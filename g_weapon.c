@@ -105,6 +105,9 @@ qboolean fire_hit (edict_t *self, vec3_t aim, int damage, int kick)
 	float		range;
 	vec3_t		dir;
 
+	if (!self->enemy)
+		return false;
+
 	// calling entity made a sound, used to alert monsters
 	self->lastsound = level.framenum;
 

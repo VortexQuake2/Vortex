@@ -1419,6 +1419,9 @@ qboolean M_MeleeAttack (edict_t *self, float range, int damage, int knockback)
 	vec3_t	start, forward, end;
 	trace_t	tr;
 
+	if (!self->enemy)
+		return false;
+
 	self->lastsound = level.framenum;
 
 	// get starting and ending positions
