@@ -1302,6 +1302,9 @@ edict_t *drone_findnavi (edict_t *self)
 	int iters = 0;
 	int i;
 
+	if (G_GetClient(self))
+		return NULL;
+
 	if (!initialized)
 		for (i = 0; i<5; i++ )
 			navis[i] = NULL;
