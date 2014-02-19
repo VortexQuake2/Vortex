@@ -232,10 +232,6 @@ void PM_RestorePlayer (edict_t *ent)
 	ent->takedamage = DAMAGE_AIM;
 
 	// recover player info
-	//memcpy(userinfo, ent->client->pers.userinfo, sizeof(userinfo));
-	//InitClientPersistant(ent->client);
-	//ClientUserinfoChanged(ent, userinfo);
-	//modify_max(ent);
 	Pick_respawnweapon(ent);
 
 	// clear monster pointer
@@ -683,24 +679,11 @@ void Cmd_PlayerToTank_f (edict_t *ent)
 		V_RestoreMorphed(ent, 0);
 		return;
 	}
-/*
-	if (G_EntExists(ent->owner) && (ent->owner->mtype == P_TANK))
-	{
-		// player's chasing this monster should now chase the player instead
-		PM_UpdateChasePlayers(ent->owner);
 
-		// remove the tank entity
-		M_Remove(ent->owner, false, false);
-		PM_RestorePlayer(ent);
-		return;
-	}
-*/
 	//Talent: Morphing
 	if(getTalentSlot(ent, TALENT_MORPHING) != -1)
 		tank_cubecost *= 1.0 - 0.2 * getTalentLevel(ent, TALENT_MORPHING);
 
-//	if (!G_CanUseAbilities(ent, ent->myskills.abilities[TANK].current_level, tank_cubecost))
-//		return;
 	if (!V_CanUseAbilities(ent, TANK, tank_cubecost, true))
 		return;
 

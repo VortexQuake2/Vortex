@@ -394,33 +394,6 @@ edict_t *drone_get_enemy (edict_t *self)
 
 edict_t *drone_findnavi (edict_t *self);
 
-// lolwut
-edict_t *drone_get_navi (edict_t *self)
-{
-	/*edict_t *target = NULL;
-
-	// find a navigational entity
-	// monster must be owned by world and not instructed to ignore navi
-	if (self->monsterinfo.aiflags & AI_FIND_NAVI)
-	{
-		while ((target = findclosestradius1 (target, self->s.origin, 
-			8192/*self->monsterinfo.sight_range*//*)) != NULL)*/
-	/*	{
-			if (!drone_validnavi(self, target, false))
-				continue;
-			return target;
-		}
-	}*/
-
-	return drone_findnavi(self);
- /*
-	// can't find a valid navigational entity
-	return NULL;
-	*/
-}
-
-edict_t *drone_findpspawn(edict_t *self);
-
 edict_t *drone_get_target (edict_t *self, 
 			qboolean get_medic_target, qboolean get_enemy, qboolean get_navi)
 {
@@ -435,7 +408,7 @@ edict_t *drone_get_target (edict_t *self,
 		return target;
 
 	// find navi
-	if (invasion->value && get_navi && ((target = drone_get_navi(self)) != NULL))
+	if (invasion->value && get_navi && ((target = drone_findnavi(self)) != NULL))
 		return target;
 
 	return NULL;
@@ -480,14 +453,12 @@ qboolean drone_findtarget (edict_t *self, qboolean force)
 	if ((target = drone_get_target(self, false, true, false)) != NULL)
 	{
 		// if this is an invasion player spawn (base), then clear goal AI flags
-		/*
 		if (target->mtype == INVASION_PLAYERSPAWN)
 		{
 			self->monsterinfo.aiflags &= ~AI_FIND_NAVI;
 			if (!self->monsterinfo.melee)
 				self->monsterinfo.aiflags  &= ~AI_NO_CIRCLE_STRAFE;
 		}
-		*/
 
 		// if we have no melee function, then make sure we can circle strafe
 		if (!self->monsterinfo.melee)
@@ -515,7 +486,7 @@ qboolean drone_findtarget (edict_t *self, qboolean force)
 		self->monsterinfo.aiflags |= (AI_COMBAT_POINT|AI_NO_CIRCLE_STRAFE);
 		self->monsterinfo.aiflags &= ~AI_LOST_SIGHT;
 		self->enemy = target;
-		//self->goalentity = target;
+		self->goalentity = target;
 		VectorCopy(target->s.origin, self->monsterinfo.last_sighting);
 		return true;
 	}
@@ -744,7 +715,7 @@ qboolean FindPlat (edict_t *self, vec3_t plat_pos)
 		// information
 
 		// az: avoid doing traces if it's down, it's useless anyway.
-		if (e->moveinfo.state != STATE_BOTTOM)
+		if (e->moveinfo.state != STATE_BOTTOM && e->moveinfo.state != STATE_TOP)
 			continue; // plat must be down
 
 		tr = gi.trace(self->s.origin, NULL, NULL, e->absmax, self, MASK_SOLID);
@@ -1268,29 +1239,7 @@ edict_t *INV_GiveRandomPSpawn();
 
 edict_t *drone_findpspawn(edict_t *self)
 {
-	/*edict_t *e=world;
-	edict_t *navis[5];
-	int count = 0;
-	int iters = 0;
-	int i;
-
-	for (i =0; i < 5; i++)
-		navis[i] = NULL;
-
-	while ((e = G_Find(e, FOFS(classname), "info_player_invasion")) != NULL)
-	{
-		if (count > 3)
-			break;
-
-		navis[count] = e;
-		count++;
-	}
-	i = GetRandom(0,2);
-	e = navis[i];
-	self->prev_navi = e;
-	return e;*/
 	return INV_GiveRandomPSpawn();
-
 }
 
 edict_t *drone_findnavi (edict_t *self)
@@ -1302,7 +1251,7 @@ edict_t *drone_findnavi (edict_t *self)
 	int iters = 0;
 	int i;
 
-	if (G_GetClient(self))
+	if (!(self->monsterinfo.aiflags & AI_FIND_NAVI))
 		return NULL;
 
 	if (!initialized)
@@ -1358,7 +1307,10 @@ edict_t *drone_findnavi (edict_t *self)
 	}
 
 	if (count > 1)
+	{
+		gi.dprintf("%s: Found %d total navis to pick from.\n", __FUNCTION__, count);
 		initialized = true;
+	}
 
 	i = GetRandom(0,4);
 	e = navis[i];
@@ -1716,10 +1668,6 @@ void drone_ai_run1 (edict_t *self, float dist)
 			// have we reached the end of the path we are searching?
 			if (self->monsterinfo.nextWaypoint < self->monsterinfo.numWaypoints)
 			{
-				//gi.dprintf("%s is now moving towards node %d\n", 
-				//	GetMonsterKindString(self->mtype), 
-				//	self->monsterinfo.waypoint[self->monsterinfo.nextWaypoint]);
-
 				// get the position of the next waypoint
 				GetNodePosition(self->monsterinfo.waypoint[self->monsterinfo.nextWaypoint], dest);
 				
@@ -1960,14 +1908,6 @@ void drone_ai_run (edict_t *self, float dist)
 		// we're following a temporary goal
 		if (self->movetarget && self->movetarget->inuse)
 		{
-			/*
-			gi.WriteByte (svc_temp_entity);
-			gi.WriteByte (TE_BFG_LASER);
-			gi.WritePosition (self->s.origin);
-			gi.WritePosition (self->movetarget->s.origin);
-			gi.multicast (self->s.origin, MULTICAST_PHS);
-			*/
-
 			// pursue the movetarget
 			M_MoveToGoal(self, dist);
 
@@ -2005,17 +1945,6 @@ void drone_ai_run (edict_t *self, float dist)
 			// he was seen if we haven't already been there
 			if (!enemy_vis)
 			{
-				/*
-				if (level.time > self->monsterinfo.teleport_delay)
-				{
-				VectorSubtract(self->enemy->s.origin, self->s.origin, v);
-				VectorNormalize(v);
-				TeleportForward(self, v, 512);
-				self->monsterinfo.teleport_delay = level.time + DRONE_TELEPORT_DELAY;
-				}
-				*/
-
-
 				if (!(self->monsterinfo.aiflags & AI_LOST_SIGHT))
 					self->monsterinfo.aiflags |= (AI_LOST_SIGHT|AI_PURSUIT_LAST_SEEN);
 

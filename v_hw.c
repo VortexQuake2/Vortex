@@ -12,12 +12,10 @@ int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target);
 
 float hw_getdamagefactor(edict_t *targ, edict_t* attacker)
 {
-	if (targ && G_GetClient(targ) && attacker && G_GetClient(attacker))
+	if (targ && G_GetClient(targ))
 	{
 		if (G_GetClient(targ)->client->pers.inventory[halo_index]) // increment damage to halo bearer by every kill
-			return 1 + targ->myskills.streak/8;
-		else if (!G_GetClient(attacker)->client->pers.inventory[halo_index]) // attacker doesn't have the halo
-			return 0.7; // lessened damage
+			return 1 + (float)targ->myskills.streak/8.0;
 	}
 	// attacker has the halo, normal damage
 	return 1;

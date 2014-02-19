@@ -2245,7 +2245,11 @@ void ClientUserinfoChanged (edict_t *ent, char *userinfo)
 		if (strlen(ent->client->pers.netname) > 3)
 			gi.bprintf(PRINT_HIGH, "%s changed name to %s\n", ent->client->pers.netname, s);
 	}
-	if (strlen( ent->client->pers.netname) < 1)
+	if (strlen( ent->client->pers.netname) < 1 || (G_IsSpectator(ent) 
+#ifndef NO_GDS
+		&& !ent->ThreadStatus // Not loaded.
+#endif
+		))
 		strncpy (ent->client->pers.netname, s, sizeof(ent->client->pers.netname)-1);
 	Info_SetValueForKey(userinfo, "name", ent->client->pers.netname);
 

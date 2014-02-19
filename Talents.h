@@ -1,7 +1,7 @@
 #ifndef TALENTS_H
 #define TALENTS_H
 
-#define MAX_TALENTS			10	//Max # of talents for each class.
+#define MAX_TALENTS			15	//Max # of talents for each class.
 #define TALENT_MIN_LEVEL	10
 #define TALENT_MAX_LEVEL	20
 

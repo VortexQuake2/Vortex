@@ -341,8 +341,6 @@ edict_t *FindPlayerByName(char *name)
 	for (i = 1; i <= maxclients->value; i++)
 	{
 		player = &g_edicts[i];
-		//if (!G_EntExists(player))
-		//	continue;
 		if (!player || !player->inuse)
 			continue;
 		if (Q_strcasecmp(name, player->client->pers.netname) != 0)

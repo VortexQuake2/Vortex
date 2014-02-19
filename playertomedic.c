@@ -484,9 +484,6 @@ void Cmd_PlayerToMedic_f (edict_t *ent)
 	if(getTalentSlot(ent, TALENT_MORPHING) != -1)
 		cost *= 1.0 - 0.25 * getTalentLevel(ent, TALENT_MORPHING);
 
-//	if (!G_CanUseAbilities(ent, ent->myskills.abilities[MEDIC].current_level, cost))
-//		return;
-
 	if (!V_CanUseAbilities(ent, MEDIC, cost, true))
 		return;
 

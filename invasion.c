@@ -233,22 +233,6 @@ void INV_AwardPlayers (void)
 		gi.bprintf(PRINT_HIGH, "Humans win! Players were awarded a bonus.\n");
 }
 
-int fib(int iter)
-{
-	int a, b, c;
-    a = b = c = 1;
-
-	while (iter)
-	{
-		iter--;
-
-		c = a+b;
-		b = a;
-		a = c;
-	}
-	return c;
-}
-
 edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 {
 	edict_t *monster;
@@ -416,7 +400,7 @@ void INV_SpawnMonsters (edict_t *self)
 			gi.bprintf(PRINT_HIGH, "Time's up!\n");
 			if (invasion_data.boss && invasion_data.boss->deadflag != DEAD_DEAD) // out of time for the boss.
 			{	
-				G_PrintGreenText(va("You failed on eliminating the commander soon enough!\n"));
+				G_PrintGreenText(va("You failed to eliminate the commander soon enough!\n"));
 				gi.WriteByte (svc_temp_entity);
 				gi.WriteByte (TE_BOSSTPORT);
 				gi.WritePosition (invasion_data.boss->s.origin);
@@ -433,9 +417,11 @@ void INV_SpawnMonsters (edict_t *self)
 			invasion_data.printedmessage = 0;
 			gi.sound(&g_edicts[0], CHAN_VOICE, gi.soundindex("misc/tele_up.wav"), 1, ATTN_NONE, 0);
 		}
+	}else // Timeout has happened or all monsters eliminated
+	{
+		self->count = MONSTERSPAWN_STATUS_WORKING;
+		invasion_data.mspawned = self->num_monsters_real;
 	}
-
-	self->count = MONSTERSPAWN_STATUS_WORKING;
 
 	if (players < 1)
 	{
@@ -497,21 +483,23 @@ void INV_SpawnMonsters (edict_t *self)
 		int randomval = GetRandom(1, 9);
 
 		if (invasion_difficulty_level % 5 && invasion->value == 1) // nonboss stage? easy mode?
-			while ( (randomval == 5) ) // disallow medics
+		{
+			while ( randomval == 5 ) // disallow medics
 			{
 				randomval = GetRandom(1, 8);
 			}
+		}
 
 		if (!INV_SpawnDrone(self, e, randomval))
 			continue;
-
-		invasion_data.mspawned++;
+		else
+			invasion_data.mspawned++;
 	}
 
-	if (self->num_monsters_real == max_monsters || invasion_data.mspawned == max_monsters)
+	if (invasion_data.mspawned == max_monsters)
 	{
 		// increase the difficulty level for the next wave
-		invasion_difficulty_level += 1/* + (invasion_difficulty_level / 10)*/;
+		invasion_difficulty_level += 1;
 		invasion_data.printedmessage = 0;
 		invasion_data.mspawned = 0;
 		self->count = MONSTERSPAWN_STATUS_IDLE;

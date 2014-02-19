@@ -650,7 +650,7 @@ void G_SetStats (edict_t *ent)
 	//
 
 
-	ent->client->ps.stats[STAT_HEALTH_ICON] = 0;
+	// ent->client->ps.stats[STAT_HEALTH_ICON] = 0;
 
 	if (ent->health <= 10000)
 		ent->client->ps.stats[STAT_HEALTH] = ent->health;

@@ -1017,7 +1017,7 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 	FREE_RESULT;
 
 	if (player->PlayerID != current->id)
-		return false; // .. Don't waste time...
+		return false; // Don't waste time...
 
 	QUERY( "SELECT COUNT(*) FROM talents WHERE char_idx=%d", id );
 	

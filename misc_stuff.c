@@ -786,7 +786,7 @@ int TotalPlayersInGame(void);
 qboolean IsNewbieBasher (edict_t *player) {
 	return (newbie_protection->value && player->client && (total_players()>0.33*maxclients->value)
 		&& (player->myskills.level>(newbie_protection->value*average_player_level)) 
-		&& (player->myskills.level >= 8) && !ctf->value && !pvm->value && !ffa->value);
+		&& (player->myskills.level >= 8) && !pvm->value);
 }
 
 qboolean TeleportNearTarget (edict_t *self, edict_t *target, float dist)

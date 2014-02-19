@@ -900,6 +900,19 @@ void KillMyVote (edict_t *ent)
 	}
 }
 
+qboolean ThereIsOneLevelTen()
+{
+	int i;
+	for (i = 1; i <= maxclients->value; i++)
+	{
+		edict_t* cl = g_edicts+i;
+		if (cl->client && !G_IsSpectator(cl) && cl->inuse)
+			if (cl->myskills.level >= 10)
+				return true;
+	}
+	return false;
+}
+
 void ShowVoteModeMenu(edict_t *ent)
 {
 #ifdef OLD_VOTE_SYSTEM // Paril
@@ -1119,7 +1132,7 @@ void ShowVoteModeMenu(edict_t *ent)
 		}
 	}
 
-	if (invasion_enabled->value && (AveragePlayerLevel() > 10 || total_players() >= min_players) )
+	if (invasion_enabled->value && (ThereIsOneLevelTen() || total_players() >= min_players) )
 	{
 		addlinetomenu(ent, " Invasion (Hard mode)", MAPMODE_INH);
 		lastline++;

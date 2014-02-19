@@ -536,6 +536,12 @@ void Drop_Ammo (edict_t *ent, gitem_t *item)
 
 void MegaHealth_think (edict_t *self)
 {
+	if (!self->owner)
+	{
+		SetRespawn (self, 20);
+		return;
+	}
+
 	if (self->owner->health > self->owner->max_health && self->owner->megahealth)
 	{
 		self->nextthink = level.time + 1;
@@ -1306,7 +1312,8 @@ void droptofloor (edict_t *ent)
 	tr = gi.trace (ent->s.origin, ent->mins, ent->maxs, dest, ent, MASK_SOLID);
 	if (tr.startsolid)
 	{
-		gi.dprintf ("droptofloor: %s startsolid at %s\n", ent->classname, vtos(ent->s.origin));
+		if (debuginfo->value)
+			gi.dprintf ("droptofloor: %s startsolid at %s\n", ent->classname, vtos(ent->s.origin));
 		G_FreeEdict (ent);
 		return;
 	}
@@ -3166,6 +3173,9 @@ void SpawnWorldAmmoType (char *pickupName, int count)
 void SpawnWorldAmmo (void)
 {
 	int count, need;
+
+	if (trading->value)
+		return;
 
 	if ((count = GetWorldAmmoCount("Shells")) < world_min_shells->value)
 	{
