@@ -58,6 +58,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 		{
 			// restore this drone
 			target->monsterinfo.slots_freed = false; // reset freed flag
+			target->monsterinfo.aiflags &= ~AI_FIND_NAVI;
 			target->health = 0.33*target->max_health;
 			target->monsterinfo.power_armor_power = 0.33*target->monsterinfo.max_armor;
 			target->monsterinfo.resurrected_time = level.time + 2.0;

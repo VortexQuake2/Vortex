@@ -1251,7 +1251,7 @@ edict_t *drone_findnavi (edict_t *self)
 	int iters = 0;
 	int i;
 
-	if (!(self->monsterinfo.aiflags & AI_FIND_NAVI))
+	if (!(self->monsterinfo.aiflags & AI_FIND_NAVI) || G_GetClient(self)) // Client monsters don't look for navis
 		return NULL;
 
 	if (!initialized)
