@@ -75,14 +75,6 @@ void UpdateChaseCam (edict_t *ent)
 	// use client's viewing angle
 	if (targ->client)
 		VectorCopy(targ->client->v_angle, angles);
-	// use pilot's viewing angle
-	/*
-	else if (PM_MonsterHasPilot(targ))
-	{
-		VectorCopy(targ->owner->s.origin, start);
-		VectorCopy(targ->owner->client->v_angle, angles);
-	}
-	*/
 	// use non-client's angles
 	else
 		VectorCopy(targ->s.angles, angles);
@@ -123,7 +115,7 @@ void UpdateChaseCam (edict_t *ent)
 			start[2] = targ->absmax[2]-8;
 		VectorMA(start, targ->maxs[1]+16, forward, start);
 		// update HUD
-		if (targ->client)
+		if (targ->client && targ->myskills.class_num != CLASS_PALADIN && !isMorphingPolt(targ)) // don't show weapons with any of these classes
 			ent->client->ps = targ->client->ps;
 		else
 			ent->client->ps.gunindex = 0;
@@ -211,31 +203,7 @@ void UpdateChaseCam (edict_t *ent)
 	ent->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
 	gi.linkentity(ent);
 }
-/*
-void ChaseNext(edict_t *ent)
-{
-	int i;
-	edict_t *e;
 
-	if (!ent->client->chase_target)
-		return;
-
-	i = ent->client->chase_target - g_edicts;
-	do {
-		i++;
-		if (i > maxclients->value)
-			i = 1;
-		e = g_edicts + i;
-		if (!e->inuse)
-			continue;
-		if (!e->client->resp.spectator)
-			break;
-	} while (e != ent->client->chase_target);
-
-	ent->client->chase_target = e;
-	ent->client->update_chase = true;
-}
-*/
 void ChaseNext(edict_t *ent) //GHz
 {
 	int i;
@@ -258,31 +226,7 @@ void ChaseNext(edict_t *ent) //GHz
 	ent->client->chase_target = e;
 	ent->client->update_chase = true;
 }
-/*
-void ChasePrev(edict_t *ent)
-{
-	int i;
-	edict_t *e;
 
-	if (!ent->client->chase_target)
-		return;
-
-	i = ent->client->chase_target - g_edicts;
-	do {
-		i--;
-		if (i < 1)
-			i = maxclients->value;
-		e = g_edicts + i;
-		if (!e->inuse)
-			continue;
-		if (!e->client->resp.spectator)
-			break;
-	} while (e != ent->client->chase_target);
-
-	ent->client->chase_target = e;
-	ent->client->update_chase = true;
-}
-*/
 void ChasePrev(edict_t *ent) //GHz
 {
 	int		i;
@@ -305,24 +249,7 @@ void ChasePrev(edict_t *ent) //GHz
 	ent->client->chase_target = e;
 	ent->client->update_chase = true;
 }
-/*
-void GetChaseTarget(edict_t *ent)
-{
-	int i;
-	edict_t *other;
 
-	for (i = 1; i <= maxclients->value; i++) {
-		other = g_edicts + i;
-		if (other->inuse && !other->client->resp.spectator) {
-			ent->client->chase_target = other;
-			ent->client->update_chase = true;
-			UpdateChaseCam(ent);
-			return;
-		}
-	}
-	gi.centerprintf(ent, "No other players to chase.");
-}
-*/
 void GetChaseTarget (edict_t *ent)//GHz
 {
 	int		i;

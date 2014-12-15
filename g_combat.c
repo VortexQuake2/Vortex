@@ -170,6 +170,32 @@ qboolean CanDamage (edict_t *targ, edict_t *inflictor)
 	return false;
 }
 
+void G_ApplyFury(edict_t *attacker)
+{
+	int chance = attacker->myskills.abilities[FURY].current_level;
+	int r = GetRandom(0, 100);
+
+	//The following is truncated so that every 4th point adds an extra 1%.
+	if (r < chance)
+	{
+		float duration = FURY_DURATION_BASE + FURY_DURATION_BONUS * chance;
+
+		if (attacker->client)
+			safe_cprintf(attacker, PRINT_HIGH, "For the next %0.1f seconds you will become the fury.\n", duration);
+
+		gi.sound(attacker, CHAN_AUTO, gi.soundindex("ctf/tech2x.wav"), 1, ATTN_NORM, 0);
+
+		//Player got a fury boost!
+		attacker->fury_time = level.time + duration;
+		attacker->myskills.abilities[FURY].delay = attacker->fury_time + 1.0;
+	}
+	else
+	{
+		//They didn't get the boost. Try again later.
+		attacker->myskills.abilities[FURY].delay = level.time + 1.0;
+	}
+}
+
 
 /*
 ============
@@ -603,8 +629,86 @@ void DeflectHitscan (edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_
 				
 		// deflect may absorb some or all damage
 		damage *= 1.0 - modifier;
+	}		
+}
+
+void G_ApplyVampire(edict_t *attacker, float take)
+{
+	float temp;
+	float steal;
+	int	delta, armorVampBase;
+	int	*armor = &attacker->client->pers.inventory[body_armor_index];
+	int	max_health = attacker->max_health;
+
+	temp = 0.075*attacker->myskills.abilities[VAMPIRE].current_level;
+
+	// brains and mutants with morph mastery use vamp
+	if (attacker->mtype)
+		temp = 0.25;
+
+	steal = (int)floor(0.5 + take*temp); // steal health
+	armorVampBase = steal; // save this value for armor vamp
+
+	delta = max_health - attacker->health;
+	// don't give more health than we need
+	if (steal > delta)
+		steal = delta;
+	if (delta < 0) // players sometimes go over maximum health
+		steal = 0;
+
+	if (attacker->mtype) // morphs don't use healthcache
+		attacker->health += steal;
+	else
+		attacker->health_cache += steal;
+
+	//Talent: Armor Vampire
+	if (*armor < MAX_ARMOR(attacker) && getTalentLevel(attacker, TALENT_ARMOR_VAMP) > 0)
+	{
+		//16.6% per point of health stolen gives armor as a bonus.
+		float mult = 0.1666 * getTalentLevel(attacker, TALENT_ARMOR_VAMP);
+		attacker->armor_cache += (int)(mult * (float)armorVampBase);
 	}
-		
+}
+
+int G_AutoTBall(edict_t *targ, float take)
+{
+	//3.0 try to auto-tball away when hit
+	if ((targ->client)															//target must be a player
+		&& G_EntIsAlive(targ)													//target must be alive
+		&& (targ->health - take < (0.25 * MAX_HEALTH(targ)))					//target must end up with < 25% hp
+		&& !(targ->v_flags & SFLG_AUTO_TBALLED)									//target must not have auto-tballed this spawn
+		&& !HasFlag(targ))	//target must not have the flag
+	{
+		qboolean found = false;
+		int i;
+		//try to find an auto-tball
+		for (i = 3; i < MAX_VRXITEMS; ++i)
+		{
+			if (targ->myskills.items[i].itemtype & ITEM_AUTO_TBALL)
+			{
+				found = true;
+				break;
+			}
+		}
+		if (found && (GetRandom(0, 100) > 75))	//75% chance of not working
+		{
+			//teleport them!
+			Teleport_them(targ);
+
+			//notify everyone
+			gi.bprintf(PRINT_MEDIUM, "%s was teleported away by an Auto-Tball!\n", targ->myskills.player_name);
+
+			targ->v_flags ^= SFLG_AUTO_TBALLED;
+			//consume an item
+			if (!(targ->myskills.items[i].itemtype & ITEM_UNIQUE))
+				targ->myskills.items[i].quantity -= 1;
+			if (targ->myskills.items[i].quantity == 0)
+				V_ItemClear(&targ->myskills.items[i]);
+			return 1;
+		}
+	}
+	return 0;
+	//end 3.0 auto-tball
 }
 
 int TotalPlayersInGame(void);
@@ -984,42 +1088,8 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 // do the damage
 	if (take)
 	{
-		//3.0 try to auto-tball away when hit
-		if ((targ->client)															//target must be a player
-			&& G_EntIsAlive(targ)													//target must be alive
-			&& (targ->health - take < (0.25 * MAX_HEALTH(targ)))					//target must end up with < 25% hp
-			&& !(targ->v_flags & SFLG_AUTO_TBALLED)									//target must not have auto-tballed this spawn
-			&& !HasFlag(targ))	//target must not have the flag
-		{
-			qboolean found = false;
-			int i;
-			//try to find an auto-tball
-			for (i = 3; i < MAX_VRXITEMS; ++i)
-			{
-				if (targ->myskills.items[i].itemtype & ITEM_AUTO_TBALL)
-				{
-					found = true;
-					break;
-				}
-			}
-			if (found && (GetRandom(0, 100) > 75))	//75% chance of not working
-			{
-				//teleport them!
-				Teleport_them(targ);
-
-                //notify everyone
-				gi.bprintf(PRINT_MEDIUM, "%s was teleported away by an Auto-Tball!\n", targ->myskills.player_name);
-
-				targ->v_flags ^= SFLG_AUTO_TBALLED;
-				//consume an item
-				if(!(targ->myskills.items[i].itemtype & ITEM_UNIQUE))
-					targ->myskills.items[i].quantity -= 1;
-				if (targ->myskills.items[i].quantity == 0)
-					V_ItemClear(&targ->myskills.items[i]);
-				return 0;
-			}
-		}
-		//end 3.0 auto-tball
+		if (G_AutoTBall(targ, take))
+			return 0;
 
 		if ((targ->svflags & SVF_MONSTER) || (client))
 			SpawnDamage (TE_BLOOD, point, normal, take);
@@ -1027,12 +1097,6 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 			SpawnDamage (te_sparks, point, normal, take);
 
 		targ->health -= take;
-
-		//4.2 allow darkness totem to work with player-monsters
-	//	if (attacker_has_pilot)
-	//		player = attacker->activator;
-	//	else
-	//		player = attacker;
 
 		//4.1 Darkness totem gives players a seperate vampire effect.
 		if(player && (attacker_has_pilot || attacker->client))
@@ -1057,9 +1121,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 				}
 			}
 		}
-
-		//dtype = G_DamageType(mod, dflags);
-		
+	
 		//4.2 give hellspawn vampire ability (50% = 150hp/sec assuming 300dmg/sec)
 
 		if (attacker->monsterinfo.bonus_flags & BF_STYGIAN)
@@ -1086,68 +1148,12 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 		// vampire effect
 		if (CanUseVampire(targ, attacker, dflags, mod))
-		{
-			int	delta, armorVampBase;
-			int	*armor = &attacker->client->pers.inventory[body_armor_index];
-			int	max_health = attacker->max_health;
-
-			temp = 0.075*attacker->myskills.abilities[VAMPIRE].current_level;
-			
-			// brains and mutants with morph mastery use vamp
-			if (attacker->mtype)
-				temp = 0.25;
-
-			steal = (int) floor(0.5+take*temp); // steal health
-			armorVampBase = steal; // save this value for armor vamp
-
-			delta = max_health - attacker->health;
-			// don't give more health than we need
-			if (steal > delta)
-				steal = delta;
-			if (delta < 0) // players sometimes go over maximum health
-				steal = 0;
-			
-			if (attacker->mtype) // morphs don't use healthcache
-				attacker->health += steal;
-			else
-				attacker->health_cache += steal;
-
-			//Talent: Armor Vampire
-			if(*armor < MAX_ARMOR(attacker) && getTalentLevel(attacker, TALENT_ARMOR_VAMP) > 0)    
-			{     
-				//16.6% per point of health stolen gives armor as a bonus.
-				float mult = 0.1666 * getTalentLevel(attacker, TALENT_ARMOR_VAMP);
-				attacker->armor_cache += (int)(mult * (float)armorVampBase);
-			}
-		}
+			G_ApplyVampire(attacker, take);
 
 		//4.1 Players with fury might get their ability triggered
 		ability = &attacker->myskills.abilities[FURY];
-		if(attacker != targ && dtype & D_PHYSICAL && !(dtype & D_MAGICAL) && ability->current_level > 0 && ability->delay < level.time)
-		{
-			int chance = ability->current_level;
-			int r = GetRandom(0, 100);
-
-            //The following is truncated so that every 4th point adds an extra 1%.
-			if(r < chance)
-			{
-				float duration = FURY_DURATION_BASE + FURY_DURATION_BONUS * ability->current_level;
-
-				if(attacker->client)
-					safe_cprintf(attacker, PRINT_HIGH, "For the next %0.1f seconds you will become the fury.\n", duration);
-
-				gi.sound (attacker, CHAN_AUTO, gi.soundindex("ctf/tech2x.wav"), 1, ATTN_NORM, 0);
-
-				//Player got a fury boost!
-				attacker->fury_time = level.time + duration;
-				ability->delay = attacker->fury_time + 1.0;
-			}
-			else
-			{
-				//They didn't get the boost. Try again later.
-                ability->delay = level.time + 1.0;
-			}
-		}
+		if (attacker != targ && dtype & D_PHYSICAL && !(dtype & D_MAGICAL) && ability->current_level > 0 && ability->delay < level.time)
+			G_ApplyFury(attacker);
 		
 		if (targ->health <= 0)
 		{
@@ -1211,8 +1217,8 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		client->damage_blood += take;
 		client->damage_knockback += knockback;
 		VectorCopy (point, client->damage_from);
-
 	}
+
 	return take;
 }	
 

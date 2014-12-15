@@ -1076,9 +1076,6 @@ void G_RunEntity (edict_t *ent)
 	case MOVETYPE_FLY:
 	case MOVETYPE_FLYMISSILE:
 	case MOVETYPE_SLIDE:
-		SV_Physics_Toss (ent);
-		break;
-	// RAFAEL
 	case MOVETYPE_WALLBOUNCE:
 		SV_Physics_Toss (ent);
 		break;

@@ -684,29 +684,6 @@ void SVCmd_DeleteCharacter_f()
 	}
 }
 
-void SVCmd_ListCombatPrefs ()
-{
-	int i, num=0;
-	edict_t *player;
-
-	for (i = 1; i <= game.maxclients; i++)
-	{
-		player = &g_edicts[i];
-
-		// make sure player is valid
-		if (!player || !player->inuse || player->client->pers.spectator)
-			continue;
-
-		safe_cprintf(NULL, PRINT_HIGH, "%s (%d) is hostile against: ", player->client->pers.netname, player->myskills.respawns);
-		if (player->myskills.respawns & HOSTILE_MONSTERS)
-			safe_cprintf(NULL, PRINT_HIGH, "monsters ");
-		if (player->myskills.respawns & HOSTILE_PLAYERS)
-			safe_cprintf(NULL, PRINT_HIGH, "players ");
-		safe_cprintf(NULL, PRINT_HIGH, "\n");
-	}
-
-}
-
 #endif
 //GHz END
 
@@ -848,8 +825,6 @@ void	ServerCommand (void)
 	}
 	else if (Q_stricmp (cmd, "addtomaplist") == 0)
 		SV_AddMapToMaplist ();
-	else if (Q_stricmp (cmd, "prefs") == 0)
-		SVCmd_ListCombatPrefs ();
 #endif
 //GHz END
 //Ticamai START

@@ -330,17 +330,7 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 
 	ent->client->pers.spectator = false;
 	ent->client->resp.spectator = false;
-
-	// Set respawns by default~ VrxChile3.0
-	if (invasion->value || pvm->value)  // vrxchile: default combat modes
-	{ 
-		ent->myskills.respawns = ent->client->pers.combat_changed = HOSTILE_MONSTERS;
-	}else if (!invasion->value && !pvm->value && !ffa->value) // pvp mode
-	{
-		ent->myskills.respawns = ent->client->pers.combat_changed = HOSTILE_PLAYERS;
-	}else // anything else?
-		ent->myskills.respawns = ent->client->pers.combat_changed = HOSTILE_PLAYERS |  HOSTILE_MONSTERS;
-
+	
 	Give_respawnitems(ent);
 	Give_respawnweapon(ent, ent->myskills.respawn_weapon);
 	

@@ -103,7 +103,6 @@ void TBI_SpawnPlayers()
 
 	for (cl_ent = g_edicts + 1; cl_ent != g_edicts + i_maxclients + 1; cl_ent++)
 	{
-		vec3_t start;
 		// Alrighty, everyone's got spawns.
 		if (cl_ent->client && cl_ent->inuse && !G_IsSpectator(cl_ent))
 		{

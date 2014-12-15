@@ -262,42 +262,8 @@ char *ClientTeam (edict_t *ent)
 	return ++p;
 }
 
-int NotHostile (edict_t *ent1, edict_t *ent2)
-{
-	edict_t *e1 = G_GetClient(ent1);
-	edict_t *e2 = G_GetClient(ent2);
-
-	if (ctf->value || ptr->value || domination->value || invasion->value)
-		return 0;
-
-	// sanity check
-	if (!ent1 || !ent2)
-		return 0;
-
-	// both entities are players or owned by players
-	if (e1 && e2)
-	{
-		// one player is not hostile against players
-		if (IsBossTeam(e1) != IsBossTeam(e2)) // is one of these clients a boss, but the other is not?
-			return 0; // they're hostile -az
-
-		if (!(e1->myskills.respawns & HOSTILE_PLAYERS) || !(e2->myskills.respawns & HOSTILE_PLAYERS))
-			return 1;
-	}
-
-	// player is not hostile against world monsters
-	else if (e1 && !(e1->myskills.respawns & HOSTILE_MONSTERS) && G_GetSummoner(ent2))
-		return 1;
-	else if (e2 && !(e2->myskills.respawns & HOSTILE_MONSTERS) && G_GetSummoner(ent1))
-		return 1;
-	
-	// either they are hostile or the result is indeterminate (e.g. both entities are not owned by players)
-	return 0;
-}
-
 int OnSameTeam (edict_t *ent1, edict_t *ent2)
 {
-	int			result = NotHostile(ent1, ent2);
 	char		ent1Team [512];
 	char		ent2Team [512];
 	qboolean	ent1_boss=false;
@@ -322,7 +288,7 @@ int OnSameTeam (edict_t *ent1, edict_t *ent2)
 			|| (ent2->activator && !ent2->activator->client))
 			return 2;
 
-		return result;
+		return 0;
 	}
 
 	// make sure we're at the top of the food chain
@@ -376,9 +342,7 @@ int OnSameTeam (edict_t *ent1, edict_t *ent2)
 	{
 		// players not spree-warring while one is in progress only become teammates
 		// if they have enabled PvP mode, otherwise, they are merely non-hostile
-		if (result)
-			return 1; // entities are non-hostile
-		else if (ent1->client && ent2->client)
+		if (ent1->client && ent2->client)
 			return 2; // players are hostile but temporarily on the same team
 		else
 			return 0; // player is hostile against this entity
@@ -386,7 +350,7 @@ int OnSameTeam (edict_t *ent1, edict_t *ent2)
 
 	// client only checks from here on
 	if ((!ent1->client) || (!ent2->client))
-		return result;
+		return 0;
 
 	// check for allies
 	if (allies->value && IsAlly(ent1, ent2))
@@ -395,7 +359,7 @@ int OnSameTeam (edict_t *ent1, edict_t *ent2)
 	/* az note: do we need this? */
 	// check dmflags for skin or model teams
 	if (!((int)(dmflags->value) & (DF_MODELTEAMS | DF_SKINTEAMS)))
-		return result;
+		return 0;
 
 	// compare skin/model values
 	strcpy (ent1Team, ClientTeam(ent1));

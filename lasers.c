@@ -90,7 +90,7 @@ void laser_remove (edict_t *self)
 
 void laser_beam_effects (edict_t *self)
 {
-	if (self->activator->teamnum == RED_TEAM || (ffa->value && V_MatchPlayerPrefs(self->activator, -1, 1)))
+	if (self->activator->teamnum == RED_TEAM || ffa->value)
 		self->s.skinnum = 0xf2f2f0f0; // red
 	else
 		self->s.skinnum = 0xf3f3f1f1; // blue

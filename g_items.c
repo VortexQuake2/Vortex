@@ -896,7 +896,7 @@ qboolean CanTball (edict_t *ent, qboolean print)
 		return false;
 	}
 
-	if (!pvm->value && !invasion->value && !V_MatchPlayerPrefs(ent, 1, 0)&& (ent->myskills.streak >= SPREE_START))
+	if (!pvm->value && !invasion->value && (ent->myskills.streak >= SPREE_START))
 	{
 		if (print)
 			safe_cprintf (ent, PRINT_HIGH, "You can't use tballs when you're on a spree\n");

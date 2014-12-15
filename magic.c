@@ -1161,7 +1161,7 @@ void explodingarmor_effects (edict_t *self)
 	self->s.effects = self->s.renderfx = 0;
 
 	self->s.effects |= EF_COLOR_SHELL;
-	if (self->owner->teamnum == RED_TEAM || (ffa->value && V_MatchPlayerPrefs(self->owner, -1, 1)))
+	if (self->owner->teamnum == RED_TEAM || ffa->value)
 		self->s.renderfx |= RF_SHELL_RED;
 	else
 		self->s.renderfx |= RF_SHELL_BLUE;
@@ -1549,7 +1549,7 @@ void proxy_effects (edict_t *self)
 		{
 			// flash on
 			self->s.effects |= EF_COLOR_SHELL;
-			if (self->creator->teamnum == RED_TEAM || (ffa->value && V_MatchPlayerPrefs(self->creator, -1, 1)))
+			if (self->creator->teamnum == RED_TEAM || ffa->value)
 				self->s.renderfx |= RF_SHELL_RED;
 			else
 				self->s.renderfx |= RF_SHELL_BLUE;
@@ -1935,7 +1935,7 @@ void napalm_effects (edict_t *self)
 	self->s.effects = self->s.renderfx = 0;
 
 	self->s.effects |= EF_COLOR_SHELL;
-	if (self->owner->teamnum == RED_TEAM || (ffa->value && V_MatchPlayerPrefs(self->owner, -1, 1)))
+	if (self->owner->teamnum == RED_TEAM || ffa->value)
 		self->s.renderfx |= RF_SHELL_RED;
 	else
 		self->s.renderfx |= RF_SHELL_BLUE;
@@ -4663,7 +4663,7 @@ void lasertrap_effects (edict_t *self)
 			self->s.effects |= EF_COLOR_SHELL;
 
 			// glow red if we are hostile against players or our activator is on the red team
-			if (cl_ent->teamnum == RED_TEAM || (ffa->value && V_MatchPlayerPrefs(cl_ent, -1, 1)))
+			if (cl_ent->teamnum == RED_TEAM || ffa->value)
 				self->s.renderfx = RF_SHELL_RED;
 			else
 				self->s.renderfx = RF_SHELL_BLUE;
@@ -7733,7 +7733,7 @@ void Cmd_Gasser_f (edict_t *ent)
 	gasser->monsterinfo.attack_finished = level.time + 1.0;
 	gasser->monsterinfo.cost = cost;
 
-	safe_cprintf(ent, PRINT_HIGH, "Gasser created (%d/%d)\n", ent->num_gasser, GASSER_MAX_COUNT);
+	safe_cprintf(ent, PRINT_HIGH, "Gasser created (%d/%d)\n", ent->num_gasser, (int)GASSER_MAX_COUNT);
 
 	ent->client->pers.inventory[power_cube_index] -= cost;
 	ent->client->ability_delay = level.time + GASSER_DELAY;

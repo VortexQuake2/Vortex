@@ -470,8 +470,8 @@ int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target)
 		strcat(name, V_GetMonsterName(targ));
 		clevel = targ->monsterinfo.level;
 
-		// increment spree counter in invasion mode or if the attacker has PvM combat preferences in FFA mode
-		if (invasion->value || (ffa->value && V_MatchPlayerPrefs(attacker, 1, 0)) || pvm->value)
+		// increment spree counter in invasion/pvm mode
+		if (invasion->value || pvm->value)
 		{
 			attacker->myskills.streak++;
 			VortexSpreeAbilities(attacker);

@@ -829,6 +829,89 @@ void ExitLevel (void)
 	}
 }
 
+void tech_spawnall(void);
+
+void G_RunPregame()
+{
+	edict_t *ent;
+	int i;
+	if (level.time <= pregame_time->value && !trading->value)
+	{
+		if (level.time == pregame_time->value - 30) {
+			gi.bprintf(PRINT_HIGH, "30 seconds left of pre-game\n");
+
+			for (i = 0; i < maxclients->value; i++) {
+				ent = &g_edicts[i];
+				if (!ent->inuse)
+					continue;
+				if (!ent->client)
+					continue;
+				//	if (ent->client->disconnect_time > 0)
+				//continue;
+
+				safe_cprintf(ent, PRINT_HIGH, "You will not be able to access the Armory in the game\n");
+			}
+		}
+		if (level.time == pregame_time->value - 10)
+			gi.bprintf(PRINT_HIGH, "10 seconds left of pre-game\n");
+		if (level.time == pregame_time->value - 5)
+		{
+			gi.bprintf(PRINT_HIGH, "5 seconds\n");
+			gi.sound(world, CHAN_VOICE, gi.soundindex("5_0.wav"), 1, ATTN_NONE, 0);
+		}
+		if (level.time == pregame_time->value - 4)
+			gi.bprintf(PRINT_HIGH, "4\n");
+		if (level.time == pregame_time->value - 3)
+			gi.bprintf(PRINT_HIGH, "3\n");
+		if (level.time == pregame_time->value - 2)
+			gi.bprintf(PRINT_HIGH, "2\n");
+		if (level.time == pregame_time->value - 1)
+			gi.bprintf(PRINT_HIGH, "1\n");
+		if (level.time == pregame_time->value) {
+			gi.bprintf(PRINT_HIGH, "Game commences!\n");
+
+			if (!invasion->value && !hw->value)
+				gi.sound(world, CHAN_VOICE, gi.soundindex("misc/fight.wav"), 1, ATTN_NONE, 0);
+			else if (invasion->value)
+				gi.sound(world, CHAN_VOICE, gi.soundindex("invasion/fight_invasion.wav"), 1, ATTN_NONE, 0);
+			else if (hw->value)
+				gi.sound(world, CHAN_VOICE, gi.soundindex("hw/hw_spawn.wav"), 1, ATTN_NONE, 0);
+
+			tech_spawnall();
+
+			if (domination->value)
+				dom_init();
+
+			if (ctf->value)
+				CTF_Init();
+			// az begin
+			if (hw->value)
+				hw_init();
+
+			if (tbi->value)
+				InitTBI();
+
+			for (i = 0; i < maxclients->value; i++) {
+				ent = &g_edicts[i];
+				if (!ent->inuse)
+					continue;
+				if (!ent->client)
+					continue;
+
+				//r1: fixed illegal effects being set
+				ent->s.effects &= ~EF_COLOR_SHELL;
+				ent->s.renderfx &= ~RF_SHELL_RED;
+
+				//RemoveAllCurses(ent);
+				//RemoveAllAuras(ent);
+				AuraRemove(ent, 0);
+				CurseRemove(ent, 0);
+				ent->Slower = level.time - 1;
+			}
+		}
+	}
+}
+
 /*
 ================
 G_RunFrame
@@ -836,7 +919,7 @@ G_RunFrame
 Advances the world by 0.1 seconds
 ================
 */
-void tech_spawnall (void);
+
 void thinkDisconnect(edict_t *ent);
 void G_InitEdict (edict_t *e);
 void check_for_levelup(edict_t *ent);//K03
@@ -862,13 +945,16 @@ void G_RunFrame (void)
 		delta = true;
 		level.framenum++;
 	}
-	level.time = level.real_framenum*FRAMETIME;
 #else
 	level.framenum++;
-	level.time = level.framenum*FRAMETIME;
 #endif
-	// choose a client for monsters to target this frame
-//	AI_SetSightClient ();
+
+	level.time = level.framenum*FRAMETIME;
+
+#ifndef FIXED_FT
+	if (!delta)
+		return;
+#endif
 
 	// exit intermissions
 
@@ -884,11 +970,6 @@ void G_RunFrame (void)
 		spawncycle = 130;
 
 	RunVotes();
-
-#ifndef FIXED_FT
-	if (!delta)
-		return;
-#endif
 
 	//
 	// treat each object in turn
@@ -955,83 +1036,12 @@ void G_RunFrame (void)
 #endif
 	//3.0 END 
 
-	if (level.time <= pregame_time->value && !trading->value)
-	{
-		if (level.time == pregame_time->value-30) {
-			gi.bprintf(PRINT_HIGH, "30 seconds left of pre-game\n");
-		
-			for (i = 0; i < maxclients->value; i++) {
-				ent = &g_edicts[i];
-				if (!ent->inuse)
-					continue;
-				if (!ent->client)
-					continue;
-			//	if (ent->client->disconnect_time > 0)
-					//continue;
+	G_RunPregame();
 
-				safe_cprintf(ent, PRINT_HIGH, "You will not be able to access the Armory in the game\n");
-			}
-		}
-		if (level.time == pregame_time->value-10)
-			gi.bprintf(PRINT_HIGH, "10 seconds left of pre-game\n");
-		if (level.time == pregame_time->value-5)
-		{
-			gi.bprintf(PRINT_HIGH, "5 seconds\n");
-			gi.sound(ent, CHAN_VOICE, gi.soundindex("5_0.wav"), 1, ATTN_NONE, 0);
-		}
-		if (level.time == pregame_time->value-4)
-			gi.bprintf(PRINT_HIGH, "4\n");
-		if (level.time == pregame_time->value-3)
-			gi.bprintf(PRINT_HIGH, "3\n");
-		if (level.time == pregame_time->value-2)
-			gi.bprintf(PRINT_HIGH, "2\n");
-		if (level.time == pregame_time->value-1)
-			gi.bprintf(PRINT_HIGH, "1\n");
-		if (level.time == pregame_time->value) {
-			gi.bprintf(PRINT_HIGH, "Game commences!\n");
+	if ((pvm->value || ffa->value) && !(level.framenum%10))
+		CreateRandomPlayerBoss(false);
 
-			if (!invasion->value && !hw->value)
-				gi.sound(ent, CHAN_VOICE, gi.soundindex("misc/fight.wav"), 1, ATTN_NONE, 0);
-			else if (invasion->value)
-				gi.sound(ent, CHAN_VOICE, gi.soundindex("invasion/fight_invasion.wav"), 1, ATTN_NONE, 0);
-			else if (hw->value)
-				gi.sound(ent, CHAN_VOICE, gi.soundindex("hw/hw_spawn.wav"), 1, ATTN_NONE, 0);
-
-			tech_spawnall();
-
-			for (i = 0; i < maxclients->value; i++) {
-				ent = &g_edicts[i];
-				if (!ent->inuse)
-					continue;
-				if (!ent->client)
-					continue;
-
-				//r1: fixed illegal effects being set
-				ent->s.effects &= ~EF_COLOR_SHELL;
-				ent->s.renderfx &= ~RF_SHELL_RED;
-
-				//RemoveAllCurses(ent);
-				//RemoveAllAuras(ent);
-				AuraRemove(ent, 0);
-				CurseRemove(ent, 0);
-				ent->Slower = level.time - 1;
-			}
-		}
-	}
-
-	if (domination->value && (level.time == pregame_time->value))
-		dom_init();
-
-	if (ctf->value && (level.time == pregame_time->value))
-		CTF_Init();
-// az begin
-	if (hw->value && (level.time == pregame_time->value))
-		hw_init();
-
-	if (tbi->value && (level.time == pregame_time->value))
-		InitTBI();
-
-// az end
+	// az end
 	if (domination->value && (level.time > pregame_time->value))
 		dom_awardpoints();
 
@@ -1040,7 +1050,4 @@ void G_RunFrame (void)
 
 	PTRCheckJoinedQue();
 	INV_SpawnPlayers();
-
-	if ((pvm->value || ffa->value) && !(level.framenum%10))
-		CreateRandomPlayerBoss(false);
 }

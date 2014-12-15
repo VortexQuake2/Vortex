@@ -34,29 +34,23 @@ void INV_InitSpawnQue (void)
 
 edict_t *INV_GiveRandomPSpawn()
 {
-	int rand;
+	int rand = -1;
 	int i;
 	edict_t * rval = NULL;
 
 	if (invasion_spawncount > 1)
-		rand = GetRandom(0,invasion_spawncount-1);
-	else if (invasion_spawncount == 1)
-		rand = 0;
-	else
 	{
-		return NULL;
-	}
-
-	for (i = 0; i < 32; i++) // validate if we can find at least one valid spawn
-		if (INV_PlayerSpawns[i] != NULL)
+		while (!INV_PlayerSpawns[rand]) // Pick a random, active one.
 		{
-			while (rval == NULL)
-			{
-				rval = INV_PlayerSpawns[i];
-				rand = GetRandom(0,31);
-			}
-			return rval;
+			rand = GetRandom(1,invasion_max_playerspawns)-1;
 		}
+	}
+	else if (invasion_spawncount == 1)
+	{
+		for (i = 0; i < invasion_spawncount; i++) // Find first valid.
+			if (INV_PlayerSpawns[i])
+				return INV_PlayerSpawns[i];
+	}
 
 	return NULL;
 }
@@ -142,7 +136,7 @@ edict_t *INV_GetSpawnPlayer (void)
 edict_t *INV_GetRandomSpawn (void)
 {
 	int i=0;
-	edict_t *e, *spawns[MAX_CLIENTS];
+	edict_t *e, *spawns[32];
 
 	for (e=g_edicts ; e < &g_edicts[globals.num_edicts]; e++)
 	{
@@ -241,7 +235,6 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 	int mhealth = 1;
 
 	monster = SpawnDrone(self, index, true);
-	//monster = SpawnDrone(self, 4, true);
 	
 	// calculate starting position
 	VectorCopy(e->s.origin, start);
@@ -249,8 +242,9 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 
 	tr = gi.trace(start, monster->mins, monster->maxs, start, NULL, MASK_SHOT);
 
-	// don't spawn here if a friendly monster occupies this space
 	if (index != 30) // not a boss?
+	{
+		// don't spawn here if a friendly monster occupies this space
 		if ((tr.fraction < 1) || (tr.ent && tr.ent->inuse && tr.ent->activator && tr.ent->activator->inuse 
 			&& (tr.ent->activator == self) && (tr.ent->deadflag != DEAD_DEAD)))
 		{
@@ -258,6 +252,7 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 			M_Remove(monster, false, false);
 			return NULL;
 		}
+	}
 		
 	e->wait = level.time + 1.0; // time until spawn is available again
 	
@@ -280,7 +275,7 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 
 	monster->max_health = monster->health = monster->max_health*mhealth;
 
-		// move the monster onto the spawn pad
+	// move the monster onto the spawn pad
 	if (index != 30)
 	{
 		VectorCopy(start, monster->s.origin);
@@ -371,7 +366,7 @@ void INV_SpawnMonsters (edict_t *self)
 {
 	int		players, max_monsters;
 	edict_t *e=NULL;
-
+	int SpawnTries = 0, MaxTriesThisFrame = 32;
 	PVM_TotalMonsters(self, true);
 
 	players = max_monsters = total_players();
@@ -383,7 +378,6 @@ void INV_SpawnMonsters (edict_t *self)
 		if (players < 1)
 		{
 			PVM_RemoveAllMonsters(self);
-			return; // don't spawn any monsters.
 		}
 		if (level.intermissiontime)
 		{
@@ -478,7 +472,7 @@ void INV_SpawnMonsters (edict_t *self)
 		invasion_data.printedmessage = 1;
 	}
 	
-	while ( ((e = INV_GetMonsterSpawn(e)) != NULL) && invasion_data.mspawned < max_monsters)
+	while ((e = INV_GetMonsterSpawn(e)) && invasion_data.mspawned < max_monsters && SpawnTries < MaxTriesThisFrame)
 	{
 		int randomval = GetRandom(1, 9);
 
@@ -490,7 +484,8 @@ void INV_SpawnMonsters (edict_t *self)
 			}
 		}
 
-		if (!INV_SpawnDrone(self, e, randomval))
+		SpawnTries++;
+		if (!INV_SpawnDrone(self, e, randomval)) // Wait for now
 			continue;
 		else
 			invasion_data.mspawned++;
@@ -586,7 +581,7 @@ void INV_RemoveFromSpawnlist(edict_t *self)
 			INV_PlayerSpawns[i] = NULL;
 			invasion_spawncount--;
 
-			if (invasion_spawncount == 0)
+			if (invasion_spawncount <= 0)
 			{
 				gi.bprintf(PRINT_HIGH, "Humans were unable to stop the invasion. Game over.\n");
 				EndDMLevel();
@@ -597,9 +592,6 @@ void INV_RemoveFromSpawnlist(edict_t *self)
 
 void info_player_invasion_death (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	//FIXME: when all of these die (number of player spawns = 0) the map should end
-	//FIXME: a message saying monsters won should print, and players don't get any bonus points
-
 	G_UseTargets(self, self);
 	self->think = BecomeExplosion1;
 	self->nextthink = level.time + FRAMETIME;
@@ -638,7 +630,7 @@ void SP_info_player_invasion (edict_t *self)
 		INVASION_OTHERSPAWNS_REMOVED = true;
 	}
 
-	//FIXME: this entity should be killable and game should end if all of them die
+	// this entity should be killable and game should end if all of them die
 	gi.setmodel (self, "models/objects/dmspot/tris.md2");
 	self->s.skinnum = 0;
 	self->mtype = INVASION_PLAYERSPAWN;

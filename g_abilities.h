@@ -40,7 +40,6 @@ typedef struct skills_s
 	unsigned int frags;
 	unsigned int fragged;
 	unsigned int credits;
-	unsigned int respawns;
 	unsigned int weapon_respawns;
 
 	int class_num;

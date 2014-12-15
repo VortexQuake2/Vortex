@@ -554,8 +554,6 @@ int PvMHighestLevelPlayer(void)
 			continue;
 		if (player->myskills.boss)
 			continue;
-		if (!(player->myskills.respawns & HOSTILE_MONSTERS))
-			continue;
 
 		if (player->myskills.level > highest)
 			highest = player->myskills.level;
@@ -580,8 +578,6 @@ int PvMLowestLevelPlayer(void)
 		if (G_IsSpectator(player))
 			continue;
 		if (player->myskills.boss)
-			continue;
-		if (!(player->myskills.respawns & HOSTILE_MONSTERS))
 			continue;
 
 		if (player->myskills.level < lowest)
@@ -667,13 +663,6 @@ int PvMAveragePlayerLevel (void)
 			continue;
 		players++;
 		levels += player->myskills.level;
-
-		if (pvm->value || ffa->value || invasion->value)
-		{
-			if (!(player->myskills.respawns & HOSTILE_MONSTERS))
-				continue;
-		}
-	
 	}
 
 	if (players < 1)
@@ -780,48 +769,18 @@ void FindMonsterSpot (edict_t *self)
 {
 	edict_t *scan=NULL;
 	int		players=total_players();
-	int		pvm_players=1, ffa_players=1;//4.5
 	int		total_monsters, max_monsters=0;
 	int		mtype=0, num=0, i=0;
 
 	total_monsters = PVM_TotalMonsters(self, false);
 
-	// get # of players with PvM only preference
-	pvm_players = V_GetNumPlayerPrefs(true, false);
-	
-	// OR ffa players. vrx chile 2.5
-	ffa_players = V_GetNumPlayerPrefs(true, true);
-
-	//4.5 if server has 50% or more PvM players, then use maximum monster value
-	if (level.r_monsters && pvm_players >= 0.5 * players)
-		max_monsters = level.r_monsters;
+	max_monsters = level.r_monsters;
 
 	// dm_monsters cvar sets minimum number of monsters that will spawn, regardless of map
 	if (max_monsters < dm_monsters->value)
 		max_monsters = dm_monsters->value;
-
-	// only spawn monsters if there are PvM players
-	if (pvm_players < 1 && ffa_players < 1) // Or ffa players.
-	{
-		if (total_monsters)
-		{
-			edict_t *next;
-			scan = DroneList_Iterate();
-			while(scan) 
-			{
-				next = DroneList_Next(scan);
-				if (G_EntExists(scan) && scan->activator && (scan->activator == self)) 
-				{
-					M_Remove(scan, false, false);
-					num++;
-				} 
-				scan = next;
-			}
-			total_monsters = PVM_TotalMonsters(self, true);
-			WriteServerMsg(va("Removed %d monsters due to insufficient players.", num), "Info", true, false);
-		}
-	}
-	else if (level.time > self->delay)
+	
+	if (level.time > self->delay)
 	{
 		total_monsters = PVM_TotalMonsters(self, true);
 		// adjust spawning delay based on efficiency of player monster kills
@@ -906,7 +865,7 @@ edict_t *InitMonsterEntity (qboolean manual_spawn)
 {
 	edict_t *monster;
 
-	if (ctf->value || domination->value || ptr->value || tbi->value)
+	if (ctf->value || domination->value || ptr->value || tbi->value || trading->value || V_IsPVP())
 		return NULL;//4.4
 
 	//if (!pvm->value && !ffa->value)

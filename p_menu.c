@@ -63,17 +63,6 @@ void StartGame (edict_t *ent)
 	ent->client->ps.stats[STAT_SPECTATOR] = 0;
 	PutClientInServer (ent);
 
-	ent->client->pers.combat_changed = ent->myskills.respawns;//4.5 set changed combat preferences to default
-
-	if (invasion->value || pvm->value)  // vrxchile: default combat modes
-	{ 
-		ent->myskills.respawns = ent->client->pers.combat_changed = HOSTILE_MONSTERS;
-	}else if (!invasion->value && !pvm->value && !ffa->value) // pvp mode
-	{
-		ent->myskills.respawns = ent->client->pers.combat_changed = HOSTILE_PLAYERS;
-	}else // anything else?
-		ent->myskills.respawns = ent->client->pers.combat_changed = HOSTILE_PLAYERS |  HOSTILE_MONSTERS;
-
 	average_player_level = AveragePlayerLevel();
 	ent->health = ent->myskills.current_health;
 

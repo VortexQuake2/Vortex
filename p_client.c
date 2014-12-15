@@ -337,9 +337,6 @@ qboolean Monster_Obits (edict_t *victim, edict_t *attacker)
     // Print the obituary message..
 	if (victim->client && attacker && attacker->activator && attacker->activator->client) {
 		gi.bprintf(PRINT_MEDIUM,"%s %s %s%s\n", victim->client->pers.netname, message1, attacker->activator->client->pers.netname, message2);
-//		attacker->activator->client->resp.score++;
-//		attacker->activator->myskills.max_experience++;
-//		attacker->activator->myskills.streak++;
 	}
 
 	//3.0 Monster killed the enemy
@@ -1149,10 +1146,7 @@ void InitClientPersistant (gclient_t *client)
 
 	if (debuginfo->value > 1)
 		gi.dprintf("InitClientPersistant()\n");
-
-	// 4.5 - latest client combat preferences, don't clear this!
-	saved = client->pers.combat_changed;
-
+	
 	//K03 End
 
 	memset (&client->pers, 0, sizeof(client->pers));
@@ -1162,7 +1156,6 @@ void InitClientPersistant (gclient_t *client)
 	client->pers.selected_item = ITEM_INDEX(item);
 	client->pers.inventory[ITEM_INDEX(item)] = 1;
 	client->pers.inventory[ITEM_INDEX(FindItem("Sword"))] = 1;
-//	client->pers.inventory[ITEM_INDEX(FindItem("Lasers"))] = LASER_SPAWN; 
 	client->pers.inventory[ITEM_INDEX(FindItem("Power Screen"))] = 1;
 	client->pers.inventory[flag_index] = 0;
 	client->pers.inventory[red_flag_index] = 0;
@@ -1170,7 +1163,6 @@ void InitClientPersistant (gclient_t *client)
 
 	client->pers.spectator = spectator;
 	client->pers.weapon = item;
-	client->pers.combat_changed = saved;//4.5
 	//K03 End
 
 	client->pers.health			= 100;
@@ -1969,7 +1961,6 @@ void PutClientInServer (edict_t *ent)
 	VectorCopy (mins, ent->mins);
 	VectorCopy (maxs, ent->maxs);
 	VectorClear (ent->velocity);
-	ent->exploded = false;
 
 	V_ResetPlayerState(ent);
 
@@ -2393,10 +2384,6 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 
 	// they can connect
 	ent->client = game.clients + (ent - g_edicts - 1);
-/*	if (ent->client->disconnect_time + 1 > level.time) {
-		Info_SetValueForKey(userinfo, "rejmsg", "Too fast connection, please try again.");
-		return false;
-	}*/
 
 	// if there is already a body waiting for us (a loadgame), just
 	// take it, otherwise spawn one from scratch
@@ -2426,11 +2413,8 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 	}
 //GHz END
 
-//	ent->client->disconnect_time = -1;
 	ent->svflags = 0;// make sure we start with known default
-	//ent->num_lasers = 0;
 	ent->client->pers.connected = true;
-//	initmenu(ent);
 	return true;
 }
 
@@ -2486,8 +2470,6 @@ void ClientDisconnect (edict_t *ent)
 		}else
 			OrganizeTeams(false);
 	}
-//	else
-//		gi.dprintf("%s %s teamnum %d\n", ent->client->pers.netname, G_IsSpectator(ent)?"y":"n", ent->teamnum);
 
 	average_player_level = AveragePlayerLevel();//GHz
 	pvm_average_level = PvMAveragePlayerLevel();
@@ -2510,7 +2492,6 @@ void ClientDisconnect (edict_t *ent)
 	}
 
 	//K03 Begin -- Save users info
-	ent->myskills.respawns = ent->client->pers.combat_changed;//4.5 save preferences when you disconnect
 
 	if (SPREE_WAR == true && (ent == SPREE_DUDE))
 	{
@@ -2518,7 +2499,6 @@ void ClientDisconnect (edict_t *ent)
 		SPREE_DUDE = NULL;
 	}
 
-	//ent->myskills.inuse = 0;
 #ifndef NO_GDS
 	if (savemethod->value != 2)
 #endif

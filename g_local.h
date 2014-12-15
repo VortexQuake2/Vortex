@@ -1422,8 +1422,6 @@ typedef struct
     float		ctf_assist_frag;	// used to give the player a "kill the flag carrier" assist
 	float		ctf_assist_return;	// used to give the player a "return the flag" assist
 	int			scanner_active;
-	//4.5 combat preferences
-	int			combat_changed;		// changed combat preferences
 	//K03 End
 } client_persistant_t;
 

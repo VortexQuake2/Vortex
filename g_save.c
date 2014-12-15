@@ -63,7 +63,7 @@ field_t fields[] = {
 	{"minpitch", STOFS(minpitch), F_FLOAT, FFL_SPAWNTEMP},
 	{"maxpitch", STOFS(maxpitch), F_FLOAT, FFL_SPAWNTEMP},
 	{"nextmap", STOFS(nextmap), F_LSTRING, FFL_SPAWNTEMP},
-	//{"weight", STOFS(weight), F_INT, FFL_SPAWNTEMP}//JABot
+	{ NULL, 0, F_IGNORE, FFL_SPAWNTEMP }
 };
 
 // -------- just for savegames ----------

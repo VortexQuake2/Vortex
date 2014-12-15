@@ -534,7 +534,7 @@ void depot_effects (edict_t *self)
 	self->s.effects |= EF_COLOR_SHELL;
 	if (level.framenum > self->count)
 		self->s.renderfx |= RF_SHELL_RED|RF_SHELL_BLUE|RF_SHELL_YELLOW;
-	else if (self->creator->teamnum == RED_TEAM || (ffa->value && V_MatchPlayerPrefs(self->creator, -1, 1)))
+	else if (self->creator->teamnum == RED_TEAM || ffa->value)
 		self->s.renderfx |= RF_SHELL_RED;
 	else
 		self->s.renderfx |= RF_SHELL_BLUE;

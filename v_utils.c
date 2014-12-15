@@ -1847,6 +1847,8 @@ void V_ResetPlayerState (edict_t *ent)
 		hw_dropflag(ent, FindItem("Halo"));
 	}
 
+	ent->exploded = false;
+
 	// drop all techs
 	tech_dropall(ent);
 
@@ -1893,14 +1895,6 @@ qboolean V_HasSummons (edict_t *ent)
 	return (ent->num_sentries || ent->num_monsters || ent->skull || ent->num_spikers 
 		|| ent->num_autocannon || ent->num_gasser || ent->num_caltrops || ent->num_proxy 
 		|| ent->num_obstacle || ent->num_armor || ent->num_spikeball || ent->num_lasers);
-}
-
-//4.5 make sure our combat preferences are valid
-void V_ValidateCombatPreferences (edict_t *ent)
-{
-	// if we aren't hostile against players or monsters, make them hostile against everything
-	if (!(ent->myskills.respawns & HOSTILE_PLAYERS) && !(ent->myskills.respawns & HOSTILE_MONSTERS))
-		ent->myskills.respawns |= (HOSTILE_PLAYERS|HOSTILE_MONSTERS);
 }
 
 void EmpEffects (edict_t *ent);
@@ -2008,34 +2002,6 @@ void V_ShellNonAbilityEffects (edict_t *ent)
 					if (!V_IsPVP())
 						ent->s.renderfx |= RF_SHELL_BLUE;
 				}
-			}
-		}
-		// set hostile/non-hostile colors in PvP/FFA modes
-		else
-		{
-			// glow red if we are hostile against players (i.e. PvP/FFA combat preferences)
-			if (cl_ent->myskills.respawns & HOSTILE_PLAYERS)
-			{
-				// only applies to morphed players/monsters
-				if (ent->mtype)
-				{
-					ent->s.effects |= EF_COLOR_SHELL;
-
-					// if we are a player spreeing, then alternate shells
-					if (ent->client && ent->myskills.streak >= 6 && (level.framenum & 4))
-					{
-						ent->s.effects |= EF_COLOR_SHELL;
-						ent->s.renderfx |= (RF_SHELL_GREEN);
-					}
-				}
-				else
-					finalEffects = false; // keep processing effects
-			}
-			// glow blue if we are not hostile (i.e. PvM combat preferences)
-			else
-			{
-				ent->s.effects |= EF_COLOR_SHELL;
-				ent->s.renderfx |= RF_SHELL_BLUE;
 			}
 		}
 
@@ -2295,40 +2261,6 @@ void V_SetEffects (edict_t *ent)
 
 	// apply non-shell effects
 	V_NonShellEffects(ent);
-}
-
-// returns true if the settings match the specified result, ignores a setting if -1 is specified
-qboolean V_MatchPlayerPrefs (edict_t *player, int monsters, int players)
-{
-	qboolean monster_result = false;
-	qboolean player_result = false;
-
-	if (player->myskills.respawns & HOSTILE_MONSTERS)
-		monster_result = true;
-	if (player->myskills.respawns & HOSTILE_PLAYERS)
-		player_result = true;
-
-	return ((monsters == -1 || monster_result == monsters) && (player_result == -1 || player_result == players));
-}
-
-//4.5 returns number of players with the specified combat preferences value
-int V_GetNumPlayerPrefs (qboolean monsters, qboolean players)
-{
-	int i, num=0;
-	edict_t *player;
-
-	for (i = 1; i <= game.maxclients; i++)
-	{
-		player = &g_edicts[i];
-
-		if (!player || !player->inuse || player->client->pers.spectator)
-			continue;
-
-		if (V_MatchPlayerPrefs(player, monsters, players))
-			num++;
-	}
-
-	return num;
 }
 
 /*
