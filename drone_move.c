@@ -432,11 +432,17 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
 	if (trace.allsolid)
 //GHz START
 	{
+		// az: Regular monsters: don't jump on invasion mode...
+		if (!G_GetClient(ent) && invasion->value) 
+			return false;
+
 		// try to jump over it
 		if (G_EntIsAlive(trace.ent) || !CanJumpUp(ent, neworg, end))
 			return false;
 		else
+		{
 			jump = 1;
+		}
 	}
 //GHz END
 

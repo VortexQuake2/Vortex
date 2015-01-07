@@ -1958,6 +1958,7 @@ void PutClientInServer (edict_t *ent)
 	ent->svflags &= ~SVF_MONSTER;
 	ent->lastkill = 0;//GHz
 	ent->nfer = 0;
+	ent->exploded = false;
 	VectorCopy (mins, ent->mins);
 	VectorCopy (maxs, ent->maxs);
 	VectorClear (ent->velocity);
@@ -3829,7 +3830,7 @@ void ClientBeginServerFrame (edict_t *ent)
 			Teleport_them(ent);
 	}
     
-	if (level.time > pregame_time->value)
+	if (level.time > pregame_time->value && ActivePlayers() > maxclients->value * 0.8)
 	{
 		frames = MAX_IDLE_FRAMES;
 
@@ -3849,7 +3850,9 @@ void ClientBeginServerFrame (edict_t *ent)
 		}
 	}
 	// initialize chat-protect
-	/*else*/ if (!ptr->value && !domination->value && !ctf->value && 
+	/*else*/ 
+#ifdef ALLOW_CHAT_PROTECT
+	if (!ptr->value && !domination->value && !ctf->value && 
 		!(hw->value && HasFlag(ent))  // the game isn't holywars and the player doesn't have the flag
 		&& !ent->myskills.administrator // Not an admin
 		&& !que_typeexists(ent->curses, 0)  // Not cursed
@@ -3880,6 +3883,7 @@ void ClientBeginServerFrame (edict_t *ent)
 			}
 		}
 	}
+#endif
 	//GHz END
 
 	client = ent->client;

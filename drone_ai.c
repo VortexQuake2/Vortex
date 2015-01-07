@@ -1245,7 +1245,7 @@ edict_t *drone_findpspawn(edict_t *self)
 edict_t *drone_findnavi (edict_t *self)
 {
 	edict_t *e=NULL;
-	static edict_t *navis[5];
+	static edict_t *navis[12];
 	static qboolean initialized = false;
 	static int count = 0;
 	int iters = 0;
@@ -1255,7 +1255,7 @@ edict_t *drone_findnavi (edict_t *self)
 		return NULL;
 
 	if (!initialized)
-		for (i = 0; i<5; i++ )
+		for (i = 0; i<12; i++ )
 			navis[i] = NULL;
 
 	if(self->prev_navi)
@@ -1289,7 +1289,7 @@ edict_t *drone_findnavi (edict_t *self)
 	}
 
 	while ((e = findclosestradius1 (e, self->s.origin, 
-		self->monsterinfo.sight_range)) != NULL)
+		2048)) != NULL)
 	{
 		if (!drone_validnavi(self, e, false))
 		{
@@ -1298,7 +1298,7 @@ edict_t *drone_findnavi (edict_t *self)
 				break;
 			continue;
 		}
-		if (count == 5)
+		if (count == 12)
 		{
 			break;
 		}

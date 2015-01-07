@@ -44,6 +44,8 @@ edict_t *INV_GiveRandomPSpawn()
 		{
 			rand = GetRandom(1,invasion_max_playerspawns)-1;
 		}
+
+		return INV_PlayerSpawns[rand];
 	}
 	else if (invasion_spawncount == 1)
 	{

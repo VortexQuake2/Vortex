@@ -1847,8 +1847,6 @@ void V_ResetPlayerState (edict_t *ent)
 		hw_dropflag(ent, FindItem("Halo"));
 	}
 
-	ent->exploded = false;
-
 	// drop all techs
 	tech_dropall(ent);
 
