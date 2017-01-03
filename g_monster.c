@@ -9,9 +9,9 @@ float monster_increaseDamageByTalent(edict_t *owner, float damage)
 		int talentLevel = getTalentLevel(owner, TALENT_CORPULENCE);
 		// corpulence increases health but reduces damage
 		if(talentLevel > 0)	damage *= 1 + 0.10 * talentLevel;
-		//Talent: Life Tap
+		//Talent: Life Tap 33%        Vortex 4.5a
 		talentLevel = getTalentLevel(owner, TALENT_LIFE_TAP);
-		if (talentLevel > 0) damage *= 1 + 0.20 * talentLevel;		
+		if (talentLevel > 0) damage *= 1 + 0.2 * talentLevel;		
 	}
 	return damage;
 }

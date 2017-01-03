@@ -48,7 +48,7 @@ qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 	case WEAPON_MACHINEGUN:
 		if(ModIndex < 3)
 		{
-			weapon->mods[ModIndex].soft_max = 15;
+			weapon->mods[ModIndex].soft_max = 20;
 			weapon->mods[ModIndex].hard_max = maxLevel;
 		}
 		else return false;
@@ -56,7 +56,7 @@ qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 	case WEAPON_CHAINGUN:
 		if(ModIndex == 0 || ModIndex == 2)
 		{
-			weapon->mods[ModIndex].soft_max = 15;
+			weapon->mods[ModIndex].soft_max = 20;
 			weapon->mods[ModIndex].hard_max = maxLevel;
 		}
 		else return false;
@@ -88,7 +88,7 @@ qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 	case WEAPON_RAILGUN:
 		if(ModIndex == 0 || ModIndex == 2)
 		{
-			weapon->mods[ModIndex].soft_max = 15;
+			weapon->mods[ModIndex].soft_max = 20;
 			weapon->mods[ModIndex].hard_max = maxLevel;
 		}
 		else return false;
@@ -112,7 +112,7 @@ qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 	case WEAPON_20MM:
 		if(ModIndex < 3)
 		{
-			weapon->mods[ModIndex].soft_max = 15;
+			weapon->mods[ModIndex].soft_max = 20;
 			weapon->mods[ModIndex].hard_max = maxLevel;
 		}
 		else return false;

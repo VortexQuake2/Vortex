@@ -20,7 +20,7 @@ void DeleteMenu_handler(edict_t *ent, int option)
 
 		//Re-apply equipment
 		V_ResetAllStats(ent);
-		for (i = 0; i < 3; ++i)
+		for (i = 0; i < 4; ++i)
 			V_ApplyRune(ent, &ent->myskills.items[i]);
 
 		safe_cprintf(ent, PRINT_HIGH, "Item deleted.\n");
@@ -266,7 +266,7 @@ void ShowItemMenu(edict_t *ent, int itemindex)
 	//Check to see if this item can be equipped or not
 	if (!((item->itemtype & ITEM_GRAVBOOTS) || (item->itemtype & ITEM_FIRE_RESIST) || (item->itemtype & ITEM_AUTO_TBALL)))
 	{
-		if (itemindex < 3)	addlinetomenu(ent, "Stash this item", 4445 + itemindex);
+		if (itemindex < 4)	addlinetomenu(ent, "Stash this item", 4445 + itemindex); //cambiado
 		else				addlinetomenu(ent, "Equip this item", 4445 + itemindex);
 		++ent->client->menustorage.currentline;
 	}
@@ -342,7 +342,8 @@ void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling)
 		case 0:	addlinetomenu(ent, " Hand", MENU_GREEN_LEFT); break;
 		case 1:	addlinetomenu(ent, " Neck", MENU_GREEN_LEFT); break;
 		case 2:	addlinetomenu(ent, " Belt", MENU_GREEN_LEFT); break;
-		case 3:	addlinetomenu(ent, " Stash", MENU_GREEN_LEFT);break;
+		case 3: addlinetomenu(ent, " back", MENU_GREEN_LEFT);break;
+		case 4:	addlinetomenu(ent, " Stash", MENU_GREEN_LEFT);break;
 		}
 		addlinetomenu(ent, va("%s", V_MenuItemString(item, ' ')), i+1);
 	}
@@ -361,7 +362,8 @@ void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling)
 		{
 		case 1:		ent->client->menustorage.currentline = 4; break;
 		case 2:		ent->client->menustorage.currentline = 6; break;
-		case 3:		ent->client->menustorage.currentline = 8; break;
+		case 3:     ent->client->menustorage.currentline = 2; break;
+		case 4:		ent->client->menustorage.currentline = 8; break;
 		default:	ent->client->menustorage.currentline = 6 + lastline; break;	//start at line 10
 		}
 	}

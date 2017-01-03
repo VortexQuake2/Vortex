@@ -598,8 +598,9 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 				message = "got bombed by";
 				break;
 			case MOD_TELEFRAG:
-				message = "tried to invade";
+				message = "se hizo pico";
 				message2 = "'s personal space";
+			
 				break;
 //ZOID
 			case MOD_GRAPPLE:
@@ -2795,6 +2796,55 @@ void ClientThinkstuff(edict_t *ent)
 	CursedPlayer(ent);
 	AllyID(ent);
 
+	armor = &ent->client->pers.inventory[body_armor_index];
+	max_armor = MAX_ARMOR(ent);
+	
+	//Talent: NanoSuit
+	if (ent->client
+		&&getTalentSlot(ent, TALENT_ARMOR_REG) != -1
+		&& G_EntIsAlive(ent) && (*armor < max_armor))
+	{
+
+		talent_t *talent = &ent->myskills.talents.talent[getTalentSlot(ent, TALENT_ARMOR_REG)];
+		if (talent->upgradeLevel > 0)
+		{
+			health_factor = 1;
+			//gi.dprintf("%d\n", health_factor);
+			if (health_factor < 1)
+				health_factor = 1;
+		*armor += health_factor;
+		if (*armor > max_armor)
+			*armor = max_armor;
+
+		nextRegen = 0.7;
+		if (nextRegen < 0.7)
+			nextRegen = 0.7;
+
+		ent->client->armorregen_time = level.time + nextRegen;
+		}
+	}
+	/// asdasdasdasdasdas
+
+
+	//Talent: Life Alien
+	if (ent->client
+		&&getTalentSlot(ent, TALENT_LIFE_REG) != -1
+		&& G_EntIsAlive(ent) && (ent->health < ent->max_health))
+	{
+
+		talent_t *talent = &ent->myskills.talents.talent[getTalentSlot(ent, TALENT_LIFE_REG)];
+		if (talent->upgradeLevel > 0)
+		{
+			health_factor = 1;
+			ent->health += health_factor;
+			if (ent->health > ent->max_health)
+				ent->health = ent->max_health;
+			ent->client->healthregen_time = 950;
+		}
+	}
+
+
+
 	//Talent: Basic Ammo Regeneration
 	if(ent->client && getTalentSlot(ent, TALENT_BASIC_AMMO_REGEN) != -1)
 	{
@@ -2820,6 +2870,10 @@ void ClientThinkstuff(edict_t *ent)
 		}
 	}
 
+
+
+
+
 	if (ent->myskills.abilities[AMMO_REGEN].current_level > 0)
 		Ammo_Regen(ent);
 	
@@ -2830,7 +2884,7 @@ void ClientThinkstuff(edict_t *ent)
 	//3.0 Mind absorb every x seconds
 	if (ent->myskills.abilities[MIND_ABSORB].current_level > 0)
 	{
-		int cooldown = 50;
+		int cooldown = 25;
 
 		//Talent: Mind Control
 		if(getTalentSlot(ent, TALENT_IMP_MINDABSORB) != -1)
@@ -3441,7 +3495,9 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 
 		//K03 Begin
 		//4.07 can't superspeed while being hurt
+#pragma region Superspeed velocity
 
+#pragma endregion
 		if (ent->superspeed)
 		{
 			
@@ -3454,13 +3510,12 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 				ent->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
 				pm.s = client->ps.pmove;
 
-				for (i=0 ; i<3 ; i++)
-				{
-					pm.s.origin[i] = ent->s.origin[i]*8;
+ 				{
+					pm.s.origin[i] = ent->s.origin[i]*6;
 					//pm.s.velocity[i] = ent->velocity[i]*8;
 				}
-				pm.s.velocity[0] = ent->velocity[0]*8;
-				pm.s.velocity[1] = ent->velocity[1]*8;
+				pm.s.velocity[0] = ent->velocity[0]*6;
+				pm.s.velocity[1] = ent->velocity[1]*6;
 
 				if (memcmp(&client->old_pmove, &pm.s, sizeof(pm.s)))
 				{

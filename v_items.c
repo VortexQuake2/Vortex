@@ -31,7 +31,7 @@ int eqSetItems(edict_t *ent, item_t *rune)
 	if (rune->setCode == 0)
 		return 0;
 
-	for (i=0; i < 3; ++i)	//loop through only the equip slots
+	for (i=0; i < 4; ++i)	//loop through only the equip slots
 	{
 		if ((ent->myskills.items[i].itemtype != TYPE_NONE) && (ent->myskills.items[i].setCode == rune->setCode))
 			count++;
@@ -964,8 +964,8 @@ qboolean V_CanPickUpItem (edict_t *ent)
 		|| (ent->client->respawn_time > level.time))
 		return false;
 	// do we have any space in our inventory?
-	// Skip hand, neck, and belt slots
-	for (i=3; i < MAX_VRXITEMS; ++i)
+	// Skip hand, neck, and belt slots           intentando equipar en HEAD
+	for (i=4; i < MAX_VRXITEMS; ++i)
 	{
 		if (!ent->myskills.items[i].itemtype)
 			return true;
@@ -1030,6 +1030,7 @@ void V_ItemSwap(item_t *item1, item_t *item2)
 	memcpy(&temp, item1, sizeof(item_t));
 	memcpy(item1, item2, sizeof(item_t));
 	memcpy(item2, &temp, sizeof(item_t));
+	//memcpy(item3, &temp, sizeof(item_t)); // runa head 
 }
 
 //************************************************************************************************
@@ -1069,7 +1070,7 @@ void V_EquipItem(edict_t *ent, int index)
 	total_pts = ceil(0.5*wpts + 0.75*apts);//was 0.66,2.0
 	//gi.dprintf("wpts = %d, apts = %d, total = %d\n", wpts, apts, total_pts);
 
-	if(index < 3)
+	if(index < 4) // cambiar de 3 a 4 
 	{
 		//remove an item
 		item_t *slot = V_FindFreeItemSlot(ent);
@@ -1112,13 +1113,13 @@ void V_EquipItem(edict_t *ent, int index)
 			else gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/amulet.wav"), 1, ATTN_NORM, 0);
 			break;
 		case ITEM_COMBO:
-			V_ItemSwap(&ent->myskills.items[index], &ent->myskills.items[2]); //put on neck slot
+			V_ItemSwap(&ent->myskills.items[index], &ent->myskills.items[2]); //put on belt slot
 			if (eqSetItems(ent, &ent->myskills.items[0]) == 3)
 				gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/blessedaim.wav"), 1, ATTN_NORM, 0);
 			else gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/belt.wav"), 1, ATTN_NORM, 0);
 			break;
 		case ITEM_CLASSRUNE:
-			V_ItemSwap(&ent->myskills.items[index], &ent->myskills.items[1]); //put on neck slot
+			V_ItemSwap(&ent->myskills.items[index], &ent->myskills.items[3]); //put on head slot
 			if (eqSetItems(ent, &ent->myskills.items[0]) == 3)
 				gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/blessedaim.wav"), 1, ATTN_NORM, 0);
 			else gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/amulet.wav"), 1, ATTN_NORM, 0);
@@ -1129,7 +1130,7 @@ void V_EquipItem(edict_t *ent, int index)
 
 	//Reset all rune info
 	V_ResetAllStats(ent);
-	for (i = 0; i < 3; ++i)
+	for (i = 0; i < 4; ++i)
 	{
 		if (ent->myskills.items[i].itemtype != TYPE_NONE)
 			V_ApplyRune(ent, &ent->myskills.items[i]);
@@ -1159,7 +1160,7 @@ void cmd_Drink(edict_t *ent, int itemtype, int index)
 	else
 	{
 		//Find item in inventory
-		for (i = 3; i < MAX_VRXITEMS; ++i)
+		for (i = 4; i < MAX_VRXITEMS; ++i)
 		{
 			if (ent->myskills.items[i].itemtype == itemtype)
 			{

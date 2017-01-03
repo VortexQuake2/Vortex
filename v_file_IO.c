@@ -266,7 +266,7 @@ qboolean ReadPlayer_v1(FILE * fRead, edict_t *player)
 
 	//Apply runes
 	V_ResetAllStats(player);
-	for (i = 0; i < 3; ++i)
+	for (i = 0; i < 4; ++i)
 		V_ApplyRune(player, &player->myskills.items[i]);
 
 	//Apply health

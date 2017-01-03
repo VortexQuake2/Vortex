@@ -29,36 +29,41 @@ void setTalents(edict_t *ent)
 	{
 		case CLASS_SOLDIER:
 			addTalent(ent, TALENT_IMP_STRENGTH, 5);
-			addTalent(ent, TALENT_IMP_RESIST, 5);
-			addTalent(ent, TALENT_BLOOD_OF_ARES, 5);
-			addTalent(ent, TALENT_BASIC_HA, 5);
+			//addTalent(ent, TALENT_IMP_RESIST, 5);
+			addTalent(ent, TALENT_BLOOD_OF_ARES, 5); //cambio max a 10 daño aumentado en pvp, invasion y pvm
+			addTalent(ent, TALENT_BASIC_HA, 1);
+			addTalent(ent, TALENT_MONSTER_MASTERY, 5);
 			addTalent(ent, TALENT_BOMBARDIER, 5);
-			addTalent(ent, TALENT_MARTYR, 5);
+			//addTalent(ent, TALENT_MARTYR, 5);
 			addTalent(ent, TALENT_BLAST_RESIST, 5);
 			addTalent(ent, TALENT_MAGMINESELF, 1);
 			addTalent(ent, TALENT_INSTANTPROXYS, 2);
 			return;
-		case CLASS_POLTERGEIST:
-			addTalent(ent, TALENT_MORPHING, 5);
-			addTalent(ent, TALENT_MORE_AMMO, 5);
-			addTalent(ent, TALENT_SUPERIORITY, 5);
-			addTalent(ent, TALENT_RETALIATION, 5);
-			addTalent(ent, TALENT_PACK_ANIMAL, 5);
+		case CLASS_POLTERGEIST:  //This is Alien
+		
+			addTalent(ent, TALENT_MONSTER_MASTERY, 5);
+			addTalent(ent, TALENT_SWARMING, 5);
+			addTalent(ent, TALENT_LIFE_REG, 1); //change to life
 			addTalent(ent, TALENT_PHANTOM_OBSTACLE, 5);
 			addTalent(ent, TALENT_SUPER_HEALER, 5);
-			addTalent(ent, TALENT_PHANTOM_COCOON, 5);
-			addTalent(ent, TALENT_SWARMING, 5);
-			addTalent(ent, TALENT_EXPLODING_BODIES, 5);
+			//addTalent(ent, TALENT_SUPERIORITY, 5);
+			//addTalent(ent, TALENT_RETALIATION, 5);
+			//addTalent(ent, TALENT_PACK_ANIMAL, 5);
+			//addTalent(ent, TALENT_MORPHING, 5);
+			//addTalent(ent, TALENT_MORE_AMMO, 5);
+			//addTalent(ent, TALENT_PHANTOM_COCOON, 5);
+			//addTalent(ent, TALENT_EXPLODING_BODIES, 5);
 			return;
 		case CLASS_DEMON:
 			addTalent(ent, TALENT_IMP_CLOAK, 4);
 			addTalent(ent, TALENT_ARMOR_VAMP, 3);
 			addTalent(ent, TALENT_SECOND_CHANCE, 4);
+			addTalent(ent, TALENT_MONSTER_MASTERY, 5);
 			addTalent(ent, TALENT_IMP_MINDABSORB, 4);
 			addTalent(ent, TALENT_CANNIBALISM, 5);
 			addTalent(ent, TALENT_FATAL_WOUND, 5);
 			addTalent(ent, TALENT_CHEAPER_CURSES, 5);
-			addTalent(ent, TALENT_CORPULENCE, 5);
+			//addTalent(ent, TALENT_CORPULENCE, 5);
 			addTalent(ent, TALENT_LIFE_TAP, 5);
 			addTalent(ent, TALENT_DIM_VISION, 5);
 			addTalent(ent, TALENT_EVIL_CURSE, 5);
@@ -69,6 +74,7 @@ void setTalents(edict_t *ent)
 			addTalent(ent, TALENT_FROST_NOVA, 5);
 			addTalent(ent, TALENT_IMP_MAGICBOLT, 5);
 			addTalent(ent, TALENT_MANASHIELD, 5);
+			addTalent(ent, TALENT_MONSTER_MASTERY, 5);
 			addTalent(ent, TALENT_MEDITATION, 5);
 			addTalent(ent, TALENT_OVERLOAD, 5);
 			addTalent(ent, TALENT_ICE, 4);
@@ -80,22 +86,29 @@ void setTalents(edict_t *ent)
 			addTalent(ent, TALENT_VOLCANIC, 5);
 			return;
 		case CLASS_ENGINEER:
+		
 			addTalent(ent, TALENT_LASER_PLATFORM, 5);
             addTalent(ent, TALENT_ALARM, 5);
-			addTalent(ent, TALENT_RAPID_ASSEMBLY, 5);
+			addTalent(ent, TALENT_ARMOR_REG, 1);
+			//addTalent(ent, TALENT_DEFENSIVE_CRATE, 1);
+			//addtalent(ent, TALENT_DEFENSIVE_CRATE, 1);
+			//addTalent(ent, TALENT_RAPID_ASSEMBLY, 5);
 			addTalent(ent, TALENT_PRECISION_TUNING, 5);
+			addTalent(ent, TALENT_MONSTER_MASTERY, 5);
 			addTalent(ent, TALENT_STORAGE_UPGRADE, 5);
+			//addTalent(ent, TALENT_EXTRA_MINISENTRY, 1);
 			return;
 		case CLASS_PALADIN:
+			addTalent(ent, TALENT_MONSTER_MASTERY, 5);
 			addTalent(ent, TALENT_BALANCESPIRIT, 5);
 			addTalent(ent, TALENT_HOLY_GROUND, 5);
 			addTalent(ent, TALENT_UNHOLY_GROUND, 5);
 			addTalent(ent, TALENT_BOOMERANG, 5);
 			addTalent(ent, TALENT_PURGE, 5);
 			addTalent(ent, TALENT_REPEL, 5);
-			addTalent(ent, TALENT_MAG_BOOTS, 5);
-			addTalent(ent, TALENT_LEAP_ATTACK, 5);
-			addTalent(ent, TALENT_MOBILITY, 5);
+			//addTalent(ent, TALENT_MAG_BOOTS, 5);
+			//addTalent(ent, TALENT_LEAP_ATTACK, 5);
+			//addTalent(ent, TALENT_MOBILITY, 5);
 			addTalent(ent, TALENT_DURABILITY, 5);
 			return;
 		case CLASS_WEAPONMASTER:
@@ -252,16 +265,24 @@ int writeTalentDescription(edict_t *ent, int talentID)
 	//Soldier talents
 	case TALENT_IMP_STRENGTH:
 		addlinetomenu(ent, "Increases damage,", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "but reduces resist.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "And resist.", MENU_WHITE_CENTERED);
+		
 		return 2;
-	case TALENT_IMP_RESIST:
-		addlinetomenu(ent, "Increases resist,", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "but reduces damage.", MENU_WHITE_CENTERED);
-		return 2;
+	//case TALENT_IMP_RESIST:
+		//addlinetomenu(ent, "Increases resist,", MENU_WHITE_CENTERED);
+		//addlinetomenu(ent, "but reduces damage.", MENU_WHITE_CENTERED);
+		//return 2;
 	case TALENT_BLOOD_OF_ARES:
 		addlinetomenu(ent, "Increases the damage you", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "give/take as you spree.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Aditional effect in PvM or Invasion", MENU_WHITE_CENTERED);
 		return 2;
+
+	case TALENT_MONSTER_MASTERY:
+		addlinetomenu(ent, "Damage increased in", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "PvM and Invasion.", MENU_WHITE_CENTERED);
+		return 2;
+
 	case TALENT_BASIC_HA:
 		addlinetomenu(ent, "Increases ammo pickups.", MENU_WHITE_CENTERED);
 		return 1;
@@ -270,6 +291,9 @@ int writeTalentDescription(edict_t *ent, int talentID)
 		addlinetomenu(ent, "grenade damage and", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "reduces cost.", MENU_WHITE_CENTERED);
 		return 3;
+
+
+
 	//Poltergeist talents
     case TALENT_MORPHING:
 		addlinetomenu(ent, "Reduces the cost", MENU_WHITE_CENTERED);
@@ -294,12 +318,14 @@ int writeTalentDescription(edict_t *ent, int talentID)
 		addlinetomenu(ent, "friendly morphed", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "players.", MENU_WHITE_CENTERED);
 		return 4;
+
 	//Vampire talents
-	case TALENT_IMP_CLOAK:
-		addlinetomenu(ent, "Move while cloaked", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "(must be crouching).", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "1/3 pc cost at night!", MENU_WHITE_CENTERED);
-		return 3;
+	//case TALENT_IMP_CLOAK:
+		//addlinetomenu(ent, "Move while cloaked", MENU_WHITE_CENTERED);
+		//addlinetomenu(ent, "(must be crouching).", MENU_WHITE_CENTERED);
+		//addlinetomenu(ent, "1/3 pc cost at night!", MENU_WHITE_CENTERED);
+		//return 3;
+
 	case TALENT_ARMOR_VAMP:
 		addlinetomenu(ent, "Also gain armor using", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "your vampire skill.", MENU_WHITE_CENTERED);
@@ -321,6 +347,7 @@ int writeTalentDescription(edict_t *ent, int talentID)
 		addlinetomenu(ent, "Increases your maximum", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "health using corpse eater.", MENU_WHITE_CENTERED);
 		return 2;
+
 	//Mage talents
 	case TALENT_ICE_BOLT:
 		addlinetomenu(ent, "Use 'icebolt' instead of", MENU_WHITE_CENTERED);
@@ -352,7 +379,16 @@ int writeTalentDescription(edict_t *ent, int talentID)
 		addlinetomenu(ent, "absorbed consumes power", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "cubes. (cmd manashield)", MENU_WHITE_CENTERED);
 		return 4;
+
 	//Engineer talents
+	
+
+	//case TALENT_DEFENSIVE_CRATE:
+		//addlinetomenu(ent, "Create a Box to absorbe damage", MENU_WHITE_CENTERED);
+		//addlinetomenu(ent, "(cmd 'box').", MENU_WHITE_CENTERED);
+		//return 2;
+
+
 	case TALENT_LASER_PLATFORM:
 		addlinetomenu(ent, "Create a laser platform", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "(cmd 'laserplatform').", MENU_WHITE_CENTERED);
@@ -362,22 +398,25 @@ int writeTalentDescription(edict_t *ent, int talentID)
 		addlinetomenu(ent, "of detector to build a", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "laser trap.", MENU_WHITE_CENTERED);
 		return 3;
-	case TALENT_RAPID_ASSEMBLY:
-		addlinetomenu(ent, "Reduces build time.", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "Can't be combined with", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "Precision Tune.", MENU_WHITE_CENTERED);
+
+	case TALENT_ARMOR_REG:
+		addlinetomenu(ent, "Allow you to regenerate.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "	some armor 	", MENU_WHITE_CENTERED);
+
 		return 3;
 	case TALENT_PRECISION_TUNING:
-		addlinetomenu(ent, "Increased cost and", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "build time to build", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "higher level devices.", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "Can't be combined with", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "Rapid Assembly.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, " Increased Damage and ", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, " Reduce build time ", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "  Of your devices. ", MENU_WHITE_CENTERED);
+
+		
 		return 3;
 	case TALENT_STORAGE_UPGRADE:
 		addlinetomenu(ent, "Increases ammunition", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "capacity of SS/sentry/AC.", MENU_WHITE_CENTERED);
 		return 2;
+
+
 	//Knight talents
 	case TALENT_REPEL:
 		addlinetomenu(ent, "Adds chance for projectiles", MENU_WHITE_CENTERED);
@@ -386,27 +425,29 @@ int writeTalentDescription(edict_t *ent, int talentID)
 	case TALENT_MAG_BOOTS:
 		addlinetomenu(ent, "Reduces effect of knockback.", MENU_WHITE_CENTERED);
 		return 1;
-	case TALENT_LEAP_ATTACK:
-		addlinetomenu(ent, "Adds stun/knockback effect", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "to boost spell when landing.", MENU_WHITE_CENTERED);
-		return 2;
-	case TALENT_MOBILITY:
-		addlinetomenu(ent, "Reduces boost cooldown", MENU_WHITE_CENTERED);
-		return 1;
+	//case TALENT_LEAP_ATTACK:
+		//addlinetomenu(ent, "Adds stun/knockback effect", MENU_WHITE_CENTERED);
+		//addlinetomenu(ent, "to boost spell when landing.", MENU_WHITE_CENTERED);
+		//return 2;
+	//case TALENT_MOBILITY:
+	//	addlinetomenu(ent, "Reduces boost cooldown", MENU_WHITE_CENTERED);
+		//return 1;
 	case TALENT_DURABILITY:
 		addlinetomenu(ent, "Increases your health", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "per level bonus!", MENU_WHITE_CENTERED);
 		return 2;
+
+
 	//Cleric talents
 	case TALENT_BALANCESPIRIT:
 		addlinetomenu(ent, "New spirit that can", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "use the skills of both", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "yin and yang spirits.", MENU_WHITE_CENTERED);
 		return 3;
-	case TALENT_HOLY_GROUND:
-		addlinetomenu(ent, "Designate an area as", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "holy ground to regenerate", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "teammates (cmd 'holyground').", MENU_WHITE_CENTERED);
+	//case TALENT_HOLY_GROUND:
+		//addlinetomenu(ent, "Designate an area as", MENU_WHITE_CENTERED);
+		//addlinetomenu(ent, "holy ground to regenerate", MENU_WHITE_CENTERED);
+		//addlinetomenu(ent, "teammates (cmd 'holyground').", MENU_WHITE_CENTERED);
 		return 3;
 	case TALENT_UNHOLY_GROUND:
 		addlinetomenu(ent, "Designate an area as", MENU_WHITE_CENTERED);
@@ -424,6 +465,8 @@ int writeTalentDescription(edict_t *ent, int talentID)
 		addlinetomenu(ent, "and immunity to curses", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "(cmd 'purge').", MENU_WHITE_CENTERED);
 		return 4;
+
+
 	//Weaponmaster talents
 	case TALENT_BASIC_AMMO_REGEN:
 		addlinetomenu(ent, "Basic ammo regeneration.", MENU_WHITE_CENTERED);
@@ -445,6 +488,8 @@ int writeTalentDescription(edict_t *ent, int talentID)
 		addlinetomenu(ent, "choice is determined by", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "weapon upgrade level.", MENU_WHITE_CENTERED);
 		return 4;
+
+
 	//Necromancer talents
 	case TALENT_EVIL_CURSE:
 		addlinetomenu(ent, "Increases curse duration.", MENU_WHITE_CENTERED);
@@ -452,12 +497,12 @@ int writeTalentDescription(edict_t *ent, int talentID)
 	case TALENT_CHEAPER_CURSES:
 		addlinetomenu(ent, "Reduces curse cost.", MENU_WHITE_CENTERED);
 		return 1;
-	case TALENT_CORPULENCE:
-		addlinetomenu(ent, "Increases hellspawn", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "and monster health/armor,", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "but reduces damage. Can't,", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "combine with Life Tap.", MENU_WHITE_CENTERED);
-		return 4;
+	//case TALENT_CORPULENCE:
+		//addlinetomenu(ent, "Increases hellspawn", MENU_WHITE_CENTERED);
+		//addlinetomenu(ent, "and monster health/armor,", MENU_WHITE_CENTERED);
+		//addlinetomenu(ent, "but reduces damage. Can't,", MENU_WHITE_CENTERED);
+		//addlinetomenu(ent, "combine with Life Tap.", MENU_WHITE_CENTERED);
+		//return 4;
 	case TALENT_LIFE_TAP:
 		addlinetomenu(ent, "Increases hellspawn", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "and monster damage,", MENU_WHITE_CENTERED);
@@ -473,6 +518,8 @@ int writeTalentDescription(edict_t *ent, int talentID)
 	case TALENT_FLIGHT:
 		addlinetomenu(ent, "Reduces jetpack cost.", MENU_WHITE_CENTERED);
 		return 1;
+
+
 	//Shaman talents
 	case TALENT_TOTEM:
 		addlinetomenu(ent, "Allows you to spawn an", MENU_WHITE_CENTERED);
@@ -504,7 +551,10 @@ int writeTalentDescription(edict_t *ent, int talentID)
 		addlinetomenu(ent, "Adds a chance for fire", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "totem to shoot a fireball.", MENU_WHITE_CENTERED);
 		return 2;
+
+
 	//Alien talents
+
 	case TALENT_PHANTOM_OBSTACLE:
 		addlinetomenu(ent, "Reduces time to cloak.", MENU_WHITE_CENTERED);
 		return 1;
@@ -512,6 +562,16 @@ int writeTalentDescription(edict_t *ent, int talentID)
 		addlinetomenu(ent, "Allows healer to heal", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "beyond maximum health.", MENU_WHITE_CENTERED);
 		return 2;
+
+	//case TALENT_FASTMOVE:
+		//addlinetomenu(ent, "Allow you to move Faster.", MENU_WHITE_CENTERED);
+		//addlinetomenu(ent, "when you receive damage.", MENU_WHITE_CENTERED);
+		//return 1;
+	case TALENT_LIFE_REG:
+		addlinetomenu(ent, "Allow you to regenerate.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "	Life 	", MENU_WHITE_CENTERED);
+		return 2;
+
 	case TALENT_PHANTOM_COCOON:
 		addlinetomenu(ent, "Allows cocoon to cloak.", MENU_WHITE_CENTERED);
 		return 1;
@@ -519,15 +579,17 @@ int writeTalentDescription(edict_t *ent, int talentID)
 		addlinetomenu(ent, "Increases spore damage.", MENU_WHITE_CENTERED);
 		// addlinetomenu(ent, "but reduces damage.", MENU_WHITE_CENTERED); // lol
 		return 1;
-	case TALENT_EXPLODING_BODIES:
-		addlinetomenu(ent, "Makes alien-summons'", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "corpses explode.", MENU_WHITE_CENTERED);
-		return 2;
+	//case TALENT_EXPLODING_BODIES:
+		//addlinetomenu(ent, "Makes alien-summons'", MENU_WHITE_CENTERED);
+		//addlinetomenu(ent, "corpses explode.", MENU_WHITE_CENTERED);
+		//return 2;
+
+
 	// Kamikaze talents
-	case TALENT_MARTYR:
-		addlinetomenu(ent, "Creates an explotion", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "when you die.", MENU_WHITE_CENTERED);
-		return 2;
+	//case TALENT_MARTYR:
+		//addlinetomenu(ent, "Creates an explotion", MENU_WHITE_CENTERED);
+		//addlinetomenu(ent, "when you die.", MENU_WHITE_CENTERED);
+		//return 2;
 	case TALENT_BLAST_RESIST:
 		addlinetomenu(ent, "Increases defense against", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "radius damage.", MENU_WHITE_CENTERED);

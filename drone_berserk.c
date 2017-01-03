@@ -134,7 +134,7 @@ void berserk_attack_spike (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = 25 + 20 * self->monsterinfo.level;
+	damage = 60 + 20 * self->monsterinfo.level;
 	M_MeleeAttack(self, 96, damage, 400);
 	//FIXME: add bleed curse
 }
@@ -163,7 +163,7 @@ void berserk_attack_club (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = 30 + 20 * self->monsterinfo.level;
+	damage = 45 + 20 * self->monsterinfo.level;
 	M_MeleeAttack(self, 96, damage, 400);
 }
 
@@ -362,7 +362,7 @@ void init_drone_berserk (edict_t *self)
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 
-	self->health = self->max_health = 65 + 22 * self->monsterinfo.level;
+	self->health = self->max_health = 120 + 75 * self->monsterinfo.level;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.power_armor_power = self->monsterinfo.max_armor = 60 + 50 * self->monsterinfo.level;
 	self->gib_health = -60;

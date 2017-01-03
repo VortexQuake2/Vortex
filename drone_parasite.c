@@ -562,7 +562,7 @@ void init_drone_parasite (edict_t *self)
 	self->solid = SOLID_BBOX;
 
 	//if (self->activator && self->activator->client)
-	self->health = 55 + 15*self->monsterinfo.level;
+	self->health = 110 + 65*self->monsterinfo.level;
 	//else self->health = 200 + 80*self->monsterinfo.level;
 
 	self->max_health = self->health;

@@ -114,7 +114,7 @@ qboolean AI_IsStep (edict_t *ent)
 //	trap_Trace (&trace, ent->s.origin, ent->mins, ent->maxs, point, ent, MASK_PLAYERSOLID);
 	trace = gi.trace( ent->s.origin, ent->mins, ent->maxs, point, ent, MASK_PLAYERSOLID);
 	
-	if (trace.plane.normal[2] < 0.7 && !trace.startsolid)
+	if (trace.plane.normal[2] < 1 && !trace.startsolid) // 0.7   [2] < 0.7
 		return false;
 	
 	//found solid.

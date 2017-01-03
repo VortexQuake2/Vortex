@@ -7,7 +7,7 @@
 
 // cumulative maximum damage a laser can deal
 #define LASER_INITIAL_HEALTH	0
-#define LASER_ADDON_HEALTH		100
+#define LASER_ADDON_HEALTH		400
 
 void RemoveLasers (edict_t *ent)
 {
@@ -94,6 +94,7 @@ void laser_beam_effects (edict_t *self)
 		self->s.skinnum = 0xf2f2f0f0; // red
 	else
 		self->s.skinnum = 0xf3f3f1f1; // blue
+
 }
 
 void laser_beam_think (edict_t *self)
@@ -287,10 +288,21 @@ void SpawnLaser (edict_t *ent, int cost, float skill_mult, float delay_mult)
 
 	// set beam diameter
 	if (laser->monsterinfo.level >= 10)
+	{
+		
 		laser->s.frame = 4;
-	else
-		laser->s.frame = 2;
+		laser->s.skinnum = 0xf2f2f0f0; //red beam color
+	}
+	if (laser->monsterinfo.level >= 20)
+	{
 
+		laser->s.frame = 5;
+		laser->s.skinnum = 0xdad0dcd2; //Yellow Golden
+	}
+	else
+		{ 
+		laser->s.frame = 2;	
+		}
 	laser->movetype	= MOVETYPE_NONE;
 	laser->solid = SOLID_NOT;
 	laser->s.renderfx = RF_BEAM|RF_TRANSLUCENT;
@@ -299,7 +311,7 @@ void SpawnLaser (edict_t *ent, int cost, float skill_mult, float delay_mult)
 	laser->classname = "laser";
     laser->owner = laser->activator = ent; // link to player
 	laser->creator = grenade; // link to grenade
-	laser->s.skinnum = 0xf2f2f0f0; // red beam color
+	laser->s.skinnum = 0xf3f3f1f1; // purple beam color
     laser->think = laser_beam_think;
 	laser->nextthink = level.time + LASER_SPAWN_DELAY * delay_mult;
 	VectorCopy(ent->s.origin, laser->s.origin);
@@ -375,8 +387,8 @@ void Cmd_BuildLaser (edict_t *ent)
 	//Talent: Precision Tuning
 	else if ((talentLevel = getTalentLevel(ent, TALENT_PRECISION_TUNING)) > 0)
 	{
-		cost_mult += PRECISION_TUNING_COST_FACTOR * talentLevel;
-		delay_mult += PRECISION_TUNING_DELAY_FACTOR * talentLevel;
+		cost_mult -= PRECISION_TUNING_COST_FACTOR * talentLevel;
+		delay_mult -= PRECISION_TUNING_DELAY_FACTOR * talentLevel;
 		skill_mult += PRECISION_TUNING_SKILL_FACTOR * talentLevel;
 	}
 	cost *= cost_mult;

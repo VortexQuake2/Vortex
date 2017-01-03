@@ -954,10 +954,11 @@ char *dm_statusbar =
 "	pic	11 "
 "endif "
 //K03 Begin
+
 //  frags
 "xr -34 "
 "yb -116 "
-"string \"Game\" "
+"string \"Exp\" "
 
 "xr	-81 "
 "yb -108 "
@@ -974,7 +975,7 @@ char *dm_statusbar =
 "if 16 "
   "xv 0 "
   "yb -68 "
- // "string \"Chasing\" "
+ // "string \"Follow\" "
   "xv 0 "
   "stat_string 16 "
 "endif "
@@ -1031,7 +1032,7 @@ char *dm_statusbar =
 "if 24 "
 "   xv 136 "
 "   yv  150 "
-"   string2 \"DMG-ID\" "
+"   string2 \"DMG\" "
 "   xv 130 "
 "   yv 159  "
 "   num 5 24 "
@@ -1040,7 +1041,7 @@ char *dm_statusbar =
 //Show the Streak
 "xr -42 "
 "yb -86 "
-"string \"Spree\" "
+"string \"Kills\" "
 //  total players
 "xr -50 "
 "yb	-78 "
@@ -1049,17 +1050,17 @@ char *dm_statusbar =
 //power cubes left
 "xr -42 "
 "yb -56 "
-"string \"Cubes\" "
+"string \"Mana\" "
 
 "xr -68 "
 "yb -48 "
 "num 4 28 "
-/*
+
 //print out our current level
 "xr -25 "
-"yt 158 "//was 141
-"string \"Lvl\" "
-
+"yt 158 "
+"string \"Level\" "
+/*
 "xr -50 "
 "yt 167 "//150
 "num 3 26 "
@@ -1071,7 +1072,7 @@ char *dm_statusbar =
 "if 30 "
 "   xv 0 "
 "   yb  -157 "
-"   string2 \"HLT-ID\" "
+"   string2 \"Life\" "
 
 "   xv 0 "
 "   yb -148  "
@@ -1082,7 +1083,7 @@ char *dm_statusbar =
 "if 26 "
 "   xv 0 "
 "   yb  -124 "
-"   string2 \"AMR-ID\" "
+"   string2 \"Armor\" "
 "endif "
 
 "if 26 "
@@ -1095,7 +1096,7 @@ char *dm_statusbar =
 "if 31 "
 "   xv 0 "
 "   yb  -91 "
-"   string2 \"AMO-ID\" "
+"   string2 \"Ammo\" "
 "endif "
 
 "if 31 "
@@ -1107,7 +1108,7 @@ char *dm_statusbar =
 "if 24 "
 "   xv 136 "
 "   yv  150 "
-"   string2 \"DMG-ID\" "
+"   string2 \"DMG\" "
 "   xv 130 "
 "   yv 159  "
 "   num 5 24 "
@@ -1331,7 +1332,7 @@ void SP_worldspawn (edict_t *ent)
 		gi.modelindex ("#w_bfg.md2");
 
 		gi.modelindex ("#w_phalanx.md2");
-		gi.modelindex ("#w_ripper.md2");
+		gi.modelindex ("#w_ripper.md2"); //downloading file cuando uno inicia el juego
 //	}
 
 

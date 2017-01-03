@@ -1323,14 +1323,14 @@ void Cmd_ExplodingArmor_f (edict_t *ent)
 	SpawnExplodingArmor(ent, atoi(gi.args()));
 }
 
-#define SPIKE_INITIAL_DMG	50
-#define SPIKE_ADDON_DMG		15
-#define SPIKE_SPEED			1000	// velocity of spike entity
+#define SPIKE_INITIAL_DMG	65
+#define SPIKE_ADDON_DMG		25
+#define SPIKE_SPEED			1800	// velocity of spike entity
 #define SPIKE_COST			25		// cost to use attack
-#define SPIKE_DELAY			0.5		// ability delay, in seconds
+#define SPIKE_DELAY			0.1		// ability delay, in seconds
 #define SPIKE_STUN_ADDON	0.05
-#define SPIKE_STUN_MIN		0.2
-#define SPIKE_STUN_MAX		1.0
+#define SPIKE_STUN_MIN		0.3
+#define SPIKE_STUN_MAX		1.5
 #define SPIKE_SHOTS			3		// number of spikes fired per attack; should be an odd number
 #define SPIKE_FOV			20		// attack spread, in degrees
 
@@ -1342,7 +1342,9 @@ void spike_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 			plane->normal, self->dmg, self->dmg, 0, MOD_SPIKE);
 
 		gi.sound (other, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav"), 1, ATTN_NORM, 0);
-
+		
+		self->owner->health += 1;
+		
 		// only stun if the entity is alive and they haven't been stunned too recently
 		if (G_EntIsAlive(other) && (level.time > (other->holdtime + 1.0)))
 		{
@@ -1391,6 +1393,7 @@ void fire_spike (edict_t *self, vec3_t start, vec3_t dir, int damage, float stun
 	bolt->dmg_radius = stun_length;
 	bolt->classname = "spike";
 	gi.linkentity (bolt);
+
 }
 
 void SpikeAttack (edict_t *ent)
@@ -1759,8 +1762,8 @@ void Cmd_BuildProxyGrenade (edict_t *ent)
 	//Talent: Precision Tuning
 	else if ((talentLevel = getTalentLevel(ent, TALENT_PRECISION_TUNING)) > 0)
 	{
-		cost_mult += PRECISION_TUNING_COST_FACTOR * talentLevel;
-		delay_mult += PRECISION_TUNING_DELAY_FACTOR * talentLevel;
+		cost_mult -= PRECISION_TUNING_COST_FACTOR * talentLevel;
+		delay_mult -= PRECISION_TUNING_DELAY_FACTOR * talentLevel;
 		skill_mult += PRECISION_TUNING_SKILL_FACTOR * talentLevel;
 	}
 	cost *= cost_mult;
@@ -3228,8 +3231,8 @@ void Cmd_AutoCannon_f (edict_t *ent)
 	//Talent: Precision Tuning
 	else if ((talentLevel = getTalentLevel(ent, TALENT_PRECISION_TUNING)) > 0)
 	{
-		cost_mult += PRECISION_TUNING_COST_FACTOR * talentLevel;
-		delay_mult += PRECISION_TUNING_DELAY_FACTOR * talentLevel;
+		cost_mult -= PRECISION_TUNING_COST_FACTOR * talentLevel;
+		delay_mult -= PRECISION_TUNING_DELAY_FACTOR * talentLevel;
 		skill_mult += PRECISION_TUNING_SKILL_FACTOR * talentLevel;
 	}
 	cost *= cost_mult;
@@ -3897,6 +3900,146 @@ void Cmd_Caltrops_f (edict_t *ent)
 	VectorMA(start, 24, forward, start);
 	ThrowCaltrops(ent, start, forward, ent->myskills.abilities[CALTROPS].current_level, CALTROPS_DURATION);
 }
+
+
+
+/////////////////////////////////////////////////////////////////// FMEDICPACK /////////v_cmd.c  g_misc.c///////////////////////////////////
+#define FMEDICPACK_INITIAL_DAMAGE				 50
+#define FMEDICPACK_ADDON_DAMAGE					 25
+#define FMEDICPACK_INITIAL_SLOW					  0
+#define FMEDICPACK_ADDON_SLOW					0.1
+#define FMEDICPACK_INITIAL_SLOWED_TIME			  0
+#define FMEDICPACK_ADDON_SLOWED_TIME			0.1
+#define FMEDICPACK_DURATION						 60
+#define FMEDICPACK_COST						     15
+#define FMEDICPACK_DELAY						0.1
+#define FMEDICPACK_MAX_COUNT					 8
+
+// editado
+void fmedi_remove(edict_t *self)
+{
+	if (self->owner && self->owner->inuse)
+		self->owner->num_fmedi--;
+
+	G_FreeEdict(self);
+}
+
+void fmedi_removeall(edict_t *ent)
+{
+	edict_t *e = NULL;
+
+	while ((e = G_Find(e, FOFS(classname), "medic pack")) != NULL)
+	{
+		if (e && e->owner && (e->owner == ent))
+			fmedi_remove(e);
+	}
+
+	ent->num_fmedi = 0;
+}
+
+void fmedi_think(edict_t *self)
+{
+	if ((level.time > self->delay) || !G_EntIsAlive(self->owner))
+	{
+		fmedi_remove(self);
+		return;
+	}
+
+	self->nextthink = level.time + FRAMETIME;
+}
+
+void fmedi_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
+{
+	if (G_EntExists(other) && !OnSameTeam(self->owner, other))
+	{
+		// 50% slowed at level 10 for 5 seconds
+		other->slowed_factor = 1 / (1 + FMEDICPACK_INITIAL_SLOW + (FMEDICPACK_ADDON_SLOW * self->monsterinfo.level));
+		other->slowed_time = level.time + (FMEDICPACK_INITIAL_SLOWED_TIME + (FMEDICPACK_ADDON_SLOWED_TIME * self->monsterinfo.level));
+
+		T_Damage(other, self, self->owner, self->velocity, self->s.origin,
+			plane->normal, self->dmg, self->dmg, DAMAGE_NO_KNOCKBACK, MOD_FMEDICPACK);
+
+		gi.sound(other, CHAN_BODY, gi.soundindex("misc/n_health.wav"), 1, ATTN_NORM, 0);
+
+		fmedi_remove(self);
+	}
+}
+
+void Throwfmedi(edict_t *self, vec3_t start, vec3_t forward, int slevel, float duration)
+{
+	edict_t *fmedi;
+
+	fmedi = G_Spawn();
+	VectorCopy(start, fmedi->s.origin);
+	fmedi->movetype = MOVETYPE_TOSS;
+	fmedi->owner = self;
+	fmedi->monsterinfo.level = slevel;
+	fmedi->dmg = FMEDICPACK_INITIAL_DAMAGE + FMEDICPACK_ADDON_DAMAGE * slevel; // editar despues
+	fmedi->classname = "medic_Pack"; // medic con miniscula no se por que
+	fmedi->think = fmedi_think;
+	fmedi->touch = fmedi_touch;
+	fmedi->nextthink = level.time + FRAMETIME;
+	fmedi->delay = level.time + duration;
+	VectorSet(fmedi->mins, -15, -15, -15);
+	VectorSet(fmedi->maxs, 15, 15, 15);
+	fmedi->s.angles[PITCH] = 0;
+	fmedi->solid = SOLID_TRIGGER;
+	fmedi->s.modelindex = gi.modelindex("models/fmedi/tris.md2"); // modificar modelo  models/spike/tris.md2
+	gi.linkentity(fmedi);
+	fmedi->clipmask = MASK_SHOT;
+
+
+
+
+
+
+
+
+
+
+
+	VectorScale(forward, 200, fmedi->velocity);
+
+	self->client->pers.inventory[power_cube_index] -= FMEDICPACK_COST;
+	self->client->ability_delay = level.time + FMEDICPACK_DELAY;
+	self->num_fmedi++;
+
+	safe_cprintf(self, PRINT_HIGH, "Medic Pack's used: %d/%d\n", self->num_fmedi, FMEDICPACK_MAX_COUNT);
+
+	//  entity made a sound, used to alert monsters
+	self->lastsound = level.framenum;
+}
+
+void Cmd_fmedi_f(edict_t *ent)
+{
+	vec3_t forward, start;
+
+	if (!Q_strcasecmp(gi.args(), "remove"))
+	{
+		fmedi_removeall(ent);
+		safe_cprintf(ent, PRINT_HIGH, "All Medic Pack's removed.\n");
+		return;
+	}
+
+	if (!V_CanUseAbilities(ent, FMEDICPACK, FMEDICPACK_COST, true))
+		return;
+
+	if (ent->num_fmedi >= FMEDICPACK_MAX_COUNT)
+	{
+		safe_cprintf(ent, PRINT_HIGH, "You've reached the maximum number of Medic Pack's (%d).\n", FMEDICPACK_MAX_COUNT);
+		return;
+	}
+
+	VectorCopy(ent->s.origin, start);
+	start[2] += ent->viewheight;
+	AngleVectors(ent->client->v_angle, forward, NULL, NULL);
+	VectorMA(start, 8, forward, start);
+	Throwfmedi(ent, start, forward, ent->myskills.abilities[FMEDICPACK].current_level, FMEDICPACK_DURATION);
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 #define SPIKEGRENADE_COST				25
 #define SPIKEGRENADE_DELAY				1.0
@@ -4788,8 +4931,8 @@ void Cmd_Detector_f (edict_t *ent)
 	//Talent: Precision Tuning
 	else if ((talentLevel = getTalentLevel(ent, TALENT_PRECISION_TUNING)) > 0)
 	{
-		cost_mult += PRECISION_TUNING_COST_FACTOR * talentLevel;
-		delay_mult += PRECISION_TUNING_DELAY_FACTOR * talentLevel;
+		cost_mult -= PRECISION_TUNING_COST_FACTOR * talentLevel;
+		delay_mult -= PRECISION_TUNING_DELAY_FACTOR * talentLevel;
 		skill_mult += PRECISION_TUNING_SKILL_FACTOR * talentLevel;
 	}
 	cost *= cost_mult;
@@ -6242,6 +6385,8 @@ void organ_remove (edict_t *self, qboolean refund)
 		{
 			if (self->mtype == M_OBSTACLE)
 				self->activator->num_obstacle--;
+			if (self->mtype == M_BOX)
+				self->activator->num_box--;
 			else if (self->mtype == M_SPIKER)
 				self->activator->num_spikers--;
 			else if (self->mtype == M_HEALER)
@@ -6648,7 +6793,7 @@ void spiker_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 
 	self->think = spiker_dead;
 	self->deadflag = DEAD_DYING;
-	self->delay = level.time + 20.0;
+	self->delay = level.time + 5;
 	self->nextthink = level.time + FRAMETIME;
 	self->s.frame = SPIKER_FRAME_DEAD;
 	self->movetype = MOVETYPE_TOSS;
@@ -6693,7 +6838,13 @@ void spiker_attack (edict_t *self)
 		//FIXME: only need to do this once
 		self->monsterinfo.attack_finished = level.time + SPIKER_REFIRE_DELAY;
 		self->s.frame = SPIKER_FRAMES_NOAMMO_START;
+	
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("weapons/twang.wav"), 1, ATTN_NORM, 0);
+		//health_factor = 1;
+		
+
+	
+		
 	}	
 }
 
@@ -6780,8 +6931,8 @@ void spiker_think (edict_t *self)
 	// ground friction to prevent excessive sliding
 	if (self->groundentity)
 	{
-		self->velocity[0] *= 0.5;
-		self->velocity[1] *= 0.5;
+		self->velocity[0] *= 0.2;
+		self->velocity[1] *= 0.2;
 	}
 	
 	M_CatagorizePosition (self);
@@ -6793,7 +6944,7 @@ void spiker_think (edict_t *self)
 	self->nextthink = level.time + FRAMETIME;
 }
 
-void spiker_grow (edict_t *self)
+void spiker_grow (edict_t *self) //Crecimiento de Spiker
 {
 	if (!organ_checkowner(self))
 		return;
@@ -6871,6 +7022,7 @@ edict_t *CreateSpiker (edict_t *ent, int skill_level)
 	return e;
 }
 
+
 void Cmd_Spiker_f (edict_t *ent)
 {
 	int		cost = SPIKER_COST;
@@ -6916,23 +7068,41 @@ void Cmd_Spiker_f (edict_t *ent)
 	VectorCopy(ent->s.angles, spiker->s.angles);
 	spiker->s.angles[PITCH] = 0;
 	gi.linkentity(spiker);
-	spiker->monsterinfo.attack_finished = level.time + 2.0;
-	spiker->monsterinfo.cost = cost;
-
+	spiker->monsterinfo.attack_finished = level.time + 1.0;
+	spiker->monsterinfo.cost = 35 + 1 * ent->myskills.abilities[SPIKER].current_level;
+	T_Damage(ent, ent, ent, ent->velocity, ent->s.origin, ent->s.origin, spiker->monsterinfo.cost, 0, 0, 0);
+	ent->client->damage_blood = 1;
 	safe_cprintf(ent, PRINT_HIGH, "Spiker created (%d/%d)\n", ent->num_spikers, SPIKER_MAX_COUNT);
-
 	ent->client->ability_delay = level.time + SPIKER_DELAY;
-	ent->client->pers.inventory[power_cube_index] -= cost;
-	//ent->holdtime = level.time + SPIKER_DELAY;
-
+	ent->holdtime = level.time + SPIKER_DELAY;
+	
 	//  entity made a sound, used to alert monsters
 	ent->lastsound = level.framenum;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #define OBSTACLE_INITIAL_HEALTH			0		
-#define OBSTACLE_ADDON_HEALTH			145
+#define OBSTACLE_ADDON_HEALTH			195
 #define OBSTACLE_INITIAL_DAMAGE			0
-#define OBSTACLE_ADDON_DAMAGE			40	
+#define OBSTACLE_ADDON_DAMAGE			75	
 #define OBSTACLE_COST					25
 #define OBSTACLE_DELAY					0.5
 
@@ -7227,16 +7397,253 @@ void Cmd_Obstacle_f (edict_t *ent)
 	obstacle->s.angles[PITCH] = 0;
 	gi.linkentity(obstacle);
 	obstacle->monsterinfo.cost = cost;
-
-	safe_cprintf(ent, PRINT_HIGH, "Obstacle created (%d/%d)\n", ent->num_obstacle,OBSTACLE_MAX_COUNT);
-
-	ent->client->pers.inventory[power_cube_index] -= cost;
+	
+	// ent->client->pers.inventory[power_cube_index] -= cost; Old Method
 	ent->client->ability_delay = level.time + OBSTACLE_DELAY;
+	safe_cprintf(ent, PRINT_HIGH, "Obstacle created (%d/%d)\n", ent->num_obstacle,OBSTACLE_MAX_COUNT);
+	
+	T_Damage(ent, ent, ent, ent->velocity, ent->s.origin, ent->s.origin, obstacle->monsterinfo.cost, 0, 0, 0);
+	ent->client->damage_blood = 1;
+
 	//ent->holdtime = level.time + OBSTACLE_DELAY;
 
 	//  entity made a sound, used to alert monsters
 	ent->lastsound = level.framenum;
 }
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////// DEFENSIVE BOX HABILIDAD ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#define BOX_INITIAL_HEALTH			150		
+#define BOX_ADDON_HEALTH			75
+#define BOX_INITIAL_DAMAGE			120
+#define BOX_ADDON_DAMAGE			40	
+#define BOX_PC_COST					50
+#define BOX_DELAY					0.5
+
+
+
+
+void box_dead(edict_t *self){
+	int danonepe = BOX_INITIAL_DAMAGE;
+	int mejorao = BOX_ADDON_DAMAGE;
+
+	if (level.time > self->delay)
+	{
+		organ_remove(self, false);
+		return;
+	}
+	if (level.time == self->delay - 5)
+		self->s.effects |= EF_PLASMA;
+	else if (level.time == self->delay - 2)
+		self->s.effects |= EF_SPHERETRANS;
+	self->nextthink = 2;
+}
+
+void box_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point){
+	int max = BOX_MAX_COUNT;
+	int cur;
+
+	if (!self->monsterinfo.slots_freed && self->activator && self->activator->inuse)
+	{
+		self->activator->num_box--;
+		cur = self->activator->num_box;
+		self->monsterinfo.slots_freed = true;
+
+		if (PM_MonsterHasPilot(attacker))
+			attacker = attacker->owner;
+
+		if (attacker->client)
+			safe_cprintf(self->activator, PRINT_HIGH, "Your box was killed by %s (%d/%d remain)\n", attacker->client->pers.netname, cur, max);
+		else if (attacker->mtype)
+			safe_cprintf(self->activator, PRINT_HIGH, "Your box was killed by a %s (%d/%d remain)\n", V_GetMonsterName(attacker), cur, max);
+		else
+			safe_cprintf(self->activator, PRINT_HIGH, "Your box was killed by a %s (%d/%d remain)\n", attacker->classname, cur, max);
+	}
+
+	if (self->health <= self->gib_health || organ_explode(self)){
+		int n;
+
+		gi.sound(self, CHAN_VOICE, gi.soundindex("makron/popup.wav"), 1, ATTN_NORM, 0);
+		for (n = 0; n < 2; n++)
+			ThrowGib(self, "models/crate/crate32.md2", damage, GIB_ORGANIC);
+		for (n = 0; n < 4; n++)
+			ThrowGib(self, "models/crate/crate32.md2", damage, GIB_ORGANIC);
+		organ_remove(self, false);
+		return;
+	}
+
+	if (self->deadflag == DEAD_DYING)
+		return;
+
+	self->think = spiker_dead;
+	self->deadflag = DEAD_DYING;
+	self->delay = 0;
+	self->nextthink = level.time + FRAMETIME;
+	self->s.frame = OBSTACLE_FRAME_DEAD;
+	self->movetype = MOVETYPE_TOSS;
+	self->touch = V_Touch;
+	self->maxs[2] = 16;
+	gi.linkentity(self);
+}
+
+void box_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf){
+	organ_touch(self, other, plane, surf);
+
+	if (other && other->inuse  && !OnSameTeam(self->activator, other)
+		&& (level.framenum >= self->monsterinfo.jumpup))
+	{			
+		self->monsterinfo.jumpup = level.framenum + 1;
+	}
+	else if (other && other->inuse )
+	{
+		self->svflags &= ~SVF_NOCLIENT;
+		self->monsterinfo.idle_frames = 0;
+	}
+}
+
+
+
+void box_move(edict_t *self){
+	// check for ground entity
+	if (!M_CheckBottom(self) || self->linkcount != self->monsterinfo.linkcount)
+	{
+		self->monsterinfo.linkcount = self->linkcount;
+		M_CheckGround(self);
+	}
+
+	// check for movement/sliding
+	if (!(int)self->velocity[0] && !(int)self->velocity[1] && !(int)self->velocity[2])
+	{
+		// stick to the ground
+		if (self->groundentity && self->groundentity == world)
+			self->movetype = MOVETYPE_NONE;
+		else
+			self->movetype = MOVETYPE_STEP;
+
+		// increment idle frames
+		self->monsterinfo.idle_frames++;
+
+		// ground friction to prevent excessive sliding
+		if (self->groundentity)
+		{
+			self->velocity[0] *= 0.001;
+			self->velocity[1] *= 0.001;
+		}
+	}
+	if (self->groundentity)
+		VectorClear(self->velocity);
+}
+void box_think(edict_t *self){
+	if (!organ_checkowner(self))
+		return;
+
+	organ_restoreMoveType(self);
+	
+	box_move(self);
+
+	V_HealthCache(self, (int)(0.1 * self->max_health), 1);
+
+	
+	M_CatagorizePosition(self);
+	M_WorldEffects(self);
+	M_SetEffects(self);
+
+	self->nextthink = level.time + FRAMETIME;
+}
+
+edict_t *CreateBox(edict_t *ent, int skill_level)
+{
+	edict_t *e;
+
+	e = G_Spawn();
+
+	e->activator = ent;
+	e->nextthink = level.time + FRAMETIME;
+	e->s.modelindex = gi.modelindex("models/crate/crate64.md2");
+	e->s.renderfx |= RF_IR_VISIBLE;
+	e->solid = SOLID_BBOX;
+	e->movetype = MOVETYPE_TOSS;
+	e->svflags |= SVF_MONSTER;
+	e->clipmask = MASK_MONSTERSOLID;
+	e->mass = 5500;
+	e->classname = "box";
+	e->takedamage = DAMAGE_AIM;
+	e->max_health = BOX_INITIAL_HEALTH + 950 * ent->myskills.level;
+	e->health = 0.5*e->max_health;
+	e->dmg = 0;
+	e->monsterinfo.level = skill_level;
+	e->gib_health = -250;
+	e->die = box_die;
+	e->touch = organ_touch;
+	VectorSet(e->mins, -32, -32, 0);
+	VectorSet(e->maxs, 32, 32,64);
+	e->mtype = M_BOX;
+
+	ent->num_box++;
+
+	return e;
+}
+
+void Cmd_box_f(edict_t *ent)
+{
+
+	int		cost = BOX_PC_COST;
+	edict_t *box;
+	vec3_t	start;
+
+	if (Q_strcasecmp(gi.args(), "remove") == 0)
+	{
+		organ_removeall(ent, "box", true);
+		safe_cprintf(ent, PRINT_HIGH, "Boxes removed\n");
+		ent->num_box = 0;
+		return;
+	}
+
+	if (ctf->value && (CTF_DistanceFromBase(ent, NULL, CTF_GetEnemyTeam(ent->teamnum)) < CTF_BASE_DEFEND_RANGE))
+	{
+		safe_cprintf(ent, PRINT_HIGH, "Can't build in enemy base!\n");
+		return;
+	}
+
+
+
+	if (!V_CanUseAbilities(ent, BOX, cost, true))
+		return;
+
+	if (ent->num_box >= 2)
+	{
+		safe_cprintf(ent, PRINT_HIGH, "Too many boxes (%d)\n", 2);
+		return;
+	}
+
+	box = CreateBox(ent, ent->myskills.abilities[BOX].current_level);
+
+		
+
+	if (!G_GetSpawnLocation(ent, 100, box->mins, box->maxs, start))
+	{
+		ent->num_box--;
+		G_FreeEdict(box);
+		return;
+	}
+	VectorCopy(start, box->s.origin);
+	VectorCopy(ent->s.angles, box->s.angles);
+	box->s.angles[PITCH] = 0;
+	gi.linkentity(box);
+	box->monsterinfo.cost = cost;
+
+	ent->client->pers.inventory[power_cube_index] -= 35;
+
+	safe_cprintf(ent, PRINT_HIGH, "Defensive box created (%d/%d)\n", ent->num_box, 2);
+//
+//	//  entity made a sound, used to alert monsters
+	ent->lastsound = level.framenum;
+	}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 #define GASSER_FRAMES_ATTACK_START		1	
 #define GASSER_FRAMES_ATTACK_END		6
@@ -7246,12 +7653,12 @@ void Cmd_Obstacle_f (edict_t *ent)
 #define GASSER_FRAMES_IDLE_END			12
 #define GASSER_FRAME_DEAD				6
 
-#define GASSER_RANGE					128
-#define GASSER_REFIRE					5.0
+#define GASSER_RANGE					150
+#define GASSER_REFIRE					2.5
 #define GASSER_INITIAL_DAMAGE			0
-#define GASSER_ADDON_DAMAGE				10
-#define GASSER_INITIAL_HEALTH			100
-#define GASSER_ADDON_HEALTH				40
+#define GASSER_ADDON_DAMAGE				45
+#define GASSER_INITIAL_HEALTH			150
+#define GASSER_ADDON_HEALTH				80
 #define GASSER_INITIAL_ATTACK_RANGE		100
 #define GASSER_ADDON_ATTACK_RANGE		0
 #define GASSER_COST						25
@@ -7735,7 +8142,11 @@ void Cmd_Gasser_f (edict_t *ent)
 
 	safe_cprintf(ent, PRINT_HIGH, "Gasser created (%d/%d)\n", ent->num_gasser, (int)GASSER_MAX_COUNT);
 
-	ent->client->pers.inventory[power_cube_index] -= cost;
+	T_Damage(ent, ent, ent, ent->velocity, ent->s.origin, ent->s.origin, gasser->monsterinfo.cost, 0, 0, 0);
+	ent->client->damage_blood = 1;
+
+	
+	//ent->client->pers.inventory[power_cube_index] -= cost;
 	ent->client->ability_delay = level.time + GASSER_DELAY;
 	//ent->holdtime = level.time + GASSER_DELAY;
 

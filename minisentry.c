@@ -2,11 +2,11 @@
 
 #define SENTRY_IDLE_LEFT		1
 #define SENTRY_IDLE_RIGHT		2
-#define SENTRY_TARGET_RANGE		512		// target aquisition distance
-#define SENTRY_ATTACK_RANGE		1024	// maximum attacking distance
-#define SENTRY_BUILD_TIME		2.0		// time it takes to build a sentry
+#define SENTRY_TARGET_RANGE		1512		// target aquisition distance
+#define SENTRY_ATTACK_RANGE		1812	// maximum attacking distance
+#define SENTRY_BUILD_TIME		1.7	// time it takes to build a sentry
 #define SENTRY_FOV				60		// field of vision, in degrees
-#define SENTRY_REGEN_TIME		30		// seconds it takes sentry to regenerate to full
+#define SENTRY_REGEN_TIME		21		// seconds it takes sentry to regenerate to full
 //#define SENTRY_MAX_HEALTH		(50+5*self->creator->myskills.abilities[BUILD_SENTRY].current_level)
 //#define SENTRY_MAX_ARMOR		(50+15*self->creator->myskills.abilities[BUILD_SENTRY].current_level)
 #define SENTRY_MAX_AMMO			(MINISENTRY_INITIAL_AMMO+MINISENTRY_ADDON_AMMO*self->creator->myskills.abilities[BUILD_SENTRY].current_level)
@@ -401,6 +401,10 @@ void minisentry_think (edict_t *self)
 	self->yaw_speed = temp; // restore original yaw speed
 	M_SetEffects(self);
 	self->nextthink = level.time + FRAMETIME;
+
+
+	
+
 }
 
 void base_think (edict_t *self)
@@ -576,7 +580,7 @@ void SpawnMiniSentry (edict_t *ent, int cost, float skill_mult, float delay_mult
 	base->movetype = MOVETYPE_TOSS;
 	base->clipmask = MASK_MONSTERSOLID;
 	base->mass = 300;
-	base->health = 500;
+	base->health = 590;
 	base->die = base_die;
 	base->classname = "msentrybase";
 	base->monsterinfo.level = ent->myskills.abilities[BUILD_SENTRY].current_level * skill_mult;
@@ -709,8 +713,8 @@ void Cmd_MiniSentry_f (edict_t *ent)
 	//Talent: Precision Tuning
 	else if ((talentLevel = getTalentLevel(ent, TALENT_PRECISION_TUNING)) > 0)
 	{
-		cost_mult += PRECISION_TUNING_COST_FACTOR * talentLevel;
-		delay_mult += PRECISION_TUNING_DELAY_FACTOR * talentLevel;
+		cost_mult -= PRECISION_TUNING_COST_FACTOR * talentLevel;
+		delay_mult -= PRECISION_TUNING_DELAY_FACTOR * talentLevel;
 		skill_mult += PRECISION_TUNING_SKILL_FACTOR * talentLevel;
 	}
 	cost *= cost_mult;

@@ -1,12 +1,12 @@
 #include "g_local.h"
 #include "boss.h"
 
-#define PVB_BOSS_EXPERIENCE		3000
+#define PVB_BOSS_EXPERIENCE		1000
 #define PVB_BOSS_MIN_EXP		100
-#define PVB_BOSS_MAX_EXP		3000
-#define PVB_BOSS_CREDITS		2000
-#define PVB_BOSS_FRAG_EXP		20
-#define PVB_BOSS_FRAG_CREDITS	10
+#define PVB_BOSS_MAX_EXP		1000
+#define PVB_BOSS_CREDITS		3000
+#define PVB_BOSS_FRAG_EXP		300
+#define PVB_BOSS_FRAG_CREDITS	100
 #define PVB_BOSS_TIMEOUT		10
 
 qboolean Boss_CanFit (edict_t *ent, vec3_t boss_mins, vec3_t boss_maxs)
@@ -36,7 +36,7 @@ edict_t *Boss_CreateTank (void)
 	tank->think = boss_tank_think;
 	tank->mass = 500;
 	tank->monsterinfo.level = average_player_level;
-	tank->health = TANK_INITIAL_HEALTH+TANK_ADDON_HEALTH*tank->monsterinfo.level;
+	tank->health = (TANK_INITIAL_HEALTH * 4 +TANK_ADDON_HEALTH*tank->monsterinfo.level);
 	tank->max_health = tank->health;
 	tank->mtype = BOSS_TANK;
 	tank->pain = boss_pain;

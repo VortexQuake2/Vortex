@@ -15,7 +15,6 @@ int G_DamageType (int mod, int dflags)
 	Monster damage is classed as MOD_UNKNOWN
 	So lets make sure it works with thorns
 	*/
-
 	// all morphed player attacks should go here
 	case MOD_UNKNOWN:
 	case MOD_HIT:
@@ -60,6 +59,7 @@ int G_DamageType (int mod, int dflags)
 	case MOD_WATERTOTEM:
 	case MOD_SPIKEGRENADE:
 	case MOD_CALTROPS:
+	
 	case MOD_SPIKE:
 	case MOD_GAS:
 	case MOD_OBSTACLE:
@@ -209,14 +209,14 @@ float G_AddDamage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	if ((attacker->mtype == M_SKULL) && (targ->mtype != M_SKULL) && !targ->client)
 	{
 		if (pvm->value || invasion->value)
-			damage *= 2;
+			damage *= 4;
 		else
 			damage *= 1.5;
 	}
 
-	// proxy and caltrops are 2x more effective against non-players
-	if (((mod == MOD_CALTROPS) || (mod == MOD_PROXY)) && !targ->client && targ->mtype)
-		damage *= 2;
+	// proxy, caltrops and medic packs are 3 more effective against non-players
+	if (((mod == MOD_CALTROPS) || (mod == MOD_PROXY) || (mod == MOD_FMEDICPACK)) && !targ->client && targ->mtype)
+		damage *= 3;
 
 	if (ctf->value)
 	{
@@ -242,6 +242,25 @@ float G_AddDamage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		}
 	}
 
+
+	//Start Talent: Monster Mastery
+	if (getTalentSlot(attacker, TALENT_MONSTER_MASTERY) != -1)
+	{
+		int level = getTalentLevel(attacker, TALENT_MONSTER_MASTERY);
+		float temp;
+
+		if (pvm->value || invasion->value)
+		{
+			temp = level * 0.06; damage *= 1.0 + temp;
+		}
+			else
+			{
+			temp = 0;
+			}
+	}
+	// END Talent: Monster Mastery
+
+
 	if (dtype & D_PHYSICAL)
 	{
 		// cocoon bonus
@@ -264,6 +283,7 @@ float G_AddDamage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 					temp = 1;
 				damage *= 1.0 + ((0.2 * talentLevel) * (1.0 - temp));
 			}
+			
 
 			// Talent: Superiority
 			// increases damage/resistance of morphed players against monsters
@@ -284,9 +304,9 @@ float G_AddDamage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 				if (attacker->owner->myskills.level <= 5)
 					damage *= 2;
 				else if (attacker->owner->myskills.level <= 10)
-					damage *= 1.5;
+					damage *= 2;
 				else
-					damage *= 1.25;
+					damage *= 2;
 			}
 		}
 
@@ -361,7 +381,7 @@ float G_AddDamage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 			{
 				// morphed players' attacks deal more damage after level 10
 				int levels = attacker->myskills.level-10;
-
+#pragma region RETALIATION TALENT
 				// Talent: Retaliation
 				// increases damage as percentage of remaining health is reduced
 				talentLevel = getTalentLevel(attacker, TALENT_RETALIATION);
@@ -372,7 +392,7 @@ float G_AddDamage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 						temp = 1;
 					damage *= 1.0 + ((0.2 * talentLevel) * (1.0 - temp));
 				}
-
+#pragma endregion
 				// Talent: Superiority
 				// increases damage/resistance of morphed players against monsters
 				talentLevel = getTalentLevel(attacker, TALENT_SUPERIORITY);
@@ -404,15 +424,22 @@ float G_AddDamage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 				temp = 1 + STRENGTH_BONUS * attacker->myskills.abilities[STRENGTH].current_level;
 			
+				//Talent: Endurance
+				//talentLevel = getTalentLevel(attacker, TALENT_IMP_STRENGTH);
+				//if (talentLevel > 0)
+					//temp += IMP_STRENGTH_BONUS * talentLevel;
+
 				//Talent: Improved Strength
 				talentLevel = getTalentLevel(attacker, TALENT_IMP_STRENGTH);
 				if(talentLevel > 0)		
 					temp += IMP_STRENGTH_BONUS * talentLevel;
 				
+				// ESTAS LINEAS DISMINUYEN EL DAÑO
+
 				//Talent: Improved Resist
-				talentLevel = getTalentLevel(attacker, TALENT_IMP_RESIST);
-				if(talentLevel > 0)		
-					temp -= 0.1 * talentLevel;
+			//	talentLevel = getTalentLevel(attacker, TALENT_IMP_RESIST);
+				//if(talentLevel > 0)		
+					//temp -= 0.1 * talentLevel;   // 
 
 				//don't allow damage under 100%
 				if (temp < 1.0) 
@@ -420,28 +447,39 @@ float G_AddDamage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 				damage *= temp;
 			}
-			
+#pragma region -- COMBAT EXPERIENCE TALENT 
 			//Talent: Combat Experience
 			if (getTalentSlot(attacker, TALENT_COMBAT_EXP) != -1)
 				damage *= 1.0 + 0.05 * getTalentLevel(attacker, TALENT_COMBAT_EXP);	//+5% per upgrade
-
-			// blood of ares effect (new)
+#pragma endregion
+#pragma region SOLDIER BLOOD OF ARES TALENT  
+			// ******TALENT BLOOD OF ARES START {****** //
 			if (getTalentSlot(attacker, TALENT_BLOOD_OF_ARES) != -1)
 			{
 				int level = getTalentLevel(attacker, TALENT_BLOOD_OF_ARES);
 				float temp;
-				
-				// BoA is less effective in PvM
-				if (pvm->value)
-					temp = level * 0.005 *attacker->myskills.streak;
+
+
+
+
+				// BoA is more effective in PvM
+				if (pvm->value || invasion->value)
+					temp = level * 0.02 *attacker->myskills.streak;
 				else
 					temp = level * 0.01 *attacker->myskills.streak;
 
 				//Limit bonus to +100%
-				if(temp > 1.0)	temp = 1.0;
-				
+				if (temp > 1.5)	temp = 1.5;
+
 				damage *= 1.0 + temp;
 			}
+			// ******TALENT BLOOD OF ARES END }****** //
+#pragma endregion
+
+		
+
+
+			
 
 			// fury ability increases damage.
 			if(attacker->fury_time > level.time)
@@ -602,20 +640,22 @@ float G_SubDamage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 				Resistance = min(Resistance, 0.8);
 		}
 
+
+		/// PUEDE QUE QUEDE LA CAGA
 		// resistance effect (for tanks, lessened)
 		if (!targ->owner->myskills.abilities[RESISTANCE].disable)
 		{
 			temp = 1 + 0.07 * targ->owner->myskills.abilities[RESISTANCE].current_level;
 
 			//Talent: Improved Resist
-			talentLevel  = getTalentLevel(targ, TALENT_IMP_RESIST);
-			if(talentLevel > 0)
-				temp += talentLevel * 0.07;
+		//	talentLevel  = getTalentLevel(targ, TALENT_IMP_RESIST);
+			//if(talentLevel > 0)
+				//temp += talentLevel * 0.07;
 
 			//Talent: Improved Strength
-			talentLevel = getTalentLevel(targ, TALENT_IMP_STRENGTH);
-			if(talentLevel > 0)		
-				temp -= talentLevel * 0.07;
+			//talentLevel = getTalentLevel(targ, TALENT_IMP_STRENGTH);
+			//if(talentLevel > 0)		
+				//temp -= talentLevel * 0.07;
 			
 			// don't allow more than 100% damage
 			if (temp < 1.0)
@@ -725,20 +765,29 @@ float G_SubDamage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		if (targ->mtype)
 			return damage; // morphed players can't use abilities
 
+
+
+
+
+
+
+
+
+
 		//Talent: Blood of Ares
 		if (getTalentSlot(targ, TALENT_BLOOD_OF_ARES) != -1)
 		{
 			int level = getTalentLevel(targ, TALENT_BLOOD_OF_ARES);
 			float temp;
 			
-			// BoA is less effective in PvM
-			if (pvm->value)
-				temp = level * 0.005 *attacker->myskills.streak;
+			// BoA is more effective in PvM
+			if (pvm->value || invasion->value)
+				temp = level * 0.02 *attacker->myskills.streak;  //  from 0.01 to 0.02
 			else
 				temp = level * 0.01 *attacker->myskills.streak;
 
-			//Limit bonus to +100%
-			if(temp > 1.0)	temp = 1.0;
+			//Limit bonus to +150%
+			if(temp > 1.5)	temp = 1.5;
 			
 			damage *= 1.0 + temp;
 		}
@@ -748,23 +797,23 @@ float G_SubDamage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		{
 			if (!V_IsPVP() || !ffa->value)
 				temp = 1 + 0.1 * targ->myskills.abilities[RESISTANCE].current_level;
-			// PvP modes are getting frustrating with players that are too resisting
+			// PvP modes are getting frustrating with players that are too resisting   0.1 in pvp should be fine.
 			else if ( (!pvm->value && !invasion->value) )
-				temp = 1 + 0.066 * targ->myskills.abilities[RESISTANCE].current_level;
+				temp = 1 + 0.1 * targ->myskills.abilities[RESISTANCE].current_level;
 
-			//Talent: Improved Resist
-			talentLevel  = getTalentLevel(targ, TALENT_IMP_RESIST);
-			if(talentLevel > 0)		
-				temp += talentLevel * 0.1;
+			//Talent: Improved Resist in 
+			//talentLevel  = getTalentLevel(targ, TALENT_IMP_RESIST);
+			//if(talentLevel > 0)		
+				//temp += talentLevel * 0.1;
 
 			//Talent: Improved Strength
 			talentLevel = getTalentLevel(targ, TALENT_IMP_STRENGTH);
 			if(talentLevel > 0)		
-				temp -= talentLevel * 0.1;
+				temp += talentLevel * 0.02;
 			
 			// don't allow more than 100% damage
-			if (temp < 1.0)
-				temp = 1.0;
+			//if (temp < 1.0)
+				//temp = 1.0;
 
 			Resistance = min(Resistance, 1/temp);
 		}

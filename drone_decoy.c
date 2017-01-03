@@ -177,9 +177,9 @@ void decoy_rocket (edict_t *self)
 		speed = 950;
 
 	//if (random() <= 0.1)
-	//	damage = 50 + 10*self->activator->myskills.level;	
+		damage = 45 + 10*self->activator->myskills.level;	
 	//else
-		damage = 1;
+    //damage = 1;
 
 	MonsterAim(self, damage, speed, true, 0, forward, start);
 	monster_fire_rocket (self, start, forward, damage, speed, 0);
@@ -299,11 +299,19 @@ mframe_t actor_frames_attack [] =
 };
 mmove_t actor_move_attack = {FRAME_attack1, FRAME_attack8, actor_frames_attack, actor_run};
 
+qboolean CanAttack(edict_t *self)
+{
+	if (G_EntIsAlive(self->enemy) && !OnSameTeam(self, self->enemy) && visible(self, self->enemy))
+		return true;
+	else return false;
+}
 void actor_attack(edict_t *self)
 {
+	CanAttack(self);
 //	int		n;
 
 //	gi.dprintf("actor_attack()\n");
+
 
 	self->monsterinfo.currentmove = &actor_move_attack;
 	self->monsterinfo.attack_finished = level.time + 0.9;
@@ -321,8 +329,8 @@ void decoy_copy (edict_t *self)
 	if (self->mtype != M_DECOY)
 		return;
 
-//	if (PM_PlayerHasMonster(self->activator))
-//		target = self->activator->owner;
+	if (PM_PlayerHasMonster(self->activator))
+		target = self->activator->owner;
 
 	// copy everything from our owner
 	self->model = target->model;
@@ -353,12 +361,12 @@ void init_drone_decoy (edict_t *self)
 	VectorSet (self->maxs, 16, 16, 32);
 	decoy_copy(self);
 
-	self->health = 250 + 100 * self->activator->myskills.level;
-	self->model = "players/male/tris.md2";
+	self->health = 350 + 100 * self->activator->myskills.level;
+	self->model = "models/monsters/soldier/tris.md2";
 	gi.setmodel(self, self->model);
 
 	//Limit decoy health to 2000
-	if(self->health > 2000)		self->health = 2000;
+	if(self->health > 3500)		self->health = 3500;
 
 	self->max_health = self->health;
 	self->gib_health = -150;
@@ -371,8 +379,8 @@ void init_drone_decoy (edict_t *self)
 	self->monsterinfo.stand = decoy_stand;
 	self->monsterinfo.run = actor_run;
 	self->monsterinfo.attack = actor_attack;
-	self->monsterinfo.control_cost = 45;
-	self->monsterinfo.cost = 25;
+	self->monsterinfo.control_cost = 15;
+	self->monsterinfo.cost = 12;
 	self->monsterinfo.jumpup = 64;
 	self->monsterinfo.jumpdn = 512;
 

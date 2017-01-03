@@ -49,6 +49,7 @@ void Cmd_TossMirv (edict_t *ent);
 void Cmd_Healer_f (edict_t *ent);
 void Cmd_Spiker_f (edict_t *ent);
 void Cmd_Obstacle_f (edict_t *ent);
+void Cmd_box_f(edict_t *ent); //lepi
 void Cmd_Gasser_f (edict_t *ent);
 void Cmd_TossSpikeball (edict_t *ent);
 void Cmd_FireAcid_f (edict_t *ent);
@@ -73,6 +74,7 @@ void Grenade_Explode (edict_t *ent);
 void Cmd_CorpseExplode(edict_t *ent);
 void Cmd_HellSpawn_f (edict_t *ent);
 void Cmd_Caltrops_f (edict_t *ent);
+void Cmd_fmedi_f(edict_t *ent);
 void Cmd_PrintCommandList(edict_t *ent);
 
 #define CommandTotal sizeof(commands) / sizeof(gameCommand_s)
@@ -132,6 +134,7 @@ gameCommand_s commands[] =
 	{ "wormhole",	    Cmd_WormHole_f },
 	{ "update",		    V_UpdatePlayerAbilities},
 	{ "berserker",	    Cmd_PlayerToBerserk_f },
+	{ "medicpack",		 Cmd_fmedi_f }, //lepi
 	{ "caltrops",	    Cmd_Caltrops_f },
 	{ "spikegrenade",   Cmd_SpikeGrenade_f },
 	{ "detector",	    Cmd_Detector_f },
@@ -143,6 +146,7 @@ gameCommand_s commands[] =
 	{ "mirv",		    Cmd_TossMirv },
 	{ "healer",		    Cmd_Healer_f },
 	{ "spiker",		    Cmd_Spiker_f },
+	{ "box",				Cmd_box_f },
 	{ "obstacle",	    Cmd_Obstacle_f },
 	{ "gasser",		    Cmd_Gasser_f },
 	{ "spore",		    Cmd_TossSpikeball },

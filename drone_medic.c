@@ -993,7 +993,7 @@ void init_drone_medic (edict_t *self)
 	VectorSet (self->maxs, 24, 24, 32);
 
 	//if (self->activator && self->activator->client)
-	self->health = 55 + 20*self->monsterinfo.level;
+	self->health = 120 + 65*self->monsterinfo.level;
 	//else self->health = 200 + 20*self->monsterinfo.level;
 
 	self->max_health = self->health;
@@ -1023,12 +1023,13 @@ void init_drone_medic (edict_t *self)
 //	self->monsterinfo.checkattack = mymedic_checkattack;
 //	self->monsterinfo.control_cost = 1;
 //	self->monsterinfo.cost = 150;
+
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
 	//self->monsterinfo.melee = 1;
 
 	//if (self->activator && self->activator->client)
-		self->monsterinfo.power_armor_power = 100 + 20*self->monsterinfo.level;
+		self->monsterinfo.power_armor_power = 60 + 50*self->monsterinfo.level;
 	//else self->monsterinfo.power_armor_power = 200 + 40*self->monsterinfo.level;
 
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
