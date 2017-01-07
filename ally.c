@@ -101,8 +101,8 @@ qboolean CanAlly (edict_t *ent, edict_t *other, int range)
 	// check for max allies
 	// alianza con la mitad del server activo (vrxchile v1.3)
 	// si uno de los dos tiene una alianza con mas de la mitad de los jugadores activos, no se pueden aliar.
-	if (   ((numAllies(ent) + 1) > ActivePlayers()/2) || 
-		((numAllies(other) + 1) > ActivePlayers()/2) ) 
+	if (((numAllies(ent) + 1) > JoinedPlayers() / 2) ||
+		((numAllies(other) + 1) > JoinedPlayers() / 2))
 		return false;
 	// are we already allied?
 	if (IsAlly(ent, other))

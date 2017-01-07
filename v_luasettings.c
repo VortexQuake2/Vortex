@@ -82,7 +82,7 @@ int q2lua_reloadvars(lua_State* L)
 
 int q2lua_getplayercount(lua_State* L)
 {
-	lua_pushnumber(L, total_players());
+	lua_pushnumber(L, JoinedPlayers());
 	return 1;
 }
 

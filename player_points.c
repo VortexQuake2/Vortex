@@ -348,8 +348,8 @@ int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target)
 	if (!attacker || !attacker->inuse || !attacker->client)
 		return 0;
 
-	// don't give exp for friendly fire in invasion hard mode
-	if ((targ->client || (targ->owner && targ->owner->client) || (targ->activator && targ->activator->client)) && invasion->value > 1)
+	// don't give exp for friendly fire in invasion mode
+	if ((targ->client || (targ->owner && targ->owner->client) || (targ->activator && targ->activator->client)) && invasion->value > 0)
 		return 0;
 
 	// don't award points for monster that was just resurrected
@@ -381,12 +381,15 @@ int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target)
 	if (attacker->myskills.streak >= SPREE_START && !SPREE_WAR)
 		bonus += 0.5;
 	else if (attacker->myskills.streak >= SPREE_WARS_START && SPREE_WARS)
-		bonus += 3.0;
+		bonus += 15.0;
 
 	// players get extra points for killing an allied teammate
 	// if they are not allied with anyone themselves
 	if (allies->value && !numAllies(attacker) && target)
 		bonus += (float) 0.5 * numAllies(target);
+
+	if (attacker->myskills.boss)
+		bonus += ceil(attacker->myskills.boss * 0.2);
 
 	// we killed another player
 	if (targ->client) 
@@ -484,7 +487,7 @@ int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target)
 		exp_points *= vrx_pvppointmult->value;
 	else
 	{
-		int player_count = total_players();
+		int player_count = JoinedPlayers();
 		exp_points *= vrx_pvmpointmult->value;
 		// in normal pvm you get slightly more exp if you're alone.
 		// and much less if you're not.
@@ -497,7 +500,7 @@ int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target)
 			float mult;
 
 			// people above average level get a bit more experience for letting others play
-			if (attacker->myskills.level - AveragePlayerLevel() > 5) 
+			if (attacker->myskills.level - AveragePlayerLevel() > 3) 
 			{
 				base = 0.7;	
 				modifier_per_person = 0.23;
@@ -505,10 +508,10 @@ int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target)
 
 			mult = base+modifier_per_person*(6-player_count);
 
-			if (mult > 0)
+			if (mult > 0.1)
 				exp_points *= mult;
 			else
-				exp_points = 0.1;
+				exp_points *= 0.1;
 		}
 	}
 

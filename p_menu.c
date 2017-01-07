@@ -26,26 +26,6 @@ void ChaseCam(edict_t *ent)
 
 int ClassNum(edict_t *ent, int team); //GHz
 int HighestLevelPlayer(void); //GHz
-int TotalPlayersInGame(void)
-{
-	edict_t *player;
-	int i, total = 0;
-
-	for (i = 1; i <= maxclients->value; i++){
-		player = &g_edicts[i];
-
-		if (!player->inuse)
-			continue;
-		if (!player->client)
-			continue;
-		if (player->solid == SOLID_NOT)
-			continue;
-
-		total++;
-	}
-//	gi.dprintf("found %d players in game\n", total);
-	return total;
-}
 
 void player_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {

@@ -70,7 +70,7 @@ void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 			//if (dm_monsters->value < 8)
 			//	gi.cvar_set("dm_monsters", "8");
 			//else
-			//	gi.cvar_set("dm_monsters", itoa(total_players(), buf, 10));
+			//	gi.cvar_set("dm_monsters", itoa(ActivePlayers(), buf, 10));
 		}
 		break;
 		case MAPMODE_DOM:
@@ -124,7 +124,7 @@ void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 			//if (dm_monsters->value < 4)
 			//	gi.cvar_set("dm_monsters", "4");
 			//else
-			//	gi.cvar_set("dm_monsters", itoa(total_players(), buf, 10));
+			//	gi.cvar_set("dm_monsters", itoa(ActivePlayers(), buf, 10));
 		}
 		break;
 		case MAPMODE_INV:
@@ -230,7 +230,7 @@ void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 		gi.dprintf("Invalid map index (%d) defaulting to current map.\n", mapindex);
 		strcpy(level.nextmap, level.mapname);
 	}
-	if (total_players() == 0)
+	if (JoinedPlayers() == 0)
 		ExitLevel();
 }
 
@@ -494,7 +494,7 @@ int CountMapVotes(int mapIndex, int mode)
 
 int V_VoteDone ()
 {
-	int players = total_players();
+	int players = JoinedPlayers();
 
 	if (players < 1)
 		return 0;
@@ -551,7 +551,7 @@ int FindBestMap(int mode)
 #else
 int FindBestMap(int mode)
 {
-	//if (numVotes > 0.5*total_players())
+	//if (numVotes > 0.5*ActivePlayers())
 	//	return currentVote.mapindex;
 	if (V_VoteDone())
 		return currentVote.mapindex;
@@ -588,7 +588,7 @@ int V_AttemptModeChange(qboolean endlevel)
 #ifdef OLD_VOTE_SYSTEM // Paril
 	int pvp, pvm, dom, ctf, ffa, inv, players, total_votes;
 	int inh, vhw, tra, dts;
-	players = total_players();
+	players = ActivePlayers();
 
 	if (players < 1)
 		return 0; // not enough players
@@ -646,7 +646,7 @@ int V_AttemptModeChange(qboolean endlevel)
 #else
 
 #if FORCE_PVP_WITH_A_LOT_OF_PLAYERS
-	int max_players, players = total_players();
+	int max_players, players = ActivePlayers();
 
 	//4.4 forcibly switch to PvP if we are in Invasion/PvM and there are many players
 	max_players = 0.25 * maxclients->value;
@@ -951,7 +951,7 @@ void ShowVoteModeMenu(edict_t *ent)
 	addlinetomenu(ent, va(" Deathmatch         (%d)", pvp), MAPMODE_PVP);
 	addlinetomenu(ent, va(" Free For All       (%d)", ffa), MAPMODE_FFA);
 //GHz START
-	players = total_players();
+	players = ActivePlayers();
 	// pvm and invasion are only available when there are few players on the server
 	if (0.33 * maxclients->value < 4)
 		min_players = 4;
@@ -1093,7 +1093,7 @@ void ShowVoteModeMenu(edict_t *ent)
 	addlinetomenu(ent, " ", 0);
 
 //GHz START
-	players = total_players();
+	players = ActivePlayers();
 	// pvm and invasion are only available when there are few players on the server
 #ifdef FORCE_PVP_WITH_A_LOT_OF_PLAYERS
 	if (0.33 * maxclients->value < 4)
@@ -1132,7 +1132,7 @@ void ShowVoteModeMenu(edict_t *ent)
 		}
 	}
 
-	if (invasion_enabled->value && (ThereIsOneLevelTen() || total_players() >= min_players) )
+	if (invasion_enabled->value && (ThereIsOneLevelTen() || ActivePlayers() >= min_players) )
 	{
 		addlinetomenu(ent, " Invasion (Hard mode)", MAPMODE_INH);
 		lastline++;

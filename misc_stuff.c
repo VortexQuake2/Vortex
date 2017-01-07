@@ -219,27 +219,6 @@ void KickPlayerBack(edict_t *ent)
 	}
 }
 
-int total_players()
-{
-	int		i, total=0;
-	edict_t *cl_ent = NULL;
-	
-	for (i=0 ; i<game.maxclients ; i++)
-	 {
-		 cl_ent = &g_edicts[1 + i];
-		  if (!cl_ent->inuse)
-			  continue;
-		  if (G_IsSpectator(cl_ent))
-			  continue;
-		  if (cl_ent->ai.is_bot)
-			  continue;
-          //if (!G_EntExists(cl_ent)) 
-           //    continue; 
-          total++; 
-     }
-	return total;
-}
-
 void GetScorePosition () 
 { 
      int i, j, k; 
@@ -781,12 +760,15 @@ float entdist(edict_t *ent1, edict_t *ent2)
 	return VectorLength(vec);
 }
 
-int TotalPlayersInGame(void);
 // returns true if the player should be affected by newbie protection
 qboolean IsNewbieBasher (edict_t *player) {
-	return (newbie_protection->value && player->client && (total_players()>0.33*maxclients->value)
-		&& (player->myskills.level>(newbie_protection->value*average_player_level)) 
-		&& (player->myskills.level >= 8) && !pvm->value);
+	qboolean levelAboveAverage = player->myskills.level > newbie_protection->value * AveragePlayerLevel();
+	qboolean isHighLevel = player->myskills.level >= 8;
+	qboolean isNotPVM = !(pvm->value != 0 || invasion->value != 0);
+	qboolean situationRequestsProtection = newbie_protection->value && player->client && (JoinedPlayers() > 1);
+	qboolean levelQualifies = isHighLevel && levelAboveAverage;
+
+	return (situationRequestsProtection && isNotPVM && levelQualifies);
 }
 
 qboolean TeleportNearTarget (edict_t *self, edict_t *target, float dist)

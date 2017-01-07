@@ -12,6 +12,21 @@ void OpenMultiUpgradeMenu (edict_t *ent, int lastline, int page, int generaltype
 void upgradeSpecialMenu_handler(edict_t *ent, int option)
 {
 	int cost = GetAbilityUpgradeCost(option-1);
+	int inc_max = ent->myskills.abilities[option - 1].max_level + 1;
+	qboolean isLimitedMax = true;
+	qboolean doubledcost = false;
+
+	if (ent->myskills.abilities[option - 1].level == inc_max - 1) // we've reached the limit of this skill
+	{
+		int hmax = getHardMax(option - 1, ent->myskills.abilities[option - 1].general_skill, ent->myskills.class_num);
+		cost *= 2;
+		doubledcost = true; // we're getting past the max level
+
+		if (hmax >= 10) // Not a limited hardmax, we can upgrade 'infinitely'
+		{
+			isLimitedMax = false;
+		}
+	}
 
 	//are we navigating the menu?
 	switch (option)
@@ -29,17 +44,26 @@ void upgradeSpecialMenu_handler(edict_t *ent, int option)
 		else safe_cprintf(ent, PRINT_HIGH, va("You need %d point to upgrade this ability.\n", cost));
 		return;
 	}
-	if (ent->myskills.abilities[option-1].level < ent->myskills.abilities[option-1].max_level || ent->myskills.administrator > 20)
+
+	// the cost is doubled, and it's not a limited hardmax, or it's just plain upgradable
+	if ((ent->myskills.abilities[option - 1].level < inc_max && (doubledcost && !isLimitedMax)) 
+		|| 
+		ent->myskills.administrator > 20)
 	{
 		ent->myskills.speciality_points -= cost;
 		ent->myskills.abilities[option-1].level++;
 		ent->myskills.abilities[option-1].current_level++;
+
+		if (doubledcost) // the skill is going above max level
+		{
+			ent->myskills.abilities[option - 1].max_level++;
+			ent->myskills.abilities[option - 1].hard_max++;
+		}
 	}
 	else 
 	{
 		safe_cprintf(ent, PRINT_HIGH, va("You have already reached the maximum level in this skill. (%d)\n", 
 			ent->myskills.abilities[option-1].max_level));
-		return;
 	}
 	// refresh the menu
 	OpenSpecialUpgradeMenu(ent, ent->client->menustorage.currentline);

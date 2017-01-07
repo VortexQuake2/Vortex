@@ -95,7 +95,7 @@ void hw_awardpoints (void)
 		return;
 
 	// not enough players
-	if (total_players() < HW_MINIMUM_PLAYERS)
+	if (JoinedPlayers() < HW_MINIMUM_PLAYERS)
 		return;
 
 	points = HW_POINTS;

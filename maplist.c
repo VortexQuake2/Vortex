@@ -156,7 +156,7 @@ void MaplistNextMap(edict_t *ent)
 	votemap = MapMaxVotes();
 	// pick this map if at least 50% of the server voted for it
 	// otherwise we continue normally
-	if ((votemap >= 0) && (maplist.people_voted >= 0.5*total_players()))	//Yes there was one picked
+	if ((votemap >= 0) && (maplist.people_voted >= 0.5*JoinedPlayers()))	//Yes there was one picked
 		i = votemap;
 	ClearMapVotes();
 

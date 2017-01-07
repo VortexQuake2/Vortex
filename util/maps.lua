@@ -48,14 +48,14 @@ mapsnotfound = {}
 
 for q,w in ipairs(mytable) do
 
-	if file_exists("D:/q2/vortex/maps/" .. w .. ".bsp") then
-		print("cp " .. "D:/q2/vortex/maps/" .. w .. ".bsp " .. " D:\\q2\\vortex\\ml\\")
-	    os.execute("cp " .. "D:/q2/vortex/maps/" .. w .. ".bsp " .. " D:\\q2\\vortex\\ml\\")
+	if file_exists("D:/juegos/Quake 2/vortex/maps/" .. w .. ".bsp") then
+		print("cp " .. "D:/juegos/Quake 2/vortex/maps/" .. w .. ".bsp " .. " D:/juegos/Quake 2/vortex\\ml\\")
+	    os.execute("copy " .. "D:/juegos/Quake 2/vortex/maps/" .. w .. ".bsp " .. " D:/juegos/Quake 2/vortex\\ml\\")
 		mapfound = true
 	end
 
 	if file_exists("../../baseq2/maps/" .. w .. ".bsp") then
-		os.execute("cp " .. "../../baseq2/maps/" .. w .. ".bsp" .. " D:\\q2\\vortex\\ml")
+		os.execute("cp " .. "../../baseq2/maps/" .. w .. ".bsp" .. " D:/juegos/Quake 2/vortex\\ml")
 		mapfound = true
 	end
 

@@ -77,12 +77,12 @@ int canJoinGame(edict_t *ent)
 		return -5;	//playing too much
 	
 	
-	if (!invasion->value || !pvm->value)
+	if (!invasion->value || !pvm->value || (ffa->value && JoinedPlayers() > 1))
 		if (newbie_protection->value && IsNewbieBasher(ent))
 			return -6;	//newbie basher can't play on non pvm modes
 	
 	
-	if (ent->myskills.boss && total_players() < (0.5*maxclients->value) 
+	if (ent->myskills.boss && JoinedPlayers() < (0.5*maxclients->value)
 		&& !trading->value && (!pvm->value || !invasion->value) && IsNewbieBasher(ent)) // trading, pvm or invasion modes means the boss actually can play.
 		return -7; //boss can't play
 

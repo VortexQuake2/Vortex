@@ -475,8 +475,8 @@ int writeTalentDescription(edict_t *ent, int talentID)
 		return 1;
 	//Shaman talents
 	case TALENT_TOTEM:
-		addlinetomenu(ent, "Allows you to spawn an", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "extra totem. Totem can not", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Allows you to spawn", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "healthier totems. Totem can not", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "be of the opposite element.", MENU_WHITE_CENTERED);
 		return 3;
 	case TALENT_ICE:

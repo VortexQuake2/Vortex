@@ -831,172 +831,177 @@ void RemoveDuplicates (node_t *BestList, node_t *OtherList)
 
 //=========================================
 int FindPath(vec3_t start, vec3_t destination) {
-node_t *StartNode;
-node_t *BestNode;
-node_t *tNode;
-int NodeNumD;
-int NodeNumS;
-int g,c,i;
-float h;
-vec3_t tstart,tdest;
+	node_t *StartNode;
+	node_t *BestNode;
+	node_t *tNode;
+	int NodeNumD;
+	int NodeNumS;
+	int g, c, i;
+	float h;
+	vec3_t tstart, tdest;
 
-  VectorCopy(start,tstart);
-  VectorCopy(destination,tdest);
+	VectorCopy(start, tstart);
+	VectorCopy(destination, tdest);
 
-  // Get NodeNum of start vector
-  NodeNumS=GetNodeNum(tstart);
-  if (NodeNumS==-1) {
-	  //gi.dprintf("bad nodenum at start\n");
-  return 0; // ERROR
-  }
-
-  // Get NodeNum of destination vector
-  NodeNumD=GetNodeNum(tdest);
-  if (NodeNumD==-1) 
-  {
-	 // gi.dprintf("bad nondenum at end\n");
-	  return 0; // ERROR
-  }
-
-  // Allocate OPEN/CLOSED list pointers..
-  OPEN=(node_t *)V_Malloc(sizeof(node_t), TAG_LEVEL);
- // OPEN=(node_t *)malloc(sizeof(node_t));
-  OPEN->NextNode=NULL;
-
-  CLOSED=(node_t *)V_Malloc(sizeof(node_t), TAG_LEVEL);
-  //CLOSED=(node_t *)malloc(sizeof(node_t));
-  CLOSED->NextNode=NULL;
-
-  //================================================
-  // This is our very first NODE!  Our start vector
-  //================================================
-  StartNode=(node_t *)V_Malloc(sizeof(node_t), TAG_LEVEL);
-  //StartNode=(node_t *)malloc(sizeof(node_t));
-  StartNode->nodenum=NodeNumS; // starting position nodenum
-  StartNode->g=g=0; // we haven't gone anywhere yet
-  StartNode->h=h=distance(start, destination);//fabs(vDiff(start,destination)); // calculate remaining distance (heuristic estimate) GHz - changed to fabs()
-  StartNode->f=g+h; // total cost from start to finish
-  for (c=0;c < NUMCHILDS;c++)
-    StartNode->Child[c]=NULL; // no children for search pattern yet
-  StartNode->NextNode=NULL;
-  StartNode->PrevNode=NULL;
-  //================================================
-
-  // next node in open list points to our starting node
-  OPEN->NextNode=BestNode=StartNode; // First node on OPEN list..
-
-  //GHz - need to free these nodes too!
-  //NodeList[NodeCount++] = OPEN;
-//  NodeList[NodeCount++] = CLOSED;
-  NodeCount+=2;
-
-  for (;;) {
-    tNode=BestNode; // Save last valid node
-    BestNode=(node_t *)NextBestNode(NodeNumS, NodeNumD); // Get next node from OPEN list
-    if (!BestNode) {
-		//gi.dprintf("ran out of nodes to search\n");
-		return 0;//GHz
-     // BestNode=tNode; // Last valid node..
-     // break;
+	// Get NodeNum of start vector
+	NodeNumS = GetNodeNum(tstart);
+	if (NodeNumS == -1) {
+		//gi.dprintf("bad nodenum at start\n");
+		return 0; // ERROR
 	}
 
-    if (BestNode->nodenum==NodeNumD) break;// we there yet?
-    ComputeSuccessors(BestNode,NodeNumD);} // Search from here..
+	// Get NodeNum of destination vector
+	NodeNumD = GetNodeNum(tdest);
+	if (NodeNumD == -1)
+	{
+		// gi.dprintf("bad nondenum at end\n");
+		return 0; // ERROR
+	}
 
-  //================================================
+	// Allocate OPEN/CLOSED list pointers..
+	OPEN = (node_t *)V_Malloc(sizeof(node_t), TAG_LEVEL);
+	// OPEN=(node_t *)malloc(sizeof(node_t));
+	OPEN->NextNode = NULL;
 
-     RemoveDuplicates(BestNode, CLOSED);//FIXME: move this up before the start==end crash check
+	CLOSED = (node_t *)V_Malloc(sizeof(node_t), TAG_LEVEL);
+	//CLOSED=(node_t *)malloc(sizeof(node_t));
+	CLOSED->NextNode = NULL;
 
- // gi.dprintf("%d: processed %d nodes\n", level.framenum,NodeCount);
-  if (BestNode==StartNode) {  // Start==End??
-    FreeStack(StartNode);//FIXME: may cause crash
-	//gi.dprintf("start==end\n");
-    return 0; }
+	//================================================
+	// This is our very first NODE!  Our start vector
+	//================================================
+	StartNode = (node_t *)V_Malloc(sizeof(node_t), TAG_LEVEL);
+	//StartNode=(node_t *)malloc(sizeof(node_t));
+	StartNode->nodenum = NodeNumS; // starting position nodenum
+	StartNode->g = g = 0; // we haven't gone anywhere yet
+	StartNode->h = h = distance(start, destination);//fabs(vDiff(start,destination)); // calculate remaining distance (heuristic estimate) GHz - changed to fabs()
+	StartNode->f = g + h; // total cost from start to finish
+	for (c = 0; c < NUMCHILDS; c++)
+		StartNode->Child[c] = NULL; // no children for search pattern yet
+	StartNode->NextNode = NULL;
+	StartNode->PrevNode = NULL;
+	//================================================
 
-    
+	// next node in open list points to our starting node
+	OPEN->NextNode = BestNode = StartNode; // First node on OPEN list..
 
+	//GHz - need to free these nodes too!
+	//NodeList[NodeCount++] = OPEN;
+	//  NodeList[NodeCount++] = CLOSED;
+	NodeCount += 2;
 
-  //gi.dprintf("Start = %d End = %d\n", NodeNumS, NodeNumD);
- // gi.dprintf("Printing tNode (in reverse):\n");
- // PrintNodes(BestNode, true);
- // gi.dprintf("Printing OPEN list:\n");
-  //PrintNodes(OPEN, false);
-  //gi.dprintf("Printing CLOSED list:\n");
- // PrintNodes(CLOSED, false);
+	for (;;) {
+		tNode = BestNode; // Save last valid node
+		BestNode = (node_t *)NextBestNode(NodeNumS, NodeNumD); // Get next node from OPEN list
+		if (!BestNode) {
+			//gi.dprintf("ran out of nodes to search\n");
+			return 0;//GHz
+			// BestNode=tNode; // Last valid node..
+			// break;
+		}
 
-BestNode->NextNode=NULL; // Must tie this off!
+		if (BestNode->nodenum == NodeNumD) break;// we there yet?
+		ComputeSuccessors(BestNode, NodeNumD);
+	} // Search from here..
 
+	//================================================
 
-  // How many nodes we got?
-   tNode=BestNode;
-  i=0;
-  while (tNode) {
-    i++; // How many nodes?
-    tNode=tNode->PrevNode; }
+	RemoveDuplicates(BestNode, CLOSED);//FIXME: move this up before the start==end crash check
 
-  if (i <= 2) { // Only nodes are Start and End??
-    FreeStack(BestNode);//FIXME: may cause crash
-	//gi.dprintf("only start and end nodes\n");
-    return 0; }
-
-  // Let's allocate our own stuff...
-
- 
-  //CLOSED->NextNode = NULL;//GHz - only needs to be null if we are using freestack()
-  numpts=i;
-
-  //GHz - free old memory
-  //V_Free(Waypoint);
-
-  Waypoint=(int *)V_Malloc(numpts*sizeof(int), TAG_LEVEL);
-  //Waypoint=(int *)malloc(numpts*sizeof(int));
-
-  // Now, we have to assign the nodenum's along
-  // this path in reverse order because that is
-  // the way the A* algorithm finishes its search.
-  // The last best node it visited was the END!
-  // So, we copy them over in reverse.. No biggy..
-
-  tNode=BestNode;
-  while (BestNode) {
-    Waypoint[--i]=BestNode->nodenum;//GHz: how/when is this freed?
-    BestNode=BestNode->PrevNode; }
-
-// NOTE: At this point, if our numpts returned is not
-// zero, then a path has been found!  To follow this
-// path we simply follow node[Waypoint[i]].origin
-// because Waypoint array is filled with indexes into
-// our node[i] array of valid vectors in the map..
-// We did it!!  Now free the stack and exit..
-
-  //================================================
-
-  //++++++++++ GHz NOTES +++++++++++++
-  // FreeStack() is flawed because the lists have nodes that point to nodes on other lists
-  // so if you free one list, then the next list will crash when it encounters a node with
-  // an invalid pointer (node was freed in last list)
-  //++++++++++++++++++++++++++++++++++
-
-  FreeStack(tNode); // Release ALL resources!!
-
-  //GHz: cleanup test/debugging
-  //for (i=0;i<NodeCount;i++)
-  //{
-//	  V_Free(NodeList[i]);
- // }
- // OPEN = NULL;
-  //CLOSED = NULL;
-  NodeCount = 0;
-
-  //TODO: performance... cpu usage is still very high
-  //TODO: grid editor, save grid to disk
-  //TODO: need some way of handling manually edited grid
-  // because NextNode() only searches within a specific 32x32 pattern
+	// gi.dprintf("%d: processed %d nodes\n", level.framenum,NodeCount);
+	if (BestNode == StartNode) {  // Start==End??
+		FreeStack(StartNode);//FIXME: may cause crash
+		//gi.dprintf("start==end\n");
+		return 0;
+	}
 
 
- // gi.dprintf("%d: found %d\n",level.framenum,numpts);
 
-  return (numpts);
+
+	//gi.dprintf("Start = %d End = %d\n", NodeNumS, NodeNumD);
+	// gi.dprintf("Printing tNode (in reverse):\n");
+	// PrintNodes(BestNode, true);
+	// gi.dprintf("Printing OPEN list:\n");
+	//PrintNodes(OPEN, false);
+	//gi.dprintf("Printing CLOSED list:\n");
+	// PrintNodes(CLOSED, false);
+
+	BestNode->NextNode = NULL; // Must tie this off!
+
+
+	// How many nodes we got?
+	tNode = BestNode;
+	i = 0;
+	while (tNode) {
+		i++; // How many nodes?
+		tNode = tNode->PrevNode;
+	}
+
+	if (i <= 2) { // Only nodes are Start and End??
+		FreeStack(BestNode);//FIXME: may cause crash
+		//gi.dprintf("only start and end nodes\n");
+		return 0;
+	}
+
+	// Let's allocate our own stuff...
+
+
+	//CLOSED->NextNode = NULL;//GHz - only needs to be null if we are using freestack()
+	numpts = i;
+
+	//GHz - free old memory
+	//V_Free(Waypoint);
+
+	Waypoint = (int *)V_Malloc(numpts*sizeof(int), TAG_LEVEL);
+	//Waypoint=(int *)malloc(numpts*sizeof(int));
+
+	// Now, we have to assign the nodenum's along
+	// this path in reverse order because that is
+	// the way the A* algorithm finishes its search.
+	// The last best node it visited was the END!
+	// So, we copy them over in reverse.. No biggy..
+
+	tNode = BestNode;
+	while (BestNode) {
+		Waypoint[--i] = BestNode->nodenum;//GHz: how/when is this freed?
+		BestNode = BestNode->PrevNode;
+	}
+
+	// NOTE: At this point, if our numpts returned is not
+	// zero, then a path has been found!  To follow this
+	// path we simply follow node[Waypoint[i]].origin
+	// because Waypoint array is filled with indexes into
+	// our node[i] array of valid vectors in the map..
+	// We did it!!  Now free the stack and exit..
+
+	//================================================
+
+	//++++++++++ GHz NOTES +++++++++++++
+	// FreeStack() is flawed because the lists have nodes that point to nodes on other lists
+	// so if you free one list, then the next list will crash when it encounters a node with
+	// an invalid pointer (node was freed in last list)
+	//++++++++++++++++++++++++++++++++++
+
+	FreeStack(tNode); // Release ALL resources!!
+
+	//GHz: cleanup test/debugging
+	//for (i=0;i<NodeCount;i++)
+	//{
+	//	  V_Free(NodeList[i]);
+	// }
+	// OPEN = NULL;
+	//CLOSED = NULL;
+	NodeCount = 0;
+
+	//TODO: performance... cpu usage is still very high
+	//TODO: grid editor, save grid to disk
+	//TODO: need some way of handling manually edited grid
+	// because NextNode() only searches within a specific 32x32 pattern
+
+
+	// gi.dprintf("%d: found %d\n",level.framenum,numpts);
+
+	return (numpts);
 }
 
 //======================================================

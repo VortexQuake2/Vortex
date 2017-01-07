@@ -4860,6 +4860,8 @@ void Cmd_LaserTrap_f (edict_t *ent)
 #define CONVERSION_COST					25
 #define CONVERSION_DELAY				2.0
 
+void drone_cleargoal(edict_t *self);
+
 qboolean RestorePreviousOwner (edict_t *ent)
 {
 	if (!(ent->flags & FL_CONVERTED))
@@ -5110,6 +5112,9 @@ qboolean ConvertOwner (edict_t *ent, edict_t *other, float duration, qboolean pr
 
 	if (duration > 0)
 		other->removetime = level.time + duration;
+
+	// If they had a goal, clear it, now.
+	drone_cleargoal(other);
 
 	return true;
 }
@@ -6701,21 +6706,12 @@ void NearestNodeLocation (vec3_t start, vec3_t node_loc);
 int FindPath(vec3_t start, vec3_t destination);
 void spiker_think (edict_t *self)
 {
-	vec3_t v1,v2;
 	edict_t *e=NULL;
 
 	if (!organ_checkowner(self))
 		return;
 
 	organ_restoreMoveType(self);
-
-	//FIXME: delete this!!!!!!!!!!
-	if (!(level.framenum%10))
-	{
-		NearestNodeLocation(self->s.origin, v1);
-		NearestNodeLocation(self->activator->s.origin, v2);
-		FindPath(v1, v2);
-	}
 
 	if (self->removetime > 0)
 	{

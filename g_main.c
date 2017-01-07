@@ -540,7 +540,7 @@ void EndDMLevel (void)
 				mode = MAPMODE_TBI;
 			else mode = MAPMODE_PVP;
 
-			if (tradingmode_enabled->value && total_players() == 0)
+			if (tradingmode_enabled->value && JoinedPlayers() == 0)
 			{
 				mode = MAPMODE_TRA; // default to trading mode when no people's in
 			}

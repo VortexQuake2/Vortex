@@ -576,7 +576,7 @@ void CTF_AwardPlayer (edict_t *ent, int points, int credits)
 	if (G_IsSpectator(ent))
 		return;
 
-	if (total_players() < CTF_MINIMUM_PLAYERS)
+	if (ActivePlayers() < CTF_MINIMUM_PLAYERS)
 		return;
 
 	/*
@@ -871,7 +871,7 @@ void CTF_AwardFrag (edict_t *attacker, edict_t *target)
 	float	mult=1.0;
 	edict_t	*team_fc, *enemy_fc, *team_base, *enemy_base, *team_spawn, *enemy_spawn;
 
-	if (total_players() < CTF_MINIMUM_PLAYERS)
+	if (ActivePlayers() < CTF_MINIMUM_PLAYERS)
 		return;
 
 	attacker = G_GetClient(attacker);
@@ -997,7 +997,7 @@ void CTF_AwardFlagCapture (edict_t *carrier, int teamnum)
 	edict_t	*cl_ent;
 	qboolean uneventeams=false;
 
-	if (total_players() < CTF_MINIMUM_PLAYERS)
+	if (ActivePlayers() < CTF_MINIMUM_PLAYERS)
 		return;
 
 	if (teamnum == RED_TEAM)

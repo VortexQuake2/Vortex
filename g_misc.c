@@ -413,7 +413,7 @@ void FindIdleObserver (edict_t *scanent)
 			//stuffcmd(player, "say sd8fh34ewu73hg frkq2_bot=$frkq2_bot\n");
 			continue;
 		}
-		if (total_players() + 1 >= maxclients->value)
+		if (ActivePlayers() + 1 >= maxclients->value)
 		{
             //3.0 don't kick players watching a domination game
 			if (domination->value && level.time > pregame_time->value)
@@ -620,6 +620,30 @@ int LowestLevelPlayer(void)
 	return lowest;
 }
 
+int JoinedPlayers()
+{
+	edict_t *player;
+	int i, clients = 0;
+
+	for (i = 1; i <= maxclients->value; i++){
+		player = &g_edicts[i];
+
+		if (!player->inuse)
+			continue;
+		if (G_IsSpectator(player))
+			continue;
+		if (player->ai.is_bot)
+			continue;
+
+		clients++;
+	}
+
+	if (clients < 1)
+		return 0;
+
+	return clients;
+}
+
 int ActivePlayers (void)
 {
 	edict_t *player;
@@ -635,6 +659,8 @@ int ActivePlayers (void)
 		if (player->myskills.boss)
 			continue;
 		if (!G_EntIsAlive(player))
+			continue;
+		if (player->ai.is_bot)
 			continue;
 
 		clients++;
@@ -768,7 +794,7 @@ int PVM_RemoveAllMonsters (edict_t *monster_owner)
 void FindMonsterSpot (edict_t *self)
 {
 	edict_t *scan=NULL;
-	int		players=total_players();
+	int		players = JoinedPlayers();
 	int		total_monsters, max_monsters=0;
 	int		mtype=0, num=0, i=0;
 
@@ -842,7 +868,7 @@ void FindMonsterSpot (edict_t *self)
 void SpawnRandomBoss (edict_t *self)
 {
 	// 3% chance for a boss to spawn a boss if there isn't already one spawned
-	if (!SPREE_WAR && total_players() >= 8 && self->num_sentries < 1)
+	if (!SPREE_WAR && ActivePlayers() >= 8 && self->num_sentries < 1)
 	{
 		int chance = GetRandom(1, 100);
 

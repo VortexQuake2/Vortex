@@ -1403,8 +1403,8 @@ void M_FindPath (edict_t *self, vec3_t goalpos, qboolean compute_path_now)
 		vec3_t v1, v2;
 
 		// get node location nearest to us and our goal
-		if (!(NearestNodeLocation(self->s.origin, v1, 0, true))
-			||!(NearestNodeLocation(goalpos, v2, 0, true)))
+		if (!(NearestNodeLocation(self->s.origin, v1, 0, false))
+			||!(NearestNodeLocation(goalpos, v2, 0, false)))
 		{
 			// can't find nearby nodes
 			M_ClearPath(self);
@@ -1424,7 +1424,7 @@ void M_FindPath (edict_t *self, vec3_t goalpos, qboolean compute_path_now)
 			self->monsterinfo.nextWaypoint = 
 				NearestWaypointNum(self->s.origin, self->monsterinfo.waypoint) + 1;
 			// brief delay before we can re-compute path to goal
-			self->monsterinfo.path_time = level.time + 1.0 + random();
+			self->monsterinfo.path_time = level.time + 3.0 + random();
 		}
 		else
 		{

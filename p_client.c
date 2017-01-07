@@ -3830,7 +3830,7 @@ void ClientBeginServerFrame (edict_t *ent)
 			Teleport_them(ent);
 	}
     
-	if (level.time > pregame_time->value && ActivePlayers() > maxclients->value * 0.8)
+	if (level.time > pregame_time->value && JoinedPlayers() > maxclients->value * 0.8)
 	{
 		frames = MAX_IDLE_FRAMES;
 

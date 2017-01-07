@@ -28,7 +28,7 @@ void dom_awardpoints (void)
 	if (level.framenum % DOMINATION_AWARD_FRAMES)
 		return;
 	// not enough players
-	if (total_players() < DOMINATION_MINIMUM_PLAYERS)
+	if (ActivePlayers() < DOMINATION_MINIMUM_PLAYERS)
 		return;
 
 	for (i=0 ; i<game.maxclients ; i++) {

@@ -376,7 +376,7 @@ void PTRCheckJoinedQue (void)
 	// check every second
 	if (!(level.framenum%10))
 	{
-		if (total_players() < 1)
+		if (JoinedPlayers() < 1)
 			return;
 		if (NumInJoinedQue() < 1)
 			return;
@@ -703,7 +703,7 @@ void retard_awardteampoints (edict_t *self)
 	if (!self->teamnum)
 		return;
 
-	if (total_players() < RETARD_MIN_PLAYERS)
+	if (ActivePlayers() < RETARD_MIN_PLAYERS)
 	{
 		gi.bprintf(PRINT_HIGH, "Not enough players!\n");
 		// switch back to pvp default

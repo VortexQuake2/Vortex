@@ -301,7 +301,7 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 float TimeFormula()
 {
 	int base = 4*60;
-	int playeramt = ActivePlayers() * 8;
+	int playeramt = JoinedPlayers() * 8;
 	int levelamt = invasion_difficulty_level * 7;
 	int cap = 60;
 	int rval = base - playeramt - levelamt;
@@ -371,7 +371,7 @@ void INV_SpawnMonsters (edict_t *self)
 	int SpawnTries = 0, MaxTriesThisFrame = 32;
 	PVM_TotalMonsters(self, true);
 
-	players = max_monsters = total_players();
+	players = max_monsters = JoinedPlayers();
 
 	// there are still monsters alive
 	if ((self->num_monsters_real > 0) && (self->count == MONSTERSPAWN_STATUS_IDLE))
@@ -446,9 +446,9 @@ void INV_SpawnMonsters (edict_t *self)
 	if (!(invasion_difficulty_level % 5))
 	{
 		if (invasion->value == 1)
-			max_monsters = 4*(ActivePlayers()-1);
+			max_monsters = 4 * (JoinedPlayers() - 1);
 		else if (invasion->value == 2)
-			max_monsters = 6*(ActivePlayers()-1);
+			max_monsters = 6 * (JoinedPlayers() - 1);
 	}
 
 	if (!invasion_data.printedmessage)

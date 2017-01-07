@@ -767,9 +767,11 @@ void	ServerCommand (void)
 		SVCmd_ListIP_f ();
 	else if (Q_stricmp (cmd, "writeip") == 0)
 		SVCmd_WriteIP_f ();
-	else if (Q_stricmp (cmd, "maplist") == 0) 
-        Cmd_Maplist_f (NULL); 
+	else if (Q_stricmp(cmd, "maplist") == 0)
+		Cmd_Maplist_f(NULL);
 	// az begin
+	else if (Q_stricmp(cmd, "avglevel"))
+		gi.dprintf("Average level: %d\n", AveragePlayerLevel());
 #if (!defined GDS_NOMULTITHREADING) && (!defined NO_GDS)
 	else if (Q_stricmp (cmd, "connectgds") == 0)
 		V_GDS_StartConn();

@@ -64,13 +64,16 @@ void Cmd_Shield_f (edict_t *ent, int toggle)
 
 void Cmd_SuperSpeed_f (edict_t *ent, int toggle)
 {
+	int speedLevel;
+
 	if ((!ent->inuse) || (!ent->client))
 		return;
 	if (toggle == 0) {
 		ent->superspeed = false;
 		return;
 	}
-	if(ent->myskills.abilities[SUPER_SPEED].disable)
+
+	if (ent->myskills.abilities[SUPER_SPEED].disable && ent->mtype != MORPH_BERSERK)
 		return;
 
 	if (HasFlag(ent))
@@ -83,7 +86,13 @@ void Cmd_SuperSpeed_f (edict_t *ent, int toggle)
 	if (que_findtype(ent->curses, NULL, AMNESIA) != NULL)
 		return;
 
-	if (ent->myskills.abilities[SUPER_SPEED].current_level < 1) {
+	speedLevel = ent->myskills.abilities[SUPER_SPEED].current_level;
+
+	// berserk gets free superspeed
+	if (ent->myskills.abilities[BERSERK].current_level)
+		speedLevel = 1;
+
+	if (speedLevel < 1) {
 		safe_cprintf(ent, PRINT_HIGH, "You can not use Super Speed due to not training in it!\n");
 		return;
 	}
