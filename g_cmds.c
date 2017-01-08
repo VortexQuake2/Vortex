@@ -6,6 +6,7 @@ void Grenade_Explode (edict_t *ent);
 void Cmd_CorpseExplode(edict_t *ent);
 void Cmd_HellSpawn_f (edict_t *ent);
 void Cmd_Caltrops_f (edict_t *ent);
+void Cmd_fmedi_f(edict_t *ent);
 //End prototypes
 
 void Cmd_DetPipes_f (edict_t *ent)
@@ -238,12 +239,13 @@ void FL_make(edict_t *self)
     self->flashlight->classname = "flashlight";
     self->flashlight->s.modelindex = gi.modelindex ("models/objects/flash/tris.md2"); 
     self->flashlight->s.skinnum = 0;
-    /*self->flashlight->s.effects |= 0x10000000;//transparency
-    self->flashlight->s.effects |= EF_HYPERBLASTER;*/
+    self->flashlight->s.effects |= 0x10000000; //transparency
+    self->flashlight->s.effects |= EF_HYPERBLASTER;
 
     self->flashlight->think = FL_think;
     self->flashlight->nextthink = level.time + FRAMETIME;
-}
+
+} 
 //K03 End
 
 char *ClientTeam (edict_t *ent)
@@ -2613,7 +2615,7 @@ void Cmd_GetFloorPos_f (edict_t *ent, int add)
 	
 void Cmd_BombPlayer(edict_t *ent, float skill_mult, float cost_mult);
 Cmd_Thorns(edict_t *ent);
-//void Cmd_HolyShock(edict_t *ent);
+void Cmd_HolyShock(edict_t *ent);
 int ClassNum(edict_t *ent, int team);
 void Cmd_VampireMode (edict_t *ent);
 qboolean vrx_CheckForFlag (void);
@@ -2622,6 +2624,9 @@ qboolean vrx_CheckForFlag (void);
 ClientCommand
 =================
 */
+
+
+
 void Cmd_HolyFreeze(edict_t *ent);
 void Cmd_Forcewall(edict_t *ent);
 void ForcewallOff(edict_t *player);
@@ -2665,6 +2670,7 @@ void Cmd_LightningStorm_f (edict_t *ent, float skill_mult, float cost_mult);
 void Cmd_TossMirv (edict_t *ent);
 void Cmd_Healer_f (edict_t *ent);
 void Cmd_Spiker_f (edict_t *ent);
+void Cmd_box_f(edict_t *ent);
 void Cmd_Obstacle_f (edict_t *ent);
 void Cmd_Gasser_f (edict_t *ent);
 void Cmd_TossSpikeball (edict_t *ent);

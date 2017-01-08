@@ -525,7 +525,7 @@ void init_drone_infantry (edict_t *self)
 	VectorSet (self->mins, -16, -16, -24);
 	VectorSet (self->maxs, 16, 16, 32);
 
-	self->health = 80 + 40*self->monsterinfo.level;
+	self->health = 80 + 55*self->monsterinfo.level;
 	self->max_health = self->health;
 	self->gib_health = -100;
 	self->mass = 400;

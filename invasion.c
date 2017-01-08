@@ -5,9 +5,9 @@
 edict_t		*INV_SpawnQue[MAX_CLIENTS];
 int			invasion_max_playerspawns;
 int			invasion_spawncount; // current spawns
-edict_t		*INV_PlayerSpawns[32]; 
+edict_t		*INV_PlayerSpawns[32];
 
-void INV_Init (void)
+void INV_Init(void)
 {
 	int i;
 	if (!pvm->value || !invasion->value)
@@ -19,16 +19,16 @@ void INV_Init (void)
 	invasion_max_playerspawns = 0;
 	invasion_spawncount = 0;
 
-	for (i = 0; i < 32; i++)
+	for (i = 0; i < 24; i++)   // down from 32 to 24
 		INV_PlayerSpawns[i] = NULL;
 }
 
 // initialize array values to NULL
-void INV_InitSpawnQue (void)
+void INV_InitSpawnQue(void)
 {
 	int i;
 
-	for (i=0; i < MAX_CLIENTS; i++)
+	for (i = 0; i < MAX_CLIENTS; i++)
 		INV_SpawnQue[i] = NULL;
 }
 
@@ -42,7 +42,7 @@ edict_t *INV_GiveRandomPSpawn()
 	{
 		while (!INV_PlayerSpawns[rand]) // Pick a random, active one.
 		{
-			rand = GetRandom(1,invasion_max_playerspawns)-1;
+			rand = GetRandom(1, invasion_max_playerspawns) - 1;
 		}
 
 		return INV_PlayerSpawns[rand];
@@ -68,18 +68,18 @@ qboolean INV_IsSpawnQueEmpty()
 	return true;
 }
 
-qboolean INV_InSpawnQue (edict_t *ent)
+qboolean INV_InSpawnQue(edict_t *ent)
 {
 	int i;
 
-	for (i=0; i < MAX_CLIENTS; i++)
+	for (i = 0; i < MAX_CLIENTS; i++)
 		if (INV_SpawnQue[i] && INV_SpawnQue[i] == ent)
 			return true;
 	return false;
 }
 
 // add player to the spawn queue
-qboolean INV_AddSpawnQue (edict_t *ent)
+qboolean INV_AddSpawnQue(edict_t *ent)
 {
 	int i;
 
@@ -90,7 +90,7 @@ qboolean INV_AddSpawnQue (edict_t *ent)
 	if (INV_InSpawnQue(ent))
 		return false;
 
-	for (i=0; i < MAX_CLIENTS; i++)
+	for (i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (!INV_SpawnQue[i])
 		{
@@ -103,11 +103,11 @@ qboolean INV_AddSpawnQue (edict_t *ent)
 }
 
 // remove player from the queue
-qboolean INV_RemoveSpawnQue (edict_t *ent)
+qboolean INV_RemoveSpawnQue(edict_t *ent)
 {
 	int i;
 
-	for (i=0; i < MAX_CLIENTS; i++)
+	for (i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (INV_SpawnQue[i] && (INV_SpawnQue[i] == ent))
 		{
@@ -120,11 +120,11 @@ qboolean INV_RemoveSpawnQue (edict_t *ent)
 }
 
 // return player that is waiting to respawn
-edict_t *INV_GetSpawnPlayer (void)
+edict_t *INV_GetSpawnPlayer(void)
 {
 	int i;
 
-	for (i=0; i < MAX_CLIENTS; i++)
+	for (i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (INV_SpawnQue[i] && INV_SpawnQue[i]->inuse && INV_SpawnQue[i]->client)
 		{
@@ -135,12 +135,12 @@ edict_t *INV_GetSpawnPlayer (void)
 	return NULL;
 }
 
-edict_t *INV_GetRandomSpawn (void)
+edict_t *INV_GetRandomSpawn(void)
 {
-	int i=0;
+	int i = 0;
 	edict_t *e, *spawns[32];
 
-	for (e=g_edicts ; e < &g_edicts[globals.num_edicts]; e++)
+	for (e = g_edicts; e < &g_edicts[globals.num_edicts]; e++)
 	{
 		if (e && e->inuse && (e->mtype == INVASION_PLAYERSPAWN))
 			spawns[i++] = e;
@@ -154,28 +154,28 @@ edict_t *INV_GetRandomSpawn (void)
 		return spawns[0];
 	// found more than one spawn, so return a random one
 	else
-		return spawns[GetRandom(0, i-1)];
+		return spawns[GetRandom(0, i - 1)];
 
 }
 
-edict_t *INV_GetMonsterSpawn (edict_t *from)
+edict_t *INV_GetMonsterSpawn(edict_t *from)
 {
 	if (from)
 		from++;
 	else
 		from = g_edicts;
 
-	for ( ; from < &g_edicts[globals.num_edicts]; from++)
+	for (; from < &g_edicts[globals.num_edicts]; from++)
 	{
-		if (from && from->inuse && (from->mtype == INVASION_MONSTERSPAWN) 
+		if (from && from->inuse && (from->mtype == INVASION_MONSTERSPAWN)
 			&& (level.time > from->wait))
 			return from;
 	}
 
 	return NULL;
-} 
+}
 
-void INV_AwardPlayers (void)
+void INV_AwardPlayers(void)
 {
 	int		i, points, credits, num_spawns = INV_GetNumPlayerSpawns(), num_winners = 0;
 	edict_t *player;
@@ -185,35 +185,35 @@ void INV_AwardPlayers (void)
 		return;
 
 	// if map didn't end normally, don't award points
-	if (level.time < timelimit->value*60)
+	if (level.time < timelimit->value * 60)
 		return;
 
 	// no award if the humans were unable to defend their spawns
 	if (num_spawns < 1)
 		return;
 
-	for (i=0; i<game.maxclients; i++) 
+	for (i = 0; i<game.maxclients; i++)
 	{
-		player = g_edicts+1+i;
+		player = g_edicts + 1 + i;
 		if (!player->inuse)
 			continue;
-		
-		if (invasion->value == 2)
-			points = player->client->resp.score*((float)num_spawns/invasion_max_playerspawns) + 500 * invasion_difficulty_level;
-		else
-			points = player->client->resp.score*((float)num_spawns/invasion_max_playerspawns);
 
-		if (invasion->value == 1  && points > INVASION_BONUS_EXP)
+		if (invasion->value == 2)
+			points = player->client->resp.score*((float)num_spawns / invasion_max_playerspawns) + 1000 * invasion_difficulty_level;
+		else
+			points = player->client->resp.score*((float)num_spawns / invasion_max_playerspawns);
+
+		if (invasion->value == 1 && points > INVASION_BONUS_EXP)
 			points = INVASION_BONUS_EXP;
 		//points = INVASION_BONUS_EXP*((float)num_spawns/invasion_max_playerspawns);
 		if (invasion->value < 2)
-			credits = INVASION_BONUS_CREDITS*((float)num_spawns/invasion_max_playerspawns);
+			credits = INVASION_BONUS_CREDITS*((float)num_spawns / invasion_max_playerspawns);
 		else
-			credits = INVASION_BONUS_CREDITS*((float)num_spawns/invasion_max_playerspawns) + 1000 * invasion_difficulty_level;
+			credits = INVASION_BONUS_CREDITS*((float)num_spawns / invasion_max_playerspawns) + 1000 * invasion_difficulty_level;
 
-	//	gi.dprintf("points=%d credits=%d spawns=%d max=%d\n", 
-	//		points, credits, num_spawns, invasion_max_playerspawns);
-	
+		//	gi.dprintf("points=%d credits=%d spawns=%d max=%d\n", 
+		//		points, credits, num_spawns, invasion_max_playerspawns);
+
 		if (!G_IsSpectator(player))
 		{
 			int fexp = V_AddFinalExp(player, points);
@@ -224,7 +224,7 @@ void INV_AwardPlayers (void)
 				num_winners++;
 		}
 	}
-	
+
 	if (num_winners)
 		gi.bprintf(PRINT_HIGH, "Humans win! Players were awarded a bonus.\n");
 }
@@ -237,7 +237,7 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 	int mhealth = 1;
 
 	monster = SpawnDrone(self, index, true);
-	
+
 	// calculate starting position
 	VectorCopy(e->s.origin, start);
 	start[2] = e->absmax[2] + 1 + abs(monster->mins[2]);
@@ -247,7 +247,7 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 	if (index != 30) // not a boss?
 	{
 		// don't spawn here if a friendly monster occupies this space
-		if ((tr.fraction < 1) || (tr.ent && tr.ent->inuse && tr.ent->activator && tr.ent->activator->inuse 
+		if ((tr.fraction < 1) || (tr.ent && tr.ent->inuse && tr.ent->activator && tr.ent->activator->inuse
 			&& (tr.ent->activator == self) && (tr.ent->deadflag != DEAD_DEAD)))
 		{
 			// remove the monster and try again
@@ -255,9 +255,9 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 			return NULL;
 		}
 	}
-		
+
 	e->wait = level.time + 1.0; // time until spawn is available again
-	
+
 	monster->monsterinfo.aiflags |= AI_FIND_NAVI; // search for navi
 	monster->s.angles[YAW] = e->s.angles[YAW];
 	monster->prev_navi = NULL;
@@ -267,12 +267,13 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 	if (invasion->value == 1) // easy mode
 	{
 		if (invasion_difficulty_level < 7 && invasion_difficulty_level > 5)
-			mhealth = (invasion_difficulty_level-5) * 0.2 + 1;
+			mhealth = (invasion_difficulty_level - 5) * 0.2 + 1;
 		else if (invasion_difficulty_level >= 7)
 			mhealth = 1.8 + 0.15 * invasion_difficulty_level;
-	}else if (invasion->value == 2) // hard mode
+	}
+	else if (invasion->value == 2) // hard mode
 	{
-		mhealth = 1.63 + 0.22 * invasion_difficulty_level;
+		mhealth = 1.71 + 0.22 * invasion_difficulty_level;
 	}
 
 	monster->max_health = monster->health = monster->max_health*mhealth;
@@ -292,7 +293,7 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 		if (invasion->value == 1)
 			monster->monsterinfo.inv_framenum = level.framenum + 60; // give them quad/invuln to prevent spawn-camping
 		else if (invasion->value == 2)
-			monster->monsterinfo.inv_framenum = level.framenum + 80; // Hard mode invin
+			monster->monsterinfo.inv_framenum = level.framenum + 60; // Hard mode invin
 	}
 	gi.linkentity(monster);
 	return monster;
@@ -300,8 +301,8 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 
 float TimeFormula()
 {
-	int base = 4*60;
-	int playeramt = JoinedPlayers() * 8;
+	int base = 4 * 60;
+	int playeramt = ActivePlayers() * 8;
 	int levelamt = invasion_difficulty_level * 7;
 	int cap = 60;
 	int rval = base - playeramt - levelamt;
@@ -325,7 +326,7 @@ struct invdata_s
 } invasion_data;
 
 // we'll override the other die functino to set our boss pointer to NULL.
-void mytank_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point);
+void mytank_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point);
 
 void invasiontank_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
@@ -343,31 +344,33 @@ void BossCheck(edict_t *e, edict_t *self)
 		{
 			if (!invasion_data.boss)
 			{
-				if(! (invasion_data.boss = INV_SpawnDrone(self, e, 30)) )
+				if (!(invasion_data.boss = INV_SpawnDrone(self, e, 30)))
 				{
 					iter++;
-					
+
 					if (iter < 256) // 256 tries before quitting with spawning this boss
 						continue;
 					else
 						break;
 				}
-				bcount ++;
+				bcount++;
 				total_monsters++;
 				invasion_data.mspawned++;
+				invasion_data.mspawned++;
 				invasion_data.boss->die = invasiontank_die;
-				G_PrintGreenText(va("A level %d tank commander has spawned!", invasion_data.boss->monsterinfo.level));
+				G_PrintGreenText(va("A level %d tank commander has spawned!", invasion_data.boss->monsterinfo.level+ 5));
 				break;
 			}
 		}
-	}else
+	}
+	else
 		invasion_data.boss = NULL;
 }
 
-void INV_SpawnMonsters (edict_t *self)
+void INV_SpawnMonsters(edict_t *self)
 {
 	int		players, max_monsters;
-	edict_t *e=NULL;
+	edict_t *e = NULL;
 	int SpawnTries = 0, MaxTriesThisFrame = 32;
 	PVM_TotalMonsters(self, true);
 
@@ -391,29 +394,31 @@ void INV_SpawnMonsters (edict_t *self)
 		{
 			self->nextthink = level.time + FRAMETIME;
 			return;
-		}else
+		}
+		else
 		{
 			gi.bprintf(PRINT_HIGH, "Time's up!\n");
 			if (invasion_data.boss && invasion_data.boss->deadflag != DEAD_DEAD) // out of time for the boss.
-			{	
+			{
 				G_PrintGreenText(va("You failed to eliminate the commander soon enough!\n"));
-				gi.WriteByte (svc_temp_entity);
-				gi.WriteByte (TE_BOSSTPORT);
-				gi.WritePosition (invasion_data.boss->s.origin);
-				gi.multicast (invasion_data.boss->s.origin, MULTICAST_PVS);
+				gi.WriteByte(svc_temp_entity);
+				gi.WriteByte(TE_BOSSTPORT);
+				gi.WritePosition(invasion_data.boss->s.origin);
+				gi.multicast(invasion_data.boss->s.origin, MULTICAST_PVS);
 				gi.unlinkentity(invasion_data.boss);
 				G_FreeEdict(invasion_data.boss);
 				invasion_data.boss = NULL;
 			}
 			// increase the difficulty level for the next wave
 			if (invasion->value == 1)
-				invasion_difficulty_level += 1; 
+				invasion_difficulty_level += 1;
 			else
 				invasion_difficulty_level += 2; // Hard mode.
 			invasion_data.printedmessage = 0;
 			gi.sound(&g_edicts[0], CHAN_VOICE, gi.soundindex("misc/tele_up.wav"), 1, ATTN_NONE, 0);
 		}
-	}else // Timeout has happened or all monsters eliminated
+	}
+	else // Timeout has happened or all monsters eliminated
 	{
 		self->count = MONSTERSPAWN_STATUS_WORKING;
 		invasion_data.mspawned = self->num_monsters_real;
@@ -429,18 +434,18 @@ void INV_SpawnMonsters (edict_t *self)
 	switch (invasion_difficulty_level)
 	{
 	case 1: max_monsters = 10; break;
-	case 2: max_monsters = 20; break;
-	case 3: max_monsters = 25; break;
-	case 4: max_monsters = 30; break;
+	case 2: max_monsters = 15; break;
+	case 3: max_monsters = 15; break;
+	case 4: max_monsters = 15; break;
 	case 5:
 	case 6:
 	case 7:
 	case 8:
 	case 9:
 	case 10:
-		max_monsters = 35; break; // vrxcl 3.2b decrease for not saturating the server hard.
+		max_monsters = 15; break; // vrxcl 3.2b decrease for not saturating the server hard.
 
-	default: max_monsters = 40;
+	default: max_monsters = 16;
 	}
 
 	if (!(invasion_difficulty_level % 5))
@@ -473,14 +478,14 @@ void INV_SpawnMonsters (edict_t *self)
 
 		invasion_data.printedmessage = 1;
 	}
-	
+
 	while ((e = INV_GetMonsterSpawn(e)) && invasion_data.mspawned < max_monsters && SpawnTries < MaxTriesThisFrame)
 	{
 		int randomval = GetRandom(1, 9);
 
 		if (invasion_difficulty_level % 5 && invasion->value == 1) // nonboss stage? easy mode?
 		{
-			while ( randomval == 5 ) // disallow medics
+			while (randomval == 5) // disallow medics
 			{
 				randomval = GetRandom(1, 8);
 			}
@@ -505,7 +510,7 @@ void INV_SpawnMonsters (edict_t *self)
 	self->nextthink = level.time + FRAMETIME;
 }
 
-void INV_SpawnPlayers (void)
+void INV_SpawnPlayers(void)
 {
 	edict_t *e, *cl_ent;
 	vec3_t	start;
@@ -519,7 +524,7 @@ void INV_SpawnPlayers (void)
 	if (!(cl_ent = INV_GetSpawnPlayer()))
 		return;
 
-	for (e=g_edicts ; e < &g_edicts[globals.num_edicts]; e++)
+	for (e = g_edicts; e < &g_edicts[globals.num_edicts]; e++)
 	{
 		// find an available spawn point
 		if (e && e->inuse && (e->mtype == INVASION_PLAYERSPAWN) && (level.time > e->wait))
@@ -548,7 +553,7 @@ void INV_SpawnPlayers (void)
 	}
 }
 
-edict_t *INV_SelectPlayerSpawnPoint (edict_t *ent)
+edict_t *INV_SelectPlayerSpawnPoint(edict_t *ent)
 {
 	if (!ent || !ent->inuse)
 		return NULL;
@@ -569,7 +574,7 @@ edict_t *INV_SelectPlayerSpawnPoint (edict_t *ent)
 	return NULL;
 }
 
-int INV_GetNumPlayerSpawns (void)
+int INV_GetNumPlayerSpawns(void)
 {
 	return invasion_spawncount;
 }
@@ -592,7 +597,7 @@ void INV_RemoveFromSpawnlist(edict_t *self)
 		}
 }
 
-void info_player_invasion_death (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
+void info_player_invasion_death(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
 	G_UseTargets(self, self);
 	self->think = BecomeExplosion1;
@@ -600,31 +605,31 @@ void info_player_invasion_death (edict_t *self, edict_t *inflictor, edict_t *att
 	INV_RemoveFromSpawnlist(self);
 }
 
-void info_player_invasion_think (edict_t *self)
+void info_player_invasion_think(edict_t *self)
 {
 	if (level.time > self->lasthurt + 1.0)
-		M_Regenerate(self, PLAYERSPAWN_REGEN_FRAMES, PLAYERSPAWN_REGEN_DELAY,  1.0, true, false, false, &self->monsterinfo.regen_delay1);
+		M_Regenerate(self, PLAYERSPAWN_REGEN_FRAMES, PLAYERSPAWN_REGEN_DELAY, 1.0, true, false, false, &self->monsterinfo.regen_delay1);
 
 	self->nextthink = level.time + FRAMETIME;
 }
 
-void SP_info_player_invasion (edict_t *self)
+void SP_info_player_invasion(edict_t *self)
 {
 	//FIXME: change to invasion->value
 	if (!pvm->value || !invasion->value)
 	{
-		G_FreeEdict (self);
+		G_FreeEdict(self);
 		return;
 	}
 
 	// remove deathmatch spawnpoints
 	if (!INVASION_OTHERSPAWNS_REMOVED)
 	{
-		edict_t *e=NULL;
-		
+		edict_t *e = NULL;
+
 		gi.dprintf("PvM Invasion mode activated!\n");
 
-		while((e = G_Find(e, FOFS(classname), "info_player_deathmatch")) != NULL)
+		while ((e = G_Find(e, FOFS(classname), "info_player_deathmatch")) != NULL)
 		{
 			if (e && e->inuse)
 				G_FreeEdict(e);
@@ -633,14 +638,14 @@ void SP_info_player_invasion (edict_t *self)
 	}
 
 	// this entity should be killable and game should end if all of them die
-	gi.setmodel (self, "models/objects/dmspot/tris.md2");
+	gi.setmodel(self, "models/objects/dmspot/tris.md2");
 	self->s.skinnum = 0;
 	self->mtype = INVASION_PLAYERSPAWN;
 
 	if (invasion->value == 1)
-		self->health = PLAYERSPAWN_HEALTH + 250*AveragePlayerLevel();
+		self->health = PLAYERSPAWN_HEALTH + 250 * AveragePlayerLevel();
 	else if (invasion->value == 2)
-		self->health = PLAYERSPAWN_HEALTH*2 + 250*AveragePlayerLevel();
+		self->health = PLAYERSPAWN_HEALTH * 2 + 250 * AveragePlayerLevel();
 
 	self->max_health = self->health;
 	self->takedamage = DAMAGE_YES;
@@ -649,9 +654,9 @@ void SP_info_player_invasion (edict_t *self)
 	self->nextthink = level.time + FRAMETIME;
 	//self->touch = info_player_invasion_touch;
 	self->solid = SOLID_BBOX;
-	VectorSet (self->mins, -32, -32, -24);
-	VectorSet (self->maxs, 32, 32, -16);
-	gi.linkentity (self);
+	VectorSet(self->mins, -32, -32, -24);
+	VectorSet(self->maxs, 32, 32, -16);
+	gi.linkentity(self);
 
 	INV_PlayerSpawns[invasion_max_playerspawns] = self;
 
@@ -659,42 +664,42 @@ void SP_info_player_invasion (edict_t *self)
 	invasion_spawncount++;
 }
 
-void SP_info_monster_invasion (edict_t *self)
+void SP_info_monster_invasion(edict_t *self)
 {
 	//FIXME: change to invasion->value
 	if (!pvm->value || !invasion->value)
 	{
-		G_FreeEdict (self);
+		G_FreeEdict(self);
 		return;
 	}
 
 	self->mtype = INVASION_MONSTERSPAWN;
 	self->solid = SOLID_NOT;
-	//self->s.effects |= EF_BLASTER;
-	//gi.setmodel (self, "models/items/c_head/tris.md2");
+	self->s.effects |= EF_BLASTER;
+	gi.setmodel (self, "models/items/c_head/tris.md2");
 	self->svflags |= SVF_NOCLIENT;
-	gi.linkentity (self);
+	gi.linkentity(self);
 }
 
-void SP_navi_monster_invasion (edict_t *self)
+void SP_navi_monster_invasion(edict_t *self)
 {
 	//FIXME: change to invasion->value
 	if (!pvm->value || !invasion->value)
 	{
-		G_FreeEdict (self);
+		G_FreeEdict(self);
 		return;
 	}
-	
+
 	//gi.dprintf("navi point created!\n");
 
 	self->solid = SOLID_NOT;
 	self->mtype = INVASION_NAVI;
-	//gi.setmodel (self, "models/items/c_head/tris.md2");
+	gi.setmodel (self, "models/items/c_head/tris.md2");
 	self->svflags |= SVF_NOCLIENT;
-	gi.linkentity (self);
+	gi.linkentity(self);
 }
 
-int G_GetEntityIndex (edict_t *ent)
+int G_GetEntityIndex(edict_t *ent)
 {
 	int		i = 0;
 	edict_t *e;
@@ -702,7 +707,7 @@ int G_GetEntityIndex (edict_t *ent)
 	if (!ent || !ent->inuse)
 		return 0;
 
-	for (e=g_edicts ; e < &g_edicts[globals.num_edicts]; e++)
+	for (e = g_edicts; e < &g_edicts[globals.num_edicts]; e++)
 	{
 		if (e && e->inuse && (e == ent))
 			return i;
@@ -712,12 +717,12 @@ int G_GetEntityIndex (edict_t *ent)
 	return 0;
 }
 
-void inv_defenderspawn_think (edict_t *self)
+void inv_defenderspawn_think(edict_t *self)
 {
 	//int		num=G_GetEntityIndex(self); // FOR DEBUGGING ONLY
 	vec3_t	start;
 	trace_t	tr;
-	edict_t *monster=NULL;
+	edict_t *monster = NULL;
 
 	//FIXME: this isn't a good enough check if monster is dead or not
 	// did our monster die?
@@ -732,7 +737,7 @@ void inv_defenderspawn_think (edict_t *self)
 		}
 
 		// try to spawn another
-		if ((level.time > self->wait) 
+		if ((level.time > self->wait)
 			&& (monster = SpawnDrone(self, self->sounds, true)) != NULL)
 		{
 			//gi.dprintf("%d: attempting to spawn a monster\n", num);
@@ -741,16 +746,16 @@ void inv_defenderspawn_think (edict_t *self)
 			start[2] = self->absmax[2] + 1 + abs(monster->mins[2]);
 
 			tr = gi.trace(start, monster->mins, monster->maxs, start, NULL, MASK_SHOT);
-			
+
 			// kill dead bodies
 			if (tr.ent && tr.ent->takedamage && (tr.ent->deadflag == DEAD_DEAD || tr.ent->health < 1))
 				T_Damage(tr.ent, self, self, vec3_origin, tr.ent->s.origin, vec3_origin, 10000, 0, 0, 0);
 			// spawn is blocked, try again later
-			 else if (tr.fraction < 1)
+			else if (tr.fraction < 1)
 			{
 				//gi.dprintf("%d: spawn is blocked, will try again\n", num);
 				G_FreeEdict(monster);
-				self->nextthink = level.time + 1.0;
+				self->nextthink = level.time + 10.0;
 				return;
 			}
 
@@ -768,7 +773,7 @@ void inv_defenderspawn_think (edict_t *self)
 			if (self->count)
 				monster->monsterinfo.inv_framenum = level.framenum + self->count;
 			else
-				monster->monsterinfo.inv_framenum = level.framenum + 60; 
+				monster->monsterinfo.inv_framenum = level.framenum + 60;
 
 			gi.linkentity(monster);
 
@@ -781,6 +786,7 @@ void inv_defenderspawn_think (edict_t *self)
 			//	gi.dprintf("%d: spawndrone() failed to spawn a monster\n", num);
 			//else if (!(level.framenum%10))
 			//	gi.dprintf("%d: waiting...\n", num);
+			self->orders = MONSTERSPAWN_STATUS_IDLE;
 		}
 	}
 	else
@@ -794,12 +800,12 @@ void inv_defenderspawn_think (edict_t *self)
 }
 
 // map-editable fields - count (quad+invin), style (stand ground), angle, sounds (mtype to spawn)
-void SP_inv_defenderspawn (edict_t *self)
+void SP_inv_defenderspawn(edict_t *self)
 {
 	//FIXME: change to invasion->value
 	if (!pvm->value || !invasion->value)
 	{
-		G_FreeEdict (self);
+		G_FreeEdict(self);
 		return;
 	}
 
@@ -807,11 +813,11 @@ void SP_inv_defenderspawn (edict_t *self)
 	self->solid = SOLID_NOT;
 	self->think = inv_defenderspawn_think;
 	self->nextthink = level.time + pregame_time->value + FRAMETIME;
-	//self->s.effects |= EF_BLASTER;
-	//gi.setmodel (self, "models/items/c_head/tris.md2");
+	self->s.effects |= EF_BLASTER;
+	gi.setmodel (self, "models/items/c_head/tris.md2");
 	self->svflags |= SVF_NOCLIENT;
-	gi.linkentity (self);
+	gi.linkentity(self);
 }
 
-float GetPlayerBossDamage (edict_t *player, edict_t *boss);
-float GetTotalBossDamage (edict_t *self);
+float GetPlayerBossDamage(edict_t *player, edict_t *boss);
+float GetTotalBossDamage(edict_t *self);

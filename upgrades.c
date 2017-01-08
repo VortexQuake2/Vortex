@@ -81,6 +81,7 @@ void OpenSpecialUpgradeMenu(edict_t *ent, int lastline)
 	//					xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
 	addlinetomenu(ent, "Player Upgrades Menu", MENU_GREEN_CENTERED);
 	addlinetomenu(ent, " ", 0);
+	ent->client->menustorage.currentline =5;
 	for (i = 0; i < MAX_ABILITIES; i++)
 	{
 		upgrade_t *upgrade;
@@ -106,9 +107,7 @@ void OpenSpecialUpgradeMenu(edict_t *ent, int lastline)
 	addlinetomenu(ent, "Exit", 500);
 	setmenuhandler(ent, upgradeSpecialMenu_handler);
 	if (!lastline)
-		ent->client->menustorage.currentline = total_lines-1;
-	else
-		ent->client->menustorage.currentline = lastline;
+		ent->client->menustorage.currentline = 5;
 	showmenu(ent);
 
 	ent->client->menustorage.menu_index = MENU_SPECIAL_UPGRADES;
@@ -139,14 +138,8 @@ void OpenUpgradeMenu (edict_t *ent)
 	clearmenu(ent);
 	//					xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
 	addlinetomenu(ent, "Player Upgrades Menu", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Select an ability you want", 0);
-	addlinetomenu(ent, "to upgrade. Remember to", 0);
-	addlinetomenu(ent, "choose class-specific", 0);
-	addlinetomenu(ent, "abilities, so you don't", 0);
-	addlinetomenu(ent, "receive a penalty! Your", 0);
-	addlinetomenu(ent, va("class is %s and you", GetClassString(ent->myskills.class_num)), 0);
-	addlinetomenu(ent, va("have %d ability points.", ent->myskills.speciality_points), 0);
+	addlinetomenu(ent, va("Your class is %s ", GetClassString(ent->myskills.class_num)), 0);
+	addlinetomenu(ent, va("and you have %d ability points.", ent->myskills.speciality_points), 0);
 	addlinetomenu(ent, " ", 0);
 
 	if (ent->myskills.class_num != CLASS_WEAPONMASTER) // WMs don't get class specific skills.
@@ -159,7 +152,7 @@ void OpenUpgradeMenu (edict_t *ent)
 
 	addlinetomenu(ent, "Exit", 4);
 	setmenuhandler(ent, upgrademenu_handler);
-	ent->client->menustorage.currentline = 10;
+	ent->client->menustorage.currentline = 5;
 	showmenu(ent);
 
 	// try to shortcut to chat-protect mode

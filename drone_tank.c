@@ -294,11 +294,11 @@ void myTankRocket (edict_t *self)
 	damage = 20 + 10*self->monsterinfo.level;
 	if( self->activator && self->activator->client )
 	{
-		speed = 450 + 30*self->monsterinfo.level;	
+		speed = 800 + 30*self->monsterinfo.level;	
 	}
 	else
 	{
-		speed = 450;
+		speed = 880;
 	}	
 
 	MonsterAim(self, 1, speed, true, flash_number, forward, start);
@@ -1101,14 +1101,14 @@ void init_drone_tank (edict_t *self)
 	gi.soundindex ("tank/tnkatck3.wav");
 
 //	if (self->activator && self->activator->client)
-	self->health = 60 + 50*self->monsterinfo.level;
+	self->health = 150 + 95*self->monsterinfo.level;
 	//else self->health = 100 + 65*self->monsterinfo.level;
 
 	self->max_health = self->health;
 	self->gib_health = -200;
 
 	//if (self->activator && self->activator->client)
-	self->monsterinfo.power_armor_power = 100 + 95*self->monsterinfo.level;
+	self->monsterinfo.power_armor_power = 200 + 95*self->monsterinfo.level;
 	//else self->monsterinfo.power_armor_power = 200 + 105*self->monsterinfo.level;
 
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;

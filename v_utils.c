@@ -8,31 +8,31 @@ qboolean IsAllowedPregameSkills();
 //Takes the class string and returns the index
 int getClassNum(char *newclass)
 {
-/*	if (Q_strcasecmp(newclass, "Soldier") == 0)
-		return CLASS_SOLDIER;
+	/*	if (Q_strcasecmp(newclass, "Soldier") == 0)
+	return CLASS_SOLDIER;
 	else if (Q_strcasecmp(newclass, "Mage") == 0)
-		return CLASS_ARCANIST;
+	return CLASS_ARCANIST;
 	else if (Q_strcasecmp(newclass, "Necromancer") == 0)
-		return CLASS_NECROMANCER;
+	return CLASS_NECROMANCER;
 	else if (Q_strcasecmp(newclass, "Vampire") == 0)
-		return CLASS_DEMON;
+	return CLASS_DEMON;
 	else if (Q_strcasecmp(newclass, "Engineer") == 0)
-		return CLASS_ENGINEER;
+	return CLASS_ENGINEER;
 	else if (Q_strcasecmp(newclass, "Poltergeist") == 0)
-		return CLASS_POLTERGEIST;
+	return CLASS_POLTERGEIST;
 	else if (Q_strcasecmp(newclass, "Knight") == 0)
-		return CLASS_PALADIN;
+	return CLASS_PALADIN;
 	else if (Q_strcasecmp(newclass, "Cleric") == 0)
-		return CLASS_CLERIC;
+	return CLASS_CLERIC;
 	else if (Q_strcasecmp(newclass, "Shaman") == 0)
-		return CLASS_SHAMAN;
+	return CLASS_SHAMAN;
 	else if (Q_strcasecmp(newclass, "Alien") == 0)
-		return CLASS_ALIEN;
+	return CLASS_ALIEN;
 	else if ((Q_strcasecmp(newclass, "Weapon Master") == 0) || (Q_strcasecmp(newclass, "WeaponMaster") == 0))
-		return CLASS_WEAPONMASTER;
+	return CLASS_WEAPONMASTER;
 	else if (Q_strcasecmp(newclass, "Kamikaze") == 0)
-		return CLASS_KAMIKAZE;
-		*/
+	return CLASS_KAMIKAZE;
+	*/
 	return 0;
 }
 
@@ -51,7 +51,7 @@ void padRight(char *String, int numChars)
 
 //************************************************************************************************
 
-char GetRandomChar (void) 
+char GetRandomChar(void)
 {
 	switch (GetRandom(1, 3))
 	{
@@ -64,13 +64,13 @@ char GetRandomChar (void)
 
 //************************************************************************************************
 
-char *GetRandomString (int len)
+char *GetRandomString(int len)
 {
 	int i;
 	char *s;
 
-	s = (char *)  V_Malloc (len*sizeof(char), TAG_GAME);
-	for (i=0; i<len-1; i++) {
+	s = (char *)V_Malloc(len*sizeof(char), TAG_GAME);
+	for (i = 0; i<len - 1; i++) {
 		s[i] = GetRandomChar();
 	}
 	s[i] = '\0'; // terminating char
@@ -83,25 +83,25 @@ char *GetRandomString (int len)
 
 void PrintCommands(edict_t *ent)
 {
-    //Spam the user with a huge amount of text :)
+	//Spam the user with a huge amount of text :)
 	safe_cprintf(ent, PRINT_HIGH, "Vortex Command List:\n\n");
 	safe_cprintf(ent, PRINT_HIGH, va("Version %s\n\n", VRX_VERSION));
 
 	safe_cprintf(ent, PRINT_HIGH, "== Character abilities ==\n\n    acid\n    airtotem [protect]\n    ammosteal\n    amnesia\n    ampdamage\n    antigrav\n    armorbomb\n    aura_holyfreeze\n    aura_salvation\n    autocannon\n    balancespirit\n    beam_off\n    beam_on\n    berserker\n    bless\n    blessedhammer\n    bombspell\n    boomerang\n    boost\n    brain\n    cacodemon\n    caltrop\n    chainlightning\n    cocoon\n    convert\n    ");
 	safe_cprintf(ent, PRINT_HIGH, "cripple\n    curse\n    darknesstotem\n    deathray\n    deflect\n    detector\n    detonatebody\n    detpipe\n    earthtotem\n    emp\n    explode\n    fireball\n    firetotem\n    flyer\n    forcewall\n    forcewall_off\n    frostnova\n    gasser\n    heal\n    healer\n    healray\n    hellspawn\n    holyfreeze\n    holyground\n    icebolt\n    laser\n    laser\n    laserplatform\n    lasertrap\n    lifedrain\n    lightningstorm\n    lowerresist\n    magicbolt\n    magmine\n    manashield\n    medic\n    meditate\n    meteor\n    minisentry\n    mirv\n    monster\n    mutant\n    napalm\n    naturetotem\n    nosspeed\n    nova\n    obstacle\n    overload\n    parasite\n    plasmabolt\n    proxy\n    purge\n    salvation\n    scanner\n    sentry\n    shieldoff\n    shieldon\n    spell_bomb\n    spell_boost\n    spell_corpse\n    spell_stealammo\n    spike\n    spikegrenade\n    spiker\n    spore\n    sprintoff\n    sprinton\n    sspeed\n    supplystation\n    tank\n    teleport_fwd\n    totem [remove]\n    unholyground\n    watertotem\n    weaken\n    wormhole\n    yang\n    yin\n");
-    safe_cprintf(ent, PRINT_HIGH, "\n\n== General commands ==\n\n    abilityindex\n    ally\n    allyinfo\n    combat\n    flashlight\n    gravjump \n    lasersight\n    masterpw\n    mute\n    owner\n    rune\n    speech\n    team\n    togglesecondary\n    trade\n    transfercredits\n    update\n    vrxhelp\n    vrxid\n    vrxmenu\n    whois\n    yell\n");
-    
-    if (ent->myskills.administrator)
-        safe_cprintf(ent, PRINT_HIGH, "\n\n== Admin commands ==\n\n    addnode\n    admincmd\n    bbox\n    checkclientsettings\n    computenode\n    deleteallnode\n    deletenode\n    loadnode\n    lockon_crosshair\n    lockon_off\n    lockon_on\n    navipos\n    savenode\n    showgrid\n    spawnpos\n    teleport_rnd\n    writepos\n");
+	safe_cprintf(ent, PRINT_HIGH, "\n\n== General commands ==\n\n    abilityindex\n    ally\n    allyinfo\n    combat\n    flashlight\n    gravjump \n    lasersight\n    masterpw\n    mute\n    owner\n    rune\n    speech\n    team\n    togglesecondary\n    trade\n    transfercredits\n    update\n    vrxhelp\n    vrxid\n    vrxmenu\n    whois\n    yell\n");
+
+	if (ent->myskills.administrator)
+		safe_cprintf(ent, PRINT_HIGH, "\n\n== Admin commands ==\n\n    addnode\n    admincmd\n    bbox\n    checkclientsettings\n    computenode\n    deleteallnode\n    deletenode\n    loadnode\n    lockon_crosshair\n    lockon_off\n    lockon_on\n    navipos\n    savenode\n    showgrid\n    spawnpos\n    teleport_rnd\n    writepos\n");
 }
 
 //************************************************************************************************
 //	Armoury Strings (stuff you can buy at the armory)
 //************************************************************************************************
 
-char *GetArmoryItemString (int purchase_number)
+char *GetArmoryItemString(int purchase_number)
 {
-	switch(purchase_number)
+	switch (purchase_number)
 	{
 	case 1:		return "Shotgun";
 	case 2:		return "Super Shotgun";
@@ -142,10 +142,10 @@ char *GetArmoryItemString (int purchase_number)
 //	Weapon Strings (mods and weapon names)
 //************************************************************************************************
 
-char *GetShortWeaponString (int weapon_number)
+char *GetShortWeaponString(int weapon_number)
 {
 	//Returns a shorter form of a weapon, for the rune menu
-	switch(weapon_number)
+	switch (weapon_number)
 	{
 	case WEAPON_BLASTER:			return "Blaster";
 	case WEAPON_SHOTGUN:			return "SG";
@@ -166,9 +166,9 @@ char *GetShortWeaponString (int weapon_number)
 
 //************************************************************************************************
 
-char *GetWeaponString (int weapon_number)
+char *GetWeaponString(int weapon_number)
 {
-	switch(weapon_number)
+	switch (weapon_number)
 	{
 	case WEAPON_BLASTER:			return "Blaster";
 	case WEAPON_SHOTGUN:			return "Shotgun";
@@ -189,19 +189,19 @@ char *GetWeaponString (int weapon_number)
 
 //************************************************************************************************
 
-char *GetModString (int weapon_number, int mod_number)
+char *GetModString(int weapon_number, int mod_number)
 {
-	switch(mod_number)
+	switch (mod_number)
 	{
 	case 0:		return "Damage";
 	case 1:
-		switch(weapon_number)
+		switch (weapon_number)
 		{
 		case WEAPON_BLASTER:			return "Stun";
 		case WEAPON_SHOTGUN:			return "Strike";
 		case WEAPON_SUPERSHOTGUN:		return "Range";
 		case WEAPON_MACHINEGUN:			return "Pierce";
-		case WEAPON_CHAINGUN:			return "Spin";		
+		case WEAPON_CHAINGUN:			return "Spin";
 		case WEAPON_GRENADELAUNCHER:	return "Radius";
 		case WEAPON_ROCKETLAUNCHER:		return "Radius";
 		case WEAPON_HYPERBLASTER:		return "Stun";
@@ -213,7 +213,7 @@ char *GetModString (int weapon_number, int mod_number)
 		default:						return "<BAD WEAPON NUMBER>";
 		}
 	case 2:
-		switch(weapon_number)
+		switch (weapon_number)
 		{
 		case WEAPON_BLASTER:			return "Speed";
 		case WEAPON_SHOTGUN:			return "Pellets";
@@ -231,7 +231,7 @@ char *GetModString (int weapon_number, int mod_number)
 		default:						return "<BAD WEAPON NUMBER>";
 		}
 	case 3:
-		switch(weapon_number)
+		switch (weapon_number)
 		{
 		case WEAPON_BLASTER:			return "Trails";
 		case WEAPON_SHOTGUN:			return "Spread";
@@ -257,11 +257,11 @@ char *GetModString (int weapon_number, int mod_number)
 //	Class Strings
 //************************************************************************************************
 
-char *GetClassString (int class_num)
+char *GetClassString(int class_num)
 {
 	switch (class_num)
 	{
-	case CLASS_SOLDIER:		return "Soldier";
+	case CLASS_SOLDIER:		return "Grunt";
 	case CLASS_DEMON:		return "Demon";
 	case CLASS_ENGINEER:	return "Engineer";
 	case CLASS_ARCANIST:	return "Arcanist";
@@ -275,23 +275,6 @@ char *GetClassString (int class_num)
 	default:
 		return "Unknown";
 
-	/*case CLASS_ARCANIST:		return "Mage";
-	case CLASS_NECROMANCER:	return "Necromancer";
-	case CLASS_DEMON:		return "Vampire";
-	case CLASS_ENGINEER:	return "Engineer";
-	case CLASS_POLTERGEIST: return "Poltergeist";
-	case CLASS_PALADIN:		return "Knight";
-	case CLASS_CLERIC:		return "Cleric";
-	case CLASS_WEAPONMASTER:
-		if (generalabmode->value) // :)
-			return "Weapon Master";
-		else
-			return "Apprentice";
-	case CLASS_SHAMAN:		return "Shaman";
-	case CLASS_ALIEN:		return "Alien";
-	case CLASS_KAMIKAZE:	return "Kamikaze";
-	default:				return "Unknown";
-	*/
 	}
 }
 
@@ -301,65 +284,68 @@ char *GetClassString (int class_num)
 
 char *GetTalentString(int talent_ID)
 {
-	switch(talent_ID)
+	switch (talent_ID)
 	{
-	//Soldier Talents
+		//Soldier Talents
 	case TALENT_IMP_STRENGTH:		return "Imp. Strength";
-	case TALENT_IMP_RESIST:			return "Imp. Resist";
+//	case TALENT_IMP_RESIST:			return "Imp. Resist";
 	case TALENT_BLOOD_OF_ARES:		return "Blood of Ares";
 	case TALENT_BASIC_HA:			return "Improved H/A";
 	case TALENT_BOMBARDIER:			return "Bombardier";
-	//Poltergeist Talents
+	case TALENT_MONSTER_MASTERY:	return "Mastery";
+		//Poltergeist Talents
 	case TALENT_MORPHING:			return "Morphing";
 	case TALENT_MORE_AMMO:			return "More Ammo";
 	case TALENT_SUPERIORITY:		return "Superiority";
 	case TALENT_RETALIATION:		return "Retaliation";
 	case TALENT_PACK_ANIMAL:		return "Pack Animal";
-	//Vampire Talents
+		//Vampire Talents
 	case TALENT_IMP_CLOAK:			return "Imp. Cloak";
 	case TALENT_ARMOR_VAMP:			return "Armor Vampire";
 	case TALENT_SECOND_CHANCE:		return "2nd Chance";
 	case TALENT_IMP_MINDABSORB:		return "Mind Control";
 	case TALENT_CANNIBALISM:		return "Cannibalism";
 	case TALENT_FATAL_WOUND:		return "Fatal Wound";
-	//Mage Talents
+		//Mage Talents
 	case TALENT_ICE_BOLT:			return "Ice Bolt";
 	case TALENT_MEDITATION:			return "Mana Charge";
 	case TALENT_FROST_NOVA:			return "Frost Nova";
 	case TALENT_IMP_MAGICBOLT:		return "Imp. Magicbolt";
 	case TALENT_MANASHIELD:			return "Mana Shield";
 	case TALENT_OVERLOAD:			return "Overload";
-	//Engineer Talents
+		//Engineer Talents
+	//case TALENT_DEFENSIVE_CRATE:     return "Defensive Crate";
 	case TALENT_LASER_PLATFORM:		return "Laser Platform";
 	case TALENT_ALARM:				return "Laser Trap";
+	case TALENT_ARMOR_REG:			return "NanoSuit";
 	case TALENT_RAPID_ASSEMBLY:		return "Rapid Assembly";
 	case TALENT_PRECISION_TUNING:	return "Precision Tune";
 	case TALENT_STORAGE_UPGRADE:	return "Storage Upgrade";
-	//Knight Talents
+		//Knight Talents
 	case TALENT_REPEL:				return "Repel";
 	case TALENT_MAG_BOOTS:			return "Mag Boots";
 	case TALENT_LEAP_ATTACK:		return "Leap Attack";
 	case TALENT_MOBILITY:			return "Mobility";
 	case TALENT_DURABILITY:			return "Durability";
-	//Cleric Talents
+		//Cleric Talents
 	case TALENT_BALANCESPIRIT:		return "Balance Spirit";
 	case TALENT_HOLY_GROUND:		return "Holy Ground";
 	case TALENT_UNHOLY_GROUND:		return "Unholy Ground";
 	case TALENT_PURGE:				return "Purge";
 	case TALENT_BOOMERANG:			return "Boomerang";
-	//Weapon Master Talents
+		//Weapon Master Talents
 	case TALENT_BASIC_AMMO_REGEN:	return "Ammo Regen";
 	case TALENT_COMBAT_EXP:			return "Combat Exp.";
 	case TALENT_TACTICS:			return "Tactics";
 	case TALENT_SIDEARMS:			return "Sidearms";
-	//Necromancer Talents
+		//Necromancer Talents
 	case TALENT_EVIL_CURSE:			return "Evil Curse";
 	case TALENT_CHEAPER_CURSES:		return "Cheaper Curses";
 	case TALENT_CORPULENCE:			return "Corpulence";
 	case TALENT_LIFE_TAP:			return "Life Tap";
 	case TALENT_DIM_VISION:			return "Dim Vision";
 	case TALENT_FLIGHT:				return "Flight";
-	//Shaman Talents
+		//Shaman Talents
 	case TALENT_ICE:				return "Ice";
 	case TALENT_WIND:				return "Wind";
 	case TALENT_STONE:				return "Stone";
@@ -367,12 +353,14 @@ char *GetTalentString(int talent_ID)
 	case TALENT_PEACE:				return "Peace";
 	case TALENT_VOLCANIC:			return "Volcanic";
 	case TALENT_TOTEM:				return "Totemic Focus";
-	//Alien Talents
+		//Alien Talents
 	case TALENT_PHANTOM_OBSTACLE:	return "Hidden Obstacle";
 	case TALENT_SUPER_HEALER:		return "Super Healer";
+	case TALENT_LIFE_REG:			return "Heart";
 	case TALENT_PHANTOM_COCOON:		return "Phantom Cocoon";
 	case TALENT_SWARMING:			return "Swarming";
 	case TALENT_EXPLODING_BODIES:	return "Exploding Body";
+	//case TALENT_FASTMOVE:			return "Run!";
 		// Kamikaze talents
 	case TALENT_MARTYR:				return "Martyr";
 	case TALENT_INSTANTPROXYS:		return "Instant Proxys";
@@ -386,7 +374,7 @@ char *GetTalentString(int talent_ID)
 //	Ability Strings
 //************************************************************************************************
 
-char *GetAbilityString (int ability_number)
+char *GetAbilityString(int ability_number)
 {
 	switch (ability_number)
 	{
@@ -478,6 +466,8 @@ char *GetAbilityString (int ability_number)
 	case TOTEM_MASTERY:		return	"Totem Mastery";
 	case SHIELD:			return	"Shield";
 	case CALTROPS:			return	"Caltrops";
+	case FMEDICPACK:		return "Medic Packs";
+	case BOX:				return "Defensive boxes";
 	case SPIKE_GRENADE:		return	"Spike Grenade";
 	case DETECTOR:			return	"Detector";
 	case CONVERSION:		return	"Conversion";
@@ -511,182 +501,182 @@ char *GetAbilityString (int ability_number)
 char *GetRuneValString(item_t *rune)
 {
 	int level = rune->itemLevel;
-    
-	switch(rune->itemtype)
+
+	switch (rune->itemtype)
 	{
 	case ITEM_WEAPON:
+	{
+		switch (level / 2)
 		{
-			switch(level / 2)
-			{
-			case 0:	 return "Worthless";
-			case 1:  return "Cracked";
-			case 2:  return "Chipped";
-			case 3:  return "Flawed";
-			case 4:  return "Normal";
-			case 5:  return "Good";
-			case 6:  return "Great";
-			case 7:  return "Exceptional";
-			case 8:  return "Flawless";
-			case 9:  return "Perfect";
-			case 10: return "Godly";
-			default: return "Cheater's";
-			}
+		case 0:	 return "Worthless";
+		case 1:  return "Cracked";
+		case 2:  return "Chipped";
+		case 3:  return "Flawed";
+		case 4:  return "Normal";
+		case 5:  return "Good";
+		case 6:  return "Great";
+		case 7:  return "Exceptional";
+		case 8:  return "Flawless";
+		case 9:  return "Perfect";
+		case 10: return "Godly";
+		default: return "Cheater's";
 		}
-		break;
-	case ITEM_ABILITY:	
+	}
+	break;
+	case ITEM_ABILITY:
+	{
+		switch (level / 3)
 		{
-			switch(level / 3)
-			{
-			case 0:	 return "Worthless";
-			case 1:  return "Cracked";
-			case 2:  return "Normal";
-			case 3:  return "Good";
-			case 4:  return "Flawless";
-			case 5:  return "Perfect";
-			case 6:  
-			default:
-				return "Godly";
-			}
+		case 0:	 return "Worthless";
+		case 1:  return "Cracked";
+		case 2:  return "Normal";
+		case 3:  return "Good";
+		case 4:  return "Flawless";
+		case 5:  return "Perfect";
+		case 6:
+		default:
+			return "Godly";
 		}
-		break;
-	case ITEM_COMBO:	
+	}
+	break;
+	case ITEM_COMBO:
+	{
+		switch (level / 2)
 		{
-			switch(level / 2)
-			{
-			case 0:	 return "Worthless";
-			case 1:  return "Cracked";
-			case 2:  return "Normal";
-			case 3:  return "Good";
-			case 4:  return "Flawless";
-			case 5:  return "Perfect";
-			case 6:  
-			default:				
-				return "Godly";
-			}
+		case 0:	 return "Worthless";
+		case 1:  return "Cracked";
+		case 2:  return "Normal";
+		case 3:  return "Good";
+		case 4:  return "Flawless";
+		case 5:  return "Perfect";
+		case 6:
+		default:
+			return "Godly";
 		}
-		break;
+	}
+	break;
 	case ITEM_CLASSRUNE:
+	{
+		switch (rune->classNum)
 		{
-			switch (rune->classNum)
+		case CLASS_ENGINEER:
+		{
+			switch (level / 2)
 			{
-			case CLASS_ENGINEER:
-				{
-					switch(level / 2)
-					{
-					case 0:	 return "Student's";
-					case 1:  return "Assistant's";
-					case 2:  return "Technician's";
-					case 3:  return "Mechanic's";
-					case 4:  return "Scientist's";
-					case 5:  return "Physicist's";
-					case 6:  
-					default:
-						return "Engineer's";
-					}
-				}
-				break;
-			case CLASS_SOLDIER:
-				{
-					switch(level / 2)
-					{
-					case 0:	 return "Newbie's";
-					case 1:  return "Greenhorn's";
-					case 2:  return "Sergent's";
-					case 3:  return "Soldier's";
-					case 4:  return "Warrior's";
-					case 5:  return "Veteran's";
-					case 6:  
-					default:
-						return "Master's";
-					
-					}
-				}
-				break;
-			case CLASS_ARCANIST:
-				{
-					switch(level / 2)
-					{
-					case 0:	 return "Apprentice's";
-					case 1:  return "Illusionist's";
-					case 2:  return "Sage's";
-					case 3:  return "Mage's";
-					case 4:  return "Wizard's";
-					case 5:  return "Sorcerer's";
-					case 6:  
-					default:
-						return "Archimage's";
-					}
-				}
-				break;
-			case CLASS_DEMON:
-				{
-					switch(level / 2)
-					{
-					case 0:	 return "Excorcist's";
-					case 1:  return "Theurgist's";
-					case 2:  return "Shaman's";
-					case 3:  return "Necromancer's";
-					case 4:  return "Warlock's";
-					case 5:  return "Demi-Lich's";
-					case 6:  
-					default:
-						return "Lich's";
-					}
-				}
-				break;
-			case CLASS_POLTERGEIST:
-				{
-					switch(level / 2)
-					{
-					case 0:	 return "Spook's";
-					case 1:  return "Spirit's";
-					case 2:  return "Phantom's";
-					case 3:  return "Poltergeist's";
-					case 4:  return "Apparition's";
-					case 5:  return "Ghost's";
-					case 6:  
-					default:
-						return "Monster's";
-					}
-				}
-				break;
-			case CLASS_PALADIN:
-				{
-					switch(level / 2)
-					{
-					case 0:	 return "Commoner's";
-					case 1:  return "Squire's";
-					case 2:  return "Guard's";
-					case 3:  return "Knight's";
-					case 4:  return "Baron's";
-					case 5:  return "Lord's";
-					case 6:  
-					default:
-						return "King's";
-					}
-				}
-				break;
-			case CLASS_WEAPONMASTER:
-				{
-					switch(level / 2)
-					{
-					case 0:  return "Amateur's";
-					case 1:	 return "Neophyte's";
-					case 2:  return "Novice's";
-					case 3:  return "Weapon Master's";
-					case 4:  return "Guru's";
-					case 5:  return "Expert's";
-					case 6:  
-					default:
-						return "Elite's'";
-					}
-				}
-				break;
-			default: return "<Unknown Class>";
+			case 0:	 return "Student's";
+			case 1:  return "Assistant's";
+			case 2:  return "Technician's";
+			case 3:  return "Mechanic's";
+			case 4:  return "Scientist's";
+			case 5:  return "Physicist's";
+			case 6:
+			default:
+				return "Engineer's";
 			}
-			break;
-		default: return "Strange";
 		}
+		break;
+		case CLASS_SOLDIER:
+		{
+			switch (level / 2)
+			{
+			case 0:	 return "Newbie's";
+			case 1:  return "Greenhorn's";
+			case 2:  return "Sergent's";
+			case 3:  return "Soldier's";
+			case 4:  return "Warrior's";
+			case 5:  return "Veteran's";
+			case 6:
+			default:
+				return "Master's";
+
+			}
+		}
+		break;
+		case CLASS_ARCANIST:
+		{
+			switch (level / 2)
+			{
+			case 0:	 return "Apprentice's";
+			case 1:  return "Illusionist's";
+			case 2:  return "Sage's";
+			case 3:  return "Mage's";
+			case 4:  return "Wizard's";
+			case 5:  return "Sorcerer's";
+			case 6:
+			default:
+				return "Archimage's";
+			}
+		}
+		break;
+		case CLASS_DEMON:
+		{
+			switch (level / 2)
+			{
+			case 0:	 return "Excorcist's";
+			case 1:  return "Theurgist's";
+			case 2:  return "Shaman's";
+			case 3:  return "Necromancer's";
+			case 4:  return "Warlock's";
+			case 5:  return "Demi-Lich's";
+			case 6:
+			default:
+				return "Lich's";
+			}
+		}
+		break;
+		case CLASS_POLTERGEIST:
+		{
+			switch (level / 2)
+			{
+			case 0:	 return "Spook's";
+			case 1:  return "Spirit's";
+			case 2:  return "Phantom's";
+			case 3:  return "Poltergeist's";
+			case 4:  return "Apparition's";
+			case 5:  return "Ghost's";
+			case 6:
+			default:
+				return "Monster's";
+			}
+		}
+		break;
+		case CLASS_PALADIN:
+		{
+			switch (level / 2)
+			{
+			case 0:	 return "Commoner's";
+			case 1:  return "Squire's";
+			case 2:  return "Guard's";
+			case 3:  return "Knight's";
+			case 4:  return "Baron's";
+			case 5:  return "Lord's";
+			case 6:
+			default:
+				return "King's";
+			}
+		}
+		break;
+		case CLASS_WEAPONMASTER:
+		{
+			switch (level / 2)
+			{
+			case 0:  return "Amateur's";
+			case 1:	 return "Neophyte's";
+			case 2:  return "Novice's";
+			case 3:  return "Weapon Master's";
+			case 4:  return "Guru's";
+			case 5:  return "Expert's";
+			case 6:
+			default:
+				return "Elite's'";
+			}
+		}
+		break;
+		default: return "<Unknown Class>";
+		}
+		break;
+	default: return "Strange";
+	}
 	}
 }
 
@@ -694,12 +684,12 @@ char *GetRuneValString(item_t *rune)
 
 int CountRuneMods(item_t *rune)
 {
-    int i;
+	int i;
 	int count = 0;
-	for(i = 0; i < MAX_VRXITEMMODS; ++i)
-		if(rune->modifiers[i].type != TYPE_NONE && rune->modifiers[i].value > 0)
+	for (i = 0; i < MAX_VRXITEMMODS; ++i)
+		if (rune->modifiers[i].type != TYPE_NONE && rune->modifiers[i].value > 0)
 			++count;
-	return count;    
+	return count;
 }
 
 //************************************************************************************************
@@ -715,7 +705,7 @@ float V_EntDistance(edict_t *ent1, edict_t *ent2)
 	dist[1] = ent1->s.origin[1] - ent2->s.origin[1];
 	dist[2] = ent1->s.origin[2] - ent2->s.origin[2];
 
-    return sqrt((dist[0] * dist[0]) + (dist[1] * dist[1]) + (dist[2] * dist[2]));
+	return sqrt((dist[0] * dist[0]) + (dist[1] * dist[1]) + (dist[2] * dist[2]));
 }
 
 //************************************************************************************************
@@ -727,7 +717,7 @@ void V_ResetAbilityDelays(edict_t *ent)
 
 	//Reset ability cooldowns, even though almost none of them are used.
 	for (i = 0; i < MAX_ABILITIES; ++i)
-        ent->myskills.abilities[i].delay = 0.0f;
+		ent->myskills.abilities[i].delay = 0.0f;
 
 	//Reset talent cooldowns as well.
 	for (i = 0; i < ent->myskills.talents.count; ++i)
@@ -736,7 +726,7 @@ void V_ResetAbilityDelays(edict_t *ent)
 
 //************************************************************************************************
 
-qboolean V_CanUseAbilities (edict_t *ent, int ability_index, int ability_cost, qboolean print_msg)
+qboolean V_CanUseAbilities(edict_t *ent, int ability_index, int ability_cost, qboolean print_msg)
 {
 	if (!ent->client)
 		return false;
@@ -748,7 +738,7 @@ qboolean V_CanUseAbilities (edict_t *ent, int ability_index, int ability_cost, q
 
 	if (ent->myskills.abilities[ability_index].disable)
 		return false;
-	
+
 	//4.2 can't use abilities in wormhole/noclip
 	if (ent->flags & FL_WORMHOLE)
 		return false;
@@ -787,7 +777,7 @@ qboolean V_CanUseAbilities (edict_t *ent, int ability_index, int ability_cost, q
 	if (que_typeexists(ent->curses, CURSE_FROZEN))
 		return false;
 
-	if (level.time < pregame_time->value && !trading->value )
+	if (level.time < pregame_time->value && !trading->value)
 	{
 		if (!IsAllowedPregameSkills())  // allow use of abilities in pvm modes.
 		{
@@ -796,21 +786,21 @@ qboolean V_CanUseAbilities (edict_t *ent, int ability_index, int ability_cost, q
 			return false;
 		}
 	}
-	
+
 	// can't use abilities immediately after a re-spawn
 	if (ent->client->respawn_time > level.time)
 	{
 		if (print_msg)
-			safe_cprintf (ent, PRINT_HIGH, "You can't use abilities for another %2.1f seconds.\n", 
-				ent->client->respawn_time-level.time);
+			safe_cprintf(ent, PRINT_HIGH, "You can't use abilities for another %2.1f seconds.\n",
+			ent->client->respawn_time - level.time);
 		return false;
 	}
 
-	if (ent->client->ability_delay > level.time) 
+	if (ent->client->ability_delay > level.time)
 	{
 		if (print_msg)
-			safe_cprintf (ent, PRINT_HIGH, "You can't use abilities for another %2.1f seconds.\n", 
-				ent->client->ability_delay-level.time);
+			safe_cprintf(ent, PRINT_HIGH, "You can't use abilities for another %2.1f seconds.\n",
+			ent->client->ability_delay - level.time);
 		return false;
 	}
 
@@ -818,7 +808,7 @@ qboolean V_CanUseAbilities (edict_t *ent, int ability_index, int ability_cost, q
 	{
 		if (print_msg)
 			safe_cprintf(ent, PRINT_HIGH, "You can't use this ability for another %2.1f seconds.\n",
-				ent->myskills.abilities[ability_index].delay-level.time);
+			ent->myskills.abilities[ability_index].delay - level.time);
 		return false;
 	}
 
@@ -827,7 +817,7 @@ qboolean V_CanUseAbilities (edict_t *ent, int ability_index, int ability_cost, q
 	{
 		if (print_msg)
 			safe_cprintf(ent, PRINT_HIGH, "You need more %d power cubes to use this ability.\n",
-				ability_cost-ent->client->pers.inventory[power_cube_index]);
+			ability_cost - ent->client->pers.inventory[power_cube_index]);
 		return false;
 	}
 
@@ -850,7 +840,7 @@ qboolean V_GiveAmmoClip(edict_t *ent, float qty, int ammotype)
 	int *max;
 	int *current;
 
-	switch(ammotype)
+	switch (ammotype)
 	{
 	case AMMO_SHELLS:
 		amount = SHELLS_PICKUP;
@@ -897,8 +887,8 @@ qboolean V_GiveAmmoClip(edict_t *ent, float qty, int ammotype)
 	//	amount *= AMMO_UP_BASE + (AMMO_UP_MULT * ent->myskills.abilities[AMMO_UPGRADE].current_level);
 
 	//Talent: Improved HA Pickup
-     if (getTalentSlot(ent, TALENT_BASIC_HA) != -1)  
-          amount *= 1.0 + (0.2 * getTalentLevel(ent, TALENT_BASIC_HA));     
+	if (getTalentSlot(ent, TALENT_BASIC_HA) != -1)
+		amount *= 1.0 + (0.2 * getTalentLevel(ent, TALENT_BASIC_HA));
 
 	//Give them the ammo
 	*current += amount;
@@ -962,7 +952,7 @@ int GetClientNumber(edict_t *ent)
 			continue;
 
 		if (Q_stricmp(ent->myskills.player_name, temp->myskills.player_name) == 0)	//same name
-			return i+1;
+			return i + 1;
 	}
 	return 0;
 }
@@ -1023,7 +1013,7 @@ void WriteString(FILE *fptr, char *String)
 {
 	int Length = strlen(String);
 	WriteChar(fptr, (char)Length);
-	fwrite(String, Length, 1, fptr);	
+	fwrite(String, Length, 1, fptr);
 }
 
 //************************************************************************************************
@@ -1068,8 +1058,8 @@ char *V_FormatFileName(char *name)
 
 	//This bit of code formats invalid filename chars, like the '?' and 
 	//reformats them into a saveable format.
-	Q_strncpy (buffer, name, sizeof(buffer)-1);
-	
+	Q_strncpy(buffer, name, sizeof(buffer) - 1);
+
 	for (i = 0; i < strlen(buffer); ++i)
 	{
 		char tmp;
@@ -1096,7 +1086,7 @@ char *V_FormatFileName(char *name)
 		else
 		{
 			filename[j++] = buffer[i];
-		}		
+		}
 	}
 
 	//make sure string is null-terminated
@@ -1116,14 +1106,13 @@ int V_tFileCountLines(FILE *fptr, long size)
 	int count = 0;
 	char temp;
 	int i = 0;
-	
+
 	do
 	{
 		temp = getc(fptr);
 		if (temp == '\n')
 			count++;
-	}
-	while (++i < size);
+	} while (++i < size);
 
 	rewind(fptr);
 	return count - 1;	//Last line is always empty
@@ -1136,7 +1125,7 @@ void V_tFileGotoLine(FILE *fptr, int linenumber, long size)
 	int count = 0;
 	char temp;
 	int i = 0;
-	
+
 	do
 	{
 		temp = fgetc(fptr);
@@ -1144,16 +1133,15 @@ void V_tFileGotoLine(FILE *fptr, int linenumber, long size)
 			count++;
 		if (count == linenumber)
 			return;
-	}
-	while (++i < size);
-		return;
+	} while (++i < size);
+	return;
 }
 
 //************************************************************************************************
 
 // this needs to match NewLevel_Addons() in player_points.c
 // NOTE: this function can't/won't award refunds if the ability was already upgraded
-void UpdateFreeAbilities (edict_t *ent)
+void UpdateFreeAbilities(edict_t *ent)
 {
 	if (ent->myskills.level >= 5)
 	{
@@ -1185,7 +1173,7 @@ void UpdateFreeAbilities (edict_t *ent)
 #define CHANGECLASS_MSG_CHANGE	1
 #define CHANGECLASS_MSG_RESET	2
 
-void ChangeClass (char *playername, int newclass, int msgtype)
+void ChangeClass(char *playername, int newclass, int msgtype)
 {
 	int		i;
 	edict_t *player;
@@ -1200,7 +1188,7 @@ void ChangeClass (char *playername, int newclass, int msgtype)
 			continue;
 		if (Q_strcasecmp(playername, player->myskills.player_name) != 0)
 			continue;
-
+		// Archon respawn only sword
 		if (newclass == CLASS_PALADIN)
 			player->myskills.respawn_weapon = 1; //sword only
 
@@ -1212,7 +1200,7 @@ void ChangeClass (char *playername, int newclass, int msgtype)
 		//Give them some upgrade points.
 		player->myskills.speciality_points = 2 * player->myskills.level;
 
-		if(generalabmode->value && player->myskills.class_num == CLASS_WEAPONMASTER)
+		if (generalabmode->value && player->myskills.class_num == CLASS_WEAPONMASTER)
 			player->myskills.weapon_points = 6 * player->myskills.level;
 		else
 			player->myskills.weapon_points = 4 * player->myskills.level;
@@ -1220,10 +1208,10 @@ void ChangeClass (char *playername, int newclass, int msgtype)
 		//Weapon masters get double the weapon points of other classes.
 		//if(player->myskills.class_num == CLASS_WEAPONMASTER)
 		//	player->myskills.weapon_points *= 2;
-		
+
 		//Initialize their upgrades
 		AssignAbilities(player);
-        resetWeapons(player);
+		resetWeapons(player);
 
 		//Check for special level-up bonuses
 		//max ammo and vit
@@ -1231,16 +1219,16 @@ void ChangeClass (char *playername, int newclass, int msgtype)
 		//player->myskills.abilities[MAX_AMMO].level = player->myskills.abilities[VITALITY].level = player->myskills.level / 5;
 		//if (player->myskills.level > 9)
 		//	player->myskills.abilities[ID].level = 1;
-		
+
 
 		//Reset talents, and give them their talent points
 		eraseTalents(player);
 		setTalents(player);
 		/*if(player->myskills.level < TALENT_MAX_LEVEL)
-			player->myskills.talents.talentPoints = player->myskills.level - TALENT_MIN_LEVEL + 1;
+		player->myskills.talents.talentPoints = player->myskills.level - TALENT_MIN_LEVEL + 1;
 		else player->myskills.talents.talentPoints = TALENT_MAX_LEVEL - TALENT_MIN_LEVEL + 1;*/
 		player->myskills.talents.talentPoints = (int)(player->myskills.level / 2);
-		if(player->myskills.talents.talentPoints < 0)
+		if (player->myskills.talents.talentPoints < 0)
 			player->myskills.talents.talentPoints = 0;
 
 		//Re-apply equipment
@@ -1251,7 +1239,7 @@ void ChangeClass (char *playername, int newclass, int msgtype)
 		if (msgtype == CHANGECLASS_MSG_CHANGE)
 		{
 			//Notify everyone
-			safe_cprintf(NULL, PRINT_HIGH, "%s's class was changed to %s (%d).\n", playername,  GetClassString(newclass), newclass);
+			safe_cprintf(NULL, PRINT_HIGH, "%s's class was changed to %s (%d).\n", playername, GetClassString(newclass), newclass);
 			WriteToLogfile(player, va("Class was changed to %s (%d).\n", gi.argv(3), newclass));
 			gi.dprintf("%s's class was changed to %s (%d).\n", playername, gi.argv(3), newclass);
 		}
@@ -1272,7 +1260,7 @@ void ChangeClass (char *playername, int newclass, int msgtype)
 	gi.dprintf("Can't find player: %s\n", playername);
 }
 
-char *V_TruncateString (char *string, int newStringLength)
+char *V_TruncateString(char *string, int newStringLength)
 {
 	char buf[512];
 
@@ -1284,12 +1272,12 @@ char *V_TruncateString (char *string, int newStringLength)
 		return string;
 
 	strncpy(buf, string, newStringLength);
-	buf[newStringLength-1] = '\0';
+	buf[newStringLength - 1] = '\0';
 
 	return &buf[0];
 }
 
-void V_RegenAbilityAmmo (edict_t *ent, int ability_index, int regen_frames, int regen_delay)
+void V_RegenAbilityAmmo(edict_t *ent, int ability_index, int regen_frames, int regen_delay)
 {
 	int ammo;
 	int max = ent->myskills.abilities[ability_index].max_ammo;
@@ -1325,42 +1313,42 @@ void V_RegenAbilityAmmo (edict_t *ent, int ability_index, int regen_frames, int 
 		*current = max;
 }
 
-void V_ModifyMorphedHealth (edict_t *ent, int type, qboolean morph)
+void V_ModifyMorphedHealth(edict_t *ent, int type, qboolean morph)
 {
 	float mult;
 
 	switch (type)
 	{
-	// player-tank has no maximum health multiplier
+		// player-tank has no maximum health multiplier
 	case P_TANK: mult = 1.8 + 0.12 * ent->myskills.abilities[TANK].current_level; break;
-	// 2x health multiplier max
+		// 2x health multiplier max
 	case MORPH_BERSERK:
-		mult = 1 + 0.1 * ent->myskills.abilities[BERSERK].current_level; 
+		mult = 1 + 0.1 * ent->myskills.abilities[BERSERK].current_level;
 		if (mult > 2)
 			mult = 2;
 		break;
-	// 2x health multiplier max
+		// 2x health multiplier max
 	case MORPH_MUTANT:
-		mult = 1 + 0.1 * ent->myskills.abilities[MUTANT].current_level; 
+		mult = 1 + 0.1 * ent->myskills.abilities[MUTANT].current_level;
 		if (mult > 2)
 			mult = 2;
 		break;
 	case MORPH_CACODEMON:
-		mult = 1 + 0.055 * ent->myskills.abilities[CACODEMON].current_level; 
+		mult = 1 + 0.055 * ent->myskills.abilities[CACODEMON].current_level;
 		if (mult > 1.75)
 			mult = 1.75;
 		break;
 	case MORPH_MEDIC:
-		mult = 1 + 0.1 * ent->myskills.abilities[MEDIC].current_level; 
+		mult = 1 + 0.1 * ent->myskills.abilities[MEDIC].current_level;
 		if (mult > 2.2)
 			mult = 2.2;
 		break;
 	case M_MYPARASITE:
-		mult = 1 + 0.05 * ent->myskills.abilities[BLOOD_SUCKER].current_level; 
+		mult = 1 + 0.05 * ent->myskills.abilities[BLOOD_SUCKER].current_level;
 		if (mult > 1.5)
 			mult = 1.5;
 		break;
-	// nothing to modify
+		// nothing to modify
 	default: return;
 	}
 
@@ -1379,15 +1367,15 @@ void V_ModifyMorphedHealth (edict_t *ent, int type, qboolean morph)
 		ent->max_health = MAX_HEALTH(ent);
 	}
 }
-	
-void V_RestoreMorphed (edict_t *ent, int refund)
+
+void V_RestoreMorphed(edict_t *ent, int refund)
 {
 	//gi.dprintf("V_RestoreMorphed()\n");
 
-	gi.sound (ent, CHAN_WEAPON, gi.soundindex("spells/morph.wav") , 1, ATTN_NORM, 0);
+	gi.sound(ent, CHAN_WEAPON, gi.soundindex("spells/morph.wav"), 1, ATTN_NORM, 0);
 
 	// if (isMorphingPolt(ent)) // az- always remove summonables
-		VortexRemovePlayerSummonables(ent);
+	VortexRemovePlayerSummonables(ent);
 
 	if (PM_PlayerHasMonster(ent))
 	{
@@ -1413,7 +1401,7 @@ void V_RestoreMorphed (edict_t *ent, int refund)
 	ent->viewheight = 22;
 	ent->mtype = 0;
 	ent->s.modelindex = 255;
-	ent->s.skinnum = ent-g_edicts-1;
+	ent->s.skinnum = ent - g_edicts - 1;
 
 	if (!ent->client->pers.weapon)
 		Pick_respawnweapon(ent);
@@ -1423,8 +1411,8 @@ void V_RestoreMorphed (edict_t *ent, int refund)
 	ent->client->lock_frames = 0;//4.2 reset smart-rocket lock-on counter
 }
 
-void mutant_checkattack (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf);
-void V_Touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
+void mutant_checkattack(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf);
+void V_Touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
 	// made a sound
 	if (other && other->inuse)
@@ -1434,7 +1422,7 @@ void V_Touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 }
 
 //FIXME: this doesn't work with 2-4 point abilities
-void V_UpdatePlayerAbilities (edict_t *ent)
+void V_UpdatePlayerAbilities(edict_t *ent)
 {
 	int			i, refunded = 0;
 	upgrade_t	old_abilities[MAX_ABILITIES];
@@ -1443,7 +1431,7 @@ void V_UpdatePlayerAbilities (edict_t *ent)
 	UpdateFreeAbilities(ent);
 
 	// make a copy of old abilities that we can use as a reference for comparison
-	for (i=0; i<MAX_ABILITIES; ++i)	
+	for (i = 0; i<MAX_ABILITIES; ++i)
 		memcpy(&old_abilities, ent->myskills.abilities, sizeof(upgrade_t) * MAX_ABILITIES);
 
 	// reset all ability upgrades
@@ -1451,7 +1439,7 @@ void V_UpdatePlayerAbilities (edict_t *ent)
 
 	AssignAbilities(ent);
 
-	for (i=0; i<MAX_ABILITIES; ++i)	
+	for (i = 0; i<MAX_ABILITIES; ++i)
 	{
 		// if this ability was previously enabled, restore the upgrade level
 		if ((ent->myskills.abilities[i].disable == false) && (old_abilities[i].disable == false))
@@ -1485,7 +1473,7 @@ void V_UpdatePlayerAbilities (edict_t *ent)
 		V_ApplyRune(ent, &ent->myskills.items[i]);
 
 	/*safe_cprintf(ent, PRINT_HIGH, "Your abilities have been updated.\n");	*/
-	
+
 	// have points been refunded?
 	if (refunded > 0)
 	{
@@ -1494,7 +1482,7 @@ void V_UpdatePlayerAbilities (edict_t *ent)
 	}
 }
 
-char *V_GetMonsterKind (int mtype)
+char *V_GetMonsterKind(int mtype)
 {
 	switch (mtype)
 	{
@@ -1578,6 +1566,8 @@ char *V_GetMonsterKind (int mtype)
 		return "spiker";
 	case M_OBSTACLE:
 		return "obstacle";
+	case M_BOX:
+		return "box";
 	case M_GASSER:
 		return "gasser";
 	case M_SPIKEBALL:
@@ -1594,7 +1584,7 @@ char *V_GetMonsterKind (int mtype)
 		return "magmine";
 	case M_SPIKE_GRENADE:
 		return "spike grenade";
-	case INVASION_PLAYERSPAWN: 
+	case INVASION_PLAYERSPAWN:
 	case CTF_PLAYERSPAWN:
 	case TBI_PLAYERSPAWN:
 		return "spawn";
@@ -1607,7 +1597,7 @@ char *V_GetMonsterKind (int mtype)
 	}
 }
 
-char *V_GetMonsterName (edict_t *monster)
+char *V_GetMonsterName(edict_t *monster)
 {
 	static char buf[50];
 
@@ -1650,12 +1640,12 @@ qboolean IsAllowedPregameSkills()
 	return false;
 }
 
-qboolean V_IsPVP (void)
+qboolean V_IsPVP(void)
 {
 	return !pvm->value && !ctf->value && !ffa->value && !invasion->value && !ptr->value && !domination->value && !tbi->value;
 }
 
-qboolean V_HealthCache (edict_t *ent, int max_per_second, int update_frequency)
+qboolean V_HealthCache(edict_t *ent, int max_per_second, int update_frequency)
 {
 	int heal, delta, max;
 
@@ -1683,7 +1673,7 @@ qboolean V_HealthCache (edict_t *ent, int max_per_second, int update_frequency)
 		ent->health += heal;
 		ent->health_cache -= heal;
 
-	//	gi.dprintf("healed %d / %d (max %d) at %d\n", heal, ent->health_cache, max, level.framenum);
+		//	gi.dprintf("healed %d / %d (max %d) at %d\n", heal, ent->health_cache, max, level.framenum);
 
 		return true;
 	}
@@ -1692,8 +1682,8 @@ qboolean V_HealthCache (edict_t *ent, int max_per_second, int update_frequency)
 
 	return false;
 }
-	
-qboolean V_ArmorCache (edict_t *ent, int max_per_second, int update_frequency)
+
+qboolean V_ArmorCache(edict_t *ent, int max_per_second, int update_frequency)
 {
 	int heal, delta, max, max_armor;
 	int	*armor;
@@ -1739,9 +1729,9 @@ qboolean V_ArmorCache (edict_t *ent, int max_per_second, int update_frequency)
 	ent->armor_cache = 0;
 
 	return false;
-}		
+}
 
-void V_ResetPlayerState (edict_t *ent)
+void V_ResetPlayerState(edict_t *ent)
 {
 	if (PM_PlayerHasMonster(ent))
 	{
@@ -1755,13 +1745,13 @@ void V_ResetPlayerState (edict_t *ent)
 		ent->viewheight = 22;
 		ent->mtype = 0;
 		ent->s.modelindex = 255;
-		ent->s.skinnum = ent-g_edicts-1;
+		ent->s.skinnum = ent - g_edicts - 1;
 		ShowGun(ent);
 
 		// reset flyer rocket lock-on frames
 		ent->client->lock_frames = 0;
 	}
-	
+
 	// reset railgun sniper frames
 	ent->client->refire_frames = 0;
 
@@ -1770,7 +1760,7 @@ void V_ResetPlayerState (edict_t *ent)
 	ent->health_cache_nextframe = 0;
 	ent->armor_cache = 0;
 	ent->armor_cache_nextframe = 0;
-	
+
 	// reset automag
 	ent->automag = 0;
 
@@ -1835,11 +1825,11 @@ void V_ResetPlayerState (edict_t *ent)
 	{
 		char *s = Info_ValueForKey(ent->client->pers.userinfo, "skin");
 		V_AssignClassSkin(ent, s);
-		
+
 		// drop the flag
 		dom_dropflag(ent, FindItem("Flag"));
 		CTF_DropFlag(ent, FindItem("Red Flag"));
-		CTF_DropFlag(ent, FindItem("Blue Flag"));	
+		CTF_DropFlag(ent, FindItem("Blue Flag"));
 	}
 
 	if (hw->value)
@@ -1864,7 +1854,7 @@ A modified version of G_TouchTriggers that will call the touch function
 of any valid intersecting entities
 ============
 */
-void V_TouchSolids (edict_t *ent)
+void V_TouchSolids(edict_t *ent)
 {
 	int			i, num;
 	edict_t		*touch[MAX_EDICTS], *hit;
@@ -1873,37 +1863,42 @@ void V_TouchSolids (edict_t *ent)
 	if (!ent || !ent->inuse || !ent->takedamage)
 		return;
 
-	num = gi.BoxEdicts (ent->absmin, ent->absmax, touch, MAX_EDICTS, AREA_SOLID);
+	num = gi.BoxEdicts(ent->absmin, ent->absmax, touch, MAX_EDICTS, AREA_SOLID);
 
 	// be careful, it is possible to have an entity in this
 	// list removed before we get to it (killtriggered)
-	for (i=0 ; i<num ; i++)
+	for (i = 0; i<num; i++)
 	{
 		hit = touch[i];
 		if (!hit->inuse || !hit->touch || !hit->takedamage || hit == ent)
 			continue;
-		hit->touch (hit, ent, NULL, NULL);
+		hit->touch(hit, ent, NULL, NULL);
 	}
 }
 
 // returns true if an entity has any offensive
 // (meaning they can do damage) deployed
-qboolean V_HasSummons (edict_t *ent)
+qboolean V_HasSummons(edict_t *ent)
 {
-	return (ent->num_sentries || ent->num_monsters || ent->skull || ent->num_spikers 
-		|| ent->num_autocannon || ent->num_gasser || ent->num_caltrops || ent->num_proxy 
+	return (ent->num_sentries || ent->num_monsters || ent->skull || ent->num_spikers
+		|| ent->num_autocannon || ent->num_gasser || ent->num_caltrops || ent->num_proxy
 		|| ent->num_obstacle || ent->num_armor || ent->num_spikeball || ent->num_lasers);
 }
 
-void EmpEffects (edict_t *ent);
-void SV_AddBlend (float r, float g, float b, float a, float *v_blend);
+void EmpEffects(edict_t *ent);
+void SV_AddBlend(float r, float g, float b, float a, float *v_blend);
 
-void V_ShellNonAbilityEffects (edict_t *ent)
+void V_ShellNonAbilityEffects(edict_t *ent)
 {
 	qboolean	finalEffects = true;
 	edict_t		*cl_ent = G_GetClient(ent);
 
 	// ********** NON-ENTITY SPECIFIC EFFECTS BELOW **********
+			 if (ent->myskills.streak >= 6)
+			{
+				ent->s.effects |= EF_COLOR_SHELL;
+				ent->s.renderfx |= (RF_SHELL_GREEN);
+			}
 
 	// drones flash briefly when selected for orders
 	if ((ent->monsterinfo.selected_time > level.time) && (level.framenum & 6))
@@ -1919,8 +1914,9 @@ void V_ShellNonAbilityEffects (edict_t *ent)
 		// spree dude and his summons glow white
 		if (G_GetSummoner(ent) == SPREE_DUDE)
 		{
+			
 			ent->s.effects |= EF_COLOR_SHELL;
-			ent->s.renderfx |= (RF_SHELL_RED|RF_SHELL_GREEN|RF_SHELL_BLUE);
+			ent->s.renderfx |= (RF_SHELL_RED | RF_SHELL_GREEN | RF_SHELL_BLUE);
 		}
 		// players and player-summoned monsters in FFA/PvP mode glow red
 		else if (cl_ent)
@@ -1972,7 +1968,7 @@ void V_ShellNonAbilityEffects (edict_t *ent)
 						ent->s.renderfx |= RF_SHELL_BLUE;
 					}
 				}
-				
+
 				if (ent->client->pers.inventory[ITEM_INDEX(FindItem("Halo"))])
 				{
 					// Red shell for the saint.
@@ -1983,10 +1979,10 @@ void V_ShellNonAbilityEffects (edict_t *ent)
 				/*
 				if (hw->value && !ent->client->pers.inventory[ITEM_INDEX(FindItem("Halo"))])
 				{
-					ent->s.effects |= EF_SPHERETRANS;
+				ent->s.effects |= EF_SPHERETRANS;
 				}*/
 			}
-			
+
 			// if we have an aura or we are morphed/monster, ALWAYS apply a shell
 			if (que_typeexists(ent->auras, 0) || ent->mtype || !ent->client || PM_PlayerHasMonster(ent))
 			{
@@ -2014,7 +2010,7 @@ void V_ShellNonAbilityEffects (edict_t *ent)
 		if (!ptr->value && !domination->value && !pvm->value && !ctf->value)
 		{
 			// boss/miniboss
-			if(ent->myskills.boss > 0 || IsNewbieBasher(ent))
+			if (ent->myskills.boss > 0 || IsNewbieBasher(ent))
 			{
 				ent->s.effects |= EF_COLOR_SHELL;
 				ent->s.renderfx |= (RF_SHELL_YELLOW);
@@ -2048,12 +2044,12 @@ void V_ShellNonAbilityEffects (edict_t *ent)
 	if (ent->monsterinfo.bonus_flags)
 	{
 		ent->s.effects |= EF_HALF_DAMAGE;
-		ent->s.renderfx |= RF_SHELL_GREEN|RF_SHELL_RED;
+		ent->s.renderfx |= RF_SHELL_GREEN | RF_SHELL_RED;
 	}
-		
+
 }
 
-void V_ShellAbilityEffects (edict_t *ent)
+void V_ShellAbilityEffects(edict_t *ent)
 {
 	// freeze/partial freeze effects
 	if (que_typeexists(ent->curses, AURA_HOLYFREEZE) || que_typeexists(ent->curses, CURSE_FROZEN) || (ent->chill_time > level.time))
@@ -2061,7 +2057,7 @@ void V_ShellAbilityEffects (edict_t *ent)
 		// client-specific
 		if (ent->client)
 		{
-			SV_AddBlend (0.75, 0.75, 0.75, 0.6, ent->client->ps.blend);
+			SV_AddBlend(0.75, 0.75, 0.75, 0.6, ent->client->ps.blend);
 			ent->client->ps.rdflags |= RDF_UNDERWATER;
 		}
 
@@ -2071,7 +2067,7 @@ void V_ShellAbilityEffects (edict_t *ent)
 	// detector ability
 	else if (ent->flags & FL_DETECTED && ent->detected_time > level.time)
 	{
-		ent->s.effects |= EF_COLOR_SHELL|EF_TAGTRAIL;
+		ent->s.effects |= EF_COLOR_SHELL | EF_TAGTRAIL;
 		ent->s.renderfx |= (RF_SHELL_YELLOW);
 	}
 	// an active aura makes you glow cyan
@@ -2089,7 +2085,7 @@ void V_ShellAbilityEffects (edict_t *ent)
 		if (ent->client->quad_framenum > level.framenum)
 		{
 			remaining = ent->client->quad_framenum - level.framenum;
-			if (remaining > 30 || (remaining & 4) )
+			if (remaining > 30 || (remaining & 4))
 				ent->s.effects |= EF_QUAD;
 			if (remaining == 30 && (ent->svflags & SVF_MONSTER))	// beginning to fade
 				gi.sound(ent, CHAN_ITEM, gi.soundindex("items/damage2.wav"), 1, ATTN_NORM, 0);
@@ -2098,7 +2094,7 @@ void V_ShellAbilityEffects (edict_t *ent)
 		if (ent->client->quadfire_framenum > level.framenum)
 		{
 			remaining = ent->client->quadfire_framenum - level.framenum;
-			if (remaining > 30 || (remaining & 4) )
+			if (remaining > 30 || (remaining & 4))
 				ent->s.effects |= EF_QUAD;
 			if (remaining == 30 && (ent->svflags & SVF_MONSTER))	// beginning to fade
 				gi.sound(ent, CHAN_ITEM, gi.soundindex("items/quadfire2.wav"), 1, ATTN_NORM, 0);
@@ -2107,7 +2103,7 @@ void V_ShellAbilityEffects (edict_t *ent)
 		if (ent->client->invincible_framenum > level.framenum && (level.framenum & 8))
 		{
 			remaining = ent->client->invincible_framenum - level.framenum;
-			if (remaining > 30 || (remaining & 4) )
+			if (remaining > 30 || (remaining & 4))
 				ent->s.effects |= EF_PENT;
 			if (remaining == 30 && (ent->svflags & SVF_MONSTER))	// beginning to fade
 				gi.sound(ent, CHAN_ITEM, gi.soundindex("items/protect2.wav"), 1, ATTN_NORM, 0);
@@ -2116,21 +2112,21 @@ void V_ShellAbilityEffects (edict_t *ent)
 	}
 }
 
-void V_NonShellEffects (edict_t *ent)
+void V_NonShellEffects(edict_t *ent)
 {
 	int pa_type;
 
 	// ********** NON-ENTITY SPECIFIC EFFECTS BELOW **********
 
 	// make all entities that have effects visible to low-light/IR vision
-	ent->s.renderfx |= RF_IR_VISIBLE; 
+	ent->s.renderfx |= RF_IR_VISIBLE;
 
 	// power armor
 	if (ent->powerarmor_time > level.time)
 	{
 		// get power armor type
 		if (ent->client)
-			pa_type = PowerArmorType (ent);
+			pa_type = PowerArmorType(ent);
 		else
 			pa_type = ent->monsterinfo.power_armor_type;
 
@@ -2164,7 +2160,7 @@ void V_NonShellEffects (edict_t *ent)
 			ent->s.effects |= EF_TAGTRAIL;
 
 		// cloak transparency effect
-		if ((level.time > ent->client->ability_delay) && !que_typeexists(ent->auras, 0) 
+		if ((level.time > ent->client->ability_delay) && !que_typeexists(ent->auras, 0)
 			&& !ent->myskills.abilities[CLOAK].disable && (ent->myskills.abilities[CLOAK].current_level > 0))
 		{
 			if (ent->client->idle_frames >= 5)
@@ -2179,7 +2175,7 @@ void V_NonShellEffects (edict_t *ent)
 			SV_AddBlend(0.5, 0, 0, 0.3, ent->client->ps.blend);
 
 		// manashield effects = EF_HALF_DAMAGE and EF_TAGTRAIL
-		if(ent->manashield)   
+		if (ent->manashield)
 			ent->s.effects |= 1073741824 | 536870912;
 
 		return; // only non-client effects from here on!
@@ -2189,9 +2185,9 @@ void V_NonShellEffects (edict_t *ent)
 	// obstacle becomes transparent before it cloaks
 	if (ent->mtype == M_OBSTACLE)
 	{
-		if (ent->monsterinfo.idle_frames >= ent->monsterinfo.nextattack-10)
+		if (ent->monsterinfo.idle_frames >= ent->monsterinfo.nextattack - 10)
 			ent->s.effects |= EF_SPHERETRANS;
-		else if (ent->monsterinfo.idle_frames >= ent->monsterinfo.nextattack-20)
+		else if (ent->monsterinfo.idle_frames >= ent->monsterinfo.nextattack - 20)
 			ent->s.effects |= EF_PLASMA;
 	}
 
@@ -2199,9 +2195,9 @@ void V_NonShellEffects (edict_t *ent)
 	// cocoon becomes transparent before it cloaks
 	if (ent->mtype == M_COCOON && ent->monsterinfo.jumpdn != -1)
 	{
-		if (ent->monsterinfo.jumpup >= ent->monsterinfo.jumpdn-10)
+		if (ent->monsterinfo.jumpup >= ent->monsterinfo.jumpdn - 10)
 			ent->s.effects |= EF_SPHERETRANS;
-		else if (ent->monsterinfo.jumpup >= ent->monsterinfo.jumpdn-20)
+		else if (ent->monsterinfo.jumpup >= ent->monsterinfo.jumpdn - 20)
 			ent->s.effects |= EF_PLASMA;
 	}
 
@@ -2218,7 +2214,7 @@ void V_NonShellEffects (edict_t *ent)
 		ent->s.effects |= EF_PLASMA;
 }
 
-void V_SetEffects (edict_t *ent)
+void V_SetEffects(edict_t *ent)
 {
 	int effects, r_effects;
 
@@ -2264,22 +2260,22 @@ void V_SetEffects (edict_t *ent)
 /*
 void V_ClearNode (nodedata_t *node)
 {
-	memset(node, 0, sizeof(nodedata_t));
+memset(node, 0, sizeof(nodedata_t));
 }
 
 void V_ClearNodes (nodedata_t **nodelist)
 {
-	memset(nodelist, 0, sizeof(nodedata_t[MAX_NODES]));	
+memset(nodelist, 0, sizeof(nodedata_t[MAX_NODES]));
 }
 
 qboolean node_visible (nodedata_t *start, nodedata_t *end)
 {
-	return ((gi.inPVS(start->pos, end->pos)) 
-		&& (gi.trace(start->pos, vec3_origin, vec3_origin, end->pos, NULL, MASK_SOLID).fraction == 1.0));
+return ((gi.inPVS(start->pos, end->pos))
+&& (gi.trace(start->pos, vec3_origin, vec3_origin, end->pos, NULL, MASK_SOLID).fraction == 1.0));
 }
 */
 
-qboolean isMonster (edict_t *ent)
+qboolean isMonster(edict_t *ent)
 {
 	return (ent && ent->mtype && ent->mtype < 100 && ent->svflags & SVF_MONSTER);
 }

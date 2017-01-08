@@ -1335,7 +1335,7 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 
 	//Apply runes
 	V_ResetAllStats(player);
-	for (i = 0; i < 3; ++i)
+	for (i = 0; i < 4; ++i)
 		V_ApplyRune(player, &player->myskills.items[i]);
 
 	//Apply health

@@ -789,7 +789,7 @@ void	ServerCommand (void)
         SVCmd_MakeAdmin_f ();
 	else if (Q_stricmp (cmd, "makeboss") == 0) 
         SVCmd_MakeBoss_f ();
-	else if (Q_stricmp (cmd, "spawnboss") == 0) 
+	else if (Q_stricmp (cmd, "ssv pawnboss") == 0) 
 		SVCmd_SpawnBoss_f();
 	else if (Q_stricmp (cmd, "changeclass") == 0) 
         SVCmd_ChangeClass_f();

@@ -439,9 +439,9 @@ void mybrain_hit_right (edict_t *self)
 		return;
 
 	if (!self->activator->client)
-		damage = 50 + 20*self->monsterinfo.level;
+		damage = 120 + 80*self->monsterinfo.level;
 	else 
-		damage = 50 + 10*self->monsterinfo.level;
+		damage = 120 + 55*self->monsterinfo.level;
 	
 	if (M_MeleeAttack(self, MELEE_DISTANCE, damage, 0))
 		gi.sound (self, CHAN_WEAPON, sound_melee3, 1, ATTN_NORM, 0);
@@ -462,9 +462,9 @@ void mybrain_hit_left (edict_t *self)
 		return;
 
 	if (!self->activator->client)
-		damage = 50 + 20*self->monsterinfo.level;
+		damage = 120 + 80*self->monsterinfo.level;
 	else 
-		damage = 50 + 10*self->monsterinfo.level;
+		damage = 120 + 80*self->monsterinfo.level;
 
 	if (M_MeleeAttack(self, MELEE_DISTANCE, damage, 0))
 		gi.sound (self, CHAN_WEAPON, sound_melee3, 1, ATTN_NORM, 0);
@@ -505,9 +505,9 @@ void mybrain_tentacle_attack (edict_t *self)
 	int		damage;
 
 	if (!self->activator->client)
-		damage = 100 + 40*self->monsterinfo.level;
+		damage = 100 + 45*self->monsterinfo.level;
 	else 
-		damage = 100 + 20*self->monsterinfo.level;
+		damage = 100 + 35*self->monsterinfo.level;
 
 	M_MeleeAttack(self, MELEE_DISTANCE, damage, 0);
 
@@ -817,7 +817,7 @@ void init_drone_brain (edict_t *self)
 	VectorSet (self->maxs, 16, 16, 32);
 
 	//if (self->activator && self->activator->client)
-	self->health = 45 + 15*self->monsterinfo.level;
+	self->health = 35 + 45*self->monsterinfo.level;
 	//else self->health = 100 + 40*self->monsterinfo.level;
 
 	self->max_health = self->health;
@@ -845,7 +845,7 @@ void init_drone_brain (edict_t *self)
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
 
 	//if (self->activator && self->activator->client)
-		self->monsterinfo.power_armor_power = 150 + 60*self->monsterinfo.level;
+		self->monsterinfo.power_armor_power = 150 + 150*self->monsterinfo.level;
 	//else self->monsterinfo.power_armor_power = 300 + 120*self->monsterinfo.level;
 
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;

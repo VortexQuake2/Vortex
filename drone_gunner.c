@@ -203,8 +203,8 @@ void myGunnerGrenade (edict_t *self)
 	if (!self->enemy || !self->enemy->inuse)
 		return;
 
-	damage = 24 + 6*self->monsterinfo.level;
-	speed = 600 /*+ 30*self->monsterinfo.level*/;
+	damage = 28 + 6*self->monsterinfo.level;
+	speed = 600 + 30*self->monsterinfo.level;
 
 	if (speed > 900)
 		speed = 900;
@@ -674,7 +674,7 @@ void init_drone_gunner (edict_t *self)
 	VectorSet (self->maxs, 16, 16, 32);
 
 	//if (self->activator && self->activator->client)
-	self->health = 40 + 20*self->monsterinfo.level;
+	self->health = 120 + 75*self->monsterinfo.level;
 	//else self->health = 100 + 30*self->monsterinfo.level;
 
 	self->max_health = self->health;
@@ -700,7 +700,7 @@ void init_drone_gunner (edict_t *self)
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 
 	//if (self->activator && self->activator->client)
-		self->monsterinfo.power_armor_power = 50 + 15*self->monsterinfo.level;
+		self->monsterinfo.power_armor_power = 60 + 45*self->monsterinfo.level;
 	//else self->monsterinfo.power_armor_power = 100 + 50*self->monsterinfo.level;
 
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;

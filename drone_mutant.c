@@ -237,7 +237,7 @@ void mutant_hit_left (edict_t *self)
 	vec3_t	aim;
 
 	if (!self->activator->client)
-		damage = 20*self->monsterinfo.level;
+		damage = 25*self->monsterinfo.level;
 	else damage = 10*self->monsterinfo.level;
 
 	VectorSet (aim, 100, self->mins[0], 8);
@@ -555,7 +555,7 @@ void init_drone_mutant (edict_t *self)
 	VectorSet (self->maxs, 24, 24, 32);
 
 	//if (self->activator && self->activator->client)
-	self->health = 90 + 35*self->monsterinfo.level;
+	self->health = 135 + 75*self->monsterinfo.level;
 	//else
 		//self->health = 400 + 160*self->monsterinfo.level;
 

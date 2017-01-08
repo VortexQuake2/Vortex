@@ -1,12 +1,12 @@
 #include "g_local.h"
 
-
+void check_for_levelup(edict_t *ent);
 int mypower(int x, int y)
 {
 	if (y > 0)
 	{
 		y--;
-		return (x * mypower(x,y) );
+		return (x * mypower(x, y));
 	}
 	return (1);
 }
@@ -17,9 +17,9 @@ char *LoPrint(char *text)
 
 	if (!text)
 		return NULL;
-	for (i=0; i<strlen(text) ; i++)
+	for (i = 0; i<strlen(text); i++)
 		if ((byte)text[i] > 127)
-			text[i]=(byte)text[i]-128;
+			text[i] = (byte)text[i] - 128;
 
 	return text;
 }
@@ -28,16 +28,16 @@ char *HiPrint(char *text)
 {
 	int i;
 	char* ReturnVal;
-	
-	ReturnVal = V_Malloc(strlen(text)+1, TAG_LEVEL);
+
+	ReturnVal = V_Malloc(strlen(text) + 1, TAG_LEVEL);
 
 	strcpy(ReturnVal, text);
 
 	if (!text)
 		return NULL;
-	for (i=0; i<strlen(ReturnVal) ; i++)
+	for (i = 0; i<strlen(ReturnVal); i++)
 		if ((byte)ReturnVal[i] <= 127)
-			ReturnVal[i]=(byte)ReturnVal[i]+128;
+			ReturnVal[i] = (byte)ReturnVal[i] + 128;
 	return ReturnVal;
 }
 
@@ -51,6 +51,22 @@ void NewLevel_Addons(edict_t *ent)
 			ent->myskills.abilities[MAX_AMMO].level++;
 			ent->myskills.abilities[MAX_AMMO].current_level++;
 		}
+		if (ent->myskills.abilities[AMMO_REGEN].level < ent->myskills.abilities[MAX_AMMO].max_level)
+		{
+			ent->myskills.abilities[AMMO_REGEN].level++;
+			ent->myskills.abilities[AMMO_REGEN].current_level++;
+		}
+
+		if (ent->myskills.abilities[POWER_REGEN].level < ent->myskills.abilities[MAX_AMMO].max_level)
+		{
+			ent->myskills.abilities[POWER_REGEN].level++;
+			ent->myskills.abilities[POWER_REGEN].current_level++;
+		}
+		
+		
+
+
+
 		else ent->myskills.speciality_points++;
 
 		if (ent->myskills.abilities[VITALITY].level < ent->myskills.abilities[VITALITY].max_level)
@@ -73,7 +89,7 @@ void NewLevel_Addons(edict_t *ent)
 			ent->myskills.speciality_points += 2;
 	}
 
-    //Give the player talents if they are eligible.
+	//Give the player talents if they are eligible.
 	//if(ent->myskills.level >= TALENT_MIN_LEVEL && ent->myskills.level <= TALENT_MAX_LEVEL)
 	if (ent->myskills.level > 1 && !(ent->myskills.level % 2)) // Give a talent point every two levels.
 		ent->myskills.talents.talentPoints++;
@@ -83,34 +99,34 @@ gitem_t	*GetWeaponForNumber(int i)
 {
 	switch (i)
 	{
-	case 2 :
+	case 2:
 		return Fdi_SHOTGUN;
-	case 3 :
+	case 3:
 		return Fdi_SUPERSHOTGUN;
-	case 4 :
+	case 4:
 		return Fdi_MACHINEGUN;
-	case 5 :
+	case 5:
 		return Fdi_CHAINGUN;
-	case 6 :
+	case 6:
 		return Fdi_GRENADES;
-	case 7 :
+	case 7:
 		return Fdi_GRENADELAUNCHER;
-	case 8 :
+	case 8:
 		return Fdi_ROCKETLAUNCHER;
-	case 9 :
+	case 9:
 		return Fdi_HYPERBLASTER;
-	case 10 :
+	case 10:
 		return Fdi_RAILGUN;
-	case 11 :
+	case 11:
 		return Fdi_BFG;
 	}
 	return Fdi_ROCKETLAUNCHER;
 }
 
-void check_for_levelup (edict_t *ent)
+void check_for_levelup(edict_t *ent)
 {
 	double points_needed;
-	int plateau_points = Lua_GetIntVariable("PlateauPoints", 38000);
+	int plateau_points = Lua_GetIntVariable("PlateauPoints", 33000);
 	qboolean levelup = false;
 	int plateau_level = (int)ceil(log(plateau_points / start_nextlevel->value) / log(nextlevel_mult->value));
 
@@ -132,20 +148,40 @@ void check_for_levelup (edict_t *ent)
 		ent->myskills.level++;
 		points_needed = start_nextlevel->value * pow(nextlevel_mult->value, ent->myskills.level);
 
-		// the experience required to reach next level reaches a plateau
-		if (points_needed > plateau_points || ent->myskills.level > 5 || ent->myskills.level > plateau_level)
+		// ESTO SOLO SUCEDE DE NIVEL 6 a 9
+	
+		if ( ent->myskills.level > 5 && ent->myskills.level<10  )
 		{
 			// calculate next level points based
-			points_needed = plateau_points + Lua_GetVariable("PlateauMult", 2000)*(ent->myskills.level-plateau_level);
+			points_needed = (ent->myskills.level) * 3000 ;
+			ent->myskills.next_level += points_needed;
+		
 		}
+		//if (ent->myskills.level == 10)
+		//{
+		//	 calculate next level points based
+			//points_needed = 50000;
+			//ent->myskills.next_level += points_needed;
+			//G_PrintGreenText("***** 50000 solo en nivel 10 *****");
+		//}
 
+		// EXPERIENCIA DESDE NIVEL 10 al infinito
+		if (ent->myskills.level > 10)
+		{
+			//	 calculate next level points based
+			points_needed = 33000 + ((ent->myskills.level) * 5900);
+			ent->myskills.next_level += points_needed;
+
+		}
+	
+		else
 		ent->myskills.next_level += points_needed;
 
-        ent->myskills.speciality_points += 2;
+		ent->myskills.speciality_points += 2;
 		if (generalabmode->value && ent->myskills.class_num == CLASS_WEAPONMASTER)
 			ent->myskills.weapon_points += 6;
 		else // 4 points for everyone, only weaponmasters in generalabmode.
-			ent->myskills.weapon_points += 4;
+			ent->myskills.weapon_points += 5;
 
 		NewLevel_Addons(ent);//Add any special addons that should be there!
 		modify_max(ent);
@@ -163,17 +199,14 @@ void check_for_levelup (edict_t *ent)
 
 	if (levelup)
 	{
-		gi.centerprintf(ent, "Welcome to level %d!\n You need %d experience \nto get to the next level.\n", 
-			ent->myskills.level, ent->myskills.next_level-ent->myskills.experience);
+		gi.centerprintf(ent, "Welcome to level %d!\n You need %d experience \nto get to the next level.\n",
+			ent->myskills.level, ent->myskills.next_level - ent->myskills.experience);
 		gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/pc_up.wav"), 1, ATTN_STATIC, 0);
-
-		SaveCharacter(ent);
 	}
 }
-
 int VortexAddCredits(edict_t *ent, float level_diff, int bonus, qboolean client)
 {
-	int add_credits		= 0;
+	int add_credits = 0;
 	int streak;
 
 	streak = ent->myskills.streak;
@@ -190,7 +223,7 @@ int VortexAddCredits(edict_t *ent, float level_diff, int bonus, qboolean client)
 	add_credits += bonus;
 
 	//FIXME: remove this after allocating more space
-	if (ent->myskills.credits+add_credits > MAX_CREDITS)
+	if (ent->myskills.credits + add_credits > MAX_CREDITS)
 		ent->myskills.credits = MAX_CREDITS;
 	else
 		ent->myskills.credits += add_credits;
@@ -198,11 +231,11 @@ int VortexAddCredits(edict_t *ent, float level_diff, int bonus, qboolean client)
 	return add_credits;
 }
 
-void VortexSpreeAbilities (edict_t *attacker)
+void VortexSpreeAbilities(edict_t *attacker)
 {
 	// NOTE: Spree MUST be incremented before calling this function
 	// otherwise the player will keep getting 10 seconds of quad/invuln
-	
+
 	//New quad/invin duration variables
 	int base_duration = 50;	//5 seconds
 	int kill_duration = 5;	//0.5 seconds per kill
@@ -213,29 +246,29 @@ void VortexSpreeAbilities (edict_t *attacker)
 		return;
 	if (HasFlag(attacker))
 		return;
-/*
-    //Talent: Longer Powerups
+	/*
+	//Talent: Longer Powerups
 	if(getTalentSlot(attacker, TALENT_LONG_POWERUPS) != -1)
 	{
-		int level = getTalentLevel(attacker, TALENT_LONG_POWERUPS);
-		int baseBonus, killBonus;
+	int level = getTalentLevel(attacker, TALENT_LONG_POWERUPS);
+	int baseBonus, killBonus;
 
-		switch(level)
-		{
-		case 1:		baseBonus = 0;		killBonus = 10;		break;
-		case 2:		baseBonus = 0;		killBonus = 15;		break;
-		case 3:		baseBonus = 0;		killBonus = 20;		break;
-		default:	baseBonus = 0;		killBonus = 0;		break;
-		}
-
-		base_duration += baseBonus;
-		kill_duration += killBonus;
+	switch(level)
+	{
+	case 1:		baseBonus = 0;		killBonus = 10;		break;
+	case 2:		baseBonus = 0;		killBonus = 15;		break;
+	case 3:		baseBonus = 0;		killBonus = 20;		break;
+	default:	baseBonus = 0;		killBonus = 0;		break;
 	}
-*/
+
+	base_duration += baseBonus;
+	kill_duration += killBonus;
+	}
+	*/
 	// special circumstances if they have both create quad and create invin
-	if ((attacker->myskills.abilities[CREATE_QUAD].current_level > 0) 
+	if ((attacker->myskills.abilities[CREATE_QUAD].current_level > 0)
 		&& (attacker->myskills.abilities[CREATE_INVIN].current_level > 0))
-	{  
+	{
 		// if they already have it, give them another second
 		if (attacker->client->quad_framenum > level.framenum)
 			attacker->client->quad_framenum += kill_duration;
@@ -244,7 +277,7 @@ void VortexSpreeAbilities (edict_t *attacker)
 		else if (!(attacker->myskills.streak % 10))
 		{
 			// give them quad OR invin, not both!
-			if (random() > 0.5)	
+			if (random() > 0.5)
 				attacker->client->quad_framenum = level.framenum + base_duration;
 			else
 				// (apple)
@@ -255,7 +288,7 @@ void VortexSpreeAbilities (edict_t *attacker)
 	// does the attacker have create quad?
 	else if (attacker->myskills.abilities[CREATE_QUAD].current_level > 0)
 	{
-		if(!attacker->myskills.abilities[CREATE_QUAD].disable)
+		if (!attacker->myskills.abilities[CREATE_QUAD].disable)
 		{
 			// every 10 frags, give them 5 seconds of quad
 			if (!(attacker->myskills.streak % 10))
@@ -268,7 +301,7 @@ void VortexSpreeAbilities (edict_t *attacker)
 	// does the attacker have create invin?
 	else if (attacker->myskills.abilities[CREATE_INVIN].current_level > 0)
 	{
-		if(!attacker->myskills.abilities[CREATE_INVIN].disable)
+		if (!attacker->myskills.abilities[CREATE_INVIN].disable)
 		{
 			// every 10 frags, give them 5 seconds of invin
 			if (!(attacker->myskills.streak % 10))
@@ -277,25 +310,25 @@ void VortexSpreeAbilities (edict_t *attacker)
 			else if (attacker->client->invincible_framenum > level.framenum)
 				attacker->client->invincible_framenum += kill_duration;
 		}
-	}	
+	}
 }
 
 #define PLAYTIME_MIN_MINUTES		999.0	// minutes played before penalty begins
 #define PLAYTIME_MAX_MINUTES		999.0	// minutes played before max penalty is reached
 #define PLAYTIME_MAX_PENALTY		2.0		// reduce experience in half
 
-int V_AddFinalExp (edict_t *player, int exp)
+int V_AddFinalExp(edict_t *player, int exp)
 {
 	float	mod, playtime_minutes;
 
 	// reduce experience as play time increases
-	playtime_minutes = player->myskills.playingtime/60.0;
+	playtime_minutes = player->myskills.playingtime / 60.0;
 	if (playtime_minutes > PLAYTIME_MIN_MINUTES)
 	{
-		mod = 1.0 + playtime_minutes/PLAYTIME_MAX_MINUTES;
-	if (mod >= PLAYTIME_MAX_PENALTY)
-		mod = PLAYTIME_MAX_PENALTY;
-	exp /= mod;
+		mod = 1.0 + playtime_minutes / PLAYTIME_MAX_MINUTES;
+		if (mod >= PLAYTIME_MAX_PENALTY)
+			mod = PLAYTIME_MAX_PENALTY;
+		exp /= mod;
 	}
 
 	// player must pay back "hole" experience first
@@ -323,27 +356,27 @@ int V_AddFinalExp (edict_t *player, int exp)
 	return exp;
 }
 
-#define EXP_SHARED_FACTOR				0.5
+#define EXP_SHARED_FACTOR				0.8
 #define PLAYER_MONSTER_MIN_PLAYERS		4
 
 void VortexAddExp(edict_t *attacker, edict_t *targ);
 
 void hw_deathcleanup(edict_t *targ, edict_t *attacker);
 
-int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target)
+int PVP_AwardKill(edict_t *attacker, edict_t *targ, edict_t *target)
 {
 	int			max_points, clevel, base_exp;
-	int			credits			= 0;
-	int			exp_points		= 0;
-	int			break_points	= 0;
-	float		level_diff		= 0;
-	float		bonus			= 1;
-	float		dmgmod			= 1;
+	int			credits = 0;
+	int			exp_points = 0;
+	int			break_points = 0;
+	float		level_diff = 0;
+	float		bonus = 1;
+	float		dmgmod = 1;
 	float		damage;
 	char		name[50];
-	int			minimum_points	= 2;
-	qboolean	is_mini=false;
-	
+	int			minimum_points = 2;
+	qboolean	is_mini = false;
+
 	// sanity check
 	if (!attacker || !attacker->inuse || !attacker->client)
 		return 0;
@@ -373,9 +406,9 @@ int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target)
 
 	// calculate level difference modifier
 	if (targ->client) // target is a player
-		level_diff = (float) (target->myskills.level + 1) / (attacker->myskills.level + 1);
+		level_diff = (float)(target->myskills.level + 1) / (attacker->myskills.level + 1);
 	else // target is a monster/summon
-		level_diff = (float) (targ->monsterinfo.level + 1) / (attacker->myskills.level + 1);
+		level_diff = (float)(targ->monsterinfo.level + 1) / (attacker->myskills.level + 1);
 
 	// calculate spree bonuses
 	if (attacker->myskills.streak >= SPREE_START && !SPREE_WAR)
@@ -392,7 +425,7 @@ int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target)
 		bonus += ceil(attacker->myskills.boss * 0.2);
 
 	// we killed another player
-	if (targ->client) 
+	if (targ->client)
 	{
 		// spree break bonus points
 		if (target->myskills.streak >= SPREE_START)
@@ -404,7 +437,7 @@ int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target)
 		// award 2fer bonus
 		if (attacker->lastkill >= level.time)
 		{
-			
+
 			if (attacker->nfer < 2)
 				attacker->nfer = 2;
 			else
@@ -415,18 +448,19 @@ int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target)
 
 			if (attacker->nfer == 4)
 			{
-				gi.sound(attacker, CHAN_VOICE, gi.soundindex("speech/threat.wav"), 1, ATTN_NORM, 0);
+				gi.sound(attacker, CHAN_VOICE, gi.soundindex("misc/assasin.wav"), 1, ATTN_NORM, 0);	//listo
 			}
 			else if (attacker->nfer == 5)
 			{
-				gi.sound(attacker, CHAN_VOICE, gi.soundindex("speech/hey.wav"), 1, ATTN_NORM, 0);
+				gi.sound(attacker, CHAN_VOICE, gi.soundindex("speech/hey.wav"), 1, ATTN_NORM, 0);	//listo
 			}
 			else if (attacker->nfer > 3 && attacker->nfer < 4)
 			{
-				gi.sound(target, CHAN_VOICE, gi.soundindex("speech/excelent.wav"), 1, ATTN_NORM, 0);
-			}else if (attacker->nfer == 10)
+				gi.sound(target, CHAN_VOICE, gi.soundindex("misc/excellent.wav"), 1, ATTN_NORM, 0); //listo
+			}
+			else if (attacker->nfer == 10)
 			{
-				gi.sound(attacker, CHAN_VOICE, gi.soundindex("misc/10fer.wav"), 1, ATTN_NORM, 0);
+				gi.sound(attacker, CHAN_VOICE, gi.soundindex("misc/godlike.wav"), 1, ATTN_NORM, 0);//listo
 			}
 		}
 
@@ -446,7 +480,7 @@ int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target)
 		max_points = 75;
 
 		//4.5 monster bonus flags
-		if (targ->monsterinfo.bonus_flags & BF_UNIQUE_FIRE 
+		if (targ->monsterinfo.bonus_flags & BF_UNIQUE_FIRE
 			|| targ->monsterinfo.bonus_flags & BF_UNIQUE_LIGHTNING)
 		{
 			level_diff *= 15.0;
@@ -462,7 +496,7 @@ int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target)
 			|| targ->monsterinfo.bonus_flags & BF_BERSERKER || targ->monsterinfo.bonus_flags & BF_GHOSTLY
 			|| targ->monsterinfo.bonus_flags & BF_STYGIAN)
 			level_diff *= 1.5;
-		
+
 		// control cost bonus (e.g. tanks)
 		if (targ->monsterinfo.control_cost > 33)
 			level_diff *= (0.75 * targ->monsterinfo.control_cost) / 30;
@@ -492,7 +526,7 @@ int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target)
 		// in normal pvm you get slightly more exp if you're alone.
 		// and much less if you're not.
 		// i passed these values through geogebra :v
-		if (invasion->value < 2) 
+		if (invasion->value < 2)
 		{
 			// normalize the modifier a bit
 			float modifier_per_person = 0.26;
@@ -502,11 +536,11 @@ int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target)
 			// people above average level get a bit more experience for letting others play
 			if (attacker->myskills.level - AveragePlayerLevel() > 3) 
 			{
-				base = 0.7;	
+				base = 0.7;
 				modifier_per_person = 0.23;
 			}
 
-			mult = base+modifier_per_person*(6-player_count);
+			mult = base + modifier_per_person*(6 - player_count);
 
 			if (mult > 0.1)
 				exp_points *= mult;
@@ -514,6 +548,7 @@ int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target)
 				exp_points *= 0.1;
 		}
 	}
+
 
 	if (attacker->myskills.level >= 10)
 		exp_points *= vrx_over10mult->value;
@@ -535,12 +570,12 @@ int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target)
 	max_points = exp_points;
 
 	if (!allies->value || ((exp_points = AddAllyExp(attacker, max_points)) < 1))
-	// award experience to non-allied players
+		// award experience to non-allied players
 		exp_points = V_AddFinalExp(attacker, max_points);
 
 	if (!attacker->ai.is_bot)
-		gi.cprintf(attacker, PRINT_HIGH, "You dealt %.0f damage (%.0f%c) to %s (level %d), gaining %d experience and %d credits\n", 
-			damage, (dmgmod * 100), '%', name, clevel, exp_points, credits);
+		gi.centerprintf(attacker, "Damage %.0f of (%.0f%c) to %s (lvl %d) \n Gained: \n Exp %d n' Credits %d \n Next Level: %d%",
+		damage, (dmgmod * 100), '%', name, clevel, exp_points, credits, (attacker->myskills.next_level - attacker->myskills.experience));
 
 	return exp_points;
 }
@@ -554,7 +589,7 @@ void VortexAddExp(edict_t *attacker, edict_t *targ)
 	if (IsABoss(attacker))
 	{
 		AddBossExp(attacker, targ);
-		return; 
+		return;
 	}
 
 	if (domination->value)
@@ -594,15 +629,15 @@ void VortexAddExp(edict_t *attacker, edict_t *targ)
 	// sanity check
 	//if (attacker == target || attacker == NULL || target == NULL || !attacker->inuse || !target->inuse)
 	//	return;
-	
+
 	// make sure target is valid
 	//if (!target || !target->inuse)
 	//	return;
 
 	// award experience and credits to anyone that has hurt the target
-	for (i=0; i<game.maxclients; i++) 
+	for (i = 0; i<game.maxclients; i++)
 	{
-		player = g_edicts+1+i;
+		player = g_edicts + 1 + i;
 
 		// award experience and credits to non-spectator clients
 		if (!player->inuse || G_IsSpectator(player) || player == target || player->flags & FL_CHATPROTECT)
@@ -622,7 +657,7 @@ void VortexAddExp(edict_t *attacker, edict_t *targ)
 
 void VortexDeathCleanup(edict_t *attacker, edict_t *targ)
 {
-	int lose_points=0;
+	int lose_points = 0;
 	float level_diff;
 
 	if (IsABoss(attacker))
@@ -647,7 +682,7 @@ void VortexDeathCleanup(edict_t *attacker, edict_t *targ)
 	{
 		targ->myskills.streak = 0;
 		targ->myskills.suicides++;
-		
+
 		// players don't lose points in PvM mode since it is easy to kill yourself
 		if (!pvm->value)
 		{
@@ -657,13 +692,13 @@ void VortexDeathCleanup(edict_t *attacker, edict_t *targ)
 			if (lose_points > 50)
 				lose_points = 50;
 
-			if (targ->client->resp.score - lose_points > 0) 
+			if (targ->client->resp.score - lose_points > 0)
 			{
 				targ->client->resp.score -= lose_points;
 				targ->myskills.experience -= lose_points;
 			}
 			else
-			{	
+			{
 				targ->myskills.experience -= targ->client->resp.score;
 				targ->client->resp.score = 0;
 			}
@@ -671,7 +706,7 @@ void VortexDeathCleanup(edict_t *attacker, edict_t *targ)
 
 		return;
 	}
-	
+
 	if (invasion->value < 2)
 	{
 		targ->myskills.fragged++;
@@ -700,7 +735,7 @@ void VortexDeathCleanup(edict_t *attacker, edict_t *targ)
 	if (IsNewbieBasher(targ))
 		gi.bprintf(PRINT_HIGH, "%s wasted a mini-boss!\n", attacker->client->pers.netname);
 
-	level_diff = (float) (targ->myskills.level + 1) / (attacker->myskills.level + 1);
+	level_diff = (float)(targ->myskills.level + 1) / (attacker->myskills.level + 1);
 	// don't let 'em spree off players that offer no challenge!
 	if (!(IsNewbieBasher(attacker) && (level_diff <= 0.5)))
 	{
@@ -749,9 +784,10 @@ void VortexDeathCleanup(edict_t *attacker, edict_t *targ)
 			if (attacker == SPREE_DUDE)
 			{
 				G_PrintGreenText(va("%s SPREE WAR: %d frag spree!", attacker->client->pers.netname, attacker->myskills.streak));
+			
 			}
 		}
-		else if (attacker->myskills.streak >= 10 && GetRandom(1,2) == 1)
+		else if (attacker->myskills.streak >= 10 && GetRandom(1, 2) == 1)
 		{
 			G_PrintGreenText(va("%s rampage: %d frag spree!", attacker->client->pers.netname, attacker->myskills.streak));
 		}
@@ -778,94 +814,94 @@ CURRENTLY DISABLED
 /*
 void Add_exp_by_damage (edict_t *attacker, edict_t *targ, int damage)
 {
-	float	exp_points=0;
-	float	lose_points=0;
-	float	level_diff=0;
-	float	bonus=1;
-	edict_t *player;
+float	exp_points=0;
+float	lose_points=0;
+float	level_diff=0;
+float	bonus=1;
+edict_t *player;
 
-	attacker = GetTheClient(attacker);
-	player = GetTheClient(targ);
+attacker = GetTheClient(attacker);
+player = GetTheClient(targ);
 
-	if (attacker == NULL || player == NULL || damage <= 0)
-		return;
+if (attacker == NULL || player == NULL || damage <= 0)
+return;
 
-	// ignore invalid data
-	if (targ == attacker || player->deadflag || !player->takedamage)
-		return;
+// ignore invalid data
+if (targ == attacker || player->deadflag || !player->takedamage)
+return;
 
-	// calc level difference modifier
-	level_diff = (float) (player->myskills.level + 1) / (attacker->myskills.level + 1);
-	
-	if (!ctf->value)
-	{
-		// calc spree bonuses
-		if (attacker->myskills.streak >= SPREE_START)
-			bonus += 0.02 * attacker->myskills.streak;
-		else if (attacker->myskills.streak >= SPREE_WARS_START && SPREE_WARS)
-			bonus += 0.03 * attacker->myskills.streak;
+// calc level difference modifier
+level_diff = (float) (player->myskills.level + 1) / (attacker->myskills.level + 1);
 
-		// calc spree break bonuses
-		if (player->myskills.streak >= SPREE_START && !SPREE_WAR)
-			bonus += 0.01 * player->myskills.streak;
-		else if (player->myskills.streak >= SPREE_WARS_START && SPREE_WARS)
-			bonus += 0.015 * player->myskills.streak;
-		
-		// cap maximum points to 200%
-		if (bonus > 2.0)
-			bonus = 2.0;
-	}
+if (!ctf->value)
+{
+// calc spree bonuses
+if (attacker->myskills.streak >= SPREE_START)
+bonus += 0.02 * attacker->myskills.streak;
+else if (attacker->myskills.streak >= SPREE_WARS_START && SPREE_WARS)
+bonus += 0.03 * attacker->myskills.streak;
 
-	if (targ->client)
-		exp_points = damage * (0.25 * (level_diff * bonus));
-	else
-		exp_points = damage * (0.025 * (level_diff * bonus));
+// calc spree break bonuses
+if (player->myskills.streak >= SPREE_START && !SPREE_WAR)
+bonus += 0.01 * player->myskills.streak;
+else if (player->myskills.streak >= SPREE_WARS_START && SPREE_WARS)
+bonus += 0.015 * player->myskills.streak;
 
-	if (targ->client)
-		lose_points = 0.25 * exp_points;
+// cap maximum points to 200%
+if (bonus > 2.0)
+bonus = 2.0;
+}
+
+if (targ->client)
+exp_points = damage * (0.25 * (level_diff * bonus));
+else
+exp_points = damage * (0.025 * (level_diff * bonus));
+
+if (targ->client)
+lose_points = 0.25 * exp_points;
 
 //	gi.dprintf("attacker exp + %f, attacker cache =%f\n", exp_points, attacker->myskills.exp_cache);
 //	gi.dprintf("targ exp - %f, targ cache =%f\n", lose_points, targ->myskills.exp_cache);
 
-	// add non-integer values to cache
-	if (exp_points < 1 && attacker->myskills.exp_cache < 1)
-	{
-		attacker->myskills.exp_cache += exp_points;
-		return;
-	}
-	if (lose_points < 1 && player->myskills.exp_cache < 1)
-	{
-		player->myskills.exp_cache += lose_points;
-		return;
-	}
+// add non-integer values to cache
+if (exp_points < 1 && attacker->myskills.exp_cache < 1)
+{
+attacker->myskills.exp_cache += exp_points;
+return;
+}
+if (lose_points < 1 && player->myskills.exp_cache < 1)
+{
+player->myskills.exp_cache += lose_points;
+return;
+}
 
-	// empty cache
-	if (attacker->myskills.exp_cache >= 1)
-	{
-		exp_points += attacker->myskills.exp_cache;
-		attacker->myskills.exp_cache = 0;
-	}
-	if (player->myskills.exp_cache >= 1)
-	{
-		lose_points += player->myskills.exp_cache;
-		player->myskills.exp_cache = 0;
-	}
+// empty cache
+if (attacker->myskills.exp_cache >= 1)
+{
+exp_points += attacker->myskills.exp_cache;
+attacker->myskills.exp_cache = 0;
+}
+if (player->myskills.exp_cache >= 1)
+{
+lose_points += player->myskills.exp_cache;
+player->myskills.exp_cache = 0;
+}
 
-	// give your team some experience
-	if (ctf->value)
-		Add_ctfteam_exp(attacker, (int)(0.5*exp_points));
+// give your team some experience
+if (ctf->value)
+Add_ctfteam_exp(attacker, (int)(0.5*exp_points));
 
-	// modify attacker's score
-	attacker->client->resp.score += (int) exp_points;
-	attacker->myskills.experience += (int) exp_points;
+// modify attacker's score
+attacker->client->resp.score += (int) exp_points;
+attacker->myskills.experience += (int) exp_points;
 
-	// reduce target's score
-	if (player->client->resp.score - lose_points > 0)
-	{
-		player->client->resp.score -= (int) lose_points;
-		player->myskills.experience -= (int) lose_points;
-	}
-	
-	check_for_levelup(attacker);
+// reduce target's score
+if (player->client->resp.score - lose_points > 0)
+{
+player->client->resp.score -= (int) lose_points;
+player->myskills.experience -= (int) lose_points;
+}
+
+check_for_levelup(attacker);
 }
 */

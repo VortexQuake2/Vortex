@@ -1494,12 +1494,12 @@ void Weapon_HyperBlaster_Fire (edict_t *ent)
 	qboolean	fire_this_frame = false;
 
 	// only fire every other frame
-	if (ent->client->ps.gunframe == 6 || ent->client->ps.gunframe == 8
-		|| ent->client->ps.gunframe == 10)
-	{
+	//if (ent->client->ps.gunframe == 6 || ent->client->ps.gunframe == 9
+	//	|| ent->client->ps.gunframe == 15)
+	//{
 		fire_this_frame = true;
 		shots++;
-	}
+	//}
 	// get weapon properties
 	damage = HYPERBLASTER_INITIAL_DAMAGE + HYPERBLASTER_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_HYPERBLASTER].mods[0].current_level;
 	speed = HYPERBLASTER_INITIAL_SPEED + HYPERBLASTER_ADDON_SPEED * ent->myskills.weapons[WEAPON_HYPERBLASTER].mods[2].current_level;
@@ -2141,7 +2141,7 @@ void weapon_shotgun_fire (edict_t *ent)
 
 	// shotgun strike upgrade
 	// 10% chance to deal double damage at level 10
-	temp = 1.0 / (1.0 + 0.0111*ent->myskills.weapons[WEAPON_SHOTGUN].mods[1].current_level);
+	temp = 1.0 / (1.0 + 0.0222*ent->myskills.weapons[WEAPON_SHOTGUN].mods[1].current_level);
 
 	if (random() > temp)
 	{

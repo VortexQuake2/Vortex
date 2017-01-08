@@ -584,7 +584,7 @@ void SpawnSkull (edict_t *ent)
 	skull->touch = skull_touch;
 	VectorSet(skull->mins, -16, -16, -16);
 	VectorSet(skull->maxs, 16, 16, 16);
-	skull->s.modelindex = gi.modelindex("models/skull/tris.md2");
+	skull->s.modelindex = gi.modelindex("models/monsters/idg2/head/tris.md2"); //"models/skull/tris.md2"
 	skull->nextthink = level.time + SKULL_DELAY;
 	skull->monsterinfo.upkeep_delay = skull->nextthink*10 + 10; // 3.2 upkeep starts 1 second after spawn
 	skull->monsterinfo.cost = cost;

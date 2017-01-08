@@ -173,7 +173,7 @@ qboolean CanDamage (edict_t *targ, edict_t *inflictor)
 void G_ApplyFury(edict_t *attacker)
 {
 	int chance = attacker->myskills.abilities[FURY].current_level;
-	int r = GetRandom(0, 100);
+	int r = GetRandom(0, 66);
 
 	//The following is truncated so that every 4th point adds an extra 1%.
 	if (r < chance)
@@ -640,7 +640,7 @@ void G_ApplyVampire(edict_t *attacker, float take)
 	int	*armor = &attacker->client->pers.inventory[body_armor_index];
 	int	max_health = attacker->max_health;
 
-	temp = 0.075*attacker->myskills.abilities[VAMPIRE].current_level;
+	temp = 0.090*attacker->myskills.abilities[VAMPIRE].current_level;
 
 	// brains and mutants with morph mastery use vamp
 	if (attacker->mtype)
@@ -1011,6 +1011,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		if (targ->mtype == M_OBSTACLE)
 			targ->svflags &= ~SVF_NOCLIENT;
 
+		
 		//Talent: Dim Vision
 		if ((dtype & D_PHYSICAL) && targ->client && G_EntIsAlive(targ) && ((talentLevel = getTalentLevel(targ, TALENT_DIM_VISION)) > 0)
 			&& (level.framenum > targ->dim_vision_delay) && (targ != attacker)) // 10% chance per 1 second
@@ -1035,6 +1036,39 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 			targ->dim_vision_delay = level.framenum + 10; // roll again in 1 second
 		}
 
+
+
+		////////////////////////TALENT : FAST MOVE (RUN!) ALIEN /////////////////////////////////////
+
+	//	if ((dtype & D_PHYSICAL) && targ->client && G_EntIsAlive(targ) && ((talentLevel = getTalentLevel(targ, TALENT_FASTMOVE)) > 0)
+		//	&& (level.framenum > targ->dim_vision_delay) && (targ != attacker)) // 10% chance per 1 second
+			// az- fix autocurse
+//		{
+	//		int curse_level;
+
+		//	temp = 0.04 * talentLevel;
+			//if (temp > random())
+			//{
+				//curse_level = targ->myskills.abilities[CURSE].current_level;
+
+				//if (curse_level < 1)
+					//curse_level = 1;
+
+				// add the curse
+				//curse_add(attacker, targ, CURSE, curse_level, curse_level / 2);
+				//CurseMessage(targ, attacker, CURSE, curse_level, true);
+			//}
+
+			// modify delay
+			//targ->dim_vision_delay = level.framenum + 10; // roll again in 1 second
+		//}
+		//int duration = 3;
+		//attacker->fury_time = level.time + duration;
+		//attacker->myskills.abilities[FURY].delay = attacker->fury_time + 1.0;
+
+
+
+		/////////////////////////////////////////////////////////////////////////////////////////////
 		//4.5 monster bonus flag ghostly chills targets
 		if (G_EntIsAlive(targ) && level.framenum > targ->dim_vision_delay)
 		{

@@ -10,7 +10,7 @@ const char* Time();
 #define	CURRENT_DATE				s1 = Date()
 #define CURRENT_TIME				s2 = Time()
 
-#define VRX_VERSION "4.7"
+#define VRX_VERSION "5"
 
 //4.5 player combat preferences
 #define HOSTILE_PLAYERS				0x00000001			
@@ -46,14 +46,15 @@ const char* Time();
 
 // class numbers
 #define CLASS_SOLDIER			1
-#define CLASS_DEMON				2
-#define CLASS_ENGINEER			3
+
+#define CLASS_ENGINEER			2 //torb
+#define CLASS_DEMON				3
 #define CLASS_PALADIN			4
 #define CLASS_ARCANIST			5
 #define CLASS_POLTERGEIST		6
 #define CLASS_WEAPONMASTER		7
 
-#define CLASS_MAX				7		//Number of classes to choose from
+#define CLASS_MAX				7	//Number of classes to choose from
 
 #define ARMORY_ITEMS 31
 
@@ -328,6 +329,7 @@ extern double DELAY_SENTRY;
 extern double SPIKER_MAX_COUNT;
 extern double GASSER_MAX_COUNT;
 extern double OBSTACLE_MAX_COUNT;
+extern double BOX_MAX_COUNT;
 extern double SPIKEBALL_MAX_COUNT;
 extern double MAX_MONSTERS;
 extern double DELAY_MONSTER_THINK;

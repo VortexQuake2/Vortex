@@ -95,7 +95,7 @@ void burn_person (edict_t *target, edict_t *owner, int damage)
 	flame->owner = owner;
 	flame->enemy = target;
 	flame->mtype = CURSE_BURN;
-	flame->delay = level.time + 10;
+	flame->delay = level.time + 5;
 	flame->nextthink = level.time + FRAMETIME;
 	flame->PlasmaDelay = level.time + FRAMETIME;
 	flame->think = fire_think;

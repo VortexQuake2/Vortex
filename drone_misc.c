@@ -124,8 +124,10 @@ qboolean drone_ValidChaseTarget (edict_t *self, edict_t *target)
 
 	//FIXME: we should clean this up
 	// chasing invasion monster spawn
+
+//lepe
 	if (invasion->value && target->mtype == INVASION_MONSTERSPAWN
-		&& !OnSameTeam(self, target))
+		&& !OnSameTeam(self, self->enemy) && visible(self, self->enemy))
 		return true;
 
 	if (!target->takedamage || (target->solid == SOLID_NOT))
@@ -745,10 +747,10 @@ edict_t *SpawnDroneEnt (edict_t *drone, edict_t *ent, int drone_type, qboolean w
 		//Talent: Corpulence (also in M_Initialize)
 		talentLevel = getTalentLevel(ent, TALENT_CORPULENCE);
 		talentLevel2 = getTalentLevel(ent, TALENT_LIFE_TAP);
-		if(talentLevel > 0)	mult +=	0.4 * talentLevel;	//+40% per upgrade
+		if(talentLevel > 0)	mult +=	0.1 * talentLevel;	//+40% per upgrade
 		if(talentLevel2 > 0) mult += 0.2 * talentLevel2; //+20%
 
-		mult += 0.5; // base mult for player monsters
+		mult += 0.3; // base mult for player monsters
 
 		//Talent: Drone Power (durability penalty)
 	//	talentLevel = getTalentLevel(ent, TALENT_DRONE_POWER);
@@ -1006,7 +1008,7 @@ void DroneBlink (edict_t *ent)
 {
 	int	i;
 
-	for (i=0; i<3; i++) {
+	for (i=0; i<4; i++) {
 		if (G_EntIsAlive(ent->selected[i]))
 			ent->selected[i]->monsterinfo.selected_time = level.time + MONSTER_BLINK_DURATION;
 	}
@@ -1045,7 +1047,7 @@ void DroneRemoveSelected (edict_t *ent, edict_t *drone)
 {
 	int i;
 
-	for (i=0; i<3; i++)
+	for (i=0; i<4; i++)
 	{
 		if (drone)
 		{
@@ -1071,7 +1073,7 @@ edict_t **DroneAlreadySelected (edict_t *ent, edict_t *drone)
 {
 	int i;
 
-	for (i=0; i<3; i++)
+	for (i=0; i<4; i++)
 	{
 		// is this drone already selected?
 		if (drone == ent->selected[i])
@@ -1148,7 +1150,7 @@ static edict_t *FindMoveTarget (edict_t *ent)
 		if (!G_EntIsAlive(e))
 			continue;
 
-		for (i=0; i<3; i++)
+		for (i=0; i<4; i++)
 		{
 			// is this a selected drone?
 			if (e == ent->selected[i])
@@ -1188,7 +1190,7 @@ void DroneMove (edict_t *ent)
 				gi.centerprintf(ent, "Drones will follow %s.\n", target->client->pers.netname);
 			else
 				gi.centerprintf(ent, "Drones will follow target.\n");
-			for (i=0; i<3; i++) {
+			for (i=0; i<4; i++) {
 				if (G_EntIsAlive(ent->selected[i])
 					&& !(ent->selected[i]->spawnflags & AI_STAND_GROUND))
 				{
@@ -1203,7 +1205,7 @@ void DroneMove (edict_t *ent)
 				gi.centerprintf(ent, "Drones will attack %s.\n", target->client->pers.netname);
 			else
 				gi.centerprintf(ent, "Drones will attack target.\n");
-			for (i=0; i<3; i++) {
+			for (i=0; i<4; i++) {
 				if (G_EntIsAlive(ent->selected[i])
 					&& !(ent->selected[i]->spawnflags & AI_STAND_GROUND))
 					ent->selected[i]->enemy = target;
@@ -1232,7 +1234,7 @@ void DroneMove (edict_t *ent)
 	gi.centerprintf(ent, "Drones changing position.\n");
 	e = SpawnCombatPoint(ent, tr.endpos);
 	ent->selectedsentry = e;
-	for (i=0; i<3; i++) {
+	for (i=0; i<4; i++) {
 		if (G_EntIsAlive(ent->selected[i]))
 		{
 			ent->selected[i]->monsterinfo.aiflags |= (AI_NO_CIRCLE_STRAFE|AI_COMBAT_POINT);
@@ -1876,6 +1878,7 @@ char *GetMonsterKindString (int mtype)
 		case M_GASSER: return "Gasser";
 		case M_SPIKEBALL: return "Spore";
 		case M_OBSTACLE: return "Obstacle";
+		case M_BOX: return "Box";
 		case M_COCOON: return "Cocoon";
 		case M_HEALER: return "Healer";
 		case TOTEM_FIRE: return "Fire Totem";
@@ -1920,7 +1923,7 @@ void DroneAttack (edict_t *ent, edict_t *other)
 
 	gi.centerprintf(ent, "Monsters will attack target.\n");
 
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 4; i++)
 	{
 		e = ent->selected[i];
 		if (G_EntIsAlive(e) && ValidCommandMonster(ent, e) && visible(ent, e))
@@ -1941,7 +1944,7 @@ void DroneFollow (edict_t *ent, edict_t *other)
 
 	gi.centerprintf(ent, "Monsters will follow target.\n");
 
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 4; i++)
 	{
 		e = ent->selected[i];
 		if (G_EntIsAlive(e) && ValidCommandMonster(ent, e) && visible(ent, e))
@@ -1963,7 +1966,7 @@ int numDroneLinks (edict_t *self)
 	int		i, numLinks;
 	edict_t *e;
 
-	for (i = numLinks = 0; i < 3; i++)
+	for (i = numLinks = 0; i < 4; i++)
 	{
 		e = self->activator->selected[i];
 		// entity must be alive
@@ -2053,7 +2056,7 @@ void DroneMovePosition (edict_t *ent, vec3_t pos)
 	}
 
 	// search selected monsters
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 4; i++)
 	{
 		e = ent->selected[i];
 
@@ -2459,12 +2462,32 @@ void Cmd_Drone_f (edict_t *ent)
 		SpawnDrone(ent, 8, false);
 	else if (!Q_strcasecmp(s, "berserker"))
 		SpawnDrone(ent, 9, false);
-	else if (!Q_strcasecmp(s, "soldier") && ent->myskills.administrator > 999)
+	else if (!Q_strcasecmp(s, "soldier"))
 		SpawnDrone(ent, 10, false);
-	else if (!Q_strcasecmp(s, "infantry") && ent->myskills.administrator > 999)
-		SpawnDrone(ent, 11, false);
-	else
+	else if (!Q_strcasecmp(s, "jorg"))
+		SpawnDrone(ent, 32, false);
+	else 
+
+
+		//case 1: init_drone_gunner(drone);		break;
+		//case 2: init_drone_parasite(drone);		break;
+		//case 3: init_drone_bitch(drone);		break;
+		//case 4: init_drone_brain(drone);		break;
+		//case 5: init_drone_medic(drone);		break;
+		//case 6: init_drone_tank(drone);			break;
+		//case 7: init_drone_mutant(drone);		break;
+		//case 8: init_drone_gladiator(drone);	break;
+		//case 9: init_drone_berserk(drone);		break;
+		//case 10: init_drone_soldier(drone);		break;
+		//case 11: init_drone_infantry(drone);	break;
+		//case 20: init_drone_decoy(drone);		break;
+		//case 30: init_drone_commander(drone);	break;
+		//case 31: init_drone_supertank(drone);	break;
+		//case 32: init_drone_jorg(drone);		break;
+		//case 33: init_drone_makron(drone);		break;
+
+
 		safe_cprintf(ent, PRINT_HIGH, "Additional parameters required.\nType 'monster help' for a list of commands.\n");
-	//gi.dprintf("%d\n", CTF_GetNumSummonable("drone", ent->teamnum));
+
 }
 

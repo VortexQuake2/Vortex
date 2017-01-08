@@ -784,6 +784,7 @@ int	skullindex;
 #define MOD_SELFDESTRUCT	101
 //K03 End
 #define MOD_FRIENDLY_FIRE	0x8000000
+#define MOD_FMEDICPACK		150
 
 extern	int	meansOfDeath;
 
@@ -1569,7 +1570,7 @@ struct gclient_s
 	int             cloakdrain;
 
 	qboolean		boosted;		//Talent: Leap Attack - true if player used boost and is still airbourne
-
+	float healthregen_timee; //lepe
 	float healthregen_time;
 	float armorregen_time;
 
@@ -1844,10 +1845,13 @@ struct edict_s
 	int num_spikegrenades; // number of spike greandes out
 	int num_autocannon; //4.1 keep track of live autocannons
 	int num_caltrops;//4.2 keep track of live caltrops
+	int num_fmedi; // lepi
+	int num_box; //lepi
 	int num_detectors; // number of live detectors
 	int	num_spikers;
 	int num_gasser;
 	int num_obstacle;
+
 	int	num_spikeball;
 	int	num_laserplatforms; //4.4 Talent: Laser Platform
 	int num_hammers; //4.4 Talent: Boomerang
@@ -2181,6 +2185,7 @@ void Cmd_LaserSight_f(edict_t *ent);
 #define M_HEALER		117
 #define M_SPIKER		118
 #define M_OBSTACLE		119
+#define M_BOX 350
 #define M_GASSER		120
 #define M_SPIKEBALL		121
 #define M_COCOON		122

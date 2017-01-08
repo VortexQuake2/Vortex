@@ -89,7 +89,8 @@
 #define SHIELD			86
 #define CALTROPS		87
 #define SPIKE_GRENADE	88
-#define DETECTOR		89
+#define BOX				89
+#define DETECTOR		133
 #define CONVERSION		90
 #define DEFLECT			91
 #define SCANNER			92
@@ -111,4 +112,5 @@
 #define FLASH			108
 #define DECOY			109 // az 3.2b add decoy back into engineer.
 
-#define MAX_ABILITIES	110
+#define MAX_ABILITIES	160
+#define FMEDICPACK		111 // Lepi

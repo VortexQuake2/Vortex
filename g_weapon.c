@@ -621,7 +621,7 @@ void fire_blaster (edict_t *self, vec3_t start, vec3_t dir, int damage, int spee
 	bolt->owner = self;
 	bolt->style = mod;
 	bolt->touch = blaster_touch;
-	bolt->nextthink = level.time + duration;
+	bolt->nextthink = level.time + 9;// duration; // 2016 SLOW
 	bolt->think = G_FreeEdict;
 	bolt->dmg = damage;
 	bolt->classname = "bolt";
@@ -2397,6 +2397,9 @@ void EmpEffects (edict_t *ent)
 	gi.multicast(start, MULTICAST_PVS);
 
 	// make powered armor flash on and off
+
+	
+	// make powered armor flash on and off
 	if (!ctf->value && !domination->value && ent->monsterinfo.power_armor_power)
 	{
 		if (ent->monsterinfo.power_armor_type == POWER_ARMOR_SHIELD)
@@ -2409,6 +2412,7 @@ void EmpEffects (edict_t *ent)
 			ent->s.effects ^= EF_POWERSCREEN;
 		}
 	}
+
 }
 
 void ExplodeAmmo (edict_t *ent, edict_t *other)
@@ -3254,6 +3258,7 @@ void Cmd_TossSpikeball (edict_t *ent)
 	fire_spikeball(ent, start, forward, damage, 600, 100, range, duration, health, ent->myskills.abilities[SPORE].current_level);
 
 	ent->client->ability_delay = level.time + SPIKEBALL_DELAY;
+
 	ent->client->pers.inventory[power_cube_index] -= cost;
 }
 
