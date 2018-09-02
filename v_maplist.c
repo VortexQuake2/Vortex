@@ -103,6 +103,9 @@ fallback:
 				{
 					// copy map name to list
 					strcpy(maplist->maps[iterator].name, s);
+
+					// terminate
+					maplist->maps[iterator].name[strcspn(s, "\r\n")] = 0;
 				}
 				else
 				{
@@ -116,16 +119,9 @@ fallback:
 				// find next token
 				if ((s = strtok(NULL, ",")) != NULL)
 				{
-					// terminate the line
-					// az: do we need this? test it.
-					maplist->maps[iterator].name[strlen(maplist->maps[iterator].name)] = '\0';
-
 					// copy monster value to list
 					maplist->maps[iterator].monsters = atoi(s);
 				}
-
-				// make sure line is terminated
-				maplist->maps[iterator].name[strlen(maplist->maps[iterator].name)-1] = '\0';
 
 				++iterator;
 			}
