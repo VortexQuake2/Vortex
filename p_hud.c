@@ -316,8 +316,8 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 
 		// 3.78 truncate client's name and class string
 		strcpy(name, V_TruncateString(cl->pers.netname, 11));
-		truncClass = V_TruncateString(GetClassString(cl_ent->myskills.class_num);
-		strcpy(classname, truncClass, 3));
+		truncClass = V_TruncateString(GetClassString(cl_ent->myskills.class_num), 3);
+		strcpy(classname, truncClass);
 		padRight(name, 10);
 
 		Com_sprintf(entry, sizeof(entry),
