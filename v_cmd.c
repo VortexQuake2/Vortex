@@ -134,7 +134,7 @@ gameCommand_s commands[] =
 	{ "wormhole",	    Cmd_WormHole_f },
 	{ "update",		    V_UpdatePlayerAbilities},
 	{ "berserker",	    Cmd_PlayerToBerserk_f },
-	{ "medicpack",		 Cmd_fmedi_f }, //lepi
+	// { "medicpack",		 Cmd_fmedi_f }, //lepi
 	{ "caltrops",	    Cmd_Caltrops_f },
 	{ "spikegrenade",   Cmd_SpikeGrenade_f },
 	{ "detector",	    Cmd_Detector_f },
