@@ -766,8 +766,8 @@ void Cmd_CreateSupplyStation_f (edict_t *ent)
 	//Talent: Precision Tuning
 	else if ((talentLevel = getTalentLevel(ent, TALENT_PRECISION_TUNING)) > 0)
 	{
-		cost_mult -= PRECISION_TUNING_COST_FACTOR * talentLevel;
-		delay_mult -= PRECISION_TUNING_DELAY_FACTOR * talentLevel;
+		cost_mult += PRECISION_TUNING_COST_FACTOR * talentLevel;
+		delay_mult += PRECISION_TUNING_DELAY_FACTOR * talentLevel;
 		skill_mult += PRECISION_TUNING_SKILL_FACTOR * talentLevel;
 	}
 	cost *= cost_mult;

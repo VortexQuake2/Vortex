@@ -2038,8 +2038,8 @@ always owned, never in the world
 		Drop_Weapon,
 		Weapon_20mm,
 		"misc/w_pkup.wav",
-		"models/espada/g_sword.md2", EF_ROTATE,
-		"models/espada/v_sword.md2",
+		"models/weapons/g_rail/tris.md2", EF_ROTATE,
+		"models/weapons/v_rail/tris.md2",
 		"w_railgun",
 		"20mm Cannon",
 		0,
@@ -2081,26 +2081,24 @@ always owned, never in the world
      always owned, never in the world
      */
      {
-		 
-
-
      "weapon_sword", 
      NULL,
-     Use_Weapon2,                             //How to use
+     Use_Weapon,                             //How to use
      NULL,
      Weapon_Sword,                           //What the function is
      "misc/w_pkup.wav",
-	 "models/espada/g_sword.md2",EF_ROTATE,
-     "models/espada/v_sword.md2",      //The models stuff
+     NULL, 
+     0,
+     "models/weapons/v_blast/tris.md2",      //The models stuff
      "w_blaster",                                    //Icon to be used
      "Sword",                                        //Pickup name
      0,
      0,
      NULL,
-     IT_WEAPON,
+     IT_WEAPON|IT_STAY_COOP,
      NULL,
      0,
-      "espada/arm.wav", //The sound of the blaster
+      "misc/power1.wav misc/fhit3.wav", //The sound of the blaster
 	WEAP_SWORD                         //This is precached
      },
 	 //K03 End
@@ -3164,13 +3162,12 @@ void SpawnWorldAmmoType (char *pickupName, int count)
 	}
 }
 
-//
-//#define WORLD_MINIMUM_SHELLS		1
-//#define WORLD_MINIMUM_BULLETS		1
-//#define WORLD_MINIMUM_GRENADES		1
-//#define WORLD_MINIMUM_ROCKETS		1
-//#define WORLD_MINIMUM_SLUGS			1
-//#define WORLD_MINIMUM_CELLS			1
+#define WORLD_MINIMUM_SHELLS		5
+#define WORLD_MINIMUM_BULLETS		5
+#define WORLD_MINIMUM_GRENADES		5
+#define WORLD_MINIMUM_ROCKETS		5
+#define WORLD_MINIMUM_SLUGS			5
+#define WORLD_MINIMUM_CELLS			5
 
 void SpawnWorldAmmo (void)
 {

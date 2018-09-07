@@ -1262,7 +1262,7 @@ void ChangeClass(char *playername, int newclass, int msgtype)
 
 char *V_TruncateString(char *string, int newStringLength)
 {
-	char buf[512];
+	static char buf[512];
 
 	if (!newStringLength || (newStringLength > 512))
 		return string;

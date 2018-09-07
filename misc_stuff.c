@@ -99,12 +99,6 @@ void Give_respawnweapon(edict_t *ent, int weaponID)
 		Pick_respawnweapon(ent);
 	}
 
-	if (ent->myskills.class_num == CLASS_SOLDIER) //soldier76
-	{
-		ent->myskills.respawn_weapon = 4; //respawn machinegun
-		Pick_respawnweapon(ent);
-	}
-
 #ifndef REMOVE_RESPAWNS
 	if (!ent->myskills.weapon_respawns) // No respawns.
 		return;
@@ -538,9 +532,10 @@ int MAX_HEALTH(edict_t *ent)
 	case CLASS_DEMON:		value = INITIAL_HEALTH_VAMPIRE+LEVELUP_HEALTH_VAMPIRE*ent->myskills.level;				break;
 	case CLASS_ENGINEER:	value = INITIAL_HEALTH_ENGINEER+LEVELUP_HEALTH_ENGINEER*ent->myskills.level;			break;
 	case CLASS_ARCANIST:		value = INITIAL_HEALTH_MAGE+LEVELUP_HEALTH_MAGE*ent->myskills.level;					break;
-	case CLASS_POLTERGEIST: value = INITIAL_HEALTH_POLTERGEIST+LEVELUP_HEALTH_POLTERGEIST*ent->myskills.level;
+	case CLASS_POLTERGEIST: if (isMorphingPolt(ent))	value = INITIAL_HEALTH_POLTERGEIST+LEVELUP_HEALTH_POLTERGEIST*ent->myskills.level;
+							else value = 100+2*ent->myskills.level;
 								break;
-	case CLASS_PALADIN:		value = 2 + INITIAL_HEALTH_KNIGHT+LEVELUP_HEALTH_KNIGHT*ent->myskills.level;				break;
+	case CLASS_PALADIN:		value = INITIAL_HEALTH_KNIGHT+LEVELUP_HEALTH_KNIGHT*ent->myskills.level;				break;
 	case CLASS_WEAPONMASTER:value = INITIAL_HEALTH_WEAPONMASTER+LEVELUP_HEALTH_WEAPONMASTER*ent->myskills.level;	break;
 	default:				value = 100+5*ent->myskills.level;
 	}
@@ -718,12 +713,12 @@ void Ammo_Regen(edict_t *ent)
 
 	if (level.time > ent->client->ammo_regentime)
 	{
-		V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.4, AMMO_SHELLS);		//40% of a pack per point
-		V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.4, AMMO_BULLETS);		//40% of a pack per point
-		V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.4, AMMO_CELLS);		//40% of a pack per point
-		V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.3, AMMO_GRENADES);	//30% of a pack per point
-		V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.3, AMMO_ROCKETS);		//30% of a pack per point
-		V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.3, AMMO_SLUGS);		//30% of a pack per point
+		V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.2, AMMO_SHELLS);		//20% of a pack per point
+		V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.1, AMMO_BULLETS);		//10% of a pack per point
+		V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.1, AMMO_CELLS);		//10% of a pack per point
+		V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.2, AMMO_GRENADES);	//20% of a pack per point
+		V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.2, AMMO_ROCKETS);		//20% of a pack per point
+		V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.2, AMMO_SLUGS);		//20% of a pack per point
 
 		ent->client->ammo_regentime = level.time + AMMO_REGEN_DELAY;
 	}
@@ -743,7 +738,7 @@ void Special_Regen(edict_t *ent)
 		index = ITEM_INDEX(item);
 		if (ent->client->pers.inventory[index] < ent->client->pers.max_powercubes)
 		{
-			temp = 9/**ent->myskills.abilities[POWER_REGEN].current_level*/;
+			temp = 5/**ent->myskills.abilities[POWER_REGEN].current_level*/;
 
 			ent->client->pers.inventory[index] += temp;
 

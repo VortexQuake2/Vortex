@@ -228,14 +228,14 @@ void Cmd_SpawnMagmine_f (edict_t *ent)
 		return;
 
 	//Talent: Rapid Assembly
-	//talentLevel = getTalentLevel(ent, TALENT_RAPID_ASSEMBLY);
-	//if (talentLevel > 0)
-		//delay_mult -= 0.1 * talentLevel;
+	talentLevel = getTalentLevel(ent, TALENT_RAPID_ASSEMBLY);
+	if (talentLevel > 0)
+		delay_mult -= 0.1 * talentLevel;
 	//Talent: Precision Tuning
 	else if ((talentLevel = getTalentLevel(ent, TALENT_PRECISION_TUNING)) > 0)
 	{
-		cost_mult -= PRECISION_TUNING_COST_FACTOR * talentLevel;
-		delay_mult -= PRECISION_TUNING_DELAY_FACTOR * talentLevel;
+		cost_mult += PRECISION_TUNING_COST_FACTOR * talentLevel;
+		delay_mult += PRECISION_TUNING_DELAY_FACTOR * talentLevel;
 		skill_mult += PRECISION_TUNING_SKILL_FACTOR * talentLevel;
 	}
 	cost *= cost_mult;

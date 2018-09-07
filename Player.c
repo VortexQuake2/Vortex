@@ -27,7 +27,7 @@ qboolean playingtoomuch(edict_t *ent)
 void newPlayer(edict_t *ent)
 {
 	ent->myskills.next_level = start_nextlevel->value;
-	ent->myskills.respawn_weapon = 9;
+	ent->myskills.respawn_weapon = 7;
 
 	//strcpy(ent->myskills.password, CryptPassword(Info_ValueForKey (ent->client->pers.userinfo, "vrx_password")) );
 

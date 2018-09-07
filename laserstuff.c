@@ -1,11 +1,11 @@
 #include    "g_local.h"
 
-#define LASER_INITIAL_DMG		120
-#define LASER_ADDON_DMG			30
+#define LASER_INITIAL_DMG		100
+#define LASER_ADDON_DMG			20
 
 // cumulative maximum damage a laser can deal
-#define LASER_INITIAL_HEALTH	1000
-#define LASER_ADDON_HEALTH		400
+#define LASER_INITIAL_HEALTH	500
+#define LASER_ADDON_HEALTH		250
 
 void    pre_target_laser_def_think (edict_t *self);
 void target_laser_think (edict_t *self);
@@ -125,7 +125,7 @@ void target_laser_def_think (edict_t *self)
 	if (self->creator && ((level.time+10) >= self->creator->nextthink))
 	{
 		if ((level.time+10) == self->creator->nextthink)
-			safe_cprintf(self->activator, PRINT_HIGH, "A laser is about to expire. \n");
+			safe_cprintf(self->activator, PRINT_HIGH, "A laser is about to expire.\n");
 		if ((level.framenum % 5) == 0)
 		{
 			self->s.skinnum = laser_colour[LASER_DEFENSE_WARNING];

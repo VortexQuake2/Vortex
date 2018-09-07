@@ -116,8 +116,8 @@ void GladiatorLightningStorm (edict_t *self)
 
 	//if (slvl > 15)
 	//	slvl = 15;
-	damage = 200 + 5 * self->monsterinfo.level;
-	// damage = 250;//50 + 15 * slvl;
+
+	damage = 200;//50 + 15 * slvl;
 	SpawnLightningStorm(self, self->enemy->s.origin, 128, 5.0, damage);
 
 	// write a nice effect so everyone knows we've cast a spell
@@ -134,7 +134,7 @@ void GladiatorLightningStorm (edict_t *self)
 
 void GaldiatorMelee (edict_t *self)
 {
-	int		damage = 55 + 8 * self->monsterinfo.level; // No one-shots, until later.
+	int		damage = 60 + 20 * self->monsterinfo.level; // No one-shots, until later.
 	vec3_t	aim;
 
 	if (self->monsterinfo.bonus_flags & BF_UNIQUE_LIGHTNING)
@@ -220,7 +220,7 @@ void GladiatorGun (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = 55 + 6 * self->monsterinfo.level; // from 50. and 15.
+	damage = 15 + 10 * self->monsterinfo.level; // from 50. and 15.
 
 	MonsterAim(self, 0.7, 0, false, MZ2_GLADIATOR_RAILGUN_1, forward, start);
 
@@ -407,12 +407,12 @@ void init_drone_gladiator (edict_t *self)
 	self->s.modelindex = gi.modelindex ("models/monsters/gladiatr/tris.md2");
 	VectorSet (self->mins, -24, -24, -24);
 	VectorSet (self->maxs, 24, 24, 48);
-	self->health = 120 + 75*self->monsterinfo.level;
+	self->health = 95 + 10*self->monsterinfo.level;
 	self->max_health = self->health;
 	self->gib_health = -100;
 	self->mass = 400;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = 100 + 40*self->monsterinfo.level;
+	self->monsterinfo.power_armor_power = 100 + 20*self->monsterinfo.level;
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 	self->mtype = M_GLADIATOR;
 	self->item = FindItemByClassname("ammo_slugs");

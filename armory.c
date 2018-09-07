@@ -326,15 +326,15 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 			break;
 		case 29:	//ability point
 			// az- we buff this up since the amount of credits went up a fucking lot due to dts
-			price = pow(ent->myskills.level, 2) * 235; 
+			price = pow(ent->myskills.level, 2) * 270; 
 			
 			// price minimum.
-			if (price < 11000)
-				price = 11000;
+			if (price < 20000)
+				price = 20000;
 
 			break;
 		case 30: // weapon points
-			price = 1750*ent->myskills.level;
+			price = 3420*ent->myskills.level;
 			break;
 #ifndef REMOVE_RESPAWNS
 		case 31: // respawns
@@ -467,8 +467,8 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 			safe_cprintf(ent, PRINT_HIGH, "You bought an ability point - you now have %d.\n", ent->myskills.speciality_points);
 			break;
 		case 30:
-			ent->myskills.weapon_points += 3;
-			safe_cprintf(ent, PRINT_HIGH, "You bought three weapon points - you now have %d.\n", ent->myskills.weapon_points);
+			ent->myskills.weapon_points += 2;
+			safe_cprintf(ent, PRINT_HIGH, "You bought two weapon points - you now have %d.\n", ent->myskills.weapon_points);
 			break;
 #ifndef REMOVE_RESPAWNS
 		case 31:

@@ -34,7 +34,7 @@ void lance_think (edict_t *self)
 	if (tr.ent && tr.ent->takedamage && T_Damage(tr.ent, self, self->owner, forward, tr.endpos, tr.plane.normal, self->dmg, self->dmg, DAMAGE_ENERGY, MOD_SWORD)
 		&& self->owner->myskills.weapons[WEAPON_SWORD].mods[3].current_level >= 1)
 	{
-		gi.sound (self, CHAN_WEAPON, gi.soundindex("espada/hit1_2.wav") , 1, ATTN_NORM, 0); 
+		gi.sound (self, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav") , 1, ATTN_NORM, 0); 
 		burn_person(tr.ent, self->owner, self->radius_dmg);
 	}
 
@@ -64,7 +64,7 @@ void fire_lance (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int bur
 	lance = G_Spawn();
 	VectorCopy (start, lance->s.origin);
 	lance->movetype = MOVETYPE_TOSS;
-	lance->s.modelindex = gi.modelindex("models/bow/w_bow.md2"); //no funcionó
+	lance->s.modelindex = 1;
 	lance->svflags |= SVF_NOCLIENT;
 	lance->owner = self;
 	lance->think = lance_think;
@@ -137,7 +137,7 @@ void fire_sword ( edict_t *self, vec3_t start, vec3_t aimdir, int damage, int ki
             if (tr.ent->takedamage)            
             {
 				if (self->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1)
-					gi.sound (self, CHAN_WEAPON, gi.soundindex("espada/hit1_2.wav") , 1, ATTN_NORM, 0); 
+					gi.sound (self, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav") , 1, ATTN_NORM, 0); 
 
 				if (T_Damage (tr.ent, self, self, aimdir, tr.endpos, tr.plane.normal, damage, kick, 0, MOD_SWORD))
 				{
@@ -205,7 +205,7 @@ void Weapon_Sword_Fire (edict_t *ent)
 	 //gi.dprintf("damage=%d\n", damage);
 
 	 if ((ent->client->ps.gunframe == 5) && (ent->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1))
-		gi.sound (ent, CHAN_WEAPON, gi.soundindex("espada/arm.wav") , 1, ATTN_NORM, 0);
+		gi.sound (ent, CHAN_WEAPON, gi.soundindex("misc/power1.wav") , 1, ATTN_NORM, 0);
 
      if ( ent->client->buttons & BUTTON_ATTACK )
 		sword_attack (ent, vec3_origin, damage);
@@ -235,7 +235,7 @@ void Weapon_Lance_Fire (edict_t *ent)
 	damage *= 2;
 
 	 if (ent->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1)
-		gi.sound (ent, CHAN_WEAPON, gi.soundindex("b/bowfire1.wav") , 1, ATTN_NORM, 0);
+		gi.sound (ent, CHAN_WEAPON, gi.soundindex("misc/power1.wav") , 1, ATTN_NORM, 0);
 
 	AngleVectors (ent->client->v_angle, forward, NULL, NULL);
 	G_EntMidPoint(ent, start);

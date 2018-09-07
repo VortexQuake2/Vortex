@@ -79,7 +79,7 @@ void boss_punch (edict_t *self)
 
 void boss_tank_attack (edict_t *ent)
 {
-	int		damage, flash_number, buffdmg;
+	int		damage, flash_number;
 	vec3_t	forward, start;
 
 	if ((flash_number=p_tank_getFirePos(ent, start, forward))==-1)
@@ -107,8 +107,8 @@ void boss_tank_attack (edict_t *ent)
 
 	if (!flash_number) // not a firing frame
 		return;
-    buffdmg = 400;
-	damage = TANK_ROCKET_INITIAL_DAMAGE+TANK_ROCKET_ADDON_DAMAGE*ent->monsterinfo.level + buffdmg;
+
+	damage = TANK_ROCKET_INITIAL_DAMAGE+TANK_ROCKET_ADDON_DAMAGE*ent->monsterinfo.level;
 
 	fire_rocket(ent, start, forward, damage, TANK_ROCKET_SPEED, damage, damage);
 

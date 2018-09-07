@@ -807,7 +807,7 @@ qboolean VSFU_LoadPlayer(edict_t *player)
 
 	//Apply runes
 	V_ResetAllStats(player);
-	for (i = 0; i < 4; ++i)
+	for (i = 0; i < 3; ++i)
 		V_ApplyRune(player, &player->myskills.items[i]);
 
 	//Apply health

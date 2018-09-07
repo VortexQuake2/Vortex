@@ -100,7 +100,6 @@ void StartGame (edict_t *ent)
 	if (trading->value) // Red shell for trading mode.
 	{
 		gi.centerprintf(ent, "Welcome to trading mode\nBuy stuff and trade runes freely.\nVote for another mode to start playing.\n");
-
 		ent->s.effects |= EF_COLOR_SHELL;
 		ent->s.renderfx |= RF_SHELL_RED;
 	}
@@ -135,20 +134,20 @@ qboolean CanJoinGame(edict_t *ent, int returned)
 	case -4:	//invalid player name
 		safe_cprintf(ent, PRINT_HIGH, "Your name must be greater than 2 characters long.\n");
 		return false;
-	//case -5:	//playing too much
-	//	safe_cprintf(ent, PRINT_HIGH, "Can't join: %d hour play-time limit reached.\n", MAX_HOURS);
-	//	safe_cprintf(ent, PRINT_HIGH, "Please try a different character, or try again tommorow.\n");
-	//	return false;
+	case -5:	//playing too much
+		safe_cprintf(ent, PRINT_HIGH, "Can't join: %d hour play-time limit reached.\n", MAX_HOURS);
+		safe_cprintf(ent, PRINT_HIGH, "Please try a different character, or try again tommorow.\n");
+		return false;
 /*	case -6:	//newbie basher can't play
 		safe_cprintf(ent, PRINT_HIGH, "Unable to join: The current maximum level is %d.\n", NEWBIE_BASHER_MAX);
 		safe_cprintf(ent, PRINT_HIGH, "Please return at a later time, or try a different character.\n");
 		gi.dprintf("INFO: %s exceeds maximum level allowed by server (level %d)!", ent->client->pers.netname, NEWBIE_BASHER_MAX);
 		return false;
 */
-	//case -7:	//boss can't play
-	//	safe_cprintf(ent, PRINT_HIGH, "Unable to join: Bosses are not allowed unless the server is at least half capacity.\n");
-	//	safe_cprintf(ent, PRINT_HIGH, "Please come back at a later time, or try a different character.\n");
-	//	return false;
+	case -7:	//boss can't play
+		safe_cprintf(ent, PRINT_HIGH, "Unable to join: Bosses are not allowed unless the server is at least half capacity.\n");
+		safe_cprintf(ent, PRINT_HIGH, "Please come back at a later time, or try a different character.\n");
+		return false;
 	case -8: // stupid name
 		safe_cprintf(ent, PRINT_HIGH, "Unable to join with default name \"Player\" - Don't use this name. We won't be able to know who are you.\n");
 		return false;
@@ -227,7 +226,7 @@ void joinmenu_handler (edict_t *ent, int option)
 	switch (option)
 	{
 	case 1:
-		gi.sound(ent, CHAN_AUTO, gi.soundindex("owintro.wav"), 1, ATTN_NORM, 0);
+		gi.sound(ent, CHAN_AUTO, gi.soundindex("misc/startup.wav"), 1, ATTN_NORM, 0);
 		//If no GDS is running, join the game right away.
 #ifndef NO_GDS
 		if(savemethod->value != 2)
@@ -256,17 +255,23 @@ void OpenJoinMenu (edict_t *ent)
 
 	//				    xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
 
-	addlinetomenu(ent, va("Vortex", VRX_VERSION), MENU_GREEN_CENTERED);
-	addlinetomenu(ent, "Welcome to Vortex ", 0);
-	addlinetomenu(ent, "", 0);
+	addlinetomenu(ent, va("Vortex Chile v%s", VRX_VERSION), MENU_GREEN_CENTERED);
+	//addlinetomenu(ent, "www.v2gamers.cl", MENU_GREEN_CENTERED);
 	addlinetomenu(ent, " ", 0);
 	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Start playing", 1);
-	addlinetomenu(ent, "View Players", 2);
-	addlinetomenu(ent, "End", 3);
+	addlinetomenu(ent, "Kill players and monsters", 0);
+    addlinetomenu(ent, "for EXP to earn levels.", 0);
+    addlinetomenu(ent, "Every level you recieve", 0);
+    addlinetomenu(ent, "ability and weapon points", 0);
+    addlinetomenu(ent, "to become stronger!", 0);
+	addlinetomenu(ent, " ", 0);
+	addlinetomenu(ent, " ", 0);
+	addlinetomenu(ent, "Start your reign", 1);
+	addlinetomenu(ent, "Toggle chasecam", 2);
+	addlinetomenu(ent, "Exit", 3);
 
 	setmenuhandler(ent, joinmenu_handler);
-	ent->client->menustorage.currentline = 6;
+	ent->client->menustorage.currentline = 11;
 	showmenu(ent);
 }
 
@@ -290,11 +295,11 @@ void OpenMyinfoMenu (edict_t *ent)
 	addlinetomenu(ent, va("Next Level:   %d", (ent->myskills.next_level-ent->myskills.experience)+ent->myskills.nerfme), 0);
 	addlinetomenu(ent, va("Credits:      %d", ent->myskills.credits), 0);
 	if (ent->myskills.shots > 0)
-		addlinetomenu(ent, va("Hit :  %d%c", (int)(100*((float)ent->myskills.shots_hit/ent->myskills.shots)), '%'), 0);
+		addlinetomenu(ent, va("Hit Percent:  %d%c", (int)(100*((float)ent->myskills.shots_hit/ent->myskills.shots)), '%'), 0);
 	else
-		addlinetomenu(ent, "Hit :  --", 0);
+		addlinetomenu(ent, "Hit Percent:  --", 0);
 	addlinetomenu(ent, va("Frags:        %d", ent->myskills.frags), 0);
-	addlinetomenu(ent, va("Deaths:      %d", ent->myskills.fragged), 0);
+	addlinetomenu(ent, va("Fragged:      %d", ent->myskills.fragged), 0);
 	if (ent->myskills.fragged > 0)
 		addlinetomenu(ent, va("Frag Percent: %d%c", (int)(100*((float)ent->myskills.frags/ent->myskills.fragged)), '%'), 0);
 	else
@@ -308,11 +313,6 @@ void OpenMyinfoMenu (edict_t *ent)
 		ent->client->menustorage.currentline = 13;
 	showmenu(ent);
 }
-
-
-
-
-
 
 void respawnmenu_handler (edict_t *ent, int option)
 {
@@ -353,7 +353,7 @@ void OpenRespawnWeapMenu(edict_t *ent)
 
 	if(ent->myskills.class_num == CLASS_PALADIN)
 	{
-		safe_cprintf(ent, PRINT_HIGH, "Archons are restricted to a sabre.\n");
+		safe_cprintf(ent, PRINT_HIGH, "Knights are restricted to a sabre.\n");
 		return;
 	}
 
@@ -443,7 +443,7 @@ void classmenu_handler (edict_t *ent, int option)
 	ent->myskills.class_num = option;
 	AssignAbilities(ent);
 	setTalents(ent);
-	ent->myskills.weapon_respawns = 250;
+	ent->myskills.weapon_respawns = 100;
 	gi.dprintf("INFO: %s created a new %s!\n", ent->client->pers.netname, GetClassString(ent->myskills.class_num));
 	WriteToLogfile(ent, va("%s created a %s.\n", ent->client->pers.netname, GetClassString(ent->myskills.class_num)));
 	check_for_levelup(ent);
@@ -567,10 +567,10 @@ void OpenGeneralMenu (edict_t *ent)
 	clearmenu(ent);
 
 		//				xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
-	addlinetomenu(ent, "Welcome to Vortex 5.0!", MENU_GREEN_CENTERED);
+	addlinetomenu(ent, "Welcome to Vortex!", MENU_GREEN_CENTERED);
 	addlinetomenu(ent, "Please choose a sub-menu.", MENU_GREEN_CENTERED);
 	addlinetomenu(ent, " ", 0);
-	ent->client->menustorage.currentline = 4;
+	
 	if (!ent->myskills.speciality_points)
 		addlinetomenu(ent, "Upgrade abilities", 1);
 	else
@@ -600,6 +600,7 @@ void OpenGeneralMenu (edict_t *ent)
 	addlinetomenu(ent, "Trade items", 10);
 	addlinetomenu(ent, "Vote for map/mode", 11);
 	addlinetomenu(ent, "Help", 12);
+
 #ifndef REMOVE_RESPAWNS
 	if (pregame_time->value > level.time || trading->value) // we in pregame? you can buy respawns
 	{
@@ -607,7 +608,9 @@ void OpenGeneralMenu (edict_t *ent)
 			addlinetomenu(ent, va("Buy Respawns (%d)", ent->myskills.weapon_respawns), 13);
 	}
 #endif
+
 	setmenuhandler(ent, generalmenu_handler);
+	ent->client->menustorage.currentline = 18;
 	showmenu(ent);
 }
 
