@@ -146,7 +146,7 @@ gameCommand_s commands[] =
 	{ "mirv",		    Cmd_TossMirv },
 	{ "healer",		    Cmd_Healer_f },
 	{ "spiker",		    Cmd_Spiker_f },
-	{ "box",				Cmd_box_f },
+	// { "box",				Cmd_box_f },
 	{ "obstacle",	    Cmd_Obstacle_f },
 	{ "gasser",		    Cmd_Gasser_f },
 	{ "spore",		    Cmd_TossSpikeball },
