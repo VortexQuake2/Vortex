@@ -1,7 +1,5 @@
 #include "g_local.h"
 
-#define ADD_ALLY				1
-#define REMOVE_ALLY				2
 #define ALLY_RANGE				0
 #define ALLY_MAX_LEVEL_DELTA	5
 

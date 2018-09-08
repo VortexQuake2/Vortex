@@ -139,7 +139,7 @@ void OpenUpgradeMenu (edict_t *ent)
 	//					xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
 	addlinetomenu(ent, "Player Upgrades Menu", MENU_GREEN_CENTERED);
 	addlinetomenu(ent, va("Your class is %s ", GetClassString(ent->myskills.class_num)), 0);
-	addlinetomenu(ent, va("and you have %d ability points.", ent->myskills.speciality_points), 0);
+	addlinetomenu(ent, va("and you have %d points.", ent->myskills.speciality_points), 0);
 	addlinetomenu(ent, " ", 0);
 
 	if (ent->myskills.class_num != CLASS_WEAPONMASTER) // WMs don't get class specific skills.

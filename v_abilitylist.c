@@ -121,18 +121,7 @@ abildefinition_t PALADIN_abil[] = { // paladin
 	{-1, 0, 0, 0} // Guardian (Add skills above this)
 };
 
-abildefinition_t POLTERGEIST_abil[] = { // POLTERGEIST
-	{ BERSERK           , 1 , INCREASED_SOFTMAX , 0  },
-	{ CACODEMON         , 1 , INCREASED_SOFTMAX , 0  },
-	{ BLOOD_SUCKER      , 1 , INCREASED_SOFTMAX , 0  },
-	{ BRAIN             , 1 , INCREASED_SOFTMAX , 0  },
-	{ FLYER             , 1 , INCREASED_SOFTMAX , 0  },
-	{ MUTANT            , 1 , INCREASED_SOFTMAX , 0  },
-	{ TANK              , 1 , INCREASED_SOFTMAX , 0  },
-	{ MEDIC             , 1 , INCREASED_SOFTMAX , 0  },
-	{ GHOST             , 0 , DEFAULT_SOFTMAX   , 0  }, // given for free with morph mastery
-	{ MORPH_MASTERY     , 0 , 1                 , 0  },
-	{ MONSTER_SUMMON    , 0 , 1                 , 0  },
+abildefinition_t ALIEN_abil[] = {
 	{ SPIKER            , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ OBSTACLE          , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ GASSER            , 0 , DEFAULT_SOFTMAX   , 0  },
@@ -142,6 +131,20 @@ abildefinition_t POLTERGEIST_abil[] = { // POLTERGEIST
 	{ SPIKE             , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ COCOON            , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ BLACKHOLE         , 1 , 1                 , 0  },
+	{-1, 0, 0, 0} // Guardian (Add skills above this)
+};
+
+abildefinition_t POLTERGEIST_abil[] = {
+	{ MORPH_MASTERY     , 0 , 1                 , 0  },
+	{ BERSERK           , 1 , INCREASED_SOFTMAX , 0  },
+	{ CACODEMON         , 1 , INCREASED_SOFTMAX , 0  },
+	{ BLOOD_SUCKER      , 1 , INCREASED_SOFTMAX , 0  },
+	{ BRAIN             , 1 , INCREASED_SOFTMAX , 0  },
+	{ FLYER             , 1 , INCREASED_SOFTMAX , 0  },
+	{ MUTANT            , 1 , INCREASED_SOFTMAX , 0  },
+	{ TANK              , 1 , INCREASED_SOFTMAX , 0  },
+	{ MEDIC             , 1 , INCREASED_SOFTMAX , 0  },
+	{ GHOST             , 1 , DEFAULT_SOFTMAX   , 0  }, // given for free with morph mastery
 	{-1, 0, 0, 0} // Guardian (Add skills above this)
 };
 
@@ -158,6 +161,7 @@ AbilList ablist [] =
 	PALADIN_abil,
 	ARCANIST_abil,
 	POLTERGEIST_abil,
+	ALIEN_abil,
 	WEAPONMASTER_abil,
 };
 

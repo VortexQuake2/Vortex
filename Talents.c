@@ -44,6 +44,8 @@ void setTalents(edict_t *ent)
 			addTalent(ent, TALENT_SUPERIORITY, 5);
 			addTalent(ent, TALENT_RETALIATION, 5);
 			addTalent(ent, TALENT_PACK_ANIMAL, 5);
+			return;
+		case CLASS_ALIEN:
 			addTalent(ent, TALENT_PHANTOM_OBSTACLE, 5);
 			addTalent(ent, TALENT_SUPER_HEALER, 5);
 			addTalent(ent, TALENT_PHANTOM_COCOON, 5);

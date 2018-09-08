@@ -403,7 +403,7 @@ void InitGame(void)
 	class11_skin = gi.cvar("class11_skin", "xenotype1", CVAR_LATCH); // alien
 	class12_skin = gi.cvar("class12_skin", "ctf_g", CVAR_LATCH); // kamikaze
 
-	//Municion MUNICION munición ammo AMMO Ammo
+	//Municion MUNICION municiï¿½n ammo AMMO Ammo
 
 	// minimum map ammo
 	world_min_shells = gi.cvar("world_min_shells", "1", 0);
@@ -419,7 +419,7 @@ void InitGame(void)
 
 	voting = gi.cvar("voting", "1", CVAR_SERVERINFO);
 	pregame_time = gi.cvar("pregame_time", "60.0", 0);
-#ifndef LOCK_DEFAULTS
+
 	nextlevel_mult = gi.cvar("nextlevel_mult", "1.5", CVAR_LATCH);
 	if (nextlevel_mult->value < 1.5)
 		nextlevel_mult->value = 1.5;
@@ -429,7 +429,7 @@ void InitGame(void)
 
 	invasion_enabled = gi.cvar("invasion_enabled", "1", CVAR_LATCH);
 	vrx_pointmult = gi.cvar("vrx_pointmult", "1.0", CVAR_SERVERINFO/* | CVAR_LATCH*/);
-	vrx_pvppointmult = gi.cvar("vrx_pvppointmult", "1.2", 0); // 1.5 is TOO much.
+	vrx_pvppointmult = gi.cvar("vrx_pvppointmult", "1.0", 0);
 	vrx_pvmpointmult = gi.cvar("vrx_pvmpointmult", "1.0", 0);
 	vrx_sub10mult = gi.cvar("vrx_sub10mult", "0.9", 0);
 	vrx_over10mult = gi.cvar("vrx_over10mult", "0.7", 0);
@@ -438,36 +438,6 @@ void InitGame(void)
 	vrx_pvpcreditmult = gi.cvar("vrx_pvpcreditmult", "2.0", 0);
 	vrx_pvmcreditmult = gi.cvar("vrx_pvmcreditmult", "1.0", 0);
 	adminpass = gi.cvar("adminpass", "", CVAR_ARCHIVE);
-#else
-	gi.cvar("timescale", "1", CVAR_NOSET);
-	gi.cvar_forceset("timescale", "1");
-
-	nextlevel_mult = gi.cvar("nextlevel_mult", "1.5", CVAR_NOSET);
-	gi.cvar_forceset("nextlevel_mult", "1.5");
-
-	start_level = gi.cvar("start_level", "0", CVAR_SERVERINFO | CVAR_NOSET);
-	start_nextlevel = gi.cvar("start_nextlevel", "1000", CVAR_NOSET);
-	gi.cvar_forceset("start_level", "0");
-	gi.cvar_forceset("start_nextlevel", "1000");
-
-	vrx_pointmult = gi.cvar("vrx_pointmult", "1.5", CVAR_NOSET);
-	vrx_pvppointmult = gi.cvar("vrx_pvppointmult", "1.5", CVAR_SERVERINFO | CVAR_NOSET);
-	vrx_pvmpointmult = gi.cvar("vrx_pvmpointmult", "1.0", CVAR_SERVERINFO | CVAR_NOSET);
-	vrx_creditmult = gi.cvar("vrx_creditmult", "2.0", CVAR_NOSET);
-	vrx_pvpcreditmult = gi.cvar("vrx_pvpcreditmult", "2.0", CVAR_SERVERINFO | CVAR_NOSET);
-	vrx_pvmcreditmult = gi.cvar("vrx_pvmcreditmult", "2.0", CVAR_SERVERINFO | CVAR_NOSET);
-	gi.cvar_forceset("vrx_pointmult", "1.5");
-	gi.cvar_forceset("vrx_creditmult", "2.0");
-	vrx_sub10mult = gi.cvar("vrx_sub10mult", "1.5", CVAR_NOSET);
-	vrx_over10mult = gi.cvar("vrx_over10mult", "0.65", CVAR_NOSET);
-
-	vrx_creditmult = gi.cvar("vrx_creditmult", "2.0", CVAR_NOSET/* | CVAR_LATCH*/);
-	vrx_pvpcreditmult = gi.cvar("vrx_pvpcreditmult", "3.0", CVAR_NOSET);
-	vrx_pvmcreditmult = gi.cvar("vrx_pvmcreditmult", "1.0", CVAR_NOSET);
-
-	adminpass = gi.cvar("adminpass", "", CVAR_NOSET);
-	gi.cvar_forceset("adminpass", "");
-#endif
 	//K03 End
 
 	// items

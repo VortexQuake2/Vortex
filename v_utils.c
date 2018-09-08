@@ -261,11 +261,12 @@ char *GetClassString(int class_num)
 {
 	switch (class_num)
 	{
-	case CLASS_SOLDIER:		return "Grunt";
+	case CLASS_SOLDIER:		return "Soldier";
 	case CLASS_DEMON:		return "Demon";
 	case CLASS_ENGINEER:	return "Engineer";
 	case CLASS_ARCANIST:	return "Arcanist";
-	case CLASS_POLTERGEIST: return "Alien";
+	case CLASS_POLTERGEIST: return "Poltergeist";
+	case CLASS_ALIEN: return "Alien";
 	case CLASS_PALADIN:		return "Paladin";
 	case CLASS_WEAPONMASTER:
 		if (generalabmode->value) // :)
@@ -612,7 +613,7 @@ char *GetRuneValString(item_t *rune)
 		{
 			switch (level / 2)
 			{
-			case 0:	 return "Excorcist's";
+			case 0:	 return "Exorcist's";
 			case 1:  return "Theurgist's";
 			case 2:  return "Shaman's";
 			case 3:  return "Necromancer's";
@@ -2282,5 +2283,7 @@ qboolean isMonster(edict_t *ent)
 
 qboolean isMorphingPolt(edict_t *ent)
 {
-	return ent->myskills.class_num == CLASS_POLTERGEIST && ent->myskills.abilities[MORPH_MASTERY].current_level && !ent->myskills.abilities[MORPH_MASTERY].disable;
+	return ent->myskills.class_num == CLASS_POLTERGEIST &&
+		   ent->myskills.abilities[MORPH_MASTERY].current_level &&
+		   !ent->myskills.abilities[MORPH_MASTERY].disable;
 }

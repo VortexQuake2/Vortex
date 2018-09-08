@@ -1,12 +1,7 @@
 #include "g_local.h"
 #include "m_player.h"
 
-//Multithreading needs windows.h
-#if defined(_WIN32) || defined(WIN32)
-#include <windows.h>
-#endif
 
-int		cumsindex;
 
 //Function prototypes required for this .c file:
 void ClientUserinfoChanged (edict_t *ent, char *userinfo);
@@ -959,8 +954,6 @@ player_die
 ==================
 */
 
-void turret_remove(edict_t *ent);
-void cmd_RemoveLaserDefense(edict_t *ent);
 void VortexDeathCleanup(edict_t *attacker, edict_t *targ);
 void VortexAddExp(edict_t *attacker, edict_t *targ);
 void tech_dropall (edict_t *ent);
@@ -3774,6 +3767,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	UpdateMirroredEntities(ent);
 }
 
+int JoinedPlayers();
 
 /*
 ==============

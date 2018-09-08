@@ -2630,17 +2630,10 @@ ClientCommand
 void Cmd_HolyFreeze(edict_t *ent);
 void Cmd_Forcewall(edict_t *ent);
 void ForcewallOff(edict_t *player);
-void ChangeRune (edict_t *ent, int type);
-qboolean SpawnWorldMonster(edict_t *ent, int mtype);
-void ArmageddonSpell(edict_t *ent);
-void BuildMiniSentry (edict_t *ent);
-void TeleportPlayer (edict_t *player);
-void SpawnTestEnt (edict_t *ent);
 void TeleportForward (edict_t *ent);
 qboolean FindValidSpawnPoint (edict_t *ent, qboolean air);
 void lasersight_off (edict_t *ent);
 void cmd_SentryGun(edict_t *ent);
-void PlayerToParasite (edict_t *ent);
 void Cmd_ExplodingArmor_f (edict_t *ent);
 void Cmd_Nova_f (edict_t *ent, int frostLevel, float skill_mult, float cost_mult);
 void Cmd_FrostNova_f (edict_t *ent, float skill_mult, float cost_mult);

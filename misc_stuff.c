@@ -494,7 +494,8 @@ switch (ent->myskills.class_num)
 	case CLASS_DEMON:		value = INITIAL_ARMOR_VAMPIRE+LEVELUP_ARMOR_VAMPIRE*ent->myskills.level;			break;
 	case CLASS_ENGINEER:	value = INITIAL_ARMOR_ENGINEER+LEVELUP_ARMOR_ENGINEER*ent->myskills.level;			break;
 	case CLASS_ARCANIST:		value = INITIAL_ARMOR_MAGE+LEVELUP_ARMOR_MAGE*ent->myskills.level;					break;
-	case CLASS_POLTERGEIST:	value = INITIAL_ARMOR_POLTERGEIST+LEVELUP_ARMOR_POLTERGEIST*ent->myskills.level;	break;
+	case CLASS_POLTERGEIST:	value = 0;	break;
+	case CLASS_ALIEN:	value = INITIAL_ARMOR_POLTERGEIST+LEVELUP_ARMOR_POLTERGEIST*ent->myskills.level;	break;
 	case CLASS_PALADIN:		value = INITIAL_ARMOR_KNIGHT+LEVELUP_ARMOR_KNIGHT*ent->myskills.level;				break;
 	case CLASS_WEAPONMASTER:value = INITIAL_ARMOR_WEAPONMASTER+LEVELUP_ARMOR_WEAPONMASTER*ent->myskills.level;	break;
 	default:				value = 100 + 5*ent->myskills.level;												break;
@@ -532,9 +533,8 @@ int MAX_HEALTH(edict_t *ent)
 	case CLASS_DEMON:		value = INITIAL_HEALTH_VAMPIRE+LEVELUP_HEALTH_VAMPIRE*ent->myskills.level;				break;
 	case CLASS_ENGINEER:	value = INITIAL_HEALTH_ENGINEER+LEVELUP_HEALTH_ENGINEER*ent->myskills.level;			break;
 	case CLASS_ARCANIST:		value = INITIAL_HEALTH_MAGE+LEVELUP_HEALTH_MAGE*ent->myskills.level;					break;
-	case CLASS_POLTERGEIST: if (isMorphingPolt(ent))	value = INITIAL_HEALTH_POLTERGEIST+LEVELUP_HEALTH_POLTERGEIST*ent->myskills.level;
-							else value = 100+2*ent->myskills.level;
-								break;
+	case CLASS_POLTERGEIST: value = 100+2*ent->myskills.level; break;
+	case CLASS_ALIEN: value = INITIAL_HEALTH_POLTERGEIST+LEVELUP_HEALTH_POLTERGEIST*ent->myskills.level; break;
 	case CLASS_PALADIN:		value = INITIAL_HEALTH_KNIGHT+LEVELUP_HEALTH_KNIGHT*ent->myskills.level;				break;
 	case CLASS_WEAPONMASTER:value = INITIAL_HEALTH_WEAPONMASTER+LEVELUP_HEALTH_WEAPONMASTER*ent->myskills.level;	break;
 	default:				value = 100+5*ent->myskills.level;
@@ -620,6 +620,7 @@ int MAX_POWERCUBES(edict_t *ent)
 	case CLASS_DEMON: value=INITIAL_POWERCUBES_VAMPIRE+ADDON_POWERCUBES_VAMPIRE*clvl; break;
 	case CLASS_PALADIN: value=INITIAL_POWERCUBES_KNIGHT+ADDON_POWERCUBES_KNIGHT*clvl; break;
 	case CLASS_ARCANIST: value=INITIAL_POWERCUBES_MAGE+ADDON_POWERCUBES_MAGE*clvl; break;
+	case CLASS_ALIEN:
 	case CLASS_POLTERGEIST: value=INITIAL_POWERCUBES_POLTERGEIST+ADDON_POWERCUBES_POLTERGEIST*clvl; break;
 	case CLASS_ENGINEER: value=INITIAL_POWERCUBES_ENGINEER+ADDON_POWERCUBES_ENGINEER*clvl; break;
 	case CLASS_WEAPONMASTER: value=INITIAL_POWERCUBES_WEAPONMASTER+ADDON_POWERCUBES_WEAPONMASTER*clvl; break;
