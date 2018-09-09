@@ -2410,6 +2410,7 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 
 	ent->svflags = 0;// make sure we start with known default
 	ent->client->pers.connected = true;
+	ent->ai.is_bot = false;
 	return true;
 }
 

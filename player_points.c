@@ -398,8 +398,8 @@ int PVP_AwardKill(edict_t *attacker, edict_t *targ, edict_t *target) {
         exp_points = V_AddFinalExp(attacker, max_points);
 
     if (!attacker->ai.is_bot)
-        gi.bprintf(PRINT_LOW,
-                   attacker, "%.0f%% dmg. to %s. xp/credits: %d/%d",
+        gi.cprintf(attacker,
+                   PRINT_HIGH, "%.0f %% dmg. to %s. xp/credits: %d/%d\n",
                    (dmgmod * 100),
                    name,
                    exp_points,

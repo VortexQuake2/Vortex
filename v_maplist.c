@@ -124,6 +124,8 @@ fallback:
 
 					// copy monster value to list
 					maplist->maps[iterator].monsters = atoi(s);
+				} else {
+					maplist->maps[iterator].monsters = 0; // use dm_monsters
 				}
 
 				++iterator;
