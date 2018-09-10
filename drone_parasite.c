@@ -291,9 +291,10 @@ void myparasite_drain_attack (edict_t *self)
 	// don't pull while mid-air
 	if (self->groundentity)
 	{
-		pull = -60;
+		//pull = -60;
 		if (self->enemy->groundentity)
-			pull *= 2;
+			//pull *= 2;
+		    pull = 0; //Pull has been removed
 	}
 
 	// gain damage back as health
