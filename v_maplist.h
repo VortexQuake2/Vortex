@@ -2,7 +2,7 @@
 #define V_MAPLIST_H
 
 #define MAX_VOTERS			(MAX_CLIENTS * 2)
-#define MAX_MAPS			64
+#define MAX_MAPS			128
 #define MAX_MAPNAME_LEN		16
 
 #define MAPMODE_PVP			1

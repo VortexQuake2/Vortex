@@ -98,6 +98,12 @@ fallback:
 
 			while (fgets(buf, 128, fptr) != NULL)
 			{
+			    if (iterator >= MAX_MAPS)
+                {
+			        gi.dprintf("Maplist for mode %d is too big - skipping extra entries. \n", mode);
+			        break;
+                }
+
 				// tokenize string using comma as separator
 				if ((s = strtok(buf, ",")) != NULL)
 				{
