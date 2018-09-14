@@ -40,10 +40,11 @@ edict_t *INV_GiveRandomPSpawn()
 
 	if (invasion_spawncount > 1)
 	{
-		while (!INV_PlayerSpawns[rand]) // Pick a random, active one.
+		do // Pick a random, active one.
 		{
 			rand = GetRandom(1, invasion_max_playerspawns) - 1;
-		}
+
+		} while (!INV_PlayerSpawns[rand]);
 
 		return INV_PlayerSpawns[rand];
 	}
