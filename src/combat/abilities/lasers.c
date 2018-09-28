@@ -164,7 +164,7 @@ void laser_beam_think (edict_t *self)
 		damage = 0; // emitter is either burned out or hit nothing valid
 
 	// emitter burns out slowly even when idle
-	if (size && !damage && !(level.framenum % 10))
+	if (size && !damage && !(sf2qf(level.framenum) % 10))
 	{
 		damage = 0.008333 * self->max_health;
 		if (damage < 1)
@@ -198,7 +198,7 @@ void laser_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *sur
 	{
 		ent->creator->health = ent->creator->max_health;
 		other->client->pers.inventory[power_cube_index] -= 5;
-		ent->creator->monsterinfo.regen_delay1 = level.framenum + 20;
+		ent->creator->monsterinfo.regen_delay1 = level.framenum + 2 / FRAMETIME;
 		gi.sound(other, CHAN_VOICE, gi.soundindex("weapons/repair.wav"), 1, ATTN_NORM, 0);
 		safe_cprintf(other, PRINT_HIGH, "Emitter repaired. Maximum output: %d/%d damage.\n", ent->creator->health, ent->creator->max_health);
 	}
@@ -217,7 +217,7 @@ void emitter_think (edict_t *self)
 	// flash yellow when we are about to expire
 	if (self->creator->health < (0.1 * self->creator->max_health))
 	{
-		if (level.framenum & 8)
+		if (sf2qf(level.framenum) & 8)
 		{
 			self->s.renderfx |= RF_SHELL_YELLOW;
 			self->s.effects |= EF_COLOR_SHELL;

@@ -853,5 +853,5 @@ void init_drone_bitch (edict_t *self)
 	self->monsterinfo.scale = MODEL_SCALE;
 
 //	walkmonster_start (self);
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 }

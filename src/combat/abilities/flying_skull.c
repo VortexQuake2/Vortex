@@ -310,7 +310,7 @@ void skull_attack (edict_t *self)
 	gi.WritePosition (tr.endpos);
 	gi.multicast (start, MULTICAST_PVS);
 
-	if (!(level.framenum%10))
+	if (!(sf2qf(level.framenum) % 10 ))
 		gi.sound(self, CHAN_ITEM, gi.soundindex("abilities/chargedbolt1.wav"), 1, ATTN_NORM, 0);
 }
 
@@ -466,12 +466,12 @@ void skull_think (edict_t *self)
 		}
 		// warn the converted monster's current owner
 		else if (converted && self->activator && self->activator->inuse && self->activator->client 
-			&& (level.time > self->removetime-5) && !(level.framenum%10))
+			&& (level.time > self->removetime-5) && !(sf2qf(level.framenum)%10))
 				safe_cprintf(self->activator, PRINT_HIGH, "%s conversion will expire in %.0f seconds\n", 
 					V_GetMonsterName(self), self->removetime-level.time);
 	}
 
-	if (!M_Upkeep(self, 10, 2))
+	if (!M_Upkeep(self, 1 / FRAMETIME, 2))
 		return;
 
 	// hellspawn can't lock-on to enemy easily while cursed

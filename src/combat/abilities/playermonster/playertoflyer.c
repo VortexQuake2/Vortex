@@ -299,7 +299,7 @@ void FlyerAttack (edict_t *ent)
 
 		gi.sound (ent, CHAN_WEAPON, gi.soundindex ("weapons/disruptor.wav"), 1, ATTN_NORM, 0);
 		//ent->monsterinfo.attack_finished = level.time + (FRAMETIME * FLYER_HB_REFIRE_FRAMES);//level.framenum + FLYER_HB_REFIRE_FRAMES;
-		ent->monsterinfo.stuck_frames = level.framenum + FLYER_HB_REFIRE_FRAMES;
+		ent->monsterinfo.stuck_frames = level.framenum + qf2sf(FLYER_HB_REFIRE_FRAMES);
 	}
 }
 
@@ -308,9 +308,9 @@ void MorphRegenerate (edict_t *ent, int regen_delay, int regen_frames)
 	int	amt, frames;
 
 	if (ent->mtype == MORPH_FLYER)
-		V_RegenAbilityAmmo(ent, FLYER, FLYER_HB_REGEN_FRAMES, FLYER_HB_REGEN_DELAY);
+		V_RegenAbilityAmmo(ent, FLYER, qf2sf(FLYER_HB_REGEN_FRAMES), qf2sf(FLYER_HB_REGEN_DELAY));
 	else if (ent->mtype == MORPH_CACODEMON)
-		V_RegenAbilityAmmo(ent, CACODEMON, CACODEMON_SKULL_REGEN_FRAMES, CACODEMON_SKULL_REGEN_DELAY);
+		V_RegenAbilityAmmo(ent, CACODEMON, qf2sf(CACODEMON_SKULL_REGEN_FRAMES), qf2sf(CACODEMON_SKULL_REGEN_DELAY));
 
 	if ((level.framenum >= ent->monsterinfo.control_cost)
 		&& (ent->health < ent->max_health))
@@ -348,10 +348,10 @@ void RunFlyerFrames (edict_t *ent, usercmd_t *ucmd)
 	if (level.framenum >= ent->count) // don't run this more than once a server frame
 	{
 		PlayerAutoThrust(ent, ucmd);
-		MorphRegenerate(ent, FLYER_REGEN_DELAY, FLYER_REGEN_FRAMES);
+		MorphRegenerate(ent, qf2sf(FLYER_REGEN_DELAY), qf2sf(FLYER_REGEN_FRAMES));
 		//FlyerCheckForImpact(ent);
 
-		ent->count = level.framenum + 1;
+		ent->count = level.framenum + (int)(0.1 / FRAMETIME);
 
 		if (ent->client->buttons & BUTTON_ATTACK)
 		{

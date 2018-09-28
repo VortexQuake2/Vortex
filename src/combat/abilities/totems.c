@@ -239,8 +239,8 @@ void NatureTotem_think(edict_t *self, edict_t *caster)
 			
 			if (!target->client)
 			{
-				regen_frames = 1000 / self->monsterinfo.level; // full-regeneration in 15 seconds at level 10
-				M_Regenerate(target, regen_frames, 50, 1.0, true, true, false, &target->monsterinfo.regen_delay2);
+				regen_frames = qf2sf(1000 / self->monsterinfo.level); // full-regeneration in 15 seconds at level 10
+				M_Regenerate(target, regen_frames, qf2sf(50), 1.0, true, true, false, &target->monsterinfo.regen_delay2);
 				continue;
 			}
 			
@@ -322,7 +322,7 @@ void totem_general_think(edict_t *self)
 	}
 
 	//Some players can have two totems out (with talent). Take cubes away from them every 5 seconds.
-	if(level.framenum % 50 == 0 && caster->client && caster->totem2 == self)
+	if(level.framenum % (int)(5 / FRAMETIME) == 0 && caster->client && caster->totem2 == self)
 	{
 		int *cubes = &caster->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)];
 
@@ -351,7 +351,10 @@ void totem_general_think(edict_t *self)
 	// totem mastery allows regeneration
 	if (level.time > self->lasthurt + 1.0 && !caster->myskills.abilities[TOTEM_MASTERY].disable 
 		&& caster->myskills.abilities[TOTEM_MASTERY].current_level > 0)
-		M_Regenerate(self, TOTEM_REGEN_FRAMES, TOTEM_REGEN_DELAY, 1.0, true, false, false, &self->monsterinfo.regen_delay1);
+		M_Regenerate(self,
+				qf2sf(TOTEM_REGEN_FRAMES),
+				qf2sf(TOTEM_REGEN_DELAY),
+				1.0, true, false, false, &self->monsterinfo.regen_delay1);
 
 	//Rotate a little.
 	self->s.angles[YAW] += 5;

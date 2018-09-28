@@ -100,7 +100,7 @@ qboolean mutant_boost (edict_t *ent)
 		ent->velocity[2] += forward[2] * MUTANT_BOOST_VALUE;
 
 		// delay to prevent jump spam
-		*next_frame = level.framenum + BOOST_DELAY;
+		*next_frame = level.framenum + qf2sf(BOOST_DELAY);
 		stuffcmd(ent, "-moveup\n");//4.4
 		return true;
 	}
@@ -156,7 +156,7 @@ void mutant_checkattack (edict_t *self, edict_t *other, cplane_t *plane, csurfac
 
 		T_Damage(self, other, other, v, point, plane->normal, dmg, dmg, DAMAGE_RADIUS, MOD_MUTANT);
 
-		other->monsterinfo.nextattack = level.framenum + MUTANT_JUMPATTACK_DELAY;
+		other->monsterinfo.nextattack = level.framenum + qf2sf(MUTANT_JUMPATTACK_DELAY);
 	}
 }
 
@@ -200,7 +200,7 @@ void mutant_jumpattack (edict_t *self)
 			}
 			// avoid multiple hits
 			if (hit)
-				self->monsterinfo.search_frames = level.framenum + 5;
+				self->monsterinfo.search_frames = level.framenum + (int)(0.5 / FRAMETIME);
 		}
 	}
 }
@@ -245,7 +245,7 @@ void RunMutantFrames (edict_t *ent, usercmd_t *ucmd)
 			G_RunFrames(ent, MUTANT_FRAMES_IDLE_START, MUTANT_FRAMES_IDLE_END, false); // run idle frames
 		}
 
-		ent->count = level.framenum + 1;
+		ent->count = level.framenum + (int)(0.1 / FRAMETIME);
 	}
 }
 

@@ -203,7 +203,7 @@ void RunParasiteFrames (edict_t *ent, usercmd_t *ucmd)
 
 	if (level.framenum >= ent->count)
 	{
-		ent->count = level.framenum + 1;
+		ent->count = level.framenum + (int)(0.1 / FRAMETIME);
 
 		// play running animation if we are moving forward or strafing
 		if ((ucmd->forwardmove > 0) || ucmd->sidemove)

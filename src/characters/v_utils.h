@@ -10,7 +10,7 @@ void V_ModifyMorphedHealth (edict_t *ent, int type, qboolean morph);
 void V_RegenAbilityAmmo (edict_t *ent, int ability_index, int regen_frames, int regen_delay);
 void V_Touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf);
 void V_UpdatePlayerAbilities (edict_t *ent);
-qboolean V_HealthCache (edict_t *ent, int max_per_second, int update_frequency);
+qboolean V_HealthCache (edict_t *ent, int max_per_second, int update_frequency_svframes);
 qboolean V_ArmorCache (edict_t *ent, int max_per_second, int update_frequency);
 void V_ResetPlayerState (edict_t *ent);
 void V_TouchSolids (edict_t *ent);

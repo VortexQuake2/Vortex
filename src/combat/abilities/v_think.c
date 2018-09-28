@@ -377,7 +377,7 @@ void think_recharge_abilities(edict_t *ent) {
     if (!G_EntIsAlive(ent))
         return;
 
-    if (!(level.framenum % 10) && (level.time > ent->client->charge_regentime)) {
+    if (!(level.framenum % (int)(1 / FRAMETIME)) && (level.time > ent->client->charge_regentime)) {
         // 3.5 add all abilities here that must recharge
 
         // beam ability
@@ -573,11 +573,11 @@ void think_tech_regeneration(edict_t *ent) {
             regenNow = true;
 
         if (ent->myskills.level <= 5)
-            regenerate = M_Regenerate(e, 100, 10, 1.0, true, true, false, &e->monsterinfo.regen_delay1);
+            regenerate = M_Regenerate(e, qf2sf(100), qf2sf(10), 1.0, true, true, false, &e->monsterinfo.regen_delay1);
         else if (ent->myskills.level <= 10)
-            regenerate = M_Regenerate(e, 200, 10, 1.0, true, true, false, &e->monsterinfo.regen_delay1);
+            regenerate = M_Regenerate(e, qf2sf(200), qf2sf(10), 1.0, true, true, false, &e->monsterinfo.regen_delay1);
         else
-            regenerate = M_Regenerate(e, 300, 10, 1.0, true, true, false, &e->monsterinfo.regen_delay1);
+            regenerate = M_Regenerate(e, qf2sf(300), qf2sf(10), 1.0, true, true, false, &e->monsterinfo.regen_delay1);
 
         if (regenNow && regenerate)
             gi.sound(ent, CHAN_ITEM, gi.soundindex("ctf/tech4.wav"), 1, ATTN_STATIC, 0);
@@ -585,7 +585,7 @@ void think_tech_regeneration(edict_t *ent) {
 }
 
 void think_ability_fury(edict_t *ent) {
-    if (!(level.framenum % 10) && (ent->fury_time > level.time && ent->client)) {
+    if (!(level.framenum % (int)(1 / FRAMETIME)) && (ent->fury_time > level.time && ent->client)) {
         if (G_EntIsAlive(ent) && !(ctf->value && ctf_enable_balanced_fc->value && HasFlag(ent))) {
             int maxHP = MAX_HEALTH(ent);
             int maxAP = MAX_ARMOR(ent);
@@ -609,7 +609,7 @@ void think_ability_fury(edict_t *ent) {
 
 void think_ability_mind_absorb(edict_t *ent) {
     if (ent->myskills.abilities[MIND_ABSORB].current_level > 0) {
-        int cooldown = 25;
+        int cooldown = (int)(2.5 / FRAMETIME);
 
         //Talent: Mind Control
         if (vrx_get_talent_slot(ent, TALENT_IMP_MINDABSORB) != -1)
@@ -698,7 +698,7 @@ void think_talent_armor_regen(const edict_t *ent, int max_armor, int *armor) {
 
 void think_cocoon_player_bonus_timeout(edict_t *ent) {
     if (ent->cocoon_factor > 0 && level.time > ent->cocoon_time - 5) {
-        if (!(level.framenum % 10))
+        if (!(level.framenum % (int)(1 / FRAMETIME)))
             safe_cprintf(ent, PRINT_HIGH, "Cocoon bonus wears off in %.0f second(s)\n", ent->cocoon_time - level.time);
 
         if (level.time >= ent->cocoon_time) {
@@ -807,7 +807,7 @@ void vrx_client_think(edict_t *ent) {
     //DrawPath();
 
     // 3.5 don't stuff player commands all at once, or they will overflow
-    if (!(level.framenum % 10))
+    if (!(level.framenum % (int)(1 / FRAMETIME)))
         StuffPlayerCmds(ent);
 
     think_cocoon_player_bonus_timeout(ent);
@@ -828,7 +828,7 @@ void vrx_client_think(edict_t *ent) {
     // 4.2 recharge blaster ammo
     // (apple)
     // Blaster should be affected by player's max ammo.
-    if (!(level.framenum % 2) && !(ent->client->buttons & BUTTON_ATTACK)
+    if (!(sf2qf(level.framenum) % 2) && !(ent->client->buttons & BUTTON_ATTACK)
         && (ent->monsterinfo.lefty < (25 + 12.5 * ent->myskills.abilities[MAX_AMMO].level)))
         ent->monsterinfo.lefty++;
 
@@ -870,7 +870,7 @@ void vrx_client_think(edict_t *ent) {
         think_ability_ammo_regen(ent);
 
     if (ent->myskills.abilities[POWER_REGEN].current_level > 0 && // We simply restore 5 cubes more often.
-        !(level.framenum % (50 / ent->myskills.abilities[POWER_REGEN].current_level)))
+        !(level.framenum % (int)(5 / ent->myskills.abilities[POWER_REGEN].current_level / FRAMETIME)))
         think_ability_power_regen(ent);
 
     //3.0 Mind absorb every x seconds

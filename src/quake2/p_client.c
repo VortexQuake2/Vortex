@@ -865,13 +865,13 @@ void TossClientWeapon (edict_t *self)
 	if (!((int)(dmflags->value) & DF_QUAD_DROP))
 		quad = false;
 	else
-		quad = (self->client->quad_framenum > (level.framenum + 10));
+		quad = (self->client->quad_framenum > (level.framenum + qf2sf(10)));
 
 	// RAFAEL
 	if (!((int)(dmflags->value) & DF_QUADFIRE_DROP))
 		quadfire = false;
 	else
-		quadfire = (self->client->quadfire_framenum > (level.framenum + 10));
+		quadfire = (self->client->quadfire_framenum > (level.framenum + qf2sf(10)));
 	
 
 	if (item && quad)
@@ -1688,7 +1688,7 @@ void respawn (edict_t *self)
 
 		//3.0 You get invincibility when you spawn, but you can't shoot
 		self->client->respawn_time = self->client->ability_delay = level.time + (RESPAWN_INVIN_TIME / 10);
-		self->client->invincible_framenum = level.framenum + RESPAWN_INVIN_TIME;		
+		self->client->invincible_framenum = level.framenum + qf2sf(RESPAWN_INVIN_TIME);
 		return;
 	}
 
@@ -1992,7 +1992,7 @@ void PutClientInServer (edict_t *ent)
 //	if (ent->myskills.class_num == CLASS_BRAIN)
 //		MorphToBrain(ent);
 
-	ent->client->invincible_framenum = level.framenum + 20;//Add 2.0 seconds to invincibility when you spawn.
+	ent->client->invincible_framenum = level.framenum + (int)(2 / FRAMETIME);//Add 2.0 seconds to invincibility when you spawn.
 	KickPlayerBack(ent);//Kicks all campers away!
 	//K03 End
 	
@@ -2544,7 +2544,6 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	edict_t	*other;
 	int		i, j;
 	pmove_t	pm;
-    float modifier = 1;
 
     que_t *curse = NULL;
 	int		viewheight;
@@ -2903,7 +2902,7 @@ void ClientBeginServerFrame (edict_t *ent)
 		return;
 
 	//GHz START
-	if (G_EntExists(ent) && !(level.framenum%10))
+	if (G_EntExists(ent) && !(level.framenum % (int)(1 / FRAMETIME)))
 	{
 		//3.0 reduce their mute list
 		int i;

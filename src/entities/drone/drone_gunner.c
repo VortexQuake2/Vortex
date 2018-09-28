@@ -712,5 +712,5 @@ void init_drone_gunner (edict_t *self)
 	self->monsterinfo.scale = MODEL_SCALE;
 
 //	walkmonster_start (self);
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 }

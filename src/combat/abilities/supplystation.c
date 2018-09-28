@@ -643,7 +643,7 @@ void depot_think (edict_t *self)
 	}
 
 	depot_effects(self);
-	depot_add_inventory(self, 100);
+	depot_add_inventory(self, qf2sf(100));
 
 	self->nextthink = level.time + FRAMETIME;
 }

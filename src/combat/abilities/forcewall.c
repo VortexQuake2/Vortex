@@ -9,7 +9,8 @@ void mylaser_think (edict_t *self)
 		return;
 	}
 	
-	if ((level.framenum+100 >= self->owner->count) && (level.framenum % 5) == 0)
+	if ((level.framenum + 10 / FRAMETIME >= self->owner->count)
+	      && (sf2qf(level.framenum) % 5) == 0)
 	{
 		// flash yellow if wall is about to time out
 		self->s.skinnum = 0xdcdddedf;
@@ -69,7 +70,7 @@ void forcewall_seteffects (edict_t *self)
 	int		color;
 
 	// get particle color
-	if ((level.framenum+100 >= self->count) && !(level.framenum%5))
+	if ((level.framenum + 10 / FRAMETIME >= self->count) && !(level.framenum % ((int)sv_fps->value / 2)))
 	{
 		color = 0xdcdddedf;
 	}
@@ -105,12 +106,12 @@ void forcewall_regenerate (edict_t *self)
 		regen = 1;
 	if ((self->health < self->max_health) && self->activator->client->pers.inventory[power_cube_index])
 	{
-		if ((self->health < 0.25*self->max_health) && !(level.framenum%20))
+		if ((self->health < 0.25*self->max_health) && !(sf2qf(level.framenum)%20))
 			safe_cprintf(self->activator, PRINT_HIGH, "Wall is low on hp: %d/%d\n", self->health, self->max_health);
 		self->health += regen;
 		if (self->health > self->max_health)
 			self->health = self->max_health;
-		if (!(level.framenum%2))
+		if (!(sf2qf(level.framenum) % 2))
 			self->activator->client->pers.inventory[power_cube_index]--;
 	//	gi.dprintf("%d/%d health\n", self->health, self->max_health);
 	}
@@ -225,7 +226,7 @@ void forcewall_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t
 		else if (level.time > self->random)
 		{
 			// dont allow solid force wall to trap people
-			if (level.framenum == self->count-900)
+			if (level.framenum == self->count - 90 / FRAMETIME)
 			{
 				G_FreeEdict(self);
 				return;
@@ -374,7 +375,7 @@ void SpawnForcewall(edict_t *player, int type)
 		wall->touch = forcewall_touch;	
 	}
 	wall->die = wall_die;
-	wall->count = level.framenum + 1000; // wall timeout
+	wall->count = level.framenum + 100 / FRAMETIME; // wall timeout
 	wall->movetype = MOVETYPE_NONE;
 	if (type)
 		wall->solid = SOLID_BBOX;

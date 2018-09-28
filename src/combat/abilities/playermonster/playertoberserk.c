@@ -243,13 +243,14 @@ void RunBerserkFrames (edict_t *ent, usercmd_t *ucmd)
 
 	if (level.framenum >= ent->count)
 	{
-		int regen_frames = BERSERK_REGEN_FRAMES;
+		int regen_frames = qf2sf(BERSERK_REGEN_FRAMES);
 
 		// morph mastery reduces regen time
 		if (ent->myskills.abilities[MORPH_MASTERY].current_level > 0)
 			regen_frames *= 0.5;
 
-		M_Regenerate(ent, regen_frames, BERSERK_REGEN_DELAY, 1.0, true, false, false, &ent->monsterinfo.regen_delay1);
+		M_Regenerate(ent, regen_frames, qf2sf(BERSERK_REGEN_DELAY),
+		        1.0, true, false, false, &ent->monsterinfo.regen_delay1);
 		
 		// play running animation if we are moving forward or strafing
 		if ((ucmd->forwardmove > 0) || (!ucmd->forwardmove && ucmd->sidemove))
@@ -276,7 +277,7 @@ void RunBerserkFrames (edict_t *ent, usercmd_t *ucmd)
 		else
 			G_RunFrames(ent, BERSERK_FRAMES_IDLE1_START, BERSERK_FRAMES_IDLE1_END, false); // run idle frames
 
-		ent->count = level.framenum + 1;
+		ent->count = (int)(level.framenum + 0.1 / FRAMETIME);
 	}
 }
 

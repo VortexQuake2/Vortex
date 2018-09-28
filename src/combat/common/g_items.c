@@ -319,7 +319,7 @@ void Use_Quad(edict_t *ent, gitem_t *item) {
         timeout = quad_drop_timeout_hack;
         quad_drop_timeout_hack = 0;
     } else {
-        timeout = 300;
+        timeout = (int)(30 / FRAMETIME);
     }
 
     if (ent->client->quad_framenum > level.framenum)
@@ -342,7 +342,7 @@ void Use_QuadFire(edict_t *ent, gitem_t *item) {
         timeout = quad_fire_drop_timeout_hack;
         quad_fire_drop_timeout_hack = 0;
     } else {
-        timeout = 300;
+        timeout = (int)(30 / FRAMETIME);
     }
 
     if (ent->client->quadfire_framenum > level.framenum)
@@ -361,7 +361,7 @@ void Use_Breather(edict_t *ent, gitem_t *item) {
     if (ent->client->breather_framenum > level.framenum)
         ent->client->breather_framenum += 300;
     else
-        ent->client->breather_framenum = level.framenum + 300;
+        ent->client->breather_framenum = level.framenum + (int)(30 / FRAMETIME);
 
 //	gi.sound(ent, CHAN_ITEM, gi.soundindex("items/damage.wav"), 1, ATTN_NORM, 0);
 }
@@ -375,7 +375,7 @@ void Use_Envirosuit(edict_t *ent, gitem_t *item) {
     if (ent->client->enviro_framenum > level.framenum)
         ent->client->enviro_framenum += 300;
     else
-        ent->client->enviro_framenum = level.framenum + 300;
+        ent->client->enviro_framenum = level.framenum + (int)(30 / FRAMETIME);
 
 //	gi.sound(ent, CHAN_ITEM, gi.soundindex("items/damage.wav"), 1, ATTN_NORM, 0);
 }
@@ -389,7 +389,7 @@ void Use_Invulnerability(edict_t *ent, gitem_t *item) {
     if (ent->client->invincible_framenum > level.framenum)
         ent->client->invincible_framenum += 300;
     else
-        ent->client->invincible_framenum = level.framenum + 300;
+        ent->client->invincible_framenum = level.framenum + (int)(30 / FRAMETIME);
 
     gi.sound(ent, CHAN_ITEM, gi.soundindex("items/protect.wav"), 1, ATTN_NORM, 0);
 }
@@ -786,7 +786,7 @@ void Teleport_them(edict_t *ent) {
 
     //3.0 You get some invincibility when you spawn, but you can't shoot
     ent->client->respawn_time = ent->client->ability_delay = level.time + (RESPAWN_INVIN_TIME / 10);
-    ent->client->invincible_framenum = level.framenum + RESPAWN_INVIN_TIME;
+    ent->client->invincible_framenum = level.framenum + qf2sf(RESPAWN_INVIN_TIME);
 
     // 3.68 don't allow morphs to immediately attack
     if (ent->mtype)

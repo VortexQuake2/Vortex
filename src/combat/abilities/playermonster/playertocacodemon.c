@@ -110,7 +110,7 @@ void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
         return;
 
     if (level.framenum >= ent->count) {
-        MorphRegenerate(ent, CACODEMON_REGEN_DELAY, CACODEMON_REGEN_FRAMES);
+        MorphRegenerate(ent, qf2sf(CACODEMON_REGEN_DELAY), qf2sf(CACODEMON_REGEN_FRAMES));
         //	ent->client->ability_delay = level.time + CACODEMON_DELAY; // can't use abilities
 
         if (ent->client->buttons & BUTTON_ATTACK) {
@@ -140,7 +140,7 @@ void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
 
         }
 
-        ent->count = level.framenum + 1;
+        ent->count = (int)(level.framenum + (0.1 / FRAMETIME));
     }
 }
 

@@ -92,7 +92,7 @@ void hw_awardpoints (void)
 		return;
 	}
 
-	if (level.framenum % HW_AWARD_FRAMES)
+	if (level.framenum % qf2sf(HW_AWARD_FRAMES))
 		return;
 
 	// not enough players

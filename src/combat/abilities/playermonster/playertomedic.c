@@ -244,7 +244,7 @@ void p_medic_heal (edict_t *ent)
 		// try to heal them if they are alive
 		if ((tr.ent->deadflag != DEAD_DEAD) && (tr.ent->health > 0))
 		{
-			int frames = floattoint(600/(float)ent->myskills.abilities[MEDIC].current_level);
+			int frames = qf2sf(600/(float)ent->myskills.abilities[MEDIC].current_level);
 			
 			if (!M_NeedRegen(tr.ent))
 				return;
@@ -318,9 +318,10 @@ void p_medic_regen (edict_t *ent)
 		health_r_frames *= 0.5;
 	}
 
-	p_medic_hb_regen(ent, weapon_r_frames, MEDIC_HB_REGEN_DELAY);
+	p_medic_hb_regen(ent, qf2sf(weapon_r_frames), qf2sf(MEDIC_HB_REGEN_DELAY));
 	//MorphRegenerate(ent, MEDIC_REGEN_DELAY, MEDIC_REGEN_FRAMES);
-	M_Regenerate(ent, health_r_frames, MEDIC_REGEN_DELAY, 1.0, true, false, false, &ent->monsterinfo.regen_delay1);
+	M_Regenerate(ent, qf2sf(health_r_frames), qf2sf(MEDIC_REGEN_DELAY),
+			1.0, true, false, false, &ent->monsterinfo.regen_delay1);
 }
 
 void p_medic_jump (edict_t *ent)
@@ -448,7 +449,7 @@ void RunMedicFrames (edict_t *ent, usercmd_t *ucmd)
 		else
 			G_RunFrames(ent, MEDIC_FRAMES_IDLE_START, MEDIC_FRAMES_IDLE_END, false); // run idle frames
 
-		ent->count = level.framenum + 1;
+		ent->count = level.framenum + (int)(0.1 / FRAMETIME);
 	}
 }
 

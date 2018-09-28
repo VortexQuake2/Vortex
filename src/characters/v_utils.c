@@ -1648,21 +1648,22 @@ qboolean V_IsPVP(void)
 	return !pvm->value && !ctf->value && !ffa->value && !invasion->value && !ptr->value && !domination->value && !tbi->value;
 }
 
-qboolean V_HealthCache(edict_t *ent, int max_per_second, int update_frequency)
+qboolean V_HealthCache(edict_t *ent, int max_per_second, int update_frequency_svframes)
 {
 	int heal, delta, max;
 
 	if (ent->health_cache_nextframe > level.framenum)
 		return false;
 
-	ent->health_cache_nextframe = level.framenum + update_frequency;
+	ent->health_cache_nextframe = level.framenum + update_frequency_svframes;
 
 	if (ent->health_cache > 0 && ent->health < ent->max_health)
 	{
-		if (update_frequency <= 10)
-			max = max_per_second / (10 / update_frequency);
+		if (update_frequency_svframes <= sv_fps)
+			max = max_per_second / (sv_fps->value / update_frequency_svframes);
 		else
 			max = max_per_second;
+
 		if (max > ent->health_cache)
 			max = ent->health_cache;
 
@@ -1709,8 +1710,8 @@ qboolean V_ArmorCache(edict_t *ent, int max_per_second, int update_frequency)
 
 	if (ent->armor_cache > 0 && *armor < max_armor)
 	{
-		if (update_frequency <= 10)
-			max = max_per_second / (10 / update_frequency);
+		if (update_frequency <= sv_fps->value)
+			max = max_per_second / (sv_fps->value / update_frequency);
 		else
 			max = max_per_second;
 		if (max > ent->armor_cache)
@@ -1904,7 +1905,7 @@ void V_ShellNonAbilityEffects(edict_t *ent)
 			}
 
 	// drones flash briefly when selected for orders
-	if ((ent->monsterinfo.selected_time > level.time) && (level.framenum & 6))
+	if ((ent->monsterinfo.selected_time > level.time) && (sf2qf(level.framenum) & 6))
 	{
 		ent->s.effects |= EF_COLOR_SHELL;
 		ent->s.renderfx |= RF_SHELL_GREEN;
@@ -2036,7 +2037,7 @@ void V_ShellNonAbilityEffects(edict_t *ent)
 	if (ent->monsterinfo.inv_framenum > level.framenum)
 	{
 		ent->s.effects |= EF_COLOR_SHELL;
-		if (level.framenum & 4)
+		if (sf2qf(level.framenum) & 4)
 			ent->s.renderfx |= RF_SHELL_RED;
 		else
 			ent->s.renderfx |= RF_SHELL_BLUE;
@@ -2087,7 +2088,7 @@ void V_ShellAbilityEffects(edict_t *ent)
 		//BEGIN QUAD EFFECTS
 		if (ent->client->quad_framenum > level.framenum)
 		{
-			remaining = ent->client->quad_framenum - level.framenum;
+			remaining = sf2qf(ent->client->quad_framenum - level.framenum);
 			if (remaining > 30 || (remaining & 4))
 				ent->s.effects |= EF_QUAD;
 			if (remaining == 30 && (ent->svflags & SVF_MONSTER))	// beginning to fade
@@ -2096,7 +2097,7 @@ void V_ShellAbilityEffects(edict_t *ent)
 
 		if (ent->client->quadfire_framenum > level.framenum)
 		{
-			remaining = ent->client->quadfire_framenum - level.framenum;
+			remaining = sf2qf(ent->client->quadfire_framenum - level.framenum);
 			if (remaining > 30 || (remaining & 4))
 				ent->s.effects |= EF_QUAD;
 			if (remaining == 30 && (ent->svflags & SVF_MONSTER))	// beginning to fade
@@ -2105,7 +2106,7 @@ void V_ShellAbilityEffects(edict_t *ent)
 
 		if (ent->client->invincible_framenum > level.framenum && (level.framenum & 8))
 		{
-			remaining = ent->client->invincible_framenum - level.framenum;
+			remaining = sf2qf(ent->client->invincible_framenum - level.framenum);
 			if (remaining > 30 || (remaining & 4))
 				ent->s.effects |= EF_PENT;
 			if (remaining == 30 && (ent->svflags & SVF_MONSTER))	// beginning to fade
@@ -2241,7 +2242,7 @@ void V_SetEffects(edict_t *ent)
 	if (ent->s.renderfx != r_effects)
 	{
 		// swap back and forth between effects
-		if (level.framenum & 8)
+		if (sf2qf(level.framenum) & 8)
 		{
 			// clear all effects
 			ent->s.effects = ent->s.renderfx = 0;

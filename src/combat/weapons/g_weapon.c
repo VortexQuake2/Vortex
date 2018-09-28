@@ -3073,12 +3073,12 @@ void spikeball_think (edict_t *self)
 		}
 		// warn the converted monster's current owner
 		else if (converted && self->activator && self->activator->inuse && self->activator->client 
-			&& (level.time > self->removetime-5) && !(level.framenum%10))
+			&& (level.time > self->removetime-5) && !(level.framenum % (int)(1 / FRAMETIME)))
 				safe_cprintf(self->activator, PRINT_HIGH, "%s conversion will expire in %.0f seconds\n", 
 					V_GetMonsterName(self), self->removetime-level.time);	
 	}
 
-	if (!M_Upkeep(self, 13, 1))
+	if (!M_Upkeep(self, 1.3 / FRAMETIME, 1))
 		return;
 
 	spikeball_effects(self);

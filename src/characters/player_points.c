@@ -184,8 +184,8 @@ void VortexSpreeAbilities(edict_t *attacker) {
     // otherwise the player will keep getting 10 seconds of quad/invuln
 
     //New quad/invin duration variables
-    int base_duration = 50;    //5 seconds
-    int kill_duration = 5;    //0.5 seconds per kill
+    int base_duration = 5 / FRAMETIME;    //5 seconds
+    int kill_duration = 0.5 / FRAMETIME;    //0.5 seconds per kill
 
     if (!attacker->client)
         return;

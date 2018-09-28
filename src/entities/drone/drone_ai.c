@@ -303,7 +303,7 @@ qboolean drone_heartarget (edict_t *target)
 		return true;
 
 	// target made a sound (necessary mostly for weapon firing)
-	if (target->lastsound + 4 >= level.framenum)
+	if (target->lastsound + (0.4 / FRAMETIME) >= level.framenum)
 		return true;
 
 	// target used an ability
@@ -434,9 +434,9 @@ qboolean drone_findtarget (edict_t *self, qboolean force)
 	// and searches less often, freeing up CPU cycles
 	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND)
 		&& self->monsterinfo.idle_frames > DRONE_SLEEP_FRAMES)
-		frames = 4;
+		frames = (int)(0.4 / FRAMETIME);
 	else
-		frames = DRONE_FINDTARGET_FRAMES;
+		frames = qf2sf(DRONE_FINDTARGET_FRAMES);
 
 	if (level.framenum % frames && !force)
 		return false;
@@ -507,7 +507,8 @@ void drone_ai_idle (edict_t *self)
 {
 	// regenerate to full in 30 seconds
 	if (self->mtype == M_MEDIC)
-		M_Regenerate(self, 300, 10, 1.0, true, true, false, &self->monsterinfo.regen_delay1);
+		M_Regenerate(self, qf2sf(300), qf2sf(10), 1.0, true, true, false, &self->monsterinfo.regen_delay1);
+
 	else if (self->health >= 0.3*self->max_health)
 	// change skin if we are being healed by someone else
 		self->s.skinnum &= ~1;
@@ -2167,13 +2168,14 @@ void drone_think (edict_t *self)
 		}
 		// warn the converted monster's current owner
 		else if (converted && self->activator && self->activator->inuse && self->activator->client 
-			&& (level.time > self->removetime-5) && !(level.framenum%10))
+			&& (level.time > self->removetime-5)
+			&& !(level.framenum % (int)(1 / FRAMETIME)))
 				safe_cprintf(self->activator, PRINT_HIGH, "%s conversion will expire in %.0f seconds\n", 
 					V_GetMonsterName(self), self->removetime-level.time);	
 	}
 
 	// if owner can't pay upkeep, monster dies
-	if (!M_Upkeep(self, 10, self->monsterinfo.cost/20))
+	if (!M_Upkeep(self, 1 / FRAMETIME, self->monsterinfo.cost/20))
 		return;
 
 	M_UpdateLastSight(self);
@@ -2209,7 +2211,7 @@ void drone_think (edict_t *self)
 	
 	// this must come before M_MoveFrame() because a monster's dead
 	// function may set the nextthink to 0
-	self->nextthink = level.time + 0.1;
+	self->nextthink = level.time + 0.1; // run at 10 frames/sec
 
 	M_MoveFrame (self);
 	M_CatagorizePosition (self);

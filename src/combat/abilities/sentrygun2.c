@@ -799,7 +799,7 @@ void sentrygun_think(edict_t *self)
 		}
 		// warn the converted monster's current owner
 		else if (converted && self->creator && self->creator->inuse && self->creator->client
-			&& (level.time > self->removetime - 5) && !(level.framenum % 10))
+			&& (level.time > self->removetime - 5) && !(level.framenum % (int)(1 / FRAMETIME)))
 			safe_cprintf(self->creator, PRINT_HIGH, "%s conversion will expire in %.0f seconds\n",
 			V_GetMonsterName(self), self->removetime - level.time);
 	}
@@ -847,7 +847,7 @@ void sentrygun_think(edict_t *self)
 	damaged = checkLowHealth(self);
 
 	//Every 5 seconds do the following
-	if (!(level.framenum % 50))
+	if (!(level.framenum % (int)(5 / FRAMETIME)))
 	{
 		checkAmmo(self);
 		if (damaged) safe_cprintf(self->creator, PRINT_HIGH, "ALERT: Your sentry gun needs repairs!\n");
@@ -856,7 +856,7 @@ void sentrygun_think(edict_t *self)
 	if (damaged)
 	{
 		//Every 2 seconds put in some sparks
-		if (level.framenum % 20 == 0)
+		if (level.framenum % (int)(2 / FRAMETIME) == 0)
 			sentSpraySparks(self);
 	}
 

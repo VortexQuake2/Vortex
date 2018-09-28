@@ -1569,7 +1569,7 @@ void CTF_SpawnPlayersInBase (int teamnum)
 
 			// give players 5 seconds of invincibility so they can
 			// kill any enemy base campers
-			cl_ent->client->invincible_framenum = level.framenum + 50;
+			cl_ent->client->invincible_framenum = level.framenum + (int)(5 / FRAMETIME);
 		}
 		
 		// remove all summonables

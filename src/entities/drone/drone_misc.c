@@ -324,7 +324,7 @@ void goalentity_think (edict_t *self)
 		return;
 	}
 
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 }
 
 edict_t *SpawnGoalEntity (edict_t *ent, vec3_t org)
@@ -342,7 +342,7 @@ edict_t *SpawnGoalEntity (edict_t *ent, vec3_t org)
 //	goal->s.modelindex = gi.modelindex("models/items/c_head/tris.md2");
 //	goal->s.effects |= EF_BLASTER;
 	VectorCopy(org, goal->s.origin);
-	goal->nextthink = level.time + FRAMETIME;
+	goal->nextthink = level.time + 0.1;
 //	gi.linkentity(goal);
 	ent->movetarget = goal; // pointer to goal
 	return goal;
@@ -433,7 +433,7 @@ void drone_heal (edict_t *self, edict_t *other)
 		if (self->health < self->max_health && other->client->pers.inventory[power_cube_index] >= 5)
 		{
 			self->health_cache += (int)(0.50 * self->max_health) + 1;
-			self->monsterinfo.regen_delay1 = level.framenum + 10;
+			self->monsterinfo.regen_delay1 = level.framenum + (int)(1 / FRAMETIME);
 			other->client->pers.inventory[power_cube_index] -= 5;
 		}
 
@@ -442,7 +442,7 @@ void drone_heal (edict_t *self, edict_t *other)
 			&& other->client->pers.inventory[power_cube_index] >= 5)
 		{
 			self->armor_cache += (int)(0.50 * self->monsterinfo.max_armor) + 1;
-			self->monsterinfo.regen_delay1 = level.framenum + 10;
+			self->monsterinfo.regen_delay1 = level.framenum + (int)(1 / FRAMETIME);
 			other->client->pers.inventory[power_cube_index] -= 5;
 		}
 	}
@@ -537,7 +537,7 @@ void drone_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 			self->monsterinfo.walk(self);
 		else
 			self->monsterinfo.stand(self);
-		self->monsterinfo.inv_framenum = level.framenum + 10;
+		self->monsterinfo.inv_framenum = level.framenum + (int)(1 / FRAMETIME);
 	}
 
 	if (other && other->inuse && other->client && self->activator
@@ -588,7 +588,7 @@ void drone_grow (edict_t *self)
 	else
 		self->s.effects |= EF_PLASMA;
 
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 }
 
 void AssignChampionStuff(edict_t *drone, int *drone_type)
@@ -777,7 +777,7 @@ edict_t *SpawnDroneEnt (edict_t *drone, edict_t *ent, int drone_type, qboolean w
 			// gives players some time to react to newly spawned monsters
 			//drone->nextthink = level.time + 1 + random();
 			drone->monsterinfo.pausetime = level.time + 1.0;
-			drone->monsterinfo.inv_framenum = level.framenum + 10;
+			drone->monsterinfo.inv_framenum = level.framenum + (int)(1 / FRAMETIME);
 
 			// trigger spree war if a boss successfully spawns in PvP mode
 			if (deathmatch->value && !domination->value && !ctf->value && !invasion->value && !pvm->value
@@ -789,7 +789,7 @@ edict_t *SpawnDroneEnt (edict_t *drone, edict_t *ent, int drone_type, qboolean w
 			}
 		}
 		//else
-		drone->nextthink = level.time + FRAMETIME;
+		drone->nextthink = level.time + 0.1;
 	}
 	else if (ent->client)
 	{
@@ -849,7 +849,7 @@ edict_t *SpawnDroneEnt (edict_t *drone, edict_t *ent, int drone_type, qboolean w
 		ent->client->pers.inventory[power_cube_index] -= drone->monsterinfo.cost;
 		drone->health = 0.5*drone->max_health;
 		drone->monsterinfo.power_armor_power = 0.5*drone->monsterinfo.max_armor;
-		drone->nextthink = level.time + FRAMETIME;//2*drone->monsterinfo.control_cost;
+		drone->nextthink = level.time + 0.1;//2*drone->monsterinfo.control_cost;
 		//drone->monsterinfo.upkeep_delay = drone->nextthink*10 + 10; // 3.2 upkeep begins 1 second after monster spawn
 	}
 	else
@@ -976,7 +976,7 @@ void combatpoint_think (edict_t *self)
 		return;
 	}
 
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 }
 
 edict_t *SpawnCombatPoint (edict_t *ent, vec3_t org)
@@ -998,7 +998,7 @@ edict_t *SpawnCombatPoint (edict_t *ent, vec3_t org)
 //	goal->s.effects |= EF_BLASTER;
 	org[2] += 8;
 	VectorCopy(org, goal->s.origin);
-	goal->nextthink = level.time + FRAMETIME;
+	goal->nextthink = level.time + 0.1;
 	VectorSet (goal->mins, -8, -8, -8);
 	VectorSet (goal->maxs, 8, 8, 8);
 	gi.linkentity(goal);
@@ -1676,7 +1676,7 @@ void M_Remove (edict_t *self, qboolean refund, qboolean effect)
 	self->takedamage = DAMAGE_NO;
 	self->solid = SOLID_NOT; //4.0 to keep killbox() happy
 	self->deadflag = DEAD_DEAD;
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 	gi.unlinkentity(self); //4.0 B15 another attempt to make killbox() happy
 
 }
@@ -1686,7 +1686,7 @@ void M_PrepBodyRemoval (edict_t *self)
 	self->think = M_BodyThink;
 	self->delay = level.time + 30; // time until body is auto-removed
 	self->activator = NULL; // no longer owned by anyone
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 }
 
 void M_BodyThink (edict_t *self)
@@ -1711,7 +1711,7 @@ void M_BodyThink (edict_t *self)
 		return;
 	}
 
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 }
 
 qboolean M_Upkeep (edict_t *self, int delay, int upkeep_cost)
@@ -1997,7 +1997,7 @@ void drone_tempent_think (edict_t *self)
 		return;
 	}
 
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 }
 
 edict_t *DroneTempEnt (edict_t *ent, vec3_t pos, float delay)
@@ -2009,7 +2009,7 @@ edict_t *DroneTempEnt (edict_t *ent, vec3_t pos, float delay)
 	e->classname = "combat point";
 	e->mtype = M_COMBAT_POINT;
 	e->think = drone_tempent_think;
-	e->nextthink = level.time + FRAMETIME;
+	e->nextthink = level.time + 0.1;
 	if (delay)
 	{
 		e->nextthink = level.time + delay;

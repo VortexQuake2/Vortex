@@ -133,8 +133,11 @@ void ShowScanner (edict_t *ent, char *layout)
 			continue;
 
 		// target is invalid
-		if ((level.framenum & 8) && ((e->flags & FL_CHATPROTECT) || (e->flags & FL_GODMODE) || (e->client && e->client->respawn_time>level.time) 
-			|| (e->client && e->client->invincible_framenum>level.framenum) || (e->monsterinfo.inv_framenum>level.framenum)))
+		if ((sf2qf(level.framenum) & 8) &&
+			((e->flags & FL_CHATPROTECT) || (e->flags & FL_GODMODE) ||
+			(e->client && e->client->respawn_time>level.time)
+			|| (e->client && e->client->invincible_framenum>level.framenum) ||
+			(e->monsterinfo.inv_framenum>level.framenum)))
 			tag = PIC_QUADDOT_TAG; // blue dot
 		// target is on our team
 		else if (OnSameTeam(ent, e))

@@ -375,7 +375,7 @@ void PTRCheckJoinedQue (void)
 		return;
 
 	// check every second
-	if (!(level.framenum%10))
+	if (!(level.framenum% (int)(1 / FRAMETIME)))
 	{
 		if (JoinedPlayers() < 1)
 			return;
@@ -742,7 +742,7 @@ void retard_seteffects (edict_t *self)
 
 	if (!self->teamnum)
 	{
-		if (level.framenum & 6)
+		if (sf2qf(level.framenum) & 6)
 		{
 			self->s.effects |= EF_COLOR_SHELL;
 			self->s.renderfx |= RF_SHELL_RED;

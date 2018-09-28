@@ -26,7 +26,7 @@ void dom_awardpoints (void)
 //	if (!(FLAG_FRAMES % 10))
 //		gi.dprintf("frames %d\n", FLAG_FRAMES);
 
-	if (level.framenum % DOMINATION_AWARD_FRAMES)
+	if (level.framenum % qf2sf(DOMINATION_AWARD_FRAMES))
 		return;
 	// not enough players
 	if (ActivePlayers() < DOMINATION_MINIMUM_PLAYERS)

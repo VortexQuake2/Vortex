@@ -453,7 +453,7 @@ void p_tank_idle (edict_t *self)
 
 void p_tank_think (edict_t *self)
 {
-	int	frame, regenFrames=P_TANK_REGEN_FRAMES, regenAmmoFrames=P_TANK_AMMOREGEN_FRAMES;
+	int	frame, regenFrames=qf2sf(P_TANK_REGEN_FRAMES), regenAmmoFrames=qf2sf(P_TANK_AMMOREGEN_FRAMES);
 	int delayFrames=P_TANK_REGEN_DELAY, delayAmmoFrames=P_TANK_AMMOREGEN_DELAY;
 
 	if (!boss_checkstatus(self))

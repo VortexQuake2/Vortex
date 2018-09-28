@@ -1103,7 +1103,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 			}
 
 			// modify delay
-			targ->dim_vision_delay = level.framenum + 10; // roll again in 1 second
+			targ->dim_vision_delay = level.framenum + (int)(1 / FRAMETIME); // roll again in 1 second
 		}
 
 		//4.5 monster bonus flag ghostly chills targets
@@ -1126,7 +1126,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 						safe_cprintf(targ, PRINT_HIGH, "You have been chilled for 10 seconds\n");
 				}
 
-				targ->dim_vision_delay = level.framenum + 10;
+				targ->dim_vision_delay = level.framenum + (int)(1 / FRAMETIME);
 			}
 
 			if (attacker->monsterinfo.bonus_flags & BF_STYGIAN)
@@ -1138,7 +1138,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 					CurseMessage(attacker, targ, AMP_DAMAGE, 10.0, true);
 				}
 
-				targ->dim_vision_delay = level.framenum + 10;
+				targ->dim_vision_delay = level.framenum + (int)(1 / FRAMETIME);
 			}
 		}
 	}

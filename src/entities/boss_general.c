@@ -173,7 +173,7 @@ void boss_update (edict_t *ent, usercmd_t *ucmd)
 		
 		boss->style = frames; // set frame set boss should use
 		gi.linkentity(boss);
-		boss->count = level.framenum+1;
+		boss->count = level.framenum + (int)(1 / FRAMETIME);
 	}
 	
 	// move player into position

@@ -806,7 +806,7 @@ void mymedic_cable_attack (edict_t *self)
 	// the target needs healing
 	if (M_NeedRegen(self->enemy))
 	{
-		int frames = 6000/(12*self->monsterinfo.level);
+		int frames = qf2sf(6000/(12*self->monsterinfo.level));
 		float mult = 1.0;
 
 		if (!frames)
@@ -1040,6 +1040,6 @@ void init_drone_medic (edict_t *self)
 	self->monsterinfo.scale = MODEL_SCALE;
 
 //	walkmonster_start (self);
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 	//self->activator->num_monsters += self->monsterinfo.control_cost;
 }

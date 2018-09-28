@@ -25,7 +25,6 @@
 #include "../characters/io/gds.h" // 3.15
 #include "../combat/abilities/scanner.h"
 
-#define FIXED_FT
 
 // the "gameversion" client command will print this plus compile date
 #define	GAMEVERSION	"Vortex"//K03 "baseq2"
@@ -114,13 +113,14 @@ extern long FLAG_FRAMES;
 #define FL_RESPAWN				0x80000000	// used for item respawning
 
 
-#ifdef FIXED_FT
-#define	FRAMETIME		0.1
-#define ft(x)			x
-#else
+
 #define FRAMETIME		(1/sv_fps->value)
-#define ft(x)			(int)(x*10/sv_fps->value)
-#endif
+
+// server frame count to fixed-time quake 2 frame count
+int sf2qf(int frames);
+
+// fixed-time quake 2 frame count to server frame count
+int qf2sf(double frames);
 
 // memory tags to allow dynamic memory to be cleaned up
 #define	TAG_GAME	765		// clear when unloading the dll
@@ -1817,7 +1817,7 @@ struct edict_s
 	int FrameShot;
 	int Slower;
 	skills_t myskills;
-	int haste_num;
+	float haste_time;
 	int	rocket_shots;
 
 	int shots_hit;

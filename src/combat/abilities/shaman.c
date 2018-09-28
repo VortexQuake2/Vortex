@@ -1212,7 +1212,7 @@ void CurseEffects (edict_t *self, int num, int color)
 {
 	vec3_t start, up, angle;
 
-	if ((level.framenum % 5) != 0)
+	if ((level.framenum % (int)(0.5 / FRAMETIME)) != 0)
 		return;
 	if (!G_EntIsAlive(self))
 		return;

@@ -126,7 +126,7 @@ void target_laser_def_think (edict_t *self)
 	{
 		if ((level.time+10) == self->creator->nextthink)
 			safe_cprintf(self->activator, PRINT_HIGH, "A laser is about to expire.\n");
-		if ((level.framenum % 5) == 0)
+		if ((sf2qf(level.framenum) % 5) == 0)
 		{
 			self->s.skinnum = laser_colour[LASER_DEFENSE_WARNING];
 		}

@@ -333,7 +333,7 @@ void holyfreeze_think (edict_t *self)
 	que_addent(self->owner->auras, self, DEFAULT_AURA_DURATION);
 
 	// use cubes
-	if (!(level.framenum % DEFAULT_AURA_FRAMES))
+	if (!(sf2qf(level.framenum) % DEFAULT_AURA_FRAMES))
 	{
 		int cube_cost = DEFAULT_AURA_COST;
 
@@ -343,7 +343,7 @@ void holyfreeze_think (edict_t *self)
 	// move aura with owner
 	VectorCopy(self->owner->s.origin,self->s.origin);
 	self->nextthink = level.time + FRAMETIME;
-	if (level.framenum % DEFAULT_AURA_SCAN_FRAMES)
+	if (sf2qf(level.framenum) % DEFAULT_AURA_SCAN_FRAMES)
 		return;
 
 	// scan for targets
@@ -448,7 +448,7 @@ void salvation_think (edict_t *self)
 	}
 
 	// use cubes
-	if (!(level.framenum % DEFAULT_AURA_FRAMES))
+	if (!(sf2qf(level.framenum) % DEFAULT_AURA_FRAMES))
 	{
 		int cube_cost = DEFAULT_AURA_COST;
 
@@ -458,7 +458,7 @@ void salvation_think (edict_t *self)
 	// move aura with owner
 	VectorCopy(self->owner->s.origin,self->s.origin);
 	self->nextthink = level.time + FRAMETIME;
-	if (level.framenum % DEFAULT_AURA_SCAN_FRAMES)
+	if (sf2qf(level.framenum) % DEFAULT_AURA_SCAN_FRAMES)
 		return;
 
 	radius = 256;

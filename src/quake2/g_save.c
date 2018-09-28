@@ -1,9 +1,6 @@
 #include "g_local.h"
+#include "../characters/io/v_sqlite_unidb.h"
 
-//K03 Begin
-void InitializeGDS(void);
-//#define LOCK_DEFAULTS 1
-//K03 End
 
 cvar_t				*bot_showpath;
 cvar_t				*bot_showcombat;
@@ -156,9 +153,7 @@ void InitGame(void)
 
 
 	// az begin
-#ifndef FIXED_FT
 	gi.cvar_forceset("g_features", va("%d", GMF_VARIABLE_FPS));
-#endif
 
 	savemethod = gi.cvar("savemethod", "3", 0);
 	generalabmode = gi.cvar("generalabmode", "0", CVAR_LATCH);
@@ -207,9 +202,7 @@ void InitGame(void)
 	gun_y = gi.cvar("gun_y", "0", 0);
 	gun_z = gi.cvar("gun_z", "0", 0);
 
-#ifndef FIXED_FT
 	sv_fps = gi.cvar("sv_fps", "10", CVAR_LATCH);
-#endif
 
 	//FIXME: sv_ prefix is wrong for these
 	sv_rollspeed = gi.cvar("sv_rollspeed", "200", 0);

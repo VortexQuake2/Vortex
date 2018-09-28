@@ -725,7 +725,7 @@ void G_SetStats(edict_t *ent)
 						index = gi.imageindex("i_ctf1"); // show team color pic
 					else
 					{
-						if (level.framenum & 8)
+						if (sf2qf(level.framenum) & 8)
 							index = gi.imageindex("i_ctf1d"); // flag taken
 						else
 							index = gi.imageindex("i_ctf1");
@@ -737,7 +737,7 @@ void G_SetStats(edict_t *ent)
 						index = gi.imageindex("i_ctf2");
 					else
 					{
-						if (level.framenum & 8)
+						if (sf2qf(level.framenum) & 8)
 							index = gi.imageindex("i_ctf2d");
 						else
 							index = gi.imageindex("i_ctf2");
@@ -823,7 +823,8 @@ void G_SetStats(edict_t *ent)
 	}
 
 	index = ArmorIndex(ent);
-	if (power_armor_type && (!index || ent->mtype || (level.framenum & 8)))//4.2 morphed players only have powered armor
+	if (power_armor_type &&
+		(!index || ent->mtype || (sf2qf(level.framenum) & 8)))//4.2 morphed players only have powered armor
 	{	// flash between power armor and other armor icon
 		ent->client->ps.stats[STAT_ARMOR] = cells;
 	}
@@ -921,7 +922,7 @@ void G_SetStats(edict_t *ent)
 	if (ent->client->quad_framenum > level.framenum)
 	{
 		ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex("p_quad");
-		ent->client->ps.stats[STAT_TIMER] = (ent->client->quad_framenum - level.framenum) / 10;
+		ent->client->ps.stats[STAT_TIMER] = (ent->client->quad_framenum - level.framenum) / sv_fps->value;
 	}
 	// RAFAEL
 	else if (ent->client->quadfire_framenum > level.framenum)
@@ -929,22 +930,22 @@ void G_SetStats(edict_t *ent)
 		// note to self
 		// need to change imageindex
 		ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex("p_quadfire");
-		ent->client->ps.stats[STAT_TIMER] = (ent->client->quadfire_framenum - level.framenum) / 10;
+		ent->client->ps.stats[STAT_TIMER] = (ent->client->quadfire_framenum - level.framenum) / sv_fps->value;
 	}
 	else if (ent->client->invincible_framenum > level.framenum)
 	{
 		ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex("p_invulnerability");
-		ent->client->ps.stats[STAT_TIMER] = (ent->client->invincible_framenum - level.framenum) / 10;
+		ent->client->ps.stats[STAT_TIMER] = (ent->client->invincible_framenum - level.framenum) / sv_fps->value;
 	}
 	else if (ent->client->enviro_framenum > level.framenum)
 	{
 		ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex("p_envirosuit");
-		ent->client->ps.stats[STAT_TIMER] = (ent->client->enviro_framenum - level.framenum) / 10;
+		ent->client->ps.stats[STAT_TIMER] = (ent->client->enviro_framenum - level.framenum) / sv_fps->value;
 	}
 	else if (ent->client->breather_framenum > level.framenum)
 	{
 		ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex("p_rebreather");
-		ent->client->ps.stats[STAT_TIMER] = (ent->client->breather_framenum - level.framenum) / 10;
+		ent->client->ps.stats[STAT_TIMER] = (ent->client->breather_framenum - level.framenum) / sv_fps->value;
 	}
 	//K03 Begin
 	else if (ent->client->thrusting == 1 ||
@@ -1000,7 +1001,7 @@ void G_SetStats(edict_t *ent)
 	//
 	// help icon / current weapon if not shown
 	//
-	if (ent->client->resp.helpchanged && (level.framenum & 8))
+	if (ent->client->resp.helpchanged && (sf2qf(level.framenum) & 8))
 		ent->client->ps.stats[STAT_HELPICON] = gi.imageindex("i_help");
 	else if ((ent->client->pers.hand == CENTER_HANDED || ent->client->ps.fov > 91)
 		&& ent->client->pers.weapon && !G_IsSpectator(ent))

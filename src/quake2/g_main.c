@@ -1,4 +1,6 @@
 #include "g_local.h"
+#include "../gamemodes/ctf.h"
+#include "../gamemodes/v_hw.h"
 
 game_locals_t	game;
 level_locals_t	level;
@@ -904,10 +906,20 @@ void G_RunPregame()
 				//RemoveAllAuras(ent);
 				AuraRemove(ent, 0);
 				CurseRemove(ent, 0);
-				ent->Slower = level.time - 1;
+				ent->Slower = (int)(level.time - 1);
 			}
 		}
 	}
+}
+
+int sf2qf(int framecount) {
+	float ratio = 10.0f / sv_fps->value;
+	return (int)roundf(framecount * ratio);
+}
+
+int qf2sf(double framecount) {
+	float ratio = sv_fps->value / 10.0f;
+	return (int)roundf(framecount * ratio);
 }
 
 /*
@@ -918,42 +930,20 @@ Advances the world by 0.1 seconds
 ================
 */
 
-void thinkDisconnect(edict_t *ent);
-void G_InitEdict(edict_t *e);
 
-void vrx_check_for_levelup(edict_t *ent);//K03
 void RunVotes();
 void G_RunFrame(void)
 {
 	int		i;//j;
-	static int ofs;
-	static float next_fragadd = 0;
-	qboolean delta = false;
 	edict_t	*ent;
-	qboolean haveflag;
 
 #if (defined GDS_NOMULTITHREADING) && (!defined NO_GDS)
 	ProcessQueue(NULL);
 #endif
 
-#ifndef FIXED_FT
-	level.real_framenum++;
-
-	if (!(level.real_framenum % (int)(sv_fps->value / 10)))
-	{
-		delta = true;
-		level.framenum++;
-	}
-#else
 	level.framenum++;
-#endif
 
 	level.time = level.framenum*FRAMETIME;
-
-#ifndef FIXED_FT
-	if (!delta)
-		return;
-#endif
 
 	// exit intermissions
 
@@ -974,7 +964,6 @@ void G_RunFrame(void)
 	// treat each object in turn
 	// even the world gets a chance to think
 	//
-	haveflag = false;
 	ent = &g_edicts[0];
 	for (i = 0; i<globals.num_edicts; i++, ent++)
 	{
@@ -1037,7 +1026,7 @@ void G_RunFrame(void)
 
 	G_RunPregame();
 
-	if ((pvm->value || ffa->value) && !(level.framenum % 10))
+	if ((pvm->value || ffa->value) && !(level.framenum % (int)(1 / FRAMETIME)))
 		CreateRandomPlayerBoss(false);
 
 	// az end

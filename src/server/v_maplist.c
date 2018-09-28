@@ -89,9 +89,7 @@ int v_LoadMapList(int mode)
 
 	//gi.dprintf("mode = %d\n", mode);
 
-	if (!Lua_GetIntVariable("UseLuaMaplists", 0))
-	{
-fallback:
+
 		if ((fptr = fopen(filename, "r")) != NULL)
 		{
 			char buf[128], *s;
@@ -144,24 +142,7 @@ fallback:
 			gi.dprintf("Error loading map file: %s\n", filename);
 			maplist->nummaps = 0;
 		}
-	}else
-	{
-		char* mapname;
-		int iter = 0;
-		Lua_RunSettingScript(filename);
 
-		if (Lua_StartTableIter("maplist"))
-		{
-			while (Lua_IterNextString(&mapname))
-			{
-				strcpy(maplist->maps[iter].name, mapname);
-				free(mapname);
-				iter++;
-			}
-			maplist->nummaps = iter;
-		}else
-			goto fallback; // didn't find table huh
-	}
 
 	return maplist->nummaps;
 }

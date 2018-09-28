@@ -292,9 +292,9 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 	else
 	{
 		if (invasion->value == 1)
-			monster->monsterinfo.inv_framenum = level.framenum + 60; // give them quad/invuln to prevent spawn-camping
+			monster->monsterinfo.inv_framenum = level.framenum + (int)(6 / FRAMETIME); // give them quad/invuln to prevent spawn-camping
 		else if (invasion->value == 2)
-			monster->monsterinfo.inv_framenum = level.framenum + 60; // Hard mode invin
+			monster->monsterinfo.inv_framenum = level.framenum + (int)(8 / FRAMETIME); // Hard mode invin
 	}
 	gi.linkentity(monster);
 	return monster;
@@ -772,9 +772,9 @@ void inv_defenderspawn_think(edict_t *self)
 
 			// give them quad/invuln to prevent spawn-camping
 			if (self->count)
-				monster->monsterinfo.inv_framenum = level.framenum + self->count;
+				monster->monsterinfo.inv_framenum = level.framenum + qf2sf(self->count);
 			else
-				monster->monsterinfo.inv_framenum = level.framenum + 60;
+				monster->monsterinfo.inv_framenum = level.framenum + (int)(6 / FRAMETIME);
 
 			gi.linkentity(monster);
 

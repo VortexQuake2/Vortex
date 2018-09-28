@@ -213,7 +213,7 @@ void minisentry_attack (edict_t *self)
 	}
 	self->light_level--; // decrease ammo
 	
-	if (slowed && !(level.framenum%2))
+	if (slowed && !(sf2qf(level.framenum)%2))
 		return;
 
 	// chill effect reduces attack rate/refire
@@ -279,7 +279,7 @@ void minisentry_idle (edict_t *self)
 
 void minisentry_regenerate (edict_t *self)
 {
-	if (!(level.framenum%10))
+	if (!(level.framenum % (int)(1 / FRAMETIME)))
 	{
 		// regenerate health
 		if (self->health < self->max_health)
@@ -336,7 +336,7 @@ void minisentry_think (edict_t *self)
 		}
 		// warn the converted monster's current owner
 		else if (converted && self->creator && self->creator->inuse && self->creator->client 
-			&& (level.time > self->removetime-5) && !(level.framenum%10))
+			&& (level.time > self->removetime-5) && !(level.framenum % (int)(1 / FRAMETIME)))
 				safe_cprintf(self->creator, PRINT_HIGH, "%s conversion will expire in %.0f seconds\n", 
 					V_GetMonsterName(self), self->removetime-level.time);	
 	}

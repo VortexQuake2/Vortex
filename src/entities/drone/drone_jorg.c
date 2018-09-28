@@ -640,7 +640,7 @@ void init_drone_jorg (edict_t *self)
 	self->monsterinfo.currentmove = &jorg_move_stand;
 	self->monsterinfo.scale = MODEL_SCALE;
 
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 	//walkmonster_start(self);
 
 	G_PrintGreenText(va("A level %d jorg has spawned!", self->monsterinfo.level));

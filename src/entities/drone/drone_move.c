@@ -607,7 +607,7 @@ qboolean SV_StepDirection (edict_t *ent, float yaw, float dist, qboolean try_sma
 	//float		delta;
 	float		old_dist;
 	
-	dist = ft(dist);
+	// dist = dist);
 
 	//gi.dprintf("SV_StepDirection\n");
 	old_dist = dist;

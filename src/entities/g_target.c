@@ -663,7 +663,7 @@ void target_mal_laser_use (edict_t *self, edict_t *other, edict_t *activator)
 void mal_laser_think (edict_t *self)
 {
 	target_laser_think (self);
-	self->nextthink = level.time + self->wait + 0.1;
+	self->nextthink = level.time + self->wait + FRAMETIME;
 	self->spawnflags |= 0x80000000;
 }
 

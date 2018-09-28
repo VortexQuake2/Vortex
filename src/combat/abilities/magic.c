@@ -1509,7 +1509,7 @@ qboolean proxy_disabled_think (edict_t *self)
 		return false;
 	
 	// set effects
-	if (level.framenum & 8)
+	if (sf2qf(level.framenum) & 8)
 	{
 		self->s.effects |= EF_COLOR_SHELL;
 		self->s.renderfx |= RF_SHELL_YELLOW;
@@ -1590,8 +1590,8 @@ void proxy_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *sur
 		other->client->pers.inventory[power_cube_index] -= 5;
 		safe_cprintf(other, PRINT_HIGH, "Proxy repaired and re-armed.\n");
 		gi.sound(other, CHAN_VOICE, gi.soundindex("weapons/repair.wav"), 1, ATTN_NORM, 0);
-		ent->monsterinfo.regen_delay1 = level.framenum + 20;// delay before we can rearm
-		ent->nextthink = level.time + 2.0;// delay before arming again
+		ent->monsterinfo.regen_delay1 = (int)(level.framenum + 2 / FRAMETIME);// delay before we can rearm
+		ent->nextthink = level.time + 2.0f;// delay before arming again
 	}
 }
 
@@ -1783,13 +1783,15 @@ void bfire_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 {
 	if (!G_EntExists(other) || OnSameTeam(self->owner, other))
 		return;
+
 	// set them on fire
-	burn_person(other, self->owner, self->dmg);
+	burn_person(other, self->owner, sf2qf(self->dmg));
+
 	// hurt them
 	if (level.framenum >= self->monsterinfo.nextattack)
 	{
 		T_Damage(other, self, self->owner, vec3_origin, self->s.origin, 
-				plane->normal, self->dmg, 0, DAMAGE_NO_KNOCKBACK, MOD_BURN);
+				plane->normal, sf2qf(self->dmg), 0, DAMAGE_NO_KNOCKBACK, MOD_BURN);
 		self->monsterinfo.nextattack = level.framenum + 1;
 	}
 }
@@ -2687,7 +2689,7 @@ void MuzzleFire (edict_t *self)
 	fire = G_Spawn();
 	fire->movetype = MOVETYPE_NONE;
 	fire->owner = self;
-	fire->count = level.framenum + 2; // duration
+	fire->count = (int)(level.framenum + 0.2 / FRAMETIME); // duration
 	fire->classname = "mzfire";
 	fire->think = mzfire_think;
 	fire->nextthink = level.time + FRAMETIME;
@@ -2810,14 +2812,14 @@ qboolean autocannon_effects (edict_t *self)
 {
 	self->s.effects = self->s.renderfx = 0;
 
-	if (!(level.framenum % 10) && self->light_level < 1)
+	if (!(level.framenum % (int)sv_fps->value) && self->light_level < 1)
 	{
 		self->s.effects |= EF_COLOR_SHELL;
 		self->s.renderfx |= RF_SHELL_YELLOW;
 		return true;
 	}
 
-	if (!(level.framenum % 20) && self->light_level < 2)
+	if (!(sf2qf(level.framenum) % 20) && self->light_level < 2)
 	{
 		self->s.effects |= EF_COLOR_SHELL;
 		self->s.renderfx |= RF_SHELL_YELLOW;
@@ -2849,7 +2851,7 @@ void autocannon_think (edict_t *self)
 	}
 
 	// low ammo warning
-	if (!(level.framenum%50))
+	if ((level.framenum % (int)(5 / FRAMETIME)) == 0)
 	{
 	if (self->light_level < 1)
 		safe_cprintf(self->creator, PRINT_HIGH, "***AutoCannon is out of ammo. Re-arm with more shells.***\n");
@@ -3307,12 +3309,12 @@ void hammer_think (edict_t *self)
 	{
 		if (self->count <= 0.33*HAMMER_TURN_RATE)
 		{
-			if (!(level.framenum%3))
+			if (!(sf2qf(level.framenum)%3))
 				self->count--;
 		}
 		else if (self->count <= 0.5*HAMMER_TURN_RATE)
 		{
-			if (!(level.framenum%2))
+			if (!(sf2qf(level.framenum)%2))
 				self->count--;
 		}
 		else
@@ -3467,7 +3469,10 @@ void SpawnBlessedHammer (edict_t *ent, int boomerang_level)
 		hammer->touch = hammer_touch1;
 		hammer->think = hammer_think1;
 		ent->num_hammers++;
-		hammer->monsterinfo.nextattack = level.framenum + 10; // framenum when the projectile reverses course
+
+		// framenum when the projectile reverses course
+
+		hammer->monsterinfo.nextattack = (int)(level.framenum + 1 / FRAMETIME);
 		hammer->movetype = MOVETYPE_WALLBOUNCE;
 	}
 	else
@@ -3617,7 +3622,7 @@ void wormhole_out_ready (edict_t *self)
         gi.sound(self, CHAN_WEAPON, gi.soundindex("abilities/portalcast.wav"), 1, ATTN_NORM, 0);
 
 		// delay before we can exit the wormhole
-		self->monsterinfo.lefty = level.framenum + 10;
+		self->monsterinfo.lefty = (int)(level.framenum + 1.0 / FRAMETIME);
 	}
 
 	// wormhole not fully opened
@@ -4287,7 +4292,7 @@ void detector_effects (edict_t *self)
 		self->s.renderfx |= RF_SHELL_RED;
 	else if (self->monsterinfo.attack_finished > level.time)
 		self->s.renderfx |= RF_SHELL_YELLOW;
-	else if (!(level.framenum & 8))
+	else if (!(sf2qf(level.framenum) & 8))
 		self->s.renderfx |= RF_SHELL_RED;
 	else
 		self->s.effects = self->s.renderfx = 0;
@@ -4692,7 +4697,7 @@ void lasertrap_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t 
 		other->client->pers.inventory[power_cube_index] -= 5;
 		safe_cprintf(other, PRINT_HIGH, "Laser trap repaired (%d/%dh).\n", ent->health, ent->max_health);
 		gi.sound(other, CHAN_VOICE, gi.soundindex("weapons/repair.wav"), 1, ATTN_NORM, 0);
-		ent->monsterinfo.regen_delay1 = level.framenum + 20;// delay before we can rearm
+		ent->monsterinfo.regen_delay1 = (int)(level.framenum + 2 / FRAMETIME);// delay before we can rearm
 	}
 }
 
@@ -5371,7 +5376,7 @@ qboolean UpdateMirroredEntity (edict_t *self, float dist)
 		vectoangles(forward, self->s.angles);
 		self->s.angles[PITCH] = target->s.angles[PITCH];
 
-		self->count = level.framenum + 1;
+		self->count = (int)(level.framenum + 0.1 / FRAMETIME);
 	}
 
 	// we have a valid position for this entity, so make it visible
@@ -5398,7 +5403,7 @@ void UpdateMirroredEntities (edict_t *ent)
 		return;
 
 	// randomize desired position to fool opponents
-	if (!(level.framenum%50))
+	if (!(level.framenum% (int)(5 / FRAMETIME)))
 		ent->mirroredPosition = GetRandom(1, 3);
 
 	pos = ent->mirroredPosition;
@@ -6158,7 +6163,7 @@ void V_Push (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 			return;
 		
 		self->movetype_prev = self->movetype;
-		self->movetype_frame = level.framenum + 5;
+		self->movetype_frame = (int)(level.framenum + 0.5 / FRAMETIME);
 		self->movetype = MOVETYPE_STEP;
 
 		AngleVectors (other->client->v_angle, forward, right, NULL);
@@ -6201,7 +6206,7 @@ void organ_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *sur
 		&& level.framenum > ent->monsterinfo.regen_delay1)
 	{
 		ent->health_cache += (int)(0.5 * ent->max_health);
-		ent->monsterinfo.regen_delay1 = level.framenum + 10;
+		ent->monsterinfo.regen_delay1 = (int)(level.framenum + 1 / FRAMETIME);
 		other->client->pers.inventory[power_cube_index] -= 5;
 	}
 }
@@ -6337,11 +6342,12 @@ void healer_heal (edict_t *self, edict_t *other)
 	// but used G_EntIsAlive for consistency.
 	if (G_EntIsAlive(other) && G_EntIsAlive(self) && OnSameTeam(self, other) && other != self)
 	{
-		int frames = 5000 / (15 * self->monsterinfo.level); // idk how much would this change tbh
+		int frames = qf2sf(5000 / (15 * self->monsterinfo.level)); // idk how much would this change tbh
 
-        value = 1.0 + 0.1 * vrx_get_talent_level(self->activator, TALENT_SUPER_HEALER);
+        value = 1.0f + 0.1f * vrx_get_talent_level(self->activator, TALENT_SUPER_HEALER);
+
 		// regenerate health
-		if (M_Regenerate(other, frames, 1, value, true, false, false, &other->monsterinfo.regen_delay2))
+		if (M_Regenerate(other, frames, qf2sf(1), value, true, false, false, &other->monsterinfo.regen_delay2))
 			regenerate = true;
 
 		// regenerate armor
@@ -6394,7 +6400,7 @@ void healer_think (edict_t *self)
 	M_SetEffects (self);
 
 	if (level.time > self->lasthurt + 1.0)
-		M_Regenerate(self, 300, 10, 1.0, true, false, false, &self->monsterinfo.regen_delay1);
+		M_Regenerate(self, qf2sf(300), qf2sf(10), 1.0, true, false, false, &self->monsterinfo.regen_delay1);
 
 	G_RunFrames(self, HEALER_FRAMES_START, HEALER_FRAMES_END, false);
 
@@ -6721,7 +6727,7 @@ void spiker_think (edict_t *self)
 		}
 		// warn the converted monster's current owner
 		else if (converted && self->activator && self->activator->inuse && self->activator->client 
-			&& (level.time > self->removetime-5) && !(level.framenum%10))
+			&& (level.time > self->removetime-5) && !(level.framenum % (int)(1 / FRAMETIME)))
 				safe_cprintf(self->activator, PRINT_HIGH, "%s conversion will expire in %.0f seconds\n", 
 					V_GetMonsterName(self), self->removetime-level.time);	
 	}
@@ -7009,7 +7015,7 @@ void obstacle_cloak (edict_t *self)
 	{
 		// random chance for obstacle to become uncloaked for a frame
 		//if (level.time > self->lasthbshot && random() <= 0.05)
-		if (!(level.framenum % 50) && random() > 0.5)
+		if (!(level.framenum % (int)(5 / FRAMETIME)) && random() > 0.5)
 		{
 			self->svflags &= ~SVF_NOCLIENT;
 			//self->lasthbshot = level.time + 1.0;
@@ -7886,9 +7892,9 @@ void cocoon_attack (edict_t *self)
 		return;
 	}
 
-	if (!(level.framenum % 10) && self->enemy->client)
+	if (!(level.framenum % (int)(sv_fps->value)) && self->enemy->client)
 		safe_cprintf(self->enemy, PRINT_HIGH, "You will emerge from the cocoon in %d second(s)\n", 
-			(int)((self->monsterinfo.nextattack - level.framenum) / 10));
+			(int)((self->monsterinfo.nextattack - level.framenum) * FRAMETIME));
 
 	time = level.time + FRAMETIME;
 
@@ -7962,7 +7968,7 @@ void cocoon_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *su
 	frames = COCOON_INITIAL_DURATION + COCOON_ADDON_DURATION * ent->monsterinfo.level;
 	if (frames < COCOON_MINIMUM_DURATION)
 		frames = COCOON_MINIMUM_DURATION;
-	ent->monsterinfo.nextattack = level.framenum + frames;
+	ent->monsterinfo.nextattack = level.framenum + sf2qf(frames);
 
 	// don't let them move (or fall out of the map)
 	ent->count = other->movetype;
@@ -7986,7 +7992,7 @@ void cocoon_think (edict_t *self)
 	cocoon_attack(self);
 
 	if (level.time > self->lasthurt + 1.0)
-		M_Regenerate(self, 300, 10,  1.0, true, false, false, &self->monsterinfo.regen_delay1);
+		M_Regenerate(self, qf2sf(300), qf2sf(10),  1.0, true, false, false, &self->monsterinfo.regen_delay1);
 
 	// if position has been updated, check for ground entity
 	if (self->linkcount != self->monsterinfo.linkcount)
@@ -8428,7 +8434,7 @@ void holyground_attack (edict_t *self, float radius)
 			{
 				// deal damage
 				T_Damage(target, self, self->owner, vec3_origin, target->s.origin, vec3_origin, 50, 0, 0, MOD_UNHOLYGROUND);
-				self->monsterinfo.nextattack = level.framenum + 5;
+				self->monsterinfo.nextattack = (int)(level.framenum + 0.5 / FRAMETIME);
 				//gi.dprintf("%.1.f %.1f\n", self->monsterinfo.nextattack, level.time);
 			}
 
@@ -8594,7 +8600,7 @@ void Cmd_Purge_f (edict_t *ent)
 	}
 
 	//Give them a short period of total immunity
-	ent->client->invincible_framenum = level.framenum + 3*talentLevel; //up to 2 seconds at level 5
+	ent->client->invincible_framenum = (int)(level.framenum + 0.3f * talentLevel / FRAMETIME); //up to 2 seconds at level 5
 
 	//Give them a short period of curse immunity
 	ent->holywaterProtection = level.time + talentLevel; //up to 5 seconds at level 5
