@@ -1,4 +1,8 @@
-vrxcl
+Vortex Quake 2 - Chile
 =====
 
-vortex chile forked from quake 2 vortex sources at https://code.google.com/p/quake-2-vortex
+Vortex Quake 2 is an RPG mod for Quake 2.
+This repository contains an updated fork of the source code.
+
+This codebase contains contributions from Ky0ko, N4CH0!, Cacamenos, Darkzard and Lepi, besides the original
+authors of Vortex.

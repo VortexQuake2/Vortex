@@ -16,8 +16,7 @@ option(VRX_USEHASH "Use hashing on commands instead of iterating through the lis
 option(VRX_Q2PRO "Use map/gamemap differenciation (for q2pro)." TRUE)
 
 # Source files
-file (GLOB VRX_FILES ./*.c)
-file (GLOB VRX_BOT_FILES ./ai/*.c)
+file(GLOB_RECURSE VRX_FILES ./src/*.c)
 
 # Set the platform-specific library name and use platform-specific files.
 if (WIN32)
@@ -33,7 +32,7 @@ else ()
 endif ()
 
 # Specify the source files for the game library
-add_library (${CC_LIB_NAME} SHARED ${VRX_FILES} ${VRX_BOT_FILES})
+add_library(${CC_LIB_NAME} SHARED ${VRX_FILES})
 
 if (VRX_USE_MYSQL AND WIN32)
     set (CC_LINK_LIBS ${CC_LINK_LIBS} libmysql)
