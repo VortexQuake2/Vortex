@@ -1,4 +1,5 @@
 #include "../quake2/g_local.h"
+#include "class_limits.h"
 
 int MAX_ARMOR(struct edict_s *ent) {
     int vitlvl = 0;
@@ -47,7 +48,7 @@ int MAX_ARMOR(struct edict_s *ent) {
     return value;
 }
 
-int MAX_HEALTH(struct edict_s *ent) {
+int MAX_HEALTH(const edict_t *ent) {
     int vitlvl = 0;
     int talentlevel;
     int value;

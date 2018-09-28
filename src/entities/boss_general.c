@@ -1,4 +1,5 @@
 #include "../quake2/g_local.h"
+#include "../gamemodes/boss.h"
 
 qboolean IsABoss(edict_t *ent)
 {

@@ -1,4 +1,5 @@
 #include "../../quake2/g_local.h"
+#include "../../characters/class_limits.h"
 
 void bfg_think (edict_t *self);//K03
 /*

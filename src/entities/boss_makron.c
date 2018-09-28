@@ -1,4 +1,5 @@
 #include "../quake2/g_local.h"
+#include "../gamemodes/boss.h"
 
 #define MAKRON_FRAMES_STAND_START	112
 #define MAKRON_FRAMES_STAND_END		162
@@ -244,7 +245,7 @@ void boss_makron_spawn (edict_t *ent)
 		InitClientPersistant(ent->client);
 		ClientUserinfoChanged(ent, userinfo);
         vrx_update_all_character_maximums(ent);
-		Pick_respawnweapon(ent);
+        vrx_pick_respawn_weapon(ent);
 		ent->owner = NULL;
 		return;
 	}

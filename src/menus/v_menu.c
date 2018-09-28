@@ -1,4 +1,5 @@
 #include "../quake2/g_local.h"
+#include "../gamemodes/ctf.h"
 
 #define VOTE_MAP	1
 #define	VOTE_MODE	2

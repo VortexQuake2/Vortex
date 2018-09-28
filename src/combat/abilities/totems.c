@@ -2,6 +2,8 @@
 #define TOTEMS_C
 
 #include "../../quake2/g_local.h"
+#include "../../gamemodes/ctf.h"
+#include "../../characters/class_limits.h"
 
 void RemoveTotem(edict_t *self)
 {

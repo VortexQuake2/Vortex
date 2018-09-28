@@ -1,4 +1,6 @@
 #include "../quake2/g_local.h"
+#include "ctf.h"
+#include "../quake2/monsterframes/m_insane.h"
 
 #define RETARD_POINTS			25
 #define RETARD_CREDITS			10

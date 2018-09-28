@@ -1,4 +1,5 @@
 #include "g_local.h"
+#include "../gamemodes/ctf.h"
 #include <sys/stat.h>
 
 //#if defined(_WIN32) || defined(WIN32)

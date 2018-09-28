@@ -2033,7 +2033,7 @@ void GetScorePosition ();
 void vrx_add_respawn_weapon(edict_t *ent, int weaponID);
 
 void vrx_add_respawn_items(edict_t *ent);
-void Pick_respawnweapon(edict_t *ent);
+void vrx_pick_respawn_weapon(edict_t *ent);
 
 #define for_each_player(JOE_BLOGGS,INDEX)				\
 for(INDEX=1;INDEX<=maxclients->value;INDEX++)			\

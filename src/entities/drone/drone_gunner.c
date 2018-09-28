@@ -7,7 +7,7 @@ GUNNER
 */
 
 #include "../../quake2/g_local.h"
-
+#include "../../quake2/monsterframes/m_gunner.h"
 
 static int	sound_pain;
 static int	sound_pain2;

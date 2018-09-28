@@ -1,4 +1,5 @@
 #include "../../quake2/g_local.h"
+#include "../../gamemodes/ctf.h"
 
 #define LASER_SPAWN_DELAY		1.0	// time before emitter creates laser beam
 #define LASER_INITIAL_DAMAGE	100	// beam damage per frame

@@ -1,4 +1,8 @@
 #include "../../quake2/g_local.h"
+#include "../../gamemodes/ctf.h"
+#include "../../entities/tech.h"
+#include "../../gamemodes/v_hw.h"
+#include "../../characters/class_limits.h"
 
 qboolean Pickup_Weapon(edict_t *ent, edict_t *other);
 

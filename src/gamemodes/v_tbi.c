@@ -1,4 +1,5 @@
 #include "../quake2/g_local.h"
+#include "ctf.h"
 
 void TBI_AwardTeam(int Teamnum, int exp, qboolean Broadcast);
 void TBI_CheckSpawns();

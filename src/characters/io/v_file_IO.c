@@ -1,4 +1,7 @@
 #include "../../quake2/g_local.h"
+#include "../class_limits.h"
+#include "v_sqlite_unidb.h"
+#include "v_sqlite_character.h"
 #include <sys/stat.h>
 
 

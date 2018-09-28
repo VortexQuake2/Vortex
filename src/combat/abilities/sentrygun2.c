@@ -5,6 +5,7 @@
 //***************
 
 #include "../../quake2/g_local.h"
+#include "../../gamemodes/ctf.h"
 
 // 3.19 sentry attack and sight FOV limits
 #define SENTRY_FOV_SIGHT			60

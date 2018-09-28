@@ -1,5 +1,6 @@
 #include "../quake2/g_local.h"
 #include <sys/stat.h>
+#include <ctype.h>
 
 static int ReadFromFile(FILE *fp, char *buffer)
 {

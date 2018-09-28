@@ -1,4 +1,6 @@
 #include "../../quake2/g_local.h"
+#include "../../gamemodes/ctf.h"
+#include "../../characters/class_limits.h"
 
 // number of seconds monsters will blink after being selected or issued commands
 #define MONSTER_BLINK_DURATION		2.0

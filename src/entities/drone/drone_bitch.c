@@ -7,6 +7,7 @@ chick
 */
 
 #include "../../quake2/g_local.h"
+#include "../../quake2/monsterframes/m_chick.h"
 
 qboolean visible (edict_t *self, edict_t *other);
 

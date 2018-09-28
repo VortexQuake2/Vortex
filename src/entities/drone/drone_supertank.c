@@ -7,7 +7,7 @@ SUPERTANK
 */
 
 #include "../../quake2/g_local.h"
-
+#include "../../quake2/monsterframes/m_supertank.h"
 qboolean visible (edict_t *self, edict_t *other);
 
 void drone_ai_stand (edict_t *self, float dist);

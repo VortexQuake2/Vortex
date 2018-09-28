@@ -1,4 +1,5 @@
 #include "../quake2/g_local.h"
+#include "ctf.h"
 
 edict_t *dom_flagcarrier (void)
 {

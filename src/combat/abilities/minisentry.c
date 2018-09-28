@@ -1,4 +1,5 @@
 #include "../../quake2/g_local.h"
+#include "../../gamemodes/ctf.h"
 
 #define SENTRY_IDLE_LEFT		1
 #define SENTRY_IDLE_RIGHT		2

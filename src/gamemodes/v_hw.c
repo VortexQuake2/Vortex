@@ -1,4 +1,5 @@
 #include "../quake2/g_local.h"
+#include "v_hw.h"
 
 // dom but without teams. vrxchile 3.0 - az
 

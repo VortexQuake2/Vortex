@@ -1,5 +1,7 @@
 // m_flash.c
 
+#include "../q_shared.h"
+
 // this file is included in both the game dll and quake2,
 // the game needs it to source shot locations, the client
 // needs it to position muzzle flashes

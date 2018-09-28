@@ -1,4 +1,6 @@
 #include "../quake2/g_local.h"
+#include "../characters/io/v_sqlite_unidb.h"
+#include "../characters/class_limits.h"
 
 
 void spawnNorm(edict_t *rune, int targ_level, int type);

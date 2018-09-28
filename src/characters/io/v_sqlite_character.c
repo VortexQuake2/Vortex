@@ -1,5 +1,6 @@
 #include "../../quake2/g_local.h"
 #include "../../libraries/sqlite3.h"
+#include "../class_limits.h"
 
 // ===  CONSTS ===
 #define TOTAL_TABLES 11

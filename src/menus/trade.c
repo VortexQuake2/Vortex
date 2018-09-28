@@ -1,4 +1,5 @@
 #include "../quake2/g_local.h"
+#include "../characters/io/v_sqlite_unidb.h"
 
 void ShowTradeMenu(edict_t *ent);
 void TradeInventoryMenu(edict_t *ent, int lastline);

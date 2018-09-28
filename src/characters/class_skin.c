@@ -1,4 +1,5 @@
 #include "../quake2/g_local.h"
+#include "../gamemodes/ctf.h"
 
 char *V_GetClassSkin(edict_t *ent) {
     char *c1, *c2;

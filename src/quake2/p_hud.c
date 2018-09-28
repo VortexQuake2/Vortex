@@ -1,4 +1,5 @@
 #include "g_local.h"
+#include "../gamemodes/ctf.h"
 
 // get our data from invasion. -az
 extern struct invdata_s

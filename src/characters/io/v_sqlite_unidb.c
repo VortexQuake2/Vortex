@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include "../../libraries/sqlite3.h"
 
+#include "../class_limits.h"
 
 #ifdef _WIN32
 #pragma warning ( disable : 4090 ; disable : 4996 )

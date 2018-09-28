@@ -1,4 +1,5 @@
 #include "../quake2/g_local.h"
+#include "invasion.h"
 
 //FIXME: need queue that holds all players that are waiting to respawn but all spawns are busy
 edict_t		*INV_SpawnQue[MAX_CLIENTS];

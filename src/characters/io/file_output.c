@@ -1,4 +1,5 @@
 #include "../../quake2/g_local.h"
+#include "../class_limits.h"
 
 
 int OpenConfigFile(edict_t *ent)

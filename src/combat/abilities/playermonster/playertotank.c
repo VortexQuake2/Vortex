@@ -1,4 +1,5 @@
 #include "../../../quake2/g_local.h"
+#include "../../../gamemodes/boss.h"
 
 #define TANK_FRAMES_START_STAND		0
 #define TANK_FRAMES_END_STAND		29
@@ -231,7 +232,7 @@ void PM_RestorePlayer (edict_t *ent)
 	ent->takedamage = DAMAGE_AIM;
 
 	// recover player info
-	Pick_respawnweapon(ent);
+    vrx_pick_respawn_weapon(ent);
 
 	// clear monster pointer
 	ent->owner = NULL;

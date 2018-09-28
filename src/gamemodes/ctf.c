@@ -1,4 +1,6 @@
 #include "../quake2/g_local.h"
+#include "ctf.h"
+#include "../characters/class_limits.h"
 
 // if this is a flag ent, re-spawn it
 void CTF_RecoverFlag (edict_t *ent)

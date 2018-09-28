@@ -6,7 +6,7 @@
 
 int MAX_ARMOR(struct edict_s *ent);
 
-int MAX_HEALTH(struct edict_s *ent);
+int MAX_HEALTH(const struct edict_s *ent);
 
 int MAX_BULLETS(struct edict_s *ent);
 

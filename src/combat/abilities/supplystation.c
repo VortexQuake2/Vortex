@@ -1,4 +1,6 @@
 #include "../../quake2/g_local.h"
+#include "../../characters/class_limits.h"
+#include "../../gamemodes/ctf.h"
 
 #define STATION_TARGET_RADIUS	256
 #define STATION_COST			50

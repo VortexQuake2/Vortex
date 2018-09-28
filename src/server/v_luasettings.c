@@ -1,5 +1,6 @@
 #include "../quake2/g_local.h"
 #include "../libraries/lua.h"
+#include "../libraries/lualib.h"
 #include "../libraries/lauxlib.h"
 
 lua_State* State = NULL;

@@ -1,4 +1,5 @@
 #include "../../quake2/g_local.h"
+#include "../../gamemodes/ctf.h"
 
 //3.0 matrix jump
 void cmd_mjump(edict_t *ent)

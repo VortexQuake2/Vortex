@@ -7,7 +7,7 @@ brain
 */
 
 #include "../../quake2/g_local.h"
-
+#include "../../quake2/monsterframes/m_brain.h"
 
 static int	sound_chest_open;
 static int	sound_tentacles_extend;

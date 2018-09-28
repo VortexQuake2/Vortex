@@ -1,4 +1,7 @@
 #include "../quake2/g_local.h"
+#include "../gamemodes/ctf.h"
+#include "../gamemodes/v_hw.h"
+#include "class_limits.h"
 
 qboolean IsAllowedPregameSkills();
 //************************************************************************************************
@@ -1404,7 +1407,7 @@ void V_RestoreMorphed(edict_t *ent, int refund)
 	ent->s.skinnum = ent - g_edicts - 1;
 
 	if (!ent->client->pers.weapon)
-		Pick_respawnweapon(ent);
+		vrx_pick_respawn_weapon(ent);
 
 	ShowGun(ent);
 

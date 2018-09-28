@@ -1,4 +1,5 @@
 #include "../../quake2/g_local.h"
+#include "../../characters/class_limits.h"
 
 void VortexDeathCleanup(edict_t *attacker, edict_t *targ);
 
@@ -157,7 +158,7 @@ void vrx_add_respawn_weapon(edict_t *ent, int weaponID) {
 
     if (ent->myskills.class_num == CLASS_PALADIN) {
         ent->myskills.respawn_weapon = 1;
-        Pick_respawnweapon(ent);
+        vrx_pick_respawn_weapon(ent);
     }
 
 #ifndef REMOVE_RESPAWNS
@@ -222,13 +223,13 @@ void vrx_add_respawn_weapon(edict_t *ent, int weaponID) {
     V_GiveAmmoClip(ent, 2, V_GetRespawnAmmoType(ent));
     //3.02 end new respawn weapon code
 
-    Pick_respawnweapon(ent);
+    vrx_pick_respawn_weapon(ent);
 
     //3.0 reset auto-tball flag
     ent->v_flags = SFLG_NONE;
 }
 
-void Pick_respawnweapon(edict_t *ent) {
+void vrx_pick_respawn_weapon(edict_t *ent) {
     gitem_t *item;
 
     switch (ent->myskills.respawn_weapon) {

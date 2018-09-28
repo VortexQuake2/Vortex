@@ -1,4 +1,5 @@
 #include "../quake2/g_local.h"
+#include "boss.h"
 
 #define PVB_BOSS_EXPERIENCE		1000
 #define PVB_BOSS_MIN_EXP		100

@@ -1,4 +1,5 @@
 #include "../quake2/g_local.h"
+#include "../gamemodes/ctf.h"
 
 int JoinedPlayers();
 

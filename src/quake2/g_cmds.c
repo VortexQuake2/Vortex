@@ -1,4 +1,6 @@
 #include "g_local.h"
+#include "../gamemodes/ctf.h"
+#include "monsterframes/m_player.h"
 
 //Function prototypes required for this .c file:
 void Grenade_Explode (edict_t *ent);

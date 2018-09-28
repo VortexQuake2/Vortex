@@ -1,4 +1,5 @@
 #include "../quake2/g_local.h"
+#include "../gamemodes/boss.h"
 
 #define TANK_FRAMES_START_STAND		0
 #define TANK_FRAMES_END_STAND		29
@@ -200,7 +201,7 @@ void boss_spawn_tank (edict_t *ent)
 		InitClientPersistant(ent->client);
 		ClientUserinfoChanged(ent, userinfo);
         vrx_update_all_character_maximums(ent);
-		Pick_respawnweapon(ent);
+        vrx_pick_respawn_weapon(ent);
 		ent->owner = NULL;
 		return;
 	}

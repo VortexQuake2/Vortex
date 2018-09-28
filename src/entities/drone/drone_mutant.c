@@ -7,7 +7,7 @@ mutant
 */
 
 #include "../../quake2/g_local.h"
-
+#include "../../quake2/monsterframes/m_mutant.h"
 
 static int	sound_swing;
 static int	sound_hit;

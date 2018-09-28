@@ -1,4 +1,5 @@
 #include "../../quake2/g_local.h"
+#include "../../characters/class_limits.h"
 
 
 void think_ability_ammo_regen(edict_t *ent) {

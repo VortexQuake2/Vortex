@@ -1,4 +1,6 @@
 #include "../../quake2/g_local.h"
+#include "damage.h"
+#include "../../gamemodes/ctf.h"
 
 float vrx_get_dmgtype_resistence(const edict_t *targ, int dtype, float Resistance);
 

@@ -1,4 +1,8 @@
 #include "g_local.h"
+#include "../gamemodes/ctf.h"
+#include "monsterframes/m_player.h"
+#include "../combat/abilities/jump.h"
+#include "../combat/abilities/v_think.h"
 
 //Function prototypes required for this .c file:
 void ClientUserinfoChanged (edict_t *ent, char *userinfo);
