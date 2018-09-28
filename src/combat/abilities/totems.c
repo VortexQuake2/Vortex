@@ -169,7 +169,7 @@ void FireTotem_think(edict_t *self, edict_t *caster)
 				self->lastsound = level.framenum;
 
 				// refire delay
-				self->delay = level.time + FRAMETIME;
+				self->delay = level.time + 0.1;
 			}
 		}
 	}

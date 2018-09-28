@@ -501,7 +501,7 @@ void skull_think (edict_t *self)
 			{
 				self->enemy = NULL;
 				skull_return(self);//skull_idle(self);
-				self->nextthink = level.time + FRAMETIME;
+				self->nextthink = level.time + 0.1;
 				return;
 			}
 		}
@@ -516,7 +516,7 @@ void skull_think (edict_t *self)
 	skull_runframes(self);
 	M_SetEffects(self);
 
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 }
 
 void skull_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
@@ -587,7 +587,7 @@ void SpawnSkull (edict_t *ent)
 	VectorSet(skull->maxs, 16, 16, 16);
 	skull->s.modelindex = gi.modelindex("models/skull/tris.md2");
 	skull->nextthink = level.time + SKULL_DELAY;
-	skull->monsterinfo.upkeep_delay = skull->nextthink*10 + 10; // 3.2 upkeep starts 1 second after spawn
+	skull->monsterinfo.upkeep_delay = skull->nextthink + 1 / FRAMETIME; // 3.2 upkeep starts 1 second after spawn
 	skull->monsterinfo.cost = cost;
 
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
