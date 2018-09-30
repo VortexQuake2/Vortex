@@ -9,7 +9,7 @@
 #define HW_MINIMUM_PLAYERS	3
 #define HW_FRAG_POINTS		45
 
-int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *target);
+int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *targetclient);
 
 float hw_getdamagefactor(edict_t *targ, edict_t* attacker)
 {

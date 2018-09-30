@@ -728,10 +728,11 @@ void CheckDMRules(void)
 					speaker = G_Spawn();
 					st.noise = "invasion/hard_victory.wav";
 					speaker->spawnflags |= 1;
-					speaker->attenuation = 1;
+					speaker->attenuation = ATTN_NONE;
 					speaker->volume = 1;
 					VectorCopy(level.intermission_origin, speaker->s.origin);
 					SP_target_speaker(speaker);
+					speaker->use(speaker, NULL, NULL);
 				}
 
 			}

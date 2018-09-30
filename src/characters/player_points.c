@@ -306,7 +306,7 @@ float vrx_get_spree_bonus(const edict_t *attacker, float bonus);
 
 float vrx_get_target_alliance_bonus(const edict_t *attacker, const edict_t *target, float bonus);
 
-void getPlayerKillXp(edict_t *attacker, const edict_t *target, float level_diff, float dmgmod, qboolean *is_mini,
+void getPlayerKillXp(edict_t *attacker, const edict_t *target, float level_diff, float dmgmod, const qboolean *is_mini,
                      int *base_exp, int *credits, int *break_points, float *bonus);
 
 void vrx_do_nfer_effects(edict_t *attacker, edict_t *target);
@@ -317,7 +317,7 @@ awardMonsterXP(edict_t *attacker, const edict_t *targ, float dmgmod, int *base_e
 
 
 
-int PVP_AwardKill(edict_t *attacker, edict_t *targ, edict_t *target) {
+int PVP_AwardKill(edict_t *attacker, edict_t *targ, edict_t *targetclient) {
     int max_points, base_exp;
     int credits = 0;
     int exp_points = 0;
@@ -359,28 +359,28 @@ int PVP_AwardKill(edict_t *attacker, edict_t *targ, edict_t *target) {
     dmgmod = damage / GetTotalBossDamage(targ);
 
     // calculate level difference modifier
-    level_diff = vrx_get_level_difference_multiplier(attacker, targ, target);
+    level_diff = vrx_get_level_difference_multiplier(attacker, targ, targetclient);
 
     // calculate spree bonuses
     bonus = vrx_get_spree_bonus(attacker, bonus);
 
     // players get extra points for killing an allied teammate
     // if they are not allied with anyone themselves
-    bonus = vrx_get_target_alliance_bonus(attacker, target, bonus);
+    bonus = vrx_get_target_alliance_bonus(attacker, targetclient, bonus);
 
     // we killed another player
     if (targ->client) {
-        getPlayerKillXp(attacker, target, level_diff, dmgmod, &is_mini, &base_exp, &credits, &break_points, &bonus);
+        getPlayerKillXp(attacker, targetclient, level_diff, dmgmod, &is_mini, &base_exp, &credits, &break_points, &bonus);
 
-        strcat(name, target->client->pers.netname);
-        clevel = target->myskills.level;
+        strcat(name, targetclient->client->pers.netname);
+        clevel = targetclient->myskills.level;
     }
         // we killed something else
     else {
         awardMonsterXP(attacker, targ, dmgmod, &base_exp, &credits, &level_diff);
 
         strcat(name, V_GetMonsterName(targ));
-        clevel = target->monsterinfo.level;
+        clevel = targ->monsterinfo.level;
     }
 
     exp_points = dmgmod * (level_diff * vrx_pointmult->value * base_exp * bonus + break_points);
@@ -466,7 +466,7 @@ awardMonsterXP(edict_t *attacker, const edict_t *targ, float dmgmod, int *base_e
 }
 
 
-void getPlayerKillXp(edict_t *attacker, const edict_t *target, float level_diff, float dmgmod, qboolean *is_mini,
+void getPlayerKillXp(edict_t *attacker, const edict_t *target, float level_diff, float dmgmod, const qboolean *is_mini,
                      int *base_exp, int *credits, int *break_points, float *bonus) {
 
     // spree break bonus points
@@ -519,7 +519,7 @@ float vrx_get_nfer_bonus(edict_t *attacker, const edict_t *target, float bonus) 
         else
             attacker->nfer++;
 
-        bonus += sqrt(attacker->nfer / 2);
+        bonus += sqrtf(attacker->nfer / 2.f);
         attacker->myskills.num_2fers++;
 
         vrx_do_nfer_effects(attacker, target);
@@ -532,7 +532,7 @@ void vrx_do_nfer_effects(edict_t *attacker, edict_t *target) {
         gi.sound(attacker, CHAN_VOICE, gi.soundindex("misc/assasin.wav"), 1, ATTN_NORM, 0);    //listo
     } else if (attacker->nfer == 5) {
         gi.sound(attacker, CHAN_VOICE, gi.soundindex("speech/hey.wav"), 1, ATTN_NORM, 0);    //listo
-    } else if (attacker->nfer > 3 && attacker->nfer < 4) {
+    } else if (attacker->nfer >= 3 && attacker->nfer <= 4) {
         gi.sound(target, CHAN_VOICE, gi.soundindex("misc/excellent.wav"), 1, ATTN_NORM, 0); //listo
     } else if (attacker->nfer == 10) {
         gi.sound(attacker, CHAN_VOICE, gi.soundindex("misc/godlike.wav"), 1, ATTN_NORM, 0);//listo
@@ -541,7 +541,7 @@ void vrx_do_nfer_effects(edict_t *attacker, edict_t *target) {
 
 void vrx_add_exp(edict_t *attacker, edict_t *targ) {
     int i, exp_points;
-    edict_t *target, *player = NULL;
+    edict_t *targetclient, *player = NULL;
 
     // this is a player-monster boss
     if (IsABoss(attacker)) {
@@ -565,10 +565,10 @@ void vrx_add_exp(edict_t *attacker, edict_t *targ) {
     }
 
     attacker = G_GetClient(attacker);
-    target = G_GetClient(targ);
+    targetclient = G_GetClient(targ);
 
     // world monster boss kill
-    if (!target && targ->monsterinfo.control_cost >= 100) {
+    if (!targetclient && targ->monsterinfo.control_cost >= 100) {
         if (targ->mtype == M_JORG)
             return;
 
@@ -580,27 +580,27 @@ void vrx_add_exp(edict_t *attacker, edict_t *targ) {
     }
 
     // sanity check
-    //if (attacker == target || attacker == NULL || target == NULL || !attacker->inuse || !target->inuse)
+    //if (attacker == targetclient || attacker == NULL || targetclient == NULL || !attacker->inuse || !targetclient->inuse)
     //	return;
 
-    // make sure target is valid
-    //if (!target || !target->inuse)
+    // make sure targetclient is valid
+    //if (!targetclient || !targetclient->inuse)
     //	return;
 
-    // award experience and credits to anyone that has hurt the target
+    // award experience and credits to anyone that has hurt the targetclient
     for (i = 0; i < game.maxclients; i++) {
         player = g_edicts + 1 + i;
 
         // award experience and credits to non-spectator clients
-        if (!player->inuse || G_IsSpectator(player) || player == target || player->flags & FL_CHATPROTECT)
+        if (!player->inuse || G_IsSpectator(player) || player == targetclient || player->flags & FL_CHATPROTECT)
             continue;
 
-        PVP_AwardKill(player, targ, target);
+        PVP_AwardKill(player, targ, targetclient);
     }
 
     // give your team some experience
     if ((int) (dmflags->value) & (DF_MODELTEAMS | DF_SKINTEAMS)) {
-        exp_points = PVP_AwardKill(attacker, targ, target);
+        exp_points = PVP_AwardKill(attacker, targ, targetclient);
         Add_ctfteam_exp(attacker, (int) (0.5 * exp_points));
         return;
     }
