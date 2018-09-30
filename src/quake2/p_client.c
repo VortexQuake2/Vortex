@@ -3,12 +3,12 @@
 #include "monsterframes/m_player.h"
 #include "../combat/abilities/jump.h"
 #include "../combat/abilities/v_think.h"
+#include "../gamemodes/boss.h"
 
 //Function prototypes required for this .c file:
 void ClientUserinfoChanged (edict_t *ent, char *userinfo);
 void SP_misc_teleporter_dest (edict_t *ent);
 void EatCorpses (edict_t *ent);
-void boss_update (edict_t *ent, usercmd_t *ucmd, int type);
 void RunCacodemonFrames (edict_t *ent, usercmd_t *ucmd);
 
 //
@@ -2872,7 +2872,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	//K03 End
     think_trade(ent);
 
-    boss_update(ent, ucmd, BOSS_TANK);
+    boss_update(ent, ucmd);
 	RunParasiteFrames(ent, ucmd);
 	RunCacodemonFrames(ent, ucmd);
 	//RunTankFrames(ent, ucmd);

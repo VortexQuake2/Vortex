@@ -1,5 +1,6 @@
 #include "../quake2/g_local.h"
 #include "../gamemodes/boss.h"
+#include "../combat/abilities/jump.h"
 
 qboolean IsABoss(edict_t *ent)
 {
@@ -14,9 +15,10 @@ qboolean IsBossTeam (edict_t *ent)
 }
 
 
-void boss_update (edict_t *ent, usercmd_t *ucmd)
-{
-	int		div=15, forwardspeed, sidespeed, maxspeed;
+
+
+void boss_update(edict_t *ent, usercmd_t *ucmd) {
+	int		div, forwardspeed, sidespeed, maxspeed;
 	int		frames=0;
 	vec3_t	forward, right, angles;
 	edict_t *boss;
@@ -52,7 +54,7 @@ void boss_update (edict_t *ent, usercmd_t *ucmd)
 		div = 26;
 
 	// speed limiter, dont allow client to speed cheat using higher cl_speeds
-	
+
 	maxspeed = 400;
 	forwardspeed = ucmd->forwardmove;
 	sidespeed = ucmd->sidemove;
@@ -62,12 +64,12 @@ void boss_update (edict_t *ent, usercmd_t *ucmd)
 		forwardspeed = maxspeed;
 	else if (forwardspeed < -maxspeed)
 		forwardspeed = -maxspeed;
-	
+
 	if ((sidespeed > 0) && sidespeed > maxspeed)
 		sidespeed = maxspeed;
 	else if (sidespeed < -maxspeed)
 		sidespeed = -maxspeed;
-	
+
 	//4.2 allow superspeed
 	if (ent->superspeed && (level.time > ent->lasthurt + DAMAGE_ESCAPE_DELAY))
 	{
@@ -123,10 +125,10 @@ void boss_update (edict_t *ent, usercmd_t *ucmd)
 				boss->velocity[0] = 0.1*((forwardspeed*forward[0])+(sidespeed*right[0]));
 				boss->velocity[1] = 0.1*((forwardspeed*forward[1])+(sidespeed*right[1]));
 				boss->velocity[2] = 350;
-				
+
 				ent->client->jump = true;
 			}
-			
+
 			boss->v_flags &= ~SFLG_DOUBLEJUMP;
 		}
 		else
@@ -143,7 +145,7 @@ void boss_update (edict_t *ent, usercmd_t *ucmd)
 			// steer in the direction we are trying to move
 			boss->velocity[0] += 0.1*((forwardspeed*forward[0])+(sidespeed*right[0]));
 			boss->velocity[1] += 0.1*((forwardspeed*forward[1])+(sidespeed*right[1]));
-			
+
 			if (ucmd->upmove && (boss->waterlevel > 1))
 			{
 				if (ucmd->upmove > 0)
@@ -170,12 +172,12 @@ void boss_update (edict_t *ent, usercmd_t *ucmd)
 			if (boss->velocity[1] < -maxspeed)
 				boss->velocity[1] = -maxspeed;
 		}
-		
+
 		boss->style = frames; // set frame set boss should use
 		gi.linkentity(boss);
-		boss->count = level.framenum + (int)(1 / FRAMETIME);
+		boss->count = level.framenum + qf2sf(1);
 	}
-	
+
 	// move player into position
 	//boss_position_player(ent, boss);
 
