@@ -327,6 +327,7 @@ int PVP_AwardKill(edict_t *attacker, edict_t *targ, edict_t *target) {
     float dmgmod = 1;
     float damage;
     char name[50];
+    int clevel;
     qboolean is_mini = false;
 
     // sanity check
@@ -372,12 +373,14 @@ int PVP_AwardKill(edict_t *attacker, edict_t *targ, edict_t *target) {
         getPlayerKillXp(attacker, target, level_diff, dmgmod, &is_mini, &base_exp, &credits, &break_points, &bonus);
 
         strcat(name, target->client->pers.netname);
+        clevel = target->myskills.level;
     }
         // we killed something else
     else {
         awardMonsterXP(attacker, targ, dmgmod, &base_exp, &credits, &level_diff);
 
         strcat(name, V_GetMonsterName(targ));
+        clevel = target->monsterinfo.level;
     }
 
     exp_points = dmgmod * (level_diff * vrx_pointmult->value * base_exp * bonus + break_points);
@@ -399,7 +402,7 @@ int PVP_AwardKill(edict_t *attacker, edict_t *targ, edict_t *target) {
 
     if (!attacker->ai.is_bot) {
         char *s1 = HiPrint(va("%dxp + $%d", exp_points, credits));
-        char *s2 = HiPrint(va("%s (%d)", name, targ->myskills.level));
+        char *s2 = HiPrint(va("%s (%d)", name, clevel));
 
         gi.cprintf(attacker,
                    PRINT_HIGH, "Gained %s (%.0f%% dmg. to %s) \n",
