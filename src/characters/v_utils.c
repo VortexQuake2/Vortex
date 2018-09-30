@@ -2106,7 +2106,7 @@ void V_ShellAbilityEffects(edict_t *ent)
 				gi.sound(ent, CHAN_ITEM, gi.soundindex("items/quadfire2.wav"), 1, ATTN_NORM, 0);
 		}
 
-		if (ent->client->invincible_framenum > level.framenum && (level.framenum & 8))
+		if (ent->client->invincible_framenum > level.framenum && (sf2qf(level.framenum) & 8))
 		{
 			remaining = sf2qf(ent->client->invincible_framenum - level.framenum);
 			if (remaining > 30 || (remaining & 4))

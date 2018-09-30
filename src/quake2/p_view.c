@@ -448,7 +448,7 @@ void SV_CalcBlend (edict_t *ent)
 	// add for powerups
 	if (ent->client->quad_framenum > level.framenum)
 	{
-		remaining = ent->client->quad_framenum - level.framenum;
+		remaining = sf2qf(ent->client->quad_framenum - level.framenum);
 		if (remaining == 30)	// beginning to fade
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("items/damage2.wav"), 1, ATTN_NORM, 0);
 		if (remaining > 30 || (remaining & 4) )
@@ -457,7 +457,7 @@ void SV_CalcBlend (edict_t *ent)
 	// RAFAEL
 	else if (ent->client->quadfire_framenum > level.framenum)
 	{
-		remaining = ent->client->quadfire_framenum - level.framenum;
+		remaining = sf2qf(ent->client->quadfire_framenum - level.framenum);
 		if (remaining == 30)	// beginning to fade
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("items/quadfire2.wav"), 1, ATTN_NORM, 0);
 		if (remaining > 30 || (remaining & 4) )
@@ -465,7 +465,7 @@ void SV_CalcBlend (edict_t *ent)
 	}
 	else if (ent->client->invincible_framenum > level.framenum)
 	{
-		remaining = ent->client->invincible_framenum - level.framenum;
+		remaining = sf2qf(ent->client->invincible_framenum - level.framenum);
 		if (remaining == 30)	// beginning to fade
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("items/protect2.wav"), 1, ATTN_NORM, 0);
 		if (remaining > 30 || (remaining & 4) )
@@ -473,7 +473,7 @@ void SV_CalcBlend (edict_t *ent)
 	}
 	else if (ent->client->enviro_framenum > level.framenum)
 	{
-		remaining = ent->client->enviro_framenum - level.framenum;
+		remaining = sf2qf(ent->client->enviro_framenum - level.framenum);
 		if (remaining == 30)	// beginning to fade
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("items/airout.wav"), 1, ATTN_NORM, 0);
 		if (remaining > 30 || (remaining & 4) )
@@ -481,7 +481,7 @@ void SV_CalcBlend (edict_t *ent)
 	}
 	else if (ent->client->breather_framenum > level.framenum)
 	{
-		remaining = ent->client->breather_framenum - level.framenum;
+		remaining = sf2qf(ent->client->breather_framenum - level.framenum);
 		if (remaining == 30)	// beginning to fade
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("items/airout.wav"), 1, ATTN_NORM, 0);
 		if (remaining > 30 || (remaining & 4) )

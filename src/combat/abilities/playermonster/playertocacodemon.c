@@ -60,7 +60,7 @@ void fire_skull(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, 
     skull->owner = self;
     skull->touch = bskull_touch;
     skull->dmg = damage;
-    skull->s.effects = EF_GIB;
+    skull->s.effects = EF_GIB | EF_ROCKET;
     skull->radius_dmg = damage;
     skull->dmg_radius = damage_radius;
     skull->classname = "skull";
@@ -83,9 +83,11 @@ void cacodemon_attack(edict_t *ent) {
 
     if (level.time > ent->monsterinfo.attack_finished) {
         damage =
-                (CACODEMON_INITIAL_DAMAGE + CACODEMON_ADDON_DAMAGE * ent->myskills.abilities[CACODEMON].current_level) *
+                (CACODEMON_INITIAL_DAMAGE +
+                CACODEMON_ADDON_DAMAGE * ent->myskills.abilities[CACODEMON].current_level) *
                 2;
-        radius = CACODEMON_INITIAL_RADIUS + CACODEMON_ADDON_RADIUS * ent->myskills.abilities[CACODEMON].current_level;
+        radius = CACODEMON_INITIAL_RADIUS +
+                CACODEMON_ADDON_RADIUS * ent->myskills.abilities[CACODEMON].current_level;
 
         ent->s.frame = CACODEMON_FRAME_ATTACK_FIRE;
 
@@ -131,7 +133,7 @@ void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
 
         // add thrust
         if (ucmd->upmove > 0) {
-            ent->client->ps.pmove.pm_flags |= PMF_JUMP_HELD;
+            ent->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
             if (ent->groundentity)
                 ent->velocity[2] = 150;
             else if (ent->velocity[2] < 0)
@@ -139,7 +141,7 @@ void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
             else
                 ent->velocity[2] += 100;
         } else {
-            ent->client->ps.pmove.pm_flags &= ~PMF_JUMP_HELD;
+            ent->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
         }
 
         ent->count = (int)(level.framenum + qf2sf(1));

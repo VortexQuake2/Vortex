@@ -6903,7 +6903,7 @@ void Cmd_Spiker_f (edict_t *ent)
 	spiker->monsterinfo.attack_finished = level.time + 2.0;
 	spiker->monsterinfo.cost = cost;
 
-	safe_cprintf(ent, PRINT_HIGH, "Spiker created (%d/%d)\n", ent->num_spikers, SPIKER_MAX_COUNT);
+	safe_cprintf(ent, PRINT_HIGH, "Spiker created (%d/%d)\n", ent->num_spikers, (int)SPIKER_MAX_COUNT);
 
 	ent->client->ability_delay = level.time + SPIKER_DELAY;
 	ent->client->pers.inventory[power_cube_index] -= cost;
