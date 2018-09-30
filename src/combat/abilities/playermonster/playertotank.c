@@ -503,7 +503,7 @@ void p_tank_think (edict_t *self)
 	if (self->groundentity && ((frame == 41) || (frame == 49)))
 		gi.sound (self, CHAN_WEAPON, gi.soundindex ("tank/step.wav"), 1, ATTN_NORM, 0);
 
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 }
 
 void p_tank_pain (edict_t *self, edict_t *other, float kick, int damage)
