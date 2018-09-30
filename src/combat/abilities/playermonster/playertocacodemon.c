@@ -103,16 +103,13 @@ void cacodemon_attack(edict_t *ent) {
 }
 
 void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
-    // az: weird ass jittery jump fix
-    ent->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
-
     int frame;
 
     // if we aren't a cacodemon or we are dead, we shouldn't be here!
     if ((ent->mtype != MORPH_CACODEMON) || (ent->deadflag == DEAD_DEAD))
         return;
 
-    if (level.framenum >= ent->count) {
+        if (level.framenum >= ent->count) {
         MorphRegenerate(ent, qf2sf(CACODEMON_REGEN_DELAY), qf2sf(CACODEMON_REGEN_FRAMES));
         //	ent->client->ability_delay = level.time + CACODEMON_DELAY; // can't use abilities
 
@@ -134,13 +131,15 @@ void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
 
         // add thrust
         if (ucmd->upmove > 0) {
+            ent->client->ps.pmove.pm_flags |= PMF_JUMP_HELD;
             if (ent->groundentity)
                 ent->velocity[2] = 150;
             else if (ent->velocity[2] < 0)
                 ent->velocity[2] += 200;
             else
                 ent->velocity[2] += 100;
-
+        } else {
+            ent->client->ps.pmove.pm_flags &= ~PMF_JUMP_HELD;
         }
 
         ent->count = (int)(level.framenum + qf2sf(1));
