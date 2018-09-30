@@ -873,7 +873,7 @@ void Tball_Aura(edict_t *owner, vec3_t origin) {
 
         if (other == owner) {
             gi.bprintf(PRINT_MEDIUM, "%s teleported away.\n", owner->client->pers.netname);
-            VortexRemovePlayerSummonables(other);
+            vrx_remove_player_summonables(other);
         } else {
             //Give the tball owner some xp
             if (other->client && !G_IsSpectator(other)) // spectators being "teleported away" lawd -az

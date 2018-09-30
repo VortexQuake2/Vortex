@@ -188,7 +188,7 @@ que_t *que_findent (que_t *src, que_t *dst, edict_t *other)
 	return NULL;
 }
 
-const que_t *que_findtype(const que_t *src, que_t *dst, int type)
+que_t * que_findtype(const que_t *src, que_t *dst, int type)
 {
 	que_t *last;
 

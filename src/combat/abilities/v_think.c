@@ -94,19 +94,19 @@ void think_chat_protect_activate(edict_t *ent) {
         if (!((!ent->myskills.abilities[CLOAK].disable) && ((ent->myskills.abilities[CLOAK].current_level > 0)))) {
             if (!trading->value && !ent->automag) // trading mode no chat protection or if automagging either
             {
-                if (ent->client->idle_frames == CHAT_PROTECT_FRAMES - 100)
+                if (sf2qf(ent->client->idle_frames) == CHAT_PROTECT_FRAMES - 100)
                     gi.centerprintf(ent, "10 seconds to chat-protect.\n");
-                else if (ent->client->idle_frames == CHAT_PROTECT_FRAMES - 50)
+                else if (sf2qf(ent->client->idle_frames) == CHAT_PROTECT_FRAMES - 50)
                     gi.centerprintf(ent, "5 seconds to chat-protect.\n");
 
-                if (ent->client->idle_frames == CHAT_PROTECT_FRAMES) {
+                if (sf2qf(ent->client->idle_frames) == qf2sf(CHAT_PROTECT_FRAMES)) {
                     gi.centerprintf(ent, "Now in chat-protect mode.\n");
                     ent->flags |= FL_CHATPROTECT;
                     if (!pvm->value) {
                         ent->solid = SOLID_NOT;
                         ent->svflags |= SVF_NOCLIENT;//4.5
                     }
-                    VortexRemovePlayerSummonables(ent);
+                    vrx_remove_player_summonables(ent);
                     //3.0 Remove all active auras when entering chat protect
                     AuraRemove(ent, 0);
                 }
@@ -173,8 +173,8 @@ void think_idle_frame_counter(const edict_t *ent) {
             ent->client->cloaking = false;
             ent->client->idle_frames = 0;
         }
-    } else if (ent->client->snipertime > 0 && ent->client->idle_frames > 15) {
-        ent->client->idle_frames = 15;
+    } else if (ent->client->snipertime > 0 && ent->client->idle_frames > qf2sf(15)) {
+        ent->client->idle_frames = qf2sf(15);
     } else if ((ent->health > 0) && !G_IsSpectator(ent) && (ent->movetype != MOVETYPE_NONE)) {
         ent->client->idle_frames++;
         ent->client->still_frames++;
@@ -426,13 +426,13 @@ void think_recharge_abilities(edict_t *ent) {
 
 void think_ability_cloak(edict_t *ent) {
     if (!ent->myskills.abilities[CLOAK].disable) {
-        int min_idle_frames = 11;
+        int min_idle_frames = qf2sf(11);
         int talentlevel = vrx_get_talent_level(ent, TALENT_IMP_CLOAK);
 
         // if (ent->myskills.abilities[CLOAK].current_level < 10 && vrx_get_talent_level(ent, TALENT_IMP_CLOAK) < 4)
 
         if (ent->myskills.abilities[CLOAK].current_level < 10) {
-            min_idle_frames -= ent->myskills.abilities[CLOAK].current_level;
+            min_idle_frames -= qf2sf(ent->myskills.abilities[CLOAK].current_level);
         } else {
             min_idle_frames = 1;
         }
@@ -444,7 +444,7 @@ void think_ability_cloak(edict_t *ent) {
             //	que_list(ent->auras);
 
             if (!ent->client->cloaking) // Only when a switch is done
-                VortexRemovePlayerSummonables(ent); // 3.75 no more cheap apps with cloak+laser/monster/etc
+                vrx_remove_player_summonables(ent); // 3.75 no more cheap apps with cloak+laser/monster/etc
 
             ent->svflags |= SVF_NOCLIENT;
             ent->client->cloaking = true;
@@ -456,7 +456,7 @@ void think_ability_cloak(edict_t *ent) {
 
         } else if ((ent->myskills.abilities[CLOAK].current_level == 10) && (talentlevel == 4)) {
             if (!ent->client->cloaking) // Only when a switch is done
-                VortexRemovePlayerSummonables(ent); // 3.75 no more cheap apps with cloak+laser/monster/etc
+                vrx_remove_player_summonables(ent); // 3.75 no more cheap apps with cloak+laser/monster/etc
 
             ent->svflags |= SVF_NOCLIENT;
             ent->client->cloaking = true;

@@ -373,7 +373,7 @@ void VortexEndLevel(void)
 	for_each_player(tempent, i)
 	{
 		PM_RemoveMonster(tempent);
-		VortexRemovePlayerSummonables(tempent);
+        vrx_remove_player_summonables(tempent);
 		tempent->myskills.streak = 0;
 #ifndef NO_GDS
 		if (savemethod->value == 2)

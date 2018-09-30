@@ -286,7 +286,7 @@ void RunBrainFrames (edict_t *ent, usercmd_t *ucmd)
 			G_RunFrames(ent, BRAIN_FRAME_IDLE_START, BRAIN_FRAME_IDLE_END, false);
 		}
 
-		ent->count = (int)(level.framenum + (0.1 / FRAMETIME));
+		ent->count = level.framenum + qf2sf(1);
 	}
 }
 

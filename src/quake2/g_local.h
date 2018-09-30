@@ -1232,7 +1232,7 @@ int PvMLowestLevelPlayer(void);
 int ActivePlayers (void);//Apple
 int vrx_GetMonsterCost(int mtype);//GHz
 int vrx_GetMonsterControlCost(int mtype);//GHz
-void VortexRemovePlayerSummonables(edict_t *self);//GHz
+void vrx_remove_player_summonables(edict_t *self);//GHz
 
 //
 // g_ai.c
@@ -1852,8 +1852,6 @@ struct edict_s
 	int num_spikegrenades; // number of spike greandes out
 	int num_autocannon; //4.1 keep track of live autocannons
 	int num_caltrops;//4.2 keep track of live caltrops
-	int num_fmedi; // lepi
-	int num_box; //lepi
 	int num_detectors; // number of live detectors
 	int	num_spikers;
 	int num_gasser;

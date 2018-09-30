@@ -637,7 +637,7 @@ void p_tank_spawn (edict_t *ent, int cost)
 	//memset (ent->client->pers.inventory, 0, sizeof(ent->client->pers.inventory));
 	ent->client->pers.weapon = NULL;
 
-	VortexRemovePlayerSummonables(ent);
+    vrx_remove_player_summonables(ent);
 
 	tank->monsterinfo.attack_finished = level.time + 0.5;// can't attack immediately
 

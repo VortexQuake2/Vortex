@@ -351,7 +351,7 @@ void RunFlyerFrames (edict_t *ent, usercmd_t *ucmd)
 		MorphRegenerate(ent, qf2sf(FLYER_REGEN_DELAY), qf2sf(FLYER_REGEN_FRAMES));
 		//FlyerCheckForImpact(ent);
 
-		ent->count = level.framenum + (int)(0.1 / FRAMETIME);
+		ent->count = level.framenum + qf2sf(1);
 
 		if (ent->client->buttons & BUTTON_ATTACK)
 		{

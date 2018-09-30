@@ -245,7 +245,7 @@ void RunMutantFrames (edict_t *ent, usercmd_t *ucmd)
 			G_RunFrames(ent, MUTANT_FRAMES_IDLE_START, MUTANT_FRAMES_IDLE_END, false); // run idle frames
 		}
 
-		ent->count = level.framenum + (int)(0.1 / FRAMETIME);
+		ent->count = level.framenum + qf2sf(1);
 	}
 }
 

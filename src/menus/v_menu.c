@@ -640,7 +640,7 @@ char *GetStatusString (edict_t *ent)
 		return "Dead";
 	if (ent->flags & FL_CHATPROTECT)
 		return "Chat Protect";
-	if (ent->client->idle_frames > 300)
+	if (ent->client->idle_frames > qf2sf(300))
 		return "Idle";
 	return "Normal";
 }

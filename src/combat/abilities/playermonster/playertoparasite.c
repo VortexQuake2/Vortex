@@ -10,6 +10,12 @@
 #define PARASITE_INITIAL_DMG		10
 #define PARASITE_ADDON_DMG			1
 
+#define PARASITE_MAXFRAMES	20
+#define PARASITE_RANGE		128
+#define PARASITE_DELAY		2
+#define PARASITE_COST		50
+
+
 static qboolean parasite_cantarget (edict_t *self, edict_t *target)
 {
 	int para_range = PARASITE_ATTACK_RANGE;
@@ -203,7 +209,7 @@ void RunParasiteFrames (edict_t *ent, usercmd_t *ucmd)
 
 	if (level.framenum >= ent->count)
 	{
-		ent->count = level.framenum + (int)(0.1 / FRAMETIME);
+		ent->count = level.framenum + qf2sf(1);
 
 		// play running animation if we are moving forward or strafing
 		if ((ucmd->forwardmove > 0) || ucmd->sidemove)
@@ -247,6 +253,82 @@ void RunParasiteFrames (edict_t *ent, usercmd_t *ucmd)
 			gi.sound (ent, CHAN_WEAPON, gi.soundindex("parasite/paridle1.wav"), 1, ATTN_IDLE, 0);
 		}
 	}
+}
+
+
+
+void parasite_endattack (edict_t *ent)
+{
+	gi.sound (ent, CHAN_AUTO, gi.soundindex("parasite/paratck4.wav"), 1, ATTN_NORM, 0);
+	ent->sucking = false;
+	ent->parasite_frames = 0;
+}
+
+void think_ability_parasite_attack(edict_t *ent)
+{
+	int		damage, kick;
+	vec3_t	forward, right, start, end, offset;
+	trace_t	tr;
+
+	if (debuginfo->value)
+		gi.dprintf("%s just called think_ability_parasite_attack()\n", ent->client->pers.userinfo);
+
+	// terminate attack
+	if (!G_EntIsAlive(ent) || (ent->parasite_frames > qf2sf(PARASITE_MAXFRAMES))
+		|| que_typeexists(ent->curses, CURSE_FROZEN))
+	{
+		parasite_endattack(ent);
+		return;
+	}
+
+	// calculate starting point
+	AngleVectors (ent->client->v_angle, forward, right, NULL);
+	VectorSet(offset, 0, 7,  ent->viewheight-8);
+	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
+
+	// do we already have a valid target?
+	if (G_ValidTarget(ent, ent->parasite_target, true)
+		&& (entdist(ent, ent->parasite_target) <= PARASITE_RANGE)
+		&& infov(ent, ent->parasite_target, 90))
+	{
+		VectorSubtract(ent->parasite_target->s.origin, start, forward);
+		VectorNormalize(forward);
+	}
+
+	VectorMA(start, PARASITE_RANGE, forward, end);
+	tr = gi.trace(start, NULL, NULL, end, ent, MASK_SHOT);
+	// did we hit something?
+	if (G_EntIsAlive(tr.ent) && !OnSameTeam(ent, tr.ent))
+	{
+		if (ent->parasite_frames == 0)
+		{
+			ent->client->pers.inventory[power_cube_index] -= PARASITE_COST;
+			gi.sound (ent, CHAN_AUTO, gi.soundindex("parasite/paratck3.wav"), 1, ATTN_NORM, 0);
+			ent->client->ability_delay = level.time + PARASITE_DELAY;
+		}
+
+		ent->parasite_target = tr.ent;
+		damage = 2*ent->myskills.abilities[BLOOD_SUCKER].current_level;
+		if (tr.ent->groundentity)
+			kick = -100;
+		else
+			kick = -50;
+
+		T_Damage(tr.ent, ent, ent, forward, tr.endpos,
+				 tr.plane.normal, damage, kick, DAMAGE_NO_ABILITIES, MOD_PARASITE);
+
+		gi.WriteByte(svc_temp_entity);
+		gi.WriteByte(TE_PARASITE_ATTACK);
+		gi.WriteShort(ent-g_edicts);
+		gi.WritePosition(start);
+		gi.WritePosition(tr.endpos);
+		gi.multicast(ent->s.origin, MULTICAST_PVS);
+
+		ent->parasite_frames++;
+	}
+	else if (ent->parasite_frames)
+		parasite_endattack(ent);
+
 }
 
 void Cmd_PlayerToParasite_f (edict_t *ent)

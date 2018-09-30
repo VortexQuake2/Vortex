@@ -307,7 +307,7 @@ qboolean CTF_ApplySpecialFcRules (edict_t *ent)
 	}
 
 	// remove any summonables
-	VortexRemovePlayerSummonables(ent);
+    vrx_remove_player_summonables(ent);
 
 	// make sure bless and other auras are gone too
 	CurseRemove(ent, 0);
@@ -1573,7 +1573,7 @@ void CTF_SpawnPlayersInBase (int teamnum)
 		}
 		
 		// remove all summonables
-		//VortexRemovePlayerSummonables(cl_ent);
+		//vrx_remove_player_summonables(cl_ent);
 
 		// remove any curses player has
 		//CurseRemove(cl_ent, 0);

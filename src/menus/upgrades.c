@@ -156,8 +156,8 @@ void OpenUpgradeMenu (edict_t *ent)
 	showmenu(ent);
 
 	// try to shortcut to chat-protect mode
-	if (ent->client->idle_frames < CHAT_PROTECT_FRAMES-51)
-		ent->client->idle_frames = CHAT_PROTECT_FRAMES-51;
+	if (ent->client->idle_frames < qf2sf(CHAT_PROTECT_FRAMES-51))
+		ent->client->idle_frames = qf2sf(CHAT_PROTECT_FRAMES-51);
 }
 
 //************************************************************************************************

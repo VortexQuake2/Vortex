@@ -1378,7 +1378,7 @@ void V_RestoreMorphed(edict_t *ent, int refund)
 	gi.sound(ent, CHAN_WEAPON, gi.soundindex("abilities/morph.wav"), 1, ATTN_NORM, 0);
 
 	// if (isMorphingPolt(ent)) // az- always remove summonables
-	VortexRemovePlayerSummonables(ent);
+	vrx_remove_player_summonables(ent);
 
 	if (PM_PlayerHasMonster(ent))
 	{
@@ -1411,6 +1411,8 @@ void V_RestoreMorphed(edict_t *ent, int refund)
 
 	ShowGun(ent);
 
+	// az: restore v_flags we've set
+	ent->v_flags &= ~SFLG_NO_BOB;
 	ent->client->lock_frames = 0;//4.2 reset smart-rocket lock-on counter
 }
 
@@ -1822,7 +1824,7 @@ void V_ResetPlayerState(edict_t *ent)
 	ent->chill_time = 0;
 
 	// remove all summonables
-	VortexRemovePlayerSummonables(ent);
+	vrx_remove_player_summonables(ent);
 
 	// if teamplay mode, set team skin
 	if (ctf->value || domination->value || tbi->value)
@@ -2167,7 +2169,7 @@ void V_NonShellEffects(edict_t *ent)
 		if ((level.time > ent->client->ability_delay) && !que_typeexists(ent->auras, 0)
 			&& !ent->myskills.abilities[CLOAK].disable && (ent->myskills.abilities[CLOAK].current_level > 0))
 		{
-			if (ent->client->idle_frames >= 5)
+			if (ent->client->idle_frames >= qf2sf(5))
 				ent->s.effects |= EF_SPHERETRANS;
 			else
 				ent->s.effects |= EF_PLASMA;

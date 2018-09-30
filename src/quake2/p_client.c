@@ -2923,7 +2923,7 @@ void ClientBeginServerFrame (edict_t *ent)
     think_idle_frame_counter(ent);
 
 	// chat-protect ends when you move or fire
-	if ((ent->client->idle_frames < CHAT_PROTECT_FRAMES) && (ent->flags & FL_CHATPROTECT))
+	if ((ent->client->idle_frames < qf2sf(CHAT_PROTECT_FRAMES)) && (ent->flags & FL_CHATPROTECT))
 	{
 		ent->flags &= ~FL_CHATPROTECT;
 		if (!PM_PlayerHasMonster(ent))

@@ -471,7 +471,7 @@ void TeleportForward (edict_t *ent)
 	RemoveAllDrones(ent, false);
 	RemoveHellspawn(ent);
 	RemoveMiniSentries(ent);
-//	VortexRemovePlayerSummonables(ent);
+//	vrx_remove_player_summonables(ent);
 
 	// get forward vector
 	if (!ent->client)
@@ -3580,7 +3580,7 @@ void wormhole_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t 
 		// reset railgun sniper frames
 		other->client->refire_frames = 0;
 
-		VortexRemovePlayerSummonables(other);
+        vrx_remove_player_summonables(other);
 		V_RestoreMorphed(other, 50); // un-morph
 
 		other->flags |= FL_WORMHOLE;

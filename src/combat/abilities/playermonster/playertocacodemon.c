@@ -103,6 +103,9 @@ void cacodemon_attack(edict_t *ent) {
 }
 
 void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
+    // az: weird ass jittery jump fix
+    ent->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
+
     int frame;
 
     // if we aren't a cacodemon or we are dead, we shouldn't be here!
@@ -140,7 +143,7 @@ void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
 
         }
 
-        ent->count = (int)(level.framenum + (0.1 / FRAMETIME));
+        ent->count = (int)(level.framenum + qf2sf(1));
     }
 }
 
@@ -199,6 +202,9 @@ void Cmd_PlayerToCacodemon_f(edict_t *ent) {
 
     ent->client->pers.inventory[power_cube_index] -= caco_cubecost;
     ent->client->ability_delay = level.time + CACODEMON_DELAY;
+
+    // az: don't bob the cacodemon!
+    ent->v_flags |= SFLG_NO_BOB;
 
     ent->mtype = MORPH_CACODEMON;
     ent->s.modelindex = gi.modelindex("models/monsters/idg2/head/tris.md2");

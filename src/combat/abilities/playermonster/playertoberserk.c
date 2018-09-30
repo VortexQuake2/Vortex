@@ -277,7 +277,7 @@ void RunBerserkFrames (edict_t *ent, usercmd_t *ucmd)
 		else
 			G_RunFrames(ent, BERSERK_FRAMES_IDLE1_START, BERSERK_FRAMES_IDLE1_END, false); // run idle frames
 
-		ent->count = (int)(level.framenum + 0.1 / FRAMETIME);
+		ent->count = level.framenum + qf2sf(1);
 	}
 }
 

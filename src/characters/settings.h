@@ -23,6 +23,8 @@ const char* Time();
 #define SFLG_PARTIAL_INWATER		0x00000004
 #define SFLG_AUTO_TBALLED			0x00000008
 #define SFLG_DOUBLEJUMP				0x00000010
+// az: don't bob this player entity
+#define SFLG_NO_BOB                 0x00000020
 
 //Other flag combinations
 #define SFLG_TOUCHING_WATER		SFLG_UNDERWATER | SFLG_PARTIAL_INWATER

@@ -165,7 +165,7 @@ qboolean dom_pickupflag (edict_t *ent, edict_t *other)
 	// antigrav
 	other->antigrav = false;
 
-	VortexRemovePlayerSummonables(other);
+    vrx_remove_player_summonables(other);
 
 	// disable scanner
 	if (other->client->pers.scanner_active & 1)

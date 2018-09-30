@@ -312,7 +312,7 @@ void Add_ctfteam_exp(edict_t *ent, int points) {
 
 /*
 =============
-VortexRemovePlayerSummonables
+vrx_remove_player_summonables
 
 Removes all edicts that the player owns
 =============
@@ -348,10 +348,10 @@ void depot_remove(edict_t *self, edict_t *owner, qboolean effect);
 
 void lasertrap_removeall(edict_t *ent, qboolean effect);
 
-void VortexRemovePlayerSummonables(edict_t *self) {
+void vrx_remove_player_summonables(edict_t *self) {
     edict_t *from;
 
-    //	gi.dprintf("VortexRemovePlayerSummonables()\n");
+    //	gi.dprintf("vrx_remove_player_summonables()\n");
 
     lasertrap_removeall(self, true);
     holyground_remove(self, self->holyground);

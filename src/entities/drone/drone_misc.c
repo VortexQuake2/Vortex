@@ -158,7 +158,7 @@ qboolean drone_ValidChaseTarget (edict_t *self, edict_t *target)
 	{
 		if (target->client->respawn_time > level.time)
 			return false; // don't pursue respawning players
-		if (target->client->cloaking && (target->client->idle_frames >= 100))
+		if (target->client->cloaking && (target->client->idle_frames >= qf2sf(100)))
 			return false; // don't pursue cloaked targets
 	}
 
