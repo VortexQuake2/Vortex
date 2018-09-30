@@ -1661,7 +1661,7 @@ qboolean V_HealthCache(edict_t *ent, int max_per_second, int update_frequency_sv
 
 	if (ent->health_cache > 0 && ent->health < ent->max_health)
 	{
-		if (update_frequency_svframes <= sv_fps)
+		if (update_frequency_svframes <= sv_fps->value)
 			max = max_per_second / (sv_fps->value / update_frequency_svframes);
 		else
 			max = max_per_second;

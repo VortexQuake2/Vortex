@@ -5,6 +5,7 @@
 #include "../../characters/class_limits.h"
 #include "../../gamemodes/ctf.h"
 
+/*
 //K03 Begin
 //==============================================================
 // Scale damage amount by location of hit on player's body..
@@ -14,7 +15,7 @@
 #define CHEST_DAMAGE   (height/1.4)-abs(targ->mins[2])
 
 //==============================================================
-/*
+
 float location_scaling(edict_t *targ, vec3_t point, int damage) {
 	float z_rel, height;
 
@@ -49,12 +50,10 @@ float location_scaling(edict_t *targ, vec3_t point, int damage) {
 void TossClientWeapon (edict_t *self);
 
 
-#define BitCmp(x,bit) ((int)(x)&(bit))
-
-qboolean HitTheWeapon (edict_t *targ, edict_t *attacker, vec3_t point, int take, int dflags) 
+qboolean HitTheWeapon (edict_t *targ, edict_t *attacker, const vec3_t point, int take, int dflags)
 {
 	edict_t *cl_ent=attacker;
-	float z_rel, height;
+	float z_rel;
 
 	if (PM_MonsterHasPilot(attacker))
 		cl_ent = attacker->activator;
@@ -90,7 +89,7 @@ qboolean HitTheWeapon (edict_t *targ, edict_t *attacker, vec3_t point, int take,
 	// check for impact location
 	// if it's at about the right height, and in front, then
 	// we're probably on-target
-	height = abs(targ->mins[2])+targ->maxs[2];
+	fabs(targ->mins[2])+targ->maxs[2];
 	z_rel = point[2]-targ->s.origin[2];
 
 	//gi.dprintf("z_rel: %.1f point: %.1f origin: %.1f, chest: %.1f stomach: %.1f", 
@@ -316,10 +315,8 @@ void Killed (edict_t *targ, edict_t *inflictor, edict_t *attacker, int damage, v
 SpawnDamage
 ================
 */
-void SpawnDamage (int type, vec3_t origin, vec3_t normal, int damage)
+void SpawnDamage(int type, vec3_t origin, vec3_t normal)
 {
-	if (damage > 255)
-		damage = 255;
 	gi.WriteByte (svc_temp_entity);
 	gi.WriteByte (type);
 //	gi.WriteByte (damage);
@@ -404,8 +401,8 @@ static int CheckShield (edict_t *ent, vec3_t point, vec3_t normal, int damage, i
 		pa_te_type = TE_SHIELD_SPARKS;
 		save = SHIELD_BODY_PROTECTION * damage;
 	}
-	
-	SpawnDamage (pa_te_type, point, normal, save);
+
+	SpawnDamage(pa_te_type, point, normal);
 
 	//gi.dprintf("damage = %d, save = %d\n", damage, save);
 
@@ -417,10 +414,10 @@ static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damag
 	gclient_t	*client;
 	int			save=0; // max absorbtion
 	int			power_armor_type;
-	int			index;
+	int index = ITEM_INDEX(Fdi_CELLS);
 	float		damagePerCell; //GHz
 	int			pa_te_type;
-	int			power; // cells
+	int			power = 0; // cells
 	int			power_used; // cells used
 	edict_t		*cl_ent=NULL;
 
@@ -524,10 +521,10 @@ static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damag
 	if (save > damage)
 		save = damage;
 
-	SpawnDamage (pa_te_type, point, normal, save);
+	SpawnDamage(pa_te_type, point, normal);
 	ent->powerarmor_time = level.time + 0.2;
 
-	power_used = ceil((float) save / damagePerCell) + 1;
+	power_used = ceilf((float) save / damagePerCell) + 1;
 
 	if (cl_ent)
 	{
@@ -616,7 +613,7 @@ static int CheckArmor(edict_t *ent, vec3_t point, vec3_t normal, int damage, int
 
 	client->pers.inventory[index] -= save / damage_per_armor;
 
-	SpawnDamage (te_sparks, point, normal, save);
+	SpawnDamage(te_sparks, point, normal);
 
 	return save;
 }
@@ -655,7 +652,8 @@ qboolean CanUseVampire (edict_t *targ, edict_t *attacker, int dflags, int mod)
 		&& (targ->mtype != M_FORCEWALL) && (targ->mtype != MOD_LASER_DEFENSE));
 }
 
-void DeflectHitscan (edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t dir, vec3_t point, vec3_t normal, float damage, int knockback, int dflags, int mod)
+void DeflectHitscan(edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t point, float damage, int knockback,
+                    int dflags, int mod)
 {		
 	que_t	*slot = NULL;	
 	float	modifier, chance;
@@ -782,7 +780,6 @@ int G_AutoTBall(edict_t *targ, float take)
 	//end 3.0 auto-tball
 }
 
-int TotalPlayersInGame(void);
 void AddDmgList (edict_t *self, edict_t *other, int damage);
 void tech_checkrespawn (edict_t *ent);
 qboolean curse_add(edict_t *target, edict_t *caster, int type, int curse_level, float duration);//4.4
@@ -800,10 +797,8 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	//int			thorns_dmg;//GHz
     float before_sub;//GHz
 	int			dtype = G_DamageType(mod, dflags);
-	qboolean	plagued=false;
 	float		temp=0;//K03
 	edict_t		*player = G_GetClient(attacker);
-	vec3_t zvec={0,0,0};//GHz
 	float		startDamage = damage; //doomie
 	upgrade_t	*ability;//4.2 for fury
 	qboolean	target_has_pilot = PM_MonsterHasPilot(targ);
@@ -842,7 +837,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	}
 
 	// try to deflect an attack first before all other resistances are checked
-	DeflectHitscan(targ, inflictor, attacker, dir, point, normal, damage, knockback, dflags, mod);
+    DeflectHitscan(targ, inflictor, attacker, point, damage, knockback, dflags, mod);
 
     damage = G_SubDamage(targ, inflictor, attacker, damage, dflags, mod);
 
@@ -868,7 +863,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	if ((slot = que_findtype(targ->curses, NULL, LOWER_RESIST)) != NULL)
 	{
 		float lowerResistFactor = LOWER_RESIST_INITIAL_FACTOR + LOWER_RESIST_ADDON_FACTOR * slot->ent->owner->myskills.abilities[LOWER_RESIST].current_level;
-		float resistFactor = (float)(startDamage - damage) / startDamage;
+		float resistFactor = (startDamage - damage) / startDamage;
 		float result = resistFactor - lowerResistFactor;
 
 	//	gi.dprintf("lower resist = %.1f resist = %.1f result = %.1f startdamage = %d", lowerResistFactor, resistFactor, result, damage);
@@ -878,7 +873,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 	}
 
-	G_ModifyDamage(targ, inflictor, attacker, point, damage, dflags, mod);
+	G_ModifyDamage(targ, attacker, damage, dflags, mod);
 	//damage = VortexModifyDamage(targ, inflictor, attacker, point, damage, dflags, mod);
 //	gi.dprintf("%d damage\n", damage);
 	
@@ -985,8 +980,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 			else
 				player->dmg_counter = damage;
 			
-			//if (!(player->myskills.abilities[ID].disable) && (player->myskills.abilities[ID].current_level))
-				player->client->ps.stats[STAT_ID_DAMAGE] = player->dmg_counter;
+			player->client->ps.stats[STAT_ID_DAMAGE] = player->dmg_counter;
 			
 			player->lastdmg = level.time;
 			player->client->idle_frames = 0; // player is no longer idle! (uncloak em!)
@@ -1057,7 +1051,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 			take = 0;
 			save = damage;
 			if ((level.time > pregame_time->value) && (G_ValidTarget(targ, attacker, false)))
-				SpawnDamage (TE_BLOOD, point, normal, save);
+				SpawnDamage(TE_BLOOD, point, normal);
 		}
 	}
 
@@ -1098,7 +1092,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 					curse_level = 1;
 
 				// add the curse
-				curse_add(attacker, targ, CURSE, curse_level, curse_level/2);
+				curse_add(attacker, targ, CURSE, curse_level, curse_level/2.0f);
 				CurseMessage(targ, attacker, CURSE, curse_level, true);
 			}
 
@@ -1163,9 +1157,9 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 			return 0;
 
 		if ((targ->svflags & SVF_MONSTER) || (client))
-			SpawnDamage (TE_BLOOD, point, normal, take);
+			SpawnDamage(TE_BLOOD, point, normal);
 		else
-			SpawnDamage (te_sparks, point, normal, take);
+			SpawnDamage(te_sparks, point, normal);
 
 		targ->health -= take;
 

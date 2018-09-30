@@ -1,6 +1,7 @@
 #include "../../quake2/g_local.h"
 #include "damage.h"
 #include "../../gamemodes/ctf.h"
+#include "../../gamemodes/v_hw.h"
 
 float vrx_get_dmgtype_resistence(const edict_t *targ, int dtype, float Resistance);
 
@@ -967,9 +968,8 @@ float vrx_get_dmgtype_resistence(const edict_t *targ, int dtype, float Resistanc
     return Resistance;
 }
 
-float G_ModifyDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
-                     vec3_t point, float damage, int dflags, int mod) {
-    int pierceLevel = 0, pierceFactor;
+float G_ModifyDamage(edict_t *targ, edict_t *attacker, float damage, int dflags, int mod) {
+    int pierceLevel = 0, pierceFactor = 1;
     float temp;
 
     if (damage > 0) {

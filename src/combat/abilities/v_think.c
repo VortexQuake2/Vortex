@@ -223,7 +223,7 @@ V_Think_ApplySuperSpeed(edict_t *ent, const usercmd_t *ucmd, gclient_t *client, 
             (*pm).s.velocity[0] = ent->velocity[0] * 6;
             (*pm).s.velocity[1] = ent->velocity[1] * 6;
 
-            if (memcmp(&client->old_pmove, &(*pm).s, sizeof((*pm).s))) {
+            if (memcmp(&client->old_pmove, &(*pm).s, sizeof((*pm).s)) != 0) {
                 (*pm).snapinitial = true;
                 //		gi.dprintf ("pmove changed!\n");
             }
@@ -677,7 +677,7 @@ void think_talent_armor_regen(const edict_t *ent, int max_armor, int *armor) {
         && vrx_get_talent_slot(ent, TALENT_ARMOR_REG) != -1
         && G_EntIsAlive(ent) && (*armor < max_armor)) {
 
-        talent_t *talent = &ent->myskills.talents.talent[vrx_get_talent_slot(ent, TALENT_ARMOR_REG)];
+        const talent_t *talent = &ent->myskills.talents.talent[vrx_get_talent_slot(ent, TALENT_ARMOR_REG)];
         if (talent->upgradeLevel > 0) {
             int health_factor = 1;
             //gi.dprintf("%d\n", health_factor);

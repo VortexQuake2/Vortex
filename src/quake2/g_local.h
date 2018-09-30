@@ -2086,7 +2086,7 @@ void PrintNumEntities (qboolean list);
 void Weapon_Generic (edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST, int FRAME_IDLE_LAST, int FRAME_DEACTIVATE_LAST, int *pause_frames, int *fire_frames, void (*fire)(edict_t *ent));
 void ClientUserinfoChanged (edict_t *ent, char *userinfo);
 qboolean ClientConnect (edict_t *ent, char *userinfo);
-void SpawnDamage (int type, vec3_t origin, vec3_t normal, int damage);
+void SpawnDamage(int type, vec3_t origin, vec3_t normal);
 qboolean SelectSpawnPoint (edict_t *ent, vec3_t origin, vec3_t angles);
 
 void think_ability_ammo_regen(edict_t *ent);

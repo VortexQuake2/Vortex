@@ -4,9 +4,7 @@
 #define PARASITE_ATTACK_FRAMES		20
 #define PARASITE_REFIRE				0.5//1.0
 #define PARASITE_KNOCKBACK			-60
-#define PARASITE_DELAY				1.0
 #define	PARASITE_INIT_COST			50
-#define PARASITE_COST				1
 #define PARASITE_INITIAL_DMG		10
 #define PARASITE_ADDON_DMG			1
 
@@ -25,7 +23,6 @@ static qboolean parasite_cantarget (edict_t *self, edict_t *target)
 		&& (entdist(self, target) <= para_range));
 }
 
-void ShowGun(edict_t *ent);
 
 qboolean myparasite_findtarget (edict_t *self)
 {
