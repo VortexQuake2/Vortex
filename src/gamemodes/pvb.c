@@ -219,7 +219,7 @@ void AddBossExp (edict_t *attacker, edict_t *target)
     vrx_check_for_levelup(attacker);
     */
 	attacker->myskills.credits += credits;
-	V_AddFinalExp(attacker, exp_points);
+	vrx_apply_experience(attacker, exp_points);
 }
 
 void AwardBossKill (edict_t *boss)
@@ -266,7 +266,7 @@ void AwardBossKill (edict_t *boss)
 			exp_points = PVB_BOSS_MIN_EXP;
 
 		player->myskills.credits += credits;
-		V_AddFinalExp(player, exp_points);
+		vrx_apply_experience(player, exp_points);
 
 		safe_cprintf(player, PRINT_HIGH, "You gained %d experience and %d credits!\n", exp_points, credits);
 	}

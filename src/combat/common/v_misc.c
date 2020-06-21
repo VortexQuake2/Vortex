@@ -279,37 +279,6 @@ edict_t *InitMonsterEntity(qboolean manual_spawn) {
     return monster;
 }
 
-void Add_ctfteam_exp(edict_t *ent, int points) {
-    int i, addexp = (int) (0.5 * points);
-    float level_diff;
-    edict_t *player;
-
-    for (i = 1; i <= maxclients->value; i++) {
-        player = &g_edicts[i];
-        if (!player->inuse)
-            continue;
-        if (player == ent)
-            continue;
-        if (player->solid == SOLID_NOT)
-            continue;
-        if (player->health <= 0)
-            continue;
-        // players must help the team in order to get shared points!
-        if ((!pvm->value && (player->lastkill + 30 < level.time))
-            || (player->lastkill + 60 < level.time))
-            continue;
-
-        if (OnSameTeam(ent, player)) {
-            level_diff = (float) (1 + player->myskills.level) / (float) (1 + ent->myskills.level);
-            if (level_diff > 1.5 || level_diff < 0.66)
-                continue;
-            player->client->resp.score += addexp;
-            player->myskills.experience += addexp;
-            vrx_check_for_levelup(player);
-        }
-    }
-}
-
 /*
 =============
 vrx_remove_player_summonables

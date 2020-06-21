@@ -99,10 +99,12 @@ edict_t *findclosestradius (edict_t *prev_ed, vec3_t org, float rad)
 	float	found_rad, prev_rad, vlen;
 	qboolean prev_found = false;
 
+	rad *= rad;
+
 	if (prev_ed) {
 		for (j=0 ; j<3 ; j++)
 			eorg[j] = org[j] - (prev_ed->s.origin[j] + (prev_ed->mins[j] + prev_ed->maxs[j])*0.5);
-		prev_rad = VectorLength(eorg);
+		prev_rad = VectorLengthSqr(eorg);
 	} else
 	{
 		prev_rad = rad + 1;
@@ -117,7 +119,7 @@ edict_t *findclosestradius (edict_t *prev_ed, vec3_t org, float rad)
 			continue;
 		for (j=0 ; j<3 ; j++)
 			eorg[j] = org[j] - (from->s.origin[j] + (from->mins[j] + from->maxs[j])*0.5);
-		vlen = VectorLength(eorg);
+		vlen = VectorLengthSqr(eorg);
 		if (vlen > rad) // found edict is outside scanning radius
 			continue;
 		if ((vlen < prev_rad) && (prev_ed))  // found edict is closer than the previously returned edict
@@ -145,7 +147,7 @@ Returns the closest entity that have origins within a spherical area
 findclosestradius (prev_edict, origin, radius)
 =================
 */
-edict_t *findclosestradius_monmask (edict_t *prev_ed, vec3_t org, float rad)
+/*edict_t *findclosestradius_monmask (edict_t *prev_ed, vec3_t org, float rad)
 {
 	vec3_t	eorg;
 	int		j;
@@ -190,7 +192,7 @@ edict_t *findclosestradius_monmask (edict_t *prev_ed, vec3_t org, float rad)
 	}
 
 	return found;
-}
+}*/
 
 // same as above but without the solidity check
 edict_t *findclosestradius1 (edict_t *prev_ed, vec3_t org, float rad)
@@ -1323,7 +1325,7 @@ G_IsClearPath
 Returns true if the path is clear from obstruction
 =============
 */
-__inline qboolean G_IsClearPath (edict_t *ignore, int mask, vec3_t spot1, vec3_t spot2) {
+qboolean G_IsClearPath (edict_t *ignore, int mask, vec3_t spot1, vec3_t spot2) {
 	return (gi.trace(spot1, NULL, NULL, spot2, ignore, mask).fraction == 1.0);
 }
 
@@ -1359,31 +1361,38 @@ void G_EntViewPoint (edict_t *ent, vec3_t point)
 	}
 	else
 	{
-		trace_t tr;
-
-		// trace to the floor to determine if we are on the ground
-		VectorCopy(ent->s.origin, start);
-		start[2] = ent->absmin[2] - 1;
-		tr = gi.trace(point, vec3_origin, vec3_origin, start, ent, MASK_SOLID);
-
 		// the entity is attached to a wall or ceiling (e.g. minisentry, proxy)
-		if (ent->movetype == MOVETYPE_NONE && tr.fraction == 1)
+		if (ent->movetype == MOVETYPE_NONE)
 		{
-			// use the midpoint instead
-			G_EntMidPoint(ent, point);
-			return;
-		}
-		// normal entity is touching the ground and/or is moveable
-		else
-		{
-			// find a point just below the top of bounding box
-			VectorCopy(ent->s.origin, start);
-			start[2] = ent->absmax[2] - 8;
+			// az note: moved from outside to inside because this trace doesn't matter
+			// for the _majority_ of cases, that are movetype != NONE
+			// and it was being made for entities that _definitely_ have
+			// a movetype other than none
+			trace_t tr;
 
-			// if this point is below or equal to our starting point, then abort
-			if (start[2] <= ent->s.origin[2])
+			// trace to the floor to determine if we are on the ground
+			VectorCopy(ent->s.origin, start);
+			start[2] = ent->absmin[2] - 1;
+			tr = gi.trace(point, NULL, NULL, start, ent, MASK_SOLID);
+
+			if (tr.fraction == 1) {
+				// use the midpoint instead
+				G_EntMidPoint(ent, point);
 				return;
+			}
 		}
+		
+		// normal entity is touching the ground and/or is moveable
+		
+		
+		// find a point just below the top of bounding box
+		VectorCopy(ent->s.origin, start);
+		start[2] = ent->absmax[2] - 8;
+
+		// if this point is below or equal to our starting point, then abort
+		if (start[2] <= ent->s.origin[2])
+			return;
+		
 
 		VectorCopy(start, point);
 	}
@@ -1692,7 +1701,7 @@ void G_ResetPlayerState (edict_t *ent)
 	// reset a single player's state
 	if (ent && ent->inuse && ent->client && !G_IsSpectator(ent))
 	{
-		V_ResetPlayerState(ent);
+		vrx_reset_player_state(ent);
 	}
 	// reset all players' state
 	else
@@ -1701,7 +1710,7 @@ void G_ResetPlayerState (edict_t *ent)
 		{
 			cl_ent = g_edicts+1+i;
 			if (cl_ent && cl_ent->inuse && !G_IsSpectator(cl_ent))
-				V_ResetPlayerState(cl_ent);
+				vrx_reset_player_state(cl_ent);
 	
 		}
 	}

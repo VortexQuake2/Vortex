@@ -869,8 +869,10 @@ void vrx_client_think(edict_t *ent) {
     if (ent->myskills.abilities[AMMO_REGEN].current_level > 0)
         think_ability_ammo_regen(ent);
 
-    if (ent->myskills.abilities[POWER_REGEN].current_level > 0 && // We simply restore 5 cubes more often.
-        !(level.framenum % (int)(5.0f / ent->myskills.abilities[POWER_REGEN].current_level / FRAMETIME)))
+    // We simply restore 5 cubes more often.
+    int regen_frame = (int)(5.0f / ent->myskills.abilities[POWER_REGEN].current_level / FRAMETIME);
+    qboolean is_regen_frame = !(level.framenum % regen_frame);
+    if (ent->myskills.abilities[POWER_REGEN].current_level > 0 && is_regen_frame)
         think_ability_power_regen(ent);
 
     //3.0 Mind absorb every x seconds

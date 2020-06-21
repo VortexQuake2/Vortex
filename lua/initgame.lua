@@ -3,6 +3,8 @@ is_invasion = (cvar_get("invasion", "0") ~= "0")
 
 UsePathfinding = 0
 
+useMysqlTablesOnSQLite = 0
+
 if is_pvm then
     cvar_set("nolag", "1")
 	q2dofile("variables_pvm")

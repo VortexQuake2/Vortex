@@ -4,7 +4,7 @@
 #define PLAYER_C
 
 // returns true if the player should be affected by newbie protection
-qboolean IsNewbieBasher(edict_t *player) {
+qboolean IsNewbieBasher(const edict_t *player) {
 	qboolean levelAboveAverage = player->myskills.level > newbie_protection->value * AveragePlayerLevel();
 	qboolean isHighLevel = player->myskills.level >= 8;
 	qboolean isNotPVM = !(pvm->value != 0 || invasion->value != 0);

@@ -13,7 +13,7 @@ void Cmd_fmedi_f(edict_t *ent);
 void Cmd_DetPipes_f (edict_t *ent)
 {
 	edict_t	*blip = NULL;
-	if ((isMorphingPolt(ent)) && (ent->mtype))
+	if ((vrx_is_morphing_polt(ent)) && (ent->mtype))
 		return; // poltergeist cannot hurt anyone with human weapons
 	while ((blip = findradius(blip, ent->s.origin, 1000)) != NULL)
 	{

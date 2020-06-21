@@ -1,7 +1,7 @@
 #include "../../quake2/g_local.h"
 #include "../../characters/class_limits.h"
 
-void VortexDeathCleanup(edict_t *attacker, edict_t *targ);
+void vrx_death_cleanup(edict_t *attacker, edict_t *targ);
 
 void vrx_add_exp(edict_t *attacker, edict_t *targ);
 
@@ -32,7 +32,7 @@ void V_GibSound(edict_t *self, int index) {
     }
 }
 
-void VortexPlayerDeath(edict_t *self, edict_t *attacker, edict_t *inflictor) {
+void vrx_player_death(edict_t *self, edict_t *attacker, edict_t *inflictor) {
     if (debuginfo->value > 1)
         gi.dprintf("VortexPlayerDeath()\n");
 
@@ -40,7 +40,7 @@ void VortexPlayerDeath(edict_t *self, edict_t *attacker, edict_t *inflictor) {
     if (self->deadflag)
         return;
 
-    V_ResetPlayerState(self);
+    vrx_reset_player_state(self);
     self->gib_health = -100;
 
     // don't drop powercubes or tballs
@@ -48,7 +48,7 @@ void VortexPlayerDeath(edict_t *self, edict_t *attacker, edict_t *inflictor) {
     self->myskills.inventory[ITEM_INDEX(Fdi_TBALL)] = self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)];
 
     vrx_add_exp(attacker, self); // modify experience
-    VortexDeathCleanup(attacker, self);
+    vrx_death_cleanup(attacker, self);
 
     TossClientBackpack(self, attacker); // toss a backpack
     vrx_roll_rune_drop(self, attacker, false); // possibly generate a rune
@@ -57,7 +57,7 @@ void VortexPlayerDeath(edict_t *self, edict_t *attacker, edict_t *inflictor) {
     dmgListCleanup(self, true);
 }
 
-void V_AddBasicWeapons(gclient_t *client, gitem_t *item, int spectator) {
+void vrx_add_basic_weapons(gclient_t *client, gitem_t *item, int spectator) {
     client->pers.inventory[ITEM_INDEX(FindItem("Sword"))] = 1;
     client->pers.inventory[ITEM_INDEX(FindItem("Power Screen"))] = 1;
     client->pers.inventory[flag_index] = 0;
@@ -98,7 +98,7 @@ void vrx_add_respawn_items(edict_t *ent) {
         ent->client->pers.inventory[ITEM_INDEX(FindItem("Body Armor"))] = MAX_ARMOR(ent);
 }
 
-void giveAdditionalRespawnWeapon(edict_t *ent, int nextWeapon) {
+void vrx_give_additional_respawn_weapons(edict_t *ent, int nextWeapon) {
     int picks[MAX_WEAPONS] = {0};
     int nextEmptyslot = 0;
 
@@ -171,7 +171,7 @@ void vrx_add_respawn_weapon(edict_t *ent, int weaponID) {
         ent->myskills.weapon_respawns--;
 #endif
 
-    if (isMorphingPolt(ent))
+    if (vrx_is_morphing_polt(ent))
         return;
 
 

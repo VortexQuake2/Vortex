@@ -52,7 +52,7 @@ void dom_awardpoints (void)
             vrx_check_for_levelup(cl_ent);
             */
 			cl_ent->myskills.credits += credits;
-			V_AddFinalExp(cl_ent, points);
+			vrx_apply_experience(cl_ent, points);
 		}
 	}
 }
@@ -123,7 +123,7 @@ void dom_fragaward (edict_t *attacker, edict_t *target)
     attacker->client->resp.score += points;
     vrx_check_for_levelup(attacker);
     */
-	V_AddFinalExp(attacker, points);
+	vrx_apply_experience(attacker, points);
 }
 
 qboolean dom_pickupflag (edict_t *ent, edict_t *other)

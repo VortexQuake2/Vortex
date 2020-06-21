@@ -548,7 +548,7 @@ int writeTalentDescription(edict_t *ent, int talentID)
 	}
 }
 
-void openTalentMenu(edict_t *ent, int talentID)
+void vrx_open_talent_menu(edict_t *ent, int talentID)
 {
     talent_t *talent = &ent->myskills.talents.talent[vrx_get_talent_slot(ent, talentID)];
 	int level			= talent->upgradeLevel;
@@ -593,7 +593,7 @@ void openTalentMenu_handler(edict_t *ent, int option)
 			closemenu(ent);
 			return;
 		}
-	default: openTalentMenu(ent, option);
+	default: vrx_open_talent_menu(ent, option);
 	}
 }
 

@@ -423,6 +423,12 @@ void drone_death (edict_t *self, edict_t *attacker)
 			&& self->item && (random() >= 0.8))
 			Drop_Item(self, self->item);
 	}
+
+	// the other place where they are handled is in player death functions
+	if (invasion->value || pvm->value) {
+		attacker->myskills.streak++;
+		VortexSpreeAbilities(attacker);
+	}
 }
 
 void drone_heal (edict_t *self, edict_t *other)

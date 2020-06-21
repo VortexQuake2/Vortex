@@ -217,7 +217,7 @@ void INV_AwardPlayers(void)
 
 		if (!G_IsSpectator(player))
 		{
-			int fexp = V_AddFinalExp(player, points);
+			int fexp = vrx_apply_experience(player, points);
 			player->myskills.credits += credits;
 			safe_cprintf(player, PRINT_MEDIUM, "Earned %d exp and %d credits!\n", fexp, credits);
 
@@ -264,17 +264,17 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 	monster->prev_navi = NULL;
 
 
-	// we modify the monsters' health lightly
+	// az: we modify the monsters' health lightly
 	if (invasion->value == 1) // easy mode
 	{
-		if (invasion_difficulty_level < 7 && invasion_difficulty_level > 5)
-			mhealth = (invasion_difficulty_level - 5) * 0.2 + 1;
-		else if (invasion_difficulty_level >= 7)
-			mhealth = 1.8 + 0.15 * invasion_difficulty_level;
+		if (invasion_difficulty_level < 5)
+			mhealth = 1;
+		else if (invasion_difficulty_level >= 5)
+			mhealth = 1 + 0.05 * log2(invasion_difficulty_level - 5);
 	}
 	else if (invasion->value == 2) // hard mode
 	{
-		mhealth = 1.71 + 0.22 * invasion_difficulty_level;
+		mhealth = 1 + 0.1 * invasion_difficulty_level * max(log2(JoinedPlayers()), 0);
 	}
 
 	monster->max_health = monster->health = monster->max_health*mhealth;
@@ -309,7 +309,7 @@ float TimeFormula()
 	int rval = base - playeramt - levelamt;
 
 	if (invasion->value == 2) // hard mode
-		cap = 50;
+		cap = 52;
 
 	if (rval < cap)
 		rval = cap;

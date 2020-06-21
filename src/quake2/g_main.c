@@ -913,6 +913,10 @@ void G_RunPregame()
 	}
 }
 
+double scale_fps(double value) {
+	return value * 10.0f / sv_fps->value;
+}
+
 int sf2qf(int framecount) {
 	float ratio = 10.0f / sv_fps->value;
 	return (int)roundf(framecount * ratio);
@@ -960,6 +964,8 @@ void G_RunFrame(void)
 		spawncycle = 130;
 
 	RunVotes();
+
+	ai_eval_targets(); // az
 
 	//
 	// treat each object in turn

@@ -60,6 +60,14 @@ const char* Time();
 
 #define ARMORY_ITEMS 31
 
+#define PLAYTIME_MIN_MINUTES        999.0    // minutes played before penalty begins
+#define PLAYTIME_MAX_MINUTES        999.0    // minutes played before max penalty is reached
+#define PLAYTIME_MAX_PENALTY        2.0        // reduce experience in half
+
+#define MAX_TALENTS			15	//Max # of talents for each class.
+#define TALENT_MIN_LEVEL	10
+#define TALENT_MAX_LEVEL	20
+
 extern double RUNE_PICKUP_DELAY;
 extern double SENTRY_MAXIMUM;
 extern double CHILL_DEFAULT_BASE;

@@ -356,7 +356,7 @@ qboolean CTF_PickupFlag (edict_t *ent, edict_t *other)
 	if (!CTF_ApplySpecialFcRules(other))
 	{
 		// poltergeist class and morphed players can only return the flag
-		if (other->mtype || (isMorphingPolt(other)))
+		if (other->mtype || (vrx_is_morphing_polt(other)))
 			return false;
 	}
 
@@ -584,7 +584,7 @@ void CTF_AwardPlayer (edict_t *ent, int points, int credits)
     vrx_check_for_levelup(ent);
     */
 	ent->myskills.credits += credits;
-	V_AddFinalExp(ent, points);
+	vrx_apply_experience(ent, points);
 
 }
 

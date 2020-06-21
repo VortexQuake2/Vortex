@@ -359,7 +359,7 @@ void OpenRespawnWeapMenu(edict_t *ent)
 		return;
 	}
 
-	if(isMorphingPolt(ent))
+	if(vrx_is_morphing_polt(ent))
 	{
 		safe_cprintf(ent, PRINT_HIGH, "You can't pick a respawn weapon.\n");
 		return;
@@ -583,7 +583,7 @@ void OpenGeneralMenu (edict_t *ent)
 	else
 		addlinetomenu(ent, va("Upgrade abilities (%d)", ent->myskills.speciality_points), 1);
 	
-	if (!isMorphingPolt(ent))
+	if (!vrx_is_morphing_polt(ent))
 	{
 		if (!ent->myskills.weapon_points)
 			addlinetomenu(ent, "Upgrade weapons", 2);
@@ -596,7 +596,7 @@ void OpenGeneralMenu (edict_t *ent)
 		addlinetomenu(ent, va("Upgrade talents (%d)",ent->myskills.talents.talentPoints), 3);
 
 	addlinetomenu(ent, " ", 0);
-	if (!isMorphingPolt(ent) && 
+	if (!vrx_is_morphing_polt(ent) && 
 		ent->myskills.class_num != CLASS_PALADIN)
 			addlinetomenu(ent, "Set respawn weapon", 4);
 	addlinetomenu(ent, "Set master password", 5);
@@ -611,7 +611,7 @@ void OpenGeneralMenu (edict_t *ent)
 #ifndef REMOVE_RESPAWNS
 	if (pregame_time->value > level.time || trading->value) // we in pregame? you can buy respawns
 	{
-		if (ent->myskills.class_num != CLASS_PALADIN && !isMorphingPolt(ent)) // A class that needs respawns?
+		if (ent->myskills.class_num != CLASS_PALADIN && !vrx_is_morphing_polt(ent)) // A class that needs respawns?
 			addlinetomenu(ent, va("Buy Respawns (%d)", ent->myskills.weapon_respawns), 13);
 	}
 #endif

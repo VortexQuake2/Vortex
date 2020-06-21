@@ -749,7 +749,7 @@ qboolean V_CanUseAbilities(edict_t *ent, int ability_index, int ability_cost, qb
 		return false;
 
 	// poltergeist cannot use abilities in human form
-	if (isMorphingPolt(ent) && !ent->mtype)
+	if (vrx_is_morphing_polt(ent) && !ent->mtype)
 	{
 		// allow them to morph
 		if (!PM_PlayerHasMonster(ent) && (ability_index != CACODEMON) && (ability_index != MUTANT) && (ability_index != BRAIN) && (ability_index != FLYER)
@@ -1737,7 +1737,7 @@ qboolean V_ArmorCache(edict_t *ent, int max_per_second, int update_frequency)
 	return false;
 }
 
-void V_ResetPlayerState(edict_t *ent)
+void vrx_reset_player_state(edict_t *ent)
 {
 	if (PM_PlayerHasMonster(ent))
 	{
@@ -2158,7 +2158,7 @@ void V_NonShellEffects(edict_t *ent)
 
 		// ghost effect applies to all classes except Poltergeist (who gets it for free)
 		else if (ent->myskills.abilities[GHOST].current_level > 0 ||
-			isMorphingPolt(ent))
+			vrx_is_morphing_polt(ent))
 			ent->s.effects |= EF_PLASMA;
 
 		// super speed effect
@@ -2286,7 +2286,7 @@ qboolean isMonster(edict_t *ent)
 	return (ent && ent->mtype && ent->mtype < 100 && ent->svflags & SVF_MONSTER);
 }
 
-qboolean isMorphingPolt(edict_t *ent)
+qboolean vrx_is_morphing_polt(edict_t *ent)
 {
 	return ent->myskills.class_num == CLASS_POLTERGEIST &&
 		   ent->myskills.abilities[MORPH_MASTERY].current_level &&

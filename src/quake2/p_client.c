@@ -960,7 +960,7 @@ void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	if (debuginfo->value > 1)
 		gi.dprintf("player_die()\n");
 	
-	VortexPlayerDeath(self, attacker, inflictor);
+	vrx_player_death(self, attacker, inflictor);
 //GHz END
 	VectorClear (self->avelocity);
 
@@ -1077,7 +1077,7 @@ void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 
 //=======================================================================
 
-void V_AddBasicWeapons(gclient_t *client, gitem_t *item, int spectator);
+void vrx_add_basic_weapons(gclient_t *client, gitem_t *item, int spectator);
 
 /*
 ==============
@@ -1107,7 +1107,7 @@ void InitClientPersistant (gclient_t *client)
 	client->pers.inventory[ITEM_INDEX(item)] = 1;
 
     //K03 Begin
-    V_AddBasicWeapons(client, item, spectator);
+    vrx_add_basic_weapons(client, item, spectator);
 
 	//K03 End
 
@@ -1864,7 +1864,7 @@ void PutClientInServer (edict_t *ent)
 			//Give the player one additional respawn weapon for every point in the talent.
 			//This does not give them ammo.
 			for(i = 0; i < talentLevel+1; ++i)
-				giveAdditionalRespawnWeapon(ent, i+1);
+				vrx_give_additional_respawn_weapons(ent, i+1);
 		}
 
 		//4.57 give a partial ability charge
@@ -1908,7 +1908,7 @@ void PutClientInServer (edict_t *ent)
 	VectorCopy (maxs, ent->maxs);
 	VectorClear (ent->velocity);
 
-	V_ResetPlayerState(ent);
+	vrx_reset_player_state(ent);
 
 	// clear playerstate values
 	memset (&ent->client->ps, 0, sizeof(client->ps));
@@ -2227,7 +2227,7 @@ void ClientUserinfoChanged (edict_t *ent, char *userinfo)
 		ent->client->pers.hand = 2;
 		if (ent->myskills.class_num > 0)
 		{
-			if ((!isMorphingPolt(ent) || !ent->mtype) && ent->myskills.class_num != CLASS_PALADIN)
+			if ((!vrx_is_morphing_polt(ent) || !ent->mtype) && ent->myskills.class_num != CLASS_PALADIN)
 				ent->client->pers.hand = atoi(s);
 		}
 	}
@@ -2395,7 +2395,7 @@ void ClientDisconnect (edict_t *ent)
 	KillMyVote (ent);
 
 	dmgListCleanup(ent, true);
-	V_ResetPlayerState(ent);
+	vrx_reset_player_state(ent);
 
 	// remove this player from allies' list
 	if (allies->value && !ctf->value && !domination->value && !ptr->value)

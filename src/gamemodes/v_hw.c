@@ -9,7 +9,7 @@
 #define HW_MINIMUM_PLAYERS	3
 #define HW_FRAG_POINTS		45
 
-int PVP_AwardKill (edict_t *attacker, edict_t *targ, edict_t *targetclient);
+int vrx_award_exp (edict_t *attacker, edict_t *targ, edict_t *targetclient);
 
 float hw_getdamagefactor(edict_t *targ, edict_t* attacker)
 {
@@ -41,14 +41,14 @@ void hw_deathcleanup(edict_t *targ, edict_t *attacker)
 		if (clientattacker)
 		{
 			clientattacker->myskills.credits += 250; // prize
-			V_AddFinalExp(clientattacker, HW_FRAG_POINTS * clienttarg->myskills.streak);
+			vrx_apply_experience(clientattacker, HW_FRAG_POINTS * clienttarg->myskills.streak);
 		}
 	}
 
 	if (clientattacker && clientattacker->client->pers.inventory[halo_index])
 	{
 		// oh no saint be killan (bonus)
-		V_AddFinalExp(clientattacker, HW_FRAG_POINTS * pow(clientattacker->myskills.streak, 1.2)); // increase experience significantly
+		vrx_apply_experience(clientattacker, HW_FRAG_POINTS * pow(clientattacker->myskills.streak, 1.2)); // increase experience significantly
 	}
 
 	for (i=0; i<game.maxclients; i++) 
@@ -59,7 +59,7 @@ void hw_deathcleanup(edict_t *targ, edict_t *attacker)
 		if (!player->inuse || G_IsSpectator(player) || player == targ || player->flags & FL_CHATPROTECT)
 			continue;
 		
-		PVP_AwardKill(player, targ, targ);
+		vrx_award_exp(player, targ, targ);
 	}
 
 }
@@ -102,7 +102,7 @@ void hw_awardpoints (void)
 	points = HW_POINTS;
 	credits = HW_CREDITS;
 	carrier->myskills.credits += credits;
-	V_AddFinalExp(carrier, points);
+	vrx_apply_experience(carrier, points);
 }
 
 void hw_laserthink (edict_t *self)

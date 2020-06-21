@@ -29,7 +29,7 @@ qboolean visible (edict_t *self, edict_t *other)
 	G_EntViewPoint(self, start);
 	G_EntMidPoint(other, end);
 
-	return ((gi.inPVS(start, end)) && (gi.trace(start, vec3_origin, vec3_origin, end, self, MASK_SOLID).fraction == 1.0));
+	return ((gi.inPVS(start, end)) && (gi.trace(start, NULL, NULL, end, self, MASK_SOLID).fraction == 1.0));
 }
 
 /*

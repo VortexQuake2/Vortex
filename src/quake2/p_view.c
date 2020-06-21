@@ -742,7 +742,7 @@ void P_WorldEffects (void)
 
 		// if out of air, start drowning
 		if ((current_player->air_finished < level.time) 
-			&& ((!isMorphingPolt(current_player)) && (current_player->mtype != 0))
+			&& ((!vrx_is_morphing_polt(current_player)) && (current_player->mtype != 0))
 			&& (current_player->myskills.abilities[WORLD_RESIST].current_level < 1 
 									|| HasFlag(current_player)) 
 			&& !(current_player->flags & FL_GODMODE))
@@ -786,7 +786,7 @@ void P_WorldEffects (void)
 	if (waterlevel && (current_player->watertype & (CONTENTS_LAVA|CONTENTS_SLIME)) 
 		&& (current_player->myskills.abilities[WORLD_RESIST].current_level < 1 || HasFlag(current_player)) 
 		&& !(current_player->flags & FL_GODMODE) 
-		&& ((!isMorphingPolt(current_player)) && (current_player->mtype == 0)))
+		&& ((!vrx_is_morphing_polt(current_player)) && (current_player->mtype == 0)))
 	{
 		if (current_player->watertype & CONTENTS_LAVA)
 		{
@@ -1166,7 +1166,7 @@ void ClientEndServerFrame (edict_t *ent)
 			bobmove = 0.0625;
 	}
 	
-	bobtime = (current_client->bobtime += qf2sf(bobmove));
+	bobtime = (current_client->bobtime += scale_fps(bobmove));
 
 	if (current_client->ps.pmove.pm_flags & PMF_DUCKED)
 		bobtime *= 4;

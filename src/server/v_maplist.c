@@ -109,7 +109,8 @@ int v_LoadMapList(int mode)
 					strcpy(maplist->maps[iterator].name, s);
 
 					// terminate
-					maplist->maps[iterator].name[strcspn(s, " \r\n")] = 0;
+					int i = strcspn(s, " \r\n");
+					maplist->maps[iterator].name[i] = 0;
 				}
 				else
 				{

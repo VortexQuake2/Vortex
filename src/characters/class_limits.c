@@ -180,6 +180,8 @@ int MAX_POWERCUBES(struct edict_s *ent) {
         case CLASS_WEAPONMASTER:
             value = INITIAL_POWERCUBES_WEAPONMASTER + ADDON_POWERCUBES_WEAPONMASTER * clvl;
             break;
+        default:
+            value = 200 + 10 * clvl;
     }
 
     return value * (1 + (0.1 * ent->myskills.abilities[MAX_AMMO].current_level));

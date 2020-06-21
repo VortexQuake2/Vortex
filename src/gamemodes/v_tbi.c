@@ -266,7 +266,7 @@ void TBI_AwardTeam(int Teamnum, int exp, qboolean Broadcast)
 		if (!G_IsSpectator(cl_ent) && cl_ent->client && cl_ent->inuse)
 		{
 			if (cl_ent->teamnum == Teamnum)
-				V_AddFinalExp(cl_ent, exp);
+				vrx_apply_experience(cl_ent, exp);
 			cl_ent->myskills.credits += exp * 2 / 3; // 2/3s the exp.
 		}
 	}

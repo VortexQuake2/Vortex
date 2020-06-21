@@ -396,7 +396,7 @@ int AddAllyExp (edict_t *ent, int exp)
 		if (cl_ent->flags & FL_CHATPROTECT)
 			continue;
 
-		V_AddFinalExp(cl_ent, exp);
+		vrx_apply_experience(cl_ent, exp);
 	}
 
 	//V_AddFinalExp(ent, exp);

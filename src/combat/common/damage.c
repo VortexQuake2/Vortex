@@ -740,7 +740,7 @@ float vrx_apply_bombardier(const edict_t *targ, const edict_t *attacker, int mod
 
 float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float damage, int dflags, int mod) {
     int dtype;
-    float temp;
+    float temp = 0;
     que_t *aura = NULL;
     int talentLevel;
     edict_t *dclient;
@@ -870,7 +870,7 @@ float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float da
             else if ((targ->myskills.abilities[WORLD_RESIST].current_level > 0) &&
                      (!targ->myskills.abilities[WORLD_RESIST].disable))
                 return 0;    // no world damage if you have world resist
-            else if ((isMorphingPolt(targ)) && (targ->mtype == 0))
+            else if ((vrx_is_morphing_polt(targ)) && (targ->mtype == 0))
                 return 0;    //Poltergeists can not take world damage in human form
         }
         if ((targ == attacker) && (mod == MOD_BOMBS))
@@ -895,10 +895,10 @@ float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float da
             temp = 1.0f / temp;
 
             // cap ghost resistance to 75%
-            if (isMorphingPolt(targ))
+            if (vrx_is_morphing_polt(targ))
                 temp = 0.25;
 
-            if (temp < 0.4 && !isMorphingPolt(targ)) {
+            if (temp < 0.4 && !vrx_is_morphing_polt(targ)) {
                 if (!pvm->value && !invasion->value) // PVP mode? cap it to 40%.
                     temp = 0.4;
             }

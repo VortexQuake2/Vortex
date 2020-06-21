@@ -79,7 +79,7 @@ qboolean HitTheWeapon (edict_t *targ, edict_t *attacker, const vec3_t point, int
 		return false;
 
 	// can't knock weapon from morphs or poltergeists
-	if (targ->mtype || (isMorphingPolt(targ)))
+	if (targ->mtype || (vrx_is_morphing_polt(targ)))
 		return false;
 
 	if ((targ->health-take) > (0.5*targ->max_health))
@@ -89,7 +89,7 @@ qboolean HitTheWeapon (edict_t *targ, edict_t *attacker, const vec3_t point, int
 	// check for impact location
 	// if it's at about the right height, and in front, then
 	// we're probably on-target
-	fabs(targ->mins[2])+targ->maxs[2];
+	// fabs(targ->mins[2])+targ->maxs[2];
 	z_rel = point[2]-targ->s.origin[2];
 
 	//gi.dprintf("z_rel: %.1f point: %.1f origin: %.1f, chest: %.1f stomach: %.1f", 
@@ -220,7 +220,7 @@ qboolean G_CanUseAbilities(edict_t *ent, int ability_lvl, int pc_cost) {
         return false;
 
     // poltergeist cannot use abilities in human form
-    if (isMorphingPolt(ent) && !ent->mtype && !PM_PlayerHasMonster(ent)) {
+    if (vrx_is_morphing_polt(ent) && !ent->mtype && !PM_PlayerHasMonster(ent)) {
         safe_cprintf(ent, PRINT_HIGH, "You can't use abilities in human form!\n");
         return false;
     }
@@ -291,8 +291,9 @@ void Killed (edict_t *targ, edict_t *inflictor, edict_t *attacker, int damage, v
 	}
 	//K03 End
 
-	if (!targ->client && !targ->deadflag && (targ->solid != SOLID_NOT))
+	if (!targ->client && !targ->deadflag && (targ->solid != SOLID_NOT)) {
         vrx_add_exp(attacker, targ);
+	}
 
 	if (targ->movetype == MOVETYPE_PUSH || targ->movetype == MOVETYPE_STOP || targ->movetype == MOVETYPE_NONE)
 	{	// doors, triggers, etc
@@ -1024,15 +1025,23 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	save = 0;
 
 	// check for invincibility
-	if ((client && client->invincible_framenum > level.framenum ) && !(dflags & DAMAGE_NO_PROTECTION))
 	{
-		if (targ->pain_debounce_time < level.time)
+		qboolean invincible = (client && client->invincible_framenum > level.framenum);
+		qboolean bypass_invincibility = (dflags & DAMAGE_NO_PROTECTION);
+
+		// az: add decino's invincibility not working for tank morphs from indy
+		qboolean is_player_tank = targ->mtype == P_TANK && targ->owner && targ->owner->client;
+		qboolean ptank_invincible = (is_player_tank && targ->owner->client->invincible_framenum > level.framenum);
+		if ((invincible || ptank_invincible) && !bypass_invincibility)
 		{
-			gi.sound(targ, CHAN_ITEM, gi.soundindex("items/protect3.wav"), 1, ATTN_NORM, 0);
-			targ->pain_debounce_time = level.time + 2;
+			if (targ->pain_debounce_time < level.time)
+			{
+				gi.sound(targ, CHAN_ITEM, gi.soundindex("items/protect3.wav"), 1, ATTN_NORM, 0);
+				targ->pain_debounce_time = level.time + 2;
+			}
+			take = 0;
+			save = damage;
 		}
-		take = 0;
-		save = damage;
 	}
 
 	//dtype = G_DamageType(mod, dflags);

@@ -156,7 +156,7 @@ void InitGame(void)
 	gi.cvar_forceset("g_features", va("%d", GMF_VARIABLE_FPS));
 
 	savemethod = gi.cvar("savemethod", "3", 0);
-	generalabmode = gi.cvar("generalabmode", "0", CVAR_LATCH);
+	generalabmode = gi.cvar("generalabmode", "1", CVAR_LATCH);
 	game_path = gi.cvar("game", ".", CVAR_LATCH);
 
 #ifdef Q2PRO_COMPATIBILITY
@@ -361,7 +361,7 @@ void InitGame(void)
 	pregame_time = gi.cvar("pregame_time", "60.0", 0);
 
     start_level = gi.cvar("start_level", "1", CVAR_LATCH);
-    level0_tnl_experience = gi.cvar("vrx_level0_exp_tnl", "2500", CVAR_LATCH);
+    level0_tnl_experience = gi.cvar("vrx_level0_exp_tnl", "1000", CVAR_LATCH);
 
     invasion_enabled = gi.cvar("vrx_invasion_enabled", "1", CVAR_LATCH);
 	vrx_pointmult = gi.cvar("vrx_pointmult", "1.0", CVAR_SERVERINFO/* | CVAR_LATCH*/);

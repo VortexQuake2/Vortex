@@ -21,9 +21,9 @@ int getHardMax(int index, qboolean general, int class);
 void vrx_assign_abilities(edict_t *ent);
 
 
-#define INCREASED_SOFTMAX 20
-#define DEFAULT_SOFTMAX 15
-#define GENERAL_SOFTMAX 8
+#define INCREASED_SOFTMAX 15
+#define DEFAULT_SOFTMAX 10
+#define GENERAL_SOFTMAX 5
 
 typedef struct
 {
@@ -62,7 +62,7 @@ int G_GetHypotenuse(vec3_t v);
 
 //************ misc_stuff.c ************
 qboolean V_AssignClassSkin(edict_t *ent, char *s);
-void giveAdditionalRespawnWeapon(edict_t *ent, int nextWeapon);
+void vrx_give_additional_respawn_weapons(edict_t *ent, int nextWeapon);
 //************ misc_stuff.c ************
 
 //************ g_main.c ************
@@ -183,7 +183,7 @@ int JoinedPlayers();
 //*********** v_client.c **********
 void V_GibSound(edict_t *self, int index);
 
-void VortexPlayerDeath(edict_t *self, edict_t *attacker, edict_t *inflictor);
+void vrx_player_death(edict_t *self, edict_t *attacker, edict_t *inflictor);
 
 //************ vote.c *************
 void CheckPlayerVotes(void);

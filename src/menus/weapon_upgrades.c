@@ -179,7 +179,7 @@ void OpenWeaponUpgradeMenu (edict_t *ent, int lastline)
 {
 	int i;
 
-	if (isMorphingPolt(ent))
+	if (vrx_is_morphing_polt(ent))
 	{
 		safe_cprintf(ent, PRINT_HIGH, "You can't upgrade weapons.\n");
 		return;

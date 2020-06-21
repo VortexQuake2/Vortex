@@ -744,6 +744,7 @@ __inline double __declspec (naked) __fastcall sqrt14(double n)
 } 
 
 #else
+
 vec_t VectorLength(vec3_t v)
 {
 	float	length;
@@ -756,7 +757,9 @@ vec_t VectorLength(vec3_t v)
 
 	return length;
 }
+
 #endif
+
 void VectorInverse (vec3_t v)
 {
 	v[0] = -v[0];

@@ -206,6 +206,8 @@ __inline vec_t VectorLength(vec3_t v)
 vec_t VectorLength(vec3_t v);
 #endif
 
+vec_t VectorLengthSqr(vec3_t v);
+
 void CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross);
 vec_t VectorNormalize (vec3_t v);		// returns vector length
 vec_t VectorNormalize2 (vec3_t v, vec3_t out);

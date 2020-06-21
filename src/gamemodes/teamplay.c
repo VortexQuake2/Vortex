@@ -730,8 +730,8 @@ void retard_awardteampoints (edict_t *self)
         cl_ent->myskills.experience += RETARD_POINTS;
         vrx_check_for_levelup(cl_ent);
         */
-		V_AddFinalExp(cl_ent, RETARD_POINTS);
-        vrx_add_credits(cl_ent, 0, RETARD_CREDITS, false);
+		vrx_apply_experience(cl_ent, RETARD_POINTS);
+        vrx_add_credits(cl_ent, RETARD_CREDITS);
 	}
 }
 

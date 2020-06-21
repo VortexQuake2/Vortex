@@ -12,7 +12,7 @@ void V_Touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf);
 void V_UpdatePlayerAbilities (edict_t *ent);
 qboolean V_HealthCache (edict_t *ent, int max_per_second, int update_frequency_svframes);
 qboolean V_ArmorCache (edict_t *ent, int max_per_second, int update_frequency);
-void V_ResetPlayerState (edict_t *ent);
+void vrx_reset_player_state (edict_t *ent);
 void V_TouchSolids (edict_t *ent);
 qboolean V_HasSummons (edict_t *ent);
 void V_ValidateCombatPreferences (edict_t *ent);//4.5
@@ -22,5 +22,5 @@ void V_ShellAbilityEffects (edict_t *ent);
 int V_GetNumPlayerPrefs (qboolean monsters, qboolean players);//4.5
 qboolean V_MatchPlayerPrefs (edict_t *player, int monsters, int players);//4.5
 qboolean isMonster (edict_t *ent);
-qboolean isMorphingPolt(edict_t *ent);
+qboolean vrx_is_morphing_polt(edict_t *ent);
 //************************************************************************************************

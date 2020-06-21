@@ -15,7 +15,7 @@ char *V_GetClassSkin(edict_t *ent) {
         case CLASS_POLTERGEIST:
             c1 = class2_model->string;
             c2 = class2_skin->string;
-            if (isMorphingPolt(ent)) {
+            if (vrx_is_morphing_polt(ent)) {
                 c1 = class9_model->string;
                 c2 = class9_skin->string;
             }
@@ -36,6 +36,10 @@ char *V_GetClassSkin(edict_t *ent) {
             c1 = class6_model->string;
             c2 = class6_skin->string;
             break;
+        case CLASS_ALIEN:
+                c1 = class11_model->string;
+                c2 = class11_skin->string;
+                break;
             /*case CLASS_CLERIC:
                 c1 = class7_model->string;
                 c2 = class7_skin->string;
@@ -53,10 +57,7 @@ char *V_GetClassSkin(edict_t *ent) {
                 c1 = class10_model->string;
                 c2 = class10_skin->string;
                 break;
-            case CLASS_ALIEN:
-                c1 = class11_model->string;
-                c2 = class11_skin->string;
-                break;
+            
             case CLASS_KAMIKAZE:
                 c1 = class12_model->string;
                 c2 = class12_skin->string;
@@ -87,7 +88,7 @@ qboolean V_AssignClassSkin(edict_t *ent, char *s) {
         return false;
 
     // don't assign class skins in teamplay modes
-    // az 3.4a support ctf skins. hue
+    // az 3.4a support ctf skins.
     /*if (ctf->value || domination->value || ptr->value || tbi->value)
         return false;*/
 

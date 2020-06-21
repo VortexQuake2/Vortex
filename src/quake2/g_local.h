@@ -116,6 +116,9 @@ extern long FLAG_FRAMES;
 
 #define FRAMETIME		(1/sv_fps->value)
 
+// scale 10 fps value to sv_fps value
+double scale_fps(double value);
+
 // server frame count to fixed-time quake 2 frame count
 int sf2qf(int frames);
 
@@ -617,6 +620,11 @@ typedef struct
 //	qboolean	melee;				// whether or not the monster should circle strafe
 	dmglist_t	dmglist[MAX_CLIENTS];		// keep track of damage by players
 	qboolean	slots_freed;		// true if player slots have been refunded prior to removal
+
+	// az begin - targeting
+	int target_index; // for ai
+	edict_t *last_target_scanner;
+	// az end
 } monsterinfo_t;
 
 extern	game_locals_t	game;
@@ -1105,7 +1113,7 @@ void EndDMLevel (void);
 
 void vrx_start_reign(edict_t *ent);
 
-int vrx_add_credits(edict_t *ent, float level_diff, int bonus, qboolean client);
+void vrx_add_credits(edict_t *ent, int add_credits);
 void RemoveAllAuras (edict_t *ent);
 void RemoveAllCurses (edict_t *ent);
 void PTRInit (void);
@@ -1131,7 +1139,7 @@ void G_TeleportNearbyEntities(vec3_t point, float radius, qboolean vis, edict_t 
 
 void stuffcmd(edict_t *ent, char *s);
 
-void Add_ctfteam_exp(edict_t *ent, int points);
+void vrx_add_team_exp(edict_t *ent, int points);
 
 void vrx_check_for_levelup(edict_t *ent);
 
@@ -1239,6 +1247,7 @@ void vrx_remove_player_summonables(edict_t *self);//GHz
 //
 void AI_SetSightClient (void);
 
+void ai_eval_targets(); // az
 void ai_stand (edict_t *self, float dist);
 void ai_move (edict_t *self, float dist);
 void ai_walk (edict_t *self, float dist);
@@ -1755,7 +1764,6 @@ struct edict_s
 	float		dmg_radius;
 	int			sounds;			//make this a spawntemp var?
 	int			count;
-	qboolean exploded; // don't explode more than once at death. lol
 
 	edict_t		*chain;
 	edict_t		*prev_chain;
@@ -1872,6 +1880,11 @@ struct edict_s
 	int movetype_frame;	// server frame to restore old movetype
 
 	//K03 End
+
+	// az begin
+	qboolean	exploded; // az: don't explode more than once at death. lol
+	// az end
+
 	edict_t		*selected[4];
 	edict_t		*other;
 	edict_t		*supplystation;
@@ -2206,7 +2219,8 @@ int V_GetRuneWeaponPts(edict_t *ent, item_t *rune);
 int V_GetRuneAbilityPts(edict_t *ent, item_t *rune);
 
 qboolean V_CommitCharacterData(edict_t *ent);
-qboolean IsNewbieBasher (edict_t *player);
+qboolean IsNewbieBasher (const edict_t *player);
+void VortexSpreeAbilities(edict_t *attacker);
 qboolean TeleportNearTarget (edict_t *self, edict_t *target, float dist);
 qboolean FindValidSpawnPoint (edict_t *ent, qboolean air);
 void ValidateAngles (vec3_t angles);
@@ -2219,7 +2233,7 @@ void CreateRandomPlayerBoss (qboolean find_new_candidate);
 qboolean BossExists (void);
 int numNearbyEntities (edict_t *ent, float dist, qboolean vis);
 void RemoveLasers (edict_t *ent);
-int V_AddFinalExp (edict_t *player, int exp);
+int vrx_apply_experience (edict_t *player, int exp);
 //K03 End
 
 #endif

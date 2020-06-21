@@ -1,10 +1,6 @@
 #ifndef TALENTS_H
 #define TALENTS_H
 
-#define MAX_TALENTS			15	//Max # of talents for each class.
-#define TALENT_MIN_LEVEL	10
-#define TALENT_MAX_LEVEL	20
-
 //Talent ID numbers. The TALENT_ prefix is for "Vortex Talent".
 //It is only there to make the talents easy to select using intellisense.
 //Soldier

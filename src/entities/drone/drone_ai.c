@@ -20,6 +20,136 @@ qboolean drone_findtarget (edict_t *self, qboolean force);
 edict_t *drone_get_target (edict_t *self, qboolean get_medic_target, qboolean get_enemy, qboolean get_navi);
 void drone_wakeallies (edict_t *self);
 
+edict_t *potential_targets[MAX_EDICTS];
+float potential_target_distances[MAX_EDICTS][MAX_EDICTS];
+int potential_target_count = 0;
+
+/*
+=============
+ai_eval_targets
+
+Makes a list of all potential targets -- to avoid checking over and over once per enemy when finding
+new goals.
+=============
+*/
+void ai_eval_targets() {
+	edict_t *from;
+	potential_target_count = 0;
+	for (from = g_edicts; from < &g_edicts[globals.num_edicts]; from++) {
+		// checks: G_EntIsAlive, G_EntExists:
+		// that it is also not null, and also in use, is alive,
+		// takedamage, is solid (so not a spectator), not respawning, 
+		// no chat protect, no notarget, not cloaked, not a forcewall
+		// not in godmode, and not frozen.
+		if (!G_ValidTargetEnt(from, true)) continue;
+		from->monsterinfo.target_index = potential_target_count;
+		potential_targets[potential_target_count++] = from;
+	}
+
+	/* 
+		the older findclosestradius sort of takes the center between the origin and
+		the bounding box. this seems a little unneccesary. i give that up
+		for a little more efficiency by not calculating distance vectors
+		so many times.
+		the target distance matrix is symmetrical across the diagonal
+		so we only reach the um, upper diagonal assuming top left is 0,0.
+	*/
+	for (int i = 0; i < potential_target_count; i++) {
+		for (int j = i; j < potential_target_count; j++) {
+			if (i == j) {
+				potential_target_distances[i][j] = 0;
+				continue;
+			}
+
+			vec3_t eorg;
+			// the order of the subtraction doesn't really matter
+			VectorSubtract(potential_targets[i]->s.origin, potential_targets[j]->s.origin, eorg);
+
+			// make use of that symmetry
+			float len = VectorLengthSqr(eorg);
+			potential_target_distances[i][j] = len;
+			potential_target_distances[j][i] = len;
+		}
+	}
+}
+
+// az: findclosestradius_monmask except ents are only validated once.
+// so it only does the checks that are specific to the current monster.
+edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t* self, int* start)
+{
+	edict_t *found = NULL;
+	float	found_rad, prev_rad;
+	qboolean prev_found = false;
+	float rad = self->monsterinfo.sight_range; 
+	rad *= rad; // az: square it
+
+	if (prev_ed) {
+		/*for (int j = 0; j < 3; j++)
+			eorg[j] = self->s.origin[j] - (prev_ed->s.origin[j] + (prev_ed->mins[j] + prev_ed->maxs[j])*0.5);
+		prev_rad = VectorLengthSqr(eorg);*/
+		prev_rad = potential_target_distances[self->monsterinfo.target_index][prev_ed->monsterinfo.target_index];
+	}
+	else
+	{
+		prev_rad = rad + 1;
+	}
+	found_rad = 0;
+
+	for (int i = *start; i < potential_target_count; i++, (*start)++)
+	{
+		edict_t* from = potential_targets[i];
+		float vlen = potential_target_distances[self->monsterinfo.target_index][i];
+
+		/*for (int j = 0; j < 3; j++)
+			eorg[j] = self->s.origin[j] - (from->s.origin[j] + (from->mins[j] + from->maxs[j])*0.5);
+		vlen = VectorLengthSqr(eorg);*/
+
+		if (vlen > rad) // found edict is outside scanning radius
+			continue;
+		if ((vlen < prev_rad) && (prev_ed))  // found edict is closer than the previously returned edict
+			continue; // thus this edict must have been returned in an earlier call
+		if ((vlen == prev_rad) && (!prev_found)) // several edicts may be at the same range
+			continue; // from the center of scan, so if the current edict is "in front of" 
+		if (from == prev_ed) // the previously returned one, it must have been returned
+			prev_found = true; // in an earlier call
+
+		// az: we already looked at this ent (not sure why this could end in an infinite loop without this check...)
+		if (from->monsterinfo.last_target_scanner == self) 
+			continue;
+
+		if ((!found) || (vlen <= found_rad)) {
+			found = from;
+			found_rad = vlen;
+		}
+	}
+
+	if (found)
+		found->monsterinfo.last_target_scanner = self;
+
+	return found;
+}
+
+qboolean G_ValidTarget_Lite(const edict_t *self, const edict_t *target, qboolean vis)
+{
+	if (trading->value)
+		return false;
+	// check for targets that require medic healing
+	if (self && self->mtype == M_MEDIC)
+	{
+		if (M_ValidMedicTarget(self, target))
+			return true;
+	}
+
+	if (self)
+	{
+		if (vis && !visible(self, target))
+			return false;
+		if (OnSameTeam(self, target))
+			return false;
+	}
+	return true;
+}
+
 /*
 =============
 ai_move
@@ -366,18 +496,17 @@ edict_t *drone_get_medic_target (edict_t *self)
 	return NULL;
 }
 
-edict_t *findclosestradius_monmask (edict_t *prev_ed, vec3_t org, float rad);
-
 edict_t *drone_get_enemy (edict_t *self)
 {
 	edict_t *target = NULL;
+	int start = 0;
 
 	// find an enemy
-	while ((target = findclosestradius_monmask (target, self->s.origin, 
-		self->monsterinfo.sight_range)) != NULL)
+	while ((target = findclosestradius_targets (target, self, &start)) != NULL)
 	{
 		// screen out invalid targets
-		if (!G_ValidTarget(self, target, true))
+		// az: Replaced G_ValidTarget for lighter check.
+		if (!G_ValidTarget_Lite(self, target, true))
 			continue;
 		// ignore low-level players
 		if (M_IgnoreInferiorTarget(self, target))
@@ -1246,7 +1375,7 @@ edict_t *drone_findpspawn(edict_t *self)
 edict_t *drone_findnavi (edict_t *self)
 {
 	edict_t *e=NULL;
-	static edict_t *navis[12];
+	static edict_t *navis[64];
 	static qboolean initialized = false;
 	static int count = 0;
 	int iters = 0;
@@ -1256,7 +1385,7 @@ edict_t *drone_findnavi (edict_t *self)
 		return NULL;
 
 	if (!initialized)
-		for (i = 0; i<12; i++ )
+		for (i = 0; i<64; i++ )
 			navis[i] = NULL;
 
 	if(self->prev_navi)
@@ -1299,7 +1428,7 @@ edict_t *drone_findnavi (edict_t *self)
 				break;
 			continue;
 		}
-		if (count == 12)
+		if (count == 64)
 		{
 			break;
 		}
@@ -1321,7 +1450,7 @@ edict_t *drone_findnavi (edict_t *self)
 	if (e != NULL)
 		return e;
 	else
-		return drone_findpspawn(self); // vrc 2.32: Ebil.
+		return drone_findpspawn(self); // vrc 2.32.
 }
 
 int NextWaypointLocation (vec3_t start, vec3_t loc, int *wp);

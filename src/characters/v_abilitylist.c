@@ -29,8 +29,8 @@ abildefinition_t SOLDIER_abil[] = {
 	{ SPIKE_GRENADE     , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ EMP               , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ MIRV              , 0 , DEFAULT_SOFTMAX   , 0  },
-	/*{ CREATE_QUAD       , 0 , 1                 , 0  },
-	{ CREATE_INVIN      , 0 , 1                 , 0  },*/
+	{ CREATE_QUAD       , 0 , 1                 , 0  },
+	{ CREATE_INVIN      , 0 , 1                 , 0  },
 	{ GRAPPLE_HOOK      , 3 , 3                 , 0  },
 	{ SELFDESTRUCT      , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ PROXY             , 0 , DEFAULT_SOFTMAX   , 0  },
@@ -45,11 +45,11 @@ abildefinition_t SOLDIER_abil[] = {
 abildefinition_t DEMON_abil[] = { // DEMON
 	{ VAMPIRE           , 0 , INCREASED_SOFTMAX , 0  },
 	{ GHOST             , 0 , DEFAULT_SOFTMAX   , 0  },
-	// { LIFE_DRAIN        , 0 , DEFAULT_SOFTMAX   , 0  },
+	{ LIFE_DRAIN        , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ FLESH_EATER       , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ CORPSE_EXPLODE    , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ MIND_ABSORB       , 0 , DEFAULT_SOFTMAX   , 0  },
-	// { AMMO_STEAL        , 0 , DEFAULT_SOFTMAX   , 0  },
+	{ AMMO_STEAL        , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ CLOAK             , 1 , 10                , 0  },
 	{ MONSTER_SUMMON    , 0 , INCREASED_SOFTMAX , 0  },
 	{ HELLSPAWN         , 0 , INCREASED_SOFTMAX , 0  },
@@ -58,7 +58,7 @@ abildefinition_t DEMON_abil[] = { // DEMON
 	{ AMP_DAMAGE        , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ CRIPPLE           , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ CURSE             , 0 , DEFAULT_SOFTMAX   , 0  },
-	// { WEAKEN            , 0 , DEFAULT_SOFTMAX   , 0  },
+	{ WEAKEN            , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ CONVERSION        , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ JETPACK           , 1 , 1                 , 0  },
 	{-1, 0, 0, 0} // Guardian (Add skills above this)
@@ -102,14 +102,14 @@ abildefinition_t ARCANIST_abil[] = { // ARCANIST
 
 abildefinition_t PALADIN_abil[] = { // paladin
 	{ SALVATION         , 0 , DEFAULT_SOFTMAX   , 0  },
-	// { HEALING           , 0 , DEFAULT_SOFTMAX   , 0  },
+	{ HEALING           , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ BLESS             , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ YIN               , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ YANG              , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ HAMMER            , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ DEFLECT           , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ SUPER_SPEED       , 1 , 1                 , 0  },
-	// { DOUBLE_JUMP       , 1 , 1                 , 0  },
+	{ DOUBLE_JUMP       , 1 , 1                 , 0  },
 	{ ARMOR_UPGRADE     , 0 , 10                , 0  },
 	{ REGENERATION      , 0 , DEFAULT_SOFTMAX   , 0  },
 	{ POWER_SHIELD      , 0 , DEFAULT_SOFTMAX   , 0  },
@@ -259,6 +259,8 @@ int getHardMax(int index, qboolean general, int class)
 					return 15;
 				break;
 			}
+		case GRAPPLE_HOOK:
+			return 3;
 		//Everything else
 		default:
 			if (GetAbilityUpgradeCost(index) < 2)

@@ -511,7 +511,7 @@ void myChickRocket (edict_t *self)
 	damage = 50 + 15*self->monsterinfo.level;
 	if ( self->activator && self->activator->client )
 	{
-		speed = 200 + 30*self->monsterinfo.level;
+		speed = 350 + 30 * log2(self->monsterinfo.level);
 	}
 	else
 	{
@@ -811,9 +811,9 @@ void init_drone_bitch (edict_t *self)
 	VectorSet (self->mins, -16, -16, 0);
 	VectorSet (self->maxs, 16, 16, 56);
 	
-	if (self->activator && self->activator->client)
-		self->health = 120 + 75*self->monsterinfo.level;
-	else
+	// if (self->activator && self->activator->client) 
+	// 	self->health = 120 + 75*self->monsterinfo.level;
+	// else
 		self->health = 80 + 55*self->monsterinfo.level;
 
 	self->max_health = self->health;

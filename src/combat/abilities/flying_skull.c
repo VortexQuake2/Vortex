@@ -545,9 +545,12 @@ void skull_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 	}
 }
 
+float monster_increaseDamageByTalent(edict_t *owner, float damage);
+
 void SpawnSkull (edict_t *ent)
 {
 	int		cost = SKULL_COST;
+	float mult = 1.0;
 	vec3_t	forward, right, start, end, offset;
 	edict_t *skull;
 	trace_t	tr;
@@ -567,6 +570,18 @@ void SpawnSkull (edict_t *ent)
 	skull->monsterinfo.control_cost = 3; // used for monster exp
 	skull->health = SKULL_INITIAL_HEALTH + SKULL_ADDON_HEALTH*ent->myskills.abilities[HELLSPAWN].current_level;//ent->myskills.level;
 	skull->dmg = SKULL_INITIAL_DAMAGE + SKULL_ADDON_DAMAGE*ent->myskills.abilities[HELLSPAWN].current_level;//*ent->myskills.level;
+
+	// az: add decino's fix from vrx-indy
+	skull->dmg = monster_increaseDamageByTalent(ent, skull->dmg);
+
+	if ((ent && ent->inuse && ent->client) || (skull->activator && skull->activator->inuse && skull->activator->client))
+	{
+		int talentLevel = vrx_get_talent_level(ent, TALENT_CORPULENCE);
+		int talentLevel2 = vrx_get_talent_level(ent, TALENT_LIFE_TAP);
+		if(talentLevel > 0)	mult +=	2.2 * talentLevel;	//+30% per upgrade
+		if(talentLevel2 > 0) mult += 1.1 * talentLevel2;
+	}
+	skull->health *= mult;
 
 	skull->max_health = skull->health;
 	skull->gib_health = -150;
