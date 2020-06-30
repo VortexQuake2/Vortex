@@ -305,29 +305,29 @@ float vrx_get_spree_bonus(const edict_t *attacker, float bonus);
 
 float vrx_get_target_alliance_bonus(const edict_t *attacker, const edict_t *target, float bonus);
 
-void vrx_get_player_kill_xp(edict_t *attacker, const edict_t *target, float level_diff, float dmgmod, 
-                     int *base_exp, int *credits, int *break_points, float *bonus);
+void vrx_get_player_kill_xp(edict_t *attacker, const edict_t *target, float level_diff, float dmgmod,
+                            int *base_exp, int *credits, int *break_points, float *bonus);
 
 void vrx_do_nfer_effects(edict_t *attacker, edict_t *target);
 
 void vrx_get_monster_xp(
-    edict_t *attacker, 
-    const edict_t *targ, 
-    float dmgmod, 
-    int *base_exp,
-    int *credits, 
-    float *level_diff
+        edict_t *attacker,
+        const edict_t *targ,
+        float dmgmod,
+        int *base_exp,
+        int *credits,
+        float *level_diff
 );
 
 /* Side effects: changes nfer if targ is a player! */
 int vrx_get_kill_base_experience(
-    edict_t* attacker, 
-    edict_t* targ, 
-    edict_t* targetclient,
-    float force_leveldiff,  // set to < 0 to calculate on our own
-    float mult, // set to != 1 to give mult times the exp
-    float *dmgmod_out, // if not null, scales by damage% and writes it to this ptr
-    int *credits
+        edict_t *attacker,
+        edict_t *targ,
+        edict_t *targetclient,
+        float force_leveldiff,  // set to < 0 to calculate on our own
+        float mult, // set to != 1 to give mult times the exp
+        float *dmgmod_out, // if not null, scales by damage% and writes it to this ptr
+        int *credits
 ) {
     int base_exp;
     int exp_points = 0;
@@ -381,25 +381,25 @@ int vrx_get_kill_base_experience(
     // we killed another player
     if (targ->client) {
         vrx_get_player_kill_xp(
-            attacker, 
-            targetclient, 
-            level_diff, 
-            dmgmod,
-            &base_exp, 
-            credits, 
-            &break_points, 
-            &bonus
+                attacker,
+                targetclient,
+                level_diff,
+                dmgmod,
+                &base_exp,
+                credits,
+                &break_points,
+                &bonus
         );
     }
-    // we killed something else
+        // we killed something else
     else {
         vrx_get_monster_xp(
-            attacker, 
-            targ, 
-            dmgmod, 
-            &base_exp, 
-            credits, 
-            &level_diff
+                attacker,
+                targ,
+                dmgmod,
+                &base_exp,
+                credits,
+                &level_diff
         );
     }
 
@@ -424,28 +424,30 @@ int vrx_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) {
     int exp_points = max_points;
     char name[50] = {0};
 
+    // award experience to non-allied players
     if (!allies->value || ((exp_points = AddAllyExp(attacker, max_points)) < 1))
-        // award experience to non-allied players
         exp_points = vrx_apply_experience(attacker, max_points);
 
     vrx_add_credits(attacker, credits);
 
-    if (targ->client) {
-        strcat(name, targetclient->client->pers.netname);
-        clevel = targetclient->myskills.level;
-    } else {
-        strcat(name, V_GetMonsterName(targ));
-        clevel = targ->monsterinfo.level;
-    }
+    if (!attacker->ai.is_bot && (exp_points > 0 || credits > 0)) {
+        if (targ->client) {
+            strcat(name, targetclient->client->pers.netname);
+            clevel = targetclient->myskills.level;
+        } else {
+            strcat(name, V_GetMonsterName(targ));
+            clevel = targ->monsterinfo.level;
+        }
 
-    if (!attacker->ai.is_bot) {
         char *s1 = HiPrint(va("%dxp + $%d", exp_points, credits));
         char *s2 = HiPrint(va("%s (%d)", name, clevel));
 
-        gi.cprintf(attacker,
-                   PRINT_HIGH, "Gained %s (%.0f%% dmg. to %s) \n",
-                   s1,
-                   (dmgmod * 100), s2);
+        gi.cprintf(
+                attacker,
+                PRINT_HIGH,
+                "Gained %s (%.0f%% dmg. to %s) \n",
+                s1, (dmgmod * 100), s2
+        );
 
         V_Free(s1);
         V_Free(s2);
@@ -490,13 +492,13 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
 
         leveldiff = vrx_get_level_difference_multiplier(attacker, targ, targetclient);
         exp = vrx_get_kill_base_experience(
-            attacker, 
-            targ, 
-            targetclient, 
-            leveldiff, // scale by own level difference
-            1.f / player_cnt, // divide exp. across players
-            NULL, // we don't care about the damage mod
-            &credits
+                attacker,
+                targ,
+                targetclient,
+                leveldiff, // scale by own level difference
+                1.f / player_cnt, // divide exp. across players
+                NULL, // we don't care about the damage mod
+                &credits
         );
 
         vrx_apply_experience(player, exp);
@@ -521,13 +523,13 @@ double getOwnLevelBaseBonus(int level, float xpPerKill) {
 
 /* No side effects. */
 void vrx_get_monster_xp(
-    edict_t *attacker, 
-    const edict_t *targ, 
-    float dmgmod, 
-    int *base_exp,
-    int *credits, 
-    float *level_diff
-)  {
+        edict_t *attacker,
+        const edict_t *targ,
+        float dmgmod,
+        int *base_exp,
+        int *credits,
+        float *level_diff
+) {
     (*base_exp) = EXP_WORLD_MONSTER + getOwnLevelBaseBonus(attacker->myskills.level, EXP_PLAYER_BASE);
 
 //4.5 monster bonus flags
@@ -538,9 +540,9 @@ void vrx_get_monster_xp(
         (*level_diff) *= 3.0;
     }
 
-    if (targ->monsterinfo.bonus_flags & BF_GHOSTLY || 
-        targ->monsterinfo.bonus_flags & BF_FANATICAL || 
-        targ->monsterinfo.bonus_flags & BF_BERSERKER || 
+    if (targ->monsterinfo.bonus_flags & BF_GHOSTLY ||
+        targ->monsterinfo.bonus_flags & BF_FANATICAL ||
+        targ->monsterinfo.bonus_flags & BF_BERSERKER ||
         targ->monsterinfo.bonus_flags & BF_GHOSTLY
         || targ->monsterinfo.bonus_flags & BF_STYGIAN)
         (*level_diff) *= 1.5;
@@ -556,15 +558,15 @@ void vrx_get_monster_xp(
 
 /* No side effects besides nfer. */
 void vrx_get_player_kill_xp(
-    edict_t *attacker, 
-    const edict_t *target, 
-    float level_diff, 
-    float dmgmod, 
-    int *base_exp, 
-    int *credits, 
-    int *break_points, 
-    float *bonus) {
-    
+        edict_t *attacker,
+        const edict_t *target,
+        float level_diff,
+        float dmgmod,
+        int *base_exp,
+        int *credits,
+        int *break_points,
+        float *bonus) {
+
     qboolean is_mini = IsNewbieBasher(target);
     // spree break bonus points
     if (target->myskills.streak >= SPREE_START)
@@ -600,10 +602,10 @@ float vrx_get_spree_bonus(const edict_t *attacker, float bonus) {
 }
 
 float vrx_get_level_difference_multiplier(
-    const edict_t *attacker, 
-    const edict_t *targ, 
-    const edict_t *target
-)  {
+        const edict_t *attacker,
+        const edict_t *targ,
+        const edict_t *target
+) {
     float level_diff;
     if (targ->client) // target is a player
         level_diff = (float) (target->myskills.level + 1) / (attacker->myskills.level + 1);
@@ -722,13 +724,12 @@ void vrx_add_exp(edict_t *attacker, edict_t *targ) {
 
     // award experience and credits to anyone that has hurt the targetclient
     // az: in non-invasion modes, don't split up the exp, in invasion, do.
-    if (!invasion->value)
-    {
+    if (!invasion->value) {
         for (i = 0; i < game.maxclients; i++) {
             player = g_edicts + 1 + i;
 
             // award experience and credits to non-spectator clients
-            if (!player->inuse || G_IsSpectator(player) || 
+            if (!player->inuse || G_IsSpectator(player) ||
                 player == targetclient || player->flags & FL_CHATPROTECT)
                 continue;
 
