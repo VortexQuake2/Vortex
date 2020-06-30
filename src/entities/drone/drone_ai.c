@@ -295,17 +295,16 @@ void drone_wakeallies (edict_t *self)
 	}
 }
 
-qboolean M_ValidMedicTarget (edict_t *self, edict_t *target)
-{
-	if (target == self)
-		return false;
+qboolean M_ValidMedicTarget(const edict_t *self, const edict_t *target) {
+    if (target == self)
+        return false;
 
-	if (!G_EntExists(target))
-		return false;
+    if (!G_EntExists(target))
+        return false;
 
-	// don't heal supertank or tank commander boss
-	if (target->monsterinfo.control_cost >= 100)
-		return false;
+    // don't heal supertank or tank commander boss
+    if (target->monsterinfo.control_cost >= 100)
+        return false;
 
 	// don't target players with invulnerability
 	if (target->client && (target->client->invincible_framenum > level.framenum))
@@ -2148,19 +2147,20 @@ void drone_togglelight (edict_t *self)
 	}
 }
 
-void drone_dodgeprojectiles (edict_t *self)
-{
-	// dodge incoming projectiles
-	if (self->health > 0 && self->monsterinfo.dodge && (self->monsterinfo.aiflags & AI_DODGE)
-		&& !(self->monsterinfo.aiflags & AI_STAND_GROUND)) // don't dodge if we are holding position
-	{
-		if (((self->monsterinfo.radius > 0) && ((level.time + 0.3) > self->monsterinfo.eta))
-			|| (level.time + FRAMETIME) > self->monsterinfo.eta) 
-		{
-			self->monsterinfo.dodge(self, self->monsterinfo.attacker, self->monsterinfo.dir, self->monsterinfo.radius);
-			self->monsterinfo.aiflags &= ~AI_DODGE;
-		}
-	}
+void drone_dodgeprojectiles (edict_t *self) {
+    qboolean alive = self->health > 0;
+    qboolean can_dodge = self->monsterinfo.dodge && (self->monsterinfo.aiflags & AI_DODGE);
+    qboolean stand_ground = (self->monsterinfo.aiflags & AI_STAND_GROUND);
+
+    // dodge incoming projectiles
+    if (alive && can_dodge && !stand_ground) // don't dodge if we are holding position
+    {
+        if (((self->monsterinfo.radius > 0) && ((level.time + 0.3) > self->monsterinfo.eta))
+            || (level.time + FRAMETIME) > self->monsterinfo.eta) {
+            self->monsterinfo.dodge(self, self->monsterinfo.attacker, self->monsterinfo.dir, self->monsterinfo.radius);
+            self->monsterinfo.aiflags &= ~AI_DODGE;
+        }
+    }
 }
 
 /*

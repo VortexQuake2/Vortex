@@ -16,9 +16,11 @@ typedef struct
 }que_t;
 
 qboolean que_addent (que_t *que, edict_t *other, float duration);
-void que_removetype (que_t *que, int type, qboolean free);
-qboolean que_typeexists (que_t *que, int type);
-que_t *que_findent (que_t *src, que_t *dst, edict_t *other);
+void que_removetype(que_t *que, int type, qboolean free);
+
+qboolean que_typeexists(const que_t *que, int type);
+
+que_t *que_findent(que_t *src, que_t *dst, edict_t *other);
 
 que_t *que_findtype(que_t *src, que_t *dst, int type);
 

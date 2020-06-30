@@ -20,7 +20,8 @@ file(GLOB_RECURSE VRX_FILES ./src/*.c)
 
 # Set the platform-specific library name and use platform-specific files.
 if (WIN32)
-  set (CC_LIB_NAME gamex86)
+  set(CC_LIB_NAME gamex86)
+  add_definitions(-DWIN32)
   #file (GLOB CC_PLATFORM_FILES source/Platform/windows/*)
 elseif (UNIX)
   # Get machine hardware name (arch), force 386 (if applicable), strip newlines, and store in ARCH

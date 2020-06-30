@@ -1078,8 +1078,10 @@ qboolean G_CanUseAbilities (edict_t *ent, int ability_lvl, int pc_cost);
 qboolean V_CanUseAbilities (edict_t *ent, int ability_index, int ability_cost, qboolean print_msg);
 
 qboolean G_ValidTarget(const edict_t *self, const edict_t *target, qboolean vis);
-qboolean G_ValidTargetEnt (edict_t *target, qboolean alive);
-qboolean G_ValidAlliedTarget (edict_t *self, edict_t *target, qboolean vis);//4.1 Archer
+
+qboolean G_ValidTargetEnt(const edict_t *target, qboolean alive);
+
+qboolean G_ValidAlliedTarget(edict_t *self, edict_t *target, qboolean vis);//4.1 Archer
 edict_t *G_GetClient(edict_t *ent);
 qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs, vec3_t start);
 void G_DrawBoundingBox (edict_t *ent);
@@ -2026,8 +2028,10 @@ void vrx_write_to_logfile(edict_t *ent, char *s);
 void WriteToLogFile (char *char_name, char *s) ;
 void WriteServerMsg (char *s, char *error_string, qboolean print_msg, qboolean save_to_logfile);
 
-void cloak(edict_t *ent); 
-qboolean G_EntExists(edict_t *ent);
+void cloak(edict_t *ent);
+
+qboolean G_EntExists(const edict_t *ent);
+
 void TossClientBackpack(edict_t *player, edict_t *attacker);
 
 // az begin
@@ -2079,9 +2083,11 @@ void Cmd_Decoy_f (edict_t *ent);
 qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, qboolean regen_health, qboolean regen_armor, qboolean regen_ammo, int *nextframe);
 qboolean M_NeedRegen (edict_t *ent);
 qboolean M_IgnoreInferiorTarget (edict_t *self, edict_t *target);//4.5
-qboolean M_MeleeAttack (edict_t *self, float range, int damage, int knockback);
-qboolean M_ValidMedicTarget (edict_t *self, edict_t *target);
-qboolean M_Upkeep (edict_t *self, int delay, int upkeep_cost);
+qboolean M_MeleeAttack(edict_t *self, float range, int damage, int knockback);
+
+qboolean M_ValidMedicTarget(const edict_t *self, const edict_t *target);
+
+qboolean M_Upkeep(edict_t *self, int delay, int upkeep_cost);
 void M_FindPath (edict_t *self, vec3_t goalpos, qboolean compute_path_now);
 void M_Remove (edict_t *self, qboolean refund, qboolean effect);
 qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax);

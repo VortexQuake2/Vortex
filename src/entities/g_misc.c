@@ -461,24 +461,24 @@ void Sun_Think(edict_t *self)
 
 void InitSunEntity(void)
 {
-	edict_t *sun;
-	sun = G_Spawn();
-	sun->svflags |= SVF_NOCLIENT;
-	sun->think = Sun_Think;
-	sun->nextthink = level.time + 10.0;
-	gi.linkentity(sun);
-	if (invasion->value < 2)
-	{
-		fullbright = 'z';
-		nightbright = 'd';
-		nighttimelight = 'k';
-	}
-	else
-	{
-		fullbright = 's';
-		nightbright = 'c';
-		nighttimelight = 'i';
-	}
+    edict_t *sun;
+    sun = G_Spawn();
+    sun->svflags |= SVF_NOCLIENT;
+    sun->think = Sun_Think;
+    sun->nextthink = level.time + 10.0;
+    gi.linkentity(sun);
+    /*if (invasion->value < 2)
+    {
+        fullbright = 'n';
+        nightbright = 's';
+        nighttimelight = 'h';
+    }
+    else
+    {*/
+    fullbright = 'n';
+    nightbright = 'h';
+    nighttimelight = 'k';
+    //}
 }
 
 

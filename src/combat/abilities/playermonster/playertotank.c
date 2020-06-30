@@ -156,15 +156,14 @@ void PM_SyncWithPlayer (edict_t *monster)
 		monster->flags &= ~FL_GODMODE;
 }
 
-edict_t *PM_GetPlayer(const edict_t *e)
-{
-	if (!e || !e->inuse)
-		return NULL;
-	if (e->client)
-		return e;
-	if (PM_MonsterHasPilot(e))
-		return e->activator;
-	return NULL;
+edict_t *PM_GetPlayer(edict_t *e) {
+    if (!e || !e->inuse)
+        return NULL;
+    if (e->client)
+        return e;
+    if (PM_MonsterHasPilot(e))
+        return e->activator;
+    return NULL;
 }
 
 qboolean PM_MonsterHasPilot(const edict_t *monster)
@@ -181,10 +180,9 @@ qboolean PM_MonsterHasPilot(const edict_t *monster)
 	return (monster->activator->owner && (monster->activator->owner == monster));
 }
 
-qboolean PM_PlayerHasMonster (edict_t *player)
-{
-	return (player && player->inuse && player->client && player->owner 
-		&& player->owner->inuse && player->owner->mtype);
+qboolean PM_PlayerHasMonster(const edict_t *player) {
+    return (player && player->inuse && player->client && player->owner
+            && player->owner->inuse && player->owner->mtype);
 }
 
 void PM_RemoveMonster (edict_t *player)

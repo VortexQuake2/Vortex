@@ -1019,8 +1019,8 @@ Returns true if the entity is currently in-use by the game
 engine, can take damage, and is currently solid
 =============
 */
-qboolean G_EntExists (edict_t *ent) {
-	return (ent && ent->inuse && ent->takedamage && ent->solid != SOLID_NOT);
+qboolean G_EntExists(const edict_t *ent) {
+    return (ent && ent->inuse && ent->takedamage && ent->solid != SOLID_NOT);
 }
 
 qboolean G_ClientExists(edict_t *player) {
@@ -1170,17 +1170,14 @@ vis			whether or not a visibility check should be run
 alive		true if a valid target must be alive
 =============
 */
-qboolean G_ValidTargetEnt (edict_t *target, qboolean alive)
-{
-	if (alive)
-	{
-		if (!G_EntIsAlive(target))
-			return false;
-	}
-	else if (!G_EntExists(target))
-		return false;
+qboolean G_ValidTargetEnt(const edict_t *target, qboolean alive) {
+    if (alive) {
+        if (!G_EntIsAlive(target))
+            return false;
+    } else if (!G_EntExists(target))
+        return false;
 
-	//4.2 G_EntIsAlive() will return true for player-monsters, but we never want to target them
+    //4.2 G_EntIsAlive() will return true for player-monsters, but we never want to target them
 	if (!target->takedamage || (target->solid == SOLID_NOT))
 		return false;
 	// don't target players with invulnerability

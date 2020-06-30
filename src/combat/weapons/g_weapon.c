@@ -76,6 +76,8 @@ static void check_dodge (edict_t *self, vec3_t start, vec3_t dir, int speed, int
 				continue;
 			if (!blip->monsterinfo.dodge)
 				continue;
+			if (!infront(blip, self)) // az: can they see it coming?
+			    continue;
 		//	gi.dprintf("found monster\n");
 			VectorSubtract(tr.endpos, start, v);
 			eta = (VectorLength(v) - blip->maxs[0]) / (float)speed;

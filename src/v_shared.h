@@ -288,20 +288,28 @@ void DroneRemoveSelected(edict_t *ent, edict_t *drone);
 // general player-monster stuff
 // this should eventually be moved to its own file
 void PM_RestorePlayer(edict_t *ent);
+
 void PM_RemoveMonster(edict_t *monster);
+
 void PM_Effects(edict_t *ent);
 
 qboolean PM_MonsterHasPilot(const edict_t *monster);
-qboolean PM_PlayerHasMonster(edict_t *player);
 
-edict_t *PM_GetPlayer(const edict_t *e); // returns player entity
+qboolean PM_PlayerHasMonster(const edict_t *player);
+
+edict_t *PM_GetPlayer(edict_t *e); // returns player entity
 void PM_UpdateChasePlayers(edict_t *ent);
+
 //***** PLAYER-MONSTER STUFF ******
 void dmgListCleanup(edict_t *self, qboolean clear_all);
+
 float GetTotalBossDamage(edict_t *self);
+
 float GetPlayerBossDamage(edict_t *player, edict_t *boss);
+
 qboolean SpawnWaitingPlayers(void);
 
 // etc
 int vrx_get_ability_upgrade_cost(int index);
+
 #endif

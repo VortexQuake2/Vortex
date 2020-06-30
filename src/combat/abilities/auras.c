@@ -109,17 +109,13 @@ void que_list (que_t *que)
 	}
 }
 
-qboolean que_typeexists (que_t *que, int type)
-{
-	int i;
+qboolean que_typeexists(const que_t *que, int type) {
+    int i;
 
-	for (i=0; i<QUE_MAXSIZE; i++)
-	{
-		if (que[i].ent && que[i].ent->inuse && que[i].ent->owner && (que[i].time > level.time))
-		{
-			//Searching for ANY curse?
-			if (type == 0)
-			{
+    for (i = 0; i < QUE_MAXSIZE; i++) {
+        if (que[i].ent && que[i].ent->inuse && que[i].ent->owner && (que[i].time > level.time)) {
+            //Searching for ANY curse?
+            if (type == 0) {
 				//3.0 blessings don't count as a curse, so skip them whenever they are found
 				if (que[i].ent->atype)
 				{
