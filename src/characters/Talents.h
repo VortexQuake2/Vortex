@@ -99,12 +99,10 @@ typedef struct talent_s
 }
 talent_t;
 
-typedef struct talentlist_s
-{
-	int			count;
-	int			talentPoints;
-	talent_t	talent[MAX_TALENTS];
-}
-talentlist_t;
+typedef struct talentlist_s {
+    int count;
+    int talentPoints;
+    talent_t talent[MAX_TALENTS];
+} talentlist_t;
 
 #endif

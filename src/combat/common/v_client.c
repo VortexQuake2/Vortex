@@ -92,7 +92,7 @@ void vrx_add_respawn_items(edict_t *ent) {
     //if (!ent->myskills.abilities[START_ARMOR].disable)
     //	ent->client->pers.inventory[ITEM_INDEX(FindItem("Body Armor"))] = ((MAX_ARMOR(ent))*0.2)*ent->myskills.abilities[START_ARMOR].current_level;
     if ((ent->myskills.level >= 10) ||
-        (ent->myskills.class_num == CLASS_PALADIN)) // give starting armor to level 10+ and knight
+        (ent->myskills.class_num == CLASS_KNIGHT)) // give starting armor to level 10+ and knight
         ent->client->pers.inventory[ITEM_INDEX(FindItem("Body Armor"))] += 50;
     if (ent->myskills.boss > 0)
         ent->client->pers.inventory[ITEM_INDEX(FindItem("Body Armor"))] = MAX_ARMOR(ent);
@@ -156,7 +156,7 @@ void vrx_give_additional_respawn_weapons(edict_t *ent, int nextWeapon) {
 void vrx_add_respawn_weapon(edict_t *ent, int weaponID) {
     //vrx_add_respawn_items(ent);
 
-    if (ent->myskills.class_num == CLASS_PALADIN) {
+    if (ent->myskills.class_num == CLASS_KNIGHT) {
         ent->myskills.respawn_weapon = 1;
         vrx_pick_respawn_weapon(ent);
     }

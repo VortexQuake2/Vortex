@@ -11,16 +11,16 @@ void OpenMultiUpgradeMenu (edict_t *ent, int lastline, int page, int generaltype
 
 void upgradeSpecialMenu_handler(edict_t *ent, int option)
 {
-	int cost = GetAbilityUpgradeCost(option-1);
-	int inc_max = ent->myskills.abilities[option - 1].max_level + 1;
-	qboolean isLimitedMax = true;
-	qboolean doubledcost = false;
+    int cost = vrx_get_ability_upgrade_cost(option - 1);
+    int inc_max = ent->myskills.abilities[option - 1].max_level + 1;
+    qboolean isLimitedMax = true;
+    qboolean doubledcost = false;
 
-	if (ent->myskills.abilities[option - 1].level == inc_max - 1) // we've reached the limit of this skill
-	{
-		int hmax = getHardMax(option - 1, ent->myskills.abilities[option - 1].general_skill, ent->myskills.class_num);
-		cost *= 2;
-		doubledcost = true; // we're getting past the max level
+    if (ent->myskills.abilities[option - 1].level == inc_max - 1) // we've reached the limit of this skill
+    {
+        int hmax = getHardMax(option - 1, ent->myskills.abilities[option - 1].general_skill, ent->myskills.class_num);
+        cost *= 2;
+        doubledcost = true; // we're getting past the max level
 
 		if (hmax >= 10) // Not a limited hardmax, we can upgrade 'infinitely'
 		{
@@ -204,20 +204,18 @@ int getMultiPageIndex (edict_t *ent, int page, int mode)
 	return i;
 }
 
-void UpgradeAbility(edict_t *ent, int ability_index)
-{
-	int cost;
-	cost = GetAbilityUpgradeCost(ability_index);
+void UpgradeAbility(edict_t *ent, int ability_index) {
+    int cost;
+    cost = vrx_get_ability_upgrade_cost(ability_index);
 
-	//We are upgrading
-	if (ent->myskills.speciality_points < cost)
-	{
-		//You need 1 points? let's fix that:
-		if (cost > 1)
-			safe_cprintf(ent, PRINT_HIGH, va("You need %d points to upgrade this ability.\n", cost));
-		else safe_cprintf(ent, PRINT_HIGH, va("You need one point to upgrade this ability.\n"));
-		return;
-	}
+    //We are upgrading
+    if (ent->myskills.speciality_points < cost) {
+        //You need 1 points? let's fix that:
+        if (cost > 1)
+            safe_cprintf(ent, PRINT_HIGH, va("You need %d points to upgrade this ability.\n", cost));
+        else safe_cprintf(ent, PRINT_HIGH, va("You need one point to upgrade this ability.\n"));
+        return;
+    }
 	if (ent->myskills.abilities[ability_index].level < ent->myskills.abilities[ability_index].max_level || ent->myskills.administrator > 999)
 	{
 		ent->myskills.speciality_points -= cost;
@@ -387,27 +385,26 @@ void OpenMultiUpgradeMenu (edict_t *ent, int lastline, int page, int generaltype
 
 		// only display 10 abilities at a time
 		if (abilities > 9)
-			break;
-	}
+            break;
+    }
 
-	//getMultiPageNum(ent, i);
+    //getMultiPageNum(ent, i);
 
-	// menu footer
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, va("You have %d ability points.", ent->myskills.speciality_points), 0);
-	addlinetomenu(ent, " ", 0);
+    // menu footer
+    addlinetomenu(ent, " ", 0);
+    addlinetomenu(ent, va("You have %d ability points.", ent->myskills.speciality_points), 0);
+    addlinetomenu(ent, " ", 0);
 
-	if (i < getLastUpgradeIndex(ent, generaltype))
-	{
-		addlinetomenu(ent, "Next", 200+page);	
-		total_lines++;
-		next_option = true;
-	}
-	
-	if (generaltype == 1)
-		addlinetomenu(ent, "Previous", 300+page);
+    if (i < vrx_get_last_enabled_skill_index(ent, generaltype)) {
+        addlinetomenu(ent, "Next", 200 + page);
+        total_lines++;
+        next_option = true;
+    }
 
-	addlinetomenu(ent, "Exit", 999);
+    if (generaltype == 1)
+        addlinetomenu(ent, "Previous", 300 + page);
+
+    addlinetomenu(ent, "Exit", 999);
 	
 	if (generaltype == 1)
 		setmenuhandler(ent, upgradeMultiMenu_handler);

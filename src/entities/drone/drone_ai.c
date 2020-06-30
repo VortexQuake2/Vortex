@@ -36,15 +36,16 @@ void ai_eval_targets() {
 	edict_t *from;
 	potential_target_count = 0;
 	for (from = g_edicts; from < &g_edicts[globals.num_edicts]; from++) {
-		// checks: G_EntIsAlive, G_EntExists:
-		// that it is also not null, and also in use, is alive,
-		// takedamage, is solid (so not a spectator), not respawning, 
-		// no chat protect, no notarget, not cloaked, not a forcewall
-		// not in godmode, and not frozen.
-		if (!G_ValidTargetEnt(from, true)) continue;
-		from->monsterinfo.target_index = potential_target_count;
-		potential_targets[potential_target_count++] = from;
-	}
+        // checks: G_EntIsAlive, G_EntExists:
+        // that it is also not null, and also in use, is alive,
+        // takedamage, is solid (so not a spectator), not respawning,
+        // no chat protect, no notarget, not cloaked, not a forcewall
+        // not in godmode, and not frozen.
+        if (!G_ValidTargetEnt(from, true)) continue;
+        from->monsterinfo.target_index = potential_target_count;
+        potential_targets[potential_target_count++] = from;
+        from->monsterinfo.last_target_scanner = NULL; // forget who last looked at this ent
+    }
 
 	/* 
 		the older findclosestradius sort of takes the center between the origin and
@@ -106,22 +107,26 @@ edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t* self, int* start)
 
 		if (vlen > rad) // found edict is outside scanning radius
 			continue;
-		if ((vlen < prev_rad) && (prev_ed))  // found edict is closer than the previously returned edict
-			continue; // thus this edict must have been returned in an earlier call
-		if ((vlen == prev_rad) && (!prev_found)) // several edicts may be at the same range
-			continue; // from the center of scan, so if the current edict is "in front of" 
-		if (from == prev_ed) // the previously returned one, it must have been returned
-			prev_found = true; // in an earlier call
+        if ((vlen < prev_rad) && (prev_ed))  // found edict is closer than the previously returned edict
+            continue; // thus this edict must have been returned in an earlier call
+        if ((vlen == prev_rad) && (!prev_found)) // several edicts may be at the same range
+            continue; // from the center of scan, so if the current edict is "in front of"
+        if (from == prev_ed) // the previously returned one, it must have been returned
+            prev_found = true; // in an earlier call
 
-		// az: we already looked at this ent (not sure why this could end in an infinite loop without this check...)
-		if (from->monsterinfo.last_target_scanner == self) 
-			continue;
+        // az: we already looked at this ent (not sure why this could end in an infinite loop without this check...)
+        if (from->monsterinfo.last_target_scanner == self)
+            continue;
 
-		if ((!found) || (vlen <= found_rad)) {
-			found = from;
-			found_rad = vlen;
-		}
-	}
+        // az: lol
+        if (from == self)
+            continue;
+
+        if ((!found) || (vlen <= found_rad)) {
+            found = from;
+            found_rad = vlen;
+        }
+    }
 
 	if (found)
 		found->monsterinfo.last_target_scanner = self;

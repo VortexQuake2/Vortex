@@ -27,27 +27,25 @@ void think_ability_jetpack(edict_t *ent)
 	if ((level.time > pregame_time->value) && !trading->value)  // allow jetpack in pregame and trading
 		if (!G_CanUseAbilities (ent, ent->myskills.abilities[JETPACK].current_level, cost) )
 			return;
-	//can't use abilities (spawning sentry gun/drone/etc...)
-	if (ent->holdtime > level.time)
-		return;
-	//4.07 can't use jetpack while being hurt
-	if (ent->lasthurt+DAMAGE_ESCAPE_DELAY > level.time)
-		return;
-	//amnesia disables jetpack
-	if (que_findtype(ent->curses, NULL, AMNESIA) != NULL)
-		return;
+    //can't use abilities (spawning sentry gun/drone/etc...)
+    if (ent->holdtime > level.time)
+        return;
+    //4.07 can't use jetpack while being hurt
+    if (ent->lasthurt + DAMAGE_ESCAPE_DELAY > level.time)
+        return;
+    //amnesia disables jetpack
+    if (que_findtype(ent->curses, NULL, AMNESIA) != NULL)
+        return;
 
-	if (HasFlag(ent))
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Can't use this ability while carrying the flag!\n");
-		return;
-	}
+    if (vrx_has_flag(ent)) {
+        safe_cprintf(ent, PRINT_HIGH, "Can't use this ability while carrying the flag!\n");
+        return;
+    }
 
-	if (ent->client->snipertime >= level.time)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "You can't use jetpack while trying to snipe!\n");
-		return;
-	}
+    if (ent->client->snipertime >= level.time) {
+        safe_cprintf(ent, PRINT_HIGH, "You can't use jetpack while trying to snipe!\n");
+        return;
+    }
 
 	if (ent->client->pers.inventory[power_cube_index] >= cost || level.time < pregame_time->value) // pregame.
 	{

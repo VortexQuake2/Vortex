@@ -677,22 +677,21 @@ void Cmd_PlayerToTank_f (edict_t *ent)
 		}
 
 		V_RestoreMorphed(ent, 0);
-		return;
-	}
+        return;
+    }
 
-	//Talent: Morphing
-	if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
-		tank_cubecost *= 1.0 - 0.2 * vrx_get_talent_level(ent, TALENT_MORPHING);
+    //Talent: Morphing
+    if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
+        tank_cubecost *= 1.0 - 0.2 * vrx_get_talent_level(ent, TALENT_MORPHING);
 
-	if (!V_CanUseAbilities(ent, TANK, tank_cubecost, true))
-		return;
+    if (!V_CanUseAbilities(ent, TANK, tank_cubecost, true))
+        return;
 
-	if (HasFlag(ent) && !hw->value)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Can't morph while carrying flag!\n");
-		return;
-	}
+    if (vrx_has_flag(ent) && !hw->value) {
+        safe_cprintf(ent, PRINT_HIGH, "Can't morph while carrying flag!\n");
+        return;
+    }
 
-	//ent->client->pers.inventory[power_cube_index] -= tank_cubecost;
-	p_tank_spawn(ent, tank_cubecost);
+    //ent->client->pers.inventory[power_cube_index] -= tank_cubecost;
+    p_tank_spawn(ent, tank_cubecost);
 }

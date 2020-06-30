@@ -168,7 +168,7 @@ qboolean ToggleSecondary(edict_t *ent, gitem_t *item, qboolean printmsg) {
 
     if (ent->client->weapon_mode) {
         // flag carrier in CTF can't use weapons
-        if (ctf->value && ctf_enable_balanced_fc->value && HasFlag(ent))
+        if (ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent))
             return false;
 
 
@@ -513,7 +513,7 @@ void Weapon_Generic2(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
     // are a morphed player using anything other
     // than a player model
     if (ent->deadflag || (ent->s.modelindex != 255) || (vrx_is_morphing_polt(ent))
-        || (ctf->value && ctf_enable_balanced_fc->value && HasFlag(ent)) // special rules, fc can't attack
+        || (ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent)) // special rules, fc can't attack
         || ((ent->client->respawn_time - (0.1 * FRAME_ACTIVATE_LAST)) > level.time) // VWep animations screw up corpses
         || (ent->flags & FL_WORMHOLE)//4.2 can't use weapons in wormhole
         || ent->shield) // can't use weapons while shield is deployed
@@ -1035,7 +1035,7 @@ void Weapon_Grenade(edict_t *ent) {
     // are a morphed player using anything other
     // than a player model
     if (ent->deadflag || (ent->s.modelindex != 255) || (vrx_is_morphing_polt(ent))
-        || (ctf->value && ctf_enable_balanced_fc->value && HasFlag(ent))
+        || (ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent))
         || (ent->client->respawn_time > level.time)
         || (ent->flags & FL_WORMHOLE))
         return;

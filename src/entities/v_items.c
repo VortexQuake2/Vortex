@@ -215,57 +215,50 @@ void fixRuneIndexes(edict_t *rune, int i)
 		{
 			if (rune->vrxitem.modifiers[b_i].type == TYPE_ABILITY) // It's an ability?
 			{
-					// invalidate this modifier.
-					rune->vrxitem.modifiers[i].index = 0;
-					rune->vrxitem.modifiers[i].type = TYPE_NONE;
-					if (GetAbilityUpgradeCost(rune->vrxitem.modifiers[b_i].index) > 1)
-					{
-						// sum the modifiers.
-						rune->vrxitem.modifiers[b_i].value += rune->vrxitem.modifiers[i].value;
-					}
-					rune->vrxitem.modifiers[i].value = 0;
-			}
+                // invalidate this modifier.
+                rune->vrxitem.modifiers[i].index = 0;
+                rune->vrxitem.modifiers[i].type = TYPE_NONE;
+                if (vrx_get_ability_upgrade_cost(rune->vrxitem.modifiers[b_i].index) > 1) {
+                    // sum the modifiers.
+                    rune->vrxitem.modifiers[b_i].value += rune->vrxitem.modifiers[i].value;
+                }
+                rune->vrxitem.modifiers[i].value = 0;
+            }
 		}
 	}
 }
 
 
 /* az- With this, our rune generation woes are finished, finally! */
-abildefinition_t *getRandomAbility();
-void V_CreateAbilityModifier(edict_t* rune, qboolean is_class, int i)
-{
-	abildefinition_t *ability; // Get ability description
-	int hard_max;
+abilitydef_t *vrx_get_random_ability();
+void V_CreateAbilityModifier(edict_t* rune, qboolean is_class, int i) {
+    abilitydef_t *ability; // Get ability description
+    int hard_max;
 
-	if (is_class)
-		ability = getClassRuneStat(rune->vrxitem.classNum);
-	else
-	{
-		ability = getRandomAbility();
-		while (!ability)
-			ability = getRandomAbility();
-	}
+    if (is_class)
+        ability = vrx_get_class_rune_stat(rune->vrxitem.classNum);
+    else
+        ability = vrx_get_random_ability();
 
-	if (ability->index < 0 || ability->index > MAX_ABILITIES-1) 
-		return; // we can't use this ability, it's invalid due to its index
+    if (ability->index < 0 || ability->index > MAX_ABILITIES - 1)
+        return; // we can't use this ability, it's invalid due to its index
 
-	// alright so we got a valid ability
-	rune->vrxitem.modifiers[i].index = ability->index;
+    // alright so we got a valid ability
+    rune->vrxitem.modifiers[i].index = ability->index;
 
-	// Assign it a type
-	rune->vrxitem.modifiers[i].type = TYPE_ABILITY;
+    // Assign it a type
+    rune->vrxitem.modifiers[i].type = TYPE_ABILITY;
 
-	if (GetAbilityUpgradeCost(ability->index) > 1) // No runes that have cost 2+ stuff should get over...
-	{
-		// for class runes, having this kind of abilities that are one-pointed or more is stupid
-		if (!ability->start || generalabmode->value || !is_class) 
-			rune->vrxitem.modifiers[i].value = 1;
-		else 
-		{
-			// if it has a starting value then we must invalidate this modifier. It's pointless to have it.
-			rune->vrxitem.modifiers[i].index = 0;
-			rune->vrxitem.modifiers[i].value = 0;
-			rune->vrxitem.modifiers[i].type = TYPE_NONE;
+    if (vrx_get_ability_upgrade_cost(ability->index) > 1) // No runes that have cost 2+ stuff should get over...
+    {
+        // for class runes, having this kind of abilities that are one-pointed or more is stupid
+        if (!ability->start || generalabmode->value || !is_class)
+            rune->vrxitem.modifiers[i].value = 1;
+        else {
+            // if it has a starting value then we must invalidate this modifier. It's pointless to have it.
+            rune->vrxitem.modifiers[i].index = 0;
+            rune->vrxitem.modifiers[i].value = 0;
+            rune->vrxitem.modifiers[i].type = TYPE_NONE;
 		}
 	}
 	else
@@ -497,7 +490,7 @@ void vrx_roll_rune_drop(edict_t *self, edict_t *attacker, qboolean debug)
 
 //************************************************************************************************
 
-int GetAbilityUpgradeCost(int index);
+int vrx_get_ability_upgrade_cost(int index);
 
 void spawnNorm(edict_t *rune, int targ_level, int type)
 {
@@ -576,27 +569,25 @@ void spawnNorm(edict_t *rune, int targ_level, int type)
 
 //************************************************************************************************
 
-void spawnClassRune(edict_t *rune, int targ_level)
-{
-	int i;
-	int max_mods, num_mods;
+void spawnClassRune(edict_t *rune, int targ_level) {
+    int i;
+    int max_mods, num_mods;
 
-	max_mods = 1 + (0.2 * targ_level);	//This means lvl 15+ can get 4 mods
-	if (max_mods > 4)
-		max_mods = 4;
-	num_mods = GetRandom(1, max_mods); // from 1 - don't be a dick
-	rune->vrxitem.itemtype = ITEM_CLASSRUNE;
-	rune->vrxitem.classNum = GetRandom(1, CLASS_MAX);	//class number
+    max_mods = 1 + (0.2 * targ_level);    //This means lvl 15+ can get 4 mods
+    if (max_mods > 4)
+        max_mods = 4;
+    num_mods = GetRandom(1, max_mods); // from 1 - don't be a dick
+    rune->vrxitem.itemtype = ITEM_CLASSRUNE;
+    rune->vrxitem.classNum = GetRandom(1, CLASS_MAX - 1);    //class number
 
-	if (rune->vrxitem.classNum == CLASS_WEAPONMASTER) // These ain't got class runes.
-	{
-		G_FreeEdict(rune);
-		return;
-	}
+    if (rune->vrxitem.classNum == CLASS_WEAPONMASTER) // These ain't got class runes.
+    {
+        G_FreeEdict(rune);
+        return;
+    }
 
-	for (i = 0; i < num_mods; ++i)
-	{
-		V_CreateAbilityModifier(rune, true, i);
+    for (i = 0; i < num_mods; ++i) {
+        V_CreateAbilityModifier(rune, true, i);
 	}
 	rune->vrxitem.numMods = CountRuneMods(&rune->vrxitem);
 	rune->s.effects |= EF_COLOR_SHELL;
@@ -1142,27 +1133,23 @@ void V_EquipItem(edict_t *ent, int index)
 
 //************************************************************************************************
 
-void cmd_Drink(edict_t *ent, int itemtype, int index)
-{
-	int i;
-	item_t *slot = NULL;
-	qboolean found = false;
+void cmd_Drink(edict_t *ent, int itemtype, int index) {
+    int i;
+    item_t *slot = NULL;
+    qboolean found = false;
 
-	//Don't drink too many potions too quickly
-	if (ent->client->ability_delay > level.time)
-		return;
+    //Don't drink too many potions too quickly
+    if (ent->client->ability_delay > level.time)
+        return;
 
-	if (ctf->value && ctf_enable_balanced_fc->value && HasFlag(ent))
-		return;
+    if (ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent))
+        return;
 
-	if (index)
-	{
-		slot = &ent->myskills.items[index-1];
-		found = true;
-	}
-	else
-	{
-		//Find item in inventory
+    if (index) {
+        slot = &ent->myskills.items[index - 1];
+        found = true;
+    } else {
+        //Find item in inventory
 		for (i = 4; i < MAX_VRXITEMS; ++i)
 		{
 			if (ent->myskills.items[i].itemtype == itemtype)

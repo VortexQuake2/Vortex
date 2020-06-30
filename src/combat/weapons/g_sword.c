@@ -100,24 +100,25 @@ void fire_sword ( edict_t *self, vec3_t start, vec3_t aimdir, int damage, int ki
     trace_t tr; //detect whats in front of you up to range "vec3_t end"
 
     vec3_t end;
-	vec3_t begin;
-	vec3_t begin_offset;
-	int sword_bonus = 1;
-	int swordrange;
-	
-	// calling entity made a sound, used to alert monsters
-	self->lastsound = level.framenum;
+    vec3_t begin;
+    vec3_t begin_offset;
+    int sword_bonus = 1;
+    int swordrange;
 
-	if (self->myskills.class_num == CLASS_PALADIN)	//doomie
-		sword_bonus = 1.3;
-	swordrange = SABRE_INITIAL_RANGE * sword_bonus + (SABRE_ADDON_RANGE * self->myskills.weapons[WEAPON_SWORD].mods[2].current_level * sword_bonus);
+    // calling entity made a sound, used to alert monsters
+    self->lastsound = level.framenum;
 
-	VectorSet( begin_offset,0,0,self->viewheight-8);
-	VectorAdd( self->s.origin, begin_offset, begin);
+    if (self->myskills.class_num == CLASS_KNIGHT)    //doomie
+        sword_bonus = 1.3;
+    swordrange = SABRE_INITIAL_RANGE * sword_bonus +
+                 (SABRE_ADDON_RANGE * self->myskills.weapons[WEAPON_SWORD].mods[2].current_level * sword_bonus);
+
+    VectorSet(begin_offset, 0, 0, self->viewheight - 8);
+    VectorAdd(self->s.origin, begin_offset, begin);
 
     // Figure out what we hit, if anything:
 
-    VectorMA (start, swordrange, aimdir, end);  //calculates the range vector                      
+    VectorMA(start, swordrange, aimdir, end);  //calculates the range vector
 
     tr = gi.trace (begin, NULL, NULL, end, self, MASK_SHOT);
                         // figuers out what in front of the player up till "end"
@@ -182,27 +183,27 @@ void sword_attack (edict_t *ent, vec3_t g_offset, int damage)
     fire_sword (ent, start, forward, damage, SABRE_INITIAL_KICK + SABRE_ADDON_KICK * ent->myskills.weapons[WEAPON_SWORD].mods[0].current_level);
 }
 
-void Weapon_Sword_Fire (edict_t *ent)
-{
-	int sword_bonus = 1;
-	int damage;
-	float temp;
-	
-	// special rules; flag carrier can't use weapons
-	if (ctf->value && ctf_enable_balanced_fc->value && HasFlag(ent))
-		return;
+void Weapon_Sword_Fire (edict_t *ent) {
+    int sword_bonus = 1;
+    int damage;
+    float temp;
 
-	if (ent->myskills.class_num == CLASS_PALADIN)
-		sword_bonus = 1.5;
-	damage = SABRE_INITIAL_DAMAGE + (SABRE_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_SWORD].mods[0].current_level * sword_bonus);
+    // special rules; flag carrier can't use weapons
+    if (ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent))
+        return;
 
-	// sword forging reduces the per-frame damage penalty
-	temp = 0.8 + 0.007 * ent->myskills.weapons[WEAPON_SWORD].mods[1].current_level;
+    if (ent->myskills.class_num == CLASS_KNIGHT)
+        sword_bonus = 1.5;
+    damage = SABRE_INITIAL_DAMAGE +
+             (SABRE_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_SWORD].mods[0].current_level * sword_bonus);
 
-	 if ((temp < 1.0) && (ent->client->ps.gunframe - 5 > 0))
-		damage *= pow(temp, ent->client->ps.gunframe - 5);
-	
-	 //gi.dprintf("damage=%d\n", damage);
+    // sword forging reduces the per-frame damage penalty
+    temp = 0.8 + 0.007 * ent->myskills.weapons[WEAPON_SWORD].mods[1].current_level;
+
+    if ((temp < 1.0) && (ent->client->ps.gunframe - 5 > 0))
+        damage *= pow(temp, ent->client->ps.gunframe - 5);
+
+    //gi.dprintf("damage=%d\n", damage);
 
 	 if ((ent->client->ps.gunframe == 5) && (ent->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1))
 		gi.sound (ent, CHAN_WEAPON, gi.soundindex("misc/power1.wav") , 1, ATTN_NORM, 0);
@@ -212,29 +213,29 @@ void Weapon_Sword_Fire (edict_t *ent)
      ent->client->ps.gunframe++;
 }
 
-void Weapon_Lance_Fire (edict_t *ent)
-{
-	int sword_bonus = 1.0;
-	int damage, burn_damage;
-	float speed;
-	vec3_t  forward, start;
-	
-	// special rules; flag carrier can't use weapons
-	if (ctf->value && ctf_enable_balanced_fc->value && HasFlag(ent))
-		return;
+void Weapon_Lance_Fire (edict_t *ent) {
+    int sword_bonus = 1.0;
+    int damage, burn_damage;
+    float speed;
+    vec3_t forward, start;
 
-	// calculate knight bonus
-	if (ent->myskills.class_num == CLASS_PALADIN)
-		sword_bonus = 1.5;
+    // special rules; flag carrier can't use weapons
+    if (ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent))
+        return;
 
-	damage = SABRE_INITIAL_DAMAGE + (SABRE_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_SWORD].mods[0].current_level * sword_bonus);
-	burn_damage = SABRE_ADDON_HEATDAMAGE * ent->myskills.weapons[WEAPON_SWORD].mods[3].current_level * sword_bonus;
-	speed = 700 + (15 * ent->myskills.weapons[WEAPON_SWORD].mods[2].current_level * sword_bonus);
+    // calculate knight bonus
+    if (ent->myskills.class_num == CLASS_KNIGHT)
+        sword_bonus = 1.5;
 
-	// lance modifier
-	damage *= 2;
+    damage = SABRE_INITIAL_DAMAGE +
+             (SABRE_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_SWORD].mods[0].current_level * sword_bonus);
+    burn_damage = SABRE_ADDON_HEATDAMAGE * ent->myskills.weapons[WEAPON_SWORD].mods[3].current_level * sword_bonus;
+    speed = 700 + (15 * ent->myskills.weapons[WEAPON_SWORD].mods[2].current_level * sword_bonus);
 
-	 if (ent->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1)
+    // lance modifier
+    damage *= 2;
+
+    if (ent->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1)
 		gi.sound (ent, CHAN_WEAPON, gi.soundindex("misc/power1.wav") , 1, ATTN_NORM, 0);
 
 	AngleVectors (ent->client->v_angle, forward, NULL, NULL);

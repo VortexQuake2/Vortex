@@ -262,18 +262,18 @@ edict_t *curse_MultiAttack (edict_t *e, edict_t *caster, int type, int range, fl
 
 	while ((e = findreticle(e, caster, range, 20, true)) != NULL)
 	{
-		if (!G_CurseValidTarget(caster, e, false, isCurse))
-			continue;
-		// holywater gives immunity to curses for a short time.
-		if (e->holywaterProtection > level.time && type != BLESS && type != HEALING)
-			continue;
-		// don't allow bless on flag carrier
-		if ((type == BLESS) && e->client && HasFlag(e))
-			continue;
-		if (!curse_add(e, caster, type, 0, duration))
-			continue;
-		return e;
-	}
+        if (!G_CurseValidTarget(caster, e, false, isCurse))
+            continue;
+        // holywater gives immunity to curses for a short time.
+        if (e->holywaterProtection > level.time && type != BLESS && type != HEALING)
+            continue;
+        // don't allow bless on flag carrier
+        if ((type == BLESS) && e->client && vrx_has_flag(e))
+            continue;
+        if (!curse_add(e, caster, type, 0, duration))
+            continue;
+        return e;
+    }
 	return NULL;
 }
 
@@ -291,22 +291,21 @@ edict_t *curse_Attack(edict_t *caster, int type, int radius, float duration, qbo
 	caster->client->idle_frames = 0; // disable cp/cloak on caster
 	caster->client->ability_delay = level.time + 0.2; // avoid spell spam
 
-	while ((e = findclosestreticle(e, caster, radius)) != NULL)
-	{
-		if (!G_CurseValidTarget(caster, e, true, isCurse))
-			continue;
-	//	if (entdist(caster, e) > radius)
-	//		continue;
-		//4.0 holywater gives immunity to curses for a short time.
-		if (e->holywaterProtection > level.time && type != BLESS && type != HEALING)
-			continue;
-		// 3.7 don't allow bless on flag carrier
-		if ((type == BLESS) && e->client && HasFlag(e))
-			continue;
-		if (!curse_add(e, caster, type, 0, duration))
-			continue;
-		return e;
-	}
+	while ((e = findclosestreticle(e, caster, radius)) != NULL) {
+        if (!G_CurseValidTarget(caster, e, true, isCurse))
+            continue;
+        //	if (entdist(caster, e) > radius)
+        //		continue;
+        //4.0 holywater gives immunity to curses for a short time.
+        if (e->holywaterProtection > level.time && type != BLESS && type != HEALING)
+            continue;
+        // 3.7 don't allow bless on flag carrier
+        if ((type == BLESS) && e->client && vrx_has_flag(e))
+            continue;
+        if (!curse_add(e, caster, type, 0, duration))
+            continue;
+        return e;
+    }
 	return NULL;
 }
 
@@ -332,19 +331,19 @@ qboolean CanCurseTarget (edict_t *caster, edict_t *target, int type, qboolean is
 		return false;
 	if (vis && !visible(caster, target))
 		return false;
-	if(que_typeexists(target->curses, CURSE_FROZEN))
-		return false;
-	if (isCurse && (target->flags & FL_GODMODE || OnSameTeam(caster, target)))
-		return false;
-	if (target == caster)
-		return false;
-	// holywater gives immunity to curses for a short time.
-	if (target->holywaterProtection > level.time && type != BLESS && type != HEALING)
-		return false;
-	// don't allow bless on flag carrier
-	if ((type == BLESS) && target->client && HasFlag(target))
-		return false;
-	return true;
+    if (que_typeexists(target->curses, CURSE_FROZEN))
+        return false;
+    if (isCurse && (target->flags & FL_GODMODE || OnSameTeam(caster, target)))
+        return false;
+    if (target == caster)
+        return false;
+    // holywater gives immunity to curses for a short time.
+    if (target->holywaterProtection > level.time && type != BLESS && type != HEALING)
+        return false;
+    // don't allow bless on flag carrier
+    if ((type == BLESS) && target->client && vrx_has_flag(target))
+        return false;
+    return true;
 }
 
 char *GetCurseName (int type)
@@ -910,19 +909,16 @@ void Cmd_Bless(edict_t *ent)
 	duration = BLESS_DURATION_BASE + (BLESS_DURATION_BONUS * ent->myskills.abilities[BLESS].current_level);
 
 	//Blessing self?
-	if (Q_strcasecmp(gi.argv(1), "self") == 0)
-	{
-		if (HasFlag(ent))
-		{
-			safe_cprintf(ent, PRINT_HIGH, "Can't use this while carrying the flag!\n");
-			return;
-		}
+	if (Q_strcasecmp(gi.argv(1), "self") == 0) {
+        if (vrx_has_flag(ent)) {
+            safe_cprintf(ent, PRINT_HIGH, "Can't use this while carrying the flag!\n");
+            return;
+        }
 
-		if (!curse_add(ent, ent, BLESS, 0, duration))
-		{
-			safe_cprintf(ent, PRINT_HIGH, "Unable to bless self.\n");
-			return;
-		}
+        if (!curse_add(ent, ent, BLESS, 0, duration)) {
+            safe_cprintf(ent, PRINT_HIGH, "Unable to bless self.\n");
+            return;
+        }
 		target = ent;
 	}
 	else

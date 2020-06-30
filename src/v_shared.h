@@ -14,8 +14,11 @@
 
 /**************** v_abilitylist.c ***************/
 void enableAbility(edict_t *ent, int index, int level, int max_level, int general);
-int getLastUpgradeIndex(edict_t *ent, int generalmode);
-void disableAbilities(edict_t *ent);
+
+int vrx_get_last_enabled_skill_index(edict_t *ent, int mode);
+
+void vrx_disable_abilities(edict_t *ent);
+
 int getHardMax(int index, qboolean general, int class);
 
 void vrx_assign_abilities(edict_t *ent);
@@ -25,15 +28,14 @@ void vrx_assign_abilities(edict_t *ent);
 #define DEFAULT_SOFTMAX 10
 #define GENERAL_SOFTMAX 5
 
-typedef struct
-{
-	int index;
-	int start;
-	int softmax;
-	int general;
-}abildefinition_t;
+typedef struct {
+    int index;
+    int start;
+    int softmax;
+    int general;
+} abilitydef_t;
 
-typedef abildefinition_t* AbilList;
+typedef abilitydef_t *abilitylist_t;
 /**************** v_abilitylist.c ***************/
 
 //************ lasersight.c ************
@@ -92,8 +94,10 @@ void tech_dropall(edict_t *ent);
 
 //************ p_menu.c ***********
 void setClassAbilities(edict_t *ent);
+
 void setGeneralAbilities(edict_t *ent);
-void disableAbilities(edict_t *ent);
+
+void vrx_disable_abilities(edict_t *ent);
 //************ p_menu.c ***********
 
 //********** v_file_IO.c **********
@@ -127,27 +131,45 @@ void V_PrintItemProperties(edict_t *player, item_t *item);
 int eqSetItems(edict_t *ent, item_t *rune);
 void ApplyRune(edict_t *ent, item_t *rune);
 void V_ResetAllStats(edict_t *ent);
+
 void PurchaseRandomRune(edict_t *ent, int runetype);
+
 void V_ApplyRune(edict_t *ent, item_t *rune);
+
 void V_ItemSwap(item_t *item1, item_t *item2);
+
 void cmd_Drink(edict_t *ent, int itemtype, int index);
 //*********** v_items.c ***********
 
 //*********** v_utils.c ***********
 qboolean V_IsPVP(void);
+
 char *V_GetMonsterName(edict_t *monster);
+
 char *GetAbilityString(int ability_number);
-abildefinition_t *getClassRuneStat(int cIndex);
-char *GetRuneValString(item_t *rune);
+
+abilitydef_t *vrx_get_class_rune_stat(int class_index);
+
+const char *GetRuneValString(item_t *rune);
+
 char *GetShortWeaponString(int weapon_number);
+
 char *GetRandomString(int len);
+
 float V_EntDistance(edict_t *ent1, edict_t *ent2);
+
 edict_t *V_getClientByNumber(int index);
+
 int GetClientNumber(edict_t *ent);
+
 char ReadChar(FILE *fptr);
+
 void WriteChar(FILE *fptr, char Value);
+
 void ReadString(char *buf, FILE *fptr);
+
 void WriteString(FILE *fptr, char *String);
+
 int ReadInteger(FILE *fptr);
 void WriteInteger(FILE *fptr, int Value);
 long ReadLong(FILE *fptr);
@@ -207,7 +229,8 @@ void VortexBeginIntermission(char *nextmap);
 
 //************ talents.c ************
 void vrx_set_talents(edict_t *ent);
-void eraseTalents(edict_t *ent);
+
+void vrx_clear_talents(edict_t *ent);
 
 void vrx_upgrade_talent(edict_t *ent, int talentID);
 
@@ -280,5 +303,5 @@ float GetPlayerBossDamage(edict_t *player, edict_t *boss);
 qboolean SpawnWaitingPlayers(void);
 
 // etc
-int GetAbilityUpgradeCost(int index);
+int vrx_get_ability_upgrade_cost(int index);
 #endif

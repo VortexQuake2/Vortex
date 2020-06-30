@@ -442,7 +442,8 @@ qboolean Pickup_Ammo(edict_t *ent, edict_t *other) {
     if ((other->client || other->mtype) &&  // knights and polts can't get ammo in pvm modes
         (pvm->value || invasion->value) &&
         // polts and kn only if the ammo is not cells
-        ((vrx_is_morphing_polt(ent) || other->myskills.class_num == CLASS_PALADIN) && strcmp(ent->classname, "ammo_cells")))
+        ((vrx_is_morphing_polt(ent) || other->myskills.class_num == CLASS_KNIGHT) &&
+         strcmp(ent->classname, "ammo_cells")))
         return false;
 
     if (ent->count)
@@ -539,7 +540,7 @@ qboolean Pickup_Health(edict_t *ent, edict_t *other) {
     }
 
     // special rules disable flag carrier abilities
-    if (!(ctf->value && ctf_enable_balanced_fc->value && HasFlag(other))) {
+    if (!(ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(other))) {
         if (!other->myskills.abilities[HA_PICKUP].disable)
             temp += 0.3 * other->myskills.abilities[HA_PICKUP].current_level;
 
@@ -638,7 +639,7 @@ qboolean Pickup_Armor(edict_t *ent, edict_t *other) {
     armor += ent->count;
 
     // special rules disable flag carrier abilities
-    if (!(ctf->value && ctf_enable_balanced_fc->value && HasFlag(other))) {
+    if (!(ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(other))) {
         if (!other->myskills.abilities[HA_PICKUP].disable)
             temp += 0.3 * other->myskills.abilities[HA_PICKUP].current_level;
 
@@ -835,7 +836,7 @@ qboolean CanTball(edict_t *ent, qboolean print) {
         return false;
     }
 
-    if (HasFlag(ent)) {
+    if (vrx_has_flag(ent)) {
         if (print)
             safe_cprintf(ent, PRINT_HIGH, "You can't use tballs while carrying the flag\n");
         return false;

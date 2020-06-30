@@ -407,26 +407,25 @@ void Cmd_PlayerToFlyer_f (edict_t *ent)
 		return;
 	}
 
-	//Talent: Morphing
+    //Talent: Morphing
     if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
         flyer_cubecost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
 
-	//if (!G_CanUseAbilities(ent, ent->myskills.abilities[FLYER].current_level, flyer_cubecost))
-	//	return;
-	if (!V_CanUseAbilities(ent, FLYER, flyer_cubecost, true))
-		return;
+    //if (!G_CanUseAbilities(ent, ent->myskills.abilities[FLYER].current_level, flyer_cubecost))
+    //	return;
+    if (!V_CanUseAbilities(ent, FLYER, flyer_cubecost, true))
+        return;
 
-	if (HasFlag(ent) && !hw->value)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Can't morph while carrying flag!\n");
-		return;
-	}
+    if (vrx_has_flag(ent) && !hw->value) {
+        safe_cprintf(ent, PRINT_HIGH, "Can't morph while carrying flag!\n");
+        return;
+    }
 
-	ent->monsterinfo.attack_finished = level.time + 0.5;// can't attack immediately
+    ent->monsterinfo.attack_finished = level.time + 0.5;// can't attack immediately
 
-	ent->client->pers.inventory[power_cube_index] -= flyer_cubecost;
+    ent->client->pers.inventory[power_cube_index] -= flyer_cubecost;
 
-	ent->mtype = MORPH_FLYER;
+    ent->mtype = MORPH_FLYER;
 	ent->s.modelindex = gi.modelindex ("models/monsters/flyer/tris.md2");
 	ent->s.modelindex2 = 0;
 	ent->s.skinnum = 0;

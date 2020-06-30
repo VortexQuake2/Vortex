@@ -1109,27 +1109,40 @@ edict_t *G_FindCurseByType (edict_t *ent, int curse_type);
 edict_t *G_FindAuraByType (edict_t *ent, int aura_type);
 qboolean AddCurse (edict_t *owner, edict_t *targ, edict_t *curse_ent, int type, float duration);
 void ShowGun(edict_t *ent);
-void EndDMLevel (void);
+void EndDMLevel(void);
 
 void vrx_start_reign(edict_t *ent);
 
 void vrx_add_credits(edict_t *ent, int add_credits);
-void RemoveAllAuras (edict_t *ent);
-void RemoveAllCurses (edict_t *ent);
-void PTRInit (void);
-void OpenPTRJoinMenu (edict_t *ent);
-void AssignTeamSkin (edict_t *ent, char *s);
-qboolean HasFlag (edict_t *ent);// 3.7
-qboolean ClientCanConnect (edict_t *ent, char *userinfo);
-void dom_awardpoints (void);
-void dom_dropflag (edict_t *ent, gitem_t *item);
-void dom_checkforflag (edict_t *ent);
-void dom_fragaward (edict_t *attacker, edict_t *target);
-qboolean nearfov (edict_t *ent, edict_t *other, int vertical_degrees, int horizontal_degrees);
-void StuffPlayerCmds (edict_t *ent); //3.50
+
+void RemoveAllAuras(edict_t *ent);
+
+void RemoveAllCurses(edict_t *ent);
+
+void PTRInit(void);
+
+void OpenPTRJoinMenu(edict_t *ent);
+
+void AssignTeamSkin(edict_t *ent, char *s);
+
+qboolean vrx_has_flag(const edict_t *ent);// 3.7
+qboolean ClientCanConnect(edict_t *ent, char *userinfo);
+
+void dom_awardpoints(void);
+
+void dom_dropflag(edict_t *ent, gitem_t *item);
+
+void dom_checkforflag(edict_t *ent);
+
+void dom_fragaward(edict_t *attacker, edict_t *target);
+
+qboolean nearfov(edict_t *ent, edict_t *other, int vertical_degrees, int horizontal_degrees);
+
+void StuffPlayerCmds(edict_t *ent); //3.50
 qboolean G_StuffPlayerCmds(edict_t *ent, const char *s);
-int floattoint (float input); //3.50
-void SpawnFlames (edict_t *self, vec3_t start, int num_flames, int damage, int toss_speed); // 3.6
+
+int floattoint(float input); //3.50
+void SpawnFlames(edict_t *self, vec3_t start, int num_flames, int damage, int toss_speed); // 3.6
 void ThrowFlame (edict_t *ent, vec3_t start, vec3_t forward, float dist, int speed, int damage, int ttl);//4.2
 void G_PrintGreenText (char *text); // 3.7
 char *HiPrint(char *text);
@@ -2020,7 +2033,7 @@ void TossClientBackpack(edict_t *player, edict_t *attacker);
 // az begin
 void InitHash();
 
-void InitializeAbilityList();
+void vrx_init_ability_list();
 
 void CreateDirIfNotExists(char *path);
 

@@ -1649,25 +1649,25 @@ void G_TeleportNearbyEntities(vec3_t point, float radius, qboolean vis, edict_t 
 
 		// don't teleport player spawns
 		if (pvm->value && e->mtype == INVASION_PLAYERSPAWN)
-			continue;
-		if (ctf->value && e->mtype == CTF_PLAYERSPAWN)
-			continue;
-		if (tbi->value && e->mtype == TBI_PLAYERSPAWN)
-			continue;
+            continue;
+        if (ctf->value && e->mtype == CTF_PLAYERSPAWN)
+            continue;
+        if (tbi->value && e->mtype == TBI_PLAYERSPAWN)
+            continue;
 
-		if (e == ignore)
-			continue;
-		if (G_IsSpectator(e))
-			continue;
-		if (HasFlag(e))
-			continue; // dont teleport flag carriers
-		if (vis && !G_IsClearPath(ignore, MASK_SOLID, point, e->s.origin))
-			continue;
-		if (radius && (distance(point, e->s.origin) > radius))
-			continue;
+        if (e == ignore)
+            continue;
+        if (G_IsSpectator(e))
+            continue;
+        if (vrx_has_flag(e))
+            continue; // dont teleport flag carriers
+        if (vis && !G_IsClearPath(ignore, MASK_SOLID, point, e->s.origin))
+            continue;
+        if (radius && (distance(point, e->s.origin) > radius))
+            continue;
 
-		FindValidSpawnPoint(e, false);
-	}
+        FindValidSpawnPoint(e, false);
+    }
 }
 
 char *G_GetTruncatedIP (edict_t *player)

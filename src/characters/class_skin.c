@@ -15,16 +15,12 @@ char *V_GetClassSkin(edict_t *ent) {
         case CLASS_POLTERGEIST:
             c1 = class2_model->string;
             c2 = class2_skin->string;
-            if (vrx_is_morphing_polt(ent)) {
-                c1 = class9_model->string;
-                c2 = class9_skin->string;
-            }
             break;
-        case CLASS_DEMON:
+        case CLASS_VAMPIRE:
             c1 = class3_model->string;
             c2 = class3_skin->string;
             break;
-        case CLASS_ARCANIST:
+        case CLASS_MAGE:
             c1 = class4_model->string;
             c2 = class4_skin->string;
             break;
@@ -32,7 +28,7 @@ char *V_GetClassSkin(edict_t *ent) {
             c1 = class5_model->string;
             c2 = class5_skin->string;
             break;
-        case CLASS_PALADIN:
+        case CLASS_KNIGHT:
             c1 = class6_model->string;
             c2 = class6_skin->string;
             break;
@@ -40,16 +36,16 @@ char *V_GetClassSkin(edict_t *ent) {
                 c1 = class11_model->string;
                 c2 = class11_skin->string;
                 break;
-            /*case CLASS_CLERIC:
-                c1 = class7_model->string;
+        case CLASS_CLERIC:
+            c1 = class7_model->string;
                 c2 = class7_skin->string;
-                break;*/
+            break;
         case CLASS_WEAPONMASTER:
             c1 = class8_model->string;
             c2 = class8_skin->string;
             break;
-            /**case CLASS_NECROMANCER:
-                c1 = class9_model->string;
+        case CLASS_NECROMANCER:
+            c1 = class9_model->string;
                 c2 = class9_skin->string;
                 break;
 
@@ -57,12 +53,6 @@ char *V_GetClassSkin(edict_t *ent) {
                 c1 = class10_model->string;
                 c2 = class10_skin->string;
                 break;
-            
-            case CLASS_KAMIKAZE:
-                c1 = class12_model->string;
-                c2 = class12_skin->string;
-                break;
-                */
         default:
             return "male/grunt";
     }

@@ -173,7 +173,7 @@ void Cmd_PlayerToCacodemon_f(edict_t *ent) {
         return;
     }
 
-    if (HasFlag(ent) && !hw->value) {
+    if (vrx_has_flag(ent) && !hw->value) {
         safe_cprintf(ent, PRINT_HIGH, "Can't morph while carrying flag!\n");
         return;
     }

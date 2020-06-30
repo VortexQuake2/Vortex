@@ -2227,9 +2227,9 @@ void ClientUserinfoChanged (edict_t *ent, char *userinfo)
 		ent->client->pers.hand = 2;
 		if (ent->myskills.class_num > 0)
 		{
-			if ((!vrx_is_morphing_polt(ent) || !ent->mtype) && ent->myskills.class_num != CLASS_PALADIN)
-				ent->client->pers.hand = atoi(s);
-		}
+            if ((!vrx_is_morphing_polt(ent) || !ent->mtype) && ent->myskills.class_num != CLASS_KNIGHT)
+                ent->client->pers.hand = atoi(s);
+        }
 	}
 
 	// save off the userinfo in case we want to check something later

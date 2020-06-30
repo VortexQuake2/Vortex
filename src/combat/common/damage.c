@@ -861,7 +861,7 @@ float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float da
     Resistance = vrx_apply_salvation(targ, attacker, dtype, aura, Resistance);
 
     if (targ->client) {
-        if (ctf->value && ctf_enable_balanced_fc->value && HasFlag(targ))
+        if (ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(targ))
             return damage; // special rules, flag carrier can't use abilities
 
         if (dtype & D_WORLD) {

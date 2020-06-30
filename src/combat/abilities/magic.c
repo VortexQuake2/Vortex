@@ -5,20 +5,18 @@
 void cmd_mjump(edict_t *ent)
 {
 
-	if (ent->holdtime > level.time)
-		return; // can't use abilities
+    if (ent->holdtime > level.time)
+        return; // can't use abilities
 
-	if (HasFlag(ent))
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Can't use this while carrying the flag!\n");
-		return;
-	}
+    if (vrx_has_flag(ent)) {
+        safe_cprintf(ent, PRINT_HIGH, "Can't use this while carrying the flag!\n");
+        return;
+    }
 
-	if ((!(ent->v_flags & SFLG_MATRIXJUMP)) && (ent->velocity[2] == 0) && (!(ent->v_flags & SFLG_UNDERWATER)))
-	{
-		item_t *slot;
-		int i;
-		qboolean found = false;
+    if ((!(ent->v_flags & SFLG_MATRIXJUMP)) && (ent->velocity[2] == 0) && (!(ent->v_flags & SFLG_UNDERWATER))) {
+        item_t *slot;
+        int i;
+        qboolean found = false;
 
 		//Find item in inventory
 		for (i = 3; i < MAX_VRXITEMS; ++i)
@@ -169,27 +167,25 @@ void Cmd_BoostPlayer(edict_t *ent)
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: %s just called Cmd_BoostPlayer()\n", ent->client->pers.netname);
 
-	if (ent->myskills.abilities[BOOST_SPELL].disable)
-		return;
+    if (ent->myskills.abilities[BOOST_SPELL].disable)
+        return;
 
-	//4.07 can't boost while being hurt
-	if (ent->lasthurt+DAMAGE_ESCAPE_DELAY > level.time)
-		return;
+    //4.07 can't boost while being hurt
+    if (ent->lasthurt + DAMAGE_ESCAPE_DELAY > level.time)
+        return;
 
-	if (!V_CanUseAbilities (ent, BOOST_SPELL, COST_FOR_BOOST, true))
-		return;
+    if (!V_CanUseAbilities(ent, BOOST_SPELL, COST_FOR_BOOST, true))
+        return;
 
-	if (HasFlag(ent))
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Can't use this ability while carrying the flag!\n");
-		return;
-	}
+    if (vrx_has_flag(ent)) {
+        safe_cprintf(ent, PRINT_HIGH, "Can't use this ability while carrying the flag!\n");
+        return;
+    }
 
-	if (ent->client->snipertime >= level.time)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "You can't use boost while trying to snipe!\n");
-		return;
-	}
+    if (ent->client->snipertime >= level.time) {
+        safe_cprintf(ent, PRINT_HIGH, "You can't use boost while trying to snipe!\n");
+        return;
+    }
 
 	//Talent: Mobility
     talentLevel = vrx_get_talent_level(ent, TALENT_MOBILITY);
@@ -445,28 +441,26 @@ qboolean ValidTeleportSpot (edict_t *ent, vec3_t spot)
 	return true;
 }
 
-void TeleportForward (edict_t *ent)
-{
-	int		dist = 512;
-	vec3_t	angles, offset, forward, right, start, end;
-	trace_t	tr;
+void TeleportForward (edict_t *ent) {
+    int dist = 512;
+    vec3_t angles, offset, forward, right, start, end;
+    trace_t tr;
 
-	if (!G_EntIsAlive(ent))
-		return;
-	//4.07 can't teleport while being hurt
-	if (ent->lasthurt+DAMAGE_ESCAPE_DELAY > level.time)
-		return;
-	if (HasFlag(ent))
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Can't use this while carrying the flag!\n");
-		return;
-	}
+    if (!G_EntIsAlive(ent))
+        return;
+    //4.07 can't teleport while being hurt
+    if (ent->lasthurt + DAMAGE_ESCAPE_DELAY > level.time)
+        return;
+    if (vrx_has_flag(ent)) {
+        safe_cprintf(ent, PRINT_HIGH, "Can't use this while carrying the flag!\n");
+        return;
+    }
 
-	if (!V_CanUseAbilities(ent, TELEPORT, TELEPORT_COST, true))
-		return;
-	
-	// calling entity made a sound, used to alert monsters
-	ent->lastsound = level.framenum;
+    if (!V_CanUseAbilities(ent, TELEPORT, TELEPORT_COST, true))
+        return;
+
+    // calling entity made a sound, used to alert monsters
+    ent->lastsound = level.framenum;
 
 	RemoveAllDrones(ent, false);
 	RemoveHellspawn(ent);
@@ -3555,21 +3549,20 @@ void wormhole_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t 
 	if (PM_MonsterHasPilot(other))
 		other = other->activator;
 
-	if ((other == self->creator) || IsAlly(self->creator, other))
-	{
-		float time;
-		
-		// can't enter wormhole with the flag
-		if (HasFlag(other))
-			return;
-		
-		// can't enter wormhole while being hurt
-		if (other->lasthurt + DAMAGE_ESCAPE_DELAY > level.time)
-			return;
-		
-		// can't enter wormhole while cursed (this includes healing, bless)
-		if (que_typeexists(other->curses, -1))
-			return;
+	if ((other == self->creator) || IsAlly(self->creator, other)) {
+        float time;
+
+        // can't enter wormhole with the flag
+        if (vrx_has_flag(other))
+            return;
+
+        // can't enter wormhole while being hurt
+        if (other->lasthurt + DAMAGE_ESCAPE_DELAY > level.time)
+            return;
+
+        // can't enter wormhole while cursed (this includes healing, bless)
+        if (que_typeexists(other->curses, -1))
+            return;
 
 		// can't stay in wormhole long if we're warring
 		if (SPREE_WAR == true && SPREE_DUDE == other)
@@ -5500,27 +5493,25 @@ void Cmd_Antigrav_f (edict_t *ent)
 	if (!G_CanUseAbilities(ent, ent->myskills.abilities[ANTIGRAV].current_level, 0))
 		return;
 
-	if (ent->antigrav == true)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Antigrav disabled.\n");
-		ent->antigrav = false;
-		return;
-	}
+    if (ent->antigrav == true) {
+        safe_cprintf(ent, PRINT_HIGH, "Antigrav disabled.\n");
+        ent->antigrav = false;
+        return;
+    }
 
-	if(ent->myskills.abilities[ANTIGRAV].disable)
-		return;
+    if (ent->myskills.abilities[ANTIGRAV].disable)
+        return;
 
-	if (HasFlag(ent))
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Can't use this ability while carrying the flag!\n");
-		return;
-	}
+    if (vrx_has_flag(ent)) {
+        safe_cprintf(ent, PRINT_HIGH, "Can't use this ability while carrying the flag!\n");
+        return;
+    }
 
-	//3.0 amnesia disables super speed
-	if (que_findtype(ent->curses, NULL, AMNESIA) != NULL)
-		return;
+    //3.0 amnesia disables super speed
+    if (que_findtype(ent->curses, NULL, AMNESIA) != NULL)
+        return;
 
-	safe_cprintf(ent, PRINT_HIGH, "Antigrav enabled.\n");
+    safe_cprintf(ent, PRINT_HIGH, "Antigrav enabled.\n");
 	ent->antigrav= true;
 }
 
@@ -6030,24 +6021,22 @@ void Cmd_Plasmabolt_f (edict_t *ent)
 #define LIGHTNING_ADDON_RADIUS		0
 #define LIGHTNING_ABILITY_DELAY		1.0
 
-void lightningstorm_think (edict_t *self)
-{
-	edict_t *e=NULL;
-	vec3_t	start, end, dir;
-	trace_t tr;
+void lightningstorm_think (edict_t *self) {
+    edict_t *e = NULL;
+    vec3_t start, end, dir;
+    trace_t tr;
 
-	// owner must be alive
-	if (!G_EntIsAlive(self->owner) || HasFlag(self->owner) || (self->delay < level.time)) 
-	{
-		G_FreeEdict(self);
-		return;
-	}
+    // owner must be alive
+    if (!G_EntIsAlive(self->owner) || vrx_has_flag(self->owner) || (self->delay < level.time)) {
+        G_FreeEdict(self);
+        return;
+    }
 
-	// calculate randomized starting position
-	VectorCopy(self->s.origin, start);
-	start[0] += GetRandom(0, (int)self->dmg_radius) * crandom();
-	start[1] += GetRandom(0, (int)self->dmg_radius) * crandom();
-	tr = gi.trace(self->s.origin, NULL, NULL, start, NULL, MASK_SOLID);
+    // calculate randomized starting position
+    VectorCopy(self->s.origin, start);
+    start[0] += GetRandom(0, (int) self->dmg_radius) * crandom();
+    start[1] += GetRandom(0, (int) self->dmg_radius) * crandom();
+    tr = gi.trace(self->s.origin, NULL, NULL, start, NULL, MASK_SOLID);
 	VectorCopy(tr.endpos, start);
 	VectorCopy(start, end);
 	end[2] += 8192;

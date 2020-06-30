@@ -352,26 +352,25 @@ void Cmd_PlayerToParasite_f (edict_t *ent)
 		return;
 	}
 
-	//Talent: Morphing
+    //Talent: Morphing
     if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
         para_cubecost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
 
 //	if (!G_CanUseAbilities(ent, ent->myskills.abilities[BLOOD_SUCKER].current_level, para_cubecost))
-	//	return;
-	if (!V_CanUseAbilities(ent, BLOOD_SUCKER, para_cubecost, true))
-		return;
+    //	return;
+    if (!V_CanUseAbilities(ent, BLOOD_SUCKER, para_cubecost, true))
+        return;
 
-	if (HasFlag(ent))
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Can't morph while carrying flag!\n");
-		return;
-	}
+    if (vrx_has_flag(ent)) {
+        safe_cprintf(ent, PRINT_HIGH, "Can't morph while carrying flag!\n");
+        return;
+    }
 
-	V_ModifyMorphedHealth(ent, M_MYPARASITE, true);
+    V_ModifyMorphedHealth(ent, M_MYPARASITE, true);
 
-	ent->wait = level.time + 0.5;// can't attack immediately
+    ent->wait = level.time + 0.5;// can't attack immediately
 
-	ent->client->pers.inventory[power_cube_index] -= para_cubecost;
+    ent->client->pers.inventory[power_cube_index] -= para_cubecost;
 	ent->client->ability_delay = level.time + PARASITE_DELAY;
 
 	ent->mtype = M_MYPARASITE;

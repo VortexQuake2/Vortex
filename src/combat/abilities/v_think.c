@@ -86,7 +86,7 @@ void think_trade(edict_t *ent) {//3.0 new trading
 
 void think_chat_protect_activate(edict_t *ent) {
     if (!ptr->value && !domination->value && !ctf->value &&
-        !(hw->value && HasFlag(ent))  // the game isn't holywars and the player doesn't have the flag
+        !(hw->value && vrx_has_flag(ent))  // the game isn't holywars and the player doesn't have the flag
         && !ent->myskills.administrator // Not an admin
         && !que_typeexists(ent->curses, 0)  // Not cursed
         && (ent->myskills.streak < SPREE_START)) // Not on a spree
@@ -439,7 +439,7 @@ void think_ability_cloak(edict_t *ent) {
 
         if ((ent->myskills.abilities[CLOAK].current_level > 0) && (ent->client->idle_frames >= min_idle_frames)
             && !que_typeexists(ent->auras, 0) && (level.time > ent->client->ability_delay)
-            && !HasFlag(ent) && !V_HasSummons(ent)) {
+            && !vrx_has_flag(ent) && !V_HasSummons(ent)) {
             //if (!ent->svflags & SVF_NOCLIENT)
             //	que_list(ent->auras);
 
@@ -512,12 +512,12 @@ void think_ability_armor_regen(edict_t *ent, int max_armor, int *armor) {
         && (ent->myskills.abilities[ARMOR_REGEN].current_level > 0)
         && G_EntIsAlive(ent) && (*armor < max_armor)
         && (level.time > ent->client->armorregen_time)
-        && !(ctf->value && ctf_enable_balanced_fc->value && HasFlag(ent))
+        && !(ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent))
         && !que_findtype(ent->curses, NULL, CURSE)) // can't regen when cursed
     {
         int health_factor;
 
-        if (ent->myskills.class_num == CLASS_PALADIN)
+        if (ent->myskills.class_num == CLASS_KNIGHT)
             health_factor = floattoint(1.5 * ent->myskills.abilities[ARMOR_REGEN].current_level);
         else
             health_factor = floattoint(1 * ent->myskills.abilities[ARMOR_REGEN].current_level);
@@ -540,7 +540,7 @@ void think_ability_armor_regen(edict_t *ent, int max_armor, int *armor) {
 void think_ability_health_regen(edict_t *ent) {
     if ((ent->health < ent->max_health) && (!ent->myskills.abilities[REGENERATION].disable)
         && (ent->deadflag != DEAD_DEAD) && (level.time > ent->client->healthregen_time)
-        && !(ctf->value && ctf_enable_balanced_fc->value && HasFlag(ent))) {
+        && !(ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent))) {
         //3.0 cursed players can't heal through regeneration
         if (que_findtype(ent->curses, NULL, CURSE) == NULL) {
             int health_factor = 1 * ent->myskills.abilities[REGENERATION].current_level; // Regeneration OP. :D
@@ -586,7 +586,7 @@ void think_tech_regeneration(edict_t *ent) {
 
 void think_ability_fury(edict_t *ent) {
     if (!(level.framenum % (int)(1 / FRAMETIME)) && (ent->fury_time > level.time && ent->client)) {
-        if (G_EntIsAlive(ent) && !(ctf->value && ctf_enable_balanced_fc->value && HasFlag(ent))) {
+        if (G_EntIsAlive(ent) && !(ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent))) {
             int maxHP = MAX_HEALTH(ent);
             int maxAP = MAX_ARMOR(ent);
             int *armor = &ent->client->pers.inventory[body_armor_index];

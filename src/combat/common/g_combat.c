@@ -225,7 +225,7 @@ qboolean G_CanUseAbilities(edict_t *ent, int ability_lvl, int pc_cost) {
         return false;
     }
     // enforce special rules on flag carrier in CTF mode
-    if (ctf->value && ctf_enable_balanced_fc->value && HasFlag(ent)) {
+    if (ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent)) {
         safe_cprintf(ent, PRINT_HIGH, "Flag carrier cannot use abilities.\n");
         return false;
     }
@@ -367,25 +367,24 @@ static int CheckShield (edict_t *ent, vec3_t point, vec3_t normal, int damage, i
 	if (ent->deadflag == DEAD_DEAD)
 		return 0;
 
-	//4.2 check for player-monster, assign cl_ent to always point to the client (if there is one)
-	if (PM_MonsterHasPilot(ent))
-		cl_ent = ent->activator;
-	else if (ent->client)
-		cl_ent = ent;
-	else
-		return 0;//non-players are not supported
+    //4.2 check for player-monster, assign cl_ent to always point to the client (if there is one)
+    if (PM_MonsterHasPilot(ent))
+        cl_ent = ent->activator;
+    else if (ent->client)
+        cl_ent = ent;
+    else
+        return 0;//non-players are not supported
 
-	// flag carriers can't use power armor in CTF
-	if (cl_ent && ctf->value && ctf_enable_balanced_fc->value && HasFlag(cl_ent))
-		return 0;
-	
-	// shield is not activated
-	if (!cl_ent->shield || (cl_ent->shield_activate_time > level.time))
-		return 0;
+    // flag carriers can't use power armor in CTF
+    if (cl_ent && ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(cl_ent))
+        return 0;
 
-	if (cl_ent->shield == 1)
-	{
-		vec3_t		forward, v;
+    // shield is not activated
+    if (!cl_ent->shield || (cl_ent->shield_activate_time > level.time))
+        return 0;
+
+    if (cl_ent->shield == 1) {
+        vec3_t forward, v;
 
 		// only works if damage point is in front
 		AngleVectors(ent->s.angles, forward, NULL, NULL);
@@ -435,27 +434,25 @@ static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damag
 		return 0;
 	if (dflags & DAMAGE_NO_ABILITIES)
 		return 0;
-	if (ent->deadflag == DEAD_DEAD)
-		return 0;
+    if (ent->deadflag == DEAD_DEAD)
+        return 0;
 
-	//4.2 check for player-monster, assign cl_ent to always point to the client (if there is one)
-	if (PM_MonsterHasPilot(ent))
-		cl_ent = ent->activator;
-	else if (client)
-		cl_ent = ent;
+    //4.2 check for player-monster, assign cl_ent to always point to the client (if there is one)
+    if (PM_MonsterHasPilot(ent))
+        cl_ent = ent->activator;
+    else if (client)
+        cl_ent = ent;
 
-	// flag carriers can't use power armor in CTF
-	if (cl_ent && ctf->value && ctf_enable_balanced_fc->value && HasFlag(cl_ent))
-		return 0;
+    // flag carriers can't use power armor in CTF
+    if (cl_ent && ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(cl_ent))
+        return 0;
 
-	if (cl_ent)
-	{
-		power_armor_type = PowerArmorType (cl_ent);
-		if (power_armor_type != POWER_ARMOR_NONE)
-		{
-			index = ITEM_INDEX(Fdi_CELLS);
-			power = cl_ent->client->pers.inventory[index];
-		}
+    if (cl_ent) {
+        power_armor_type = PowerArmorType(cl_ent);
+        if (power_armor_type != POWER_ARMOR_NONE) {
+            index = ITEM_INDEX(Fdi_CELLS);
+            power = cl_ent->client->pers.inventory[index];
+        }
 	}
 	else if (ent->svflags & SVF_MONSTER)
 	{
@@ -556,27 +553,27 @@ static int CheckArmor(edict_t *ent, vec3_t point, vec3_t normal, int damage, int
 //	int talentLevel;
 
 	if (!damage)
-		return 0;
+        return 0;
 
-	client = ent->client;
+    client = ent->client;
 
-	if (!client)
-		return 0;
-	// player-monsters dont use normal armor
-	if (ent->mtype)
-		return 0;
-	// flag carrier can't use armor in CTF
-	if (ctf->value && ctf_enable_balanced_fc->value && HasFlag(ent))
-		return 0;
+    if (!client)
+        return 0;
+    // player-monsters dont use normal armor
+    if (ent->mtype)
+        return 0;
+    // flag carrier can't use armor in CTF
+    if (ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent))
+        return 0;
 
-	if (dflags & DAMAGE_NO_ARMOR)
-		return 0;
-	if (dflags & DAMAGE_NO_ABILITIES)
-		return 0;
+    if (dflags & DAMAGE_NO_ARMOR)
+        return 0;
+    if (dflags & DAMAGE_NO_ABILITIES)
+        return 0;
 
-	index = ArmorIndex (ent);
-	if (!index)
-		return 0;
+    index = ArmorIndex(ent);
+    if (!index)
+        return 0;
 
 	if (dflags & DAMAGE_ENERGY)	armor_protection = 0.6;//was 0.7;
 	else						armor_protection = 0.8;//was 0.9;
@@ -621,27 +618,26 @@ static int CheckArmor(edict_t *ent, vec3_t point, vec3_t normal, int damage, int
 
 qboolean CanUseVampire (edict_t *targ, edict_t *attacker, int dflags, int mod)
 {
-	int dtype = G_DamageType(mod, dflags);
+    int dtype = G_DamageType(mod, dflags);
 
-	if (!attacker->client)
-		return false;
+    if (!attacker->client)
+        return false;
 
-	// can't vamp from yourself
-	if (targ == attacker)
-		return false;
+    // can't vamp from yourself
+    if (targ == attacker)
+        return false;
 
-	// flag carrier can't use abilities in CTF mode
-	if (ctf->value && ctf_enable_balanced_fc->value && HasFlag(attacker))
-		return false;
+    // flag carrier can't use abilities in CTF mode
+    if (ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(attacker))
+        return false;
 
-	// is vampire upgraded?
-	if (attacker->myskills.abilities[VAMPIRE].current_level < 1)
-	{
-		// are we a brain or mutant?
-		if ((attacker->mtype != MORPH_BRAIN) && (attacker->mtype != MORPH_MUTANT))
-			return false;
-		// is morph mastery upgraded?
-		if (attacker->myskills.abilities[MORPH_MASTERY].current_level < 1)
+    // is vampire upgraded?
+    if (attacker->myskills.abilities[VAMPIRE].current_level < 1) {
+        // are we a brain or mutant?
+        if ((attacker->mtype != MORPH_BRAIN) && (attacker->mtype != MORPH_MUTANT))
+            return false;
+        // is morph mastery upgraded?
+        if (attacker->myskills.abilities[MORPH_MASTERY].current_level < 1)
 			return false;
 	}
 
@@ -743,21 +739,20 @@ void G_ApplyVampire(edict_t *attacker, float take)
 int G_AutoTBall(edict_t *targ, float take)
 {
 	//3.0 try to auto-tball away when hit
-	if ((targ->client)															//target must be a player
-		&& G_EntIsAlive(targ)													//target must be alive
-		&& (targ->health - take < (0.25 * MAX_HEALTH(targ)))					//target must end up with < 25% hp
-		&& !(targ->v_flags & SFLG_AUTO_TBALLED)									//target must not have auto-tballed this spawn
-		&& !HasFlag(targ))	//target must not have the flag
-	{
-		qboolean found = false;
-		int i;
-		//try to find an auto-tball
-		for (i = 3; i < MAX_VRXITEMS; ++i)
-		{
-			if (targ->myskills.items[i].itemtype & ITEM_AUTO_TBALL)
-			{
-				found = true;
-				break;
+    if ((targ->client)                                                            //target must be a player
+        && G_EntIsAlive(targ)                                                    //target must be alive
+        && (targ->health - take < (0.25 * MAX_HEALTH(targ)))                    //target must end up with < 25% hp
+        && !(targ->v_flags &
+             SFLG_AUTO_TBALLED)                                    //target must not have auto-tballed this spawn
+        && !vrx_has_flag(targ))    //target must not have the flag
+    {
+        qboolean found = false;
+        int i;
+        //try to find an auto-tball
+        for (i = 3; i < MAX_VRXITEMS; ++i) {
+            if (targ->myskills.items[i].itemtype & ITEM_AUTO_TBALL) {
+                found = true;
+                break;
 			}
 		}
 		if (found && (GetRandom(0, 100) > 75))	//75% chance of not working

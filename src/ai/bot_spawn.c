@@ -310,7 +310,7 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 	ent->nextthink = level.time + FRAMETIME;
 
 	// az: Vortex stuff
-	disableAbilities(ent);
+    vrx_disable_abilities(ent);
 
 	ent->myskills.level = AveragePlayerLevel();
 	ent->myskills.speciality_points = ent->myskills.level * 2;

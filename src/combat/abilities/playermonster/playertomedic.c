@@ -478,27 +478,26 @@ void Cmd_PlayerToMedic_f (edict_t *ent)
 		}
 
 		V_RestoreMorphed(ent, 0);
-		return;
-	}
+        return;
+    }
 
-	//Talent: Morphing
+    //Talent: Morphing
     if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
         cost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
 
-	if (!V_CanUseAbilities(ent, MEDIC, cost, true))
-		return;
+    if (!V_CanUseAbilities(ent, MEDIC, cost, true))
+        return;
 
-	if (HasFlag(ent) && !hw->value)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Can't morph while carrying flag!\n");
-		return;
-	}
+    if (vrx_has_flag(ent) && !hw->value) {
+        safe_cprintf(ent, PRINT_HIGH, "Can't morph while carrying flag!\n");
+        return;
+    }
 
-	// make sure don't get stuck in a wall
-	VectorSet (boxmin, -24, -24, -24);
-	VectorSet (boxmax, 24, 24, 32);
-	tr = gi.trace(ent->s.origin, boxmin, boxmax, ent->s.origin, ent, MASK_SHOT);
-	if (tr.fraction<1)
+    // make sure don't get stuck in a wall
+    VectorSet (boxmin, -24, -24, -24);
+    VectorSet (boxmax, 24, 24, 32);
+    tr = gi.trace(ent->s.origin, boxmin, boxmax, ent->s.origin, ent, MASK_SHOT);
+    if (tr.fraction < 1)
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Not enough room to morph!\n");
 		return;

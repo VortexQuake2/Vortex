@@ -302,27 +302,26 @@ void Cmd_PlayerToBerserk_f (edict_t *ent)
 		}
 
 		V_RestoreMorphed(ent, 0);
-		return;
-	}
+        return;
+    }
 
-	//Talent: Morphing
+    //Talent: Morphing
     if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
         cost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
 
-	if (!V_CanUseAbilities(ent, BERSERK, cost, true))
-		return;
+    if (!V_CanUseAbilities(ent, BERSERK, cost, true))
+        return;
 
-	if (HasFlag(ent) && !hw->value)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Can't morph while carrying flag!\n");
-		return;
-	}
+    if (vrx_has_flag(ent) && !hw->value) {
+        safe_cprintf(ent, PRINT_HIGH, "Can't morph while carrying flag!\n");
+        return;
+    }
 
-	V_ModifyMorphedHealth(ent, MORPH_BERSERK, true);
+    V_ModifyMorphedHealth(ent, MORPH_BERSERK, true);
 
-	ent->monsterinfo.attack_finished = level.time + 0.5;// can't attack immediately
+    ent->monsterinfo.attack_finished = level.time + 0.5;// can't attack immediately
 
-	ent->client->pers.inventory[power_cube_index] -= cost;
+    ent->client->pers.inventory[power_cube_index] -= cost;
 	ent->client->ability_delay = level.time + BERSERK_DELAY;
 
 	ent->mtype = MORPH_BERSERK;

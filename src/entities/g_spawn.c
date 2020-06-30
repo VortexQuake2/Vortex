@@ -672,7 +672,6 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	int			inhibit;
 	char		*com_token;
 	int			i;
-	int			laser = 0;
 	int			saved;//4.5 don't lose level.r_monsters value!
 
 	SaveClientData ();

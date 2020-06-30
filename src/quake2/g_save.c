@@ -195,7 +195,7 @@ void InitGame(void)
 	InitHash();
 #endif
 
-	InitializeAbilityList();
+    vrx_init_ability_list();
 	// az end
 
 	gun_x = gi.cvar("gun_x", "0", 0);
@@ -310,7 +310,7 @@ void InitGame(void)
 	enforce_class_skins = gi.cvar("enforce_class_skins", "1", CVAR_LATCH);
 
 	class1_model = gi.cvar("class1_model", "terran", CVAR_LATCH); // soldier
-	class2_model = gi.cvar("class2_model", "xenoid", CVAR_LATCH); // polt
+	class2_model = gi.cvar("class2_model", "zumlin", CVAR_LATCH); // polt
 	class3_model = gi.cvar("class3_model", "caleb", CVAR_LATCH); // vampire
 	class4_model = gi.cvar("class4_model", "linfang", CVAR_LATCH); // mage
 	class5_model = gi.cvar("class5_model", "terminator", CVAR_LATCH); // engy
@@ -322,7 +322,7 @@ void InitGame(void)
 	else
 		class8_model = gi.cvar("class8_model", "marine", CVAR_LATCH); // apprentice
 
-	class9_model = gi.cvar("class9_model", "zumlin", CVAR_LATCH); // necromancer
+	class9_model = gi.cvar("class9_model", "slith", CVAR_LATCH); // necromancer
 	class10_model = gi.cvar("class10_model", "bauul", CVAR_LATCH); // shaman
 	class11_model = gi.cvar("class11_model", "xenoid", CVAR_LATCH); // alien
 	class12_model = gi.cvar("class12_model", "ddz", CVAR_LATCH); // kamikaze
@@ -330,7 +330,7 @@ void InitGame(void)
 
 
 	class1_skin = gi.cvar("class1_skin", "blue", CVAR_LATCH); // soldier
-	class2_skin = gi.cvar("class2_skin", "xenotype1", CVAR_LATCH); // polt
+	class2_skin = gi.cvar("class2_skin", "zumlin", CVAR_LATCH); // polt
 	class3_skin = gi.cvar("class3_skin", "caleb_undead", CVAR_LATCH); // vampire
 	class4_skin = gi.cvar("class4_skin", "ctf_r", CVAR_LATCH); // mage
 	class5_skin = gi.cvar("class5_skin", "blood", CVAR_LATCH); // engy
@@ -340,7 +340,7 @@ void InitGame(void)
 		class8_skin = gi.cvar("class8_skin", "ratamahatta", CVAR_LATCH); // weapon master
 	else
 		class8_skin = gi.cvar("class8_skin", "brownie", CVAR_LATCH); // apprentice
-	class9_skin = gi.cvar("class9_skin", "zumlin", CVAR_LATCH); // necromancer
+	class9_skin = gi.cvar("class9_skin", "chompers", CVAR_LATCH); // necromancer
 	class10_skin = gi.cvar("class10_skin", "bauul", CVAR_LATCH); // shaman
 	class11_skin = gi.cvar("class11_skin", "xenotype1", CVAR_LATCH); // alien
 	class12_skin = gi.cvar("class12_skin", "ctf_g", CVAR_LATCH); // kamikaze

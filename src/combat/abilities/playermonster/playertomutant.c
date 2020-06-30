@@ -275,26 +275,25 @@ void Cmd_PlayerToMutant_f (edict_t *ent)
 		return;
 	}
 
-	//Talent: Morphing
+    //Talent: Morphing
     if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
         mutant_cubecost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
 
 //	if (!G_CanUseAbilities(ent, ent->myskills.abilities[MUTANT].current_level, mutant_cubecost))
 //		return;
-	if (!V_CanUseAbilities(ent, MUTANT, mutant_cubecost, true))
-		return;
+    if (!V_CanUseAbilities(ent, MUTANT, mutant_cubecost, true))
+        return;
 
-	if (HasFlag(ent) && !hw->value)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Can't morph while carrying flag!\n");
-		return;
-	}
+    if (vrx_has_flag(ent) && !hw->value) {
+        safe_cprintf(ent, PRINT_HIGH, "Can't morph while carrying flag!\n");
+        return;
+    }
 
 
-	// make sure don't get stuck in a wall
-	VectorSet (boxmin, -24, -24, -24);
-	VectorSet (boxmax, 24, 24, 32);
-	tr = gi.trace(ent->s.origin, boxmin, boxmax, ent->s.origin, ent, MASK_SHOT);
+    // make sure don't get stuck in a wall
+    VectorSet (boxmin, -24, -24, -24);
+    VectorSet (boxmax, 24, 24, 32);
+    tr = gi.trace(ent->s.origin, boxmin, boxmax, ent->s.origin, ent, MASK_SHOT);
 	if (tr.fraction<1)
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Not enough room to morph!\n");

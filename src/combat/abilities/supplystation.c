@@ -75,18 +75,17 @@ void healthbox_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t
 	if (G_EntExists(other) && other->client && (other->health > 0)
 		&& (NeedHealth(other) || (self->style == HEALTHBOX_SMALL)))
 	{
-		// special rules disable flag carrier abilities
-		if(!(ctf->value && ctf_enable_balanced_fc->value && HasFlag(other)))
-		{
-			if(!other->myskills.abilities[HA_PICKUP].disable)
-				temp += 0.3*other->myskills.abilities[HA_PICKUP].current_level;
+        // special rules disable flag carrier abilities
+        if (!(ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(other))) {
+            if (!other->myskills.abilities[HA_PICKUP].disable)
+                temp += 0.3 * other->myskills.abilities[HA_PICKUP].current_level;
 
-			//Talent: Basic HA Pickup
+            //Talent: Basic HA Pickup
             //if(vrx_get_talent_slot(other, TALENT_BASIC_HA) != -1)
             //	temp += 0.2 * vrx_get_talent_level(other, TALENT_BASIC_HA);
-		}
+        }
 
-		other->health += self->count*temp;
+        other->health += self->count * temp;
 		// check for maximum health cap
 		if ((other->health > other->max_health) && (self->style != HEALTHBOX_SMALL))
 			other->health = other->max_health;

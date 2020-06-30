@@ -1011,17 +1011,16 @@ int	TeamScore (int teamnum)
 	return score;
 }
 
-qboolean HasFlag (edict_t *ent)
-{
-	if (!ent->client)
-		return false;
+qboolean vrx_has_flag(const edict_t *ent) {
+    if (!ent->client)
+        return false;
 
-	if (ent->client->pers.inventory[flag_index] > 0)
-		return true;
-	if (ent->client->pers.inventory[red_flag_index] > 0)
-		return true;
-	if (ent->client->pers.inventory[blue_flag_index] > 0)
-		return true;
+    if (ent->client->pers.inventory[flag_index] > 0)
+        return true;
+    if (ent->client->pers.inventory[red_flag_index] > 0)
+        return true;
+    if (ent->client->pers.inventory[blue_flag_index] > 0)
+        return true;
 	if (ent->client->pers.inventory[halo_index] > 0)
 		return true;
 	return false;

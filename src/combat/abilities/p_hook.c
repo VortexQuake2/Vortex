@@ -291,27 +291,25 @@ void hook_fire (edict_t *ent) {
 			return;
 	}
 	else if (ent->flags & FL_WORMHOLE)
-		return; //4.2 don't allow hook in wormhole/noclip
+        return; //4.2 don't allow hook in wormhole/noclip
 
-	//4.07 can't hook while being hurt
-	if (ent->lasthurt+DAMAGE_ESCAPE_DELAY > level.time)
-		return;
+    //4.07 can't hook while being hurt
+    if (ent->lasthurt + DAMAGE_ESCAPE_DELAY > level.time)
+        return;
 
-	//amnesia disables hook
+    //amnesia disables hook
     if (que_findtype(ent->curses, NULL, AMNESIA) != NULL)
-		return;
+        return;
 
-	if (HasFlag(ent))
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Can't use this ability while carrying the flag!\n");
-		return;
-	}
+    if (vrx_has_flag(ent)) {
+        safe_cprintf(ent, PRINT_HIGH, "Can't use this ability while carrying the flag!\n");
+        return;
+    }
 
-	if (ent->client->snipertime >= level.time)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "You can't use hook while trying to snipe!\n");
-		return;
-	}
+    if (ent->client->snipertime >= level.time) {
+        safe_cprintf(ent, PRINT_HIGH, "You can't use hook while trying to snipe!\n");
+        return;
+    }
 
     ent->client->hook_state = HOOK_OUT;
 

@@ -350,20 +350,18 @@ char *GetRespawnString (edict_t *ent)
 
 void OpenRespawnWeapMenu(edict_t *ent)
 {
-	if (!ShowMenu(ent))
+    if (!ShowMenu(ent))
         return;
 
-	if(ent->myskills.class_num == CLASS_PALADIN)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Knights are restricted to a sabre.\n");
-		return;
-	}
+    if (ent->myskills.class_num == CLASS_KNIGHT) {
+        safe_cprintf(ent, PRINT_HIGH, "Knights are restricted to a sabre.\n");
+        return;
+    }
 
-	if(vrx_is_morphing_polt(ent))
-	{
-		safe_cprintf(ent, PRINT_HIGH, "You can't pick a respawn weapon.\n");
-		return;
-	}
+    if (vrx_is_morphing_polt(ent)) {
+        safe_cprintf(ent, PRINT_HIGH, "You can't pick a respawn weapon.\n");
+        return;
+    }
 
 	clearmenu(ent);
 
@@ -404,20 +402,18 @@ void classmenu_handler (edict_t *ent, int option)
 		OpenJoinMenu(ent);
 		return;
 	}
-	else if (page_num > 0)
-	{
-		if (page_choice == 2)	//next
-            OpenClassMenu (ent, page_num+1);
-		else if (page_choice == 1)	//prev
-			OpenClassMenu (ent, page_num-1);
-		return;
-	}
-	//don't cause an invalid class to be created (option 99 is checked as well)
-	else if ((option > CLASS_MAX) || (option < 1))
-	{
-		closemenu(ent);
-		return;
-	}
+	else if (page_num > 0) {
+        if (page_choice == 2)    //next
+            OpenClassMenu(ent, page_num + 1);
+        else if (page_choice == 1)    //prev
+            OpenClassMenu(ent, page_num - 1);
+        return;
+    }
+        //don't cause an invalid class to be created (option 99 is checked as well)
+    else if ((option >= CLASS_MAX) || (option < 1)) {
+        closemenu(ent);
+        return;
+    }
 
 	// assign new players a team if the start level is low
 	// otherwise, deny them access until the next game
@@ -480,25 +476,24 @@ void OpenClassMenu (edict_t *ent, int page_num)
 	//				xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
 	addlinetomenu(ent, "Please select your", MENU_GREEN_CENTERED);
 	addlinetomenu(ent, "character class:", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
+    addlinetomenu(ent, " ", 0);
 
-	for (i = ((page_num-1)*11); i < (page_num*11); ++i)
-	{
-		if (i < CLASS_MAX)
+    for (i = ((page_num - 1) * 11); i < (page_num * 11); ++i) {
+        if (i < CLASS_MAX - 1)
             addlinetomenu(ent, va("%s", vrx_get_class_string(i + 1)), i + 1);
-		else addlinetomenu(ent, " ", 0);
-	}
+        else addlinetomenu(ent, " ", 0);
+    }
 
-	addlinetomenu(ent, " ", 0);
-	if (i < CLASS_MAX) addlinetomenu(ent, "Next", (page_num*1000)+2);
-	addlinetomenu(ent, "Back", (page_num*1000)+1);
-	addlinetomenu(ent, "Exit", 99);
+    addlinetomenu(ent, " ", 0);
+    if (i < CLASS_MAX - 1) addlinetomenu(ent, "Next", (page_num * 1000) + 2);
+    addlinetomenu(ent, "Back", (page_num * 1000) + 1);
+    addlinetomenu(ent, "Exit", 99);
 
-	setmenuhandler(ent, classmenu_handler);
-	if (CLASS_MAX > 11)
-		ent->client->menustorage.currentline = 15;
-	else ent->client->menustorage.currentline = 5 + i;
-	showmenu(ent);
+    setmenuhandler(ent, classmenu_handler);
+    if (CLASS_MAX - 1 > 11)
+        ent->client->menustorage.currentline = 15;
+    else ent->client->menustorage.currentline = 5 + i;
+    showmenu(ent);
 }
 
 void masterpw_handler (edict_t *ent, int option)
@@ -593,27 +588,30 @@ void OpenGeneralMenu (edict_t *ent)
 	if (!ent->myskills.talents.talentPoints)
 		addlinetomenu(ent, "Upgrade talents", 3);
 	else
-		addlinetomenu(ent, va("Upgrade talents (%d)",ent->myskills.talents.talentPoints), 3);
+        addlinetomenu(ent, va("Upgrade talents (%d)", ent->myskills.talents.talentPoints), 3);
 
-	addlinetomenu(ent, " ", 0);
-	if (!vrx_is_morphing_polt(ent) && 
-		ent->myskills.class_num != CLASS_PALADIN)
-			addlinetomenu(ent, "Set respawn weapon", 4);
-	addlinetomenu(ent, "Set master password", 5);
-	addlinetomenu(ent, "Show character info", 6);
-	addlinetomenu(ent, "Access the armory", 7);
-	addlinetomenu(ent, "Access your items", 8);
-	addlinetomenu(ent, "Form alliance", 9);
-	addlinetomenu(ent, "Trade items", 10);
-	addlinetomenu(ent, "Vote for map/mode", 11);
-	addlinetomenu(ent, "Help", 12);
+    addlinetomenu(ent, " ", 0);
+    if (!vrx_is_morphing_polt(ent) &&
+        ent->myskills.class_num != CLASS_KNIGHT)
+        addlinetomenu(ent, "Set respawn weapon", 4);
+    addlinetomenu(ent, "Set master password", 5);
+    addlinetomenu(ent, "Show character info", 6);
+    addlinetomenu(ent, "Access the armory", 7);
+    addlinetomenu(ent, "Access your items", 8);
+
+    if (!invasion->value) // az: don't need this there.
+        addlinetomenu(ent, "Form alliance", 9);
+
+    addlinetomenu(ent, "Trade items", 10);
+    addlinetomenu(ent, "Vote for map/mode", 11);
+    addlinetomenu(ent, "Help", 12);
 
 #ifndef REMOVE_RESPAWNS
-	if (pregame_time->value > level.time || trading->value) // we in pregame? you can buy respawns
-	{
-		if (ent->myskills.class_num != CLASS_PALADIN && !vrx_is_morphing_polt(ent)) // A class that needs respawns?
-			addlinetomenu(ent, va("Buy Respawns (%d)", ent->myskills.weapon_respawns), 13);
-	}
+    if (pregame_time->value > level.time || trading->value) // we in pregame? you can buy respawns
+    {
+        if (ent->myskills.class_num != CLASS_KNIGHT && !vrx_is_morphing_polt(ent)) // A class that needs respawns?
+            addlinetomenu(ent, va("Buy Respawns (%d)", ent->myskills.weapon_respawns), 13);
+    }
 #endif
 
 	setmenuhandler(ent, generalmenu_handler);

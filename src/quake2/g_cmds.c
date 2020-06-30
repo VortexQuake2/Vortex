@@ -68,27 +68,26 @@ void Cmd_SuperSpeed_f (edict_t *ent, int toggle)
 {
 	int speedLevel;
 
-	if ((!ent->inuse) || (!ent->client))
-		return;
-	if (toggle == 0) {
-		ent->superspeed = false;
-		return;
-	}
+    if ((!ent->inuse) || (!ent->client))
+        return;
+    if (toggle == 0) {
+        ent->superspeed = false;
+        return;
+    }
 
-	if (ent->myskills.abilities[SUPER_SPEED].disable && ent->mtype != MORPH_BERSERK)
-		return;
+    if (ent->myskills.abilities[SUPER_SPEED].disable && ent->mtype != MORPH_BERSERK)
+        return;
 
-	if (HasFlag(ent))
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Can't use this ability while carrying the flag!\n");
-		return;
-	}
+    if (vrx_has_flag(ent)) {
+        safe_cprintf(ent, PRINT_HIGH, "Can't use this ability while carrying the flag!\n");
+        return;
+    }
 
-	//3.0 amnesia disables super speed
-	if (que_findtype(ent->curses, NULL, AMNESIA) != NULL)
-		return;
+    //3.0 amnesia disables super speed
+    if (que_findtype(ent->curses, NULL, AMNESIA) != NULL)
+        return;
 
-	speedLevel = ent->myskills.abilities[SUPER_SPEED].current_level;
+    speedLevel = ent->myskills.abilities[SUPER_SPEED].current_level;
 
 	// berserk gets free superspeed
 	if (ent->myskills.abilities[BERSERK].current_level)
@@ -997,26 +996,23 @@ void Cmd_Use_f (edict_t *ent)
 	if ((ent->health < 1) || (ent->deadflag == DEAD_DEAD))
 		return;
 
-	//K03 End
-	s = gi.args();
-	
-	if (Cmd_UseMorphWeapons_f(ent, s))
-	{
-		ent->client->last_weapon_mode = weapMode;
-		return;
-	}
+    //K03 End
+    s = gi.args();
 
-	if ((ent->myskills.class_num == CLASS_PALADIN) && 
-		((Q_strcasecmp(s, "20mm cannon") == 0) || (Q_strcasecmp(s, "grenades") == 0)) )
-		return;
+    if (Cmd_UseMorphWeapons_f(ent, s)) {
+        ent->client->last_weapon_mode = weapMode;
+        return;
+    }
 
-	//3.0 Check for consumable items
-	if (Q_strcasecmp(s, "potion") == 0)
-	{
-		cmd_Drink(ent, ITEM_POTION, 0);
-		return;
-	}
-	else if (Q_strcasecmp(s, "holywater") == 0)
+    if ((ent->myskills.class_num == CLASS_KNIGHT) &&
+        ((Q_strcasecmp(s, "20mm cannon") == 0) || (Q_strcasecmp(s, "grenades") == 0)))
+        return;
+
+    //3.0 Check for consumable items
+    if (Q_strcasecmp(s, "potion") == 0) {
+        cmd_Drink(ent, ITEM_POTION, 0);
+        return;
+    } else if (Q_strcasecmp(s, "holywater") == 0)
 	{
 		cmd_Drink(ent, ITEM_ANTIDOTE, 0);
 		return;
@@ -1032,27 +1028,26 @@ void Cmd_Use_f (edict_t *ent)
 	{
 		safe_cprintf (ent, PRINT_HIGH, "unknown item: %s\n", s);
 		return;
-	}
-	if (!it->use)
-	{
-		safe_cprintf (ent, PRINT_HIGH, "Item is not usable.\n");
-		return;
-	}
+    }
+    if (!it->use) {
+        safe_cprintf(ent, PRINT_HIGH, "Item is not usable.\n");
+        return;
+    }
 
-	//K03 Begin
-	slot = GetSlot(it);
+    //K03 Begin
+    slot = GetSlot(it);
 
-	if ((ent->myskills.class_num == CLASS_PALADIN) && (slot > 0) && (slot < 11))
-		return;
+    if ((ent->myskills.class_num == CLASS_KNIGHT) && (slot > 0) && (slot < 11))
+        return;
 
-	if (slot == 1 && ent->client->pers.weapon == FindItem ("Blaster"))
-        it = FindItem ("Sword");
-	else if (slot == 1 && ent->client->pers.weapon == FindItem ("Sword"))
-        it = FindItem ("Blaster");
-	//K03 End
-	index = ITEM_INDEX(it);
-	if (!ent->client->pers.inventory[index]  && (it != FindItem("tball self")))//K03 tball self exception
-	{
+    if (slot == 1 && ent->client->pers.weapon == FindItem("Blaster"))
+        it = FindItem("Sword");
+    else if (slot == 1 && ent->client->pers.weapon == FindItem("Sword"))
+        it = FindItem("Blaster");
+    //K03 End
+    index = ITEM_INDEX(it);
+    if (!ent->client->pers.inventory[index] && (it != FindItem("tball self")))//K03 tball self exception
+    {
 		safe_cprintf (ent, PRINT_HIGH, "Out of item: %s\n", s);
 		return;
 	}
@@ -1242,18 +1237,17 @@ void Cmd_InvUse_f (edict_t *ent)
 	ValidateSelectedItem (ent);
 	if (ent->client->pers.selected_item == -1)
 	{
-		safe_cprintf (ent, PRINT_HIGH, "No item to use.\n");
-		return;
-	}
-	it = &itemlist[ent->client->pers.selected_item];
-	if (!it->use)
-	{
-		safe_cprintf (ent, PRINT_HIGH, "Item is not usable.\n");
-		return;
-	}
+        safe_cprintf(ent, PRINT_HIGH, "No item to use.\n");
+        return;
+    }
+    it = &itemlist[ent->client->pers.selected_item];
+    if (!it->use) {
+        safe_cprintf(ent, PRINT_HIGH, "Item is not usable.\n");
+        return;
+    }
 
-	if(ent->myskills.class_num != CLASS_PALADIN)	//doomie
-		it->use (ent, it);
+    if (ent->myskills.class_num != CLASS_KNIGHT)    //doomie
+        it->use(ent, it);
 }
 //ZOID
 /*
@@ -1279,27 +1273,25 @@ void Cmd_LastWeap_f (edict_t *ent)
 Cmd_WeapPrev_f
 =================
 */
-void Cmd_WeapPrev_f (edict_t *ent)
-{
-	gclient_t	*cl;
-	int			i, index;
-	gitem_t		*it;
-	int			selected_weapon;
-	cl = ent->client;
-	if (!cl->pers.weapon)
-		return;
+void Cmd_WeapPrev_f (edict_t *ent) {
+    gclient_t *cl;
+    int i, index;
+    gitem_t *it;
+    int selected_weapon;
+    cl = ent->client;
+    if (!cl->pers.weapon)
+        return;
 
-	if (ent->myskills.class_num == CLASS_PALADIN)
-		return;
-	selected_weapon = ITEM_INDEX(cl->pers.weapon);
-	// scan  for the next valid one
-	for (i=1 ; i<=MAX_ITEMS ; i++)
-	{
-		index = (selected_weapon + i)%MAX_ITEMS;
-		if (!cl->pers.inventory[index])
-			continue;
-		it = &itemlist[index];
-		if (!it->use)
+    if (ent->myskills.class_num == CLASS_KNIGHT)
+        return;
+    selected_weapon = ITEM_INDEX(cl->pers.weapon);
+    // scan  for the next valid one
+    for (i = 1; i <= MAX_ITEMS; i++) {
+        index = (selected_weapon + i) % MAX_ITEMS;
+        if (!cl->pers.inventory[index])
+            continue;
+        it = &itemlist[index];
+        if (!it->use)
 			continue;
 		if (! (it->flags & IT_WEAPON) )
 			continue;
@@ -1313,26 +1305,24 @@ void Cmd_WeapPrev_f (edict_t *ent)
 Cmd_WeapNext_f
 =================
 */
-void Cmd_WeapNext_f (edict_t *ent)
-{
-	gclient_t	*cl;
-	int			i, index;
-	gitem_t		*it;
-	int			selected_weapon;
-	cl = ent->client;
-	if (!cl->pers.weapon)
-		return;
-	if (ent->myskills.class_num == CLASS_PALADIN)
-		return;
+void Cmd_WeapNext_f (edict_t *ent) {
+    gclient_t *cl;
+    int i, index;
+    gitem_t *it;
+    int selected_weapon;
+    cl = ent->client;
+    if (!cl->pers.weapon)
+        return;
+    if (ent->myskills.class_num == CLASS_KNIGHT)
+        return;
 
-	selected_weapon = ITEM_INDEX(cl->pers.weapon);
-	// scan  for the next valid one
-	for (i=1 ; i<=MAX_ITEMS ; i++)
-	{
-		index = (selected_weapon + MAX_ITEMS - i)%MAX_ITEMS;
-		if (!cl->pers.inventory[index])
-			continue;
-		it = &itemlist[index];
+    selected_weapon = ITEM_INDEX(cl->pers.weapon);
+    // scan  for the next valid one
+    for (i = 1; i <= MAX_ITEMS; i++) {
+        index = (selected_weapon + MAX_ITEMS - i) % MAX_ITEMS;
+        if (!cl->pers.inventory[index])
+            continue;
+        it = &itemlist[index];
 		if (!it->use)
 			continue;
 		if (! (it->flags & IT_WEAPON) )
@@ -1469,27 +1459,25 @@ void Cmd_Kill_f (edict_t *ent)
 	{
 		SPREE_WAR = false;
 		SPREE_DUDE = NULL;
-	}
+    }
 
-	// if a player suicides, re-spawn the flag
-	if (domination->value && ent->client->pers.inventory[flag_index])
-	{
-		ent->client->pers.inventory[flag_index] = 0;
-		dom_spawnflag();
-		gi.bprintf(PRINT_HIGH, "%s gives up control of the flag.\n", ent->client->pers.netname);
-	}
+    // if a player suicides, re-spawn the flag
+    if (domination->value && ent->client->pers.inventory[flag_index]) {
+        ent->client->pers.inventory[flag_index] = 0;
+        dom_spawnflag();
+        gi.bprintf(PRINT_HIGH, "%s gives up control of the flag.\n", ent->client->pers.netname);
+    }
 
-	if (ctf->value && HasFlag(ent))
-	{
-		int teamnum;
+    if (ctf->value && vrx_has_flag(ent)) {
+        int teamnum;
 
-		teamnum = CTF_GetEnemyTeam(ent->teamnum);
+        teamnum = CTF_GetEnemyTeam(ent->teamnum);
 
-		gi.bprintf(PRINT_HIGH, "%s gave back the %s flag!\n", 
-			ent->client->pers.netname, CTF_GetTeamString(teamnum));
+        gi.bprintf(PRINT_HIGH, "%s gave back the %s flag!\n",
+                   ent->client->pers.netname, CTF_GetTeamString(teamnum));
 
-		// remove flag from inventory
-		ent->client->pers.inventory[red_flag_index] = 0;
+        // remove flag from inventory
+        ent->client->pers.inventory[red_flag_index] = 0;
 		ent->client->pers.inventory[blue_flag_index] = 0;
 
 		// spawn flag at enemy base

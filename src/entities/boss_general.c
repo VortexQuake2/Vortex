@@ -394,17 +394,16 @@ void boss_eyecam (edict_t *player, edict_t *boss)
 
 void boss_position_player (edict_t *player, edict_t *boss)
 {
-	float	hdist, vdist;
-	vec3_t	forward, start, goal;
-	vec3_t	boxmin={-4,-4,0};
-	vec3_t	boxmax={4,4,0};
-	trace_t	tr;
+    float hdist = 0, vdist = 0;
+    vec3_t forward, start, goal;
+    vec3_t boxmin = {-4, -4, 0};
+    vec3_t boxmax = {4, 4, 0};
+    trace_t tr;
 
-	if (boss->monsterinfo.trail_time > level.time)
-	{
-		boss_eyecam(player, boss);
-		return;
-	}
+    if (boss->monsterinfo.trail_time > level.time) {
+        boss_eyecam(player, boss);
+        return;
+    }
 
 	if (boss->mtype == BOSS_TANK)
 	{

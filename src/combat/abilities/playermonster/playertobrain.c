@@ -314,27 +314,26 @@ void Cmd_PlayerToBrain_f (edict_t *ent)
 		return;
 	}
 
-	//Talent: Morphing
+    //Talent: Morphing
     if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
         brain_cubecost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
 
-	//if (!G_CanUseAbilities(ent, ent->myskills.abilities[BRAIN].current_level, brain_cubecost))
-	//	return;
+    //if (!G_CanUseAbilities(ent, ent->myskills.abilities[BRAIN].current_level, brain_cubecost))
+    //	return;
 
-	if (!V_CanUseAbilities(ent, BRAIN, brain_cubecost, true))
-		return;
+    if (!V_CanUseAbilities(ent, BRAIN, brain_cubecost, true))
+        return;
 
-	if (HasFlag(ent))
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Can't morph while carrying flag!\n");
-		return;
-	}
+    if (vrx_has_flag(ent)) {
+        safe_cprintf(ent, PRINT_HIGH, "Can't morph while carrying flag!\n");
+        return;
+    }
 
-	ent->client->pers.inventory[power_cube_index] -= brain_cubecost;
+    ent->client->pers.inventory[power_cube_index] -= brain_cubecost;
 
-	// undo crouching / ducked state
-	// try asking their client to get up
-	stuffcmd(ent, "-movedown\n");
+    // undo crouching / ducked state
+    // try asking their client to get up
+    stuffcmd(ent, "-movedown\n");
 	// if their client ignores the command, force them up
 	if (ent->client->ps.pmove.pm_flags & PMF_DUCKED)
 	{

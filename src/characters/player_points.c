@@ -33,7 +33,7 @@ char *HiPrint(char *text) {
     return ReturnVal;
 }
 
-// this needs to match UpdateFreeAbilities() in v_utils.c
+// this needs to match vrx_update_free_abilities() in v_utils.c
 void vrx_add_levelup_boons(edict_t *ent) {
     if ((ent->myskills.level % 5) == 0) {
         if (ent->myskills.abilities[MAX_AMMO].level < ent->myskills.abilities[MAX_AMMO].max_level) {
@@ -194,7 +194,7 @@ void VortexSpreeAbilities(edict_t *attacker) {
         return;
     if (attacker->myskills.streak < 6)
         return;
-    if (HasFlag(attacker))
+    if (vrx_has_flag(attacker))
         return;
     /*
     //Talent: Longer Powerups

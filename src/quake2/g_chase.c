@@ -107,23 +107,23 @@ retry_eyecam:
 
 	if (eyecam)
 	{
-		// save current player fov
-		float fov = ent->client->ps.fov;
+        // save current player fov
+        float fov = ent->client->ps.fov;
 
-		if (targ->viewheight)
-			start[2] += targ->viewheight;
-		else
-			start[2] = targ->absmax[2]-8;
-		VectorMA(start, targ->maxs[1]+16, forward, start);
-		// update HUD
-		// az: don't show weapons with any of these classes
-		if (targ->client && targ->myskills.class_num != CLASS_PALADIN && !vrx_is_morphing_polt(targ)) 
-			ent->client->ps = targ->client->ps;
-		else
-			ent->client->ps.gunindex = 0;
-		// restore player's fov (don't use target's fov)
-		ent->client->ps.fov = fov;
-	}
+        if (targ->viewheight)
+            start[2] += targ->viewheight;
+        else
+            start[2] = targ->absmax[2] - 8;
+        VectorMA(start, targ->maxs[1] + 16, forward, start);
+        // update HUD
+        // az: don't show weapons with any of these classes
+        if (targ->client && targ->myskills.class_num != CLASS_KNIGHT && !vrx_is_morphing_polt(targ))
+            ent->client->ps = targ->client->ps;
+        else
+            ent->client->ps.gunindex = 0;
+        // restore player's fov (don't use target's fov)
+        ent->client->ps.fov = fov;
+    }
 	else
 	{
 		ent->client->ps.gunindex = 0;

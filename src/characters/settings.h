@@ -47,16 +47,29 @@ const char* Time();
 #define	CLIENT_FIXEDTIME			11
 
 // class numbers
-#define CLASS_SOLDIER			1
-#define CLASS_DEMON				2
-#define CLASS_ENGINEER			3
-#define CLASS_PALADIN			4
-#define CLASS_ARCANIST			5
-#define CLASS_POLTERGEIST		6
-#define CLASS_ALIEN     		7
-#define CLASS_WEAPONMASTER		8
-
-#define CLASS_MAX				8		//Number of classes to choose from
+/*
+ * az note:
+ * if you ever feel like adding a class or removing one,
+ * preserve the indices set below, for easier migration.
+ * make sure to look at v_abilitylist.c, class_limits.c
+ * Talents.c, class_skin.c (and its cvars),
+ * v_utils.c for rune names and class names.
+ * */
+enum vrx_player_class_t {
+    CLASS_NULL,
+    CLASS_SOLDIER = 1,
+    CLASS_POLTERGEIST = 2,
+    CLASS_VAMPIRE = 3,
+    CLASS_MAGE = 4,
+    CLASS_ENGINEER = 5,
+    CLASS_KNIGHT = 6,
+    CLASS_CLERIC = 7,
+    CLASS_NECROMANCER = 8,
+    CLASS_SHAMAN = 9,
+    CLASS_ALIEN = 10,
+    CLASS_WEAPONMASTER = 11,
+    CLASS_MAX // Number of classes to choose from + 1
+};
 
 #define ARMORY_ITEMS 31
 
@@ -147,19 +160,42 @@ extern double LEVELUP_ARMOR_KNIGHT;
 extern double LEVELUP_ARMOR_MAGE;
 extern double LEVELUP_ARMOR_WEAPONMASTER;
 extern double INITIAL_POWERCUBES_SOLDIER;
-extern double ADDON_POWERCUBES_SOLDIER;
+extern double LEVELUP_POWERCUBES_SOLDIER;
+extern double INITIAL_HEALTH_ALIEN;
+extern double LEVELUP_HEALTH_ALIEN;
+extern double INITIAL_POWERCUBES_ALIEN;
+extern double LEVELUP_POWERCUBES_ALIEN;
 extern double INITIAL_POWERCUBES_VAMPIRE;
-extern double ADDON_POWERCUBES_VAMPIRE;
+extern double LEVELUP_POWERCUBES_VAMPIRE;
 extern double INITIAL_POWERCUBES_KNIGHT;
-extern double ADDON_POWERCUBES_KNIGHT;
+extern double LEVELUP_POWERCUBES_KNIGHT;
 extern double INITIAL_POWERCUBES_MAGE;
-extern double ADDON_POWERCUBES_MAGE;
+extern double LEVELUP_POWERCUBES_MAGE;
 extern double INITIAL_POWERCUBES_POLTERGEIST;
-extern double ADDON_POWERCUBES_POLTERGEIST;
+extern double LEVELUP_POWERCUBES_POLTERGEIST;
 extern double INITIAL_POWERCUBES_ENGINEER;
-extern double ADDON_POWERCUBES_ENGINEER;
+extern double LEVELUP_POWERCUBES_ENGINEER;
 extern double INITIAL_POWERCUBES_WEAPONMASTER;
-extern double ADDON_POWERCUBES_WEAPONMASTER;
+extern double LEVELUP_POWERCUBES_WEAPONMASTER;
+extern double INITIAL_ARMOR_CLERIC;
+extern double LEVELUP_ARMOR_CLERIC;
+extern double INITIAL_POWERCUBES_CLERIC;
+extern double LEVELUP_POWERCUBES_CLERIC;
+extern double INITIAL_HEALTH_CLERIC;
+extern double LEVELUP_HEALTH_CLERIC;
+extern double INITIAL_ARMOR_SHAMAN;
+extern double LEVELUP_ARMOR_SHAMAN;
+extern double INITIAL_POWERCUBES_SHAMAN;
+extern double LEVELUP_POWERCUBES_SHAMAN;
+extern double INITIAL_HEALTH_SHAMAN;
+extern double LEVELUP_HEALTH_SHAMAN;
+extern double INITIAL_ARMOR_NECROMANCER;
+extern double LEVELUP_ARMOR_NECROMANCER;
+extern double INITIAL_POWERCUBES_NECROMANCER;
+extern double LEVELUP_POWERCUBES_NECROMANCER;
+extern double INITIAL_HEALTH_NECROMANCER;
+extern double LEVELUP_HEALTH_NECROMANCER;
+
 extern double TBALLS_RESPAWN;
 extern double POWERCUBES_RESPAWN;
 extern double SHELLS_PICKUP;
