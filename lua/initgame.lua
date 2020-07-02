@@ -1,18 +1,13 @@
 is_pvm = ((cvar_get("pvm", "0") ~= "0") or (cvar_get("invasion", "0") ~= "0"))
 is_invasion = (cvar_get("invasion", "0") ~= "0")
 
-UsePathfinding = 0
+UsePathfinding = 1
 
 useMysqlTablesOnSQLite = 0
 
 if is_pvm then
     cvar_set("nolag", "1")
 	q2dofile("variables_pvm")
-
-	if is_invasion == true then
-		UsePathfinding = 1
-
-	end
 else
 	cvar_set("nolag", "0")
 	q2dofile("variables_pvp")

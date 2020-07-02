@@ -6,6 +6,8 @@ int numnodes=0;
 
 #define MAX_GRID_SIZE	10000
 vec3_t pathnode[MAX_GRID_SIZE];
+int *cached_gridlist[MAX_GRID_SIZE];
+int cached_gridlist_count[MAX_GRID_SIZE];
 
 #define maxx 512 // 32 units/node x=[0..255]
 #define maxy 512
@@ -41,6 +43,7 @@ struct node_s {
   node_t *Child[NUMCHILDS];
   node_t *PrevNode;
   node_t *NextNode;
+  int *gridlist;
 } ;
 
 node_t *node;
@@ -567,6 +570,11 @@ int FillGridList (int NodeNumStart)
 	int		i, j;
 	vec3_t	start;
 
+	if (cached_gridlist[NodeNumStart] != NULL) // az: don't recompute this
+	{
+		return cached_gridlist_count[NodeNumStart];
+	}
+
 	// clear previous gridlist values
 	ClearGridList();
 
@@ -585,6 +593,13 @@ int FillGridList (int NodeNumStart)
 		gridlist[j++] = i;
 	}
 
+	cached_gridlist[NodeNumStart] = V_Malloc(sizeof(int) * j, TAG_LEVEL);
+	for (int k = 0; k < j; k++) // az: copy to cache
+	{
+		cached_gridlist[NodeNumStart][k] = gridlist[k];
+	}
+
+	cached_gridlist_count[NodeNumStart] = j;
 	return j;
 }
 
@@ -619,18 +634,19 @@ int SortGridList (int NodeNumStart)
 
 	// fill gridlist with node indices closest to start
 	//for (i=0; i<list_size; i++)
+	//
 	for (i=0; i<childs; i++)
 	{
 		GLindex = i;
-		index = gridlist[i];//i;
-		best = distance(pathnode[gridlist[i]], start);
+		index = cached_gridlist[NodeNumStart][i];//i;
+		best = distance(pathnode[cached_gridlist[NodeNumStart][i]], start);
 
 		for (j = i+1; j<list_size; j++)
 		{
-			dist = distance(pathnode[gridlist[j]], start);
+			dist = distance(pathnode[cached_gridlist[NodeNumStart][j]], start);
 			if (dist < best)
 			{
-				index = gridlist[j];//j; // stored value
+				index = cached_gridlist[NodeNumStart][j];//j; // stored value
 				GLindex = j; // list position of best value
 				best = dist;
 			}
@@ -638,9 +654,9 @@ int SortGridList (int NodeNumStart)
 
 		// swap node index of current position with node index of closest node
 		// this procedure sorts the list and keeps us from finding the same value twice
-		temp = gridlist[i];
-		gridlist[i] = index;
-		gridlist[GLindex] = temp;
+		temp = cached_gridlist[NodeNumStart][i];
+		cached_gridlist[NodeNumStart][i] = index;
+		cached_gridlist[NodeNumStart][GLindex] = temp;
 		//gridlist[index] = temp;
 	}
 
@@ -708,7 +724,7 @@ void ComputeSuccessors(node_t *PresentNode, int NodeNumD)
 
 	for (i=0; i<maxChilds; i++)
 	{
-		NextNodeNum = gridlist[i];
+		NextNodeNum = cached_gridlist[PresentNode->nodenum][i];
 		//if (NextNodeNum == PresentNode->nodenum)
 		//	gi.dprintf("%d = %d\n", PresentNode->nodenum, NextNodeNum);
 		if (NextNodeNum == -1) 
@@ -1127,7 +1143,7 @@ void DrawChildLinks (edict_t *ent)
 
 	if (!(level.framenum%20))
 		gi.centerprintf(ent, "Node %d has %d child links @ %.0f.\n", 
-			parentNode, count, maxDist);
+			NearestNodeNumber(ent->s.origin, 255, true), count, maxDist);
 }
 
 void DrawNearbyGrid(edict_t *ent) {
@@ -1399,6 +1415,10 @@ float v0,v1,v2;
   vec3_t max2={+16,+16,0};
 
     numnodes=0;
+	for (int i = 0; i < MAX_GRID_SIZE; i++) // az don't recompute grid all the damn time
+	{
+		cached_gridlist[i] = NULL;
+	}
 
 	if (!force && LoadGrid())
 		return;

@@ -619,6 +619,7 @@ qboolean drone_findtarget (edict_t *self, qboolean force)
 		self->monsterinfo.aiflags |= (AI_COMBAT_POINT|AI_NO_CIRCLE_STRAFE);
 		self->monsterinfo.aiflags &= ~AI_LOST_SIGHT;
 		self->enemy = target;
+		
 		self->goalentity = target;
 		VectorCopy(target->s.origin, self->monsterinfo.last_sighting);
 		return true;
@@ -1369,93 +1370,7 @@ void drone_cleargoal (edict_t *self)
 	else
 		self->monsterinfo.stand(self);
 }
-edict_t *INV_GiveRandomPSpawn();
 
-edict_t *drone_findpspawn(edict_t *self)
-{
-	return INV_GiveRandomPSpawn();
-}
-
-edict_t *drone_findnavi (edict_t *self)
-{
-	edict_t *e=NULL;
-	static edict_t *navis[64];
-	static qboolean initialized = false;
-	static int count = 0;
-	int iters = 0;
-	int i;
-
-	if (!(self->monsterinfo.aiflags & AI_FIND_NAVI) || G_GetClient(self)) // Client monsters don't look for navis
-		return NULL;
-
-	if (!initialized)
-		for (i = 0; i<64; i++ )
-			navis[i] = NULL;
-
-	if(self->prev_navi)
-	{
-		if (self->prev_navi->target && self->prev_navi->targetname &&
-						((e = G_Find(NULL, FOFS(targetname), self->prev_navi->target)) != NULL))
-		{
-#ifdef navi_debug
-			gi.dprintf("advancing to navi %s %s\n", self->prev_navi->targetname, self->prev_navi->target);
-#endif
-			self->prev_navi = e;
-			return e;
-		}else // No navi points ahead.
-		{
-#ifdef navi_debug
-			gi.dprintf("advancing to player spawn\n");
-#endif
-			return drone_findpspawn(self);
-		}
-	}
-
-	if (count >= 2 || initialized) // should speed things up
-	{
-		i = GetRandom(0,count-1);
-		e = navis[i];
-		self->prev_navi = e;
-#ifdef navi_debug
-		gi.dprintf("choosing navi %s\n", e->targetname);
-#endif
-		return e;
-	}
-
-	while ((e = findclosestradius1 (e, self->s.origin, 
-		2048)) != NULL)
-	{
-		if (!drone_validnavi(self, e, false))
-		{
-			iters++;
-			if (iters > 512)
-				break;
-			continue;
-		}
-		if (count == 64)
-		{
-			break;
-		}
-		navis[count] = e;
-		count++;
-	}
-
-	if (count > 1)
-	{
-		gi.dprintf("%s: Found %d total navis to pick from.\n", __FUNCTION__, count);
-		initialized = true;
-	}
-
-	i = GetRandom(0,4);
-	e = navis[i];
-	self->prev_navi = e;
-	//gi.dprintf("selected navi %i at %d\n", i, e);
-
-	if (e != NULL)
-		return e;
-	else
-		return drone_findpspawn(self); // vrc 2.32.
-}
 
 int NextWaypointLocation (vec3_t start, vec3_t loc, int *wp);
 qboolean NearestNodeLocation (vec3_t start, vec3_t node_loc, float range, qboolean vis);
@@ -1685,9 +1600,8 @@ void drone_ai_run1 (edict_t *self, float dist)
 		if (self->enemy)
 		{
 			goal = self->enemy;
-			// couldn't find one, so follow goalentity (non-enemy goal)
 		}
-		else
+		else // couldn't find one, so follow goalentity (non-enemy goal)
 			goal = self->goalentity;
 	}
 	else
@@ -1701,6 +1615,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 	// is the goal entity valid and chaseable?
 	if (drone_ValidChaseTarget(self, goal))
 	{
+		/* az note 1: chase after killable enemy */
 		// goal entity is visible
 		if (visible(self, goal))
 		{
@@ -1735,6 +1650,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 			return;
 		}
 
+		/* az note 2: move towards last sighting */
 		// goal position is within +/- 1 step of our elevation and we have a clear line of sight
 		//FIXME: if goal entity is taller than us (e.g. jorg), this wont work very well!
 		if (fabs(self->s.origin[2]-self->monsterinfo.last_sighting[2]) <= 18 
@@ -1757,7 +1673,20 @@ void drone_ai_run1 (edict_t *self, float dist)
 				// we've reached the temporary entity used for movement commands
 				if (self->monsterinfo.aiflags & AI_COMBAT_POINT)
 				{
-					if (!drone_ai_patrol(self))
+					// az: follow the chain
+					if (invasion->value && goal->target_ent && goal != goal->target_ent)
+					{
+						self->enemy = goal->target_ent;
+						self->goalentity = goal->target_ent;
+						VectorCopy(self->goalentity->s.origin, self->monsterinfo.last_sighting); // az: Move! DO SOMETHING!!
+					}else if (invasion->value) // az: no chain, or target is the same...
+					{
+						// az: Clear this out so we don't seek any more navis after this
+						self->monsterinfo.aiflags &= ~(AI_FIND_NAVI | AI_COMBAT_POINT);
+						drone_ai_findgoal(self); // az: Look for pspawns or players or anything!
+						return;
+					}
+					else if (!drone_ai_patrol(self))
 					{
 						// we're close enough, clear the goal
 						self->monsterinfo.aiflags &= ~AI_COMBAT_POINT;
@@ -1903,7 +1832,7 @@ void drone_ai_run (edict_t *self, float dist)
 
 					// we're close enough to this navi; follow the next one in the chain
 					if (self->enemy->target && self->enemy->targetname &&
-						((e = G_Find(NULL, FOFS(targetname), self->enemy->target)) != NULL))
+						((e = self->enemy->target_ent) != NULL))
 					{
 						//gi.dprintf("following next navi in chain\n");
 						self->enemy = e;

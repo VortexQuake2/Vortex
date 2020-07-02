@@ -249,6 +249,7 @@ edict_t *INV_SelectPlayerSpawnPoint(edict_t *ent);
 void INV_InitSpawnQue(void);
 qboolean INV_RemoveSpawnQue(edict_t *ent);
 void INV_Init(void);
+void INV_InitPostEntities(void);
 void INV_SpawnPlayers(void);
 qboolean INV_AddSpawnQue(edict_t *ent);
 int INV_GetNumPlayerSpawns(void);

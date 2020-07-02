@@ -773,6 +773,8 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	if (level.pathfinding)
 		CreateGrid(false);
 
+	INV_InitPostEntities(); // az
+
 //GHz END
 
 	if (invasion->value)

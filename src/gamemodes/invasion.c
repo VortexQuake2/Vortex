@@ -5,7 +5,11 @@
 edict_t		*INV_SpawnQue[MAX_CLIENTS];
 int			invasion_max_playerspawns;
 int			invasion_spawncount; // current spawns
-edict_t		*INV_PlayerSpawns[32];
+int			invasion_navicount;
+int			invasion_start_navicount;
+edict_t		*INV_PlayerSpawns[64];
+edict_t		*INV_Navi[64];
+edict_t		*INV_StartNavi[64];
 
 void INV_Init(void)
 {
@@ -18,9 +22,47 @@ void INV_Init(void)
 	invasion_difficulty_level = 1;
 	invasion_max_playerspawns = 0;
 	invasion_spawncount = 0;
+	invasion_navicount = 0;
+	invasion_start_navicount = 0;
 
-	for (i = 0; i < 24; i++)   // down from 32 to 24
+	for (i = 0; i < 64; i++)   // down from 32 to 24
 		INV_PlayerSpawns[i] = NULL;
+
+	for (i = 0; i < 64; i++) {
+		INV_Navi[i] = NULL;
+		INV_StartNavi[i] = NULL;
+	}
+}
+
+// Ran after edicts have been initialized
+void INV_InitPostEntities(void)
+{
+	if (!invasion->value)
+		return;
+	
+	// find all navis without a navi pre-targeting them.
+	// they are potential start navis
+	for (int i = 0; i < invasion_navicount; i++)
+	{
+		edict_t* self = INV_Navi[i];
+		edict_t* target;
+
+		if (self->target) {
+			target = G_Find(NULL, FOFS(target), self->target);
+			target->prev_navi = self;
+			self->target_ent = target;
+		}
+	}
+
+	for (int i = 0; i < invasion_navicount; i++)
+	{
+		edict_t* self = INV_Navi[i];
+		if (self->prev_navi == NULL) {
+			INV_StartNavi[invasion_start_navicount++] = self;
+		}
+	}
+
+	gi.dprintf("invasion: found %d start navis to choose from. total: %d\n", invasion_start_navicount, invasion_navicount);
 }
 
 // initialize array values to NULL
@@ -30,6 +72,29 @@ void INV_InitSpawnQue(void)
 
 	for (i = 0; i < MAX_CLIENTS; i++)
 		INV_SpawnQue[i] = NULL;
+}
+
+edict_t *INV_GiveClosestPSpawn(edict_t *ent)
+{
+	float bestdist = 8192 * 8192; // using dist. sqr.
+	vec3_t eorg;
+	edict_t *ret = NULL;
+	
+	for (int i = 0; i < invasion_max_playerspawns; i++)
+	{
+		float dist;
+		edict_t* spawn = INV_PlayerSpawns[i];
+		if (!spawn) continue;
+		VectorSubtract(ent->s.origin, spawn->s.origin, eorg);
+		dist = VectorLengthSqr(eorg);
+
+		if (dist < bestdist) {
+			bestdist = dist;
+			ret = spawn;
+		}
+	}
+
+	return ret; // can be null if no pspawns
 }
 
 edict_t *INV_GiveRandomPSpawn()
@@ -57,6 +122,85 @@ edict_t *INV_GiveRandomPSpawn()
 
 	return NULL;
 }
+
+edict_t* INV_ClosestNavi(edict_t* self)
+{
+	vec3_t eorg;
+	float best = 8192 * 8192;
+	edict_t *ret = NULL;
+	for (int i = 0; i < invasion_start_navicount; i++)
+	{
+		float len;
+		VectorSubtract(self->s.origin, INV_StartNavi[i]->s.origin, eorg);
+		len = VectorLengthSqr(eorg);
+		if (len < best)
+		{
+			best = len;
+			ret = INV_StartNavi[i];
+		}
+	}
+
+	return ret;
+}
+
+edict_t *drone_findnavi(edict_t *self)
+{
+#if 0
+	edict_t* visible_candidates[4];
+	int num_visible_candidates = 0;
+#endif
+
+	if (G_GetClient(self)) // Client monsters don't look for navis
+		return NULL;
+	
+	if (!(self->monsterinfo.aiflags & AI_FIND_NAVI)) {
+		if (!invasion->value)
+			return NULL;
+
+		// if we reached this point we're no longer looking for navis. we should be looking for spawns!
+		return INV_GiveClosestPSpawn(self); 
+	}
+
+	/*if (invasion->value && level.pathfinding)
+	{
+		return INV_GiveClosestPSpawn(self);
+	}*/
+
+
+	// az: there's no need to find a new target. ai_run will advance through the navis
+	if (self->enemy && self->enemy->mtype == INVASION_NAVI)
+		return self->enemy;
+
+#if 0
+	// seek up to 4 visible candidates
+	for (int i = 0; i < invasion_start_navicount; i++)
+	{
+		if (visible(self, INV_StartNavi[i]))
+		{
+			visible_candidates[num_visible_candidates++] = INV_StartNavi[i];
+			if (num_visible_candidates == 4) break;
+		}
+	}
+
+	// if there's visible candidates, use them
+	if (num_visible_candidates > 0) {
+		int i = GetRandom(1, num_visible_candidates) - 1;
+		return visible_candidates[i];
+	}
+
+	// there aren't, then use any start navi
+	if (invasion_start_navicount > 0)
+		return INV_StartNavi[GetRandom(1, invasion_start_navicount) - 1];
+#endif
+
+	if (invasion_start_navicount > 0) {
+		return INV_ClosestNavi(self);
+	}
+	
+	// no navis, return a player spawn...
+	return INV_GiveRandomPSpawn();
+}
+
 
 qboolean INV_IsSpawnQueEmpty()
 {
@@ -175,6 +319,7 @@ edict_t *INV_GetMonsterSpawn(edict_t *from)
 
 	return NULL;
 }
+
 
 void INV_AwardPlayers(void)
 {
@@ -604,6 +749,7 @@ void info_player_invasion_death(edict_t *self, edict_t *inflictor, edict_t *atta
 	self->think = BecomeExplosion1;
 	self->nextthink = level.time + FRAMETIME;
 	INV_RemoveFromSpawnlist(self);
+	gi.bprintf(PRINT_HIGH, "A human spawn was destroyed by a %s!\n", V_GetMonsterName(attacker));
 }
 
 void info_player_invasion_think(edict_t *self)
@@ -695,9 +841,11 @@ void SP_navi_monster_invasion(edict_t *self)
 
 	self->solid = SOLID_NOT;
 	self->mtype = INVASION_NAVI;
-	gi.setmodel (self, "models/items/c_head/tris.md2");
-	self->svflags |= SVF_NOCLIENT;
+	gi.setmodel(self, "models/items/c_head/tris.md2");
+	// self->svflags |= SVF_NOCLIENT;
 	gi.linkentity(self);
+
+	INV_Navi[invasion_navicount++] = self;
 }
 
 int G_GetEntityIndex(edict_t *ent)
@@ -819,6 +967,3 @@ void SP_inv_defenderspawn(edict_t *self)
 	self->svflags |= SVF_NOCLIENT;
 	gi.linkentity(self);
 }
-
-float GetPlayerBossDamage(edict_t *player, edict_t *boss);
-float GetTotalBossDamage(edict_t *self);

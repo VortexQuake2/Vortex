@@ -2388,6 +2388,32 @@ void Cmd_AdminCmd (edict_t *ent)
 
 	}
 
+	if (!Q_stricmp(cmd1, "pickent"))
+	{
+		vec3_t forward;
+		vec3_t org;
+		AngleVectors(ent->client->v_angle, forward, NULL, NULL);
+		trace_t tr;
+		VectorCopy(ent->s.origin, org);
+		VectorScale(forward, 8192, forward);
+
+		org[2] += ent->viewheight;
+		tr = gi.trace(org, NULL, NULL, forward, ent, MASK_SHOT);
+
+		gi.WriteByte(svc_temp_entity);
+		gi.WriteByte(TE_BFG_LASER);
+		gi.WritePosition(org);
+		gi.WritePosition(tr.endpos);
+		gi.unicast(ent, true);
+
+		if (tr.ent)
+		{
+			safe_cprintf(ent, PRINT_HIGH, "Ent: 0x%p (classname: %s, monstername: %s)\n", tr.ent, tr.ent->classname, V_GetMonsterName(tr.ent));
+		}
+		
+		return;
+	}
+
 	if (!Q_stricmp(cmd1, "sky"))
 	{
 		csurface_t *sky = FindSky();

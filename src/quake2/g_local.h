@@ -460,6 +460,7 @@ typedef struct
     qboolean warning_given;
     qboolean sounds[4];
 
+	
 /*	gdsfiles_t	gdsfiles[MAX_CLIENTS];*/
 
 	// experimental monster pathfinding
