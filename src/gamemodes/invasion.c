@@ -842,7 +842,10 @@ void SP_navi_monster_invasion(edict_t *self)
 	self->solid = SOLID_NOT;
 	self->mtype = INVASION_NAVI;
 	gi.setmodel(self, "models/items/c_head/tris.md2");
-	// self->svflags |= SVF_NOCLIENT;
+
+	if (!debuginfo->value)
+		self->svflags |= SVF_NOCLIENT;
+
 	gi.linkentity(self);
 
 	INV_Navi[invasion_navicount++] = self;

@@ -490,7 +490,7 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
         if (player->v_flags & FL_CHATPROTECT)
             continue;
 
-        leveldiff = vrx_get_level_difference_multiplier(attacker, targ, targetclient);
+        leveldiff = vrx_get_level_difference_multiplier(player, targ, targetclient);
         exp = vrx_get_kill_base_experience(
                 attacker,
                 targ,
@@ -638,9 +638,9 @@ void vrx_do_nfer_effects(edict_t *attacker, edict_t *target) {
     } else if (attacker->nfer == 5) {
         gi.sound(attacker, CHAN_VOICE, gi.soundindex("speech/hey.wav"), 1, ATTN_NORM, 0);    //listo
     } else if (attacker->nfer >= 3 && attacker->nfer <= 4) {
-        gi.sound(target, CHAN_VOICE, gi.soundindex("misc/excellent.wav"), 1, ATTN_NORM, 0); //listo
+        gi.sound(target, CHAN_VOICE, gi.soundindex("speech/excellent.wav"), 1, ATTN_NORM, 0); //listo
     } else if (attacker->nfer == 10) {
-        gi.sound(attacker, CHAN_VOICE, gi.soundindex("misc/godlike.wav"), 1, ATTN_NORM, 0);//listo
+        gi.sound(attacker, CHAN_VOICE, gi.soundindex("misc/10fer.wav"), 1, ATTN_NORM, 0);//listo
     }
 }
 
