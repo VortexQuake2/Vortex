@@ -147,7 +147,7 @@ void InitGame(void)
 	//K03 Begin
 	srand((unsigned)time(0));
 
-	gamedir = gi.cvar("gamedir", "", CVAR_SERVERINFO);
+	gamedir = gi.cvar("gamedir", "vortex", CVAR_SERVERINFO);
 	save_path = gi.cvar("save_path", va("%s//characters", gamedir->string), CVAR_LATCH);
 	//K03 End
 
@@ -264,10 +264,6 @@ void InitGame(void)
 	// az 3.0
 	hw = gi.cvar("hw", "0", CVAR_LATCH);
 
-	sentry_lev1_model = gi.cvar("sentry_lev1_model", "models/sentry/turret1/tris.md2", CVAR_LATCH);
-	sentry_lev2_model = gi.cvar("sentry_lev2_model", "models/sentry/turret2/tris.md2", CVAR_LATCH);
-	sentry_lev3_model = gi.cvar("sentry_lev3_model", "models/sentry/turret3/tris.md2", CVAR_LATCH);
-
 	vrx_password = gi.cvar("vrx_password", "", CVAR_ARCHIVE | CVAR_USERINFO);
 	dm_monsters = gi.cvar("dm_monsters", "8", CVAR_SERVERINFO);
 
@@ -299,10 +295,14 @@ void InitGame(void)
     tradingmode_enabled = gi.cvar("vrx_trading_enabled", "1", CVAR_LATCH);
 	tbi = gi.cvar("tbi", "0", CVAR_LATCH); // enable tbi mode
 	// az end
+
+	// az: pvm_respawntime, pvm_monstermult and ffa_monstermult currently unused
 	pvm_respawntime = gi.cvar("pvm_respawntime", "10", 0);
 	pvm_monstermult = gi.cvar("pvm_monstermult", "1.0", 0);
 	ffa_respawntime = gi.cvar("ffa_respawntime", "20", 0);
 	ffa_monstermult = gi.cvar("ffa_monstermult", "1.0", 0);
+
+	// az note: only used in teamplay.c, which is unused....
 	team1_skin = gi.cvar("team1_skin", "female/ctf_r", 0);
 	team2_skin = gi.cvar("team2_skin", "male/ctf_b", 0);
 

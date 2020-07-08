@@ -10,20 +10,20 @@ qboolean IsAllowedPregameSkills();
 
 //Takes the class string and returns the index
 int getClassNum(char *newclass) {
-    /*	if (Q_strcasecmp(newclass, "Soldier") == 0)
+    if (Q_strcasecmp(newclass, "Soldier") == 0)
     return CLASS_SOLDIER;
     else if (Q_strcasecmp(newclass, "Mage") == 0)
-    return CLASS_ARCANIST;
+    return CLASS_MAGE;
     else if (Q_strcasecmp(newclass, "Necromancer") == 0)
     return CLASS_NECROMANCER;
     else if (Q_strcasecmp(newclass, "Vampire") == 0)
-    return CLASS_DEMON;
+    return CLASS_VAMPIRE;
     else if (Q_strcasecmp(newclass, "Engineer") == 0)
     return CLASS_ENGINEER;
     else if (Q_strcasecmp(newclass, "Poltergeist") == 0)
     return CLASS_POLTERGEIST;
     else if (Q_strcasecmp(newclass, "Knight") == 0)
-    return CLASS_PALADIN;
+    return CLASS_KNIGHT;
     else if (Q_strcasecmp(newclass, "Cleric") == 0)
     return CLASS_CLERIC;
     else if (Q_strcasecmp(newclass, "Shaman") == 0)
@@ -32,9 +32,6 @@ int getClassNum(char *newclass) {
     return CLASS_ALIEN;
     else if ((Q_strcasecmp(newclass, "Weapon Master") == 0) || (Q_strcasecmp(newclass, "WeaponMaster") == 0))
     return CLASS_WEAPONMASTER;
-    else if (Q_strcasecmp(newclass, "Kamikaze") == 0)
-    return CLASS_KAMIKAZE;
-    */
     return 0;
 }
 
@@ -161,12 +158,12 @@ char *GetArmoryItemString(int purchase_number) {
             return "Weapon Rune";
         case 28:
             return "Reset Abilities/Weapons";
-        case 29:
+        /* case 29:
             return "Ability point";
         case 30:
             return "Weapon point";
         case 31:
-            return "Respawns";
+            return "Respawns"; */
         default:
             return "<BAD ITEM NUMBER>";
     }

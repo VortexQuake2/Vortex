@@ -8,8 +8,8 @@ void TBI_Reinitialize();
 #define TBI_SPAWN_HEALTH (15000 + (250 * AveragePlayerLevel()))
 #define TBI_MAX_SPAWNS	 16
 #define TBI_MIN_PLAYERS	 4
-#define DESTROYSPAWN_EXP (pow(self->monsterinfo.level, 1.3) / 7 * 80)
-#define ROUNDEND_EXP 250 * pow(AveragePlayerLevel(), 1.4) / 5
+#define DESTROYSPAWN_EXP (log2(self->monsterinfo.level + 1) * 10)
+#define ROUNDEND_EXP 50 * log2(AveragePlayerLevel() + 1)
 
 typedef struct
 {
@@ -265,9 +265,10 @@ void TBI_AwardTeam(int Teamnum, int exp, qboolean Broadcast)
 	{
 		if (!G_IsSpectator(cl_ent) && cl_ent->client && cl_ent->inuse)
 		{
-			if (cl_ent->teamnum == Teamnum)
-				vrx_apply_experience(cl_ent, exp);
-			cl_ent->myskills.credits += exp * 2 / 3; // 2/3s the exp.
+			if (cl_ent->teamnum == Teamnum) {
+                vrx_apply_experience(cl_ent, exp);
+                vrx_add_credits(cl_ent, exp * 2 / 3); // 2/3s the exp.
+            }
 		}
 	}
 

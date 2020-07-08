@@ -207,19 +207,20 @@ qboolean FindValidSpawnPoint (edict_t *ent, qboolean air)
 			continue;
 
 		// az: Hey cool, the position is good to go. Let's check that it's not behind any players.
-		for (i=1; i <=maxclients->value; i++)
-		{
-			edict_t *cl = &g_edicts[i];
-			if (cl->inuse && !cl->client->pers.spectator && !cl->client->resp.spectator)
-			{
-				vec3_t cl_forward;
-				vec3_t r_vec;
-				AngleVectors(cl->client->ps.viewangles, cl_forward, NULL, NULL);
-				VectorSubtract(cl->s.origin, ent->s.origin, r_vec);
-				if (DotProduct(r_vec, cl_forward) >= 0 && visible(ent, cl))
-					continue;
-			}
-		}
+		// az 2020: this isn't really doing much for us. whoops! look at it later
+//		for (i=1; i <=maxclients->value; i++)
+//		{
+//			edict_t *cl = &g_edicts[i];
+//			if (cl->inuse && !cl->client->pers.spectator && !cl->client->resp.spectator)
+//			{
+//				vec3_t cl_forward;
+//				vec3_t r_vec;
+//				AngleVectors(cl->client->ps.viewangles, cl_forward, NULL, NULL);
+//				VectorSubtract(cl->s.origin, ent->s.origin, r_vec);
+//				if (DotProduct(r_vec, cl_forward) >= 0 && visible(ent, cl))
+//					continue;
+//			}
+//		}
 		break;
 	}
 

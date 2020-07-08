@@ -13,7 +13,7 @@
 #include "characters/Talents.h"
 
 /**************** v_abilitylist.c ***************/
-void enableAbility(edict_t *ent, int index, int level, int max_level, int general);
+void vrx_enable_ability(edict_t *ent, int index, int level, int max_level, int general);
 
 int vrx_get_last_enabled_skill_index(edict_t *ent, int mode);
 
@@ -23,8 +23,6 @@ int getHardMax(int index, qboolean general, int class);
 
 void vrx_assign_abilities(edict_t *ent);
 
-
-#define INCREASED_SOFTMAX 15
 #define DEFAULT_SOFTMAX 10
 #define GENERAL_SOFTMAX 5
 

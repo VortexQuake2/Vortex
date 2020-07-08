@@ -4,6 +4,10 @@
 #include "v_sqlite_character.h"
 #include <sys/stat.h>
 
+#ifdef WIN32
+#include <direct.h>
+#endif
+
 
 #define SAVE_VERSION "v1.0"
 

@@ -858,9 +858,6 @@ extern	float	spawncycle;
 extern	cvar_t	*killboxspawn;
 extern cvar_t *save_path;
 extern cvar_t *particles;
-extern cvar_t *sentry_lev1_model;
-extern cvar_t *sentry_lev2_model;
-extern cvar_t *sentry_lev3_model;
 
 extern cvar_t *start_level;
 extern cvar_t *level0_tnl_experience;

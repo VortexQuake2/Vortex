@@ -5,8 +5,8 @@ abilitydef_t *abilities_by_index[MAX_ABILITIES];
 abilitydef_t ability_general[] = {
         {VITALITY,        0, 15,              1},
         {MAX_AMMO,        0, 10,              1},
-        {POWER_REGEN,     0, 8,               1},
-        {WORLD_RESIST,    0, 1,               1},
+        {POWER_REGEN,     1, 8,               1},
+        {WORLD_RESIST,    0, 1,                1},
         {AMMO_REGEN,      0, 10,              1},
         {REGENERATION,    0, 5,               1},
         {STRENGTH,        0, 5,               1},
@@ -23,7 +23,7 @@ abilitydef_t ability_general[] = {
 };
 
 abilitydef_t ability_soldier[] = {
-        {STRENGTH,      0, INCREASED_SOFTMAX, 0},
+        {STRENGTH,      0, DEFAULT_SOFTMAX, 0},
         {RESISTANCE,    0, DEFAULT_SOFTMAX,   0},
         {NAPALM,        0, DEFAULT_SOFTMAX,   0},
         {SPIKE_GRENADE, 0, DEFAULT_SOFTMAX,   0},
@@ -37,7 +37,7 @@ abilitydef_t ability_soldier[] = {
 };
 
 abilitydef_t ability_vampire[] = {
-        {VAMPIRE,        0, INCREASED_SOFTMAX, 0},
+        {VAMPIRE,        0, DEFAULT_SOFTMAX, 0},
         {GHOST,          0, DEFAULT_SOFTMAX,   0},
         {LIFE_DRAIN,     0, DEFAULT_SOFTMAX,   0},
         {FLESH_EATER,    0, DEFAULT_SOFTMAX,   0},
@@ -51,8 +51,8 @@ abilitydef_t ability_vampire[] = {
 
 abilitydef_t ability_necromancer[] = { // NECROMANCER
 
-        {MONSTER_SUMMON, 0, INCREASED_SOFTMAX, 0},
-        {HELLSPAWN,      0, INCREASED_SOFTMAX, 0},
+        {MONSTER_SUMMON, 0, DEFAULT_SOFTMAX, 0},
+        {HELLSPAWN,      0, DEFAULT_SOFTMAX, 0},
         {PLAGUE,         0, DEFAULT_SOFTMAX,   0},
         {LOWER_RESIST,   0, DEFAULT_SOFTMAX,   0},
         {AMP_DAMAGE,     0, DEFAULT_SOFTMAX,   0},
@@ -65,10 +65,10 @@ abilitydef_t ability_necromancer[] = { // NECROMANCER
 
 abilitydef_t ability_engineer[] = { // ENGINEER
         {PROXY,           0, DEFAULT_SOFTMAX,   0},
-        {BUILD_SENTRY,    0, INCREASED_SOFTMAX, 0},
+        {BUILD_SENTRY,    0, DEFAULT_SOFTMAX, 0},
         {SUPPLY_STATION,  0, DEFAULT_SOFTMAX,   0},
         {BUILD_LASER,     0, DEFAULT_SOFTMAX,   0},
-        {MAGMINE,         0, INCREASED_SOFTMAX, 0},
+        {MAGMINE,         0, DEFAULT_SOFTMAX, 0},
         {CALTROPS,        0, DEFAULT_SOFTMAX,   0},
         {AUTOCANNON,      0, DEFAULT_SOFTMAX,   0},
         {DETECTOR,        0, DEFAULT_SOFTMAX,   0},
@@ -79,12 +79,12 @@ abilitydef_t ability_engineer[] = { // ENGINEER
 };
 
 abilitydef_t ability_shaman[] = { // SHAMAN
-        {FIRE_TOTEM,    0, INCREASED_SOFTMAX, 0},
-        {WATER_TOTEM,   0, INCREASED_SOFTMAX, 0},
-        {AIR_TOTEM,     0, INCREASED_SOFTMAX, 0},
-        {EARTH_TOTEM,   0, INCREASED_SOFTMAX, 0},
-        {DARK_TOTEM,    0, INCREASED_SOFTMAX, 0},
-        {NATURE_TOTEM,  0, INCREASED_SOFTMAX, 0},
+        {FIRE_TOTEM,    0, DEFAULT_SOFTMAX, 0},
+        {WATER_TOTEM,   0, DEFAULT_SOFTMAX, 0},
+        {AIR_TOTEM,     0, DEFAULT_SOFTMAX, 0},
+        {EARTH_TOTEM,   0, DEFAULT_SOFTMAX, 0},
+        {DARK_TOTEM,    0, DEFAULT_SOFTMAX, 0},
+        {NATURE_TOTEM,  0, DEFAULT_SOFTMAX, 0},
         {HASTE,         0, 5,                 0},
         {TOTEM_MASTERY, 1, 1,                 0},
         {SUPER_SPEED,   1, 1,                 0},
@@ -92,7 +92,7 @@ abilitydef_t ability_shaman[] = { // SHAMAN
 };
 
 abilitydef_t ability_mage[] = { // MAGE
-        {MAGICBOLT,       0, INCREASED_SOFTMAX, 0},
+        {MAGICBOLT,       0, DEFAULT_SOFTMAX, 0},
         {NOVA,            0, DEFAULT_SOFTMAX,   0},
         {BOMB_SPELL,      0, DEFAULT_SOFTMAX,   0},
         {FORCE_WALL,      0, DEFAULT_SOFTMAX,   0},
@@ -119,11 +119,11 @@ abilitydef_t ability_cleric[] = {
 
 abilitydef_t ability_knight[] = { // knight
 
-        {ARMOR_UPGRADE, 0, 10,                0},
+        {ARMOR_UPGRADE, 0, DEFAULT_SOFTMAX,                0},
         {REGENERATION,  0, DEFAULT_SOFTMAX,   0},
         {POWER_SHIELD,  0, DEFAULT_SOFTMAX,   0},
         {ARMOR_REGEN,   0, DEFAULT_SOFTMAX,   0},
-        {BEAM,          0, INCREASED_SOFTMAX, 0},
+        {BEAM,          0, DEFAULT_SOFTMAX, 0},
         {PLASMA_BOLT,   0, DEFAULT_SOFTMAX,   0},
         {SHIELD,        1, 1,                 0},
         {BOOST_SPELL,   1, 1,                 0},
@@ -145,14 +145,14 @@ abilitydef_t ability_alien[] = {
 
 abilitydef_t ability_poltergeist[] = {
         {MORPH_MASTERY, 1, 1,                 0},
-        {BERSERK,       1, INCREASED_SOFTMAX, 0},
-        {CACODEMON,     1, INCREASED_SOFTMAX, 0},
-        {BLOOD_SUCKER,  1, INCREASED_SOFTMAX, 0},
-        {BRAIN,         1, INCREASED_SOFTMAX, 0},
-        {FLYER,         1, INCREASED_SOFTMAX, 0},
-        {MUTANT,        1, INCREASED_SOFTMAX, 0},
-        {TANK,          1, INCREASED_SOFTMAX, 0},
-        {MEDIC,         1, INCREASED_SOFTMAX, 0},
+        {BERSERK,       1, DEFAULT_SOFTMAX, 0},
+        {CACODEMON,     1, DEFAULT_SOFTMAX, 0},
+        {BLOOD_SUCKER,  1, DEFAULT_SOFTMAX, 0},
+        {BRAIN,         1, DEFAULT_SOFTMAX, 0},
+        {FLYER,         1, DEFAULT_SOFTMAX, 0},
+        {MUTANT,        1, DEFAULT_SOFTMAX, 0},
+        {TANK,          1, DEFAULT_SOFTMAX, 0},
+        {MEDIC,         1, DEFAULT_SOFTMAX, 0},
         {GHOST,         1, DEFAULT_SOFTMAX,   0}, // given for free with morph mastery
         {-1,            0, 0,                 0} // Guardian (Add skills above this)
 };
@@ -185,7 +185,7 @@ void vrx_assign_abilities(edict_t *ent) {
     // enable general skills
     while (first->index != -1) {
         //gi.dprintf("enabled ability %s\n", GetAbilityString(first->index));
-        enableAbility(ent, first->index, first->start, first->softmax, first->general);
+        vrx_enable_ability(ent, first->index, first->start, first->softmax, first->general);
         first++;
     }
 
@@ -197,11 +197,15 @@ void vrx_assign_abilities(edict_t *ent) {
 
             if (first) {
                 int real_max = first->softmax;
+                int start = 0;
 
-                if (first->softmax > 10) // a 15 softmax? dump down to 8
+                if (first->softmax >= DEFAULT_SOFTMAX) // a 10 softmax? dump down to 5
                     real_max = GENERAL_SOFTMAX;
 
-                enableAbility(ent, first->index, 0, real_max, 1);
+                if (first->general) // non-class can get starting points
+                    start = first->start;
+
+                vrx_enable_ability(ent, first->index, start, real_max, 1);
             }
         }
     }
@@ -211,7 +215,7 @@ void vrx_assign_abilities(edict_t *ent) {
         first = abilities_by_class[ent->myskills.class_num];
         while (first->index != -1) {
             //gi.dprintf("enabled ability %s\n", GetAbilityString(first->index));
-            enableAbility(ent, first->index, first->start, first->softmax, first->general);
+            vrx_enable_ability(ent, first->index, first->start, first->softmax, first->general);
             first++;
         }
     }
@@ -234,6 +238,7 @@ int getHardMax(int index, qboolean general, int class) {
         case SUPER_SPEED:
         case ANTIGRAV:
         case WEAPON_KNOCK:
+        case MORPH_MASTERY:
         case TELEPORT:
         case JETPACK:
         case SHIELD:
@@ -280,7 +285,7 @@ int getHardMax(int index, qboolean general, int class) {
     return abilities_by_index[index]->softmax;
 }
 
-void enableAbility(edict_t *ent, int index, int level, int max_level, int general) {
+void vrx_enable_ability(edict_t *ent, int index, int level, int max_level, int general) {
     ent->myskills.abilities[index].disable = false;
 
     // we can pass this function -1 if we don't want to alter these variables

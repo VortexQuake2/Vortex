@@ -63,9 +63,6 @@ cvar_t *killboxspawn;
 cvar_t *save_path;
 cvar_t *particles;
 
-cvar_t *sentry_lev1_model;
-cvar_t *sentry_lev2_model;
-cvar_t *sentry_lev3_model;
 cvar_t *nextlevel_mult;
 cvar_t *vrx_creditmult;
 cvar_t *vrx_pvpcreditmult;

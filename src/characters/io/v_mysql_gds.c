@@ -844,7 +844,7 @@ int V_GDS_Save(gds_queue_t *current, MYSQL* db)
 #endif
 
 	if (current->ent->PlayerID == current->id)
-		current->ent->ThreadStatus = 3;
+		current->ent->ThreadStatus = GDS_STATUS_CHARACTER_SAVED;
 
 #ifndef GDS_NOMULTITHREADING
 	pthread_mutex_unlock(&StatusMutex);
@@ -860,12 +860,56 @@ void V_GDS_SetPlaying(gds_queue_t *current, MYSQL *db)
 	char escaped[32];
 	char *format;
 
-	if (current->ent->ThreadStatus == 1)
+	if (current->ent->ThreadStatus == GDS_STATUS_CHARACTER_LOADED)
 	{
 		mysql_real_escape_string(db, escaped, current->ent->client->pers.netname, strlen(current->ent->client->pers.netname));
 
 		QUERY("UPDATE userdata SET isplaying = 1 WHERE playername=\"%s\"", escaped);
 	}
+}
+
+qboolean V_GDS_LoadFromQueue(gds_queue_t *current){
+    if (otherq = V_GDS_FindSave(current)) // Got a save in the que, use that instead.
+    {
+        memcpy(&current->ent->myskills, &otherq->myskills, sizeof(skills_t));
+
+#ifndef GDS_NOMULTITHREADING
+        pthread_mutex_lock(&StatusMutex);
+#endif
+
+        if ( (i = canJoinGame(player)) == 0)
+        {
+            if (player->PlayerID == current->id)
+            {
+                QUERY ("CALL CanPlay(%d, @IsAble);", id);
+                mysql_query (db, "SELECT @IsAble;");
+                GET_RESULT;
+
+                if (atoi(row[0]) == 0 && !gds_singleserver->value)
+                {
+                    player->ThreadStatus = GDS_STATUS_ALREADY_PLAYING; // Already playing.
+                    FREE_RESULT;
+                    return false;
+                }
+
+                FREE_RESULT;
+
+                player->ThreadStatus = GDS_STATUS_CHARACTER_LOADED; // You can play.
+                V_GDS_SetPlaying(current, db);
+                V_GDS_FreeQueue_Add(otherq); // Remove this, now.
+            }
+        }else
+        {
+            V_GDS_Queue_Push(otherq, true); // push back into the que.
+            player->ThreadStatus = i;
+        }
+#ifndef GDS_NOMULTITHREADING
+        pthread_mutex_unlock(&StatusMutex);
+#endif
+        return i == 0; // success.
+    }
+
+    return false;
 }
 
 qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
@@ -903,7 +947,7 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 #ifndef GDS_NOMULTITHREADING
 		pthread_mutex_lock(&StatusMutex);
 #endif
-		player->ThreadStatus = 2;
+		player->ThreadStatus = GDS_STATUS_CHARACTER_DOES_NOT_EXIST;
 #ifndef GDS_NOMULTITHREADING
 		pthread_mutex_unlock(&StatusMutex);
 #endif
@@ -924,46 +968,11 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 
 	if (exists) // Exists? Then is it able to play?
 	{
-		if (otherq = V_GDS_FindSave(current)) // Got a save in the que, use that instead.
-		{  
-			memcpy(&current->ent->myskills, &otherq->myskills, sizeof(skills_t));
-
-#ifndef GDS_NOMULTITHREADING
-			pthread_mutex_lock(&StatusMutex);
-#endif
-
-			if ( (i = canJoinGame(player)) == 0) 
-			{
-				if (player->PlayerID == current->id)
-				{
-					player->ThreadStatus = 1; // You can play.
-
-					QUERY ("CALL CanPlay(%d, @IsAble);", id);
-					mysql_query (db, "SELECT @IsAble;");
-					GET_RESULT;
-
-					if (atoi(row[0]) == 0 && !gds_singleserver->value)
-					{
-						player->ThreadStatus = 4; // Already playing.
-						FREE_RESULT;
-						return false;
-					}
-
-					FREE_RESULT;
-
-					V_GDS_SetPlaying(current, db);
-					V_GDS_FreeQueue_Add(otherq); // Remove this, now.
-				}
-			}else
-			{
-				V_GDS_Queue_Push(otherq, true); // push back into the que.
-				player->ThreadStatus = i;
-			}
-#ifndef GDS_NOMULTITHREADING
-			pthread_mutex_unlock(&StatusMutex);
-#endif
-			return i == 0; // success.
-		} // No save in q? proceed as before
+	    // az 2020: don't be clever, especially if it's hard to test. just wait until it saves.
+	    // besides, the load will be put after the last SaveClose anyway.
+		/* if (V_GDS_LoadFromQueue()) {
+		    return;
+		}*/
 
 
 		QUERY ("CALL CanPlay(%d, @IsAble);", id);
@@ -977,7 +986,7 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 #ifndef GDS_NOMULTITHREADING
 				pthread_mutex_lock(&StatusMutex);
 #endif
-				player->ThreadStatus = 4; // Already playing.
+				player->ThreadStatus = GDS_STATUS_ALREADY_PLAYING; // Already playing.
 #ifndef GDS_NOMULTITHREADING
 				pthread_mutex_unlock(&StatusMutex);
 #endif
@@ -1356,8 +1365,8 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 	{
 		if (player->PlayerID == current->id)
 		{
-			player->ThreadStatus = 1; // You can play! :)
 			V_GDS_SetPlaying(current, db);
+			player->ThreadStatus = GDS_STATUS_CHARACTER_LOADED; // You can play! :)
 		}
 	}else
 		player->ThreadStatus = i;
@@ -1495,7 +1504,7 @@ void HandleStatus(edict_t *player)
 	pthread_mutex_lock(&StatusMutex);
 #endif
 
-	if (player->ThreadStatus == 0)
+	if (player->ThreadStatus == GDS_STATUS_OK)
 	{
 #ifndef GDS_NOMULTITHREADING
 		pthread_mutex_unlock(&StatusMutex);
@@ -1505,28 +1514,30 @@ void HandleStatus(edict_t *player)
 
 	switch (player->ThreadStatus)
 	{
-	case 4:
+	case GDS_STATUS_ALREADY_PLAYING:
 		gi.centerprintf(player, "You seem to be already playing in this or another server.\nIf you're not, wait until tomorrow or ask an admin\nto free your character.\n");
-	case 3:
+	case GDS_STATUS_CHARACTER_SAVED:
 		/*if (player->inuse)
 			gi.cprintf(player, PRINT_LOW, "Character saved!\n");*/
 		break;
-	case 2: // does not exist?
+	case GDS_STATUS_CHARACTER_DOES_NOT_EXIST: // does not exist?
 		gi.centerprintf(player, "Creating a new Character!\n");
 		newPlayer(player);
 		OpenModeMenu(player);
 		break;
-	case 1:
+	case GDS_STATUS_CHARACTER_LOADED:
 		gi.centerprintf(player, "Your character was loaded succesfully.");
 		OpenModeMenu(player);
 		break;
-	case 0:
+	case GDS_STATUS_OK:
 		break;
-	default:
+	default: // negative value
 		CanJoinGame(player, player->ThreadStatus); //Sends out correct message.
 	}
-	if (player->ThreadStatus != 1)
-		player->ThreadStatus = 0;
+
+	// clear the status.
+	if (player->ThreadStatus != GDS_STATUS_CHARACTER_LOADED)
+		player->ThreadStatus = GDS_STATUS_OK;
 #ifndef GDS_NOMULTITHREADING
 	pthread_mutex_unlock(&StatusMutex);
 #endif

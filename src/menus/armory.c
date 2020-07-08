@@ -326,6 +326,7 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 			if (price > 50000)
 				price = 50000;
 			break;
+#if 0
 		case 29:	//ability point
 			// az- we buff this up since the amount of credits went up a fucking lot due to dts
 			price = pow(ent->myskills.level, 2) * 270; 
@@ -338,6 +339,7 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 		case 30: // weapon points
 			price = 3420*ent->myskills.level;
 			break;
+#endif
 #ifndef REMOVE_RESPAWNS
 		case 31: // respawns
 			price = (int)ARMORY_PRICE_RESPAWN * ((int)ARMORY_QTY_RESPAWNS - ent->myskills.weapon_respawns) / (int)ARMORY_QTY_RESPAWNS;
@@ -464,6 +466,8 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 		case 28:	//Reset char data
 			ChangeClass(ent->client->pers.netname, ent->myskills.class_num, 2);
 			break;
+
+#if 0
 		case 29:
 			ent->myskills.speciality_points += 1;
 			safe_cprintf(ent, PRINT_HIGH, "You bought an ability point - you now have %d.\n", ent->myskills.speciality_points);
@@ -472,12 +476,15 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 			ent->myskills.weapon_points += 2;
 			safe_cprintf(ent, PRINT_HIGH, "You bought two weapon points - you now have %d.\n", ent->myskills.weapon_points);
 			break;
+#endif
 #ifndef REMOVE_RESPAWNS
 		case 31:
 			safe_cprintf(ent, PRINT_HIGH, "You bought %d respawns for %d credits - you now have %d.\n", (int)(ARMORY_QTY_RESPAWNS - ent->myskills.weapon_respawns), (int)(price), (int)(ARMORY_QTY_RESPAWNS));
 			ent->myskills.weapon_respawns = ARMORY_QTY_RESPAWNS;
 			break;
 #endif
+		    default:
+		        return; // az: just in case
 		}
 	}
 
@@ -518,7 +525,7 @@ void PurchaseMenu_handler (edict_t *ent, int option)
 	}
 
 	//Try to buy it
-	if (option > 27 && option != 31) // reset, ab pt, weap pt, but not respawns
+	if (option == 28) // option > 27 && option != 31* // reset, ab pt, weap pt, but not respawns
 	{
 		armoryConfirmOption(ent, option);
 		return;

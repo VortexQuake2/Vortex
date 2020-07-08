@@ -13,7 +13,6 @@ we're having a MYSQL GDS.
 
 						-az
 
-(this will also work with qfusion)
 */
 #ifndef NO_GDS
 
@@ -22,6 +21,14 @@ we're having a MYSQL GDS.
 #define GDS_SAVECLOSE 3
 #define GDS_SAVERUNES 4
 #define GDS_EXITTHREAD 5
+
+typedef enum threadstatus_s {
+    GDS_STATUS_OK,
+    GDS_STATUS_CHARACTER_LOADED = 1,
+    GDS_STATUS_CHARACTER_DOES_NOT_EXIST = 2,
+    GDS_STATUS_CHARACTER_SAVED = 3,
+    GDS_STATUS_ALREADY_PLAYING = 4
+} threadstatus_t;
 
 // For Everyone
 // void V_GDS_Load(edict_t *ent);

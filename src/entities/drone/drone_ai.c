@@ -76,7 +76,7 @@ void ai_eval_targets() {
 
 // az: findclosestradius_monmask except ents are only validated once.
 // so it only does the checks that are specific to the current monster.
-edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t* self, int* start)
+edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t* self)
 {
 	edict_t *found = NULL;
 	float	found_rad, prev_rad;
@@ -96,7 +96,7 @@ edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t* self, int* start)
 	}
 	found_rad = 0;
 
-	for (int i = *start; i < potential_target_count; i++, (*start)++)
+	for (int i = 0; i < potential_target_count; i++)
 	{
 		edict_t* from = potential_targets[i];
 		float vlen = potential_target_distances[self->monsterinfo.target_index][i];
@@ -503,10 +503,9 @@ edict_t *drone_get_medic_target (edict_t *self)
 edict_t *drone_get_enemy (edict_t *self)
 {
 	edict_t *target = NULL;
-	int start = 0;
 
 	// find an enemy
-	while ((target = findclosestradius_targets (target, self, &start)) != NULL)
+	while ((target = findclosestradius_targets (target, self)) != NULL)
 	{
 		// screen out invalid targets
 		// az: Replaced G_ValidTarget for lighter check.

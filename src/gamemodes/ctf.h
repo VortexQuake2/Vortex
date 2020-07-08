@@ -9,34 +9,34 @@
 #define CTF_ASSIST_DURATION			10.0		// time (in seconds) before an assist bonus expires
 #define CTF_SUMMONABLE_AUTOREMOVE	10.0	// time (in seconds) before summonable removes after flag taken
 
-#define CTF_FLAG_CAPTURE_EXP		2000		// points for capturing enemy flag
-#define CTF_FLAG_ASSIST_EXP			1000		// points for assisting a capture
+#define CTF_FLAG_CAPTURE_EXP		500		// points for capturing enemy flag
+#define CTF_FLAG_ASSIST_EXP			100		// points for assisting a capture
 #define CTF_FLAG_CAPTURE_CREDITS	350	
 #define CTF_MINIMUM_PLAYERS			4
 #define CTF_FLAG_DEFEND_RANGE		512		// max range of flag defender to flag carrier
 #define CTF_BASE_DEFEND_RANGE		1024	// max range of defender to base
-#define CTF_FLAG_DEFEND_EXP			120		// points for defending flag carrier
-#define CTF_FLAG_DEFEND_CREDITS		50
-#define CTF_FLAG_KILL_EXP			450		// points for killing enemy flag carrier
-#define CTF_FLAG_KILL_CREDITS		200
-#define CTF_BASE_DEFEND_EXP			125		// points for defending base
-#define CTF_BASE_DEFEND_CREDITS		125
-#define CTF_BASE_KILL_EXP			400		// points for killing enemy base defender
+#define CTF_FLAG_DEFEND_EXP			40		// points for defending flag carrier
+#define CTF_FLAG_DEFEND_CREDITS		20
+#define CTF_FLAG_KILL_EXP			60		// points for killing enemy flag carrier
+#define CTF_FLAG_KILL_CREDITS		20
+#define CTF_BASE_DEFEND_EXP			30		// points for defending base
+#define CTF_BASE_DEFEND_CREDITS		10
+#define CTF_BASE_KILL_EXP			40		// points for killing enemy base defender
 #define CTF_BASE_KILL_CREDITS		20
-#define CTF_FLAG_RETURN_EXP			650		// points for returning the flag
+#define CTF_FLAG_RETURN_EXP			25		// points for returning the flag
 #define CTF_FLAG_RETURN_CREDITS		100
-#define CTF_FLAG_TAKE_EXP			2500		// points for picking up enemy flag
-#define CTF_FLAG_TAKE_CREDITS		2500
-#define CTF_FRAG_EXP				175		// points for normal frag (outside of base)
-#define CTF_FRAG_CREDITS			100
+#define CTF_FLAG_TAKE_EXP			50		// points for picking up enemy flag
+#define CTF_FLAG_TAKE_CREDITS		25
+#define CTF_FRAG_EXP				30		// points for normal frag (outside of base)
+#define CTF_FRAG_CREDITS			10
 
 #define CTF_PLAYERSPAWN_HEALTH					1750
-#define CTF_PLAYERSPAWN_CAPTURE_EXPERIENCE	    750
-#define CTF_PLAYERSPAWN_CAPTURE_CREDITS			350
+#define CTF_PLAYERSPAWN_CAPTURE_EXPERIENCE	    50
+#define CTF_PLAYERSPAWN_CAPTURE_CREDITS			10
 #define CTF_PLAYERSPAWN_DEFENSE_RANGE			512
-#define CTF_PLAYERSPAWN_DEFENSE_EXP				30
-#define CTF_PLAYERSPAWN_DEFENSE_CREDITS			10
-#define CTF_PLAYERSPAWN_OFFENSE_EXP				30
+#define CTF_PLAYERSPAWN_DEFENSE_EXP				10
+#define CTF_PLAYERSPAWN_DEFENSE_CREDITS			5
+#define CTF_PLAYERSPAWN_OFFENSE_EXP				15
 #define CTF_PLAYERSPAWN_OFFENSE_CREDITS			10
 #define CTF_PLAYERSPAWN_TIME					1.0
 #define CTF_PLAYERSPAWN_MAX_TIME				3.0					
