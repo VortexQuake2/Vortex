@@ -5,13 +5,9 @@ float monster_increaseDamageByTalent(edict_t *owner, float damage)
 {
 	if(owner && owner->client)
 	{
-		//Talent: Corpulence
-        int talentLevel = vrx_get_talent_level(owner, TALENT_CORPULENCE);
-		// corpulence increases health but reduces damage
-		if(talentLevel > 0)	damage *= 1 + 0.10 * talentLevel;
-		//Talent: Life Tap 33%        Vortex 4.5a
-        talentLevel = vrx_get_talent_level(owner, TALENT_LIFE_TAP);
-		if (talentLevel > 0) damage *= 1 + 0.2 * talentLevel;		
+		// cl5.0: 5% dmg/lv
+        int talentLevel = vrx_get_talent_level(owner, TALENT_LIFE_TAP);
+		if (talentLevel > 0) damage *= 1 + 0.05 * talentLevel;
 	}
 	return damage;
 }

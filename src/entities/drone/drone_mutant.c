@@ -311,7 +311,7 @@ void mutant_jump_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface
 		//if (!self->activator->client)
 		//	damage = 40*self->monsterinfo.level;
 		//else 
-			damage = 30 + 7*self->monsterinfo.level;
+			damage = 50 + 15*self->monsterinfo.level;
 			damage = monster_increaseDamageByTalent(self->activator, damage);
 
 		knockback = damage;

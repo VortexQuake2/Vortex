@@ -1780,9 +1780,7 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster)
 	{
 		//Talent: Corpulence
         talentLevel = vrx_get_talent_level(ent, TALENT_CORPULENCE);
-        talentLevel2 = vrx_get_talent_level(ent, TALENT_LIFE_TAP);
-		if(talentLevel > 0)	mult +=	2.2 * talentLevel;	//+30% per upgrade
-		if(talentLevel2 > 0) mult += 1.1 * talentLevel2;
+		if(talentLevel > 0)	mult +=	0.05 * talentLevel;	//+5% per upgrade
 
 		mult += 0.5; // base player's monster multiplier.
 	}

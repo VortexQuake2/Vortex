@@ -253,6 +253,16 @@ void vrx_upgrade_talent(edict_t *ent, int talentID) {
         return;
     }
 
+    if (talentID == TALENT_IMP_RESIST && vrx_get_talent_level(ent, TALENT_IMP_STRENGTH) > 0) {
+        safe_cprintf(ent, PRINT_HIGH, "Improved Resist can't be combined with Improved Resist.\n");
+        return;
+    }
+
+    if (talentID == TALENT_IMP_STRENGTH && vrx_get_talent_level(ent, TALENT_IMP_RESIST) > 0) {
+        safe_cprintf(ent, PRINT_HIGH, "Improved Strength can't be combined with Improved Resist.\n");
+        return;
+    }
+
     if (talent->upgradeLevel == talent->maxLevel) {
         safe_cprintf(ent, PRINT_HIGH, "You can not upgrade this talent any further.\n");
         return;
@@ -492,18 +502,15 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             addlinetomenu(ent, "Reduces curse cost.", MENU_WHITE_CENTERED);
             return 1;
         case TALENT_CORPULENCE:
-            addlinetomenu(ent, "Increases hellspawn", MENU_WHITE_CENTERED);
-            addlinetomenu(ent, "and monster health/armor,", MENU_WHITE_CENTERED);
-            addlinetomenu(ent, "but reduces damage. Can't,", MENU_WHITE_CENTERED);
-            addlinetomenu(ent, "combine with Life Tap.", MENU_WHITE_CENTERED);
-            return 4;
+            addlinetomenu(ent, "Increases monster health/armor", MENU_WHITE_CENTERED);
+            addlinetomenu(ent, "Can't combine with Life Tap.", MENU_WHITE_CENTERED);
+            return 2;
         case TALENT_LIFE_TAP:
-            addlinetomenu(ent, "Increases hellspawn", MENU_WHITE_CENTERED);
-            addlinetomenu(ent, "and monster damage,", MENU_WHITE_CENTERED);
+            addlinetomenu(ent, "Increases monster damage", MENU_WHITE_CENTERED);
             addlinetomenu(ent, "but slowly saps life.", MENU_WHITE_CENTERED);
             addlinetomenu(ent, "Can't combine with", MENU_WHITE_CENTERED);
             addlinetomenu(ent, "Corpulence.", MENU_WHITE_CENTERED);
-            return 5;
+            return 4;
         case TALENT_DIM_VISION:
             addlinetomenu(ent, "Adds chance to", MENU_WHITE_CENTERED);
             addlinetomenu(ent, "automatically curse", MENU_WHITE_CENTERED);
