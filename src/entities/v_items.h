@@ -46,16 +46,16 @@ typedef struct item_s
 	imodifier_t		modifiers[MAX_VRXITEMMODS];	//Up to 6 seperate mods
 }item_t;
 
-#define RUNE_SPAWN_MONSTER		0.005	// (0.01 = 1% per frag) base chance of a rune spawning, before level modifiers
-#define RUNE_SPAWN_BASE			0.05	// (0.01 = 1% per frag) base chance of a rune spawning, before level modifiers
+#define RUNE_SPAWN_MONSTER		0.01	// (0.01 = 1% per frag) base chance of a rune spawning, before level modifiers
+#define RUNE_SPAWN_BASE			0.05	// (0.05 = 5% per frag) base chance of a rune spawning, before level modifiers
 #define RUNE_WEAPON_MAXVALUE	10		// maximum modifier for weapon runes
 #define RUNE_ABILITY_MAXVALUE	10		// maximum modifier for ability runes
 #define RUNE_COST_BASE			2500
 #define RUNE_COST_ADDON			750
 
-#define CHANCE_NORM				750		//50%	(1 in 1.5)
-#define CHANCE_COMBO			250		//27%	(1 in 3.7)
-#define CHANCE_CLASS			100		//2.8%	(1 in 40)
-#define CHANCE_UNIQUE			35		//0.2%	(1 in 500)
+#define CHANCE_NORM				850		// 85%
+#define CHANCE_COMBO			140		// 14%
+#define CHANCE_CLASS			8		// .8%
+#define CHANCE_UNIQUE			2		// .2%
 
 #endif

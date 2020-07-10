@@ -11,27 +11,27 @@ qboolean IsAllowedPregameSkills();
 //Takes the class string and returns the index
 int getClassNum(char *newclass) {
     if (Q_strcasecmp(newclass, "Soldier") == 0)
-    return CLASS_SOLDIER;
+        return CLASS_SOLDIER;
     else if (Q_strcasecmp(newclass, "Mage") == 0)
-    return CLASS_MAGE;
+        return CLASS_MAGE;
     else if (Q_strcasecmp(newclass, "Necromancer") == 0)
-    return CLASS_NECROMANCER;
+        return CLASS_NECROMANCER;
     else if (Q_strcasecmp(newclass, "Vampire") == 0)
-    return CLASS_VAMPIRE;
+        return CLASS_VAMPIRE;
     else if (Q_strcasecmp(newclass, "Engineer") == 0)
-    return CLASS_ENGINEER;
+        return CLASS_ENGINEER;
     else if (Q_strcasecmp(newclass, "Poltergeist") == 0)
-    return CLASS_POLTERGEIST;
+        return CLASS_POLTERGEIST;
     else if (Q_strcasecmp(newclass, "Knight") == 0)
-    return CLASS_KNIGHT;
+        return CLASS_KNIGHT;
     else if (Q_strcasecmp(newclass, "Cleric") == 0)
-    return CLASS_CLERIC;
+        return CLASS_CLERIC;
     else if (Q_strcasecmp(newclass, "Shaman") == 0)
-    return CLASS_SHAMAN;
+        return CLASS_SHAMAN;
     else if (Q_strcasecmp(newclass, "Alien") == 0)
-    return CLASS_ALIEN;
+        return CLASS_ALIEN;
     else if ((Q_strcasecmp(newclass, "Weapon Master") == 0) || (Q_strcasecmp(newclass, "WeaponMaster") == 0))
-    return CLASS_WEAPONMASTER;
+        return CLASS_WEAPONMASTER;
     return 0;
 }
 
@@ -158,12 +158,12 @@ char *GetArmoryItemString(int purchase_number) {
             return "Weapon Rune";
         case 28:
             return "Reset Abilities/Weapons";
-        /* case 29:
-            return "Ability point";
-        case 30:
-            return "Weapon point";
-        case 31:
-            return "Respawns"; */
+            /* case 29:
+                return "Ability point";
+            case 30:
+                return "Weapon point";
+            case 31:
+                return "Respawns"; */
         default:
             return "<BAD ITEM NUMBER>";
     }
@@ -995,6 +995,7 @@ void V_ResetAbilityDelays(edict_t *ent)
 qboolean V_CanUseAbilities(edict_t *ent, int ability_index, int ability_cost, qboolean print_msg) {
     if (!ent->client)
         return false;
+
     if (!G_EntIsAlive(ent))
         return false;
 
@@ -1015,9 +1016,14 @@ qboolean V_CanUseAbilities(edict_t *ent, int ability_index, int ability_cost, qb
     // poltergeist cannot use abilities in human form
     if (vrx_is_morphing_polt(ent) && !ent->mtype) {
         // allow them to morph
-        if (!PM_PlayerHasMonster(ent) && (ability_index != CACODEMON) && (ability_index != MUTANT) &&
-            (ability_index != BRAIN) && (ability_index != FLYER)
-            && (ability_index != MEDIC) && (ability_index != BLOOD_SUCKER) && (ability_index != TANK) &&
+        if (!PM_PlayerHasMonster(ent) &&
+            (ability_index != CACODEMON) &&
+            (ability_index != MUTANT) &&
+            (ability_index != BRAIN) &&
+            (ability_index != FLYER) &&
+            (ability_index != MEDIC) &&
+            (ability_index != BLOOD_SUCKER) &&
+            (ability_index != TANK) &&
             (ability_index != BERSERK)) {
             if (print_msg)
                 safe_cprintf(ent, PRINT_HIGH, "You can't use abilities in human form!\n");
@@ -2210,7 +2216,7 @@ void V_ShellNonAbilityEffects(edict_t *ent) {
         // these effects only apply to FFA/PvP modes
         if (!ptr->value && !domination->value && !pvm->value && !ctf->value) {
             // boss/miniboss
-            if (ent->myskills.boss > 0 || IsNewbieBasher(ent)) {
+            if (ent->myskills.boss > 0 || vrx_is_newbie_basher(ent)) {
                 ent->s.effects |= EF_COLOR_SHELL;
                 ent->s.renderfx |= (RF_SHELL_YELLOW);
             }

@@ -1146,6 +1146,18 @@ void DrawChildLinks (edict_t *ent)
 			NearestNodeNumber(ent->s.origin, 255, true), count, maxDist);
 }
 
+void InvalidateGridCache() {
+    for (int i = 0; i < numnodes; i++) {
+        if (cached_gridlist[i])
+        {
+            V_Free(cached_gridlist[i]);
+            cached_gridlist[i] = NULL;
+            cached_gridlist_count[i] = 0;
+        }
+    }
+}
+
+
 void DrawNearbyGrid(edict_t *ent) {
 	int i;
 vec3_t v,forward;
@@ -1185,6 +1197,8 @@ void Cmd_DeleteNode_f (edict_t *ent)
 	if ((nearestNode = NearestNodeNumber(ent->s.origin, 255, true)) != -1)
 		DeleteNode(nearestNode);
 
+    InvalidateGridCache();
+
 	safe_cprintf(ent, PRINT_HIGH, "**Closest node deleted (%d nodes total).**\n", numnodes);
 }
 
@@ -1203,6 +1217,8 @@ void Cmd_AddNode_f (edict_t *ent)
 	start[2] += 32;
 	VectorCopy(start, pathnode[numnodes]);
 	numnodes++;
+
+	InvalidateGridCache();
 
 	safe_cprintf(ent, PRINT_HIGH, "**Node added at current position (%d nodes total).\n**", numnodes);
 }

@@ -13,9 +13,7 @@ SHIELD_BODY_PROTECTION                   = 0.8
 SHIELD_ABILITY_DELAY                     = 0.3
 SMARTROCKET_LOCKFRAMES                   = 3
 DAMAGE_ESCAPE_DELAY                      = 0.1
-EXP_PLAYER_MONSTER = 75
-EXP_WORLD_MONSTER = 25
-AMMO_REGEN_DELAY = 5.0
+AMMO_REGEN_DELAY 						 = 5.0
 MAX_KNOCKBACK                            = 300
 CHAT_PROTECT_FRAMES                      = 200
 MAX_HOURS                                = 24
@@ -31,8 +29,12 @@ MAX_LASERS                               = 6
 LASER_SPAWN                              = 3
 SUPERSPEED_DRAIN_COST                    = 1
 RESPAWN_INVIN_TIME                       = 20
+
+-- Antigravity
 ANTIGRAV_COST                            = 1
 ANTIGRAV_AMT                             = 400
+
+-- Force wall
 FORCEWALL_WIDTH                          = 256
 FORCEWALL_HEIGHT                         = 128
 FORCEWALL_THICKNESS                      = 16
@@ -41,6 +43,8 @@ FORCEWALL_SOLID_COST = 20
 FORCEWALL_NOTSOLID_COST = 50
 MAX_PIPES = 8
 MAX_IDLE_FRAMES = 1800
+
+-- Spree wars
 SPREE_WARS = 1
 SPREE_START = 6
 SPREE_WARS_START = 25
@@ -50,84 +54,106 @@ SPREE_BREAKBONUS = 100
 MONSTER_MASTERY_FACTOR = 0.04
 MAGMINE_DEFAULT_PULL = -40
 MAGMINE_ADDON_PULL = -4
-LEVELUP_ARMOR_VAMPIRE = 4
+
+-- Character basics
 INITIAL_POWERCUBES_ALIEN = 200
 LEVELUP_POWERCUBES_ALIEN = 10
 INITIAL_ARMOR_CLERIC = 50
-LEVELUP_ARMOR_CLERIC = 5
-INITIAL_POWERCUBES_CLERIC = 200
-LEVELUP_POWERCUBES_CLERIC = 10
+
 INITIAL_HEALTH_CLERIC = 100
 LEVELUP_HEALTH_CLERIC = 5
 INITIAL_ARMOR_SHAMAN = 50
-LEVELUP_ARMOR_SHAMAN = 5
-INITIAL_POWERCUBES_SHAMAN = 200
-LEVELUP_POWERCUBES_SHAMAN = 10
+
 INITIAL_HEALTH_SHAMAN = 100
 LEVELUP_HEALTH_SHAMAN = 5
 INITIAL_ARMOR_NECROMANCER = 50
-LEVELUP_ARMOR_NECROMANCER = 5
-INITIAL_POWERCUBES_NECROMANCER = 200
-LEVELUP_POWERCUBES_NECROMANCER = 10
+LEVELUP_ARMOR_NECROMANCER = 0
 INITIAL_HEALTH_NECROMANCER = 100
 LEVELUP_HEALTH_NECROMANCER = 1
-INITIAL_HEALTH_SOLDIER = 80
-INITIAL_HEALTH_ENGINEER = 110
-INITIAL_HEALTH_VAMPIRE = 130
-INITIAL_HEALTH_POLTERGEIST = 125
-INITIAL_HEALTH_ALIEN = 115
-INITIAL_HEALTH_KNIGHT = 110
+INITIAL_HEALTH_SOLDIER = 100
+INITIAL_HEALTH_ENGINEER = 100
+INITIAL_HEALTH_VAMPIRE = 100
+INITIAL_HEALTH_POLTERGEIST = 100
+INITIAL_HEALTH_ALIEN = 100
+INITIAL_HEALTH_KNIGHT = 100
 INITIAL_HEALTH_MAGE = 100
 INITIAL_HEALTH_WEAPONMASTER = 85
-LEVELUP_HEALTH_SOLDIER = 2
+LEVELUP_HEALTH_SOLDIER = 1
 LEVELUP_HEALTH_ENGINEER = 2
-LEVELUP_HEALTH_VAMPIRE                   = 4
-LEVELUP_HEALTH_POLTERGEIST               = 4
-LEVELUP_HEALTH_ALIEN                     = 5
-LEVELUP_HEALTH_KNIGHT                    = 2
+LEVELUP_HEALTH_VAMPIRE                   = 5
+LEVELUP_HEALTH_POLTERGEIST               = 5
+LEVELUP_HEALTH_ALIEN                     = 1
+LEVELUP_HEALTH_KNIGHT                    = 1
 LEVELUP_HEALTH_MAGE                      = 1
-LEVELUP_HEALTH_WEAPONMASTER              = 2
+LEVELUP_HEALTH_WEAPONMASTER              = 1
 INITIAL_ARMOR_SOLDIER                    = 50
-INITIAL_ARMOR_ENGINEER                   = 50
+INITIAL_ARMOR_ENGINEER                   = 100
 INITIAL_ARMOR_VAMPIRE                    = 50
 INITIAL_ARMOR_POLTERGEIST                = 50
-INITIAL_ARMOR_ALIEN                      = 30
-INITIAL_ARMOR_KNIGHT                     = 75
+INITIAL_ARMOR_ALIEN                      = 50
+INITIAL_ARMOR_KNIGHT                     = 100
 INITIAL_ARMOR_MAGE                       = 50
 INITIAL_ARMOR_WEAPONMASTER               = 50
 LEVELUP_ARMOR_SOLDIER                    = 1
-LEVELUP_ARMOR_ENGINEER                   = 4
+LEVELUP_ARMOR_ENGINEER                   = 5
 LEVELUP_ARMOR_POLTERGEIST                = 0
-LEVELUP_ARMOR_ALIEN                      = 4
-LEVELUP_ARMOR_KNIGHT                     = 6
+LEVELUP_ARMOR_ALIEN                      = 0
+LEVELUP_ARMOR_KNIGHT                     = 10
 LEVELUP_ARMOR_MAGE                       = 0
-LEVELUP_ARMOR_WEAPONMASTER               = 2
-INITIAL_POWERCUBES_SOLDIER = 250
-LEVELUP_POWERCUBES_SOLDIER = 8
+LEVELUP_ARMOR_WEAPONMASTER               = 1
+LEVELUP_ARMOR_VAMPIRE = 0
+LEVELUP_ARMOR_SHAMAN = 0
+LEVELUP_ARMOR_CLERIC = 2
+
+INITIAL_POWERCUBES_SOLDIER = 200
+LEVELUP_POWERCUBES_SOLDIER = 10
 INITIAL_POWERCUBES_VAMPIRE = 200
 LEVELUP_POWERCUBES_VAMPIRE = 10
 INITIAL_POWERCUBES_KNIGHT = 200
 LEVELUP_POWERCUBES_KNIGHT = 10
 INITIAL_POWERCUBES_MAGE = 200
-LEVELUP_POWERCUBES_MAGE = 25
+LEVELUP_POWERCUBES_MAGE = 30
 INITIAL_POWERCUBES_POLTERGEIST = 200
 LEVELUP_POWERCUBES_POLTERGEIST = 10
 INITIAL_POWERCUBES_ENGINEER = 200
 LEVELUP_POWERCUBES_ENGINEER = 15
 INITIAL_POWERCUBES_WEAPONMASTER = 200
 LEVELUP_POWERCUBES_WEAPONMASTER = 10
+INITIAL_POWERCUBES_CLERIC = 200
+LEVELUP_POWERCUBES_CLERIC = 10
+INITIAL_POWERCUBES_SHAMAN = 200
+LEVELUP_POWERCUBES_SHAMAN = 10
+INITIAL_POWERCUBES_NECROMANCER = 200
+LEVELUP_POWERCUBES_NECROMANCER = 10
+
+
+-- Tballs
 TBALLS_RESPAWN = 2
+
+-- Respawn Power Cubes
 POWERCUBES_RESPAWN                       = 25
+
+-- Ammo Pickups
 SHELLS_PICKUP                            = 10
 BULLETS_PICKUP                           = 50
 GRENADES_PICKUP                          = 3
 ROCKETS_PICKUP                           = 8
 CELLS_PICKUP                             = 50
 SLUGS_PICKUP                             = 8
-EXP_PLAYER_BASE = 75
-EXP_MINIBOSS = 100
+
+-- Experience Base
+EXP_PLAYER_BASE 						 = 40
+EXP_MINIBOSS 							 = 100
+EXP_PLAYER_MONSTER 					     = 10
+EXP_WORLD_MONSTER 						 = 17
+
+-- Credits base
 CREDITS_PLAYER_BASE                      = 15
 CREDITS_OTHER_BASE                       = 5
+
+-- Weapons
+-- ===========================================
+-- Sabre/Sword
 SABRE_INITIAL_DAMAGE                     = 100
 SABRE_ADDON_DAMAGE                       = 5
 SABRE_ADDON_HEATDAMAGE                   = 2
@@ -135,6 +161,7 @@ SABRE_INITIAL_RANGE                      = 32
 SABRE_ADDON_RANGE                        = 3.4
 SABRE_INITIAL_KICK                       = 120
 SABRE_ADDON_KICK                         = 0
+-- Blaster
 BLASTER_INITIAL_DAMAGE_MIN               = 20
 BLASTER_INITIAL_DAMAGE_MAX               = 50
 BLASTER_ADDON_DAMAGE_MIN                 = 2
@@ -143,38 +170,54 @@ BLASTER_INITIAL_HASTE                    = 50
 BLASTER_ADDON_HASTE                      = 14
 BLASTER_INITIAL_SPEED                    = 1000
 BLASTER_ADDON_SPEED                      = 40
+
+-- 20mm cannon
 WEAPON_20MM_INITIAL_DMG                  = 35
 WEAPON_20MM_ADDON_DMG                    = 1.5
 WEAPON_20MM_INITIAL_RANGE                = 550
 WEAPON_20MM_ADDON_RANGE                  = 30
+
+-- Shotgun
 SHOTGUN_INITIAL_DAMAGE                   = 6
 SHOTGUN_ADDON_DAMAGE                     = 0.125
 SHOTGUN_INITIAL_BULLETS                  = 10
 SHOTGUN_ADDON_BULLETS                    = 0.35
+
+-- SSG/Super Shotgun
 SUPERSHOTGUN_INITIAL_DAMAGE              = 10
 SUPERSHOTGUN_ADDON_DAMAGE                = 0.4
 SUPERSHOTGUN_INITIAL_BULLETS             = 15
 SUPERSHOTGUN_ADDON_BULLETS               = 0.5
+
+-- Machinegun
 MACHINEGUN_INITIAL_DAMAGE                = 9
 MACHINEGUN_ADDON_DAMAGE                  = 0.45
 MACHINEGUN_ADDON_TRACERDAMAGE            = 2
+
+-- Chaingun
 CHAINGUN_INITIAL_DAMAGE                  = 3
 CHAINGUN_ADDON_DAMAGE                    = 0.17
 CHAINGUN_ADDON_TRACERDAMAGE              = 4
+
+-- Hand Grenade
 GRENADE_INITIAL_DAMAGE                   = 200
 GRENADE_ADDON_DAMAGE                     = 10
 GRENADE_INITIAL_RADIUS_DAMAGE            = 200
 GRENADE_ADDON_RADIUS_DAMAGE              = 10
 GRENADE_INITIAL_RADIUS                   = 100
 GRENADE_ADDON_RADIUS                     = 2.5
-GRENADELAUNCHER_INITIAL_DAMAGE           = 40
+
+-- GL/Grenade Launcher
+GRENADELAUNCHER_INITIAL_DAMAGE           = 100
 GRENADELAUNCHER_ADDON_DAMAGE             = 6
-GRENADELAUNCHER_INITIAL_RADIUS_DAMAGE    = 80
-GRENADELAUNCHER_ADDON_RADIUS_DAMAGE      = 4
+GRENADELAUNCHER_INITIAL_RADIUS_DAMAGE    = 100
+GRENADELAUNCHER_ADDON_RADIUS_DAMAGE      = 5
 GRENADELAUNCHER_INITIAL_RADIUS           = 100
 GRENADELAUNCHER_ADDON_RADIUS             = 2
 GRENADELAUNCHER_INITIAL_SPEED            = 600
-GRENADELAUNCHER_ADDON_SPEED              = 13
+GRENADELAUNCHER_ADDON_SPEED              = 30
+
+-- RL/Rocket Launcher
 ROCKETLAUNCHER_INITIAL_DAMAGE            = 100
 ROCKETLAUNCHER_ADDON_DAMAGE              = 3.5
 ROCKETLAUNCHER_INITIAL_SPEED             = 650
@@ -183,13 +226,19 @@ ROCKETLAUNCHER_INITIAL_RADIUS_DAMAGE     = 100
 ROCKETLAUNCHER_ADDON_RADIUS_DAMAGE       = 2.5
 ROCKETLAUNCHER_INITIAL_DAMAGE_RADIUS     = 100
 ROCKETLAUNCHER_ADDON_DAMAGE_RADIUS       = 2.5
+
+-- Hyperblaster
 HYPERBLASTER_INITIAL_DAMAGE              = 15
 HYPERBLASTER_ADDON_DAMAGE                = 0.75
 HYPERBLASTER_INITIAL_SPEED               = 1500
 HYPERBLASTER_ADDON_SPEED                 = 50
+
+-- Railgun
 RAILGUN_INITIAL_DAMAGE                   = 100
 RAILGUN_ADDON_DAMAGE                     = 8
 RAILGUN_ADDON_HEATDAMAGE                 = 1.0
+
+-- BFG10K
 BFG10K_INITIAL_DAMAGE                    = 30
 BFG10K_ADDON_DAMAGE                      = 2.0
 BFG10K_INITIAL_SPEED                     = 650
@@ -199,6 +248,8 @@ BFG10K_INITIAL_DURATION                  = 1.0
 BFG10K_ADDON_DURATION                    = 0.05
 BFG10K_DEFAULT_DURATION                  = 1.5
 BFG10K_DEFAULT_SLIDE                     = 0
+
+-- Totems
 TOTEM_MAX_RANGE                          = 512
 TOTEM_COST                               = 25
 TOTEM_HEALTH_BASE                        = 100
@@ -208,6 +259,8 @@ TOTEM_REGEN_MULT                         = 0
 TOTEM_MASTERY_MULT                       = 2
 TOTEM_REGEN_FRAMES                       = 100
 TOTEM_REGEN_DELAY                        = 10
+
+-- Fury
 FURY_INITIAL_REGEN                       = 0.05
 FURY_ADDON_REGEN                         = 0.005
 FURY_MAX_REGEN                           = 0.1
@@ -216,14 +269,20 @@ FURY_ADDON_FACTOR                        = 0.05
 FURY_FACTOR_MAX                          = 2.0
 FURY_DURATION_BASE                       = 0
 FURY_DURATION_BONUS                      = 1.0
+
+-- Fire Totem
 FIRETOTEM_DAMAGE_BASE                    = 0
 FIRETOTEM_DAMAGE_MULT                    = 6
 FIRETOTEM_REFIRE_BASE                    = 2.0
 FIRETOTEM_REFIRE_MULT                    = 0.0
+
+-- Water Totem
 WATERTOTEM_DURATION_BASE                 = 3.0
 WATERTOTEM_DURATION_MULT                 = 0.0
 WATERTOTEM_REFIRE_BASE                   = 1.0
 WATERTOTEM_REFIRE_MULT                   = 0.0
+
+-- Air Totem
 AIRTOTEM_RESIST_BASE                     = 1.0
 AIRTOTEM_RESIST_MULT                     = 0.2
 EARTHTOTEM_RESIST_MULT                   = 0.05
@@ -238,12 +297,16 @@ DARKNESSTOTEM_MAX_MULT                   = 0.1
 PRECISION_TUNING_COST_FACTOR             = 0.1
 PRECISION_TUNING_DELAY_FACTOR            = 0.1
 PRECISION_TUNING_SKILL_FACTOR            = 0.1
+
+-- Sentry
 SENTRY_INITIAL_HEALTH                    = 100
 SENTRY_ADDON_HEALTH                      = 10
 SENTRY_INITIAL_ARMOR                     = 150
 SENTRY_ADDON_ARMOR                       = 15
 SENTRY_INITIAL_AMMO                      = 100
 SENTRY_ADDON_AMMO                        = 10
+
+-- Minisentry
 MINISENTRY_INITIAL_HEALTH                = 50
 MINISENTRY_ADDON_HEALTH                  = 15
 MINISENTRY_INITIAL_ARMOR                 = 50
@@ -276,7 +339,6 @@ SPIKER_MAX_COUNT                         = 4
 GASSER_MAX_COUNT                         = 4
 OBSTACLE_MAX_COUNT                       = 6
 SPIKEBALL_MAX_COUNT                      = 3
-MAX_MONSTERS                             = 100
 DELAY_MONSTER_THINK                      = 3
 DELAY_MONSTER                            = 3
 M_FLYER_COST                             = 25
@@ -294,22 +356,30 @@ M_SUPERTANK_COST                         = 300
 M_COMMANDER_COST                         = 300
 M_MUTANT_COST                            = 25
 M_DEFAULT_COST                           = 25
-M_FLYER_CONTROL_COST                     = 33
-M_INSANE_CONTROL_COST                    = 33
-M_SOLDIERLT_CONTROL_COST                 = 30
-M_SOLDIER_CONTROL_COST                   = 30
-M_GUNNER_CONTROL_COST                    = 33
-M_CHICK_CONTROL_COST                     = 25
-M_PARASITE_CONTROL_COST                  = 30
-M_MEDIC_CONTROL_COST                     = 30
-M_TANK_CONTROL_COST                      = 70
-M_BRAIN_CONTROL_COST                     = 33
-M_HOVER_CONTROL_COST                     = 33
-M_SUPERTANK_CONTROL_COST                 = 100
-M_COMMANDER_CONTROL_COST                 = 100
-M_MUTANT_CONTROL_COST                    = 33
-M_GLADIATOR_CONTROL_COST                 = 40
-M_DEFAULT_CONTROL_COST                   = 35
+
+-- control cost stuff
+MAX_MONSTERS                             = 3 
+M_FLYER_CONTROL_COST                     = 1
+M_INSANE_CONTROL_COST                    = 1
+M_SOLDIERLT_CONTROL_COST                 = 1
+M_SOLDIER_CONTROL_COST                   = 1
+M_GUNNER_CONTROL_COST                    = 1
+M_CHICK_CONTROL_COST                     = 1
+M_PARASITE_CONTROL_COST                  = 1
+M_MEDIC_CONTROL_COST                     = 1
+M_TANK_CONTROL_COST                      = 2
+M_BRAIN_CONTROL_COST                     = 1
+M_HOVER_CONTROL_COST                     = 1
+M_SUPERTANK_CONTROL_COST                 = 3
+M_COMMANDER_CONTROL_COST                 = 3 -- used as comparison point for bosses!
+M_BERSERKER_CONTROL_COST				 = 1
+M_MUTANT_CONTROL_COST                    = 1
+M_JORG_CONTROL_COST						 = 4
+M_GLADIATOR_CONTROL_COST                 = 1
+M_DEFAULT_CONTROL_COST                   = 1
+M_CONTROL_COST_SCALE					 = 1
+
+
 DELAY_FREEZE                             = 5
 DELAY_BOOST                              = 2.0
 DELAY_BLOODSUCKER                        = 3
@@ -690,3 +760,50 @@ SPIKEBALL_INITIAL_DURATION               = 9999
 SPIKEBALL_ADDON_DURATION                 = 0
 SPIKEBALL_COST                           = 25
 SPIKEBALL_DELAY                          = 1.0
+PVB_BOSS_EXPERIENCE                      = 1000
+PVB_BOSS_MIN_EXP                         = 100
+PVB_BOSS_MAX_EXP                         = 1000
+PVB_BOSS_CREDITS                         = 3000
+PVB_BOSS_FRAG_EXP                        = 300
+PVB_BOSS_FRAG_CREDITS                    = 100
+PVB_BOSS_TIMEOUT                         = 10
+GROUP_SHARE_MULT                         = 0.4
+CTF_ASSIST_DURATION                      = 10.0
+CTF_SUMMONABLE_AUTOREMOVE                = 10.0
+CTF_FLAG_CAPTURE_EXP                     = 500
+CTF_FLAG_ASSIST_EXP                      = 100
+CTF_FLAG_CAPTURE_CREDITS                 = 350
+CTF_MINIMUM_PLAYERS                      = 4
+CTF_FLAG_DEFEND_RANGE                    = 512
+CTF_BASE_DEFEND_RANGE                    = 1024
+CTF_FLAG_DEFEND_EXP                      = 40
+CTF_FLAG_DEFEND_CREDITS                  = 20
+CTF_FLAG_KILL_EXP                        = 60
+CTF_FLAG_KILL_CREDITS                    = 20
+CTF_BASE_DEFEND_EXP                      = 30
+CTF_BASE_DEFEND_CREDITS                  = 10
+CTF_BASE_KILL_EXP                        = 40
+CTF_BASE_KILL_CREDITS                    = 20
+CTF_FLAG_RETURN_EXP                      = 25
+CTF_FLAG_RETURN_CREDITS                  = 100
+CTF_FLAG_TAKE_EXP                        = 50
+CTF_FLAG_TAKE_CREDITS                    = 25
+CTF_FRAG_EXP                             = 30
+CTF_FRAG_CREDITS                         = 10
+CTF_PLAYERSPAWN_HEALTH                   = 1750
+CTF_PLAYERSPAWN_CAPTURE_EXPERIENCE       = 50
+CTF_PLAYERSPAWN_CAPTURE_CREDITS          = 10
+CTF_PLAYERSPAWN_DEFENSE_RANGE            = 512
+CTF_PLAYERSPAWN_DEFENSE_EXP              = 10
+CTF_PLAYERSPAWN_DEFENSE_CREDITS          = 5
+CTF_PLAYERSPAWN_OFFENSE_EXP              = 15
+CTF_PLAYERSPAWN_OFFENSE_CREDITS          = 10
+CTF_PLAYERSPAWN_TIME                     = 1.0
+CTF_PLAYERSPAWN_MAX_TIME                 = 3.0
+CORPSEEATER_DELAY                        = 0.5
+CORPSEEATER_RANGE                        = 64
+CORPSEEATER_INITIAL_HEALTH               = 0
+CORPSEEATER_ADDON_HEALTH                 = 10
+CORPSEEATER_INITIAL_DAMAGE               = 25
+CORPSEEATER_ADDON_DAMAGE                 = 2.5
+CORPSEEATER_ADDON_MAXHEALTH              = 0.05

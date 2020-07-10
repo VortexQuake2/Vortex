@@ -365,9 +365,9 @@ void init_drone_berserk (edict_t *self)
 	self->health = self->max_health = 120 + 75 * self->monsterinfo.level;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.power_armor_power = self->monsterinfo.max_armor = 60 + 50 * self->monsterinfo.level;
-	self->gib_health = -60;
+	self->gib_health = -0.6 * BASE_GIB_HEALTH;
 	self->mass = 250;
-	self->monsterinfo.control_cost = 40;
+	self->monsterinfo.control_cost = M_BERSERKER_CONTROL_COST;
 	self->monsterinfo.cost = M_DEFAULT_COST;//FIXME
 	self->monsterinfo.jumpup = 64;
 	self->monsterinfo.jumpdn = 512;

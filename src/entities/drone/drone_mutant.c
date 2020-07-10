@@ -288,7 +288,7 @@ void mutant_melee (edict_t *self)
 //
 // ATTACK
 //
-float monster_increaseDamageByTalent(edict_t *owner, float damage);
+float vrx_increase_monster_damage_by_talent(edict_t *owner, float damage);
 
 void mutant_jump_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
@@ -312,7 +312,7 @@ void mutant_jump_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface
 		//	damage = 40*self->monsterinfo.level;
 		//else 
 			damage = 50 + 15*self->monsterinfo.level;
-			damage = monster_increaseDamageByTalent(self->activator, damage);
+			damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 
 		knockback = damage;
 		if (knockback > 500)
@@ -559,7 +559,7 @@ void init_drone_mutant (edict_t *self)
 		//self->health = 400 + 160*self->monsterinfo.level;
 
 	self->max_health = self->health;
-	self->gib_health = -100;
+	self->gib_health = -BASE_GIB_HEALTH;
 	self->mass = 300;
 
 //	self->pain = mutant_pain;

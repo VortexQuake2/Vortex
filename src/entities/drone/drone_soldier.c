@@ -739,13 +739,13 @@ void init_drone_soldier (edict_t *self)
 	if (!self->mtype)
 		self->mtype = M_SOLDIER;
 
-	self->monsterinfo.control_cost = 33;
+	self->monsterinfo.control_cost = M_SOLDIERLT_CONTROL_COST;
 	self->monsterinfo.cost = 50;
 
 	// set health
 	self->health = M_SOLDIER_INITIAL_HEALTH+M_SOLDIER_ADDON_HEALTH*self->monsterinfo.level;
 	self->max_health = self->health;
-	self->gib_health = -150;
+	self->gib_health = -1.5 * BASE_GIB_HEALTH;
 
 	// set armor
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;

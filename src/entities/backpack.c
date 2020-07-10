@@ -41,7 +41,7 @@ gitem_t *item=itemlist;
 }
 
 
-void TossClientBackpack(edict_t *player, edict_t *attacker) {
+void vrx_toss_backpack(edict_t *player, edict_t *attacker) {
 int i,quantity;
 gitem_t *item=itemlist;
 edict_t *pack;

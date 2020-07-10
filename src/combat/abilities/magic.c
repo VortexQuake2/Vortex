@@ -6519,7 +6519,7 @@ edict_t *CreateHealer (edict_t *ent, int skill_level)
 	e->takedamage = DAMAGE_AIM;
 	e->health = e->max_health = HEALER_INITIAL_HEALTH + HEALER_ADDON_HEALTH * skill_level;
 	e->monsterinfo.level = skill_level;
-	e->gib_health = -200;
+	e->gib_health = -2 * BASE_GIB_HEALTH;
 	e->die = healer_die;
 	e->touch = V_Touch;
 	VectorSet(e->mins, -28, -28, 0);
@@ -6832,7 +6832,7 @@ edict_t *CreateSpiker (edict_t *ent, int skill_level)
 	e->dmg = SPIKER_INITIAL_DAMAGE + SPIKER_ADDON_DAMAGE * skill_level;
 
 	e->monsterinfo.level = skill_level;
-	e->gib_health = -250;
+	e->gib_health = -2.5 * BASE_GIB_HEALTH;
 	e->die = spiker_die;
 	e->touch = organ_touch;
 	VectorSet(e->mins, -24, -24, 0);
@@ -7142,7 +7142,7 @@ edict_t *CreateObstacle (edict_t *ent, int skill_level)
 	e->dmg = OBSTACLE_INITIAL_DAMAGE + OBSTACLE_ADDON_DAMAGE * skill_level;
     e->monsterinfo.nextattack = 100 - 9 * vrx_get_talent_level(ent, TALENT_PHANTOM_OBSTACLE);
 	e->monsterinfo.level = skill_level;
-	e->gib_health = -250;
+	e->gib_health = -2.5 * BASE_GIB_HEALTH;
 	e->die = obstacle_die;
 	e->touch = organ_touch;
 	VectorSet(e->mins, -16, -16, 0);
@@ -7645,7 +7645,7 @@ edict_t *CreateGasser (edict_t *ent, int skill_level)
 	e->dmg_radius = GASSER_INITIAL_ATTACK_RANGE + GASSER_ADDON_ATTACK_RANGE * skill_level;
 
 	e->monsterinfo.level = skill_level;
-	e->gib_health = -250;
+	e->gib_health = -2.5 * BASE_GIB_HEALTH;
 	e->s.frame = GASSER_FRAMES_IDLE_START;
 	e->die = gasser_die;
 	e->touch = organ_touch;
@@ -8060,7 +8060,7 @@ edict_t *CreateCocoon (edict_t *ent, int skill_level)
 	else
 		e->monsterinfo.jumpdn = -1; // cloak disabled
 
-	e->gib_health = -200;
+	e->gib_health = -2 * BASE_GIB_HEALTH;
 	e->s.frame = COCOON_FRAME_STANDBY;
 	e->die = cocoon_die;
 	e->touch = V_Touch;

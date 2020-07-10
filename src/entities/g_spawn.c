@@ -754,7 +754,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	RunLuaMapSettings(mapname);
 
 	level.r_monsters = Lua_GetVariable(va("%s_monsters", mapname), saved);
-	level.pathfinding = Lua_GetVariable(va("%s_UsePathfinding", level.mapname), 0) || Lua_GetVariable(va("UsePathfinding", level.mapname), 0);
+	// level.pathfinding = Lua_GetVariable(va("%s_UsePathfinding", level.mapname), 0) || Lua_GetVariable(va("UsePathfinding", level.mapname), 0);
 
 	G_FindTeams ();
 
@@ -770,8 +770,8 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	PrintNumEntities(false);
 	SpawnWorldAmmo();
 
-	if (level.pathfinding)
-		CreateGrid(false);
+	// if (level.pathfinding)
+	CreateGrid(false);
 
 	INV_InitPostEntities(); // az
 

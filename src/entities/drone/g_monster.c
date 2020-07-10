@@ -1,7 +1,7 @@
 #include "../../quake2/g_local.h"
 
 
-float monster_increaseDamageByTalent(edict_t *owner, float damage)
+float vrx_increase_monster_damage_by_talent(edict_t *owner, float damage)
 {
 	if(owner && owner->client)
 	{
@@ -39,7 +39,7 @@ void monster_fire_bullet (edict_t *self, vec3_t start, vec3_t dir, int damage, i
 			return;
 	}
 
-	damage = monster_increaseDamageByTalent(self->activator, damage);	
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_bullet (self, start, dir, damage, kick, hspread, vspread, MOD_UNKNOWN);
 
 	gi.WriteByte (svc_muzzleflash2);
@@ -67,7 +67,7 @@ void monster_fire_shotgun (edict_t *self, vec3_t start, vec3_t aimdir, float dam
 			return;
 	}
 
-	damage = monster_increaseDamageByTalent(self->activator, damage);
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_shotgun (self, start, aimdir, damage, kick, hspread, vspread, count, MOD_UNKNOWN);
 
 	gi.WriteByte (svc_muzzleflash2);
@@ -102,7 +102,7 @@ void monster_fire_blaster (edict_t *self, vec3_t start, vec3_t dir, int damage, 
 	else
 		mod = MOD_HYPERBLASTER;
 
-	damage = monster_increaseDamageByTalent(self->activator, damage);
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_blaster(self, start, dir, damage, speed, effect, proj_type, mod, duration, bounce);
 
 	gi.WriteByte (svc_muzzleflash2);
@@ -140,7 +140,7 @@ void monster_fire_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int damag
 	if (speed > 1000)
 		speed = 1000;
 
-	damage = monster_increaseDamageByTalent(self->activator, damage);
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_grenade (self, start, aimdir, damage, speed, 2.5, radius, damage);
 
 	gi.WriteByte (svc_muzzleflash2);
@@ -178,7 +178,7 @@ void monster_fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, i
 	if (speed > 1000)
 		speed = 1000;
 
-	damage = monster_increaseDamageByTalent(self->activator, damage);
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_rocket (self, start, dir, damage, speed, radius, damage);
 
 	gi.WriteByte (svc_muzzleflash2);
@@ -206,7 +206,7 @@ void monster_fire_railgun (edict_t *self, vec3_t start, vec3_t aimdir, int damag
 			return;
 	}
 
-	damage = monster_increaseDamageByTalent(self->activator, damage);
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_rail (self, start, aimdir, damage, kick);
 
 	gi.WriteByte (svc_muzzleflash2);
@@ -234,7 +234,7 @@ void monster_fire_bfg (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 			return;
 	}
 
-	damage = monster_increaseDamageByTalent(self->activator, damage);
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_bfg (self, start, aimdir, damage, speed, damage_radius);
 
 	gi.WriteByte (svc_muzzleflash2);
@@ -246,7 +246,7 @@ void monster_fire_bfg (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 void fire_sword ( edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick);
 void monster_fire_sword (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype)
 {
-	damage = monster_increaseDamageByTalent(self->activator, damage);
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_sword (self, start, aimdir, damage, kick);
 
 	gi.WriteByte (svc_muzzleflash2);

@@ -313,7 +313,7 @@ void dom_spawnflag (void)
 	flag = Spawn_Item(FindItemByClassname("item_flag"));
 	flag->think = dom_flagthink;
 	flag->nextthink = level.time + FRAMETIME;
-	if (FindValidSpawnPoint(flag, false))
+	if (vrx_find_random_spawn_point(flag, false))
 		gi.dprintf("INFO: Flag spawned successfully.\n");
 	else
 		gi.dprintf("WARNING: Flag failed to spawn!\n");

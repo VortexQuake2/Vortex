@@ -195,7 +195,7 @@ qboolean validDmgPlayer (edict_t *player)
 	return (player && player->inuse && player->client && !G_IsSpectator(player));
 }
 
-void dmgListCleanup (edict_t *self, qboolean clear_all)
+void vrx_clean_damage_list (edict_t *self, qboolean clear_all)
 {
 	int i;
 
@@ -332,7 +332,7 @@ void AddDmgList (edict_t *self, edict_t *other, int damage)
 		return;
 
 	// prune list of disconnected clients
-	dmgListCleanup(self, false);
+    vrx_clean_damage_list(self, false);
 
 	// already in the queue?
 	if (slot=findDmgSlot(self, cl_ent))

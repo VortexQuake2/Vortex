@@ -108,7 +108,7 @@ qboolean mutant_boost (edict_t *ent)
 	return false;
 }
 
-float monster_increaseDamageByTalent(edict_t *owner, float damage);
+float vrx_increase_monster_damage_by_talent(edict_t *owner, float damage);
 void mutant_checkattack (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
 	// sanity check
@@ -147,7 +147,7 @@ void mutant_checkattack (edict_t *self, edict_t *other, cplane_t *plane, csurfac
 		{
 			VectorCopy(other->velocity, v);
 			dmg = MUTANT_INITIAL_JUMP_DMG + MUTANT_ADDON_JUMP_DMG * other->monsterinfo.level;
-			dmg = monster_increaseDamageByTalent(other->activator, dmg);
+			dmg = vrx_increase_monster_damage_by_talent(other->activator, dmg);
 		}
 
 		// calculate attack endpoint

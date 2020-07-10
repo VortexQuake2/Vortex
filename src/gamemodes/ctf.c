@@ -538,7 +538,7 @@ void CTF_SpawnFlag (int teamnum, vec3_t point)
 
 	if (point)
 		VectorCopy(point, flag->s.origin);
-	else if (!FindValidSpawnPoint(flag, false))
+	else if (!vrx_find_random_spawn_point(flag, false))
 		gi.dprintf("WARNING: %s flag failed to spawn\n", CTF_GetTeamString(teamnum));
 
 	gi.linkentity(flag);
@@ -1236,7 +1236,7 @@ void CTF_SpawnFlagBase (int teamnum, vec3_t point)
 	{
 		VectorCopy(point, base->s.origin);
 	}
-	else if (!FindValidSpawnPoint(base, false))
+	else if (!vrx_find_random_spawn_point(base, false))
 	{
 		WriteServerMsg(va("%s base failed to spawn.", CTF_GetTeamString(teamnum)), "WARNING", true, false);
 		G_FreeEdict(base);

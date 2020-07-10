@@ -404,14 +404,19 @@ void drone_death (edict_t *self, edict_t *attacker)
 	if (self->mtype == M_COMMANDER || self->mtype == M_SUPERTANK || self->mtype == M_MAKRON)
 	{
 		edict_t *e;
+		float drop_chance = 0.25;
 
-		if ((e = V_SpawnRune(self, attacker, 0.25, 0)) != NULL)
+		if (invasion->value)
+		    drop_chance = 0.05;
+
+
+		if ((e = V_SpawnRune(self, attacker, drop_chance, 0)) != NULL)
 			V_TossRune(e, (float)GetRandom(200, 1000), (float)GetRandom(200, 1000));
-		if ((e = V_SpawnRune(self, attacker, 0.25, 0)) != NULL)
+		if ((e = V_SpawnRune(self, attacker, drop_chance, 0)) != NULL)
 			V_TossRune(e, (float)GetRandom(200, 1000), (float)GetRandom(200, 1000));
-		if ((e = V_SpawnRune(self, attacker, 0.25, 0)) != NULL)
+		if ((e = V_SpawnRune(self, attacker, drop_chance, 0)) != NULL)
 			V_TossRune(e, (float)GetRandom(200, 1000), (float)GetRandom(200, 1000));
-		if ((e = V_SpawnRune(self, attacker, 0.25, 0)) != NULL)
+		if ((e = V_SpawnRune(self, attacker, drop_chance, 0)) != NULL)
 			V_TossRune(e, (float)GetRandom(200, 1000), (float)GetRandom(200, 1000));
 	}
 	else
@@ -427,7 +432,7 @@ void drone_death (edict_t *self, edict_t *attacker)
 	// the other place where they are handled is in player death functions
 	if (invasion->value || pvm->value) {
 		attacker->myskills.streak++;
-		VortexSpreeAbilities(attacker);
+        vrx_trigger_spree_abilities(attacker);
 	}
 }
 
@@ -530,7 +535,7 @@ void drone_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 
 		self->s.event = EV_PLAYER_TELEPORT;
 
-		if (!FindValidSpawnPoint(self, false))
+		if (!vrx_find_random_spawn_point(self, false))
 		{
 			M_Remove(self, false, false);
 			return;
@@ -597,7 +602,7 @@ void drone_grow (edict_t *self)
 	self->nextthink = level.time + 0.1;
 }
 
-void AssignChampionStuff(edict_t *drone, int *drone_type)
+void vrx_roll_to_make_champion(edict_t *drone, int *drone_type)
 {
 	if ((ffa->value || invasion->value == 2) && drone->monsterinfo.level >= 10 && GetRandom(1, 100) <= 10)//10% chance for a champion to spawn
 	{
@@ -645,7 +650,7 @@ edict_t *SpawnDroneEnt (edict_t *drone, edict_t *ent, int drone_type, qboolean w
 			else if (invasion->value == 2) // hard mode invasion
 			{
 				drone->monsterinfo.level = HighestLevelPlayer()+invasion_difficulty_level-1;
-				AssignChampionStuff(drone, &drone_type);
+                vrx_roll_to_make_champion(drone, &drone_type);
 			}
 		}
 		else
@@ -664,7 +669,7 @@ edict_t *SpawnDroneEnt (edict_t *drone, edict_t *ent, int drone_type, qboolean w
 
 			// 4.5 assign monster bonus flags
 			// Champions spawn on invasion hard mode.
-			AssignChampionStuff(drone, &drone_type);
+            vrx_roll_to_make_champion(drone, &drone_type);
 		}
 	}
 	else
@@ -729,7 +734,7 @@ edict_t *SpawnDroneEnt (edict_t *drone, edict_t *ent, int drone_type, qboolean w
 
 	//4.0 gib health based on monster control cost
 	if (drone_type != 30)
-		drone->gib_health = -drone->monsterinfo.control_cost*2;
+		drone->gib_health = -drone->monsterinfo.control_cost * BASE_GIB_HEALTH * M_CONTROL_COST_SCALE;
 	else
 		drone->gib_health = 0;//gib boss immediately
 
@@ -774,7 +779,7 @@ edict_t *SpawnDroneEnt (edict_t *drone, edict_t *ent, int drone_type, qboolean w
 	{
 		if (!INVASION_OTHERSPAWNS_REMOVED || drone_type >= 30) // only use designated spawns in invasion mode
 		{
-			if (drone->mtype != M_JORG && !FindValidSpawnPoint(drone, false))
+			if (drone->mtype != M_JORG && !vrx_find_random_spawn_point(drone, false))
 			{
 				G_FreeEdict(drone);
 				return NULL; // couldn't find a spawn point
@@ -850,7 +855,7 @@ edict_t *SpawnDroneEnt (edict_t *drone, edict_t *ent, int drone_type, qboolean w
 		VectorCopy(tr.endpos, drone->s.origin);
 		drone->s.angles[YAW] = ent->s.angles[YAW];
 
-		ent->client->ability_delay = level.time + drone->monsterinfo.control_cost/15;
+		ent->client->ability_delay = level.time + drone->monsterinfo.control_cost * 2 * M_CONTROL_COST_SCALE;
 		//ent->holdtime = level.time + 2*drone->monsterinfo.control_cost;
 		ent->client->pers.inventory[power_cube_index] -= drone->monsterinfo.cost;
 		drone->health = 0.5*drone->max_health;
@@ -860,7 +865,7 @@ edict_t *SpawnDroneEnt (edict_t *drone, edict_t *ent, int drone_type, qboolean w
 	}
 	else
 	{
-		gi.dprintf("WARNING: SpawnDrone() called without a valid spawner!\n");
+		gi.dprintf("WARNING: vrx_create_new_drone() called without a valid spawner!\n");
 		G_FreeEdict(drone);
 		return NULL;
 	}
@@ -887,7 +892,7 @@ edict_t *SpawnDroneEnt (edict_t *drone, edict_t *ent, int drone_type, qboolean w
 	return drone;
 }
 
-edict_t *SpawnDrone(edict_t *ent, int drone_type, qboolean worldspawn)
+edict_t *vrx_create_new_drone(edict_t *ent, int drone_type, qboolean worldspawn)
 {
 	return SpawnDroneEnt(G_Spawn(), ent, drone_type, worldspawn);
 }
@@ -1643,7 +1648,7 @@ void M_Remove (edict_t *self, qboolean refund, qboolean effect)
 				self->activator->enemy = NULL;
 
 			// reduce boss count
-			if (self->monsterinfo.control_cost > 80)
+			if (self->monsterinfo.control_cost >= M_COMMANDER_CONTROL_COST)
 				self->activator->num_sentries--;
 
 
@@ -1914,7 +1919,9 @@ void M_Notify (edict_t *monster)
 		monster->activator->num_monsters = 0;
 
 	safe_cprintf(monster->activator, PRINT_HIGH, "You lost a %s! (%d/%d)\n",
-		GetMonsterKindString(monster->mtype), monster->activator->num_monsters, 100);
+		GetMonsterKindString(monster->mtype),
+		monster->activator->num_monsters,
+		(int)MAX_MONSTERS);
 
 	monster->monsterinfo.slots_freed = true;
 
@@ -2451,27 +2458,27 @@ void Cmd_Drone_f (edict_t *ent)
 	}
 
 	if (!Q_strcasecmp(s, "gunner"))
-		SpawnDrone(ent, 1, false);
+        vrx_create_new_drone(ent, 1, false);
 	else if (!Q_strcasecmp(s, "parasite"))
-		SpawnDrone(ent, 2, false);
+        vrx_create_new_drone(ent, 2, false);
 	else if (!Q_strcasecmp(s, "brain"))
-		SpawnDrone(ent, 4, false);
+        vrx_create_new_drone(ent, 4, false);
 	else if (!Q_strcasecmp(s, "bitch"))
-		SpawnDrone(ent, 3, false);
+        vrx_create_new_drone(ent, 3, false);
 	else if (!Q_strcasecmp(s, "medic"))
-		SpawnDrone(ent, 5, false);
+        vrx_create_new_drone(ent, 5, false);
 	else if (!Q_strcasecmp(s, "tank"))
-		SpawnDrone(ent, 6, false);
+        vrx_create_new_drone(ent, 6, false);
 	else if (!Q_strcasecmp(s, "mutant"))
-		SpawnDrone(ent, 7, false);
+        vrx_create_new_drone(ent, 7, false);
 	else if (!Q_strcasecmp(s, "gladiator")/* && ent->myskills.administrator*/)
-		SpawnDrone(ent, 8, false);
+        vrx_create_new_drone(ent, 8, false);
 	else if (!Q_strcasecmp(s, "berserker"))
-		SpawnDrone(ent, 9, false);
+        vrx_create_new_drone(ent, 9, false);
 	else if (!Q_strcasecmp(s, "soldier"))
-		SpawnDrone(ent, 10, false);
+        vrx_create_new_drone(ent, 10, false);
 	else if (!Q_strcasecmp(s, "jorg"))
-		SpawnDrone(ent, 32, false);
+        vrx_create_new_drone(ent, 32, false);
 	else 
 
 

@@ -9,9 +9,9 @@ int OpenConfigFile(edict_t *ent)
 
 	//Load file
 	if (openPlayer(ent) == false)
-		newPlayer(ent);
+        vrx_set_new_player_data(ent);
 
-	return canJoinGame(ent);
+	return vrx_get_login_is_allowable(ent);
 }
 
 #ifndef NO_GDS

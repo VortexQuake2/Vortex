@@ -261,7 +261,7 @@ void hw_spawnflag (void)
 	flag->nextthink = level.time + FRAMETIME;
 	flag->takedamage = DAMAGE_NO; // this should fix a nasty bug. should.
 
-	if (FindValidSpawnPoint(flag, false))
+	if (vrx_find_random_spawn_point(flag, false))
 		gi.dprintf("INFO: Flag spawned successfully.\n");
 	else
 		gi.dprintf("WARNING: Flag failed to spawn!\n");

@@ -409,7 +409,7 @@ void init_drone_gladiator (edict_t *self)
 	VectorSet (self->maxs, 24, 24, 48);
 	self->health = 95 + 10*self->monsterinfo.level;
 	self->max_health = self->health;
-	self->gib_health = -100;
+	self->gib_health = -BASE_GIB_HEALTH;
 	self->mass = 400;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.power_armor_power = 100 + 20*self->monsterinfo.level;

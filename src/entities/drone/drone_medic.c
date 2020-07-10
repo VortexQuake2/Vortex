@@ -997,7 +997,7 @@ void init_drone_medic (edict_t *self)
 	//else self->health = 200 + 20*self->monsterinfo.level;
 
 	self->max_health = self->health;
-	self->gib_health = -100;//-self->health;
+	self->gib_health = -BASE_GIB_HEALTH;//-self->health;
 	self->mass = 400;
 	self->mtype = M_MEDIC;
 	self->monsterinfo.aiflags |= AI_MEDIC; // use medic ai

@@ -2430,6 +2430,65 @@ void Cmd_AdminCmd (edict_t *ent)
 		return;
 	}
 
+	if (!Q_stricmp(cmd1, "break"))
+    {
+#ifdef WIN32
+        __asm int 3
+#endif
+        return;
+    }
+
+	if (!Q_stricmp(cmd1, "closestnavi"))
+    {
+        edict_t *navi = INV_ClosestNavi(ent);
+        if (!navi) return;
+        safe_cprintf(ent, PRINT_HIGH, "%s\n", vtos(navi->s.origin));
+        gi.WriteByte (svc_temp_entity);
+        gi.WriteByte (TE_BFG_EXPLOSION);
+        gi.WritePosition (navi->s.origin);
+        gi.multicast (navi->s.origin, MULTICAST_PVS);
+        return;
+    }
+
+    if (!Q_stricmp(cmd1, "closestnaviany"))
+    {
+        edict_t *navi = INV_ClosestNaviAny(ent);
+        if (!navi) return;
+        safe_cprintf(
+                ent,
+                PRINT_HIGH,
+                "%s \"%s -> %s\" targeted by: %s\n",
+                vtos(navi->s.origin),
+                navi->targetname,
+                navi->target,
+                navi->prev_navi ? navi->prev_navi->targetname : "<null>"
+         );
+        gi.WriteByte (svc_temp_entity);
+        gi.WriteByte (TE_BFG_EXPLOSION);
+        gi.WritePosition (navi->s.origin);
+        gi.multicast (navi->s.origin, MULTICAST_PVS);
+
+        if (navi->target_ent) {
+            gi.WriteByte(svc_temp_entity);
+            gi.WriteByte(TE_BFG_LASER);
+            gi.WritePosition(navi->s.origin);
+            gi.WritePosition(navi->target_ent->s.origin);
+            gi.unicast(ent, true);
+        }
+        return;
+    }
+
+	if (!Q_stricmp(cmd1, "closestpspawn"))
+    {
+	    edict_t *navi = INV_GiveClosestPSpawn(ent);
+        safe_cprintf(ent, PRINT_HIGH, "%s\n", vtos(navi->s.origin));
+        gi.WriteByte (svc_temp_entity);
+        gi.WriteByte (TE_BFG_EXPLOSION);
+        gi.WritePosition (navi->s.origin);
+        gi.multicast (navi->s.origin, MULTICAST_PVS);
+	    return;
+    }
+
 	if (!Q_stricmp(cmd1, "reloadvars"))
 	{
 		Lua_LoadVariables();
@@ -2645,7 +2704,7 @@ void Cmd_HolyFreeze(edict_t *ent);
 void Cmd_Forcewall(edict_t *ent);
 void ForcewallOff(edict_t *player);
 void TeleportForward (edict_t *ent);
-qboolean FindValidSpawnPoint (edict_t *ent, qboolean air);
+qboolean vrx_find_random_spawn_point (edict_t *ent, qboolean air);
 void lasersight_off (edict_t *ent);
 void cmd_SentryGun(edict_t *ent);
 void Cmd_ExplodingArmor_f (edict_t *ent);
@@ -3093,7 +3152,7 @@ void ClientCommand (edict_t *ent)
 	{
 		if (!ent->myskills.administrator)
 			return;
-		if (FindValidSpawnPoint(ent, false)) {
+		if (vrx_find_random_spawn_point(ent, false)) {
 			ent->s.event = EV_PLAYER_TELEPORT;
 			VectorClear(ent->velocity);
 		}
@@ -3147,7 +3206,7 @@ void ClientCommand (edict_t *ent)
 	{
 		if (V_CanUseAbilities(ent, FLASH, 0, true))
 		{
-			FindValidSpawnPoint(ent, true); // Find them a random place to go.
+            vrx_find_random_spawn_point(ent, true); // Find them a random place to go.
 		}
 	}
 	else if (Q_stricmp (cmd, "allyinfo") == 0)

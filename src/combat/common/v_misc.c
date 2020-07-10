@@ -194,7 +194,7 @@ void FindMonsterSpot(edict_t *self) {
 
         // spawn monsters until we reach the limit
         while (total_monsters < max_monsters) {
-            if ((scan = SpawnDrone(self, GetRandom(1, 9), true)) != NULL) {
+            if ((scan = vrx_create_new_drone(self, GetRandom(1, 9), true)) != NULL) {
                 if (scan->monsterinfo.walk && random() > 0.5)
                     scan->monsterinfo.walk(scan);
                 total_monsters++;
@@ -230,7 +230,7 @@ void SpawnRandomBoss(edict_t *self) {
     if (!SPREE_WAR && ActivePlayers() >= 8 && self->num_sentries < 1) {
         int chance = GetRandom(1, 100);
 
-        if ((chance >= 97) && SpawnDrone(self, GetRandom(30, 31), true)) {
+        if ((chance >= 97) && vrx_create_new_drone(self, GetRandom(30, 31), true)) {
             //gi.dprintf("Spawning a boss monster (chance = %d) at %.1f. Waiting 300 seconds to try again.\n",
             //	chance, level.time);
             // 5 minutes until we can try to spawn another boss

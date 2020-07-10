@@ -775,7 +775,7 @@ void retard_checkposition (edict_t *self)
 	if (gi.pointcontents(self->s.origin) & MASK_SOLID)
 	{
 		gi.dprintf("WARNING: Retard stuck in solid. Attempting to respawn...");
-		if (FindValidSpawnPoint(self, false))
+		if (vrx_find_random_spawn_point(self, false))
 		{
 			gi.dprintf("success!\n");
 		}
@@ -853,7 +853,7 @@ void retard_teleport (edict_t *self)
 		if (!OnSameTeam(self, e))
 		{
 			e->s.event = EV_PLAYER_TELEPORT;
-			FindValidSpawnPoint(e, false);
+            vrx_find_random_spawn_point(e, false);
 			continue;
 		}
 		if (e->movetype == MOVETYPE_NONE)
@@ -966,7 +966,7 @@ void SpawnRetard (int teamnum)
 	retard->s.modelindex = gi.modelindex("models/monsters/insane/tris.md2");
 	gi.linkentity(retard);
 	retard->monsterinfo.currentmove = &retard_move_stand_insane;
-	FindValidSpawnPoint(retard, false);
+    vrx_find_random_spawn_point(retard, false);
 	retard->nextthink = level.time + 1;
 //	gi.dprintf("retard created\n");
 	if (teamnum)

@@ -182,7 +182,7 @@ void vrx_add_credits(edict_t *ent, int add_credits) {
         ent->myskills.credits += add_credits;
 }
 
-void VortexSpreeAbilities(edict_t *attacker) {
+void vrx_trigger_spree_abilities(edict_t *attacker) {
     // NOTE: Spree MUST be incremented before calling this function
     // otherwise the player will keep getting 10 seconds of quad/invuln
 
@@ -548,8 +548,8 @@ void vrx_get_monster_xp(
         (*level_diff) *= 1.5;
 
 // control cost bonus (e.g. tanks)
-    if (targ->monsterinfo.control_cost > 33)
-        (*level_diff) *= (0.75 * targ->monsterinfo.control_cost) / 30;
+    if (targ->monsterinfo.control_cost > M_CONTROL_COST_SCALE)
+        (*level_diff) *= (0.75 * targ->monsterinfo.control_cost) / M_CONTROL_COST_SCALE;
 
     // award credits for kill
     (*credits) = vrx_get_credits(attacker, (dmgmod * (*level_diff)), 0, false);
@@ -567,7 +567,7 @@ void vrx_get_player_kill_xp(
         int *break_points,
         float *bonus) {
 
-    qboolean is_mini = IsNewbieBasher(target);
+    qboolean is_mini = vrx_is_newbie_basher(target);
     // spree break bonus points
     if (target->myskills.streak >= SPREE_START)
         (*break_points) = SPREE_BREAKBONUS;
@@ -703,14 +703,14 @@ void vrx_add_exp(edict_t *attacker, edict_t *targ) {
     targetclient = G_GetClient(targ);
 
     // world monster boss kill
-    if (!targetclient && targ->monsterinfo.control_cost >= 100) {
+    if (!targetclient && targ->monsterinfo.control_cost >= M_COMMANDER_CONTROL_COST) {
         if (targ->mtype == M_JORG)
             return;
 
         if (attacker)
             G_PrintGreenText(va("%s puts the smackdown on a world-spawned boss!", attacker->client->pers.netname));
 
-        AwardBossKill(targ);
+        vrx_award_boss_kill(targ);
         return;
     }
 
@@ -815,19 +815,19 @@ void vrx_death_cleanup(edict_t *attacker, edict_t *targ) {
 
     targ->myskills.streak = 0;
 
-    if (IsNewbieBasher(targ))
+    if (vrx_is_newbie_basher(targ))
         gi.bprintf(PRINT_HIGH, "%s wasted a mini-boss!\n", attacker->client->pers.netname);
 
     level_diff = (float) (targ->myskills.level + 1) / (attacker->myskills.level + 1);
     // don't let 'em spree off players that offer no challenge!
-    if (!(IsNewbieBasher(attacker) && (level_diff <= 0.5))) {
+    if (!(vrx_is_newbie_basher(attacker) && (level_diff <= 0.5))) {
         attacker->myskills.streak++;
 
         if ((ffa->value || V_IsPVP()) && attacker->myskills.streak > 15) {
             tech_dropall(attacker); // you can't use techs on a spree.
         }
 
-        VortexSpreeAbilities(attacker);
+        vrx_trigger_spree_abilities(attacker);
     } else
         return;
 
@@ -850,7 +850,7 @@ void vrx_death_cleanup(edict_t *attacker, edict_t *targ) {
             attacker->myskills.spree_wars++;
 
         if ((attacker->myskills.streak >= SPREE_WARS_START) && SPREE_WARS && (!V_GetNumAllies(attacker))
-            && !attacker->myskills.boss && !IsNewbieBasher(attacker)) {
+            && !attacker->myskills.boss && !vrx_is_newbie_basher(attacker)) {
             if (SPREE_WAR == false) {
                 SPREE_DUDE = attacker;
                 SPREE_WAR = true;

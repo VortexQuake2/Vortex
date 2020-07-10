@@ -99,7 +99,7 @@ void vrx_disable_abilities(edict_t *ent);
 //************ p_menu.c ***********
 
 //********** v_file_IO.c **********
-void VRXGetPath(char* path, edict_t* ent);
+void vrx_get_character_file_path(char* path, edict_t* ent);
 char *CryptPassword(char *text);
 qboolean savePlayer(edict_t *ent);
 void VSF_SaveRunes(edict_t *player, char *path);
@@ -238,8 +238,8 @@ int vrx_get_talent_level(const edict_t *ent, int talentID);
 //************ talents.c ************
 
 //************ player.c ************
-void newPlayer(edict_t *ent);
-int canJoinGame(edict_t *ent);
+void vrx_set_new_player_data(edict_t *ent);
+int vrx_get_login_is_allowable(edict_t *ent);
 //************ player.c ************
 
 //************ invasion.c ************
@@ -252,6 +252,9 @@ void INV_SpawnPlayers(void);
 qboolean INV_AddSpawnQue(edict_t *ent);
 int INV_GetNumPlayerSpawns(void);
 void INV_AwardPlayers(void);
+edict_t* INV_ClosestNavi(edict_t* self); // az: only spawn ones
+edict_t* INV_ClosestNaviAny(edict_t* self); // any navi
+edict_t* INV_GiveClosestPSpawn(edict_t* self);
 //************ invasion.c ************
 
 //************ totems.c ************
@@ -300,7 +303,7 @@ edict_t *PM_GetPlayer(edict_t *e); // returns player entity
 void PM_UpdateChasePlayers(edict_t *ent);
 
 //***** PLAYER-MONSTER STUFF ******
-void dmgListCleanup(edict_t *self, qboolean clear_all);
+void vrx_clean_damage_list(edict_t *self, qboolean clear_all);
 
 float GetTotalBossDamage(edict_t *self);
 

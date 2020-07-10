@@ -2883,7 +2883,7 @@ void SpawnWorldAmmoType(char *pickupName, int count) {
 
     for (i = 0; i < count; i++) {
         e = Spawn_Item(FindItem(pickupName));
-        if (!FindValidSpawnPoint(e, false))
+        if (!vrx_find_random_spawn_point(e, false))
             G_FreeEdict(e);
         e->spawnflags &= ~DROPPED_ITEM;
     }

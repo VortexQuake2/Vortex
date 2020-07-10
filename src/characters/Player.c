@@ -4,7 +4,7 @@
 #define PLAYER_C
 
 // returns true if the player should be affected by newbie protection
-qboolean IsNewbieBasher(const edict_t *player) {
+qboolean vrx_is_newbie_basher(const edict_t *player) {
 	qboolean levelAboveAverage = player->myskills.level > newbie_protection->value * AveragePlayerLevel();
 	qboolean isHighLevel = player->myskills.level >= 8;
 	qboolean isNotPVM = !(pvm->value != 0 || invasion->value != 0);
@@ -14,7 +14,7 @@ qboolean IsNewbieBasher(const edict_t *player) {
 	return (situationRequestsProtection && isNotPVM && levelQualifies);
 }
 
-qboolean playingtoomuch(edict_t *ent)
+qboolean vrx_is_playing_too_much(edict_t *ent)
 {
 	//Char played today?
 	if( Q_strncasecmp(ent->myskills.last_played, CURRENT_DATE, strlen(CURRENT_DATE)) == 0)
@@ -35,7 +35,7 @@ qboolean playingtoomuch(edict_t *ent)
 }
 
 
-void newPlayer(edict_t *ent)
+void vrx_set_new_player_data(edict_t *ent)
 {
 	ent->myskills.next_level = level0_tnl_experience->value;
 	ent->myskills.respawn_weapon = 7;
@@ -48,7 +48,7 @@ void newPlayer(edict_t *ent)
 }
 
 //Returns true if the player is able to join the game.
-int canJoinGame(edict_t *ent)
+int vrx_get_login_is_allowable(edict_t *ent)
 {
 	char chkpassword[24];
 	char chkpassword2[24];
@@ -84,17 +84,17 @@ int canJoinGame(edict_t *ent)
 	if (strlen(ent->client->pers.netname) < 3)
 		return -4;	//invalid player name
 	
-	if (playingtoomuch(ent))
+	if (vrx_is_playing_too_much(ent))
 		return -5;	//playing too much
 	
 	
 	if (!invasion->value || !pvm->value || (ffa->value && JoinedPlayers() > 1))
-		if (newbie_protection->value && IsNewbieBasher(ent))
+		if (newbie_protection->value && vrx_is_newbie_basher(ent))
 			return -6;	//newbie basher can't play on non pvm modes
 	
 	
 	if (ent->myskills.boss && JoinedPlayers() < (0.5*maxclients->value)
-		&& !trading->value && (!pvm->value || !invasion->value) && IsNewbieBasher(ent)) // trading, pvm or invasion modes means the boss actually can play.
+        && !trading->value && (!pvm->value || !invasion->value) && vrx_is_newbie_basher(ent)) // trading, pvm or invasion modes means the boss actually can play.
 		return -7; //boss can't play
 
 	if (!strcmp(ent->myskills.player_name, "Player"))

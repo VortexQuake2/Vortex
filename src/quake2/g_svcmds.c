@@ -260,8 +260,6 @@ void	Svcmd_Test_f (void)
 }
 
 //GHz START
-#define ALLOW_ADMIN		1 // whether admin cmds are available
-
 #if ALLOW_ADMIN
 
 void SVCmd_AddExp_f (void)
@@ -563,11 +561,11 @@ void SVCmd_SpawnBoss_f (void)
 		m_worldspawn = world;
 
 	if (!strcmp(gi.argv(2), "tank"))
-		SpawnDrone(m_worldspawn, 30, true);
+        vrx_create_new_drone(m_worldspawn, 30, true);
 	else if (!strcmp(gi.argv(2), "supertank"))
-		SpawnDrone(m_worldspawn, 31, true);
+        vrx_create_new_drone(m_worldspawn, 31, true);
 	else if (!strcmp(gi.argv(2), "jorg"))
-		SpawnDrone(m_worldspawn, 32, true);
+        vrx_create_new_drone(m_worldspawn, 32, true);
 	else
 		safe_cprintf(NULL, PRINT_HIGH, "Invalid boss type. Usage: sv spawnboss <type>\n");
 }

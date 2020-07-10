@@ -41,7 +41,7 @@ void vrx_player_death(edict_t *self, edict_t *attacker, edict_t *inflictor) {
         return;
 
     vrx_reset_player_state(self);
-    self->gib_health = -100;
+    self->gib_health = -BASE_GIB_HEALTH;
 
     // don't drop powercubes or tballs
     self->myskills.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = self->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)];
@@ -50,11 +50,11 @@ void vrx_player_death(edict_t *self, edict_t *attacker, edict_t *inflictor) {
     vrx_add_exp(attacker, self); // modify experience
     vrx_death_cleanup(attacker, self);
 
-    TossClientBackpack(self, attacker); // toss a backpack
+    vrx_toss_backpack(self, attacker); // toss a backpack
     vrx_roll_rune_drop(self, attacker, false); // possibly generate a rune
     GetScorePosition();// gets each persons rank and total players in game
 
-    dmgListCleanup(self, true);
+    vrx_clean_damage_list(self, true);
 }
 
 void vrx_add_basic_weapons(gclient_t *client, gitem_t *item, int spectator) {

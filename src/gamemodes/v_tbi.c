@@ -179,7 +179,7 @@ void TBI_Reinitialize()
 		e->solid = SOLID_BBOX;
 		e->takedamage = DAMAGE_YES;
 		e->svflags &= ~SVF_NOCLIENT;
-		dmgListCleanup(e, true);
+        vrx_clean_damage_list(e, true);
 		tbi_game.RedSpawns++;
 	}
 
@@ -191,7 +191,7 @@ void TBI_Reinitialize()
 		e->solid = SOLID_BBOX;
 		e->svflags &= ~SVF_NOCLIENT;
 		e->takedamage = DAMAGE_YES;
-		dmgListCleanup(e, true);
+        vrx_clean_damage_list(e, true);
 		tbi_game.BlueSpawns++;
 	}
 

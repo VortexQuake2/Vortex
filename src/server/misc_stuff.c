@@ -135,13 +135,13 @@ csurface_t* FindSky()
 	return NULL;
 }
 
-qboolean FindValidSpawnPoint (edict_t *ent, qboolean air)
+qboolean vrx_find_random_spawn_point (edict_t *ent, qboolean air)
 {
 	int		i, j=0, mask;
 	vec3_t	start, end, forward, right;
 	trace_t	tr;
 
-	//gi.dprintf("FindValidSpawnPoint()\n");
+	//gi.dprintf("vrx_find_random_spawn_point()\n");
 
 	mask = (MASK_MONSTERSOLID|MASK_PLAYERSOLID|MASK_SOLID);
 

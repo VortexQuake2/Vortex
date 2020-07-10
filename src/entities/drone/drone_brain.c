@@ -820,7 +820,7 @@ void init_drone_brain (edict_t *self)
 	//else self->health = 100 + 40*self->monsterinfo.level;
 
 	self->max_health = self->health;
-	self->gib_health = -100;
+	self->gib_health = -BASE_GIB_HEALTH;
 	self->mass = 400;
 
 	self->item = FindItemByClassname("ammo_cells");

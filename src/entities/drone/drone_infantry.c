@@ -527,7 +527,7 @@ void init_drone_infantry (edict_t *self)
 
 	self->health = 80 + 55*self->monsterinfo.level;
 	self->max_health = self->health;
-	self->gib_health = -100;
+	self->gib_health = -BASE_GIB_HEALTH;
 	self->mass = 400;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power = 0;

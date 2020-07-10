@@ -616,7 +616,7 @@ void init_drone_jorg (edict_t *self)
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 	self->mtype = M_JORG;
-	self->monsterinfo.control_cost = 101;
+	self->monsterinfo.control_cost = M_JORG_CONTROL_COST;
 	self->monsterinfo.cost = 300;
 	self->gib_health = -2000;
 	self->mass = 1000;

@@ -364,7 +364,7 @@ void mytank_delay (edict_t *self)
 	// delay next attack if we're not standing ground, our enemy isn't within rocket range
 	// (we need to get closer) and we are not a tank commander/boss
 	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND) && (entdist(self, self->enemy) > 512) 
-		&& (self->monsterinfo.control_cost < 100))
+		&& (self->monsterinfo.control_cost < M_COMMANDER_CONTROL_COST))
 		self->monsterinfo.attack_finished = level.time + GetRandom(20, 30)*FRAMETIME;
 }
 
@@ -1104,7 +1104,7 @@ void init_drone_tank (edict_t *self)
 	//else self->health = 100 + 65*self->monsterinfo.level;
 
 	self->max_health = self->health;
-	self->gib_health = -200;
+	self->gib_health = -2 * BASE_GIB_HEALTH;
 
 	//if (self->activator && self->activator->client)
 	self->monsterinfo.power_armor_power = 200 + 95*self->monsterinfo.level;
@@ -1165,7 +1165,7 @@ void init_drone_commander (edict_t *self)
 	self->monsterinfo.power_armor_power = 675*self->monsterinfo.level;
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 
-	self->monsterinfo.control_cost = 101;
+	self->monsterinfo.control_cost = M_COMMANDER_CONTROL_COST;
 	self->monsterinfo.cost = M_COMMANDER_COST;
 	self->mtype = M_COMMANDER;
 	self->s.skinnum = 2;

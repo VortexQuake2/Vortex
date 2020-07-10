@@ -545,7 +545,7 @@ void skull_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 	}
 }
 
-float monster_increaseDamageByTalent(edict_t *owner, float damage);
+float vrx_increase_monster_damage_by_talent(edict_t *owner, float damage);
 
 void SpawnSkull (edict_t *ent)
 {
@@ -573,7 +573,7 @@ void SpawnSkull (edict_t *ent)
 
 	// az: add decino's fix from vrx-indy
 	// az: un-add. let's make a new talent for this.
-//	skull->dmg = monster_increaseDamageByTalent(ent, skull->dmg);
+//	skull->dmg = vrx_increase_monster_damage_by_talent(ent, skull->dmg);
 //
 //	if ((ent && ent->inuse && ent->client) || (skull->activator && skull->activator->inuse && skull->activator->client))
 //	{
@@ -585,7 +585,7 @@ void SpawnSkull (edict_t *ent)
 	skull->health *= mult;
 
 	skull->max_health = skull->health;
-	skull->gib_health = -150;
+	skull->gib_health = -BASE_GIB_HEALTH * 1.5;
 	skull->mass = 200;
 	skull->monsterinfo.power_armor_power = 0;
 	skull->monsterinfo.power_armor_type = POWER_ARMOR_NONE;

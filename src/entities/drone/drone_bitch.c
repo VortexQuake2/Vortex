@@ -817,7 +817,7 @@ void init_drone_bitch (edict_t *self)
 		self->health = 80 + 55*self->monsterinfo.level;
 
 	self->max_health = self->health;
-	self->gib_health = -100;
+	self->gib_health = -BASE_GIB_HEALTH;
 	self->mass = 200;
 
 	if (random() > 0.5)

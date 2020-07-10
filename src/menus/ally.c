@@ -77,7 +77,7 @@ qboolean ValidAlly (edict_t *ent)
 	if (ent->client->resp.spectator || ent->client->pers.spectator)
 		return false;
 	// mini-bosses can't ally
-	if (IsNewbieBasher(ent))
+	if (vrx_is_newbie_basher(ent))
 		return false;
 	// you can't ally if you are on a war
 	if (SPREE_DUDE && (SPREE_DUDE == ent))

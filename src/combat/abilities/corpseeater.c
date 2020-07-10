@@ -1,12 +1,6 @@
 #include "../../quake2/g_local.h"
 
-#define CORPSEEATER_DELAY            0.5
-#define CORPSEEATER_RANGE            64    // maximum distance from corpse
-#define CORPSEEATER_INITIAL_HEALTH    0
-#define CORPSEEATER_ADDON_HEALTH    10
-#define CORPSEEATER_INITIAL_DAMAGE    25
-#define CORPSEEATER_ADDON_DAMAGE    2.5
-#define CORPSEEATER_ADDON_MAXHEALTH    0.05
+
 
 qboolean curse_add(edict_t *target, edict_t *caster, int type, int curse_level, float duration);
 

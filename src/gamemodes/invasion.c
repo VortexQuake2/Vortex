@@ -48,9 +48,11 @@ void INV_InitPostEntities(void)
 		edict_t* target;
 
 		if (self->target) {
-			target = G_Find(NULL, FOFS(target), self->target);
-			target->prev_navi = self;
-			self->target_ent = target;
+			target = G_Find(NULL, FOFS(targetname), self->target);
+			if (target) {
+                target->prev_navi = self;
+                self->target_ent = target;
+            }
 		}
 	}
 
@@ -143,6 +145,25 @@ edict_t* INV_ClosestNavi(edict_t* self)
 	return ret;
 }
 
+edict_t* INV_ClosestNaviAny(edict_t* self) {
+    vec3_t eorg;
+    float best = 8192 * 8192;
+    edict_t *ret = NULL;
+    for (int i = 0; i < invasion_navicount; i++)
+    {
+        float len;
+        VectorSubtract(self->s.origin, INV_Navi[i]->s.origin, eorg);
+        len = VectorLengthSqr(eorg);
+        if (len < best)
+        {
+            best = len;
+            ret = INV_Navi[i];
+        }
+    }
+
+    return ret;
+}
+
 edict_t *drone_findnavi(edict_t *self)
 {
 #if 0
@@ -165,11 +186,6 @@ edict_t *drone_findnavi(edict_t *self)
 	{
 		return INV_GiveClosestPSpawn(self);
 	}*/
-
-
-	// az: there's no need to find a new target. ai_run will advance through the navis
-	if (self->enemy && self->enemy->mtype == INVASION_NAVI)
-		return self->enemy;
 
 #if 0
 	// seek up to 4 visible candidates
@@ -320,6 +336,10 @@ edict_t *INV_GetMonsterSpawn(edict_t *from)
 	return NULL;
 }
 
+void INV_SpawnOneMonster(void) // az: for testing purposes
+{
+
+}
 
 void INV_AwardPlayers(void)
 {
@@ -382,7 +402,7 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 	trace_t	tr;
 	int mhealth = 1;
 
-	monster = SpawnDrone(self, index, true);
+	monster = vrx_create_new_drone(self, index, true);
 
 	// calculate starting position
 	VectorCopy(e->s.origin, start);
@@ -415,7 +435,7 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 		if (invasion_difficulty_level < 5)
 			mhealth = 1;
 		else if (invasion_difficulty_level >= 5)
-			mhealth = 1 + 0.05 * log2(invasion_difficulty_level - 5);
+			mhealth = 1 + 0.05 * log2(invasion_difficulty_level - 4);
 	}
 	else if (invasion->value == 2) // hard mode
 	{
@@ -577,22 +597,8 @@ void INV_SpawnMonsters(edict_t *self)
 		return;
 	}
 
-	switch (invasion_difficulty_level)
-	{
-	case 1: max_monsters = 10; break;
-	case 2: max_monsters = 15; break;
-	case 3: max_monsters = 15; break;
-	case 4: max_monsters = 15; break;
-	case 5:
-	case 6:
-	case 7:
-	case 8:
-	case 9:
-	case 10:
-		max_monsters = 15; break; // vrxcl 3.2b decrease for not saturating the server hard.
-
-	default: max_monsters = 16;
-	}
+	// 10 at lv 1, 30 by level 20. 41 by level 100
+	max_monsters = (int)round(10 + 4.6276 * log2f((float)invasion_difficulty_level));
 
 	if (!(invasion_difficulty_level % 5))
 	{
@@ -781,6 +787,14 @@ void SP_info_player_invasion(edict_t *self)
 			if (e && e->inuse)
 				G_FreeEdict(e);
 		}
+
+		// az: *sigh*
+        /* while ((e = G_Find(e, FOFS(classname), "info_player_start")) != NULL)
+        {
+            if (e && e->inuse)
+                G_FreeEdict(e);
+        }*/
+
 		INVASION_OTHERSPAWNS_REMOVED = true;
 	}
 
@@ -824,7 +838,10 @@ void SP_info_monster_invasion(edict_t *self)
 	self->solid = SOLID_NOT;
 	self->s.effects |= EF_BLASTER;
 	gi.setmodel (self, "models/items/c_head/tris.md2");
-	self->svflags |= SVF_NOCLIENT;
+
+	if (debuginfo->value == 0)
+	    self->svflags |= SVF_NOCLIENT;
+
 	gi.linkentity(self);
 }
 
@@ -890,7 +907,7 @@ void inv_defenderspawn_think(edict_t *self)
 
 		// try to spawn another
 		if ((level.time > self->wait)
-			&& (monster = SpawnDrone(self, self->sounds, true)) != NULL)
+			&& (monster = vrx_create_new_drone(self, self->sounds, true)) != NULL)
 		{
 			//gi.dprintf("%d: attempting to spawn a monster\n", num);
 			// get starting position

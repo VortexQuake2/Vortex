@@ -591,7 +591,7 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 				message = "got bombed by";
 				break;
 			case MOD_TELEFRAG:
-				message = "se hizo pico";
+				message = "tried to invade";
 				message2 = "'s personal space";
 			
 				break;
@@ -1408,7 +1408,7 @@ qboolean SelectSpawnPoint (edict_t *ent, vec3_t origin, vec3_t angles)
 
 			if (base && !TeleportNearArea(ent, base->s.origin, 512, false))
 				failed = true;
-			else if (!base && !FindValidSpawnPoint(ent, false))
+			else if (!base && !vrx_find_random_spawn_point(ent, false))
 				failed = true;
 			else
 			{
@@ -1451,7 +1451,7 @@ qboolean SelectSpawnPoint (edict_t *ent, vec3_t origin, vec3_t angles)
 
 		if (!spot)
 		{
-			if (FindValidSpawnPoint(ent, true))
+			if (vrx_find_random_spawn_point(ent, true))
 			{
 				VectorCopy(ent->s.angles, angles);
 				VectorCopy(ent->s.origin, origin);
@@ -2394,7 +2394,7 @@ void ClientDisconnect (edict_t *ent)
 
 	KillMyVote (ent);
 
-	dmgListCleanup(ent, true);
+    vrx_clean_damage_list(ent, true);
 	vrx_reset_player_state(ent);
 
 	// remove this player from allies' list
@@ -2430,7 +2430,7 @@ void ClientDisconnect (edict_t *ent)
 				continue;
 			if (player->solid == SOLID_NOT)
 				continue;
-			if (IsNewbieBasher(player) && SPREE_WAR && (SPREE_DUDE == player))
+			if (vrx_is_newbie_basher(player) && SPREE_WAR && (SPREE_DUDE == player))
 			{
 				SPREE_WAR = false;
 				SPREE_DUDE = NULL;

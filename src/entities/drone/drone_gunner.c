@@ -677,7 +677,7 @@ void init_drone_gunner (edict_t *self)
 	//else self->health = 100 + 30*self->monsterinfo.level;
 
 	self->max_health = self->health;
-	self->gib_health = -100;
+	self->gib_health = -BASE_GIB_HEALTH;
 	self->mass = 200;
 	self->monsterinfo.jumpdn = 512;
 	self->monsterinfo.jumpup = 64;

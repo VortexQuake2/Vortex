@@ -613,7 +613,7 @@ void init_drone_makron (edict_t *self)
 	self->gib_health = -2000;
 	self->mass = 500;
 	self->mtype = M_MAKRON;
-	self->monsterinfo.control_cost = 101;
+	self->monsterinfo.control_cost = M_JORG_CONTROL_COST;
 	self->monsterinfo.cost = 300;
 	self->monsterinfo.jumpup = 64;
 	self->monsterinfo.jumpdn = 512;
@@ -651,7 +651,7 @@ void MakronSpawn (edict_t *self)
 	vec3_t		forward;
 	edict_t		*makron;
 
-	makron = SpawnDrone(self->activator, 33, true);
+	makron = vrx_create_new_drone(self->activator, 33, true);
 	VectorCopy(self->s.origin, makron->s.origin);
 	gi.linkentity(makron);
 

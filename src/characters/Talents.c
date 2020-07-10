@@ -254,7 +254,7 @@ void vrx_upgrade_talent(edict_t *ent, int talentID) {
     }
 
     if (talentID == TALENT_IMP_RESIST && vrx_get_talent_level(ent, TALENT_IMP_STRENGTH) > 0) {
-        safe_cprintf(ent, PRINT_HIGH, "Improved Resist can't be combined with Improved Resist.\n");
+        safe_cprintf(ent, PRINT_HIGH, "Improved Resist can't be combined with Improved Strength.\n");
         return;
     }
 

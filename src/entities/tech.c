@@ -8,7 +8,7 @@ void tech_think(edict_t *self) {
 
     // remove self after 60 seconds
     if (self->count >= 60) {
-        if (!FindValidSpawnPoint(self, false)) {
+        if (!vrx_find_random_spawn_point(self, false)) {
             BecomeTE(self);
             return;
         }
@@ -56,7 +56,7 @@ qboolean tech_spawn(int index) {
 
     tech->think = tech_think;
     tech->nextthink = level.time + FRAMETIME;
-    if (!FindValidSpawnPoint(tech, false)) {
+    if (!vrx_find_random_spawn_point(tech, false)) {
         gi.dprintf("Failed to spawn %s\n", tech->item->pickup_name);
         G_FreeEdict(tech);
         return false;

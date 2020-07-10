@@ -455,7 +455,7 @@ typedef struct
 	int			r_monsters;			//4.5 recommended monster value for this map
 	qboolean	daytime; //GHz: Is the sun going up or down?
 	qboolean    modechange;
-	qboolean	pathfinding;
+	// qboolean	pathfinding;
 
     qboolean warning_given;
     qboolean sounds[4];
@@ -1234,7 +1234,7 @@ void M_CheckGround (edict_t *ent);
 void M_SetEffects (edict_t *ent);
 void M_MoveFrame (edict_t *self);
 void M_WorldEffects (edict_t *ent);
-edict_t *SpawnDrone (edict_t *ent, int drone_type, qboolean worldspawn);
+edict_t *vrx_create_new_drone (edict_t *ent, int drone_type, qboolean worldspawn);
 
 //
 // g_misc.c
@@ -2029,7 +2029,7 @@ void cloak(edict_t *ent);
 
 qboolean G_EntExists(const edict_t *ent);
 
-void TossClientBackpack(edict_t *player, edict_t *attacker);
+void vrx_toss_backpack(edict_t *player, edict_t *attacker);
 
 // az begin
 void InitHash();
@@ -2235,22 +2235,25 @@ int V_GetRuneWeaponPts(edict_t *ent, item_t *rune);
 int V_GetRuneAbilityPts(edict_t *ent, item_t *rune);
 
 qboolean V_CommitCharacterData(edict_t *ent);
-qboolean IsNewbieBasher (const edict_t *player);
-void VortexSpreeAbilities(edict_t *attacker);
+qboolean vrx_is_newbie_basher (const edict_t *player);
+void vrx_trigger_spree_abilities(edict_t *attacker);
 qboolean TeleportNearTarget (edict_t *self, edict_t *target, float dist);
-qboolean FindValidSpawnPoint (edict_t *ent, qboolean air);
+qboolean vrx_find_random_spawn_point (edict_t *ent, qboolean air);
 void ValidateAngles (vec3_t angles);
 int InJoinedQueue (edict_t *ent);
 qboolean IsABoss(edict_t *ent);
 qboolean IsBossTeam (edict_t *ent);
 void AddBossExp (edict_t *attacker, edict_t *target);
-void AwardBossKill (edict_t *boss);
+void vrx_award_boss_kill (edict_t *boss);
 void CreateRandomPlayerBoss (qboolean find_new_candidate);
 qboolean BossExists (void);
 int numNearbyEntities (edict_t *ent, float dist, qboolean vis);
 void RemoveLasers (edict_t *ent);
 int vrx_apply_experience (edict_t *player, int exp);
+float vrx_increase_monster_damage_by_talent(edict_t *owner, float damage);
 //K03 End
+
+#define BASE_GIB_HEALTH 400
 
 #endif
 

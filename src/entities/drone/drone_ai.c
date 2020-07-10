@@ -303,7 +303,7 @@ qboolean M_ValidMedicTarget(const edict_t *self, const edict_t *target) {
         return false;
 
     // don't heal supertank or tank commander boss
-    if (target->monsterinfo.control_cost >= 100)
+    if (target->monsterinfo.control_cost >= M_COMMANDER_CONTROL_COST)
         return false;
 
 	// don't target players with invulnerability
@@ -614,10 +614,16 @@ qboolean drone_findtarget (edict_t *self, qboolean force)
 	//if ((!self->goalentity || self->goalentity == world) && // no goal or goal is world entity
 	if ((target = drone_get_target(self, false, false, true)) != NULL)
 	{
+	    if (self->goalentity && self->goalentity->mtype == INVASION_NAVI) {
+	        // az: we didn't get a valid enemy; restore looking for the last navi we were following.
+            VectorCopy(self->goalentity->s.origin, self->monsterinfo.last_sighting);
+	        return true;
+	    }
+
 		// set ai flags to chase goal and turn off circle strafing
 		self->monsterinfo.aiflags |= (AI_COMBAT_POINT|AI_NO_CIRCLE_STRAFE);
 		self->monsterinfo.aiflags &= ~AI_LOST_SIGHT;
-		self->enemy = target;
+		// self->enemy = target;
 		
 		self->goalentity = target;
 		VectorCopy(target->s.origin, self->monsterinfo.last_sighting);
@@ -658,7 +664,7 @@ void drone_ai_idle (edict_t *self)
 	if (self->activator && !self->activator->client && !(self->monsterinfo.aiflags & AI_STAND_GROUND)
 		&& (self->monsterinfo.idle_frames > DRONE_SUICIDE_FRAMES))
 	{
-		if (self->monsterinfo.control_cost > 80) // we're a boss
+		if (self->monsterinfo.control_cost >= M_TANK_CONTROL_COST) // we're a boss
 			self->activator->num_sentries--;
 		if (self->activator)
 		{
@@ -1205,6 +1211,7 @@ void drone_unstuck (edict_t *self)
 //	gi.dprintf("couldnt fix\n");
 }
 
+#if 0
 void drone_pursue_goal (edict_t *self, float dist)
 {
 	float	goal_elevation;
@@ -1314,6 +1321,8 @@ void drone_pursue_goal (edict_t *self, float dist)
 			M_MoveToGoal(self, dist);
 	}
 }
+
+#endif
 
 void drone_ai_run_slide (edict_t *self, float dist)
 {
@@ -1505,6 +1514,10 @@ qboolean drone_ai_patrol (edict_t *self)
 		if (!VectorCompare(self->monsterinfo.spot1, temp->s.origin)
 			&& !VectorCompare(self->monsterinfo.spot2, temp->s.origin))
 			continue;
+
+		if (temp == self->goalentity) // az: don't switch target to the same point we're already going to
+		    continue;
+
 		dist = entdist(self, temp);
 		// find the spot farthest away
 		if (dist > bestDist)
@@ -1673,19 +1686,23 @@ void drone_ai_run1 (edict_t *self, float dist)
 				if (self->monsterinfo.aiflags & AI_COMBAT_POINT)
 				{
 					// az: follow the chain
-					if (invasion->value && goal->target_ent && goal != goal->target_ent)
-					{
-						self->enemy = goal->target_ent;
-						self->goalentity = goal->target_ent;
-						VectorCopy(self->goalentity->s.origin, self->monsterinfo.last_sighting); // az: Move! DO SOMETHING!!
-					}else if (invasion->value) // az: no chain, or target is the same...
-					{
-						// az: Clear this out so we don't seek any more navis after this
-						self->monsterinfo.aiflags &= ~(AI_FIND_NAVI | AI_COMBAT_POINT);
-						drone_ai_findgoal(self); // az: Look for pspawns or players or anything!
-						return;
-					}
-					else if (!drone_ai_patrol(self))
+					if (!G_GetClient(self)) {
+                        if (invasion->value && goal->target_ent && goal != goal->target_ent) {
+                            // self->enemy = goal->target_ent;
+                            self->goalentity = goal->target_ent;
+                            VectorCopy(self->goalentity->s.origin,
+                                       self->monsterinfo.last_sighting); // az: Move! DO SOMETHING!!
+                                       return;
+                        } else if (invasion->value) // az: no chain, or target is the same...
+                        {
+                            // az: Clear this out so we don't seek any more navis after this
+                            self->monsterinfo.aiflags &= ~(AI_FIND_NAVI | AI_COMBAT_POINT);
+                            drone_ai_findgoal(self); // az: Look for pspawns or players or anything!
+                            return;
+                        }
+                    }
+
+					if (!drone_ai_patrol(self))
 					{
 						// we're close enough, clear the goal
 						self->monsterinfo.aiflags &= ~AI_COMBAT_POINT;
@@ -1786,13 +1803,13 @@ void drone_ai_run (edict_t *self, float dist)
 	edict_t         *tempgoal=NULL;
 	qboolean        enemy_vis=false;
 
-	if (level.pathfinding > 0)
+	// if (level.pathfinding > 0)
 	{
 		drone_ai_run1(self, dist);
 		return;
 	}
 
-
+#if 0
 	// if we're dead, we shouldn't be here
 	if (self->deadflag == DEAD_DEAD)
 		return;
@@ -1825,7 +1842,7 @@ void drone_ai_run (edict_t *self, float dist)
 			if (!drone_findtarget(self, false) && (entdist(self, self->enemy) <= 64))
 			{
 				// the goal is a navi
-				if (self->enemy->mtype == INVASION_NAVI) 
+				if (self->enemy->mtype == INVASION_NAVI)
 				{
 					edict_t *e;
 
@@ -2045,6 +2062,7 @@ void drone_ai_run (edict_t *self, float dist)
 		//      gi.dprintf("stand was called because monster has no valid target!\n");
 		self->monsterinfo.stand(self);
 	}
+#endif
 }				
 
 void drone_togglelight (edict_t *self)
@@ -2107,7 +2125,7 @@ qboolean drone_validposition (edict_t *self)
 	if (gi.pointcontents(self->s.origin) & CONTENTS_SOLID)
 	{
 		if (self->activator && self->activator->inuse && !self->activator->client)
-			respawned = FindValidSpawnPoint(self, false);
+			respawned = vrx_find_random_spawn_point(self, false);
 		
 		if (!respawned)
 		{
@@ -2148,7 +2166,7 @@ qboolean drone_boss_stuff (edict_t *self)
 		gi.WritePosition (self->s.origin);
 		gi.multicast (self->s.origin, MULTICAST_PVS);
 
-		if(!FindValidSpawnPoint(self, false))
+		if(!vrx_find_random_spawn_point(self, false))
 		{
 			// boss failed to re-spawn
 			/*

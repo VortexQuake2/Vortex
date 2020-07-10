@@ -1663,7 +1663,7 @@ void G_TeleportNearbyEntities(vec3_t point, float radius, qboolean vis, edict_t 
         if (radius && (distance(point, e->s.origin) > radius))
             continue;
 
-        FindValidSpawnPoint(e, false);
+        vrx_find_random_spawn_point(e, false);
     }
 }
 

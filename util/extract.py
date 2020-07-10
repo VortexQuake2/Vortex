@@ -10,7 +10,7 @@ nomatch = open("nomatch.txt", "w")
 for line in settingsfile:
 	defmatch = re.match("#define[\s\t]+(.+)[\s\t]+(-?[0-9]+(\.+[0-9]+)?)", line)
 	if defmatch != None:
-		print defmatch.group(1).strip(), defmatch.group(2)
+		print(defmatch.group(1).strip(), defmatch.group(2))
 		if defmatch.group(2) != None:
 			varname = defmatch.group(1).strip()
 			varvalue = defmatch.group(2).strip()

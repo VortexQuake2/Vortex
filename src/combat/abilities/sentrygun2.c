@@ -1059,7 +1059,7 @@ void SpawnSentry1(edict_t *ent, int sentryType, int cost, float skill_mult, floa
 
 	// used for monster exp
 	sentry->monsterinfo.level = ent->myskills.abilities[BUILD_SENTRY].current_level * skill_mult;
-	sentry->monsterinfo.control_cost = 20;
+	sentry->monsterinfo.control_cost = 2 * M_CONTROL_COST_SCALE;
 
 	//Health
 	sentry->health = sentry->max_health = SENTRY_HEALTH_BASE + SENTRY_HEALTH_MULT * sentry->monsterinfo.level;

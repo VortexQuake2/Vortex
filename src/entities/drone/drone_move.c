@@ -201,6 +201,9 @@ qboolean CanJumpUp (edict_t *self, vec3_t neworg, vec3_t end)
 		// trace to the floor (end position is always 1 step below floor)
 		tr = gi.trace(start, self->mins, self->maxs, end, self, MASK_MONSTERSOLID);
 
+		if (tr.ent && G_GetClient(tr.ent)) // az: Don't jump over players...
+		    return false;
+
 		// we have cleared the obstacle!
 		if (!tr.startsolid && !tr.allsolid)
 			break;

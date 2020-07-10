@@ -488,7 +488,7 @@ void base_createturret (edict_t *self)
 	//get player's current_level for BUILD_SENTRY
 	casterlevel = self->monsterinfo.level;
 	sentry->monsterinfo.level = casterlevel; // used for adding monster exp
-	sentry->monsterinfo.control_cost = 20; // used for adding monster exp
+	sentry->monsterinfo.control_cost = 2 * M_CONTROL_COST_SCALE; // used for adding monster exp
 
 	//set health
 	sentry->health = MINISENTRY_INITIAL_HEALTH + (MINISENTRY_ADDON_HEALTH * casterlevel);

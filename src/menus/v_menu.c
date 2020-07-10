@@ -76,7 +76,7 @@ void vrx_start_reign(edict_t *ent)
 		gi.bprintf(PRINT_HIGH, "A level %d boss known as %s starts their reign.\n", 
 			ent->myskills.boss, ent->client->pers.netname);
 	}
-	else if (IsNewbieBasher(ent) && !ptr->value && !domination->value)
+	else if (vrx_is_newbie_basher(ent) && !ptr->value && !domination->value)
 	{
 		gi.bprintf(PRINT_HIGH, "A level %d mini-boss known as %s begins their domination.\n", 
 		ent->myskills.level, ent->client->pers.netname);

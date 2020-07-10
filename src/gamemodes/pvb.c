@@ -1,14 +1,6 @@
 #include "../quake2/g_local.h"
 #include "boss.h"
 
-#define PVB_BOSS_EXPERIENCE		1000
-#define PVB_BOSS_MIN_EXP		100
-#define PVB_BOSS_MAX_EXP		1000
-#define PVB_BOSS_CREDITS		3000
-#define PVB_BOSS_FRAG_EXP		300
-#define PVB_BOSS_FRAG_CREDITS	100
-#define PVB_BOSS_TIMEOUT		10
-
 qboolean Boss_CanFit (edict_t *ent, vec3_t boss_mins, vec3_t boss_maxs)
 {
 	trace_t tr;
@@ -222,7 +214,7 @@ void AddBossExp (edict_t *attacker, edict_t *target)
 	vrx_apply_experience(attacker, exp_points);
 }
 
-void AwardBossKill (edict_t *boss)
+void vrx_award_boss_kill (edict_t *boss)
 {
 	int			i, damage, exp_points, credits;
 	float		levelmod, dmgmod;
@@ -240,12 +232,16 @@ void AwardBossKill (edict_t *boss)
 
 
 		levelmod = ((float)boss->monsterinfo.level+1) / ((float)player->myskills.level+1);
+		levelmod = log2(levelmod + 1); // az: softcap growth
 
 		damage = GetPlayerBossDamage(player, boss);
 		if (damage < 1)
 			continue; // they get nothing if they didn't touch the boss
 
-		dmgmod = (float)damage / GetTotalBossDamage(boss);
+		if (!invasion->value)
+		    dmgmod = (float)damage / GetTotalBossDamage(boss);
+        else // az: shared experience
+            dmgmod = (float)1 / ActivePlayers();
 
 		exp_points = levelmod*dmgmod*PVB_BOSS_EXPERIENCE;
 		credits = levelmod*dmgmod*PVB_BOSS_CREDITS;

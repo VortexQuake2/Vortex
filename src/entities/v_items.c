@@ -231,7 +231,7 @@ void fixRuneIndexes(edict_t *rune, int i)
 
 /* az- With this, our rune generation woes are finished, finally! */
 abilitydef_t *vrx_get_random_ability();
-void V_CreateAbilityModifier(edict_t* rune, qboolean is_class, int i) {
+void V_CreateAbilityModifier(edict_t *rune, qboolean is_class, int i, int targ_level) {
     abilitydef_t *ability; // Get ability description
     int hard_max;
 
@@ -263,7 +263,8 @@ void V_CreateAbilityModifier(edict_t* rune, qboolean is_class, int i) {
 	}
 	else
 	{
-		rune->vrxitem.modifiers[i].value = GetRandom(1, RUNE_ABILITY_MAXVALUE);
+	    int modmax = max(min(RUNE_ABILITY_MAXVALUE, targ_level), 1);
+		rune->vrxitem.modifiers[i].value = GetRandom(1, modmax);
 	}
 
 	hard_max = getHardMax(ability->index, !is_class, 0);
@@ -311,7 +312,7 @@ edict_t *V_SpawnRune (edict_t *self, edict_t *attacker, float base_drop_chance, 
 			temp = (float) (self->myskills.level + 1) / (attacker->myskills.level + 1);
 		
 		// miniboss has greater chance of dropping a rune
-		if (IsNewbieBasher(self))
+		if (vrx_is_newbie_basher(self))
 			temp *= 2;
 		
 		//boss has a greater chance of dropping a rune
@@ -427,7 +428,7 @@ void vrx_roll_rune_drop(edict_t *self, edict_t *attacker, qboolean debug)
             temp = (float) (self->myskills.level + 1) * 5.0f / (attacker->myskills.level + 1);
 		
 		// miniboss has greater chance of dropping a rune
-		if (IsNewbieBasher(self))
+		if (vrx_is_newbie_basher(self))
 			temp *= 2;
 		
 		//boss has a greater chance of dropping a rune
@@ -559,8 +560,8 @@ void spawnNorm(edict_t *rune, int targ_level, int type)
 			//25% chance for rune mod not to show up
 			if (GetRandom(0, 4) == 0)
 				continue;
-			
-			V_CreateAbilityModifier(rune, false, i);
+
+            V_CreateAbilityModifier(rune, false, i, targ_level);
 		}
 		rune->vrxitem.numMods = CountRuneMods(&rune->vrxitem);
 		rune->s.effects |= EF_QUAD;
@@ -587,7 +588,7 @@ void spawnClassRune(edict_t *rune, int targ_level) {
     }
 
     for (i = 0; i < num_mods; ++i) {
-        V_CreateAbilityModifier(rune, true, i);
+        V_CreateAbilityModifier(rune, true, i, targ_level);
 	}
 	rune->vrxitem.numMods = CountRuneMods(&rune->vrxitem);
 	rune->s.effects |= EF_COLOR_SHELL;
@@ -727,7 +728,7 @@ void spawnCombo(edict_t *rune, int targ_level)
 		//50% chance of ability mod
 		if (type > 5)
 		{
-			V_CreateAbilityModifier(rune, false, i);
+            V_CreateAbilityModifier(rune, false, i, targ_level);
 		}
 		else	//50% chance of weapon mod
 		{
@@ -827,7 +828,7 @@ void PurchaseRandomRune(edict_t *ent, int runetype)
 	{
 		char path[MAX_QPATH];
 		memset(path, 0, MAX_QPATH);
-		VRXGetPath(path, ent);
+        vrx_get_character_file_path(path, ent);
 		VSF_SaveRunes(ent, path);
 	}else if (savemethod->value == 3)
 	{
@@ -884,7 +885,7 @@ qboolean Pickup_Rune (edict_t *ent, edict_t *other)
 	{
 		char path[MAX_QPATH];
 		memset(path, 0, MAX_QPATH);
-		VRXGetPath(path, other);
+        vrx_get_character_file_path(path, other);
 		VSF_SaveRunes(other, path);
 	}
 

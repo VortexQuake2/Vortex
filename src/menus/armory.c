@@ -651,7 +651,7 @@ void SellConfirmMenu_handler(edict_t *ent, int option)
 		{
 			char path[MAX_QPATH];
 			memset(path, 0, MAX_QPATH);
-			VRXGetPath(path, ent);
+            vrx_get_character_file_path(path, ent);
 			VSF_SaveRunes(ent, path);
 		}
 
@@ -797,7 +797,7 @@ void BuyRuneConfirmMenu_handler (edict_t *ent, int option)
 			{
 				char path[MAX_QPATH];
 				memset (path, 0, MAX_QPATH);
-				VRXGetPath(path, ent);
+                vrx_get_character_file_path(path, ent);
 				VSF_SaveRunes(ent, path);
 			}
 			else if (savemethod->value == 1)

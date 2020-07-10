@@ -121,11 +121,11 @@ void TradeItems(edict_t *player1, edict_t *player2)
 		char path[MAX_QPATH];
 
 		memset(path, 0, strlen(path));
-		VRXGetPath(path, player1);
+        vrx_get_character_file_path(path, player1);
 		VSF_SaveRunes(player1, path);
 
 		memset(path, 0, strlen(path));
-		VRXGetPath(path, player2);
+        vrx_get_character_file_path(path, player2);
 		VSF_SaveRunes(player2, path);
 
 	}else if (savemethod->value == 3)

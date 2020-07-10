@@ -286,6 +286,7 @@ void myparasite_drain_attack (edict_t *self)
 	}
 
 	damage = 10+self->monsterinfo.level;
+    damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 
 	// don't pull while mid-air
 	if (self->groundentity)
@@ -462,12 +463,14 @@ void myparasite_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int d
 
 	M_Notify(self);
 
+#ifdef OLD_NOLAG_STYLE
 	// reduce lag by removing the entity right away
 	if (nolag->value)
 	{
 		M_Remove(self, false, true);
 		return;
 	}
+#endif
 
 	//if (self->deadflag != DEAD_DEAD)
 	//	level.total_monsters--;
@@ -482,7 +485,14 @@ void myparasite_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int d
 			ThrowGib (self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
 		//ThrowHead (self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
 		//self->deadflag = DEAD_DEAD;
-		M_Remove(self, false, false);
+#ifdef OLD_NOLAG_STYLE
+        M_Remove(self, false, false);
+#else
+        if (nolag->value)
+            M_Remove(self, false, true);
+        else
+            M_Remove(self, false, false);
+#endif
 		return;
 	}
 
@@ -566,7 +576,7 @@ void init_drone_parasite (edict_t *self)
 	//else self->health = 200 + 80*self->monsterinfo.level;
 
 	self->max_health = self->health;
-	self->gib_health = -100;
+	self->gib_health = -BASE_GIB_HEALTH;
 	self->mass = 100;
 
 //	self->pain = myparasite_pain;

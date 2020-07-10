@@ -22,7 +22,7 @@ cvar_t *savemethod;
 
 qboolean V_CommitCharacterData(edict_t *ent);
 
-void VRXGetPath (char* path, edict_t *ent)
+void vrx_get_character_file_path (char* path, edict_t *ent)
 {
 	if (savemethod->value == 1)
 	{
@@ -682,7 +682,7 @@ qboolean V_CommitCharacterData(edict_t *ent)
 #endif
 
 	//determine path
-	VRXGetPath(path, ent);
+    vrx_get_character_file_path(path, ent);
 
 	if (stat (path, &exist) == 0)
 		file_exists = 1;
