@@ -698,6 +698,8 @@ qboolean spawnUnique(edict_t *rune, int index)
 		if (rune->vrxitem.setCode != 0) rune->s.renderfx |= RF_SHELL_GREEN;
 		else rune->s.renderfx |= RF_SHELL_YELLOW;
 
+		rune->vrxitem.isUnique = true;
+
 		fclose (fptr);
 		return true;
 	}
@@ -863,7 +865,7 @@ qboolean Pickup_Rune (edict_t *ent, edict_t *other)
 		return false;
 
 	//4.2 if it's worthless, then just destroy it
-	if (ent->vrxitem.itemLevel < 1)
+	if (ent->vrxitem.itemLevel < 1 && !ent->vrxitem.isUnique)
 	{
 		G_FreeEdict(ent);
 		return false;

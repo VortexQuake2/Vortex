@@ -109,13 +109,13 @@ void berserk_walk (edict_t *self)
 }
 
 mframe_t berserk_frames_run1 [] =
-{ // from 35 to 27
-	drone_ai_run, 27, NULL,
-	drone_ai_run, 27, NULL,
-	drone_ai_run, 27, NULL,
-	drone_ai_run, 27, NULL,
-	drone_ai_run, 27, NULL,
-	drone_ai_run, 27, NULL
+{
+	drone_ai_run, 35, NULL,
+	drone_ai_run, 35, NULL,
+	drone_ai_run, 35, NULL,
+	drone_ai_run, 35, NULL,
+	drone_ai_run, 35, NULL,
+	drone_ai_run, 35, NULL
 };
 mmove_t berserk_move_run1 = {FRAME_run1, FRAME_run6, berserk_frames_run1, NULL};
 
@@ -134,7 +134,7 @@ void berserk_attack_spike (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = 60 + 20 * self->monsterinfo.level;
+	damage = 50 + 25 * self->monsterinfo.level; // dmg: berserker_attack_spike
 	M_MeleeAttack(self, 96, damage, 400);
 	//FIXME: add bleed curse
 }
@@ -163,7 +163,7 @@ void berserk_attack_club (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = 45 + 20 * self->monsterinfo.level;
+	damage = 50 + 25 * self->monsterinfo.level; // dmg: berserker_attack_club
 	M_MeleeAttack(self, 96, damage, 400);
 }
 
@@ -279,6 +279,16 @@ void berserk_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 
 	M_Notify(self);
 
+#ifdef OLD_NOLAG_STYLE
+    if (nolag->value)
+	{
+		M_Remove(self, false, true);
+		return;
+	}
+#endif
+
+
+
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
@@ -287,7 +297,14 @@ void berserk_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 		for (n= 0; n < 4; n++)
 			ThrowGib (self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
 		//ThrowHead (self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
-		M_Remove(self, false, true);
+#ifdef OLD_NOLAG_STYLE
+        M_Remove(self, false, false);
+#else
+        if (nolag->value)
+            M_Remove(self, false, true);
+        else
+            M_Remove(self, false, false);
+#endif
 		return;
 	}
 
@@ -362,9 +379,9 @@ void init_drone_berserk (edict_t *self)
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 
-	self->health = self->max_health = 120 + 75 * self->monsterinfo.level;
+	self->health = self->max_health = 120 + 75 * self->monsterinfo.level; // hlt: berserker
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = self->monsterinfo.max_armor = 60 + 50 * self->monsterinfo.level;
+	self->monsterinfo.power_armor_power = self->monsterinfo.max_armor = 100 + 40 * self->monsterinfo.level; // pow: berserker
 	self->gib_health = -0.6 * BASE_GIB_HEALTH;
 	self->mass = 250;
 	self->monsterinfo.control_cost = M_BERSERKER_CONTROL_COST;

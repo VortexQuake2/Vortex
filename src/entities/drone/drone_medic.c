@@ -180,6 +180,7 @@ void mymedic_run (edict_t *self)
 void mymedic_fire_blaster (edict_t *self)
 {
 	int		effect, damage;
+	float speed = 2000; // speed: medic_blaster
 	vec3_t	forward, start;
 	qboolean bounce = false;
 	
@@ -191,10 +192,11 @@ void mymedic_fire_blaster (edict_t *self)
 	else
 		effect = EF_HYPERBLASTER;
 
-	damage = 10 + 4*self->monsterinfo.level;
+	damage = 20 + 3*self->monsterinfo.level; // dmg: medic_blaster
 
-	MonsterAim(self, 0.8, 2000, false, MZ2_MEDIC_BLASTER_1, forward, start);
-	monster_fire_blaster(self, start, forward, damage, 2000, effect, BLASTER_PROJ_BOLT, 2.0, bounce, MZ2_MEDIC_BLASTER_1);
+
+	MonsterAim(self, 0.8, speed, false, MZ2_MEDIC_BLASTER_1, forward, start);
+	monster_fire_blaster(self, start, forward, damage, speed, effect, BLASTER_PROJ_BOLT, 2.0, bounce, MZ2_MEDIC_BLASTER_1);
 }
 
 void mymedic_fire_bolt (edict_t *self)
@@ -202,8 +204,8 @@ void mymedic_fire_bolt (edict_t *self)
 	int		min, max, damage;
 	vec3_t	forward, start;
 
-	min = 4*self->monsterinfo.level;
-	max = 50 + 25*self->monsterinfo.level;
+	min = 4*self->monsterinfo.level; // dmg.min: medic_fire_bolt
+	max = 50 + 25*self->monsterinfo.level; // dmg.max: medic_fire_bolt
 
 	damage = GetRandom(min, max);
 
@@ -993,7 +995,7 @@ void init_drone_medic (edict_t *self)
 	VectorSet (self->maxs, 24, 24, 32);
 
 	//if (self->activator && self->activator->client)
-	self->health = 120 + 65*self->monsterinfo.level;
+	self->health = 100 + 10*self->monsterinfo.level; // hlt: medic
 	//else self->health = 200 + 20*self->monsterinfo.level;
 
 	self->max_health = self->health;
@@ -1029,7 +1031,7 @@ void init_drone_medic (edict_t *self)
 	//self->monsterinfo.melee = 1;
 
 	//if (self->activator && self->activator->client)
-		self->monsterinfo.power_armor_power = 60 + 50*self->monsterinfo.level;
+		self->monsterinfo.power_armor_power = 100 + 20*self->monsterinfo.level; // pow: medic
 	//else self->monsterinfo.power_armor_power = 200 + 40*self->monsterinfo.level;
 
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;

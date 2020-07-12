@@ -190,7 +190,7 @@ void InfantryMachineGun (edict_t *self)
 	vec3_t	start, forward, right, vec;
 	int		damage, flash_number;
 
-	damage = 10 + 2*self->monsterinfo.level;
+	damage = 10 + 2*self->monsterinfo.level; // dmg: infantry_machinegun
 
 	if (self->s.frame == FRAME_attak111)
 	{
@@ -454,7 +454,7 @@ void infantry_swing (edict_t *self)
 
 void infantry_smack (edict_t *self)
 {
-	int		damage = 100 + 20 * self->monsterinfo.level;
+	int		damage = 100 + 20 * self->monsterinfo.level; // dmg: infantry_smack
 	vec3_t	aim;
 
 	if (!G_EntExists(self->enemy))
@@ -525,7 +525,7 @@ void init_drone_infantry (edict_t *self)
 	VectorSet (self->mins, -16, -16, -24);
 	VectorSet (self->maxs, 16, 16, 32);
 
-	self->health = 80 + 55*self->monsterinfo.level;
+	self->health = 100 + 40*self->monsterinfo.level; // hlt: infantry
 	self->max_health = self->health;
 	self->gib_health = -BASE_GIB_HEALTH;
 	self->mass = 400;

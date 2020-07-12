@@ -132,7 +132,7 @@ void vrx_check_for_levelup(edict_t *ent) {
         if (generalabmode->value && ent->myskills.class_num == CLASS_WEAPONMASTER)
             ent->myskills.weapon_points += 6;
         else // 4 points for everyone, only weaponmasters in generalabmode.
-            ent->myskills.weapon_points += 5;
+            ent->myskills.weapon_points += 4;
 
         vrx_add_levelup_boons(ent);//Add any special addons that should be there!
         vrx_update_all_character_maximums(ent);

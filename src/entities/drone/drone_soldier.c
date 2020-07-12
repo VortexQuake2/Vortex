@@ -156,8 +156,8 @@ void soldier_fireblaster (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = 50 + 10*self->monsterinfo.level;
-	speed = 1000 + 50*self->monsterinfo.level;
+	damage = 50 + 10*self->monsterinfo.level; // dmg: soldier_fireblaster
+	speed = 1000 + 50*self->monsterinfo.level; // spd: soldier_fireblaster
 
 	MonsterAim(self, 0.8, speed, false, MZ2_SOLDIER_BLASTER_8, forward, start);
 	monster_fire_blaster(self, start, forward, damage, speed, EF_BLASTER, BLASTER_PROJ_BOLT, 2.0, true, MZ2_SOLDIER_BLASTER_8);
@@ -171,8 +171,8 @@ void soldier_firerocket (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = 50 + 10*self->monsterinfo.level;
-	speed = 650 + 30*self->monsterinfo.level;
+	damage = 50 + 10*self->monsterinfo.level; // dmg: soldier_firerocket
+	speed = 650 + 30*self->monsterinfo.level; // spd: soldier_firerocket
 
 	MonsterAim(self, 0.8, speed, true, MZ2_SOLDIER_BLASTER_8, forward, start);
 	monster_fire_rocket (self, start, forward, damage, speed, MZ2_SOLDIER_BLASTER_8);
@@ -180,13 +180,14 @@ void soldier_firerocket (edict_t *self)
 
 void soldier_fireshotgun (edict_t *self)
 {
+    int count = 10; // count: soldier_fireshotgun
 	int		damage;
 	vec3_t	forward, start;
 
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = 5 + self->monsterinfo.level;
+	damage = 5 + 1*self->monsterinfo.level; // dmg: soldier_fireshotgun
 	MonsterAim(self, 0.8, 0, false, MZ2_SOLDIER_SHOTGUN_8, forward, start);
 	monster_fire_shotgun(self, start, forward, damage, damage, 375, 375, 10, MZ2_SOLDIER_SHOTGUN_8);
 }
@@ -743,13 +744,13 @@ void init_drone_soldier (edict_t *self)
 	self->monsterinfo.cost = 50;
 
 	// set health
-	self->health = M_SOLDIER_INITIAL_HEALTH+M_SOLDIER_ADDON_HEALTH*self->monsterinfo.level;
+	self->health = M_SOLDIER_INITIAL_HEALTH+M_SOLDIER_ADDON_HEALTH*self->monsterinfo.level; // hlt: soldier
 	self->max_health = self->health;
 	self->gib_health = -1.5 * BASE_GIB_HEALTH;
 
 	// set armor
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = M_SOLDIER_INITIAL_ARMOR+M_SOLDIER_ADDON_ARMOR*self->monsterinfo.level;
+	self->monsterinfo.power_armor_power = M_SOLDIER_INITIAL_ARMOR+M_SOLDIER_ADDON_ARMOR*self->monsterinfo.level; // pow: soldier
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 
 	// set AI jump parameters

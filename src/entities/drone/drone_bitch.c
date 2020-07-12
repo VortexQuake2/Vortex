@@ -439,8 +439,10 @@ void myChickMeteor (edict_t *self)
 	//if (slvl > 15)
 	//	slvl = 15;
 
-	damage = 500;//200 + 30 * slvl;
-	speed = 1000;//650 + 35 * slvl;
+    //200 + 30 * slvl;
+	damage = 500; // dmg: myChickMeteor
+    //650 + 35 * slvl;
+	speed = 1000; // spd: myChickMeteor
 
 	fire_meteor(self, self->enemy->s.origin, damage, 200, speed);
 
@@ -484,9 +486,9 @@ void myChickFireball (edict_t *self)
 	if (slvl > 15)
 		slvl = 15;
 
-	damage = 50 + 15 * slvl;
-	flame_damage = 2 * slvl;
-	speed = 650 + 35 * slvl;
+	damage = 50 + 15 * slvl; // dmg: myChickFireball
+	flame_damage = 2 * slvl; // dmg: myChickFireballFlames
+	speed = 650 + 35 * slvl; // spd: myChickFireball
 
 	MonsterAim(self, 0.9, speed, true, MZ2_CHICK_ROCKET_1, forward, start);
 	fire_fireball(self, start, forward, damage, 125.0, speed, 5, flame_damage);
@@ -508,15 +510,9 @@ void myChickRocket (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = 50 + 15*self->monsterinfo.level;
-	if ( self->activator && self->activator->client )
-	{
-		speed = 350 + 30 * log2(self->monsterinfo.level);
-	}
-	else
-	{
-		speed = 450;	
-	}
+	damage = 50 + 10 * self->monsterinfo.level; // dmg: myChickRocket
+	speed = 650 + 30 * self->monsterinfo.level; // spd: myChickRocket
+	
 
 	MonsterAim(self, 1, speed, true, MZ2_CHICK_ROCKET_1, forward, start);
 	monster_fire_rocket (self, start, forward, damage, speed, MZ2_CHICK_ROCKET_1);
@@ -530,7 +526,7 @@ void myChickRail (edict_t *self)
 	//if (!self->activator->client)
 	//	damage = 50 + 20*self->monsterinfo.level;
 	//else
-		damage = 50 + 10*self->monsterinfo.level;
+		damage = 50 + 10*self->monsterinfo.level; // dmg: myChickRailWorld
 
 	MonsterAim(self, 0.33, 0, false, MZ2_CHICK_ROCKET_1, forward, start);
 	monster_fire_railgun (self, start, forward, damage, damage, MZ2_GLADIATOR_RAILGUN_1);
@@ -814,7 +810,7 @@ void init_drone_bitch (edict_t *self)
 	// if (self->activator && self->activator->client) 
 	// 	self->health = 120 + 75*self->monsterinfo.level;
 	// else
-		self->health = 80 + 55*self->monsterinfo.level;
+		self->health = 50 + 15 * self->monsterinfo.level; // hlt: chick
 
 	self->max_health = self->health;
 	self->gib_health = -BASE_GIB_HEALTH;
@@ -828,7 +824,7 @@ void init_drone_bitch (edict_t *self)
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 
 	//if (self->activator && self->activator->client)
-		self->monsterinfo.power_armor_power = 60 + 50*self->monsterinfo.level;
+		self->monsterinfo.power_armor_power = 25 + 15*self->monsterinfo.level; // pow: chick
 	//else self->monsterinfo.power_armor_power = 20*self->monsterinfo.level;
 
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;

@@ -3,7 +3,7 @@
 abilitydef_t *abilities_by_index[MAX_ABILITIES];
 
 abilitydef_t ability_general[] = {
-        {VITALITY,        0, 15,              1},
+        {VITALITY,        0, 10,              1},
         {MAX_AMMO,        0, 10,              1},
         {POWER_REGEN,     1, 8,               1},
         {WORLD_RESIST,    0, 1,                1},
@@ -178,22 +178,13 @@ abilitylist_t abilities_by_class[] = {
 
 
 void vrx_assign_abilities(edict_t *ent) {
-    abilitydef_t *first = abilities_by_class[0];
-
     vrx_disable_abilities(ent);
-
-    // enable general skills
-    while (first->index != -1) {
-        //gi.dprintf("enabled ability %s\n", GetAbilityString(first->index));
-        vrx_enable_ability(ent, first->index, first->start, first->softmax, first->general);
-        first++;
-    }
 
     // enable all skills (weaponmaster/ab or generalabmode is on)
     if (ent->myskills.class_num == CLASS_WEAPONMASTER || generalabmode->value) {
         int i;
         for (i = 0; i < MAX_ABILITIES; i++) {
-            first = abilities_by_index[i];
+            abilitydef_t *first = abilities_by_index[i];
 
             if (first) {
                 int real_max = first->softmax;
@@ -212,12 +203,24 @@ void vrx_assign_abilities(edict_t *ent) {
 
     // enable class skills
     if (ent->myskills.class_num != CLASS_WEAPONMASTER) {
-        first = abilities_by_class[ent->myskills.class_num];
+        abilitydef_t *first = abilities_by_class[ent->myskills.class_num];
         while (first->index != -1) {
             //gi.dprintf("enabled ability %s\n", GetAbilityString(first->index));
             vrx_enable_ability(ent, first->index, first->start, first->softmax, first->general);
             first++;
         }
+    }
+
+    // enable general skills
+    // has to be done after enabling all skills and class skills
+    // since we check if there's a class version already enabled.
+    abilitydef_t *first = abilities_by_class[0];
+    while (first->index != -1) {
+        //gi.dprintf("enabled ability %s\n", GetAbilityString(first->index));
+        // if this ability doesn't have a class specialization, use our general version
+        if (ent->myskills.abilities[first->index].general_skill)
+            vrx_enable_ability(ent, first->index, first->start, first->softmax, first->general);
+        first++;
     }
 }
 

@@ -7,13 +7,15 @@ cmake_minimum_required (VERSION 2.8)
 project (VortexQuake2)
 
 include(CMakeDependentOption)
-option(VRX_USE_MYSQL "Use MySQL based GDS" FALSE)
+option(VRX_USE_MYSQL "Use MySQL/MariaDB based GDS" FALSE)
 option(VRX_USE_MULTITHREAD "Use multithreading (only valid when using mysql)" FALSE)
 option(VRX_ALLOW_ADMIN "Allow usage of admin commands via rcon/sv commands." TRUE)
 option(VRX_LOCKDEFAULTS "Disallow changing exp/credits rates via cvar." FALSE)
-option(VRX_REMOVERESPAWNS "Remove the usage of respawns." TRUE)
+option(VRX_REMOVERESPAWNS "Remove the usage of the respawns system." TRUE)
 option(VRX_USEHASH "Use hashing on commands instead of iterating through the list." TRUE)
-option(VRX_Q2PRO "Use map/gamemap differenciation (for q2pro)." TRUE)
+option(VRX_Q2PRO "Use map/gamemap differentiation (for q2pro)." TRUE)
+option(VRX_OLD_NOLAG "Use old NOLAG style. Not recommended." FALSE)
+option(VRX_OLD_VOTE "Use old vote system." FALSE)
 
 # Source files
 file(GLOB_RECURSE VRX_FILES ./src/*.c)
@@ -66,6 +68,14 @@ endif ()
 
 if (NOT VRX_USE_MYSQL)
   add_definitions(-DNO_GDS)
+endif()
+
+if (VRX_OLD_NOLAG)
+  add_definitions(-DOLD_NOLAG_STYLE)
+endif()
+
+if (VRX_OLD_VOTE)
+  add_definitions(-DOLD_VOTE_SYSTEM)
 endif()
 
 if (VRX_USEHASH)

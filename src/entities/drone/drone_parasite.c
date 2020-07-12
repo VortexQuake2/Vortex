@@ -285,16 +285,16 @@ void myparasite_drain_attack (edict_t *self)
 			gi.sound (self, CHAN_WEAPON, sound_suck, 1, ATTN_NORM, 0);
 	}
 
-	damage = 10+self->monsterinfo.level;
+	damage = 10+1*self->monsterinfo.level; // dmg: parasite_drain
     damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 
 	// don't pull while mid-air
 	if (self->groundentity)
 	{
-		//pull = -60;
+		pull = -60; // pull: parasite_drain
 		if (self->enemy->groundentity)
-			//pull *= 2;
-		    pull = 0; //Pull has been removed
+			pull *= 2;
+		    // pull = 0; //Pull has been removed
 	}
 
 	// gain damage back as health
@@ -572,7 +572,7 @@ void init_drone_parasite (edict_t *self)
 	self->solid = SOLID_BBOX;
 
 	//if (self->activator && self->activator->client)
-	self->health = 110 + 65*self->monsterinfo.level;
+	self->health = 75 + 30*self->monsterinfo.level; // hlt: parasite
 	//else self->health = 200 + 80*self->monsterinfo.level;
 
 	self->max_health = self->health;

@@ -438,9 +438,9 @@ void mybrain_hit_right (edict_t *self)
 		return;
 
 	if (!self->activator->client)
-		damage = 120 + 80*self->monsterinfo.level;
+		damage = 50 + 20*self->monsterinfo.level; // dmg: brain_hit_right_world
 	else 
-		damage = 120 + 55*self->monsterinfo.level;
+		damage = 50 + 10*self->monsterinfo.level; // dmg: brain_hit_right_player
 	
 	if (M_MeleeAttack(self, MELEE_DISTANCE, damage, 0))
 		gi.sound (self, CHAN_WEAPON, sound_melee3, 1, ATTN_NORM, 0);
@@ -461,9 +461,9 @@ void mybrain_hit_left (edict_t *self)
 		return;
 
 	if (!self->activator->client)
-		damage = 120 + 80*self->monsterinfo.level;
+		damage = 50 + 20*self->monsterinfo.level; // dmg: brain_hit_left_world
 	else 
-		damage = 120 + 80*self->monsterinfo.level;
+		damage = 50 + 10*self->monsterinfo.level; // dmg: brain_hit_world_player
 
 	if (M_MeleeAttack(self, MELEE_DISTANCE, damage, 0))
 		gi.sound (self, CHAN_WEAPON, sound_melee3, 1, ATTN_NORM, 0);
@@ -504,9 +504,9 @@ void mybrain_tentacle_attack (edict_t *self)
 	int		damage;
 
 	if (!self->activator->client)
-		damage = 100 + 45*self->monsterinfo.level;
+		damage = 100 + 45*self->monsterinfo.level; // dmg: brain_tentacle_attack_world
 	else 
-		damage = 100 + 35*self->monsterinfo.level;
+		damage = 100 + 35*self->monsterinfo.level; // dmg: brain_tentacle_attack_player
 
 	M_MeleeAttack(self, MELEE_DISTANCE, damage, 0);
 
@@ -541,10 +541,10 @@ mframe_t mybrain_frames_attack2 [] =
 };
 mmove_t mybrain_move_attack2 = {FRAME_attak205, FRAME_attak217, mybrain_frames_attack2, mybrain_run};
 
-#define BRAIN_INITIAL_PULL			-65 // from 60.
-#define BRAIN_ADDON_PULL			0 // from -2, pull shouldn't scale.
+#define BRAIN_INITIAL_PULL			-60
+#define BRAIN_ADDON_PULL			-2
 #define BRAIN_INITIAL_TENTACLE_DMG	30
-#define BRAIN_ADDON_TENTACLE_DMG	3 // from 6, give some life for the player.
+#define BRAIN_ADDON_TENTACLE_DMG	6
 
 void mybrain_suxor (edict_t *self)
 {
@@ -569,8 +569,8 @@ void mybrain_suxor (edict_t *self)
 	tr = gi.trace(self->s.origin, NULL, NULL, end, self, MASK_SHOT);
 	if (G_EntExists(tr.ent) && (tr.ent == self->enemy))
 	{
-		damage = BRAIN_INITIAL_TENTACLE_DMG + BRAIN_ADDON_TENTACLE_DMG*self->monsterinfo.level;
-		pull = BRAIN_INITIAL_PULL + BRAIN_ADDON_PULL*self->monsterinfo.level;
+		damage = BRAIN_INITIAL_TENTACLE_DMG + BRAIN_ADDON_TENTACLE_DMG*self->monsterinfo.level; // dmg: brain_suxor
+		pull = BRAIN_INITIAL_PULL + BRAIN_ADDON_PULL*self->monsterinfo.level; // pull: brain_suxor
 
 		if (tr.ent->groundentity)
 			pull *= 2;

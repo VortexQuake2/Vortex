@@ -236,8 +236,8 @@ void mutant_hit_left (edict_t *self)
 	vec3_t	aim;
 
 	if (!self->activator->client)
-		damage = 25*self->monsterinfo.level;
-	else damage = 10*self->monsterinfo.level;
+		damage = 0+40*self->monsterinfo.level; // dmg: mutant_hit_left_world
+	else damage = 0+20*self->monsterinfo.level; // dmg: mutant_hit_left_player
 
 	VectorSet (aim, 100, self->mins[0], 8);
 	if (fire_hit (self, aim, damage, 100))
@@ -252,8 +252,8 @@ void mutant_hit_right (edict_t *self)
 	vec3_t	aim;
 
 	if (!self->activator->client)
-		damage = 16*self->monsterinfo.level;
-	else damage = 12*self->monsterinfo.level;
+		damage = 0+40*self->monsterinfo.level; // dmg: mutant_hit_right_world
+	else damage = 0+20*self->monsterinfo.level; // dmg: mutant_hit_right_player
 
 	VectorSet (aim, 100, self->maxs[0], 8);
 	if (fire_hit (self, aim, damage, 100))
@@ -311,7 +311,7 @@ void mutant_jump_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface
 		//if (!self->activator->client)
 		//	damage = 40*self->monsterinfo.level;
 		//else 
-			damage = 50 + 15*self->monsterinfo.level;
+			damage = 50 + 15*self->monsterinfo.level; // dmg: mutant_jump_touch_unused
 			damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 
 		knockback = damage;
@@ -554,7 +554,7 @@ void init_drone_mutant (edict_t *self)
 	VectorSet (self->maxs, 24, 24, 32);
 
 	//if (self->activator && self->activator->client)
-	self->health = 135 + 75*self->monsterinfo.level;
+	self->health = 135 + 75*self->monsterinfo.level; // hlt: mutant
 	//else
 		//self->health = 400 + 160*self->monsterinfo.level;
 

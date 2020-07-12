@@ -202,18 +202,18 @@ void myGunnerGrenade (edict_t *self)
 	if (!self->enemy || !self->enemy->inuse)
 		return;
 
-	damage = 28 + 6*self->monsterinfo.level;
-	speed = 600 + 30*self->monsterinfo.level;
+	damage = 50 + 10*self->monsterinfo.level; // dmg: gunner_grenade
+	speed = 600 + 30*self->monsterinfo.level; // spd: gunner_grenade
 
 	if (speed > 900)
-		speed = 900;
+		speed = 900; // cap: gunner_grenade.speed
 
 	if (self->s.frame == FRAME_attak105)
 		flash_number = MZ2_GUNNER_GRENADE_1;
 	else
 		flash_number = MZ2_GUNNER_GRENADE_4;
 
-	MonsterAim(self, 0.9, speed, false, flash_number, forward, start);
+	MonsterAim(self, 0.8f, speed, false, flash_number, forward, start);
 	monster_fire_grenade(self, start, forward, damage, speed, flash_number);
 }
 
@@ -330,7 +330,8 @@ void myGunnerFire (edict_t *self)
 
 	flash_number = MZ2_GUNNER_MACHINEGUN_1 + (self->s.frame - FRAME_attak216);
  
-	damage = 7 + self->monsterinfo.level;
+	// leave the 1* alone so the balance parser can understand this line
+	damage = 10 + 1*self->monsterinfo.level; // dmg: gunner_fire
 
 	MonsterAim(self, 0.9, 0, false, flash_number, forward, start);
 
@@ -673,7 +674,7 @@ void init_drone_gunner (edict_t *self)
 	VectorSet (self->maxs, 16, 16, 32);
 
 	//if (self->activator && self->activator->client)
-	self->health = 120 + 75*self->monsterinfo.level;
+	self->health = 50 + 25*self->monsterinfo.level; // hlt: gunner
 	//else self->health = 100 + 30*self->monsterinfo.level;
 
 	self->max_health = self->health;
@@ -699,7 +700,7 @@ void init_drone_gunner (edict_t *self)
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 
 	//if (self->activator && self->activator->client)
-		self->monsterinfo.power_armor_power = 60 + 45*self->monsterinfo.level;
+		self->monsterinfo.power_armor_power = 50 + 15*self->monsterinfo.level; // pow: gunner
 	//else self->monsterinfo.power_armor_power = 100 + 50*self->monsterinfo.level;
 
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;

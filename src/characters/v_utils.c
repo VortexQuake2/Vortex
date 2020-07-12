@@ -1744,7 +1744,7 @@ char *V_GetMonsterKind(int mtype) {
         case M_GUNNER:
             return "gunner";
         case M_CHICK:
-            return "bitch";
+            return "iron praetor";
         case M_PARASITE:
             return "parasite";
         case M_FLOATER:

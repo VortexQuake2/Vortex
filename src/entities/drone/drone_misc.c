@@ -2441,7 +2441,7 @@ void Cmd_Drone_f (edict_t *ent)
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Available monster commands:\n");
 		//safe_cprintf(ent, PRINT_HIGH, "monster gunner\nmonster parasite\nmonster brain\nmonster bitch\nmonster medic\nmonster tank\nmonster mutant\nmonster select\nmonster move\nmonster remove\nmonster hunt\nmonster count\n");
-		safe_cprintf(ent, PRINT_HIGH, "monster gunner\nmonster parasite\nmonster brain\nmonster bitch\nmonster medic\nmonster tank\nmonster mutant\nmonster gladiator\nmonster command\nmonster follow me\nmonster remove\nmonster count\n");
+		safe_cprintf(ent, PRINT_HIGH, "monster gunner\nmonster parasite\nmonster brain\nmonster praetor\nmonster medic\nmonster tank\nmonster mutant\nmonster gladiator\nmonster command\nmonster follow me\nmonster remove\nmonster count\n");
 		return;
 	}
 
@@ -2463,7 +2463,7 @@ void Cmd_Drone_f (edict_t *ent)
         vrx_create_new_drone(ent, 2, false);
 	else if (!Q_strcasecmp(s, "brain"))
         vrx_create_new_drone(ent, 4, false);
-	else if (!Q_strcasecmp(s, "bitch"))
+	else if (!Q_strcasecmp(s, "praetor"))
         vrx_create_new_drone(ent, 3, false);
 	else if (!Q_strcasecmp(s, "medic"))
         vrx_create_new_drone(ent, 5, false);

@@ -307,7 +307,9 @@ void OpenMyinfoMenu (edict_t *ent)
 	else
 		addlinetomenu(ent, "Frag Percent: --", 0);
 	addlinetomenu(ent, va("Played Hrs:   %.1f", (float)ent->myskills.playingtime/3600), 0);
+#ifndef REMOVE_RESPAWNS
 	addlinetomenu(ent, va("Respawns: %d", ent->myskills.weapon_respawns), 0);
+#endif
 	addlinetomenu(ent, " ", 0);
 	addlinetomenu(ent, "Exit", 1);
 

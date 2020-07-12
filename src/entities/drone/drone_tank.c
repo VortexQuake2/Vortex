@@ -237,7 +237,7 @@ void myTankRail (edict_t *self)
 	else
 		flash_number = MZ2_TANK_BLASTER_3;
 
-	damage = 50 + 5*self->monsterinfo.level;
+	damage = 50 + 5*self->monsterinfo.level; // dmg: tank_rail
 
 	MonsterAim(self, 0.5, 0, false, flash_number, forward, start);
 	monster_fire_railgun(self, start, forward, damage, damage, MZ2_GLADIATOR_RAILGUN_1);
@@ -262,8 +262,9 @@ void myTankBlaster (edict_t *self)
 	else
 		flash_number = MZ2_TANK_BLASTER_3;
 
-	damage = 35 + 15*self->monsterinfo.level;
-	speed = 650 /*+ 50*self->monsterinfo.level*/; // speed should NEVER scale.
+	damage = 50 + 10*self->monsterinfo.level; // dmg: tank_blaster
+	speed = 1000 + 50*self->monsterinfo.level; // spd: tank_blaster
+	// speed = 650 /*+ 50*self->monsterinfo.level*/; // speed should NEVER scale.
 
 	MonsterAim(self, 1, speed, false, flash_number, forward, start);
 	monster_fire_blaster(self, start, forward, damage, speed, EF_BLASTER, BLASTER_PROJ_BOLT, 2.0, true, flash_number);
@@ -290,17 +291,11 @@ void myTankRocket (edict_t *self)
 	else
 		flash_number = MZ2_TANK_ROCKET_3;
 
-	damage = 20 + 10*self->monsterinfo.level;
-	if( self->activator && self->activator->client )
-	{
-		speed = 800 + 30*self->monsterinfo.level;	
-	}
-	else
-	{
-		speed = 880;
-	}	
+	damage = 50 + 10*self->monsterinfo.level; // dmg: tank_rocket
+	speed = 650 + 30*self->monsterinfo.level; // spd: tank_rocket
 
-	MonsterAim(self, 1, speed, true, flash_number, forward, start);
+
+	MonsterAim(self, 0.5, speed, true, flash_number, forward, start);
 
 	monster_fire_rocket (self, start, forward, damage, speed, flash_number);
 }	
@@ -316,9 +311,9 @@ void myTankMachineGun (edict_t *self)
 
 	flash_number = MZ2_TANK_MACHINEGUN_1 + (self->s.frame - FRAME_attak406);
 
-	damage = 5 + 2*self->monsterinfo.level;
+	damage = 20 + 2*self->monsterinfo.level; // dmg: tank_machinegun
 
-	MonsterAim(self, 0.6, 0, false, flash_number, forward, start);
+	MonsterAim(self, 0.8, 0, false, flash_number, forward, start);
 
 	monster_fire_bullet (self, start, forward, damage, damage, 
 		DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, flash_number);
@@ -729,7 +724,7 @@ void mytank_meleeattack (edict_t *self)
 
 	self->lastsound = level.framenum;
 
-	damage = 100+20*self->monsterinfo.level;
+	damage = 100+20*self->monsterinfo.level; // dmg: tank_melee
 	gi.sound (self, CHAN_AUTO, gi.soundindex ("tank/tnkatck5.wav"), 1, ATTN_NORM, 0);
 	
 	while ((other = findradius(other, self->s.origin, 128)) != NULL)
@@ -1100,14 +1095,14 @@ void init_drone_tank (edict_t *self)
 	gi.soundindex ("tank/tnkatck3.wav");
 
 //	if (self->activator && self->activator->client)
-	self->health = 150 + 95*self->monsterinfo.level;
+	self->health = 100 + 65*self->monsterinfo.level; // hlt: tank
 	//else self->health = 100 + 65*self->monsterinfo.level;
 
 	self->max_health = self->health;
 	self->gib_health = -2 * BASE_GIB_HEALTH;
 
 	//if (self->activator && self->activator->client)
-	self->monsterinfo.power_armor_power = 200 + 95*self->monsterinfo.level;
+	self->monsterinfo.power_armor_power = 200 + 105*self->monsterinfo.level; // pow: tank
 	//else self->monsterinfo.power_armor_power = 200 + 105*self->monsterinfo.level;
 
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
@@ -1157,12 +1152,12 @@ void init_drone_commander (edict_t *self)
 
 	// modify health and armor
 	if (invasion->value < 2)
-		self->health = 950 + 675*self->monsterinfo.level;
+		self->health = 2500 + 675*self->monsterinfo.level; // hlt: commander_normal_and_invasion
 	else
-		self->health = 1500 + 750*self->monsterinfo.level;
+		self->health = 5000 + 750*self->monsterinfo.level; // hlt: commander_invasion_hard
 
 	self->max_health = self->health;
-	self->monsterinfo.power_armor_power = 675*self->monsterinfo.level;
+	self->monsterinfo.power_armor_power = 675*self->monsterinfo.level; // pow: commander_normal_and_invasion,commander_invasion_hard
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 
 	self->monsterinfo.control_cost = M_COMMANDER_CONTROL_COST;

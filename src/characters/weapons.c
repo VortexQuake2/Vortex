@@ -11,6 +11,9 @@ qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 	if (generalabmode->value == 0) // No weapon master bonuses in non-general ab mode.
 		return false;
 
+	if (generalabmode->value && ent->myskills.class_num != CLASS_WEAPONMASTER)
+	    return false;
+
 	//Point to the correct weapon
 	weapon = &ent->myskills.weapons[WeaponIndex];
 
@@ -149,14 +152,19 @@ void vrx_reset_weapon_maximums(edict_t *ent)
 				//Weapon masters get a bonus to some upgrades
 				if (ent->myskills.class_num != CLASS_WEAPONMASTER || !GiveWeaponMasterUpgrade(ent, i, j))
 				{
-					//Sword gets an extra bonus
-					if ((j < 3) || ((j == 3) && (i == WEAPON_SWORD)))
+					if (j < 3)
 					{
-							ent->myskills.weapons[i].mods[j].soft_max = 20;
-							ent->myskills.weapons[i].mods[j].hard_max = 30;
+                        ent->myskills.weapons[i].mods[j].soft_max = 10;
+                        ent->myskills.weapons[i].mods[j].hard_max = 20;
 					}
 					else
 					{
+                        //Sword gets an extra bonus
+                        if (j == 3 && i == WEAPON_SWORD) {
+                            ent->myskills.weapons[i].mods[j].soft_max = 20;
+                            ent->myskills.weapons[i].mods[j].hard_max = 30;
+                        }
+
 						ent->myskills.weapons[i].mods[j].soft_max = 1;
 						ent->myskills.weapons[i].mods[j].hard_max = 1;
 					}
