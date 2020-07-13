@@ -25,7 +25,7 @@ void INV_Init(void)
 	invasion_navicount = 0;
 	invasion_start_navicount = 0;
 
-	for (i = 0; i < 64; i++)   // down from 32 to 24
+	for (i = 0; i < MAX_CLIENTS; i++)   // down from 32 to 24
 		INV_PlayerSpawns[i] = NULL;
 
 	for (i = 0; i < 64; i++) {
@@ -82,7 +82,7 @@ edict_t *INV_GiveClosestPSpawn(edict_t *ent)
 	vec3_t eorg;
 	edict_t *ret = NULL;
 	
-	for (int i = 0; i < invasion_max_playerspawns; i++)
+	for (int i = 0; i < invasion_spawncount; i++)
 	{
 		float dist;
 		edict_t* spawn = INV_PlayerSpawns[i];
@@ -101,25 +101,15 @@ edict_t *INV_GiveClosestPSpawn(edict_t *ent)
 
 edict_t *INV_GiveRandomPSpawn()
 {
-	int rand = -1;
-	int i;
-	edict_t * rval = NULL;
-
 	if (invasion_spawncount > 1)
 	{
-		do // Pick a random, active one.
-		{
-			rand = GetRandom(1, invasion_max_playerspawns) - 1;
-
-		} while (!INV_PlayerSpawns[rand]);
-
+		// pick a random active spawn
+		int rand = GetRandom(1, invasion_spawncount) - 1;
 		return INV_PlayerSpawns[rand];
 	}
 	else if (invasion_spawncount == 1)
 	{
-		for (i = 0; i < invasion_spawncount; i++) // Find first valid.
-			if (INV_PlayerSpawns[i])
-				return INV_PlayerSpawns[i];
+		return INV_PlayerSpawns[0];
 	}
 
 	return NULL;
@@ -294,29 +284,6 @@ edict_t *INV_GetSpawnPlayer(void)
 		}
 	}
 	return NULL;
-}
-
-edict_t *INV_GetRandomSpawn(void)
-{
-	int i = 0;
-	edict_t *e, *spawns[32];
-
-	for (e = g_edicts; e < &g_edicts[globals.num_edicts]; e++)
-	{
-		if (e && e->inuse && (e->mtype == INVASION_PLAYERSPAWN))
-			spawns[i++] = e;
-	}
-
-	// didn't find any spawns
-	if (i == 0)
-		return NULL;
-	// found one spawn
-	else if (i == 1)
-		return spawns[0];
-	// found more than one spawn, so return a random one
-	else
-		return spawns[GetRandom(0, i - 1)];
-
 }
 
 edict_t *INV_GetMonsterSpawn(edict_t *from)
@@ -676,10 +643,12 @@ void INV_SpawnPlayers(void)
 	if (!(cl_ent = INV_GetSpawnPlayer()))
 		return;
 
-	for (e = g_edicts; e < &g_edicts[globals.num_edicts]; e++)
+	for (int i = 0; i < invasion_spawncount; i++)
 	{
+		e = INV_PlayerSpawns[i];
+
 		// find an available spawn point
-		if (e && e->inuse && (e->mtype == INVASION_PLAYERSPAWN) && (level.time > e->wait))
+		if (level.time > e->wait)
 		{
 			// get player starting position
 			VectorCopy(e->s.origin, start);
@@ -688,7 +657,7 @@ void INV_SpawnPlayers(void)
 			tr = gi.trace(start, cl_ent->mins, cl_ent->maxs, start, NULL, MASK_SHOT);
 
 			// don't spawn if another player is standing in the way
-			if ((tr.fraction < 1) && tr.ent && tr.ent->inuse && tr.ent->client)
+			if (tr.ent && tr.ent->inuse && tr.ent->client)
 			{
 				e->wait = level.time + 1.0;
 				continue;
@@ -712,7 +681,7 @@ edict_t *INV_SelectPlayerSpawnPoint(edict_t *ent)
 
 	// spectators always get a spawn
 	if (G_IsSpectator(ent))
-		return INV_GetRandomSpawn();
+		return INV_GiveRandomPSpawn();
 
 	if (ent->spawn && ent->spawn->inuse)
 		return ent->spawn;
@@ -720,7 +689,7 @@ edict_t *INV_SelectPlayerSpawnPoint(edict_t *ent)
 	{
 		// Try to find one. But only if the spawn que is empty.
 		if (INV_IsSpawnQueEmpty())
-			return INV_GetRandomSpawn();
+			return INV_GiveRandomPSpawn();
 	}
 
 	return NULL;
@@ -733,20 +702,23 @@ int INV_GetNumPlayerSpawns(void)
 
 void INV_RemoveFromSpawnlist(edict_t *self)
 {
-	int i;
-	for (i = 0; i < 32; i++)
-		if (INV_PlayerSpawns[i] == self)
-		{
-			INV_PlayerSpawns[i] = NULL;
-			invasion_spawncount--;
+	// az: move the last one to our current slot
+	// this works out fine if list_index = invasion_spawncount
+	invasion_spawncount--;
+	INV_PlayerSpawns[self->list_index] = INV_PlayerSpawns[invasion_spawncount];
 
-			if (invasion_spawncount <= 0)
-			{
-				gi.bprintf(PRINT_HIGH, "Humans were unable to stop the invasion. Game over.\n");
-				EndDMLevel();
-				return;
-			}
-		}
+	if (INV_PlayerSpawns[self->list_index])
+		INV_PlayerSpawns[self->list_index]->list_index = self->list_index;
+
+	INV_PlayerSpawns[invasion_spawncount] = NULL;
+
+	if (invasion_spawncount <= 0)
+	{
+		gi.bprintf(PRINT_HIGH, "Humans were unable to stop the invasion. Game over.\n");
+		EndDMLevel();
+		return;
+	}
+
 }
 
 void info_player_invasion_death(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
@@ -754,8 +726,8 @@ void info_player_invasion_death(edict_t *self, edict_t *inflictor, edict_t *atta
 	G_UseTargets(self, self);
 	self->think = BecomeExplosion1;
 	self->nextthink = level.time + FRAMETIME;
-	INV_RemoveFromSpawnlist(self);
 	gi.bprintf(PRINT_HIGH, "A human spawn was destroyed by a %s!\n", V_GetMonsterName(attacker));
+	INV_RemoveFromSpawnlist(self);
 }
 
 void info_player_invasion_think(edict_t *self)
@@ -788,13 +760,6 @@ void SP_info_player_invasion(edict_t *self)
 				G_FreeEdict(e);
 		}
 
-		// az: *sigh*
-        /* while ((e = G_Find(e, FOFS(classname), "info_player_start")) != NULL)
-        {
-            if (e && e->inuse)
-                G_FreeEdict(e);
-        }*/
-
 		INVASION_OTHERSPAWNS_REMOVED = true;
 	}
 
@@ -819,6 +784,7 @@ void SP_info_player_invasion(edict_t *self)
 	VectorSet(self->maxs, 32, 32, -16);
 	gi.linkentity(self);
 
+	self->list_index = invasion_max_playerspawns;
 	INV_PlayerSpawns[invasion_max_playerspawns] = self;
 
 	invasion_max_playerspawns++;

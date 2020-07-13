@@ -1,6 +1,40 @@
 #include "g_local.h"
 #include "../characters/io/v_sqlite_unidb.h"
 
+// settings.h
+const char *s1;
+const char *s2;
+
+// g_local.h
+gitem_t	*Fdi_GRAPPLE;
+gitem_t	*Fdi_BLASTER;
+gitem_t *Fdi_SHOTGUN;
+gitem_t *Fdi_SUPERSHOTGUN;
+gitem_t *Fdi_MACHINEGUN;
+gitem_t *Fdi_CHAINGUN;
+gitem_t *Fdi_GRENADES;
+gitem_t *Fdi_GRENADELAUNCHER;
+gitem_t *Fdi_ROCKETLAUNCHER;
+gitem_t *Fdi_HYPERBLASTER;
+gitem_t *Fdi_RAILGUN;
+gitem_t *Fdi_BFG;
+gitem_t *Fdi_PHALANX;
+gitem_t *Fdi_BOOMER;
+gitem_t *Fdi_TRAP;
+gitem_t *Fdi_20MM;
+
+gitem_t *Fdi_SHELLS;
+gitem_t *Fdi_BULLETS;
+gitem_t *Fdi_CELLS;
+gitem_t *Fdi_ROCKETS;
+gitem_t *Fdi_SLUGS;
+gitem_t *Fdi_MAGSLUGS;
+gitem_t *Fdi_TBALL;
+gitem_t	*Fdi_POWERCUBE;
+
+int headindex;
+int	skullindex;
+
 
 cvar_t				*bot_showpath;
 cvar_t				*bot_showcombat;

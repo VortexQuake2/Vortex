@@ -2,6 +2,10 @@
 #include "../characters/class_limits.h"
 #include "../characters/io/v_sqlite_unidb.h"
 
+armoryRune_t WeaponRunes[20];
+armoryRune_t AbilityRunes[20];
+armoryRune_t ComboRunes[20];
+
 #define ARMORY_MAX_CONSUMABLES	10
 
 void OpenPurchaseMenu (edict_t *ent, int page_num, int lastline);

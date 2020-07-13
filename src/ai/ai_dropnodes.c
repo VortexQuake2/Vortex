@@ -27,6 +27,10 @@ in NO WAY supported by Steve Yeager.
 #include "ai_local.h"
 
 
+nav_plink_t pLinks[MAX_NODES];		// pLinks array
+nav_node_t nodes[MAX_NODES];		// nodes array
+ai_navigation_t	nav;
+
 //ACE
 
 

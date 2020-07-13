@@ -782,7 +782,7 @@ Marks the edict as free
 
 void G_FreeEdict (edict_t *ed)
 {
-	gi.unlinkentity (ed); // unlink from world
+	gi.unlinkentity (ed); // unlink from world|
 
 	if ((ed - g_edicts) <= (maxclients->value + BODY_QUEUE_SIZE))
 		return;

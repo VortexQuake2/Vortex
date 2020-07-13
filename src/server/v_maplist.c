@@ -1,5 +1,16 @@
 #include "../quake2/g_local.h"
 
+v_maplist_t maplist_PVP;
+v_maplist_t maplist_DOM;
+v_maplist_t maplist_PVM;
+v_maplist_t	maplist_CTF;
+v_maplist_t maplist_FFA;
+v_maplist_t maplist_INV;
+v_maplist_t maplist_TRA;
+v_maplist_t maplist_INH;
+v_maplist_t maplist_VHW;
+v_maplist_t maplist_TBI;
+
 void DoMaplistFilename(int mode, char* filename)
 {
 	sprintf(filename, "%s/settings/", game_path->string);

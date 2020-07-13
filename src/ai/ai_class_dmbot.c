@@ -23,7 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //ACE
 
-
+ai_weapon_t		AIWeapons[WEAP_TOTAL];
+int	num_AIEnemies;
+edict_t *AIEnemies[MAX_EDICTS];		// pointers to all players in the game
 
 //==========================================
 // Some CTF stuff

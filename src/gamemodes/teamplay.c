@@ -2,6 +2,8 @@
 #include "ctf.h"
 #include "../quake2/monsterframes/m_insane.h"
 
+joined_t	players[MAX_CLIENTS];
+
 #define RETARD_POINTS			25
 #define RETARD_CREDITS			10
 #define RETARD_POINTS_DELAY		10

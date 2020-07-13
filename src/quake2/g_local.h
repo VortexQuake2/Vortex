@@ -659,34 +659,34 @@ extern int	slug_index;
 extern int	cell_index;
 
 //pre searched items
-gitem_t	*Fdi_GRAPPLE;
-gitem_t	*Fdi_BLASTER;
-gitem_t *Fdi_SHOTGUN;
-gitem_t *Fdi_SUPERSHOTGUN;
-gitem_t *Fdi_MACHINEGUN;
-gitem_t *Fdi_CHAINGUN;
-gitem_t *Fdi_GRENADES;
-gitem_t *Fdi_GRENADELAUNCHER;
-gitem_t *Fdi_ROCKETLAUNCHER;
-gitem_t *Fdi_HYPERBLASTER;
-gitem_t *Fdi_RAILGUN;
-gitem_t *Fdi_BFG;
-gitem_t *Fdi_PHALANX;
-gitem_t *Fdi_BOOMER;
-gitem_t *Fdi_TRAP;
-gitem_t *Fdi_20MM;
+extern gitem_t	*Fdi_GRAPPLE;
+extern gitem_t	*Fdi_BLASTER;
+extern gitem_t *Fdi_SHOTGUN;
+extern gitem_t *Fdi_SUPERSHOTGUN;
+extern gitem_t *Fdi_MACHINEGUN;
+extern gitem_t *Fdi_CHAINGUN;
+extern gitem_t *Fdi_GRENADES;
+extern gitem_t *Fdi_GRENADELAUNCHER;
+extern gitem_t *Fdi_ROCKETLAUNCHER;
+extern gitem_t *Fdi_HYPERBLASTER;
+extern gitem_t *Fdi_RAILGUN;
+extern gitem_t *Fdi_BFG;
+extern gitem_t *Fdi_PHALANX;
+extern gitem_t *Fdi_BOOMER;
+extern gitem_t *Fdi_TRAP;
+extern gitem_t *Fdi_20MM;
 
-gitem_t *Fdi_SHELLS;
-gitem_t *Fdi_BULLETS;
-gitem_t *Fdi_CELLS;
-gitem_t *Fdi_ROCKETS;
-gitem_t *Fdi_SLUGS;
-gitem_t *Fdi_MAGSLUGS;
-gitem_t *Fdi_TBALL;
-gitem_t	*Fdi_POWERCUBE;
+extern gitem_t *Fdi_SHELLS;
+extern gitem_t *Fdi_BULLETS;
+extern gitem_t *Fdi_CELLS;
+extern gitem_t *Fdi_ROCKETS;
+extern gitem_t *Fdi_SLUGS;
+extern gitem_t *Fdi_MAGSLUGS;
+extern gitem_t *Fdi_TBALL;
+extern gitem_t	*Fdi_POWERCUBE;
 
-int headindex;
-int	skullindex;
+extern int headindex;
+extern int	skullindex;
 
 // means of death
 #define MOD_UNKNOWN			0
@@ -804,10 +804,10 @@ extern	int	meansOfDeath;
 
 extern	edict_t			*g_edicts;
 
-#define	FOFS(x) (int)&(((edict_t *)0)->x)
-#define	STOFS(x) (int)&(((spawn_temp_t *)0)->x)
-#define	LLOFS(x) (int)&(((level_locals_t *)0)->x)
-#define	CLOFS(x) (int)&(((gclient_t *)0)->x)
+#define	FOFS(x) (size_t)&(((edict_t *)0)->x)
+#define	STOFS(x) (size_t)&(((spawn_temp_t *)0)->x)
+#define	LLOFS(x) (size_t)&(((level_locals_t *)0)->x)
+#define	CLOFS(x) (size_t)&(((gclient_t *)0)->x)
 
 #define random()	((rand () & 0x7fff) / ((float)0x7fff))
 #define crandom()	(2.0 * (random() - 0.5))
@@ -994,7 +994,7 @@ typedef enum {
 typedef struct
 {
 	char	*name;
-	int		ofs;
+	size_t		ofs;
 	fieldtype_t	type;
 	int		flags;
 } field_t;
@@ -1895,6 +1895,7 @@ struct edict_s
 
 	// az begin
 	qboolean	exploded; // az: don't explode more than once at death. lol
+	int			list_index;
 	// az end
 
 	edict_t		*selected[4];
@@ -1975,16 +1976,16 @@ struct edict_s
 //ZOID
 
 //3.0 map lists
-v_maplist_t maplist_PVP;
-v_maplist_t maplist_DOM;
-v_maplist_t maplist_PVM;
-v_maplist_t	maplist_CTF;
-v_maplist_t maplist_FFA;
-v_maplist_t maplist_INV;
-v_maplist_t maplist_TRA;
-v_maplist_t maplist_INH;
-v_maplist_t maplist_VHW;
-v_maplist_t maplist_TBI;
+extern v_maplist_t maplist_PVP;
+extern v_maplist_t maplist_DOM;
+extern v_maplist_t maplist_PVM;
+extern v_maplist_t	maplist_CTF;
+extern v_maplist_t maplist_FFA;
+extern v_maplist_t maplist_INV;
+extern v_maplist_t maplist_TRA;
+extern v_maplist_t maplist_INH;
+extern v_maplist_t maplist_VHW;
+extern v_maplist_t maplist_TBI;
 //end new map lists
 
 //3.0 runes you can buy
@@ -1992,9 +1993,9 @@ typedef struct armoryRune_s {
     item_t rune;
 } armoryRune_t;
 
-armoryRune_t WeaponRunes[20];
-armoryRune_t AbilityRunes[20];
-armoryRune_t ComboRunes[20];
+extern armoryRune_t WeaponRunes[20];
+extern armoryRune_t AbilityRunes[20];
+extern armoryRune_t ComboRunes[20];
 
 //end runes you can buy
 
@@ -2006,7 +2007,7 @@ typedef struct
 	int		team;
 	float	time;
 }joined_t;
-joined_t	players[MAX_CLIENTS];
+extern joined_t	players[MAX_CLIENTS];
 joined_t *GetJoinedSlot (edict_t *ent);
 void ClearJoinedSlot (joined_t *slot);
 

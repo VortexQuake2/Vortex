@@ -66,8 +66,8 @@ extern	cvar_t				*bot_debugmonster;
 
 //acebot_items.c players table
 //----------------------------------------------------------
-int	num_AIEnemies;
-edict_t *AIEnemies[MAX_EDICTS];		// pointers to all players in the game
+extern int	num_AIEnemies;
+extern edict_t *AIEnemies[MAX_EDICTS];		// pointers to all players in the game
 
 
 //Debug & creating and linking nodes
@@ -83,7 +83,7 @@ typedef struct
 	edict_t		*chaseguy;
 
 } ai_devel_t;
-ai_devel_t	AIDevel;
+extern ai_devel_t	AIDevel;
 
 
 

@@ -201,7 +201,7 @@ qboolean CanJumpUp (edict_t *self, vec3_t neworg, vec3_t end)
 		// trace to the floor (end position is always 1 step below floor)
 		tr = gi.trace(start, self->mins, self->maxs, end, self, MASK_MONSTERSOLID);
 
-		if (tr.ent && G_GetClient(tr.ent)) // az: Don't jump over players...
+		if (tr.ent && tr.ent != world) // az: Don't jump over anything but the world...
 		    return false;
 
 		// we have cleared the obstacle!
@@ -435,10 +435,6 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
 	if (trace.allsolid)
 //GHz START
 	{
-		// az: Regular monsters: don't jump on invasion mode...
-		if (!G_GetClient(ent) && invasion->value) 
-			return false;
-
 		// try to jump over it
 		if (G_EntIsAlive(trace.ent) || !CanJumpUp(ent, neworg, end))
 			return false;

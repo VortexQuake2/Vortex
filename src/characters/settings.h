@@ -1,8 +1,8 @@
 #ifndef SETTINGS
 #define SETTINGS
 
-const char *s1;
-const char *s2;
+extern const char *s1;
+extern const char *s2;
 
 const char* Date();
 const char* Time();

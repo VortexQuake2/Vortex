@@ -64,8 +64,8 @@ typedef struct nav_path_s
 
 } nav_path_t;
 
-nav_plink_t pLinks[MAX_NODES];		// pLinks array
-nav_node_t nodes[MAX_NODES];		// nodes array
+extern nav_plink_t pLinks[MAX_NODES];		// pLinks array
+extern nav_node_t nodes[MAX_NODES];		// nodes array
 
 typedef struct
 {
@@ -83,5 +83,5 @@ typedef struct
 
 } ai_navigation_t;
 
-ai_navigation_t	nav;
+extern ai_navigation_t	nav;
 
