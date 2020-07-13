@@ -13,7 +13,7 @@ is not a staircase.
 
 =============
 */
-int c_yes, c_no;
+// static int c_yes, c_no;
 
 qboolean M_CheckBottom (edict_t *ent)
 {
@@ -38,11 +38,11 @@ qboolean M_CheckBottom (edict_t *ent)
 				goto realcheck;
 		}
 
-	c_yes++;
+	// c_yes++;
 	return true;		// we got out easy
 
 realcheck:
-	c_no++;
+	// c_no++;
 //
 // check it for real...
 //
@@ -73,7 +73,7 @@ realcheck:
 				return false;
 		}
 
-	c_yes++;
+	// c_yes++;
 	return true;
 }
 

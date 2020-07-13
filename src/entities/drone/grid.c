@@ -1340,7 +1340,7 @@ qboolean NearbyGridNode (vec3_t start, int nodes)
 	return false;
 }
 
-int c_yes, c_no;
+// static int c_yes, c_no;
 qboolean CheckBottom (vec3_t pos, vec3_t boxmin, vec3_t boxmax)
 {
 	vec3_t	mins, maxs, start, stop;
@@ -1364,11 +1364,11 @@ qboolean CheckBottom (vec3_t pos, vec3_t boxmin, vec3_t boxmax)
 				goto realcheck;
 		}
 
-	c_yes++;
+	// c_yes++;
 	return true;		// we got out easy
 
 realcheck:
-	c_no++;
+	// c_no++;
 //
 // check it for real...
 //
@@ -1399,7 +1399,7 @@ realcheck:
 				return false;
 		}
 
-	c_yes++;
+	// c_yes++;
 	return true;
 }
 
