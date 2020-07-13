@@ -190,7 +190,7 @@ void InfantryMachineGun (edict_t *self)
 	vec3_t	start, forward, right, vec;
 	int		damage, flash_number;
 
-	damage = 10 + 2*self->monsterinfo.level; // dmg: infantry_machinegun
+	damage = 10 + 1*self->monsterinfo.level; // dmg: infantry_machinegun
 
 	if (self->s.frame == FRAME_attak111)
 	{
@@ -224,8 +224,7 @@ void infantry_dead (edict_t *self)
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	gi.linkentity (self);
-
-	M_FlyCheck (self);
+	M_PrepBodyRemoval(self);
 }
 
 mframe_t infantry_frames_death1 [] =
@@ -525,7 +524,7 @@ void init_drone_infantry (edict_t *self)
 	VectorSet (self->mins, -16, -16, -24);
 	VectorSet (self->maxs, 16, 16, 32);
 
-	self->health = 100 + 40*self->monsterinfo.level; // hlt: infantry
+	self->health = 50 + 15*self->monsterinfo.level; // hlt: infantry
 	self->max_health = self->health;
 	self->gib_health = -BASE_GIB_HEALTH;
 	self->mass = 400;

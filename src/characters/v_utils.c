@@ -1737,10 +1737,10 @@ char *V_GetMonsterKind(int mtype) {
         case M_FLYER:
             return "flyer";
         case M_INFANTRY:
-            return "infantry";
+            return "enforcer";
         case M_INSANE:
         case M_RETARD:
-            return "retard";
+            return "lost marine";
         case M_GUNNER:
             return "gunner";
         case M_CHICK:
