@@ -666,6 +666,9 @@ qboolean vrx_CheckForFlag (void);
 void CreateGrid(qboolean force);
 void DroneList_Clear();
 
+extern edict_t* g_freeEdictsH;
+extern edict_t* g_freeEdictsT;
+
 void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 {
 	edict_t		*ent;
@@ -681,6 +684,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	saved = level.r_monsters;//4.5
 	memset (&level, 0, sizeof(level));
 	memset (g_edicts, 0, game.maxentities * sizeof (g_edicts[0]));
+	g_freeEdictsH = g_freeEdictsT = NULL;
 
 	strncpy (level.mapname, mapname, sizeof(level.mapname)-1);
 	strncpy (game.spawnpoint, spawnpoint, sizeof(game.spawnpoint)-1);
