@@ -373,7 +373,7 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 
 	// calculate starting position
 	VectorCopy(e->s.origin, start);
-	start[2] = e->absmax[2] + 1 + abs(monster->mins[2]);
+	start[2] = e->absmax[2] + 1 + fabsf(monster->mins[2]);
 
 	tr = gi.trace(start, monster->mins, monster->maxs, start, NULL, MASK_SHOT);
 
@@ -606,11 +606,11 @@ void INV_SpawnMonsters(edict_t *self)
 			randomval = GetRandom(1, 11); // don't spawn soldiers
 		}
 
-		if (invasion_difficulty_level % 5 && invasion->value == 1) // nonboss stage? easy mode?
+		if (invasion_difficulty_level % 5 || invasion->value == 1) // nonboss stage? easy mode?
 		{
-			while (randomval == 5) // disallow medics
+			while (randomval == 5 || randomval == 10) // disallow medics
 			{
-				randomval = GetRandom(1, 8);
+				randomval = GetRandom(1, 11);
 			}
 		}
 
@@ -656,12 +656,12 @@ void INV_SpawnPlayers(void)
 		{
 			// get player starting position
 			VectorCopy(e->s.origin, start);
-			start[2] = e->absmax[2] + 1 + abs(cl_ent->mins[2]);
+			start[2] = e->absmax[2] + 1 + fabsf(cl_ent->mins[2]);
 
 			tr = gi.trace(start, cl_ent->mins, cl_ent->maxs, start, NULL, MASK_SHOT);
 
 			// don't spawn if another player is standing in the way
-			if (tr.ent && tr.ent->inuse && tr.ent->client)
+			if (tr.ent && tr.ent->inuse && tr.ent->client && tr.ent->deadflag != DEAD_DEAD)
 			{
 				e->wait = level.time + 1.0;
 				continue;
@@ -730,7 +730,7 @@ void info_player_invasion_death(edict_t *self, edict_t *inflictor, edict_t *atta
 	G_UseTargets(self, self);
 	self->think = BecomeExplosion1;
 	self->nextthink = level.time + FRAMETIME;
-	gi.bprintf(PRINT_HIGH, "A human spawn was destroyed by a %s!\n", V_GetMonsterName(attacker));
+	gi.bprintf(PRINT_HIGH, "A human spawn was destroyed by a %s!\n", GetMonsterKindString(attacker->mtype));
 	INV_RemoveFromSpawnlist(self);
 }
 
@@ -882,7 +882,7 @@ void inv_defenderspawn_think(edict_t *self)
 			//gi.dprintf("%d: attempting to spawn a monster\n", num);
 			// get starting position
 			VectorCopy(self->s.origin, start);
-			start[2] = self->absmax[2] + 1 + abs(monster->mins[2]);
+			start[2] = self->absmax[2] + 1 + fabsf(monster->mins[2]);
 
 			tr = gi.trace(start, monster->mins, monster->maxs, start, NULL, MASK_SHOT);
 

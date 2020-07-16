@@ -257,8 +257,9 @@ void OpenJoinMenu (edict_t *ent)
 
 	//				    xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
 
-	addlinetomenu(ent, va("Vortex Chile v%s", VRX_VERSION), MENU_GREEN_CENTERED);
-	//addlinetomenu(ent, "www.v2gamers.cl", MENU_GREEN_CENTERED);
+	addlinetomenu(ent, "Vortex Revival", MENU_GREEN_CENTERED);
+	addlinetomenu(ent, va("vrxcl v%s", VRX_VERSION), MENU_GREEN_CENTERED);
+	addlinetomenu(ent, "http://q2vortex.com", MENU_WHITE_CENTERED);
 	addlinetomenu(ent, " ", 0);
 	addlinetomenu(ent, " ", 0);
 	addlinetomenu(ent, "Kill players and monsters", 0);
@@ -267,13 +268,16 @@ void OpenJoinMenu (edict_t *ent)
     addlinetomenu(ent, "ability and weapon points", 0);
     addlinetomenu(ent, "to become stronger!", 0);
 	addlinetomenu(ent, " ", 0);
+	addlinetomenu(ent, "Maintained by", MENU_GREEN_CENTERED);
+	addlinetomenu(ent, "The Vortex Revival Team", MENU_GREEN_CENTERED);
+	addlinetomenu(ent, "github.com/zardoru/vrxcl", MENU_WHITE_CENTERED);
 	addlinetomenu(ent, " ", 0);
 	addlinetomenu(ent, "Start your reign", 1);
 	addlinetomenu(ent, "Toggle chasecam", 2);
 	addlinetomenu(ent, "Exit", 3);
 
 	setmenuhandler(ent, joinmenu_handler);
-	ent->client->menustorage.currentline = 11;
+	ent->client->menustorage.currentline = 16;
 	showmenu(ent);
 }
 
@@ -617,7 +621,7 @@ void OpenGeneralMenu (edict_t *ent)
 #endif
 
 	setmenuhandler(ent, generalmenu_handler);
-	ent->client->menustorage.currentline = 18;
+	ent->client->menustorage.currentline = 4;
 	showmenu(ent);
 }
 

@@ -1985,7 +1985,7 @@ void PM_UseTeleporter(edict_t *self, edict_t *other, cplane_t *plane, csurface_t
 
 	// place the entity slightly above the teleporter's destination target
 	VectorCopy(dest->s.origin, start);
-	start[2] += abs(other->mins[2]) - 14;
+	start[2] += fabsf(other->mins[2]) - 14;
 
 	// make sure we don't get stuck
 	tr = gi.trace(start, other->mins, other->maxs, start, other, MASK_SHOT);

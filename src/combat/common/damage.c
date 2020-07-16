@@ -216,7 +216,7 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
         damage *= 3;
 
     if (ctf->value) {
-        int delta = abs(red_flag_caps - blue_flag_caps);
+        int delta = fabsf(red_flag_caps - blue_flag_caps);
         edict_t *cl_targ = G_GetClient(targ);
 
         if ((delta > 1) && cl_targ) // need at least 2 caps

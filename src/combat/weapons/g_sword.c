@@ -102,7 +102,7 @@ void fire_sword ( edict_t *self, vec3_t start, vec3_t aimdir, int damage, int ki
     vec3_t end;
     vec3_t begin;
     vec3_t begin_offset;
-    int sword_bonus = 1;
+    float sword_bonus = 1;
     int swordrange;
 
     // calling entity made a sound, used to alert monsters
@@ -184,7 +184,7 @@ void sword_attack (edict_t *ent, vec3_t g_offset, int damage)
 }
 
 void Weapon_Sword_Fire (edict_t *ent) {
-    int sword_bonus = 1;
+    float sword_bonus = 1;
     int damage;
     float temp;
 

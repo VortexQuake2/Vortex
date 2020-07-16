@@ -18,10 +18,6 @@ void makron_step_right (edict_t *self);
 void makronBFG (edict_t *self);
 void makron_dead (edict_t *self);
 
-void drone_ai_stand (edict_t *self, float dist);
-void drone_ai_run (edict_t *self, float dist);
-void drone_ai_walk (edict_t *self, float dist);
-
 static int	sound_pain4;
 static int	sound_pain5;
 static int	sound_pain6;

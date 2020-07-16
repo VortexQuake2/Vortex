@@ -335,12 +335,12 @@ void AddDmgList (edict_t *self, edict_t *other, int damage)
     vrx_clean_damage_list(self, false);
 
 	// already in the queue?
-	if (slot=findDmgSlot(self, cl_ent))
+	if ( (slot=findDmgSlot(self, cl_ent)) != NULL )
 	{
 		slot->damage += damage;
 	}
 	// add attacker to the queue
-	else if (slot=findEmptyDmgSlot(self))
+	else if ( (slot=findEmptyDmgSlot(self)) != NULL )
 	{
 		slot->player = cl_ent;
 		slot->damage += damage;

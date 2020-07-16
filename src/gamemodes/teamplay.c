@@ -201,7 +201,7 @@ void sortTeamsByLevel()
 		  /*
 		  if (ctf->value)
 		  {
-			delta = abs(red_flag_caps-blue_flag_caps);
+			delta = fabsf(red_flag_caps-blue_flag_caps);
 			if (delta > 1) // need at least 2 extra caps
 			{
 				// don't award more than 20% (70/30 split)

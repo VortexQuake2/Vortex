@@ -191,7 +191,7 @@ void FL_think (edict_t *self)
 
 		// special circumstance for flipped sentry
 		if (self->owner->owner && self->owner->owner->style == SENTRY_FLIPPED)
-			start[2] -= abs(self->owner->mins[2]);
+			start[2] -= fabsf(self->owner->mins[2]);
 		else
 			start[2] += self->owner->maxs[2];
 		VectorMA(start, (self->owner->maxs[0] + 16), forward, start);
@@ -2492,11 +2492,17 @@ void Cmd_AdminCmd (edict_t *ent)
 	if (!Q_stricmp(cmd1, "reloadvars"))
 	{
 		Lua_LoadVariables();
-	}else if (!Q_stricmp(cmd1, "crashserv"))
+		return;
+	}
+	
+	// Maybe it'll be more obvious as to why there's a "please crash me" command this way.
+#ifdef _DEBUG 
+	if (!Q_stricmp(cmd1, "crashserv"))
 	{
 		char *segf = 0;
 		*segf = 1; // Boom.
 	}
+#endif
 
 	/*else if (Q_stricmp(cmd1, "upgrade_ability") == 0)
 	{
@@ -2812,49 +2818,49 @@ void Cmd_Overload_f (edict_t *ent)
 	}
 	else if (Q_stricmp(cmd, "fireball") == 0)
 	{
-		if (GetOverloadValues(ent, talentLevel, cubes, FIREBALL_COST, &cost_mult, &skill_mult));
+		if (GetOverloadValues(ent, talentLevel, cubes, FIREBALL_COST, &cost_mult, &skill_mult))
 			Cmd_Fireball_f(ent, skill_mult, cost_mult);
 	}
 	else if (Q_stricmp(cmd, "icebolt") == 0)
 	{
-		if (GetOverloadValues(ent, talentLevel, cubes, ICEBOLT_COST, &cost_mult, &skill_mult));
+		if (GetOverloadValues(ent, talentLevel, cubes, ICEBOLT_COST, &cost_mult, &skill_mult))
 			Cmd_IceBolt_f(ent, skill_mult, cost_mult);
 	}
 	else if (Q_stricmp(cmd, "meteor") == 0)
 	{
-		if (GetOverloadValues(ent, talentLevel, cubes, METEOR_COST, &cost_mult, &skill_mult));
+		if (GetOverloadValues(ent, talentLevel, cubes, METEOR_COST, &cost_mult, &skill_mult))
 			Cmd_Meteor_f(ent, skill_mult, cost_mult);
 	}
 	else if (Q_stricmp(cmd, "nova") == 0)
 	{
-		if (GetOverloadValues(ent, talentLevel, cubes, NOVA_COST, &cost_mult, &skill_mult));
+		if (GetOverloadValues(ent, talentLevel, cubes, NOVA_COST, &cost_mult, &skill_mult))
 			Cmd_Nova_f(ent, 0, skill_mult, cost_mult);
 	}
 	else if (Q_stricmp(cmd, "frostnova") == 0)
 	{
-		if (GetOverloadValues(ent, talentLevel, cubes, NOVA_COST, &cost_mult, &skill_mult));
+		if (GetOverloadValues(ent, talentLevel, cubes, NOVA_COST, &cost_mult, &skill_mult))
 			Cmd_FrostNova_f(ent, skill_mult, cost_mult);
 	}
 	else if (Q_stricmp(cmd, "chainlightning") == 0)
 	{
-		if (GetOverloadValues(ent, talentLevel, cubes, CLIGHTNING_COST, &cost_mult, &skill_mult));
+		if (GetOverloadValues(ent, talentLevel, cubes, CLIGHTNING_COST, &cost_mult, &skill_mult))
 			Cmd_ChainLightning_f(ent, skill_mult, cost_mult);
 	}
 	else if (Q_stricmp(cmd, "lightningstorm") == 0)
 	{
-		if (GetOverloadValues(ent, talentLevel, cubes, LIGHTNING_COST, &cost_mult, &skill_mult));
+		if (GetOverloadValues(ent, talentLevel, cubes, LIGHTNING_COST, &cost_mult, &skill_mult))
 			Cmd_LightningStorm_f(ent, skill_mult, cost_mult);
 	}
 	else if (Q_stricmp(cmd, "spell_bomb") == 0 || Q_stricmp(cmd, "bombspell") == 0)
 	{
-		if (GetOverloadValues(ent, talentLevel, cubes, COST_FOR_BOMB, &cost_mult, &skill_mult));
+		if (GetOverloadValues(ent, talentLevel, cubes, COST_FOR_BOMB, &cost_mult, &skill_mult))
 			Cmd_BombPlayer(ent, skill_mult, cost_mult);
 	}
 	else
 		safe_cprintf(ent, PRINT_HIGH, "syntax: overload <# cubes> <spell command>\n");
 }
 
-void Cmd_DeathRay_f (edict_t *ent, qboolean heal)
+void Cmd_DeathRay_f (edict_t *ent, qboolean heal, qboolean gib)
 {
 	vec3_t forward, right, offset, start, end;
 	trace_t tr;
@@ -2872,9 +2878,15 @@ void Cmd_DeathRay_f (edict_t *ent, qboolean heal)
 	{
 		if (heal && tr.ent->health > 0)
 			tr.ent->health += 10000;
-		else
-			T_Damage(tr.ent, ent, ent, vec3_origin, tr.ent->s.origin, vec3_origin, 
-				1000000, 0, DAMAGE_NO_PROTECTION, MOD_LIGHTNING);
+		else {
+			if (gib)
+				T_Damage(tr.ent, ent, ent, vec3_origin, tr.ent->s.origin, vec3_origin,
+					1000000, 0, DAMAGE_NO_PROTECTION, MOD_LIGHTNING);
+			else {
+				T_Damage(tr.ent, ent, ent, vec3_origin, tr.ent->s.origin, vec3_origin,
+					tr.ent->health, 0, DAMAGE_NO_PROTECTION, MOD_LIGHTNING);
+			}
+		}
 	}
 }
 
@@ -3183,11 +3195,14 @@ void ClientCommand (edict_t *ent)
 	}
 	else if (Q_stricmp (cmd, "deathray") == 0)
 	{
-		Cmd_DeathRay_f(ent, false);
+		Cmd_DeathRay_f(ent, false, true);
 	}
 	else if (Q_stricmp (cmd, "healray") == 0)
 	{
-		Cmd_DeathRay_f(ent, true);
+		Cmd_DeathRay_f(ent, true, true);
+	}
+	else if (Q_stricmp(cmd, "lessdeadlyray") == 0) { // az
+		Cmd_DeathRay_f(ent, false, false);
 	}
 	else if (Q_stricmp (cmd, "test") == 0)
 	{

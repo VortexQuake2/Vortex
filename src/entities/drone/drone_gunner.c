@@ -24,7 +24,6 @@ void mygunner_fire_chain(edict_t *self);
 void mygunner_delay (edict_t *self);
 void gunner_attack_grenade (edict_t *self);
 void gunner_refire_grenade (edict_t *self);
-void drone_ai_walk (edict_t *self, float dist);
 
 void mygunneridlesound (edict_t *self)
 {

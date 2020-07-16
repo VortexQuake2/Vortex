@@ -184,7 +184,7 @@ void ClientDisconnect(edict_t *ent);
 void ClientBegin(edict_t *ent, qboolean loadgame);
 void ClientCommand(edict_t *ent);
 void RunEntity(edict_t *ent);
-void WriteGame(char *filename);
+void WriteGame(char *filename, qboolean autosave);
 void ReadGame(char *filename);
 void WriteLevel(char *filename);
 void ReadLevel(char *filename);
@@ -585,7 +585,7 @@ void EndDMLevel(void)
 	//3.0 end voting (doomie)
 
 	//This should always be true now
-	if (level.nextmap)
+	if (level.nextmap[0])
 	{	// go to a specific map
 		//BeginIntermission (CreateTargetChangeLevel (level.nextmap) );
 		VortexBeginIntermission(level.nextmap);
@@ -597,7 +597,6 @@ void EndDMLevel(void)
 		if (!ent)
 		{	// the map designer didn't include a changelevel,
 			// so create a fake ent that goes back to the same level
-			//BeginIntermission (CreateTargetChangeLevel (level.mapname) );
 			VortexBeginIntermission(level.nextmap);
 			return;
 		}
@@ -795,7 +794,7 @@ void ExitLevel(void)
 		Com_sprintf(command, sizeof(command), "gamemap \"%s\"\n", level.changemap);
 #endif
 	}
-	else if (level.nextmap)
+	else if (level.nextmap[0])
 	{
 #ifdef Q2PRO_COMPATIBILITY
 		Com_sprintf(command, sizeof(command), "map \"%s\"\n", level.nextmap);

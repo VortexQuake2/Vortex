@@ -151,7 +151,7 @@ void P_DamageFeedback (edict_t *player)
 	//
 	// calculate view angle kicks
 	//
-	kick = abs(client->damage_knockback);
+	kick = fabsf(client->damage_knockback);
 	if (kick && player->health > 0)	// kick of 0 means no view adjust at all
 	{
 		kick = kick * 100 / player->health;

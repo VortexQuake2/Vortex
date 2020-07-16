@@ -540,7 +540,7 @@ edict_t *drone_get_target (edict_t *self,
 		return target;
 
 	// find navi
-	if (invasion->value && get_navi && ((target = drone_findnavi(self)) != NULL))
+	if (invasion->value && get_navi && (target = drone_findnavi(self)) != NULL)
 		return target;
 
 	return NULL;
@@ -874,7 +874,7 @@ qboolean FindPlat (edict_t *self, vec3_t plat_pos)
 			continue;
 
 		VectorCopy(start, end);
-		end[2] += abs(e->s.origin[2]);
+		end[2] += fabsf(e->s.origin[2]);
 		if (distance(end, self->enemy->s.origin)
 			> distance(self->s.origin, self->enemy->s.origin))
 			continue; // plat must bring us closer to our goal
@@ -1797,11 +1797,11 @@ Called when the monster is chasing an enemy or goal
 */
 void drone_ai_run (edict_t *self, float dist)
 {
-	float           time;
-	vec3_t          start, end, v;
-	trace_t         tr;
-	edict_t         *tempgoal=NULL;
-	qboolean        enemy_vis=false;
+	// float           time;
+	// vec3_t          start, end, v;
+	// trace_t         tr;
+	// edict_t         *tempgoal=NULL;
+	// qboolean        enemy_vis=false;
 
 	// if (level.pathfinding > 0)
 	{
@@ -1967,7 +1967,7 @@ void drone_ai_run (edict_t *self, float dist)
 		{
 			//      gi.dprintf("standing on plat!\n");
 			// divide by speed to get time to reach destination
-			time = 0.1 * (abs(self->groundentity->s.origin[2]) / self->groundentity->moveinfo.speed);
+			time = 0.1 * (fabsf(self->groundentity->s.origin[2]) / self->groundentity->moveinfo.speed);
 			self->monsterinfo.pausetime = level.time + time;
 			self->monsterinfo.stand(self);
 			self->monsterinfo.aiflags &= ~AI_PURSUE_PLAT_GOAL;

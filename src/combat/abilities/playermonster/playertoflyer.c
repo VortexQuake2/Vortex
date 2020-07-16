@@ -103,7 +103,7 @@ void FlyerVerticalThrust (edict_t *ent, int speed, int max_speed)
 	max = 2*CS_AIRACCEL; // absolute maximum acceleration
 	cspd = ent->velocity[2]; // current velocity
 	nspd = cspd+speed; // new velocity
-	delta = max_speed-fabs(cspd); // difference between max speed and current velocity
+	delta = max_speed-fabsf(cspd); // difference between max speed and current velocity
 
 	if (speed > 0) // player wants to go up
 	{

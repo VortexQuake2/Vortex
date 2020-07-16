@@ -21,9 +21,6 @@ static int	sound_tap;
 static int	sound_scratch;
 static int	sound_search;
 
-void drone_ai_stand (edict_t *self, float dist);
-void drone_ai_run (edict_t *self, float dist);
-void drone_ai_walk (edict_t *self, float dist);
 void myparasite_stand (edict_t *self);
 void myparasite_start_run (edict_t *self);
 void myparasite_run (edict_t *self);

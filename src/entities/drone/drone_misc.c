@@ -431,8 +431,11 @@ void drone_death (edict_t *self, edict_t *attacker)
 
 	// the other place where they are handled is in player death functions
 	if (invasion->value || pvm->value) {
-		attacker->myskills.streak++;
-        vrx_trigger_spree_abilities(attacker);
+		edict_t *cl = G_GetClient(attacker);
+		if (cl) {
+			cl->myskills.streak++;
+			vrx_trigger_spree_abilities(cl);
+		}
 	}
 }
 
@@ -839,7 +842,7 @@ edict_t *SpawnDroneEnt (edict_t *drone, edict_t *ent, int drone_type, qboolean w
 		if (tr.fraction < 1)
 		{
 			if (tr.endpos[2] <= ent->s.origin[2])
-				tr.endpos[2] += abs(drone->mins[2]); // spawned below us
+				tr.endpos[2] += fabsf(drone->mins[2]); // spawned below us
 			else
 				tr.endpos[2] -= drone->maxs[2];	// spawned above
 		}
@@ -1762,7 +1765,7 @@ qboolean M_Upkeep (edict_t *self, int delay, int upkeep_cost)
 qboolean M_Initialize (edict_t *ent, edict_t *monster)
 {
 	int		talentLevel;
-	int 	talentLevel2;
+	// int 	talentLevel2;
 	float	mult = 1.0;
 
 	switch (monster->mtype)
@@ -1866,7 +1869,7 @@ char *GetMonsterKindString (int mtype)
     switch (mtype)
     {
         case M_BRAIN: return "Brain";
-        case M_CHICK: return "Chick";
+        case M_CHICK: return "Praetor";
         case M_MEDIC: return "Medic";
         case M_MUTANT: return "Mutant";
         case M_PARASITE: return "Parasite";

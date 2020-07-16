@@ -88,7 +88,7 @@ qboolean minisentry_checkposition (edict_t *self)
 	if (self->style == SENTRY_UPRIGHT)
 	{
 		VectorCopy(self->s.origin, end);
-		end[2]--;// -= abs(self->mins[2])+1;
+		end[2]--;// -= fabsf(self->mins[2])+1;
 		tr = gi.trace(self->s.origin, self->mins, self->maxs, end, self, MASK_SHOT);//MASK_SOLID);
 		if (tr.fraction == 1.0 || (tr.ent != world && tr.ent->mtype != M_LASERPLATFORM))
 		{
@@ -117,9 +117,9 @@ qboolean minisentry_findtarget (edict_t *self)
 	// don't retarget too quickly
 	if (self->last_move_time > level.time)
 		return false;
-	while ((target = findclosestradius (target, self->s.origin, SENTRY_TARGET_RANGE)) != NULL)
+	while ((target = findclosestradius_targets (target, self)) != NULL)
 	{
-		if (!G_ValidTarget(self, target, true))
+		if (!G_ValidTarget_Lite(self, target, true))
 			continue;
 		if (!infov(self, target, SENTRY_FOV))
 			continue;
@@ -190,7 +190,7 @@ void minisentry_attack (edict_t *self)
 	AngleVectors(self->s.angles, forward, NULL, NULL);
 	VectorCopy(self->s.origin, start);
 	if (self->owner && self->owner->style == SENTRY_FLIPPED)
-		start[2] -= abs(self->mins[2]);
+		start[2] -= fabsf(self->mins[2]);
 	else
 		start[2] += self->maxs[2];
 	VectorMA(start, (self->maxs[0] + 16), forward, start);
@@ -481,6 +481,8 @@ void base_createturret (edict_t *self)
     talentLevel = vrx_get_talent_level(self->creator, TALENT_STORAGE_UPGRADE);
 	ammo_mult += 0.2 * talentLevel;
 
+	sentry->monsterinfo.sight_range = SENTRY_TARGET_RANGE; // az
+
 	// set ammo
 	sentry->monsterinfo.jumpdn = SENTRY_MAX_AMMO * ammo_mult; // max ammo
 	sentry->light_level = sentry->monsterinfo.jumpdn; // current ammo
@@ -518,14 +520,14 @@ void base_createturret (edict_t *self)
 		VectorSet(sentry->maxs, 28, 28, 24);
 		VectorCopy(self->s.origin, end);
 		//end[2] += self->maxs[2] + sentry->mins[2] + 1;
-		end[2] += abs(sentry->mins[2])+1;
+		end[2] += fabsf(sentry->mins[2])+1;
 	}
 	else
 	{
 		VectorSet(sentry->mins, -28, -28, -24);
 		VectorSet(sentry->maxs, 28, 28, 12);
 		VectorCopy(self->s.origin, end);
-		//end[2] -= abs(self->mins[2]) + sentry->maxs[2] + 1;
+		//end[2] -= fabsf(self->mins[2]) + sentry->maxs[2] + 1;
 		end[2] -= sentry->maxs[2]+1;
 	}
 
@@ -585,6 +587,8 @@ void SpawnMiniSentry (edict_t *ent, int cost, float skill_mult, float delay_mult
 	VectorSet(base->mins, -32, -32, 0);
 	VectorSet(base->maxs, 32, 32, 12);
 
+	base->monsterinfo.sight_range = SENTRY_TARGET_RANGE; // az
+
 	// calculate starting position
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
 	VectorSet(offset, 0, 7,  ent->viewheight-8);
@@ -602,7 +606,7 @@ void SpawnMiniSentry (edict_t *ent, int cost, float skill_mult, float delay_mult
 	{
 		// add the height of the base
 		VectorCopy(tr.endpos, end);
-		end[2] += abs(base->mins[2]);
+		end[2] += fabsf(base->mins[2]);
 		//base->movetype = MOVETYPE_NONE;
 		base->style = SENTRY_UPRIGHT;
 	}

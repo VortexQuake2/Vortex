@@ -54,7 +54,7 @@ static void check_dodge (edict_t *self, vec3_t start, vec3_t dir, int speed, int
 	VectorMA (start, 8192, dir, end);
 	tr = gi.trace (start, NULL, NULL, end, self, MASK_SHOT);
 	if (G_EntIsAlive(tr.ent) && (tr.ent->svflags & SVF_MONSTER) && (tr.ent->monsterinfo.dodge) 
-		&& infront(tr.ent, self) && (tr.endpos[2] > (tr.ent->absmin[2]+abs(tr.ent->mins[2]))))
+		&& infront(tr.ent, self) && (tr.endpos[2] > (tr.ent->absmin[2]+fabsf(tr.ent->mins[2]))))
 	{
 		VectorSubtract (tr.endpos, start, v);
 		eta = (VectorLength(v) - tr.ent->maxs[0]) / speed;
@@ -3176,6 +3176,17 @@ void fire_spikeball (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int
 
 void organ_removeall (edict_t *ent, char *classname, qboolean refund);
 
+void organ_kill(edict_t *ent, char *classname)
+{
+	edict_t *e = NULL;
+
+	while ((e = G_Find(e, FOFS(classname), classname)) != NULL)
+	{
+		if (e && e->activator && e->activator->inuse && (e->activator == ent) && !RestorePreviousOwner(e))
+			T_Damage(e, ent, ent, vec3_origin, e->s.origin, vec3_origin, e->health / 2, 0, DAMAGE_NO_PROTECTION, MOD_LIGHTNING_STORM);
+	}
+}
+
 void Cmd_TossSpikeball (edict_t *ent)
 {
 	int		talentLevel;
@@ -3199,6 +3210,11 @@ void Cmd_TossSpikeball (edict_t *ent)
 			ent->spikeball_follow = true;
 			safe_cprintf(ent, PRINT_HIGH, "Spores will follow your crosshairs\n");
 		}
+		return;
+	}
+
+	if (Q_strcasecmp(gi.args(), "kill") == 0 && ent->myskills.administrator) {
+		organ_kill(ent, "spikeball");
 		return;
 	}
 /*

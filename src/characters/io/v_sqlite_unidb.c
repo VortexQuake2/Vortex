@@ -22,17 +22,17 @@ void V_VSFU_Cleanup();
 
 const char* VSFU_CREATEDBQUERY[TOTAL_TABLES] = 
 {
-	{"CREATE TABLE [abilities] ( [char_idx] INTEGER,[index] INTEGER, [level] INTEGER, [max_level] INTEGER, [hard_max] INTEGER, [modifier] INTEGER,   [disable] INTEGER,   [general_skill] INTEGER)"},
-	{"CREATE TABLE [ctf_stats] ( [char_idx] INTEGER,  [flag_pickups] INTEGER,   [flag_captures] INTEGER,   [flag_returns] INTEGER,   [flag_kills] INTEGER,   [offense_kills] INTEGER,   [defense_kills] INTEGER,   [assists] INTEGER)"},
-	{"CREATE TABLE [game_stats] ([char_idx] INTEGER,  [shots] INTEGER,   [shots_hit] INTEGER,   [frags] INTEGER,   [fragged] INTEGER,   [num_sprees] INTEGER,   [max_streak] INTEGER,   [spree_wars] INTEGER,   [broken_sprees] INTEGER,   [broken_spreewars] INTEGER,   [suicides] INT,   [teleports] INTEGER,   [num_2fers] INTEGER)"},
-	{"CREATE TABLE [point_data] ([char_idx] INTEGER,  [exp] INTEGER,   [exptnl] INTEGER,   [level] INTEGER,   [classnum] INTEGER,   [skillpoints] INTEGER,   [credits] INTEGER,   [weap_points] INTEGER,   [resp_weapon] INTEGER,   [tpoints] INTEGER)"},
-	{"CREATE TABLE [runes_meta] ([char_idx] INTEGER,[index] INTEGER, [itemtype] INTEGER, [itemlevel] INTEGER, [quantity] INTEGER, [untradeable] INTEGER, [id] CHAR(16), [name] CHAR(24), [nummods] INTEGER, [setcode] INTEGER, [classnum] INTEGER)"},
-	{"CREATE TABLE [runes_mods] ([char_idx] INTEGER,  [rune_index] INTEGER, [type] INTEGER, [mod_index] INTEGER, [value] INTEGER, [set] INTEGER)"},
-	{"CREATE TABLE [talents] (   [char_idx] INTEGER,[id] INTEGER, [upgrade_level] INTEGER, [max_level] INTEGER)"},
-	{"CREATE TABLE [userdata] (  [char_idx] INTEGER,[title] CHAR(24), [playername] CHAR(64), [password] CHAR(24), [email] CHAR(64), [owner] CHAR(24), [member_since] CHAR(30), [last_played] CHAR(30), [playtime_total] INTEGER,[playingtime] INTEGER)"},
-	{"CREATE TABLE [weapon_meta] ([char_idx] INTEGER,[index] INTEGER, [disable] INTEGER)"},
-	{"CREATE TABLE [weapon_mods] ([char_idx] INTEGER,[weapon_index] INTEGER, [modindex] INTEGER, [level] INTEGER, [soft_max] INTEGER, [hard_max] INTEGER)"},
-	{"CREATE TABLE [character_data] ([char_idx] INTEGER,  [respawns] INTEGER,   [health] INTEGER,   [maxhealth] INTEGER,   [armour] INTEGER,   [maxarmour] INTEGER,   [nerfme] INTEGER,   [adminlevel] INTEGER,   [bosslevel] INTEGER)"}
+	"CREATE TABLE [abilities] ( [char_idx] INTEGER,[index] INTEGER, [level] INTEGER, [max_level] INTEGER, [hard_max] INTEGER, [modifier] INTEGER,   [disable] INTEGER,   [general_skill] INTEGER)",
+	"CREATE TABLE [ctf_stats] ( [char_idx] INTEGER,  [flag_pickups] INTEGER,   [flag_captures] INTEGER,   [flag_returns] INTEGER,   [flag_kills] INTEGER,   [offense_kills] INTEGER,   [defense_kills] INTEGER,   [assists] INTEGER)",
+	"CREATE TABLE [game_stats] ([char_idx] INTEGER,  [shots] INTEGER,   [shots_hit] INTEGER,   [frags] INTEGER,   [fragged] INTEGER,   [num_sprees] INTEGER,   [max_streak] INTEGER,   [spree_wars] INTEGER,   [broken_sprees] INTEGER,   [broken_spreewars] INTEGER,   [suicides] INT,   [teleports] INTEGER,   [num_2fers] INTEGER)",
+	"CREATE TABLE [point_data] ([char_idx] INTEGER,  [exp] INTEGER,   [exptnl] INTEGER,   [level] INTEGER,   [classnum] INTEGER,   [skillpoints] INTEGER,   [credits] INTEGER,   [weap_points] INTEGER,   [resp_weapon] INTEGER,   [tpoints] INTEGER)",
+	"CREATE TABLE [runes_meta] ([char_idx] INTEGER,[index] INTEGER, [itemtype] INTEGER, [itemlevel] INTEGER, [quantity] INTEGER, [untradeable] INTEGER, [id] CHAR(16), [name] CHAR(24), [nummods] INTEGER, [setcode] INTEGER, [classnum] INTEGER)",
+	"CREATE TABLE [runes_mods] ([char_idx] INTEGER,  [rune_index] INTEGER, [type] INTEGER, [mod_index] INTEGER, [value] INTEGER, [set] INTEGER)",
+	"CREATE TABLE [talents] (   [char_idx] INTEGER,[id] INTEGER, [upgrade_level] INTEGER, [max_level] INTEGER)",
+	"CREATE TABLE [userdata] (  [char_idx] INTEGER,[title] CHAR(24), [playername] CHAR(64), [password] CHAR(24), [email] CHAR(64), [owner] CHAR(24), [member_since] CHAR(30), [last_played] CHAR(30), [playtime_total] INTEGER,[playingtime] INTEGER)",
+	"CREATE TABLE [weapon_meta] ([char_idx] INTEGER,[index] INTEGER, [disable] INTEGER)",
+	"CREATE TABLE [weapon_mods] ([char_idx] INTEGER,[weapon_index] INTEGER, [modindex] INTEGER, [level] INTEGER, [soft_max] INTEGER, [hard_max] INTEGER)",
+	"CREATE TABLE [character_data] ([char_idx] INTEGER,  [respawns] INTEGER,   [health] INTEGER,   [maxhealth] INTEGER,   [armour] INTEGER,   [maxarmour] INTEGER,   [nerfme] INTEGER,   [adminlevel] INTEGER,   [bosslevel] INTEGER)"
 };
 
 // SAVING
@@ -45,12 +45,12 @@ const char *CE = "INSERT INTO userdata VALUES (%d,\"\",\"\",\"\",\"\",\"\",\"\",
 
 const char* VSFU_RESETTABLES[TOTAL_RESETTABLES] =
 {
-	{"DELETE FROM abilities WHERE char_idx=%d;"},
-	{"DELETE FROM talents WHERE char_idx=%d;"},
-	{"DELETE FROM runes_meta WHERE char_idx=%d;"},
-	{"DELETE FROM runes_mods WHERE char_idx=%d;"},
-	{"DELETE FROM weapon_meta WHERE char_idx=%d;"},
-	{"DELETE FROM weapon_mods WHERE char_idx=%d;"}
+	"DELETE FROM abilities WHERE char_idx=%d;",
+	"DELETE FROM talents WHERE char_idx=%d;",
+	"DELETE FROM runes_meta WHERE char_idx=%d;",
+	"DELETE FROM runes_mods WHERE char_idx=%d;",
+	"DELETE FROM weapon_meta WHERE char_idx=%d;",
+	"DELETE FROM weapon_mods WHERE char_idx=%d;"
 };
 
 // ab/talent

@@ -1043,6 +1043,7 @@ edict_t *findradius(const edict_t *from, vec3_t const org, float rad);
 edict_t *findclosestreticle (edict_t *prev_ed, edict_t *ent, float rad);
 edict_t *findreticle (edict_t *from, edict_t *ent, float range, int degrees, qboolean vis);
 edict_t *findclosestradius (edict_t *prev_ed, vec3_t org, float rad);//GHz
+edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t* self); // az
 edict_t *findclosestradius1 (edict_t *prev_ed, vec3_t org, float rad);//GHz
 edict_t *G_FindEntityByMtype (int mtype, edict_t *from);//GHz
 float Get2dDistance (vec3_t v1, vec3_t v2);//GHz
@@ -1075,8 +1076,8 @@ qboolean G_CanUseAbilities (edict_t *ent, int ability_lvl, int pc_cost);
 qboolean V_CanUseAbilities (edict_t *ent, int ability_index, int ability_cost, qboolean print_msg);
 
 qboolean G_ValidTarget(const edict_t *self, const edict_t *target, qboolean vis);
-
 qboolean G_ValidTargetEnt(const edict_t *target, qboolean alive);
+qboolean G_ValidTarget_Lite(const edict_t *self, const edict_t *target, qboolean vis);
 
 qboolean G_ValidAlliedTarget(edict_t *self, edict_t *target, qboolean vis);//4.1 Archer
 edict_t *G_GetClient(edict_t *ent);
@@ -2039,6 +2040,8 @@ void vrx_init_ability_list();
 
 void CreateDirIfNotExists(char *path);
 
+
+
 // q2pro gmf
 #define GMF_VARIABLE_FPS            0x00000800
 // az end
@@ -2051,6 +2054,12 @@ qboolean StartClient(edict_t *ent);
 void OpenJoinMenu(edict_t *ent);
 void Cmd_Maplist_f (edict_t *ent);
 char *TeamName (edict_t *ent);
+
+// az: global defs from magic.c
+qboolean ValidTeleportSpot (edict_t *ent, vec3_t spot);
+void fire_spike (edict_t *self, vec3_t start, vec3_t dir, int damage, float stun_length, int speed);
+void lasertrap_removeall (edict_t *ent, qboolean effect);
+void detector_removeall(edict_t *ent);
 
 void KickPlayerBack(edict_t *ent);
 void P_ProjectSource (gclient_t *client, vec3_t point, vec3_t distance, vec3_t forward, vec3_t right, vec3_t result);

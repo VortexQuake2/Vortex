@@ -460,7 +460,7 @@ int GetVerticalNodeNum (vec3_t start, float x, float y, float max_z_range, int n
 		if (Get2dDistance(v, pathnode[i]) > 1)
 			continue;
 		// is it within our specified z range?
-		if (abs((int)pathnode[i][2]-(int)start[2]) > max_z_range)
+		if (fabsf((int)pathnode[i][2]-(int)start[2]) > max_z_range)
 			continue;
 		return i;
 	}

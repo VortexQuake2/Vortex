@@ -10,13 +10,6 @@ SUPERTANK
 #include "../../quake2/monsterframes/m_supertank.h"
 qboolean visible (edict_t *self, edict_t *other);
 
-void drone_ai_stand (edict_t *self, float dist);
-void drone_ai_run (edict_t *self, float dist);
-void drone_ai_walk (edict_t *self, float dist);
-
-static int	sound_pain1;
-static int	sound_pain2;
-static int	sound_pain3;
 static int	sound_death;
 static int	sound_search1;
 static int	sound_search2;

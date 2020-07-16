@@ -1100,9 +1100,7 @@ void MindAbsorb(edict_t *ent)
 	while ((target = findclosestradius(target, ent->s.origin, radius)) != NULL)  
 	{   
 		if (target == ent)    
-			continue;   
-		if (!G_ValidTarget(ent, target, true))    
-			continue;   
+			continue;
 		
 		total = 0;
 		

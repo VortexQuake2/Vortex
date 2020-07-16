@@ -258,7 +258,7 @@ int getHardMax(int index, qboolean general, int class) {
                 if (general && class == CLASS_SOLDIER)
                     return 15;
                 else
-                    return 30;
+                    return 20;
                 break;
             }
 
@@ -274,14 +274,14 @@ int getHardMax(int index, qboolean general, int class) {
         default:
             if (vrx_get_ability_upgrade_cost(index) < 2) {
                 if (!generalabmode->value) {
-                    if (class == CLASS_WEAPONMASTER) {
+                    if (class == CLASS_WEAPONMASTER) { // apprentice
                         return GENERAL_SOFTMAX * 2;
                     } else {
-                        return abilities_by_index[index]->softmax * 4;
+                        return abilities_by_index[index]->softmax * 2;
                     }
 
                 } else
-                    return (int) (abilities_by_index[index]->softmax * 1.5);
+                    return (int) (abilities_by_index[index]->softmax * 2);
             } else
                 return abilities_by_index[index]->softmax;
     }

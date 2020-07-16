@@ -514,10 +514,12 @@ void WriteField2(FILE *f, field_t *field, byte *base)
 			fwrite(*(char **)p, len, 1, f);
 		}
 		break;
+	default:
+		break;
 	}
 }
 
-void ReadField(FILE *f, field_t *field, byte *base)
+static void ReadField(FILE *f, field_t *field, byte *base)
 {
 	void		*p;
 	int			len;
@@ -620,7 +622,7 @@ ReadClient
 All pointer variables (except function pointers) must be handled specially.
 ==============
 */
-void ReadClient(FILE *f, gclient_t *client)
+static void ReadClient(FILE *f, gclient_t *client)
 {
 	field_t		*field;
 
@@ -738,6 +740,9 @@ void WriteEdict(FILE *f, edict_t *ent)
 
 }
 
+/* Local for WriteLevelLocals because size of level_locals_t exceeds stack space available. */
+static level_locals_t		WLL_temp;
+
 /*
 ==============
 WriteLevelLocals
@@ -748,19 +753,18 @@ All pointer variables (except function pointers) must be handled specially.
 void WriteLevelLocals(FILE *f)
 {
 	field_t		*field;
-	level_locals_t		temp;
 
 	// all of the ints, floats, and vectors stay as they are
-	temp = level;
+	WLL_temp = level;
 
 	// change the pointers to lengths or indexes
 	for (field = levelfields; field->name; field++)
 	{
-		WriteField1(f, field, (byte *)&temp);
+		WriteField1(f, field, (byte *)&WLL_temp);
 	}
 
 	// write the block
-	fwrite(&temp, sizeof(temp), 1, f);
+	fwrite(&WLL_temp, sizeof(WLL_temp), 1, f);
 
 	// now write any allocated data following the edict
 	for (field = levelfields; field->name; field++)
@@ -777,7 +781,7 @@ ReadEdict
 All pointer variables (except function pointers) must be handled specially.
 ==============
 */
-void ReadEdict(FILE *f, edict_t *ent)
+static void ReadEdict(FILE *f, edict_t *ent)
 {
 	field_t		*field;
 
@@ -796,7 +800,7 @@ ReadLevelLocals
 All pointer variables (except function pointers) must be handled specially.
 ==============
 */
-void ReadLevelLocals(FILE *f)
+static void ReadLevelLocals(FILE *f)
 {
 	field_t		*field;
 
@@ -819,18 +823,20 @@ void WriteLevel(char *filename)
 	int		i;
 	edict_t	*ent;
 	FILE	*f;
-	void	*base;
+	void	(*base)(void);
 
 	f = fopen(filename, "wb");
-	if (!f)
+	if (!f) {
 		gi.error("Couldn't open %s", filename);
+		exit(1); // never gets here
+	}
 
 	// write out edict size for checking
 	i = sizeof(edict_t);
 	fwrite(&i, sizeof(i), 1, f);
 
 	// write out a function pointer for checking
-	base = (void *)InitGame;
+	base = InitGame;
 	fwrite(&base, sizeof(base), 1, f);
 
 	// write out level_locals_t
@@ -877,8 +883,10 @@ void ReadLevel(char *filename)
 	edict_t	*ent;
 
 	f = fopen(filename, "rb");
-	if (!f)
+	if (!f) {
 		gi.error("Couldn't open %s", filename);
+		return;
+	}
 
 	// free any dynamic memory allocated by loading the level
 	// base state

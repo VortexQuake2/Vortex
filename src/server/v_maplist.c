@@ -103,9 +103,9 @@ int v_LoadMapList(int mode)
 
 		if ((fptr = fopen(filename, "r")) != NULL)
 		{
-			char buf[128], *s;
+			char buf[MAX_INFO_STRING], *s;
 
-			while (fgets(buf, 128, fptr) != NULL)
+			while (fgets(buf, MAX_INFO_STRING, fptr) != NULL)
 			{
 			    if (iterator >= MAX_MAPS)
                 {

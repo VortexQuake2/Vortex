@@ -168,6 +168,7 @@ void adminSpawnRune(edict_t *self, int type, int index)
 	item = FindItem("Rune");		// get the item properties
 	rune = Drop_Item(self, item);	// create the entity that holds those properties
 	V_ItemClear(&rune->vrxitem);	// initialize the rune
+	rune->clipmask = MASK_SOLID | MASK_MONSTERSOLID;
 	rune->vrxitem.quantity = 1;
 	
 	switch(type)
@@ -330,6 +331,7 @@ edict_t *V_SpawnRune (edict_t *self, edict_t *attacker, float base_drop_chance, 
 	item = FindItem("Rune");		// get the item properties
 	rune = Drop_Item(self, item);	// create the entity that holds those properties
 	V_ItemClear(&rune->vrxitem);	// initialize the rune
+	rune->clipmask = MASK_SOLID | MASK_MONSTERSOLID;
 
 	if (levelmod)
 		targ_level *= levelmod;
@@ -446,6 +448,7 @@ void vrx_roll_rune_drop(edict_t *self, edict_t *attacker, qboolean debug)
 	item = FindItem("Rune");		// get the item properties
 	rune = Drop_Item(self, item);	// create the entity that holds those properties
 	V_ItemClear(&rune->vrxitem);	// initialize the rune
+	rune->clipmask = MASK_SOLID | MASK_MONSTERSOLID;
 
 	//set target level to 20 if we are debugging
 	if (debug == true)
@@ -577,7 +580,7 @@ void spawnClassRune(edict_t *rune, int targ_level) {
     max_mods = 1 + (0.2 * targ_level);    //This means lvl 15+ can get 4 mods
     if (max_mods > 4)
         max_mods = 4;
-    num_mods = GetRandom(1, max_mods); // from 1 - don't be a dick
+    num_mods = GetRandom(1, max_mods); // az: from 1 - don't be a dick
     rune->vrxitem.itemtype = ITEM_CLASSRUNE;
     rune->vrxitem.classNum = GetRandom(1, CLASS_MAX - 1);    //class number
 
@@ -829,7 +832,7 @@ void PurchaseRandomRune(edict_t *ent, int runetype)
 	else if (savemethod->value == 0)
 	{
 		char path[MAX_QPATH];
-		memset(path, 0, MAX_QPATH);
+		memset(path, 0, sizeof path);
         vrx_get_character_file_path(path, ent);
 		VSF_SaveRunes(ent, path);
 	}else if (savemethod->value == 3)
@@ -886,7 +889,7 @@ qboolean Pickup_Rune (edict_t *ent, edict_t *other)
 	else if (savemethod->value == 0)
 	{
 		char path[MAX_QPATH];
-		memset(path, 0, MAX_QPATH);
+		memset(path, 0, sizeof path);
         vrx_get_character_file_path(path, other);
 		VSF_SaveRunes(other, path);
 	}
@@ -961,8 +964,8 @@ qboolean V_CanPickUpItem (edict_t *ent)
 		|| (ent->client->respawn_time > level.time))
 		return false;
 	// do we have any space in our inventory?
-	// Skip hand, neck, and belt slots           intentando equipar en HEAD
-	for (i=4; i < MAX_VRXITEMS; ++i)
+	// Skip hand, neck, and belt slots
+	for (i=3; i < MAX_VRXITEMS; ++i)
 	{
 		if (!ent->myskills.items[i].itemtype)
 			return true;
@@ -1067,7 +1070,7 @@ void V_EquipItem(edict_t *ent, int index)
 	total_pts = ceil(0.5*wpts + 0.75*apts);//was 0.66,2.0
 	//gi.dprintf("wpts = %d, apts = %d, total = %d\n", wpts, apts, total_pts);
 
-	if(index < 4) // cambiar de 3 a 4 
+	if(index < 3)
 	{
 		//remove an item
 		item_t *slot = V_FindFreeItemSlot(ent);
@@ -1127,7 +1130,7 @@ void V_EquipItem(edict_t *ent, int index)
 
 	//Reset all rune info
 	V_ResetAllStats(ent);
-	for (i = 0; i < 4; ++i)
+	for (i = 0; i < 3; ++i)
 	{
 		if (ent->myskills.items[i].itemtype != TYPE_NONE)
 			V_ApplyRune(ent, &ent->myskills.items[i]);

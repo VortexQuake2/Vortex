@@ -265,7 +265,7 @@ void SpawnForcewall(edict_t *player, int type)
 	tr.endpos[2]++;
 	VectorCopy(tr.endpos, wall->s.origin); // copy origin to ending position of trace
   
-	if(fabs(forward[0]) > fabs(forward[1]))
+	if(fabsf(forward[0]) > fabsf(forward[1]))
 	{
 		// set wall thickness
 		wall->pos1[0] = wall->pos2[0] = wall->s.origin[0];

@@ -17,9 +17,6 @@ static int sound_punch;
 static int sound_sight;
 static int sound_search;
 
-void drone_ai_stand (edict_t *self, float dist);
-void drone_ai_run (edict_t *self, float dist);
-void drone_ai_walk (edict_t *self, float dist);
 
 void berserk_sight (edict_t *self, edict_t *other)
 {

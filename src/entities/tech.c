@@ -98,14 +98,14 @@ qboolean tech_pickup(edict_t *ent, edict_t *other) {
         || other->client->pers.inventory[strength_index]
         || other->client->pers.inventory[regeneration_index]
         || other->client->pers.inventory[haste_index]
-        || (other->myskills.streak > 15 && (V_IsPVP() || ffa->value))) // don't allow to pick up techs
+        || (other->myskills.streak >= SPREE_START && (V_IsPVP() || ffa->value))) // don't allow to pick up techs
         return false;
 
     // vrc 2.32: allow players to get techs unless there's a player significantly lower
     // than himself instead of limiting techs to level 15.
 
     // can't pick-up if 1.7x higher than average player level
-    if (other->myskills.level > maxLevel)
+    if (other->myskills.level > maxLevel && !invasion->value)  // az only apply this restriction in invasion
         return false;
 
 

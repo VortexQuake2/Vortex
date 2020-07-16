@@ -589,9 +589,9 @@ void OpenPurchaseMenu (edict_t *ent, int page_num, int lastline)
 		ent->client->menustorage.currentline = (lastline % 10) + 3;
 	else if (lastline)	//selected #10 in this page
 		ent->client->menustorage.currentline = 13;
-	// else if (ARMORY_ITEMS > 10)	//menu is under 10 items
-	//	ent->client->menustorage.currentline = 15;
-	else ent->client->menustorage.currentline = 5 + i;
+	else if (ARMORY_ITEMS > 10)	//menu is under 10 items
+		ent->client->menustorage.currentline = 15;
+	else ent->client->menustorage.currentline = 5 + i % 10;
 
 	//Show the menu
 	showmenu(ent);
@@ -654,7 +654,7 @@ void SellConfirmMenu_handler(edict_t *ent, int option)
 		else if (savemethod->value == 0)
 		{
 			char path[MAX_QPATH];
-			memset(path, 0, MAX_QPATH);
+			memset(path, 0, sizeof path);
             vrx_get_character_file_path(path, ent);
 			VSF_SaveRunes(ent, path);
 		}
@@ -800,7 +800,7 @@ void BuyRuneConfirmMenu_handler (edict_t *ent, int option)
 			if (savemethod->value == 0)
 			{
 				char path[MAX_QPATH];
-				memset (path, 0, MAX_QPATH);
+				memset (path, 0, sizeof path);
                 vrx_get_character_file_path(path, ent);
 				VSF_SaveRunes(ent, path);
 			}

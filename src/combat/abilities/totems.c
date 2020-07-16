@@ -120,9 +120,9 @@ void FireTotem_think(edict_t *self, edict_t *caster)
 		chance = 0.02 * talentLevel;
 
 		//Find players in radius and attack them.
-		while ((target = findclosestradius(target, self->s.origin, TOTEM_MAX_RANGE)) != NULL)
+		while ((target = findclosestradius_targets(target, self)) != NULL)
 		{
-			if (G_ValidTarget(self, target, true) && (self->s.origin[2]+64>target->s.origin[2]))
+			if (G_ValidTarget_Lite(self, target, true) && (self->s.origin[2]+64>target->s.origin[2]))
 			{
 				vec3_t forward, end;
 				int damage = FIRETOTEM_DAMAGE_BASE + self->monsterinfo.level * FIRETOTEM_DAMAGE_MULT;
@@ -509,6 +509,8 @@ void SpawnTotem(edict_t *ent, int abilityID)
 	totem->nextthink = level.time + FRAMETIME*2;
 	totem->delay = level.time + 0.5;
 	totem->die = totem_die;
+
+	totem->monsterinfo.sight_range = TOTEM_MAX_RANGE; // az
 
 	//TODO: update this with the new model.
 	totem->s.modelindex = gi.modelindex("models/items/mega_h/tris.md2");

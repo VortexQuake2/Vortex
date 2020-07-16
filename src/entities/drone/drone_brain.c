@@ -27,9 +27,6 @@ static int	sound_thud;
 
 void mybrain_attack (edict_t *self);
 void mybrain_attack3 (edict_t *self);
-void drone_ai_stand (edict_t *self, float dist);
-void drone_ai_run (edict_t *self, float dist);
-void drone_ai_walk (edict_t *self, float dist);
 
 void mybrain_sight (edict_t *self, edict_t *other)
 {

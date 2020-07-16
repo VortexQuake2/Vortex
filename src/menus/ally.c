@@ -117,7 +117,7 @@ qboolean CanAlly (edict_t *ent, edict_t *other, int range)
 
 	// only allow allies that are close in level
 	// FIXME: we should get an average or median player level if there are >1 allies
-	if (abs(ent->myskills.level - other->myskills.level) > ALLY_MAX_LEVEL_DELTA)
+	if (fabsf(ent->myskills.level - other->myskills.level) > ALLY_MAX_LEVEL_DELTA)
 	{
 		//gi.dprintf("no3\n");
 		return false;

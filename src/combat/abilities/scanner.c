@@ -55,7 +55,7 @@ void ShowAllyInfo (edict_t *ent)
 		// set output
 		Com_sprintf (stats, sizeof(stats),"xl %i yv %i string \"%s\" ", x, y, e->client->pers.netname);
 		// don't overflow the buffer
-		SAFE_STRCAT(string, stats, 1400);
+		SAFE_STRCAT(string, stats, LAYOUT_MAX_LENGTH);
 
 		y += 8;
 		
@@ -70,7 +70,7 @@ void ShowAllyInfo (edict_t *ent)
 		Com_sprintf (stats, sizeof(stats),"xl %i yv %i picn %s ", x, y, tag);
 
 		// don't overflow the buffer
-		SAFE_STRCAT(string, stats, 1400);
+		SAFE_STRCAT(string, stats, LAYOUT_MAX_LENGTH);
 
 		y += 5;
 

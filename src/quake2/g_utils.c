@@ -655,7 +655,7 @@ void vectoangles (vec3_t value1, vec3_t angles)
 		if (yaw < 0)
 			yaw += 360;
 
-		forward = sqrt (value1[0]*value1[0] + value1[1]*value1[1]);
+		forward = sqrtf (value1[0]*value1[0] + value1[1]*value1[1]);
 		pitch = (float) (atan2(value1[2], forward) * 180 / M_PI);//K03
 		if (pitch < 0)
 			pitch += 360;
@@ -1423,7 +1423,7 @@ void G_EntMidPoint (edict_t *ent, vec3_t point)
 
 	VectorCopy(ent->s.origin, point);
 	// get half the height of the actual bbox
-	midheight = 0.5 * (ent->maxs[2] + fabs(ent->mins[2]));
+	midheight = 0.5 * (ent->maxs[2] + fabsf(ent->mins[2]));
 	point[2] = ent->absmin[2]+midheight;
 }
 
@@ -1512,7 +1512,7 @@ qboolean nearfov (edict_t *ent, edict_t *other, int vertical_degrees, int horizo
 
 	if (horizontal_degrees)
 	{
-		delta = abs(old_angles[YAW]-new_angles[YAW]);
+		delta = fabsf(old_angles[YAW]-new_angles[YAW]);
 		if (delta > 180)
 			delta = 360-delta;
 		//gi.dprintf("delta %d horizontal\n", delta);
@@ -1523,9 +1523,9 @@ qboolean nearfov (edict_t *ent, edict_t *other, int vertical_degrees, int horizo
 	if (vertical_degrees)
 	{
 		if (ent->client)
-			delta = abs(old_angles[PITCH]-new_angles[PITCH]);
+			delta = fabsf(old_angles[PITCH]-new_angles[PITCH]);
 		else
-			delta = abs(ent->s.angles[PITCH]-forward[PITCH]);
+			delta = fabsf(ent->s.angles[PITCH]-forward[PITCH]);
 		if (delta > 180)
 			delta = 360-delta;
 		//gi.dprintf("delta %d vertical\n", delta);

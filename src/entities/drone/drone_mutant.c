@@ -23,9 +23,6 @@ static int	sound_step2;
 static int	sound_step3;
 static int	sound_thud;
 
-void drone_ai_stand (edict_t *self, float dist);
-void drone_ai_run (edict_t *self, float dist);
-void drone_ai_walk (edict_t *self, float dist);
 void mutant_jump (edict_t *self);
 //
 // SOUNDS

@@ -266,11 +266,11 @@ edict_t *sentry_findtarget(edict_t *self)
 {
 	edict_t *target = NULL;
 
-	while ((target = findclosestradius(target, self->s.origin, SENTRY_TARGET_RANGE)) != NULL)
+	while ((target = findclosestradius_targets(target, self)) != NULL)
 	{
-		if (!G_ValidTarget(self, target, true))
-			continue;
 		//if (!infov(self, target, SENTRY_FOV_SIGHT)) // 3.19 reduced sentry FOV
+		if (!G_ValidTarget_Lite(self, target, true)) // az
+			continue;
 		if (!nearfov(self, target, 0, SENTRY_FOV_SIGHT))
 			continue;
 		self->enemy = target;
@@ -738,7 +738,7 @@ void sentRotate(edict_t *self)
 
 	if (self->wait == 0)
 	{
-		if (abs(self->s.angles[YAW] - self->ideal_yaw) < SENTRY_ROTATE_SPEED)
+		if (fabsf(self->s.angles[YAW] - self->ideal_yaw) < SENTRY_ROTATE_SPEED)
 			self->s.angles[YAW] = self->ideal_yaw;
 		if (self->s.angles[YAW] == self->ideal_yaw)
 		{
@@ -872,17 +872,6 @@ void sentrygun_think(edict_t *self)
 	self->yaw_speed = temp; // restore original yaw speed
 	//Reset think time
 	self->nextthink = level.time + FRAMETIME;
-
-
-
-
-
-
-
-
-
-
-
 
 
 	vec3_t	angles;//4.5 aiming angles are different than model/gun angles
@@ -1072,6 +1061,8 @@ void SpawnSentry1(edict_t *ent, int sentryType, int cost, float skill_mult, floa
 	sentry->monsterinfo.power_armor_power = sentry->rocket_shots = SENTRY_ARMOR_BASE + SENTRY_ARMOR_MULT * sentry->monsterinfo.level;
 	sentry->monsterinfo.max_armor = sentry->monsterinfo.power_armor_power;//GHz
 
+	sentry->monsterinfo.sight_range = SENTRY_TARGET_RANGE; // az
+
 	//Talent: Storage Upgrade
 	talentLevel = vrx_get_talent_level(ent, TALENT_STORAGE_UPGRADE);
 	ammo_mult += 0.2 * talentLevel;
@@ -1147,7 +1138,7 @@ void SpawnSentry1(edict_t *ent, int sentryType, int cost, float skill_mult, floa
 	if ((tr.fraction != 1.0) && (tr.endpos[2] < ent->s.origin[2]) && (angles[PITCH] == 270))
 	{
 		//gi.dprintf("aiming at ground\n");
-		end[2] += abs(sentry->mins[2]) + 1;
+		end[2] += fabsf(sentry->mins[2]) + 1;
 	}
 	// make sure sentry doesn't spawn in a solid
 	tr = gi.trace(end, sentry->mins, sentry->maxs, end, NULL, MASK_SHOT);

@@ -20,11 +20,8 @@ static int	sound_hook_hit;
 static int	sound_hook_heal;
 static int	sound_hook_retract;
 
-void drone_ai_stand (edict_t *self, float dist);
-void drone_ai_run (edict_t *self, float dist);
 void mymedic_refire (edict_t *self);
 void mymedic_heal (edict_t *self);
-void drone_ai_walk (edict_t *self, float dist);
 
 void mymedic_idle (edict_t *self)
 {

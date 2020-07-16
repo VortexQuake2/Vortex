@@ -14,10 +14,6 @@ void mytank_doattack_rocket (edict_t *self);
 void mytank_reattack_blaster (edict_t *self);
 void mytank_meleeattack (edict_t *self);
 void mytank_restrike (edict_t *self);
-qboolean TeleportNearTarget (edict_t *self, edict_t *target, float dist);
-void drone_ai_stand (edict_t *self, float dist);
-void drone_ai_run (edict_t *self, float dist);
-void drone_ai_walk (edict_t *self, float dist);
 void mytank_chain_refire (edict_t *self);
 void mytank_attack_chain (edict_t *self);
 

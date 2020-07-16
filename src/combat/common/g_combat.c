@@ -10,9 +10,9 @@
 //==============================================================
 // Scale damage amount by location of hit on player's body..
 //==============================================================
-#define LEG_DAMAGE     (height/2.0)-abs(targ->mins[2])-3
-#define STOMACH_DAMAGE (height/1.6)-abs(targ->mins[2])
-#define CHEST_DAMAGE   (height/1.4)-abs(targ->mins[2])
+#define LEG_DAMAGE     (height/2.0)-fabsf(targ->mins[2])-3
+#define STOMACH_DAMAGE (height/1.6)-fabsf(targ->mins[2])
+#define CHEST_DAMAGE   (height/1.4)-fabsf(targ->mins[2])
 
 //==============================================================
 
@@ -28,7 +28,7 @@ float location_scaling(edict_t *targ, vec3_t point, int damage) {
 	if (targ->flags & FL_GODMODE)
 		return 1.0;
 
-	height = abs(targ->mins[2])+targ->maxs[2];
+	height = fabsf(targ->mins[2])+targ->maxs[2];
 	z_rel = point[2]-targ->s.origin[2];
 	if (z_rel < LEG_DAMAGE)
 	  return 0.60;  // Scale down by 2/5

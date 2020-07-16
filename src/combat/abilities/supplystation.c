@@ -449,7 +449,7 @@ void BuildSupplyStation (edict_t *ent, int cost, float skill_mult, float delay_m
 	ValidateAngles(angles);
 	// player is aiming at the ground
 	if ((tr.fraction != 1.0) && (tr.endpos[2] < ent->s.origin[2]) && (angles[PITCH] == 270))
-		end[2] += abs(station->mins[2])+1;
+		end[2] += fabsf(station->mins[2])+1;
 	// make sure station doesn't spawn in a solid
 	tr = gi.trace(end, station->mins, station->maxs, end, NULL, MASK_SHOT);
 	if (tr.contents & MASK_SHOT)

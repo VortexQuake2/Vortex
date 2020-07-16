@@ -1407,10 +1407,10 @@ void V_tFileGotoLine(FILE *fptr, int linenumber, long size) {
 void vrx_update_free_abilities(edict_t *ent) {
     if (ent->myskills.level >= 5) {
         // free ID at level 5
-        if (!ent->myskills.abilities[ID].level) {
+        /*if (!ent->myskills.abilities[ID].level) {
             ent->myskills.abilities[ID].level++;
             ent->myskills.abilities[ID].current_level++;
-        }
+        }*/
 
         // free scanner at level 10
         if (ent->myskills.level >= 10) {

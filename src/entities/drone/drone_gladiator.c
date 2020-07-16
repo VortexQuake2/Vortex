@@ -20,10 +20,6 @@ static int	sound_idle;
 static int	sound_search;
 static int	sound_sight;
 
-void drone_ai_stand (edict_t *self, float dist);
-void drone_ai_run (edict_t *self, float dist);
-void drone_ai_walk (edict_t *self, float dist);
-
 void gladiator_idle (edict_t *self)
 {
 	gi.sound (self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);

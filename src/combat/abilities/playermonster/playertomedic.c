@@ -70,7 +70,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 			ent->num_monsters_real++;
 			// gi.bprintf(PRINT_HIGH, "adding %p (%d)\n", target, ent->num_monsters_real);
 			safe_cprintf(ent, PRINT_HIGH, "Resurrected a %s. (%d/%d)\n", 
-				target->classname, ent->num_monsters, MAX_MONSTERS);
+				target->classname, ent->num_monsters, (int)MAX_MONSTERS);
 		}
 	}
 	else if ((!strcmp(target->classname, "bodyque") || !strcmp(target->classname, "player"))

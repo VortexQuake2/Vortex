@@ -157,7 +157,7 @@ CREDITS_OTHER_BASE                       = 5
 SABRE_INITIAL_DAMAGE                     = 100
 SABRE_ADDON_DAMAGE                       = 5
 SABRE_ADDON_HEATDAMAGE                   = 2
-SABRE_INITIAL_RANGE                      = 32
+SABRE_INITIAL_RANGE                      = 64
 SABRE_ADDON_RANGE                        = 3.4
 SABRE_INITIAL_KICK                       = 120
 SABRE_ADDON_KICK                         = 0
@@ -172,16 +172,16 @@ BLASTER_INITIAL_SPEED                    = 1000
 BLASTER_ADDON_SPEED                      = 40
 
 -- 20mm cannon
-WEAPON_20MM_INITIAL_DMG                  = 35
-WEAPON_20MM_ADDON_DMG                    = 1.5
+WEAPON_20MM_INITIAL_DMG                  = 40
+WEAPON_20MM_ADDON_DMG                    = 2
 WEAPON_20MM_INITIAL_RANGE                = 550
 WEAPON_20MM_ADDON_RANGE                  = 30
 
 -- Shotgun
-SHOTGUN_INITIAL_DAMAGE                   = 6
-SHOTGUN_ADDON_DAMAGE                     = 0.125
+SHOTGUN_INITIAL_DAMAGE                   = 8
+SHOTGUN_ADDON_DAMAGE                     = 0.2
 SHOTGUN_INITIAL_BULLETS                  = 10
-SHOTGUN_ADDON_BULLETS                    = 0.35
+SHOTGUN_ADDON_BULLETS                    = 0.5
 
 -- SSG/Super Shotgun
 SUPERSHOTGUN_INITIAL_DAMAGE              = 10
@@ -190,14 +190,14 @@ SUPERSHOTGUN_INITIAL_BULLETS             = 15
 SUPERSHOTGUN_ADDON_BULLETS               = 0.5
 
 -- Machinegun
-MACHINEGUN_INITIAL_DAMAGE                = 9
-MACHINEGUN_ADDON_DAMAGE                  = 0.45
-MACHINEGUN_ADDON_TRACERDAMAGE            = 2
+MACHINEGUN_INITIAL_DAMAGE                = 10
+MACHINEGUN_ADDON_DAMAGE                  = 0.5
+MACHINEGUN_ADDON_TRACERDAMAGE            = 3
 
 -- Chaingun
-CHAINGUN_INITIAL_DAMAGE                  = 3
-CHAINGUN_ADDON_DAMAGE                    = 0.17
-CHAINGUN_ADDON_TRACERDAMAGE              = 4
+CHAINGUN_INITIAL_DAMAGE                  = 5
+CHAINGUN_ADDON_DAMAGE                    = 0.2
+CHAINGUN_ADDON_TRACERDAMAGE              = 5
 
 -- Hand Grenade
 GRENADE_INITIAL_DAMAGE                   = 200
@@ -205,7 +205,7 @@ GRENADE_ADDON_DAMAGE                     = 10
 GRENADE_INITIAL_RADIUS_DAMAGE            = 200
 GRENADE_ADDON_RADIUS_DAMAGE              = 10
 GRENADE_INITIAL_RADIUS                   = 100
-GRENADE_ADDON_RADIUS                     = 2.5
+GRENADE_ADDON_RADIUS                     = 5
 
 -- GL/Grenade Launcher
 GRENADELAUNCHER_INITIAL_DAMAGE           = 100
@@ -213,7 +213,7 @@ GRENADELAUNCHER_ADDON_DAMAGE             = 6
 GRENADELAUNCHER_INITIAL_RADIUS_DAMAGE    = 100
 GRENADELAUNCHER_ADDON_RADIUS_DAMAGE      = 5
 GRENADELAUNCHER_INITIAL_RADIUS           = 100
-GRENADELAUNCHER_ADDON_RADIUS             = 2
+GRENADELAUNCHER_ADDON_RADIUS             = 2.5
 GRENADELAUNCHER_INITIAL_SPEED            = 600
 GRENADELAUNCHER_ADDON_SPEED              = 30
 
@@ -341,6 +341,8 @@ OBSTACLE_MAX_COUNT                       = 6
 SPIKEBALL_MAX_COUNT                      = 3
 DELAY_MONSTER_THINK                      = 3
 DELAY_MONSTER                            = 3
+
+-- summon costs
 M_FLYER_COST                             = 25
 M_INSANE_COST                            = 25
 M_SOLDIERLT_COST                         = 25
@@ -615,6 +617,8 @@ M_SOLDIER_INITIAL_HEALTH                 = 45
 M_SOLDIER_ADDON_HEALTH                   = 8
 M_SOLDIER_INITIAL_ARMOR                  = 20
 M_SOLDIER_ADDON_ARMOR                    = 8
+
+-- Player Berserk
 BERSERK_SLASH_INITIAL_DAMAGE             = 100
 BERSERK_SLASH_ADDON_DAMAGE               = 20
 BERSERK_SLASH_RANGE                      = 96
@@ -630,6 +634,8 @@ BERSERK_COST                             = 50
 BERSERK_DELAY                            = 1.0
 BERSERK_REGEN_FRAMES                     = 300
 BERSERK_REGEN_DELAY                      = 10
+
+-- Player Flyer
 FLYER_IMPACT_VELOCITY                    = 350
 FLYER_IMPACT_DAMAGE                      = 50
 FLYER_HB_REFIRE_FRAMES                   = 3
@@ -652,6 +658,8 @@ FLYER_HB_REGEN_FRAMES                    = 300
 FLYER_HB_REGEN_DELAY                     = 10
 FLYER_HB_AMMO                            = 2
 FLYER_ROCKET_AMMO                        = 10
+
+-- Medic
 MEDIC_INIT_COST                          = 50
 MEDIC_DELAY                              = 1.0
 MEDIC_HB_INITIAL_DMG                     = 20
@@ -673,6 +681,8 @@ MEDIC_BOLT_ADDON_SPEED                   = 0
 MEDIC_BOLT_AMMO                          = 10
 MEDIC_RESURRECT_DELAY                    = 1.0
 MEDIC_RESURRECT_BONUS                    = 0.25
+
+-- Player Tank
 P_TANK_PUNCH_RADIUS                      = 196
 P_TANK_PUNCH_INITIAL_DMG                 = 200
 P_TANK_PUNCH_ADDON_DMG                   = 20
@@ -736,6 +746,8 @@ CACODEMON_REGEN_DELAY                    = 2
 CACODEMON_SKULL_INITIAL_AMMO             = 10
 CACODEMON_SKULL_ADDON_AMMO               = 0
 CACODEMON_SKULL_START_AMMO               = 3
+
+-- Domination mode
 DOMINATION_POINTS                        = 500
 DOMINATION_CREDITS                       = 350
 DOMINATION_AWARD_FRAMES                  = 100
@@ -745,10 +757,16 @@ DOMINATION_DEFEND_BONUS                  = 150
 DOMINATION_FRAG_POINTS                   = 150
 DOMINATION_CARRIER_BONUS                 = 450
 DOMINATION_OFFENSE_BONUS                 = 350
+
+-- Brain
 BRAIN_DEFAULT_KNOCKBACK                  = -60
 BRAIN_ADDON_KNOCKBACK                    = -2
+
+-- Nature Totem
 NATURETOTEM_REFIRE_BASE                  = 5.0
 NATURETOTEM_REFIRE_MULT                  = -0.25
+
+-- Spore
 SPIKEBALL_INITIAL_HEALTH                 = 100
 SPIKEBALL_ADDON_HEALTH                   = 15
 SPIKEBALL_INITIAL_DAMAGE                 = 50
@@ -760,6 +778,8 @@ SPIKEBALL_INITIAL_DURATION               = 9999
 SPIKEBALL_ADDON_DURATION                 = 0
 SPIKEBALL_COST                           = 25
 SPIKEBALL_DELAY                          = 1.0
+
+-- 
 PVB_BOSS_EXPERIENCE                      = 1000
 PVB_BOSS_MIN_EXP                         = 100
 PVB_BOSS_MAX_EXP                         = 1000
@@ -767,6 +787,8 @@ PVB_BOSS_CREDITS                         = 3000
 PVB_BOSS_FRAG_EXP                        = 300
 PVB_BOSS_FRAG_CREDITS                    = 100
 PVB_BOSS_TIMEOUT                         = 10
+
+-- CTF
 GROUP_SHARE_MULT                         = 0.4
 CTF_ASSIST_DURATION                      = 10.0
 CTF_SUMMONABLE_AUTOREMOVE                = 10.0
@@ -800,6 +822,8 @@ CTF_PLAYERSPAWN_OFFENSE_EXP              = 15
 CTF_PLAYERSPAWN_OFFENSE_CREDITS          = 10
 CTF_PLAYERSPAWN_TIME                     = 1.0
 CTF_PLAYERSPAWN_MAX_TIME                 = 3.0
+
+-- Corpse Eater
 CORPSEEATER_DELAY                        = 0.5
 CORPSEEATER_RANGE                        = 64
 CORPSEEATER_INITIAL_HEALTH               = 0
@@ -807,3 +831,243 @@ CORPSEEATER_ADDON_HEALTH                 = 10
 CORPSEEATER_INITIAL_DAMAGE               = 25
 CORPSEEATER_ADDON_DAMAGE                 = 2.5
 CORPSEEATER_ADDON_MAXHEALTH              = 0.05
+
+-- AC
+AUTOCANNON_ATTACK_DELAY					 = 1.0 -- refire rate, must be >= = 1.0
+AUTOCANNON_START_DELAY                   = 2.0
+AUTOCANNON_BUILD_TIME                    = 1.0
+AUTOCANNON_DELAY                         = 1.0
+AUTOCANNON_RANGE                         = 2048
+AUTOCANNON_INITIAL_HEALTH                = 100
+AUTOCANNON_ADDON_HEALTH                  = 40
+AUTOCANNON_INITIAL_DAMAGE                = 100
+AUTOCANNON_ADDON_DAMAGE                  = 40
+AUTOCANNON_YAW_SPEED                     = 2
+AUTOCANNON_COST                          = 50
+AUTOCANNON_MAX_UNITS                     = 3
+AUTOCANNON_START_AMMO                    = 5
+AUTOCANNON_INITIAL_AMMO                  = 5
+AUTOCANNON_ADDON_AMMO                    = 0
+AUTOCANNON_REPAIR_COST                   = 0.1
+AUTOCANNON_TOUCH_DELAY                   = 3.0
+
+-- Holy ground
+HOLYGROUND_INITIAL_DURATION              = 0
+HOLYGROUND_ADDON_DURATION                = 12.0
+HOLYGROUND_COST                          = 25
+HOLYGROUND_DELAY                         = 1.0
+
+-- Cocoon
+COCOON_INITIAL_HEALTH                    = 0
+COCOON_ADDON_HEALTH                      = 100
+COCOON_INITIAL_DURATION                  = 50
+COCOON_ADDON_DURATION                    = 0
+COCOON_MINIMUM_DURATION                  = 50
+COCOON_INITIAL_FACTOR                    = 1.0
+COCOON_ADDON_FACTOR                      = 0.05
+COCOON_INITIAL_TIME                      = 30.0
+COCOON_ADDON_TIME                        = 1.5
+COCOON_COST                              = 50
+COCOON_DELAY                             = 1.0
+
+-- Magic Bolt
+BOLT_SPEED                               = 1000
+BOLT_DURATION                            = 3
+BOLT_INITIAL_DAMAGE                      = 50
+BOLT_ADDON_DAMAGE                        = 10
+BOLT_DELAY                               = 0.2
+IMP_BOLT_DELAY                           = 0.3
+IMP_BOLT_RADIUS                          = 100
+
+
+SPIKE_INITIAL_DMG                        = 50
+SPIKE_ADDON_DMG                          = 15
+SPIKE_SPEED                              = 1000
+SPIKE_COST                               = 25
+SPIKE_DELAY                              = 0.5
+SPIKE_STUN_ADDON                         = 0.05
+SPIKE_STUN_MIN                           = 0.2
+SPIKE_STUN_MAX                           = 1.0
+SPIKE_SHOTS                              = 3
+SPIKE_FOV                                = 20
+
+-- Proxies
+PROXY_COST                               = 25
+PROXY_MAX_COUNT                          = 6
+PROXY_BUILD_TIME                         = 1.0
+PROXY_BASE_DMG                           = 100
+PROXY_ADDON_DMG                          = 25
+PROXY_BASE_RADIUS                        = 100
+PROXY_ADDON_RADIUS                       = 5
+PROXY_BASE_HEALTH                        = 200
+PROXY_ADDON_HEALTH                       = 30
+
+-- Napalm
+NAPALM_MAX_COUNT                         = 3
+NAPALM_ATTACK_DELAY                      = 1.0
+NAPALM_DELAY                             = 1.0
+NAPALM_COST                              = 25
+NAPALM_DURATION                          = 10.0
+NAPALM_INITIAL_DMG                       = 100
+NAPALM_ADDON_DMG                         = 20
+NAPALM_INITIAL_RADIUS                    = 100.0
+NAPALM_ADDON_RADIUS                      = 5.0
+NAPALM_INITIAL_BURN                      = 0
+NAPALM_ADDON_BURN                        = 1
+
+
+METEOR_INITIAL_DMG                       = 100
+METEOR_ADDON_DMG                         = 40
+METEOR_INITIAL_RADIUS                    = 200
+METEOR_ADDON_RADIUS                      = 0
+METEOR_INITIAL_SPEED                     = 1000
+METEOR_ADDON_SPEED                       = 0
+METEOR_CEILING_HEIGHT                    = 1024
+METEOR_RANGE                             = 8192
+METEOR_DELAY                             = 1.0
+
+
+CLIGHTNING_COLOR                         = 15
+CLIGHTNING_PARTICLES                     = 3
+CLIGHTNING_INITIAL_DMG                   = 50
+CLIGHTNING_ADDON_DMG                     = 15
+CLIGHTNING_INITIAL_AR                    = 256
+CLIGHTNING_ADDON_AR                      = 0
+CLIGHTNING_INITIAL_HR                    = 256
+CLIGHTNING_ADDON_HR                      = 0
+CLIGHTNING_DELAY                         = 0.3
+CLIGHTNING_DMG_MOD                       = 1.25
+
+
+HAMMER_INITIAL_SPEED                     = 400
+HAMMER_ADDON_SPEED                       = 5
+HAMMER_TURN_RATE                         = 54
+HAMMER_INITIAL_DAMAGE                    = 100
+HAMMER_ADDON_DAMAGE                      = 30
+HAMMER_COST                              = 10
+HAMMER_DELAY                             = 0.1
+
+
+BLACKHOLE_COST                           = 50
+BLACKHOLE_DELAY                          = 10.0
+BLACKHOLE_EXIT_TIME                      = 30.0
+
+
+CALTROPS_INITIAL_DAMAGE                  = 50
+CALTROPS_ADDON_DAMAGE                    = 25
+CALTROPS_INITIAL_SLOW                    = 0
+CALTROPS_ADDON_SLOW                      = 0.1
+CALTROPS_INITIAL_SLOWED_TIME             = 0
+CALTROPS_ADDON_SLOWED_TIME               = 1.0
+CALTROPS_DURATION                        = 120.0
+CALTROPS_COST                            = 10
+CALTROPS_DELAY                           = 0.2
+CALTROPS_MAX_COUNT                       = 10
+
+
+SPIKEGRENADE_COST                        = 25
+SPIKEGRENADE_DELAY                       = 1.0
+SPIKEGRENADE_DURATION                    = 10.0
+SPIKEGRENADE_INITIAL_DAMAGE              = 50
+SPIKEGRENADE_ADDON_DAMAGE                = 15
+SPIKEGRENADE_INITIAL_SPEED               = 600
+SPIKEGRENADE_ADDON_SPEED                 = 0
+SPIKEGRENADE_TURN_DEGREES                = 3
+SPIKEGRENADE_TURN_DELAY                  = 1.0
+SPIKEGRENADE_TURNS                       = 8
+SPIKEGRENADE_MAX_COUNT                   = 3
+
+-- Laser trap
+LASERTRAP_INITIAL_HEALTH                 = 0
+LASERTRAP_ADDON_HEALTH                   = 100
+LASERTRAP_INITIAL_DAMAGE                 = 0
+LASERTRAP_ADDON_DAMAGE                   = 100
+LASERTRAP_DELAY                          = 1.0
+LASERTRAP_COST                           = 50
+LASERTRAP_RANGE                          = 64.0
+LASERTRAP_MINIMUM_RANGE                  = 64.0
+LASERTRAP_YAW_SPEED                      = 15
+
+-- Detector
+DETECTOR_COST                            = 25
+DETECTOR_DELAY                           = 2.0
+DETECTOR_MAX_COUNT                       = 3
+DETECTOR_INITIAL_HEALTH                  = 50
+DETECTOR_ADDON_HEALTH                    = 10
+DETECTOR_INITIAL_RANGE                   = 96
+DETECTOR_ADDON_RANGE                     = 16
+DETECTOR_DURATION                        = 120.0
+DETECTOR_FLAG_DURATION                   = 1.0
+DETECTOR_GLOW_TIME                       = 1.0
+
+-- Detector talent
+ALARM_INITIAL_HEALTH                     = 0
+ALARM_ADDON_HEALTH                       = 200
+ALARM_INITIAL_RANGE                      = 0
+ALARM_ADDON_RANGE                        = 76.8
+
+-- Conversion
+CONVERSION_INITIAL_RANGE                 = 196.0
+CONVERSION_ADDON_RANGE                   = 0
+CONVERSION_INITIAL_DURATION              = 0
+CONVERSION_ADDON_DURATION                = 6.0
+CONVERSION_INITIAL_CHANCE                = 0.25
+CONVERSION_ADDON_CHANCE                  = 0.025
+CONVERSION_MAX_CHANCE                    = 0.5
+CONVERSION_COST                          = 25
+CONVERSION_DELAY                         = 2.0
+
+-- Mirror
+MIRROR_INITIAL_HEALTH                    = 0
+MIRROR_ADDON_HEALTH                      = 100
+MIRROR_COST                              = 50
+MIRROR_DELAY                             = 1.0
+
+-- Fireball
+FIREBALL_INITIAL_DAMAGE                  = 50
+FIREBALL_ADDON_DAMAGE                    = 15
+FIREBALL_INITIAL_RADIUS                  = 100
+FIREBALL_ADDON_RADIUS                    = 2.5
+FIREBALL_INITIAL_SPEED                   = 650
+FIREBALL_ADDON_SPEED                     = 35
+FIREBALL_INITIAL_FLAMES                  = 5
+FIREBALL_ADDON_FLAMES                    = 0
+FIREBALL_INITIAL_FLAMEDMG                = 0
+FIREBALL_ADDON_FLAMEDMG                  = 2
+FIREBALL_DELAY                           = 0.3
+
+-- Lightning
+LIGHTNING_STRIKE_RADIUS                  = 64
+LIGHTNING_MIN_DELAY                      = 1
+LIGHTNING_MAX_DELAY                      = 3
+LIGHTNING_INITIAL_DAMAGE                 = 50
+LIGHTNING_ADDON_DAMAGE                   = 15
+LIGHTNING_INITIAL_DURATION               = 5.0
+LIGHTNING_ADDON_DURATION                 = 0
+LIGHTNING_INITIAL_RADIUS                 = 128
+LIGHTNING_ADDON_RADIUS                   = 0
+LIGHTNING_ABILITY_DELAY                  = 1.0
+
+-- Plasmabolt
+PLASMABOLT_INITIAL_DAMAGE                = 50
+PLASMABOLT_ADDON_DAMAGE                  = 15
+PLASMABOLT_INITIAL_RADIUS                = 100
+PLASMABOLT_ADDON_RADIUS                  = 5
+PLASMABOLT_INITIAL_SPEED                 = 750
+PLASMABOLT_ADDON_SPEED                   = 0
+PLASMABOLT_INITIAL_DURATION              = 2.0
+PLASMABOLT_ADDON_DURATION                = 0
+PLASMABOLT_COST                          = 20
+PLASMABOLT_DELAY                         = 0.3
+PLASMABOLT_DELAY_PVP                     = 0.7
+
+-- Icebolt
+ICEBOLT_INITIAL_DAMAGE                   = 100
+ICEBOLT_ADDON_DAMAGE                     = 20
+ICEBOLT_INITIAL_RADIUS                   = 100
+ICEBOLT_ADDON_RADIUS                     = 0
+ICEBOLT_INITIAL_SPEED                    = 650
+ICEBOLT_ADDON_SPEED                      = 0
+ICEBOLT_INITIAL_CHILL_DURATION           = 0
+ICEBOLT_ADDON_CHILL_DURATION             = 0.4
+ICEBOLT_DELAY                            = 0.3

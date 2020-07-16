@@ -13,37 +13,37 @@
 
 const char* SQLITE_CREATEDBQUERY[TOTAL_TABLES] = 
 {
-	{"CREATE TABLE [abilities] ([index] INTEGER, [level] INTEGER, [max_level] INTEGER, [hard_max] INTEGER, [modifier] INTEGER,   [disable] INTEGER,   [general_skill] INTEGER)"},
-	{"CREATE TABLE [ctf_stats] (  [flag_pickups] INTEGER,   [flag_captures] INTEGER,   [flag_returns] INTEGER,   [flag_kills] INTEGER,   [offense_kills] INTEGER,   [defense_kills] INTEGER,   [assists] INTEGER)"},
-	{"CREATE TABLE [game_stats] (  [shots] INTEGER,   [shots_hit] INTEGER,   [frags] INTEGER,   [fragged] INTEGER,   [num_sprees] INTEGER,   [max_streak] INTEGER,   [spree_wars] INTEGER,   [broken_sprees] INTEGER,   [broken_spreewars] INTEGER,   [suicides] INT,   [teleports] INTEGER,   [num_2fers] INTEGER)"},
-	{"CREATE TABLE [point_data] (  [exp] INTEGER,   [exptnl] INTEGER,   [level] INTEGER,   [classnum] INTEGER,   [skillpoints] INTEGER,   [credits] INTEGER,   [weap_points] INTEGER,   [resp_weapon] INTEGER,   [tpoints] INTEGER)"},
-	{"CREATE TABLE [runes_meta] ([index] INTEGER, [itemtype] INTEGER, [itemlevel] INTEGER, [quantity] INTEGER, [untradeable] INTEGER, [id] CHAR(16), [name] CHAR(24), [nummods] INTEGER, [setcode] INTEGER, [classnum] INTEGER)"},
-	{"CREATE TABLE [runes_mods] (  [rune_index] INTEGER, [type] INTEGER, [mod_index] INTEGER, [value] INTEGER, [set] INTEGER)"},
-	{"CREATE TABLE [talents] ([id] INTEGER, [upgrade_level] INTEGER, [max_level] INTEGER)"},
-	{"CREATE TABLE [userdata] ([title] CHAR(24), [playername] CHAR(64), [password] CHAR(24), [email] CHAR(64), [owner] CHAR(24), [member_since] CHAR(30), [last_played] CHAR(30), [playtime_total] INTEGER,[playingtime] INTEGER)"},
-	{"CREATE TABLE [weapon_meta] ([index] INTEGER, [disable] INTEGER)"},
-	{"CREATE TABLE [weapon_mods] ([weapon_index] INTEGER, [modindex] INTEGER, [level] INTEGER, [soft_max] INTEGER, [hard_max] INTEGER)"},
-	{"CREATE TABLE [character_data] (  [respawns] INTEGER,   [health] INTEGER,   [maxhealth] INTEGER,   [armour] INTEGER,   [maxarmour] INTEGER,   [nerfme] INTEGER,   [adminlevel] INTEGER,   [bosslevel] INTEGER)"}
+	"CREATE TABLE [abilities] ([index] INTEGER, [level] INTEGER, [max_level] INTEGER, [hard_max] INTEGER, [modifier] INTEGER,   [disable] INTEGER,   [general_skill] INTEGER)",
+	"CREATE TABLE [ctf_stats] (  [flag_pickups] INTEGER,   [flag_captures] INTEGER,   [flag_returns] INTEGER,   [flag_kills] INTEGER,   [offense_kills] INTEGER,   [defense_kills] INTEGER,   [assists] INTEGER)",
+	"CREATE TABLE [game_stats] (  [shots] INTEGER,   [shots_hit] INTEGER,   [frags] INTEGER,   [fragged] INTEGER,   [num_sprees] INTEGER,   [max_streak] INTEGER,   [spree_wars] INTEGER,   [broken_sprees] INTEGER,   [broken_spreewars] INTEGER,   [suicides] INT,   [teleports] INTEGER,   [num_2fers] INTEGER)",
+	"CREATE TABLE [point_data] (  [exp] INTEGER,   [exptnl] INTEGER,   [level] INTEGER,   [classnum] INTEGER,   [skillpoints] INTEGER,   [credits] INTEGER,   [weap_points] INTEGER,   [resp_weapon] INTEGER,   [tpoints] INTEGER)",
+	"CREATE TABLE [runes_meta] ([index] INTEGER, [itemtype] INTEGER, [itemlevel] INTEGER, [quantity] INTEGER, [untradeable] INTEGER, [id] CHAR(16), [name] CHAR(24), [nummods] INTEGER, [setcode] INTEGER, [classnum] INTEGER)",
+	"CREATE TABLE [runes_mods] (  [rune_index] INTEGER, [type] INTEGER, [mod_index] INTEGER, [value] INTEGER, [set] INTEGER)",
+	"CREATE TABLE [talents] ([id] INTEGER, [upgrade_level] INTEGER, [max_level] INTEGER)",
+	"CREATE TABLE [userdata] ([title] CHAR(24), [playername] CHAR(64), [password] CHAR(24), [email] CHAR(64), [owner] CHAR(24), [member_since] CHAR(30), [last_played] CHAR(30), [playtime_total] INTEGER,[playingtime] INTEGER)",
+	"CREATE TABLE [weapon_meta] ([index] INTEGER, [disable] INTEGER)",
+	"CREATE TABLE [weapon_mods] ([weapon_index] INTEGER, [modindex] INTEGER, [level] INTEGER, [soft_max] INTEGER, [hard_max] INTEGER)",
+	"CREATE TABLE [character_data] (  [respawns] INTEGER,   [health] INTEGER,   [maxhealth] INTEGER,   [armour] INTEGER,   [maxarmour] INTEGER,   [nerfme] INTEGER,   [adminlevel] INTEGER,   [bosslevel] INTEGER)"
 };
 
 // SAVING
 const char* SQLITE_INSERTONCE[TOTAL_INSERTONCE] = 
 {
-	{"INSERT INTO character_data VALUES (0,0,0,0,0,0,0,0)"},
-	{"INSERT INTO ctf_stats VALUES (0,0,0,0,0,0,0)"},
-	{"INSERT INTO game_stats VALUES (0,0,0,0,0,0,0,0,0,0,0,0)"},
-	{"INSERT INTO point_data VALUES (0,0,0,0,0,0,0,0,0)"},
-	{"INSERT INTO userdata VALUES (\"\",\"\",\"\",\"\",\"\",\"\",\"\",0,0)"}
+	"INSERT INTO character_data VALUES (0,0,0,0,0,0,0,0)",
+	"INSERT INTO ctf_stats VALUES (0,0,0,0,0,0,0)",
+	"INSERT INTO game_stats VALUES (0,0,0,0,0,0,0,0,0,0,0,0)",
+	"INSERT INTO point_data VALUES (0,0,0,0,0,0,0,0,0)",
+	"INSERT INTO userdata VALUES (\"\",\"\",\"\",\"\",\"\",\"\",\"\",0,0)"
 };
 
 const char* SQLITE_RESETTABLES[TOTAL_RESETTABLES] =
 {
-	{"DELETE FROM abilities;"},
-	{"DELETE FROM talents;"},
-	{"DELETE FROM runes_meta;"},
-	{"DELETE FROM runes_mods;"},
-	{"DELETE FROM weapon_meta;"},
-	{"DELETE FROM weapon_mods;"}
+	"DELETE FROM abilities;",
+	"DELETE FROM talents;",
+	"DELETE FROM runes_meta;",
+	"DELETE FROM runes_mods;",
+	"DELETE FROM weapon_meta;",
+	"DELETE FROM weapon_mods;"
 };
 
 // ab/talent

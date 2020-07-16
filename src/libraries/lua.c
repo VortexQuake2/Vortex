@@ -2,7 +2,7 @@
  inspired by one.c -- Lua core, libraries, and interpreter in a single file
 
     SLB - Simple Lua Binder
-    Copyright (C) 2007-2011 Jose L. Hidalgo Valiño (PpluX)
+    Copyright (C) 2007-2011 Jose L. Hidalgo Valiï¿½o (PpluX)
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -5084,7 +5084,7 @@ static void fixjump (FuncState *fs, int pc, int dest) {
   Instruction *jmp = &fs->f->code[pc];
   int offset = dest-(pc+1);
   lua_assert(dest != NO_JUMP);
-  if (abs(offset) > MAXARG_sBx)
+  if (fabsf(offset) > MAXARG_sBx)
     luaX_syntaxerror(fs->ls, "control structure too long");
   SETARG_sBx(*jmp, offset);
 }
@@ -16847,7 +16847,7 @@ static int math_randomseed (lua_State *L) {
 
 
 static const luaL_Reg mathlib[] = {
-  {"abs",   math_abs},
+  {"fabsf",   math_abs},
   {"acos",  math_acos},
   {"asin",  math_asin},
   {"atan2", math_atan2},
