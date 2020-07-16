@@ -18,8 +18,8 @@ if is_invasion then
 	PVB_BOSS_EXPERIENCE = 400
 	PVB_BOSS_CREDITS = 100
 else
-	q2print("Lua: Non-invasion - Setting xp to 35/monster\n")
-	EXP_WORLD_MONSTER = 35
+	q2print("Lua: Non-invasion - Setting xp to 22/monster\n")
+	EXP_WORLD_MONSTER = 22
 	PVB_BOSS_EXPERIENCE = 1000
 	PVB_BOSS_CREDITS = 3000
 end
