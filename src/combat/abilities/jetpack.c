@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 #define JETPACK_DRAIN	1 //every x frames drain JETPACK_AMMO
 #define JETPACK_AMMO	2 // Less cube cost.

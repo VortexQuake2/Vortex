@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 
 void plasmabolt_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)

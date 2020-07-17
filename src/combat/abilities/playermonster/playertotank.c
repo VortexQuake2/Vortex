@@ -1,4 +1,4 @@
-#include "../../../quake2/g_local.h"
+#include "g_local.h"
 #include "../../../gamemodes/boss.h"
 
 #define TANK_FRAMES_START_STAND		0

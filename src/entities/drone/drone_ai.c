@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 #define DRONE_TARGET_RANGE		1024	// maximum range for finding targets
 #define DRONE_ALLY_RANGE		512		// range allied units can be called for assistance

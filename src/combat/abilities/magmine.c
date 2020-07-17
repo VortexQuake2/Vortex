@@ -1,7 +1,7 @@
 
 
 
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 void magmine_throwsparks(edict_t *self) {
     int i;

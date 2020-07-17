@@ -1,11 +1,12 @@
-void InitLuaSettings();
-void CleanupLua();
-int Lua_GetIntSetting(char* varname);
-double Lua_GetDoubleSetting(char* varname);
-const char* Lua_GetStringSetting(char* varname);
-void RunLuaMapSettings(char* mapname);
-double Lua_GetVariable(char* varname, double default_var);
+void vrx_init_lua();
+void vrx_close_lua();
+int vrx_lua_get_int(char* varname, double default_var);
+double vrx_lua_get_double(char* varname);
+const char* vrx_lua_get_string(char* varname);
+void vrx_lua_run_map_settings(char* mapname);
+double vrx_lua_get_variable(char* varname, double default_var);
 void Lua_RunSettingScript(const char* filename);
-qboolean Lua_StartTableIter(const char* tablename);
-int Lua_IterNextString(char** out);
-int Lua_GetIntVariable(char* varname, double default_var);
+qboolean vrx_lua_start_table_iter(const char* tablename);
+int vrx_lua_iter_next_string(char** out);
+
+void vrx_lua_event(const char* eventname);

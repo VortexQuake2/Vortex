@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 
 char lightlevel[2] = { 'm', '\0' };
 int day = 1;
@@ -378,7 +378,7 @@ void FindIdleObserver(edict_t *scanent)
 		{
 			continue;
 		}
-		if (ActivePlayers() + 1 >= maxclients->value)
+		if (vrx_get_alive_players() + 1 >= maxclients->value)
 		{
 			//3.0 don't kick players watching a domination game
 			if (domination->value && level.time > pregame_time->value)

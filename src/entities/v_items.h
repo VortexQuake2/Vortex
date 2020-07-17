@@ -47,8 +47,11 @@ typedef struct item_s
 	qboolean        isUnique;
 }item_t;
 
-#define RUNE_SPAWN_MONSTER		0.01	// (0.01 = 1% per frag) base chance of a rune spawning, before level modifiers
-#define RUNE_SPAWN_BASE			0.05	// (0.05 = 5% per frag) base chance of a rune spawning, before level modifiers
+// 1 every 500 monsters
+#define RUNE_SPAWN_MONSTER		0.002	// (0.01 = 1% per frag) base chance of a rune spawning, before level modifiers
+
+// 1 every 50 frags
+#define RUNE_SPAWN_BASE			0.02	// (0.05 = 5% per frag) base chance of a rune spawning, before level modifiers
 #define RUNE_WEAPON_MAXVALUE	5		// maximum modifier for weapon runes
 #define RUNE_ABILITY_MAXVALUE	5		// maximum modifier for ability runes
 #define RUNE_COST_BASE			2500

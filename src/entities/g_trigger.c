@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 
 
 void InitTrigger (edict_t *self)

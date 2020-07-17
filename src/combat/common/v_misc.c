@@ -1,7 +1,7 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 
-int JoinedPlayers() {
+int vrx_get_joined_players() {
     edict_t *player;
     int i, clients = 0;
 
@@ -24,7 +24,7 @@ int JoinedPlayers() {
     return clients;
 }
 
-int ActivePlayers(void) {
+int vrx_get_alive_players(void) {
     edict_t *player;
     int i, clients = 0;
 
@@ -162,7 +162,7 @@ int PVM_RemoveAllMonsters(edict_t *monster_owner) {
 //qboolean SpawnWorldMonster(edict_t *ent, int mtype);
 void FindMonsterSpot(edict_t *self) {
     edict_t *scan = NULL;
-    int players = JoinedPlayers();
+    int players = vrx_get_joined_players();
     int total_monsters, max_monsters = 0;
     int mtype = 0, num = 0, i = 0;
     total_monsters = PVM_TotalMonsters(self, false);
@@ -227,7 +227,7 @@ void FindMonsterSpot(edict_t *self) {
 
 void SpawnRandomBoss(edict_t *self) {
     // 3% chance for a boss to spawn a boss if there isn't already one spawned
-    if (!SPREE_WAR && ActivePlayers() >= 8 && self->num_sentries < 1) {
+    if (!SPREE_WAR && vrx_get_alive_players() >= 8 && self->num_sentries < 1) {
         int chance = GetRandom(1, 100);
 
         if ((chance >= 97) && vrx_create_new_drone(self, GetRandom(30, 31), true)) {

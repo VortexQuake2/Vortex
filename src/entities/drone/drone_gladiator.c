@@ -6,7 +6,7 @@ GLADIATOR
 ==============================================================================
 */
 
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 #include "../../quake2/monsterframes/m_gladiator.h"
 
 static int	sound_pain1;

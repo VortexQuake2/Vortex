@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 #include "ctf.h"
 
 edict_t *dom_flagcarrier (void)
@@ -29,7 +29,7 @@ void dom_awardpoints (void)
 	if (level.framenum % qf2sf(DOMINATION_AWARD_FRAMES))
 		return;
 	// not enough players
-	if (ActivePlayers() < DOMINATION_MINIMUM_PLAYERS)
+	if (vrx_get_alive_players() < DOMINATION_MINIMUM_PLAYERS)
 		return;
 
 	for (i=0 ; i<game.maxclients ; i++) {

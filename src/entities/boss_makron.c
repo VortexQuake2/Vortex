@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 #include "../gamemodes/boss.h"
 
 #define MAKRON_FRAMES_STAND_START	112

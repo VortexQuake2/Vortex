@@ -1,5 +1,5 @@
 
-#include "../quake2/g_local.h"
+#include "g_local.h"
 #include "ai_local.h"
 
 //==========================================

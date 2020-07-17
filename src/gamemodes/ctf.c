@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 #include "ctf.h"
 #include "../characters/class_limits.h"
 
@@ -575,7 +575,7 @@ void CTF_AwardPlayer (edict_t *ent, int points, int credits)
 	if (G_IsSpectator(ent))
 		return;
 
-	if (ActivePlayers() < CTF_MINIMUM_PLAYERS)
+	if (vrx_get_alive_players() < CTF_MINIMUM_PLAYERS)
 		return;
 
     /*
@@ -870,7 +870,7 @@ void CTF_AwardFrag (edict_t *attacker, edict_t *target)
 	float	mult=1.0;
 	edict_t	*team_fc, *enemy_fc, *team_base, *enemy_base, *team_spawn, *enemy_spawn;
 
-	if (ActivePlayers() < CTF_MINIMUM_PLAYERS)
+	if (vrx_get_alive_players() < CTF_MINIMUM_PLAYERS)
 		return;
 
 	attacker = G_GetClient(attacker);
@@ -996,7 +996,7 @@ void CTF_AwardFlagCapture (edict_t *carrier, int teamnum)
 	edict_t	*cl_ent;
 	qboolean uneventeams=false;
 
-	if (ActivePlayers() < CTF_MINIMUM_PLAYERS)
+	if (vrx_get_alive_players() < CTF_MINIMUM_PLAYERS)
 		return;
 
 	if (teamnum == RED_TEAM)

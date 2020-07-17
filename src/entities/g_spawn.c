@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 
 typedef struct
 {
@@ -755,9 +755,9 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 
 	// AI_NewMap();//JABot
 
-	RunLuaMapSettings(mapname);
+	vrx_lua_run_map_settings(mapname);
 
-	level.r_monsters = Lua_GetVariable(va("%s_monsters", mapname), saved);
+	level.r_monsters = vrx_lua_get_variable(va("%s_monsters", mapname), saved);
 	// level.pathfinding = Lua_GetVariable(va("%s_UsePathfinding", level.mapname), 0) || Lua_GetVariable(va("UsePathfinding", level.mapname), 0);
 
 	G_FindTeams ();

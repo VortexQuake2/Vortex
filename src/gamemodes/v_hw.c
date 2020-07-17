@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 #include "v_hw.h"
 
 // dom but without teams. vrxchile 3.0 - az
@@ -96,7 +96,7 @@ void hw_awardpoints (void)
 		return;
 
 	// not enough players
-	if (JoinedPlayers() < HW_MINIMUM_PLAYERS)
+	if (vrx_get_joined_players() < HW_MINIMUM_PLAYERS)
 		return;
 
 	points = HW_POINTS;

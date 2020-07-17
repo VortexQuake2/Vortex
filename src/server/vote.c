@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 
 void ShowVoteMapMenu(edict_t *ent, int pagenum, int mapmode);
 
@@ -33,19 +33,23 @@ void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 {
 	//char buf[8];
 	int timelimit;
+	int fraglimit;
+
+	vrx_lua_event("on_change_map");
 
 	//Change the mode
 	switch(gamemode)
 	{
 		case MAPMODE_PVP:
 		{
+			fraglimit = vrx_lua_get_int("pvp_fraglimit", 50);
 			// player versus player
 			gi.cvar_set("ffa", "0");
 			gi.cvar_set("domination", "0");
 			gi.cvar_set("ctf", "0");
 			gi.cvar_set("pvm", "0");
 			gi.cvar_set("invasion", "0");
-			gi.cvar_set("fraglimit", "50"); // vrxchile 2.5: less time per round (more dynamic pvp)
+			gi.cvar_set("fraglimit", va("%d", fraglimit)); // vrxcl 5.0: lua fraglimits
 			gi.cvar_set("timelimit", "0");
 			gi.cvar_set("trading", "0");
 			gi.cvar_set("hw", "0");
@@ -56,7 +60,7 @@ void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 		case MAPMODE_PVM:
 		{
 			// player versus monsters
-			timelimit = Lua_GetVariable("pvm_timelimit", 10)+pregame_time->value/60;
+			timelimit = vrx_lua_get_variable("pvm_timelimit", 10)+pregame_time->value/60;
 			gi.cvar_set("ffa", "0");
 			gi.cvar_set("domination", "0");
 			gi.cvar_set("ctf", "0");
@@ -75,7 +79,7 @@ void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 		break;
 		case MAPMODE_DOM:
 		{
-			timelimit = Lua_GetVariable("dom_timelimit", 10)+pregame_time->value/60;
+			timelimit = vrx_lua_get_variable("dom_timelimit", 10)+pregame_time->value/60;
 			// domination mode
 			gi.cvar_set("ffa", "0");
 			gi.cvar_set("domination", "1");
@@ -92,7 +96,7 @@ void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 		break;
 		case MAPMODE_CTF:
 		{
-			timelimit = Lua_GetVariable("ctf_timelimit", 10)+pregame_time->value/60;
+			timelimit = vrx_lua_get_variable("ctf_timelimit", 10)+pregame_time->value/60;
 			// ctf mode
 			gi.cvar_set("ffa", "0");
 			gi.cvar_set("domination", "0");
@@ -109,14 +113,15 @@ void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 		break;
 		case MAPMODE_FFA:
 		{
-			timelimit = Lua_GetVariable("ffa_timelimit", 15)+pregame_time->value/60;
+			timelimit = vrx_lua_get_variable("ffa_timelimit", 15)+pregame_time->value/60;
+			fraglimit = vrx_lua_get_int("ffa_fraglimit", 100);
 			// free for all mode
 			gi.cvar_set("ffa", "1");
 			gi.cvar_set("domination", "0");
 			gi.cvar_set("ctf", "0");
 			gi.cvar_set("pvm", "0");
 			gi.cvar_set("invasion", "0");
-			gi.cvar_set("fraglimit", "100");
+			gi.cvar_set("fraglimit", va("%d", fraglimit));
 			gi.cvar_set("timelimit", va("%d", timelimit));
 			gi.cvar_set("trading", "0");
 			gi.cvar_set("hw", "0");
@@ -129,7 +134,7 @@ void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 		break;
 		case MAPMODE_INV:
 		{
-			timelimit = Lua_GetVariable("inv_timelimit", 20)+pregame_time->value/60;
+			timelimit = vrx_lua_get_variable("inv_timelimit", 20)+pregame_time->value/60;
 			// invasion mode
 			gi.cvar_set("ffa", "0");
 			gi.cvar_set("domination", "0");
@@ -146,7 +151,7 @@ void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 		break;
 		case MAPMODE_INH:
 		{
-			timelimit = Lua_GetVariable("inh_timelimit", 25)+pregame_time->value/60;
+			timelimit = vrx_lua_get_variable("inh_timelimit", 25)+pregame_time->value/60;
 			// invasion mode - hard
 			gi.cvar_set("ffa", "0");
 			gi.cvar_set("domination", "0");
@@ -177,7 +182,7 @@ void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 		}
 		case MAPMODE_VHW: // vortex holy wars
 			{
-				timelimit = Lua_GetVariable("vhw_timelimit", 10)+pregame_time->value/60;
+				timelimit = vrx_lua_get_variable("vhw_timelimit", 10)+pregame_time->value/60;
 				gi.cvar_set("ffa", "0");
 				gi.cvar_set("domination", "0");
 				gi.cvar_set("ctf", "0");
@@ -192,7 +197,7 @@ void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 			}
 		case MAPMODE_TBI:
 			{
-				timelimit = Lua_GetVariable("dts_timelimit", 15)+pregame_time->value/60;
+				timelimit = vrx_lua_get_variable("dts_timelimit", 15)+pregame_time->value/60;
 				gi.cvar_set("ffa", "0");
 				gi.cvar_set("domination", "0");
 				gi.cvar_set("ctf", "0");
@@ -230,7 +235,7 @@ void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 		gi.dprintf("Invalid map index (%d) defaulting to current map.\n", mapindex);
 		strcpy(level.nextmap, level.mapname);
 	}
-	if (JoinedPlayers() == 0)
+	if (vrx_get_joined_players() == 0)
 		ExitLevel();
 }
 
@@ -238,7 +243,7 @@ void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 
 v_maplist_t *GetMapList(int mode)
 {
-	if(Lua_GetIntVariable("UseLuaMaplists", 0))
+	if(vrx_lua_get_int("UseLuaMaplists", 0))
 		v_LoadMapList(mode); // reload the map list (lua conditional maplists)
 
 	//Change the map
@@ -494,7 +499,7 @@ int CountMapVotes(int mapIndex, int mode)
 
 int V_VoteDone ()
 {
-	int players = JoinedPlayers();
+	int players = vrx_get_joined_players();
 
 	if (players < 1)
 		return 0;
@@ -1093,7 +1098,7 @@ void ShowVoteModeMenu(edict_t *ent)
 	addlinetomenu(ent, " ", 0);
 
 //GHz START
-	players = ActivePlayers();
+	players = vrx_get_alive_players();
 	// pvm and invasion are only available when there are few players on the server
 #ifdef FORCE_PVP_WITH_A_LOT_OF_PLAYERS
 	if (0.33 * maxclients->value < 4)
@@ -1132,7 +1137,7 @@ void ShowVoteModeMenu(edict_t *ent)
 		}
 	}
 
-	if (invasion_enabled->value && (ThereIsOneLevelTen() || ActivePlayers() >= min_players) )
+	if (invasion_enabled->value && (ThereIsOneLevelTen() || vrx_get_alive_players() >= min_players) )
 	{
 		addlinetomenu(ent, " Invasion (Hard mode)", MAPMODE_INH);
 		lastline++;

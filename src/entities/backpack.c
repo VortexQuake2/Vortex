@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 
 void Backpack_Touch(edict_t *pack, edict_t *other, cplane_t *plane, csurface_t *surf) {
 int i,quantity;

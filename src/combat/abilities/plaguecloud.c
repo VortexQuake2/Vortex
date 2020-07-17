@@ -1,5 +1,5 @@
 
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 #define PLAGUE_DEFAULT_RADIUS    48
 #define PLAGUE_ADDON_RADIUS        8

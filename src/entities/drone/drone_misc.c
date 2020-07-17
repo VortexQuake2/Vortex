@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 #include "../../gamemodes/ctf.h"
 #include "../../characters/class_limits.h"
 

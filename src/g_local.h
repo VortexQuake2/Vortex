@@ -12,37 +12,24 @@
 // short, server-visible gclient_t and edict_t structures,
 // because we define the full size ones in this file
 #define	GAME_INCLUDE
-#include "game.h"
+#include "quake2/game.h"
 
 //ZOID
-#include "../menus/v_menu.h"
+#include "menus/v_menu.h"
 //ZOID
 
-#include "../v_shared.h"    //3.0
-#include "../combat/abilities/Spirit.h"        // 3.03+
-#include "../combat/abilities/playermonster/morph.h"
-#include "../menus/ally.h" // 3.12
-#include "../characters/io/gds.h" // 3.15
-#include "../combat/abilities/scanner.h"
+#include "v_shared.h"    //3.0
+#include "combat/abilities/Spirit.h"        // 3.03+
+#include "combat/abilities/playermonster/morph.h"
+#include "menus/ally.h" // 3.12
+#include "characters/io/gds.h" // 3.15
+#include "combat/abilities/scanner.h"
 
 
 // the "gameversion" client command will print this plus compile date
 #define	GAMEVERSION	"Vortex"//K03 "baseq2"
 //#define MAX_NODES	1024
 //K03 Begin
-
-//typedef struct nodedata_s nodedata_t;
-/*
-struct nodedata_s
-{
-	vec3_t		pos;			// position of the node
-	nodedata_t	*next;			// pointer to next node
-	nodedata_t	*prev;			// pointer to previous node
-	int			type;			// the type of node
-	int			flags;			// special node flags
-	float		weight;			// weight modifier
-};
-*/
 
 extern qboolean MonstersInUse;
 extern qboolean found_flag;
@@ -62,7 +49,7 @@ extern int DEFENSE_TEAM;
 extern int PREV_DEFENSE_TEAM;
 extern long FLAG_FRAMES;
 //extern vec3_t nodes[MAX_NODES];//GHz
-#include "../combat/abilities/p_hook.h"
+#include "combat/abilities/p_hook.h"
 //K03 End
 
 // protocol bytes that can be directly added to messages
@@ -111,8 +98,6 @@ extern long FLAG_FRAMES;
 #define FL_CONVERTED			0x00040000	// entity was converted
 #define FL_COCOONED				0x00080000	// entitiy is cocooned
 #define FL_RESPAWN				0x80000000	// used for item respawning
-
-
 
 #define FRAMETIME		(1/sv_fps->value)
 
@@ -1250,7 +1235,7 @@ int HighestLevelPlayer(void);//GHz
 int LowestLevelPlayer(void);
 int PvMHighestLevelPlayer(void);//GHz
 int PvMLowestLevelPlayer(void);
-int ActivePlayers (void);//Apple
+int vrx_get_alive_players (void);//Apple
 int vrx_GetMonsterCost(int mtype);//GHz
 int vrx_GetMonsterControlCost(int mtype);//GHz
 void vrx_remove_player_summonables(edict_t *self);//GHz
@@ -1401,7 +1386,7 @@ void GetChaseTarget(edict_t *ent);
 //============================================================================
 
 //jabot
-#include "../ai/ai.h"
+#include "ai/ai.h"
 
 // client_t->anim_priority
 #define	ANIM_BASIC		0		// stand / run
@@ -1494,8 +1479,8 @@ typedef struct
 	char	*stuffptr;
 } client_respawn_t;
 
-#include "../combat/abilities/g_abilities.h"
-#include "../menus/menu.h"
+#include "combat/abilities/g_abilities.h"
+#include "menus/menu.h"
 
 // this structure is cleared on each PutClientInServer(),
 // except for 'client->pers'
@@ -1971,9 +1956,9 @@ struct edict_s
 	edict_t *laser;
 };
 
-#include "../combat/abilities/auras.h"
+#include "combat/abilities/auras.h"
 //ZOID
-#include "../gamemodes/g_ctf.h"
+#include "gamemodes/g_ctf.h"
 //ZOID
 
 //3.0 map lists
@@ -2289,7 +2274,7 @@ void SaveCharacterQuit (edict_t *ent);
 void V_AutoStuff(edict_t* ent);
 
 // new command system
-#include "../server/v_cmd.h"
+#include "server/v_cmd.h"
 
 qboolean V_VoteInProgress();
 
@@ -2304,7 +2289,7 @@ void DroneList_Remove(edict_t *ent);
 edict_t* TBI_FindSpawn(edict_t *ent);
 void InitTBI();
 
-#include "../server/v_luasettings.h"
+#include "server/v_luasettings.h"
 
 //az end
 

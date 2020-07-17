@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 #include "boss.h"
 
 qboolean Boss_CanFit (edict_t *ent, vec3_t boss_mins, vec3_t boss_maxs)
@@ -241,7 +241,7 @@ void vrx_award_boss_kill (edict_t *boss)
 		if (!invasion->value)
 		    dmgmod = (float)damage / GetTotalBossDamage(boss);
         else // az: shared experience
-            dmgmod = (float)1 / ActivePlayers();
+            dmgmod = (float)1 / vrx_get_alive_players();
 
 		exp_points = levelmod*dmgmod*PVB_BOSS_EXPERIENCE;
 		credits = levelmod*dmgmod*PVB_BOSS_CREDITS;

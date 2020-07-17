@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 void wormhole_in (edict_t *self, edict_t *other)
 {

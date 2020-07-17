@@ -1,4 +1,4 @@
-#include "../../../quake2/g_local.h"
+#include "g_local.h"
 
 #define PARASITE_ATTACK_RANGE		96
 #define PARASITE_ATTACK_FRAMES		20

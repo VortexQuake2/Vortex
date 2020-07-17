@@ -1,4 +1,4 @@
-#include "../../../quake2/g_local.h"
+#include "g_local.h"
 
 #define CACODEMON_FRAME_IDLE_START        0
 #define CACODEMON_FRAME_IDLE_END        3

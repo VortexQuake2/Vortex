@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 
 float vrx_increase_monster_damage_by_talent(edict_t *owner, float damage)

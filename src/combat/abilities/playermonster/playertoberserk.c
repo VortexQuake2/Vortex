@@ -1,4 +1,4 @@
-#include "../../../quake2/g_local.h"
+#include "g_local.h"
 
 #define BERSERK_RUN_FORWARD		1
 #define BERSERK_RUN_BACKWARD	2

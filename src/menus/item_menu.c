@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 
 //************************************************************************************************
 //		Sorry about the "hacker" approach to indexing through these menus,

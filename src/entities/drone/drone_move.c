@@ -1,6 +1,6 @@
 // m_move.c -- monster movement
 
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 #define	STEPSIZE	18
 

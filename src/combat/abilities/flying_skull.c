@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 #include "../../gamemodes/ctf.h"
 
 #define SKULL_FRAMES_ATTACK_START	10

@@ -287,7 +287,7 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 		"xv 0 yv 16 string2 \"Time:%2im %2is Frags:%3i Players:%3i\" "
 		"xv 0 yv 34 string2 \"Name       Lv Cl Score Frg Spr Png\" ",
 		(int)(time_left / 60), (int)(time_left - (int)((time_left / 60) * 60)),
-		frag_left, JoinedPlayers());
+		frag_left, vrx_get_joined_players());
 
 	//K03 End
 	j = strlen(entry);

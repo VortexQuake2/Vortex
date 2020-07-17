@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 
 //***********************************************************
 //		Weapon Master class bonus
@@ -160,9 +160,10 @@ void vrx_reset_weapon_maximums(edict_t *ent)
 					else
 					{
                         //Sword gets an extra bonus
-                        if (j == 3 && i == WEAPON_SWORD) {
-                            ent->myskills.weapons[i].mods[j].soft_max = 20;
-                            ent->myskills.weapons[i].mods[j].hard_max = 30;
+                        if (j == 3 && i == WEAPON_SWORD) { // az note: this is sword burn
+                            ent->myskills.weapons[i].mods[j].soft_max = 10;
+                            ent->myskills.weapons[i].mods[j].hard_max = 20;
+							continue;
                         }
 
 						ent->myskills.weapons[i].mods[j].soft_max = 1;

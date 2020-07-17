@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 #include "../../gamemodes/ctf.h"
 
 #define LASER_SPAWN_DELAY		1.0	// time before emitter creates laser beam

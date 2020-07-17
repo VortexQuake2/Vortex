@@ -1,5 +1,5 @@
 //This code just handles the laser sight
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 void LaserSightThink (edict_t *self);
 

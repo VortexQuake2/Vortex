@@ -4,7 +4,7 @@
 //***By Archer***
 //***************
 
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 #include "../../gamemodes/ctf.h"
 
 // 3.19 sentry attack and sight FOV limits

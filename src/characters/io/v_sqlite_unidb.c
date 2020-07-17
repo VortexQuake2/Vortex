@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 #include <sys/stat.h>
 #include "../../libraries/sqlite3.h"
@@ -161,7 +161,7 @@ void VSFU_SaveRunes(edict_t *player)
 				char* query;
 				// cant remove columns with sqlite.
 				// ugly hack to work around that
-				if (Lua_GetIntVariable("useMysqlTablesOnSQLite", 0))
+				if (vrx_lua_get_int("useMysqlTablesOnSQLite", 0))
 					query = VSFU_INSERTRMODEX;
 				else
 					query = VSFU_INSERTRMOD;
@@ -240,7 +240,7 @@ void VSFU_SavePlayer(edict_t *player)
 		
 		gi.dprintf("SQLite (single mode): creating initial data for player id %d..", id);
 		
-		if (!Lua_GetIntVariable("useMysqlTablesOnSQLite", 0))
+		if (!vrx_lua_get_int("useMysqlTablesOnSQLite", 0))
 		{
 			/* sorry about this :( -az*/
 				QUERY(va (CA, id));
@@ -420,7 +420,7 @@ void VSFU_SavePlayer(edict_t *player)
 					char* query;
 					// cant remove columns with sqlite.
 					// ugly hack to work around that
-					if (Lua_GetIntVariable("useMysqlTablesOnSQLite", 0))
+					if (vrx_lua_get_int("useMysqlTablesOnSQLite", 0))
 						query = VSFU_INSERTRMODEX;
 					else
 						query = VSFU_INSERTRMOD;
@@ -665,7 +665,7 @@ qboolean VSFU_LoadPlayer(edict_t *player)
 
 			for (j = 0; j < MAX_VRXITEMMODS; ++j)
 			{
-				if (Lua_GetIntVariable("useMysqlTablesOnSQLite", 0))
+				if (vrx_lua_get_int("useMysqlTablesOnSQLite", 0))
 				{
 					player->myskills.items[index].modifiers[j].type = sqlite3_column_int(statement_mods, 3);
 					player->myskills.items[index].modifiers[j].index = sqlite3_column_int(statement_mods, 4);
@@ -832,7 +832,7 @@ qboolean VSFU_LoadPlayer(edict_t *player)
 
 void V_VSFU_StartConn()
 {
-	char *dbname = Lua_GetStringSetting("SQLitePath");
+	char *dbname = vrx_lua_get_string("SQLitePath");
 	struct stat mybuf;
 	int i, r;
 	char* format;

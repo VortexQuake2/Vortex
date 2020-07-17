@@ -34,6 +34,8 @@ else ()
   message (FATAL "Unknown platform")
 endif ()
 
+include_directories(./src/ ./src/*)
+
 # Specify the source files for the game library
 add_library(${CC_LIB_NAME} SHARED ${VRX_FILES})
 

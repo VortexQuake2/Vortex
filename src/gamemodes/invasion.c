@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 #include "invasion.h"
 
 //FIXME: need queue that holds all players that are waiting to respawn but all spawns are busy
@@ -406,7 +406,7 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 	}
 	else if (invasion->value == 2) // hard mode
 	{
-		mhealth = 1 + 0.1 * invasion_difficulty_level * max(log2(JoinedPlayers()), 0);
+		mhealth = 1 + 0.1 * invasion_difficulty_level * max(log2(vrx_get_joined_players()), 0);
 	}
 
 	monster->max_health = monster->health = monster->max_health*mhealth;
@@ -435,7 +435,7 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 float TimeFormula()
 {
 	int base = 4 * 60;
-	int playeramt = ActivePlayers() * 8;
+	int playeramt = vrx_get_alive_players() * 8;
 	int levelamt = invasion_difficulty_level * 7;
 	int cap = 60;
 	int rval = base - playeramt - levelamt;
@@ -507,7 +507,7 @@ void INV_SpawnMonsters(edict_t *self)
 	int SpawnTries = 0, MaxTriesThisFrame = 32;
 	PVM_TotalMonsters(self, true);
 
-	players = max_monsters = JoinedPlayers();
+	players = max_monsters = vrx_get_joined_players();
 
 	// there are still monsters alive
 	if ((self->num_monsters_real > 0) && (self->count == MONSTERSPAWN_STATUS_IDLE))
@@ -570,9 +570,9 @@ void INV_SpawnMonsters(edict_t *self)
 	if (!(invasion_difficulty_level % 5))
 	{
 		if (invasion->value == 1)
-			max_monsters = 4 * (JoinedPlayers() - 1);
+			max_monsters = 4 * (vrx_get_joined_players() - 1);
 		else if (invasion->value == 2)
-			max_monsters = 6 * (JoinedPlayers() - 1);
+			max_monsters = 6 * (vrx_get_joined_players() - 1);
 	}
 
 	if (!invasion_data.printedmessage)

@@ -6,7 +6,7 @@ MEDIC
 ==============================================================================
 */
 
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 #include "../../quake2/monsterframes/m_medic.h"
 
 static int	sound_idle1;

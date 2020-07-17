@@ -1,4 +1,4 @@
-#include "../../../quake2/g_local.h"
+#include "g_local.h"
 
 #define MUTANT_FRAMES_IDLE_START	62
 #define MUTANT_FRAMES_IDLE_END		125

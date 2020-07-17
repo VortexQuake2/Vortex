@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 #include "../../characters/class_limits.h"
 
 
@@ -116,7 +116,7 @@ void think_chat_protect_activate(edict_t *ent) {
 }
 
 void think_player_inactivity(edict_t *ent) {
-    if (level.time > pregame_time->value && JoinedPlayers() > maxclients->value * 0.8) {
+    if (level.time > pregame_time->value && vrx_get_joined_players() > maxclients->value * 0.8) {
         int frames = MAX_IDLE_FRAMES;
 
         if (!ent->myskills.administrator && !trading->value) {

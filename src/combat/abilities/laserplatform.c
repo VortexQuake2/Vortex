@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 #define LASERPLATFORM_INITIAL_HEALTH		0
 #define LASERPLATFORM_ADDON_HEALTH			200

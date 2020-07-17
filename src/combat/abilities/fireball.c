@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 void fireball_explode (edict_t *self, cplane_t *plane)
 {

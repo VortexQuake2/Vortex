@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 
 v_maplist_t maplist_PVP;
 v_maplist_t maplist_DOM;

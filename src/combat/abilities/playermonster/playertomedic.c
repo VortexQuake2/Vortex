@@ -1,4 +1,4 @@
-#include "../../../quake2/g_local.h"
+#include "g_local.h"
 
 #define MEDIC_FRAMES_IDLE_START		12
 #define MEDIC_FRAMES_IDLE_END		101

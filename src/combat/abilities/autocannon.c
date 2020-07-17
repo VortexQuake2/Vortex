@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 #define AUTOCANNON_FRAME_ATTACK_START	7
 #define AUTOCANNON_FRAME_ATTACK_END		17//20

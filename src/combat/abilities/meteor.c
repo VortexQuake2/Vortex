@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 void meteor_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {

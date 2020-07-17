@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 //FIXME: this code is a mess, clean me!
 void cloak(edict_t *ent)

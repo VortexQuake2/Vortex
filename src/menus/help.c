@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 
 void ShowHelpMenu(edict_t *ent, int lastpick);
 

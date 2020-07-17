@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 
 void OpenSpecialUpgradeMenu (edict_t *ent, int lastline);
 void OpenMultiUpgradeMenu (edict_t *ent, int lastline, int page, int generaltype); // 3.17

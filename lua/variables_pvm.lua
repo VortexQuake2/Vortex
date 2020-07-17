@@ -1,6 +1,5 @@
 -- pvm variables
-q2print("Lua: Running pvm variables\n")
-GRENADES_PICKUP                          = 5
+q2.print("Lua: Running pvm variables\n")
 SKULL_MOVE_HORIZONTAL_SPEED              = 30
 SKULL_MOVE_VERTICAL_SPEED                = 30
 SKULL_INITIAL_HEALTH                     = 150
@@ -10,9 +9,6 @@ SKULL_ADDON_DAMAGE                       = 4
 SKULL_SEARCH_TIMEOUT                     = 100
 CACODEMON_INITIAL_DAMAGE                 = 100
 CACODEMON_ADDON_DAMAGE                   = 20
-MACHINEGUN_INITIAL_DAMAGE                = 13
-MACHINEGUN_ADDON_DAMAGE                  = 0.65
-MACHINEGUN_ADDON_TRACERDAMAGE            = 4
 MAX_PIPES                                = 12
 P_TANK_PUNCH_RADIUS                      = 224
 SPIKEBALL_INITIAL_HEALTH                 = 150

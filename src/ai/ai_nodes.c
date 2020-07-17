@@ -23,7 +23,7 @@ This program is a modification of the ACE Bot, and is therefore
 in NO WAY supported by Steve Yeager.
 */
 
-#include "../quake2/g_local.h"
+#include "g_local.h"
 #include "ai_local.h"
 
 

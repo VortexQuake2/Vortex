@@ -1,6 +1,6 @@
 // g_weapon.c
 
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 #include "../../quake2/monsterframes/m_player.h"
 
 qboolean is_quad;

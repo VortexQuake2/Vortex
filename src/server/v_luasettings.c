@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 #include "../libraries/lua.h"
 #include "../libraries/lualib.h"
 #include "../libraries/lauxlib.h"
@@ -15,6 +15,7 @@ edict_t *printent = NULL;
 	{                                          \
 		reason = lua_tostring(State, -1);      \
 		gi.dprintf("Lua Error: %s\n", reason); \
+		lua_pop(State, 1); 					   \
 		return;                                \
 	}
 #define CHECK_LUA_ERR_NRET(x, p)               \
@@ -23,8 +24,18 @@ edict_t *printent = NULL;
 	{                                          \
 		reason = lua_tostring(State, -1);      \
 		gi.dprintf("Lua Error: %s\n", reason); \
+		lua_pop(State, 1);                     \
 		p;                                     \
 	}
+
+void vrx_lua_event(const char* eventname) {
+	lua_getglobal(State, eventname);
+	if (lua_isfunction(State, -1)) {
+		if (lua_pcall(State, 0, 0, 0))
+			lua_pop(State, 1); // error handler already called. we've got a message though.
+	} else
+		lua_pop(State, 1);
+}
 
 void Lua_RunSettingScript(const char *filename)
 {
@@ -84,7 +95,7 @@ int q2lua_cvar_set(lua_State *L)
 
 int q2lua_svcmd(lua_State *L)
 {
-	const char *command = luaL_checkstring(L, 1);
+	char *command = luaL_checkstring(L, 1);
 	gi.AddCommandString(command);
 	return 0;
 }
@@ -97,12 +108,57 @@ int q2lua_reloadvars(lua_State *L)
 
 int q2lua_getplayercount(lua_State *L)
 {
-	lua_pushnumber(L, JoinedPlayers());
+	lua_pushnumber(L, vrx_get_joined_players());
 	return 1;
 }
 
+int q2lua_get_mapname(lua_State *L) 
+{
+	lua_pushstring(L, level.mapname);
+	return 1;
+}
+
+int q2lua_get_nextmap(lua_State *L)
+{
+	lua_pushstring(L, level.nextmap);
+	return 1;
+}
+
+int q2lua_get_ability_name(lua_State *L)
+{
+	int index = luaL_checkinteger(State, 1);
+	lua_pushstring(L, GetAbilityString(index));
+	return 1;
+}
+
+int q2lua_get_is_ability_in_use(lua_State *L)
+{
+	int index = luaL_checkinteger(State, 1);
+	lua_pushboolean(L, vrx_get_ability_by_index(index) != NULL);
+	return 1;
+}
+
+static const struct luaL_Reg q2lib [] = {
+	{ "print", q2lua_Print },
+	{ "dofile", q2lua_dofile },
+	{ "cvar_get", q2lua_cvar_get },
+	{ "cvar_set", q2lua_cvar_set },
+	{ "svcmd", q2lua_svcmd },
+	{ "get_mapname", q2lua_get_mapname},
+	{ "get_next_map", q2lua_get_nextmap},
+	{ NULL, NULL }
+};
+
+static const struct luaL_Reg vrxlib [] = {
+	{ "reloadvars", q2lua_reloadvars },
+	{ "get_joined_player_count", q2lua_getplayercount },
+	{ "get_ability_name", q2lua_get_ability_name },
+	{ "get_is_ability_in_use", q2lua_get_is_ability_in_use },
+	{ NULL, NULL }
+};
+
 /* Called at InitGame time */
-void InitLuaSettings()
+void vrx_init_lua()
 {
 	gi.dprintf("LUA: Initializing settings...");
 
@@ -111,12 +167,12 @@ void InitLuaSettings()
 	if (State)
 	{
 		luaL_openlibs(State);
-		lua_register(State, "q2print", q2lua_Print);
-		lua_register(State, "q2dofile", q2lua_dofile);
-		lua_register(State, "cvar_get", q2lua_cvar_get);
-		lua_register(State, "cvar_set", q2lua_cvar_set);
-		lua_register(State, "svcmd", q2lua_svcmd);
-		lua_register(State, "reloadvars", q2lua_reloadvars);
+		// q2lib
+		luaL_newlib(State, q2lib);
+		lua_setglobal(State, "q2");
+		// vrxlib
+		luaL_newlib(State, vrxlib);
+		lua_setglobal(State, "vrx");
 		lua_atpanic(State, printLuaError);
 	}
 	else
@@ -133,13 +189,13 @@ void InitLuaSettings()
 	gi.dprintf("done.\n");
 }
 
-void CleanupLua()
+void vrx_close_lua()
 {
 	if (State)
 		lua_close(State);
 }
 
-void RunLuaMapSettings(char *mapname)
+void vrx_lua_run_map_settings(char *mapname)
 {
 	if (!State)
 		return;
@@ -148,7 +204,7 @@ void RunLuaMapSettings(char *mapname)
 	Lua_RunScript(mapname);
 }
 
-double Lua_GetDoubleSetting(char *varname)
+double vrx_lua_get_double(char *varname)
 {
 	double setting = -1;
 
@@ -163,12 +219,8 @@ double Lua_GetDoubleSetting(char *varname)
 	return setting;
 }
 
-int Lua_GetIntSetting(char *varname)
-{
-	return (int)Lua_GetDoubleSetting(varname);
-}
 
-const char *Lua_GetStringSetting(char *varname)
+const char *vrx_lua_get_string(char *varname)
 {
 	lua_getglobal(State, varname);
 	if (lua_isstring(State, -1))
@@ -176,7 +228,7 @@ const char *Lua_GetStringSetting(char *varname)
 	return NULL;
 }
 
-double Lua_GetVariable(char *varname, double default_var)
+double vrx_lua_get_variable(char *varname, double default_var)
 {
 	double Setting = default_var;
 	lua_getglobal(State, varname);
@@ -194,9 +246,9 @@ double Lua_GetVariable(char *varname, double default_var)
 	return Setting;
 }
 
-int Lua_GetIntVariable(char *varname, double default_var)
+int vrx_lua_get_int(char *varname, double default_var)
 {
-	return (int)Lua_GetVariable(varname, default_var);
+	return (int)vrx_lua_get_variable(varname, default_var);
 }
 
 void Lua_AdminLua(edict_t *ent, char *command)
@@ -208,7 +260,7 @@ void Lua_AdminLua(edict_t *ent, char *command)
 }
 
 /* Table Iteration */
-qboolean Lua_StartTableIter(const char *tablename)
+qboolean vrx_lua_start_table_iter(const char *tablename)
 {
 	lua_getglobal(State, tablename);
 
@@ -221,7 +273,7 @@ qboolean Lua_StartTableIter(const char *tablename)
 	return false;
 }
 
-int Lua_IterNextString(char **out)
+int vrx_lua_iter_next_string(char **out)
 {
 	int retval = lua_next(State, -2);
 	if (retval != 0)
@@ -1179,1062 +1231,1062 @@ double ICEBOLT_DELAY;
 
 void Lua_LoadVariables()
 {
-	MONSTER_MASTERY_FACTOR = Lua_GetVariable("MONSTER_MASTERY_FACTOR", 0.04);
-	MAGMINE_DEFAULT_PULL = Lua_GetVariable("MAGMINE_DEFAULT_PULL", -40);
-	MAGMINE_ADDON_PULL = Lua_GetVariable("MAGMINE_ADDON_PULL", -4);
-	RUNE_PICKUP_DELAY = Lua_GetVariable("RUNE_PICKUP_DELAY", 2.0);
+	MONSTER_MASTERY_FACTOR = vrx_lua_get_variable("MONSTER_MASTERY_FACTOR", 0.04);
+	MAGMINE_DEFAULT_PULL = vrx_lua_get_variable("MAGMINE_DEFAULT_PULL", -40);
+	MAGMINE_ADDON_PULL = vrx_lua_get_variable("MAGMINE_ADDON_PULL", -4);
+	RUNE_PICKUP_DELAY = vrx_lua_get_variable("RUNE_PICKUP_DELAY", 2.0);
 
-	SENTRY_MAXIMUM = Lua_GetVariable("SENTRY_MAXIMUM", 1);
+	SENTRY_MAXIMUM = vrx_lua_get_variable("SENTRY_MAXIMUM", 1);
 
-	CHILL_DEFAULT_BASE = Lua_GetVariable("CHILL_DEFAULT_BASE", 0);
-	CHILL_DEFAULT_ADDON = Lua_GetVariable("CHILL_DEFAULT_ADDON", 0.1);
-	SPRINT_COST = Lua_GetVariable("SPRINT_COST", 4);
-	SPRINT_MAX_CHARGE = Lua_GetVariable("SPRINT_MAX_CHARGE", 100);
-	SPRINT_CHARGE_RATE = Lua_GetVariable("SPRINT_CHARGE_RATE", 20);
-	SHIELD_COST = Lua_GetVariable("SHIELD_COST", 3);
-	SHIELD_MAX_CHARGE = Lua_GetVariable("SHIELD_MAX_CHARGE", 100);
-	SHIELD_CHARGE_RATE = Lua_GetVariable("SHIELD_CHARGE_RATE", 10);
-	SHIELD_FRONT_PROTECTION = Lua_GetVariable("SHIELD_FRONT_PROTECTION", 1.0);
-	SHIELD_BODY_PROTECTION = Lua_GetVariable("SHIELD_BODY_PROTECTION", 0.8);
-	SHIELD_ABILITY_DELAY = Lua_GetVariable("SHIELD_ABILITY_DELAY", 0.3);
-	SMARTROCKET_LOCKFRAMES = Lua_GetVariable("SMARTROCKET_LOCKFRAMES", 3);
-	DAMAGE_ESCAPE_DELAY = Lua_GetVariable("DAMAGE_ESCAPE_DELAY", 0.2);
-	EXP_WORLD_MONSTER = Lua_GetVariable("EXP_WORLD_MONSTER", 35);
-	AMMO_REGEN_DELAY = Lua_GetVariable("AMMO_REGEN_DELAY", 3);
-	MAX_KNOCKBACK = Lua_GetVariable("MAX_KNOCKBACK", 300);
-	CHAT_PROTECT_FRAMES = Lua_GetVariable("CHAT_PROTECT_FRAMES", 200);
-	MAX_HOURS = Lua_GetVariable("MAX_HOURS", 24);
-	MAX_CREDITS = Lua_GetVariable("MAX_CREDITS", 10000000);
-	CLOAK_DRAIN_TIME = Lua_GetVariable("CLOAK_DRAIN_TIME", 1);
-	CLOAK_DRAIN_AMMO = Lua_GetVariable("CLOAK_DRAIN_AMMO", 1.0);
-	CLOAK_COST = Lua_GetVariable("CLOAK_COST", 50);
-	CLOAK_ACTIVATE_TIME = Lua_GetVariable("CLOAK_ACTIVATE_TIME", 1.5);
+	CHILL_DEFAULT_BASE = vrx_lua_get_variable("CHILL_DEFAULT_BASE", 0);
+	CHILL_DEFAULT_ADDON = vrx_lua_get_variable("CHILL_DEFAULT_ADDON", 0.1);
+	SPRINT_COST = vrx_lua_get_variable("SPRINT_COST", 4);
+	SPRINT_MAX_CHARGE = vrx_lua_get_variable("SPRINT_MAX_CHARGE", 100);
+	SPRINT_CHARGE_RATE = vrx_lua_get_variable("SPRINT_CHARGE_RATE", 20);
+	SHIELD_COST = vrx_lua_get_variable("SHIELD_COST", 3);
+	SHIELD_MAX_CHARGE = vrx_lua_get_variable("SHIELD_MAX_CHARGE", 100);
+	SHIELD_CHARGE_RATE = vrx_lua_get_variable("SHIELD_CHARGE_RATE", 10);
+	SHIELD_FRONT_PROTECTION = vrx_lua_get_variable("SHIELD_FRONT_PROTECTION", 1.0);
+	SHIELD_BODY_PROTECTION = vrx_lua_get_variable("SHIELD_BODY_PROTECTION", 0.8);
+	SHIELD_ABILITY_DELAY = vrx_lua_get_variable("SHIELD_ABILITY_DELAY", 0.3);
+	SMARTROCKET_LOCKFRAMES = vrx_lua_get_variable("SMARTROCKET_LOCKFRAMES", 3);
+	DAMAGE_ESCAPE_DELAY = vrx_lua_get_variable("DAMAGE_ESCAPE_DELAY", 0.2);
+	EXP_WORLD_MONSTER = vrx_lua_get_variable("EXP_WORLD_MONSTER", 35);
+	AMMO_REGEN_DELAY = vrx_lua_get_variable("AMMO_REGEN_DELAY", 3);
+	MAX_KNOCKBACK = vrx_lua_get_variable("MAX_KNOCKBACK", 300);
+	CHAT_PROTECT_FRAMES = vrx_lua_get_variable("CHAT_PROTECT_FRAMES", 200);
+	MAX_HOURS = vrx_lua_get_variable("MAX_HOURS", 24);
+	MAX_CREDITS = vrx_lua_get_variable("MAX_CREDITS", 10000000);
+	CLOAK_DRAIN_TIME = vrx_lua_get_variable("CLOAK_DRAIN_TIME", 1);
+	CLOAK_DRAIN_AMMO = vrx_lua_get_variable("CLOAK_DRAIN_AMMO", 1.0);
+	CLOAK_COST = vrx_lua_get_variable("CLOAK_COST", 50);
+	CLOAK_ACTIVATE_TIME = vrx_lua_get_variable("CLOAK_ACTIVATE_TIME", 1.5);
 
-	LASER_TIMEUP = Lua_GetVariable("LASER_TIMEUP", 70);
-	LASER_COST = Lua_GetVariable("LASER_COST", 25);
-	LASER_CUTDAMAGE = Lua_GetVariable("LASER_CUTDAMAGE", 55);
-	MAX_LASERS = Lua_GetVariable("MAX_LASERS", 5);
+	LASER_TIMEUP = vrx_lua_get_variable("LASER_TIMEUP", 70);
+	LASER_COST = vrx_lua_get_variable("LASER_COST", 25);
+	LASER_CUTDAMAGE = vrx_lua_get_variable("LASER_CUTDAMAGE", 55);
+	MAX_LASERS = vrx_lua_get_variable("MAX_LASERS", 5);
 
-	LASER_SPAWN = Lua_GetVariable("LASER_SPAWN", 3);
-	SUPERSPEED_DRAIN_COST = Lua_GetVariable("SUPERSPEED_DRAIN_COST", 0);
-	RESPAWN_INVIN_TIME = Lua_GetVariable("RESPAWN_INVIN_TIME", 20);
-	ANTIGRAV_COST = Lua_GetVariable("ANTIGRAV_COST", 1);
-	ANTIGRAV_AMT = Lua_GetVariable("ANTIGRAV_AMT", 400);
-	FORCEWALL_WIDTH = Lua_GetVariable("FORCEWALL_WIDTH", 256);
-	FORCEWALL_HEIGHT = Lua_GetVariable("FORCEWALL_HEIGHT", 128);
-	FORCEWALL_THICKNESS = Lua_GetVariable("FORCEWALL_THICKNESS", 16);
-	FORCEWALL_DELAY = Lua_GetVariable("FORCEWALL_DELAY", 2.0);
-	FORCEWALL_SOLID_COST = Lua_GetVariable("FORCEWALL_SOLID_COST", 20);
-	FORCEWALL_NOTSOLID_COST = Lua_GetVariable("FORCEWALL_NOTSOLID_COST", 50);
+	LASER_SPAWN = vrx_lua_get_variable("LASER_SPAWN", 3);
+	SUPERSPEED_DRAIN_COST = vrx_lua_get_variable("SUPERSPEED_DRAIN_COST", 0);
+	RESPAWN_INVIN_TIME = vrx_lua_get_variable("RESPAWN_INVIN_TIME", 20);
+	ANTIGRAV_COST = vrx_lua_get_variable("ANTIGRAV_COST", 1);
+	ANTIGRAV_AMT = vrx_lua_get_variable("ANTIGRAV_AMT", 400);
+	FORCEWALL_WIDTH = vrx_lua_get_variable("FORCEWALL_WIDTH", 256);
+	FORCEWALL_HEIGHT = vrx_lua_get_variable("FORCEWALL_HEIGHT", 128);
+	FORCEWALL_THICKNESS = vrx_lua_get_variable("FORCEWALL_THICKNESS", 16);
+	FORCEWALL_DELAY = vrx_lua_get_variable("FORCEWALL_DELAY", 2.0);
+	FORCEWALL_SOLID_COST = vrx_lua_get_variable("FORCEWALL_SOLID_COST", 20);
+	FORCEWALL_NOTSOLID_COST = vrx_lua_get_variable("FORCEWALL_NOTSOLID_COST", 50);
 
-	MAX_PIPES = Lua_GetVariable("MAX_PIPES", 8);
+	MAX_PIPES = vrx_lua_get_variable("MAX_PIPES", 8);
 
-	MAX_IDLE_FRAMES = Lua_GetVariable("MAX_IDLE_FRAMES", 1800);
-	SPREE_WARS = Lua_GetVariable("SPREE_WARS", 1);
-	SPREE_START = Lua_GetVariable("SPREE_START", 6);
-	SPREE_WARS_START = Lua_GetVariable("SPREE_WARS_START", 25);
-	SPREE_WARS_BONUS = Lua_GetVariable("SPREE_WARS_BONUS", 3);
-	SPREE_BONUS = Lua_GetVariable("SPREE_BONUS", 1);
-	SPREE_BREAKBONUS = Lua_GetVariable("SPREE_BREAKBONUS", 100);
+	MAX_IDLE_FRAMES = vrx_lua_get_variable("MAX_IDLE_FRAMES", 1800);
+	SPREE_WARS = vrx_lua_get_variable("SPREE_WARS", 1);
+	SPREE_START = vrx_lua_get_variable("SPREE_START", 6);
+	SPREE_WARS_START = vrx_lua_get_variable("SPREE_WARS_START", 25);
+	SPREE_WARS_BONUS = vrx_lua_get_variable("SPREE_WARS_BONUS", 3);
+	SPREE_BONUS = vrx_lua_get_variable("SPREE_BONUS", 1);
+	SPREE_BREAKBONUS = vrx_lua_get_variable("SPREE_BREAKBONUS", 100);
 
 	// VIDA INICIAL
-	INITIAL_HEALTH_SOLDIER = Lua_GetVariable("INITIAL_HEALTH_SOLDIER", 110);
-	INITIAL_HEALTH_ENGINEER = Lua_GetVariable("INITIAL_HEALTH_ENGINEER", 115);
-	INITIAL_HEALTH_VAMPIRE = Lua_GetVariable("INITIAL_HEALTH_VAMPIRE", 130);
-	INITIAL_HEALTH_POLTERGEIST = Lua_GetVariable("INITIAL_HEALTH_POLTERGEIST", 125);
-	INITIAL_HEALTH_ALIEN = Lua_GetVariable("INITIAL_HEALTH_ALIEN", 115); //ALIEN
-	INITIAL_HEALTH_KNIGHT = Lua_GetVariable("INITIAL_HEALTH_KNIGHT", 105);
-	INITIAL_HEALTH_MAGE = Lua_GetVariable("INITIAL_HEALTH_MAGE", 125);
-	INITIAL_HEALTH_WEAPONMASTER = Lua_GetVariable("INITIAL_HEALTH_WEAPONMASTER", 85);
+	INITIAL_HEALTH_SOLDIER = vrx_lua_get_variable("INITIAL_HEALTH_SOLDIER", 110);
+	INITIAL_HEALTH_ENGINEER = vrx_lua_get_variable("INITIAL_HEALTH_ENGINEER", 115);
+	INITIAL_HEALTH_VAMPIRE = vrx_lua_get_variable("INITIAL_HEALTH_VAMPIRE", 130);
+	INITIAL_HEALTH_POLTERGEIST = vrx_lua_get_variable("INITIAL_HEALTH_POLTERGEIST", 125);
+	INITIAL_HEALTH_ALIEN = vrx_lua_get_variable("INITIAL_HEALTH_ALIEN", 115); //ALIEN
+	INITIAL_HEALTH_KNIGHT = vrx_lua_get_variable("INITIAL_HEALTH_KNIGHT", 105);
+	INITIAL_HEALTH_MAGE = vrx_lua_get_variable("INITIAL_HEALTH_MAGE", 125);
+	INITIAL_HEALTH_WEAPONMASTER = vrx_lua_get_variable("INITIAL_HEALTH_WEAPONMASTER", 85);
 
 	// VIDA POR NIVEL
-	LEVELUP_HEALTH_SOLDIER = Lua_GetVariable("LEVELUP_HEALTH_SOLDIER", 5);
-	LEVELUP_HEALTH_ENGINEER = Lua_GetVariable("LEVELUP_HEALTH_ENGINEER", 5);
-	LEVELUP_HEALTH_VAMPIRE = Lua_GetVariable("LEVELUP_HEALTH_VAMPIRE", 8);
-	LEVELUP_HEALTH_POLTERGEIST = Lua_GetVariable("LEVELUP_HEALTH_POLTERGEIST", 12);
-	LEVELUP_HEALTH_ALIEN = Lua_GetVariable("LEVELUP_HEALTH_ALIEN", 5);
-	LEVELUP_HEALTH_KNIGHT = Lua_GetVariable("LEVELUP_HEALTH_KNIGHT", 6);
-	LEVELUP_HEALTH_MAGE = Lua_GetVariable("LEVELUP_HEALTH_MAGE", 5);
-	LEVELUP_HEALTH_WEAPONMASTER = Lua_GetVariable("LEVELUP_HEALTH_WEAPONMASTER", 1);
+	LEVELUP_HEALTH_SOLDIER = vrx_lua_get_variable("LEVELUP_HEALTH_SOLDIER", 5);
+	LEVELUP_HEALTH_ENGINEER = vrx_lua_get_variable("LEVELUP_HEALTH_ENGINEER", 5);
+	LEVELUP_HEALTH_VAMPIRE = vrx_lua_get_variable("LEVELUP_HEALTH_VAMPIRE", 8);
+	LEVELUP_HEALTH_POLTERGEIST = vrx_lua_get_variable("LEVELUP_HEALTH_POLTERGEIST", 12);
+	LEVELUP_HEALTH_ALIEN = vrx_lua_get_variable("LEVELUP_HEALTH_ALIEN", 5);
+	LEVELUP_HEALTH_KNIGHT = vrx_lua_get_variable("LEVELUP_HEALTH_KNIGHT", 6);
+	LEVELUP_HEALTH_MAGE = vrx_lua_get_variable("LEVELUP_HEALTH_MAGE", 5);
+	LEVELUP_HEALTH_WEAPONMASTER = vrx_lua_get_variable("LEVELUP_HEALTH_WEAPONMASTER", 1);
 
 	// ARMADURA INICIAL
-	INITIAL_ARMOR_SOLDIER = Lua_GetVariable("INITIAL_ARMOR_SOLDIER", 35);
-	INITIAL_ARMOR_ENGINEER = Lua_GetVariable("INITIAL_ARMOR_ENGINEER", 35);
-	INITIAL_ARMOR_VAMPIRE = Lua_GetVariable("INITIAL_ARMOR_VAMPIRE", 25);
-	INITIAL_ARMOR_POLTERGEIST = Lua_GetVariable("INITIAL_ARMOR_POLTERGEIST", 0);
-	INITIAL_ARMOR_ALIEN = Lua_GetVariable("INITIAL_ARMOR_ALIEN", 30);
-	INITIAL_ARMOR_KNIGHT = Lua_GetVariable("INITIAL_ARMOR_KNIGHT", 25);
-	INITIAL_ARMOR_MAGE = Lua_GetVariable("INITIAL_ARMOR_MAGE", 75);
-	INITIAL_ARMOR_WEAPONMASTER = Lua_GetVariable("INITIAL_ARMOR_WEAPONMASTER", 50);
+	INITIAL_ARMOR_SOLDIER = vrx_lua_get_variable("INITIAL_ARMOR_SOLDIER", 35);
+	INITIAL_ARMOR_ENGINEER = vrx_lua_get_variable("INITIAL_ARMOR_ENGINEER", 35);
+	INITIAL_ARMOR_VAMPIRE = vrx_lua_get_variable("INITIAL_ARMOR_VAMPIRE", 25);
+	INITIAL_ARMOR_POLTERGEIST = vrx_lua_get_variable("INITIAL_ARMOR_POLTERGEIST", 0);
+	INITIAL_ARMOR_ALIEN = vrx_lua_get_variable("INITIAL_ARMOR_ALIEN", 30);
+	INITIAL_ARMOR_KNIGHT = vrx_lua_get_variable("INITIAL_ARMOR_KNIGHT", 25);
+	INITIAL_ARMOR_MAGE = vrx_lua_get_variable("INITIAL_ARMOR_MAGE", 75);
+	INITIAL_ARMOR_WEAPONMASTER = vrx_lua_get_variable("INITIAL_ARMOR_WEAPONMASTER", 50);
 
 	// ARMOR PER LEVEL
-	LEVELUP_ARMOR_SOLDIER = Lua_GetVariable("LEVELUP_ARMOR_SOLDIER", 5);
-	LEVELUP_ARMOR_ENGINEER = Lua_GetVariable("LEVELUP_ARMOR_ENGINEER", 6);
-	LEVELUP_ARMOR_POLTERGEIST = Lua_GetVariable("LEVELUP_ARMOR_POLTERGEIST", 0);
-	LEVELUP_ARMOR_ALIEN = Lua_GetVariable("LEVELUP_ARMOR_ALIEN", 4);
-	LEVELUP_ARMOR_KNIGHT = Lua_GetVariable("LEVELUP_ARMOR_KNIGHT", 8);
-	LEVELUP_ARMOR_MAGE = Lua_GetVariable("LEVELUP_ARMOR_MAGE", 4);
-	LEVELUP_ARMOR_WEAPONMASTER = Lua_GetVariable("LEVELUP_ARMOR_WEAPONMASTER", 1);
-	LEVELUP_ARMOR_VAMPIRE = Lua_GetVariable("LEVELUP_ARMOR_VAMPIRE", 4);
+	LEVELUP_ARMOR_SOLDIER = vrx_lua_get_variable("LEVELUP_ARMOR_SOLDIER", 5);
+	LEVELUP_ARMOR_ENGINEER = vrx_lua_get_variable("LEVELUP_ARMOR_ENGINEER", 6);
+	LEVELUP_ARMOR_POLTERGEIST = vrx_lua_get_variable("LEVELUP_ARMOR_POLTERGEIST", 0);
+	LEVELUP_ARMOR_ALIEN = vrx_lua_get_variable("LEVELUP_ARMOR_ALIEN", 4);
+	LEVELUP_ARMOR_KNIGHT = vrx_lua_get_variable("LEVELUP_ARMOR_KNIGHT", 8);
+	LEVELUP_ARMOR_MAGE = vrx_lua_get_variable("LEVELUP_ARMOR_MAGE", 4);
+	LEVELUP_ARMOR_WEAPONMASTER = vrx_lua_get_variable("LEVELUP_ARMOR_WEAPONMASTER", 1);
+	LEVELUP_ARMOR_VAMPIRE = vrx_lua_get_variable("LEVELUP_ARMOR_VAMPIRE", 4);
 
-	INITIAL_POWERCUBES_SOLDIER = Lua_GetVariable("INITIAL_POWERCUBES_SOLDIER", 200);
-	LEVELUP_POWERCUBES_SOLDIER = Lua_GetVariable("LEVELUP_POWERCUBES_SOLDIER", 10);
-	INITIAL_POWERCUBES_VAMPIRE = Lua_GetVariable("INITIAL_POWERCUBES_VAMPIRE", 200);
-	LEVELUP_POWERCUBES_VAMPIRE = Lua_GetVariable("LEVELUP_POWERCUBES_VAMPIRE", 10);
-	INITIAL_POWERCUBES_KNIGHT = Lua_GetVariable("INITIAL_POWERCUBES_KNIGHT", 200);
-	LEVELUP_POWERCUBES_KNIGHT = Lua_GetVariable("LEVELUP_POWERCUBES_KNIGHT", 10);
-	INITIAL_POWERCUBES_MAGE = Lua_GetVariable("INITIAL_POWERCUBES_MAGE", 200);
-	LEVELUP_POWERCUBES_MAGE = Lua_GetVariable("LEVELUP_POWERCUBES_MAGE", 30);
-	INITIAL_POWERCUBES_POLTERGEIST = Lua_GetVariable("INITIAL_POWERCUBES_POLTERGEIST", 200);
-	LEVELUP_POWERCUBES_POLTERGEIST = Lua_GetVariable("LEVELUP_POWERCUBES_POLTERGEIST", 10);
-	INITIAL_POWERCUBES_ALIEN = Lua_GetVariable("INITIAL_POWERCUBES_ALIEN", 200);
-	LEVELUP_POWERCUBES_ALIEN = Lua_GetVariable("LEVELUP_POWERCUBES_ALIEN", 10);
+	INITIAL_POWERCUBES_SOLDIER = vrx_lua_get_variable("INITIAL_POWERCUBES_SOLDIER", 200);
+	LEVELUP_POWERCUBES_SOLDIER = vrx_lua_get_variable("LEVELUP_POWERCUBES_SOLDIER", 10);
+	INITIAL_POWERCUBES_VAMPIRE = vrx_lua_get_variable("INITIAL_POWERCUBES_VAMPIRE", 200);
+	LEVELUP_POWERCUBES_VAMPIRE = vrx_lua_get_variable("LEVELUP_POWERCUBES_VAMPIRE", 10);
+	INITIAL_POWERCUBES_KNIGHT = vrx_lua_get_variable("INITIAL_POWERCUBES_KNIGHT", 200);
+	LEVELUP_POWERCUBES_KNIGHT = vrx_lua_get_variable("LEVELUP_POWERCUBES_KNIGHT", 10);
+	INITIAL_POWERCUBES_MAGE = vrx_lua_get_variable("INITIAL_POWERCUBES_MAGE", 200);
+	LEVELUP_POWERCUBES_MAGE = vrx_lua_get_variable("LEVELUP_POWERCUBES_MAGE", 30);
+	INITIAL_POWERCUBES_POLTERGEIST = vrx_lua_get_variable("INITIAL_POWERCUBES_POLTERGEIST", 200);
+	LEVELUP_POWERCUBES_POLTERGEIST = vrx_lua_get_variable("LEVELUP_POWERCUBES_POLTERGEIST", 10);
+	INITIAL_POWERCUBES_ALIEN = vrx_lua_get_variable("INITIAL_POWERCUBES_ALIEN", 200);
+	LEVELUP_POWERCUBES_ALIEN = vrx_lua_get_variable("LEVELUP_POWERCUBES_ALIEN", 10);
 
-	INITIAL_POWERCUBES_ENGINEER = Lua_GetVariable("INITIAL_POWERCUBES_ENGINEER", 200);
-	LEVELUP_POWERCUBES_ENGINEER = Lua_GetVariable("LEVELUP_POWERCUBES_ENGINEER", 10);
-	INITIAL_POWERCUBES_WEAPONMASTER = Lua_GetVariable("INITIAL_POWERCUBES_WEAPONMASTER", 200);
-	LEVELUP_POWERCUBES_WEAPONMASTER = Lua_GetVariable("LEVELUP_POWERCUBES_WEAPONMASTER", 10);
+	INITIAL_POWERCUBES_ENGINEER = vrx_lua_get_variable("INITIAL_POWERCUBES_ENGINEER", 200);
+	LEVELUP_POWERCUBES_ENGINEER = vrx_lua_get_variable("LEVELUP_POWERCUBES_ENGINEER", 10);
+	INITIAL_POWERCUBES_WEAPONMASTER = vrx_lua_get_variable("INITIAL_POWERCUBES_WEAPONMASTER", 200);
+	LEVELUP_POWERCUBES_WEAPONMASTER = vrx_lua_get_variable("LEVELUP_POWERCUBES_WEAPONMASTER", 10);
 
-	INITIAL_ARMOR_CLERIC = Lua_GetVariable("INITIAL_ARMOR_CLERIC", 50);
-	LEVELUP_ARMOR_CLERIC = Lua_GetVariable("LEVELUP_ARMOR_CLERIC", 5);
-	INITIAL_POWERCUBES_CLERIC = Lua_GetVariable("INITIAL_POWERCUBES_CLERIC", 200);
-	LEVELUP_POWERCUBES_CLERIC = Lua_GetVariable("LEVELUP_POWERCUBES_CLERIC", 10);
-	INITIAL_HEALTH_CLERIC = Lua_GetVariable("INITIAL_HEALTH_CLERIC", 100);
-	LEVELUP_HEALTH_CLERIC = Lua_GetVariable("LEVELUP_HEALTH_CLERIC", 5);
+	INITIAL_ARMOR_CLERIC = vrx_lua_get_variable("INITIAL_ARMOR_CLERIC", 50);
+	LEVELUP_ARMOR_CLERIC = vrx_lua_get_variable("LEVELUP_ARMOR_CLERIC", 5);
+	INITIAL_POWERCUBES_CLERIC = vrx_lua_get_variable("INITIAL_POWERCUBES_CLERIC", 200);
+	LEVELUP_POWERCUBES_CLERIC = vrx_lua_get_variable("LEVELUP_POWERCUBES_CLERIC", 10);
+	INITIAL_HEALTH_CLERIC = vrx_lua_get_variable("INITIAL_HEALTH_CLERIC", 100);
+	LEVELUP_HEALTH_CLERIC = vrx_lua_get_variable("LEVELUP_HEALTH_CLERIC", 5);
 
-	INITIAL_ARMOR_SHAMAN = Lua_GetVariable("INITIAL_ARMOR_SHAMAN", 50);
-	LEVELUP_ARMOR_SHAMAN = Lua_GetVariable("LEVELUP_ARMOR_SHAMAN", 5);
-	INITIAL_POWERCUBES_SHAMAN = Lua_GetVariable("INITIAL_POWERCUBES_SHAMAN", 200);
-	LEVELUP_POWERCUBES_SHAMAN = Lua_GetVariable("LEVELUP_POWERCUBES_SHAMAN", 10);
-	INITIAL_HEALTH_SHAMAN = Lua_GetVariable("INITIAL_HEALTH_SHAMAN", 100);
-	LEVELUP_HEALTH_SHAMAN = Lua_GetVariable("LEVELUP_HEALTH_SHAMAN", 5);
+	INITIAL_ARMOR_SHAMAN = vrx_lua_get_variable("INITIAL_ARMOR_SHAMAN", 50);
+	LEVELUP_ARMOR_SHAMAN = vrx_lua_get_variable("LEVELUP_ARMOR_SHAMAN", 5);
+	INITIAL_POWERCUBES_SHAMAN = vrx_lua_get_variable("INITIAL_POWERCUBES_SHAMAN", 200);
+	LEVELUP_POWERCUBES_SHAMAN = vrx_lua_get_variable("LEVELUP_POWERCUBES_SHAMAN", 10);
+	INITIAL_HEALTH_SHAMAN = vrx_lua_get_variable("INITIAL_HEALTH_SHAMAN", 100);
+	LEVELUP_HEALTH_SHAMAN = vrx_lua_get_variable("LEVELUP_HEALTH_SHAMAN", 5);
 
-	INITIAL_ARMOR_NECROMANCER = Lua_GetVariable("INITIAL_ARMOR_NECROMANCER", 50);
-	LEVELUP_ARMOR_NECROMANCER = Lua_GetVariable("LEVELUP_ARMOR_NECROMANCER", 5);
-	INITIAL_POWERCUBES_NECROMANCER = Lua_GetVariable("INITIAL_POWERCUBES_NECROMANCER", 200);
-	LEVELUP_POWERCUBES_NECROMANCER = Lua_GetVariable("LEVELUP_POWERCUBES_NECROMANCER", 10);
-	INITIAL_HEALTH_NECROMANCER = Lua_GetVariable("INITIAL_HEALTH_NECROMANCER", 100);
-	LEVELUP_HEALTH_NECROMANCER = Lua_GetVariable("LEVELUP_HEALTH_NECROMANCER", 1);
+	INITIAL_ARMOR_NECROMANCER = vrx_lua_get_variable("INITIAL_ARMOR_NECROMANCER", 50);
+	LEVELUP_ARMOR_NECROMANCER = vrx_lua_get_variable("LEVELUP_ARMOR_NECROMANCER", 5);
+	INITIAL_POWERCUBES_NECROMANCER = vrx_lua_get_variable("INITIAL_POWERCUBES_NECROMANCER", 200);
+	LEVELUP_POWERCUBES_NECROMANCER = vrx_lua_get_variable("LEVELUP_POWERCUBES_NECROMANCER", 10);
+	INITIAL_HEALTH_NECROMANCER = vrx_lua_get_variable("INITIAL_HEALTH_NECROMANCER", 100);
+	LEVELUP_HEALTH_NECROMANCER = vrx_lua_get_variable("LEVELUP_HEALTH_NECROMANCER", 1);
 
-	TBALLS_RESPAWN = Lua_GetVariable("TBALLS_RESPAWN", 2);
-	POWERCUBES_RESPAWN = Lua_GetVariable("POWERCUBES_RESPAWN", 25);
-	SHELLS_PICKUP = Lua_GetVariable("SHELLS_PICKUP", 30);
-	BULLETS_PICKUP = Lua_GetVariable("BULLETS_PICKUP", 70);
-	GRENADES_PICKUP = Lua_GetVariable("GRENADES_PICKUP", 20);
-	ROCKETS_PICKUP = Lua_GetVariable("ROCKETS_PICKUP", 20);
-	CELLS_PICKUP = Lua_GetVariable("CELLS_PICKUP", 70);
-	SLUGS_PICKUP = Lua_GetVariable("SLUGS_PICKUP", 15);
+	TBALLS_RESPAWN = vrx_lua_get_variable("TBALLS_RESPAWN", 2);
+	POWERCUBES_RESPAWN = vrx_lua_get_variable("POWERCUBES_RESPAWN", 25);
+	SHELLS_PICKUP = vrx_lua_get_variable("SHELLS_PICKUP", 30);
+	BULLETS_PICKUP = vrx_lua_get_variable("BULLETS_PICKUP", 70);
+	GRENADES_PICKUP = vrx_lua_get_variable("GRENADES_PICKUP", 20);
+	ROCKETS_PICKUP = vrx_lua_get_variable("ROCKETS_PICKUP", 20);
+	CELLS_PICKUP = vrx_lua_get_variable("CELLS_PICKUP", 70);
+	SLUGS_PICKUP = vrx_lua_get_variable("SLUGS_PICKUP", 15);
 
-	EXP_PLAYER_BASE = Lua_GetVariable("EXP_PLAYER_BASE", 50);
+	EXP_PLAYER_BASE = vrx_lua_get_variable("EXP_PLAYER_BASE", 50);
 
-	CREDITS_PLAYER_BASE = Lua_GetVariable("CREDITS_PLAYER_BASE", 15);
-	CREDITS_OTHER_BASE = Lua_GetVariable("CREDITS_OTHER_BASE", 8);
+	CREDITS_PLAYER_BASE = vrx_lua_get_variable("CREDITS_PLAYER_BASE", 15);
+	CREDITS_OTHER_BASE = vrx_lua_get_variable("CREDITS_OTHER_BASE", 8);
 #pragma region WEAPONS
 #pragma region SABRE
-	SABRE_INITIAL_DAMAGE = Lua_GetVariable("SABRE_INITIAL_DAMAGE", 125);
-	SABRE_ADDON_DAMAGE = Lua_GetVariable("SABRE_ADDON_DAMAGE", 15);
-	SABRE_ADDON_HEATDAMAGE = Lua_GetVariable("SABRE_ADDON_HEATDAMAGE", 4);
-	SABRE_INITIAL_RANGE = Lua_GetVariable("SABRE_INITIAL_RANGE", 38);
-	SABRE_ADDON_RANGE = Lua_GetVariable("SABRE_ADDON_RANGE", 3.2);
-	SABRE_INITIAL_KICK = Lua_GetVariable("SABRE_INITIAL_KICK", 100);
-	SABRE_ADDON_KICK = Lua_GetVariable("SABRE_ADDON_KICK", 0);
+	SABRE_INITIAL_DAMAGE = vrx_lua_get_variable("SABRE_INITIAL_DAMAGE", 125);
+	SABRE_ADDON_DAMAGE = vrx_lua_get_variable("SABRE_ADDON_DAMAGE", 15);
+	SABRE_ADDON_HEATDAMAGE = vrx_lua_get_variable("SABRE_ADDON_HEATDAMAGE", 4);
+	SABRE_INITIAL_RANGE = vrx_lua_get_variable("SABRE_INITIAL_RANGE", 38);
+	SABRE_ADDON_RANGE = vrx_lua_get_variable("SABRE_ADDON_RANGE", 3.2);
+	SABRE_INITIAL_KICK = vrx_lua_get_variable("SABRE_INITIAL_KICK", 100);
+	SABRE_ADDON_KICK = vrx_lua_get_variable("SABRE_ADDON_KICK", 0);
 #pragma endregion
 #pragma region BLASTER
-	BLASTER_INITIAL_DAMAGE_MIN = Lua_GetVariable("BLASTER_INITIAL_DAMAGE_MIN", 5);
-	BLASTER_INITIAL_DAMAGE_MAX = Lua_GetVariable("BLASTER_INITIAL_DAMAGE_MAX", 42);
-	BLASTER_ADDON_DAMAGE_MIN = Lua_GetVariable("BLASTER_ADDON_DAMAGE_MIN", 3);
-	BLASTER_ADDON_DAMAGE_MAX = Lua_GetVariable("BLASTER_ADDON_DAMAGE_MAX", 9);
-	BLASTER_INITIAL_HASTE = Lua_GetVariable("BLASTER_INITIAL_HASTE", 50);
-	BLASTER_ADDON_HASTE = Lua_GetVariable("BLASTER_ADDON_HASTE", 14);
-	BLASTER_INITIAL_SPEED = Lua_GetVariable("BLASTER_INITIAL_SPEED", 700);
-	BLASTER_ADDON_SPEED = Lua_GetVariable("BLASTER_ADDON_SPEED", 45);
+	BLASTER_INITIAL_DAMAGE_MIN = vrx_lua_get_variable("BLASTER_INITIAL_DAMAGE_MIN", 5);
+	BLASTER_INITIAL_DAMAGE_MAX = vrx_lua_get_variable("BLASTER_INITIAL_DAMAGE_MAX", 42);
+	BLASTER_ADDON_DAMAGE_MIN = vrx_lua_get_variable("BLASTER_ADDON_DAMAGE_MIN", 3);
+	BLASTER_ADDON_DAMAGE_MAX = vrx_lua_get_variable("BLASTER_ADDON_DAMAGE_MAX", 9);
+	BLASTER_INITIAL_HASTE = vrx_lua_get_variable("BLASTER_INITIAL_HASTE", 50);
+	BLASTER_ADDON_HASTE = vrx_lua_get_variable("BLASTER_ADDON_HASTE", 14);
+	BLASTER_INITIAL_SPEED = vrx_lua_get_variable("BLASTER_INITIAL_SPEED", 700);
+	BLASTER_ADDON_SPEED = vrx_lua_get_variable("BLASTER_ADDON_SPEED", 45);
 #pragma endregion
 #pragma region WEAPON_20MM
-	WEAPON_20MM_INITIAL_DMG = Lua_GetVariable("WEAPON_20MM_INITIAL_DMG", 35);
-	WEAPON_20MM_ADDON_DMG = Lua_GetVariable("WEAPON_20MM_ADDON_DMG", 5);
-	WEAPON_20MM_INITIAL_RANGE = Lua_GetVariable("WEAPON_20MM_INITIAL_RANGE", 650);
-	WEAPON_20MM_ADDON_RANGE = Lua_GetVariable("WEAPON_20MM_ADDON_RANGE", 45);
+	WEAPON_20MM_INITIAL_DMG = vrx_lua_get_variable("WEAPON_20MM_INITIAL_DMG", 35);
+	WEAPON_20MM_ADDON_DMG = vrx_lua_get_variable("WEAPON_20MM_ADDON_DMG", 5);
+	WEAPON_20MM_INITIAL_RANGE = vrx_lua_get_variable("WEAPON_20MM_INITIAL_RANGE", 650);
+	WEAPON_20MM_ADDON_RANGE = vrx_lua_get_variable("WEAPON_20MM_ADDON_RANGE", 45);
 #pragma endregion
 #pragma region SHOTGUN
-	SHOTGUN_INITIAL_DAMAGE = Lua_GetVariable("SHOTGUN_INITIAL_DAMAGE", 8);
-	SHOTGUN_ADDON_DAMAGE = Lua_GetVariable("SHOTGUN_ADDON_DAMAGE", 1);
-	SHOTGUN_INITIAL_BULLETS = Lua_GetVariable("SHOTGUN_INITIAL_BULLETS", 8);
-	SHOTGUN_ADDON_BULLETS = Lua_GetVariable("SHOTGUN_ADDON_BULLETS", 1);
+	SHOTGUN_INITIAL_DAMAGE = vrx_lua_get_variable("SHOTGUN_INITIAL_DAMAGE", 8);
+	SHOTGUN_ADDON_DAMAGE = vrx_lua_get_variable("SHOTGUN_ADDON_DAMAGE", 1);
+	SHOTGUN_INITIAL_BULLETS = vrx_lua_get_variable("SHOTGUN_INITIAL_BULLETS", 8);
+	SHOTGUN_ADDON_BULLETS = vrx_lua_get_variable("SHOTGUN_ADDON_BULLETS", 1);
 #pragma endregion
 #pragma region SUPERSHOTGUN
-	SUPERSHOTGUN_INITIAL_DAMAGE = Lua_GetVariable("SUPERSHOTGUN_INITIAL_DAMAGE", 4);
-	SUPERSHOTGUN_ADDON_DAMAGE = Lua_GetVariable("SUPERSHOTGUN_ADDON_DAMAGE", 1);
-	SUPERSHOTGUN_INITIAL_BULLETS = Lua_GetVariable("SUPERSHOTGUN_INITIAL_BULLETS", 8);
-	SUPERSHOTGUN_ADDON_BULLETS = Lua_GetVariable("SUPERSHOTGUN_ADDON_BULLETS", 0.5);
+	SUPERSHOTGUN_INITIAL_DAMAGE = vrx_lua_get_variable("SUPERSHOTGUN_INITIAL_DAMAGE", 4);
+	SUPERSHOTGUN_ADDON_DAMAGE = vrx_lua_get_variable("SUPERSHOTGUN_ADDON_DAMAGE", 1);
+	SUPERSHOTGUN_INITIAL_BULLETS = vrx_lua_get_variable("SUPERSHOTGUN_INITIAL_BULLETS", 8);
+	SUPERSHOTGUN_ADDON_BULLETS = vrx_lua_get_variable("SUPERSHOTGUN_ADDON_BULLETS", 0.5);
 #pragma endregion
 #pragma region MACHINEGUN
-	MACHINEGUN_INITIAL_DAMAGE = Lua_GetVariable("MACHINEGUN_INITIAL_DAMAGE", 12);
-	MACHINEGUN_ADDON_DAMAGE = Lua_GetVariable("MACHINEGUN_ADDON_DAMAGE", 1);
-	MACHINEGUN_ADDON_TRACERDAMAGE = Lua_GetVariable("MACHINEGUN_ADDON_TRACERDAMAGE", 12);
+	MACHINEGUN_INITIAL_DAMAGE = vrx_lua_get_variable("MACHINEGUN_INITIAL_DAMAGE", 12);
+	MACHINEGUN_ADDON_DAMAGE = vrx_lua_get_variable("MACHINEGUN_ADDON_DAMAGE", 1);
+	MACHINEGUN_ADDON_TRACERDAMAGE = vrx_lua_get_variable("MACHINEGUN_ADDON_TRACERDAMAGE", 12);
 #pragma endregion
 #pragma region CHAINGUN
 
-	CHAINGUN_INITIAL_DAMAGE = Lua_GetVariable("CHAINGUN_INITIAL_DAMAGE", 6);
-	CHAINGUN_ADDON_DAMAGE = Lua_GetVariable("CHAINGUN_ADDON_DAMAGE", 1);
-	CHAINGUN_ADDON_TRACERDAMAGE = Lua_GetVariable("CHAINGUN_ADDON_TRACERDAMAGE", 8);
+	CHAINGUN_INITIAL_DAMAGE = vrx_lua_get_variable("CHAINGUN_INITIAL_DAMAGE", 6);
+	CHAINGUN_ADDON_DAMAGE = vrx_lua_get_variable("CHAINGUN_ADDON_DAMAGE", 1);
+	CHAINGUN_ADDON_TRACERDAMAGE = vrx_lua_get_variable("CHAINGUN_ADDON_TRACERDAMAGE", 8);
 #pragma endregion
 #pragma region GRENADES
-	GRENADE_INITIAL_DAMAGE = Lua_GetVariable("GRENADE_INITIAL_DAMAGE", 220);
-	GRENADE_ADDON_DAMAGE = Lua_GetVariable("GRENADE_ADDON_DAMAGE", 15);
-	GRENADE_INITIAL_RADIUS_DAMAGE = Lua_GetVariable("GRENADE_INITIAL_RADIUS_DAMAGE", 200);
-	GRENADE_ADDON_RADIUS_DAMAGE = Lua_GetVariable("GRENADE_ADDON_RADIUS_DAMAGE", 10);
-	GRENADE_INITIAL_RADIUS = Lua_GetVariable("GRENADE_INITIAL_RADIUS", 100);
-	GRENADE_ADDON_RADIUS = Lua_GetVariable("GRENADE_ADDON_RADIUS", 2.5);
+	GRENADE_INITIAL_DAMAGE = vrx_lua_get_variable("GRENADE_INITIAL_DAMAGE", 220);
+	GRENADE_ADDON_DAMAGE = vrx_lua_get_variable("GRENADE_ADDON_DAMAGE", 15);
+	GRENADE_INITIAL_RADIUS_DAMAGE = vrx_lua_get_variable("GRENADE_INITIAL_RADIUS_DAMAGE", 200);
+	GRENADE_ADDON_RADIUS_DAMAGE = vrx_lua_get_variable("GRENADE_ADDON_RADIUS_DAMAGE", 10);
+	GRENADE_INITIAL_RADIUS = vrx_lua_get_variable("GRENADE_INITIAL_RADIUS", 100);
+	GRENADE_ADDON_RADIUS = vrx_lua_get_variable("GRENADE_ADDON_RADIUS", 2.5);
 #pragma endregion
 #pragma region GRENADELAUNCHER
-	GRENADELAUNCHER_INITIAL_DAMAGE = Lua_GetVariable("GRENADELAUNCHER_INITIAL_DAMAGE", 110);
-	GRENADELAUNCHER_ADDON_DAMAGE = Lua_GetVariable("GRENADELAUNCHER_ADDON_DAMAGE", 15);
-	GRENADELAUNCHER_INITIAL_RADIUS_DAMAGE = Lua_GetVariable("GRENADELAUNCHER_INITIAL_RADIUS_DAMAGE", 100);
-	GRENADELAUNCHER_ADDON_RADIUS_DAMAGE = Lua_GetVariable("GRENADELAUNCHER_ADDON_RADIUS_DAMAGE", 10);
-	GRENADELAUNCHER_INITIAL_RADIUS = Lua_GetVariable("GRENADELAUNCHER_INITIAL_RADIUS", 100);
-	GRENADELAUNCHER_ADDON_RADIUS = Lua_GetVariable("GRENADELAUNCHER_ADDON_RADIUS", 2.5);
-	GRENADELAUNCHER_INITIAL_SPEED = Lua_GetVariable("GRENADELAUNCHER_INITIAL_SPEED", 600);
-	GRENADELAUNCHER_ADDON_SPEED = Lua_GetVariable("GRENADELAUNCHER_ADDON_SPEED", 30);
+	GRENADELAUNCHER_INITIAL_DAMAGE = vrx_lua_get_variable("GRENADELAUNCHER_INITIAL_DAMAGE", 110);
+	GRENADELAUNCHER_ADDON_DAMAGE = vrx_lua_get_variable("GRENADELAUNCHER_ADDON_DAMAGE", 15);
+	GRENADELAUNCHER_INITIAL_RADIUS_DAMAGE = vrx_lua_get_variable("GRENADELAUNCHER_INITIAL_RADIUS_DAMAGE", 100);
+	GRENADELAUNCHER_ADDON_RADIUS_DAMAGE = vrx_lua_get_variable("GRENADELAUNCHER_ADDON_RADIUS_DAMAGE", 10);
+	GRENADELAUNCHER_INITIAL_RADIUS = vrx_lua_get_variable("GRENADELAUNCHER_INITIAL_RADIUS", 100);
+	GRENADELAUNCHER_ADDON_RADIUS = vrx_lua_get_variable("GRENADELAUNCHER_ADDON_RADIUS", 2.5);
+	GRENADELAUNCHER_INITIAL_SPEED = vrx_lua_get_variable("GRENADELAUNCHER_INITIAL_SPEED", 600);
+	GRENADELAUNCHER_ADDON_SPEED = vrx_lua_get_variable("GRENADELAUNCHER_ADDON_SPEED", 30);
 #pragma endregion
 #pragma region ROCKETLAUNCHER
-	ROCKETLAUNCHER_INITIAL_DAMAGE = Lua_GetVariable("ROCKETLAUNCHER_INITIAL_DAMAGE", 120);
-	ROCKETLAUNCHER_ADDON_DAMAGE = Lua_GetVariable("ROCKETLAUNCHER_ADDON_DAMAGE", 11);
-	ROCKETLAUNCHER_INITIAL_SPEED = Lua_GetVariable("ROCKETLAUNCHER_INITIAL_SPEED", 1050);
-	ROCKETLAUNCHER_ADDON_SPEED = Lua_GetVariable("ROCKETLAUNCHER_ADDON_SPEED", 35);
-	ROCKETLAUNCHER_INITIAL_RADIUS_DAMAGE = Lua_GetVariable("ROCKETLAUNCHER_INITIAL_RADIUS_DAMAGE", 180);
-	ROCKETLAUNCHER_ADDON_RADIUS_DAMAGE = Lua_GetVariable("ROCKETLAUNCHER_ADDON_RADIUS_DAMAGE", 8);
-	ROCKETLAUNCHER_INITIAL_DAMAGE_RADIUS = Lua_GetVariable("ROCKETLAUNCHER_INITIAL_DAMAGE_RADIUS", 108);
-	ROCKETLAUNCHER_ADDON_DAMAGE_RADIUS = Lua_GetVariable("ROCKETLAUNCHER_ADDON_DAMAGE_RADIUS", 8);
+	ROCKETLAUNCHER_INITIAL_DAMAGE = vrx_lua_get_variable("ROCKETLAUNCHER_INITIAL_DAMAGE", 120);
+	ROCKETLAUNCHER_ADDON_DAMAGE = vrx_lua_get_variable("ROCKETLAUNCHER_ADDON_DAMAGE", 11);
+	ROCKETLAUNCHER_INITIAL_SPEED = vrx_lua_get_variable("ROCKETLAUNCHER_INITIAL_SPEED", 1050);
+	ROCKETLAUNCHER_ADDON_SPEED = vrx_lua_get_variable("ROCKETLAUNCHER_ADDON_SPEED", 35);
+	ROCKETLAUNCHER_INITIAL_RADIUS_DAMAGE = vrx_lua_get_variable("ROCKETLAUNCHER_INITIAL_RADIUS_DAMAGE", 180);
+	ROCKETLAUNCHER_ADDON_RADIUS_DAMAGE = vrx_lua_get_variable("ROCKETLAUNCHER_ADDON_RADIUS_DAMAGE", 8);
+	ROCKETLAUNCHER_INITIAL_DAMAGE_RADIUS = vrx_lua_get_variable("ROCKETLAUNCHER_INITIAL_DAMAGE_RADIUS", 108);
+	ROCKETLAUNCHER_ADDON_DAMAGE_RADIUS = vrx_lua_get_variable("ROCKETLAUNCHER_ADDON_DAMAGE_RADIUS", 8);
 #pragma endregion
 #pragma region HYPERBLASTER
-	HYPERBLASTER_INITIAL_DAMAGE = Lua_GetVariable("HYPERBLASTER_INITIAL_DAMAGE", 12);
-	HYPERBLASTER_ADDON_DAMAGE = Lua_GetVariable("HYPERBLASTER_ADDON_DAMAGE", 1);
-	HYPERBLASTER_INITIAL_SPEED = Lua_GetVariable("HYPERBLASTER_INITIAL_SPEED", 400);
-	HYPERBLASTER_ADDON_SPEED = Lua_GetVariable("HYPERBLASTER_ADDON_SPEED", -15);
+	HYPERBLASTER_INITIAL_DAMAGE = vrx_lua_get_variable("HYPERBLASTER_INITIAL_DAMAGE", 12);
+	HYPERBLASTER_ADDON_DAMAGE = vrx_lua_get_variable("HYPERBLASTER_ADDON_DAMAGE", 1);
+	HYPERBLASTER_INITIAL_SPEED = vrx_lua_get_variable("HYPERBLASTER_INITIAL_SPEED", 400);
+	HYPERBLASTER_ADDON_SPEED = vrx_lua_get_variable("HYPERBLASTER_ADDON_SPEED", -15);
 #pragma endregion
 #pragma region RAILGUN
-	RAILGUN_INITIAL_DAMAGE = Lua_GetVariable("RAILGUN_INITIAL_DAMAGE", 100);
-	RAILGUN_ADDON_DAMAGE = Lua_GetVariable("RAILGUN_ADDON_DAMAGE", 15);
-	RAILGUN_ADDON_HEATDAMAGE = Lua_GetVariable("RAILGUN_ADDON_HEATDAMAGE", 2);
+	RAILGUN_INITIAL_DAMAGE = vrx_lua_get_variable("RAILGUN_INITIAL_DAMAGE", 100);
+	RAILGUN_ADDON_DAMAGE = vrx_lua_get_variable("RAILGUN_ADDON_DAMAGE", 15);
+	RAILGUN_ADDON_HEATDAMAGE = vrx_lua_get_variable("RAILGUN_ADDON_HEATDAMAGE", 2);
 
 #pragma endregion
 #pragma region BFG10K
-	BFG10K_INITIAL_DAMAGE = Lua_GetVariable("BFG10K_INITIAL_DAMAGE", 25);
-	BFG10K_ADDON_DAMAGE = Lua_GetVariable("BFG10K_ADDON_DAMAGE", 4.0);
-	BFG10K_INITIAL_SPEED = Lua_GetVariable("BFG10K_INITIAL_SPEED", 750);
-	BFG10K_ADDON_SPEED = Lua_GetVariable("BFG10K_ADDON_SPEED", 45);
-	BFG10K_RADIUS = Lua_GetVariable("BFG10K_RADIUS", 190);
-	BFG10K_INITIAL_DURATION = Lua_GetVariable("BFG10K_INITIAL_DURATION", 1);
-	BFG10K_ADDON_DURATION = Lua_GetVariable("BFG10K_ADDON_DURATION", 0.1);
-	BFG10K_DEFAULT_DURATION = Lua_GetVariable("BFG10K_DEFAULT_DURATION", 1);
-	BFG10K_DEFAULT_SLIDE = Lua_GetVariable("BFG10K_DEFAULT_SLIDE", 0);
+	BFG10K_INITIAL_DAMAGE = vrx_lua_get_variable("BFG10K_INITIAL_DAMAGE", 25);
+	BFG10K_ADDON_DAMAGE = vrx_lua_get_variable("BFG10K_ADDON_DAMAGE", 4.0);
+	BFG10K_INITIAL_SPEED = vrx_lua_get_variable("BFG10K_INITIAL_SPEED", 750);
+	BFG10K_ADDON_SPEED = vrx_lua_get_variable("BFG10K_ADDON_SPEED", 45);
+	BFG10K_RADIUS = vrx_lua_get_variable("BFG10K_RADIUS", 190);
+	BFG10K_INITIAL_DURATION = vrx_lua_get_variable("BFG10K_INITIAL_DURATION", 1);
+	BFG10K_ADDON_DURATION = vrx_lua_get_variable("BFG10K_ADDON_DURATION", 0.1);
+	BFG10K_DEFAULT_DURATION = vrx_lua_get_variable("BFG10K_DEFAULT_DURATION", 1);
+	BFG10K_DEFAULT_SLIDE = vrx_lua_get_variable("BFG10K_DEFAULT_SLIDE", 0);
 #pragma endregion
 #pragma endregion /*Weapons Parameters*/
 
-	TOTEM_MAX_RANGE = Lua_GetVariable("TOTEM_MAX_RANGE", 512);
-	TOTEM_COST = Lua_GetVariable("TOTEM_COST", 25);
-	TOTEM_HEALTH_BASE = Lua_GetVariable("TOTEM_HEALTH_BASE", 100);
-	TOTEM_HEALTH_MULT = Lua_GetVariable("TOTEM_HEALTH_MULT", 15);
-	TOTEM_REGEN_BASE = Lua_GetVariable("TOTEM_REGEN_BASE", 10);
-	TOTEM_REGEN_MULT = Lua_GetVariable("TOTEM_REGEN_MULT", 0);
-	TOTEM_MASTERY_MULT = Lua_GetVariable("TOTEM_MASTERY_MULT", 2);
-	TOTEM_REGEN_FRAMES = Lua_GetVariable("TOTEM_REGEN_FRAMES", 100);
-	TOTEM_REGEN_DELAY = Lua_GetVariable("TOTEM_REGEN_DELAY", 10);
+	TOTEM_MAX_RANGE = vrx_lua_get_variable("TOTEM_MAX_RANGE", 512);
+	TOTEM_COST = vrx_lua_get_variable("TOTEM_COST", 25);
+	TOTEM_HEALTH_BASE = vrx_lua_get_variable("TOTEM_HEALTH_BASE", 100);
+	TOTEM_HEALTH_MULT = vrx_lua_get_variable("TOTEM_HEALTH_MULT", 15);
+	TOTEM_REGEN_BASE = vrx_lua_get_variable("TOTEM_REGEN_BASE", 10);
+	TOTEM_REGEN_MULT = vrx_lua_get_variable("TOTEM_REGEN_MULT", 0);
+	TOTEM_MASTERY_MULT = vrx_lua_get_variable("TOTEM_MASTERY_MULT", 2);
+	TOTEM_REGEN_FRAMES = vrx_lua_get_variable("TOTEM_REGEN_FRAMES", 100);
+	TOTEM_REGEN_DELAY = vrx_lua_get_variable("TOTEM_REGEN_DELAY", 10);
 
-	FURY_INITIAL_REGEN = Lua_GetVariable("FURY_INITIAL_REGEN", 0.15);
-	FURY_ADDON_REGEN = Lua_GetVariable("FURY_ADDON_REGEN", 0.01);
-	FURY_MAX_REGEN = Lua_GetVariable("FURY_MAX_REGEN", 0.2);
-	FURY_INITIAL_FACTOR = Lua_GetVariable("FURY_INITIAL_FACTOR", 1.5);
-	FURY_ADDON_FACTOR = Lua_GetVariable("FURY_ADDON_FACTOR", 0.05);
-	FURY_FACTOR_MAX = Lua_GetVariable("FURY_FACTOR_MAX", 2.0);
-	FURY_DURATION_BASE = Lua_GetVariable("FURY_DURATION_BASE", 0);
-	FURY_DURATION_BONUS = Lua_GetVariable("FURY_DURATION_BONUS", 1.3);
+	FURY_INITIAL_REGEN = vrx_lua_get_variable("FURY_INITIAL_REGEN", 0.15);
+	FURY_ADDON_REGEN = vrx_lua_get_variable("FURY_ADDON_REGEN", 0.01);
+	FURY_MAX_REGEN = vrx_lua_get_variable("FURY_MAX_REGEN", 0.2);
+	FURY_INITIAL_FACTOR = vrx_lua_get_variable("FURY_INITIAL_FACTOR", 1.5);
+	FURY_ADDON_FACTOR = vrx_lua_get_variable("FURY_ADDON_FACTOR", 0.05);
+	FURY_FACTOR_MAX = vrx_lua_get_variable("FURY_FACTOR_MAX", 2.0);
+	FURY_DURATION_BASE = vrx_lua_get_variable("FURY_DURATION_BASE", 0);
+	FURY_DURATION_BONUS = vrx_lua_get_variable("FURY_DURATION_BONUS", 1.3);
 
-	FIRETOTEM_DAMAGE_BASE = Lua_GetVariable("FIRETOTEM_DAMAGE_BASE", 0);
-	FIRETOTEM_DAMAGE_MULT = Lua_GetVariable("FIRETOTEM_DAMAGE_MULT", 6);
-	FIRETOTEM_REFIRE_BASE = Lua_GetVariable("FIRETOTEM_REFIRE_BASE", 2.0);
-	FIRETOTEM_REFIRE_MULT = Lua_GetVariable("FIRETOTEM_REFIRE_MULT", 0.0);
+	FIRETOTEM_DAMAGE_BASE = vrx_lua_get_variable("FIRETOTEM_DAMAGE_BASE", 0);
+	FIRETOTEM_DAMAGE_MULT = vrx_lua_get_variable("FIRETOTEM_DAMAGE_MULT", 6);
+	FIRETOTEM_REFIRE_BASE = vrx_lua_get_variable("FIRETOTEM_REFIRE_BASE", 2.0);
+	FIRETOTEM_REFIRE_MULT = vrx_lua_get_variable("FIRETOTEM_REFIRE_MULT", 0.0);
 
-	WATERTOTEM_DURATION_BASE = Lua_GetVariable("WATERTOTEM_DURATION_BASE", 3.0);
-	WATERTOTEM_DURATION_MULT = Lua_GetVariable("WATERTOTEM_DURATION_MULT", 0.0);
-	WATERTOTEM_REFIRE_BASE = Lua_GetVariable("WATERTOTEM_REFIRE_BASE", 1.0);
-	WATERTOTEM_REFIRE_MULT = Lua_GetVariable("WATERTOTEM_REFIRE_MULT", 0.0);
+	WATERTOTEM_DURATION_BASE = vrx_lua_get_variable("WATERTOTEM_DURATION_BASE", 3.0);
+	WATERTOTEM_DURATION_MULT = vrx_lua_get_variable("WATERTOTEM_DURATION_MULT", 0.0);
+	WATERTOTEM_REFIRE_BASE = vrx_lua_get_variable("WATERTOTEM_REFIRE_BASE", 1.0);
+	WATERTOTEM_REFIRE_MULT = vrx_lua_get_variable("WATERTOTEM_REFIRE_MULT", 0.0);
 
-	AIRTOTEM_RESIST_BASE = Lua_GetVariable("AIRTOTEM_RESIST_BASE", 1.0);
-	AIRTOTEM_RESIST_MULT = Lua_GetVariable("AIRTOTEM_RESIST_MULT", 0.2);
+	AIRTOTEM_RESIST_BASE = vrx_lua_get_variable("AIRTOTEM_RESIST_BASE", 1.0);
+	AIRTOTEM_RESIST_MULT = vrx_lua_get_variable("AIRTOTEM_RESIST_MULT", 0.2);
 
-	EARTHTOTEM_RESIST_MULT = Lua_GetVariable("EARTHTOTEM_RESIST_MULT", 0.05);
-	EARTHTOTEM_DAMAGE_MULT = Lua_GetVariable("EARTHTOTEM_DAMAGE_MULT", 0.1);
+	EARTHTOTEM_RESIST_MULT = vrx_lua_get_variable("EARTHTOTEM_RESIST_MULT", 0.05);
+	EARTHTOTEM_DAMAGE_MULT = vrx_lua_get_variable("EARTHTOTEM_DAMAGE_MULT", 0.1);
 
-	NATURETOTEM_HEALTH_BASE = Lua_GetVariable("NATURETOTEM_HEALTH_BASE", 0);
-	NATURETOTEM_HEALTH_MULT = Lua_GetVariable("NATURETOTEM_HEALTH_MULT", 15);
-	NATURETOTEM_ARMOR_BASE = Lua_GetVariable("NATURETOTEM_ARMOR_BASE", 0);
-	NATURETOTEM_ARMOR_MULT = Lua_GetVariable("NATURETOTEM_ARMOR_MULT", 5);
+	NATURETOTEM_HEALTH_BASE = vrx_lua_get_variable("NATURETOTEM_HEALTH_BASE", 0);
+	NATURETOTEM_HEALTH_MULT = vrx_lua_get_variable("NATURETOTEM_HEALTH_MULT", 15);
+	NATURETOTEM_ARMOR_BASE = vrx_lua_get_variable("NATURETOTEM_ARMOR_BASE", 0);
+	NATURETOTEM_ARMOR_MULT = vrx_lua_get_variable("NATURETOTEM_ARMOR_MULT", 5);
 
-	DARKNESSTOTEM_VAMP_MULT = Lua_GetVariable("DARKNESSTOTEM_VAMP_MULT", 0.033);
-	DARKNESSTOTEM_MAX_MULT = Lua_GetVariable("DARKNESSTOTEM_MAX_MULT", 0.1);
+	DARKNESSTOTEM_VAMP_MULT = vrx_lua_get_variable("DARKNESSTOTEM_VAMP_MULT", 0.033);
+	DARKNESSTOTEM_MAX_MULT = vrx_lua_get_variable("DARKNESSTOTEM_MAX_MULT", 0.1);
 
-	PRECISION_TUNING_COST_FACTOR = Lua_GetVariable("PRECISION_TUNING_COST_FACTOR", 0.1);
-	PRECISION_TUNING_DELAY_FACTOR = Lua_GetVariable("PRECISION_TUNING_DELAY_FACTOR", 0.1);
-	PRECISION_TUNING_SKILL_FACTOR = Lua_GetVariable("PRECISION_TUNING_SKILL_FACTOR", 0.1);
+	PRECISION_TUNING_COST_FACTOR = vrx_lua_get_variable("PRECISION_TUNING_COST_FACTOR", 0.1);
+	PRECISION_TUNING_DELAY_FACTOR = vrx_lua_get_variable("PRECISION_TUNING_DELAY_FACTOR", 0.1);
+	PRECISION_TUNING_SKILL_FACTOR = vrx_lua_get_variable("PRECISION_TUNING_SKILL_FACTOR", 0.1);
 
-	SENTRY_INITIAL_HEALTH = Lua_GetVariable("SENTRY_INITIAL_HEALTH", 150);
-	SENTRY_ADDON_HEALTH = Lua_GetVariable("SENTRY_ADDON_HEALTH", 90);
-	SENTRY_INITIAL_ARMOR = Lua_GetVariable("SENTRY_INITIAL_ARMOR", 300);
-	SENTRY_ADDON_ARMOR = Lua_GetVariable("SENTRY_ADDON_ARMOR", 70);
-	SENTRY_INITIAL_AMMO = Lua_GetVariable("SENTRY_INITIAL_AMMO", 150);
-	SENTRY_ADDON_AMMO = Lua_GetVariable("SENTRY_ADDON_AMMO", 30);
+	SENTRY_INITIAL_HEALTH = vrx_lua_get_variable("SENTRY_INITIAL_HEALTH", 150);
+	SENTRY_ADDON_HEALTH = vrx_lua_get_variable("SENTRY_ADDON_HEALTH", 90);
+	SENTRY_INITIAL_ARMOR = vrx_lua_get_variable("SENTRY_INITIAL_ARMOR", 300);
+	SENTRY_ADDON_ARMOR = vrx_lua_get_variable("SENTRY_ADDON_ARMOR", 70);
+	SENTRY_INITIAL_AMMO = vrx_lua_get_variable("SENTRY_INITIAL_AMMO", 150);
+	SENTRY_ADDON_AMMO = vrx_lua_get_variable("SENTRY_ADDON_AMMO", 30);
 
-	MINISENTRY_INITIAL_HEALTH = Lua_GetVariable("MINISENTRY_INITIAL_HEALTH", 95);
-	MINISENTRY_ADDON_HEALTH = Lua_GetVariable("MINISENTRY_ADDON_HEALTH", 45);
-	MINISENTRY_INITIAL_ARMOR = Lua_GetVariable("MINISENTRY_INITIAL_ARMOR", 90);
-	MINISENTRY_ADDON_ARMOR = Lua_GetVariable("MINISENTRY_ADDON_ARMOR", 55);
-	MINISENTRY_MAX_HEALTH = Lua_GetVariable("MINISENTRY_MAX_HEALTH", 350);
-	MINISENTRY_MAX_ARMOR = Lua_GetVariable("MINISENTRY_MAX_ARMOR", 370);
-	MINISENTRY_INITIAL_AMMO = Lua_GetVariable("MINISENTRY_INITIAL_AMMO", 70);
-	MINISENTRY_ADDON_AMMO = Lua_GetVariable("MINISENTRY_ADDON_AMMO", 20);
-	MINISENTRY_INITIAL_BULLET = Lua_GetVariable("MINISENTRY_INITIAL_BULLET", 35);
-	MINISENTRY_ADDON_BULLET = Lua_GetVariable("MINISENTRY_ADDON_BULLET", 1);
-	MINISENTRY_INITIAL_ROCKET = Lua_GetVariable("MINISENTRY_INITIAL_ROCKET", 70);
-	MINISENTRY_ADDON_ROCKET = Lua_GetVariable("MINISENTRY_ADDON_ROCKET", 15);
-	MINISENTRY_MAX_BULLET = Lua_GetVariable("MINISENTRY_MAX_BULLET", 250);
-	MINISENTRY_MAX_ROCKET = Lua_GetVariable("MINISENTRY_MAX_ROCKET", 1000);
+	MINISENTRY_INITIAL_HEALTH = vrx_lua_get_variable("MINISENTRY_INITIAL_HEALTH", 95);
+	MINISENTRY_ADDON_HEALTH = vrx_lua_get_variable("MINISENTRY_ADDON_HEALTH", 45);
+	MINISENTRY_INITIAL_ARMOR = vrx_lua_get_variable("MINISENTRY_INITIAL_ARMOR", 90);
+	MINISENTRY_ADDON_ARMOR = vrx_lua_get_variable("MINISENTRY_ADDON_ARMOR", 55);
+	MINISENTRY_MAX_HEALTH = vrx_lua_get_variable("MINISENTRY_MAX_HEALTH", 350);
+	MINISENTRY_MAX_ARMOR = vrx_lua_get_variable("MINISENTRY_MAX_ARMOR", 370);
+	MINISENTRY_INITIAL_AMMO = vrx_lua_get_variable("MINISENTRY_INITIAL_AMMO", 70);
+	MINISENTRY_ADDON_AMMO = vrx_lua_get_variable("MINISENTRY_ADDON_AMMO", 20);
+	MINISENTRY_INITIAL_BULLET = vrx_lua_get_variable("MINISENTRY_INITIAL_BULLET", 35);
+	MINISENTRY_ADDON_BULLET = vrx_lua_get_variable("MINISENTRY_ADDON_BULLET", 1);
+	MINISENTRY_INITIAL_ROCKET = vrx_lua_get_variable("MINISENTRY_INITIAL_ROCKET", 70);
+	MINISENTRY_ADDON_ROCKET = vrx_lua_get_variable("MINISENTRY_ADDON_ROCKET", 15);
+	MINISENTRY_MAX_BULLET = vrx_lua_get_variable("MINISENTRY_MAX_BULLET", 250);
+	MINISENTRY_MAX_ROCKET = vrx_lua_get_variable("MINISENTRY_MAX_ROCKET", 1000);
 
-	SENTRY_LEVEL1_DAMAGE = Lua_GetVariable("SENTRY_LEVEL1_DAMAGE", 0.4);
-	SENTRY_LEVEL2_DAMAGE = Lua_GetVariable("SENTRY_LEVEL2_DAMAGE", 0.8);
-	SENTRY_LEVEL3_DAMAGE = Lua_GetVariable("SENTRY_LEVEL3_DAMAGE", 1.6);
-	SENTRY_INITIAL_BULLETDAMAGE = Lua_GetVariable("SENTRY_INITIAL_BULLETDAMAGE", 45);
-	SENTRY_ADDON_BULLETDAMAGE = Lua_GetVariable("SENTRY_ADDON_BULLETDAMAGE", 7);
-	SENTRY_INITIAL_ROCKETDAMAGE = Lua_GetVariable("SENTRY_INITIAL_ROCKETDAMAGE", 120);
-	SENTRY_ADDON_ROCKETDAMAGE = Lua_GetVariable("SENTRY_ADDON_ROCKETDAMAGE", 55);
-	SENTRY_INITIAL_ROCKETSPEED = Lua_GetVariable("SENTRY_INITIAL_ROCKETSPEED", 850);
-	SENTRY_ADDON_ROCKETSPEED = Lua_GetVariable("SENTRY_ADDON_ROCKETSPEED", 95);
-	SENTRY_COST = Lua_GetVariable("SENTRY_COST", 35);
-	SENTRY_MAX = Lua_GetVariable("SENTRY_MAX", 1);
-	SENTRY_UPGRADE = Lua_GetVariable("SENTRY_UPGRADE", 100);
+	SENTRY_LEVEL1_DAMAGE = vrx_lua_get_variable("SENTRY_LEVEL1_DAMAGE", 0.4);
+	SENTRY_LEVEL2_DAMAGE = vrx_lua_get_variable("SENTRY_LEVEL2_DAMAGE", 0.8);
+	SENTRY_LEVEL3_DAMAGE = vrx_lua_get_variable("SENTRY_LEVEL3_DAMAGE", 1.6);
+	SENTRY_INITIAL_BULLETDAMAGE = vrx_lua_get_variable("SENTRY_INITIAL_BULLETDAMAGE", 45);
+	SENTRY_ADDON_BULLETDAMAGE = vrx_lua_get_variable("SENTRY_ADDON_BULLETDAMAGE", 7);
+	SENTRY_INITIAL_ROCKETDAMAGE = vrx_lua_get_variable("SENTRY_INITIAL_ROCKETDAMAGE", 120);
+	SENTRY_ADDON_ROCKETDAMAGE = vrx_lua_get_variable("SENTRY_ADDON_ROCKETDAMAGE", 55);
+	SENTRY_INITIAL_ROCKETSPEED = vrx_lua_get_variable("SENTRY_INITIAL_ROCKETSPEED", 850);
+	SENTRY_ADDON_ROCKETSPEED = vrx_lua_get_variable("SENTRY_ADDON_ROCKETSPEED", 95);
+	SENTRY_COST = vrx_lua_get_variable("SENTRY_COST", 35);
+	SENTRY_MAX = vrx_lua_get_variable("SENTRY_MAX", 1);
+	SENTRY_UPGRADE = vrx_lua_get_variable("SENTRY_UPGRADE", 100);
 
-	DELAY_SENTRY_SCAN = Lua_GetVariable("DELAY_SENTRY_SCAN", 2);
-	DELAY_SENTRY = Lua_GetVariable("DELAY_SENTRY", 1);
+	DELAY_SENTRY_SCAN = vrx_lua_get_variable("DELAY_SENTRY_SCAN", 2);
+	DELAY_SENTRY = vrx_lua_get_variable("DELAY_SENTRY", 1);
 
-	SPIKER_MAX_COUNT = Lua_GetVariable("SPIKER_MAX_COUNT", 4);
+	SPIKER_MAX_COUNT = vrx_lua_get_variable("SPIKER_MAX_COUNT", 4);
 
-	GASSER_MAX_COUNT = Lua_GetVariable("GASSER_MAX_COUNT", 4);
+	GASSER_MAX_COUNT = vrx_lua_get_variable("GASSER_MAX_COUNT", 4);
 
-	OBSTACLE_MAX_COUNT = Lua_GetVariable("OBSTACLE_MAX_COUNT", 5);
+	OBSTACLE_MAX_COUNT = vrx_lua_get_variable("OBSTACLE_MAX_COUNT", 5);
 
-	SPIKEBALL_MAX_COUNT = Lua_GetVariable("SPIKEBALL_MAX_COUNT", 3);
+	SPIKEBALL_MAX_COUNT = vrx_lua_get_variable("SPIKEBALL_MAX_COUNT", 3);
 
-	MAX_MONSTERS = Lua_GetVariable("MAX_MONSTERS", 3);
+	MAX_MONSTERS = vrx_lua_get_variable("MAX_MONSTERS", 3);
 
-	DELAY_MONSTER_THINK = Lua_GetVariable("DELAY_MONSTER_THINK", 1);
-	DELAY_MONSTER = Lua_GetVariable("DELAY_MONSTER", 1);
+	DELAY_MONSTER_THINK = vrx_lua_get_variable("DELAY_MONSTER_THINK", 1);
+	DELAY_MONSTER = vrx_lua_get_variable("DELAY_MONSTER", 1);
 
-	M_FLYER_COST = Lua_GetVariable("M_FLYER_COST", 25);
-	M_INSANE_COST = Lua_GetVariable("M_INSANE_COST", 25);
-	M_SOLDIERLT_COST = Lua_GetVariable("M_SOLDIERLT_COST", 25);
-	M_SOLDIER_COST = Lua_GetVariable("M_SOLDIER_COST", 25);
-	M_GUNNER_COST = Lua_GetVariable("M_GUNNER_COST", 25);
-	M_CHICK_COST = Lua_GetVariable("M_CHICK_COST", 25);
-	M_PARASITE_COST = Lua_GetVariable("M_PARASITE_COST", 25);
-	M_MEDIC_COST = Lua_GetVariable("M_MEDIC_COST", 25);
-	M_BRAIN_COST = Lua_GetVariable("M_BRAIN_COST", 25);
-	M_TANK_COST = Lua_GetVariable("M_TANK_COST", 50);
-	M_HOVER_COST = Lua_GetVariable("M_HOVER_COST", 25);
-	M_SUPERTANK_COST = Lua_GetVariable("M_SUPERTANK_COST", 150);
-	M_COMMANDER_COST = Lua_GetVariable("M_COMMANDER_COST", 150);
-	M_MUTANT_COST = Lua_GetVariable("M_MUTANT_COST", 25);
+	M_FLYER_COST = vrx_lua_get_variable("M_FLYER_COST", 25);
+	M_INSANE_COST = vrx_lua_get_variable("M_INSANE_COST", 25);
+	M_SOLDIERLT_COST = vrx_lua_get_variable("M_SOLDIERLT_COST", 25);
+	M_SOLDIER_COST = vrx_lua_get_variable("M_SOLDIER_COST", 25);
+	M_GUNNER_COST = vrx_lua_get_variable("M_GUNNER_COST", 25);
+	M_CHICK_COST = vrx_lua_get_variable("M_CHICK_COST", 25);
+	M_PARASITE_COST = vrx_lua_get_variable("M_PARASITE_COST", 25);
+	M_MEDIC_COST = vrx_lua_get_variable("M_MEDIC_COST", 25);
+	M_BRAIN_COST = vrx_lua_get_variable("M_BRAIN_COST", 25);
+	M_TANK_COST = vrx_lua_get_variable("M_TANK_COST", 50);
+	M_HOVER_COST = vrx_lua_get_variable("M_HOVER_COST", 25);
+	M_SUPERTANK_COST = vrx_lua_get_variable("M_SUPERTANK_COST", 150);
+	M_COMMANDER_COST = vrx_lua_get_variable("M_COMMANDER_COST", 150);
+	M_MUTANT_COST = vrx_lua_get_variable("M_MUTANT_COST", 25);
 
-	M_DEFAULT_COST = Lua_GetVariable("M_DEFAULT_COST", 25);
-	M_FLYER_CONTROL_COST = Lua_GetVariable("M_FLYER_CONTROL_COST", 1);
-	M_INSANE_CONTROL_COST = Lua_GetVariable("M_INSANE_CONTROL_COST", 1);
-	M_SOLDIERLT_CONTROL_COST = Lua_GetVariable("M_SOLDIERLT_CONTROL_COST", 1);
-	M_SOLDIER_CONTROL_COST = Lua_GetVariable("M_SOLDIER_CONTROL_COST", 1);
-	M_GUNNER_CONTROL_COST = Lua_GetVariable("M_GUNNER_CONTROL_COST", 1);
-	M_CHICK_CONTROL_COST = Lua_GetVariable("M_CHICK_CONTROL_COST", 1);
-	M_PARASITE_CONTROL_COST = Lua_GetVariable("M_PARASITE_CONTROL_COST", 1);
-	M_MEDIC_CONTROL_COST = Lua_GetVariable("M_MEDIC_CONTROL_COST", 1);
-	M_TANK_CONTROL_COST = Lua_GetVariable("M_TANK_CONTROL_COST", 2);
-	M_BRAIN_CONTROL_COST = Lua_GetVariable("M_BRAIN_CONTROL_COST", 1);
-	M_JORG_CONTROL_COST = Lua_GetVariable("M_JORG_CONTROL_COST", 4);
-	M_CONTROL_COST_SCALE = Lua_GetVariable("M_CONTROL_COST_SCALE", 1);
-	M_HOVER_CONTROL_COST = Lua_GetVariable("M_HOVER_CONTROL_COST", 1);
-	M_SUPERTANK_CONTROL_COST = Lua_GetVariable("M_SUPERTANK_CONTROL_COST", 3);
-	M_COMMANDER_CONTROL_COST = Lua_GetVariable("M_COMMANDER_CONTROL_COST", 3);
-	M_MUTANT_CONTROL_COST = Lua_GetVariable("M_MUTANT_CONTROL_COST", 1);
-	M_BERSERKER_CONTROL_COST = Lua_GetVariable("M_BERSERKER_CONTROL_COST", 1);
-	M_GLADIATOR_CONTROL_COST = Lua_GetVariable("M_GLADIATOR_CONTROL_COST", 1);
-	M_DEFAULT_CONTROL_COST = Lua_GetVariable("M_DEFAULT_CONTROL_COST", 1);
+	M_DEFAULT_COST = vrx_lua_get_variable("M_DEFAULT_COST", 25);
+	M_FLYER_CONTROL_COST = vrx_lua_get_variable("M_FLYER_CONTROL_COST", 1);
+	M_INSANE_CONTROL_COST = vrx_lua_get_variable("M_INSANE_CONTROL_COST", 1);
+	M_SOLDIERLT_CONTROL_COST = vrx_lua_get_variable("M_SOLDIERLT_CONTROL_COST", 1);
+	M_SOLDIER_CONTROL_COST = vrx_lua_get_variable("M_SOLDIER_CONTROL_COST", 1);
+	M_GUNNER_CONTROL_COST = vrx_lua_get_variable("M_GUNNER_CONTROL_COST", 1);
+	M_CHICK_CONTROL_COST = vrx_lua_get_variable("M_CHICK_CONTROL_COST", 1);
+	M_PARASITE_CONTROL_COST = vrx_lua_get_variable("M_PARASITE_CONTROL_COST", 1);
+	M_MEDIC_CONTROL_COST = vrx_lua_get_variable("M_MEDIC_CONTROL_COST", 1);
+	M_TANK_CONTROL_COST = vrx_lua_get_variable("M_TANK_CONTROL_COST", 2);
+	M_BRAIN_CONTROL_COST = vrx_lua_get_variable("M_BRAIN_CONTROL_COST", 1);
+	M_JORG_CONTROL_COST = vrx_lua_get_variable("M_JORG_CONTROL_COST", 4);
+	M_CONTROL_COST_SCALE = vrx_lua_get_variable("M_CONTROL_COST_SCALE", 1);
+	M_HOVER_CONTROL_COST = vrx_lua_get_variable("M_HOVER_CONTROL_COST", 1);
+	M_SUPERTANK_CONTROL_COST = vrx_lua_get_variable("M_SUPERTANK_CONTROL_COST", 3);
+	M_COMMANDER_CONTROL_COST = vrx_lua_get_variable("M_COMMANDER_CONTROL_COST", 3);
+	M_MUTANT_CONTROL_COST = vrx_lua_get_variable("M_MUTANT_CONTROL_COST", 1);
+	M_BERSERKER_CONTROL_COST = vrx_lua_get_variable("M_BERSERKER_CONTROL_COST", 1);
+	M_GLADIATOR_CONTROL_COST = vrx_lua_get_variable("M_GLADIATOR_CONTROL_COST", 1);
+	M_DEFAULT_CONTROL_COST = vrx_lua_get_variable("M_DEFAULT_CONTROL_COST", 1);
 
-	DELAY_FREEZE = Lua_GetVariable("DELAY_FREEZE", 5);
-	DELAY_BOOST = Lua_GetVariable("DELAY_BOOST", 2.0);
-	DELAY_BLOODSUCKER = Lua_GetVariable("DELAY_BLOODSUCKER", 3);
-	DELAY_SALVATION = Lua_GetVariable("DELAY_SALVATION", 1);
-	DELAY_CORPSEEXPLODE = Lua_GetVariable("DELAY_CORPSEEXPLODE", 0.5);
-	DELAY_LASER = Lua_GetVariable("DELAY_LASER", 1);
-	DELAY_DECOY = Lua_GetVariable("DELAY_DECOY", 2);
-	DELAY_BOMB = Lua_GetVariable("DELAY_BOMB", 1);
-	DELAY_THORNS = Lua_GetVariable("DELAY_THORNS", 1);
-	DELAY_HOLYFREEZE = Lua_GetVariable("DELAY_HOLYFREEZE", 1);
+	DELAY_FREEZE = vrx_lua_get_variable("DELAY_FREEZE", 5);
+	DELAY_BOOST = vrx_lua_get_variable("DELAY_BOOST", 2.0);
+	DELAY_BLOODSUCKER = vrx_lua_get_variable("DELAY_BLOODSUCKER", 3);
+	DELAY_SALVATION = vrx_lua_get_variable("DELAY_SALVATION", 1);
+	DELAY_CORPSEEXPLODE = vrx_lua_get_variable("DELAY_CORPSEEXPLODE", 0.5);
+	DELAY_LASER = vrx_lua_get_variable("DELAY_LASER", 1);
+	DELAY_DECOY = vrx_lua_get_variable("DELAY_DECOY", 2);
+	DELAY_BOMB = vrx_lua_get_variable("DELAY_BOMB", 1);
+	DELAY_THORNS = vrx_lua_get_variable("DELAY_THORNS", 1);
+	DELAY_HOLYFREEZE = vrx_lua_get_variable("DELAY_HOLYFREEZE", 1);
 
-	COST_FOR_BOOST = Lua_GetVariable("COST_FOR_BOOST", 0);
-	COST_FOR_SALVATION = Lua_GetVariable("COST_FOR_SALVATION", 1);
-	COST_FOR_CORPSEEXPLODE = Lua_GetVariable("COST_FOR_CORPSEEXPLODE", 20);
-	COST_FOR_DECOY = Lua_GetVariable("COST_FOR_DECOY", 45);
-	COST_FOR_HOLYSHOCK = Lua_GetVariable("COST_FOR_HOLYSHOCK", 1);
-	COST_FOR_HOLYFREEZE = Lua_GetVariable("COST_FOR_HOLYFREEZE", 1);
-	COST_FOR_HOOK = Lua_GetVariable("COST_FOR_HOOK", 8);
+	COST_FOR_BOOST = vrx_lua_get_variable("COST_FOR_BOOST", 0);
+	COST_FOR_SALVATION = vrx_lua_get_variable("COST_FOR_SALVATION", 1);
+	COST_FOR_CORPSEEXPLODE = vrx_lua_get_variable("COST_FOR_CORPSEEXPLODE", 20);
+	COST_FOR_DECOY = vrx_lua_get_variable("COST_FOR_DECOY", 45);
+	COST_FOR_HOLYSHOCK = vrx_lua_get_variable("COST_FOR_HOLYSHOCK", 1);
+	COST_FOR_HOLYFREEZE = vrx_lua_get_variable("COST_FOR_HOLYFREEZE", 1);
+	COST_FOR_HOOK = vrx_lua_get_variable("COST_FOR_HOOK", 8);
 
-	MAX_BOMB_RANGE = Lua_GetVariable("MAX_BOMB_RANGE", 768);
-	COST_FOR_BOMB = Lua_GetVariable("COST_FOR_BOMB", 25);
-	METEOR_COST = Lua_GetVariable("METEOR_COST", 25);
-	ICEBOLT_COST = Lua_GetVariable("ICEBOLT_COST", 25);
-	FIREBALL_COST = Lua_GetVariable("FIREBALL_COST", 25);
-	NOVA_COST = Lua_GetVariable("NOVA_COST", 25);
-	BOLT_COST = Lua_GetVariable("BOLT_COST", 15);
-	CLIGHTNING_COST = Lua_GetVariable("CLIGHTNING_COST", 25);
-	LIGHTNING_COST = Lua_GetVariable("LIGHTNING_COST", 25);
+	MAX_BOMB_RANGE = vrx_lua_get_variable("MAX_BOMB_RANGE", 768);
+	COST_FOR_BOMB = vrx_lua_get_variable("COST_FOR_BOMB", 25);
+	METEOR_COST = vrx_lua_get_variable("METEOR_COST", 25);
+	ICEBOLT_COST = vrx_lua_get_variable("ICEBOLT_COST", 25);
+	FIREBALL_COST = vrx_lua_get_variable("FIREBALL_COST", 25);
+	NOVA_COST = vrx_lua_get_variable("NOVA_COST", 25);
+	BOLT_COST = vrx_lua_get_variable("BOLT_COST", 15);
+	CLIGHTNING_COST = vrx_lua_get_variable("CLIGHTNING_COST", 25);
+	LIGHTNING_COST = vrx_lua_get_variable("LIGHTNING_COST", 25);
 
-	RADIUS_AMMOSTEAL = Lua_GetVariable("RADIUS_AMMOSTEAL", 512);
-	RADIUS_FREEZE = Lua_GetVariable("RADIUS_FREEZE", 512);
-	RADIUS_BLOODSUCKER = Lua_GetVariable("RADIUS_BLOODSUCKER", 512);
-	RADIUS_CORPSEEXPLODE = Lua_GetVariable("RADIUS_CORPSEEXPLODE", 1024);
-	RADIUS_BOMB = Lua_GetVariable("RADIUS_BOMB", 512);
+	RADIUS_AMMOSTEAL = vrx_lua_get_variable("RADIUS_AMMOSTEAL", 512);
+	RADIUS_FREEZE = vrx_lua_get_variable("RADIUS_FREEZE", 512);
+	RADIUS_BLOODSUCKER = vrx_lua_get_variable("RADIUS_BLOODSUCKER", 512);
+	RADIUS_CORPSEEXPLODE = vrx_lua_get_variable("RADIUS_CORPSEEXPLODE", 1024);
+	RADIUS_BOMB = vrx_lua_get_variable("RADIUS_BOMB", 512);
 
-	ARMORY_RUNE_UNIQUE_PRICE = Lua_GetVariable("ARMORY_RUNE_UNIQUE_PRICE", 90000);
-	ARMORY_RUNE_APOINT_PRICE = Lua_GetVariable("ARMORY_RUNE_APOINT_PRICE", 5000);
-	ARMORY_RUNE_WPOINT_PRICE = Lua_GetVariable("ARMORY_RUNE_WPOINT_PRICE", 2500);
-	ARMORY_MAX_RUNES = Lua_GetVariable("ARMORY_MAX_RUNES", 20);
-	ARMORY_PRICE_WEAPON = Lua_GetVariable("ARMORY_PRICE_WEAPON", 5);
-	ARMORY_PRICE_AMMO = Lua_GetVariable("ARMORY_PRICE_AMMO", 5);
-	ARMORY_PRICE_TBALLS = Lua_GetVariable("ARMORY_PRICE_TBALLS", 10);
-	ARMORY_PRICE_POWERCUBE = Lua_GetVariable("ARMORY_PRICE_POWERCUBE", 1);
-	ARMORY_PRICE_RESPAWN = Lua_GetVariable("ARMORY_PRICE_RESPAWN", 250);
-	ARMORY_PRICE_HEALTH = Lua_GetVariable("ARMORY_PRICE_HEALTH", 5);
-	ARMORY_PRICE_ARMOR = Lua_GetVariable("ARMORY_PRICE_ARMOR", 10);
-	ARMORY_PRICE_POTIONS = Lua_GetVariable("ARMORY_PRICE_POTIONS", 50);
-	ARMORY_PRICE_ANTIDOTES = Lua_GetVariable("ARMORY_PRICE_ANTIDOTES", 100);
-	ARMORY_PRICE_GRAVITYBOOTS = Lua_GetVariable("ARMORY_PRICE_GRAVITYBOOTS", 50);
-	ARMORY_PRICE_FIRE_RESIST = Lua_GetVariable("ARMORY_PRICE_FIRE_RESIST", 75);
-	ARMORY_PRICE_AUTO_TBALL = Lua_GetVariable("ARMORY_PRICE_AUTO_TBALL", 50);
-	ARMORY_PRICE_RESET = Lua_GetVariable("ARMORY_PRICE_RESET", 1500);
-	ARMORY_QTY_RESPAWNS = Lua_GetVariable("ARMORY_QTY_RESPAWNS", 250);
-	ARMORY_QTY_POTIONS = Lua_GetVariable("ARMORY_QTY_POTIONS", 5);
-	ARMORY_QTY_ANTIDOTES = Lua_GetVariable("ARMORY_QTY_ANTIDOTES", 10);
-	ARMORY_QTY_GRAVITYBOOTS = Lua_GetVariable("ARMORY_QTY_GRAVITYBOOTS", 25);
-	ARMORY_QTY_FIRE_RESIST = Lua_GetVariable("ARMORY_QTY_FIRE_RESIST", 25);
-	ARMORY_QTY_AUTO_TBALL = Lua_GetVariable("ARMORY_QTY_AUTO_TBALL", 3);
+	ARMORY_RUNE_UNIQUE_PRICE = vrx_lua_get_variable("ARMORY_RUNE_UNIQUE_PRICE", 90000);
+	ARMORY_RUNE_APOINT_PRICE = vrx_lua_get_variable("ARMORY_RUNE_APOINT_PRICE", 5000);
+	ARMORY_RUNE_WPOINT_PRICE = vrx_lua_get_variable("ARMORY_RUNE_WPOINT_PRICE", 2500);
+	ARMORY_MAX_RUNES = vrx_lua_get_variable("ARMORY_MAX_RUNES", 20);
+	ARMORY_PRICE_WEAPON = vrx_lua_get_variable("ARMORY_PRICE_WEAPON", 5);
+	ARMORY_PRICE_AMMO = vrx_lua_get_variable("ARMORY_PRICE_AMMO", 5);
+	ARMORY_PRICE_TBALLS = vrx_lua_get_variable("ARMORY_PRICE_TBALLS", 10);
+	ARMORY_PRICE_POWERCUBE = vrx_lua_get_variable("ARMORY_PRICE_POWERCUBE", 1);
+	ARMORY_PRICE_RESPAWN = vrx_lua_get_variable("ARMORY_PRICE_RESPAWN", 250);
+	ARMORY_PRICE_HEALTH = vrx_lua_get_variable("ARMORY_PRICE_HEALTH", 5);
+	ARMORY_PRICE_ARMOR = vrx_lua_get_variable("ARMORY_PRICE_ARMOR", 10);
+	ARMORY_PRICE_POTIONS = vrx_lua_get_variable("ARMORY_PRICE_POTIONS", 50);
+	ARMORY_PRICE_ANTIDOTES = vrx_lua_get_variable("ARMORY_PRICE_ANTIDOTES", 100);
+	ARMORY_PRICE_GRAVITYBOOTS = vrx_lua_get_variable("ARMORY_PRICE_GRAVITYBOOTS", 50);
+	ARMORY_PRICE_FIRE_RESIST = vrx_lua_get_variable("ARMORY_PRICE_FIRE_RESIST", 75);
+	ARMORY_PRICE_AUTO_TBALL = vrx_lua_get_variable("ARMORY_PRICE_AUTO_TBALL", 50);
+	ARMORY_PRICE_RESET = vrx_lua_get_variable("ARMORY_PRICE_RESET", 1500);
+	ARMORY_QTY_RESPAWNS = vrx_lua_get_variable("ARMORY_QTY_RESPAWNS", 250);
+	ARMORY_QTY_POTIONS = vrx_lua_get_variable("ARMORY_QTY_POTIONS", 5);
+	ARMORY_QTY_ANTIDOTES = vrx_lua_get_variable("ARMORY_QTY_ANTIDOTES", 10);
+	ARMORY_QTY_GRAVITYBOOTS = vrx_lua_get_variable("ARMORY_QTY_GRAVITYBOOTS", 25);
+	ARMORY_QTY_FIRE_RESIST = vrx_lua_get_variable("ARMORY_QTY_FIRE_RESIST", 25);
+	ARMORY_QTY_AUTO_TBALL = vrx_lua_get_variable("ARMORY_QTY_AUTO_TBALL", 3);
 
-	TRADE_MAX_DISTANCE = Lua_GetVariable("TRADE_MAX_DISTANCE", 768);
-	TRADE_MAX_PLAYERS = Lua_GetVariable("TRADE_MAX_PLAYERS", 5);
+	TRADE_MAX_DISTANCE = vrx_lua_get_variable("TRADE_MAX_DISTANCE", 768);
+	TRADE_MAX_PLAYERS = vrx_lua_get_variable("TRADE_MAX_PLAYERS", 5);
 
-	VITALITY_MULT = Lua_GetVariable("VITALITY_MULT", 0.19);
+	VITALITY_MULT = vrx_lua_get_variable("VITALITY_MULT", 0.19);
 
-	MAGMINE_RANGE = Lua_GetVariable("MAGMINE_RANGE", 256);
-	MAGMINE_COST = Lua_GetVariable("MAGMINE_COST", 50);
-	MAGMINE_DEFAULT_HEALTH = Lua_GetVariable("MAGMINE_DEFAULT_HEALTH", 200);
-	MAGMINE_ADDON_HEALTH = Lua_GetVariable("MAGMINE_ADDON_HEALTH", 80);
-	MAGMINE_DELAY = Lua_GetVariable("MAGMINE_DELAY", 1.0);
+	MAGMINE_RANGE = vrx_lua_get_variable("MAGMINE_RANGE", 256);
+	MAGMINE_COST = vrx_lua_get_variable("MAGMINE_COST", 50);
+	MAGMINE_DEFAULT_HEALTH = vrx_lua_get_variable("MAGMINE_DEFAULT_HEALTH", 200);
+	MAGMINE_ADDON_HEALTH = vrx_lua_get_variable("MAGMINE_ADDON_HEALTH", 80);
+	MAGMINE_DELAY = vrx_lua_get_variable("MAGMINE_DELAY", 1.0);
 
-	SELFDESTRUCT_RADIUS = Lua_GetVariable("SELFDESTRUCT_RADIUS", 150);
-	SELFDESTRUCT_BASE = Lua_GetVariable("SELFDESTRUCT_BASE", 50);
-	SELFDESTRUCT_BONUS = Lua_GetVariable("SELFDESTRUCT_BONUS", 50);
+	SELFDESTRUCT_RADIUS = vrx_lua_get_variable("SELFDESTRUCT_RADIUS", 150);
+	SELFDESTRUCT_BASE = vrx_lua_get_variable("SELFDESTRUCT_BASE", 50);
+	SELFDESTRUCT_BONUS = vrx_lua_get_variable("SELFDESTRUCT_BONUS", 50);
 
-	EXPLODING_ARMOR_COST = Lua_GetVariable("EXPLODING_ARMOR_COST", 0);
-	EXPLODING_ARMOR_MAX_COUNT = Lua_GetVariable("EXPLODING_ARMOR_MAX_COUNT", 4);
-	EXPLODING_ARMOR_AMOUNT = Lua_GetVariable("EXPLODING_ARMOR_AMOUNT", 50);
-	EXPLODING_ARMOR_DMG_BASE = Lua_GetVariable("EXPLODING_ARMOR_DMG_BASE", 90);
-	EXPLODING_ARMOR_DMG_ADDON = Lua_GetVariable("EXPLODING_ARMOR_DMG_ADDON", 35);
-	EXPLODING_ARMOR_MAX_RADIUS = Lua_GetVariable("EXPLODING_ARMOR_MAX_RADIUS", 180);
-	EXPLODING_ARMOR_DELAY = Lua_GetVariable("EXPLODING_ARMOR_DELAY", 1);
-	EXPLODING_ARMOR_DETECTION = Lua_GetVariable("EXPLODING_ARMOR_DETECTION", 32);
+	EXPLODING_ARMOR_COST = vrx_lua_get_variable("EXPLODING_ARMOR_COST", 0);
+	EXPLODING_ARMOR_MAX_COUNT = vrx_lua_get_variable("EXPLODING_ARMOR_MAX_COUNT", 4);
+	EXPLODING_ARMOR_AMOUNT = vrx_lua_get_variable("EXPLODING_ARMOR_AMOUNT", 50);
+	EXPLODING_ARMOR_DMG_BASE = vrx_lua_get_variable("EXPLODING_ARMOR_DMG_BASE", 90);
+	EXPLODING_ARMOR_DMG_ADDON = vrx_lua_get_variable("EXPLODING_ARMOR_DMG_ADDON", 35);
+	EXPLODING_ARMOR_MAX_RADIUS = vrx_lua_get_variable("EXPLODING_ARMOR_MAX_RADIUS", 180);
+	EXPLODING_ARMOR_DELAY = vrx_lua_get_variable("EXPLODING_ARMOR_DELAY", 1);
+	EXPLODING_ARMOR_DETECTION = vrx_lua_get_variable("EXPLODING_ARMOR_DETECTION", 32);
 
-	MIRV_INITIAL_DAMAGE = Lua_GetVariable("MIRV_INITIAL_DAMAGE", 40);
-	MIRV_ADDON_DAMAGE = Lua_GetVariable("MIRV_ADDON_DAMAGE", 7);
-	MIRV_INITIAL_RADIUS = Lua_GetVariable("MIRV_INITIAL_RADIUS", 80);
-	MIRV_ADDON_RADIUS = Lua_GetVariable("MIRV_ADDON_RADIUS", 2);
-	MIRV_DELAY = Lua_GetVariable("MIRV_DELAY", 0.5);
-	MIRV_COST = Lua_GetVariable("MIRV_COST", 35);
+	MIRV_INITIAL_DAMAGE = vrx_lua_get_variable("MIRV_INITIAL_DAMAGE", 40);
+	MIRV_ADDON_DAMAGE = vrx_lua_get_variable("MIRV_ADDON_DAMAGE", 7);
+	MIRV_INITIAL_RADIUS = vrx_lua_get_variable("MIRV_INITIAL_RADIUS", 80);
+	MIRV_ADDON_RADIUS = vrx_lua_get_variable("MIRV_ADDON_RADIUS", 2);
+	MIRV_DELAY = vrx_lua_get_variable("MIRV_DELAY", 0.5);
+	MIRV_COST = vrx_lua_get_variable("MIRV_COST", 35);
 
-	SPIKER_INITIAL_HEALTH = Lua_GetVariable("SPIKER_INITIAL_HEALTH", 110);
-	SPIKER_ADDON_HEALTH = Lua_GetVariable("SPIKER_ADDON_HEALTH", 75);
-	SPIKER_INITIAL_DAMAGE = Lua_GetVariable("SPIKER_INITIAL_DAMAGE", 79);
-	SPIKER_ADDON_DAMAGE = Lua_GetVariable("SPIKER_ADDON_DAMAGE", 16);
-	SPIKER_INITIAL_SPEED = Lua_GetVariable("SPIKER_INITIAL_SPEED", 2100);
-	SPIKER_ADDON_SPEED = Lua_GetVariable("SPIKER_ADDON_SPEED", 0);
-	SPIKER_COST = Lua_GetVariable("SPIKER_COST", 35);
-	SPIKER_DELAY = Lua_GetVariable("SPIKER_DELAY", 0.2);
-	SPIKER_REFIRE_DELAY = Lua_GetVariable("SPIKER_REFIRE_DELAY", 0.8);
-	SPIKER_INITIAL_RANGE = Lua_GetVariable("SPIKER_INITIAL_RANGE", 1562);
-	SPIKER_ADDON_RANGE = Lua_GetVariable("SPIKER_ADDON_RANGE", 50);
+	SPIKER_INITIAL_HEALTH = vrx_lua_get_variable("SPIKER_INITIAL_HEALTH", 110);
+	SPIKER_ADDON_HEALTH = vrx_lua_get_variable("SPIKER_ADDON_HEALTH", 75);
+	SPIKER_INITIAL_DAMAGE = vrx_lua_get_variable("SPIKER_INITIAL_DAMAGE", 79);
+	SPIKER_ADDON_DAMAGE = vrx_lua_get_variable("SPIKER_ADDON_DAMAGE", 16);
+	SPIKER_INITIAL_SPEED = vrx_lua_get_variable("SPIKER_INITIAL_SPEED", 2100);
+	SPIKER_ADDON_SPEED = vrx_lua_get_variable("SPIKER_ADDON_SPEED", 0);
+	SPIKER_COST = vrx_lua_get_variable("SPIKER_COST", 35);
+	SPIKER_DELAY = vrx_lua_get_variable("SPIKER_DELAY", 0.2);
+	SPIKER_REFIRE_DELAY = vrx_lua_get_variable("SPIKER_REFIRE_DELAY", 0.8);
+	SPIKER_INITIAL_RANGE = vrx_lua_get_variable("SPIKER_INITIAL_RANGE", 1562);
+	SPIKER_ADDON_RANGE = vrx_lua_get_variable("SPIKER_ADDON_RANGE", 50);
 
-	CORPSE_EXPLOSION_INITIAL_DAMAGE = Lua_GetVariable("CORPSE_EXPLOSION_INITIAL_DAMAGE", 150);
-	CORPSE_EXPLOSION_ADDON_DAMAGE = Lua_GetVariable("CORPSE_EXPLOSION_ADDON_DAMAGE", 25);
-	CORPSE_EXPLOSION_INITIAL_RADIUS = Lua_GetVariable("CORPSE_EXPLOSION_INITIAL_RADIUS", 100);
-	CORPSE_EXPLOSION_ADDON_RADIUS = Lua_GetVariable("CORPSE_EXPLOSION_ADDON_RADIUS", 10);
-	CORPSE_EXPLOSION_MAX_RANGE = Lua_GetVariable("CORPSE_EXPLOSION_MAX_RANGE", 8192);
-	CORPSE_EXPLOSION_SEARCH_RADIUS = Lua_GetVariable("CORPSE_EXPLOSION_SEARCH_RADIUS", 128);
+	CORPSE_EXPLOSION_INITIAL_DAMAGE = vrx_lua_get_variable("CORPSE_EXPLOSION_INITIAL_DAMAGE", 150);
+	CORPSE_EXPLOSION_ADDON_DAMAGE = vrx_lua_get_variable("CORPSE_EXPLOSION_ADDON_DAMAGE", 25);
+	CORPSE_EXPLOSION_INITIAL_RADIUS = vrx_lua_get_variable("CORPSE_EXPLOSION_INITIAL_RADIUS", 100);
+	CORPSE_EXPLOSION_ADDON_RADIUS = vrx_lua_get_variable("CORPSE_EXPLOSION_ADDON_RADIUS", 10);
+	CORPSE_EXPLOSION_MAX_RANGE = vrx_lua_get_variable("CORPSE_EXPLOSION_MAX_RANGE", 8192);
+	CORPSE_EXPLOSION_SEARCH_RADIUS = vrx_lua_get_variable("CORPSE_EXPLOSION_SEARCH_RADIUS", 128);
 
-	CRIPPLE_RANGE = Lua_GetVariable("CRIPPLE_RANGE", 256);
-	CRIPPLE_COST = Lua_GetVariable("CRIPPLE_COST", 25);
-	CRIPPLE_DELAY = Lua_GetVariable("CRIPPLE_DELAY", 2.0);
-	CRIPPLE_MAX_DAMAGE = Lua_GetVariable("CRIPPLE_MAX_DAMAGE", 1000);
+	CRIPPLE_RANGE = vrx_lua_get_variable("CRIPPLE_RANGE", 256);
+	CRIPPLE_COST = vrx_lua_get_variable("CRIPPLE_COST", 25);
+	CRIPPLE_DELAY = vrx_lua_get_variable("CRIPPLE_DELAY", 2.0);
+	CRIPPLE_MAX_DAMAGE = vrx_lua_get_variable("CRIPPLE_MAX_DAMAGE", 1000);
 
-	TELEPORT_COST = Lua_GetVariable("TELEPORT_COST", 20);
+	TELEPORT_COST = vrx_lua_get_variable("TELEPORT_COST", 20);
 
-	PLAYERSPAWN_REGEN_FRAMES = Lua_GetVariable("PLAYERSPAWN_REGEN_FRAMES", 800);
-	PLAYERSPAWN_REGEN_DELAY = Lua_GetVariable("PLAYERSPAWN_REGEN_DELAY", 20);
-	PLAYERSPAWN_HEALTH = Lua_GetVariable("PLAYERSPAWN_HEALTH", 4500);
+	PLAYERSPAWN_REGEN_FRAMES = vrx_lua_get_variable("PLAYERSPAWN_REGEN_FRAMES", 800);
+	PLAYERSPAWN_REGEN_DELAY = vrx_lua_get_variable("PLAYERSPAWN_REGEN_DELAY", 20);
+	PLAYERSPAWN_HEALTH = vrx_lua_get_variable("PLAYERSPAWN_HEALTH", 4500);
 
-	INVASION_BONUS_EXP = Lua_GetVariable("INVASION_BONUS_EXP", 5000);
-	INVASION_BONUS_CREDITS = Lua_GetVariable("INVASION_BONUS_CREDITS", 10000);
+	INVASION_BONUS_EXP = vrx_lua_get_variable("INVASION_BONUS_EXP", 5000);
+	INVASION_BONUS_CREDITS = vrx_lua_get_variable("INVASION_BONUS_CREDITS", 10000);
 
-	SHAMAN_CURSE_RADIUS_BASE = Lua_GetVariable("SHAMAN_CURSE_RADIUS_BASE", 512);
-	SHAMAN_CURSE_RADIUS_BONUS = Lua_GetVariable("SHAMAN_CURSE_RADIUS_BONUS", 0);
+	SHAMAN_CURSE_RADIUS_BASE = vrx_lua_get_variable("SHAMAN_CURSE_RADIUS_BASE", 512);
+	SHAMAN_CURSE_RADIUS_BONUS = vrx_lua_get_variable("SHAMAN_CURSE_RADIUS_BONUS", 0);
 
-	CURSE_DEFAULT_INITIAL_RADIUS = Lua_GetVariable("CURSE_DEFAULT_INITIAL_RADIUS", 256);
-	CURSE_DEFAULT_ADDON_RADIUS = Lua_GetVariable("CURSE_DEFAULT_ADDON_RADIUS", 0);
-	CURSE_DEFAULT_INITIAL_RANGE = Lua_GetVariable("CURSE_DEFAULT_INITIAL_RANGE", 512);
-	CURSE_DEFAULT_ADDON_RANGE = Lua_GetVariable("CURSE_DEFAULT_ADDON_RANGE", 0);
+	CURSE_DEFAULT_INITIAL_RADIUS = vrx_lua_get_variable("CURSE_DEFAULT_INITIAL_RADIUS", 256);
+	CURSE_DEFAULT_ADDON_RADIUS = vrx_lua_get_variable("CURSE_DEFAULT_ADDON_RADIUS", 0);
+	CURSE_DEFAULT_INITIAL_RANGE = vrx_lua_get_variable("CURSE_DEFAULT_INITIAL_RANGE", 512);
+	CURSE_DEFAULT_ADDON_RANGE = vrx_lua_get_variable("CURSE_DEFAULT_ADDON_RANGE", 0);
 
-	MIND_ABSORB_RADIUS_BASE = Lua_GetVariable("MIND_ABSORB_RADIUS_BASE", 256);
-	MIND_ABSORB_RADIUS_BONUS = Lua_GetVariable("MIND_ABSORB_RADIUS_BONUS", 0);
-	MIND_ABSORB_AMOUNT_BASE = Lua_GetVariable("MIND_ABSORB_AMOUNT_BASE", 0);
-	MIND_ABSORB_AMOUNT_BONUS = Lua_GetVariable("MIND_ABSORB_AMOUNT_BONUS", 10);
+	MIND_ABSORB_RADIUS_BASE = vrx_lua_get_variable("MIND_ABSORB_RADIUS_BASE", 256);
+	MIND_ABSORB_RADIUS_BONUS = vrx_lua_get_variable("MIND_ABSORB_RADIUS_BONUS", 0);
+	MIND_ABSORB_AMOUNT_BASE = vrx_lua_get_variable("MIND_ABSORB_AMOUNT_BASE", 0);
+	MIND_ABSORB_AMOUNT_BONUS = vrx_lua_get_variable("MIND_ABSORB_AMOUNT_BONUS", 10);
 
-	LOWER_RESIST_INITIAL_RANGE = Lua_GetVariable("LOWER_RESIST_INITIAL_RANGE", 512);
-	LOWER_RESIST_ADDON_RANGE = Lua_GetVariable("LOWER_RESIST_ADDON_RANGE", 0);
-	LOWER_RESIST_INITIAL_RADIUS = Lua_GetVariable("LOWER_RESIST_INITIAL_RADIUS", 256);
-	LOWER_RESIST_ADDON_RADIUS = Lua_GetVariable("LOWER_RESIST_ADDON_RADIUS", 0);
-	LOWER_RESIST_INITIAL_DURATION = Lua_GetVariable("LOWER_RESIST_INITIAL_DURATION", 0);
-	LOWER_RESIST_ADDON_DURATION = Lua_GetVariable("LOWER_RESIST_ADDON_DURATION", 1.0);
-	LOWER_RESIST_COST = Lua_GetVariable("LOWER_RESIST_COST", 50);
-	LOWER_RESIST_DELAY = Lua_GetVariable("LOWER_RESIST_DELAY", 1.0);
-	LOWER_RESIST_INITIAL_FACTOR = Lua_GetVariable("LOWER_RESIST_INITIAL_FACTOR", 0.25);
-	LOWER_RESIST_ADDON_FACTOR = Lua_GetVariable("LOWER_RESIST_ADDON_FACTOR", 0.025);
+	LOWER_RESIST_INITIAL_RANGE = vrx_lua_get_variable("LOWER_RESIST_INITIAL_RANGE", 512);
+	LOWER_RESIST_ADDON_RANGE = vrx_lua_get_variable("LOWER_RESIST_ADDON_RANGE", 0);
+	LOWER_RESIST_INITIAL_RADIUS = vrx_lua_get_variable("LOWER_RESIST_INITIAL_RADIUS", 256);
+	LOWER_RESIST_ADDON_RADIUS = vrx_lua_get_variable("LOWER_RESIST_ADDON_RADIUS", 0);
+	LOWER_RESIST_INITIAL_DURATION = vrx_lua_get_variable("LOWER_RESIST_INITIAL_DURATION", 0);
+	LOWER_RESIST_ADDON_DURATION = vrx_lua_get_variable("LOWER_RESIST_ADDON_DURATION", 1.0);
+	LOWER_RESIST_COST = vrx_lua_get_variable("LOWER_RESIST_COST", 50);
+	LOWER_RESIST_DELAY = vrx_lua_get_variable("LOWER_RESIST_DELAY", 1.0);
+	LOWER_RESIST_INITIAL_FACTOR = vrx_lua_get_variable("LOWER_RESIST_INITIAL_FACTOR", 0.25);
+	LOWER_RESIST_ADDON_FACTOR = vrx_lua_get_variable("LOWER_RESIST_ADDON_FACTOR", 0.025);
 
-	AMP_DAMAGE_DELAY = Lua_GetVariable("AMP_DAMAGE_DELAY", 1);
-	AMP_DAMAGE_DURATION_BASE = Lua_GetVariable("AMP_DAMAGE_DURATION_BASE", 0);
-	AMP_DAMAGE_DURATION_BONUS = Lua_GetVariable("AMP_DAMAGE_DURATION_BONUS", 1.5);
-	AMP_DAMAGE_COST = Lua_GetVariable("AMP_DAMAGE_COST", 35);
-	AMP_DAMAGE_MULT_BASE = Lua_GetVariable("AMP_DAMAGE_MULT_BASE", 1.5);
-	AMP_DAMAGE_MULT_BONUS = Lua_GetVariable("AMP_DAMAGE_MULT_BONUS", 0.3);
+	AMP_DAMAGE_DELAY = vrx_lua_get_variable("AMP_DAMAGE_DELAY", 1);
+	AMP_DAMAGE_DURATION_BASE = vrx_lua_get_variable("AMP_DAMAGE_DURATION_BASE", 0);
+	AMP_DAMAGE_DURATION_BONUS = vrx_lua_get_variable("AMP_DAMAGE_DURATION_BONUS", 1.5);
+	AMP_DAMAGE_COST = vrx_lua_get_variable("AMP_DAMAGE_COST", 35);
+	AMP_DAMAGE_MULT_BASE = vrx_lua_get_variable("AMP_DAMAGE_MULT_BASE", 1.5);
+	AMP_DAMAGE_MULT_BONUS = vrx_lua_get_variable("AMP_DAMAGE_MULT_BONUS", 0.3);
 
-	WEAKEN_DELAY = Lua_GetVariable("WEAKEN_DELAY", 2);
-	WEAKEN_DURATION_BASE = Lua_GetVariable("WEAKEN_DURATION_BASE", 0);
-	WEAKEN_DURATION_BONUS = Lua_GetVariable("WEAKEN_DURATION_BONUS", 1.0);
-	WEAKEN_COST = Lua_GetVariable("WEAKEN_COST", 50);
-	WEAKEN_MULT_BASE = Lua_GetVariable("WEAKEN_MULT_BASE", 1.25);
-	WEAKEN_MULT_BONUS = Lua_GetVariable("WEAKEN_MULT_BONUS", 0.025);
-	WEAKEN_SLOW_BASE = Lua_GetVariable("WEAKEN_SLOW_BASE", 0);
-	WEAKEN_SLOW_BONUS = Lua_GetVariable("WEAKEN_SLOW_BONUS", 0.1);
+	WEAKEN_DELAY = vrx_lua_get_variable("WEAKEN_DELAY", 2);
+	WEAKEN_DURATION_BASE = vrx_lua_get_variable("WEAKEN_DURATION_BASE", 0);
+	WEAKEN_DURATION_BONUS = vrx_lua_get_variable("WEAKEN_DURATION_BONUS", 1.0);
+	WEAKEN_COST = vrx_lua_get_variable("WEAKEN_COST", 50);
+	WEAKEN_MULT_BASE = vrx_lua_get_variable("WEAKEN_MULT_BASE", 1.25);
+	WEAKEN_MULT_BONUS = vrx_lua_get_variable("WEAKEN_MULT_BONUS", 0.025);
+	WEAKEN_SLOW_BASE = vrx_lua_get_variable("WEAKEN_SLOW_BASE", 0);
+	WEAKEN_SLOW_BONUS = vrx_lua_get_variable("WEAKEN_SLOW_BONUS", 0.1);
 
-	LIFE_DRAIN_DELAY = Lua_GetVariable("LIFE_DRAIN_DELAY", 2);
-	LIFE_DRAIN_COST = Lua_GetVariable("LIFE_DRAIN_COST", 50);
-	LIFE_DRAIN_HEALTH = Lua_GetVariable("LIFE_DRAIN_HEALTH", 10);
-	LIFE_DRAIN_DURATION_BASE = Lua_GetVariable("LIFE_DRAIN_DURATION_BASE", 0);
-	LIFE_DRAIN_DURATION_BONUS = Lua_GetVariable("LIFE_DRAIN_DURATION_BONUS", 1.0);
-	LIFE_DRAIN_RANGE = Lua_GetVariable("LIFE_DRAIN_RANGE", 256);
-	LIFE_DRAIN_UPDATETIME = Lua_GetVariable("LIFE_DRAIN_UPDATETIME", 1.0);
+	LIFE_DRAIN_DELAY = vrx_lua_get_variable("LIFE_DRAIN_DELAY", 2);
+	LIFE_DRAIN_COST = vrx_lua_get_variable("LIFE_DRAIN_COST", 50);
+	LIFE_DRAIN_HEALTH = vrx_lua_get_variable("LIFE_DRAIN_HEALTH", 10);
+	LIFE_DRAIN_DURATION_BASE = vrx_lua_get_variable("LIFE_DRAIN_DURATION_BASE", 0);
+	LIFE_DRAIN_DURATION_BONUS = vrx_lua_get_variable("LIFE_DRAIN_DURATION_BONUS", 1.0);
+	LIFE_DRAIN_RANGE = vrx_lua_get_variable("LIFE_DRAIN_RANGE", 256);
+	LIFE_DRAIN_UPDATETIME = vrx_lua_get_variable("LIFE_DRAIN_UPDATETIME", 1.0);
 
-	AMNESIA_DELAY = Lua_GetVariable("AMNESIA_DELAY", 2);
-	AMNESIA_DURATION_BASE = Lua_GetVariable("AMNESIA_DURATION_BASE", 0);
-	AMNESIA_DURATION_BONUS = Lua_GetVariable("AMNESIA_DURATION_BONUS", 2);
-	AMNESIA_COST = Lua_GetVariable("AMNESIA_COST", 50);
+	AMNESIA_DELAY = vrx_lua_get_variable("AMNESIA_DELAY", 2);
+	AMNESIA_DURATION_BASE = vrx_lua_get_variable("AMNESIA_DURATION_BASE", 0);
+	AMNESIA_DURATION_BONUS = vrx_lua_get_variable("AMNESIA_DURATION_BONUS", 2);
+	AMNESIA_COST = vrx_lua_get_variable("AMNESIA_COST", 50);
 
-	CURSE_DELAY = Lua_GetVariable("CURSE_DELAY", 2);
-	CURSE_DURATION_BASE = Lua_GetVariable("CURSE_DURATION_BASE", 0);
-	CURSE_DURATION_BONUS = Lua_GetVariable("CURSE_DURATION_BONUS", 1);
-	CURSE_COST = Lua_GetVariable("CURSE_COST", 25);
+	CURSE_DELAY = vrx_lua_get_variable("CURSE_DELAY", 2);
+	CURSE_DURATION_BASE = vrx_lua_get_variable("CURSE_DURATION_BASE", 0);
+	CURSE_DURATION_BONUS = vrx_lua_get_variable("CURSE_DURATION_BONUS", 1);
+	CURSE_COST = vrx_lua_get_variable("CURSE_COST", 25);
 
-	HEALING_DELAY = Lua_GetVariable("HEALING_DELAY", 2);
-	HEALING_DURATION_BASE = Lua_GetVariable("HEALING_DURATION_BASE", 10.5);
-	HEALING_DURATION_BONUS = Lua_GetVariable("HEALING_DURATION_BONUS", 0);
-	HEALING_COST = Lua_GetVariable("HEALING_COST", 50);
-	HEALING_HEAL_BASE = Lua_GetVariable("HEALING_HEAL_BASE", 0);
-	HEALING_HEAL_BONUS = Lua_GetVariable("HEALING_HEAL_BONUS", 1);
+	HEALING_DELAY = vrx_lua_get_variable("HEALING_DELAY", 2);
+	HEALING_DURATION_BASE = vrx_lua_get_variable("HEALING_DURATION_BASE", 10.5);
+	HEALING_DURATION_BONUS = vrx_lua_get_variable("HEALING_DURATION_BONUS", 0);
+	HEALING_COST = vrx_lua_get_variable("HEALING_COST", 50);
+	HEALING_HEAL_BASE = vrx_lua_get_variable("HEALING_HEAL_BASE", 0);
+	HEALING_HEAL_BONUS = vrx_lua_get_variable("HEALING_HEAL_BONUS", 1);
 
-	BLESS_DELAY = Lua_GetVariable("BLESS_DELAY", 0);
-	BLESS_DURATION_BASE = Lua_GetVariable("BLESS_DURATION_BASE", 0);
-	BLESS_DURATION_BONUS = Lua_GetVariable("BLESS_DURATION_BONUS", 0.5);
-	BLESS_COST = Lua_GetVariable("BLESS_COST", 50);
-	BLESS_BONUS = Lua_GetVariable("BLESS_BONUS", 1.5);
-	BLESS_MAGIC_BONUS = Lua_GetVariable("BLESS_MAGIC_BONUS", 1.5);
+	BLESS_DELAY = vrx_lua_get_variable("BLESS_DELAY", 0);
+	BLESS_DURATION_BASE = vrx_lua_get_variable("BLESS_DURATION_BASE", 0);
+	BLESS_DURATION_BONUS = vrx_lua_get_variable("BLESS_DURATION_BONUS", 0.5);
+	BLESS_COST = vrx_lua_get_variable("BLESS_COST", 50);
+	BLESS_BONUS = vrx_lua_get_variable("BLESS_BONUS", 1.5);
+	BLESS_MAGIC_BONUS = vrx_lua_get_variable("BLESS_MAGIC_BONUS", 1.5);
 
-	DEFLECT_INITIAL_DURATION = Lua_GetVariable("DEFLECT_INITIAL_DURATION", 0);
-	DEFLECT_ADDON_DURATION = Lua_GetVariable("DEFLECT_ADDON_DURATION", 1.0);
-	DEFLECT_COST = Lua_GetVariable("DEFLECT_COST", 50);
-	DEFLECT_DELAY = Lua_GetVariable("DEFLECT_DELAY", 2.0);
-	DEFLECT_INITIAL_HITSCAN_CHANCE = Lua_GetVariable("DEFLECT_INITIAL_HITSCAN_CHANCE", 0.1);
-	DEFLECT_ADDON_HITSCAN_CHANCE = Lua_GetVariable("DEFLECT_ADDON_HITSCAN_CHANCE", 0.023);
-	DEFLECT_INITIAL_PROJECTILE_CHANCE = Lua_GetVariable("DEFLECT_INITIAL_PROJECTILE_CHANCE", 0.1);
-	DEFLECT_ADDON_PROJECTILE_CHANCE = Lua_GetVariable("DEFLECT_ADDON_PROJECTILE_CHANCE", 0.023);
-	DEFLECT_MAX_PROJECTILE_CHANCE = Lua_GetVariable("DEFLECT_MAX_PROJECTILE_CHANCE", 0.33);
-	DEFLECT_MAX_HITSCAN_CHANCE = Lua_GetVariable("DEFLECT_MAX_HITSCAN_CHANCE", 0.33);
-	DEFLECT_HITSCAN_ABSORB_BASE = Lua_GetVariable("DEFLECT_HITSCAN_ABSORB_BASE", 1.0);
-	DEFLECT_HITSCAN_ABSORB_ADDON = Lua_GetVariable("DEFLECT_HITSCAN_ABSORB_ADDON", 0);
-	DEFLECT_HITSCAN_ABSORB_MAX = Lua_GetVariable("DEFLECT_HITSCAN_ABSORB_MAX", 1.0);
-	DEFAULT_AURA_COST = Lua_GetVariable("DEFAULT_AURA_COST", 2);
-	DEFAULT_AURA_INIT_COST = Lua_GetVariable("DEFAULT_AURA_INIT_COST", 25);
-	DEFAULT_AURA_FRAMES = Lua_GetVariable("DEFAULT_AURA_FRAMES", 10);
-	DEFAULT_AURA_MIN_RADIUS = Lua_GetVariable("DEFAULT_AURA_MIN_RADIUS", 56);
-	DEFAULT_AURA_ADDON_RADIUS = Lua_GetVariable("DEFAULT_AURA_ADDON_RADIUS", 25);
-	DEFAULT_AURA_MAX_RADIUS = Lua_GetVariable("DEFAULT_AURA_MAX_RADIUS", 512);
-	DEFAULT_AURA_SCAN_FRAMES = Lua_GetVariable("DEFAULT_AURA_SCAN_FRAMES", 5);
-	DEFAULT_AURA_DURATION = Lua_GetVariable("DEFAULT_AURA_DURATION", 2);
-	DEFAULT_AURA_DELAY = Lua_GetVariable("DEFAULT_AURA_DELAY", 0.5);
-	MAX_AURAS = Lua_GetVariable("MAX_AURAS", 3);
+	DEFLECT_INITIAL_DURATION = vrx_lua_get_variable("DEFLECT_INITIAL_DURATION", 0);
+	DEFLECT_ADDON_DURATION = vrx_lua_get_variable("DEFLECT_ADDON_DURATION", 1.0);
+	DEFLECT_COST = vrx_lua_get_variable("DEFLECT_COST", 50);
+	DEFLECT_DELAY = vrx_lua_get_variable("DEFLECT_DELAY", 2.0);
+	DEFLECT_INITIAL_HITSCAN_CHANCE = vrx_lua_get_variable("DEFLECT_INITIAL_HITSCAN_CHANCE", 0.1);
+	DEFLECT_ADDON_HITSCAN_CHANCE = vrx_lua_get_variable("DEFLECT_ADDON_HITSCAN_CHANCE", 0.023);
+	DEFLECT_INITIAL_PROJECTILE_CHANCE = vrx_lua_get_variable("DEFLECT_INITIAL_PROJECTILE_CHANCE", 0.1);
+	DEFLECT_ADDON_PROJECTILE_CHANCE = vrx_lua_get_variable("DEFLECT_ADDON_PROJECTILE_CHANCE", 0.023);
+	DEFLECT_MAX_PROJECTILE_CHANCE = vrx_lua_get_variable("DEFLECT_MAX_PROJECTILE_CHANCE", 0.33);
+	DEFLECT_MAX_HITSCAN_CHANCE = vrx_lua_get_variable("DEFLECT_MAX_HITSCAN_CHANCE", 0.33);
+	DEFLECT_HITSCAN_ABSORB_BASE = vrx_lua_get_variable("DEFLECT_HITSCAN_ABSORB_BASE", 1.0);
+	DEFLECT_HITSCAN_ABSORB_ADDON = vrx_lua_get_variable("DEFLECT_HITSCAN_ABSORB_ADDON", 0);
+	DEFLECT_HITSCAN_ABSORB_MAX = vrx_lua_get_variable("DEFLECT_HITSCAN_ABSORB_MAX", 1.0);
+	DEFAULT_AURA_COST = vrx_lua_get_variable("DEFAULT_AURA_COST", 2);
+	DEFAULT_AURA_INIT_COST = vrx_lua_get_variable("DEFAULT_AURA_INIT_COST", 25);
+	DEFAULT_AURA_FRAMES = vrx_lua_get_variable("DEFAULT_AURA_FRAMES", 10);
+	DEFAULT_AURA_MIN_RADIUS = vrx_lua_get_variable("DEFAULT_AURA_MIN_RADIUS", 56);
+	DEFAULT_AURA_ADDON_RADIUS = vrx_lua_get_variable("DEFAULT_AURA_ADDON_RADIUS", 25);
+	DEFAULT_AURA_MAX_RADIUS = vrx_lua_get_variable("DEFAULT_AURA_MAX_RADIUS", 512);
+	DEFAULT_AURA_SCAN_FRAMES = vrx_lua_get_variable("DEFAULT_AURA_SCAN_FRAMES", 5);
+	DEFAULT_AURA_DURATION = vrx_lua_get_variable("DEFAULT_AURA_DURATION", 2);
+	DEFAULT_AURA_DELAY = vrx_lua_get_variable("DEFAULT_AURA_DELAY", 0.5);
+	MAX_AURAS = vrx_lua_get_variable("MAX_AURAS", 3);
 
-	CARPETBOMB_INITIAL_DAMAGE = Lua_GetVariable("CARPETBOMB_INITIAL_DAMAGE", 50);
-	CARPETBOMB_ADDON_DAMAGE = Lua_GetVariable("CARPETBOMB_ADDON_DAMAGE", 10);
-	CARPETBOMB_DAMAGE_RADIUS = Lua_GetVariable("CARPETBOMB_DAMAGE_RADIUS", 100);
-	CARPETBOMB_CARPET_WIDTH = Lua_GetVariable("CARPETBOMB_CARPET_WIDTH", 128);
-	CARPETBOMB_STEP_SIZE = Lua_GetVariable("CARPETBOMB_STEP_SIZE", 128);
-	CARPETBOMB_DURATION = Lua_GetVariable("CARPETBOMB_DURATION", 2.0);
+	CARPETBOMB_INITIAL_DAMAGE = vrx_lua_get_variable("CARPETBOMB_INITIAL_DAMAGE", 50);
+	CARPETBOMB_ADDON_DAMAGE = vrx_lua_get_variable("CARPETBOMB_ADDON_DAMAGE", 10);
+	CARPETBOMB_DAMAGE_RADIUS = vrx_lua_get_variable("CARPETBOMB_DAMAGE_RADIUS", 100);
+	CARPETBOMB_CARPET_WIDTH = vrx_lua_get_variable("CARPETBOMB_CARPET_WIDTH", 128);
+	CARPETBOMB_STEP_SIZE = vrx_lua_get_variable("CARPETBOMB_STEP_SIZE", 128);
+	CARPETBOMB_DURATION = vrx_lua_get_variable("CARPETBOMB_DURATION", 2.0);
 
-	BOMBAREA_WIDTH = Lua_GetVariable("BOMBAREA_WIDTH", 256);
-	BOMBAREA_FLOOR_HEIGHT = Lua_GetVariable("BOMBAREA_FLOOR_HEIGHT", 256);
-	BOMBAREA_DURATION = Lua_GetVariable("BOMBAREA_DURATION", 5);
-	BOMBAREA_STARTUP_DELAY = Lua_GetVariable("BOMBAREA_STARTUP_DELAY", 1.5);
-	BOMBPERSON_WIDTH = Lua_GetVariable("BOMBPERSON_WIDTH", 128);
-	BOMBPERSON_DURATION = Lua_GetVariable("BOMBPERSON_DURATION", 10);
-	BOMBPERSON_RANGE = Lua_GetVariable("BOMBPERSON_RANGE", 8192);
+	BOMBAREA_WIDTH = vrx_lua_get_variable("BOMBAREA_WIDTH", 256);
+	BOMBAREA_FLOOR_HEIGHT = vrx_lua_get_variable("BOMBAREA_FLOOR_HEIGHT", 256);
+	BOMBAREA_DURATION = vrx_lua_get_variable("BOMBAREA_DURATION", 5);
+	BOMBAREA_STARTUP_DELAY = vrx_lua_get_variable("BOMBAREA_STARTUP_DELAY", 1.5);
+	BOMBPERSON_WIDTH = vrx_lua_get_variable("BOMBPERSON_WIDTH", 128);
+	BOMBPERSON_DURATION = vrx_lua_get_variable("BOMBPERSON_DURATION", 10);
+	BOMBPERSON_RANGE = vrx_lua_get_variable("BOMBPERSON_RANGE", 8192);
 
 	// BOSS MAKRON
-	MAKRON_MAXVELOCITY = Lua_GetVariable("MAKRON_MAXVELOCITY", 200);
-	MAKRON_INITIAL_HEALTH = Lua_GetVariable("MAKRON_INITIAL_HEALTH", 0);
-	MAKRON_ADDON_HEALTH = Lua_GetVariable("MAKRON_ADDON_HEALTH", 4500);
-	MAKRON_INITIAL_ARMOR = Lua_GetVariable("MAKRON_INITIAL_ARMOR", 0);
-	MAKRON_ADDON_ARMOR = Lua_GetVariable("MAKRON_ADDON_ARMOR", 4500);
-	MAKRON_CG_INITIAL_DAMAGE = Lua_GetVariable("MAKRON_CG_INITIAL_DAMAGE", 50);
-	MAKRON_CG_ADDON_DAMAGE = Lua_GetVariable("MAKRON_CG_ADDON_DAMAGE", 7);
-	MAKRON_BFG_INITIAL_DAMAGE = Lua_GetVariable("MAKRON_BFG_INITIAL_DAMAGE", 90);
-	MAKRON_BFG_ADDON_DAMAGE = Lua_GetVariable("MAKRON_BFG_ADDON_DAMAGE", 6);
-	MAKRON_BFG_DELAY = Lua_GetVariable("MAKRON_BFG_DELAY", 0.8);
-	MAKRON_BFG_SPEED = Lua_GetVariable("MAKRON_BFG_SPEED", 950);
-	MAKRON_BFG_RADIUS = Lua_GetVariable("MAKRON_BFG_RADIUS", 256);
-	MAKRON_TOUCH_DAMAGE = Lua_GetVariable("MAKRON_TOUCH_DAMAGE", 100);
+	MAKRON_MAXVELOCITY = vrx_lua_get_variable("MAKRON_MAXVELOCITY", 200);
+	MAKRON_INITIAL_HEALTH = vrx_lua_get_variable("MAKRON_INITIAL_HEALTH", 0);
+	MAKRON_ADDON_HEALTH = vrx_lua_get_variable("MAKRON_ADDON_HEALTH", 4500);
+	MAKRON_INITIAL_ARMOR = vrx_lua_get_variable("MAKRON_INITIAL_ARMOR", 0);
+	MAKRON_ADDON_ARMOR = vrx_lua_get_variable("MAKRON_ADDON_ARMOR", 4500);
+	MAKRON_CG_INITIAL_DAMAGE = vrx_lua_get_variable("MAKRON_CG_INITIAL_DAMAGE", 50);
+	MAKRON_CG_ADDON_DAMAGE = vrx_lua_get_variable("MAKRON_CG_ADDON_DAMAGE", 7);
+	MAKRON_BFG_INITIAL_DAMAGE = vrx_lua_get_variable("MAKRON_BFG_INITIAL_DAMAGE", 90);
+	MAKRON_BFG_ADDON_DAMAGE = vrx_lua_get_variable("MAKRON_BFG_ADDON_DAMAGE", 6);
+	MAKRON_BFG_DELAY = vrx_lua_get_variable("MAKRON_BFG_DELAY", 0.8);
+	MAKRON_BFG_SPEED = vrx_lua_get_variable("MAKRON_BFG_SPEED", 950);
+	MAKRON_BFG_RADIUS = vrx_lua_get_variable("MAKRON_BFG_RADIUS", 256);
+	MAKRON_TOUCH_DAMAGE = vrx_lua_get_variable("MAKRON_TOUCH_DAMAGE", 100);
 
-	SKULL_INITIAL_HEALTH = Lua_GetVariable("SKULL_INITIAL_HEALTH", 200);
-	SKULL_ADDON_HEALTH = Lua_GetVariable("SKULL_ADDON_HEALTH", 30);
-	SKULL_INITIAL_DAMAGE = Lua_GetVariable("SKULL_INITIAL_DAMAGE", 10);
-	SKULL_ADDON_DAMAGE = Lua_GetVariable("SKULL_ADDON_DAMAGE", 2);
-	SKULL_TARGET_RANGE = Lua_GetVariable("SKULL_TARGET_RANGE", 1024);
-	SKULL_MAX_RANGE = Lua_GetVariable("SKULL_MAX_RANGE", 1024);
-	SKULL_MOVE_HORIZONTAL_SPEED = Lua_GetVariable("SKULL_MOVE_HORIZONTAL_SPEED", 35);
-	SKULL_MOVE_VERTICAL_SPEED = Lua_GetVariable("SKULL_MOVE_VERTICAL_SPEED", 35);
-	SKULL_MAX_DIST = Lua_GetVariable("SKULL_MAX_DIST", 96);
-	SKULL_HEIGHT = Lua_GetVariable("SKULL_HEIGHT", 48);
-	SKULL_ATTACK_RANGE = Lua_GetVariable("SKULL_ATTACK_RANGE", 128);
-	SKULL_COST = Lua_GetVariable("SKULL_COST", 100);
-	SKULL_REGEN_FRAMES = Lua_GetVariable("SKULL_REGEN_FRAMES", 100);
-	SKULL_DELAY = Lua_GetVariable("SKULL_DELAY", 2);
-	SKULL_SEARCH_TIMEOUT = Lua_GetVariable("SKULL_SEARCH_TIMEOUT", 100);
+	SKULL_INITIAL_HEALTH = vrx_lua_get_variable("SKULL_INITIAL_HEALTH", 200);
+	SKULL_ADDON_HEALTH = vrx_lua_get_variable("SKULL_ADDON_HEALTH", 30);
+	SKULL_INITIAL_DAMAGE = vrx_lua_get_variable("SKULL_INITIAL_DAMAGE", 10);
+	SKULL_ADDON_DAMAGE = vrx_lua_get_variable("SKULL_ADDON_DAMAGE", 2);
+	SKULL_TARGET_RANGE = vrx_lua_get_variable("SKULL_TARGET_RANGE", 1024);
+	SKULL_MAX_RANGE = vrx_lua_get_variable("SKULL_MAX_RANGE", 1024);
+	SKULL_MOVE_HORIZONTAL_SPEED = vrx_lua_get_variable("SKULL_MOVE_HORIZONTAL_SPEED", 35);
+	SKULL_MOVE_VERTICAL_SPEED = vrx_lua_get_variable("SKULL_MOVE_VERTICAL_SPEED", 35);
+	SKULL_MAX_DIST = vrx_lua_get_variable("SKULL_MAX_DIST", 96);
+	SKULL_HEIGHT = vrx_lua_get_variable("SKULL_HEIGHT", 48);
+	SKULL_ATTACK_RANGE = vrx_lua_get_variable("SKULL_ATTACK_RANGE", 128);
+	SKULL_COST = vrx_lua_get_variable("SKULL_COST", 100);
+	SKULL_REGEN_FRAMES = vrx_lua_get_variable("SKULL_REGEN_FRAMES", 100);
+	SKULL_DELAY = vrx_lua_get_variable("SKULL_DELAY", 2);
+	SKULL_SEARCH_TIMEOUT = vrx_lua_get_variable("SKULL_SEARCH_TIMEOUT", 100);
 
-	M_SOLDIER_INITIAL_HEALTH = Lua_GetVariable("M_SOLDIER_INITIAL_HEALTH", 50);
-	M_SOLDIER_ADDON_HEALTH = Lua_GetVariable("M_SOLDIER_ADDON_HEALTH", 15);
-	M_SOLDIER_INITIAL_ARMOR = Lua_GetVariable("M_SOLDIER_INITIAL_ARMOR", 25);
-	M_SOLDIER_ADDON_ARMOR = Lua_GetVariable("M_SOLDIER_ADDON_ARMOR", 15);
+	M_SOLDIER_INITIAL_HEALTH = vrx_lua_get_variable("M_SOLDIER_INITIAL_HEALTH", 50);
+	M_SOLDIER_ADDON_HEALTH = vrx_lua_get_variable("M_SOLDIER_ADDON_HEALTH", 15);
+	M_SOLDIER_INITIAL_ARMOR = vrx_lua_get_variable("M_SOLDIER_INITIAL_ARMOR", 25);
+	M_SOLDIER_ADDON_ARMOR = vrx_lua_get_variable("M_SOLDIER_ADDON_ARMOR", 15);
 
-	BERSERK_SLASH_INITIAL_DAMAGE = Lua_GetVariable("BERSERK_SLASH_INITIAL_DAMAGE", 100);
-	BERSERK_SLASH_ADDON_DAMAGE = Lua_GetVariable("BERSERK_SLASH_ADDON_DAMAGE", 20);
-	BERSERK_SLASH_RANGE = Lua_GetVariable("BERSERK_SLASH_RANGE", 96);
-	BERSERK_SLASH_KNOCKBACK = Lua_GetVariable("BERSERK_SLASH_KNOCKBACK", 100);
-	BERSERK_PUNCH_INITIAL_DAMAGE = Lua_GetVariable("BERSERK_PUNCH_INITIAL_DAMAGE", 100);
-	BERSERK_PUNCH_ADDON_DAMAGE = Lua_GetVariable("BERSERK_PUNCH_ADDON_DAMAGE", 20);
-	BERSERK_PUNCH_RANGE = Lua_GetVariable("BERSERK_PUNCH_RANGE", 64);
-	BERSERK_PUNCH_KNOCKBACK = Lua_GetVariable("BERSERK_PUNCH_KNOCKBACK", 100);
-	BERSERK_CRUSH_INITIAL_DAMAGE = Lua_GetVariable("BERSERK_CRUSH_INITIAL_DAMAGE", 100);
-	BERSERK_CRUSH_ADDON_DAMAGE = Lua_GetVariable("BERSERK_CRUSH_ADDON_DAMAGE", 20);
-	BERSERK_CRUSH_RANGE = Lua_GetVariable("BERSERK_CRUSH_RANGE", 175);
-	BERSERK_COST = Lua_GetVariable("BERSERK_COST", 50);
-	BERSERK_DELAY = Lua_GetVariable("BERSERK_DELAY", 1.0);
-	BERSERK_REGEN_FRAMES = Lua_GetVariable("BERSERK_REGEN_FRAMES", 300);
-	BERSERK_REGEN_DELAY = Lua_GetVariable("BERSERK_REGEN_DELAY", 10);
+	BERSERK_SLASH_INITIAL_DAMAGE = vrx_lua_get_variable("BERSERK_SLASH_INITIAL_DAMAGE", 100);
+	BERSERK_SLASH_ADDON_DAMAGE = vrx_lua_get_variable("BERSERK_SLASH_ADDON_DAMAGE", 20);
+	BERSERK_SLASH_RANGE = vrx_lua_get_variable("BERSERK_SLASH_RANGE", 96);
+	BERSERK_SLASH_KNOCKBACK = vrx_lua_get_variable("BERSERK_SLASH_KNOCKBACK", 100);
+	BERSERK_PUNCH_INITIAL_DAMAGE = vrx_lua_get_variable("BERSERK_PUNCH_INITIAL_DAMAGE", 100);
+	BERSERK_PUNCH_ADDON_DAMAGE = vrx_lua_get_variable("BERSERK_PUNCH_ADDON_DAMAGE", 20);
+	BERSERK_PUNCH_RANGE = vrx_lua_get_variable("BERSERK_PUNCH_RANGE", 64);
+	BERSERK_PUNCH_KNOCKBACK = vrx_lua_get_variable("BERSERK_PUNCH_KNOCKBACK", 100);
+	BERSERK_CRUSH_INITIAL_DAMAGE = vrx_lua_get_variable("BERSERK_CRUSH_INITIAL_DAMAGE", 100);
+	BERSERK_CRUSH_ADDON_DAMAGE = vrx_lua_get_variable("BERSERK_CRUSH_ADDON_DAMAGE", 20);
+	BERSERK_CRUSH_RANGE = vrx_lua_get_variable("BERSERK_CRUSH_RANGE", 175);
+	BERSERK_COST = vrx_lua_get_variable("BERSERK_COST", 50);
+	BERSERK_DELAY = vrx_lua_get_variable("BERSERK_DELAY", 1.0);
+	BERSERK_REGEN_FRAMES = vrx_lua_get_variable("BERSERK_REGEN_FRAMES", 300);
+	BERSERK_REGEN_DELAY = vrx_lua_get_variable("BERSERK_REGEN_DELAY", 10);
 
-	FLYER_IMPACT_VELOCITY = Lua_GetVariable("FLYER_IMPACT_VELOCITY", 350);
-	FLYER_IMPACT_DAMAGE = Lua_GetVariable("FLYER_IMPACT_DAMAGE", 50);
-	FLYER_HB_REFIRE_FRAMES = Lua_GetVariable("FLYER_HB_REFIRE_FRAMES", 3);
-	FLYER_HB_INITIAL_DMG = Lua_GetVariable("FLYER_HB_INITIAL_DMG", 45);
-	FLYER_HB_ADDON_DMG = Lua_GetVariable("FLYER_HB_ADDON_DMG", 6);
-	FLYER_HB_SPEED = Lua_GetVariable("FLYER_HB_SPEED", 2000);
-	FLYER_INIT_COST = Lua_GetVariable("FLYER_INIT_COST", 50);
-	FLYER_REGEN_FRAMES = Lua_GetVariable("FLYER_REGEN_FRAMES", 300);
-	FLYER_REGEN_DELAY = Lua_GetVariable("FLYER_REGEN_DELAY", 5);
-	FLYER_ROCKET_PREFIRE_FRAMES = Lua_GetVariable("FLYER_ROCKET_PREFIRE_FRAMES", 30);
-	FLYER_ROCKET_INITIAL_DMG = Lua_GetVariable("FLYER_ROCKET_INITIAL_DMG", 200);
-	FLYER_ROCKET_ADDON_DMG = Lua_GetVariable("FLYER_ROCKET_ADDON_DMG", 35);
-	FLYER_ROCKET_SPEED = Lua_GetVariable("FLYER_ROCKET_SPEED", 650);
-	FLYER_ROCKET_INITIAL_RADIUS = Lua_GetVariable("FLYER_ROCKET_INITIAL_RADIUS", 100);
-	FLYER_ROCKET_ADDON_RADIUS = Lua_GetVariable("FLYER_ROCKET_ADDON_RADIUS", 5);
-	FLYER_HB_INITIAL_AMMO = Lua_GetVariable("FLYER_HB_INITIAL_AMMO", 100);
-	FLYER_HB_ADDON_AMMO = Lua_GetVariable("FLYER_HB_ADDON_AMMO", 0);
-	FLYER_HB_START_AMMO = Lua_GetVariable("FLYER_HB_START_AMMO", 33);
-	FLYER_HB_REGEN_FRAMES = Lua_GetVariable("FLYER_HB_REGEN_FRAMES", 300);
-	FLYER_HB_REGEN_DELAY = Lua_GetVariable("FLYER_HB_REGEN_DELAY", 10);
-	FLYER_HB_AMMO = Lua_GetVariable("FLYER_HB_AMMO", 2);
-	FLYER_ROCKET_AMMO = Lua_GetVariable("FLYER_ROCKET_AMMO", 10);
+	FLYER_IMPACT_VELOCITY = vrx_lua_get_variable("FLYER_IMPACT_VELOCITY", 350);
+	FLYER_IMPACT_DAMAGE = vrx_lua_get_variable("FLYER_IMPACT_DAMAGE", 50);
+	FLYER_HB_REFIRE_FRAMES = vrx_lua_get_variable("FLYER_HB_REFIRE_FRAMES", 3);
+	FLYER_HB_INITIAL_DMG = vrx_lua_get_variable("FLYER_HB_INITIAL_DMG", 45);
+	FLYER_HB_ADDON_DMG = vrx_lua_get_variable("FLYER_HB_ADDON_DMG", 6);
+	FLYER_HB_SPEED = vrx_lua_get_variable("FLYER_HB_SPEED", 2000);
+	FLYER_INIT_COST = vrx_lua_get_variable("FLYER_INIT_COST", 50);
+	FLYER_REGEN_FRAMES = vrx_lua_get_variable("FLYER_REGEN_FRAMES", 300);
+	FLYER_REGEN_DELAY = vrx_lua_get_variable("FLYER_REGEN_DELAY", 5);
+	FLYER_ROCKET_PREFIRE_FRAMES = vrx_lua_get_variable("FLYER_ROCKET_PREFIRE_FRAMES", 30);
+	FLYER_ROCKET_INITIAL_DMG = vrx_lua_get_variable("FLYER_ROCKET_INITIAL_DMG", 200);
+	FLYER_ROCKET_ADDON_DMG = vrx_lua_get_variable("FLYER_ROCKET_ADDON_DMG", 35);
+	FLYER_ROCKET_SPEED = vrx_lua_get_variable("FLYER_ROCKET_SPEED", 650);
+	FLYER_ROCKET_INITIAL_RADIUS = vrx_lua_get_variable("FLYER_ROCKET_INITIAL_RADIUS", 100);
+	FLYER_ROCKET_ADDON_RADIUS = vrx_lua_get_variable("FLYER_ROCKET_ADDON_RADIUS", 5);
+	FLYER_HB_INITIAL_AMMO = vrx_lua_get_variable("FLYER_HB_INITIAL_AMMO", 100);
+	FLYER_HB_ADDON_AMMO = vrx_lua_get_variable("FLYER_HB_ADDON_AMMO", 0);
+	FLYER_HB_START_AMMO = vrx_lua_get_variable("FLYER_HB_START_AMMO", 33);
+	FLYER_HB_REGEN_FRAMES = vrx_lua_get_variable("FLYER_HB_REGEN_FRAMES", 300);
+	FLYER_HB_REGEN_DELAY = vrx_lua_get_variable("FLYER_HB_REGEN_DELAY", 10);
+	FLYER_HB_AMMO = vrx_lua_get_variable("FLYER_HB_AMMO", 2);
+	FLYER_ROCKET_AMMO = vrx_lua_get_variable("FLYER_ROCKET_AMMO", 10);
 
-	MEDIC_INIT_COST = Lua_GetVariable("MEDIC_INIT_COST", 50);
-	MEDIC_DELAY = Lua_GetVariable("MEDIC_DELAY", 1.0);
-	MEDIC_HB_INITIAL_DMG = Lua_GetVariable("MEDIC_HB_INITIAL_DMG", 30);
-	MEDIC_HB_ADDON_DMG = Lua_GetVariable("MEDIC_HB_ADDON_DMG", 5.0);
-	MEDIC_HB_INITIAL_SPEED = Lua_GetVariable("MEDIC_HB_INITIAL_SPEED", 2000);
-	MEDIC_HB_ADDON_SPEED = Lua_GetVariable("MEDIC_HB_ADDON_SPEED", 0);
-	MEDIC_HB_INITIAL_AMMO = Lua_GetVariable("MEDIC_HB_INITIAL_AMMO", 70);
-	MEDIC_HB_ADDON_AMMO = Lua_GetVariable("MEDIC_HB_ADDON_AMMO", 0);
-	MEDIC_HB_START_AMMO = Lua_GetVariable("MEDIC_HB_START_AMMO", 35);
-	MEDIC_HB_REGEN_FRAMES = Lua_GetVariable("MEDIC_HB_REGEN_FRAMES", 100);
-	MEDIC_HB_REGEN_DELAY = Lua_GetVariable("MEDIC_HB_REGEN_DELAY", 5);
-	MEDIC_CABLE_RANGE = Lua_GetVariable("MEDIC_CABLE_RANGE", 128);
-	MEDIC_REGEN_FRAMES = Lua_GetVariable("MEDIC_REGEN_FRAMES", 300);
-	MEDIC_REGEN_DELAY = Lua_GetVariable("MEDIC_REGEN_DELAY", 10);
-	MEDIC_BOLT_INITIAL_DMG = Lua_GetVariable("MEDIC_BOLT_INITIAL_DMG", 80);
-	MEDIC_BOLT_ADDON_DMG = Lua_GetVariable("MEDIC_BOLT_ADDON_DMG", 30);
-	MEDIC_BOLT_INITIAL_SPEED = Lua_GetVariable("MEDIC_BOLT_INITIAL_SPEED", 1500);
-	MEDIC_BOLT_ADDON_SPEED = Lua_GetVariable("MEDIC_BOLT_ADDON_SPEED", 0);
-	MEDIC_BOLT_AMMO = Lua_GetVariable("MEDIC_BOLT_AMMO", 10);
-	MEDIC_RESURRECT_DELAY = Lua_GetVariable("MEDIC_RESURRECT_DELAY", 1.0);
-	MEDIC_RESURRECT_BONUS = Lua_GetVariable("MEDIC_RESURRECT_BONUS", 0.25);
+	MEDIC_INIT_COST = vrx_lua_get_variable("MEDIC_INIT_COST", 50);
+	MEDIC_DELAY = vrx_lua_get_variable("MEDIC_DELAY", 1.0);
+	MEDIC_HB_INITIAL_DMG = vrx_lua_get_variable("MEDIC_HB_INITIAL_DMG", 30);
+	MEDIC_HB_ADDON_DMG = vrx_lua_get_variable("MEDIC_HB_ADDON_DMG", 5.0);
+	MEDIC_HB_INITIAL_SPEED = vrx_lua_get_variable("MEDIC_HB_INITIAL_SPEED", 2000);
+	MEDIC_HB_ADDON_SPEED = vrx_lua_get_variable("MEDIC_HB_ADDON_SPEED", 0);
+	MEDIC_HB_INITIAL_AMMO = vrx_lua_get_variable("MEDIC_HB_INITIAL_AMMO", 70);
+	MEDIC_HB_ADDON_AMMO = vrx_lua_get_variable("MEDIC_HB_ADDON_AMMO", 0);
+	MEDIC_HB_START_AMMO = vrx_lua_get_variable("MEDIC_HB_START_AMMO", 35);
+	MEDIC_HB_REGEN_FRAMES = vrx_lua_get_variable("MEDIC_HB_REGEN_FRAMES", 100);
+	MEDIC_HB_REGEN_DELAY = vrx_lua_get_variable("MEDIC_HB_REGEN_DELAY", 5);
+	MEDIC_CABLE_RANGE = vrx_lua_get_variable("MEDIC_CABLE_RANGE", 128);
+	MEDIC_REGEN_FRAMES = vrx_lua_get_variable("MEDIC_REGEN_FRAMES", 300);
+	MEDIC_REGEN_DELAY = vrx_lua_get_variable("MEDIC_REGEN_DELAY", 10);
+	MEDIC_BOLT_INITIAL_DMG = vrx_lua_get_variable("MEDIC_BOLT_INITIAL_DMG", 80);
+	MEDIC_BOLT_ADDON_DMG = vrx_lua_get_variable("MEDIC_BOLT_ADDON_DMG", 30);
+	MEDIC_BOLT_INITIAL_SPEED = vrx_lua_get_variable("MEDIC_BOLT_INITIAL_SPEED", 1500);
+	MEDIC_BOLT_ADDON_SPEED = vrx_lua_get_variable("MEDIC_BOLT_ADDON_SPEED", 0);
+	MEDIC_BOLT_AMMO = vrx_lua_get_variable("MEDIC_BOLT_AMMO", 10);
+	MEDIC_RESURRECT_DELAY = vrx_lua_get_variable("MEDIC_RESURRECT_DELAY", 1.0);
+	MEDIC_RESURRECT_BONUS = vrx_lua_get_variable("MEDIC_RESURRECT_BONUS", 0.25);
 
-	P_TANK_PUNCH_RADIUS = Lua_GetVariable("P_TANK_PUNCH_RADIUS", 200);
-	P_TANK_PUNCH_INITIAL_DMG = Lua_GetVariable("P_TANK_PUNCH_INITIAL_DMG", 200);
-	P_TANK_PUNCH_ADDON_DMG = Lua_GetVariable("P_TANK_PUNCH_ADDON_DMG", 65);
-	P_TANK_BLASTER_INITIAL_DMG = Lua_GetVariable("P_TANK_BLASTER_INITIAL_DMG", 100);
-	P_TANK_BLASTER_ADDON_DMG = Lua_GetVariable("P_TANK_BLASTER_ADDON_DMG", 18);
-	P_TANK_BLASTER_INITIAL_SPD = Lua_GetVariable("P_TANK_BLASTER_INITIAL_SPD", 1500);
-	P_TANK_BLASTER_ADDON_SPD = Lua_GetVariable("P_TANK_BLASTER_ADDON_SPD", 55);
-	P_TANK_ROCKET_INITIAL_DMG = Lua_GetVariable("P_TANK_ROCKET_INITIAL_DMG", 150);
-	P_TANK_ROCKET_ADDON_DMG = Lua_GetVariable("P_TANK_ROCKET_ADDON_DMG", 35);
-	P_TANK_ROCKET_INITIAL_SPD = Lua_GetVariable("P_TANK_ROCKET_INITIAL_SPD", 650);
-	P_TANK_ROCKET_ADDON_SPD = Lua_GetVariable("P_TANK_ROCKET_ADDON_SPD", 40);
-	P_TANK_BULLET_INITIAL_DMG = Lua_GetVariable("P_TANK_BULLET_INITIAL_DMG", 35);
-	P_TANK_BULLET_ADDON_DMG = Lua_GetVariable("P_TANK_BULLET_ADDON_DMG", 4);
-	P_TANK_INITIAL_ROCKETS = Lua_GetVariable("P_TANK_INITIAL_ROCKETS", 25);
-	P_TANK_ADDON_ROCKETS = Lua_GetVariable("P_TANK_ADDON_ROCKETS", 5);
-	P_TANK_SPAWN_ROCKETS = Lua_GetVariable("P_TANK_SPAWN_ROCKETS", 15);
-	P_TANK_INITIAL_BULLETS = Lua_GetVariable("P_TANK_INITIAL_BULLETS", 150);
-	P_TANK_ADDON_BULLETS = Lua_GetVariable("P_TANK_ADDON_BULLETS", 33);
-	P_TANK_SPAWN_BULLETS = Lua_GetVariable("P_TANK_SPAWN_BULLETS", 75);
-	P_TANK_INITIAL_CELLS = Lua_GetVariable("P_TANK_INITIAL_CELLS", 45);
-	P_TANK_ADDON_CELLS = Lua_GetVariable("P_TANK_ADDON_CELLS", 5);
-	P_TANK_SPAWN_CELLS = Lua_GetVariable("P_TANK_SPAWN_CELLS", 25);
-	P_TANK_MAX_AMMO = Lua_GetVariable("P_TANK_MAX_AMMO", 150);
-	P_TANK_INIT_COST = Lua_GetVariable("P_TANK_INIT_COST", 50);
-	P_TANK_REGEN_FRAMES = Lua_GetVariable("P_TANK_REGEN_FRAMES", 300);
-	P_TANK_REGEN_DELAY = Lua_GetVariable("P_TANK_REGEN_DELAY", 40);
-	P_TANK_AMMOREGEN_FRAMES = Lua_GetVariable("P_TANK_AMMOREGEN_FRAMES", 300);
-	P_TANK_AMMOREGEN_DELAY = Lua_GetVariable("P_TANK_AMMOREGEN_DELAY", 50);
+	P_TANK_PUNCH_RADIUS = vrx_lua_get_variable("P_TANK_PUNCH_RADIUS", 200);
+	P_TANK_PUNCH_INITIAL_DMG = vrx_lua_get_variable("P_TANK_PUNCH_INITIAL_DMG", 200);
+	P_TANK_PUNCH_ADDON_DMG = vrx_lua_get_variable("P_TANK_PUNCH_ADDON_DMG", 65);
+	P_TANK_BLASTER_INITIAL_DMG = vrx_lua_get_variable("P_TANK_BLASTER_INITIAL_DMG", 100);
+	P_TANK_BLASTER_ADDON_DMG = vrx_lua_get_variable("P_TANK_BLASTER_ADDON_DMG", 18);
+	P_TANK_BLASTER_INITIAL_SPD = vrx_lua_get_variable("P_TANK_BLASTER_INITIAL_SPD", 1500);
+	P_TANK_BLASTER_ADDON_SPD = vrx_lua_get_variable("P_TANK_BLASTER_ADDON_SPD", 55);
+	P_TANK_ROCKET_INITIAL_DMG = vrx_lua_get_variable("P_TANK_ROCKET_INITIAL_DMG", 150);
+	P_TANK_ROCKET_ADDON_DMG = vrx_lua_get_variable("P_TANK_ROCKET_ADDON_DMG", 35);
+	P_TANK_ROCKET_INITIAL_SPD = vrx_lua_get_variable("P_TANK_ROCKET_INITIAL_SPD", 650);
+	P_TANK_ROCKET_ADDON_SPD = vrx_lua_get_variable("P_TANK_ROCKET_ADDON_SPD", 40);
+	P_TANK_BULLET_INITIAL_DMG = vrx_lua_get_variable("P_TANK_BULLET_INITIAL_DMG", 35);
+	P_TANK_BULLET_ADDON_DMG = vrx_lua_get_variable("P_TANK_BULLET_ADDON_DMG", 4);
+	P_TANK_INITIAL_ROCKETS = vrx_lua_get_variable("P_TANK_INITIAL_ROCKETS", 25);
+	P_TANK_ADDON_ROCKETS = vrx_lua_get_variable("P_TANK_ADDON_ROCKETS", 5);
+	P_TANK_SPAWN_ROCKETS = vrx_lua_get_variable("P_TANK_SPAWN_ROCKETS", 15);
+	P_TANK_INITIAL_BULLETS = vrx_lua_get_variable("P_TANK_INITIAL_BULLETS", 150);
+	P_TANK_ADDON_BULLETS = vrx_lua_get_variable("P_TANK_ADDON_BULLETS", 33);
+	P_TANK_SPAWN_BULLETS = vrx_lua_get_variable("P_TANK_SPAWN_BULLETS", 75);
+	P_TANK_INITIAL_CELLS = vrx_lua_get_variable("P_TANK_INITIAL_CELLS", 45);
+	P_TANK_ADDON_CELLS = vrx_lua_get_variable("P_TANK_ADDON_CELLS", 5);
+	P_TANK_SPAWN_CELLS = vrx_lua_get_variable("P_TANK_SPAWN_CELLS", 25);
+	P_TANK_MAX_AMMO = vrx_lua_get_variable("P_TANK_MAX_AMMO", 150);
+	P_TANK_INIT_COST = vrx_lua_get_variable("P_TANK_INIT_COST", 50);
+	P_TANK_REGEN_FRAMES = vrx_lua_get_variable("P_TANK_REGEN_FRAMES", 300);
+	P_TANK_REGEN_DELAY = vrx_lua_get_variable("P_TANK_REGEN_DELAY", 40);
+	P_TANK_AMMOREGEN_FRAMES = vrx_lua_get_variable("P_TANK_AMMOREGEN_FRAMES", 300);
+	P_TANK_AMMOREGEN_DELAY = vrx_lua_get_variable("P_TANK_AMMOREGEN_DELAY", 50);
 
-	MUTANT_DELAY = Lua_GetVariable("MUTANT_DELAY", 1);
-	MUTANT_INIT_COST = Lua_GetVariable("MUTANT_INIT_COST", 50);
-	MUTANT_SWING_RANGE = Lua_GetVariable("MUTANT_SWING_RANGE", 64);
-	MUTANT_INITIAL_SWING_DMG = Lua_GetVariable("MUTANT_INITIAL_SWING_DMG", 1);
-	MUTANT_ADDON_SWING_DMG = Lua_GetVariable("MUTANT_ADDON_SWING_DMG", 15);
-	MUTANT_JUMPATTACK_VELOCITY = Lua_GetVariable("MUTANT_JUMPATTACK_VELOCITY", 0);
-	MUTANT_JUMPATTACK_DELAY = Lua_GetVariable("MUTANT_JUMPATTACK_DELAY", 5);
-	MUTANT_INITIAL_JUMP_DMG = Lua_GetVariable("MUTANT_INITIAL_JUMP_DMG", 150);
-	MUTANT_ADDON_JUMP_DMG = Lua_GetVariable("MUTANT_ADDON_JUMP_DMG", 35);
-	MUTANT_JUMPATTACK_RADIUS = Lua_GetVariable("MUTANT_JUMPATTACK_RADIUS", 68);
+	MUTANT_DELAY = vrx_lua_get_variable("MUTANT_DELAY", 1);
+	MUTANT_INIT_COST = vrx_lua_get_variable("MUTANT_INIT_COST", 50);
+	MUTANT_SWING_RANGE = vrx_lua_get_variable("MUTANT_SWING_RANGE", 64);
+	MUTANT_INITIAL_SWING_DMG = vrx_lua_get_variable("MUTANT_INITIAL_SWING_DMG", 1);
+	MUTANT_ADDON_SWING_DMG = vrx_lua_get_variable("MUTANT_ADDON_SWING_DMG", 15);
+	MUTANT_JUMPATTACK_VELOCITY = vrx_lua_get_variable("MUTANT_JUMPATTACK_VELOCITY", 0);
+	MUTANT_JUMPATTACK_DELAY = vrx_lua_get_variable("MUTANT_JUMPATTACK_DELAY", 5);
+	MUTANT_INITIAL_JUMP_DMG = vrx_lua_get_variable("MUTANT_INITIAL_JUMP_DMG", 150);
+	MUTANT_ADDON_JUMP_DMG = vrx_lua_get_variable("MUTANT_ADDON_JUMP_DMG", 35);
+	MUTANT_JUMPATTACK_RADIUS = vrx_lua_get_variable("MUTANT_JUMPATTACK_RADIUS", 68);
 
-	BRAIN_ATTACK_RANGE = Lua_GetIntVariable("BRAIN_ATTACK_RANGE", 256);
-	BRAIN_DEFAULT_TENTACLE_DMG = Lua_GetIntVariable("BRAIN_DEFAULT_TENTACLE_DMG", 80);
-	BRAIN_ADDON_TENTACLE_DMG = Lua_GetIntVariable("BRAIN_ADDON_TENTACLE_DMG", 12);
-	BRAIN_BEAM_COST = Lua_GetIntVariable("BRAIN_BEAM_COST", 2);
-	BRAIN_BEAM_DEFAULT_DMG = Lua_GetIntVariable("BRAIN_BEAM_DEFAULT_DMG", 35);
-	BRAIN_BEAM_ADDON_DMG = Lua_GetIntVariable("BRAIN_BEAM_ADDON_DMG", 6);
-	BRAIN_LOCKON_RANGE = Lua_GetIntVariable("BRAIN_LOCKON_RANGE", 96);
-	BRAIN_INIT_COST = Lua_GetIntVariable("BRAIN_INIT_COST", 50);
+	BRAIN_ATTACK_RANGE = vrx_lua_get_int("BRAIN_ATTACK_RANGE", 256);
+	BRAIN_DEFAULT_TENTACLE_DMG = vrx_lua_get_int("BRAIN_DEFAULT_TENTACLE_DMG", 80);
+	BRAIN_ADDON_TENTACLE_DMG = vrx_lua_get_int("BRAIN_ADDON_TENTACLE_DMG", 12);
+	BRAIN_BEAM_COST = vrx_lua_get_int("BRAIN_BEAM_COST", 2);
+	BRAIN_BEAM_DEFAULT_DMG = vrx_lua_get_int("BRAIN_BEAM_DEFAULT_DMG", 35);
+	BRAIN_BEAM_ADDON_DMG = vrx_lua_get_int("BRAIN_BEAM_ADDON_DMG", 6);
+	BRAIN_LOCKON_RANGE = vrx_lua_get_int("BRAIN_LOCKON_RANGE", 96);
+	BRAIN_INIT_COST = vrx_lua_get_int("BRAIN_INIT_COST", 50);
 
-	MAX_MINISENTRIES = Lua_GetIntVariable("MAX_MINISENTRIES", 3);
+	MAX_MINISENTRIES = vrx_lua_get_int("MAX_MINISENTRIES", 3);
 
-	STRENGTH_BONUS = Lua_GetVariable("STRENGTH_BONUS", 0.08);
-	IMP_STRENGTH_BONUS = Lua_GetVariable("IMP_STRENGTH_BONUS", 0.08);
+	STRENGTH_BONUS = vrx_lua_get_variable("STRENGTH_BONUS", 0.08);
+	IMP_STRENGTH_BONUS = vrx_lua_get_variable("IMP_STRENGTH_BONUS", 0.08);
 
-	CACODEMON_DELAY = Lua_GetIntVariable("CACODEMON_DELAY", 1);
-	CACODEMON_INIT_COST = Lua_GetIntVariable("CACODEMON_INIT_COST", 50);
-	CACODEMON_REFIRE = Lua_GetIntVariable("CACODEMON_REFIRE", 1);
-	CACODEMON_INITIAL_DAMAGE = Lua_GetIntVariable("CACODEMON_INITIAL_DAMAGE", 120);
-	CACODEMON_ADDON_DAMAGE = Lua_GetIntVariable("CACODEMON_ADDON_DAMAGE", 30);
-	CACODEMON_INITIAL_RADIUS = Lua_GetIntVariable("CACODEMON_INITIAL_RADIUS", 125);
-	CACODEMON_ADDON_RADIUS = Lua_GetIntVariable("CACODEMON_ADDON_RADIUS", 0);
-	CACODEMON_ADDON_BURN = Lua_GetVariable("CACODEMON_ADDON_BURN", 3);
-	CACODEMON_SKULL_SPEED = Lua_GetIntVariable("CACODEMON_SKULL_SPEED", 950);
-	CACODEMON_REGEN_FRAMES = Lua_GetIntVariable("CACODEMON_REGEN_FRAMES", 300);
-	CACODEMON_REGEN_DELAY = Lua_GetIntVariable("CACODEMON_REGEN_DELAY", 1.5);
-	CACODEMON_SKULL_INITIAL_AMMO = Lua_GetIntVariable("CACODEMON_SKULL_INITIAL_AMMO", 15);
-	CACODEMON_SKULL_ADDON_AMMO = Lua_GetVariable("CACODEMON_SKULL_ADDON_AMMO", 0);
-	CACODEMON_SKULL_START_AMMO = Lua_GetIntVariable("CACODEMON_SKULL_START_AMMO", 3);
+	CACODEMON_DELAY = vrx_lua_get_int("CACODEMON_DELAY", 1);
+	CACODEMON_INIT_COST = vrx_lua_get_int("CACODEMON_INIT_COST", 50);
+	CACODEMON_REFIRE = vrx_lua_get_int("CACODEMON_REFIRE", 1);
+	CACODEMON_INITIAL_DAMAGE = vrx_lua_get_int("CACODEMON_INITIAL_DAMAGE", 120);
+	CACODEMON_ADDON_DAMAGE = vrx_lua_get_int("CACODEMON_ADDON_DAMAGE", 30);
+	CACODEMON_INITIAL_RADIUS = vrx_lua_get_int("CACODEMON_INITIAL_RADIUS", 125);
+	CACODEMON_ADDON_RADIUS = vrx_lua_get_int("CACODEMON_ADDON_RADIUS", 0);
+	CACODEMON_ADDON_BURN = vrx_lua_get_variable("CACODEMON_ADDON_BURN", 3);
+	CACODEMON_SKULL_SPEED = vrx_lua_get_int("CACODEMON_SKULL_SPEED", 950);
+	CACODEMON_REGEN_FRAMES = vrx_lua_get_int("CACODEMON_REGEN_FRAMES", 300);
+	CACODEMON_REGEN_DELAY = vrx_lua_get_int("CACODEMON_REGEN_DELAY", 1.5);
+	CACODEMON_SKULL_INITIAL_AMMO = vrx_lua_get_int("CACODEMON_SKULL_INITIAL_AMMO", 15);
+	CACODEMON_SKULL_ADDON_AMMO = vrx_lua_get_variable("CACODEMON_SKULL_ADDON_AMMO", 0);
+	CACODEMON_SKULL_START_AMMO = vrx_lua_get_int("CACODEMON_SKULL_START_AMMO", 3);
 
-	DOMINATION_POINTS = Lua_GetVariable("DOMINATION_POINTS", 500);
-	DOMINATION_CREDITS = Lua_GetVariable("DOMINATION_CREDITS", 350);
-	DOMINATION_AWARD_FRAMES = Lua_GetVariable("DOMINATION_AWARD_FRAMES", 100);
-	DOMINATION_MINIMUM_PLAYERS = Lua_GetVariable("DOMINATION_MINIMUM_PLAYERS", 4);
-	DOMINATION_DEFEND_RANGE = Lua_GetVariable("DOMINATION_DEFEND_RANGE", 512);
-	DOMINATION_DEFEND_BONUS = Lua_GetVariable("DOMINATION_DEFEND_BONUS", 150);
-	DOMINATION_FRAG_POINTS = Lua_GetVariable("DOMINATION_FRAG_POINTS", 150);
-	DOMINATION_CARRIER_BONUS = Lua_GetVariable("DOMINATION_CARRIER_BONUS", 450);
-	DOMINATION_OFFENSE_BONUS = Lua_GetVariable("DOMINATION_OFFENSE_BONUS", 350);
+	DOMINATION_POINTS = vrx_lua_get_variable("DOMINATION_POINTS", 500);
+	DOMINATION_CREDITS = vrx_lua_get_variable("DOMINATION_CREDITS", 350);
+	DOMINATION_AWARD_FRAMES = vrx_lua_get_variable("DOMINATION_AWARD_FRAMES", 100);
+	DOMINATION_MINIMUM_PLAYERS = vrx_lua_get_variable("DOMINATION_MINIMUM_PLAYERS", 4);
+	DOMINATION_DEFEND_RANGE = vrx_lua_get_variable("DOMINATION_DEFEND_RANGE", 512);
+	DOMINATION_DEFEND_BONUS = vrx_lua_get_variable("DOMINATION_DEFEND_BONUS", 150);
+	DOMINATION_FRAG_POINTS = vrx_lua_get_variable("DOMINATION_FRAG_POINTS", 150);
+	DOMINATION_CARRIER_BONUS = vrx_lua_get_variable("DOMINATION_CARRIER_BONUS", 450);
+	DOMINATION_OFFENSE_BONUS = vrx_lua_get_variable("DOMINATION_OFFENSE_BONUS", 350);
 
-	BRAIN_DEFAULT_KNOCKBACK = Lua_GetVariable("BRAIN_DEFAULT_KNOCKBACK", -60);
-	BRAIN_ADDON_KNOCKBACK = Lua_GetVariable("BRAIN_ADDON_KNOCKBACK", -2);
+	BRAIN_DEFAULT_KNOCKBACK = vrx_lua_get_variable("BRAIN_DEFAULT_KNOCKBACK", -60);
+	BRAIN_ADDON_KNOCKBACK = vrx_lua_get_variable("BRAIN_ADDON_KNOCKBACK", -2);
 
-	NATURETOTEM_REFIRE_BASE = Lua_GetVariable("NATURETOTEM_REFIRE_BASE", 5.0);
-	NATURETOTEM_REFIRE_MULT = Lua_GetVariable("NATURETOTEM_REFIRE_MULT", -0.25);
-	SPIKEBALL_INITIAL_HEALTH = Lua_GetVariable("SPIKEBALL_INITIAL_HEALTH", 100);
+	NATURETOTEM_REFIRE_BASE = vrx_lua_get_variable("NATURETOTEM_REFIRE_BASE", 5.0);
+	NATURETOTEM_REFIRE_MULT = vrx_lua_get_variable("NATURETOTEM_REFIRE_MULT", -0.25);
+	SPIKEBALL_INITIAL_HEALTH = vrx_lua_get_variable("SPIKEBALL_INITIAL_HEALTH", 100);
 
-	SPIKEBALL_ADDON_HEALTH = Lua_GetVariable("SPIKEBALL_ADDON_HEALTH", 10);
-	SPIKEBALL_INITIAL_DAMAGE = Lua_GetVariable("SPIKEBALL_INITIAL_DAMAGE", 50);
-	SPIKEBALL_ADDON_DAMAGE = Lua_GetVariable("SPIKEBALL_ADDON_DAMAGE", 20);
-	SPIKEBALL_INITIAL_RANGE = Lua_GetVariable("SPIKEBALL_INITIAL_RANGE", 1024);
-	SPIKEBALL_MAX_DIST = Lua_GetVariable("SPIKEBALL_MAX_DIST", 1024);
-	SPIKEBALL_ADDON_RANGE = Lua_GetVariable("SPIKEBALL_ADDON_RANGE", 0);
-	SPIKEBALL_INITIAL_DURATION = Lua_GetVariable("SPIKEBALL_INITIAL_DURATION", 9999);
-	SPIKEBALL_ADDON_DURATION = Lua_GetVariable("SPIKEBALL_ADDON_DURATION", 0);
-	SPIKEBALL_COST = Lua_GetVariable("SPIKEBALL_COST", 25);
-	SPIKEBALL_DELAY = Lua_GetVariable("SPIKEBALL_DELAY", 1.0);
+	SPIKEBALL_ADDON_HEALTH = vrx_lua_get_variable("SPIKEBALL_ADDON_HEALTH", 10);
+	SPIKEBALL_INITIAL_DAMAGE = vrx_lua_get_variable("SPIKEBALL_INITIAL_DAMAGE", 50);
+	SPIKEBALL_ADDON_DAMAGE = vrx_lua_get_variable("SPIKEBALL_ADDON_DAMAGE", 20);
+	SPIKEBALL_INITIAL_RANGE = vrx_lua_get_variable("SPIKEBALL_INITIAL_RANGE", 1024);
+	SPIKEBALL_MAX_DIST = vrx_lua_get_variable("SPIKEBALL_MAX_DIST", 1024);
+	SPIKEBALL_ADDON_RANGE = vrx_lua_get_variable("SPIKEBALL_ADDON_RANGE", 0);
+	SPIKEBALL_INITIAL_DURATION = vrx_lua_get_variable("SPIKEBALL_INITIAL_DURATION", 9999);
+	SPIKEBALL_ADDON_DURATION = vrx_lua_get_variable("SPIKEBALL_ADDON_DURATION", 0);
+	SPIKEBALL_COST = vrx_lua_get_variable("SPIKEBALL_COST", 25);
+	SPIKEBALL_DELAY = vrx_lua_get_variable("SPIKEBALL_DELAY", 1.0);
 
-	PVB_BOSS_EXPERIENCE = Lua_GetVariable("PVB_BOSS_EXPERIENCE", 1000);
-	PVB_BOSS_MIN_EXP = Lua_GetVariable("PVB_BOSS_MIN_EXP", 100);
-	PVB_BOSS_MAX_EXP = Lua_GetVariable("PVB_BOSS_MAX_EXP", 1000);
-	PVB_BOSS_CREDITS = Lua_GetVariable("PVB_BOSS_CREDITS", 3000);
-	PVB_BOSS_FRAG_EXP = Lua_GetVariable("PVB_BOSS_FRAG_EXP", 300);
-	PVB_BOSS_FRAG_CREDITS = Lua_GetVariable("PVB_BOSS_FRAG_CREDITS", 100);
-	PVB_BOSS_TIMEOUT = Lua_GetVariable("PVB_BOSS_TIMEOUT", 10);
-	GROUP_SHARE_MULT = Lua_GetVariable("GROUP_SHARE_MULT", 0.4);
-	CTF_ASSIST_DURATION = Lua_GetVariable("CTF_ASSIST_DURATION", 10.0);
-	CTF_SUMMONABLE_AUTOREMOVE = Lua_GetVariable("CTF_SUMMONABLE_AUTOREMOVE", 10.0);
-	CTF_FLAG_CAPTURE_EXP = Lua_GetVariable("CTF_FLAG_CAPTURE_EXP", 500);
-	CTF_FLAG_ASSIST_EXP = Lua_GetVariable("CTF_FLAG_ASSIST_EXP", 100);
-	CTF_FLAG_CAPTURE_CREDITS = Lua_GetVariable("CTF_FLAG_CAPTURE_CREDITS", 350);
-	CTF_MINIMUM_PLAYERS = Lua_GetVariable("CTF_MINIMUM_PLAYERS", 4);
-	CTF_FLAG_DEFEND_RANGE = Lua_GetVariable("CTF_FLAG_DEFEND_RANGE", 512);
-	CTF_BASE_DEFEND_RANGE = Lua_GetVariable("CTF_BASE_DEFEND_RANGE", 1024);
-	CTF_FLAG_DEFEND_EXP = Lua_GetVariable("CTF_FLAG_DEFEND_EXP", 40);
-	CTF_FLAG_DEFEND_CREDITS = Lua_GetVariable("CTF_FLAG_DEFEND_CREDITS", 20);
-	CTF_FLAG_KILL_EXP = Lua_GetVariable("CTF_FLAG_KILL_EXP", 60);
-	CTF_FLAG_KILL_CREDITS = Lua_GetVariable("CTF_FLAG_KILL_CREDITS", 20);
-	CTF_BASE_DEFEND_EXP = Lua_GetVariable("CTF_BASE_DEFEND_EXP", 30);
-	CTF_BASE_DEFEND_CREDITS = Lua_GetVariable("CTF_BASE_DEFEND_CREDITS", 10);
-	CTF_BASE_KILL_EXP = Lua_GetVariable("CTF_BASE_KILL_EXP", 40);
-	CTF_BASE_KILL_CREDITS = Lua_GetVariable("CTF_BASE_KILL_CREDITS", 20);
-	CTF_FLAG_RETURN_EXP = Lua_GetVariable("CTF_FLAG_RETURN_EXP", 25);
-	CTF_FLAG_RETURN_CREDITS = Lua_GetVariable("CTF_FLAG_RETURN_CREDITS", 100);
-	CTF_FLAG_TAKE_EXP = Lua_GetVariable("CTF_FLAG_TAKE_EXP", 50);
-	CTF_FLAG_TAKE_CREDITS = Lua_GetVariable("CTF_FLAG_TAKE_CREDITS", 25);
-	CTF_FRAG_EXP = Lua_GetVariable("CTF_FRAG_EXP", 30);
-	CTF_FRAG_CREDITS = Lua_GetVariable("CTF_FRAG_CREDITS", 10);
-	CTF_PLAYERSPAWN_HEALTH = Lua_GetVariable("CTF_PLAYERSPAWN_HEALTH", 1750);
-	CTF_PLAYERSPAWN_CAPTURE_EXPERIENCE = Lua_GetVariable("CTF_PLAYERSPAWN_CAPTURE_EXPERIENCE", 50);
-	CTF_PLAYERSPAWN_CAPTURE_CREDITS = Lua_GetVariable("CTF_PLAYERSPAWN_CAPTURE_CREDITS", 10);
-	CTF_PLAYERSPAWN_DEFENSE_RANGE = Lua_GetVariable("CTF_PLAYERSPAWN_DEFENSE_RANGE", 512);
-	CTF_PLAYERSPAWN_DEFENSE_EXP = Lua_GetVariable("CTF_PLAYERSPAWN_DEFENSE_EXP", 10);
-	CTF_PLAYERSPAWN_DEFENSE_CREDITS = Lua_GetVariable("CTF_PLAYERSPAWN_DEFENSE_CREDITS", 5);
-	CTF_PLAYERSPAWN_OFFENSE_EXP = Lua_GetVariable("CTF_PLAYERSPAWN_OFFENSE_EXP", 15);
-	CTF_PLAYERSPAWN_OFFENSE_CREDITS = Lua_GetVariable("CTF_PLAYERSPAWN_OFFENSE_CREDITS", 10);
-	CTF_PLAYERSPAWN_TIME = Lua_GetVariable("CTF_PLAYERSPAWN_TIME", 1.0);
-	CTF_PLAYERSPAWN_MAX_TIME = Lua_GetVariable("CTF_PLAYERSPAWN_MAX_TIME", 3.0);
-	CORPSEEATER_DELAY = Lua_GetVariable("CORPSEEATER_DELAY", 0.5);
-	CORPSEEATER_RANGE = Lua_GetVariable("CORPSEEATER_RANGE", 64);
-	CORPSEEATER_INITIAL_HEALTH = Lua_GetVariable("CORPSEEATER_INITIAL_HEALTH", 0);
-	CORPSEEATER_ADDON_HEALTH = Lua_GetVariable("CORPSEEATER_ADDON_HEALTH", 10);
-	CORPSEEATER_INITIAL_DAMAGE = Lua_GetVariable("CORPSEEATER_INITIAL_DAMAGE", 25);
-	CORPSEEATER_ADDON_DAMAGE = Lua_GetVariable("CORPSEEATER_ADDON_DAMAGE", 2.5);
-	CORPSEEATER_ADDON_MAXHEALTH = Lua_GetVariable("CORPSEEATER_ADDON_MAXHEALTH", 0.05);
+	PVB_BOSS_EXPERIENCE = vrx_lua_get_variable("PVB_BOSS_EXPERIENCE", 1000);
+	PVB_BOSS_MIN_EXP = vrx_lua_get_variable("PVB_BOSS_MIN_EXP", 100);
+	PVB_BOSS_MAX_EXP = vrx_lua_get_variable("PVB_BOSS_MAX_EXP", 1000);
+	PVB_BOSS_CREDITS = vrx_lua_get_variable("PVB_BOSS_CREDITS", 3000);
+	PVB_BOSS_FRAG_EXP = vrx_lua_get_variable("PVB_BOSS_FRAG_EXP", 300);
+	PVB_BOSS_FRAG_CREDITS = vrx_lua_get_variable("PVB_BOSS_FRAG_CREDITS", 100);
+	PVB_BOSS_TIMEOUT = vrx_lua_get_variable("PVB_BOSS_TIMEOUT", 10);
+	GROUP_SHARE_MULT = vrx_lua_get_variable("GROUP_SHARE_MULT", 0.4);
+	CTF_ASSIST_DURATION = vrx_lua_get_variable("CTF_ASSIST_DURATION", 10.0);
+	CTF_SUMMONABLE_AUTOREMOVE = vrx_lua_get_variable("CTF_SUMMONABLE_AUTOREMOVE", 10.0);
+	CTF_FLAG_CAPTURE_EXP = vrx_lua_get_variable("CTF_FLAG_CAPTURE_EXP", 500);
+	CTF_FLAG_ASSIST_EXP = vrx_lua_get_variable("CTF_FLAG_ASSIST_EXP", 100);
+	CTF_FLAG_CAPTURE_CREDITS = vrx_lua_get_variable("CTF_FLAG_CAPTURE_CREDITS", 350);
+	CTF_MINIMUM_PLAYERS = vrx_lua_get_variable("CTF_MINIMUM_PLAYERS", 4);
+	CTF_FLAG_DEFEND_RANGE = vrx_lua_get_variable("CTF_FLAG_DEFEND_RANGE", 512);
+	CTF_BASE_DEFEND_RANGE = vrx_lua_get_variable("CTF_BASE_DEFEND_RANGE", 1024);
+	CTF_FLAG_DEFEND_EXP = vrx_lua_get_variable("CTF_FLAG_DEFEND_EXP", 40);
+	CTF_FLAG_DEFEND_CREDITS = vrx_lua_get_variable("CTF_FLAG_DEFEND_CREDITS", 20);
+	CTF_FLAG_KILL_EXP = vrx_lua_get_variable("CTF_FLAG_KILL_EXP", 60);
+	CTF_FLAG_KILL_CREDITS = vrx_lua_get_variable("CTF_FLAG_KILL_CREDITS", 20);
+	CTF_BASE_DEFEND_EXP = vrx_lua_get_variable("CTF_BASE_DEFEND_EXP", 30);
+	CTF_BASE_DEFEND_CREDITS = vrx_lua_get_variable("CTF_BASE_DEFEND_CREDITS", 10);
+	CTF_BASE_KILL_EXP = vrx_lua_get_variable("CTF_BASE_KILL_EXP", 40);
+	CTF_BASE_KILL_CREDITS = vrx_lua_get_variable("CTF_BASE_KILL_CREDITS", 20);
+	CTF_FLAG_RETURN_EXP = vrx_lua_get_variable("CTF_FLAG_RETURN_EXP", 25);
+	CTF_FLAG_RETURN_CREDITS = vrx_lua_get_variable("CTF_FLAG_RETURN_CREDITS", 100);
+	CTF_FLAG_TAKE_EXP = vrx_lua_get_variable("CTF_FLAG_TAKE_EXP", 50);
+	CTF_FLAG_TAKE_CREDITS = vrx_lua_get_variable("CTF_FLAG_TAKE_CREDITS", 25);
+	CTF_FRAG_EXP = vrx_lua_get_variable("CTF_FRAG_EXP", 30);
+	CTF_FRAG_CREDITS = vrx_lua_get_variable("CTF_FRAG_CREDITS", 10);
+	CTF_PLAYERSPAWN_HEALTH = vrx_lua_get_variable("CTF_PLAYERSPAWN_HEALTH", 1750);
+	CTF_PLAYERSPAWN_CAPTURE_EXPERIENCE = vrx_lua_get_variable("CTF_PLAYERSPAWN_CAPTURE_EXPERIENCE", 50);
+	CTF_PLAYERSPAWN_CAPTURE_CREDITS = vrx_lua_get_variable("CTF_PLAYERSPAWN_CAPTURE_CREDITS", 10);
+	CTF_PLAYERSPAWN_DEFENSE_RANGE = vrx_lua_get_variable("CTF_PLAYERSPAWN_DEFENSE_RANGE", 512);
+	CTF_PLAYERSPAWN_DEFENSE_EXP = vrx_lua_get_variable("CTF_PLAYERSPAWN_DEFENSE_EXP", 10);
+	CTF_PLAYERSPAWN_DEFENSE_CREDITS = vrx_lua_get_variable("CTF_PLAYERSPAWN_DEFENSE_CREDITS", 5);
+	CTF_PLAYERSPAWN_OFFENSE_EXP = vrx_lua_get_variable("CTF_PLAYERSPAWN_OFFENSE_EXP", 15);
+	CTF_PLAYERSPAWN_OFFENSE_CREDITS = vrx_lua_get_variable("CTF_PLAYERSPAWN_OFFENSE_CREDITS", 10);
+	CTF_PLAYERSPAWN_TIME = vrx_lua_get_variable("CTF_PLAYERSPAWN_TIME", 1.0);
+	CTF_PLAYERSPAWN_MAX_TIME = vrx_lua_get_variable("CTF_PLAYERSPAWN_MAX_TIME", 3.0);
+	CORPSEEATER_DELAY = vrx_lua_get_variable("CORPSEEATER_DELAY", 0.5);
+	CORPSEEATER_RANGE = vrx_lua_get_variable("CORPSEEATER_RANGE", 64);
+	CORPSEEATER_INITIAL_HEALTH = vrx_lua_get_variable("CORPSEEATER_INITIAL_HEALTH", 0);
+	CORPSEEATER_ADDON_HEALTH = vrx_lua_get_variable("CORPSEEATER_ADDON_HEALTH", 10);
+	CORPSEEATER_INITIAL_DAMAGE = vrx_lua_get_variable("CORPSEEATER_INITIAL_DAMAGE", 25);
+	CORPSEEATER_ADDON_DAMAGE = vrx_lua_get_variable("CORPSEEATER_ADDON_DAMAGE", 2.5);
+	CORPSEEATER_ADDON_MAXHEALTH = vrx_lua_get_variable("CORPSEEATER_ADDON_MAXHEALTH", 0.05);
 
-	AUTOCANNON_ATTACK_DELAY = Lua_GetVariable("AUTOCANNON_ATTACK_DELAY", 1.0);
-	AUTOCANNON_START_DELAY = Lua_GetVariable("AUTOCANNON_START_DELAY", 2.0);
-	AUTOCANNON_BUILD_TIME = Lua_GetVariable("AUTOCANNON_BUILD_TIME", 1.0);
-	AUTOCANNON_DELAY = Lua_GetVariable("AUTOCANNON_DELAY", 1.0);
-	AUTOCANNON_RANGE = Lua_GetVariable("AUTOCANNON_RANGE", 2048);
-	AUTOCANNON_INITIAL_HEALTH = Lua_GetVariable("AUTOCANNON_INITIAL_HEALTH", 100);
-	AUTOCANNON_ADDON_HEALTH = Lua_GetVariable("AUTOCANNON_ADDON_HEALTH", 40);
-	AUTOCANNON_INITIAL_DAMAGE = Lua_GetVariable("AUTOCANNON_INITIAL_DAMAGE", 100);
-	AUTOCANNON_ADDON_DAMAGE = Lua_GetVariable("AUTOCANNON_ADDON_DAMAGE", 40);
-	AUTOCANNON_YAW_SPEED = Lua_GetVariable("AUTOCANNON_YAW_SPEED", 2);
-	AUTOCANNON_COST = Lua_GetVariable("AUTOCANNON_COST", 50);
-	AUTOCANNON_MAX_UNITS = Lua_GetVariable("AUTOCANNON_MAX_UNITS", 3);
-	AUTOCANNON_START_AMMO = Lua_GetVariable("AUTOCANNON_START_AMMO", 5);
-	AUTOCANNON_INITIAL_AMMO = Lua_GetVariable("AUTOCANNON_INITIAL_AMMO", 5);
-	AUTOCANNON_ADDON_AMMO = Lua_GetVariable("AUTOCANNON_ADDON_AMMO", 0);
-	AUTOCANNON_REPAIR_COST = Lua_GetVariable("AUTOCANNON_REPAIR_COST", 0.1);
-	AUTOCANNON_TOUCH_DELAY = Lua_GetVariable("AUTOCANNON_TOUCH_DELAY", 3.0);
-	HOLYGROUND_INITIAL_DURATION = Lua_GetVariable("HOLYGROUND_INITIAL_DURATION", 0);
-	HOLYGROUND_ADDON_DURATION = Lua_GetVariable("HOLYGROUND_ADDON_DURATION", 12.0);
-	HOLYGROUND_COST = Lua_GetVariable("HOLYGROUND_COST", 25);
-	HOLYGROUND_DELAY = Lua_GetVariable("HOLYGROUND_DELAY", 1.0);
-	COCOON_INITIAL_HEALTH = Lua_GetVariable("COCOON_INITIAL_HEALTH", 0);
-	COCOON_ADDON_HEALTH = Lua_GetVariable("COCOON_ADDON_HEALTH", 100);
-	COCOON_INITIAL_DURATION = Lua_GetVariable("COCOON_INITIAL_DURATION", 50);
-	COCOON_ADDON_DURATION = Lua_GetVariable("COCOON_ADDON_DURATION", 0);
-	COCOON_MINIMUM_DURATION = Lua_GetVariable("COCOON_MINIMUM_DURATION", 50);
-	COCOON_INITIAL_FACTOR = Lua_GetVariable("COCOON_INITIAL_FACTOR", 1.0);
-	COCOON_ADDON_FACTOR = Lua_GetVariable("COCOON_ADDON_FACTOR", 0.05);
-	COCOON_INITIAL_TIME = Lua_GetVariable("COCOON_INITIAL_TIME", 30.0);
-	COCOON_ADDON_TIME = Lua_GetVariable("COCOON_ADDON_TIME", 1.5);
-	COCOON_COST = Lua_GetVariable("COCOON_COST", 50);
-	COCOON_DELAY = Lua_GetVariable("COCOON_DELAY", 1.0);
-	BOLT_SPEED = Lua_GetVariable("BOLT_SPEED", 1000);
-	BOLT_DURATION = Lua_GetVariable("BOLT_DURATION", 3);
-	BOLT_INITIAL_DAMAGE = Lua_GetVariable("BOLT_INITIAL_DAMAGE", 50);
-	BOLT_ADDON_DAMAGE = Lua_GetVariable("BOLT_ADDON_DAMAGE", 10);
-	BOLT_DELAY = Lua_GetVariable("BOLT_DELAY", 0.2);
-	IMP_BOLT_DELAY = Lua_GetVariable("IMP_BOLT_DELAY", 0.3);
-	IMP_BOLT_RADIUS = Lua_GetVariable("IMP_BOLT_RADIUS", 100);
-	SPIKE_INITIAL_DMG = Lua_GetVariable("SPIKE_INITIAL_DMG", 50);
-	SPIKE_ADDON_DMG = Lua_GetVariable("SPIKE_ADDON_DMG", 15);
-	SPIKE_SPEED = Lua_GetVariable("SPIKE_SPEED", 1000);
-	SPIKE_COST = Lua_GetVariable("SPIKE_COST", 25);
-	SPIKE_DELAY = Lua_GetVariable("SPIKE_DELAY", 0.5);
-	SPIKE_STUN_ADDON = Lua_GetVariable("SPIKE_STUN_ADDON", 0.05);
-	SPIKE_STUN_MIN = Lua_GetVariable("SPIKE_STUN_MIN", 0.2);
-	SPIKE_STUN_MAX = Lua_GetVariable("SPIKE_STUN_MAX", 1.0);
-	SPIKE_SHOTS = Lua_GetVariable("SPIKE_SHOTS", 3);
-	SPIKE_FOV = Lua_GetVariable("SPIKE_FOV", 20);
-	PROXY_COST = Lua_GetVariable("PROXY_COST", 25);
-	PROXY_MAX_COUNT = Lua_GetVariable("PROXY_MAX_COUNT", 6);
-	PROXY_BUILD_TIME = Lua_GetVariable("PROXY_BUILD_TIME", 1.0);
-	PROXY_BASE_DMG = Lua_GetVariable("PROXY_BASE_DMG", 100);
-	PROXY_ADDON_DMG = Lua_GetVariable("PROXY_ADDON_DMG", 25);
-	PROXY_BASE_RADIUS = Lua_GetVariable("PROXY_BASE_RADIUS", 100);
-	PROXY_ADDON_RADIUS = Lua_GetVariable("PROXY_ADDON_RADIUS", 5);
-	PROXY_BASE_HEALTH = Lua_GetVariable("PROXY_BASE_HEALTH", 200);
-	PROXY_ADDON_HEALTH = Lua_GetVariable("PROXY_ADDON_HEALTH", 30);
-	NAPALM_MAX_COUNT = Lua_GetVariable("NAPALM_MAX_COUNT", 3);
-	NAPALM_ATTACK_DELAY = Lua_GetVariable("NAPALM_ATTACK_DELAY", 1.0);
-	NAPALM_DELAY = Lua_GetVariable("NAPALM_DELAY", 1.0);
-	NAPALM_COST = Lua_GetVariable("NAPALM_COST", 25);
-	NAPALM_DURATION = Lua_GetVariable("NAPALM_DURATION", 10.0);
-	NAPALM_INITIAL_DMG = Lua_GetVariable("NAPALM_INITIAL_DMG", 100);
-	NAPALM_ADDON_DMG = Lua_GetVariable("NAPALM_ADDON_DMG", 20);
-	NAPALM_INITIAL_RADIUS = Lua_GetVariable("NAPALM_INITIAL_RADIUS", 100.0);
-	NAPALM_ADDON_RADIUS = Lua_GetVariable("NAPALM_ADDON_RADIUS", 5.0);
-	NAPALM_INITIAL_BURN = Lua_GetVariable("NAPALM_INITIAL_BURN", 0);
-	NAPALM_ADDON_BURN = Lua_GetVariable("NAPALM_ADDON_BURN", 1);
-	METEOR_INITIAL_DMG = Lua_GetVariable("METEOR_INITIAL_DMG", 100);
-	METEOR_ADDON_DMG = Lua_GetVariable("METEOR_ADDON_DMG", 40);
-	METEOR_INITIAL_RADIUS = Lua_GetVariable("METEOR_INITIAL_RADIUS", 200);
-	METEOR_ADDON_RADIUS = Lua_GetVariable("METEOR_ADDON_RADIUS", 0);
-	METEOR_INITIAL_SPEED = Lua_GetVariable("METEOR_INITIAL_SPEED", 1000);
-	METEOR_ADDON_SPEED = Lua_GetVariable("METEOR_ADDON_SPEED", 0);
-	METEOR_CEILING_HEIGHT = Lua_GetVariable("METEOR_CEILING_HEIGHT", 1024);
-	METEOR_RANGE = Lua_GetVariable("METEOR_RANGE", 8192);
-	METEOR_DELAY = Lua_GetVariable("METEOR_DELAY", 1.0);
-	CLIGHTNING_COLOR = Lua_GetVariable("CLIGHTNING_COLOR", 15);
-	CLIGHTNING_PARTICLES = Lua_GetVariable("CLIGHTNING_PARTICLES", 3);
-	CLIGHTNING_INITIAL_DMG = Lua_GetVariable("CLIGHTNING_INITIAL_DMG", 50);
-	CLIGHTNING_ADDON_DMG = Lua_GetVariable("CLIGHTNING_ADDON_DMG", 15);
-	CLIGHTNING_INITIAL_AR = Lua_GetVariable("CLIGHTNING_INITIAL_AR", 256);
-	CLIGHTNING_ADDON_AR = Lua_GetVariable("CLIGHTNING_ADDON_AR", 0);
-	CLIGHTNING_INITIAL_HR = Lua_GetVariable("CLIGHTNING_INITIAL_HR", 256);
-	CLIGHTNING_ADDON_HR = Lua_GetVariable("CLIGHTNING_ADDON_HR", 0);
-	CLIGHTNING_DELAY = Lua_GetVariable("CLIGHTNING_DELAY", 0.3);
-	CLIGHTNING_DMG_MOD = Lua_GetVariable("CLIGHTNING_DMG_MOD", 1.25);
-	HAMMER_INITIAL_SPEED = Lua_GetVariable("HAMMER_INITIAL_SPEED", 400);
-	HAMMER_ADDON_SPEED = Lua_GetVariable("HAMMER_ADDON_SPEED", 5);
-	HAMMER_TURN_RATE = Lua_GetVariable("HAMMER_TURN_RATE", 54);
-	HAMMER_INITIAL_DAMAGE = Lua_GetVariable("HAMMER_INITIAL_DAMAGE", 100);
-	HAMMER_ADDON_DAMAGE = Lua_GetVariable("HAMMER_ADDON_DAMAGE", 30);
-	HAMMER_COST = Lua_GetVariable("HAMMER_COST", 10);
-	HAMMER_DELAY = Lua_GetVariable("HAMMER_DELAY", 0.1);
-	BLACKHOLE_COST = Lua_GetVariable("BLACKHOLE_COST", 50);
-	BLACKHOLE_DELAY = Lua_GetVariable("BLACKHOLE_DELAY", 10.0);
-	BLACKHOLE_EXIT_TIME = Lua_GetVariable("BLACKHOLE_EXIT_TIME", 30.0);
-	CALTROPS_INITIAL_DAMAGE = Lua_GetVariable("CALTROPS_INITIAL_DAMAGE", 50);
-	CALTROPS_ADDON_DAMAGE = Lua_GetVariable("CALTROPS_ADDON_DAMAGE", 25);
-	CALTROPS_INITIAL_SLOW = Lua_GetVariable("CALTROPS_INITIAL_SLOW", 0);
-	CALTROPS_ADDON_SLOW = Lua_GetVariable("CALTROPS_ADDON_SLOW", 0.1);
-	CALTROPS_INITIAL_SLOWED_TIME = Lua_GetVariable("CALTROPS_INITIAL_SLOWED_TIME", 0);
-	CALTROPS_ADDON_SLOWED_TIME = Lua_GetVariable("CALTROPS_ADDON_SLOWED_TIME", 1.0);
-	CALTROPS_DURATION = Lua_GetVariable("CALTROPS_DURATION", 120.0);
-	CALTROPS_COST = Lua_GetVariable("CALTROPS_COST", 10);
-	CALTROPS_DELAY = Lua_GetVariable("CALTROPS_DELAY", 0.2);
-	CALTROPS_MAX_COUNT = Lua_GetVariable("CALTROPS_MAX_COUNT", 10);
-	SPIKEGRENADE_COST = Lua_GetVariable("SPIKEGRENADE_COST", 25);
-	SPIKEGRENADE_DELAY = Lua_GetVariable("SPIKEGRENADE_DELAY", 1.0);
-	SPIKEGRENADE_DURATION = Lua_GetVariable("SPIKEGRENADE_DURATION", 10.0);
-	SPIKEGRENADE_INITIAL_DAMAGE = Lua_GetVariable("SPIKEGRENADE_INITIAL_DAMAGE", 50);
-	SPIKEGRENADE_ADDON_DAMAGE = Lua_GetVariable("SPIKEGRENADE_ADDON_DAMAGE", 15);
-	SPIKEGRENADE_INITIAL_SPEED = Lua_GetVariable("SPIKEGRENADE_INITIAL_SPEED", 600);
-	SPIKEGRENADE_ADDON_SPEED = Lua_GetVariable("SPIKEGRENADE_ADDON_SPEED", 0);
-	SPIKEGRENADE_TURN_DEGREES = Lua_GetVariable("SPIKEGRENADE_TURN_DEGREES", 3);
-	SPIKEGRENADE_TURN_DELAY = Lua_GetVariable("SPIKEGRENADE_TURN_DELAY", 1.0);
-	SPIKEGRENADE_TURNS = Lua_GetVariable("SPIKEGRENADE_TURNS", 8);
-	SPIKEGRENADE_MAX_COUNT = Lua_GetVariable("SPIKEGRENADE_MAX_COUNT", 3);
-	LASERTRAP_INITIAL_HEALTH = Lua_GetVariable("LASERTRAP_INITIAL_HEALTH", 0);
-	LASERTRAP_ADDON_HEALTH = Lua_GetVariable("LASERTRAP_ADDON_HEALTH", 100);
-	LASERTRAP_INITIAL_DAMAGE = Lua_GetVariable("LASERTRAP_INITIAL_DAMAGE", 0);
-	LASERTRAP_ADDON_DAMAGE = Lua_GetVariable("LASERTRAP_ADDON_DAMAGE", 100);
-	LASERTRAP_DELAY = Lua_GetVariable("LASERTRAP_DELAY", 1.0);
-	LASERTRAP_COST = Lua_GetVariable("LASERTRAP_COST", 50);
-	LASERTRAP_RANGE = Lua_GetVariable("LASERTRAP_RANGE", 64.0);
-	LASERTRAP_MINIMUM_RANGE = Lua_GetVariable("LASERTRAP_MINIMUM_RANGE", 64.0);
-	LASERTRAP_YAW_SPEED = Lua_GetVariable("LASERTRAP_YAW_SPEED", 15);
-	DETECTOR_COST = Lua_GetVariable("DETECTOR_COST", 25);
-	DETECTOR_DELAY = Lua_GetVariable("DETECTOR_DELAY", 2.0);
-	DETECTOR_MAX_COUNT = Lua_GetVariable("DETECTOR_MAX_COUNT", 3);
-	DETECTOR_INITIAL_HEALTH = Lua_GetVariable("DETECTOR_INITIAL_HEALTH", 50);
-	DETECTOR_ADDON_HEALTH = Lua_GetVariable("DETECTOR_ADDON_HEALTH", 10);
-	DETECTOR_INITIAL_RANGE = Lua_GetVariable("DETECTOR_INITIAL_RANGE", 96);
-	DETECTOR_ADDON_RANGE = Lua_GetVariable("DETECTOR_ADDON_RANGE", 16);
-	DETECTOR_DURATION = Lua_GetVariable("DETECTOR_DURATION", 120.0);
-	DETECTOR_FLAG_DURATION = Lua_GetVariable("DETECTOR_FLAG_DURATION", 1.0);
-	DETECTOR_GLOW_TIME = Lua_GetVariable("DETECTOR_GLOW_TIME", 1.0);
-	ALARM_INITIAL_HEALTH = Lua_GetVariable("ALARM_INITIAL_HEALTH", 0);
-	ALARM_ADDON_HEALTH = Lua_GetVariable("ALARM_ADDON_HEALTH", 200);
-	ALARM_INITIAL_RANGE = Lua_GetVariable("ALARM_INITIAL_RANGE", 0);
-	ALARM_ADDON_RANGE = Lua_GetVariable("ALARM_ADDON_RANGE", 76.8);
-	CONVERSION_INITIAL_RANGE = Lua_GetVariable("CONVERSION_INITIAL_RANGE", 196.0);
-	CONVERSION_ADDON_RANGE = Lua_GetVariable("CONVERSION_ADDON_RANGE", 0);
-	CONVERSION_INITIAL_DURATION = Lua_GetVariable("CONVERSION_INITIAL_DURATION", 0);
-	CONVERSION_ADDON_DURATION = Lua_GetVariable("CONVERSION_ADDON_DURATION", 6.0);
-	CONVERSION_INITIAL_CHANCE = Lua_GetVariable("CONVERSION_INITIAL_CHANCE", 0.25);
-	CONVERSION_ADDON_CHANCE = Lua_GetVariable("CONVERSION_ADDON_CHANCE", 0.025);
-	CONVERSION_MAX_CHANCE = Lua_GetVariable("CONVERSION_MAX_CHANCE", 0.5);
-	CONVERSION_COST = Lua_GetVariable("CONVERSION_COST", 25);
-	CONVERSION_DELAY = Lua_GetVariable("CONVERSION_DELAY", 2.0);
-	MIRROR_INITIAL_HEALTH = Lua_GetVariable("MIRROR_INITIAL_HEALTH", 0);
-	MIRROR_ADDON_HEALTH = Lua_GetVariable("MIRROR_ADDON_HEALTH", 100);
-	MIRROR_COST = Lua_GetVariable("MIRROR_COST", 50);
-	MIRROR_DELAY = Lua_GetVariable("MIRROR_DELAY", 1.0);
-	FIREBALL_INITIAL_DAMAGE = Lua_GetVariable("FIREBALL_INITIAL_DAMAGE", 50);
-	FIREBALL_ADDON_DAMAGE = Lua_GetVariable("FIREBALL_ADDON_DAMAGE", 15);
-	FIREBALL_INITIAL_RADIUS = Lua_GetVariable("FIREBALL_INITIAL_RADIUS", 100);
-	FIREBALL_ADDON_RADIUS = Lua_GetVariable("FIREBALL_ADDON_RADIUS", 2.5);
-	FIREBALL_INITIAL_SPEED = Lua_GetVariable("FIREBALL_INITIAL_SPEED", 650);
-	FIREBALL_ADDON_SPEED = Lua_GetVariable("FIREBALL_ADDON_SPEED", 35);
-	FIREBALL_INITIAL_FLAMES = Lua_GetVariable("FIREBALL_INITIAL_FLAMES", 5);
-	FIREBALL_ADDON_FLAMES = Lua_GetVariable("FIREBALL_ADDON_FLAMES", 0);
-	FIREBALL_INITIAL_FLAMEDMG = Lua_GetVariable("FIREBALL_INITIAL_FLAMEDMG", 0);
-	FIREBALL_ADDON_FLAMEDMG = Lua_GetVariable("FIREBALL_ADDON_FLAMEDMG", 2);
-	FIREBALL_DELAY = Lua_GetVariable("FIREBALL_DELAY", 0.3);
-	LIGHTNING_STRIKE_RADIUS = Lua_GetVariable("LIGHTNING_STRIKE_RADIUS", 64);
-	LIGHTNING_MIN_DELAY = Lua_GetVariable("LIGHTNING_MIN_DELAY", 1);
-	LIGHTNING_MAX_DELAY = Lua_GetVariable("LIGHTNING_MAX_DELAY", 3);
-	LIGHTNING_INITIAL_DAMAGE = Lua_GetVariable("LIGHTNING_INITIAL_DAMAGE", 50);
-	LIGHTNING_ADDON_DAMAGE = Lua_GetVariable("LIGHTNING_ADDON_DAMAGE", 15);
-	LIGHTNING_INITIAL_DURATION = Lua_GetVariable("LIGHTNING_INITIAL_DURATION", 5.0);
-	LIGHTNING_ADDON_DURATION = Lua_GetVariable("LIGHTNING_ADDON_DURATION", 0);
-	LIGHTNING_INITIAL_RADIUS = Lua_GetVariable("LIGHTNING_INITIAL_RADIUS", 128);
-	LIGHTNING_ADDON_RADIUS = Lua_GetVariable("LIGHTNING_ADDON_RADIUS", 0);
-	LIGHTNING_ABILITY_DELAY = Lua_GetVariable("LIGHTNING_ABILITY_DELAY", 1.0);
-	PLASMABOLT_INITIAL_DAMAGE = Lua_GetVariable("PLASMABOLT_INITIAL_DAMAGE", 50);
-	PLASMABOLT_ADDON_DAMAGE = Lua_GetVariable("PLASMABOLT_ADDON_DAMAGE", 15);
-	PLASMABOLT_INITIAL_RADIUS = Lua_GetVariable("PLASMABOLT_INITIAL_RADIUS", 100);
-	PLASMABOLT_ADDON_RADIUS = Lua_GetVariable("PLASMABOLT_ADDON_RADIUS", 5);
-	PLASMABOLT_INITIAL_SPEED = Lua_GetVariable("PLASMABOLT_INITIAL_SPEED", 750);
-	PLASMABOLT_ADDON_SPEED = Lua_GetVariable("PLASMABOLT_ADDON_SPEED", 0);
-	PLASMABOLT_INITIAL_DURATION = Lua_GetVariable("PLASMABOLT_INITIAL_DURATION", 2.0);
-	PLASMABOLT_ADDON_DURATION = Lua_GetVariable("PLASMABOLT_ADDON_DURATION", 0);
-	PLASMABOLT_COST = Lua_GetVariable("PLASMABOLT_COST", 20);
-	PLASMABOLT_DELAY = Lua_GetVariable("PLASMABOLT_DELAY", 0.3);
-	PLASMABOLT_DELAY_PVP = Lua_GetVariable("PLASMABOLT_DELAY_PVP", 0.7);
-	ICEBOLT_INITIAL_DAMAGE = Lua_GetVariable("ICEBOLT_INITIAL_DAMAGE", 100);
-	ICEBOLT_ADDON_DAMAGE = Lua_GetVariable("ICEBOLT_ADDON_DAMAGE", 20);
-	ICEBOLT_INITIAL_RADIUS = Lua_GetVariable("ICEBOLT_INITIAL_RADIUS", 100);
-	ICEBOLT_ADDON_RADIUS = Lua_GetVariable("ICEBOLT_ADDON_RADIUS", 0);
-	ICEBOLT_INITIAL_SPEED = Lua_GetVariable("ICEBOLT_INITIAL_SPEED", 650);
-	ICEBOLT_ADDON_SPEED = Lua_GetVariable("ICEBOLT_ADDON_SPEED", 0);
-	ICEBOLT_INITIAL_CHILL_DURATION = Lua_GetVariable("ICEBOLT_INITIAL_CHILL_DURATION", 0);
-	ICEBOLT_ADDON_CHILL_DURATION = Lua_GetVariable("ICEBOLT_ADDON_CHILL_DURATION", 0.4);
-	ICEBOLT_DELAY = Lua_GetVariable("ICEBOLT_DELAY", 0.3);
+	AUTOCANNON_ATTACK_DELAY = vrx_lua_get_variable("AUTOCANNON_ATTACK_DELAY", 1.0);
+	AUTOCANNON_START_DELAY = vrx_lua_get_variable("AUTOCANNON_START_DELAY", 2.0);
+	AUTOCANNON_BUILD_TIME = vrx_lua_get_variable("AUTOCANNON_BUILD_TIME", 1.0);
+	AUTOCANNON_DELAY = vrx_lua_get_variable("AUTOCANNON_DELAY", 1.0);
+	AUTOCANNON_RANGE = vrx_lua_get_variable("AUTOCANNON_RANGE", 2048);
+	AUTOCANNON_INITIAL_HEALTH = vrx_lua_get_variable("AUTOCANNON_INITIAL_HEALTH", 100);
+	AUTOCANNON_ADDON_HEALTH = vrx_lua_get_variable("AUTOCANNON_ADDON_HEALTH", 40);
+	AUTOCANNON_INITIAL_DAMAGE = vrx_lua_get_variable("AUTOCANNON_INITIAL_DAMAGE", 100);
+	AUTOCANNON_ADDON_DAMAGE = vrx_lua_get_variable("AUTOCANNON_ADDON_DAMAGE", 40);
+	AUTOCANNON_YAW_SPEED = vrx_lua_get_variable("AUTOCANNON_YAW_SPEED", 2);
+	AUTOCANNON_COST = vrx_lua_get_variable("AUTOCANNON_COST", 50);
+	AUTOCANNON_MAX_UNITS = vrx_lua_get_variable("AUTOCANNON_MAX_UNITS", 3);
+	AUTOCANNON_START_AMMO = vrx_lua_get_variable("AUTOCANNON_START_AMMO", 5);
+	AUTOCANNON_INITIAL_AMMO = vrx_lua_get_variable("AUTOCANNON_INITIAL_AMMO", 5);
+	AUTOCANNON_ADDON_AMMO = vrx_lua_get_variable("AUTOCANNON_ADDON_AMMO", 0);
+	AUTOCANNON_REPAIR_COST = vrx_lua_get_variable("AUTOCANNON_REPAIR_COST", 0.1);
+	AUTOCANNON_TOUCH_DELAY = vrx_lua_get_variable("AUTOCANNON_TOUCH_DELAY", 3.0);
+	HOLYGROUND_INITIAL_DURATION = vrx_lua_get_variable("HOLYGROUND_INITIAL_DURATION", 0);
+	HOLYGROUND_ADDON_DURATION = vrx_lua_get_variable("HOLYGROUND_ADDON_DURATION", 12.0);
+	HOLYGROUND_COST = vrx_lua_get_variable("HOLYGROUND_COST", 25);
+	HOLYGROUND_DELAY = vrx_lua_get_variable("HOLYGROUND_DELAY", 1.0);
+	COCOON_INITIAL_HEALTH = vrx_lua_get_variable("COCOON_INITIAL_HEALTH", 0);
+	COCOON_ADDON_HEALTH = vrx_lua_get_variable("COCOON_ADDON_HEALTH", 100);
+	COCOON_INITIAL_DURATION = vrx_lua_get_variable("COCOON_INITIAL_DURATION", 50);
+	COCOON_ADDON_DURATION = vrx_lua_get_variable("COCOON_ADDON_DURATION", 0);
+	COCOON_MINIMUM_DURATION = vrx_lua_get_variable("COCOON_MINIMUM_DURATION", 50);
+	COCOON_INITIAL_FACTOR = vrx_lua_get_variable("COCOON_INITIAL_FACTOR", 1.0);
+	COCOON_ADDON_FACTOR = vrx_lua_get_variable("COCOON_ADDON_FACTOR", 0.05);
+	COCOON_INITIAL_TIME = vrx_lua_get_variable("COCOON_INITIAL_TIME", 30.0);
+	COCOON_ADDON_TIME = vrx_lua_get_variable("COCOON_ADDON_TIME", 1.5);
+	COCOON_COST = vrx_lua_get_variable("COCOON_COST", 50);
+	COCOON_DELAY = vrx_lua_get_variable("COCOON_DELAY", 1.0);
+	BOLT_SPEED = vrx_lua_get_variable("BOLT_SPEED", 1000);
+	BOLT_DURATION = vrx_lua_get_variable("BOLT_DURATION", 3);
+	BOLT_INITIAL_DAMAGE = vrx_lua_get_variable("BOLT_INITIAL_DAMAGE", 50);
+	BOLT_ADDON_DAMAGE = vrx_lua_get_variable("BOLT_ADDON_DAMAGE", 10);
+	BOLT_DELAY = vrx_lua_get_variable("BOLT_DELAY", 0.2);
+	IMP_BOLT_DELAY = vrx_lua_get_variable("IMP_BOLT_DELAY", 0.3);
+	IMP_BOLT_RADIUS = vrx_lua_get_variable("IMP_BOLT_RADIUS", 100);
+	SPIKE_INITIAL_DMG = vrx_lua_get_variable("SPIKE_INITIAL_DMG", 50);
+	SPIKE_ADDON_DMG = vrx_lua_get_variable("SPIKE_ADDON_DMG", 15);
+	SPIKE_SPEED = vrx_lua_get_variable("SPIKE_SPEED", 1000);
+	SPIKE_COST = vrx_lua_get_variable("SPIKE_COST", 25);
+	SPIKE_DELAY = vrx_lua_get_variable("SPIKE_DELAY", 0.5);
+	SPIKE_STUN_ADDON = vrx_lua_get_variable("SPIKE_STUN_ADDON", 0.05);
+	SPIKE_STUN_MIN = vrx_lua_get_variable("SPIKE_STUN_MIN", 0.2);
+	SPIKE_STUN_MAX = vrx_lua_get_variable("SPIKE_STUN_MAX", 1.0);
+	SPIKE_SHOTS = vrx_lua_get_variable("SPIKE_SHOTS", 3);
+	SPIKE_FOV = vrx_lua_get_variable("SPIKE_FOV", 20);
+	PROXY_COST = vrx_lua_get_variable("PROXY_COST", 25);
+	PROXY_MAX_COUNT = vrx_lua_get_variable("PROXY_MAX_COUNT", 6);
+	PROXY_BUILD_TIME = vrx_lua_get_variable("PROXY_BUILD_TIME", 1.0);
+	PROXY_BASE_DMG = vrx_lua_get_variable("PROXY_BASE_DMG", 100);
+	PROXY_ADDON_DMG = vrx_lua_get_variable("PROXY_ADDON_DMG", 25);
+	PROXY_BASE_RADIUS = vrx_lua_get_variable("PROXY_BASE_RADIUS", 100);
+	PROXY_ADDON_RADIUS = vrx_lua_get_variable("PROXY_ADDON_RADIUS", 5);
+	PROXY_BASE_HEALTH = vrx_lua_get_variable("PROXY_BASE_HEALTH", 200);
+	PROXY_ADDON_HEALTH = vrx_lua_get_variable("PROXY_ADDON_HEALTH", 30);
+	NAPALM_MAX_COUNT = vrx_lua_get_variable("NAPALM_MAX_COUNT", 3);
+	NAPALM_ATTACK_DELAY = vrx_lua_get_variable("NAPALM_ATTACK_DELAY", 1.0);
+	NAPALM_DELAY = vrx_lua_get_variable("NAPALM_DELAY", 1.0);
+	NAPALM_COST = vrx_lua_get_variable("NAPALM_COST", 25);
+	NAPALM_DURATION = vrx_lua_get_variable("NAPALM_DURATION", 10.0);
+	NAPALM_INITIAL_DMG = vrx_lua_get_variable("NAPALM_INITIAL_DMG", 100);
+	NAPALM_ADDON_DMG = vrx_lua_get_variable("NAPALM_ADDON_DMG", 20);
+	NAPALM_INITIAL_RADIUS = vrx_lua_get_variable("NAPALM_INITIAL_RADIUS", 100.0);
+	NAPALM_ADDON_RADIUS = vrx_lua_get_variable("NAPALM_ADDON_RADIUS", 5.0);
+	NAPALM_INITIAL_BURN = vrx_lua_get_variable("NAPALM_INITIAL_BURN", 0);
+	NAPALM_ADDON_BURN = vrx_lua_get_variable("NAPALM_ADDON_BURN", 1);
+	METEOR_INITIAL_DMG = vrx_lua_get_variable("METEOR_INITIAL_DMG", 100);
+	METEOR_ADDON_DMG = vrx_lua_get_variable("METEOR_ADDON_DMG", 40);
+	METEOR_INITIAL_RADIUS = vrx_lua_get_variable("METEOR_INITIAL_RADIUS", 200);
+	METEOR_ADDON_RADIUS = vrx_lua_get_variable("METEOR_ADDON_RADIUS", 0);
+	METEOR_INITIAL_SPEED = vrx_lua_get_variable("METEOR_INITIAL_SPEED", 1000);
+	METEOR_ADDON_SPEED = vrx_lua_get_variable("METEOR_ADDON_SPEED", 0);
+	METEOR_CEILING_HEIGHT = vrx_lua_get_variable("METEOR_CEILING_HEIGHT", 1024);
+	METEOR_RANGE = vrx_lua_get_variable("METEOR_RANGE", 8192);
+	METEOR_DELAY = vrx_lua_get_variable("METEOR_DELAY", 1.0);
+	CLIGHTNING_COLOR = vrx_lua_get_variable("CLIGHTNING_COLOR", 15);
+	CLIGHTNING_PARTICLES = vrx_lua_get_variable("CLIGHTNING_PARTICLES", 3);
+	CLIGHTNING_INITIAL_DMG = vrx_lua_get_variable("CLIGHTNING_INITIAL_DMG", 50);
+	CLIGHTNING_ADDON_DMG = vrx_lua_get_variable("CLIGHTNING_ADDON_DMG", 15);
+	CLIGHTNING_INITIAL_AR = vrx_lua_get_variable("CLIGHTNING_INITIAL_AR", 256);
+	CLIGHTNING_ADDON_AR = vrx_lua_get_variable("CLIGHTNING_ADDON_AR", 0);
+	CLIGHTNING_INITIAL_HR = vrx_lua_get_variable("CLIGHTNING_INITIAL_HR", 256);
+	CLIGHTNING_ADDON_HR = vrx_lua_get_variable("CLIGHTNING_ADDON_HR", 0);
+	CLIGHTNING_DELAY = vrx_lua_get_variable("CLIGHTNING_DELAY", 0.3);
+	CLIGHTNING_DMG_MOD = vrx_lua_get_variable("CLIGHTNING_DMG_MOD", 1.25);
+	HAMMER_INITIAL_SPEED = vrx_lua_get_variable("HAMMER_INITIAL_SPEED", 400);
+	HAMMER_ADDON_SPEED = vrx_lua_get_variable("HAMMER_ADDON_SPEED", 5);
+	HAMMER_TURN_RATE = vrx_lua_get_variable("HAMMER_TURN_RATE", 54);
+	HAMMER_INITIAL_DAMAGE = vrx_lua_get_variable("HAMMER_INITIAL_DAMAGE", 100);
+	HAMMER_ADDON_DAMAGE = vrx_lua_get_variable("HAMMER_ADDON_DAMAGE", 30);
+	HAMMER_COST = vrx_lua_get_variable("HAMMER_COST", 10);
+	HAMMER_DELAY = vrx_lua_get_variable("HAMMER_DELAY", 0.1);
+	BLACKHOLE_COST = vrx_lua_get_variable("BLACKHOLE_COST", 50);
+	BLACKHOLE_DELAY = vrx_lua_get_variable("BLACKHOLE_DELAY", 10.0);
+	BLACKHOLE_EXIT_TIME = vrx_lua_get_variable("BLACKHOLE_EXIT_TIME", 30.0);
+	CALTROPS_INITIAL_DAMAGE = vrx_lua_get_variable("CALTROPS_INITIAL_DAMAGE", 50);
+	CALTROPS_ADDON_DAMAGE = vrx_lua_get_variable("CALTROPS_ADDON_DAMAGE", 25);
+	CALTROPS_INITIAL_SLOW = vrx_lua_get_variable("CALTROPS_INITIAL_SLOW", 0);
+	CALTROPS_ADDON_SLOW = vrx_lua_get_variable("CALTROPS_ADDON_SLOW", 0.1);
+	CALTROPS_INITIAL_SLOWED_TIME = vrx_lua_get_variable("CALTROPS_INITIAL_SLOWED_TIME", 0);
+	CALTROPS_ADDON_SLOWED_TIME = vrx_lua_get_variable("CALTROPS_ADDON_SLOWED_TIME", 1.0);
+	CALTROPS_DURATION = vrx_lua_get_variable("CALTROPS_DURATION", 120.0);
+	CALTROPS_COST = vrx_lua_get_variable("CALTROPS_COST", 10);
+	CALTROPS_DELAY = vrx_lua_get_variable("CALTROPS_DELAY", 0.2);
+	CALTROPS_MAX_COUNT = vrx_lua_get_variable("CALTROPS_MAX_COUNT", 10);
+	SPIKEGRENADE_COST = vrx_lua_get_variable("SPIKEGRENADE_COST", 25);
+	SPIKEGRENADE_DELAY = vrx_lua_get_variable("SPIKEGRENADE_DELAY", 1.0);
+	SPIKEGRENADE_DURATION = vrx_lua_get_variable("SPIKEGRENADE_DURATION", 10.0);
+	SPIKEGRENADE_INITIAL_DAMAGE = vrx_lua_get_variable("SPIKEGRENADE_INITIAL_DAMAGE", 50);
+	SPIKEGRENADE_ADDON_DAMAGE = vrx_lua_get_variable("SPIKEGRENADE_ADDON_DAMAGE", 15);
+	SPIKEGRENADE_INITIAL_SPEED = vrx_lua_get_variable("SPIKEGRENADE_INITIAL_SPEED", 600);
+	SPIKEGRENADE_ADDON_SPEED = vrx_lua_get_variable("SPIKEGRENADE_ADDON_SPEED", 0);
+	SPIKEGRENADE_TURN_DEGREES = vrx_lua_get_variable("SPIKEGRENADE_TURN_DEGREES", 3);
+	SPIKEGRENADE_TURN_DELAY = vrx_lua_get_variable("SPIKEGRENADE_TURN_DELAY", 1.0);
+	SPIKEGRENADE_TURNS = vrx_lua_get_variable("SPIKEGRENADE_TURNS", 8);
+	SPIKEGRENADE_MAX_COUNT = vrx_lua_get_variable("SPIKEGRENADE_MAX_COUNT", 3);
+	LASERTRAP_INITIAL_HEALTH = vrx_lua_get_variable("LASERTRAP_INITIAL_HEALTH", 0);
+	LASERTRAP_ADDON_HEALTH = vrx_lua_get_variable("LASERTRAP_ADDON_HEALTH", 100);
+	LASERTRAP_INITIAL_DAMAGE = vrx_lua_get_variable("LASERTRAP_INITIAL_DAMAGE", 0);
+	LASERTRAP_ADDON_DAMAGE = vrx_lua_get_variable("LASERTRAP_ADDON_DAMAGE", 100);
+	LASERTRAP_DELAY = vrx_lua_get_variable("LASERTRAP_DELAY", 1.0);
+	LASERTRAP_COST = vrx_lua_get_variable("LASERTRAP_COST", 50);
+	LASERTRAP_RANGE = vrx_lua_get_variable("LASERTRAP_RANGE", 64.0);
+	LASERTRAP_MINIMUM_RANGE = vrx_lua_get_variable("LASERTRAP_MINIMUM_RANGE", 64.0);
+	LASERTRAP_YAW_SPEED = vrx_lua_get_variable("LASERTRAP_YAW_SPEED", 15);
+	DETECTOR_COST = vrx_lua_get_variable("DETECTOR_COST", 25);
+	DETECTOR_DELAY = vrx_lua_get_variable("DETECTOR_DELAY", 2.0);
+	DETECTOR_MAX_COUNT = vrx_lua_get_variable("DETECTOR_MAX_COUNT", 3);
+	DETECTOR_INITIAL_HEALTH = vrx_lua_get_variable("DETECTOR_INITIAL_HEALTH", 50);
+	DETECTOR_ADDON_HEALTH = vrx_lua_get_variable("DETECTOR_ADDON_HEALTH", 10);
+	DETECTOR_INITIAL_RANGE = vrx_lua_get_variable("DETECTOR_INITIAL_RANGE", 96);
+	DETECTOR_ADDON_RANGE = vrx_lua_get_variable("DETECTOR_ADDON_RANGE", 16);
+	DETECTOR_DURATION = vrx_lua_get_variable("DETECTOR_DURATION", 120.0);
+	DETECTOR_FLAG_DURATION = vrx_lua_get_variable("DETECTOR_FLAG_DURATION", 1.0);
+	DETECTOR_GLOW_TIME = vrx_lua_get_variable("DETECTOR_GLOW_TIME", 1.0);
+	ALARM_INITIAL_HEALTH = vrx_lua_get_variable("ALARM_INITIAL_HEALTH", 0);
+	ALARM_ADDON_HEALTH = vrx_lua_get_variable("ALARM_ADDON_HEALTH", 200);
+	ALARM_INITIAL_RANGE = vrx_lua_get_variable("ALARM_INITIAL_RANGE", 0);
+	ALARM_ADDON_RANGE = vrx_lua_get_variable("ALARM_ADDON_RANGE", 76.8);
+	CONVERSION_INITIAL_RANGE = vrx_lua_get_variable("CONVERSION_INITIAL_RANGE", 196.0);
+	CONVERSION_ADDON_RANGE = vrx_lua_get_variable("CONVERSION_ADDON_RANGE", 0);
+	CONVERSION_INITIAL_DURATION = vrx_lua_get_variable("CONVERSION_INITIAL_DURATION", 0);
+	CONVERSION_ADDON_DURATION = vrx_lua_get_variable("CONVERSION_ADDON_DURATION", 6.0);
+	CONVERSION_INITIAL_CHANCE = vrx_lua_get_variable("CONVERSION_INITIAL_CHANCE", 0.25);
+	CONVERSION_ADDON_CHANCE = vrx_lua_get_variable("CONVERSION_ADDON_CHANCE", 0.025);
+	CONVERSION_MAX_CHANCE = vrx_lua_get_variable("CONVERSION_MAX_CHANCE", 0.5);
+	CONVERSION_COST = vrx_lua_get_variable("CONVERSION_COST", 25);
+	CONVERSION_DELAY = vrx_lua_get_variable("CONVERSION_DELAY", 2.0);
+	MIRROR_INITIAL_HEALTH = vrx_lua_get_variable("MIRROR_INITIAL_HEALTH", 0);
+	MIRROR_ADDON_HEALTH = vrx_lua_get_variable("MIRROR_ADDON_HEALTH", 100);
+	MIRROR_COST = vrx_lua_get_variable("MIRROR_COST", 50);
+	MIRROR_DELAY = vrx_lua_get_variable("MIRROR_DELAY", 1.0);
+	FIREBALL_INITIAL_DAMAGE = vrx_lua_get_variable("FIREBALL_INITIAL_DAMAGE", 50);
+	FIREBALL_ADDON_DAMAGE = vrx_lua_get_variable("FIREBALL_ADDON_DAMAGE", 15);
+	FIREBALL_INITIAL_RADIUS = vrx_lua_get_variable("FIREBALL_INITIAL_RADIUS", 100);
+	FIREBALL_ADDON_RADIUS = vrx_lua_get_variable("FIREBALL_ADDON_RADIUS", 2.5);
+	FIREBALL_INITIAL_SPEED = vrx_lua_get_variable("FIREBALL_INITIAL_SPEED", 650);
+	FIREBALL_ADDON_SPEED = vrx_lua_get_variable("FIREBALL_ADDON_SPEED", 35);
+	FIREBALL_INITIAL_FLAMES = vrx_lua_get_variable("FIREBALL_INITIAL_FLAMES", 5);
+	FIREBALL_ADDON_FLAMES = vrx_lua_get_variable("FIREBALL_ADDON_FLAMES", 0);
+	FIREBALL_INITIAL_FLAMEDMG = vrx_lua_get_variable("FIREBALL_INITIAL_FLAMEDMG", 0);
+	FIREBALL_ADDON_FLAMEDMG = vrx_lua_get_variable("FIREBALL_ADDON_FLAMEDMG", 2);
+	FIREBALL_DELAY = vrx_lua_get_variable("FIREBALL_DELAY", 0.3);
+	LIGHTNING_STRIKE_RADIUS = vrx_lua_get_variable("LIGHTNING_STRIKE_RADIUS", 64);
+	LIGHTNING_MIN_DELAY = vrx_lua_get_variable("LIGHTNING_MIN_DELAY", 1);
+	LIGHTNING_MAX_DELAY = vrx_lua_get_variable("LIGHTNING_MAX_DELAY", 3);
+	LIGHTNING_INITIAL_DAMAGE = vrx_lua_get_variable("LIGHTNING_INITIAL_DAMAGE", 50);
+	LIGHTNING_ADDON_DAMAGE = vrx_lua_get_variable("LIGHTNING_ADDON_DAMAGE", 15);
+	LIGHTNING_INITIAL_DURATION = vrx_lua_get_variable("LIGHTNING_INITIAL_DURATION", 5.0);
+	LIGHTNING_ADDON_DURATION = vrx_lua_get_variable("LIGHTNING_ADDON_DURATION", 0);
+	LIGHTNING_INITIAL_RADIUS = vrx_lua_get_variable("LIGHTNING_INITIAL_RADIUS", 128);
+	LIGHTNING_ADDON_RADIUS = vrx_lua_get_variable("LIGHTNING_ADDON_RADIUS", 0);
+	LIGHTNING_ABILITY_DELAY = vrx_lua_get_variable("LIGHTNING_ABILITY_DELAY", 1.0);
+	PLASMABOLT_INITIAL_DAMAGE = vrx_lua_get_variable("PLASMABOLT_INITIAL_DAMAGE", 50);
+	PLASMABOLT_ADDON_DAMAGE = vrx_lua_get_variable("PLASMABOLT_ADDON_DAMAGE", 15);
+	PLASMABOLT_INITIAL_RADIUS = vrx_lua_get_variable("PLASMABOLT_INITIAL_RADIUS", 100);
+	PLASMABOLT_ADDON_RADIUS = vrx_lua_get_variable("PLASMABOLT_ADDON_RADIUS", 5);
+	PLASMABOLT_INITIAL_SPEED = vrx_lua_get_variable("PLASMABOLT_INITIAL_SPEED", 750);
+	PLASMABOLT_ADDON_SPEED = vrx_lua_get_variable("PLASMABOLT_ADDON_SPEED", 0);
+	PLASMABOLT_INITIAL_DURATION = vrx_lua_get_variable("PLASMABOLT_INITIAL_DURATION", 2.0);
+	PLASMABOLT_ADDON_DURATION = vrx_lua_get_variable("PLASMABOLT_ADDON_DURATION", 0);
+	PLASMABOLT_COST = vrx_lua_get_variable("PLASMABOLT_COST", 20);
+	PLASMABOLT_DELAY = vrx_lua_get_variable("PLASMABOLT_DELAY", 0.3);
+	PLASMABOLT_DELAY_PVP = vrx_lua_get_variable("PLASMABOLT_DELAY_PVP", 0.7);
+	ICEBOLT_INITIAL_DAMAGE = vrx_lua_get_variable("ICEBOLT_INITIAL_DAMAGE", 100);
+	ICEBOLT_ADDON_DAMAGE = vrx_lua_get_variable("ICEBOLT_ADDON_DAMAGE", 20);
+	ICEBOLT_INITIAL_RADIUS = vrx_lua_get_variable("ICEBOLT_INITIAL_RADIUS", 100);
+	ICEBOLT_ADDON_RADIUS = vrx_lua_get_variable("ICEBOLT_ADDON_RADIUS", 0);
+	ICEBOLT_INITIAL_SPEED = vrx_lua_get_variable("ICEBOLT_INITIAL_SPEED", 650);
+	ICEBOLT_ADDON_SPEED = vrx_lua_get_variable("ICEBOLT_ADDON_SPEED", 0);
+	ICEBOLT_INITIAL_CHILL_DURATION = vrx_lua_get_variable("ICEBOLT_INITIAL_CHILL_DURATION", 0);
+	ICEBOLT_ADDON_CHILL_DURATION = vrx_lua_get_variable("ICEBOLT_ADDON_CHILL_DURATION", 0.4);
+	ICEBOLT_DELAY = vrx_lua_get_variable("ICEBOLT_DELAY", 0.3);
 }

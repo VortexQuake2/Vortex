@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 void Weapon_Blaster (edict_t *ent);
 void Weapon_GrenadeLauncher (edict_t *ent);

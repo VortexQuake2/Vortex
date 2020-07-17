@@ -1,6 +1,6 @@
 
 
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 //K03 Begin
 void DeflectProjectiles(edict_t *self, float chance, qboolean in_front);

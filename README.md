@@ -1,4 +1,4 @@
-Vortex Quake 2 - Chile
+Vortex Quake 2 - vrxcl
 =====
 
 Vortex Quake 2 is an RPG mod for Quake 2.

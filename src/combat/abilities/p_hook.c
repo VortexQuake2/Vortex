@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 #define HOOK_PULL_SPEED 425
 #define HOOK_FIRE_SPEED 825/*425*/

@@ -1,4 +1,4 @@
-#include "../../../quake2/g_local.h"
+#include "g_local.h"
 
 #define FLYER_FRAMES_STAND_START	13
 #define FLYER_FRAMES_STAND_END		57

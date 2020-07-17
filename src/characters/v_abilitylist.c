@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 
 abilitydef_t *abilities_by_index[MAX_ABILITIES];
 
@@ -7,7 +7,7 @@ abilitydef_t ability_general[] = {
         {MAX_AMMO,        0, 10,              1},
         {POWER_REGEN,     1, 8,               1},
         {WORLD_RESIST,    0, 1,                1},
-        {AMMO_REGEN,      0, 10,              1},
+        {AMMO_REGEN,      0, 5,              1},
         {REGENERATION,    0, 5,               1},
         {STRENGTH,        0, 5,               1},
         {HASTE,           0, 5,               1},
@@ -45,7 +45,7 @@ abilitydef_t ability_vampire[] = {
         {MIND_ABSORB,    0, DEFAULT_SOFTMAX,   0},
         {AMMO_STEAL,     0, DEFAULT_SOFTMAX,   0},
         {CONVERSION,     0, DEFAULT_SOFTMAX,   0},
-        {CLOAK,          1, 10,                0},
+        {CLOAK,          1, 1,                0},
         {-1,             0, 0,                 0} // Guardian (Add skills above this)
 };
 
@@ -161,6 +161,7 @@ abilitydef_t ability_weaponmaster[] = {
         {-1, 0, 0, 0} // Guardian (Add skills above this)
 };
 
+// needs to match class enum
 abilitylist_t abilities_by_class[] = {
         ability_general,
         ability_soldier,
@@ -175,6 +176,14 @@ abilitylist_t abilities_by_class[] = {
         ability_alien,
         ability_weaponmaster,
 };
+
+abilitydef_t *vrx_get_ability_by_index(int index) {
+    
+    if (index < 0 || index >= MAX_ABILITIES)
+        return NULL;
+
+    return abilities_by_index[index];
+}
 
 
 void vrx_assign_abilities(edict_t *ent) {
@@ -248,10 +257,16 @@ int getHardMax(int index, qboolean general, int class) {
             return 1;
             break;
 
-            // Special cases for the non-general ability mode.
+        case GRAPPLE_HOOK:
+            return 3;
+
+            
         case HASTE:
         case AMMO_REGEN:
             return 5;
+
+        // Special cases for the non-general ability mode.
+        // Falls through to the default case...
         case STRENGTH:
         case RESISTANCE:
             if (!generalabmode->value) {
@@ -259,17 +274,13 @@ int getHardMax(int index, qboolean general, int class) {
                     return 15;
                 else
                     return 20;
-                break;
             }
 
         case REGENERATION:
             if (!generalabmode->value) {
                 if (general)
                     return 15;
-                break;
             }
-        case GRAPPLE_HOOK:
-            return 3;
             //Everything else
         default:
             if (vrx_get_ability_upgrade_cost(index) < 2) {
@@ -422,6 +433,13 @@ void vrx_init_ability_list() {
                     abilities_by_index[first->index] = first;
             } else
                 abilities_by_index[first->index] = first;
+
+#ifdef _DEBUG
+            if (getHardMax(first->index, first->general, i) < first->softmax) {
+                gi.dprintf("warning: ability '%s' (%d) has hardmax < softmax\n", GetAbilityString(first->index), first->index);
+            }
+
+#endif
             first++;
         }
     }

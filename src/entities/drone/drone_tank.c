@@ -6,7 +6,7 @@ TANK
 ==============================================================================
 */
 
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 #include "../../quake2/monsterframes/m_tank.h"
 
 void mytank_refire_rocket (edict_t *self);

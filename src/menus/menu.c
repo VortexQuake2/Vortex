@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 
 // v3.12
 qboolean InMenu (edict_t *ent,int index, void (*optionselected)(edict_t *ent,int option))

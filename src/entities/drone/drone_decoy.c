@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 #include "../../quake2/monsterframes/m_player.h"
 
 void drone_ai_stand (edict_t *self, float dist);

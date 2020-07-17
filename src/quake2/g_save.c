@@ -197,7 +197,7 @@ void InitGame(void)
 	gi.cvar_forceset("sv_allow_map", "2");
 #endif
 
-	InitLuaSettings();
+	vrx_init_lua();
     CreateDirIfNotExists(va("%s/settings", gamedir->string));
 
 	// Before anything else, prepare TagMalloc's mutexes and a mysql connection

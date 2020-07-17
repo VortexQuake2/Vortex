@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 #include "../characters/io/v_sqlite_unidb.h"
 #include "../characters/class_limits.h"
 
@@ -427,7 +427,7 @@ void vrx_roll_rune_drop(edict_t *self, edict_t *attacker, qboolean debug)
 		if (attacker->myskills.boss > 0)
             temp = (float)attacker->myskills.boss * 5;
 		else
-            temp = (float) (self->myskills.level + 1) * 5.0f / (attacker->myskills.level + 1);
+            temp = (float) (self->myskills.level + 1) / (attacker->myskills.level + 1);
 		
 		// miniboss has greater chance of dropping a rune
 		if (vrx_is_newbie_basher(self))
@@ -1119,7 +1119,7 @@ void V_EquipItem(edict_t *ent, int index)
 			else gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/belt.wav"), 1, ATTN_NORM, 0);
 			break;
 		case ITEM_CLASSRUNE:
-			V_ItemSwap(&ent->myskills.items[index], &ent->myskills.items[3]); //put on head slot
+			V_ItemSwap(&ent->myskills.items[index], &ent->myskills.items[1]); //put on neck slot
 			if (eqSetItems(ent, &ent->myskills.items[0]) == 3)
 				gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/blessedaim.wav"), 1, ATTN_NORM, 0);
 			else gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/amulet.wav"), 1, ATTN_NORM, 0);
@@ -1156,7 +1156,7 @@ void cmd_Drink(edict_t *ent, int itemtype, int index) {
         found = true;
     } else {
         //Find item in inventory
-		for (i = 4; i < MAX_VRXITEMS; ++i)
+		for (i = 3; i < MAX_VRXITEMS; ++i)
 		{
 			if (ent->myskills.items[i].itemtype == itemtype)
 			{

@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 
 void SpawnItem3 (edict_t *ent, gitem_t *item);
 /*

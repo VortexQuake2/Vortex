@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 #define HOLYGROUND_HOLY					1
 #define HOLYGROUND_UNHOLY				2

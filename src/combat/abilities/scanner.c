@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 #include "../../characters/class_limits.h"
 
 void ClearScanner(gclient_t *client)

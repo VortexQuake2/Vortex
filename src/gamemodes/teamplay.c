@@ -1,4 +1,4 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 #include "ctf.h"
 #include "../quake2/monsterframes/m_insane.h"
 
@@ -379,7 +379,7 @@ void PTRCheckJoinedQue (void)
 	// check every second
 	if (!(level.framenum% (int)(1 / FRAMETIME)))
 	{
-		if (JoinedPlayers() < 1)
+		if (vrx_get_joined_players() < 1)
 			return;
 		if (NumInJoinedQue() < 1)
 			return;
@@ -706,7 +706,7 @@ void retard_awardteampoints (edict_t *self)
 	if (!self->teamnum)
 		return;
 
-	if (ActivePlayers() < RETARD_MIN_PLAYERS)
+	if (vrx_get_alive_players() < RETARD_MIN_PLAYERS)
 	{
 		gi.bprintf(PRINT_HIGH, "Not enough players!\n");
 		// switch back to pvp default

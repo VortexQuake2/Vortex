@@ -1,7 +1,7 @@
 #ifndef V_SHARED_H
 #define V_SHARED_H
 
-#include "quake2/q_shared.h"
+#include "q_shared.h"
 #include "combat/weapons/weapon_def.h"
 #include "combat/abilities/ability_def.h"
 #include "characters/settings.h"
@@ -23,6 +23,7 @@ int getHardMax(int index, qboolean general, int class);
 
 void vrx_assign_abilities(edict_t *ent);
 
+
 #define DEFAULT_SOFTMAX 10
 #define GENERAL_SOFTMAX 5
 
@@ -34,6 +35,8 @@ typedef struct {
 } abilitydef_t;
 
 typedef abilitydef_t *abilitylist_t;
+
+abilitydef_t *vrx_get_ability_by_index(int index);
 /**************** v_abilitylist.c ***************/
 
 //************ lasersight.c ************
@@ -197,7 +200,7 @@ void ChangeClass(char *playername, int newclass, int msgtype);
 char *GetTalentString(int talent_ID);
 char *V_TruncateString(char *string, int newStringLength);
 
-int JoinedPlayers();
+int vrx_get_joined_players();
 //*********** v_utils.c ***********
 
 //*********** v_client.c **********

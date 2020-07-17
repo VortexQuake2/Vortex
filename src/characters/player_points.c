@@ -1,7 +1,7 @@
-#include "../quake2/g_local.h"
+#include "g_local.h"
 #include "../gamemodes/ctf.h"
 
-int JoinedPlayers();
+int vrx_get_joined_players();
 
 void vrx_check_for_levelup(edict_t *ent);
 
@@ -46,10 +46,10 @@ void vrx_add_levelup_boons(edict_t *ent) {
             ent->myskills.abilities[AMMO_REGEN].current_level++;
         }*/ 
 
-        if (ent->myskills.abilities[POWER_REGEN].level < ent->myskills.abilities[MAX_AMMO].max_level) {
+        /*if (ent->myskills.abilities[POWER_REGEN].level < ent->myskills.abilities[POWER_REGEN].max_level) {
             ent->myskills.abilities[POWER_REGEN].level++;
             ent->myskills.abilities[POWER_REGEN].current_level++;
-        } else ent->myskills.speciality_points++;
+        } else ent->myskills.speciality_points++;*/
 
         if (ent->myskills.abilities[VITALITY].level < ent->myskills.abilities[VITALITY].max_level) {
             ent->myskills.abilities[VITALITY].level++;

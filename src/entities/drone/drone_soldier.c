@@ -6,7 +6,7 @@ SOLDIER
 ==============================================================================
 */
 
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 #include "../../quake2/monsterframes/m_soldier.h"
 
 static int	sound_idle;

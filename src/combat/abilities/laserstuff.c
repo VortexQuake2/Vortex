@@ -1,4 +1,4 @@
-#include    "../../quake2/g_local.h"
+#include    "g_local.h"
 
 #define LASER_INITIAL_DMG		100
 #define LASER_ADDON_DMG			20

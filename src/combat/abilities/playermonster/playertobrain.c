@@ -1,4 +1,4 @@
-#include "../../../quake2/g_local.h"
+#include "g_local.h"
 
 #define BRAIN_FRAME_TENTACLE_START	76	// continuous tentacle attack
 #define BRAIN_FRAME_TENTACLE_END	81

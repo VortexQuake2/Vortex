@@ -1,4 +1,4 @@
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 
 void MagicBoltExplode(edict_t *self, edict_t *other)
 {

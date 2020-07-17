@@ -6,7 +6,7 @@ parasite
 ==============================================================================
 */
 
-#include "../../quake2/g_local.h"
+#include "g_local.h"
 #include "../../quake2/monsterframes/m_parasite.h"
 
 static int	sound_pain1;
