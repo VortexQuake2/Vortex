@@ -39,7 +39,7 @@ void vrx_add_levelup_boons(edict_t *ent) {
         if (ent->myskills.abilities[MAX_AMMO].level < ent->myskills.abilities[MAX_AMMO].max_level) {
             ent->myskills.abilities[MAX_AMMO].level++;
             ent->myskills.abilities[MAX_AMMO].current_level++;
-        }
+        } else ent->myskills.speciality_points++;
 
         /* if (ent->myskills.abilities[AMMO_REGEN].level < ent->myskills.abilities[MAX_AMMO].max_level) {
             ent->myskills.abilities[AMMO_REGEN].level++;
