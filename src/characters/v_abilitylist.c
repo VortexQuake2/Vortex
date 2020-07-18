@@ -226,8 +226,10 @@ void vrx_assign_abilities(edict_t *ent) {
     abilitydef_t *first = abilities_by_class[0];
     while (first->index != -1) {
         //gi.dprintf("enabled ability %s\n", GetAbilityString(first->index));
-        // if this ability doesn't have a class specialization, use our general version
-        if (ent->myskills.abilities[first->index].general_skill)
+        // if this ability doesn't have a class specialization, or is disabled, use our general version
+        if (ent->myskills.abilities[first->index].general_skill || 
+            ent->myskills.abilities[first->index].disable ||
+            ent->myskills.abilities[first->index].hard_max == 0)
             vrx_enable_ability(ent, first->index, first->start, first->softmax, first->general);
         first++;
     }

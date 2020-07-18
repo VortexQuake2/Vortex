@@ -406,7 +406,7 @@ void vrx_roll_rune_drop(edict_t *self, edict_t *attacker, qboolean debug)
                 temp = levelRatio * 3.0f;
 			else
                 // monsters have a 1% chance to spawn a rune
-                temp = (float) (self->monsterinfo.level + 1) / (attacker->myskills.level + 1) * 1.0f; // from 0.2%
+                temp = (float) (self->monsterinfo.level + 1) / (attacker->myskills.level + 1);
 
 			if (RUNE_SPAWN_MONSTER * temp < random())
 				return;

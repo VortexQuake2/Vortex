@@ -1700,9 +1700,10 @@ void V_UpdatePlayerAbilities(edict_t *ent) {
             }
                 // otherwise set new upgrade level to soft max and refund unused points
             else {
-                refunded = old_abilities[i].level - ent->myskills.abilities[i].max_level;
+                refunded += old_abilities[i].level - ent->myskills.abilities[i].max_level;
                 //gi.dprintf("Refunding %d points due to hard max cap\n", refunded);
-                ent->myskills.abilities[i].level = ent->myskills.abilities[i].max_level;
+                if (refunded > 0) // az: I added this check. I'm not sure why we need this.
+                    ent->myskills.abilities[i].level = ent->myskills.abilities[i].max_level;
             }
         }
             // if this upgrade was previously disabled, refund them points
