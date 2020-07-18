@@ -347,7 +347,7 @@ void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling)
                 addlinetomenu(ent, " ", MENU_GREEN_LEFT);
                 break;
 		}
-		addlinetomenu(ent, va("%s", V_MenuItemString(item, ' ')), i+1);
+		addlinetomenu(ent, V_MenuItemString(item, ' '), i+1);
 	}
 
 	//Menu footer

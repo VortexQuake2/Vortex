@@ -2254,8 +2254,9 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 	char	ip[16];
 	char	*value;
 	
-	if (debuginfo->value > 1)
-		gi.dprintf("ClientConnect()\n");
+	if (debuginfo->value > 1) {
+        gi.dprintf("ClientConnect(): %s\n", userinfo);
+    }
 
 	value = Info_ValueForKey (userinfo, "name");
 
