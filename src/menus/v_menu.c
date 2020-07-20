@@ -94,14 +94,14 @@ void vrx_start_reign(edict_t *ent)
 	strcpy(ent->myskills.player_name, ent->client->pers.netname);
 
 	if (level.time < pregame_time->value && !trading->value) {
-		gi.centerprintf(ent, "This map is currently in pre-game\nPlease warm up, upgrade and\naccess the Armory now\n");
+		safe_centerprintf(ent, "This map is currently in pre-game\nPlease warm up, upgrade and\naccess the Armory now\n");
 		ent->s.effects |= EF_COLOR_SHELL;
 		ent->s.renderfx |= (RF_SHELL_RED | RF_SHELL_GREEN | RF_SHELL_BLUE);
 	}
 
 	if (trading->value) // Red shell for trading mode.
 	{
-		gi.centerprintf(ent, "Welcome to trading mode\nBuy stuff and trade runes freely.\nVote for another mode to start playing.\n");
+		safe_centerprintf(ent, "Welcome to trading mode\nBuy stuff and trade runes freely.\nVote for another mode to start playing.\n");
 		ent->s.effects |= EF_COLOR_SHELL;
 		ent->s.renderfx |= RF_SHELL_RED;
 	}
@@ -237,7 +237,7 @@ void joinmenu_handler (edict_t *ent, int option)
 #ifndef NO_GDS
 		else
 		{
-			gi.centerprintf(ent, "You have been queued for Loading.\n Please wait.\n");
+			safe_centerprintf(ent, "You have been queued for Loading.\n Please wait.\n");
 			V_GDS_Queue_Add(ent, GDS_LOAD);
 		}
 #endif

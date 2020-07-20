@@ -98,8 +98,9 @@ void GiveRuneToArmory(item_t *rune)
 
 
 	//remove the unique flag if it's there
-	if (type & ITEM_UNIQUE)
-		type ^= ITEM_UNIQUE;
+	// az: Why?
+    //	if (type & ITEM_UNIQUE)
+    //		type ^= ITEM_UNIQUE;
 
 	//select the correct item list
 	switch(type)

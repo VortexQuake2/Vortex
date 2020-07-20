@@ -1336,6 +1336,8 @@ can mess up the server's parsing
 */
 qboolean Info_Validate (char *s)
 {
+    if (!s || !s[0])
+        return false;
 	if (strstr (s, "\""))
 		return false;
 	if (strstr (s, ";"))

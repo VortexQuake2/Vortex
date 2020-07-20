@@ -983,7 +983,7 @@ void V_PrintItemProperties(edict_t *player, item_t *item)
 	//Did they find a unique?
 	if (strlen(item->name) > 0)
 	{
-		gi.centerprintf(player, "WOW! It's \"%s\"!!\n", item->name);
+		safe_centerprintf(player, "WOW! It's \"%s\"!!\n", item->name);
 		return;
 	}
 
@@ -1019,7 +1019,7 @@ void V_PrintItemProperties(edict_t *player, item_t *item)
 		strcat(buf, va("\n    %s(%d)", temp, item->modifiers[i].value));
 	}
 	
-	gi.centerprintf(player, "%s\n", buf);
+	safe_centerprintf(player, "%s\n", buf);
 }
 
 //************************************************************************************************

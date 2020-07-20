@@ -362,7 +362,7 @@ void NotifyAllies (edict_t *ent, int msgtype, char *s)
 		if (cl_ent == ent)
 			continue;
 		if (msgtype)
-			gi.centerprintf(cl_ent, "%s", s);
+			safe_centerprintf(cl_ent, "%s", s);
 		else
 			safe_cprintf(cl_ent, PRINT_HIGH, "%s", s);
 	}
@@ -434,7 +434,7 @@ void AllyID (edict_t *ent)
 
 		if (IsAlly(ent, e))
 		{
-			gi.centerprintf(ent, "Ally: %s\n", e->client->pers.netname);
+			safe_centerprintf(ent, "Ally: %s\n", e->client->pers.netname);
 			ent->msg_time = level.time + 5;
 		}
 	}
@@ -465,7 +465,7 @@ void ShowAllyInviteMenu_handler (edict_t *ent, int option)
 	if (option == 1)
 	{
 		// notify inviter and his previous allies, if any
-		gi.centerprintf(e, "Now allied with %s\n", ent->client->pers.netname);
+		safe_centerprintf(e, "Now allied with %s\n", ent->client->pers.netname);
 		NotifyAllies(e, CENTERPRINT, va("Now allied with %s\n", ent->client->pers.netname));
 
 		// notify invitee's allies
@@ -678,7 +678,7 @@ void ShowRemoveAllyMenu_handler (edict_t *ent, int option)
 	NotifyAllies(ent, CENTERPRINT, va("Ally removed: %s\n", e->client->pers.netname));
 
 	// notify removed player
-	gi.centerprintf(e, "No longer allied with: %s\n", ent->client->pers.netname);
+	safe_centerprintf(e, "No longer allied with: %s\n", ent->client->pers.netname);
 
 	// notify player
 	safe_cprintf(ent, PRINT_HIGH, "Ally removed.\n");

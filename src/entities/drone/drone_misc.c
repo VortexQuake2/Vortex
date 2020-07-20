@@ -1124,7 +1124,7 @@ void DroneSelect (edict_t *ent)
 	{
 		if ((slot = DroneAlreadySelected(ent, drone)) != NULL)
 		{
-			gi.centerprintf(ent, "Drone standing down.\n");
+			safe_centerprintf(ent, "Drone standing down.\n");
 			*slot = NULL;
 			drone->monsterinfo.selected_time = 0;
 			DroneBlink(ent); // all selected monsters blink
@@ -1133,14 +1133,14 @@ void DroneSelect (edict_t *ent)
 
 		if ((slot = GetFreeSelectSlot(ent)) != NULL)
 		{
-			gi.centerprintf(ent, "Drone awaiting orders.\n");
+			safe_centerprintf(ent, "Drone awaiting orders.\n");
 			*slot = drone;
 			DroneBlink(ent); // all selected monsters blink
 			return;
 		}
 
 		// the queue is full, so bump one of our already selected monsters
-		gi.centerprintf(ent, "Drone awaiting orders.\n");
+		safe_centerprintf(ent, "Drone awaiting orders.\n");
 		ent->selected[0] = drone;
 		DroneBlink(ent);
 	}
@@ -1203,9 +1203,9 @@ void DroneMove (edict_t *ent)
 		if (OnSameTeam(target, ent))
 		{
 			if (target->client)
-				gi.centerprintf(ent, "Drones will follow %s.\n", target->client->pers.netname);
+				safe_centerprintf(ent, "Drones will follow %s.\n", target->client->pers.netname);
 			else
-				gi.centerprintf(ent, "Drones will follow target.\n");
+				safe_centerprintf(ent, "Drones will follow target.\n");
 			for (i=0; i<4; i++) {
 				if (G_EntIsAlive(ent->selected[i])
 					&& !(ent->selected[i]->spawnflags & AI_STAND_GROUND))
@@ -1218,9 +1218,9 @@ void DroneMove (edict_t *ent)
 		else
 		{
 			if (target->client)
-				gi.centerprintf(ent, "Drones will attack %s.\n", target->client->pers.netname);
+				safe_centerprintf(ent, "Drones will attack %s.\n", target->client->pers.netname);
 			else
-				gi.centerprintf(ent, "Drones will attack target.\n");
+				safe_centerprintf(ent, "Drones will attack target.\n");
 			for (i=0; i<4; i++) {
 				if (G_EntIsAlive(ent->selected[i])
 					&& !(ent->selected[i]->spawnflags & AI_STAND_GROUND))
@@ -1247,7 +1247,7 @@ void DroneMove (edict_t *ent)
 		return;
 	}
 
-	gi.centerprintf(ent, "Drones changing position.\n");
+	safe_centerprintf(ent, "Drones changing position.\n");
 	e = SpawnCombatPoint(ent, tr.endpos);
 	ent->selectedsentry = e;
 	for (i=0; i<4; i++) {
@@ -1939,7 +1939,7 @@ void DroneAttack (edict_t *ent, edict_t *other)
 	int		i;
 	edict_t *e;
 
-	gi.centerprintf(ent, "Monsters will attack target.\n");
+	safe_centerprintf(ent, "Monsters will attack target.\n");
 
 	for (i = 0; i < 4; i++)
 	{
@@ -1960,7 +1960,7 @@ void DroneFollow (edict_t *ent, edict_t *other)
 	int		i;
 	edict_t *e;
 
-	gi.centerprintf(ent, "Monsters will follow target.\n");
+	safe_centerprintf(ent, "Monsters will follow target.\n");
 
 	for (i = 0; i < 4; i++)
 	{
@@ -2058,18 +2058,18 @@ void DroneMovePosition (edict_t *ent, vec3_t pos)
 		// two different locations selected?
 		if (Get2dDistance(ent->client->lastPosition, pos) > 64)
 		{
-			gi.centerprintf(ent, "Monsters will patrol.\n");
+			safe_centerprintf(ent, "Monsters will patrol.\n");
 			cmd = 1; // patrol between two points
 		}
 		else
 		{
-			gi.centerprintf(ent, "Monsters will defend position.\n");
+			safe_centerprintf(ent, "Monsters will defend position.\n");
 			cmd = 2; // defend/stay in this spot
 		}
 	}
 	else
 	{
-		gi.centerprintf(ent, "Monsters will move to spot.\n");
+		safe_centerprintf(ent, "Monsters will move to spot.\n");
 		cmd = 3; // move to this spot
 	}
 
@@ -2117,7 +2117,7 @@ void DroneToggleStand (edict_t *ent, edict_t *monster)
 {
 	if (monster->monsterinfo.aiflags & AI_STAND_GROUND)
 	{
-		gi.centerprintf(ent, "Monster will hunt.\n");
+		safe_centerprintf(ent, "Monster will hunt.\n");
 
 		// if we have no melee function, then make sure we can circle strafe
 		if (!monster->monsterinfo.melee)
@@ -2132,7 +2132,7 @@ void DroneToggleStand (edict_t *ent, edict_t *monster)
 	}
 	else
 	{
-		gi.centerprintf(ent, "Monster will stand ground.\n");
+		safe_centerprintf(ent, "Monster will stand ground.\n");
 
 		monster->monsterinfo.aiflags |= AI_STAND_GROUND;
 		monster->monsterinfo.leader = NULL;
@@ -2177,12 +2177,12 @@ void MonsterToggleShowpath (edict_t *ent)
 	{
 		if (tr.ent->showPathDebug)
 		{
-			gi.centerprintf(ent, "Show path OFF\n");
+			safe_centerprintf(ent, "Show path OFF\n");
 			tr.ent->showPathDebug = 0;
 		}
 		else
 		{
-			gi.centerprintf(ent, "Show path ON\n");
+			safe_centerprintf(ent, "Show path ON\n");
 			tr.ent->showPathDebug = 1;
 		}
 	}
@@ -2270,7 +2270,7 @@ void MonsterFollowMe (edict_t *ent)
 	int		i;
 	edict_t *e;
 
-	gi.centerprintf(ent, "Monsters will follow you.\n");
+	safe_centerprintf(ent, "Monsters will follow you.\n");
 
 	// search selected monsters
 	for (i = 0; i < 3; i++)
@@ -2307,13 +2307,13 @@ void MonsterAttack (edict_t *ent)
 			goal = CTF_GetFlagBaseEnt(2);
 		else
 			goal = CTF_GetFlagBaseEnt(1);
-		gi.centerprintf(ent, "Monsters will attack enemy base.\n");
+		safe_centerprintf(ent, "Monsters will attack enemy base.\n");
 	}
 	// FIXME: this doesn't work if monster spawns are spread around
 	else if (invasion->value)
 	{
 		goal = G_FindEntityByMtype(INVASION_MONSTERSPAWN, goal);
-		gi.centerprintf(ent, "Monsters will attack monster base.\n");
+		safe_centerprintf(ent, "Monsters will attack monster base.\n");
 	}
 
 	if (goal)
@@ -2386,7 +2386,7 @@ void Cmd_Drone_f (edict_t *ent)
 /*
 	if (!Q_strcasecmp(s, "stand"))
 	{
-		gi.centerprintf(ent, "Drones will hold position.\n");
+		safe_centerprintf(ent, "Drones will hold position.\n");
 		for (i=0; i<3; i++) {
 			// search queue for drones
 			if (G_EntIsAlive(ent->selected[i]))
@@ -2411,13 +2411,13 @@ void Cmd_Drone_f (edict_t *ent)
 
 	if (!Q_strcasecmp(s, "count"))
 	{
-		gi.centerprintf(ent, "You have %d drones.\n%d/%d slots used.", ent->num_monsters_real, ent->num_monsters, (int)MAX_MONSTERS);
+		safe_centerprintf(ent, "You have %d drones.\n%d/%d slots used.", ent->num_monsters_real, ent->num_monsters, (int)MAX_MONSTERS);
 		return;
 	}
 /*
 	if (!Q_strcasecmp(s, "hunt"))
 	{
-		gi.centerprintf(ent, "Drones will hunt.\n");
+		safe_centerprintf(ent, "Drones will hunt.\n");
 		for (i=0; i<3; i++) {
 			// search queue for drones
 			if (G_EntIsAlive(ent->selected[i]))

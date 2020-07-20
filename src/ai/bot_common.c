@@ -239,6 +239,9 @@ void safe_cprintf (edict_t *ent, int printlevel, char *fmt, ...)
 	if (ent && (!ent->inuse || ent->ai.is_bot))
 		return;
 
+	if (ent && !ent->client) // az: it happens.
+		return;
+
 	va_start (argptr,fmt);
 	len = vsprintf (bigbuffer,fmt,argptr);
 	va_end (argptr);
@@ -256,7 +259,13 @@ void safe_centerprintf (edict_t *ent, char *fmt, ...)
 	va_list		argptr;
 	int len;
 
+	if (!ent)
+	    return;
+
 	if (!ent->inuse || ent->ai.is_bot)
+		return;
+
+	if (!ent->client)
 		return;
 	
 	va_start (argptr,fmt);

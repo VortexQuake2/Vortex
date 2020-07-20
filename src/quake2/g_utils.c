@@ -488,7 +488,7 @@ void G_UseTargets (edict_t *ent, edict_t *activator)
 //
 	if ((ent->message) && !(activator->svflags & SVF_MONSTER))
 	{
-		gi.centerprintf (activator, "%s", ent->message);
+		safe_centerprintf (activator, "%s", ent->message);
 		if (ent->noise_index)
 			gi.sound (activator, CHAN_AUTO, ent->noise_index, 1, ATTN_NORM, 0);
 		else
@@ -1575,7 +1575,7 @@ void PrintNumEntities (qboolean list)
 		i++;
 	}
 
-	gi.cprintf(NULL, PRINT_HIGH, "INFO: %d entities in use (%d%c capacity).\n",
+	gi.dprintf("INFO: %d entities in use (%d%c capacity).\n",
 		i, (int)(100*((float)i/MAX_EDICTS)), '%');
 }
 

@@ -182,7 +182,7 @@ qboolean dom_pickupflag (edict_t *ent, edict_t *other)
 	for (i=0 ; i<game.maxclients ; i++) {
 		cl_ent = g_edicts+1+i;
 		if (G_EntExists(cl_ent) && (cl_ent->teamnum == other->teamnum) && (cl_ent != other))
-			gi.centerprintf(cl_ent, "Protect the flag carrier!\n");
+			safe_centerprintf(cl_ent, "Protect the flag carrier!\n");
 	}
 
 	DEFENSE_TEAM = other->teamnum;

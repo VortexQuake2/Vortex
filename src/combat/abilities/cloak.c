@@ -15,7 +15,7 @@ void cloak(edict_t *ent)
 			ent->client->cloaking = false;
 			ent->client->cloakable = false;
 			if (ent->myskills.abilities[CLOAK].current_level < 1)
-				gi.cprintf(ent, PRINT_HIGH, "You can't use cloaking, you never trained in it!\n");
+				safe_cprintf(ent, PRINT_HIGH, "You can't use cloaking, you never trained in it!\n");
 		}
 		return;
 	}

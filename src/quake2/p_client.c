@@ -2140,10 +2140,12 @@ void ClientUserinfoChanged (edict_t *ent, char *userinfo)
 	int		playernum;
 	char	ip[16];
 	
-	if (debuginfo->value > 1)
-		gi.dprintf("ClientUserinfoChanged()\n");
-	// check for malformed or illegal info strings
+	if (debuginfo->value > 1) {
+        gi.dprintf("ClientUserinfoChanged(): %s\n", userinfo);
+    }
 
+
+	// check for malformed or illegal info strings
 	if (!Info_Validate(userinfo))
 	{
 		strcpy (userinfo, "\\name\\badinfo\\skin\\male/grunt");

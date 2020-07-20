@@ -22,7 +22,7 @@ qboolean station_findtarget (edict_t *self)
 			continue;
 		if (!OnSameTeam(self, e))
 		{
-			gi.centerprintf(self->creator, "%s is using\nyour supply station!\n", 
+			safe_centerprintf(self->creator, "%s is using\nyour supply station!\n", 
 				e->client->pers.netname);
 			continue;
 		}
@@ -406,9 +406,9 @@ void supplystation_pain (edict_t *self, edict_t *other, float kick, int damage)
 	if (G_EntExists(other) && !OnSameTeam(self, other) && (level.time > self->random))
 	{
 		if (other->client)
-			gi.centerprintf(self->creator, "%s is attacking\nyour station!\n", other->client->pers.netname);
+			safe_centerprintf(self->creator, "%s is attacking\nyour station!\n", other->client->pers.netname);
 		else
-			gi.centerprintf(self->creator, "Your station is under\nattack!");
+			safe_centerprintf(self->creator, "Your station is under\nattack!");
 		self->random = level.time + 5;
 	}
 }

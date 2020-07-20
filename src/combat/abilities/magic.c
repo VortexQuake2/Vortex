@@ -799,11 +799,11 @@ void Cmd_Meditate_f (edict_t *ent)
 
 	if (ent->manacharging)
 	{
-		gi.cprintf(ent, PRINT_HIGH, "Charging mana.\n");
+		safe_cprintf(ent, PRINT_HIGH, "Charging mana.\n");
 	}
 	else
 	{
-		gi.cprintf(ent, PRINT_HIGH, "No longer charging mana.\n");
+		safe_cprintf(ent, PRINT_HIGH, "No longer charging mana.\n");
 		ent->client->ability_delay = level.time + 2;
 	}
 

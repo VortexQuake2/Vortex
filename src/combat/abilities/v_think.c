@@ -95,12 +95,12 @@ void think_chat_protect_activate(edict_t *ent) {
             if (!trading->value && !ent->automag) // trading mode no chat protection or if automagging either
             {
                 if (sf2qf(ent->client->idle_frames) == CHAT_PROTECT_FRAMES - 100)
-                    gi.centerprintf(ent, "10 seconds to chat-protect.\n");
+                    safe_centerprintf(ent, "10 seconds to chat-protect.\n");
                 else if (sf2qf(ent->client->idle_frames) == CHAT_PROTECT_FRAMES - 50)
-                    gi.centerprintf(ent, "5 seconds to chat-protect.\n");
+                    safe_centerprintf(ent, "5 seconds to chat-protect.\n");
 
                 if (sf2qf(ent->client->idle_frames) == qf2sf(CHAT_PROTECT_FRAMES)) {
-                    gi.centerprintf(ent, "Now in chat-protect mode.\n");
+                    safe_centerprintf(ent, "Now in chat-protect mode.\n");
                     ent->flags |= FL_CHATPROTECT;
                     if (!pvm->value) {
                         ent->solid = SOLID_NOT;
@@ -121,9 +121,9 @@ void think_player_inactivity(edict_t *ent) {
 
         if (!ent->myskills.administrator && !trading->value) {
             if (ent->client->still_frames == frames - 300)
-                gi.centerprintf(ent, "You have 30 seconds to stop\nidling or you will be kicked.\n");
+                safe_centerprintf(ent, "You have 30 seconds to stop\nidling or you will be kicked.\n");
             else if (ent->client->still_frames == frames - 100)
-                gi.centerprintf(ent, "You have 10 seconds to stop\nidling or you will be kicked.\n");
+                safe_centerprintf(ent, "You have 10 seconds to stop\nidling or you will be kicked.\n");
 
             if (ent->client->still_frames > frames) {
                 ent->client->still_frames = 0;
@@ -454,7 +454,7 @@ void think_ability_cloak(edict_t *ent) {
             ent->client->cloaking = false;
             ent->svflags &= ~SVF_NOCLIENT;
 
-        } else if ((ent->myskills.abilities[CLOAK].current_level == 10) && (talentlevel == 4)) {
+        } else if ((ent->myskills.abilities[CLOAK].current_level == 10) && (talentlevel == 4) && !V_HasSummons(ent)) {
             if (!ent->client->cloaking) // Only when a switch is done
                 vrx_remove_player_summonables(ent); // 3.75 no more cheap apps with cloak+laser/monster/etc
 

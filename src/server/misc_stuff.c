@@ -619,7 +619,7 @@ void V_PrintSayPrefix (edict_t *speaker, edict_t *listener, char *text)
 
 	if (G_IsSpectator(speaker))
 	{
-		gi.cprintf(listener, PRINT_CHAT, "(Spectator) %s", text);
+		safe_cprintf(listener, PRINT_CHAT, "(Spectator) %s", text);
 		return;
 	}
 
@@ -649,5 +649,5 @@ void V_PrintSayPrefix (edict_t *speaker, edict_t *listener, char *text)
 	}
 	Com_sprintf (temp, sizeof(temp), "%s%s", temp, text);
 
-	gi.cprintf (listener, PRINT_CHAT, "%s", temp);
+	safe_cprintf (listener, PRINT_CHAT, "%s", temp);
 }

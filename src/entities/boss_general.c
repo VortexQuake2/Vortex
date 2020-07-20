@@ -489,9 +489,9 @@ qboolean boss_checkstatus (edict_t *self)
 	if (level.time > self->wait)
 	{
 		if (self->health <= (0.1*self->max_health))
-			gi.centerprintf(self->owner, "***HEALTH LEVEL CRITICAL***\n");
+			safe_centerprintf(self->owner, "***HEALTH LEVEL CRITICAL***\n");
 		else if (self->health <= (0.3*self->max_health))
-			gi.centerprintf(self->owner, "Low health warning.\n");
+			safe_centerprintf(self->owner, "Low health warning.\n");
 		self->wait = level.time + BOSS_STATUS_DELAY;
 	}
 

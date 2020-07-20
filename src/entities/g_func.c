@@ -1161,7 +1161,7 @@ void door_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *sur
 
 	if(!other->client)
 	{
-		gi.centerprintf (other, "%s", self->message);
+		safe_centerprintf (other, "%s", self->message);
 		gi.sound (other, CHAN_AUTO, gi.soundindex ("misc/talk1.wav"), 1, ATTN_NORM, 0);
 	}
 }

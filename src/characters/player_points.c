@@ -149,7 +149,7 @@ void vrx_check_for_levelup(edict_t *ent) {
     }
 
     if (levelup) {
-        gi.centerprintf(ent, "Welcome to level %d!\n You need %d experience \nto get to the next level.\n",
+        safe_centerprintf(ent, "Welcome to level %d!\n You need %d experience \nto get to the next level.\n",
                         ent->myskills.level, ent->myskills.next_level - ent->myskills.experience);
         gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/pc_up.wav"), 1, ATTN_STATIC, 0);
     }
@@ -431,7 +431,7 @@ int vrx_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) {
 
     vrx_add_credits(attacker, credits);
 
-    if (!attacker->ai.is_bot && (exp_points > 0 || credits > 0)) {
+    if (!attacker->ai.is_bot && (exp_points > 0 || credits > 0) && attacker->client) {
         if (targ->client) {
             strcat(name, targetclient->client->pers.netname);
             clevel = targetclient->myskills.level;

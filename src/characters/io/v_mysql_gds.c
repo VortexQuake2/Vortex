@@ -318,7 +318,7 @@ void V_GDS_Queue_Add(edict_t *ent, int operation)
 
 	if (!GDS_MySQL)
 	{
-		gi.cprintf(ent, PRINT_HIGH, "It seems that there's no connection to the database. Contact an admin ASAP.\n");
+		safe_cprintf(ent, PRINT_HIGH, "It seems that there's no connection to the database. Contact an admin ASAP.\n");
 		return;
 	}
 
@@ -1515,18 +1515,18 @@ void HandleStatus(edict_t *player)
 	switch (player->ThreadStatus)
 	{
 	case GDS_STATUS_ALREADY_PLAYING:
-		gi.centerprintf(player, "You seem to be already playing in this or another server.\nIf you're not, wait until tomorrow or ask an admin\nto free your character.\n");
+		safe_centerprintf(player, "You seem to be already playing in this or another server.\nIf you're not, wait until tomorrow or ask an admin\nto free your character.\n");
 	case GDS_STATUS_CHARACTER_SAVED:
 		/*if (player->inuse)
 			gi.cprintf(player, PRINT_LOW, "Character saved!\n");*/
 		break;
 	case GDS_STATUS_CHARACTER_DOES_NOT_EXIST: // does not exist?
-		gi.centerprintf(player, "Creating a new Character!\n");
+		safe_centerprintf(player, "Creating a new Character!\n");
 		newPlayer(player);
 		OpenModeMenu(player);
 		break;
 	case GDS_STATUS_CHARACTER_LOADED:
-		gi.centerprintf(player, "Your character was loaded succesfully.");
+		safe_centerprintf(player, "Your character was loaded succesfully.");
 		OpenModeMenu(player);
 		break;
 	case GDS_STATUS_OK:

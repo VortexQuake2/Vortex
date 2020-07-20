@@ -206,7 +206,7 @@ void trigger_key_use (edict_t *self, edict_t *other, edict_t *activator)
 			return;
 		self->touch_debounce_time = level.time + 5.0;
 		if(!(activator->svflags & SVF_MONSTER))
-				gi.centerprintf (activator, "You need the %s", self->item->pickup_name);
+				safe_centerprintf (activator, "You need the %s", self->item->pickup_name);
 		gi.sound (activator, CHAN_AUTO, gi.soundindex ("misc/keytry.wav"), 1, ATTN_NORM, 0);
 		return;
 	}
@@ -316,7 +316,7 @@ void trigger_counter_use(edict_t *self, edict_t *other, edict_t *activator)
 	{
 		if (! (self->spawnflags & 1) && !(self->svflags & SVF_MONSTER))
 		{
-			gi.centerprintf(activator, "%i more to go...", self->count);
+			safe_centerprintf(activator, "%i more to go...", self->count);
 			gi.sound (activator, CHAN_AUTO, gi.soundindex ("misc/talk1.wav"), 1, ATTN_NORM, 0);
 		}
 		return;
@@ -324,7 +324,7 @@ void trigger_counter_use(edict_t *self, edict_t *other, edict_t *activator)
 	
 	if (! (self->spawnflags & 1) && !(self->svflags & SVF_MONSTER))
 	{
-		gi.centerprintf(activator, "Sequence completed!");
+		safe_centerprintf(activator, "Sequence completed!");
 		gi.sound (activator, CHAN_AUTO, gi.soundindex ("misc/talk1.wav"), 1, ATTN_NORM, 0);
 	}
 	self->activator = activator;

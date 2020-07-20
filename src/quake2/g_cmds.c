@@ -143,7 +143,7 @@ void Cmd_Lockon_f (edict_t *ent, int toggle)
 		if (!player->inuse)
 			continue;
 		if (player->client->chase_target == ent)
-			gi.centerprintf(ent, "WARNING: You're being watched!\n");
+			safe_centerprintf(ent, "WARNING: You're being watched!\n");
 	}
 }
 

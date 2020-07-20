@@ -45,7 +45,7 @@ abilitydef_t ability_vampire[] = {
         {MIND_ABSORB,    0, DEFAULT_SOFTMAX,   0},
         {AMMO_STEAL,     0, DEFAULT_SOFTMAX,   0},
         {CONVERSION,     0, DEFAULT_SOFTMAX,   0},
-        {CLOAK,          1, 1,                0},
+        {CLOAK,          1, 10,                0},
         {-1,             0, 0,                 0} // Guardian (Add skills above this)
 };
 
@@ -245,7 +245,6 @@ int getHardMax(int index, qboolean general, int class) {
         case ENERGY_RESIST:
         case PIERCING_RESIST:
         case SPLASH_RESIST:
-        case CLOAK:
         case CREATE_QUAD:
         case CREATE_INVIN:
         case BOOST_SPELL:
@@ -257,7 +256,6 @@ int getHardMax(int index, qboolean general, int class) {
         case JETPACK:
         case SHIELD:
             return 1;
-            break;
 
         case GRAPPLE_HOOK:
             return 3;
@@ -339,7 +337,6 @@ int vrx_get_ability_upgrade_cost(int index) {
         case ID:
             return 2;
             //Abilities that cost 3 points
-        case CLOAK:
         case WORLD_RESIST:
         case BULLET_RESIST:
         case SHELL_RESIST:

@@ -230,10 +230,10 @@ void FlyerAttack (edict_t *ent)
 				if (ent->client->lock_frames == SMARTROCKET_LOCKFRAMES)
 				{
 					// let them know the rocket will seek
-					gi.centerprintf(ent, "Target locked\n");
+					safe_centerprintf(ent, "Target locked\n");
 					// warn their enemy
 					if (tr.ent->client)
-						gi.centerprintf(tr.ent, "Incoming rocket\n");
+						safe_centerprintf(tr.ent, "Incoming rocket\n");
 				}
 			}
 		}
@@ -257,7 +257,7 @@ void FlyerAttack (edict_t *ent)
 				int	quality = 10 * (ent->client->lock_frames - (SMARTROCKET_LOCKFRAMES - 1));
 				if (quality > 100)
 					quality = 100;
-				gi.centerprintf(ent, "Lock quality: %d%c", quality, '%');
+				safe_centerprintf(ent, "Lock quality: %d%c", quality, '%');
 			}
 
 			// fire smart rocket

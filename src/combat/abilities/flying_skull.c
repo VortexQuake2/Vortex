@@ -42,7 +42,7 @@ qboolean skull_checkposition (edict_t *self)
 		{
 			self->activator->skull = NULL;
 			self->activator->client->pers.inventory[power_cube_index] += SKULL_COST;
-			gi.centerprintf(self->activator, "Skull was removed.\n");
+			safe_centerprintf(self->activator, "Skull was removed.\n");
 		}
 		G_FreeEdict(self);
 		gi.dprintf("WARNING: Skull removed from solid.\n");
@@ -521,7 +521,7 @@ void skull_think (edict_t *self)
 
 void skull_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	gi.centerprintf(self->activator, "Hell spawn died.\n");
+	safe_centerprintf(self->activator, "Hell spawn died.\n");
 	skull_remove(self);
 }
 

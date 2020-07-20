@@ -284,7 +284,7 @@ void GetChaseTarget (edict_t *ent)//GHz
 		UpdateChaseCam(ent);
 		return;
 	}
-	gi.centerprintf(ent, "Nothing to chase.\n");
+	safe_centerprintf(ent, "Nothing to chase.\n");
 }
 			
 

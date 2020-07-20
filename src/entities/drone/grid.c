@@ -1142,7 +1142,7 @@ void DrawChildLinks (edict_t *ent)
 	}
 
 	if (!(level.framenum%20))
-		gi.centerprintf(ent, "Node %d has %d child links @ %.0f.\n", 
+		safe_centerprintf(ent, "Node %d has %d child links @ %.0f.\n", 
 			NearestNodeNumber(ent->s.origin, 255, true), count, maxDist);
 }
 

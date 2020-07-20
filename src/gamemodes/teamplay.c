@@ -251,7 +251,7 @@ void sortTeamsByLevel()
                     team2score += GetLevelValue(playerlist[i]);//playerlist[i]->myskills.level + 1;
                }
 			   
-			   gi.centerprintf(playerlist[i], "You are on the %s team\n", TeamName(playerlist[i]));
+			   safe_centerprintf(playerlist[i], "You are on the %s team\n", TeamName(playerlist[i]));
 
 			   // set team skin
 			   s = Info_ValueForKey (playerlist[i]->client->pers.userinfo, "skin");
@@ -922,7 +922,7 @@ void retard_pain (edict_t *self, edict_t *other, float kick, int damage)
 			continue;
 		if (level.time > cl_ent->msg_time)
 		{
-			gi.centerprintf(cl_ent, "Retard under attack!\n%d health left.", self->health);
+			safe_centerprintf(cl_ent, "Retard under attack!\n%d health left.", self->health);
 			cl_ent->msg_time = level.time + RETARD_MSG_DELAY;
 		}
 	}

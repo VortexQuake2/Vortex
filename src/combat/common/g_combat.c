@@ -101,7 +101,7 @@ qboolean HitTheWeapon (edict_t *targ, edict_t *attacker, const vec3_t point, int
 	//4.2 relaxed weapon knock requirements; just hit them above the waistline
 	if (infront(targ, attacker) && (z_rel >= 0) && (random() > 0.4))
 	{
-		gi.centerprintf(targ, "Your weapon was knocked!\n");
+		safe_centerprintf(targ, "Your weapon was knocked!\n");
 		targ->knockweapon_debounce_time = level.time + 2.0;
 		return true;
 	}
