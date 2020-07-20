@@ -1856,6 +1856,18 @@ qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax)
 		VectorSet (boxmin, -24, -24, -24);
 		VectorSet (boxmax, 24, 24, 32);
 		break;
+	case M_BERSERK: // az: these were missing...
+		VectorSet(boxmin, -16, -16, -24);
+		VectorSet(boxmax, 16, 16, -8);
+		break;
+	case M_GLADIATOR:
+		VectorSet(boxmin, -24, -24, -24);
+		VectorSet(boxmax, 24, 24, 48);
+		break;
+	case M_INFANTRY:
+		VectorSet(boxmin, -16, -16, -24);
+		VectorSet(boxmax, 16, 16, 32);
+		break;
 	default:
 		//gi.dprintf("failed to set bbox\n");
 		return false;
