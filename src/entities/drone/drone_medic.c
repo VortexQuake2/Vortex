@@ -571,7 +571,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 		target->monsterinfo.level = r_level;
 		M_SetBoundingBox(target->mtype, bmin, bmax);
 
-		if (G_IsValidLocation(target, target->s.origin, bmin, bmax) && M_Initialize(ent, target))
+		if (G_IsValidLocation(target, target->s.origin, bmin, bmax) && M_Initialize(ent, target, 0.0f))
 		{
 			// restore this drone
 			target->monsterinfo.slots_freed = false; // reset freed flag
@@ -638,7 +638,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 
 		e->activator = ent;
 		e->monsterinfo.level = r_level;
-		M_Initialize(ent, e);
+		M_Initialize(ent, e, 0.0f);
 		e->health = r_modifier*e->max_health;
 		e->monsterinfo.power_armor_power = r_modifier*e->monsterinfo.max_armor;
 		e->monsterinfo.resurrected_time = level.time + 10.0;

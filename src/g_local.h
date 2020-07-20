@@ -2083,7 +2083,7 @@ qboolean M_Upkeep(edict_t *self, int delay, int upkeep_cost);
 void M_FindPath (edict_t *self, vec3_t goalpos, qboolean compute_path_now);
 void M_Remove (edict_t *self, qboolean refund, qboolean effect);
 qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax);
-qboolean M_Initialize (edict_t *ent, edict_t *monster);
+qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus);
 void M_Notify (edict_t *monster);
 void M_BodyThink (edict_t *self);
 void M_PrepBodyRemoval (edict_t *self);

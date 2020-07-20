@@ -34,7 +34,7 @@ int eqSetItems(edict_t *ent, item_t *rune)
 	if (rune->setCode == 0)
 		return 0;
 
-	for (i=0; i < 4; ++i)	//loop through only the equip slots
+	for (i=0; i < 3; ++i)	//loop through only the equip slots
 	{
 		if ((ent->myskills.items[i].itemtype != TYPE_NONE) && (ent->myskills.items[i].setCode == rune->setCode))
 			count++;

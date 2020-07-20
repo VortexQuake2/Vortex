@@ -131,7 +131,7 @@ LEVELUP_POWERCUBES_NECROMANCER = 10
 TBALLS_RESPAWN = 2
 
 -- Respawn Power Cubes
-POWERCUBES_RESPAWN                       = 25
+POWERCUBES_RESPAWN                       = 50
 
 -- Ammo Pickups
 SHELLS_PICKUP                            = 10
@@ -613,10 +613,10 @@ SKULL_COST                               = 100
 SKULL_REGEN_FRAMES                       = 400
 SKULL_DELAY                              = 2
 SKULL_SEARCH_TIMEOUT                     = 50
-M_SOLDIER_INITIAL_HEALTH                 = 45
-M_SOLDIER_ADDON_HEALTH                   = 8
-M_SOLDIER_INITIAL_ARMOR                  = 20
-M_SOLDIER_ADDON_ARMOR                    = 8
+M_SOLDIER_INITIAL_HEALTH                 = 50
+M_SOLDIER_ADDON_HEALTH                   = 15
+M_SOLDIER_INITIAL_ARMOR                  = 25
+M_SOLDIER_ADDON_ARMOR                    = 15
 
 -- Player Berserk
 BERSERK_SLASH_INITIAL_DAMAGE             = 100

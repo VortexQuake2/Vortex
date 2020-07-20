@@ -194,7 +194,12 @@ void FindMonsterSpot(edict_t *self) {
 
         // spawn monsters until we reach the limit
         while (total_monsters < max_monsters) {
-            if ((scan = vrx_create_new_drone(self, GetRandom(1, 9), true)) != NULL) {
+            int rnd;
+            do {
+                rnd = GetRandom(1, 11); // az: don't spawn soldiers
+            } while (rnd == 10);
+
+            if ((scan = vrx_create_new_drone(self, rnd, true)) != NULL) {
                 if (scan->monsterinfo.walk && random() > 0.5)
                     scan->monsterinfo.walk(scan);
                 total_monsters++;

@@ -612,7 +612,7 @@ void vrx_roll_to_make_champion(edict_t *drone, int *drone_type)
 		drone->monsterinfo.bonus_flags |= BF_CHAMPION;
 
 		if ( (!invasion->value && GetRandom(1, 100) <= 33) // 33% chance to spawn a special champion
-			|| (invasion->value == 2 && GetRandom(1, 100) <= 10) )  // 5% chance in invasion.
+			|| (invasion->value == 2 && GetRandom(1, 100) <= 5) )  // 5% chance in invasion.
 		{
 			int r = GetRandom(1, 7);
 
@@ -1762,7 +1762,7 @@ qboolean M_Upkeep (edict_t *self, int delay, int upkeep_cost)
 	return true;
 }
 
-qboolean M_Initialize (edict_t *ent, edict_t *monster)
+qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 {
 	int		talentLevel;
 	// int 	talentLevel2;
@@ -1780,6 +1780,7 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster)
 	case M_BERSERK: init_drone_berserk(monster); break;
 	case M_SOLDIER: case M_SOLDIERLT: case M_SOLDIERSS: init_drone_soldier(monster); break;
 	case M_GLADIATOR: init_drone_gladiator(monster); break;
+	case M_INFANTRY: init_drone_infantry(monster); break;
 	default: return false;
 	}
 
@@ -1790,7 +1791,7 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster)
         talentLevel = vrx_get_talent_level(ent, TALENT_CORPULENCE);
 		if(talentLevel > 0)	mult +=	0.05 * talentLevel;	//+5% per upgrade
 
-		mult += 0.5; // base player's monster multiplier.
+		mult += dur_bonus; // caller defined monster multiplier.
 	}
 
 	monster->health *= mult;
@@ -1899,6 +1900,7 @@ char *GetMonsterKindString (int mtype)
 		case TOTEM_WATER: return "Water Totem";
 		case M_ALARM: return "Laser Trap";
 		case M_GLADIATOR: return "Gladiator";
+		case M_INFANTRY: return "Enforcer";
         default: return "Monster";
     }
 }
