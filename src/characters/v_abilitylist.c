@@ -3,27 +3,28 @@
 abilitydef_t *abilities_by_index[MAX_ABILITIES];
 
 abilitydef_t ability_general[] = {
-        {VITALITY,        0, 10,              1},
-        {MAX_AMMO,        0, 10,              1},
-        {POWER_REGEN,     1, 8,               1},
+        {VITALITY,        0, DEFAULT_SOFTMAX,  1},
+        {MAX_AMMO,        0, DEFAULT_SOFTMAX,  1},
+        {POWER_REGEN,     1, 8,                1},
         {WORLD_RESIST,    0, 1,                1},
-        {AMMO_REGEN,      0, 5,              1},
-        {REGENERATION,    0, 5,               1},
-        {STRENGTH,        0, 5,               1},
-        {HASTE,           0, 5,               1},
-        {RESISTANCE,      0, 5,               1},
-        {SHELL_RESIST,    0, 1,               1},
-        {BULLET_RESIST,   0, 1,               1},
-        {SPLASH_RESIST,   0, 1,               1},
-        {PIERCING_RESIST, 0, 1,               1},
-        {ENERGY_RESIST,   0, 1,               1},
-        {SCANNER,         0, 1,               1},
-        {HA_PICKUP,       0, DEFAULT_SOFTMAX, 1},
-        {-1,              0, 0,               0} // Guardian (Add skills above this)
+        {AMMO_REGEN,      0, DEFAULT_SOFTMAX,  1},
+        {REGENERATION,    0, 5,                1},
+        {STRENGTH,        0, 5,                1},
+        {HASTE,           0, 5,                1},
+        {RESISTANCE,      0, 5,                1},
+        {SHELL_RESIST,    0, 1,                1},
+        {BULLET_RESIST,   0, 1,                1},
+        {SPLASH_RESIST,   0, 1,                1},
+        {PIERCING_RESIST, 0, 1,                1},
+        {ENERGY_RESIST,   0, 1,                1},
+        {SCANNER,         0, 1,                1},
+        {HA_PICKUP,       0, DEFAULT_SOFTMAX,  1},
+        {FLASH,           0, 0,                1},
+        {-1,              0, 0,                0} // Guardian (Add skills above this)
 };
 
 abilitydef_t ability_soldier[] = {
-        {STRENGTH,      0, DEFAULT_SOFTMAX, 0},
+        {STRENGTH,      0, DEFAULT_SOFTMAX,   0},
         {RESISTANCE,    0, DEFAULT_SOFTMAX,   0},
         {NAPALM,        0, DEFAULT_SOFTMAX,   0},
         {SPIKE_GRENADE, 0, DEFAULT_SOFTMAX,   0},
@@ -37,7 +38,7 @@ abilitydef_t ability_soldier[] = {
 };
 
 abilitydef_t ability_vampire[] = {
-        {VAMPIRE,        0, DEFAULT_SOFTMAX, 0},
+        {VAMPIRE,        0, DEFAULT_SOFTMAX,   0},
         {GHOST,          0, DEFAULT_SOFTMAX,   0},
         {LIFE_DRAIN,     0, DEFAULT_SOFTMAX,   0},
         {FLESH_EATER,    0, DEFAULT_SOFTMAX,   0},
@@ -51,8 +52,8 @@ abilitydef_t ability_vampire[] = {
 
 abilitydef_t ability_necromancer[] = { // NECROMANCER
 
-        {MONSTER_SUMMON, 0, DEFAULT_SOFTMAX, 0},
-        {HELLSPAWN,      0, DEFAULT_SOFTMAX, 0},
+        {MONSTER_SUMMON, 0, DEFAULT_SOFTMAX,   0},
+        {HELLSPAWN,      0, DEFAULT_SOFTMAX,   0},
         {PLAGUE,         0, DEFAULT_SOFTMAX,   0},
         {LOWER_RESIST,   0, DEFAULT_SOFTMAX,   0},
         {AMP_DAMAGE,     0, DEFAULT_SOFTMAX,   0},
@@ -65,10 +66,10 @@ abilitydef_t ability_necromancer[] = { // NECROMANCER
 
 abilitydef_t ability_engineer[] = { // ENGINEER
         {PROXY,           0, DEFAULT_SOFTMAX,   0},
-        {BUILD_SENTRY,    0, DEFAULT_SOFTMAX, 0},
+        {BUILD_SENTRY,    0, DEFAULT_SOFTMAX,   0},
         {SUPPLY_STATION,  0, DEFAULT_SOFTMAX,   0},
         {BUILD_LASER,     0, DEFAULT_SOFTMAX,   0},
-        {MAGMINE,         0, DEFAULT_SOFTMAX, 0},
+        {MAGMINE,         0, DEFAULT_SOFTMAX,   0},
         {CALTROPS,        0, DEFAULT_SOFTMAX,   0},
         {AUTOCANNON,      0, DEFAULT_SOFTMAX,   0},
         {DETECTOR,        0, DEFAULT_SOFTMAX,   0},
@@ -85,14 +86,15 @@ abilitydef_t ability_shaman[] = { // SHAMAN
         {EARTH_TOTEM,   0, DEFAULT_SOFTMAX, 0},
         {DARK_TOTEM,    0, DEFAULT_SOFTMAX, 0},
         {NATURE_TOTEM,  0, DEFAULT_SOFTMAX, 0},
-        {HASTE,         0, 5,                 0},
-        {TOTEM_MASTERY, 1, 1,                 0},
-        {SUPER_SPEED,   1, 1,                 0},
-        {-1,            0, 0,                 0} // Guardian (Add skills above this)
+        {HASTE,         0, 5,               0},
+        {TOTEM_MASTERY, 1, 1,               0},
+        {SUPER_SPEED,   1, 1,               0},
+        {FURY,          0, DEFAULT_SOFTMAX, 0},
+        {-1,            0, 0,               0} // Guardian (Add skills above this)
 };
 
 abilitydef_t ability_mage[] = { // MAGE
-        {MAGICBOLT,       0, DEFAULT_SOFTMAX, 0},
+        {MAGICBOLT,       0, DEFAULT_SOFTMAX,   0},
         {NOVA,            0, DEFAULT_SOFTMAX,   0},
         {BOMB_SPELL,      0, DEFAULT_SOFTMAX,   0},
         {FORCE_WALL,      0, DEFAULT_SOFTMAX,   0},
@@ -114,16 +116,17 @@ abilitydef_t ability_cleric[] = {
         {DEFLECT,     0, DEFAULT_SOFTMAX, 0},
         {SUPER_SPEED, 1, 1,               0},
         {DOUBLE_JUMP, 1, 1,               0},
+        {HOLY_FREEZE, 0, DEFAULT_SOFTMAX, 0},
         {-1,          0, 0,               0} // Guardian (Add skills above this)
 };
 
 abilitydef_t ability_knight[] = { // knight
 
-        {ARMOR_UPGRADE, 0, DEFAULT_SOFTMAX,                0},
+        {ARMOR_UPGRADE, 0, DEFAULT_SOFTMAX,   0},
         {REGENERATION,  0, DEFAULT_SOFTMAX,   0},
         {POWER_SHIELD,  0, DEFAULT_SOFTMAX,   0},
         {ARMOR_REGEN,   0, DEFAULT_SOFTMAX,   0},
-        {BEAM,          0, DEFAULT_SOFTMAX, 0},
+        {BEAM,          0, DEFAULT_SOFTMAX,   0},
         {PLASMA_BOLT,   0, DEFAULT_SOFTMAX,   0},
         {SHIELD,        1, 1,                 0},
         {BOOST_SPELL,   1, 1,                 0},
@@ -144,7 +147,7 @@ abilitydef_t ability_alien[] = {
 };
 
 abilitydef_t ability_poltergeist[] = {
-        {MORPH_MASTERY, 1, 1,                 0},
+        {MORPH_MASTERY, 1, 1,               0},
         {BERSERK,       1, DEFAULT_SOFTMAX, 0},
         {CACODEMON,     1, DEFAULT_SOFTMAX, 0},
         {BLOOD_SUCKER,  1, DEFAULT_SOFTMAX, 0},
@@ -153,8 +156,8 @@ abilitydef_t ability_poltergeist[] = {
         {MUTANT,        1, DEFAULT_SOFTMAX, 0},
         {TANK,          1, DEFAULT_SOFTMAX, 0},
         {MEDIC,         1, DEFAULT_SOFTMAX, 0},
-        {GHOST,         1, DEFAULT_SOFTMAX,   0}, // given for free with morph mastery
-        {-1,            0, 0,                 0} // Guardian (Add skills above this)
+        {GHOST,         1, DEFAULT_SOFTMAX, 0}, // given for free with morph mastery
+        {-1,            0, 0,               0} // Guardian (Add skills above this)
 };
 
 abilitydef_t ability_weaponmaster[] = {
@@ -262,8 +265,8 @@ int getHardMax(int index, qboolean general, int class) {
 
             
         case HASTE:
-        case AMMO_REGEN:
-            return 5;
+        case CLOAK:
+            return 10;
 
         // Special cases for the non-general ability mode.
         // Falls through to the default case...
