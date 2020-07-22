@@ -155,14 +155,14 @@ void vrx_reset_weapon_maximums(edict_t *ent)
 					if (j < 3)
 					{
                         ent->myskills.weapons[i].mods[j].soft_max = 10;
-                        ent->myskills.weapons[i].mods[j].hard_max = 20;
+                        ent->myskills.weapons[i].mods[j].hard_max = 30;
 					}
 					else
 					{
                         //Sword gets an extra bonus
                         if (j == 3 && i == WEAPON_SWORD) { // az note: this is sword burn
                             ent->myskills.weapons[i].mods[j].soft_max = 10;
-                            ent->myskills.weapons[i].mods[j].hard_max = 20;
+                            ent->myskills.weapons[i].mods[j].hard_max = 30;
 							continue;
                         }
 

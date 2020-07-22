@@ -514,7 +514,7 @@ void Weapon_Generic2(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
     // than a player model
     if (ent->deadflag || (ent->s.modelindex != 255) || (vrx_is_morphing_polt(ent))
         || (ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent)) // special rules, fc can't attack
-        || ((ent->client->respawn_time - (0.1 * FRAME_ACTIVATE_LAST)) > level.time) // VWep animations screw up corpses
+        || ((ent->client->respawn_time/* - (0.1 * FRAME_ACTIVATE_LAST)*/ ) > level.time) // VWep animations screw up corpses
         || (ent->flags & FL_WORMHOLE)//4.2 can't use weapons in wormhole
         || ent->shield) // can't use weapons while shield is deployed
         return;
@@ -1362,11 +1362,11 @@ void Weapon_Blaster(edict_t *ent) {
             // charge up weapon
             if (ent->client->refire_frames == 50) {
                 gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/noammo.wav"), 1, ATTN_NORM, 0);
-                safe_centerprintf(ent, "Blaster fully charged.\n(5.0x damage)\n");
+                gi.centerprintf(ent, "Blaster fully charged.\n(5.0x damage)\n");
             }
 
             if (ent->client->refire_frames == 25)
-                safe_centerprintf(ent, "Blaster 50%c charged.\n(2.5x damage)\n", '%');
+                gi.centerprintf(ent, "Blaster 50%c charged.\n(2.5x damage)\n", '%');
             // dont fire yet
             ent->client->buttons &= ~BUTTON_ATTACK;
             ent->client->latched_buttons &= ~BUTTON_ATTACK;

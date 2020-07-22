@@ -332,9 +332,9 @@ void INV_AwardPlayers(void)
 			continue;
 
 		if (invasion->value == 2)
-			points = player->client->resp.score*((float)num_spawns / invasion_max_playerspawns) + 1000 * invasion_difficulty_level;
+			points = 2.0f / 5.0f * player->client->resp.score*((float)num_spawns / invasion_max_playerspawns) + 300 * sqrt(invasion_difficulty_level);
 		else
-			points = player->client->resp.score*((float)num_spawns / invasion_max_playerspawns);
+			points = 1.5f / 10.0f * player->client->resp.score*((float)num_spawns / invasion_max_playerspawns);
 
 		if (invasion->value == 1 && points > INVASION_BONUS_EXP)
 			points = INVASION_BONUS_EXP;
@@ -342,7 +342,7 @@ void INV_AwardPlayers(void)
 		if (invasion->value < 2)
 			credits = INVASION_BONUS_CREDITS*((float)num_spawns / invasion_max_playerspawns);
 		else
-			credits = INVASION_BONUS_CREDITS*((float)num_spawns / invasion_max_playerspawns) + 1000 * invasion_difficulty_level;
+			credits = 2.0f / 5.0f * INVASION_BONUS_CREDITS*((float)num_spawns / invasion_max_playerspawns) + 300 * sqrt(invasion_difficulty_level);
 
 		//	gi.dprintf("points=%d credits=%d spawns=%d max=%d\n", 
 		//		points, credits, num_spawns, invasion_max_playerspawns);
