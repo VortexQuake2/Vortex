@@ -5,7 +5,7 @@ abilitydef_t *abilities_by_index[MAX_ABILITIES];
 abilitydef_t ability_general[] = {
         {VITALITY,        0, DEFAULT_SOFTMAX,  1},
         {MAX_AMMO,        0, DEFAULT_SOFTMAX,  1},
-        {POWER_REGEN,     1, 8,                1},
+        {POWER_REGEN,     1, DEFAULT_SOFTMAX,                1},
         {WORLD_RESIST,    0, 1,                1},
         {AMMO_REGEN,      0, DEFAULT_SOFTMAX,  1},
         {REGENERATION,    0, 5,                1},
