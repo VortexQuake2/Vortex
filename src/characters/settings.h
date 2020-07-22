@@ -71,7 +71,7 @@ enum vrx_player_class_t {
     CLASS_MAX // Number of classes to choose from + 1
 };
 
-#define ARMORY_ITEMS 28
+#define ARMORY_ITEMS 29
 
 #define PLAYTIME_MIN_MINUTES        999.0    // minutes played before penalty begins
 #define PLAYTIME_MAX_MINUTES        999.0    // minutes played before max penalty is reached

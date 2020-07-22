@@ -157,13 +157,13 @@ char *GetArmoryItemString(int purchase_number) {
         case 27:
             return "Weapon Rune";
         case 28:
+            return "Combo Rune";
+        case 29:
             return "Reset Abilities/Weapons";
-            /* case 29:
-                return "Ability point";
+#ifndef REMOVE_RESPAWNS
             case 30:
-                return "Weapon point";
-            case 31:
-                return "Respawns"; */
+                return "Respawns"; 
+#endif
         default:
             return "<BAD ITEM NUMBER>";
     }

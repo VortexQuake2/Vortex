@@ -791,15 +791,15 @@ void PurchaseRandomRune(edict_t *ent, int runetype)
 
 	ent->myskills.credits -= cost;
 	
-	if (runetype)
+	if (runetype == ITEM_COMBO) {
+		spawnCombo(rune, ent->myskills.level);
+	} else if (runetype)
 	{
 		spawnNorm(rune, ent->myskills.level, runetype);
-	}
-	else if (random() > 0.5)
+	} else if (random() > 0.5)
 	{
 		spawnNorm(rune, ent->myskills.level, ITEM_WEAPON);
-	}
-	else
+	} else
 	{
 		spawnNorm(rune, ent->myskills.level, ITEM_ABILITY);
 	}
