@@ -950,20 +950,20 @@ float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float da
 float vrx_get_dmgtype_resistence(const edict_t *targ, int dtype, float Resistance) {
     if ((dtype & D_EXPLOSIVE) && (targ->myskills.abilities[SPLASH_RESIST].current_level > 0)) {
         if (!targ->myskills.abilities[SPLASH_RESIST].disable) {
-            Resistance = min(Resistance, 0.4f);
+            Resistance = min(Resistance, 0.5f);
         }
     } else if ((dtype & D_PIERCING) && (targ->myskills.abilities[PIERCING_RESIST].current_level > 0)) {
         if (!targ->myskills.abilities[PIERCING_RESIST].disable)
-            Resistance = min(Resistance, 0.4f);
+            Resistance = min(Resistance, 0.5f);
     } else if ((dtype & D_ENERGY) && (targ->myskills.abilities[ENERGY_RESIST].current_level > 0)) {
         if (!targ->myskills.abilities[ENERGY_RESIST].disable)
-            Resistance = min(Resistance, 0.4f);
+            Resistance = min(Resistance, 0.5f);
     } else if ((dtype & D_SHELL) && (targ->myskills.abilities[SHELL_RESIST].current_level > 0)) {
         if (!targ->myskills.abilities[SHELL_RESIST].disable)
-            Resistance = min(Resistance, 0.4f);
+            Resistance = min(Resistance, 0.5f);
     } else if ((dtype & D_BULLET) && (targ->myskills.abilities[BULLET_RESIST].current_level > 0)) {
         if (!targ->myskills.abilities[BULLET_RESIST].disable)
-            Resistance = min(Resistance, 0.4f);
+            Resistance = min(Resistance, 0.5f);
     }
     return Resistance;
 }
