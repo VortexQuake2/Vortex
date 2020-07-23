@@ -169,8 +169,8 @@ void FindMonsterSpot(edict_t *self) {
 
     max_monsters = level.r_monsters;
 
-    // dm_monsters cvar sets minimum number of monsters that will spawn, regardless of map
-    if (max_monsters < dm_monsters->value)
+    // dm_monsters cvar sets the default number of monsters in a given map
+    if (max_monsters <= 0)
         max_monsters = dm_monsters->value;
 
     if (level.time > self->delay) {

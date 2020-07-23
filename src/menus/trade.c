@@ -428,7 +428,7 @@ void TradeInventoryMenu(edict_t *ent, int lastline)
 			ch = '*';
 		else ch = ' ';
 
-		addlinetomenu(ent, va("%s", V_MenuItemString(item, ch)), i+1);
+		addlinetomenu(ent, V_MenuItemString(item, ch), i+1);
 	}
 
 	//Menu footer
