@@ -759,6 +759,13 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 
 	level.r_monsters = vrx_lua_get_variable(va("%s_monsters", mapname), saved);
 	// level.pathfinding = Lua_GetVariable(va("%s_UsePathfinding", level.mapname), 0) || Lua_GetVariable(va("UsePathfinding", level.mapname), 0);
+	if (level.r_monsters == 0)
+		gi.dprintf("Map suggested monsters are 0. Falling back to dm_monsters.\n");
+	else
+	{
+		gi.dprintf("Map suggested monsters are %d.\n", level.r_monsters);
+	}
+	
 
 	G_FindTeams ();
 
