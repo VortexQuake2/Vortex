@@ -46,7 +46,7 @@ abilitydef_t ability_vampire[] = {
         {MIND_ABSORB,    0, DEFAULT_SOFTMAX,   0},
         {AMMO_STEAL,     0, DEFAULT_SOFTMAX,   0},
         {CONVERSION,     0, DEFAULT_SOFTMAX,   0},
-        {CLOAK,          1, 10,                0},
+        {CLOAK,          1, 1,                0},
         {-1,             0, 0,                 0} // Guardian (Add skills above this)
 };
 
@@ -258,6 +258,7 @@ int getHardMax(int index, qboolean general, int class) {
         case TELEPORT:
         case JETPACK:
         case SHIELD:
+        case CLOAK: // az: sure it scales whatever the scaling is dumb
             return 1;
 
         case GRAPPLE_HOOK:
