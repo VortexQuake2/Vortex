@@ -725,7 +725,7 @@ void Cmd_MiniSentry_f (edict_t *ent)
 
 	if (ent->num_sentries >= MAX_MINISENTRIES)
 	{
-		safe_cprintf(ent, PRINT_HIGH, "You have reached the max of %d sentries\n", MAX_MINISENTRIES);
+		safe_cprintf(ent, PRINT_HIGH, "You have reached the max of %d sentries\n", (int)MAX_MINISENTRIES);
 		return;
 	}
 

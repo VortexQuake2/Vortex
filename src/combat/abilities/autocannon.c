@@ -54,9 +54,9 @@ void autocannon_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int d
 
 	if (attacker->client)
 		s = va("Your autocannon was destroyed by %s (%d/%d).\n", attacker->client->pers.netname, 
-			self->creator->num_autocannon-1, AUTOCANNON_MAX_UNITS);
+			self->creator->num_autocannon-1, (int)AUTOCANNON_MAX_UNITS);
 	else
-		s = va("Your autocannon was destroyed (%d/%d).\n", self->creator->num_autocannon-1, AUTOCANNON_MAX_UNITS);
+		s = va("Your autocannon was destroyed (%d/%d).\n", self->creator->num_autocannon-1, (int)AUTOCANNON_MAX_UNITS);
 	autocannon_remove(self, s);
 }
 
@@ -508,7 +508,7 @@ void CreateAutoCannon (edict_t *ent, int cost, float skill_mult, float delay_mul
 	ent->client->pers.inventory[power_cube_index] -= cost;
 	ent->num_autocannon++; // increment counter
 
-	safe_cprintf(ent, PRINT_HIGH, "Built %d/%d autocannons.\n", ent->num_autocannon, AUTOCANNON_MAX_UNITS);
+	safe_cprintf(ent, PRINT_HIGH, "Built %d/%d autocannons.\n", ent->num_autocannon, (int)AUTOCANNON_MAX_UNITS);
 }
 
 #define AUTOCANNON_AIM_NEAREST	0

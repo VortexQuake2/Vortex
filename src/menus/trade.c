@@ -279,7 +279,7 @@ void TradeFinalMenu(edict_t *ent)
 		item = ent->trade_item[i];
 		if (item != NULL)
 		{
-			addlinetomenu(ent, va("%s", V_MenuItemString(item, ' ')), 0);
+			addlinetomenu(ent, V_MenuItemString(item, ' '), 0);
 			++linecount;
 		}
 	}
@@ -295,7 +295,7 @@ void TradeFinalMenu(edict_t *ent)
 		item = ent->trade_with->trade_item[i];
 		if (item != NULL)
 		{
-			addlinetomenu(ent, va("%s", V_MenuItemString(item, ' ')), (i+1)*10);	//10, 20, 30
+			addlinetomenu(ent, V_MenuItemString(item, ' '), (i+1)*10);	//10, 20, 30
 			++linecount;
 		}
 	}
