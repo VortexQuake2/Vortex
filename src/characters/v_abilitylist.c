@@ -266,8 +266,7 @@ int getHardMax(int index, qboolean general, int class) {
 
             
         case HASTE:
-        case CLOAK:
-            return 10;
+            return 5;
 
         // Special cases for the non-general ability mode.
         // Falls through to the default case...
