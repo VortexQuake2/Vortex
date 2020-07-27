@@ -227,8 +227,10 @@ int MAX_POWERCUBES(struct edict_s *ent) {
 #pragma clang diagnostic pop
 
 void vrx_update_health_max(edict_t *ent) {
-    ent->health = MAX_HEALTH(ent);
-    ent->client->pers.health = ent->health;
+    ent->max_health = MAX_HEALTH(ent);
+    ent->health = ent->max_health;
+    ent->client->pers.health = ent->max_health;
+    ent->client->pers.max_health = ent->max_health;
 }
 
 void vrx_update_all_character_maximums(edict_t *ent) {

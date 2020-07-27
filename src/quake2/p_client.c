@@ -1850,7 +1850,6 @@ void PutClientInServer (edict_t *ent)
 	{
 		int talentLevel;
 
-        vrx_update_health_max(ent);
         vrx_update_all_character_maximums(ent);
         vrx_add_respawn_weapon(ent, ent->myskills.respawn_weapon);
         vrx_add_respawn_items(ent);

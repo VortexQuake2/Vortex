@@ -115,7 +115,6 @@ void SaveCharacter (edict_t *ent)
 		InitClientPersistant(ent->client);
 		ClientUserinfoChanged (ent, userinfo);
 		ent->client->resp = resp;
-		vrx_update_health_max(ent);
 		vrx_update_all_character_maximums(ent);
 		vrx_add_respawn_weapon(ent, ent->myskills.respawn_weapon);
 		vrx_add_respawn_items(ent);

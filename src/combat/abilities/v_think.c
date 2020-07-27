@@ -609,7 +609,7 @@ void think_ability_fury(edict_t *ent) {
 
 void think_ability_mind_absorb(edict_t *ent) {
     if (ent->myskills.abilities[MIND_ABSORB].current_level > 0) {
-        int cooldown = (int)(2.5 / FRAMETIME);
+        int cooldown = (int)(5.0f / FRAMETIME);
 
         //Talent: Mind Control
         if (vrx_get_talent_slot(ent, TALENT_IMP_MINDABSORB) != -1)
