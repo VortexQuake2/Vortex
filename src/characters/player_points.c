@@ -614,7 +614,13 @@ float vrx_get_level_difference_multiplier(
         level_diff = (float) (targ->monsterinfo.level + 1) / (attacker->myskills.level + 1);
 
     // az: if the target is say, 10 levels over, you don't want to award 10x the exp.
-    return log2(level_diff + 1);
+    if (level_diff >= 1)
+        return log2(level_diff + 1);
+    else
+    {
+        return level_diff;
+    }
+    
 }
 
 float vrx_get_nfer_bonus(edict_t *attacker, const edict_t *target, float bonus) {
