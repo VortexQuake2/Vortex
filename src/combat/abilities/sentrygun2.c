@@ -23,10 +23,6 @@
 #define SENTRY_MODEL_3				"models/sentry/turret3/tris.md2"
 
 //Basic sentry attributes (in game)
-#define SENTRY_HEALTH_MULT			75		//Multiply by myskills.abilities[BUILD_SENTRY].current_level
-#define SENTRY_HEALTH_BASE			600	//Base health
-#define SENTRY_ARMOR_MULT			35		//Multiply by myskills.abilities[BUILD_SENTRY].current_level
-#define SENTRY_ARMOR_BASE			350		//Base armour
 #define SENTRY_HEAL_COST			0.05		//Amount of pc's required to heal 1 hp
 #define SENTRY_REPAIR_COST			0.05	//Amount of pc's required to heal 1 armor point
 #define SENTRY_MAX_UPGRADE_LEVEL	3		//Maximum sentry upgrade level (like it says)
@@ -1051,14 +1047,14 @@ void SpawnSentry1(edict_t *ent, int sentryType, int cost, float skill_mult, floa
 	sentry->monsterinfo.control_cost = 2 * M_CONTROL_COST_SCALE;
 
 	//Health
-	sentry->health = sentry->max_health = SENTRY_HEALTH_BASE + SENTRY_HEALTH_MULT * sentry->monsterinfo.level;
+	sentry->health = sentry->max_health = SENTRY_INITIAL_HEALTH + SENTRY_ADDON_HEALTH * sentry->monsterinfo.level;
 
 	//Armour (max armour is currently stored as rocket_shots)
 	//Note: (rocket_shots) was previously used by K03 for homing rockets
 
 	sentry->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 
-	sentry->monsterinfo.power_armor_power = sentry->rocket_shots = SENTRY_ARMOR_BASE + SENTRY_ARMOR_MULT * sentry->monsterinfo.level;
+	sentry->monsterinfo.power_armor_power = sentry->rocket_shots = SENTRY_INITIAL_ARMOR + SENTRY_ADDON_ARMOR * sentry->monsterinfo.level;
 	sentry->monsterinfo.max_armor = sentry->monsterinfo.power_armor_power;//GHz
 
 	sentry->monsterinfo.sight_range = SENTRY_TARGET_RANGE; // az

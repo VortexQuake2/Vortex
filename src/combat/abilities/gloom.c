@@ -1328,7 +1328,7 @@ qboolean gasser_findtarget (edict_t *self)
 {
 	edict_t *e=NULL;
 
-	while ((e = findclosestradius_targets(e, self->s.origin, GASSER_RANGE)) != NULL)
+	while ((e = findclosestradius_targets(e, self, GASSER_RANGE)) != NULL)
 	{
 		if (!G_ValidTarget_Lite(self, e, true))
 			continue;

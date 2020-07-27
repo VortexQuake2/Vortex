@@ -303,8 +303,8 @@ SENTRY_INITIAL_HEALTH                    = 100
 SENTRY_ADDON_HEALTH                      = 10
 SENTRY_INITIAL_ARMOR                     = 150
 SENTRY_ADDON_ARMOR                       = 15
-SENTRY_INITIAL_AMMO                      = 100
-SENTRY_ADDON_AMMO                        = 10
+SENTRY_INITIAL_AMMO                      = 100 -- goes ignored right now
+SENTRY_ADDON_AMMO                        = 10 -- goes ignored right now
 
 -- Minisentry
 MINISENTRY_INITIAL_HEALTH                = 50
