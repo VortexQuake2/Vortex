@@ -1328,10 +1328,11 @@ qboolean gasser_findtarget (edict_t *self)
 {
 	edict_t *e=NULL;
 
-	while ((e = findradius(e, self->s.origin, GASSER_RANGE)) != NULL)
+	while ((e = findclosestradius_targets(e, self->s.origin, GASSER_RANGE)) != NULL)
 	{
-		if (!G_ValidTarget(self, e, true))
+		if (!G_ValidTarget_Lite(self, e, true))
 			continue;
+
 		self->enemy = e;
 		return true;
 	}
@@ -1511,7 +1512,7 @@ edict_t *CreateGasser (edict_t *ent, int skill_level)
 	e->dmg_radius = GASSER_INITIAL_ATTACK_RANGE + GASSER_ADDON_ATTACK_RANGE * skill_level;
 
 	e->monsterinfo.level = skill_level;
-	e->gib_health = -2.5 * BASE_GIB_HEALTH;
+	e->gib_health = -1.25 * BASE_GIB_HEALTH;
 	e->s.frame = GASSER_FRAMES_IDLE_START;
 	e->die = gasser_die;
 	e->touch = organ_touch;

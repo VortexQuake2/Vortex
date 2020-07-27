@@ -220,8 +220,13 @@ void Cmd_WormHole_f (edict_t *ent)
 
 	if (!V_CanUseAbilities(ent, BLACKHOLE, BLACKHOLE_COST, true))
 		return;
+
 	if (ent->myskills.abilities[BLACKHOLE].disable)
 		return;
+
+	if (ent->myskills.streak >= SPREE_WARS_START) {
+		gi.cprintf(ent, PRINT_HIGH, "You can't wormhole during a spree war.\n");
+	}
 
 	SpawnWormhole(ent, 1);
 }

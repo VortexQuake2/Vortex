@@ -264,7 +264,7 @@ void OpenJoinMenu (edict_t *ent)
 	addlinetomenu(ent, " ", 0);
 	addlinetomenu(ent, "Kill players and monsters", 0);
     addlinetomenu(ent, "for EXP to earn levels.", 0);
-    addlinetomenu(ent, "Every level you recieve", 0);
+    addlinetomenu(ent, "Every level you receive", 0);
     addlinetomenu(ent, "ability and weapon points", 0);
     addlinetomenu(ent, "to become stronger!", 0);
 	addlinetomenu(ent, " ", 0);
