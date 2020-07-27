@@ -1097,7 +1097,7 @@ void MindAbsorb(edict_t *ent)
 	radius = MIND_ABSORB_RADIUS_BASE + (MIND_ABSORB_RADIUS_BONUS * abilityLevel);   
 	
 	// scan for targets  
-	while ((target = findclosestradius(target, ent->s.origin, radius)) != NULL)  
+	while ((target = findclosestradius_targets(target, ent->s.origin, radius)) != NULL)  
 	{   
 		if (target == ent)    
 			continue;
