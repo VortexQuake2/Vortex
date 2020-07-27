@@ -120,7 +120,7 @@ void FireTotem_think(edict_t *self, edict_t *caster)
 		chance = 0.02 * talentLevel;
 
 		//Find players in radius and attack them.
-		while ((target = findclosestradius_targets(target, self)) != NULL)
+		while ((target = findclosestradius_targets(target, self, self->monsterinfo.sight_range)) != NULL)
 		{
 			if (G_ValidTarget_Lite(self, target, true) && (self->s.origin[2]+64>target->s.origin[2]))
 			{

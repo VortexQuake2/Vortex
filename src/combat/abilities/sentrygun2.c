@@ -266,7 +266,7 @@ edict_t *sentry_findtarget(edict_t *self)
 {
 	edict_t *target = NULL;
 
-	while ((target = findclosestradius_targets(target, self)) != NULL)
+	while ((target = findclosestradius_targets(target, self, self->monsterinfo.sight_range)) != NULL)
 	{
 		//if (!infov(self, target, SENTRY_FOV_SIGHT)) // 3.19 reduced sentry FOV
 		if (!G_ValidTarget_Lite(self, target, true)) // az

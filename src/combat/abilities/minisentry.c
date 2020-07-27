@@ -117,7 +117,7 @@ qboolean minisentry_findtarget (edict_t *self)
 	// don't retarget too quickly
 	if (self->last_move_time > level.time)
 		return false;
-	while ((target = findclosestradius_targets (target, self)) != NULL)
+	while ((target = findclosestradius_targets (target, self, self->monsterinfo.sight_range)) != NULL)
 	{
 		if (!G_ValidTarget_Lite(self, target, true))
 			continue;

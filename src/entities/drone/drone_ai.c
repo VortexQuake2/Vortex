@@ -76,12 +76,12 @@ void ai_eval_targets() {
 
 // az: findclosestradius_monmask except ents are only validated once.
 // so it only does the checks that are specific to the current monster.
-edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t* self)
+edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t* self, float rad)
 {
 	edict_t *found = NULL;
 	float	found_rad, prev_rad;
 	qboolean prev_found = false;
-	float rad = self->monsterinfo.sight_range; 
+
 	rad *= rad; // az: square it
 
 	if (prev_ed) {
@@ -138,6 +138,7 @@ qboolean G_ValidTarget_Lite(const edict_t *self, const edict_t *target, qboolean
 {
 	if (trading->value)
 		return false;
+		
 	// check for targets that require medic healing
 	if (self && self->mtype == M_MEDIC)
 	{
@@ -505,7 +506,7 @@ edict_t *drone_get_enemy (edict_t *self)
 	edict_t *target = NULL;
 
 	// find an enemy
-	while ((target = findclosestradius_targets (target, self)) != NULL)
+	while ((target = findclosestradius_targets (target, self, self->monsterinfo.sight_range)) != NULL)
 	{
 		// screen out invalid targets
 		// az: Replaced G_ValidTarget for lighter check.

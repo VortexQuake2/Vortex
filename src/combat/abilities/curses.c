@@ -1101,6 +1101,9 @@ void MindAbsorb(edict_t *ent)
 	{   
 		if (target == ent)    
 			continue;
+
+		if (!G_ValidTarget_Lite(ent, target, true))
+			continue;
 		
 		total = 0;
 		
