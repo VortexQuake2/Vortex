@@ -718,11 +718,11 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 				message = "'s soul was taken by";
 				break;
 			case MOD_PROXY:
-				message = " got a closer look of";
+				message = "got a closer look of";
 				message2 = "'s exploding proxy grenade";
 				break;
 			case MOD_METEOR:
-				message = " was crushed under";
+				message = "was crushed under";
 				message2 = "'s meteorite";
 				break;
 			case MOD_NAPALM:

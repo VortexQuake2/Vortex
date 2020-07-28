@@ -29,6 +29,24 @@ qboolean V_VoteInProgress()
 }
 #endif
 
+void V_VoteReset() {
+#ifdef OLD_VOTE_SYSTEM // Paril
+	memset(votes, 0, sizeof(votes_t) * MAX_VOTERS);
+#else
+	int i = 0;
+	edict_t *e;
+	numVotes = 0;
+	numVoteNo = 0;
+	voteTimeLeft = 0;
+	memset (&currentVote, 0, sizeof(currentVote));
+
+	for_each_player(e, i)
+	{
+		e->client->resp.HasVoted = false;
+	}
+#endif
+}
+
 void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 {
 	//char buf[8];
@@ -213,14 +231,7 @@ void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 	}
 
 	//Reset player votes
-#ifdef OLD_VOTE_SYSTEM // Paril
-	memset(votes, 0, sizeof(votes_t) * MAX_VOTERS);
-#else
-	numVotes = 0;
-	numVoteNo = 0;
-	voteTimeLeft = 0;
-	memset (&currentVote, 0, sizeof(currentVote));
-#endif
+	V_VoteReset();
 
 	gi.dprintf("Votes have been reset.\n");
 
@@ -412,6 +423,7 @@ void AddVote(edict_t *ent, int mode, int mapnum)
 	if (mode && (maplist->nummaps > mapnum))
 	{
 		char tempBuffer[1024];
+		char tempBuffer2[1024];
 		//Add the vote
 		voter = ent;
 		numVotes = 1;
@@ -439,7 +451,7 @@ void AddVote(edict_t *ent, int mode, int mapnum)
 			case MAPMODE_VHW:	smode =  "Vortex HolyWars ";			break;
 			case MAPMODE_TBI:   smode =  "Destroy the Spawn ";		break;
 		}
-		Com_sprintf (tempBuffer, 1024, "%s%son %s\n", tempBuffer, smode, maplist->maps[mapnum].name);
+		Com_sprintf (tempBuffer2, 1024, "%s%son %s\n", tempBuffer, smode, maplist->maps[mapnum].name);
 
 		text1 = HiPrint(va("%s", smode));
 		text2 = HiPrint(va("%s", maplist->maps[mapnum].name));
@@ -449,7 +461,7 @@ void AddVote(edict_t *ent, int mode, int mapnum)
 		
 		gi.configstring(CS_GENERAL+MAX_CLIENTS+1, strBuffer);
 
-		G_PrintGreenText(tempBuffer);
+		G_PrintGreenText(tempBuffer2);
 		gi.sound(&g_edicts[0], CHAN_VOICE, gi.soundindex("misc/comp_up.wav"), 1, ATTN_NONE, 0);
 
 
@@ -697,22 +709,13 @@ void RunVotes ()
 			G_PrintGreenText("A majority was reached! Vote passed!\n");
 			voteTimeLeft = -1;
 			//Change the map
+			// az note: internally, V_ChangeMap will reset the votes!
 			EndDMLevel();
 		}
 		else
 		{
-			edict_t *e;
-			int i;
-
 			gi.bprintf (PRINT_CHAT, "Vote failed.\n");
-			numVotes = 0;
-			voteTimeLeft = 0;
-			memset (&currentVote, 0, sizeof(currentVote));
-			
-			for_each_player(e, i)
-			{
-				e->client->resp.HasVoted = false;
-			}
+			V_VoteReset();
 
 			voter->client->resp.VoteTimeout = level.time + 20;
 			voter = NULL;

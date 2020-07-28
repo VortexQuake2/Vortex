@@ -684,6 +684,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	saved = level.r_monsters;//4.5
 	memset (&level, 0, sizeof(level));
 	memset (g_edicts, 0, game.maxentities * sizeof (g_edicts[0]));
+	V_VoteReset(); // az
 	g_freeEdictsH = g_freeEdictsT = NULL;
 
 	strncpy (level.mapname, mapname, sizeof(level.mapname)-1);
@@ -1135,78 +1136,78 @@ char *dm_statusbar =
 //GHz END
 ;
 
-edict_t *SpawnDroneEnt (edict_t *drone, edict_t *ent, int drone_type, qboolean worldspawn);
+edict_t *vrx_create_drone_from_ent (edict_t *drone, edict_t *ent, int drone_type, qboolean worldspawn);
 
 void SP_monster_berserk(edict_t *ent) 
 {
 	if (coop->value)
-		SpawnDroneEnt(ent, g_edicts, 9, true);
+		vrx_create_drone_from_ent(ent, g_edicts, 9, true);
 }
 
 void SP_monster_gladiator(edict_t *ent) 
 {
 	if (coop->value)
-		SpawnDroneEnt(ent, g_edicts, 8, true);
+		vrx_create_drone_from_ent(ent, g_edicts, 8, true);
 }
 
 void SP_monster_gunner(edict_t *ent) 
 {
 	if (coop->value)
-		SpawnDroneEnt(ent, g_edicts, 1, true);
+		vrx_create_drone_from_ent(ent, g_edicts, 1, true);
 }
 
 void SP_monster_soldier(edict_t *ent) 
 {
 	if (coop->value)
-		SpawnDroneEnt(ent, g_edicts, 10, true);
+		vrx_create_drone_from_ent(ent, g_edicts, 10, true);
 }
 
 void SP_monster_tank(edict_t *ent) 
 {
 	if (coop->value)
-		SpawnDroneEnt(ent, g_edicts, 6, true);
+		vrx_create_drone_from_ent(ent, g_edicts, 6, true);
 }
 
 void SP_monster_tank_commander(edict_t *ent) 
 {
 	if (coop->value)
-		SpawnDroneEnt(ent, g_edicts, 30, true);
+		vrx_create_drone_from_ent(ent, g_edicts, 30, true);
 }
 
 void SP_monster_infantry(edict_t *ent) 
 {
 	if (coop->value)
-		SpawnDroneEnt(ent, g_edicts, 11, true);
+		vrx_create_drone_from_ent(ent, g_edicts, 11, true);
 }
 
 void SP_monster_medic(edict_t *ent) 
 {
 	if (coop->value)
-		SpawnDroneEnt(ent, g_edicts, 5, true);
+		vrx_create_drone_from_ent(ent, g_edicts, 5, true);
 }
 
 void SP_monster_mutant(edict_t *ent) 
 {
 	if (coop->value)
-		SpawnDroneEnt(ent, g_edicts, 7, true);
+		vrx_create_drone_from_ent(ent, g_edicts, 7, true);
 }
 
 void SP_monster_chick(edict_t *ent) 
 {
 	if (coop->value)
-		SpawnDroneEnt(ent, g_edicts, 3, true);
+		vrx_create_drone_from_ent(ent, g_edicts, 3, true);
 }
 
 void SP_monster_parasite(edict_t *ent) 
 {
 	if (coop->value)
-		SpawnDroneEnt(ent, g_edicts, 2, true);
+		vrx_create_drone_from_ent(ent, g_edicts, 2, true);
 }
 
 void SP_monster_brain(edict_t *ent) 
 {
 	if (coop->value)
-		SpawnDroneEnt(ent, g_edicts, 4, true);
+		vrx_create_drone_from_ent(ent, g_edicts, 4, true);
 }
 
 

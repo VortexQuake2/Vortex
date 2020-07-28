@@ -5,7 +5,11 @@ void spikegren_remove (edict_t *self)
 	if (self->owner && self->owner->inuse)
 	{
 		self->owner->num_spikegrenades--;
-		safe_cprintf(self->owner, PRINT_HIGH, "%d/%d spike grenades remaining\n", self->owner->num_spikegrenades, SPIKEGRENADE_MAX_COUNT);
+		safe_cprintf(self->owner, 
+				     PRINT_HIGH, 
+					 "%d/%d spike grenades remaining\n", 
+					 self->owner->num_spikegrenades, 
+					 (int)SPIKEGRENADE_MAX_COUNT);
 	}
 
 	G_FreeEdict(self);
@@ -208,7 +212,7 @@ void Cmd_SpikeGrenade_f (edict_t *ent)
 
 	if (ent->num_spikegrenades >= SPIKEGRENADE_MAX_COUNT)
 	{
-		safe_cprintf(ent, PRINT_HIGH, "You've reached the maximum number of spike grenades (%d)\n", SPIKEGRENADE_MAX_COUNT);
+		safe_cprintf(ent, PRINT_HIGH, "You've reached the maximum number of spike grenades (%d)\n", (int)SPIKEGRENADE_MAX_COUNT);
 		return;
 	}
 

@@ -115,7 +115,7 @@ void napalm_remove (edict_t *self, qboolean print)
 
 		if (print)
 			safe_cprintf(self->owner, PRINT_HIGH, "%d/%d napalm grenades remaining.\n",
-				self->owner->num_napalm, NAPALM_MAX_COUNT);
+				self->owner->num_napalm, (int)NAPALM_MAX_COUNT);
 	}
 }
 
@@ -234,7 +234,7 @@ void Cmd_Napalm_f (edict_t *ent)
 	if (Q_strcasecmp (gi.args(), "count") == 0)
 	{
 		safe_cprintf(ent, PRINT_HIGH, "You have %d/%d napalm grenades.\n",
-			ent->num_napalm, NAPALM_MAX_COUNT);
+			ent->num_napalm, (int)NAPALM_MAX_COUNT);
 		return;
 	}
 

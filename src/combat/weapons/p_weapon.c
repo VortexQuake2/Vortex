@@ -1965,7 +1965,7 @@ void weapon_shotgun_fire(edict_t *ent) {
 
     // shotgun strike upgrade
     // 20% chance to deal double damage at level 10
-    temp = 1.0 / (1.0 + 0.02 * ent->myskills.weapons[WEAPON_SHOTGUN].mods[1].current_level);
+    temp = 1.0 / (1.0 + 0.0222 * ent->myskills.weapons[WEAPON_SHOTGUN].mods[1].current_level);
 
     if (random() > temp) {
         damage *= 1.5;

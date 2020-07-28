@@ -203,27 +203,27 @@ void V_TossRune (edict_t *rune, float h_vel, float v_vel)
 }
 
 /* az- This function is for avoiding redundant abilities within a rune. */
-void fixRuneIndexes(edict_t *rune, int i)
+void vrx_join_redundant_ability_mods(edict_t *rune, int mod_index)
 {
 	int b_i;
 	// do a backward's iteration, if we find the ability then..
-	for (b_i = (i - 1); b_i > -1; b_i--)
+	for (b_i = (mod_index - 1); b_i > -1; b_i--)
 	{
 		// so we already have one of these?
 		// add onto it then, discard this one.
-		if (rune->vrxitem.modifiers[b_i].index == rune->vrxitem.modifiers[i].index &&
-			rune->vrxitem.modifiers[b_i].type == rune->vrxitem.modifiers[i].type)
+		if (rune->vrxitem.modifiers[b_i].index == rune->vrxitem.modifiers[mod_index].index &&
+			rune->vrxitem.modifiers[b_i].type == rune->vrxitem.modifiers[mod_index].type)
 		{
 			if (rune->vrxitem.modifiers[b_i].type == TYPE_ABILITY) // It's an ability?
 			{
                 // invalidate this modifier.
-                rune->vrxitem.modifiers[i].index = 0;
-                rune->vrxitem.modifiers[i].type = TYPE_NONE;
+                rune->vrxitem.modifiers[mod_index].index = 0;
+                rune->vrxitem.modifiers[mod_index].type = TYPE_NONE;
                 if (vrx_get_ability_upgrade_cost(rune->vrxitem.modifiers[b_i].index) > 1) {
                     // sum the modifiers.
-                    rune->vrxitem.modifiers[b_i].value += rune->vrxitem.modifiers[i].value;
+                    rune->vrxitem.modifiers[b_i].value += rune->vrxitem.modifiers[mod_index].value;
                 }
-                rune->vrxitem.modifiers[i].value = 0;
+                rune->vrxitem.modifiers[mod_index].value = 0;
             }
 		}
 	}
@@ -274,7 +274,7 @@ void V_CreateAbilityModifier(edict_t *rune, qboolean is_class, int i, int targ_l
 
 	rune->vrxitem.itemLevel += rune->vrxitem.modifiers[i].value;
 
-	fixRuneIndexes(rune, i);
+	vrx_join_redundant_ability_mods(rune, i);
 }
 
 edict_t *V_SpawnRune (edict_t *self, edict_t *attacker, float base_drop_chance, float levelmod)

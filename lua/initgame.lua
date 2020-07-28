@@ -1,5 +1,5 @@
 is_pvm = ((q2.cvar_get("pvm", "0") ~= "0") or (q2.cvar_get("invasion", "0") ~= "0"))
-is_invasion = (q2.cvar_get("invasion", "0") ~= "0")
+is_invasion = q2.cvar_get("invasion", "0")
 
 useMysqlTablesOnSQLite = 0
 UseLuaMaplists = 0
@@ -17,7 +17,7 @@ if is_invasion == 1 then
 	EXP_WORLD_MONSTER = 18
 	PVB_BOSS_EXPERIENCE = 1600
 	PVB_BOSS_CREDITS = 100
-else if is_invasion == 2 then
+elseif is_invasion == 2 then
 	q2.print("Lua: Invasion Hard - lowering xp to 20/monster\n")
 	EXP_WORLD_MONSTER = 20
 	PVB_BOSS_EXPERIENCE = 2000
@@ -33,6 +33,7 @@ q2.print("INFO: nolag is set to " .. q2.cvar_get("nolag", "0") .. ".\n")
 vrx.reloadvars()
 
 function on_map_change()
+	q2.print("Lua: on_map_change called. Joined player count: " .. vrx.get_joined_player_count())
 	if vrx.get_joined_player_count() >= 6 then
 		pvp_fraglimit = 100
 	else

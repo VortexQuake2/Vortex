@@ -299,9 +299,9 @@ PRECISION_TUNING_DELAY_FACTOR            = 0.1
 PRECISION_TUNING_SKILL_FACTOR            = 0.1
 
 -- Sentry
-SENTRY_INITIAL_HEALTH                    = 100
-SENTRY_ADDON_HEALTH                      = 10
-SENTRY_INITIAL_ARMOR                     = 150
+SENTRY_INITIAL_HEALTH                    = 200
+SENTRY_ADDON_HEALTH                      = 15
+SENTRY_INITIAL_ARMOR                     = 250
 SENTRY_ADDON_ARMOR                       = 15
 SENTRY_INITIAL_AMMO                      = 100 -- goes ignored right now
 SENTRY_ADDON_AMMO                        = 10 -- goes ignored right now

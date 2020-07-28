@@ -384,6 +384,9 @@ void vrx_remove_player_summonables(edict_t *self) {
             continue;
         }
 
+
+        
+#ifdef REMOVE_PROJECTILES_AFTER_DEATH // az: now commented out...
         // remove grenades
         if ((from->owner) && (from->owner == self)
             && !Q_stricmp(from->classname, "grenade")) {
@@ -391,6 +394,13 @@ void vrx_remove_player_summonables(edict_t *self) {
             G_FreeEdict(from);
             continue;
         }
+
+        // remove bolts
+        if ((from->owner) && (from->owner == self)
+            && !Q_stricmp(from->classname, "bolt")) {
+                G_FreeEdict(from);
+        }
+#endif
 
         // remove hammers
         cl_ent = G_GetClient(from);

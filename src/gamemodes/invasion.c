@@ -406,7 +406,8 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 	}
 	else if (invasion->value == 2) // hard mode
 	{
-		mhealth = 1 + 0.1 * invasion_difficulty_level * max(log2(vrx_get_joined_players()), 0);
+		float plog = log2(vrx_get_joined_players() + 1) / log2(4);
+		mhealth = 1 + 0.1 * invasion_difficulty_level * max(plog, 0);
 	}
 
 	monster->max_health = monster->health = monster->max_health*mhealth;

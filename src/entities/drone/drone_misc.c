@@ -631,7 +631,7 @@ void vrx_roll_to_make_champion(edict_t *drone, int *drone_type)
 	}
 }
 
-edict_t *SpawnDroneEnt (edict_t *drone, edict_t *ent, int drone_type, qboolean worldspawn)
+edict_t *vrx_create_drone_from_ent (edict_t *drone, edict_t *ent, int drone_type, qboolean worldspawn)
 {
 	vec3_t		forward, right, start, end, offset;
 	trace_t		tr;
@@ -897,7 +897,7 @@ edict_t *SpawnDroneEnt (edict_t *drone, edict_t *ent, int drone_type, qboolean w
 
 edict_t *vrx_create_new_drone(edict_t *ent, int drone_type, qboolean worldspawn)
 {
-	return SpawnDroneEnt(G_Spawn(), ent, drone_type, worldspawn);
+	return vrx_create_drone_from_ent(G_Spawn(), ent, drone_type, worldspawn);
 }
 
 void RemoveAllDrones (edict_t *ent, qboolean refund_player)

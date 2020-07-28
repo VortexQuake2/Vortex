@@ -405,9 +405,9 @@ void WeaponStun (edict_t *attacker, edict_t *target, int mod)
 	}
 	else if (mod == MOD_HYPERBLASTER)
 	{
-		duration = 0.2;
+		duration = 0.1;
 		lvl = attacker->myskills.weapons[WEAPON_HYPERBLASTER].mods[1].current_level;
-		value += 0.033*lvl; // 25% at level 10
+		value += 0.025*lvl; // 25% at level 10
 	}
 	else
 		return;
@@ -654,12 +654,17 @@ void Grenade_Explode (edict_t *ent)
 	vec3_t		origin;
 	int			mod;
 
+#ifdef REMOVE_PROJECTILES_AFTER_DEATH
 	// remove grenade if owner dies or becomes invalid
 	if (!G_EntValid(ent->owner))
 	{
 		BecomeExplosion1(ent);
 		return;
 	}
+#else
+	if (!ent->owner)
+		return;
+#endif
 
 	if (ent->owner->client && !(ent->owner->svflags & SVF_DEADMONSTER))
 		PlayerNoise(ent->owner, ent->s.origin, PNOISE_IMPACT);
@@ -1060,6 +1065,7 @@ void rocket_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *su
 
 void rocket_think (edict_t *self)
 {
+#ifdef REMOVE_PROJECTILES_AFTER_DEATH
 	// remove rocket if owner dies or becomes invalid
 	// or the rocket times out
 	if (!G_EntValid(self->owner) || (level.time >= self->delay))
@@ -1069,6 +1075,7 @@ void rocket_think (edict_t *self)
 	}
 
 	self->nextthink = level.time + FRAMETIME;
+#endif
 }
 
 void fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius, int radius_damage)
@@ -1755,6 +1762,7 @@ void bfg_think (edict_t *self)
 
 void bfg_idle_think (edict_t *self)
 {
+#ifdef REMOVE_PROJECTILES_AFTER_DEATH // az
 	// owner must be alive
 	if (!G_EntIsAlive(self->owner) || (self->delay < level.time)) 
 	{
@@ -1762,7 +1770,9 @@ void bfg_idle_think (edict_t *self)
 		return;
 	}
 
+
 	self->nextthink = level.time + FRAMETIME;
+#endif
 }
 
 void fire_bfg (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius)

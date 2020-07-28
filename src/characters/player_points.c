@@ -830,7 +830,7 @@ void vrx_death_cleanup(edict_t *attacker, edict_t *targ) {
     if (!(vrx_is_newbie_basher(attacker) && (level_diff <= 0.5))) {
         attacker->myskills.streak++;
 
-        if ((ffa->value || V_IsPVP()) && attacker->myskills.streak > 15) {
+        if ((ffa->value || V_IsPVP()) && attacker->myskills.streak >= SPREE_START) {
             tech_dropall(attacker); // you can't use techs on a spree.
         }
 
