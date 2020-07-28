@@ -12,11 +12,16 @@ else
 	q2.dofile("variables_pvp")
 end
 
-if is_invasion then 
+if is_invasion == 1 then
 	q2.print("Lua: Invasion - lowering xp to 18/monster\n")
 	EXP_WORLD_MONSTER = 18
 	PVB_BOSS_EXPERIENCE = 1600
 	PVB_BOSS_CREDITS = 100
+else if is_invasion == 2 then
+	q2.print("Lua: Invasion Hard - lowering xp to 20/monster\n")
+	EXP_WORLD_MONSTER = 20
+	PVB_BOSS_EXPERIENCE = 2000
+	PVB_BOSS_CREDITS = 200
 else
 	q2.print("Lua: Non-invasion - Setting xp to 22/monster\n")
 	EXP_WORLD_MONSTER = 22
