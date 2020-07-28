@@ -2135,6 +2135,7 @@ void Cmd_LaserSight_f(edict_t *ent);
 #define M_FLIPPER 4 // 50
 #define M_FLYER 5 // 50
 #define M_INFANTRY 6 // 100
+#define M_ENFORCER 6 // 100
 #define M_INSANE 7 // 100 - Crazy Marine
 #define M_GUNNER 8 // 175
 #define M_CHICK 9 // 175

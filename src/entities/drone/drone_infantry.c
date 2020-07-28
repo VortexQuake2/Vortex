@@ -511,25 +511,38 @@ void init_drone_infantry (edict_t *self)
 	sound_sight = gi.soundindex ("infantry/infsght1.wav");
 	sound_search = gi.soundindex ("infantry/infsrch1.wav");
 	sound_idle = gi.soundindex ("infantry/infidle1.wav");
-	
 
-	self->movetype = MOVETYPE_STEP;
-	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex("models/monsters/infantry/tris.md2");
 	VectorSet (self->mins, -16, -16, -24);
 	VectorSet (self->maxs, 16, 16, 32);
+	self->movetype = MOVETYPE_STEP;
+	self->solid = SOLID_BBOX;
 
-	self->health = 50 + 15*self->monsterinfo.level; // hlt: infantry
-	self->max_health = self->health;
-	self->gib_health = -BASE_GIB_HEALTH;
 	self->mass = 400;
+
+	//don't override previous mtype
+	if (!self->mtype)
+		self->mtype = M_ENFORCER;	
+
+	self->monsterinfo.control_cost = M_ENFORCER_CONTROL_COST;
+	self->monsterinfo.cost = M_ENFORCER_COST;
+
+	// set health
+	self->health = M_ENFORCER_INITIAL_HEALTH+M_ENFORCER_ADDON_HEALTH*self->monsterinfo.level; // hlt: enforcer
+	self->max_health = self->health;
+	self->gib_health = -1.5 * BASE_GIB_HEALTH;
+
+	// set armor
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power = 0;
-	self->mtype = M_INFANTRY;
-	self->item = FindItemByClassname("ammo_bullets");
+	self->monsterinfo.power_armor_power = M_ENFORCER_INITIAL_ARMOR+M_ENFORCER_ADDON_ARMOR*self->monsterinfo.level; // pow: soldier
+	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+
+	// jump and movement
 	self->monsterinfo.jumpup = 64;
 	self->monsterinfo.jumpdn = 512;
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
+
+	self->item = FindItemByClassname("ammo_bullets");
 
 	//self->pain = infantry_pain;
 	self->die = infantry_die;

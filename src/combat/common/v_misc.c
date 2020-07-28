@@ -455,6 +455,9 @@ int vrx_GetMonsterCost(int mtype) {
         case M_SOLDIER:
             cost = M_SOLDIER_COST;
             break;
+        case M_INFANTRY:
+            cost = M_ENFORCER_COST;
+            break;
         case M_GUNNER:
             cost = M_GUNNER_COST;
             break;
@@ -504,6 +507,9 @@ int vrx_GetMonsterControlCost(int mtype) {
             break;
         case M_SOLDIER:
             cost = M_SOLDIER_CONTROL_COST;
+            break;
+        case M_INFANTRY:
+            cost = M_ENFORCER_CONTROL_COST;
             break;
         case M_GUNNER:
             cost = M_GUNNER_CONTROL_COST;
