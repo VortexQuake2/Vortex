@@ -1450,6 +1450,15 @@ typedef struct
 	float		ctf_assist_return;	// used to give the player a "return the flag" assist
 	int			scanner_active;
 	//K03 End
+
+	// invasion wave stat tracking
+	int wave_solo_dmgmod;
+	int wave_solo_exp;
+	int wave_solo_credits;
+	int wave_shared_exp;
+	int wave_shared_credits;
+	int wave_assist_exp;
+	int wave_assist_credits;
 } client_persistant_t;
 
 // client data that stays across deathmatch respawns
@@ -1876,7 +1885,6 @@ struct edict_s
 	float shield_activate_time; // when shield will activate
 	int movetype_prev; // previous movetype, used by V_Push()
 	int movetype_frame;	// server frame to restore old movetype
-
 	//K03 End
 
 	// az begin
@@ -1914,6 +1922,7 @@ struct edict_s
 	//4.0 "chilled effect"
 	int			chill_level;
 	float		chill_time;
+	edict_t		*chill_owner;			// for assist exp tracking
 	//4.0 "manashield"
 	qboolean	manashield;
 	//4.0
@@ -1935,8 +1944,10 @@ struct edict_s
 	float		slowed_time;
 	float		detected_time;
 	float		empeffect_time;
+	edict_t		*empeffect_owner; 		// for assist exp tracking
 	float		cocoon_time;
 	float		cocoon_factor;
+	edict_t		*cocoon_owner;			// for assist exp tracking
 	int			showPathDebug;			// show path debug information (0=off,1=on)
 
 

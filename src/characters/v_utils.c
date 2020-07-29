@@ -2006,6 +2006,7 @@ void vrx_reset_player_state(edict_t *ent) {
     // reset cocooned state
     ent->cocoon_time = 0;
     ent->cocoon_factor = 0;
+    ent->cocoon_owner = NULL;
 
     // disble fury
     ent->fury_time = 0;
@@ -2046,6 +2047,7 @@ void vrx_reset_player_state(edict_t *ent) {
     ent->slowed_time = 0;
     ent->chill_level = 0;
     ent->chill_time = 0;
+    ent->chill_owner = NULL;
 
     // remove all summonables
     vrx_remove_player_summonables(ent);
