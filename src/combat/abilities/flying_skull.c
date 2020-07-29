@@ -500,7 +500,7 @@ void skull_think (edict_t *self)
 			if (self->monsterinfo.search_frames > SKULL_SEARCH_TIMEOUT)
 			{
 				self->enemy = NULL;
-				skull_return(self);//skull_idle(self);
+				skull_idle(self); //skull_return(self);
 				self->nextthink = level.time + 0.1;
 				return;
 			}
@@ -670,7 +670,7 @@ void Cmd_HellSpawn_f (edict_t *ent)
 		skull_attackcmd(ent->skull);
 		return;
 	}
-/*
+
 	if (!Q_strcasecmp(gi.args(), "recall") && ent->skull && ent->skull->inuse)
 	{
 		// toggle
@@ -686,7 +686,6 @@ void Cmd_HellSpawn_f (edict_t *ent)
 		}
 		return;
 	}
-*/
 
 	if (G_EntExists(ent->skull))
 	{
