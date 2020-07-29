@@ -1276,52 +1276,43 @@ char *Info_ValueForKey (char *s, char *key)
 	}
 }
 
-void Info_RemoveKey (char *s, char *key)
+// az: replaced with q2pro's
+void Info_RemoveKey(char *s, const char *key)
 {
-	char	*start;
-	char	pkey[512];
-	char	value[512];
-	char	*o;
+    char    *start;
+    char    pkey[MAX_INFO_STRING];
+    char    *o;
 
-	if (strstr (key, "\\"))
-	{
-//		Com_Printf ("Can't use a key with a \\\n");
-		return;
-	}
+    while (1) {
+        start = s;
+        if (*s == '\\')
+            s++;
+        o = pkey;
+        while (*s != '\\') {
+            if (!*s)
+                return;
+            *o++ = *s++;
+        }
+        *o = 0;
+        s++;
 
-	while (1)
-	{
-		start = s;
-		if (*s == '\\')
-			s++;
-		o = pkey;
-		while (*s != '\\')
-		{
-			if (!*s)
-				return;
-			*o++ = *s++;
-		}
-		*o = 0;
-		s++;
+        while (*s != '\\' && *s) {
+            s++;
+        }
 
-		o = value;
-		while (*s != '\\' && *s)
-		{
-			if (!*s)
-				return;
-			*o++ = *s++;
-		}
-		*o = 0;
+        if (!strcmp(key, pkey)) {
+            o = start; // remove this part
+            while (*s) {
+                *o++ = *s++;
+            }
+            *o = 0;
+            s = start;
+            continue; // search for duplicates
+        }
 
-		if (!strcmp (key, pkey) )
-		{
-			strcpy (start, s);	// remove this part
-			return;
-		}
-
-		if (!*s)
-			return;
-	}
+        if (!*s)
+            return;
+    }
 
 }
 
