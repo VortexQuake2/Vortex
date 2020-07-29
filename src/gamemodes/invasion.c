@@ -312,6 +312,7 @@ void INV_AwardPlayers(void)
 {
 	int		i, points, credits, num_spawns = INV_GetNumPlayerSpawns(), num_winners = 0;
 	edict_t *player;
+	int shared, private, bonus;
 
 	// we're not in invasion mode
 	if (!INVASION_OTHERSPAWNS_REMOVED)

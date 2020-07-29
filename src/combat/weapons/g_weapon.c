@@ -2600,6 +2600,7 @@ void EMP_Explode (edict_t *self)
 				time *= 0.2;
 
 			e->empeffect_time = level.time + time;
+			e->empeffect_owner = self->owner;
 			e->monsterinfo.pausetime = level.time + time;
 			e->monsterinfo.stand(e);
 		}

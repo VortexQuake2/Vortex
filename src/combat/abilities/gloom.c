@@ -1707,6 +1707,7 @@ void cocoon_attack (edict_t *self)
 		// give them a damage/defense bonus for awhile
 		self->enemy->cocoon_time = level.time + duration;
 		self->enemy->cocoon_factor = factor;
+		self->enemy->cocoon_owner = self->owner;
 
 		if (self->enemy->client)
 			safe_cprintf(self->enemy, PRINT_HIGH, "You have gained a damage/defense bonus of +%.0f%c for %.0f seconds\n", 
@@ -1909,6 +1910,7 @@ edict_t *CreateCocoon (edict_t *ent, int skill_level)
 	e->takedamage = DAMAGE_AIM;
 	e->health = e->max_health = COCOON_INITIAL_HEALTH + COCOON_ADDON_HEALTH * skill_level;
 	e->monsterinfo.level = skill_level;
+	e->owner = ent;
 	
 	//Talent: Phantom Cocoon - frames before cloaking
 	if (talentLevel > 0)

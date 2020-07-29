@@ -211,6 +211,7 @@ void WaterTotem_think(edict_t *self, edict_t *caster)
 			//Chill the target.
 			target->chill_level = self->monsterinfo.level;
 			target->chill_time = level.time + duration;
+			target->chill_owner = caster;
 			//gi.dprintf("chilled %s for %.1f seconds at level %d\n", target->classname, duration, self->monsterinfo.level);
 			
 		}
