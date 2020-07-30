@@ -1450,15 +1450,6 @@ typedef struct
 	float		ctf_assist_return;	// used to give the player a "return the flag" assist
 	int			scanner_active;
 	//K03 End
-
-	// invasion wave stat tracking
-	int wave_solo_dmgmod;
-	int wave_solo_exp;
-	int wave_solo_credits;
-	int wave_shared_exp;
-	int wave_shared_credits;
-	int wave_assist_exp;
-	int wave_assist_credits;
 } client_persistant_t;
 
 // client data that stays across deathmatch respawns
@@ -1486,6 +1477,16 @@ typedef struct
 	// 3.5 delayed stuffcmd commands
 	char	stuffbuf[500];			// commands that will be stuffed to client; delay prevents overflow
 	char	*stuffptr;
+
+	// invasion wave stat tracking
+	int wave_solo_dmgmod;
+	int wave_solo_targets;
+	int wave_solo_exp;
+	int wave_solo_credits;
+	int wave_shared_exp;
+	int wave_shared_credits;
+	int wave_assist_exp;
+	int wave_assist_credits;
 } client_respawn_t;
 
 #include "combat/abilities/g_abilities.h"
