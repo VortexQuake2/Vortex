@@ -1130,14 +1130,6 @@ void InitClientPersistant (gclient_t *client)
 	client->pers.max_tballs = 20;
 	//K03 End
 
-	client->pers.wave_solo_dmgmod = 0;
-	client->pers.wave_solo_exp = 0;
-	client->pers.wave_solo_credits = 0;
-	client->pers.wave_shared_exp = 0;
-	client->pers.wave_shared_credits = 0;
-	client->pers.wave_assist_exp = 0;
-	client->pers.wave_assist_credits = 0;
-
 	client->pers.connected = true;
 	ClearScanner(client);
 }
