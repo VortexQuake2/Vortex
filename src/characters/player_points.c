@@ -552,7 +552,7 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
                 gi.dprintf("\n");
             }
 
-            if ( slot->ent != player ) {
+            if ( slot->ent->owner != player ) {
                 leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
                 exp = vrx_get_kill_base_experience(
                     slot->ent->owner, targ, targetclient, 
@@ -573,7 +573,7 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
                 gi.dprintf("\n");
             }
 
-            if ( slot->ent != player ) {
+            if ( slot->ent->owner != player ) {
                 leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
                 exp = vrx_get_kill_base_experience(
                     slot->ent->owner, targ, targetclient,  
@@ -594,7 +594,7 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
                 gi.dprintf("\n");
             }
 
-            if ( slot->ent != player ) {
+            if ( slot->ent->owner != player ) {
                 leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
                 exp = vrx_get_kill_base_experience(
                     slot->ent->owner, targ, targetclient, 
@@ -615,7 +615,7 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
                 gi.dprintf("\n");
             }
 
-            if ( slot->ent != player ) {
+            if ( slot->ent->owner != player ) {
                 leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
                 exp = vrx_get_kill_base_experience(
                     slot->ent->owner, targ, targetclient, 
@@ -636,7 +636,7 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
                 gi.dprintf("\n");
             }
 
-            if ( slot->ent != player ) {
+            if ( player->cocoon_owner != player ) {
                 leveldiff = vrx_get_level_difference_multiplier(player->cocoon_owner, targ, targetclient);
                 exp = vrx_get_kill_base_experience(
                     player->cocoon_owner, targ, targetclient, 
