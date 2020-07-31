@@ -1708,11 +1708,7 @@ void cocoon_attack (edict_t *self)
 		self->enemy->cocoon_time = level.time + duration;
 		self->enemy->cocoon_factor = factor;
 		self->enemy->cocoon_owner = self->cocoon_owner;
-<<<<<<< HEAD
-		
-=======
 
->>>>>>> 6a6b0b2... fix assist exp crashes
 		if (self->enemy->client)
 			safe_cprintf(self->enemy, PRINT_HIGH, "You have gained a damage/defense bonus of +%.0f%c for %.0f seconds\n", 
 				(factor * 100) - 100, '%', duration); 
@@ -1916,6 +1912,7 @@ edict_t *CreateCocoon (edict_t *ent, int skill_level)
 	e->monsterinfo.level = skill_level;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	e->cocoon_owner = ent;
 =======
 	e->owner = ent;
@@ -1923,6 +1920,9 @@ edict_t *CreateCocoon (edict_t *ent, int skill_level)
 =======
 	e->cocoon_owner = ent;
 >>>>>>> 6a6b0b2... fix assist exp crashes
+=======
+	e->cocoon_owner = ent;
+>>>>>>> 6a6b0b2437504a942b2fef0f3900f9866dba1d4c
 	
 	//Talent: Phantom Cocoon - frames before cloaking
 	if (talentLevel > 0)
