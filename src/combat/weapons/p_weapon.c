@@ -600,15 +600,12 @@ void Weapon_Generic2(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
                 //4.5 the first shot merely resets the chatprotect state, but doesn't actually fire
                 if (ent->flags & FL_CHATPROTECT) {
                     // reset chat protect and cloaking flags
-                    ent->flags ^= FL_CHATPROTECT;
-                    ent->svflags &= ~SVF_NOCLIENT;
+                    vrx_remove_chat_protect(ent);
 
                     // re-draw weapon
                     ent->client->newweapon = ent->client->pers.weapon;
                     ent->client->weaponstate = WEAPON_DROPPING;
                     ChangeWeapon(ent);
-
-                    Teleport_them(ent);
                     return;
                 }
                 //GHz END
@@ -833,16 +830,12 @@ void weapon_grenade_fire(edict_t *ent, qboolean held) {
     //3.0 disable chat protect (somehow throwing a hg does not reset a client's idle frames)
     //4.5 the first shot merely resets the chatprotect state, but doesn't actually fire
     if (ent->flags & FL_CHATPROTECT) {
-        // reset chat protect and cloaking flags
-        ent->flags ^= FL_CHATPROTECT;
-        ent->svflags &= ~SVF_NOCLIENT;
+        vrx_remove_chat_protect(ent);
 
         // re-draw weapon
         ent->client->newweapon = ent->client->pers.weapon;
         ent->client->weaponstate = WEAPON_DROPPING;
         ChangeWeapon(ent);
-
-        Teleport_them(ent);
         return;
     }
 

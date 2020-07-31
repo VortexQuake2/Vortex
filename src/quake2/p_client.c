@@ -2888,6 +2888,23 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	UpdateMirroredEntities(ent);
 }
 
+// az: this code has been a little redundant in places
+void vrx_remove_chat_protect(edict_t* ent) {
+	ent->flags &= ~FL_CHATPROTECT;
+	if (!PM_PlayerHasMonster(ent))
+	{
+		if (!pvm->value)
+		{
+			ent->solid = SOLID_BBOX;
+			ent->svflags &= ~SVF_NOCLIENT;//4.5
+		}
+	}
+
+	// in pvp modes, teleport them.
+	if (!pvm->value)
+		Teleport_them(ent);
+}
+
 
 /*
 ==============
@@ -2928,19 +2945,7 @@ void ClientBeginServerFrame (edict_t *ent)
 	// chat-protect ends when you move or fire
 	if ((ent->client->idle_frames < qf2sf(CHAT_PROTECT_FRAMES)) && (ent->flags & FL_CHATPROTECT))
 	{
-		ent->flags &= ~FL_CHATPROTECT;
-		if (!PM_PlayerHasMonster(ent))
-		{
-			if (!pvm->value)
-			{
-				ent->solid = SOLID_BBOX;
-				ent->svflags &= ~SVF_NOCLIENT;//4.5
-			}
-		}
-
-		// in pvp modes, teleport them.
-		if (!pvm->value)
-			Teleport_them(ent);
+		vrx_remove_chat_protect(ent);
 	}
 
     think_player_inactivity(ent);

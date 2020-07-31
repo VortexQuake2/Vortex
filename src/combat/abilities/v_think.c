@@ -340,10 +340,11 @@ V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse) {// assault cannon
             ucmd->buttons &= ~BUTTON_ATTACK;
     }
 
-    if (PM_PlayerHasMonster(ent)) {
-        if (ent->owner->mtype == P_TANK)
-            ucmd->upmove = 0;
-    }
+    // az 2020: it seems like _we_ added this? _why_ did we add this?
+    // if (PM_PlayerHasMonster(ent)) {
+    //     if (ent->owner->mtype == P_TANK)
+    //         ucmd->upmove = 0;
+    // }
 
     if (ent->automag) {
         edict_t *other;

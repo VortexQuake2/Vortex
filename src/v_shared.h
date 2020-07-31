@@ -317,5 +317,6 @@ qboolean SpawnWaitingPlayers(void);
 
 // etc
 int vrx_get_ability_upgrade_cost(int index);
+void vrx_remove_chat_protect(edict_t* ent);
 
 #endif
