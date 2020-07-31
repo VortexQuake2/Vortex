@@ -544,62 +544,64 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
         // check for buffs, and award the buff-giver some exp and credits
         // todo: add totems
         if ((slot = que_findtype(player->curses, NULL, BLESS)) != NULL) {
-            if ( slot->ent == player ) {
+            if ( slot->ent != player ) {
                 leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
                 exp = vrx_get_kill_base_experience(
                     slot->ent, targ, targetclient, 
                     leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
                 vrx_apply_experience(player, exp);
                 vrx_add_credits(player, credits);
-                slot->ent->client->resp.wave_assist_exp += exp;
-                slot->ent->client->resp.wave_assist_exp += credits;
+                slot->ent->owner->client->resp.wave_assist_exp += exp;
+                slot->ent->owner->client->resp.wave_assist_credits += credits;
             }
         }
         if ((slot = que_findtype(player->curses, NULL, HEALING)) != NULL) {
-            if ( slot->ent == player ) {
+            if ( slot->ent != player ) {
                 leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
                 exp = vrx_get_kill_base_experience(
                     slot->ent, targ, targetclient,  
                     leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
                 vrx_apply_experience(player, exp);
                 vrx_add_credits(player, credits);
-                slot->ent->client->resp.wave_assist_exp += exp;
-                slot->ent->client->resp.wave_assist_exp += credits;
+                slot->ent->owner->client->resp.wave_assist_exp += exp;
+                slot->ent->owner->client->resp.wave_assist_credits += credits;
             }
         }
         if ((slot = que_findtype(player->curses, NULL, DEFLECT)) != NULL) {
-            if ( slot->ent == player ) {
+            if ( slot->ent != player ) {
                 leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
                 exp = vrx_get_kill_base_experience(
                     slot->ent, targ, targetclient, 
                     leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
                 vrx_apply_experience(player, exp);
                 vrx_add_credits(player, credits);
-                slot->ent->client->resp.wave_assist_exp += exp;
-                slot->ent->client->resp.wave_assist_exp += credits;
+                slot->ent->owner->client->resp.wave_assist_exp += exp;
+                slot->ent->owner->client->resp.wave_assist_credits += credits;
             }
         }
         if ((slot = que_findtype(player->auras, NULL, AURA_SALVATION)) != NULL) {
-            if ( slot->ent == player ) {
+            if ( slot->ent != player ) {
                 leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
                 exp = vrx_get_kill_base_experience(
                     slot->ent, targ, targetclient, 
                     leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
                 vrx_apply_experience(player, exp);
                 vrx_add_credits(player, credits);
-                slot->ent->client->resp.wave_assist_exp += exp;
-                slot->ent->client->resp.wave_assist_exp += credits;
+                slot->ent->owner->client->resp.wave_assist_exp += exp;
+                slot->ent->owner->client->resp.wave_assist_credits += credits;
             }
         }
         if ( ( targ->cocoon_time > level.time ) && player->cocoon_owner && player->cocoon_owner->client ) {
-            leveldiff = vrx_get_level_difference_multiplier(player->cocoon_owner, targ, targetclient);
-            exp = vrx_get_kill_base_experience(
-                player->cocoon_owner, targ, targetclient, 
-                leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-            vrx_apply_experience(player, exp);
-            vrx_add_credits(player, credits);
-            player->cocoon_owner->client->resp.wave_assist_exp += exp;
-            player->cocoon_owner->client->resp.wave_assist_exp += credits;    
+            if ( slot->ent != player ) {
+                leveldiff = vrx_get_level_difference_multiplier(player->cocoon_owner, targ, targetclient);
+                exp = vrx_get_kill_base_experience(
+                    player->cocoon_owner, targ, targetclient, 
+                    leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
+                vrx_apply_experience(player, exp);
+                vrx_add_credits(player, credits);
+                player->cocoon_owner->client->resp.wave_assist_exp += exp;
+                player->cocoon_owner->client->resp.wave_assist_credits += credits;    
+            }
         }
     }
 
@@ -611,8 +613,8 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
             leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
         vrx_apply_experience(player, exp);
         vrx_add_credits(player, credits);
-        slot->ent->client->resp.wave_assist_exp += exp;
-        slot->ent->client->resp.wave_assist_exp += credits;
+        slot->ent->owner->client->resp.wave_assist_exp += exp;
+        slot->ent->owner->client->resp.wave_assist_credits += credits;
     }
     if ((slot = que_findtype(targ->curses, NULL, LOWER_RESIST)) != NULL) {
         leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
@@ -621,8 +623,8 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
             leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
         vrx_apply_experience(player, exp);
         vrx_add_credits(player, credits);
-        slot->ent->client->resp.wave_assist_exp += exp;
-        slot->ent->client->resp.wave_assist_exp += credits;
+        slot->ent->owner->client->resp.wave_assist_exp += exp;
+        slot->ent->owner->client->resp.wave_assist_credits += credits;
     }
     if ((slot = que_findtype(targ->curses, NULL, WEAKEN)) != NULL) {
         leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
@@ -631,8 +633,8 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
             leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
         vrx_apply_experience(player, exp);
         vrx_add_credits(player, credits);
-        slot->ent->client->resp.wave_assist_exp += exp;
-        slot->ent->client->resp.wave_assist_exp += credits;
+        slot->ent->owner->client->resp.wave_assist_exp += exp;
+        slot->ent->owner->client->resp.wave_assist_credits += credits;
     }
     if ((slot = que_findtype(targ->auras, NULL, AURA_HOLYFREEZE)) != NULL) {
         leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
@@ -641,8 +643,8 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
             leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
         vrx_apply_experience(player, exp);
         vrx_add_credits(player, credits);
-        slot->ent->client->resp.wave_assist_exp += exp;
-        slot->ent->client->resp.wave_assist_exp += credits;
+        slot->ent->owner->client->resp.wave_assist_exp += exp;
+        slot->ent->owner->client->resp.wave_assist_credits += credits;
     }
     if ( targ->chill_time > level.time && targ->chill_owner ) {
         leveldiff = vrx_get_level_difference_multiplier(targ->chill_owner, targ, targetclient);
@@ -652,7 +654,7 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
         vrx_apply_experience(player, exp);
         vrx_add_credits(player, credits);
         targ->chill_owner->client->resp.wave_assist_exp += exp;
-        targ->chill_owner->client->resp.wave_assist_exp += credits;    
+        targ->chill_owner->client->resp.wave_assist_credits += credits;    
     }
     if ( targ->empeffect_time > level.time && targ->empeffect_owner ) {
         leveldiff = vrx_get_level_difference_multiplier(targ->empeffect_owner, targ, targetclient);
@@ -662,7 +664,7 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
         vrx_apply_experience(player, exp);
         vrx_add_credits(player, credits);
         targ->empeffect_owner->client->resp.wave_assist_exp += exp;
-        targ->empeffect_owner->client->resp.wave_assist_exp += credits;    
+        targ->empeffect_owner->client->resp.wave_assist_credits += credits;    
     }
 }
 
