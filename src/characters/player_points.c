@@ -553,12 +553,12 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
             }
 
             if ( slot->ent->owner != player ) {
-                leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
+                leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
                 exp = vrx_get_kill_base_experience(
                     slot->ent->owner, targ, targetclient, 
                     leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-                vrx_apply_experience(player, exp);
-                vrx_add_credits(player, credits);
+                vrx_apply_experience(slot->ent->owner, exp);
+                vrx_add_credits(slot->ent->owner, credits);
                 slot->ent->owner->client->resp.wave_assist_exp += exp;
                 slot->ent->owner->client->resp.wave_assist_credits += credits;
                 gi.dprintf("  add %dxp, %dcr\n", exp, credits);
@@ -574,12 +574,12 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
             }
 
             if ( slot->ent->owner != player ) {
-                leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
+                leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
                 exp = vrx_get_kill_base_experience(
                     slot->ent->owner, targ, targetclient,  
                     leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-                vrx_apply_experience(player, exp);
-                vrx_add_credits(player, credits);
+                vrx_apply_experience(slot->ent->owner, exp);
+                vrx_add_credits(slot->ent->owner, credits);
                 slot->ent->owner->client->resp.wave_assist_exp += exp;
                 slot->ent->owner->client->resp.wave_assist_credits += credits;
                 gi.dprintf("  add %dxp, %dcr\n", exp, credits);
@@ -595,12 +595,12 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
             }
 
             if ( slot->ent->owner != player ) {
-                leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
+                leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
                 exp = vrx_get_kill_base_experience(
                     slot->ent->owner, targ, targetclient, 
                     leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-                vrx_apply_experience(player, exp);
-                vrx_add_credits(player, credits);
+                vrx_apply_experience(slot->ent->owner, exp);
+                vrx_add_credits(slot->ent->owner, credits);
                 slot->ent->owner->client->resp.wave_assist_exp += exp;
                 slot->ent->owner->client->resp.wave_assist_credits += credits;
                 gi.dprintf("  add %dxp, %dcr\n", exp, credits);
@@ -616,12 +616,12 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
             }
 
             if ( slot->ent->owner != player ) {
-                leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
+                leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
                 exp = vrx_get_kill_base_experience(
                     slot->ent->owner, targ, targetclient, 
                     leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-                vrx_apply_experience(player, exp);
-                vrx_add_credits(player, credits);
+                vrx_apply_experience(slot->ent->owner, exp);
+                vrx_add_credits(slot->ent->owner, credits);
                 slot->ent->owner->client->resp.wave_assist_exp += exp;
                 slot->ent->owner->client->resp.wave_assist_credits += credits;
                 gi.dprintf("  add %dxp, %dcr\n", exp, credits);
@@ -641,8 +641,8 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
                 exp = vrx_get_kill_base_experience(
                     player->cocoon_owner, targ, targetclient, 
                     leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-                vrx_apply_experience(player, exp);
-                vrx_add_credits(player, credits);
+                vrx_apply_experience(player->cocoon_owner, exp);
+                vrx_add_credits(player->cocoon_owner, credits);
                 player->cocoon_owner->client->resp.wave_assist_exp += exp;
                 player->cocoon_owner->client->resp.wave_assist_credits += credits;    
                 gi.dprintf("  add %dxp, %dcr\n", exp, credits);
@@ -660,12 +660,12 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
             gi.dprintf("\n");
         }
 
-        leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
+        leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
         exp = vrx_get_kill_base_experience(
             slot->ent->owner, targ, targetclient, 
             leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-        vrx_apply_experience(player, exp);
-        vrx_add_credits(player, credits);
+        vrx_apply_experience(slot->ent->owner, exp);
+        vrx_add_credits(slot->ent->owner, credits);
         slot->ent->owner->client->resp.wave_assist_exp += exp;
         slot->ent->owner->client->resp.wave_assist_credits += credits;
         gi.dprintf("  add %dxp, %dcr\n", exp, credits);
@@ -679,12 +679,12 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
             gi.dprintf("\n");
         }
 
-        leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
+        leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
         exp = vrx_get_kill_base_experience(
             slot->ent->owner, targ, targetclient, 
             leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-        vrx_apply_experience(player, exp);
-        vrx_add_credits(player, credits);
+        vrx_apply_experience(slot->ent->owner, exp);
+        vrx_add_credits(slot->ent->owner, credits);
         slot->ent->owner->client->resp.wave_assist_exp += exp;
         slot->ent->owner->client->resp.wave_assist_credits += credits;
         gi.dprintf("  add %dxp, %dcr\n", exp, credits);
@@ -698,12 +698,12 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
             gi.dprintf("\n");
         }
 
-        leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
+        leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
         exp = vrx_get_kill_base_experience(
             slot->ent->owner, targ, targetclient, 
             leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-        vrx_apply_experience(player, exp);
-        vrx_add_credits(player, credits);
+        vrx_apply_experience(slot->ent->owner, exp);
+        vrx_add_credits(slot->ent->owner, credits);
         slot->ent->owner->client->resp.wave_assist_exp += exp;
         slot->ent->owner->client->resp.wave_assist_credits += credits;
         gi.dprintf("  add %dxp, %dcr\n", exp, credits);
@@ -717,12 +717,12 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
             gi.dprintf("\n");
         }
 
-        leveldiff = vrx_get_level_difference_multiplier(slot->ent, targ, targetclient);
+        leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
         exp = vrx_get_kill_base_experience(
             slot->ent->owner, targ, targetclient, 
             leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-        vrx_apply_experience(player, exp);
-        vrx_add_credits(player, credits);
+        vrx_apply_experience(slot->ent->owner, exp);
+        vrx_add_credits(slot->ent->owner, credits);
         slot->ent->owner->client->resp.wave_assist_exp += exp;
         slot->ent->owner->client->resp.wave_assist_credits += credits;
         gi.dprintf("  add %dxp, %dcr\n", exp, credits);
@@ -740,8 +740,8 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
         exp = vrx_get_kill_base_experience(
             targ->chill_owner, targ, targetclient, 
             leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-        vrx_apply_experience(player, exp);
-        vrx_add_credits(player, credits);
+        vrx_apply_experience(targ->chill_owner, exp);
+        vrx_add_credits(targ->chill_owner, credits);
         targ->chill_owner->client->resp.wave_assist_exp += exp;
         targ->chill_owner->client->resp.wave_assist_credits += credits;
         gi.dprintf("  add %dxp, %dcr\n", exp, credits);  
@@ -759,8 +759,8 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
         exp = vrx_get_kill_base_experience(
             targ->empeffect_owner, targ, targetclient, 
             leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-        vrx_apply_experience(player, exp);
-        vrx_add_credits(player, credits);
+        vrx_apply_experience(targ->empeffect_owner, exp);
+        vrx_add_credits(targ->empeffect_owner, credits);
         targ->empeffect_owner->client->resp.wave_assist_exp += exp;
         targ->empeffect_owner->client->resp.wave_assist_credits += credits;   
         gi.dprintf("  add %dxp, %dcr\n", exp, credits); 
