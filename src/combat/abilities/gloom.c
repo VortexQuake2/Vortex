@@ -1910,20 +1910,8 @@ edict_t *CreateCocoon (edict_t *ent, int skill_level)
 	e->takedamage = DAMAGE_AIM;
 	e->health = e->max_health = COCOON_INITIAL_HEALTH + COCOON_ADDON_HEALTH * skill_level;
 	e->monsterinfo.level = skill_level;
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 	e->cocoon_owner = ent;
-=======
-	e->owner = ent;
->>>>>>> 3cab0a7... split exp in invasion; add bonus exp for assist actions
-=======
-	e->cocoon_owner = ent;
->>>>>>> 6a6b0b2... fix assist exp crashes
-=======
-	e->cocoon_owner = ent;
->>>>>>> 6a6b0b2437504a942b2fef0f3900f9866dba1d4c
-	
+
 	//Talent: Phantom Cocoon - frames before cloaking
 	if (talentLevel > 0)
 		e->monsterinfo.jumpdn = 50 - 8 * talentLevel;
