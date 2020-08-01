@@ -636,7 +636,9 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
         vrx_inv_award_curse_exp(player, targ, targetclient, player->auras, AURA_SALVATION, dmgmod, true );
         
         vrx_inv_award_cooldown_exp(player, targ, targetclient, player->cocoon_time, player->cocoon_owner, dmgmod, true);
-        
+        vrx_inv_award_cooldown_exp(player, targ, targetclient, player->heal_exp_time, player->heal_exp_owner, dmgmod, true);
+        vrx_inv_award_cooldown_exp(player, targ, targetclient, player->supply_exp_time, player->supply_exp_owner, dmgmod, true);
+
         vrx_inv_award_totem_exp(player, targ, targetclient, TOTEM_AIR, dmgmod, true);
         vrx_inv_award_totem_exp(player, targ, targetclient, TOTEM_DARKNESS, dmgmod, true);
         vrx_inv_award_totem_exp(player, targ, targetclient, TOTEM_EARTH, dmgmod, true);
