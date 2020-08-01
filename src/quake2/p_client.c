@@ -504,6 +504,7 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 				break;
 			case MOD_BFG_BLAST:
 				message = "should have used a smaller gun";
+				break;
 			case MOD_CORPSEEXPLODE:
 				snprintf( cmessage, 64, "hugs %s exploding corpse", GetPossesiveAdjective( self ) );
 				message = &cmessage;
