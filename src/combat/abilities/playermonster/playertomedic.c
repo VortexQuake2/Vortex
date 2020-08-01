@@ -257,9 +257,9 @@ void p_medic_heal (edict_t *ent)
 			M_Regenerate(tr.ent, frames, 0, 1.0, true, true, false, &tr.ent->monsterinfo.regen_delay2);
 
 			if ( ent->client ) {
-				exp = floattoint( (float)tr.ent->max_health / ((float)frames) / 4 );
+				exp = floattoint( (float)tr.ent->max_health / ((float)frames) / 5 );
 				vrx_apply_experience(ent, exp);
-				gi.dprintf("playertomedic.c: player %d earned %d exp from healing\n", ent->client->pers.netname, exp );
+				ent->client->resp.wave_assist_exp += exp;
 			}
 
 			// hold monsters in-place
