@@ -457,6 +457,62 @@ int vrx_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) {
     return exp_points;
 }
 
+void vrx_inv_award_curse_exp( edict_t *attacker, edict_t *targ, edict_t *targetclient, que_t *que, int type, qboolean is_blessing ) {
+    int leveldiff, exp, credits;
+    que_t *slot;
+    edict_t *assister;
+
+    if ((slot = que_findtype(que, NULL, type)) != NULL) {
+        gi.dprintf("vrx_inv_award_exp: found curse %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
+
+        if ( slot->ent->owner->client ) {
+            gi.dprintf("named %s\n", slot->ent->owner->client->pers.netname);
+        } else {
+            gi.dprintf("\n");
+        }
+
+        if ( slot->ent->owner != attacker ) {
+            leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
+            exp = vrx_get_kill_base_experience(
+                slot->ent->owner, targ, targetclient, 
+                leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
+            vrx_apply_experience(slot->ent->owner, exp);
+            vrx_add_credits(slot->ent->owner, credits);
+            slot->ent->owner->client->resp.wave_assist_exp += exp;
+            slot->ent->owner->client->resp.wave_assist_credits += credits;
+            gi.dprintf("  add %dxp, %dcr\n", exp, credits);
+        }
+    }
+}
+
+void vrx_inv_award_cooldown_exp( edict_t *attacker, edict_t *targ, edict_t *targetclient, float time, edict_t *owner, qboolean is_buff ) {
+    int leveldiff, exp, credits;
+    que_t *slot;
+    edict_t *assister;
+
+    if ( time > level.time && owner ) {
+        gi.dprintf("vrx_inv_award_exp: found a cooldown, owner is a %s ", owner->classname );
+
+        if ( owner->client ) {
+            gi.dprintf("named %s\n", owner->client->pers.netname);
+        } else {
+            gi.dprintf("\n");
+        }
+
+        if ( owner != attacker ) {
+            leveldiff = vrx_get_level_difference_multiplier(owner, targ, targetclient);
+            exp = vrx_get_kill_base_experience(
+                owner, targ, targetclient, 
+                leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
+            vrx_apply_experience(owner, exp);
+            vrx_add_credits(owner, credits);
+            owner->client->resp.wave_assist_exp += exp;
+            owner->client->resp.wave_assist_credits += credits;
+            gi.dprintf("  add %dxp, %dcr\n", exp, credits);
+        }
+    }
+}
+
 void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) {
     edict_t *player;
     int exp, i, credits = 0;
@@ -543,240 +599,19 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
 
         // check for buffs, and award the buff-giver some exp and credits
         // todo: add totems
-        if ((slot = que_findtype(player->curses, NULL, BLESS)) != NULL) {
-            gi.dprintf("vrx_inv_award_exp: found bless %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
-
-            if ( slot->ent->owner->client ) {
-                gi.dprintf("named %s\n", slot->ent->owner->client->pers.netname);
-            } else {
-                gi.dprintf("\n");
-            }
-
-            if ( slot->ent->owner != player ) {
-                leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
-                exp = vrx_get_kill_base_experience(
-                    slot->ent->owner, targ, targetclient, 
-                    leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-                vrx_apply_experience(slot->ent->owner, exp);
-                vrx_add_credits(slot->ent->owner, credits);
-                slot->ent->owner->client->resp.wave_assist_exp += exp;
-                slot->ent->owner->client->resp.wave_assist_credits += credits;
-                gi.dprintf("  add %dxp, %dcr\n", exp, credits);
-            }
-        }
-        if ((slot = que_findtype(player->curses, NULL, HEALING)) != NULL) {
-            gi.dprintf("vrx_inv_award_exp: found healing %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
-
-            if ( slot->ent->owner->client ) {
-                gi.dprintf("named %s\n", slot->ent->owner->client->pers.netname);
-            } else {
-                gi.dprintf("\n");
-            }
-
-            if ( slot->ent->owner != player ) {
-                leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
-                exp = vrx_get_kill_base_experience(
-                    slot->ent->owner, targ, targetclient,  
-                    leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-                vrx_apply_experience(slot->ent->owner, exp);
-                vrx_add_credits(slot->ent->owner, credits);
-                slot->ent->owner->client->resp.wave_assist_exp += exp;
-                slot->ent->owner->client->resp.wave_assist_credits += credits;
-                gi.dprintf("  add %dxp, %dcr\n", exp, credits);
-            }
-        }
-        if ((slot = que_findtype(player->curses, NULL, DEFLECT)) != NULL) {
-            gi.dprintf("vrx_inv_award_exp: deflect bless %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
-
-            if ( slot->ent->owner->client ) {
-                gi.dprintf("named %s\n", slot->ent->owner->client->pers.netname);
-            } else {
-                gi.dprintf("\n");
-            }
-
-            if ( slot->ent->owner != player ) {
-                leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
-                exp = vrx_get_kill_base_experience(
-                    slot->ent->owner, targ, targetclient, 
-                    leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-                vrx_apply_experience(slot->ent->owner, exp);
-                vrx_add_credits(slot->ent->owner, credits);
-                slot->ent->owner->client->resp.wave_assist_exp += exp;
-                slot->ent->owner->client->resp.wave_assist_credits += credits;
-                gi.dprintf("  add %dxp, %dcr\n", exp, credits);
-            }
-        }
-        if ((slot = que_findtype(player->auras, NULL, AURA_SALVATION)) != NULL) {
-            gi.dprintf("vrx_inv_award_exp: found salv %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
-
-            if ( slot->ent->owner->client ) {
-                gi.dprintf("named %s\n", slot->ent->owner->client->pers.netname);
-            } else {
-                gi.dprintf("\n");
-            }
-
-            if ( slot->ent->owner != player ) {
-                leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
-                exp = vrx_get_kill_base_experience(
-                    slot->ent->owner, targ, targetclient, 
-                    leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-                vrx_apply_experience(slot->ent->owner, exp);
-                vrx_add_credits(slot->ent->owner, credits);
-                slot->ent->owner->client->resp.wave_assist_exp += exp;
-                slot->ent->owner->client->resp.wave_assist_credits += credits;
-                gi.dprintf("  add %dxp, %dcr\n", exp, credits);
-            }
-        }
-        if ( ( player->cocoon_time > level.time ) && player->cocoon_owner && player->cocoon_owner->client ) {
-            gi.dprintf("vrx_inv_award_exp: found cocoon, owner is a %s ", player->cocoon_owner->classname );
-
-            if ( player->cocoon_owner->client ) {
-                gi.dprintf("named %s\n", player->cocoon_owner->client->pers.netname);
-            } else {
-                gi.dprintf("\n");
-            }
-
-            if ( player->cocoon_owner != player ) {
-                leveldiff = vrx_get_level_difference_multiplier(player->cocoon_owner, targ, targetclient);
-                exp = vrx_get_kill_base_experience(
-                    player->cocoon_owner, targ, targetclient, 
-                    leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-                vrx_apply_experience(player->cocoon_owner, exp);
-                vrx_add_credits(player->cocoon_owner, credits);
-                player->cocoon_owner->client->resp.wave_assist_exp += exp;
-                player->cocoon_owner->client->resp.wave_assist_credits += credits;    
-                gi.dprintf("  add %dxp, %dcr\n", exp, credits);
-            }
-        }
+        vrx_inv_award_curse_exp(player, targ, targetclient, player->curses, BLESS, true );
+        vrx_inv_award_curse_exp(player, targ, targetclient, player->curses, HEALING, true );
+        vrx_inv_award_curse_exp(player, targ, targetclient, player->curses, DEFLECT, true );
+        vrx_inv_award_curse_exp(player, targ, targetclient, player->auras, AURA_SALVATION, true );
+        vrx_inv_award_cooldown_exp(player, targ, targetclient, player->cocoon_time, player->cocoon_owner, true);
     }
 
-    // check for debuffs, and award the debuff-giver some exp and credits
-    if ((slot = que_findtype(targ->curses, NULL, AMP_DAMAGE)) != NULL) {
-        gi.dprintf("vrx_inv_award_exp: found ampdamage %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
-
-        if ( slot->ent->owner->client ) {
-            gi.dprintf("named %s\n", slot->ent->owner->client->pers.netname);
-        } else {
-            gi.dprintf("\n");
-        }
-
-        if ( slot->ent->owner != attacker ) {
-            leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
-            exp = vrx_get_kill_base_experience(
-                slot->ent->owner, targ, targetclient, 
-                leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-            vrx_apply_experience(slot->ent->owner, exp);
-            vrx_add_credits(slot->ent->owner, credits);
-            slot->ent->owner->client->resp.wave_assist_exp += exp;
-            slot->ent->owner->client->resp.wave_assist_credits += credits;
-            gi.dprintf("  add %dxp, %dcr\n", exp, credits);
-        }
-    }
-    if ((slot = que_findtype(targ->curses, NULL, LOWER_RESIST)) != NULL) {
-        gi.dprintf("vrx_inv_award_exp: found lowerresist %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
-
-        if ( slot->ent->owner->client ) {
-            gi.dprintf("named %s\n", slot->ent->owner->client->pers.netname);
-        } else {
-            gi.dprintf("\n");
-        }
-
-        if ( slot->ent->owner != attacker ) {
-            leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
-            exp = vrx_get_kill_base_experience(
-                slot->ent->owner, targ, targetclient, 
-                leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-            vrx_apply_experience(slot->ent->owner, exp);
-            vrx_add_credits(slot->ent->owner, credits);
-            slot->ent->owner->client->resp.wave_assist_exp += exp;
-            slot->ent->owner->client->resp.wave_assist_credits += credits;
-            gi.dprintf("  add %dxp, %dcr\n", exp, credits);
-        }
-    }
-    if ((slot = que_findtype(targ->curses, NULL, WEAKEN)) != NULL) {
-        gi.dprintf("vrx_inv_award_exp: found weaken %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
-
-        if ( slot->ent->owner->client ) {
-            gi.dprintf("named %s\n", slot->ent->owner->client->pers.netname);
-        } else {
-            gi.dprintf("\n");
-        }
-
-        if ( slot->ent->owner != attacker ) {
-            leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
-            exp = vrx_get_kill_base_experience(
-                slot->ent->owner, targ, targetclient, 
-                leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-            vrx_apply_experience(slot->ent->owner, exp);
-            vrx_add_credits(slot->ent->owner, credits);
-            slot->ent->owner->client->resp.wave_assist_exp += exp;
-            slot->ent->owner->client->resp.wave_assist_credits += credits;
-            gi.dprintf("  add %dxp, %dcr\n", exp, credits);
-        }
-    }
-    if ((slot = que_findtype(targ->auras, NULL, AURA_HOLYFREEZE)) != NULL) {
-        gi.dprintf("vrx_inv_award_exp: found holyfreeze %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
-
-        if ( slot->ent->owner->client ) {
-            gi.dprintf("named %s\n", slot->ent->owner->client->pers.netname);
-        } else {
-            gi.dprintf("\n");
-        }
-
-        if ( slot->ent->owner != attacker ) {
-            leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
-            exp = vrx_get_kill_base_experience(
-                slot->ent->owner, targ, targetclient, 
-                leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-            vrx_apply_experience(slot->ent->owner, exp);
-            vrx_add_credits(slot->ent->owner, credits);
-            slot->ent->owner->client->resp.wave_assist_exp += exp;
-            slot->ent->owner->client->resp.wave_assist_credits += credits;
-            gi.dprintf("  add %dxp, %dcr\n", exp, credits);
-        }
-    }
-    if ( targ->chill_time > level.time && targ->chill_owner ) {
-        gi.dprintf("vrx_inv_award_exp: found chill, owner is a %s ", player->chill_owner );
-
-        if ( player->chill_owner->client ) {
-            gi.dprintf("named %s\n", player->chill_owner->client->pers.netname);
-        } else {
-            gi.dprintf("\n");
-        }
-
-        if ( targ->chill_owner != attacker ) {
-            leveldiff = vrx_get_level_difference_multiplier(targ->chill_owner, targ, targetclient);
-            exp = vrx_get_kill_base_experience(
-                targ->chill_owner, targ, targetclient, 
-                leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-            vrx_apply_experience(targ->chill_owner, exp);
-            vrx_add_credits(targ->chill_owner, credits);
-            targ->chill_owner->client->resp.wave_assist_exp += exp;
-            targ->chill_owner->client->resp.wave_assist_credits += credits;
-            gi.dprintf("  add %dxp, %dcr\n", exp, credits);
-        }
-    }
-    if ( targ->empeffect_time > level.time && targ->empeffect_owner ) {
-        gi.dprintf("vrx_inv_award_exp: found emp, owner is a %s ", player->empeffect_owner );
-
-        if ( player->empeffect_owner->client ) {
-            gi.dprintf("named %s\n", player->empeffect_owner->client->pers.netname);
-        } else {
-            gi.dprintf("\n");
-        }
-
-        if ( targ->empeffect_owner != attacker ) {
-            leveldiff = vrx_get_level_difference_multiplier(targ->empeffect_owner, targ, targetclient);
-            exp = vrx_get_kill_base_experience(
-                targ->empeffect_owner, targ, targetclient, 
-                leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
-            vrx_apply_experience(targ->empeffect_owner, exp);
-            vrx_add_credits(targ->empeffect_owner, credits);
-            targ->empeffect_owner->client->resp.wave_assist_exp += exp;
-            targ->empeffect_owner->client->resp.wave_assist_credits += credits;   
-            gi.dprintf("  add %dxp, %dcr\n", exp, credits);
-        }
-    }
+    vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, AMP_DAMAGE, false );
+    vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, LOWER_RESIST, false );
+    vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, WEAKEN, false );
+    vrx_inv_award_curse_exp(player, targ, targetclient, targ->auras, AURA_HOLYFREEZE, false );
+    vrx_inv_award_cooldown_exp(player, targ, targetclient, targ->chill_time, targ->chill_owner, false);
+    vrx_inv_award_cooldown_exp(player, targ, targetclient, targ->empeffect_time, targ->empeffect_owner, false);
 }
 
 double getOwnLevelBaseBonus(int level, float xpPerKill) {
