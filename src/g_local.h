@@ -239,6 +239,17 @@ typedef enum
 #define PNOISE_WEAPON			1
 #define PNOISE_IMPACT			2
 
+// gender defines
+
+#define GENDER_CUSTOM -2
+#define GENDER_OBJECT -1
+#define GENDER_NEUTRAL 0
+#define GENDER_MALE 1
+#define GENDER_FEMALE 2
+#define GENDER_MAX 3
+
+char *GetReflexivePronoun( edict_t *ent );
+char *GetPossesiveAdjective( edict_t *ent );
 
 //3ZB CTF state
 

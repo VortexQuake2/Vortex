@@ -182,6 +182,68 @@ qboolean IsFemale (edict_t *ent)
 	return false;
 }
 
+int GetGender(edict_t *ent) {
+	char *info;
+
+	if ( !ent->client )
+		return GENDER_NEUTRAL;
+	
+	info = Info_ValueForKey (ent->client->pers.userinfo, "gender");
+	if ( !strncmp( info, "fluid", 6 ) ) {
+		return GetRandom( GENDER_NEUTRAL, GENDER_MAX -1 );
+	} else if ( info[0] == 'f' || info[0] == 'F' || info[0] == 's' || info[0] == 'S') {
+		return GENDER_FEMALE;
+	} else if ( info[0] == 'm' || info[0] == 'M' || info[0] == 'h' || info[0] == 'H' ) {
+		return GENDER_MALE;
+	} else if ( info[0] == 'o' || info[0] == 'O' || info[0] == 'i' || info[0] == 'I' ) { 
+		return GENDER_OBJECT;
+	} else {
+		return GENDER_NEUTRAL;
+	}
+}
+
+char *GetPossesiveAdjective(edict_t *ent) {
+	int gender = GetGender(ent);
+	char *info;
+
+	switch( gender ) {
+		case GENDER_MALE:
+			return "his";
+		case GENDER_FEMALE:
+			return "her";
+		case GENDER_OBJECT:
+			return "its";
+		case GENDER_CUSTOM:
+			info = Info_ValueForKey(ent->client->pers.userinfo, "gender_pa" );
+			if ( strncmp( info, "", 2 ) )
+				return info;
+		case GENDER_NEUTRAL:
+		default:
+			return "their";
+	}
+}
+
+char *GetReflexivePronoun(edict_t *ent) {
+	int gender = GetGender(ent);
+	char *info;
+
+	switch( gender ) {
+		case GENDER_MALE:
+			return "himself";
+		case GENDER_FEMALE:
+			return "herself";
+		case GENDER_OBJECT:
+			return "itself";
+		case GENDER_CUSTOM:
+			info = Info_ValueForKey(ent->client->pers.userinfo, "gender_rp" );
+			if ( strncmp( info, "", 2 ) )
+				return info;
+		case GENDER_NEUTRAL:
+		default:
+			return "theirself";
+	}
+}
+
 qboolean MonsterObits (edict_t *player, edict_t *monster)
 {
 	edict_t *monster_owner;
@@ -342,6 +404,7 @@ qboolean Monster_Obits (edict_t *victim, edict_t *attacker)
 void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 {
 	int			mod;
+	char 		cmessage[64];
 	char		*message;
 	char		*message2;
 	qboolean	ff;
@@ -419,7 +482,8 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 		// RAFAEL
 		case MOD_GEKK:
 		case MOD_BRAINTENTACLE:
-			message = "got his brains sucked out";
+			snprintf( cmessage, 64, "got %s brains sucked out", GetPossesiveAdjective( self ) );
+			message = &cmessage;
 			break;
 		}
 		if (attacker == self)
@@ -431,61 +495,70 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 				break;
 			case MOD_HG_SPLASH:
 			case MOD_G_SPLASH:
-				if (IsFemale(self))
-					message = "hugs his grenade";
-				else
-					message = "hugs her grenade";
+				snprintf( cmessage, 64, "hugs %s grenade", GetPossesiveAdjective( self ) );
+				message = &cmessage;
 				break;
 			case MOD_R_SPLASH:
-				if (IsFemale(self))
-					message = "hates herself";
-				else
-					message = "hates himself";
+				snprintf( cmessage, 64, "got %s brains sucked out", GetReflexivePronoun( self ) );
+				message = &cmessage;
 				break;
 			case MOD_BFG_BLAST:
 				message = "should have used a smaller gun";
 			case MOD_CORPSEEXPLODE:
-				message = "hugs his corpse";
+				snprintf( cmessage, 64, "hugs %s exploding corpse", GetPossesiveAdjective( self ) );
+				message = &cmessage;
 				break;
 			case MOD_BOMBS:
-				message = "plays catch with his bombs";
+				snprintf( cmessage, 64, "plays catch with %s bombs", GetPossesiveAdjective( self ) );
+				message = &cmessage;
 				break;
 			case MOD_DECOY:
-				message = "hates his decoy";
+				snprintf( cmessage, 64, "hates %s decoy", GetPossesiveAdjective( self ) );
+				message = &cmessage;
 				break;
 			// RAFAEL 03-MAY-98
 			case MOD_TRAP:
-			 	message = "sucked into his own trap";
+			 	snprintf( cmessage, 64, "was sucked into %s own trap", GetPossesiveAdjective( self ) );
+				message = &cmessage;
 				break;
 			case MOD_SUPPLYSTATION:
-				message = "took a seat on his exploding supply station";
+				snprintf( cmessage, 64, "took a seat on %s exploding supply station", GetPossesiveAdjective( self ) );
+				message = &cmessage;
 				break;
 			case MOD_CACODEMON_FIREBALL:
-				message = "juggles his exploding skulls";
+				snprintf( cmessage, 64, "juggles %s exploding skulls", GetPossesiveAdjective( self ) );
+				message = &cmessage;
 				break;
 			case MOD_EXPLODINGARMOR:
-				message = "shows off his exploding armor";
+				snprintf( cmessage, 64, "shows off %s exploding armor", GetPossesiveAdjective( self ) );
+				message = &cmessage;
 				break;
 			case MOD_PROXY:
-				message = "stood too close to his proxy grenade";
+				snprintf( cmessage, 64, "stood too close to %s proxy grenade", GetPossesiveAdjective( self ) );
+				message = &cmessage;
 				break;
 			case MOD_METEOR:
-				message = "pitched a tent underneath his falling meteor";
+				snprintf( cmessage, 64, "pitched a tent underneath %s falling meteor", GetPossesiveAdjective( self ) );
+				message = &cmessage;
 				break;
 			case MOD_NAPALM:
-				message = "makes a thorough examination of his napalm";
+				snprintf( cmessage, 64, "makes a thorough examination of %s napalm", GetPossesiveAdjective( self ) );
+				message = &cmessage;
 				break;
 			case MOD_EMP:
-				message = "detonates his ammo";
+				snprintf( cmessage, 64, "detonates %s ammo", GetPossesiveAdjective( self ) );
+				message = &cmessage;
 				break;
 			case MOD_SPIKEGRENADE:
-				message = "ate his spike grenade";
+				snprintf( cmessage, 64, "eats %s spike grenade", GetPossesiveAdjective( self ) );
+				message = &cmessage;
 				break;
 			case MOD_FIREBALL:
-				message = "rides his fireball";
+				snprintf( cmessage, 64, "rides %s fireball", GetPossesiveAdjective( self ) );
+				message = &cmessage;
 				break;
 			case MOD_ICEBOLT:
-				message = "became a popsicle";
+				message = "becomes a popsicle";
 				break;
 			case MOD_PLASMABOLT:
 				message = "turns to dust";
@@ -494,10 +567,11 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 				message = "receives the death penalty";
 				break;
 			case MOD_MIRV:
-				message = "ate his mirv grenade";
+				snprintf( cmessage, 64, "eats %s mirv grenade", GetPossesiveAdjective( self ) );
+				message = &cmessage;
 				break;
 			case MOD_SELFDESTRUCT:
-				message = "went off with a blast";
+				message = "goes off with a blast";
 				break;
 			default:
 				message = "becomes bored with life";
@@ -1740,7 +1814,7 @@ void spectator_respawn (edict_t *ent)
 		if (numspec >= maxspectators->value) {
 			safe_cprintf(ent, PRINT_HIGH, "Server spectator limit is full.");
 			ent->client->pers.spectator = false;
-			// reset his spectator var
+			// reset their spectator var
 			gi.WriteByte (svc_stufftext);
 			gi.WriteString ("spectator 0\n");
 			gi.unicast(ent, true);
@@ -2851,7 +2925,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	{
 		ent->v_flags &= ~SFLG_DOUBLEJUMP;
 
-		// the player (parasite) has completed his jump, clear the flag
+		// the player (parasite) has completed their jump, clear the flag
 		ent->monsterinfo.jumpup = 0;
 
 		//Talent: Leap Attack - player has touched down

@@ -73,19 +73,19 @@ void vrx_start_reign(edict_t *ent)
 
 	if (ent->myskills.boss > 0)
 	{
-		gi.bprintf(PRINT_HIGH, "A level %d boss known as %s starts their reign.\n", 
-			ent->myskills.boss, ent->client->pers.netname);
+		gi.bprintf(PRINT_HIGH, "A level %d boss known as %s starts %s reign.\n", 
+			ent->myskills.boss, ent->client->pers.netname, GetPossesiveAdjective(ent) );
 	}
 	else if (vrx_is_newbie_basher(ent) && !ptr->value && !domination->value)
 	{
-		gi.bprintf(PRINT_HIGH, "A level %d mini-boss known as %s begins their domination.\n", 
-		ent->myskills.level, ent->client->pers.netname);
+		gi.bprintf(PRINT_HIGH, "A level %d mini-boss known as %s begins %s domination.\n", 
+		ent->myskills.level, ent->client->pers.netname, GetPossesiveAdjective(ent) );
 		gi.bprintf(PRINT_HIGH, "Kill %s, and every non-boss gets a reward!\n", ent->client->pers.netname);
 		safe_cprintf(ent, PRINT_HIGH, "You are currently a mini-boss. You will receive no point loss, but cannot war.\n");
 	}
 	else
 	{
-		gi.bprintf(PRINT_HIGH, "%s starts their reign.\n", ent->client->pers.netname);
+		gi.bprintf( PRINT_HIGH, "%s starts %s reign.\n", ent->client->pers.netname, GetPossesiveAdjective(ent) );
 	}
 
 	V_UpdatePlayerAbilities(ent);
