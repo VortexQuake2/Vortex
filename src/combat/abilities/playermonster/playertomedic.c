@@ -270,7 +270,7 @@ void p_medic_heal (edict_t *ent)
 			if ( tr.ent->heal_exp_time < level.time )
 				tr.ent->heal_exp_time = level.time;
 			if ( tr.ent->heal_exp_time < level.time + 60.0 ) {
-				tr.ent->heal_exp_time += 2.0;
+				tr.ent->heal_exp_time += 15.0;
 			}
 		}
 		else
