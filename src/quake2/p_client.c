@@ -499,7 +499,7 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 				message = &cmessage;
 				break;
 			case MOD_R_SPLASH:
-				snprintf( cmessage, 64, "got %s brains sucked out", GetReflexivePronoun( self ) );
+				snprintf( cmessage, 64, "hates %s", GetReflexivePronoun( self ) );
 				message = &cmessage;
 				break;
 			case MOD_BFG_BLAST:
