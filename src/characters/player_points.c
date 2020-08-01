@@ -418,7 +418,7 @@ int vrx_get_kill_base_experience(
 }
 
 int vrx_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) {
-    int clevel;
+    int clevel = 0;
     float dmgmod = 1;
     int credits = 0;
     int max_points = vrx_get_kill_base_experience(attacker, targ, targetclient, -1, 1, &dmgmod, &credits);
@@ -458,9 +458,9 @@ int vrx_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) {
 }
 
 void vrx_inv_award_curse_exp( edict_t *attacker, edict_t *targ, edict_t *targetclient, que_t *que, int type, float mult, qboolean is_blessing ) {
-    int leveldiff, exp, credits;
-    que_t *slot;
-    edict_t *assister;
+    int leveldiff = 0, exp = 0, credits = 0;
+    que_t *slot = NULL;
+    edict_t *assister = NULL;
 
     if ((slot = que_findtype(que, NULL, type)) != NULL) {
         gi.dprintf("vrx_inv_award_exp: found curse %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
@@ -486,9 +486,9 @@ void vrx_inv_award_curse_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
 }
 
 void vrx_inv_award_cooldown_exp( edict_t *attacker, edict_t *targ, edict_t *targetclient, float time, edict_t *owner, float mult, qboolean is_buff ) {
-    int leveldiff, exp, credits;
-    que_t *slot;
-    edict_t *assister;
+    int leveldiff = 0, exp = 0, credits = 0;
+    que_t *slot = NULL;
+    edict_t *assister = NULL;
 
     if ( time > level.time && owner ) {
         gi.dprintf("vrx_inv_award_exp: found a cooldown, owner is a %s ", owner->classname );
@@ -514,8 +514,8 @@ void vrx_inv_award_cooldown_exp( edict_t *attacker, edict_t *targ, edict_t *targ
 }
 
 void vrx_inv_award_totem_exp( edict_t *attacker, edict_t *targ, edict_t *targetclient, int type, float mult, qboolean is_allied ) {
-    int exp, credits, leveldiff;
-    edict_t *totem;
+    int exp = 0, credits = 0, leveldiff = 0;
+    edict_t *totem = NULL;
 
     if ( is_allied ) {
         totem = NextNearestTotem(attacker, type, NULL, true);
@@ -547,12 +547,12 @@ void vrx_inv_award_totem_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
 }
 
 void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) {
-    edict_t *player;
-    int exp, i, credits = 0;
+    edict_t *player = NULL;
+    int exp = 0, credits = 0, i = 0;
     float leveldiff = 1;
     float player_cnt = 0;
     float dmgmod = 0;
-    que_t *slot;
+    que_t *slot = NULL;
     qboolean attacker_was_null = attacker == NULL;
 
     for (i = 1; i <= maxclients->value; i++) {
