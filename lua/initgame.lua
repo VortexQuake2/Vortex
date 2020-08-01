@@ -13,9 +13,9 @@ else
 end
 
 if is_invasion == 1 then
-	q2.print("Lua: Invasion - lowering xp to 18/monster\n")
-	EXP_WORLD_MONSTER = 18
-	PVB_BOSS_EXPERIENCE = 1600
+	q2.print("Lua: Invasion - lowering xp to 15/monster\n")
+	EXP_WORLD_MONSTER = 15
+	PVB_BOSS_EXPERIENCE = 600
 	PVB_BOSS_CREDITS = 100
 elseif is_invasion == 2 then
 	q2.print("Lua: Invasion Hard - lowering xp to 20/monster\n")
@@ -32,8 +32,9 @@ end
 q2.print("INFO: nolag is set to " .. q2.cvar_get("nolag", "0") .. ".\n")
 vrx.reloadvars()
 
+pvp_fraglimit = 75
+
 function on_map_change()
-	q2.print("Lua: on_map_change called. Joined player count: " .. vrx.get_joined_player_count())
 	if vrx.get_joined_player_count() >= 6 then
 		pvp_fraglimit = 100
 	else

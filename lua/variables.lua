@@ -136,7 +136,7 @@ POWERCUBES_RESPAWN                       = 50
 -- Ammo Pickups
 SHELLS_PICKUP                            = 10
 BULLETS_PICKUP                           = 50
-GRENADES_PICKUP                          = 3
+GRENADES_PICKUP                          = 8
 ROCKETS_PICKUP                           = 8
 CELLS_PICKUP                             = 50
 SLUGS_PICKUP                             = 8
@@ -360,7 +360,7 @@ M_MUTANT_COST                            = 25
 M_DEFAULT_COST                           = 25
 
 -- control cost stuff
-MAX_MONSTERS                             = 3 
+MAX_MONSTERS                             = 3
 M_FLYER_CONTROL_COST                     = 1
 M_INSANE_CONTROL_COST                    = 1
 M_SOLDIERLT_CONTROL_COST                 = 1
@@ -777,8 +777,8 @@ SPIKEBALL_ADDON_DURATION                 = 0
 SPIKEBALL_COST                           = 25
 SPIKEBALL_DELAY                          = 1.0
 
--- 
-PVB_BOSS_EXPERIENCE                      = 1000
+--
+PVB_BOSS_EXPERIENCE                      = 1600
 PVB_BOSS_MIN_EXP                         = 100
 PVB_BOSS_MAX_EXP                         = 1000
 PVB_BOSS_CREDITS                         = 3000
@@ -1101,3 +1101,11 @@ GASSER_DELAY                             = 1.0
 
 GASCLOUD_POISON_DURATION                 = 10.0
 GASCLOUD_POISON_FACTOR                   = 0.1
+
+-- Monster Counts
+sewer64_monsters			 = 100
+base64_monsters				= 100
+city64_monsters				= 100
+spogsp1_monsters			= 100
+hwytohell_monsters			 = 75
+
