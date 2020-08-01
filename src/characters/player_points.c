@@ -523,24 +523,26 @@ void vrx_inv_award_totem_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
         totem = NextNearestTotem(targ, type, NULL, false);
     }
 
-    gi.dprintf("vrx_inv_award_exp: found a totem, owner is a %s ", totem->owner->classname );
+    if ( totem ) {
+        gi.dprintf("vrx_inv_award_exp: found a totem, owner is a %s ", totem->owner->classname );
 
-    if ( totem->owner->client ) {
-        gi.dprintf("named %s\n", totem->owner->client->pers.netname);
-    } else {
-        gi.dprintf("\n");
-    }
+        if ( totem->owner->client ) {
+            gi.dprintf("named %s\n", totem->owner->client->pers.netname);
+        } else {
+            gi.dprintf("\n");
+        }
 
-    if ( totem && totem->owner && totem->owner->client && totem->owner != attacker ) {
-        leveldiff = vrx_get_level_difference_multiplier(totem->owner, targ, targetclient);
-        exp = vrx_get_kill_base_experience(
-            totem->owner, targ, targetclient, 
-            leveldiff, INVASION_ASSIST_EXP_PERCENT * mult, NULL, &credits);
-        vrx_apply_experience(totem->owner, exp);
-        vrx_add_credits(totem->owner, credits);
-        totem->owner->client->resp.wave_assist_exp += exp;
-        totem->owner->client->resp.wave_assist_credits += credits;
-        gi.dprintf("  add %dxp, %dcr\n", exp, credits);
+        if ( totem->owner && totem->owner->client && totem->owner != attacker ) {
+            leveldiff = vrx_get_level_difference_multiplier(totem->owner, targ, targetclient);
+            exp = vrx_get_kill_base_experience(
+                totem->owner, targ, targetclient, 
+                leveldiff, INVASION_ASSIST_EXP_PERCENT * mult, NULL, &credits);
+            vrx_apply_experience(totem->owner, exp);
+            vrx_add_credits(totem->owner, credits);
+            totem->owner->client->resp.wave_assist_exp += exp;
+            totem->owner->client->resp.wave_assist_credits += credits;
+            gi.dprintf("  add %dxp, %dcr\n", exp, credits);
+        }
     }
 }
 
