@@ -486,8 +486,6 @@ TELEPORT_COST                            = 20
 PLAYERSPAWN_REGEN_FRAMES                 = 800
 PLAYERSPAWN_REGEN_DELAY                  = 10
 PLAYERSPAWN_HEALTH                       = 2500
-INVASION_BONUS_EXP                       = 10000
-INVASION_BONUS_CREDITS                   = 10000
 SHAMAN_CURSE_RADIUS_BASE                 = 512
 SHAMAN_CURSE_RADIUS_BONUS                = 0
 CURSE_DEFAULT_INITIAL_RADIUS             = 256
@@ -822,6 +820,12 @@ CTF_PLAYERSPAWN_OFFENSE_EXP              = 15
 CTF_PLAYERSPAWN_OFFENSE_CREDITS          = 10
 CTF_PLAYERSPAWN_TIME                     = 1.0
 CTF_PLAYERSPAWN_MAX_TIME                 = 3.0
+
+-- Invasion
+INVASION_BONUS_EXP                       = 10000
+INVASION_BONUS_CREDITS                   = 10000
+INVASION_EXP_SPLIT                       = 0.33
+INVASION_ASSIST_EXP_PERCENT              = 0.20
 
 -- Corpse Eater
 CORPSEEATER_DELAY                        = 0.5

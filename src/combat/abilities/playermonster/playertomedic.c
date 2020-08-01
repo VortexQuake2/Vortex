@@ -229,6 +229,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 
 void p_medic_heal (edict_t *ent)
 {
+	int exp;
 	vec3_t	forward,  right, offset, start, end, org;
 	trace_t	tr;
 
@@ -276,6 +277,12 @@ void p_medic_heal (edict_t *ent)
 			// heal them
 			M_Regenerate(tr.ent, frames, 0, 1.0, true, true, false, &tr.ent->monsterinfo.regen_delay2);
 
+			if ( ent->client ) {
+				exp = floattoint( (float)tr.ent->max_health / ((float)frames) / 5 );
+				vrx_apply_experience(ent, exp);
+				ent->client->resp.wave_assist_exp += exp;
+			}
+
 			// hold monsters in-place
 			if (tr.ent->svflags & SVF_MONSTER)
 				tr.ent->holdtime = level.time + 0.2;
@@ -285,6 +292,14 @@ void p_medic_heal (edict_t *ent)
 
 			//Give them a short period of curse immunity
 			tr.ent->holywaterProtection = level.time + 2.0; //2 seconds immunity
+
+			//give exp if they do something useful shortly after being healed
+			tr.ent->heal_exp_owner = ent;
+			if ( tr.ent->heal_exp_time < level.time )
+				tr.ent->heal_exp_time = level.time;
+			if ( tr.ent->heal_exp_time < level.time + 60.0 ) {
+				tr.ent->heal_exp_time += 15.0;
+			}
 		}
 		else
 		{

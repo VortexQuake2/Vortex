@@ -1140,6 +1140,16 @@ void InitClientResp (gclient_t *client)
 	memset (&client->resp, 0, sizeof(client->resp));
 	client->resp.enterframe = level.framenum;
 	client->resp.coop_respawn = client->pers;
+
+	// per-wave exp tracking
+	client->resp.wave_solo_targets = 0;
+	client->resp.wave_solo_dmgmod = 0;
+	client->resp.wave_solo_exp = 0;
+	client->resp.wave_solo_credits = 0;
+	client->resp.wave_shared_exp = 0;
+	client->resp.wave_shared_credits = 0;
+	client->resp.wave_assist_exp = 0;
+	client->resp.wave_assist_credits = 0;
 }
 
 /*

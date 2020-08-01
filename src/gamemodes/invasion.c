@@ -312,6 +312,7 @@ void INV_AwardPlayers(void)
 {
 	int		i, points, credits, num_spawns = INV_GetNumPlayerSpawns(), num_winners = 0;
 	edict_t *player;
+	int shared, private, bonus;
 
 	// we're not in invasion mode
 	if (!INVASION_OTHERSPAWNS_REMOVED)
@@ -503,8 +504,8 @@ void BossCheck(edict_t *e, edict_t *self)
 
 void INV_SpawnMonsters(edict_t *self)
 {
-	int		players, max_monsters;
-	edict_t *e = NULL;
+	int		players, max_monsters, i;
+	edict_t *e = NULL, *player = NULL;
 	int SpawnTries = 0, MaxTriesThisFrame = 32;
 	PVM_TotalMonsters(self, true);
 
@@ -585,6 +586,51 @@ void INV_SpawnMonsters(edict_t *self)
 				gi.bprintf(PRINT_HIGH, "The invasion begins!\n");
 			else
 				gi.bprintf(PRINT_HIGH, "The invasion... begins.\n");
+		} else {
+			// print exp summaries
+			for (i = 1; i <= maxclients->value; i++) {
+				player = &g_edicts[i];
+        		if (!player->inuse || G_IsSpectator(player))
+					continue;
+
+				if ( ( player->client->resp.wave_solo_exp < 1 ) &&
+						( player->client->resp.wave_shared_exp < 1 ) &&
+						( player->client->resp.wave_assist_exp < 1 ) ) {
+
+					continue;
+				}
+
+				safe_cprintf(player, PRINT_MEDIUM, "Wave summary:\n" );
+
+				if ( player->client->resp.wave_solo_exp > 0 ) {
+					safe_cprintf(player, PRINT_MEDIUM, "  %d exp and %d credits from %d damage dealt to %d monsters\n",
+								 	player->client->resp.wave_solo_exp,
+									player->client->resp.wave_solo_credits,
+									player->client->resp.wave_solo_dmgmod,
+									player->client->resp.wave_solo_targets );
+				}
+
+				if ( player->client->resp.wave_assist_exp > 0 ) {
+					safe_cprintf(player, PRINT_MEDIUM, "  %d exp and %d credits from assisting your team\n",
+								 	player->client->resp.wave_assist_exp,
+									player->client->resp.wave_assist_credits );
+				}
+
+				if ( player->client->resp.wave_shared_exp > 0 ) {
+					safe_cprintf(player, PRINT_MEDIUM, "  %d exp and %d credits shared from your team\n",
+								 	player->client->resp.wave_shared_exp,
+									player->client->resp.wave_shared_credits );
+				}
+
+				player->client->resp.wave_solo_targets = 0;
+				player->client->resp.wave_solo_dmgmod = 0;
+				player->client->resp.wave_solo_exp = 0;
+				player->client->resp.wave_solo_credits = 0;
+				player->client->resp.wave_shared_exp = 0;
+				player->client->resp.wave_shared_credits = 0;
+				player->client->resp.wave_assist_exp = 0;
+				player->client->resp.wave_assist_credits = 0;
+			}
 		}
 		if (invasion_difficulty_level % 5)
 			gi.bprintf(PRINT_HIGH, "Welcome to level %d. %d monsters incoming!\n", invasion_difficulty_level, max_monsters);
