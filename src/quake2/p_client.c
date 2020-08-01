@@ -197,6 +197,8 @@ int GetGender(edict_t *ent) {
 		return GENDER_MALE;
 	} else if ( info[0] == 'o' || info[0] == 'O' || info[0] == 'i' || info[0] == 'I' ) { 
 		return GENDER_OBJECT;
+	} else if ( info[0] == 'c' || info[0] == 'C' ) { 
+		return GENDER_CUSTOM;
 	} else {
 		return GENDER_NEUTRAL;
 	}
