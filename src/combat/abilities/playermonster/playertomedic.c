@@ -208,6 +208,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 
 void p_medic_heal (edict_t *ent)
 {
+	int exp;
 	vec3_t	forward,  right, offset, start, end, org;
 	trace_t	tr;
 
@@ -254,6 +255,12 @@ void p_medic_heal (edict_t *ent)
 			
 			// heal them
 			M_Regenerate(tr.ent, frames, 0, 1.0, true, true, false, &tr.ent->monsterinfo.regen_delay2);
+
+			if ( ent->client ) {
+				exp = floattoint( (float)tr.ent->max_health / ((float)frames) / 4 );
+				vrx_apply_experience(ent, exp);
+				gi.dprintf("playertomedic.c: player %d earned %d exp from healing\n", ent->client->pers.netname, exp );
+			}
 
 			// hold monsters in-place
 			if (tr.ent->svflags & SVF_MONSTER)
