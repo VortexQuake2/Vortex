@@ -202,8 +202,15 @@ void healer_heal (edict_t *self, edict_t *other)
         value = 1.0f + 0.1f * vrx_get_talent_level(self->activator, TALENT_SUPER_HEALER);
 
 		// regenerate health
-		if (M_Regenerate(other, frames, qf2sf(1), value, true, false, false, &other->monsterinfo.regen_delay2))
+		if (M_Regenerate(other, frames, qf2sf(1), value, true, false, false, &other->monsterinfo.regen_delay2)) {
 			regenerate = true;
+			other->heal_exp_owner = self->creator;
+			if ( other->heal_exp_time < level.time )
+				other->heal_exp_time = level.time;
+			if ( other->heal_exp_time < level.time + 600 ) {
+				other->heal_exp_time += 200;
+			}
+		}
 
 		// regenerate armor
 		/*
@@ -391,6 +398,7 @@ edict_t *CreateHealer (edict_t *ent, int skill_level)
 	VectorSet(e->mins, -28, -28, 0);
 	VectorSet(e->maxs, 28, 28, 32);
 	e->mtype = M_HEALER;
+	e->creator = ent;
 	ent->healer = e;
 
 	return e;
@@ -1707,7 +1715,7 @@ void cocoon_attack (edict_t *self)
 		// give them a damage/defense bonus for awhile
 		self->enemy->cocoon_time = level.time + duration;
 		self->enemy->cocoon_factor = factor;
-		self->enemy->cocoon_owner = self->cocoon_owner;
+		self->enemy->cocoon_owner = self->creator;
 
 		if (self->enemy->client)
 			safe_cprintf(self->enemy, PRINT_HIGH, "You have gained a damage/defense bonus of +%.0f%c for %.0f seconds\n", 
@@ -1910,7 +1918,7 @@ edict_t *CreateCocoon (edict_t *ent, int skill_level)
 	e->takedamage = DAMAGE_AIM;
 	e->health = e->max_health = COCOON_INITIAL_HEALTH + COCOON_ADDON_HEALTH * skill_level;
 	e->monsterinfo.level = skill_level;
-	e->cocoon_owner = ent;
+	e->creator = ent;
 
 	//Talent: Phantom Cocoon - frames before cloaking
 	if (talentLevel > 0)

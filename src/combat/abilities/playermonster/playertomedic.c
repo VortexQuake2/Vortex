@@ -264,6 +264,14 @@ void p_medic_heal (edict_t *ent)
 
 			//Give them a short period of curse immunity
 			tr.ent->holywaterProtection = level.time + 2.0; //2 seconds immunity
+
+			//give exp if they do something useful shortly after being healed
+			tr.ent->heal_exp_owner = ent;
+			if ( tr.ent->heal_exp_time < level.time )
+				tr.ent->heal_exp_time = level.time;
+			if ( tr.ent->heal_exp_time < level.time + 600 ) {
+				tr.ent->heal_exp_time += 20;
+			}
 		}
 		else
 		{

@@ -700,8 +700,16 @@ void depot_give_inventory (edict_t *self, edict_t *other)
 	// delay before depot can be used again
 	self->sentrydelay = level.time + 2.0;
 
-	if (result > 0)
+	if (result > 0) {
 		gi.sound(self, CHAN_ITEM, gi.soundindex("misc/w_pkup.wav"), 1, ATTN_STATIC, 0);
+	
+		other->supply_exp_owner = self->creator;
+		if ( other->supply_exp_time < level.time )
+			other->supply_exp_time = level.time;
+		if ( other->supply_exp_time < level.time + 600 ) {
+			other->supply_exp_time += 200;
+		}
+	}
 }
 
 void depot_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)

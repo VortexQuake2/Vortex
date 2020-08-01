@@ -1949,6 +1949,13 @@ struct edict_s
 	float		cocoon_time;
 	float		cocoon_factor;
 	edict_t		*cocoon_owner;			// for assist exp tracking
+
+	float		heal_exp_time;
+	edict_t		*heal_exp_owner;			// for assist exp tracking
+
+	float		supply_exp_time;
+	edict_t		*supply_exp_owner;			// for assist exp tracking
+
 	int			showPathDebug;			// show path debug information (0=off,1=on)
 
 

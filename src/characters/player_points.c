@@ -457,7 +457,7 @@ int vrx_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) {
     return exp_points;
 }
 
-void vrx_inv_award_curse_exp( edict_t *attacker, edict_t *targ, edict_t *targetclient, que_t *que, int type, qboolean is_blessing ) {
+void vrx_inv_award_curse_exp( edict_t *attacker, edict_t *targ, edict_t *targetclient, que_t *que, int type, float mult, qboolean is_blessing ) {
     int leveldiff, exp, credits;
     que_t *slot;
     edict_t *assister;
@@ -475,7 +475,7 @@ void vrx_inv_award_curse_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
             leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
             exp = vrx_get_kill_base_experience(
                 slot->ent->owner, targ, targetclient, 
-                leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
+                leveldiff, INVASION_ASSIST_EXP_PERCENT * mult, NULL, &credits);
             vrx_apply_experience(slot->ent->owner, exp);
             vrx_add_credits(slot->ent->owner, credits);
             slot->ent->owner->client->resp.wave_assist_exp += exp;
@@ -485,7 +485,7 @@ void vrx_inv_award_curse_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
     }
 }
 
-void vrx_inv_award_cooldown_exp( edict_t *attacker, edict_t *targ, edict_t *targetclient, float time, edict_t *owner, qboolean is_buff ) {
+void vrx_inv_award_cooldown_exp( edict_t *attacker, edict_t *targ, edict_t *targetclient, float time, edict_t *owner, float mult, qboolean is_buff ) {
     int leveldiff, exp, credits;
     que_t *slot;
     edict_t *assister;
@@ -503,13 +503,44 @@ void vrx_inv_award_cooldown_exp( edict_t *attacker, edict_t *targ, edict_t *targ
             leveldiff = vrx_get_level_difference_multiplier(owner, targ, targetclient);
             exp = vrx_get_kill_base_experience(
                 owner, targ, targetclient, 
-                leveldiff, INVASION_ASSIST_EXP_PERCENT, NULL, &credits);
+                leveldiff, INVASION_ASSIST_EXP_PERCENT * mult, NULL, &credits);
             vrx_apply_experience(owner, exp);
             vrx_add_credits(owner, credits);
             owner->client->resp.wave_assist_exp += exp;
             owner->client->resp.wave_assist_credits += credits;
             gi.dprintf("  add %dxp, %dcr\n", exp, credits);
         }
+    }
+}
+
+void vrx_inv_award_totem_exp( edict_t *attacker, edict_t *targ, edict_t *targetclient, int type, float mult, qboolean is_allied ) {
+    int exp, credits, leveldiff;
+    edict_t *totem;
+
+    if ( is_allied ) {
+        totem = NextNearestTotem(attacker, type, NULL, true);
+    } else {
+        totem = NextNearestTotem(targ, type, NULL, false);
+    }
+
+    gi.dprintf("vrx_inv_award_exp: found a totem, owner is a %s ", totem->owner->classname );
+
+    if ( totem->owner->client ) {
+        gi.dprintf("named %s\n", totem->owner->client->pers.netname);
+    } else {
+        gi.dprintf("\n");
+    }
+
+    if ( totem && totem->owner && totem->owner->client && totem->owner != attacker ) {
+        leveldiff = vrx_get_level_difference_multiplier(totem->owner, targ, targetclient);
+        exp = vrx_get_kill_base_experience(
+            totem->owner, targ, targetclient, 
+            leveldiff, INVASION_ASSIST_EXP_PERCENT * mult, NULL, &credits);
+        vrx_apply_experience(totem->owner, exp);
+        vrx_add_credits(totem->owner, credits);
+        totem->owner->client->resp.wave_assist_exp += exp;
+        totem->owner->client->resp.wave_assist_credits += credits;
+        gi.dprintf("  add %dxp, %dcr\n", exp, credits);
     }
 }
 
@@ -599,19 +630,26 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
 
         // check for buffs, and award the buff-giver some exp and credits
         // todo: add totems
-        vrx_inv_award_curse_exp(player, targ, targetclient, player->curses, BLESS, true );
-        vrx_inv_award_curse_exp(player, targ, targetclient, player->curses, HEALING, true );
-        vrx_inv_award_curse_exp(player, targ, targetclient, player->curses, DEFLECT, true );
-        vrx_inv_award_curse_exp(player, targ, targetclient, player->auras, AURA_SALVATION, true );
-        vrx_inv_award_cooldown_exp(player, targ, targetclient, player->cocoon_time, player->cocoon_owner, true);
+        vrx_inv_award_curse_exp(player, targ, targetclient, player->curses, BLESS, dmgmod, true );
+        vrx_inv_award_curse_exp(player, targ, targetclient, player->curses, HEALING, dmgmod, true );
+        vrx_inv_award_curse_exp(player, targ, targetclient, player->curses, DEFLECT, dmgmod, true );
+        vrx_inv_award_curse_exp(player, targ, targetclient, player->auras, AURA_SALVATION, dmgmod, true );
+        
+        vrx_inv_award_cooldown_exp(player, targ, targetclient, player->cocoon_time, player->cocoon_owner, dmgmod, true);
+        
+        vrx_inv_award_totem_exp(player, targ, targetclient, TOTEM_AIR, dmgmod, true);
+        vrx_inv_award_totem_exp(player, targ, targetclient, TOTEM_DARKNESS, dmgmod, true);
+        vrx_inv_award_totem_exp(player, targ, targetclient, TOTEM_EARTH, dmgmod, true);
+        vrx_inv_award_totem_exp(player, targ, targetclient, TOTEM_NATURE, dmgmod, true);
     }
 
-    vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, AMP_DAMAGE, false );
-    vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, LOWER_RESIST, false );
-    vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, WEAKEN, false );
-    vrx_inv_award_curse_exp(player, targ, targetclient, targ->auras, AURA_HOLYFREEZE, false );
-    vrx_inv_award_cooldown_exp(player, targ, targetclient, targ->chill_time, targ->chill_owner, false);
-    vrx_inv_award_cooldown_exp(player, targ, targetclient, targ->empeffect_time, targ->empeffect_owner, false);
+    vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, AMP_DAMAGE, 1.0, false );
+    vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, LOWER_RESIST, 1.0, false );
+    vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, WEAKEN, 1.0, false );
+    vrx_inv_award_curse_exp(player, targ, targetclient, targ->auras, AURA_HOLYFREEZE, 1.0, false );
+    
+    vrx_inv_award_cooldown_exp(player, targ, targetclient, targ->chill_time, targ->chill_owner, 1.0, false);
+    vrx_inv_award_cooldown_exp(player, targ, targetclient, targ->empeffect_time, targ->empeffect_owner, 1.0, false);
 }
 
 double getOwnLevelBaseBonus(int level, float xpPerKill) {
