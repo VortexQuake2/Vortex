@@ -5,6 +5,20 @@
 
 float vrx_get_dmgtype_resistence(const edict_t *targ, int dtype, float Resistance);
 
+float vrx_apply_monster_mastery(const edict_t *attacker, float damage);
+
+float vrx_apply_amp_damage(const edict_t *targ, float damage);
+
+float vrx_apply_weaken(const edict_t *targ, float damage);
+
+float vrx_apply_bless_damage_bonus(const edict_t *attacker, float damage, int dtype);
+
+float vrx_apply_tech_strength(const edict_t *attacker, float damage);
+
+float vrx_apply_talent_retaliation_damage(const edict_t *attacker, float damage);
+
+float vrx_apply_morph_talent_damage(const edict_t *targ, const edict_t *attacker, float damage);
+
 int G_DamageType(int mod, int dflags) {
     switch (mod) {
         // world damage
@@ -174,7 +188,6 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
     float temp;
     que_t *slot = NULL;
     qboolean physicalDamage;
-    int talentLevel;
 
     dtype = G_DamageType(mod, dflags);
 
@@ -240,17 +253,7 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 
     //Start Talent: Monster Mastery
-    if (vrx_get_talent_slot(attacker, TALENT_MONSTER_MASTERY) != -1) {
-        int level = vrx_get_talent_level(attacker, TALENT_MONSTER_MASTERY);
-        float temp;
-
-        if (pvm->value || invasion->value) {
-            temp = level * 0.06;
-            damage *= 1.0 + temp;
-        } else {
-            temp = 0;
-        }
-    }
+    damage = vrx_apply_monster_mastery(attacker, damage);
     // END Talent: Monster Mastery
 
 
@@ -261,59 +264,15 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
         // player-monster damage bonuses
         if (!attacker->client && attacker->mtype && PM_MonsterHasPilot(attacker)) {
-            // morphed players' attacks deal more damage after level 10
-            int levels = attacker->owner->myskills.level - 10;
-
-            // Talent: Retaliation
-            // increases damage as percentage of remaining health is reduced
-            talentLevel = vrx_get_talent_level(attacker->owner, TALENT_RETALIATION);
-            if (talentLevel > 0) {
-                temp = attacker->health / (float) attacker->max_health;
-                if (temp > 1)
-                    temp = 1;
-                damage *= 1.0 + ((0.2 * talentLevel) * (1.0 - temp));
-            }
-
-
-            // Talent: Superiority
-            // increases damage/resistance of morphed players against monsters
-            talentLevel = vrx_get_talent_level(attacker->owner, TALENT_SUPERIORITY);
-            if (talentLevel > 0 && targ->activator && targ->mtype != P_TANK && targ->svflags & SVF_MONSTER)
-                damage *= 1.0 + 0.2 * talentLevel;
-
-            // Talent: Pack Animal
-            damage *= vrx_get_pack_modifier(attacker);
-
-            if (levels > 0)
-                damage *= 1 + 0.05 * levels;
-
-            // strength tech effect
-            if (attacker->owner && attacker->owner->inuse && attacker->owner->client
-                && attacker->owner->client->pers.inventory[strength_index]) {
-                if (attacker->owner->myskills.level <= 5)
-                    damage *= 2;
-                else if (attacker->owner->myskills.level <= 10)
-                    damage *= 2;
-                else
-                    damage *= 2;
-            }
+            damage = vrx_apply_tech_strength(attacker, damage);
+            damage = vrx_apply_morph_talent_damage(targ, attacker, damage);
         }
 
         // targets cursed with "amp damage" take additional damage
-        if ((slot = que_findtype(targ->curses, NULL, AMP_DAMAGE)) != NULL) {
-            temp = AMP_DAMAGE_MULT_BASE +
-                   (slot->ent->owner->myskills.abilities[AMP_DAMAGE].current_level * AMP_DAMAGE_MULT_BONUS);
-            // cap amp damage at 3x damage
-            if (temp > 3)
-                temp = 3;
-            damage *= temp;
-        }
+        damage = vrx_apply_amp_damage(targ, damage);
 
         // weaken causes target to take more damage
-        if ((slot = que_findtype(targ->curses, NULL, WEAKEN)) != NULL) {
-            temp = WEAKEN_MULT_BASE + (slot->ent->owner->myskills.abilities[WEAKEN].current_level * WEAKEN_MULT_BONUS);
-            damage *= temp;
-        }
+        damage = vrx_apply_weaken(targ, damage);
 
         // targets "chilled" deal less damage.
         if (attacker->chill_time > level.time)
@@ -336,57 +295,17 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
     }
 
     // attackers blessed deal additional damage
-    if (que_findtype(attacker->curses, NULL, BLESS) != NULL) {
-        float bonus;
-
-        if (dtype & D_MAGICAL)
-            bonus = BLESS_MAGIC_BONUS;
-        else
-            bonus = BLESS_BONUS;
-
-        damage *= bonus;
-    }
+    damage = vrx_apply_bless_damage_bonus(attacker, damage, dtype);
 
     // player-only damage bonuses
     if (attacker->client && (attacker != targ)) {
         // increase physical or morphed-player damage
         if (dtype & D_PHYSICAL) {
             // strength tech effect
-            if (attacker->client->pers.inventory[strength_index]) {
-                if (attacker->myskills.level <= 5)
-                    damage *= 2;
-                else if (attacker->myskills.level <= 10)
-                    damage *= 1.5;
-                else
-                    damage *= 1.25;
-            }
+            damage = vrx_apply_tech_strength(attacker, damage);
 
-            if (attacker->mtype) {
-                // morphed players' attacks deal more damage after level 10
-                int levels = attacker->myskills.level - 10;
-#pragma region RETALIATION TALENT
-                // Talent: Retaliation
-                // increases damage as percentage of remaining health is reduced
-                talentLevel = vrx_get_talent_level(attacker, TALENT_RETALIATION);
-                if (talentLevel > 0) {
-                    temp = attacker->health / (float) attacker->max_health;
-                    if (temp > 1)
-                        temp = 1;
-                    damage *= 1.0 + ((0.2 * talentLevel) * (1.0 - temp));
-                }
-#pragma endregion
-                // Talent: Superiority
-                // increases damage/resistance of morphed players against monsters
-                talentLevel = vrx_get_talent_level(attacker, TALENT_SUPERIORITY);
-                if (talentLevel > 0 && targ->activator && targ->mtype != P_TANK && targ->svflags & SVF_MONSTER)
-                    damage *= 1.0 + 0.2 * talentLevel;
-
-                if (levels > 0)
-                    damage *= 1 + 0.05 * levels;
-
-                // Talent: Pack Animal
-                damage *= vrx_get_pack_modifier(attacker);
-            }
+            if (attacker->mtype)
+                damage = vrx_apply_morph_talent_damage(targ, attacker, damage);
         }
 
         // only physical damage is increased
@@ -403,26 +322,19 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
                 temp = 1 + STRENGTH_BONUS * attacker->myskills.abilities[STRENGTH].current_level;
 
-                //Talent: Endurance
-                //talentLevel = vrx_get_talent_level(attacker, TALENT_IMP_STRENGTH);
-                //if (talentLevel > 0)
-                //temp += IMP_STRENGTH_BONUS * talentLevel;
-
                 //Talent: Improved Strength
                 talentLevel = vrx_get_talent_level(attacker, TALENT_IMP_STRENGTH);
                 if (talentLevel > 0)
                     temp += IMP_STRENGTH_BONUS * talentLevel;
 
-                // ESTAS LINEAS DISMINUYEN EL DA�O
 
-                //Talent: Improved Resist
-                //	talentLevel = vrx_get_talent_level(attacker, TALENT_IMP_RESIST);
-                //if(talentLevel > 0)
-                //temp -= 0.1 * talentLevel;   //
+                talentLevel = vrx_get_talent_level(attacker, TALENT_IMP_RESIST);
+                if(talentLevel > 0)
+                    temp -= 0.1 * talentLevel;
 
                 //don't allow damage under 100%
-                if (temp < 1.0)
-                    temp = 1.0;
+                if (temp < 1.0f)
+                    temp = 1.0f;
 
                 damage *= temp;
             }
@@ -450,11 +362,6 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
             }
             // ******TALENT BLOOD OF ARES END }****** //
 
-
-
-
-
-
             // fury ability increases damage.
             if (attacker->fury_time > level.time) {
                 // (apple)
@@ -467,6 +374,110 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
         }
     }
 
+    return damage;
+}
+
+float vrx_apply_morph_talent_damage(const edict_t *targ, const edict_t *attacker, float damage) {
+    // az: ptank exception
+    if (attacker->owner && attacker->owner->inuse && attacker->owner->client)
+        attacker = attacker->owner;
+
+    float levels = attacker->myskills.level - 10;
+
+    // Talent: Retaliation
+    // increases damage as percentage of remaining health is reduced
+    damage = vrx_apply_talent_retaliation_damage(attacker, damage);
+
+    // Talent: Superiority
+    // increases damage/resistance of morphed players against monsters
+    int talentLevel = vrx_get_talent_level(attacker, TALENT_SUPERIORITY);
+    if (talentLevel > 0 && targ->activator && targ->mtype != P_TANK && targ->svflags & SVF_MONSTER)
+        damage *= 1.0f + 0.2f * (float)talentLevel;
+
+    // Talent: Pack Animal
+    damage *= vrx_get_pack_modifier(attacker);
+
+    if (levels > 0)
+        damage *= 1.f + 0.05f * levels;
+    return damage;
+}
+
+float vrx_apply_talent_retaliation_damage(const edict_t *attacker, float damage) {
+    int talentLevel = vrx_get_talent_level(attacker, TALENT_RETALIATION);
+    if (talentLevel > 0) {
+        float temp = attacker->health / (float) attacker->max_health;
+        if (temp > 1)
+            temp = 1;
+        damage *= 1.0 + ((0.2 * talentLevel) * (1.0 - temp));
+    }
+    return damage;
+}
+
+float vrx_apply_tech_strength(const edict_t *attacker, float damage) {
+
+    // az generalizable tech strength application
+    if (!attacker->client && attacker->owner && attacker->owner->client)
+        attacker = attacker->owner;
+
+    if (attacker->client->pers.inventory[strength_index]) {
+        if (attacker->myskills.level <= 5)
+            damage *= 2;
+        else if (attacker->myskills.level <= 10)
+            damage *= 1.5;
+        else
+            damage *= 1.25;
+    }
+    return damage;
+}
+
+float vrx_apply_bless_damage_bonus(const edict_t *attacker, float damage, int dtype) {
+    if (que_findtype(attacker->curses, NULL, BLESS) != NULL) {
+        float bonus;
+
+        if (dtype & D_MAGICAL)
+            bonus = BLESS_MAGIC_BONUS;
+        else
+            bonus = BLESS_BONUS;
+
+        damage *= bonus;
+    }
+    return damage;
+}
+
+float vrx_apply_weaken(const edict_t *targ, float damage) {
+    que_t *slot = que_findtype(targ->curses, NULL, WEAKEN);
+    if (slot != NULL) {
+        float temp = WEAKEN_MULT_BASE + (slot->ent->owner->myskills.abilities[WEAKEN].current_level * WEAKEN_MULT_BONUS);
+        damage *= temp;
+    }
+    return damage;
+}
+
+float vrx_apply_amp_damage(const edict_t *targ, float damage) {
+    que_t *slot = que_findtype(targ->curses, NULL, AMP_DAMAGE);
+    if (slot  != NULL) {
+        float temp = AMP_DAMAGE_MULT_BASE +
+               (slot->ent->owner->myskills.abilities[AMP_DAMAGE].current_level * AMP_DAMAGE_MULT_BONUS);
+        // cap amp damage at 3x damage
+        if (temp > 3)
+            temp = 3;
+        damage *= temp;
+    }
+    return damage;
+}
+
+float vrx_apply_monster_mastery(const edict_t *attacker, float damage) {
+    if (vrx_get_talent_slot(attacker, TALENT_MONSTER_MASTERY) != -1) {
+        int level = vrx_get_talent_level(attacker, TALENT_MONSTER_MASTERY);
+        float temp;
+
+        if (pvm->value || invasion->value) {
+            temp = level * 0.06;
+            damage *= 1.0 + temp;
+        } else {
+            temp = 0;
+        }
+    }
     return damage;
 }
 
@@ -557,9 +568,9 @@ float vrx_apply_blood_of_ares(const edict_t *targ, const edict_t *attacker, floa
 
         // BoA is more effective in PvM
         if (pvm->value || invasion->value)
-            temp = level * 0.02 * attacker->myskills.streak;  //  from 0.01 to 0.02
+            temp = level * 0.02 * targ->myskills.streak;  //  from 0.01 to 0.02
         else
-            temp = level * 0.01 * attacker->myskills.streak;
+            temp = level * 0.01 * targ->myskills.streak;
 
         //Limit bonus to +150%
         if (temp > 1.5) temp = 1.5;
@@ -691,6 +702,11 @@ float vrx_apply_detector_resistence(const edict_t *targ, const edict_t *attacker
 }
 
 float vrx_apply_resistence_tech(const edict_t *targ, float Resistance) {
+
+    // az apply resist tech to poltergeists
+    if (!targ->client && targ->owner && targ->owner->client && targ->owner->inuse)
+        targ = targ->owner;
+
     if (targ->client && targ->client->pers.inventory[resistance_index]) {
         if (targ->myskills.level <= 5)
             Resistance = fminf(Resistance, 0.5);
@@ -738,21 +754,63 @@ float vrx_apply_bombardier(const edict_t *targ, const edict_t *attacker, int mod
     return Resistance;
 }
 
+qboolean vrx_should_apply_ghost(edict_t *targ) {
+    if (!targ->myskills.abilities[GHOST].disable) {
+        int talentSlot = vrx_get_talent_slot(targ, TALENT_SECOND_CHANCE);
+        float temp = 1 + 0.035f * targ->myskills.abilities[GHOST].current_level;
+        edict_t* dclient = G_GetClient(targ);
+
+        temp = 1.0f / temp;
+
+        // cap ghost resistance to 75%
+        if (vrx_is_morphing_polt(targ))
+            temp = 0.25f;
+
+        if (temp < 0.4 && !vrx_is_morphing_polt(targ)) {
+            if (!pvm->value && !invasion->value) // PVP mode? cap it to 60%.
+                temp = 0.4f;
+        }
+
+        if (!hw->value) {
+            if (random() >= temp)
+                return true;
+        } else {
+            // Doesn't have the halo? Have ghost. (az remainder: this is if you do have ghost)
+            if (dclient && !dclient->client->pers.inventory[halo_index])
+                if (random() >= temp)
+                    return true;
+        }
+
+        //Talent: Second Chance
+        if (talentSlot != -1) {
+            talent_t *talent = &targ->myskills.talents.talent[talentSlot];
+
+            //Make sure the talent is not on cooldown
+            if (talent->upgradeLevel > 0 && talent->delay < level.time) {
+                //Cooldown should be 3 minutes - 0.5min per upgrade level
+                float cooldown = 180.f - 30.f * vrx_get_talent_level(targ, TALENT_SECOND_CHANCE);
+                talent->delay = level.time + cooldown;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float damage, int dflags, int mod) {
     int dtype;
     float temp = 0;
     que_t *aura = NULL;
     int talentLevel;
-    edict_t *dclient;
     qboolean invasion_friendlyfire = false;
     float Resistance = 1.0; // We find the highest resist value and only use THAT.
+    qboolean is_target_morphed_player = IsMorphedPlayer(targ);
 
     //gi.dprintf("G_SubDamage()\n");
     //gi.dprintf("%d damage before G_SubDamage() modification\n", damage);
 
     dtype = G_DamageType(mod, dflags);
-
-    dclient = G_GetClient(targ);
 
     if (dflags & DAMAGE_NO_PROTECTION)
         return damage;
@@ -860,7 +918,9 @@ float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float da
     //Check for salvation
     Resistance = vrx_apply_salvation(targ, attacker, dtype, aura, Resistance);
 
-    if (targ->client) {
+    if (G_GetClient(targ)) { // az: player-only effects
+        targ = G_GetClient(targ); // az:
+
         if (ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(targ))
             return damage; // special rules, flag carrier can't use abilities
 
@@ -870,14 +930,18 @@ float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float da
             else if ((targ->myskills.abilities[WORLD_RESIST].current_level > 0) &&
                      (!targ->myskills.abilities[WORLD_RESIST].disable))
                 return 0;    // no world damage if you have world resist
-            else if ((vrx_is_morphing_polt(targ)) && (targ->mtype == 0))
+            else if (vrx_is_morphing_polt(targ) && !is_target_morphed_player)
                 return 0;    //Poltergeists can not take world damage in human form
         }
         if ((targ == attacker) && (mod == MOD_BOMBS))
             return 0; // cannot bomb yourself
 
+        // az 2020: allow morphs to use resists
+        /*
+        // morphed players can't use abilities
         if (targ->mtype)
-            return damage; // morphed players can't use abilities
+            return damage; 
+        */
 
         //Talent: Blood of Ares
         damage = vrx_apply_blood_of_ares(targ, attacker, damage);
@@ -889,44 +953,9 @@ float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float da
         damage = vrx_apply_combat_experience(targ, damage, talentLevel);
 
         // ghost effect
-        if ((!targ->myskills.abilities[GHOST].disable) && !(dflags & DAMAGE_NO_PROTECTION)) {
-            int talentSlot = vrx_get_talent_slot(targ, TALENT_SECOND_CHANCE);
-            temp = 1 + 0.035f * targ->myskills.abilities[GHOST].current_level;
-            temp = 1.0f / temp;
-
-            // cap ghost resistance to 75%
-            if (vrx_is_morphing_polt(targ))
-                temp = 0.25;
-
-            if (temp < 0.4 && !vrx_is_morphing_polt(targ)) {
-                if (!pvm->value && !invasion->value) // PVP mode? cap it to 40%.
-                    temp = 0.4;
-            }
-
-            if (!hw->value) {
-                if (random() >= temp)
-                    return 0;
-            } else {
-                // Doesn't have the halo? Have ghost. (az remainder: this is if you do have ghost)
-                if (dclient && !dclient->client->pers.inventory[halo_index])
-                    if (random() >= temp)
-                        return 0;
-            }
-
-            //Talent: Second Chance
-            if (talentSlot != -1) {
-                talent_t *talent = &targ->myskills.talents.talent[talentSlot];
-
-                //Make sure the talent is not on cooldown
-                if (talent->upgradeLevel > 0 && talent->delay < level.time) {
-                    //Cooldown should be 3 minutes - 0.5min per upgrade level
-                    float cooldown = 180 - 30 * vrx_get_talent_level(targ, TALENT_SECOND_CHANCE);
-                    talent->delay = level.time + cooldown;
-                    return 0;
-                }
-            }
-
-        }
+        if (!is_target_morphed_player && !(dflags & DAMAGE_NO_PROTECTION))
+            if (vrx_should_apply_ghost(targ))
+                return 0;
 
         // grouped weapon resists
         Resistance = vrx_get_dmgtype_resistence(targ, dtype, Resistance);

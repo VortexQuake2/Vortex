@@ -766,7 +766,8 @@ edict_t *vrx_create_drone_from_ent (edict_t *drone, edict_t *ent, int drone_type
 		if(talentLevel > 0)	mult +=	0.1 * talentLevel;	//+40% per upgrade
 		if(talentLevel2 > 0) mult += 0.2 * talentLevel2; //+20%
 
-		mult += 0.3; // base mult for player monsters
+		if (pvm->value)
+		    mult += 0.3; // base mult for player monsters in pvm
 
 		//Talent: Drone Power (durability penalty)
         //	talentLevel = vrx_get_talent_level(ent, TALENT_DRONE_POWER);

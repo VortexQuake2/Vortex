@@ -175,15 +175,12 @@ qboolean organ_explode (edict_t *self)
 	return true;
 }
 
-#define HEALER_INITIAL_HEALTH		100
-#define HEALER_ADDON_HEALTH			40
 #define HEALER_FRAMES_GROW_START	0
 #define HEALER_FRAMES_GROW_END		15
 #define HEALER_FRAMES_START			16
 #define HEALER_FRAMES_END			26
 #define HEALER_FRAME_DEAD			4
-#define HEALER_COST					50
-#define HEALER_DELAY				1.0
+
 
 void healer_heal (edict_t *self, edict_t *other)
 {
@@ -776,13 +773,6 @@ void Cmd_Spiker_f (edict_t *ent)
 	ent->lastsound = level.framenum;
 }
 
-#define OBSTACLE_INITIAL_HEALTH			0		
-#define OBSTACLE_ADDON_HEALTH			145
-#define OBSTACLE_INITIAL_DAMAGE			0
-#define OBSTACLE_ADDON_DAMAGE			40	
-#define OBSTACLE_COST					25
-#define OBSTACLE_DELAY					0.5
-
 #define OBSTACLE_FRAMES_GROW_START		0
 #define OBSTACLE_FRAMES_GROW_END		9
 #define OBSTACLE_FRAME_READY			12
@@ -1093,24 +1083,10 @@ void Cmd_Obstacle_f (edict_t *ent)
 #define GASSER_FRAMES_IDLE_END			12
 #define GASSER_FRAME_DEAD				6
 
-#define GASSER_RANGE					128
-#define GASSER_REFIRE					5.0
-#define GASSER_INITIAL_DAMAGE			0
-#define GASSER_ADDON_DAMAGE				10
-#define GASSER_INITIAL_HEALTH			100
-#define GASSER_ADDON_HEALTH				40
-#define GASSER_INITIAL_ATTACK_RANGE		100
-#define GASSER_ADDON_ATTACK_RANGE		0
-#define GASSER_COST						25
-#define GASSER_DELAY					1.0
-
 #define GASCLOUD_FRAMES_GROW_START		10
 #define GASCLOUD_FRAMES_GROW_END		18
 #define GASCLOUD_FRAMES_IDLE_START		19
 #define GASCLOUD_FRAMES_IDLE_END		23
-
-#define GASCLOUD_POISON_DURATION		10.0
-#define GASCLOUD_POISON_FACTOR			0.1
 
 void poison_think (edict_t *self)
 {
@@ -1717,8 +1693,8 @@ void cocoon_attack (edict_t *self)
 		self->enemy->cocoon_factor = factor;
 		self->enemy->cocoon_owner = self->creator;
 
-		if (self->enemy->client)
-			safe_cprintf(self->enemy, PRINT_HIGH, "You have gained a damage/defense bonus of +%.0f%c for %.0f seconds\n", 
+		if (self->enemy->client && !self->enemy->ai.is_bot)
+			gi.cprintf(self->enemy, PRINT_HIGH, "You have gained a damage/defense bonus of +%.0f%c for %.0f seconds\n",
 				(factor * 100) - 100, '%', duration); 
 		
 		//4.4 give some health

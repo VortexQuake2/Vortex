@@ -16,3 +16,4 @@ SPIKEBALL_ADDON_HEALTH                   = 10
 SPIKEBALL_INITIAL_DAMAGE                 = 40
 SPIKEBALL_ADDON_DAMAGE                   = 10
 FIRETOTEM_DAMAGE_MULT                    = 4
+SENTRY_ADDON_BULLETDAMAGE                = 1

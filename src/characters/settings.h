@@ -1056,5 +1056,28 @@ extern double ICEBOLT_INITIAL_CHILL_DURATION;
 extern double ICEBOLT_ADDON_CHILL_DURATION;
 extern double ICEBOLT_DELAY;
 
+extern double HEALER_INITIAL_HEALTH;
+extern double HEALER_ADDON_HEALTH;
+extern double HEALER_COST;
+extern double HEALER_DELAY;
+extern double OBSTACLE_INITIAL_HEALTH;
+extern double OBSTACLE_ADDON_HEALTH;
+extern double OBSTACLE_INITIAL_DAMAGE;
+extern double OBSTACLE_ADDON_DAMAGE;
+extern double OBSTACLE_COST;
+extern double OBSTACLE_DELAY;
+extern double GASSER_RANGE;
+extern double GASSER_REFIRE;
+extern double GASSER_INITIAL_DAMAGE;
+extern double GASSER_ADDON_DAMAGE;
+extern double GASSER_INITIAL_HEALTH;
+extern double GASSER_ADDON_HEALTH;
+extern double GASSER_INITIAL_ATTACK_RANGE;
+extern double GASSER_ADDON_ATTACK_RANGE;
+extern double GASSER_COST;
+extern double GASSER_DELAY;
+extern double GASCLOUD_POISON_DURATION;
+extern double GASCLOUD_POISON_FACTOR;
+
 
 #endif
