@@ -17,12 +17,14 @@ qboolean CheckAuraOwner (edict_t *self, int aura_cost)
 qboolean que_valident (que_t *que)
 {
 	// 3.5 aura/curse is no longer valid if the owner dies
-	return (que->ent && que->ent->inuse && (que->time > level.time)
-		&& G_EntIsAlive(que->ent->owner));
-	/*
-	return (que->ent && que->ent->inuse && que->ent->owner 
-		&& que->ent->owner->inuse && (que->time > level.time));
-	*/
+	qboolean owner_valid = (que->ent && que->ent->inuse && que->time > level.time);
+
+	if (owner_valid) {
+		if (pvm->value) return G_EntExists(que->ent->owner);
+		else return G_EntIsAlive(que->ent->owner);
+    }
+
+	return false;
 }
 
 void que_empty (que_t *que)

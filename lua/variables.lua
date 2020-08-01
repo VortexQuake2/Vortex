@@ -67,7 +67,7 @@ INITIAL_ARMOR_SHAMAN = 50
 INITIAL_HEALTH_SHAMAN = 100
 LEVELUP_HEALTH_SHAMAN = 5
 INITIAL_ARMOR_NECROMANCER = 50
-LEVELUP_ARMOR_NECROMANCER = 0
+LEVELUP_ARMOR_NECROMANCER = 1
 INITIAL_HEALTH_NECROMANCER = 100
 LEVELUP_HEALTH_NECROMANCER = 1
 INITIAL_HEALTH_SOLDIER = 100
@@ -97,12 +97,12 @@ INITIAL_ARMOR_WEAPONMASTER               = 50
 LEVELUP_ARMOR_SOLDIER                    = 1
 LEVELUP_ARMOR_ENGINEER                   = 5
 LEVELUP_ARMOR_POLTERGEIST                = 0
-LEVELUP_ARMOR_ALIEN                      = 0
+LEVELUP_ARMOR_ALIEN                      = 1
 LEVELUP_ARMOR_KNIGHT                     = 10
-LEVELUP_ARMOR_MAGE                       = 0
+LEVELUP_ARMOR_MAGE                       = 1
 LEVELUP_ARMOR_WEAPONMASTER               = 1
-LEVELUP_ARMOR_VAMPIRE = 0
-LEVELUP_ARMOR_SHAMAN = 0
+LEVELUP_ARMOR_VAMPIRE = 1
+LEVELUP_ARMOR_SHAMAN = 1
 LEVELUP_ARMOR_CLERIC = 2
 
 INITIAL_POWERCUBES_SOLDIER = 200
@@ -228,7 +228,7 @@ ROCKETLAUNCHER_INITIAL_DAMAGE_RADIUS     = 100
 ROCKETLAUNCHER_ADDON_DAMAGE_RADIUS       = 2.5
 
 -- Hyperblaster
-HYPERBLASTER_INITIAL_DAMAGE              = 20
+HYPERBLASTER_INITIAL_DAMAGE              = 15
 HYPERBLASTER_ADDON_DAMAGE                = 0.75
 HYPERBLASTER_INITIAL_SPEED               = 1500
 HYPERBLASTER_ADDON_SPEED                 = 50
@@ -860,13 +860,13 @@ HOLYGROUND_DELAY                         = 1.0
 -- Cocoon
 COCOON_INITIAL_HEALTH                    = 0
 COCOON_ADDON_HEALTH                      = 100
-COCOON_INITIAL_DURATION                  = 50
+COCOON_INITIAL_DURATION                  = 30
 COCOON_ADDON_DURATION                    = 0
-COCOON_MINIMUM_DURATION                  = 50
+COCOON_MINIMUM_DURATION                  = 30
 COCOON_INITIAL_FACTOR                    = 1.0
-COCOON_ADDON_FACTOR                      = 0.05
-COCOON_INITIAL_TIME                      = 30.0
-COCOON_ADDON_TIME                        = 1.5
+COCOON_ADDON_FACTOR                      = 0.075
+COCOON_INITIAL_TIME                      = 120.0
+COCOON_ADDON_TIME                        = 0
 COCOON_COST                              = 50
 COCOON_DELAY                             = 1.0
 
@@ -1071,3 +1071,29 @@ ICEBOLT_ADDON_SPEED                      = 0
 ICEBOLT_INITIAL_CHILL_DURATION           = 0
 ICEBOLT_ADDON_CHILL_DURATION             = 0.4
 ICEBOLT_DELAY                            = 0.3
+
+HEALER_INITIAL_HEALTH                    = 100
+HEALER_ADDON_HEALTH                      = 40
+HEALER_COST                              = 50
+HEALER_DELAY                             = 1.0
+
+OBSTACLE_INITIAL_HEALTH                  = 0
+OBSTACLE_ADDON_HEALTH                    = 145
+OBSTACLE_INITIAL_DAMAGE                  = 0
+OBSTACLE_ADDON_DAMAGE                    = 40
+OBSTACLE_COST                            = 25
+OBSTACLE_DELAY                           = 0.5
+
+GASSER_RANGE                             = 128
+GASSER_REFIRE                            = 5.0
+GASSER_INITIAL_DAMAGE                    = 0
+GASSER_ADDON_DAMAGE                      = 10
+GASSER_INITIAL_HEALTH                    = 100
+GASSER_ADDON_HEALTH                      = 40
+GASSER_INITIAL_ATTACK_RANGE              = 100
+GASSER_ADDON_ATTACK_RANGE                = 0
+GASSER_COST                              = 25
+GASSER_DELAY                             = 1.0
+
+GASCLOUD_POISON_DURATION                 = 10.0
+GASCLOUD_POISON_FACTOR                   = 0.1
