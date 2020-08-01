@@ -706,8 +706,8 @@ void depot_give_inventory (edict_t *self, edict_t *other)
 		other->supply_exp_owner = self->creator;
 		if ( other->supply_exp_time < level.time )
 			other->supply_exp_time = level.time;
-		if ( other->supply_exp_time < level.time + 600 ) {
-			other->supply_exp_time += 200;
+		if ( other->supply_exp_time < level.time + 60.0 ) {
+			other->supply_exp_time += 20.0;
 		}
 	}
 }

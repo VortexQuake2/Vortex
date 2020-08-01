@@ -207,8 +207,8 @@ void healer_heal (edict_t *self, edict_t *other)
 			other->heal_exp_owner = self->creator;
 			if ( other->heal_exp_time < level.time )
 				other->heal_exp_time = level.time;
-			if ( other->heal_exp_time < level.time + 600 ) {
-				other->heal_exp_time += 200;
+			if ( other->heal_exp_time < level.time + 60.0 ) {
+				other->heal_exp_time += 20.0;
 			}
 		}
 
