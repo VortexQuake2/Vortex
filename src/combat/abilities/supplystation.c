@@ -707,7 +707,7 @@ void depot_give_inventory (edict_t *self, edict_t *other)
 		if ( other->supply_exp_time < level.time )
 			other->supply_exp_time = level.time;
 		if ( other->supply_exp_time < level.time + 60.0 ) {
-			other->supply_exp_time += 20.0;
+			other->supply_exp_time += 30.0;
 		}
 	}
 }
