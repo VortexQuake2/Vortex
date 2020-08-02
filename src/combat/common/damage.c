@@ -356,7 +356,7 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
                 // Limit bonus to +100%
                 // let the talent level be the limit
-                // if (temp > 1.5) temp = 1.5;
+                if (temp > 1.5) temp = 1.5;
 
                 damage *= 1.0 + temp;
             }
