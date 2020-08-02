@@ -143,7 +143,7 @@ qboolean IsMorphedPlayer(const edict_t *ent) {
     return (PM_MonsterHasPilot(ent) || ent->mtype == P_TANK || ent->mtype == MORPH_MUTANT ||
             ent->mtype == MORPH_CACODEMON
             || ent->mtype == MORPH_BRAIN || ent->mtype == MORPH_FLYER || ent->mtype == MORPH_MEDIC
-            || ent->mtype == MORPH_BERSERK);
+            || ent->mtype == MORPH_BERSERK || ent->mtype == M_MYPARASITE);
 }
 
 float vrx_get_pack_modifier(const edict_t *ent) {
@@ -527,37 +527,44 @@ float vrx_apply_blast_resist(const edict_t *targ, int dflags, int mod, float tem
     return Resistance;
 }
 
-float vrx_apply_combat_experience(const edict_t *targ, float damage, int talentLevel) {
-    talentLevel = vrx_get_talent_level(targ, TALENT_COMBAT_EXP);
+float vrx_apply_combat_experience(const edict_t *targ, float damage) {
+    int talentLevel = vrx_get_talent_level(targ, TALENT_COMBAT_EXP);
     if (talentLevel > 0)
         damage *= 1.0 + 0.05 * talentLevel;    //-5% per upgrade
 
     return damage;
 }
 
-void vrx_apply_resistence(const edict_t *targ, float *temp, int *talentLevel, float *Resistance) {
+void vrx_apply_resistance(const edict_t *targ, float *Resistance) {
+    edict_t *dclient = PM_GetPlayer(targ);
+    float temp = 1.0f;
+
+    if (dclient) {
+        targ = dclient;
+    }
+
     if (!targ->myskills.abilities[RESISTANCE].disable) {
         if (!V_IsPVP() || !ffa->value)
-            (*temp) = 1 + 0.1 * targ->myskills.abilities[RESISTANCE].current_level;
+            temp = 1.0f + 0.1f * targ->myskills.abilities[RESISTANCE].current_level;
             // PvP modes are getting frustrating with players that are too resisting   0.1 in pvp should be fine.
         else if ((!pvm->value && !invasion->value))
-            (*temp) = 1 + 0.1 * targ->myskills.abilities[RESISTANCE].current_level;
+            temp = 1.0f + 0.1f * targ->myskills.abilities[RESISTANCE].current_level;
 
-        //Talent: Improved Resist in
-        //talentLevel  = vrx_get_talent_level(targ, TALENT_IMP_RESIST);
-        //if(talentLevel > 0)
-        //temp += talentLevel * 0.1;
+        //Talent: Improved Resist
+        int talentLevel  = vrx_get_talent_level(targ, TALENT_IMP_RESIST);
+        if(talentLevel > 0)
+            temp += talentLevel * 0.1;
 
         //Talent: Improved Strength
-        (*talentLevel) = vrx_get_talent_level(targ, TALENT_IMP_STRENGTH);
-        if ((*talentLevel) > 0)
-            (*temp) += (*talentLevel) * 0.02;
+        talentLevel = vrx_get_talent_level(targ, TALENT_IMP_STRENGTH);
+        if (talentLevel > 0)
+            temp += talentLevel * 0.02;
 
         // don't allow more than 100% damage
-        //if (temp < 1.0)
-        //temp = 1.0;
+        if (temp < 1.0)
+            temp = 1.0;
 
-        (*Resistance) = min((*Resistance), 1 / (*temp));
+        (*Resistance) = min((*Resistance), 1 / temp);
     }
 }
 
@@ -611,6 +618,10 @@ float vrx_apply_bless(const edict_t *targ, int dtype, float Resistance) {
 }
 
 void vrx_apply_morph_modifiers(const edict_t *targ, const edict_t *attacker, float *Resistance) {
+    if (PM_MonsterHasPilot(targ)) {
+        targ = PM_GetPlayer(targ);
+    }
+
     if (targ->client && targ->mtype) {
         float temp = 1.0;
 
@@ -627,69 +638,24 @@ void vrx_apply_morph_modifiers(const edict_t *targ, const edict_t *attacker, flo
     }
 }
 
-float vrx_apply_ptank_resistence_tech(const edict_t *targ, float Resistance) {
-    if (targ->owner && targ->owner->inuse && targ->owner->client
-        && targ->owner->client->pers.inventory[resistance_index]) {
-        if (targ->owner->myskills.level <= 5)
-            Resistance = min(Resistance, 0.5);
-        else if (targ->owner->myskills.level <= 10)
-            Resistance = min(Resistance, 0.66);
-        else
-            Resistance = min(Resistance, 0.8);
-    }
-    return Resistance;
-}
 
 void vrx_apply_pack_animal(const edict_t *targ, float temp, float *Resistance) {
     temp *= vrx_get_pack_modifier(targ);
     (*Resistance) = min((*Resistance), 1 / temp);
 }
 
-void vrx_apply_playertank_modifiers(const edict_t *targ, const edict_t *attacker, float *Resistance) {
-    if (targ->mtype == P_TANK) {
-        int temp = 1.0;
-
-        // Talent: Superiority
-        // increases damage/resistance of morphed players against monsters
-        int talentLevel = vrx_get_talent_level(targ, TALENT_SUPERIORITY);
-
-        if (attacker->activator && attacker->mtype != P_TANK && (attacker->svflags & SVF_MONSTER) && talentLevel > 0)
-            temp += 0.2 * talentLevel;
-
-        // Talent: Pack Animal
-        vrx_apply_pack_animal(targ, temp, Resistance);
-
-        // resistance tech
-        (*Resistance) = vrx_apply_ptank_resistence_tech(targ, (*Resistance));
-
-
-        // resistance effect (for tanks, lessened)
-        if (!targ->owner->myskills.abilities[RESISTANCE].disable) {
-            int temp = 1 + 0.07 * targ->owner->myskills.abilities[RESISTANCE].current_level;
-
-            //Talent: Improved Resist
-            int talentLevel = vrx_get_talent_level(targ, TALENT_IMP_RESIST);
-            if (talentLevel > 0)
-                temp += talentLevel * 0.07;
-
-            // Talent: Improved Strength
-            talentLevel = vrx_get_talent_level(targ, TALENT_IMP_STRENGTH);
-            if (talentLevel > 0)
-                temp -= talentLevel * 0.07;
-
-            // don't allow more than 100% damage
-            if (temp < 1.0)
-                temp = 1.0;
-
-            (*Resistance) = min((*Resistance), 1 / temp);
-        }
-
-        if (attacker->svflags & SVF_MONSTER) // monsters inflict only 3/4s damage to tanks
-            (*Resistance) = min((*Resistance), 0.75);
-    }
-}
-
 float vrx_apply_cocoon_bonus(const edict_t *targ, float Resistance) {
+    float cocoon_time = targ->cocoon_time;
+    float cocoon_factor = targ->cocoon_factor;
+    edict_t* dclient = PM_GetPlayer(targ);
+
+    // az: apply cocoon to player tank if owner has it
+    if (dclient) {
+        // az: if either has a higher level cocoon, both of these will be higher, so w/e
+        cocoon_time = max(cocoon_time, dclient->cocoon_time);
+        cocoon_factor = max(cocoon_time, dclient->cocoon_factor);
+    }
+
     if (targ->cocoon_time > level.time)
         Resistance = min(Resistance, 1.0 / targ->cocoon_factor);
     return Resistance;
@@ -701,11 +667,13 @@ float vrx_apply_detector_resistence(const edict_t *targ, const edict_t *attacker
     return Resistance;
 }
 
-float vrx_apply_resistence_tech(const edict_t *targ, float Resistance) {
+float vrx_apply_resistance_tech(const edict_t *targ, float Resistance) {
+    edict_t *dclient = PM_GetPlayer(targ);
 
-    // az apply resist tech to poltergeists
-    if (!targ->client && targ->owner && targ->owner->client && targ->owner->inuse)
-        targ = targ->owner;
+    // az apply resist tech to tank poltergeists
+    if (dclient) {
+        targ = dclient;
+    }
 
     if (targ->client && targ->client->pers.inventory[resistance_index]) {
         if (targ->myskills.level <= 5)
@@ -715,6 +683,7 @@ float vrx_apply_resistence_tech(const edict_t *targ, float Resistance) {
         else
             Resistance = fminf(Resistance, 0.8);
     }
+
     return Resistance;
 }
 
@@ -757,7 +726,7 @@ float vrx_apply_bombardier(const edict_t *targ, const edict_t *attacker, int mod
 qboolean vrx_should_apply_ghost(edict_t *targ) {
     if (!targ->myskills.abilities[GHOST].disable) {
         int talentSlot = vrx_get_talent_slot(targ, TALENT_SECOND_CHANCE);
-        float temp = 1 + 0.035f * targ->myskills.abilities[GHOST].current_level;
+        float temp = 1 + 0.05f * targ->myskills.abilities[GHOST].current_level;
         edict_t* dclient = G_GetClient(targ);
 
         temp = 1.0f / temp;
@@ -870,13 +839,10 @@ float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float da
     Resistance = vrx_apply_detector_resistence(targ, attacker, Resistance);
 
     // resistance tech
-    Resistance = vrx_apply_resistence_tech(targ, Resistance);
+    Resistance = vrx_apply_resistance_tech(targ, Resistance);
 
     // cocoon bonus
     Resistance = vrx_apply_cocoon_bonus(targ, Resistance);
-
-    // player tank
-    vrx_apply_playertank_modifiers(targ, attacker, &Resistance);
 
     // morphed players
     vrx_apply_morph_modifiers(targ, attacker, &Resistance);
@@ -937,20 +903,20 @@ float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float da
             return 0; // cannot bomb yourself
 
         // az 2020: allow morphs to use resists
-        /*
-        // morphed players can't use abilities
-        if (targ->mtype)
+
+        // summonables players can't use abilities
+        if (targ->mtype && !is_target_morphed_player)
             return damage; 
-        */
+
 
         //Talent: Blood of Ares
         damage = vrx_apply_blood_of_ares(targ, attacker, damage);
 
         // resistance effect
-        vrx_apply_resistence(targ, &temp, &talentLevel, &Resistance);
+        vrx_apply_resistance(targ, &Resistance);
 
         //Talent: Combat Experience
-        damage = vrx_apply_combat_experience(targ, damage, talentLevel);
+        damage = vrx_apply_combat_experience(targ, damage);
 
         // ghost effect
         if (!is_target_morphed_player && !(dflags & DAMAGE_NO_PROTECTION))

@@ -370,7 +370,7 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 	trace_t	tr;
 	int mhealth = 1;
 
-	monster = vrx_create_new_drone(self, index, true);
+	monster = vrx_create_new_drone(self, index, true, false);
 
 	// calculate starting position
 	VectorCopy(e->s.origin, start);
@@ -540,7 +540,6 @@ void INV_SpawnMonsters(edict_t *self)
 				gi.WriteByte(TE_BOSSTPORT);
 				gi.WritePosition(invasion_data.boss->s.origin);
 				gi.multicast(invasion_data.boss->s.origin, MULTICAST_PVS);
-				gi.unlinkentity(invasion_data.boss);
 				G_FreeEdict(invasion_data.boss);
 				invasion_data.boss = NULL;
 			}
@@ -645,6 +644,13 @@ void INV_SpawnMonsters(edict_t *self)
 		invasion_data.printedmessage = 1;
 	}
 
+    self->nextthink = level.time + FRAMETIME;
+
+	/*
+	if (e->wait > level.time) // az: wait for a bit before spawning
+	    return;
+	*/
+
 	while ((e = INV_GetMonsterSpawn(e)) && invasion_data.mspawned < max_monsters && SpawnTries < MaxTriesThisFrame)
 	{
 		int randomval = GetRandom(1, 11);
@@ -676,8 +682,6 @@ void INV_SpawnMonsters(edict_t *self)
 		invasion_data.mspawned = 0;
 		self->count = MONSTERSPAWN_STATUS_IDLE;
 	}
-
-	self->nextthink = level.time + FRAMETIME;
 }
 
 void INV_SpawnPlayers(void)
@@ -924,7 +928,7 @@ void inv_defenderspawn_think(edict_t *self)
 
 		// try to spawn another
 		if ((level.time > self->wait)
-			&& (monster = vrx_create_new_drone(self, self->sounds, true)) != NULL)
+			&& (monster = vrx_create_new_drone(self, self->sounds, true, false)) != NULL)
 		{
 			//gi.dprintf("%d: attempting to spawn a monster\n", num);
 			// get starting position
@@ -940,6 +944,7 @@ void inv_defenderspawn_think(edict_t *self)
 			else if (tr.fraction < 1)
 			{
 				//gi.dprintf("%d: spawn is blocked, will try again\n", num);
+				DroneList_Remove(monster); // az 2020: this should've been a thing
 				G_FreeEdict(monster);
 				self->nextthink = level.time + 10.0;
 				return;

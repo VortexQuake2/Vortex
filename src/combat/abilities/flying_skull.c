@@ -15,12 +15,12 @@ qboolean skull_findtarget (edict_t *self)
 {
 	edict_t *e=NULL;
 
-	while ((e = findclosestradius(e, self->s.origin, 
+	while ((e = findclosestradius_targets(e, self,
 		SKULL_TARGET_RANGE)) != NULL)
 	{
 		if (e == self)
 			continue;
-		if (!G_ValidTarget(self, e, true))
+		if (!G_ValidTarget_Lite(self, e, true))
 			continue;
 		// ignore enemies that are too far away from activator to prevent wandering
 		// FIXME: we may want to add a hurt function so that we can retaliate if we are attacked out of range

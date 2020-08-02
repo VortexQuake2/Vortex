@@ -16,7 +16,7 @@ qboolean BrainValidTarget (edict_t *self, edict_t *target)
 	// 3.6 this code is mostly redundant
 	if (target == self)
 		return false;
-	if (!G_ValidTarget(self, target, true))
+	if (!G_ValidTarget_Lite(self, target, true))
 		return false;
 	if (!nearfov(self, target, 45, 45))
 		return false;
@@ -131,7 +131,7 @@ qboolean tentacle_findtarget (edict_t *self)
 {
 	edict_t *other=NULL;
 
-	while ((other = findclosestradius(other, self->s.origin, BRAIN_ATTACK_RANGE)) != NULL)
+	while ((other = findclosestradius_targets(other, self, BRAIN_ATTACK_RANGE)) != NULL)
 	{
 		if (!BrainValidTarget(self, other))
 			continue;

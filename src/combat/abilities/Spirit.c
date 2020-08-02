@@ -52,10 +52,10 @@ void Spirit_AttackSomething(edict_t *self)
 	}
 
 	//Find a new target
-    while ((target = findclosestradius(target, self->s.origin, SPIRIT_SIGHT_RADIUS)) != NULL)
+    while ((target = findclosestradius_targets(target, self, SPIRIT_SIGHT_RADIUS)) != NULL)
 	{
 		//if (target != self->activator && G_EntIsAlive(target) && visible(self, target) && !OnSameTeam(self, target))
-		if (G_ValidTarget(self, target, true))
+		if (G_ValidTarget_Lite(self, target, true))
 		{
 			self->enemy = target;
 			Spirit_Shoot(self, self->enemy, damage, refire);

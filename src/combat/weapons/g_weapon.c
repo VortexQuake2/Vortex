@@ -2884,9 +2884,9 @@ void spikeball_findtarget (edict_t *self)
 
 	if (!G_ValidTarget(self, self->enemy, true))
 	{
-		while ((e = findclosestradius(e, self->s.origin, self->dmg_radius)) != NULL)
+		while ((e = findclosestradius_targets(e, self->s.origin, self->dmg_radius)) != NULL)
 		{
-			if (!G_ValidTarget(self, e, true))
+			if (!G_ValidTarget_Lite(self, e, true))
 				continue;
 
 			// ignore enemies that are too far from our owner

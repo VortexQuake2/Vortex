@@ -27,9 +27,9 @@ void magmine_throwsparks(edict_t *self) {
 qboolean magmine_findtarget(edict_t *self) {
     edict_t *other = NULL;
 
-    while ((other = findclosestradius(other,
-                                      self->s.origin, self->dmg_radius)) != NULL) {
-        if (!G_ValidTarget(self, other, true))
+    while ((other = findclosestradius_targets(other,
+                                      self, self->dmg_radius)) != NULL) {
+        if (!G_ValidTarget_Lite(self, other, true))
             continue;
         //if (!BrainValidTarget(self, other))
         //	continue;

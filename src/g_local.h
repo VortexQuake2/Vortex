@@ -618,9 +618,15 @@ typedef struct
 	dmglist_t	dmglist[MAX_CLIENTS];		// keep track of damage by players
 	qboolean	slots_freed;		// true if player slots have been refunded prior to removal
 
-	// az begin - targeting
+	// az begin
+
+	// targeting
 	int target_index; // for ai
 	edict_t *last_target_scanner;
+
+	// drone list
+	int dronelist_index;
+
 	// az end
 } monsterinfo_t;
 
@@ -1231,7 +1237,7 @@ void M_CheckGround (edict_t *ent);
 void M_SetEffects (edict_t *ent);
 void M_MoveFrame (edict_t *self);
 void M_WorldEffects (edict_t *ent);
-edict_t *vrx_create_new_drone (edict_t *ent, int drone_type, qboolean worldspawn);
+edict_t *vrx_create_new_drone(edict_t *ent, int drone_type, qboolean worldspawn, qboolean link_now);
 
 //
 // g_misc.c

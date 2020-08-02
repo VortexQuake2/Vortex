@@ -113,9 +113,9 @@ void proxy_think (edict_t *self)
 		return;
 	
 	// search for nearby targets
-	while ((e = findclosestradius(e, self->s.origin, self->dmg_radius)) != NULL)
+	while ((e = findclosestradius_targets(e, self->s.origin, self->dmg_radius)) != NULL)
 	{
-		if (!G_ValidTarget(self, e, true))
+		if (!G_ValidTarget_Lite(self, e, true))
 			continue;
 		proxy_explode(self);
 		break;//4.4

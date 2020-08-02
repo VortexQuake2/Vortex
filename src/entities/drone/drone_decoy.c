@@ -413,7 +413,7 @@ void Cmd_Decoy_f (edict_t *ent)
 		return;
 	}
 
-	ret = vrx_create_new_drone(ent, 20, false);
+	ret = vrx_create_new_drone(ent, 20, false, true);
 	if (ret)
 		ret->monsterinfo.level = ent->myskills.abilities[DECOY].current_level;
 }

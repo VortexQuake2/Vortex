@@ -36,10 +36,10 @@ edict_t *detector_findprojtarget (edict_t *self, edict_t *projectile)
 	edict_t *target=NULL;
 
 	// find enemy that is closest to the projectile
-	while ((target = findclosestradius(target, projectile->s.origin, self->dmg_radius)) != NULL)
+	while ((target = findclosestradius_targets(target, projectile, self->dmg_radius)) != NULL)
 	{
 		// valid target must be within range of the detector
-		if (G_ValidTarget(self, target, true) && entdist(self, target) < self->dmg_radius)
+		if (G_ValidTarget_Lite(self, target, true) && entdist(self, target) < self->dmg_radius)
 			return target;
 	}
 	return NULL;

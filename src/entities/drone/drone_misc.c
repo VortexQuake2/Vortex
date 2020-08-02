@@ -32,78 +32,66 @@ int crand (void);
 
 /* The purpose of this is to decrease those silly G_Find calls for drones by chaining them together. */
 edict_t *DroneList[1024];
+int DroneCount = 0;
 
 void DroneList_Clear()
 {
-	int i;
-	for (i = 0; i < 1024; i++)
-	{
-		DroneList[i] = NULL;
-	}
+    memset(DroneList, 0, sizeof DroneList);
+	DroneCount = 0;
 }
 
 edict_t *DroneList_Iterate()
 {
-	int i;
-	for (i = 0; i < 1024; i++)
-	{
-		if (DroneList[i])
-			return DroneList[i];
-	}
-
-	return NULL;
+	return DroneList[0];
 }
 
 edict_t *DroneList_Next(edict_t *ent)
 {
-	int i;
-	int next = 0;
-	for (i = 0; i < 1024; i++)
-	{
-		if (next && DroneList[i])
-			return DroneList[i];
+    if (ent->monsterinfo.dronelist_index + 1 < MAX_EDICTS)
+	    return DroneList[ent->monsterinfo.dronelist_index + 1];
 
-		if (DroneList[i] == ent)
-		{
-			next = 1;
-		}
-	}
-
-	return NULL;
+    return NULL;
 }
 
 void DroneList_Insert(edict_t* new_ent)
 {
-	int i;
+    if (DroneCount >= MAX_EDICTS) {
+        gi.dprintf("drone list: overflowed the list");
+        return;
+    }
 
-	for (i = 0; i < 1024; i++)
-	{
-		if (new_ent == DroneList[i]) // Don't add twice to the list.
-			return;
-	}
-
-	for (i = 0; i < 1024; i++)
-	{
-		if (!DroneList[i])
-		{
-			DroneList[i] = new_ent;
-			return;
-		}
-	}
+    new_ent->monsterinfo.dronelist_index = DroneCount;
+	DroneList[DroneCount++] = new_ent;
 }
 
 /* we don't free it, we just remove it from the list */
 void DroneList_Remove(edict_t *ent)
 {
-	int i;
-	for (i = 0; i < 1024; i++)
-	{
-		if (DroneList[i] == ent)
-		{
-			DroneList[i] = NULL;
-			return;
-		}
+	if (ent->monsterinfo.dronelist_index >= 0 && ent->monsterinfo.dronelist_index < DroneCount) {
+        int index = ent->monsterinfo.dronelist_index;
+	    if (DroneList[index] == ent) { // follows the same logic as player spawn list
+	        DroneCount--;
+
+	        DroneList[index] = DroneList[DroneCount];
+	        if (DroneList[index])
+                DroneList[index]->monsterinfo.dronelist_index = index;
+
+	        DroneList[DroneCount] = NULL;
+
+	        ent->monsterinfo.dronelist_index = -1;
+	    }
+#ifdef _DEBUG
+        else {
+	        gi.dprintf("drone list: mismatched index (%d != %d)\n", index, DroneList[index]->monsterinfo.dronelist_index);
+        }
+#endif
+
 	}
+#ifdef _DEBUG
+	else {
+	    gi.dprintf("drone list: removing a monster twice? %d out of range (0 to %d)\n", ent->monsterinfo.dronelist_index, DroneCount);
+	}
+#endif
 }
 
 // end Drone Lists
@@ -631,7 +619,7 @@ void vrx_roll_to_make_champion(edict_t *drone, int *drone_type)
 	}
 }
 
-edict_t *vrx_create_drone_from_ent (edict_t *drone, edict_t *ent, int drone_type, qboolean worldspawn)
+edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type, qboolean worldspawn, qboolean link_now)
 {
 	vec3_t		forward, right, start, end, offset;
 	trace_t		tr;
@@ -887,7 +875,10 @@ edict_t *vrx_create_drone_from_ent (edict_t *drone, edict_t *ent, int drone_type
 	// gi.bprintf(PRINT_HIGH, "adding %p (%d)\n", drone, ent->num_monsters_real);
 
 	VectorCopy (drone->s.origin, drone->s.old_origin);
-	gi.linkentity(drone);
+
+	if (link_now) {
+        gi.linkentity(drone);
+    }
 
 	// Addition to JABot
 	AI_EnemyAdded(drone);
@@ -896,9 +887,9 @@ edict_t *vrx_create_drone_from_ent (edict_t *drone, edict_t *ent, int drone_type
 	return drone;
 }
 
-edict_t *vrx_create_new_drone(edict_t *ent, int drone_type, qboolean worldspawn)
+edict_t *vrx_create_new_drone(edict_t *ent, int drone_type, qboolean worldspawn, qboolean link_now)
 {
-	return vrx_create_drone_from_ent(G_Spawn(), ent, drone_type, worldspawn);
+	return vrx_create_drone_from_ent(G_Spawn(), ent, drone_type, worldspawn, link_now);
 }
 
 void RemoveAllDrones (edict_t *ent, qboolean refund_player)
@@ -2476,29 +2467,29 @@ void Cmd_Drone_f (edict_t *ent)
 	}
 
 	if (!Q_strcasecmp(s, "gunner"))
-        vrx_create_new_drone(ent, 1, false);
+        vrx_create_new_drone(ent, 1, false, true);
 	else if (!Q_strcasecmp(s, "parasite"))
-        vrx_create_new_drone(ent, 2, false);
+        vrx_create_new_drone(ent, 2, false, true);
 	else if (!Q_strcasecmp(s, "brain"))
-        vrx_create_new_drone(ent, 4, false);
+        vrx_create_new_drone(ent, 4, false, true);
 	else if (!Q_strcasecmp(s, "praetor"))
-        vrx_create_new_drone(ent, 3, false);
+        vrx_create_new_drone(ent, 3, false, true);
 	else if (!Q_strcasecmp(s, "medic"))
-        vrx_create_new_drone(ent, 5, false);
+        vrx_create_new_drone(ent, 5, false, true);
 	else if (!Q_strcasecmp(s, "tank"))
-        vrx_create_new_drone(ent, 6, false);
+        vrx_create_new_drone(ent, 6, false, true);
 	else if (!Q_strcasecmp(s, "mutant"))
-        vrx_create_new_drone(ent, 7, false);
+        vrx_create_new_drone(ent, 7, false, true);
 	else if (!Q_strcasecmp(s, "gladiator")/* && ent->myskills.administrator*/)
-        vrx_create_new_drone(ent, 8, false);
+        vrx_create_new_drone(ent, 8, false, true);
 	else if (!Q_strcasecmp(s, "berserker"))
-        vrx_create_new_drone(ent, 9, false);
+        vrx_create_new_drone(ent, 9, false, true);
 	else if (!Q_strcasecmp(s, "soldier"))
-        vrx_create_new_drone(ent, 10, false);
+        vrx_create_new_drone(ent, 10, false, true);
 	else if (!Q_strcasecmp(s, "enforcer"))
-        vrx_create_new_drone(ent, 11, false);
+        vrx_create_new_drone(ent, 11, false, true);
 	else if (!Q_strcasecmp(s, "jorg"))
-        vrx_create_new_drone(ent, 32, false);
+        vrx_create_new_drone(ent, 32, false, true);
 	else 
 
 

@@ -199,7 +199,7 @@ void FindMonsterSpot(edict_t *self) {
                 rnd = GetRandom(1, 11); // az: don't spawn soldiers
             } while (rnd == 10);
 
-            if ((scan = vrx_create_new_drone(self, rnd, true)) != NULL) {
+            if ((scan = vrx_create_new_drone(self, rnd, true, true)) != NULL) {
                 if (scan->monsterinfo.walk && random() > 0.5)
                     scan->monsterinfo.walk(scan);
                 total_monsters++;
@@ -235,7 +235,7 @@ void SpawnRandomBoss(edict_t *self) {
     if (!SPREE_WAR && vrx_get_alive_players() >= 8 && self->num_sentries < 1) {
         int chance = GetRandom(1, 100);
 
-        if ((chance >= 97) && vrx_create_new_drone(self, GetRandom(30, 31), true)) {
+        if ((chance >= 97) && vrx_create_new_drone(self, GetRandom(30, 31), true, true)) {
             //gi.dprintf("Spawning a boss monster (chance = %d) at %.1f. Waiting 300 seconds to try again.\n",
             //	chance, level.time);
             // 5 minutes until we can try to spawn another boss
