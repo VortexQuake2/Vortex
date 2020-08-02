@@ -825,7 +825,7 @@ CTF_PLAYERSPAWN_MAX_TIME                 = 3.0
 INVASION_BONUS_EXP                       = 10000
 INVASION_BONUS_CREDITS                   = 10000
 INVASION_EXP_SPLIT                       = 0.33
-INVASION_ASSIST_EXP_PERCENT              = 0.20
+INVASION_ASSIST_EXP_PERCENT              = 0.15
 
 -- Corpse Eater
 CORPSEEATER_DELAY                        = 0.5
