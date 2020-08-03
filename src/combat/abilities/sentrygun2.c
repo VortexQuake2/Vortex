@@ -319,46 +319,47 @@ void attack(edict_t *self)
 		return; // 3.19 sentry can't fire outside its FOV
 
 	//Fire
-	switch (self->mtype)
-	{
-	case M_SENTRY:
-		//Fire a rocket if there is sufficient ammo
-		if ((level.time >= self->delay) && (self->style >= SENTRY_ROCKETCOST) && (self->orders >= 3))
-			sentFireRocket(self);
-		// are we affected by holy freeze?
-		if (que_typeexists(self->curses, AURA_HOLYFREEZE)/*HasActiveCurse(self, AURA_HOLYFREEZE)*/ && !(level.framenum % 2))
-			break;
-		// chill effect reduces attack rate/refire
-		if (self->chill_time > level.time)
-		{
-			chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
-			if (random() > chance)
+	if ( ( level.framenum % qf2sf( 1 ) ) == 0 ) {
+		switch (self->mtype) {
+		case M_SENTRY:
+			//Fire a rocket if there is sufficient ammo
+			if ((level.time >= self->delay) && (self->style >= SENTRY_ROCKETCOST) && (self->orders >= 3))
+				sentFireRocket(self);
+			// are we affected by holy freeze?
+			if (que_typeexists(self->curses, AURA_HOLYFREEZE)/*HasActiveCurse(self, AURA_HOLYFREEZE)*/ && !(level.framenum % 2))
 				break;
-		}
-		//Fire a bullet if there is sufficient ammo
-		if (self->light_level >= SENTRY_BULLETCOST)
-		{
-			sentFireBullet(self);
+			// chill effect reduces attack rate/refire
+			if (self->chill_time > level.time)
+			{
+				chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
+				if (random() > chance)
+					break;
+			}
+			//Fire a bullet if there is sufficient ammo
+			if (self->light_level >= SENTRY_BULLETCOST)
+			{
+				sentFireBullet(self);
 
-			// firing animation
-			if (self->s.frame == 1)
-				self->s.frame = 2;
-			else
-				self->s.frame = 1;
+				// firing animation
+				if (self->s.frame == 1)
+					self->s.frame = 2;
+				else
+					self->s.frame = 1;
+			}
+			break;
+			/*
+			//New bfg firing (wee!)
+			case M_BFG_SENTRY:
+			if(self->count >= SENTRY_BFG_AMMOCOST)
+			{
+			if(self->delay <= level.time)
+			sentFireBFG(self);
+			else if(self->delay - 1 == level.time)
+			gi.sound(self, CHAN_AUTO, gi.soundindex("misc/power1.wav"), 1, ATTN_STATIC, 0);
+			}
+			break;
+			*/
 		}
-		break;
-		/*
-		//New bfg firing (wee!)
-		case M_BFG_SENTRY:
-		if(self->count >= SENTRY_BFG_AMMOCOST)
-		{
-		if(self->delay <= level.time)
-		sentFireBFG(self);
-		else if(self->delay - 1 == level.time)
-		gi.sound(self, CHAN_AUTO, gi.soundindex("misc/power1.wav"), 1, ATTN_STATIC, 0);
-		}
-		break;
-		*/
 	}
 
 	//	if(self->s.angles[PITCH] != 0)
