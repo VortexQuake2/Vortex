@@ -72,9 +72,6 @@ void brain_fire_beam (edict_t *self)
 		return;
 	}
 
-	self->client->charge_index = BEAM+1;
-	self->myskills.abilities[BEAM].charge -= BRAIN_BEAM_COST;
-	//self->client->pers.inventory[cell_index] -= BRAIN_BEAM_COST;
 	self->client->idle_frames = 0;
 
 	// calculate starting point
@@ -86,9 +83,14 @@ void brain_fire_beam (edict_t *self)
 	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
 	brain_beam_sparks(tr.endpos);
 
-	damage = BRAIN_BEAM_DEFAULT_DMG+BRAIN_BEAM_ADDON_DMG*self->myskills.abilities[BEAM].current_level;
-
-	T_Damage(tr.ent, self, self, forward, tr.endpos, tr.plane.normal, damage, damage, DAMAGE_ENERGY, MOD_BEAM);
+	// only run the actual damage/charge calc at 10tps, not server rate
+	if ( ( level.framenum % qf2sf( 1 ) ) == 0 ) {
+		self->client->charge_index = BEAM+1;
+		self->myskills.abilities[BEAM].charge -= BRAIN_BEAM_COST;
+		//self->client->pers.inventory[cell_index] -= BRAIN_BEAM_COST;
+		damage = BRAIN_BEAM_DEFAULT_DMG+BRAIN_BEAM_ADDON_DMG*self->myskills.abilities[BEAM].current_level;
+		T_Damage(tr.ent, self, self, forward, tr.endpos, tr.plane.normal, damage, damage, DAMAGE_ENERGY, MOD_BEAM);
+	}
 
 	gi.WriteByte (svc_temp_entity);
 	gi.WriteByte (TE_BFG_LASER);
