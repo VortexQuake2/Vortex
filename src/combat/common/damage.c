@@ -527,7 +527,7 @@ float vrx_apply_blast_resist(const edict_t *targ, int dflags, int mod, float tem
     return Resistance;
 }
 
-float vrx_apply_combat_experience(const edict_t *targ, float damage) {
+float vrx_apply_combat_experience_damage_increase(const edict_t *targ, float damage) {
     int talentLevel = vrx_get_talent_level(targ, TALENT_COMBAT_EXP);
     if (talentLevel > 0)
         damage *= 1.0 + 0.05 * talentLevel;    //-5% per upgrade
@@ -558,7 +558,7 @@ void vrx_apply_resistance(const edict_t *targ, float *Resistance) {
         //Talent: Improved Strength
         talentLevel = vrx_get_talent_level(targ, TALENT_IMP_STRENGTH);
         if (talentLevel > 0)
-            temp += talentLevel * 0.02;
+            temp -= talentLevel * 0.02;
 
         // don't allow more than 100% damage
         if (temp < 1.0)
@@ -916,7 +916,7 @@ float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float da
         vrx_apply_resistance(targ, &Resistance);
 
         //Talent: Combat Experience
-        damage = vrx_apply_combat_experience(targ, damage);
+        damage = vrx_apply_combat_experience_damage_increase(targ, damage);
 
         // ghost effect
         if (!is_target_morphed_player && !(dflags & DAMAGE_NO_PROTECTION))
