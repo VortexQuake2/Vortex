@@ -13,7 +13,7 @@ float vrx_apply_weaken(const edict_t *targ, float damage);
 
 float vrx_apply_bless_damage_bonus(const edict_t *attacker, float damage, int dtype);
 
-float vrx_apply_tech_strength(const edict_t *attacker, float damage);
+float vrx_apply_strength_tech(const edict_t *attacker, float damage);
 
 float vrx_apply_talent_retaliation_damage(const edict_t *attacker, float damage);
 
@@ -264,7 +264,7 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
         // player-monster damage bonuses
         if (!attacker->client && attacker->mtype && PM_MonsterHasPilot(attacker)) {
-            damage = vrx_apply_tech_strength(attacker, damage);
+            damage = vrx_apply_strength_tech(attacker, damage);
             damage = vrx_apply_morph_talent_damage(targ, attacker, damage);
         }
 
@@ -302,7 +302,7 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
         // increase physical or morphed-player damage
         if (dtype & D_PHYSICAL) {
             // strength tech effect
-            damage = vrx_apply_tech_strength(attacker, damage);
+            damage = vrx_apply_strength_tech(attacker, damage);
 
             if (attacker->mtype)
                 damage = vrx_apply_morph_talent_damage(targ, attacker, damage);
@@ -413,11 +413,11 @@ float vrx_apply_talent_retaliation_damage(const edict_t *attacker, float damage)
     return damage;
 }
 
-float vrx_apply_tech_strength(const edict_t *attacker, float damage) {
+float vrx_apply_strength_tech(const edict_t *attacker, float damage) {
+    edict_t* dclient = PM_GetPlayer(attacker);
 
-    // az generalizable tech strength application
-    if (!attacker->client && attacker->owner && attacker->owner->client)
-        attacker = attacker->owner;
+    if (dclient)
+        attacker = dclient;
 
     if (attacker->client->pers.inventory[strength_index]) {
         if (attacker->myskills.level <= 5)
