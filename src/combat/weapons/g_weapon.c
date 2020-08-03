@@ -1136,7 +1136,7 @@ void fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed
 	//K03 Begin
 	rocket->nextthink = level.time + FRAMETIME;
 	rocket->think = rocket_think;// GHz v3.1
-	rocket->delay = level.time + 8000/speed;
+	rocket->delay = level.time + 8000*(sv_fps->value) / speed;
 	//rocket->think = G_FreeEdict;
 	//K03 End
 	rocket->dmg = damage;

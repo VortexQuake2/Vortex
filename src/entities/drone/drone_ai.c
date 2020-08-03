@@ -2673,26 +2673,7 @@ void drone_think (edict_t *self)
 	
 	// this must come before M_MoveFrame() because a monster's dead
 	// function may set the nextthink to 0
-	self->nextthink = level.time + 0.1; // run at 10 frames/sec
-	/*
-	if (self->mtype == M_DECOY && level.framenum % 10)
-	{
-		self->model = self->activator->model;
-		self->s.skinnum = self->activator->s.skinnum;
-		self->s.modelindex = self->activator->s.modelindex;
-		self->s.modelindex2 = self->activator->s.modelindex2;
-		self->s.modelindex3 = self->activator->s.modelindex3;
-		self->s.modelindex4 = self->activator->s.modelindex4;
-
-		if (self->activator && self->activator->inuse)
-		{
-			gi.dprintf("class skin: %s\n", V_GetClassModel(self->activator));
-			gi.dprintf("activator model: %s skinnum: %d modelindex: %d modelindex2: %d\n", self->activator->model, self->activator->s.skinnum, self->activator->s.modelindex, self->activator->s.modelindex2);
-			gi.dprintf("decoy model: %s skinnum: %d modelindex: %d modelindex2: %d\n", self->model, self->s.skinnum, self->s.modelindex, self->s.modelindex2);
-		}
-		else
-			gi.dprintf("no activator\n");
-	}*/
+	self->nextthink = level.time + FRAMETIME; // run at 10 frames/sec
 
 	M_MoveFrame (self);
 	M_CatagorizePosition (self);

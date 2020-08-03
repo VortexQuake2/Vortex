@@ -530,6 +530,7 @@ void M_MoveFrame (edict_t *self)
 	float	temp;
 //	edict_t *curse;
 	que_t	*slot=NULL;
+	qboolean runthink = false;
 
 	if (!self->inuse)
 		return;
@@ -568,9 +569,13 @@ void M_MoveFrame (edict_t *self)
 		{
 			if (!(self->monsterinfo.aiflags & AI_HOLD_FRAME))
 			{
-				self->s.frame++;
-				if (self->s.frame > move->lastframe)
-					self->s.frame = move->firstframe;
+				if ( self->monsterinfo.frametimer <= level.framenum ) {
+					self->s.frame++;
+					self->monsterinfo.frametimer = level.framenum + qf2sf(1);
+					runthink = true;
+					if (self->s.frame > move->lastframe)
+						self->s.frame = move->firstframe;
+				}
 			}
 		}
 	}
@@ -579,7 +584,7 @@ void M_MoveFrame (edict_t *self)
 	if (move->frame[index].aifunc)
 		if (!(self->monsterinfo.aiflags & AI_HOLD_FRAME))
 		{
-			self->monsterinfo.scale = 1.0;
+			self->monsterinfo.scale = FRAMETIME * 10;
 
 			//4.5 monster bonus flags
 			if (self->monsterinfo.bonus_flags & BF_FANATICAL)
@@ -620,7 +625,7 @@ void M_MoveFrame (edict_t *self)
 			move->frame[index].aifunc (self, 0);
 		}
 
-	if (move->frame[index].thinkfunc)
+	if ( ( move->frame[index].thinkfunc != NULL ) && ( runthink == true ))
 		move->frame[index].thinkfunc (self);
 }
 

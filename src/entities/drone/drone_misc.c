@@ -800,6 +800,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	drone->monsterinfo.control_cost = M_DEFAULT_CONTROL_COST;
 	drone->monsterinfo.cost = M_DEFAULT_COST;
 	drone->monsterinfo.sight_range = 1024; // 3.56 default sight range for finding targets
+	drone->monsterinfo.frametimer = level.framenum;
 	drone->inuse = true;
 
 	switch(drone_type) // not to be confused with mtype!

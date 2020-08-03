@@ -1490,7 +1490,7 @@ qboolean M_walkmove (edict_t *ent, float yaw, float dist)
 		return false;
 
 	yaw = yaw*M_PI*2 / 360;
-	
+
 	move[0] = cos(yaw)*dist;
 	move[1] = sin(yaw)*dist;
 	move[2] = 0;
