@@ -190,7 +190,7 @@ void autocannon_aim (edict_t *self)
 	{
 		VectorCopy(self->move_origin, v);
 		// 0.1=5-6 degrees/frame, 0.2=11-12 degrees/frame, 0.3=17-18 degrees/frame
-		VectorScale(v, 0.1, v);
+		VectorScale(v, FRAMETIME, v);
 		VectorAdd(v, self->movedir, v);
 		VectorNormalize(v);
 		VectorCopy(v, self->movedir);

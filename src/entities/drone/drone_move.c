@@ -1160,7 +1160,7 @@ void M_ChangeYaw (edict_t *ent)
 		return;
 
 	move = ideal - current;
-	speed = ent->yaw_speed;
+	speed = ent->yaw_speed * FRAMETIME * 10;
 	if (ideal > current)
 	{
 		if (move >= 180)
