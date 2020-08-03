@@ -772,15 +772,15 @@ void M_MoveFrame (edict_t *self)
 		}
 		else
 		{
+			if ( self->monsterinfo.frametimer <= level.framenum ) {
 			if (!vrx_holdframe(self))
-			{
-				if ( self->monsterinfo.frametimer <= level.framenum ) {
+				{
 					self->s.frame++;
-					self->monsterinfo.frametimer = level.framenum + qf2sf(1);
-					runthink = true;
 					if (self->s.frame > move->lastframe)
 						self->s.frame = move->firstframe;
 				}
+				self->monsterinfo.frametimer = level.framenum + qf2sf(1);
+				runthink = true;
 			}
 		}
 	}
