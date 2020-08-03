@@ -463,7 +463,7 @@ void vrx_inv_award_curse_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
     edict_t *assister = NULL;
 
     if ((slot = que_findtype(que, NULL, type)) != NULL) {
-        gi.dprintf("vrx_inv_award_exp: found curse %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
+        gi.dprintf("vrx_inv_award_exp: found curse/aura %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
 
         if ( slot->ent->owner->client ) {
             gi.dprintf("named %s\n", slot->ent->owner->client->pers.netname);
@@ -650,7 +650,7 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
     vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, AMP_DAMAGE, 1.0, false );
     vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, LOWER_RESIST, 1.0, false );
     vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, WEAKEN, 1.0, false );
-    vrx_inv_award_curse_exp(player, targ, targetclient, targ->auras, AURA_HOLYFREEZE, 1.0, false );
+    vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, AURA_HOLYFREEZE, 1.0, false );
     
     vrx_inv_award_cooldown_exp(player, targ, targetclient, targ->chill_time, targ->chill_owner, 1.0, false);
     vrx_inv_award_cooldown_exp(player, targ, targetclient, targ->empeffect_time, targ->empeffect_owner, 1.0, false);
