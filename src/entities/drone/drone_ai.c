@@ -676,6 +676,8 @@ void drone_ai_idle (edict_t *self)
 			self->activator->num_monsters = 0;
 		if (self->activator->num_monsters_real < 0)
 			self->activator->num_monsters_real = 0;
+
+		DroneList_Remove(self); // az: PESKY BEE
 		BecomeTE(self);
 		return;
 	}

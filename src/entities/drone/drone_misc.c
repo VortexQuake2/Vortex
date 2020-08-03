@@ -47,8 +47,9 @@ edict_t *DroneList_Iterate()
 
 edict_t *DroneList_Next(edict_t *ent)
 {
-    if (ent->monsterinfo.dronelist_index + 1 < MAX_EDICTS)
+    if (ent->monsterinfo.dronelist_index + 1 < MAX_EDICTS) {
 	    return DroneList[ent->monsterinfo.dronelist_index + 1];
+	}
 
     return NULL;
 }
