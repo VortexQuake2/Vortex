@@ -2884,7 +2884,7 @@ void spikeball_findtarget (edict_t *self)
 
 	if (!G_ValidTarget(self, self->enemy, true))
 	{
-		while ((e = findclosestradius_targets(e, self->s.origin, self->dmg_radius)) != NULL)
+		while ((e = findclosestradius_targets(e, self, self->dmg_radius)) != NULL)
 		{
 			if (!G_ValidTarget_Lite(self, e, true))
 				continue;

@@ -7,7 +7,7 @@ void detector_remove (edict_t *self)
 	if (self->owner && self->owner->inuse)
 	{
 		self->owner->num_detectors--;
-		safe_cprintf(self->owner, PRINT_HIGH, "%d/%d detectors remaining\n", self->owner->num_detectors, DETECTOR_MAX_COUNT);
+		safe_cprintf(self->owner, PRINT_HIGH, "%d/%d detectors remaining\n", self->owner->num_detectors, (int)DETECTOR_MAX_COUNT);
 	}
 
 	self->think = G_FreeEdict;

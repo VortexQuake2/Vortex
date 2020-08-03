@@ -456,7 +456,7 @@ qboolean boss_findtarget (edict_t *boss)
 {
 	edict_t *target = NULL;
 
-	while ((target = findclosestradius_targets(target, boss->s.origin, BOSS_TARGET_RADIUS)) != NULL)
+	while ((target = findclosestradius_targets(target, boss, BOSS_TARGET_RADIUS)) != NULL)
 	{
 		if (!G_ValidTarget_Lite(boss, target, true))
 			continue;

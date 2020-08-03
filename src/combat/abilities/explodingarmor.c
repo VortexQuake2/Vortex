@@ -39,7 +39,7 @@ void DetonateArmor (edict_t *self)
 	self->owner->num_armor--;
 
 	safe_cprintf(self->owner, PRINT_HIGH, "Exploding armor did %d damage! (%d/%d)\n", 
-		self->dmg, self->owner->num_armor, EXPLODING_ARMOR_MAX_COUNT);
+		self->dmg, self->owner->num_armor, (int)EXPLODING_ARMOR_MAX_COUNT);
 
 	T_RadiusDamage(self, self->owner, self->dmg, NULL, self->dmg_radius, MOD_EXPLODINGARMOR);
 	// throw debris around
@@ -217,7 +217,7 @@ void SpawnExplodingArmor (edict_t *ent, int time)
 	ent->num_armor++; // 3.5 keep track of number of armor bombs
 
 	safe_cprintf(ent, PRINT_HIGH, "Your armor will detonate in %d seconds. Move away! (%d/%d)\n", 
-		time, ent->num_armor, EXPLODING_ARMOR_MAX_COUNT);
+		time, ent->num_armor, (int)EXPLODING_ARMOR_MAX_COUNT);
 
 	// calling entity made a sound, used to alert monsters
 	ent->lastsound = level.framenum;
@@ -246,7 +246,7 @@ void Cmd_ExplodingArmor_f (edict_t *ent)
 	}
 	if (ent->num_armor >= EXPLODING_ARMOR_MAX_COUNT)
 	{
-		safe_cprintf(ent, PRINT_HIGH, "Maximum count of %d reached.\n", EXPLODING_ARMOR_MAX_COUNT);
+		safe_cprintf(ent, PRINT_HIGH, "Maximum count of %d reached.\n", (int)EXPLODING_ARMOR_MAX_COUNT);
 		return;
 	}
 
