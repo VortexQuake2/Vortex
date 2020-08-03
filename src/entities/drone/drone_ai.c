@@ -463,7 +463,7 @@ qboolean drone_heartarget (edict_t *target)
 		return true;
 
 	// target used an ability
-	if (target->client->ability_delay + 0.4 >= level.time)
+	if (target->client->ability_delay + (0.4 / FRAMETIME) >= level.time)
 		return true;
 
 	return false;
@@ -592,7 +592,7 @@ qboolean drone_findtarget (edict_t *self, qboolean force)
 	// if a monster hasn't found a target for awhile, it becomes less alert
 	// and searches less often, freeing up CPU cycles
 	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND)
-		&& self->monsterinfo.idle_frames > DRONE_SLEEP_FRAMES)
+		&& self->monsterinfo.idle_frames > qf2sf(DRONE_SLEEP_FRAMES))
 		frames = qf2sf(DRONE_FINDTARGET_FRAMES * 5);
 	else
 		frames = qf2sf(DRONE_FINDTARGET_FRAMES);
@@ -703,7 +703,7 @@ void drone_ai_idle (edict_t *self)
 
 	// world monsters suicide if they haven't found an enemy in awhile
 	if (self->activator && !self->activator->client && !(self->monsterinfo.aiflags & AI_STAND_GROUND)
-		&& (self->monsterinfo.idle_frames > DRONE_SUICIDE_FRAMES))
+		&& (self->monsterinfo.idle_frames > qf2sf(DRONE_SUICIDE_FRAMES)))
 	{
 		if (self->monsterinfo.control_cost >= M_TANK_CONTROL_COST) // we're a boss
 			self->activator->num_sentries--;

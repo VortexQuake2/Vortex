@@ -29,7 +29,7 @@ void bfire_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 	{
 		T_Damage(other, self, self->owner, vec3_origin, self->s.origin, 
 				plane->normal, sf2qf(self->dmg), 0, DAMAGE_NO_KNOCKBACK, MOD_BURN);
-		self->monsterinfo.nextattack = level.framenum + 1;
+		self->monsterinfo.nextattack = level.framenum + qf2sf(1);
 	}
 }
 

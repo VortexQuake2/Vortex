@@ -1354,7 +1354,7 @@ void poison_think (edict_t *self)
 	if (level.framenum >= self->monsterinfo.nextattack)
 	{
 		T_Damage(self->enemy, self, self->activator, vec3_origin, self->enemy->s.origin, vec3_origin, self->dmg, 0, 0, self->style);
-		self->monsterinfo.nextattack = level.framenum + floattoint(self->random);
+		self->monsterinfo.nextattack = level.framenum + qf2sf( floattoint(self->random) ); 
 		self->random *= 1.25;
 	}
 
@@ -1373,7 +1373,7 @@ void CreatePoison (edict_t *ent, edict_t *targ, int damage, float duration, int 
 	e->classname = "poison";
 	e->delay = level.time + duration;
 	e->owner = e->enemy = targ;
-	e->random = 1; // starting refire delay (in frames)
+	e->random = 1; // starting refire delay (in quake frames)
 	e->dmg = damage;
 	e->mtype = POISON;
 	e->style = meansOfDeath;
@@ -1436,7 +1436,7 @@ void gascloud_attack (edict_t *self)
 			if ((slot = que_findtype(e->curses, NULL, POISON)) != NULL)
 			{
 				slot->ent->random = 1;
-				slot->ent->monsterinfo.nextattack = level.framenum + 1;
+				slot->ent->monsterinfo.nextattack = level.framenum + qf2sf(1);
 				slot->ent->delay = level.time + self->radius_dmg;
 				slot->time = level.time + self->radius_dmg;
 			}

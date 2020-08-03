@@ -94,20 +94,20 @@ void think_trade(edict_t* ent) {//3.0 new trading
 
 }
 
-void think_chat_protect_activate(edict_t* ent) {
-	if (!ptr->value && !domination->value && !ctf->value &&
-		!(hw->value && vrx_has_flag(ent))  // the game isn't holywars and the player doesn't have the flag
-		&& !ent->myskills.administrator // Not an admin
-		&& !que_typeexists(ent->curses, 0)  // Not cursed
-		&& (ent->myskills.streak < SPREE_START)) // Not on a spree
-	{
-		if (!((!ent->myskills.abilities[CLOAK].disable) && ((ent->myskills.abilities[CLOAK].current_level > 0)))) {
-			if (!trading->value && !ent->automag) // trading mode no chat protection or if automagging either
-			{
-				if (sf2qf(ent->client->idle_frames) == CHAT_PROTECT_FRAMES - 100)
-					safe_centerprintf(ent, "10 seconds to chat-protect.\n");
-				else if (sf2qf(ent->client->idle_frames) == CHAT_PROTECT_FRAMES - 50)
-					safe_centerprintf(ent, "5 seconds to chat-protect.\n");
+void think_chat_protect_activate(edict_t *ent) {
+    if (!ptr->value && !domination->value && !ctf->value &&
+        !(hw->value && vrx_has_flag(ent))  // the game isn't holywars and the player doesn't have the flag
+        && !ent->myskills.administrator // Not an admin
+        && !que_typeexists(ent->curses, 0)  // Not cursed
+        && (ent->myskills.streak < SPREE_START)) // Not on a spree
+    {
+        if (!((!ent->myskills.abilities[CLOAK].disable) && ((ent->myskills.abilities[CLOAK].current_level > 0)))) {
+            if (!trading->value && !ent->automag) // trading mode no chat protection or if automagging either
+            {
+                if (sf2qf(ent->client->idle_frames) == qf2sf(CHAT_PROTECT_FRAMES - 100))
+                    safe_centerprintf(ent, "10 seconds to chat-protect.\n");
+                else if (sf2qf(ent->client->idle_frames) == qf2sf(CHAT_PROTECT_FRAMES - 50))
+                    safe_centerprintf(ent, "5 seconds to chat-protect.\n");
 
 				if (sf2qf(ent->client->idle_frames) == qf2sf(CHAT_PROTECT_FRAMES)) {
 					safe_centerprintf(ent, "Now in chat-protect mode.\n");
