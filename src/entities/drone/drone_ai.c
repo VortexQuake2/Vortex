@@ -588,11 +588,12 @@ qboolean drone_findtarget (edict_t *self, qboolean force)
 	if (level.time < pregame_time->value)
 		return false; // pre-game time
 
+
 	// if a monster hasn't found a target for awhile, it becomes less alert
 	// and searches less often, freeing up CPU cycles
 	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND)
 		&& self->monsterinfo.idle_frames > DRONE_SLEEP_FRAMES)
-		frames = (int)(0.4 / FRAMETIME);
+		frames = qf2sf(DRONE_FINDTARGET_FRAMES * 5);
 	else
 		frames = qf2sf(DRONE_FINDTARGET_FRAMES);
 

@@ -567,15 +567,15 @@ void M_MoveFrame (edict_t *self)
 		}
 		else
 		{
-			if (!(self->monsterinfo.aiflags & AI_HOLD_FRAME))
-			{
-				if ( self->monsterinfo.frametimer <= level.framenum ) {
+			if ( self->monsterinfo.frametimer <= level.framenum ) {
+				if (!(self->monsterinfo.aiflags & AI_HOLD_FRAME))
+				{
 					self->s.frame++;
-					self->monsterinfo.frametimer = level.framenum + qf2sf(1);
-					runthink = true;
 					if (self->s.frame > move->lastframe)
 						self->s.frame = move->firstframe;
 				}
+				self->monsterinfo.frametimer = level.framenum + qf2sf(1);
+				runthink = true;
 			}
 		}
 	}
