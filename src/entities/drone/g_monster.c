@@ -723,6 +723,7 @@ void M_MoveFrame (edict_t *self)
 
 //	edict_t *curse;
 
+	qboolean runthink = false;
 
 	if (!self->inuse)
 		return;
@@ -773,9 +774,13 @@ void M_MoveFrame (edict_t *self)
 		{
 			if (!vrx_holdframe(self))
 			{
-				self->s.frame++;
-				if (self->s.frame > move->lastframe)
-					self->s.frame = move->firstframe;
+				if ( self->monsterinfo.frametimer <= level.framenum ) {
+					self->s.frame++;
+					self->monsterinfo.frametimer = level.framenum + qf2sf(1);
+					runthink = true;
+					if (self->s.frame > move->lastframe)
+						self->s.frame = move->firstframe;
+				}
 			}
 		}
 	}
@@ -784,7 +789,7 @@ void M_MoveFrame (edict_t *self)
 	if (move->frame[index].aifunc)
 		if (!vrx_holdframe(self))
 		{
-			self->monsterinfo.scale = 1.0;
+			self->monsterinfo.scale = FRAMETIME * 10;
 			vrx_adjust_moveframe_scale(self);
 			
 			move->frame[index].aifunc (self, move->frame[index].dist * self->monsterinfo.scale);
@@ -795,7 +800,7 @@ void M_MoveFrame (edict_t *self)
 			move->frame[index].aifunc (self, 0);
 		}
 
-	if (move->frame[index].thinkfunc)
+	if ( ( move->frame[index].thinkfunc != NULL ) && ( runthink == true ))
 		move->frame[index].thinkfunc (self);
 }
 

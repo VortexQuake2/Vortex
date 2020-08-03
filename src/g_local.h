@@ -107,7 +107,7 @@ extern long FLAG_FRAMES;
 #define FL_PACKANIMAL			0x01000000	// pack animal: use num_packanimals to track active quantity
 #define FL_RESPAWN				0x80000000	// used for item respawning
 
-#define FRAMETIME		(1/sv_fps->value)
+#define FRAMETIME		(1.0f/sv_fps->value)
 
 // scale 10 fps value to sv_fps value
 double scale_fps(double value);
@@ -572,6 +572,7 @@ typedef struct
 	mmove_t		*currentmove;
 	int			aiflags;
 	int			nextframe;
+	int			frametimer;
 	float		scale;
 
 	void		(*stand)(edict_t *self);
