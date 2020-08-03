@@ -193,11 +193,11 @@ void skull_movetogoal (edict_t *self, edict_t *goal)
 		goalpos = tr.endpos[2];
 
 		if (goalpos > self->s.origin[2])
-			skull_move_vertical(self, SKULL_MOVE_VERTICAL_SPEED);
+			skull_move_vertical(self, SKULL_MOVE_VERTICAL_SPEED*(FRAMETIME * 10));
 		if (goalpos < self->s.origin[2])
-			skull_move_vertical(self, -SKULL_MOVE_VERTICAL_SPEED);
+			skull_move_vertical(self, -SKULL_MOVE_VERTICAL_SPEED*(FRAMETIME * 10));
 
-		skull_strafe(self, 0.5*SKULL_MOVE_HORIZONTAL_SPEED);
+		skull_strafe(self, 0.5*SKULL_MOVE_HORIZONTAL_SPEED*(FRAMETIME * 10));
 	}
 
 	// horizontal movement
@@ -217,6 +217,9 @@ void skull_movetogoal (edict_t *self, edict_t *goal)
 		else
 			speed = -SKULL_MOVE_HORIZONTAL_SPEED;
 	}
+
+	// scale by server tickrate
+	speed *= (FRAMETIME * 10);
 
 	// are we slowed by holy freeze?
 	slot = que_findtype(self->curses, slot, AURA_HOLYFREEZE);
@@ -293,7 +296,7 @@ void skull_attack (edict_t *self)
 	//forward[2] = v[2];
 	VectorMA(start, 8192, v, end);
 
-	// do the damage
+	// do the damage, but only at 10 ticks per second
 	damage = self->dmg;
 	//knockback = 2*damage;
 	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
@@ -301,8 +304,10 @@ void skull_attack (edict_t *self)
 	{
 		//if (tr.ent->groundentity)
 		//	knockback *= 2;
-		T_Damage(tr.ent, self, self, forward, tr.endpos, tr.plane.normal, 
-			damage, 0, DAMAGE_ENERGY, MOD_SKULL);
+		if ( ( level.framenum % qf2sf( 1 ) ) == 0 ) {
+			T_Damage(tr.ent, self, self, forward, tr.endpos, tr.plane.normal, 
+				damage, 0, DAMAGE_ENERGY, MOD_SKULL);
+		}
 	}
 
 	gi.WriteByte (svc_temp_entity);
@@ -508,7 +513,7 @@ void skull_think (edict_t *self)
 			{
 				self->enemy = NULL;
 				skull_idle(self); //skull_return(self);
-				self->nextthink = level.time + 0.1;
+				self->nextthink = level.time + FRAMETIME;
 				return;
 			}
 		}
@@ -523,7 +528,7 @@ void skull_think (edict_t *self)
 	skull_runframes(self);
 	M_SetEffects(self);
 
-	self->nextthink = level.time + 0.1;
+	self->nextthink = level.time + FRAMETIME;
 }
 
 void skull_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
