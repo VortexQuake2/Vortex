@@ -304,7 +304,7 @@ void AI_ChangeAngle (edict_t *ent)
 	if (current_yaw != ideal_yaw)
 	{
 		move = ideal_yaw - current_yaw;
-		speed = ent->yaw_speed;
+		speed = ent->yaw_speed * FRAMETIME * 10.0f;
 		if (ideal_yaw > current_yaw)
 		{
 			if (move >= 180)
@@ -333,7 +333,7 @@ void AI_ChangeAngle (edict_t *ent)
 	if (current_pitch != ideal_pitch)
 	{
 		move = ideal_pitch - current_pitch;
-		speed = ent->yaw_speed;
+		speed = ent->yaw_speed * FRAMETIME * 10.0f;
 		if (ideal_pitch > current_pitch)
 		{
 			if (move >= 180)
