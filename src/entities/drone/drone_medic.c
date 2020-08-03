@@ -651,6 +651,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 			start[2] += 24;
 			if (!G_IsValidLocation(target, start, e->mins, e->maxs))
 			{
+				DroneList_Remove(e); // az: AAAAAAAARGH
 				G_FreeEdict(e);
 				return;
 			}

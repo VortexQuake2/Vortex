@@ -122,6 +122,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 			start[2] += 24;
 			if (!G_IsValidLocation(target, start, e->mins, e->maxs))
 			{
+				DroneList_Remove(e); // az: STILL AAAARGH
 				G_FreeEdict(e);
 				return;
 			}
