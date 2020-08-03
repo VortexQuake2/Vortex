@@ -181,7 +181,7 @@ void WaterTotem_think(edict_t *self, edict_t *caster)
 	edict_t *target = NULL;
 
 	//Find players in radius and attack them.
-	while ((target = findclosestradius_targets(target, self->s.origin, TOTEM_MAX_RANGE)) != NULL)
+	while ((target = findclosestradius_targets(target, self, TOTEM_MAX_RANGE)) != NULL)
 	{
 		// (apple)
 		// Since ice talent and watertotem work concurrently now, 
