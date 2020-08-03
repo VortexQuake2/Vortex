@@ -1678,7 +1678,7 @@ void poison_think (edict_t *self)
 	{
 		//self->dmg_counter += self->dmg;
 		T_Damage(self->enemy, self, self->activator, vec3_origin, self->enemy->s.origin, vec3_origin, self->dmg, 0, 0, self->style);
-		self->monsterinfo.nextattack = level.framenum + floattoint(self->random);
+		self->monsterinfo.nextattack = level.framenum + qf2sf( floattoint(self->random) ); 
 		self->random *= 1.25;
 	}
 
@@ -1697,7 +1697,7 @@ void CreatePoison (edict_t *ent, edict_t *targ, int damage, float duration, int 
 	e->classname = "poison";
 	e->delay = level.time + duration;
 	e->owner = e->enemy = targ;
-	e->random = 1; // starting refire delay (in frames)
+	e->random = 1; // starting refire delay (in quake frames)
 	e->dmg = damage;
 	e->mtype = e->atype = POISON;
 	e->style = meansOfDeath;
@@ -1769,7 +1769,7 @@ void poison_target(edict_t* ent, edict_t* target, int damage, float duration, in
 		if (!stack) // stacking of poison curses is not allowed, so refresh the curse instead
 		{
 			slot->ent->random = 1; // initial refire delay for next attack
-			slot->ent->monsterinfo.nextattack = level.framenum + 1; // next attack server frame
+				slot->ent->monsterinfo.nextattack = level.framenum + qf2sf(1);
 			slot->ent->delay = level.time + duration;
 			slot->time = level.time + duration;
 			return;
