@@ -540,6 +540,7 @@ void INV_SpawnMonsters(edict_t *self)
 				gi.WriteByte(TE_BOSSTPORT);
 				gi.WritePosition(invasion_data.boss->s.origin);
 				gi.multicast(invasion_data.boss->s.origin, MULTICAST_PVS);
+				DroneList_Remove(invasion_data.boss); // az: WHY DID I FORGET THIS
 				G_FreeEdict(invasion_data.boss);
 				invasion_data.boss = NULL;
 			}
