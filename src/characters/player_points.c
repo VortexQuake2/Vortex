@@ -471,7 +471,7 @@ void vrx_inv_award_curse_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
             gi.dprintf("\n");
         }
 
-        if ( slot->ent->owner != attacker ) {
+        if ( slot->ent->owner->client && slot->ent->owner != attacker ) {
             leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
             exp = vrx_get_kill_base_experience(
                 slot->ent->owner, targ, targetclient, 
@@ -499,7 +499,7 @@ void vrx_inv_award_cooldown_exp( edict_t *attacker, edict_t *targ, edict_t *targ
             gi.dprintf("\n");
         }
 
-        if ( owner != attacker ) {
+        if ( owner->client && owner != attacker ) {
             leveldiff = vrx_get_level_difference_multiplier(owner, targ, targetclient);
             exp = vrx_get_kill_base_experience(
                 owner, targ, targetclient, 
