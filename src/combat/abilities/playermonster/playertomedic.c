@@ -278,7 +278,7 @@ void p_medic_heal (edict_t *ent)
 			// heal them
 			M_Regenerate(tr.ent, frames, 0, 1.0, true, true, false, &tr.ent->monsterinfo.regen_delay2);
 
-			if ( ent->client && && tr.ent->owner != ent && tr.ent->activator != ent ) {
+			if ( ent->client && tr.ent->owner != ent && tr.ent->activator != ent ) {
 				exp = floattoint( (float)tr.ent->max_health / ((float)frames) / 10 );
 				vrx_apply_experience(ent, exp);
 				ent->client->resp.wave_assist_exp += exp;
