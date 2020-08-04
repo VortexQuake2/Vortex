@@ -334,6 +334,7 @@ int vrx_get_kill_base_experience(
     int exp_points = 0;
     int break_points = 0;
     float level_diff = 0;
+    float miniboss_bonus = 0;
     float bonus = 1;
     float dmgmod = 1;
     float damage;
@@ -391,6 +392,11 @@ int vrx_get_kill_base_experience(
                 &break_points,
                 &bonus
         );
+
+        // az: I forgot this. "everyone gets a bonus!"
+        if (vrx_is_newbie_basher(targ)) {
+            miniboss_bonus = EXP_MINIBOSS;
+        }
     }
         // we killed something else
     else {
@@ -404,7 +410,8 @@ int vrx_get_kill_base_experience(
         );
     }
 
-    exp_points = dmgmod * (level_diff * vrx_pointmult->value * base_exp * bonus + break_points);
+    exp_points = dmgmod * (level_diff * base_exp * bonus + break_points) + miniboss_bonus;
+    exp_points *= vrx_pointmult->value;
 
     if (G_GetClient(targ)) // az: pvp has another value.
         exp_points *= vrx_pvppointmult->value;
