@@ -1975,6 +1975,8 @@ struct edict_s
 
 	int			showPathDebug;			// show path debug information (0=off,1=on)
 
+	float       swordtimer;             //decino: time before we can reattack
+
 
 #ifndef NO_GDS
 
