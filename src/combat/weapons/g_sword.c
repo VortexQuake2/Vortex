@@ -403,7 +403,7 @@ void sword_attack (edict_t *ent, vec3_t g_offset, int damage)
 		forward, 
 		damage, 
 		SABRE_INITIAL_KICK + SABRE_ADDON_KICK * ent->myskills.weapons[WEAPON_SWORD].mods[0].current_level,
-		209 /* color */
+		0xd3d3d3d3 /* scolor */
 	); 
 }
 

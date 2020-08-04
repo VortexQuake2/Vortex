@@ -243,11 +243,11 @@ void monster_fire_bfg (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 	gi.multicast (start, MULTICAST_PVS);
 }
 
-void fire_sword ( edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick);
+void fire_sword ( edict_t *self, vec3_t start, vec3_t aimdir, int damage, int length, int color);
 void monster_fire_sword (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype)
 {
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
-	fire_sword (self, start, aimdir, damage, kick);
+	fire_sword (self, start, aimdir, damage, kick, 0xd2d3d2d3);
 
 	gi.WriteByte (svc_muzzleflash2);
 	gi.WriteShort (self - g_edicts);
