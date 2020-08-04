@@ -1257,7 +1257,7 @@ double GASSER_COST;
 double GASSER_DELAY;
 double GASCLOUD_POISON_DURATION;
 double GASCLOUD_POISON_FACTOR;
-
+double EXP_MINIBOSS;
 
 void Lua_LoadVariables()
 {
@@ -1282,6 +1282,7 @@ void Lua_LoadVariables()
 	SMARTROCKET_LOCKFRAMES = vrx_lua_get_variable("SMARTROCKET_LOCKFRAMES", 3);
 	DAMAGE_ESCAPE_DELAY = vrx_lua_get_variable("DAMAGE_ESCAPE_DELAY", 0.2);
 	EXP_WORLD_MONSTER = vrx_lua_get_variable("EXP_WORLD_MONSTER", 35);
+	EXP_MINIBOSS = vrx_lua_get_variable("EXP_MINIBOSS", 100);
 	AMMO_REGEN_DELAY = vrx_lua_get_variable("AMMO_REGEN_DELAY", 3);
 	MAX_KNOCKBACK = vrx_lua_get_variable("MAX_KNOCKBACK", 300);
 	CHAT_PROTECT_FRAMES = vrx_lua_get_variable("CHAT_PROTECT_FRAMES", 200);
