@@ -662,8 +662,10 @@ void Grenade_Explode (edict_t *ent)
 		return;
 	}
 #else
-	if (!ent->owner)
+	if (!G_EntExists(ent->owner)) {
+		BecomeExplosion1(ent);
 		return;
+	}
 #endif
 
 	if (ent->owner->client && !(ent->owner->svflags & SVF_DEADMONSTER))
@@ -1073,9 +1075,17 @@ void rocket_think (edict_t *self)
 		BecomeExplosion1(self);
 		return;
 	}
+#else
+	// remove rocket if owner dies or becomes invalid
+	// or the rocket times out
+	if (!G_EntExists(self->owner) || (level.time >= self->delay))
+	{
+		BecomeExplosion1(self);
+		return;
+	}
+#endif
 
 	self->nextthink = level.time + FRAMETIME;
-#endif
 }
 
 void fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius, int radius_damage)
@@ -1688,12 +1698,20 @@ void bfg_think (edict_t *self)
 	vec3_t		dir, v;
 	trace_t		tr;
 
+#ifdef REMOVE_PROJECTILES_AFTER_DEATH
 	// owner must be alive
 	if (!G_EntIsAlive(self->owner) || (self->delay <= level.time)) 
 	{
 		G_FreeEdict(self);
 		return;
 	}
+#else
+	if (!G_EntExists(self->owner) || (self->delay <= level.time)) 
+	{
+		G_FreeEdict(self);
+		return;
+	}
+#endif
 
 	damage = self->dmg;
 	range = self->dmg_radius;
@@ -1769,10 +1787,16 @@ void bfg_idle_think (edict_t *self)
 		G_FreeEdict(self);
 		return;
 	}
-
+#else
+	// owner must exist
+	if (!G_EntExists(self->owner) || (self->delay < level.time)) 
+	{
+		G_FreeEdict(self);
+		return;
+	}
+#endif
 
 	self->nextthink = level.time + FRAMETIME;
-#endif
 }
 
 void fire_bfg (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius)
