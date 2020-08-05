@@ -11,6 +11,14 @@ edict_t		*INV_PlayerSpawns[64];
 edict_t		*INV_Navi[64];
 edict_t		*INV_StartNavi[64];
 
+struct invdata_s
+{
+	qboolean printedmessage;
+	int mspawned;
+	float limitframe;
+	edict_t *boss;
+} invasion_data;
+
 void INV_Init(void)
 {
 	int i;
@@ -303,16 +311,10 @@ edict_t *INV_GetMonsterSpawn(edict_t *from)
 	return NULL;
 }
 
-void INV_SpawnOneMonster(void) // az: for testing purposes
-{
-
-}
-
 void INV_AwardPlayers(void)
 {
 	int		i, points, credits, num_spawns = INV_GetNumPlayerSpawns(), num_winners = 0;
 	edict_t *player;
-	int shared, private, bonus;
 
 	// we're not in invasion mode
 	if (!INVASION_OTHERSPAWNS_REMOVED)
@@ -363,7 +365,7 @@ void INV_AwardPlayers(void)
 		gi.bprintf(PRINT_HIGH, "Humans win! Players were awarded a bonus.\n");
 }
 
-edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
+edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
 {
 	edict_t *monster;
 	vec3_t	start;
@@ -373,8 +375,8 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 	monster = vrx_create_new_drone(self, index, true, false);
 
 	// calculate starting position
-	VectorCopy(e->s.origin, start);
-	start[2] = e->absmax[2] + 1 + fabsf(monster->mins[2]);
+	VectorCopy(spawn_point->s.origin, start);
+	start[2] = spawn_point->absmax[2] + 1 + fabsf(monster->mins[2]);
 
 	tr = gi.trace(start, monster->mins, monster->maxs, start, NULL, MASK_SHOT);
 
@@ -390,10 +392,10 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 		}
 	}
 
-	e->wait = level.time + 1.0; // time until spawn is available again
+	spawn_point->wait = level.time + 1.0; // time until spawn is available again
 
 	monster->monsterinfo.aiflags |= AI_FIND_NAVI; // search for navi
-	monster->s.angles[YAW] = e->s.angles[YAW];
+	monster->s.angles[YAW] = spawn_point->s.angles[YAW];
 	monster->prev_navi = NULL;
 
 
@@ -413,22 +415,28 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *e, int index)
 
 	monster->max_health = monster->health = monster->max_health*mhealth;
 
-	// move the monster onto the spawn pad
+	// move the monster onto the spawn pad if it's not a commander
 	if (index != 30)
 	{
 		VectorCopy(start, monster->s.origin);
 		VectorCopy(start, monster->s.old_origin);
 	}
+
 	monster->s.event = EV_OTHER_TELEPORT;
 
-	if (e->count)
-		monster->monsterinfo.inv_framenum = level.framenum + e->count;
-	else
-	{
-		if (invasion->value == 1)
-			monster->monsterinfo.inv_framenum = level.framenum + (int)(6 / FRAMETIME); // give them quad/invuln to prevent spawn-camping
-		else if (invasion->value == 2)
-			monster->monsterinfo.inv_framenum = level.framenum + (int)(8 / FRAMETIME); // Hard mode invin
+	// az: non-bosses get quad/inven for preventing spawn camp
+	// bosses don't get it because it makes it inevitable for the players
+	// to lose spawns sometimes.
+	if (index != 30) {
+		if (spawn_point->count)
+			monster->monsterinfo.inv_framenum = level.framenum + spawn_point->count;
+		else
+		{
+			if (invasion->value == 1)
+				monster->monsterinfo.inv_framenum = level.framenum + (int)(6 / FRAMETIME); // give them quad/invuln to prevent spawn-camping
+			else if (invasion->value == 2)
+				monster->monsterinfo.inv_framenum = level.framenum + (int)(8 / FRAMETIME); // Hard mode invin
+		}
 	}
 	gi.linkentity(monster);
 	return monster;
@@ -451,15 +459,6 @@ float TimeFormula()
 	return rval;
 }
 
-struct invdata_s
-{
-	int printedmessage;
-	int mspawned;
-	float limitframe;
-	edict_t *boss;
-
-} invasion_data;
-
 // we'll override the other die functino to set our boss pointer to NULL.
 void mytank_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point);
 
@@ -469,8 +468,10 @@ void invasiontank_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int 
 	invasion_data.boss = NULL;
 }
 
-void BossCheck(edict_t *e, edict_t *self)
+void INV_BossCheck(edict_t *self)
 {
+	edict_t *e = NULL;
+
 	if (!(invasion_difficulty_level % 5))// every 5 levels, spawn a boss
 	{
 		int bcount = 0;
@@ -490,10 +491,8 @@ void BossCheck(edict_t *e, edict_t *self)
 				}
 				bcount++;
 				total_monsters++;
-				invasion_data.mspawned++;
-				invasion_data.mspawned++;
 				invasion_data.boss->die = invasiontank_die;
-				G_PrintGreenText(va("A level %d tank commander has spawned!", invasion_data.boss->monsterinfo.level+ 5));
+				G_PrintGreenText(va("A level %d tank commander has spawned!", invasion_data.boss->monsterinfo.level));
 				break;
 			}
 		}
@@ -502,70 +501,111 @@ void BossCheck(edict_t *e, edict_t *self)
 		invasion_data.boss = NULL;
 }
 
+void INV_OnTimeout() {
+	gi.bprintf(PRINT_HIGH, "Time's up!\n");
+	if (invasion_data.boss && invasion_data.boss->deadflag != DEAD_DEAD) // out of time for the boss.
+	{
+		G_PrintGreenText("You failed to eliminate the commander soon enough!\n");
+		gi.WriteByte(svc_temp_entity);
+		gi.WriteByte(TE_BOSSTPORT);
+		gi.WritePosition(invasion_data.boss->s.origin);
+		gi.multicast(invasion_data.boss->s.origin, MULTICAST_PVS);
+		DroneList_Remove(invasion_data.boss); // az: WHY DID I FORGET THIS
+		G_FreeEdict(invasion_data.boss);
+		invasion_data.boss = NULL;
+	}
+
+	// increase the difficulty level for the next wave
+	if (invasion->value == 1)
+		invasion_difficulty_level += 1;
+	else
+		invasion_difficulty_level += 2; // Hard mode.
+	invasion_data.printedmessage = 0;
+	gi.sound(&g_edicts[0], CHAN_VOICE, gi.soundindex("misc/tele_up.wav"), 1, ATTN_NONE, 0);
+}
+
+void INV_ShowLastWaveSummary() {
+	// print exp summaries
+	for (int i = 1; i <= maxclients->value; i++) {
+		edict_t *player = &g_edicts[i];
+
+		if (!player->inuse || G_IsSpectator(player))
+			continue;
+
+		if ( ( player->client->resp.wave_solo_exp < 1 ) &&
+				( player->client->resp.wave_shared_exp < 1 ) &&
+				( player->client->resp.wave_assist_exp < 1 ) ) {
+
+			continue;
+		}
+
+		safe_cprintf(player, PRINT_MEDIUM, "Wave summary:\n" );
+
+		if ( player->client->resp.wave_solo_exp > 0 ) {
+			safe_cprintf(player, PRINT_MEDIUM, "  %d exp and %d credits from %d damage dealt to %d monsters\n",
+							player->client->resp.wave_solo_exp,
+							player->client->resp.wave_solo_credits,
+							player->client->resp.wave_solo_dmgmod,
+							player->client->resp.wave_solo_targets );
+		}
+
+		if ( player->client->resp.wave_assist_exp > 0 ) {
+			safe_cprintf(player, PRINT_MEDIUM, "  %d exp and %d credits from assisting your team\n",
+							player->client->resp.wave_assist_exp,
+							player->client->resp.wave_assist_credits );
+		}
+
+		if ( player->client->resp.wave_shared_exp > 0 ) {
+			safe_cprintf(player, PRINT_MEDIUM, "  %d exp and %d credits shared from your team\n",
+							player->client->resp.wave_shared_exp,
+							player->client->resp.wave_shared_credits );
+		}
+
+		player->client->resp.wave_solo_targets = 0;
+		player->client->resp.wave_solo_dmgmod = 0;
+		player->client->resp.wave_solo_exp = 0;
+		player->client->resp.wave_solo_credits = 0;
+		player->client->resp.wave_shared_exp = 0;
+		player->client->resp.wave_shared_credits = 0;
+		player->client->resp.wave_assist_exp = 0;
+		player->client->resp.wave_assist_credits = 0;
+	}
+}
+
+void INV_OnBeginWave(edict_t *self, int max_monsters) {
+	if (invasion_difficulty_level == 1)
+	{
+		if (invasion->value == 1)
+			gi.bprintf(PRINT_HIGH, "The invasion begins!\n");
+		else
+			gi.bprintf(PRINT_HIGH, "The invasion... begins.\n");
+	} else {
+		INV_ShowLastWaveSummary();
+	}
+
+	if (invasion_difficulty_level % 5)
+		gi.bprintf(PRINT_HIGH, "Welcome to level %d. %d monsters incoming!\n", invasion_difficulty_level, max_monsters);
+	else
+		gi.bprintf(PRINT_HIGH, "Welcome to level %d.\n", invasion_difficulty_level, max_monsters);
+	G_PrintGreenText(va("Timelimit: %dm %ds.\n", (int)TimeFormula() / 60, (int)TimeFormula() % 60));
+
+	gi.sound(&g_edicts[0], CHAN_VOICE, gi.soundindex("misc/talk1.wav"), 1, ATTN_NONE, 0);
+
+	// check for a boss spawn
+	INV_BossCheck(self);
+}
+
 void INV_SpawnMonsters(edict_t *self)
 {
-	int		players, max_monsters, i;
-	edict_t *e = NULL, *player = NULL;
+	int		players, max_monsters;
+	edict_t *e = NULL;
 	int SpawnTries = 0, MaxTriesThisFrame = 32;
+
+	// update our drone count
 	PVM_TotalMonsters(self, true);
+	players = vrx_get_joined_players();
 
-	players = max_monsters = vrx_get_joined_players();
-
-	// there are still monsters alive
-	if ((self->num_monsters_real > 0) && (self->count == MONSTERSPAWN_STATUS_IDLE))
-	{
-		// if there's nobody playing, remove all monsters
-		if (players < 1)
-		{
-			PVM_RemoveAllMonsters(self);
-		}
-		if (level.intermissiontime)
-		{
-			if (self->num_monsters_real)
-				PVM_RemoveAllMonsters(self);
-			return;
-		}
-		if (invasion_data.limitframe > level.time) // we still got time?
-		{
-			self->nextthink = level.time + FRAMETIME;
-			return;
-		}
-		else
-		{
-			gi.bprintf(PRINT_HIGH, "Time's up!\n");
-			if (invasion_data.boss && invasion_data.boss->deadflag != DEAD_DEAD) // out of time for the boss.
-			{
-				G_PrintGreenText(va("You failed to eliminate the commander soon enough!\n"));
-				gi.WriteByte(svc_temp_entity);
-				gi.WriteByte(TE_BOSSTPORT);
-				gi.WritePosition(invasion_data.boss->s.origin);
-				gi.multicast(invasion_data.boss->s.origin, MULTICAST_PVS);
-				DroneList_Remove(invasion_data.boss); // az: WHY DID I FORGET THIS
-				G_FreeEdict(invasion_data.boss);
-				invasion_data.boss = NULL;
-			}
-			// increase the difficulty level for the next wave
-			if (invasion->value == 1)
-				invasion_difficulty_level += 1;
-			else
-				invasion_difficulty_level += 2; // Hard mode.
-			invasion_data.printedmessage = 0;
-			gi.sound(&g_edicts[0], CHAN_VOICE, gi.soundindex("misc/tele_up.wav"), 1, ATTN_NONE, 0);
-		}
-	}
-	else // Timeout has happened or all monsters eliminated
-	{
-		self->count = MONSTERSPAWN_STATUS_WORKING;
-		invasion_data.mspawned = self->num_monsters_real;
-	}
-
-	if (players < 1)
-	{
-		// if there's nobody playing, then wait until some join
-		self->nextthink = level.time + FRAMETIME;
-		return;
-	}
-
+	// How many monsters should we spawn?
 	// 10 at lv 1, 30 by level 20. 41 by level 100
 	max_monsters = (int)round(10 + 4.6276 * log2f((float)invasion_difficulty_level));
 
@@ -577,80 +617,63 @@ void INV_SpawnMonsters(edict_t *self)
 			max_monsters = 6 * (vrx_get_joined_players() - 1);
 	}
 
-	if (!invasion_data.printedmessage)
+	// Idle State
+	// we're done spawning
+	if (self->count == MONSTERSPAWN_STATUS_IDLE)
 	{
-		invasion_data.limitframe = level.time + TimeFormula();
-		if (invasion_difficulty_level == 1)
+		// if there's nobody playing, remove all monsters
+		if (players < 1)
 		{
-			if (invasion->value == 1)
-				gi.bprintf(PRINT_HIGH, "The invasion begins!\n");
-			else
-				gi.bprintf(PRINT_HIGH, "The invasion... begins.\n");
-		} else {
-			// print exp summaries
-			for (i = 1; i <= maxclients->value; i++) {
-				player = &g_edicts[i];
-        		if (!player->inuse || G_IsSpectator(player))
-					continue;
-
-				if ( ( player->client->resp.wave_solo_exp < 1 ) &&
-						( player->client->resp.wave_shared_exp < 1 ) &&
-						( player->client->resp.wave_assist_exp < 1 ) ) {
-
-					continue;
-				}
-
-				safe_cprintf(player, PRINT_MEDIUM, "Wave summary:\n" );
-
-				if ( player->client->resp.wave_solo_exp > 0 ) {
-					safe_cprintf(player, PRINT_MEDIUM, "  %d exp and %d credits from %d damage dealt to %d monsters\n",
-								 	player->client->resp.wave_solo_exp,
-									player->client->resp.wave_solo_credits,
-									player->client->resp.wave_solo_dmgmod,
-									player->client->resp.wave_solo_targets );
-				}
-
-				if ( player->client->resp.wave_assist_exp > 0 ) {
-					safe_cprintf(player, PRINT_MEDIUM, "  %d exp and %d credits from assisting your team\n",
-								 	player->client->resp.wave_assist_exp,
-									player->client->resp.wave_assist_credits );
-				}
-
-				if ( player->client->resp.wave_shared_exp > 0 ) {
-					safe_cprintf(player, PRINT_MEDIUM, "  %d exp and %d credits shared from your team\n",
-								 	player->client->resp.wave_shared_exp,
-									player->client->resp.wave_shared_credits );
-				}
-
-				player->client->resp.wave_solo_targets = 0;
-				player->client->resp.wave_solo_dmgmod = 0;
-				player->client->resp.wave_solo_exp = 0;
-				player->client->resp.wave_solo_credits = 0;
-				player->client->resp.wave_shared_exp = 0;
-				player->client->resp.wave_shared_credits = 0;
-				player->client->resp.wave_assist_exp = 0;
-				player->client->resp.wave_assist_credits = 0;
-			}
+			PVM_RemoveAllMonsters(self);
 		}
-		if (invasion_difficulty_level % 5)
-			gi.bprintf(PRINT_HIGH, "Welcome to level %d. %d monsters incoming!\n", invasion_difficulty_level, max_monsters);
+		
+		// the level ended, remove monsters
+		if (level.intermissiontime)
+		{
+			if (self->num_monsters_real)
+				PVM_RemoveAllMonsters(self);
+			return;
+		}
+
+		// were all monsters eliminated?
+		if (self->num_monsters_real == 0) {
+			// start spawning
+			self->nextthink = level.time + FRAMETIME;
+			self->count = MONSTERSPAWN_STATUS_WORKING;
+			return;
+		}
+
+
+		// Check for timeout
+		if (invasion_data.limitframe > level.time) // we still got time?
+		{
+			self->nextthink = level.time + FRAMETIME;
+			return;
+		}
 		else
-			gi.bprintf(PRINT_HIGH, "Welcome to level %d.\n", invasion_difficulty_level, max_monsters);
-		G_PrintGreenText(va("Timelimit: %dm %ds.\n", (int)TimeFormula() / 60, (int)TimeFormula() % 60));
+		{
+			// Timeout. We go straight to the working state.
+			INV_OnTimeout();
+			self->count = MONSTERSPAWN_STATUS_WORKING;
+		}
+	}
 
-		gi.sound(&g_edicts[0], CHAN_VOICE, gi.soundindex("misc/talk1.wav"), 1, ATTN_NONE, 0);
+	// Working State
+	// if there's nobody playing, then wait until some join
+	if (players < 1)
+	{
+		self->nextthink = level.time + FRAMETIME;
+		return;
+	}
 
-		BossCheck(e, self);
-
-		invasion_data.printedmessage = 1;
+	// print the message and set the timer the first frame we start working
+	if (!invasion_data.printedmessage) {
+		invasion_data.limitframe = level.time + TimeFormula();
+		INV_OnBeginWave(self, max_monsters);
+		invasion_data.printedmessage = true;
 	}
 
     self->nextthink = level.time + FRAMETIME;
-
-	/*
-	if (e->wait > level.time) // az: wait for a bit before spawning
-	    return;
-	*/
 
 	while ((e = INV_GetMonsterSpawn(e)) && invasion_data.mspawned < max_monsters && SpawnTries < MaxTriesThisFrame)
 	{
@@ -675,7 +698,7 @@ void INV_SpawnMonsters(edict_t *self)
 			invasion_data.mspawned++;
 	}
 
-	if (invasion_data.mspawned == max_monsters)
+	if (invasion_data.mspawned >= max_monsters)
 	{
 		// increase the difficulty level for the next wave
 		invasion_difficulty_level += 1;

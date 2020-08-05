@@ -733,7 +733,7 @@ void vrx_get_player_kill_xp(
         (*break_points) = SPREE_WARS_BONUS;
 
     // award 2fer bonus
-    (*bonus) *= vrx_get_nfer_bonus(attacker, target, (*bonus));
+    (*bonus) = vrx_get_nfer_bonus(attacker, target, (*bonus));
 
     (*base_exp) = EXP_PLAYER_BASE + getOwnLevelBaseBonus(attacker->myskills.level, EXP_PLAYER_BASE);
 
@@ -797,13 +797,13 @@ float vrx_get_nfer_bonus(edict_t *attacker, const edict_t *target, float bonus) 
 
 void vrx_do_nfer_effects(edict_t *attacker, edict_t *target) {
     if (attacker->nfer == 4) {
-        gi.sound(attacker, CHAN_VOICE, gi.soundindex("misc/assasin.wav"), 1, ATTN_NORM, 0);    //listo
+        gi.sound(attacker, CHAN_VOICE, gi.soundindex("misc/assasin.wav"), 1, ATTN_NORM, 0);
     } else if (attacker->nfer == 5) {
-        gi.sound(attacker, CHAN_VOICE, gi.soundindex("speech/hey.wav"), 1, ATTN_NORM, 0);    //listo
+        gi.sound(attacker, CHAN_VOICE, gi.soundindex("speech/hey.wav"), 1, ATTN_NORM, 0);  
     } else if (attacker->nfer >= 3 && attacker->nfer <= 4) {
-        gi.sound(target, CHAN_VOICE, gi.soundindex("speech/excellent.wav"), 1, ATTN_NORM, 0); //listo
+        gi.sound(target, CHAN_VOICE, gi.soundindex("speech/excellent.wav"), 1, ATTN_NORM, 0);
     } else if (attacker->nfer == 10) {
-        gi.sound(attacker, CHAN_VOICE, gi.soundindex("misc/10fer.wav"), 1, ATTN_NORM, 0);//listo
+        gi.sound(attacker, CHAN_VOICE, gi.soundindex("misc/10fer.wav"), 1, ATTN_NORM, 0);
     }
 }
 
