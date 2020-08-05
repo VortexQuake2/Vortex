@@ -527,9 +527,11 @@ void think_ability_superspeed(edict_t *ent) {
                     }
                     // otherwise use ability charge
                 } else {
-                    ent->client->charge_index = BERSERK + 1;
-                    ent->client->charge_time = level.time + 1.0;
-                    ent->myskills.abilities[BERSERK].charge -= SPRINT_COST;
+                    if (ent->myskills.abilities[BERSERK].charge >= SPRINT_COST) {
+                        ent->client->charge_index = BERSERK + 1;
+                        ent->client->charge_time = level.time + 1.0;
+                        ent->myskills.abilities[BERSERK].charge -= SPRINT_COST;
+                    }
                 }
             }
         }
