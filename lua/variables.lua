@@ -27,7 +27,7 @@ LASER_COST                               = 25
 LASER_CUTDAMAGE                          = 15
 MAX_LASERS                               = 6
 LASER_SPAWN                              = 3
-SUPERSPEED_DRAIN_COST                    = 1
+SUPERSPEED_DRAIN_COST                    = 4
 RESPAWN_INVIN_TIME                       = 20
 
 -- Antigravity

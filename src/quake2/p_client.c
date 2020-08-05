@@ -2620,10 +2620,9 @@ void V_AutoAim (edict_t *player);
 void UpdateMirroredEntities (edict_t *ent);
 void LeapAttack (edict_t *ent);
 
-void V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse);
+float V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse);
 
-pmove_t
-V_Think_ApplySuperSpeed(edict_t *ent, const usercmd_t *ucmd, gclient_t *client, int i, pmove_t *pm, int viewheight);
+// pmove_t V_Think_ApplySuperSpeed(edict_t *ent, const usercmd_t *ucmd, gclient_t *client, int i, pmove_t *pm, int viewheight);
 
 void think_trade(edict_t *ent);
 
@@ -2633,6 +2632,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	edict_t	*other;
 	int		i, j;
 	pmove_t	pm;
+	float velocity_mod = 1;
 
     que_t *curse = NULL;
 	int		viewheight;
@@ -2655,7 +2655,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	//K03 Begin
 	if (ent->client->resp.spectator != true)
 	{
-        V_ModifyMovement(ent, ucmd, curse);
+        velocity_mod = V_ModifyMovement(ent, ucmd, curse);
 
 		//End of slow move
 		if(que_typeexists(ent->curses, CURSE_FROZEN))
@@ -2748,7 +2748,10 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		for (i=0 ; i<3 ; i++)
 		{
 			pm.s.origin[i] = ent->s.origin[i]*8;
-			pm.s.velocity[i] = ent->velocity[i]*8;
+			if (i != 2 && velocity_mod < 1)
+				pm.s.velocity[i] = ent->velocity[i] * 8 * velocity_mod;
+			else
+				pm.s.velocity[i] = ent->velocity[i] * 8;
 		}
 
 		if (memcmp(&client->old_pmove, &pm.s, sizeof(pm.s)))
@@ -2763,6 +2766,26 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 
 		// perform a pmove
 		gi.Pmove (&pm);
+
+		// az: for SPEED, run a Pmove twice
+		// we don't wan't to compound on the existing velocity
+		// thus we undo the change in velocity right after...
+		if (velocity_mod > 1) {
+			pm.s.velocity[0] += ent->velocity[0] * 8 * (velocity_mod - 1);
+            pm.s.velocity[1] += ent->velocity[1] * 8 * (velocity_mod - 1);
+			gi.Pmove(&pm);
+			pm.s.velocity[0] -= ent->velocity[0] * 8 * (velocity_mod - 1);
+            pm.s.velocity[1] -= ent->velocity[1] * 8 * (velocity_mod - 1);
+		} else if (velocity_mod < 1) {
+			/* 
+				pm.s.velocity[0] -= ent->velocity[0] * 8 * (1 - velocity_mod);
+				pm.s.velocity[1] -= ent->velocity[1] * 8 * (1 - velocity_mod);
+				gi.Pmove(&pm);
+				pm.s.velocity[0] += ent->velocity[0] * 8 * (1 - velocity_mod);
+				pm.s.velocity[1] += ent->velocity[1] * 8 * (1 - velocity_mod);
+			*/ 
+		}
+
 // GHz START
 		// if this is a morphed player, restore saved viewheight
 		// this locks them into that viewheight
@@ -2791,7 +2814,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 
 		//K03 Begin
 		//4.07 can't superspeed while being hurt
-        pm = V_Think_ApplySuperSpeed(ent, ucmd, client, i, &pm, viewheight);
+        // pm = V_Think_ApplySuperSpeed(ent, ucmd, client, i, &pm, viewheight);
 
 		if (/*ent->groundentity && !pm.groundentity &&*/ (pm.cmd.upmove >= 10) /*&& (pm.waterlevel == 0)*/)
 		{
@@ -2953,13 +2976,6 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	if (ent->lockon == 1)
 		V_AutoAim(ent);
 
-	//K03 Begin
-	if ((client->hook_state == HOOK_ON) && (VectorLength(ent->velocity) < 10)) {
-        client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
-    } else {
-        client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
-    }
-	//K03 End
     think_trade(ent);
 
     boss_update(ent, ucmd);
