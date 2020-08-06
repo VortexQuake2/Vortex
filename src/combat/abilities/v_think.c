@@ -196,16 +196,17 @@ qboolean CanSuperSpeed(edict_t *ent) {
 
     // superspeed ability
     if (!ent->myskills.abilities[SUPER_SPEED].disable && ent->myskills.abilities[SUPER_SPEED].current_level > 0
-        && ent->client->pers.inventory[power_cube_index] >= SUPERSPEED_DRAIN_COST)
+        && ent->myskills.abilities[SUPER_SPEED].charge >= SUPERSPEED_DRAIN_COST)
         return true;
 
     // sprint
-    if (ent->mtype == MORPH_BERSERK && ent->myskills.abilities[BERSERK].charge > SPRINT_COST)
+    if (ent->mtype == MORPH_BERSERK && ent->myskills.abilities[BERSERK].charge >= SPRINT_COST)
         return true;
 
     return false;
 }
 
+/*
 pmove_t
 V_Think_ApplySuperSpeed(edict_t *ent, const usercmd_t *ucmd, gclient_t *client, int i, pmove_t *pm, int viewheight) {
     if (ent->superspeed) {
@@ -213,7 +214,7 @@ V_Think_ApplySuperSpeed(edict_t *ent, const usercmd_t *ucmd, gclient_t *client, 
         if (!CanSuperSpeed(ent)) {
             ent->superspeed = false;
         } else if (level.time > ent->lasthurt + DAMAGE_ESCAPE_DELAY) {
-            ent->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
+            // ent->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
             (*pm).s = client->ps.pmove;
 
             {
@@ -261,28 +262,25 @@ V_Think_ApplySuperSpeed(edict_t *ent, const usercmd_t *ucmd, gclient_t *client, 
             client->resp.cmd_angles[1] = SHORT2ANGLE(ucmd->angles[1]);
             client->resp.cmd_angles[2] = SHORT2ANGLE(ucmd->angles[2]);
 
-            ent->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
+            // ent->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
         }
     }
     //K03 End
 
     return (*pm);
-}
+}*/
 
-void
-V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse) {// assault cannon slows you down
+float V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse) {// assault cannon slows you down
+    float vel_modification = 1;
+
     if (ent->client->pers.weapon && (ent->client->pers.weapon->weaponthink == Weapon_Chaingun)
         && (ent->client->weaponstate == WEAPON_FIRING) && (ent->client->weapon_mode)) {
-        ucmd->forwardmove *= 0.33;
-        ucmd->sidemove *= 0.33;
-        ucmd->upmove *= 0.33;
+        vel_modification *= 0.33;
     }
 
     // sniper mode slows you down
     if (ent->client->snipertime >= level.time) {
-        ucmd->forwardmove *= 0.33;
-        ucmd->sidemove *= 0.33;
-        ucmd->upmove *= 0.33;
+        vel_modification *= 0.33;
     }
 
     curse = que_findtype(ent->curses, curse, AURA_HOLYFREEZE);
@@ -290,10 +288,9 @@ V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse) {// assault cannon
     if (curse) {
         float modifier = 1 / (1 + 0.1 * curse->ent->owner->myskills.abilities[HOLY_FREEZE].current_level);
         if (modifier < 0.25) modifier = 0.25;
+
         //gi.dprintf("holyfreeze modifier = %.2f\n", modifier);
-        ucmd->forwardmove *= modifier;
-        ucmd->sidemove *= modifier;
-        ucmd->upmove *= modifier;
+        vel_modification *= modifier;
     }
 
     //Talent: Frost Nova
@@ -301,17 +298,13 @@ V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse) {// assault cannon
     if (ent->chill_time > level.time) {
         float modifier = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * ent->chill_level);
         if (modifier < 0.25) modifier = 0.25;
-        //gi.dprintf("chill modifier = %.2f\n", modifier);
-        ucmd->forwardmove *= modifier;
-        ucmd->sidemove *= modifier;
-        ucmd->upmove *= modifier;
+
+        vel_modification *= modifier;
     }
 
     //4.2 caltrops
     if (ent->slowed_time > level.time) {
-        ucmd->forwardmove *= ent->slowed_factor;
-        ucmd->sidemove *= ent->slowed_factor;
-        ucmd->upmove *= ent->slowed_factor;
+        vel_modification *= ent->slowed_factor;
     }
 
 
@@ -319,19 +312,14 @@ V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse) {// assault cannon
     if ((curse = que_findtype(ent->curses, NULL, WEAKEN)) != NULL) {
         float modifier = 1 / (1 + WEAKEN_SLOW_BASE + WEAKEN_SLOW_BONUS
                                                      * curse->ent->owner->myskills.abilities[WEAKEN].current_level);
-
-        ucmd->forwardmove *= modifier;
-        ucmd->sidemove *= modifier;
-        ucmd->upmove *= modifier;
+        vel_modification *= modifier;
     }
 
     //GHz: Keep us still and don't allow shooting
 // If we have an automag up, don't let us move either. -az
 // az: nope nevermind it's bullshit
     if ((ent->holdtime && ent->holdtime > level.time)) {
-        ucmd->forwardmove = 0;
-        ucmd->sidemove = 0;
-        ucmd->upmove = 0;
+        vel_modification *= 0;
 
         if (ent->client->buttons & BUTTON_ATTACK)
             ent->client->buttons &= ~BUTTON_ATTACK;
@@ -372,6 +360,27 @@ V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse) {// assault cannon
             T_Damage(other, ent, ent, dir, end, vec3_origin, 0, pull, 0, 0);
         }
     }
+
+    /* 
+		az: rewrite how superspeed works because it fucking sucks
+	*/
+    qboolean superspeed = ent->superspeed && CanSuperSpeed(ent) && level.time > ent->lasthurt + DAMAGE_ESCAPE_DELAY;
+    if (superspeed) {
+        vel_modification *= 1.75;
+    }
+
+
+    //K03 Begin
+	qboolean hook = (ent->client->hook_state == HOOK_ON) && (VectorLength(ent->velocity) < 10);
+	
+	if (hook || vel_modification != 1) {
+        ent->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
+    } else {
+        ent->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
+    }
+	//K03 End
+
+    return sqrt(vel_modification);
 }
 
 void think_recharge_abilities(edict_t *ent) {
@@ -416,6 +425,18 @@ void think_recharge_abilities(edict_t *ent) {
 
             if (ent->myskills.abilities[BERSERK].charge > SPRINT_MAX_CHARGE)
                 ent->myskills.abilities[BERSERK].charge = SPRINT_MAX_CHARGE;
+        }
+
+        // az: super speed sprint
+        qboolean can_superspeed = !ent->myskills.abilities[SUPER_SPEED].disable && ent->myskills.abilities[SUPER_SPEED].current_level;
+        if (!ent->superspeed && can_superspeed) {
+            if (ent->myskills.abilities[SUPER_SPEED].charge < SPRINT_MAX_CHARGE) {
+                ent->myskills.abilities[SUPER_SPEED].charge += SPRINT_CHARGE_RATE;
+                ent->client->charge_time = level.time + 1.0; // show charge until we are full
+            }
+
+            if (ent->myskills.abilities[SUPER_SPEED].charge > SPRINT_MAX_CHARGE)
+                ent->myskills.abilities[SUPER_SPEED].charge = SPRINT_MAX_CHARGE;
         }
 
         // stop showing charge on hud
@@ -486,19 +507,31 @@ void think_ability_superspeed(edict_t *ent) {
         //eat cubes if the player isn't blessed
         if (slot == NULL) {
             // if we are not morphed, then just use cubes
-            if (ent->mtype != MORPH_BERSERK)
-                ent->client->pers.inventory[power_cube_index] -= SUPERSPEED_DRAIN_COST;
-            else // berserker can sprint
+            if (ent->mtype != MORPH_BERSERK) {
+                // ent->client->pers.inventory[power_cube_index] -= SUPERSPEED_DRAIN_COST;
+                if (ent->myskills.abilities[SUPER_SPEED].charge >= SUPERSPEED_DRAIN_COST) {
+                    ent->client->charge_index = SUPER_SPEED + 1;
+                    ent->client->charge_time = level.time + 1.0;
+                    ent->myskills.abilities[SUPER_SPEED].charge -= SUPERSPEED_DRAIN_COST;
+                }
+
+            } else // berserker can sprint
             {
                 // if superspeed is upgraded and we have insufficient charge, then use cubes
-                if ((ent->myskills.abilities[SUPER_SPEED].current_level > 0) &&
-                    (ent->myskills.abilities[BERSERK].charge < SPRINT_COST))
-                    ent->client->pers.inventory[power_cube_index] -= SUPERSPEED_DRAIN_COST;
+                if (ent->myskills.abilities[SUPER_SPEED].current_level > 0 &&
+                    ent->myskills.abilities[BERSERK].charge < SPRINT_COST) {
+                    if (ent->myskills.abilities[SUPER_SPEED].charge >= SUPERSPEED_DRAIN_COST) {
+                        ent->client->charge_index = SUPER_SPEED + 1;
+                        ent->client->charge_time = level.time + 1.0;
+                        ent->myskills.abilities[SUPER_SPEED].charge -= SUPERSPEED_DRAIN_COST;
+                    }
                     // otherwise use ability charge
-                else {
-                    ent->client->charge_index = BERSERK + 1;
-                    ent->client->charge_time = level.time + 1.0;
-                    ent->myskills.abilities[BERSERK].charge -= SPRINT_COST;
+                } else {
+                    if (ent->myskills.abilities[BERSERK].charge >= SPRINT_COST) {
+                        ent->client->charge_index = BERSERK + 1;
+                        ent->client->charge_time = level.time + 1.0;
+                        ent->myskills.abilities[BERSERK].charge -= SPRINT_COST;
+                    }
                 }
             }
         }
