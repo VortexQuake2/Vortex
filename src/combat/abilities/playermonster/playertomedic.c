@@ -280,6 +280,7 @@ void p_medic_heal (edict_t *ent)
 
 			if ( ent->client && tr.ent->owner != ent && tr.ent->activator != ent ) {
 				exp = floattoint( (float)tr.ent->max_health / ((float)frames) / 10 );
+				exp *= (1 - INVASION_EXP_SPLIT);
 				vrx_apply_experience(ent, exp);
 				ent->client->resp.wave_assist_exp += exp;
 			}
