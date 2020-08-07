@@ -330,14 +330,13 @@ int vrx_get_kill_base_experience(
         float *dmgmod_out, // if not null, scales by damage% and writes it to this ptr
         int *credits
 ) {
-    int base_exp;
+    int base_exp = 0;
     int exp_points = 0;
     int break_points = 0;
     float level_diff = 0;
     float miniboss_bonus = 0;
     float bonus = 1;
     float dmgmod = 1;
-    float damage;
 
     // sanity check
     if (!attacker || !attacker->inuse || !attacker->client)
@@ -357,7 +356,7 @@ int vrx_get_kill_base_experience(
     // apply the damage mod?
     if (dmgmod_out) {
         // calculate damage modifier
-        damage = GetPlayerBossDamage(attacker, targ);
+        float damage = GetPlayerBossDamage(attacker, targ);
         if (damage < 1) {
 
             // az: EVERYONE. I MEAN EVERYONE GETS A BONUS. EVERYONE!!
