@@ -488,7 +488,7 @@ void vrx_inv_award_curse_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
             leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
             exp = vrx_get_kill_base_experience(
                 slot->ent->owner, targ, targetclient, 
-                leveldiff, INVASION_ASSIST_EXP_PERCENT * mult, NULL, &credits);
+                leveldiff, (1 - INVASION_EXP_SPLIT) * INVASION_ASSIST_EXP_PERCENT * mult, NULL, &credits);
             vrx_apply_experience(slot->ent->owner, exp);
             vrx_add_credits(slot->ent->owner, credits);
             slot->ent->owner->client->resp.wave_assist_exp += exp;
@@ -516,7 +516,7 @@ void vrx_inv_award_cooldown_exp( edict_t *attacker, edict_t *targ, edict_t *targ
             leveldiff = vrx_get_level_difference_multiplier(owner, targ, targetclient);
             exp = vrx_get_kill_base_experience(
                 owner, targ, targetclient, 
-                leveldiff, INVASION_ASSIST_EXP_PERCENT * mult, NULL, &credits);
+                leveldiff, (1 - INVASION_EXP_SPLIT) * INVASION_ASSIST_EXP_PERCENT * mult, NULL, &credits);
             vrx_apply_experience(owner, exp);
             vrx_add_credits(owner, credits);
             owner->client->resp.wave_assist_exp += exp;
@@ -549,7 +549,7 @@ void vrx_inv_award_totem_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
             leveldiff = vrx_get_level_difference_multiplier(totem->activator, targ, targetclient);
             exp = vrx_get_kill_base_experience(
                 totem->activator, targ, targetclient, 
-                leveldiff, INVASION_ASSIST_EXP_PERCENT * mult, NULL, &credits);
+                leveldiff, (1 - INVASION_EXP_SPLIT) * INVASION_ASSIST_EXP_PERCENT * mult, NULL, &credits);
             vrx_apply_experience(totem->activator, exp);
             vrx_add_credits(totem->activator, credits);
             totem->activator->client->resp.wave_assist_exp += exp;
