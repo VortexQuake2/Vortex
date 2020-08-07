@@ -358,8 +358,15 @@ int vrx_get_kill_base_experience(
     if (dmgmod_out) {
         // calculate damage modifier
         damage = GetPlayerBossDamage(attacker, targ);
-        if (damage < 1)
+        if (damage < 1) {
+
+            // az: EVERYONE. I MEAN EVERYONE GETS A BONUS. EVERYONE!!
+            if (vrx_is_newbie_basher(targ)) {
+                return EXP_MINIBOSS * vrx_pointmult->value * vrx_pvppointmult->value;
+            }
+
             return 0;
+        }
 
         dmgmod = damage / GetTotalBossDamage(targ);
 
