@@ -684,7 +684,12 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	saved = level.r_monsters;//4.5
 	memset (&level, 0, sizeof(level));
 	memset (g_edicts, 0, game.maxentities * sizeof (g_edicts[0]));
-	V_VoteReset(); // az
+
+	// az begin
+	V_VoteReset();
+	cs_reset();
+	// az end
+
 	g_freeEdictsH = g_freeEdictsT = NULL;
 
 	strncpy (level.mapname, mapname, sizeof(level.mapname)-1);

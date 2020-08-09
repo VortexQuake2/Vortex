@@ -268,6 +268,8 @@ game_export_t *GetGameAPI(game_import_t *import)
 
 	globals.edict_size = sizeof(edict_t);
 
+	cs_override_init(); // az: fuck gi.soundindex
+
 	return &globals;
 }
 

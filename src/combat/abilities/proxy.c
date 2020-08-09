@@ -21,7 +21,7 @@ void proxy_remove (edict_t *self, qboolean print)
 
 		if (print)
 			safe_cprintf(self->creator, PRINT_HIGH, "%d/%d proxy grenades remaining.\n",
-				self->creator->num_proxy, PROXY_MAX_COUNT);
+				self->creator->num_proxy, (int)PROXY_MAX_COUNT);
 	}
 }
 
@@ -237,7 +237,7 @@ void SpawnProxyGrenade (edict_t *self, int cost, float skill_mult, float delay_m
 	self->client->ability_delay = level.time + PROXY_BUILD_TIME * delay_mult;
 
 	safe_cprintf(self, PRINT_HIGH, "Proxy grenade built (%d/%d).\n", 
-		self->num_proxy, PROXY_MAX_COUNT);
+		self->num_proxy, (int)PROXY_MAX_COUNT);
 }
 
 void RemoveProxyGrenades (edict_t *ent)
@@ -265,7 +265,7 @@ void Cmd_BuildProxyGrenade (edict_t *ent)
 	if (Q_strcasecmp (gi.args(), "count") == 0)
 	{
 		safe_cprintf(ent, PRINT_HIGH, "You have %d/%d proxy grenades.\n",
-			ent->num_proxy, PROXY_MAX_COUNT);
+			ent->num_proxy, (int)PROXY_MAX_COUNT);
 		return;
 	}
 
@@ -297,7 +297,7 @@ void Cmd_BuildProxyGrenade (edict_t *ent)
 	if (!G_CanUseAbilities(ent, ent->myskills.abilities[PROXY].current_level, cost))
 		return;
 
-	if (ent->num_proxy >= PROXY_MAX_COUNT)
+	if (ent->num_proxy >= (int)PROXY_MAX_COUNT)
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Can't build any more proxy grenades.\n");
 		return;

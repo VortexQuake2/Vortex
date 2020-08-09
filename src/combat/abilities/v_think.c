@@ -373,7 +373,7 @@ float V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse) {// assault 
     //K03 Begin
 	qboolean hook = (ent->client->hook_state == HOOK_ON) && (VectorLength(ent->velocity) < 10);
 	
-	if (hook || vel_modification != 1) {
+	if (hook/* || vel_modification != 1*/) {
         ent->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
     } else {
         ent->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;

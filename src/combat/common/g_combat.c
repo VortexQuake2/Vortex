@@ -709,8 +709,8 @@ void G_ApplyVampire(edict_t *attacker, float take)
 	temp = 0.075*attacker->myskills.abilities[VAMPIRE].current_level;
 
 	// brains and mutants with morph mastery use vamp
-	if (attacker->mtype)
-		temp = 0.25;
+	if (attacker->mtype == MORPH_BRAIN || attacker->mtype == MORPH_MUTANT)
+		temp += 0.25;
 
 	steal = (int)floor(0.5 + take*temp); // steal health
 	armorVampBase = steal; // save this value for armor vamp

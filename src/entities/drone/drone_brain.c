@@ -697,6 +697,7 @@ void mybrain_dead (edict_t *self)
 	self->svflags |= SVF_DEADMONSTER;
 	self->nextthink = 0;
 	gi.linkentity (self);
+	M_PrepBodyRemoval(self);
 }
 
 void mybrain_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)

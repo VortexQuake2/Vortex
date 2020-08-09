@@ -122,11 +122,12 @@ void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
             cacodemon_attack(ent);
         } else {
             frame = ent->s.frame;
-            if (((random() <= 0.5) && (frame == CACODEMON_FRAME_IDLE_END))
+            // az: hi decino
+            /*if (((random() <= 0.5) && (frame == CACODEMON_FRAME_IDLE_END))
                 || ((frame >= CACODEMON_FRAME_BLINK_START) && (frame < CACODEMON_FRAME_BLINK_END)))
                 // run blink frames
                 G_RunFrames(ent, CACODEMON_FRAME_BLINK_START, CACODEMON_FRAME_BLINK_END, false);
-            else
+            else*/ 
                 // run idle frames
                 G_RunFrames(ent, CACODEMON_FRAME_IDLE_START, CACODEMON_FRAME_IDLE_END, false);
         }

@@ -78,7 +78,7 @@ void ThrowCaltrops (edict_t *self, vec3_t start, vec3_t forward, int slevel, flo
 	self->client->ability_delay = level.time + CALTROPS_DELAY;
 	self->num_caltrops++;
 
-	safe_cprintf(self, PRINT_HIGH, "Caltrops deployed: %d/%d\n", self->num_caltrops, CALTROPS_MAX_COUNT);
+	safe_cprintf(self, PRINT_HIGH, "Caltrops deployed: %d/%d\n", self->num_caltrops, (int)CALTROPS_MAX_COUNT);
 
 	//  entity made a sound, used to alert monsters
 	self->lastsound = level.framenum;
@@ -98,9 +98,9 @@ void Cmd_Caltrops_f (edict_t *ent)
 	if (!V_CanUseAbilities(ent, CALTROPS, CALTROPS_COST, true))
 		return;
 
-	if (ent->num_caltrops >= CALTROPS_MAX_COUNT)
+	if (ent->num_caltrops >= (int)CALTROPS_MAX_COUNT)
 	{
-		safe_cprintf(ent, PRINT_HIGH, "You've reached the maximum number of caltrops (%d).\n", CALTROPS_MAX_COUNT);
+		safe_cprintf(ent, PRINT_HIGH, "You've reached the maximum number of caltrops (%d).\n", (int)CALTROPS_MAX_COUNT);
 		return;
 	}
 

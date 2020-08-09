@@ -27,7 +27,7 @@ LASER_COST                               = 25
 LASER_CUTDAMAGE                          = 15
 MAX_LASERS                               = 6
 LASER_SPAWN                              = 3
-SUPERSPEED_DRAIN_COST                    = 4
+SUPERSPEED_DRAIN_COST                    = 2
 RESPAWN_INVIN_TIME                       = 20
 
 -- Antigravity
@@ -637,13 +637,13 @@ BERSERK_REGEN_DELAY                      = 10
 FLYER_IMPACT_VELOCITY                    = 350
 FLYER_IMPACT_DAMAGE                      = 50
 FLYER_HB_REFIRE_FRAMES                   = 3
-FLYER_HB_INITIAL_DMG                     = 35
-FLYER_HB_ADDON_DMG                       = 4
+FLYER_HB_INITIAL_DMG                     = 40
+FLYER_HB_ADDON_DMG                       = 5
 FLYER_HB_SPEED                           = 2000
 FLYER_INIT_COST                          = 50
 FLYER_REGEN_FRAMES                       = 300
 FLYER_REGEN_DELAY                        = 5
-FLYER_ROCKET_PREFIRE_FRAMES              = 30
+FLYER_ROCKET_PREFIRE_FRAMES              = 15
 FLYER_ROCKET_INITIAL_DMG                 = 100
 FLYER_ROCKET_ADDON_DMG                   = 20
 FLYER_ROCKET_SPEED                       = 650

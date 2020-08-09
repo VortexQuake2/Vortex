@@ -578,12 +578,7 @@ void CTF_AwardPlayer (edict_t *ent, int points, int credits)
 	if (vrx_get_alive_players() < CTF_MINIMUM_PLAYERS)
 		return;
 
-    /*
-    ent->myskills.experience += points;
-    ent->client->resp.score += points;
-    vrx_check_for_levelup(ent);
-    */
-	ent->myskills.credits += credits;
+   	vrx_add_credits(ent, credits);
 	vrx_apply_experience(ent, points);
 
 }

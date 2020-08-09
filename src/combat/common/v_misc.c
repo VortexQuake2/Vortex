@@ -117,8 +117,9 @@ int AveragePlayerLevel(void) {
     if (average < 1)
         average = 1;
 
-    if (debuginfo->value)
+    /* if (debuginfo->value)
         gi.dprintf("DEBUG: Average player level %d\n", average);
+        */
     return average;
 }
 

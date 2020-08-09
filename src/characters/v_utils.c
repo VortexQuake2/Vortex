@@ -1587,13 +1587,13 @@ void V_ModifyMorphedHealth(edict_t *ent, int type, qboolean morph) {
             break;
         case MORPH_CACODEMON:
             mult = 1 + 0.055 * ent->myskills.abilities[CACODEMON].current_level;
-            if (mult > 1.75)
-                mult = 1.75;
+            if (mult > 1.5)
+                mult = 1.5;
             break;
         case MORPH_MEDIC:
             mult = 1 + 0.1 * ent->myskills.abilities[MEDIC].current_level;
-            if (mult > 2.2)
-                mult = 2.2;
+            if (mult > 1.5)
+                mult = 1.5;
             break;
         case M_MYPARASITE:
             mult = 1 + 0.05 * ent->myskills.abilities[BLOOD_SUCKER].current_level;
@@ -2121,11 +2121,6 @@ void V_ShellNonAbilityEffects(edict_t *ent) {
     edict_t *cl_ent = G_GetClient(ent);
 
     // ********** NON-ENTITY SPECIFIC EFFECTS BELOW **********
-    if (ent->myskills.streak >= 6) {
-        ent->s.effects |= EF_COLOR_SHELL;
-        ent->s.renderfx |= (RF_SHELL_GREEN);
-    }
-
     // drones flash briefly when selected for orders
     if ((ent->monsterinfo.selected_time > level.time) && (sf2qf(level.framenum) & 6)) {
         ent->s.effects |= EF_COLOR_SHELL;
@@ -2133,6 +2128,7 @@ void V_ShellNonAbilityEffects(edict_t *ent) {
         return;// stop processing effects
     }
 
+    
     // spree war
     if (SPREE_WAR == true) {
         // spree dude and his summons glow white
@@ -2152,6 +2148,23 @@ void V_ShellNonAbilityEffects(edict_t *ent) {
 
     // these effects apply to players and player-spawned monsters
     if (cl_ent) {
+        // if we have an aura or we are morphed/monster, apply a shell in CTF.
+        if (que_typeexists(ent->auras, 0) || ent->mtype || !ent->client || PM_PlayerHasMonster(ent)) {
+            if (ctf->value || pvm->value) {
+                ent->s.effects |= EF_COLOR_SHELL;
+                // red team shell
+                if (cl_ent->teamnum == RED_TEAM)
+                    ent->s.renderfx |= RF_SHELL_RED;
+                    // default blue shell (blue team and PvM aura or morphed/monster)
+                else {
+                    if (!V_IsPVP())
+                        ent->s.renderfx |= RF_SHELL_BLUE;
+                }
+            }
+        }
+
+
+
         // CTF/Domination/PtR/PvM mode effects
         if (ctf->value || domination->value || ptr->value || pvm->value || hw->value || tbi->value) {
             // flag effects for clients
@@ -2189,33 +2202,14 @@ void V_ShellNonAbilityEffects(edict_t *ent) {
                     ent->s.renderfx |= RF_SHELL_YELLOW;
                     ent->s.effects |= EF_COLOR_SHELL;
                 }
-                /*
-                if (hw->value && !ent->client->pers.inventory[ITEM_INDEX(FindItem("Halo"))])
-                {
-                ent->s.effects |= EF_SPHERETRANS;
-                }*/
             }
-
-            // if we have an aura or we are morphed/monster, ALWAYS apply a shell
-            if (que_typeexists(ent->auras, 0) || ent->mtype || !ent->client || PM_PlayerHasMonster(ent)) {
-                ent->s.effects |= EF_COLOR_SHELL;
-                // red team shell
-                if (cl_ent->teamnum == RED_TEAM)
-                    ent->s.renderfx |= RF_SHELL_RED;
-                    // default blue shell (blue team and PvM aura or morphed/monster)
-                else {
-                    if (!V_IsPVP())
-                        ent->s.renderfx |= RF_SHELL_BLUE;
-                }
-            }
+            /*
+            if (hw->value && !ent->client->pers.inventory[ITEM_INDEX(FindItem("Halo"))])
+            {
+            ent->s.effects |= EF_SPHERETRANS;
+            }*/            
         }
 
-        if (finalEffects)
-            return; // stop processing effects
-    }
-
-    // ********** CLIENT-SPECIFIC EFFECTS BELOW **********
-    if (ent->client) {
         // these effects only apply to FFA/PvP modes
         if (!ptr->value && !domination->value && !pvm->value && !ctf->value) {
             // boss/miniboss
@@ -2223,14 +2217,15 @@ void V_ShellNonAbilityEffects(edict_t *ent) {
                 ent->s.effects |= EF_COLOR_SHELL;
                 ent->s.renderfx |= (RF_SHELL_YELLOW);
             }
-                // spree effect
+            // spree effect
             else if (ent->myskills.streak >= 6) {
                 ent->s.effects |= EF_COLOR_SHELL;
                 ent->s.renderfx |= (RF_SHELL_GREEN);
             }
         }
 
-        return;// stop processing effects
+        if (finalEffects)
+            return; // stop processing effects
     }
 
     // ********** NON-CLIENT SPECIFIC EFFECTS BELOW **********

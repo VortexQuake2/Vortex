@@ -694,6 +694,11 @@ void SellMenu_handler (edict_t *ent, int option)
 		OpenSellMenu(ent, option);
 		return;
 	}
+
+	if (option - 1 < 3) { // az: equipped slot?
+		gi.cprintf(ent, PRINT_HIGH, "You can't sell an equipped rune.\n");
+		return;
+	}
 	
 	//We picked an item
 	OpenSellConfirmMenu(ent, option-1);

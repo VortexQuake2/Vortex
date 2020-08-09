@@ -266,6 +266,12 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
         if (!attacker->client && attacker->mtype && PM_MonsterHasPilot(attacker)) {
             damage = vrx_apply_strength_tech(attacker, damage);
             damage = vrx_apply_morph_talent_damage(targ, attacker, damage);
+
+            // az: apply cocoon bonus acquired unmorphed. 
+            edict_t *dclient = PM_GetPlayer(attacker);
+            if (dclient->cocoon_time > level.time && 
+                attacker->cocoon_time < level.time /* don't let it stack */)
+                damage *= dclient->cocoon_factor;
         }
 
         // targets cursed with "amp damage" take additional damage
@@ -644,7 +650,7 @@ void vrx_apply_pack_animal(const edict_t *targ, float temp, float *Resistance) {
     (*Resistance) = min((*Resistance), 1 / temp);
 }
 
-float vrx_apply_cocoon_bonus(const edict_t *targ, float Resistance) {
+float vrx_apply_cocoon_defense_bonus(const edict_t *targ, float Resistance) {
     float cocoon_time = targ->cocoon_time;
     float cocoon_factor = targ->cocoon_factor;
     edict_t* dclient = PM_GetPlayer(targ);
@@ -842,7 +848,7 @@ float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float da
     Resistance = vrx_apply_resistance_tech(targ, Resistance);
 
     // cocoon bonus
-    Resistance = vrx_apply_cocoon_bonus(targ, Resistance);
+    Resistance = vrx_apply_cocoon_defense_bonus(targ, Resistance);
 
     // morphed players
     vrx_apply_morph_modifiers(targ, attacker, &Resistance);
