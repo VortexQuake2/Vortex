@@ -56,7 +56,7 @@ int gi_soundindex_override(char* str) {
     // az: well at this point quake 2 would crash so let's do this lru thing.
     if (i == MAX_SOUNDS) {
         uint64_t min_value = UINT64_MAX;
-        int      min_index = INT_MAX;
+        int      min_index = INT8_MAX;
 
         // find the least recently used (smallest my_snd_used_index value)
         for (i = 1; i < MAX_SOUNDS; i++) {
