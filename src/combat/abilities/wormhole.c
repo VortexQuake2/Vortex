@@ -226,6 +226,7 @@ void Cmd_WormHole_f (edict_t *ent)
 
 	if (ent->myskills.streak >= SPREE_WARS_START) {
 		gi.cprintf(ent, PRINT_HIGH, "You can't wormhole during a spree war.\n");
+		return;
 	}
 
 	SpawnWormhole(ent, 1);
