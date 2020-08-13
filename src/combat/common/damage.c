@@ -564,7 +564,7 @@ void vrx_apply_resistance(const edict_t *targ, float *Resistance) {
         //Talent: Improved Strength
         talentLevel = vrx_get_talent_level(targ, TALENT_IMP_STRENGTH);
         if (talentLevel > 0)
-            temp -= talentLevel * 0.02;
+            temp -= talentLevel * IMP_STRENGTH_BONUS;
 
         // don't allow more than 100% damage
         if (temp < 1.0)

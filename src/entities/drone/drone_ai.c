@@ -74,6 +74,12 @@ void ai_eval_targets() {
 	}
 }
 
+qboolean vrx_in_target_list(edict_t *ent) {
+	if (ent->monsterinfo.target_index >= 0 && ent->monsterinfo.target_index < potential_target_count) {
+		return potential_targets[ent->monsterinfo.target_index] == ent;
+	}
+}
+
 // az: findclosestradius_monmask except ents are only validated once.
 // so it only does the checks that are specific to the current monster.
 edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t* self, float rad)

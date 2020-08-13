@@ -380,7 +380,7 @@ float V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse) {// assault 
     }
 	//K03 End
 
-    return sqrt(vel_modification);
+    return vel_modification;
 }
 
 void think_recharge_abilities(edict_t *ent) {

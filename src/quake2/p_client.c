@@ -2745,13 +2745,16 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		
 		pm.s = client->ps.pmove;
 
+		// az: apply slowdowns
+		if (velocity_mod < 1) {
+		    ucmd->forwardmove *= velocity_mod;
+		    ucmd->sidemove *= velocity_mod;
+		}
+
 		for (i=0 ; i<3 ; i++)
 		{
 			pm.s.origin[i] = ent->s.origin[i]*8;
-			if (i != 2 && velocity_mod < 1)
-				pm.s.velocity[i] = ent->velocity[i] * 8 * velocity_mod;
-			else
-				pm.s.velocity[i] = ent->velocity[i] * 8;
+            pm.s.velocity[i] = ent->velocity[i] * 8;
 		}
 
 		if (memcmp(&client->old_pmove, &pm.s, sizeof(pm.s)))
@@ -2771,19 +2774,18 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		// we don't wan't to compound on the existing velocity
 		// thus we undo the change in velocity right after...
 		if (velocity_mod > 1) {
+		    float oldZpos, oldZspeed;
+		    oldZpos = pm.s.origin[2];
+		    oldZspeed = pm.s.velocity[2];
+
 			pm.s.velocity[0] += ent->velocity[0] * 8 * (velocity_mod - 1);
             pm.s.velocity[1] += ent->velocity[1] * 8 * (velocity_mod - 1);
 			gi.Pmove(&pm);
 			pm.s.velocity[0] -= ent->velocity[0] * 8 * (velocity_mod - 1);
             pm.s.velocity[1] -= ent->velocity[1] * 8 * (velocity_mod - 1);
-		} else if (velocity_mod < 1) {
-			/* 
-				pm.s.velocity[0] -= ent->velocity[0] * 8 * (1 - velocity_mod);
-				pm.s.velocity[1] -= ent->velocity[1] * 8 * (1 - velocity_mod);
-				gi.Pmove(&pm);
-				pm.s.velocity[0] += ent->velocity[0] * 8 * (1 - velocity_mod);
-				pm.s.velocity[1] += ent->velocity[1] * 8 * (1 - velocity_mod);
-			*/ 
+
+            pm.s.origin[2] = oldZpos;
+            pm.s.velocity[2] = oldZspeed;
 		}
 
 // GHz START
@@ -2792,6 +2794,8 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		if (ent->mtype)
 			pm.viewheight = viewheight;
 //GHz END
+
+
 
 		// save results of pmove
 		client->ps.pmove = pm.s;

@@ -1045,7 +1045,8 @@ edict_t *findradius(const edict_t *from, vec3_t const org, float rad);
 edict_t *findclosestreticle (edict_t *prev_ed, edict_t *ent, float rad);
 edict_t *findreticle (edict_t *from, edict_t *ent, float range, int degrees, qboolean vis);
 edict_t *findclosestradius (edict_t *prev_ed, vec3_t org, float rad);//GHz
-edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t* self, float radius); // az
+
+
 edict_t *findclosestradius1 (edict_t *prev_ed, vec3_t org, float rad);//GHz
 edict_t *G_FindEntityByMtype (int mtype, edict_t *from);//GHz
 float Get2dDistance (vec3_t v1, vec3_t v2);//GHz
@@ -1262,7 +1263,6 @@ void vrx_remove_player_summonables(edict_t *self);//GHz
 //
 void AI_SetSightClient (void);
 
-void ai_eval_targets(); // az
 void ai_stand (edict_t *self, float dist);
 void ai_move (edict_t *self, float dist);
 void ai_walk (edict_t *self, float dist);
@@ -1284,6 +1284,12 @@ void drone_ai_stand (edict_t *self, float dist);
 void drone_ai_run (edict_t *self, float dist);
 void drone_ai_run1 (edict_t *self, float dist);
 void drone_ai_walk (edict_t *self, float dist);
+
+// az begin
+void ai_eval_targets();
+edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t* self, float radius);
+qboolean vrx_is_in_target_list(edict_t *ent);
+// az end
 
 //
 // g_weapon.c

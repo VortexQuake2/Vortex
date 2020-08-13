@@ -856,7 +856,8 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	}
 
 	// lower resist curse
-	if ((slot = que_findtype(targ->curses, NULL, LOWER_RESIST)) != NULL)
+	// az: "mod != MOD_CRIPPLE" to make lower resist Not Apply here
+	if ((slot = que_findtype(targ->curses, NULL, LOWER_RESIST)) != NULL && mod != MOD_CRIPPLE)
 	{
 		float lowerResistFactor = LOWER_RESIST_INITIAL_FACTOR + LOWER_RESIST_ADDON_FACTOR * slot->ent->owner->myskills.abilities[LOWER_RESIST].current_level;
 		float resistFactor = (startDamage - damage) / startDamage;
