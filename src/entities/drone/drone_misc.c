@@ -751,9 +751,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	{
 		//Talent: Corpulence (also in M_Initialize)
         talentLevel = vrx_get_talent_level(ent, TALENT_CORPULENCE);
-        talentLevel2 = vrx_get_talent_level(ent, TALENT_LIFE_TAP);
 		if(talentLevel > 0)	mult +=	0.1 * talentLevel;	//+40% per upgrade
-		if(talentLevel2 > 0) mult += 0.2 * talentLevel2; //+20%
 
 		if (pvm->value)
 		    mult += 0.3; // base mult for player monsters in pvm
