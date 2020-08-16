@@ -1716,6 +1716,11 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 	}
 //GHz END
 
+    if (SV_IpSilenced(ent->client->pers.current_ip)) {
+        safe_cprintf(ent, PRINT_HIGH, "You're banned from the in-game chat.\n");
+        return;
+    }
+
 	if (flood_msgs->value) {
 		cl = ent->client;
         if (level.time < cl->flood_locktill) {
@@ -1760,6 +1765,11 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 				continue;
 		}
 		if (other->svflags & SVF_MONSTER) continue;
+
+		if (SV_IpSilenced(other->client->pers.current_ip)) {
+            continue;
+		}
+
 		//Archer (PlayerMute start)
 		for (k = 0; k < game.maxclients; k++)
 		{

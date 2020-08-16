@@ -1349,6 +1349,7 @@ void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 //
 void	ServerCommand (void);
 qboolean SV_FilterPacket (char *from);
+qboolean SV_IpSilenced (char* from); // az
 
 // m_move.c
 //
@@ -1620,7 +1621,7 @@ struct gclient_s
 	int             cloakdrain;
 
 	qboolean		boosted;		//Talent: Leap Attack - true if player used boost and is still airbourne
-	float healthregen_timee; //lepe
+
 	float healthregen_time;
 	float armorregen_time;
 

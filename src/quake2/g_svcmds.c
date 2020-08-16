@@ -43,8 +43,9 @@ If 0, then only addresses matching the list will be allowed.  This lets you easi
 
 typedef struct
 {
-	unsigned	mask;
-	unsigned	compare;
+    unsigned	mask;
+    unsigned	compare;
+    qboolean    silence_only; // az: if this is a ban from the in-game chat system.
 } ipfilter_t;
 
 #define	MAX_IPFILTERS	1024
@@ -59,78 +60,107 @@ StringToFilter
 */
 static qboolean StringToFilter (char *s, ipfilter_t *f)
 {
-	char	num[128];
-	int		i, j;
-	byte	b[4];
-	byte	m[4];
-	
-	for (i=0 ; i<4 ; i++)
-	{
-		b[i] = 0;
-		m[i] = 0;
-	}
-	
-	for (i=0 ; i<4 ; i++)
-	{
-		if (*s < '0' || *s > '9')
-		{
-			safe_cprintf(NULL, PRINT_HIGH, "Bad filter address: %s\n", s);
-			return false;
-		}
-		
-		j = 0;
-		while (*s >= '0' && *s <= '9')
-		{
-			num[j++] = *s++;
-		}
-		num[j] = 0;
-		b[i] = atoi(num);
-		if (b[i] != 0)
-			m[i] = 255;
+    char	num[128];
+    int		i, j;
+    byte	b[4];
+    byte	m[4];
 
-		if (!*s)
-			break;
-		s++;
-	}
-	
-	f->mask = *(unsigned *)m;
-	f->compare = *(unsigned *)b;
-	
-	return true;
+    for (i=0 ; i<4 ; i++)
+    {
+        b[i] = 0;
+        m[i] = 0;
+    }
+
+    for (i=0 ; i<4 ; i++)
+    {
+        if (*s < '0' || *s > '9')
+        {
+            safe_cprintf(NULL, PRINT_HIGH, "Bad filter address: %s\n", s);
+            return false;
+        }
+
+        j = 0;
+        while (*s >= '0' && *s <= '9')
+        {
+            num[j++] = *s++;
+        }
+        num[j] = 0;
+        b[i] = atoi(num);
+        if (b[i] != 0)
+            m[i] = 255;
+
+        if (!*s)
+            break;
+        s++;
+    }
+
+    f->mask = *(unsigned *)m;
+    f->compare = *(unsigned *)b;
+
+    return true;
 }
 
 /*
 =================
 SV_FilterPacket
+
+ az: enhanced to support ip silencing instead of banning.
 =================
 */
+qboolean SV_FilterPacket_GetIndex (char *from, ipfilter_t **entry)
+{
+    int		i;
+    unsigned	in;
+    byte m[4];
+    char *p;
+
+    if (entry)
+        (*entry) = NULL;
+
+    i = 0;
+    p = from;
+    while (*p && i < 4) {
+        m[i] = 0;
+        while (*p >= '0' && *p <= '9') {
+            m[i] = m[i]*10 + (*p - '0');
+            p++;
+        }
+        if (!*p || *p == ':')
+            break;
+        i++, p++;
+    }
+
+    in = *(unsigned *)m;
+
+    for (i=0 ; i<numipfilters ; i++)
+        if ( (in & ipfilters[i].mask) == ipfilters[i].compare) {
+
+            if (entry)
+                (*entry) = &ipfilters[i];
+
+            return (int) filterban->value;
+        }
+
+    return (int)!filterban->value;
+}
+
 qboolean SV_FilterPacket (char *from)
 {
-	int		i;
-	unsigned	in;
-	byte m[4];
-	char *p;
+    ipfilter_t *filter = NULL;
+    if(SV_FilterPacket_GetIndex(from, &filter))
+        return !filter->silence_only;
+    return false;
+}
 
-	i = 0;
-	p = from;
-	while (*p && i < 4) {
-		m[i] = 0;
-		while (*p >= '0' && *p <= '9') {
-			m[i] = m[i]*10 + (*p - '0');
-			p++;
-		}
-		if (!*p || *p == ':')
-			break;
-		i++, p++;
-	}
-	
-	in = *(unsigned *)m;
+qboolean SV_IpSilenced(char *from)
+{
+    ipfilter_t *filter;
+    SV_FilterPacket_GetIndex(from, &filter);
 
-	for (i=0 ; i<numipfilters ; i++)
-		if ( (in & ipfilters[i].mask) == ipfilters[i].compare)
-			return (int)filterban->value;
+    if (filter && filter->silence_only)
+        return true;
 
-	return (int)!filterban->value;
+    return false;
 }
 
 
@@ -141,28 +171,36 @@ SV_AddIP_f
 */
 void SVCmd_AddIP_f (void)
 {
-	int		i;
-	
-	if (gi.argc() < 3) {
-		safe_cprintf(NULL, PRINT_HIGH, "Usage:  addip <ip-mask>\n");
-		return;
-	}
+    int		i;
 
-	for (i=0 ; i<numipfilters ; i++)
-		if (ipfilters[i].compare == 0xffffffff)
-			break;		// free spot
-	if (i == numipfilters)
-	{
-		if (numipfilters == MAX_IPFILTERS)
-		{
-			safe_cprintf (NULL, PRINT_HIGH, "IP filter list is full\n");
-			return;
-		}
-		numipfilters++;
-	}
-	
-	if (!StringToFilter (gi.argv(2), &ipfilters[i]))
-		ipfilters[i].compare = 0xffffffff;
+    if (gi.argc() < 3) {
+        safe_cprintf(NULL, PRINT_HIGH, "Usage:  addip <ip-mask> [silence]\n");
+        return;
+    }
+
+    for (i=0 ; i<numipfilters ; i++)
+        if (ipfilters[i].compare == 0xffffffff)
+            break;		// free spot
+    if (i == numipfilters)
+    {
+        if (numipfilters == MAX_IPFILTERS)
+        {
+            safe_cprintf (NULL, PRINT_HIGH, "IP filter list is full\n");
+            return;
+        }
+        numipfilters++;
+    }
+
+    if (!StringToFilter (gi.argv(2), &ipfilters[i]))
+        ipfilters[i].compare = 0xffffffff;
+    else {
+        // az: is this a full ban or a chat ban?
+        if (gi.argc() >= 4 && strcmp(gi.argv(3), "silence") == 0) {
+            ipfilters[i].silence_only = true;
+        } else {
+            ipfilters[i].silence_only = false;
+        }
+    }
 }
 
 /*
@@ -172,28 +210,28 @@ SV_RemoveIP_f
 */
 void SVCmd_RemoveIP_f (void)
 {
-	ipfilter_t	f;
-	int			i, j;
+    ipfilter_t	f;
+    int			i, j;
 
-	if (gi.argc() < 3) {
-		safe_cprintf(NULL, PRINT_HIGH, "Usage:  sv removeip <ip-mask>\n");
-		return;
-	}
+    if (gi.argc() < 3) {
+        safe_cprintf(NULL, PRINT_HIGH, "Usage:  sv removeip <ip-mask>\n");
+        return;
+    }
 
-	if (!StringToFilter (gi.argv(2), &f))
-		return;
+    if (!StringToFilter (gi.argv(2), &f))
+        return;
 
-	for (i=0 ; i<numipfilters ; i++)
-		if (ipfilters[i].mask == f.mask
-		&& ipfilters[i].compare == f.compare)
-		{
-			for (j=i+1 ; j<numipfilters ; j++)
-				ipfilters[j-1] = ipfilters[j];
-			numipfilters--;
-			safe_cprintf (NULL, PRINT_HIGH, "Removed.\n");
-			return;
-		}
-	safe_cprintf (NULL, PRINT_HIGH, "Didn't find %s.\n", gi.argv(2));
+    for (i=0 ; i<numipfilters ; i++)
+        if (ipfilters[i].mask == f.mask
+            && ipfilters[i].compare == f.compare)
+        {
+            for (j=i+1 ; j<numipfilters ; j++)
+                ipfilters[j-1] = ipfilters[j];
+            numipfilters--;
+            safe_cprintf (NULL, PRINT_HIGH, "Removed.\n");
+            return;
+        }
+    safe_cprintf (NULL, PRINT_HIGH, "Didn't find %s.\n", gi.argv(2));
 }
 
 /*
@@ -203,15 +241,17 @@ SV_ListIP_f
 */
 void SVCmd_ListIP_f (void)
 {
-	int		i;
-	byte	b[4];
+    int		i;
+    byte	b[4];
 
-	safe_cprintf (NULL, PRINT_HIGH, "Filter list:\n");
-	for (i=0 ; i<numipfilters ; i++)
-	{
-		*(unsigned *)b = ipfilters[i].compare;
-		safe_cprintf (NULL, PRINT_HIGH, "%3i.%3i.%3i.%3i\n", b[0], b[1], b[2], b[3]);
-	}
+    safe_cprintf (NULL, PRINT_HIGH, "Filter list:\n");
+    for (i=0 ; i<numipfilters ; i++)
+    {
+        *(unsigned *)b = ipfilters[i].compare;
+        safe_cprintf (NULL, PRINT_HIGH, "%3i.%3i.%3i.%3i%s\n",
+                      b[0], b[1], b[2], b[3],
+                      ipfilters[i].silence_only ? " silenced" : " banned");
+    }
 }
 
 /*
@@ -221,42 +261,44 @@ SV_WriteIP_f
 */
 void SVCmd_WriteIP_f (void)
 {
-	FILE	*f;
-	char	name[MAX_OSPATH];
-	byte	b[4];
-	int		i;
-	cvar_t	*game;
+    FILE	*f;
+    char	name[MAX_OSPATH];
+    byte	b[4];
+    int		i;
+    cvar_t	*game;
 
-	game = gi.cvar("game", "", 0);
+    game = gi.cvar("game", "", 0);
 
-	if (!*game->string)
-		sprintf (name, "%s/listip.cfg", GAMEVERSION);
-	else
-		sprintf (name, "%s/listip.cfg", game->string);
+    if (!*game->string)
+        sprintf (name, "%s/listip.cfg", GAMEVERSION);
+    else
+        sprintf (name, "%s/listip.cfg", game->string);
 
-	safe_cprintf (NULL, PRINT_HIGH, "Writing %s.\n", name);
+    safe_cprintf (NULL, PRINT_HIGH, "Writing %s.\n", name);
 
-	f = fopen (name, "wb");
-	if (!f)
-	{
-		safe_cprintf (NULL, PRINT_HIGH, "Couldn't open %s\n", name);
-		return;
-	}
-	
-	fprintf(f, "set filterban %d\n", (int)filterban->value);
+    f = fopen (name, "wb");
+    if (!f)
+    {
+        safe_cprintf (NULL, PRINT_HIGH, "Couldn't open %s\n", name);
+        return;
+    }
 
-	for (i=0 ; i<numipfilters ; i++)
-	{
-		*(unsigned *)b = ipfilters[i].compare;
-		fprintf (f, "sv addip %i.%i.%i.%i\n", b[0], b[1], b[2], b[3]);
-	}
-	
-	fclose (f);
+    fprintf(f, "set filterban %d\n", (int)filterban->value);
+
+    for (i=0 ; i<numipfilters ; i++)
+    {
+        *(unsigned *)b = ipfilters[i].compare;
+        fprintf (f, "sv addip %i.%i.%i.%i%s\n",
+                 b[0], b[1], b[2], b[3],
+                 ipfilters[i].silence_only ? " silence" : "");
+    }
+
+    fclose (f);
 }
 
 void	Svcmd_Test_f (void)
 {
-	safe_cprintf (NULL, PRINT_HIGH, "Svcmd_Test_f()\n");
+    safe_cprintf (NULL, PRINT_HIGH, "Svcmd_Test_f()\n");
 }
 
 //GHz START
@@ -264,130 +306,130 @@ void	Svcmd_Test_f (void)
 
 void SVCmd_AddExp_f (void)
 {
-	int		points;
-	char	*name;
-	edict_t *e;
+    int		points;
+    char	*name;
+    edict_t *e;
 
-	name = gi.argv(2);
+    name = gi.argv(2);
 
-	if ((e = FindPlayer(name)) != NULL)
-	{
-		points = atoi(gi.argv(3));
+    if ((e = FindPlayer(name)) != NULL)
+    {
+        points = atoi(gi.argv(3));
 
-		if (points < 1)
-		{
-			gi.dprintf("Cannot subtract experience.\n");
-			return;
-		}
+        if (points < 1)
+        {
+            gi.dprintf("Cannot subtract experience.\n");
+            return;
+        }
 
-		e->myskills.experience += points;
-		e->client->resp.score += points;
-		safe_cprintf(NULL, PRINT_HIGH, "Gave %d experience to %s.\n", points, e->client->pers.netname);
+        e->myskills.experience += points;
+        e->client->resp.score += points;
+        safe_cprintf(NULL, PRINT_HIGH, "Gave %d experience to %s.\n", points, e->client->pers.netname);
         vrx_check_for_levelup(e);
         vrx_write_to_logfile(e, va("Experience was modified. (amount = %d)\n", points));
-		return;
-	}
-	
-	safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", name);
+        return;
+    }
+
+    safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", name);
 }
 
 void SVCmd_AddCredits_f (void)
 {
-	int		points;
-	char	*name;
-	edict_t *e;
+    int		points;
+    char	*name;
+    edict_t *e;
 
-	name = gi.argv(2);
+    name = gi.argv(2);
 
-	if ((e = FindPlayer(name)) != NULL)
-	{
-		points = atoi(gi.argv(3));
-		e->myskills.credits += points;
-		safe_cprintf(NULL, PRINT_HIGH, "Gave %d credits to %s.\n", points, e->client->pers.netname);
+    if ((e = FindPlayer(name)) != NULL)
+    {
+        points = atoi(gi.argv(3));
+        e->myskills.credits += points;
+        safe_cprintf(NULL, PRINT_HIGH, "Gave %d credits to %s.\n", points, e->client->pers.netname);
         vrx_write_to_logfile(e, va("Credits were modified. (amount = %d)\n", points));
-		return;
-	}
+        return;
+    }
 
-	safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", name);
+    safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", name);
 }
 
 void SVCmd_MakeAdmin_f (void)
 {
-	int		lvl;
-	char	*name;
-	edict_t *e;
+    int		lvl;
+    char	*name;
+    edict_t *e;
 
-	name = gi.argv(2);
-	lvl = atoi(gi.argv(3));
+    name = gi.argv(2);
+    lvl = atoi(gi.argv(3));
 
-	if ((e = FindPlayer(name)) != NULL)
-	{
-		e->myskills.administrator = lvl;
-		if (lvl < 0)
-			lvl = 0;
-		if (!lvl)
-			safe_cprintf(NULL, PRINT_HIGH, "%s's administrator flag was reset.\n", e->client->pers.netname);
-		else
-			safe_cprintf(NULL, PRINT_HIGH, "%s's admin flag set to level %d.\n", e->client->pers.netname, lvl);
+    if ((e = FindPlayer(name)) != NULL)
+    {
+        e->myskills.administrator = lvl;
+        if (lvl < 0)
+            lvl = 0;
+        if (!lvl)
+            safe_cprintf(NULL, PRINT_HIGH, "%s's administrator flag was reset.\n", e->client->pers.netname);
+        else
+            safe_cprintf(NULL, PRINT_HIGH, "%s's admin flag set to level %d.\n", e->client->pers.netname, lvl);
         vrx_write_to_logfile(e, "Administrator flag was modified.\n");
-		return;
-	}
+        return;
+    }
 
-	safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", name);
+    safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", name);
 }
 
 void SVCmd_AddAbilityPoints_f (void)
 {
-	char	*name;
-	edict_t *e;
+    char	*name;
+    edict_t *e;
 
-	name = gi.argv(2);
+    name = gi.argv(2);
 
-	if ((e = FindPlayer(name)) != NULL)
-	{
-		e->myskills.speciality_points += atoi(gi.argv(3));
-		safe_cprintf(NULL, PRINT_HIGH, "Ability points added.\n");
+    if ((e = FindPlayer(name)) != NULL)
+    {
+        e->myskills.speciality_points += atoi(gi.argv(3));
+        safe_cprintf(NULL, PRINT_HIGH, "Ability points added.\n");
         vrx_write_to_logfile(e, "Ability points were modified.\n");
-		return;
-	}
+        return;
+    }
 
-	safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", name);
+    safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", name);
 }
 
 void SVCmd_AddTalentPoints_f (void)
 {
-	char	*name;
-	edict_t *e;
+    char	*name;
+    edict_t *e;
 
-	name = gi.argv(2);
+    name = gi.argv(2);
 
-	if ((e = FindPlayer(name)) != NULL)
-	{
-		e->myskills.talents.talentPoints += atoi(gi.argv(3));
-		safe_cprintf(NULL, PRINT_HIGH, "Talent points added.\n");
+    if ((e = FindPlayer(name)) != NULL)
+    {
+        e->myskills.talents.talentPoints += atoi(gi.argv(3));
+        safe_cprintf(NULL, PRINT_HIGH, "Talent points added.\n");
         vrx_write_to_logfile(e, "Talent points were modified.\n");
-		return;
-	}
+        return;
+    }
 
-	safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", name);
+    safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", name);
 }
 
 void SVCmd_AddWeaponPoints_f (void)
 {
-	char	*name;
-	edict_t *e;
+    char	*name;
+    edict_t *e;
 
-	name = gi.argv(2);
+    name = gi.argv(2);
 
-	if ((e = FindPlayer(name)) != NULL)
-	{
-		e->myskills.weapon_points += atoi(gi.argv(3));
-		safe_cprintf(NULL, PRINT_HIGH, "Weapon points added.\n");
+    if ((e = FindPlayer(name)) != NULL)
+    {
+        e->myskills.weapon_points += atoi(gi.argv(3));
+        safe_cprintf(NULL, PRINT_HIGH, "Weapon points added.\n");
         vrx_write_to_logfile(e, "Weapon points were modified.\n");
-		return;
-	}
+        return;
+    }
 
-	safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", name);
+    safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", name);
 
 }
 
@@ -395,108 +437,108 @@ int GetLevelValue (edict_t *player);
 
 void SVCmd_Teams_f (void)
 {
-	int		i, lvl, levels;
-	edict_t *cl_ent;
+    int		i, lvl, levels;
+    edict_t *cl_ent;
 
-	if (!ptr->value && !domination->value && !ctf->value)
-		return;
-	if (level.time < pregame_time->value)
-		return;
+    if (!ptr->value && !domination->value && !ctf->value)
+        return;
+    if (level.time < pregame_time->value)
+        return;
 
-	gi.dprintf("Not Assigned:\n");
-	levels = 0;
-	for (i=0 ; i<game.maxclients ; i++) {
-		cl_ent = g_edicts+1+i;
-		if (!cl_ent->inuse)
-			continue;
-		if (G_IsSpectator(cl_ent))
-			continue;
-		if (cl_ent->teamnum != 0)
-			continue;
-		lvl = GetLevelValue(cl_ent);
-		gi.dprintf("%d. %s (%d/%d/%d)\n", i+1, cl_ent->client->pers.netname, cl_ent->myskills.level, cl_ent->myskills.inuse, lvl);
-		levels += lvl;
-	}
-	gi.dprintf("%d levels.\n", levels);
+    gi.dprintf("Not Assigned:\n");
+    levels = 0;
+    for (i=0 ; i<game.maxclients ; i++) {
+        cl_ent = g_edicts+1+i;
+        if (!cl_ent->inuse)
+            continue;
+        if (G_IsSpectator(cl_ent))
+            continue;
+        if (cl_ent->teamnum != 0)
+            continue;
+        lvl = GetLevelValue(cl_ent);
+        gi.dprintf("%d. %s (%d/%d/%d)\n", i+1, cl_ent->client->pers.netname, cl_ent->myskills.level, cl_ent->myskills.inuse, lvl);
+        levels += lvl;
+    }
+    gi.dprintf("%d levels.\n", levels);
 
-	gi.dprintf("Team 1:\n");
-	gi.dprintf("Caps: %d\n", CTF_GetTeamCaps(1));
-	levels = 0;
-	for (i=0 ; i<game.maxclients ; i++) {
-		cl_ent = g_edicts+1+i;
-		if (!cl_ent->inuse)
-			continue;
-		if (G_IsSpectator(cl_ent))
-			continue;
-		if (cl_ent->teamnum != 1)
-			continue;
-		lvl = GetLevelValue(cl_ent);
-		if (cl_ent->solid == SOLID_NOT)
-			gi.dprintf("%d. %s (%d/%d/%d) SPECTATOR\n", i+1, cl_ent->client->pers.netname, cl_ent->myskills.level, cl_ent->myskills.inuse, lvl);
-		else if (cl_ent->deadflag == DEAD_DEAD)
-			gi.dprintf("%d. %s (%d/%d/%d) DEAD\n", i+1, cl_ent->client->pers.netname, cl_ent->myskills.level, cl_ent->myskills.inuse, lvl);
-		else
-			gi.dprintf("%d. %s (%d/%d/%d)\n", i+1, cl_ent->client->pers.netname, cl_ent->myskills.level, cl_ent->myskills.inuse, lvl);
-		levels += lvl;
-	}
-	gi.dprintf("%d levels.\n", levels);
+    gi.dprintf("Team 1:\n");
+    gi.dprintf("Caps: %d\n", CTF_GetTeamCaps(1));
+    levels = 0;
+    for (i=0 ; i<game.maxclients ; i++) {
+        cl_ent = g_edicts+1+i;
+        if (!cl_ent->inuse)
+            continue;
+        if (G_IsSpectator(cl_ent))
+            continue;
+        if (cl_ent->teamnum != 1)
+            continue;
+        lvl = GetLevelValue(cl_ent);
+        if (cl_ent->solid == SOLID_NOT)
+            gi.dprintf("%d. %s (%d/%d/%d) SPECTATOR\n", i+1, cl_ent->client->pers.netname, cl_ent->myskills.level, cl_ent->myskills.inuse, lvl);
+        else if (cl_ent->deadflag == DEAD_DEAD)
+            gi.dprintf("%d. %s (%d/%d/%d) DEAD\n", i+1, cl_ent->client->pers.netname, cl_ent->myskills.level, cl_ent->myskills.inuse, lvl);
+        else
+            gi.dprintf("%d. %s (%d/%d/%d)\n", i+1, cl_ent->client->pers.netname, cl_ent->myskills.level, cl_ent->myskills.inuse, lvl);
+        levels += lvl;
+    }
+    gi.dprintf("%d levels.\n", levels);
 
-	gi.dprintf("Team 2:\n");
-	gi.dprintf("Caps: %d\n", CTF_GetTeamCaps(2));
-	levels = 0;
-	for (i=0 ; i<game.maxclients ; i++) {
-		cl_ent = g_edicts+1+i;
-		if (!cl_ent->inuse)
-			continue;
-		if (G_IsSpectator(cl_ent))
-			continue;
-		if (cl_ent->teamnum != 2)
-			continue;
-		lvl = GetLevelValue(cl_ent);
-		if (cl_ent->solid == SOLID_NOT)
-			gi.dprintf("%d. %s (%d/%d/%d) SPECTATOR\n", i+1, cl_ent->client->pers.netname, cl_ent->myskills.level, cl_ent->myskills.inuse, lvl);
-		else if (cl_ent->deadflag == DEAD_DEAD)
-			gi.dprintf("%d. %s (%d/%d/%d) DEAD\n", i+1, cl_ent->client->pers.netname, cl_ent->myskills.level, cl_ent->myskills.inuse, lvl);
-		else
-			gi.dprintf("%d. %s (%d/%d/%d)\n", i+1, cl_ent->client->pers.netname, cl_ent->myskills.level, cl_ent->myskills.inuse, lvl);
-		levels += lvl;
-	}
-	gi.dprintf("%d levels.\n", levels);
+    gi.dprintf("Team 2:\n");
+    gi.dprintf("Caps: %d\n", CTF_GetTeamCaps(2));
+    levels = 0;
+    for (i=0 ; i<game.maxclients ; i++) {
+        cl_ent = g_edicts+1+i;
+        if (!cl_ent->inuse)
+            continue;
+        if (G_IsSpectator(cl_ent))
+            continue;
+        if (cl_ent->teamnum != 2)
+            continue;
+        lvl = GetLevelValue(cl_ent);
+        if (cl_ent->solid == SOLID_NOT)
+            gi.dprintf("%d. %s (%d/%d/%d) SPECTATOR\n", i+1, cl_ent->client->pers.netname, cl_ent->myskills.level, cl_ent->myskills.inuse, lvl);
+        else if (cl_ent->deadflag == DEAD_DEAD)
+            gi.dprintf("%d. %s (%d/%d/%d) DEAD\n", i+1, cl_ent->client->pers.netname, cl_ent->myskills.level, cl_ent->myskills.inuse, lvl);
+        else
+            gi.dprintf("%d. %s (%d/%d/%d)\n", i+1, cl_ent->client->pers.netname, cl_ent->myskills.level, cl_ent->myskills.inuse, lvl);
+        levels += lvl;
+    }
+    gi.dprintf("%d levels.\n", levels);
 }
 
 void SVCmd_BalanceTeams_f (void)
 {
-	OrganizeTeams(true);
+    OrganizeTeams(true);
 }
 
 void SVCmd_SpawnFlag_f (void)
 {
-	int		i;
-	edict_t	*e, *cl_ent;
+    int		i;
+    edict_t	*e, *cl_ent;
 
-	if (!domination->value)
-		return;
+    if (!domination->value)
+        return;
 
-	DEFENSE_TEAM = 0;
+    DEFENSE_TEAM = 0;
 
-	for (i=0 ; i<game.maxclients ; i++) {
-		cl_ent = g_edicts+1+i;
-		if (!G_EntIsAlive(cl_ent))
-			continue;
-		// remove flag from carrier
-		if (cl_ent->client->pers.inventory[flag_index])
-			cl_ent->client->pers.inventory[flag_index] = 0;
-	}
+    for (i=0 ; i<game.maxclients ; i++) {
+        cl_ent = g_edicts+1+i;
+        if (!G_EntIsAlive(cl_ent))
+            continue;
+        // remove flag from carrier
+        if (cl_ent->client->pers.inventory[flag_index])
+            cl_ent->client->pers.inventory[flag_index] = 0;
+    }
 
-	if ((e = G_Find(NULL, FOFS(classname), "flag")) != NULL)
-		G_FreeEdict(e); // this should cause the flag to auto-respawn
-	else
-		dom_spawnflag();
+    if ((e = G_Find(NULL, FOFS(classname), "flag")) != NULL)
+        G_FreeEdict(e); // this should cause the flag to auto-respawn
+    else
+        dom_spawnflag();
 }
 
 void SVCmd_EntityCount_f (void)
 {
-	PrintNumEntities(true);
+    PrintNumEntities(true);
 }
 
 /*
@@ -543,144 +585,144 @@ void SVCmd_GenerateNodes_f (void)
 */
 void SVCmd_SpawnBoss_f (void)
 {
-	edict_t *e;
-	edict_t *m_worldspawn = NULL;
+    edict_t *e;
+    edict_t *m_worldspawn = NULL;
 
-	// try to locate the world monster spawning entity
-	for (e=g_edicts ; e < &g_edicts[globals.num_edicts]; e++)
-	{
-		if (e && e->inuse && e->mtype == M_WORLDSPAWN)
-		{
-			m_worldspawn = e;
-			break;
-		}
-	}
+    // try to locate the world monster spawning entity
+    for (e=g_edicts ; e < &g_edicts[globals.num_edicts]; e++)
+    {
+        if (e && e->inuse && e->mtype == M_WORLDSPAWN)
+        {
+            m_worldspawn = e;
+            break;
+        }
+    }
 
-	// if we can't find it, use world instead
-	if (!m_worldspawn)
-		m_worldspawn = world;
+    // if we can't find it, use world instead
+    if (!m_worldspawn)
+        m_worldspawn = world;
 
-	if (!strcmp(gi.argv(2), "tank"))
+    if (!strcmp(gi.argv(2), "tank"))
         vrx_create_new_drone(m_worldspawn, 30, true, true);
-	else if (!strcmp(gi.argv(2), "supertank"))
+    else if (!strcmp(gi.argv(2), "supertank"))
         vrx_create_new_drone(m_worldspawn, 31, true, true);
-	else if (!strcmp(gi.argv(2), "jorg"))
+    else if (!strcmp(gi.argv(2), "jorg"))
         vrx_create_new_drone(m_worldspawn, 32, true, true);
-	else
-		safe_cprintf(NULL, PRINT_HIGH, "Invalid boss type. Usage: sv spawnboss <type>\n");
+    else
+        safe_cprintf(NULL, PRINT_HIGH, "Invalid boss type. Usage: sv spawnboss <type>\n");
 }
 
 void SVCmd_MakeBoss_f (void)
 {
-	edict_t *p;
+    edict_t *p;
 
-	if ((p = FindPlayer(gi.argv(2))) != NULL)
-	{
-		if (!strcmp(gi.argv(3), "tank"))
-			boss_spawn_tank(p);
-		else if (!strcmp(gi.argv(3), "makron"))
-			boss_makron_spawn(p);
-		else
-			safe_cprintf(NULL, PRINT_HIGH, "Invalid boss type. Usage: sv makeboss <player> <type>\n");
-		return;
-	}
+    if ((p = FindPlayer(gi.argv(2))) != NULL)
+    {
+        if (!strcmp(gi.argv(3), "tank"))
+            boss_spawn_tank(p);
+        else if (!strcmp(gi.argv(3), "makron"))
+            boss_makron_spawn(p);
+        else
+            safe_cprintf(NULL, PRINT_HIGH, "Invalid boss type. Usage: sv makeboss <player> <type>\n");
+        return;
+    }
 
-	safe_cprintf(NULL, PRINT_HIGH, "Couldn't find %s\n", gi.argv(2));
+    safe_cprintf(NULL, PRINT_HIGH, "Couldn't find %s\n", gi.argv(2));
 }
 
 void SVCmd_ChangeClass_f (void)
 {
-	char	*playername = gi.argv(2);
-	int		newclass = getClassNum(gi.argv(3));
-	edict_t *p;
+    char	*playername = gi.argv(2);
+    int		newclass = getClassNum(gi.argv(3));
+    edict_t *p;
 
-	if ((newclass < 1) || (newclass > CLASS_MAX))
-	{
-		safe_cprintf(NULL, PRINT_HIGH, "Invalid class number: %d\n", newclass);
-		return;
-	}
+    if ((newclass < 1) || (newclass > CLASS_MAX))
+    {
+        safe_cprintf(NULL, PRINT_HIGH, "Invalid class number: %d\n", newclass);
+        return;
+    }
 
-	if ((p = FindPlayer(playername)) != NULL)
-		ChangeClass(p->client->pers.netname, newclass, 1);
-	else
-		safe_cprintf(NULL, PRINT_HIGH, "Couldn't find %s\n", playername);
+    if ((p = FindPlayer(playername)) != NULL)
+        ChangeClass(p->client->pers.netname, newclass, 1);
+    else
+        safe_cprintf(NULL, PRINT_HIGH, "Couldn't find %s\n", playername);
 }
 
 void SVCmd_ExpHole_f()
 {
-	char *pname = gi.argv(2);
-	edict_t *p;
-	int value = atoi(gi.argv(3));
+    char *pname = gi.argv(2);
+    edict_t *p;
+    int value = atoi(gi.argv(3));
 
-	if ((value < 0) || (value > 1000000) || (strlen(pname) < 1))
-	{
-		safe_cprintf(NULL, PRINT_HIGH, "cmd: exphole <playername> <value>.\n", pname);
-		return;
-	}
+    if ((value < 0) || (value > 1000000) || (strlen(pname) < 1))
+    {
+        safe_cprintf(NULL, PRINT_HIGH, "cmd: exphole <playername> <value>.\n", pname);
+        return;
+    }
 
-	if ((p = FindPlayer(pname)) != NULL)
-	{
-		p->myskills.nerfme = value;
-		safe_cprintf(NULL, PRINT_HIGH, "%s's experience hole has been set to %d\n", p->client->pers.netname, value);
+    if ((p = FindPlayer(pname)) != NULL)
+    {
+        p->myskills.nerfme = value;
+        safe_cprintf(NULL, PRINT_HIGH, "%s's experience hole has been set to %d\n", p->client->pers.netname, value);
         vrx_write_to_logfile(p, "Experience hole was modified.\n");
-		return;
-	}
+        return;
+    }
 
-	safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", pname);
+    safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", pname);
 }
 
 void SVCmd_SetTeam_f()
 {
-	char *pname = gi.argv(2);
-	edict_t *p;
-	int value = atoi(gi.argv(3));
+    char *pname = gi.argv(2);
+    edict_t *p;
+    int value = atoi(gi.argv(3));
 
-	if ((value < 0) || (strlen(pname) < 0))
-	{
-		safe_cprintf(NULL, PRINT_HIGH, "cmd: setteam <playername> <value>.\n", pname);
-		return;
-	}
-	
-	if ((p = FindPlayer(pname)) != NULL)
-	{
-		p->teamnum = value;
-		safe_cprintf(NULL, PRINT_HIGH, "%s's team has been set to %d (%s)\n", p->client->pers.netname, value, CTF_GetTeamString(value));
-		return;
-	}
+    if ((value < 0) || (strlen(pname) < 0))
+    {
+        safe_cprintf(NULL, PRINT_HIGH, "cmd: setteam <playername> <value>.\n", pname);
+        return;
+    }
 
-	safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", pname);
+    if ((p = FindPlayer(pname)) != NULL)
+    {
+        p->teamnum = value;
+        safe_cprintf(NULL, PRINT_HIGH, "%s's team has been set to %d (%s)\n", p->client->pers.netname, value, CTF_GetTeamString(value));
+        return;
+    }
+
+    safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", pname);
 }
 
 void SVCmd_DeleteCharacter_f()
 {
-	char		*pname = gi.argv(2);
-	char		*reason = gi.argv(3);
-	char		buf[100];
-	struct	stat file;
+    char		*pname = gi.argv(2);
+    char		*reason = gi.argv(3);
+    char		buf[100];
+    struct	stat file;
 
-	if (strlen(pname) < 1 || strlen(reason) < 1)
-	{
-		safe_cprintf(NULL, PRINT_HIGH, "cmd: delchar <playername> <reason>\n", pname);
-		return;
-	}
+    if (strlen(pname) < 1 || strlen(reason) < 1)
+    {
+        safe_cprintf(NULL, PRINT_HIGH, "cmd: delchar <playername> <reason>\n", pname);
+        return;
+    }
 
-	if (strlen(reason) > 50)
-	{
-		safe_cprintf(NULL, PRINT_HIGH, "Reason string too long (> 50 characters).\n");
-		return;
-	}
+    if (strlen(reason) > 50)
+    {
+        safe_cprintf(NULL, PRINT_HIGH, "Reason string too long (> 50 characters).\n");
+        return;
+    }
 
-	// did the file we want download successfully?
-	sprintf(buf, "%s\\%s.vrx", save_path->string, pname);
-	if(!stat(buf, &file) && (file.st_size > 1))
-	{
+    // did the file we want download successfully?
+    sprintf(buf, "%s\\%s.vrx", save_path->string, pname);
+    if(!stat(buf, &file) && (file.st_size > 1))
+    {
 
-		
-		WriteToLogFile(pname, va("Character deleted by an administrator (Reason: %s).\n", reason));
-		gi.bprintf(PRINT_HIGH, "%s's character was deleted by an administrator (reason: %s)\n", pname, reason);
-		sprintf(buf, "del %s\\\"%s.vrx\"", save_path->string, V_FormatFileName(pname));
-		system(buf);
-	}
+
+        WriteToLogFile(pname, va("Character deleted by an administrator (Reason: %s).\n", reason));
+        gi.bprintf(PRINT_HIGH, "%s's character was deleted by an administrator (reason: %s)\n", pname, reason);
+        sprintf(buf, "del %s\\\"%s.vrx\"", save_path->string, V_FormatFileName(pname));
+        system(buf);
+    }
 }
 
 #endif
@@ -689,14 +731,14 @@ void SVCmd_DeleteCharacter_f()
 //Ticamai START
 void SV_SaveAllCharacters (void)
 {
-	int i;
-	edict_t *ent;
+    int i;
+    edict_t *ent;
 
-	for_each_player(ent, i)
-	{
-		SaveCharacter(ent);
-	}
-	gi.dprintf("INFO: All players saved.\n");
+    for_each_player(ent, i)
+        {
+            SaveCharacter(ent);
+        }
+    gi.dprintf("INFO: All players saved.\n");
 }
 //Ticamai END
 
@@ -706,31 +748,31 @@ void DoMaplistFilename(int mode, char* filename);
 
 void SV_AddMapToMaplist()
 {
-	int mode = atoi(gi.argv(2));
-	char* map = gi.argv(3);
-	char filename[256];
-	qboolean IsAppend = true;
-	FILE* fp;
+    int mode = atoi(gi.argv(2));
+    char* map = gi.argv(3);
+    char filename[256];
+    qboolean IsAppend = true;
+    FILE* fp;
 
-	if (gi.argc() < 4)
-	{
-		safe_cprintf(NULL, PRINT_HIGH, "Missing arguments!\n");
-		return;
-	}
+    if (gi.argc() < 4)
+    {
+        safe_cprintf(NULL, PRINT_HIGH, "Missing arguments!\n");
+        return;
+    }
 
-	DoMaplistFilename(mode, &filename[0]);
+    DoMaplistFilename(mode, &filename[0]);
 
-	if (!(fp = fopen(filename, "a")))
-	{
-		safe_cprintf(NULL, PRINT_HIGH, "%s: file couldn't be opened... opening in write mode.\n", filename);
-		fp = fopen(filename, "w");
-		IsAppend = false;
-		if (!fp)
-			safe_cprintf(NULL, PRINT_HIGH, "Nope. Not in writing mode neither.\n");
-	}
-	
-	fprintf(fp, "%s\n", map);	
-	fclose(fp);
+    if (!(fp = fopen(filename, "a")))
+    {
+        safe_cprintf(NULL, PRINT_HIGH, "%s: file couldn't be opened... opening in write mode.\n", filename);
+        fp = fopen(filename, "w");
+        IsAppend = false;
+        if (!fp)
+            safe_cprintf(NULL, PRINT_HIGH, "Nope. Not in writing mode neither.\n");
+    }
+
+    fprintf(fp, "%s\n", map);
+    fclose(fp);
 }
 
 
@@ -747,92 +789,92 @@ of the parameters
 */
 void	ServerCommand (void)
 {
-	char	*cmd;
+    char	*cmd;
 
-	cmd = gi.argv(1);
+    cmd = gi.argv(1);
 
-	// JABot[start]
-	if (BOT_ServerCommand ())
-		return;
-	// [end]
+    // JABot[start]
+    if (BOT_ServerCommand ())
+        return;
+    // [end]
 
-	if (Q_stricmp (cmd, "test") == 0)
-		Svcmd_Test_f ();
-	else if (Q_stricmp (cmd, "addip") == 0)
-		SVCmd_AddIP_f ();
-	else if (Q_stricmp (cmd, "removeip") == 0)
-		SVCmd_RemoveIP_f ();
-	else if (Q_stricmp (cmd, "listip") == 0)
-		SVCmd_ListIP_f ();
-	else if (Q_stricmp (cmd, "writeip") == 0)
-		SVCmd_WriteIP_f ();
-	// az begin
+    if (Q_stricmp (cmd, "test") == 0)
+        Svcmd_Test_f ();
+    else if (Q_stricmp (cmd, "addip") == 0)
+        SVCmd_AddIP_f ();
+    else if (Q_stricmp (cmd, "removeip") == 0)
+        SVCmd_RemoveIP_f ();
+    else if (Q_stricmp (cmd, "listip") == 0)
+        SVCmd_ListIP_f ();
+    else if (Q_stricmp (cmd, "writeip") == 0)
+        SVCmd_WriteIP_f ();
+        // az begin
     else if (Q_stricmp(cmd, "avglevel") == 0)
-		gi.dprintf("Average level: %d\n", AveragePlayerLevel());
+        gi.dprintf("Average level: %d\n", AveragePlayerLevel());
 #if (!defined GDS_NOMULTITHREADING) && (!defined NO_GDS)
-	else if (Q_stricmp (cmd, "connectgds") == 0)
+        else if (Q_stricmp (cmd, "connectgds") == 0)
 		V_GDS_StartConn();
 	// az end
 #endif
 //GHz START
 #if ALLOW_ADMIN
-	else if (Q_stricmp (cmd, "addexp") == 0) 
+    else if (Q_stricmp (cmd, "addexp") == 0)
         SVCmd_AddExp_f ();
-	else if (Q_stricmp (cmd, "addtalentpoints") == 0) 
+    else if (Q_stricmp (cmd, "addtalentpoints") == 0)
         SVCmd_AddTalentPoints_f ();
-	else if (Q_stricmp (cmd, "addcredits") == 0) 
+    else if (Q_stricmp (cmd, "addcredits") == 0)
         SVCmd_AddCredits_f ();
-	else if (Q_stricmp (cmd, "makeadmin") == 0) 
+    else if (Q_stricmp (cmd, "makeadmin") == 0)
         SVCmd_MakeAdmin_f ();
-	else if (Q_stricmp (cmd, "makeboss") == 0) 
+    else if (Q_stricmp (cmd, "makeboss") == 0)
         SVCmd_MakeBoss_f ();
     else if (Q_stricmp(cmd, "spawnboss") == 0)
-		SVCmd_SpawnBoss_f();
-	else if (Q_stricmp (cmd, "changeclass") == 0) 
+        SVCmd_SpawnBoss_f();
+    else if (Q_stricmp (cmd, "changeclass") == 0)
         SVCmd_ChangeClass_f();
-	else if (Q_stricmp (cmd, "addabilitypoints") == 0) 
+    else if (Q_stricmp (cmd, "addabilitypoints") == 0)
         SVCmd_AddAbilityPoints_f ();
-	else if (Q_stricmp (cmd, "addweaponpoints") == 0) 
+    else if (Q_stricmp (cmd, "addweaponpoints") == 0)
         SVCmd_AddWeaponPoints_f ();
-	else if (Q_stricmp (cmd, "teams") == 0) 
+    else if (Q_stricmp (cmd, "teams") == 0)
         SVCmd_Teams_f ();
-	else if (Q_stricmp (cmd, "entities") == 0) 
+    else if (Q_stricmp (cmd, "entities") == 0)
         SVCmd_EntityCount_f ();
-	else if (Q_stricmp (cmd, "eventeams") == 0)
-		SVCmd_BalanceTeams_f();
+    else if (Q_stricmp (cmd, "eventeams") == 0)
+        SVCmd_BalanceTeams_f();
 //	else if (Q_stricmp (cmd, "nodes") == 0)
 //		SVCmd_GenerateNodes_f();
-	else if (Q_stricmp (cmd, "spawnflag") == 0)
-		SVCmd_SpawnFlag_f();
-	else if (Q_stricmp (cmd, "exphole") == 0)
-		SVCmd_ExpHole_f();
-	else if (Q_stricmp (cmd, "resetctf") == 0)
-		CTF_Init();
-	else if (Q_stricmp (cmd, "setteam") == 0)
-		SVCmd_SetTeam_f();
-		else if (Q_stricmp (cmd, "delchar") == 0)
-		SVCmd_DeleteCharacter_f();
-	else if (Q_stricmp (cmd, "loadmaplists") == 0)
-	{
-		//3.0 Load the custom map lists
-		if(v_LoadMapList(MAPMODE_PVP) && v_LoadMapList(MAPMODE_PVM) 
-			&& v_LoadMapList(MAPMODE_DOM) && v_LoadMapList(MAPMODE_CTF) 
-			&& v_LoadMapList(MAPMODE_FFA) && v_LoadMapList(MAPMODE_INV)
-			&& v_LoadMapList(MAPMODE_TRA) && v_LoadMapList(MAPMODE_INH) && v_LoadMapList(MAPMODE_VHW)
-			&& v_LoadMapList(MAPMODE_TBI))
-			safe_cprintf(NULL, PRINT_HIGH, "INFO: Vortex Custom Map Lists loaded successfully\n");
-	}
-	else if (Q_stricmp (cmd, "addtomaplist") == 0)
-		SV_AddMapToMaplist ();
+    else if (Q_stricmp (cmd, "spawnflag") == 0)
+        SVCmd_SpawnFlag_f();
+    else if (Q_stricmp (cmd, "exphole") == 0)
+        SVCmd_ExpHole_f();
+    else if (Q_stricmp (cmd, "resetctf") == 0)
+        CTF_Init();
+    else if (Q_stricmp (cmd, "setteam") == 0)
+        SVCmd_SetTeam_f();
+    else if (Q_stricmp (cmd, "delchar") == 0)
+        SVCmd_DeleteCharacter_f();
+    else if (Q_stricmp (cmd, "loadmaplists") == 0)
+    {
+        //3.0 Load the custom map lists
+        if(v_LoadMapList(MAPMODE_PVP) && v_LoadMapList(MAPMODE_PVM)
+           && v_LoadMapList(MAPMODE_DOM) && v_LoadMapList(MAPMODE_CTF)
+           && v_LoadMapList(MAPMODE_FFA) && v_LoadMapList(MAPMODE_INV)
+           && v_LoadMapList(MAPMODE_TRA) && v_LoadMapList(MAPMODE_INH) && v_LoadMapList(MAPMODE_VHW)
+           && v_LoadMapList(MAPMODE_TBI))
+            safe_cprintf(NULL, PRINT_HIGH, "INFO: Vortex Custom Map Lists loaded successfully\n");
+    }
+    else if (Q_stricmp (cmd, "addtomaplist") == 0)
+        SV_AddMapToMaplist ();
 #endif
 //GHz END
 //Ticamai START
-else if (Q_stricmp (cmd, "saveplayers") == 0)
-	SV_SaveAllCharacters ();
+    else if (Q_stricmp (cmd, "saveplayers") == 0)
+        SV_SaveAllCharacters ();
 
 //Ticamai END
-	else
-		safe_cprintf (NULL, PRINT_HIGH, "Unknown server command \"%s\"\n", cmd);
+    else
+        safe_cprintf (NULL, PRINT_HIGH, "Unknown server command \"%s\"\n", cmd);
 }
 
 
