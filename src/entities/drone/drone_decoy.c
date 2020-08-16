@@ -281,7 +281,7 @@ void decoy_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 	self->takedamage = DAMAGE_YES;
 	self->s.modelindex2 = 0;
 
-	n = rand() % 2;
+	n = randomMT() % 2;
 	if (n == 0)		self->monsterinfo.currentmove = &actor_move_death1;
 	else			self->monsterinfo.currentmove = &actor_move_death2;	
 }
@@ -307,7 +307,7 @@ void actor_attack(edict_t *self)
 
 	self->monsterinfo.currentmove = &actor_move_attack;
 	self->monsterinfo.attack_finished = level.time + 0.9;
-//	n = (rand() & 15) + 3 + 7;
+//	n = (randomMT() & 15) + 3 + 7;
 //	self->monsterinfo.pausetime = level.time + n * FRAMETIME;
 }
 

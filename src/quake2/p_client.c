@@ -1144,7 +1144,7 @@ void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 				self->client->anim_end = FRAME_death308;
 				break;
 			}
-			gi.sound (self, CHAN_VOICE, gi.soundindex(va("*death%i.wav", (rand()%4)+1)), 1, ATTN_NORM, 0);
+			gi.sound (self, CHAN_VOICE, gi.soundindex(va("*death%i.wav", (randomMT()%4)+1)), 1, ATTN_NORM, 0);
 		}
 	}
 
@@ -1365,7 +1365,7 @@ edict_t *SelectRandomDeathmatchSpawnPoint (edict_t *ent)
 	else
 		count -= 2;
 
-	selection = count ? rand() % count : 0;
+	selection = count ? randomMT() % count : 0;
 
 	spot = NULL;
 	do
@@ -1637,7 +1637,7 @@ void floatbody(edict_t *ent)
             ent->style = 1;
             ent->speed = ent->s.origin[2] + 16;
             ent->accel = ent->s.origin[2] + 18;
-            ent->decel = level.time + 4 + (rand() % 10);
+            ent->decel = level.time + 4 + (randomMT() % 10);
             }
          }
       ent->s.origin[2] += 18;
@@ -1650,8 +1650,8 @@ void floatbody(edict_t *ent)
       ent->nextthink = level.time + .2;
       if (ent->decel < level.time)
          {
-         gi.sound (ent, CHAN_VOICE, gi.soundindex(va("player/wade%i.wav", (rand()%3)+1)), .6, ATTN_STATIC, 0);
-         ent->decel = level.time + 4 + (rand() % 10);
+         gi.sound (ent, CHAN_VOICE, gi.soundindex(va("player/wade%i.wav", (randomMT()%3)+1)), .6, ATTN_STATIC, 0);
+         ent->decel = level.time + 4 + (randomMT() % 10);
          }
       }
 }
@@ -1757,6 +1757,8 @@ void respawn (edict_t *self)
 				return;
 			}
 		}
+
+		vrx_print_newbie_tip(self);
 
 		// spectator's don't leave bodies
 		if (self->movetype != MOVETYPE_NOCLIP)

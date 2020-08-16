@@ -1208,21 +1208,7 @@ void cmd_Drink(edict_t *ent, int itemtype, int index) {
 		{
 			if (que_typeexists(ent->curses, 0))
 			{
-				int i;
-				//Use the potion
-				for (i = 0; i < QUE_MAXSIZE; ++i)
-				{
-					que_t *curse = &ent->curses[i];
-					if ((curse->ent && curse->ent->inuse) && (curse->ent->atype != HEALING && curse->ent->atype != BLESS))
-					{
-						//destroy the curse
-						if (curse->ent->enemy && (curse->ent->enemy == ent))
-							G_FreeEdict(curse->ent);
-						// remove entry from the queue
-						curse->time = 0;
-						curse->ent = NULL;
-					}
-				}
+				vrx_curse_heal_all(ent);
 
 				//Give them a short period of curse immunity
 				ent->holywaterProtection = level.time + 5.0; //5 seconds immunity

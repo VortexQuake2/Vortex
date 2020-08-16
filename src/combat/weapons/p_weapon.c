@@ -514,7 +514,7 @@ void Weapon_Generic2(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
     // than a player model
     if (ent->deadflag || (ent->s.modelindex != 255) || (vrx_is_morphing_polt(ent))
         || (ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent)) // special rules, fc can't attack
-        || ((ent->client->respawn_time/* - (0.1 * FRAME_ACTIVATE_LAST)*/ ) > level.time) // VWep animations screw up corpses
+        // || ((ent->client->respawn_time/* - (0.1 * FRAME_ACTIVATE_LAST)*/ ) > level.time)
         || (ent->flags & FL_WORMHOLE)//4.2 can't use weapons in wormhole
         || ent->shield) // can't use weapons while shield is deployed
         return;
@@ -637,7 +637,7 @@ void Weapon_Generic2(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
             if (pause_frames) {
                 for (n = 0; pause_frames[n]; n++) {
                     if (ent->client->ps.gunframe == pause_frames[n]) {
-                        if (rand() & 15)
+                        if (randomMT() & 15)
                             return;
                     }
                 }
@@ -950,7 +950,7 @@ void Weapon_Grenade2(edict_t *ent) {
 
         if ((ent->client->ps.gunframe == 29) || (ent->client->ps.gunframe == 34) || (ent->client->ps.gunframe == 39) ||
             (ent->client->ps.gunframe == 48)) {
-            if (rand() & 15)
+            if (randomMT() & 15)
                 return;
         }
 
@@ -2371,7 +2371,6 @@ void Weapon_BFG(edict_t *ent) {
 void fire_flame (edict_t *self, vec3_t start, vec3_t dir, int speed, int damage);
 
 void Flamethrower_Fire(edict_t *ent) {
-    int i;
     vec3_t start;
     vec3_t forward, right;
     vec3_t angles;

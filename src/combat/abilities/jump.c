@@ -16,15 +16,16 @@ void V_PlayerJump(edict_t *ent) {
         PlayerNoise(ent, ent->s.origin, PNOISE_SELF);
     }
 
+    qboolean has_cloak = ent->myskills.abilities[CLOAK].current_level > 0;
     if (ent->mtype == MORPH_MUTANT) {
-        if (mutant_boost(ent))
+        if (mutant_boost(ent) && !has_cloak)
             gi.sound(ent, CHAN_VOICE, gi.soundindex("mutant/mutsght1.wav"), 1, ATTN_NORM, 0);
-    } else if (ent->mtype == MORPH_MEDIC) {
+    } else if (ent->mtype == MORPH_MEDIC && !has_cloak) {
         gi.sound(ent, CHAN_VOICE, gi.soundindex("medic/medsght1.wav"), 1, ATTN_NORM, 0);
-    } else if (ent->mtype == MORPH_BERSERK) {
+    } else if (ent->mtype == MORPH_BERSERK && !has_cloak) {
         gi.sound(ent, CHAN_VOICE, gi.soundindex("berserk/sight.wav"), 1, ATTN_NORM, 0);
     } else if (ent->mtype == MORPH_BRAIN) {
-        if (mutant_boost(ent))
+        if (mutant_boost(ent) && !has_cloak)
             gi.sound(ent, CHAN_VOICE, gi.soundindex("brain/brnsght1.wav"), 1, ATTN_NORM, 0);
     } else if ((ent->mtype == M_MYPARASITE) || (ent->mtype == MORPH_BRAIN)) {
         ent->velocity[0] *= 1.66;

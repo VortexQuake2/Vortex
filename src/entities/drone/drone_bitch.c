@@ -290,7 +290,7 @@ void mychick_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	self->takedamage = DAMAGE_YES;
 	//level.total_monsters--;
 
-	n = rand() % 2;
+	n = randomMT() % 2;
 	if (n == 0)
 	{
 		self->monsterinfo.currentmove = &mychick_move_death1;
@@ -463,7 +463,7 @@ void myChickSlash (edict_t *self)
 
 	VectorSet (aim, MELEE_DISTANCE, self->mins[0], 10);
 	gi.sound (self, CHAN_WEAPON, sound_melee_swing, 1, ATTN_NORM, 0);
-	fire_hit (self, aim, (10 + (rand() %6)), 100);
+	fire_hit (self, aim, (10 + (randomMT() %6)), 100);
 }
 
 void fire_fireball (edict_t *self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int flames, int flame_damage);

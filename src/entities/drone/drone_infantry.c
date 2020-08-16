@@ -339,7 +339,7 @@ void infantry_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
 
-	n = rand() % 3;
+	n = randomMT() % 3;
 	if (n == 0)
 	{
 		self->monsterinfo.currentmove = &infantry_move_death1;
@@ -407,7 +407,7 @@ void infantry_cock_gun (edict_t *self)
 	//int		n;
 
 	gi.sound (self, CHAN_WEAPON, sound_weapon_cock, 1, ATTN_NORM, 0);
-	//n = (rand() & 15) + 3 + 7;
+	//n = (randomMT() & 15) + 3 + 7;
 	//self->monsterinfo.pausetime = level.time + (GetRandom(10, 50) * FRAMETIME);
 	//self->monsterinfo.attack_finished = self->monsterinfo.pausetime + 2.0;
 }

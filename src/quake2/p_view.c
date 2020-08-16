@@ -112,7 +112,7 @@ void P_DamageFeedback (edict_t *player)
 		&& (client->invincible_framenum <= level.framenum) && !player->mtype
 		&& !(player->owner && player->owner->inuse)) // don't play sound if morphed
 	{
-		r = 1 + (rand()&1);
+		r = 1 + (randomMT()&1);
 		player->pain_debounce_time = level.time + 0.7;
 		// az: use percents instead of fixed values.
 		if (player->health < player->max_health*0.25)
@@ -762,7 +762,7 @@ void P_WorldEffects (void)
 				{
 					if (current_player->health <= current_player->dmg)
 						gi.sound (current_player, CHAN_VOICE, gi.soundindex("player/drown1.wav"), 1, ATTN_NORM, 0);
-					else if (rand()&1)
+					else if (randomMT()&1)
 						gi.sound (current_player, CHAN_VOICE, gi.soundindex("*gurp1.wav"), 1, ATTN_NORM, 0);
 					else
 						gi.sound (current_player, CHAN_VOICE, gi.soundindex("*gurp2.wav"), 1, ATTN_NORM, 0);
@@ -796,7 +796,7 @@ void P_WorldEffects (void)
 			{
 				if (current_player->client)//K03
 				{
-				if (rand()&1)
+				if (randomMT()&1)
 					gi.sound (current_player, CHAN_VOICE, gi.soundindex("player/burn1.wav"), 1, ATTN_NORM, 0);
 				else
 					gi.sound (current_player, CHAN_VOICE, gi.soundindex("player/burn2.wav"), 1, ATTN_NORM, 0);

@@ -247,7 +247,7 @@ void M_default_FireWeapon (edict_t *self)
 		AngleVectors (self->s.angles, forward, right, NULL);
 		G_ProjectSource (self->s.origin, tv(15,15,0), forward, right, start);
 		//monster_fire_bullet (self, start, forward, 4, 4, MZ2_INFANTRY_MACHINEGUN_2);
-		monster_fire_bullet (self, start, forward, 4, 4, rand(), rand(), MZ2_INFANTRY_MACHINEGUN_2);
+		monster_fire_bullet (self, start, forward, 4, 4, randomMT(), randomMT(), MZ2_INFANTRY_MACHINEGUN_2);
 	}	
 
 	//if(AIDevel.debugMode && bot_debugmonster->integer)

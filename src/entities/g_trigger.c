@@ -464,7 +464,7 @@ void trigger_effect (edict_t *self)
 		gi.WriteByte (1);
 		gi.WritePosition (origin);
 		gi.WriteDir (vec3_origin);
-		gi.WriteByte (0x74 + (rand()&7));
+		gi.WriteByte (0x74 + (randomMT()&7));
 		gi.multicast (self->s.origin, MULTICAST_PVS);
 	}
 

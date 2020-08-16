@@ -128,7 +128,7 @@ void DoRespawn(edict_t *ent) {
 
         for (count = 0, ent = master; ent; ent = ent->chain, count++);
 
-		choice = count ? rand() % count : 0;
+		choice = count ? randomMT() % count : 0;
 
         for (count = 0, ent = master; count < choice; ent = ent->chain, count++);
     }
@@ -800,9 +800,24 @@ void Teleport_them(edict_t *ent) {
     KillBox(ent);
 }
 
+// G_EntIsAlive except it doesn't matter if they're respawning or not.
+qboolean G_AliveForTball(edict_t *ent) {
+    // entity must exist and be in-use
+    if (!ent || !ent->inuse)
+        return false;
+    // if this is not a player-monster (morph), then the entity must be solid/damageable
+    if (!PM_PlayerHasMonster(ent) && (!ent->takedamage || (ent->solid == SOLID_NOT)))
+        return false;
+    // entity must be alive
+    if ((ent->health < 1) || (ent->deadflag == DEAD_DEAD))
+        return false;
+
+    return true;
+}
+
 qboolean CanTball(edict_t *ent, qboolean print) {
     // must be alive/valid
-    if (!G_EntIsAlive(ent))
+    if (!G_AliveForTball(ent))
         return false;
 
     // must be a player/client

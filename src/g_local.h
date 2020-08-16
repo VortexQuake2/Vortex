@@ -25,6 +25,10 @@
 #include "characters/io/gds.h" // 3.15
 #include "combat/abilities/scanner.h"
 
+/* twister.c */
+#include <stdint.h>
+void seedMT(uint32_t seed);
+uint32_t randomMT(void);
 
 // the "gameversion" client command will print this plus compile date
 #define	GAMEVERSION	"Vortex"//K03 "baseq2"
@@ -811,7 +815,7 @@ extern	edict_t			*g_edicts;
 #define	LLOFS(x) (size_t)&(((level_locals_t *)0)->x)
 #define	CLOFS(x) (size_t)&(((gclient_t *)0)->x)
 
-#define random()	((rand () & 0x7fff) / ((float)0x7fff))
+#define random()	((double)randomMT() / (double)(0xffffffff))
 #define crandom()	(2.0 * (random() - 0.5))
 
 extern	cvar_t	*maxentities;
@@ -2341,6 +2345,9 @@ void InitTBI();
 typedef void (*gi_sound_func_t) (edict_t *ent, int channel, int soundindex, float volume, float attenuation, float timeofs);
 void cs_override_init();
 void cs_reset();
+
+/* v_newbie_tips.c */
+void vrx_print_newbie_tip(edict_t *ent);
 
 //az end
 
