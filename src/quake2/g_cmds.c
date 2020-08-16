@@ -880,6 +880,7 @@ int GetSlot(gitem_t *it)
 	else if(it == FindItem("hyperblaster")) slot = 8;
 	else if(it == FindItem("railgun")) slot = 9;
 	else if(it == FindItem("bfg10k")) slot = 10;
+    else if(it == FindItem("flamethrower")) slot = 10;
 	return (slot);
 }
 

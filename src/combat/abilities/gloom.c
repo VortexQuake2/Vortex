@@ -1952,3 +1952,580 @@ void Cmd_Cocoon_f (edict_t *ent)
 	//  entity made a sound, used to alert monsters
 	ent->lastsound = level.framenum;
 }
+
+void spikeball_findtarget (edict_t *self)
+{
+    edict_t *e=NULL;
+
+    if (!G_ValidTarget(self, self->enemy, true))
+    {
+        while ((e = findclosestradius_targets(e, self, self->dmg_radius)) != NULL)
+        {
+            if (!G_ValidTarget_Lite(self, e, true))
+                continue;
+
+            // ignore enemies that are too far from our owner
+            // FIXME: we may want to add a hurt function so that we can retaliate if we are attacked out of range
+            if (entdist(self->activator, e) > SPIKEBALL_MAX_DIST)
+                continue;
+
+            self->enemy = e;
+            //	gi.sound (self, CHAN_VOICE, gi.soundindex("misc/scream6.wav"), 1, ATTN_NORM, 0);
+            return;
+        }
+
+        self->enemy = NULL;
+    }
+}
+
+void spikeball_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
+{
+    if (other && other->inuse && other->takedamage && !OnSameTeam(ent, other) && (level.time > ent->monsterinfo.attack_finished))
+    {
+        T_Damage(other, ent, ent, ent->velocity, ent->s.origin, plane->normal, ent->dmg, 0, 0, MOD_UNKNOWN);
+        ent->monsterinfo.attack_finished = level.time + 0.5;
+    }
+
+    V_Touch(ent, other, plane, surf);
+}
+
+qboolean spikeball_recall (edict_t *self)
+{
+    // we shouldn't be here if recall is disabled, we have a target, our activator is visible
+    // or we have teleported recently
+    if (/*!self->activator->spikeball_recall || self->enemy ||*/ visible(self, self->activator)
+                                                                 || self->monsterinfo.teleport_delay > level.time)
+        return false;
+
+    TeleportNearArea(self, self->activator->s.origin, 128, false);
+    self->monsterinfo.teleport_delay = level.time + 1;//0.0;
+    return true;
+}
+
+void spikeball_move (edict_t *self)
+{
+    vec3_t	start, forward, end, goalpos;
+    trace_t	tr;
+    float	max_velocity = 350;
+
+    if (self->monsterinfo.attack_finished > level.time)
+        return;
+
+    // are we following the player's crosshairs?
+    if (self->activator->spikeball_follow)
+    {
+        G_GetSpawnLocation(self->activator, 8192, NULL, NULL, goalpos);
+    }
+        // we have no enemy
+    else if (!self->enemy)
+    {
+        if (entdist(self, self->activator) > 128)
+        {
+            // move towards player
+            if (visible(self, self->activator))
+            {
+                VectorCopy(self->activator->s.origin, goalpos);
+                self->monsterinfo.search_frames = 0;
+
+            }
+            else
+            {
+                // try to teleport near player after 3 seconds of losing sight
+                if (self->monsterinfo.search_frames > 30)
+                    spikeball_recall(self);
+                else
+                    self->monsterinfo.search_frames++;
+                return;
+            }
+        }
+        else
+            return;
+    }
+
+    // use the enemy's position as a starting point if we are not following
+    if (self->enemy && !self->spikeball_follow)
+    {
+        // enemy is too far from activator, abort if activator is visible or we can teleport
+        if (entdist(self->activator, self->enemy) > SPIKEBALL_MAX_DIST
+            && (visible(self, self->activator) || spikeball_recall(self)))
+        {
+            self->enemy = NULL;
+            return;
+        }
+
+        VectorCopy(self->enemy->s.origin, goalpos);
+    }
+
+
+    // vector to target
+    VectorSubtract(goalpos, self->s.origin, forward);
+    VectorNormalize(forward);
+
+    // accelerate towards target
+    VectorMA(self->velocity, self->monsterinfo.lefty, forward, forward);
+    self->velocity[0] = forward[0];
+    self->velocity[1] = forward[1];
+
+    // calculate starting position and ending position on a 2-D plane
+    VectorCopy(self->s.origin, start);
+    VectorAdd(self->s.origin, self->velocity, end);
+    tr = gi.trace(start, NULL, NULL, end, NULL, MASK_SHOT);
+    VectorCopy(tr.endpos, end);
+    start[2] = end[2] = goalpos[2] = 0;
+
+    // if we are moving away from our target, slow down
+    if (distance(goalpos, end) > distance(goalpos, start))
+    {
+        self->velocity[0] *= 0.8;
+        self->velocity[1] *= 0.8;
+    }
+
+    // cap maximum x and y velocity
+    if (self->velocity[0] > max_velocity)
+        self->velocity[0] = max_velocity;
+    if (self->velocity[0] < -max_velocity)
+        self->velocity[0] = -max_velocity;
+    if (self->velocity[1] > max_velocity)
+        self->velocity[1] = max_velocity;
+    if (self->velocity[1] < -max_velocity)
+        self->velocity[1] = -max_velocity;
+
+//	gi.dprintf("%.0f %.0f %.0f\n", self->velocity[0], self->velocity[1], self->velocity[2]);
+}
+
+void spikeball_idle_friction (edict_t *self)
+{
+    if (!self->enemy && !self->spikeball_follow)
+    {
+        self->velocity[0] *= 0.8;
+        self->velocity[1] *= 0.8;
+
+        if (VectorLength(self->velocity) < 10)
+        {
+            VectorClear(self->velocity);
+            return;
+        }
+
+        if (level.time > self->msg_time)
+        {
+            gi.sound (self, CHAN_VOICE, gi.soundindex(va("spore/neutral%d.wav", GetRandom(1, 6))), 1, ATTN_NORM, 0);
+            self->msg_time = level.time + GetRandom(2, 10);
+        }
+    }
+}
+
+void spikeball_effects(edict_t *self)
+{
+    if (self->enemy)
+    {
+        self->s.effects |= EF_COLOR_SHELL;
+        self->s.renderfx |= RF_SHELL_RED;
+    }
+    else
+    {
+        self->s.effects &= ~EF_COLOR_SHELL;
+        self->s.renderfx &= ~RF_SHELL_RED;
+    }
+}
+
+void spikeball_think (edict_t *self)
+{
+    if (!G_EntIsAlive(self->owner) || level.time > self->delay)
+    {
+        organ_remove(self, false);
+        return;
+    }
+    else if (self->removetime > 0)
+    {
+        qboolean converted=false;
+
+        if (self->flags & FL_CONVERTED)
+            converted = true;
+
+        if (level.time > self->removetime)
+        {
+            // if we were converted, try to convert back to previous owner
+            if (converted && self->prev_owner && self->prev_owner->inuse)
+            {
+                if (!ConvertOwner(self->prev_owner, self, 0, false))
+                {
+                    organ_remove(self, false);
+                    return;
+                }
+            }
+            else
+            {
+                organ_remove(self, false);
+                return;
+            }
+        }
+            // warn the converted monster's current owner
+        else if (converted && self->activator && self->activator->inuse && self->activator->client
+                 && (level.time > self->removetime-5) && !(level.framenum % (int)(1 / FRAMETIME)))
+            safe_cprintf(self->activator, PRINT_HIGH, "%s conversion will expire in %.0f seconds\n",
+                         V_GetMonsterName(self), self->removetime-level.time);
+    }
+
+    if (!M_Upkeep(self, 1.3 / FRAMETIME, 1))
+        return;
+
+    spikeball_effects(self);
+    spikeball_findtarget(self);
+    //spikeball_recall(self);
+    spikeball_move(self);
+    spikeball_idle_friction(self);
+
+    self->nextthink = level.time + FRAMETIME;
+}
+
+void spikeball_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
+{
+    if (!self->monsterinfo.slots_freed && self->activator && self->activator->inuse)
+    {
+        int cur;
+
+        self->activator->num_spikeball--;
+        cur = self->activator->num_spikeball;
+        self->monsterinfo.slots_freed = true;
+
+        if (PM_MonsterHasPilot(attacker))
+            attacker = attacker->owner;
+
+        if (attacker->client)
+            safe_cprintf(self->activator, PRINT_HIGH, "Your spore was killed by %s (%d remain)\n", attacker->client->pers.netname, cur);
+        else if (attacker->mtype)
+            safe_cprintf(self->activator, PRINT_HIGH, "Your spore was killed by a %s (%d remain)\n", V_GetMonsterName(attacker), cur);
+        else
+            safe_cprintf(self->activator, PRINT_HIGH, "Your spore was killed by a %s (%d remain)\n", attacker->classname, cur);
+    }
+
+    organ_remove(self, false);
+}
+
+void fire_spikeball (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int throw_speed, int ball_speed, float radius, int duration, int health, int skill_level)
+{
+    int		cost = SPIKEBALL_COST;
+    edict_t	*grenade;
+    vec3_t	dir;
+    vec3_t	forward, right, up;
+
+    // calling entity made a sound, used to alert monsters
+    self->lastsound = level.framenum;
+
+    // cost is doubled if you are a flyer or cacodemon below skill level 5
+    if ((self->mtype == MORPH_FLYER && self->myskills.abilities[FLYER].current_level < 5)
+        || (self->mtype == MORPH_CACODEMON && self->myskills.abilities[CACODEMON].current_level < 5))
+        cost *= 2;
+
+    // get aiming angles
+    vectoangles(aimdir, dir);
+    // get directional vectors
+    AngleVectors(dir, forward, right, up);
+
+    // spawn grenade entity
+    grenade = G_Spawn();
+    VectorCopy (start, grenade->s.origin);
+    grenade->takedamage = DAMAGE_AIM;
+    grenade->die = spikeball_die;
+    grenade->health = grenade->max_health = health;
+    grenade->movetype = MOVETYPE_BOUNCE;
+//	grenade->svflags |= SVF_MONSTER; // tell physics to clip on more than just walls
+    grenade->clipmask = MASK_SHOT;
+    grenade->solid = SOLID_BBOX;
+    grenade->s.effects |= EF_GIB;
+    grenade->s.modelindex = gi.modelindex ("models/objects/sspore/tris.md2");
+    grenade->owner = grenade->activator = self;
+    grenade->touch = spikeball_touch;
+    grenade->think = spikeball_think;
+    grenade->dmg = damage;
+    grenade->mtype = M_SPIKEBALL;
+    grenade->monsterinfo.level = skill_level;
+    grenade->dmg_radius = radius;
+    grenade->monsterinfo.attack_finished = level.time + 2.0;
+    grenade->monsterinfo.lefty = ball_speed;
+    grenade->delay = level.time + duration;
+    grenade->classname = "spikeball";
+    VectorSet(grenade->maxs, 8, 8, 8);
+    VectorSet(grenade->mins, -8, -8, -8);
+    gi.linkentity (grenade);
+    grenade->nextthink = level.time + 1.0;
+    grenade->monsterinfo.cost = cost;
+
+    // adjust velocity
+    VectorScale (aimdir, throw_speed, grenade->velocity);
+    VectorMA (grenade->velocity, 200 + crandom() * 10.0, up, grenade->velocity);
+    VectorMA (grenade->velocity, crandom() * 10.0, right, grenade->velocity);
+    VectorSet (grenade->avelocity, 300, 300, 300);
+
+    self->num_spikeball++;
+}
+
+void organ_removeall (edict_t *ent, char *classname, qboolean refund);
+
+void organ_kill(edict_t *ent, char *classname)
+{
+    edict_t *e = NULL;
+
+    while ((e = G_Find(e, FOFS(classname), classname)) != NULL)
+    {
+        if (e && e->activator && e->activator->inuse && (e->activator == ent) && !RestorePreviousOwner(e))
+            T_Damage(e, ent, ent, vec3_origin, e->s.origin, vec3_origin, e->health / 2, 0, DAMAGE_NO_PROTECTION, MOD_LIGHTNING_STORM);
+    }
+}
+
+void Cmd_TossSpikeball (edict_t *ent)
+{
+    int		talentLevel;
+    int		cost = SPIKEBALL_COST, max_count = SPIKEBALL_MAX_COUNT;
+    int		health = SPIKEBALL_INITIAL_HEALTH + SPIKEBALL_ADDON_HEALTH * ent->myskills.abilities[SPORE].current_level;
+    int		damage = SPIKEBALL_INITIAL_DAMAGE + SPIKEBALL_ADDON_DAMAGE * ent->myskills.abilities[SPORE].current_level;
+    float	duration = SPIKEBALL_INITIAL_DURATION + SPIKEBALL_ADDON_DURATION * ent->myskills.abilities[SPORE].current_level;
+    float	range = SPIKEBALL_INITIAL_RANGE + SPIKEBALL_ADDON_RANGE * ent->myskills.abilities[SPORE].current_level;
+    vec3_t	forward, right, start, offset;
+
+    if (ent->num_spikeball > 0 && Q_strcasecmp (gi.args(), "move") == 0)
+    {
+        // toggle movement setting
+        if (ent->spikeball_follow)
+        {
+            ent->spikeball_follow = false;
+            safe_cprintf(ent, PRINT_HIGH, "Spores will follow targets\n");
+        }
+        else
+        {
+            ent->spikeball_follow = true;
+            safe_cprintf(ent, PRINT_HIGH, "Spores will follow your crosshairs\n");
+        }
+        return;
+    }
+
+    if (Q_strcasecmp(gi.args(), "kill") == 0 && ent->myskills.administrator) {
+        organ_kill(ent, "spikeball");
+        return;
+    }
+/*
+	if (ent->num_spikeball > 0 && Q_strcasecmp (gi.args(), "recall") == 0)
+	{
+		// toggle recall setting
+		if (ent->spikeball_recall)
+		{
+			ent->spikeball_recall = false;
+			safe_cprintf(ent, PRINT_HIGH, "Spores recall disabled\n");
+		}
+		else
+		{
+			ent->spikeball_recall = true;
+			safe_cprintf(ent, PRINT_HIGH, "Spores recall enabled\n");
+		}
+		return;
+	}
+*/
+    if (Q_strcasecmp (gi.args(), "help") == 0)
+    {
+        safe_cprintf(ent, PRINT_HIGH, "syntax: spore [move|remove]\n");
+        return;
+    }
+
+    if (Q_strcasecmp (gi.args(), "remove") == 0)
+    {
+        organ_removeall(ent, "spikeball", true);
+        safe_cprintf(ent, PRINT_HIGH, "Spores removed\n");
+        ent->num_spikeball = 0;
+        return;
+    }
+
+    // cost is doubled if you are a flyer or cacodemon below skill level 5
+    if ((ent->mtype == MORPH_FLYER && ent->myskills.abilities[FLYER].current_level < 5)
+        || (ent->mtype == MORPH_CACODEMON && ent->myskills.abilities[CACODEMON].current_level < 5))
+        cost *= 2;
+
+    if (!V_CanUseAbilities(ent, SPORE, cost, true))
+        return;
+
+    //Talent: Swarming
+    if ((talentLevel = vrx_get_talent_level(ent, TALENT_SWARMING)) > 0)
+    {
+        // max_count *= 1.0 + 0.2 * talentLevel;
+        damage *= 1.0 + 0.15 * talentLevel; // Only increase damage.
+    }
+
+    if (ent->num_spikeball >= max_count)
+    {
+        safe_cprintf(ent, PRINT_HIGH, "You have reached the maximum amount of spores (%d)\n", ent->num_spikeball);
+        return;
+    }
+
+    // get starting position and forward vector
+    AngleVectors (ent->client->v_angle, forward, right, NULL);
+    VectorSet(offset, 0, 8,  ent->viewheight-8);
+    P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+
+    fire_spikeball(ent, start, forward, damage, 600, 100, range, duration, health, ent->myskills.abilities[SPORE].current_level);
+
+    ent->client->ability_delay = level.time + SPIKEBALL_DELAY;
+
+    ent->client->pers.inventory[power_cube_index] -= cost;
+}
+
+void acid_sparks (vec3_t org, int num, float radius)
+{
+    int		i;
+    vec3_t	start;
+
+    // 0 = black, 8 = grey, 15 = white, 16 = light brown, 20 = brown, 57 = light orange, 66 = orange/red, 73 = maroon
+    // 106 = pink, 113 = light blue, 119 = blue, 123 = dark blue, 200 = pale green, 205 = dark green, 209 = bright green
+    // 217 = white, 220 = yellow, 226 = orange, 231 = red/orange, 240 = red, 243 = dark blue
+
+    for (i=0; i<num; i++)
+    {
+        //VectorCopy(self->s.origin, start);
+        VectorCopy(org, start);
+        start[0] += crandom() * GetRandom(0, (int) radius);
+        start[1] += crandom() * GetRandom(0, (int) radius);
+        //start[2] += crandom() * GetRandom(0, (int) self->dmg_radius);
+
+        gi.WriteByte(svc_temp_entity);
+        gi.WriteByte(TE_LASER_SPARKS);
+        gi.WriteByte(1); // number of sparks
+        gi.WritePosition(start);
+        gi.WriteDir(vec3_origin);
+        //gi.WriteByte(GetRandom(200, 209)); // color
+        if (random() <= 0.33)
+            gi.WriteByte(205);
+        else
+            gi.WriteByte(209);
+        gi.multicast(start, MULTICAST_PVS);
+    }
+}
+
+void CreatePoison (edict_t *ent, edict_t *targ, int damage, float duration, int meansOfDeath);
+
+void acid_explode (edict_t *self)
+{
+    int amt, max_amt;
+    vec3_t start;
+    edict_t *e=NULL;
+
+    if (!G_EntIsAlive(self->owner))
+    {
+        G_FreeEdict(self);
+        return;
+    }
+
+    while ((e = findradius(e, self->s.origin, self->dmg_radius)) != NULL)
+    {
+        // acid heals alien summons beyond their normal max health
+        if (OnSameTeam(self->owner, e) && (e->mtype == M_SPIKER
+                                           || e->mtype == M_OBSTACLE || e->mtype == M_GASSER
+                                           || e->mtype == M_HEALER || e->mtype == M_COCOON))
+        {
+            amt = 0.1 * self->dmg;
+            max_amt = 2 * e->max_health;
+
+            // 2x health maximum
+            if (e->health + amt < max_amt)
+                e->health += amt;
+            else if (e->health < max_amt)
+                e->health = max_amt;
+        }
+
+        if (e && e->inuse && e->takedamage && e->solid != SOLID_NOT && !OnSameTeam(self->owner, e))
+        {
+            T_Damage(e, self, self->owner, vec3_origin, e->s.origin, vec3_origin, self->dmg, 0, 0, MOD_ACID);
+            CreatePoison(self->owner, e, self->radius_dmg, self->delay, MOD_ACID);
+        }
+    }
+
+    VectorCopy(self->s.origin, start);
+    start[2] += 8;
+    acid_sparks(start, 20, self->dmg_radius);
+
+    gi.sound(self, CHAN_VOICE, gi.soundindex("weapons/acid.wav"), 1, ATTN_NORM, 0);
+
+    G_FreeEdict(self);
+}
+
+
+void acid_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
+{
+    // disappear when touching a sky brush
+    if (surf && (surf->flags & SURF_SKY))
+    {
+        G_FreeEdict (ent);
+        return;
+    }
+
+    acid_explode(ent);
+}
+
+void fire_acid (edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damage, float radius,
+                int speed, int acid_damage, float acid_duration)
+{
+    edict_t	*grenade;
+    vec3_t	dir;
+    vec3_t	forward, right, up;
+
+    // calling entity made a sound, used to alert monsters
+    self->lastsound = level.framenum;
+
+    // get aiming angles
+    vectoangles(aimdir, dir);
+    // get directional vectors
+    AngleVectors(dir, forward, right, up);
+
+    // spawn grenade entity
+    grenade = G_Spawn();
+    VectorCopy (start, grenade->s.origin);
+    grenade->movetype = MOVETYPE_TOSS;
+    grenade->clipmask = MASK_SHOT;
+    grenade->solid = SOLID_BBOX;
+    grenade->s.modelindex = gi.modelindex ("models/objects/spore/tris.md2");
+    grenade->s.skinnum = 1;
+    grenade->owner = self;
+    grenade->touch = acid_touch;
+    grenade->think = acid_explode;
+    grenade->dmg = projectile_damage;
+    grenade->radius_dmg = acid_damage;
+    grenade->dmg_radius = radius;
+    grenade->delay = acid_duration;
+    grenade->classname = "acid";
+    gi.linkentity (grenade);
+    grenade->nextthink = level.time + 10.0;
+
+    // adjust velocity
+    VectorScale (aimdir, speed, grenade->velocity);
+    VectorMA (grenade->velocity, 200 + crandom() * 10.0, up, grenade->velocity);
+    VectorMA (grenade->velocity, crandom() * 10.0, right, grenade->velocity);
+    VectorSet (grenade->avelocity, 300, 300, 300);
+}
+
+#define ACID_INITIAL_DAMAGE		50
+#define ACID_ADDON_DAMAGE		15
+#define ACID_INITIAL_SPEED		600
+#define ACID_ADDON_SPEED		0
+#define ACID_INITIAL_RADIUS		64
+#define ACID_ADDON_RADIUS		0
+#define ACID_DURATION			10.0
+#define ACID_DELAY				0.2
+#define ACID_COST				20
+
+void Cmd_FireAcid_f (edict_t *ent)
+{
+    int		damage = ACID_INITIAL_DAMAGE + ACID_ADDON_DAMAGE * ent->myskills.abilities[ACID].current_level;
+    int		speed = ACID_INITIAL_SPEED + ACID_ADDON_SPEED * ent->myskills.abilities[ACID].current_level;
+    float	radius = ACID_INITIAL_RADIUS + ACID_ADDON_RADIUS * ent->myskills.abilities[ACID].current_level;
+    vec3_t	forward, right, start, offset;
+
+    if (!V_CanUseAbilities(ent, ACID, ACID_COST, true))
+        return;
+
+    // get starting position and forward vector
+    AngleVectors (ent->client->v_angle, forward, right, NULL);
+    VectorSet(offset, 0, 8,  ent->viewheight-8);
+    P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+
+    fire_acid(ent, start, forward, damage, radius, speed, (int)(0.1 * damage), ACID_DURATION);
+
+    ent->client->ability_delay = level.time + ACID_DELAY;
+    ent->client->pers.inventory[power_cube_index] -= ACID_COST;
+}

@@ -55,6 +55,9 @@ static int quad_drop_timeout_hack;
 // RAFAEL
 static int quad_fire_drop_timeout_hack;
 
+// az
+void Weapon_Flamethrower(edict_t *ent);
+
 //======================================================================
 
 
@@ -1818,6 +1821,29 @@ always owned, never in the world
 /* precache */
                         "sprites/s_bfg1.sp2 sprites/s_bfg2.sp2 sprites/s_bfg3.sp2 weapons/bfg__f1y.wav weapons/bfg__l1a.wav weapons/bfg__x1b.wav weapons/bfg_hum.wav a_cells_hud",
                         WEAP_BFG
+                },
+                /*QUAKED weapon_machinegun (.3 .3 1) (-16 -16 -16) (16 16 16)	9
+*/
+                {
+                        "weapon_flamethrower",
+                        Pickup_Weapon,
+                        Use_Weapon,
+                        Drop_Weapon,
+                        Weapon_Flamethrower,
+                        "misc/w_pkup.wav",
+                        "models/weapons/g_machn/tris.md2", EF_ROTATE,
+                        "models/weapons/v_machn/tris.md2",
+    /* icon */        "w_machinegun",
+    /* pickup */    "Flamethrower",
+                        0,
+                        1,
+                        "Bullets",
+                        IT_WEAPON,
+                        NULL,
+                        0,
+/* precache */
+                        "weapons/machgf1b.wav weapons/machgf2b.wav weapons/machgf3b.wav weapons/machgf4b.wav weapons/machgf5b.wav a_bullets_hud",
+                        WEAP_MACHINEGUN
                 },
 
                 //K03 Begin
