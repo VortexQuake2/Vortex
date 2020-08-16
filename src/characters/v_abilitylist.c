@@ -19,7 +19,7 @@ abilitydef_t ability_general[] = {
         {ENERGY_RESIST,   0, 1,                1},
         {SCANNER,         0, 1,                1},
         {HA_PICKUP,       0, DEFAULT_SOFTMAX,  1},
-        {FLASH,           0, 0,                1},
+        {FLASH,           0, 1,                1},
         {-1,              0, 0,                0} // Guardian (Add skills above this)
 };
 
@@ -259,6 +259,7 @@ int getHardMax(int index, qboolean general, int class) {
         case JETPACK:
         case SHIELD:
         case CLOAK: // az: sure it scales whatever the scaling is dumb
+        case FLASH:
             return 1;
 
         case GRAPPLE_HOOK:

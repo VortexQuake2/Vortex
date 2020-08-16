@@ -381,7 +381,7 @@ qboolean AI_MoveToGoalEntity(edict_t *self, usercmd_t *ucmd)
 //			G_PrintMsg (AIDevel.chaseguy, PRINT_HIGH, "%s: Oh crap a rocket!\n",self->ai.pers.netname);
 
 		// strafe left/right
-		if(rand()%1 && AI_CanMove(self, BOT_MOVE_LEFT))
+		if(randomMT()%1 && AI_CanMove(self, BOT_MOVE_LEFT))
 				ucmd->sidemove = -400;
 		else if(AI_CanMove(self, BOT_MOVE_RIGHT))
 				ucmd->sidemove = 400;

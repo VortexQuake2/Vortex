@@ -626,7 +626,6 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	trace_t		tr;
 	float		mult;
 	int			talentLevel;
-	int			talentLevel2;
 
 	drone->classname = "drone";
 
@@ -1384,7 +1383,7 @@ void MonsterAim (edict_t *self, float accuracy, int projectile_speed, qboolean r
 		target[2] += GetRandom(0, self->enemy->maxs[2]+16);
 
 		// aim a little to the left or right of the target
-		VectorMA(target, ((self->enemy->maxs[1]+GetRandom(12, 24))*crand()), right, target);
+		VectorMA(target, ((self->enemy->maxs[1]+GetRandom(12, 24))*crandom()), right, target);
 
 		VectorSubtract(target, start, forward);
 		VectorNormalize(forward);

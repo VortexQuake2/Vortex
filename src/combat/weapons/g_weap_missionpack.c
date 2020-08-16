@@ -1,5 +1,8 @@
 #include "g_local.h"
 
+// from g_weapon.c
+void check_dodge (edict_t *self, vec3_t start, vec3_t dir, int speed, int radius);
+
 // RAFAEL
 /*
 =================
@@ -14,7 +17,7 @@ void ionripper_sparks (edict_t *self)
     gi.WriteByte (0);
     gi.WritePosition (self->s.origin);
     gi.WriteDir (vec3_origin);
-    gi.WriteByte (0xe4 + (rand()&3));
+    gi.WriteByte (0xe4 + (randomMT()&3));
     gi.multicast (self->s.origin, MULTICAST_PVS);
 
     G_FreeEdict (self);

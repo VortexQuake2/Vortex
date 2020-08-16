@@ -1,6 +1,26 @@
 #include "g_local.h"
 #include "../../characters/class_limits.h"
 
+void vrx_curse_heal_all(edict_t* target) {
+    int i;
+
+    //Use the potion
+    for (i = 0; i < QUE_MAXSIZE; ++i)
+    {
+        que_t *curse = &target->curses[i];
+        if ((curse->ent && curse->ent->inuse) && (curse->ent->atype != HEALING && curse->ent->atype != BLESS))
+        {
+            //destroy the curse
+            if (curse->ent->enemy && (curse->ent->enemy == target))
+                G_FreeEdict(curse->ent);
+            // remove entry from the queue
+            curse->time = 0;
+            curse->ent = NULL;
+        }
+    }
+}
+
+
 //************************************************************************************************
 //			Bless think
 //************************************************************************************************
@@ -56,7 +76,14 @@ void Healing_think(edict_t *self)
 	gi.linkentity(self);
 
 	//Next think time
-	self->nextthink = level.time + cooldown;
+	self->nextthink = level.time + 0.1;
+
+    // remove Bad curses every frame
+    vrx_curse_heal_all(self->enemy);
+
+    // can't heal or give armor until delay's over
+    if (level.time < self->delay)
+        return;
 
 	//Heal the target's armor
 	if (!self->enemy->client)
@@ -109,6 +136,8 @@ void Healing_think(edict_t *self)
 				self->enemy->client->pers.inventory[body_armor_index] = MAX_ARMOR(self->enemy);
 		}
 	}
+
+    self->delay = level.time + cooldown;
 }
 
 //************************************************************************************************
@@ -852,6 +881,7 @@ void Cmd_Healing(edict_t *ent)
 	if (target != NULL)
 	{
 		que_t *slot = NULL;
+
 		//Finish casting the spell
 		ent->client->ability_delay = level.time + HEALING_DELAY;
 		ent->client->pers.inventory[power_cube_index] -= HEALING_COST;
@@ -862,6 +892,7 @@ void Cmd_Healing(edict_t *ent)
 		{
 			slot->ent->think = Healing_think;
 			slot->ent->nextthink = level.time + FRAMETIME;
+			slot->ent->delay = level.time + FRAMETIME; // az act immediately
 		}
 
 		//Notify the target

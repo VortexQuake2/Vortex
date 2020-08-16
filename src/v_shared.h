@@ -319,4 +319,7 @@ qboolean SpawnWaitingPlayers(void);
 int vrx_get_ability_upgrade_cost(int index);
 void vrx_remove_chat_protect(edict_t* ent);
 
+// ****** curses.c ******
+void vrx_curse_heal_all(edict_t* target);
+
 #endif

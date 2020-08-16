@@ -722,7 +722,7 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 	}
 
 // try other directions
-	if ( ((rand()&3) & 1) ||  fabsf(deltay)>fabsf(deltax))
+	if ( ((randomMT()&3) & 1) ||  fabsf(deltay)>fabsf(deltax))
 	{
 		tdir=d[1];
 		d[1]=d[2];
@@ -742,7 +742,7 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 	if (olddir!=DI_NODIR && SV_StepDirection(actor, olddir, dist, true))
 			return;
 
-	if (rand()&1) 	/*randomly determine direction of search*/
+	if (randomMT()&1) 	/*randomly determine direction of search*/
 	{
 		for (tdir=0 ; tdir<=315 ; tdir += 45)
 			if (tdir!=turnaround && SV_StepDirection(actor, tdir, dist, true) )

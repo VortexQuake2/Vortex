@@ -8,8 +8,8 @@ char my_snd_configstrings[MAX_SOUNDS][MAX_QPATH];
 uint64_t my_snd_used_index[MAX_SOUNDS];
 uint64_t lru_index;
 
-void gi_sound_override (edict_t *ent, int channel, int soundindex, float volume, float attenuation, float timeofs);
-int gi_soundindex_override(char* str);
+void gi_sound_override (const edict_t *ent, int channel, int soundindex, float volume, float attenuation, float timeofs);
+int gi_soundindex_override(const char* str);
 
 // to be called after getgameapi
 void cs_override_init() {
@@ -30,7 +30,7 @@ void cs_reset() {
 }
 
 // override gi.configstring
-int gi_soundindex_override(char* str) {
+int gi_soundindex_override(const char* str) {
     int i = 0;
 
     if (!str || !str[0])
@@ -76,7 +76,7 @@ int gi_soundindex_override(char* str) {
     return 0; // az: whatever.
 }
 
-void gi_sound_override (edict_t *ent, int channel, int soundindex, float volume, float attenuation, float timeofs) {
+void gi_sound_override (const edict_t *ent, int channel, int soundindex, float volume, float attenuation, float timeofs) {
     if (soundindex >= 0 && soundindex < MAX_SOUNDS) {
         my_snd_used_index[soundindex] = lru_index++; // we've used this sound last...
         original_sound(ent, channel, soundindex, volume, attenuation, timeofs);

@@ -3,24 +3,34 @@
 
 
 void think_ability_ammo_regen(edict_t *ent) {
+    float amount_mult = 1;
     if (ent->myskills.abilities[AMMO_REGEN].disable)
         return;
 
-    if (ent->client->buttons & BUTTON_ATTACK)
-        return; // don't regenerate ammo while attacking
+    if (ent->client->buttons & BUTTON_ATTACK) {
+        amount_mult = 0.2f; // newvrx
+    }
 
     if (level.time > ent->client->ammo_regentime) {
-        V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.2,
+        float regen_level = (float)ent->myskills.abilities[AMMO_REGEN].current_level;
+
+        V_GiveAmmoClip(ent,
+                       regen_level * 0.2f * amount_mult,
                        AMMO_SHELLS);        //20% of a pack per point
-        V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.1,
+        V_GiveAmmoClip(ent,
+                       regen_level * 0.1f * amount_mult,
                        AMMO_BULLETS);        //10% of a pack per point
-        V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.1,
+        V_GiveAmmoClip(ent,
+                       regen_level * 0.1f * amount_mult,
                        AMMO_CELLS);        //10% of a pack per point
-        V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.2,
+        V_GiveAmmoClip(ent,
+                       regen_level * 0.2f * amount_mult,
                        AMMO_GRENADES);    //20% of a pack per point
-        V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.2,
+        V_GiveAmmoClip(ent,
+                       regen_level * 0.2f * amount_mult,
                        AMMO_ROCKETS);        //20% of a pack per point
-        V_GiveAmmoClip(ent, ent->myskills.abilities[AMMO_REGEN].current_level * 0.2,
+        V_GiveAmmoClip(ent,
+                       regen_level * 0.2f * amount_mult,
                        AMMO_SLUGS);        //20% of a pack per point
 
         ent->client->ammo_regentime = level.time + AMMO_REGEN_DELAY;
@@ -346,7 +356,7 @@ float V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse) {// assault 
             if (!G_ValidTarget(ent, other, true))
                 continue;
 
-            if (entdist(ent, other) > MAGMINE_RANGE * 2)
+            if (entdist(ent, other) > MAGMINE_RANGE)
                 continue;
 
             pull = MAGMINE_DEFAULT_PULL + MAGMINE_ADDON_PULL * ent->myskills.abilities[MAGMINE].level;

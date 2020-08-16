@@ -132,6 +132,30 @@ qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 	return true;
 }
 
+qboolean GiveKnightUpgrade(edict_t *ent, int WeaponIndex, int ModIndex) {
+    weapon_t *weapon;
+    int maxLevel = 40;		// Sword hard maximums for the knight are set to this number.
+
+    //Point to the correct weapon
+    weapon = &ent->myskills.weapons[WeaponIndex];
+
+    //Don't crash
+    if (ModIndex < 0 || ModIndex >= MAX_WEAPONMODS)
+        return false;
+
+    if (WeaponIndex == WEAPON_SWORD) { // same as WM
+        if(ModIndex < 4 && ModIndex != 1)
+        {
+            weapon->mods[ModIndex].soft_max = 20;
+            weapon->mods[ModIndex].hard_max = maxLevel;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
 //***********************************************************
 //		Reset player's weapon maximums
 //***********************************************************
@@ -149,8 +173,10 @@ void vrx_reset_weapon_maximums(edict_t *ent)
 			//Update the player's max levels ONLY IF they need it (ex: not loading a weapon from their player file)
 			if(ent->myskills.weapons[i].mods[j].soft_max == 0 || ent->myskills.weapons[i].mods[j].hard_max == 0)
 			{
-				//Weapon masters get a bonus to some upgrades
-				if (ent->myskills.class_num != CLASS_WEAPONMASTER || !GiveWeaponMasterUpgrade(ent, i, j))
+				//Weapon masters and knights get a bonus to some upgrades
+				if (ent->myskills.class_num != CLASS_WEAPONMASTER ||
+				    !GiveWeaponMasterUpgrade(ent, i, j) ||
+				    !GiveKnightUpgrade(ent, i, j))
 				{
 					if (j < 3)
 					{

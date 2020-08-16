@@ -69,7 +69,7 @@ void GetScorePosition ()
 
 int GetRandom(int min,int max)
 {	
-	return (rand() % (max+1-min)+min);
+	return (randomMT() % (max+1-min)+min);
 }
 
 qboolean findspawnpoint (edict_t *ent)
@@ -83,7 +83,7 @@ qboolean findspawnpoint (edict_t *ent)
   do {
     j++;
     for (i = 0; i < 3; i++)
-      loc[i] = rand() % (8192 + 1) - 4096;
+      loc[i] = randomMT() % (8192 + 1) - 4096;
     if (gi.pointcontents(loc) == 0)
     {
       VectorCopy(loc, floor);
@@ -118,7 +118,7 @@ csurface_t* FindSky()
 	{
 		// get a random position within a map
 		for (i=0;i<3;i++)
-			start[i] = rand() % (8192 + 1) - 4096;
+			start[i] = randomMT() % (8192 + 1) - 4096;
 		// is the point good?
 		if (gi.pointcontents(start) != 0)
 			continue;
@@ -149,7 +149,7 @@ qboolean vrx_find_random_spawn_point (edict_t *ent, qboolean air)
 	{
 		// get a random position within a map
 		for (i=0;i<3;i++)
-			start[i] = rand() % (8192 + 1) - 4096;
+			start[i] = randomMT() % (8192 + 1) - 4096;
 		// is the point good?
 		if (gi.pointcontents(start) != 0)
 			continue;
@@ -239,7 +239,7 @@ qboolean TeleportNearArea (edict_t *ent, vec3_t point, int area_size, qboolean a
 	for (i=0; i<50000; i++) {
 		for (j=0; j<3; j++) {
 			VectorCopy(point, start);
-			start[j] += rand() % (area_size + 1) - 0.5*area_size;
+			start[j] += randomMT() % (area_size + 1) - 0.5*area_size;
 			if (gi.pointcontents(start) != 0)
 				continue;
 			if (!air)

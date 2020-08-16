@@ -78,6 +78,8 @@ qboolean vrx_in_target_list(edict_t *ent) {
 	if (ent->monsterinfo.target_index >= 0 && ent->monsterinfo.target_index < potential_target_count) {
 		return potential_targets[ent->monsterinfo.target_index] == ent;
 	}
+
+	return false;
 }
 
 // az: findclosestradius_monmask except ents are only validated once.
@@ -1605,7 +1607,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 	// decoys make step sounds
 	if ((self->mtype == M_DECOY) && (level.time > self->wait)) 
 	{
-		gi.sound (self, CHAN_BODY, gi.soundindex(va("player/step%i.wav", (rand()%4)+1)), 1, ATTN_NORM, 0);
+		gi.sound (self, CHAN_BODY, gi.soundindex(va("player/step%i.wav", (randomMT()%4)+1)), 1, ATTN_NORM, 0);
 		self->wait = level.time + 0.3;
 	}
 
@@ -1827,7 +1829,7 @@ void drone_ai_run (edict_t *self, float dist)
 	// decoys make step sounds
 	if ((self->mtype == M_DECOY) && (level.time > self->wait)) 
 	{
-		gi.sound (self, CHAN_BODY, gi.soundindex(va("player/step%i.wav", (rand()%4)+1)), 1, ATTN_NORM, 0);
+		gi.sound (self, CHAN_BODY, gi.soundindex(va("player/step%i.wav", (randomMT()%4)+1)), 1, ATTN_NORM, 0);
 		self->wait = level.time + 0.3;
 	}
 

@@ -31,7 +31,7 @@ void mutant_jump (edict_t *self);
 void mutant_step (edict_t *self)
 {
 	int		n;
-	n = (rand() + 1) % 3;
+	n = (randomMT() + 1) % 3;
 	if (n == 0)
 		gi.sound (self, CHAN_VOICE, sound_step1, 1, ATTN_NORM, 0);		
 	else if (n == 1)

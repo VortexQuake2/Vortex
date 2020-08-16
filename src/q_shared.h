@@ -4,7 +4,7 @@
 #ifndef Q_SHARED
 #define Q_SHARED
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 // unknown pragmas are SUPPOSED to be ignored, but....
 #pragma warning(disable : 4244)     // MIPS
 #pragma warning(disable : 4136)     // X86

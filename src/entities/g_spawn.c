@@ -688,6 +688,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	// az begin
 	V_VoteReset();
 	cs_reset();
+	seedMT(time(NULL));
 	// az end
 
 	g_freeEdictsH = g_freeEdictsT = NULL;
