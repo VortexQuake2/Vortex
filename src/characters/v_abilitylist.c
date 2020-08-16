@@ -1,6 +1,7 @@
 #include "g_local.h"
 
 abilitydef_t *abilities_by_index[MAX_ABILITIES];
+uint8_t ability_class[MAX_ABILITIES];
 
 abilitydef_t ability_general[] = {
         {VITALITY,        0, DEFAULT_SOFTMAX,  1},
@@ -295,8 +296,12 @@ int getHardMax(int index, qboolean general, int class) {
                         return abilities_by_index[index]->softmax * 2;
                     }
 
-                } else
-                    return (int) (abilities_by_index[index]->softmax * 2);
+                } else { // general ability mode
+                    if (class == ability_class[index])
+                        return (int) (abilities_by_index[index]->softmax * 2);
+                    else
+                        return (int) (abilities_by_index[index]->softmax);
+                }
             } else
                 return abilities_by_index[index]->softmax;
     }
@@ -421,8 +426,12 @@ void vrx_init_ability_list() {
     int i;
     // gi.dprintf("INFO: Initializing ability list... ");
 
-    for (i = 0; i < MAX_ABILITIES; i++)
+    for (i = 0; i < MAX_ABILITIES; i++) {
         abilities_by_index[i] = NULL;
+        ability_class[i] = 0;
+    }
+
+
 
     for (i = 0; i < CLASS_MAX; i++) {
         // iterate through our pointer list
@@ -432,10 +441,14 @@ void vrx_init_ability_list() {
         while (first->index != -1) {
             if (abilities_by_index[first->index]) {
                 // get the one with the highest softmax
-                if (abilities_by_index[first->index]->softmax < first->softmax)
+                if (abilities_by_index[first->index]->softmax < first->softmax) {
                     abilities_by_index[first->index] = first;
-            } else
+                    ability_class[first->index] = i;
+                }
+            } else {
                 abilities_by_index[first->index] = first;
+                ability_class[first->index] = i;
+            }
 
 #ifdef _DEBUG
             if (getHardMax(first->index, first->general, i) < first->softmax) {
