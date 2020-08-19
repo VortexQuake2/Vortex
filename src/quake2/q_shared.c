@@ -1145,7 +1145,7 @@ Com_PageInMemory
 */
 int	paged_total;
 
-void Com_PageInMemory (byte *buffer, int size)
+void Com_PageInMemory (const byte *buffer, int size)
 {
 	int		i;
 
@@ -1176,7 +1176,7 @@ int Q_stricmp (char *s1, char *s2)
 
 int Q_strncasecmp (const char * s1, const char * s2, int n)
 {
-	int		c1, c2;
+	char		c1, c2;
 	
 	do
 	{
@@ -1200,7 +1200,7 @@ int Q_strncasecmp (const char * s1, const char * s2, int n)
 	return 0;		// strings are equal
 }
 
-int Q_strcasecmp (char *s1, char *s2)
+int Q_strcasecmp (const char *s1, const char *s2)
 {
 	return Q_strncasecmp (s1, s2, 99999);
 }

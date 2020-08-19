@@ -1544,16 +1544,6 @@ void CTF_SpawnPlayersInBase (int teamnum)
 
 		G_ResetPlayerState(cl_ent);
 
-		// return player-monster to human form
-		/*
-		if (PM_PlayerHasMonster(cl_ent))
-		{
-			PM_UpdateChasePlayers(cl_ent->owner);
-			M_Remove(cl_ent->owner, true);
-			PM_RestorePlayer(cl_ent);
-		}
-		*/
-
 		// find team spawn point
 		if ((spot = CTF_SelectTeamSpawnPoint(cl_ent)) != NULL)
 		{

@@ -15,7 +15,8 @@ void CountVotes();
 votes_t currentVote = {false, 0, 0, "", ""};
 int numVotes = 0, numVoteNo;
 char* text1 = NULL, *text2 = NULL, *smode = NULL;
-float voteTimeLeft = 0;
+uint64_t voteTimeLeft = 0; // az: changed to frame-based because imprecision led to funky behaviour
+qboolean voteRunning = false;
 edict_t *voter;
 static char strBuffer[1024];
 #endif
@@ -25,7 +26,7 @@ static char strBuffer[1024];
 #ifndef OLD_VOTE_SYSTEM
 qboolean V_VoteInProgress()
 {
-	return voteTimeLeft > 0;
+	return voteRunning;
 }
 #endif
 
@@ -38,6 +39,8 @@ void V_VoteReset() {
 	numVotes = 0;
 	numVoteNo = 0;
 	voteTimeLeft = 0;
+	voteRunning = false;
+
 	memset (&currentVote, 0, sizeof(currentVote));
 
 	for_each_player(e, i)
@@ -434,7 +437,8 @@ void AddVote(edict_t *ent, int mode, int mapnum)
 		currentVote.mapindex = mapnum;
 		currentVote.mode = mode;
 		currentVote.used = true;
-		voteTimeLeft = level.time + 90;
+		voteTimeLeft = level.framenum + qf2sf(900);
+		voteRunning = true;
 
 
 		Com_sprintf (tempBuffer, 1024, "%s started a vote for ", ent->myskills.player_name);
@@ -464,8 +468,8 @@ void AddVote(edict_t *ent, int mode, int mapnum)
 		G_PrintGreenText(tempBuffer2);
 		gi.sound(&g_edicts[0], CHAN_VOICE, gi.soundindex("misc/comp_up.wav"), 1, ATTN_NONE, 0);
 
-
-		gi.bprintf (PRINT_HIGH, "Please place your vote by typing 'vote yes' or 'vote no' within the next %d seconds.\n", floattoint(voteTimeLeft-level.time));
+        uint64_t timeRem = (voteTimeLeft-level.framenum) / (uint64_t)sv_fps->value;
+		gi.bprintf (PRINT_HIGH, "Please place your vote by typing 'vote yes' or 'vote no' within the next %u seconds.\n", timeRem);
 
 	}
 	else 
@@ -690,16 +694,16 @@ int V_AttemptModeChange(qboolean endlevel)
 
 void RunVotes ()
 {
-	if (voteTimeLeft == -1)
+	if (!voteRunning)
 		return;
 
-	if (voteTimeLeft == level.time+60.0f)
+	if (voteTimeLeft == level.framenum+qf2sf(600))
 		gi.bprintf (PRINT_CHAT, "One minute left to place your vote.\n");
-	else if (voteTimeLeft == level.time+30.0f)
+	else if (voteTimeLeft == level.framenum+qf2sf(300))
 		gi.bprintf (PRINT_CHAT, "Thirty seconds left to place your vote.\n");
-	else if (voteTimeLeft == level.time+10)
+	else if (voteTimeLeft == level.framenum+qf2sf(100))
 		gi.bprintf (PRINT_CHAT, "Ten seconds left to place your vote.\n");
-	else if (voteTimeLeft == level.time)
+	else if (voteTimeLeft <= level.framenum)
 	{
 		// Finish vote
 		// Did we reach a majority?
@@ -707,7 +711,8 @@ void RunVotes ()
 		{
 			// Tell everyone
 			G_PrintGreenText("A majority was reached! Vote passed!\n");
-			voteTimeLeft = -1;
+			voteRunning = false;
+
 			//Change the map
 			// az note: internally, V_ChangeMap will reset the votes!
 			EndDMLevel();
@@ -754,8 +759,6 @@ void RunVotes()
 //************************************************************************************************
 //		**VOTE MAP SELECT MENU**
 //************************************************************************************************
-
-extern cvar_t *adminctrl;
 
 void ShowVoteMapMenu_handler(edict_t *ent, int option)
 {
@@ -1032,12 +1035,10 @@ void ShowVoteModeMenu(edict_t *ent)
 
 	char *cmd2 = gi.argv(1);
 
-	if (voteTimeLeft == -1)
-		return;
-
 	//Voting enabled?
 	if (!voting->value)
 		return;
+
 	// don't allow non-admin voting during pre-game to allow players time to connect
 	if (!ent->myskills.administrator && (level.time < 5.0)) // allow 5 seconds for players to connect
 	{

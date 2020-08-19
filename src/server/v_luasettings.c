@@ -95,7 +95,7 @@ int q2lua_cvar_set(lua_State *L)
 
 int q2lua_svcmd(lua_State *L)
 {
-	char *command = luaL_checkstring(L, 1);
+	const char *command = luaL_checkstring(L, 1);
 	gi.AddCommandString(command);
 	return 0;
 }

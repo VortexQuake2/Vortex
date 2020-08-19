@@ -1468,7 +1468,7 @@ void stuffcmd(edict_t *ent, char *s)
 {
 	if(ent->svflags & SVF_MONSTER) return;
 
-   	gi.WriteByte (11);	        
+   	gi.WriteByte (svc_stufftext);
 	gi.WriteString (s);
     gi.unicast (ent, true);	
 }

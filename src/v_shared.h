@@ -34,9 +34,9 @@ typedef struct {
     int general;
 } abilitydef_t;
 
-typedef abilitydef_t *abilitylist_t;
+typedef const abilitydef_t *abilitylist_t;
 
-abilitydef_t *vrx_get_ability_by_index(int index);
+const abilitydef_t * vrx_get_ability_by_index(int index);
 /**************** v_abilitylist.c ***************/
 
 //************ lasersight.c ************
@@ -149,7 +149,7 @@ char *V_GetMonsterName(edict_t *monster);
 
 char *GetAbilityString(int ability_number);
 
-abilitydef_t *vrx_get_class_rune_stat(int class_index);
+const abilitydef_t * vrx_get_class_rune_stat(int class_index);
 
 const char *GetRuneValString(item_t *rune);
 

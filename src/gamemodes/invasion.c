@@ -437,7 +437,11 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
 			else if (invasion->value == 2)
 				monster->monsterinfo.inv_framenum = level.framenum + (int)(8 / FRAMETIME); // Hard mode invin
 		}
+	} else {
+        // remove any existing invuln. from boss
+        monster->monsterinfo.inv_framenum = level.framenum - 1;
 	}
+
 	gi.linkentity(monster);
 	return monster;
 }

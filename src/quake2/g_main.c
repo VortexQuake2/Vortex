@@ -912,17 +912,17 @@ void G_RunPregame()
 }
 
 double scale_fps(double value) {
-	return value * 10.0f / sv_fps->value;
+	return value * 10.0 / sv_fps->value;
 }
 
-int sf2qf(int framecount) {
-	float ratio = 10.0f / sv_fps->value;
-	return (int)roundf(framecount * ratio);
+uint64_t sf2qf(uint64_t framecount) {
+	double ratio = 10.0 / sv_fps->value;
+	return (uint64_t)round(framecount * ratio);
 }
 
-int qf2sf(double framecount) {
-	float ratio = sv_fps->value / 10.0f;
-	return (int)roundf(framecount * ratio);
+uint64_t qf2sf(uint64_t frames) {
+	double ratio = sv_fps->value / 10.0f;
+	return (uint64_t)round(frames * ratio);
 }
 
 /*

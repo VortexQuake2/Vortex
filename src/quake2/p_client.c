@@ -295,113 +295,6 @@ qboolean MonsterObits (edict_t *player, edict_t *monster)
 	return true;
 }
 
-//K03 Begin
-qboolean Monster_Obits (edict_t *victim, edict_t *attacker)
-{
-    char *message1="";
-    char *message2="";
-
-    // Make sure both attacker and victim still in game!
-    if (attacker == NULL || 
-		attacker->activator == NULL || 
-		attacker->activator->client == NULL ||
-		victim == NULL)
-        return false;
-
-	if (!victim->client)
-		return true;
-
-    message1="was killed by";
-
-    // What type of monster was this?
-    switch (attacker->mtype)
-    {
-        case M_BERSERK:
-            message2="'s Berserker";
-            break;
-        case M_BOSS2:
-            message2="'s Boss";
-            break;
-        case M_SOLDIERSS:
-            message2="'s Machinegun Soldier";
-            break;
-        case M_JORG:
-            message2="'s Jorg";
-            break;
-        case M_BRAIN:
-            message2="'s Brain";
-            break;
-        case M_CHICK:
-            message2="'s Chick";
-            break;
-        case M_FLIPPER:
-            message2="'s Shark";
-            break;
-        case M_FLOATER:
-            break;
-        case M_FLYER:
-            message2="'s Flyer";
-            break;
-        case M_INSANE:
-            message2="'s Insane"; // how the hell does this work? -(nobody)
-            break;
-        case M_GLADIATOR:
-            message2="'s Gladiator";
-            break;
-        case M_HOVER:
-            message2="'s Icarus";
-            break;
-        case M_INFANTRY:
-            message2="'s Infantry";
-            break;
-        case M_SOLDIERLT:
-            message2="'s Blaster Guard";
-            break;
-        case M_SOLDIER:
-            message2="'s Shark";
-            break;
-        case M_MEDIC:
-            message2="'s Medic";
-            break;
-        case M_MUTANT:
-            message2="'s Mutant";
-            break;
-        case M_PARASITE:
-            message2="'s Parasite";
-            break;
-        case M_TANK:
-            message2="'s Tank";
-            break;
-        case M_MAKRON:
-            message2="'s Makron";
-            break;
-        case M_GUNNER:
-            message2="'s Gunner";
-            break;
-        case M_SUPERTANK:
-            message2="'s Supertank";
-            break;
-		case M_YANGSPIRIT:
-		case M_YINSPIRIT:
-		case M_BALANCESPIRIT:
-			message1 = "was defeated by";
-			message2 = va("'s %s", attacker->classname);				
-			break;	//3.03 Spirit skill
-        default:
-			return false;
-    } // end switch
-
-    // Print the obituary message..
-	if (victim->client && attacker && attacker->activator && attacker->activator->client) {
-		gi.bprintf(PRINT_MEDIUM,"%s %s %s%s\n", victim->client->pers.netname, message1, attacker->activator->client->pers.netname, message2);
-	}
-
-	//3.0 Monster killed the enemy
-	attacker->enemy = NULL;
-    return true;
-}
-//K03 End
-
 
 void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 {
@@ -1621,41 +1514,6 @@ void body_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage,
 	}
 }
 
-//K03 Begin
-void floatbody(edict_t *ent)
-{
-   if (!(ent->flipping & FLIP_WATER))
-      {
-      ent->s.origin[2] -= 18;
-      if (gi.pointcontents (ent->s.origin) & MASK_WATER)
-         {
-         ent->s.origin[2] += 3;
-         ent->nextthink = level.time + .1;
-         if (!(gi.pointcontents (ent->s.origin) & MASK_WATER))
-            {
-            ent->flipping |= FLIP_WATER;
-            ent->style = 1;
-            ent->speed = ent->s.origin[2] + 16;
-            ent->accel = ent->s.origin[2] + 18;
-            ent->decel = level.time + 4 + (randomMT() % 10);
-            }
-         }
-      ent->s.origin[2] += 18;
-      }
-   else
-      {
-      //if (ent->s.origin[2] > ent->accel || ent->s.origin[2] < ent->speed) 
-      //   ent->style = -ent->style;
-      //ent->s.origin[2] += ent->style;   
-      ent->nextthink = level.time + .2;
-      if (ent->decel < level.time)
-         {
-         gi.sound (ent, CHAN_VOICE, gi.soundindex(va("player/wade%i.wav", (randomMT()%3)+1)), .6, ATTN_STATIC, 0);
-         ent->decel = level.time + 4 + (randomMT() % 10);
-         }
-      }
-}
-//K03 End
 void body_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
 	vec3_t	forward, right, start, offset;
@@ -2219,9 +2077,6 @@ The game can override any of the settings in place
 (forcing skins or names, etc) before copying it off.
 ============
 */
-//K03 Begin
-qboolean Is_Observer(edict_t *self);
-//K03 End
 void ClientUserinfoChanged (edict_t *ent, char *userinfo)
 {
 	char	*s;
@@ -2597,14 +2452,6 @@ trace_t	PM_trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end)
 		return gi.trace (start, mins, maxs, end, pm_passent, MASK_DEADSOLID);
 }
 
-unsigned CheckBlock (void *b, int c)
-{
-	int	v,i;
-	v = 0;
-	for (i=0 ; i<c ; i++)
-		v+= ((byte *)b)[i];
-	return v;
-}
 
 /*
 ==============
@@ -2623,8 +2470,6 @@ void UpdateMirroredEntities (edict_t *ent);
 void LeapAttack (edict_t *ent);
 
 float V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse);
-
-// pmove_t V_Think_ApplySuperSpeed(edict_t *ent, const usercmd_t *ucmd, gclient_t *client, int i, pmove_t *pm, int viewheight);
 
 void think_trade(edict_t *ent);
 

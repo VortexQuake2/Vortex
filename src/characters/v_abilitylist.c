@@ -1,9 +1,9 @@
 #include "g_local.h"
 
-abilitydef_t *abilities_by_index[MAX_ABILITIES];
-uint8_t ability_class[MAX_ABILITIES];
+const abilitydef_t *abilities_by_index[MAX_ABILITIES];
+uint8_t ability_class[MAX_ABILITIES][CLASS_MAX]; // whether ability i is in character class k (1 or 0)
 
-abilitydef_t ability_general[] = {
+const abilitydef_t ability_general[] = {
         {VITALITY,        0, DEFAULT_SOFTMAX,  1},
         {MAX_AMMO,        0, DEFAULT_SOFTMAX,  1},
         {POWER_REGEN,     1, DEFAULT_SOFTMAX,                1},
@@ -24,7 +24,7 @@ abilitydef_t ability_general[] = {
         {-1,              0, 0,                0} // Guardian (Add skills above this)
 };
 
-abilitydef_t ability_soldier[] = {
+const abilitydef_t ability_soldier[] = {
         {STRENGTH,      0, DEFAULT_SOFTMAX,   0},
         {RESISTANCE,    0, DEFAULT_SOFTMAX,   0},
         {NAPALM,        0, DEFAULT_SOFTMAX,   0},
@@ -38,7 +38,7 @@ abilitydef_t ability_soldier[] = {
         {-1,            0, 0,                 0} // Guardian (Add skills above this)
 };
 
-abilitydef_t ability_vampire[] = {
+const abilitydef_t ability_vampire[] = {
         {VAMPIRE,        0, DEFAULT_SOFTMAX,   0},
         {GHOST,          0, DEFAULT_SOFTMAX,   0},
         {LIFE_DRAIN,     0, DEFAULT_SOFTMAX,   0},
@@ -51,7 +51,7 @@ abilitydef_t ability_vampire[] = {
         {-1,             0, 0,                 0} // Guardian (Add skills above this)
 };
 
-abilitydef_t ability_necromancer[] = { // NECROMANCER
+const abilitydef_t ability_necromancer[] = { // NECROMANCER
 
         {MONSTER_SUMMON, 0, DEFAULT_SOFTMAX,   0},
         {HELLSPAWN,      0, DEFAULT_SOFTMAX,   0},
@@ -65,7 +65,7 @@ abilitydef_t ability_necromancer[] = { // NECROMANCER
         {-1,             0, 0,                 0} // Guardian (Add skills above this)
 };
 
-abilitydef_t ability_engineer[] = { // ENGINEER
+const abilitydef_t ability_engineer[] = { // ENGINEER
         {PROXY,           0, DEFAULT_SOFTMAX,   0},
         {BUILD_SENTRY,    0, DEFAULT_SOFTMAX,   0},
         {SUPPLY_STATION,  0, DEFAULT_SOFTMAX,   0},
@@ -80,7 +80,7 @@ abilitydef_t ability_engineer[] = { // ENGINEER
         {-1,              0, 0,                 0} // Guardian (Add skills above this)
 };
 
-abilitydef_t ability_shaman[] = { // SHAMAN
+const abilitydef_t ability_shaman[] = { // SHAMAN
         {FIRE_TOTEM,    0, DEFAULT_SOFTMAX, 0},
         {WATER_TOTEM,   0, DEFAULT_SOFTMAX, 0},
         {AIR_TOTEM,     0, DEFAULT_SOFTMAX, 0},
@@ -94,7 +94,7 @@ abilitydef_t ability_shaman[] = { // SHAMAN
         {-1,            0, 0,               0} // Guardian (Add skills above this)
 };
 
-abilitydef_t ability_mage[] = { // MAGE
+const abilitydef_t ability_mage[] = { // MAGE
         {MAGICBOLT,       0, DEFAULT_SOFTMAX,   0},
         {NOVA,            0, DEFAULT_SOFTMAX,   0},
         {BOMB_SPELL,      0, DEFAULT_SOFTMAX,   0},
@@ -107,7 +107,7 @@ abilitydef_t ability_mage[] = { // MAGE
         {-1,              0, 0,                 0} // Guardian (Add skills above this)
 };
 
-abilitydef_t ability_cleric[] = {
+const abilitydef_t ability_cleric[] = {
         {SALVATION,   0, DEFAULT_SOFTMAX, 0},
         {HEALING,     0, DEFAULT_SOFTMAX, 0},
         {BLESS,       0, DEFAULT_SOFTMAX, 0},
@@ -121,7 +121,7 @@ abilitydef_t ability_cleric[] = {
         {-1,          0, 0,               0} // Guardian (Add skills above this)
 };
 
-abilitydef_t ability_knight[] = { // knight
+const abilitydef_t ability_knight[] = { // knight
 
         {ARMOR_UPGRADE, 0, DEFAULT_SOFTMAX,   0},
         {REGENERATION,  0, DEFAULT_SOFTMAX,   0},
@@ -134,7 +134,7 @@ abilitydef_t ability_knight[] = { // knight
         {-1,            0, 0,                 0} // Guardian (Add skills above this)
 };
 
-abilitydef_t ability_alien[] = {
+const abilitydef_t ability_alien[] = {
         {SPIKER,    0, DEFAULT_SOFTMAX, 0},
         {OBSTACLE,  0, DEFAULT_SOFTMAX, 0},
         {GASSER,    0, DEFAULT_SOFTMAX, 0},
@@ -147,7 +147,7 @@ abilitydef_t ability_alien[] = {
         {-1,        0, 0,               0} // Guardian (Add skills above this)
 };
 
-abilitydef_t ability_poltergeist[] = {
+const abilitydef_t ability_poltergeist[] = {
         {MORPH_MASTERY, 1, 1,               0},
         {BERSERK,       1, DEFAULT_SOFTMAX, 0},
         {CACODEMON,     1, DEFAULT_SOFTMAX, 0},
@@ -161,12 +161,12 @@ abilitydef_t ability_poltergeist[] = {
         {-1,            0, 0,               0} // Guardian (Add skills above this)
 };
 
-abilitydef_t ability_weaponmaster[] = {
+const abilitydef_t ability_weaponmaster[] = {
         {-1, 0, 0, 0} // Guardian (Add skills above this)
 };
 
 // needs to match class enum
-abilitylist_t abilities_by_class[] = {
+const abilitylist_t abilities_by_class[] = {
         ability_general,
         ability_soldier,
         ability_poltergeist,
@@ -181,7 +181,7 @@ abilitylist_t abilities_by_class[] = {
         ability_weaponmaster,
 };
 
-abilitydef_t *vrx_get_ability_by_index(int index) {
+const abilitydef_t * vrx_get_ability_by_index(int index) {
     
     if (index < 0 || index >= MAX_ABILITIES)
         return NULL;
@@ -197,7 +197,7 @@ void vrx_assign_abilities(edict_t *ent) {
     if (ent->myskills.class_num == CLASS_WEAPONMASTER || generalabmode->value) {
         int i;
         for (i = 0; i < MAX_ABILITIES; i++) {
-            abilitydef_t *first = abilities_by_index[i];
+            const abilitydef_t *first = abilities_by_index[i];
 
             if (first) {
                 int real_max = first->softmax;
@@ -216,7 +216,7 @@ void vrx_assign_abilities(edict_t *ent) {
 
     // enable class skills
     if (ent->myskills.class_num != CLASS_WEAPONMASTER) {
-        abilitydef_t *first = abilities_by_class[ent->myskills.class_num];
+        const abilitydef_t *first = abilities_by_class[ent->myskills.class_num];
         while (first->index != -1) {
             //gi.dprintf("enabled ability %s\n", GetAbilityString(first->index));
             vrx_enable_ability(ent, first->index, first->start, first->softmax, first->general);
@@ -227,7 +227,7 @@ void vrx_assign_abilities(edict_t *ent) {
     // enable general skills
     // has to be done after enabling all skills and class skills
     // since we check if there's a class version already enabled.
-    abilitydef_t *first = abilities_by_class[0];
+    const abilitydef_t *first = abilities_by_class[0];
     while (first->index != -1) {
         //gi.dprintf("enabled ability %s\n", GetAbilityString(first->index));
         // if this ability doesn't have a class specialization, or is disabled, use our general version
@@ -297,7 +297,7 @@ int getHardMax(int index, qboolean general, int class) {
                     }
 
                 } else { // general ability mode
-                    if (class == ability_class[index])
+                    if (ability_class[index][class] != 0) // current class has this ability
                         return (int) (abilities_by_index[index]->softmax * 2);
                     else
                         return (int) (abilities_by_index[index]->softmax);
@@ -384,10 +384,10 @@ Using ability lists, this will always be up to date, and it'll always be relevan
 
 abilitydef_t null_ab = {-1, 0, 0, 0};
 
-abilitydef_t *vrx_get_class_rune_stat(int class_index) {
+const abilitydef_t * vrx_get_class_rune_stat(int class_index) {
     int ability_index;
     int count = 0;
-    abilitydef_t *first, *current;
+    const abilitydef_t *first, *current;
 
     // find in our ability list for this class
     first = abilities_by_class[class_index];
@@ -411,8 +411,8 @@ abilitydef_t *vrx_get_class_rune_stat(int class_index) {
         return &null_ab;
 }
 
-abilitydef_t *vrx_get_random_ability() {
-    abilitydef_t *ability;
+const abilitydef_t * vrx_get_random_ability() {
+    const abilitydef_t *ability;
 
     ability = abilities_by_index[GetRandom(0, MAX_ABILITIES - 1)];
     while (!ability)
@@ -422,18 +422,13 @@ abilitydef_t *vrx_get_random_ability() {
 }
 
 void vrx_init_ability_list() {
-    abilitydef_t *first;
-    int i;
+    const abilitydef_t *first;
     // gi.dprintf("INFO: Initializing ability list... ");
 
-    for (i = 0; i < MAX_ABILITIES; i++) {
-        abilities_by_index[i] = NULL;
-        ability_class[i] = 0;
-    }
+    memset(abilities_by_index, 0, sizeof abilities_by_index);
+    memset(ability_class, 0, sizeof ability_class);
 
-
-
-    for (i = 0; i < CLASS_MAX; i++) {
+    for (int i = 0; i < CLASS_MAX; i++) {
         // iterate through our pointer list
         first = abilities_by_class[i];
 
@@ -443,18 +438,17 @@ void vrx_init_ability_list() {
                 // get the one with the highest softmax
                 if (abilities_by_index[first->index]->softmax < first->softmax) {
                     abilities_by_index[first->index] = first;
-                    ability_class[first->index] = i;
                 }
             } else {
                 abilities_by_index[first->index] = first;
-                ability_class[first->index] = i;
             }
+
+            ability_class[first->index][i] = 1;
 
 #ifdef _DEBUG
             if (getHardMax(first->index, first->general, i) < first->softmax) {
                 gi.dprintf("warning: ability '%s' (%d) has hardmax < softmax\n", GetAbilityString(first->index), first->index);
             }
-
 #endif
             first++;
         }
@@ -464,12 +458,12 @@ void vrx_init_ability_list() {
 }
 
 int vrx_get_last_enabled_skill_index(edict_t *ent, int mode) {
-    int i, returnindex;
-    for (i = 0; i < MAX_ABILITIES; i++) {
+    int return_index;
+    for (int i = 0; i < MAX_ABILITIES; i++) {
         if (!ent->myskills.abilities[i].disable) {
             if (ent->myskills.abilities[i].general_skill == mode)
-                returnindex = i;
+                return_index = i;
         }
     }
-    return returnindex;
+    return return_index;
 }

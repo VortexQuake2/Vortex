@@ -231,7 +231,7 @@ void vrx_join_redundant_ability_mods(edict_t *rune, int mod_index)
 
 
 /* az- With this, our rune generation woes are finished, finally! */
-abilitydef_t *vrx_get_random_ability();
+const abilitydef_t * vrx_get_random_ability();
 void V_CreateAbilityModifier(edict_t *rune, qboolean is_class, int i, int targ_level) {
     abilitydef_t *ability; // Get ability description
     int hard_max;

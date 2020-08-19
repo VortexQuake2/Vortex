@@ -80,7 +80,7 @@ void Cmd_PrintCommandList(edict_t *ent);
 
 #define CommandTotal sizeof(commands) / sizeof(gameCommand_s)
 
-gameCommand_s commands[] = 
+const gameCommand_s commands[] =
 {
 	{ "medic", 			Cmd_PlayerToMedic_f },
 	{ "autocannon", 	Cmd_AutoCannon_f },
@@ -217,7 +217,7 @@ void InitHash()
 
 	for (i = 0; i < CommandTotal; i++)
 	{
-		int index = fnv_32a_str(commands[i].FunctionName, FNV1_32A_INIT) % (MAXCOMMANDS);
+		unsigned int index = fnv_32a_str(commands[i].FunctionName, FNV1_32A_INIT) % (MAXCOMMANDS);
 		memcpy(&hashedList[index], &commands[i], sizeof(gameCommand_s));
 	}
 
@@ -229,7 +229,7 @@ void InitHash()
 
 qboolean VortexCommand(char* command, edict_t* ent)
 {
-	int index;
+	unsigned int index;
 
 	if (G_IsSpectator(ent))
 		return false;

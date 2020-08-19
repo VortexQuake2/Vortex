@@ -309,7 +309,7 @@ float vrx_get_target_alliance_bonus(const edict_t *attacker, const edict_t *targ
 void vrx_get_player_kill_xp(edict_t *attacker, const edict_t *target, float level_diff, float dmgmod,
                             int *base_exp, int *credits, int *break_points, float *bonus);
 
-void vrx_do_nfer_effects(edict_t *attacker, edict_t *target);
+void vrx_do_nfer_effects(const edict_t *attacker, const edict_t *target);
 
 void vrx_get_monster_xp(
         edict_t *attacker,
@@ -801,7 +801,7 @@ float vrx_get_nfer_bonus(edict_t *attacker, const edict_t *target, float bonus) 
     return bonus;
 }
 
-void vrx_do_nfer_effects(edict_t *attacker, edict_t *target) {
+void vrx_do_nfer_effects(const edict_t *attacker, const edict_t *target) {
     if (attacker->nfer == 4) {
         gi.sound(attacker, CHAN_VOICE, gi.soundindex("misc/assasin.wav"), 1, ATTN_NORM, 0);
     } else if (attacker->nfer == 5) {
@@ -818,7 +818,7 @@ void vrx_add_team_exp(edict_t *ent, int points) {
     float level_diff;
     edict_t *player;
 
-    for (i = 1; i <= maxclients->value; i++) {
+    for (i = 1; i <= (int)maxclients->value; i++) {
         player = &g_edicts[i];
         if (!player->inuse)
             continue;

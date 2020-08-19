@@ -109,10 +109,10 @@ extern long FLAG_FRAMES;
 double scale_fps(double value);
 
 // server frame count to fixed-time quake 2 frame count
-int sf2qf(int frames);
+uint64_t sf2qf(uint64_t framecount);
 
 // fixed-time quake 2 frame count to server frame count
-int qf2sf(double frames);
+uint64_t qf2sf(uint64_t frames);
 
 // memory tags to allow dynamic memory to be cleaned up
 #define	TAG_GAME	765		// clear when unloading the dll
@@ -411,16 +411,15 @@ typedef struct
 //
 typedef struct
 {
-	int			framenum;
-	int			real_framenum;
-	float		time;
+	uint64_t			framenum;
+	double      		time;
 
 	char		level_name[MAX_QPATH];	// the descriptive name (Outer Base, etc)
 	char		mapname[MAX_QPATH];		// the server name (base1, etc)
 	char		nextmap[MAX_QPATH];		// go here when fraglimit is hit
 
 	// intermission state
-	float		intermissiontime;		// time the intermission was started
+	double		intermissiontime;		// time the intermission was started
 	char		*changemap;
 	int			exitintermission;
 	vec3_t		intermission_origin;
@@ -1384,14 +1383,6 @@ void PlayerNoise(edict_t *who, vec3_t where, int type);
 void P_ProjectSource (gclient_t *client, vec3_t point, vec3_t distance, vec3_t forward, vec3_t right, vec3_t result);
 void Weapon_Generic (edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST, int FRAME_IDLE_LAST, int FRAME_DEACTIVATE_LAST, int *pause_frames, int *fire_frames, void (*fire)(edict_t *ent));
 
-
-//
-// m_move.c
-//
-qboolean M_CheckBottom (edict_t *ent);
-qboolean M_walkmove (edict_t *ent, float yaw, float dist);
-void M_MoveToGoal (edict_t *ent, float dist);
-void M_ChangeYaw (edict_t *ent);
 
 //
 // g_phys.c

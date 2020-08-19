@@ -1965,21 +1965,9 @@ qboolean V_ArmorCache(edict_t *ent, int max_per_second, int update_frequency) {
 }
 
 void vrx_reset_player_state(edict_t *ent) {
-    if (PM_PlayerHasMonster(ent)) {
+    if (PM_PlayerHasMonster(ent) || ent->mtype) {
         // restore the player to original state
         V_RestoreMorphed(ent, 0);
-    }
-
-    // restore morphed player state
-    if (ent->mtype) {
-        ent->viewheight = 22;
-        ent->mtype = 0;
-        ent->s.modelindex = 255;
-        ent->s.skinnum = ent - g_edicts - 1;
-        ShowGun(ent);
-
-        // reset flyer rocket lock-on frames
-        ent->client->lock_frames = 0;
     }
 
     // reset railgun sniper frames
