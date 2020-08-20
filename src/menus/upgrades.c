@@ -401,8 +401,7 @@ void OpenMultiUpgradeMenu (edict_t *ent, int lastline, int page, int generaltype
         next_option = true;
     }
 
-    if (generaltype == 1)
-        addlinetomenu(ent, "Previous", 300 + page);
+    addlinetomenu(ent, "Previous", 300 + page);
 
     addlinetomenu(ent, "Exit", 999);
 	

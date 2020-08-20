@@ -223,25 +223,68 @@ qboolean StartClient(edict_t *ent)
 	return false;
 }
 
-void joinmenu_handler (edict_t *ent, int option)
+void motdmenu_handler (edict_t *ent, int option)
 {
-	switch (option)
-	{
-	case 1:
-		gi.sound(ent, CHAN_AUTO, gi.soundindex("misc/startup.wav"), 1, ATTN_NORM, 0);
-		//If no GDS is running, join the game right away.
+    switch (option)
+    {
+        case 1:
+            gi.sound(ent, CHAN_AUTO, gi.soundindex("misc/startup.wav"), 1, ATTN_NORM, 0);
+            //If no GDS is running, join the game right away.
 #ifndef NO_GDS
-		if(savemethod->value != 2)
+            if(savemethod->value != 2)
 #endif
-			JoinTheGame(ent);
+            JoinTheGame(ent);
 #ifndef NO_GDS
-		else
+            else
 		{
 			safe_centerprintf(ent, "You have been queued for Loading.\n Please wait.\n");
 			V_GDS_Queue_Add(ent, GDS_LOAD);
 		}
 #endif
-		break;
+            break;
+        case 2:
+            OpenJoinMenu(ent);
+    }
+}
+
+void OpenMOTDMenu (edict_t *ent)
+{
+    if (!ShowMenu(ent))
+        return;
+    clearmenu(ent);
+
+    //				    xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
+
+    addlinetomenu(ent, "Message of the Day", MENU_GREEN_CENTERED);
+    addlinetomenu(ent, "CTF Event, 1.5x EXP", MENU_WHITE_CENTERED);
+    addlinetomenu(ent, "Starts 08/22 12PM EST", MENU_WHITE_CENTERED);
+    addlinetomenu(ent, "Ends 08/23 10PM EST", MENU_WHITE_CENTERED);
+    addlinetomenu(ent, " ", 0);
+    addlinetomenu(ent, "discord.gg/bX7Updq", MENU_GREEN_CENTERED);
+    addlinetomenu(ent, " ", 0);
+    addlinetomenu(ent, "Rules", MENU_GREEN_CENTERED);
+    addlinetomenu(ent, "- No racism, sexism, or", 0);
+    addlinetomenu(ent, "targeted harassment.", MENU_WHITE_CENTERED);
+    addlinetomenu(ent, "- Do not exploit bugs.", 0);
+    addlinetomenu(ent, "- Be kind when discussing", 0);
+    addlinetomenu(ent, "balancing issues.", MENU_WHITE_CENTERED);
+    addlinetomenu(ent, "- No toxicity", 0);
+    addlinetomenu(ent, " ", 0);
+    addlinetomenu(ent, " ", 0);
+    addlinetomenu(ent, "Accept", 1);
+    addlinetomenu(ent, "Back", 2);
+
+    setmenuhandler(ent, motdmenu_handler);
+    ent->client->menustorage.currentline = 17;
+    showmenu(ent);
+}
+
+void joinmenu_handler (edict_t *ent, int option)
+{
+	switch (option)
+	{
+    case 1:
+        OpenMOTDMenu(ent); break;
 	case 2: 
 		ChaseCam(ent); break;
 	case 3: 
