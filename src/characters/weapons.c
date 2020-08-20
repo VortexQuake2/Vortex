@@ -133,6 +133,9 @@ qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 }
 
 qboolean GiveKnightUpgrade(edict_t *ent, int WeaponIndex, int ModIndex) {
+    if (ent->myskills.class_num != CLASS_KNIGHT)
+        return false;
+
     weapon_t *weapon;
     int maxLevel = 40;		// Sword hard maximums for the knight are set to this number.
 
@@ -174,28 +177,24 @@ void vrx_reset_weapon_maximums(edict_t *ent)
 			if(ent->myskills.weapons[i].mods[j].soft_max == 0 || ent->myskills.weapons[i].mods[j].hard_max == 0)
 			{
 				//Weapon masters and knights get a bonus to some upgrades
-				if (ent->myskills.class_num != CLASS_WEAPONMASTER ||
-				    !GiveWeaponMasterUpgrade(ent, i, j) ||
-				    !GiveKnightUpgrade(ent, i, j))
-				{
-					if (j < 3)
-					{
-                        ent->myskills.weapons[i].mods[j].soft_max = 10;
-                        ent->myskills.weapons[i].mods[j].hard_max = 30;
-					}
-					else
-					{
-                        //Sword gets an extra bonus
-                        if (j == 3 && i == WEAPON_SWORD) { // az note: this is sword burn
+				if (ent->myskills.class_num != CLASS_WEAPONMASTER || !GiveWeaponMasterUpgrade(ent, i, j)) {
+                    if (ent->myskills.class_num != CLASS_KNIGHT || !GiveKnightUpgrade(ent, i, j)) {
+                        if (j < 3) {
                             ent->myskills.weapons[i].mods[j].soft_max = 10;
                             ent->myskills.weapons[i].mods[j].hard_max = 30;
-							continue;
-                        }
+                        } else {
+                            //Sword gets an extra bonus
+                            if (j == 3 && i == WEAPON_SWORD) { // az note: this is sword burn
+                                ent->myskills.weapons[i].mods[j].soft_max = 10;
+                                ent->myskills.weapons[i].mods[j].hard_max = 30;
+                                continue;
+                            }
 
-						ent->myskills.weapons[i].mods[j].soft_max = 1;
-						ent->myskills.weapons[i].mods[j].hard_max = 1;
-					}
-				}
+                            ent->myskills.weapons[i].mods[j].soft_max = 1;
+                            ent->myskills.weapons[i].mods[j].hard_max = 1;
+                        }
+                    }
+                }
 			}
 		}
 	}
