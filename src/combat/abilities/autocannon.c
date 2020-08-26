@@ -218,11 +218,11 @@ qboolean autocannon_checkstatus (edict_t *self)
 		return false;
 
 	// must be on firm ground
-	VectorCopy(self->s.origin, end);
+	/* VectorCopy(self->s.origin, end);
 	end[2] -= fabsf(self->mins[2])+1;
 	tr = gi.trace(self->s.origin, self->mins, self->maxs, end, NULL, MASK_SOLID);
 	if (tr.fraction == 1.0)
-		return false;
+		return false; */
 
 	return true; // everything is OK
 }
