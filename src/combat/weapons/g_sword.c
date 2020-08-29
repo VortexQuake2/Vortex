@@ -110,15 +110,12 @@ void fire_sword_old ( edict_t *self, vec3_t start, vec3_t aimdir, int damage, in
     vec3_t begin;
     vec3_t begin_offset;
     float sword_bonus = 1;
-    int swordrange;
 
     // calling entity made a sound, used to alert monsters
     self->lastsound = level.framenum;
 
-    if (self->myskills.class_num == CLASS_KNIGHT)    //doomie
-        sword_bonus = 1.3;
-    swordrange = SABRE_INITIAL_RANGE * sword_bonus +
-                 (SABRE_ADDON_RANGE * self->myskills.weapons[WEAPON_SWORD].mods[2].current_level * sword_bonus);
+    float swordrange = SABRE_INITIAL_RANGE * sword_bonus +
+                 (SABRE_ADDON_RANGE * self->myskills.weapons[WEAPON_SWORD].mods[2].current_level);
 
     VectorSet(begin_offset, 0, 0, self->viewheight - 8);
     VectorAdd(self->s.origin, begin_offset, begin);

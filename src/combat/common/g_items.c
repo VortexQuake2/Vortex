@@ -442,13 +442,6 @@ qboolean Pickup_Ammo(edict_t *ent, edict_t *other) {
     int count;
     //float qty;
 
-    if ((other->client || other->mtype) &&  // knights and polts can't get ammo in pvm modes
-        (pvm->value || invasion->value) &&
-        // polts and kn only if the ammo is not cells
-        ((vrx_is_morphing_polt(ent) || other->myskills.class_num == CLASS_KNIGHT) &&
-         strcmp(ent->classname, "ammo_cells")))
-        return false;
-
     if (ent->count)
         count = ent->count;
     else {

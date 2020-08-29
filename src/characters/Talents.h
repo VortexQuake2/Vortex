@@ -87,11 +87,7 @@
 #define TALENT_MAGMINESELF			122
 #define TALENT_INSTANTPROXYS		123
 
-
-
-
-typedef struct talent_s
-{
+typedef struct talent_s {
 	int		id;
 	int		upgradeLevel;
 	int		maxLevel;
@@ -104,5 +100,11 @@ typedef struct talentlist_s {
     int talentPoints;
     talent_t talent[MAX_TALENTS];
 } talentlist_t;
+
+/***
+* fix differences between class talents and player talents.
+* @param ent player to update talents of
+*/
+void V_UpdatePlayerTalents(edict_t *ent);
 
 #endif

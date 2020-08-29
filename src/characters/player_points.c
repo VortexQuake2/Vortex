@@ -1,22 +1,6 @@
 #include "g_local.h"
 #include "../gamemodes/ctf.h"
 
-int vrx_get_joined_players();
-
-void vrx_check_for_levelup(edict_t *ent);
-
-char *LoPrint(char *text) {
-    int i;
-
-    if (!text)
-        return NULL;
-    for (i = 0; i < strlen(text); i++)
-        if ((byte) text[i] > 127)
-            text[i] = (byte) text[i] - 128;
-
-    return text;
-}
-
 char *HiPrint(char *text) {
     int i;
     char *ReturnVal;
@@ -40,16 +24,6 @@ void vrx_add_levelup_boons(edict_t *ent) {
             ent->myskills.abilities[MAX_AMMO].level++;
             ent->myskills.abilities[MAX_AMMO].current_level++;
         } else ent->myskills.speciality_points++;
-
-        /* if (ent->myskills.abilities[AMMO_REGEN].level < ent->myskills.abilities[MAX_AMMO].max_level) {
-            ent->myskills.abilities[AMMO_REGEN].level++;
-            ent->myskills.abilities[AMMO_REGEN].current_level++;
-        }*/ 
-
-        /*if (ent->myskills.abilities[POWER_REGEN].level < ent->myskills.abilities[POWER_REGEN].max_level) {
-            ent->myskills.abilities[POWER_REGEN].level++;
-            ent->myskills.abilities[POWER_REGEN].current_level++;
-        } else ent->myskills.speciality_points++;*/
 
         if (ent->myskills.abilities[VITALITY].level < ent->myskills.abilities[VITALITY].max_level) {
             ent->myskills.abilities[VITALITY].level++;
@@ -99,10 +73,6 @@ gitem_t *GetWeaponForNumber(int i) {
 }
 
 double vrx_get_points_tnl(int level) {
-    /* double lerp = pow( (level - 1) / 48.0, 1.3 );
-    float level1XpTnl = 2500;
-    float level49XpTnl = 180000;
-    return (1 - lerp) * level1XpTnl + lerp * level49XpTnl; */
     return 370 * level * level + 1000;
 }
 

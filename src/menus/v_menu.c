@@ -89,6 +89,7 @@ void vrx_start_reign(edict_t *ent)
 	}
 
 	V_UpdatePlayerAbilities(ent);
+    V_UpdatePlayerTalents(ent);
 
 	//Set the player's name
 	strcpy(ent->myskills.player_name, ent->client->pers.netname);

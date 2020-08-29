@@ -151,9 +151,8 @@ qboolean GiveKnightUpgrade(edict_t *ent, int WeaponIndex, int ModIndex) {
         {
             weapon->mods[ModIndex].soft_max = 20;
             weapon->mods[ModIndex].hard_max = maxLevel;
+            return true;
         }
-
-        return true;
     }
 
     return false;

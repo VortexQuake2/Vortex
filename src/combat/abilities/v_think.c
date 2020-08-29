@@ -469,9 +469,20 @@ void think_ability_cloak(edict_t *ent) {
             min_idle_frames = 1;
         }
 
-        if ((ent->myskills.abilities[CLOAK].current_level > 0) && (ent->client->idle_frames >= min_idle_frames)
-            && !que_typeexists(ent->auras, 0) && (level.time > ent->client->ability_delay)
-            && !vrx_has_flag(ent) && !V_HasSummons(ent)) {
+        qboolean idled_enough = ent->client->idle_frames >= min_idle_frames;
+        qboolean has_no_curses = !que_typeexists(ent->auras, 0);
+        qboolean ability_delay_over = (level.time > ent->client->ability_delay);
+        qboolean has_no_flag = !vrx_has_flag(ent);
+        qboolean has_no_summons = !V_HasSummons(ent);
+        qboolean is_not_automagging = !ent->automag;
+        qboolean can_cloak = idled_enough
+                             && has_no_curses
+                             && ability_delay_over
+                             && has_no_flag
+                             && has_no_summons
+                             && is_not_automagging;
+
+        if (ent->myskills.abilities[CLOAK].current_level > 0 && can_cloak) {
             //if (!ent->svflags & SVF_NOCLIENT)
             //	que_list(ent->auras);
 
@@ -486,12 +497,6 @@ void think_ability_cloak(edict_t *ent) {
             ent->client->cloaking = false;
             ent->svflags &= ~SVF_NOCLIENT;
 
-        } else if ((ent->myskills.abilities[CLOAK].current_level == 10) && (talentlevel == 4) && !V_HasSummons(ent)) {
-            if (!ent->client->cloaking) // Only when a switch is done
-                vrx_remove_player_summonables(ent); // 3.75 no more cheap apps with cloak+laser/monster/etc
-
-            ent->svflags |= SVF_NOCLIENT;
-            ent->client->cloaking = true;
         } else
             ent->client->cloaking = false;
     }

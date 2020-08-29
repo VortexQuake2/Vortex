@@ -628,7 +628,12 @@ void INV_SpawnMonsters(edict_t *self)
 		// if there's nobody playing, remove all monsters
 		if (players < 1)
 		{
-			PVM_RemoveAllMonsters(self);
+		    // az: reset the current wave to avoid people skipping waves
+		    if (self->num_monsters_real) {
+                invasion_difficulty_level -= 1;
+                invasion_data.printedmessage = false;
+                PVM_RemoveAllMonsters(self);
+            }
 		}
 		
 		// the level ended, remove monsters

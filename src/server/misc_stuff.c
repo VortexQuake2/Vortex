@@ -145,11 +145,11 @@ qboolean vrx_find_random_spawn_point (edict_t *ent, qboolean air)
 
 	mask = (MASK_MONSTERSOLID|MASK_PLAYERSOLID|MASK_SOLID);
 
-	for (j=0;j<50000;j++)
+	for (j=0;j<1000;j++)
 	{
 		// get a random position within a map
 		for (i=0;i<3;i++)
-			start[i] = randomMT() % (8192 + 1) - 4096;
+			start[i] = crandom() * 4096;
 		// is the point good?
 		if (gi.pointcontents(start) != 0)
 			continue;

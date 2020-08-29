@@ -378,7 +378,7 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 		case MOD_GEKK:
 		case MOD_BRAINTENTACLE:
 			snprintf( cmessage, 64, "got %s brains sucked out", GetPossesiveAdjective( self ) );
-			message = &cmessage;
+			message = cmessage;
 			break;
 		}
 		if (attacker == self)
@@ -391,67 +391,67 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 			case MOD_HG_SPLASH:
 			case MOD_G_SPLASH:
 				snprintf( cmessage, 64, "hugs %s grenade", GetPossesiveAdjective( self ) );
-				message = &cmessage;
+				message = cmessage;
 				break;
 			case MOD_R_SPLASH:
 				snprintf( cmessage, 64, "hates %s", GetReflexivePronoun( self ) );
-				message = &cmessage;
+				message = cmessage;
 				break;
 			case MOD_BFG_BLAST:
 				message = "should have used a smaller gun";
 				break;
 			case MOD_CORPSEEXPLODE:
 				snprintf( cmessage, 64, "hugs %s exploding corpse", GetPossesiveAdjective( self ) );
-				message = &cmessage;
+				message = cmessage;
 				break;
 			case MOD_BOMBS:
 				snprintf( cmessage, 64, "plays catch with %s bombs", GetPossesiveAdjective( self ) );
-				message = &cmessage;
+				message = cmessage;
 				break;
 			case MOD_DECOY:
 				snprintf( cmessage, 64, "hates %s decoy", GetPossesiveAdjective( self ) );
-				message = &cmessage;
+				message = cmessage;
 				break;
 			// RAFAEL 03-MAY-98
 			case MOD_TRAP:
 			 	snprintf( cmessage, 64, "was sucked into %s own trap", GetPossesiveAdjective( self ) );
-				message = &cmessage;
+				message = cmessage;
 				break;
 			case MOD_SUPPLYSTATION:
 				snprintf( cmessage, 64, "took a seat on %s exploding supply station", GetPossesiveAdjective( self ) );
-				message = &cmessage;
+				message = cmessage;
 				break;
 			case MOD_CACODEMON_FIREBALL:
 				snprintf( cmessage, 64, "juggles %s exploding skulls", GetPossesiveAdjective( self ) );
-				message = &cmessage;
+				message = cmessage;
 				break;
 			case MOD_EXPLODINGARMOR:
 				snprintf( cmessage, 64, "shows off %s exploding armor", GetPossesiveAdjective( self ) );
-				message = &cmessage;
+				message = cmessage;
 				break;
 			case MOD_PROXY:
 				snprintf( cmessage, 64, "stood too close to %s proxy grenade", GetPossesiveAdjective( self ) );
-				message = &cmessage;
+				message = cmessage;
 				break;
 			case MOD_METEOR:
 				snprintf( cmessage, 64, "pitched a tent underneath %s falling meteor", GetPossesiveAdjective( self ) );
-				message = &cmessage;
+				message = cmessage;
 				break;
 			case MOD_NAPALM:
 				snprintf( cmessage, 64, "makes a thorough examination of %s napalm", GetPossesiveAdjective( self ) );
-				message = &cmessage;
+				message = cmessage;
 				break;
 			case MOD_EMP:
 				snprintf( cmessage, 64, "detonates %s ammo", GetPossesiveAdjective( self ) );
-				message = &cmessage;
+				message = cmessage;
 				break;
 			case MOD_SPIKEGRENADE:
 				snprintf( cmessage, 64, "eats %s spike grenade", GetPossesiveAdjective( self ) );
-				message = &cmessage;
+				message = cmessage;
 				break;
 			case MOD_FIREBALL:
 				snprintf( cmessage, 64, "rides %s fireball", GetPossesiveAdjective( self ) );
-				message = &cmessage;
+				message = cmessage;
 				break;
 			case MOD_ICEBOLT:
 				message = "becomes a popsicle";
@@ -464,7 +464,7 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 				break;
 			case MOD_MIRV:
 				snprintf( cmessage, 64, "eats %s mirv grenade", GetPossesiveAdjective( self ) );
-				message = &cmessage;
+				message = cmessage;
 				break;
 			case MOD_SELFDESTRUCT:
 				message = "goes off with a blast";
@@ -2077,6 +2077,8 @@ The game can override any of the settings in place
 (forcing skins or names, etc) before copying it off.
 ============
 */
+
+void classmenu_handler (edict_t *ent, int option); // az
 void ClientUserinfoChanged (edict_t *ent, char *userinfo)
 {
 	char	*s;
@@ -2131,8 +2133,11 @@ void ClientUserinfoChanged (edict_t *ent, char *userinfo)
 #ifndef NO_GDS
 		&& !ent->ThreadStatus // Not loaded.
 #endif
-		))
-		strncpy (ent->client->pers.netname, s, sizeof(ent->client->pers.netname)-1);
+		)) {
+        strncpy(ent->client->pers.netname, s, sizeof(ent->client->pers.netname) - 1);
+        if (ent->client->menustorage.optionselected == classmenu_handler)
+            closemenu(ent); // az. just in case
+    }
 	Info_SetValueForKey(userinfo, "name", ent->client->pers.netname);
 
 	if (!ClientCanConnect(ent, userinfo))

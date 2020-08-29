@@ -34,7 +34,6 @@ const abilitydef_t ability_soldier[] = {
         {CREATE_QUAD,   0, 1,                 0},
         {CREATE_INVIN,  0, 1,                 0},
         {GRAPPLE_HOOK,  3, 3,                 0},
-        {SELFDESTRUCT,  0, DEFAULT_SOFTMAX,   0},
         {-1,            0, 0,                 0} // Guardian (Add skills above this)
 };
 
@@ -353,6 +352,7 @@ int vrx_get_ability_upgrade_cost(int index) {
         case PIERCING_RESIST:
         case BLACKHOLE:
         case TELEPORT:
+        case CLOAK:
         case BOOST_SPELL:
         case SPLASH_RESIST:
             return 3;
@@ -445,6 +445,13 @@ void vrx_init_ability_list() {
 
             ability_class[first->index][i] = 1;
 
+            // all classes have general abilities
+            if (i == 0) {
+                for (int pclass = CLASS_NULL + 1; pclass < CLASS_MAX; pclass++) {
+                    ability_class[first->index][pclass] = 1;
+                }
+            }
+
 #ifdef _DEBUG
             if (getHardMax(first->index, first->general, i) < first->softmax) {
                 gi.dprintf("warning: ability '%s' (%d) has hardmax < softmax\n", GetAbilityString(first->index), first->index);
@@ -466,4 +473,80 @@ int vrx_get_last_enabled_skill_index(edict_t *ent, int mode) {
         }
     }
     return return_index;
+}
+
+// this needs to match vrx_add_levelup_boons() in player_points.c
+// NOTE: this function can't/won't award refunds if the ability was already upgraded
+void vrx_update_free_abilities(edict_t *ent) {
+    // free scanner at level 10
+    if (ent->myskills.level >= 10) {
+        if (!ent->myskills.abilities[SCANNER].level) {
+            ent->myskills.abilities[SCANNER].level++;
+            ent->myskills.abilities[SCANNER].current_level++;
+        }
+    }
+
+    // free max ammo and vitality upgrade every 5 levels
+    if (!ent->myskills.abilities[MAX_AMMO].level)
+        ent->myskills.abilities[MAX_AMMO].level = ent->myskills.abilities[MAX_AMMO].current_level =
+                ent->myskills.level / 5;
+    if (!ent->myskills.abilities[VITALITY].level)
+        ent->myskills.abilities[VITALITY].level = ent->myskills.abilities[VITALITY].current_level =
+                ent->myskills.level / 5;
+}
+
+
+//FIXME: this doesn't work with 2-4 point abilities
+void V_UpdatePlayerAbilities(edict_t *ent) {
+    int i, refunded = 0;
+    upgrade_t old_abilities[MAX_ABILITIES];
+    qboolean points_refunded = false;
+
+    vrx_update_free_abilities(ent);
+
+    // make a copy of old abilities that we can use as a reference for comparison
+    for (i = 0; i < MAX_ABILITIES; ++i)
+        memcpy(&old_abilities, ent->myskills.abilities, sizeof(upgrade_t) * MAX_ABILITIES);
+
+    // reset all ability upgrades
+    memset(ent->myskills.abilities, 0, sizeof(upgrade_t) * MAX_ABILITIES);
+
+    vrx_assign_abilities(ent);
+
+    for (i = 0; i < MAX_ABILITIES; ++i) {
+        // if this ability was previously enabled, restore the upgrade level
+        if ((ent->myskills.abilities[i].disable == false) && (old_abilities[i].disable == false)) {
+            // restore previous upgrade level if our new max_level is greater or equal to the old one
+            if (ent->myskills.abilities[i].max_level >= old_abilities[i].max_level) {
+                //if (old_abilities[i].level > 0)
+                //	gi.dprintf("Restoring %s to level %d\n", GetAbilityString(i), old_abilities[i].level);
+                ent->myskills.abilities[i].level = old_abilities[i].level;
+            }
+                // otherwise set new upgrade level to soft max and refund unused points
+            else {
+                refunded += old_abilities[i].level - ent->myskills.abilities[i].max_level;
+                //gi.dprintf("Refunding %d points due to hard max cap\n", refunded);
+                if (refunded > 0) // az: I added this check. I'm not sure why we need this.
+                    ent->myskills.abilities[i].level = ent->myskills.abilities[i].max_level;
+            }
+        }
+            // if this upgrade was previously disabled, refund them points
+        else if ((ent->myskills.abilities[i].disable == true) && (old_abilities[i].disable == false)) {
+            refunded = old_abilities[i].level;
+            //gi.dprintf("Refunding %d points because ability is currently disabled\n", refunded);
+        }
+    }
+
+    // re-apply equipment
+    V_ResetAllStats(ent);
+    for (i = 0; i < 3; ++i)
+        V_ApplyRune(ent, &ent->myskills.items[i]);
+
+    /*safe_cprintf(ent, PRINT_HIGH, "Your abilities have been updated.\n");	*/
+
+    // have points been refunded?
+    if (refunded > 0) {
+        ent->myskills.speciality_points += old_abilities[i].level;
+        safe_cprintf(ent, PRINT_HIGH, "%d ability points have been refunded.\n", refunded);
+    }
 }

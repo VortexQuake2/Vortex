@@ -79,8 +79,13 @@ void generalWeaponMenu_handler(edict_t *ent, int option)
 	}
 	else if (option >= 7777)
 	{
-        int LastWeapon = option - 7777;
-		OpenWeaponUpgradeMenu(ent, LastWeapon+1);
+	    if (ent->myskills.class_num != CLASS_KNIGHT) {
+            int LastWeapon = option - 7777;
+            OpenWeaponUpgradeMenu(ent, LastWeapon + 1);
+        } else {
+            OpenWeaponUpgradeMenu(ent, 0);
+	    }
+
 		return;
 	}
 
@@ -164,7 +169,8 @@ void OpenGeneralWeaponMenu (edict_t *ent, int lastline)
 
 void weaponmenu_handler (edict_t *ent, int option)
 {
-	if ((option/100)-10 > MAX_WEAPONS)
+    int weap_num = (option/100)-10;
+	if (weap_num > MAX_WEAPONS || weap_num < 0)
 	{
 		closemenu(ent);
 		return;
@@ -196,36 +202,31 @@ void OpenWeaponUpgradeMenu (edict_t *ent, int lastline)
     addlinetomenu(ent, " ", 0);
 
     // todo: unuglyfy
-    if (ent->myskills.class_num == CLASS_KNIGHT) // only add the sword
-    {
-        for (i = 0; i < MAX_WEAPONS; ++i) {
-            char weaponString[24];
-            strcpy(weaponString, GetWeaponString(i));
-            if (!strcmp(weaponString, "Sword")) // only add the sword
-            {
-                padRight(weaponString, 18);
-                addlinetomenu(ent, va("%s%d%c", weaponString, V_WeaponUpgradeVal(ent, i), '%'), (i + 10) * 100);
-            }
-		}
-	}else
-	{
-		for (i = 0; i < MAX_WEAPONS; ++i)
-		{
-			char weaponString[24];
-			strcpy(weaponString, GetWeaponString(i));
-			padRight(weaponString, 18);
-			addlinetomenu(ent, va("%s%d%c", weaponString, V_WeaponUpgradeVal(ent, i),'%'), (i+10)*100);
+    qboolean is_knight = ent->myskills.class_num == CLASS_KNIGHT;
 
-		}
-	}
+    for (i = 0; i < MAX_WEAPONS; ++i)
+    {
+        char weaponString[24];
+        strcpy(weaponString, GetWeaponString(i));
+
+        qboolean is_sword = !strcmp(weaponString, "Sword");
+
+        padRight(weaponString, 18);
+        if (!is_knight || (is_knight && is_sword))
+            addlinetomenu(ent, va("%s%d%c", weaponString, V_WeaponUpgradeVal(ent, i),'%'), (i+10)*100);
+    }
 
 	addlinetomenu(ent, " ", 0);
 	addlinetomenu(ent, "Exit", 6666);
 	setmenuhandler(ent, weaponmenu_handler);
 	if (lastline)
 		ent->client->menustorage.currentline = lastline + 5;
-	else
-		ent->client->menustorage.currentline = MAX_WEAPONS + 7;
+	else {
+	    if (!is_knight)
+            ent->client->menustorage.currentline = MAX_WEAPONS + 7;
+	    else
+            ent->client->menustorage.currentline = 8;
+    }
 	showmenu(ent);
 
 	// try to shortcut to chat-protect mode

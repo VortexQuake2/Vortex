@@ -1,29 +1,30 @@
 #include "g_local.h"
 
+const talent_t null_talent = {0};
+
 typedef struct {
     int talent_id;
     int max_level;
     qboolean general;
 } talentdef_t;
 
-talentdef_t talents_general[] = {
+const talentdef_t talents_general[] = {
         {-1, 0, 0}
 };
 
-talentdef_t talents_soldier[] = {
+const talentdef_t talents_soldier[] = {
         {TALENT_IMP_STRENGTH,  5, false},
         {TALENT_IMP_RESIST,    5, false},
         {TALENT_BLOOD_OF_ARES, 5, false},
         {TALENT_BASIC_HA,      5, false},
         {TALENT_BOMBARDIER,    5, false},
-        {TALENT_MARTYR,        5, false},
         {TALENT_BLAST_RESIST,  5, false},
         {TALENT_MAGMINESELF,   1, false},
         {TALENT_INSTANTPROXYS, 2, false},
         {-1,                   0, 0}
 };
 
-talentdef_t talents_poltergeist[] = {
+const talentdef_t talents_poltergeist[] = {
         {TALENT_MORPHING,    5, false},
         {TALENT_MORE_AMMO,   5, false},
         {TALENT_SUPERIORITY, 5, false},
@@ -32,7 +33,7 @@ talentdef_t talents_poltergeist[] = {
         {-1,                 0, 0}
 };
 
-talentdef_t talents_alien[] = {
+const talentdef_t talents_alien[] = {
         {TALENT_PHANTOM_OBSTACLE, 5, false},
         {TALENT_SUPER_HEALER,     5, false},
         {TALENT_PHANTOM_COCOON,   5, false},
@@ -41,7 +42,7 @@ talentdef_t talents_alien[] = {
         {-1,                      0, 0}
 };
 
-talentdef_t talents_vampire[] = {
+const talentdef_t talents_vampire[] = {
         {TALENT_IMP_CLOAK,      4, false},
         {TALENT_ARMOR_VAMP,     3, false},
         {TALENT_SECOND_CHANCE,  4, false},
@@ -51,7 +52,7 @@ talentdef_t talents_vampire[] = {
         {-1,                    0, 0}
 };
 
-talentdef_t talents_necromancer[] = {
+const talentdef_t talents_necromancer[] = {
         {TALENT_CHEAPER_CURSES, 5, false},
         {TALENT_CORPULENCE,     5, false},
         {TALENT_LIFE_TAP,       5, false},
@@ -61,7 +62,7 @@ talentdef_t talents_necromancer[] = {
         {-1,                    0, 0}
 };
 
-talentdef_t talents_mage[] = {
+const talentdef_t talents_mage[] = {
         {TALENT_ICE_BOLT,      5, false},
         {TALENT_FROST_NOVA,    5, false},
         {TALENT_IMP_MAGICBOLT, 5, false},
@@ -71,7 +72,7 @@ talentdef_t talents_mage[] = {
         {-1,                   0, 0}
 };
 
-talentdef_t talents_shaman[] = {
+const talentdef_t talents_shaman[] = {
         {TALENT_ICE,      4, false},
         {TALENT_WIND,     4, false},
         {TALENT_STONE,    4, false},
@@ -82,7 +83,7 @@ talentdef_t talents_shaman[] = {
         {-1,              0, 0}
 };
 
-talentdef_t talents_engineer[] = {
+const talentdef_t talents_engineer[] = {
         {TALENT_LASER_PLATFORM,   5, false},
         {TALENT_ALARM,            5, false},
         {TALENT_RAPID_ASSEMBLY,   5, false},
@@ -91,7 +92,7 @@ talentdef_t talents_engineer[] = {
         {-1,                      0, 0}
 };
 
-talentdef_t talents_cleric[] = {
+const talentdef_t talents_cleric[] = {
         {TALENT_BALANCESPIRIT, 5, false},
         {TALENT_HOLY_GROUND,   5, false},
         {TALENT_UNHOLY_GROUND, 5, false},
@@ -100,7 +101,7 @@ talentdef_t talents_cleric[] = {
         {-1,                   0, 0}
 };
 
-talentdef_t talents_knight[] = {
+const talentdef_t talents_knight[] = {
         {TALENT_REPEL,       5, false},
         {TALENT_MAG_BOOTS,   5, false},
         {TALENT_LEAP_ATTACK, 5, false},
@@ -109,18 +110,17 @@ talentdef_t talents_knight[] = {
         {-1,                 0, 0}
 };
 
-talentdef_t talents_weaponmaster[] = {
+const talentdef_t talents_weaponmaster[] = {
         {TALENT_BASIC_AMMO_REGEN, 5, false},
         {TALENT_COMBAT_EXP,       5, false},
         {TALENT_TACTICS,          3, false},
         {TALENT_SIDEARMS,         3, false},
-        {TALENT_MARTYR,           5, false},
         {-1,                      0, 0}
 };
 
-typedef talentdef_t *talentclasslist_t;
+typedef const talentdef_t *talentclasslist_t;
 
-talentclasslist_t talents_by_class[] = {
+const talentclasslist_t talents_by_class[] = {
         talents_general,
         talents_soldier,
         talents_poltergeist,
@@ -135,7 +135,12 @@ talentclasslist_t talents_by_class[] = {
         talents_weaponmaster
 };
 
-//Gives the player a new talent.
+/**
+ * Gives the player a new talent.
+ * @param ent who to give the talent to
+ * @param talentID talent to add
+ * @param maxLevel max level of the talent
+ */
 void vrx_add_talent(edict_t *ent, int talentID, int maxLevel) {
     int nextEmptySlot = ent->myskills.talents.count;
     int i = 0;
@@ -156,9 +161,49 @@ void vrx_add_talent(edict_t *ent, int talentID, int maxLevel) {
     ent->myskills.talents.count++;
 }
 
+/// vrx_remove_talent
+/// \param ent player to remove talent from
+/// \param talentID talent id to remove
+/// \return number of points the talent was upgraded
+int vrx_remove_talent(edict_t *ent, int talentID) {
+    int count = ent->myskills.talents.count;
+    int ret = 0;
+
+    for (int i = 0; i < count; i++) {
+        talent_t *player_talent = &ent->myskills.talents.talent[i];
+        if (player_talent->id != talentID) {
+            continue;
+        }
+
+        // get how much we need to refund
+        ret += player_talent->upgradeLevel;
+
+        // move all that follow back
+        for (int j = i; j < count; j++) {
+            // there is not a talent that follows this one
+            if (j == MAX_TALENTS - 1 || // array limit
+                (j + 1) == count) // next one is outside
+            {
+                ent->myskills.talents.talent[j] = null_talent;
+
+                continue;
+            }
+
+            // a talent follows this one, so copy it over
+            ent->myskills.talents.talent[j] = ent->myskills.talents.talent[j + 1];
+        }
+
+        // that's all folks
+        ent->myskills.talents.count--;
+        break;
+    }
+
+    return ret;
+}
+
 //Adds all the required talents for said class.
 void vrx_set_talents(edict_t *ent) {
-    talentdef_t *first = talents_by_class[ent->myskills.class_num];
+    const talentdef_t *first = talents_by_class[ent->myskills.class_num];
 
     while (first->talent_id != -1) {
         vrx_add_talent(ent, first->talent_id, first->max_level);
@@ -208,7 +253,7 @@ int vrx_get_talent_level(const edict_t *ent, int talentID) {
     int slot = vrx_get_talent_slot(ent, talentID);
 
     if (slot < 0) {
-        if (!ent->client) // so it's a morphed player?
+        if (!ent->client) { // so it's a morphed player?
             if (ent->owner && ent->owner->inuse && ent->owner->client) {
                 slot = vrx_get_talent_slot(ent->owner, talentID);
                 ent = ent->owner;
@@ -216,6 +261,7 @@ int vrx_get_talent_level(const edict_t *ent, int talentID) {
                 slot = vrx_get_talent_slot(ent->activator, talentID);
                 ent = ent->activator;
             }
+        }
 
         if (slot < 0) // still doesn't exist? k
             return 0;
@@ -681,4 +727,68 @@ void OpenTalentUpgradeMenu(edict_t *ent, int lastline) {
     // try to shortcut to chat-protect mode
     if (ent->client->idle_frames < qf2sf(CHAT_PROTECT_FRAMES - 51))
         ent->client->idle_frames = qf2sf(CHAT_PROTECT_FRAMES - 51);
+}
+
+void V_UpdatePlayerTalents(edict_t *ent) {
+    if (!ent) return;
+    if (!ent->client) return;
+    if (ent->myskills.class_num <= CLASS_NULL || ent->myskills.class_num >= CLASS_MAX) {
+        gi.dprintf("warning: invalid class for %s\n", ent->client->pers.netname);
+        return;
+    }
+
+    int refunded = 0;
+
+    // see differences between class talents and player talents
+    for (int i = 0; i < ent->myskills.talents.count; ++i) {
+        int talentId = ent->myskills.talents.talent[i].id;
+        talent_t *player_talent = &ent->myskills.talents.talent[i];
+        const talentdef_t *class_talent = NULL;
+
+        for (const talentdef_t* talent = talents_by_class[ent->myskills.class_num];
+             talent->talent_id != -1;
+             talent++) {
+            if (talent->talent_id == talentId) {
+                class_talent = talent;
+                break;
+            }
+        }
+
+        // not found in class
+        if (class_talent == NULL) {
+            // remove it
+            refunded += vrx_remove_talent(ent, talentId);
+            i = -1; // start over
+            continue;
+        }
+
+        // found in class
+
+        // max level changed
+        if (class_talent->max_level != player_talent->maxLevel) {
+            player_talent->maxLevel = class_talent->max_level;
+
+            // upgrade level past max level
+            if (player_talent->upgradeLevel > player_talent->maxLevel) {
+                int difference = player_talent->upgradeLevel - player_talent->maxLevel;
+                player_talent->upgradeLevel -= difference;
+                refunded += difference;
+            }
+        }
+    }
+
+    // check talents missing from the player
+    for (const talentdef_t* talent = talents_by_class[ent->myskills.class_num];
+         talent->talent_id != -1;
+         talent++) {
+        int talentLevel = vrx_get_talent_slot(ent, talent->talent_id);
+        if (talentLevel == -1) { // not found
+            vrx_add_talent(ent, talent->talent_id, talent->max_level);
+        }
+    }
+
+    if (refunded) {
+        ent->myskills.talents.talentPoints += refunded;
+        gi.cprintf(ent, PRINT_HIGH, "%d talent points were refunded.\n", refunded);
+    }
 }

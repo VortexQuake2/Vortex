@@ -191,9 +191,11 @@ void Cmd_BoostPlayer(edict_t *ent)
     talentLevel = vrx_get_talent_level(ent, TALENT_MOBILITY);
 	switch(talentLevel)
 	{
-	case 1:		boost_delay -= 0.15;	break;
+	case 1:		boost_delay -= 0.1;	break;
 	case 2:		boost_delay -= 0.3;		break;
 	case 3:		boost_delay -= 0.5;		break;
+	case 4:     boost_delay -= 0.7;     break;
+	case 5:     boost_delay -= 1.0;     break;
 	default:	//Do nothing
 		break;
 	}
