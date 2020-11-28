@@ -175,9 +175,7 @@ void fire_sword (edict_t *self, vec3_t start, vec3_t dir, int damage, int length
 	int kick = 100;
 	int count = 0;
 	int swordrange;
-	int talentLevel;
 
-	talentLevel = vrx_get_talent_level(self, TALENT_DURABILITY);
 
 	VectorSet(mins, -2, -2, -2);
 	VectorSet(maxs, 2, 2, 2);
@@ -185,7 +183,7 @@ void fire_sword (edict_t *self, vec3_t start, vec3_t dir, int damage, int length
 	// calling entity made a sound, used to alert monsters
 	self->lastsound = level.framenum;
 
-	swordrange = SABRE_INITIAL_RANGE + (SABRE_ADDON_RANGE * self->myskills.weapons[WEAPON_SWORD].mods[2].current_level) * (1 + 0.33*talentLevel);
+	swordrange = SABRE_INITIAL_RANGE + (SABRE_ADDON_RANGE * self->myskills.weapons[WEAPON_SWORD].mods[2].current_level);
 
 	//decino: special for decoys
 	if (self->mtype == M_DECOY)
