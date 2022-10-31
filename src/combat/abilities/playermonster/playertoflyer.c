@@ -257,7 +257,7 @@ void FlyerAttack (edict_t *ent)
 				int	quality = 10 * (ent->client->lock_frames - (SMARTROCKET_LOCKFRAMES - 1));
 				if (quality > 100)
 					quality = 100;
-				safe_centerprintf(ent, "Lock quality: %d%c", quality, '%');
+				//safe_centerprintf(ent, "Lock quality: %d%c", quality, '%');
 			}
 
 			// fire smart rocket
