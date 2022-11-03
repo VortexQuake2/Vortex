@@ -164,28 +164,14 @@ edict_t* INV_ClosestNaviAny(edict_t* self) {
 
 edict_t *drone_findnavi(edict_t *self)
 {
-#if 0
+	edict_t* e = NULL;
 	edict_t* visible_candidates[4];
 	int num_visible_candidates = 0;
-#endif
 
 	if (G_GetClient(self)) // Client monsters don't look for navis
 		return NULL;
-	
-	if (!(self->monsterinfo.aiflags & AI_FIND_NAVI)) {
-		if (!invasion->value)
-			return NULL;
 
-		// if we reached this point we're no longer looking for navis. we should be looking for spawns!
-		return INV_GiveClosestPSpawn(self); 
-	}
 
-	/*if (invasion->value && level.pathfinding)
-	{
-		return INV_GiveClosestPSpawn(self);
-	}*/
-
-#if 0
 	// seek up to 4 visible candidates
 	for (int i = 0; i < invasion_start_navicount; i++)
 	{
@@ -202,17 +188,36 @@ edict_t *drone_findnavi(edict_t *self)
 		return visible_candidates[i];
 	}
 
-	// there aren't, then use any start navi
-	if (invasion_start_navicount > 0)
-		return INV_StartNavi[GetRandom(1, invasion_start_navicount) - 1];
-#endif
+	// if there aren't, try to use the most recent navi
+	if (!(self->monsterinfo.aiflags & AI_FIND_NAVI)) {
+		if (!invasion->value)
+			return NULL;
+
+		if(self->prev_navi) {
+			if (self->prev_navi->target && self->prev_navi->targetname &&
+							((e = G_Find(NULL, FOFS(targetname), self->prev_navi->target)) != NULL)) {
+				self->prev_navi = e;
+				return e;
+			}
+			// there are no further navis - find a spawn
+			return INV_GiveClosestPSpawn(self); 
+		}
+	}
+
+	// if no most recent, and no visible, use a start navi
+	if (invasion_start_navicount > 0) {
+		e = INV_StartNavi[GetRandom(1, invasion_start_navicount) - 1];
+		return e;
+	}
 
 	if (invasion_start_navicount > 0) {
-		return INV_ClosestNavi(self);
+		e = INV_ClosestNavi(self);
+		return e;
 	}
 	
 	// no navis, return a player spawn...
-	return INV_GiveRandomPSpawn();
+	e = INV_GiveRandomPSpawn();
+	return e;
 }
 
 
@@ -394,10 +399,13 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
 
 	spawn_point->wait = level.time + 1.0; // time until spawn is available again
 
+	monster->monsterinfo.idle_frames = 0;
 	monster->monsterinfo.aiflags |= AI_FIND_NAVI; // search for navi
 	monster->s.angles[YAW] = spawn_point->s.angles[YAW];
 	monster->prev_navi = NULL;
-
+	monster->enemy = NULL; // find a new target
+	monster->oldenemy = NULL;
+	monster->monsterinfo.stand(monster);
 
 	// az: we modify the monsters' health lightly
 	if (invasion->value == 1) // easy mode
@@ -901,14 +909,11 @@ void SP_info_monster_invasion(edict_t *self)
 
 void SP_navi_monster_invasion(edict_t *self)
 {
-	//FIXME: change to invasion->value
-	if (!pvm->value || !invasion->value)
+	if (0 == invasion->value)
 	{
 		G_FreeEdict(self);
 		return;
 	}
-
-	//gi.dprintf("navi point created!\n");
 
 	self->solid = SOLID_NOT;
 	self->mtype = INVASION_NAVI;

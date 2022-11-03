@@ -540,17 +540,25 @@ edict_t *drone_get_target (edict_t *self,
 {
 	edict_t	*target = NULL;
 
+	//gi.dprintf("drone_get_target()\n");
+
 	// find medic targets
-	if (get_medic_target && (target = drone_get_medic_target(self)) != NULL)
+	if (get_medic_target && (target = drone_get_medic_target(self)) != NULL) {
+		//gi.dprintf("medic target found\n");
 		return target;
+	}
 
 	// find enemies
-	if (get_enemy && (target = drone_get_enemy(self)) != NULL)
+	if (get_enemy && (target = drone_get_enemy(self)) != NULL) {
+		//gi.dprintf("enemy target found\n");
 		return target;
+	}
 
 	// find navi
-	if (invasion->value && get_navi && (target = drone_findnavi(self)) != NULL)
+	if (invasion->value && get_navi && (target = drone_findnavi(self)) != NULL) {
+		//gi.dprintf("navi target found\n");
 		return target;
+	}
 
 	return NULL;
 }
@@ -568,8 +576,12 @@ qboolean drone_findtarget (edict_t *self, qboolean force)
 	int			frames;
 	edict_t		*target=NULL;
 
+	//gi.dprintf("drone_findtarget\n");
+
 	if (level.time < pregame_time->value)
 		return false; // pre-game time
+
+	//gi.dprintf("not pregame\n");
 
 	// if a monster hasn't found a target for awhile, it becomes less alert
 	// and searches less often, freeing up CPU cycles
@@ -581,6 +593,8 @@ qboolean drone_findtarget (edict_t *self, qboolean force)
 
 	if (level.framenum % frames && !force)
 		return false;
+
+	//gi.dprintf("got past frame check\n");
 
 	// if we're a medic, do a sweep for those with medical need!
 	if ((target = drone_get_target(self, true, false, false)) != NULL)
@@ -651,8 +665,11 @@ qboolean drone_ValidLeader(edict_t *leader)
 	return (G_EntIsAlive(leader));
 }
 
+qboolean drone_ai_findgoal (edict_t *self);
+
 void drone_ai_idle (edict_t *self)
 {
+	//gi.dprintf("drone is idling\n");
 	// regenerate to full in 30 seconds
 	if (self->mtype == M_MEDIC)
 		M_Regenerate(self, qf2sf(300), qf2sf(10), 1.0, true, true, false, &self->monsterinfo.regen_delay1);
@@ -668,6 +685,10 @@ void drone_ai_idle (edict_t *self)
 		self->monsterinfo.idle_delay = level.time + GetRandom(15, 30);
 	}
 	self->monsterinfo.idle_frames++;
+
+	if (drone_ai_findgoal(self)) {
+		return;
+	}
 
 	// world monsters suicide if they haven't found an enemy in awhile
 	if (self->activator && !self->activator->client && !(self->monsterinfo.aiflags & AI_STAND_GROUND)
@@ -693,10 +714,11 @@ void drone_ai_idle (edict_t *self)
 
 qboolean drone_ai_findgoal (edict_t *self)
 {
-
+	//gi.dprintf("drone_ai_findgoal()\n");
 	// did we have a previous enemy?
 	if (self->oldenemy)
 	{
+		//gi.dprintf("old enemy found\n");
 		// is he still a valid target?
 		if (drone_ValidChaseTarget(self, self->oldenemy))
 		{
@@ -711,7 +733,7 @@ qboolean drone_ai_findgoal (edict_t *self)
 		self->oldenemy = NULL;
 	}
 	// can we find a new target?
-	else if (drone_findtarget(self, false))
+	else if (drone_findtarget(self, true))
 	{
 		// go after him
 		if (!(self->monsterinfo.aiflags & AI_STAND_GROUND))
@@ -770,7 +792,7 @@ void drone_ai_walk (edict_t *self, float dist)
 		if (drone_ValidChaseTarget(self, self->enemy))
 			self->monsterinfo.run(self);
 		// otherwise, try to find a new one
-		else if (drone_findtarget(self, false))
+		else if (drone_findtarget(self, true))
 			self->monsterinfo.run(self);
 		// enemy isn't valid, so give up
 		else
@@ -802,8 +824,10 @@ void drone_ai_stand (edict_t *self, float dist)
 	if (!self->enemy)
 	{
 		// try to find a new goal (e.g. enemy or combat point)
-		if (!drone_ai_findgoal(self))
+		if (!drone_ai_findgoal(self)) {
+			//gi.dprintf("drone couldn't find a goal in stand\n");
 			drone_ai_idle(self);// couldn't find anything, so just idle
+		}
 	}
 	else
 	{
@@ -827,7 +851,7 @@ void drone_ai_stand (edict_t *self, float dist)
 
 		if (drone_ValidChaseTarget(self, self->enemy))
 			self->monsterinfo.run(self);
-		else if (drone_findtarget(self, false))
+		else if (drone_findtarget(self, true))
 			self->monsterinfo.run(self);
 		else
 			self->enemy = NULL;
@@ -1619,7 +1643,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 	else if (self->goalentity)
 	{
 		// try to find an enemy
-		drone_findtarget(self, false);
+		drone_findtarget(self, true);
 		if (self->enemy)
 		{
 			goal = self->enemy;
@@ -1920,7 +1944,7 @@ void drone_ai_run (edict_t *self, float dist)
 
 
 				// try to find a new target
-				if (drone_findtarget(self, false))
+				if (drone_findtarget(self, true))
 				{
 					//gi.dprintf("found %s!\n", self->enemy->classname);
 					drone_ai_checkattack(self);
