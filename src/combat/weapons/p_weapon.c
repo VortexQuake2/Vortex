@@ -850,7 +850,13 @@ void weapon_grenade_fire(edict_t *ent, qboolean held) {
 
     timer = ent->client->grenade_time - level.time;
     min_speed = 0.5 * max_speed;
-    speed = min_speed + (GRENADE_TIMER - timer) * ((max_speed - min_speed) / GRENADE_TIMER);
+    
+    if ( ent->health <= 0 )
+        speed = min_speed;
+    else
+        speed = min_speed + (GRENADE_TIMER - timer) * ((max_speed - min_speed) / GRENADE_TIMER);
+
+
     fire_grenade2(ent, start, forward, damage, speed, timer, radius, radius_damage, held);
     //gi.dprintf("fired grenade at %.1f\n", level.time);
     //gi.dprintf("fired grenade at %.1f\n", timer);

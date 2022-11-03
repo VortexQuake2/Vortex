@@ -967,6 +967,12 @@ void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 		// clear inventory
 		memset(self->client->pers.inventory, 0, sizeof(self->client->pers.inventory));
 
+		if ( self->client->pers.weapon == Fdi_GRENADES ) {
+			if ( self->client->weaponstate == WEAPON_FIRING ) {
+				weapon_grenade_fire(self, false);
+			}
+		}
+
 		if (!self->exploded)
 		{
             talentLevel = vrx_get_talent_level(self, TALENT_MARTYR);
