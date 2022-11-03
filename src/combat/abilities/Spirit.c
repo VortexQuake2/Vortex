@@ -17,7 +17,7 @@ void Spirit_Shoot(edict_t *self, edict_t *target, int damage, float next_shot)
 	MonsterAim(self, -1, 1000, false, 0, forward, start);
 
 	//Fire!
-	monster_fire_blaster(self, start, forward, damage, 1000, EF_BLASTER, BLASTER_PROJ_BOLT, 2.0, false, 0);
+	monster_fire_blaster(self, start, forward, damage, 1000, EF_BLASTER, BLASTER_PROJ_BOLT, 2.0, true, 0);
 
 	//Set up for the next shot
 	self->delay = level.time + next_shot;
