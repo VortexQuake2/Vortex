@@ -257,10 +257,8 @@ void OpenMOTDMenu (edict_t *ent)
     //				    xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
 
     addlinetomenu(ent, "Message of the Day", MENU_GREEN_CENTERED);
-    addlinetomenu(ent, "CTF Event, 1.5x EXP", MENU_WHITE_CENTERED);
-    addlinetomenu(ent, "Starts 08/22 12PM EST", MENU_WHITE_CENTERED);
-    addlinetomenu(ent, "Ends 08/23 10PM EST", MENU_WHITE_CENTERED);
-    addlinetomenu(ent, " ", 0);
+    addlinetomenu(ent, " ", 0);    
+    addlinetomenu(ent, "Join us on Discord!", MENU_WHITE_CENTERED);
     addlinetomenu(ent, "discord.gg/bX7Updq", MENU_GREEN_CENTERED);
     addlinetomenu(ent, " ", 0);
     addlinetomenu(ent, "Rules", MENU_GREEN_CENTERED);
@@ -269,7 +267,7 @@ void OpenMOTDMenu (edict_t *ent)
     addlinetomenu(ent, "- Do not exploit bugs.", 0);
     addlinetomenu(ent, "- Be kind when discussing", 0);
     addlinetomenu(ent, "balancing issues.", MENU_WHITE_CENTERED);
-    addlinetomenu(ent, "- No toxicity", 0);
+    addlinetomenu(ent, "- Don't be an asshole.", 0);
     addlinetomenu(ent, " ", 0);
     addlinetomenu(ent, " ", 0);
     addlinetomenu(ent, "Accept", 1);
