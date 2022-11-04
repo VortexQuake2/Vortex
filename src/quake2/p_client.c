@@ -926,6 +926,7 @@ player_die
 void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
 	int		n;
+	qboolean dogrenade = false;
 //GHz START
 	if (debuginfo->value > 1)
 		gi.dprintf("player_die()\n");
@@ -969,7 +970,7 @@ void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 
 		if ( self->client->pers.weapon == Fdi_GRENADES ) {
 			if ( self->client->weaponstate == WEAPON_FIRING ) {
-				weapon_grenade_fire(self, false);
+				dogrenade = true;
 			}
 		}
 
@@ -1048,6 +1049,11 @@ void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	}
 
 	self->deadflag = DEAD_DEAD;
+
+
+	if ( dogrenade ) {
+		weapon_grenade_fire(self, false);
+	}
 	gi.linkentity (self);
 }
 
