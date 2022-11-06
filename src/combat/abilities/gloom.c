@@ -745,7 +745,7 @@ void Cmd_Spiker_f (edict_t *ent)
 
 	if (ent->num_spikers >= SPIKER_MAX_COUNT)
 	{
-		safe_cprintf(ent, PRINT_HIGH, "You have reached the maximum amount of spikers (%d)\n", SPIKER_MAX_COUNT);
+		safe_cprintf(ent, PRINT_HIGH, "You have reached the maximum amount of spikers (%d)\n", (int)SPIKER_MAX_COUNT);
 		return;
 	}
 

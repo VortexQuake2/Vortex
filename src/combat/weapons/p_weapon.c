@@ -1307,7 +1307,7 @@ void Weapon_Blaster_Fire(edict_t *ent) {
 
 
     if (ent->client->weapon_mode) {
-        temp = (float) ent->client->refire_frames / 10;
+        temp = (float) ent->client->refire_frames / 10 * 2.0;
         if (temp > 5)
             temp = 5;
         damage *= temp;
@@ -1359,13 +1359,14 @@ void Weapon_Blaster(edict_t *ent) {
                 ent->client->refire_frames = 0;
         } else {
             // charge up weapon
-            if (ent->client->refire_frames == 50) {
+            if (ent->client->refire_frames == 20) {
                 gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/noammo.wav"), 1, ATTN_NORM, 0);
-                gi.centerprintf(ent, "Blaster fully charged.\n(5.0x damage)\n");
+                gi.centerprintf(ent, "Blaster fully charged.\n(4.0x damage)\n");
             }
 
-            if (ent->client->refire_frames == 25)
-                gi.centerprintf(ent, "Blaster 50%c charged.\n(2.5x damage)\n", '%');
+            if (ent->client->refire_frames == 10)
+                gi.centerprintf(ent, "Blaster 50%c charged.\n(2.0x damage)\n", '%');
+
             // dont fire yet
             ent->client->buttons &= ~BUTTON_ATTACK;
             ent->client->latched_buttons &= ~BUTTON_ATTACK;

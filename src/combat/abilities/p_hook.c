@@ -306,10 +306,10 @@ void hook_fire (edict_t *ent) {
         return;
     }
 
-    if (ent->client->snipertime >= level.time) {
-        safe_cprintf(ent, PRINT_HIGH, "You can't use hook while trying to snipe!\n");
-        return;
-    }
+//    if (ent->client->snipertime >= level.time) {
+//        safe_cprintf(ent, PRINT_HIGH, "You can't use hook while trying to snipe!\n");
+//        return;
+//    }
 
     ent->client->hook_state = HOOK_OUT;
 

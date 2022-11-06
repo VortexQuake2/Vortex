@@ -98,11 +98,11 @@ void Cmd_SuperSpeed_f (edict_t *ent, int toggle)
 		return;
 	}
 
-	if (ent->client->snipertime >= level.time)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "You can't use superspeed while trying to snipe!\n");
-		return;
-	}
+//	if (ent->client->snipertime >= level.time)
+//	{
+//		safe_cprintf(ent, PRINT_HIGH, "You can't use superspeed while trying to snipe!\n");
+//		return;
+//	}
 
 	if( (ent->client->weapon_mode) && ent->client->pers.weapon
 		&& (Q_strcasecmp(ent->client->pers.weapon->pickup_name, "chaingun") == 0))

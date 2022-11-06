@@ -42,10 +42,10 @@ void think_ability_jetpack(edict_t *ent)
         return;
     }
 
-    if (ent->client->snipertime >= level.time) {
-        safe_cprintf(ent, PRINT_HIGH, "You can't use jetpack while trying to snipe!\n");
-        return;
-    }
+//    if (ent->client->snipertime >= level.time) {
+//        safe_cprintf(ent, PRINT_HIGH, "You can't use jetpack while trying to snipe!\n");
+//        return;
+//    }
 
 	if (ent->client->pers.inventory[power_cube_index] >= cost || level.time < pregame_time->value) // pregame.
 	{

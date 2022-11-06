@@ -289,9 +289,9 @@ float V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse) {// assault 
     }
 
     // sniper mode slows you down
-    if (ent->client->snipertime >= level.time) {
-        vel_modification *= 0.33;
-    }
+//    if (ent->client->snipertime >= level.time) {
+//        vel_modification *= 0.33;
+//    }
 
     curse = que_findtype(ent->curses, curse, AURA_HOLYFREEZE);
     // are we affected by the holy freeze aura?
