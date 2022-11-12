@@ -570,6 +570,7 @@ void OpenPurchaseMenu (edict_t *ent, int page_num, int lastline)
 //************************************************************************************************
 //		**ITEM SELL CONFIRM MENU**
 //************************************************************************************************
+void ShowItemMenu_handler(edict_t *ent, int option); // item_menu.c
 
 void SellConfirmMenu_handler(edict_t *ent, int option)
 {
@@ -633,7 +634,12 @@ void SellConfirmMenu_handler(edict_t *ent, int option)
 	else if (option - 666 > 0)
 	{
 		//Back to select sell item
-		OpenSellMenu(ent, option - 666);
+        if (ent->client->menustorage.oldmenuhandler == ShowItemMenu_handler)
+        {
+            ShowInventoryMenu(ent, option - 666, false);
+        }
+        else
+		    OpenSellMenu(ent, option - 666);
 		return;
 	}
 	else
