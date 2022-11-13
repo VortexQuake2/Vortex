@@ -964,7 +964,9 @@ void door_go_up (edict_t *self, edict_t *activator)
 	else if (strcmp(self->classname, "func_door_rotating") == 0)
 		AngleMove_Calc (self, door_hit_top);
 
-	G_UseTargets (self, activator);
+    if (G_GetClient(activator)) // only clients activate targets
+	    G_UseTargets (self, activator);
+
 	door_use_areaportals (self, true);
 }
 
@@ -1008,7 +1010,8 @@ void Touch_DoorTrigger (edict_t *self, edict_t *other, cplane_t *plane, csurface
 	if (other->health <= 0)
 		return;
 
-	if (!G_GetClient(other))
+    // az: monsters Can open doors in invasion
+	if (!G_GetClient(other) && !invasion->value)
 		return;
 
 //	if ((self->owner->spawnflags & DOOR_NOMONSTER) && (other->svflags & SVF_MONSTER))
