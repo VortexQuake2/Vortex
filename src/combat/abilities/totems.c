@@ -358,9 +358,9 @@ void totem_general_think(edict_t *self)
 				1.0, true, false, false, &self->monsterinfo.regen_delay1);
 
 	//Rotate a little.
-	self->s.angles[YAW] += 5;
-	if(self->s.angles[YAW] == 360)
-		self->s.angles[YAW] = 0;
+	self->s.angles[YAW] += scale_fps(5.0);
+	if(self->s.angles[YAW] >= 360.0)
+		self->s.angles[YAW] -= 360.0;
 //GHz 4.32
 	// if position has been updated, check for ground entity
 	if (self->linkcount != self->monsterinfo.linkcount)
