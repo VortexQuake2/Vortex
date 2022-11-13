@@ -1038,6 +1038,11 @@ void Weapon_Grenade(edict_t *ent) {
         || (ent->client->respawn_time > level.time)
         || (ent->flags & FL_WORMHOLE))
         return;
+    
+    // Run weapons at 10 FPS
+    if ( (level.framenum % qf2sf(1)) != 0)
+        return;
+
     Weapon_Grenade2(ent);
 
 //	if (ent->myskills.weapons[WEAPON_HANDGRENADE].mods[1].current_level > 9)
