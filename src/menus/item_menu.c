@@ -206,8 +206,8 @@ void StartShowInventoryMenu(edict_t *ent, item_t *item) {
 void OpenSellConfirmMenu(edict_t *ent, int itemindex); // zar: armory.c
 
 void ShowItemMenu_handler(edict_t *ent, int option) {
-    if (option - 19999 > 0) {
-        OpenSellConfirmMenu(ent, option - 20000);
+    if (option - 14999 > 0) {
+        OpenSellConfirmMenu(ent, option - 15000);
     } else if (option - 9999 > 0) {
         //Delete item menu
         ItemDeleteMenu(ent, option - 10000);
@@ -247,7 +247,7 @@ void ShowItemMenu(edict_t *ent, int itemindex) {
     addlinetomenu(ent, "Exit", 666);
     addlinetomenu(ent, " ", 0);
     addlinetomenu(ent, "Delete this item", 10000 + itemindex);
-    addlinetomenu(ent, "Sell this item", 20000 + itemindex);
+    addlinetomenu(ent, "Sell this item", 15000 + itemindex);
 
     //set currentline
     ent->client->menustorage.currentline += 2;

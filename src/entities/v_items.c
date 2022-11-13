@@ -787,22 +787,26 @@ void PurchaseRandomRune(edict_t *ent, int runetype)
 		return;
 
 	rune = G_Spawn();				// create a rune
-	V_ItemClear(&rune->vrxitem);	// initialize the rune
-
 	ent->myskills.credits -= cost;
-	
-	if (runetype == ITEM_COMBO) {
-		spawnCombo(rune, ent->myskills.level);
-	} else if (runetype)
-	{
-		spawnNorm(rune, ent->myskills.level, runetype);
-	} else if (random() > 0.5)
-	{
-		spawnNorm(rune, ent->myskills.level, ITEM_WEAPON);
-	} else
-	{
-		spawnNorm(rune, ent->myskills.level, ITEM_ABILITY);
-	}
+
+    qboolean reroll = true;
+
+    while (reroll) {
+        V_ItemClear(&rune->vrxitem);	// initialize the rune
+
+        if (runetype == ITEM_COMBO) {
+            spawnCombo(rune, ent->myskills.level);
+        } else if (runetype) {
+            spawnNorm(rune, ent->myskills.level, runetype);
+        } else if (random() > 0.5) {
+            spawnNorm(rune, ent->myskills.level, ITEM_WEAPON);
+        } else {
+            spawnNorm(rune, ent->myskills.level, ITEM_ABILITY);
+        }
+
+        if (rune->vrxitem.itemLevel != 0)
+            reroll = false;
+    }
     
 	if (Pickup_Rune(rune, ent) == false)
 	{

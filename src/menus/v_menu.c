@@ -114,7 +114,7 @@ void vrx_start_reign(edict_t *ent)
 
     V_CommitCharacterData(ent); // Do we need to?
 	V_AssignClassSkin(ent, Info_ValueForKey(ent->client->pers.userinfo, "skin"));
-    stuffcmd(ent, va("exec %s.cfg", ent->client->pers.netname));
+    G_StuffPlayerCmds(ent, va("exec %s.cfg", ent->client->pers.netname));
 }
 
 qboolean CanJoinGame(edict_t *ent, int returned)
