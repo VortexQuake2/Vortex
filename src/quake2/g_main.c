@@ -921,7 +921,6 @@ uint64_t sf2qf(uint64_t framecount) {
 	if ( rounded == 0 ) {
 		uint64_t iratio = sv_fps->value / 10;
 		rounded = level.framenum % iratio ? 0 : 1;
-		printf("%li %li %li\n", rounded, iratio, level.framenum);
 	}
 	return rounded;
 }
