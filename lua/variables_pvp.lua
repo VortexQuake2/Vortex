@@ -7,8 +7,19 @@ SKULL_ADDON_HEALTH                       = 30
 SKULL_INITIAL_DAMAGE                     = 7
 SKULL_ADDON_DAMAGE                       = 3
 SKULL_SEARCH_TIMEOUT                     = 75
-CACODEMON_INITIAL_DAMAGE                 = 70
-CACODEMON_ADDON_DAMAGE                   = 14
+-- Cacodemon
+CACODEMON_INITIAL_DAMAGE                 = 75
+CACODEMON_ADDON_DAMAGE                   = 7
+CACODEMON_SKULL_INITIAL_AMMO             = 2
+CACODEMON_SKULL_ADDON_AMMO               = 1
+CACODEMON_SKULL_START_AMMO               = 2
+CACODEMON_REGEN_FRAMES                   = 200
+CACODEMON_REGEN_DELAY                    = 5
+CACODEMON_INITIAL_RADIUS                 = 75
+CACODEMON_ADDON_RADIUS                   = 2.5
+CACODEMON_SKULL_SPEED                    = 750
+CACODEMON_ADDON_BURN                     = 1
+--
 MAX_PIPES                                = 5
 P_TANK_PUNCH_RADIUS                      = 170
 SPIKEBALL_INITIAL_HEALTH                 = 80

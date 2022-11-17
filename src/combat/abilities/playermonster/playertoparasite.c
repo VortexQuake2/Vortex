@@ -148,7 +148,7 @@ qboolean ParasiteCanAttack (edict_t *ent)
 	if (ent->monsterinfo.attack_finished > level.time)
 		return false;
 
-	return ((level.time > pregame_time->value) && (level.time > ent->client->respawn_time) 
+	return (((level.time > pregame_time->value) || pvm->value) && (level.time > ent->client->respawn_time) 
 		&& (!que_typeexists(ent->curses, CURSE_FROZEN)) && (level.time > ent->holdtime));
 }
 

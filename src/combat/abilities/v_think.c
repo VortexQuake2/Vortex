@@ -503,10 +503,10 @@ void think_ability_cloak(edict_t *ent) {
 }
 
 void think_ability_antigrav(edict_t *ent) {
-    if (ent->antigrav && ent->deadflag != DEAD_DEAD && !ent->groundentity) {
-        ent->client->pers.inventory[power_cube_index] -= ANTIGRAV_COST;
-        ent->velocity[2] += 55;
-        if (ent->client->pers.inventory[power_cube_index] == 0) {
+    if (ent->antigrav && ent->deadflag != DEAD_DEAD && !ent->groundentity) { 
+	ent->client->pers.inventory[power_cube_index] -= sf2qf(ANTIGRAV_COST);
+        ent->velocity[2] += sf2qf(55);
+        if (ent->client->pers.inventory[power_cube_index] <= 0) {
             ent->antigrav = 0;
             safe_cprintf(ent, PRINT_HIGH, "Antigrav disabled.\n");
         }

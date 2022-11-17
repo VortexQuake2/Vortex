@@ -917,7 +917,12 @@ double scale_fps(double value) {
 
 uint64_t sf2qf(uint64_t framecount) {
 	double ratio = 10.0 / sv_fps->value;
-	return (uint64_t)round(framecount * ratio);
+	uint64_t rounded = (uint64_t)round(framecount * ratio);
+	if ( rounded == 0 ) {
+		uint64_t iratio = sv_fps->value / 10;
+		rounded = level.framenum % iratio ? 0 : 1;
+	}
+	return rounded;
 }
 
 uint64_t qf2sf(uint64_t frames) {

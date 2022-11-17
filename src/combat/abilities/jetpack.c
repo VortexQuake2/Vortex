@@ -5,7 +5,7 @@
 
 void think_ability_jetpack(edict_t *ent)
 {
-	int talentLevel, cost = JETPACK_AMMO;
+	int talentLevel, cost = sf2qf(JETPACK_AMMO);
     vec3_t forward, right;
     vec3_t pack_pos, jet_vector;
 
@@ -49,7 +49,7 @@ void think_ability_jetpack(edict_t *ent)
 
 	if (ent->client->pers.inventory[power_cube_index] >= cost || level.time < pregame_time->value) // pregame.
 	{
-		ent->client->thrustdrain ++;
+		ent->client->thrustdrain += sf2qf(1);
 		if (ent->client->thrustdrain == JETPACK_DRAIN)
 		{
 			if (level.time > pregame_time->value) // not pregame
@@ -67,15 +67,15 @@ void think_ability_jetpack(edict_t *ent)
 	{
 		if (ent->groundentity)
 			ent->velocity[2] = 150;
-		ent->velocity[2] += 150;
+		ent->velocity[2] += scale_fps(150);
 	}
 
     AngleVectors(ent->client->v_angle, forward, right, NULL);
-    VectorScale (forward, -7, pack_pos);
+    VectorScale (forward, scale_fps(-7), pack_pos);
     VectorAdd (pack_pos, ent->s.origin, pack_pos);
     pack_pos[2] += (ent->viewheight);
 
-    VectorScale (forward, -50, jet_vector);
+    VectorScale (forward, scale_fps(-50), jet_vector);
 
     if (ent->client->next_thrust_sound < level.time)
     {
