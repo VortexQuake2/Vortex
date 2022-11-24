@@ -27,7 +27,9 @@ SENTRY_ADDON_BULLETDAMAGE                = 2
 -- POLTERGEIST
 -- TANK
 P_TANK_PUNCH_RADIUS                      = 224
-P_TANK_ROCKET_ADDON_DMG                  = 55
+P_TANK_ROCKET_ADDON_DMG                  = 6.5
+P_TANK_AMMOREGEN_DELAY                   = 3
+P_TANK_REGEN_DELAY                       = 40
 
 -- CACODEMON
 CACODEMON_INITIAL_DAMAGE                 = 100

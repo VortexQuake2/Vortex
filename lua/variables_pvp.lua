@@ -24,7 +24,9 @@ CACODEMON_ADDON_BURN                     = 1
 
 -- TANK
 P_TANK_PUNCH_RADIUS                      = 170
-P_TANK_ROCKET_ADDON_DMG                  = 4.5
+P_TANK_ROCKET_ADDON_DMG                  = 5.5
+P_TANK_AMMOREGEN_DELAY                   = 3
+P_TANK_REGEN_DELAY                       = 40
 
 -- SOLDIER
 MAX_PIPES                                = 5
