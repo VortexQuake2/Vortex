@@ -112,7 +112,7 @@ int q2lua_getplayercount(lua_State *L)
 	return 1;
 }
 
-int q2lua_get_mapname(lua_State *L) 
+int q2lua_get_mapname(lua_State *L)
 {
 	lua_pushstring(L, level.mapname);
 	return 1;
@@ -1996,7 +1996,7 @@ void Lua_LoadVariables()
 	P_TANK_BLASTER_INITIAL_SPD = vrx_lua_get_variable("P_TANK_BLASTER_INITIAL_SPD", 1500);
 	P_TANK_BLASTER_ADDON_SPD = vrx_lua_get_variable("P_TANK_BLASTER_ADDON_SPD", 55);
 	P_TANK_ROCKET_INITIAL_DMG = vrx_lua_get_variable("P_TANK_ROCKET_INITIAL_DMG", 150);
-	P_TANK_ROCKET_ADDON_DMG = vrx_lua_get_variable("P_TANK_ROCKET_ADDON_DMG", 35);
+	P_TANK_ROCKET_ADDON_DMG = vrx_lua_get_variable("P_TANK_ROCKET_ADDON_DMG", 2.5);
 	P_TANK_ROCKET_INITIAL_SPD = vrx_lua_get_variable("P_TANK_ROCKET_INITIAL_SPD", 650);
 	P_TANK_ROCKET_ADDON_SPD = vrx_lua_get_variable("P_TANK_ROCKET_ADDON_SPD", 40);
 	P_TANK_BULLET_INITIAL_DMG = vrx_lua_get_variable("P_TANK_BULLET_INITIAL_DMG", 35);

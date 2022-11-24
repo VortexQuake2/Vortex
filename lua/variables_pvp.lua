@@ -7,7 +7,9 @@ SKULL_ADDON_HEALTH                       = 30
 SKULL_INITIAL_DAMAGE                     = 7
 SKULL_ADDON_DAMAGE                       = 3
 SKULL_SEARCH_TIMEOUT                     = 75
--- Cacodemon
+
+-- POLTERGEIST
+-- CACODEMON
 CACODEMON_INITIAL_DAMAGE                 = 75
 CACODEMON_ADDON_DAMAGE                   = 7
 CACODEMON_SKULL_INITIAL_AMMO             = 2
@@ -19,12 +21,20 @@ CACODEMON_INITIAL_RADIUS                 = 75
 CACODEMON_ADDON_RADIUS                   = 2.5
 CACODEMON_SKULL_SPEED                    = 750
 CACODEMON_ADDON_BURN                     = 1
---
-MAX_PIPES                                = 5
+
+-- TANK
 P_TANK_PUNCH_RADIUS                      = 170
+P_TANK_ROCKET_ADDON_DMG                  = 4.5
+
+-- SOLDIER
+MAX_PIPES                                = 5
 SPIKEBALL_INITIAL_HEALTH                 = 80
 SPIKEBALL_ADDON_HEALTH                   = 10
 SPIKEBALL_INITIAL_DAMAGE                 = 40
 SPIKEBALL_ADDON_DAMAGE                   = 10
+
+-- SHAMAN
 FIRETOTEM_DAMAGE_MULT                    = 4
+
+-- ENGINEER
 SENTRY_ADDON_BULLETDAMAGE                = 1
