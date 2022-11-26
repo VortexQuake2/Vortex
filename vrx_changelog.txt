@@ -1,0 +1,1822 @@
+v1.972
+================
+
+** Fixed suicide pointloss so it actually works: No more lame HG suicide characters.
+** Tweaked bomb spell. Caster must remain within 512 units of the target for spell to remain in effect. This is to counteract the unbalanced jetpack+bomb combo. Bomb spell delay reduced to 1 second, and multiple castings per target allowed. Players can no longer tball while cursed.
+
+
+v1.973
+================
+
+** Added confirmation for rune removal, so players don't accidentally remove their precious runes.
+** Added CTF idle player timeout. Players who remain idle for over 60 seconds are kicked from the game, as they are not contributing to the team.
+** Added credit loss on suicides to prevent players from gaining an advantage by massing credits at low levels.
+
+v1.986
+================
+
+** Reduced effectiveness of vampire to 2.5% per level
+** Increased effectiveness of health regeneration and removed cap
+** Increased effectiveness of armor regeneration and removed cap
+** Increased effectiveness of H/A upgrade and removed cap
+** Decreased cost of superspeed and added visual effect while using it
+** Changed daylight and nighttime values (more light, less dark)
+** Added strict class restrictions on unique abilities
+** Changed bomb spell to pause if caster loses sight on target, and made adjustments to timing values
+** Adjusted health and armor values for some classes
+** Adjusted SG pellets
+** Disabled newbie protection for CTF
+** Disabled flag pickup while invincible
+** Adjusted minisentry regeneration rate
+** Changed ghost to be more like resist-- removed damage penalty and reduced effectivness
+** Increased effectiveness of specific resists
+** Disabled damage prevention on dead targets
+** Enabled quad damage and invulnerability in CTF (this was only an issue because you could pick up the flag)
+** Reduced penalty for suicide
+** Increased effectiveness of normal bomb spell
+** Increased spree break points
+** Increased effectiveness of level cap
+** Added a cap to point loss
+** Point loss no longer occurs unless you are killed by a lower-level player
+
+v1.99
+=================
+
+** Rewrote normal bomb spell code in hopes of preventing crashes
+** Increased benefit of sprees to a fixed value of 150% normal points
+** Increased benefit of spree war to 300%
+** Players will have their velocity reset when they pick up flag, to prevent them from bypassing speed restrictions
+** Disabled createinvin for flag carrier for obvious reasons
+
+v1.991
+=================
+
+** Made minor adjustments to level difference point modifier
+** Newbie protection no longer causes high-level players to lose effectiveness; instead, they become mini-bosses incapable of warring, but are worth double points to other players, and do not suffer from normal point loss
+
+v1.992
+=================
+
+** Disabled power armor for dead targets
+** Disabled self-inflicted knockback for flag carrier in CTF (again)
+** Added checks to superspeed, parasite, and vampire IR vision for player death
+** Tweaked hyperblaster damage and bolt velocity
+** Burning a person no longer unfreezes them
+** Added infinite loop check to OnSameTeam(), which fixes certain world entities from crashing a server
+
+v1.993
+=================
+
+** Added flying monster boss with teleportation capability, worth more points than the previous boss
+** Modified boss monster code to work more reliably
+** Hand grenade no longer detonates on death; no more lame suicide kills
+** Reduced blaster damage and increased bounce damage. At level 0 it does 1-50 (was 1-75), and at level 10 it does 10-90 (was 10-140).
+** Modified holy shock radius to a fixed value of 256 units
+
+v1.994
+=================
+
+** Removed max blaster counter
+** Reduced blaster bolt duration
+** Bomb spell can no longer hurt caster
+** Chatprotect cannot be called while using an aura
+** Added secondary blaster mode which allows you to charge a bolt for 4x damage
+
+v1.995
+=================
+
+** Reduced range of bloodsucker to 64 units
+** Reduced BFG stick duration to 0.1 seconds per level
+** BFG blast is removed upon owner death
+** Cleaned up various bits of code ;)
+** Reworked some forcewall code and made improvements
+** Allow multiple flames per target
+
+v1.996
+=================
+
+** Added PlayerMute command: mute <playername> (archer & vex)
+** Changed flag pickup code to only award points if the teams are nearly even by weighted value
+** Modified CTF weighted player value to be 1.02^player_level, which makes very high level players worth more
+** Increased ability point cost to 15,000 because purchased points disrupt game balance
+** Disabled extra damage to spree'ers in deathmatch play
+** Ghost only has one level of reduced transparency after level 5
+** Reduced chance a boss will spawn to 2% every minute
+** Fixed a bug that would make normal monsters unable to spawn after a boss was created
+** Fixed boss spawn message
+
+v1.997
+=================
+
+** Modified force wall laser and particle effects: Walls are now color-coded in CTF and flash yellow before expiring
+** Added solid forcewall knockback with damage
+** Added weighted value to CTF score screen, so you know when teams are unbalanced
+** Added level 3 force even teams, which does not allow the user to choose a team at all
+** Respawns are now given to players who's team is auto-changed
+** Capture points are not awarded if team levels are not within a 20% margin
+** Added rune id number, which will allow for easy tracking of duped runes
+** Added inuse flag to player files, which will allow easy tracking of cheaters trying to dupe runes
+** Added extra logging, including IP, date, time, and rune trade info
+** Replaced armor regeneration with the supertank ability, which affords great protection at the cost of mobility
+
+v1.998
+==================
+
+** Swapped level 10 bfg upgrades pull and speed
+** Tweaked BFG upgrades
+** Added automatic team sorting capabilities to CTF
+** Added code to openconfigfile() that will refund points from BFG pull upgrade
+** Fragging a miniboss will now give points to every non-boss character. Miniboss also has 2x the chance to drop a rune.
+
+v1.999
+==================
+
+** Reworked chasecam code to support monster and sentry cam
+** Reworked monster aim code; monsters' accuracy will decrease if their target is moving fast
+** Replaced minisentry with improved version
+** Re-enabled laser ability delay of 1 second
+** Cursed players cannot tball
+
+v2.0
+==================
+
+** Rewrite of bomb spell and other various bits of code
+** Bomb spell has a new mode "area" which will bomb a specific area for 10 seconds
+
+v2.03
+==================
+
+** Fixed monster targetting other small monsters
+** Slightly reduced RL damage to 135 at level 10
+** Slightly increased sword length
+
+v2.1
+==================
+
+** Replaced all monster code with all new AI. Monsters are smarter, capable of swimming, jumping, using elevators, dodging, and more.
+** Players have new monsters at their disposal, as well as new commands: 'monster select', 'monster move', and 'monster help'
+** Replaced world monster spawning code
+** Added PvM (Player vs. Monster) mode, which places everyone on the same team against world monsters
+** Added ability for players to set an email address 'email <address>'. Players that lose their passwords can email an administrator, and their password will be sent to the email address provided. Once an email address is set, it cannot be changed, so make sure you're going to have the same address for the life of your character!
+** Changed upgrade system back to the way it used to be. All abilities can be upgraded to level 10 by any class, but if you upgrade something out of your class-specific abilities, you will receive a 50% penalty. This will prevent the creation of uber-defense characters that have been plaguing Vortex lately, and will force more class specialization.
+** Teammates can repair/upgrade your sentry in PvM, and move your monsters if they are not holding position
+
+v2.11
+==================
+
+** Replaced decoy
+** Disabled knockback in PvM by teammates
+** Disabled tballing of teammates in PvM
+** Added ability for teammates to upgrade/repair/reload allied sentries
+** Teammates in PvM can push allied monsters around if they are not in stand mode
+** Tried to fix a bug which causes players to randomly become invincible
+** Increased effectiveness of yellow tech
+** Increased monster build times and delay, also added holdtime so the controller is unable to move while spawning a monster
+** Drowning and burning sounds no longer play if you aren't taking damage (yellow tech, world resist, etc.)
+** Monsters and sentries take 50% extra damage from world monsters in PvM so they don't dominate so much!
+** Monsters will no longer target players that have just respawned, or are invulnerable
+** World monsters will suicide after 3 minutes of inactivity
+** Tweaked brain AI so it won't try to suck in an immovable target, but instead will close in and use its hooks
+** Other minor monster AI tweaks
+** Increased soldier initial health and addon health
+
+v2.12
+==================
+
+** Brains don't try to suck in immovable targets (added MOVETYPE_TOSS)
+** Tweaked starting health and armor for soldier
+** Create invin/invuln no longer is activated by the 'create****' command, instead, you automatically get 10 seconds every 10 frags
+** Fixed bug where minisentries would have no armor
+** Fixed h/a to recognize class correctly, so tanks get the higher modifier (4x at level 10)
+** Monsters in PvM now add to your spree, so boa and create invuln/invin work effectively
+
+v2.13
+==================
+
+** Players that reach level 10 get free fast weapon switching
+** Increased blood of ares effect to 8% per spree point, reaching 3x damage at 25 spree at level 10 for soldiers
+** Lowered cost of bomb spell
+
+v2.14
+==================
+
+** World monsters now take 3 seconds to spawn, which gives players time to get out of the way. While the monsters are spawning, they are invulnerable and cannot be moved
+** Fixed bug with createquad/invuln that would give players 10 seconds of quad/invuln for each monster kill in pvp
+** Increased cost for bomb spell and ability delay
+** Changed cloak ability to not require power cubes. Instead, a player becomes invisible when standing still for 3 seconds. If the player moves, fires a weapon, is shot, or uses an ability, they are de-cloaked. Includes silent running when not cloaked!
+
+v2.141
+==================
+
+** Capped experience to reach next level to 50000 (from 10000) to promote long-term character building
+
+v2.142
+==================
+
+** Fixed ghost bug following version 2.1 update (was giving only 5% chance for a shot to miss, not 10%)
+** Reduced PvM points from a base of 10-30 to 10-20
+** Capped monster points to 100 per kill
+
+v2.143
+==================
+
+** Fixed rune bug which was preventing weapon runes with a modifier higher than 3 from spawning
+** Tweaked monster AI so monsters are less likely to jump off ledges that place them farther away from their intended goal
+** Slightly reduced effectiveness of ammo regeneration
+** Modified cloak so players gain additional transparency prior to cloaking (ie: if you don't have ghost, you will be slightly transparent, otherwise you will become almost completely transparent) and also reduced cloaking time to 1.5 seconds (from 2 seconds)
+
+v2.144
+==================
+
+** Tweaked ammo regeneration (again)
+** BFG now causes damage to its owner if fired too close
+** Reduced cloak time to 1 second (from 1.5)
+
+v2.145
+==================
+
+** Fixed cloaking bug that allowed someone to remain indefinitely cloaked
+** Increased cost of jetpack
+** BFG now only inflicts 50% damage to it's owner when they fire too close (since the BFG is like an energy rocket)
+** Re-wrote knock weapon code to work more efficiently, with slightly reduced effectiveness. You have to fire at a player's weapon to have it knock (the general area anyway), they must have less than 50% health, there is only a 50% chance of it actually knocking, and it only tries once every 2 seconds (so using an MG with knock weapon is no more effective than using a RG)
+
+v2.15
+==================
+
+** Fixed a bug that allowed fast weapon switching to bypass secondary mode switchover delay
+** Halved power cube cost of parasite transformation ability
+** Rewrote holy freeze aura code; it now works on monsters and sentries!
+** Worked on aura code and did some other code cleanup
+** Reduced power cube cost and ability delay of auras and made it easier to toggle between them
+** Fixed bug that would allow a controller to make more than 3 decoys
+** Dead or frozen players are not awarded points
+** Reduced bomb delay to 1 second
+** Mage's main abilities have been changed; Corpse explosion replaces power cube regeneration
+** Reduced cost of mage's abilities
+** Made monsters and sentries visible to infra-red vision
+** Made player-spawned monsters in PvM glow blue instead of red because or IR vision being red only
+
+v2.151
+==================
+
+** Holy shock now displays damage dealt to non-client targets
+** Fixed aura effects not showing up on monsters/sentries
+** Aura effects flash on and off on monsters/sentries (their protection remains constant though)
+** Fixed bug that allowed players in parasite form to throw grenades
+** Lowered cost of force wall
+** Improved blaster bolt mode; Now charges up to 10x damage at 5 seconds, and displays bolt damage
+
+v2.16
+==================
+
+** Replaced tank special ability 'supertank' with supply station. Once created, the supply station drops health and armor to aid the creator. Upgrading supply station reduces the time it takes for the station to produce items.
+** Fixed a bug with blaster and railgun secondary modes which allowed a player to fire multiple charged shots
+** Modified Drop_Item() so that items dropped by the supply station and monsters will drop at random velocities and directions
+
+v2.161
+==================
+
+** Fixed corpse explosion spell so it works with drones (new monsters)
+** Added fix for characters with a negative credit value
+** Fixed burn so that it appropriately curses a player, preventing them from tballing away
+** Fixed burn breaking freeze curse (chatprotect)
+** Removed last bits of supertank code
+
+v2.162
+==================
+
+** Reduced blaster speed and bolt damage
+** Reduced hyperblaster initial speed
+** Made a few small changes to supply station. It can now be removed with the "remove" command, which refunds power cubes used to create the station.
+** Removed rank from HUD (it wasn't working correctly, and is unnecessary)
+** Added ID-DMG display to ID upgrade, which displays the damage you deal to targets
+** ID upgrade is now a one time upgrade, costing 2 ability points. It displays target's health, armor, ammo, and damage dealt
+** Fixed ID-AMR not working for player targets
+
+v2.163
+==================
+
+** Players now get 3 seconds of invulnerability after respawning, but they are not allowed to use abilities or to fire weapons
+** Improved supplystation intelligence; it now has a better understanding of what you need. It now drops shards and stimpacks.
+** Updated regular bloodsucker ability (+parasite) to follow version 2.1 changes
+** Reduced cost of special resists (shell resistance, explosive resist, etc.) to 3 ability points
+
+v2.164
+==================
+
+** Reduced cost of decoy
+** Increased effectiveness of createinvin (you get 2 seconds per frag after it activates)
+** Newbie bashers don't spree off players half their level and below
+** Increased sword length from 56 units at level 10 to 64 units and doubled burn damage
+** Fixed CE so it correctly kills the corpse at low levels; removed CE knockback
+
+v2.165
+==================
+
+** Fixed bug with createquad/invuln when a mini-boss would kill a player below half their level
+** Reduced effectiveness of defensive abilities when upgrading out of your class
+
+v2.166
+==================
+
+** Fixed grenades so they can't be thrown during 3 second spawn time
+** Modified health and armor values for Vampire class because the total adjusted damage (after defenses) they could take at any given level was superior to every class except Tank, which only had a slight advantage
+** Reduced cost of class unique abilities to 4 ability points
+
+v2.167
+==================
+
+** Replaced super shotgun refire with range upgrade, which increases the maximum range of the weapon's pellet spray
+
+v2.168
+==================
+
+** Modified SSG pellets and damage. SSG now does 150 damage at level 0 from close range (<256 units from target), but retains the same 300 damage at level 10
+** Fixed bug with flames stacking every 0.1 seconds. Flames may only stack once every second maximum.
+** Fixed a rounding bug with armor efficiency causing a player to be stuck with 1 armor
+
+v2.2
+==================
+
+** Removed all CTF and 3zb code! CTF will be replaced with a different teamplay at a later date.
+** Cleaned up various bits of code causing MSVC to give warnings at build time
+** Added new menu code that fixes overflow problems and rids us of the shared-menu bugs
+** Removed old, buggy pmenu code (originally borrowed from Zoid's CTF)
+** Replaced all menus with new more intuitive menus (a work in-progress)
+** Rewrote rune code with higher chances of decent runes spawning
+** Rewrote rune inventory code to support items other than runes (hint hint)
+** Players now have 6 persistant inventory slots, plus 2 equipment slots. The neck slot is for equipping ability runes, while the hand slot is for weapon runes.
+** Modified admin commands. It is now possible for administrators to give negative credits and points to players who break the rules.
+** Removed unused Xatrix mod weapons
+** Players can no longer buy weapon points
+
+v2.3
+==================
+
+** Actually enabled special item (rune) spawning
+** Increase weapon points to 4 (requiring another reset!) since they can no longer be purchased
+** Added Vortex PTR: Protect The Retard! A form of teamplay where players battle against each other to control the retard. The team in-control gains points
+** Lowered max points to next level to 50k (from 75k)
+
+v2.31
+==================
+
+** Added feature to PTR so teammates that are accidentally disconnected can re-join
+** Removed color miniboss color shell when in pvm or ptr modes
+** Made improvements to PTR; once a team gains control of the retard, that team is teleported near him
+** Made client bodies kickable, to allow mages to make better use of corpses
+** Increased bomb spell damage
+** Removed visible requirement for normal bomb spell curse
+
+v2.32
+==================
+
+** Re-added voting system. Maps can only be voted for if at least 50% of the server participates, and there is at least 2 votes for that map.
+** Added game mode voting, so players can vote on whether a server should be PvP, PvM, or PtR
+
+v2.321
+==================
+
+** Updated and improved chasecam
+** Added new server commands
+** Improved CE radius and damage
+** Added monster/sentry/forcewall team colors in PtR
+** Team 1 now uses female/ctf_r skin and Team 2 uses male/ctf_b skin
+** Updated sentrygun with v.2.1 changes, so only controllers can use them most effectively
+** Re-added idle kick for PtR mode
+** Re-enabled minimum players for PtR mode
+
+v2.4
+==================
+
+** Added playing time restrictions. Characters cannot be played more than 4 hours per day
+** Increased player body kick, so bodies can be moved quicker
+** Touched up special item menus
+** Added armory item 'health potion' which can be used to restore yourself to full health during game
+** Added timer to PTR so that teams will automatically rebalance if dropped players don't reconnect within 60 seconds
+** Disabled voting of PTR with insufficient players
+** The Paladin can now use multiple auras at a time!
+** Rewrote Weapon_Generic() function
+** Players can now have 3 curses and 3 auras at a time
+** Fixed decoy so he turns towards teammates
+** Added cacodemon ability, cmd 'cacodemon', which morphs the player into a spherical demon with flying ability.
+** Added plague ability which passively infects players, causing them damage over time. Infected players can infect other players by getting near them.
+** Added corpse eater ability, which passively eats corpses if you're near and looking at one, giving you health. You can gain up to 2x your maximum health.
+** Added hell spawn unique ability, which spawns a flying skull that attacks enemies with a lightning attack. His health and damage are based on the caster's level.
+** Added Demon class, who specializes in: cacodemon, plague, and corpse eater. His unique ability is hellspawn.
+** Added multiple sound effects
+
+==================
+v4.0 BETA3
+==================
+** Modified createinvin/quad & longer powerups. Base duration is 5 seconds with 0 seconds added per kill. Longer powerups adds 1.0, 1.5, and 2.0 seconds, respectively.
+** Increased attack FOV of player tank punch to 30 (from 20) degrees.
+** Modified player tank ammo regen. Ammo will regenerate as long as you aren't spamming +attack while in rocket mode. Previously it would not regenerate if +attack was used in either weapon mode.
+** Modified tank mastery, now reduces ammo/health regen delay 20% per talent level, and reduces ammo regeneration frames by 5% per level (this does not make them regen more... just more often). Ammo regenerates 11% faster per talent level.
+** Modified player tank aim to align more closely with the player's crosshairs.
+** Players picking up the enemy flag are briefly stunned for 0.5 seconds to prevent mage lameness.
+** Fixed bug where player tank that couldn't spawn wouldn't refund power cubes.
+
+==================
+v4.0 BETA5
+==================
+** Fixed player-tank ally points... they weren't getting any!
+** Fixed ally id to work with player-tank
+** Fixed a few possible crash bugs, namely with decoy exploding, and with M_Regenerate()
+** Improved magic bolt explosion talent to 10% damage per level
+** Improved improved pcr talent to 10 cubes per level
+** Added doomie's fix to magic shield and armor vampire talents
+
+==================
+v4.0 BETA6
+==================
+** Fixed possible crash bug when player-monsters were auto-removed
+** Monster's being removed will use SOLID_NOT for 1 frame before removal so they work better with killbox()
+** Player-tank morph mastery gives a bullet attack mode instead of super regeneration
+
+==================
+v4.0 BETA7
+==================
+** Fixed apprentice moderate vitality talent
+** Balance changes to Cleric support skills talent
+** Increase imp magic bolt talent radius
+** Improved player-monster movement to be more player-like. Monsters stepping against a wall will move in the direction where monster angles are pointing. This will make it much easier to maneuver them around obstacles.
+
+==================
+v4.0 BETA8
+==================
+** Fixed apprentice moderate vitality talent (again)
+** Fixed vamp resetting to max health when health is already above max
+** Fixed armor vamp talent so it works independently of health vamp
+** Capped poltergeist resistance to 33% (mutant & parasite)
+** All morphs now gain extra damage after level 10, including player-monsters (ex: tank)
+
+==================
+v4.0 BETA9
+==================
+** Disabled ClientThinkStuff() and using items when player is dead; commented out code in ClientThinkStuff() that called player_die() to make sure the player stayed dead... this code shouldn't be necessary anymore (hopefully!)
+** Updated G_ResetPlayerState() and used it in CTF_SpawnPlayersInBase(). This should fix bugs with certain abilities and/or effects from working after spawning in base.
+** Fixed PM_RestorePlayer() so player doesn't get stuck in floor after reverting from player-monster (ex: tank) form
+
+==================
+v4.06
+==================
+** Added experience penalty for players that are too active, to deter sharing
+** Fixed spectator bug that allowed client commands to be run
+** Fixed hellspawn being spawned through walls
+** Fixed crouching brain bug by forcing client to stand before morphing
+** Replaced lockon() admin command with improved version
+** Fixed tank ally bug by updating G_GetSummoner() and G_GetClient() to always return client first
+** Fixed tank cl_forwardspeed bug by making tank entity ignore invalid cl_speeds
+** Fixed medic summoning bug by removing all summonables when ANY morphing is done
+** Gave flyer ammo to limit blaster spam
+** Fixed tank no exp in CTF bug by updating CTF_AwardFrag()
+** Added tank self-damage with rockets
+** Reduced chainlightning range
+** Tank can now use teleporters
+** Fixed tank punch knocking people out of chat protect
+** Reduced tank punch fov
+** Reduced RUNE_POINTS_PER_LEVEL to 1.5 (from 2.5)
+** Modified monster AI so that when hurt, they attack the closest enemy
+** Fixed some player boss tank bugs, boss tank no longer autoaims
+** Brought back monster boss tank
+** Fixed endless bomb person spell
+** You can no longer morph back to human state while cursed
+** Reduced tank resistance to 66% at level 10 (from 75%)
+** Improved supplystation AI for selecting items
+** Increased nova radius to 128 (from 100)
+
+==================
+v4.07
+==================
+** Monster, hellspawn, and forcewall will auto-remove from enemy base in CTF when defender's flag is taken
+** Disabled code that modified level balance in CTF based on number of flag captures
+** Dominating teams in CTF will take more damage for each extra flag capture they have over their opponents
+** Superspeed/bless no longer works while taking damage
+** Reduced bless defensive/offensive bonus to 1.25 (from 1.33)
+** Reduced effectiveness of corpse eater to 25+2.5dmg/level from 50+5/level, reduced maxhealth to 0.05/level
+** Reduced max cripple damage to 500 (from 1000) and increased delay to 2 seconds (from 1)
+** Capped plague radius to 128 units
+
+==================
+v4.08
+==================
+** Added sentry command "rotate" which will point the sentry towards where the player is aiming
+** Improved sentry rocket speed and addon damage
+** Teleport will no longer work near sky brushes, to keep players from abusing map bugs
+** Player mobility upgrades (hook, superspeed, boost, teleport, jetpack) don't work while the player is being hurt
+** Slight boost to initial BFG pull
+** Cacodemon now has ammo like other morphs
+** Life drain now updates every 1 second (was 0.1 second) but does the same overall damage
+** Improved sentry talent now increases damage by 25% at level 5 with no penalty
+** Armor mastery talent now increases armor absorbtion by 5% per level with a cap of 90%
+** Atomic Armor talent changed. It now doubles detection radius when maxed instead of increasing damage radius.
+** Increased ammo bonus to 2.5%/level for Improved delivery (supply station) talent (from 2%)
+** Increased minimum damage on chainlightning to 50% of max
+** Nova cost now 35, dmg 300 @ 10, radius 100
+** Life drain now uses cubes when you miss
+** Bomb spell forward will only work as long as you can see the location being bombed (to prevent people using it through walls)
+** Increased cost of teleport to 20 (from 10)
+** Fixed domination bug that allowed a team to drop flag to bypass damage modifier applied to winning team
+** Reduced mutant jump attack fov to 20 degrees forward (from 60)
+** Attempted to fix meteor-after-death bug by adding 1 second cushion to G_EntIsAlive(), making touch NULL when death detected, and removing respawn_time reset when teleporting
+** Removed unused check for sentrygun in infront()
+** Added G_ClearPath(), an improved version of G_IsClearPath() that can ignore up to 2 entities when tracing
+** Updated MonsterAim(), mytank_meleeattack(), sentry_findtarget(), sentry's attack(), and drone_ai_checkattack() to use nearfov() instead of infront() to fix bug that allows players to fool monsters/sentries by standing on their heads; also replaced G_IsClearPath with G_ClearPath()
+
+==================
+v4.09
+==================
+** Added new game mode: Invasion
+** Reduced effectiveness of BoA talent in PvM and overall
+** Reduced maximum amount laser can deal before self-destruct from 1000 to 500 at level 10
+** Increased sentrygun reload delay to 3 seconds (from 1.5)
+
+==================
+v4.0967
+==================
+** Reduced rune requirements
+** Added autocannon, cmd 'autocannon' 'autocannon aim' 'autocannon aimall'
+** Added blessed hammer, cmd 'blessedhammer'
+** Engineer receives autocannon, swapped armor upgrade for power shield
+** Knight swaps blessed hammer for magmine
+** Soldier receives magmine, loses createinvin and createquad
+** Weaponmaster receives createinvin and createquad
+** Fixed weapon master receiving too many weapon points on class change/reset
+** Resolved rune dupe bug by modifying savechar() sanity check to allow for morphed tank
+
+** Player must touch autocannon for repair/reload/status (like sentry); aiming laser activated on touch (magic.c)
+** Added FL_CHASEABLE flag to tank boss so it can be watched in chasecam (pvb.c)
+** Blessed Hammer removes itself if the owner dies
+** Swapped TALENT_IMP_EFF_RESIST on engineer for TALENT_IMP_POWERSCREEN
+** Swapped TALENT_IMP_POWERSCREEN on knight with TALENT_IMP_EFF_RESIST
+** Replaced TALENT_LONG_POWERUPS on soldier with TALENT_IMP_TRAPS, which improves effectiveness of magmine, proxy, and napalm
+** TALENT_LONG_POWERUPS no longer in use; may be added to weaponmaster at a later time
+** Moved AddDmgList() to T_Damage() so to fix invasion bug where killing a monster instantly would result in no experience gained, since killed() is called before pain()
+** Improved sentry talent now affects minisentry (previously it only worked on the standard sentry)
+
+==================
+v4.0968
+==================
+** Re-write of ally code to handle > 1 allies
+** Reduced bonus for killing allied player to 1 + 0.5 * num_allies (from 1+1*num_allies)
+** Autocannon can be aimed without cubes
+** Nerf to chainlightning range and damage due to autoaim
+** Slight SSG nerf to 280 dmg at 10 (from 300)
+** Slight SG improvement to 165 dmg at 10 (from 150)
+
+==================
+v4.2
+==================
+** Removed Apprentice class
+** Removed 3 point upgrades from class-specific ability menu (e.g. mobility upgrades, cloak, weapon knock, etc.)
+** Moved all other upgrades to general skills with 5 point max upgrade
+** Modified drone ai_charge() to find a new target if the last one is invalid, so monsters can re-target instantaneously instead of waiting for the current attack to end
+** Fixed gladiator no armor regen bug
+** Doubled flyer vertical acceleration speed
+** Increased player medic regeneration speed, will regenerate to full in 10 seconds (vs. 30 seconds previously)
+** Medic's revived monsters will be equal to medic's level * 1.5 (from 1.0)
+** Increased EXP_PLAYER_BASE to 30 (from 20) to promote PvP modes
+** Increased minimum blaster damage, lowered maximum damage (level 10 is 30-70 vs. 10-90) for more reliable shots
+** Increased tank punch base damage to 200 (from 100), increased base ammo to 10 (from 5)
+** Reduced flyer base ammo to 50 (from 60); flyer now gets 5 additional ammo per level
+** Medic now gets 5 additional ammo per level
+** Reduced cost of character reset to 5000 * player level
+** Fixed Cmd_LifeDrain() so that cubes are not used if you miss
+** Added techs (Resistance, Strength, Regeneration, Haste)
+** Greatly improved haste, now a maximum 50% increased firing rate at level 10 (from 17%)
+** Added Shaman class
+** Added Fire totem: Damages enemy players in the radius
+** Added Water totem: Chills enemy players that enter its radius
+** Added Air totem: Takes 50% of the damage for friendly players in its radius
+** Added Earth totem: Gives a strength effect to friendly players in its radius. Strength bonus is seperate from all other abilities that increase damage. The better of the two bonuses will be used.
+** Added Nature totem: Heals friendly players in its radius
+** Added Darkness totem: Allows all friendly players in its radius to leach health from their opponents
+** Added Fury: Ability that randomly gives the user great bursts of energy when they deal damage with their weapon. They gain damage, resist, and regenerate H/A
+** Added Totem mastery: 4pt upgrade that increases your totem's base health
+** Added Flame: Talent that allows the fire totem to curse players with burn. Damage is based on fire totem ability level.
+** Added Ice: Talent that allows the water totem to damage players when it chills them
+** Added Wind: Talent that allows the air totem to ghost an attack. Both the target and the totem take no damage
+** Added Stone: Talent that allows the earth totem to give players in its radius resistance to damage. Resistance bonus is seperate from all other abilities that reduce damage.
+** Added Shadow: Talent that allows the darkness totem to bring players beyond their usual maximum health
+** Added Peace: Talent that allows the nature totem to regenerate power cubes for players in its radius
+** Added Totemic Focus: Talent that allows the player to have two totems out at the same time (with a cost). You can not create two totems of equal or opposite elemental alignment (ex: two fire totems or one fire totem, one water totem).
+** Added Wormhole: create a portal to travel to another location
+
+==================
+v4.201
+==================
+** Attempted to fix multiple tech bug; StartGame() will zero-out inventory of techs
+** Fixed Water Totem freeze/chill (was 0 movement at level 10)
+** Reduced medic revived monster level bonus to 1.33x (from 1.5x)
+** Increased monster gib health to 200 * control cost (from 150)
+** Added SOLDIERLT and SOLDIERSS with RL and SG weapons for Medic
+** Reduced base chance of rune dropping to 0.5% (from 2%)
+** Fixed shooting while in wormhole
+** Poltergeist can no longer use abilities while in human form (e.g. summoning)
+** Reduced totem range to 384 (from 512)
+** Fixed Shaman class skin not working
+** Fixed fury (it didn't work)
+
+==================
+v4.202
+==================
+** Reduced Medic soldier's blaster weapon accuracy to 60% (from 90%), increased RL and SG accuracy to 60% (from 50%)
+** Removed standard Medic resistance (33% at level 10); Medic can still gain resistance through talent (up to 33%)
+** Increased Medic blaster bolt base damage to 11.1% of max damage (360 at level 10), doubled ammo cost to 20 (from 10) cells
+** Reduced Medic ammo/health regeneration rate to 200 frames or 20 seconds for 100% recovery (from 100 frames or 10 seconds); morph mastery regains previous regen rate
+** Medics no longer have to wait for death animation to complete before they can revive a corpse
+** Fixed Brain not working with polt class
+** Removed uber-transparency with high level ghost, removed transparency with ghost + cloak
+** Fixed weapon stun working with morphed player weapons
+** Fixed "drop tech" command; this command will drop any/all techs that you are carrying
+** Fixed plague + wormhole by removing all summonables on wormhole entry
+** Attempted to fix totem exp bug by ensuring proper removal of totem upon death
+** Modified fire totem to spit flames when a target is in range
+
+==================
+v4.203
+==================
+** Restored medic resistance, reduced regen rate to 300 frames for 100% recovery, reduced medic revive bonus to 1.25x (from 1.33x)
+** Reduced effectiveness of haste ability to 33% at level 10 (from 50%), maxing out at 50% at level 13
+** Reduced movement delay while taking damage to 0.2 seconds (from 0.5), giving players a better chance to escape
+** Reduced chance of weapon stun for blaster to 25% at level 10 (from 33%); maximum chance is now capped at 50%; continuous stun is not allowed, and is limited by the duration of the stun (e.g. if you stun someone for 0.4 seconds, you can't stun them again for 0.4 seconds)
+** Reduced maximum vampire effect to 50 health/sec (from 100)
+** Fixed armor vampire to base calculation on amount of health stolen (steal) vs. health damage (take), increased armor vamp% to 16.6% per level
+** Ammo regeneration (including talent) doesn't work while firing
+** Fixed/added plague max radius
+
+==================
+v4.204
+==================
+** Added blaster as a respawn weapon
+** When blaster is equipped and set as respawn weapon, picking up another weapon will not cause a weapon change
+** Blaster now consumes ammo; the ammo is automatically regenerated when not firing at a rate of 5 cells per second up to 25 cells
+
+==================
+v4.205
+==================
+** Added ammo regen timer, so ammo regen will kick-in immediately following -attack
+** Lengthened daytime to 5 minutes (from 3), nighttime remains at 1 minute
+** Attempted to fix plague+wormhole bug by adding spectator check in ClientThinkStuff()
+** Added 30 second wormhole timer; if the player doesn't exit the wormhole in 30 seconds, they are respawned
+** Added wormhole exception to G_IsSpectator() and IsValidChaseTarget() to allow wormhole user to be chased
+** Free level 2 hook in CTF mode!
+** Increased base player credits to 10 (from 5)
+** Increased frag experience and base defend experience to 30 (from 20) to equal DM base player experience
+** Increased CTF_FLAG_ASSIST_EXP to 100 (from 50) and CTF_ASSIST_DURATION to 10 seconds to encourage offensive teamwork
+** Increased CTF_FLAG_CAPTURE_EXP to 750 (from 500) to encourage CTF play
+** Reduced makron addon health to 1000 (from 1500) per level, initial armor to 0 (from 5000), and addon armor to 1000 (from 1500)
+** Rewrote mutant jump attack code to use V_Touch(); this function will be called when any live target comes into contact with mutant; this method should be more reliable and cost far less CPU cycles to execute
+
+==================
+v4.206
+==================
+** Hook is now free in CTF mode (fixes negative power cube bug)
+** VortexRemovePlayerSummonables() will now remove totems, fixing totem removal not working in CTF mode
+** Added totem_effects() to glow with team colors in CTF and domination modes
+** Fixed CTF team balancing not respawning wormholed players
+** Fixed abilities working in wormhole
+** Yin now tries to recover ammo even if health/armor are full
+** Fixed flyer smart rocket lock after morph bug by causing the counter to reset with V_RestoreMorphed() which is called after morphing back to human form
+** Added totem death message
+** Reduced fire totem refire delay from 0.1-0.2 seconds to 0.1 second
+** Fixed ChangeClass() causing players to lose class ability upgrades when resetting their characters
+** Added V_UpdatePlayerAbilities() which will update a player's abilities to the latest version; this way, a change in class/general abilities will not require a reset
+
+==================
+v4.207
+==================
+** Fixed Medic health/ammo regen not getting a bonus with morph mastery
+** Fixed Flyer smart rocket tracking targets without establishing a lock; improved turn rate based on lock quality (1.4 seconds for maximum lock)
+** Increased Flyer addon HB damage to 4 (from 3); level 10 damage is now 75 damage/bolt (from 65)
+** Removed Flyer HB ammo addon bonus, max ammo is now 100, starting ammo is 33 (from 30)
+** Removed Medic HB ammo addon bonus, max ammo is now 100, starting ammo is 33 (from 25)
+** Medic bolt now costs 10 ammo (from 20)
+** Fixed weapon knock (attacker should be in-front of target, not the other way around), relaxed hit location requirements
+** Removed Tank bullet and rocket addon ammo, max ammo is 100 and 25 respectively; increased starting/spawn ammo
+** Increased Tank punch range to 196 (from 128)
+** Increased Brain initial damage to 40 per frame (from 30)
+** Doubled frost nova effectiveness
+** Increased nova radius to 128 (from 100)
+** Reduced blessed hammer cost to 10 (from 20), reduced ability delay to 0.1 second (from 0.2), increased base damage to 200 (from 100)
+** Increased chain lightning range to 196 (from 128)
+** Reduced bomb spell cost to 25 (from 50)
+** Fixed flame pitch angles (so flame always points up)
+** Increased totem range to 512 (from 384)
+** Fixed Mutant being unable to jump-attack parasites
+
+==================
+v4.208
+==================
+** Fixed player-tank (morph) touch function to check for mutant attack via V_Touch()
+** Added per-kill bonus duration of 0.5 seconds (from 0) to create quad/invin
+** Fixed flyer smartrocket bug that allowed for a negative target lock
+** Removed playing time experience penalty
+** Reduced nature totem refire rate to 5 seconds (from 10) and increased armor mult to 2.5 (from 2), which should yield 50h/25a at level 10
+** Reduced Medic ammo to 50, reduced starting ammo to 25, reduced regen frames to 100 (10 seconds for 100% ammo recovery, from 20 seconds)
+** Player-tank morph can use active abilities (e.g. summon monster)
+
+==================
+v4.21
+==================
+** Attempted fix (hopefully last one) to Flyer smart rocket negative target lock
+** Player-tank morph can push monsters, touch/repair/reload/rotate sentries
+** Added player-monster exception to G_EntIsAlive(), allowing more abilities to be used, added additional checks to G_ValidTarget() to make sure nobody is targetting noclipped players (since G_EntIsAlive() is now saying these entities are valid)
+** Fixed napalm and proxy to work with player-monsters
+** Fixed proxy talent bug (talent did not work)
+** Attempted fix for monster selection bug by adding DroneRemoveSelected() which will purge the selected monster from the player's list when it dies or is removed from the game
+** Reduced blessed hammer base damage to 100 (from 200)
+** Fixed mutant jump attack not triggering power screen (attack impact point was always target origin)
+** Removed morph power screen restriction; now, any morph can use power screen
+** Modified CheckPowerArmor() to allow power armor to work with player-monsters (e.g. Tank)
+** Modified HUD to show power armor screen with any morphed player
+** Modified darkness totem to work with player-monsters
+** Fixed PvM/Invasion modes not working with pregame_time
+** Fixed flames not clipping on monsters by adding clipmask; flame totem is now effective against monsters
+** Improved totem regeneration to 10% per second (from 10 health/sec), but totem will only regenerate when it is not being damaged
+** Modified Water totem to work against non-players
+** Modified Nature totem to heal non-clients (full regeneration in 30 seconds at level 10)
+** Modified forcewall solid to allow player-medics to heal their own wall
+** Added bleed curse (non-ability for now) that takes 33-99% health over 10 seconds at level 10 (capped at 100 dmg/tick)
+** Added Berserker morph with 3 attacks: punch, crush, and slash. Punch can be used while running, while crush and slash are limited to standing attacks. Crush is similar to tank's strike/punch attack (radius damage). Slash does slightly less damage than punch, but can cause bleeding. Berserker gains up to 50% natural resistance at level 10.
+** Added Berserker mastery talent (+11.1% damage/talent level)
+** Fixed player level-up and regeneration sounds not working with r1q2 (the 'play' command was removed)
+** Fixed morph + superspeed bug that causes viewheight to be thrown off
+** Superspeed now works with player-monsters (e.g. Tank)
+** Increased max vote maps to 64 (from 32)
+** Fixed water totem bug causing insane damage reduction (damage was reduced by 1/10 at level 10!)
+
+==================
+v4.211
+==================
+** Capped radius weapon knockback to 300, so level 100 monsters won't toss you across the map
+** Increased player-monster superspeed bonus to 3x (may need to be decreased for other player-monsters besides Tank)
+** Modified teleport, hook, and boost to work with player-monsters
+** Modified berserk sounds
+** Improved berserker attacks: slash has 2 attacks while punch has up to 3 (when standing still) and swings horizontally
+** Added sprint ability to berserker morph (cmd: +sprint), similar to superspeed
+
+==================
+v4.212
+==================
+** Fixed superspeed not draining cubes for morphed players (non-berserker)
+** Improved berserk punch attack: shorter swing (40 degree span) for easier aiming and additional attack when running (3, from 2)
+** Increased charge rate of beam to 10/sec (from 5)
+** Increased max radius of exploding armor to 256 (from 200)
+** Increased invasion player spawn health to 2000 (from 1000) and reduced regen time to 120 seconds (from 180); spawn will not regenerate while being damaged
+** Increased invasion experience/credit award maximum to 1000/1000 (from 500/250)
+** Added shield ability (cmd: +shield): absorbs 100% damage while deployed, but you will be unable to use weapons/abilities
+** Fixed bug with flyer hb refire (attack_finished is supposed to be a float, not an int)
+
+==================
+v4.213
+==================
+** Reduced ability delay while using shield so that you can use abilities immediately after shield is down
+** Players can vote 30 seconds after the game begins (from pre-game value of 120 seconds), this gives players time to connect
+** Worthless runes are automatically removed when you touch them, to prevent inventory clutter
+** World-spawned non-player bosses will drop up to 5 runes upon death; improved chance of boss dropping a rune
+** Attempted to improve fire totem aim: totem will try to lead targets and will adjust firing arc based on target distance
+** Fixed fury and vampire working when hurting yourself
+** Fixed invasion bug where a player was not awarded points for a monster kill if the monster were killed in 1 shot (we now call AddDmgList() before Killed())
+
+==================
+v4.214
+==================
+** Modified wormhole exit time; you only have 10 seconds to exit if you are on spree war
+** Greatly improved boss rune spawn rate (now 25% per rune, up to 4 runes); runes will toss far so other players have a chance to get them
+** Added caltrops ability: cmd "caltrops" throws a spike on the ground; if someone touches it, they take damage and are slowed; this ability is for the soldier class
+** Removed hellspawn regeneration in favor of vampire ability; this should help it in PvM situations
+** Fixed berserker crouching (not allowed)
+
+==================
+v4.215
+==================
+** Increased armor regen rate to 5/sec at level 10 (from 4)
+** Fixed hellspawn attack, vamp (attacker was it's activator, not the hs itself); improved vamp%
+** Removed drone power talent durability penalty
+** Fixed drone mastery (now it modifies max hp/armor)
+** Fixed stun/movement penalty on death
+** Hellspawn can vamp up to 2x maximum health
+** Added hellspawn "recall" command to have hellspawn automatically recall itself on idle
+** Hellspawn can be pushed (like monsters)
+** Fixed vampire working with morphs
+** Fixed tank abilities not working, fixed tank+wormhole
+** Allies can share wormhole
+** Fixed wormhole working with hand grenades
+
+==================
+v4.216
+==================
+** Changed idle timeout/kick to check for actual movement to prevent players from bypassing the check using +attack; this check does not happen in pre-game mode
+** PvM and invasion modes can no longer be voted for once the server is more than 33% full or has more than 4 players, whichever is greater
+** PvM experience sharing is removed
+** Increased ALLY_MAX_LEVEL_DELTA to 2, so you can ally with someone that is 2 levels above or below you
+** Added 2 second delay to rune pickup, so you can't hog runes
+** Reduced health and armor of Soldier to 200h, 175a (from 250h, 250a)
+** Increased bitch health and armor to match Soldier (from 150h, 100a)
+** Reduced shotgun soldier's weapon spread
+** Rewrote fire_blaster() to accept projectile type, bounce, duration, and MOD parameters
+** Medic blaster bolt no longer bounces
+** Added tank weapon blaster mode
+** Gunner grenade speed goes up with monster level (max: 900)
+** Reduced player-tank machinegun spread
+** Monster mutant now uses player-mutant jump attack (more reliable)
+** Added monster mutant melee attack
+** Fixed tank grapple hook in CTF mode
+** Fixed LowestLevelPlayer() and HIghestLevelPlayer() not detecting player-monsters (e.g. tank)
+** Fixed flashlight with tank
+** Players will unmorph when using tball
+** Player-monsters (tank) can use tball self
+** Players are unmorphed when disconnecting
+** Fixed megahealth decay not working with player-monsters (tank)
+
+==================
+v4.217
+==================
+** Fixed CG tracer damage
+** Added use* commands for tank (use punch/machinegun/rocket launcher), medic (use hyperblaster/blaster/healing), berserker (use punch/slash/crush)
+** Fixed berserker forward running attack
+** Increased berserker slash range to 96 (from 64)
+** Reduced parasite morph attack delay/refire to 0.5 seconds (from 1.0)
+** Caltrops damage is now improved with traps talent
+** Increased caltrops slow time to 1 second/level (from 0.5), damage to 300 at level 10 (from 200)
+** Removed 2.5 second ability cooldown on totem death
+** Fixed bug with rune spawning code (would return pointer to freed rune)
+** Added soldier class ability 'spike grenade', cmd 'spikegrenade': throws a grenade that shoots spikes in all directions for 10 seconds
+
+==================
+v4.218
+==================
+** Caltrops and spikegrenade are now classified as magical damage
+** Improved tank mastery talent: ammo regenerates 20% faster/level (from 11%)
+** Fury chance rolls every 1 second (from 2), chance reduced to 1%/level (from 1.25%/level)
+** Fixed air totem resistance
+** Increased darkness totem vamp mult to 0.033 (from 0.025)
+** Reduced shield cooldown to 0.3 seconds (from 0.5)
+** Increased spike grenade addon damage to 15 (from 10)
+** Reduced napalm cost to 25 (from 50)
+** Reduced caltrops ability delay to 0.2 seconds (from 0.5)
+** Increased caltrops duration to 120 seconds (from 60)
+** Changed morph monster resistance to scale better with level; player-tank gains extra resistance against monsters
+** Hellspawn remove refunds powercubes if its health is greater than or equal to max
+** Added sounds for fury and techs
+** Fixed tank morphing bug (tank would not unmorph if you tried to morph into something else, allowing you to use 2 morph's abilities)
+** Fixed player-monster (tank) ally marker
+** Fixed player-monster (tank) cloaking
+
+==================
+v4.22
+==================
+** Fixed weapon knock working with non-physical, magical attacks
+** World-spawned boss (AI type) will trigger spree war in PvP mode
+** Added capturable spawns to CTF mode: touch an unclaimed player-spawn to claim it for your team, or kill another team's spawn point to capture it. Your respawn time is affected by the number of spawns your team controls (fewer spawns = longer respawn time). If your team controls no respawns, you will be spawn inside your base or near your flag base. Bonus points are awarded for capturing spawn points (thus improving your team's offensive position). Spawns are reset after the flag is captured.
+** Fixed dangerous (server-crashing) bug with AllyID working with non-clients
+** Increased maximum respawns to 1000 (from 100), reduced cost per respawn (1 credit = 10 respawns)
+** Added hellspawn obstruction avoidance when calculating height
+** Fixed dangerous (server-crashing) bug with Teleport_them (Tball) calling SelectFarthestDeathmatchSpawnPoint() with a NULL parameter
+
+==================
+v4.221
+==================
+** Fixed wormhole bug where a player would enter a wormhole, reconnect as another player, and be 'stuck' in wormhole state until they issued the command to exit the wormhole
+** Fixed auras auto-removing after a player cloaks, even while uncloaked (i.e. they cloak, uncloak, use an aura, and the aura auto-removes before they cloak again)
+** Player-monsters copy client effects directly, so they should always be accurate
+** Fixed CE not attacking with player-monsters (tank)
+** Fixed player-monster (tank) damage scaling after level 10
+** Capped maximum level for picking up techs to 15
+** Added infront() check to V_AutoAim() to prevent MonsterAim() from locking view forward when enemy moves out of view
+** Added new engineer ability 'detector': attach detector to a wall, if an enemy walks within range they will glow yellow and all friendly projectiles will be redirected toward them. Detector will also de-cloak nearby players. Monsters gain perfect accuracy if a target is spotted by a detector.
+** Fixed CTF player spawn NULL think bug (added empty think)
+
+==================
+v4.222
+==================
+** Fixed player-monster (tank) effects
+** Added FL_GODMODE check to drone_ValidChaseTarget()
+** Fixed superspeed visual effect EF_TAGTRAIL not working with ghost transparency (you could have one or the other, but not both)
+** Fixed poltergeist player-monster (tank) damage being zeroed out from other player abilities (e.g. corpseeater, magicbolt, etc.)
+** Administrators can upgrade abilities past their normal upgrade level (good for testing abilities)
+** Fixed MAX_KNOCKBACK of 300 capping radius damage instead of knockback
+** Fixed players stuck in wormhole after death by removing FL_WORMHOLE and FL_DETECTED flags on death
+** Fixed new players not getting any respawns
+** Fixed bug that allowed knights with 0 respawns to use any weapon
+** Fixed bug that allowed you to remove a tank and get double powercubes refunded
+** Fixed drone power talent not working with mutant
+** Increased detector addon health to 15 (from 10), added resistance against non-client/player attack, attracts more projectiles
+** Improved bless; damage/defense bonus increased to 1.5 (from 1.25), magical bonus of 2.0 added that applies to any magical attack
+** Increased bless cost to 75 with cooldown equal to 2x bless duration (so if you bless for 5 seconds, cooldown is 10 seconds, or 5 seconds after bless expires) capped at 10.0 seconds
+** Removed bless ability delay (use cooldown instead) so that clerics can use other magical attacks while blessed
+** Reduced superspeed drain cost to 3/frame (from 4)
+** Added sentry firing animation
+** Added server command 'setteam' that allows a server administrator to change someone's team
+
+==================
+v4.223
+==================
+** Improved combat exp WM talent: now +5% physical/-5% magical per level
+** Improved balace spirit cleric talent: now 75% + 7% per level for both yin and yang
+** Fixed bug that would allow players to exit wormhole while outside of map (added gi.pointcontents() check)
+** Fixed bug that would allow players to throw spike grenades through thin walls
+** Fixed bug that would allow spike grenades to disappear in walls/floors
+** Fixed sidearms WM talent
+** Fixed tank punch going through shield
+** Fixed burn going through shield
+** Added world ammo spawning code that checks to see if the map has at least 4 packs of each ammo type; if it doesn't, then additional ammo packs are spawned in random locations on the map; added server cvars for each ammo type (default is 4)
+** Fixed boss spree war triggering in PvM mode
+** Removed talent upgrade statistical information until the data is updated/finalized
+
+==================
+v4.224
+==================
+** Added server console command 'delchar' usage: 'delchar <player name> <reason>'. This command will delete a character file and log the action both in the server log and the character log. This command will make it easier for server admins to perform punitive action against cheaters without requiring direct access
+** Reduced CTF player spawn health to 2000 (from 5000) and removed credit and experience bonus for spawn capture (use for tactical purposes only)
+** Reworked hellspawn recall to avoid getting stuck in solids
+** Fixed hellspawn always using attack frames, even when idle
+** Fixed wormhole working with flag carrier (spawn wormhole, grab flag, enter wormhole)
+** Increased hellspawn vertical speed to 35 (from 20) to match horizontal speed (no reason why these should be different)
+** Removed extra summonable damage in PvM and Invasion modes
+** Increased monster soldier accuracy
+** Reduced player-tank machinegun bullet spread
+** Changed a bunch of server CVARs to avoid serverinfo overflow
+** Changed gamename CVAR to 'Vortex' (from 'thevortex')
+** Changed AI medic's cable attack to work on monsters as soon as they die (no waiting for death animation to complete)
+** Added cleric ability 'conversion': if successfully cast, cleric will take control of a summon for a short duration (cmd 'convert'); conversion currently works with: monsters, hellspawn, sentry, and minisentry
+** Fixed unsafe entity removal for: hellspawn, sentry, minisentry
+
+==================
+v4.225
+==================
+** Conversion will attempt to restore previous owner when it expires, rather than just removing the entity
+** Added conversion graphical effect
+** Added conversion warning message when it is about to expire
+** Fixed conversion allowing more than minisentry max count
+** Fixed sword burn penetrating shield
+** Fixed SP_trigger_multiple not working with player-monsters (tank can now activate more doors and elevators)
+** Fixed player-monsters being able to use movement abilities while being damaged (monster copies lasthurt to client)
+** Fixed earth totem not working with player-monsters (tank)
+** Capped Invasion monster credits to 3x base award (cap for exp/credits is 60/30 for normal monsters and 120/60 for tanks)
+** Added new cleric ability 'deflect' which will bless a player and cause enemy projectiles to reverse course before hitting you
+** Increased laser addon health to 100 (from 30) and reduced initial health to 0 (from 200); this gives laser 1000 health at level 10 (from 500)
+** Reduced spike attack spread to 20 degrees (from 30), increased initial damage to 50 (from 0) and addon damage to 15 (from 10)
+** weaplast now works with morphs
+
+==================
+v4.226
+==================
+** Reduced laser cost to 25
+** Reduced jetpack cost to 4/frame (from 5)
+** Morphed players are refunded upon entering a wormhole or using tball
+** Improved deflect projectile targetting code: it will now redirect all projectiles that will hit on the next frame, instead of searching a predefined radius which is insufficient for fast-moving projectiles. This change should make deflect 100% effective against projectiles (assuming you aren't too close to the projectile's spawning origin)
+** Increased laser initial damage to 100 (from 50) and addon damage to 40 (from 15), yielding 500 damage/frame at level 10 (from 200)
+** Fixed bug that would allow laser to deal more total damage than its health
+** Increased deflect cost to 50 (from 25), and delay to 2 seconds
+** Deflect now has a chance to deflect attacks (initially 25%, then 2.5% per level up to 50%)
+** Deflect can avoid hitscan attacks (non-projectiles) and will redirect them back to their origin (not always the attacker); it will absorb 100% of the damage of deflected attacks
+
+==================
+v4.227
+==================
+** Increased detector flag (FL_DETECTED) duration to 2 seconds (from 1)
+** Increased detector maximum count to 3 (from 2)
+** Increased laser cost to 50 (from 25)... again
+** Issuing a "remove" command to a converted summon will attempt to convert the summon back to the previous owner
+** If a converted summon's owner dies, it will try to restore the previous owner
+** Reduced armor bomb cost to 0 (from 25)
+** Added more monster strings to MonsterObits() which should prevent strange death messages when using reflect
+** MonsterObits() will check for monster level... if it has none, then it will fail (you'll see "player was killed" instead)
+
+==================
+v4.23
+==================
+** Fixed bug that would crash the server if an entity was burning with no valid owner (owner disconnected, was freed, etc.)
+** Player is warned when deflect expires
+** Added newline character to 'totem remove'
+** Fixed sniper mode morph bug; weapon mode is now reset when morphing
+** Fixed bug that would give 50 free powercubes when you tball; only morphed players will receive power cubes (refund for being un-morphed)
+** Fixed spirit (Yin/Yang) movement bug (player getting stuck) by making the spirit entity non-solid
+** Fixed fury being removed on teleport
+** Fixed knock weapon working poltergeists and morphed players (they have no weapon to drop)
+** Spike has a delay between re-stunning a target equal to its stun duration (e.g. if you stun a target for 0.5 seconds, you can't stun them again for 1.0 second)
+** Increased spike maximum stun duration to 1 second
+** Reduced spike ability delay to 0.3 seconds (from 0.5)
+** Fixed spikes not all firing due to collisions (3 fire at once; if two spikes collide, they disappear)
+** Removed BFG pull, replaced 'stick' upgrade with 'radius'; increased base damage to 30/frame (from 20) and addon damage to 2/level/frame (from 1/level/frame)
+** Reduced cost of amnesia to 50
+** Superspeed is no longer reset while taking damage, and will resume automatically after a brief delay
+** Reduced bless cost to 50, reduced magic bonus to 1.5 (from 2.0)
+** Fixed meteor damage type (D_MAGICAL|D_EXPLOSIVE) so bless+meteor works
+** Added new ability to replace decoy (cmd 'mirror') that will create a mirror image of the player on either side (randomized position) to confuse your enemy; the old decoy command works (for now) until the talent can be reworked; you cannot deploy decoy and use mirror at the same time
+** You can no longer drop more than 5 power cubes (entities, not quantity)
+
+==================
+v4.231
+==================
+** Added new 2-point ability 'scanner': toggle this command to view a radar-like screen of nearby targets. Enemies will show as red dots, teammates as green, and invalid targets as blue
+** Fixed bug that allowed Strength tech to boost magical damage (including cripple)
+** Fixed bug that gave damage bonus to magical attacks for morphed players
+
+==================
+v4.232
+==================
+** Moved scanner to the left-side of the screen
+** Removed 'self' from scanner view
+** Swapped BFG 'radius' upgrade for 'duration' (same as old stick), replaced 'pull' with 'slide'
+** Fixed spike grenade calling spike_touch() instead of spikey_touch(), which caused stun (only spike ability should have this)
+** Spike grenades can now hurt their owner
+** Added new soldier ability: EMP grenade 'emp' which tosses a grenade that fries entities with electronics. If it comes into contact with a player, it will detonate their ammo. Monsters (excluding mutant) and sentries will be stunned.
+** Increased spike delay to 0.5 seconds
+** Increased chainlightning addon damage to 15 (from 10), changed damage modifier to 0.66 (from 1.5) so that damage decreases each hop
+** Reduced chainlightning cost to 25 (from 35)
+** Fixed player-tank chasecam (the crosshair is still a little off, and follow-cam needs a little work)
+
+==================
+v4.233
+==================
+** Players are not awarded points for killing monsters that were just resurrected
+** Added new general ability - double jump: when upgraded, players can jump again while airborne
+
+==================
+v4.234
+==================
+** EMP grenade will detonate if it touches an entity that is not a teammate
+** Fixed bug that where quad/invin would not activate if you had both upgraded
+** Fixed flyer smart rockets not working while railgun is equipped
+** Fixed drone power not working with mutant
+** Fixed ID not capturing the first frame's worth of damage, resulting in inaccurate reading
+** Fixed armor vamp not working if the player has full health
+** Fixed hellspawn resistance against player-tank
+** Fixed knock weapon working with spike (spike is no longer considered physical damage)
+** Un-morphing only removes summonables for poltergeist class
+** Fixed invasion bug where base defenders would not spawn if the area was blocked or the entity was still valid (not NULL)
+** Increased medic resurrection point delay to 2 seconds (to prevent abuse)
+** Fixed berserk slash working on teammates
+** Fixed parasite attack working on teammates
+** Applied teleport ability restrictions to wormhole (you can't wormhole near a sky brush)
+** BFG causes damage the instant it hits something (instead of waiting for the next server frame)
+** EMP will now detonate ammo boxes
+** Shield will now automatically re-activate while using +shield (instead of waiting for the ability delay and using +shield again)
+
+==================
+v4.235
+==================
+** Fixed misspelling of sentry status message
+** Added new necromancer ability lower resist (cmd 'lowerresist'): when cast, it will target all entities in-range within a 20 degree fov. Those entities will have their resistances lowered (currently 25% + 2.5% per level). If an entity has no resistance, damage will be increased (negative resistance).
+** Rewrote curse targetting code (most curses) to find a target nearest to the player reticle (where they are aiming), then find targets near that entity within 256 units range; curses updated with this code will have multiple targets with one casting, significantly improving the utility of these skills
+** Fixed bug with EMP that would always detonate 100% of a target's ammo
+
+==================
+v4.236
+==================
+** Increased chainlightning addon damage to 15 (from 10), bringing the damage up to 100-200 at level 10 (from 75-150), increased hop damage modifier to 0.8 (from 0.66)
+** Added mage ability 'fireball', which spawns a fireball that explodes on impact, causing radius damage, burning nearby targets, and spawning flames
+** Added automatic burning of targets within meteor explosion radius
+** Added knight ability 'plasmabolt', which spawns a bfg ball that bounces and causes radius damage on impact
+** Added mage ability 'lightningstorm', which spawns a storm entity that creates lightning bolts from the ceiling that shoot down and damage anything it touches
+
+==================
+v4.237
+==================
+** Increased lightning storm attack frequency (from 1-5 frames to 1-3), increased strike radius to 64 (from 48), reduced cost to 25 (from 50)
+** Player can now spawn lightning storm from a distance (like meteor)
+** Increased chainlightning range to 256 (from 196)
+** Added additional check to prevent converted tank commander (this should never have happened in the first place since commanders use 4 slots)
+** Fixed fireball crash bug (NULL plane with touch function)
+
+==================
+v4.238
+==================
+** Fireball can't be cast in the water, and will auto-remove itself if it comes into contact with it
+** Flames will auto-extinguish when they come into contact with water
+** Added 'airtotem protect' command to toggle who air totem will protect (owner or owner + teammates)
+** Added soldier ability mirv grenade (cmd 'mirv'): fires a grenade that explodes into 4 more grenades
+
+==================
+v4.239
+==================
+** Fixed earth totem giving magic damage bonus
+** Fixed salvation bug: salvation will remove any existing aura when it is called, and will replace it with the owner's aura; the player will only receive the 'aura removed' message if he is removing his own aura (toggles it off)
+** Reduced update frequency of scanner to 2 server frames (from 1) to reduce possible overflow
+** Replaced hand grenade 'refire' with 'range'
+** Fixed 20mm range upgrade (it wasn't working at all): range = 500 + 50 * upgrade_level
+** Fixed random rune purchase from armory deleting runes due to rune pickup delay (it won't let you buy one until the delay expires)
+** Chasecam will no longer copy target's FOV
+** Removed lightning storm start-up delay
+
+==================
+v4.3
+==================
+** Fixed mutant attack not working on brain
+** Changed health/armor recovery cap to 10% of maximum value per second
+** Reduced scanner update frequency
+** Fixed bug that caused the scoreboard to display with scanner's update frequency; now, the scanner will automatically close when you try to use the scoreboard
+** Fixed bug with amp damage and weaken modifying magical damage (they should only affect physical damage)
+** Changed fury damage and resist value to 1.5 + 0.5 / level, with a maximum value of 2.0
+** Fixed typo/bug with fury that caused fury to add health every frame; fury will now regenerate 5% + 0.5%/level per second up to 10%
+** Healing non-clients will recover 1% of maximum health and armor per level, up to 100 per second
+** Reduced armor healing to 1/2 of health value (10 health, 5 armor at level 10 healing)
+** Reduced maximum armor protection to 0.8 (80%, from 90%)
+** Fixed flames causing damage multiple times per frame (should be once per server frame)
+** Increased meteor flame damage to 10% of meteor damage (from 5%)
+** Increased fireball flame damage to 5 (from 3) per level
+** Added health and armor cache for vampire; health and armor cap remains, but it will store in this cache and slowly transfer to health over time.
+** Fixed bug with minisentry rocket damage
+** Updated detector and deflect with new projectiles
+** Fixed drone_wakeallies() from changing enemy of non-drones
+** Fixed sentry remove causing a negative sentry count
+** Fixed minisentry base_think() causing a negative sentry count
+** Increased EMP range/speed
+** Reduced cacodemon ammo regen frames to 250, increased regen delay to 50 frames (ammo regen is now 2 per 5 seconds vs. 1 per 4 seconds)
+** Increased plasmabolt addon damage to 15 (from 10) per level
+** Fixed salvation remove
+** Made totem's health viewable with ID; the possible downside is that it is now solid to the owner (you can't walk through it)
+** Fixed airtotem protect when used with player-monster (tank)
+** Railgun sniper frames are reset when entering a wormhole
+** You can't enter a wormhole while being hurt
+** Plague (that you own) is removed if you enter a wormhole
+** You can't enter a wormhole while cursed (this includes healing, bless, or any "good" curse)
+** Improved double jump when falling
+** Mind absorb works on non-players with a 50% penalty
+** Added damage experience modifier for players (same one used in invasion mode, but improved)
+** Increased PvP minimum experience per frag to 10 (from 5)
+** Increased PvP maximum experience per frag to 300 (from 200)
+** Removed high-delta level modifier for PvP experience calculation
+** Removed PvP maximum level modifier (was 3.0)
+** Changed miniboss point award to be the same as breaking a spree war; experience is no longer equally divided among players, but instead based on damage (like everyone else)
+** Removed Weapon Master weapon points level-up bonus; now they get 4 weapon points per level like everyone else
+** Increased strength addon bonus to 0.1 (from 0.075)
+** Fixed improved strength and resist talents, which should give +10/-10% dmg/res per level; note that the negative figure will never fall below 100% (e.g. if you upgraded improved strength but don't touch resist, you will not take extra damage as a result)
+** Changed basic H/A talent to improved H/A which is similar to ammo efficiency upgrade (which was removed)
+** Added soldier grenade mastery talent
+** Mage's elemental mastery talent increases fireball and lightning storm damage
+** Fixed minisentry improved sentry talent to increase rocket damage instead of radius
+** Added engineer talent improved lasers (increases laser damage 10%/level)
+** Added engineer talent improved autocannon (increases damage 5%/level and max ammo 20%/level)
+** Engineer gets improved traps talent
+** Removed alloyed steel and armor mastery talents
+** Moved improved powerscreen and atomic armor talents to knight
+** Changed weaponmaster combat exp talent to increase physical damage but reduce resistance 5% per level
+** Added alien ability 'spiker'
+** Added alien ability 'healer'
+** Added alien ability 'obstacle'
+** Added alien ability 'gasser'
+** Added alien ability 'spore'
+** Added alien ability 'acid'
+** Added alien ability 'cocoon'
+
+==================
+v4.310
+==================
+** Spiker, gasser, and obstacle no longer automatically regenerate, and must be 'repaired' by touching them; they cannot be repaired while taking damage (0.5 second delay)
+** Alien summonables can be removed without powercube check
+** Alien summonables 'remove' command will refund powercubes based on the health of the entity
+** Players who upgrade flyer or cacodemon to less than 5 will have to pay double the normal cost for spiker, gasser, obstacle, spore, monsters, hellspawn, etc.
+** Spore has an upkeep of 1 powercube per second
+** Reduced spore cost to 25
+
+==================
+v4.311
+==================
+** Added spore recall command
+** Reduced spore upkeep to 1 powercube every 13 server frames (from 1 every 10 frames), which equals the upkeep of 3 monsters
+** Fixed SV_Physics_Toss() and SV_Physics_Step() with V_TouchSolids(), which calls touch functions of valid intersecting entities; this allows monsters, sentries, player-tanks, etc. to benefit from healer
+** Renamed 'decoy' to 'mirror' to clue engineers that are not aware of decoy's replacement
+** Fixed obstacle talent to correctly reduce cloaking time 2 seconds per level (vs. 0.2 seconds)
+** Reduced cocooned duration to 30 - 2.5 seconds per level (was 60 - 5 per level); minimum duration remains at 5 seconds
+** Added spiker, gasser, and obstacle support to player-medic resurrection
+** Fixed medic trying to resurrect non-monsters
+
+==================
+v4.312
+==================
+** Increased spore recall teleport delay to 10 seconds (from 5)
+** Fixed player-medic bug when resurrecting spore/spiker/obstacle
+** Fixed AI targetting non-player cloaked/hidden (SVF_NOCLIENT) entities
+** Increased gasser height to 20 units (from 16) so it is easier to push
+** Cloak will no longer activate if you have any damage-dealing summonables out
+** Increased spiker/gasser/obstacle gib health
+** Fixed ally check with V_Push so that alien summons can be pushed by allies
+** Fixed V_TouchSolids() causing an entity to call its own touch function against itself
+** Entities are no longer considered idle if they deal or receive damage
+** Reduced obstacle cloaking time to 10 - 0.9 seconds per talent level
+** Obstacle will lock itself down after 1 second to prevent it from getting knocked around
+** Changed alien summon healing to cost 5 power cubes for +50% life, healed rapidly over time (health cache)
+** Made alien summons easier to push
+** Re-added ammo regeneration as a general skill with a hard maximum skill level of 5 (with runes or without)
+** Fixed OnSameTeam() so that boss teams work correctly (boss' spawns are on the world monster team)
+
+==================
+v4.313
+==================
+** Fixed bug with high level cocoon having a negative cocooned-entity duration
+** Changed beam charge to display until fully charged
+** Increased deflect duration to 1 second per level, reduced maximum deflection to 33% (10% + 2.3% per level)
+** Changed ammo steal so it will target entities within a radius near the endpoint of your crosshair (range = 512 units + 128 radius at endpoint = 640)
+** Fixed autocannon chasecam to display correct level
+** Fixed bug with drone_validposition() removing a monster that respawned properly
+** Reduced chance of boss spawning in PvM and FFA modes
+** Fixed bug with obstacle not uncloaking after dealing damage
+** Fixed bug with brains being unable to attack invasion player spawns, fixed bug with brains trying their suck attack on unmoveable entities
+** Fixed bug that made a solid forcewall invisible to monsters
+
+==================
+v4.314
+==================
+** Added CTF and Domination feature that put players on a list when they try to join after pre-game ends. In CTF, these players will automatically join when the flag is captures. In Domination, players will automatically join when the flag is dropped.
+
+==================
+v4.315
+==================
+** Fixed bug that would allow new players to join Domination and CTF games without choosing a class; now they will be prompted with the class menu, and they can join immediately to a random team
+
+==================
+v4.316
+==================
+** Fixed cocooned duration when cocoon was upgraded past level 10
+** Fixed cocoon bug that would make cocoon fall through the floor if you dropped it on a friendly entity (cocoon won't let you enter until it is grounded)
+** Reduced spore knockback to 0
+** Increased the size of spore's bounding box to 16x16x16 (from 10x10x10)
+** Support skills talent increases deflect duration
+** Fixed flyer smart rockets working while shield is active
+** Added support for spiker, gasser, obstacle, and spore conversion
+
+==================
+v4.317
+changed files: g_weapon.c, magic.c, settings.h, p_menu.c
+==================
+** Reduced obstacle addon health to 150 (from 250)
+** Reduced maximum spore count to 3 (from 4)
+** Reduced spore addon health to 10 (from 20)
+** Reduced spore addon damage to 15 (from 25)
+** Fixed divide by zero bug in vrxinfo menu (hit percent and frag percent)
+
+==================
+v4.32
+changed files: drone_ai.c, g_weapon.c, g_local.h, magic.c, p_view.c, drone_mutant, drone_parasite.c, drone_misc.c, drone_brain.c, drone_tank.c, flying_skull.c, forcewall.c, bombspell.c, lasers.c, jetpack.c, minisentry.c, playertoberserk.c, playertomutant.c, playertoparasite.c, totems.c, player_points.c, g_combat.c, p_weapon.c
+
+==================
+** Removed idle regeneration for all monsters except medic
+** Monsters now have a 90 degree FOV
+** Added monster "hearing" to alert monsters to enemy prescence on certain events (e.g. weapon firing, spell cast, footsteps)
+** Removed monster holdtime (caused players to get stuck while they were spawning monsters), but monsters must now be "grown" by touching them until they are healed to 100% health
+** Spiker, gasser, and obstacle start at 50% health and must be "grown" by touching them until they are healed to 100%
+** Reduced lightning storm duration to 5.0 seconds
+** Added random green sparks to make gasser easier to see
+** Added a 5% chance for a cloaked obstacle to become visible for a frame
+** Hellspawn will only begin strafing when within 512 units of target
+** Fixed bug that awarded points for alien summons' corpses
+** Fixed bug with cocoon death
+** Fixed parasite attack and hand grenade working with shield deployed
+** Reduced pre-fire delay for meteor to 2 seconds (from 2.5) and shortened sound accordingly
+** Added fireball gravity to better differentiate it from similar attacks (e.g. magicbolt, plasmabolt)
+** Hitscan deflection check is now called before all resistances are calculated
+** Fixed bug with deflect that caused projectiles to call hitscan check (thus being called twice; once at range, then again on impact)
+** Added point information for monster parasite attack (impact point)
+** Fixed hitscan deflection so it always redirects towards target (at midpoint), rather than simply reversing direction (not reliable)
+** Fixed bug (hopefully) that causes mirrored entities to crash (better checks that the mirrored entities exist/are valid)
+** Fixed bug that incremented spree in PvM by killing corpses (better checks for what entities will award experience)
+** Fixed bug that made totems fall through solid objects (better spawning code)
+** Disabled spore "recall" command. Spores will now automatically (by default) follow their owner as bodygaurds.
+** Monster tank will no longer default to melee attack at close range (80% instead of 100% chance)
+
+==================
+v4.321
+changed files: auras.c, magic.c, g_weapon.c, shaman.h
+==================
+** Fixed bug with salvation aura never wearing off
+** Increased fireball addon damage to 15 (from 10), reduced addon flame damage to 2 (from 5)
+** Capped the number of plasmabolt bounces to 10
+** Increased plasmabolt addon radius to 5 (from 2.5), speed to 750
+** Increased mirv grenade count to 8 (from 4)
+** Removed randomness to meteor flame count
+** Increased addon duration of most curses to 1 second (from 0.5)
+
+==================
+v4.322
+==================
+** New voting feature. Type 'vote' and select a map/mode to start a 90-second vote. Other players vote with 'vote yes' or 'vote no' (note: 'vote no' is implied for non-voters).
+** Fixed crash bug with monster healing
+** Eliminated stun delay for cocoon
+** Fixed fury bug
+** Fixed quad/invin bug
+** Fixed CTF cap points being awarded AFTER teams were re-balanced
+** Fixed ice totem bug (was attacking every 0.1 seconds instead of 1.0)
+** Reduced hard level cap for techs to 10
+** Freeze spell teleports the player away when they unfreeze (prevents camping)
+** Chat protect will try to activate within 5.1 seconds of using the upgrade or trade menus
+** Lowered maximum character level cap to 20 (from 30)
+** Added 'exphole' server command
+** Fixed morphed players not triggering monster "hearing"
+** Increased nova radius to 150 (from 128), reduced cost to 25 (from 35)
+
+==================
+v4.323
+==================
+** Fixed crash bug with mirv
+** Made flyer's hyperblaster more reliable
+** Made chainlightning bounce off walls, reduced delay, damage no longer randomized
+** You can now heal monsters by touching them, regardless if they are fully grown
+** Reduced spawning cost of gasser, spiker, obstacle and increased spawning/growing rate
+
+==================
+v4.324
+==================
+** Fixed crash bug with monster medic healing (medic accidentally frees itself thinking it's a curse...sigh)
+** Reduced acid addon damage from 25 to 15
+** Free ID at level 5 (instead of 10), points refunded if already upgraded
+** Free scanner at level 10, points refunded if already upgraded
+** Increased medic resurrect points delay to 10 seconds (from 2)
+** Chainlightning damage now increases with each "hop" by 1.25x
+** Freeze spell will no longer teleport a player on spree, but will instead make them temporarily invincible but unable to shoot (similar to respawning)
+** Reduced nighttime darkness
+** Improved monster hearing. They will now trigger when they are touched, a player uses an ability, or when a player enters or exits the water. Monsters always sense other AI.
+
+==================
+v4.325
+==================
+** Modified CTF team balancing code to use a level modifier based on team flag captures. Strong CTF players will be weighted more heavily than poor players, which will hopefully lead to more balanced teams.
+** Increased shield cost (discharge rate)
+** Reduced default pre-game time to 60 seconds (from 120)
+** Added range limiter for spores. They will ignore enemies that are greater than 1024 units from spawner, preventing them from wandering too far (reinforcing the bodyguard role).
+** Fixed double jump activating when you crouch
+** Increased effectiveness of mana shield (max talent now absorbs 1.5x cubes, so 1 dmg = 0.66 cubes used)
+** Added cacodemon innate resistance (33% at level 10)
+** Mutant can now vamp up to 1.5x maximum hp
+** Mutant's slash attack has a chance to cause bleeding (curse)
+** Increased chance of berserker slash causing bleeding
+** Added minimum exp award for killing a miniboss (even 1 damage will award this value)
+
+==================
+v4.33
+==================
+** Fixed brain getting stuck while jumping
+** Added CTF restrictions/delays to wormhole
+** Fixed soldier h/a talent
+** Improved fire totem aim, increased firing velocity, increased health
+** Fixed extra newline added to chat text
+** Fixed weapon knock so it works with morphed tank, reduce delay to 1 sec for misses (from 2)
+** Fixed plague not working with player-tank
+** Fixed curse/bless status messages with player-tank
+** Fixed knock weapon status message sometimes triggering with non-physical attacks
+** Fixed fury message triggering with magical attacks (e.g. morphed player)
+** Fixed yang obituary/death message
+** You can now spree in invasion mode, although there is no exp bonus
+** Fixed yin not targetting alien summons' corpses
+** Disabled double-jump when on flag pickup
+** Re-wrote some of the tball code so its more reliable
+** Tballing yourself causes summons to be removed
+** Fixed fire and water totem death messages
+** Fixed blaster noise upgrade
+** Destroyed techs are respawned
+** Reduced monster/spiker/obstacle/gasser grow rate to 2.5s (from 1.25s)
+** Increased monster/spiker/obstacle/gasser cost
+** Increased tank/makron boss hp/armor
+** Made hellspawn follow activator, like spores
+
+==================
+v4.331
+==================
+** Lots of stability-related fixes by R1CH
+** Added fire totem spawn delay
+** Reduced cost to build/upgrade sentry/minisentry
+** Reduced laser cost
+** Railgun stops on sentry again (so an engineer can hide behind it)
+** Fixed techs respawning a million times when being crushed by rotating brush
+
+==================
+v4.34
+==================
+** Second attempt to fix sprees in invasion mode
+** Allow parasite to attack while knocked in the air
+** Invasion monsters will reset to hunting players/base when conversion wears off
+** Fixed mirror not working reliably
+** Fixed balance spirit death message
+** Lowered spirit cost
+** Fixed lower resist curse on allied players allowing allied players to hurt one another
+** Fixed respawning player being unable to shoot after invincibility wears off
+** Sword now fires closer to center
+** Invasion medics should no longer try to heal base defenders
+** Fixed players not being awarded experience for hurting other players in FFA on suicide/monster kill
+** Increased domination points from 25 to 50 (awarded every 10 seconds)
+** Updated rcon commands to search by index or name
+** Reduced effectiveness of EMP grenade on boss
+** Fixed class runes (this should also fix more :) runes spawning)
+** Weapon tweaks (SG/SSG/RG/HB/RL)
+** Added timer recycling for HG
+** Casting curses no longer delays other abilities
+** Freeze spell gives player a small amount of invincibility when wearing off (to clear away campers) but no longer teleports
+
+==================
+v4.34x
+==================
+** Fixed bug with spiker and cocoon
+** Crouching view no longer persists when morphing to mutant while crouching
+** Tweaks to HG recycling feature, now HG primes faster but has same refire
+** Allying now takes into account the amount of players in server (minimum 6) and disallows allies when player is 1.5 times higher in level than the current average
+** Grenades do full damage on direct hits (for example, would get 141 instead of 150). This affects all types of grenades
+** Fixed pellet/bullet based weapons with decimal damage values being truncated before they could be affected by strength calculations or curses, doing less damage than they actually should be doing
+** Blaster is now affected by player's max ammo level. This adds 12.5 blaster cells per level, giving 150 max cells at level 10
+** MIRV "cluster" grenades no longer explode on contact, instead they always blow up when their timer runs out
+
+==================
+v4.4
+==================
+** Made monsters less accurate (they would still hit even when they were supposed to miss)
+** Monsters can now move forward or backpedal while circle-strafing
+** Fixed invasion monsters being unable to circle-strafe
+** Set skill hard level cap to 1.5 * max level (from 2)
+** Increased base chance of a rune spawning to 1% (from 0.5%)
+** Reduced reset cost to 2500 per level (from 5000), and capped it at 50000
+** Updated website and (default) server admin email addresses
+** Renamed Blood Sucker to Parasite
+** Removed haste from Shaman
+** Reindexed all abilities, classes, and talents
+** Disabled weaponmaster class (needs work; may be introduced later)
+** Fixed unsafe detector removal (could crash the server under certain circumstances)
+** Force PvP mode switch at the end of the map in PvM/Invasion if the server is more than 25% full
+** Allow bosses to randomly spawn in PvP mode when the server has enough players
+** Complete talent overhaul (added/removed/replaced many talents)
+** Added Soldier talent 'Bombardier' - reduces self-inflicted grenade damage, reduces cost
+** Added Poltergeist talent 'More Ammo' - increases maximum ammo for tank/caco/flyer/medic
+** Added Poltergeist talent 'Superiority' - increased damage/resistance to monsters
+** Added Poltergeist talent 'Retaliation' - damage increases as percentage of remaining health is reduced
+** Added Potergesit talent 'Pack Animal' - increases damage/resistance when near other friendly morphed players
+** Added Vampire talent 'Fatal Wound' - adds a chance for flesh eater to rapidly kill a target (10 seconds for 99% health taken)
+** Added Mage talent 'Ice Bolt' - use 'icebolt' instead of fireball to chill targets
+** Added Mage talent 'Meditation' - use 'meditate' for 5 seconds to build 100 power cubes
+** Added Mage talent 'Overload' - use 'overload' to spend extra power cubes on spells to deal extra damage (also increases cooldown delay)
+** Added Engineer talent 'Laser Platform' - use 'laserplatform' to build up to 2 laser platforms
+** Added Engineer talent 'Laser Trap' - use 'lasertrap' instead of detector to build a laser trap
+** Added Engineer talent 'Rapid Assembly' - allows proxy/SS/sentry/laser/AC to be built faster
+** Added Engineer talent 'Precision Tuning' - increases build time/cost of proxy/SS/sentry/laser/AC/magmine/detector in exchange for higher skill level produced
+** Added Engineer talent 'Storage Upgrade' - increases maximum ammo capacity of SS/sentry/AC
+** Added Knight talent 'Repel' - adds chance for projectile weapons to deflect from shield
+** Added Knight talent 'Mag Boots' - reduces knockback effect
+** Added Knight talent 'Leap Attack' - causes stun/knockback effect when landing from boost spell
+** Added Cleric talent 'Holy Ground' - designate an area via 'holyground' to heal friendly units
+** Added Cleric talent 'Unholy Ground' - designate an area via 'unholyground' to damage enemies
+** Added Cleric talent 'Purge' - allows cleric to remove curses and grant temporary invin + immunity to curses
+** Added Cleric talent 'Boomerang' - use 'boomerang' to throw a blessed hammer forward like a boomerang
+** Added Necromancer talent 'Cheaper Curses' - reduces cost of curses
+** Added Necromancer talent 'Corpulence' - increases hellspawn/monster health/armor, but reduces damage, can't combine with Life Tap
+** Added Necromancer talent 'Life Tap' - increases hellspawn/monster damage, but slowly saps its life force, can't combine with Corpulence
+** Added Necromancer talent 'Dim Vision' - adds chance to automatically curse enemies that fire at you
+** Added Necromancer talent 'Flight' - reduces cost of jetpack
+** Added Alien talent 'Phantom Cocoon' - allows cocoon to cloak
+** Added Alien talent 'Swarming' - increases maximum spore count, but reduces damage
+** Added Alien talent 'Explosive Bodies' - makes alien summons' corpses explode
+** Added Shaman talent 'Volcanic' - adds a chance for flame totem to shoot a fireball
+** Removed FFA experience bonus to promote PvP and other modes
+
+==================
+v4.4x
+==================
+** Lasertrap will trace to wall when building to avoid clipping walls
+** Mutant and brain can now boost while in water
+** Increased sentry addon bullet damage to 2 (from 1) to better compete with uber-monsters (e.g. tank has damage output between 400-500/s with same aim and far more hp/armor)
+** Increased minisentry addon rocket damage to 15 (from 10), see reason above
+** Reinstituted vampire health/armor cap of 50/25 per second (it wasn't supposed to be removed), regardless of base/max health (was 15% of base/max health per second)
+** Changed laser so that the emitter burns out and must be repaired by the engineer/ally (cheaper/faster than building a new one)
+** Added sword secondary fire mode: Lance
+** Added morphing sound
+** Shaman can now create 2 totems of opposite alignment, regardless of talent level
+** Reduced cost of having two totems out to 10 power cubes per 5 seconds, regardless of talent level
+** Increased base totem health to 100 (from 75), increased addon health to 15 (from 10)
+** Totem mastery is now required for totem regeneration
+** Reduced fire totem health bonus to 2x (from 3x) due to increased base totem health
+** Reduced base frame multiplier for super healer talent to 3.0 (from 4.5), reduced addon multiplier to 0.4 (from 0.5); net benefit is that talent will heal armor to full in the same time that it takes to heal health (e.g. 5 seconds at skill level 10) at max talent
+** Removed cocoon armor regeneration, set cocooned duration to 5 seconds (at any level), cocooned entity can no longer be hurt
+** Cocoon now gives health only when bonus is awarded, 25% + 7.5% per level (100% max)
+** Improved Phantom Cocoon talent (cloaks faster)
+** Swapped superspeed shaman freebie for totem mastery (SS is counterproductive to totem usage)
+
+==================
+v4.5 BETA
+==================
+** Disabled PvP and PvM modes
+** Players can choose combat preferences with 'combat' menu
+** Removed respawns
+** Fixed magmine, spike grenade, and proxy not working with ID
+** Added monster effects to magmine, spike grenade
+** Combat preferences applied after respawn or disconnect
+** Chatprotect now cloaks players so there's less color shell confusion, and respawns them when they move
+** Removed mutant innate resist, but kept superior vampire ability (for now)
+** Plasmabolt dissipates when it touches anything other than a wall
+** Force FFA mode and fix switching to PvP in Invasion/PvM
+** Fixed voting bug that allowed players to pass votes at the end of the map without majority
+** Rewrote/implemented generic effects function for players and monsters
+** Added feature to maplist settings that allows specifying monster value
+** Monsters will not spawn in FFA mode if there are no PvM-only preference players
+** Players can now spree against monsters if they have PvM-only preferences (otherwise FFA-pref players could spree too easily)
+** Added exp by damage for monsters in FFA
+** Reduced minimum experience to 1
+** Fixed spike/stun causing monsters to become invincible for the duration of the stun
+** World monsters in FFA now teleport out of your way if you have PvP preferences (instead of the other way around) if they don't have an enemy
+** Fixed holy/unholy ground causing the wrong entities to be freed upon removal (bad player pointers)
+** Spawning/respawning monsters now flash red/blue to indicate invulnerability (like invasion, but they don't attack)
+** Blessed hammers and holy/unholy ground removes on death/CTF respawn/flag-touch
+** Spikers and gasser can't be built in or near the enemy base
+** Fixed lance impact effect so it appears at the impact point (rather than the center of the lance)
+** Changed healer talent to allow healer to heal beyond maximum health of target (since aliens hardly have any armor)
+** Monster accuracy penalties (e.g. harder to hit a moving target) now take effect even at extremely close range (< 128 units)
+** Monster accuracy is now affected by monster level
+** Reduce maximum accuracy of most monsters by 10% or more, tank rocket accuracy reduced to 50% (from 90%)
+** Fixed velocity penalty so it doesn't work if the entity isn't moving, and so that the correct penalty is being used (it was using walking pentalty when the target was actually running)
+** Fixed a bug that allowed unlimited experience from medic respawning a monster
+** Fixed a bug with RG sniper mode that prevented a player from going into chat protect
+** Fixed a bug with chatprotect that allowed players to fire a shot before teleporting away
+** Fixed a bug with voting that would cause a forced switch to FFA from PvM/Invasion even when the voted mode wasn't PvM/Invasion
+** Reduced autocannon initial health (250-->100), increase addon health (25-->40) and addon damage (20-->40)
+** Fixed laser platform bug that improperly removed laser platform but didn't decrement the counter (and it was also unsafe)
+** Laser platform now has infinite (effectively) duration regardless of level; adding more points increases health only
+** Reduced holdtime/delay for meditation to 3 seconds (from 5)
+
+** Fixed bug that allowed cocooned entity to get hurt
+** Added a small holdtime/ability delay when a player prematurely exits a cocoon
+** Reduced default ffa_respawntime value to 10 (from 20), so monster counts recover faster in FFA
+** Added spore help command to reveal syntax and advanced command options
+** Added hellspawn "attack" command
+** Fixed a bug with SV_StepDirection() that didn't let zero or negative distance values work
+** World monsters now roam the map
+** Disabled idle functions on brain, parasite, and mutant because they interfere w/walking/roaming
+
+** Increased allowed aiming pitch for autocannon, added yellow flash when ammo is low or out
+** Increased distance buffer for laser trap
+
+** Replaced laser trap with more effective and reliable trap
+** Fixed laser trap effects
+** Fixed proxy effects
+** Fixed napalm effects
+** Fixed and improved armorbomb effects
+** Increased alien summons corpse timeout to 20 seconds (from 10)
+** Changed obstacle random decloaking to occur every 5 seconds for 1 frame (50% chance)
+** Reduced 20mm addon range to 30 (from 50)
+** Increased obstacle addon health to 200 (from 150)
+** Autocannon ammo now shows properly with ID
+** Replaced supplystation with depot
+
+** Fixed armor regen/medic bug
+** Increased bounding box size for proxy
+** Increased laser trap damage, can now be repaired
+** Updated ID to properly display laser trap
+** Cocoon will no longer cloak while holding a flag carrier
+** World monsters above level 5 will ignore players at or below level 5, unless fired upon (except in Invasion)
+** Players below level 5 will get a very basic version of ID that lets them know if a monster is ignoring them
+** Increased base player experience to 40 (from 30) to promote PvP
+
+** Chatprotect will always teleport players in CTF or Domination modes, but only in FFA mode if the player is hostile against other players; you will no longer be teleported in Invasion mode
+
+champion:
+health/armor x 3
+damage x 2
+accuracy + 50%
+
+ghostly:
+speed - 50%
+20% chance for chill attack
+50% chance for ghost
+
+fanatical:
+speed x 2
+accuracy - 50%
+
+berserker:
+damage x 2
+accuracy x 2
+health/armor + 50%
+
+Stygian:
+100% vampire
+up to 2x max hp
+20% chance for amp damage attack
+
+posessed:
+health/armor x 4
+
+==================
+v4.51
+==================
+** Fixed supplystation roll angles
+** HUD now displays supplystation (depot) % capacity (total ammo+armor / max ammo+armor)
+** Fixed precision tuning not working with magmine
+** Fixed pack animal always being level 5, causing morphed player damage/resist to always be higher than it should when in the presence of other morphed players
+** Fixed holy/unholy ground working in pre-game
+** Modified monster experience points and credit awards
+** Changed exploding bodies talent to use corpse_explodeX.wav, where X is a number between 1 and 6
+** Increased chance of a champion monster spawning a rune by a factor of 10, now equal to base player rate
+** Fixed obituary messages to show champion status
+** Added stygian champion monster: 100% vampire, up to 2x max hp, 20% chance of level 10 amp damage attack
+
+==================
+v4.52
+==================
+** Fixed a very old bug that caused fragged (# of times you were killed) to be incremented even when killed by a world monster. Now, fragged is only incremented by non world monsters.
+** You can now tball while on a spree in FFA with PvM combat preferences
+** Fixed supply station using cubes even after it fails to spawn, added notification message
+** Fixed Storage Upgrade engineer talent so it works with SS/depot
+** Fixed sprees not working in invasion mode
+** Only a minimal # of world monsters will spawn (usually 8) unless the server is at least 50% full of PvM players
+** Changed default dm_monsters (minimum # of monsters to spawn, regardless of map) value to 8 (from 0)
+** Changed the way monsters spawn (they all spawn on the same server frame); monsters will spawn faster if they are killed faster, or slower if they aren't killed fast enough (adaptive spawn delay)
+** Increased effectiveness of holyfreeze player slowdown (same as water totem now)
+** Fixed water totem and holyfreeze effects
+
+==================
+v4.53
+==================
+** Fixed visible() to use entity's midpoint as a reference instead of origin
+** Improved tank weapon selection, added brief post-fire delays, re-added blaster weapon
+** Improved gunner weapon refire, attack selection, and added brief post-fire delays
+** Reduced gladiator base accuracy
+** Added gladiator to world monster spawn list
+** Fixed bug that prevented world monsters from spawning runes
+** Fixed tank commander manual spawning
+** Removed monster tank commander's regeneration, but increased base hp/armor (now 100x equivalent level tank)
+
+==================
+v4.54
+==================
+** Added level to basic/chasecam ID
+** Increased initial detector range to 96 (from 64), lowered addon range to 16 (from 19.6), added build/hold time, added flashing shell effect, reduced addon health to 10 (from 15)
+** Fixed health stat to show 666 when health exceeds 999
+** Lowered tank (commander) boss hp/armor multiplier to 80x (from 100x)
+** Added supertank monster boss
+
+==================
+v4.55
+==================
+** Fixed supertank not dropping runes
+** Fixed monsters dropping ammo/runes during or immediately following resurrection
+** Reduced max runes dropped by monster bosses (tank/supertank) to 3 (from 4)
+** Changed Corpse Explosion so that damage is 50-100% of target corpse's max health (capped to 1000 for now), reduced maximum sight range and search radius (1024 and 128, respectively), added levels only increase radius
+** Changed visible() to begin visiblity check from approximate location of entity's eyes, and end at the midpoint of the target; this will help monsters and other forms of AI to "see" better
+** World monsters can now be teleported away even if they are "angry" (i.e. they have an enemy) if they cannot see their enemy
+** Fixed PvP players sharing salvation with world monsters
+** Fire totem cannot be spawned in enemy's base in CTF mode
+** Increased the time it takes to exit a wormhole and added a casting sound to exit wormhole
+
+==================
+v4.56
+==================
+** Fixed new/modified visible() function so it works with entities that are attached to walls or ceilings (e.g. minisentry, proxy)
+** Increased maximum number of runes that a boss can drop to 4 (they should drop at least 1)
+** Increased damage ID length to 5 numbers; resets after 32767 (max integer size supported by engine)
+** Detectors can no longer be built in enemy's base in CTF mode
+** Lightning storm removes itself after flag pickup
+** Proxy grenades can no longer be built in enemy's base in CTF mode
+** Fixed supertank not always removing after death (being telefragged)
+** Added unique fire monster "Hephaestus" which is a chick/bitch monster with 20x hp/armor and shoots fireballs instead of rockets. She will also cast meteor, especially at long range.
+** Added unique lightning monster "Zeus" which is a gladiator with 20x hp/armor and shoots chainlightning instead of RG. He will also cast lightning storm, especially at long range.
+
+==================
+v4.57
+==================
+** Fixed unique/champion monster item drop chances, modified values (uniques 50%, champions 2%, normal 0.2%)
+** Nerfed Zeus LS spam, capped LS damage to 200 (equivalent to level 10)
+** Reduced Heph meteor to level 10 equivalent
+** Medics will not heal tank commander bosses or supertanks
+** Increased monster boss kill award (3000 exp, 2000 credits), raised maximum
+** Fixed unique monster hp/armor multiplier being modified 3x by champion modifier (for a total of 45x hp/armor), set to 25x
+** Reduced effectiveness of EMP against unique monsters
+** Added combat preferences menu link to vrxmenu
+** Re-enabled PvP voting option
+
+==================
+v4.58
+==================
+** Added 'deathray' admin command
+** Allow supertank to spawn on random boss spawn
+** Fixed supertank rune drop chance
+** Reduced random PvP boss spawn chance to 3% (from 5%) per 1 minute
+** Removed damage variability from 20mm and set damage to old minimum figure (balanced with hb)
+** Increased base player kill points to 50 (from 40)
+** Medic morph's heal attack holds monsters in-place until healed or attack ends
+** Fixed retaliation giving full bonus with just 1 health missing
+** Charged abilities (beam, berserker, shield) are at 50% after spawn/respawn
+** Reduced the number of frames it takes supertank to ready rocket attack
+** Reduced meteor pre-fire delay to 1.5 seconds (from 2.0)
+** Attempt to fix bug where medic on stand will target an invalid entity and ignore nearby valid targets for healing
+** Added jorg/makron boss monster
+** Reduced effectiveness of EMP on bosses to 20% (from 25%)
+** Improved mage overload talent, fixed rounding error that occurred when overload was used with some abilities
+** Fixed bleed not working with makron/jorg, supertank
+** Changed mage icebolt talent to use fireball upgrades; upgrading the talent will increase the freeze effect/duration
+
+==================
+v4.59
+==================
+** Increased effectiveness of mind absorb on non-players; damage now ignores armor; fixed max powercubes cap so it doesn't reduce cubes if you are over your max
+** Changed max powercubes for players to be based on character level
+** Changed max ammo upgrade to increase power cubes 10% per upgrade level
+** Changed improved magic bolt talent to refund power cubes on a successful hit
+
+==================
+v4.6
+==================
+** Removed knockback from hellspawn lightning attack
+** Changed berserker attack so it is only visible to the player using it; this reduces network demand and looks less goofy to onlookers
+** Made icebolt/frostnova/watertotem more effective; they now slow enemy refire like holyfreeze (level 10 = 50% movement penalty, 50%/25% refire penalty vs monsters/players)
+** Monsters will no longer instantly acquire new targets mid-attack unless they are allies or non-players; hurting a monster will still allow them to change attacks, player/ally or not
+** Acid will repair damage to alien summons beyond their normal max health; the amount they heal is currently equal to 10% of acid projectile damage
+** Improved corpse explosion; increased max damage to 5x minimum damage (from 1000), increased range to 8192 (from 1024), added minimum damage of 50+25/level, modified radius to 100+10/level
+
+==================
+v4.61
+==================
+** Increased berserker slash and crush damage to equal that of punch
+** Fixed bug with drone_findtarget() that made monsters get stuck in invasion
+** Added berserker monster
+** Fixed monster stand command sometimes causing a crash if the selected monster list was invalid
+** Reduced meteor initial damage to 100 (from 200), but increased addon damage to 40 (from 30); set initial speed to 1000 and addon speed to 0 (same speed at all levels)
+** Increased berserker run speed to 35 (from 25)
+** Reduced meditate delay to 2 seconds
+** Increased cocoon initial time to 30 seconds (from 0), reduced addon time to 0 (from 3.0)
+** Increased super healer talent bonus to 20% (level 5 talent = 2x max health)
+
+==================
+v4.62
+==================
+** Mutant attacks will no longer steal beyond max health
+** Health HUD will display 666 at health values beyond 32767 (max supported) instead of 999
+** Fixed bug with superiority not working with flyer or brain
+** Removed innate resistances on morphs; berserker spawns with up to 2x health, mutant/parasite/cacodemon/medic/brain spawn with up to 1.5x health, tank spawns with (2+0.1/level)x health with no maximum multiplier
+** Increased cocoon addon time to 1.5
+** Increased berserker sprint recharger rate to 20 (from 10)
+** Increased champion monster points bonus to 3x (from 2x), and max points to 150
+** Increased Zeus/Heph points bonus to 15x (from 10x)
+
+==================
+v4.63
+==================
+** Fixed darkness totem not working with morphs that health multipliers
+** Fixed superiority working against player tanks
+** Replaced brain health mult with free power screen equal to brain level
+** Increased minimum light level from sun entity
+** Fixed bomb spell area/person entities having 0 damage radius, reduced bomb area delay
+** Removed bomb spell area requirement for caster to be able to see their target (spell would pause if you couldn't), reduced bomb spell area delay to 1.5 seconds (from 2) and added startup delay time to spell duration (so you get 5 seconds of bombs dropping, not 3.5)
+** Fixed forcewall level not displaying with ID
+** Fixed bug with chainlightning that caused second hop to deal more damage than it should
+** Increased chainlightning max hops to 4 (from 3)
+** Fixed meditate spawned cubes delay
+** Changed overload so that there is always a 1:1 relationship between input cubes and output skill multiplier; each level of overload will increase maximum cost/damage multiplier by 20%
+** Fixed improved bolt talent so that cubes are refunded with overload
+** Fixed ai_charge() and G_ValidTarget() to handle medic targets better
+** Increased medic hb damage (same as player medic now, but 50% refire)
+** Fixed unique monster max points (should be higher than a champion)
+
+==================
+v4.7
+==================
+** Allow magmine to pull through non-wall objects (e.g. other players)
+** Restore movetype after V_Push()
+** Completely revamped and improved monster AI which uses A* (a-star) pathfinding to find enemies/goals no matter where they are in a map. Monsters also have new commands which can be accessed with 'monster command'. Use this command while looking at a monster and it will be selected/deselected. Use it on a spot on the floor and monsters will move to that location. Use it quickly between two spots and monsters will patrol between the two locations. Double-click on a monster to toggle hunt/stand commands. Double-click on a spot to make the monster guard that location.
+** Fix medic not healing large sentry
+** Increased detector build time/delay, reduced non-player resistance
+** Fixed medic getting stuck while trying to heal a corpse; medic will gib a corpse if it can't revive it
+** Fixed deflect not absorbing hitscan damage
+** Fixed purge removing "good" curses; now it only targets "bad" curses; non-curses such as bleeding, poison, and caltrops are not affected
+** Fixed weapon knock working on targets that have more than 1/2 health
+** Fixed quad damage not working with lance
+** Fixed brain's free powerscreen being available outside of brain morph
+** Fixed ammo/tballs being thrown while in wormhole
+** Fixed EMP working on invalid entity types (e.g. hellspawn)
+** Fixed detector targetting forcewall solid (this caused problems when detected effects were applied to the forcewall)
+** Fixed vamp working with medic morph and other abilities
+** Laser emitter can now be hurt/destroyed
+
+** Fixed tballs and other items from being dropped while in chatprotect mode
+** Chatprotect mode now makes a player non-solid so that players and monsters can pass through them
+** Reduced monster weapon/attack knockback
+
+==================
+v4.71
+==================
+** Reduced minimum number of invasion monster spawns
+** Added maximum damage/speed for monster weapons
+** Fixed bug where medic would switch targets from hostile enemy to friendly while firing hyperblaster (and keep on shooting)
+** Added champion monster spawning to invasion mode
+** Monster spawning is now based on monster levels rather than the number of monsters spawned
+** Increased maximum experience for monster kills
+** Added berserker, soldier, and infantry monsters to invasion
+** Improved infantry, changed weapon to 20mm and added shell throwing special effects
+
+==================
+v4.8
+==================
+** Fixed AI bugs, made improvements to pathfinding
+** Added flying monsters (flyer, floater, hover)!
+
+==================
+v5.1
+==================
+** Note: With fixes below, AI will use map navi entities in invasion if present, otherwise it will use A* pathfinding to reach a player spawn
+** Forked vrxcl 5.0 codebase in late October '22 and began process of merging with changes made between ~4.7 (the basis of vrxcl) and 4.8, while retaining the improvements introduced by the vrxcl team
+** Integrated substantial changes and improvements in drone_ai and related files that aim to keep monsters (drones) from getting lost
+** Fixed bug in drone_findnavi() in invasion.c that caused monsters to return to the start of a navi chain after being interrupted, instead of finding the closest one
+** Fixed bug in ComputeSuccessors() in grid.c that would break A* pathfinding by allowing the AI to use the cached_gridlist once populated. Note: This bug completely broke A* pathfinding in 5.0 (and was a PITA to find)!
+** Fixed bugs in drone_misc.c with drone commands: move to spot, patrol, "follow me", "attack"
+** Fixed bug that would cause monsters to forget their commands after losing their target (primarily affecting patrol)
+** Fixed bug in NearestWaypointNum() in drone_ai.c causing monsters to get stuck due to the unreliable use of numpts as an indicator of the size of monster cached path lists (not sure if this makes pathnode[] unreliable for the same reason)
+** Fixed bug in drone_ai_run1() in drone_ai.c that prevented monsters from (usually) re-calculating a path when their goal's position has changed
+** Fixed bug in CanJumpDown() in drone_move.c that allowed monsters to fall even if the fall would place them off their intended path; this makes monsters follow their path more reliably (if a little erratically)
+** Fixed bugs in M_AvoidObstruction() so that it actually works, i.e. it finds a path perpendicular to walls/obstructions when a monster gets stuck (doesn't help avoid monsters trying to fall, unfortunately)

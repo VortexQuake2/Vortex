@@ -108,6 +108,7 @@ qboolean CheckHazards (edict_t *self, vec3_t landing_pos)
 }
 
 void GetNodePosition (int nodenum, vec3_t pos);
+int NearestWaypointNum(vec3_t start, int* wp);
 qboolean CanJumpDown (edict_t *self, vec3_t neworg)
 {
 	vec3_t	start;
@@ -130,7 +131,8 @@ qboolean CanJumpDown (edict_t *self, vec3_t neworg)
 	// trace down
 	VectorCopy(neworg, start);
 	start[2] -= 8192;
-	tr = gi.trace(neworg, self->mins, self->maxs, start, self, MASK_MONSTERSOLID);
+	//tr = gi.trace(neworg, self->mins, self->maxs, start, self, MASK_MONSTERSOLID);
+	tr = gi.trace(neworg, vec3_origin, vec3_origin, start, self, MASK_MONSTERSOLID);
 
 	// the landing position is less than 1 unit down, so it's not worth it
 	//if (fabs(tr.endpos[2] - self->s.origin[2]) < STEPSIZE)
@@ -150,9 +152,18 @@ qboolean CanJumpDown (edict_t *self, vec3_t neworg)
 	if (self->monsterinfo.numWaypoints 
 		&& self->monsterinfo.nextWaypoint < self->monsterinfo.numWaypoints)
 	{
+		
+		//int nearestWpNum;
 		vec3_t v;
 
+		/*
+		nearestWpNum = NearestWaypointNum(tr.endpos, self->monsterinfo.waypoint);
+		gi.dprintf("nearest wp to fall: %d vs %d\n", nearestWpNum, self->monsterinfo.nextWaypoint);
+		
 		// is the landing position closer to the next waypoint?
+		if (nearestWpNum < self->monsterinfo.nextWaypoint)
+			return false;*/
+		
 		GetNodePosition(self->monsterinfo.waypoint[self->monsterinfo.nextWaypoint], v);
 		if (!LandCloserToGoal(self, v, tr.endpos))
 		{
@@ -164,9 +175,14 @@ qboolean CanJumpDown (edict_t *self, vec3_t neworg)
 				return false;
 			}
 		}
-
+		
+		
+		//if (self->s.origin[2] - tr.endpos[2] > STEPSIZE)
+		//	return false;
 		// the landing position is non-hazardous and closer to our final or next waypoint
-		//gi.dprintf("jump down!\n");
+		//gi.dprintf("jump down! org: %f %f %f fall: %f %f %f\n", self->s.origin[0], self->s.origin[1], self->s.origin[2], tr.endpos[0], tr.endpos[1], tr.endpos[2]);
+		// it's important to follow paths as closely as possible, as they are already designed to avoid obstructions
+
 		return true;
 	}
 
@@ -308,6 +324,123 @@ qboolean M_Move (edict_t *ent, vec3_t move, qboolean relink)
 	return true;
 }
 
+qboolean M_MoveVertical(edict_t* ent, vec3_t dest, vec3_t neworg)
+{
+	float        dz;                        // delta Z
+	float        idealZ;                // ideal Z position, either a destination waypoint/node or a goal entity
+	float        zSpeed = 8;        // Z movement speed
+	vec3_t        end, goalpos;
+	trace_t        trace;
+	//qboolean stopOnCollision=false;
+	VectorCopy(ent->s.origin, neworg);
+	if (ent->monsterinfo.bump_delay > level.time || ent->monsterinfo.Zchange_delay > level.time)
+		return true; // don't adjust vertically
+	if (dest)
+	{
+		idealZ = dest[2] + 16;
+		VectorCopy(dest, goalpos);
+	}
+	else if (ent->goalentity)
+	{
+		if (ent->goalentity = world)
+			return true;
+		idealZ = ent->goalentity->s.origin[2] + 16;
+		VectorCopy(ent->goalentity->s.origin, goalpos);
+	}
+	else
+		return true; // no goal, no destination - probably idle
+	// if we can see our enemy, stay above him
+	if (ent->enemy && visible(ent, ent->enemy) && entdist(ent, ent->enemy) <= 256)
+		idealZ = ent->enemy->absmax[2] + 48;
+	// goal position is obstructed, so vertical movement should fail if we are obstructed
+	//else if (!G_IsClearPath(ent, MASK_SHOT, ent->s.origin, goalpos))
+	//        stopOnCollision = true;
+	//gi.dprintf("idealZ @ %.0f ", idealZ);
+	// check floor height
+	VectorCopy(ent->s.origin, end);
+	end[2] -= 8192;
+	trace = gi.trace(ent->s.origin, ent->mins, ent->maxs, end, ent, MASK_MONSTERSOLID);
+	// always stay above the floor, regardless of goal/destination
+	if (idealZ < trace.endpos[2] + 16)
+		idealZ = trace.endpos[2] + 16;
+	//gi.dprintf("floor @ %.0f position @ %.0f\n", trace.endpos[2], ent->s.origin[2]);
+	dz = ent->s.origin[2] - idealZ;
+	VectorCopy(ent->s.origin, end);
+	if (dz > 0) // we are above our target
+	{
+		if (dz > zSpeed)
+			dz = zSpeed;
+		end[2] -= dz;
+	}
+	else if (dz < 0) // we are below our target
+	{
+		dz = fabs(dz);
+		if (dz > zSpeed)
+			dz = zSpeed;
+		end[2] += dz;
+	}
+	else // we at the correct Z height, so we're done
+		return true;
+	trace = gi.trace(ent->s.origin, ent->mins, ent->maxs, end, ent, MASK_MONSTERSOLID);
+	if (trace.fraction == 1)
+	{
+		VectorCopy(trace.endpos, neworg);
+		/*if (relink)
+		{
+				gi.linkentity (ent);
+				G_TouchTriggers (ent);
+		}*/
+		return true;
+	}
+	return false;
+}
+qboolean M_FlyMove(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
+{
+	//float        dz;                        // delta Z
+	//float        idealZ;                // ideal Z position, either a destination waypoint/node or a goal entity
+	float        zSpeed = 8;        // Z movement speed
+	trace_t        trace;
+	vec3_t        neworg1, neworg2;
+	if (!M_MoveVertical(ent, dest, neworg1))
+	{
+		//gi.dprintf("movevertical failed\n");
+		return false;
+	}
+	VectorAdd(neworg1, move, neworg2);
+	trace = gi.trace(neworg1, ent->mins, ent->maxs, neworg2, ent, MASK_MONSTERSOLID);
+	if (trace.fraction == 1)
+	{
+		// has our Z position changed?
+		if (fabs(ent->s.origin[2] - neworg2[2]) > 1)
+		{
+			ent->monsterinfo.Zchanged = true;
+			//gi.dprintf("Z changed\n");
+		}
+		else
+		{
+			// if our Z position changed last frame, then delay the next Z position change
+			if (ent->monsterinfo.Zchanged)
+			{
+				//gi.dprintf("** Z position change will be delayed **\n");
+				ent->monsterinfo.Zchange_delay = level.time + GetRandom(3, 9) * FRAMETIME; // don't bounce!
+			}
+			// our Z position hasn't changed recently
+			ent->monsterinfo.Zchanged = false;
+		}
+		VectorCopy(trace.endpos, ent->s.origin);
+		if (relink)
+		{
+			gi.linkentity(ent);
+			G_TouchTriggers(ent);
+		}
+
+		//gi.dprintf("flymove was able to move %.0f\n", distance(neworg1, neworg2));
+		return true;
+	}
+	//return M_MoveVertical(ent, dest, relink); //false;
+	return false;
+}
+
 /*
 =============
 SV_movestep
@@ -320,7 +453,7 @@ pr_global_struct->trace_normal is set to the normal of the blocking wall
 */
 //FIXME since we need to test end position contents here, can we avoid doing
 //it again later in catagorize position?
-qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
+qboolean SV_movestep(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
 {
 	float		dz;
 	vec3_t		oldorg, neworg, end;
@@ -338,16 +471,24 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink)
 // flying monsters don't step up
 	if ((ent->flags & (FL_SWIM|FL_FLY)) || (ent->waterlevel > 1))
 	{
-	//	gi.dprintf("trying to swim\n");
-	// try one move with vertical motion, then one without
-		for (i=0 ; i<2 ; i++)
+		if (ent->flags & FL_FLY)
+			return M_FlyMove(ent, dest, move, relink);
+		//	gi.dprintf("trying to swim\n");
+		// try one move with vertical motion, then one without
+		for (i = 0; i < 2; i++)
 		{
-			VectorAdd (ent->s.origin, move, neworg);
+			VectorAdd(ent->s.origin, move, neworg);
 			if (i == 0 && ent->enemy)
 			{
 				if (!ent->goalentity)
 					ent->goalentity = ent->enemy;
-				dz = ent->s.origin[2] - ent->goalentity->s.origin[2];
+				if (dest)
+				{
+					dz = ent->s.origin[2] - dest[2];
+					//gi.dprintf("adjusting z height to dest z\n");
+				}
+				else
+					dz = ent->s.origin[2] - ent->goalentity->s.origin[2];
 				if (ent->goalentity->client)
 				{
 					if (dz > 40)
@@ -600,16 +741,16 @@ facing it.
 
 ======================
 */
-qboolean SV_StepDirection (edict_t *ent, float yaw, float dist, qboolean try_smallstep)
+qboolean SV_StepDirection(edict_t* ent, vec3_t dest, float yaw, float dist, qboolean try_smallstep)
 {
 	vec3_t		move, oldorigin;
 	//float		delta;
-	float		old_dist;
+	//float		old_dist;
 	
 	// dist = dist);
 
 	//gi.dprintf("SV_StepDirection\n");
-	old_dist = dist;
+	//old_dist = dist;
 	ent->ideal_yaw = yaw;
 	M_ChangeYaw (ent);
 
@@ -627,7 +768,7 @@ qboolean SV_StepDirection (edict_t *ent, float yaw, float dist, qboolean try_sma
 		move[2] = 0;
 
 		
-		if (SV_movestep (ent, move, false))
+		if (SV_movestep (ent, dest, move, false))
 		{
 			/*
 			delta = ent->s.angles[YAW] - ent->ideal_yaw;
@@ -717,7 +858,7 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 		else
 			tdir = d[2] == 90 ? 135 : 215;
 			
-		if (tdir != turnaround && SV_StepDirection(actor, tdir, dist, true))
+		if (tdir != turnaround && SV_StepDirection(actor, NULL, tdir, dist, true))
 			return;
 	}
 
@@ -730,32 +871,32 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 	}
 
 	if (d[1]!=DI_NODIR && d[1]!=turnaround 
-	&& SV_StepDirection(actor, d[1], dist, true))
+	&& SV_StepDirection(actor, NULL, d[1], dist, true))
 			return;
 
 	if (d[2]!=DI_NODIR && d[2]!=turnaround
-	&& SV_StepDirection(actor, d[2], dist, true))
+	&& SV_StepDirection(actor, NULL, d[2], dist, true))
 			return;
 
 /* there is no direct path to the player, so pick another direction */
 
-	if (olddir!=DI_NODIR && SV_StepDirection(actor, olddir, dist, true))
+	if (olddir!=DI_NODIR && SV_StepDirection(actor, NULL, olddir, dist, true))
 			return;
 
 	if (randomMT()&1) 	/*randomly determine direction of search*/
 	{
 		for (tdir=0 ; tdir<=315 ; tdir += 45)
-			if (tdir!=turnaround && SV_StepDirection(actor, tdir, dist, true) )
+			if (tdir!=turnaround && SV_StepDirection(actor, NULL, tdir, dist, true) )
 					return;
 	}
 	else
 	{
 		for (tdir=315 ; tdir >=0 ; tdir -= 45)
-			if (tdir!=turnaround && SV_StepDirection(actor, tdir, dist, true) )
+			if (tdir!=turnaround && SV_StepDirection(actor, NULL, tdir, dist, true) )
 					return;
 	}
 
-	if (turnaround != DI_NODIR && SV_StepDirection(actor, turnaround, dist, true) )
+	if (turnaround != DI_NODIR && SV_StepDirection(actor, NULL, turnaround, dist, true) )
 			return;
 
 	actor->ideal_yaw = olddir;		// can't move
@@ -787,7 +928,7 @@ void SV_NewChaseDir1 (edict_t *self, edict_t *goal, float dist)
 		maxyaw -= 360;
 
 	for (i=minyaw; i<maxyaw; i+=30) {
-		if (SV_StepDirection(self, i, dist, false))
+		if (SV_StepDirection(self, NULL, i, dist, false))
 			return;
 	}
 
@@ -817,7 +958,7 @@ qboolean CheckYawStep (edict_t *self, float minyaw, float maxyaw, float dist)
 			yaw += i;
 			AngleCheck(&yaw);
 
-			if (SV_StepDirection(self, yaw, dist, true))
+			if (SV_StepDirection(self, NULL, yaw, dist, true))
 			{
 				//gi.dprintf("attempt small step\n");
 				return true;
@@ -826,7 +967,7 @@ qboolean CheckYawStep (edict_t *self, float minyaw, float maxyaw, float dist)
 		// otherwise, we might be stuck, so try a full step
 		else
 		{
-			if (SV_StepDirection(self, i, dist, false))
+			if (SV_StepDirection(self, NULL, i, dist, false))
 			{
 				//gi.dprintf("attempt full step\n");
 				return true;
@@ -835,6 +976,108 @@ qboolean CheckYawStep (edict_t *self, float minyaw, float maxyaw, float dist)
 	}
 
 	return false;
+}
+
+void SV_NewChaseDir3(edict_t* actor, vec3_t goalpos, float dist)
+{
+	float	deltax, deltay;
+	float	d[3];
+	float	tdir, olddir, turnaround;
+
+	//FIXME: how did we get here with no enemy
+	if (!goalpos)
+		return;
+
+	olddir = anglemod((int)(actor->ideal_yaw / 45) * 45);
+	turnaround = anglemod(olddir - 180);
+	//gi.dprintf("olddir=%.0f, turnaround=%.0f\n", olddir, turnaround);
+
+	deltax = goalpos[0] - actor->s.origin[0];
+	deltay = goalpos[1] - actor->s.origin[1];
+	if (deltax > 10)
+		d[1] = 0;
+	else if (deltax < -10)
+		d[1] = 180;
+	else
+		d[1] = DI_NODIR;
+	if (deltay < -10)
+		d[2] = 270;
+	else if (deltay > 10)
+		d[2] = 90;
+	else
+		d[2] = DI_NODIR;
+
+	// try direct route
+	if (d[1] != DI_NODIR && d[2] != DI_NODIR)
+	{
+		if (d[1] == 0)
+			tdir = d[2] == 90 ? 45 : 315;
+		else
+			tdir = d[2] == 90 ? 135 : 215;
+
+		if (tdir != turnaround && SV_StepDirection(actor, goalpos, tdir, dist, true))
+			return;
+	}
+
+	// try other directions
+	if (((rand() & 3) & 1) || abs(deltay) > abs(deltax))
+	{
+		tdir = d[1];
+		d[1] = d[2];
+		d[2] = tdir;
+	}
+
+	if (d[1] != DI_NODIR && d[1] != turnaround
+		&& SV_StepDirection(actor, goalpos, d[1], dist, true))
+		return;
+
+	if (d[2] != DI_NODIR && d[2] != turnaround
+		&& SV_StepDirection(actor, goalpos, d[2], dist, true))
+		return;
+
+	/* there is no direct path to the player, so pick another direction */
+
+	if (olddir != DI_NODIR && SV_StepDirection(actor, goalpos, olddir, dist, true))
+		return;
+
+	if (rand() & 1) 	/*randomly determine direction of search*/
+	{
+		for (tdir = 0; tdir <= 315; tdir += 45)
+			if (tdir != turnaround && SV_StepDirection(actor, goalpos, tdir, dist, true))
+				return;
+	}
+	else
+	{
+		for (tdir = 315; tdir >= 0; tdir -= 45)
+			if (tdir != turnaround && SV_StepDirection(actor, goalpos, tdir, dist, true))
+				return;
+	}
+
+	if (turnaround != DI_NODIR && SV_StepDirection(actor, goalpos, turnaround, dist, true))
+		return;
+
+	actor->ideal_yaw = olddir;		// can't move
+
+	// if a bridge was pulled out from underneath a monster, it may not have
+	// a valid standing position at all
+
+	if (!M_CheckBottom(actor))
+		SV_FixCheckBottom(actor);
+}
+
+void SV_MoveRandom(edict_t* actor, vec3_t dest, float dist)
+{
+	float i, tdir;
+
+	// try to take a full step in any random direction
+	tdir = GetRandom(0, 360);
+	for (i = 0; i < 7; i++)
+	{
+		if (SV_StepDirection(actor, dest, tdir, dist, false))
+			return;
+		tdir += 45;
+		AngleCheck(&tdir);
+	}
 }
 
 void SV_NewChaseDir2 (edict_t *self, vec3_t dest, float dist)
@@ -854,7 +1097,8 @@ void SV_NewChaseDir2 (edict_t *self, vec3_t dest, float dist)
 	// try a step forward +/- 90 degrees from ideal yaw
 	if (CheckYawStep(self, minyaw, maxyaw, dist))
 	{
-		//gi.dprintf("took a step +/- 90 degrees from ideal yaw\n");
+		//gi.dprintf("%s took a step +/- 90 degrees from ideal yaw\n", 
+		//        GetMonsterKindString(self->mtype));
 		return;
 	}
 
@@ -865,7 +1109,8 @@ void SV_NewChaseDir2 (edict_t *self, vec3_t dest, float dist)
 	maxyaw = temp;
 	if (CheckYawStep(self, minyaw, maxyaw, dist))
 	{
-		//gi.dprintf("took a step 180 degrees from ideal yaw\n");
+		//gi.dprintf("%s took a step 180 degrees from ideal yaw\n", 
+		//	GetMonsterKindString(self->mtype));
 		return;
 	}
 	
@@ -953,8 +1198,111 @@ qboolean SV_CloseEnough1 (edict_t *ent, vec3_t goalpos, float dist)
 	return true;
 }
 
+// finds escape angle perpendicular to wall that moves us in the direction we were facing
+// FIXME: modify to move closer to goal position/waypoint rather than relying on monster angles
+// FIXME: how will this work if the "obstruction" is open space (i.e. we can't walk because we will fall!)
+void M_AvoidObstruction(edict_t* self, vec3_t pos, float dist)
+{
+	vec3_t	angles, forward, start, end;
+	float	cl_yaw, ideal_yaw, angle1, angle2, delta1, delta2;
+	trace_t	tr;
+
+	// calculate next move
+	//yaw = self->ideal_yaw * M_PI * 2 / 360;
+	//move[0] = cos(yaw) * dist;
+	//move[1] = sin(yaw) * dist;
+	//move[2] = 0;
+
+	// get monster forward angle
+	AngleVectors(self->s.angles, NULL, forward, NULL);
+	vectoangles(forward, forward);
+
+	// get monster yaw
+	if (pos)
+	{
+		// yaw angle to pos (usually monster's intended destination)
+		VectorSubtract(pos, self->s.origin, end);
+		VectorNormalize(end);
+		vectoangles(end, end);
+		cl_yaw = end[YAW];
+	}
+	else
+		cl_yaw = self->s.angles[YAW];
+	AngleCheck(&cl_yaw);
+
+	// trace from monster to wall
+	G_EntMidPoint(self, start);
+	VectorMA(start, 64, forward, end);
+	tr = gi.trace(start, NULL, NULL, end, self, MASK_MONSTERSOLID);
+
+	// did the trace hit something?
+	//FIXME: if the trace hit nothing (air), then this function won't really help avoid anything!
+	if (tr.fraction != 1)
+	{
+		// get monster angles in relation to wall
+		VectorCopy(tr.plane.normal, angles);
+		vectoangles(angles, angles);
+	}
+
+	// delta between monster yaw and wall yaw should be no more than 90 degrees
+	// else, turn wall angles around 180 degrees
+	if (fabs(cl_yaw - angles[YAW]) > 90)
+		angles[YAW] += 180;
+	ValidateAngles(angles);
+
+	// possible escape angle 1
+	angle1 = angles[YAW] + 90;
+	AngleCheck(&angle1);
+	delta1 = fabs(angle1 - cl_yaw);
+	// possible escape angle 2
+	angle2 = angles[YAW] - 90;
+	AngleCheck(&angle2);
+	delta2 = fabs(angle2 - cl_yaw);
+
+	// take the shorter route
+	if (delta1 > delta2)
+	{
+		ideal_yaw = angle2;
+		//mult = 1.0 - delta2 / 90.0;
+	}
+	else
+	{
+		ideal_yaw = angle1;
+		//mult = 1.0 - delta1 / 90.0;
+	}
+
+	// go full speed if we are turned at least half way towards ideal yaw
+	//if (mult >= 0.5)
+	//	mult = 1.0;
+
+	// modify speed
+	//dist *= mult;
+	//if (dist < 5)
+	//	dist = 5;
+
+	// recalculate with new heading
+	//yaw = ideal_yaw * M_PI * 2 / 360;
+	/*
+	move[0] = cos(yaw)*dist;
+	move[1] = sin(yaw)*dist;
+	move[2] = 0;
+	*/
+
+	//gi.dprintf("**can't walk dist %.1f, wall@%.1f you@%.1f ideal@%.1f tr.fraction=%f\n", dist, angles[YAW], cl_yaw, ideal_yaw, tr.fraction);
+
+	if (!SV_StepDirection(self, pos, ideal_yaw, dist, false))
+	{
+		//gi.dprintf("couldn't avoid obstruction!\n");
+		return;
+	}
+		
+
+	if (!M_CheckBottom(self))
+		SV_FixCheckBottom(self);
+}
+
 // NOTE: pos should be the final goal, because monster will stop moving after reaching it!
-void M_MoveToPosition (edict_t *ent, vec3_t pos, float dist)
+void M_MoveToPosition(edict_t* ent, vec3_t pos, float dist, qboolean stop_when_close)
 {
 	vec3_t v;
 
@@ -969,8 +1317,8 @@ void M_MoveToPosition (edict_t *ent, vec3_t pos, float dist)
 		return;
 	}
 
-	// we are close enough
-	if (distance(ent->s.origin, pos) < 32)
+	// if the next step touches our goal position, then stop
+	if (stop_when_close && SV_CloseEnough1(ent, pos, dist))
 	{
 		//gi.dprintf("close enough %.0f\n", distance(ent->s.origin, pos));
 		// look at the final position
@@ -986,7 +1334,7 @@ void M_MoveToPosition (edict_t *ent, vec3_t pos, float dist)
 		dist *= 0.5;
 
 	// if we can't take a step, try moving in another direction
-	if (!SV_StepDirection (ent, ent->ideal_yaw, dist, true))
+	if (!SV_StepDirection (ent, pos, ent->ideal_yaw, dist, true))
 	{
 		//gi.dprintf("couldn't step\n");
 		// if the monster hasn't moved much, then increment
@@ -995,22 +1343,43 @@ void M_MoveToPosition (edict_t *ent, vec3_t pos, float dist)
 			ent->monsterinfo.stuck_frames++;
 		else
 			ent->monsterinfo.stuck_frames = 0;
+		//gi.dprintf("stuck frames=%d\n",ent->monsterinfo.stuck_frames);
 
 		// record current position for comparison
 		VectorCopy(ent->s.origin, ent->monsterinfo.stuck_org);
 
 		// attempt a course-correction
+		// first, we attempt to find an angle perpendicular to wall to escape, and then we try a random direction
 		if (ent->inuse && (level.time > ent->monsterinfo.bump_delay))
 		{
-			//gi.dprintf("tried course correction\n");
-			//SV_NewChaseDir (ent, goal, dist);
-			SV_NewChaseDir2(ent, pos, dist);
-			ent->monsterinfo.bump_delay = level.time + FRAMETIME*GetRandom(3, 9);
+			//gi.dprintf("trying course correction\n");
+			// find a random path if we are stuck, or 50% of the time if we can't see the next waypoint
+			if (ent->monsterinfo.stuck_frames > 2
+				|| (random() > 0.5 && !G_IsClearPath(ent, MASK_MONSTERSOLID, ent->s.origin, pos)))
+			{
+				SV_MoveRandom(ent, pos, dist);
+				ent->monsterinfo.bump_delay = level.time + FRAMETIME* GetRandom(3, 9);
+				return;
+			}
+			//gi.dprintf("M_MoveToPosition() tried course correction\n");
+			/*
+			if (ent->flags & FL_FLY && !G_IsClearPath(ent, MASK_MONSTERSOLID, ent->s.origin, pos))
+			{
+				//SV_StepDirection(ent, pos, GetRandom(0, 360), dist, false);
+				SV_MoveRandom(ent, pos, dist);
+				ent->monsterinfo.bump_delay = level.time + FRAMETIME*GetRandom(5, 15);
+				return;
+			}*/
+
+			//SV_NewChaseDir3(ent, pos, dist);
+			M_AvoidObstruction(ent, pos, dist);//FIXME: this will cause a monster to continue to be stuck if there is no wall to escape!
+
+			ent->monsterinfo.bump_delay = level.time + FRAMETIME * GetRandom(3, 9);
 			return;
 		}
 	}
 	//else
-		//gi.dprintf("step OK\n");
+		//gi.dprintf("step OK %.0f\n", dist);
 }
 
 /*
@@ -1058,7 +1427,7 @@ void M_MoveToGoal (edict_t *ent, float dist)
 
 // bump around...
 	// if we can't take a step, try moving in another direction
-	if (!SV_StepDirection (ent, ent->ideal_yaw, dist, true))
+	if (!SV_StepDirection (ent, NULL, ent->ideal_yaw, dist, true))
 	{
 		//gi.dprintf("couldnt step\n");
 		// if the monster hasn't moved much, then increment
@@ -1080,6 +1449,8 @@ void M_MoveToGoal (edict_t *ent, float dist)
 			return;
 		}
 	}
+	//else
+//	gi.dprintf("M_MoveToGoal() was successful %.0f\n",dist);
 }
 
 
@@ -1183,7 +1554,7 @@ qboolean M_walkmove (edict_t *ent, float yaw, float dist)
 		return true;
 	}
 	else if (level.time > ent->holdtime) // stay in-place for medic healing
-		return SV_movestep(ent, move, true);
+		return SV_movestep(ent, NULL, move, true);
 	else
 		return false;
 }

@@ -26,6 +26,9 @@ void init_drone_soldier (edict_t *self);
 void init_drone_gladiator (edict_t *self);
 void init_drone_berserk (edict_t *self);
 void init_drone_infantry (edict_t *self);
+void init_drone_flyer (edict_t* self);
+void init_drone_floater(edict_t* self);
+void init_drone_hover(edict_t* self);
 int crand (void);
 
 // Drone Lists -az
@@ -99,10 +102,10 @@ void DroneList_Remove(edict_t *ent)
 
 qboolean drone_ValidChaseTarget (edict_t *self, edict_t *target)
 {
-	//if (target && target->inuse && target->classname)
-	//	gi.dprintf("drone_ValidChaseTarget() is checking %s\n", target->classname);
-	//else
-	//	gi.dprintf("drone_ValidChaseTarget() is checking <unknown>\n");
+	/*if (target && target->inuse && target->classname)
+		gi.dprintf("drone_ValidChaseTarget() is checking %s\n", target->classname);
+	else
+		gi.dprintf("drone_ValidChaseTarget() is checking <unknown>\n");*/
 
 	if (!target || !target->inuse)
 		return false;
@@ -351,6 +354,8 @@ void drone_pain (edict_t *self, edict_t *other, float kick, int damage)
 
 	// ignore non-living objects
 	if (!G_EntIsAlive(other))
+		return;
+	if (other->flags & FL_GODMODE)
 		return;
 	// ignore teammates
 	if (OnSameTeam(self, other))
@@ -715,6 +720,9 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	case 9: init_drone_berserk(drone);		break;
 	case 10: init_drone_soldier(drone);		break;
 	case 11: init_drone_infantry(drone);	break;
+	case 12: init_drone_flyer(drone);		break;
+	case 13: init_drone_floater(drone);		break;
+	case 14: init_drone_hover(drone);		break;
 	case 20: init_drone_decoy(drone);		break;
 	case 30: init_drone_commander(drone);	break;
 	case 31: init_drone_supertank(drone);	break;
@@ -1771,6 +1779,9 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	case M_SOLDIER: case M_SOLDIERLT: case M_SOLDIERSS: init_drone_soldier(monster); break;
 	case M_GLADIATOR: init_drone_gladiator(monster); break;
 	case M_INFANTRY: init_drone_infantry(monster); break;
+	case M_FLYER: init_drone_flyer(monster); break;
+	case M_FLOATER: init_drone_floater(monster); break;
+	case M_HOVER: init_drone_hover(monster); break;
 	default: return false;
 	}
 
@@ -1903,6 +1914,9 @@ char *GetMonsterKindString (int mtype)
 		case M_ALARM: return "Laser Trap";
 		case M_GLADIATOR: return "Gladiator";
 		case M_INFANTRY: return "Enforcer";
+		case M_FLYER: return "Flyer";
+		case M_FLOATER: return "Floater";
+		case M_HOVER: return "Hover";
         default: return "Monster";
     }
 }
@@ -1985,17 +1999,21 @@ int numDroneLinks (edict_t *self)
 {
 	int		i, numLinks;
 	edict_t *e;
+	vec3_t	pos;
 
 	for (i = numLinks = 0; i < 4; i++)
 	{
+		// we iterate through each monster/drone that the client has selected
 		e = self->activator->selected[i];
-		// entity must be alive
+		// monster/drone must be alive
 		if (!G_EntIsAlive(e))
 			continue;
 		// must be a valid monster that our activator owns
 		if (!ValidCommandMonster(self->activator, e))
 			continue;
-		if (e->monsterinfo.leader && e->monsterinfo.leader == self)
+		// monster/drone has a matching vector to our location
+		//FIXME: may want to add a timeout/lost frame counter to this, as monsters might get lost/distracted and forget about the combat point
+		if (VectorCompare(e->monsterinfo.spot1, self->s.origin) || VectorCompare(e->monsterinfo.spot2, self->s.origin))
 			numLinks++;
 	}
 
@@ -2004,13 +2022,10 @@ int numDroneLinks (edict_t *self)
 
 void drone_tempent_think (edict_t *self)
 {
-	//FIXME: this won't work for patrols because monsters won't always be
-	//FIXME: following one of the combat points
-	//FIXME: the fix is to have spot1/2 as goal1/goal2 and have the tempent check that
 	// if no monsters are following this combat point, then free it
 	if (!G_EntIsAlive(self->activator) || numDroneLinks(self) < 1)
 	{
-		// gi.dprintf("freed combat point %d\n", numDroneLinks(self));
+		gi.dprintf("freed combat point %d\n", numDroneLinks(self));
 		G_FreeEdict(self);
 		return;
 	}
@@ -2087,6 +2102,8 @@ void DroneMovePosition (edict_t *ent, vec3_t pos)
 			e->monsterinfo.aiflags &= ~AI_STAND_GROUND;
 			e->enemy = NULL;
 			e->goalentity = temp;
+			VectorClear(e->monsterinfo.spot1);
+			VectorClear(e->monsterinfo.spot2);
 
 			// patrol between two points
 			if (cmd == 1)
@@ -2100,11 +2117,13 @@ void DroneMovePosition (edict_t *ent, vec3_t pos)
 			// return to this spot, even if we get distracted
 			else if (cmd == 2)
 			{
+				VectorCopy(pos, e->monsterinfo.spot1);
 				e->monsterinfo.leader = temp;
 			}
 			// move to this spot, but we may get distracted
 			else
 			{
+				VectorCopy(pos, e->monsterinfo.spot1);
 				e->monsterinfo.leader = NULL;
 			}
 
@@ -2333,6 +2352,8 @@ void MonsterAttack (edict_t *ent)
 			e->monsterinfo.leader = goal;
 			e->goalentity = goal;
 			VectorCopy(goal->s.origin, e->monsterinfo.last_sighting);
+			VectorCopy(goal->s.origin, e->monsterinfo.spot1);
+			VectorClear(e->monsterinfo.spot2);
 			if (entdist(e, goal) > 256)
 				e->monsterinfo.run(e);
 			e->monsterinfo.selected_time = level.time + MONSTER_BLINK_DURATION;
@@ -2486,6 +2507,12 @@ void Cmd_Drone_f (edict_t *ent)
         vrx_create_new_drone(ent, 10, false, true);
 	else if (!Q_strcasecmp(s, "enforcer"))
         vrx_create_new_drone(ent, 11, false, true);
+	else if (!Q_strcasecmp(s, "flyer"))
+		vrx_create_new_drone(ent, 12, false, true);
+	else if (!Q_strcasecmp(s, "floater"))
+		vrx_create_new_drone(ent, 13, false, true);
+	else if (!Q_strcasecmp(s, "hover"))
+		vrx_create_new_drone(ent, 14, false, true);
 	else if (!Q_strcasecmp(s, "jorg"))
         vrx_create_new_drone(ent, 32, false, true);
 	else 

@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //ACE
 
-qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink);
+qboolean SV_movestep(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink);
 void barrel_delay (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point);
 qboolean SelectSpawnPoint (edict_t *ent, vec3_t origin, vec3_t angles);
 qboolean BOT_DMclass_FindEnemy(edict_t *self);

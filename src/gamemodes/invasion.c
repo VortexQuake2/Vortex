@@ -123,6 +123,8 @@ edict_t *INV_GiveRandomPSpawn()
 	return NULL;
 }
 
+//FIXME: should we do a visibility check?
+// this function returns the closest START navi, i.e. a navi at the start of a chain
 edict_t* INV_ClosestNavi(edict_t* self)
 {
 	vec3_t eorg;
@@ -143,6 +145,7 @@ edict_t* INV_ClosestNavi(edict_t* self)
 	return ret;
 }
 
+// returns the nearest navi
 edict_t* INV_ClosestNaviAny(edict_t* self) {
     vec3_t eorg;
     float best = 8192 * 8192;
@@ -164,14 +167,30 @@ edict_t* INV_ClosestNaviAny(edict_t* self) {
 
 edict_t *drone_findnavi(edict_t *self)
 {
-	edict_t* e = NULL;
+#if 0
 	edict_t* visible_candidates[4];
 	int num_visible_candidates = 0;
+#endif
 
 	if (G_GetClient(self)) // Client monsters don't look for navis
 		return NULL;
+// GHz FIX - commented out the if clause below, as we want monsters to find a path to the player spawns
+// because since 4.63 we can use A* pathfinding to get a path rather than relying on INVASION_NAVI/navi_monster_invasion entities
+// if we still want to use the navis, then we need to use the target property of the map entity to find the next navi in the chain
+	if (!(self->monsterinfo.aiflags & AI_FIND_NAVI)) {
+		if (!invasion->value)
+			return NULL;
 
+		// if we reached this point we're no longer looking for navis. we should be looking for spawns!
+		return INV_GiveClosestPSpawn(self); 
+	}
 
+	/*if (invasion->value && level.pathfinding)
+	{
+		return INV_GiveClosestPSpawn(self);
+	}*/
+
+#if 0
 	// seek up to 4 visible candidates
 	for (int i = 0; i < invasion_start_navicount; i++)
 	{
@@ -188,36 +207,17 @@ edict_t *drone_findnavi(edict_t *self)
 		return visible_candidates[i];
 	}
 
-	// if there aren't, try to use the most recent navi
-	if (!(self->monsterinfo.aiflags & AI_FIND_NAVI)) {
-		if (!invasion->value)
-			return NULL;
-
-		if(self->prev_navi) {
-			if (self->prev_navi->target && self->prev_navi->targetname &&
-							((e = G_Find(NULL, FOFS(targetname), self->prev_navi->target)) != NULL)) {
-				self->prev_navi = e;
-				return e;
-			}
-			// there are no further navis - find a spawn
-			return INV_GiveClosestPSpawn(self); 
-		}
-	}
-
-	// if no most recent, and no visible, use a start navi
-	if (invasion_start_navicount > 0) {
-		e = INV_StartNavi[GetRandom(1, invasion_start_navicount) - 1];
-		return e;
-	}
+	// there aren't, then use any start navi
+	if (invasion_start_navicount > 0)
+		return INV_StartNavi[GetRandom(1, invasion_start_navicount) - 1];
+#endif
 
 	if (invasion_start_navicount > 0) {
-		e = INV_ClosestNavi(self);
-		return e;
+		return INV_ClosestNaviAny(self);// INV_ClosestNavi(self);
 	}
 	
 	// no navis, return a player spawn...
-	e = INV_GiveRandomPSpawn();
-	return e;
+	return INV_GiveRandomPSpawn();
 }
 
 
@@ -399,13 +399,10 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
 
 	spawn_point->wait = level.time + 1.0; // time until spawn is available again
 
-	monster->monsterinfo.idle_frames = 0;
 	monster->monsterinfo.aiflags |= AI_FIND_NAVI; // search for navi
 	monster->s.angles[YAW] = spawn_point->s.angles[YAW];
 	monster->prev_navi = NULL;
-	monster->enemy = NULL; // find a new target
-	monster->oldenemy = NULL;
-	monster->monsterinfo.stand(monster);
+
 
 	// az: we modify the monsters' health lightly
 	if (invasion->value == 1) // easy mode
@@ -620,6 +617,9 @@ void INV_SpawnMonsters(edict_t *self)
 	// How many monsters should we spawn?
 	// 10 at lv 1, 30 by level 20. 41 by level 100
 	max_monsters = (int)round(10 + 4.6276 * log2f((float)invasion_difficulty_level));
+	//max_monsters = 1;//GHz DEBUG - REMOVE ME!
+	//self->nextthink = level.time + FRAMETIME;//GHz DEBUG - REMOVE ME!
+	//return;//GHz DEBUG - REMOVE ME!
 
 	if (!(invasion_difficulty_level % 5))
 	{
@@ -694,7 +694,7 @@ void INV_SpawnMonsters(edict_t *self)
 
 	while ((e = INV_GetMonsterSpawn(e)) && invasion_data.mspawned < max_monsters && SpawnTries < MaxTriesThisFrame)
 	{
-		int randomval = GetRandom(1, 11);
+		int randomval = GetRandom(1, 14);
 
 		while ( randomval == 10 ) {
 			randomval = GetRandom(1, 11); // don't spawn soldiers
@@ -704,7 +704,7 @@ void INV_SpawnMonsters(edict_t *self)
 		{
 			while (randomval == 5 || randomval == 10) // disallow medics
 			{
-				randomval = GetRandom(1, 11);
+				randomval = GetRandom(1, 14);
 			}
 		}
 
@@ -909,11 +909,14 @@ void SP_info_monster_invasion(edict_t *self)
 
 void SP_navi_monster_invasion(edict_t *self)
 {
-	if (0 == invasion->value)
+	//FIXME: change to invasion->value
+	if (!pvm->value || !invasion->value)
 	{
 		G_FreeEdict(self);
 		return;
 	}
+
+	//gi.dprintf("navi point created!\n");
 
 	self->solid = SOLID_NOT;
 	self->mtype = INVASION_NAVI;

@@ -315,6 +315,10 @@ float GetPlayerBossDamage(edict_t *player, edict_t *boss);
 
 qboolean SpawnWaitingPlayers(void);
 
+// drone/monster pathfinding/grid stuff
+#define SEARCHTYPE_WALK 1	// find nodes on horizontal plane with limited Z delta
+#define SEARCHTYPE_FLY	2	// find nodes regardless of Z delta between start end ending positions
+
 // etc
 int vrx_get_ability_upgrade_cost(int index);
 void vrx_remove_chat_protect(edict_t* ent);

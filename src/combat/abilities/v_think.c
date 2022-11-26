@@ -847,8 +847,10 @@ void vrx_client_think(edict_t *ent) {
     int max_armor;    // 3.5 max armor client can hold
     int *armor;        // 3.5 pointer to client armor
 
-    if (ent->client->showGridDebug > 0) {
-        DrawNearbyGrid(ent);
+    if (ent->client->showGridDebug > 0) 
+    {
+        if (ent->client->showGridDebug <= 2)
+            DrawNearbyGrid(ent);
         if (ent->client->showGridDebug >= 2)
             DrawChildLinks(ent);
     }
