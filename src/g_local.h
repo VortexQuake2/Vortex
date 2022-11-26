@@ -614,8 +614,13 @@ typedef struct
 	float		dodge_time;			// delay before we can dodge again
 	float		sight_range;		// 3.56 how far the drone can see to acquire targets
 	float		bump_delay;			// delay before we can make another course-correction
+	float		Zchange_delay;		// delay before we can adjust Z position again (to prevent bouncing)
+	qboolean	Zchanged;			// has our Z position changed recently?
 	float		resurrected_time;	// time when resurrection from a medic is complete
+	float		backtrack_delay;	// delay until we can backtrack to a closer waypoint (to prevent getting stuck)
 	float		path_time;			// time when monster can compute a path
+	vec3_t		prevGoalPos;		// last goal position, used for deciding when to re-compute paths
+	qboolean	updatePath;			// if true, update path to goal when level.time > path_time
 	edict_t		*lastGoal;			// last goal we were chasing, used for deciding when to re-compute paths
 //	qboolean	melee;				// whether or not the monster should circle strafe
 	dmglist_t	dmglist[MAX_CLIENTS];		// keep track of damage by players

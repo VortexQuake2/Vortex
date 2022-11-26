@@ -123,6 +123,8 @@ edict_t *INV_GiveRandomPSpawn()
 	return NULL;
 }
 
+//FIXME: should we do a visibility check?
+// this function returns the closest START navi, i.e. a navi at the start of a chain
 edict_t* INV_ClosestNavi(edict_t* self)
 {
 	vec3_t eorg;
@@ -143,6 +145,7 @@ edict_t* INV_ClosestNavi(edict_t* self)
 	return ret;
 }
 
+// returns the nearest navi
 edict_t* INV_ClosestNaviAny(edict_t* self) {
     vec3_t eorg;
     float best = 8192 * 8192;
@@ -171,7 +174,9 @@ edict_t *drone_findnavi(edict_t *self)
 
 	if (G_GetClient(self)) // Client monsters don't look for navis
 		return NULL;
-	
+// GHz FIX - commented out the if clause below, as we want monsters to find a path to the player spawns
+// because since 4.63 we can use A* pathfinding to get a path rather than relying on INVASION_NAVI/navi_monster_invasion entities
+// if we still want to use the navis, then we need to use the target property of the map entity to find the next navi in the chain
 	if (!(self->monsterinfo.aiflags & AI_FIND_NAVI)) {
 		if (!invasion->value)
 			return NULL;
@@ -208,7 +213,7 @@ edict_t *drone_findnavi(edict_t *self)
 #endif
 
 	if (invasion_start_navicount > 0) {
-		return INV_ClosestNavi(self);
+		return INV_ClosestNaviAny(self);// INV_ClosestNavi(self);
 	}
 	
 	// no navis, return a player spawn...
@@ -612,6 +617,9 @@ void INV_SpawnMonsters(edict_t *self)
 	// How many monsters should we spawn?
 	// 10 at lv 1, 30 by level 20. 41 by level 100
 	max_monsters = (int)round(10 + 4.6276 * log2f((float)invasion_difficulty_level));
+	//max_monsters = 1;//GHz DEBUG - REMOVE ME!
+	//self->nextthink = level.time + FRAMETIME;//GHz DEBUG - REMOVE ME!
+	//return;//GHz DEBUG - REMOVE ME!
 
 	if (!(invasion_difficulty_level % 5))
 	{
@@ -686,7 +694,7 @@ void INV_SpawnMonsters(edict_t *self)
 
 	while ((e = INV_GetMonsterSpawn(e)) && invasion_data.mspawned < max_monsters && SpawnTries < MaxTriesThisFrame)
 	{
-		int randomval = GetRandom(1, 11);
+		int randomval = GetRandom(1, 14);
 
 		while ( randomval == 10 ) {
 			randomval = GetRandom(1, 11); // don't spawn soldiers
@@ -696,7 +704,7 @@ void INV_SpawnMonsters(edict_t *self)
 		{
 			while (randomval == 5 || randomval == 10) // disallow medics
 			{
-				randomval = GetRandom(1, 11);
+				randomval = GetRandom(1, 14);
 			}
 		}
 

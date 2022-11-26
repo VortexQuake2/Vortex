@@ -2441,14 +2441,6 @@ void Cmd_AdminCmd (edict_t *ent)
 		return;
 	}
 
-	if (!Q_stricmp(cmd1, "break"))
-    {
-#ifdef WIN32
-        __asm int 3
-#endif
-        return;
-    }
-
 	if (!Q_stricmp(cmd1, "closestnavi"))
     {
         edict_t *navi = INV_ClosestNavi(ent);

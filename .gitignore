@@ -12,3 +12,6 @@ util/settings.txt
 util/v_luasettings_decl.c
 util/v_luasettings_game.c
 util/v_luasettings_game.h
+/.vs
+/out/build/x64-Debug
+/out/build

@@ -566,6 +566,7 @@ double MAX_MONSTERS;
 double DELAY_MONSTER_THINK;
 double DELAY_MONSTER;
 double M_FLYER_COST;
+double M_FLOATER_COST;
 double M_INSANE_COST;
 double M_SOLDIERLT_COST;
 double M_SOLDIER_COST;
@@ -582,6 +583,7 @@ double M_COMMANDER_COST;
 double M_MUTANT_COST;
 double M_DEFAULT_COST;
 double M_FLYER_CONTROL_COST;
+double M_FLOATER_CONTROL_COST;
 double M_INSANE_CONTROL_COST;
 double M_SOLDIERLT_CONTROL_COST;
 double M_SOLDIER_CONTROL_COST;
@@ -601,6 +603,8 @@ double M_MUTANT_CONTROL_COST;
 double M_BERSERKER_CONTROL_COST;
 double M_GLADIATOR_CONTROL_COST;
 double M_DEFAULT_CONTROL_COST;
+double M_MIN_REACTION_TIME;
+double M_MAX_REACTION_TIME;
 double DELAY_FREEZE;
 double DELAY_BOOST;
 double DELAY_BLOODSUCKER;
@@ -1613,6 +1617,7 @@ void Lua_LoadVariables()
 	DELAY_MONSTER = vrx_lua_get_variable("DELAY_MONSTER", 1);
 
 	M_FLYER_COST = vrx_lua_get_variable("M_FLYER_COST", 25);
+	M_FLOATER_COST = vrx_lua_get_variable("M_FLYER_COST", 25);
 	M_INSANE_COST = vrx_lua_get_variable("M_INSANE_COST", 25);
 	M_SOLDIERLT_COST = vrx_lua_get_variable("M_SOLDIERLT_COST", 25);
 	M_SOLDIER_COST = vrx_lua_get_variable("M_SOLDIER_COST", 25);
@@ -1630,6 +1635,7 @@ void Lua_LoadVariables()
 
 	M_DEFAULT_COST = vrx_lua_get_variable("M_DEFAULT_COST", 25);
 	M_FLYER_CONTROL_COST = vrx_lua_get_variable("M_FLYER_CONTROL_COST", 1);
+	M_FLOATER_CONTROL_COST = vrx_lua_get_variable("M_FLYER_CONTROL_COST", 1);
 	M_INSANE_CONTROL_COST = vrx_lua_get_variable("M_INSANE_CONTROL_COST", 1);
 	M_SOLDIERLT_CONTROL_COST = vrx_lua_get_variable("M_SOLDIERLT_CONTROL_COST", 1);
 	M_SOLDIER_CONTROL_COST = vrx_lua_get_variable("M_SOLDIER_CONTROL_COST", 1);
@@ -1649,6 +1655,8 @@ void Lua_LoadVariables()
 	M_BERSERKER_CONTROL_COST = vrx_lua_get_variable("M_BERSERKER_CONTROL_COST", 1);
 	M_GLADIATOR_CONTROL_COST = vrx_lua_get_variable("M_GLADIATOR_CONTROL_COST", 1);
 	M_DEFAULT_CONTROL_COST = vrx_lua_get_variable("M_DEFAULT_CONTROL_COST", 1);
+	M_MIN_REACTION_TIME = vrx_lua_get_variable("M_MIN_REACTION_TIME", 0.2);
+	M_MAX_REACTION_TIME = vrx_lua_get_variable("M_MAX_REACTION_TIME", 1.0);
 
 	DELAY_FREEZE = vrx_lua_get_variable("DELAY_FREEZE", 5);
 	DELAY_BOOST = vrx_lua_get_variable("DELAY_BOOST", 2.0);

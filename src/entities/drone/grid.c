@@ -398,16 +398,21 @@ int i;
     VectorSubtract(pathnode[i],origin,vtmp);
 	  dist=VectorLengthSqr(vtmp);
 
-	//if (dist < best)//GHz: added for debugging only
-	//	best = dist;
-	//d=distance(node[i].origin, origin);
-	//if (d < bestd)
-	//	bestd=d;
+	/*if (dist < best)//GHz: added next 4 lines for debugging only
+		best = dist;
+	d=distance(pathnode[i], origin);
+	if (d < bestd)
+		bestd=d;
+	*/
+	if (dist < 1.0F)//FIXME: wtf does this mean?
+	{
+		// we are close enough to our goal
+		//gi.dprintf("best result=%f, need=%f, actual=%f\n", best, 1.0F, bestd);
+		return i;
+	}
+  }
 
-    if (dist < 1.0F)//FIXME: wtf does this mean?
-     return i; }
-
-  //gi.dprintf("best result=%f, need=%f, actual=%f\n", best, 1.0F, bestd);
+ // gi.dprintf("best result=%f, need=%f, actual=%f\n", best, 1.0F, bestd);
   return -1;
 }
 
@@ -419,7 +424,11 @@ node_t *Node;
 
   Node=OPEN->NextNode;    // Pull from FRONT of OPEN list
 
-  if (!Node) return NULL;
+  if (!Node)
+  {
+	 // gi.dprintf("OPEN list is empty!\n");
+	  return NULL;
+  }
 
   //GHz: wont this break if the OPEN list is empty?
   OPEN->NextNode=OPEN->NextNode->NextNode;
@@ -565,20 +574,29 @@ qboolean isValidChildNode (vec3_t start, vec3_t v, int max_distance, int max_z_d
 
 // fills gridlist with visible nodes within +/- 32 of start on the Z axis
 // returns the number of found nodes
-int FillGridList (int NodeNumStart)
+int FillGridList(int searchType, int NodeNumStart)
 {
-	int		i, j;
+	int		i, j, maxZdelta;
 	vec3_t	start;
 
 	if (cached_gridlist[NodeNumStart] != NULL) // az: don't recompute this
 	{
+		//gi.dprintf("FillGridList() exited: don't recompute\n");
+
 		return cached_gridlist_count[NodeNumStart];
 	}
+	//else
+	//	gi.dprintf("FillGridList()");
 
 	// clear previous gridlist values
 	ClearGridList();
 
 	VectorCopy(pathnode[NodeNumStart], start);
+
+	if (searchType == SEARCHTYPE_FLY)
+		maxZdelta = 8192;
+	else
+		maxZdelta = 32;
 
 	// fill gridlist with node indices
 	for (i=0,j=0; i<numnodes; i++)
@@ -586,7 +604,7 @@ int FillGridList (int NodeNumStart)
 		// we don't want the start node pointing to itself!
 		if (i == NodeNumStart)
 			continue;
-		if (!isValidChildNode(start, pathnode[i], 256, 32))
+		if (!isValidChildNode(start, pathnode[i], 256, maxZdelta))
 			continue;
 
 		// copy pathnode index to gridlist array and increment the gridlist index/nodes found
@@ -604,7 +622,7 @@ int FillGridList (int NodeNumStart)
 }
 
 //TODO: limit search pattern on X and Y axis?
-int SortGridList (int NodeNumStart)
+int SortGridList(int searchType, int NodeNumStart)
 {
 	int		GLindex;
 	int		i, j, index, temp, list_size, childs=NUMCHILDS;
@@ -613,7 +631,7 @@ int SortGridList (int NodeNumStart)
 
 	VectorCopy(pathnode[NodeNumStart], start);
 
-	list_size = FillGridList(NodeNumStart);
+	list_size = FillGridList(searchType,NodeNumStart);
 
 	// nothing to sort!
 	if (list_size < 2)
@@ -639,11 +657,11 @@ int SortGridList (int NodeNumStart)
 	{
 		GLindex = i;
 		index = cached_gridlist[NodeNumStart][i];//i;
-		best = distance(pathnode[cached_gridlist[NodeNumStart][i]], start);
+		best = Get2dDistance(pathnode[cached_gridlist[NodeNumStart][i]], start);
 
 		for (j = i+1; j<list_size; j++)
 		{
-			dist = distance(pathnode[cached_gridlist[NodeNumStart][j]], start);
+			dist = Get2dDistance(pathnode[cached_gridlist[NodeNumStart][j]], start);
 			if (dist < best)
 			{
 				index = cached_gridlist[NodeNumStart][j];//j; // stored value
@@ -715,19 +733,26 @@ int z=16; // 24 units each z direction
 */
 //==========================================================
 
-void ComputeSuccessors(node_t *PresentNode, int NodeNumD)
+void ComputeSuccessors(int searchType, node_t* PresentNode, int NodeNumD)
 {
 	int i, maxChilds, NextNodeNum;
 
 	// create a sorted list of the closest node indices
-	maxChilds = SortGridList(PresentNode->nodenum);
+	maxChilds = SortGridList(searchType, PresentNode->nodenum);
 
-	for (i=0; i<maxChilds; i++)
+	for (i = 0; i < maxChilds; i++)
 	{
-		NextNodeNum = cached_gridlist[PresentNode->nodenum][i];
+		// GHz FIX - added if clause to use the cached gridlist if available
+		// this is necessary because SortGridList() is only sorting the cached list, not gridList
+		//GHz START
+		if (cached_gridlist[PresentNode->nodenum] == NULL)
+			NextNodeNum = gridlist[i];
+		else
+			NextNodeNum = cached_gridlist[PresentNode->nodenum][i];
+		//GHz END
 		//if (NextNodeNum == PresentNode->nodenum)
 		//	gi.dprintf("%d = %d\n", PresentNode->nodenum, NextNodeNum);
-		if (NextNodeNum == -1) 
+		if (NextNodeNum == -1)
 			continue;
 		GetSuccessorNodes(PresentNode, NextNodeNum, NodeNumD);
 	}
@@ -766,31 +791,39 @@ void GetNodePosition (int nodenum, vec3_t pos)
 	VectorCopy(pathnode[nodenum], pos);
 }
 
-// returns the waypoint index closest to start along the path leading to our final destination
+// returns the waypoint index closest to start along the path leading to our final destination (or -1 if list is empty)
 int NearestWaypointNum (vec3_t start, int *wp)
 {
-	int		i, bestNodeNum;
+	int		i, bestNodeNum = -1;
 	float	dist, best = 0;
 
-	if (!numpts)
-		return -1;
+	//if (!numpts)
+	//	return -1;
 
 	// get the nodenum for the closest node
-	for (i = 0; i < numpts; i++)
+	//for (i = 0; i < numpts; i++)
+	for (i=0; i < MAX_GRID_SIZE; i++)
 	{
+		// we've reached the end of the list
+		if (wp[i] == 0)
+			break;
+
 		dist = distance(pathnode[wp[i]], start);
+		
 		if (!best || dist < best)
 		{
 			best = dist;
 			bestNodeNum = i;
 		}
+		//gi.dprintf("%d: node %d dist %f best %d %d %f\n", i, wp[i], dist, wp[bestNodeNum], bestNodeNum, best);//DEBUG: REMOVE THIS!
 	}
-	
+
 	return bestNodeNum;
 }
 
 // copies the location of the next waypoint nearest to start
 // returns -1 if we are at the end of the waypoint path
+//FIXME: numpts is not a reliable indicator--use approach similar to NearestWaypointNum()
 int NextWaypointLocation (vec3_t start, vec3_t loc, int *wp)
 {
 	int nearestWaypoint;
@@ -846,7 +879,7 @@ void RemoveDuplicates (node_t *BestList, node_t *OtherList)
 }
 
 //=========================================
-int FindPath(vec3_t start, vec3_t destination) {
+int FindPath(int searchType, vec3_t start, vec3_t destination) {
 	node_t *StartNode;
 	node_t *BestNode;
 	node_t *tNode;
@@ -870,9 +903,11 @@ int FindPath(vec3_t start, vec3_t destination) {
 	NodeNumD = GetNodeNum(tdest);
 	if (NodeNumD == -1)
 	{
-		// gi.dprintf("bad nondenum at end\n");
+		 //gi.dprintf("bad nondenum at end\n");
 		return 0; // ERROR
 	}
+
+	//gi.dprintf("starting node = %d, end = %d\n", NodeNumS, NodeNumD);
 
 	// Allocate OPEN/CLOSED list pointers..
 	OPEN = (node_t *)V_Malloc(sizeof(node_t), TAG_LEVEL);
@@ -917,30 +952,29 @@ int FindPath(vec3_t start, vec3_t destination) {
 		}
 
 		if (BestNode->nodenum == NodeNumD) break;// we there yet?
-		ComputeSuccessors(BestNode, NodeNumD);
+		//gi.dprintf("searching node %d\n", BestNode->nodenum);
+		ComputeSuccessors(searchType, BestNode, NodeNumD);
 	} // Search from here..
 
 	//================================================
 
 	RemoveDuplicates(BestNode, CLOSED);//FIXME: move this up before the start==end crash check
 
-	// gi.dprintf("%d: processed %d nodes\n", level.framenum,NodeCount);
+	 //gi.dprintf("%d: processed %d nodes\n", level.framenum,NodeCount);
 	if (BestNode == StartNode) {  // Start==End??
 		FreeStack(StartNode);//FIXME: may cause crash
 		//gi.dprintf("start==end\n");
 		return 0;
 	}
 
-
-
-
+	//debugging information - shows Best, OPEN, and CLOSED node lists
 	//gi.dprintf("Start = %d End = %d\n", NodeNumS, NodeNumD);
-	// gi.dprintf("Printing tNode (in reverse):\n");
-	// PrintNodes(BestNode, true);
-	// gi.dprintf("Printing OPEN list:\n");
+	//gi.dprintf("Printing tNode (in reverse):\n");
+	//PrintNodes(BestNode, true);
+	//gi.dprintf("Printing OPEN list:\n");
 	//PrintNodes(OPEN, false);
 	//gi.dprintf("Printing CLOSED list:\n");
-	// PrintNodes(CLOSED, false);
+	//PrintNodes(CLOSED, false);
 
 	BestNode->NextNode = NULL; // Must tie this off!
 
@@ -1015,7 +1049,7 @@ int FindPath(vec3_t start, vec3_t destination) {
 	// because NextNode() only searches within a specific 32x32 pattern
 
 
-	// gi.dprintf("%d: found %d\n",level.framenum,numpts);
+	 //gi.dprintf("%d: found %d\n",level.framenum, numpts);
 
 	return (numpts);
 }
@@ -1060,8 +1094,8 @@ void DrawPath (edict_t *ent)
 		G_Spawn_Splash(TE_LASER_SPARKS, 4, 0xdcdddedf, pathnode[j], vec3_origin, pathnode[j]);
 	}
 }
-/*
-void DrawPath (void) 
+
+void DrawPath1 (void) 
 {
 	int i, j=0;
 
@@ -1075,15 +1109,46 @@ void DrawPath (void)
 		//G_Spawn_Trails(TE_BFG_LASER, pathnode[j], pathnode[j+1]);
 	}
 }
-*/
+
 
 //=====================================================
 //================== pathfinding stuff ================
 //=====================================================
 
 
+// draws the path to the spot the player is aiming at
+void DrawPathToAimSpot (edict_t *ent)
+{
+	vec3_t	forward, right, start, offset, end;
+	trace_t tr;
 
+	if (!ent->myskills.administrator)
+		return;
 
+	// calculate starting position for trace
+	AngleVectors(ent->client->v_angle, forward, right, NULL);
+	VectorSet(offset, 0, 7, ent->viewheight - 8);
+	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+	// calculate end position
+	VectorMA(start, 8192, forward, end);
+	// run trace
+	tr = gi.trace(start, NULL, NULL, end, ent, MASK_SHOT);
+	// find path to the spot we are aiming at
+	// get node location nearest to us and our goal
+	if (!(NearestNodeLocation(ent->s.origin, start, 0, true))
+		|| !(NearestNodeLocation(tr.endpos, end, 0, true)))
+	{
+		// can't find nearby nodes
+		//gi.dprintf("couldn't find nearby nodes");
+		return;
+	}
+	if (FindPath(SEARCHTYPE_WALK, start, end))
+	{
+		// draw it
+		DrawPath1();
+		//safe_centerprintf(ent, "success!");
+	}
+}
 //========================================================
 // Put this at very top of ClientThink() so you can see
 // the nodes created by CreateGrid as you walk around!
@@ -1097,18 +1162,23 @@ void DrawChildLinks (edict_t *ent)
 	int		i, count, parentNode;
 	float	dist, maxDist;
 	vec3_t	start, end;
-	trace_t	tr;
+//	trace_t	tr;
 
 	if (ent->client->showGridDebug == 3)
 	{
-		parentNode = 0;
+		
+		//parentNode = 0;
 
 		// spawn bfg laser trails between player and nearby nodes
+		/*
 		VectorCopy(ent->s.origin, start);
 		start[2] -= 8192;
 		tr = gi.trace(ent->s.origin, NULL, NULL, start, NULL, MASK_SOLID);
 		VectorCopy(tr.endpos, start);
 		start[2] += 32;
+		*/
+		DrawPathToAimSpot(ent);
+		return;
 	}
 	else
 	{
@@ -1533,9 +1603,21 @@ void Cmd_ToggleShowGrid (edict_t *ent)
 {
 	if (!ent->myskills.administrator)
 		return;
-
-	if (ent->client->showGridDebug == 3)
+	ent->client->showGridDebug++;
+	if (ent->client->showGridDebug == 4)
+	{
+		safe_centerprintf(ent, "Show grid OFF\n");
 		ent->client->showGridDebug = 0;
+	}
 	else
-		ent->client->showGridDebug++;
+	{
+		if (ent->client->showGridDebug == 1)
+			safe_centerprintf(ent, "Show nearby nodes\n");
+		else if (ent->client->showGridDebug == 2)
+			safe_centerprintf(ent, "Show child links\n");
+		else if (ent->client->showGridDebug == 3)
+			safe_centerprintf(ent, "Show path to aim spot\n");
+		//else
+		//	safe_centerprintf(ent, "Create child links\n");
+	}
 }
