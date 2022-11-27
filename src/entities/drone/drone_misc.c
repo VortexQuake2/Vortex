@@ -51,7 +51,21 @@ edict_t *DroneList_Iterate()
 edict_t *DroneList_Next(edict_t *ent)
 {
     if (ent->monsterinfo.dronelist_index + 1 < MAX_EDICTS) {
-	    return DroneList[ent->monsterinfo.dronelist_index + 1];
+		edict_t *next_drone = DroneList[ent->monsterinfo.dronelist_index + 1];
+		if (ent == next_drone) {
+			gi.dprintf("invoking horrible drone list hack because we would otherwise infinite loop");
+			ent->monsterinfo.dronelist_index = ent->monsterinfo.dronelist_index + 1;
+			return DroneList_Next(ent);
+		}
+
+		if (next_drone != NULL && next_drone->monsterinfo.dronelist_index < ent->monsterinfo.dronelist_index) {
+			// wooee this is terrible 
+			gi.dprintf("another horrible hack: next monster would have put us in an infinite loop. removing.");
+			DroneList_Remove(next_drone);
+			return DroneList_Next(ent);
+		}
+
+	    return next_drone;
 	}
 
     return NULL;
@@ -86,14 +100,33 @@ void DroneList_Remove(edict_t *ent)
 	    }
 #ifdef _DEBUG
         else {
-	        gi.dprintf("drone list: mismatched index (%d != %d)\n", index, DroneList[index]->monsterinfo.dronelist_index);
+			gi.dprintf("drone list: mismatched index (%d != %d)\n", index, DroneList[index]->monsterinfo.dronelist_index);
+
+			int duplicates = 0; // god forbid
+			for (int i = 0; i < DroneCount; i++) {
+				if (DroneList[i] == ent) {
+					for (int j = i; j < DroneCount - 1; j++) {
+						DroneList[j] = DroneList[j + 1];
+						DroneList[j]->monsterinfo.dronelist_index = j;
+					}
+
+					DroneList[DroneCount - 1] = NULL; // guardian angel
+					DroneCount--;
+					duplicates += 1;
+				}
+			}
+
+			if (duplicates > 0) {
+				gi.dprintf("removed monster has duplicates %d lol", duplicates);
+			}
         }
 #endif
 
 	}
 #ifdef _DEBUG
 	else {
-	    gi.dprintf("drone list: removing a monster twice? %d out of range (0 to %d)\n", ent->monsterinfo.dronelist_index, DroneCount);
+		// it's really not a big deal if this happens.
+	    // gi.dprintf("drone list: removing a monster twice? %d out of range (0 to %d)\n", ent->monsterinfo.dronelist_index, DroneCount);
 	}
 #endif
 }

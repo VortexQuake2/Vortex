@@ -15,3 +15,4 @@ util/v_luasettings_game.h
 /.vs
 /out/build/x64-Debug
 /out/build
+CmakeSettings.txt

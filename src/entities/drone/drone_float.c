@@ -596,6 +596,7 @@ void floater_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	gi.WriteByte (TE_EXPLOSION1);
 	gi.WritePosition (self->s.origin);
 	gi.multicast (self->s.origin, MULTICAST_PVS);
+
 	M_Remove(self, false, false);
 }
 
