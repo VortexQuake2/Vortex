@@ -275,9 +275,11 @@ void lance_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *sur
 	VectorMA (ent->s.origin, -0.02, ent->velocity, origin);
 
 	if (other->takedamage){
-	T_Damage (other, ent, ent->owner, ent->velocity, ent->s.origin, plane->normal, ent->dmg, 0, 0, MOD_SWORD);
-	if (ent->owner->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1)
-	gi.sound (other, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav") , 1, ATTN_NORM, 0);}
+		T_Damage (other, ent, ent->owner, ent->velocity, ent->s.origin, plane->normal, ent->dmg, 0, 0, MOD_SWORD);
+
+		if (ent->owner->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1)
+			gi.sound (other, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav") , 1, ATTN_NORM, 0);
+	}
 
 	gi.WriteByte (svc_temp_entity);
 	gi.WriteByte (TE_BFG_EXPLOSION);
@@ -304,11 +306,11 @@ void lance_think (edict_t *self)
 	VectorMA(self->s.origin, self->dmg_radius, forward, end);
 	tr = gi.trace (self->s.origin, NULL, NULL, end, self->owner, MASK_SHOT);
 
-	gi.WriteByte (svc_temp_entity);
+	/*gi.WriteByte (svc_temp_entity);
 	gi.WriteByte (TE_BFG_LASER);
 	gi.WritePosition (self->s.origin);
 	gi.WritePosition (tr.endpos);
-	gi.multicast (self->s.origin, MULTICAST_PHS);
+	gi.multicast (self->s.origin, MULTICAST_PHS);*/
 
 	// if we hit something, damage it and burn if it's upgraded
 	if (tr.ent && tr.ent->takedamage && T_Damage(tr.ent, self, self->owner, forward, tr.endpos, tr.plane.normal, self->dmg, self->dmg, DAMAGE_ENERGY, MOD_SWORD)
@@ -337,6 +339,7 @@ void fire_lance (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int bur
 {
 	edict_t	*lance;
 
+
 	//  entity made a sound, used to alert monsters
 	self->lastsound = level.framenum;
 
@@ -345,7 +348,8 @@ void fire_lance (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int bur
 	VectorCopy (start, lance->s.origin);
 	lance->movetype = MOVETYPE_TOSS;
 	lance->s.modelindex = 1;
-	lance->svflags |= SVF_NOCLIENT;
+    // az: we got a model!! thanks moesh
+	// lance->svflags |= SVF_NOCLIENT;
 	lance->owner = self;
 	lance->think = lance_think;
 	lance->dmg_radius = length;
@@ -353,6 +357,9 @@ void fire_lance (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int bur
 	lance->radius_dmg = burn_damage;
 	lance->classname = "lance";
 	lance->delay = level.time + 10.0;
+    gi.setmodel(lance, "models/objects/javelin/tris.md2");
+	// lance->s.skinnum = 1;
+
 	gi.linkentity (lance);
 	lance->nextthink = level.time + FRAMETIME;
 	vectoangles(aimdir, lance->s.angles);
@@ -436,29 +443,30 @@ void Weapon_Lance_Fire (edict_t *ent) {
     int sword_bonus = 1.0;
     int damage, burn_damage;
     float speed;
-    vec3_t forward, start;
+    vec3_t forward, start, right, offset;
 
     // special rules; flag carrier can't use weapons
     if (ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent))
         return;
 
-    // calculate knight bonus
+	// calculate knight bonus
     if (ent->myskills.class_num == CLASS_KNIGHT)
         sword_bonus = 1.5;
 
     damage = SABRE_INITIAL_DAMAGE +
              (SABRE_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_SWORD].mods[0].current_level * sword_bonus);
     burn_damage = SABRE_ADDON_HEATDAMAGE * ent->myskills.weapons[WEAPON_SWORD].mods[3].current_level * sword_bonus;
-    speed = 700 + (15 * ent->myskills.weapons[WEAPON_SWORD].mods[2].current_level * sword_bonus);
+    speed = 850 + (15 * ent->myskills.weapons[WEAPON_SWORD].mods[2].current_level * sword_bonus);
 
     // lance modifier
     damage *= 2;
 
-    if (ent->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1)
-		gi.sound (ent, CHAN_WEAPON, gi.soundindex("misc/power1.wav") , 1, ATTN_NORM, 0);
+    if (ent->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1) 
+		gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/lancethrow.wav"), 1, ATTN_NORM, 0);
 
-	AngleVectors (ent->client->v_angle, forward, NULL, NULL);
-	G_EntMidPoint(ent, start);
+	VectorSet(offset, 8, 8, ent->viewheight - 8);
+	AngleVectors (ent->client->v_angle, forward, right, NULL);
+	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
 
 	// apply view kick
 	VectorScale (forward, -2, ent->client->kick_origin);
@@ -477,7 +485,7 @@ void Weapon_Lance_Fire (edict_t *ent) {
 	}
 
 	// advance weapon frame
-     ent->client->ps.gunframe++;
+    ent->client->ps.gunframe++;
 }
 
 void Weapon_Sword (edict_t *ent)

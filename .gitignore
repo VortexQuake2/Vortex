@@ -16,3 +16,5 @@ util/v_luasettings_game.h
 /out/build/x64-Debug
 /out/build
 CmakeSettings.txt
+/CMakeSettings.json
+/CppProperties.json
