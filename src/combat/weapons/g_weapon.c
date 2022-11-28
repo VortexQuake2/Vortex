@@ -755,6 +755,16 @@ void Grenade_Explode (edict_t *ent)
 	G_FreeEdict (ent);
 }
 
+static void Pipebomb_Think (edict_t *ent)
+{
+        if ( ( !G_EntValid(ent->owner) ) || ( ent->owner->deadflag == DEAD_DEAD ) )
+        {                                                                                                                                       
+        	BecomeExplosion1(ent);                                                                                                          
+        	return;                                                                                                                         
+        }                                                                                                                                       
+	ent->nextthink = level.time + 0.2;                                                                                                                                            
+}
+
 static void Cluster_Explode (edict_t *ent)
 
 {
@@ -897,7 +907,7 @@ void fire_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int s
 	grenade->s.modelindex = gi.modelindex ("models/objects/grenade/tris.md2");
 	grenade->owner = self;
 	grenade->touch = Grenade_Touch;
-	//K03 Begin
+	
 	if (self->svflags & SVF_MONSTER)
 		grenade->nextthink = level.time + timer;
 	else
@@ -907,10 +917,13 @@ void fire_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int s
 		else
 			grenade->nextthink = level.time + timer;
 	}
-	if (self->client && self->client->weapon_mode)
+	if (self->client && self->client->weapon_mode) {
 		grenade->spawnflags = 9;//GHz: Pipe bomb fired or not?
-	//K03 End
-	grenade->think = Grenade_Explode;
+		grenade->nextthink = level.time + 0.2;
+		grenade->think = Pipebomb_Think; 
+	} else {
+		grenade->think = Grenade_Explode;
+	}
 	grenade->dmg = damage;
 	grenade->radius_dmg = radius_damage;
 	grenade->dmg_radius = damage_radius;
