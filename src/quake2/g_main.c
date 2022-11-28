@@ -934,7 +934,7 @@ uint64_t qf2sf(uint64_t frames) {
 ================
 G_RunFrame
 
-Advances the world by 0.1 seconds
+Advances the world by 
 ================
 */
 
@@ -965,6 +965,11 @@ void G_RunFrame(void)
 		spawncycle = level.time + FRAMETIME * 10;
 	if (spawncycle < 130)
 		spawncycle = 130;
+
+	// autosave
+	if ( ( level.framenum % AUTOSAVE_FRAMES ) == 0 ) {
+		SV_SaveAllCharacters();
+	}
 
 	RunVotes();
 

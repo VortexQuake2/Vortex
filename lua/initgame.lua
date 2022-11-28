@@ -13,18 +13,15 @@ else
 end
 
 if is_invasion == 1 then
-	q2.print("Lua: Invasion - lowering xp to 15/monster\n")
-	EXP_WORLD_MONSTER = 15
+	EXP_WORLD_MONSTER = 25
 	PVB_BOSS_EXPERIENCE = 600
 	PVB_BOSS_CREDITS = 100
 elseif is_invasion == 2 then
-	q2.print("Lua: Invasion Hard - lowering xp to 20/monster\n")
-	EXP_WORLD_MONSTER = 20
+	EXP_WORLD_MONSTER = 35
 	PVB_BOSS_EXPERIENCE = 2000
 	PVB_BOSS_CREDITS = 200
 else
-	q2.print("Lua: Non-invasion - Setting xp to 22/monster\n")
-	EXP_WORLD_MONSTER = 22
+	EXP_WORLD_MONSTER = 20
 	PVB_BOSS_EXPERIENCE = 1000
 	PVB_BOSS_CREDITS = 3000
 end

@@ -275,7 +275,7 @@ void OpenMOTDMenu (edict_t *ent)
     addlinetomenu(ent, "Back", 2);
 
     setmenuhandler(ent, motdmenu_handler);
-    ent->client->menustorage.currentline = 17;
+    ent->client->menustorage.currentline = 15;
     showmenu(ent);
 }
 
