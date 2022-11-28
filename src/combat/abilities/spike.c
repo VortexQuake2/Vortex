@@ -89,7 +89,7 @@ void SpikeAttack (edict_t *ent)
 		delay = SPIKE_STUN_MAX;
 
 	// fire spikes spaced evenly across horizontal plane
-	for (i=0; i<SPIKE_SHOTS; i++)
+	for (i=1; i<SPIKE_SHOTS+1; i++)
 	{
 		if (i < SPIKE_SHOTS/2)
 		{
