@@ -1,6 +1,6 @@
 #define MAX_LINES				21
 #define LINE_SPACING			8
-#define MENU_DELAY_TIME			0.2		// 3.65 delay time when cycling thru menu (in seconds)
+#define MENU_DELAY_TIME			0.1 // 3.65 delay time when cycling thru menu (in seconds)
 
 #define MENU_WHITE_CENTERED		20001
 #define	MENU_GREEN_CENTERED		20002
