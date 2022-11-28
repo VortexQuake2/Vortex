@@ -13,7 +13,7 @@ const char* Time();
 #define VRX_VERSION "5.2"
 
 // autosave interval
-#define AUTOSAVE_FRAMES (30*60)
+#define AUTOSAVE_FRAMES (300)
 
 //4.5 player combat preferences
 #define HOSTILE_PLAYERS				0x00000001			
