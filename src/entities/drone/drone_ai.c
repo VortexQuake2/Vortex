@@ -1829,15 +1829,6 @@ void drone_ai_run1 (edict_t *self, float dist)
                             self->goalentity = goal->target_ent;
                             VectorCopy(self->goalentity->s.origin, self->monsterinfo.last_sighting); // az: Move! DO SOMETHING!!
                             return;
-                        } 
-						else if (invasion->value) // az: no chain, or target is the same...
-                        {
-							if (DRONE_DEBUG)
-								gi.dprintf("no navi chain or target unchanged\n");
-                            // az: Clear this out so we don't seek any more navis after this
-                            self->monsterinfo.aiflags &= ~(AI_FIND_NAVI | AI_COMBAT_POINT);
-                            drone_ai_findgoal(self); // az: Look for pspawns or players or anything!
-                            return;
                         }
                     }
 
