@@ -180,7 +180,6 @@ edict_t *drone_findnavi(edict_t *self)
 	if (!(self->monsterinfo.aiflags & AI_FIND_NAVI)) {
 		if (!invasion->value)
 			return NULL;
-
 		// if we reached this point we're no longer looking for navis. we should be looking for spawns!
 		return INV_GiveClosestPSpawn(self); 
 	}

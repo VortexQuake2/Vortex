@@ -1427,7 +1427,8 @@ void G_EntMidPoint (edict_t *ent, vec3_t point)
 
 	VectorCopy(ent->s.origin, point);
 	// get half the height of the actual bbox
-	midheight = 0.5 * (ent->maxs[2] + fabsf(ent->mins[2]));
+	//midheight = 0.5 * (ent->maxs[2] + fabsf(ent->mins[2]));
+	midheight = 0.5 * (ent->absmax[2] - ent->absmin[2]);
 	point[2] = ent->absmin[2]+midheight;
 }
 

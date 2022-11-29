@@ -2110,8 +2110,12 @@ void Cmd_DrawBoundingBox_f (edict_t *ent)
 		gi.WritePosition (tr.endpos);
 		gi.multicast (start, MULTICAST_PHS);
 
-		gi.dprintf("%s %d:\n", tr.ent->classname, tr.ent->clipmask);
-		gi.dprintf("%d\n", tr.ent->gib_health);
+		gi.dprintf("classname: %s clipmask %d:\n", tr.ent->classname, tr.ent->clipmask);
+		gi.dprintf("gib health: %d\n", tr.ent->gib_health);
+		gi.dprintf("origin[0] %d origin[1] %d origin[2] %d\n",
+			(int)tr.ent->s.origin[0], (int)tr.ent->s.origin[1], (int)tr.ent->s.origin[2]);
+		gi.dprintf("absmin[2] %d absmax[2] %d\n",
+			(int)tr.ent->absmin[2], (int)tr.ent->absmax[2]);
 		gi.dprintf ("mins[0] %d mins[1] %d mins[2] %d\n", 
 			(int)tr.ent->mins[0], (int)tr.ent->mins[1], (int)tr.ent->mins[2]);
 		gi.dprintf ("maxs[0] %d maxs[1] %d maxs[2] %d\n", 

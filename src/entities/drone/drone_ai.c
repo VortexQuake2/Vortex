@@ -160,7 +160,10 @@ qboolean G_ValidTarget_Lite(const edict_t *self, const edict_t *target, qboolean
 	if (self)
 	{
 		if (vis && !visible(self, target))
+		{
+			//gi.dprintf("potential target: %s is not visible\n", target->classname);
 			return false;
+		}
 		if (OnSameTeam(self, target))
 			return false;
 	}
@@ -599,6 +602,7 @@ qboolean drone_findtarget (edict_t *self, qboolean force)
 	// find an enemy
 	if ((target = drone_get_target(self, false, true, false)) != NULL)
 	{
+		//gi.dprintf("target found: %s\n", target->classname);
 		/*
 		// GHz: FIX - this tends to cause monsters to give up following the navi path prematurely
 		// if this is an invasion player spawn (base), then clear goal AI flags
@@ -719,7 +723,6 @@ void drone_newtarget(edict_t* self)
 
 qboolean drone_ai_findgoal (edict_t *self)
 {
-
 	// did we have a previous enemy?
 	if (self->oldenemy)
 	{
@@ -780,8 +783,13 @@ void drone_ai_walk (edict_t *self, float dist)
 		return;
 	//if (self->monsterinfo.pausetime > level.time)
 	//	return;
+	//if (DRONE_DEBUG)
+	//	gi.dprintf("drone_ai_walk()\n");
+
 	if (DRONE_DEBUG)
-		gi.dprintf("drone_ai_walk()\n");
+	{
+		gi.dprintf("drone_ai_walk() AI_FINDNAVI %s goalentity %s\n", self->monsterinfo.aiflags & AI_FIND_NAVI ? "true" : "false", self->goalentity ? "true" : "false");
+	}
 
 	M_MoveToGoal(self, dist);
 
@@ -1673,8 +1681,13 @@ void drone_ai_run1 (edict_t *self, float dist)
 		return;
 	}
 
+	//if (DRONE_DEBUG)
+		//gi.dprintf("drone_ai_run1()\n");
+
 	if (DRONE_DEBUG)
-		gi.dprintf("drone_ai_run1()\n");
+	{
+		gi.dprintf("drone_ai_run1() AI_FINDNAVI %s goalentity %s\n", self->monsterinfo.aiflags & AI_FIND_NAVI ? "true" : "false", self->goalentity ? "true" : "false");
+	}
 
 	if (self->health >= 0.3*self->max_health)
 	// change skin if we are being healed by someone else
@@ -1822,14 +1835,40 @@ void drone_ai_run1 (edict_t *self, float dist)
 					// az: follow the chain
 					if (!G_GetClient(self)) // non-player spawned monster, i.e. owned by worldspawn
 					{
-                        if (invasion->value && goal->target_ent && goal != goal->target_ent) {
-							if (DRONE_DEBUG)
-								gi.dprintf("current navi: %s, next: %s\n", self->goalentity->targetname, goal->target_ent->targetname);
-                            // self->enemy = goal->target_ent;
-                            self->goalentity = goal->target_ent;
-                            VectorCopy(self->goalentity->s.origin, self->monsterinfo.last_sighting); // az: Move! DO SOMETHING!!
-                            return;
-                        } 
+						if (DRONE_DEBUG)
+						{
+							if (goal->target_ent)
+							{
+								gi.dprintf("goal has a chain link\n");
+								if (Q_strcasecmp(goal->target_ent->targetname, "end") == 0)
+								{
+									gi.dprintf("reached end\n");
+								}
+							}
+							
+
+						}
+                        if (invasion->value) {
+							if (goal->target_ent && goal != goal->target_ent)
+							{
+								if (DRONE_DEBUG)
+									gi.dprintf("current navi: %s, next: %s\n", self->goalentity->targetname, goal->target_ent->targetname);
+								// self->enemy = goal->target_ent;
+								self->goalentity = goal->target_ent;
+								VectorCopy(self->goalentity->s.origin, self->monsterinfo.last_sighting); // az: Move! DO SOMETHING!!
+								return;
+							}
+							else if (goal->mtype == INVASION_NAVI)
+							{
+								if (DRONE_DEBUG)
+									gi.dprintf("reached the end of navi chain\n");
+								// monster is currently chasing a navi but we have reached the end
+								self->monsterinfo.aiflags &= ~(AI_FIND_NAVI | AI_COMBAT_POINT);
+								drone_ai_giveup(self);
+								return;
+							}
+                        }
+						/*
 						else if (invasion->value) // az: no chain, or target is the same...
                         {
 							if (DRONE_DEBUG)
@@ -1838,7 +1877,7 @@ void drone_ai_run1 (edict_t *self, float dist)
                             self->monsterinfo.aiflags &= ~(AI_FIND_NAVI | AI_COMBAT_POINT);
                             drone_ai_findgoal(self); // az: Look for pspawns or players or anything!
                             return;
-                        }
+                        }*/
                     }
 
 					// drone_ai_patrol() returns true if drone is patrolling and swaps between goalentities (points A and B in the patrol route)
