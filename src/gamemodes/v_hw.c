@@ -259,9 +259,22 @@ void hw_flagthink (edict_t *self)
 	self->nextthink = level.time + 0.1;
 }
 
+void hw_touch_flag(edict_t* ent, edict_t* other, cplane_t* plane, csurface_t* surf) {
+	if (!other->takedamage && (level.time - ent->touch_debounce_time) > 0.2)
+	{
+		gi.sound(ent, CHAN_VOICE, gi.soundindex(va("hw/hw_ding%d.wav", GetRandom(1, 5))), 1, ATTN_NORM, 0);
+		ent->touch_debounce_time = level.time;
+	}
+
+	Touch_Item(ent, other, plane, surf);
+}
+
 void hw_dropflag (edict_t *ent, gitem_t *item)
 {
 	edict_t *flag;
+	vec3_t dir = { 0, 0, 0 };
+
+	float speed = 600;
 
 	//if (!G_EntExists(ent))
 	//	return;
@@ -274,12 +287,23 @@ void hw_dropflag (edict_t *ent, gitem_t *item)
 	gi.bprintf(PRINT_HIGH, "%s dropped the halo!\n", ent->client->pers.netname);
 	flag = Drop_Item (ent, item);
 	flag->think = hw_flagthink;
+	flag->touch = hw_touch_flag;
 	flag->count = 0;
 	//Wait a second before starting to think
 	flag->nextthink = level.time + 1.0;
 	ent->client->pers.inventory[ITEM_INDEX(item)] = 0;
 	ValidateSelectedItem (ent);
 	gi.sound(flag, CHAN_ITEM, gi.soundindex( va("hw/hw_ding%d.wav", GetRandom(1, 5)) ), 1, ATTN_NORM, 0);
+
+	// toss this flag
+	dir[YAW] = GetRandom(0, 360);
+	dir[PITCH] = -60;
+	AngleVectors(dir, dir, NULL, NULL);
+	VectorScale(dir, speed, dir);
+
+	VectorNormalize(dir);
+	VectorScale(dir, speed, dir);
+	VectorCopy(dir, flag->velocity);
 }
 
 void hw_find_spawn_point(edict_t* flag)
@@ -334,6 +358,8 @@ void hw_spawnflag (void)
 	flag->think = hw_flagthink;
 	flag->nextthink = level.time + FRAMETIME;
 	flag->takedamage = DAMAGE_NO; // this should fix a nasty bug. should.
+	flag->touch = hw_touch_flag;
+	flag->movetype = MOVETYPE_BOUNCE;
 
 	hw_find_spawn_point(flag);
 
@@ -344,6 +370,7 @@ void hw_spawnflag (void)
 	flag->s.angles[PITCH] = 90;                     // Set the right angles
 	flag->s.angles[YAW] = 0;                       //
 	flag->s.angles[ROLL] = 45;                       //
+	flag->touch_debounce_time = level.time;
 
 	gi.sound(flag, CHAN_ITEM, gi.soundindex( va("hw/hw_ding%d.wav", GetRandom(1, 5)) ), 1, ATTN_NORM, 0);
 	gi.linkentity(flag);
