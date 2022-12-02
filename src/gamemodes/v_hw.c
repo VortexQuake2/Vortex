@@ -8,6 +8,7 @@
 #define HW_AWARD_FRAMES		50
 #define HW_MINIMUM_PLAYERS	3
 #define HW_FRAG_POINTS		45
+#define HW_FLAG_HEALTH 1500
 
 int halo_index;
 
@@ -81,7 +82,7 @@ void hw_checkflag(edict_t *ent)
 		return;
 
 	hw_spawnflag();
-	gi.bprintf(PRINT_HIGH, "The halo respawns.");
+	gi.bprintf(PRINT_HIGH, "The halo respawns.\n");
 }
 
 edict_t *hw_flagcarrier()
@@ -227,14 +228,23 @@ void hw_flagthink (edict_t *self)
 	}
 	self->count++;
 
+	VectorCopy(self->s.origin, end);
+	end[2] += 8192;
+	tr = gi.trace(self->s.origin, NULL, NULL, end, self, MASK_SOLID);
+	VectorCopy(tr.endpos, end);
+
+	// update laser entity
 	if (!self->other && !VectorLength(self->velocity))
 	{
-		VectorCopy(self->s.origin, end);
-		end[2] += 8192;
-		tr = gi.trace (self->s.origin, NULL, NULL, end, self, MASK_SOLID);
-		VectorCopy(tr.endpos, end);
 		self->other = hw_spawnlaser(self, self->s.origin, end);
+	} else if (self->other)
+	{
+		VectorCopy(self->s.origin, self->other->pos1);
+		VectorCopy(self->s.origin, self->other->s.old_origin);
+		VectorCopy(end, self->other->pos2);
+		VectorCopy(end, self->other->s.origin);
 	}
+
 	self->s.effects = 0;
 
 	if ((self->count % 10) == 0) {
@@ -260,7 +270,12 @@ void hw_flagthink (edict_t *self)
 }
 
 void hw_touch_flag(edict_t* ent, edict_t* other, cplane_t* plane, csurface_t* surf) {
-	if (!other->takedamage && (level.time - ent->touch_debounce_time) > 0.2)
+
+
+	if (other == ent->owner)
+		return;
+
+	if (!other->takedamage && (level.time - ent->touch_debounce_time) > 0.2 && plane)
 	{
 		gi.sound(ent, CHAN_VOICE, gi.soundindex(va("hw/hw_ding%d.wav", GetRandom(1, 5))), 1, ATTN_NORM, 0);
 		ent->touch_debounce_time = level.time;
@@ -269,46 +284,10 @@ void hw_touch_flag(edict_t* ent, edict_t* other, cplane_t* plane, csurface_t* su
 	Touch_Item(ent, other, plane, surf);
 }
 
-void hw_dropflag (edict_t *ent, gitem_t *item)
-{
-	edict_t *flag;
-	vec3_t dir = { 0, 0, 0 };
-
-	float speed = 600;
-
-	//if (!G_EntExists(ent))
-	//	return;
-	if (!ent || !ent->inuse || G_IsSpectator(ent))
-		return;
-
-	if (!hw->value || !ent->client->pers.inventory[halo_index])
-		return;
-
-	gi.bprintf(PRINT_HIGH, "%s dropped the halo!\n", ent->client->pers.netname);
-	flag = Drop_Item (ent, item);
-	flag->think = hw_flagthink;
-	flag->touch = hw_touch_flag;
-	flag->count = 0;
-	//Wait a second before starting to think
-	flag->nextthink = level.time + 1.0;
-	ent->client->pers.inventory[ITEM_INDEX(item)] = 0;
-	ValidateSelectedItem (ent);
-	gi.sound(flag, CHAN_ITEM, gi.soundindex( va("hw/hw_ding%d.wav", GetRandom(1, 5)) ), 1, ATTN_NORM, 0);
-
-	// toss this flag
-	dir[YAW] = GetRandom(0, 360);
-	dir[PITCH] = -60;
-	AngleVectors(dir, dir, NULL, NULL);
-	VectorScale(dir, speed, dir);
-
-	VectorNormalize(dir);
-	VectorScale(dir, speed, dir);
-	VectorCopy(dir, flag->velocity);
-}
 
 void hw_find_spawn_point(edict_t* flag)
 {
-	vec3_t dir = {0, 0, 0};
+	vec3_t dir = { 0, 0, 0 };
 	float speed = 600;
 	edict_t* it = NULL;
 	edict_t* candidates[32];
@@ -349,6 +328,105 @@ void hw_find_spawn_point(edict_t* flag)
 	}
 }
 
+void hw_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point)
+{
+	vec3_t start, end, dir;
+	float knockback = 600;
+	
+
+	G_EntMidPoint(self, start);
+	G_EntMidPoint(attacker, end);
+	VectorSubtract(end, start, dir);
+	VectorNormalize(dir);
+	VectorScale(dir, knockback, dir);
+
+	// "respawn" or knock attacker back
+	if (self->health < 0)
+	{
+		self->health = HW_FLAG_HEALTH;
+		hw_find_spawn_point(self);
+
+		T_Damage(attacker, NULL, self, dir, attacker->s.origin, vec3_origin, 10000, knockback, DAMAGE_NO_PROTECTION, MOD_SPLASH);
+	}
+}
+
+void hw_toss(edict_t* flag, float speed)
+{
+	vec3_t dir = { 0, 0, 0 };
+	dir[YAW] = GetRandom(0, 360);
+	dir[PITCH] = -60;
+	AngleVectors(dir, dir, NULL, NULL);
+	VectorScale(dir, speed, dir);
+
+	VectorNormalize(dir);
+	VectorScale(dir, speed, dir);
+	VectorCopy(dir, flag->velocity);
+}
+
+void hw_pain(edict_t* self, edict_t* other, float kick, int damage)
+{
+	vec3_t start, end, dir;
+	float knockback_dmg = 500;
+	edict_t* cl = G_GetClient(other);
+
+	if (!cl)
+		return;
+
+	if (PM_PlayerHasMonster(cl))
+		cl = cl->owner;
+	
+	G_EntMidPoint(self, start);
+	G_EntMidPoint(cl, end);
+	VectorSubtract(end, start, dir);
+	VectorNormalize(dir);
+	VectorScale(dir, knockback_dmg, dir);
+
+	T_Damage(cl, NULL, self, dir, cl->s.origin, vec3_origin, 0, knockback_dmg, DAMAGE_NO_PROTECTION, MOD_SPLASH);
+	hw_toss(self, knockback_dmg);
+}
+
+
+
+void hw_dropflag (edict_t *ent, gitem_t *item)
+{
+	edict_t *flag;
+	float speed = 600;
+
+	//if (!G_EntExists(ent))
+	//	return;
+	if (!ent || !ent->inuse || G_IsSpectator(ent))
+		return;
+
+	if (!hw->value || !ent->client->pers.inventory[halo_index])
+		return;
+
+	gi.bprintf(PRINT_HIGH, "%s dropped the halo!\n", ent->client->pers.netname);
+	flag = Drop_Item (ent, item);
+	flag->think = hw_flagthink;
+	flag->touch = hw_touch_flag;
+	flag->movetype = MOVETYPE_BOUNCE;
+	flag->takedamage = DAMAGE_YES; // this should fix a nasty bug. should.
+	flag->die = hw_die;
+	flag->pain = hw_pain;
+	flag->health = HW_FLAG_HEALTH;
+	flag->max_health = flag->health;
+	flag->mtype = HW_FLAG;
+
+	flag->count = 0;
+
+	//Wait a second before starting to think
+	flag->nextthink = level.time + 1.0;
+	ent->client->pers.inventory[ITEM_INDEX(item)] = 0;
+	ValidateSelectedItem (ent);
+	gi.sound(flag, CHAN_ITEM, gi.soundindex( va("hw/hw_ding%d.wav", GetRandom(1, 5)) ), 1, ATTN_NORM, 0);
+
+	// toss this flag
+	hw_toss(flag, speed);
+}
+
+
+
+
 
 void hw_spawnflag (void)
 {
@@ -357,9 +435,16 @@ void hw_spawnflag (void)
 	flag = Spawn_Item(FindItemByClassname("item_flaghw"));
 	flag->think = hw_flagthink;
 	flag->nextthink = level.time + FRAMETIME;
-	flag->takedamage = DAMAGE_NO; // this should fix a nasty bug. should.
-	flag->touch = hw_touch_flag;
+		flag->touch = hw_touch_flag;
 	flag->movetype = MOVETYPE_BOUNCE;
+
+	flag->health = HW_FLAG_HEALTH;
+	flag->takedamage = DAMAGE_YES; // this should fix a nasty bug. should.
+	flag->die = hw_die;
+	flag->pain = hw_pain;
+	flag->max_health = flag->health;
+
+	flag->mtype = HW_FLAG;
 
 	hw_find_spawn_point(flag);
 
