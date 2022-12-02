@@ -9,6 +9,8 @@
 #define HW_MINIMUM_PLAYERS	3
 #define HW_FRAG_POINTS		45
 
+int halo_index;
+
 int vrx_award_exp (edict_t *attacker, edict_t *targ, edict_t *targetclient);
 
 float hw_getdamagefactor(edict_t *targ, edict_t* attacker)
@@ -61,7 +63,25 @@ void hw_deathcleanup(edict_t *targ, edict_t *attacker)
 		
 		vrx_award_exp(player, targ, targ);
 	}
+}
 
+void hw_checkflag(edict_t *ent)
+{
+	int index;
+
+	if (!ent || !ent->inuse)
+		return;
+
+	if (!hw->value)
+		return;
+
+	index = ITEM_INDEX(ent->item);
+
+	if (index != halo_index)
+		return;
+
+	hw_spawnflag();
+	gi.bprintf(PRINT_HIGH, "The halo respawns.");
 }
 
 edict_t *hw_flagcarrier()
@@ -198,7 +218,7 @@ void hw_flagthink (edict_t *self)
 	if (self->owner) self->owner = NULL;
 
 	//3.0 destroy idling flags so they can respawn somewhere else
-	if (self->count >= 60)	//30 seconds of idling time;
+	if (self->count >= 300)	//30 seconds of idling time;
 	{
 		BecomeTE(self);
 		gi.bprintf(PRINT_HIGH, "The halo respawns.\n");
@@ -216,16 +236,27 @@ void hw_flagthink (edict_t *self)
 		self->other = hw_spawnlaser(self, self->s.origin, end);
 	}
 	self->s.effects = 0;
-	if (self->style)
-		self->style = 0;
-	else
-		self->style = 1;
-	self->s.effects |= (EF_ROTATE|EF_COLOR_SHELL);
+
+	if ((self->count % 10) == 0) {
+		if (self->style)
+			self->style = 0;
+		else
+			self->style = 1;
+	}
+
+	self->s.effects |= (EF_COLOR_SHELL);
 	if (self->style)
 		self->s.renderfx = RF_SHELL_RED;
 	else
 		self->s.renderfx = RF_SHELL_BLUE;
-	self->nextthink = level.time + 0.5;
+
+	self->s.angles[PITCH] = -45;
+	self->s.angles[YAW] += FRAMETIME * 120;
+
+	if (self->s.angles[YAW] > 360)
+		self->s.angles[YAW] -= 360;
+
+	self->nextthink = level.time + 0.1;
 }
 
 void hw_dropflag (edict_t *ent, gitem_t *item)
@@ -251,6 +282,49 @@ void hw_dropflag (edict_t *ent, gitem_t *item)
 	gi.sound(flag, CHAN_ITEM, gi.soundindex( va("hw/hw_ding%d.wav", GetRandom(1, 5)) ), 1, ATTN_NORM, 0);
 }
 
+void hw_find_spawn_point(edict_t* flag)
+{
+	vec3_t dir = {0, 0, 0};
+	float speed = 600;
+	edict_t* it = NULL;
+	edict_t* candidates[32];
+	int cnt = 0;
+	int retries = 32;
+
+	while ((it = G_Find(it, FOFS(classname), "info_player_deathmatch")) && cnt < 32)
+	{
+		candidates[cnt] = it;
+		cnt++;
+	}
+
+	// throw in a direction away from a wall
+	while (retries > 0) {
+		trace_t tr;
+		vec3_t end;
+
+		it = candidates[GetRandom(1, cnt) - 1];
+		dir[YAW] = GetRandom(0, 360);
+		dir[PITCH] = -45;
+		AngleVectors(dir, dir, NULL, NULL);
+		VectorScale(dir, speed, dir);
+
+		VectorSet(flag->s.origin, it->s.origin[0], it->s.origin[1], it->s.origin[2] + 16);
+		VectorAdd(flag->s.origin, dir, end);
+
+		tr = gi.trace(flag->s.origin, end, flag->mins, flag->maxs, flag, MASK_SOLID);
+
+		if (tr.fraction != 1.0)
+			break;
+
+		flag->speed = speed;
+		VectorNormalize(dir);
+		VectorScale(dir, speed, dir);
+		VectorCopy(dir, flag->velocity);
+		// vectoangles(dir, flag->s.angles);
+		retries--;
+	}
+}
+
 
 void hw_spawnflag (void)
 {
@@ -261,23 +335,24 @@ void hw_spawnflag (void)
 	flag->nextthink = level.time + FRAMETIME;
 	flag->takedamage = DAMAGE_NO; // this should fix a nasty bug. should.
 
-	if (vrx_find_random_spawn_point(flag, false))
-		gi.dprintf("INFO: Flag spawned successfully.\n");
-	else
-		gi.dprintf("WARNING: Flag failed to spawn!\n");
+	hw_find_spawn_point(flag);
+
 	FLAG_FRAMES = 0;
 	flag->s.effects |= EF_BLASTER;
 	flag->s.renderfx = RF_GLOW;
 
-	flag->s.angles[PITCH] = 60;                     // Set the right angles
-	flag->s.angles[YAW] = 0;                        //
-	flag->s.angles[ROLL] = 0;                       //
+	flag->s.angles[PITCH] = 90;                     // Set the right angles
+	flag->s.angles[YAW] = 0;                       //
+	flag->s.angles[ROLL] = 45;                       //
 
 	gi.sound(flag, CHAN_ITEM, gi.soundindex( va("hw/hw_ding%d.wav", GetRandom(1, 5)) ), 1, ATTN_NORM, 0);
+	gi.linkentity(flag);
 }
 
 void hw_init()
 {
+	halo_index = ITEM_INDEX(FindItem("Halo"));
+
 	hw_spawnflag();
 	gi.bprintf(PRINT_HIGH, "Find the halo!\n");
 }

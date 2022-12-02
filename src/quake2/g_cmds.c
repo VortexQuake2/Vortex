@@ -2429,6 +2429,18 @@ void Cmd_AdminCmd (edict_t *ent)
 		return;
 	}
 
+	if (!Q_stricmp(cmd1, "tphalo"))
+	{
+		edict_t* it = NULL;
+		it = G_Find(it, FOFS(classname), "item_flaghw");
+		if (it)
+		{
+			VectorCopy(it->s.origin, ent->s.origin);
+			// ent->s.effects = EF_;
+			gi.linkentity(ent);
+		}
+	}
+
 	if (!Q_stricmp(cmd1, "sky"))
 	{
 		csurface_t *sky = FindSky();

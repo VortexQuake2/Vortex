@@ -780,6 +780,7 @@ void AddDmgList (edict_t *self, edict_t *other, int damage);
 void tech_checkrespawn (edict_t *ent);
 qboolean curse_add(edict_t *target, edict_t *caster, int type, int curse_level, float duration);//4.4
 void CurseMessage (edict_t *caster, edict_t *target, int type, float duration, qboolean isCurse);//4.4
+void hw_checkflag(edict_t* ent); // az
 int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker, 
 			   vec3_t dir, vec3_t point, vec3_t normal, float damage, int knockback, int dflags, int mod)
 {
@@ -806,6 +807,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	if (mod == MOD_CRUSH || mod == MOD_TRIGGER_HURT) // vrxchile 2.5: or we fall into nothingness
 	{
 		//gi.dprintf("flag is being crushed\n");
+		hw_checkflag(targ);
 		CTF_CheckFlag(targ);
 		tech_checkrespawn(targ);
 	}
