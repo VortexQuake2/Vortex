@@ -2501,6 +2501,13 @@ void Cmd_AdminCmd (edict_t *ent)
 		Lua_LoadVariables();
 		return;
 	}
+
+	if (!Q_stricmp(cmd1, "addstreak"))
+	{
+		ent->myskills.streak += strtol(cmd2, NULL, 10);
+		vrx_trigger_spree_abilities(ent);
+		return;
+	}
 	
 	// Maybe it'll be more obvious as to why there's a "please crash me" command this way.
 #ifdef _DEBUG 

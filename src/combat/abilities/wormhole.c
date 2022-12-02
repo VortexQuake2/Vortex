@@ -224,7 +224,9 @@ void Cmd_WormHole_f (edict_t *ent)
 	if (ent->myskills.abilities[BLACKHOLE].disable)
 		return;
 
-	if (ent->myskills.streak >= SPREE_WARS_START) {
+	if (ent->myskills.streak >= SPREE_WARS_START && 
+		!pvm->value && 
+		!invasion->value) {
 		gi.cprintf(ent, PRINT_HIGH, "You can't wormhole during a spree war.\n");
 		return;
 	}
