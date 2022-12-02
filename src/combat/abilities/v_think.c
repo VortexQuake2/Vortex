@@ -359,7 +359,7 @@ float V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse) {// assault 
             if (entdist(ent, other) > MAGMINE_RANGE)
                 continue;
 
-            pull = MAGMINE_DEFAULT_PULL + MAGMINE_ADDON_PULL * ent->myskills.abilities[MAGMINE].level;
+            pull = MAGMINE_DEFAULT_PULL / 2 + MAGMINE_ADDON_PULL * ent->myskills.abilities[MAGMINE].level;
 
             G_EntMidPoint(other, end);
             G_EntMidPoint(ent, start);
