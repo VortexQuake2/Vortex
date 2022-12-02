@@ -703,7 +703,7 @@ edict_t *CreateSpiker (edict_t *ent, int skill_level)
 	e->dmg = SPIKER_INITIAL_DAMAGE + SPIKER_ADDON_DAMAGE * skill_level;
 
 	e->monsterinfo.level = skill_level;
-	e->gib_health = -2.5 * BASE_GIB_HEALTH;
+	e->gib_health = -1.5 * BASE_GIB_HEALTH;
 	e->die = spiker_die;
 	e->touch = organ_touch;
 	VectorSet(e->mins, -24, -24, 0);
