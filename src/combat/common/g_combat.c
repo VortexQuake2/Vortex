@@ -1312,6 +1312,8 @@ void T_RadiusDamage (edict_t *inflictor, edict_t *attacker, float damage, edict_
 			continue;
 		if (!visible1(inflictor, ent))
 			continue;
+		if (ent->flags & FL_WORMHOLE) // az: can't damage entities in wormhole
+			continue;
 
 		//gi.dprintf("damage = %.0f radius = %.0f range = %.0f\n", damage, radius, entdist(inflictor, ent));
 
