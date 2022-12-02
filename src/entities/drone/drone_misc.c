@@ -426,6 +426,10 @@ void drone_death (edict_t *self, edict_t *attacker)
 	if (self->monsterinfo.resurrected_time > level.time)
 		return;
 
+	// az: don't trigger this more than once!
+	if (self->deadflag)
+		return; 
+
 
 	//4.2 bosses can drop up to 4 runes
 	if (self->mtype == M_COMMANDER || self->mtype == M_SUPERTANK || self->mtype == M_MAKRON)
