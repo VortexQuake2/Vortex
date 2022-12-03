@@ -1,12 +1,9 @@
 #include "g_local.h"
 
-#define PARASITE_ATTACK_RANGE		96
+
 #define PARASITE_ATTACK_FRAMES		20
 #define PARASITE_REFIRE				0.5//1.0
-#define PARASITE_KNOCKBACK			-60
 #define	PARASITE_INIT_COST			50
-#define PARASITE_INITIAL_DMG		10
-#define PARASITE_ADDON_DMG			1
 
 #define PARASITE_MAXFRAMES	20
 #define PARASITE_RANGE		128
@@ -111,7 +108,9 @@ void myparasite_fire (edict_t *self)
 	//if (tr.ent && (tr.ent==self->enemy))
 	if (G_EntExists(tr.ent) && !OnSameTeam(self, tr.ent))
 	{
-		pull = PARASITE_KNOCKBACK;
+		pull = PARASITE_INITIAL_KNOCKBACK + PARASITE_ADDON_KNOCKBACK*self->monsterinfo.level;
+		if (PARASITE_MAX_KNOCKBACK && pull < PARASITE_MAX_KNOCKBACK)
+			pull = PARASITE_MAX_KNOCKBACK;
 		if (tr.ent->groundentity)
 			pull *= 2;
 		T_Damage(tr.ent, self, self, v, tr.endpos, 

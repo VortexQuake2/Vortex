@@ -1232,6 +1232,7 @@ void monster_fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, i
 void monster_fire_railgun (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype);
 void monster_fire_bfg (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int kick, float damage_radius, int flashtype);
 void monster_fire_sword (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype); //Ghz
+void monster_fire_20mm(edict_t* self, vec3_t start, vec3_t dir, int damage, int kick, int flashtype);
 void M_droptofloor (edict_t *ent);
 void monster_think (edict_t *self);
 void walkmonster_start (edict_t *self);
@@ -2121,7 +2122,8 @@ qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, q
 qboolean M_NeedRegen (edict_t *ent);
 qboolean M_IgnoreInferiorTarget (edict_t *self, edict_t *target);//4.5
 qboolean M_MeleeAttack(edict_t *self, float range, int damage, int knockback);
-
+qboolean M_ContinueAttack(edict_t* self, mmove_t* attack_move, mmove_t* end_move, float min_dist, float max_dist, float chance);
+void M_DelayNextAttack(edict_t* self, float delay, qboolean add_attack_frames);
 qboolean M_ValidMedicTarget(const edict_t *self, const edict_t *target);
 
 qboolean M_Upkeep(edict_t *self, int delay, int upkeep_cost);

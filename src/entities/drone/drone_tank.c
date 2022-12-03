@@ -233,13 +233,15 @@ void myTankRail (edict_t *self)
 	else
 		flash_number = MZ2_TANK_BLASTER_3;
 
-	damage = 50 + 5*self->monsterinfo.level; // dmg: tank_rail
+	damage = M_RAILGUN_DMG_BASE + M_RAILGUN_DMG_ADDON*self->monsterinfo.level; // dmg: tank_rail
+	if (M_RAILGUN_DMG_MAX && damage > M_RAILGUN_DMG_MAX)
+		damage = M_RAILGUN_DMG_MAX;
 
-	MonsterAim(self, 0.5, 0, false, flash_number, forward, start);
+	MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, flash_number, forward, start);
 	monster_fire_railgun(self, start, forward, damage, damage, MZ2_GLADIATOR_RAILGUN_1);
 }
 
-void myTankBlaster (edict_t *self)
+void myTankBlaster(edict_t* self)
 {
 	int		flash_number, speed, damage;
 	vec3_t	forward, start;
@@ -258,20 +260,24 @@ void myTankBlaster (edict_t *self)
 	else
 		flash_number = MZ2_TANK_BLASTER_3;
 
-	damage = 50 + 10*self->monsterinfo.level; // dmg: tank_blaster
-	speed = 1000 + 50*self->monsterinfo.level; // spd: tank_blaster
-	// speed = 650 /*+ 50*self->monsterinfo.level*/; // speed should NEVER scale.
+	damage = M_BLASTER_DMG_BASE + M_BLASTER_DMG_ADDON * self->monsterinfo.level;
+	if (M_BLASTER_DMG_BASE && damage > M_BLASTER_DMG_MAX)
+		damage = M_BLASTER_DMG_MAX;
 
-	MonsterAim(self, 1, speed, false, flash_number, forward, start);
+	speed = M_BLASTER_SPEED_BASE + M_BLASTER_SPEED_ADDON * self->monsterinfo.level;
+	if (M_BLASTER_SPEED_MAX && speed > M_BLASTER_SPEED_MAX)
+		speed = M_BLASTER_SPEED_MAX;
+
+	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash_number, forward, start);
 	monster_fire_blaster(self, start, forward, damage, speed, EF_BLASTER, BLASTER_PROJ_BOLT, 2.0, true, flash_number);
-}	
+}
 
 void myTankStrike (edict_t *self)
 {
 	gi.sound (self, CHAN_WEAPON, sound_strike, 1, ATTN_NORM, 0);
 }	
 
-void myTankRocket (edict_t *self)
+void myTankRocket(edict_t* self)
 {
 	int		flash_number, damage, speed;
 	vec3_t	forward, start;
@@ -287,16 +293,19 @@ void myTankRocket (edict_t *self)
 	else
 		flash_number = MZ2_TANK_ROCKET_3;
 
-	damage = 50 + 10*self->monsterinfo.level; // dmg: tank_rocket
-	speed = 650 + 30*self->monsterinfo.level; // spd: tank_rocket
+	damage = M_ROCKETLAUNCHER_DMG_BASE + M_ROCKETLAUNCHER_DMG_ADDON * self->monsterinfo.level;
+	if (M_ROCKETLAUNCHER_DMG_MAX && damage > M_ROCKETLAUNCHER_DMG_MAX)
+		damage = M_ROCKETLAUNCHER_DMG_MAX;
+	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * self->monsterinfo.level;
+	if (M_ROCKETLAUNCHER_SPEED_MAX && speed > M_ROCKETLAUNCHER_SPEED_MAX)
+		speed = M_ROCKETLAUNCHER_SPEED_MAX;
 
+	MonsterAim(self, M_PROJECTILE_ACC, speed, true, flash_number, forward, start);
 
-	MonsterAim(self, 0.5, speed, true, flash_number, forward, start);
+	monster_fire_rocket(self, start, forward, damage, speed, flash_number);
+}
 
-	monster_fire_rocket (self, start, forward, damage, speed, flash_number);
-}	
-
-void myTankMachineGun (edict_t *self)
+void myTankMachineGun(edict_t* self)
 {
 	vec3_t	forward, start;
 	int		flash_number, damage;
@@ -307,13 +316,16 @@ void myTankMachineGun (edict_t *self)
 
 	flash_number = MZ2_TANK_MACHINEGUN_1 + (self->s.frame - FRAME_attak406);
 
-	damage = 20 + 2*self->monsterinfo.level; // dmg: tank_machinegun
+	// tank machinegun does 2x damage compared to other monster machineguns
+	damage = 2 * (M_MACHINEGUN_DMG_BASE + M_MACHINEGUN_DMG_ADDON * self->monsterinfo.level);
+	if (M_MACHINEGUN_DMG_MAX && damage > 2 * M_MACHINEGUN_DMG_MAX)
+		damage = 2 * M_MACHINEGUN_DMG_MAX;
 
-	MonsterAim(self, 0.8, 0, false, flash_number, forward, start);
+	MonsterAim(self, M_HITSCAN_CONT_ACC, 0, false, flash_number, forward, start);
 
-	monster_fire_bullet (self, start, forward, damage, damage, 
+	monster_fire_bullet(self, start, forward, damage, 40,
 		DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, flash_number);
-}	
+}
 
 mframe_t mytank_frames_attack_blast [] =
 {
@@ -370,39 +382,10 @@ mframe_t mytank_frames_attack_post_blast [] =
 };
 mmove_t mytank_move_attack_post_blast = {FRAME_attak117, FRAME_attak122, mytank_frames_attack_post_blast, mytank_run};
 
-void mytank_reattack_blaster (edict_t *self)
+void mytank_reattack_blaster(edict_t* self)
 {
-	float r, range;
-
-	if (G_ValidTarget(self, self->enemy, true))
-	{
-		r = random();
-		range = entdist(self, self->enemy);
-
-		// medium range = 80% chance to continue attack
-		if (range <= 512)
-		{
-			if (r <= 0.8)
-				self->monsterinfo.currentmove = &mytank_move_reattack_blast;
-			else
-				self->monsterinfo.currentmove = &mytank_move_attack_post_blast;
-		}
-		// long range = 50% chance to continue attack
-		else
-		{
-			if (r <= 0.5)
-				self->monsterinfo.currentmove = &mytank_move_reattack_blast;
-			else
-				self->monsterinfo.currentmove = &mytank_move_attack_post_blast;
-		}
-	}
-	else
-	{
-		self->monsterinfo.currentmove = &mytank_move_attack_post_blast;
-	}
-
-	// don't call the attack function again for awhile!
-	self->monsterinfo.attack_finished = level.time + 2.0 + random();
+	M_ContinueAttack(self, &mytank_move_reattack_blast,
+		&mytank_move_attack_post_blast, 0, 768, 0.8);
 }
 
 
@@ -610,91 +593,22 @@ void mytank_attack_chain (edict_t *self)
 		mytank_run(self);
 }
 
-void mytank_chain_refire (edict_t *self)
+void mytank_chain_refire(edict_t* self)
 {
-	float	r, range;
-
-	// is enemy still valid?
-	if (G_ValidTarget(self, self->enemy, true))
-	{
-		r = random();
-		range = entdist(self, self->enemy);
-
-		// medium range = 50% chance to continue attack
-		if (range <= 512)
-		{
-			if (r <= 0.5)
-				self->monsterinfo.currentmove = &mytank_move_attack_chain;
-			else
-				self->monsterinfo.currentmove = &mytank_move_attack_chain_end;
-
-		}
-		// long range = 80% chance to continue attack
-		else if (r <= 0.8)
-			self->monsterinfo.currentmove = &mytank_move_attack_chain;
-		// end attack sequence
-		else
-			self->monsterinfo.currentmove = &mytank_move_attack_chain_end;
-	}
-	else
-	{
-		self->monsterinfo.currentmove = &mytank_move_attack_chain_end;
-	}
-	
-	// don't call the attack function again for awhile!
-	self->monsterinfo.attack_finished = level.time + 2.0 + random();
+	M_ContinueAttack(self, &mytank_move_attack_chain,
+		&mytank_move_attack_chain_end, 0, 8192, 0.8);
 }
 
-void mytank_restrike (edict_t *self)
+void mytank_restrike(edict_t* self)
 {
-	if (G_ValidTarget(self, self->enemy, true) && (random() <= 0.6 || !self->enemy->client)
-		&& (entdist(self, self->enemy) < 128))
-	{
-		self->monsterinfo.currentmove = &mytank_move_strike;
-	}
-	else
-	{
-		self->monsterinfo.currentmove = &mytank_move_post_strike;
-	}
-
-	// don't call the attack function again for awhile!
-	self->monsterinfo.attack_finished = level.time + 0.5 + random();
+	M_ContinueAttack(self, &mytank_move_strike,
+		&mytank_move_post_strike, 0, 128, 0.66);
 }
 
-void mytank_refire_rocket (edict_t *self)
+void mytank_refire_rocket(edict_t* self)
 {
-	float	r, range;
-	
-	if (G_ValidTarget(self, self->enemy, true))
-	{
-		r = random();
-		range = entdist(self, self->enemy);
-
-		// medium range
-		if (range <= 512)
-		{
-			if (r <= 0.8)
-				self->monsterinfo.currentmove = &mytank_move_attack_fire_rocket;
-			else
-				self->monsterinfo.currentmove = &mytank_move_attack_post_rocket;
-		}
-		// long range
-		else
-		{
-			if (r <= 0.5)
-				self->monsterinfo.currentmove = &mytank_move_attack_fire_rocket;
-			else
-				self->monsterinfo.currentmove = &mytank_move_attack_post_rocket;
-		}
-	}
-	// end attack sequence
-	else
-	{
-		self->monsterinfo.currentmove = &mytank_move_attack_post_rocket;
-	}
-
-	// don't call the attack function again for awhile!
-	self->monsterinfo.attack_finished = level.time + 2.5 + random();
+	M_ContinueAttack(self, &mytank_move_attack_fire_rocket,
+		&mytank_move_attack_post_rocket, 0, 512, 0.8);
 }
 
 void mytank_doattack_rocket (edict_t *self)
@@ -720,7 +634,10 @@ void mytank_meleeattack (edict_t *self)
 
 	self->lastsound = level.framenum;
 
-	damage = 100+20*self->monsterinfo.level; // dmg: tank_melee
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * self->monsterinfo.level; // dmg: berserker_attack_strike
+	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
+		damage = M_MELEE_DMG_MAX;
+
 	gi.sound (self, CHAN_AUTO, gi.soundindex ("tank/tnkatck5.wav"), 1, ATTN_NORM, 0);
 	
 	while ((other = findradius(other, self->s.origin, 128)) != NULL)
@@ -885,7 +802,7 @@ void commander_attack (edict_t *self)
 	self->monsterinfo.attack_finished = level.time + 2.0;
 }
 
-void tank_attack (edict_t *self)
+void tank_attack(edict_t* self)
 {
 	float r = random();
 	float range = entdist(self, self->enemy);
@@ -926,8 +843,7 @@ void tank_attack (edict_t *self)
 			self->monsterinfo.currentmove = &mytank_move_attack_chain;
 	}
 
-	// don't call attack function for awhile
-	self->monsterinfo.attack_finished = level.time + 2.0;
+	M_DelayNextAttack(self, 0, true);
 }
 
 void mytank_attack (edict_t *self)
@@ -1091,14 +1007,14 @@ void init_drone_tank (edict_t *self)
 	gi.soundindex ("tank/tnkatck3.wav");
 
 //	if (self->activator && self->activator->client)
-	self->health = 100 + 65*self->monsterinfo.level; // hlt: tank
+	self->health = M_TANK_INITIAL_HEALTH + M_TANK_ADDON_HEALTH*self->monsterinfo.level; // hlt: tank
 	//else self->health = 100 + 65*self->monsterinfo.level;
 
 	self->max_health = self->health;
 	self->gib_health = -2 * BASE_GIB_HEALTH;
 
 	//if (self->activator && self->activator->client)
-	self->monsterinfo.power_armor_power = 200 + 105*self->monsterinfo.level; // pow: tank
+	self->monsterinfo.power_armor_power = M_TANK_INITIAL_ARMOR + M_TANK_ADDON_ARMOR*self->monsterinfo.level; // pow: tank
 	//else self->monsterinfo.power_armor_power = 200 + 105*self->monsterinfo.level;
 
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;

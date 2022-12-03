@@ -34,7 +34,6 @@ void floater_idle (edict_t *self)
 	gi.sound (self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
 }
 
-
 //void floater_stand1 (edict_t *self);
 void floater_dead (edict_t *self);
 void floater_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point);
@@ -44,7 +43,7 @@ void floater_zap (edict_t *self);
 
 void floater_fire_blaster (edict_t *self)
 {
-	int		damage, speed, effect;
+	int		damage, speed=2000, effect;
 	vec3_t	forward, start;
 
 	if ((self->s.frame == FRAME_attak104) || (self->s.frame == FRAME_attak107))
@@ -52,18 +51,11 @@ void floater_fire_blaster (edict_t *self)
 	else
 		effect = 0;
 
-	damage = 50 + 10 * self->monsterinfo.level; // dmg: soldier_fireblaster
-	speed = 1000 + 50 * self->monsterinfo.level; // spd: soldier_fireblaster
-	/*
-	damage = M_BLASTER_DMG_BASE + M_BLASTER_DMG_ADDON*self->monsterinfo.level;
-	if (damage > M_BLASTER_DMG_MAX)
-		damage = M_BLASTER_DMG_MAX;
+	damage = M_HYPERBLASTER_DMG_BASE + M_HYPERBLASTER_DMG_ADDON * self->monsterinfo.level;
+	if (M_HYPERBLASTER_DMG_MAX && damage > M_HYPERBLASTER_DMG_MAX)
+		damage = M_HYPERBLASTER_DMG_MAX;
 
-	speed = M_BLASTER_SPEED_BASE + M_BLASTER_SPEED_ADDON*self->monsterinfo.level;
-	if (speed > M_BLASTER_SPEED_MAX)
-		speed = M_BLASTER_SPEED_MAX;*/
-
-	MonsterAim(self, 0.8, speed, false, MZ2_FLOAT_BLASTER_1, forward, start);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, false, MZ2_FLOAT_BLASTER_1, forward, start);
 	monster_fire_blaster(self, start, forward, damage, speed, EF_BLASTER, BLASTER_PROJ_BOLT, 2.0, true, MZ2_FLOAT_BLASTER_1);
 }
 
@@ -623,13 +615,13 @@ void init_drone_floater (edict_t *self)
 	VectorSet (self->mins, -24, -24, -24);
 	VectorSet (self->maxs, 24, 24, 40);
 
-	self->health = 50 + 20*self->monsterinfo.level;
+	self->health = M_FLOATER_INITIAL_HEALTH + M_FLOATER_ADDON_HEALTH*self->monsterinfo.level;
 	self->max_health = self->health;
 	self->gib_health = -0.6 * BASE_GIB_HEALTH;
 	self->mass = 300;
 	self->mtype = M_FLOATER;
 
-	self->monsterinfo.power_armor_power = 150 + 60*self->monsterinfo.level;
+	self->monsterinfo.power_armor_power = M_FLOATER_INITIAL_ARMOR + M_FLOATER_ADDON_ARMOR*self->monsterinfo.level;
 
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;

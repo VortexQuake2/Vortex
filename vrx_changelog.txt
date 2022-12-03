@@ -1820,3 +1820,20 @@ v5.1
 ** Fixed bug in drone_ai_run1() in drone_ai.c that prevented monsters from (usually) re-calculating a path when their goal's position has changed
 ** Fixed bug in CanJumpDown() in drone_move.c that allowed monsters to fall even if the fall would place them off their intended path; this makes monsters follow their path more reliably (if a little erratically)
 ** Fixed bugs in M_AvoidObstruction() so that it actually works, i.e. it finds a path perpendicular to walls/obstructions when a monster gets stuck (doesn't help avoid monsters trying to fall, unfortunately)
+
+==================
+v5.21
+==================
+** Added health, armor, and weapon values for monsters to lua files
+** Enforcer now fires 20mm cannon!
+** Made changes and improvements to monster attack and refire delays
+** Improved pull of monster parasite
+** Modified 'monster attack' command so that non-admin players can order their monsters to attack an enemy base
+** Added weapon caps (e.g. max damage) to monsters
+** Increased monster berserker strike damage (same as monster tank punch)
+** Reduced weapon/attack values for player tank to bring them in-line with monster tank values
+** Fixed MonsterAim() so that monsters actually miss targets when they are supposed to, added accuracy reduction for targets that use superspeed
+** Monster weapon accuracy is now affected by target range
+** Added base monster weapon accuracy for continuous hitscan (e.g. machinegun), instant hitscan (e.g. railgun), and projectile (e.g. rocket launcher) weapons
+** Added reaction time to monsters that prevents them from insta-killing players (monsters will notice you immediately but their attack is delayed unless standing ground)
+** Tweaked monster hp/armor/weapon values for improved balance (lua)

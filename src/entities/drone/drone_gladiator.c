@@ -131,7 +131,7 @@ void GladiatorLightningStorm (edict_t *self)
 
 void GaldiatorMelee (edict_t *self)
 {
-	int		damage = 100 + 20 * self->monsterinfo.level; // dmg: gladiator_melee
+	int		damage;
 	vec3_t	aim;
 
 	if (self->monsterinfo.bonus_flags & BF_UNIQUE_LIGHTNING)
@@ -142,6 +142,10 @@ void GaldiatorMelee (edict_t *self)
 
 	if (!G_EntExists(self->enemy))
 		return;
+
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * self->monsterinfo.level; // dmg: gladiator_melee
+	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
+		damage = M_MELEE_DMG_MAX;
 
 	VectorSet (aim, MELEE_DISTANCE, self->mins[0], -4);
 	if (M_MeleeAttack(self, 96, damage, 200))
@@ -199,7 +203,7 @@ void GladiatorChainLightning (edict_t *self)
 
 	damage = 50 + 15 * slvl; // dmg: gladiator_chain_lightning
 
-	MonsterAim(self, 0.5, 0, false, MZ2_GLADIATOR_RAILGUN_1, forward, start);
+	MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, MZ2_GLADIATOR_RAILGUN_1, forward, start);
 	ChainLightning(self, start, forward, damage, 1024, 256);
 }
 
@@ -217,9 +221,11 @@ void GladiatorGun (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = 50 + 15 * self->monsterinfo.level; // dmg: gladiator_railgun
+	damage = M_RAILGUN_DMG_BASE + M_RAILGUN_DMG_ADDON * self->monsterinfo.level;
+	if (M_RAILGUN_DMG_MAX && damage > M_RAILGUN_DMG_MAX)
+		damage = M_RAILGUN_DMG_MAX;
 
-	MonsterAim(self, 0.7, 0, false, MZ2_GLADIATOR_RAILGUN_1, forward, start);
+	MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, MZ2_GLADIATOR_RAILGUN_1, forward, start);
 
 	monster_fire_railgun (self, start, forward, damage, 100, MZ2_GLADIATOR_RAILGUN_1);
 }
@@ -404,12 +410,12 @@ void init_drone_gladiator (edict_t *self)
 	self->s.modelindex = gi.modelindex ("models/monsters/gladiatr/tris.md2");
 	VectorSet (self->mins, -24, -24, -24);
 	VectorSet (self->maxs, 24, 24, 48);
-	self->health = 100 + 10*self->monsterinfo.level; // hlt: gladiator
+	self->health = M_GLADIATOR_INITIAL_HEALTH + M_GLADIATOR_ADDON_HEALTH*self->monsterinfo.level; // hlt: gladiator
 	self->max_health = self->health;
 	self->gib_health = -BASE_GIB_HEALTH;
 	self->mass = 400;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = 100 + 20*self->monsterinfo.level; // pow: gladiator
+	self->monsterinfo.power_armor_power = M_GLADIATOR_INITIAL_ARMOR + M_GLADIATOR_ADDON_ARMOR*self->monsterinfo.level; // pow: gladiator
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 	self->mtype = M_GLADIATOR;
 	self->item = FindItemByClassname("ammo_slugs");

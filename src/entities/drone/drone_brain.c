@@ -434,10 +434,9 @@ void mybrain_hit_right (edict_t *self)
 	if (!self->enemy->inuse)
 		return;
 
-	if (!self->activator->client)
-		damage = 50 + 20*self->monsterinfo.level; // dmg: brain_hit_right_world
-	else 
-		damage = 50 + 10*self->monsterinfo.level; // dmg: brain_hit_right_player
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * self->monsterinfo.level;
+	if (damage > M_MELEE_DMG_MAX)
+		damage = M_MELEE_DMG_MAX;
 	
 	if (M_MeleeAttack(self, MELEE_DISTANCE, damage, 0))
 		gi.sound (self, CHAN_WEAPON, sound_melee3, 1, ATTN_NORM, 0);
@@ -457,10 +456,9 @@ void mybrain_hit_left (edict_t *self)
 	if (!self->enemy->inuse)
 		return;
 
-	if (!self->activator->client)
-		damage = 50 + 20*self->monsterinfo.level; // dmg: brain_hit_left_world
-	else 
-		damage = 50 + 10*self->monsterinfo.level; // dmg: brain_hit_world_player
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * self->monsterinfo.level;
+	if (damage > M_MELEE_DMG_MAX)
+		damage = M_MELEE_DMG_MAX;
 
 	if (M_MeleeAttack(self, MELEE_DISTANCE, damage, 0))
 		gi.sound (self, CHAN_WEAPON, sound_melee3, 1, ATTN_NORM, 0);
@@ -500,11 +498,9 @@ void mybrain_tentacle_attack (edict_t *self)
 {
 	int		damage;
 
-	if (!self->activator->client)
-		damage = 100 + 45*self->monsterinfo.level; // dmg: brain_tentacle_attack_world
-	else 
-		damage = 100 + 35*self->monsterinfo.level; // dmg: brain_tentacle_attack_player
-
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON*self->monsterinfo.level; // dmg: brain_tentacle_attack_world
+	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
+		damage = M_MELEE_DMG_MAX;
 	M_MeleeAttack(self, MELEE_DISTANCE, damage, 0);
 
 	gi.sound (self, CHAN_WEAPON, sound_tentacles_retract, 1, ATTN_NORM, 0);
@@ -538,11 +534,6 @@ mframe_t mybrain_frames_attack2 [] =
 };
 mmove_t mybrain_move_attack2 = {FRAME_attak205, FRAME_attak217, mybrain_frames_attack2, mybrain_run};
 
-#define BRAIN_INITIAL_PULL			-60
-#define BRAIN_ADDON_PULL			-2
-#define BRAIN_INITIAL_TENTACLE_DMG	30
-#define BRAIN_ADDON_TENTACLE_DMG	6
-
 void mybrain_suxor (edict_t *self)
 {
 	int		damage, range, pull;
@@ -562,17 +553,21 @@ void mybrain_suxor (edict_t *self)
 	M_ChangeYaw (self);
 	range = VectorLength(v);
 	VectorNormalize(v);
-	VectorMA(self->s.origin, 512, v, end);
+	VectorMA(self->s.origin, 512, v, end); // pull range
 	tr = gi.trace(self->s.origin, NULL, NULL, end, self, MASK_SHOT);
 	if (G_EntExists(tr.ent) && (tr.ent == self->enemy))
 	{
-		damage = BRAIN_INITIAL_TENTACLE_DMG + BRAIN_ADDON_TENTACLE_DMG*self->monsterinfo.level; // dmg: brain_suxor
-		pull = BRAIN_INITIAL_PULL + BRAIN_ADDON_PULL*self->monsterinfo.level; // pull: brain_suxor
+		damage = M_BRAIN_INITIAL_TENTACLE_DMG + M_BRAIN_ADDON_TENTACLE_DMG*self->monsterinfo.level; // dmg: brain_suxor
+		if (M_BRAIN_MAX_TENTACLE_DMG && damage > M_BRAIN_MAX_TENTACLE_DMG)
+			damage = M_BRAIN_MAX_TENTACLE_DMG;
+		pull = M_BRAIN_INITIAL_PULL + M_BRAIN_ADDON_PULL*self->monsterinfo.level; // pull: brain_suxor
+		if (M_BRAIN_MAX_PULL && pull < M_BRAIN_MAX_PULL)
+			pull = M_BRAIN_MAX_PULL;
 
 		if (tr.ent->groundentity)
 			pull *= 2;
 
-		if (range > 64)
+		if (range > 64) // attack range
 			T_Damage(tr.ent, self, self, v, tr.endpos, tr.plane.normal, 0, pull, 0, MOD_UNKNOWN);
 		else
 			T_Damage(tr.ent, self, self, v, tr.endpos, tr.plane.normal, damage, pull, 0, MOD_UNKNOWN);
@@ -814,7 +809,7 @@ void init_drone_brain (edict_t *self)
 	VectorSet (self->maxs, 16, 16, 32);
 
 	//if (self->activator && self->activator->client)
-	self->health = 35 + 45*self->monsterinfo.level;
+	self->health = M_BRAIN_INITIAL_HEALTH + M_BRAIN_ADDON_HEALTH * self->monsterinfo.level;
 	//else self->health = 100 + 40*self->monsterinfo.level;
 
 	self->max_health = self->health;
@@ -842,7 +837,7 @@ void init_drone_brain (edict_t *self)
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
 
 	//if (self->activator && self->activator->client)
-		self->monsterinfo.power_armor_power = 150 + 150*self->monsterinfo.level;
+	self->monsterinfo.power_armor_power = M_BRAIN_INITIAL_ARMOR + M_BRAIN_ADDON_ARMOR * self->monsterinfo.level;
 	//else self->monsterinfo.power_armor_power = 300 + 120*self->monsterinfo.level;
 
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;

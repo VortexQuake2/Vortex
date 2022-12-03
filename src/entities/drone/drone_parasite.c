@@ -282,13 +282,17 @@ void myparasite_drain_attack (edict_t *self)
 			gi.sound (self, CHAN_WEAPON, sound_suck, 1, ATTN_NORM, 0);
 	}
 
-	damage = 10+1*self->monsterinfo.level; // dmg: parasite_drain
+	damage = PARASITE_INITIAL_DMG+PARASITE_ADDON_DMG*self->monsterinfo.level; // dmg: parasite_drain
+	if (PARASITE_MAX_DMG && damage > PARASITE_MAX_DMG)
+		damage = PARASITE_MAX_DMG;
     damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 
 	// don't pull while mid-air
 	if (self->groundentity)
 	{
-		pull = -60; // pull: parasite_drain
+		pull = PARASITE_INITIAL_KNOCKBACK + PARASITE_ADDON_KNOCKBACK * self->monsterinfo.level;
+		if (PARASITE_MAX_KNOCKBACK && pull < PARASITE_MAX_KNOCKBACK)
+			pull = PARASITE_MAX_KNOCKBACK;
 		if (self->enemy->groundentity)
 			pull *= 2;
 		    // pull = 0; //Pull has been removed
@@ -569,7 +573,7 @@ void init_drone_parasite (edict_t *self)
 	self->solid = SOLID_BBOX;
 
 	//if (self->activator && self->activator->client)
-	self->health = 75 + 30*self->monsterinfo.level; // hlt: parasite
+	self->health = M_PARASITE_INITIAL_HEALTH + M_PARASITE_ADDON_HEALTH*self->monsterinfo.level; // hlt: parasite
 	//else self->health = 200 + 80*self->monsterinfo.level;
 
 	self->max_health = self->health;
@@ -591,7 +595,7 @@ void init_drone_parasite (edict_t *self)
 
 	//K03 Begin
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = 0;
+	self->monsterinfo.power_armor_power = M_PARASITE_INITIAL_ARMOR + M_PARASITE_ADDON_ARMOR*self->monsterinfo.level;
 	self->monsterinfo.control_cost = M_PARASITE_CONTROL_COST;
 	self->monsterinfo.cost = M_PARASITE_COST;
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;

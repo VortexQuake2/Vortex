@@ -719,6 +719,7 @@ void drone_newtarget(edict_t* self)
 		// then add a delay before they can initiate an attack
 		self->monsterinfo.attack_finished = level.time
 		+ (GetRandom((int)(10 * M_MIN_REACTION_TIME), (int)(10 * M_MAX_REACTION_TIME)) * FRAMETIME);
+	//gi.dprintf("level time: %f attack_finished: %f\n", level.time, self->monsterinfo.attack_finished);
 }
 
 qboolean drone_ai_findgoal (edict_t *self)
@@ -742,6 +743,7 @@ qboolean drone_ai_findgoal (edict_t *self)
 	// can we find a new target?
 	else if (drone_findtarget(self, false))
 	{
+		//gi.dprintf("drone_ai_findgoal found new target\n");
 		drone_newtarget(self);
 		// go after him
 		if (!(self->monsterinfo.aiflags & AI_STAND_GROUND))

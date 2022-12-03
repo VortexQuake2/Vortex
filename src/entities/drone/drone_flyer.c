@@ -356,13 +356,12 @@ void flyer_fire (edict_t *self, int flash_number)
 		effect = EF_HYPERBLASTER;
 	else
 		effect = 0;
-	damage = 20 + 3 * self->monsterinfo.level; // dmg: medic_blaster
-	/*
+
 	damage = M_HYPERBLASTER_DMG_BASE + M_HYPERBLASTER_DMG_ADDON * self->monsterinfo.level;
-	if (damage > M_HYPERBLASTER_DMG_MAX)
+	if (M_HYPERBLASTER_DMG_MAX && damage > M_HYPERBLASTER_DMG_MAX)
 		damage = M_HYPERBLASTER_DMG_MAX;
-	*/
-	MonsterAim(self, 0.8, 2000, false, MZ2_FLOAT_BLASTER_1, forward, start);
+
+	MonsterAim(self, M_PROJECTILE_ACC, 2000, false, MZ2_FLOAT_BLASTER_1, forward, start);
 	monster_fire_blaster(self, start, forward, damage, 2000, effect, BLASTER_PROJ_BOLT, 2.0, false, flash_number);
 }
 
@@ -574,13 +573,13 @@ void init_drone_flyer (edict_t *self)
 
 	self->s.sound = gi.soundindex ("flyer/flyidle1.wav");
 
-	self->health = 50 + 20*self->monsterinfo.level;
+	self->health = M_FLYER_INITIAL_HEALTH + M_FLYER_ADDON_HEALTH*self->monsterinfo.level;
 	self->mass = 50;
 
 	self->mtype = M_FLYER;
 	self->flags |= FL_FLY;
 	self->max_health = self->health;
-	self->monsterinfo.power_armor_power = 50 + 20*self->monsterinfo.level;
+	self->monsterinfo.power_armor_power = M_FLYER_INITIAL_ARMOR + M_FLYER_ADDON_ARMOR*self->monsterinfo.level;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 	self->monsterinfo.control_cost = M_FLYER_CONTROL_COST;

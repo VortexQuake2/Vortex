@@ -148,48 +148,58 @@ void m_soldier_run (edict_t *self)
 		self->monsterinfo.currentmove = &m_soldier_move_run;
 }
 
-void soldier_fireblaster (edict_t *self)
+void soldier_fireblaster(edict_t* self)
 {
 	int		damage, speed;
 	vec3_t	forward, start;
-	
+
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = 50 + 10*self->monsterinfo.level; // dmg: soldier_fireblaster
-	speed = 1000 + 50*self->monsterinfo.level; // spd: soldier_fireblaster
+	damage = M_BLASTER_DMG_BASE + M_BLASTER_DMG_ADDON * self->monsterinfo.level;
+	if (damage > M_BLASTER_DMG_MAX)
+		damage = M_BLASTER_DMG_MAX;
 
-	MonsterAim(self, 0.8, speed, false, MZ2_SOLDIER_BLASTER_8, forward, start);
+	speed = M_BLASTER_SPEED_BASE + M_BLASTER_SPEED_ADDON * self->monsterinfo.level;
+	if (M_BLASTER_SPEED_MAX && speed > M_BLASTER_SPEED_MAX)
+		speed = M_BLASTER_SPEED_MAX;
+
+	MonsterAim(self, M_PROJECTILE_ACC, speed, false, MZ2_SOLDIER_BLASTER_8, forward, start);
 	monster_fire_blaster(self, start, forward, damage, speed, EF_BLASTER, BLASTER_PROJ_BOLT, 2.0, true, MZ2_SOLDIER_BLASTER_8);
 }
 
-void soldier_firerocket (edict_t *self)
+void soldier_firerocket(edict_t* self)
 {
 	int		damage, speed;
 	vec3_t	forward, start;
-	
+
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = 50 + 10*self->monsterinfo.level; // dmg: soldier_firerocket
-	speed = 650 + 30*self->monsterinfo.level; // spd: soldier_firerocket
+	damage = M_ROCKETLAUNCHER_DMG_BASE + M_ROCKETLAUNCHER_DMG_ADDON * self->monsterinfo.level;
+	if (damage > M_ROCKETLAUNCHER_DMG_MAX)
+		damage = M_ROCKETLAUNCHER_DMG_MAX;
+	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * self->monsterinfo.level;
+	if (M_ROCKETLAUNCHER_SPEED_MAX && speed > M_ROCKETLAUNCHER_SPEED_MAX)
+		speed = M_ROCKETLAUNCHER_SPEED_MAX;
 
-	MonsterAim(self, 0.8, speed, true, MZ2_SOLDIER_BLASTER_8, forward, start);
-	monster_fire_rocket (self, start, forward, damage, speed, MZ2_SOLDIER_BLASTER_8);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, true, MZ2_SOLDIER_BLASTER_8, forward, start);
+	monster_fire_rocket(self, start, forward, damage, speed, MZ2_SOLDIER_BLASTER_8);
 }
 
-void soldier_fireshotgun (edict_t *self)
+void soldier_fireshotgun(edict_t* self)
 {
-    int count = 10; // count: soldier_fireshotgun
 	int		damage;
 	vec3_t	forward, start;
 
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = 5 + 1*self->monsterinfo.level; // dmg: soldier_fireshotgun
-	MonsterAim(self, 0.8, 0, false, MZ2_SOLDIER_SHOTGUN_8, forward, start);
-	monster_fire_shotgun(self, start, forward, damage, damage, 375, 375, 10, MZ2_SOLDIER_SHOTGUN_8);
+	damage = M_SHOTGUN_DMG_BASE + M_SHOTGUN_DMG_ADDON * self->monsterinfo.level;
+	if (M_SHOTGUN_DMG_MAX && damage > M_SHOTGUN_DMG_MAX)
+		damage = M_SHOTGUN_DMG_MAX;
+	MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, MZ2_SOLDIER_SHOTGUN_8, forward, start);
+	monster_fire_shotgun(self, start, forward, damage, 15, 375, 375, 10, MZ2_SOLDIER_SHOTGUN_8);
 }
 
 void m_soldier_fire (edict_t *self)
@@ -224,33 +234,35 @@ mframe_t m_soldier_frames_runandshoot [] =
 };
 mmove_t m_soldier_move_runandshoot = {FRAME_runs01, FRAME_runs14, m_soldier_frames_runandshoot, NULL};
 
-void m_soldier_runandshoot_continue (edict_t *self)
+void m_soldier_runandshoot_continue (edict_t* self)
 {
-	if (G_ValidTarget(self, self->enemy, true) && (random() <= 0.9) 
-		&& (entdist(self, self->enemy) <= 512))
-	{
-		self->monsterinfo.currentmove = &m_soldier_move_runandshoot;
-		self->monsterinfo.attack_finished = level.time + 2;
+	if (M_ContinueAttack(self, &m_soldier_move_runandshoot, NULL, 0, 512, 0.9))
 		return;
-	}
 
+	// end attack
 	self->monsterinfo.currentmove = &m_soldier_move_run;
 }
 
-void m_soldier_runandshoot (edict_t *self)
+void m_soldier_runandshoot (edict_t* self)
 {
 	self->monsterinfo.currentmove = &m_soldier_move_runandshoot;
 }
 
-void m_soldier_attack1_refire1 (edict_t *self)
+void m_soldier_attack1_refire1 (edict_t* self)
 {
 	// continue firing if the enemy is still close, or we are standing ground
 	if (G_ValidTarget(self, self->enemy, true) && (random() <= 0.9)
 		&& ((entdist(self, self->enemy) <= 512) || (self->monsterinfo.aiflags & AI_STAND_GROUND)))
-	{
 		self->s.frame = FRAME_attak102;
-		self->monsterinfo.attack_finished = level.time + 2;
-	}
+
+	M_DelayNextAttack(self, 0, true);
+}
+
+void m_soldier_endattack1 (edict_t* self)
+{
+	if (entdist(self, self->enemy) > 128 && !(self->monsterinfo.aiflags & AI_STAND_GROUND))
+		M_DelayNextAttack(self, (GetRandom(10, 20) * FRAMETIME), false);
+	m_soldier_run(self);
 }
 
 mframe_t m_soldier_frames_attack1 [] =
@@ -268,9 +280,9 @@ mframe_t m_soldier_frames_attack1 [] =
 	ai_charge, 0,  NULL,
 	ai_charge, 0,  NULL
 };
-mmove_t m_soldier_move_attack1 = {FRAME_attak101, FRAME_attak112, m_soldier_frames_attack1, m_soldier_run};
+mmove_t m_soldier_move_attack1 = {FRAME_attak101, FRAME_attak112, m_soldier_frames_attack1, m_soldier_endattack1};
 
-void m_soldier_attack (edict_t *self)
+void m_soldier_attack(edict_t* self)
 {
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 	{
@@ -283,7 +295,7 @@ void m_soldier_attack (edict_t *self)
 	else
 		self->monsterinfo.currentmove = &m_soldier_move_runandshoot;
 
-	self->monsterinfo.attack_finished = level.time + 2;
+	M_DelayNextAttack(self, 0, true);
 }
 
 void m_soldier_duck_down (edict_t *self)

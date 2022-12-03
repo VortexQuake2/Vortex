@@ -201,18 +201,22 @@ void myGunnerGrenade (edict_t *self)
 	if (!self->enemy || !self->enemy->inuse)
 		return;
 
-	damage = 50 + 10*self->monsterinfo.level; // dmg: gunner_grenade
-	speed = 600 + 30*self->monsterinfo.level; // spd: gunner_grenade
+	damage = M_GRENADELAUNCHER_DMG_BASE + M_GRENADELAUNCHER_DMG_ADDON * self->monsterinfo.level;
 
-	if (speed > 900)
-		speed = 900; // cap: gunner_grenade.speed
+	if (M_GRENADELAUNCHER_DMG_MAX && damage > M_GRENADELAUNCHER_DMG_MAX)
+		damage = M_GRENADELAUNCHER_DMG_MAX;
+
+	speed = M_GRENADELAUNCHER_SPEED_BASE + M_GRENADELAUNCHER_SPEED_ADDON * self->monsterinfo.level;
+
+	if (M_GRENADELAUNCHER_SPEED_MAX && speed > M_GRENADELAUNCHER_SPEED_MAX)
+		speed = M_GRENADELAUNCHER_SPEED_MAX;
 
 	if (self->s.frame == FRAME_attak105)
 		flash_number = MZ2_GUNNER_GRENADE_1;
 	else
 		flash_number = MZ2_GUNNER_GRENADE_4;
 
-	MonsterAim(self, 0.8f, speed, false, flash_number, forward, start);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash_number, forward, start);
 	monster_fire_grenade(self, start, forward, damage, speed, flash_number);
 }
 
@@ -329,10 +333,11 @@ void myGunnerFire (edict_t *self)
 
 	flash_number = MZ2_GUNNER_MACHINEGUN_1 + (self->s.frame - FRAME_attak216);
  
-	// leave the 1* alone so the balance parser can understand this line
-	damage = 10 + 1*self->monsterinfo.level; // dmg: gunner_fire
+	damage = M_MACHINEGUN_DMG_BASE + M_MACHINEGUN_DMG_ADDON * self->monsterinfo.level;
+	if (M_MACHINEGUN_DMG_MAX && damage > M_MACHINEGUN_DMG_MAX)
+		damage = M_MACHINEGUN_DMG_MAX;
 
-	MonsterAim(self, 0.9, 0, false, flash_number, forward, start);
+	MonsterAim(self, M_HITSCAN_CONT_ACC, 0, false, flash_number, forward, start);
 
 	monster_fire_bullet (self, start, forward, damage, damage, 
 		DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, flash_number);
@@ -673,7 +678,7 @@ void init_drone_gunner (edict_t *self)
 	VectorSet (self->maxs, 16, 16, 32);
 
 	//if (self->activator && self->activator->client)
-	self->health = 50 + 25*self->monsterinfo.level; // hlt: gunner
+	self->health = M_GUNNER_INITIAL_HEALTH + M_GUNNER_ADDON_HEALTH*self->monsterinfo.level; // hlt: gunner
 	//else self->health = 100 + 30*self->monsterinfo.level;
 
 	self->max_health = self->health;
@@ -699,7 +704,7 @@ void init_drone_gunner (edict_t *self)
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 
 	//if (self->activator && self->activator->client)
-		self->monsterinfo.power_armor_power = 50 + 15*self->monsterinfo.level; // pow: gunner
+		self->monsterinfo.power_armor_power = M_GUNNER_INITIAL_ARMOR + M_GUNNER_ADDON_ARMOR*self->monsterinfo.level; // pow: gunner
 	//else self->monsterinfo.power_armor_power = 100 + 50*self->monsterinfo.level;
 
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;

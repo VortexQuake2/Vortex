@@ -416,17 +416,15 @@ void hover_reattack (edict_t *self)
 
 void hover_fire_blaster (edict_t *self)
 {
-	int		damage,speed;
+	int		damage,speed=M_ROCKETLAUNCHER_SPEED_MAX;
 	vec3_t	forward, start;
 
-	/*
-	damage = M_ROCKETLAUNCHER_DMG_BASE + M_ROCKETLAUNCHER_DMG_ADDON * self->monsterinfo.level;
-	if (damage > M_ROCKETLAUNCHER_DMG_MAX)
-		damage = M_ROCKETLAUNCHER_DMG_MAX;*/
-	damage = 50 + 10 * self->monsterinfo.level; // dmg: myChickRocket
-	speed = 650 + 30 * self->monsterinfo.level; // spd: myChickRocket
+	// hover fires a rapid fire, weakened rocket launcher
+	damage = M_HYPERBLASTER_DMG_BASE + M_HYPERBLASTER_DMG_ADDON * self->monsterinfo.level;
+	if (M_HYPERBLASTER_DMG_MAX && damage > M_HYPERBLASTER_DMG_MAX)
+		damage = M_HYPERBLASTER_DMG_MAX;
 
-	MonsterAim(self, 0.8, speed, true, MZ2_HOVER_BLASTER_1, forward, start);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, true, MZ2_HOVER_BLASTER_1, forward, start);
 	monster_fire_rocket (self, start, forward, damage, speed, MZ2_HOVER_BLASTER_1);
 }
 
@@ -570,14 +568,14 @@ void init_drone_hover (edict_t *self)
 	VectorSet (self->mins, -24, -24, -24);
 	VectorSet (self->maxs, 24, 24, 32);
 
-	self->health = 50 + 10*self->monsterinfo.level;
+	self->health = M_FLOATER_INITIAL_HEALTH + M_FLOATER_ADDON_HEALTH*self->monsterinfo.level;
 	self->gib_health = -100;
 	self->mass = 150;
 
 	self->mtype = M_HOVER;
 	self->flags |= FL_FLY;
 	self->max_health = self->health;
-	self->monsterinfo.power_armor_power = 50 + 30*self->monsterinfo.level;
+	self->monsterinfo.power_armor_power = M_FLOATER_INITIAL_ARMOR + M_FLOATER_ADDON_ARMOR*self->monsterinfo.level;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 	self->monsterinfo.control_cost = M_HOVER_CONTROL_COST;

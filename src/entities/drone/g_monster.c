@@ -48,6 +48,78 @@ void monster_fire_bullet (edict_t *self, vec3_t start, vec3_t dir, int damage, i
 	gi.multicast (start, MULTICAST_PVS);
 }
 
+static void debris_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point)
+{
+	G_FreeEdict(self);
+}
+
+void ThrowShell(edict_t* self, char* modelname, vec3_t start)
+{
+	edict_t* chunk;
+	vec3_t	forward, right, target;
+
+	chunk = G_Spawn();
+	VectorCopy(start, chunk->s.origin);
+	gi.setmodel(chunk, modelname);
+
+	// projectile direction is forward of us, randomly offset to the left or right
+	AngleVectors(self->s.angles, forward, right, NULL);
+	VectorMA(start, 512, forward, target);
+	VectorMA(target, crandom() * GetRandom(1, 64), right, target);
+	VectorSubtract(target, start, forward);
+	VectorNormalize(forward);
+
+	// apply direction to object
+	VectorMA(chunk->velocity, GetRandom(128, 256), forward, chunk->velocity);
+	chunk->velocity[2] = GetRandom(128, 256);
+
+	chunk->movetype = MOVETYPE_BOUNCE;
+	chunk->solid = SOLID_NOT;
+	chunk->avelocity[0] = random() * 600;
+	chunk->avelocity[1] = random() * 600;
+	chunk->avelocity[2] = random() * 600;
+	chunk->think = G_FreeEdict;
+	chunk->nextthink = level.time + GetRandom(2, 4);
+	chunk->s.frame = 0;
+	chunk->flags = 0;
+	chunk->classname = "debris";
+	chunk->takedamage = DAMAGE_YES;
+	chunk->die = debris_die;
+	gi.linkentity(chunk);
+}
+
+void monster_fire_20mm(edict_t* self, vec3_t start, vec3_t dir, int damage, int kick, int flashtype)
+{
+	float chance;
+
+	// holy freeze reduces firing rate by 50%
+	if (que_typeexists(self->curses, AURA_HOLYFREEZE))
+	{
+		if (random() <= 0.5)
+			return;
+	}
+
+	// chill effect reduces attack rate/refire
+	if (self->chill_time > level.time)
+	{
+		chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
+		if (random() > chance)
+			return;
+	}
+
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
+	fire_20mm(self, start, dir, damage, kick);
+
+	gi.WriteByte(svc_muzzleflash);
+	gi.WriteShort(self - g_edicts);
+	gi.WriteByte(flashtype);
+	gi.multicast(start, MULTICAST_PVS);
+
+	gi.sound(self, CHAN_WEAPON, gi.soundindex("weapons/sgun1.wav"), 1, ATTN_NORM, 0);
+
+	ThrowShell(self, "models/objects/shell1/tris.md2", start);
+}
+
 void monster_fire_shotgun (edict_t *self, vec3_t start, vec3_t aimdir, float damage, int kick, int hspread, int vspread, int count, int flashtype)
 {
 	float chance;

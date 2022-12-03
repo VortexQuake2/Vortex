@@ -1403,6 +1403,7 @@ void fire_rail (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick
 					mod = MOD_SNIPER;
 				else
 					mod = MOD_RAILGUN;
+				//gi.dprintf("%d: fire_rail() hit\n", (int)(level.framenum));
 				// only cause burn if damage is actually inflicted
 				if (T_Damage (tr.ent, self, self, aimdir, tr.endpos, tr.plane.normal, damage, kick, DAMAGE_PIERCING, mod))
 				{

@@ -485,7 +485,7 @@ void myChickFireball (edict_t *self)
 	flame_damage = 2 * slvl; // dmg: myChickFireballFlames
 	speed = 650 + 35 * slvl; // spd: myChickFireball
 
-	MonsterAim(self, 0.9, speed, true, MZ2_CHICK_ROCKET_1, forward, start);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, true, MZ2_CHICK_ROCKET_1, forward, start);
 	fire_fireball(self, start, forward, damage, 125.0, speed, 5, flame_damage);
 
     gi.sound(self, CHAN_ITEM, gi.soundindex("abilities/firecast.wav"), 1, ATTN_NORM, 0);
@@ -505,11 +505,14 @@ void myChickRocket (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = 50 + 10 * self->monsterinfo.level; // dmg: myChickRocket
-	speed = 650 + 30 * self->monsterinfo.level; // spd: myChickRocket
+	damage = M_ROCKETLAUNCHER_DMG_BASE + M_ROCKETLAUNCHER_DMG_ADDON * self->monsterinfo.level; // dmg: myChickRocket
+	if (M_ROCKETLAUNCHER_DMG_MAX && damage > M_ROCKETLAUNCHER_DMG_MAX)
+		damage = M_ROCKETLAUNCHER_DMG_MAX;
+	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * self->monsterinfo.level; // spd: myChickRocket
+	if (M_ROCKETLAUNCHER_SPEED_MAX && speed > M_ROCKETLAUNCHER_SPEED_MAX)
+		speed = M_ROCKETLAUNCHER_SPEED_MAX;
 	
-
-	MonsterAim(self, 1, speed, true, MZ2_CHICK_ROCKET_1, forward, start);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, true, MZ2_CHICK_ROCKET_1, forward, start);
 	monster_fire_rocket (self, start, forward, damage, speed, MZ2_CHICK_ROCKET_1);
 }
 
@@ -805,7 +808,7 @@ void init_drone_bitch (edict_t *self)
 	// if (self->activator && self->activator->client) 
 	// 	self->health = 120 + 75*self->monsterinfo.level;
 	// else
-		self->health = 50 + 15 * self->monsterinfo.level; // hlt: chick
+		self->health = M_CHICK_INITIAL_HEALTH + M_CHICK_ADDON_HEALTH * self->monsterinfo.level; // hlt: chick
 
 	self->max_health = self->health;
 	self->gib_health = -BASE_GIB_HEALTH;
@@ -819,7 +822,7 @@ void init_drone_bitch (edict_t *self)
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 
 	//if (self->activator && self->activator->client)
-		self->monsterinfo.power_armor_power = 25 + 15*self->monsterinfo.level; // pow: chick
+		self->monsterinfo.power_armor_power = M_CHICK_INITIAL_ARMOR + M_CHICK_ADDON_ARMOR *self->monsterinfo.level; // pow: chick
 	//else self->monsterinfo.power_armor_power = 20*self->monsterinfo.level;
 
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;

@@ -209,6 +209,34 @@ void InfantryMachineGun (edict_t *self)
 		DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, flash_number);
 }
 
+void Infantry20mm(edict_t* self)
+{
+	vec3_t	start, forward, right, vec;
+	int		damage, flash_number;
+
+	damage = M_20MM_DMG_BASE + M_20MM_DMG_ADDON * self->monsterinfo.level;
+	if (M_20MM_DMG_MAX && damage > M_20MM_DMG_MAX)
+		damage = M_20MM_DMG_MAX;
+
+	if (self->s.frame == FRAME_attak111)
+	{
+		flash_number = MZ2_INFANTRY_MACHINEGUN_1;
+		MonsterAim(self, M_HITSCAN_CONT_ACC, 0, false, flash_number, forward, start);
+	}
+	else
+	{
+		flash_number = MZ2_INFANTRY_MACHINEGUN_2 + (self->s.frame - FRAME_death211);
+
+		AngleVectors(self->s.angles, forward, right, NULL);
+		G_ProjectSource(self->s.origin, monster_flash_offset[flash_number], forward, right, start);
+
+		VectorSubtract(self->s.angles, aimangles[flash_number - MZ2_INFANTRY_MACHINEGUN_2], vec);
+		AngleVectors(vec, forward, NULL, NULL);
+	}
+
+	monster_fire_20mm(self, start, forward, damage, damage, MZ_IONRIPPER | MZ_SILENCED);
+}
+
 void infantry_sight (edict_t *self, edict_t *other)
 {
 	gi.sound (self, CHAN_BODY, sound_sight, 1, ATTN_NORM, 0);
@@ -262,18 +290,18 @@ mframe_t infantry_frames_death2 [] =
 	ai_move, 4,   NULL,
 	ai_move, 3,   NULL,
 	ai_move, 0,   NULL,
-	ai_move, -2,  InfantryMachineGun,
-	ai_move, -2,  InfantryMachineGun,
-	ai_move, -3,  InfantryMachineGun,
-	ai_move, -1,  InfantryMachineGun,
-	ai_move, -2,  InfantryMachineGun,
-	ai_move, 0,   InfantryMachineGun,
-	ai_move, 2,   InfantryMachineGun,
-	ai_move, 2,   InfantryMachineGun,
-	ai_move, 3,   InfantryMachineGun,
-	ai_move, -10, InfantryMachineGun,
-	ai_move, -7,  InfantryMachineGun,
-	ai_move, -8,  InfantryMachineGun,
+	ai_move, -2,  Infantry20mm,
+	ai_move, -2,  Infantry20mm,
+	ai_move, -3,  Infantry20mm,
+	ai_move, -1,  Infantry20mm,
+	ai_move, -2,  Infantry20mm,
+	ai_move, 0,   Infantry20mm,
+	ai_move, 2,   Infantry20mm,
+	ai_move, 2,   Infantry20mm,
+	ai_move, 3,   Infantry20mm,
+	ai_move, -10, Infantry20mm,
+	ai_move, -7,  Infantry20mm,
+	ai_move, -8,  Infantry20mm,
 	ai_move, -6,  NULL,
 	ai_move, 4,   NULL,
 	ai_move, 0,   NULL
@@ -412,14 +440,33 @@ void infantry_cock_gun (edict_t *self)
 	//self->monsterinfo.attack_finished = self->monsterinfo.pausetime + 2.0;
 }
 
-void infantry_fire (edict_t *self)
+void infantry_fire(edict_t* self)
 {
-	InfantryMachineGun (self);
+	int range = M_20MM_RANGE_BASE + M_20MM_RANGE_ADDON * self->monsterinfo.level;
+	int dist;
+	vec3_t	forward, start;
 
-	if (level.time >= self->monsterinfo.pausetime || !visible(self, self->enemy))
-		self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
-	else
-		self->monsterinfo.aiflags |= AI_HOLD_FRAME;
+	if (M_20MM_RANGE_MAX && range > M_20MM_RANGE_MAX)
+		range = M_20MM_RANGE_MAX;
+
+	if (!G_ValidTarget(self, self->enemy, true))
+		return;
+
+	dist = entdist(self, self->enemy);
+
+	if (dist > range)
+		return;
+
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+	VectorMA(self->s.origin, self->maxs[1] + 8, forward, start);
+
+	// continue firing
+	if (G_IsClearPath(self->enemy, MASK_SHOT, start, self->enemy->s.origin) && random() <= 0.9)
+		self->monsterinfo.nextframe = FRAME_attak110;
+
+	Infantry20mm(self);
+
+	M_DelayNextAttack(self, 0, true);
 }
 
 mframe_t infantry_frames_attack1 [] =
@@ -433,14 +480,14 @@ mframe_t infantry_frames_attack1 [] =
 	//ai_charge, 1,  NULL,
 	//ai_charge, 2,  NULL,
 	//ai_charge, -2, NULL,
-	//ai_charge, -3, NULL,
+	ai_charge, -3, NULL,
 	ai_charge, 1,  infantry_fire,
 	ai_charge, 5,  NULL,
 	ai_charge, -1, NULL,
 	ai_charge, -2, NULL,
 	ai_charge, -3, NULL
 };
-mmove_t infantry_move_attack1 = {FRAME_attak111, FRAME_attak115, infantry_frames_attack1, infantry_run};
+mmove_t infantry_move_attack1 = {FRAME_attak110, FRAME_attak115, infantry_frames_attack1, infantry_run};
 
 
 void infantry_swing (edict_t *self)
@@ -450,10 +497,14 @@ void infantry_swing (edict_t *self)
 
 void infantry_smack (edict_t *self)
 {
-	int		damage = 100 + 20 * self->monsterinfo.level; // dmg: infantry_smack
+	int		damage;
 
 	if (!G_EntExists(self->enemy))
 		return;
+
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * self->monsterinfo.level; // dmg: infantry_smack
+	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
+		damage = M_MELEE_DMG_MAX;
 
 	if (M_MeleeAttack(self, 96, damage, 200))
 		gi.sound (self, CHAN_AUTO, sound_punch_hit, 1, ATTN_NORM, 0);
@@ -472,9 +523,26 @@ mframe_t infantry_frames_attack2 [] =
 };
 mmove_t infantry_move_attack2 = {FRAME_attak201, FRAME_attak208, infantry_frames_attack2, infantry_run};
 
-void infantry_attack(edict_t *self)
+void infantry_attack(edict_t* self)
 {
-	if (entdist (self, self->enemy) <= 64)
+	int maxrange;
+	int range = entdist(self, self->enemy);
+
+	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+	{
+		maxrange = M_20MM_RANGE_BASE + M_20MM_RANGE_ADDON * self->monsterinfo.level;
+		if (M_20MM_RANGE_MAX && maxrange > M_20MM_RANGE_MAX)
+			maxrange = M_20MM_RANGE_MAX;
+	}
+	else
+		maxrange = 512;
+
+	if (range > maxrange)
+		return;
+
+	M_DelayNextAttack(self, 0, true);
+
+	if (entdist(self, self->enemy) <= 64 && random() <= 0.5)
 	{
 		self->monsterinfo.currentmove = &infantry_move_attack2;// melee attack
 		return;
@@ -482,11 +550,6 @@ void infantry_attack(edict_t *self)
 
 	// machinegun attack
 	self->monsterinfo.currentmove = &infantry_move_attack1;
-	self->monsterinfo.pausetime = level.time + (GetRandom(25, 50) * FRAMETIME);
-	self->monsterinfo.attack_finished = self->monsterinfo.pausetime;
-
-	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND))
-		self->monsterinfo.attack_finished += GetRandom(10, 20) * FRAMETIME;
 }
 
 void infantry_melee (edict_t *self)

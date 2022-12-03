@@ -131,7 +131,10 @@ void berserk_attack_spike (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = 50 + 25 * self->monsterinfo.level; // dmg: berserker_attack_spike
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * self->monsterinfo.level; // dmg: berserker_attack_spike
+	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
+		damage = M_MELEE_DMG_MAX;
+
 	M_MeleeAttack(self, 96, damage, 400);
 	//FIXME: add bleed curse
 }
@@ -160,7 +163,10 @@ void berserk_attack_club (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = 50 + 25 * self->monsterinfo.level; // dmg: berserker_attack_club
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * self->monsterinfo.level; // dmg: berserker_attack_club
+	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
+		damage = M_MELEE_DMG_MAX;
+
 	M_MeleeAttack(self, 96, damage, 400);
 }
 
@@ -200,7 +206,10 @@ void berserk_attack_strike (edict_t *self)
 
 	self->lastsound = level.framenum;
 
-	damage = 45+10*self->monsterinfo.level;
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * self->monsterinfo.level; // dmg: berserker_attack_strike
+	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
+		damage = M_MELEE_DMG_MAX;
+
 	gi.sound (self, CHAN_AUTO, gi.soundindex ("tank/tnkatck5.wav"), 1, ATTN_NORM, 0);
 	
 	while ((other = findradius(other, self->s.origin, 128)) != NULL)
@@ -376,9 +385,9 @@ void init_drone_berserk (edict_t *self)
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 
-	self->health = self->max_health = 120 + 75 * self->monsterinfo.level; // hlt: berserker
+	self->health = self->max_health = M_BERSERKER_INITIAL_HEALTH + M_BERSERKER_ADDON_HEALTH * self->monsterinfo.level; // hlt: berserker
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = self->monsterinfo.max_armor = 80 + 30 * self->monsterinfo.level; // pow: berserker
+	self->monsterinfo.power_armor_power = self->monsterinfo.max_armor = M_BERSERKER_INITIAL_ARMOR + M_BERSERKER_ADDON_ARMOR * self->monsterinfo.level; // pow: berserker
 	self->gib_health = -0.6 * BASE_GIB_HEALTH;
 	self->mass = 250;
 	self->monsterinfo.control_cost = M_BERSERKER_CONTROL_COST;

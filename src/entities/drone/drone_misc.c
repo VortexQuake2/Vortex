@@ -1330,10 +1330,16 @@ qboolean infov (edict_t *self, edict_t *other, int degrees)
 	return false;
 }
 
+// return a random double in [0.0, 1.0)
+double randfrac(void) {
+	double res = (rand() % RAND_MAX) / (double)RAND_MAX;
+	return res;
+}
+
 void MonsterAim (edict_t *self, float accuracy, int projectile_speed, qboolean rocket,
 				 int flash_number, vec3_t forward, vec3_t start)
 {
-	float	velocity, dist;
+	float	velocity, dist, rnd, crnd;
 	vec3_t	target, end;
 	vec3_t	right, offset;
 	trace_t	tr;
@@ -1371,11 +1377,17 @@ void MonsterAim (edict_t *self, float accuracy, int projectile_speed, qboolean r
 	if (self->enemy->flags & FL_DETECTED && self->enemy->detected_time > level.time)
 		accuracy = -1;
 
+	// get enemy distance and velocity
 	dist = entdist(self, self->enemy);
+	velocity = VectorLength(self->enemy->velocity);
 
 	// accuracy modifications based on target's velocity, level, and bonus flags
 	if (accuracy > 0)
 	{
+		// non-moving targets have a high minimum accuracy
+		if (accuracy < 0.9 && velocity == 0)
+			accuracy = 0.9;
+
 		//4.5 monster bonus flags
 		if (self->monsterinfo.bonus_flags & BF_CHAMPION)
 			accuracy *= 1.5;
@@ -1387,28 +1399,44 @@ void MonsterAim (edict_t *self, float accuracy, int projectile_speed, qboolean r
 		// try to determine if this is really a monster or some other non-player entity
 		if (self->svflags & SVF_MONSTER && self->mtype && self->monsterinfo.sight_range && self->monsterinfo.level > 0)
 		{
-			// reduce accuracy based on monster level
-			float temp = self->monsterinfo.level / 10.0;
-
+			float range = 2 * self->monsterinfo.sight_range;
+			// reduce accuracy of low-level monsters
+			
+			float temp;// = self->monsterinfo.level / 10.0;
+			/*
 			if (temp < 0.5)
 				temp = 0.5;
 			else if (temp > 1.0)
 				temp = 1.0;
+			//gi.dprintf("low level mod: %f", temp);
+			accuracy *= temp;*/
+
+			// reduce accuracy of far away targets
+			if (range < 2048)
+				range = 2048;
+			temp = 1 - (dist / range);
+			if (temp < 0.5)
+				temp = 0.5;
+			else if (temp > 1.0)
+				temp = 1.0;
+			//gi.dprintf("far away mod: %f", temp);
 			accuracy *= temp;
 		}
 
-		// reduce accuracy if the target is moving
+		// reduce accuracy based on target velocity or superspeed
 		if ((velocity = VectorLength(self->enemy->velocity)) > 0)
 		{
-			if (velocity <= 200) // walking speed
+			/*if (velocity <= 200) // walking speed
 				accuracy *= 0.9;
-			else if (velocity <= 300) // running speed
-				accuracy *= 0.8;
-			else if (velocity > 310)
+			else */
+			if (self->superspeed)
 				accuracy *= 0.7;
+			else if (velocity > 310)
+				accuracy *= 0.8;
+			else if (velocity >= 300) // running speed
+				accuracy *= 0.9;
 		}
 	}
-	//gi.dprintf("%f %.0f\n",accuracy,velocity);
 
 	// curse reduces accuracy of monsters dramatically
 	if (accuracy > 0 && que_findtype(self->curses, NULL, CURSE))
@@ -1418,18 +1446,36 @@ void MonsterAim (edict_t *self, float accuracy, int projectile_speed, qboolean r
 	//VectorCopy(self->enemy->s.origin, target);
 
 	// miss the shot
-	if (accuracy >= 0 && random() > accuracy)
+	rnd = random();//GetRandom(1, 100) * 0.1;//(float)randfrac();
+	crnd = crandom();
+	if (crnd > 0)
+		crnd = 1;
+	else
+		crnd = -1;
+	//gi.dprintf("%f %.0f\n", accuracy, velocity);
+	if (accuracy >= 0 && rnd > accuracy)
 	{
+		/*
+		VectorSubtract(start, target, forward);
+		VectorNormalize(forward);
+		vectoangles(forward, forward);
+		AngleVectors(forward, NULL, right, NULL);
+		*/
+		//gi.dprintf("%d: miss the shot!! %f %f\n", (int)(level.framenum), accuracy, rnd);
 		// aim above the bbox
-		target[2] += GetRandom(0, self->enemy->maxs[2]+16);
+		//target[2] += GetRandom(0, self->enemy->maxs[2]+16);
+		if (random() > 0.5)
+			target[2] = self->enemy->absmax[2] + fabs(self->enemy->maxs[2]);
 
 		// aim a little to the left or right of the target
-		VectorMA(target, ((self->enemy->maxs[1]+GetRandom(12, 24))*crandom()), right, target);
+		// FIXME: if this doesn't miss reliably, we can 'lead' the target in the opposite direction
+		VectorMA(target, ((2 * self->enemy->maxs[1])*crnd), right, target);
 
 		VectorSubtract(target, start, forward);
 		VectorNormalize(forward);
 		return;
 	}
+	//gi.dprintf("%d: hit! %f %f\n", (int)(level.framenum), accuracy, rnd);
 
 	// lead shots if our enemy is alive and not too close
 	if ((self->enemy->health > 0) && (dist > 64) && (projectile_speed > 0))
@@ -2032,7 +2078,7 @@ int numDroneLinks (edict_t *self)
 {
 	int		i, numLinks;
 	edict_t *e;
-	vec3_t	pos;
+	//vec3_t	pos;
 
 	for (i = numLinks = 0; i < 4; i++)
 	{
@@ -2434,7 +2480,7 @@ void Cmd_Drone_f (edict_t *ent)
 		return;
 	}
 
-	if (ent->myskills.administrator && !Q_strcasecmp(s, "attack"))
+	if (!Q_strcasecmp(s, "attack"))
 	{
 		MonsterAttack(ent);
 		return;
@@ -2573,3 +2619,86 @@ void Cmd_Drone_f (edict_t *ent)
 
 }
 
+void M_DelayNextAttack(edict_t* self, float delay, qboolean add_attack_frames)
+{
+	if (add_attack_frames)
+	{
+		int startframe;
+		mmove_t* move = self->monsterinfo.currentmove;
+
+		// if we haven't begun this move yet or we are at the tail-end of
+		// an attack (re-attack) then start at the first frame
+		if (self->s.frame < move->firstframe || self->s.frame >= move->lastframe)
+			startframe = move->firstframe;
+		else
+			// otherwise, start at the current frame
+			startframe = self->s.frame;
+
+		// attack is delayed until the current move frames are finished + delay (if any)
+		self->monsterinfo.attack_finished = level.time
+			+ ((move->lastframe - startframe) * FRAMETIME) + delay;
+	}
+	else if (delay)
+	{
+		// attack is delayed until after delay
+		self->monsterinfo.attack_finished = level.time + delay;
+	}
+
+	//gi.dprintf("%s attack delayed for %.1f second(s) until %.1f\n", 
+	//	GetMonsterKindString(self->mtype), 
+	//	(self->monsterinfo.attack_finished - level.time), self->monsterinfo.attack_finished);
+}
+
+qboolean M_ContinueAttack(edict_t* self, mmove_t* attack_move, mmove_t* end_move,
+	float min_dist, float max_dist, float chance)
+{
+	float dist = 9999;
+
+	// do we have an attack move to continue?
+	if (attack_move)
+	{
+		// is the target still valid?
+		if (G_ValidTarget(self, self->enemy, true))
+		{
+			dist = entdist(self, self->enemy);
+
+			// check valid range and chance conditions
+			if (random() <= chance && dist <= max_dist && dist >= min_dist)
+			{
+				// continue attack move
+				self->monsterinfo.currentmove = attack_move;
+
+				// delay attack function call until this one finishes
+				M_DelayNextAttack(self, 0, true);
+				return true;
+			}
+		}
+		/*
+		else
+		{
+			// target is invalid, clear it
+			self->enemy = NULL;
+		}
+		*/
+	}
+
+	// do we have an end move?
+	if (end_move)
+	{
+		// end attack move
+		self->monsterinfo.currentmove = end_move;
+
+		// if we are very close to our target or standing ground
+		// then delay the next attack only until end_move is finished
+		if (dist <= 128 || (self->monsterinfo.aiflags & AI_STAND_GROUND))
+			M_DelayNextAttack(self, 0, true);
+		else
+			// otherwise, delay a little bit longer so monster can walk around
+			M_DelayNextAttack(self, (GetRandom(10, 20) * FRAMETIME), true);
+	}
+	else
+		// no end move was specified, so delay the next move for awhile
+		M_DelayNextAttack(self, (GetRandom(10, 20) * FRAMETIME), false);
+
+	return false;
+}

@@ -189,10 +189,12 @@ void mymedic_fire_blaster (edict_t *self)
 	else
 		effect = EF_HYPERBLASTER;
 
-	damage = 20 + 3*self->monsterinfo.level; // dmg: medic_blaster
+	damage = M_HYPERBLASTER_DMG_BASE + M_HYPERBLASTER_DMG_ADDON * self->monsterinfo.level;
+	if (M_HYPERBLASTER_DMG_MAX && damage > M_HYPERBLASTER_DMG_MAX)
+		damage = M_HYPERBLASTER_DMG_MAX;
 
 
-	MonsterAim(self, 0.8, speed, false, MZ2_MEDIC_BLASTER_1, forward, start);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, false, MZ2_MEDIC_BLASTER_1, forward, start);
 	monster_fire_blaster(self, start, forward, damage, speed, effect, BLASTER_PROJ_BOLT, 2.0, bounce, MZ2_MEDIC_BLASTER_1);
 }
 
@@ -206,7 +208,7 @@ void mymedic_fire_bolt (edict_t *self)
 
 	damage = GetRandom(min, max);
 
-	MonsterAim(self, 0.8, 1500, false, MZ2_MEDIC_BLASTER_1, forward, start);
+	MonsterAim(self, M_PROJECTILE_ACC, 1500, false, MZ2_MEDIC_BLASTER_1, forward, start);
 	monster_fire_blaster(self, start, forward, damage, 1500, EF_BLASTER, BLASTER_PROJ_BLAST, 2.0, true, MZ2_MEDIC_BLASTER_1);
 
 	gi.sound (self, CHAN_WEAPON, gi.soundindex("weapons/photon.wav"), 1, ATTN_NORM, 0);
@@ -480,27 +482,42 @@ mframe_t mymedic_frames_attackHyperBlaster [] =
 };
 mmove_t mymedic_move_attackHyperBlaster = {FRAME_attack15, FRAME_attack30, mymedic_frames_attackHyperBlaster, mymedic_refire};
 
-void mymedic_refire (edict_t *self)
+void mymedic_refire(edict_t* self)
 {
-	if (G_ValidTarget(self, self->enemy, true) && (random() <= 0.5) 
-		&& (entdist(self, self->enemy) <= 512))
+	float dist = 9999;
+
+	if (G_ValidTarget(self, self->enemy, true))
 	{
-		self->s.frame = FRAME_attack19;
-		return;
+		dist = entdist(self, self->enemy);
+
+		if (random() <= 0.8 && dist <= 512)
+		{
+			// continue attack
+			self->s.frame = FRAME_attack19;
+			M_DelayNextAttack(self, 0, true);
+			return;
+		}
 	}
+	else
+		self->enemy = NULL;
 
-	self->monsterinfo.currentmove = &mymedic_move_run;
-	self->monsterinfo.attack_finished = level.time + random() + 1;
+	// end attack
+	mymedic_run(self);
 
+	if (dist <= 128 || (self->monsterinfo.aiflags & AI_STAND_GROUND))
+		M_DelayNextAttack(self, 0, true);
+	else
+		M_DelayNextAttack(self, (GetRandom(10, 20) * FRAMETIME), false);
 }
 
-void mymedic_continue (edict_t *self)
+void mymedic_continue(edict_t* self)
 {
-	if (G_ValidTarget(self, self->enemy, true) && (random() > 0.5))
-		self->monsterinfo.currentmove = &mymedic_move_attackHyperBlaster;
-	self->monsterinfo.attack_finished = level.time + random() + 1;
-}
+	if (M_ContinueAttack(self, &mymedic_move_attackHyperBlaster, NULL, 0, 512, 0.8))
+		return;
 
+	// end attack
+	mymedic_run(self);
+}
 
 mframe_t mymedic_frames_attackBlaster [] =
 {
@@ -793,7 +810,23 @@ void mymedic_cable_attack (edict_t *self)
 
 	tr = gi.trace (start, NULL, NULL, end, self, MASK_SHOT);
 	if (tr.ent != self->enemy)
+	{
+		if (self->s.frame == 226)
+		{
+			// give up for awhile
+			self->s.frame = 229;
+			M_DelayNextAttack(self, (GetRandom(10, 20)*FRAMETIME), true);
+			mymedic_hook_retract(self);
+			
+			// if our enemy is a corpse, destroy it
+			if (self->enemy->health < 1)
+			{
+				T_Damage(self->enemy, self->enemy, self->enemy, vec3_origin, 
+					self->enemy->s.origin, vec3_origin, 10000, 0, DAMAGE_NO_PROTECTION, 0);
+			}
+		}
 		return; // cable is blocked
+	}
 
 	// cable effect
 	gi.WriteByte (svc_temp_entity);
@@ -807,7 +840,6 @@ void mymedic_cable_attack (edict_t *self)
 	if (M_NeedRegen(self->enemy))
 	{
 		int frames = qf2sf(6000/(12*self->monsterinfo.level));
-		float mult = 1.0;
 
 		if (!frames)
 			frames = 1;
@@ -819,7 +851,7 @@ void mymedic_cable_attack (edict_t *self)
 		self->enemy->holywaterProtection = level.time + 2.0; //2 seconds immunity
 
 		// heal them
-		M_Regenerate(self->enemy, frames, 0, mult, true, true, false, &self->enemy->monsterinfo.regen_delay2);
+		M_Regenerate(self->enemy, frames, 0, 1.0, true, true, false, &self->enemy->monsterinfo.regen_delay2);
 
 		// hold monsters in-place
 		if (self->enemy->svflags & SVF_MONSTER)
@@ -955,6 +987,8 @@ void mymedic_attack(edict_t *self)
 		else
 			self->monsterinfo.currentmove = &mymedic_move_attackHyperBlaster;
 	}
+
+	M_DelayNextAttack(self, 0, true);
 }
 
 void mymedic_melee (edict_t *self)
@@ -993,7 +1027,7 @@ void init_drone_medic (edict_t *self)
 	VectorSet (self->maxs, 24, 24, 32);
 
 	//if (self->activator && self->activator->client)
-	self->health = 100 + 10*self->monsterinfo.level; // hlt: medic
+	self->health = M_MEDIC_INITIAL_HEALTH + M_MEDIC_ADDON_HEALTH*self->monsterinfo.level; // hlt: medic
 	//else self->health = 200 + 20*self->monsterinfo.level;
 
 	self->max_health = self->health;
@@ -1029,7 +1063,7 @@ void init_drone_medic (edict_t *self)
 	//self->monsterinfo.melee = 1;
 
 	//if (self->activator && self->activator->client)
-		self->monsterinfo.power_armor_power = 100 + 20*self->monsterinfo.level; // pow: medic
+		self->monsterinfo.power_armor_power = M_MEDIC_INITIAL_ARMOR + M_MEDIC_ADDON_ARMOR*self->monsterinfo.level; // pow: medic
 	//else self->monsterinfo.power_armor_power = 200 + 40*self->monsterinfo.level;
 
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
