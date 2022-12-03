@@ -37,7 +37,7 @@ qboolean vrx_is_playing_too_much(edict_t *ent)
 
 void vrx_set_new_player_data(edict_t *ent)
 {
-	ent->myskills.next_level = level0_tnl_experience->value;
+	ent->myskills.next_level = vrx_get_points_tnl(ent->myskills.level);
 	ent->myskills.respawn_weapon = 7;
 
 	//strcpy(ent->myskills.password, CryptPassword(Info_ValueForKey (ent->client->pers.userinfo, "vrx_password")) );

@@ -1825,6 +1825,9 @@ void PutClientInServer (edict_t *ent)
 				vrx_give_additional_respawn_weapons(ent, i+1);
 		}
 
+		// az: restore blaster ammo on death
+		ent->monsterinfo.lefty = 25 + 12.5 * ent->myskills.abilities[MAX_AMMO].level;
+
 		//4.57 give a partial ability charge
 		if (ent->myskills.abilities[SHIELD].current_level > 0)
 			ent->myskills.abilities[SHIELD].charge = 50;

@@ -70,7 +70,6 @@ cvar_t *vrx_pvmcreditmult;
 
 cvar_t *invasion_enabled;
 cvar_t *start_level;
-cvar_t *level0_tnl_experience;
 
 cvar_t *vrx_pointmult;
 cvar_t *vrx_pvppointmult;

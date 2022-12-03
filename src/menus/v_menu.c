@@ -481,7 +481,7 @@ void classmenu_handler (edict_t *ent, int option)
     ent->myskills.experience = 0;
 	for (i = 0; i < start_level->value; ++i)
 	{
-        ent->myskills.experience += vrx_get_points_tnl(i + 1);
+        ent->myskills.experience += vrx_get_points_tnl(i);
 	}
 
 	ent->myskills.class_num = option;

@@ -394,8 +394,7 @@ void InitGame(void)
 	voting = gi.cvar("voting", "1", CVAR_SERVERINFO);
 	pregame_time = gi.cvar("pregame_time", "60.0", 0);
 
-    start_level = gi.cvar("start_level", "1", CVAR_LATCH);
-    level0_tnl_experience = gi.cvar("vrx_level0_exp_tnl", "1000", CVAR_LATCH);
+    start_level = gi.cvar("start_level", "0", CVAR_LATCH);
 
     invasion_enabled = gi.cvar("vrx_invasion_enabled", "1", CVAR_LATCH);
 	vrx_pointmult = gi.cvar("vrx_pointmult", "1.0", CVAR_SERVERINFO/* | CVAR_LATCH*/);

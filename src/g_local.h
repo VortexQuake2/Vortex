@@ -870,8 +870,6 @@ extern cvar_t *save_path;
 extern cvar_t *particles;
 
 extern cvar_t *start_level;
-extern cvar_t *level0_tnl_experience;
-
 extern cvar_t *vrx_creditmult;
 extern cvar_t *vrx_pointmult;
 
