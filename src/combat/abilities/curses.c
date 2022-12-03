@@ -209,7 +209,7 @@ qboolean curse_add(edict_t *target, edict_t *caster, int type, int curse_level, 
 	edict_t *curse;
 	que_t	*slot = NULL;
 	
-	if (type != BLESS && type != HEALING)
+	if (type != BLESS && type != HEALING && type != DEFLECT)
 		if (target == caster)
 			return false;
 

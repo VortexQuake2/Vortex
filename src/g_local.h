@@ -2248,6 +2248,7 @@ void Cmd_LaserSight_f(edict_t *ent);
 #define INVASION_DEFENDERSPAWN	704
 #define CTF_PLAYERSPAWN			705
 #define TBI_PLAYERSPAWN			706 // Team Based Invasion PlayerSpawn.
+#define HW_FLAG			707
 #define M_COMBAT_POINT			800 // temporary entity for monster navigation
 #define FUNC_DOOR				900
 //4.1 Archer

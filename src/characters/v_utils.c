@@ -1754,6 +1754,8 @@ char *V_GetMonsterKind(int mtype) {
             return "depot";
         case M_ALARM:
             return "laser trap";
+    case HW_FLAG:
+        return "halo";
         default:
             return "<unknown>";
     }
