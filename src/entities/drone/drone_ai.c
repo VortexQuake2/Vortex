@@ -1440,7 +1440,7 @@ void drone_cleargoal (edict_t *self)
 
 	if (self->monsterinfo.walk)
 		self->monsterinfo.walk(self);
-	else
+	else if (self->monsterinfo.stand)
 		self->monsterinfo.stand(self);
 }
 
