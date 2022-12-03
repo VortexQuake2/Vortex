@@ -216,13 +216,17 @@ void AddBossExp (edict_t *attacker, edict_t *target)
 
 void vrx_award_boss_kill (edict_t *boss)
 {
-	int			i, damage, exp_points, credits;
+	int			i, damage, exp_points, credits, players;
 	float		levelmod, dmgmod;
 	edict_t		*player;
 	dmglist_t	*slot=NULL;
 
 	// find the player that did the most damage
 	slot = findHighestDmgPlayer(boss);
+
+	players = vrx_get_alive_players();
+	if (players < 1)
+		players = 1;
 
 	for (i=0; i<game.maxclients; i++) 
 	{
@@ -241,7 +245,7 @@ void vrx_award_boss_kill (edict_t *boss)
 		if (!invasion->value)
 		    dmgmod = (float)damage / GetTotalBossDamage(boss);
         else // az: shared experience
-            dmgmod = (float)1 / vrx_get_alive_players();
+            dmgmod = (float)1 / players;
 
 		exp_points = levelmod*dmgmod*PVB_BOSS_EXPERIENCE;
 		credits = levelmod*dmgmod*PVB_BOSS_CREDITS;
