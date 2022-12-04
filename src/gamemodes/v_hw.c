@@ -10,7 +10,7 @@
 #define HW_FRAG_POINTS		45
 #define HW_FLAG_HEALTH 1500
 
-int halo_index;
+extern int halo_index;
 
 int vrx_award_exp (edict_t *attacker, edict_t *targ, edict_t *targetclient);
 
