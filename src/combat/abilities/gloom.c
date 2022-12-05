@@ -182,7 +182,7 @@ qboolean organ_explode (edict_t *self)
 #define HEALER_FRAME_DEAD			4
 
 
-void healer_heal (edict_t *self, edict_t *other)
+qboolean healer_heal (edict_t *self, edict_t *other)
 {
 	float	value;
     //int	talentLevel = vrx_get_talent_level(self->activator, TALENT_SUPER_HEALER);
@@ -192,8 +192,8 @@ void healer_heal (edict_t *self, edict_t *other)
 	// In the healer's case, checking for the health 
 	// self->health >= 1 should be enough,
 	// but used G_EntIsAlive for consistency.
-	if (G_EntIsAlive(other) && G_EntIsAlive(self) && OnSameTeam(self, other) && other != self)
-	{
+	//if (G_EntIsAlive(other) && G_EntIsAlive(self) && OnSameTeam(self, other) && other != self)
+	//{
 		int frames = qf2sf(5000 / (15 * self->monsterinfo.level)); // idk how much would this change tbh
 
         value = 1.0f + 0.1f * vrx_get_talent_level(self->activator, TALENT_SUPER_HEALER);
@@ -219,20 +219,111 @@ void healer_heal (edict_t *self, edict_t *other)
 		}*/
 		
 		// play healer sound if health or armor was regenerated
-		if (regenerate && (level.time > self->msg_time))
+		if (regenerate)
 		{
-			gi.sound(self, CHAN_AUTO, gi.soundindex("organ/healer1.wav"), 1, ATTN_NORM, 0);
-			self->msg_time = level.time + 1.5;
+			if (level.time > self->msg_time)
+			{
+				gi.sound(self, CHAN_AUTO, gi.soundindex("organ/healer1.wav"), 1, ATTN_NORM, 0);
+				self->msg_time = level.time + 1.5;
+			}
+			return true;
 		}
-	}
+		return false;
+	//}
 }
 
+qboolean healer_validtarget(edict_t* self, edict_t* target)
+{
+	float velocity;
+
+	if (target == self)
+		return false;
+
+	//if (!G_EntExists(target))
+	if (!G_EntIsAlive(target))
+		return false;
+
+	// don't target players with invulnerability
+	if (target->client && (target->client->invincible_framenum > level.framenum))
+		return false;
+
+	// don't target spawning players
+	if (target->client && (target->client->respawn_time > level.time))
+		return false;
+
+	// don't target players in chat-protect
+	if (target->client && ((target->flags & FL_CHATPROTECT) || (target->flags & FL_GODMODE)))
+		return false;
+
+	// don't target frozen players
+	if (que_typeexists(target->curses, CURSE_FROZEN))
+		return false;
+
+	// target must be visible
+	if (!visible(self, target))
+		return false;
+
+	// make sure target is within sight range
+	if (entdist(self, target) > self->monsterinfo.sight_range)
+		return false;
+
+	// make sure we have an unobstructed path to target
+	if (!G_ClearShot(self, NULL, target))
+		return false;
+
+	velocity = VectorLength(target->velocity);
+	// make sure target is touching the ground and isn't moving
+	if (!target->groundentity || velocity != 0)
+	{
+		//gi.dprintf("groundentity: %s velocity: %.0f\n", target->groundentity?"true":"false", velocity);
+		return false;
+	}
+
+	// make sure target is alive!
+	//if (target->deadflag == DEAD_DEAD || target->health < 1)
+		//return false;
+
+	// target needs to be on our team
+	if (OnSameTeam(self, target) < 2)
+		return false;
+
+	return true;
+}
+
+//void G_Spawn_Trails(int type, vec3_t start, vec3_t endpos);
+void G_Spawn_Splash(int type, int count, int color, vec3_t start, vec3_t movdir, vec3_t origin);
 void healer_attack (edict_t *self)
 {
-	edict_t *e=NULL;
+	edict_t*	target =NULL;
+	float		range = self->monsterinfo.sight_range;
+	vec3_t		start, end, forward, angles;
+	trace_t		tr;
 
-	while ((e = findradius(e, self->s.origin, 96)) != NULL)
-		healer_heal(self, e);
+	while ((target = findradius(target, self->s.origin, range)) != NULL)
+	{
+		if (!healer_validtarget(self, target))
+			continue;
+
+		if (healer_heal(self, target))
+		{
+			// start and end position of effect is slightly above the floor
+			VectorCopy(self->s.origin, start);
+			start[2] = self->absmin[2] + 4;
+			VectorCopy(target->s.origin, end);
+			end[2] = target->absmin[2] + 4;
+
+			tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
+
+			// move effect slightly to the right or left
+			VectorSubtract(start, end, forward);
+			VectorNormalize(forward);
+			vectoangles(forward, forward);
+			AngleVectors(forward, NULL, forward, NULL);
+			VectorMA(tr.endpos, crandom()*target->maxs[1], forward, end);
+
+			G_Spawn_Splash(TE_LASER_SPARKS, 6, GetRandom(200, 217), end, forward, end);
+		}
+	}
 }
 
 void healer_think (edict_t *self)
@@ -259,7 +350,10 @@ void healer_think (edict_t *self)
 	M_SetEffects (self);
 
 	if (level.time > self->lasthurt + 1.0)
+	{
+		healer_attack(self);
 		M_Regenerate(self, qf2sf(300), qf2sf(10), 1.0, true, false, false, &self->monsterinfo.regen_delay1);
+	}
 
 	G_RunFrames(self, HEALER_FRAMES_START, HEALER_FRAMES_END, false);
 
@@ -389,6 +483,7 @@ edict_t *CreateHealer (edict_t *ent, int skill_level)
 	e->takedamage = DAMAGE_AIM;
 	e->health = e->max_health = HEALER_INITIAL_HEALTH + HEALER_ADDON_HEALTH * skill_level;
 	e->monsterinfo.level = skill_level;
+	e->monsterinfo.sight_range = 256;
 	e->gib_health = -2 * BASE_GIB_HEALTH;
 	e->die = healer_die;
 	e->touch = V_Touch;
