@@ -291,6 +291,7 @@ void drone_ai_checkattack (edict_t *self)
 	// don't change attacks if we're busy with the last one
 	if (level.time < self->monsterinfo.attack_finished)
 	{
+		//gi.dprintf("attack not ready\n");
 		if (!self->monsterinfo.melee)
 			return;
 		if (level.time < self->monsterinfo.melee_finished)
@@ -322,6 +323,7 @@ void drone_ai_checkattack (edict_t *self)
 	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
 	if (!tr.ent || tr.ent != self->enemy)
 	{
+		//gi.dprintf("blocked shot\n");
 		if (G_ValidTarget(self, tr.ent, false))
 			self->enemy = tr.ent;
 		else
@@ -336,6 +338,7 @@ void drone_ai_checkattack (edict_t *self)
 	//	gi.dprintf("shot is blocked\n");
 	//	return;
 	//}
+	//gi.dprintf("attack!\n");
 	self->monsterinfo.attack(self);
 }
 

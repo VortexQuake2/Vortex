@@ -72,6 +72,31 @@ gitem_t *GetWeaponForNumber(int i) {
     return Fdi_ROCKETLAUNCHER;
 }
 
+double sigmoid (double x) 
+{
+    double result;
+    result = 1 / (1 + exp(-x));
+    return result;
+}
+
+double vrx_get_points_tnl (int level) 
+{
+    long    tnl = 0;
+    // this is the top of our sigmoid 'S' curve, where it becomes asymptotic
+    long    max_exp_tnl = 50000;
+
+    // note: for loop below can be removed to make curve more 'S' like than current exponential curve by changing the max_exp_tnl, e.g. 250000
+    // for reference, the old system would return 149K TNL at level 20, whereas this one returns 546K
+    for (int i = 0; i <= level; i++) {
+        // this is the 'x' input value into the sigmoid function that allows up to determine which part of the curve to utilize
+        double x = i - 5 - (0.5 * i);
+        tnl += (long)(sigmoid(x) * max_exp_tnl) + 1000;
+        //gi.dprintf("%i x: %f tnl: %d\n", i, x, tnl);
+    }
+    return tnl;
+}
+
+#if 0
 double vrx_get_points_tnl(int level) {
     static const double lowlv_curve[] = {
         2500, // lv 0
@@ -115,6 +140,7 @@ double vrx_get_points_tnl(int level) {
     // we don't really use those results as is though, we cap xp at around level 32 at approx. 3m xp/level.
     return min(round(tnl_unrounded / 5000) * 5000, 3000000);
 }
+#endif
 
 void vrx_check_for_levelup(edict_t *ent) {
     double points_needed;

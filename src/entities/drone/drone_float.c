@@ -40,6 +40,7 @@ void floater_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 void floater_run (edict_t *self);
 void floater_wham (edict_t *self);
 void floater_zap (edict_t *self);
+void floater_continue_attack(edict_t* self);
 
 void floater_fire_blaster (edict_t *self)
 {
@@ -228,12 +229,52 @@ mframe_t floater_frames_attack1 [] =
 	drone_ai_run,	15,	floater_fire_blaster,
 	drone_ai_run,	15,	floater_fire_blaster,
 	drone_ai_run,	15,	floater_fire_blaster,
-	drone_ai_run,	15,	NULL,
+	drone_ai_run,	15,	floater_continue_attack,
 	drone_ai_run,	15,	NULL,
 	drone_ai_run,	15,	NULL,
 	drone_ai_run,	15,	NULL			//							-- LOOP Ends
 };
 mmove_t floater_move_attack1 = {FRAME_attak101, FRAME_attak114, floater_frames_attack1, floater_run};
+
+
+
+mframe_t floater_frames_attack4[] =
+{
+	ai_charge,	0,	NULL,			// Blaster attack
+	ai_charge,	0,	NULL,
+	ai_charge,	0,	NULL,
+	ai_charge,	0,	floater_fire_blaster,			// BOOM (0, -25.8, 32.5)	-- LOOP Starts
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_continue_attack,
+	ai_charge,	0,	NULL,
+	ai_charge,	0,	NULL,
+	ai_charge,	0,	NULL			//							-- LOOP Ends
+};
+mmove_t floater_move_attack4 = { FRAME_attak101, FRAME_attak114, floater_frames_attack4, floater_run };
+
+void floater_continue_attack(edict_t* self)
+{
+	mmove_t* move;
+
+	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+		move = &floater_move_attack4;
+	else
+		move = &floater_move_attack1;
+
+	// if our enemy is still valid, then continue firing
+	if (M_ContinueAttack(self, move, NULL, 0, 1024, 0.8))
+	{
+		self->s.frame = FRAME_attak104;
+		return;
+	}
+
+	M_DelayNextAttack(self, 0, true);
+}
 
 mframe_t floater_frames_attack2 [] =
 {
@@ -529,7 +570,10 @@ void floater_zap (edict_t *self)
 
 void floater_attack(edict_t *self)
 {
-	self->monsterinfo.currentmove = &floater_move_attack1;
+	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+		self->monsterinfo.currentmove = &floater_move_attack4;
+	else
+		self->monsterinfo.currentmove = &floater_move_attack1;
 }
 
 
@@ -589,6 +633,7 @@ void floater_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	gi.WritePosition (self->s.origin);
 	gi.multicast (self->s.origin, MULTICAST_PVS);
 
+	M_Notify(self);
 	M_Remove(self, false, false);
 }
 

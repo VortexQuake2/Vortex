@@ -386,32 +386,52 @@ mframe_t hover_frames_start_attack [] =
 };
 mmove_t hover_move_start_attack = {FRAME_attak101, FRAME_attak103, hover_frames_start_attack, hover_attack};
 
+mframe_t hover_frames_attack2[] =
+{
+	ai_charge,	15,	hover_fire_blaster,
+	ai_charge,	15,	hover_fire_blaster,
+	ai_charge,	15,	hover_reattack
+};
+mmove_t hover_move_attack2 = { FRAME_attak104, FRAME_attak106, hover_frames_attack2, hover_run };
+
 mframe_t hover_frames_attack1 [] =
 {
-	ai_charge,	-10,	hover_fire_blaster,
-	ai_charge,	-10,	hover_fire_blaster,
-	ai_charge,	0,		hover_reattack,
+	drone_ai_run,	15,	hover_fire_blaster,
+	drone_ai_run,	15,	hover_fire_blaster,
+	drone_ai_run,	15,	hover_reattack
 };
-mmove_t hover_move_attack1 = {FRAME_attak104, FRAME_attak106, hover_frames_attack1, NULL};
+mmove_t hover_move_attack1 = {FRAME_attak104, FRAME_attak106, hover_frames_attack1, hover_run };
 
 
 mframe_t hover_frames_end_attack [] =
 {
-	ai_charge,	1,	NULL,
-	ai_charge,	1,	NULL
+	drone_ai_run,	15,	NULL,
+	drone_ai_run,	15,	NULL
 };
 mmove_t hover_move_end_attack = {FRAME_attak107, FRAME_attak108, hover_frames_end_attack, hover_run};
 
 void hover_reattack (edict_t *self)
 {
-	if (self->enemy->health > 0 )
-		if (visible (self, self->enemy) )
-			if (random() <= 0.6)		
-			{
-				self->monsterinfo.currentmove = &hover_move_attack1;
-				return;
-			}
-	self->monsterinfo.currentmove = &hover_move_end_attack;
+	// if our enemy is still valid, then continue firing
+	if (G_ValidTarget(self, self->enemy, true) && (random() <= 0.9))
+	{
+		self->s.frame = FRAME_attak104;
+		//hover_fire_blaster(self);
+		return;
+	}
+
+	/*
+	if (M_ContinueAttack(self, &hover_move_attack1, NULL, 0, 512, 0.9))
+	{
+		//gi.dprintf("continue attack\n");
+		return;
+	}*/
+	//else
+		//gi.dprintf("end attack\n");
+	// end attack
+	self->monsterinfo.attack_finished = level.time + 1.0;
+	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND))
+		self->monsterinfo.currentmove = &hover_move_end_attack;
 }
 
 void hover_fire_blaster (edict_t *self)
@@ -419,6 +439,7 @@ void hover_fire_blaster (edict_t *self)
 	int		damage,speed=M_ROCKETLAUNCHER_SPEED_MAX;
 	vec3_t	forward, start;
 
+	//gi.dprintf("fired at %d\n", (int)(level.framenum));
 	// hover fires a rapid fire, weakened rocket launcher
 	damage = M_HYPERBLASTER_DMG_BASE + M_HYPERBLASTER_DMG_ADDON * self->monsterinfo.level;
 	if (M_HYPERBLASTER_DMG_MAX && damage > M_HYPERBLASTER_DMG_MAX)
@@ -453,7 +474,10 @@ void hover_start_attack (edict_t *self)
 
 void hover_attack(edict_t *self)
 {
-	self->monsterinfo.currentmove = &hover_move_attack1;
+	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+		self->monsterinfo.currentmove = &hover_move_attack2;
+	else
+		self->monsterinfo.currentmove = &hover_move_attack1;
 }
 
 
@@ -589,7 +613,7 @@ void init_drone_hover (edict_t *self)
 	self->monsterinfo.walk = hover_walk;
 	self->monsterinfo.run = hover_run;
 //	self->monsterinfo.dodge = hover_dodge;
-	self->monsterinfo.attack = hover_start_attack;
+	self->monsterinfo.attack = hover_attack;
 	self->monsterinfo.sight = hover_sight;
 	self->monsterinfo.idle = hover_search;
 	//self->monsterinfo.search = hover_search;

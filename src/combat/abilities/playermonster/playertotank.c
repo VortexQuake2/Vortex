@@ -336,6 +336,13 @@ void p_tank_bullet(edict_t *self, vec3_t start, vec3_t forward, int flash_number
 void p_tank_rocket(edict_t *self, vec3_t start, vec3_t forward, int flash_number) {
     int damage = P_TANK_ROCKET_INITIAL_DMG + P_TANK_ROCKET_ADDON_DMG * self->monsterinfo.level;
     int speed = P_TANK_ROCKET_INITIAL_SPD + P_TANK_ROCKET_ADDON_SPD * self->monsterinfo.level;
+    float radius = damage;
+
+    // cap rocket radius and speed (should be equivalent to monster tank)
+    if (radius > 125)
+        radius = 125;
+    if (speed > 1000)
+        speed = 1000;
 
     // rocket ammo counter
     if (!self->monsterinfo.jumpup)
