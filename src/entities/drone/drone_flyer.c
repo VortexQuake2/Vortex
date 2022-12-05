@@ -375,6 +375,27 @@ void flyer_fireright (edict_t *self)
 	flyer_fire (self, MZ2_FLYER_BLASTER_2);
 }
 
+mframe_t flyer_frames_attack3[] =
+{
+		ai_charge, 0, NULL,
+		ai_charge, 0, NULL,
+		ai_charge, 0, NULL,
+		ai_charge, 0, flyer_fireleft,			// left gun
+		ai_charge, 0, flyer_fireright,		// right gun
+		ai_charge, 0, flyer_fireleft,			// left gun
+		ai_charge, 0, flyer_fireright,		// right gun
+		ai_charge, 0, flyer_fireleft,			// left gun
+		ai_charge, 0, flyer_fireright,		// right gun
+		ai_charge, 0, flyer_fireleft,			// left gun
+		ai_charge, 0, flyer_fireright,		// right gun
+		ai_charge, 0, NULL,
+		ai_charge, 0, NULL,
+		ai_charge, 0, NULL,
+		ai_charge, 0, NULL,
+		ai_charge, 0, NULL,
+		ai_charge, 0, NULL
+};
+mmove_t flyer_move_attack3 = { FRAME_attak201, FRAME_attak217, flyer_frames_attack3, flyer_run };
 
 mframe_t flyer_frames_attack2 [] =
 {
@@ -480,7 +501,10 @@ void flyer_attack (edict_t *self)
 /*	if (random() <= 0.5)	
 		self->monsterinfo.currentmove = &flyer_move_attack1;
 	else */
-	self->monsterinfo.currentmove = &flyer_move_attack2;
+	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+		self->monsterinfo.currentmove = &flyer_move_attack3;
+	else
+		self->monsterinfo.currentmove = &flyer_move_attack2;
 }
 
 void flyer_setstart (edict_t *self)
@@ -547,6 +571,7 @@ void flyer_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage,
 	gi.WritePosition (self->s.origin);
 	gi.multicast (self->s.origin, MULTICAST_PVS);
 
+	M_Notify(self);
 	M_Remove(self, false, false);
 }
 	
@@ -593,7 +618,7 @@ void init_drone_flyer (edict_t *self)
 	self->monsterinfo.walk = flyer_walk;
 	self->monsterinfo.run = flyer_run;
 	self->monsterinfo.attack = flyer_attack;
-	self->monsterinfo.melee = flyer_melee;
+	//self->monsterinfo.melee = flyer_melee;
 	self->monsterinfo.sight = flyer_sight;
 	self->monsterinfo.idle = flyer_idle;
 
