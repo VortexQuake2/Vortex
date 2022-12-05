@@ -101,6 +101,7 @@ extern long FLAG_FRAMES;
 #define FL_DETECTED				0x00020000	// player was detected
 #define FL_CONVERTED			0x00040000	// entity was converted
 #define FL_COCOONED				0x00080000	// entitiy is cocooned
+#define FL_NO_TRADING_PROTECT	0x00100000	// let it be hurt in trading mode
 #define FL_RESPAWN				0x80000000	// used for item respawning
 
 #define FRAMETIME		(1/sv_fps->value)

@@ -147,7 +147,7 @@ edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t* self, float rad)
 
 qboolean G_ValidTarget_Lite(const edict_t *self, const edict_t *target, qboolean vis)
 {
-	if (trading->value)
+	if (trading->value && !(target->flags & FL_NO_TRADING_PROTECT))
 		return false;
 		
 	// check for targets that require medic healing

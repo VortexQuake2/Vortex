@@ -150,6 +150,10 @@ void SP_navi_monster_invasion (edict_t *self);
 void SP_inv_defenderspawn (edict_t *self);
 //GHz END
 
+// az start
+void SP_misc_dummy(edict_t* self);
+// az end
+
 void SP_misc_nuke (edict_t *ent);
 
 spawn_t	spawns[] = {
@@ -238,6 +242,7 @@ spawn_t	spawns[] = {
 	{"misc_actor", SP_misc_actor},
 #endif
 	{"misc_gib_arm", SP_misc_gib_arm},
+	{"misc_dummy", SP_misc_dummy},
 	{"misc_gib_leg", SP_misc_gib_leg},
 	{"misc_gib_head", SP_misc_gib_head},
 #if 0 // remove monster code
