@@ -38,6 +38,7 @@ edict_t *CreateSpiker (edict_t *ent, int skill_level);
 edict_t *CreateObstacle (edict_t *ent, int skill_level);
 edict_t *CreateGasser (edict_t *ent, int skill_level);
 edict_t *CreateCocoon (edict_t *ent, int skill_level);
+edict_t* CreateHealer(edict_t* ent, int skill_level);
 void organ_remove (edict_t *self, qboolean refund);
 
 void p_medic_reanimate (edict_t *ent, edict_t *target)
@@ -204,7 +205,9 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 		gi.linkentity(e);
 
 		organ_remove(target, false);
-	} else if (!strcmp(target->classname, "cocoon") && !ent->cocoon) {
+	} 
+	else if (!strcmp(target->classname, "cocoon") && !ent->cocoon) 
+	{
 	    // az: yeah... why wasn't this a thing?
         e = CreateCocoon(ent, skill_level);
 
@@ -225,6 +228,26 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 
         organ_remove(target, false);
 	}
+	else if (!strcmp(target->classname, "healer") && !ent->healer)
+	{
+		e = CreateHealer(ent, skill_level);
+
+		if (!G_IsValidLocation(target, target->s.origin, e->mins, e->maxs))
+		{
+			ent->healer = NULL;
+			G_FreeEdict(e);
+			return;
+		}
+
+		VectorCopy(target->s.angles, e->s.angles);
+		e->s.angles[PITCH] = 0;
+		//e->monsterinfo.cost = target->monsterinfo.cost;
+		e->health = 0.33 * e->max_health;
+		e->s.frame = 0; // "HEALER_FRAMES_GROW_START"
+		VectorCopy(target->s.origin, e->s.origin);
+		gi.linkentity(e);
+	}
+
 		
 }
 
