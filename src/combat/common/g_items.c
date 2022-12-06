@@ -705,6 +705,8 @@ void Use_PowerArmor(edict_t *ent, gitem_t *item) {
     pslevel = ent->myskills.abilities[POWER_SHIELD].current_level;
     if (ent->mtype == MORPH_BRAIN && ent->myskills.abilities[BRAIN].current_level > pslevel)
         pslevel = ent->myskills.abilities[BRAIN].current_level;
+    if (ent->mtype == MORPH_BERSERK && ent->myskills.abilities[BERSERK].current_level > pslevel)
+        pslevel = ent->myskills.abilities[BERSERK].current_level;
 
     if (pslevel < 1) {
         safe_cprintf(ent, PRINT_HIGH, "You need to upgrade Power Armor!\n");

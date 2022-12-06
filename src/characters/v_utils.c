@@ -1542,33 +1542,32 @@ void V_ModifyMorphedHealth(edict_t *ent, int type, qboolean morph) {
     float mult;
 
     switch (type) {
-        // player-tank has no maximum health multiplier
-        case P_TANK:
-            mult = 1.8 + 0.12 * ent->myskills.abilities[TANK].current_level;
+        case P_TANK: // multi-role fighter, slow moving with large hitbox
+            mult = 2 + 0.15 * ent->myskills.abilities[TANK].current_level;
+            if (mult > 3.5)
+                mult = 3.5;
             break;
-            // 2x health multiplier max
-        case MORPH_BERSERK:
+        case MORPH_BERSERK: // melee fighter with power screen
             mult = 1 + 0.1 * ent->myskills.abilities[BERSERK].current_level;
             if (mult > 2)
                 mult = 2;
             break;
-            // 2x health multiplier max
-        case MORPH_MUTANT:
-            mult = 1 + 0.1 * ent->myskills.abilities[MUTANT].current_level;
-            if (mult > 2)
-                mult = 2;
+        case MORPH_MUTANT: // melee fighter with large hitbox
+            mult = 1 + 0.15 * ent->myskills.abilities[MUTANT].current_level;
+            if (mult > 2.5)
+                mult = 2.5;
             break;
-        case MORPH_CACODEMON:
-            mult = 1 + 0.055 * ent->myskills.abilities[CACODEMON].current_level;
+        case MORPH_CACODEMON: // slow moving flyer with large hitbox
+            mult = 1 + 0.05 * ent->myskills.abilities[CACODEMON].current_level;
             if (mult > 1.5)
                 mult = 1.5;
             break;
-        case MORPH_MEDIC:
-            mult = 1 + 0.1 * ent->myskills.abilities[MEDIC].current_level;
+        case MORPH_BRAIN: // melee fighter with power screen
+            mult = 1 + 0.05 * ent->myskills.abilities[BRAIN].current_level;
             if (mult > 1.5)
                 mult = 1.5;
             break;
-        case M_MYPARASITE:
+        case M_MYPARASITE: // melee fighter with vamp up to 2x health
             mult = 1 + 0.05 * ent->myskills.abilities[BLOOD_SUCKER].current_level;
             if (mult > 1.5)
                 mult = 1.5;

@@ -493,6 +493,8 @@ static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damag
 			pslevel = cl_ent->myskills.abilities[POWER_SHIELD].current_level;
 			if (cl_ent->mtype == MORPH_BRAIN && cl_ent->myskills.abilities[BRAIN].current_level > pslevel)
 				pslevel = cl_ent->myskills.abilities[BRAIN].current_level;
+			if (cl_ent->mtype == MORPH_BERSERK && cl_ent->myskills.abilities[BERSERK].current_level > pslevel)
+				pslevel = cl_ent->myskills.abilities[BERSERK].current_level;
 			
 			if (pslevel > 0)
 				damagePerCell = 0.1 + 0.19 * pslevel;
