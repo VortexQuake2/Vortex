@@ -794,10 +794,12 @@ float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float da
     if (mod == MOD_TELEFRAG)
         return damage;
 
-    if (level.time < pregame_time->value)
+    if (level.time < pregame_time->value && !trading->value)
         return 0; // no damage in pre-game
-    if (trading->value)
+    
+    if (trading->value && !(targ->flags & FL_NO_TRADING_PROTECT))
         return 0; // az 2.5 vrxchile: no damage in trading mode
+
     if (OnSameTeam(attacker, targ) && (attacker != targ)) {
         if (invasion->value > 1 && gi.cvar("inh_friendlyfire", "0", 0)->value) {
             // if none of them is a client and the target is not a piloted monster

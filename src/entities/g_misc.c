@@ -1700,6 +1700,54 @@ void SP_misc_gib_arm(edict_t *ent)
 	gi.linkentity(ent);
 }
 
+void misc_dummy_think(edict_t* ent) {
+	if (ent->health < ent->max_health) {
+		int rate = max(ent->max_health - ent->health, 10);
+		int effective_heal_rate = rate * FRAMETIME;
+
+		if (ent->health + effective_heal_rate > ent->max_health) {
+			ent->health = ent->max_health;
+		}
+		else {
+			ent->health += effective_heal_rate;
+		}
+	}
+
+	ent->nextthink = level.time + FRAMETIME;
+}
+
+void misc_dummy_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point)
+{
+	self->health = self->max_health;
+}
+
+/*
+	this ice cream cone can regenerate health and stuff
+*/
+void SP_misc_dummy(edict_t* ent) {
+	gi.setmodel(ent, "models/objects/cruelcone/tris.md2");
+	ent->solid = SOLID_BBOX;
+	ent->takedamage = DAMAGE_YES;
+	ent->die = misc_dummy_die;
+	ent->movetype = MOVETYPE_NONE;
+	ent->svflags |= SVF_MONSTER;
+	ent->flags |= FL_NO_TRADING_PROTECT;
+	ent->deadflag = DEAD_NO;
+	ent->think = misc_dummy_think;
+	ent->nextthink = level.time + FRAMETIME;
+	ent->max_health = 10000;
+	ent->health = ent->max_health;
+
+
+	/*vec3_t	mins = { -16, -16, -24 };
+	vec3_t	maxs = { 16, 16, 32 };*/
+
+	VectorSet(ent->mins, -16, -16, -24);
+	VectorSet(ent->maxs, 16, 16, 32);
+
+	gi.linkentity(ent);
+}
+
 /*QUAKED misc_gib_leg (1 0 0) (-8 -8 -8) (8 8 8)
 Intended for use with the target_spawner
 */

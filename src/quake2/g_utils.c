@@ -1212,8 +1212,9 @@ qboolean G_ValidTargetEnt(const edict_t *target, qboolean alive) {
 
 qboolean G_ValidTarget(const edict_t *self, const edict_t *target, qboolean vis)
 {
-	if (trading->value)
+	if (trading->value && !(target->flags & FL_NO_TRADING_PROTECT))
 		return false;
+
 	// check for targets that require medic healing
 	if (self && self->mtype == M_MEDIC)
 	{

@@ -826,7 +826,8 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 			// gives players some time to react to newly spawned monsters
 			//drone->nextthink = level.time + 1 + random();
 			drone->monsterinfo.pausetime = level.time + 1.0;
-			drone->monsterinfo.inv_framenum = level.framenum + (int)(1 / FRAMETIME);
+			// az: remove invuln. in non-invasion
+			// drone->monsterinfo.inv_framenum = level.framenum + (int)(1 / FRAMETIME);
 
 			// trigger spree war if a boss successfully spawns in PvP mode
 			if (deathmatch->value && !domination->value && !ctf->value && !invasion->value && !pvm->value
