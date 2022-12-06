@@ -1835,6 +1835,12 @@ void PutClientInServer (edict_t *ent)
 			ent->myskills.abilities[BERSERK].charge = 50;
 		if (ent->myskills.abilities[BEAM].current_level > 0)
 			ent->myskills.abilities[BEAM].charge = 50;
+		
+		// armor regen grants starting armor
+		if (ent->myskills.abilities[ARMOR_REGEN].current_level > 0) {
+			float factor = ent->myskills.abilities[ARMOR_REGEN].current_level * 0.05f;
+			ent->client->pers.inventory[body_armor_index] = MAX_ARMOR(ent) * factor; 
+		}
 
 	}
 	//K03 End
