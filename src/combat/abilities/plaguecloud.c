@@ -105,6 +105,7 @@ void plague_think(edict_t *self) {
         else
             maxlevel = self->owner->myskills.abilities[PLAGUE].current_level;
 
+        // e.g. at level 10: 5% of max hp per second for 20 seconds
         dmg = (float) maxlevel / 10 * ((float) self->enemy->max_health / 20);
         if (!self->enemy->client && strcmp(self->enemy->classname, "player_tank") != 0)
             dmg *= 2; // non-clients take double damage (helps with pvm)
