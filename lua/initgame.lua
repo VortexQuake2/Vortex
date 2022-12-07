@@ -1,5 +1,5 @@
 is_pvm = ((q2.cvar_get("pvm", "0") ~= "0") or (q2.cvar_get("invasion", "0") ~= "0"))
-is_invasion = q2.cvar_get("invasion", "0")
+is_invasion = tonumber(q2.cvar_get("invasion", "0"))
 
 useMysqlTablesOnSQLite = 0
 UseLuaMaplists = 0
@@ -14,15 +14,18 @@ end
 
 if is_invasion == 1 then
 	EXP_WORLD_MONSTER = 25
+	CREDITS_OTHER_BASE = 5
 	PVB_BOSS_EXPERIENCE = 600
 	PVB_BOSS_CREDITS = 100
 elseif is_invasion == 2 then
 	EXP_WORLD_MONSTER = 35
+	CREDITS_OTHER_BASE = 5
 	PVB_BOSS_EXPERIENCE = 2000
 	PVB_BOSS_CREDITS = 200
 else
-	EXP_WORLD_MONSTER = 20
-	PVB_BOSS_EXPERIENCE = 1000
+	EXP_WORLD_MONSTER = 50
+	CREDITS_OTHER_BASE = 10
+	PVB_BOSS_EXPERIENCE = 1200
 	PVB_BOSS_CREDITS = 3000
 end
 

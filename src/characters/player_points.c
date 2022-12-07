@@ -463,6 +463,7 @@ int vrx_get_kill_base_experience(
     if (hw->value && attacker->client->pers.inventory[halo_index])
         exp_points *= 1.5; // extra experience for halo user
 
+    //gi.dprintf("BASE exp_points: %d dmgmod %.1f level_diff %.1f base_exp %d bonus %.1f break_points %d miniboss_bonus %.1f\n", exp_points, dmgmod, level_diff, base_exp, bonus, break_points, miniboss_bonus);
     return exp_points * mult;
 }
 
@@ -646,6 +647,8 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
                 &credits
         );
 
+        //gi.dprintf("SHARED exp: %d credits: %d leveldiff: %.1f\n", exp, credits, leveldiff);
+
         vrx_apply_experience(player, exp);
         vrx_add_credits(player, credits);
 
@@ -671,6 +674,8 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
 
         vrx_apply_experience(player, exp);
         vrx_add_credits(player, credits);
+
+        //gi.dprintf("SOLO exp: %d credits: %d leveldiff: %.1f\n", exp, credits, leveldiff);
 
         if ( player->client != NULL ) {
             player->client->resp.wave_solo_exp += exp;
