@@ -1257,6 +1257,7 @@ void ThrowGib (edict_t *self, char *gibname, int damage, int type);
 void BecomeExplosion1(edict_t *self);
 void BecomeTE(edict_t *self);//GHz
 void BecomeBigExplosion(edict_t *self);//GHz
+void SV_SaveAllCharacters(void);
 int HighestLevelPlayer(void);//GHz
 int LowestLevelPlayer(void);
 int PvMHighestLevelPlayer(void);//GHz
@@ -1319,6 +1320,7 @@ void fire_blueblaster (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 void fire_plasma (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius, int radius_damage);
 void fire_trap (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float timer, float damage_radius, qboolean held);
 void fire_smartrocket (edict_t *self, edict_t *target, vec3_t start, vec3_t dir, int damage, int speed, int turn_speed, float damage_radius, int radius_damage);
+void fire_20mm(edict_t* self, vec3_t start, vec3_t aimdir, int damage, int kick);
 
 //
 // g_ptrail.c
@@ -1382,7 +1384,7 @@ void ValidateSelectedItem (edict_t *ent);
 void DeathmatchScoreboardMessage (edict_t *client, edict_t *killer);
 
 //
-// g_pweapon.c
+// p_weapon.c
 //
 void PlayerNoise(edict_t *who, vec3_t where, int type);
 void P_ProjectSource (gclient_t *client, vec3_t point, vec3_t distance, vec3_t forward, vec3_t right, vec3_t result);

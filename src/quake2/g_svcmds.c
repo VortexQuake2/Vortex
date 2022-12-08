@@ -767,10 +767,12 @@ void SV_AddMapToMaplist()
         safe_cprintf(NULL, PRINT_HIGH, "%s: file couldn't be opened... opening in write mode.\n", filename);
         fp = fopen(filename, "w");
         IsAppend = false;
-        if (!fp)
-            safe_cprintf(NULL, PRINT_HIGH, "Nope. Not in writing mode neither.\n");
+        if (!fp) {
+            safe_cprintf(NULL, PRINT_HIGH, "Nope. Not in writing mode either.\n");
+            return;
+        }
     }
-
+    
     fprintf(fp, "%s\n", map);
     fclose(fp);
 }
