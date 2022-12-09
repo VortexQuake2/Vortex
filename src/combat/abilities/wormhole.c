@@ -133,6 +133,7 @@ void wormhole_out_ready (edict_t *self)
 
 	self->creator->client->ability_delay = level.time + (ctf->value?2.0:1.0);
 	self->creator->client->pers.inventory[power_cube_index] -= BLACKHOLE_COST;
+	self->creator->gravity = 1.0f; // az
 }
 
 void wormhole_in_ready (edict_t *self)

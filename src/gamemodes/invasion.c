@@ -11,6 +11,23 @@ edict_t		*INV_PlayerSpawns[64];
 edict_t		*INV_Navi[64];
 edict_t		*INV_StartNavi[64];
 
+/* reference vrx_create_drone_from_ent on drone_misc.c */
+static const int SET_EASY_MODE_MONSTERS[] = {
+	1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14
+};
+const int SET_EASY_MODE_MONSTERS_COUNT = sizeof(SET_EASY_MODE_MONSTERS) / sizeof(int);
+
+static const int SET_HARD_MODE_MONSTERS[] = {
+	1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14
+};
+const int SET_HARD_MODE_MONSTERS_COUNT = sizeof(SET_HARD_MODE_MONSTERS) / sizeof(int);
+
+
+static const int SET_FLYING_MONSTERS[] = {
+	12, 13, 14
+};
+const int SET_FLYING_MONSTERS_COUNT = sizeof(SET_FLYING_MONSTERS) / sizeof(int);
+
 struct invdata_s
 {
 	qboolean printedmessage;
@@ -603,19 +620,46 @@ void INV_OnBeginWave(edict_t *self, int max_monsters) {
 	INV_BossCheck(self);
 }
 
+void INV_SelectMonsterSet(const edict_t* self, int const * * monster_set, int* monster_set_count)
+{
+	*monster_set = SET_EASY_MODE_MONSTERS;
+	*monster_set_count = SET_EASY_MODE_MONSTERS_COUNT;
+
+	/*
+	 * style 1 forces flying monsters
+	 * style 2 forces easy mode monsters (no medic)
+	 * style 3 forces hard mode monsters (include medic)
+	 */
+
+	if ((invasion->value == 2 && self->style != 2) || self->style == 3)
+	{
+		*monster_set = SET_HARD_MODE_MONSTERS;
+		*monster_set_count = SET_HARD_MODE_MONSTERS_COUNT;
+	}
+
+	if (self->style == 1)
+	{
+		*monster_set = SET_FLYING_MONSTERS;
+		*monster_set_count = SET_FLYING_MONSTERS_COUNT;
+	}
+}
+
 void INV_SpawnMonsters(edict_t *self)
 {
-	int		players, max_monsters;
-	edict_t *e = NULL;
-	int SpawnTries = 0, MaxTriesThisFrame = 32;
-
-	// update our drone count
-	PVM_TotalMonsters(self, true);
-	players = vrx_get_joined_players();
+	const int players = vrx_get_joined_players();
 
 	// How many monsters should we spawn?
 	// 10 at lv 1, 30 by level 20. 41 by level 100
-	max_monsters = (int)round(10 + 4.6276 * log2f((float)invasion_difficulty_level));
+	int max_monsters = (int)round(10 + 4.6276 * log2f((float)invasion_difficulty_level));
+
+	edict_t *e = NULL;
+	int SpawnTries = 0, MaxTriesThisFrame = 32;
+	const int* monster_set;
+	int monster_set_count;
+
+	// update our drone count
+	PVM_TotalMonsters(self, true);
+	
 	//max_monsters = 1;//GHz DEBUG - REMOVE ME!
 	//self->nextthink = level.time + FRAMETIME;//GHz DEBUG - REMOVE ME!
 	//return;//GHz DEBUG - REMOVE ME!
@@ -691,26 +735,17 @@ void INV_SpawnMonsters(edict_t *self)
 
     self->nextthink = level.time + FRAMETIME;
 
-	while ((e = INV_GetMonsterSpawn(e)) && invasion_data.mspawned < max_monsters && SpawnTries < MaxTriesThisFrame)
+	INV_SelectMonsterSet(self, &monster_set, &monster_set_count);
+
+	while ((e = INV_GetMonsterSpawn(e)) 
+		&& invasion_data.mspawned < max_monsters
+		&& SpawnTries < MaxTriesThisFrame)
 	{
-		int randomval = GetRandom(1, 14);
-
-		while ( randomval == 10 ) {
-			randomval = GetRandom(1, 11); // don't spawn soldiers
-		}
-
-		if (invasion_difficulty_level % 5 || invasion->value == 1) // nonboss stage? easy mode?
-		{
-			while (randomval == 5 || randomval == 10) // disallow medics
-			{
-				randomval = GetRandom(1, 14);
-			}
-		}
+		const int pick = GetRandom(1, monster_set_count) - 1;
+		const int monster = monster_set[pick];
 
 		SpawnTries++;
-		if (!INV_SpawnDrone(self, e, randomval)) // Wait for now
-			continue;
-		else
+		if (INV_SpawnDrone(self, e, monster)) // Wait for now
 			invasion_data.mspawned++;
 	}
 
