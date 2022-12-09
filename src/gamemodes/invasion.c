@@ -654,8 +654,6 @@ void INV_SpawnMonsters(edict_t *self)
 
 	edict_t *e = NULL;
 	int SpawnTries = 0, MaxTriesThisFrame = 32;
-	const int* monster_set;
-	int monster_set_count;
 
 	// update our drone count
 	PVM_TotalMonsters(self, true);
@@ -735,14 +733,18 @@ void INV_SpawnMonsters(edict_t *self)
 
     self->nextthink = level.time + FRAMETIME;
 
-	INV_SelectMonsterSet(self, &monster_set, &monster_set_count);
-
 	while ((e = INV_GetMonsterSpawn(e)) 
 		&& invasion_data.mspawned < max_monsters
 		&& SpawnTries < MaxTriesThisFrame)
 	{
-		const int pick = GetRandom(1, monster_set_count) - 1;
-		const int monster = monster_set[pick];
+		const int* monster_set;
+		int monster_set_count;
+		int pick;
+		int monster ;
+
+		INV_SelectMonsterSet(e, &monster_set, &monster_set_count);
+		pick = GetRandom(1, monster_set_count) - 1;
+		monster = monster_set[pick];
 
 		SpawnTries++;
 		if (INV_SpawnDrone(self, e, monster)) // Wait for now
