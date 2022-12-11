@@ -605,10 +605,12 @@ void INV_OnBeginWave(edict_t *self, int max_monsters) {
 
 void INV_SpawnMonsters(edict_t *self)
 {
-	int		players, max_monsters;
+	int		players, max_monsters;//, max_monsters_value;
 	edict_t *e = NULL;
 	int SpawnTries = 0, MaxTriesThisFrame = 32;
 
+	// get the value of all of our monsters (BF flag mult * level * control_cost)
+	// max_monsters_value = PVM_TotalMonstersValue(self);
 	// update our drone count
 	PVM_TotalMonsters(self, true);
 	players = vrx_get_joined_players();
