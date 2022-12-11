@@ -210,8 +210,8 @@ void autocannon_aim (edict_t *self)
 
 qboolean autocannon_checkstatus (edict_t *self)
 {
-	vec3_t	end;
-	trace_t tr;
+	//vec3_t	end;
+	//trace_t tr;
 
 	// must have live owner
 	if (!G_EntIsAlive(self->creator))

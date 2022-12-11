@@ -465,7 +465,7 @@ void WriteToLogFile (char *char_name, char *s)
           if (buf[strlen(buf)-1] != '\n')  
                strcat(buf, "\n");  
   
-          fprintf(fptr, buf);  
+          fprintf(fptr, "%s", buf);
           fclose(fptr);  
           return;  
      }  
@@ -498,7 +498,7 @@ void vrx_write_to_logfile(edict_t *ent, char *s)
           if (buf[strlen(buf)-1] != '\n')  
                strcat(buf, "\n");  
   
-          fprintf(fptr, buf);  
+          fprintf(fptr, "%s", buf);
           fclose(fptr);  
           return;  
      }  
@@ -535,7 +535,7 @@ void WriteServerMsg (char *s, char *error_string, qboolean print_msg, qboolean s
           if (buf[strlen(buf)-1] != '\n')  
                strcat(buf, "\n");  
   
-          fprintf(fptr, buf);  
+          fprintf(fptr, "%s", buf);
           fclose(fptr);  
           return;  
      }  

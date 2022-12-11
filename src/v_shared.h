@@ -14,6 +14,7 @@
 
 /**************** v_abilitylist.c ***************/
 void vrx_enable_ability(edict_t *ent, int index, int level, int max_level, int general);
+void vrx_update_free_abilities(edict_t* ent);
 
 int vrx_get_last_enabled_skill_index(edict_t *ent, int mode);
 
@@ -144,6 +145,8 @@ void cmd_Drink(edict_t *ent, int itemtype, int index);
 
 //*********** v_utils.c ***********
 qboolean V_IsPVP(void);
+
+char* V_GetMonsterKind(int mtype);
 
 char *V_GetMonsterName(edict_t *monster);
 
