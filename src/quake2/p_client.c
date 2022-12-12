@@ -2587,19 +2587,20 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		//K03 Begin
 		if (client->hook_state == HOOK_ON)
 			client->ps.pmove.gravity = 0;
-		else
-			client->ps.pmove.gravity = sv_gravity->value;
-		//K03 End
+		else {
+			//3.0 matrix jump
+			if (ent->v_flags & SFLG_MATRIXJUMP)
+				client->ps.pmove.gravity = sv_gravity->value / MJUMP_GRAVITY_MULT;
+			else if ((ent->mtype == MORPH_FLYER) && (ent->deadflag != DEAD_DEAD)) // flyers are not affected by gravity
+				client->ps.pmove.gravity = 0;
+			else
+				client->ps.pmove.gravity = sv_gravity->value;
+			//end doomie
 
-		//3.0 matrix jump
-		if (ent->v_flags & SFLG_MATRIXJUMP)
-			client->ps.pmove.gravity = sv_gravity->value / MJUMP_GRAVITY_MULT;
-		else if ((ent->mtype == MORPH_FLYER) && (ent->deadflag != DEAD_DEAD)) // flyers are not affected by gravity
-			client->ps.pmove.gravity = 0;
-		else
-			client->ps.pmove.gravity = sv_gravity->value;
-		//pm.s = client->ps.pmove;
-		//end doomie
+			// az: uncomment to make gravity multiplier work
+			// client->ps.pmove.gravity *= ent->gravity;
+		}
+		//K03 End
 
 		// reset jump flag
 		if (!ucmd->upmove)
