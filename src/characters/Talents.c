@@ -401,8 +401,8 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             return 2;
         case TALENT_FATAL_WOUND:
             addlinetomenu(ent, "Adds chance for flesh", MENU_WHITE_CENTERED);
-            addlinetomenu(ent, "eater to cause a fatal", MENU_WHITE_CENTERED);
-            addlinetomenu(ent, "wound.", MENU_WHITE_CENTERED);
+            addlinetomenu(ent, "eater to make the", MENU_WHITE_CENTERED);
+            addlinetomenu(ent, "victim bleed out.", MENU_WHITE_CENTERED);
             return 3;
         case TALENT_SECOND_CHANCE:
             addlinetomenu(ent, "100% chance of ghost", MENU_WHITE_CENTERED);
