@@ -18,8 +18,7 @@ void ChaseCam(edict_t *ent)
 
 	if (ent->client->chase_target) 
 	{
-		ent->client->chase_target = NULL;
-		ent->client->ps.gunindex = 0;
+		DisableChaseCam(ent);
 		return;
 	}
 

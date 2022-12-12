@@ -1407,6 +1407,7 @@ void UpdateChaseCam(edict_t *ent);
 void ChaseNext(edict_t *ent);
 void ChasePrev(edict_t *ent);
 void GetChaseTarget(edict_t *ent);
+void DisableChaseCam(edict_t* ent); // az
 //============================================================================
 
 //jabot

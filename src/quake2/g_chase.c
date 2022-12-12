@@ -33,6 +33,14 @@ qboolean IsValidChaseTarget (edict_t *ent)
 	return true;
 }
 
+void DisableChaseCam(edict_t *ent)
+{
+	ent->client->chase_target = NULL;
+	ent->client->ps.gunindex = 0;
+	ent->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
+	ent->client->ps.pmove.pm_flags &= ~PMF_DUCKED; // quit ducked.
+}
+
 void UpdateChaseCam (edict_t *ent)
 {
 	int			i;
@@ -57,9 +65,7 @@ void UpdateChaseCam (edict_t *ent)
 		if (ent->client->chase_target == old) 
 		{
 			// switch out of chase-cam mode
-			ent->client->chase_target = NULL;
-			ent->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
-			ent->client->ps.pmove.pm_flags &= ~PMF_DUCKED; // quit ducked.
+			DisableChaseCam(ent);
 			return;
 		}
 	}
