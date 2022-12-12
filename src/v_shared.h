@@ -78,6 +78,7 @@ void VortexEndLevel(void);
 //************ magic.c ************
 void cmd_mjump(edict_t *ent);
 void proxy_remove(edict_t *self, qboolean print);
+void magmine_remove(edict_t* self, qboolean print);
 qboolean ConvertOwner(edict_t *ent, edict_t *other, float duration, qboolean print);
 qboolean RestorePreviousOwner(edict_t *ent);
 void ProjectileLockon(edict_t *proj);

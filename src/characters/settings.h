@@ -491,6 +491,7 @@ extern double MAGMINE_COST;
 extern double MAGMINE_DEFAULT_HEALTH;
 extern double MAGMINE_ADDON_HEALTH;
 extern double MAGMINE_DELAY;
+extern double MAGMINE_MAX_COUNT;
 extern double SELFDESTRUCT_RADIUS;
 extern double SELFDESTRUCT_BASE;
 extern double SELFDESTRUCT_BONUS;

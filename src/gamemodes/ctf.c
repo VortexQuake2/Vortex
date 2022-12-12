@@ -1195,12 +1195,7 @@ void flagbase_think (edict_t *self)
 		// remove magmine
 		else if (!strcmp(e->classname, "magmine"))
 		{
-			e->takedamage = DAMAGE_NO;
-			e->deadflag = DEAD_DEAD;
-			e->think = BecomeExplosion1;
-			e->nextthink = level.time + FRAMETIME;
-			cl->magmine = NULL;
-
+			magmine_remove(self, false);
 			safe_cprintf(cl, PRINT_HIGH, "Your mag mine was removed because it is too close to the flag base.\n");
 		}
 	}

@@ -52,8 +52,6 @@ SPREE_WARS_BONUS = 250
 SPREE_BONUS = 0.5
 SPREE_BREAKBONUS = 100
 MONSTER_MASTERY_FACTOR = 0.04
-MAGMINE_DEFAULT_PULL = -40
-MAGMINE_ADDON_PULL = -4
 
 -- Character basics
 INITIAL_POWERCUBES_ALIEN = 200
@@ -451,6 +449,9 @@ MAGMINE_COST                             = 50
 MAGMINE_DEFAULT_HEALTH                   = 200
 MAGMINE_ADDON_HEALTH                     = 80
 MAGMINE_DELAY                            = 1.0
+MAGMINE_MAX_COUNT						 = 3
+MAGMINE_DEFAULT_PULL					 = -40
+MAGMINE_ADDON_PULL						 = -4
 SELFDESTRUCT_RADIUS                      = 256
 SELFDESTRUCT_BASE                        = 50
 SELFDESTRUCT_BONUS                       = 50

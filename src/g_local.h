@@ -1898,6 +1898,7 @@ struct edict_s
 	int	num_spikers;
 	int num_gasser;
 	int num_obstacle;
+	int num_magmine;
 
 	int	num_spikeball;
 	int	num_laserplatforms; //4.4 Talent: Laser Platform
@@ -1922,7 +1923,7 @@ struct edict_s
 	edict_t		*selected[4];
 	edict_t		*other;
 	edict_t		*supplystation;
-	edict_t		*magmine;
+	//edict_t		*magmine;
 //GHz START
 	// rune stuff
 	edict_t		*trade_with;

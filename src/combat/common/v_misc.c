@@ -354,6 +354,9 @@ vrx_remove_player_summonables
 Removes all edicts that the player owns
 =============
 */
+
+void RemoveMagmines(edict_t* ent);
+
 void RemoveProxyGrenades(edict_t *ent);
 
 void RemoveNapalmGrenades(edict_t *ent);
@@ -408,6 +411,7 @@ void vrx_remove_player_summonables(edict_t *self) {
     AuraRemove(self, 0);
     RemoveLasers(self);
     RemoveProxyGrenades(self);
+    RemoveMagmines(self);
     RemoveNapalmGrenades(self);
     RemoveExplodingArmor(self);
     RemoveAutoCannons(self);
@@ -494,14 +498,6 @@ void vrx_remove_player_summonables(edict_t *self) {
         self->skull->deadflag = DEAD_DEAD;
         self->skull->nextthink = level.time + FRAMETIME;
         self->skull = NULL;
-    }
-    if (self->magmine) {
-        //BecomeExplosion1(self->magmine);
-        self->magmine->think = BecomeExplosion1;
-        self->magmine->takedamage = DAMAGE_NO;
-        self->magmine->deadflag = DEAD_DEAD;
-        self->magmine->nextthink = level.time + FRAMETIME;
-        self->magmine = NULL;
     }
     if (self->spirit) {
         self->spirit->think = G_FreeEdict;
