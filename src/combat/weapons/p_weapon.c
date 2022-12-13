@@ -769,9 +769,10 @@ void Weapon_Generic(
         // time when to fire next shot
         float haste_wait = 1;
         float haste_tech = 1;
-        float haste_skill = 1;
+        float haste_skill = INFINITY; // "never"
 
-        haste_skill = 1.0f / ent->myskills.abilities[HASTE].current_level;
+        if (ent->myskills.abilities[HASTE].current_level >= 1)
+            haste_skill = 1.0f / ent->myskills.abilities[HASTE].current_level;
 
         // haste tech
         if (ent->client->pers.inventory[haste_index]) {
