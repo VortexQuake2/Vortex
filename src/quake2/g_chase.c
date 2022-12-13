@@ -132,6 +132,7 @@ retry_eyecam:
     }
 	else
 	{
+		ent->client->ps.pmove.pm_flags &= ~PMF_DUCKED;
 		ent->client->ps.gunindex = 0;
 
 		// special conditions for upside-down minisentry
