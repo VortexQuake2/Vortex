@@ -557,12 +557,8 @@ void Cmd_PlayerToMedic_f (edict_t *ent)
     // make sure don't get stuck in a wall
     VectorSet (boxmin, -24, -24, -24);
     VectorSet (boxmax, 24, 24, 32);
-    tr = gi.trace(ent->s.origin, boxmin, boxmax, ent->s.origin, ent, MASK_SHOT);
-    if (tr.fraction < 1)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Not enough room to morph!\n");
+	if (!PM_MorphPlayerHitbox(ent, boxmin, boxmax))
 		return;
-	}
 	
 	V_ModifyMorphedHealth(ent, MORPH_MEDIC, true);
 

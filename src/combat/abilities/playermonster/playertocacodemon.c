@@ -151,7 +151,7 @@ void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
 
 void Cmd_PlayerToCacodemon_f(edict_t *ent) {
     vec3_t mins, maxs;
-    trace_t tr;
+    //trace_t tr;
     int caco_cubecost = CACODEMON_INIT_COST;
     //Talent: More Ammo
     int talentLevel = vrx_get_talent_level(ent, TALENT_MORE_AMMO);
@@ -191,11 +191,8 @@ void Cmd_PlayerToCacodemon_f(edict_t *ent) {
     // don't get stuck
     VectorSet(mins, -24, -24, -24);
     VectorSet(maxs, 24, 24, 24);
-    tr = gi.trace(ent->s.origin, mins, maxs, ent->s.origin, ent, MASK_SHOT);
-    if (tr.fraction < 1) {
-        safe_cprintf(ent, PRINT_HIGH, "Not enough room to morph.\n");
+    if (!PM_MorphPlayerHitbox(ent, mins, maxs))
         return;
-    }
 
     V_ModifyMorphedHealth(ent, MORPH_CACODEMON, true);
 

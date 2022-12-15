@@ -179,7 +179,7 @@ void mutant_jumpattack (edict_t *self)
 		// detect collision within area surrounding bounding box
 		VectorAdd(self->maxs, boxmax, boxmax);
 		VectorAdd(self->mins, boxmin, boxmin);
-		tr = gi.trace(self->s.origin, boxmin, boxmax, self->s.origin, self, (CONTENTS_MONSTERCLIP|CONTENTS_MONSTER|CONTENTS_DEADMONSTER|CONTENTS_PLAYERCLIP));
+		tr = gi.trace(self->s.origin, boxmin, boxmax, self->s.origin, self, (CONTENTS_MONSTERCLIP|CONTENTS_MONSTER|CONTENTS_DEADMONSTER|CONTENTS_PLAYERCLIP));//FIXME: why not MASK_SHOT?
 		
 		if (tr.fraction<1) // hit something
 		{
@@ -252,7 +252,7 @@ void RunMutantFrames (edict_t *ent, usercmd_t *ucmd)
 void Cmd_PlayerToMutant_f (edict_t *ent)
 {
 	vec3_t	boxmin, boxmax;
-	trace_t	tr;
+	//trace_t	tr;
 	int mutant_cubecost = MUTANT_INIT_COST;
 
 	if (debuginfo->value)
@@ -289,16 +289,11 @@ void Cmd_PlayerToMutant_f (edict_t *ent)
         return;
     }
 
-
     // make sure don't get stuck in a wall
     VectorSet (boxmin, -24, -24, -24);
     VectorSet (boxmax, 24, 24, 32);
-    tr = gi.trace(ent->s.origin, boxmin, boxmax, ent->s.origin, ent, MASK_SHOT);
-	if (tr.fraction<1)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Not enough room to morph!\n");
+	if (!PM_MorphPlayerHitbox(ent, boxmin, boxmax))
 		return;
-	}
 
 	V_ModifyMorphedHealth(ent, MORPH_MUTANT, true);
 

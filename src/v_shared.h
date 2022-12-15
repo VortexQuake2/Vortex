@@ -300,6 +300,8 @@ void DroneRemoveSelected(edict_t *ent, edict_t *drone);
 // this should eventually be moved to its own file
 void PM_RestorePlayer(edict_t *ent);
 
+qboolean PM_MorphPlayerHitbox(edict_t* ent, vec3_t boxmin, vec3_t boxmax);
+
 void PM_RemoveMonster(edict_t *monster);
 
 void PM_Effects(edict_t *ent);
