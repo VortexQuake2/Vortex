@@ -768,7 +768,7 @@ void Weapon_Generic(
     if (!ent->myskills.abilities[HASTE].disable || ent->client->pers.inventory[haste_index]) {
         // time when to fire next shot
         float haste_wait = 1;
-        float haste_tech = 1;
+        float haste_tech = INFINITY; // "never"
         float haste_skill = INFINITY; // "never"
 
         if (ent->myskills.abilities[HASTE].current_level >= 1)
