@@ -16,13 +16,13 @@ void RemoveLasers (edict_t *ent)
 
 	while((e = G_Find(e, FOFS(classname), "emitter")) != NULL)
 	{
-		if (e && (e->activator == ent))
+		if (e && (e->creator == ent))
 		{
 			// remove the laser beam
-			if (e->owner)
+			if (e->activator)
 			{
-				e->owner->think = G_FreeEdict;
-				e->owner->nextthink = level.time + FRAMETIME;
+				e->activator->think = G_FreeEdict;
+				e->activator->nextthink = level.time + FRAMETIME;
 				//G_FreeEdict(e->creator);
 			}
 			// remove the emitter
