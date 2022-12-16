@@ -497,12 +497,12 @@ void SV_CalcBlend (edict_t *ent)
 		SV_AddBlend (0.85, 0.7, 0.3, ent->client->bonus_alpha, ent->client->ps.blend);
 
 	// drop the damage value
-	ent->client->damage_alpha -= 0.06;
+	ent->client->damage_alpha -= 0.06 * 10.0 / sv_fps->value;
 	if (ent->client->damage_alpha < 0)
 		ent->client->damage_alpha = 0;
 
 	// drop the bonus value
-	ent->client->bonus_alpha -= 0.1;
+	ent->client->bonus_alpha -= 0.1 * 10.0 / sv_fps->value;
 	if (ent->client->bonus_alpha < 0)
 		ent->client->bonus_alpha = 0;
 }
