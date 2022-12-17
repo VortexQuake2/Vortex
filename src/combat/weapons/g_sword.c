@@ -438,9 +438,16 @@ void Weapon_Sword_Fire (edict_t *ent) {
 	 if ((ent->client->ps.gunframe == 5) && (ent->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1))
 		gi.sound (ent, CHAN_WEAPON, gi.soundindex("misc/power1.wav") , 1, ATTN_NORM, 0);
 
+	 int frames_per_frame = sv_fps->value / 10.0;
+
      if ( ent->client->buttons & BUTTON_ATTACK )
-		sword_attack (ent, vec3_origin, damage);
-     ent->client->ps.gunframe++;
+		sword_attack (ent, vec3_origin, damage / frames_per_frame);
+
+	 ent->client->vrr.stretched_frames++;
+	 if (ent->client->vrr.stretched_frames >= frames_per_frame) {
+		 ent->client->ps.gunframe++;
+		 ent->client->vrr.stretched_frames -= frames_per_frame;
+	 }
 }
 
 void Weapon_Lance_Fire (edict_t *ent) {

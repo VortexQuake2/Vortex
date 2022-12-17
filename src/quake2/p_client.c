@@ -3001,11 +3001,12 @@ void ClientBeginServerFrame (edict_t *ent)
 
 	// run weapon animations if it hasn't been done by a ucmd_t
 	if (!client->weapon_thunk
-//ZOID
+		//ZOID
 		&& ent->movetype != MOVETYPE_NOCLIP
-//ZOID
-		)
-		Think_Weapon (ent);
+		//ZOID
+		) {
+		Think_Weapon(ent);
+	}
 	else
 		client->weapon_thunk = false;
 
