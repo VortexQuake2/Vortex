@@ -1085,7 +1085,11 @@ void Touch_Item(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
 /*static*/ void drop_make_touchable(edict_t *ent) {
     ent->touch = Touch_Item;
     if (deathmatch->value) {
-        ent->nextthink = level.time + 29;
+        // runes are freed after 2 minutes instead of 30 seconds
+        if (ent->vrxitem.itemLevel)
+            ent->nextthink = level.time + 119;
+        else
+            ent->nextthink = level.time + 29;
         ent->think = G_FreeEdict;
     }
 }
