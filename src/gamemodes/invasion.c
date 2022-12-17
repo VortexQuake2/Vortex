@@ -526,7 +526,7 @@ void INV_BossCheck(edict_t *self)
 		invasion_data.boss = NULL;
 }
 
-void INV_OnTimeout() {
+void INV_OnTimeout(edict_t *self) {
 	gi.bprintf(PRINT_HIGH, "Time's up!\n");
 	if (invasion_data.boss && invasion_data.boss->deadflag != DEAD_DEAD) // out of time for the boss.
 	{
@@ -535,18 +535,27 @@ void INV_OnTimeout() {
 		gi.WriteByte(TE_BOSSTPORT);
 		gi.WritePosition(invasion_data.boss->s.origin);
 		gi.multicast(invasion_data.boss->s.origin, MULTICAST_PVS);
-		DroneList_Remove(invasion_data.boss); // az: WHY DID I FORGET THIS
-		G_FreeEdict(invasion_data.boss);
+		//DroneList_Remove(invasion_data.boss); // az: WHY DID I FORGET THIS
+		//G_FreeEdict(invasion_data.boss);
 		invasion_data.boss = NULL;
 	}
+	// remove monsters from the current wave before spawning the next
+	if (self->num_monsters_real)
+		PVM_RemoveAllMonsters(self);
+	// restart the last wave
+	invasion_difficulty_level -= 1;
 
 	// increase the difficulty level for the next wave
-	if (invasion->value == 1)
-		invasion_difficulty_level += 1;
-	else
-		invasion_difficulty_level += 2; // Hard mode.
+	//if (invasion->value == 1)
+	//	invasion_difficulty_level += 1;
+	//else
+	//	invasion_difficulty_level += 2; // Hard mode.
 	invasion_data.printedmessage = 0;
 	gi.sound(&g_edicts[0], CHAN_VOICE, gi.soundindex("misc/tele_up.wav"), 1, ATTN_NONE, 0);
+
+	// start spawning
+	self->nextthink = level.time + FRAMETIME;
+	self->count = MONSTERSPAWN_STATUS_WORKING;
 }
 
 void INV_ShowLastWaveSummary() {
@@ -713,12 +722,14 @@ void INV_SpawnMonsters(edict_t *self)
 		else
 		{
 			// Timeout. We go straight to the working state.
-			INV_OnTimeout();
-			self->count = MONSTERSPAWN_STATUS_WORKING;
+			INV_OnTimeout(self);
+			//self->count = MONSTERSPAWN_STATUS_WORKING;
+			return;
 		}
 	}
 
 	// Working State
+	//gi.dprintf("%d: level: %d max_monsters: %d\n", (int)(level.framenum), invasion_difficulty_level, max_monsters);
 	// if there's nobody playing, then wait until some join
 	if (players < 1)
 	{
@@ -760,6 +771,7 @@ void INV_SpawnMonsters(edict_t *self)
 		invasion_data.printedmessage = 0;
 		invasion_data.mspawned = 0;
 		self->count = MONSTERSPAWN_STATUS_IDLE;
+		//gi.dprintf("invasion level now: %d\n", invasion_difficulty_level);
 	}
 }
 

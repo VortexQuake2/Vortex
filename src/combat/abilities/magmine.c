@@ -166,13 +166,12 @@ void magmine_spawn(edict_t *ent, int cost, float skill_mult, float delay_mult) {
         G_FreeEdict(mine);
         return;
     }
-
     VectorCopy(tr.endpos, mine->s.origin);
-
-    safe_cprintf(ent, PRINT_HIGH, "Mag mine built (%d/%d).\n", ent->num_magmine, (int)MAGMINE_MAX_COUNT);
 
     //ent->magmine = mine; // link to owner
     ent->num_magmine++;
+    safe_cprintf(ent, PRINT_HIGH, "Mag mine built (%d/%d).\n", ent->num_magmine, (int)MAGMINE_MAX_COUNT);
+
     ent->client->pers.inventory[power_cube_index] -= cost;
     ent->client->ability_delay = level.time + MAGMINE_DELAY * delay_mult;
     ent->holdtime = level.time + MAGMINE_DELAY * delay_mult;
@@ -239,7 +238,7 @@ void Cmd_SpawnMagmine_f(edict_t *ent) {
         return;
     }
 
-    if (ent->num_proxy >= (int)PROXY_MAX_COUNT)
+    if (ent->num_magmine >= (int)MAGMINE_MAX_COUNT)
     {
         safe_cprintf(ent, PRINT_HIGH, "Can't build any more mag mines.\n");
         return;

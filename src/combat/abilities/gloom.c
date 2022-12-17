@@ -268,8 +268,8 @@ qboolean healer_validtarget(edict_t* self, edict_t* target)
 		return false;
 
 	// make sure we have an unobstructed path to target
-	if (!G_ClearShot(self, NULL, target))
-		return false;
+	//if (!G_ClearShot(self, NULL, target))
+	//	return false;
 
 	velocity = VectorLength(target->velocity);
 	// make sure target is touching the ground and isn't moving
