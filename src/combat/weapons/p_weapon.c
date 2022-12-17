@@ -515,6 +515,7 @@ A generic function to handle the basics of weapon thinking
 #define FRAME_DEACTIVATE_FIRST    (FRAME_IDLE_LAST + 1)
 
 #define T_EPSILON 0.001
+#ifdef DEBUG_WEAPONS
 void print_wp_state(edict_t* ent, char* state)
 {
 	gi.dprintf("%f\t%f\t%f\t%d\t%d\t%s\n",
@@ -526,6 +527,9 @@ void print_wp_state(edict_t* ent, char* state)
 		state
 	);
 }
+#else
+#define print_wp_state(...) 
+#endif
 
 void Weapon_Generic2(edict_t* ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST, int FRAME_IDLE_LAST,
 	int FRAME_DEACTIVATE_LAST, int* pause_frames, int* fire_frames, void (*fire)(edict_t* ent)) {
