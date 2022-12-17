@@ -325,6 +325,7 @@ qboolean SpawnWaitingPlayers(void);
 // drone/monster pathfinding/grid stuff
 #define SEARCHTYPE_WALK 1	// find nodes on horizontal plane with limited Z delta
 #define SEARCHTYPE_FLY	2	// find nodes regardless of Z delta between start end ending positions
+void G_Spawn_Trails(int type, vec3_t start, vec3_t endpos);
 
 // etc
 int vrx_get_ability_upgrade_cost(int index);

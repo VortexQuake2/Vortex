@@ -182,6 +182,32 @@ edict_t* INV_ClosestNaviAny(edict_t* self) {
     return ret;
 }
 
+void DrawNavi(edict_t* ent)
+{
+	float		dist, flrht;
+	edict_t*	navi=NULL;
+	vec3_t		start, end;
+	trace_t		tr;
+
+	if (((navi = INV_ClosestNaviAny(ent)) != NULL) && navi->target_ent)
+	{
+		VectorCopy(navi->s.origin, start);
+		VectorCopy(navi->target_ent->s.origin, end);
+		dist = distance(start, end);
+		// spawn bfg laser trails between two chained navis
+		G_Spawn_Trails(TE_BFG_LASER, start, end);
+
+		// calculate distance from floor - start node
+		VectorCopy(start, end);
+		end[2] -= 8192;
+		tr = gi.trace(start, NULL, NULL, end, ent, MASK_SOLID);
+		flrht = start[2] - tr.endpos[2];
+
+		if (!(level.framenum % 20))
+			safe_centerprintf(ent, "Navi %s --> navi %s, height: %.0f distance: %.0f\n", navi->targetname, navi->target, flrht, distance);
+	}
+}
+
 edict_t *drone_findnavi(edict_t *self)
 {
 #if 0

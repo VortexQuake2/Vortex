@@ -842,6 +842,7 @@ void brain_fire_beam(edict_t *self);
 // class_demon.c
 void PlagueCloudSpawn(edict_t *ent);
 
+void DrawNavi(edict_t* ent);
 
 void vrx_client_think(edict_t *ent) {
     int max_armor;    // 3.5 max armor client can hold
@@ -854,7 +855,7 @@ void vrx_client_think(edict_t *ent) {
         if (ent->client->showGridDebug >= 2)
             DrawChildLinks(ent);
     }
-
+    //DrawNavi(ent);
     //DrawPath();
 
     // 3.5 don't stuff player commands all at once, or they will overflow

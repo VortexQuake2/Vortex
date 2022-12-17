@@ -261,7 +261,7 @@ void myTankBlaster(edict_t* self)
 		flash_number = MZ2_TANK_BLASTER_3;
 
 	damage = M_BLASTER_DMG_BASE + M_BLASTER_DMG_ADDON * self->monsterinfo.level;
-	if (M_BLASTER_DMG_BASE && damage > M_BLASTER_DMG_MAX)
+	if (M_BLASTER_DMG_MAX && damage > M_BLASTER_DMG_MAX)
 		damage = M_BLASTER_DMG_MAX;
 
 	speed = M_BLASTER_SPEED_BASE + M_BLASTER_SPEED_ADDON * self->monsterinfo.level;
