@@ -16,13 +16,13 @@ void RemoveLasers (edict_t *ent)
 
 	while((e = G_Find(e, FOFS(classname), "emitter")) != NULL)
 	{
-		if (e && (e->activator == ent))
+		if (e && (e->creator == ent))
 		{
 			// remove the laser beam
-			if (e->creator)
+			if (e->activator)
 			{
-				e->creator->think = G_FreeEdict;
-				e->creator->nextthink = level.time + FRAMETIME;
+				e->activator->think = G_FreeEdict;
+				e->activator->nextthink = level.time + FRAMETIME;
 				//G_FreeEdict(e->creator);
 			}
 			// remove the emitter
@@ -74,10 +74,10 @@ void laser_remove (edict_t *self)
 	self->nextthink = level.time+FRAMETIME;
 
 	// remove laser beam
-	if (self->creator && self->creator->inuse)
+	if (self->owner && self->owner->inuse)
 	{
-		self->creator->think = G_FreeEdict;
-		self->creator->nextthink = level.time+FRAMETIME;
+		self->owner->think = G_FreeEdict;
+		self->owner->nextthink = level.time+FRAMETIME;
 	}
 
 	// decrement laser counter
@@ -105,7 +105,7 @@ void laser_beam_think (edict_t *self)
 	trace_t tr;
 
 	// can't have a laser beam without an emitter!
-	if (!self->creator)
+	if (!self->owner)
 	{
 		G_FreeEdict(self);
 		return;
@@ -126,7 +126,7 @@ void laser_beam_think (edict_t *self)
 	// trace from beam emitter out as far as we can go
 	AngleVectors(self->s.angles, forward, NULL, NULL);
 	VectorMA(self->pos1, 8192, forward, self->pos2);
-	tr = gi.trace (self->pos1, NULL, NULL, self->pos2, self->creator, MASK_SHOT);
+	tr = gi.trace (self->pos1, NULL, NULL, self->pos2, self->owner, MASK_SHOT);
 	VectorCopy(tr.endpos, self->s.origin);
 	VectorCopy(self->pos1, self->s.old_origin);
 
@@ -147,8 +147,8 @@ void laser_beam_think (edict_t *self)
 		// remove lasers near spawn positions
 		if (tr.ent->client && (tr.ent->client->respawn_time-1.5 > level.time))
 		{
-			safe_cprintf(self->activator, PRINT_HIGH, "Laser touched respawning player, so it was removed. (%d/%d remain)\n", self->activator->num_lasers, MAX_LASERS);
-			laser_remove(self->creator);
+			safe_cprintf(self->activator, PRINT_HIGH, "Laser touched respawning player, so it was removed. (%d/%d remain)\n", self->activator->num_lasers, (int)MAX_LASERS);
+			laser_remove(self->owner);
 			return;
 		}
 
@@ -186,21 +186,21 @@ void laser_beam_think (edict_t *self)
 	self->nextthink = level.time + FRAMETIME;
 }
 
-void laser_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
+void emitter_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
-	//gi.dprintf("laser_touch\n");
+	//gi.dprintf("emitter_touch\n");
 	//gi.dprintf("%s %s %s\n", OnSameTeam(ent, other)?"y":"n", ent->health<ent->max_health?"y":"n", level.framenum>ent->monsterinfo.regen_delay1?"y":"n");
 
 	if (G_EntIsAlive(other) && other->client && OnSameTeam(ent, other) // a player on our team
 		&& other->client->pers.inventory[power_cube_index] >= 5 // has power cubes
-		&& ent->creator->health < 0.5*ent->creator->max_health // only repair below 50% health (to prevent excessive cube use/repair noise)
-		&& level.framenum > ent->creator->monsterinfo.regen_delay1) // check delay
+		&& ent->activator->health < 0.5*ent->activator->max_health // only repair below 50% health (to prevent excessive cube use/repair noise)
+		&& level.framenum > ent->activator->monsterinfo.regen_delay1) // check delay
 	{
-		ent->creator->health = ent->creator->max_health;
+		ent->activator->health = ent->activator->max_health;
 		other->client->pers.inventory[power_cube_index] -= 5;
-		ent->creator->monsterinfo.regen_delay1 = level.framenum + 2 / FRAMETIME;
+		ent->activator->monsterinfo.regen_delay1 = level.framenum + 2 / FRAMETIME;
 		gi.sound(other, CHAN_VOICE, gi.soundindex("weapons/repair.wav"), 1, ATTN_NORM, 0);
-		safe_cprintf(other, PRINT_HIGH, "Emitter repaired. Maximum output: %d/%d damage.\n", ent->creator->health, ent->creator->max_health);
+		safe_cprintf(other, PRINT_HIGH, "Emitter repaired. Maximum output: %d/%d damage.\n", ent->activator->health, ent->activator->max_health);
 	}
 
 }
@@ -215,7 +215,7 @@ void emitter_think (edict_t *self)
 	}*/
 
 	// flash yellow when we are about to expire
-	if (self->creator->health < (0.1 * self->creator->max_health))
+	if (self->activator->health < (0.1 * self->activator->max_health))
 	{
 		if (sf2qf(level.framenum) & 8)
 		{
@@ -298,8 +298,8 @@ void SpawnLaser (edict_t *ent, int cost, float skill_mult, float delay_mult)
 	laser->s.modelindex = 1; // must be non-zero
 	laser->s.sound = gi.soundindex ("world/laser.wav");
 	laser->classname = "laser";
-    laser->owner = laser->activator = ent; // link to player
-	laser->creator = grenade; // link to grenade
+    laser->creator = laser->activator = ent; // link to player
+	laser->owner = grenade; // link to grenade
 	laser->s.skinnum = 0xf2f2f0f0; // red beam color
     laser->think = laser_beam_think;
 	laser->nextthink = level.time + LASER_SPAWN_DELAY * delay_mult;
@@ -325,14 +325,14 @@ void SpawnLaser (edict_t *ent, int cost, float skill_mult, float delay_mult)
 	VectorSet(grenade->maxs, 3, 3, 6);
 	grenade->takedamage = DAMAGE_NO;
 	grenade->s.modelindex = gi.modelindex("models/objects/grenade2/tris.md2");
-    grenade->activator = ent; // link to player
-    grenade->creator = laser; // link to laser
+    grenade->creator = ent; // link to player
+    grenade->activator = laser; // link to laser
 	grenade->classname = "emitter";
 	grenade->mtype = M_LASER;//4.5
 	grenade->nextthink = level.time+FRAMETIME;//delay; // time before self-destruct
 	//grenade->delay = level.time + delay;//4.4 time before self destruct
 	grenade->think = emitter_think;//laser_remove;
-	grenade->touch = laser_touch;//4.4
+	grenade->touch = emitter_touch;//4.4
 	gi.linkentity(grenade);
 
 	// cost is doubled if you are a flyer or cacodemon below skill level 5
