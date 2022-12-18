@@ -517,7 +517,7 @@ void RunMedicFrames (edict_t *ent, usercmd_t *ucmd)
 void Cmd_PlayerToMedic_f (edict_t *ent)
 {
 	vec3_t	boxmin, boxmax;
-	trace_t	tr;
+	//trace_t	tr;
 	int cost = MEDIC_INIT_COST;
 	//Talent: More Ammo
     int talentLevel = vrx_get_talent_level(ent, TALENT_MORE_AMMO);
