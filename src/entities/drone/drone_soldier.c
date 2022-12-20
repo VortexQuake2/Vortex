@@ -177,7 +177,7 @@ void soldier_firerocket(edict_t* self)
 		return;
 
 	damage = M_ROCKETLAUNCHER_DMG_BASE + M_ROCKETLAUNCHER_DMG_ADDON * self->monsterinfo.level;
-	if (damage > M_ROCKETLAUNCHER_DMG_MAX)
+	if (M_ROCKETLAUNCHER_DMG_MAX && damage > M_ROCKETLAUNCHER_DMG_MAX)
 		damage = M_ROCKETLAUNCHER_DMG_MAX;
 	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * self->monsterinfo.level;
 	if (M_ROCKETLAUNCHER_SPEED_MAX && speed > M_ROCKETLAUNCHER_SPEED_MAX)
