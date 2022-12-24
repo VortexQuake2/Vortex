@@ -85,18 +85,20 @@ void DroneList_Insert(edict_t* new_ent)
 /* we don't free it, we just remove it from the list */
 void DroneList_Remove(edict_t *ent)
 {
+	// is monster index within valid range of list?
 	if (ent->monsterinfo.dronelist_index >= 0 && ent->monsterinfo.dronelist_index < DroneCount) {
         int index = ent->monsterinfo.dronelist_index;
+		// have we found this monster within the drone list?
 	    if (DroneList[index] == ent) { // follows the same logic as player spawn list
-	        DroneCount--;
+	        DroneCount--; // reduce the count, and hence, the length of the list, by 1
 
-	        DroneList[index] = DroneList[DroneCount];
-	        if (DroneList[index])
+	        DroneList[index] = DroneList[DroneCount]; // move the last monster on the list to this position
+	        if (DroneList[index]) // if the list wasn't empty, then update this monster's index to the new position
                 DroneList[index]->monsterinfo.dronelist_index = index;
 
-	        DroneList[DroneCount] = NULL;
+	        DroneList[DroneCount] = NULL; // we moved the monster at the end of the list, so now the end of the list is NULL
 
-	        ent->monsterinfo.dronelist_index = -1;
+	        ent->monsterinfo.dronelist_index = -1; // this monster has been removed from the drone list
 	    }
 #ifdef _DEBUG
         else {
@@ -131,6 +133,33 @@ void DroneList_Remove(edict_t *ent)
 #endif
 }
 
+void DroneList_Print(edict_t* ent, edict_t *owner)
+{
+	for (int i = 0; i < DroneCount; i++)
+	{
+		if (!DroneList[i])
+		{
+			gi.dprintf("index %d: NULL\n", i);
+			continue;
+		}
+		if (ent && DroneList[i] == ent)
+		{
+			// found the monster we're looking for
+			gi.dprintf("index %d=%d: %s (this monster)\n", i, ent->monsterinfo.dronelist_index, V_GetMonsterName(ent));
+		}
+		else if (owner && DroneList[i]->activator && DroneList[i]->activator == owner)
+		{
+			// found monster we own
+			gi.dprintf("index %d=%d: %s (activator-owned monster)\n", i, DroneList[i]->monsterinfo.dronelist_index, V_GetMonsterName(DroneList[i]));
+		}
+		else
+		{
+			gi.dprintf("index %d=%d: %s (other monster)\n", i, DroneList[i]->monsterinfo.dronelist_index, V_GetMonsterName(DroneList[i]));
+			// found a different monster owned by someone else
+		}
+	}
+
+}
 // end Drone Lists
 
 qboolean drone_ValidChaseTarget (edict_t *self, edict_t *target)
@@ -960,6 +989,9 @@ void RemoveDrone (edict_t *ent)
 	trace_t	tr;
 	edict_t	*e=NULL, *n = NULL;
 
+	//gi.dprintf("DroneList before:\n");
+	//DroneList_Print(NULL, ent);
+
 	// get muzzle origin
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
 	VectorSet(offset, 0, 7,  ent->viewheight-8);
@@ -992,23 +1024,23 @@ void RemoveDrone (edict_t *ent)
 
 	while (e)
 	{
-		n = DroneList_Next(e);
 		if (e && e->activator && (e->activator == ent))
 		{
 			// try to convert back to previous owner
 			if (RestorePreviousOwner(e))
 				continue;
-
 			M_Remove(e, true, true);
 		}
-
-		e = n;
+		e = DroneList_Next(e);
 	}
 
 	// clear all slots
 	DroneRemoveSelected(ent, NULL);
 	ent->num_monsters = 0;
 	safe_cprintf(ent, PRINT_HIGH, "All monsters removed.\n");
+
+	//gi.dprintf("DroneList after:\n");
+	//DroneList_Print(NULL, ent);
 
 }
 
@@ -2550,9 +2582,10 @@ void Cmd_Drone_f (edict_t *ent)
 
 	if (!Q_strcasecmp(s, "help"))
 	{
-		safe_cprintf(ent, PRINT_HIGH, "Available monster commands:\n");
-		//safe_cprintf(ent, PRINT_HIGH, "monster gunner\nmonster parasite\nmonster brain\nmonster bitch\nmonster medic\nmonster tank\nmonster mutant\nmonster select\nmonster move\nmonster remove\nmonster hunt\nmonster count\n");
-		safe_cprintf(ent, PRINT_HIGH, "monster gunner\nmonster parasite\nmonster brain\nmonster praetor\nmonster medic\nmonster tank\nmonster mutant\nmonster gladiator\nmonster enforcer\nmonster command\nmonster follow me\nmonster remove\nmonster count\n");
+		safe_cprintf(ent, PRINT_HIGH, "Monster summoning:\n");
+		safe_cprintf(ent, PRINT_HIGH, "monster [gunner|parasite|brain|praetor|medic|tank|mutant|gladiator|berserker|soldier|enforcer|flyer|floater|hover\n");
+		safe_cprintf(ent, PRINT_HIGH, "Monster utility commands:\n");
+		safe_cprintf(ent, PRINT_HIGH, "monster [remove|command|follow me|count|attack]\n");
 		return;
 	}
 
@@ -2596,8 +2629,8 @@ void Cmd_Drone_f (edict_t *ent)
 		vrx_create_new_drone(ent, 13, false, true);
 	else if (!Q_strcasecmp(s, "hover"))
 		vrx_create_new_drone(ent, 14, false, true);
-	else if (!Q_strcasecmp(s, "jorg"))
-        vrx_create_new_drone(ent, 32, false, true);
+	//else if (!Q_strcasecmp(s, "jorg"))
+    //    vrx_create_new_drone(ent, 32, false, true);
 	else 
 
 
