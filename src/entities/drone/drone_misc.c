@@ -987,7 +987,7 @@ void RemoveDrone (edict_t *ent)
 {
 	vec3_t	forward, right, start, end, offset;
 	trace_t	tr;
-	edict_t	*e=NULL, *n = NULL;
+	edict_t* e = NULL;//, * n = NULL;
 
 	//gi.dprintf("DroneList before:\n");
 	//DroneList_Print(NULL, ent);

@@ -2445,19 +2445,19 @@ and cannot be re-spawned
 qboolean drone_validposition (edict_t *self)
 {
 	//trace_t		tr;
-	qboolean	respawned = false;
+	//qboolean	respawned = false;
 
 	if (gi.pointcontents(self->s.origin) & CONTENTS_SOLID)
 	{
-		if (self->activator && self->activator->inuse && !self->activator->client)
-			respawned = vrx_find_random_spawn_point(self, false);
+		//if (self->activator && self->activator->inuse && !self->activator->client)
+		//	respawned = vrx_find_random_spawn_point(self, false);
 		
-		if (!respawned)
-		{
+		//if (!respawned)
+		//{
 			WriteServerMsg("A drone was removed from a solid object.", "Info", true, false);
 			M_Remove(self, true, false);
 			return false;
-		}
+		//}
 	}
 	return true;
 }
