@@ -512,10 +512,14 @@ float TimeFormula()
 
 // we'll override the other die functino to set our boss pointer to NULL.
 void mytank_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point);
+void makron_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point);
 
-void invasiontank_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
+void invasion_boss_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	mytank_die(self, inflictor, attacker, damage, point);
+	if (self->mtype == M_COMMANDER)
+		mytank_die(self, inflictor, attacker, damage, point);
+	else if (self->mtype == M_MAKRON)
+		makron_die(self, inflictor, attacker, damage, point);
 	invasion_data.boss = NULL;
 }
 
@@ -531,7 +535,7 @@ void INV_BossCheck(edict_t *self)
 		{
 			if (!invasion_data.boss)
 			{
-				if (!(invasion_data.boss = INV_SpawnDrone(self, e, 30)))
+				if (!(invasion_data.boss = INV_SpawnDrone(self, e, GetRandom(30,31))))
 				{
 					iter++;
 
@@ -542,8 +546,8 @@ void INV_BossCheck(edict_t *self)
 				}
 				bcount++;
 				total_monsters++;
-				invasion_data.boss->die = invasiontank_die;
-				G_PrintGreenText(va("A level %d tank commander has spawned!", invasion_data.boss->monsterinfo.level));
+				invasion_data.boss->die = invasion_boss_die;
+				G_PrintGreenText(va("A level %d %s has spawned!", invasion_data.boss->monsterinfo.level, V_GetMonsterName(invasion_data.boss)));
 				break;
 			}
 		}
@@ -556,7 +560,7 @@ void INV_OnTimeout(edict_t *self) {
 	gi.bprintf(PRINT_HIGH, "Time's up!\n");
 	if (invasion_data.boss && invasion_data.boss->deadflag != DEAD_DEAD) // out of time for the boss.
 	{
-		G_PrintGreenText("You failed to eliminate the commander soon enough!\n");
+		G_PrintGreenText(va("You failed to kill the %s soon enough!", V_GetMonsterName(invasion_data.boss)));
 		gi.WriteByte(svc_temp_entity);
 		gi.WriteByte(TE_BOSSTPORT);
 		gi.WritePosition(invasion_data.boss->s.origin);

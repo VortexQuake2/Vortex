@@ -776,8 +776,9 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	drone->monsterinfo.sight_range = 1024; // 3.56 default sight range for finding targets
 	drone->inuse = true;
 
-	switch(drone_type)
+	switch(drone_type) // not to be confused with mtype!
 	{
+	// normal monsters
 	case 1: init_drone_gunner(drone);		break;
 	case 2: init_drone_parasite(drone);		break;
 	case 3: init_drone_bitch(drone);		break;
@@ -793,15 +794,17 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	case 13: init_drone_floater(drone);		break;
 	case 14: init_drone_hover(drone);		break;
 	case 20: init_drone_decoy(drone);		break;
+	// bosses
 	case 30: init_drone_commander(drone);	break;
-	case 31: init_drone_supertank(drone);	break;
-	case 32: init_drone_jorg(drone);		break;
-	case 33: init_drone_makron(drone);		break;
+	case 31: init_drone_makron(drone);		break;
+	case 32: init_drone_supertank(drone);	break;
+	case 33: init_drone_jorg(drone);		break;
+	// default
 	default: init_drone_gunner(drone);		break;
 	}
 
 	//4.0 gib health based on monster control cost
-	if (drone_type != 30)
+	if (drone_type < 30)
 		drone->gib_health = -drone->monsterinfo.control_cost * BASE_GIB_HEALTH * M_CONTROL_COST_SCALE;
 	else
 		drone->gib_health = 0;//gib boss immediately
@@ -815,7 +818,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	//4.5 monster bonus flags
 	if (drone->monsterinfo.bonus_flags & BF_UNIQUE_FIRE
 		|| drone->monsterinfo.bonus_flags & BF_UNIQUE_LIGHTNING)
-		mult *= 25;
+		mult *= 10;
 	else if (drone->monsterinfo.bonus_flags & BF_CHAMPION)
 		mult *= 3.0;
 	else if (drone->monsterinfo.bonus_flags & BF_BERSERKER)
