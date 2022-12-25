@@ -427,7 +427,7 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
 
 	tr = gi.trace(start, monster->mins, monster->maxs, start, NULL, MASK_SHOT);
 
-	if (index != 30) // not a boss?
+	if (index < 30) // not a boss?
 	{
 		// don't spawn here if a friendly monster occupies this space
 		if ((tr.fraction < 1) || (tr.ent && tr.ent->inuse && tr.ent->activator && tr.ent->activator->inuse
@@ -462,8 +462,8 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
 
 	monster->max_health = monster->health = monster->max_health*mhealth;
 
-	// move the monster onto the spawn pad if it's not a commander
-	if (index != 30)
+	// move the monster onto the spawn pad if it's not a boss
+	if (index < 30)
 	{
 		VectorCopy(start, monster->s.origin);
 		VectorCopy(start, monster->s.old_origin);
@@ -474,7 +474,7 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
 	// az: non-bosses get quad/inven for preventing spawn camp
 	// bosses don't get it because it makes it inevitable for the players
 	// to lose spawns sometimes.
-	if (index != 30) {
+	if (index < 30) {
 		if (spawn_point->count)
 			monster->monsterinfo.inv_framenum = level.framenum + spawn_point->count;
 		else

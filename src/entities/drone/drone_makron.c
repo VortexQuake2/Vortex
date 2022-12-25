@@ -424,6 +424,7 @@ void makron_reattack_railgun(edict_t* self)
 	// if our enemy is still valid, then continue firing
 	if (G_ValidTarget(self, self->enemy, true) && (random() <= 0.9))
 	{
+		MakronRailgun(self);
 		self->s.frame = FRAME_attak509;
 		return;
 	}
@@ -621,7 +622,7 @@ void init_drone_makron (edict_t *self)
 		self->health = 2000 * self->monsterinfo.level;
 	else
 		self->health = 3000 * self->monsterinfo.level;
-	self->health = self->max_health;
+	self->max_health = self->health;
 	self->monsterinfo.power_armor_power = 5000 * self->monsterinfo.level;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
