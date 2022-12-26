@@ -1,7 +1,7 @@
-
-
-
 #include "g_local.h"
+
+#define MAGMINE_FRAMES_START	1
+#define MAGMINE_FRAMES_END		5
 
 void magmine_throwsparks(edict_t *self) {
     int i;
@@ -98,21 +98,32 @@ void magmine_think(edict_t *self) {
         return;
     }
 
+    qboolean shouldCallThrowSparks = false;
     if (!self->enemy) {
         if (magmine_findtarget(self)) {
             magmine_attack(self);
-            magmine_throwsparks(self);
+            shouldCallThrowSparks = true;
         }
     } else if (G_ValidTarget(self, self->enemy, true)
                && (entdist(self, self->enemy) <= self->dmg_radius)) {
         magmine_attack(self);
-        magmine_throwsparks(self);
+        shouldCallThrowSparks = true;
     } else {
         self->enemy = NULL;
     }
 
-    //magmine_seteffects(self);
-    M_SetEffects(self);//4.5
+    if (shouldCallThrowSparks) {
+        magmine_throwsparks(self);
+    }
+
+    // Animate the mag mine
+	self->s.frame++;
+	if (self->s.frame > MAGMINE_FRAMES_END)
+		self->s.frame = MAGMINE_FRAMES_START;
+    
+    // Set shell color
+    M_SetEffects(self);
+
     self->nextthink = level.time + FRAMETIME;
 }
 
@@ -133,12 +144,12 @@ void magmine_spawn(edict_t *ent, int cost, float skill_mult, float delay_mult) {
     mine = G_Spawn();
     mine->creator = ent;
     VectorCopy(ent->s.angles, mine->s.angles);
-    mine->s.angles[PITCH] = 270;
+    mine->s.angles[PITCH] = 0;
     mine->s.angles[ROLL] = 0;
     mine->think = magmine_think;
     mine->touch = V_Touch;
     mine->nextthink = level.time + FRAMETIME;
-    mine->s.modelindex = gi.modelindex("models/objects/minelite/light1/tris.md2");
+    mine->s.modelindex = gi.modelindex("models/objects/magmine/tris.md2");
     mine->solid = SOLID_BBOX;
     mine->movetype = MOVETYPE_TOSS;
     mine->clipmask = MASK_MONSTERSOLID;
