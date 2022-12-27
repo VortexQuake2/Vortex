@@ -1212,6 +1212,9 @@ qboolean G_ValidTargetEnt(const edict_t *target, qboolean alive) {
 
 qboolean G_ValidTarget(const edict_t *self, const edict_t *target, qboolean vis)
 {
+	if (!target)
+		return false;
+
 	if (trading->value && !(target->flags & FL_NO_TRADING_PROTECT))
 		return false;
 
