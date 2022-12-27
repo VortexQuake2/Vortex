@@ -602,12 +602,14 @@ void SVCmd_SpawnBoss_f (void)
     if (!m_worldspawn)
         m_worldspawn = world;
 
-    if (!strcmp(gi.argv(2), "tank"))
+    if (!strcmp(gi.argv(2), "commander"))
         vrx_create_new_drone(m_worldspawn, 30, true, true);
-    else if (!strcmp(gi.argv(2), "supertank"))
+    else if (!strcmp(gi.argv(2), "makron"))
         vrx_create_new_drone(m_worldspawn, 31, true, true);
-    else if (!strcmp(gi.argv(2), "jorg"))
+    else if (!strcmp(gi.argv(2), "supertank"))
         vrx_create_new_drone(m_worldspawn, 32, true, true);
+    else if (!strcmp(gi.argv(2), "jorg"))
+        vrx_create_new_drone(m_worldspawn, 33, true, true);
     else
         safe_cprintf(NULL, PRINT_HIGH, "Invalid boss type. Usage: sv spawnboss <type>\n");
 }
@@ -767,10 +769,12 @@ void SV_AddMapToMaplist()
         safe_cprintf(NULL, PRINT_HIGH, "%s: file couldn't be opened... opening in write mode.\n", filename);
         fp = fopen(filename, "w");
         IsAppend = false;
-        if (!fp)
-            safe_cprintf(NULL, PRINT_HIGH, "Nope. Not in writing mode neither.\n");
+        if (!fp) {
+            safe_cprintf(NULL, PRINT_HIGH, "Nope. Not in writing mode either.\n");
+            return;
+        }
     }
-
+    
     fprintf(fp, "%s\n", map);
     fclose(fp);
 }

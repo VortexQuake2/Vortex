@@ -1,7 +1,7 @@
 # Cmake script based off several sources, including cleancodequake2.
 
 # Specify minimum version of CMake required
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.0)
 
 # Project name
 project (VortexQuake2)
@@ -30,6 +30,7 @@ elseif (UNIX)
   execute_process (COMMAND uname -m COMMAND sed s/i.86/i386/ COMMAND tr -d \n OUTPUT_VARIABLE ARCH)
   set (CC_LIB_NAME game${ARCH})
   #file (GLOB CC_PLATFORM_FILES source/Platform/unix/*)
+  link_libraries(dl m)
 else ()
   message (FATAL "Unknown platform")
 endif ()

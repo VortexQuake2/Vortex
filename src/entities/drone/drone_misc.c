@@ -1,5 +1,6 @@
 #include "g_local.h"
 #include "../../gamemodes/ctf.h"
+#include "../../gamemodes/invasion.h"
 #include "../../characters/class_limits.h"
 
 // number of seconds monsters will blink after being selected or issued commands
@@ -30,6 +31,7 @@ void init_drone_flyer (edict_t* self);
 void init_drone_floater(edict_t* self);
 void init_drone_hover(edict_t* self);
 int crand (void);
+edict_t* INV_GetMonsterSpawn(edict_t* from);
 
 // Drone Lists -az
 
@@ -85,18 +87,20 @@ void DroneList_Insert(edict_t* new_ent)
 /* we don't free it, we just remove it from the list */
 void DroneList_Remove(edict_t *ent)
 {
+	// is monster index within valid range of list?
 	if (ent->monsterinfo.dronelist_index >= 0 && ent->monsterinfo.dronelist_index < DroneCount) {
         int index = ent->monsterinfo.dronelist_index;
+		// have we found this monster within the drone list?
 	    if (DroneList[index] == ent) { // follows the same logic as player spawn list
-	        DroneCount--;
+	        DroneCount--; // reduce the count, and hence, the length of the list, by 1
 
-	        DroneList[index] = DroneList[DroneCount];
-	        if (DroneList[index])
+	        DroneList[index] = DroneList[DroneCount]; // move the last monster on the list to this position
+	        if (DroneList[index]) // if the list wasn't empty, then update this monster's index to the new position
                 DroneList[index]->monsterinfo.dronelist_index = index;
 
-	        DroneList[DroneCount] = NULL;
+	        DroneList[DroneCount] = NULL; // we moved the monster at the end of the list, so now the end of the list is NULL
 
-	        ent->monsterinfo.dronelist_index = -1;
+	        ent->monsterinfo.dronelist_index = -1; // this monster has been removed from the drone list
 	    }
 #ifdef _DEBUG
         else {
@@ -131,6 +135,33 @@ void DroneList_Remove(edict_t *ent)
 #endif
 }
 
+void DroneList_Print(edict_t* ent, edict_t *owner)
+{
+	for (int i = 0; i < DroneCount; i++)
+	{
+		if (!DroneList[i])
+		{
+			gi.dprintf("index %d: NULL\n", i);
+			continue;
+		}
+		if (ent && DroneList[i] == ent)
+		{
+			// found the monster we're looking for
+			gi.dprintf("index %d=%d: %s (this monster)\n", i, ent->monsterinfo.dronelist_index, V_GetMonsterName(ent));
+		}
+		else if (owner && DroneList[i]->activator && DroneList[i]->activator == owner)
+		{
+			// found monster we own
+			gi.dprintf("index %d=%d: %s (activator-owned monster)\n", i, DroneList[i]->monsterinfo.dronelist_index, V_GetMonsterName(DroneList[i]));
+		}
+		else
+		{
+			gi.dprintf("index %d=%d: %s (other monster)\n", i, DroneList[i]->monsterinfo.dronelist_index, V_GetMonsterName(DroneList[i]));
+			// found a different monster owned by someone else
+		}
+	}
+
+}
 // end Drone Lists
 
 qboolean drone_ValidChaseTarget (edict_t *self, edict_t *target)
@@ -459,7 +490,7 @@ void drone_death (edict_t *self, edict_t *attacker)
 
 		// world monsters sometimes drop ammo
 		if (self->activator && !self->activator->client
-			&& self->item && (random() >= 0.8))
+			&& self->item && (random() >= 0.2))
 			Drop_Item(self, self->item);
 	}
 
@@ -747,8 +778,9 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	drone->monsterinfo.sight_range = 1024; // 3.56 default sight range for finding targets
 	drone->inuse = true;
 
-	switch(drone_type)
+	switch(drone_type) // not to be confused with mtype!
 	{
+	// normal monsters
 	case 1: init_drone_gunner(drone);		break;
 	case 2: init_drone_parasite(drone);		break;
 	case 3: init_drone_bitch(drone);		break;
@@ -764,15 +796,17 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	case 13: init_drone_floater(drone);		break;
 	case 14: init_drone_hover(drone);		break;
 	case 20: init_drone_decoy(drone);		break;
+	// bosses
 	case 30: init_drone_commander(drone);	break;
-	case 31: init_drone_supertank(drone);	break;
-	case 32: init_drone_jorg(drone);		break;
-	case 33: init_drone_makron(drone);		break;
+	case 31: init_drone_makron(drone);		break;
+	case 32: init_drone_supertank(drone);	break;
+	case 33: init_drone_jorg(drone);		break;
+	// default
 	default: init_drone_gunner(drone);		break;
 	}
 
 	//4.0 gib health based on monster control cost
-	if (drone_type != 30)
+	if (drone_type < 30)
 		drone->gib_health = -drone->monsterinfo.control_cost * BASE_GIB_HEALTH * M_CONTROL_COST_SCALE;
 	else
 		drone->gib_health = 0;//gib boss immediately
@@ -786,7 +820,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	//4.5 monster bonus flags
 	if (drone->monsterinfo.bonus_flags & BF_UNIQUE_FIRE
 		|| drone->monsterinfo.bonus_flags & BF_UNIQUE_LIGHTNING)
-		mult *= 25;
+		mult *= 10;
 	else if (drone->monsterinfo.bonus_flags & BF_CHAMPION)
 		mult *= 3.0;
 	else if (drone->monsterinfo.bonus_flags & BF_BERSERKER)
@@ -811,10 +845,12 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 
 	if (worldspawn)
 	{
+		// non-invasion mode monsters or bosses are spawned randomly throughout the map
 		if (!INVASION_OTHERSPAWNS_REMOVED || drone_type >= 30) // only use designated spawns in invasion mode
 		{
-			if (drone->mtype != M_JORG && !vrx_find_random_spawn_point(drone, false))
+			if (link_now && drone->mtype != M_JORG && !vrx_find_random_spawn_point(drone, false))
 			{
+				//gi.dprintf("vrx_create_drone_from_ent couldn't find a valid spawn point\n");
 				G_FreeEdict(drone);
 				return NULL; // couldn't find a spawn point
 			}
@@ -883,6 +919,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 		tr = gi.trace(tr.endpos, drone->mins, drone->maxs, tr.endpos, NULL, MASK_MONSTERSOLID);
 		if (tr.contents & MASK_MONSTERSOLID)
 		{
+			//gi.dprintf("invalid spot\n");
 			G_FreeEdict(drone);
 			return NULL;
 		}
@@ -958,7 +995,10 @@ void RemoveDrone (edict_t *ent)
 {
 	vec3_t	forward, right, start, end, offset;
 	trace_t	tr;
-	edict_t	*e=NULL, *n = NULL;
+	edict_t* e = NULL;//, * n = NULL;
+
+	//gi.dprintf("DroneList before:\n");
+	//DroneList_Print(NULL, ent);
 
 	// get muzzle origin
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
@@ -992,23 +1032,23 @@ void RemoveDrone (edict_t *ent)
 
 	while (e)
 	{
-		n = DroneList_Next(e);
 		if (e && e->activator && (e->activator == ent))
 		{
 			// try to convert back to previous owner
 			if (RestorePreviousOwner(e))
 				continue;
-
 			M_Remove(e, true, true);
 		}
-
-		e = n;
+		e = DroneList_Next(e);
 	}
 
 	// clear all slots
 	DroneRemoveSelected(ent, NULL);
 	ent->num_monsters = 0;
 	safe_cprintf(ent, PRINT_HIGH, "All monsters removed.\n");
+
+	//gi.dprintf("DroneList after:\n");
+	//DroneList_Print(NULL, ent);
 
 }
 
@@ -1742,6 +1782,12 @@ void M_Remove (edict_t *self, qboolean refund, qboolean effect)
 			{
 				SPREE_WAR = false;
 				SPREE_DUDE = NULL;
+			}
+
+			// is this an invasion boss?
+			if (invasion->value && invasion_data.boss && invasion_data.boss == self)
+			{
+				invasion_data.boss = NULL;
 			}
 		}
 
@@ -2550,9 +2596,10 @@ void Cmd_Drone_f (edict_t *ent)
 
 	if (!Q_strcasecmp(s, "help"))
 	{
-		safe_cprintf(ent, PRINT_HIGH, "Available monster commands:\n");
-		//safe_cprintf(ent, PRINT_HIGH, "monster gunner\nmonster parasite\nmonster brain\nmonster bitch\nmonster medic\nmonster tank\nmonster mutant\nmonster select\nmonster move\nmonster remove\nmonster hunt\nmonster count\n");
-		safe_cprintf(ent, PRINT_HIGH, "monster gunner\nmonster parasite\nmonster brain\nmonster praetor\nmonster medic\nmonster tank\nmonster mutant\nmonster gladiator\nmonster enforcer\nmonster command\nmonster follow me\nmonster remove\nmonster count\n");
+		safe_cprintf(ent, PRINT_HIGH, "Monster summoning:\n");
+		safe_cprintf(ent, PRINT_HIGH, "monster [gunner|parasite|brain|praetor|medic|tank|mutant|gladiator|berserker|soldier|enforcer|flyer|floater|hover\n");
+		safe_cprintf(ent, PRINT_HIGH, "Monster utility commands:\n");
+		safe_cprintf(ent, PRINT_HIGH, "monster [remove|command|follow me|count|attack]\n");
 		return;
 	}
 
@@ -2596,8 +2643,8 @@ void Cmd_Drone_f (edict_t *ent)
 		vrx_create_new_drone(ent, 13, false, true);
 	else if (!Q_strcasecmp(s, "hover"))
 		vrx_create_new_drone(ent, 14, false, true);
-	else if (!Q_strcasecmp(s, "jorg"))
-        vrx_create_new_drone(ent, 32, false, true);
+	//else if (!Q_strcasecmp(s, "jorg"))
+    //    vrx_create_new_drone(ent, 32, false, true);
 	else 
 
 
@@ -2704,5 +2751,85 @@ qboolean M_ContinueAttack(edict_t* self, mmove_t* attack_move, mmove_t* end_move
 		// no end move was specified, so delay the next move for awhile
 		M_DelayNextAttack(self, (GetRandom(10, 20) * FRAMETIME), false);
 
+	return false;
+}
+
+qboolean M_TryRespawn(edict_t* self, qboolean remove_if_fail)
+{
+	edict_t		*cl = NULL, *e = NULL;
+	vec3_t		start;
+	trace_t		tr;
+
+	if (!self->mtype)
+		return false;
+
+
+	// is this monster player/client owned?
+	if ((cl = G_GetClient(self)) != NULL && cl != self)
+	{
+		// try to teleport the monster close to the player
+		if (TeleportNearTarget(self, cl, 256, false))
+		{
+			self->s.event = EV_PLAYER_TELEPORT;
+			return true;
+		}
+	}
+	else
+	{
+		// invasion mode?
+		if (invasion->value)
+		{
+			// try to get an available invasion monster spawn
+			// note: if this fails, we could also use TeleportNearArea() to teleport near a monster spawn
+			if ((e = INV_GetMonsterSpawn(e)) != NULL)
+			{
+				// calculate starting position just above the spawn point
+				VectorCopy(e->s.origin, start);
+				start[2] = e->absmax[2] + 1 + fabsf(self->mins[2]);
+
+				// perform trace
+				tr = gi.trace(start, self->mins, self->maxs, start, NULL, MASK_SHOT);
+
+				// is it clear?
+				if (tr.fraction == 1)
+				{
+					e->wait = level.time + 1.0; // time until spawn is available again
+
+					// worldspawn monsters in invasion mode should be chasing navis
+					if (self->activator && !self->activator->client)
+						self->monsterinfo.aiflags |= AI_FIND_NAVI;
+					self->prev_navi = NULL;
+
+					self->s.angles[YAW] = e->s.angles[YAW];
+
+					// move to position
+					VectorCopy(start, self->s.origin);
+					VectorCopy(start, self->s.old_origin);
+					gi.linkentity(self);
+
+					self->s.event = EV_PLAYER_TELEPORT;
+					return true;
+				}
+			}
+		}
+		// all other game modes
+		else
+		{
+			// FIXME: you probably don't want monsters respawning randomly in CTF and other team game modes!
+			// note: this function is somewhat unreliable (by design) and would be better to spawn at a player spawn point or grid file location, if available
+			if (vrx_find_random_spawn_point(self, false))
+			{
+				self->s.event = EV_PLAYER_TELEPORT;
+				return true;
+			}
+		}
+	}
+
+	if (remove_if_fail)
+	{
+		// are we sure this is a monster? if so, call the M_Remove() function to remove it
+		if (self->svflags & SVF_MONSTER)
+			M_Remove(self, true, false);
+	}
 	return false;
 }

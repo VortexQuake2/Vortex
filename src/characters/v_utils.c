@@ -1591,6 +1591,130 @@ void V_ModifyMorphedHealth(edict_t *ent, int type, qboolean morph) {
     }
 }
 
+// attempts to push (move) away from nearby wall(s) by dist
+void V_PushBackWalls(edict_t* self, float dist)
+{
+    vec3_t      start, end, v = { 0,0,0 };
+    trace_t     tr;
+    qboolean    move = false;
+
+    VectorCopy(self->s.origin, start);
+
+    // gather plane normal vector(s)
+    for (int i = 0; i <= 3; i++)
+    {
+        VectorCopy(start, end);
+
+        // trace in a circle around us to find nearby walls
+        switch (i)
+        {
+        case 0:
+            end[0] += dist;
+            break;
+        case 1:
+            end[1] += dist;
+            break;
+        case 2:
+            end[0] -= dist;
+            break;
+        case 3:
+            end[1] -= dist;
+            break;
+        }
+        tr = gi.trace(start, self->mins, self->maxs, end, self, MASK_SOLID);
+
+        // did we hit something?
+        if (tr.fraction < 1)
+        {
+            move = true;
+            if (VectorEmpty(v))
+            {
+                // first intersecting plane normal--this is our escape vector from one wall
+                VectorCopy(tr.plane.normal, v);
+            }
+            else
+            {
+                // second intersecting plane normal--this is another wall roughly perpendicular to the first
+                // now add the two plane normals together to get our final escape vector
+                VectorAdd(tr.plane.normal, v, v);
+                break;
+            }
+        }
+    }
+    // we are adjacent to one or more walls, so try to push/move away
+    if (move)
+    {
+        // ending position
+        VectorMA(start, dist, v, end);
+
+        tr = gi.trace(start, self->mins, self->maxs, end, self, MASK_SOLID);
+        // nothing detected
+        if (!(tr.contents & MASK_SOLID) && tr.fraction == 1)
+        {
+            // try to move target 'e' to new position
+            VectorCopy(end, self->s.origin);
+            gi.linkentity(self);
+        }
+    }
+}
+
+// attempts to push/knock-away nearby entities by dist
+void V_PushBackEnts(edict_t* self, float dist)
+{
+    vec3_t      start, end, v;
+    trace_t     tr;
+    edict_t* e = NULL;
+
+    //gi.dprintf("V_PushBackEnts()\n");
+
+    while ((e = findradius(e, self->s.origin, dist)) != NULL)
+    {
+        if (!G_EntExists(e))
+            continue;
+        // ignore non-moving entities (e.g. forcewall)
+        if (e->movetype == MOVETYPE_NONE)
+            continue;
+        // ignore entities that can't take damage or are non-solid
+        if (!e->takedamage || e->solid == SOLID_NOT || e->svflags & SVF_NOCLIENT)
+            continue;
+        // ignore frozen entities
+        if (que_typeexists(e->curses, CURSE_FROZEN))
+            continue;
+        // ignore non-visible entities
+        if (!visible(self, e))
+            continue;
+        // ignore self
+        if (e == self)
+            continue;
+
+        //gi.dprintf("found class: %s\n", e->classname);
+
+        // calculate vector to target 'e' at the same Z height
+        VectorCopy(e->s.origin, start);
+        start[2] = self->s.origin[2];
+        VectorSubtract(start, self->s.origin, v);
+        VectorNormalize(v);
+
+        // ending position
+        VectorMA(start, dist, v, end);
+
+        // trace from target 'e' (start) along same vector to ending position (end), a short distance 'range' away
+        tr = gi.trace(start, e->mins, e->maxs, end, e, MASK_SOLID);
+
+        // nothing detected
+        if (!(tr.contents & MASK_SOLID) && tr.fraction == 1)
+        {
+            // try to move target 'e' to new position
+            VectorCopy(end, e->s.origin);
+            gi.linkentity(e);
+        }
+        else
+        {
+            //gi.dprintf("collided with solid\n");
+        }
+    }
+}
+
 void V_RestoreMorphed(edict_t *ent, int refund) {
     //gi.dprintf("V_RestoreMorphed()\n");
 

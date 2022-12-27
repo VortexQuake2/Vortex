@@ -17,6 +17,7 @@ void makron_step_left (edict_t *self);
 void makron_step_right (edict_t *self);
 void makronBFG (edict_t *self);
 void makron_dead (edict_t *self);
+void makron_reattack_railgun(edict_t* self);
 
 static int	sound_pain4;
 static int	sound_pain5;
@@ -122,16 +123,16 @@ void makron_stand (edict_t *self)
 
 mframe_t makron_frames_run [] =
 {
-	drone_ai_run, 3,	makron_step_left,
-	drone_ai_run, 12,	NULL,
-	drone_ai_run, 8,	NULL,
-	drone_ai_run, 8,	NULL,
-	drone_ai_run, 8,	makron_step_right,
-	drone_ai_run, 6,	NULL,
-	drone_ai_run, 12,	NULL,
-	drone_ai_run, 9,	NULL,
-	drone_ai_run, 6,	NULL,
-	drone_ai_run, 12,	NULL
+	drone_ai_run, 20,	makron_step_left,
+	drone_ai_run, 20,	NULL,
+	drone_ai_run, 20,	NULL,
+	drone_ai_run, 20,	NULL,
+	drone_ai_run, 20,	makron_step_right,
+	drone_ai_run, 20,	NULL,
+	drone_ai_run, 20,	NULL,
+	drone_ai_run, 20,	NULL,
+	drone_ai_run, 20,	NULL,
+	drone_ai_run, 20,	NULL
 };
 mmove_t	makron_move_run = {FRAME_walk204, FRAME_walk213, makron_frames_run, NULL};
 
@@ -345,10 +346,10 @@ void makronBFG (edict_t *self)
 	vec3_t	forward, start;
 	int		damage, speed;
 
-	damage = 30 + 2 * self->monsterinfo.level;
-	speed = 650 + 35 * self->monsterinfo.level;
+	damage = BFG10K_INITIAL_DAMAGE + BFG10K_ADDON_DAMAGE * self->monsterinfo.level;
+	speed = BFG10K_INITIAL_SPEED + BFG10K_ADDON_SPEED * self->monsterinfo.level;
 
-	MonsterAim(self, 0.8, speed, true, MZ2_MAKRON_BFG, forward, start);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, true, MZ2_MAKRON_BFG, forward, start);
 	monster_fire_bfg (self, start, forward, damage, speed, 0, 150.0, MZ2_MAKRON_BFG);
 }	
 
@@ -388,7 +389,7 @@ mframe_t makron_frames_attack4[]=
 	ai_charge,	0,	MakronHyperblaster,		// fire
 	ai_charge,	0,	MakronHyperblaster,		// fire
 	ai_charge,	0,	MakronHyperblaster,		// fire
-	ai_charge,	0,	MakronHyperblaster,		// fire
+	ai_charge,	0,	MakronHyperblaster,		// fire 229
 	ai_charge,	0,	NULL,
 	ai_charge,	0,	NULL,
 	ai_charge,	0,	NULL,
@@ -408,7 +409,7 @@ mframe_t makron_frames_attack5[]=
 	ai_charge,	0,	NULL,
 	ai_charge,	0,	NULL,
 	ai_charge,	0,	MakronRailgun,		// 243 - Fire railgun
-	ai_charge,	0,	NULL,
+	ai_charge,	0,	makron_reattack_railgun,
 	ai_charge,	0,	NULL,
 	ai_charge,	0,	NULL,
 	ai_charge,	0,	NULL,
@@ -418,15 +419,31 @@ mframe_t makron_frames_attack5[]=
 };
 mmove_t makron_move_attack5 = {FRAME_attak501, FRAME_attak516, makron_frames_attack5, makron_run};
 
+void makron_reattack_railgun(edict_t* self)
+{
+	// if our enemy is still valid, then continue firing
+	if (G_ValidTarget(self, self->enemy, true) && (random() <= 0.9))
+	{
+		MakronRailgun(self);
+		self->s.frame = FRAME_attak509;
+		return;
+	}
+
+	// end attack
+	self->monsterinfo.attack_finished = level.time + 1.0;
+}
+
 // FIXME: He's not firing from the proper Z
 void MakronRailgun (edict_t *self)
 {
 	vec3_t	forward, start;
 	int		damage;
 
-	damage = 150 + 35 * self->monsterinfo.level;
+	damage = M_RAILGUN_DMG_BASE + M_RAILGUN_DMG_ADDON * self->monsterinfo.level;
+	if (M_RAILGUN_DMG_MAX && damage > M_RAILGUN_DMG_MAX)
+		damage = M_RAILGUN_DMG_MAX;
 
-	MonsterAim(self, 0.5, 0, false, MZ2_MAKRON_RAILGUN_1, forward, start);
+	MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, MZ2_MAKRON_RAILGUN_1, forward, start);
 
 	monster_fire_railgun (self, start, forward, damage, 100, MZ2_MAKRON_RAILGUN_1);
 }
@@ -435,14 +452,15 @@ void MakronRailgun (edict_t *self)
 void MakronHyperblaster (edict_t *self)
 {
 	vec3_t	forward, start;
-	int		damage, speed, flash_number;
+	int		damage, speed=2000, flash_number;
 
 	flash_number = MZ2_MAKRON_BLASTER_1 + (self->s.frame - FRAME_attak405);
 
-	damage = 50 + 10*self->monsterinfo.level;
-	speed = 1000 + 50*self->monsterinfo.level;
+	damage = M_HYPERBLASTER_DMG_BASE + M_HYPERBLASTER_DMG_ADDON * self->monsterinfo.level;
+	if (M_HYPERBLASTER_DMG_MAX && damage > M_HYPERBLASTER_DMG_MAX)
+		damage = M_HYPERBLASTER_DMG_MAX;
 
-	MonsterAim(self, 0.8, 1500, false, flash_number, forward, start);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash_number, forward, start);
 	monster_fire_blaster(self, start, forward, damage, speed, EF_BLASTER, BLASTER_PROJ_BOLT, 2.0, true, flash_number);
 }	
 
@@ -461,9 +479,7 @@ void makron_attack(edict_t *self)
 	// medium range
 	if (range <= 768)
 	{
-		if (r <= 0.2)
-			self->monsterinfo.currentmove = &makron_move_attack5; // railgun
-		else if (r <= 0.6)
+		if (r <= 0.6)
 			self->monsterinfo.currentmove = &makron_move_attack4; // hyperblaster
 		else
 			self->monsterinfo.currentmove = &makron_move_attack3; // bfg	
@@ -550,7 +566,7 @@ void makron_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 
 	if (self->deadflag == DEAD_DEAD)
 		return;
-
+	
 // regular death
 	gi.sound (self, CHAN_VOICE, sound_death, 1, ATTN_NONE, 0);
 	self->deadflag = DEAD_DEAD;
@@ -602,7 +618,11 @@ void init_drone_makron (edict_t *self)
 	VectorSet (self->mins, -30, -30, 0);
 	VectorSet (self->maxs, 30, 30, 90);
 
-	self->health = self->max_health = 5000 * self->monsterinfo.level;
+	if (invasion->value < 2)
+		self->health = 2000 * self->monsterinfo.level;
+	else
+		self->health = 3000 * self->monsterinfo.level;
+	self->max_health = self->health;
 	self->monsterinfo.power_armor_power = 5000 * self->monsterinfo.level;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;

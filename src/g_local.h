@@ -1091,7 +1091,7 @@ qboolean G_ValidTarget_Lite(const edict_t *self, const edict_t *target, qboolean
 
 qboolean G_ValidAlliedTarget(edict_t *self, edict_t *target, qboolean vis);//4.1 Archer
 edict_t *G_GetClient(edict_t *ent);
-qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs, vec3_t start);
+qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs, vec3_t start, vec3_t normal);
 void G_DrawBoundingBox (edict_t *ent);
 void G_DrawLaserBBox (edict_t *ent, int laser_color, int laser_size);
 void G_DrawLaser (edict_t *ent, vec3_t v1, vec3_t v2, int laser_color, int laser_size);
@@ -1257,6 +1257,7 @@ void ThrowGib (edict_t *self, char *gibname, int damage, int type);
 void BecomeExplosion1(edict_t *self);
 void BecomeTE(edict_t *self);//GHz
 void BecomeBigExplosion(edict_t *self);//GHz
+void SV_SaveAllCharacters(void);
 int HighestLevelPlayer(void);//GHz
 int LowestLevelPlayer(void);
 int PvMHighestLevelPlayer(void);//GHz
@@ -1319,6 +1320,7 @@ void fire_blueblaster (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 void fire_plasma (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius, int radius_damage);
 void fire_trap (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float timer, float damage_radius, qboolean held);
 void fire_smartrocket (edict_t *self, edict_t *target, vec3_t start, vec3_t dir, int damage, int speed, int turn_speed, float damage_radius, int radius_damage);
+void fire_20mm(edict_t* self, vec3_t start, vec3_t aimdir, int damage, int kick);
 
 //
 // g_ptrail.c
@@ -1382,7 +1384,7 @@ void ValidateSelectedItem (edict_t *ent);
 void DeathmatchScoreboardMessage (edict_t *client, edict_t *killer);
 
 //
-// g_pweapon.c
+// p_weapon.c
 //
 void PlayerNoise(edict_t *who, vec3_t where, int type);
 void P_ProjectSource (gclient_t *client, vec3_t point, vec3_t distance, vec3_t forward, vec3_t right, vec3_t result);
@@ -1407,6 +1409,7 @@ void UpdateChaseCam(edict_t *ent);
 void ChaseNext(edict_t *ent);
 void ChasePrev(edict_t *ent);
 void GetChaseTarget(edict_t *ent);
+void DisableChaseCam(edict_t* ent); // az
 //============================================================================
 
 //jabot
@@ -1896,6 +1899,7 @@ struct edict_s
 	int	num_spikers;
 	int num_gasser;
 	int num_obstacle;
+	int num_magmine;
 
 	int	num_spikeball;
 	int	num_laserplatforms; //4.4 Talent: Laser Platform
@@ -1920,7 +1924,7 @@ struct edict_s
 	edict_t		*selected[4];
 	edict_t		*other;
 	edict_t		*supplystation;
-	edict_t		*magmine;
+	//edict_t		*magmine;
 //GHz START
 	// rune stuff
 	edict_t		*trade_with;
@@ -2280,7 +2284,7 @@ int V_GetRuneAbilityPts(edict_t *ent, item_t *rune);
 qboolean V_CommitCharacterData(edict_t *ent);
 qboolean vrx_is_newbie_basher (const edict_t *player);
 void vrx_trigger_spree_abilities(edict_t *attacker);
-qboolean TeleportNearTarget (edict_t *self, edict_t *target, float dist);
+qboolean TeleportNearTarget (edict_t *self, edict_t *target, float dist, qboolean effect);
 qboolean vrx_find_random_spawn_point (edict_t *ent, qboolean air);
 void ValidateAngles (vec3_t angles);
 int InJoinedQueue (edict_t *ent);

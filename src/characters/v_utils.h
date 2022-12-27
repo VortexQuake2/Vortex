@@ -6,6 +6,8 @@ void padRight(char *String, int numChars);
 char *GetWeaponString (int weapon_number);
 char *GetModString (int weapon_number, int mod_number);
 void V_RestoreMorphed (edict_t *ent, int refund);
+void V_PushBackEnts(edict_t* self, float dist);
+void V_PushBackWalls(edict_t* self, float dist);
 void V_ModifyMorphedHealth (edict_t *ent, int type, qboolean morph);
 void V_RegenAbilityAmmo (edict_t *ent, int ability_index, int regen_frames, int regen_delay);
 void V_Touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf);

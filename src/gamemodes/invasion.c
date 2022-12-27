@@ -22,19 +22,10 @@ static const int SET_HARD_MODE_MONSTERS[] = {
 };
 const int SET_HARD_MODE_MONSTERS_COUNT = sizeof(SET_HARD_MODE_MONSTERS) / sizeof(int);
 
-
 static const int SET_FLYING_MONSTERS[] = {
 	12, 13, 14
 };
 const int SET_FLYING_MONSTERS_COUNT = sizeof(SET_FLYING_MONSTERS) / sizeof(int);
-
-struct invdata_s
-{
-	qboolean printedmessage;
-	int mspawned;
-	float limitframe;
-	edict_t *boss;
-} invasion_data;
 
 void INV_Init(void)
 {
@@ -180,6 +171,32 @@ edict_t* INV_ClosestNaviAny(edict_t* self) {
     }
 
     return ret;
+}
+
+void DrawNavi(edict_t* ent)
+{
+	float		dist, flrht;
+	edict_t*	navi=NULL;
+	vec3_t		start, end;
+	trace_t		tr;
+
+	if (((navi = INV_ClosestNaviAny(ent)) != NULL) && navi->target_ent)
+	{
+		VectorCopy(navi->s.origin, start);
+		VectorCopy(navi->target_ent->s.origin, end);
+		dist = distance(start, end);
+		// spawn bfg laser trails between two chained navis
+		G_Spawn_Trails(TE_BFG_LASER, start, end);
+
+		// calculate distance from floor - start node
+		VectorCopy(start, end);
+		end[2] -= 8192;
+		tr = gi.trace(start, NULL, NULL, end, ent, MASK_SOLID);
+		flrht = start[2] - tr.endpos[2];
+
+		if (!(level.framenum % 20))
+			safe_centerprintf(ent, "Navi %s --> navi %s, height: %.0f distance: %.0f\n", navi->targetname, navi->target, flrht, distance);
+	}
 }
 
 edict_t *drone_findnavi(edict_t *self)
@@ -393,7 +410,11 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
 	trace_t	tr;
 	int mhealth = 1;
 
-	monster = vrx_create_new_drone(self, index, true, false);
+	if (!(monster = vrx_create_new_drone(self, index, true, false)))
+	{
+		//gi.dprintf("INV_SpawnDrone() failed to create a new type %d drone\n", index);
+		return NULL;
+	}
 
 	// calculate starting position
 	VectorCopy(spawn_point->s.origin, start);
@@ -401,13 +422,30 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
 
 	tr = gi.trace(start, monster->mins, monster->maxs, start, NULL, MASK_SHOT);
 
-	if (index != 30) // not a boss?
+	// starting point is occupied
+	if (tr.fraction < 1)
 	{
-		// don't spawn here if a friendly monster occupies this space
-		if ((tr.fraction < 1) || (tr.ent && tr.ent->inuse && tr.ent->activator && tr.ent->activator->inuse
-			&& (tr.ent->activator == self) && (tr.ent->deadflag != DEAD_DEAD)))
+		// is this an entity (monster) that we own?
+		if (tr.ent && tr.ent->inuse && tr.ent->activator && tr.ent->activator->inuse && (tr.ent->activator == self))
 		{
-			// remove the monster and try again
+			//gi.dprintf("another monster occupies this space\n");
+			// if we're trying to spawn a non-boss monster, remove the monster and try again later
+			if (index < 30)
+			{
+				M_Remove(monster, false, false);
+				return NULL;
+			}
+			else
+			{
+				//gi.dprintf("tried to make a boss and remove another ent\n");
+				// if we are trying to spawn a boss, remove the monster currently occupying this space
+				M_Remove(tr.ent, false, false);
+			}
+		}
+		else
+		{
+			//gi.dprintf("spawn area occupied by something else\n");
+			// we've hit something else, remove the monster and try again later
 			M_Remove(monster, false, false);
 			return NULL;
 		}
@@ -436,19 +474,19 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
 
 	monster->max_health = monster->health = monster->max_health*mhealth;
 
-	// move the monster onto the spawn pad if it's not a commander
-	if (index != 30)
-	{
+	// move the monster onto the spawn pad if it's not a boss
+	//if (index < 30)
+	//{
 		VectorCopy(start, monster->s.origin);
 		VectorCopy(start, monster->s.old_origin);
-	}
+	//}
 
 	monster->s.event = EV_OTHER_TELEPORT;
 
 	// az: non-bosses get quad/inven for preventing spawn camp
 	// bosses don't get it because it makes it inevitable for the players
 	// to lose spawns sometimes.
-	if (index != 30) {
+	if (index < 30) {
 		if (spawn_point->count)
 			monster->monsterinfo.inv_framenum = level.framenum + spawn_point->count;
 		else
@@ -484,14 +522,20 @@ float TimeFormula()
 	return rval;
 }
 
+/*
 // we'll override the other die functino to set our boss pointer to NULL.
 void mytank_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point);
+void makron_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point);
 
-void invasiontank_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
+void invasion_boss_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	mytank_die(self, inflictor, attacker, damage, point);
+	if (self->mtype == M_COMMANDER)
+		mytank_die(self, inflictor, attacker, damage, point);
+	else if (self->mtype == M_MAKRON)
+		makron_die(self, inflictor, attacker, damage, point);
 	invasion_data.boss = NULL;
 }
+*/
 
 void INV_BossCheck(edict_t *self)
 {
@@ -505,7 +549,7 @@ void INV_BossCheck(edict_t *self)
 		{
 			if (!invasion_data.boss)
 			{
-				if (!(invasion_data.boss = INV_SpawnDrone(self, e, 30)))
+				if (!(invasion_data.boss = INV_SpawnDrone(self, e, GetRandom(30,31))))
 				{
 					iter++;
 
@@ -516,8 +560,8 @@ void INV_BossCheck(edict_t *self)
 				}
 				bcount++;
 				total_monsters++;
-				invasion_data.boss->die = invasiontank_die;
-				G_PrintGreenText(va("A level %d tank commander has spawned!", invasion_data.boss->monsterinfo.level));
+				//invasion_data.boss->die = invasion_boss_die;
+				G_PrintGreenText(va("A level %d %s has spawned!", invasion_data.boss->monsterinfo.level, V_GetMonsterName(invasion_data.boss)));
 				break;
 			}
 		}
@@ -526,27 +570,36 @@ void INV_BossCheck(edict_t *self)
 		invasion_data.boss = NULL;
 }
 
-void INV_OnTimeout() {
+void INV_OnTimeout(edict_t *self) {
 	gi.bprintf(PRINT_HIGH, "Time's up!\n");
 	if (invasion_data.boss && invasion_data.boss->deadflag != DEAD_DEAD) // out of time for the boss.
 	{
-		G_PrintGreenText("You failed to eliminate the commander soon enough!\n");
+		G_PrintGreenText(va("You failed to kill the %s soon enough!", V_GetMonsterName(invasion_data.boss)));
 		gi.WriteByte(svc_temp_entity);
 		gi.WriteByte(TE_BOSSTPORT);
 		gi.WritePosition(invasion_data.boss->s.origin);
 		gi.multicast(invasion_data.boss->s.origin, MULTICAST_PVS);
-		DroneList_Remove(invasion_data.boss); // az: WHY DID I FORGET THIS
-		G_FreeEdict(invasion_data.boss);
+		//DroneList_Remove(invasion_data.boss); // az: WHY DID I FORGET THIS
+		//G_FreeEdict(invasion_data.boss);
 		invasion_data.boss = NULL;
 	}
+	// remove monsters from the current wave before spawning the next
+	if (self->num_monsters_real)
+		PVM_RemoveAllMonsters(self);
+	// restart the last wave
+	invasion_difficulty_level -= 1;
 
 	// increase the difficulty level for the next wave
-	if (invasion->value == 1)
-		invasion_difficulty_level += 1;
-	else
-		invasion_difficulty_level += 2; // Hard mode.
+	//if (invasion->value == 1)
+	//	invasion_difficulty_level += 1;
+	//else
+	//	invasion_difficulty_level += 2; // Hard mode.
 	invasion_data.printedmessage = 0;
 	gi.sound(&g_edicts[0], CHAN_VOICE, gi.soundindex("misc/tele_up.wav"), 1, ATTN_NONE, 0);
+
+	// start spawning
+	self->nextthink = level.time + FRAMETIME;
+	self->count = MONSTERSPAWN_STATUS_WORKING;
 }
 
 void INV_ShowLastWaveSummary() {
@@ -655,6 +708,8 @@ void INV_SpawnMonsters(edict_t *self)
 	edict_t *e = NULL;
 	int SpawnTries = 0, MaxTriesThisFrame = 32;
 
+	// get the value of all of our monsters (BF flag mult * level * control_cost)
+	// max_monsters_value = PVM_TotalMonstersValue(self);
 	// update our drone count
 	PVM_TotalMonsters(self, true);
 	
@@ -711,12 +766,14 @@ void INV_SpawnMonsters(edict_t *self)
 		else
 		{
 			// Timeout. We go straight to the working state.
-			INV_OnTimeout();
-			self->count = MONSTERSPAWN_STATUS_WORKING;
+			INV_OnTimeout(self);
+			//self->count = MONSTERSPAWN_STATUS_WORKING;
+			return;
 		}
 	}
 
 	// Working State
+	//gi.dprintf("%d: level: %d max_monsters: %d\n", (int)(level.framenum), invasion_difficulty_level, max_monsters);
 	// if there's nobody playing, then wait until some join
 	if (players < 1)
 	{
@@ -758,6 +815,7 @@ void INV_SpawnMonsters(edict_t *self)
 		invasion_data.printedmessage = 0;
 		invasion_data.mspawned = 0;
 		self->count = MONSTERSPAWN_STATUS_IDLE;
+		//gi.dprintf("invasion level now: %d\n", invasion_difficulty_level);
 	}
 }
 

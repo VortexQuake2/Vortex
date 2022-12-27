@@ -53,14 +53,16 @@ void organ_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *sur
 	if (!ent || !ent->inuse || !ent->takedamage || ent->health < 1)
 		return;
 
-	V_Push(ent, other, plane, surf);
+	// allow organ to be pushed if it's not flipped (attached to ceiling)
+	if (ent->s.angles[PITCH] != 180)
+		V_Push(ent, other, plane, surf);
 
 	if (G_EntIsAlive(other) && other->client && OnSameTeam(ent, other) 
 		&& other->client->pers.inventory[power_cube_index] >= 5
 		&& level.time > ent->lasthurt + 0.5 && ent->health < ent->max_health
 		&& level.framenum > ent->monsterinfo.regen_delay1)
 	{
-		ent->health_cache += (int)(0.5 * ent->max_health);
+		ent->health_cache += (int)(0.5 * ent->max_health) + 1;
 		ent->monsterinfo.regen_delay1 = (int)(level.framenum + 1 / FRAMETIME);
 		other->client->pers.inventory[power_cube_index] -= 5;
 	}
@@ -268,8 +270,8 @@ qboolean healer_validtarget(edict_t* self, edict_t* target)
 		return false;
 
 	// make sure we have an unobstructed path to target
-	if (!G_ClearShot(self, NULL, target))
-		return false;
+	//if (!G_ClearShot(self, NULL, target))
+	//	return false;
 
 	velocity = VectorLength(target->velocity);
 	// make sure target is touching the ground and isn't moving
@@ -296,7 +298,7 @@ void healer_attack (edict_t *self)
 {
 	edict_t*	target =NULL;
 	float		range = self->monsterinfo.sight_range;
-	vec3_t		start, end, forward, angles;
+	vec3_t		start, end, forward;//, angles;
 	trace_t		tr;
 
 	while ((target = findradius(target, self->s.origin, range)) != NULL)
@@ -512,7 +514,7 @@ void Cmd_Healer_f (edict_t *ent)
 		return;
 
 	healer = CreateHealer(ent, ent->myskills.abilities[HEALER].current_level);
-	if (!G_GetSpawnLocation(ent, 100, healer->mins, healer->maxs, start))
+	if (!G_GetSpawnLocation(ent, 100, healer->mins, healer->maxs, start, NULL))
 	{
 		ent->healer = NULL;
 		G_FreeEdict(healer);
@@ -845,7 +847,7 @@ void Cmd_Spiker_f (edict_t *ent)
 	}
 
 	spiker = CreateSpiker(ent, ent->myskills.abilities[SPIKER].current_level);
-	if (!G_GetSpawnLocation(ent, 100, spiker->mins, spiker->maxs, start))
+	if (!G_GetSpawnLocation(ent, 100, spiker->mins, spiker->maxs, start, NULL))
 	{
 		ent->num_spikers--;
 		G_FreeEdict(spiker);
@@ -927,14 +929,24 @@ void obstacle_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 	if (self->deadflag == DEAD_DYING)
 		return;
 
-	self->think = spiker_dead;
+	self->think = obstacle_dead;
 	self->deadflag = DEAD_DYING;
 	self->delay = level.time + 20.0;
 	self->nextthink = level.time + FRAMETIME;
 	self->s.frame = OBSTACLE_FRAME_DEAD;
-	self->movetype = MOVETYPE_TOSS;
+	if (self->s.angles[PITCH] != 180)
+	{
+		// don't make tossable if we're stuck to the ceiling
+		self->movetype = MOVETYPE_TOSS;
+		// shorten the bounding box
+		self->maxs[2] = 16;
+	}
+	else
+	{
+		self->mins[2] = -16;
+	}
 	self->touch = V_Touch;
-	self->maxs[2] = 16;
+
 	gi.linkentity(self);
 }
 
@@ -988,11 +1000,15 @@ void obstacle_move (edict_t *self)
 	// check for movement/sliding
 	if (!(int)self->velocity[0] && !(int)self->velocity[1] && !(int)self->velocity[2])
 	{
-		// stick to the ground
-		if (self->groundentity && self->groundentity == world)
-			self->movetype = MOVETYPE_NONE;
-		else
-			self->movetype = MOVETYPE_STEP;
+		// obstacle not attached to the ceiling
+		if (self->s.angles[PITCH] != 180)
+		{
+			// stick to the ground
+			if (self->groundentity && self->groundentity == world)
+				self->movetype = MOVETYPE_NONE;
+			else
+				self->movetype = MOVETYPE_STEP;
+		}
 
 		// increment idle frames
 		self->monsterinfo.idle_frames++;
@@ -1013,6 +1029,88 @@ void obstacle_move (edict_t *self)
 	}
 }
 
+qboolean obstacle_attack_clear(edict_t* self, edict_t* target)
+{
+	// no entity blocking our path
+	if (!target || !target->inuse)// || !target->takedamage)
+		return true;
+	// an indestructable entity is blocking us
+	if (!target->takedamage)
+		return false;
+	// a teammate is blocking us
+	if (OnSameTeam(self, target))
+		return false;
+	// an enemy is in our path--keep falling!
+	return true;
+}
+
+void obstacle_return(edict_t* self)
+{
+	VectorCopy(self->move_origin, self->s.origin);
+	VectorCopy(self->move_origin, self->s.old_origin);
+	gi.linkentity(self);
+	self->movetype = MOVETYPE_NONE;
+	self->s.event = EV_PLAYER_TELEPORT;
+}
+
+void obstacle_attack(edict_t* self)
+{
+	vec3_t end;
+	trace_t	tr;
+
+	// must be flipped
+	if (self->s.angles[PITCH] != 180)
+		return;
+
+	// obstacle is currently attached to ceiling, so look for a valid target to fall on
+	if (self->movetype == MOVETYPE_NONE)
+	{
+		VectorCopy(self->s.origin, end);
+		VectorCopy(end, self->move_origin); // save current position
+		end[2] -= 8192;
+		tr = gi.trace(self->s.origin, self->mins, self->maxs, end, self, MASK_SHOT);
+		if (G_ValidTarget(self, tr.ent, false))
+			self->movetype = MOVETYPE_STEP;
+	}
+	else
+	{
+		// obstacle is falling
+		// trace to the floor to determine the floor Z height where we would make contact
+		VectorCopy(self->s.origin, end);
+		end[2] -= 8192;
+		tr = gi.trace(self->s.origin, self->mins, self->maxs, end, self, MASK_SOLID);
+		// have we reached the floor?
+		if (self->s.origin[2] == tr.endpos[2])
+		{
+			// we've hit the ground, so move back to the starting position
+			obstacle_return(self);
+		}
+		else
+		{
+			// floor position, i.e. the lowest point we can go before touching the ground
+			VectorCopy(tr.endpos, end); 
+			// trace again looking for something to hurt
+			tr = gi.trace(self->s.origin, self->mins, self->maxs, end, self, MASK_SHOT);
+			// are we touching it?
+			if (self->s.origin[2] == tr.endpos[2])
+			{
+				// is path to floor obstructed by something that we can't hurt?
+				if (!obstacle_attack_clear(self, tr.ent))
+				{
+					// return to starting position
+					obstacle_return(self);
+				}
+				else
+				{
+					// hurt it!
+					obstacle_touch(self, tr.ent, &tr.plane, tr.surface);
+				}
+			}
+		}
+
+	}
+}
+
 void obstacle_think (edict_t *self)
 {
 	if (!organ_checkowner(self))
@@ -1020,6 +1118,7 @@ void obstacle_think (edict_t *self)
 
 	organ_restoreMoveType(self);
 	obstacle_cloak(self);
+	obstacle_attack(self);
 	obstacle_move(self);
 
 	V_HealthCache(self, (int)(0.2 * self->max_health), 1);
@@ -1038,7 +1137,7 @@ void obstacle_grow (edict_t *self)
 {
 	if (!organ_checkowner(self))
 		return;
-
+	//gi.dprintf("movetype: %d pitch: %.0f\n", self->movetype, self->s.angles[PITCH]);
 	organ_restoreMoveType(self);
 
 	V_HealthCache(self, (int)(0.2 * self->max_health), 1);
@@ -1101,7 +1200,7 @@ edict_t *CreateObstacle (edict_t *ent, int skill_level)
 	e->dmg = OBSTACLE_INITIAL_DAMAGE + OBSTACLE_ADDON_DAMAGE * skill_level;
     e->monsterinfo.nextattack = 100 - 9 * vrx_get_talent_level(ent, TALENT_PHANTOM_OBSTACLE);
 	e->monsterinfo.level = skill_level;
-	e->gib_health = -2.5 * BASE_GIB_HEALTH;
+	e->gib_health = -2 * BASE_GIB_HEALTH;
 	e->die = obstacle_die;
 	e->touch = organ_touch;
 	VectorSet(e->mins, -16, -16, 0);
@@ -1117,7 +1216,7 @@ void Cmd_Obstacle_f (edict_t *ent)
 {
 	int		cost = OBSTACLE_COST;
 	edict_t *obstacle;
-	vec3_t	start;
+	vec3_t	start, angles;
 
 	if (Q_strcasecmp (gi.args(), "remove") == 0)
 	{
@@ -1148,15 +1247,40 @@ void Cmd_Obstacle_f (edict_t *ent)
 	}
 
 	obstacle = CreateObstacle(ent, ent->myskills.abilities[OBSTACLE].current_level);
-	if (!G_GetSpawnLocation(ent, 100, obstacle->mins, obstacle->maxs, start))
+	if (!G_GetSpawnLocation(ent, 100, obstacle->mins, obstacle->maxs, start, angles))
 	{
 		ent->num_obstacle--;
 		G_FreeEdict(obstacle);
 		return;
 	}
+
+	// calculate angles from plane.normal of wall
+	vectoangles(angles, angles);
+	AngleCheck(&angles[PITCH]);// 90 = ceiling, 270 = floor
+	if (angles[PITCH] == 90)
+	{
+		VectorCopy(angles, obstacle->s.angles);
+		obstacle->movetype = MOVETYPE_NONE;
+		// flip obstacle over
+		obstacle->s.angles[PITCH] = 180;
+		// flip bounding box
+		obstacle->mins[2] = -40;
+		obstacle->maxs[2] = 0;
+		// move starting position Z height
+		start[2] += 40;
+	}
+	else
+	{
+		VectorCopy(ent->s.angles, obstacle->s.angles);
+		obstacle->s.angles[PITCH] = 0;
+	}
+
+	//AngleCheck(&angles[YAW]);
+	//AngleCheck(&angles[ROLL]);
+	//gi.dprintf("angles %.0f %.0f %.0f\n", angles[PITCH], angles[YAW], angles[ROLL]);
+
 	VectorCopy(start, obstacle->s.origin);
-	VectorCopy(ent->s.angles, obstacle->s.angles);
-	obstacle->s.angles[PITCH] = 0;
+
 	gi.linkentity(obstacle);
 	obstacle->monsterinfo.cost = cost;
 
@@ -1639,7 +1763,7 @@ void Cmd_Gasser_f (edict_t *ent)
 	}
 
 	gasser = CreateGasser(ent, ent->myskills.abilities[GASSER].current_level);
-	if (!G_GetSpawnLocation(ent, 100, gasser->mins, gasser->maxs, start))
+	if (!G_GetSpawnLocation(ent, 100, gasser->mins, gasser->maxs, start, NULL))
 	{
 		ent->num_gasser--;
 		G_FreeEdict(gasser);
@@ -2026,7 +2150,7 @@ void Cmd_Cocoon_f (edict_t *ent)
 		return;
 
 	cocoon = CreateCocoon(ent, ent->myskills.abilities[COCOON].current_level);
-	if (!G_GetSpawnLocation(ent, 100, cocoon->mins, cocoon->maxs, start))
+	if (!G_GetSpawnLocation(ent, 100, cocoon->mins, cocoon->maxs, start, NULL))
 	{
 		ent->cocoon = NULL;
 		G_FreeEdict(cocoon);
@@ -2109,7 +2233,7 @@ void spikeball_move (edict_t *self)
     // are we following the player's crosshairs?
     if (self->activator->spikeball_follow)
     {
-        G_GetSpawnLocation(self->activator, 8192, NULL, NULL, goalpos);
+        G_GetSpawnLocation(self->activator, 8192, NULL, NULL, goalpos, NULL);
     }
         // we have no enemy
     else if (!self->enemy)

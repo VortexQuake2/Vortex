@@ -33,11 +33,19 @@ qboolean IsValidChaseTarget (edict_t *ent)
 	return true;
 }
 
+void DisableChaseCam(edict_t *ent)
+{
+	ent->client->chase_target = NULL;
+	ent->client->ps.gunindex = 0;
+	ent->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
+	ent->client->ps.pmove.pm_flags &= ~PMF_DUCKED; // quit ducked.
+}
+
 void UpdateChaseCam (edict_t *ent)
 {
 	int			i;
 	edict_t		*old, *targ;
-	vec3_t		start, goal;
+	vec3_t		start, goal, pivot;
 	vec3_t		angles, forward, right;
 	trace_t		tr;
 	qboolean	eyecam=false;
@@ -57,9 +65,7 @@ void UpdateChaseCam (edict_t *ent)
 		if (ent->client->chase_target == old) 
 		{
 			// switch out of chase-cam mode
-			ent->client->chase_target = NULL;
-			ent->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
-			ent->client->ps.pmove.pm_flags &= ~PMF_DUCKED; // quit ducked.
+			DisableChaseCam(ent);
 			return;
 		}
 	}
@@ -72,17 +78,24 @@ void UpdateChaseCam (edict_t *ent)
 
 	VectorCopy(targ->s.origin, start);
 
-	// use client's viewing angle
-	if (targ->client)
-		VectorCopy(targ->client->v_angle, angles);
-	// use non-client's angles
-	else
-		VectorCopy(targ->s.angles, angles);
-
 	if (ent->client->chasecam_mode)
 		eyecam = true;
 
 retry_eyecam:
+	if (eyecam) {
+		// use client's viewing angle
+		if (targ->client)
+			VectorCopy(targ->client->v_angle, angles);
+		// use non-client's angles
+		else
+			VectorCopy(targ->s.angles, angles);
+	}
+	else
+	{
+		// get the requested angles
+		VectorCopy(ent->client->resp.cmd_angles, angles);
+	}
+
 	// if we're chasing a non-client entity that has a valid enemy
 	// within our sights, then modify our viewing pitch
 	if (eyecam && !targ->client && G_ValidTarget(targ, targ->enemy, true) 
@@ -92,14 +105,6 @@ retry_eyecam:
 		vectoangles(forward, forward);
 		angles[PITCH] = forward[PITCH];
 		//gi.dprintf("pitch %d\n", (int)forward[PITCH]);
-	}
-
-	if (!eyecam)
-	{
-		if (angles[PITCH] > 56)
-			angles[PITCH] = 56;
-		if (angles[PITCH] < -56)
-			angles[PITCH] = -56;
 	}
 
 	AngleVectors (angles, forward, right, NULL);
@@ -115,6 +120,7 @@ retry_eyecam:
         else
             start[2] = targ->absmax[2] - 8;
         VectorMA(start, targ->maxs[1] + 16, forward, start);
+
         // update HUD
         // az: don't show weapons with any of these classes
         if (targ->client && targ->myskills.class_num != CLASS_KNIGHT && !vrx_is_morphing_polt(targ))
@@ -126,6 +132,7 @@ retry_eyecam:
     }
 	else
 	{
+		ent->client->ps.pmove.pm_flags &= ~PMF_DUCKED;
 		ent->client->ps.gunindex = 0;
 
 		// special conditions for upside-down minisentry
@@ -143,7 +150,8 @@ retry_eyecam:
 			
 			start[2] += 16; // az: put him a little bit above
 			// from 16 to 24
-			VectorMA(start, targ->mins[1]-24, forward, start);
+			VectorCopy(start, pivot);
+			VectorMA(start, (targ->mins[1]-64), forward, start);
 		}
 	}
 
@@ -181,7 +189,7 @@ retry_eyecam:
 	// az: if the goal's too close to the entity, use the eye cam.
 	if (!eyecam) {
 		vec3_t dist;
-		VectorSubtract(goal, targ->s.origin, dist);
+		VectorSubtract(goal, pivot, dist);
 
 		vec_t len = VectorLength(dist);
 		if (len < 24) {
@@ -191,17 +199,13 @@ retry_eyecam:
 	}
 
 	// az: PM_DEAD seems to jitter the chaser in q2pro
-	// if (targ->deadflag)
-	// 	ent->client->ps.pmove.pm_type = PM_DEAD;
-	// else
+	if (eyecam)
 		ent->client->ps.pmove.pm_type = PM_FREEZE;
+	else
+		ent->client->ps.pmove.pm_type = PM_SPECTATOR;
 
 	VectorCopy(goal, ent->s.origin);
-	for (i=0 ; i<3 ; i++) {
-		ent->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(angles[i] - ent->client->resp.cmd_angles[i]);
-	}
-
-
+	
 	if (targ->deadflag) 
 	{
 		ent->client->ps.viewangles[ROLL] = 40;
@@ -213,8 +217,18 @@ retry_eyecam:
 	} 
 	else 
 	{
+		if (!eyecam) {
+			VectorSubtract(pivot, goal, angles);
+			VectorNormalize(angles);
+			vectoangles(angles, angles);
+		}
+
 		VectorCopy(angles, ent->client->ps.viewangles);
 		VectorCopy(angles, ent->client->v_angle);
+	}
+
+	for (i=0 ; i<3 ; i++) {
+		ent->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(angles[i] - ent->client->resp.cmd_angles[i]);
 	}
 
 	ent->viewheight = 0;

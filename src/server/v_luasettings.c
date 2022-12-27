@@ -1043,7 +1043,7 @@ double MUTANT_ADDON_JUMP_DMG;
 double MUTANT_JUMPATTACK_RADIUS;
 double MAGMINE_DEFAULT_PULL;
 double MAGMINE_ADDON_PULL;
-
+double MAGMINE_MAX_COUNT;
 double BRAIN_ATTACK_RANGE;
 double BRAIN_DEFAULT_TENTACLE_DMG;
 double BRAIN_ADDON_TENTACLE_DMG;
@@ -1374,10 +1374,9 @@ void Lua_LoadVariables()
 	MONSTER_MASTERY_FACTOR = vrx_lua_get_variable("MONSTER_MASTERY_FACTOR", 0.04);
 	MAGMINE_DEFAULT_PULL = vrx_lua_get_variable("MAGMINE_DEFAULT_PULL", -40);
 	MAGMINE_ADDON_PULL = vrx_lua_get_variable("MAGMINE_ADDON_PULL", -4);
+	MAGMINE_MAX_COUNT = vrx_lua_get_variable("MAGMINE_MAX_COUNT", 3);
 	RUNE_PICKUP_DELAY = vrx_lua_get_variable("RUNE_PICKUP_DELAY", 2.0);
-
 	SENTRY_MAXIMUM = vrx_lua_get_variable("SENTRY_MAXIMUM", 1);
-
 	CHILL_DEFAULT_BASE = vrx_lua_get_variable("CHILL_DEFAULT_BASE", 0);
 	CHILL_DEFAULT_ADDON = vrx_lua_get_variable("CHILL_DEFAULT_ADDON", 0.1);
 	SPRINT_COST = vrx_lua_get_variable("SPRINT_COST", 4);

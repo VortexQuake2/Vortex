@@ -1,7 +1,7 @@
-
-
-
 #include "g_local.h"
+
+#define MAGMINE_FRAMES_START	1
+#define MAGMINE_FRAMES_END		5
 
 void magmine_throwsparks(edict_t *self) {
     int i;
@@ -66,52 +66,71 @@ void magmine_attack(edict_t *self) {
     }
 }
 
+void magmine_remove(edict_t* self, qboolean print)
+{
+    if (self->deadflag == DEAD_DEAD)
+        return;
+
+    // prepare for removal
+    self->deadflag = DEAD_DEAD;
+    self->takedamage = DAMAGE_NO;
+    self->think = BecomeExplosion1;
+    self->nextthink = level.time + FRAMETIME;
+
+    if (self->creator && self->creator->inuse)
+    {
+        self->creator->num_magmine--;
+
+        if (print)
+            safe_cprintf(self->creator, PRINT_HIGH, "%d/%d mag mines remaining.\n",
+                self->creator->num_magmine, (int)MAGMINE_MAX_COUNT);
+    }
+}
+
 void magmine_think(edict_t *self) {
     // check for valid position
     if (gi.pointcontents(self->s.origin) & CONTENTS_SOLID) {
         gi.dprintf("WARNING: A mag mine was removed from map due to invalid position.\n");
         safe_cprintf(self->creator, PRINT_HIGH, "Your mag mine was removed.\n");
-        self->creator->magmine = NULL;
-        G_FreeEdict(self);
+        magmine_remove(self, true);
+        //self->creator->magmine = NULL;
+        //G_FreeEdict(self);
         return;
     }
 
+    qboolean shouldCallThrowSparks = false;
     if (!self->enemy) {
         if (magmine_findtarget(self)) {
             magmine_attack(self);
-            magmine_throwsparks(self);
+            shouldCallThrowSparks = true;
         }
     } else if (G_ValidTarget(self, self->enemy, true)
                && (entdist(self, self->enemy) <= self->dmg_radius)) {
         magmine_attack(self);
-        magmine_throwsparks(self);
+        shouldCallThrowSparks = true;
     } else {
         self->enemy = NULL;
     }
 
-    //magmine_seteffects(self);
-    M_SetEffects(self);//4.5
+    if (shouldCallThrowSparks) {
+        magmine_throwsparks(self);
+    }
+
+    // Animate the mag mine
+	self->s.frame++;
+	if (self->s.frame > MAGMINE_FRAMES_END)
+		self->s.frame = MAGMINE_FRAMES_START;
+    
+    // Set shell color
+    M_SetEffects(self);
+
     self->nextthink = level.time + FRAMETIME;
 }
 
-void magmine_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point) {
-    if (self->deadflag == DEAD_DEAD)
-        return;
-
-    if (debuginfo->value)
-        gi.dprintf("DEBUG: magmine_die()\n");
-
-    safe_cprintf(self->creator, PRINT_HIGH, "Your mag mine was destroyed.\n");
-    self->creator->magmine = NULL;
-    //BecomeExplosion1(self);
-
-    // prepare this entity for removal
-    self->think = BecomeExplosion1;
-    self->nextthink = level.time + FRAMETIME;
-    self->deadflag = DEAD_DEAD;
-    self->takedamage = DAMAGE_NO;
-    self->solid = SOLID_NOT;
-    gi.unlinkentity(self);
+void magmine_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
+{
+    safe_cprintf(self->creator, PRINT_HIGH, "Mag mine destroyed.\n");
+    magmine_remove(self, true);
 }
 
 void magmine_spawn(edict_t *ent, int cost, float skill_mult, float delay_mult) {
@@ -125,12 +144,12 @@ void magmine_spawn(edict_t *ent, int cost, float skill_mult, float delay_mult) {
     mine = G_Spawn();
     mine->creator = ent;
     VectorCopy(ent->s.angles, mine->s.angles);
-    mine->s.angles[PITCH] = 270;
+    mine->s.angles[PITCH] = 0;
     mine->s.angles[ROLL] = 0;
     mine->think = magmine_think;
     mine->touch = V_Touch;
     mine->nextthink = level.time + FRAMETIME;
-    mine->s.modelindex = gi.modelindex("models/objects/minelite/light1/tris.md2");
+    mine->s.modelindex = gi.modelindex("models/objects/magmine/tris.md2");
     mine->solid = SOLID_BBOX;
     mine->movetype = MOVETYPE_TOSS;
     mine->clipmask = MASK_MONSTERSOLID;
@@ -158,12 +177,29 @@ void magmine_spawn(edict_t *ent, int cost, float skill_mult, float delay_mult) {
         G_FreeEdict(mine);
         return;
     }
-
     VectorCopy(tr.endpos, mine->s.origin);
-    ent->magmine = mine; // link to owner
+
+    //ent->magmine = mine; // link to owner
+    ent->num_magmine++;
+    safe_cprintf(ent, PRINT_HIGH, "Mag mine built (%d/%d).\n", ent->num_magmine, (int)MAGMINE_MAX_COUNT);
+
     ent->client->pers.inventory[power_cube_index] -= cost;
     ent->client->ability_delay = level.time + MAGMINE_DELAY * delay_mult;
     ent->holdtime = level.time + MAGMINE_DELAY * delay_mult;
+}
+
+void RemoveMagmines(edict_t* ent)
+{
+    edict_t* e = NULL;
+
+    while ((e = G_Find(e, FOFS(classname), "magmine")) != NULL)
+    {
+        if (e && (e->creator == ent))
+            magmine_remove(e, false);
+    }
+
+    // reset mag mine counter
+    ent->num_magmine = 0;
 }
 
 void Cmd_SpawnMagmine_f(edict_t *ent) {
@@ -173,6 +209,20 @@ void Cmd_SpawnMagmine_f(edict_t *ent) {
 
     if (ent->myskills.abilities[MAGMINE].disable)
         return;
+
+    if (Q_strcasecmp(gi.args(), "count") == 0)
+    {
+        safe_cprintf(ent, PRINT_HIGH, "You have %d/%d mag mines.\n",
+            ent->num_magmine, (int)MAGMINE_MAX_COUNT);
+        return;
+    }
+
+    if (Q_strcasecmp(gi.args(), "remove") == 0)
+    {
+        RemoveMagmines(ent);
+        safe_cprintf(ent, PRINT_HIGH, "All mag mines removed.\n");
+        return;
+    }
 
     //Talent: Rapid Assembly
     talentLevel = vrx_get_talent_level(ent, TALENT_RAPID_ASSEMBLY);
@@ -199,10 +249,9 @@ void Cmd_SpawnMagmine_f(edict_t *ent) {
         return;
     }
 
-    if (ent->magmine && ent->magmine->inuse) {
-        safe_cprintf(ent, PRINT_HIGH, "Removed mag mine.\n");
-        BecomeExplosion1(ent->magmine);
-        ent->magmine = NULL;
+    if (ent->num_magmine >= (int)MAGMINE_MAX_COUNT)
+    {
+        safe_cprintf(ent, PRINT_HIGH, "Can't build any more mag mines.\n");
         return;
     }
 

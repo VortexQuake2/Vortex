@@ -123,6 +123,68 @@ int AveragePlayerLevel(void) {
     return average;
 }
 
+int PVM_TotalMonsterLevels(edict_t* monster_owner)
+{
+    int		monsters = 0;
+    float	mult = 1.0;
+    edict_t* scan = NULL;
+
+    while ((scan = G_Find(scan, FOFS(classname), "drone")) != NULL)
+    {
+        // found a live monster that we own
+        if (G_EntIsAlive(scan) && scan->activator && (scan->activator == monster_owner))
+        {
+            //4.5 monster bonus flags
+            if (scan->monsterinfo.bonus_flags & BF_UNIQUE_FIRE
+                || scan->monsterinfo.bonus_flags & BF_UNIQUE_LIGHTNING)
+                mult = 25;
+            else if (scan->monsterinfo.bonus_flags & BF_CHAMPION)
+                mult = 3.0;
+            else if (scan->monsterinfo.bonus_flags & BF_BERSERKER)
+                mult = 1.5;
+            else if (scan->monsterinfo.bonus_flags & BF_POSESSED)
+                mult = 4.0;
+
+            monsters += scan->monsterinfo.level * scan->monsterinfo.control_cost * mult;
+        }
+    }
+
+    return monsters;
+}
+
+int PVM_TotalMonstersValue(edict_t* monster_owner) 
+{
+    int         i = 0;
+    float       mult = 1.0, temp = 0;
+    edict_t*    e = NULL;
+
+    // gets the first monster in the list
+    e = DroneList_Iterate();
+
+    while (e) {
+        // found a live monster that we own
+        if (G_EntIsAlive(e) && (e->activator == monster_owner)) {
+            // unique monsters are especially hard
+            if (e->monsterinfo.bonus_flags & BF_UNIQUE_FIRE
+                || e->monsterinfo.bonus_flags & BF_UNIQUE_LIGHTNING)
+                mult = 5.0;
+            // champion monsters are harder than normal monsters
+            else if (e->monsterinfo.bonus_flags & BF_CHAMPION)
+                mult = 3.0;
+            else if (e->monsterinfo.bonus_flags & BF_BERSERKER)
+                mult = 1.5;
+            else if (e->monsterinfo.bonus_flags & BF_POSESSED)
+                mult = 4.0;
+            // add this monster's value to the subtotal
+            temp += e->monsterinfo.level * e->monsterinfo.control_cost * mult;
+        }
+        // iterate to the next monster in the list
+        e = DroneList_Next(e);
+    }
+
+    return (int)temp;
+}
+
 int PVM_TotalMonsters(edict_t *monster_owner, qboolean update) {
     int i = 0;
     edict_t *e = NULL;
@@ -292,6 +354,9 @@ vrx_remove_player_summonables
 Removes all edicts that the player owns
 =============
 */
+
+void RemoveMagmines(edict_t* ent);
+
 void RemoveProxyGrenades(edict_t *ent);
 
 void RemoveNapalmGrenades(edict_t *ent);
@@ -346,6 +411,7 @@ void vrx_remove_player_summonables(edict_t *self) {
     AuraRemove(self, 0);
     RemoveLasers(self);
     RemoveProxyGrenades(self);
+    RemoveMagmines(self);
     RemoveNapalmGrenades(self);
     RemoveExplodingArmor(self);
     RemoveAutoCannons(self);
@@ -385,9 +451,6 @@ void vrx_remove_player_summonables(edict_t *self) {
             continue;
         }
 
-
-        
-#ifdef REMOVE_PROJECTILES_AFTER_DEATH // az: now commented out...
         // remove grenades
         if ((from->owner) && (from->owner == self)
             && !Q_stricmp(from->classname, "grenade")) {
@@ -401,7 +464,6 @@ void vrx_remove_player_summonables(edict_t *self) {
             && !Q_stricmp(from->classname, "bolt")) {
                 G_FreeEdict(from);
         }
-#endif
 
         // remove hammers
         cl_ent = G_GetClient(from);
@@ -432,14 +494,6 @@ void vrx_remove_player_summonables(edict_t *self) {
         self->skull->deadflag = DEAD_DEAD;
         self->skull->nextthink = level.time + FRAMETIME;
         self->skull = NULL;
-    }
-    if (self->magmine) {
-        //BecomeExplosion1(self->magmine);
-        self->magmine->think = BecomeExplosion1;
-        self->magmine->takedamage = DAMAGE_NO;
-        self->magmine->deadflag = DEAD_DEAD;
-        self->magmine->nextthink = level.time + FRAMETIME;
-        self->magmine = NULL;
     }
     if (self->spirit) {
         self->spirit->think = G_FreeEdict;

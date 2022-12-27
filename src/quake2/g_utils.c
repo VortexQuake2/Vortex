@@ -1212,6 +1212,9 @@ qboolean G_ValidTargetEnt(const edict_t *target, qboolean alive) {
 
 qboolean G_ValidTarget(const edict_t *self, const edict_t *target, qboolean vis)
 {
+	if (!target)
+		return false;
+
 	if (trading->value && !(target->flags & FL_NO_TRADING_PROTECT))
 		return false;
 
@@ -1748,7 +1751,7 @@ int G_GetHypotenuse (vec3_t v)
 	return floattoint(sqrt(((v[0]*v[0]) + (v[1]*v[1]))));
 }
 
-qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs, vec3_t start)
+qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs, vec3_t start, vec3_t normal)
 {
 	vec3_t	forward, right, offset, end;
 	trace_t	tr;
@@ -1764,7 +1767,10 @@ qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs
 
 	tr = gi.trace(start, mins, maxs, end, ent, MASK_SHOT);
 
+	// copy the normal if the trace touched worldspawn (i.e. a wall or ceiling)
 	VectorCopy(tr.endpos, start);
+	if (normal && tr.fraction < 1 && tr.ent && tr.ent->inuse && tr.ent == world)
+		VectorCopy(tr.plane.normal, normal);
 
 	tr = gi.trace(start, mins, maxs, start, NULL, MASK_SHOT);
 

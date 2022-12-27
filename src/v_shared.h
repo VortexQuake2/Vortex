@@ -14,6 +14,7 @@
 
 /**************** v_abilitylist.c ***************/
 void vrx_enable_ability(edict_t *ent, int index, int level, int max_level, int general);
+void vrx_update_free_abilities(edict_t* ent);
 
 int vrx_get_last_enabled_skill_index(edict_t *ent, int mode);
 
@@ -55,6 +56,7 @@ int PVM_RemoveAllMonsters(edict_t *monster_owner);
 int AveragePlayerLevel(void);
 int PvMAveragePlayerLevel(void);
 int PVM_TotalMonsters(edict_t *monster_owner, qboolean update);
+int PVM_TotalMonstersValue(edict_t* monster_owner);
 //************ g_misc.c ************
 
 //************ g_utils.c ************
@@ -76,6 +78,7 @@ void VortexEndLevel(void);
 //************ magic.c ************
 void cmd_mjump(edict_t *ent);
 void proxy_remove(edict_t *self, qboolean print);
+void magmine_remove(edict_t* self, qboolean print);
 qboolean ConvertOwner(edict_t *ent, edict_t *other, float duration, qboolean print);
 qboolean RestorePreviousOwner(edict_t *ent);
 void ProjectileLockon(edict_t *proj);
@@ -144,6 +147,8 @@ void cmd_Drink(edict_t *ent, int itemtype, int index);
 
 //*********** v_utils.c ***********
 qboolean V_IsPVP(void);
+
+char* V_GetMonsterKind(int mtype);
 
 char *V_GetMonsterName(edict_t *monster);
 
@@ -295,6 +300,8 @@ void DroneRemoveSelected(edict_t *ent, edict_t *drone);
 // this should eventually be moved to its own file
 void PM_RestorePlayer(edict_t *ent);
 
+qboolean PM_MorphPlayerHitbox(edict_t* ent, vec3_t boxmin, vec3_t boxmax);
+
 void PM_RemoveMonster(edict_t *monster);
 
 void PM_Effects(edict_t *ent);
@@ -318,6 +325,7 @@ qboolean SpawnWaitingPlayers(void);
 // drone/monster pathfinding/grid stuff
 #define SEARCHTYPE_WALK 1	// find nodes on horizontal plane with limited Z delta
 #define SEARCHTYPE_FLY	2	// find nodes regardless of Z delta between start end ending positions
+void G_Spawn_Trails(int type, vec3_t start, vec3_t endpos);
 
 // etc
 int vrx_get_ability_upgrade_cost(int index);

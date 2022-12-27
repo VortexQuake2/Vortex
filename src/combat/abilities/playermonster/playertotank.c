@@ -168,6 +168,32 @@ qboolean PM_PlayerHasMonster(const edict_t *player) {
             && player->owner->inuse && player->owner->mtype);
 }
 
+// utility function - attempts to push away obstructions and returns true if the player has enough room to morph
+qboolean PM_MorphPlayerHitbox (edict_t* ent, vec3_t boxmin, vec3_t boxmax)
+{
+    float   dist;
+    trace_t tr;
+
+    // distance should be the size of our new bounding box maxs[1] + adjacent entities maxs[1]
+    dist = boxmax[1] + 24;
+    V_PushBackEnts(ent, dist);
+
+    // distance parameter is units away from nearby wall(s)
+    dist = boxmax[1] + 8;
+    V_PushBackWalls(ent, dist);
+
+    // make sure don't get stuck in a wall
+    tr = gi.trace(ent->s.origin, boxmin, boxmax, ent->s.origin, ent, MASK_SHOT);
+    if (tr.fraction < 1)
+    {
+        safe_cprintf(ent, PRINT_HIGH, "Not enough room to morph!\n");
+        return false;
+    }
+
+    // no obstructions found
+    return true;
+}
+
 void PM_RemoveMonster(edict_t *player) {
     if (!player || !player->inuse || !player->client)
         return;
@@ -502,18 +528,15 @@ void p_tank_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 void p_tank_spawn(edict_t *ent, int cost) {
     edict_t *tank;
     vec3_t boxmin, boxmax;
-    trace_t tr;
+    //trace_t tr;
     //Talent: More Ammo
     int talentLevel = vrx_get_talent_level(ent, TALENT_MORE_AMMO);
 
     // make sure we don't get stuck in a wall
     VectorSet (boxmin, -24, -24, -16);
     VectorSet (boxmax, 24, 24, 64);
-    tr = gi.trace(ent->s.origin, boxmin, boxmax, ent->s.origin, ent, MASK_SHOT);
-    if (tr.fraction < 1) {
-        safe_cprintf(ent, PRINT_HIGH, "Not enough room to morph!\n");
+    if (!PM_MorphPlayerHitbox(ent, boxmin, boxmax))
         return;
-    }
 
     V_ModifyMorphedHealth(ent, P_TANK, true);
 

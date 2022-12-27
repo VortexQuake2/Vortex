@@ -783,6 +783,7 @@ void tech_checkrespawn (edict_t *ent);
 qboolean curse_add(edict_t *target, edict_t *caster, int type, int curse_level, float duration);//4.4
 void CurseMessage (edict_t *caster, edict_t *target, int type, float duration, qboolean isCurse);//4.4
 void hw_checkflag(edict_t* ent); // az
+qboolean M_TryRespawn(edict_t* self, qboolean remove_if_fail);
 int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker, 
 			   vec3_t dir, vec3_t point, vec3_t normal, float damage, int knockback, int dflags, int mod)
 {
@@ -812,6 +813,10 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		hw_checkflag(targ);
 		CTF_CheckFlag(targ);
 		tech_checkrespawn(targ);
+
+		// try to respawn monsters and other summonables
+		if (mod == MOD_TRIGGER_HURT && M_TryRespawn(targ, false))
+			return 0;
 	}
 
 	if (!targ->takedamage)
