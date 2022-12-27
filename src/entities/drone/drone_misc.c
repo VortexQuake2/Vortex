@@ -845,10 +845,12 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 
 	if (worldspawn)
 	{
+		// non-invasion mode monsters or bosses are spawned randomly throughout the map
 		if (!INVASION_OTHERSPAWNS_REMOVED || drone_type >= 30) // only use designated spawns in invasion mode
 		{
-			if (drone->mtype != M_JORG && !vrx_find_random_spawn_point(drone, false))
+			if (link_now && drone->mtype != M_JORG && !vrx_find_random_spawn_point(drone, false))
 			{
+				//gi.dprintf("vrx_create_drone_from_ent couldn't find a valid spawn point\n");
 				G_FreeEdict(drone);
 				return NULL; // couldn't find a spawn point
 			}
@@ -917,6 +919,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 		tr = gi.trace(tr.endpos, drone->mins, drone->maxs, tr.endpos, NULL, MASK_MONSTERSOLID);
 		if (tr.contents & MASK_MONSTERSOLID)
 		{
+			//gi.dprintf("invalid spot\n");
 			G_FreeEdict(drone);
 			return NULL;
 		}
