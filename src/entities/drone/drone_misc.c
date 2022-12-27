@@ -1,5 +1,6 @@
 #include "g_local.h"
 #include "../../gamemodes/ctf.h"
+#include "../../gamemodes/invasion.h"
 #include "../../characters/class_limits.h"
 
 // number of seconds monsters will blink after being selected or issued commands
@@ -30,6 +31,7 @@ void init_drone_flyer (edict_t* self);
 void init_drone_floater(edict_t* self);
 void init_drone_hover(edict_t* self);
 int crand (void);
+edict_t* INV_GetMonsterSpawn(edict_t* from);
 
 // Drone Lists -az
 
@@ -1778,6 +1780,12 @@ void M_Remove (edict_t *self, qboolean refund, qboolean effect)
 				SPREE_WAR = false;
 				SPREE_DUDE = NULL;
 			}
+
+			// is this an invasion boss?
+			if (invasion->value && invasion_data.boss && invasion_data.boss == self)
+			{
+				invasion_data.boss = NULL;
+			}
 		}
 
 		// reduce monster count
@@ -2740,5 +2748,85 @@ qboolean M_ContinueAttack(edict_t* self, mmove_t* attack_move, mmove_t* end_move
 		// no end move was specified, so delay the next move for awhile
 		M_DelayNextAttack(self, (GetRandom(10, 20) * FRAMETIME), false);
 
+	return false;
+}
+
+qboolean M_TryRespawn(edict_t* self, qboolean remove_if_fail)
+{
+	edict_t		*cl = NULL, *e = NULL;
+	vec3_t		start;
+	trace_t		tr;
+
+	if (!self->mtype)
+		return false;
+
+
+	// is this monster player/client owned?
+	if ((cl = G_GetClient(self)) != NULL && cl != self)
+	{
+		// try to teleport the monster close to the player
+		if (TeleportNearTarget(self, cl, 256, false))
+		{
+			self->s.event = EV_PLAYER_TELEPORT;
+			return true;
+		}
+	}
+	else
+	{
+		// invasion mode?
+		if (invasion->value)
+		{
+			// try to get an available invasion monster spawn
+			// note: if this fails, we could also use TeleportNearArea() to teleport near a monster spawn
+			if ((e = INV_GetMonsterSpawn(e)) != NULL)
+			{
+				// calculate starting position just above the spawn point
+				VectorCopy(e->s.origin, start);
+				start[2] = e->absmax[2] + 1 + fabsf(self->mins[2]);
+
+				// perform trace
+				tr = gi.trace(start, self->mins, self->maxs, start, NULL, MASK_SHOT);
+
+				// is it clear?
+				if (tr.fraction == 1)
+				{
+					e->wait = level.time + 1.0; // time until spawn is available again
+
+					// worldspawn monsters in invasion mode should be chasing navis
+					if (self->activator && !self->activator->client)
+						self->monsterinfo.aiflags |= AI_FIND_NAVI;
+					self->prev_navi = NULL;
+
+					self->s.angles[YAW] = e->s.angles[YAW];
+
+					// move to position
+					VectorCopy(start, self->s.origin);
+					VectorCopy(start, self->s.old_origin);
+					gi.linkentity(self);
+
+					self->s.event = EV_PLAYER_TELEPORT;
+					return true;
+				}
+			}
+		}
+		// all other game modes
+		else
+		{
+			// FIXME: you probably don't want monsters respawning randomly in CTF and other team game modes!
+			// note: this function is somewhat unreliable (by design) and would be better to spawn at a player spawn point or grid file location, if available
+			if (vrx_find_random_spawn_point(self, false))
+			{
+				self->s.event = EV_PLAYER_TELEPORT;
+				return true;
+			}
+		}
+	}
+
+	if (remove_if_fail)
+	{
+		// are we sure this is a monster? if so, call the M_Remove() function to remove it
+		if (self->svflags & SVF_MONSTER)
+			M_Remove(self, true, false);
+	}
 	return false;
 }

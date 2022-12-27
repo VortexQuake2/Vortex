@@ -95,7 +95,7 @@ void boss_tank_attack (edict_t *ent)
 		{
 			if (boss_findtarget(ent) && (entdist(ent, ent->enemy) > TANK_PUNCH_RADIUS))
 			{
-				if (TeleportNearTarget(ent, ent->enemy, 16))
+				if (TeleportNearTarget(ent, ent->enemy, 16, true))
 					boss_locktarget(ent, 0, forward, start);
 			}
 			gi.sound (ent, CHAN_WEAPON, gi.soundindex ("tank/tnkatck4.wav"), 1, ATTN_NORM, 0);

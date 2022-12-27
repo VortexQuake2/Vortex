@@ -604,6 +604,8 @@ void SVCmd_SpawnBoss_f (void)
 
     if (!strcmp(gi.argv(2), "commander"))
         vrx_create_new_drone(m_worldspawn, 30, true, true);
+    else if (!strcmp(gi.argv(2), "makron"))
+        vrx_create_new_drone(m_worldspawn, 31, true, true);
     else if (!strcmp(gi.argv(2), "supertank"))
         vrx_create_new_drone(m_worldspawn, 32, true, true);
     else if (!strcmp(gi.argv(2), "jorg"))

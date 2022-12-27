@@ -221,13 +221,13 @@ qboolean vrx_find_random_spawn_point (edict_t *ent, qboolean air)
 //					continue;
 //			}
 //		}
-		break;
+		VectorCopy(start, ent->s.origin);
+		VectorCopy(start, ent->s.old_origin);
+		gi.linkentity(ent);
+		return true;
 	}
 
-	VectorCopy(start, ent->s.origin);
-	VectorCopy(start, ent->s.old_origin);
-	gi.linkentity(ent);
-	return true;
+	return false;
 }
 
 qboolean TeleportNearArea (edict_t *ent, vec3_t point, int area_size, qboolean air)
@@ -344,9 +344,7 @@ float entdist(edict_t *ent1, edict_t *ent2)
 	return VectorLength(vec);
 }
 
-
-
-qboolean TeleportNearTarget (edict_t *self, edict_t *target, float dist)
+qboolean TeleportNearTarget (edict_t *self, edict_t *target, float dist, qboolean effect)
 {
 	int		i;
 	float	yaw;
@@ -377,15 +375,18 @@ qboolean TeleportNearTarget (edict_t *self, edict_t *target, float dist)
 		tr = gi.trace(start, self->mins, self->maxs, start, NULL, MASK_MONSTERSOLID);
 		if (!(tr.contents & MASK_MONSTERSOLID))
 		{
-			gi.WriteByte (svc_temp_entity);
-			gi.WriteByte (TE_BOSSTPORT);
-			gi.WritePosition (self->s.origin);
-			gi.multicast (self->s.origin, MULTICAST_PVS);
+			if (effect)
+			{
+				gi.WriteByte(svc_temp_entity);
+				gi.WriteByte(TE_BOSSTPORT);
+				gi.WritePosition(self->s.origin);
+				gi.multicast(self->s.origin, MULTICAST_PVS);
 
-			gi.WriteByte (svc_temp_entity);
-			gi.WriteByte (TE_BOSSTPORT);
-			gi.WritePosition (start);
-			gi.multicast (start, MULTICAST_PVS);
+				gi.WriteByte(svc_temp_entity);
+				gi.WriteByte(TE_BOSSTPORT);
+				gi.WritePosition(start);
+				gi.multicast(start, MULTICAST_PVS);
+			}
 
 			VectorCopy(start, self->s.origin);
 			gi.linkentity(self);

@@ -57,7 +57,7 @@ void mytank_idle (edict_t *self)
 		range = VectorLength (v);
 		if (range > 256)
 		{
-			TeleportNearTarget (self, self->activator, 16);
+			TeleportNearTarget (self, self->activator, 16, true);
 		}
 	}
 	gi.sound (self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
@@ -769,7 +769,7 @@ void commander_attack (edict_t *self)
 		// try to teleport to enemy if we are not standing ground
 		if (!(self->monsterinfo.aiflags & AI_STAND_GROUND))
 		{
-			if (TeleportNearTarget(self, self->enemy, 16.0))
+			if (TeleportNearTarget(self, self->enemy, 16.0, true))
 			{
 				if (r <= 0.5)
 				{

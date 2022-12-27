@@ -2283,7 +2283,7 @@ int V_GetRuneAbilityPts(edict_t *ent, item_t *rune);
 qboolean V_CommitCharacterData(edict_t *ent);
 qboolean vrx_is_newbie_basher (const edict_t *player);
 void vrx_trigger_spree_abilities(edict_t *attacker);
-qboolean TeleportNearTarget (edict_t *self, edict_t *target, float dist);
+qboolean TeleportNearTarget (edict_t *self, edict_t *target, float dist, qboolean effect);
 qboolean vrx_find_random_spawn_point (edict_t *ent, qboolean air);
 void ValidateAngles (vec3_t angles);
 int InJoinedQueue (edict_t *ent);
