@@ -2189,7 +2189,7 @@ void spikeball_findtarget (edict_t *self)
                 continue;
 
             self->enemy = e;
-            //	gi.sound (self, CHAN_VOICE, gi.soundindex("misc/scream6.wav"), 1, ATTN_NORM, 0);
+           //	gi.sound (self, CHAN_VOICE, gi.soundindex("brain/brnpain1.wav"), 1, ATTN_NORM, 0);
             return;
         }
 
@@ -2201,7 +2201,14 @@ void spikeball_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t 
 {
     if (other && other->inuse && other->takedamage && !OnSameTeam(ent, other) && (level.time > ent->monsterinfo.attack_finished))
     {
-        T_Damage(other, ent, ent, ent->velocity, ent->s.origin, plane->normal, ent->dmg, 0, 0, MOD_UNKNOWN);
+		if (T_Damage(other, ent, ent, ent->velocity, ent->s.origin, plane->normal, ent->dmg, 0, 0, MOD_UNKNOWN))
+		{
+			if (random() > 0.5)
+				gi.sound(ent, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav"), 1, ATTN_NORM, 0);
+			else
+				gi.sound(ent, CHAN_WEAPON, gi.soundindex("brain/melee3.wav"), 1, ATTN_NORM, 0);
+		}
+
         ent->monsterinfo.attack_finished = level.time + 0.5;
     }
 
