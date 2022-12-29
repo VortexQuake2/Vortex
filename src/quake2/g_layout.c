@@ -256,6 +256,7 @@ void layout_clean_tracked_entity_list(layout_t* layout)
 		{
 			layout->tracked_list[i] = layout->tracked_list[--layout->tracked_count];
 			i--; // continue with this entity
+			cleaned = true;
 		}
 	}
 
@@ -359,8 +360,8 @@ void layout_generate_entities(layout_t* layout, sidebar_t* sidebar)
 {
 	for (int i = 0; i < layout->tracked_count; i++)
 	{
-		sidebar_result_t res = layout_add_entity_info(layout, layout->tracked_list[i]);
-		sidebar->entry[sidebar->entry_count++] = res;
+		const sidebar_result_t res = layout_add_entity_info(layout, layout->tracked_list[i]);
+		sidebar_add_entry(sidebar, res);
 	}
 }
 
@@ -390,22 +391,16 @@ void sidebar_emit_layout(layout_t* layout, sidebar_t* sidebar)
 	// emit everything. assumption is that entry.pos will update both x and y.
 	for (int i = 0; i < sidebar->entry_count; i++)
 	{
-		layout_pos_t npos = sidebar->entry[i].pos;
-
 		// first, emit the name string
 		layout_apply_pos(layout, sidebar->entry[i].pos);
 		layout_add_string(layout, sidebar->entry[i].name.str);
-
-		
-		npos.x += namelen * 8;
-		layout_apply_pos(layout, npos);
-		layout_add_string(layout, sidebar->entry[i].data.str);
 	}
 
 	// doing it this way we save cursor position changes from the 3rd row.
 	for (int i = 0; i < sidebar->entry_count; i++)
 	{
 		layout_pos_t npos = sidebar->entry[i].pos;
+
 		// now emit the data string
 		npos.x += namelen * 8;
 		layout_apply_pos(layout, npos);
