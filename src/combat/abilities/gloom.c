@@ -109,6 +109,9 @@ void organ_remove (edict_t *self, qboolean refund)
 			self->activator->client->pers.inventory[power_cube_index] += (self->health / self->max_health) * self->monsterinfo.cost;
 	}
 
+	if (self->activator->client)
+		layout_remove_tracked_entity(&self->activator->client->layout, self);
+
 	self->think = G_FreeEdict;
 	self->nextthink = level.time + FRAMETIME;
 	self->svflags |= SVF_NOCLIENT;
@@ -523,6 +526,10 @@ void Cmd_Healer_f (edict_t *ent)
 	VectorCopy(start, healer->s.origin);
 	VectorCopy(ent->s.angles, healer->s.angles);
 	healer->s.angles[PITCH] = 0;
+
+	if (ent->client)
+		layout_add_tracked_entity(&ent->client->layout, healer);
+
 	gi.linkentity(healer);
 	healer->monsterinfo.cost = HEALER_COST;
 
@@ -571,6 +578,9 @@ void spiker_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 		
 		if (PM_MonsterHasPilot(attacker))
 			attacker = attacker->owner;
+
+		if (self->activator->client)
+			layout_remove_tracked_entity(&self->activator->client->layout, self);
 
 		if (attacker->client)
 			safe_cprintf(self->activator, PRINT_HIGH, "Your spiker was killed by %s (%d/%d remain)\n", attacker->client->pers.netname, cur, max);
@@ -860,6 +870,9 @@ void Cmd_Spiker_f (edict_t *ent)
 	spiker->monsterinfo.attack_finished = level.time + 2.0;
 	spiker->monsterinfo.cost = cost;
 
+	if (ent->client)
+		layout_add_tracked_entity(&ent->client->layout, spiker);
+
 	safe_cprintf(ent, PRINT_HIGH, "Spiker created (%d/%d)\n", ent->num_spikers, (int)SPIKER_MAX_COUNT);
 
 	ent->client->ability_delay = level.time + SPIKER_DELAY;
@@ -905,8 +918,12 @@ void obstacle_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 		if (PM_MonsterHasPilot(attacker))
 			attacker = attacker->owner;
 
-		if (attacker->client)
+		if (self->activator->client)
+			layout_remove_tracked_entity(&self->activator->client->layout, self);
+
+		if (attacker->client) {
 			safe_cprintf(self->activator, PRINT_HIGH, "Your obstacle was killed by %s (%d/%d remain)\n", attacker->client->pers.netname, cur, max);
+		}
 		else if (attacker->mtype)
 			safe_cprintf(self->activator, PRINT_HIGH, "Your obstacle was killed by a %s (%d/%d remain)\n", V_GetMonsterName(attacker), cur, max);
 		else
@@ -1280,6 +1297,9 @@ void Cmd_Obstacle_f (edict_t *ent)
 	//gi.dprintf("angles %.0f %.0f %.0f\n", angles[PITCH], angles[YAW], angles[ROLL]);
 
 	VectorCopy(start, obstacle->s.origin);
+
+	if (ent->client)
+		layout_add_tracked_entity(&ent->client->layout, obstacle);
 
 	gi.linkentity(obstacle);
 	obstacle->monsterinfo.cost = cost;
@@ -1658,6 +1678,9 @@ void gasser_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 		if (PM_MonsterHasPilot(attacker))
 			attacker = attacker->owner;
 
+		if (self->activator->client)
+			layout_remove_tracked_entity(&self->activator->client->layout, self);
+
 		if (attacker->client)
 			safe_cprintf(self->activator, PRINT_HIGH, "Your gasser was killed by %s (%d/%d remain)\n", attacker->client->pers.netname, cur, max);
 		else if (attacker->mtype)
@@ -1776,6 +1799,9 @@ void Cmd_Gasser_f (edict_t *ent)
 	gasser->monsterinfo.attack_finished = level.time + 1.0;
 	gasser->monsterinfo.cost = cost;
 
+	if (ent->client)
+		layout_add_tracked_entity(&ent->client->layout, gasser);
+
 	safe_cprintf(ent, PRINT_HIGH, "Gasser created (%d/%d)\n", ent->num_gasser, (int)GASSER_MAX_COUNT);
 
 	ent->client->pers.inventory[power_cube_index] -= cost;
@@ -1818,6 +1844,9 @@ void cocoon_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 		
 		if (PM_MonsterHasPilot(attacker))
 			attacker = attacker->owner;
+
+		if (self->activator->client)
+			layout_remove_tracked_entity(&self->activator->client->layout, self);
 
 		if (attacker->client)
 			safe_cprintf(self->activator, PRINT_HIGH, "Your cocoon was killed by %s\n", attacker->client->pers.netname);
@@ -1911,6 +1940,9 @@ void cocoon_attack (edict_t *self)
 		self->enemy->cocoon_time = level.time + duration;
 		self->enemy->cocoon_factor = factor;
 		self->enemy->cocoon_owner = self->creator;
+
+		if (self->creator && self->creator->client)
+			self->creator->client->layout.dirty = true;
 
 		if (self->enemy->client && !self->enemy->ai.is_bot)
 			gi.cprintf(self->enemy, PRINT_HIGH, "You have gained a damage/defense bonus of +%.0f%c for %.0f seconds\n",
@@ -2026,6 +2058,11 @@ void cocoon_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *su
 
 	if (other->client)
 		safe_cprintf(other, PRINT_HIGH, "You have been cocooned for %d seconds\n", (int)(frames / 10));
+
+	if (ent->activator && ent->activator->client)
+	{
+		ent->activator->client->layout.dirty = true;
+	}
 }
 
 void cocoon_think (edict_t *self)
@@ -2161,6 +2198,9 @@ void Cmd_Cocoon_f (edict_t *ent)
 	cocoon->s.angles[PITCH] = 0;
 	gi.linkentity(cocoon);
 	cocoon->monsterinfo.cost = COCOON_COST;
+
+	if (ent->client)
+		layout_add_tracked_entity(&ent->client->layout, cocoon);
 
 	safe_cprintf(ent, PRINT_HIGH, "Cocoon created\n");
 	gi.sound(cocoon, CHAN_VOICE, gi.soundindex("organ/organe3.wav"), 1, ATTN_STATIC, 0);
@@ -2473,6 +2513,10 @@ void fire_spikeball (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int
     grenade->classname = "spikeball";
     VectorSet(grenade->maxs, 8, 8, 8);
     VectorSet(grenade->mins, -8, -8, -8);
+
+	if (self->client)
+		layout_add_tracked_entity(&self->client->layout, grenade);
+
     gi.linkentity (grenade);
     grenade->nextthink = level.time + 1.0;
     grenade->monsterinfo.cost = cost;

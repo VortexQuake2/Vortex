@@ -18,6 +18,10 @@ void autocannon_remove (edict_t *self, char *message)
 	{
 		self->creator->num_autocannon--; // decrement counter
 
+		if (self->creator->client)
+			layout_remove_tracked_entity(&self->creator->client->layout, self);
+
+
 		if (self->creator->inuse && message)
 			safe_cprintf(self->creator, PRINT_HIGH, message);
 	}
@@ -507,6 +511,8 @@ void CreateAutoCannon (edict_t *ent, int cost, float skill_mult, float delay_mul
 	ent->holdtime = level.time + AUTOCANNON_BUILD_TIME * delay_mult;
 	ent->client->pers.inventory[power_cube_index] -= cost;
 	ent->num_autocannon++; // increment counter
+
+	layout_add_tracked_entity(&ent->client->layout, cannon);
 
 	safe_cprintf(ent, PRINT_HIGH, "Built %d/%d autocannons.\n", ent->num_autocannon, (int)AUTOCANNON_MAX_UNITS);
 }

@@ -934,6 +934,8 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 		drone->monsterinfo.power_armor_power = 0.5*drone->monsterinfo.max_armor;
 		drone->nextthink = level.time + 0.1;//2*drone->monsterinfo.control_cost;
 		//drone->monsterinfo.upkeep_delay = drone->nextthink*10 + 10; // 3.2 upkeep begins 1 second after monster spawn
+
+		layout_add_tracked_entity(&ent->client->layout, drone);
 	}
 	else
 	{
@@ -1764,6 +1766,7 @@ void M_Remove (edict_t *self, qboolean refund, qboolean effect)
 				self->activator->client->pers.inventory[power_cube_index]
 				+= self->monsterinfo.cost;
 
+			layout_remove_tracked_entity(&self->activator->client->layout, self);
 		}
 		else
 		{

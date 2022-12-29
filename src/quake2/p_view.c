@@ -1239,6 +1239,17 @@ void ClientEndServerFrame (edict_t *ent)
 		closemenu(ent);
 	}
 	//GHz END
+	// az 
+	else if (!ent->client->showscores && !ent->client->pers.scanner_active && !ent->client->menustorage.menu_active)
+	{
+		// once a sec
+		if (!(level.framenum % (int)sv_fps->value) || ent->client->layout.dirty)
+		{
+			layout_generate_all(ent);
+			layout_send(ent);
+		}
+	}
+	// az
 
 //	P_FollowWall(ent);
 }

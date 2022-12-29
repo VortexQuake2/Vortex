@@ -980,7 +980,7 @@ void G_SetStats(edict_t *ent)
 	if (deathmatch->value)
 	{
 		if (ent->client->pers.health <= 0 || level.intermissiontime
-			|| ent->client->showscores || ent->client->pers.scanner_active)
+			|| ent->client->showscores || ent->client->pers.scanner_active || ent->client->layout.current_len)
 			ent->client->ps.stats[STAT_LAYOUTS] |= 1;
 		if (ent->client->showinventory && ent->client->pers.health > 0)
 			ent->client->ps.stats[STAT_LAYOUTS] |= 2;

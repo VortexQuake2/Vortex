@@ -405,8 +405,12 @@ void skull_remove (edict_t *self)
 		return;
 
 	// reset owner's pointer to this entity
-	if (self->activator && self->activator->inuse)
+	if (self->activator && self->activator->inuse) {
 		self->activator->skull = NULL;
+
+		if (self->activator->client)
+			layout_remove_tracked_entity(&self->activator->client->layout, self);
+	}
 
 	// prep for removal
 	self->think = BecomeExplosion1;
@@ -619,6 +623,9 @@ void SpawnSkull (edict_t *ent)
 		G_FreeEdict(skull);
 		return;
 	}
+
+	if (ent->client)
+		layout_add_tracked_entity(&ent->client->layout, skull);
 
 	VectorCopy(end, skull->s.origin);
 	VectorCopy(end, skull->move_origin);
