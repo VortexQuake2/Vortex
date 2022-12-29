@@ -396,6 +396,16 @@ void sidebar_emit_layout(layout_t* layout, sidebar_t* sidebar)
 		layout_apply_pos(layout, sidebar->entry[i].pos);
 		layout_add_string(layout, sidebar->entry[i].name.str);
 
+		
+		npos.x += namelen * 8;
+		layout_apply_pos(layout, npos);
+		layout_add_string(layout, sidebar->entry[i].data.str);
+	}
+
+	// doing it this way we save cursor position changes from the 3rd row.
+	for (int i = 0; i < sidebar->entry_count; i++)
+	{
+		layout_pos_t npos = sidebar->entry[i].pos;
 		// now emit the data string
 		npos.x += namelen * 8;
 		layout_apply_pos(layout, npos);
