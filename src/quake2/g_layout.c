@@ -264,13 +264,21 @@ void layout_clean_tracked_entity_list(layout_t* layout)
 		layout->dirty = true;
 }
 
-sidebar_result_t layout_add_entity_info(layout_t* layout, edict_t* ent)
+layout_pos_t sidebar_get_next_line_pos(layout_t* layout)
 {
-	sidebar_result_t res;
-	layout_pos_t pos = layout_set_cursor_xy(
+	layout_pos_t ret = layout_set_cursor_xy(
 		5, XM_LEFT,
 		(layout->line + 2) * 8, YM_CENTER
 	);
+
+	layout->line++;
+	return ret;
+}
+
+sidebar_result_t layout_add_entity_info(layout_t* layout, edict_t* ent)
+{
+	sidebar_result_t res;
+	layout_pos_t pos = sidebar_get_next_line_pos(layout);
 
 	lva_result_t name = { 0 };
 	lva_result_t data = { 0 };
@@ -343,17 +351,24 @@ sidebar_result_t layout_add_entity_info(layout_t* layout, edict_t* ent)
 		gi.dprintf("g_layout.c: unsupported mtype %d\n");
 	}
 
-	layout->line++;
-
 	res.name = name;
 	res.data = data;
 	res.pos = pos;
 	return res;
 }
 
-void layout_add_curse_info(layout_t* layout, que_t* curse)
+// curses.c
+char* GetCurseName(int type);
+
+sidebar_result_t layout_add_curse_info(layout_t* layout, que_t* curse)
 {
-	
+	sidebar_result_t res;
+
+	res.pos = sidebar_get_next_line_pos(layout);
+	res.name = lva("%s", GetCurseName(curse->ent->atype));
+	res.data = lva("%.1fs", curse->time - level.time);
+
+	return res;
 }
 
 void layout_generate_entities(layout_t* layout, sidebar_t* sidebar)
@@ -365,9 +380,36 @@ void layout_generate_entities(layout_t* layout, sidebar_t* sidebar)
 	}
 }
 
-void layout_generate_curses(edict_t* curses)
+void layout_generate_curses(edict_t* ent, sidebar_t* sidebar)
 {
-	
+	if (ent->cocoon_time >= level.time) {
+		float dt = ent->cocoon_time - level.time;
+		sidebar_result_t res;
+		res.pos = sidebar_get_next_line_pos(&ent->client->layout);
+		res.name = lva("cocooned");
+		res.data = lva("%.1fs +%.1f%%", dt, (ent->cocoon_factor - 1) * 100.0f);
+		sidebar_add_entry(sidebar, res);
+	}
+
+	if (ent->fury_time >= level.time)
+	{
+		float dt = ent->fury_time - level.time;
+		sidebar_result_t res;
+		res.pos = sidebar_get_next_line_pos(&ent->client->layout);
+		res.name = lva("furied");
+		res.data = lva("%.2fs", dt);
+		sidebar_add_entry(sidebar, res);
+	}
+
+	for (int i = 0; i < QUE_MAXSIZE; i++)
+	{
+		que_t* curse = &ent->curses[i];
+		sidebar_result_t res;
+		if (!que_valident(curse)) continue;
+
+		res = layout_add_curse_info(&ent->client->layout, curse);
+		sidebar_add_entry(sidebar, res);
+	}
 }
 
 void layout_reset(layout_t* layout)
@@ -415,7 +457,7 @@ void layout_generate_all(edict_t* ent)
 	layout_clean_tracked_entity_list(&ent->client->layout);
 	layout_reset(&ent->client->layout);
 	layout_generate_entities(&ent->client->layout, &sidebar);
-	// layout_generate_curses(ent);
+	layout_generate_curses(ent, &sidebar);
 
 	sidebar_emit_layout(&ent->client->layout, &sidebar);
 
