@@ -672,7 +672,7 @@ void drone_grow (edict_t *self)
 
 void vrx_roll_to_make_champion(edict_t *drone, int *drone_type)
 {
-	if ((ffa->value || invasion->value == 2) && drone->monsterinfo.level >= 10 && GetRandom(1, 100) <= 10)//10% chance for a champion to spawn
+	if ((ffa->value || invasion->value == 2 || (pvm->value && !invasion->value)) && drone->monsterinfo.level >= 10 && GetRandom(1, 100) <= 10)//10% chance for a champion to spawn
 	{
 		drone->monsterinfo.bonus_flags |= BF_CHAMPION;
 
