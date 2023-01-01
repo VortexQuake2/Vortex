@@ -1,15 +1,6 @@
 #include "g_local.h"
 #include "../gamemodes/ctf.h"
-
-// get our data from invasion. -az
-extern struct invdata_s
-{
-	int printedmessage;
-	int mspawned;
-	float limitframe;
-	edict_t *boss;
-
-} invasion_data;
+#include "../gamemodes/invasion.h"
 
 /*
 ======================================================================
