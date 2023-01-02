@@ -1242,7 +1242,7 @@ void Cmd_Obstacle_f (edict_t *ent)
 
 	if (ent->num_obstacle >= OBSTACLE_MAX_COUNT)
 	{
-		safe_cprintf(ent, PRINT_HIGH, "You have reached the maximum amount of obstacles (%d)\n", OBSTACLE_MAX_COUNT);
+		safe_cprintf(ent, PRINT_HIGH, "You have reached the maximum amount of obstacles (%d)\n", (int)OBSTACLE_MAX_COUNT);
 		return;
 	}
 
@@ -1284,7 +1284,7 @@ void Cmd_Obstacle_f (edict_t *ent)
 	gi.linkentity(obstacle);
 	obstacle->monsterinfo.cost = cost;
 
-	safe_cprintf(ent, PRINT_HIGH, "Obstacle created (%d/%d)\n", ent->num_obstacle,OBSTACLE_MAX_COUNT);
+	safe_cprintf(ent, PRINT_HIGH, "Obstacle created (%d/%d)\n", ent->num_obstacle,(int)OBSTACLE_MAX_COUNT);
 
 	ent->client->pers.inventory[power_cube_index] -= cost;
 	ent->client->ability_delay = level.time + OBSTACLE_DELAY;
@@ -1756,9 +1756,9 @@ void Cmd_Gasser_f (edict_t *ent)
 	if (!V_CanUseAbilities(ent, GASSER, cost, true))
 		return;
 
-	if (ent->num_gasser >= GASSER_MAX_COUNT)
+	if (ent->num_gasser >= (int)GASSER_MAX_COUNT)
 	{
-		safe_cprintf(ent, PRINT_HIGH, "You have reached the maximum amount of gassers (%d)\n", GASSER_MAX_COUNT);
+		safe_cprintf(ent, PRINT_HIGH, "You have reached the maximum amount of gassers (%d)\n", (int)GASSER_MAX_COUNT);
 		return;
 	}
 

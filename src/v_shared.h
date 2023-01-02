@@ -57,6 +57,7 @@ int AveragePlayerLevel(void);
 int PvMAveragePlayerLevel(void);
 int PVM_TotalMonsters(edict_t *monster_owner, qboolean update);
 int PVM_TotalMonstersValue(edict_t* monster_owner);
+void ThrowShrapnel(edict_t* self, char* modelname, float speed, vec3_t origin, int dmg, int mod);
 //************ g_misc.c ************
 
 //************ g_utils.c ************

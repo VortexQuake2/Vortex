@@ -45,10 +45,10 @@ void DetonateArmor (edict_t *self)
 	// throw debris around
 	if (gi.pointcontents(self->s.origin) == 0) 
 	{
-		for(i=0;i<GetRandom(2, 6);i++)
-			ThrowDebris (self, "models/objects/debris2/tris.md2", 4, self->s.origin);
-		for(i=0;i<GetRandom(1, 3);i++)
-			ThrowDebris (self, "models/objects/debris1/tris.md2", 2, self->s.origin);
+		for (i = 0;i < GetRandom(4, 6);i++)
+			ThrowShrapnel(self, "models/objects/debris2/tris.md2", 3, self->s.origin, self->dmg, MOD_EXPLODINGARMOR);
+		for(i=0;i<GetRandom(2, 3);i++)
+			ThrowShrapnel(self, "models/objects/debris1/tris.md2", 2, self->s.origin, self->dmg, MOD_EXPLODINGARMOR);
 	}
 	// create explosion effect
 	gi.WriteByte (svc_temp_entity);
@@ -193,15 +193,22 @@ void SpawnExplodingArmor (edict_t *ent, int time)
 	VectorSet(offset, 0, 8,  ent->viewheight-8);
 	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
 
-	// move armor into position
-	VectorMA(start, 48, forward, armor->s.origin);
-
+	if (!G_GetSpawnLocation(ent, 48, armor->mins, armor->maxs, start, NULL))
+	{
+		G_FreeEdict(armor);
+		return;
+	}
+	/*
 	// don't spawn in a wall
 	if (gi.pointcontents(armor->s.origin) & CONTENTS_SOLID)
 	{
 		G_FreeEdict(armor);
 		return;
 	}
+	*/
+
+	// move armor into position
+	VectorMA(start, 48, forward, armor->s.origin);
 	gi.linkentity(armor);
 
 	// toss it forward
@@ -241,7 +248,7 @@ void Cmd_ExplodingArmor_f (edict_t *ent)
 		return;
 	if (ent->client->pers.inventory[body_armor_index] < EXPLODING_ARMOR_AMOUNT)
 	{
-		safe_cprintf(ent, PRINT_HIGH, "You need at least %d armor to use this ability.\n", EXPLODING_ARMOR_AMOUNT);
+		safe_cprintf(ent, PRINT_HIGH, "You need at least %d armor to use this ability.\n", (int)EXPLODING_ARMOR_AMOUNT);
 		return;
 	}
 	if (ent->num_armor >= EXPLODING_ARMOR_MAX_COUNT)
