@@ -76,8 +76,14 @@ void vrx_add_respawn_items(edict_t *ent) {
     ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)] = ent->myskills.inventory[ITEM_INDEX(
             Fdi_TBALL)] += TBALLS_RESPAWN;
 
-    if ((ent->myskills.class_num == CLASS_POLTERGEIST) && (ent->client->pers.inventory[power_cube_index] < 50))
-        ent->client->pers.inventory[power_cube_index] += 50;
+    // poltergeist always spawns with at least 50 power cubes (for morphing) and cells (for power screen)
+    if (ent->myskills.class_num == CLASS_POLTERGEIST)
+    {
+        if (ent->client->pers.inventory[power_cube_index] < 50)
+            ent->client->pers.inventory[power_cube_index] = 50;
+        if (ent->client->pers.inventory[cell_index] < 50)
+            ent->client->pers.inventory[cell_index] = 50;
+    }
     else
         ent->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = ent->myskills.inventory[ITEM_INDEX(
                 Fdi_POWERCUBE)] += POWERCUBES_RESPAWN;
@@ -283,4 +289,16 @@ void vrx_pick_respawn_weapon(edict_t *ent) {
     ent->client->newweapon = item;
 
     ChangeWeapon(ent);
+}
+
+void Use_PowerArmor(edict_t* ent, gitem_t* item);
+
+void vrx_morph_think(edict_t* ent)
+{
+    // only valid player-morphs should be calling this function
+    if (!ent || !ent->inuse || !ent->client || !ent->mtype)
+        return;
+    // activate power screen for berserk and brain automatically when player has cells for it
+    if ((ent->mtype == MORPH_BERSERK || ent->mtype == MORPH_BRAIN) && ent->client->pers.inventory[cell_index] && !(ent->flags & FL_POWER_ARMOR))
+        Use_PowerArmor(ent, NULL);
 }

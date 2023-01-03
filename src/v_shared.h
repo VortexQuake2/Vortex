@@ -214,6 +214,8 @@ void V_GibSound(edict_t *self, int index);
 
 void vrx_player_death(edict_t *self, edict_t *attacker, edict_t *inflictor);
 
+void vrx_morph_think(edict_t* ent);
+
 //************ vote.c *************
 void CheckPlayerVotes(void);
 void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode);

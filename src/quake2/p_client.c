@@ -2867,6 +2867,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	RunBerserkFrames(ent, ucmd);
 	EatCorpses(ent);
 	UpdateMirroredEntities(ent);
+	vrx_morph_think(ent);
 }
 
 // az: this code has been a little redundant in places
