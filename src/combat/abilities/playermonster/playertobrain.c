@@ -129,15 +129,24 @@ void Cmd_FireBeam_f (edict_t *ent, int toggle)
 
 qboolean tentacle_findtarget (edict_t *self)
 {
+	float	dist;
 	edict_t *other=NULL;
 
 	while ((other = findclosestradius_targets(other, self, BRAIN_ATTACK_RANGE)) != NULL)
 	{
 		if (!BrainValidTarget(self, other))
 			continue;
+		dist = entdist(self, other);
+		/*
+		if (other->mtype)
+			gi.dprintf("%d: tentacle found enemy %s @ %.0f\n", (int)(level.framenum), V_GetMonsterName(other), dist);
+		else
+			gi.dprintf("%d: tentacle found enemy %s @ %.0f\n", (int)(level.framenum), other->classname, dist);
+		*/
 		self->enemy = other;
 		return true;
 	}
+	//gi.dprintf("%d: couldn't find a valid tentacle target\n", (int)(level.framenum));
 	return false;
 }
 
@@ -205,10 +214,12 @@ void tentacle_attack (edict_t *self)
 	else if (G_ValidTarget(self, self->enemy, true) //BrainValidTarget(self, self->enemy))
 		&& (entdist(self, self->enemy) < BRAIN_ATTACK_RANGE))
 	{
+		//gi.dprintf("%d: trying to pull valid target\n", (int)(level.framenum));
 		tentacle_pull(self);
 	}
 	else
 	{
+		//gi.dprintf("%d: tentacle target no longer valid\n", (int)(level.framenum));
 		// reset target
 		self->enemy = NULL;
 	}
