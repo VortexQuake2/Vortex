@@ -538,7 +538,7 @@ void TeleportForward (edict_t *ent) {
 			ent->client->pers.inventory[power_cube_index]-=TELEPORT_COST;
 
 			// 3.14 prevent teleport+nova spam
-			ent->client->ability_delay = level.time + (ctf->value?2.0:1.0);
+			ent->client->ability_delay = level.time + (ctf->value?1.5:0.7);
 			return;
 		}
 		else

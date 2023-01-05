@@ -251,6 +251,12 @@ void Cmd_Napalm_f (edict_t *ent)
 	if (!G_CanUseAbilities(ent, ent->myskills.abilities[NAPALM].current_level, cost))
 		return;
 
+	if (ent->client->pers.inventory[grenade_index] < 1)
+	{
+		safe_cprintf(ent, PRINT_HIGH, "You need at least 1 grenade to use this ability.\n");
+		return;
+	}
+
 	if (ent->num_napalm >= NAPALM_MAX_COUNT)
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Can't throw any more napalm grenades.\n");
@@ -269,5 +275,6 @@ void Cmd_Napalm_f (edict_t *ent)
 	fire_napalm(ent, start, forward, damage, burn_dmg, 400, NAPALM_DURATION, radius);
 
 	ent->client->pers.inventory[power_cube_index] -= cost;
+	ent->client->pers.inventory[grenade_index]--;
 	ent->client->ability_delay = level.time + NAPALM_DELAY;
 }

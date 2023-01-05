@@ -53,7 +53,8 @@ void ProjectileLockon (edict_t *proj)
 	VectorSubtract(start, proj->s.origin, forward);
 	VectorNormalize(forward);
 	VectorCopy (forward, proj->movedir);
-	vectoangles (forward, proj->s.angles);
+	vectoangles (forward, proj->s.angles);// this might look strange for fire, which is normally always upright
+	VectorCopy(proj->s.angles, proj->move_angles);// fix for hammer
 	VectorScale (forward, VectorLength(proj->velocity), proj->velocity);
 }
 
@@ -63,17 +64,26 @@ void detector_findprojectile (edict_t *self, char *className)
 
 	while((e = G_Find(e, FOFS(classname), className)) != NULL)
 	{
+		//gi.dprintf("detector_findprojectile found %s\n", className);
+
 		// only use friendly projectiles
 		if (e->owner && e->owner->inuse && !OnSameTeam(self->owner, e->owner))
+		{
+			//gi.dprintf("non-friendly projectile\n");
 			continue;
+		}
 
 		// find a projectile that is within range of the detector
 		if (entdist(self, e) > self->dmg_radius)
+		{
+			//gi.dprintf("%d: out of range %.0f %.0f\n", (int)(level.framenum), entdist(self, e), self->dmg_radius);
 			continue;
+		}
 	
 		// this projectile already has a target that is within range
 		if (e->enemy && e->enemy->inuse && entdist(self, e->enemy) < self->dmg_radius)
 		{
+			//gi.dprintf("projectile already has a target\n");
 			// lock-on to enemy
 			ProjectileLockon(e);
 			continue;
@@ -82,6 +92,7 @@ void detector_findprojectile (edict_t *self, char *className)
 		// find a new target for the projectile
 		if ((proj_target = detector_findprojtarget(self, e)) != NULL)
 		{
+			//gi.dprintf("finding a new target for %s\n", className);
 			e->enemy = proj_target;
 			ProjectileLockon(e);
 		}
@@ -190,6 +201,7 @@ void detector_think (edict_t *self)
 	{
 		detector_findprojectile(self, "rocket");
 		detector_findprojectile(self, "bolt");
+		detector_findprojectile(self, "icebolt");
 		detector_findprojectile(self, "bfg blast");
 		detector_findprojectile(self, "magicbolt");
 		detector_findprojectile(self, "grenade");
@@ -197,9 +209,14 @@ void detector_think (edict_t *self)
 		detector_findprojectile(self, "skull");
 		detector_findprojectile(self, "spike");
 		detector_findprojectile(self, "spikey");
+		detector_findprojectile(self, "spikeball");
+		detector_findprojectile(self, "shrapnel");
 		detector_findprojectile(self, "fireball");
+		detector_findprojectile(self, "fire");
 		detector_findprojectile(self, "plasma bolt");
 		detector_findprojectile(self, "acid");
+		detector_findprojectile(self, "hammer");
+		detector_findprojectile(self, "exploding_armor");
 	}
 
 	self->nextthink = level.time + FRAMETIME;

@@ -824,7 +824,8 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	if (!targ->inuse)
 		return 0;
 
-//	gi.dprintf("original damage: %d target: %s (%.1f)\n", damage, targ->classname, level.time);
+	//gi.dprintf("original damage: %d target: %s (%.1f)\n", damage, targ->classname, level.time);
+
 	before_sub = damage = G_AddDamage(targ, inflictor, attacker, point, damage, dflags, mod);
 
 	//4.1 some abilities that increase damage are seperate from all the others.

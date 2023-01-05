@@ -183,9 +183,9 @@ void ThrowSpikeGrenade (edict_t *self, vec3_t start, vec3_t forward, int slevel,
 
 	VectorCopy(start, grenade->s.origin);
 	grenade->movetype = MOVETYPE_BOUNCE;
-	grenade->health = grenade->max_health = 100;//4.4
-	grenade->takedamage = DAMAGE_AIM;//4.4
-	grenade->die = spikegren_die;//4.4
+	//grenade->health = grenade->max_health = 100 + 25 * slevel;//4.4
+	//grenade->takedamage = DAMAGE_AIM;//4.4
+	//grenade->die = spikegren_die;//4.4
 	grenade->owner = self;
 	grenade->monsterinfo.level = slevel;
 	grenade->mtype = M_SPIKE_GRENADE;
@@ -222,6 +222,12 @@ void Cmd_SpikeGrenade_f (edict_t *ent)
 	if (!V_CanUseAbilities(ent, SPIKE_GRENADE, cost, true))
 		return;
 
+	if (ent->client->pers.inventory[grenade_index] < 1)
+	{
+		safe_cprintf(ent, PRINT_HIGH, "You need at least 1 grenade to use this ability.\n");
+		return;
+	}
+
 	VectorCopy(ent->s.origin, start);
 	start[2] += ent->viewheight - 8;
 	AngleVectors(ent->client->v_angle, forward, NULL, NULL);
@@ -234,5 +240,6 @@ void Cmd_SpikeGrenade_f (edict_t *ent)
 	ThrowSpikeGrenade(ent, start, forward, ent->myskills.abilities[SPIKE_GRENADE].current_level, SPIKEGRENADE_DURATION);
 
 	ent->client->pers.inventory[power_cube_index] -= cost;
+	ent->client->pers.inventory[grenade_index]--;
 	ent->client->ability_delay = level.time + SPIKEGRENADE_DELAY;
 }

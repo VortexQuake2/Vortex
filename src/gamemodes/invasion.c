@@ -11,6 +11,8 @@ edict_t		*INV_PlayerSpawns[64];
 edict_t		*INV_Navi[64];
 edict_t		*INV_StartNavi[64];
 
+struct invdata_s invasion_data;
+
 /* reference vrx_create_drone_from_ent on drone_misc.c */
 static const int SET_EASY_MODE_MONSTERS[] = {
 	1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14

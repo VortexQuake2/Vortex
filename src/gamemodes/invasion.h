@@ -7,4 +7,6 @@ struct invdata_s
 	int mspawned;
 	float limitframe;
 	edict_t* boss;
-} invasion_data;
+};
+
+extern struct invdata_s invasion_data;

@@ -609,3 +609,66 @@ int vrx_GetMonsterControlCost(int mtype) {
     }
     return cost;
 }
+
+void shrapnel_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* surf)
+{
+    if ((surf && (surf->flags & SURF_SKY)) || !self->creator || !self->creator->inuse)
+    {
+        //gi.dprintf("hit skybox or no creator\n");
+        G_FreeEdict(self);
+        return;
+    }
+
+    if (other->takedamage)
+    {
+        //gi.dprintf("hit something!\n");
+        T_Damage(other, self, self->creator, self->velocity, self->s.origin,
+            plane->normal, self->dmg, self->dmg, 0, self->style);
+
+        gi.sound(other, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav"), 1, ATTN_NORM, 0);
+        G_FreeEdict(self);
+    }
+}
+
+void shrapnel_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point)
+{
+    //gi.dprintf("shrapnel_die\n");
+    G_FreeEdict(self);
+}
+
+void ThrowShrapnel(edict_t* self, char* modelname, float speed, vec3_t origin, int dmg, int mod)
+{
+    edict_t* cl, *chunk;
+    vec3_t	v;
+
+    chunk = G_Spawn();
+    VectorCopy(origin, chunk->s.origin);
+    gi.setmodel(chunk, modelname);
+    v[0] = 100 * crandom();
+    v[1] = 100 * crandom();
+    v[2] = 100 + 150 * random();
+    VectorMA(self->velocity, speed, v, chunk->velocity);
+    VectorSet(chunk->mins, -4, -4, -2);
+    VectorSet(chunk->maxs, 4, 4, 2);
+    chunk->movetype = MOVETYPE_BOUNCE;
+    chunk->solid = SOLID_BBOX;
+    chunk->clipmask = MASK_SHOT;
+    chunk->avelocity[0] = random() * 600;
+    chunk->avelocity[1] = random() * 600;
+    chunk->avelocity[2] = random() * 600;
+    chunk->think = G_FreeEdict;
+    chunk->nextthink = level.time + 5;//+random() * 5;
+    chunk->s.frame = 0;
+    chunk->flags = 0;
+    chunk->classname = "shrapnel";
+    chunk->takedamage = DAMAGE_YES;
+    chunk->dmg = dmg;
+    chunk->die = shrapnel_die;
+    chunk->touch = shrapnel_touch;
+    chunk->style = mod; // means-of-death
+    if (cl = G_GetClient(self))
+        chunk->creator = cl; // owner-creator of shrapnel
+    else
+        chunk->creator = self;
+    gi.linkentity(chunk);
+}

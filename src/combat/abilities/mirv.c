@@ -152,6 +152,11 @@ void Cmd_TossMirv (edict_t *ent)
 
     if (!V_CanUseAbilities(ent, MIRV, MIRV_COST, true))
         return;
+    if (ent->client->pers.inventory[grenade_index] < 1)
+    {
+        safe_cprintf(ent, PRINT_HIGH, "You need at least 1 grenade to use this ability.\n");
+        return;
+    }
 
     damage = MIRV_INITIAL_DAMAGE + MIRV_ADDON_DAMAGE * ent->myskills.abilities[MIRV].current_level;
     radius = MIRV_INITIAL_RADIUS + MIRV_ADDON_RADIUS * ent->myskills.abilities[MIRV].current_level;
@@ -165,4 +170,5 @@ void Cmd_TossMirv (edict_t *ent)
 
     ent->client->ability_delay = level.time + MIRV_DELAY;
     ent->client->pers.inventory[power_cube_index] -= cost;
+    ent->client->pers.inventory[grenade_index]--;
 }
