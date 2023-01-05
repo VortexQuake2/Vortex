@@ -1243,7 +1243,9 @@ void ClientEndServerFrame (edict_t *ent)
 	else if (!ent->client->showscores && !ent->client->pers.scanner_active && !ent->client->menustorage.menu_active)
 	{
 		// once a sec
-		if (!(level.framenum % (int)sv_fps->value) || ent->client->layout.dirty)
+		qboolean this_tick = !(level.framenum % (int)sv_fps->value);
+		qboolean has_cooldown = (ent->client->ability_delay - level.time) > -0.001;
+		if (this_tick || ent->client->layout.dirty || has_cooldown)
 		{
 			layout_generate_all(ent);
 			layout_send(ent);

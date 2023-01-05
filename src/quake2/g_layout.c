@@ -302,6 +302,8 @@ sidebar_result_t layout_add_entity_info(layout_t* layout, edict_t* ent)
 	case M_BRAIN:
 	case M_GLADIATOR:
 	case M_TANK:
+	case M_FORCEWALL:
+	case M_MINISENTRY:
 		name = lva("%s", V_GetMonsterName(ent));
 		data = lva("+%d/%d", ent->health, ent->monsterinfo.power_armor_power);
 		break;
@@ -380,6 +382,43 @@ void layout_generate_entities(layout_t* layout, sidebar_t* sidebar)
 	}
 }
 
+sidebar_result_t layout_add_aura_info(layout_t* layout, que_t* que)
+{
+	sidebar_result_t res;
+
+	res.pos = sidebar_get_next_line_pos(layout);
+
+	switch (que->ent->mtype)
+	{
+	case AURA_SALVATION:
+		res.name = lva("salvation");
+		break;
+	case AURA_HOLYFREEZE:
+		res.name = lva("holy freeze");
+		break;
+	case AURA_HOLYSHOCK:
+		res.name = lva("holy shock");
+		break;
+	case AURA_MANASHIELD:
+		res.name = lva("manashield");
+		break;
+	default:
+		res.name = lva("%s", que->ent->classname);
+		break;
+	}
+
+	if (que->ent->owner && que->ent->owner->client)
+		res.data = lva(
+			"%.1fs (%s)", 
+			que->time - level.time, 
+			que->ent->owner->client->pers.netname
+		);
+	else
+		res.data = lva("%.1fs", que->time - level.time);
+
+	return res;
+}
+
 void layout_generate_curses(edict_t* ent, sidebar_t* sidebar)
 {
 	if (ent->cocoon_time >= level.time) {
@@ -408,6 +447,16 @@ void layout_generate_curses(edict_t* ent, sidebar_t* sidebar)
 		if (!que_valident(curse)) continue;
 
 		res = layout_add_curse_info(&ent->client->layout, curse);
+		sidebar_add_entry(sidebar, res);
+	}
+
+	for (int i = 0; i < QUE_MAXSIZE; i++)
+	{
+		que_t* aura = &ent->auras[i];
+		sidebar_result_t res;
+		if (!que_valident(aura)) continue;
+
+		res = layout_add_aura_info(&ent->client->layout, aura);
 		sidebar_add_entry(sidebar, res);
 	}
 }
@@ -456,6 +505,17 @@ void layout_generate_all(edict_t* ent)
 
 	layout_clean_tracked_entity_list(&ent->client->layout);
 	layout_reset(&ent->client->layout);
+
+	if (ent->client->ability_delay > level.time)
+	{
+		sidebar_result_t entry;
+		entry.pos = sidebar_get_next_line_pos(&ent->client->layout);
+		entry.name = lva("cd");
+		entry.data = lva("%.1f", ent->client->ability_delay - level.time);
+
+		sidebar_add_entry(&sidebar, entry);
+	}
+
 	layout_generate_entities(&ent->client->layout, &sidebar);
 	layout_generate_curses(ent, &sidebar);
 

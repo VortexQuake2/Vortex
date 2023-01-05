@@ -1941,8 +1941,6 @@ struct edict_s
 	// teamplay
 	int			teamnum;
 	float		incontrol_time;
-	aura_t		aura[3];
-	aura_t		curse[3];
 	edict_t		*skull;
 	que_t		auras[QUE_MAXSIZE];
 	que_t		curses[QUE_MAXSIZE];
