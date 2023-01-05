@@ -1518,6 +1518,7 @@ typedef struct
 
 #include "combat/abilities/g_abilities.h"
 #include "menus/menu.h"
+#include "quake2/g_layout.h"
 
 // this structure is cleared on each PutClientInServer(),
 // except for 'client->pers'
@@ -1536,6 +1537,11 @@ struct gclient_s
 //ZOID
 	pmenuhnd_t	*menu;				// current menu
 //ZOID
+
+	// az
+	layout_t layout;
+	//az
+
 	qboolean	showinventory;		// set layout stat
 	qboolean	showhelp;
 
@@ -1935,8 +1941,6 @@ struct edict_s
 	// teamplay
 	int			teamnum;
 	float		incontrol_time;
-	aura_t		aura[3];
-	aura_t		curse[3];
 	edict_t		*skull;
 	que_t		auras[QUE_MAXSIZE];
 	que_t		curses[QUE_MAXSIZE];

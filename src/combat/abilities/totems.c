@@ -18,6 +18,9 @@ void RemoveTotem(edict_t *self)
 		if(self->activator->totem1 == self)
 			self->activator->totem1 = self->activator->totem2;
 		self->activator->totem2 = NULL;
+
+		if (self->activator->client)
+			layout_remove_tracked_entity(&self->activator->client->layout, self);
 	}
 
 	// prep for removal
@@ -589,6 +592,8 @@ void SpawnTotem(edict_t *ent, int abilityID)
 //GHz
 	if(!ent->totem1)	ent->totem1 = totem;
 	else				ent->totem2 = totem;
+
+	layout_add_tracked_entity(&ent->client->layout, totem);
 
 	ent->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)] -= cost;
 

@@ -37,6 +37,9 @@ void minisentry_remove (edict_t *self)
 	if (self->owner && self->owner->inuse)
 		G_FreeEdict(self->owner);
 
+	if (self->creator && self->creator->client)
+		layout_remove_tracked_entity(&self->creator->client->layout, self);
+
 	// prep sentry for removal
 	self->think = BecomeExplosion1;
 	self->takedamage = DAMAGE_NO;
@@ -546,6 +549,10 @@ void base_createturret (edict_t *self)
 		BecomeExplosion1(sentry);
 		return;
 	}
+
+	if (self->creator && self->creator->client)
+		layout_add_tracked_entity(&self->creator->client->layout, sentry);
+
 	VectorCopy(tr.endpos, sentry->s.origin);
 	VectorCopy(sentry->s.angles, sentry->move_angles);// save for idle animation
 	gi.linkentity(sentry);

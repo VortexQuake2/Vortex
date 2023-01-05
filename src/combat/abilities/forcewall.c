@@ -242,8 +242,13 @@ void wall_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage,
 {
 	if (self->deadflag == DEAD_DEAD)
 		return;
-	if (G_EntExists(self->activator))
+	if (G_EntExists(self->activator)) {
 		safe_cprintf(self->activator, PRINT_HIGH, "Your wall was destroyed.\n");
+
+		if (self->activator->client)
+			layout_remove_tracked_entity(&self->activator->client->layout, self);
+	}
+
 	self->deadflag = DEAD_DEAD;
 	self->think = G_FreeEdict;
 	self->nextthink = level.time + FRAMETIME;
@@ -385,6 +390,8 @@ void SpawnForcewall(edict_t *player, int type)
 	wall->think = forcewall_think;
 	wall->nextthink = level.time + FRAMETIME;
 	wall->svflags = SVF_NOCLIENT;//need this or we get some strange graphic errors (no model?)
+
+	layout_add_tracked_entity(&player->client->layout, wall);
 
 	gi.linkentity(wall);
 
