@@ -516,6 +516,16 @@ void layout_generate_all(edict_t* ent)
 		sidebar_add_entry(&sidebar, entry);
 	}
 
+	if (pregame_time->value < level.time)
+	{
+		sidebar_result_t entry;
+		entry.pos = sidebar_get_next_line_pos(&ent->client->layout);
+		entry.name = lva("pregame");
+		entry.data = lva("%.0f", level.time - pregame_time->value);
+
+		sidebar_add_entry(&sidebar, entry);
+	}
+
 	layout_generate_entities(&ent->client->layout, &sidebar);
 	layout_generate_curses(ent, &sidebar);
 

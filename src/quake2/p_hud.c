@@ -956,6 +956,11 @@ void G_SetStats(edict_t *ent)
 		ent->client->ps.stats[STAT_TIMER] = ent->client->pers.inventory[power_cube_index];
 	}
 	//K03 End
+	else if (ent->client->ability_delay > level.time)
+	{
+		ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex("turtle");
+		ent->client->ps.stats[STAT_TIMER] = (ent->client->ability_delay - level.time) * 10;
+	}
 	else
 	{
 		ent->client->ps.stats[STAT_TIMER_ICON] = 0;

@@ -879,8 +879,6 @@ char *single_statusbar =
 "	pic 6 "
 "endif "
 
-"yb	-50 "
-
 // picked up item
 "if 7 "
 "	yv	125 "
@@ -889,7 +887,6 @@ char *single_statusbar =
 "	xv	145 "
 "	yb	133 "
 "	stat_string 8 "
-"	yb	-50 "
 "endif "
 
 // timer
@@ -915,66 +912,59 @@ char *dm_statusbar =
 "xl	24 "
 "num 4 1 "
 
-// ammo
-"if 2 "
-"	xl 24 "
-"	yb	-48 "//K03 was 100
-"	anum "
-"	xl 0 "//K03 was 150
-"   yb -72 "
-"	pic 2 "
-"endif "
-
 // armor
 "yb -24 "
-"xl 24 "//K03 was 200
 "rnum "
-"endif "
 
 // selected item
 "ifeq 29 0 "
-"if 6 "
-//K03 Begin
-"   xr  -72 "
-"   num 3 27 "
-//K03 End
-"	xr -24 "
-"	pic 6 "
+	"if 6 "
+		//K03 Begin
+		"xr  -72 "
+		"num 3 27 "
+		//K03 End
+		"xr -24 "
+		"pic 6 "
+	"endif "
 "endif "
 
+// ammo
+"if 2 "
+	"xl	24 "
+	"yb	-48 "//K03 was 100
+	"anum "
+	"xl 0 "//K03 was 150
+	"yb -72 "
+	"pic 2 "
 "endif "
 
-"yb	-50 "
 
 // picked up item
 "if 7 "
-//"   yv 125 "
-"	yv -42 "
-"	xv 120 "
-"	pic 7 "
-"	xv 145 "
-"	stat_string 8 "
-"	yb	-50 "
+	"yv	-42 "
+	"xv	120 "
+	"pic	7 "
+	"xv	145 "
+	"stat_string	8 "
 "endif "
 
-// timer
+// timer (quad, invin, etc)
 "if 9 "
-//K03 Begin
-//"	xv	246 "
-" yb -96 "
-" xl 25 "
-"	num	3 10 "//was " num 2 10 "
+	"yb	-96 "
+	"xl	25 "
+	"num	3 10 "//was " num 2 10 "
 //K03 End
-"	xl	0 "
-"	pic	9 "
-"   yb -50 "
+	"xl	0 "
+	"pic	9 "
 "endif "
 
 //  help / weapon icon 
-"if 11 "
-"	xv	148 "
-"	pic	11 "
+"if	11 "
+	"yb -72 "
+	"xv	148 "
+	"pic	11 "
 "endif "
+
 //K03 Begin
 //  frags
 "xr -34 "
@@ -996,78 +986,63 @@ char *dm_statusbar =
 "if 16 "
   "xv 0 "
   "yb -68 "
- // "string \"Chasing\" "
-  "xv 0 "
   "stat_string 16 "
 "endif "
 
 // team number
 "if 17 "
-"xr	-20 "
-"yt 107 "
-"pic 17 "
+  "xr -20 "
+  "yt 107 "
+  "pic 17 "
 "endif "
 
 // supply station icon
 "if 18 "
-"xl 0 "
-"yt 46 "
-"pic 18 "
-// supply station time
-"xl	30 "
-"yt 46 "
-"num 3 19 "
+	"xl 0 "
+	"yt 46 "
+	"pic 18 "
+	// supply station time
+	"xl	30 "
+	"num 3 19 "
 "endif "
-/*
-//K03 Begin rank order system
-//  rank
-"xr -34 "
-"yt 37 "
-"string \"Rank\" "
-
-"xr	-50 "
-"yt 46 "
-"num 3 24 "
-//Rank stuff done
-*/
 // az start
 // invasion time left
 "if 21 "
-"   xv 136 "
-"   yv  252 "
-"   string2 \"Time Left\" "
-"   xv 136 "
-"   yv 260 "
-"   num 4 21 "
+	"xv	136 "
+	"yv	252 "
+	"string2	\"Time Left\" "
+	"yv	260 "
+	"num	4 21 "
 "endif "
 // vote notifier
 "if 22 "
-"   xv 0 "
-"   yb  -60 "
-"   stat_string 22 "
+	"xv	0 "
+	"yb	-60 "
+	"stat_string	22 "
 "endif "
 // az end
 
 //GHz START
 // show damage done to target
 "if 24 "
-"   xv 136 "
-"   yv  150 "
-"   string2 \"DMG-ID\" "
-"   xv 130 "
-"   yv 159  "
-"   num 5 24 "
+	"xv	136 "
+	"yv	150 "
+	"string2 \"DMG-ID\" "
+	"xv	130 "
+	"yv	159 "
+	"num	5 24 "
 "endif "
 //GHz END
 //Show the Streak
 "xr -42 "
 "yb -86 "
 "string \"Spree\" "
-//  total players
+
 "xr -50 "
 "yb	-78 "
 "num 3 25 "
 //End streak stuff
+
 //power cubes left
 "xr -42 "
 "yb -56 "
@@ -1076,73 +1051,24 @@ char *dm_statusbar =
 "xr -68 "
 "yb -48 "
 "num 4 28 "
-/*
-//print out our current level
-"xr -25 "
-"yt 158 "//was 141
-"string \"Lvl\" "
-
-"xr -50 "
-"yt 167 "//150
-"num 3 26 "
-*/
-//K03 End
 //GHz START
 
-// health-id
-"if 30 "
-"   xv 0 "
-"   yb  -157 "
-"   string2 \"HLT-ID\" "
-
-"   xv 0 "
-"   yb -148  "
-"   num 4 30 "
-"endif "
-
-// armor-id
-"if 26 "
-"   xv 0 "
-"   yb  -124 "
-"   string2 \"AMR-ID\" "
-"endif "
-
-"if 26 "
-"   xv 0 "
-"   yb -115 "
-"   num 4 26 "
-"endif "
-
-// ammo-id
-"if 31 "
-"   xv 0 "
-"   yb  -91 "
-"   string2 \"AMO-ID\" "
-"endif "
-
-"if 31 "
-"   xv 0 "
-"   yb -82 "
-"   num 4 31 "
-"endif "
-
 "if 24 "
-"   xv 136 "
-"   yv  150 "
-"   string2 \"DMG-ID\" "
-"   xv 130 "
-"   yv 159  "
-"   num 5 24 "
+	"xv 136 "
+	"yv  150 "
+	"string2 \"DMG-ID\" "
+	"xv 130 "
+	"yv 159  "
+	"num 5 24 "
 "endif "
 
 // 3.5 show ability charge percent
 "if 20 "
-"   xr -50 "
-"   yt  133 "
-"   string2 \"Charge\" "
-"   xr -50 "
-"   yt 142 "
-"   num 3 20 "
+	"xr -50 "
+	"yt  133 "
+	"string2 \"Charge\" "
+	"yt 142 "
+	"num 3 20 "
 "endif "
 //GHz END
 ;
