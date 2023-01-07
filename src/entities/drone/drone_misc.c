@@ -644,7 +644,7 @@ void drone_grow (edict_t *self)
 	if (self->health >= self->max_health)
 		self->think = drone_think;
 	// check for heal
-	else if (self->health >= 0.3*self->max_health)
+	else if (self->mtype != M_DECOY && self->health >= 0.3*self->max_health)
 		self->s.skinnum &= ~1;
 
 	// if position has been updated, check for ground entity
@@ -1649,7 +1649,7 @@ qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, q
 				self->health = max_health;
 
 			// switch to normal monster skin when it's healed
-			if (!self->client && (self->svflags & SVF_MONSTER)
+			if (!self->client && (self->svflags & SVF_MONSTER) && (self->mtype != M_DECOY)
 				&& (self->health >= 0.3*self->max_health))
 				self->s.skinnum &= ~1;
 

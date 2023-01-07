@@ -166,23 +166,35 @@ void actor_pain (edict_t *self, edict_t *other, float kick, int damage)
 	drone_pain(self, other, kick, damage);
 }
 
+void decoy_sword(edict_t* self)
+{
+	vec3_t	forward, start;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	MonsterAim(self, 1, 0, false, MZ_ROCKET, forward, start);
+
+	if (self->s.frame == FRAME_attack1)
+		gi.sound(self, CHAN_WEAPON, gi.soundindex("misc/power1.wav"), 1, ATTN_NORM, 0);
+
+	monster_fire_sword(self, start, forward, 1, SABRE_INITIAL_KICK, MZ_ROCKET);
+}
 
 void decoy_rocket (edict_t *self)
 {
-	int		damage, speed;
+	int		speed;
 	vec3_t	forward, start;
 
-	speed = 650 + 30*self->activator->myskills.level;
-	if (speed > 950)
-		speed = 950;
+	if (!G_EntExists(self->enemy))
+		return;
 
-	//if (random() <= 0.1)
-	//	damage = 50 + 10*self->activator->myskills.level;	
-	//else
-		damage = 1;
+	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * self->activator->myskills.level;
+	if (M_ROCKETLAUNCHER_SPEED_MAX && speed > M_ROCKETLAUNCHER_SPEED_MAX)
+		speed = M_ROCKETLAUNCHER_SPEED_MAX;
 
-	MonsterAim(self, damage, speed, true, 0, forward, start);
-	monster_fire_rocket (self, start, forward, damage, speed, 0);
+	MonsterAim(self, 1, speed, true, MZ_ROCKET, forward, start);
+	monster_fire_rocket (self, start, forward, 1, speed, 0);
 
 	gi.WriteByte (svc_muzzleflash);
 	gi.WriteShort (self-g_edicts);
@@ -190,6 +202,22 @@ void decoy_rocket (edict_t *self)
 	gi.multicast (self->s.origin, MULTICAST_PVS);
 }
 
+void decoy_rail(edict_t* self)
+{
+	int damage;
+	vec3_t	forward, start;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	damage = M_RAILGUN_DMG_BASE + M_RAILGUN_DMG_ADDON * self->monsterinfo.level;
+	if (M_RAILGUN_DMG_MAX && damage > M_RAILGUN_DMG_MAX)
+		damage = M_RAILGUN_DMG_MAX;
+
+	MonsterAim(self, 1, 0, false, MZ2_ACTOR_MACHINEGUN_1, forward, start);
+
+	monster_fire_railgun(self, start, forward, 1, 100, MZ2_ACTOR_MACHINEGUN_1);
+}
 
 void actor_dead (edict_t *self)
 {
@@ -262,20 +290,19 @@ void decoy_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 	self->deadflag = DEAD_DEAD;
 
 	//Talent: Exploding Decoy
-    /*
-    if(damage > 0 && self->activator && getTalentLevel(self->activator, TALENT_EXPLODING_DECOY) != -1)
+    if(damage > 0 && self->activator && self->activator->inuse)// && getTalentLevel(self->activator, TALENT_EXPLODING_DECOY) != -1)
     {
-        int talentLevel = vrx_get_talent_level(self->activator, TALENT_EXPLODING_DECOY);
-        int decoyDamage = 100 + talentLevel * 50;
-        int decoyRadius = 100 + talentLevel * 25;
+        //int talentLevel = vrx_get_talent_level(self->activator, TALENT_EXPLODING_DECOY);
+		int decoyDamage = 0.2 * self->max_health;
+		int decoyRadius = 100 + 5 * self->monsterinfo.level;// +talentLevel * 25;
 
-        T_RadiusDamage(self, self->activator, decoyDamage, self, decoyRadius, MOD_EXPLODING_DECOY);
+        T_RadiusDamage(self, self->activator, decoyDamage, self, decoyRadius, MOD_DECOY);
 
         self->takedamage = DAMAGE_NO;
         self->think = BecomeExplosion1;
         self->nextthink = level.time + FRAMETIME;
         return;
-    }*/
+    }
 
 	// regular death
 	self->takedamage = DAMAGE_YES;
@@ -285,6 +312,32 @@ void decoy_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 	if (n == 0)		self->monsterinfo.currentmove = &actor_move_death1;
 	else			self->monsterinfo.currentmove = &actor_move_death2;	
 }
+
+mframe_t actor_frames_attack3[] =
+{
+	drone_ai_run, 30,  decoy_rail,
+	drone_ai_run, 30,  NULL,
+	drone_ai_run, 30,   NULL,
+	drone_ai_run, 30,   NULL,
+	drone_ai_run, 30,  NULL,
+	drone_ai_run, 30,  NULL,
+	drone_ai_run, 30,   NULL,
+	drone_ai_run, 30,   NULL
+};
+mmove_t actor_move_attack3 = { FRAME_attack1, FRAME_attack8, actor_frames_attack3, actor_run };
+
+mframe_t actor_frames_attack2[] =
+{
+	drone_ai_run, 30,  decoy_sword,
+	drone_ai_run, 30,  decoy_sword,
+	drone_ai_run, 30,   decoy_sword,
+	drone_ai_run, 30,   decoy_sword,
+	drone_ai_run, 30,  decoy_sword,
+	drone_ai_run, 30,  NULL,
+	drone_ai_run, 30,   NULL,
+	drone_ai_run, 30,   NULL
+};
+mmove_t actor_move_attack2 = { FRAME_attack1, FRAME_attack8, actor_frames_attack2, actor_run };
 
 mframe_t actor_frames_attack [] =
 {
@@ -301,14 +354,42 @@ mmove_t actor_move_attack = {FRAME_attack1, FRAME_attack8, actor_frames_attack, 
 
 void actor_attack(edict_t *self)
 {
-//	int		n;
+	int	weap_index;
+	float dist = entdist(self, self->enemy);
 
-//	gi.dprintf("actor_attack()\n");
+	// we're dying, get up close!
+	if (self->health < 0.3 * self->max_health)
+	{
+		self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
+	}
+	else if (self->monsterinfo.aiflags & AI_NO_CIRCLE_STRAFE)
+	{
+		self->monsterinfo.aiflags &= ~AI_NO_CIRCLE_STRAFE;
+	}
 
-	self->monsterinfo.currentmove = &actor_move_attack;
+	if (dist < SABRE_INITIAL_RANGE)
+	{
+		weap_index = WEAP_SWORD;
+		self->s.skinnum = self->activator->s.skinnum | (weap_index << 8);
+		// sword attack
+		self->monsterinfo.currentmove = &actor_move_attack2;
+	}
+	else if (dist < 512)
+	{
+		weap_index = WEAP_ROCKETLAUNCHER;
+		self->s.skinnum = self->activator->s.skinnum | (weap_index << 8);
+		// rocket attack
+		self->monsterinfo.currentmove = &actor_move_attack;
+	}
+	else
+	{
+		weap_index = WEAP_RAILGUN;
+		self->s.skinnum = self->activator->s.skinnum | (weap_index << 8);
+		// rail attack
+		self->monsterinfo.currentmove = &actor_move_attack3;
+	}
+
 	self->monsterinfo.attack_finished = level.time + 0.9;
-//	n = (randomMT() & 15) + 3 + 7;
-//	self->monsterinfo.pausetime = level.time + n * FRAMETIME;
 }
 
 /*QUAKED misc_actor (1 .5 0) (-16 -16 -24) (16 16 32)
@@ -318,52 +399,50 @@ void decoy_copy (edict_t *self)
 {
 	edict_t *target = self->activator;
 
-	if (self->mtype != M_DECOY)
+	if (!self->activator || !self->activator->inuse || !self->activator->client)
 		return;
 
-//	if (PM_PlayerHasMonster(self->activator))
-//		target = self->activator->owner;
+	if (PM_PlayerHasMonster(self->activator))
+	{
+		target = self->activator->owner;
+		//self->owner = target;
+	}
+	else
+	{
+		target = self->activator;
+		//self->owner = self->activator;
+	}
 
 	// copy everything from our owner
 	self->model = target->model;
+	//gi.setmodel(self, self->model);
 	self->s.skinnum = target->s.skinnum;
 	self->s.modelindex = target->s.modelindex;
 	self->s.modelindex2 = target->s.modelindex2;
 	self->s.effects = target->s.effects;
 	self->s.renderfx = target->s.renderfx;
-
-	// try to copy target's bounding box if there's room
-	if (!VectorCompare(self->mins, target->mins) || !VectorCompare(self->maxs, target->maxs))
-	{
-		trace_t tr = gi.trace(self->s.origin, target->mins, target->maxs, self->s.origin, self, MASK_SHOT);
-		if (tr.fraction == 1.0)
-		{
-			VectorCopy(target->mins, self->mins);
-			VectorCopy(target->maxs, self->maxs);
-			gi.linkentity(self);
-		}
-	}
 }
 
+void decoy_melee(edict_t* self)
+{
+
+}
+
+char* V_GetClassSkin(edict_t* ent);
 void init_drone_decoy (edict_t *self)
 {
+	decoy_copy(self);
+	self->monsterinfo.leader = self->activator;//always follow our leader!
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
+	self->mtype = M_DECOY;
 	VectorSet (self->mins, -16, -16, -24);
 	VectorSet (self->maxs, 16, 16, 32);
-	decoy_copy(self);
 
-	self->health = 250 + 100 * self->activator->myskills.level;
-	self->model = "players/male/tris.md2";
-	gi.setmodel(self, self->model);
-
-	//Limit decoy health to 2000
-	if(self->health > 2000)		self->health = 2000;
-
+	self->health =  250 * self->activator->myskills.abilities[DECOY].current_level;
 	self->max_health = self->health;
 	self->gib_health = -1.5 * BASE_GIB_HEALTH;
 	self->mass = 200;
-	self->mtype = M_DECOY;
 
 	self->pain = actor_pain;
 	self->die = decoy_die;
@@ -371,25 +450,13 @@ void init_drone_decoy (edict_t *self)
 	self->monsterinfo.stand = decoy_stand;
 	self->monsterinfo.run = actor_run;
 	self->monsterinfo.attack = actor_attack;
+	self->monsterinfo.melee = decoy_melee;
 	self->monsterinfo.control_cost = M_DEFAULT_CONTROL_COST;
 	self->monsterinfo.cost = 25;
 	self->monsterinfo.jumpup = 64;
 	self->monsterinfo.jumpdn = 512;
-
-	//K03 Begin
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.power_armor_power = 0;
-	//K03 End
-/*
-	if (random() > 0.5)
-	{
-		self->monsterinfo.melee = 1;
-		self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
-	}
-*/
-
-//	self->monsterinfo.aiflags |= AI_GOOD_GUY;
-
 	gi.linkentity (self);
 
 	self->monsterinfo.currentmove = &decoy_move_stand;
@@ -398,11 +465,56 @@ void init_drone_decoy (edict_t *self)
 
 qboolean MirroredEntitiesExist (edict_t *ent);
 
+void decoy_togglesolid(edict_t* ent, qboolean make_solid)
+{
+	edict_t* e = NULL;
+
+	e = DroneList_Iterate();
+
+	// search for other drones
+	while (e)
+	{
+		if (e && e->activator && e->activator == ent && e->mtype == M_DECOY)
+		{
+			if (make_solid)
+				e->owner = NULL;
+			else
+				e->owner = e->activator;
+		}
+
+		e = DroneList_Next(e);
+	}
+}
+
 void Cmd_Decoy_f (edict_t *ent)
 {
+	char* s;
 	edict_t *ret;
+
+	if (ent->deadflag == DEAD_DEAD)
+		return;
+
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: %s just called Cmd_Decoy_f()\n", ent->client->pers.netname);
+
+	s = gi.args();
+	if (!Q_strcasecmp(s, "remove"))
+	{
+		RemoveAllDrones(ent, true);
+		return;
+	}
+
+	if (!Q_strcasecmp(s, "solid"))
+	{
+		decoy_togglesolid(ent, true);
+		return;
+	}
+
+	if (!Q_strcasecmp(s, "notsolid"))
+	{
+		decoy_togglesolid(ent, false);
+		return;
+	}
 
 	if (!V_CanUseAbilities(ent, DECOY, M_DEFAULT_COST, true))
 		return;

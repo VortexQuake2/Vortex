@@ -6,7 +6,6 @@ char *V_GetClassSkin(edict_t *ent) {
     static char out[64];
 
     /* az 3.4a ctf skins support */
-
     switch (ent->myskills.class_num) {
         case CLASS_SOLDIER:
             c1 = class1_model->string;
@@ -54,6 +53,7 @@ char *V_GetClassSkin(edict_t *ent) {
                 c2 = class10_skin->string;
                 break;
         default:
+            //gi.dprintf("returned male/grunt: %d %d %s\n", ent->myskills.class_num, ent->myskills.level, ent->client->pers.netname);
             return "male/grunt";
     }
 

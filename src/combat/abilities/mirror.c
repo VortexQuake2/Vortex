@@ -252,3 +252,161 @@ edict_t *MirrorEntity (edict_t *ent)
 
 	return e;
 }
+
+void dummy_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point)
+{
+	if (self->deadflag == DEAD_DEAD)
+		return;
+
+	self->deadflag = DEAD_DEAD;
+	self->think = BecomeTE;
+	self->nextthink = level.time + FRAMETIME;
+	if (self->activator && self->activator->inuse)
+		self->activator->mirror1 = NULL;
+}
+
+void dummy_copy_activator(edict_t* self)
+{
+	int skin_number = maxclients->value + self->s.number - 1;//self - g_edicts - 1;//maxclients->value; // the first "free" index
+	//int weap_index = WEAP_HYPERBLASTER;
+
+	if (!self->activator || !self->activator->inuse)
+		return;
+
+	if (self->activator->myskills.class_num == CLASS_SOLDIER)
+	{
+		//gi.dprintf("using terran skin\n");
+		gi.configstring(CS_PLAYERSKINS + skin_number, "monster\\terran/blue");
+	}
+	else if (self->activator->myskills.class_num == CLASS_ENGINEER)
+	{
+		//gi.dprintf("using terminator skin\n");
+		gi.configstring(CS_PLAYERSKINS + skin_number, "monster\\terminator/blood");
+	}
+	else
+		gi.configstring(CS_PLAYERSKINS + skin_number, "monster\\female/athena");
+	self->s.modelindex = 255;
+	self->s.skinnum = skin_number;// | (weap_index << 8);
+	self->s.modelindex2 = 255;
+
+	self->s.effects = self->activator->s.effects;
+	self->s.renderfx = self->activator->s.renderfx;
+}
+
+void dummy_think1(edict_t* self)
+{
+	if (!G_EntIsAlive(self->activator))
+	{
+		self->think = BecomeTE;
+		self->nextthink = level.time + FRAMETIME;
+		if (self->activator && self->activator->inuse)
+			self->activator->mirror1 = NULL;
+		return;
+	}
+	//gi.dprintf("%s's skinnum %d dummy %d\n", self->activator->client->pers.netname, self->activator->s.skinnum, self->s.skinnum);
+	self->s.frame = self->activator->s.frame;
+
+	self->nextthink = level.time + FRAMETIME;
+}
+
+edict_t* TestDummy(edict_t* ent)
+{
+	edict_t* e;
+
+	e = G_Spawn();
+	e->svflags |= SVF_MONSTER;
+	e->classname = "dummy";
+	e->activator = e->owner = ent;
+	e->takedamage = DAMAGE_YES;
+	e->health = e->max_health = MIRROR_INITIAL_HEALTH + MIRROR_ADDON_HEALTH * ent->myskills.level;
+	e->mass = 200;
+	e->clipmask = MASK_MONSTERSOLID;
+	e->movetype = MOVETYPE_STEP;
+	e->s.renderfx |= RF_IR_VISIBLE;
+	//	e->flags |= FL_CHASEABLE;
+	e->solid = SOLID_BBOX;
+	e->think = dummy_think1;//mirrored_think;
+	e->die = dummy_die;//mirrored_die;
+	e->mtype = M_MIRROR;
+	e->touch = V_Touch;
+	VectorCopy(ent->mins, e->mins);
+	VectorCopy(ent->maxs, e->maxs);
+	e->nextthink = level.time + FRAMETIME;
+
+	dummy_copy_activator(e);
+	ent->mirror1 = e;
+
+	return e;
+}
+
+// note: dummy was used as proof-of-concept to assign player skins to a non-client (monster) using configstrings
+void Cmd_Dummy_f(edict_t* ent)
+{
+	vec3_t start;
+
+	if (ent->mirror1)
+	{
+		// remove
+		if (ent->mirror1->inuse)
+		{
+			safe_cprintf(ent, PRINT_HIGH, "Dummy removed\n");
+			ent->mirror1->think = BecomeTE;
+			ent->nextthink = level.time + FRAMETIME;
+		}
+		ent->mirror1 = NULL;
+	}
+	else
+	{
+		ent->mirror1 = TestDummy(ent);
+		if (!G_GetSpawnLocation(ent, 100, ent->mirror1->mins, ent->mirror1->maxs, start, NULL))
+		{
+			safe_cprintf(ent, PRINT_HIGH, "Unable to spawn dummy\n");
+			ent->mirror1 = NULL;
+			G_FreeEdict(ent->mirror1);
+			return;
+		}
+		safe_cprintf(ent, PRINT_HIGH, "Dummy spawned\n");
+		VectorCopy(start, ent->mirror1->s.origin);
+		VectorCopy(ent->s.angles, ent->mirror1->s.angles);
+		ent->mirror1->s.angles[PITCH] = 0;
+		gi.linkentity(ent->mirror1);
+	}
+}
+
+void Cmd_Mirror_f(edict_t* ent)
+{
+	edict_t* e = NULL;
+
+	//Cmd_Dummy_f(ent);
+	//return;
+	// DISABLED FOR NOW (SKINS DONT WORK) :(
+//	if (!ent->myskills.administrator)
+//		return;
+
+	// remove existing decoys
+	if (MirroredEntitiesExist(ent))
+	{
+		mirrored_removeall(ent);
+		gi.cprintf(ent, PRINT_HIGH, "Decoys removed.\n");
+		return;
+	}
+
+	// find monster decoys
+	while ((e = G_Find(e, FOFS(classname), "drone")) != NULL)
+	{
+		if (e && e->inuse && (e->activator == ent) && (e->mtype == M_DECOY))
+		{
+			gi.cprintf(ent, PRINT_HIGH, "You already have decoys out!\n");
+			return;
+		}
+	}
+
+	if (!V_CanUseAbilities(ent, DECOY, MIRROR_COST, true))
+		return;
+
+	ent->mirror1 = MirrorEntity(ent);
+	ent->mirror2 = MirrorEntity(ent);
+
+	ent->client->ability_delay = level.time + MIRROR_DELAY;
+	ent->client->pers.inventory[power_cube_index] -= MIRROR_COST;
+}

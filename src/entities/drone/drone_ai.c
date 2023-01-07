@@ -678,7 +678,7 @@ void drone_ai_idle (edict_t *self)
 	if (self->mtype == M_MEDIC)
 		M_Regenerate(self, qf2sf(300), qf2sf(10), 1.0, true, true, false, &self->monsterinfo.regen_delay1);
 
-	else if (self->health >= 0.3*self->max_health)
+	else if (self->mtype != M_DECOY && self->health >= 0.3*self->max_health)
 	// change skin if we are being healed by someone else
 		self->s.skinnum &= ~1;
 
@@ -1693,7 +1693,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 		gi.dprintf("drone_ai_run1() AI_FINDNAVI %s goalentity %s\n", self->monsterinfo.aiflags & AI_FIND_NAVI ? "true" : "false", self->goalentity ? "true" : "false");
 	}
 
-	if (self->health >= 0.3*self->max_health)
+	if (self->mtype != M_DECOY && self->health >= 0.3*self->max_health)
 	// change skin if we are being healed by someone else
 		self->s.skinnum &= ~1;
 
@@ -2543,6 +2543,22 @@ void M_UpdateLastSight (edict_t *self)
 	VectorCopy(goal->s.origin, self->monsterinfo.last_sighting);
 }
 
+void drone_return(edict_t* self)
+{
+	edict_t* leader = self->monsterinfo.leader;
+
+	if (self->mtype != M_DECOY)
+		return;
+
+	// teleport back to our leader if we can't reach him
+	if (!self->enemy && leader && leader->inuse && self->monsterinfo.search_frames > 300 
+		&& level.time > self->monsterinfo.teleport_delay)
+	{
+		TeleportNearArea(self, self->activator->s.origin, 256, false);
+		self->monsterinfo.teleport_delay = level.time + 1;
+	}
+}
+
 void drone_think (edict_t *self)
 {
 	//gi.dprintf("drone_think()\n");
@@ -2552,7 +2568,8 @@ void drone_think (edict_t *self)
 	if (!drone_boss_stuff(self))
 		return;
 
-//	decoy_copy(self);
+	drone_return(self);
+	//decoy_copy(self);
 
 	CTF_SummonableCheck(self);
 
@@ -2632,6 +2649,25 @@ void drone_think (edict_t *self)
 	// this must come before M_MoveFrame() because a monster's dead
 	// function may set the nextthink to 0
 	self->nextthink = level.time + 0.1; // run at 10 frames/sec
+	/*
+	if (self->mtype == M_DECOY && level.framenum % 10)
+	{
+		self->model = self->activator->model;
+		self->s.skinnum = self->activator->s.skinnum;
+		self->s.modelindex = self->activator->s.modelindex;
+		self->s.modelindex2 = self->activator->s.modelindex2;
+		self->s.modelindex3 = self->activator->s.modelindex3;
+		self->s.modelindex4 = self->activator->s.modelindex4;
+
+		if (self->activator && self->activator->inuse)
+		{
+			gi.dprintf("class skin: %s\n", V_GetClassModel(self->activator));
+			gi.dprintf("activator model: %s skinnum: %d modelindex: %d modelindex2: %d\n", self->activator->model, self->activator->s.skinnum, self->activator->s.modelindex, self->activator->s.modelindex2);
+			gi.dprintf("decoy model: %s skinnum: %d modelindex: %d modelindex2: %d\n", self->model, self->s.skinnum, self->s.modelindex, self->s.modelindex2);
+		}
+		else
+			gi.dprintf("no activator\n");
+	}*/
 
 	M_MoveFrame (self);
 	M_CatagorizePosition (self);
