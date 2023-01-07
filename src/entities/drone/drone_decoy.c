@@ -216,7 +216,7 @@ void decoy_rail(edict_t* self)
 
 	MonsterAim(self, 1, 0, false, MZ2_ACTOR_MACHINEGUN_1, forward, start);
 
-	monster_fire_railgun(self, start, forward, damage, 100, MZ2_ACTOR_MACHINEGUN_1);
+	monster_fire_railgun(self, start, forward, 1, 100, MZ2_ACTOR_MACHINEGUN_1);
 }
 
 void actor_dead (edict_t *self)
@@ -354,6 +354,7 @@ mmove_t actor_move_attack = {FRAME_attack1, FRAME_attack8, actor_frames_attack, 
 
 void actor_attack(edict_t *self)
 {
+	int	weap_index;
 	float dist = entdist(self, self->enemy);
 
 	// we're dying, get up close!
@@ -368,16 +369,22 @@ void actor_attack(edict_t *self)
 
 	if (dist < SABRE_INITIAL_RANGE)
 	{
+		weap_index = WEAP_SWORD;
+		self->s.skinnum = self->activator->s.skinnum | (weap_index << 8);
 		// sword attack
 		self->monsterinfo.currentmove = &actor_move_attack2;
 	}
 	else if (dist < 512)
 	{
+		weap_index = WEAP_ROCKETLAUNCHER;
+		self->s.skinnum = self->activator->s.skinnum | (weap_index << 8);
 		// rocket attack
 		self->monsterinfo.currentmove = &actor_move_attack;
 	}
 	else
 	{
+		weap_index = WEAP_RAILGUN;
+		self->s.skinnum = self->activator->s.skinnum | (weap_index << 8);
 		// rail attack
 		self->monsterinfo.currentmove = &actor_move_attack3;
 	}
@@ -387,73 +394,6 @@ void actor_attack(edict_t *self)
 
 /*QUAKED misc_actor (1 .5 0) (-16 -16 -24) (16 16 32)
 */
-
-char* V_GetClassModel(edict_t* ent) {
-	char* c1;//, * c2;
-	static char out[64];
-
-	/* az 3.4a ctf skins support */
-
-	switch (ent->myskills.class_num) {
-	case CLASS_SOLDIER:
-		c1 = class1_model->string;
-		//c2 = class1_skin->string;
-		break;
-	case CLASS_POLTERGEIST:
-		c1 = class2_model->string;
-		//c2 = class2_skin->string;
-		break;
-	case CLASS_VAMPIRE:
-		c1 = class3_model->string;
-		//c2 = class3_skin->string;
-		break;
-	case CLASS_MAGE:
-		c1 = class4_model->string;
-		//c2 = class4_skin->string;
-		break;
-	case CLASS_ENGINEER:
-		c1 = class5_model->string;
-		//c2 = class5_skin->string;
-		break;
-	case CLASS_KNIGHT:
-		c1 = class6_model->string;
-		//c2 = class6_skin->string;
-		break;
-	case CLASS_ALIEN:
-		c1 = class11_model->string;
-		//c2 = class11_skin->string;
-		break;
-	case CLASS_CLERIC:
-		c1 = class7_model->string;
-		//c2 = class7_skin->string;
-		break;
-	case CLASS_WEAPONMASTER:
-		c1 = class8_model->string;
-		//c2 = class8_skin->string;
-		break;
-	case CLASS_NECROMANCER:
-		c1 = class9_model->string;
-		//c2 = class9_skin->string;
-		break;
-
-	case CLASS_SHAMAN:
-		c1 = class10_model->string;
-		//c2 = class10_skin->string;
-		break;
-	default:
-		return "male/grunt";
-	}
-	/*
-	if (ctf->value || domination->value || ptr->value || tbi->value) {
-		if (ent->teamnum == RED_TEAM)
-			c2 = "ctf_r";
-		else
-			c2 = "ctf_b";
-	}*/
-
-	sprintf(out, "players/%s/tris.md2", c1);
-	return out;
-}
 
 void decoy_copy (edict_t *self)
 {
@@ -525,11 +465,56 @@ void init_drone_decoy (edict_t *self)
 
 qboolean MirroredEntitiesExist (edict_t *ent);
 
+void decoy_togglesolid(edict_t* ent, qboolean make_solid)
+{
+	edict_t* e = NULL;
+
+	e = DroneList_Iterate();
+
+	// search for other drones
+	while (e)
+	{
+		if (e && e->activator && e->activator == ent && e->mtype == M_DECOY)
+		{
+			if (make_solid)
+				e->owner = NULL;
+			else
+				e->owner = e->activator;
+		}
+
+		e = DroneList_Next(e);
+	}
+}
+
 void Cmd_Decoy_f (edict_t *ent)
 {
+	char* s;
 	edict_t *ret;
+
+	if (ent->deadflag == DEAD_DEAD)
+		return;
+
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: %s just called Cmd_Decoy_f()\n", ent->client->pers.netname);
+
+	s = gi.args();
+	if (!Q_strcasecmp(s, "remove"))
+	{
+		RemoveAllDrones(ent, true);
+		return;
+	}
+
+	if (!Q_strcasecmp(s, "solid"))
+	{
+		decoy_togglesolid(ent, true);
+		return;
+	}
+
+	if (!Q_strcasecmp(s, "notsolid"))
+	{
+		decoy_togglesolid(ent, false);
+		return;
+	}
 
 	if (!V_CanUseAbilities(ent, DECOY, M_DEFAULT_COST, true))
 		return;
