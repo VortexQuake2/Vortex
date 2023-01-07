@@ -327,6 +327,7 @@ sidebar_result_t layout_add_entity_info(layout_t* layout, edict_t* ent)
 	case M_OBSTACLE:
 	case M_HEALER:
 	case M_GASSER:
+	case M_DECOY:
 		name = lva("%s", V_GetMonsterName(ent));
 		data = lva("+%d", ent->health);
 		break;

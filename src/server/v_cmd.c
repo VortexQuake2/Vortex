@@ -77,6 +77,7 @@ void Cmd_HellSpawn_f (edict_t *ent);
 void Cmd_Caltrops_f (edict_t *ent);
 void Cmd_fmedi_f(edict_t *ent);
 void Cmd_PrintCommandList(edict_t *ent);
+void Cmd_Mirror_f(edict_t* ent);
 
 #define CommandTotal sizeof(commands) / sizeof(gameCommand_s)
 
@@ -104,6 +105,7 @@ const gameCommand_s commands[] =
 	{ "hellspawn", 		Cmd_HellSpawn_f },
 	{ "supplystation", 	Cmd_CreateSupplyStation_f },
 	{ "decoy", 			Cmd_Decoy_f },
+	//{ "mirror", 		Cmd_Mirror_f },
 	{ "curse", 			Cmd_Curse },
 	{ "amnesia", 		Cmd_Amnesia },
 	{ "weaken", 		Cmd_Weaken },

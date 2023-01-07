@@ -172,9 +172,9 @@ void fire_sword (edict_t *self, vec3_t start, vec3_t dir, int damage, int length
 	vec3_t mins, maxs;
 	qboolean water;
 	int mask;
-	int kick = 100;
+	int kick = SABRE_INITIAL_KICK;
 	int count = 0;
-	int swordrange;
+	//int swordrange;
 
 
 	VectorSet(mins, -2, -2, -2);
@@ -183,15 +183,15 @@ void fire_sword (edict_t *self, vec3_t start, vec3_t dir, int damage, int length
 	// calling entity made a sound, used to alert monsters
 	self->lastsound = level.framenum;
 
-	swordrange = SABRE_INITIAL_RANGE + (SABRE_ADDON_RANGE * self->myskills.weapons[WEAPON_SWORD].mods[2].current_level);
+	//swordrange = SABRE_INITIAL_RANGE + (SABRE_ADDON_RANGE * self->myskills.weapons[WEAPON_SWORD].mods[2].current_level);
 
 	//decino: special for decoys
-	if (self->mtype == M_DECOY)
-    swordrange = SABRE_INITIAL_RANGE + (SABRE_ADDON_RANGE * self->activator->myskills.weapons[WEAPON_SWORD].mods[2].current_level);
+	//if (self->mtype == M_DECOY)
+    //swordrange = SABRE_INITIAL_RANGE + (SABRE_ADDON_RANGE * self->activator->myskills.weapons[WEAPON_SWORD].mods[2].current_level);
 
 	//create starting and ending positions for trace
 	VectorCopy(start, from);
-	VectorMA(start, swordrange, dir, end);
+	VectorMA(start, length, dir, end);
 
 //	gi.dprintf("Sword range: %d\n", swordrange);
 
@@ -374,8 +374,12 @@ void sword_attack (edict_t *ent, vec3_t g_offset, int damage)
 	vec3_t  forward, right;
 	vec3_t  start;
 	vec3_t  offset;
-
-	int swordrange = SABRE_INITIAL_RANGE + SABRE_ADDON_RANGE * ent->myskills.weapons[WEAPON_SWORD].mods[2].current_level;
+	int swordrange;
+	
+	if (ent->client)
+		swordrange = SABRE_INITIAL_RANGE + SABRE_ADDON_RANGE * ent->myskills.weapons[WEAPON_SWORD].mods[2].current_level;
+	else
+		swordrange = SABRE_INITIAL_RANGE + SABRE_ADDON_RANGE * ent->monsterinfo.level;
 
 	if (is_quad)
 		damage *= 4;
@@ -404,7 +408,7 @@ void sword_attack (edict_t *ent, vec3_t g_offset, int damage)
 		start, 
 		forward, 
 		damage, 
-		SABRE_INITIAL_KICK + SABRE_ADDON_KICK * ent->myskills.weapons[WEAPON_SWORD].mods[0].current_level,
+		swordrange,//SABRE_INITIAL_KICK + SABRE_ADDON_KICK * ent->myskills.weapons[WEAPON_SWORD].mods[0].current_level,
 		0xd3d3d3d3 /* scolor */
 	); 
 }
