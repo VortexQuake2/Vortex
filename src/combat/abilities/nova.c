@@ -23,9 +23,9 @@ void NovaExplosionEffect (vec3_t org)
 }
 
 #define NOVA_RADIUS				150
-#define NOVA_DEFAULT_DAMAGE		100
-#define NOVA_ADDON_DAMAGE		20
-#define NOVA_DELAY				0.5
+#define NOVA_DEFAULT_DAMAGE		50
+#define NOVA_ADDON_DAMAGE		30
+#define NOVA_DELAY				0.3
 #define FROSTNOVA_RADIUS		150
 	
 void Cmd_Nova_f (edict_t *ent, int frostLevel, float skill_mult, float cost_mult)

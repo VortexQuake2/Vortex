@@ -57,6 +57,7 @@ int AveragePlayerLevel(void);
 int PvMAveragePlayerLevel(void);
 int PVM_TotalMonsters(edict_t *monster_owner, qboolean update);
 int PVM_TotalMonstersValue(edict_t* monster_owner);
+void ThrowShrapnel(edict_t* self, char* modelname, float speed, vec3_t origin, int dmg, int mod);
 //************ g_misc.c ************
 
 //************ g_utils.c ************
@@ -212,6 +213,8 @@ int vrx_get_joined_players();
 void V_GibSound(edict_t *self, int index);
 
 void vrx_player_death(edict_t *self, edict_t *attacker, edict_t *inflictor);
+
+void vrx_morph_think(edict_t* ent);
 
 //************ vote.c *************
 void CheckPlayerVotes(void);

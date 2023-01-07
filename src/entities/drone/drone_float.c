@@ -663,7 +663,7 @@ void init_drone_floater (edict_t *self)
 	self->health = M_FLOATER_INITIAL_HEALTH + M_FLOATER_ADDON_HEALTH*self->monsterinfo.level;
 	self->max_health = self->health;
 	self->gib_health = -0.6 * BASE_GIB_HEALTH;
-	self->mass = 300;
+	self->mass = 150;
 	self->mtype = M_FLOATER;
 
 	self->monsterinfo.power_armor_power = M_FLOATER_INITIAL_ARMOR + M_FLOATER_ADDON_ARMOR*self->monsterinfo.level;

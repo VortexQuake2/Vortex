@@ -71,6 +71,7 @@ void ai_eval_targets() {
 
 			// make use of that symmetry
 			float len = VectorLengthSqr(eorg);
+			//gi.dprintf("%s %s distance to %s %s is %.0f\n", potential_targets[i]->classname, V_GetMonsterName(potential_targets[i]), potential_targets[j]->classname, V_GetMonsterName(potential_targets[j]), len);
 			potential_target_distances[i][j] = len;
 			potential_target_distances[j][i] = len;
 		}
@@ -134,6 +135,7 @@ edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t* self, float rad)
             continue;
 
         if ((!found) || (vlen <= found_rad)) {
+			//gi.dprintf("findclosestradius() found %s %s @ %.0f\n", from->classname, V_GetMonsterName(from), vlen);
             found = from;
             found_rad = vlen;
         }
