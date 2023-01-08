@@ -193,17 +193,13 @@ DeathmatchScoreboardMessage *Improved!*
 
 void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 {
-
-	char entry[MAX_ENTRY_SIZE];
-	char string[MAX_STRING_SIZE];
-	char name[23], classname[20];//3.78
-	char* truncClass;
-	int stringlength;
+	layout_t scoreboard = {0};
+	layout_pos_t cursor;
+	lva_result_t entry;
 	int i, j, k;
 	int sorted[MAX_CLIENTS];
 	int sortedscores[MAX_CLIENTS];
 	int score, total, highscore = 0;
-	int y;
 	//float accuracy;
 	int time_left = 999, frag_left = 999;
 	gclient_t *cl;
@@ -217,15 +213,13 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 	}
 	else
 	{
-		*string = 0;
-
 		// Scanner active ?
 		if (ent->client->pers.scanner_active & 1)
-			ShowScanner(ent, string);
+			ShowScanner(ent, scoreboard.layout);
 
 		// normal quake code ...	
 		gi.WriteByte(svc_layout);
-		gi.WriteString(string);
+		gi.WriteString(scoreboard.layout);
 		return;
 	}
 
@@ -258,9 +252,6 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 		sortedscores[j] = score;
 		total++;
 	}
-	// print level name and exit rules
-	string[0] = 0;
-	stringlength = strlen(string);
 
 	// make a header for the data 
 	//K03 Begin
@@ -274,22 +265,54 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 	if (time_left < 0)
 		time_left = 0;
 
-	Com_sprintf(entry, sizeof(entry),
-		"xv 0 yv 16 string2 \"Time:%2im %2is Frags:%3i Players:%3i\" "
-		"xv 0 yv 34 string2 \"Name       Lv Cl Score Frg Spr Png\" ",
-		(int)(time_left / 60), (int)(time_left - (int)((time_left / 60) * 60)),
-		frag_left, vrx_get_joined_players());
+	cursor = layout_set_cursor_xy(
+		0, XM_CENTER,
+		16, YM_CENTER
+	);
 
-	//K03 End
-	j = strlen(entry);
+	layout_apply_pos(&scoreboard, cursor);
 
-	//gi.dprintf("header string length=%d\n", j);
-
-	if (stringlength + j < MAX_ENTRY_SIZE)
-	{
-		strcpy(string + stringlength, entry);
-		stringlength += j;
+	if (pvm->value && !invasion->value) {
+		entry = lva("Time:%2im %2is                Players:%3i",
+			(time_left / 60),
+			(time_left - (time_left / 60) * 60),
+			frag_left,
+			vrx_get_joined_players()
+		);
 	}
+	else if (invasion->value)
+	{
+		entry = lva("Time:%2im %2is    Wave:%3i    Players:%3i",
+			(time_left / 60),
+			(time_left - (time_left / 60) * 60),
+			invasion_difficulty_level,
+			vrx_get_joined_players()
+		);
+	}
+	else
+	{
+		entry = lva("Time:%2im %2is    Frags:%3i   Players:%3i",
+			(time_left / 60),
+			(time_left - (time_left / 60) * 60),
+			frag_left,
+			vrx_get_joined_players()
+		);
+	}
+
+	layout_add_highlight_string(&scoreboard, entry.str);
+
+	cursor = layout_set_cursor_xy(
+		0, XM_CENTER,
+		34, YM_CENTER
+	);
+
+	layout_apply_pos(&scoreboard, cursor);
+	if (pvm->value)
+		entry = lva("Name            Lv Cl         Score Png");
+	else
+		entry = lva("Name            Lv Cl Score Frg Spr Png");
+	layout_add_highlight_string(&scoreboard, entry.str);
+	
 
 	// add the clients in sorted order 
 	if (total > 24)
@@ -298,42 +321,67 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 
 	for (i = 0; i<total; i++)
 	{
+		char name[16];
+		char classname[3];
+		char* truncClass;
+		char* prefix = "";
+		int xoffs = 0;
+
 		cl = &game.clients[sorted[i]];
 		cl_ent = g_edicts + 1 + sorted[i];
 
 		if (!cl_ent)
 			continue;
 
-		y = 44 + 8 * i;
-
 		// 3.78 truncate client's name and class string
-		strcpy(name, V_TruncateString(cl->pers.netname, 11));
+		strcpy(name, V_TruncateString(cl->pers.netname, sizeof name));
         truncClass = V_TruncateString(vrx_get_class_string(cl_ent->myskills.class_num), 3);
 		strcpy(classname, truncClass);
-		padRight(name, 10);
+		padRight(name, sizeof name - 1);
 
-		Com_sprintf(entry, sizeof(entry),
-			"xv %i yv %i string \"%s%s %2i %s %5i %3i %3i %3i\" ",
-			cl_ent->client->resp.spectator ? -24 : 0,
-			y, cl_ent->client->resp.spectator ? "(s)" : "", name,
-			cl_ent->client->resp.spectator ? 0 : cl_ent->myskills.level,
-			cl_ent->client->resp.spectator ? "??" : classname, cl_ent->client->resp.spectator ? 0 : cl->resp.score,
-			cl_ent->client->resp.spectator ? 0 : cl->resp.frags,
-			cl_ent->client->resp.spectator ? 0 : cl_ent->myskills.streak, cl->ping);
+		if (cl_ent->client->resp.spectator) {
+			xoffs = -24;
+			prefix = "(s)";
+		} else if (cl_ent->deadflag)
+		{
+			xoffs = -24;
+			prefix = "(d)";
+		}
 
-		j = strlen(entry);
+		cursor = layout_set_cursor_xy(
+			xoffs, XM_CENTER,
+			44 + 8 * i, YM_CENTER
+		);
 
-		//gi.dprintf("player string length=%d\n", j);
+		if (!layout_apply_pos(&scoreboard, cursor)) break;
 
-		if (stringlength + j > MAX_ENTRY_SIZE)
-			break;
+		if (pvm->value)
+		{
+			entry = lva("%s%s %2i %s         %5i %3i",
+				prefix, name,
+				cl_ent->client->resp.spectator ? 0 : cl_ent->myskills.level,
+				cl_ent->client->resp.spectator ? "??" : classname,
+				cl_ent->client->resp.spectator ? 0 : cl->resp.score,
+				cl->ping
+			);
+		} else
+		{
+			entry = lva("%s%s %2i %s %5i %3i %3i %3i",
+				prefix, name,
+				cl_ent->client->resp.spectator ? 0 : cl_ent->myskills.level,
+				cl_ent->client->resp.spectator ? "??" : classname,
+				cl_ent->client->resp.spectator ? 0 : cl->resp.score,
+				cl_ent->client->resp.spectator ? 0 : cl->resp.frags,
+				cl_ent->client->resp.spectator ? 0 : cl_ent->myskills.streak,
+				cl->ping
+			);
+		}
 
-		strcpy(string + stringlength, entry);
-		stringlength += j;
+		if (!layout_add_string(&scoreboard, entry.str)) break;
 	}
 
 	gi.WriteByte(svc_layout);
-	gi.WriteString(string);
+	gi.WriteString(scoreboard.layout);
 
 }
 //K03 End
@@ -947,6 +995,11 @@ void G_SetStats(edict_t *ent)
 		ent->client->ps.stats[STAT_TIMER] = ent->client->pers.inventory[power_cube_index];
 	}
 	//K03 End
+	else if (ent->client->ability_delay > level.time)
+	{
+		ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex("turtle");
+		ent->client->ps.stats[STAT_TIMER] = (ent->client->ability_delay - level.time) * 10;
+	}
 	else
 	{
 		ent->client->ps.stats[STAT_TIMER_ICON] = 0;

@@ -36,6 +36,7 @@ void tech_drop(edict_t *ent, gitem_t *item) {
 
     // clear inventory
     ent->client->pers.inventory[index]--;
+    ent->client->layout.dirty = true; // az
 
     ValidateSelectedItem(ent);
 }
@@ -121,6 +122,7 @@ qboolean tech_pickup(edict_t *ent, edict_t *other) {
         gi.sound(other, CHAN_ITEM, gi.soundindex("ctf/tech4.wav"), 1, ATTN_STATIC, 0);
 
     other->client->pers.inventory[ITEM_INDEX(ent->item)]++;
+    other->client->layout.dirty = true; // az
     return true;
 }
 
