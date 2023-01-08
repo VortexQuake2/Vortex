@@ -91,6 +91,49 @@ mframe_t gladiator_frames_run [] =
 };
 mmove_t gladiator_move_run = {FRAME_run1, FRAME_run6, gladiator_frames_run, NULL};
 
+mframe_t gladiator_frames_pain[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+};
+mmove_t gladiator_move_pain = { FRAME_pain1, FRAME_pain6, gladiator_frames_pain, gladiator_walk };
+
+void gladiator_pain(edict_t* self, edict_t* other, float kick, int damage)
+{
+	if (self->health < (self->max_health / 2))
+		self->s.skinnum = 1;
+
+	// we're already in a pain state
+	if (self->monsterinfo.currentmove == &gladiator_move_pain)
+		return;
+
+	// monster players don't get pain state induced
+	if (G_GetClient(self))
+		return;
+
+	// no pain in invasion hard mode
+	if (invasion->value == 2)
+		return;
+
+	// if we're fidgeting, always go into pain state.
+	if (random() <= (1.0f - self->monsterinfo.pain_chance) &&
+		self->monsterinfo.currentmove != &gladiator_move_walk &&
+		self->monsterinfo.currentmove != &gladiator_move_stand)
+		return;
+
+	if (random() < 0.5)
+		gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
+	else {
+		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
+	}
+
+	self->monsterinfo.currentmove = &gladiator_move_pain;
+}
+
 void gladiator_run (edict_t *self)
 {
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
@@ -423,6 +466,9 @@ void init_drone_gladiator (edict_t *self)
 	self->monsterinfo.jumpdn = 512;
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
 	self->monsterinfo.control_cost = M_GLADIATOR_CONTROL_COST;
+
+	self->monsterinfo.pain_chance = 0.25f;
+	self->pain = gladiator_pain;
 
 	self->die = gladiator_die;
 	self->monsterinfo.stand = gladiator_stand;

@@ -415,6 +415,117 @@ void m_soldier_dead (edict_t *self)
 	M_PrepBodyRemoval(self);
 }
 
+
+mframe_t soldier_frames_pain_short1[] =
+{
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0, NULL,
+	ai_move, 0,	 NULL,
+};
+mmove_t soldier_move_pain_short1 = { FRAME_pain101, FRAME_pain105, soldier_frames_pain_short1, m_soldier_run };
+
+mframe_t soldier_frames_pain_short2[] =
+{
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+};
+mmove_t soldier_move_pain_short2 = { FRAME_pain201, FRAME_pain207, soldier_frames_pain_short2, m_soldier_run };
+
+mframe_t soldier_frames_pain_long1[] =
+{
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+};
+mmove_t soldier_move_pain_long1 = { FRAME_pain301, FRAME_pain318, soldier_frames_pain_long1, m_soldier_run };
+
+mframe_t soldier_frames_pain_long2[] =
+{
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,  NULL,	
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+};
+mmove_t soldier_move_pain_long2 = { FRAME_pain401, FRAME_pain417, soldier_frames_pain_long2, m_soldier_run };
+
+void soldier_pain(edict_t* self, edict_t* other, float kick, int damage)
+{
+	if (self->health < (self->max_health / 2))
+		self->s.skinnum = 1;
+
+	// we're already in a pain state
+	if (self->monsterinfo.currentmove == &soldier_move_pain_long1 ||
+		self->monsterinfo.currentmove == &soldier_move_pain_long2 ||
+		self->monsterinfo.currentmove == &soldier_move_pain_short1 || 
+		self->monsterinfo.currentmove == &soldier_move_pain_short2)
+		return;
+
+	// monster players don't get pain state induced
+	if (G_GetClient(self))
+		return;
+
+	// no pain in invasion hard mode
+	if (invasion->value == 2)
+		return;
+
+	// if we're fidgeting, always go into pain state.
+	if (random() <= (1.0f - self->monsterinfo.pain_chance) &&
+		self->monsterinfo.currentmove != &m_soldier_move_stand1 &&
+		self->monsterinfo.currentmove != &m_soldier_move_stand3)
+		return;
+
+	gi.sound(self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
+
+	if (self->monsterinfo.currentmove == &m_soldier_move_stand1 ||
+		self->monsterinfo.currentmove == &m_soldier_move_stand3) {
+		if (random() < 0.5)
+			self->monsterinfo.currentmove = &soldier_frames_pain_long1;
+		else
+			self->monsterinfo.currentmove = &soldier_frames_pain_long2;
+	}
+	else {
+		if (random() < 0.5)
+			self->monsterinfo.currentmove = &soldier_move_pain_short1;
+		else
+			self->monsterinfo.currentmove = &soldier_move_pain_short2;
+	}
+}
+
 mframe_t m_soldier_frames_death1 [] =
 {
 	ai_move, 0,   NULL,
@@ -769,6 +880,9 @@ void init_drone_soldier (edict_t *self)
 	self->monsterinfo.jumpdn = 512;
 	self->monsterinfo.jumpup = 64;
 
+	// extremely sensitive to pain!
+	self->monsterinfo.pain_chance = 0.4f;
+	self->pain = soldier_pain;
 	self->die = m_soldier_die;
 
 	self->monsterinfo.stand = m_soldier_stand;

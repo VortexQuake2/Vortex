@@ -401,6 +401,8 @@ void mychick_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
 {
 	if (random() > 0.9)
 		return;
+	if (!G_GetClient(self))
+		return;
 	if (level.time < self->monsterinfo.dodge_time)
 		return;
 	if (OnSameTeam(self, attacker))
@@ -775,6 +777,104 @@ mframe_t mychick_frames_jump [] =
 };
 mmove_t mychick_move_jump = {FRAME_walk11, FRAME_walk20, mychick_frames_jump, NULL};
 
+mframe_t mychick_frames_pain_short1[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+};
+mmove_t mychick_move_pain_short1 = { FRAME_pain101, FRAME_pain105, mychick_frames_pain_short1, mychick_continue };
+
+mframe_t mychick_frames_pain_short2[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+};
+mmove_t mychick_move_pain_short2 = { FRAME_pain201, FRAME_pain205, mychick_frames_pain_short2, mychick_continue };
+
+mframe_t mychick_frames_pain_long[] =
+{
+	ai_move, 0, NULL,
+
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+};
+mmove_t mychick_move_pain_long = { FRAME_pain301, FRAME_pain321, mychick_frames_pain_long, mychick_continue };
+
+void mychick_pain(edict_t* self, edict_t* other, float kick, int damage)
+{
+	double rng = random();
+	if (self->health < (self->max_health / 2))
+		self->s.skinnum = 1;
+
+	// we're already in a pain state
+	if (self->monsterinfo.currentmove == &mychick_move_pain_long ||
+		self->monsterinfo.currentmove == &mychick_move_pain_short1 || 
+		self->monsterinfo.currentmove == &mychick_move_pain_short2)
+		return;
+
+	// monster players don't get pain state induced
+	if (G_GetClient(self))
+		return;
+
+	// no pain in invasion hard mode
+	if (invasion->value == 2)
+		return;
+
+	// if we're fidgeting, always go into pain state.
+	if (rng <= (1.0f - self->monsterinfo.pain_chance) &&
+		self->monsterinfo.currentmove != &mychick_move_fidget &&
+		self->monsterinfo.currentmove != &mychick_move_stand)
+		return;
+
+	if (random() < 0.33)
+		gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
+	else {
+		if (random() < 0.5)
+			gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
+		else
+			gi.sound(self, CHAN_VOICE, sound_pain3, 1, ATTN_NORM, 0);
+	}
+
+	if (self->monsterinfo.currentmove == &mychick_move_fidget ||
+		self->monsterinfo.currentmove == &mychick_move_stand)
+		self->monsterinfo.currentmove = &mychick_move_pain_long;
+	else {
+		if (random() < 0.5)
+			self->monsterinfo.currentmove = &mychick_move_pain_short1;
+		else
+			self->monsterinfo.currentmove = &mychick_move_pain_short2;
+	}
+}
+
+
 /*QUAKED monster_chick (1 .5 0) (-16 -16 -24) (16 16 32) Ambush Trigger_Spawn Sight
 */
 void init_drone_bitch (edict_t *self)
@@ -827,8 +927,9 @@ void init_drone_bitch (edict_t *self)
 
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 
-//	self->pain = mychick_pain;
+	self->pain = mychick_pain;
 	self->die = mychick_die;
+	self->monsterinfo.pain_chance = 0.3f;
 
 	self->monsterinfo.stand = mychick_stand;
 	self->monsterinfo.walk = chick_walk;

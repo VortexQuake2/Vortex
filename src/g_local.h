@@ -636,6 +636,9 @@ typedef struct
 	// drone list
 	int dronelist_index;
 
+	// odds that a hit will induce a pain state
+	float pain_chance;
+
 	// az end
 } monsterinfo_t;
 

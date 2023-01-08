@@ -875,6 +875,93 @@ void mytank_dead (edict_t *self)
 	M_PrepBodyRemoval(self);
 }
 
+// pain
+mframe_t tank_frames_pain_long[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+};
+mmove_t tank_move_pain_long = { FRAME_pain301, FRAME_pain316, tank_frames_pain_long, tank_walk };
+
+mframe_t tank_frames_pain_short1[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+};
+mmove_t tank_move_pain_short1 = { FRAME_pain201, FRAME_pain205, tank_frames_pain_short1, tank_walk };
+
+mframe_t tank_frames_pain_short2[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+};
+
+mmove_t tank_move_pain_short2 = { FRAME_pain101, FRAME_pain104, tank_frames_pain_short2, tank_walk };
+
+void tank_pain(edict_t* self, edict_t* other, float kick, int damage)
+{
+	double rng = random();
+	if (self->health < (self->max_health / 2))
+		self->s.skinnum = 1;
+
+	// we're already in a pain state
+	if (self->monsterinfo.currentmove == &tank_move_pain_long ||
+		self->monsterinfo.currentmove == &tank_move_pain_short1 ||
+		self->monsterinfo.currentmove == &tank_move_pain_short2)
+		return;
+
+	// monster players don't get pain state induced
+	if (G_GetClient(self))
+		return;
+
+	// no pain in invasion hard mode
+	if (invasion->value == 2)
+		return;
+
+	// if we're fidgeting, always go into pain state.
+	if (rng <= (1.0f - self->monsterinfo.pain_chance) &&
+		self->monsterinfo.currentmove != &tank_move_start_walk &&
+		self->monsterinfo.currentmove != &tank_move_stop_walk &&
+		self->monsterinfo.currentmove != &mytank_move_stand)
+		return;
+
+	gi.sound(self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
+
+	if (self->monsterinfo.currentmove == &tank_move_start_walk ||
+		self->monsterinfo.currentmove == &mytank_move_stand)
+		self->monsterinfo.currentmove = &tank_move_pain_long;
+	else {
+		if (random() < 0.5)
+			self->monsterinfo.currentmove = &tank_move_pain_short1;
+		else
+			self->monsterinfo.currentmove = &tank_move_pain_short2;
+	}
+}
+
+
+
 mframe_t mytank_frames_death1 [] =
 {
 	ai_move, -7,  NULL,
@@ -1031,7 +1118,8 @@ void init_drone_tank (edict_t *self)
 
 	self->mass = 500;
 
-	//self->pain = mytank_pain;
+	self->monsterinfo.pain_chance = 0.15f;
+	self->pain = tank_pain;
 	self->die = mytank_die;
 	//self->touch = mytank_touch;
 	self->monsterinfo.stand = mytank_stand;

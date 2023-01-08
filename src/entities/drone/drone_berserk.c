@@ -40,6 +40,7 @@ mframe_t berserk_frames_stand [] =
 };
 mmove_t berserk_move_stand = {FRAME_stand1, FRAME_stand5, berserk_frames_stand, NULL};
 
+
 void berserk_stand (edict_t *self)
 {
 	self->monsterinfo.currentmove = &berserk_move_stand;
@@ -279,6 +280,76 @@ mframe_t berserk_frames_death2 [] =
 };
 mmove_t berserk_move_death2 = {FRAME_deathc1, FRAME_deathc8, berserk_frames_death2, berserk_dead};
 
+mframe_t berserk_frames_pain_short[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+mmove_t berserk_move_pain_short = { FRAME_painc1, FRAME_painc4, berserk_frames_pain_short, berserk_run };
+
+mframe_t berserk_frames_pain_long[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+};
+mmove_t berserk_move_pain_long = { FRAME_painb1, FRAME_painb20, berserk_frames_pain_long, berserk_run };
+
+void berserk_pain(edict_t* self, edict_t* other, float kick, int damage)
+{
+	double rng = random();
+	if (self->health < (self->max_health / 2))
+		self->s.skinnum = 1;
+
+	// we're already in a pain state
+	if (self->monsterinfo.currentmove == &berserk_move_pain_long ||
+		self->monsterinfo.currentmove == &berserk_move_pain_short)
+		return;
+
+	// monster players don't get pain state induced
+	if (G_GetClient(self))
+		return;
+
+	// no pain in invasion hard mode
+	if (invasion->value == 2)
+		return;
+
+	// if we're fidgeting, always go into pain state.
+	if (rng <= (1.0f - self->monsterinfo.pain_chance) &&
+		self->monsterinfo.currentmove != &berserk_move_stand &&
+		self->monsterinfo.currentmove != &berserk_move_stand_fidget &&
+		self->monsterinfo.currentmove != &berserk_move_walk)
+		return;
+
+	gi.sound(self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
+
+	if (self->monsterinfo.currentmove == &berserk_move_stand ||
+		self->monsterinfo.currentmove == &berserk_move_stand_fidget ||
+		self->monsterinfo.currentmove == &berserk_move_walk)
+		self->monsterinfo.currentmove = &berserk_move_pain_long;
+	else
+		self->monsterinfo.currentmove = &berserk_move_pain_short;
+}
+
 void berserk_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
 	int		n;
@@ -397,7 +468,9 @@ void init_drone_berserk (edict_t *self)
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
 	self->mtype = M_BERSERK;
 
-	//self->pain = berserk_pain;
+	self->pain = berserk_pain;
+	self->monsterinfo.pain_chance = 0.15f;
+
 	self->die = berserk_die;
 
 	self->monsterinfo.stand = berserk_stand;

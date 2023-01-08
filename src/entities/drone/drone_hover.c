@@ -486,13 +486,20 @@ void hover_pain (edict_t *self, edict_t *other, float kick, int damage)
 	if (self->health < (self->max_health / 2))
 		self->s.skinnum = 1;
 
-	if (level.time < self->pain_debounce_time)
+	// we're already in a pain state
+	if (self->monsterinfo.currentmove == &hover_move_pain1 ||
+		self->monsterinfo.currentmove == &hover_move_pain2 ||
+		self->monsterinfo.currentmove == &hover_move_pain3)
 		return;
 
-	self->pain_debounce_time = level.time + 3;
+	// monster players don't get pain state induced
+	if (G_GetClient(self))
+		return;
 
-	if (skill->value == 3)
-		return;		// no pain anims in nightmare
+	// stand animation always gets pain state
+	if (random() <= (1.0f - self->monsterinfo.pain_chance) &&
+		self->monsterinfo.currentmove == &hover_move_stand)
+		return;
 
 	if (damage <= 25)
 	{
@@ -616,6 +623,7 @@ void init_drone_hover (edict_t *self)
 	self->monsterinfo.attack = hover_attack;
 	self->monsterinfo.sight = hover_sight;
 	self->monsterinfo.idle = hover_search;
+	self->monsterinfo.pain_chance = 0.2f; 
 	//self->monsterinfo.search = hover_search;
 
 	gi.linkentity (self);

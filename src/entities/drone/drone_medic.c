@@ -226,6 +226,76 @@ void mymedic_dead (edict_t *self)
 	M_PrepBodyRemoval(self);
 }
 
+mframe_t medic_frames_pain_short[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+};
+mmove_t medic_move_pain_short = { FRAME_paina1, FRAME_paina8, medic_frames_pain_short, mymedic_run };
+
+mframe_t medic_frames_pain_long[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+};
+mmove_t medic_move_pain_long = { FRAME_painb1, FRAME_painb15, medic_frames_pain_long, mymedic_run };
+
+void medic_pain(edict_t* self, edict_t* other, float kick, int damage)
+{
+	if (self->health < (self->max_health / 2))
+		self->s.skinnum = 1;
+
+	// we're already in a pain state
+	if (self->monsterinfo.currentmove == &medic_move_pain_short ||
+		self->monsterinfo.currentmove == &medic_move_pain_long)
+		return;
+
+	// monster players don't get pain state induced
+	if (G_GetClient(self))
+		return;
+
+	// no pain in invasion hard mode
+	if (invasion->value == 2)
+		return;
+
+	// if we're fidgeting, always go into pain state.
+	if (random() <= (1.0f - self->monsterinfo.pain_chance) &&
+		self->monsterinfo.currentmove != &medic_move_walk &&
+		self->monsterinfo.currentmove != &mymedic_move_stand)
+		return;
+
+	if (random() < 0.5)
+		gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
+	else {
+		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
+	}
+
+	if (self->monsterinfo.currentmove == &medic_move_walk ||
+		self->monsterinfo.currentmove == &mymedic_move_stand)
+		self->monsterinfo.currentmove = &medic_move_pain_long;
+	else
+		self->monsterinfo.currentmove = &medic_move_pain_short;
+}
+
 mframe_t mymedic_frames_death [] =
 {
 	ai_move, 0, NULL,
@@ -1037,7 +1107,8 @@ void init_drone_medic (edict_t *self)
 	self->monsterinfo.aiflags |= AI_MEDIC; // use medic ai
 	self->style = 1;// for blaster bolt
 
-//	self->pain = mymedic_pain;
+	self->monsterinfo.pain_chance = 0.3f;
+	self->pain = medic_pain;
 	self->die = mymedic_die;
 //	self->touch = mymedic_touch;
 
