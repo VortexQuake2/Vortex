@@ -880,9 +880,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 	}
 
-	G_ModifyDamage(targ, attacker, damage, dflags, mod);
-	//damage = VortexModifyDamage(targ, inflictor, attacker, point, damage, dflags, mod);
-//	gi.dprintf("%d damage\n", damage);
+	dflags = vrx_apply_pierce(targ, attacker, damage, dflags, mod);
 	
 	if (targ->flags & FL_CHATPROTECT || trading->value)
 		knockback = 0;

@@ -971,9 +971,8 @@ float vrx_get_dmgtype_resistence(const edict_t *targ, int dtype, float Resistanc
     return Resistance;
 }
 
-float G_ModifyDamage(edict_t *targ, edict_t *attacker, float damage, int dflags, int mod) {
-    int pierceLevel = 0, pierceFactor = 1;
-    float temp;
+int vrx_apply_pierce(const edict_t *targ, const edict_t *attacker, const float damage, int dflags, const int mod) {
+    float pierceLevel = 0, pierceFactor = 1;
 
     if (damage > 0) {
         if (attacker->client) {
@@ -981,18 +980,18 @@ float G_ModifyDamage(edict_t *targ, edict_t *attacker, float damage, int dflags,
             if (mod == MOD_MACHINEGUN) {
                 // 25% chance at level 10 for AP round
                 pierceLevel = attacker->myskills.weapons[WEAPON_MACHINEGUN].mods[1].current_level;
-                pierceFactor = 0.0333;
+                pierceFactor = 0.0333f;
             } else if (mod == MOD_RAILGUN) {
                 // 10% chance at level 10 for AP round
                 pierceLevel = attacker->myskills.weapons[WEAPON_RAILGUN].mods[1].current_level;
-                pierceFactor = 0.0111;
+                pierceFactor = 0.0111f;
             }
 
             if (pierceLevel > 0) {
-                temp = 1 + pierceFactor * pierceLevel;
-                temp = 1.0 / temp;
+	            float temp = 1.0f / (1.0f + pierceFactor * pierceLevel);
+	            double rnd = random();
 
-                if (random() >= temp)
+                if (rnd >= temp)
                     dflags |= DAMAGE_NO_ARMOR;
             }
         }
@@ -1002,5 +1001,5 @@ float G_ModifyDamage(edict_t *targ, edict_t *attacker, float damage, int dflags,
             targ->client->idle_frames = 0;
     }
 
-    return damage;
+    return dflags;
 }
