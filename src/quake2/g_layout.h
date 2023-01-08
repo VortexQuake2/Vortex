@@ -34,7 +34,6 @@ typedef struct layout_s
 {
 	char layout[MAX_LAYOUT_LEN];
 	int current_len;
-	int line;
 	layout_pos_t last_pos;
 	edict_t* tracked_list[MAX_LAYOUT_TRACKED_ENTS];
 	int tracked_count;
@@ -72,8 +71,5 @@ qboolean layout_remove_tracked_entity(layout_t* layout, edict_t* ent);
 void layout_clean_tracked_entity_list(layout_t* layout); // removes ents not in use etc..
 
 // go through all tracked entities, curses, etc... and add them to the layout
-void layout_generate_entities(layout_t* layout);
-void layout_generate_curses(edict_t* client);
-
 void layout_generate_all(edict_t* client);
 void layout_send(edict_t* client);
