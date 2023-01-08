@@ -1,13 +1,5 @@
 #include "g_local.h"
 
-// a copy of the "va" function but with its own memory.
-#define MAX_LVA_SIZE 1024
-typedef struct lva_result_s
-{
-	char str[MAX_LVA_SIZE];
-	int len;
-} lva_result_t;
-
 lva_result_t lva(const char* format, ...)
 {
 	va_list		argptr;
@@ -19,7 +11,6 @@ lva_result_t lva(const char* format, ...)
 
 	return ret;
 }
-
 
 #define MAX_SIDEBAR_ROWS 32
 
@@ -48,76 +39,80 @@ void sidebar_add_entry(sidebar_t* sidebar, sidebar_entry_t entry)
 }
 
 
-void layout_add_lva(layout_t* layout, lva_result_t* s)
+qboolean layout_add_lva(layout_t* layout, lva_result_t* s)
 {
 	if (s->len < 0)
 	{
 		gi.dprintf("g_layout.c: invalid encoding\n");
-		return;
+		return false;
 	}
 
 	if (s->len >= MAX_LVA_SIZE)
 	{
 		gi.dprintf("g_layout.c: formatted data overflow");
-		return;
+		return false;
 	}
 
 	if (layout->current_len + s->len < MAX_LAYOUT_LEN)
 	{
 		strcat(layout->layout + layout->current_len, s->str);
 		layout->current_len += s->len;
-	} else
+	}
+	else
 	{
 		gi.dprintf("g_layout.c: layout overflow\n");
+		return false;
 	}
+
+	return true;
 }
 
-void layout_add_string(layout_t* layout, char* str)
+qboolean layout_add_string(layout_t* layout, char* str)
 {
 	lva_result_t text = lva("string \"%s\" ", str);
-	layout_add_lva(layout, &text);
+	return layout_add_lva(layout, &text);
 }
 
-void layout_add_highlight_string(layout_t* layout, char* str)
+qboolean layout_add_highlight_string(layout_t* layout, char* str)
 {
 	lva_result_t text = lva("string2 \"%s\" ", str);
-	layout_add_lva(layout, &text);
+	return layout_add_lva(layout, &text);
 }
 
-void layout_add_centerstring(layout_t* layout, char* str)
+qboolean layout_add_centerstring(layout_t* layout, char* str)
 {
 	lva_result_t text = lva("cstring \"%s\" ", str);
-	layout_add_lva(layout, &text);
+	return layout_add_lva(layout, &text);
 }
 
-void layout_add_centerstring_green(layout_t* layout, char* str)
+qboolean layout_add_centerstring_green(layout_t* layout, char* str)
 {
 	lva_result_t text = lva("cstring2 \"%s\" ", str);
-	layout_add_lva(layout, &text);
+	return layout_add_lva(layout, &text);
 }
 
-void layout_add_raw_string(layout_t* layout, char* str)
+qboolean layout_add_raw_string(layout_t* layout, char* str)
 {
 	lva_result_t text = lva("%s ", str);
-	layout_add_lva(layout, &text);
+	return layout_add_lva(layout, &text);
 }
 
-void layout_add_pic(layout_t* layout, int i)
+qboolean layout_add_pic(layout_t* layout, int i)
 {
 	lva_result_t text = lva("pic %d ", i );
-	layout_add_lva(layout, &text);
+	return layout_add_lva(layout, &text);
 }
 
-void layout_add_pic_name(layout_t* layout, char* str)
+qboolean layout_add_pic_name(layout_t* layout, char* str)
 {
 	lva_result_t text = lva("picn \"%s\" ", str);
-	layout_add_lva(layout, &text);
+	return layout_add_lva(layout, &text);
 }
 
-void layout_add_num(layout_t* layout, int width, int num)
+qboolean layout_add_num(layout_t* layout, int width, int num)
 {
 	lva_result_t text = lva("num %d %d ", width, num);
-	layout_add_lva(layout, &text);
+	return layout_add_lva(layout, &text);
 }
 
 layout_pos_t layout_set_cursor_x(int x, layout_pos_type_x posx_type)
@@ -155,7 +150,7 @@ layout_pos_t layout_set_cursor_xy(
 	return ret;
 }
 
-void layout_apply_pos(layout_t* layout, layout_pos_t pos)
+qboolean layout_apply_pos(layout_t* layout, layout_pos_t pos)
 {
 	// only apply cursor change if x/y positions are different
 	if (pos.pos_flags & LPF_X)
@@ -181,7 +176,8 @@ void layout_apply_pos(layout_t* layout, layout_pos_t pos)
 				gi.dprintf("invalid x-mode %d\n", pos.x_mode);
 			}
 
-			layout_add_lva(layout, &text);
+			if (!layout_add_lva(layout, &text))
+				return false;
 		}
 	}
 
@@ -208,9 +204,12 @@ void layout_apply_pos(layout_t* layout, layout_pos_t pos)
 				gi.dprintf("invalid y-mode %d\n", pos.y_mode);
 			}
 
-			layout_add_lva(layout, &text);
+			if (!layout_add_lva(layout, &text))
+				return false;
 		}
 	}
+
+	return true;
 }
 
 // -1 if it does not exist
@@ -577,7 +576,7 @@ void layout_generate_all(edict_t* ent)
 		sidebar_add_entry(&sidebar, entry);
 	}
 
-	if (pregame_time->value > level.time)
+	if (pregame_time->value > level.time && !trading->value)
 	{
 		sidebar_entry_t entry = {0};
 		entry.pos = sidebar_get_next_line_pos(&sidebar);

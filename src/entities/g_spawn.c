@@ -960,7 +960,7 @@ char *dm_statusbar =
 
 //  help / weapon icon 
 "if	11 "
-	"yb -72 "
+	"yb -32 "
 	"xv	148 "
 	"pic	11 "
 "endif "
