@@ -922,7 +922,12 @@ mmove_t tank_move_pain_short2 = { FRAME_pain101, FRAME_pain104, tank_frames_pain
 
 void tank_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
-	double rng = random();
+	const double rng = random();
+	const qboolean is_idling = self->monsterinfo.currentmove == &tank_move_start_walk ||
+		self->monsterinfo.currentmove == &tank_move_stop_walk ||
+		self->monsterinfo.currentmove == &mytank_move_stand;
+	const qboolean moving_without_enemy = self->monsterinfo.currentmove == &tank_move_walk && !self->enemy;
+
 	if (self->health < (self->max_health / 2))
 		self->s.skinnum = 1;
 
@@ -942,17 +947,12 @@ void tank_pain(edict_t* self, edict_t* other, float kick, int damage)
 
 	// if we're fidgeting, always go into pain state.
 	if (rng <= (1.0f - self->monsterinfo.pain_chance) &&
-		self->monsterinfo.currentmove != &tank_move_start_walk &&
-		self->monsterinfo.currentmove != &tank_move_stop_walk &&
-		self->monsterinfo.currentmove != &mytank_move_stand)
+		!(is_idling || moving_without_enemy))
 		return;
 
 	gi.sound(self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
 
-	if (self->monsterinfo.currentmove == &tank_move_start_walk ||
-		self->monsterinfo.currentmove == &mytank_move_stand ||
-		// walking only if there's no enemy
-		(self->monsterinfo.currentmove == &tank_move_walk && !self->enemy)) 
+	if (is_idling || moving_without_enemy) 
 		self->monsterinfo.currentmove = &tank_move_pain_long;
 	else {
 		if (random() < 0.5)

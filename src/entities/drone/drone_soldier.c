@@ -432,6 +432,7 @@ mframe_t soldier_frames_pain_short2[] =
 	ai_move, 0,	 NULL,
 	ai_move, 0,  NULL,
 	ai_move, 0,  NULL,
+
 	ai_move, 0,  NULL,
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
@@ -444,18 +445,22 @@ mframe_t soldier_frames_pain_long1[] =
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
 	ai_move, 0,  NULL,
+
 	ai_move, 0,  NULL,
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
+
 	ai_move, 0,  NULL,
 	ai_move, 0,  NULL,
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
+
 	ai_move, 0,	 NULL,
 	ai_move, 0,  NULL,
 	ai_move, 0,  NULL,
 	ai_move, 0,	 NULL,
+
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
 };
@@ -467,18 +472,22 @@ mframe_t soldier_frames_pain_long2[] =
 	ai_move, 0,	 NULL,
 	ai_move, 0,  NULL,
 	ai_move, 0,  NULL,
+
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
 	ai_move, 0,  NULL,
+
 	ai_move, 0,  NULL,
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
+
 	ai_move, 0,  NULL,
 	ai_move, 0,  NULL,	
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
+
 	ai_move, 0,	 NULL,
 };
 mmove_t soldier_move_pain_long2 = { FRAME_pain401, FRAME_pain417, soldier_frames_pain_long2, m_soldier_run };
@@ -514,9 +523,9 @@ void soldier_pain(edict_t* self, edict_t* other, float kick, int damage)
 	if (self->monsterinfo.currentmove == &m_soldier_move_stand1 ||
 		self->monsterinfo.currentmove == &m_soldier_move_stand3) {
 		if (random() < 0.5)
-			self->monsterinfo.currentmove = &soldier_frames_pain_long1;
+			self->monsterinfo.currentmove = &soldier_move_pain_long1;
 		else
-			self->monsterinfo.currentmove = &soldier_frames_pain_long2;
+			self->monsterinfo.currentmove = &soldier_move_pain_long2;
 	}
 	else {
 		if (random() < 0.5)
