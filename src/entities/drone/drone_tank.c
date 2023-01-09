@@ -950,7 +950,9 @@ void tank_pain(edict_t* self, edict_t* other, float kick, int damage)
 	gi.sound(self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
 
 	if (self->monsterinfo.currentmove == &tank_move_start_walk ||
-		self->monsterinfo.currentmove == &mytank_move_stand)
+		self->monsterinfo.currentmove == &mytank_move_stand ||
+		// walking only if there's no enemy
+		(self->monsterinfo.currentmove == &tank_move_walk && !self->enemy)) 
 		self->monsterinfo.currentmove = &tank_move_pain_long;
 	else {
 		if (random() < 0.5)
