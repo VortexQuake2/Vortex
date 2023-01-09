@@ -589,7 +589,15 @@ void mutant_pain(edict_t* self, edict_t* other, float kick, int damage)
 		self->monsterinfo.currentmove != &mutant_move_walk)
 		return;
 
-	gi.sound(self, CHAN_VOICE, sound_thud, 1, ATTN_NORM, 0);
+	if (self->monsterinfo.currentmove == &mutant_move_jump)
+		gi.sound(self, CHAN_VOICE, sound_thud, 1, ATTN_NORM, 0);
+	else
+	{
+		if (random() < 0.5)
+			gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
+		else
+			gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
+	}
 
 	if (self->monsterinfo.currentmove == &mutant_move_idle ||
 		self->monsterinfo.currentmove == &mutant_move_jump ||
@@ -617,8 +625,8 @@ void init_drone_mutant (edict_t *self)
 	sound_hit2 = gi.soundindex ("mutant/mutatck3.wav");
 	sound_death = gi.soundindex ("mutant/mutdeth1.wav");
 	sound_idle = gi.soundindex ("mutant/mutidle1.wav");
-	0;//sound_pain1 = gi.soundindex ("mutant/mutpain1.wav");
-	0;//sound_pain2 = gi.soundindex ("mutant/mutpain2.wav");
+	sound_pain1 = gi.soundindex ("mutant/mutpain1.wav");
+	sound_pain2 = gi.soundindex ("mutant/mutpain2.wav");
 	sound_sight = gi.soundindex ("mutant/mutsght1.wav");
 	0;//sound_search = gi.soundindex ("mutant/mutsrch1.wav");
 	sound_step1 = gi.soundindex ("mutant/step1.wav");
