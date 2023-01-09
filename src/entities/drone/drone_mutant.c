@@ -560,7 +560,7 @@ mframe_t mutant_frames_pain_short2[] =
 
 	ai_move, 0,  NULL,
 };
-mmove_t mutant_move_pain_short2 = { FRAME_pain301, FRAME_pain305, mutant_frames_pain_short2, mutant_run };
+mmove_t mutant_move_pain_short2 = { FRAME_pain101, FRAME_pain105, mutant_frames_pain_short2, mutant_run };
 
 void mutant_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
