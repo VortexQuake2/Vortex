@@ -502,6 +502,8 @@ void mymedic_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
 {
 	if (random() > 0.9)
 		return;
+	if (!G_GetClient(self))
+		return;
 	if (level.time < self->monsterinfo.dodge_time)
 		return;
 	if (OnSameTeam(self, attacker))
