@@ -211,6 +211,22 @@ mframe_t myparasite_frames_start_run [] =
 };
 mmove_t myparasite_move_start_run = {FRAME_run01, FRAME_run02, myparasite_frames_start_run, myparasite_run};
 
+mframe_t parasite_frames_pain[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+mmove_t parasite_move_pain = { FRAME_pain101, FRAME_pain111, parasite_frames_pain, myparasite_run };
+
 void myparasite_start_run (edict_t *self)
 {	
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
@@ -544,6 +560,43 @@ void myparasite_melee (edict_t *self)
 	// prevent circle-strafing
 }
 
+void myparasite_pain(edict_t* self, edict_t* other, float kick, int damage)
+{
+	double rng = random();
+	if (self->health < (self->max_health / 2))
+		self->s.skinnum = 1;
+
+	// we're already in a pain state
+	if (self->monsterinfo.currentmove == &parasite_move_pain)
+		return;
+
+	// monster players don't get pain state induced
+	if (G_GetClient(self))
+		return;
+
+	// no pain in invasion hard mode
+	if (invasion->value == 2)
+		return;
+
+	// if we're fidgeting, always go into pain state.
+	if (rng <= (1.0f - self->monsterinfo.pain_chance) &&
+		self->monsterinfo.currentmove != &myparasite_move_fidget &&
+		self->monsterinfo.currentmove != &myparasite_move_end_fidget &&
+		self->monsterinfo.currentmove != &myparasite_move_start_fidget)
+		return;
+
+	if (random() < 0.5)
+	{
+		gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
+	}
+	else
+	{
+		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
+	}
+
+	self->monsterinfo.currentmove = &parasite_move_pain;
+}
+
 /*QUAKED monster_parasite (1 .5 0) (-16 -16 -24) (16 16 32) Ambush Trigger_Spawn Sight
 */
 void init_drone_parasite (edict_t *self)
@@ -580,7 +633,7 @@ void init_drone_parasite (edict_t *self)
 	self->gib_health = -BASE_GIB_HEALTH;
 	self->mass = 100;
 
-//	self->pain = myparasite_pain;
+	self->pain = myparasite_pain;
 	self->die = myparasite_die;
 //	self->touch = myparasite_touch;
 
@@ -600,6 +653,7 @@ void init_drone_parasite (edict_t *self)
 	self->monsterinfo.cost = M_PARASITE_COST;
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
 	self->monsterinfo.melee = myparasite_melee;
+	self->monsterinfo.pain_chance = 0.25f;
 	//self->monsterinfo.melee = 1;
 	self->mtype = M_PARASITE;
 	//K03 End

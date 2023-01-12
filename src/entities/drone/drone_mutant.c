@@ -521,6 +521,97 @@ void mutant_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 }
 
 
+mframe_t mutant_frames_pain_long[] =
+{
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0, NULL,
+
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+};
+mmove_t mutant_move_pain_long1 = { FRAME_pain301, FRAME_pain311, mutant_frames_pain_long, mutant_run };
+
+mframe_t mutant_frames_pain_short1[] =
+{
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+
+	ai_move, 0,  NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,  NULL,
+};
+mmove_t mutant_move_pain_short1 = { FRAME_pain201, FRAME_pain206, mutant_frames_pain_short1, mutant_run };
+
+mframe_t mutant_frames_pain_short2[] =
+{
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,  NULL,
+
+	ai_move, 0,  NULL,
+};
+mmove_t mutant_move_pain_short2 = { FRAME_pain101, FRAME_pain105, mutant_frames_pain_short2, mutant_run };
+
+void mutant_pain(edict_t* self, edict_t* other, float kick, int damage)
+{
+	double rng = random();
+	if (self->health < (self->max_health / 2))
+		self->s.skinnum = 1;
+
+	// we're already in a pain state
+	if (self->monsterinfo.currentmove == &mutant_move_pain_long1 ||
+		self->monsterinfo.currentmove == &mutant_move_pain_short1 ||
+		self->monsterinfo.currentmove == &mutant_move_pain_short2)
+		return;
+
+	// monster players don't get pain state induced
+	if (G_GetClient(self))
+		return;
+
+	// no pain in invasion hard mode
+	if (invasion->value == 2)
+		return;
+
+	// if we're fidgeting, always go into pain state.
+	if (rng <= (1.0f - self->monsterinfo.pain_chance) &&
+		self->monsterinfo.currentmove != &mutant_move_idle &&
+		self->monsterinfo.currentmove != &mutant_move_jump &&
+		self->monsterinfo.currentmove != &mutant_move_walk)
+		return;
+
+	if (self->monsterinfo.currentmove == &mutant_move_jump)
+		gi.sound(self, CHAN_VOICE, sound_thud, 1, ATTN_NORM, 0);
+	else
+	{
+		if (random() < 0.5)
+			gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
+		else
+			gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
+	}
+
+	if (self->monsterinfo.currentmove == &mutant_move_idle ||
+		self->monsterinfo.currentmove == &mutant_move_jump ||
+		self->monsterinfo.currentmove == &mutant_move_walk) {
+			self->monsterinfo.currentmove = &mutant_move_pain_long1;
+	}
+	else {
+		if (random() < 0.5)
+			self->monsterinfo.currentmove = &mutant_move_pain_short1;
+		else
+			self->monsterinfo.currentmove = &mutant_move_pain_short2;
+	}
+}
+
 //
 // SPAWN
 //
@@ -534,8 +625,8 @@ void init_drone_mutant (edict_t *self)
 	sound_hit2 = gi.soundindex ("mutant/mutatck3.wav");
 	sound_death = gi.soundindex ("mutant/mutdeth1.wav");
 	sound_idle = gi.soundindex ("mutant/mutidle1.wav");
-	0;//sound_pain1 = gi.soundindex ("mutant/mutpain1.wav");
-	0;//sound_pain2 = gi.soundindex ("mutant/mutpain2.wav");
+	sound_pain1 = gi.soundindex ("mutant/mutpain1.wav");
+	sound_pain2 = gi.soundindex ("mutant/mutpain2.wav");
 	sound_sight = gi.soundindex ("mutant/mutsght1.wav");
 	0;//sound_search = gi.soundindex ("mutant/mutsrch1.wav");
 	sound_step1 = gi.soundindex ("mutant/step1.wav");
@@ -560,7 +651,8 @@ void init_drone_mutant (edict_t *self)
 	self->gib_health = -BASE_GIB_HEALTH;
 	self->mass = 300;
 
-//	self->pain = mutant_pain;
+	self->monsterinfo.pain_chance = 0.15f;
+	self->pain = mutant_pain;
 	self->die = mutant_die;
 
 	self->monsterinfo.stand = mutant_stand;

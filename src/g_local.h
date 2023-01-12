@@ -636,6 +636,9 @@ typedef struct
 	// drone list
 	int dronelist_index;
 
+	// odds that a hit will induce a pain state
+	float pain_chance;
+
 	// az end
 } monsterinfo_t;
 
@@ -1780,6 +1783,7 @@ struct edict_s
 	void		(*touch)(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf);
 	void		(*use)(edict_t *self, edict_t *other, edict_t *activator);
 	void		(*pain)(edict_t *self, edict_t *other, float kick, int damage);
+	void		(*pain_inner)(edict_t* self, edict_t* other, float kick, int damage); // az: for monsters that use drone_pain
 	void		(*die)(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point);
 
 	float		touch_debounce_time;		// are all these legit?  do we need more/less of them?
