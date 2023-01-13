@@ -1382,6 +1382,8 @@ double randfrac(void) {
 	return res;
 }
 
+// note: flash_number is used by monsters to determine muzzle location; use -1 if muzzle location is already known, or 0 for non-monsters to estimate muzzle location
+// aiming vector will be copied to 'forward' and can be used for firing functions
 void MonsterAim (edict_t *self, float accuracy, int projectile_speed, qboolean rocket,
 				 int flash_number, vec3_t forward, vec3_t start)
 {
@@ -1399,11 +1401,16 @@ void MonsterAim (edict_t *self, float accuracy, int projectile_speed, qboolean r
 	}
 	else if (flash_number)
 	{
-		// monsters have special offsets that determine their exact firing origin
-		G_ProjectSource (self->s.origin, monster_flash_offset[flash_number], forward, right, start);
-		// fix for retarded chick muzzle location
-		if ((self->svflags & SVF_MONSTER) && (start[2] < self->absmin[2]+32))
-			start[2] += 32;
+		// -1 flash number indicates we've already calculated our muzzle location as 'start'
+		// otherwise proceed using flash offset
+		if (flash_number != -1)
+		{
+			// monsters have special offsets that determine their exact firing origin
+			G_ProjectSource(self->s.origin, monster_flash_offset[flash_number], forward, right, start);
+			// fix for retarded chick muzzle location
+			if ((self->svflags & SVF_MONSTER) && (start[2] < self->absmin[2] + 32))
+				start[2] += 32;
+		}
 	}
 	else
 	{

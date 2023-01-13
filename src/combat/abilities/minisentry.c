@@ -3,7 +3,7 @@
 
 #define SENTRY_IDLE_LEFT		1
 #define SENTRY_IDLE_RIGHT		2
-#define SENTRY_TARGET_RANGE		512		// target aquisition distance
+#define SENTRY_TARGET_RANGE		764		// target aquisition distance
 #define SENTRY_ATTACK_RANGE		1024	// maximum attacking distance
 #define SENTRY_BUILD_TIME		2.0		// time it takes to build a sentry
 #define SENTRY_FOV				60		// field of vision, in degrees
@@ -61,14 +61,75 @@ void minisentry_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int d
 	minisentry_remove(self);
 }
 
+void drone_heal(edict_t* self, edict_t* other);
+void minisentry_reload(edict_t* self, edict_t *other)
+{
+	int	player_ammo;
+	edict_t* player;
+
+	// entity must be alive
+	if (!G_EntIsAlive(other))
+		return;
+	// must be a player entity
+	if (other->client)
+		player = other;
+	else if (PM_MonsterHasPilot(other))
+		player = other->owner;
+	else
+		return;
+
+	// must be in need of ammo
+	if (self->light_level < self->monsterinfo.jumpdn)
+	{
+		player_ammo = player->client->pers.inventory[self->num_hammers];
+
+		//If player has more bullets than needed to fill up the gun
+		if (self->light_level + 4 * player_ammo > self->monsterinfo.jumpdn)
+		{
+			player_ammo -= 0.25 * (self->monsterinfo.jumpdn - self->light_level);
+			self->light_level = self->monsterinfo.jumpdn;
+		}
+		else	//Player loads all their bullets into the gun
+		{
+			self->light_level += 4 * player_ammo;
+			player_ammo = 0;
+		}
+
+		// has player's inventory been modified?
+		if (player->client->pers.inventory[self->num_hammers] != player_ammo)
+		{
+			player->client->pers.inventory[self->num_hammers] = player_ammo; // update player's ammo
+			gi.sound(self, CHAN_ITEM, gi.soundindex("misc/w_pkup.wav"), 1, ATTN_STATIC, 0);
+		}
+	}
+}
+
 void minisentry_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
 	V_Touch(self, other, plane, surf);
 
+	// limit how often sentry can be repaired/reloaded
+	if (self->sentrydelay > level.time)
+		return;
+	// only teammates can repair/reload
+	if (!OnSameTeam(self, other))
+		return;
+
+	minisentry_reload(self, other);
+	if (self->health < self->max_health)
+	{
+		drone_heal(self, other);
+		gi.sound(self, CHAN_VOICE, gi.soundindex("weapons/repair.wav"), 1, ATTN_NORM, 0);
+	}
+
+	safe_cprintf(other, PRINT_HIGH, "Sentry Health: %d/%d Armor: %d/%d Ammo: %d/%d\n", self->health, self->max_health, self->monsterinfo.power_armor_power, self->monsterinfo.max_armor, self->light_level, self->monsterinfo.jumpdn);
+	self->sentrydelay = level.time + 2.5;// SENTRY_RELOAD_DELAY
+
+	/*
 	//4.2 if this is a player-monster (morph), then we should be looking at the client/player
 	if (PM_MonsterHasPilot(other))
 		other = other->activator;
-
+	
 	if (other && other->inuse && (other == self->creator) && (level.time > self->random))
 	{
 		safe_cprintf(self->creator, PRINT_HIGH, "Rotating sentry gun 45 degrees.\n");
@@ -80,6 +141,7 @@ void minisentry_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_
 		self->random = level.time + 1;
 		self->nextthink = level.time + 2;
 	}
+	*/
 }
 
 qboolean minisentry_checkposition (edict_t *self)
@@ -136,7 +198,7 @@ qboolean minisentry_findtarget (edict_t *self)
 
 void minisentry_lockon (edict_t *self)
 {
-	float	max, temp;
+	float	max, temp, deg;
 	vec3_t	angles, v;
 
 	// curse causes minisentry to fail to lock-on to enemy
@@ -152,71 +214,61 @@ void minisentry_lockon (edict_t *self)
 	self->yaw_speed = temp; // restore original yaw speed
 	self->s.angles[PITCH] = angles[PITCH];
 	ValidateAngles(self->s.angles);
-	// maximum pitch is 65 degrees in either direction
+
+	// maximum pitch in either direction
+	if (self->mtype == M_BEAMSENTRY)
+		deg = 30;
+	else
+		deg = 5;
+
 	if (self->enemy->s.origin[2] > self->s.origin[2]) // if the enemy is above
 	{	
-		if (self->owner && self->owner->style == SENTRY_FLIPPED)
-			max = 340; // allow 20 degrees up
-		else
-			max = 315; // allow 45 degrees up
+		//if (self->owner && self->owner->style == SENTRY_FLIPPED)
+			max = 360-deg; // allow 5 degrees up
+		//else
+		//	max = 315; // allow 45 degrees up
 		if (self->s.angles[PITCH] < max)
 			self->s.angles[PITCH] = max;
 	}
 	else
 	{
-		if (self->owner && self->owner->style == SENTRY_FLIPPED)
-			max = 45; // allow 45 degrees down
-		else
-			max = 20; // allow 20 degrees down
+		//if (self->owner && self->owner->style == SENTRY_FLIPPED)
+		//	max = 45; // allow 45 degrees down
+		//else
+			max = deg; // allow 5 degrees down
 		if (self->s.angles[PITCH] > max)
 			self->s.angles[PITCH] = max;
 	}
 }
 
-qboolean infov (edict_t *self, edict_t *other, int degrees);
-void minisentry_attack (edict_t *self)
+void minisentry_rocket_attack(edict_t* self, vec3_t start)
 {
-	int			speed, dmg_radius;
-	float		chance;
-	vec3_t		forward, start, aim;
-	qboolean	slowed=false;
+	float		speed, dmg_radius;
+	vec3_t		aim;
 
-	minisentry_lockon(self);
-	if (self->light_level < 1)
-		return; // out of ammo
-	// are we affected by holy freeze?
-	//if (HasActiveCurse(self, AURA_HOLYFREEZE))
-	if (que_typeexists(self->curses, AURA_HOLYFREEZE))
-		slowed = true;
-	
-	// calculate muzzle location
-	AngleVectors(self->s.angles, forward, NULL, NULL);
-	VectorCopy(self->s.origin, start);
-	if (self->owner && self->owner->style == SENTRY_FLIPPED)
-		start[2] -= fabsf(self->mins[2]);
-	else
-		start[2] += self->maxs[2];
-	VectorMA(start, (self->maxs[0] + 16), forward, start);
-
-	if ((level.time > self->wait) && infov(self, self->enemy, 30))
+	if (level.time > self->wait)
 	{
-		speed = 650 + 35*self->creator->myskills.abilities[BUILD_SENTRY].current_level;
-		MonsterAim(self, -1, speed, true, 0, aim, start);
+		speed = 650 + 35 * self->creator->myskills.abilities[BUILD_SENTRY].current_level;
+		MonsterAim(self, -1, speed, true, -1, aim, start);
 		dmg_radius = self->radius_dmg;
 		if (dmg_radius > 150)
 			dmg_radius = 150;
-		fire_rocket (self, start, aim, self->radius_dmg, speed, dmg_radius, self->radius_dmg);
-		if (slowed)
+		fire_rocket(self, start, aim, self->radius_dmg, speed, dmg_radius, self->radius_dmg);
+		if (que_typeexists(self->curses, AURA_HOLYFREEZE))
 			self->wait = level.time + 2.0;
 		else if (self->chill_time > level.time)
 			self->wait = level.time + (1.0 * (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level));
 		else
 			self->wait = level.time + 1.0;
-	
 	}
-	self->light_level--; // decrease ammo
-	
-	if (slowed && !(sf2qf(level.framenum)%2))
+}
+
+void minisentry_bullet_attack(edict_t* self, vec3_t start)
+{
+	float	chance;
+	vec3_t	aim;
+
+	if (que_typeexists(self->curses, AURA_HOLYFREEZE) && !(sf2qf(level.framenum) % 2))
 		return;
 
 	// chill effect reduces attack rate/refire
@@ -227,13 +279,108 @@ void minisentry_attack (edict_t *self)
 			return;
 	}
 
-	fire_bullet (self, start, forward, self->dmg, 2*self->dmg, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, MOD_SENTRY);
+	MonsterAim(self, -1, 0, true, -1, aim, start);
+	fire_bullet(self, start, aim, self->dmg, 2 * self->dmg, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, MOD_SENTRY);
 	gi.sound(self, CHAN_WEAPON, gi.soundindex("weapons/plaser.wav"), 1, ATTN_NORM, 0);
 
-	gi.WriteByte (svc_muzzleflash);
-	gi.WriteShort (self-g_edicts);
-	gi.WriteByte (MZ_IONRIPPER|MZ_SILENCED);
-	gi.multicast (start, MULTICAST_PVS);
+	gi.WriteByte(svc_muzzleflash);
+	gi.WriteShort(self - g_edicts);
+	gi.WriteByte(MZ_IONRIPPER | MZ_SILENCED);
+	gi.multicast(start, MULTICAST_PVS);
+
+	self->light_level--; // decrease ammo
+}
+
+void brain_beam_sparks(vec3_t start);
+
+void minisentry_beam_attack(edict_t* self, vec3_t start)
+{
+	float	chance;
+	vec3_t	forward, end;
+	trace_t	tr;
+
+	if (self->monsterinfo.attack_finished > level.time)
+		return;
+
+	if (que_typeexists(self->curses, AURA_HOLYFREEZE) && !(sf2qf(level.framenum) % 2))
+		return;
+
+	// chill effect reduces attack rate/refire
+	if (self->chill_time > level.time)
+	{
+		chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
+		if (random() > chance)
+			return;
+	}
+
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+	VectorMA(start, 8192, forward, end);
+	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
+	brain_beam_sparks(tr.endpos);
+
+	T_Damage(tr.ent, self, self, forward, tr.endpos, tr.plane.normal, self->dmg, 0, DAMAGE_ENERGY, MOD_SENTRY_BEAM);
+
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_BFG_LASER);
+	gi.WritePosition(start);
+	gi.WritePosition(tr.endpos);
+	gi.multicast(start, MULTICAST_PHS);
+
+	if (level.time > self->wait)
+	{
+		gi.sound(self, CHAN_WEAPON, gi.soundindex("weapons/phrwea.wav"), 1, ATTN_NORM, 0);
+		self->wait = level.time + 2.5;
+	}
+	else if (level.time == self->wait)
+	{
+		// delay next attack
+		self->monsterinfo.attack_finished = level.time + 1.0;
+	}
+	self->light_level--; // decrease ammo
+}
+
+qboolean infov (edict_t *self, edict_t *other, int degrees);
+void minisentry_attack (edict_t *self)
+{
+	vec3_t		forward, start;
+
+	minisentry_lockon(self);
+
+	if (!nearfov(self, self->enemy, 45, 30))
+		return;
+
+	// out of ammo?
+	if (self->light_level < 1)
+	{
+		if (self->mtype == M_MINISENTRY)
+			self->s.frame = 7; //idle
+		return;
+	}
+
+	// calculate muzzle location
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+	VectorCopy(self->s.origin, start);
+	if (self->owner && self->owner->style == SENTRY_FLIPPED)
+		start[2] = self->absmin[2] + 16;// -= fabsf(self->mins[2]);
+	else
+		start[2] = self->absmax[2] - 16;// += self->maxs[2];
+	VectorMA(start, (self->maxs[0] + 1), forward, start);
+
+	if (self->mtype == M_MINISENTRY)
+	{
+		// cycle attack frames
+		if (self->s.frame == 8)
+			self->s.frame = 7; //idle
+		else
+			self->s.frame = 8; //firing
+		minisentry_rocket_attack(self, start);
+		minisentry_bullet_attack(self, start);
+
+	}
+	else
+	{
+		minisentry_beam_attack(self, start);
+	}
 }
 
 void minisentry_idle (edict_t *self)
@@ -242,27 +389,27 @@ void minisentry_idle (edict_t *self)
 
 	if (self->delay > level.time)
 		return;
+
+	if (self->mtype == M_MINISENTRY)
+		self->s.frame = 7;//idle
+
 	if (self->delay == level.time)
 		gi.sound(self, CHAN_AUTO, gi.soundindex("weapons/gunidle1.wav"), 0.5, ATTN_NORM, 0);
 
 //	self->yaw_speed = 5;
 	max_yaw = self->move_angles[YAW] + 45;
 	min_yaw = self->move_angles[YAW] - 45;
-	// validate angles
-	if (max_yaw < 0)
-		max_yaw += 360;
-	else if (max_yaw > 360)
-		max_yaw -= 360;
-	if (min_yaw < 0)
-		min_yaw += 360;
-	else if (min_yaw > 360)
-		min_yaw -= 360;
+	AngleCheck(&max_yaw);
+	AngleCheck(&min_yaw);
+
+	//gi.dprintf("current %f default %f min %f max %f dir %d\n", self->s.angles[YAW], self->move_angles[YAW], min_yaw, max_yaw, self->style);
+
 	// sentry scans side-to-side looking for targets
 	if (self->style == SENTRY_IDLE_RIGHT)
 	{
 		self->ideal_yaw = max_yaw;
 		M_ChangeYaw(self);
-		if (self->s.angles[YAW] == self->ideal_yaw)
+		if ((int)self->s.angles[YAW] == (int)self->ideal_yaw)
 		{
 			self->style = SENTRY_IDLE_LEFT;
 			self->delay = level.time + 1.0;
@@ -272,7 +419,7 @@ void minisentry_idle (edict_t *self)
 	{	
 		self->ideal_yaw = min_yaw;
 		M_ChangeYaw(self);
-		if (self->s.angles[YAW] == self->ideal_yaw)
+		if ((int)self->s.angles[YAW] == (int)self->ideal_yaw)
 		{
 			self->style = SENTRY_IDLE_RIGHT;
 			self->delay = level.time + 1.0;
@@ -301,6 +448,76 @@ void minisentry_regenerate (edict_t *self)
 			self->light_level = SENTRY_MAX_AMMO;
 	}
 //	gi.dprintf("%d/%d armor\n", self->monsterinfo.power_armor_power, self->monsterinfo.max_armor);
+}
+
+void minisentry_sparks(edict_t* self)
+{
+	float	min, max, dist;
+	vec3_t start, forward, up,angle;
+
+	VectorCopy(self->s.angles, angle);
+	
+	angle[YAW] = GetRandom(0, 360);
+	AngleVectors(self->s.angles, NULL, NULL, up);
+	vectoangles(up, up);
+	AngleCheck(&up[PITCH]);
+	min = up[PITCH] - 45;
+	max = up[PITCH] + 45;
+	angle[PITCH] = GetRandom(min, max);
+
+	VectorCopy(self->s.origin, start);
+	
+	if (self->style == SENTRY_FLIPPED)
+		dist = fabs(self->mins[2]);
+	else
+		dist = self->maxs[2];
+	//gi.dprintf("pitch %.0f min %.0f max %0.f\n", up[PITCH], min, max);
+	//angle[PITCH] = 270;
+	//AngleCheck(&angle[ROLL]);
+	//AngleCheck(&angle[PITCH]);
+	ValidateAngles(angle);
+
+	AngleVectors(angle, forward, NULL, NULL);
+	VectorMA(start, dist, forward, start);
+
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_WELDING_SPARKS);
+	gi.WriteByte(20);
+	gi.WritePosition(start);
+	gi.WriteDir(forward);
+	gi.WriteByte(0xdad0dcd2);//(0x000000FF);
+	gi.multicast(start, MULTICAST_PVS);
+
+	gi.sound(self, CHAN_VOICE, gi.soundindex("world/spark1.wav"), 1, ATTN_STATIC, 0);
+}
+
+void minisentry_checkstatus(edict_t* self)
+{
+	qboolean warn = false;
+
+	if (self->health < (int)(0.3 * self->max_health))
+	{
+		if (level.time > self->shield_activate_time)
+		{
+			minisentry_sparks(self);
+			self->shield_activate_time = level.time + GetRandom(5, 30) * FRAMETIME;
+		}
+		warn = true;
+		//safe_cprintf(self->creator, PRINT_HIGH, "Your sentry needs repairs!\n");
+	}
+
+	if (self->light_level < 0.2 * self->monsterinfo.jumpdn)
+	{
+		//safe_cprintf(self->creator, PRINT_HIGH, "Your sentry needs ammo!\n");
+		warn = true;
+	}
+
+	if (warn && level.time > self->msg_time)
+	{
+		safe_cprintf(self->creator, PRINT_HIGH, "Your sentry needs your attention!\n");
+		self->monsterinfo.selected_time = level.time + 1.0; // blink
+		self->msg_time = level.time + 10;
+	}
 }
 
 void minisentry_think (edict_t *self)
@@ -344,6 +561,9 @@ void minisentry_think (edict_t *self)
 					V_GetMonsterName(self), self->removetime-level.time);	
 	}
 
+	V_HealthCache(self, (int)(0.2 * self->max_health), 1);
+	V_ArmorCache(self, (int)(0.2 * self->monsterinfo.max_armor), 1);
+
 	// sentry is stunned
 	if (self->holdtime > level.time)
 	{
@@ -351,6 +571,8 @@ void minisentry_think (edict_t *self)
 		self->nextthink = level.time + FRAMETIME;
 		return;
 	}
+
+	minisentry_checkstatus(self);
 
 	// toggle sentry spotlight
 	if (level.daytime && self->flashlight)
@@ -374,7 +596,7 @@ void minisentry_think (edict_t *self)
 
 	if (!self->enemy)
 	{
-		minisentry_regenerate(self);
+		//minisentry_regenerate(self);
 		if (minisentry_findtarget(self))
 			minisentry_attack(self);
 		else
@@ -464,7 +686,6 @@ void base_createturret (edict_t *self)
 	VectorCopy(self->s.angles, sentry->s.angles);
 	sentry->think = minisentry_think;
 	sentry->nextthink = level.time + FRAMETIME;
-	sentry->s.modelindex = gi.modelindex ("models/weapons/g_bfg/tris.md2");
 	sentry->s.renderfx |= RF_IR_VISIBLE;
 	// who really wanted to chase sentries anyway
 	// sentry->flags |= FL_CHASEABLE; // 3.65 indicates entity can be chase cammed
@@ -475,7 +696,7 @@ void base_createturret (edict_t *self)
 	sentry->classname = "msentrygun";
 	//sentry->viewheight = 16;
 	sentry->takedamage = DAMAGE_AIM;
-	sentry->mtype = M_MINISENTRY;
+	sentry->mtype = self->orders; // copys mtype from base to sentry
 	sentry->touch = minisentry_touch;
 	
 	sentry->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
@@ -505,33 +726,56 @@ void base_createturret (edict_t *self)
 	sentry->max_health = sentry->health;
 	sentry->monsterinfo.max_armor = sentry->monsterinfo.power_armor_power;
 
-	//set damage
-	sentry->dmg = MINISENTRY_INITIAL_BULLET + (MINISENTRY_ADDON_BULLET * casterlevel);// bullet damage
-	sentry->radius_dmg = MINISENTRY_INITIAL_ROCKET + (MINISENTRY_ADDON_ROCKET * casterlevel); // rocket damage
-	if (sentry->dmg > MINISENTRY_MAX_BULLET)
-		sentry->dmg = MINISENTRY_MAX_BULLET;
-	if (sentry->radius_dmg > MINISENTRY_MAX_ROCKET)
-		sentry->radius_dmg = MINISENTRY_MAX_ROCKET;
-
 	sentry->die = minisentry_die;
 	sentry->pain = minisentry_pain;
 	sentry->yaw_speed = 5;
 
-	if (self->style == SENTRY_UPRIGHT)
+	VectorCopy(self->s.origin, end);
+
+	if (sentry->mtype == M_BEAMSENTRY)
 	{
-		VectorSet(sentry->mins, -28, -28, -12);
-		VectorSet(sentry->maxs, 28, 28, 24);
-		VectorCopy(self->s.origin, end);
-		//end[2] += self->maxs[2] + sentry->mins[2] + 1;
-		end[2] += fabsf(sentry->mins[2])+1;
+		//sentry->s.modelindex = gi.modelindex("models/weapons/g_bfg/tris.md2");
+		sentry->s.modelindex = gi.modelindex("models/objects/turret/x12bfgcannon.md2");
+		sentry->dmg = 10 + 5 * casterlevel;
+		sentry->num_hammers = cell_index; // this sentry uses cells for ammo
+		if (self->style == SENTRY_UPRIGHT)
+		{
+			VectorSet(sentry->mins, -25, -25, -24);
+			VectorSet(sentry->maxs, 25, 25, 24);
+			end[2] += fabsf(sentry->mins[2]) + 1;
+		}
+		else
+		{
+			VectorSet(sentry->mins, -25, -25, -24);
+			VectorSet(sentry->maxs, 25, 25, 24);
+			end[2] -= sentry->maxs[2] + 1;
+		}	
 	}
 	else
 	{
-		VectorSet(sentry->mins, -28, -28, -24);
-		VectorSet(sentry->maxs, 28, 28, 12);
-		VectorCopy(self->s.origin, end);
-		//end[2] -= fabsf(self->mins[2]) + sentry->maxs[2] + 1;
-		end[2] -= sentry->maxs[2]+1;
+		sentry->num_hammers = bullet_index; // this sentry uses bullets for ammo
+		sentry->s.modelindex = gi.modelindex("models/sentry/turret/tris.md2");
+		sentry->s.frame = 7; //idle frame
+		//set damage
+		sentry->dmg = MINISENTRY_INITIAL_BULLET + (MINISENTRY_ADDON_BULLET * casterlevel);// bullet damage
+		sentry->radius_dmg = MINISENTRY_INITIAL_ROCKET + (MINISENTRY_ADDON_ROCKET * casterlevel); // rocket damage
+		if (sentry->dmg > MINISENTRY_MAX_BULLET)
+			sentry->dmg = MINISENTRY_MAX_BULLET;
+		if (sentry->radius_dmg > MINISENTRY_MAX_ROCKET)
+			sentry->radius_dmg = MINISENTRY_MAX_ROCKET;
+		if (self->style == SENTRY_UPRIGHT)
+		{
+			VectorSet(sentry->mins, -25, -25, -8);
+			VectorSet(sentry->maxs, 25, 25, 45);
+			end[2] += fabsf(sentry->mins[2]) + 1;
+		}
+		else
+		{
+			VectorSet(sentry->mins, -25, -25, -45);
+			VectorSet(sentry->maxs, 25, 25, 8);
+			VectorCopy(self->s.origin, end);
+			end[2] -= sentry->maxs[2] + 1;
+		}
 	}
 
 	// make sure position is valid
@@ -562,7 +806,7 @@ void base_createturret (edict_t *self)
 	self->nextthink = level.time + FRAMETIME;
 }
 
-void SpawnMiniSentry (edict_t *ent, int cost, float skill_mult, float delay_mult)
+void SpawnMiniSentry (edict_t *ent, int cost, int mtype, float skill_mult, float delay_mult)
 {
 	int			sentries=0;//3.9
 	qboolean	failed=false;
@@ -575,13 +819,13 @@ void SpawnMiniSentry (edict_t *ent, int cost, float skill_mult, float delay_mult
 
 	// create basic ent for sentry base
 	base = G_Spawn();
+	base->orders = mtype; // mtype to be transferred to the gun entity
 	base->activator = base->creator = ent;
 	VectorCopy(ent->s.angles, base->s.angles);
 	base->s.angles[PITCH] = 0;
 	base->s.angles[ROLL] = 0;
 	base->think = base_createturret;
 	base->nextthink = level.time + SENTRY_BUILD_TIME * delay_mult;
-	base->s.modelindex = gi.modelindex ("models/objects/turret/turret_heavy.md2");
 	base->solid = SOLID_BBOX;
 	base->movetype = MOVETYPE_TOSS;
 	base->clipmask = MASK_MONSTERSOLID;
@@ -591,9 +835,6 @@ void SpawnMiniSentry (edict_t *ent, int cost, float skill_mult, float delay_mult
 	base->classname = "msentrybase";
 	base->monsterinfo.level = ent->myskills.abilities[BUILD_SENTRY].current_level * skill_mult;
 	base->takedamage = DAMAGE_YES; // need this to let sentry get knocked around
-	VectorSet(base->mins, -32, -32, 0);
-	VectorSet(base->maxs, 32, 32, 12);
-
 	base->monsterinfo.sight_range = SENTRY_TARGET_RANGE; // az
 
 	// calculate starting position
@@ -627,14 +868,43 @@ void SpawnMiniSentry (edict_t *ent, int cost, float skill_mult, float delay_mult
 			base->s.angles[ROLL] += 360;
 		else if (base->s.angles[ROLL] > 360)
 			base->s.angles[ROLL] -= 360;
-		VectorSet(base->mins, -32, -32, -12);
-		VectorSet(base->maxs, 32, 32, 0);
+		//VectorSet(base->mins, -32, -32, -12);
+		//VectorSet(base->maxs, 32, 32, 0);
 		// subtract the height of the base
 		VectorCopy(tr.endpos, end);
 		end[2] -= base->maxs[2];
 		base->style = SENTRY_FLIPPED;
 	}
 	
+	if (mtype == M_BEAMSENTRY)
+	{
+		base->s.modelindex = gi.modelindex("models/objects/turret/turret_heavy.md2");
+		if (base->style == SENTRY_UPRIGHT)
+		{
+			VectorSet(base->mins, -32, -32, 0);
+			VectorSet(base->maxs, 32, 32, 12);
+		}
+		else
+		{
+			VectorSet(base->mins, -32, -32, -12);
+			VectorSet(base->maxs, 32, 32, 0);
+		}
+	}
+	else
+	{
+		base->s.modelindex = gi.modelindex("models/sentry/base/tris.md2");
+		if (base->style == SENTRY_UPRIGHT)
+		{
+			VectorSet(base->mins, -12, -12, 0);
+			VectorSet(base->maxs, 12, 12, 36);
+		}
+		else
+		{
+			VectorSet(base->mins, -12, -12, -36);
+			VectorSet(base->maxs, 12, 12, 0);
+		}
+	}
+
 	// make sure the position is valid
 	tr = gi.trace(end, base->mins, base->maxs, end, NULL, MASK_SHOT);
 	if (tr.contents & MASK_SHOT)
@@ -681,11 +951,74 @@ void RemoveMiniSentries (edict_t *ent)
 	ent->num_sentries = 0;
 }
 
+#define MINISENTRY_AIM_NEAREST	0
+#define MINISENTRY_AIM_ALL		1
+
+void minisentry_setaim(edict_t* ent, edict_t* minisentry)
+{
+	vec3_t	forward, right, start, offset, end;
+	trace_t	tr;
+
+	// get start position for trace
+	AngleVectors(ent->client->v_angle, forward, right, NULL);
+	VectorSet(offset, 0, 8, ent->viewheight - 8);
+	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+	// get end position for trace
+	VectorMA(start, 8192, forward, end);
+
+	// get vector to the point client is aiming at and convert to angles
+	tr = gi.trace(start, NULL, NULL, end, ent, MASK_SOLID);
+	VectorSubtract(tr.endpos, minisentry->s.origin, forward);
+
+	vectoangles(forward, forward);
+	ValidateAngles(forward);
+
+	// copy angles to minisentry
+	minisentry->s.angles[YAW] = minisentry->move_angles[YAW] = forward[YAW];
+
+	//minisentry->nextthink = level.time + 1.0;
+	minisentry->delay = level.time + 1;
+}
+
+void Cmd_MinisentryAim_f(edict_t* ent, int option)
+{
+	edict_t* e = NULL;
+
+	if (option == MINISENTRY_AIM_NEAREST)
+	{
+		while ((e = findclosestradius(e, ent->s.origin, 512)) != NULL)
+		{
+			if (!e->inuse)
+				continue;
+			if (e->mtype != M_MINISENTRY && e->mtype != M_BEAMSENTRY)
+				continue;
+			if (e->creator && e->creator->inuse && e->creator == ent)
+			{
+				minisentry_setaim(ent, e);
+				break;
+			}
+		}
+		safe_cprintf(ent, PRINT_HIGH, "Aiming sentry gun...\n");
+	}
+	else if (option == MINISENTRY_AIM_ALL)
+	{
+		while ((e = G_Find(e, FOFS(classname), "msentrygun")) != NULL)
+		{
+			if (e && e->inuse && e->creator && e->creator->client && (e->creator == ent))
+				minisentry_setaim(ent, e);
+		}
+		safe_cprintf(ent, PRINT_HIGH, "Aiming sentry guns...\n");
+	}
+}
+
 void Cmd_MiniSentry_f (edict_t *ent)
 {
 	int talentLevel, sentries=0, cost=SENTRY_COST;
 	float skill_mult=1.0, cost_mult=1.0, delay_mult=1.0;//Talent: Rapid Assembly & Precision Tuning
 	edict_t *scan=NULL;
+	char* arg;
+
+	arg = gi.args();
 
 	if (debuginfo->value)
 		gi.dprintf("%s just called Cmd_MiniSentry_f\n", ent->client->pers.netname);
@@ -693,9 +1026,21 @@ void Cmd_MiniSentry_f (edict_t *ent)
 	if (ent->myskills.abilities[BUILD_SENTRY].disable)
 		return;
 
-	if (!Q_strcasecmp(gi.args(), "remove"))
+	if (!Q_strcasecmp(arg, "remove"))
 	{
 		RemoveMiniSentries(ent);
+		return;
+	}
+
+	if (!Q_strcasecmp(arg, "aim"))
+	{
+		Cmd_MinisentryAim_f(ent, MINISENTRY_AIM_NEAREST);
+		return;
+	}
+
+	if (!Q_strcasecmp(arg, "aimall"))
+	{
+		Cmd_MinisentryAim_f(ent, MINISENTRY_AIM_ALL);
 		return;
 	}
 
@@ -742,5 +1087,8 @@ void Cmd_MiniSentry_f (edict_t *ent)
 		return;
 	}
 
-	SpawnMiniSentry(ent, cost, skill_mult, delay_mult);
+	if (!Q_strcasecmp(gi.args(), "beam"))
+		SpawnMiniSentry(ent, cost, M_BEAMSENTRY, skill_mult, delay_mult);
+	else
+		SpawnMiniSentry(ent, cost, M_MINISENTRY, skill_mult, delay_mult);
 }

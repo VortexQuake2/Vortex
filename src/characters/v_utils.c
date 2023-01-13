@@ -1816,6 +1816,7 @@ char *V_GetMonsterKind(int mtype) {
         case M_COMMANDER:
             return "commander";
         case M_MINISENTRY:
+        case M_BEAMSENTRY:
             return "mini-sentry";
         case M_SENTRY:
             return "sentry";

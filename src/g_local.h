@@ -806,6 +806,7 @@ extern int	skullindex;
 #define MOD_ICEBOLT			99//4.4
 #define MOD_UNHOLYGROUND	100//4.4
 #define MOD_SELFDESTRUCT	101
+#define MOD_SENTRY_BEAM		102
 //K03 End
 #define MOD_FRIENDLY_FIRE	0x8000000
 #define MOD_FMEDICPACK		150
@@ -2238,6 +2239,7 @@ void Cmd_LaserSight_f(edict_t *ent);
 #define M_SPIKE_GRENADE	128
 #define M_HOLYGROUND	129
 #define M_WORLDSPAWN	130
+#define M_BEAMSENTRY	131
 #define P_TANK			200
 #define MORPH_MUTANT	400
 #define MORPH_CACODEMON	401

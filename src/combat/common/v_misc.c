@@ -657,7 +657,7 @@ void ThrowShrapnel(edict_t* self, char* modelname, float speed, vec3_t origin, i
     chunk->avelocity[1] = random() * 600;
     chunk->avelocity[2] = random() * 600;
     chunk->think = G_FreeEdict;
-    chunk->nextthink = level.time + 5;//+random() * 5;
+    chunk->nextthink = level.time + 5 + random() * 5;
     chunk->s.frame = 0;
     chunk->flags = 0;
     chunk->classname = "shrapnel";

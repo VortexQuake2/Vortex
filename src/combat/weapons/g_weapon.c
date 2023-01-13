@@ -999,12 +999,16 @@ void rocket_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *su
 
 	//K03 Begin
 	int mod=MOD_ROCKET;
+
+	if (ent->owner->mtype == M_SENTRY || ent->owner->mtype == M_MINISENTRY)
+		mod = MOD_SENTRY_ROCKET;
+	/*
 	if (Q_stricmp(ent->owner->classname, "SentryGun") == 0)
 		mod = MOD_SENTRY_ROCKET;
 	if (Q_stricmp(ent->owner->classname, "msentrygun") == 0)
 		mod = MOD_SENTRY_ROCKET;
 	if (Q_stricmp(ent->owner->classname, "Sentry_Gun") == 0)
-		mod = MOD_SENTRY_ROCKET;
+		mod = MOD_SENTRY_ROCKET;*/
 
 	if (!G_EntExists(ent->owner))
 	{

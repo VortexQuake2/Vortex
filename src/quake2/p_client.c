@@ -311,7 +311,7 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 	//	} //[end]
 
 	//K03 Begin
-	if (attacker && (attacker->creator) &&(!attacker->client) && (meansOfDeath == MOD_SENTRY || meansOfDeath == MOD_SENTRY_ROCKET))
+	if (attacker && (attacker->creator) &&(!attacker->client) && (meansOfDeath == MOD_SENTRY || meansOfDeath == MOD_SENTRY_ROCKET || meansOfDeath == MOD_SENTRY_BEAM))
 		attacker = attacker->creator;
 	// fire totem
 	if ((attacker->mtype == TOTEM_FIRE) && attacker->owner && attacker->owner->inuse)
@@ -600,6 +600,10 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 				break;
 			case MOD_SENTRY_ROCKET:
 				message = "hates";
+				message2 = "'s Sentry Gun";
+				break;
+			case MOD_SENTRY_BEAM:
+				message = "is disintegrated by";
 				message2 = "'s Sentry Gun";
 				break;
 			case MOD_CORPSEEXPLODE:

@@ -145,7 +145,7 @@ void sentFireBullet(edict_t *self)
 	VectorMA(self->s.origin, self->maxs[1] + 1, forward, origin);
 
 	//Adjust aim
-	MonsterAim(self, -1, 0, false, 0, forward, origin);
+	MonsterAim(self, -1, 0, false, -1, forward, origin);
 
 	//Fire
 	fire_bullet(self, origin, forward, damage, 2 * damage, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, MOD_SENTRY);
@@ -233,7 +233,7 @@ void sentFireRocket(edict_t *self)
 	AngleVectors(self->s.angles, forward, NULL, NULL);
 	VectorMA(self->s.origin, self->maxs[1] + 1, forward, origin);
 	//Adjust aim (aim at the ground)
-	MonsterAim(self, -1, speed, true, 0, forward, origin);
+	MonsterAim(self, -1, speed, true, -1, forward, origin);
 
 	//Fire
 	fire_rocket(self, origin, forward, damage, speed, damage_radius, damage);
