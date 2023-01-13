@@ -116,7 +116,7 @@ void minisentry_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_
 		return;
 
 	minisentry_reload(self, other);
-	if (self->health < self->max_health)
+	if (self->health < self->max_health || self->monsterinfo.power_armor_power < self->monsterinfo.max_armor)
 	{
 		drone_heal(self, other);
 		gi.sound(self, CHAN_VOICE, gi.soundindex("weapons/repair.wav"), 1, ATTN_NORM, 0);
