@@ -18,7 +18,7 @@ void upgradeSpecialMenu_handler(edict_t *ent, int option)
 
     if (ent->myskills.abilities[option - 1].level == inc_max - 1) // we've reached the limit of this skill
     {
-        int hmax = getHardMax(option - 1, ent->myskills.abilities[option - 1].general_skill, ent->myskills.class_num);
+        int hmax = vrx_get_hard_max(option - 1, ent->myskills.abilities[option - 1].general_skill, ent->myskills.class_num);
         cost *= 2;
         doubledcost = true; // we're getting past the max level
 

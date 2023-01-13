@@ -238,7 +238,7 @@ void vrx_assign_abilities(edict_t *ent) {
     }
 }
 
-int getHardMax(int index, qboolean general, int class) {
+int vrx_get_hard_max(int index, qboolean general, int class) {
     switch (index) {
         //Skills that max at level 1
         case ID:
@@ -320,7 +320,7 @@ void vrx_enable_ability(edict_t *ent, int index, int level, int max_level, int g
     }
 
     ent->myskills.abilities[index].general_skill = general;
-    ent->myskills.abilities[index].hard_max = getHardMax(index, general, ent->myskills.class_num);
+    ent->myskills.abilities[index].hard_max = vrx_get_hard_max(index, general, ent->myskills.class_num);
 }
 
 void vrx_disable_abilities(edict_t *ent) {
@@ -453,7 +453,7 @@ void vrx_init_ability_list() {
             }
 
 #ifdef _DEBUG
-            if (getHardMax(first->index, first->general, i) < first->softmax) {
+            if (vrx_get_hard_max(first->index, first->general, i) < first->softmax) {
                 gi.dprintf("warning: ability '%s' (%d) has hardmax < softmax\n", GetAbilityString(first->index), first->index);
             }
 #endif

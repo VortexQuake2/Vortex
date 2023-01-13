@@ -20,7 +20,7 @@ int vrx_get_last_enabled_skill_index(edict_t *ent, int mode);
 
 void vrx_disable_abilities(edict_t *ent);
 
-int getHardMax(int index, qboolean general, int class);
+int vrx_get_hard_max(int index, qboolean general, int class);
 
 void vrx_assign_abilities(edict_t *ent);
 
@@ -193,8 +193,19 @@ int V_tFileCountLines(FILE *fptr, long size);
 
 char *vrx_get_class_string(int class_num);
 int getClassNum(char *newclass);
-char *V_MenuItemString(item_t *item, char selected);
+
+/* menu strings */
+char* V_MenuItemString(item_t* item, char selected);
 char *GetArmoryItemString(int purchase_number);
+
+typedef struct item_menu_s
+{
+    char* str;
+    int num;
+} item_menu_t;
+
+item_menu_t vrx_menu_item_display(item_t* item, char selected);
+
 void PrintCommands(edict_t *ent);
 int CountRuneMods(item_t *rune);
 void V_ResetAbilityDelays(edict_t *ent);

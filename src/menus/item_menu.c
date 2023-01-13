@@ -76,7 +76,7 @@ void StartShowInventoryMenu(edict_t *ent, item_t *item) {
         else addlinetomenu(ent, va(" %s (set item)", item->name), MENU_GREEN_LEFT);
     } else {
         //Print header, depending on the item type
-        addlinetomenu(ent, va("%s", V_MenuItemString(item, ' ')), MENU_GREEN_LEFT);
+        addlinetomenu(ent, va("%s", V_MenuItemString (item, ' ')), MENU_GREEN_LEFT);
     }
 
     //Unique runes need to display stats too

@@ -118,7 +118,7 @@ Sword
 20mm Cannon
 	0 - Damage
 	1 - Range
-	2 - Recoil
+	2 - |Recoil
 	3 - Caliber
 	4 - Noise
 

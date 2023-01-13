@@ -913,35 +913,42 @@ void OpenBuyRuneMenu(edict_t *ent, int page_num, int lastline)
 {
 	int i;
 	armoryRune_t *firstItem;
+	char* category;
 
 	//Usual menu stuff
 	if (!ShowMenu(ent))
         return;
 	clearmenu(ent);
 
-	//Header
-	addlinetomenu(ent, va("You have %d credits", ent->myskills.credits), MENU_GREEN_CENTERED);
-	addlinetomenu(ent, "Please make a selection:", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
-
 	switch(page_num)
 	{
-	case 1: 
+	case 1:
+		category = "a weapon rune";
 		firstItem = WeaponRunes;	break;
-	case 2:		
+	case 2:
+		category = "a weapon rune";
 		firstItem = &WeaponRunes[10];	break;
-	case 3: 
+	case 3:
+		category = "an ability rune";
 		firstItem = AbilityRunes;	break;
 	case 4:
+		category = "an ability rune";
 		firstItem = &AbilityRunes[10];	break;
-	case 5: 
+	case 5:
+		category = "a combo rune";
 		firstItem = ComboRunes;		break;
 	case 6:
+		category = "a combo rune";
 		firstItem = &ComboRunes[10];		break;
 	default: 
 		gi.dprintf("Error in OpenBuyRuneMenu(). Invalid page number: %d\n", page_num);
 		return;
 	}
+
+	//Header
+	addlinetomenu(ent, va("You have %d credits", ent->myskills.credits), MENU_GREEN_CENTERED);
+	addlinetomenu(ent, va("Select %s:", category), MENU_GREEN_CENTERED);
+	addlinetomenu(ent, " ", 0);
 
 	//Print this page's items
     for (i = 0; i < ARMORY_MAX_RUNES / 2; ++i)
@@ -949,10 +956,10 @@ void OpenBuyRuneMenu(edict_t *ent, int page_num, int lastline)
 		item_t *rune = &((firstItem + i)->rune);
 		if (rune->itemtype != ITEM_NONE)
 		{
-			char buf[32];
-			strcpy(buf, V_MenuItemString(rune, ' '));
-			padRight(buf, 18);
-			addlinetomenu(ent, va("%s%d", buf, getBuyValue(rune)), (page_num * 1000) + i + 1);
+			item_menu_t fmt = vrx_menu_item_display(rune, ' ');
+			addlinetomenu(ent, 
+				va("%-13.13s (%2d) %5d", fmt.str, fmt.num, getBuyValue(rune)), 
+				(page_num * 1000) + i + 1);
 		}
 		else 
 		{
