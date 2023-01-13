@@ -305,19 +305,30 @@ void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling) {
         //Print equip slot (if required)
         switch (i) {
             case 0:
-                addlinetomenu(ent, " Hand", MENU_GREEN_LEFT);
+                addlinetomenu(ent, "Hand", MENU_GREEN_LEFT);
                 break;
             case 1:
-                addlinetomenu(ent, " Neck", MENU_GREEN_LEFT);
+                addlinetomenu(ent, "Neck", MENU_GREEN_LEFT);
                 break;
             case 2:
-                addlinetomenu(ent, " Belt", MENU_GREEN_LEFT);
+                addlinetomenu(ent, "Belt", MENU_GREEN_LEFT);
                 break;
             case 3:
                 addlinetomenu(ent, " ", MENU_GREEN_LEFT);
                 break;
         }
-        addlinetomenu(ent, V_MenuItemString(item, ' '), i + 1);
+
+        item_menu_t fmt = vrx_menu_item_display(item, ' ');
+        if (fmt.num >= 0) {
+            addlinetomenu(ent,
+                va("%-16.16s %2d/%2d", fmt.str, fmt.num, item->itemLevel),
+                i + 1);
+        } else
+        {
+            addlinetomenu(ent,
+                fmt.str,
+                i + 1);
+        }
     }
 
     //Menu footer

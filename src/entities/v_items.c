@@ -1032,6 +1032,13 @@ qboolean V_CanPickUpItem (edict_t *ent)
 
 //************************************************************************************************
 
+char* vrx_get_weapon_mod_string(item_t* item, int i)
+{
+	return va("%s %s",
+	          GetShortWeaponString((item->modifiers[i].index / 100) - 10),
+	          GetModString((item->modifiers[i].index / 100) - 10, item->modifiers[i].index % 100));
+}
+
 void V_PrintItemProperties(edict_t *player, item_t *item)
 {
 	char buf[256];
@@ -1068,9 +1075,7 @@ void V_PrintItemProperties(edict_t *player, item_t *item)
 		switch(item->modifiers[i].type)
 		{
 		case TYPE_ABILITY:	strcpy(temp, va("%s:", GetAbilityString(item->modifiers[i].index)));				break;
-		case TYPE_WEAPON:	strcpy(temp, va("%s %s:", 
-								GetShortWeaponString((item->modifiers[i].index / 100)-10), 
-								GetModString((item->modifiers[i].index / 100)-10, item->modifiers[i].index % 100)));	break;
+		case TYPE_WEAPON:	strcpy(temp, va("%s:", vrx_get_weapon_mod_string(item, i)));	break;
 		}
 		padRight(temp, 20);
 		strcat(buf, va("\n    %s(%d)", temp, item->modifiers[i].value));
@@ -1293,6 +1298,7 @@ void cmd_Drink(edict_t *ent, int itemtype, int index) {
 item_menu_t vrx_get_weapon_rune_string(item_t* item)
 {
 	const char* wstring = "Weapon";
+	int max = 0;
 
 	for (int i = 0; i < MAX_VRXITEMMODS; i++)
 	{
@@ -1301,13 +1307,13 @@ item_menu_t vrx_get_weapon_rune_string(item_t* item)
 		{
 			int weap = vrx_weapon_index_from_mod_index(mod->index);
 			wstring = GetWeaponString(weap);
-			break;
+			if (mod->value > max) max = mod->value;
 		}
 	}
 
 	return (item_menu_t) {
 		wstring,
-		item->itemLevel
+		max
 	};
 }
 
@@ -1331,7 +1337,7 @@ char *V_MenuItemString(item_t *item, char selected)
 		case ITEM_NONE:			return " <Empty>";
 		case ITEM_WEAPON:		
 			r = vrx_get_weapon_rune_string(item);
-			return va("%s (%d)", r.str, r.num);
+			return va(" %s (%d)", r.str, r.num);
 		case ITEM_ABILITY:		return va("%cAbility rune (%d)", selected, item->itemLevel);
 		case ITEM_COMBO:		return va("%cCombo rune   (%d)", selected, item->itemLevel);
 		case ITEM_CLASSRUNE:	return va("%c%s rune", selected, GetRuneValString(item));
@@ -1360,12 +1366,15 @@ item_menu_t vrx_get_ability_rune_string(item_t* item)
 		}
 	}
 
-	return (item_menu_t) { va("%s rune", astring), item->itemLevel };
+	return (item_menu_t) {
+		va("%s", astring),
+		max
+	};
 }
 
 item_menu_t vrx_get_combo_rune_string(item_t* item)
 {
-	const char* astring = "Combo";
+	char astring[64];
 	int max = 0;
 
 	for (int i = 0; i < MAX_VRXITEMMODS; i++)
@@ -1374,20 +1383,19 @@ item_menu_t vrx_get_combo_rune_string(item_t* item)
 		if (mod->index > 0 && mod->value > 0 && mod->type == TYPE_ABILITY && max < mod->value)
 		{
 			max = mod->value;
-			astring = GetAbilityString(mod->index);
+			strcpy(astring, GetAbilityString(mod->index));
 		}
 
 		if (mod->index > 0 && mod->value > 0 && mod->type == TYPE_WEAPON && max < mod->value)
 		{
-			int weap = vrx_weapon_index_from_mod_index(mod->index);
 			max = mod->value;
-			astring = GetWeaponString(weap);
+			strcpy(astring, vrx_get_weapon_mod_string(item, i));
 		}
 	}
 
 	return (item_menu_t) {
-		va("%s rune", astring),
-			item->itemLevel
+		va("%s", astring),
+			max
 	};
 }
 
@@ -1401,7 +1409,7 @@ item_menu_t vrx_menu_item_display(item_t* item)
 		//Print item, depending on the item type
 		switch (item->itemtype)
 		{
-		case ITEM_NONE:			return (item_menu_t) { " <Empty>", -1 };
+		case ITEM_NONE:			return (item_menu_t) { "<Empty>", -1 };
 		case ITEM_WEAPON:		return vrx_get_weapon_rune_string(item);
 		case ITEM_ABILITY:		return vrx_get_ability_rune_string(item);
 		case ITEM_COMBO:		return vrx_get_combo_rune_string(item);
