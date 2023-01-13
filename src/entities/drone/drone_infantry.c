@@ -252,6 +252,73 @@ void infantry_dead (edict_t *self)
 	M_PrepBodyRemoval(self);
 }
 
+mframe_t infantry_frames_pain1[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+};
+mmove_t infantry_move_pain1 = { FRAME_pain101, FRAME_pain110, infantry_frames_pain1, infantry_run };
+
+mframe_t infantry_frames_pain2[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+};
+mmove_t infantry_move_pain2 = { FRAME_pain201, FRAME_pain210, infantry_frames_pain2, infantry_run };
+
+void infantry_pain(edict_t* self, edict_t* other, float kick, int damage)
+{
+	double rng = random();
+	if (self->health < (self->max_health / 2))
+		self->s.skinnum = 1;
+
+	// we're already in a pain state
+	if (self->monsterinfo.currentmove == &infantry_move_pain2 ||
+		self->monsterinfo.currentmove == &infantry_move_pain1)
+		return;
+
+	// monster players don't get pain state induced
+	if (G_GetClient(self))
+		return;
+
+	// no pain in invasion hard mode
+	if (invasion->value == 2)
+		return;
+
+	// if we're fidgeting, always go into pain state.
+	if (rng <= (1.0f - self->monsterinfo.pain_chance) &&
+		self->monsterinfo.currentmove != &infantry_move_stand &&
+		self->monsterinfo.currentmove != &infantry_move_walk)
+		return;
+
+	if (random() < 0.5)
+		gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
+	else {
+		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
+	}
+
+	if (random() < 0.5)
+		self->monsterinfo.currentmove = &infantry_move_pain1;
+	else
+		self->monsterinfo.currentmove = &infantry_move_pain2;
+}
+
 mframe_t infantry_frames_death1 [] =
 {
 	ai_move, -4, NULL,
@@ -607,7 +674,9 @@ void init_drone_infantry (edict_t *self)
 
 	self->item = FindItemByClassname("ammo_bullets");
 
-	//self->pain = infantry_pain;
+	// they're very sensitive to pain!
+	self->monsterinfo.pain_chance = 0.3f;
+	self->pain = infantry_pain;
 	self->die = infantry_die;
 
 	self->monsterinfo.stand = infantry_stand;

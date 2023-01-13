@@ -415,9 +415,8 @@ void drone_pain (edict_t *self, edict_t *other, float kick, int damage)
 	if ((self->s.modelindex != 255) && (self->health < (0.5*self->max_health)))
 		self->s.skinnum |= 1;
 
-	// keep track of damage by players in invasion mode
-//	if (INVASION_OTHERSPAWNS_REMOVED)
-//		AddDmgList(self, other, damage);
+	if (self->pain_inner)
+		self->pain_inner(self, other, kick, damage);
 
 	// ignore non-living objects
 	if (!G_EntIsAlive(other))
@@ -448,11 +447,6 @@ void drone_pain (edict_t *self, edict_t *other, float kick, int damage)
 		self->enemy = other;
 		drone_wakeallies(self);
 	}
-
-	// if this is a boss, then add attacker dmg to a list
-	// this list will be used to calculate exp for killing this monster
-//	if (self->monsterinfo.control_cost > 3)
-//		AddDmgList(self, other, damage);
 }
 
 void drone_death (edict_t *self, edict_t *attacker)
@@ -752,7 +746,6 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 
 	drone->activator = ent;
 	drone->svflags |= SVF_MONSTER;
-	drone->pain = drone_pain;
 	drone->yaw_speed = 20;
 	drone->takedamage = DAMAGE_AIM;
 	drone->clipmask = MASK_MONSTERSOLID;
@@ -804,6 +797,14 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	// default
 	default: init_drone_gunner(drone);		break;
 	}
+
+	/* az: init functions might have set up a pain function -- address that here */
+	if (drone->pain && drone->pain != drone_pain)
+		drone->pain_inner = drone->pain;
+	else
+		drone->pain_inner = NULL; // maybe redundant?
+
+	drone->pain = drone_pain;
 
 	//4.0 gib health based on monster control cost
 	if (drone_type < 30)
@@ -1960,6 +1961,11 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	monster->monsterinfo.bonus_flags = 0;//4.5 reset monster bonus flags
 
 	// set shared monster functions
+	if (monster->pain && monster->pain != drone_pain)
+		monster->pain_inner = monster->pain;
+	else
+		monster->pain_inner = NULL; // maybe redundant?
+
 	monster->pain = drone_pain;
 	monster->touch = drone_touch;
 	monster->think = drone_think;

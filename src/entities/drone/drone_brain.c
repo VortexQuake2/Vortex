@@ -175,6 +175,104 @@ mframe_t mybrain_frames_defense [] =
 };
 mmove_t mybrain_move_defense = {FRAME_defens01, FRAME_defens08, mybrain_frames_defense, NULL};
 
+mframe_t mybrain_frames_pain_short1[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+};
+mmove_t mybrain_move_pain_short1 = { FRAME_pain301, FRAME_pain306, mybrain_frames_pain_short1, mybrain_run };
+
+mframe_t mybrain_frames_pain_short2[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+};
+mmove_t mybrain_move_pain_short2 = { FRAME_pain201, FRAME_pain208, mybrain_frames_pain_short2, mybrain_run };
+
+mframe_t mybrain_frames_pain_long[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+};
+
+mmove_t mybrain_move_pain_long = { FRAME_pain101, FRAME_pain118, mybrain_frames_pain_long, mybrain_run };
+
+void mybrain_pain(edict_t* self, edict_t* other, float kick, int damage)
+{
+	const double rng = random();
+	const qboolean is_idling = self->monsterinfo.currentmove == &mybrain_move_idle ||
+		self->monsterinfo.currentmove == &mybrain_move_stand;
+	const qboolean moving_without_enemy = (self->monsterinfo.currentmove == &brain_move_walk1 && !self->enemy);
+
+	if (self->health < (self->max_health / 2))
+		self->s.skinnum = 1;
+
+	// we're already in a pain state
+	if (self->monsterinfo.currentmove == &mybrain_move_pain_long ||
+		self->monsterinfo.currentmove == &mybrain_move_pain_short1 ||
+		self->monsterinfo.currentmove == &mybrain_move_pain_short2 ||
+		self->monsterinfo.currentmove == &mybrain_move_defense)
+		return;
+
+	// monster players don't get pain state induced
+	if (G_GetClient(self))
+		return;
+
+	// no pain in invasion hard mode
+	if (invasion->value == 2)
+		return;
+
+	// if we're fidgeting, always go into pain state.
+	if (rng <= (1.0f - self->monsterinfo.pain_chance) &&
+		!(is_idling || moving_without_enemy))
+		return;
+
+	if (random() < 0.5)
+		gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
+	else {
+		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
+	}
+
+	if (is_idling || moving_without_enemy)
+		self->monsterinfo.currentmove = &mybrain_move_pain_long;
+	else {
+		if (random() < 0.5)
+			self->monsterinfo.currentmove = &mybrain_move_pain_short1;
+		else
+			self->monsterinfo.currentmove = &mybrain_move_pain_short2;
+	}
+}
+
 //
 // DUCK
 //
@@ -362,6 +460,8 @@ void mybrain_jump (edict_t *self)
 void mybrain_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
 {
 	if (random() > 0.9)
+		return;
+	if (!G_GetClient(self))
 		return;
 	if (level.time < self->monsterinfo.dodge_time)
 		return;
@@ -818,7 +918,8 @@ void init_drone_brain (edict_t *self)
 
 	self->item = FindItemByClassname("ammo_cells");
 
-//	self->pain = mybrain_pain;
+	self->monsterinfo.pain_chance = .2f;
+	self->pain = mybrain_pain;
 	self->die = mybrain_die;
 //	self->touch = mybrain_touch;
 

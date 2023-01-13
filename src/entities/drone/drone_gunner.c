@@ -555,6 +555,8 @@ void mygunner_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
 {
 	if (random() > 0.9)
 		return;
+	if (!G_GetClient(self))
+		return;
 	if (level.time < self->monsterinfo.dodge_time)
 		return;
 	if (OnSameTeam(self, attacker))
@@ -572,6 +574,97 @@ void mygunner_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
 		mygunner_leap(self);
 		self->monsterinfo.dodge_time = level.time + 3.0;
 	}
+}
+
+mframe_t mygunnerframes_pain_long[] =
+{
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0, NULL,
+
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+};
+mmove_t mygunnermove_pain_long1 = { FRAME_pain101, FRAME_pain118, mygunnerframes_pain_long, mygunner_continue };
+
+mframe_t mygunnerframes_pain_long2[] =
+{
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+};
+mmove_t mygunnermove_pain_long2 = { FRAME_pain201, FRAME_pain208, mygunnerframes_pain_long2, mygunner_continue };
+
+mframe_t mygunnerframes_pain_short[] =
+{
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,	 NULL,
+	ai_move, 0,  NULL,
+	ai_move, 0,  NULL,
+};
+mmove_t mygunnermove_pain_short = { FRAME_pain301, FRAME_pain305, mygunnerframes_pain_short, mygunner_continue };
+
+void mygunner_pain(edict_t* self, edict_t* other, float kick, int damage)
+{
+	double rng = random();
+	if (self->health < (self->max_health / 2))
+		self->s.skinnum = 1;
+
+	// we're already in a pain state
+	if (self->monsterinfo.currentmove == &mygunnermove_pain_long1 ||
+		self->monsterinfo.currentmove == &mygunnermove_pain_long2 ||
+		self->monsterinfo.currentmove == &mygunnermove_pain_short)
+		return;
+
+	// monster players don't get pain state induced
+	if (G_GetClient(self))
+		return;
+
+	// no pain in invasion hard mode
+	if (invasion->value == 2)
+		return;
+
+	// if we're fidgeting, always go into pain state.
+	if (rng <= (1.0f - self->monsterinfo.pain_chance) &&
+		self->monsterinfo.currentmove != &mygunnermove_fidget &&
+		self->monsterinfo.currentmove != &mygunnermove_stand &&
+		self->monsterinfo.currentmove != &gunner_move_walk)
+		return;
+
+	gi.sound(self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
+
+	if (self->monsterinfo.currentmove == &mygunnermove_fidget ||
+		self->monsterinfo.currentmove == &mygunnermove_stand ||
+		self->monsterinfo.currentmove == &gunner_move_walk) {
+		if (random() < 0.5)
+			self->monsterinfo.currentmove = &mygunnermove_pain_long1;
+		else
+			self->monsterinfo.currentmove = &mygunnermove_pain_long2;
+	}
+	else
+		self->monsterinfo.currentmove = &mygunnermove_pain_short;
 }
 
 void mygunnerdead (edict_t *self)
@@ -699,6 +792,9 @@ void init_drone_gunner (edict_t *self)
 	self->monsterinfo.dodge = mygunner_dodge;
 	self->monsterinfo.attack = mygunner_attack;
 	self->monsterinfo.walk = gunner_walk;
+	self->monsterinfo.pain_chance = 0.3f;
+
+	self->pain = mygunner_pain;
 
 	//K03 Begin
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
