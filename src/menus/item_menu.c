@@ -320,8 +320,16 @@ void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling) {
 
         item_menu_t fmt = vrx_menu_item_display(item, ' ');
         if (fmt.num >= 0) {
+            char* abbr = "";
+            if (item->itemtype == ITEM_COMBO)
+                abbr = "CO";
+            else if (item->itemtype == ITEM_ABILITY)
+                abbr = "AB";
+            else if (item->itemtype == ITEM_WEAPON)
+                abbr = "WE";
+
             addlinetomenu(ent,
-                va("%-16.16s %2d/%2d", fmt.str, fmt.num, item->itemLevel),
+                va("%-15.15s %2s %2d/%2d", fmt.str, abbr, fmt.num, item->itemLevel),
                 i + 1);
         } else
         {
