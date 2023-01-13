@@ -17,6 +17,9 @@ option(VRX_Q2PRO "Use map/gamemap differentiation (for q2pro)." TRUE)
 option(VRX_OLD_NOLAG "Use old NOLAG style. Not recommended." FALSE)
 option(VRX_OLD_VOTE "Use old vote system." FALSE)
 
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED TRUE)
+
 # Source files
 file(GLOB_RECURSE VRX_FILES ./src/*.c)
 
@@ -39,6 +42,7 @@ include_directories(./src/ ./src/*)
 
 # Specify the source files for the game library
 add_library(${CC_LIB_NAME} SHARED ${VRX_FILES})
+
 
 if (VRX_USE_MYSQL AND WIN32)
     set (CC_LINK_LIBS ${CC_LINK_LIBS} libmysql)

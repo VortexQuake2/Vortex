@@ -76,7 +76,7 @@ void StartShowInventoryMenu(edict_t *ent, item_t *item) {
         else addlinetomenu(ent, va(" %s (set item)", item->name), MENU_GREEN_LEFT);
     } else {
         //Print header, depending on the item type
-        addlinetomenu(ent, va("%s", V_MenuItemString(item, ' ')), MENU_GREEN_LEFT);
+        addlinetomenu(ent, va("%s", V_MenuItemString (item, ' ')), MENU_GREEN_LEFT);
     }
 
     //Unique runes need to display stats too
@@ -305,19 +305,38 @@ void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling) {
         //Print equip slot (if required)
         switch (i) {
             case 0:
-                addlinetomenu(ent, " Hand", MENU_GREEN_LEFT);
+                addlinetomenu(ent, "Hand", MENU_GREEN_LEFT);
                 break;
             case 1:
-                addlinetomenu(ent, " Neck", MENU_GREEN_LEFT);
+                addlinetomenu(ent, "Neck", MENU_GREEN_LEFT);
                 break;
             case 2:
-                addlinetomenu(ent, " Belt", MENU_GREEN_LEFT);
+                addlinetomenu(ent, "Belt", MENU_GREEN_LEFT);
                 break;
             case 3:
                 addlinetomenu(ent, " ", MENU_GREEN_LEFT);
                 break;
         }
-        addlinetomenu(ent, V_MenuItemString(item, ' '), i + 1);
+
+        item_menu_t fmt = vrx_menu_item_display(item, ' ');
+        if (fmt.num >= 0) {
+            char* abbr = "";
+            if (item->itemtype == ITEM_COMBO)
+                abbr = "CO";
+            else if (item->itemtype == ITEM_ABILITY)
+                abbr = "AB";
+            else if (item->itemtype == ITEM_WEAPON)
+                abbr = "WE";
+
+            addlinetomenu(ent,
+                va("%-15.15s %2s %2d/%2d", fmt.str, abbr, fmt.num, item->itemLevel),
+                i + 1);
+        } else
+        {
+            addlinetomenu(ent,
+                fmt.str,
+                i + 1);
+        }
     }
 
     //Menu footer
