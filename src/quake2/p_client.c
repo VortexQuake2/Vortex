@@ -4,6 +4,7 @@
 #include "../combat/abilities/jump.h"
 #include "../combat/abilities/v_think.h"
 #include "../gamemodes/boss.h"
+#include "characters/class_limits.h"
 
 //Function prototypes required for this .c file:
 void ClientUserinfoChanged (edict_t *ent, char *userinfo);
@@ -1843,7 +1844,7 @@ void PutClientInServer (edict_t *ent)
 		// armor regen grants starting armor
 		if (ent->myskills.abilities[ARMOR_REGEN].current_level > 0) {
 			float factor = ent->myskills.abilities[ARMOR_REGEN].current_level * 0.05f;
-			ent->client->pers.inventory[body_armor_index] = MAX_ARMOR(ent) * factor; 
+			ent->client->pers.inventory[body_armor_index] += MAX_ARMOR(ent) * factor; 
 		}
 
 	}

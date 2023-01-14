@@ -929,7 +929,7 @@ void tank_pain(edict_t* self, edict_t* other, float kick, int damage)
 	const qboolean moving_without_enemy = self->monsterinfo.currentmove == &tank_move_walk && !self->enemy;
 
 	if (self->health < (self->max_health / 2))
-		self->s.skinnum = 1;
+		self->s.skinnum |= 1;
 
 	// we're already in a pain state
 	if (self->monsterinfo.currentmove == &tank_move_pain_long ||
