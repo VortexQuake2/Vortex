@@ -1665,7 +1665,8 @@ qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, q
 				&& (self->health >= 0.5 * self->max_health))
 			{
 				self->s.skinnum &= ~1;
-				self->s.skinnum &= ~2;
+				if (self->mtype != M_COMMANDER)
+					self->s.skinnum &= ~2;
 			}
 
 			regenerate = true;

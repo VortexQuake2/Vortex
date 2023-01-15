@@ -682,7 +682,8 @@ void drone_ai_idle (edict_t *self)
 	{
 		// change skin if we are being healed by someone else
 		self->s.skinnum &= ~1;
-		self->s.skinnum &= ~2;
+		if (self->mtype != M_COMMANDER)
+			self->s.skinnum &= ~2;
 	}
 
 	// call idle func every so often
@@ -1700,7 +1701,8 @@ void drone_ai_run1 (edict_t *self, float dist)
 	{
 		// change skin if we are being healed by someone else
 		self->s.skinnum &= ~1;
-		self->s.skinnum &= ~2;
+		if (self->mtype != M_COMMANDER)
+			self->s.skinnum &= ~2;
 	}
 
 	// monster is no longer idle
