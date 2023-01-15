@@ -30,6 +30,7 @@ void init_drone_infantry (edict_t *self);
 void init_drone_flyer (edict_t* self);
 void init_drone_floater(edict_t* self);
 void init_drone_hover(edict_t* self);
+void init_baron_fire(edict_t* self);
 int crand (void);
 edict_t* INV_GetMonsterSpawn(edict_t* from);
 
@@ -638,8 +639,10 @@ void drone_grow (edict_t *self)
 	if (self->health >= self->max_health)
 		self->think = drone_think;
 	// check for heal
-	else if (self->mtype != M_DECOY && self->health >= 0.3*self->max_health)
+	else if (self->mtype != M_DECOY && self->health >= 0.3 * self->max_health)
+	{
 		self->s.skinnum &= ~1;
+	}
 
 	// if position has been updated, check for ground entity
 	if (self->linkcount != self->monsterinfo.linkcount)
@@ -792,8 +795,9 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	// bosses
 	case 30: init_drone_commander(drone);	break;
 	case 31: init_drone_makron(drone);		break;
-	case 32: init_drone_supertank(drone);	break;
-	case 33: init_drone_jorg(drone);		break;
+	case 32: init_baron_fire(drone);		break;
+	case 33: init_drone_supertank(drone);	break;
+	case 34: init_drone_jorg(drone);		break;
 	// default
 	default: init_drone_gunner(drone);		break;
 	}
@@ -1658,8 +1662,11 @@ qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, q
 
 			// switch to normal monster skin when it's healed
 			if (!self->client && (self->svflags & SVF_MONSTER) && (self->mtype != M_DECOY)
-				&& (self->health >= 0.3*self->max_health))
+				&& (self->health >= 0.5 * self->max_health))
+			{
 				self->s.skinnum &= ~1;
+				self->s.skinnum &= ~2;
+			}
 
 			regenerate = true;
 		}
@@ -2062,6 +2069,7 @@ char *GetMonsterKindString (int mtype)
 		case M_FLYER: return "Flyer";
 		case M_FLOATER: return "Floater";
 		case M_HOVER: return "Hover";
+		case M_BARON_FIRE: return "Fire Baron";
         default: return "Monster";
     }
 }
@@ -2659,6 +2667,8 @@ void Cmd_Drone_f (edict_t *ent)
 		vrx_create_new_drone(ent, 13, false, true);
 	else if (!Q_strcasecmp(s, "hover"))
 		vrx_create_new_drone(ent, 14, false, true);
+	//else if (!Q_strcasecmp(s, "baron fire") && ent->myskills.administrator)
+		//vrx_create_new_drone(ent, 32, false, true);
 	//else if (!Q_strcasecmp(s, "jorg"))
     //    vrx_create_new_drone(ent, 32, false, true);
 	else 

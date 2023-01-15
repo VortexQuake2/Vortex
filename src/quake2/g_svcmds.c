@@ -606,10 +606,12 @@ void SVCmd_SpawnBoss_f (void)
         vrx_create_new_drone(m_worldspawn, 30, true, true);
     else if (!strcmp(gi.argv(2), "makron"))
         vrx_create_new_drone(m_worldspawn, 31, true, true);
-    else if (!strcmp(gi.argv(2), "supertank"))
+    else if (!strcmp(gi.argv(2), "firebaron"))
         vrx_create_new_drone(m_worldspawn, 32, true, true);
-    else if (!strcmp(gi.argv(2), "jorg"))
+    else if (!strcmp(gi.argv(2), "supertank"))
         vrx_create_new_drone(m_worldspawn, 33, true, true);
+    else if (!strcmp(gi.argv(2), "jorg"))
+        vrx_create_new_drone(m_worldspawn, 34, true, true);
     else
         safe_cprintf(NULL, PRINT_HIGH, "Invalid boss type. Usage: sv spawnboss <type>\n");
 }

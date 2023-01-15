@@ -675,6 +675,10 @@ M_TANK_INITIAL_HEALTH					 = 100	-- 750
 M_TANK_ADDON_HEALTH						 = 65
 M_TANK_INITIAL_ARMOR					 = 200	-- 1250
 M_TANK_ADDON_ARMOR						 = 105
+M_BARON_FIRE_INITIAL_HEALTH				 = 0
+M_BARON_FIRE_ADDON_HEALTH				 = 2500
+M_BARON_INITIAL_ARMOR					 = 0
+M_BARON_ADDON_ARMOR						 = 0
 
 -- Monster Weapons --
 M_BRAIN_INITIAL_PULL			=	-60
@@ -1070,7 +1074,7 @@ CLIGHTNING_ADDON_AR                      = 0
 CLIGHTNING_INITIAL_HR                    = 256
 CLIGHTNING_ADDON_HR                      = 0
 CLIGHTNING_DELAY                         = 0.3
-CLIGHTNING_DMG_MOD                       = 1.5
+CLIGHTNING_DMG_MOD                       = 1.25
 
 
 HAMMER_INITIAL_SPEED                     = 400

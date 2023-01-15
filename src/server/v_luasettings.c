@@ -897,7 +897,10 @@ double M_TANK_INITIAL_HEALTH;
 double M_TANK_ADDON_HEALTH;
 double M_TANK_INITIAL_ARMOR;
 double M_TANK_ADDON_ARMOR;
-
+double M_BARON_FIRE_INITIAL_HEALTH;
+double M_BARON_FIRE_ADDON_HEALTH;
+double M_BARON_FIRE_INITIAL_ARMOR;
+double M_BARON_FIRE_ADDON_ARMOR;
 
 // --Monster Weapons --
 double M_BRAIN_INITIAL_PULL;
@@ -2104,6 +2107,10 @@ void Lua_LoadVariables()
 	M_TANK_INITIAL_ARMOR = vrx_lua_get_variable("M_TANK_INITIAL_ARMOR", 200);
 	M_TANK_ADDON_ARMOR = vrx_lua_get_variable("M_TANK_ADDON_ARMOR", 105);
 
+	M_BARON_FIRE_INITIAL_HEALTH = vrx_lua_get_variable("M_BARON_FIRE_INITIAL_HEALTH", 0);
+	M_BARON_FIRE_ADDON_HEALTH = vrx_lua_get_variable("M_BARON_FIRE_ADDON_HEALTH", 2500);
+	M_BARON_FIRE_INITIAL_ARMOR = vrx_lua_get_variable("M_BARON_FIRE_INITIAL_ARMOR", 0);
+	M_BARON_FIRE_ADDON_ARMOR = vrx_lua_get_variable("M_BARON_FIRE_ADDON_ARMOR", 0);
 
 	M_BRAIN_INITIAL_PULL = vrx_lua_get_variable("M_BRAIN_INITIAL_PULL", -60);
 	M_BRAIN_ADDON_PULL = vrx_lua_get_variable("M_BRAIN_ADDON_PULL", -2);

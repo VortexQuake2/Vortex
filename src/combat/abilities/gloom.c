@@ -904,10 +904,23 @@ void obstacle_dead (edict_t *self)
 	self->nextthink = level.time + FRAMETIME;
 }
 
+void obstacle_return(edict_t* self)
+{
+	VectorCopy(self->move_origin, self->s.origin);
+	VectorCopy(self->move_origin, self->s.old_origin);
+	gi.linkentity(self);
+	self->movetype = MOVETYPE_NONE;
+	self->s.event = EV_PLAYER_TELEPORT;
+	VectorClear(self->velocity);
+}
+
 void obstacle_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
 	int max = OBSTACLE_MAX_COUNT;
 	int cur;
+
+	if (self->movetype != MOVETYPE_NONE)
+		obstacle_return(self);
 
 	if (!self->monsterinfo.slots_freed && self->activator && self->activator->inuse)
 	{
@@ -1059,15 +1072,6 @@ qboolean obstacle_attack_clear(edict_t* self, edict_t* target)
 		return false;
 	// an enemy is in our path--keep falling!
 	return true;
-}
-
-void obstacle_return(edict_t* self)
-{
-	VectorCopy(self->move_origin, self->s.origin);
-	VectorCopy(self->move_origin, self->s.old_origin);
-	gi.linkentity(self);
-	self->movetype = MOVETYPE_NONE;
-	self->s.event = EV_PLAYER_TELEPORT;
 }
 
 void obstacle_attack(edict_t* self)

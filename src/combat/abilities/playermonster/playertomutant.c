@@ -116,7 +116,7 @@ void mutant_checkattack (edict_t *self, edict_t *other, cplane_t *plane, csurfac
 		return;
 
 	// must be an airborne mutant
-	if (((other->mtype != M_MUTANT) && (other->mtype != MORPH_MUTANT)) || (other->groundentity && other->groundentity == world))
+	if (((other->mtype != M_MUTANT) && (other->mtype != MORPH_MUTANT) && (other->mtype != M_BARON_FIRE)) || (other->groundentity && other->groundentity == world))
 		return;
 
 	// check for attack delay (used when respawning/teleporting)
@@ -128,7 +128,7 @@ void mutant_checkattack (edict_t *self, edict_t *other, cplane_t *plane, csurfac
 		return;
 
 	// we should stop attacking if we've landed
-	if (other->s.frame != MUTANT_FRAMES_JUMP)
+	if ((other->mtype == MORPH_MUTANT || other->mtype == M_MUTANT) && other->s.frame != MUTANT_FRAMES_JUMP)
 		return;
 
 	// is this a valid target?

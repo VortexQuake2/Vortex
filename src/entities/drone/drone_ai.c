@@ -678,9 +678,12 @@ void drone_ai_idle (edict_t *self)
 	if (self->mtype == M_MEDIC)
 		M_Regenerate(self, qf2sf(300), qf2sf(10), 1.0, true, true, false, &self->monsterinfo.regen_delay1);
 
-	else if (self->mtype != M_DECOY && self->health >= 0.3*self->max_health)
-	// change skin if we are being healed by someone else
+	else if (self->mtype != M_DECOY && self->health >= 0.5 * self->max_health)
+	{
+		// change skin if we are being healed by someone else
 		self->s.skinnum &= ~1;
+		self->s.skinnum &= ~2;
+	}
 
 	// call idle func every so often
 	if (self->monsterinfo.idle && (level.time > self->monsterinfo.idle_delay))
@@ -1693,9 +1696,12 @@ void drone_ai_run1 (edict_t *self, float dist)
 		gi.dprintf("drone_ai_run1() AI_FINDNAVI %s goalentity %s\n", self->monsterinfo.aiflags & AI_FIND_NAVI ? "true" : "false", self->goalentity ? "true" : "false");
 	}
 
-	if (self->mtype != M_DECOY && self->health >= 0.3*self->max_health)
-	// change skin if we are being healed by someone else
+	if (self->mtype != M_DECOY && self->health >= 0.5 * self->max_health)
+	{
+		// change skin if we are being healed by someone else
 		self->s.skinnum &= ~1;
+		self->s.skinnum &= ~2;
+	}
 
 	// monster is no longer idle
 	self->monsterinfo.idle_frames = 0;

@@ -165,17 +165,29 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 	else if (!strcmp(target->classname, "obstacle") && ent->num_obstacle + 1 <= OBSTACLE_MAX_COUNT)
 	{
 		e = CreateObstacle(ent, skill_level);
-
+		// target obstacle is flipped
+		if (target->s.angles[PITCH] == 180)
+		{
+			e->s.angles[PITCH] = 180;
+			e->mins[2] = -40;
+			e->maxs[2] = 0;
+			e->movetype = MOVETYPE_NONE;
+		}
+		else
+		{
+			VectorCopy(target->s.angles, e->s.angles);
+			e->s.angles[PITCH] = 0;
+		}
 		// make sure the new entity fits
 		if (!G_IsValidLocation(target, target->s.origin, e->mins, e->maxs))
 		{
+			gi.dprintf("obstacle won't fit\n");
 			ent->num_obstacle--;
 			G_FreeEdict(e);
 			return;
 		}
+		gi.dprintf("obstacle will fit\n");
 		
-		VectorCopy(target->s.angles, e->s.angles);
-		e->s.angles[PITCH] = 0;
 		e->monsterinfo.cost = target->monsterinfo.cost;
 		e->health = 0.33 * e->max_health;
 		e->s.frame = 6;

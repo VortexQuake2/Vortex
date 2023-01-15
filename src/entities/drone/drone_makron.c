@@ -619,11 +619,11 @@ void init_drone_makron (edict_t *self)
 	VectorSet (self->maxs, 30, 30, 90);
 
 	if (invasion->value < 2)
-		self->health = 2000 * self->monsterinfo.level;
+		self->health = 1000 * self->monsterinfo.level;
 	else
-		self->health = 3000 * self->monsterinfo.level;
+		self->health = 1500 * self->monsterinfo.level;
 	self->max_health = self->health;
-	self->monsterinfo.power_armor_power = 5000 * self->monsterinfo.level;
+	self->monsterinfo.power_armor_power = 1000 * self->monsterinfo.level;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 	self->gib_health = -2000;
