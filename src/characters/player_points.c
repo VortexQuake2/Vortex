@@ -81,7 +81,7 @@ double sigmoid (double x)
 
 double vrx_get_points_tnl (int level) 
 {
-    long    val,tnl = 0;
+    long    tnl = 0;
     // this is the top of our sigmoid 'S' curve, where it becomes asymptotic
     long    max_exp_tnl = 50000;
 
@@ -90,12 +90,11 @@ double vrx_get_points_tnl (int level)
     for (int i = 0; i <= level; i++) {
         // this is the 'x' input value into the sigmoid function that allows up to determine which part of the curve to utilize
         double x = i - 5 - (0.5 * i);
-        val = (long)(sigmoid(x) * max_exp_tnl) + 1000;
-        if (val > 150000)
-            val = 150000;
-        tnl += val;
+        tnl += (long)(sigmoid(x) * max_exp_tnl) + 1000;
         //gi.dprintf("%i x: %f tnl: %d\n", i, x, tnl);
     }
+    if (tnl > 150000)
+        tnl = 150000;
     return tnl;
 }
 
@@ -168,7 +167,10 @@ void vrx_check_for_levelup(edict_t *ent) {
 
         ent->myskills.next_level += points_needed;
 
-        ent->myskills.speciality_points += 2;
+        if (ent->myskills.level <= 10)
+            ent->myskills.speciality_points += 2;
+        else
+            ent->myskills.speciality_points += 1;
         if (generalabmode->value && ent->myskills.class_num == CLASS_WEAPONMASTER)
             ent->myskills.weapon_points += 6;
         else // 4 points for everyone, only weaponmasters in generalabmode.
