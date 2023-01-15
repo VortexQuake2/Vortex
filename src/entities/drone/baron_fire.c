@@ -122,6 +122,7 @@ mframe_t baron_fire_frames_pain[] =
 	ai_move, 0,	 NULL,
 	ai_move, 0,  NULL,
 	ai_move, 0,  NULL,
+	ai_move, 0,  NULL
 };
 mmove_t baron_fire_move_pain = { FRAME_pain101, FRAME_pain106, baron_fire_frames_pain, NULL };
 
@@ -153,6 +154,11 @@ void baron_fire_pain(edict_t* self, edict_t* other, float kick, int damage)
 		self->monsterinfo.currentmove != &baron_fire_move_stand &&
 		self->monsterinfo.currentmove != &baron_fire_move_walk)
 		return;
+
+	if (random() > 0.5)
+		gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_IDLE, 0);
+	else
+		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_IDLE, 0);
 
 	//gi.sound(self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
 	self->monsterinfo.currentmove = &baron_fire_move_pain;
