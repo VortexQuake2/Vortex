@@ -81,7 +81,7 @@ double sigmoid (double x)
 
 double vrx_get_points_tnl (int level) 
 {
-    long    tnl = 0;
+    long    val,tnl = 0;
     // this is the top of our sigmoid 'S' curve, where it becomes asymptotic
     long    max_exp_tnl = 50000;
 
@@ -90,7 +90,10 @@ double vrx_get_points_tnl (int level)
     for (int i = 0; i <= level; i++) {
         // this is the 'x' input value into the sigmoid function that allows up to determine which part of the curve to utilize
         double x = i - 5 - (0.5 * i);
-        tnl += (long)(sigmoid(x) * max_exp_tnl) + 1000;
+        val = (long)(sigmoid(x) * max_exp_tnl) + 1000;
+        if (val > 150000)
+            val = 150000;
+        tnl += val;
         //gi.dprintf("%i x: %f tnl: %d\n", i, x, tnl);
     }
     return tnl;

@@ -124,7 +124,7 @@ mframe_t baron_fire_frames_pain[] =
 	ai_move, 0,  NULL,
 	ai_move, 0,  NULL
 };
-mmove_t baron_fire_move_pain = { FRAME_pain101, FRAME_pain106, baron_fire_frames_pain, NULL };
+mmove_t baron_fire_move_pain = { FRAME_pain101, FRAME_pain106, baron_fire_frames_pain, baron_fire_walk };
 
 void baron_fire_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
