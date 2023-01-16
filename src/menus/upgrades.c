@@ -576,28 +576,76 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		addlinetomenu(ent, "enemies while active.", MENU_WHITE_CENTERED);
 		return 6;
 	}
+
+	return 0;
 }
+
+
+
+/*
+ * Sorry for encoding it this way.
+ * I think it's more or less the most obvious way of encoding this information.
+ * -az
+ *
+ * option layout:
+ * L: Line to restore the multimenu on, P: page of multimenu, A: ability index.
+ * S: Skill bit. Are we upgrading the ability encoded in the number?
+ * G: General bit. Is this the general upgrades menu?
+ * SGLLLLLL PPPPPPPP AAAAAAAA AAAAAAAA
+ * Allows for 256 pages, 64 lines, and 65k abilities.
+ *
+ * This gets encoded on vrx_open_ability_menu and decoded on AbilityUpgradeMenu_handler.
+ */
+
+#define SKILL_BIT (1 << 31)
+#define GENERAL_BIT (1 << 30)
+
+ // ability index is the ability to upgrade.
+ // page, general_type and last_line are so that we can restore the multimenu afterwards.
+ // "use_upgrade_line" is whether to open this menu
+ // on the "upgrade this ability" menu item or not. -az
+void vrx_open_ability_menu(
+	edict_t* ent, 
+	int ability_index, 
+	int page, 
+	int general_type, 
+	int last_line, 
+	qboolean use_upgrade_line
+);
 
 void AbilityUpgradeMenu_handler(edict_t* ent, int option) {
 	//Not upgrading
-	if (option > 0) {
-		//OpenMultiUpgradeMenu
-		OpenTalentUpgradeMenu(ent, vrx_get_talent_slot(ent, option - 1) + 1);
+	const qboolean is_ability = (option & SKILL_BIT) != 0;
+	const int general_type = (option & GENERAL_BIT) != 0;
+	const int ability = option & 0xFFFF;
+	const int page = (option >> 16) & 0xFF;
+	const int last_line = (option >> 24) & 0x3F;
+	
+
+	if (is_ability) {
+		//upgrading
+		UpgradeAbility(ent, ability);
+		vrx_open_ability_menu(ent, ability, page, general_type, last_line, true);
 	}
-	else    //upgrading
+	else    
 	{
-		//vrx_upgrade_talent(ent, (option * -1) - 1);
-		UpgradeAbility(ent, (option * -1) -1);
+		//OpenMultiUpgradeMenu
+		OpenMultiUpgradeMenu(ent, last_line, page, general_type);
 	}
 }
 
-//FIXME: this menu should be a sub-menu of OpenMultiUpgradeMenu (ability_upgrade) that
+// this menu is a sub-menu of OpenMultiUpgradeMenu (ability_upgrade) that
 // displays a description of each ability, allowing you to upgrade (multiple times) or
 // go back to the OpenMultiUpgradeMenu
-
-void vrx_open_ability_menu(edict_t* ent, int abilityIndex) {
-	//talent_t* talent = &ent->myskills.talents.talent[vrx_get_talent_slot(ent, talentID)];
-	upgrade_t* ability = &ent->myskills.abilities[abilityIndex];
+void vrx_open_ability_menu(
+	edict_t* ent, 
+	int ability_index, 
+	int page, 
+	int general_type, 
+	int last_line, 
+	qboolean use_upgrade_line
+) {
+	upgrade_t* ability = &ent->myskills.abilities[ability_index];
 	int level = ability->current_level;
 	int lineCount = 7;//12;
 
@@ -605,24 +653,37 @@ void vrx_open_ability_menu(edict_t* ent, int abilityIndex) {
 		return;
 	clearmenu(ent);
 
-	addlinetomenu(ent, va("%s: %d\\%d\n", GetAbilityString(abilityIndex), level, ability->max_level), MENU_GREEN_CENTERED);
+	addlinetomenu(ent, va("%s: %d/%d\n", GetAbilityString(ability_index), level, ability->max_level), MENU_GREEN_CENTERED);
 	addlinetomenu(ent, " ", 0);
 
-	lineCount += writeAbilityDescription(ent, abilityIndex);
+	lineCount += writeAbilityDescription(ent, ability_index);
 
 	addlinetomenu(ent, " ", 0);
-	//addlinetomenu(ent, "Current", MENU_GREEN_CENTERED);
-	//writeTalentUpgrade(ent, talentID, level);
 	addlinetomenu(ent, " ", 0);
+
+	/* see the comment above to see how this option encoding works.
+	 * there's an underlying assumption here that none of these values
+	 * will overflow. if they do, change the layout. -az
+	 */
+	int option_encoded = (last_line << 24) | (page << 16) | ability_index;
+	if (general_type) option_encoded |= GENERAL_BIT;
 
 	if (level < ability->max_level)
-		addlinetomenu(ent, "Upgrade this ability.", -1 * (abilityIndex + 1));
-	else addlinetomenu(ent, " ", 0);
+		// we're going to upgrade it, so set the skill bit.
+		addlinetomenu(ent, "Upgrade this ability.", option_encoded | SKILL_BIT);
+	else 
+		addlinetomenu(ent, " ", 0);
 
-	addlinetomenu(ent, "Previous menu.", abilityIndex + 1);
+	// we're not going to upgrade it, so do not set the skill bit.
+	addlinetomenu(ent, "Previous menu.", option_encoded);
 
 	setmenuhandler(ent, AbilityUpgradeMenu_handler);
-	ent->client->menustorage.currentline = lineCount;
+
+	if (!use_upgrade_line)
+		ent->client->menustorage.currentline = lineCount - 1;
+	else
+		ent->client->menustorage.currentline = lineCount - 2;
+
 	showmenu(ent);
 }
 
@@ -660,10 +721,7 @@ void upgradeMultiMenu_class_handler (edict_t *ent, int option)
 
 	ability_index = option%1000;
 	//gi.dprintf("ability = %s (%d)\n", GetAbilityString(ability_index), ability_index);
-	
-	UpgradeAbility(ent, ability_index);
-
-	OpenMultiUpgradeMenu(ent, ent->client->menustorage.currentline, p, 0);
+	vrx_open_ability_menu(ent, ability_index, p, 0, ent->client->menustorage.currentline, false);
 }
 
 void upgradeMultiMenu_handler (edict_t *ent, int option)
@@ -701,46 +759,7 @@ void upgradeMultiMenu_handler (edict_t *ent, int option)
 	ability_index = option%1000;
 	//gi.dprintf("ability = %s (%d)\n", GetAbilityString(ability_index), ability_index);
 	
-	UpgradeAbility(ent, ability_index);
-
-	OpenMultiUpgradeMenu(ent, ent->client->menustorage.currentline, p, 1);
-}
-
-void upgradeMultiMenu_handler_mobility (edict_t *ent, int option)
-{
-	int p, ability_index;
-
-	if (option == 999)
-	{
-		closemenu(ent);
-		return;
-	}
-
-	//gi.dprintf("option=%d\n", option);
-
-	// next menu
-	if (option < 300)
-	{
-		OpenMultiUpgradeMenu(ent, PAGE_NEXT, option-199, 2);
-		return;
-	}
-	// previous menu
-	else if (option < 400)
-	{
-		p = option-301;
-		if (p < 0)
-			OpenUpgradeMenu(ent);
-		else	
-			OpenMultiUpgradeMenu(ent, PAGE_PREVIOUS, p, 2);
-		return;
-	}
-
-	p = option/1000-1;
-	ability_index = option%1000;
-
-	UpgradeAbility(ent, ability_index);
-
-	OpenMultiUpgradeMenu(ent, ent->client->menustorage.currentline, p, 2);
+	vrx_open_ability_menu(ent, ability_index, p, 1, ent->client->menustorage.currentline, false);
 }
 
 // this menu lists each ability along with current level
@@ -773,10 +792,8 @@ void OpenMultiUpgradeMenu (edict_t *ent, int lastline, int page, int generaltype
 
 		// create ability menu string
 		strcpy(buffer, GetAbilityString(i));
-		strcat(buffer, ":");
-		padRight(buffer, 15);
 
-		addlinetomenu(ent, va("%d. %s %d[%d]", abilities+page*10, buffer, upgrade->level, upgrade->current_level), ((page+1)*1000)+i);
+		addlinetomenu(ent, va("%2d. %-14.14s %2d[%2d]", abilities+page*10, buffer, upgrade->level, upgrade->current_level), ((page+1)*1000)+i);
 	
 
 		// only display 10 abilities at a time
@@ -803,8 +820,6 @@ void OpenMultiUpgradeMenu (edict_t *ent, int lastline, int page, int generaltype
 	
 	if (generaltype == 1)
 		setmenuhandler(ent, upgradeMultiMenu_handler);
-	else if (generaltype == 2)
-		setmenuhandler(ent, upgradeMultiMenu_handler_mobility);
 	else
 		setmenuhandler(ent, upgradeMultiMenu_class_handler);
 
