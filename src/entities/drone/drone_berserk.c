@@ -168,6 +168,8 @@ void berserk_attack_club (edict_t *self)
 	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
 		damage = M_MELEE_DMG_MAX;
 
+	damage /= 3;
+
 	M_MeleeAttack(self, 96, damage, 400);
 }
 
@@ -176,8 +178,8 @@ mframe_t berserk_frames_attack_club [] =
 	ai_charge, 0, berserk_swing,
 	ai_charge, 0, NULL,
 	ai_charge, 0, berserk_attack_club,
-	ai_charge, 0, berserk_attack_club,
-	ai_charge, 0, berserk_attack_club,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
 	ai_charge, 0, NULL
 };
 mmove_t berserk_move_attack_club = {FRAME_att_b10, FRAME_att_b15, berserk_frames_attack_club, berserk_run};
@@ -187,8 +189,8 @@ mframe_t berserk_frames_runattack1 [] =
 	drone_ai_run, 35, berserk_swing,
 	drone_ai_run, 35, NULL,
 	drone_ai_run, 35, berserk_attack_club,
-	drone_ai_run, 35, berserk_attack_club,
-	drone_ai_run, 35, berserk_attack_club,
+	drone_ai_run, 35, NULL,
+	drone_ai_run, 35, NULL,
 	drone_ai_run, 35, NULL
 };
 mmove_t berserk_move_runattack1 = {FRAME_r_att13, FRAME_r_att18, berserk_frames_runattack1, berserk_run};

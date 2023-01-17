@@ -309,7 +309,7 @@ void mutant_jump_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface
 		//if (!self->activator->client)
 		//	damage = 40*self->monsterinfo.level;
 		//else 
-			damage = 100 + 20 * drone_damagelevel(self); // dmg: mutant_jump_touch_unused
+			damage = 30 + 1.5 * (drone_damagelevel(self) - 1); // dmg: mutant_jump_touch_unused
 			damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 
 		knockback = damage;

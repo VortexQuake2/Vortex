@@ -303,6 +303,7 @@ void myparasite_drain_attack (edict_t *self)
 		damage = PARASITE_MAX_DMG;
     damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 
+	
 	// don't pull while mid-air
 	if (self->groundentity)
 	{
