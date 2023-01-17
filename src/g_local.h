@@ -1168,7 +1168,7 @@ void stuffcmd(edict_t *ent, char *s);
 
 void vrx_add_team_exp(edict_t *ent, int points);
 
-void vrx_check_for_levelup(edict_t *ent);
+void vrx_check_for_levelup(edict_t *ent, qboolean print_message);
 
 double vrx_get_points_tnl(int level);
 

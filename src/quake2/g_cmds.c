@@ -1881,7 +1881,7 @@ void ResetPlayer (edict_t *ent)
 
 char *LoPrint(char *text);
 //edict_t *FindPlayerByName(const char *name);	//4.0 Already declared in g_local.h
-void vrx_check_for_levelup(edict_t *ent);
+void vrx_check_for_levelup(edict_t *ent, qboolean print_message);
 
 void Cmd_MakeAdmin(edict_t *ent)
 {
@@ -2572,7 +2572,7 @@ void Cmd_AdminCmd (edict_t *ent)
 			if (num < 0)
 				return;
 			player->myskills.experience += num;
-            vrx_check_for_levelup(player);
+            vrx_check_for_levelup(player, true);
 			G_PrintGreenText(va("**%s's experience was edited by %s**", player->client->pers.netname, ent->client->pers.netname));
 		}
 		else

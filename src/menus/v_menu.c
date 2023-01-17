@@ -6,7 +6,7 @@
 
 qboolean loc_CanSee (edict_t *targ, edict_t *inflictor);
 
-void vrx_check_for_levelup(edict_t *ent);
+void vrx_check_for_levelup(edict_t *ent, qboolean print_message);
 void Cmd_Armory_f(edict_t*ent, int selection);
 //Function prototypes required for this .c file:
 void OpenDOMJoinMenu (edict_t *ent);
@@ -497,7 +497,7 @@ void classmenu_handler (edict_t *ent, int option)
                             ent->client->pers.netname,
                             vrx_get_class_string(ent->myskills.class_num)));
 
-    vrx_check_for_levelup(ent);
+    vrx_check_for_levelup(ent, true);
     vrx_update_all_character_maximums(ent);
     vrx_add_respawn_weapon(ent, ent->myskills.respawn_weapon);
     vrx_add_respawn_items(ent);

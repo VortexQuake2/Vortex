@@ -325,7 +325,7 @@ void SVCmd_AddExp_f (void)
         e->myskills.experience += points;
         e->client->resp.score += points;
         safe_cprintf(NULL, PRINT_HIGH, "Gave %d experience to %s.\n", points, e->client->pers.netname);
-        vrx_check_for_levelup(e);
+        vrx_check_for_levelup(e, true);
         vrx_write_to_logfile(e, va("Experience was modified. (amount = %d)\n", points));
         return;
     }
@@ -647,7 +647,7 @@ void SVCmd_ChangeClass_f (void)
     }
 
     if ((p = FindPlayer(playername)) != NULL)
-        ChangeClass(p->client->pers.netname, newclass, 1);
+        vrx_change_class(p->client->pers.netname, newclass, 1);
     else
         safe_cprintf(NULL, PRINT_HIGH, "Couldn't find %s\n", playername);
 }

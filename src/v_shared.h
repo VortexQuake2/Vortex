@@ -213,7 +213,7 @@ void SaveArmory();
 void LoadArmory();
 qboolean V_GiveAmmoClip(edict_t *ent, float qty, int ammotype);
 int V_GetRespawnAmmoType(edict_t *ent);
-void ChangeClass(char *playername, int newclass, int msgtype);
+void vrx_change_class(char *playername, int newclass, int msgtype);
 char *GetTalentString(int talent_ID);
 char *V_TruncateString(char *string, int newStringLength);
 

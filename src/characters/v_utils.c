@@ -1406,7 +1406,7 @@ void V_tFileGotoLine(FILE *fptr, int linenumber, long size) {
 #define CHANGECLASS_MSG_CHANGE    1
 #define CHANGECLASS_MSG_RESET    2
 
-void ChangeClass(char *playername, int newclass, int msgtype) {
+void vrx_change_class(char *playername, int newclass, int msgtype) {
     int i;
     edict_t *player;
 
@@ -1426,41 +1426,13 @@ void ChangeClass(char *playername, int newclass, int msgtype) {
         //Reset player's skills and change their class
         memset(player->myskills.abilities, 0, sizeof(upgrade_t) * MAX_ABILITIES);
         memset(player->myskills.weapons, 0, sizeof(weapon_t) * MAX_WEAPONS);
+        vrx_clear_talents(player);
         player->myskills.class_num = newclass;
-
-        //Give them some upgrade points.
-        player->myskills.speciality_points = 2 * player->myskills.level;
-
-        if (generalabmode->value && player->myskills.class_num == CLASS_WEAPONMASTER)
-            player->myskills.weapon_points = 6 * player->myskills.level;
-        else
-            player->myskills.weapon_points = 4 * player->myskills.level;
-
-        //Weapon masters get double the weapon points of other classes.
-        //if(player->myskills.class_num == CLASS_WEAPONMASTER)
-        //	player->myskills.weapon_points *= 2;
 
         //Initialize their upgrades
         vrx_assign_abilities(player);
         vrx_reset_weapon_maximums(player);
-
-        //Check for special level-up bonuses
-        //max ammo and vit
-        vrx_update_free_abilities(player);
-        //player->myskills.abilities[MAX_AMMO].level = player->myskills.abilities[VITALITY].level = player->myskills.level / 5;
-        //if (player->myskills.level > 9)
-        //	player->myskills.abilities[ID].level = 1;
-
-
-        //Reset talents, and give them their talent points
-        vrx_clear_talents(player);
         vrx_set_talents(player);
-        /*if(player->myskills.level < TALENT_MAX_LEVEL)
-        player->myskills.talents.talentPoints = player->myskills.level - TALENT_MIN_LEVEL + 1;
-        else player->myskills.talents.talentPoints = TALENT_MAX_LEVEL - TALENT_MIN_LEVEL + 1;*/
-        player->myskills.talents.talentPoints = (int) (player->myskills.level / 2);
-        if (player->myskills.talents.talentPoints < 0)
-            player->myskills.talents.talentPoints = 0;
 
         //Re-apply equipment
         V_ResetAllStats(player);
@@ -1479,8 +1451,11 @@ void ChangeClass(char *playername, int newclass, int msgtype) {
             gi.dprintf("%s's character data was reset.\n", playername);
         }
 
-        //Reset max health/armor/ammo
-        vrx_update_all_character_maximums(player);
+        player->myskills.level = 0;
+        player->myskills.next_level = vrx_get_points_tnl(0);
+        player->myskills.speciality_points = 0;
+        player->myskills.weapon_points = 0;
+        vrx_check_for_levelup(player, false);
 
         //Save the player.
         V_CommitCharacterData(player);

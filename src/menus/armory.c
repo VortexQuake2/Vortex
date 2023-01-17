@@ -189,6 +189,8 @@ void armoryConfirmOption(edict_t *ent, int selection)
 	addlinetomenu(ent, "Yes", selection);
 	addlinetomenu(ent, "No", -1);
 
+	ent->client->menustorage.currentline = 11;
+
 	setmenuhandler(ent, buyPoint);
 
 	showmenu(ent);
@@ -449,7 +451,7 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 			break;
 		
 		case 29:	//Reset char data
-			ChangeClass(ent->client->pers.netname, ent->myskills.class_num, 2);
+			vrx_change_class(ent->client->pers.netname, ent->myskills.class_num, 2);
 			break;
 #ifndef REMOVE_RESPAWNS
 		case 30:

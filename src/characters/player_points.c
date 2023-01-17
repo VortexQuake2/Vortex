@@ -144,9 +144,8 @@ double vrx_get_points_tnl(int level) {
 }
 #endif
 
-void vrx_check_for_levelup(edict_t *ent) {
-    double points_needed;
-    qboolean levelup = false;
+void vrx_check_for_levelup(edict_t *ent, qboolean print_message) {
+	qboolean levelup = false;
 
     if (ent->ai.is_bot) // bots don't level up -az
         return;
@@ -162,7 +161,7 @@ void vrx_check_for_levelup(edict_t *ent) {
         }
 
         ent->myskills.level++;
-        points_needed = vrx_get_points_tnl(ent->myskills.level);
+        double points_needed = vrx_get_points_tnl(ent->myskills.level);
 
 
         ent->myskills.next_level += points_needed;
@@ -179,8 +178,10 @@ void vrx_check_for_levelup(edict_t *ent) {
         vrx_add_levelup_boons(ent);//Add any special addons that should be there!
         vrx_update_all_character_maximums(ent);
 
-        G_PrintGreenText(va("*****%s gained a level*****", ent->client->pers.netname));
-        vrx_write_to_logfile(ent, va("Player reached level %d\n", ent->myskills.level));
+        if (print_message) {
+            G_PrintGreenText(va("*****%s gained a level*****", ent->client->pers.netname));
+            vrx_write_to_logfile(ent, va("Player reached level %d\n", ent->myskills.level));
+        }
 
         // maximum level cap
         if (!ent->myskills.administrator && ent->myskills.level >= 50) {
@@ -189,7 +190,7 @@ void vrx_check_for_levelup(edict_t *ent) {
         }
     }
 
-    if (levelup) {
+    if (levelup && print_message) {
         safe_centerprintf(ent, "Welcome to level %d!\n You need %d experience \nto get to the next level.\n",
                         ent->myskills.level, ent->myskills.next_level - ent->myskills.experience);
         gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/pc_up.wav"), 1, ATTN_STATIC, 0);
@@ -329,7 +330,7 @@ int vrx_apply_experience(edict_t *player, int exp) {
         }
     }
     player->client->resp.score += exp;
-    vrx_check_for_levelup(player);
+    vrx_check_for_levelup(player, true);
 
     return exp;
 }
