@@ -189,7 +189,7 @@ void mymedic_fire_blaster (edict_t *self)
 	else
 		effect = EF_HYPERBLASTER;
 
-	damage = M_HYPERBLASTER_DMG_BASE + M_HYPERBLASTER_DMG_ADDON * self->monsterinfo.level;
+	damage = M_HYPERBLASTER_DMG_BASE + M_HYPERBLASTER_DMG_ADDON * drone_damagelevel(self);
 	if (M_HYPERBLASTER_DMG_MAX && damage > M_HYPERBLASTER_DMG_MAX)
 		damage = M_HYPERBLASTER_DMG_MAX;
 
@@ -203,8 +203,8 @@ void mymedic_fire_bolt (edict_t *self)
 	int		min, max, damage;
 	vec3_t	forward, start;
 
-	min = 4*self->monsterinfo.level; // dmg.min: medic_fire_bolt
-	max = 50 + 25*self->monsterinfo.level; // dmg.max: medic_fire_bolt
+	min = 4 * drone_damagelevel(self); // dmg.min: medic_fire_bolt
+	max = 50 + 25 * drone_damagelevel(self); // dmg.max: medic_fire_bolt
 
 	damage = GetRandom(min, max);
 

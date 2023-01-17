@@ -186,7 +186,7 @@ void GaldiatorMelee (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * self->monsterinfo.level; // dmg: gladiator_melee
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * drone_damagelevel(self); // dmg: gladiator_melee
 	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
 		damage = M_MELEE_DMG_MAX;
 
@@ -233,18 +233,13 @@ void ChainLightning (edict_t *ent, vec3_t start, vec3_t aimdir, int damage, int 
 
 void GladiatorChainLightning (edict_t *self)
 {
-	int slvl, damage;
+	int  damage;
 	vec3_t	forward, start;
 
 	if (!G_EntExists(self->enemy))
 		return;
 
-	slvl = self->monsterinfo.level;
-
-	if (slvl > 15)
-		slvl = 15; // cap: gladiator_chain_lightning.lvl
-
-	damage = 50 + 15 * slvl; // dmg: gladiator_chain_lightning
+	damage = 50 + 15 * drone_damagelevel(self); // dmg: gladiator_chain_lightning
 
 	MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, MZ2_GLADIATOR_RAILGUN_1, forward, start);
 	ChainLightning(self, start, forward, damage, 1024, 256);
@@ -264,7 +259,7 @@ void GladiatorGun (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = M_RAILGUN_DMG_BASE + M_RAILGUN_DMG_ADDON * self->monsterinfo.level;
+	damage = M_RAILGUN_DMG_BASE + M_RAILGUN_DMG_ADDON * drone_damagelevel(self);
 	if (M_RAILGUN_DMG_MAX && damage > M_RAILGUN_DMG_MAX)
 		damage = M_RAILGUN_DMG_MAX;
 

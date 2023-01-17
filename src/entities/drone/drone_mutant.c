@@ -232,7 +232,7 @@ void mutant_hit_left (edict_t *self)
 	int damage;
 	vec3_t	aim;
 
-	damage = M_MELEE_DMG_BASE+M_MELEE_DMG_ADDON*self->monsterinfo.level; // dmg: mutant_hit_left_world
+	damage = M_MELEE_DMG_BASE+M_MELEE_DMG_ADDON* drone_damagelevel(self); // dmg: mutant_hit_left_world
 	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
 		damage = M_MELEE_DMG_MAX;
 
@@ -248,7 +248,7 @@ void mutant_hit_right (edict_t *self)
 	int damage;
 	vec3_t	aim;
 
-	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * self->monsterinfo.level; // dmg: mutant_hit_right_world
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * drone_damagelevel(self); // dmg: mutant_hit_right_world
 	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
 		damage = M_MELEE_DMG_MAX;
 
@@ -309,7 +309,7 @@ void mutant_jump_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface
 		//if (!self->activator->client)
 		//	damage = 40*self->monsterinfo.level;
 		//else 
-			damage = 100 + 20*self->monsterinfo.level; // dmg: mutant_jump_touch_unused
+			damage = 100 + 20 * drone_damagelevel(self); // dmg: mutant_jump_touch_unused
 			damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 
 		knockback = damage;

@@ -431,8 +431,8 @@ void supertankRocket (edict_t *self)
 	else // (self->s.frame == FRAME_attak2_14)
 		flash_number = MZ2_SUPERTANK_ROCKET_3;
 
-	damage = 50 + 10*self->monsterinfo.level;
-	speed = 650 + 30*self->monsterinfo.level;
+	damage = 50 + 10 * drone_damagelevel(self);
+	speed = 650 + 30 * drone_damagelevel(self);
 
 	MonsterAim(self, 0.5, speed, true, flash_number, forward, start);
 
@@ -446,7 +446,7 @@ void supertankMachineGun (edict_t *self)
 
 	flash_number = MZ2_SUPERTANK_MACHINEGUN_1 + (self->s.frame - FRAME_attak1_1);
 
-	damage = 20 + 2*self->monsterinfo.level;
+	damage = 20 + 2* drone_damagelevel(self);
 
 	MonsterAim(self, 0.8, 0, false, flash_number, forward, start);
 

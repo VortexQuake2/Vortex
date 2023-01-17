@@ -233,7 +233,7 @@ void myTankRail (edict_t *self)
 	else
 		flash_number = MZ2_TANK_BLASTER_3;
 
-	damage = M_RAILGUN_DMG_BASE + M_RAILGUN_DMG_ADDON*self->monsterinfo.level; // dmg: tank_rail
+	damage = M_RAILGUN_DMG_BASE + M_RAILGUN_DMG_ADDON* drone_damagelevel(self); // dmg: tank_rail
 	if (M_RAILGUN_DMG_MAX && damage > M_RAILGUN_DMG_MAX)
 		damage = M_RAILGUN_DMG_MAX;
 
@@ -260,11 +260,11 @@ void myTankBlaster(edict_t* self)
 	else
 		flash_number = MZ2_TANK_BLASTER_3;
 
-	damage = M_BLASTER_DMG_BASE + M_BLASTER_DMG_ADDON * self->monsterinfo.level;
+	damage = M_BLASTER_DMG_BASE + M_BLASTER_DMG_ADDON * drone_damagelevel(self);
 	if (M_BLASTER_DMG_MAX && damage > M_BLASTER_DMG_MAX)
 		damage = M_BLASTER_DMG_MAX;
 
-	speed = M_BLASTER_SPEED_BASE + M_BLASTER_SPEED_ADDON * self->monsterinfo.level;
+	speed = M_BLASTER_SPEED_BASE + M_BLASTER_SPEED_ADDON * drone_damagelevel(self);
 	if (M_BLASTER_SPEED_MAX && speed > M_BLASTER_SPEED_MAX)
 		speed = M_BLASTER_SPEED_MAX;
 
@@ -293,10 +293,10 @@ void myTankRocket(edict_t* self)
 	else
 		flash_number = MZ2_TANK_ROCKET_3;
 
-	damage = M_ROCKETLAUNCHER_DMG_BASE + M_ROCKETLAUNCHER_DMG_ADDON * self->monsterinfo.level;
+	damage = M_ROCKETLAUNCHER_DMG_BASE + M_ROCKETLAUNCHER_DMG_ADDON * drone_damagelevel(self);
 	if (M_ROCKETLAUNCHER_DMG_MAX && damage > M_ROCKETLAUNCHER_DMG_MAX)
 		damage = M_ROCKETLAUNCHER_DMG_MAX;
-	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * self->monsterinfo.level;
+	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * drone_damagelevel(self);
 	if (M_ROCKETLAUNCHER_SPEED_MAX && speed > M_ROCKETLAUNCHER_SPEED_MAX)
 		speed = M_ROCKETLAUNCHER_SPEED_MAX;
 
@@ -317,7 +317,7 @@ void myTankMachineGun(edict_t* self)
 	flash_number = MZ2_TANK_MACHINEGUN_1 + (self->s.frame - FRAME_attak406);
 
 	// tank machinegun does 2x damage compared to other monster machineguns
-	damage = 2 * (M_MACHINEGUN_DMG_BASE + M_MACHINEGUN_DMG_ADDON * self->monsterinfo.level);
+	damage = 2 * (M_MACHINEGUN_DMG_BASE + M_MACHINEGUN_DMG_ADDON * drone_damagelevel(self));
 	if (M_MACHINEGUN_DMG_MAX && damage > 2 * M_MACHINEGUN_DMG_MAX)
 		damage = 2 * M_MACHINEGUN_DMG_MAX;
 
@@ -634,7 +634,7 @@ void mytank_meleeattack (edict_t *self)
 
 	self->lastsound = level.framenum;
 
-	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * self->monsterinfo.level; // dmg: berserker_attack_strike
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * drone_damagelevel(self); // dmg: berserker_attack_strike
 	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
 		damage = M_MELEE_DMG_MAX;
 

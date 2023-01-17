@@ -534,7 +534,7 @@ void mybrain_hit_right (edict_t *self)
 	if (!self->enemy->inuse)
 		return;
 
-	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * self->monsterinfo.level;
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * drone_damagelevel(self);
 	if (damage > M_MELEE_DMG_MAX)
 		damage = M_MELEE_DMG_MAX;
 	
@@ -556,7 +556,7 @@ void mybrain_hit_left (edict_t *self)
 	if (!self->enemy->inuse)
 		return;
 
-	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * self->monsterinfo.level;
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * drone_damagelevel(self);
 	if (damage > M_MELEE_DMG_MAX)
 		damage = M_MELEE_DMG_MAX;
 
@@ -598,7 +598,7 @@ void mybrain_tentacle_attack (edict_t *self)
 {
 	int		damage;
 
-	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON*self->monsterinfo.level; // dmg: brain_tentacle_attack_world
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * drone_damagelevel(self); // dmg: brain_tentacle_attack_world
 	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
 		damage = M_MELEE_DMG_MAX;
 	M_MeleeAttack(self, MELEE_DISTANCE, damage, 0);
@@ -657,10 +657,10 @@ void mybrain_suxor (edict_t *self)
 	tr = gi.trace(self->s.origin, NULL, NULL, end, self, MASK_SHOT);
 	if (G_EntExists(tr.ent) && (tr.ent == self->enemy))
 	{
-		damage = M_BRAIN_INITIAL_TENTACLE_DMG + M_BRAIN_ADDON_TENTACLE_DMG*self->monsterinfo.level; // dmg: brain_suxor
+		damage = M_BRAIN_INITIAL_TENTACLE_DMG + M_BRAIN_ADDON_TENTACLE_DMG * drone_damagelevel(self); // dmg: brain_suxor
 		if (M_BRAIN_MAX_TENTACLE_DMG && damage > M_BRAIN_MAX_TENTACLE_DMG)
 			damage = M_BRAIN_MAX_TENTACLE_DMG;
-		pull = M_BRAIN_INITIAL_PULL + M_BRAIN_ADDON_PULL*self->monsterinfo.level; // pull: brain_suxor
+		pull = M_BRAIN_INITIAL_PULL + M_BRAIN_ADDON_PULL * drone_damagelevel(self); // pull: brain_suxor
 		if (M_BRAIN_MAX_PULL && pull < M_BRAIN_MAX_PULL)
 			pull = M_BRAIN_MAX_PULL;
 

@@ -187,7 +187,7 @@ void InfantryMachineGun (edict_t *self)
 	vec3_t	start, forward, right, vec;
 	int		damage, flash_number;
 
-	damage = 10 + 1*self->monsterinfo.level; // dmg: infantry_machinegun
+	damage = 10 + 1* drone_damagelevel(self); // dmg: infantry_machinegun
 
 	if (self->s.frame == FRAME_attak111)
 	{
@@ -214,7 +214,7 @@ void Infantry20mm(edict_t* self)
 	vec3_t	start, forward, right, vec;
 	int		damage, flash_number;
 
-	damage = M_20MM_DMG_BASE + M_20MM_DMG_ADDON * self->monsterinfo.level;
+	damage = M_20MM_DMG_BASE + M_20MM_DMG_ADDON * drone_damagelevel(self);
 	if (M_20MM_DMG_MAX && damage > M_20MM_DMG_MAX)
 		damage = M_20MM_DMG_MAX;
 
@@ -509,7 +509,7 @@ void infantry_cock_gun (edict_t *self)
 
 void infantry_fire(edict_t* self)
 {
-	int range = M_20MM_RANGE_BASE + M_20MM_RANGE_ADDON * self->monsterinfo.level;
+	int range = M_20MM_RANGE_BASE + M_20MM_RANGE_ADDON * drone_damagelevel(self);
 	int dist;
 	vec3_t	forward, start;
 
@@ -569,7 +569,7 @@ void infantry_smack (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * self->monsterinfo.level; // dmg: infantry_smack
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * drone_damagelevel(self); // dmg: infantry_smack
 	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
 		damage = M_MELEE_DMG_MAX;
 
@@ -597,7 +597,7 @@ void infantry_attack(edict_t* self)
 
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 	{
-		maxrange = M_20MM_RANGE_BASE + M_20MM_RANGE_ADDON * self->monsterinfo.level;
+		maxrange = M_20MM_RANGE_BASE + M_20MM_RANGE_ADDON * drone_damagelevel(self);
 		if (M_20MM_RANGE_MAX && maxrange > M_20MM_RANGE_MAX)
 			maxrange = M_20MM_RANGE_MAX;
 	}

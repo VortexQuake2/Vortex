@@ -1300,6 +1300,7 @@ void drone_ai_walk (edict_t *self, float dist);
 
 // az begin
 void ai_eval_targets();
+float drone_damagelevel(const edict_t* ent);
 edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t* self, float radius);
 qboolean vrx_is_in_target_list(edict_t *ent);
 // az end

@@ -472,17 +472,14 @@ void fire_fireball (edict_t *self, vec3_t start, vec3_t aimdir, int damage, floa
 
 void myChickFireball (edict_t *self)
 {
-	int slvl, damage, speed, flame_damage;
+	int damage, speed, flame_damage;
 	vec3_t	forward, start;
 
 	if (!G_EntExists(self->enemy))
 		return;
 
-	slvl = self->monsterinfo.level;
-
-	if (slvl > 15)
-		slvl = 15;
-
+	float slvl = drone_damagelevel(self);
+	
 	damage = 50 + 15 * slvl; // dmg: myChickFireball
 	flame_damage = 2 * slvl; // dmg: myChickFireballFlames
 	speed = 650 + 35 * slvl; // spd: myChickFireball
@@ -507,10 +504,10 @@ void myChickRocket (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = M_ROCKETLAUNCHER_DMG_BASE + M_ROCKETLAUNCHER_DMG_ADDON * self->monsterinfo.level; // dmg: myChickRocket
+	damage = M_ROCKETLAUNCHER_DMG_BASE + M_ROCKETLAUNCHER_DMG_ADDON * drone_damagelevel(self); // dmg: myChickRocket
 	if (M_ROCKETLAUNCHER_DMG_MAX && damage > M_ROCKETLAUNCHER_DMG_MAX)
 		damage = M_ROCKETLAUNCHER_DMG_MAX;
-	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * self->monsterinfo.level; // spd: myChickRocket
+	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * drone_damagelevel(self); // spd: myChickRocket
 	if (M_ROCKETLAUNCHER_SPEED_MAX && speed > M_ROCKETLAUNCHER_SPEED_MAX)
 		speed = M_ROCKETLAUNCHER_SPEED_MAX;
 	
@@ -526,7 +523,7 @@ void myChickRail (edict_t *self)
 	//if (!self->activator->client)
 	//	damage = 50 + 20*self->monsterinfo.level;
 	//else
-		damage = 50 + 10*self->monsterinfo.level; // dmg: myChickRailWorld
+		damage = 50 + 10 * drone_damagelevel(self); // dmg: myChickRailWorld
 
 	MonsterAim(self, 0.33, 0, false, MZ2_CHICK_ROCKET_1, forward, start);
 	monster_fire_railgun (self, start, forward, damage, damage, MZ2_GLADIATOR_RAILGUN_1);

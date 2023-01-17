@@ -366,8 +366,8 @@ void jorgBFG (edict_t *self)
 
 	gi.sound (self, CHAN_VOICE, sound_attack2, 1, ATTN_NORM, 0);
 
-	damage = 30 + 2 * self->monsterinfo.level;
-	speed = 650 + 35 * self->monsterinfo.level;
+	damage = 30 + 2 * drone_damagelevel(self);
+	speed = 650 + 35 * drone_damagelevel(self);
 
 	MonsterAim(self, 0.8, speed, true, MZ2_JORG_BFG_1, forward, start);
 	monster_fire_bfg (self, start, forward, damage, speed, 0, 150.0, MZ2_JORG_BFG_1);
@@ -378,7 +378,7 @@ void jorg_firebullet_right (edict_t *self)
 	int		damage;
 	vec3_t	forward, start;
 
-	damage = 20 + 2*self->monsterinfo.level;
+	damage = 20 + 2* drone_damagelevel(self);
 
 	MonsterAim(self, 0.8, 0, false, MZ2_JORG_MACHINEGUN_R1, forward, start);
 
@@ -391,7 +391,7 @@ void jorg_firebullet_left (edict_t *self)
 	int		damage;
 	vec3_t	forward, start;
 
-	damage = 20 + 2*self->monsterinfo.level;
+	damage = 20 + 2 * drone_damagelevel(self);
 
 	MonsterAim(self, 0.8, 0, false, MZ2_JORG_MACHINEGUN_L1, forward, start);
 

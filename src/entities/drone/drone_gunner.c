@@ -201,12 +201,12 @@ void myGunnerGrenade (edict_t *self)
 	if (!self->enemy || !self->enemy->inuse)
 		return;
 
-	damage = M_GRENADELAUNCHER_DMG_BASE + M_GRENADELAUNCHER_DMG_ADDON * self->monsterinfo.level;
+	damage = M_GRENADELAUNCHER_DMG_BASE + M_GRENADELAUNCHER_DMG_ADDON * drone_damagelevel(self);
 
 	if (M_GRENADELAUNCHER_DMG_MAX && damage > M_GRENADELAUNCHER_DMG_MAX)
 		damage = M_GRENADELAUNCHER_DMG_MAX;
 
-	speed = M_GRENADELAUNCHER_SPEED_BASE + M_GRENADELAUNCHER_SPEED_ADDON * self->monsterinfo.level;
+	speed = M_GRENADELAUNCHER_SPEED_BASE + M_GRENADELAUNCHER_SPEED_ADDON * drone_damagelevel(self);
 
 	if (M_GRENADELAUNCHER_SPEED_MAX && speed > M_GRENADELAUNCHER_SPEED_MAX)
 		speed = M_GRENADELAUNCHER_SPEED_MAX;
@@ -333,7 +333,7 @@ void myGunnerFire (edict_t *self)
 
 	flash_number = MZ2_GUNNER_MACHINEGUN_1 + (self->s.frame - FRAME_attak216);
  
-	damage = M_MACHINEGUN_DMG_BASE + M_MACHINEGUN_DMG_ADDON * self->monsterinfo.level;
+	damage = M_MACHINEGUN_DMG_BASE + M_MACHINEGUN_DMG_ADDON * drone_damagelevel(self);
 	if (M_MACHINEGUN_DMG_MAX && damage > M_MACHINEGUN_DMG_MAX)
 		damage = M_MACHINEGUN_DMG_MAX;
 

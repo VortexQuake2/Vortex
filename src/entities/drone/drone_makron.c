@@ -346,8 +346,8 @@ void makronBFG (edict_t *self)
 	vec3_t	forward, start;
 	int		damage, speed;
 
-	damage = BFG10K_INITIAL_DAMAGE + BFG10K_ADDON_DAMAGE * self->monsterinfo.level;
-	speed = BFG10K_INITIAL_SPEED + BFG10K_ADDON_SPEED * self->monsterinfo.level;
+	damage = BFG10K_INITIAL_DAMAGE + BFG10K_ADDON_DAMAGE * drone_damagelevel(self);
+	speed = BFG10K_INITIAL_SPEED + BFG10K_ADDON_SPEED * drone_damagelevel(self);
 
 	MonsterAim(self, M_PROJECTILE_ACC, speed, true, MZ2_MAKRON_BFG, forward, start);
 	monster_fire_bfg (self, start, forward, damage, speed, 0, 150.0, MZ2_MAKRON_BFG);
@@ -439,7 +439,7 @@ void MakronRailgun (edict_t *self)
 	vec3_t	forward, start;
 	int		damage;
 
-	damage = M_RAILGUN_DMG_BASE + M_RAILGUN_DMG_ADDON * self->monsterinfo.level;
+	damage = M_RAILGUN_DMG_BASE + M_RAILGUN_DMG_ADDON * drone_damagelevel(self);
 	if (M_RAILGUN_DMG_MAX && damage > M_RAILGUN_DMG_MAX)
 		damage = M_RAILGUN_DMG_MAX;
 
@@ -456,7 +456,7 @@ void MakronHyperblaster (edict_t *self)
 
 	flash_number = MZ2_MAKRON_BLASTER_1 + (self->s.frame - FRAME_attak405);
 
-	damage = M_HYPERBLASTER_DMG_BASE + M_HYPERBLASTER_DMG_ADDON * self->monsterinfo.level;
+	damage = M_HYPERBLASTER_DMG_BASE + M_HYPERBLASTER_DMG_ADDON * drone_damagelevel(self);
 	if (M_HYPERBLASTER_DMG_MAX && damage > M_HYPERBLASTER_DMG_MAX)
 		damage = M_HYPERBLASTER_DMG_MAX;
 

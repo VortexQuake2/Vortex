@@ -156,11 +156,11 @@ void soldier_fireblaster(edict_t* self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = M_BLASTER_DMG_BASE + M_BLASTER_DMG_ADDON * self->monsterinfo.level;
-	if (damage > M_BLASTER_DMG_MAX)
+	damage = M_BLASTER_DMG_BASE + M_BLASTER_DMG_ADDON * drone_damagelevel(self);
+	if (damage > M_BLASTER_DMG_MAX && M_BLASTER_DMG_MAX)
 		damage = M_BLASTER_DMG_MAX;
 
-	speed = M_BLASTER_SPEED_BASE + M_BLASTER_SPEED_ADDON * self->monsterinfo.level;
+	speed = M_BLASTER_SPEED_BASE + M_BLASTER_SPEED_ADDON * drone_damagelevel(self);
 	if (M_BLASTER_SPEED_MAX && speed > M_BLASTER_SPEED_MAX)
 		speed = M_BLASTER_SPEED_MAX;
 
@@ -176,10 +176,10 @@ void soldier_firerocket(edict_t* self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = M_ROCKETLAUNCHER_DMG_BASE + M_ROCKETLAUNCHER_DMG_ADDON * self->monsterinfo.level;
+	damage = M_ROCKETLAUNCHER_DMG_BASE + M_ROCKETLAUNCHER_DMG_ADDON * drone_damagelevel(self);
 	if (M_ROCKETLAUNCHER_DMG_MAX && damage > M_ROCKETLAUNCHER_DMG_MAX)
 		damage = M_ROCKETLAUNCHER_DMG_MAX;
-	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * self->monsterinfo.level;
+	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * drone_damagelevel(self);
 	if (M_ROCKETLAUNCHER_SPEED_MAX && speed > M_ROCKETLAUNCHER_SPEED_MAX)
 		speed = M_ROCKETLAUNCHER_SPEED_MAX;
 
@@ -195,7 +195,7 @@ void soldier_fireshotgun(edict_t* self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = M_SHOTGUN_DMG_BASE + M_SHOTGUN_DMG_ADDON * self->monsterinfo.level;
+	damage = M_SHOTGUN_DMG_BASE + M_SHOTGUN_DMG_ADDON * drone_damagelevel(self);
 	if (M_SHOTGUN_DMG_MAX && damage > M_SHOTGUN_DMG_MAX)
 		damage = M_SHOTGUN_DMG_MAX;
 	MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, MZ2_SOLDIER_SHOTGUN_8, forward, start);

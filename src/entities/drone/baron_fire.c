@@ -226,15 +226,11 @@ mmove_t baron_fire_move_jump = { FRAME_jump01, FRAME_jump16, baron_fire_frames_j
 
 void baron_fire_meteor(edict_t* self)
 {
-	int slvl, damage, radius, speed;
+	int damage, radius, speed;
+	float slvl = drone_damagelevel(self);
 
 	if (!G_EntExists(self->enemy))
 		return;
-
-	slvl = self->monsterinfo.level;
-	// spell level capped at 20
-	if (slvl > 20)
-		slvl = 20;
 
 	damage = METEOR_INITIAL_DMG + METEOR_ADDON_DMG * slvl;
 	radius = METEOR_INITIAL_RADIUS + METEOR_ADDON_RADIUS * slvl;
@@ -294,16 +290,14 @@ void flame_think(edict_t* self)
 
 void flame_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* surf)
 {
-	int slvl, damage;
+	int damage;
+	float slvl = drone_damagelevel(self);
 
 	if (other == self)
 		return;
 
 	if (G_EntExists(other) && !OnSameTeam(self, other))
 	{
-		slvl = self->monsterinfo.level;
-		if (slvl > 20)
-			slvl = 20;
 		// 100% of health over 5 seconds at level 10
 		damage = other->max_health * (0.1 + 0.01 * slvl);
 		if (damage < 20)
@@ -375,11 +369,9 @@ void circle_of_flames(edict_t* self, int count, int damage, float speed)
 
 void fire_baron_cof_attack(edict_t* self)
 {
-	int damage, slvl;
+	int damage;
+	float slvl = drone_damagelevel(self);
 
-	slvl = self->monsterinfo.level;
-	if (slvl > 20)
-		slvl = 20;
 	damage = FIREBALL_INITIAL_FLAMEDMG + FIREBALL_ADDON_FLAMEDMG * self->monsterinfo.level;
 
 	circle_of_flames(self, 16, damage, 300);
@@ -409,16 +401,13 @@ void fire_fireball(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float
 
 void baron_fire_fireball(edict_t* self)
 {
-	int slvl, damage, radius, speed, flames, flame_damage;
+	int damage, radius, speed, flames, flame_damage;
 	vec3_t	forward, start;
 
 	if (!G_EntExists(self->enemy))
 		return;
 
-	slvl = self->monsterinfo.level;
-
-	if (slvl > 20)
-		slvl = 20;
+	float slvl = drone_damagelevel(self);
 
 	damage = FIREBALL_INITIAL_DAMAGE + FIREBALL_ADDON_DAMAGE * slvl;
 	radius = FIREBALL_INITIAL_RADIUS + FIREBALL_ADDON_RADIUS * slvl;
@@ -619,13 +608,6 @@ void baron_fire_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int da
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
 	self->monsterinfo.currentmove = &baron_fire_move_death;
-
-	/*
-	if (self->activator && !self->activator->client)
-	{
-		self->activator->num_monsters_real--;
-		// gi.bprintf(PRINT_HIGH, "releasing %p (%d)\n", self, self->activator->num_monsters_real);
-	}*/
 }
 
 void baron_fire_melee(edict_t* self)

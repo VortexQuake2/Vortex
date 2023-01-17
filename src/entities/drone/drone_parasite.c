@@ -298,7 +298,7 @@ void myparasite_drain_attack (edict_t *self)
 			gi.sound (self, CHAN_WEAPON, sound_suck, 1, ATTN_NORM, 0);
 	}
 
-	damage = PARASITE_INITIAL_DMG+PARASITE_ADDON_DMG*self->monsterinfo.level; // dmg: parasite_drain
+	damage = PARASITE_INITIAL_DMG+PARASITE_ADDON_DMG * drone_damagelevel(self); // dmg: parasite_drain
 	if (PARASITE_MAX_DMG && damage > PARASITE_MAX_DMG)
 		damage = PARASITE_MAX_DMG;
     damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
@@ -306,7 +306,7 @@ void myparasite_drain_attack (edict_t *self)
 	// don't pull while mid-air
 	if (self->groundentity)
 	{
-		pull = PARASITE_INITIAL_KNOCKBACK + PARASITE_ADDON_KNOCKBACK * self->monsterinfo.level;
+		pull = PARASITE_INITIAL_KNOCKBACK + PARASITE_ADDON_KNOCKBACK * drone_damagelevel(self);
 		if (PARASITE_MAX_KNOCKBACK && pull < PARASITE_MAX_KNOCKBACK)
 			pull = PARASITE_MAX_KNOCKBACK;
 		if (self->enemy->groundentity)

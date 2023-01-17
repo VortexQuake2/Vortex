@@ -441,7 +441,7 @@ void hover_fire_blaster (edict_t *self)
 
 	//gi.dprintf("fired at %d\n", (int)(level.framenum));
 	// hover fires a rapid fire, weakened rocket launcher
-	damage = M_HYPERBLASTER_DMG_BASE + M_HYPERBLASTER_DMG_ADDON * self->monsterinfo.level;
+	damage = M_HYPERBLASTER_DMG_BASE + M_HYPERBLASTER_DMG_ADDON * drone_damagelevel(self);
 	if (M_HYPERBLASTER_DMG_MAX && damage > M_HYPERBLASTER_DMG_MAX)
 		damage = M_HYPERBLASTER_DMG_MAX;
 

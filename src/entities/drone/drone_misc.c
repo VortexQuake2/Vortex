@@ -165,6 +165,27 @@ void DroneList_Print(edict_t* ent, edict_t *owner)
 }
 // end Drone Lists
 
+float drone_damagelevel(const edict_t* ent)
+{
+	int level = ent->monsterinfo.level;
+
+	// player monsters don't get softcapped
+	if (G_GetClient(ent)) 
+		return level;
+
+	// disable softcap
+	if (M_ENABLE_WORLDSPAWN_SOFTCAP == 0)  // NOLINT(clang-diagnostic-float-equal)
+		return level;
+
+	if (level <= 0)
+	{
+		gi.dprintf("weird level being passed to drone_damagelevel");
+		return level;
+	}
+
+	return min(7 * log10f(level) + 1, 20);
+}
+
 qboolean drone_ValidChaseTarget (edict_t *self, edict_t *target)
 {
 	/*if (target && target->inuse && target->classname)
