@@ -1021,7 +1021,7 @@ void upgradeMultiMenu_class_handler (edict_t *ent, int option)
 		return;
 	}
 
-	gi.dprintf("option=%d\n", option);
+	//gi.dprintf("option=%d\n", option);
 
 	// next menu
 	if (option < 300)

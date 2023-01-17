@@ -631,7 +631,7 @@ void init_baron_fire(edict_t* self)
 	sound_step1 = gi.soundindex("baron/step.wav");
 	sound_step2 = gi.soundindex("baron/stepdistant.wav");
 	
-	self->monsterinfo.control_cost = M_DEFAULT_CONTROL_COST;
+	self->monsterinfo.control_cost = 4;
 	self->monsterinfo.cost = M_DEFAULT_COST;
 	self->s.modelindex = gi.modelindex("models/monsters/baron_fire/tris.md2");
 	VectorSet(self->mins, -40, -40, -24);
