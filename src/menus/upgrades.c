@@ -234,7 +234,54 @@ void UpgradeAbility(edict_t *ent, int ability_index) {
 int writeAbilityDescription(edict_t* ent, int abilityIndex)
 {
 	switch (abilityIndex) {
-		//Soldier talents
+	//GENERAL
+	case VITALITY:
+		addlinetomenu(ent, "Passive ability. Increases", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "maximum health.", MENU_WHITE_CENTERED);
+		return 2;
+	case MAX_AMMO:
+		addlinetomenu(ent, "Passive ability. Increases", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "maximum ammunition and power", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "cubes.", MENU_WHITE_CENTERED);
+		return 3;
+	case POWER_REGEN:
+		addlinetomenu(ent, "Passive ability. Increases", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "power cube regeneration rate.", MENU_WHITE_CENTERED);
+		return 2;
+	case WORLD_RESIST:
+		addlinetomenu(ent, "Passive ability. Reduces", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "world damage (e.g. lava).", MENU_WHITE_CENTERED);
+		return 2;
+	case SHELL_RESIST:
+		addlinetomenu(ent, "Passive ability. Reduces", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "damage from shell-based", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "weapons.", MENU_WHITE_CENTERED);
+		return 3;
+	case BULLET_RESIST:
+		addlinetomenu(ent, "Passive ability. Reduces", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "damage from bullet-based", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "weapons.", MENU_WHITE_CENTERED);
+		return 3;
+	case PIERCING_RESIST:
+		addlinetomenu(ent, "Passive ability. Reduces", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "damage from piercing", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "weapons.", MENU_WHITE_CENTERED);
+		return 3;
+	case ENERGY_RESIST:
+		addlinetomenu(ent, "Passive ability. Reduces", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "damage from energy-based", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "weapons.", MENU_WHITE_CENTERED);
+		return 3;
+	case SCANNER:
+		addlinetomenu(ent, "Shows nearby enemies and", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "allies on your HUD.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: scanner", MENU_WHITE_CENTERED);
+		return 3;
+	case HA_PICKUP:
+		addlinetomenu(ent, "Increases the amount of", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "health and armor provided by", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "items. Passive ability.", MENU_WHITE_CENTERED);
+		return 3;
 		//					xxxxxxxxxxxxxxxxxxxxxxxxxxxxx (max 21 lines)
 	//SOLDIER
 	case STRENGTH:
@@ -567,7 +614,6 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		addlinetomenu(ent, "Command: sspeed|nosspeed", MENU_WHITE_CENTERED);
 		return 3;
 	case FURY:
-		//					xxxxxxxxxxxxxxxxxxxxxxxxxxxxx (max 21 lines)
 		addlinetomenu(ent, "Passive ability.", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "Chance to activate the fury!", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "Provides health regeneration,", MENU_WHITE_CENTERED);
@@ -575,7 +621,288 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		addlinetomenu(ent, "and reduced damage from", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "enemies while active.", MENU_WHITE_CENTERED);
 		return 6;
+	//MAGE
+	case MAGICBOLT:
+		addlinetomenu(ent, "Fires a magic bolt!", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Uses power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: magicbolt", MENU_WHITE_CENTERED);
+		return 3;
+	case NOVA:
+		addlinetomenu(ent, "Creates a nova explosion", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "that damages nearby enemies.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Uses power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: nova", MENU_WHITE_CENTERED);
+		return 4;
+	case BOMB_SPELL:
+		addlinetomenu(ent, "Causes bombs to fall from", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "the sky or drop on top of", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "enemies! Uses power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Commands:", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "bombspell [forward|area]", MENU_WHITE_CENTERED);
+		return 5;
+	case FORCE_WALL:
+		addlinetomenu(ent, "Spawns a wall that sets", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "enemies that touch it on", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "fire, or a solid wall that", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "provides shelter. Uses power", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command:", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "forcewall [solid]", MENU_WHITE_CENTERED);
+		return 7;
+	case LIGHTNING:
+		addlinetomenu(ent, "Fires a bolt of lightning", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "that damages enemies and", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "jumps between them. Uses", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: chainlightning", MENU_WHITE_CENTERED);
+		return 5;
+	case METEOR:
+		addlinetomenu(ent, "Drops a meteor from the sky", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "causing radius damage on", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "impact, setting enemies", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "on fire and throwing", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "flames! Uses power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: meteor", MENU_WHITE_CENTERED);
+		return 6;
+	case FIREBALL:
+		addlinetomenu(ent, "Toss a fireball, causing", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "radius damage on impact,", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "setting enemies on fire and", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "throwing flames! Uses power", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: fireball", MENU_WHITE_CENTERED);
+		return 6;
+	case LIGHTNING_STORM:
+		addlinetomenu(ent, "Creates a lightning storm,", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "causing bolts to shoot from", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "the sky and strike your", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "enemies! Uses power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: lightningstorm", MENU_WHITE_CENTERED);
+		return 5;
+	case TELEPORT:
+		addlinetomenu(ent, "Teleport in the direction you", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "aiming! Uses power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: teleport_fwd", MENU_WHITE_CENTERED);
+		return 3;
+	//CLERIC
+	case SALVATION:
+		addlinetomenu(ent, "Activates salvation aura,", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "protecting yourself and", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "allies and reducing damage", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "received from both physical", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "and magical sources. Uses", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: salvation", MENU_WHITE_CENTERED);
+		return 7;
+	case HEALING:
+		addlinetomenu(ent, "Blesses target with healing!", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Restores health and armor.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Uses power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: heal [self]", MENU_WHITE_CENTERED);
+		return 4;
+	case BLESS:
+		addlinetomenu(ent, "Blesses target with speed,", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "increased damage output,", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "and damage resistance! Uses", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: bless [self]", MENU_WHITE_CENTERED);
+		return 5;
+	case YIN:
+		addlinetomenu(ent, "Spawns a Yin Spirit!", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Destroys corpses in exchange", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "for health, armor, and ammo.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Uses power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: yin", MENU_WHITE_CENTERED);
+		return 5;
+	case YANG:
+		addlinetomenu(ent, "Spawns a Yang Spirit!", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Attacks your enemies. Uses", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: yang", MENU_WHITE_CENTERED);
+		return 4;
+	case HAMMER:
+		addlinetomenu(ent, "Fires a spinning magical", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "hammer that spirals away from", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "you, and causes damage to", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "anything it touches. Uses", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: blessedhammer", MENU_WHITE_CENTERED);
+		return 6;
+	case DEFLECT:
+		addlinetomenu(ent, "Blesses target with", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "deflection! Causes", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "projectiles to harmlessly", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "bounce away. Uses power", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: deflect [self]", MENU_WHITE_CENTERED);
+		return 6;
+	case DOUBLE_JUMP:
+		addlinetomenu(ent, "Allows you to jump a second", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "time while airborne!", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Passive ability.", MENU_WHITE_CENTERED);
+		return 3;
+	case HOLY_FREEZE:
+		addlinetomenu(ent, "Activates holy freeze aura!", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Alows movement and attacks of", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "enemies. Uses power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: holyfreeze", MENU_WHITE_CENTERED);
+		return 4;
+	//KNIGHT
+	case ARMOR_UPGRADE:
+		addlinetomenu(ent, "Increases the effectiveness", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "of armor. Passive ability.", MENU_WHITE_CENTERED);
+		return 2;
+	case REGENERATION:
+		addlinetomenu(ent, "Automatically regenerates", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "your health.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Passive ability.", MENU_WHITE_CENTERED);
+		return 3;
+	case POWER_SHIELD:
+		addlinetomenu(ent, "Activate power screen in", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "your inventory to provide", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "frontal protection. Each", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "upgrade increases", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "effectiveness.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: use power screen", MENU_WHITE_CENTERED);
+		return 6;
+	case ARMOR_REGEN:
+		addlinetomenu(ent, "Automatically regenerates", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "your armor. Passive ability.", MENU_WHITE_CENTERED);
+		return 2;
+	case BEAM:
+		addlinetomenu(ent, "Fires a laser beam!", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: beam_on|beam_off", MENU_WHITE_CENTERED);
+		return 2;
+	case PLASMA_BOLT:
+		addlinetomenu(ent, "Fires a plasma bolt,", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "exploding each time it", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "impacts a surface.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: plasmabolt", MENU_WHITE_CENTERED);
+		return 4;
+	case SHIELD:
+		//					xxxxxxxxxxxxxxxxxxxxxxxxxxxxx (max 21 lines)
+		addlinetomenu(ent, "Activate shield to provide", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "frontal protection. Similar", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "to power screen, but uses", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "charge instead of cells.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "You can't attack while", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "shield is activated.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Commands: shieldon|shieldoff", MENU_WHITE_CENTERED);
+		return 7;
+	case BOOST_SPELL:
+		addlinetomenu(ent, "Boosts you in the direction", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "you are aiming!", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: boost", MENU_WHITE_CENTERED);
+		return 3;
+	//ALIEN
+	case SPIKER:
+		addlinetomenu(ent, "Spawns an organism that", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "shoots spikes at enemies.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Uses power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: spiker [remove]", MENU_WHITE_CENTERED);
+		return 4;
+	case OBSTACLE:
+		addlinetomenu(ent, "Spawns an organism that", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "damages enemies that touch", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "it. Uses power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: obstacle [remove]", MENU_WHITE_CENTERED);
+		return 4;
+	case GASSER:
+		addlinetomenu(ent, "Spawns an organism that", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "spits a damaging gas cloud", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "at enemies. Uses power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: gasser [remove]", MENU_WHITE_CENTERED);
+		return 4;
+	case HEALER:
+		addlinetomenu(ent, "Spawns an organism that", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "heals friendly units. Uses", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: healer", MENU_WHITE_CENTERED);
+		return 4;
+	case SPORE:
+		addlinetomenu(ent, "Throws a spiked organism", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "that attacks enemies. Uses", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Commands: spore", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "[move|remove]", MENU_WHITE_CENTERED);
+		return 5;
+	case SPIKE:
+		addlinetomenu(ent, "Fires a volley of spikes that", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "damage and stun enemies they", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "touch. Uses power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: spike", MENU_WHITE_CENTERED);
+		return 4;
+	case COCOON:
+		addlinetomenu(ent, "Spawns an organism that", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "can boost your attack damage", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "and resistance. Uses power", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: cocoon", MENU_WHITE_CENTERED);
+		return 5;
+	case BLACKHOLE:
+		addlinetomenu(ent, "Creates a wormhole that you", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "can enter to temporarily", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "move about the map in noclip", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "mode. Use again to exit. Uses", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: wormhole", MENU_WHITE_CENTERED);
+		return 6;
+	//POLTERGEIST
+	case MORPH_MASTERY:
+		addlinetomenu(ent, "Adds secondary weapon modes", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "to various morphs. Passive", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "ability.", MENU_WHITE_CENTERED);
+		return 3;
+	case BERSERK:
+		addlinetomenu(ent, "Morph into a berserker! Has", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "the ability to sprint short", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "distances with the +sprint", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "command. Uses power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: berserker", MENU_WHITE_CENTERED);
+		return 5;
+	case CACODEMON:
+		addlinetomenu(ent, "Morph into the cacodemon!", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Uses power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: cacodemon", MENU_WHITE_CENTERED);
+		return 3;
+	case BLOOD_SUCKER:
+		addlinetomenu(ent, "Morph into a parasite! Uses", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: parasite", MENU_WHITE_CENTERED);
+		return 3;
+	case BRAIN:
+		addlinetomenu(ent, "Morph into a brain! Uses", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: brain", MENU_WHITE_CENTERED);
+		return 3;
+	case FLYER:
+		addlinetomenu(ent, "Morph into a flyer! Uses", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: flyer", MENU_WHITE_CENTERED);
+		return 3;
+	case MUTANT:
+		addlinetomenu(ent, "Morph into a mutant! Uses", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: mutant", MENU_WHITE_CENTERED);
+		return 3;
+	case TANK:
+		addlinetomenu(ent, "Morph into a tank! Uses", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: tank", MENU_WHITE_CENTERED);
+		return 3;
+	case MEDIC:
+		//					xxxxxxxxxxxxxxxxxxxxxxxxxxxxx (max 21 lines)
+		addlinetomenu(ent, "Morph into a medic! Can heal", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "allies and resurrect dead", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "monsters, among others. Uses", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: medic", MENU_WHITE_CENTERED);
+		return 5;
+	default:
+		addlinetomenu(ent, "Unknown ability!", MENU_WHITE_CENTERED);
+		return 1;
 	}
+
 }
 
 void AbilityUpgradeMenu_handler(edict_t* ent, int option) {
