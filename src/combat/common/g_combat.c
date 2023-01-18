@@ -626,8 +626,8 @@ qboolean CanUseVampire (edict_t *targ, edict_t *attacker, int dflags, int mod)
         return false;
 
     // can't vamp from yourself
-    if (targ == attacker)
-        return false;
+    if (targ == attacker || targ == attacker->owner)
+      return false;
 
     // flag carrier can't use abilities in CTF mode
     if (ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(attacker))
@@ -724,17 +724,22 @@ void G_ApplyVampire(edict_t *attacker, float take)
 	if (delta < 0) // players sometimes go over maximum health
 		steal = 0;
 
-	if (attacker->mtype) // morphs don't use healthcache
+	// Strenx: Fix for tank VAMP
+	if (attacker->mtype || attacker->owner->mtype) {// morphs don't use healthcache or armor
 		attacker->health += steal;
-	else
+		// Sync TANK health with owner
+		if(attacker->owner->mtype == P_TANK) {
+			attacker->owner->health = attacker->health;
+		}
+	}	else {
 		attacker->health_cache += steal;
-
-	//Talent: Armor Vampire
-    if (*armor < MAX_ARMOR(attacker) && vrx_get_talent_level(attacker, TALENT_ARMOR_VAMP) > 0)
-	{
-		//16.6% per point of health stolen gives armor as a bonus.
-        float mult = 0.1666 * vrx_get_talent_level(attacker, TALENT_ARMOR_VAMP);
-		attacker->armor_cache += (int)(mult * (float)armorVampBase);
+		//Talent: Armor Vampire
+		if (*armor < MAX_ARMOR(attacker) && vrx_get_talent_level(attacker, TALENT_ARMOR_VAMP) > 0)
+		{
+			//16.6% per point of health stolen gives armor as a bonus.
+					float mult = 0.1666 * vrx_get_talent_level(attacker, TALENT_ARMOR_VAMP);
+			attacker->armor_cache += (int)(mult * (float)armorVampBase);
+		}
 	}
 }
 
@@ -1225,8 +1230,10 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		}
 
 		// vampire effect
-		if (CanUseVampire(targ, attacker, dflags, mod))
-			G_ApplyVampire(attacker, take);
+		edict_t* real_attacker = attacker_has_pilot ? attacker->activator : attacker;
+
+		if (CanUseVampire(targ, real_attacker, dflags, mod))
+			G_ApplyVampire(real_attacker, take);
 
 		//4.1 Players with fury might get their ability triggered
 		ability = &attacker->myskills.abilities[FURY];
