@@ -44,9 +44,9 @@ const abilitydef_t ability_vampire[] = {
         {FLESH_EATER,    0, DEFAULT_SOFTMAX,   0},
         {CORPSE_EXPLODE, 0, DEFAULT_SOFTMAX,   0},
         {MIND_ABSORB,    0, DEFAULT_SOFTMAX,   0},
-        {AMMO_STEAL,     0, DEFAULT_SOFTMAX,   0},
+        {BLINKSTRIKE,    0, DEFAULT_SOFTMAX,   0},
         {CONVERSION,     0, DEFAULT_SOFTMAX,   0},
-        {CLOAK,          1, 1,                0},
+        {CLOAK,          1, 1,                 0},
         {-1,             0, 0,                 0} // Guardian (Add skills above this)
 };
 
@@ -70,7 +70,7 @@ const abilitydef_t ability_engineer[] = { // ENGINEER
         {SUPPLY_STATION,  0, DEFAULT_SOFTMAX,   0},
         {BUILD_LASER,     0, DEFAULT_SOFTMAX,   0},
         {MAGMINE,         0, DEFAULT_SOFTMAX,   0},
-        {CALTROPS,        0, DEFAULT_SOFTMAX,   0},
+       // {CALTROPS,        0, DEFAULT_SOFTMAX,   0},
         {AUTOCANNON,      0, DEFAULT_SOFTMAX,   0},
         {DETECTOR,        0, DEFAULT_SOFTMAX,   0},
         {DECOY,           0, DEFAULT_SOFTMAX,   0},
@@ -128,6 +128,7 @@ const abilitydef_t ability_knight[] = { // knight
         {ARMOR_REGEN,   0, DEFAULT_SOFTMAX,   0},
         {BEAM,          0, DEFAULT_SOFTMAX,   0},
         {PLASMA_BOLT,   0, DEFAULT_SOFTMAX,   0},
+        {CALTROPS,      0, DEFAULT_SOFTMAX,   0},
         {SHIELD,        1, 1,                 0},
         {BOOST_SPELL,   1, 1,                 0},
         {-1,            0, 0,                 0} // Guardian (Add skills above this)

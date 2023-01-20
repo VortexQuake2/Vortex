@@ -1237,6 +1237,15 @@ GASSER_DELAY                             = 1.0
 GASCLOUD_POISON_DURATION                 = 10.0
 GASCLOUD_POISON_FACTOR                   = 0.1
 
+--Blink Strike
+BLINKSTRIKE_INITIAL_COST				 = 75
+BLINKSTRIKE_ADDON_COST					 = -5
+BLINKSTRIKE_MIN_COST					 = 25
+BLINKSTRIKE_DELAY						 = 1.0
+BLINKSTRIKE_FRAMES						 = 50
+BLINKSTRIKE_INITIAL_BONUS				 = 0
+BLINKSTRIKE_ADDON_BONUS					 = 0.1
+
 -- Monster Counts
 sewer64_monsters			 = 100
 base64_monsters				= 100

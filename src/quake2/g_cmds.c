@@ -2091,6 +2091,7 @@ void cmd_PlayerMute(edict_t *ent, char *playername, int time)
 
 void Cmd_DrawBoundingBox_f (edict_t *ent)
 {
+	float	yaw;
 	vec3_t	forward, right, offset, start, end;
 	vec3_t	p1, p2;
 	vec3_t	origin;
@@ -2110,7 +2111,9 @@ void Cmd_DrawBoundingBox_f (edict_t *ent)
 		gi.WritePosition (tr.endpos);
 		gi.multicast (start, MULTICAST_PHS);
 
-		gi.dprintf("classname: %s clipmask %d:\n", tr.ent->classname, tr.ent->clipmask);
+		yaw = tr.ent->s.angles[YAW];
+		AngleCheck(&yaw);
+		gi.dprintf("classname: %s clipmask: %d angles: %.0f adjusted angles: %.0f\n", tr.ent->classname, tr.ent->clipmask, tr.ent->s.angles[YAW], yaw);
 		gi.dprintf("gib health: %d\n", tr.ent->gib_health);
 		gi.dprintf("origin[0] %d origin[1] %d origin[2] %d\n",
 			(int)tr.ent->s.origin[0], (int)tr.ent->s.origin[1], (int)tr.ent->s.origin[2]);

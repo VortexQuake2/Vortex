@@ -8,7 +8,7 @@
 #define CLOAK			7
 #define WEAPON_KNOCK	8
 #define ARMOR_UPGRADE	9
-#define AMMO_STEAL		10
+#define BLINKSTRIKE		10
 #define ID				11
 #define MAX_AMMO		12
 #define GRAPPLE_HOOK	13

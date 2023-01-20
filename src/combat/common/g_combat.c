@@ -282,6 +282,10 @@ void Killed (edict_t *targ, edict_t *inflictor, edict_t *attacker, int damage, v
 	if (targ->mtype != M_COCOON)// cocoon uses enemy after death to restore cocooned entity
 		targ->enemy = attacker;
 
+	// clear Blink Strike target
+	if (attacker && attacker->client && attacker->client->blinkStrike_targ && attacker->client->blinkStrike_targ == targ)
+		attacker->client->blinkStrike_targ = NULL;
+
 	//K03 Begin
 	//Has the spreewar been broken?
 	if (SPREE_WAR == true && targ == SPREE_DUDE)

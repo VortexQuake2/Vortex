@@ -302,3 +302,30 @@ void vrx_morph_think(edict_t* ent)
     if ((ent->mtype == MORPH_BERSERK || ent->mtype == MORPH_BRAIN) && ent->client->pers.inventory[cell_index] && !(ent->flags & FL_POWER_ARMOR))
         Use_PowerArmor(ent, NULL);
 }
+
+void BlinkStrike_think(edict_t* ent)
+{
+    trace_t tr;
+    vec3_t  start;
+
+    if (!ent || !ent->inuse || !ent->client)
+        return;
+    // try to teleport the player back if the Blink Strike target is still alive
+    if (level.framenum == ent->client->tele_timeout && G_EntIsAlive(ent->client->blinkStrike_targ))
+    {
+        // get previous position
+        VectorCopy(ent->client->oldpos, start);
+        // clear Blink Strike values
+        ent->client->blinkStrike_targ = NULL;
+        VectorClear(ent->client->oldpos);
+        // check position
+        tr = gi.trace(start, ent->mins, ent->maxs, start, ent, MASK_SHOT);
+        if (tr.allsolid || tr.startsolid || tr.fraction < 1)
+            return;
+        // move player into position
+        VectorCopy(start, ent->s.origin);
+        VectorCopy(start, ent->s.old_origin);
+        ent->s.event = EV_PLAYER_TELEPORT;
+        gi.linkentity(ent);
+    }
+}

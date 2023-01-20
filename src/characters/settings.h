@@ -1196,6 +1196,12 @@ extern double GASSER_COST;
 extern double GASSER_DELAY;
 extern double GASCLOUD_POISON_DURATION;
 extern double GASCLOUD_POISON_FACTOR;
-
+extern double BLINKSTRIKE_INITIAL_COST;
+extern double BLINKSTRIKE_ADDON_COST;
+extern double BLINKSTRIKE_MIN_COST;
+extern double BLINKSTRIKE_DELAY;
+extern double BLINKSTRIKE_FRAMES;
+extern double BLINKSTRIKE_INITIAL_BONUS;
+extern double BLINKSTRIKE_ADDON_BONUS;
 
 #endif

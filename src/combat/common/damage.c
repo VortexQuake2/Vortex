@@ -305,6 +305,14 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
     // player-only damage bonuses
     if (attacker->client && (attacker != targ)) {
+
+        // Blink Strike damage bonus applies before attacker has to teleport back, targ is our Blink Strike target, and attacker is not in-front of target
+        if (attacker->client->tele_timeout > level.framenum && attacker->client->blinkStrike_targ && attacker->client->blinkStrike_targ == targ && !infront(targ, attacker))
+        {
+            temp = 1 + BLINKSTRIKE_INITIAL_BONUS + BLINKSTRIKE_ADDON_BONUS * attacker->myskills.abilities[BLINKSTRIKE].current_level;
+            damage *= temp;
+        }
+
         // increase physical or morphed-player damage
         if (dtype & D_PHYSICAL) {
             // strength tech effect

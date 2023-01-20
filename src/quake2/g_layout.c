@@ -588,6 +588,16 @@ void layout_generate_all(edict_t* ent)
 		sidebar_add_entry(&sidebar, entry);
 	}
 
+	if (ent->client->tele_timeout > level.framenum)
+	{
+		sidebar_entry_t entry = { 0 };
+		entry.pos = sidebar_get_next_line_pos(&sidebar);
+		entry.name = lva("blinkStrike");
+		entry.data = lva("%ds", (int)(ent->client->tele_timeout - level.framenum)/10);
+
+		sidebar_add_entry(&sidebar, entry);
+	}
+
 	layout_generate_entities(&ent->client->layout, &sidebar);
 	layout_generate_curses(ent, &sidebar);
 

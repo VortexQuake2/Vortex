@@ -888,3 +888,117 @@ void Cmd_SelfDestruct_f(edict_t *self)
 	self->client->ability_delay = level.time + 1;
 	return;
 }
+
+void TeleportBehindTarget(edict_t* self, edict_t* target, float dist)
+{
+	int	i, cost;
+	float min, ideal, z;
+	vec3_t angles, forward, org, start, end;
+	trace_t	tr;
+
+	// start above the target and then later we'll push down
+	z = target->absmax[2] + 1;
+	VectorCopy(target->s.origin, org);
+	org[2] = target->absmin[2] + fabs(self->mins[2]) + 1;
+
+	// calculate angles 180 degrees behind target
+	// note: Quake yaw angles are 0 -> 180/-180 -> 0 turning counter-clockwise, AngleCheck and ValidateAngles re-map to a 360 degree radius
+	VectorCopy(target->s.angles, angles);
+	angles[PITCH] = 0;
+	angles[YAW] += 180;
+	ValidateAngles(angles);
+	ideal = angles[YAW];
+	// calculate +/- 45 degrees behind (i.e. opposite target's fov)
+	min = angles[YAW] - 45;
+	AngleCheck(&min);
+	//max = angles[YAW] + 45;
+
+	//gi.dprintf("target yaw %.0f behind %.0f min %.0f\n", target->s.angles[YAW], ideal, min);
+	cost = BLINKSTRIKE_INITIAL_COST + BLINKSTRIKE_ADDON_COST * self->myskills.abilities[BLINKSTRIKE].current_level;
+	if (BLINKSTRIKE_MIN_COST && cost < BLINKSTRIKE_MIN_COST)
+		cost = BLINKSTRIKE_MIN_COST;
+
+
+	for (i = 0; i < 10; i++)
+	{
+		if (i)
+		{
+			// random angle +/- 45 degrees behind target
+			angles[YAW] = min + GetRandom(0, 90);
+			AngleCheck(&angles[YAW]);
+			//gi.dprintf("checking %.0f\n", angles[YAW]);
+		}
+		// convert angles back to vector
+		AngleVectors(angles, forward, NULL, NULL);
+		// calculate point behind target
+		VectorMA(org, dist, forward, start);
+		start[2] = z; // start above target
+		// trace to that point behind target, stopping on obstructions (walls)
+		tr = gi.trace(org, self->mins, self->maxs, start, target, MASK_SOLID);
+		if (tr.startsolid || tr.allsolid)
+		{
+			//gi.dprintf("trace 1 failed: from target to behind and above %s %s %.1f\n", tr.startsolid?"true":"false", tr.allsolid?"true":"false", tr.fraction);
+			continue;
+		}
+		VectorCopy(tr.endpos, start);
+		VectorCopy(tr.endpos, end);
+		end[2] = target->absmin[2] + 1; // push down - final z height will be slightly above or at the same level as target
+		// trace down
+		tr = gi.trace(start, self->mins, self->maxs, end, NULL, MASK_SOLID);
+		if (tr.startsolid || tr.allsolid)
+		{
+			//gi.dprintf("trace 2 failed: pushing down from above\n");
+			continue;
+		}
+		VectorCopy(tr.endpos, start);
+		// final trace
+		tr = gi.trace(start, self->mins, self->maxs, start, self, MASK_SHOT);
+		if (tr.fraction < 1)
+		{
+			//gi.dprintf("trace 3 failed: final position obstructed\n");
+			continue;
+		}
+		VectorCopy(self->s.origin, self->client->oldpos); // save previous position
+		VectorCopy(start, self->s.origin);
+		VectorCopy(start, self->s.old_origin);
+		self->s.event = EV_PLAYER_TELEPORT;
+		gi.linkentity(self);
+		//safe_cprintf(self, PRINT_HIGH, "teleport!\n");
+
+		// face the target
+		VectorSubtract(target->s.origin, self->s.origin, forward);
+		vectoangles(forward, forward);
+		self->s.angles[YAW] = forward[YAW];
+
+		// set view angles to target
+		if (self->client)
+		{
+			for (i = 0; i < 3; i++)
+				self->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(forward[i] - self->client->resp.cmd_angles[i]);
+			VectorCopy(forward, self->client->ps.viewangles);
+			VectorCopy(forward, self->client->v_angle);
+		}
+		self->client->blinkStrike_targ = target; // blinkStrike target
+		self->client->tele_timeout = level.framenum + BLINKSTRIKE_FRAMES; // duration of attack before returning to oldpos
+		self->client->ability_delay = level.time + BLINKSTRIKE_DELAY;
+		self->client->pers.inventory[power_cube_index] -= cost;
+		break;
+	}
+}
+
+void Cmd_BlinkStrike_f(edict_t* self)
+{
+	edict_t* target=NULL;
+
+	while ((target = findclosestreticle(target, self, 1024)) != NULL)
+	{
+		if (!G_EntIsAlive(target))
+			continue;
+		if (OnSameTeam(self, target))
+			continue;
+		if (!visible(self, target))
+			continue;
+		TeleportBehindTarget(self, target, 128);
+		break;
+	}
+}

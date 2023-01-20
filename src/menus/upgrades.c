@@ -379,13 +379,14 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		addlinetomenu(ent, "enemies and steal power", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "cubes.", MENU_WHITE_CENTERED);
 		return 4;
-	case AMMO_STEAL:
-		addlinetomenu(ent, "Steals ammunition from nearby", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "enemies.", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "Commands:", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "ammosteal", MENU_WHITE_CENTERED);
-		addlinetomenu(ent, "spell_stealammo", MENU_WHITE_CENTERED);
-		return 5;
+	case BLINKSTRIKE:
+		addlinetomenu(ent, "Teleports behind an enemy for", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "several seconds. During this", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "time, a damage bonus applies", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "as long as you remain unseen.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Uses power cubes.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: blinkstrike", MENU_WHITE_CENTERED);
+		return 6;
 	case CONVERSION:
 		addlinetomenu(ent, "Temporarily makes monsters", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "and other summonables", MENU_WHITE_CENTERED);

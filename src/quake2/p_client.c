@@ -2503,6 +2503,7 @@ void LeapAttack (edict_t *ent);
 float V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse);
 
 void think_trade(edict_t *ent);
+void BlinkStrike_think(edict_t* ent);
 
 void ClientThink (edict_t *ent, usercmd_t *ucmd)
 {
@@ -2873,6 +2874,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	EatCorpses(ent);
 	UpdateMirroredEntities(ent);
 	vrx_morph_think(ent);
+	BlinkStrike_think(ent);
 }
 
 // az: this code has been a little redundant in places

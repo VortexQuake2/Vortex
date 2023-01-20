@@ -1699,6 +1699,9 @@ struct gclient_s
 	vec3_t		lastPosition;		// last selected position for monster command
 	edict_t		*lastEnt;			// last selected entity for monster command
     qboolean update_chase;
+	vec3_t		oldpos;				// used by Blink Strike to store position prior to teleportation
+	int			tele_timeout;		// used by Blink Strike to store level.framenum when attack ends and player teleports (back) to oldpos
+	edict_t		*blinkStrike_targ;	// used by Blink Strike - target entity for attack
 };
 
 struct edict_s

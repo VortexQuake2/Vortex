@@ -19,8 +19,8 @@ const talentdef_t talents_soldier[] = {
         {TALENT_BASIC_HA,      5, false},
         {TALENT_BOMBARDIER,    5, false},
         {TALENT_BLAST_RESIST,  5, false},
-        {TALENT_MAGMINESELF,   1, false},
-        {TALENT_INSTANTPROXYS, 2, false},
+   //     {TALENT_MAGMINESELF,   1, false},
+   //     {TALENT_INSTANTPROXYS, 2, false},
         {-1,                   0, 0}
 };
 
@@ -89,6 +89,8 @@ const talentdef_t talents_engineer[] = {
         {TALENT_RAPID_ASSEMBLY,   5, false},
         {TALENT_PRECISION_TUNING, 5, false},
         {TALENT_STORAGE_UPGRADE,  5, false},
+        {TALENT_MAGMINESELF,      1, false},
+        {TALENT_INSTANTPROXYS,    2, false},
         {-1,                      0, 0}
 };
 

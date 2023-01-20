@@ -556,8 +556,8 @@ char *GetAbilityString(int ability_number) {
             return "Knock Weapon";
         case ARMOR_UPGRADE:
             return "Armor Upgrade";
-        case AMMO_STEAL:
-            return "Ammo Stealer";
+        case BLINKSTRIKE:
+            return "Blink Strike";
         case ID:
             return "ID";
         case MAX_AMMO:
