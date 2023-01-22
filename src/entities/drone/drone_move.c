@@ -21,7 +21,12 @@ qboolean M_CheckBottom (edict_t *ent)
 	trace_t	trace;
 	int		x, y;
 	float	mid, bottom;
-	
+	//GHz START - minimum step size based on the size of monster's hitbox
+	float	step = 2*STEPSIZE;
+	if (ent->size[0] > 48)
+		step = 64;
+	//GHz END
+
 	VectorAdd (ent->s.origin, ent->mins, mins);
 	VectorAdd (ent->s.origin, ent->maxs, maxs);
 
@@ -51,7 +56,7 @@ realcheck:
 // the midpoint must be within 16 of the bottom
 	start[0] = stop[0] = (mins[0] + maxs[0])*0.5;
 	start[1] = stop[1] = (mins[1] + maxs[1])*0.5;
-	stop[2] = start[2] - 2*STEPSIZE;
+	stop[2] = start[2] - step;//2 * STEPSIZE; GHz - min stepsize is an attempted fix for large monster hitboxes having trouble on ramps
 	trace = gi.trace (start, vec3_origin, vec3_origin, stop, ent,MASK_PLAYERSOLID /*MASK_MONSTERSOLID*/);
 
 	if (trace.fraction == 1.0)
@@ -69,8 +74,12 @@ realcheck:
 			
 			if (trace.fraction != 1.0 && trace.endpos[2] > bottom)
 				bottom = trace.endpos[2];
-			if (trace.fraction == 1.0 || mid - trace.endpos[2] > STEPSIZE)
+			//FIXME: bosses often fail this last check on ramps, where their large hitbox hangs in the air
+			if (trace.fraction == 1.0 || mid - trace.endpos[2] > 0.5*step)//STEPSIZE) GHz
+			{
+				//gi.dprintf("fraction %.1f dist %.1f\n", trace.fraction, mid - trace.endpos[2]);
 				return false;
+			}
 		}
 
 	// c_yes++;
@@ -80,9 +89,11 @@ realcheck:
 qboolean LandCloserToGoal (edict_t *self, vec3_t goal_pos, vec3_t landing_pos)
 {
 	// goal position path is obstructed by a wall
+	landing_pos[2] += 8; // raise slightly off floor (navis are usually placed 8 units above floor height)
 	if (!G_IsClearPath(self, MASK_SOLID, landing_pos, goal_pos))
 		return false;
 	// landing position places us farther from our goal
+	//FIXME: subtracting 16 from landing position is a "cheap fix" for monsters with large hitboxes (i.e. bosses) who fail M_CheckBottom
 	if (distance(landing_pos, goal_pos) > distance(self->s.origin, goal_pos))
 		return false;
 	return true;
@@ -578,7 +589,10 @@ qboolean SV_movestep(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
 	{
 		// try to jump over it
 		if (G_EntIsAlive(trace.ent) || !CanJumpUp(ent, neworg, end))
+		{
+			//gi.dprintf("couldn't jump over obstruction\n");
 			return false;
+		}
 		else
 		{
 			jump = 1;
@@ -593,7 +607,10 @@ qboolean SV_movestep(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
 		neworg[2] -= stepsize;
 		trace = gi.trace (neworg, ent->mins, ent->maxs, end, ent, MASK_MONSTERSOLID);
 		if (trace.allsolid || trace.startsolid)
+		{
+			//gi.dprintf("too tall!\n");
 			return false;
+		}
 	}
 
 	// don't go in to water
@@ -610,7 +627,10 @@ qboolean SV_movestep(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
 
 //GHz 5/8/2010 - don't get stuck on steep little ramps
 	if (trace.fraction < 1 && trace.plane.normal[2] < 0.7) // too steep
+	{
+		//gi.dprintf("too steep\n");
 		return false;
+	}
 
 //GHz START
 //	if (CanJumpDown(ent, trace.endpos))
@@ -643,6 +663,7 @@ qboolean SV_movestep(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
 				ent->groundentity = NULL;
 				return true;
 			}
+			//gi.dprintf("don't walk off a ledge\n");
 			return false;		// walked off an edge
 		}
 		else
@@ -680,6 +701,7 @@ qboolean SV_movestep(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
 		if (!jump)
 		{
 			VectorCopy (oldorg, ent->s.origin);
+			//gi.dprintf("don't fall\n");
 			return false;
 		}
 	}

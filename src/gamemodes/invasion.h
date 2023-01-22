@@ -5,8 +5,12 @@ struct invdata_s
 {
 	qboolean printedmessage;
 	int mspawned;
+	// working monster set
 	const int* monster_set;
 	int monster_set_count;
+	// default monster set - may be overridden by spawn
+	const int* default_monster_set;
+	int default_set_count;
 	float limitframe;
 	edict_t* boss;
 };

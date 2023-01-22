@@ -2378,7 +2378,10 @@ void MonsterToggleShowpath (edict_t *ent)
 		}
 		else
 		{
-			safe_centerprintf(ent, "Show path ON\n");
+			if (tr.ent->monsterinfo.aiflags & AI_FIND_NAVI)
+				safe_centerprintf(ent, "Show path ON. Monster is searching for navis.\n");
+			else
+				safe_centerprintf(ent, "Show path ON\n");
 			tr.ent->showPathDebug = 1;
 		}
 	}

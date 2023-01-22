@@ -5,6 +5,7 @@
 edict_t		*INV_SpawnQue[MAX_CLIENTS];
 int			invasion_max_playerspawns;
 int			invasion_spawncount; // current spawns
+int			invasion_monsterspawns;
 int			invasion_navicount;
 int			invasion_start_navicount;
 edict_t		*INV_PlayerSpawns[64];
@@ -102,7 +103,8 @@ void INV_InitPostEntities(void)
 		}
 	}
 
-	gi.dprintf("invasion: found %d start navis to choose from. total: %d\n", invasion_start_navicount, invasion_navicount);
+	//gi.dprintf("invasion: found %d start navis to choose from. total: %d\n", invasion_start_navicount, invasion_navicount);
+	gi.dprintf("Invasion: %d start navis, %d total. %d player spawns, %d monster spawns.\n", invasion_start_navicount, invasion_navicount, invasion_spawncount, invasion_monsterspawns);
 }
 
 // initialize array values to NULL
@@ -559,6 +561,29 @@ void invasion_boss_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int
 }
 */
 
+void INV_SpawnBoss(edict_t* self, int index)
+{
+	edict_t* spawn=NULL;
+
+	if (invasion_data.boss)
+		return;
+	if (index < 30)
+		return;
+
+	while (spawn = INV_GetMonsterSpawn(spawn))
+	{
+		if (!(invasion_data.boss = INV_SpawnDrone(self, spawn, index)))
+			continue;
+		else
+		{
+			total_monsters++;
+			G_PrintGreenText(va("A level %d %s has spawned!", invasion_data.boss->monsterinfo.level, V_GetMonsterName(invasion_data.boss)));
+			return;
+		}
+	}
+	gi.dprintf("Unable to spawn boss.\n");
+}
+
 void INV_BossCheck(edict_t *self)
 {
 	edict_t *e = NULL;
@@ -697,10 +722,15 @@ void INV_OnBeginWave(edict_t *self, int max_monsters) {
 
 void INV_SelectMonsterSet(const edict_t* self, int const * * monster_set, int* monster_set_count)
 {
+	int const **default_monster_set = &invasion_data.default_monster_set;
+	int* default_monster_set_count = &invasion_data.default_set_count;
+
 	//*monster_set = SET_EASY_MODE_MONSTERS;
 	//*monster_set_count = SET_EASY_MODE_MONSTERS_COUNT;
 
-	// set default
+	//****FIXME: either abort when boss spawns (since nothing else spawns), or don't print anything! ****
+	// ALSO: fire baron will stay at range spamming meteor at a target, uninterrupted, rather than trying to close distance
+	// set default - this is done at the start of a wave before checking individual spawnpoint values
 	if (!self)
 	{
 		if (random() <= 0.5)// chance to spawn special wave
@@ -708,36 +738,36 @@ void INV_SelectMonsterSet(const edict_t* self, int const * * monster_set, int* m
 			switch (GetRandom(1, 4))
 			{
 			case 1:
-				*monster_set = SET_FLYING_MONSTERS;
-				*monster_set_count = SET_FLYING_MONSTERS_COUNT;
+				*default_monster_set = SET_FLYING_MONSTERS;
+				*default_monster_set_count = SET_FLYING_MONSTERS_COUNT;
 				gi.bprintf(PRINT_HIGH, "Flying invaders are coming for you!\n");
 				break;
 			case 2:
-				*monster_set = SET_MELEE_MONSTERS;
-				*monster_set_count = SET_MELEE_MONSTERS_COUNT;
+				*default_monster_set = SET_MELEE_MONSTERS;
+				*default_monster_set_count = SET_MELEE_MONSTERS_COUNT;
 				gi.bprintf(PRINT_HIGH, "Prepare bayonets! The invaders are about to get up close and personal!\n");
 				break;
 			case 3:
-				*monster_set = SET_RAGEQUIT_MONSTERS;
-				*monster_set_count = SET_RAGEQUIT_MONSTERS_COUNT;
+				*default_monster_set = SET_RAGEQUIT_MONSTERS;
+				*default_monster_set_count = SET_RAGEQUIT_MONSTERS_COUNT;
 				gi.bprintf(PRINT_HIGH, "It's time to rage quit!\n");
 				break;
 			case 4:
-				*monster_set = SET_TANKY_MONSTERS;
-				*monster_set_count = SET_TANKY_MONSTERS_COUNT;
+				*default_monster_set = SET_TANKY_MONSTERS;
+				*default_monster_set_count = SET_TANKY_MONSTERS_COUNT;
 				gi.bprintf(PRINT_HIGH, "The heavyweights are coming for your base!\n");
 				break;
 			}
 		}
 		else if (invasion->value == 2)// hard mode
 		{
-			*monster_set = SET_HARD_MODE_MONSTERS;
-			*monster_set_count = SET_HARD_MODE_MONSTERS_COUNT;
+			*default_monster_set = SET_HARD_MODE_MONSTERS;
+			*default_monster_set_count = SET_HARD_MODE_MONSTERS_COUNT;
 		}
 		else// easy mode
 		{
-			*monster_set = SET_EASY_MODE_MONSTERS;
-			*monster_set_count = SET_EASY_MODE_MONSTERS_COUNT;
+			*default_monster_set = SET_EASY_MODE_MONSTERS;
+			*default_monster_set_count = SET_EASY_MODE_MONSTERS_COUNT;
 		}
 		return;
 	}
@@ -748,22 +778,24 @@ void INV_SelectMonsterSet(const edict_t* self, int const * * monster_set, int* m
 	 */
 
 	// modify monster set based on map values (bypasses defaults)
-	if (self->style == 3)
+	switch (self->style)
 	{
-		*monster_set = SET_HARD_MODE_MONSTERS;
-		*monster_set_count = SET_HARD_MODE_MONSTERS_COUNT;
-	}
-
-	if (self->style == 2)
-	{
-		*monster_set = SET_EASY_MODE_MONSTERS;
-		*monster_set_count = SET_EASY_MODE_MONSTERS_COUNT;
-	}
-
-	if (self->style == 1)
-	{
+	case 1:
 		*monster_set = SET_FLYING_MONSTERS;
 		*monster_set_count = SET_FLYING_MONSTERS_COUNT;
+		break;
+	case 2:
+		*monster_set = SET_EASY_MODE_MONSTERS;
+		*monster_set_count = SET_EASY_MODE_MONSTERS_COUNT;
+		break;
+	case 3:
+		*monster_set = SET_HARD_MODE_MONSTERS;
+		*monster_set_count = SET_HARD_MODE_MONSTERS_COUNT;
+		break;
+	default:
+		*monster_set = *default_monster_set;
+		*monster_set_count = *default_monster_set_count;
+		break;
 	}
 }
 
@@ -1070,6 +1102,8 @@ void SP_info_monster_invasion(edict_t *self)
 	    self->svflags |= SVF_NOCLIENT;
 
 	gi.linkentity(self);
+
+	invasion_monsterspawns++;
 }
 
 void SP_navi_monster_invasion(edict_t *self)
