@@ -25,12 +25,13 @@ const abilitydef_t ability_general[] = {
 };
 
 const abilitydef_t ability_soldier[] = {
-        {STRENGTH,      0, DEFAULT_SOFTMAX,   0},
-        {RESISTANCE,    0, DEFAULT_SOFTMAX,   0},
-        {NAPALM,        0, DEFAULT_SOFTMAX,   0},
-        {SPIKE_GRENADE, 0, DEFAULT_SOFTMAX,   0},
-        {EMP,           0, DEFAULT_SOFTMAX,   0},
-        {MIRV,          0, DEFAULT_SOFTMAX,   0},
+        {STRENGTH,         0, DEFAULT_SOFTMAX,   0},
+        {RESISTANCE,       0, DEFAULT_SOFTMAX,   0},
+        {NAPALM,           0, DEFAULT_SOFTMAX,   0},
+        {SPIKE_GRENADE,    0, DEFAULT_SOFTMAX,   0},
+        {EMP,              0, DEFAULT_SOFTMAX,   0},
+        {MIRV,             0, DEFAULT_SOFTMAX,   0},
+        {EXPLODING_BARREL, 0, DEFAULT_SOFTMAX,   0},
         {CREATE_QUAD,   0, 1,                 0},
         {CREATE_INVIN,  0, 1,                 0},
         {GRAPPLE_HOOK,  3, 3,                 0},

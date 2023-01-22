@@ -79,6 +79,7 @@ void Cmd_fmedi_f(edict_t *ent);
 void Cmd_PrintCommandList(edict_t *ent);
 void Cmd_Mirror_f(edict_t* ent);
 void Cmd_BlinkStrike_f(edict_t* self);
+void Cmd_ExplodingBarrel_f(edict_t* ent);
 
 #define CommandTotal sizeof(commands) / sizeof(gameCommand_s)
 
@@ -187,7 +188,8 @@ const gameCommand_s commands[] =
 	{ "aura_holyfreeze", Cmd_HolyFreeze },
 	{ "holyfreeze", Cmd_HolyFreeze },
 	{ "togglesecondary", Cmd_Togglesecondary_f },
-	{ "blinkstrike", Cmd_BlinkStrike_f }
+	{ "blinkstrike", Cmd_BlinkStrike_f },
+	{ "barrel", Cmd_ExplodingBarrel_f }
 };
 
 #ifdef CMD_USEHASH

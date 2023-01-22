@@ -321,7 +321,12 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		addlinetomenu(ent, "in all directions. Consumes", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "power cubes.", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "Command: mirv", MENU_WHITE_CENTERED);
-		return 5;
+	case EXPLODING_BARREL:
+		addlinetomenu(ent, "Toss a barrel that explodes", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "and throws shrapnel after", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "being destroyed.", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "Command: barrel [remove]", MENU_WHITE_CENTERED);
+		return 4;
 	case CREATE_INVIN:
 		addlinetomenu(ent, "Passive ability. Provides", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "temporary invincibility.", MENU_WHITE_CENTERED);

@@ -567,10 +567,12 @@ typedef struct
 	void		(*melee)(edict_t *self);
 	void		(*sight)(edict_t *self, edict_t *other); // called when monster acquires a target
 //	qboolean	(*checkattack)(edict_t *self);
+	void		(*touchdown)(edict_t* self); // GHz: called when airborne monster touches the ground
 
 	float		pausetime;
 	float		attack_finished;
 	float		melee_finished;
+	float		touchdown_delay; // GHz: to prevent touchdown() function from being called too often
 
 //	vec3_t		saved_goal;
 	int			search_frames; // number of frames enemy has not been visible
@@ -810,6 +812,8 @@ extern int	skullindex;
 #define MOD_UNHOLYGROUND	100//4.4
 #define MOD_SELFDESTRUCT	101
 #define MOD_SENTRY_BEAM		102
+#define MOD_EXPLODING_BARREL	103
+#define MOD_SHRAPNEL			104
 //K03 End
 #define MOD_FRIENDLY_FIRE	0x8000000
 #define MOD_FMEDICPACK		150
@@ -1702,6 +1706,7 @@ struct gclient_s
 	vec3_t		oldpos;				// used by Blink Strike to store position prior to teleportation
 	int			tele_timeout;		// used by Blink Strike to store level.framenum when attack ends and player teleports (back) to oldpos
 	edict_t		*blinkStrike_targ;	// used by Blink Strike - target entity for attack
+	edict_t		*pickup;			// entity we are holding/have picked up
 };
 
 struct edict_s
@@ -1915,6 +1920,7 @@ struct edict_s
 	int num_gasser;
 	int num_obstacle;
 	int num_magmine;
+	int num_barrels;
 
 	int	num_spikeball;
 	int	num_laserplatforms; //4.4 Talent: Laser Platform
@@ -2249,6 +2255,7 @@ void Cmd_LaserSight_f(edict_t *ent);
 #define M_HOLYGROUND	129
 #define M_WORLDSPAWN	130
 #define M_BEAMSENTRY	131
+#define M_BARREL		132
 #define P_TANK			200
 #define MORPH_MUTANT	400
 #define MORPH_CACODEMON	401

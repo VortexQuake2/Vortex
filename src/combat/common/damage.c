@@ -814,7 +814,7 @@ float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float da
             if (!(G_GetClient(attacker) && G_GetClient(targ)))
                 return 0; // then friendly fire is off.
             invasion_friendlyfire = true;
-        } else
+        } else if (targ->mtype != M_BARREL)
             return 0;  // can't damage teammates
     }
     if (que_typeexists(targ->curses, CURSE_FROZEN))

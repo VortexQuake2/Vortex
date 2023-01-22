@@ -998,6 +998,8 @@ void Cmd_BlinkStrike_f(edict_t* self)
 			continue;
 		if (!visible(self, target))
 			continue;
+		if (!infront(self, target))
+			continue;
 		TeleportBehindTarget(self, target, 128);
 		break;
 	}

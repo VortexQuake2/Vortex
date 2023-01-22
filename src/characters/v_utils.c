@@ -758,6 +758,9 @@ char *GetAbilityString(int ability_number) {
             return "Flash";
         case DECOY:
             return "Decoy";
+        case EXPLODING_BARREL:
+            //      xxxxxxxxxxxxxx (14 chars)
+            return "Barrel Bombs";
         default:
             return "<ERROR: NO NAME>";
     }
@@ -1855,8 +1858,10 @@ char *V_GetMonsterKind(int mtype) {
             return "depot";
         case M_ALARM:
             return "laser trap";
-    case HW_FLAG:
-        return "halo";
+        case HW_FLAG:
+            return "halo";
+        case M_BARREL:
+            return "barrel";
         default:
             return "<unknown>";
     }

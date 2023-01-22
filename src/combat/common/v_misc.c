@@ -365,6 +365,8 @@ void sentrygun_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 
 void RemoveExplodingArmor(edict_t *ent);
 
+void RemoveExplodingBarrels(edict_t* ent);
+
 void RemoveAutoCannons(edict_t *ent);
 
 void caltrops_removeall(edict_t *ent);
@@ -414,6 +416,7 @@ void vrx_remove_player_summonables(edict_t *self) {
     RemoveMagmines(self);
     RemoveNapalmGrenades(self);
     RemoveExplodingArmor(self);
+    RemoveExplodingBarrels(self);
     RemoveAutoCannons(self);
     RemoveMiniSentries(self);
     RemoveAllLaserPlatforms(self);
@@ -614,16 +617,13 @@ void shrapnel_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* 
 {
     if ((surf && (surf->flags & SURF_SKY)) || !self->creator || !self->creator->inuse)
     {
-        //gi.dprintf("hit skybox or no creator\n");
         G_FreeEdict(self);
         return;
     }
 
     if (other->takedamage)
     {
-        //gi.dprintf("hit something!\n");
-        T_Damage(other, self, self->creator, self->velocity, self->s.origin,
-            plane->normal, self->dmg, self->dmg, 0, self->style);
+        T_Damage(other, self, self->creator, self->velocity, self->s.origin, plane->normal, self->dmg, 0, 0, self->style);
 
         gi.sound(other, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav"), 1, ATTN_NORM, 0);
         G_FreeEdict(self);
@@ -632,7 +632,6 @@ void shrapnel_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* 
 
 void shrapnel_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point)
 {
-    //gi.dprintf("shrapnel_die\n");
     G_FreeEdict(self);
 }
 

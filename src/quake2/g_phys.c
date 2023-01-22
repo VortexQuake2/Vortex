@@ -240,6 +240,11 @@ int SV_FlyMove (edict_t *ent, float time, int mask)
 			blocked |= 1;		// floor
 			if ( hit->solid == SOLID_BSP)
 			{
+				//GHz START
+				// monster wasn't previously on the ground (aireborne), so call touchdown function if we have one
+				if (!ent->groundentity && ent->monsterinfo.touchdown)
+					ent->monsterinfo.touchdown(ent);
+				//GHz END
 				ent->groundentity = hit;
 				ent->groundentity_linkcount = hit->linkcount;
 			}

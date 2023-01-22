@@ -386,6 +386,9 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 		{
 			switch (mod)
 			{
+			case MOD_SHRAPNEL:
+				message = "received a fatal piercing";
+				break;
 			case MOD_HELD_GRENADE:
 				message = "tried to put the pin back in";
 				break;
@@ -779,6 +782,14 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 			case MOD_UNHOLYGROUND:
 				message = "was sacrificed by";
 				message2 = "'s unholy ground";
+				break;
+			case MOD_EXPLODING_BARREL:
+				message = "closely inspects";
+				message2 = "'s exploding barrel";
+				break;
+			case MOD_SHRAPNEL:
+				message = "adorns";
+				message2 = "'s burning shrapnel";
 				break;
 				//K03 End
 			}
@@ -2504,6 +2515,7 @@ float V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse);
 
 void think_trade(edict_t *ent);
 void BlinkStrike_think(edict_t* ent);
+void V_PickUpEntity(edict_t* ent);
 
 void ClientThink (edict_t *ent, usercmd_t *ucmd)
 {
@@ -2875,6 +2887,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	UpdateMirroredEntities(ent);
 	vrx_morph_think(ent);
 	BlinkStrike_think(ent);
+	V_PickUpEntity(ent);
 }
 
 // az: this code has been a little redundant in places
