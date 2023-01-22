@@ -291,13 +291,14 @@ void flame_think(edict_t* self)
 void flame_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* surf)
 {
 	int damage;
-	float slvl = drone_damagelevel(self);
+	float slvl;
 
 	if (other == self)
 		return;
 
 	if (G_EntExists(other) && !OnSameTeam(self, other))
 	{
+		slvl = drone_damagelevel(self->owner);
 		// 100% of health over 5 seconds at level 10
 		damage = other->max_health * (0.1 + 0.01 * slvl);
 		if (damage < 20)
@@ -372,7 +373,7 @@ void fire_baron_cof_attack(edict_t* self)
 	int damage;
 	float slvl = drone_damagelevel(self);
 
-	damage = FIREBALL_INITIAL_FLAMEDMG + FIREBALL_ADDON_FLAMEDMG * self->monsterinfo.level;
+	damage = FIREBALL_INITIAL_FLAMEDMG + FIREBALL_ADDON_FLAMEDMG * slvl;
 
 	circle_of_flames(self, 16, damage, 300);
 }
@@ -495,7 +496,8 @@ void baron_fire_move_attack(edict_t* self)
 	}
 	else
 		self->monsterinfo.currentmove = &baron_fire_move_crush;//meteor attack
-	self->monsterinfo.attack_finished = level.time + 2.0;
+	//self->monsterinfo.attack_finished = level.time + GetRandom(2, 4);
+	M_DelayNextAttack(self, (float)GetRandom(0,2), true);
 }
 
 void baron_fire_attack(edict_t* self)

@@ -179,8 +179,8 @@ float drone_damagelevel(const edict_t* ent)
 
 	if (level <= 0)
 	{
-		gi.dprintf("weird level being passed to drone_damagelevel");
-		return level;
+		gi.dprintf("weird level %d being passed to drone_damagelevel\n", level);
+		return 1;
 	}
 
 	return min(7 * log10f(level) + 1, 20);
