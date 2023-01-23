@@ -672,7 +672,7 @@ void init_drone_infantry (edict_t *self)
 	self->monsterinfo.jumpdn = 512;
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
 
-	self->item = FindItemByClassname("ammo_bullets");
+	self->item = FindItemByClassname("ammo_shells");
 
 	// they're very sensitive to pain!
 	self->monsterinfo.pain_chance = 0.3f;
