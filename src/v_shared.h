@@ -204,7 +204,7 @@ typedef struct item_menu_s
     int num;
 } item_menu_t;
 
-item_menu_t vrx_menu_item_display(item_t* item, char selected);
+item_menu_t vrx_menu_item_display(item_t* item);//, char selected);
 
 void PrintCommands(edict_t *ent);
 int CountRuneMods(item_t *rune);

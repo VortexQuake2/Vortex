@@ -318,7 +318,7 @@ void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling) {
                 break;
         }
 
-        item_menu_t fmt = vrx_menu_item_display(item, ' ');
+        item_menu_t fmt = vrx_menu_item_display(item);//, ' ');
         if (fmt.num >= 0) {
             char* abbr = "";
             if (item->itemtype == ITEM_COMBO)
