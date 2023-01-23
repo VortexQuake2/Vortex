@@ -232,6 +232,9 @@ qboolean drone_ValidChaseTarget (edict_t *self, edict_t *target)
 	if (target->flags & FL_GODMODE)
 		return false;
 
+	if (target->svflags & SVF_NOCLIENT)
+		return false;
+
 	if (target->client)
 	{
 		if (target->client->respawn_time > level.time)

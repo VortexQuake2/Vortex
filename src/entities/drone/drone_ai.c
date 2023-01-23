@@ -526,7 +526,8 @@ edict_t *drone_get_enemy (edict_t *self)
 	{
 		// screen out invalid targets
 		// az: Replaced G_ValidTarget for lighter check.
-		if (!G_ValidTarget_Lite(self, target, true))
+		//if (!G_ValidTarget_Lite(self, target, true))
+		if (!G_ValidTarget(self, target, true))
 			continue;
 		// ignore low-level players
 		if (M_IgnoreInferiorTarget(self, target))
