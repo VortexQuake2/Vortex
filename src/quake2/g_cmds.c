@@ -3184,7 +3184,7 @@ void ClientCommand (edict_t *ent)
 	else if (Q_stricmp(cmd, "speech") == 0)
 		Cmd_Speech (ent, atoi(gi.argv(1)));
 	else if (Q_stricmp (cmd, "lasers") == 0)
-		safe_cprintf(ent, PRINT_HIGH, "Lasers: %d/%d\n", ent->num_lasers, MAX_LASERS);
+		safe_cprintf(ent, PRINT_HIGH, "Lasers: %d/%d\n", ent->num_lasers, (int)MAX_LASERS);
 	/*
 	else if (Q_stricmp (cmd, "adminme") == 0)
 		Cmd_MakeAdmin(ent);

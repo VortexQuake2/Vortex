@@ -5,6 +5,7 @@
 #define LASER_INITIAL_DAMAGE	100	// beam damage per frame
 #define LASER_ADDON_DAMAGE		40
 #define LASER_TIMEOUT_DELAY		120
+#define LASER_NONCLIENT_MOD		0.5 // modifier applied to damage prior to reducing laser health on non-client laser targets
 
 // cumulative maximum damage a laser can deal
 #define LASER_INITIAL_HEALTH	0
@@ -87,7 +88,7 @@ void laser_remove (edict_t *self)
 	{
 		self->activator->num_lasers--;
 		safe_cprintf(self->activator, PRINT_HIGH, "Laser destroyed. %d/%d remaining.\n", 
-			self->activator->num_lasers, MAX_LASERS);
+			self->activator->num_lasers, (int)MAX_LASERS);
 	}
 }
 
@@ -105,6 +106,7 @@ void laser_beam_think (edict_t *self)
 	int		damage;
 	vec3_t	forward;
 	trace_t tr;
+	qboolean	nonclient = false;
 
 	// can't have a laser beam without an emitter!
 	if (!self->owner)
@@ -146,13 +148,18 @@ void laser_beam_think (edict_t *self)
 	// what is in lasers path?
 	if (damage && G_EntExists(tr.ent) && tr.ent != self->activator)
 	{
-		// remove lasers near spawn positions
-		if (tr.ent->client && (tr.ent->client->respawn_time-1.5 > level.time))
+		if (tr.ent->client)
 		{
-			safe_cprintf(self->activator, PRINT_HIGH, "Laser touched respawning player, so it was removed. (%d/%d remain)\n", self->activator->num_lasers, (int)MAX_LASERS);
-			laser_remove(self->owner);
-			return;
+			// remove lasers near spawn positions
+			if (tr.ent->client->respawn_time - 1.5 > level.time)
+			{
+				safe_cprintf(self->activator, PRINT_HIGH, "Laser touched respawning player, so it was removed. (%d/%d remain)\n", self->activator->num_lasers, (int)MAX_LASERS);
+				laser_remove(self);
+				return;
+			}
 		}
+		else
+			nonclient = true; // target is a non-client
 
 		if (G_GetClient(tr.ent) && invasion->value > 1) // don't deal damage to friends in invasion hard.
 			damage = 0;
@@ -174,7 +181,10 @@ void laser_beam_think (edict_t *self)
 	}
 
 	// reduce maximum damage counter
-	self->health -= damage;
+	if (nonclient)
+		self->health -= LASER_NONCLIENT_MOD * damage; // up to 2x damage can be applied to non-clients before burning out
+	else
+		self->health -= damage;
 
 	// if the counter reaches 0, then shut-down
 	if (damage && self->health < 1)
