@@ -13,7 +13,7 @@ v_maplist_t maplist_TBI;
 
 void DoMaplistFilename(int mode, char* filename)
 {
-	sprintf(filename, "%s/settings/", game_path->string);
+	sprintf(filename, "%s/settings/maplists/", game_path->string);
 
 	switch(mode)
 	{
