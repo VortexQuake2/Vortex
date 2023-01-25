@@ -659,7 +659,7 @@ void init_baron_fire(edict_t* self)
 	//self->monsterinfo.dodge = baron_fire_dodge;
 	self->monsterinfo.attack = baron_fire_attack;
 	self->monsterinfo.walk = baron_fire_walk;
-	self->monsterinfo.pain_chance = 0.3f;
+	self->monsterinfo.pain_chance = 0.1f;
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
 
 
