@@ -304,6 +304,8 @@ spawn_t	spawns[] = {
 	{"info_monster_invasion", SP_info_monster_invasion},
 	{"navi_monster_invasion", SP_navi_monster_invasion},
 	{"inv_defenderspawn", SP_inv_defenderspawn},
+	{"info_player_team1", SP_info_player_team1},
+	{ "info_player_team2", SP_info_player_team2},
 //GHz END
 	{NULL, NULL}
 };

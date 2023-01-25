@@ -787,7 +787,7 @@ void ctf_playerspawn_die (edict_t *self, edict_t *inflictor, edict_t *attacker, 
 
 void ctf_playerspawn_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
-//	gi.dprintf("ctf_playerspawn_touch()\n");
+	//gi.dprintf("ctf_playerspawn_touch() %d %d\n", self->teamnum, other->teamnum);
 
 	if (!self->teamnum && other && other->inuse && other->client && other->teamnum)
 	{
@@ -796,7 +796,8 @@ void ctf_playerspawn_touch (edict_t *self, edict_t *other, cplane_t *plane, csur
 		// claim this spawn for our team
 		self->teamnum = other->teamnum;
 		//self->touch = NULL;
-		self->takedamage = DAMAGE_YES;
+		if (CTF_PLAYERSPAWN_HEALTH)
+			self->takedamage = DAMAGE_YES;
 
 		if (self->teamnum == RED_TEAM)
 			self->s.renderfx = RF_SHELL_RED;
@@ -833,20 +834,26 @@ void CTF_InitSpawnPoints (int teamnum)
 		strcpy(classStr, "info_player_deathmatch");
 	}
 
+	gi.dprintf("searching for %s...\n", classStr);
 	while((e = G_Find(e, FOFS(classname), classStr)) != NULL)
 	{
 		if (!e->inuse)
 			continue;
 		
+		gi.dprintf("found %s at %.0f %.0f %.0f\n", classStr, e->s.origin[0], e->s.origin[1], e->s.origin[2]);
 		e->touch = ctf_playerspawn_touch;
-		e->health = CTF_PLAYERSPAWN_HEALTH;
-		e->max_health = e->health;
 
 		// spawns shouldn't be damageable until they are claimed by a team
-		if (teamnum)
+		if (CTF_PLAYERSPAWN_HEALTH && teamnum)
+		{
+			e->health = CTF_PLAYERSPAWN_HEALTH;
+			e->max_health = e->health;
 			e->takedamage = DAMAGE_YES;
+		}
 		else
+		{
 			e->takedamage = DAMAGE_NO;
+		}
 
 		e->solid = SOLID_BBOX;
 		e->die = ctf_playerspawn_die;
@@ -1158,6 +1165,8 @@ void flagbase_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t 
 		CTF_SpawnPlayersInBase(RED_TEAM);
 		CTF_SpawnPlayersInBase(BLUE_TEAM);
 		CTF_InitSpawnPoints(0);
+		CTF_InitSpawnPoints(RED_TEAM);
+		CTF_InitSpawnPoints(BLUE_TEAM);
 	}
 }
 
@@ -1427,6 +1436,8 @@ void CTF_Init (void)
 
 	// make spawn points capturable
 	CTF_InitSpawnPoints(0);
+	CTF_InitSpawnPoints(RED_TEAM);
+	CTF_InitSpawnPoints(BLUE_TEAM);
 
 	WriteServerMsg("CTF initialization is complete.", "Info", true, false);
 }
@@ -1492,21 +1503,26 @@ edict_t *CTF_SelectSpawnPoint (edict_t *ent)
 	base = CTF_GetFlagBaseEnt(ent->teamnum);
 
 	if (!base)
+	{
+		//gi.dprintf("no base\n");
 		return SelectDeathmatchSpawnPoint(ent);
+	}
 
 	// players spawn outside of base if the flag is secure
 	// the purpose of this is to encourage players to go on the offensive
 	if (base->count == BASE_FLAG_SECURE)
 	{
+		//gi.dprintf("flag secure\n");
 		// try to spawn at a deathmatch spawn point
+		
 		if ((spawn = SelectDeathmatchSpawnPoint(ent)) != NULL)
 		{
-		//	gi.dprintf("deathmatch spawn\n");
+			//gi.dprintf("deathmatch spawn\n");
 			return spawn;
 		}
 		// try to spawn inside base
 		{
-		//	gi.dprintf("ctf spawn\n");
+			//gi.dprintf("ctf spawn\n");
 			return CTF_SelectTeamSpawnPoint(ent);
 		}
 		
@@ -1681,4 +1697,26 @@ void CTF_OpenJoinMenu (edict_t *ent)
 	setmenuhandler(ent, CTF_JoinMenuHandler);
 	ent->client->menustorage.currentline = 11;
 	showmenu(ent);
+}
+
+//SP_misc_teleporter_dest(self);
+
+void SP_info_player_team1(edict_t* self)
+{
+	if (!deathmatch->value)
+	{
+		G_FreeEdict(self);
+		return;
+	}
+	//SP_misc_teleporter_dest(self);
+}
+
+void SP_info_player_team2(edict_t* self)
+{
+	if (!deathmatch->value)
+	{
+		G_FreeEdict(self);
+		return;
+	}
+	//SP_misc_teleporter_dest(self);
 }
