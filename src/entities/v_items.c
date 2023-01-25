@@ -1042,7 +1042,6 @@ char* vrx_get_weapon_mod_string(item_t* item, int i)
 void V_PrintItemProperties(edict_t *player, item_t *item)
 {
 	char buf[256];
-	int i;
 
 	//Did they find a unique?
 	if (strlen(item->name) > 0)
@@ -1064,7 +1063,7 @@ void V_PrintItemProperties(edict_t *player, item_t *item)
 	if(item->numMods == 1) strcat(buf, "(1 mod)");
 	else strcat(buf, va("(%d mods)", item->numMods));
 
-	for (i = 0; i < MAX_VRXITEMMODS; ++i)
+	for (int i = 0; i < MAX_VRXITEMMODS; ++i)
 	{
 		char temp[32];
 
@@ -1074,11 +1073,15 @@ void V_PrintItemProperties(edict_t *player, item_t *item)
 
 		switch(item->modifiers[i].type)
 		{
-		case TYPE_ABILITY:	strcpy(temp, va("%s:", GetAbilityString(item->modifiers[i].index)));				break;
-		case TYPE_WEAPON:	strcpy(temp, va("%s:", vrx_get_weapon_mod_string(item, i)));	break;
+		case TYPE_ABILITY:	
+			strcpy(temp, GetAbilityString(item->modifiers[i].index));
+			break;
+		case TYPE_WEAPON:
+			strcpy(temp, vrx_get_weapon_mod_string(item, i));
+			break;
 		}
-		padRight(temp, 20);
-		strcat(buf, va("\n    %s(%d)", temp, item->modifiers[i].value));
+
+		strcat(buf, va("\n    %-20.20s (%d)", temp, item->modifiers[i].value));
 	}
 	
 	safe_centerprintf(player, "%s\n", buf);
@@ -1337,7 +1340,11 @@ char *V_MenuItemString(item_t *item, char selected)
 		case ITEM_NONE:			return " <Empty>";
 		case ITEM_WEAPON:		
 			r = vrx_get_weapon_rune_string(item);
-			return va(" %s (%d)", r.str, r.num);
+			char* str[64];
+			// a hack because vrx_get_weapon_rune_string uses va, and we cannot reference va's
+			// static memory again here and expect it to work.
+			strcpy(str, r.str);
+			return va(" %s (%d)", str, r.num);
 		case ITEM_ABILITY:		return va("%cAbility rune (%d)", selected, item->itemLevel);
 		case ITEM_COMBO:		return va("%cCombo rune   (%d)", selected, item->itemLevel);
 		case ITEM_CLASSRUNE:	return va("%c%s rune", selected, GetRuneValString(item));
