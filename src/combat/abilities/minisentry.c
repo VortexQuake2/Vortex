@@ -111,6 +111,9 @@ void minisentry_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_
 	// limit how often sentry can be repaired/reloaded
 	if (self->sentrydelay > level.time)
 		return;
+	// other must be valid and a client
+	if (!G_EntIsAlive(other) || !other->client)
+		return;
 	// only teammates can repair/reload
 	if (!OnSameTeam(self, other))
 		return;

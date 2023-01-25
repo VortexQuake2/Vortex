@@ -192,6 +192,7 @@ void SpawnExplodingBarrel(edict_t* ent)
 	safe_cprintf(ent, PRINT_HIGH, "Spawned exploding barrel (%d/%d)\n", ent->num_barrels, (int)EXPLODING_BARREL_MAX_COUNT);
 	// pick it up!
 	ent->client->pickup = barrel;
+	ent->client->pers.inventory[power_cube_index] -= EXPLODING_BARREL_COST;
 }
 
 void V_PickUpEntity(edict_t* ent)

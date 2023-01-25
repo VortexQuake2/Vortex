@@ -1903,6 +1903,9 @@ qboolean M_Upkeep (edict_t *self, int delay, int upkeep_cost)
 	int		*cubes;
 	edict_t *e;
 
+	if (self->mtype == M_DECOY)
+		return true;
+
 	if (delay > 0)
 	{
 		if (level.framenum < self->monsterinfo.upkeep_delay)

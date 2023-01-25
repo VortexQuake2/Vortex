@@ -660,7 +660,7 @@ void ThrowShrapnel(edict_t* self, char* modelname, float speed, vec3_t origin, i
     chunk->s.frame = 0;
     chunk->flags = 0;
     chunk->classname = "shrapnel";
-    chunk->takedamage = DAMAGE_YES;
+    //chunk->takedamage = DAMAGE_YES;
     chunk->dmg = dmg;
     chunk->die = shrapnel_die;
     chunk->touch = shrapnel_touch;
