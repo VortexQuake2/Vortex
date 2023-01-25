@@ -2063,7 +2063,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 				if (DRONE_DEBUG)
 					gi.dprintf("next waypoint = %d %d (%d/%d), closest = %d %d (%d/%d)\n", next, nexter, self->monsterinfo.nextWaypoint, self->monsterinfo.numWaypoints,
 						closestWaypointNode, closesterWaypointNode, NearestWaypointNum(self->s.origin, self->monsterinfo.waypoint), self->monsterinfo.numWaypoints);
-				if (closestWaypointNode != closesterWaypointNode)
+				if (DRONE_DEBUG && closestWaypointNode != closesterWaypointNode)
 				{
 					qboolean foundWp = false;
 					// does the actual closest node exist in our path?
