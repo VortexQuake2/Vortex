@@ -959,9 +959,8 @@ void OpenBuyRuneMenu(edict_t *ent, int page_num, int lastline)
 		if (rune->itemtype != ITEM_NONE)
 		{
 			item_menu_t fmt = vrx_menu_item_display(rune);//, ' ');
-			addlinetomenu(ent, 
-				va("%-13.13s %2d/%2d %5d", fmt.str, fmt.num, rune->itemLevel, getBuyValue(rune)), 
-				(page_num * 1000) + i + 1);
+			lva_result_t txt = lva("%-13.13s %2d/%2d %5d", fmt.str, fmt.num, rune->itemLevel, getBuyValue(rune));
+			addlinetomenu(ent, txt.str, (page_num * 1000) + i + 1);
 		}
 		else 
 		{
