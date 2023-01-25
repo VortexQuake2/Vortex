@@ -1227,6 +1227,44 @@ void InvalidateGridCache() {
     }
 }
 
+qboolean GetRandomGridPosition(vec3_t pos)
+{
+	int index;
+	
+	if (numnodes < 1)
+		return false;
+
+	index = GetRandom(0, numnodes - 1);
+
+	VectorCopy(pathnode[index], pos);
+	return true;
+}
+
+qboolean GetGridPosition(vec3_t pos, int index)
+{
+	if (!index)
+		index = 0;
+
+	for (; index < numnodes; index++)
+	{
+		VectorCopy(pathnode[index], pos);
+		return true;
+	}
+	// reached the end of the list
+	return false;
+}
+
+void Cmd_GetGridPosition()
+{
+	int i;
+	vec3_t v;
+
+	for (i = 0; i < 5; i++)
+	{
+		if (GetGridPosition(v, i))
+			gi.dprintf("%d: %.1f %.1f %.1f\n", i, v[0], v[1], v[2]);
+	}
+}
 
 void DrawNearbyGrid(edict_t *ent) {
 	int i;
@@ -1338,6 +1376,11 @@ qboolean LoadGrid (void)
 		numnodes = ReadInteger(fptr);
 		fclose(fptr);
 
+		if (numnodes < 1)
+		{
+			gi.dprintf("Grid file is invalid and must be rebuilt.\n");
+			return false;
+		}
 		gi.dprintf("Grid successfully loaded (%d nodes).\n", numnodes);
 		return true;
 	}
