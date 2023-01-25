@@ -834,13 +834,13 @@ void CTF_InitSpawnPoints (int teamnum)
 		strcpy(classStr, "info_player_deathmatch");
 	}
 
-	gi.dprintf("searching for %s...\n", classStr);
+	//gi.dprintf("searching for %s...\n", classStr);
 	while((e = G_Find(e, FOFS(classname), classStr)) != NULL)
 	{
 		if (!e->inuse)
 			continue;
 		
-		gi.dprintf("found %s at %.0f %.0f %.0f\n", classStr, e->s.origin[0], e->s.origin[1], e->s.origin[2]);
+		//gi.dprintf("found %s at %.0f %.0f %.0f\n", classStr, e->s.origin[0], e->s.origin[1], e->s.origin[2]);
 		e->touch = ctf_playerspawn_touch;
 
 		// spawns shouldn't be damageable until they are claimed by a team
