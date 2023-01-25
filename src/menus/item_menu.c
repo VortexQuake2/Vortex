@@ -328,8 +328,9 @@ void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling) {
             else if (item->itemtype == ITEM_WEAPON)
                 abbr = "WE";
 
+            lva_result_t txt = lva("%-15.15s %2s %2d/%2d", fmt.str, abbr, fmt.num, item->itemLevel);
             addlinetomenu(ent,
-                va("%-15.15s %2s %2d/%2d", fmt.str, abbr, fmt.num, item->itemLevel),
+                txt.str,
                 i + 1);
         } else
         {
