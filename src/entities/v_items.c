@@ -1367,14 +1367,14 @@ item_menu_t vrx_get_ability_rune_string(item_t* item)
 	}
 
 	return (item_menu_t) {
-		va("%s", astring),
+		astring,
 		max
 	};
 }
 
 item_menu_t vrx_get_combo_rune_string(item_t* item)
 {
-	char astring[64];
+	char *astring = "Combo";
 	int max = 0;
 
 	for (int i = 0; i < MAX_VRXITEMMODS; i++)
@@ -1383,18 +1383,18 @@ item_menu_t vrx_get_combo_rune_string(item_t* item)
 		if (mod->index > 0 && mod->value > 0 && mod->type == TYPE_ABILITY && max < mod->value)
 		{
 			max = mod->value;
-			strcpy(astring, GetAbilityString(mod->index));
+			astring = GetAbilityString(mod->index);
 		}
 
 		if (mod->index > 0 && mod->value > 0 && mod->type == TYPE_WEAPON && max < mod->value)
 		{
 			max = mod->value;
-			strcpy(astring, vrx_get_weapon_mod_string(item, i));
+			astring = vrx_get_weapon_mod_string(item, i);
 		}
 	}
 
 	return (item_menu_t) {
-		va("%s", astring),
+		astring,
 			max
 	};
 }
