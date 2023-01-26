@@ -336,7 +336,7 @@ int vrx_apply_experience(edict_t *player, int exp) {
 }
 
 
-void vrx_add_exp(edict_t *attacker, edict_t *targ);
+void vrx_process_exp(edict_t *attacker, edict_t *targ);
 
 void hw_deathcleanup(edict_t *targ, edict_t *attacker);
 
@@ -908,7 +908,7 @@ void vrx_award_all_attackers(edict_t* targ, edict_t* targetclient, edict_t* play
 	}
 }
 
-void vrx_add_exp(edict_t *attacker, edict_t *targ) {
+void vrx_process_exp(edict_t *attacker, edict_t *targ) {
     edict_t *targetclient, *player = NULL;
 
     // this is a player-monster boss

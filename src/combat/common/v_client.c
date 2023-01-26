@@ -3,7 +3,7 @@
 
 void vrx_death_cleanup(edict_t *attacker, edict_t *targ);
 
-void vrx_add_exp(edict_t *attacker, edict_t *targ);
+void vrx_process_exp(edict_t *attacker, edict_t *targ);
 
 
 void V_GibSound(edict_t *self, int index) {
@@ -40,14 +40,14 @@ void vrx_player_death(edict_t *self, edict_t *attacker, edict_t *inflictor) {
     if (self->deadflag)
         return;
 
-    vrx_reset_player_state(self);
     self->gib_health = -BASE_GIB_HEALTH;
 
     // don't drop powercubes or tballs
     self->myskills.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = self->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)];
     self->myskills.inventory[ITEM_INDEX(Fdi_TBALL)] = self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)];
 
-    vrx_add_exp(attacker, self); // modify experience
+    vrx_process_exp(attacker, self); // modify experience
+    vrx_reset_player_state(self);
     vrx_death_cleanup(attacker, self);
 
     vrx_toss_backpack(self, attacker); // toss a backpack

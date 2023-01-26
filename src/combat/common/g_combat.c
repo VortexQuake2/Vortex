@@ -272,7 +272,7 @@ qboolean G_CanUseAbilities(edict_t *ent, int ability_lvl, int pc_cost) {
 Killed
 ============
 */
-void vrx_add_exp(edict_t *attacker, edict_t *targ);
+void vrx_process_exp(edict_t *attacker, edict_t *targ);
 void drone_death (edict_t *self, edict_t *attacker);
 void Killed (edict_t *targ, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
@@ -296,7 +296,7 @@ void Killed (edict_t *targ, edict_t *inflictor, edict_t *attacker, int damage, v
 	//K03 End
 
 	if (!targ->client && !targ->deadflag && (targ->solid != SOLID_NOT)) {
-        vrx_add_exp(attacker, targ);
+        vrx_process_exp(attacker, targ);
 	}
 
 	if (targ->movetype == MOVETYPE_PUSH || targ->movetype == MOVETYPE_STOP || targ->movetype == MOVETYPE_NONE)
