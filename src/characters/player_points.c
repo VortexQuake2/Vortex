@@ -473,13 +473,16 @@ int vrx_get_kill_base_experience(
     return exp_points * mult;
 }
 
-int vrx_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) {
-    int clevel = 0;
-    float dmgmod = 1;
+int vrx_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient, int bonus_xp) {
+	float dmgmod = 1;
     int credits = 0;
     int max_points = vrx_get_kill_base_experience(attacker, targ, targetclient, -1, 1, &dmgmod, &credits);
-    int exp_points = max_points;
+    int exp_points;
     char name[50] = {0};
+
+    // apply bonus_xp if we're supposed to receive some. Otherwise, don't.
+    if (max_points > 0)
+        max_points += bonus_xp;
 
     // award experience to non-allied players
     if (!allies->value || ((exp_points = AddAllyExp(attacker, max_points)) < 1))
@@ -488,7 +491,8 @@ int vrx_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) {
     vrx_add_credits(attacker, credits);
 
     if (!attacker->ai.is_bot && (exp_points > 0 || credits > 0) && attacker->client) {
-        if (targ->client) {
+	    int clevel = 0;
+	    if (targ->client) {
             strcat(name, targetclient->client->pers.netname);
             clevel = targetclient->myskills.level;
         } else {
@@ -890,8 +894,21 @@ void vrx_add_team_exp(edict_t *ent, int points) {
     }
 }
 
+void vrx_award_all_attackers(edict_t* targ, edict_t* targetclient, edict_t* player, int bonus_xp)
+{
+	for (int i = 0; i < game.maxclients; i++) {
+		player = g_edicts + 1 + i;
+
+		// award experience and credits to non-spectator clients
+		if (!player->inuse || G_IsSpectator(player) ||
+			player == targetclient || player->flags & FL_CHATPROTECT)
+			continue;
+
+		vrx_award_exp(player, targ, targetclient, bonus_xp);
+	}
+}
+
 void vrx_add_exp(edict_t *attacker, edict_t *targ) {
-    int i, exp_points;
     edict_t *targetclient, *player = NULL;
 
     // this is a player-monster boss
@@ -941,23 +958,14 @@ void vrx_add_exp(edict_t *attacker, edict_t *targ) {
     // award experience and credits to anyone that has hurt the targetclient
     // az: in non-invasion modes, don't split up the exp, in invasion, do.
     if (!invasion->value) {
-        for (i = 0; i < game.maxclients; i++) {
-            player = g_edicts + 1 + i;
-
-            // award experience and credits to non-spectator clients
-            if (!player->inuse || G_IsSpectator(player) ||
-                player == targetclient || player->flags & FL_CHATPROTECT)
-                continue;
-
-            vrx_award_exp(player, targ, targetclient);
-        }
+        vrx_award_all_attackers(targ, targetclient, player, 0);
     } else {
         vrx_inv_award_exp(attacker, targ, targetclient);
     }
 
     // give your team some experience
     if ((int) (dmflags->value) & (DF_MODELTEAMS | DF_SKINTEAMS)) {
-        exp_points = vrx_award_exp(attacker, targ, targetclient);
+        int exp_points = vrx_award_exp(attacker, targ, targetclient, 0);
         vrx_add_team_exp(attacker, (int) (0.5 * exp_points));
         return;
     }

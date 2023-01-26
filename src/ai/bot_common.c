@@ -57,6 +57,8 @@ qboolean BOT_ServerCommand (void)
 
 	cmd = gi.argv (1);
 
+	return; // az: unused...
+
 	if (!ctf->value)
 		name = gi.argv(2);
 

@@ -575,7 +575,7 @@ void CTF_AwardPlayer (edict_t *ent, int points, int credits)
 	if (G_IsSpectator(ent))
 		return;
 
-	if (vrx_get_alive_players() < CTF_MINIMUM_PLAYERS)
+	if (vrx_get_joined_players() < CTF_MINIMUM_PLAYERS)
 		return;
 
    	vrx_add_credits(ent, credits);
@@ -869,71 +869,68 @@ void CTF_AwardFrag (edict_t *attacker, edict_t *target)
 {
 	int		points=0, credits=0;
 	int		enemy_teamnum;
-	float	mult=1.0;
 	edict_t	*team_fc, *enemy_fc, *team_base, *enemy_base, *team_spawn, *enemy_spawn;
 
-	if (vrx_get_alive_players() < CTF_MINIMUM_PLAYERS)
+	if (vrx_get_joined_players() < CTF_MINIMUM_PLAYERS)
 		return;
 
-	attacker = G_GetClient(attacker);
-	target = G_GetClient(target);
+	edict_t* attacker_cl = G_GetClient(attacker);
+	edict_t* target_cl = G_GetClient(target);
 
 	//4.04 give tank morph frag exp
-	if (!attacker || !target || !attacker->inuse || !target->inuse 
-		|| G_IsSpectator(attacker) || G_IsSpectator(target))
+	if (!attacker_cl || !target_cl || !attacker_cl->inuse || !target_cl->inuse
+		|| G_IsSpectator(attacker_cl) || G_IsSpectator(target_cl))
 		return;
 
-	if (attacker == target)
+	if (attacker_cl == target_cl)
 		return;
-	if (attacker->health < 1)
+	if (attacker_cl->health < 1)
 		return;
 
 	// get enemy team number
-	if (attacker->teamnum == RED_TEAM)
+	if (attacker_cl->teamnum == RED_TEAM)
 		enemy_teamnum = BLUE_TEAM;
-	else if (attacker->teamnum == BLUE_TEAM)
+	else if (attacker_cl->teamnum == BLUE_TEAM)
 		enemy_teamnum = RED_TEAM;
 
 	enemy_fc = CTF_GetFlagCarrier(enemy_teamnum);
 	team_fc = CTF_GetFlagCarrier(attacker->teamnum);
 	team_base = CTF_GetFlagBaseEnt(attacker->teamnum);
 	enemy_base = CTF_GetFlagBaseEnt(enemy_teamnum);
-	team_spawn = CTF_NearestPlayerSpawn(target, attacker->teamnum, CTF_PLAYERSPAWN_DEFENSE_RANGE, false);
-	enemy_spawn = CTF_NearestPlayerSpawn(target, target->teamnum, CTF_PLAYERSPAWN_DEFENSE_RANGE, false);
 
 	// are we defending our base?
 	if (team_base && (entdist(attacker, team_base) <= CTF_BASE_DEFEND_RANGE))
 	{
 		gi.bprintf(PRINT_HIGH, "%s defends the %s base!\n", 
-			attacker->client->pers.netname, CTF_GetTeamString(attacker->teamnum));
+			attacker_cl->client->pers.netname, CTF_GetTeamString(attacker_cl->teamnum));
 
 		//Give them credit
-		attacker->myskills.defense_kills++;
+		attacker_cl->myskills.defense_kills++;
 
 		points = CTF_BASE_DEFEND_EXP;
 		credits = CTF_BASE_DEFEND_CREDITS;
 	}
 	// are we assisting a flag carrier?
-	else if (team_fc && (attacker != team_fc) 
-		&& (entdist(attacker, team_fc) <= CTF_FLAG_DEFEND_RANGE))
+	else if (team_fc && (attacker_cl != team_fc)
+		&& (entdist(attacker_cl, team_fc) <= CTF_FLAG_DEFEND_RANGE))
 	{
 		gi.bprintf(PRINT_HIGH, "%s assists the %s flag carrier!\n", 
-			attacker->client->pers.netname, CTF_GetTeamString(attacker->teamnum));
+			attacker_cl->client->pers.netname, CTF_GetTeamString(attacker_cl->teamnum));
 
 		points = CTF_FLAG_DEFEND_EXP;
 		credits = CTF_FLAG_DEFEND_CREDITS;
 	}
 	// did we kill the enemy flag carrier?
-	else if (enemy_fc && (target == enemy_fc))
+	else if (enemy_fc && (target_cl == enemy_fc))
 	{
 		gi.bprintf(PRINT_HIGH, "%s kills the %s flag carrier!\n", 
-			attacker->client->pers.netname, CTF_GetTeamString(enemy_teamnum));
+			attacker_cl->client->pers.netname, CTF_GetTeamString(enemy_teamnum));
 
 		//Give them credit
-		attacker->myskills.flag_kills++;
+		attacker_cl->myskills.flag_kills++;
 
 		//Set up the player for an assist.
-		attacker->client->pers.ctf_assist_frag = level.time + CTF_ASSIST_DURATION;
+		attacker_cl->client->pers.ctf_assist_frag = level.time + CTF_ASSIST_DURATION;
 
 		points = CTF_FLAG_KILL_EXP;
 		credits = CTF_FLAG_KILL_CREDITS;
@@ -941,7 +938,7 @@ void CTF_AwardFrag (edict_t *attacker, edict_t *target)
 	// award points for killing enemy base defenders IF their flag is secure
 	// no points are awarded for enemy base campers!
 	else if (enemy_base && (enemy_base->count == BASE_FLAG_SECURE) 
-		&& (entdist(attacker, enemy_base) <= CTF_BASE_DEFEND_RANGE))
+		&& (entdist(attacker_cl, enemy_base) <= CTF_BASE_DEFEND_RANGE))
 	{
 		gi.bprintf(PRINT_HIGH, "%s kills a %s defender!\n", 
 			attacker->client->pers.netname, CTF_GetTeamString(enemy_teamnum));
@@ -952,18 +949,6 @@ void CTF_AwardFrag (edict_t *attacker, edict_t *target)
 		points = CTF_BASE_KILL_EXP;
 		credits = CTF_BASE_KILL_CREDITS;
 	}
-	// award points for killing spawn defenders
-	else if (enemy_spawn)
-	{
-		points = CTF_PLAYERSPAWN_OFFENSE_EXP;
-		credits = CTF_PLAYERSPAWN_OFFENSE_CREDITS;
-	}
-	// award points for defending team spawn
-	else if (team_spawn)
-	{
-		points = CTF_PLAYERSPAWN_DEFENSE_EXP;
-		credits = CTF_PLAYERSPAWN_DEFENSE_CREDITS;
-	}
 	// award points for neutral/war zone frags/interceptions
 	else
 	{
@@ -971,14 +956,21 @@ void CTF_AwardFrag (edict_t *attacker, edict_t *target)
 		credits = CTF_FRAG_CREDITS;
 	}
 
-	// this share is subtracted from the amount awarded to the player
-	mult -= GROUP_SHARE_MULT;
-
+	// a percent of the bonus is awarded to the entire team.
 	CTF_AwardTeam(attacker, attacker->teamnum, 
 		(int)(points*GROUP_SHARE_MULT), (int)(credits*GROUP_SHARE_MULT));
 	
-	// the player is awarded the remaining share
-	CTF_AwardPlayer(attacker, points*mult, credits*mult);
+	// the player is awarded according to damage, like every other mode
+	// player count should NOT matter here, a frag is a frag.
+	vrx_award_all_attackers(
+		target, 
+		target_cl, 
+		attacker, 
+		(points * (1 - GROUP_SHARE_MULT))
+	);
+
+	// credit bonuses here are another matter, however.
+	CTF_AwardPlayer(attacker_cl, 0, credits);
 }
 
 int CTF_GetTeamCaps (int teamnum)
