@@ -152,6 +152,8 @@ void SP_inv_defenderspawn (edict_t *self);
 
 // az start
 void SP_misc_dummy(edict_t* self);
+void SP_item_redflag(edict_t* self);
+void SP_item_blueflag(edict_t* self);
 // az end
 
 void SP_misc_nuke (edict_t *ent);
@@ -182,6 +184,10 @@ spawn_t	spawns[] = {
 	{"func_timer", SP_func_timer},
 	{"func_explosive", SP_func_explosive},
 	{"func_killbox", SP_func_killbox},
+
+	// az ctf fix begin 
+	{"item_flag_team1", SP_item_redflag },
+	{"item_flag_team2", SP_item_blueflag },
 
 	// RAFAEL
 	{"func_object_repair", SP_object_repair},

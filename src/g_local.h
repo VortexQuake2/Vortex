@@ -460,6 +460,13 @@ typedef struct
     qboolean warning_given;
     qboolean sounds[4];
 
+	struct {
+		vec3_t blueflag_fallback;
+		vec3_t redflag_fallback;
+		qboolean has_blue_fallback;
+		qboolean has_red_fallback;
+	} ctf;
+
 	
 /*	gdsfiles_t	gdsfiles[MAX_CLIENTS];*/
 

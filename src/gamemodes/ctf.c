@@ -2,6 +2,20 @@
 #include "ctf.h"
 #include "../characters/class_limits.h"
 
+void SP_item_redflag(edict_t* self)
+{
+	VectorCopy(self->s.origin, level.ctf.redflag_fallback);
+	level.ctf.has_red_fallback = true;
+	G_FreeEdict(self);
+}
+
+void SP_item_blueflag(edict_t* self)
+{
+	VectorCopy(self->s.origin, level.ctf.blueflag_fallback);
+	level.ctf.has_blue_fallback = true;
+	G_FreeEdict(self);
+}
+
 // if this is a flag ent, re-spawn it
 void CTF_RecoverFlag (edict_t *ent)
 {
@@ -1275,7 +1289,32 @@ qboolean CTF_GetFlagPosition (int teamnum, vec3_t pos)
 		 fclose(fptr);
 		 gi.dprintf("Data for team %d at {%f, %f, %f}\n", teamnum, v[0], v[1], v[2]);
          return true; 
-     }  
+     } 
+
+	 if (level.ctf.has_blue_fallback && level.ctf.has_red_fallback) {
+		switch (teamnum)
+		{
+		case BLUE_TEAM:
+			VectorCopy(level.ctf.blueflag_fallback, pos);
+			break;
+		case RED_TEAM:
+			VectorCopy(level.ctf.redflag_fallback, pos);
+			break;
+		default:
+			break;
+		}
+
+		vec3_t down = { 0, 0, -8192 };
+		const vec3_t up = { 0, 0, 24 };
+		VectorAdd(pos, down, down);
+
+		trace_t tr = gi.trace(pos, vec3_origin, vec3_origin, down, NULL, MASK_SOLID);
+
+		VectorCopy(tr.endpos, pos);
+		VectorAdd(up, pos, pos);
+
+		return true;
+	 }
 
 	return false;
 }
