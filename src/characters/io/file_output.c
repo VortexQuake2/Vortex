@@ -107,6 +107,7 @@ void SaveCharacter (edict_t *ent)
 	if (debuginfo->value)
 		gi.dprintf("%s just called SaveMyCharacter()\n", ent->client->pers.netname);
 
+	//FIXME: something here is causing player corpses to come alive!
 	if (ent->health < 1)
 	{
 		// use respawn data
@@ -115,7 +116,7 @@ void SaveCharacter (edict_t *ent)
 		InitClientPersistant(ent->client);
 		ClientUserinfoChanged (ent, userinfo);
 		ent->client->resp = resp;
-		vrx_update_all_character_maximums(ent);
+		vrx_update_all_character_maximums(ent);//FIXME: would cause corpses to have positive health
 		vrx_add_respawn_weapon(ent, ent->myskills.respawn_weapon);
 		vrx_add_respawn_items(ent);
 	}

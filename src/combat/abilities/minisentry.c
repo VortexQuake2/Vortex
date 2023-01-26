@@ -215,14 +215,21 @@ void minisentry_lockon (edict_t *self)
 	// aim at target
 	G_EntMidPoint(self->enemy, end);
 	VectorSubtract(end, self->s.origin, v);
+	VectorNormalize(v);
 	vectoangles(v, angles);
 	self->ideal_yaw = vectoyaw(v);
 	M_ChangeYaw(self);
 
 	// restore original yaw speed
 	self->yaw_speed = temp; 
+	// vectoangles returns angles between (-) 0-360, this restores the "normal" range of (+/-) 180
+	if (angles[PITCH] < -180)
+		angles[PITCH] += 360;
 	self->s.angles[PITCH] = angles[PITCH];
-	ValidateAngles(self->s.angles);
+	//ValidateAngles(self->s.angles);
+
+	//gi.dprintf("ideal yaw %.0f pitch %.0f\n", angles[YAW], angles[PITCH]);
+	//gi.dprintf("actual yaw %.0f pitch %.0f\n", self->s.angles[YAW], self->s.angles[PITCH]);
 
 	// maximum pitch in either direction
 	if (self->mtype == M_BEAMSENTRY)
@@ -232,19 +239,25 @@ void minisentry_lockon (edict_t *self)
 
 	if (self->enemy->s.origin[2] > self->s.origin[2]) // if the enemy is above
 	{	
+		//note: negative PITCH turns up
+		max = -deg;
 		//if (self->owner && self->owner->style == SENTRY_FLIPPED)
-			max = 360-deg; // allow 5 degrees up
+			//max = 360-deg; // allow 5 degrees up
 		//else
 		//	max = 315; // allow 45 degrees up
+			//gi.dprintf("enemy ABOVE! max %.0f\n", max);
 		if (self->s.angles[PITCH] < max)
 			self->s.angles[PITCH] = max;
 	}
 	else
 	{
+		//note: positive PITCH turns down
+
 		//if (self->owner && self->owner->style == SENTRY_FLIPPED)
 		//	max = 45; // allow 45 degrees down
 		//else
 			max = deg; // allow 5 degrees down
+			//gi.dprintf("enemy BELOW! max %.0f\n", max);
 		if (self->s.angles[PITCH] > max)
 			self->s.angles[PITCH] = max;
 	}
