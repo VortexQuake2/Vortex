@@ -990,7 +990,7 @@ void CTF_AwardFlagCapture (edict_t *carrier, int teamnum)
 	edict_t	*cl_ent;
 	qboolean uneventeams=false;
 
-	if (vrx_get_alive_players() < CTF_MINIMUM_PLAYERS)
+	if (vrx_get_joined_players() < CTF_MINIMUM_PLAYERS)
 		return;
 
 	if (teamnum == RED_TEAM)
