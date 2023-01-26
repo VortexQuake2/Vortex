@@ -239,7 +239,7 @@ void minisentry_lockon (edict_t *self)
 
 	if (self->enemy->s.origin[2] > self->s.origin[2]) // if the enemy is above
 	{	
-		//note: negative PITCH turns up
+		//note: negative PITCH tilts up 0 - (-)180
 		max = -deg;
 		//if (self->owner && self->owner->style == SENTRY_FLIPPED)
 			//max = 360-deg; // allow 5 degrees up
@@ -251,7 +251,7 @@ void minisentry_lockon (edict_t *self)
 	}
 	else
 	{
-		//note: positive PITCH turns down
+		//note: positive PITCH tilts down 0 - 180
 
 		//if (self->owner && self->owner->style == SENTRY_FLIPPED)
 		//	max = 45; // allow 45 degrees down

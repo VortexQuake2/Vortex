@@ -228,8 +228,12 @@ int MAX_POWERCUBES(struct edict_s *ent) {
 
 void vrx_update_health_max(edict_t *ent) {
     ent->max_health = MAX_HEALTH(ent);
-    ent->health = ent->max_health;
-    ent->client->pers.health = ent->max_health;
+    // don't touch health if the player is dead!
+    if (ent->deadflag != DEAD_DEAD)
+    {
+        ent->health = ent->max_health;
+        ent->client->pers.health = ent->max_health;
+    }
     ent->client->pers.max_health = ent->max_health;
 }
 
