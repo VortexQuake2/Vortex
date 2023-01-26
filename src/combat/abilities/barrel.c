@@ -24,6 +24,22 @@ void barrel_think(edict_t* self)
 		return;
 	}
 
+	// is a player holding this barrel?
+	if (self->creator->client && self->creator->client->pickup)
+	{
+		// make barrel non-solid to player while being held
+		self->owner = self->creator;
+	}
+	else if (self->owner)
+	{
+		// need to make this null first so that the trace works
+		self->owner = NULL;
+		// barrel isn't being held, so make it solid again to player if it's clear of obstructions
+		trace_t tr = gi.trace(self->s.origin, self->mins, self->maxs, self->s.origin, self, MASK_PLAYERSOLID);
+		if (tr.allsolid || tr.startsolid || tr.fraction < 1)
+			self->owner = self->creator;
+	}
+
 	// if position has been updated, check for ground entity
 	if (self->linkcount != self->monsterinfo.linkcount)
 	{

@@ -2388,6 +2388,10 @@ void V_NonShellEffects(edict_t *ent) {
     }
     // ********** NON-CLIENT SPECIFIC EFFECTS BELOW **********
 
+    // barrel is transparent if it has an owner
+    if (ent->mtype == M_BARREL && ent->owner && ent->owner->inuse && ent->owner->client)
+        ent->s.effects |= EF_SPHERETRANS;
+
     // obstacle becomes transparent before it cloaks
     if (ent->mtype == M_OBSTACLE) {
         if (ent->monsterinfo.idle_frames >= ent->monsterinfo.nextattack - 10)
