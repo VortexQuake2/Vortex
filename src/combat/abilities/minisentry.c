@@ -61,7 +61,7 @@ void minisentry_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int d
 	minisentry_remove(self);
 }
 
-void drone_heal(edict_t* self, edict_t* other);
+void drone_heal(edict_t* self, edict_t* other, qboolean heal_while_being_damaged);
 void minisentry_reload(edict_t* self, edict_t *other)
 {
 	int	player_ammo;
@@ -121,7 +121,7 @@ void minisentry_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_
 	minisentry_reload(self, other);
 	if (self->health < self->max_health || self->monsterinfo.power_armor_power < self->monsterinfo.max_armor)
 	{
-		drone_heal(self, other);
+		drone_heal(self, other, true);
 		gi.sound(self, CHAN_VOICE, gi.soundindex("weapons/repair.wav"), 1, ATTN_NORM, 0);
 	}
 
@@ -202,19 +202,25 @@ qboolean minisentry_findtarget (edict_t *self)
 void minisentry_lockon (edict_t *self)
 {
 	float	max, temp, deg;
-	vec3_t	angles, v;
+	vec3_t	angles, end, v;
 
 	// curse causes minisentry to fail to lock-on to enemy
 	if ((que_typeexists(self->curses, CURSE)) && random() <= 0.8)
 		return;
 
+	// rotate quickly
 	temp = self->yaw_speed;
 	self->yaw_speed *= 3;
-	VectorSubtract(self->enemy->s.origin, self->s.origin, v);
+
+	// aim at target
+	G_EntMidPoint(self->enemy, end);
+	VectorSubtract(end, self->s.origin, v);
 	vectoangles(v, angles);
 	self->ideal_yaw = vectoyaw(v);
 	M_ChangeYaw(self);
-	self->yaw_speed = temp; // restore original yaw speed
+
+	// restore original yaw speed
+	self->yaw_speed = temp; 
 	self->s.angles[PITCH] = angles[PITCH];
 	ValidateAngles(self->s.angles);
 
@@ -316,7 +322,15 @@ void minisentry_beam_attack(edict_t* self, vec3_t start)
 			return;
 	}
 
-	AngleVectors(self->s.angles, forward, NULL, NULL);
+	if (!nearfov(self, self->enemy, 20, 10))
+		return;
+	//AngleVectors(self->s.angles, forward, NULL, NULL);
+
+	// aim at target
+	G_EntMidPoint(self->enemy, end);
+	VectorSubtract(end, start, forward);
+	VectorNormalize(forward);
+
 	VectorMA(start, 8192, forward, end);
 	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
 	brain_beam_sparks(tr.endpos);
@@ -667,6 +681,9 @@ void base_createturret (edict_t *self)
 	{
 		if (self->creator)
 		{
+			// refund player's power cubes
+			if (self->creator->client)
+				self->creator->client->pers.inventory[power_cube_index] += self->monsterinfo.cost;
 			self->creator->num_sentries--;
 			if (self->creator->num_sentries < 0)
 				self->creator->num_sentries = 0;
@@ -787,6 +804,9 @@ void base_createturret (edict_t *self)
 	{
 		if (self->creator)
 		{
+			// refund player's power cubes
+			if (self->creator->client)
+				self->creator->client->pers.inventory[power_cube_index] += self->monsterinfo.cost;
 			self->creator->num_sentries--;
 			if (self->creator->num_sentries < 0)
 				self->creator->num_sentries = 0;
@@ -934,6 +954,7 @@ void SpawnMiniSentry (edict_t *ent, int cost, int mtype, float skill_mult, float
 		|| (ent->mtype == MORPH_CACODEMON && ent->myskills.abilities[CACODEMON].current_level < 5))
 		cost *= 2;
 
+	base->monsterinfo.cost = cost;
 	ent->client->pers.inventory[power_cube_index] -= cost;
 	ent->client->ability_delay = level.time + SENTRY_BUILD_TIME * delay_mult;
 	ent->holdtime = level.time + SENTRY_BUILD_TIME * delay_mult;
