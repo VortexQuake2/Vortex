@@ -305,8 +305,6 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	case M_GLADIATOR:
 	case M_TANK:
 	case M_FORCEWALL:
-	case M_MINISENTRY:
-	case M_BEAMSENTRY:
 	case M_BARON_FIRE:
 		name = lva("%s", V_GetMonsterName(ent));
 		data = lva("+%d/%d", ent->health, ent->monsterinfo.power_armor_power);
@@ -314,6 +312,11 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	case M_SENTRY:
 		name = lva("sentry");
 		data = lva("+%d/%d %d/%da", ent->health, ent->monsterinfo.power_armor_power, ent->light_level, ent->style);
+		break;
+	case M_MINISENTRY:
+	case M_BEAMSENTRY:
+		name = lva("sentry");
+		data = lva("+%d/%d %da", ent->health, ent->monsterinfo.power_armor_power, ent->light_level);
 		break;
 	case M_LASER:
 		name = lva("laser");

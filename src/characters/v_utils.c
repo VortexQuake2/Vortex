@@ -2044,6 +2044,10 @@ void vrx_reset_player_state(edict_t *ent) {
     ent->client->invincible_framenum = 0;
     ent->client->quad_framenum = 0;
 
+    // reset Blink Strike state
+    ent->client->blinkStrike_targ = NULL;
+    ent->client->tele_timeout = 0;
+
     // reset ability delay
     ent->client->ability_delay = 0;
     V_ResetAbilityDelays(ent);

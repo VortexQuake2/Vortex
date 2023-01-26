@@ -527,5 +527,10 @@ void Cmd_Decoy_f (edict_t *ent)
 
 	ret = vrx_create_new_drone(ent, 20, false, true);
 	if (ret)
+	{
+		ret->health_cache += (int)(0.50 * ret->max_health) + 1;
+		ret->armor_cache += (int)(0.50 * ret->monsterinfo.max_armor) + 1;
+		ret->monsterinfo.regen_delay1 = level.framenum + 10;
 		ret->monsterinfo.level = ent->myskills.abilities[DECOY].current_level;
+	}
 }

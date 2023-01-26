@@ -298,7 +298,7 @@ void ChangeWeapon(edict_t *ent) {
     else
         ent->client->ammo_index = 0;
 
-    if (!ent->client->pers.weapon) {    // dead
+    if (!ent->client->pers.weapon || ent->deadflag == DEAD_DEAD) {    // dead
         ent->client->ps.gunindex = 0;
         return;
     }

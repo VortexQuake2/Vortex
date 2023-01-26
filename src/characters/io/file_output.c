@@ -107,6 +107,7 @@ void SaveCharacter (edict_t *ent)
 	if (debuginfo->value)
 		gi.dprintf("%s just called SaveMyCharacter()\n", ent->client->pers.netname);
 
+	//FIXME: something here is causing player corpses to come alive!
 	if (ent->health < 1)
 	{
 		// use respawn data

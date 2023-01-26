@@ -523,25 +523,28 @@ void drone_death (edict_t *self, edict_t *attacker)
 	}
 }
 
-void drone_heal (edict_t *self, edict_t *other)
+void drone_heal (edict_t *self, edict_t *other, qboolean heal_while_being_damaged)
 {
-	if ((self->health > 0) && (level.time > self->lasthurt + 0.5) && (level.framenum > self->monsterinfo.regen_delay1))
+	if (self->health > 0 && level.framenum > self->monsterinfo.regen_delay1)
 	{
-		// check health
-		if (self->health < self->max_health && other->client->pers.inventory[power_cube_index] >= 5)
+		if (heal_while_being_damaged || level.time > self->lasthurt + 0.5)
 		{
-			self->health_cache += (int)(0.50 * self->max_health) + 1;
-			self->monsterinfo.regen_delay1 = level.framenum + (int)(1 / FRAMETIME);
-			other->client->pers.inventory[power_cube_index] -= 5;
-		}
+			// check health
+			if (self->health < self->max_health && other->client->pers.inventory[power_cube_index] >= 5)
+			{
+				self->health_cache += (int)(0.50 * self->max_health) + 1;
+				self->monsterinfo.regen_delay1 = level.framenum + (int)(1 / FRAMETIME);
+				other->client->pers.inventory[power_cube_index] -= 5;
+			}
 
-		// check armor
-		if (self->monsterinfo.power_armor_power < self->monsterinfo.max_armor
-			&& other->client->pers.inventory[power_cube_index] >= 5)
-		{
-			self->armor_cache += (int)(0.50 * self->monsterinfo.max_armor) + 1;
-			self->monsterinfo.regen_delay1 = level.framenum + (int)(1 / FRAMETIME);
-			other->client->pers.inventory[power_cube_index] -= 5;
+			// check armor
+			if (self->monsterinfo.power_armor_power < self->monsterinfo.max_armor
+				&& other->client->pers.inventory[power_cube_index] >= 5)
+			{
+				self->armor_cache += (int)(0.50 * self->monsterinfo.max_armor) + 1;
+				self->monsterinfo.regen_delay1 = level.framenum + (int)(1 / FRAMETIME);
+				other->client->pers.inventory[power_cube_index] -= 5;
+			}
 		}
 	}
 }
@@ -605,7 +608,7 @@ void drone_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 		self->velocity[1] += forward[1] * 200;
 		self->velocity[2] += 200;
 
-		drone_heal(self, other->activator);
+		drone_heal(self, other->activator, false);
 		return;
 	}
 
@@ -650,7 +653,7 @@ void drone_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 		self->velocity[1] += forward[1] * 50;
 		self->velocity[2] += forward[2] * 50;
 
-		drone_heal(self, other);
+		drone_heal(self, other, false);
 	}
 }
 

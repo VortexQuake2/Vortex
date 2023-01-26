@@ -2098,6 +2098,7 @@ void Cmd_DrawBoundingBox_f (edict_t *ent)
 	trace_t	tr;
 
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
+	gi.dprintf("v_angle YAW %.0f PITCH %.0f\n", ent->client->v_angle[YAW], ent->client->v_angle[PITCH]);
 	VectorSet(offset, 0, 7,  ent->viewheight-8);
 	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
 	VectorMA(start, 8192, forward, end);
