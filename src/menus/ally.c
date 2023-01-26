@@ -373,6 +373,10 @@ int AddAllyExp (edict_t *ent, int exp)
 	int		i, allies=0;
 	edict_t	*cl_ent;
 
+	// alliances do not work while we're in ctf mode.
+	if (ctf->value > 0 || domination->value > 0)
+		return 0;
+
 	// get number of players allied with us
     allies = V_GetNumAllies(ent);
 	if (!allies)

@@ -265,6 +265,7 @@ void closemenu (edict_t *ent)
 	ent->client->menustorage.displaymsg = false;
 	ent->client->showinventory = false;
 	ent->client->trading = false; // done trading
+	ent->client->layout.dirty = true; // update the layout asap
 }
 
 /*

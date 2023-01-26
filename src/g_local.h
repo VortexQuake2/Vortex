@@ -2319,6 +2319,8 @@ qboolean BossExists (void);
 int numNearbyEntities (edict_t *ent, float dist, qboolean vis);
 void RemoveLasers (edict_t *ent);
 int vrx_apply_experience (edict_t *player, int exp);
+void vrx_award_all_attackers(edict_t* targ, edict_t* targetclient, edict_t* player, int bonus_xp);
+int vrx_award_exp(edict_t* attacker, edict_t* targ, edict_t* targetclient, int bonus_xp);
 float vrx_increase_monster_damage_by_talent(edict_t *owner, float damage);
 //K03 End
 

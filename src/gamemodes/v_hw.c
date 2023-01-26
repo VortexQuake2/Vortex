@@ -12,8 +12,6 @@
 
 extern int halo_index;
 
-int vrx_award_exp (edict_t *attacker, edict_t *targ, edict_t *targetclient);
-
 float hw_getdamagefactor(edict_t *targ, edict_t* attacker)
 {
 	if (targ && G_GetClient(targ))
@@ -62,7 +60,7 @@ void hw_deathcleanup(edict_t *targ, edict_t *attacker)
 		if (!player->inuse || G_IsSpectator(player) || player == targ || player->flags & FL_CHATPROTECT)
 			continue;
 		
-		vrx_award_exp(player, targ, targ);
+		vrx_award_exp(player, targ, targ, 0);
 	}
 }
 
