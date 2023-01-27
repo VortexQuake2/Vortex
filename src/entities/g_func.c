@@ -1014,6 +1014,12 @@ void Touch_DoorTrigger (edict_t *self, edict_t *other, cplane_t *plane, csurface
 	if (!G_GetClient(other) && !invasion->value)
 		return;
 
+	if (self->owner->teamnum)
+	{
+		if (self->owner->teamnum != other->teamnum)
+			return;
+	}
+
 //	if ((self->owner->spawnflags & DOOR_NOMONSTER) && (other->svflags & SVF_MONSTER))
 //		return;
 
