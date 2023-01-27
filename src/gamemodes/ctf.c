@@ -1760,13 +1760,13 @@ qboolean CTF_CheckSpawn(edict_t* self)
 	return true;
 }
 
-void CTF_CorrectSpawnPosition(edict_t* self)
+qboolean CTF_CorrectSpawnPosition(edict_t* self)
 {
 	// this Only runs in CTF.
 	if (ctf->value < 1) 
 		return;
 
-	int tries = 8;
+	int tries = 3;
 	vec3_t start;
 	VectorCopy(self->s.origin, start);
 
@@ -1774,20 +1774,37 @@ void CTF_CorrectSpawnPosition(edict_t* self)
 	{
 		if (CTF_CheckSpawn(self)) {
 			// We've done it! No need to continue trying to fix this spawn.
-			if (tries < 7)
-				gi.dprintf("had to fix a spawn at {%f,%f,%f}, took %d tries.\n", start[0], start[1], start[2], 7 - tries);
+			if (tries < 2)
+				gi.dprintf("had to fix a spawn at {%f,%f,%f}, took %d tries.\n", start[0], start[1], start[2], 2 - tries);
+
+			// now pull it down
+			const vec3_t mins = { -32, -32, -24 };
+			const vec3_t maxs = { 32, 32, -16 };
+			const vec3_t down = { 0, 0, -8192 };
+			vec3_t end;
+			VectorAdd(self->s.origin, down, end);
+			trace_t tr = gi.trace(self->s.origin, mins, maxs, end, self, MASK_PLAYERSOLID);
+
+			if (tr.ent == g_edicts) 
+			{
+				// hey we collided with the world so that's good,
+				// we're probably not overlapping something else.
+				VectorCopy(tr.endpos, self->s.origin);
+				VectorCopy(tr.endpos, self->s.old_origin);
+			}
 
 			return;
 		}
 
 		// we move the spawn a little bit up to give it a reasonable position.
-		const vec3_t up = { 0, 0, 4 };
+		const vec3_t up = { 0, 0, 8 };
 		VectorAdd(up, self->s.origin, self->s.origin);
 		VectorCopy(self->s.origin, self->s.old_origin);
 	}
 
 	// oh no!! this sucks!!
 	gi.dprintf("couldn't fix spawn at {%f,%f,%f}. erasing\n", start[0], start[1], start[2]);
+	G_FreeEdict(self);
 }
 
 void SP_info_player_team1(edict_t* self)
@@ -1798,9 +1815,9 @@ void SP_info_player_team1(edict_t* self)
 		return;
 	}
 
-	CTF_CorrectSpawnPosition(self);
+	qboolean success = CTF_CorrectSpawnPosition(self);
 
-	if (ctf->value && debuginfo->value > 0)
+	if (ctf->value && debuginfo->value > 0 && success)
 	{
 		gi.setmodel(self, "models/objects/dmspot/tris.md2");
 		self->s.skinnum = 0;
@@ -1818,9 +1835,9 @@ void SP_info_player_team2(edict_t* self)
 		return;
 	}
 	
-	CTF_CorrectSpawnPosition(self);
+	qboolean success = CTF_CorrectSpawnPosition(self);
 
-	if (ctf->value && debuginfo->value > 0)
+	if (ctf->value && debuginfo->value > 0 && success)
 	{
 		gi.setmodel(self, "models/objects/dmspot/tris.md2");
 		self->s.skinnum = 0;

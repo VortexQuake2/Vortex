@@ -109,7 +109,7 @@ void SP_info_player_start(edict_t *self)
 potential spawning position for deathmatch games
 */
 
-void CTF_CorrectSpawnPosition(edict_t* self);
+qboolean CTF_CorrectSpawnPosition(edict_t* self);
 
 void SP_info_player_deathmatch(edict_t *self)
 {
