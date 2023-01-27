@@ -11,6 +11,7 @@ qboolean CTF_PickupFlag (edict_t *ent, edict_t *other);
 void CTF_DropFlag (edict_t *ent, gitem_t *item);
 void CTF_SpawnFlag (int teamnum, vec3_t point);
 char *CTF_GetTeamString (int teamnum);
+char* CTF_GetShortTeam(int teamnum);
 void CTF_SpawnFlagBase (int teamnum, vec3_t point);
 void CTF_Init (void);
 void CTF_ShutDown (void);

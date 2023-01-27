@@ -309,6 +309,8 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 	layout_apply_pos(&scoreboard, cursor);
 	if (pvm->value)
 		entry = lva("Name            Lv Cl         Score Png");
+	else if (ctf->value)
+		entry = lva("Name            Lv Cl Score Frg Tm  Png");
 	else
 		entry = lva("Name            Lv Cl Score Frg Spr Png");
 	layout_add_highlight_string(&scoreboard, entry.str);
@@ -364,7 +366,20 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 				cl_ent->client->resp.spectator ? 0 : cl->resp.score,
 				cl->ping
 			);
-		} else
+		}
+		else if (ctf->value)
+		{
+			entry = lva("%s%s %2i %s %5i %3i %s %3i",
+				prefix, name,
+				cl_ent->client->resp.spectator ? 0 : cl_ent->myskills.level,
+				cl_ent->client->resp.spectator ? "??" : classname,
+				cl_ent->client->resp.spectator ? 0 : cl->resp.score,
+				cl_ent->client->resp.spectator ? 0 : cl->resp.frags,
+				cl_ent->client->resp.spectator ? "?? " : CTF_GetShortTeam(cl_ent->teamnum),
+				cl->ping
+			);
+		}
+		else
 		{
 			entry = lva("%s%s %2i %s %5i %3i %3i %3i",
 				prefix, name,

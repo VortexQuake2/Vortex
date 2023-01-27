@@ -89,6 +89,16 @@ int CTF_GetNumClassPlayers (int classnum, int teamnum)
 	return numPlayers;
 }
 
+char* CTF_GetShortTeam(int teamnum)
+{
+	switch (teamnum)
+	{
+	case 1: return "Red";
+	case 2: return "Blu";
+	default: return "?? ";
+	}
+}
+
 char *CTF_GetTeamString (int teamnum)
 {
 	switch (teamnum)
@@ -883,7 +893,7 @@ void CTF_AwardFrag (edict_t *attacker, edict_t *target)
 {
 	int		points=0, credits=0;
 	int		enemy_teamnum;
-	edict_t	*team_fc, *enemy_fc, *team_base, *enemy_base, *team_spawn, *enemy_spawn;
+	edict_t* team_fc, * enemy_fc, * team_base, * enemy_base;//, * team_spawn, * enemy_spawn;
 
 	if (vrx_get_joined_players() < CTF_MINIMUM_PLAYERS)
 		return;
