@@ -1261,4 +1261,13 @@ base64_monsters				= 100
 city64_monsters				= 100
 spogsp1_monsters			= 100
 hwytohell_monsters			 = 75
+lavatube_monsters = 24
+vrxdm1_monsters             = 16
+q2dm7_monsters  = 10
+q2dm8_monsters             = 14
+ktdm8_monsters = 14
+q2rdm8_monsters  = 12
+q2rdm9_monsters = 12
+nexus2_monsters = 12
+
 
