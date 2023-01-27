@@ -65,6 +65,12 @@ void Touch_Multi (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 	else
 		return;
 
+	if (self->teamnum)
+	{
+		if (other->teamnum != self->teamnum)
+			return;
+	}
+
 	if (!VectorCompare(self->movedir, vec3_origin))
 	{
 		vec3_t	forward;
@@ -563,6 +569,12 @@ void hurt_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *sur
 
 	if (!other->takedamage)
 		return;
+
+	if (self->teamnum)
+	{
+		if (other->teamnum != self->teamnum)
+			return;
+	}
 
 	if (self->timestamp > level.time)
 		return;

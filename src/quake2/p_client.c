@@ -108,6 +108,9 @@ void SP_info_player_start(edict_t *self)
 /*QUAKED info_player_deathmatch (1 0 1) (-16 -16 -24) (16 16 32)
 potential spawning position for deathmatch games
 */
+
+qboolean CTF_CorrectSpawnPosition(edict_t* self);
+
 void SP_info_player_deathmatch(edict_t *self)
 {
 	if (!deathmatch->value)
@@ -115,6 +118,8 @@ void SP_info_player_deathmatch(edict_t *self)
 		G_FreeEdict (self);
 		return;
 	}
+
+	CTF_CorrectSpawnPosition(self);
 	SP_misc_teleporter_dest (self);
 }
 
