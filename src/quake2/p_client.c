@@ -1569,6 +1569,15 @@ void body_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *sur
 
 void body_think (edict_t *self)
 {
+	/*
+	if (level.time > self->delay)
+	{
+		gi.dprintf("hide the body!\n");
+		self->svflags |= SVF_NOCLIENT;
+		gi.unlinkentity(self);
+		return;
+	}*/
+
 	self->s.effects = 0;
 	self->s.renderfx = 0;
 
@@ -1590,6 +1599,11 @@ void body_think (edict_t *self)
 void CopyToBodyQue (edict_t *ent)
 {
 	edict_t		*body;
+
+	//gi.dprintf("CopyToBodyQue\n");
+	//gi.dprintf("effects %d damage %d movetype %d frame %d\n", ent->s.effects, ent->takedamage, ent->movetype, ent->s.frame);
+	//if (ent->solid == SOLID_NOT)
+	//	gi.dprintf("copytobodyque called on nonsolid\n");
 
 	// grab a body que and cycle to the next one
 	body = &g_edicts[(int)maxclients->value + level.body_que + 1];
@@ -1619,6 +1633,9 @@ void CopyToBodyQue (edict_t *ent)
 	body->die = body_die;
 	body->takedamage = DAMAGE_YES;
 //GHz START
+	//body->think = body_think;
+	//body->nextthink = level.time + FRAMETIME;
+	//body->delay = level.time + GetRandom(5, 10);// hide the body after some time
 	body->deadflag = DEAD_DEAD; // added so its easier to identify a body
 	body->gib_health = ent->gib_health; // necessary for corpse explosion and yin spirit
 	body->max_health = ent->max_health;//4.55

@@ -6,7 +6,7 @@
 #define GROUP_ATTACKERS				1
 #define GROUP_DEFENDERS				2
 
-
+qboolean CTF_IsFlag(edict_t* ent);
 qboolean CTF_PickupFlag (edict_t *ent, edict_t *other);
 void CTF_DropFlag (edict_t *ent, gitem_t *item);
 void CTF_SpawnFlag (int teamnum, vec3_t point);

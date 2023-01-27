@@ -814,6 +814,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 	//gi.dprintf("T_damage\n");
 	// 3.7 respawn flag if it's being crushed
+	//FIXME: MOD_TRIGGER_HURT won't work on entities that won't takedamage
 	if (mod == MOD_CRUSH || mod == MOD_TRIGGER_HURT) // vrxchile 2.5: or we fall into nothingness
 	{
 		//gi.dprintf("flag is being crushed\n");

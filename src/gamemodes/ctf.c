@@ -545,6 +545,21 @@ void CTF_DropFlag (edict_t *ent, gitem_t *item)
 	CTF_RemoveSpecialFcRules(ent);
 }
 
+qboolean CTF_IsFlag(edict_t* ent)
+{
+	if (!ctf->value)
+		return false;
+	if (!ent || !ent->inuse)
+		return false;
+	if (!ent->item)
+		return false;
+	if (!Q_strcasecmp(ent->classname, "item_redflag"))
+		return true;
+	if (!Q_strcasecmp(ent->classname, "item_blueflag"))
+		return true;
+	return false;
+}
+
 void CTF_SpawnFlag (int teamnum, vec3_t point)
 {
 	edict_t *flag;
@@ -1378,20 +1393,31 @@ void CTF_CheckFlag (edict_t *ent)
 	int		index, teamnum;
 	edict_t	*base;
 
+	//gi.dprintf("CTF_CheckFlag called on %s\n", ent->classname);
+
 	if (!ctf->value)
 		return;
 	if (!ent || !ent->inuse || !ent->item)
+	{
+		//gi.dprintf("not an item or not inuse\n");
 		return;
+	}
 
 	// get item index
 	index = ITEM_INDEX(ent->item);
 
 	if (!index)
+	{
+		//gi.dprintf("couldnt get item index\n");
 		return;
+	}
 
 	// is this a ctf flag?
 	if ((index != red_flag_index) && (index != blue_flag_index))
+	{
+		//gi.dprintf("not a ctf flag\n");
 		return;
+	}
 
 	// determine team number by the flag's item index
 	teamnum = CTF_GetTeamByFlagIndex(index);
@@ -1401,6 +1427,8 @@ void CTF_CheckFlag (edict_t *ent)
 	{
 		CTF_SpawnFlagAtBase(base, teamnum);
 		gi.bprintf(PRINT_HIGH, "The %s flag was re-spawned.\n", CTF_GetTeamString(teamnum));
+		// remove the old flag
+		BecomeTE(ent);
 		return;
 	}
 
@@ -1774,7 +1802,7 @@ qboolean CTF_CorrectSpawnPosition(edict_t* self)
 {
 	// this Only runs in CTF.
 	if (ctf->value < 1) 
-		return;
+		return false;
 
 	int tries = 3;
 	vec3_t start;
@@ -1784,8 +1812,8 @@ qboolean CTF_CorrectSpawnPosition(edict_t* self)
 	{
 		if (CTF_CheckSpawn(self)) {
 			// We've done it! No need to continue trying to fix this spawn.
-			if (tries < 2)
-				gi.dprintf("had to fix a spawn at {%f,%f,%f}, took %d tries.\n", start[0], start[1], start[2], 2 - tries);
+			//if (tries < 2)
+			//	gi.dprintf("had to fix a spawn at {%f,%f,%f}, took %d tries.\n", start[0], start[1], start[2], 2 - tries);
 
 			// now pull it down
 			const vec3_t mins = { -32, -32, -24 };
@@ -1803,7 +1831,7 @@ qboolean CTF_CorrectSpawnPosition(edict_t* self)
 				VectorCopy(tr.endpos, self->s.old_origin);
 			}
 
-			return;
+			return true;
 		}
 
 		// we move the spawn a little bit up to give it a reasonable position.
@@ -1815,6 +1843,7 @@ qboolean CTF_CorrectSpawnPosition(edict_t* self)
 	// oh no!! this sucks!!
 	gi.dprintf("couldn't fix spawn at {%f,%f,%f}. erasing\n", start[0], start[1], start[2]);
 	G_FreeEdict(self);
+	return false;
 }
 
 void SP_info_player_team1(edict_t* self)

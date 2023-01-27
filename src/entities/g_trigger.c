@@ -562,10 +562,12 @@ void hurt_use (edict_t *self, edict_t *other, edict_t *activator)
 		self->use = NULL;
 }
 
-
+void V_RespawnItems(edict_t* ent);//GHz
 void hurt_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
 	int		dflags;
+
+	V_RespawnItems(other);
 
 	if (!other->takedamage)
 		return;

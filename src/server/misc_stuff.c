@@ -138,20 +138,24 @@ csurface_t* FindSky()
 //FIXME: this should try to use grd coordinates first
 qboolean GetGridPosition(vec3_t pos, int index);
 qboolean GetRandomGridPosition(vec3_t pos);
+int GetGridNodes();
 qboolean vrx_find_random_spawn_point (edict_t *ent, qboolean air)
 {
-	int		i, j=0, mask;
+	int		max_tries=1000,grd_nodes = GetGridNodes(),i, j = 0, mask;
 	vec3_t	start, end, forward, right;
 	trace_t	tr;
 
 	//gi.dprintf("vrx_find_random_spawn_point()\n");
 
+	if (grd_nodes > 0.5*max_tries)
+		grd_nodes = 0.5*max_tries;
+
 	mask = (MASK_MONSTERSOLID|MASK_PLAYERSOLID|MASK_SOLID);
 
-	for (j=0;j<1000;j++)
+	for (j=0;j<max_tries;j++)
 	{
 		// try to use a random grid position first, then fall back to random coordinates
-		if (j > 10 || !GetRandomGridPosition(start))
+		if (j > 100 || !GetRandomGridPosition(start))
 		{
 			//gi.dprintf("couldn't get a random grid position\n");
 			// get a random position within a map
@@ -661,4 +665,22 @@ void V_PrintSayPrefix (edict_t *speaker, edict_t *listener, char *text)
 	Com_sprintf (temp, sizeof(temp), "%s%s", temp, text);
 
 	gi.cprintf (listener, PRINT_CHAT, "%s", temp);
+}
+
+void tech_checkrespawn(edict_t* ent);
+qboolean IsBackpack(edict_t* ent);
+
+//FIXME: this function could be called frequently and could cause CPU to spike
+// this function will remove and respawn entities if, for example, if they fell on a trigger_hurt
+void V_RespawnItems(edict_t* ent)
+{
+	// if this is a CTF flag, then respawn it at base!
+	if (CTF_IsFlag(ent))
+		CTF_CheckFlag(ent);
+	//hw_checkflag(targ);
+
+	// functions below could be CPU-heavy if there is no grd file present
+	tech_checkrespawn(ent);
+	if (IsBackpack(ent))
+		vrx_find_random_spawn_point(ent, false);
 }

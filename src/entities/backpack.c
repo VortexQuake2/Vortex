@@ -40,6 +40,15 @@ gitem_t *item=itemlist;
   G_FreeEdict(pack);
 }
 
+qboolean IsBackpack(edict_t* ent)
+{
+	if (!ent || !ent->inuse)
+		return false;
+	if (ent->style && ent->owner && ent->owner == world && ent->movetype == MOVETYPE_TOSS
+		&& !ent->takedamage && !ent->health && ent->deadflag == DEAD_DEAD && ent->solid == SOLID_TRIGGER)
+		return true;
+	return false;
+}
 
 void vrx_toss_backpack(edict_t *player, edict_t *attacker) {
 int i,quantity;

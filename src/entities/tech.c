@@ -79,7 +79,8 @@ void tech_checkrespawn(edict_t *ent) {
         return;
 
     // try to respawn tech
-    tech_spawn(index);
+    if (tech_spawn(index))
+        BecomeTE(ent);
 }
 
 void tech_spawnall(void) {

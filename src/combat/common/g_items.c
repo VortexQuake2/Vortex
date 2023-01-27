@@ -1088,9 +1088,12 @@ void Touch_Item(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
         // runes are freed after 2 minutes instead of 30 seconds
         if (ent->vrxitem.itemLevel)
             ent->nextthink = level.time + 119;
+        // dropped player items, 30 seconds
+        else if (ent->spawnflags == DROPPED_PLAYER_ITEM)
+            ent->nextthink = level.time + 30;
         else
-        // everything else, between 15-30 seconds
-            ent->nextthink = level.time + GetRandom(15, 29);
+        // everything else, between 10-20 seconds
+            ent->nextthink = level.time + GetRandom(10, 20);
         ent->think = G_FreeEdict;
     }
 }

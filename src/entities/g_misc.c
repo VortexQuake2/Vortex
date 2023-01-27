@@ -226,6 +226,8 @@ void ThrowClientHead(edict_t *self, int damage)
 	vec3_t	vd;
 	char	*gibname;
 
+	//gi.dprintf("ThrowClientHead\n");
+
 	if (randomMT() & 1)
 	{
 		gibname = "models/objects/gibs/head2/tris.md2";
@@ -248,6 +250,8 @@ void ThrowClientHead(edict_t *self, int damage)
 	self->s.effects = EF_GIB;
 	self->s.sound = 0;
 	self->flags |= FL_NO_KNOCKBACK;
+	//self->think = head_think;//GHz
+	//self->nextthink = level.time + FRAMETIME;//GHz
 
 	self->movetype = MOVETYPE_BOUNCE;
 	VelocityForDamage(damage, vd);
@@ -255,6 +259,7 @@ void ThrowClientHead(edict_t *self, int damage)
 
 	if (self->client)	// bodies in the queue don't have a client anymore
 	{
+		//gi.dprintf("client\n");
 		if (!(self->svflags & SVF_MONSTER))
 		{
 			self->client->anim_priority = ANIM_DEATH;
@@ -270,8 +275,10 @@ void ThrowClientHead(edict_t *self, int damage)
 	}
 	else
 	{
-		self->think = NULL;
-		self->nextthink = 0;
+		//gi.dprintf("not a client: free!!\n");
+		self->think = NULL;//G_FreeAnyEdict;
+		self->nextthink = 0;// level.time + FRAMETIME;
+		return;
 	}
 
 	gi.linkentity(self);

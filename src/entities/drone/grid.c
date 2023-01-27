@@ -1227,6 +1227,11 @@ void InvalidateGridCache() {
     }
 }
 
+int GetGridNodes()
+{
+	return numnodes;
+}
+
 qboolean GetRandomGridPosition(vec3_t pos)
 {
 	int index;
