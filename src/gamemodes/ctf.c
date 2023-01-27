@@ -1802,7 +1802,7 @@ qboolean CTF_CorrectSpawnPosition(edict_t* self)
 {
 	// this Only runs in CTF.
 	if (ctf->value < 1) 
-		return false;
+		return true;
 
 	int tries = 3;
 	vec3_t start;
