@@ -75,6 +75,8 @@ field_t fields[] = {
 	{ "volume", FOFS(volume), F_FLOAT },
 	{ "attenuation", FOFS(attenuation), F_FLOAT },
 	{ "map", FOFS(map), F_LSTRING },
+	{"wf_team", FOFS(teamnum), F_INT },
+
 	//arena
 	{ "arena", FOFS(arena), F_INT },
 	//end arena
