@@ -1774,7 +1774,7 @@ qboolean CTF_CorrectSpawnPosition(edict_t* self)
 {
 	// this Only runs in CTF.
 	if (ctf->value < 1) 
-		return;
+		return true;
 
 	int tries = 3;
 	vec3_t start;
@@ -1803,7 +1803,7 @@ qboolean CTF_CorrectSpawnPosition(edict_t* self)
 				VectorCopy(tr.endpos, self->s.old_origin);
 			}
 
-			return;
+			return true;
 		}
 
 		// we move the spawn a little bit up to give it a reasonable position.
@@ -1815,6 +1815,7 @@ qboolean CTF_CorrectSpawnPosition(edict_t* self)
 	// oh no!! this sucks!!
 	gi.dprintf("couldn't fix spawn at {%f,%f,%f}. erasing\n", start[0], start[1], start[2]);
 	G_FreeEdict(self);
+	return false;
 }
 
 void SP_info_player_team1(edict_t* self)
