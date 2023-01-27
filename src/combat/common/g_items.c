@@ -1089,7 +1089,8 @@ void Touch_Item(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
         if (ent->vrxitem.itemLevel)
             ent->nextthink = level.time + 119;
         else
-            ent->nextthink = level.time + 29;
+        // everything else, between 15-30 seconds
+            ent->nextthink = level.time + GetRandom(15, 29);
         ent->think = G_FreeEdict;
     }
 }
