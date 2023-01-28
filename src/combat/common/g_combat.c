@@ -810,6 +810,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	upgrade_t	*ability;//4.2 for fury
 	qboolean	target_has_pilot = PM_MonsterHasPilot(targ);
 	qboolean	attacker_has_pilot = PM_MonsterHasPilot(attacker);
+	qboolean	same_team = false;//GHz
 	que_t		*slot=NULL;
 
 	//gi.dprintf("T_damage\n");
@@ -905,7 +906,8 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	*/
 	
 	// teammates can't knock your summonables around
-	if (OnSameTeam(targ, attacker) && (attacker != targ) && !(targ->activator && (targ->activator == attacker)) 
+	same_team = OnSameTeam(targ, attacker);
+	if (same_team && (attacker != targ) && !(targ->activator && (targ->activator == attacker)) 
 		&& !(targ->creator && (targ->creator == attacker)))
 		knockback = 0;
 
@@ -942,7 +944,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	// knockback still occurs
 	if ((targ != attacker) && ((deathmatch->value && ((int)(dmflags->value) & (DF_MODELTEAMS | DF_SKINTEAMS))) || coop->value))
 	{
-		if (OnSameTeam (targ, attacker))
+		if (same_team)
 		{
 			if ((int)(dmflags->value) & DF_NO_FRIENDLY_FIRE)
 				damage = 0;
@@ -1185,7 +1187,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		targ->health -= take;
 
 		//4.1 Darkness totem gives players a seperate vampire effect.
-		if(player && (attacker_has_pilot || attacker->client))
+		if(player && (attacker_has_pilot || attacker->client) && !same_team)
 		{
 			edict_t *totem = NextNearestTotem(player, TOTEM_DARKNESS, NULL, true);
 			int maxHP = player->max_health;//MAX_HEALTH(player);
@@ -1233,7 +1235,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		}
 
 		// vampire effect
-		if (CanUseVampire(targ, attacker, dflags, mod))
+		if (CanUseVampire(targ, attacker, dflags, mod) && !same_team)
 			G_ApplyVampire(attacker, take);
 
 		//4.1 Players with fury might get their ability triggered

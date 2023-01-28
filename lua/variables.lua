@@ -138,10 +138,10 @@ CELLS_PICKUP                             = 50
 SLUGS_PICKUP                             = 8
 
 -- Experience Base
-EXP_PLAYER_BASE 						 = 40
-EXP_MINIBOSS 							 = 100
-EXP_PLAYER_MONSTER 					     = 10
-EXP_WORLD_MONSTER 						 = 30
+EXP_PLAYER_BASE 						 = 100
+EXP_MINIBOSS 							 = 150
+EXP_PLAYER_MONSTER 					     = 25
+EXP_WORLD_MONSTER 						 = 50
 
 -- Credits base
 CREDITS_PLAYER_BASE                      = 15

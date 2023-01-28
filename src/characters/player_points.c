@@ -384,12 +384,16 @@ int vrx_get_kill_base_experience(
     if (!attacker || !attacker->inuse || !attacker->client)
         return 0;
 
+    // don't give experience for friendly fire
+    if (OnSameTeam(targ, attacker))
+        return 0;
+    /*
     // don't give exp for friendly fire in invasion mode
     if ((targ->client ||
          (targ->owner && targ->owner->client) ||
          (targ->activator && targ->activator->client)) &&
         invasion->value > 0)
-        return 0;
+        return 0;*/
 
     // don't award points for monster that was just resurrected
     if (targ->monsterinfo.resurrected_time > level.time)
