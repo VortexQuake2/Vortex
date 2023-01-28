@@ -252,6 +252,10 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		addlinetomenu(ent, "Passive ability. Reduces", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "world damage (e.g. lava).", MENU_WHITE_CENTERED);
 		return 2;
+	case AMMO_REGEN:
+		addlinetomenu(ent, "Passive ability. Regenerates", MENU_WHITE_CENTERED);
+		addlinetomenu(ent, "ammunition for weapons.", MENU_WHITE_CENTERED);
+		return 2;
 	case SHELL_RESIST:
 		addlinetomenu(ent, "Passive ability. Reduces", MENU_WHITE_CENTERED);
 		addlinetomenu(ent, "damage from shell-based", MENU_WHITE_CENTERED);
