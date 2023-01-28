@@ -976,7 +976,7 @@ void vrx_open_ability_menu(
 	qboolean use_upgrade_line
 ) {
 	upgrade_t* ability = &ent->myskills.abilities[ability_index];
-	int level = ability->current_level;
+	int level = ability->level;//current_level;
 	int lineCount = 7;//12;
 
 	if (!ShowMenu(ent))

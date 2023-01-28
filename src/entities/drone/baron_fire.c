@@ -290,14 +290,15 @@ void flame_think(edict_t* self)
 
 void flame_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* surf)
 {
-	int damage;
-	float slvl;
+	//int damage;
+	//float slvl;
 
 	if (other == self)
 		return;
 
 	if (G_EntExists(other) && !OnSameTeam(self, other))
 	{
+		/*
 		slvl = drone_damagelevel(self->owner);
 		// 100% of health over 5 seconds at level 10
 		damage = other->max_health * (0.1 + 0.01 * slvl);
@@ -305,14 +306,15 @@ void flame_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* sur
 			damage = 20;
 		if (damage > 1000)
 			damage = 1000;
+		*/
 		// set them on fire
-		burn_person(other, self->owner, sf2qf(self->dmg));
+		burn_person(other, self->owner, sf2qf(self->dmg_radius));
 
 		// hurt them
 		if (level.framenum >= self->monsterinfo.nextattack)
 		{
 			T_Damage(other, self, self->owner, vec3_origin, self->s.origin,
-				plane->normal, damage, 0, DAMAGE_NO_KNOCKBACK, MOD_BURN);
+				plane->normal, self->dmg, 0, DAMAGE_NO_KNOCKBACK, MOD_BURN);
 			self->monsterinfo.nextattack = level.framenum + 1;
 		}
 		// actively hurting something--don't free us yet!
@@ -325,7 +327,7 @@ void flame_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* sur
 	}
 }
 
-void circle_of_flames(edict_t* self, int count, int damage, float speed)
+void circle_of_flames(edict_t* self, int count, int damage, int burn_damage, float speed)
 {
 	int			i;
 	float		deg;
@@ -359,6 +361,7 @@ void circle_of_flames(edict_t* self, int count, int damage, float speed)
 		flame->touch = flame_touch;
 		flame->think = flame_think;
 		flame->dmg = damage;
+		flame->dmg_radius = burn_damage;
 		flame->s.frame = 15;//21-32
 		flame->classname = "flame";
 		flame->delay = level.time + 10.0;
@@ -370,12 +373,13 @@ void circle_of_flames(edict_t* self, int count, int damage, float speed)
 
 void fire_baron_cof_attack(edict_t* self)
 {
-	int damage;
+	int damage, burn;
 	float slvl = drone_damagelevel(self);
 
-	damage = FIREBALL_INITIAL_FLAMEDMG + FIREBALL_ADDON_FLAMEDMG * slvl;
+	damage = METEOR_INITIAL_DMG + METEOR_ADDON_DMG * slvl;
+	burn = 0.1 * damage;
 
-	circle_of_flames(self, 16, damage, 300);
+	circle_of_flames(self, 16, damage, burn, 350);
 }
 
 mframe_t baron_fire_frames_swipe[] =

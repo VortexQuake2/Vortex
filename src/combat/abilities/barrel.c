@@ -1,31 +1,51 @@
 #include "g_local.h"
 
-void barrel_remove(edict_t* self)
+void barrel_remove(edict_t* self, qboolean refund)
 {
+	if (!self || !self->inuse || self->deadflag == DEAD_DEAD)
+		return;
+
 	// reduce armor count
 	if (self->creator && self->creator->inuse && self->creator->client)
 	{
 		// reduce count
 		self->creator->num_barrels--;
+		// refund player
+		if (refund)
+			self->creator->client->pers.inventory[power_cube_index] += self->monsterinfo.cost;
 		// drop it
 		if (self->creator->client->pickup && self->creator->client->pickup->inuse && self->creator->client->pickup == self)
 			self->creator->client->pickup = NULL;
 		// remove from HUD
 		layout_remove_tracked_entity(&self->creator->client->layout, self);
 	}
+
+	self->think = BecomeExplosion1;
+	self->nextthink = level.time + FRAMETIME;
+	self->svflags |= SVF_NOCLIENT;
+	self->takedamage = DAMAGE_NO;
+	self->solid = SOLID_NOT;
+	self->deadflag = DEAD_DEAD;
 }
 
 void barrel_think(edict_t* self)
 {
 	if (!G_EntIsAlive(self->creator))
 	{
-		barrel_remove(self);
-		BecomeExplosion1(self);
+		barrel_remove(self, false);
+		return;
+	}
+
+	if (gi.pointcontents(self->s.origin) & CONTENTS_SOLID)
+	{
+		gi.dprintf("Barrel was removed from a solid object.\n");
+		barrel_remove(self, true);
+		safe_cprintf(self->creator, PRINT_HIGH, "Removed barrel from a solid object (%d/%d).\n", self->creator->num_barrels, (int)EXPLODING_BARREL_MAX_COUNT);
 		return;
 	}
 
 	// is a player holding this barrel?
-	if (self->creator->client && self->creator->client->pickup)
+	if (self->creator->client && self->creator->client->pickup && self->creator->client->pickup == self)
 	{
 		// make barrel non-solid to player while being held
 		self->owner = self->creator;
@@ -70,33 +90,11 @@ void BarrelDetonate(edict_t* self)
 	if (self->solid == SOLID_NOT)
 		return; // already flagged for removal
 
+	barrel_remove(self, false);
+
 	// creator no longer valid?
 	if (!G_EntExists(self->creator))
-	{
-		barrel_remove(self);
-		// remove the barrel entity
-		BecomeExplosion1(self);
 		return;
-	}
-
-	// mark for removal
-	self->think = G_FreeEdict;
-	self->nextthink = level.time + FRAMETIME;
-	self->solid = SOLID_NOT;
-	self->takedamage = DAMAGE_NO;
-
-	// create explosion effect
-	gi.WriteByte(svc_temp_entity);
-	if (self->waterlevel)
-		gi.WriteByte(TE_ROCKET_EXPLOSION_WATER);
-	else
-		gi.WriteByte(TE_ROCKET_EXPLOSION);
-	gi.WritePosition(self->s.origin);
-	gi.multicast(self->s.origin, MULTICAST_PHS);
-
-	// reduce armor count
-	//self->creator->num_barrels--;
-	barrel_remove(self);
 
 	safe_cprintf(self->creator, PRINT_HIGH, "Barrel detonated! (%d/%d)\n", self->creator->num_barrels, (int)EXPLODING_BARREL_MAX_COUNT);
 
@@ -173,6 +171,7 @@ void SpawnExplodingBarrel(edict_t* ent)
 	VectorSet(barrel->mins, -16, -16, 0);
 	VectorSet(barrel->maxs, 16, 16, 40);
 	barrel->monsterinfo.level = ent->myskills.abilities[EXPLODING_BARREL].current_level;
+	barrel->monsterinfo.cost = EXPLODING_BARREL_COST;
 	barrel->health = barrel->max_health = EXPLODING_BARREL_INITIAL_HEALTH + EXPLODING_BARREL_ADDON_HEALTH * barrel->monsterinfo.level;
 	barrel->mass = 100;
 	barrel->takedamage = DAMAGE_YES;
@@ -189,6 +188,7 @@ void SpawnExplodingBarrel(edict_t* ent)
 	VectorSet(offset, 0, 8, ent->viewheight - 8);
 	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
 
+	//FIXME: this function modifies start and returns the tr.endpos, so the next bit of code may push the starting position into a wall!
 	if (!G_GetSpawnLocation(ent, 48, barrel->mins, barrel->maxs, start, NULL))
 	{
 		G_FreeEdict(barrel);
@@ -196,7 +196,9 @@ void SpawnExplodingBarrel(edict_t* ent)
 	}
 
 	// move armor into position
-	VectorMA(start, 48, forward, barrel->s.origin);
+	VectorCopy(start, barrel->s.origin);
+	VectorCopy(start, barrel->s.old_origin);
+	//VectorMA(start, 48, forward, barrel->s.origin);
 	gi.linkentity(barrel);
 
 	//VectorClear(armor->avelocity);
@@ -205,10 +207,10 @@ void SpawnExplodingBarrel(edict_t* ent)
 	barrel->s.angles[ROLL] = 0;
 
 	ent->num_barrels++;
+	ent->client->pers.inventory[power_cube_index] -= barrel->monsterinfo.cost;
 	safe_cprintf(ent, PRINT_HIGH, "Spawned exploding barrel (%d/%d)\n", ent->num_barrels, (int)EXPLODING_BARREL_MAX_COUNT);
 	// pick it up!
 	ent->client->pickup = barrel;
-	ent->client->pers.inventory[power_cube_index] -= EXPLODING_BARREL_COST;
 }
 
 void V_PickUpEntity(edict_t* ent)
@@ -236,34 +238,31 @@ void V_PickUpEntity(edict_t* ent)
 	dist = ent->maxs[0] + other->maxs[0] + 0.1 * VectorLength(ent->velocity) + 8;
 	VectorMA(start, dist, forward, start);
 	// check for obstructions
-	tr = gi.trace(start, other->mins, other->maxs, start, other, MASK_SHOT);
-	if (tr.allsolid || tr.startsolid || tr.fraction < 1)
+	tr = gi.trace(ent->s.origin, other->mins, other->maxs, start, other, MASK_SHOT);
+	if (tr.allsolid || tr.startsolid)// || tr.fraction < 1)
 	{
 		//gi.dprintf("obstruction\n");
 		//ent->client->pickup = NULL;
 		return;
 	}
 	// move into position
-	VectorCopy(start, other->s.origin);
-	VectorCopy(start, other->s.old_origin);
+	VectorCopy(tr.endpos, other->s.origin);
+	VectorCopy(tr.endpos, other->s.old_origin);
 	gi.linkentity(other);
 	VectorClear(other->velocity);
 }
 
-void RemoveExplodingBarrels(edict_t* ent)
+void RemoveExplodingBarrels(edict_t* ent, qboolean refund)
 {
 	edict_t* e = NULL;
 
 	while ((e = G_Find(e, FOFS(classname), "barrel")) != NULL)
 	{
 		if (e && e->inuse && (e->creator == ent))
-		{
-			e->think = G_FreeEdict;
-			e->nextthink = level.time + FRAMETIME;
-		}
+			barrel_remove(e, refund);
 	}
 
-	// reset armor counter
+	// reset barrel counter
 	ent->num_barrels = 0;
 }
 
@@ -274,7 +273,7 @@ void Cmd_ExplodingBarrel_f(edict_t* ent)
 
 	if (Q_strcasecmp(gi.args(), "remove") == 0)
 	{
-		RemoveExplodingBarrels(ent);
+		RemoveExplodingBarrels(ent, true);
 		safe_cprintf(ent, PRINT_HIGH, "All exploding barrels removed.\n");
 		return;
 	}

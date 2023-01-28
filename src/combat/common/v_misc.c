@@ -365,7 +365,7 @@ void sentrygun_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 
 void RemoveExplodingArmor(edict_t *ent);
 
-void RemoveExplodingBarrels(edict_t* ent);
+void RemoveExplodingBarrels(edict_t* ent, qboolean refund);
 
 void RemoveAutoCannons(edict_t *ent);
 
@@ -416,7 +416,7 @@ void vrx_remove_player_summonables(edict_t *self) {
     RemoveMagmines(self);
     RemoveNapalmGrenades(self);
     RemoveExplodingArmor(self);
-    RemoveExplodingBarrels(self);
+    RemoveExplodingBarrels(self, false);
     RemoveAutoCannons(self);
     RemoveMiniSentries(self);
     RemoveAllLaserPlatforms(self);

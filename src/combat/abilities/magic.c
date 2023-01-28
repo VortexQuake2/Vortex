@@ -988,7 +988,17 @@ void TeleportBehindTarget(edict_t* self, edict_t* target, float dist)
 
 void Cmd_BlinkStrike_f(edict_t* self)
 {
+	int cost;
 	edict_t* target=NULL;
+
+	cost = BLINKSTRIKE_INITIAL_COST + BLINKSTRIKE_ADDON_COST * self->myskills.abilities[BLINKSTRIKE].current_level;
+	if (BLINKSTRIKE_MIN_COST && cost < BLINKSTRIKE_MIN_COST)
+		cost = BLINKSTRIKE_MIN_COST;
+
+	if (!G_CanUseAbilities(self, self->myskills.abilities[BLINKSTRIKE].current_level, cost))
+		return;
+	if (self->myskills.abilities[BLINKSTRIKE].disable)
+		return;
 
 	while ((target = findclosestreticle(target, self, 1024)) != NULL)
 	{

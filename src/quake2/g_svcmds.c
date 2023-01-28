@@ -302,7 +302,7 @@ void	Svcmd_Test_f (void)
 }
 
 //GHz START
-#if ALLOW_ADMIN
+//#if ALLOW_ADMIN
 
 void SVCmd_AddExp_f (void)
 {
@@ -362,6 +362,7 @@ void SVCmd_MakeAdmin_f (void)
     name = gi.argv(2);
     lvl = atoi(gi.argv(3));
 
+    //gi.dprintf("name: %s level: %d\n", name, lvl);
     if ((e = FindPlayer(name)) != NULL)
     {
         e->myskills.administrator = lvl;
@@ -755,7 +756,7 @@ void SVCmd_DeleteCharacter_f()
     }
 }
 
-#endif
+//#endif
 //GHz END
 
 //Ticamai START
@@ -829,7 +830,6 @@ void	ServerCommand (void)
     if (BOT_ServerCommand ())
         return;
     // [end]
-
     if (Q_stricmp (cmd, "test") == 0)
         Svcmd_Test_f ();
     else if (Q_stricmp (cmd, "addip") == 0)
@@ -849,7 +849,7 @@ void	ServerCommand (void)
 	// az end
 #endif
 //GHz START
-#if ALLOW_ADMIN
+//#if ALLOW_ADMIN
     else if (Q_stricmp (cmd, "addexp") == 0)
         SVCmd_AddExp_f ();
     else if (Q_stricmp (cmd, "addtalentpoints") == 0)
@@ -898,7 +898,7 @@ void	ServerCommand (void)
     }
     else if (Q_stricmp (cmd, "addtomaplist") == 0)
         SV_AddMapToMaplist ();
-#endif
+//#endif
 //GHz END
 //Ticamai START
     else if (Q_stricmp (cmd, "saveplayers") == 0)

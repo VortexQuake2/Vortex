@@ -1766,6 +1766,8 @@ qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs
 	VectorMA(start, range, forward, end);
 
 	tr = gi.trace(start, mins, maxs, end, ent, MASK_SHOT);
+	if (tr.allsolid || tr.startsolid)
+		return false;
 
 	// copy the normal if the trace touched worldspawn (i.e. a wall or ceiling)
 	VectorCopy(tr.endpos, start);
