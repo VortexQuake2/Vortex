@@ -604,7 +604,8 @@ double M_BERSERKER_CONTROL_COST;
 double M_GLADIATOR_CONTROL_COST;
 double M_DEFAULT_CONTROL_COST;
 double M_MIN_REACTION_TIME;
-double M_MAX_REACTION_TIME;
+double M_INITIAL_REACTION_TIME;
+double M_ADDON_REACTION_TIME;
 double M_PROJECTILE_ACC;
 double M_HITSCAN_INSTANT_ACC;
 double M_HITSCAN_CONT_ACC;
@@ -1780,7 +1781,8 @@ void Lua_LoadVariables()
 	M_DEFAULT_CONTROL_COST = vrx_lua_get_variable("M_DEFAULT_CONTROL_COST", 1);
 
 	M_MIN_REACTION_TIME = vrx_lua_get_variable("M_MIN_REACTION_TIME", 0.2);
-	M_MAX_REACTION_TIME = vrx_lua_get_variable("M_MAX_REACTION_TIME", 1.0);
+	M_INITIAL_REACTION_TIME = vrx_lua_get_variable("M_INITIAL_REACTION_TIME", 3.0);
+	M_ADDON_REACTION_TIME = vrx_lua_get_variable("M_ADDON_REACTION_TIME", -0.2);
 	M_PROJECTILE_ACC = vrx_lua_get_variable("M_PROJECTILE_ACC", 0.8);
 	M_HITSCAN_INSTANT_ACC = vrx_lua_get_variable("M_HITSCAN_INSTANT_ACC", 0.4);
 	M_HITSCAN_CONT_ACC = vrx_lua_get_variable("M_HITSCAN_CONT_ACC", 0.6);

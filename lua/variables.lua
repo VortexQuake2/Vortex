@@ -383,7 +383,8 @@ M_PROJECTILE_ACC						= 0.8	-- base monster accuracy with projectile weapons
 M_HITSCAN_INSTANT_ACC					= 0.4	-- base monster accuracy with instaneous hitscan weapons
 M_HITSCAN_CONT_ACC						= 0.6	-- base monster accuracy with continuous hitscan weapons
 M_MIN_REACTION_TIME						= 0.2
-M_MAX_REACTION_TIME						= 1.0
+M_INITIAL_REACTION_TIME					= 3.0
+M_ADDON_REACTION_TIME					= -0.2
 
 DELAY_FREEZE                             = 5
 DELAY_BOOST                              = 2.0

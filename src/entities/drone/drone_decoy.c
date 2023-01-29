@@ -168,33 +168,36 @@ void actor_pain (edict_t *self, edict_t *other, float kick, int damage)
 
 void decoy_sword(edict_t* self)
 {
+	int damage;
 	vec3_t	forward, start;
 
 	if (!G_EntExists(self->enemy))
 		return;
 
+	damage = drone_damagelevel(self);
 	MonsterAim(self, 1, 0, false, MZ_ROCKET, forward, start);
 
 	if (self->s.frame == FRAME_attack1)
 		gi.sound(self, CHAN_WEAPON, gi.soundindex("misc/power1.wav"), 1, ATTN_NORM, 0);
 
-	monster_fire_sword(self, start, forward, 1, SABRE_INITIAL_KICK, MZ_ROCKET);
+	monster_fire_sword(self, start, forward, damage, SABRE_INITIAL_KICK, MZ_ROCKET);
 }
 
 void decoy_rocket (edict_t *self)
 {
-	int		speed;
+	int		damage, speed;
 	vec3_t	forward, start;
 
 	if (!G_EntExists(self->enemy))
 		return;
 
+	damage = drone_damagelevel(self);
 	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * self->activator->myskills.level;
 	if (M_ROCKETLAUNCHER_SPEED_MAX && speed > M_ROCKETLAUNCHER_SPEED_MAX)
 		speed = M_ROCKETLAUNCHER_SPEED_MAX;
 
 	MonsterAim(self, 1, speed, true, MZ_ROCKET, forward, start);
-	monster_fire_rocket (self, start, forward, 1, speed, 0);
+	monster_fire_rocket (self, start, forward, damage, speed, 0);
 
 	gi.WriteByte (svc_muzzleflash);
 	gi.WriteShort (self-g_edicts);
@@ -210,13 +213,11 @@ void decoy_rail(edict_t* self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = M_RAILGUN_DMG_BASE + M_RAILGUN_DMG_ADDON * self->monsterinfo.level;
-	if (M_RAILGUN_DMG_MAX && damage > M_RAILGUN_DMG_MAX)
-		damage = M_RAILGUN_DMG_MAX;
+	damage = drone_damagelevel(self);
 
 	MonsterAim(self, 1, 0, false, MZ2_ACTOR_MACHINEGUN_1, forward, start);
 
-	monster_fire_railgun(self, start, forward, 1, 100, MZ2_ACTOR_MACHINEGUN_1);
+	monster_fire_railgun(self, start, forward, damage, 100, MZ2_ACTOR_MACHINEGUN_1);
 }
 
 void actor_dead (edict_t *self)

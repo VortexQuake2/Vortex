@@ -30,6 +30,8 @@ void barrel_remove(edict_t* self, qboolean refund)
 
 void barrel_think(edict_t* self)
 {
+	edict_t* owner = NULL;
+
 	if (!G_EntIsAlive(self->creator))
 	{
 		barrel_remove(self, false);
@@ -44,20 +46,31 @@ void barrel_think(edict_t* self)
 		return;
 	}
 
+	// get preferred owner of barrel
+	if (PM_PlayerHasMonster(self->creator))
+		owner = self->creator->owner;
+	else
+		owner = self->creator;
+
 	// is a player holding this barrel?
 	if (self->creator->client && self->creator->client->pickup && self->creator->client->pickup == self)
 	{
-		// make barrel non-solid to player while being held
-		self->owner = self->creator;
+		// if owner isn't set or invalid, set it to the preferred owner
+		// this will make barrel non-solid to the player (or player-monster)
+		if (!self->owner || !self->owner->inuse || self->owner != owner)
+			self->owner = owner;
 	}
+	// player is no longer holding barrel--is owner set?
 	else if (self->owner)
 	{
+		//gi.dprintf("let go!\n");
 		// need to make this null first so that the trace works
 		self->owner = NULL;
 		// barrel isn't being held, so make it solid again to player if it's clear of obstructions
 		trace_t tr = gi.trace(self->s.origin, self->mins, self->maxs, self->s.origin, self, MASK_PLAYERSOLID);
+		//FIXME: the owner won't be cleared if the player managed to stick the barrel in a bad spot
 		if (tr.allsolid || tr.startsolid || tr.fraction < 1)
-			self->owner = self->creator;
+			self->owner = owner;
 	}
 
 	// if position has been updated, check for ground entity
@@ -212,22 +225,32 @@ void SpawnExplodingBarrel(edict_t* ent)
 	// pick it up!
 	ent->client->pickup = barrel;
 }
-
+//PM_MonsterHasPilot
 void V_PickUpEntity(edict_t* ent)
 {
 	float	dist;
-	edict_t* other = ent->client->pickup;
-	vec3_t forward, right, offset, start;
+	edict_t	*e = ent, *other = ent->client->pickup;
+	vec3_t forward, right, offset, start, org;
 	trace_t tr;
 
 	if (!G_EntIsAlive(ent) || !ent->client)
+	{
+		//gi.dprintf("V_PickUpEntity aborted: ent isn't alive\n");
 		return;
+	}
 	// is the barrel dead?
 	if (!G_EntIsAlive(other))
 	{
+		//gi.dprintf("V_PickUpEntity aborted: barrel is dead\n");
 		// drop it
 		ent->client->pickup = NULL;
 		return;
+	}
+	// is this a player-tank?
+	if (PM_PlayerHasMonster(ent))
+	{
+		//gi.dprintf("V_PickUpEntity: player tank\n");
+		e = ent->owner;
 	}
 
 	// get view origin
@@ -235,13 +258,20 @@ void V_PickUpEntity(edict_t* ent)
 	VectorSet(offset, 0, 8, ent->viewheight - 8);
 	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
 	// calculate point in-front of us, leaving just enough room so that our bounding boxes don't collide
-	dist = ent->maxs[0] + other->maxs[0] + 0.1 * VectorLength(ent->velocity) + 8;
+	dist = e->maxs[0] + other->maxs[0] + 0.1 * VectorLength(ent->velocity) + 8;
 	VectorMA(start, dist, forward, start);
-	// check for obstructions
-	tr = gi.trace(ent->s.origin, other->mins, other->maxs, start, other, MASK_SHOT);
-	if (tr.allsolid || tr.startsolid)// || tr.fraction < 1)
+	// begin trace at calling entity's origin, adjusted to fit the height of the entity we're carrying
+	VectorCopy(e->s.origin, org);
+	org[2] = e->absmin[2] + other->mins[2] + 1;
+	// check for obstructions at our starting position - this will cover situations where the player can squeeze under a staircase
+	tr = gi.trace(org, other->mins, other->maxs, org, other, MASK_SOLID);
+	if (tr.allsolid || tr.startsolid || tr.fraction < 1)
+		return;
+	// check for obstructions between our starting and ending positions
+	tr = gi.trace(org, other->mins, other->maxs, start, other, MASK_SHOT);
+	if (tr.allsolid)// || tr.fraction < 1)
 	{
-		//gi.dprintf("obstruction\n");
+		//gi.dprintf("obstruction %s at %.0f distance and %.0f height fraction %.1f allsolid %d startsolid %d\n", tr.ent->classname, dist, tr.endpos[2], tr.fraction, tr.allsolid, tr.startsolid);
 		//ent->client->pickup = NULL;
 		return;
 	}

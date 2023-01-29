@@ -720,13 +720,19 @@ void drone_ai_idle (edict_t *self)
 // called when a the drone finds a new target
 void drone_newtarget(edict_t* self)
 {
+	float reactionTime;
 	// if monster is not standing ground or enemy is a player
 	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND)
 		|| (self->enemy && self->enemy->inuse && self->enemy->client))
+	{
+		reactionTime = M_INITIAL_REACTION_TIME + M_ADDON_REACTION_TIME * self->monsterinfo.level;
+		if (M_MIN_REACTION_TIME && reactionTime < M_MIN_REACTION_TIME)
+			reactionTime = M_MIN_REACTION_TIME;
 		// then add a delay before they can initiate an attack
-		self->monsterinfo.attack_finished = level.time
-		+ (GetRandom((int)(10 * M_MIN_REACTION_TIME), (int)(10 * M_MAX_REACTION_TIME)) * FRAMETIME);
-	//gi.dprintf("level time: %f attack_finished: %f\n", level.time, self->monsterinfo.attack_finished);
+		self->monsterinfo.attack_finished = level.time + reactionTime;
+		//+ (GetRandom((int)(10 * M_MIN_REACTION_TIME), (int)(10 * M_MAX_REACTION_TIME)) * FRAMETIME);
+	//gi.dprintf("level time: %0.1f reaction time: %.1f attack_finished: %0.1f\n", level.time, reactionTime, self->monsterinfo.attack_finished);
+	}
 }
 
 qboolean drone_ai_findgoal (edict_t *self)

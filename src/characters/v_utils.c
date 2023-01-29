@@ -2117,8 +2117,9 @@ void V_TouchSolids(edict_t *ent) {
     // list removed before we get to it (killtriggered)
     for (i = 0; i < num; i++) {
         hit = touch[i];
-        if (!hit->inuse || !hit->touch || !hit->takedamage || hit == ent)
+        if (!hit->inuse || !hit->touch/* || !hit->takedamage */|| hit == ent)
             continue;
+        //gi.dprintf("V_TouchSolids called by %s hit %s\n", ent->classname, hit->classname);
         hit->touch(hit, ent, NULL, NULL);
     }
 }
@@ -2389,7 +2390,7 @@ void V_NonShellEffects(edict_t *ent) {
     // ********** NON-CLIENT SPECIFIC EFFECTS BELOW **********
 
     // barrel is transparent if it has an owner
-    if (ent->mtype == M_BARREL && ent->owner && ent->owner->inuse && ent->owner->client)
+    if (ent->mtype == M_BARREL && ent->owner && ent->owner->inuse)// && ent->owner->client)
         ent->s.effects |= EF_SPHERETRANS;
 
     // obstacle becomes transparent before it cloaks

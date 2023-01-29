@@ -988,6 +988,7 @@ void SV_Physics_Step (edict_t *ent)
 
 	if (ent->velocity[2] || ent->velocity[1] || ent->velocity[0])
 	{
+		//gi.dprintf("velocity is nonzero\n");
 		// apply friction
 		// let dead monsters who aren't completely onground slide
 		if ((wasonground) || (ent->flags & (FL_SWIM|FL_FLY)))
