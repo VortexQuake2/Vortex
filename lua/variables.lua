@@ -1129,12 +1129,12 @@ LASERTRAP_YAW_SPEED                      = 15
 
 -- Detector
 DETECTOR_COST                            = 25
-DETECTOR_DELAY                           = 2.0
+DETECTOR_DELAY                           = 1.0
 DETECTOR_MAX_COUNT                       = 4
 DETECTOR_INITIAL_HEALTH                  = 50
 DETECTOR_ADDON_HEALTH                    = 20
-DETECTOR_INITIAL_RANGE                   = 56
-DETECTOR_ADDON_RANGE                     = 20
+DETECTOR_INITIAL_RANGE                   = 54
+DETECTOR_ADDON_RANGE                     = 33
 DETECTOR_DURATION                        = 120.0
 DETECTOR_FLAG_DURATION                   = 1.0
 DETECTOR_GLOW_TIME                       = 1.0
