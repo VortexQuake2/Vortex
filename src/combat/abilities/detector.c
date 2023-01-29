@@ -341,7 +341,7 @@ void Cmd_Detector_f (edict_t *ent)
 
 	if (ent->num_detectors >= DETECTOR_MAX_COUNT)
 	{
-		safe_cprintf(ent, PRINT_HIGH, "You've reached the maximum number of detectors (%d)\n", DETECTOR_MAX_COUNT);
+		safe_cprintf(ent, PRINT_HIGH, "You've reached the maximum number of detectors (%d)\n", (int)DETECTOR_MAX_COUNT);
 		return;
 	}
 
