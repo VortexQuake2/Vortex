@@ -36,12 +36,17 @@ edict_t *detector_findprojtarget (edict_t *self, edict_t *projectile)
 	edict_t *target=NULL;
 
 	// find enemy that is closest to the projectile
-	while ((target = findclosestradius_targets(target, projectile, self->dmg_radius)) != NULL)
+	//while ((target = findclosestradius_targets(target, projectile, self->dmg_radius)) != NULL)
+	while (target = findradius(target, projectile->s.origin, self->dmg_radius))
 	{
 		// valid target must be within range of the detector
-		if (G_ValidTarget_Lite(self, target, true) && entdist(self, target) < self->dmg_radius)
+		//if (G_ValidTarget_Lite(self, target, true) && entdist(self, target) < self->dmg_radius)
+		// valid target must be visible and within range of the projectile
+		//gi.dprintf("detector_findprojtarget found a target in range of %s\n", projectile->classname);
+		if (G_ValidTarget(self, target, false) && visible(projectile, target) && entdist(projectile, target) < self->dmg_radius)
 			return target;
 	}
+	//gi.dprintf("no targets\n");
 	return NULL;
 }
 
@@ -74,11 +79,11 @@ void detector_findprojectile (edict_t *self, char *className)
 		}
 
 		// find a projectile that is within range of the detector
-		if (entdist(self, e) > self->dmg_radius)
+		/*if (entdist(self, e) > self->dmg_radius)
 		{
 			//gi.dprintf("%d: out of range %.0f %.0f\n", (int)(level.framenum), entdist(self, e), self->dmg_radius);
 			continue;
-		}
+		}*/
 	
 		// this projectile already has a target that is within range
 		if (e->enemy && e->enemy->inuse && entdist(self, e->enemy) < self->dmg_radius)
@@ -92,7 +97,7 @@ void detector_findprojectile (edict_t *self, char *className)
 		// find a new target for the projectile
 		if ((proj_target = detector_findprojtarget(self, e)) != NULL)
 		{
-			//gi.dprintf("finding a new target for %s\n", className);
+			//gi.dprintf("SUCCESS! finding a new target for %s\n", className);
 			e->enemy = proj_target;
 			ProjectileLockon(e);
 		}
