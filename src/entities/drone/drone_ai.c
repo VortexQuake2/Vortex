@@ -117,7 +117,7 @@ edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t* self, float rad)
 			eorg[j] = self->s.origin[j] - (from->s.origin[j] + (from->mins[j] + from->maxs[j])*0.5);
 		vlen = VectorLengthSqr(eorg);*/
 
-		if (vlen > rad) // found edict is outside scanning radius
+		if (!(from->flags & FL_DETECTED) && vlen > rad) // found edict is outside scanning radius
 			continue;
         if ((vlen < prev_rad) && (prev_ed))  // found edict is closer than the previously returned edict
             continue; // thus this edict must have been returned in an earlier call

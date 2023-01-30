@@ -634,8 +634,8 @@ void minisentry_think (edict_t *self)
 	}
 	else
 	{
-		if (G_ValidTarget(self, self->enemy, true) 
-			&& (entdist(self, self->enemy)<=SENTRY_ATTACK_RANGE))
+		// valid target and in range or detected?
+		if (G_ValidTarget(self, self->enemy, true) && (entdist(self, self->enemy)<=SENTRY_ATTACK_RANGE || self->enemy->flags & FL_DETECTED))
 		{
 			minisentry_attack(self);
 		}
@@ -661,12 +661,35 @@ void minisentry_think (edict_t *self)
 
 void base_think (edict_t *self)
 {
-	// make sure sentry has settled down
-	if (!minisentry_checkposition(self))
+	vec3_t start;
+
+	if (!self->sentry || !self->sentry->inuse)
 	{
 		BecomeExplosion1(self);
 		return;
 	}
+
+	// make sure sentry has settled down
+	if (self->style == SENTRY_FLIPPED)
+	{
+		if (!minisentry_checkposition(self))
+		{
+			BecomeExplosion1(self);
+			return;
+		}
+	}
+	//FIXME: we could monitor velocity or store the sentry position and compare for changes to make this faster/more cpu efficient
+	// keep the base positioned below or above the gun, depending on orientation
+	else
+	{
+		VectorCopy(self->sentry->s.origin, start);
+		if (self->style == SENTRY_UPRIGHT)
+			start[2] -= fabsf(self->sentry->mins[2]);
+		VectorCopy(start, self->s.origin);
+		VectorCopy(start, self->s.old_origin);
+		gi.linkentity(self);
+	}
+
 	self->nextthink = level.time + FRAMETIME;
 }
 
@@ -690,7 +713,7 @@ void base_createturret (edict_t *self)
 	float		ammo_mult=1.0;
 
 	// make sure sentry has settled down
-	if (!G_EntIsAlive(self->creator) || !minisentry_checkposition(self))
+	if (!G_EntIsAlive(self->creator) || (self->style == SENTRY_FLIPPED && !minisentry_checkposition(self)))
 	{
 		if (self->creator)
 		{
@@ -704,18 +727,21 @@ void base_createturret (edict_t *self)
 		BecomeExplosion1(self);
 		return;
 	}
+
+	//gi.dprintf("base org[2] %.0f\n", self->s.origin[2]);
 	self->movetype = MOVETYPE_NONE; // lock down base
 	self->takedamage = DAMAGE_NO; // the base is invulnerable
-
 	// 3.8 base bbox no longer necessary, turret takes over
 	VectorClear(self->mins);
 	VectorClear(self->maxs);
 	self->solid = SOLID_NOT;
+	gi.linkentity(self);// size and solidity changed, so we must re-link
 
 	// create basic ent for sentry
 	sentry = G_Spawn();
 	sentry->creator = self->creator;
 	sentry->owner = self; // the base becomes the owner
+	self->sentry = sentry; // reciprocal link back to gun
 	VectorCopy(self->s.angles, sentry->s.angles);
 	sentry->think = minisentry_think;
 	sentry->nextthink = level.time + FRAMETIME;
@@ -723,9 +749,9 @@ void base_createturret (edict_t *self)
 	// who really wanted to chase sentries anyway
 	// sentry->flags |= FL_CHASEABLE; // 3.65 indicates entity can be chase cammed
 	sentry->solid = SOLID_BBOX;
-	sentry->movetype = MOVETYPE_NONE;
 	sentry->clipmask = MASK_MONSTERSOLID;
-	sentry->mass = 100;
+	sentry->svflags |= SVF_MONSTER;
+	sentry->mass = 400;
 	sentry->classname = "msentrygun";
 	//sentry->viewheight = 16;
 	sentry->takedamage = DAMAGE_AIM;
@@ -773,12 +799,14 @@ void base_createturret (edict_t *self)
 		sentry->num_hammers = cell_index; // this sentry uses cells for ammo
 		if (self->style == SENTRY_UPRIGHT)
 		{
+			sentry->movetype = MOVETYPE_TOSS;
 			VectorSet(sentry->mins, -25, -25, -24);
 			VectorSet(sentry->maxs, 25, 25, 24);
 			end[2] += fabsf(sentry->mins[2]) + 1;
 		}
 		else
 		{
+			sentry->movetype = MOVETYPE_NONE;
 			VectorSet(sentry->mins, -25, -25, -24);
 			VectorSet(sentry->maxs, 25, 25, 24);
 			end[2] -= sentry->maxs[2] + 1;
@@ -798,23 +826,33 @@ void base_createturret (edict_t *self)
 			sentry->radius_dmg = MINISENTRY_MAX_ROCKET;
 		if (self->style == SENTRY_UPRIGHT)
 		{
+			sentry->movetype = MOVETYPE_TOSS;
 			VectorSet(sentry->mins, -25, -25, -8);
 			VectorSet(sentry->maxs, 25, 25, 45);
 			end[2] += fabsf(sentry->mins[2]) + 1;
 		}
 		else
 		{
+			sentry->movetype = MOVETYPE_NONE;
 			VectorSet(sentry->mins, -25, -25, -45);
 			VectorSet(sentry->maxs, 25, 25, 8);
-			VectorCopy(self->s.origin, end);
+			VectorCopy(self->s.origin, end);//FIXME: why is this here?
 			end[2] -= sentry->maxs[2] + 1;
 		}
 	}
-
+	
+	//gi.dprintf("sentry mins %.0f %.0f %.0f\n", sentry->mins[0], sentry->mins[1], sentry->mins[2]);
+	//gi.dprintf("sentry maxs %.0f %.0f %.0f\n", sentry->maxs[0], sentry->maxs[1], sentry->maxs[2]);
+	
 	// make sure position is valid
-	tr = gi.trace(end, sentry->mins, sentry->maxs, end, sentry, MASK_SHOT);
-	if (tr.contents & MASK_SHOT)
+	tr = gi.trace(end, sentry->mins, sentry->maxs, end, NULL, MASK_SHOT);
+	//FIXME: this trace will fail on ramps because sentry base is smaller than the complete sentrygun, causing the edges of the hitbox to intersect with the ramp
+	// FIXME: this check is REDUNDANT and unnecessary if the base/sentry hitboxes are equal
+	// to fix, either push down from above or make the base bigger/equal size of complete sentry
+	//if (tr.contents & MASK_SHOT)
+	if (tr.allsolid || tr.startsolid || tr.fraction < 1)
 	{
+		float dist;
 		if (self->creator)
 		{
 			// refund player's power cubes
@@ -824,7 +862,9 @@ void base_createturret (edict_t *self)
 			if (self->creator->num_sentries < 0)
 				self->creator->num_sentries = 0;
 		}
+		dist = tr.endpos[2] - end[2];
 		//gi.dprintf("%s\n", tr.ent?tr.ent->classname:"null");
+		//gi.dprintf("obstruction %s at %.0f distance and %.0f height fraction %.1f allsolid %d startsolid %d\n", tr.ent->classname, dist, tr.endpos[2], tr.fraction, tr.allsolid, tr.startsolid);
 		BecomeExplosion1(self);
 		BecomeExplosion1(sentry);
 		return;
@@ -931,8 +971,10 @@ void SpawnMiniSentry (edict_t *ent, int cost, int mtype, float skill_mult, float
 		base->s.modelindex = gi.modelindex("models/sentry/base/tris.md2");
 		if (base->style == SENTRY_UPRIGHT)
 		{
-			VectorSet(base->mins, -12, -12, 0);
-			VectorSet(base->maxs, 12, 12, 36);
+			//VectorSet(base->mins, -12, -12, 0);
+			//VectorSet(base->maxs, 12, 12, 36);
+			VectorSet(base->mins, -25, -25, 0);
+			VectorSet(base->maxs, 25, 25, 53);
 		}
 		else
 		{
