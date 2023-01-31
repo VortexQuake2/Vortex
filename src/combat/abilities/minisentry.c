@@ -14,9 +14,12 @@
 
 void minisentry_pain (edict_t *self, edict_t *other, float kick, int damage)
 {
-	if (!self->enemy && G_ValidTarget(self, other, true) 
-		&& (entdist(self, other)<SENTRY_ATTACK_RANGE))
+	if (!self->enemy && G_ValidTarget(self, other, true)
+		&& (entdist(self, other) < SENTRY_ATTACK_RANGE))
+	{
+		//gi.dprintf("minisentry_pain is targetting %s\n", other->classname);
 		self->enemy = other;
+	}
 
 	if (level.time < self->pain_debounce_time)
 		return;

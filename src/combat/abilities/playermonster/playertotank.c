@@ -607,7 +607,7 @@ void p_tank_spawn(edict_t *ent, int cost) {
 
     // link up entities
     gi.linkentity(tank);
-    gi.linkentity(ent);
+    gi.linkentity(ent);//FIXME: this should be called after ent solidity changes below
 
     // make the player into a ghost
     ent->svflags |= SVF_NOCLIENT;
