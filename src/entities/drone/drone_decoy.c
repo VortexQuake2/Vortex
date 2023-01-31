@@ -396,6 +396,17 @@ void actor_attack(edict_t *self)
 /*QUAKED misc_actor (1 .5 0) (-16 -16 -24) (16 16 32)
 */
 
+char* V_GetClassSkin(edict_t* ent);
+void decoy_assign_class_skin(edict_t* self)
+{
+	int skin_number = maxclients->value + self->s.number - 1;
+	char* c_skin = va("decoy\\%s\0", V_GetClassSkin(self->activator));
+	gi.configstring(CS_PLAYERSKINS + skin_number, c_skin);
+	self->s.skinnum = skin_number;
+	//gi.dprintf("set class skin %s\n", c_skin);
+}
+
+//FIXME: this won't work correctly for player morphs--need to default to some other model, either class model or grunt
 void decoy_copy (edict_t *self)
 {
 	edict_t *target = self->activator;
@@ -403,23 +414,30 @@ void decoy_copy (edict_t *self)
 	if (!self->activator || !self->activator->inuse || !self->activator->client)
 		return;
 
-	if (PM_PlayerHasMonster(self->activator))
+	// decoys will use class skins (if defined) for morphed players
+	if (PM_PlayerHasMonster(self->activator) || self->activator->s.modelindex != 255)
 	{
-		target = self->activator->owner;
+		//gi.dprintf("player-morph\n");
+		//target = self->activator->owner;
 		//self->owner = target;
+
+		self->s.modelindex = 255;
+		decoy_assign_class_skin(self);
+		self->s.modelindex2 = 255;
 	}
 	else
 	{
-		target = self->activator;
+		//gi.dprintf("not a player morph\n");
+		//target = self->activator;
 		//self->owner = self->activator;
+		// copy everything from our owner
+		//gi.setmodel(self, self->model);
+		self->s.skinnum = target->s.skinnum;
+		self->model = target->model;
+		self->s.modelindex = target->s.modelindex;
+		self->s.modelindex2 = target->s.modelindex2;
 	}
-
-	// copy everything from our owner
-	self->model = target->model;
-	//gi.setmodel(self, self->model);
-	self->s.skinnum = target->s.skinnum;
-	self->s.modelindex = target->s.modelindex;
-	self->s.modelindex2 = target->s.modelindex2;
+	
 	self->s.effects = target->s.effects;
 	self->s.renderfx = target->s.renderfx;
 }
