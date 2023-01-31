@@ -5,6 +5,7 @@ void ShowTradeMenu(edict_t *ent);
 void TradeInventoryMenu(edict_t *ent, int lastline);
 void TradeFinalMenu(edict_t *ent);
 void ShowTradeAskMenu(edict_t *tradee, edict_t *trader);
+lva_result_t vrx_get_item_menu_line(item_t* item);
 
 //************************************************************************************************
 //		**TRADE CODE**
@@ -279,7 +280,9 @@ void TradeFinalMenu(edict_t *ent)
 		item = ent->trade_item[i];
 		if (item != NULL)
 		{
-			addlinetomenu(ent, V_MenuItemString(item, ' '), 0);
+			lva_result_t s = vrx_get_item_menu_line(item);
+			// va here as a workaround because option 0s print left aligned... -az
+			addlinetomenu(ent, va("   %s", s.str), 0);
 			++linecount;
 		}
 	}
@@ -295,7 +298,8 @@ void TradeFinalMenu(edict_t *ent)
 		item = ent->trade_with->trade_item[i];
 		if (item != NULL)
 		{
-			addlinetomenu(ent, V_MenuItemString(item, ' '), (i+1)*10);	//10, 20, 30
+			lva_result_t s = vrx_get_item_menu_line(item);
+			addlinetomenu(ent, s.str, (i+1)*10);	//10, 20, 30
 			++linecount;
 		}
 	}
@@ -405,8 +409,6 @@ void TradeInventoryMenu_handler(edict_t *ent, int option)
 
 void TradeInventoryMenu(edict_t *ent, int lastline)
 {
-	int i;
-
 	//Usual menu stuff
 	 if (!ShowMenu(ent))
         return;
@@ -417,18 +419,17 @@ void TradeInventoryMenu(edict_t *ent, int lastline)
 	addlinetomenu(ent, " ", 0);
 
 	//Print each item
-	for (i = 3; i < MAX_VRXITEMS; ++i)
+	for (int i = 3; i < MAX_VRXITEMS; ++i)
 	{
-		char ch;
-		item_t *item;
-		item = &ent->myskills.items[i];
-
+		item_t* item = &ent->myskills.items[i];
+			
 		//Is this item selected for trading?
+		qboolean selected = false;
 		if ((item == ent->trade_item[0]) || (item == ent->trade_item[1]) || (item == ent->trade_item[2]))
-			ch = '*';
-		else ch = ' ';
+			selected = true;
 
-		addlinetomenu(ent, V_MenuItemString(item, ch), i+1);
+		lva_result_t str = vrx_get_item_menu_line(item);
+		addlinetomenu(ent, va("%c%s", selected ? '*' : ' ', str.str), i+1);
 	}
 
 	//Menu footer
