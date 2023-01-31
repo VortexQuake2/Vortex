@@ -285,6 +285,25 @@ void ShowInventoryMenu_handler(edict_t *ent, int option) {
 
 //************************************************************************************************
 
+lva_result_t vrx_get_item_menu_line(item_t* item)
+{
+	item_menu_t fmt = vrx_menu_item_display(item);//, ' ');
+	if (fmt.num >= 0) {
+		char* abbr = "";
+		if (item->itemtype == ITEM_COMBO)
+			abbr = "CO";
+		else if (item->itemtype == ITEM_ABILITY)
+			abbr = "AB";
+		else if (item->itemtype == ITEM_WEAPON)
+			abbr = "WE";
+
+        return lva("%-15.15s %2s %2d/%2d", fmt.str, abbr, fmt.num, item->itemLevel);
+	} else
+	{
+        return lva("%s", fmt.str);
+	}
+}
+
 void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling) {
     int i;
 
@@ -318,26 +337,8 @@ void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling) {
                 break;
         }
 
-        item_menu_t fmt = vrx_menu_item_display(item);//, ' ');
-        if (fmt.num >= 0) {
-            char* abbr = "";
-            if (item->itemtype == ITEM_COMBO)
-                abbr = "CO";
-            else if (item->itemtype == ITEM_ABILITY)
-                abbr = "AB";
-            else if (item->itemtype == ITEM_WEAPON)
-                abbr = "WE";
-
-            lva_result_t txt = lva("%-15.15s %2s %2d/%2d", fmt.str, abbr, fmt.num, item->itemLevel);
-            addlinetomenu(ent,
-                txt.str,
-                i + 1);
-        } else
-        {
-            addlinetomenu(ent,
-                fmt.str,
-                i + 1);
-        }
+        lva_result_t s = vrx_get_item_menu_line(item);
+        addlinetomenu(ent, s.str, i + 1);
     }
 
     //Menu footer
