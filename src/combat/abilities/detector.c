@@ -43,7 +43,7 @@ edict_t *detector_findprojtarget (edict_t *self, edict_t *projectile)
 		//if (G_ValidTarget_Lite(self, target, true) && entdist(self, target) < self->dmg_radius)
 		// valid target must be visible and within range of the projectile
 		//gi.dprintf("detector_findprojtarget found a target in range of %s\n", projectile->classname);
-		if (G_ValidTarget(self, target, false) && visible(projectile, target) && entdist(projectile, target) < self->dmg_radius)
+		if (G_ValidTarget(self, target, false) && visible(projectile, target) && entdist(projectile, target) < self->dmg_radius && target->detected_time > level.time)
 			return target;
 	}
 	//gi.dprintf("no targets\n");
