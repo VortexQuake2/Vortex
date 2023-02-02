@@ -397,10 +397,7 @@ void VortexEndLevel(void)
 void EndDMLevel(void)
 {
 	edict_t *ent;
-	int found_map = 0;
-	static const char *seps = " ,\n\r";
 	//GHz START
-	int modenum = 0;
 	VortexEndLevel();
 	//GHz END
 

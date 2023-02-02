@@ -115,7 +115,7 @@ void createOpenPlayerThread(edict_t *ent);
 //********** v_file_IO.c **********
 
 //********** v_maplist.c **********
-int v_LoadMapList(int mode);
+int vrx_load_map_list(int mode);
 //********** v_maplist.c **********
 
 //*********** v_items.c ***********

@@ -889,11 +889,11 @@ void	ServerCommand (void)
     else if (Q_stricmp (cmd, "loadmaplists") == 0)
     {
         //3.0 Load the custom map lists
-        if(v_LoadMapList(MAPMODE_PVP) && v_LoadMapList(MAPMODE_PVM)
-           && v_LoadMapList(MAPMODE_DOM) && v_LoadMapList(MAPMODE_CTF)
-           && v_LoadMapList(MAPMODE_FFA) && v_LoadMapList(MAPMODE_INV)
-           && v_LoadMapList(MAPMODE_TRA) && v_LoadMapList(MAPMODE_INH) && v_LoadMapList(MAPMODE_VHW)
-           && v_LoadMapList(MAPMODE_TBI))
+        if(vrx_load_map_list(MAPMODE_PVP) && vrx_load_map_list(MAPMODE_PVM)
+           && vrx_load_map_list(MAPMODE_DOM) && vrx_load_map_list(MAPMODE_CTF)
+           && vrx_load_map_list(MAPMODE_FFA) && vrx_load_map_list(MAPMODE_INV)
+           && vrx_load_map_list(MAPMODE_TRA) && vrx_load_map_list(MAPMODE_INH) && vrx_load_map_list(MAPMODE_VHW)
+           && vrx_load_map_list(MAPMODE_TBI))
             safe_cprintf(NULL, PRINT_HIGH, "INFO: Vortex Custom Map Lists loaded successfully\n");
     }
     else if (Q_stricmp (cmd, "addtomaplist") == 0)
