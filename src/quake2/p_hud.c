@@ -725,7 +725,7 @@ void G_SetStats(edict_t *ent)
 	{
 		ent->client->ps.stats[STAT_STATION_ICON] = gi.imageindex("i_tele");
 		//if (ent->supplystation->wait < 100)
-		ent->client->ps.stats[STAT_STATION_TIME] = (int)ent->supplystation->wait;//-level.time;
+		ent->client->ps.stats[STAT_STATION_TIME] = (int)ceil(ent->supplystation->wait);//-level.time;
 		//else
 		//	ent->client->ps.stats[STAT_STATION_TIME] = 0;
 	}

@@ -355,8 +355,15 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 			data = lva("+%d", ent->health);
 		break;
 	case M_AUTOCANNON:
-		name = lva("cannon", V_GetMonsterName(ent));
+		name = lva("cannon");
 		data = lva("+%d %da", ent->health, ent->light_level);
+		break;
+	case M_SUPPLYSTATION:
+		name = lva("SS");
+		if (ent->s.effects & EF_PLASMA)
+			data = lva("+%d", ent->health);
+		else
+			data = lva("+%d %ds %d%%", ent->health, (int)ceil(0.1*(ent->count-level.framenum)), (int)ceil(ent->wait));
 		break;
 	default:
 		gi.dprintf("g_layout.c: unsupported mtype %d\n");
