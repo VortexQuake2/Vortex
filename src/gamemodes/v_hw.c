@@ -344,7 +344,7 @@ void hw_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, ve
 		self->health = HW_FLAG_HEALTH;
 		hw_find_spawn_point(self);
 
-		T_Damage(attacker, NULL, self, dir, attacker->s.origin, vec3_origin, 10000, knockback, DAMAGE_NO_PROTECTION, MOD_SPLASH);
+		T_Damage(attacker, self, self, dir, attacker->s.origin, vec3_origin, 10000, knockback, DAMAGE_NO_PROTECTION, MOD_SPLASH);
 	}
 }
 
@@ -379,7 +379,7 @@ void hw_pain(edict_t* self, edict_t* other, float kick, int damage)
 	VectorNormalize(dir);
 	VectorScale(dir, knockback_dmg, dir);
 
-	T_Damage(cl, NULL, self, dir, cl->s.origin, vec3_origin, 0, knockback_dmg, DAMAGE_NO_PROTECTION, MOD_SPLASH);
+	T_Damage(cl, self, self, dir, cl->s.origin, vec3_origin, 0, knockback_dmg, DAMAGE_NO_PROTECTION, MOD_SPLASH);
 	hw_toss(self, knockback_dmg);
 }
 
