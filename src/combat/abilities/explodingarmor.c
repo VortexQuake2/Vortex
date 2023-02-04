@@ -200,7 +200,7 @@ void SpawnExplodingArmor (edict_t *ent, int time)
 	VectorSet(offset, 0, 8,  ent->viewheight-8);
 	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
 
-	if (!G_GetSpawnLocation(ent, 48, armor->mins, armor->maxs, start, NULL))
+	if (!G_GetSpawnLocation(ent, 64, armor->mins, armor->maxs, start, NULL, true))
 	{
 		G_FreeEdict(armor);
 		return;
@@ -215,7 +215,9 @@ void SpawnExplodingArmor (edict_t *ent, int time)
 	*/
 
 	// move armor into position
-	VectorMA(start, 48, forward, armor->s.origin);
+	//VectorMA(start, 48, forward, armor->s.origin);
+	VectorCopy(start, armor->s.origin);
+	VectorCopy(start, armor->s.old_origin);
 	gi.linkentity(armor);
 
 	// toss it forward
@@ -223,6 +225,8 @@ void SpawnExplodingArmor (edict_t *ent, int time)
 	armor->velocity[2] += 200;
 	//VectorClear(armor->avelocity);
 	VectorCopy(ent->s.angles, armor->s.angles);
+	armor->s.angles[PITCH] = 0;
+	armor->s.angles[ROLL] = 0;
 
 	layout_add_tracked_entity(&ent->client->layout, armor); // add to HUD
 	ent->client->pers.inventory[body_armor_index] -= EXPLODING_ARMOR_AMOUNT;

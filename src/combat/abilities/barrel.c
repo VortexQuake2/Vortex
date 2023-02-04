@@ -202,7 +202,7 @@ void SpawnExplodingBarrel(edict_t* ent)
 	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
 
 	//FIXME: this function modifies start and returns the tr.endpos, so the next bit of code may push the starting position into a wall!
-	if (!G_GetSpawnLocation(ent, 48, barrel->mins, barrel->maxs, start, NULL))
+	if (!G_GetSpawnLocation(ent, 80, barrel->mins, barrel->maxs, start, NULL, true))
 	{
 		G_FreeEdict(barrel);
 		return;

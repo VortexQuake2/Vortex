@@ -517,7 +517,7 @@ void Cmd_Healer_f (edict_t *ent)
 		return;
 
 	healer = CreateHealer(ent, ent->myskills.abilities[HEALER].current_level);
-	if (!G_GetSpawnLocation(ent, 100, healer->mins, healer->maxs, start, NULL))
+	if (!G_GetSpawnLocation(ent, 100, healer->mins, healer->maxs, start, NULL, false))
 	{
 		ent->healer = NULL;
 		G_FreeEdict(healer);
@@ -857,7 +857,7 @@ void Cmd_Spiker_f (edict_t *ent)
 	}
 
 	spiker = CreateSpiker(ent, ent->myskills.abilities[SPIKER].current_level);
-	if (!G_GetSpawnLocation(ent, 100, spiker->mins, spiker->maxs, start, NULL))
+	if (!G_GetSpawnLocation(ent, 100, spiker->mins, spiker->maxs, start, NULL, false))
 	{
 		ent->num_spikers--;
 		G_FreeEdict(spiker);
@@ -1268,7 +1268,7 @@ void Cmd_Obstacle_f (edict_t *ent)
 	}
 
 	obstacle = CreateObstacle(ent, ent->myskills.abilities[OBSTACLE].current_level);
-	if (!G_GetSpawnLocation(ent, 100, obstacle->mins, obstacle->maxs, start, angles))
+	if (!G_GetSpawnLocation(ent, 100, obstacle->mins, obstacle->maxs, start, angles, false))
 	{
 		ent->num_obstacle--;
 		G_FreeEdict(obstacle);
@@ -1790,7 +1790,7 @@ void Cmd_Gasser_f (edict_t *ent)
 	}
 
 	gasser = CreateGasser(ent, ent->myskills.abilities[GASSER].current_level);
-	if (!G_GetSpawnLocation(ent, 100, gasser->mins, gasser->maxs, start, NULL))
+	if (!G_GetSpawnLocation(ent, 100, gasser->mins, gasser->maxs, start, NULL, false))
 	{
 		ent->num_gasser--;
 		G_FreeEdict(gasser);
@@ -2191,7 +2191,7 @@ void Cmd_Cocoon_f (edict_t *ent)
 		return;
 
 	cocoon = CreateCocoon(ent, ent->myskills.abilities[COCOON].current_level);
-	if (!G_GetSpawnLocation(ent, 100, cocoon->mins, cocoon->maxs, start, NULL))
+	if (!G_GetSpawnLocation(ent, 100, cocoon->mins, cocoon->maxs, start, NULL, false))
 	{
 		ent->cocoon = NULL;
 		G_FreeEdict(cocoon);
@@ -2284,7 +2284,7 @@ void spikeball_move (edict_t *self)
     // are we following the player's crosshairs?
     if (self->activator->spikeball_follow)
     {
-        G_GetSpawnLocation(self->activator, 8192, NULL, NULL, goalpos, NULL);
+        G_GetSpawnLocation(self->activator, 8192, NULL, NULL, goalpos, NULL, false);
     }
         // we have no enemy
     else if (!self->enemy)

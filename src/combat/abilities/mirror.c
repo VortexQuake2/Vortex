@@ -358,7 +358,7 @@ void Cmd_Dummy_f(edict_t* ent)
 	else
 	{
 		ent->mirror1 = TestDummy(ent);
-		if (!G_GetSpawnLocation(ent, 100, ent->mirror1->mins, ent->mirror1->maxs, start, NULL))
+		if (!G_GetSpawnLocation(ent, 100, ent->mirror1->mins, ent->mirror1->maxs, start, NULL, false))
 		{
 			safe_cprintf(ent, PRINT_HIGH, "Unable to spawn dummy\n");
 			ent->mirror1 = NULL;

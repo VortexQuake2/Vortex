@@ -820,7 +820,7 @@ void Cmd_CreateSupplyStation_f (edict_t *ent)
 	//BuildSupplyStation(ent, cost, skill_mult, delay_mult);
 
 	depot = BuildDepot(ent, skill_mult, delay_mult);
-	if (!G_GetSpawnLocation(ent, 100, depot->mins, depot->maxs, start, NULL))
+	if (!G_GetSpawnLocation(ent, 100, depot->mins, depot->maxs, start, NULL, false))
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Not enough room to spawn supply station.\n");
 		ent->supplystation = NULL;

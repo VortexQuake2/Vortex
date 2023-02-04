@@ -291,7 +291,6 @@ void BuildDetector (edict_t *self, vec3_t start, vec3_t forward, int slvl, float
 	detector->clipmask = MASK_SHOT;
 
 	//Talent: Alarm
-	duration = 20;//TESTING**** REMOVE THIS!!!!
 	if (duration)
 	{
 		detector->mtype = M_DETECTOR;

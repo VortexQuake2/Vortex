@@ -1106,7 +1106,7 @@ qboolean G_ValidTarget_Lite(const edict_t *self, const edict_t *target, qboolean
 
 qboolean G_ValidAlliedTarget(edict_t *self, edict_t *target, qboolean vis);//4.1 Archer
 edict_t *G_GetClient(edict_t *ent);
-qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs, vec3_t start, vec3_t normal);
+qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs, vec3_t start, vec3_t normal, qboolean ignore_self_clip);
 void G_DrawBoundingBox (edict_t *ent);
 void G_DrawLaserBBox (edict_t *ent, int laser_color, int laser_size);
 void G_DrawLaser (edict_t *ent, vec3_t v1, vec3_t v2, int laser_color, int laser_size);
