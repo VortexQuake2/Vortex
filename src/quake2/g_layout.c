@@ -365,6 +365,11 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 		name = lva("cannon");
 		data = lva("+%d %da", ent->health, ent->light_level);
 		break;
+	case M_DETECTOR:
+	case M_ALARM:
+		name = lva("detector");
+		data = lva("+%d %dr %ds", ent->health, (int)ceil(ent->dmg_radius), (int)ceil(ent->delay - level.time));
+		break;
 	case M_SUPPLYSTATION:
 		name = lva("SS");
 		if (ent->s.effects & EF_PLASMA)
