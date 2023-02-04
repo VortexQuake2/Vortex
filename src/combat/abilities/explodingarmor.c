@@ -1,6 +1,40 @@
 #include "g_local.h"
 #include "../../gamemodes/ctf.h"
 
+void armor_remove(edict_t* self, qboolean refund)
+{
+	if (!self || !self->inuse || self->deadflag == DEAD_DEAD)
+		return;
+
+	// reduce armor count
+	if (self->owner && self->owner->inuse && self->owner->client)
+	{
+		// reduce count
+		self->owner->num_armor--;
+		// refund player
+		if (refund)
+			self->owner->client->pers.inventory[power_cube_index] += EXPLODING_ARMOR_COST;
+		// remove from HUD
+		layout_remove_tracked_entity(&self->owner->client->layout, self);
+	}
+
+	// create explosion effect
+	gi.WriteByte(svc_temp_entity);
+	if (self->waterlevel)
+		gi.WriteByte(TE_ROCKET_EXPLOSION_WATER);
+	else
+		gi.WriteByte(TE_ROCKET_EXPLOSION);
+	gi.WritePosition(self->s.origin);
+	gi.multicast(self->s.origin, MULTICAST_PHS);
+
+	self->think = G_FreeEdict;
+	self->nextthink = level.time + FRAMETIME;
+	self->svflags |= SVF_NOCLIENT;
+	self->takedamage = DAMAGE_NO;
+	self->solid = SOLID_NOT;
+	self->deadflag = DEAD_DEAD;
+}
+
 void RemoveExplodingArmor (edict_t *ent)
 {
 	edict_t *e=NULL;
@@ -9,8 +43,7 @@ void RemoveExplodingArmor (edict_t *ent)
 	{
 		if (e && e->inuse && (e->owner == ent))
 		{
-			e->think = G_FreeEdict;
-			e->nextthink = level.time + FRAMETIME;
+			armor_remove(e, false);
 		}
 	}
 
@@ -25,21 +58,9 @@ void DetonateArmor (edict_t *self)
 	if (self->solid == SOLID_NOT)
 		return; // already flagged for removal
 
-	if (!G_EntExists(self->owner))
-	{
-		// reduce armor count
-		if (self->owner && self->owner->inuse)
-			self->owner->num_armor--;
+	armor_remove(self, false);
 
-		G_FreeEdict(self);
-		return;
-	}
-
-	// reduce armor count
-	self->owner->num_armor--;
-
-	safe_cprintf(self->owner, PRINT_HIGH, "Exploding armor did %d damage! (%d/%d)\n", 
-		self->dmg, self->owner->num_armor, (int)EXPLODING_ARMOR_MAX_COUNT);
+	//safe_cprintf(self->owner, PRINT_HIGH, "Exploding armor did %d damage! (%d/%d)\n", self->dmg, self->owner->num_armor, (int)EXPLODING_ARMOR_MAX_COUNT);
 
 	T_RadiusDamage(self, self->owner, self->dmg, NULL, self->dmg_radius, MOD_EXPLODINGARMOR);
 	// throw debris around
@@ -50,21 +71,6 @@ void DetonateArmor (edict_t *self)
 		for(i=0;i<GetRandom(2, 3);i++)
 			ThrowShrapnel(self, "models/objects/debris1/tris.md2", 2, self->s.origin, self->dmg, MOD_EXPLODINGARMOR);
 	}
-	// create explosion effect
-	gi.WriteByte (svc_temp_entity);
-	if (self->waterlevel)
-		gi.WriteByte (TE_ROCKET_EXPLOSION_WATER);
-	else
-		gi.WriteByte (TE_ROCKET_EXPLOSION);
-	gi.WritePosition (self->s.origin);
-	gi.multicast (self->s.origin, MULTICAST_PHS);
-
-	//G_FreeEdict (self);
-	// don't remove immediately
-
-	self->think = G_FreeEdict;
-	self->nextthink = level.time + FRAMETIME;
-	self->solid = SOLID_NOT;
 }
 
 void explodingarmor_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
@@ -172,6 +178,7 @@ void SpawnExplodingArmor (edict_t *ent, int time)
 	armor->solid = SOLID_TRIGGER;
 	armor->s.modelindex = gi.modelindex("models/items/armor/body/tris.md2");
 	armor->classname = "exploding_armor";
+	armor->mtype = M_ARMOR;
 	armor->s.effects |= EF_ROTATE;//(EF_ROTATE|EF_COLOR_SHELL);
 	//armor->s.renderfx |= RF_SHELL_RED;	
 	armor->s.origin[2] += 32;
@@ -217,6 +224,7 @@ void SpawnExplodingArmor (edict_t *ent, int time)
 	//VectorClear(armor->avelocity);
 	VectorCopy(ent->s.angles, armor->s.angles);
 
+	layout_add_tracked_entity(&ent->client->layout, armor); // add to HUD
 	ent->client->pers.inventory[body_armor_index] -= EXPLODING_ARMOR_AMOUNT;
 	ent->client->pers.inventory[power_cube_index] -= EXPLODING_ARMOR_COST;
 	ent->client->ability_delay = level.time + EXPLODING_ARMOR_DELAY;

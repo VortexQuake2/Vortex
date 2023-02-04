@@ -2263,6 +2263,7 @@ void Cmd_LaserSight_f(edict_t *ent);
 #define M_WORLDSPAWN	130
 #define M_BEAMSENTRY	131
 #define M_BARREL		132
+#define M_ARMOR			133
 #define P_TANK			200
 #define MORPH_MUTANT	400
 #define MORPH_CACODEMON	401
