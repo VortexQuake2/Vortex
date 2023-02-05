@@ -256,6 +256,7 @@ void detector_think (edict_t *self)
 		detector_findprojectile(self, "acid");
 		detector_findprojectile(self, "hammer");
 		detector_findprojectile(self, "exploding_armor");
+		detector_findprojectile(self, "lance");
 	}
 
 	self->nextthink = level.time + FRAMETIME;
