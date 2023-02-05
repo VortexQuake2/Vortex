@@ -212,9 +212,12 @@ qboolean G_CanUseAbilities(edict_t *ent, int ability_lvl, int pc_cost) {
     //	return false;
     if (!ent || !ent->inuse || (ent->health < 1) || G_IsSpectator(ent))
         return false;
-    //4.2 can't use abilities while in wormhole/noclip
+    //4.2 can't use abilities while in wormhole (note: MOVETYPE_NOCLIP would also work)
     if (ent->flags & FL_WORMHOLE)
         return false;
+	// can't use abilities while in intermission (note: PM_FREEZE would also work)
+	if (ent->solid == SOLID_NOT)
+		return false;
 
     if (ent->manacharging)
         return false;

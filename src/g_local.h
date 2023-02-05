@@ -1714,6 +1714,7 @@ struct gclient_s
 	int			tele_timeout;		// used by Blink Strike to store level.framenum when attack ends and player teleports (back) to oldpos
 	edict_t		*blinkStrike_targ;	// used by Blink Strike - target entity for attack
 	edict_t		*pickup;			// entity we are holding/have picked up
+	edict_t		*pickup_prev;		// previously picked up entity
 };
 
 struct edict_s

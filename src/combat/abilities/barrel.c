@@ -2,6 +2,7 @@
 
 void barrel_remove(edict_t* self, qboolean refund)
 {
+	gclient_t* cl = NULL;
 	if (!self || !self->inuse || self->deadflag == DEAD_DEAD)
 		return;
 
@@ -10,14 +11,18 @@ void barrel_remove(edict_t* self, qboolean refund)
 	{
 		// reduce count
 		self->creator->num_barrels--;
+		cl = self->creator->client;
 		// refund player
 		if (refund)
-			self->creator->client->pers.inventory[power_cube_index] += self->monsterinfo.cost;
+			cl->pers.inventory[power_cube_index] += self->monsterinfo.cost;
+		// stop tracking this previously picked up entity
+		if (cl->pickup_prev && cl->pickup_prev->inuse && cl->pickup_prev == self)
+			cl->pickup_prev = NULL;
 		// drop it
-		if (self->creator->client->pickup && self->creator->client->pickup->inuse && self->creator->client->pickup == self)
-			self->creator->client->pickup = NULL;
+		if (cl->pickup && cl->pickup->inuse && cl->pickup == self)
+			cl->pickup = NULL;
 		// remove from HUD
-		layout_remove_tracked_entity(&self->creator->client->layout, self);
+		layout_remove_tracked_entity(&cl->layout, self);
 	}
 
 	self->think = BecomeExplosion1;
@@ -202,7 +207,7 @@ void SpawnExplodingBarrel(edict_t* ent)
 	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
 
 	//FIXME: this function modifies start and returns the tr.endpos, so the next bit of code may push the starting position into a wall!
-	if (!G_GetSpawnLocation(ent, 80, barrel->mins, barrel->maxs, start, NULL, true))
+	if (!G_GetSpawnLocation(ent, 80, barrel->mins, barrel->maxs, start, NULL, false))
 	{
 		G_FreeEdict(barrel);
 		return;
@@ -296,6 +301,19 @@ void RemoveExplodingBarrels(edict_t* ent, qboolean refund)
 	ent->num_barrels = 0;
 }
 
+qboolean CanDropPickupEnt(edict_t* ent)
+{
+	edict_t* pickup_prev = ent->client->pickup_prev;
+	// don't have a pickup entity to drop
+	if (!ent->client->pickup || !ent->client->pickup->inuse)
+		return false;
+	// previous pickup entity might get in the way
+	if (pickup_prev && pickup_prev->inuse && pickup_prev->owner && pickup_prev->owner->inuse && pickup_prev->owner == ent)
+		return false;
+	return true;
+
+}
+
 void Cmd_ExplodingBarrel_f(edict_t* ent)
 {
 	edict_t* e = NULL;
@@ -309,19 +327,29 @@ void Cmd_ExplodingBarrel_f(edict_t* ent)
 	}
 
 	// already picked up a barrel?
-	if (ent->client->pickup)
+	if (ent->client->pickup && ent->client->pickup->inuse)
 	{
-		AngleVectors(ent->client->v_angle, forward, NULL, NULL);
-		// toss it forward if it's airborne
-		if (!ent->client->pickup->groundentity)
+		//gi.dprintf("have pickup\n");
+		if (CanDropPickupEnt(ent))
 		{
-			VectorScale(forward, 400, ent->client->pickup->velocity);
-			ent->client->pickup->velocity[2] += 200;
+			//gi.dprintf("dropping it\n");
+			AngleVectors(ent->client->v_angle, forward, NULL, NULL);
+			// toss it forward if it's airborne
+			if (!ent->client->pickup->groundentity)
+			{
+				VectorScale(forward, 400, ent->client->pickup->velocity);
+				ent->client->pickup->velocity[2] += 200;
+			}
+			// save a pointer to dropped entity
+			ent->client->pickup_prev = ent->client->pickup;
+			// let go
+			ent->client->pickup = NULL;
 		}
-		// let go
-		ent->client->pickup = NULL;
+		//else
+			//gi.dprintf("can't drop it\n");
 		return;
 	}
+	//gi.dprintf("no pickup\n");
 
 	// find a barrel close to the player's aiming reticle
 	while ((e = findclosestreticle(e, ent, 128)) != NULL)
@@ -338,6 +366,9 @@ void Cmd_ExplodingBarrel_f(edict_t* ent)
 			continue;
 		// found one--pick it up!
 		ent->client->pickup = e;
+		// clear pickup_prev if we've picked up the same entity we previously dropped
+		if (ent->client->pickup_prev && ent->client->pickup_prev->inuse && ent->client->pickup_prev == e)
+			ent->client->pickup_prev = NULL;
 		return;
 	}
 
