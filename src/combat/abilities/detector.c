@@ -214,7 +214,7 @@ void detector_think (edict_t *self)
 	if (expired || !G_EntIsAlive(self->owner))
 	{
 		if (expired && self->owner && self->owner->inuse)
-			safe_cprintf(self->owner, PRINT_HIGH, "A detector timed-out. (%d/%d)\n", self->owner->num_detectors, DETECTOR_MAX_COUNT);
+			safe_cprintf(self->owner, PRINT_HIGH, "A detector timed-out. (%d/%d)\n", self->owner->num_detectors, (int)DETECTOR_MAX_COUNT);
 
 		detector_remove(self);
 		return;
@@ -264,7 +264,7 @@ void detector_think (edict_t *self)
 
 void detector_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	safe_cprintf(self->owner, PRINT_HIGH, "A detector was destroyed. (%d/%d)\n", self->owner->num_detectors, DETECTOR_MAX_COUNT);
+	safe_cprintf(self->owner, PRINT_HIGH, "A detector was destroyed. (%d/%d)\n", self->owner->num_detectors, (int)DETECTOR_MAX_COUNT);
 	detector_remove(self);
 }
 
