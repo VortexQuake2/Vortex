@@ -5,6 +5,7 @@
 #include "../combat/abilities/v_think.h"
 #include "../gamemodes/boss.h"
 #include "characters/class_limits.h"
+#include "characters/io/v_characterio.h"
 
 //Function prototypes required for this .c file:
 void ClientUserinfoChanged (edict_t *ent, char *userinfo);
@@ -2038,7 +2039,7 @@ void ClientBeginDeathmatch (edict_t *ent)
 
 	// az begin
 #ifndef NO_GDS
-	ent->PlayerID = lastID;
+	ent->gds_player_id = lastID;
 	lastID++;
 
 	if (lastID > 100000000)
@@ -2190,7 +2191,7 @@ void ClientUserinfoChanged (edict_t *ent, char *userinfo)
 	}
 	if (strlen( ent->client->pers.netname) < 1 || (G_IsSpectator(ent) 
 #ifndef NO_GDS
-		&& !ent->ThreadStatus // Not loaded.
+		&& !ent->gds_thread_status // Not loaded.
 #endif
 		)) {
         strncpy(ent->client->pers.netname, s, sizeof(ent->client->pers.netname) - 1);
@@ -2212,7 +2213,7 @@ void ClientUserinfoChanged (edict_t *ent, char *userinfo)
 	playernum = ent-g_edicts-1;
 
 	// combine name and skin into a configstring
-	if (!G_IsSpectator(ent) && !V_AssignClassSkin(ent, s))
+	if (!G_IsSpectator(ent) && !vrx_assign_character_skin(ent, s))
 		gi.configstring (CS_PLAYERSKINS+playernum, va("%s\\%s", ent->client->pers.netname, s) );
 
 	// fov
@@ -2456,13 +2457,7 @@ void ClientDisconnect (edict_t *ent)
 		SPREE_DUDE = NULL;
 	}
 
-#ifndef NO_GDS
-	if (savemethod->value != 2)
-#endif
-		SaveCharacter(ent);
-#ifndef NO_GDS
-	else SaveCharacterQuit(ent);
-#endif
+    vrx_save_character(ent, true);
 
 	//GHz: Reset their skills_t to prevent any possibility of duping
 	memset(&ent->myskills,0,sizeof(skills_t));
@@ -2550,13 +2545,8 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
     que_t *curse = NULL;
 	int		viewheight;
 
-#ifndef NO_GDS
-#ifndef GDS_NOMULTITHREADING
-	// az begin
-	HandleStatus(ent);
-	// az end
-#endif
-#endif
+    if (vrx_char_io.handle_status)
+        vrx_char_io.handle_status(ent);
 
 // GHz START
 	// if we're a morphed player, then save the current viewheight

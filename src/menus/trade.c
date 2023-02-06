@@ -1,5 +1,6 @@
 #include "g_local.h"
 #include "../characters/io/v_sqlite_unidb.h"
+#include "characters/io/v_characterio.h"
 
 void ShowTradeMenu(edict_t *ent);
 void TradeInventoryMenu(edict_t *ent, int lastline);
@@ -113,34 +114,8 @@ void TradeItems(edict_t *player1, edict_t *player2)
 	player2->client->trade_accepted = false;
 
 	//Save players
-	if (savemethod->value == 1)
-	{
-		SaveCharacter(player1);
-		SaveCharacter(player2);
-	}else if (savemethod->value == 0)
-	{
-		char path[MAX_QPATH];
-
-		memset(path, 0, sizeof path);
-        vrx_get_character_file_path(path, player1);
-		VSF_SaveRunes(player1, path);
-
-		memset(path, 0, sizeof path);
-        vrx_get_character_file_path(path, player2);
-		VSF_SaveRunes(player2, path);
-
-	}else if (savemethod->value == 3)
-	{
-		VSFU_SaveRunes(player1);
-		VSFU_SaveRunes(player2);
-	}
-#ifndef NO_GDS
-	else if (savemethod->value == 2)
-	{
-		V_GDS_Queue_Add(player1, GDS_SAVERUNES);
-		V_GDS_Queue_Add(player2, GDS_SAVERUNES);
-	}
-#endif
+    vrx_char_io.save_player_runes(player1);
+    vrx_char_io.save_player_runes(player2);
 }
 
 //************************************************************************************************

@@ -1624,7 +1624,7 @@ qboolean M_MeleeAttack (edict_t *self, float range, int damage, int knockback)
 	return false;
 }
 
-qboolean M_NeedRegen (edict_t *ent)
+qboolean M_NeedRegen (const edict_t *ent)
 {
 	if (!ent || !ent->inuse)
 		return false;

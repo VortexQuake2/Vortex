@@ -366,7 +366,7 @@ void dom_init (void)
 		if (G_EntExists(cl_ent))
 		{
 			s = Info_ValueForKey (cl_ent->client->pers.userinfo, "skin");
-			V_AssignClassSkin(cl_ent, s);
+            vrx_assign_character_skin(cl_ent, s);
 		}
 	}
 	

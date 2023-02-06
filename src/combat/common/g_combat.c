@@ -911,7 +911,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		&& !(targ->creator && (targ->creator == attacker)))
 		knockback = 0;
 
-	// CE does not kick other corpses
+	// CreateUserData does not kick other corpses
 	if ((targ->deadflag == DEAD_DEAD) && (inflictor->deadflag == DEAD_DEAD)
 		&& (targ != inflictor))
 		knockback = 0;

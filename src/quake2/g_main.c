@@ -1,6 +1,7 @@
 #include "g_local.h"
 #include "../gamemodes/ctf.h"
 #include "../gamemodes/v_hw.h"
+#include "../characters/io/v_characterio.h"
 
 game_locals_t	game;
 level_locals_t	level;
@@ -213,23 +214,13 @@ void ShutdownGame(void)
 
 	for_each_player(ent, i)
 	{
-		//ent->myskills.inuse = 0;
-#if (!defined GDS_NOMULTITHREADING) && (!defined NO_GDS)
-		if (savemethod->value == 2)
-			SaveCharacterQuit(ent); //WriteMyCharacter(ent);
-		else
-#endif
-			SaveCharacter(ent);
-
+        vrx_save_character(ent, true);
 	}
-
 
 	//K03 End
 	gi.dprintf("==== ShutdownGame ====\n");
 
-#if (!defined GDS_NOMULTITHREADING) && (!defined NO_GDS)
-	GDS_FinishThread();
-#endif
+    vrx_close_char_io();
 
 	gi.FreeTags(TAG_LEVEL);
 	gi.FreeTags(TAG_GAME);
@@ -373,12 +364,7 @@ void VortexEndLevel(void)
 		PM_RemoveMonster(tempent);
         vrx_remove_player_summonables(tempent);
 		tempent->myskills.streak = 0;
-#ifndef NO_GDS
-		if (savemethod->value == 2)
-			SaveCharacterQuit(tempent);
-		else
-#endif
-			SaveCharacter(tempent);
+        vrx_save_character(tempent, true);
 		if (G_EntExists(tempent))
             vrx_write_to_logfile(tempent, "Logged out.\n");
 		else
@@ -942,7 +928,7 @@ void G_RunFrame(void)
 	edict_t	*ent;
 
 #if (defined GDS_NOMULTITHREADING) && (!defined NO_GDS)
-	ProcessQueue(NULL);
+	GDS_ProcessQueue(NULL);
 #endif
 
 	level.framenum++;
@@ -963,7 +949,7 @@ void G_RunFrame(void)
 		spawncycle = 130;
 
 	// autosave
-	if ( ( level.framenum % AUTOSAVE_FRAMES ) == 0 ) {
+	if ( ( level.framenum % qf2sf(AUTOSAVE_FRAMES) ) == 0 ) {
 		SV_SaveAllCharacters();
 	}
 

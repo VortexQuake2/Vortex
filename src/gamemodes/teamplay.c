@@ -255,7 +255,7 @@ void sortTeamsByLevel()
 
 			   // set team skin
 			   s = Info_ValueForKey (playerlist[i]->client->pers.userinfo, "skin");
-			   V_AssignClassSkin(playerlist[i], s);
+              vrx_assign_character_skin(playerlist[i], s);
           }	
      }
 }
@@ -418,7 +418,7 @@ qboolean SpawnWaitingPlayers (void)
 
 #ifndef NO_GDS
 #ifndef GDS_NOMULTITHREADING
-		if (player->ThreadStatus != 1) // Not loaded?
+		if (player->gds_thread_status != 1) // Not loaded?
 			continue; // Can't play
 #endif
 #endif

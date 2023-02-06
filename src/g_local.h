@@ -1105,16 +1105,16 @@ qboolean G_ValidTargetEnt(const edict_t *target, qboolean alive);
 qboolean G_ValidTarget_Lite(const edict_t *self, const edict_t *target, qboolean vis);
 
 qboolean G_ValidAlliedTarget(edict_t *self, edict_t *target, qboolean vis);//4.1 Archer
-edict_t *G_GetClient(edict_t *ent);
+edict_t *G_GetClient(const edict_t *ent);
 qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs, vec3_t start, vec3_t normal);
 void G_DrawBoundingBox (edict_t *ent);
 void G_DrawLaserBBox (edict_t *ent, int laser_color, int laser_size);
 void G_DrawLaser (edict_t *ent, vec3_t v1, vec3_t v2, int laser_color, int laser_size);
 void G_ResetPlayerState (edict_t *ent); // 3.78
 int G_GetNumSummonable (edict_t *ent, char *classname); // 3.9
-void G_EntMidPoint (edict_t *ent, vec3_t point);
-void G_EntViewPoint (edict_t *ent, vec3_t point); //4.55
-qboolean G_ClearShot (edict_t *shooter, vec3_t start, edict_t *target);
+void G_EntMidPoint (const edict_t *ent, vec3_t point);
+void G_EntViewPoint (const edict_t *ent, vec3_t point); //4.55
+qboolean G_ClearShot (const edict_t *shooter, vec3_t start, const edict_t *target);
 float distance (vec3_t p1, vec3_t p2);
 void G_RunFrames (edict_t *ent, int start_frame, int end_frame, qboolean reverse);
 void AngleCheck (float *val);
@@ -1123,7 +1123,7 @@ int Get_KindWeapon (gitem_t	*it);
 edict_t *FindPlayerByName(char *name);	//4.0 was (const char *name);
 edict_t *FindPlayer(char *s);
 edict_t *InitMonsterEntity (qboolean manual_spawn);
-edict_t *G_GetSummoner (edict_t *ent);
+edict_t *G_GetSummoner (const edict_t *ent);
 void InitJoinedQueue (void);
 void AddJoinedQueue (edict_t *ent);
 qboolean TeleportNearArea (edict_t *ent, vec3_t point, int area_size, qboolean air);
@@ -1297,7 +1297,7 @@ int range (edict_t *self, edict_t *other);
 
 void FoundTarget (edict_t *self);
 qboolean infront (edict_t *self, edict_t *other);
-qboolean visible (edict_t *self, edict_t *other);
+qboolean visible (const edict_t *self, const edict_t *other);
 qboolean FacingIdeal(edict_t *self);
 qboolean infov (edict_t *self, edict_t *other, int degrees);
 
@@ -2018,8 +2018,8 @@ struct edict_s
 #ifndef NO_GDS
 
 #ifndef GDS_NOMULTITHREADING
-	/*volatile */int ThreadStatus; // vrxchile 3.0
-	/*volatile */int PlayerID;
+	/*volatile */int gds_thread_status; // vrxchile 3.0
+	/*volatile */int gds_player_id;
 #endif
 
 #endif
@@ -2081,7 +2081,7 @@ int OpenConfigFile(edict_t *ent);
 void vrx_update_all_character_maximums(edict_t *ent);
 
 void vrx_update_health_max(edict_t *ent);
-void SaveCharacter (edict_t *ent);
+void vrx_save_character(edict_t *ent, qboolean unlock);
 
 void vrx_write_to_logfile(edict_t *ent, char *s);
 void WriteToLogFile (char *char_name, char *s) ;
@@ -2137,7 +2137,7 @@ for(INDEX=1;INDEX<=maxclients->value;INDEX++)			\
 void Teleport_them(edict_t *ent);
 void Check_full(edict_t *ent);
 void MonsterAim(edict_t *self, float accuracy, int projectile_speed, qboolean rocket, int flash_number, vec3_t forward, vec3_t start);
-float entdist(edict_t *ent1, edict_t *ent2);
+float entdist(const edict_t *ent1, const edict_t *ent2);
 void burn_person(edict_t *target, edict_t *owner, int damage);
 void hook_laser_think (edict_t *self);
 void Cmd_Salvation(edict_t *ent);
@@ -2148,7 +2148,7 @@ void Cmd_MiniSentry_f (edict_t *ent);
 void Cmd_CreateSupplyStation_f (edict_t *ent);
 void Cmd_Decoy_f (edict_t *ent);
 qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, qboolean regen_health, qboolean regen_armor, qboolean regen_ammo, int *nextframe);
-qboolean M_NeedRegen (edict_t *ent);
+qboolean M_NeedRegen (const edict_t *ent);
 qboolean M_IgnoreInferiorTarget (edict_t *self, edict_t *target);//4.5
 qboolean M_MeleeAttack(edict_t *self, float range, int damage, int knockback);
 qboolean M_ContinueAttack(edict_t* self, mmove_t* attack_move, mmove_t* end_move, float min_dist, float max_dist, float chance);
@@ -2310,15 +2310,15 @@ void Cmd_LaserSight_f(edict_t *ent);
 int V_GetRuneWeaponPts(edict_t *ent, item_t *rune);
 int V_GetRuneAbilityPts(edict_t *ent, item_t *rune);
 
-qboolean V_CommitCharacterData(edict_t *ent);
+qboolean vrx_commit_character(edict_t *ent, qboolean unlock);
 qboolean vrx_is_newbie_basher (const edict_t *player);
 void vrx_trigger_spree_abilities(edict_t *attacker);
 qboolean TeleportNearTarget (edict_t *self, edict_t *target, float dist, qboolean effect);
 qboolean vrx_find_random_spawn_point (edict_t *ent, qboolean air);
 void ValidateAngles (vec3_t angles);
 int InJoinedQueue (edict_t *ent);
-qboolean IsABoss(edict_t *ent);
-qboolean IsBossTeam (edict_t *ent);
+qboolean IsABoss(const edict_t *ent);
+qboolean IsBossTeam (const edict_t *ent);
 void AddBossExp (edict_t *attacker, edict_t *target);
 void vrx_award_boss_kill (edict_t *boss);
 void CreateRandomPlayerBoss (qboolean find_new_candidate);
@@ -2347,12 +2347,10 @@ do { \
 void OpenModeMenu(edict_t *ent);
 qboolean CanJoinGame(edict_t *ent, int returned);
 qboolean ToggleSecondary (edict_t *ent, gitem_t *item, qboolean printmsg);
+void plat_go_up (edict_t *ent);
+void weapon_grenade_fire(edict_t *ent, qboolean held);
 
 // az begin
-#ifndef NO_GDS
-void SaveCharacterQuit (edict_t *ent);
-#endif
-
 // New AutoStuff
 void V_AutoStuff(edict_t* ent);
 
@@ -2375,7 +2373,7 @@ void InitTBI();
 #include "server/v_luasettings.h"
 
 /* g_configstring_override.c */
-typedef void (*gi_sound_func_t) (edict_t *ent, int channel, int soundindex, float volume, float attenuation, float timeofs);
+typedef void (*gi_sound_func_t) (const edict_t *ent, int channel, int soundindex, float volume, float attenuation, float timeofs);
 void cs_override_init();
 void cs_reset();
 

@@ -1,6 +1,6 @@
 #define	ALLY_WAIT_TIMEOUT	30 // number of seconds before a request times out
 
-qboolean IsAlly (edict_t *ent, edict_t *other);
+qboolean IsAlly (const edict_t *ent, const edict_t *other);
 void AddAlly (edict_t *ent, edict_t *other);
 void RemoveAlly (edict_t *ent, edict_t *other);
 void AllyCleanup (edict_t *ent);

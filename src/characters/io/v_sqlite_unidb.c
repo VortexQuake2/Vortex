@@ -16,9 +16,9 @@
 #define TOTAL_INSERTONCE 5
 #define TOTAL_RESETTABLES 6
 
-void V_VSFU_StartConn();
+void vrx_sqlite_start_connection();
 
-void V_VSFU_Cleanup();
+void vrx_sqlite_end_connection();
 
 const char* VSFU_CREATEDBQUERY[TOTAL_TABLES] = 
 {
@@ -37,11 +37,11 @@ const char* VSFU_CREATEDBQUERY[TOTAL_TABLES] =
 
 // SAVING
 
-const char *CA = "INSERT INTO character_data VALUES (%d,0,0,0,0,0,0,0,0)";
-const char *CB = "INSERT INTO ctf_stats VALUES (%d,0,0,0,0,0,0,0)";
-const char *CC = "INSERT INTO game_stats VALUES (%d,0,0,0,0,0,0,0,0,0,0,0,0)";
-const char *CD = "INSERT INTO point_data VALUES (%d,0,0,0,0,0,0,0,0,0)";
-const char *CE = "INSERT INTO userdata VALUES (%d,\"\",\"\",\"\",\"\",\"\",\"\",\"\",0,0)";
+const char *CreateCharacterData = "INSERT INTO character_data VALUES (%d,0,0,0,0,0,0,0,0)";
+const char *CreateCtfStats = "INSERT INTO ctf_stats VALUES (%d,0,0,0,0,0,0,0)";
+const char *CreateGameStats = "INSERT INTO game_stats VALUES (%d,0,0,0,0,0,0,0,0,0,0,0,0)";
+const char *CreatePointData = "INSERT INTO point_data VALUES (%d,0,0,0,0,0,0,0,0,0)";
+const char *CreateUserData = "INSERT INTO userdata VALUES (%d,\"\",\"\",\"\",\"\",\"\",\"\",\"\",0,0)";
 
 const char* VSFU_RESETTABLES[TOTAL_RESETTABLES] =
 {
@@ -84,30 +84,43 @@ const char* VSFU_UPDATEPDATA = "UPDATE point_data SET exp=%d, exptnl=%d, level=%
 
 const char* VSFU_UPDATECTFSTATS = "UPDATE ctf_stats SET flag_pickups=%d, flag_captures=%d, flag_returns=%d, flag_kills=%d, offense_kills=%d, defense_kills=%d, assists=%d WHERE char_idx=%d;";
 
-#define rck() if(r!=SQLITE_OK){ if(r != SQLITE_ROW && r != SQLITE_OK && r != SQLITE_DONE){gi.dprintf("sqlite error %d: %s\n", r, sqlite3_errmsg(db));return;}}
-#define rck2() if(r!=SQLITE_OK){ if(r != SQLITE_ROW && r != SQLITE_OK && r != SQLITE_DONE){gi.dprintf("sqlite error %d: %s\n", r, sqlite3_errmsg(db));}}
+#define CHECK_ERR_RETURN() if(r!=SQLITE_OK){ if(r != SQLITE_ROW && r != SQLITE_OK && r != SQLITE_DONE){gi.dprintf("sqlite error %d: %s\n", r, sqlite3_errmsg(db));return;}}
+#define CHECK_ERR() if(r!=SQLITE_OK){ if(r != SQLITE_ROW && r != SQLITE_OK && r != SQLITE_DONE){gi.dprintf("sqlite error %d: %s\n", r, sqlite3_errmsg(db));}}
 
 #define QUERY(x) format=x;\
 	r=sqlite3_prepare_v2(db, format, strlen(format), &statement, NULL);\
-	rck()\
+	CHECK_ERR_RETURN()\
 	r=sqlite3_step(statement);\
-	rck()\
+	CHECK_ERR_RETURN()\
 	sqlite3_finalize(statement);
 
-#define LQUERY(x) format=x;\
+#define QUERY_NORETURN(x) format=x;\
 	r=sqlite3_prepare_v2(db, format, strlen(format), &statement, NULL);\
-	rck2()\
+	CHECK_ERR()\
 	r=sqlite3_step(statement);\
-	rck2()\
+	CHECK_ERR()\
 
 #define DEFAULT_PATH va("%s/settings/characters.db", game_path->string)
 sqlite3 *db = NULL;
 
 
-void BeginTransaction(sqlite3* db);
+void BeginTransaction(sqlite3* db)
+{
+    char* format;
+    int r;
+    sqlite3_stmt *statement;
 
-void CommitTransaction(sqlite3 *db);
+    QUERY("BEGIN TRANSACTION;");
+}
 
+void CommitTransaction(sqlite3 *db)
+{
+    char* format;
+    int r;
+    sqlite3_stmt *statement;
+
+    QUERY("COMMIT;")
+}
 
 // az begin
 void VSFU_SaveRunes(edict_t *player)
@@ -118,9 +131,7 @@ void VSFU_SaveRunes(edict_t *player)
 	int numRunes = CountRunes(player);
 	char* format;
 
-	V_VSFU_StartConn();
-
-	LQUERY(va("SELECT char_idx FROM userdata WHERE playername=\"%s\"", player->client->pers.netname));
+	QUERY_NORETURN(va("SELECT char_idx FROM userdata WHERE playername=\"%s\"", player->client->pers.netname));
 
 	id = sqlite3_column_int(statement, 0);
 
@@ -158,7 +169,7 @@ void VSFU_SaveRunes(edict_t *player)
 
 			for (j = 0; j < MAX_VRXITEMMODS; ++j)
 			{
-				char* query;
+				const char* query;
 				// cant remove columns with sqlite.
 				// ugly hack to work around that
 				if (vrx_lua_get_int("useMysqlTablesOnSQLite", 0))
@@ -180,7 +191,6 @@ void VSFU_SaveRunes(edict_t *player)
 	//end runes
 
 	CommitTransaction(db);
-	V_VSFU_Cleanup();
 }
 
 int VSFU_GetID(char *playername)
@@ -189,7 +199,7 @@ int VSFU_GetID(char *playername)
 	int r, id;
 	char* format;
 
-	LQUERY(va("SELECT char_idx FROM userdata WHERE playername=\"%s\"", playername));
+	QUERY_NORETURN(va("SELECT char_idx FROM userdata WHERE playername=\"%s\"", playername));
 
 	if (r == SQLITE_ROW) // character exists
 	{
@@ -207,7 +217,7 @@ int VSFU_NewID()
 	int r, ncount;
 	char* format;
 
-	LQUERY("SELECT COUNT(*) FROM userdata");
+	QUERY_NORETURN("SELECT COUNT(*) FROM userdata");
 
 	ncount = sqlite3_column_int(statement, 0);
 
@@ -226,7 +236,6 @@ void VSFU_SavePlayer(edict_t *player)
 	int numRunes = CountRunes(player);
 	char *format;
 
-	V_VSFU_StartConn();
 
 	id = VSFU_GetID(player->client->pers.netname);
 
@@ -243,17 +252,17 @@ void VSFU_SavePlayer(edict_t *player)
 		if (!vrx_lua_get_int("useMysqlTablesOnSQLite", 0))
 		{
 			/* sorry about this :( -az*/
-				QUERY(va (CA, id));
-				QUERY(va (CB, id));
-				QUERY(va (CC, id));
-				QUERY(va (CD, id));
-				QUERY(va (CE, id));
+				QUERY(va (CreateCharacterData, id));
+				QUERY(va (CreateCtfStats, id));
+				QUERY(va (CreateGameStats, id));
+				QUERY(va (CreatePointData, id));
+				QUERY(va (CreateUserData, id));
 		}else
 		{
-			QUERY(va (CA, id));
-			QUERY(va (CB, id));
-			QUERY(va (CC, id));
-			QUERY(va (CD, id));
+			QUERY(va (CreateCharacterData, id));
+			QUERY(va (CreateCtfStats, id));
+			QUERY(va (CreateGameStats, id));
+			QUERY(va (CreatePointData, id));
 			QUERY(va("INSERT INTO userdata VALUES (%d,\"\",\"\",\"\",\"\",\"\",\"\",\"\",0,0,0)", id));
 		}
 		gi.dprintf("inserted bases.\n", r);
@@ -417,7 +426,7 @@ void VSFU_SavePlayer(edict_t *player)
 
 				for (j = 0; j < MAX_VRXITEMMODS; ++j)
 				{
-					char* query;
+					const char* query;
 					// cant remove columns with sqlite.
 					// ugly hack to work around that
 					if (vrx_lua_get_int("useMysqlTablesOnSQLite", 0))
@@ -457,7 +466,6 @@ void VSFU_SavePlayer(edict_t *player)
 	if (player->client->pers.inventory[power_cube_index] > player->client->pers.max_powercubes)
 		player->client->pers.inventory[power_cube_index] = player->client->pers.max_powercubes;
 
-	V_VSFU_Cleanup();
 }
 
 
@@ -468,14 +476,12 @@ qboolean VSFU_LoadPlayer(edict_t *player)
 	int numAbilities, numWeapons, numRunes;
 	int i, r, id;
 
-	V_VSFU_StartConn();
-
 	id = VSFU_GetID(player->client->pers.netname);
 
 	if (id == -1)
 		return false;
 	
-	LQUERY(va("SELECT * FROM userdata WHERE char_idx=%d", id));
+	QUERY_NORETURN(va("SELECT * FROM userdata WHERE char_idx=%d", id));
 
     strcpy(player->myskills.title, sqlite3_column_text(statement, 1));
 	strcpy(player->myskills.player_name, sqlite3_column_text(statement, 2));
@@ -824,15 +830,14 @@ qboolean VSFU_LoadPlayer(edict_t *player)
 		player->myskills.current_armor = MAX_ARMOR(player);
 	player->myskills.inventory[body_armor_index] = player->myskills.current_armor;
 
-	V_VSFU_Cleanup();
 	return true;
 }
 
 // Start Connection to SQLite
 
-void V_VSFU_StartConn()
+void vrx_sqlite_start_connection()
 {
-	char *dbname = vrx_lua_get_string("SQLitePath");
+	const char *dbname = vrx_lua_get_string("SQLitePath");
 	struct stat mybuf;
 	int i, r;
 	char* format;
@@ -862,7 +867,7 @@ void V_VSFU_StartConn()
 
 }
 	
-void V_VSFU_Cleanup()
+void vrx_sqlite_end_connection()
 {
 	sqlite3_close(db);
 	db = NULL;

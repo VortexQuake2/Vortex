@@ -2,9 +2,9 @@
 
 #ifndef NO_GDS
 
-#include <my_global.h>
 #include <mysql.h>
 #include "gds.h"
+#include "characters/class_limits.h"
 
 #ifndef GDS_NOMULTITHREADING
 #include <pthread.h>
@@ -125,7 +125,7 @@ qboolean IsThreadRunning();
 // Utility Functions
 
 // va used only in the thread.
-char	*myva(char *format, ...)
+char	*myva(const char *format, ...)
 {
 	va_list		argptr;
 	static char		string[1024];
@@ -365,7 +365,7 @@ void V_GDS_Queue_Add(edict_t *ent, int operation)
 	last->ent = ent;
 	last->next = NULL; // make sure last node has null pointer 
 	last->operation = operation;
-	last->id = ent? ent->PlayerID : 0;
+	last->id = ent ? ent->gds_player_id : 0;
 
 	if (operation == GDS_SAVE || 
 		operation == GDS_SAVECLOSE ||
@@ -505,7 +505,7 @@ void SetThreadRunning(qboolean running)
 #endif
 }
 
-void *ProcessQueue(void *unused)
+void *GDS_ProcessQueue(void *unused)
 {
 	gds_queue_t *current = V_GDS_Queue_PopFirst();
 
@@ -602,8 +602,6 @@ int V_GDS_UpdateRunes(gds_queue_t *current, MYSQL* db)
 		int index = FindRuneIndex_S(i+1, &current->myskills);
 		if (index != -1)
 		{
-			int j;
-
 			QUERY (MYSQL_INSERTRMETA, id, 
 				index,
 				current->myskills.items[index].itemtype,
@@ -615,9 +613,14 @@ int V_GDS_UpdateRunes(gds_queue_t *current, MYSQL* db)
 				current->myskills.items[index].numMods,
 				current->myskills.items[index].setCode,
 				current->myskills.items[index].classNum);
-			for (j = 0; j < MAX_VRXITEMMODS; ++j)
+			for (int j = 0; j < MAX_VRXITEMMODS; ++j)
 			{
-				QUERY(MYSQL_INSERTRMOD, id, index,
+				// TYPE_NONE, so skip it
+				if (current->myskills.items[index].modifiers[j].type == 0 || 
+					current->myskills.items[index].modifiers[j].value == 0)
+					continue;
+
+				QUERY(MYSQL_INSERTRMOD, id, index, j,
 					current->myskills.items[index].modifiers[j].type,
 					current->myskills.items[index].modifiers[j].index,
 					current->myskills.items[index].modifiers[j].value,
@@ -812,6 +815,11 @@ int V_GDS_Save(gds_queue_t *current, MYSQL* db)
 
 				for (j = 0; j < MAX_VRXITEMMODS; ++j)
 				{
+					// TYPE_NONE, so skip it
+					if (current->myskills.items[index].modifiers[j].type == 0 ||
+						current->myskills.items[index].modifiers[j].value == 0)
+						continue;
+
 					QUERY(MYSQL_INSERTRMOD, id, index, j,
 					    current->myskills.items[index].modifiers[j].type,
 					    current->myskills.items[index].modifiers[j].index,
@@ -843,8 +851,8 @@ int V_GDS_Save(gds_queue_t *current, MYSQL* db)
 	pthread_mutex_lock(&StatusMutex);
 #endif
 
-	if (current->ent->PlayerID == current->id)
-		current->ent->ThreadStatus = GDS_STATUS_CHARACTER_SAVED;
+	if (current->ent->gds_player_id == current->id)
+		current->ent->gds_thread_status = GDS_STATUS_CHARACTER_SAVED;
 
 #ifndef GDS_NOMULTITHREADING
 	pthread_mutex_unlock(&StatusMutex);
@@ -853,63 +861,6 @@ int V_GDS_Save(gds_queue_t *current, MYSQL* db)
 	mysql_autocommit(db, true);
 
 	return id;
-}
-
-void V_GDS_SetPlaying(gds_queue_t *current, MYSQL *db)
-{
-	char escaped[32];
-	char *format;
-
-	if (current->ent->ThreadStatus == GDS_STATUS_CHARACTER_LOADED)
-	{
-		mysql_real_escape_string(db, escaped, current->ent->client->pers.netname, strlen(current->ent->client->pers.netname));
-
-		QUERY("UPDATE userdata SET isplaying = 1 WHERE playername=\"%s\"", escaped);
-	}
-}
-
-qboolean V_GDS_LoadFromQueue(gds_queue_t *current){
-    if (otherq = V_GDS_FindSave(current)) // Got a save in the que, use that instead.
-    {
-        memcpy(&current->ent->myskills, &otherq->myskills, sizeof(skills_t));
-
-#ifndef GDS_NOMULTITHREADING
-        pthread_mutex_lock(&StatusMutex);
-#endif
-
-        if ( (i = canJoinGame(player)) == 0)
-        {
-            if (player->PlayerID == current->id)
-            {
-                QUERY ("CALL CanPlay(%d, @IsAble);", id);
-                mysql_query (db, "SELECT @IsAble;");
-                GET_RESULT;
-
-                if (atoi(row[0]) == 0 && !gds_singleserver->value)
-                {
-                    player->ThreadStatus = GDS_STATUS_ALREADY_PLAYING; // Already playing.
-                    FREE_RESULT;
-                    return false;
-                }
-
-                FREE_RESULT;
-
-                player->ThreadStatus = GDS_STATUS_CHARACTER_LOADED; // You can play.
-                V_GDS_SetPlaying(current, db);
-                V_GDS_FreeQueue_Add(otherq); // Remove this, now.
-            }
-        }else
-        {
-            V_GDS_Queue_Push(otherq, true); // push back into the que.
-            player->ThreadStatus = i;
-        }
-#ifndef GDS_NOMULTITHREADING
-        pthread_mutex_unlock(&StatusMutex);
-#endif
-        return i == 0; // success.
-    }
-
-    return false;
 }
 
 qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
@@ -929,7 +880,7 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 		return false;
 	}
 
-	if (player->PlayerID != current->id)
+	if (player->gds_player_id != current->id)
 		return false; // Heh.
 
 	mysql_real_escape_string(db, escaped, current->ent->client->pers.netname, strlen(current->ent->client->pers.netname));
@@ -947,7 +898,7 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 #ifndef GDS_NOMULTITHREADING
 		pthread_mutex_lock(&StatusMutex);
 #endif
-		player->ThreadStatus = GDS_STATUS_CHARACTER_DOES_NOT_EXIST;
+		player->gds_thread_status = GDS_STATUS_CHARACTER_DOES_NOT_EXIST;
 #ifndef GDS_NOMULTITHREADING
 		pthread_mutex_unlock(&StatusMutex);
 #endif
@@ -975,7 +926,7 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 		}*/
 
 
-		QUERY ("CALL CanPlay(%d, @IsAble);", id);
+		QUERY ("CALL GetCharacterLock(%d, @IsAble);", id);
 		mysql_query (db, "SELECT @IsAble;");
 		GET_RESULT;
 
@@ -986,7 +937,7 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 #ifndef GDS_NOMULTITHREADING
 				pthread_mutex_lock(&StatusMutex);
 #endif
-				player->ThreadStatus = GDS_STATUS_ALREADY_PLAYING; // Already playing.
+				player->gds_thread_status = GDS_STATUS_ALREADY_PLAYING; // Already playing.
 #ifndef GDS_NOMULTITHREADING
 				pthread_mutex_unlock(&StatusMutex);
 #endif
@@ -995,7 +946,7 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 			}
 		}else
 		{
-			char* error = mysql_error(GDS_MySQL);
+			const char* error = mysql_error(GDS_MySQL);
 			if (error)
 				gi.dprintf("DB: %s\n", error);
 		}
@@ -1025,7 +976,7 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 
 	FREE_RESULT;
 
-	if (player->PlayerID != current->id)
+	if (player->gds_player_id != current->id)
 		return false; // Don't waste time...
 
 	QUERY( "SELECT COUNT(*) FROM talents WHERE char_idx=%d", id );
@@ -1058,7 +1009,7 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 	FREE_RESULT;
 	//end talents
 
-	if (player->PlayerID != current->id)
+	if (player->gds_player_id != current->id)
 		return false; // Still here.
 
 	QUERY( "SELECT COUNT(*) FROM abilities WHERE char_idx=%d", id );
@@ -1097,7 +1048,7 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 
 	FREE_RESULT;
 
-	if (player->PlayerID != current->id)
+	if (player->gds_player_id != current->id)
 		return false; // Patient enough...
 
 	QUERY( "SELECT COUNT(*) FROM weapon_meta WHERE char_idx=%d", id );
@@ -1157,7 +1108,7 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 	mysql_free_result(result_b);
 	//end weapons
 
-	if (player->PlayerID != current->id)
+	if (player->gds_player_id != current->id)
 		return false; // Why quit now?
 
 	//begin runes
@@ -1191,7 +1142,7 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 			player->myskills.items[index].setCode = atoi(row[9]);
 			player->myskills.items[index].classNum = atoi(row[10]);
 
-			QUERY ("SELECT * FROM runes_mods WHERE rune_index=%d AND char_idx=%d", index, id);
+			QUERY ("SELECT type, mindex, value, rset FROM runes_mods WHERE rune_index=%d AND char_idx=%d", index, id);
 
 			result_b = mysql_store_result(db);
 			
@@ -1200,19 +1151,16 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 			else
 				row = NULL;
 
-			if (row)
+			int mod = 0;
+			while (row && mod < MAX_VRXITEMMODS)
 			{
-				for (j = 0; j < MAX_VRXITEMMODS; ++j)
-				{
-					player->myskills.items[index].modifiers[atoi(row[2])].type = atoi(row[3]);
-					player->myskills.items[index].modifiers[atoi(row[2])].index = atoi(row[4]);
-					player->myskills.items[index].modifiers[atoi(row[2])].value = atoi(row[5]);
-					player->myskills.items[index].modifiers[atoi(row[2])].set = atoi(row[6]);
+				player->myskills.items[index].modifiers[mod].type = atoi(row[0]);
+				player->myskills.items[index].modifiers[mod].index = atoi(row[1]);
+				player->myskills.items[index].modifiers[mod].value = atoi(row[2]);
+				player->myskills.items[index].modifiers[mod].set = atoi(row[3]);
 
-					row = mysql_fetch_row(result_b);
-					if (!row)
-						break;
-				}
+				row = mysql_fetch_row(result_b);
+				mod++;
 			}
 
 			mysql_free_result(result_b);
@@ -1226,7 +1174,7 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 	FREE_RESULT;
 	//end runes
 
-	if (player->PlayerID != current->id)
+	if (player->gds_player_id != current->id)
 		return false; // Almost there.
 
 
@@ -1360,16 +1308,16 @@ qboolean V_GDS_Load(gds_queue_t *current, MYSQL *db)
 #ifndef GDS_NOMULTITHREADING
 	pthread_mutex_lock(&StatusMutex);
 #endif
-	
-	if ( (i = canJoinGame(player)) == 0)
+
+    int result_status = vrx_get_login_status(player);
+	if (result_status == 0)
 	{
-		if (player->PlayerID == current->id)
+		if (player->gds_player_id == current->id)
 		{
-			V_GDS_SetPlaying(current, db);
-			player->ThreadStatus = GDS_STATUS_CHARACTER_LOADED; // You can play! :)
+			player->gds_thread_status = GDS_STATUS_CHARACTER_LOADED; // You can play! :)
 		}
 	}else
-		player->ThreadStatus = i;
+		player->gds_thread_status = result_status;
 
 #ifndef GDS_NOMULTITHREADING
 	pthread_mutex_unlock(&StatusMutex);
@@ -1393,7 +1341,7 @@ void CreateProcessQueue()
 	int rc;
 
 	// gi.dprintf ("DB: Creating thread...");
-	rc = pthread_create(&QueueThread, &attr, ProcessQueue, NULL);
+	rc = pthread_create(&QueueThread, &attr, GDS_ProcessQueue, NULL);
 	
 	if (rc)
 	{
@@ -1407,28 +1355,16 @@ void CreateProcessQueue()
 qboolean V_GDS_StartConn()
 {
 	int rc;
-	char* database, *user, *pw, *dbname;
+	const char* database, *user, *pw, *dbname;
 
 	gi.dprintf("DB: Initializing connection... ");
 
-	gds_singleserver = gi.cvar("gds_single", "1", 0); // default to a single server using sql.
+	gds_singleserver = gi.cvar("gds_single", "0", 0); // default to multi server using sql.
 
-	database = Lua_GetStringSetting("dbaddress");
-	user = Lua_GetStringSetting("username");
-	pw = Lua_GetStringSetting("dbpass");
-	dbname = Lua_GetStringSetting("databasename");
-
-	if (!database)
-		database = DEFAULT_DATABASE;
-
-	if (!user)
-		user = MYSQL_USER;
-
-	if (!pw)
-		pw = MYSQL_PW;
-
-	if (!dbname)
-		dbname = MYSQL_DBNAME;
+	database = gi.cvar("gds_dbaddress", DEFAULT_DATABASE, 0)->string;
+	user = gi.cvar("gds_dbuser", MYSQL_USER, 0)->string;
+	pw = gi.cvar("gds_dbpass", MYSQL_PW, 0)->string;
+	dbname = gi.cvar("gds_dbname", MYSQL_DBNAME, 0)->string;
 
 	if (!GDS_MySQL)
 	{
@@ -1457,7 +1393,8 @@ qboolean V_GDS_StartConn()
 
 	pthread_mutex_init(&QueueMutex, NULL);
 	pthread_mutex_init(&StatusMutex, NULL);
-	if (rc = pthread_mutex_init(&ThreadStatusMutex, NULL))
+    rc = pthread_mutex_init(&ThreadStatusMutex, NULL);
+    if (rc)
 		gi.dprintf("mutex creation err: %d", rc);
 
 	pthread_attr_init(&attr);
@@ -1476,22 +1413,42 @@ void Mem_PrepareMutexes()
 #endif
 }
 
-qboolean CanUseGDS()
+qboolean GDS_IsEnabled()
 {
 	return GDS_MySQL != NULL;
 }
 
+qboolean vrx_mysql_isloading(edict_t *ent) {
+#ifndef GDS_NOMULTITHREADING
+    pthread_mutex_lock(&StatusMutex);
+#endif
+    int status = ent->gds_thread_status;
+#ifndef GDS_NOMULTITHREADING
+    pthread_mutex_unlock(&StatusMutex);
+#endif
+    return status == GDS_STATUS_CHARACTER_LOADING ||
+           status == GDS_STATUS_CHARACTER_LOADED ||
+           status == GDS_STATUS_CHARACTER_DOES_NOT_EXIST;
+}
+
+qboolean vrx_mysql_saveclose_character(edict_t* player) {
+	if (GDS_IsEnabled())
+	{
+		V_GDS_Queue_Add(player, GDS_SAVECLOSE);
+		return true;
+	}
+
+	return false;
+}
+
 #ifndef GDS_NOMULTITHREADING
 
-void HandleStatus(edict_t *player)
+void GDS_HandleStatus(edict_t *player)
 {
 	if (!player)
 		return;
 
 	if (!player->inuse)
-		return;
-
-	if (savemethod->value != 2)
 		return;
 
 	if (!G_IsSpectator(player)) // don't handle plyers that are already logged in!
@@ -1504,7 +1461,7 @@ void HandleStatus(edict_t *player)
 	pthread_mutex_lock(&StatusMutex);
 #endif
 
-	if (player->ThreadStatus == GDS_STATUS_OK)
+	if (player->gds_thread_status == GDS_STATUS_OK)
 	{
 #ifndef GDS_NOMULTITHREADING
 		pthread_mutex_unlock(&StatusMutex);
@@ -1512,17 +1469,17 @@ void HandleStatus(edict_t *player)
 		return;
 	}
 
-	switch (player->ThreadStatus)
+	switch (player->gds_thread_status)
 	{
 	case GDS_STATUS_ALREADY_PLAYING:
-		safe_centerprintf(player, "You seem to be already playing in this or another server.\nIf you're not, wait until tomorrow or ask an admin\nto free your character.\n");
+		safe_centerprintf(player, "You seem to be already playing in this or another server.\nAsk an admin to free your character.\n");
 	case GDS_STATUS_CHARACTER_SAVED:
 		/*if (player->inuse)
 			gi.cprintf(player, PRINT_LOW, "Character saved!\n");*/
 		break;
 	case GDS_STATUS_CHARACTER_DOES_NOT_EXIST: // does not exist?
 		safe_centerprintf(player, "Creating a new Character!\n");
-		newPlayer(player);
+		vrx_create_new_character(player);
 		OpenModeMenu(player);
 		break;
 	case GDS_STATUS_CHARACTER_LOADED:
@@ -1531,13 +1488,14 @@ void HandleStatus(edict_t *player)
 		break;
 	case GDS_STATUS_OK:
 		break;
+    case GDS_STATUS_CHARACTER_LOADING:
+        return;
 	default: // negative value
-		CanJoinGame(player, player->ThreadStatus); //Sends out correct message.
+		CanJoinGame(player, player->gds_thread_status); //Sends out correct message.
 	}
 
 	// clear the status.
-	if (player->ThreadStatus != GDS_STATUS_CHARACTER_LOADED)
-		player->ThreadStatus = GDS_STATUS_OK;
+	player->gds_thread_status = GDS_STATUS_OK;
 #ifndef GDS_NOMULTITHREADING
 	pthread_mutex_unlock(&StatusMutex);
 #endif
@@ -1575,7 +1533,7 @@ void GDS_FinishThread()
 #else
 
 void GDS_FinishThread () {}
-void HandleStatus () {}
+void GDS_HandleStatus () {}
 
 #endif
 

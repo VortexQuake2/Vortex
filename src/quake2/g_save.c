@@ -1,5 +1,5 @@
 #include "g_local.h"
-#include "../characters/io/v_sqlite_unidb.h"
+#include "../characters/io/v_characterio.h"
 
 // settings.h
 const char *s1;
@@ -202,30 +202,7 @@ void InitGame(void)
 	vrx_init_lua();
     CreateDirIfNotExists(va("%s/settings", gamedir->string));
 
-	// Before anything else, prepare TagMalloc's mutexes and a mysql connection
-	if (savemethod->value == 2)
-	{
-#if (!defined NO_GDS)
-		V_GDS_StartConn(); // start connection to db
-#else
-		gi.dprintf("This server does not support MySQL. Forcing offline saving via SQLite.\n");
-		gi.cvar_forceset("savemethod", "3");
-#endif
-	}
-	else
-	{
-		gi.dprintf("DB: Using offline character saving (via %s)\n", savemethod->value == 1 ? "Binary" : "SQLite");
-        CreateDirIfNotExists(save_path->string);
-	}
-
-	if (savemethod->value == 3)
-	{
-		V_VSFU_StartConn(); // open up sqlite single connection database
-	}
-
-#if (!defined GDS_NOMULTITHREADING) && (!defined NO_GDS)
-	Mem_PrepareMutexes();
-#endif
+	vrx_init_char_io();
 
 #ifdef CMD_USEHASH
 	InitHash();

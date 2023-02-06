@@ -8,7 +8,7 @@ SUPERTANK
 
 #include "g_local.h"
 #include "../../quake2/monsterframes/m_supertank.h"
-qboolean visible (edict_t *self, edict_t *other);
+qboolean visible (const edict_t *self, const edict_t *other);
 
 static int	sound_death;
 static int	sound_search1;

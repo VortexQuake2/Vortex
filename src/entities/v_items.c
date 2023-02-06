@@ -1,6 +1,7 @@
 #include "g_local.h"
 #include "../characters/io/v_sqlite_unidb.h"
 #include "../characters/class_limits.h"
+#include "characters/io/v_characterio.h"
 
 
 void vrx_spawn_normal_rune(edict_t *rune, int targ_level, int type);
@@ -285,6 +286,9 @@ void vrx_create_ability_modifier(edict_t *rune, qboolean is_class, int i, int ta
     // Assign it a type
     rune->vrxitem.modifiers[i].type = TYPE_ABILITY;
 
+	// no set by default
+	rune->vrxitem.modifiers[i].set = 0;
+
     if (vrx_get_ability_upgrade_cost(ability->index) > 1) // No runes that have cost 2+ stuff should get over...
     {
         // for class runes, having this kind of abilities that are one-pointed or more is stupid
@@ -558,6 +562,7 @@ void vrx_make_weapon_rune(edict_t* rune, int targ_level)
 		rune->vrxitem.modifiers[i].value = GetRandom(1, RUNE_WEAPON_MAXVALUE);
 		rune->vrxitem.modifiers[i].index = ((weaponIndex + 10) * 100) + modIndex;	// ex: 1800 = rg damage
 		rune->vrxitem.modifiers[i].type = TYPE_WEAPON;
+		rune->vrxitem.modifiers[i].set = 0;
 
 		//Fix 1 time upgrades to 1 pt
 		if ((modIndex > 3) || ((modIndex > 2) && (weaponIndex != WEAPON_SWORD)))
@@ -884,18 +889,7 @@ void PurchaseRandomRune(edict_t *ent, int runetype)
 	gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/gold.wav"), 1, ATTN_NORM, 0);
 
 	//Save the player
-	if (savemethod->value == 1)
-		SaveCharacter(ent);
-	else if (savemethod->value == 0)
-	{
-		char path[MAX_QPATH];
-		memset(path, 0, sizeof path);
-        vrx_get_character_file_path(path, ent);
-		VSF_SaveRunes(ent, path);
-	}else if (savemethod->value == 3)
-	{
-		VSFU_SaveRunes(ent);
-	}
+	vrx_char_io.save_player_runes(ent);
 
 	//write to the log
 	gi.dprintf("INFO: %s purchased a level %d rune (%s).\n", 
@@ -941,16 +935,7 @@ qboolean Pickup_Rune (edict_t *ent, edict_t *other)
 	V_ItemCopy(&ent->vrxitem, slot);
 
 	//Save the player file (prevents lost runes)
-	if (savemethod->value == 1)
-		SaveCharacter(other);
-	else if (savemethod->value == 0)
-	{
-		char path[MAX_QPATH];
-		memset(path, 0, sizeof path);
-        vrx_get_character_file_path(path, other);
-		VSF_SaveRunes(other, path);
-	}
-
+	vrx_char_io.save_player_runes(other);
 	other->client->rune_delay = level.time + RUNE_PICKUP_DELAY;
 
 	//Done
@@ -1340,7 +1325,7 @@ char *V_MenuItemString(item_t *item, char selected)
 		case ITEM_NONE:			return " <Empty>";
 		case ITEM_WEAPON:		
 			r = vrx_get_weapon_rune_string(item);
-			char* str[64];
+			char str[64];
 			// a hack because vrx_get_weapon_rune_string uses va, and we cannot reference va's
 			// static memory again here and expect it to work.
 			strcpy(str, r.str);

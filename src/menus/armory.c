@@ -1,6 +1,7 @@
 #include "g_local.h"
 #include "../characters/class_limits.h"
 #include "../characters/io/v_sqlite_unidb.h"
+#include "characters/io/v_characterio.h"
 
 armoryRune_t WeaponRunes[20];
 armoryRune_t AbilityRunes[20];
@@ -612,26 +613,7 @@ void SellConfirmMenu_handler(edict_t *ent, int option)
 		gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/gold.wav"), 1, ATTN_NORM, 0);
 
 		//save the player file
-#ifndef NO_GDS
-		if (savemethod->value == 2)
-		{
-			V_GDS_Queue_Add(ent, GDS_SAVERUNES);
-		} else 
-#endif
-		if (savemethod->value == 1)
-			SaveCharacter(ent);
-		else if (savemethod->value == 3)
-		{
-			VSFU_SaveRunes(ent);
-		}
-		else if (savemethod->value == 0)
-		{
-			char path[MAX_QPATH];
-			memset(path, 0, sizeof path);
-            vrx_get_character_file_path(path, ent);
-			VSF_SaveRunes(ent, path);
-		}
-
+        vrx_char_io.save_player_runes(ent);
 	}
 	else if (option - 666 > 0)
 	{
@@ -780,23 +762,8 @@ void BuyRuneConfirmMenu_handler (edict_t *ent, int option)
 			V_ItemSwap(rune, slot);
 			ent->myskills.credits -= cost;
 			SaveArmory();
-			if (savemethod->value == 0)
-			{
-				char path[MAX_QPATH];
-				memset (path, 0, sizeof path);
-                vrx_get_character_file_path(path, ent);
-				VSF_SaveRunes(ent, path);
-			}
-			else if (savemethod->value == 1)
-                V_CommitCharacterData(ent);
-#ifndef NO_GDS
-			else if (savemethod->value == 2)
-				V_GDS_Queue_Add(ent, GDS_SAVERUNES);
-#endif
-			else if (savemethod->value == 3)
-			{
-				VSFU_SaveRunes(ent);
-			}
+			vrx_char_io.save_player_runes(ent);
+
 			safe_cprintf(ent, PRINT_HIGH, "Rune purchased for %d credits.\nYou have %d credits left.\n", cost, ent->myskills.credits);
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/gold.wav"), 1, ATTN_NORM, 0);
 		}

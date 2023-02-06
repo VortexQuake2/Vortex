@@ -135,7 +135,7 @@ qboolean CanAlly (edict_t *ent, edict_t *other, int range)
 	return true;
 }
 
-qboolean IsAlly (edict_t *ent, edict_t *other)
+qboolean IsAlly (const edict_t *ent, const edict_t *other)
 {
 	if (!ent || !other)
 		return false;

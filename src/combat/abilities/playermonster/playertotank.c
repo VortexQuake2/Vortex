@@ -140,7 +140,7 @@ void PM_SyncWithPlayer(edict_t *monster) {
         monster->flags &= ~FL_GODMODE;
 }
 
-edict_t *PM_GetPlayer(edict_t *e) {
+const edict_t * PM_GetPlayer(const edict_t *e) {
     if (!e || !e->inuse)
         return NULL;
     if (e->client)

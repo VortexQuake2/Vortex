@@ -27,20 +27,24 @@ typedef enum threadstatus_s {
     GDS_STATUS_CHARACTER_LOADED = 1,
     GDS_STATUS_CHARACTER_DOES_NOT_EXIST = 2,
     GDS_STATUS_CHARACTER_SAVED = 3,
-    GDS_STATUS_ALREADY_PLAYING = 4
+    GDS_STATUS_ALREADY_PLAYING = 4,
+    GDS_STATUS_CHARACTER_LOADING = 5,
 } threadstatus_t;
 
 // For Everyone
 // void V_GDS_Load(edict_t *ent);
 qboolean V_GDS_StartConn();
 void V_GDS_Queue_Add(edict_t *ent, int operation);
-qboolean CanUseGDS();
+qboolean GDS_IsEnabled();
 #ifndef GDS_NOMULTITHREADING
 void GDS_FinishThread();
-void HandleStatus(edict_t *player);
+void GDS_HandleStatus(edict_t *player);
 #endif
 
 void Mem_PrepareMutexes();
+
+qboolean vrx_mysql_isloading(edict_t *ent);
+qboolean vrx_mysql_saveclose_character(edict_t* player);
 
 #endif //NO_GDS
 

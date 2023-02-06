@@ -767,7 +767,7 @@ void SV_SaveAllCharacters (void)
 
     for_each_player(ent, i)
         {
-            SaveCharacter(ent);
+            vrx_save_character(ent, false);
         }
     gi.dprintf("INFO: All players saved.\n");
 }

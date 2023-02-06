@@ -7,7 +7,6 @@ void Grenade_Explode (edict_t *ent);
 void Cmd_CorpseExplode(edict_t *ent);
 void Cmd_HellSpawn_f (edict_t *ent);
 void Cmd_Caltrops_f (edict_t *ent);
-void Cmd_fmedi_f(edict_t *ent);
 //End prototypes
 
 void Cmd_DetPipes_f (edict_t *ent)
@@ -248,7 +247,7 @@ void FL_make(edict_t *self)
 } 
 //K03 End
 
-char *ClientTeam (edict_t *ent)
+char *ClientTeam (const edict_t *ent)
 {
 	char		*p;
 	static char	value[512];
@@ -2723,7 +2722,6 @@ void Cmd_GetFloorPos_f (edict_t *ent, int add)
 
 	
 void Cmd_BombPlayer(edict_t *ent, float skill_mult, float cost_mult);
-Cmd_Thorns(edict_t *ent);
 void Cmd_HolyShock(edict_t *ent);
 int ClassNum(edict_t *ent, int team);
 void Cmd_VampireMode (edict_t *ent);

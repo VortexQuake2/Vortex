@@ -1,5 +1,6 @@
 #include "g_local.h"
 #include "../gamemodes/ctf.h"
+#include "characters/io/v_characterio.h"
 
 #define VOTE_MAP	1
 #define	VOTE_MODE	2
@@ -47,9 +48,9 @@ void vrx_start_reign(edict_t *ent)
 	average_player_level = AveragePlayerLevel();
 	ent->health = ent->myskills.current_health;
 
-	if(savemethod->value == 1) // binary .vrx style saving
-		for (i=0; i<game.num_items; i++, item++) // reload inventory.
-			ent->client->pers.inventory[ITEM_INDEX(item)] = ent->myskills.inventory[ITEM_INDEX(item)];
+//	if(savemethod->value == 1) // binary .vrx style saving
+//		for (i=0; i<game.num_items; i++, item++) // reload inventory.
+//			ent->client->pers.inventory[ITEM_INDEX(item)] = ent->myskills.inventory[ITEM_INDEX(item)];
 
 	ent->client->pers.inventory[flag_index] = 0; // NO FLAG FOR YOU!!!
 	ent->client->pers.inventory[red_flag_index] = 0;
@@ -108,11 +109,11 @@ void vrx_start_reign(edict_t *ent)
     vrx_write_to_logfile(ent, "Logged in.\n");
 
 #ifndef GDS_NOMULTITHREADING
-	ent->ThreadStatus = 0;
+	ent->gds_thread_status = 0;
 #endif
 
-    V_CommitCharacterData(ent); // Do we need to?
-	V_AssignClassSkin(ent, Info_ValueForKey(ent->client->pers.userinfo, "skin"));
+    vrx_commit_character(ent, false); // Do we need to?
+    vrx_assign_character_skin(ent, Info_ValueForKey(ent->client->pers.userinfo, "skin"));
     G_StuffPlayerCmds(ent, va("exec %s.cfg", ent->client->pers.netname));
 }
 
@@ -190,28 +191,36 @@ void OpenModeMenu(edict_t *ent)
 
 void JoinTheGame (edict_t *ent)
 {
-	int		returned;
-
 	if (ent->client->menustorage.menu_active)
 	{
 		closemenu(ent);
 		return;
 	}
 
-	if (savemethod->value != 2)
-		returned = OpenConfigFile(ent);
-	else
-	{
-		// We can't use this function.
-		// We instead do it in somewhere else.
-		gi.dprintf("Warning: JoinTheGame Called on MYSQL mode!\n");
-		return; 
-	}
+    if (vrx_char_io.is_loading(ent))
+        return;
 
-	if (!CanJoinGame(ent, returned))
-		return;
+    if (vrx_char_io.handle_status) {
+        /*
+         * We're in multithreaded mode, so we can't go into the mode menu right away.
+         * this is kind of silly, sorry, but
+         * because vrx_load_player will very likely always
+         * be true in this circumstance where
+         * we're using multithreading, since it only
+         * validates that it's been successfully added to the
+         * queue, we mustn't do the rest of the procedure.
+         * handle_status will take care of it.
+         */
+        vrx_load_player(ent);
+    } else {
+        if (vrx_load_player(ent) == false)
+            vrx_create_new_character(ent);
 
-	OpenModeMenu(ent); // This implies the game will start.
+        if (!CanJoinGame(ent, vrx_get_login_status(ent)))
+            return;
+
+        OpenModeMenu(ent); // This implies the game will start.
+    }
 }
 
 qboolean StartClient(edict_t *ent)
@@ -229,19 +238,7 @@ void motdmenu_handler (edict_t *ent, int option)
     switch (option)
     {
         case 1:
-            gi.sound(ent, CHAN_AUTO, gi.soundindex("misc/startup.wav"), 1, ATTN_NORM, 0);
-            //If no GDS is running, join the game right away.
-#ifndef NO_GDS
-            if(savemethod->value != 2)
-#endif
             JoinTheGame(ent);
-#ifndef NO_GDS
-            else
-		{
-			safe_centerprintf(ent, "You have been queued for Loading.\n Please wait.\n");
-			V_GDS_Queue_Add(ent, GDS_LOAD);
-		}
-#endif
             break;
         case 2:
             OpenJoinMenu(ent);
@@ -510,7 +507,7 @@ void classmenu_handler (edict_t *ent, int option)
 		ent->teamnum = GetRandom(1, 2);
 
     vrx_start_reign(ent);
-	SaveCharacter(ent);
+    vrx_save_character(ent, false);
 }
 
 void OpenClassMenu (edict_t *ent, int page_num)
