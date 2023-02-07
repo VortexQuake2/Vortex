@@ -1751,7 +1751,7 @@ int G_GetHypotenuse (vec3_t v)
 	return floattoint(sqrt(((v[0]*v[0]) + (v[1]*v[1]))));
 }
 
-qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs, vec3_t start, vec3_t normal)
+qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs, vec3_t start, vec3_t normal, qboolean ignore_self_clip)
 {
 	vec3_t	forward, right, offset, end;
 	trace_t	tr;
@@ -1767,17 +1767,28 @@ qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs
 
 	tr = gi.trace(start, mins, maxs, end, ent, MASK_SHOT);
 	if (tr.allsolid || tr.startsolid)
+	{
+		//gi.dprintf("allsolid %d startsolid %d fraction %.1f\n", tr.allsolid, tr.startsolid, tr.fraction);
 		return false;
-
+	}
 	// copy the normal if the trace touched worldspawn (i.e. a wall or ceiling)
 	VectorCopy(tr.endpos, start);
 	if (normal && tr.fraction < 1 && tr.ent && tr.ent->inuse && tr.ent == world)
 		VectorCopy(tr.plane.normal, normal);
 
+	// we need to make picked up/previously picked up entities solid to player so that the trace function works
 	tr = gi.trace(start, mins, maxs, start, NULL, MASK_SHOT);
 
+	//gi.dprintf("ignore %d tr.ent %s allsolid %d startsolid %d fraction %.1f\n", ignore_self_clip, tr.ent->classname, tr.allsolid, tr.startsolid, tr.fraction);
 	if (tr.fraction < 1)
+	{
+		// ignore clipping against self (set ignore_self_clip to true if it's OK if trace intersects calling entity)
+		// note: this could possibly cause multiple entities to spawn on top of each other if they all occupy thes ame space
+		// barrels take measures to prevent this from occuring by not allowing the player to spawn/drop a barrel while inside one previously spawned
+		if (tr.ent && tr.ent == ent && ignore_self_clip)
+			return true;
 		return false;
+	}
 
 	return true;
 }

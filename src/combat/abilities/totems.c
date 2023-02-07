@@ -581,7 +581,7 @@ void SpawnTotem(edict_t *ent, int abilityID)
 		break;
 	}
 //GHz 4.32
-	if (!G_GetSpawnLocation(ent, 64, totem->mins, totem->maxs, start, NULL))
+	if (!G_GetSpawnLocation(ent, 64, totem->mins, totem->maxs, start, NULL, false))
 	{
 		G_FreeEdict(totem);
 		return;

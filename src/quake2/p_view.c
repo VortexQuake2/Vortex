@@ -715,6 +715,11 @@ void P_WorldEffects (void)
 		}
 	}
 
+	const qboolean is_unmorphed_poltergeist = vrx_is_morphing_polt(current_player) && current_player->mtype == 0;
+	const qboolean has_world_resist = current_player->myskills.abilities[WORLD_RESIST].current_level >= 1;
+	const qboolean has_flag = vrx_has_flag(current_player);
+	const qboolean is_invulnerable = current_player->flags & FL_GODMODE;
+
 	//
 	// check for drowning
 	//
@@ -741,11 +746,12 @@ void P_WorldEffects (void)
 		}
 
 		// if out of air, start drowning
-		if ((current_player->air_finished < level.time)
-            && ((!vrx_is_morphing_polt(current_player)) && (current_player->mtype != 0))
-            && (current_player->myskills.abilities[WORLD_RESIST].current_level < 1
-                || vrx_has_flag(current_player))
-            && !(current_player->flags & FL_GODMODE))
+		const qboolean out_of_air = current_player->air_finished < level.time;
+		if (out_of_air && 
+			!is_unmorphed_poltergeist && 
+			!has_world_resist && 
+			!has_flag && 
+			!is_invulnerable)
 		{	// drown!
 			if (current_player->client->next_drown_time < level.time 
 				&& current_player->health > 0)
@@ -783,10 +789,11 @@ void P_WorldEffects (void)
 	//
 	// check for sizzle damage
 	//
-	if (waterlevel && (current_player->watertype & (CONTENTS_LAVA | CONTENTS_SLIME))
-        && (current_player->myskills.abilities[WORLD_RESIST].current_level < 1 || vrx_has_flag(current_player))
-        && !(current_player->flags & FL_GODMODE)
-		&& ((!vrx_is_morphing_polt(current_player)) && (current_player->mtype == 0)))
+	const qboolean is_in_lava = current_player->watertype & (CONTENTS_LAVA | CONTENTS_SLIME);
+	if (waterlevel && is_in_lava
+        && !has_world_resist && !has_flag
+        && !is_invulnerable
+		&& !is_unmorphed_poltergeist)
 	{
 		if (current_player->watertype & CONTENTS_LAVA)
 		{
