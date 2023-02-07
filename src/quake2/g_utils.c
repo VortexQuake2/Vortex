@@ -1751,6 +1751,9 @@ int G_GetHypotenuse (vec3_t v)
 	return floattoint(sqrt(((v[0]*v[0]) + (v[1]*v[1]))));
 }
 
+// returns true if the specified entity can be spawned
+// note: range should be no less than the longest possible distance between the two entities where the hitboxes don't overlap
+// which is usually the hypotenuse of a line drawn diagonally between the start end ending coordinates
 qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs, vec3_t start, vec3_t normal, qboolean ignore_self_clip)
 {
 	vec3_t	forward, right, offset, end;
@@ -1763,6 +1766,9 @@ qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs
 
 	// get ending position
 	VectorCopy(start, end);
+	//FIXME: we could make this function more reliable by calculating the "worst case" distance using the hypotenuse method described above
+	//or a more cpu-intensive fix would be to find a point further away (unlikely to cause overlapping hitboxes) and then trace back toward
+	//ent along the same (negative) vector to the "desired" distance
 	VectorMA(start, range, forward, end);
 
 	tr = gi.trace(start, mins, maxs, end, ent, MASK_SHOT);
@@ -1783,7 +1789,7 @@ qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs
 	if (tr.fraction < 1)
 	{
 		// ignore clipping against self (set ignore_self_clip to true if it's OK if trace intersects calling entity)
-		// note: this could possibly cause multiple entities to spawn on top of each other if they all occupy thes ame space
+		// note: this could possibly cause multiple entities to spawn on top of each other if they all occupy the same space
 		// barrels take measures to prevent this from occuring by not allowing the player to spawn/drop a barrel while inside one previously spawned
 		if (tr.ent && tr.ent == ent && ignore_self_clip)
 			return true;

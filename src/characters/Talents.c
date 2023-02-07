@@ -647,14 +647,21 @@ int writeTalentDescription(edict_t *ent, int talentID) {
 }
 
 void vrx_open_talent_menu(edict_t *ent, int talentID, qboolean select_upgrade) {
-    talent_t *talent = &ent->myskills.talents.talent[vrx_get_talent_slot(ent, talentID)];
-    int level = talent->upgradeLevel;
+    talent_t* talent;// = &ent->myskills.talents.talent[vrx_get_talent_slot(ent, talentID)];
+    int level;// = talent->upgradeLevel;
+    int slot = vrx_get_talent_slot(ent, talentID);
     int talentPoints = ent->myskills.talents.talentPoints;
     int lineCount = 7;//12;
     qboolean can_upgrade = false;
 
+    // check for invalid talent index
+    if (slot == -1)
+        return;
     if (!ShowMenu(ent))
         return;
+
+    talent = &ent->myskills.talents.talent[slot];
+    level = talent->upgradeLevel;
     clearmenu(ent);
 
     addlinetomenu(ent, "Talent", MENU_GREEN_CENTERED);
