@@ -892,6 +892,7 @@ void obstacle_dead (edict_t *self)
 {
 	if (level.time > self->delay)
 	{
+		//gi.dprintf("remove dead obstacle %.1f!\n", level.time);
 		organ_remove(self, false);
 		return;
 	}
@@ -906,6 +907,8 @@ void obstacle_dead (edict_t *self)
 
 void obstacle_return(edict_t* self)
 {
+	//gi.dprintf("obstacle_return\n");
+
 	VectorCopy(self->move_origin, self->s.origin);
 	VectorCopy(self->move_origin, self->s.old_origin);
 	gi.linkentity(self);
@@ -918,8 +921,14 @@ void obstacle_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 {
 	int max = OBSTACLE_MAX_COUNT;
 	int cur;
+	qboolean flipped = false;
 
-	if (self->movetype != MOVETYPE_NONE)
+	//gi.dprintf("obstacle_die %d %d\n", self->health, self->gib_health);
+
+	if (self->s.angles[PITCH] == 180)
+		flipped = true;
+
+	if (flipped && self->movetype != MOVETYPE_NONE)
 		obstacle_return(self);
 
 	if (!self->monsterinfo.slots_freed && self->activator && self->activator->inuse)
@@ -947,6 +956,7 @@ void obstacle_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 	{
 		int n;
 
+		//gi.dprintf("gib obstacle\n");
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
 		for (n= 0; n < 2; n++)
 			ThrowGib (self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
@@ -962,9 +972,10 @@ void obstacle_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 	self->think = obstacle_dead;
 	self->deadflag = DEAD_DYING;
 	self->delay = level.time + 20.0;
+	//gi.dprintf("time: %.1f delay %.1f\n", (level.time), self->delay);
 	self->nextthink = level.time + FRAMETIME;
 	self->s.frame = OBSTACLE_FRAME_DEAD;
-	if (self->s.angles[PITCH] != 180)
+	if (!flipped)
 	{
 		// don't make tossable if we're stuck to the ceiling
 		self->movetype = MOVETYPE_TOSS;
