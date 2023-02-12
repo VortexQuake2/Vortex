@@ -216,7 +216,8 @@ qboolean G_CanUseAbilities(edict_t *ent, int ability_lvl, int pc_cost) {
     if (ent->flags & FL_WORMHOLE)
         return false;
 	// can't use abilities while in intermission (note: PM_FREEZE would also work)
-	if (ent->solid == SOLID_NOT)
+	//if (ent->solid == SOLID_NOT) --this breaks player-tank
+	if (ent->client->ps.pmove.pm_type == PM_FREEZE)
 		return false;
 
     if (ent->manacharging)

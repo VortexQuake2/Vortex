@@ -1756,12 +1756,27 @@ int G_GetHypotenuse (vec3_t v)
 // which is usually the hypotenuse of a line drawn diagonally between the start end ending coordinates
 qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs, vec3_t start, vec3_t normal, qboolean ignore_self_clip)
 {
+	int		addheight = ent->viewheight - 8;
+	int		aimheight;
+	int		minheight;
 	vec3_t	forward, right, offset, end;
 	trace_t	tr;
 
 	// get starting position and forward vector
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
-	VectorSet(offset, 0, 8,  ent->viewheight-8);
+	// fix for spawning entities taller than player
+	minheight = abs((int)mins[2]) + 1;
+	if (PM_PlayerHasMonster(ent))
+		aimheight = fabs(ent->owner->mins[2]) + addheight;
+	else
+		aimheight = fabs(ent->mins[2]) + addheight;
+	if (aimheight < minheight)
+	{
+		//gi.dprintf("current aimheight: %d minimum: %d\n", aimheight, minheight);
+		addheight += minheight - aimheight;
+		//gi.dprintf("adjusting aimheight up %d\n", addheight);
+	}
+	VectorSet(offset, 0, 8,  addheight); // note: player's viewheight is 22
 	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
 
 	// get ending position

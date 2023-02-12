@@ -2202,7 +2202,7 @@ void Cmd_Cocoon_f (edict_t *ent)
 		return;
 
 	cocoon = CreateCocoon(ent, ent->myskills.abilities[COCOON].current_level);
-	if (!G_GetSpawnLocation(ent, 100, cocoon->mins, cocoon->maxs, start, NULL, false))
+	if (!G_GetSpawnLocation(ent, 150, cocoon->mins, cocoon->maxs, start, NULL, false))
 	{
 		ent->cocoon = NULL;
 		G_FreeEdict(cocoon);
