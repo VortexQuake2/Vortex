@@ -13,8 +13,7 @@ create table if not exists abilities
 
 create table if not exists character_data
 (
-    char_idx   int not null
-        primary key,
+    char_idx   int not null,
     respawns   int null,
     health     int null,
     maxhealth  int null,
@@ -22,26 +21,26 @@ create table if not exists character_data
     maxarmour  int null,
     nerfme     int null,
     adminlevel int null,
-    bosslevel  int null
+    bosslevel  int null,
+    primary key (char_idx)
 );
 
 create table if not exists ctf_stats
 (
-    char_idx      int not null
-        primary key,
+    char_idx      int not null,
     flag_pickups  int null,
     flag_captures int null,
     flag_returns  int null,
     flag_kills    int null,
     offense_kills int null,
     defense_kills int null,
-    assists       int null
+    assists       int null,
+    primary key (char_idx)
 );
 
 create table if not exists game_stats
 (
-    char_idx         int not null
-        primary key,
+    char_idx         int not null,
     shots            int null,
     shots_hit        int null,
     frags            int null,
@@ -53,13 +52,13 @@ create table if not exists game_stats
     broken_spreewars int null,
     suicides         int null,
     teleports        int null,
-    num_2fers        int null
+    num_2fers        int null,
+    primary key (char_idx)
 );
 
 create table if not exists point_data
 (
-    char_idx    int not null
-        primary key,
+    char_idx    int not null,
     exp         int null,
     exptnl      int null,
     level       int null,
@@ -68,7 +67,8 @@ create table if not exists point_data
     credits     int null,
     weap_points int null,
     resp_weapon int null,
-    tpoints     int null
+    tpoints     int null,
+    primary key (char_idx)
 );
 
 create table if not exists runes_meta
@@ -99,6 +99,41 @@ create table if not exists runes_mods
     primary key (char_idx, rune_index, mod_index)
 );
 
+create table if not exists stash
+(
+    char_idx     int not null,
+    lock_char_id int null,
+    primary key (char_idx)
+);
+
+create table if not exists stash_runes_meta
+(
+    char_idx    int      not null,
+    stash_index int      not null,
+    itemtype    int      null,
+    itemlevel   int      null,
+    quantity    int      null,
+    untradeable int      null,
+    id          char(16) null,
+    name        char(24) null,
+    nummods     int      null,
+    setcode     int      null,
+    classnum    int      null,
+    primary key (char_idx, stash_index)
+);
+
+create table if not exists stash_runes_mods
+(
+    char_idx       int not null,
+    stash_index    int not null,
+    rune_mod_index int not null,
+    type           int null,
+    mod_index      int null,
+    value          int null,
+    rset           int null,
+    primary key (char_idx, stash_index, rune_mod_index)
+);
+
 create table if not exists talents
 (
     char_idx      int not null,
@@ -110,8 +145,7 @@ create table if not exists talents
 
 create table if not exists userdata
 (
-    char_idx       int      not null
-        primary key,
+    char_idx       int      not null,
     title          char(24) null,
     playername     char(64) null,
     password       char(24) null,
@@ -121,7 +155,8 @@ create table if not exists userdata
     last_played    char(30) null,
     playtime_total int      null,
     playingtime    int      null,
-    isplaying      int      null
+    isplaying      int      null,
+    primary key (char_idx)
 );
 
 create table if not exists weapon_meta
@@ -142,7 +177,7 @@ create table if not exists weapon_mods
 );
 
 create
-    procedure CharacterExists(IN pname varchar(64), OUT doesexist int)
+     procedure CharacterExists(IN pname varchar(64), OUT doesexist int)
 BEGIN
 
     SELECT EXISTS (
@@ -153,7 +188,7 @@ BEGIN
 END;
 
 create
-    procedure FillNewChar(IN charname varchar(64))
+     procedure FillNewChar(IN charname varchar(64))
 BEGIN
 
     DECLARE chid INT DEFAULT 0;
@@ -169,19 +204,20 @@ BEGIN
     INSERT INTO point_data (char_idx) VALUES (chid);
     INSERT INTO game_stats (char_idx) VALUES (chid);
     INSERT INTO ctf_stats (char_idx) VALUES (chid);
+    INSERT INTO stash(char_idx) VALUES (chid);
 
     COMMIT;
 
 END;
 
 create
-    procedure GetCharID(IN pname varchar(64), OUT chidx int)
+     procedure GetCharID(IN pname varchar(64), OUT chidx int)
 BEGIN
     SELECT (char_idx) INTO chidx FROM userdata WHERE playername = pname;
 END;
 
 create
-    procedure GetCharacterLock(IN chidx int, OUT canplay int)
+     procedure GetCharacterLock(IN chidx int, OUT canplay int)
 BEGIN
     START TRANSACTION;
 
@@ -196,7 +232,7 @@ BEGIN
 END;
 
 create
-    procedure ResetTables(IN pname varchar(64))
+     procedure ResetTables(IN pname varchar(64))
 BEGIN
 
     DECLARE chid INT DEFAULT 0;
@@ -216,6 +252,3 @@ BEGIN
 
 END;
 
--- a lot of the loading procedure is performed in-dll, since it's a lot of
--- code that is redundant to sqlite. for this reason, we're pretty low on the number of
--- stored procedures. -az
