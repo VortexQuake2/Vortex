@@ -845,7 +845,7 @@ void	ServerCommand (void)
         gi.dprintf("Average level: %d\n", AveragePlayerLevel());
 #if (!defined GDS_NOMULTITHREADING) && (!defined NO_GDS)
         else if (Q_stricmp (cmd, "connectgds") == 0)
-		V_GDS_StartConn();
+		gds_connect();
 	// az end
 #endif
 //GHz START

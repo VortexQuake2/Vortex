@@ -470,7 +470,7 @@ void ShowVoteMapMenu_handler(edict_t *ent, int option)
 {
 	if (option == 66666)
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 	//Multi-page navigation
@@ -523,13 +523,13 @@ void ShowVoteMapMenu(edict_t *ent, int pagenum, int mapmode)
 	if (!maplist) return;
 
 	//Usual menu stuff
-	 if (!ShowMenu(ent))
+	 if (!menu_can_show(ent))
         return;
-	clearmenu(ent);
+	menu_clear(ent);
 
 	//Print header
-	addlinetomenu(ent, "Vote for map:", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, "Vote for map:", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
 
 	for (i = 10 * (pagenum-1); i < 10 * pagenum; ++i)
 	{
@@ -550,12 +550,12 @@ void ShowVoteMapMenu(edict_t *ent, int pagenum, int mapmode)
 			Com_sprintf(min_max_str,  20, "Max. %2d", maplist->maps[i].max_players);
 
 
-		addlinetomenu(ent, va(" %-14.14s %s", buf, min_max_str), i+1+(mapmode * 1000));
+		menu_add_line(ent, va(" %-14.14s %s", buf, min_max_str), i+1+(mapmode * 1000));
 	}
 
 	//Menu footer
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " ", 0);
 
 	//Set current line
 	if (i % 10 != 0) ent->client->menustorage.currentline = 6 + (i % 10);
@@ -563,22 +563,22 @@ void ShowVoteMapMenu(edict_t *ent, int pagenum, int mapmode)
 
 	if ((!EndOfList) && (i != maplist->nummaps))
 	{
-		addlinetomenu(ent, " Next", (20000 + pagenum + 1) + (mapmode * 1000)); //ex: pvp, page 3 = 11004
+		menu_add_line(ent, " Next", (20000 + pagenum + 1) + (mapmode * 1000)); //ex: pvp, page 3 = 11004
 	}
 	else
 	{
-		addlinetomenu(ent, " ", 0);
+		menu_add_line(ent, " ", 0);
 		++ent->client->menustorage.currentline;
 	}
 	
-	addlinetomenu(ent, " Previous", (20000 + pagenum - 1) + (mapmode * 1000));	//ex: pvm, page 3 = 12002
-	addlinetomenu(ent, " Exit", 66666);
+	menu_add_line(ent, " Previous", (20000 + pagenum - 1) + (mapmode * 1000));	//ex: pvm, page 3 = 12002
+	menu_add_line(ent, " Exit", 66666);
 
 	//Set handler
-	setmenuhandler(ent, ShowVoteMapMenu_handler);
+	menu_set_handler(ent, ShowVoteMapMenu_handler);
 
 	//Display the menu
-	showmenu(ent);
+	menu_show(ent);
 }
 
 //************************************************************************************************
@@ -589,7 +589,7 @@ void ShowVoteModeMenu_handler(edict_t *ent, int option)
 {
 	if (option == 66666)
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 
@@ -689,13 +689,13 @@ void ShowVoteModeMenu(edict_t *ent)
 	}
 
 	//Usual menu stuff
-	 if (!ShowMenu(ent))
+	 if (!menu_can_show(ent))
         return;
-	clearmenu(ent);
+	menu_clear(ent);
 	
 	//Print header
-	addlinetomenu(ent, "Vote for game mode:", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, "Vote for game mode:", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
 
 //GHz START
 	players = vrx_get_joined_players();
@@ -710,20 +710,20 @@ void ShowVoteModeMenu(edict_t *ent)
 #endif
 
 	if (players > 1) // how could you ever play pvp alone? -az (bots not functional yet)
-		addlinetomenu(ent, " Player vs. Player", MAPMODE_PVP);
+		menu_add_line(ent, " Player vs. Player", MAPMODE_PVP);
 
-	addlinetomenu(ent, " Free For All", MAPMODE_FFA);
+	menu_add_line(ent, " Free For All", MAPMODE_FFA);
 
 	if (players < min_players)
 	{
-		addlinetomenu(ent, " Player vs. Monster", MAPMODE_PVM);
+		menu_add_line(ent, " Player vs. Monster", MAPMODE_PVM);
 		lastline++;
 	}
 
 		// vrx chile 2.5: trading mode
 		if (tradingmode_enabled->value)
 		{
-			addlinetomenu(ent, " Trading", MAPMODE_TRA);
+			menu_add_line(ent, " Trading", MAPMODE_TRA);
 			lastline++;
 		}
 
@@ -732,53 +732,53 @@ void ShowVoteModeMenu(edict_t *ent)
 	{
 		if (invasion_enabled->value)
 		{
-			addlinetomenu(ent, " Invasion", MAPMODE_INV);
+			menu_add_line(ent, " Invasion", MAPMODE_INV);
 			lastline++;
 		}
 	}
 
 	if (invasion_enabled->value && (ThereIsOneLevelTen() || vrx_get_alive_players() >= min_players) )
 	{
-		addlinetomenu(ent, " Invasion (Hard mode)", MAPMODE_INH);
+		menu_add_line(ent, " Invasion (Hard mode)", MAPMODE_INH);
 		lastline++;
 	}
 	
 	// domination available when there are at least 4 players
 	if (players >= 8)
 	{
-		addlinetomenu(ent, " Domination", MAPMODE_DOM);
+		menu_add_line(ent, " Domination", MAPMODE_DOM);
 		lastline++;
 	}
 	// CTF and vhw and tbi available when there are at least 4 players
 	if (players >= 4)
 	{
-		addlinetomenu(ent, " CTF", MAPMODE_CTF);
+		menu_add_line(ent, " CTF", MAPMODE_CTF);
 		lastline++;
 
 		if (gi.cvar("vhw_enabled", "1", 0)->value)
 		{
-			addlinetomenu(ent, " Vortex Holywars", MAPMODE_VHW);
+			menu_add_line(ent, " Vortex Holywars", MAPMODE_VHW);
 			lastline++;
 		}
 
 		// az: nobody plays DTS.
-		/*addlinetomenu(ent, " Destroy The Spawn", MAPMODE_TBI);
+		/*menu_add_line(ent, " Destroy The Spawn", MAPMODE_TBI);
 		lastline++;*/
 	}
 
 //GHz END
 	//Menu footer
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, " Exit", 66666);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " Exit", 66666);
 
 	//Set handler
-	setmenuhandler(ent, ShowVoteModeMenu_handler);
+	menu_set_handler(ent, ShowVoteModeMenu_handler);
 
 	//Set current line
 	ent->client->menustorage.currentline = lastline;
 
 	//Display the menu
-	showmenu(ent);
+	menu_show(ent);
 }
 

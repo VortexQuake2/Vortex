@@ -11,6 +11,7 @@
 #include "combat/abilities/shaman.h"
 #include "combat/abilities/auras.h"
 #include "characters/Talents.h"
+#include "quake2/g_layout.h"
 
 /**************** v_abilitylist.c ***************/
 void vrx_enable_ability(edict_t *ent, int index, int level, int max_level, int general);
@@ -127,7 +128,7 @@ item_t *V_FindFreeItemSlot(edict_t *ent);
 item_t *V_FindFreeTradeSlot(edict_t *ent, int index);
 qboolean V_CanPickUpItem(edict_t *ent);
 void V_EquipItem(edict_t *ent, int index);
-void V_ItemCopy(item_t *dest, item_t *source);
+void V_ItemCopy(item_t *source, item_t *dest);
 void V_ItemClear(item_t *item);
 void V_PrintItemProperties(edict_t *player, item_t *item);
 int eqSetItems(edict_t *ent, item_t *rune);
@@ -202,6 +203,7 @@ typedef struct item_menu_s
 } item_menu_t;
 
 item_menu_t vrx_menu_item_display(item_t* item);//, char selected);
+lva_result_t vrx_get_item_menu_line(item_t* item);
 
 void PrintCommands(edict_t *ent);
 int CountRuneMods(item_t *rune);
@@ -341,6 +343,7 @@ void G_Spawn_Trails(int type, vec3_t start, vec3_t endpos);
 // etc
 int vrx_get_ability_upgrade_cost(int index);
 void vrx_remove_chat_protect(edict_t* ent);
+#include "characters/v_stash.h"
 
 // ****** curses.c ******
 void vrx_curse_heal_all(edict_t* target);

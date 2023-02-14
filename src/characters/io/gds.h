@@ -20,7 +20,13 @@ we're having a MYSQL GDS.
 #define GDS_SAVE 2
 #define GDS_SAVECLOSE 3
 #define GDS_SAVERUNES 4
-#define GDS_EXITTHREAD 5
+#define GDS_STASH_OPEN 5
+#define GDS_STASH_TAKE 6
+#define GDS_STASH_STORE 7
+#define GDS_STASH_CLOSE 8
+#define GDS_STASH_GET_PAGE 9
+#define GDS_EXITTHREAD 10
+
 
 typedef enum threadstatus_s {
     GDS_STATUS_OK,
@@ -32,13 +38,16 @@ typedef enum threadstatus_s {
 } threadstatus_t;
 
 // For Everyone
-// void V_GDS_Load(edict_t *ent);
-qboolean V_GDS_StartConn();
-void V_GDS_Queue_Add(edict_t *ent, int operation);
-qboolean GDS_IsEnabled();
+// void gds_op_load(edict_t *ent);
+qboolean gds_connect();
+
+// for STASH_TAKE/STORE index means what index
+// of the stash or inventory to take from respectively.
+void gds_queue_add(edict_t *ent, int operation, int index);
+qboolean gds_enabled();
 #ifndef GDS_NOMULTITHREADING
-void GDS_FinishThread();
-void GDS_HandleStatus(edict_t *player);
+void gds_finish_thread();
+void gds_handle_status(edict_t *player);
 #endif
 
 void Mem_PrepareMutexes();

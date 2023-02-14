@@ -2039,7 +2039,7 @@ void ClientBeginDeathmatch (edict_t *ent)
 
 	// az begin
 #ifndef NO_GDS
-	ent->gds_player_id = lastID;
+	ent->gds_connection_id = lastID;
 	lastID++;
 
 	if (lastID > 100000000)
@@ -2196,7 +2196,7 @@ void ClientUserinfoChanged (edict_t *ent, char *userinfo)
 		)) {
         strncpy(ent->client->pers.netname, s, sizeof(ent->client->pers.netname) - 1);
         if (ent->client->menustorage.optionselected == classmenu_handler)
-            closemenu(ent); // az. just in case
+            menu_close(ent, true); // az. just in case
     }
 	Info_SetValueForKey(userinfo, "name", ent->client->pers.netname);
 
@@ -2545,8 +2545,14 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
     que_t *curse = NULL;
 	int		viewheight;
 
+	/* this is another method of deferral,
+	 * but it's kept to play nice with
+	 * older code. -az
+	 */
     if (vrx_char_io.handle_status)
         vrx_char_io.handle_status(ent);
+
+	defer_run(&ent->client->defers);
 
 // GHz START
 	// if we're a morphed player, then save the current viewheight

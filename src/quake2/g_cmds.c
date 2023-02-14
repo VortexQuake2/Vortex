@@ -391,7 +391,7 @@ void SelectNextItem (edict_t *ent, int itflags)
 //GHz START
 	if (ent->client->menustorage.menu_active)
 	{
-		menudown(ent);
+		menu_down(ent);
 		return;
 	} 
 	else if (cl->chase_target) 
@@ -430,7 +430,7 @@ void SelectPrevItem (edict_t *ent, int itflags)
 //GHz START
 	if (ent->client->menustorage.menu_active)
 	{
-		menuup(ent);
+		menu_up(ent);
 		return;
 	} 
 	else if (cl->chase_target) 
@@ -1228,7 +1228,7 @@ void Cmd_InvUse_f (edict_t *ent)
 //GHz START
 	if (ent->client->menustorage.menu_active)
 	{
-		menuselect(ent);
+		menu_select(ent);
 		return;
 
 	}
@@ -1388,7 +1388,7 @@ void Cmd_InvDrop_f (edict_t *ent)
 	{
 		int index = ent->client->menustorage.messages[ent->client->menustorage.currentline].option-2;
 
-		if (InMenu(ent, MENU_SPECIAL_UPGRADES, upgradeSpecialMenu_handler) && index < 500)
+		if (menu_active(ent, MENU_SPECIAL_UPGRADES, upgradeSpecialMenu_handler) && index < 500)
 		{
 			int			i;
 			int			list_index=0;
@@ -1409,7 +1409,7 @@ void Cmd_InvDrop_f (edict_t *ent)
 				{
 					upgrade->current_level--;
 					upgrade->level--;
-					showmenu(ent);
+					menu_show(ent);
 					gi.dprintf("%d. %s [%d]\n", index, GetAbilityString(i), upgrade->current_level);
 					return;
 				}
@@ -1483,6 +1483,9 @@ void Cmd_Kill_f (edict_t *ent)
 		// spawn flag at enemy base
 		CTF_SpawnFlagAtBase(NULL, CTF_GetEnemyTeam(ent->teamnum));
 	}
+
+	// az: trigger this close function
+	menu_close(ent, true);
 
 	ent->flags &= ~FL_GODMODE;
 	ent->health = 0;
@@ -1696,7 +1699,7 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 	}
 	
 	// master password prompt
-	if (InMenu(ent, MENU_MASTER_PASSWORD, masterpw_handler) && !strcmp(ent->myskills.email, ""))
+	if (menu_active(ent, MENU_MASTER_PASSWORD, masterpw_handler) && !strcmp(ent->myskills.email, ""))
 	{
 		int	len=strlen(p);
 
@@ -1710,7 +1713,7 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 
 		strcpy(ent->myskills.email, p);
 		safe_cprintf(ent, PRINT_HIGH, "Master password has been set to %s.\n", ent->myskills.email);
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 //GHz END

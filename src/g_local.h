@@ -14,9 +14,6 @@
 #define	GAME_INCLUDE
 #include "quake2/game.h"
 
-//ZOID
-#include "menus/v_menu.h"
-//ZOID
 
 #include "v_shared.h"    //3.0
 #include "combat/abilities/Spirit.h"        // 3.03+
@@ -27,6 +24,8 @@
 
 /* twister.c */
 #include <stdint.h>
+
+#include "server/defer.h"
 void seedMT(uint32_t seed);
 uint32_t randomMT(void);
 
@@ -1534,7 +1533,6 @@ typedef struct
 
 #include "combat/abilities/g_abilities.h"
 #include "menus/menu.h"
-#include "quake2/g_layout.h"
 
 // this structure is cleared on each PutClientInServer(),
 // except for 'client->pers'
@@ -1550,13 +1548,16 @@ struct gclient_s
 	pmove_state_t		old_pmove;	// for detecting out-of-pmove changes
 
 	qboolean	showscores;			// set layout stat
-//ZOID
-	pmenuhnd_t	*menu;				// current menu
-//ZOID
 
-	// az
+	// az begin
+	// for the dynamic hud
 	layout_t layout;
-	//az
+
+	// for calls that are initiated in a secondary thread that must be done in the main thread
+	deferrals_t defers;
+
+	stash_state_t stash;
+	// az end
 
 	qboolean	showinventory;		// set layout stat
 	qboolean	showhelp;
@@ -2015,13 +2016,13 @@ struct edict_s
 	float       swordtimer;             //decino: time before we can reattack
 
 
+	// "connection" id, not database id.
+	// kept around without NO_GDS to simplify preprocessor macros
+	volatile int gds_connection_id; 
 #ifndef NO_GDS
-
 #ifndef GDS_NOMULTITHREADING
-	/*volatile */int gds_thread_status; // vrxchile 3.0
-	/*volatile */int gds_player_id;
+	volatile int gds_thread_status; // vrxchile 3.0
 #endif
-
 #endif
 
 	float		removetime; //4.07 time to auto-remove

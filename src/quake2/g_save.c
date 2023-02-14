@@ -199,10 +199,12 @@ void InitGame(void)
 	gi.cvar_forceset("sv_allow_map", "2");
 #endif
 
+	defer_global_init();
 	vrx_init_lua();
     CreateDirIfNotExists(va("%s/settings", gamedir->string));
 
 	vrx_init_char_io();
+	vrx_init_stash_io();
 
 #ifdef CMD_USEHASH
 	InitHash();
@@ -373,7 +375,7 @@ void InitGame(void)
 	voting = gi.cvar("voting", "1", CVAR_SERVERINFO);
 	pregame_time = gi.cvar("pregame_time", "60.0", 0);
 
-    start_level = gi.cvar("start_level", "0", CVAR_LATCH);
+    start_level = gi.cvar("start_level", "1", CVAR_LATCH);
 
     invasion_enabled = gi.cvar("vrx_invasion_enabled", "1", CVAR_LATCH);
 	vrx_pointmult = gi.cvar("vrx_pointmult", "1.0", CVAR_SERVERINFO/* | CVAR_LATCH*/);

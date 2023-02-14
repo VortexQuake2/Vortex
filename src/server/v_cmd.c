@@ -80,6 +80,7 @@ void Cmd_PrintCommandList(edict_t *ent);
 void Cmd_Mirror_f(edict_t* ent);
 void Cmd_BlinkStrike_f(edict_t* self);
 void Cmd_ExplodingBarrel_f(edict_t* ent);
+void Cmd_Stash_f(edict_t* ent);
 
 #define CommandTotal sizeof(commands) / sizeof(gameCommand_s)
 
@@ -107,7 +108,7 @@ const gameCommand_s commands[] =
 	{ "hellspawn", 		Cmd_HellSpawn_f },
 	{ "supplystation", 	Cmd_CreateSupplyStation_f },
 	{ "decoy", 			Cmd_Decoy_f },
-	//{ "mirror", 		Cmd_Mirror_f },
+	{ "stash", 		Cmd_Stash_f },
 	{ "curse", 			Cmd_Curse },
 	{ "amnesia", 		Cmd_Amnesia },
 	{ "weaken", 		Cmd_Weaken },

@@ -6,7 +6,6 @@ void ShowTradeMenu(edict_t *ent);
 void TradeInventoryMenu(edict_t *ent, int lastline);
 void TradeFinalMenu(edict_t *ent);
 void ShowTradeAskMenu(edict_t *tradee, edict_t *trader);
-lva_result_t vrx_get_item_menu_line(item_t* item);
 
 //************************************************************************************************
 //		**TRADE CODE**
@@ -97,8 +96,8 @@ void TradeItems(edict_t *player1, edict_t *player2)
 	safe_cprintf(player2, PRINT_HIGH, "Trade completed. Check your items.\n");
 
 	//Close menus
-	closemenu(player1);
-	closemenu(player2);
+	menu_close(player1, true);
+	menu_close(player2, true);
 
 	//Clear trade info
 	for (i = 0; i < 3; ++i)
@@ -131,7 +130,7 @@ void OpenTradeViewOtherMenu_handler(edict_t *ent, int option)
 	}
 	else //ent closed the menu (reject)
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 }
@@ -141,25 +140,25 @@ void OpenTradeViewOtherMenu_handler(edict_t *ent, int option)
 void OpenTradeViewOtherMenu(edict_t *ent, int option)
 {
 	//Menu stuff
-	if (!ShowMenu(ent))
+	if (!menu_can_show(ent))
 		return;
-	clearmenu(ent);
+	menu_clear(ent);
 
 	//Load the item
 	StartShowInventoryMenu(ent, ent->trade_with->trade_item[option]);
 
 	//Append a footer to the menu
-	addlinetomenu(ent, "Previous menu", 777);
-	addlinetomenu(ent, "Exit", 666);
+	menu_add_line(ent, "Previous menu", 777);
+	menu_add_line(ent, "Exit", 666);
 
 	//set currentline
 	ent->client->menustorage.currentline += 2;
 
 	//Set handler
-	setmenuhandler(ent, OpenTradeViewOtherMenu_handler);
+	menu_set_handler(ent, OpenTradeViewOtherMenu_handler);
 
 	//Display the menu
-	showmenu(ent);
+	menu_show(ent);
 }
 
 //************************************************************************************************
@@ -170,7 +169,7 @@ void TradeFinalMenu_handler(edict_t *ent, int option)
 {
 	if (option == 666)	//ent closed the menu
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 	else if (option == 777)	//ent selected previous menu
@@ -231,22 +230,22 @@ void TradeFinalMenu(edict_t *ent)
 	int i;
 	int linecount = 0;
 
-	//If the player is in the final menu, showmenu returns false, so add an extra check for that
-	 if (!ShowMenu(ent))
+	//If the player is in the final menu, menu_show returns false, so add an extra check for that
+	 if (!menu_can_show(ent))
         return;
-	clearmenu(ent);
+	menu_clear(ent);
 
 	if (ent->trade_with == NULL)
 	{
 		gi.dprintf("ERROR: TradeFinalMenu() found a NULL ent->trade_with!\n");
 		ent->client->trading = false;
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 
 	//Print header
-	addlinetomenu(ent, va("%s's items", ent->myskills.player_name), MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, va("%s's items", ent->myskills.player_name), MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
 
 	//Print each item (this player)
 	for (i = 0; i < 3; ++i)
@@ -257,14 +256,14 @@ void TradeFinalMenu(edict_t *ent)
 		{
 			lva_result_t s = vrx_get_item_menu_line(item);
 			// va here as a workaround because option 0s print left aligned... -az
-			addlinetomenu(ent, va("   %s", s.str), 0);
+			menu_add_line(ent, va("   %s", s.str), 0);
 			++linecount;
 		}
 	}
 
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, va("%s's items", ent->trade_with->myskills.player_name), MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, va("%s's items", ent->trade_with->myskills.player_name), MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
 
 	//Print each item (trade_with)
 	for (i = 0; i < 3; ++i)
@@ -274,25 +273,25 @@ void TradeFinalMenu(edict_t *ent)
 		if (item != NULL)
 		{
 			lva_result_t s = vrx_get_item_menu_line(item);
-			addlinetomenu(ent, s.str, (i+1)*10);	//10, 20, 30
+			menu_add_line(ent, s.str, (i+1)*10);	//10, 20, 30
 			++linecount;
 		}
 	}
 
 	//Menu footer
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, " ", 0);
 
 	//Accepted or denied?
 	if (ent->client->trade_accepted)
-        addlinetomenu(ent, "<You have accepted>", 888);
-	else addlinetomenu(ent, "<You have not accepted>", 888);
+        menu_add_line(ent, "<You have accepted>", 888);
+	else menu_add_line(ent, "<You have not accepted>", 888);
 
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, " Previous", 777);
-	addlinetomenu(ent, " Exit", 666);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " Previous", 777);
+	menu_add_line(ent, " Exit", 666);
 
 	//Set handler
-	setmenuhandler(ent, TradeFinalMenu_handler);
+	menu_set_handler(ent, TradeFinalMenu_handler);
 
 	//Where are we in the menu?
 	ent->client->menustorage.currentline = 9 + linecount;
@@ -301,7 +300,7 @@ void TradeFinalMenu(edict_t *ent)
 	ent->client->trade_final = true;
 
 	//Display the menu
-	showmenu(ent);
+	menu_show(ent);
 }
 
 
@@ -315,7 +314,7 @@ void TradeInventoryMenu_handler(edict_t *ent, int option)
 	{
 		gi.dprintf("ERROR: TradeInventoryMenu_handler() found a NULL ent->trade_with!\n");
 		ent->client->trading = false;
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 
@@ -355,7 +354,7 @@ void TradeInventoryMenu_handler(edict_t *ent, int option)
 	}
 	else if (option == 666)	//ent closed the menu
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 	else if (option == 888)	//Ready to confirm trade
@@ -367,7 +366,7 @@ void TradeInventoryMenu_handler(edict_t *ent, int option)
 		//Refresh the other player's menu if they were waiting
 		if (ent->trade_with->client->trade_final)
 		{			
-			closemenu(ent->trade_with);
+			menu_close(ent->trade_with, true);
 			TradeFinalMenu(ent->trade_with);
 		}
 
@@ -385,13 +384,13 @@ void TradeInventoryMenu_handler(edict_t *ent, int option)
 void TradeInventoryMenu(edict_t *ent, int lastline)
 {
 	//Usual menu stuff
-	 if (!ShowMenu(ent))
+	 if (!menu_can_show(ent))
         return;
-	clearmenu(ent);
+	menu_clear(ent);
 
 	//Print header
-	addlinetomenu(ent, va("%s's items", ent->client->pers.netname), MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, va("%s's items", ent->client->pers.netname), MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
 
 	//Print each item
 	for (int i = 3; i < MAX_VRXITEMS; ++i)
@@ -404,16 +403,16 @@ void TradeInventoryMenu(edict_t *ent, int lastline)
 			selected = true;
 
 		lva_result_t str = vrx_get_item_menu_line(item);
-		addlinetomenu(ent, va("%c%s", selected ? '*' : ' ', str.str), i+1);
+		menu_add_line(ent, va("%c%s", selected ? '*' : ' ', str.str), i+1);
 	}
 
 	//Menu footer
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, " Done", 888);
-	addlinetomenu(ent, " Exit", 666);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " Done", 888);
+	menu_add_line(ent, " Exit", 666);
 
 	//Set handler
-	setmenuhandler(ent, TradeInventoryMenu_handler);
+	menu_set_handler(ent, TradeInventoryMenu_handler);
 
 	//Where are we in the menu?
 	if (lastline)
@@ -421,7 +420,7 @@ void TradeInventoryMenu(edict_t *ent, int lastline)
 	else ent->client->menustorage.currentline = 11;
 
 	//Display the menu
-	showmenu(ent);
+	menu_show(ent);
 }
 
 //************************************************************************************************
@@ -432,7 +431,7 @@ void ShowTradeMenu_handler(edict_t *ent, int option)
 {
 	if (option == 666)	//ent closed the menu
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 	else	//ent picked someone
@@ -443,7 +442,7 @@ void ShowTradeMenu_handler(edict_t *ent, int option)
 		if(trade_with->trade_with != NULL)
 		{
 			safe_cprintf(ent, PRINT_HIGH, "This player is trading with someone else.\n");
-			closemenu(ent);
+			menu_close(ent, true);
 			return;
 		}
 
@@ -481,14 +480,14 @@ void ShowTradeMenu(edict_t *ent)
 	}
 
 	//Usual menu stuff
-	 if (!ShowMenu(ent))
+	 if (!menu_can_show(ent))
         return;
-	clearmenu(ent);
+	menu_clear(ent);
 
 	//Print header
-	addlinetomenu(ent, "Select player to trade with", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, "Select player to trade with", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " ", 0);
 
 	for_each_player(temp, i)
 	{
@@ -496,7 +495,7 @@ void ShowTradeMenu(edict_t *ent)
 			&& (!temp->client->trading) && (!temp->client->trade_off) && (temp != ent))
 		{
 			//Add player to the list
-			addlinetomenu(ent, va(" %s", temp->myskills.player_name), GetClientNumber(temp));
+			menu_add_line(ent, va(" %s", temp->myskills.player_name), GetClientNumber(temp));
 			++j;
 		}
 	}
@@ -505,22 +504,22 @@ void ShowTradeMenu(edict_t *ent)
 	if (j == 0)
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Nobody found close enough to trade with.\n");
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 
 	//Menu footer
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, " Exit", 666);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " Exit", 666);
 
 	//Set handler
-	setmenuhandler(ent, ShowTradeMenu_handler);
+	menu_set_handler(ent, ShowTradeMenu_handler);
 
 	//Set current line
 	ent->client->menustorage.currentline = 5 + j;
 
 	//Display the menu
-	showmenu(ent);
+	menu_show(ent);
 
 	// try to shortcut to chat-protect mode
 	if (ent->client->idle_frames < qf2sf(CHAT_PROTECT_FRAMES-51))
@@ -537,13 +536,13 @@ void ShowTradeAskMenu_handler(edict_t *ent, int option)
 	{
 		gi.dprintf("ERROR: ShowTradeAskMenu_handler() found a NULL ent->trade_with!\n");
 		ent->client->trading = false;
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 
 	if (option == 666)	//ent closed the menu (reject)
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 	else	//ent wants to trade
@@ -562,40 +561,40 @@ void ShowTradeAskMenu_handler(edict_t *ent, int option)
 void ShowTradeAskMenu(edict_t *tradee, edict_t *trader)
 {
 	//Usual menu stuff
-	if (!ShowMenu(tradee))
+	if (!menu_can_show(tradee))
 		return;
 
 	//People already trading are not in the list
 	if (tradee->client->trading)
 		return;
 
-	clearmenu(tradee);
+	menu_clear(tradee);
 
 	//We are now trading
 	tradee->client->trading = true;
 	trader->client->trading = true;
 
 	//Print header
-	addlinetomenu(tradee, " ", 0);
-	addlinetomenu(tradee, " ", 0);
-	addlinetomenu(tradee, va("%s is trying", trader->myskills.player_name), MENU_GREEN_CENTERED);
-	addlinetomenu(tradee, "to trade with you.", MENU_GREEN_CENTERED);
-	addlinetomenu(tradee, " ", 0);
-	addlinetomenu(tradee, " ", 0);
-	addlinetomenu(tradee, " ", 0);
+	menu_add_line(tradee, " ", 0);
+	menu_add_line(tradee, " ", 0);
+	menu_add_line(tradee, va("%s is trying", trader->myskills.player_name), MENU_GREEN_CENTERED);
+	menu_add_line(tradee, "to trade with you.", MENU_GREEN_CENTERED);
+	menu_add_line(tradee, " ", 0);
+	menu_add_line(tradee, " ", 0);
+	menu_add_line(tradee, " ", 0);
 
 	//Menu footer
-	addlinetomenu(tradee, " Accept", 777);
-	addlinetomenu(tradee, " Reject", 666);
+	menu_add_line(tradee, " Accept", 777);
+	menu_add_line(tradee, " Reject", 666);
 
 	//Set handler
-	setmenuhandler(tradee, ShowTradeAskMenu_handler);
+	menu_set_handler(tradee, ShowTradeAskMenu_handler);
 
 	//Set current line
 	tradee->client->menustorage.currentline = 9;
 
 	//Display the menu
-	showmenu(tradee);
+	menu_show(tradee);
 }
 
 //************************************************************************************************
@@ -615,7 +614,7 @@ void EndTrade (edict_t *ent)
 	}
 
 	//cancel the trade (trade_with)
-	closemenu(ent->trade_with);
+	menu_close(ent->trade_with, true);
 	ent->trade_with->client->trade_accepted = false;
 	ent->trade_with->client->trade_final = false;
 	ent->trade_with->client->trading = false;

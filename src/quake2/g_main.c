@@ -221,6 +221,7 @@ void ShutdownGame(void)
 	gi.dprintf("==== ShutdownGame ====\n");
 
     vrx_close_char_io();
+	defer_global_close();
 
 	gi.FreeTags(TAG_LEVEL);
 	gi.FreeTags(TAG_GAME);
@@ -355,7 +356,7 @@ void VortexEndLevel(void)
 	gi.dprintf("Vortex is shutting down...\n");
 
 	CTF_ShutDown(); // 3.7 shut down CTF, remove flags and bases
-	clearallmenus();
+	menu_close_all();
 	InitJoinedQueue();
 	InitializeTeamNumbers(); // for allies
 

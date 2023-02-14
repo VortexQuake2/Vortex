@@ -6,7 +6,9 @@
 char_io_t vrx_char_io;
 
 void vrx_setup_sqlite_io();
+#ifndef NO_GDS
 void vrx_setup_mysql_io();
+#endif
 
 void vrx_init_char_io() {
     memset(&vrx_char_io, 0, sizeof vrx_char_io);
@@ -18,13 +20,13 @@ void vrx_init_char_io() {
     int method = savemethod->value;
     switch (method) {
 #ifndef NO_GDS
-        case 2:
+        case SAVEMETHOD_MYSQL:
             vrx_setup_mysql_io();
             break;
 #endif
         default:
             gi.dprintf("unsupported method, defaulting to 3 (sqlite single file mode)");
-        case 3:
+        case SAVEMETHOD_SQLITE:
             vrx_setup_sqlite_io();
             break;
     }
@@ -41,7 +43,7 @@ void vrx_close_char_io() {
     switch (method) {
 #ifndef NO_GDS
         case 2:
-            GDS_FinishThread();
+            gds_finish_thread();
             break;
 #endif
         default:
@@ -78,9 +80,9 @@ void vrx_setup_sqlite_io() {
 
 #ifndef NO_GDS
 qboolean vrx_mysql_save_character(edict_t* player) {
-    if (GDS_IsEnabled())
+    if (gds_enabled())
     {
-        V_GDS_Queue_Add(player, GDS_SAVE);
+        gds_queue_add(player, GDS_SAVE, -1);
         return true;
     }
 
@@ -88,9 +90,9 @@ qboolean vrx_mysql_save_character(edict_t* player) {
 }
 
 qboolean vrx_mysql_save_character_runes(edict_t* player) {
-    if (GDS_IsEnabled())
+    if (gds_enabled())
     {
-        V_GDS_Queue_Add(player, GDS_SAVERUNES);
+        gds_queue_add(player, GDS_SAVERUNES, -1);
         return true;
     }
 
@@ -99,16 +101,16 @@ qboolean vrx_mysql_save_character_runes(edict_t* player) {
 
 
 qboolean vrx_mysql_load_character(edict_t* player) {
-    if (GDS_IsEnabled())
+    if (gds_enabled())
     {
         if (player->gds_thread_status == GDS_STATUS_CHARACTER_LOADING) {
             gi.cprintf(player, PRINT_HIGH, "You're already queued for loading.");
             return false;
-        } else {
-            gi.cprintf(player, PRINT_HIGH, "You're now queued for loading.");
-            V_GDS_Queue_Add(player, GDS_LOAD);
-            return true;
         }
+
+        gi.cprintf(player, PRINT_HIGH, "You're now queued for loading.");
+        gds_queue_add(player, GDS_LOAD, -1);
+        return true;
     }
 
     return false;
@@ -123,10 +125,10 @@ void vrx_setup_mysql_io() {
             .save_close_player = &vrx_mysql_saveclose_character,
             .load_player = &vrx_mysql_load_character,
             .is_loading = &vrx_mysql_isloading,
-            .handle_status = &GDS_HandleStatus
+            .handle_status = &gds_handle_status
     };
 
-    V_GDS_StartConn();
+    gds_connect();
 }
 
 #endif
