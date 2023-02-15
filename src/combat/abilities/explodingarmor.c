@@ -200,7 +200,7 @@ void SpawnExplodingArmor (edict_t *ent, int time)
 	VectorSet(offset, 0, 8,  ent->viewheight-8);
 	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
 
-	if (!G_GetSpawnLocation(ent, 64, armor->mins, armor->maxs, start, NULL, true))
+	if (!G_GetSpawnLocation(ent, 64, armor->mins, armor->maxs, start, NULL, PROJECT_HITBOX_FAR, true))
 	{
 		G_FreeEdict(armor);
 		return;

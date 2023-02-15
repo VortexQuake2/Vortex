@@ -2095,6 +2095,7 @@ void Cmd_DrawBoundingBox_f (edict_t *ent)
 	vec3_t	forward, right, offset, start, end;
 	vec3_t	p1, p2;
 	vec3_t	origin;
+	vec3_t	angles;
 	trace_t	tr;
 
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
@@ -2112,6 +2113,10 @@ void Cmd_DrawBoundingBox_f (edict_t *ent)
 		gi.WritePosition (tr.endpos);
 		gi.multicast (start, MULTICAST_PHS);
 
+		vectoangles(tr.plane.normal, angles);
+		yaw = angles[PITCH];
+		AngleCheck(&yaw);
+		gi.dprintf("plane.normal %.0f corrected %.0f\n", angles[PITCH], yaw);
 		yaw = tr.ent->s.angles[YAW];
 		AngleCheck(&yaw);
 		gi.dprintf("classname: %s clipmask: %d angles: %.0f adjusted angles: %.0f\n", tr.ent->classname, tr.ent->clipmask, tr.ent->s.angles[YAW], yaw);

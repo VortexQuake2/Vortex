@@ -140,7 +140,7 @@ void Cmd_CreateLaserPlatform_f (edict_t *ent)
 
 	laserplatform = CreateLaserPlatform(ent, talentLevel);
 
-	if (!G_GetSpawnLocation(ent, 100, laserplatform->mins, laserplatform->maxs, start, NULL, false))
+	if (!G_GetSpawnLocation(ent, 100, laserplatform->mins, laserplatform->maxs, start, NULL, PROJECT_HITBOX_FAR, false))
 	{
 		RemoveLaserPlatform(laserplatform);
 		return;

@@ -1751,10 +1751,22 @@ int G_GetHypotenuse (vec3_t v)
 	return floattoint(sqrt(((v[0]*v[0]) + (v[1]*v[1]))));
 }
 
-// returns true if the specified entity can be spawned
-// note: range should be no less than the longest possible distance between the two entities where the hitboxes don't overlap
-// which is usually the hypotenuse of a line drawn diagonally between the start end ending coordinates
-qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs, vec3_t start, vec3_t normal, qboolean ignore_self_clip)
+int G_GetHypotenuse1(float a, float b)
+{
+	return floattoint(sqrt(((a * a) + (b * b))));
+}
+
+float G_GetBoxHypotenuse(vec3_t size)
+{
+	return sqrt(((size[0]*size[0]) + (size[1]*size[1]) + (size[2]*size[2])));
+}
+
+// returns true if the box defined by mins and maxs is clear of obstruction at least range distance from ent
+// note: range should be no less than the minimum distance between the two entities where the hitboxes don't overlap/intersect
+// mode - use PROJECT_HITBOX_NEAR if you want the box defined by mins and maxs to be traced between start and ending positions
+//        use PROJECT_HITBOX_FAR if you want the box to be traced only at the ending position
+//        default is PROJECT_HITBOX_FAR if mode is not set (0)
+qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs, vec3_t start, vec3_t normal, int mode, qboolean ignore_self_clip)
 {
 	int		addheight = ent->viewheight - 8;
 	int		aimheight;
@@ -1762,31 +1774,38 @@ qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs
 	vec3_t	forward, right, offset, end;
 	trace_t	tr;
 
+	if (!mode)
+		mode = PROJECT_HITBOX_FAR;
+
 	// get starting position and forward vector
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
-	// fix for spawning entities taller than player
-	minheight = abs((int)mins[2]) + 1;
-	if (PM_PlayerHasMonster(ent))
-		aimheight = fabs(ent->owner->mins[2]) + addheight;
-	else
-		aimheight = fabs(ent->mins[2]) + addheight;
-	if (aimheight < minheight)
+	if (mode == PROJECT_HITBOX_NEAR)
 	{
-		//gi.dprintf("current aimheight: %d minimum: %d\n", aimheight, minheight);
-		addheight += minheight - aimheight;
-		//gi.dprintf("adjusting aimheight up %d\n", addheight);
+		// fix for spawning entities taller than player
+		minheight = abs((int)mins[2]) + 1;
+		if (PM_PlayerHasMonster(ent))
+			aimheight = fabs(ent->owner->mins[2]) + addheight;
+		else
+			aimheight = fabs(ent->mins[2]) + addheight;
+		// if the aim starting position is lower than the origin of the entity we're trying to spawn, then raise aimheight to the minimum height
+		if (aimheight < minheight)
+		{
+			//gi.dprintf("current aimheight: %d minimum: %d\n", aimheight, minheight);
+			addheight += minheight - aimheight;
+			//gi.dprintf("adjusting aimheight up %d\n", addheight);
+		}
 	}
 	VectorSet(offset, 0, 8,  addheight); // note: player's viewheight is 22
 	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
 
 	// get ending position
 	VectorCopy(start, end);
-	//FIXME: we could make this function more reliable by calculating the "worst case" distance using the hypotenuse method described above
-	//or a more cpu-intensive fix would be to find a point further away (unlikely to cause overlapping hitboxes) and then trace back toward
-	//ent along the same (negative) vector to the "desired" distance
 	VectorMA(start, range, forward, end);
 
-	tr = gi.trace(start, mins, maxs, end, ent, MASK_SHOT);
+	if (mode == PROJECT_HITBOX_FAR)
+		tr = gi.trace(start, NULL, NULL, end, ent, MASK_SHOT); // don't trace box
+	else
+		tr = gi.trace(start, mins, maxs, end, ent, MASK_SHOT); // trace box
 	if (tr.allsolid || tr.startsolid)
 	{
 		//gi.dprintf("allsolid %d startsolid %d fraction %.1f\n", tr.allsolid, tr.startsolid, tr.fraction);
@@ -1797,9 +1816,35 @@ qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs
 	if (normal && tr.fraction < 1 && tr.ent && tr.ent->inuse && tr.ent == world)
 		VectorCopy(tr.plane.normal, normal);
 
-	// we need to make picked up/previously picked up entities solid to player so that the trace function works
-	tr = gi.trace(start, mins, maxs, start, NULL, MASK_SHOT);
+	if (tr.fraction < 1 && mode == PROJECT_HITBOX_FAR)
+	{
+		float	pitch, dist = 0;
+		vec3_t	angles, size;
 
+		// calculate the pitch angle of the clipped solid
+		vectoangles(tr.plane.normal, angles);
+		pitch = angles[PITCH] * -1;
+		if (pitch == 270) // ceiling
+			dist = maxs[2] + 1;
+		else if (pitch == 0) // wall
+			dist = maxs[1] + 1;
+		else if (pitch == 90) // floor
+			dist = fabs(mins[2]) + 1;
+		else // irregular pitch (non right angle)
+		{
+			VectorSet(size, fabs(mins[0]) + maxs[0], fabs(mins[1]) + maxs[1], fabs(mins[2]) + maxs[2]);
+			// distance is "worst case" i.e. (half of) the longest line that can fit within our mins/maxs box
+			dist = 0.5 * G_GetBoxHypotenuse(size) + 1;
+			//gi.dprintf("pitch %.1f dist %.1f\n", pitch, dist);
+		}
+		// try to move away from the obstruction just enough to clear it
+		// note: if this doesn't work, we could try to move backward from aiming vector 'forward' but we won't know how far!
+		VectorMA(start, dist, tr.plane.normal, start);
+		//VectorMA(start, -dist, forward, start);
+	}
+
+	// we need to make picked up/previously picked up entities solid to player so that the trace function works
+	tr = gi.trace(start, mins, maxs, start, NULL, MASK_MONSTERSOLID);
 	//gi.dprintf("ignore %d tr.ent %s allsolid %d startsolid %d fraction %.1f\n", ignore_self_clip, tr.ent->classname, tr.allsolid, tr.startsolid, tr.fraction);
 	if (tr.fraction < 1)
 	{
@@ -1810,10 +1855,8 @@ qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs
 			return true;
 		return false;
 	}
-
 	return true;
 }
-
 
 void G_LaserThink (edict_t *self)
 {
