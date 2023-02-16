@@ -616,6 +616,7 @@ void INV_BossCheck(edict_t *self)
 }
 
 void INV_OnTimeout(edict_t *self) {
+	qboolean was_boss = false;
 	gi.bprintf(PRINT_HIGH, "Time's up!\n");
 	if (invasion_data.boss && invasion_data.boss->deadflag != DEAD_DEAD) // out of time for the boss.
 	{
@@ -627,12 +628,14 @@ void INV_OnTimeout(edict_t *self) {
 		//DroneList_Remove(invasion_data.boss); // az: WHY DID I FORGET THIS
 		//G_FreeEdict(invasion_data.boss);
 		invasion_data.boss = NULL;
+		was_boss = true;
 	}
 	// remove monsters from the current wave before spawning the next
 	if (self->num_monsters_real)
 		PVM_RemoveAllMonsters(self);
 	// restart the last wave
-	invasion_difficulty_level -= 1;
+	if (!was_boss)
+		invasion_difficulty_level -= 1;
 
 	// increase the difficulty level for the next wave
 	//if (invasion->value == 1)

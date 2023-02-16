@@ -7,7 +7,11 @@ void detector_remove (edict_t *self)
 	if (self->owner && self->owner->inuse)
 	{
 		self->owner->num_detectors--;
-		safe_cprintf(self->owner, PRINT_HIGH, "%d/%d detectors remaining\n", self->owner->num_detectors, (int)DETECTOR_MAX_COUNT);
+		if (self->owner->client)
+		{
+			safe_cprintf(self->owner, PRINT_HIGH, "%d/%d detectors remaining.\n", self->owner->num_detectors, (int)DETECTOR_MAX_COUNT);
+			layout_add_tracked_entity(&self->owner->client->layout, self); // remove from HUD
+		}
 	}
 
 	self->think = G_FreeEdict;
@@ -156,18 +160,48 @@ qboolean detector_findtarget (edict_t *self)
 
 void detector_effects (edict_t *self)
 {
+	//gi.dprintf("detector_effects\n");
 	// team colors
 	self->s.effects |= EF_COLOR_SHELL;
 	if (self->owner->teamnum == BLUE_TEAM)
 		self->s.renderfx |= RF_SHELL_BLUE;
 	else if (self->owner->teamnum == RED_TEAM)
 		self->s.renderfx |= RF_SHELL_RED;
+	// glow yellow when an enemy is detected
 	else if (self->monsterinfo.attack_finished > level.time)
 		self->s.renderfx |= RF_SHELL_YELLOW;
+	// blink
 	else if (!(sf2qf(level.framenum) & 8))
-		self->s.renderfx |= RF_SHELL_RED;
+	{
+		// blink white prior to timeout
+		if (level.time >= self->delay - 10 && !self->style)
+		{
+			self->s.renderfx |= RF_SHELL_RED | RF_SHELL_BLUE | RF_SHELL_YELLOW;
+			//self->style = 1;
+			//gi.dprintf("blink white %d\n", self->style);
+		}
+		// blink red
+		else
+		{
+			self->s.renderfx |= RF_SHELL_RED;
+			//self->style = 0;
+			//gi.dprintf("blink red %d\n", self->style);
+		}
+	}
 	else
+	{
+		if (self->s.renderfx)
+		{
+			if (self->style)
+				self->style = 0;
+			else
+				self->style = 1;
+			//gi.dprintf("flip to %d\n", self->style);
+		}
 		self->s.effects = self->s.renderfx = 0;
+	}
+
+
 }
 
 void detector_think (edict_t *self)
@@ -180,7 +214,7 @@ void detector_think (edict_t *self)
 	if (expired || !G_EntIsAlive(self->owner))
 	{
 		if (expired && self->owner && self->owner->inuse)
-			safe_cprintf(self->owner, PRINT_HIGH, "A detector timed-out. (%d/%d)\n", self->owner->num_detectors, DETECTOR_MAX_COUNT);
+			safe_cprintf(self->owner, PRINT_HIGH, "A detector timed-out. (%d/%d)\n", self->owner->num_detectors, (int)DETECTOR_MAX_COUNT);
 
 		detector_remove(self);
 		return;
@@ -222,6 +256,7 @@ void detector_think (edict_t *self)
 		detector_findprojectile(self, "acid");
 		detector_findprojectile(self, "hammer");
 		detector_findprojectile(self, "exploding_armor");
+		detector_findprojectile(self, "lance");
 	}
 
 	self->nextthink = level.time + FRAMETIME;
@@ -229,7 +264,7 @@ void detector_think (edict_t *self)
 
 void detector_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	safe_cprintf(self->owner, PRINT_HIGH, "A detector was destroyed. (%d/%d)\n", self->owner->num_detectors, DETECTOR_MAX_COUNT);
+	safe_cprintf(self->owner, PRINT_HIGH, "A detector was destroyed. (%d/%d)\n", self->owner->num_detectors, (int)DETECTOR_MAX_COUNT);
 	detector_remove(self);
 }
 
@@ -304,6 +339,7 @@ void BuildDetector (edict_t *self, vec3_t start, vec3_t forward, int slvl, float
 	self->num_detectors++;
 	self->client->ability_delay = self->holdtime = level.time + DETECTOR_DELAY * delay_mult;
 	self->client->pers.inventory[power_cube_index] -= cost;
+	layout_add_tracked_entity(&self->client->layout, detector); // add to HUD
 
 	//  entity made a sound, used to alert monsters
 	self->lastsound = level.framenum;

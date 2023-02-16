@@ -2008,6 +2008,7 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	monster->touch = drone_touch;
 	monster->think = drone_think;
 	DroneList_Insert(monster);
+	layout_add_tracked_entity(&ent->client->layout, monster);
 	return true;
 }
 

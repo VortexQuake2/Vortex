@@ -505,7 +505,12 @@ void depot_remove (edict_t *self, edict_t *owner, qboolean effect)
 
 	// clear our creator's pointer
 	if (self->creator && self->creator->inuse)
+	{
 		self->creator->supplystation = NULL;
+		// remove from HUD
+		if (self->creator->client)
+			layout_remove_tracked_entity(&self->creator->client->layout, self);
+	}
 
 	if (effect)
 		self->think = BecomeExplosion1;
@@ -581,6 +586,29 @@ int depot_getmax (edict_t *self, int item_index)
 	return 0;
 }
 
+float depot_get_fraction_full(edict_t* self)
+{
+	int	current_total = 0, max_total = 0;
+
+	current_total += depot_getcount(self, body_armor_index);
+	max_total += depot_getmax(self, body_armor_index);
+	current_total += depot_getcount(self, bullet_index);
+	max_total += depot_getmax(self, bullet_index);
+	current_total += depot_getcount(self, cell_index);
+	max_total += depot_getmax(self, cell_index);
+	current_total += depot_getcount(self, shell_index);
+	max_total += depot_getmax(self, shell_index);
+	current_total += depot_getcount(self, grenade_index);
+	max_total += depot_getmax(self, grenade_index);
+	current_total += depot_getcount(self, rocket_index);
+	max_total += depot_getmax(self, rocket_index);
+	current_total += depot_getcount(self, slug_index);
+	max_total += depot_getmax(self, slug_index);
+
+	//gi.dprintf("%d %d %.1f\n", current_total, max_total, (float)current_total / max_total);
+	return (float)current_total / max_total;
+}
+
 void depot_add_inventory (edict_t *self, int frames)
 {
 	int	current_total = 0, max_total = 0;
@@ -593,8 +621,8 @@ void depot_add_inventory (edict_t *self, int frames)
 		max_amount = depot_getmax(self, body_armor_index);
 		depot_add_item(self, body_armor_index, amount, max_amount);
 		// keep track of grand totals
-		max_total += max_amount;
-		current_total += depot_getcount(self, body_armor_index);
+		//max_total += max_amount;
+		//current_total += depot_getcount(self, body_armor_index);
 
 		// add bullets and cells (200-1200 max)
 		amount = skill_level * 10;
@@ -602,18 +630,18 @@ void depot_add_inventory (edict_t *self, int frames)
 		depot_add_item(self, bullet_index, amount, max_amount);
 		depot_add_item(self, cell_index, amount, max_amount);
 		// keep track of grand totals
-		max_total += 2 * max_amount;
-		current_total += depot_getcount(self, bullet_index);
-		current_total += depot_getcount(self, cell_index);
+		//max_total += 2 * max_amount;
+		//current_total += depot_getcount(self, bullet_index);
+		//current_total += depot_getcount(self, cell_index);
 
 		// add shells (100-600 max)
 		amount = skill_level * 5;
 		max_amount = depot_getmax(self, shell_index);
 		depot_add_item(self, shell_index, amount, max_amount);
 		// keep track of grand totals
-		max_total += max_amount;
-		current_total += depot_getcount(self, shell_index);
-		
+		//max_total += max_amount;
+		//current_total += depot_getcount(self, shell_index);
+
 		// add rockets, grenades, and slugs (50-300 max)
 		amount = skill_level * 2.5;
 		max_amount = depot_getmax(self, rocket_index);
@@ -621,16 +649,17 @@ void depot_add_inventory (edict_t *self, int frames)
 		depot_add_item(self, rocket_index, amount, max_amount);
 		depot_add_item(self, slug_index, amount, max_amount);
 		// keep track of grand totals
-		max_total += 3 * max_amount;
-		current_total += depot_getcount(self, grenade_index);
-		current_total += depot_getcount(self, rocket_index);
-		current_total += depot_getcount(self, slug_index);
-	
-		self->count = level.framenum + frames;
-		self->wait = 100 * ((float) current_total / max_total);//for HUD display
-		//gi.dprintf("%d/%d = %.1f %d\n", current_total, max_total, self->wait, (int)self->wait);
+		//max_total += 3 * max_amount;
+		//current_total += depot_getcount(self, grenade_index);
+		//current_total += depot_getcount(self, rocket_index);
+		//current_total += depot_getcount(self, slug_index);
 
+		self->count = level.framenum + frames;
+		//self->wait = 100 * ((float)current_total / max_total);//for HUD display
+		//gi.dprintf("%d/%d = %.1f %d\n", current_total, max_total, self->wait, (int)self->wait);
 	}
+	// store percentage full for hud display
+	self->wait = 100 * depot_get_fraction_full(self);
 }
 
 void depot_think (edict_t *self)
@@ -680,19 +709,23 @@ int depot_give_item (edict_t *self, edict_t *other, int item_index)
 void depot_give_inventory (edict_t *self, edict_t *other)
 {
 	int result = 0;
+	int qty_armor, qty_bullets, qty_cells, qty_shells, qty_grenades, qty_rockets, qty_slugs;
 
 	if ((self->sentrydelay > level.time) || !G_EntIsAlive(self) || !G_EntIsAlive(other) || !other->client || OnSameTeam(self, other) < 2)
 		return;
 
-	result += depot_give_item(self, other, body_armor_index);
-	result += depot_give_item(self, other, bullet_index);
-	result += depot_give_item(self, other, cell_index);
-	result += depot_give_item(self, other, shell_index);
-	result += depot_give_item(self, other, grenade_index);
-	result += depot_give_item(self, other, rocket_index);
-	result += depot_give_item(self, other, slug_index);
+	result += qty_armor = depot_give_item(self, other, body_armor_index);
+	result += qty_bullets = depot_give_item(self, other, bullet_index);
+	result += qty_cells = depot_give_item(self, other, cell_index);
+	result += qty_shells = depot_give_item(self, other, shell_index);
+	result += qty_grenades = depot_give_item(self, other, grenade_index);
+	result += qty_rockets = depot_give_item(self, other, rocket_index);
+	result += qty_slugs = depot_give_item(self, other, slug_index);
 
-	safe_cprintf(other, PRINT_HIGH, "Depot has %d armor, %d bullets, %d cells, %d shells, %d grenades, %d rockets, %d slugs\n", 
+	safe_cprintf(other, PRINT_HIGH, "You received %d armor, %d bullets, %d cells, %d shells, %d grenades, %d rockets, %d slugs.\n",
+		qty_armor, qty_bullets, qty_cells, qty_shells, qty_grenades, qty_rockets, qty_slugs);
+
+	safe_cprintf(other, PRINT_HIGH, "Depot has %d armor, %d bullets, %d cells, %d shells, %d grenades, %d rockets, %d slugs remaining.\n", 
 		self->packitems[body_armor_index], self->packitems[bullet_index], self->packitems[cell_index], 
 		self->packitems[shell_index], self->packitems[grenade_index], self->packitems[rocket_index], 
 		self->packitems[slug_index]);
@@ -736,7 +769,7 @@ edict_t *BuildDepot (edict_t *ent, float skill_mult, float delay_mult)
 	station->mtype = M_SUPPLYSTATION;//FIXME: change this
 	station->classname = "depot";
 	station->takedamage = DAMAGE_YES;
-	station->health = 500;//FIXME: change this
+	station->health = station->max_health =  500;//FIXME: change this
 	station->monsterinfo.level = ent->myskills.abilities[SUPPLY_STATION].current_level * skill_mult;
 	station->touch = depot_touch;
 	station->die = depot_die;
@@ -787,7 +820,7 @@ void Cmd_CreateSupplyStation_f (edict_t *ent)
 	//BuildSupplyStation(ent, cost, skill_mult, delay_mult);
 
 	depot = BuildDepot(ent, skill_mult, delay_mult);
-	if (!G_GetSpawnLocation(ent, 100, depot->mins, depot->maxs, start, NULL))
+	if (!G_GetSpawnLocation(ent, 100, depot->mins, depot->maxs, start, NULL, PROJECT_HITBOX_FAR, false))
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Not enough room to spawn supply station.\n");
 		ent->supplystation = NULL;
@@ -804,5 +837,6 @@ void Cmd_CreateSupplyStation_f (edict_t *ent)
 	ent->client->ability_delay = level.time + DEPOT_DELAY * delay_mult;
 	ent->client->pers.inventory[power_cube_index] -= cost;
 	ent->holdtime = level.time + DEPOT_BUILD_TIME * delay_mult;
+	layout_add_tracked_entity(&ent->client->layout, depot); // add to HUD
 	gi.sound(depot, CHAN_ITEM, gi.soundindex("weapons/repair.wav"), 1, ATTN_NORM, 0);
 }
