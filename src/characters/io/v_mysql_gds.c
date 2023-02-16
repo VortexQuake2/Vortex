@@ -644,9 +644,8 @@ int gds_get_owner_id(char* charname, MYSQL* db)
 	return id;
 }
 
-int gds_subop_stash_get_page(int owner_id, item_t* page, int items_per_page, int page_index, MYSQL* db)
+void gds_subop_stash_get_page(int owner_id, item_t* page, int items_per_page, int page_index, MYSQL* db)
 {
-	int itemcount = 0;
 	memset(page, 0, sizeof(item_t) * items_per_page);
 
 	const int start_index = page_index * items_per_page;
@@ -666,7 +665,7 @@ int gds_subop_stash_get_page(int owner_id, item_t* page, int items_per_page, int
 
 		if (item_head_result == NULL) {
 			mysql_query(db, "COMMIT");
-			return 0;
+			return;
 		}
 
 		MYSQL_ROW item_head_row = mysql_fetch_row(item_head_result);
@@ -693,7 +692,6 @@ int gds_subop_stash_get_page(int owner_id, item_t* page, int items_per_page, int
 			item_head_row = mysql_fetch_row(item_head_result);
 		}
 
-		itemcount = safeguard_items;
 		mysql_free_result(item_head_result);
 	}
 
@@ -734,7 +732,6 @@ int gds_subop_stash_get_page(int owner_id, item_t* page, int items_per_page, int
 	}
 
 	mysql_query(db, "COMMIT");
-	return itemcount;
 }
 
 
@@ -1087,12 +1084,13 @@ void gds_op_stash_take(gds_queue_t* current, MYSQL* db)
 
 		MYSQL_RES* item_modifier_result = mysql_store_result(db);
 		MYSQL_ROW item_modifier_row = mysql_fetch_row(item_modifier_result);
-		while (item_modifier_row)
+		int mod_index = 0;
+		while (item_modifier_row && mod_index < MAX_VRXITEMMODS)
 		{
-			const int modn = atoi(item_modifier_row[1]);
-			assert(modn >= 0 && modn < MAX_VRXITEMMODS);
+			/*const int modn = atoi(item_modifier_row[1]);
+			assert(modn >= 0 && modn < MAX_VRXITEMMODS);*/
 
-			imodifier_t* mod = &item.modifiers[modn];
+			imodifier_t* mod = &item.modifiers[mod_index];
 
 			mod->type = atoi(item_modifier_row[2]);
 			mod->index = atoi(item_modifier_row[3]);
@@ -1100,6 +1098,7 @@ void gds_op_stash_take(gds_queue_t* current, MYSQL* db)
 			mod->set = atoi(item_modifier_row[5]);
 
 			item_modifier_row = mysql_fetch_row(item_modifier_result);
+			mod_index++;
 		}
 
 		mysql_free_result(item_modifier_result);
