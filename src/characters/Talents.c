@@ -666,7 +666,7 @@ void vrx_open_talent_menu(edict_t *ent, int talentID, qboolean select_upgrade) {
     menu_clear(ent);
     
     menu_add_line(ent, "Talent", MENU_GREEN_CENTERED);
-    addlinetomenu(ent, va("%s: %d/%d", GetTalentString(talentID), level, talent->maxLevel), MENU_WHITE_CENTERED);
+    menu_add_line(ent, va("%s: %d/%d", GetTalentString(talentID), level, talent->maxLevel), MENU_WHITE_CENTERED);
     menu_add_line(ent, " ", 0);
 
     lineCount += writeTalentDescription(ent, talentID);
