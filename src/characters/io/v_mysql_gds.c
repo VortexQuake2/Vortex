@@ -580,7 +580,7 @@ void *gds_process_queue(void *unused)
 // *********************************
 
 #define QUERY(a, ...) { char* format = strdup(myva(a, __VA_ARGS__));\
-	mysql_query(db, format);\
+	if (mysql_query(db, format)) { gi.dprintf("DB: %s", mysql_error(db)); };\
 	free (format); }
 
 #define GET_RESULT result = mysql_store_result(db);\
@@ -765,12 +765,15 @@ void gds_op_set_owner(gds_queue_t* current, MYSQL* db)
 
 	QUERY(
 		"update userdata target "
-		"	join   userdata player on "
-		"	player.email = \"%s\" and player.email is not null "
+		"	join  userdata owner on "
+		"		owner.email = \"%s\" and "
+		"		owner.email is not null and "
+		"		owner.char_idx=%d "
 		"set target.owner = \"%s\""
 		"where target.char_idx = %d",
-		esc_password,
-		esc_ownername,
+		esc_password, 
+		new_owner_id,
+		esc_ownername, 
 		id);
 
 	int rows = mysql_affected_rows(db);
@@ -1233,9 +1236,15 @@ int gds_op_save(gds_queue_t *current, MYSQL* db)
 		DECLARE_ESCAPE(esc_owner, current->myskills.email);
 
 		QUERY ("UPDATE userdata SET " 
-			"title=\"%s\", playername=\"%s\", password=\"%s\", "
-			"email=\"%s\", owner=\"%s\", member_since=\"%s\", "
-			"last_played=CURDATE(), playtime_total=%d, playingtime=%d "
+			"title=\"%s\", "
+			"playername=\"%s\", "
+			"password=\"%s\", "
+			"email=\"%s\", "
+			"owner=if(length(owner) = 0 or owner is null, \"%s\", owner), "
+			"member_since=\"%s\", "
+			"last_played=CURDATE(), "
+			"playtime_total=%d, "
+			"playingtime=%d, "
 			"isplaying = 1 "
 			"WHERE char_idx=%d",
 		 esc_title,
