@@ -2047,6 +2047,8 @@ void ClientBeginDeathmatch (edict_t *ent)
 		gi.dprintf("We seem to have passed a big player ID. Resetting!");
 		lastID = 0;
 	}
+#else
+	ent->gds_connection_id = 0;
 #endif
 	// az end
 

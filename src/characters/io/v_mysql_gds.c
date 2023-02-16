@@ -1164,7 +1164,6 @@ void gds_subop_insert_rune(MYSQL* db, gds_queue_t* current, int id)
 // GDS_Save except it only deals with runes.
 int gds_op_save_runes(gds_queue_t *current, MYSQL* db)
 {
-	char* format;
 	const int id = gds_get_id(current->myskills.player_name, db);
 	mysql_autocommit(db, false);
 
@@ -1865,8 +1864,10 @@ qboolean gds_op_load(gds_queue_t *current, MYSQL *db)
 void gds_op_saveclose(gds_queue_t *current, MYSQL *db)
 {
 	int id = gds_op_save(current, db);
-	if (id != -1)
-		QUERY ("UPDATE userdata SET isplaying = 0 WHERE char_idx = %d;", id)
+	if (id != -1) {
+		QUERY("UPDATE userdata SET isplaying = 0 WHERE char_idx = %d", id)
+		QUERY("UPDATE stash SET lock_char_id = NULL WHERE lock_char_id = %d", id)
+	}
 }
 
 // Start Connection to GDS/MySQL

@@ -1,5 +1,6 @@
 #include "../g_local.h"
 #include "io/v_characterio.h"
+#include "io/v_sqlite_unidb.h"
 
 stash_io_t vrx_stash_io = {0};
 
@@ -59,11 +60,15 @@ void vrx_setup_mysql_stash()
 }
 #endif
 
-
 void vrx_setup_sqlite_stash()
 {
 	vrx_stash_io = (stash_io_t){
-		0
+		.open_stash = cdb_stash_open,
+		.close_stash = cdb_stash_close,
+		.close_stash_by_id = cdb_stash_close_id,
+		.take = cdb_stash_take,
+		.get_page = cdb_stash_get_page,
+		.store = cdb_stash_store
 	};
 }
 

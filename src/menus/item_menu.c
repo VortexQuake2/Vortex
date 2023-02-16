@@ -237,7 +237,7 @@ void ShowItemMenu(edict_t *ent, int itemindex) {
     //Check to see if this item can be equipped or not
     if (!((item->itemtype & ITEM_GRAVBOOTS) || (item->itemtype & ITEM_FIRE_RESIST) ||
           (item->itemtype & ITEM_AUTO_TBALL))) {
-        if (itemindex < 3) menu_add_line(ent, "Stash this item", 4445 + itemindex);
+        if (itemindex < 3) menu_add_line(ent, "Unequip this item", 4445 + itemindex);
         else menu_add_line(ent, "Equip this item", 4445 + itemindex);
         ++ent->client->menustorage.currentline;
     }
@@ -246,16 +246,13 @@ void ShowItemMenu(edict_t *ent, int itemindex) {
     menu_add_line(ent, "Previous menu", 7778 + itemindex);
     menu_add_line(ent, "Exit", 666);
     menu_add_line(ent, " ", 0);
-    menu_add_line(ent, "Stash this item", 10000 + itemindex);
+    if (strlen(ent->myskills.owner) > 0 || strlen(ent->myskills.email) > 0)
+		menu_add_line(ent, "Stash this item", 10000 + itemindex);
     menu_add_line(ent, "Sell this item", 15000 + itemindex);
 
-    //set currentline
     ent->client->menustorage.currentline += 2;
 
-    //Set handler
     menu_set_handler(ent, ShowItemMenu_handler);
-
-    //Display the menu
     menu_show(ent);
 }
 

@@ -49,7 +49,7 @@ void vrx_close_char_io() {
         default:
             gi.dprintf("unsupported method, defaulting to 3 (sqlite single file mode)");
         case 3:
-            vrx_sqlite_end_connection();
+            cdb_end_connection();
             break;
     }
 }
@@ -63,7 +63,7 @@ void vrx_notify_owner_nonexistent(void* args)
         return;
     }
 
-    gi.cprintf(evt->ent, PRINT_HIGH, "The character '%s' does not exist. You cannot use it as an owner.", evt->owner_name);
+    gi.cprintf(evt->ent, PRINT_HIGH, "The character '%s' does not exist. You cannot use it as an owner.\n", evt->owner_name);
 
     V_Free(args);
 }
@@ -77,7 +77,7 @@ void vrx_notify_owner_bad_password(void* args)
         return;
     }
 
-    gi.cprintf(evt->ent, PRINT_HIGH, "The password you entered is not correct.");
+    gi.cprintf(evt->ent, PRINT_HIGH, "The password you entered is not correct.\n");
     V_Free(args);
 }
 
@@ -93,14 +93,14 @@ void vrx_notify_owner_success(void* args)
     assert(sizeof evt->ent->myskills.owner == sizeof evt->owner_name);
     strcpy(evt->ent->myskills.owner, evt->owner_name);
 
-    gi.cprintf(evt->ent, PRINT_HIGH, "Owner set successfully.");
+    gi.cprintf(evt->ent, PRINT_HIGH, "Owner set successfully.\n");
     V_Free(args);
 }
 
 void vrx_chario_noop(edict_t* player) { }
 
 qboolean vrx_sqlite_character_exists(edict_t *ent) {
-    return VSFU_GetID(ent->client->pers.netname) != -1;
+    return cdb_get_id(ent->client->pers.netname) != -1;
 }
 
 qboolean vrx_sqlite_isloading(edict_t *ent) {
@@ -109,16 +109,17 @@ qboolean vrx_sqlite_isloading(edict_t *ent) {
 
 void vrx_setup_sqlite_io() {
     vrx_char_io = (char_io_t) {
-            .save_player_runes = &VSFU_SaveRunes,
-            .save_player = &VSFU_SavePlayer,
-            .save_close_player = &VSFU_SavePlayer,
-            .load_player = &VSFU_LoadPlayer,
-            .handle_status = NULL,
-            .character_exists = &vrx_sqlite_character_exists,
-            .is_loading = &vrx_sqlite_isloading
+        .save_player_runes = &cdb_save_runes,
+        .save_player = &cdb_save_player,
+        .save_close_player = &cdb_saveclose_player,
+        .load_player = &cdb_load_player,
+        .handle_status = NULL,
+        .character_exists = &vrx_sqlite_character_exists,
+        .is_loading = &vrx_sqlite_isloading,
+        .set_owner = &cdb_set_owner
     };
 
-    vrx_sqlite_start_connection();
+    cdb_start_connection();
 }
 
 #ifndef NO_GDS
@@ -147,11 +148,11 @@ qboolean vrx_mysql_load_character(edict_t* player) {
     if (gds_enabled())
     {
         if (player->gds_thread_status == GDS_STATUS_CHARACTER_LOADING) {
-            gi.cprintf(player, PRINT_HIGH, "You're already queued for loading.");
+            gi.cprintf(player, PRINT_HIGH, "You're already queued for loading.\n");
             return false;
         }
 
-        gi.cprintf(player, PRINT_HIGH, "You're now queued for loading.");
+        gi.cprintf(player, PRINT_HIGH, "You're now queued for loading.\n");
         gds_queue_add(player, GDS_LOAD, -1);
         return true;
     }
