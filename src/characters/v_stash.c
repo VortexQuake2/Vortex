@@ -173,8 +173,14 @@ void vrx_notify_open_stash(void* args)
 
 void handler_stash_item(edict_t* ent, int option)
 {
-	if (option == 5000) {
+	if (option >= 5000) {
 		// do not close the stash
+		vrx_stash_open_page(
+			ent, 
+			ent->client->stash.page, 
+			sizeof ent->client->stash.page / sizeof(item_t), 
+			option - 5000
+		);
 		ent->client->menustorage.cancel_close_event = true;
 		return;
 	}
@@ -195,7 +201,7 @@ void vrx_show_stash_item(edict_t* ent, item_t* item, int stash_index)
 
 	menu_add_line(ent, "", 0);
 	menu_add_line(ent, "Take", 1000 + stash_index);
-	menu_add_line(ent, "Back", 5000);
+	menu_add_line(ent, "Back", 5000 + stash_index / 10);
 
 	menu_set_handler(ent, handler_stash_item);
 	menu_set_close_handler(ent, vrx_stash_close); // ran after selection or if menu is unexpectedly closed

@@ -25,7 +25,8 @@ we're having a MYSQL GDS.
 #define GDS_STASH_STORE 7
 #define GDS_STASH_CLOSE 8
 #define GDS_STASH_GET_PAGE 9
-#define GDS_EXITTHREAD 10
+#define GDS_SET_OWNER 10
+#define GDS_EXITTHREAD 11
 
 
 typedef enum threadstatus_s {
@@ -44,6 +45,7 @@ qboolean gds_connect();
 // for STASH_TAKE/STORE index means what index
 // of the stash or inventory to take from respectively.
 void gds_queue_add(edict_t *ent, int operation, int index);
+void gds_queue_add_setowner(edict_t* ent, char* charname, char* masterpw);
 qboolean gds_enabled();
 #ifndef GDS_NOMULTITHREADING
 void gds_finish_thread();

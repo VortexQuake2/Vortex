@@ -12,6 +12,7 @@ typedef struct {
     qboolean (*character_exists) (edict_t* ent); // checking char existence should be skipped if this function is null.
     qboolean (*is_loading) (edict_t* ent); // if it's already loading... don't bother calling load_player again.
     void (*handle_status)(edict_t* ent); // if not null, this is a multithreaded io system.
+    void (*set_owner)(edict_t* ent, char* charname, char* mpw);
 } char_io_t;
 
 extern char_io_t vrx_char_io;
@@ -49,6 +50,17 @@ extern stash_io_t vrx_stash_io;
 /* v_characterio.c */
 void vrx_init_char_io();
 void vrx_close_char_io();
+
+typedef struct
+{
+    edict_t* ent;
+    int connection_id;
+    char owner_name[24];
+} event_owner_error_t;
+
+void vrx_notify_owner_nonexistent(void* args);
+void vrx_notify_owner_bad_password(void* args);
+void vrx_notify_owner_success(void* args);
 
 #endif //VORTEXQUAKE2_V_CHARACTERIO_H
 

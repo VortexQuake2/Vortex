@@ -54,6 +54,49 @@ void vrx_close_char_io() {
     }
 }
 
+void vrx_notify_owner_nonexistent(void* args)
+{
+    event_owner_error_t* evt = args;
+
+    if (evt->connection_id != evt->ent->gds_connection_id) {
+        V_Free(args);
+        return;
+    }
+
+    gi.cprintf(evt->ent, PRINT_HIGH, "The character '%s' does not exist. You cannot use it as an owner.", evt->owner_name);
+
+    V_Free(args);
+}
+
+void vrx_notify_owner_bad_password(void* args)
+{
+    event_owner_error_t* evt = args;
+
+    if (evt->connection_id != evt->ent->gds_connection_id) {
+        V_Free(args);
+        return;
+    }
+
+    gi.cprintf(evt->ent, PRINT_HIGH, "The password you entered is not correct.");
+    V_Free(args);
+}
+
+void vrx_notify_owner_success(void* args)
+{
+    event_owner_error_t* evt = args;
+
+    if (evt->connection_id != evt->ent->gds_connection_id) {
+        V_Free(args);
+        return;
+    }
+
+    assert(sizeof evt->ent->myskills.owner == sizeof evt->owner_name);
+    strcpy(evt->ent->myskills.owner, evt->owner_name);
+
+    gi.cprintf(evt->ent, PRINT_HIGH, "Owner set successfully.");
+    V_Free(args);
+}
+
 void vrx_chario_noop(edict_t* player) { }
 
 qboolean vrx_sqlite_character_exists(edict_t *ent) {
@@ -125,7 +168,8 @@ void vrx_setup_mysql_io() {
             .save_close_player = &vrx_mysql_saveclose_character,
             .load_player = &vrx_mysql_load_character,
             .is_loading = &vrx_mysql_isloading,
-            .handle_status = &gds_handle_status
+            .handle_status = &gds_handle_status,
+        .set_owner = &gds_queue_add_setowner
     };
 
     gds_connect();

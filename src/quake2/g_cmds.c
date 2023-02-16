@@ -1,5 +1,6 @@
 #include "g_local.h"
 #include "../gamemodes/ctf.h"
+#include "characters/io/v_characterio.h"
 #include "monsterframes/m_player.h"
 
 //Function prototypes required for this .c file:
@@ -2243,25 +2244,39 @@ s = gi.argv(1);
 
 void Cmd_SetOwner_f (edict_t *ent)
 {
-	char *s;
-	s = gi.argv(1);
+	char* charname = gi.argv(1);
+	char* mpw = gi.argv(2);
+
 	if (strlen(ent->myskills.owner) > 0)
 	{
 		safe_cprintf(ent, PRINT_HIGH, "%s has already been claimed by %s.\n", ent->myskills.player_name, ent->myskills.owner);
 		return;
 	}
-	else if (strlen(s) < 1)
+	else if (strlen(charname) < 1)
 	{
-		safe_cprintf(ent, PRINT_HIGH, "%s has not yet been claimed.\nCommand: owner <name>\n", ent->myskills.player_name);
+		safe_cprintf(ent, PRINT_HIGH, "%s has not yet been claimed.\nCommand: owner <name> <master password>\n", ent->myskills.player_name);
 		return;
 	}
-	if (strlen(s) >= 24)
+	if (strlen(charname) >= 24)
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Owner string must be less than 24 characters long.\n");
 		return;
 	}
-	strcpy(ent->myskills.owner, s);
-	safe_cprintf(ent, PRINT_HIGH, "%s now belongs to %s.\n", ent->myskills.player_name, ent->myskills.owner);
+
+	int mpwlen = strlen(mpw);
+	if (mpwlen == 0)
+	{
+		safe_cprintf(ent, PRINT_HIGH, "Please include the master password of the owner.\n");
+		return;
+	}
+
+	if (mpwlen > 63)
+	{
+		safe_cprintf(ent, PRINT_HIGH, "Master password too long.\n");
+		return;
+	}
+
+	vrx_char_io.set_owner(ent, charname, mpw);
 }
 
 void cmd_whois(edict_t *ent, char *playername)
