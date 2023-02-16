@@ -517,7 +517,7 @@ void Cmd_Healer_f (edict_t *ent)
 		return;
 
 	healer = CreateHealer(ent, ent->myskills.abilities[HEALER].current_level);
-	if (!G_GetSpawnLocation(ent, 100, healer->mins, healer->maxs, start, NULL))
+	if (!G_GetSpawnLocation(ent, 100, healer->mins, healer->maxs, start, NULL, PROJECT_HITBOX_FAR, false))
 	{
 		ent->healer = NULL;
 		G_FreeEdict(healer);
@@ -857,7 +857,7 @@ void Cmd_Spiker_f (edict_t *ent)
 	}
 
 	spiker = CreateSpiker(ent, ent->myskills.abilities[SPIKER].current_level);
-	if (!G_GetSpawnLocation(ent, 100, spiker->mins, spiker->maxs, start, NULL))
+	if (!G_GetSpawnLocation(ent, 100, spiker->mins, spiker->maxs, start, NULL, PROJECT_HITBOX_FAR, false))
 	{
 		ent->num_spikers--;
 		G_FreeEdict(spiker);
@@ -892,6 +892,7 @@ void obstacle_dead (edict_t *self)
 {
 	if (level.time > self->delay)
 	{
+		//gi.dprintf("remove dead obstacle %.1f!\n", level.time);
 		organ_remove(self, false);
 		return;
 	}
@@ -906,6 +907,8 @@ void obstacle_dead (edict_t *self)
 
 void obstacle_return(edict_t* self)
 {
+	//gi.dprintf("obstacle_return\n");
+
 	VectorCopy(self->move_origin, self->s.origin);
 	VectorCopy(self->move_origin, self->s.old_origin);
 	gi.linkentity(self);
@@ -918,8 +921,14 @@ void obstacle_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 {
 	int max = OBSTACLE_MAX_COUNT;
 	int cur;
+	qboolean flipped = false;
 
-	if (self->movetype != MOVETYPE_NONE)
+	//gi.dprintf("obstacle_die %d %d\n", self->health, self->gib_health);
+
+	if (self->s.angles[PITCH] == 180)
+		flipped = true;
+
+	if (flipped && self->movetype != MOVETYPE_NONE)
 		obstacle_return(self);
 
 	if (!self->monsterinfo.slots_freed && self->activator && self->activator->inuse)
@@ -947,6 +956,7 @@ void obstacle_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 	{
 		int n;
 
+		//gi.dprintf("gib obstacle\n");
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
 		for (n= 0; n < 2; n++)
 			ThrowGib (self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
@@ -962,9 +972,10 @@ void obstacle_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 	self->think = obstacle_dead;
 	self->deadflag = DEAD_DYING;
 	self->delay = level.time + 20.0;
+	//gi.dprintf("time: %.1f delay %.1f\n", (level.time), self->delay);
 	self->nextthink = level.time + FRAMETIME;
 	self->s.frame = OBSTACLE_FRAME_DEAD;
-	if (self->s.angles[PITCH] != 180)
+	if (!flipped)
 	{
 		// don't make tossable if we're stuck to the ceiling
 		self->movetype = MOVETYPE_TOSS;
@@ -1268,7 +1279,7 @@ void Cmd_Obstacle_f (edict_t *ent)
 	}
 
 	obstacle = CreateObstacle(ent, ent->myskills.abilities[OBSTACLE].current_level);
-	if (!G_GetSpawnLocation(ent, 100, obstacle->mins, obstacle->maxs, start, angles))
+	if (!G_GetSpawnLocation(ent, 100, obstacle->mins, obstacle->maxs, start, angles, PROJECT_HITBOX_FAR, false))
 	{
 		ent->num_obstacle--;
 		G_FreeEdict(obstacle);
@@ -1790,7 +1801,7 @@ void Cmd_Gasser_f (edict_t *ent)
 	}
 
 	gasser = CreateGasser(ent, ent->myskills.abilities[GASSER].current_level);
-	if (!G_GetSpawnLocation(ent, 100, gasser->mins, gasser->maxs, start, NULL))
+	if (!G_GetSpawnLocation(ent, 100, gasser->mins, gasser->maxs, start, NULL, PROJECT_HITBOX_FAR, false))
 	{
 		ent->num_gasser--;
 		G_FreeEdict(gasser);
@@ -2191,7 +2202,7 @@ void Cmd_Cocoon_f (edict_t *ent)
 		return;
 
 	cocoon = CreateCocoon(ent, ent->myskills.abilities[COCOON].current_level);
-	if (!G_GetSpawnLocation(ent, 100, cocoon->mins, cocoon->maxs, start, NULL))
+	if (!G_GetSpawnLocation(ent, 150, cocoon->mins, cocoon->maxs, start, NULL, PROJECT_HITBOX_FAR, false))
 	{
 		ent->cocoon = NULL;
 		G_FreeEdict(cocoon);
@@ -2284,7 +2295,7 @@ void spikeball_move (edict_t *self)
     // are we following the player's crosshairs?
     if (self->activator->spikeball_follow)
     {
-        G_GetSpawnLocation(self->activator, 8192, NULL, NULL, goalpos, NULL);
+        G_GetSpawnLocation(self->activator, 8192, NULL, NULL, goalpos, NULL, PROJECT_HITBOX_FAR, false);
     }
         // we have no enemy
     else if (!self->enemy)

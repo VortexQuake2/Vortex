@@ -332,14 +332,18 @@ void vrx_upgrade_talent(edict_t *ent, int talentID) {
 //****************************************
 //************* Talent Menus *************
 //****************************************
-
+void vrx_open_talent_menu(edict_t* ent, int talentID, qboolean select_upgrade);
 void TalentUpgradeMenu_handler(edict_t *ent, int option) {
     //Not upgrading
     if (option > 0) {
         OpenTalentUpgradeMenu(ent, vrx_get_talent_slot(ent, option - 1) + 1);
     } else    //upgrading
     {
-        vrx_upgrade_talent(ent, (option * -1) - 1);
+        int talentID = (option * -1) - 1;
+        // upgrade the talent
+        vrx_upgrade_talent(ent, talentID);
+        // refresh the menu
+        vrx_open_talent_menu(ent, talentID, true);
     }
 }
 
@@ -642,17 +646,27 @@ int writeTalentDescription(edict_t *ent, int talentID) {
     }
 }
 
-void vrx_open_talent_menu(edict_t *ent, int talentID) {
-    talent_t *talent = &ent->myskills.talents.talent[vrx_get_talent_slot(ent, talentID)];
-    int level = talent->upgradeLevel;
+void vrx_open_talent_menu(edict_t *ent, int talentID, qboolean select_upgrade) {
+    talent_t* talent;// = &ent->myskills.talents.talent[vrx_get_talent_slot(ent, talentID)];
+    int level;// = talent->upgradeLevel;
+    int slot = vrx_get_talent_slot(ent, talentID);
+    int talentPoints = ent->myskills.talents.talentPoints;
     int lineCount = 7;//12;
+    qboolean can_upgrade = false;
 
+    // check for invalid talent index
+    if (slot == -1)
+        return;
+        
     if (!menu_can_show(ent))
         return;
+               
+    talent = &ent->myskills.talents.talent[slot];
+    level = talent->upgradeLevel;
     menu_clear(ent);
-
+    
     menu_add_line(ent, "Talent", MENU_GREEN_CENTERED);
-    menu_add_line(ent, GetTalentString(talentID), MENU_WHITE_CENTERED);
+    addlinetomenu(ent, va("%s: %d/%d", GetTalentString(talentID), level, talent->maxLevel), MENU_WHITE_CENTERED);
     menu_add_line(ent, " ", 0);
 
     lineCount += writeTalentDescription(ent, talentID);
@@ -662,14 +676,20 @@ void vrx_open_talent_menu(edict_t *ent, int talentID) {
     //writeTalentUpgrade(ent, talentID, level);
     menu_add_line(ent, " ", 0);
 
-    if (talent->upgradeLevel < talent->maxLevel)
+    if (talent->upgradeLevel < talent->maxLevel && talentPoints)
+    {
+        can_upgrade = true;
         menu_add_line(ent, "Upgrade this talent.", -1 * (talentID + 1));
+    }
     else menu_add_line(ent, " ", 0);
 
     menu_add_line(ent, "Previous menu.", talentID + 1);
 
     menu_set_handler(ent, TalentUpgradeMenu_handler);
-    ent->client->menustorage.currentline = lineCount;
+    if (select_upgrade && can_upgrade)
+        ent->client->menustorage.currentline = lineCount-1;
+    else
+        ent->client->menustorage.currentline = lineCount;
     menu_show(ent);
 }
 
@@ -685,7 +705,7 @@ void openTalentMenu_handler(edict_t *ent, int option) {
             return;
         }
         default:
-            vrx_open_talent_menu(ent, option);
+            vrx_open_talent_menu(ent, option, false);
     }
 }
 

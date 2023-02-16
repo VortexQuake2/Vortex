@@ -124,6 +124,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 			if (!G_IsValidLocation(target, start, e->mins, e->maxs))
 			{
 				DroneList_Remove(e); // az: STILL AAAARGH
+				layout_remove_tracked_entity(&ent->client->layout, e);
 				G_FreeEdict(e);
 				return;
 			}
@@ -159,6 +160,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 		e->s.frame = 4;
 		VectorCopy(target->s.origin, e->s.origin);
 		gi.linkentity(e);
+		layout_add_tracked_entity(&ent->client->layout, e);
 
 		organ_remove(target, false);
 	}
@@ -193,6 +195,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 		e->s.frame = 6;
 		VectorCopy(target->s.origin, e->s.origin);
 		gi.linkentity(e);
+		layout_add_tracked_entity(&ent->client->layout, e);
 
 		organ_remove(target, false);
 	}
@@ -215,6 +218,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 		e->s.frame = 0;
 		VectorCopy(target->s.origin, e->s.origin);
 		gi.linkentity(e);
+		layout_add_tracked_entity(&ent->client->layout, e);
 
 		organ_remove(target, false);
 	} 
@@ -237,6 +241,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
         e->s.frame = 90; // "COCOON_FRAMES_GROW_START"
         VectorCopy(target->s.origin, e->s.origin);
         gi.linkentity(e);
+		layout_add_tracked_entity(&ent->client->layout, e);
 
         organ_remove(target, false);
 	}
@@ -258,6 +263,9 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 		e->s.frame = 0; // "HEALER_FRAMES_GROW_START"
 		VectorCopy(target->s.origin, e->s.origin);
 		gi.linkentity(e);
+		layout_add_tracked_entity(&ent->client->layout, e);
+
+		organ_remove(target, false);
 	}
 
 		

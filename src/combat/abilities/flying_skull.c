@@ -556,8 +556,10 @@ void SpawnSkull (edict_t *ent)
 	int		cost = SKULL_COST;
 	float mult = 1.0;
 	vec3_t	forward, right, start, end, offset;
-	edict_t *skull;
+	edict_t *skull, *ignore = ent;
 	trace_t	tr;
+
+	//gi.dprintf("SpawnSkull\n");
 
 	// cost is doubled if you are a flyer below skill level 5
 	if (ent->mtype == MORPH_FLYER && ent->myskills.abilities[FLYER].current_level < 5)
@@ -616,10 +618,14 @@ void SpawnSkull (edict_t *ent)
 	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
 	VectorMA(start, 64, forward, end);
 
-	tr = gi.trace(start, skull->mins, skull->maxs, end, ent, MASK_SHOT);
+	if (PM_PlayerHasMonster(ent))
+		ignore = ent->owner;
+
+	tr = gi.trace(start, skull->mins, skull->maxs, end, ignore, MASK_SHOT);
 	
 	if (tr.fraction < 1)
 	{
+		//gi.dprintf("tr.ent %s allsolid %d startsolid %d fraction %.1f\n", tr.ent->classname, tr.allsolid, tr.startsolid, tr.fraction);
 		G_FreeEdict(skull);
 		return;
 	}
@@ -719,8 +725,10 @@ void Cmd_HellSpawn_f (edict_t *ent)
 		cost *= 2;
 
 	if (!G_CanUseAbilities(ent, ent->myskills.abilities[HELLSPAWN].current_level, cost))
+	{
+		//gi.dprintf("cant use abilities\n");
 		return;
-
+	}
 	if (ctf->value && (CTF_DistanceFromBase(ent, NULL, CTF_GetEnemyTeam(ent->teamnum)) < CTF_BASE_DEFEND_RANGE))
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Can't build in enemy base!\n");

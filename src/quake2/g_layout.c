@@ -335,9 +335,16 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	case M_HEALER:
 	case M_GASSER:
 	case M_DECOY:
-	case M_BARREL:
 		name = lva("%s", V_GetMonsterName(ent));
 		data = lva("+%d", ent->health);
+		break;
+	case M_BARREL:
+		name = lva("barrel");
+		data = lva("+%d %dd %dr", ent->health, ent->dmg, (int)ceil(ent->dmg_radius));
+		break;
+	case M_ARMOR:
+		name = lva("armor");
+		data = lva("%dd %dr %ds", ent->dmg, (int)ceil(ent->dmg_radius), (int)ceil(ent->delay-level.time));
 		break;
 	case M_COCOON:
 		name = lva("cocoon");
@@ -355,8 +362,20 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 			data = lva("+%d", ent->health);
 		break;
 	case M_AUTOCANNON:
-		name = lva("cannon", V_GetMonsterName(ent));
+		name = lva("cannon");
 		data = lva("+%d %da", ent->health, ent->light_level);
+		break;
+	case M_DETECTOR:
+	case M_ALARM:
+		name = lva("detector");
+		data = lva("+%d %dr %ds", ent->health, (int)ceil(ent->dmg_radius), (int)ceil(ent->delay - level.time));
+		break;
+	case M_SUPPLYSTATION:
+		name = lva("SS");
+		if (ent->s.effects & EF_PLASMA)
+			data = lva("+%d", ent->health);
+		else
+			data = lva("+%d %ds %d%%", ent->health, (int)ceil(0.1*(ent->count-level.framenum)), (int)ceil(ent->wait));
 		break;
 	default:
 		gi.dprintf("g_layout.c: unsupported mtype %d\n");
@@ -428,8 +447,59 @@ sidebar_entry_t layout_add_aura_info(sidebar_t* sidebar, que_t* que)
 	return res;
 }
 
+void layout_generate_misc(edict_t* ent, sidebar_t* sidebar)
+{
+	if (ent->client->ability_delay > level.time)
+	{
+		sidebar_entry_t entry = { 0 };
+		entry.pos = sidebar_get_next_line_pos(sidebar);
+		entry.name = lva("cd");
+		entry.data = lva("%.1f", ent->client->ability_delay - level.time);
+		sidebar_add_entry(sidebar, entry);
+	}
+
+	if (ent->cocoon_time >= level.time) 
+	{
+		float dt = ent->cocoon_time - level.time;
+		sidebar_entry_t res = { 0 };
+		res.pos = sidebar_get_next_line_pos(sidebar);
+		res.name = lva("cocooned");
+		res.data = lva("%.1fs +%.1f%%", dt, (ent->cocoon_factor - 1) * 100.0f);
+		sidebar_add_entry(sidebar, res);
+	}
+
+	if (ent->fury_time >= level.time)
+	{
+		float dt = ent->fury_time - level.time;
+		sidebar_entry_t res = { 0 };
+		res.pos = sidebar_get_next_line_pos(sidebar);
+		res.name = lva("furied");
+		res.data = lva("%.2fs", dt);
+		sidebar_add_entry(sidebar, res);
+	}
+
+	if (pregame_time->value > level.time && !trading->value)
+	{
+		sidebar_entry_t entry = { 0 };
+		entry.pos = sidebar_get_next_line_pos(sidebar);
+		entry.name = lva("pregame");
+		entry.data = lva("%.0fs", pregame_time->value - level.time);
+		sidebar_add_entry(sidebar, entry);
+	}
+
+	if (ent->client->tele_timeout > level.framenum)
+	{
+		sidebar_entry_t entry = { 0 };
+		entry.pos = sidebar_get_next_line_pos(sidebar);
+		entry.name = lva("blinkStrike");
+		entry.data = lva("%ds", (int)(ent->client->tele_timeout - level.framenum) / 10);
+		sidebar_add_entry(sidebar, entry);
+	}
+}
+
 void layout_generate_curses(edict_t* ent, sidebar_t* sidebar)
 {
+	/*
 	if (ent->cocoon_time >= level.time) {
 		float dt = ent->cocoon_time - level.time;
 		sidebar_entry_t res = {0};
@@ -447,7 +517,7 @@ void layout_generate_curses(edict_t* ent, sidebar_t* sidebar)
 		res.name = lva("furied");
 		res.data = lva("%.2fs", dt);
 		sidebar_add_entry(sidebar, res);
-	}
+	}*/
 
 	for (int i = 0; i < QUE_MAXSIZE; i++)
 	{
@@ -571,7 +641,7 @@ void layout_generate_all(edict_t* ent)
 
 	layout_clean_tracked_entity_list(&ent->client->layout);
 	layout_reset(&ent->client->layout);
-
+	/*
 	if (ent->client->ability_delay > level.time)
 	{
 		sidebar_entry_t entry = {0};
@@ -600,8 +670,8 @@ void layout_generate_all(edict_t* ent)
 		entry.data = lva("%ds", (int)(ent->client->tele_timeout - level.framenum)/10);
 
 		sidebar_add_entry(&sidebar, entry);
-	}
-
+	}*/
+	layout_generate_misc(ent, &sidebar);
 	layout_generate_entities(&ent->client->layout, &sidebar);
 	layout_generate_curses(ent, &sidebar);
 
