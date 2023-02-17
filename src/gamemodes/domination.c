@@ -366,7 +366,7 @@ void dom_init (void)
 		if (G_EntExists(cl_ent))
 		{
 			s = Info_ValueForKey (cl_ent->client->pers.userinfo, "skin");
-			V_AssignClassSkin(cl_ent, s);
+            vrx_assign_character_skin(cl_ent, s);
 		}
 	}
 	
@@ -410,7 +410,7 @@ void OpenDOMJoinMenu (edict_t *ent)
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: OpenDOMJoinMenu()\n");
 
-	if (!ShowMenu(ent))
+	if (!menu_can_show(ent))
         return;
 
 	// new character
@@ -420,23 +420,23 @@ void OpenDOMJoinMenu (edict_t *ent)
 		return;
 	}
 
-	clearmenu(ent);
+	menu_clear(ent);
 
 	if (!ent->myskills.administrator && !InJoinedQueue(ent) && (level.time > pregame_time->value))
 	{
 //							xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
-		addlinetomenu(ent, "Vortex Domination:", MENU_GREEN_CENTERED);
-		addlinetomenu(ent, " ", 0);
-		addlinetomenu(ent, "The match has already", 0);
-		addlinetomenu(ent, "begun. You will be joined", 0);
-		addlinetomenu(ent, "automatically when the", 0);
-		addlinetomenu(ent, "flag is dropped.", 0);
-		addlinetomenu(ent, " ", 0);
-		addlinetomenu(ent, "Exit", 3);
+		menu_add_line(ent, "Vortex Domination:", MENU_GREEN_CENTERED);
+		menu_add_line(ent, " ", 0);
+		menu_add_line(ent, "The match has already", 0);
+		menu_add_line(ent, "begun. You will be joined", 0);
+		menu_add_line(ent, "automatically when the", 0);
+		menu_add_line(ent, "flag is dropped.", 0);
+		menu_add_line(ent, " ", 0);
+		menu_add_line(ent, "Exit", 3);
 
-		setmenuhandler(ent, jointeam_handler);
+		menu_set_handler(ent, jointeam_handler);
 		ent->client->menustorage.currentline = 8;
-		showmenu(ent);
+		menu_show(ent);
 
 		// indicate that the player wants to join
 		ent->client->waiting_to_join = true;
@@ -444,22 +444,22 @@ void OpenDOMJoinMenu (edict_t *ent)
 		return;
 	}
 
-	addlinetomenu(ent, "Vortex Domination:", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, "Vortex Domination:", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
 	//					xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
-	addlinetomenu(ent, "Your goal is to help your", 0);
-	addlinetomenu(ent, "team capture the flag.", 0);
-	addlinetomenu(ent, "While your team is in", 0);
-	addlinetomenu(ent, "control of the flag, you", 0);
-	addlinetomenu(ent, "gain points. Protect your", 0);
-	addlinetomenu(ent, "flag carrier! Don't let", 0);
-	addlinetomenu(ent, "the flag into enemy hands.", 0);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Join", 1);
-	addlinetomenu(ent, "Back", 2);
-	addlinetomenu(ent, "Exit", 3);
+	menu_add_line(ent, "Your goal is to help your", 0);
+	menu_add_line(ent, "team capture the flag.", 0);
+	menu_add_line(ent, "While your team is in", 0);
+	menu_add_line(ent, "control of the flag, you", 0);
+	menu_add_line(ent, "gain points. Protect your", 0);
+	menu_add_line(ent, "flag carrier! Don't let", 0);
+	menu_add_line(ent, "the flag into enemy hands.", 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Join", 1);
+	menu_add_line(ent, "Back", 2);
+	menu_add_line(ent, "Exit", 3);
 
-	setmenuhandler(ent, jointeam_handler);
+	menu_set_handler(ent, jointeam_handler);
 	ent->client->menustorage.currentline = 11;
-	showmenu(ent);
+	menu_show(ent);
 }

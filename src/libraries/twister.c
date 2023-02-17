@@ -42,7 +42,7 @@
 //   you use this, send an e-mail to <matumoto@math.keio.ac.jp> with
 //   an appropriate reference to your work.
 //
-// It would be nice to CC: <Cokus@math.washington.edu> when you write.
+// It would be nice to CreateGameStats: <Cokus@math.washington.edu> when you write.
 //
 
 #include <stdint.h>

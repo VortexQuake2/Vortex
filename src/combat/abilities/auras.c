@@ -186,15 +186,13 @@ que_t *que_findent (que_t *src, que_t *dst, edict_t *other)
 	return NULL;
 }
 
-que_t *que_findtype(que_t *src, que_t *dst, int type) {
-    que_t *last;
-
+que_t *que_findtype(const que_t *src, que_t *dst, int type) {
     if (!dst)
         dst = src;
     else
         dst++;
 
-    last = &src[QUE_MAXSIZE - 1];
+    const que_t *last = &src[QUE_MAXSIZE - 1];
 
 	for ( ; dst < last; dst++)
 	{

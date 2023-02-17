@@ -135,7 +135,7 @@ qboolean CanAlly (edict_t *ent, edict_t *other, int range)
 	return true;
 }
 
-qboolean IsAlly (edict_t *ent, edict_t *other)
+qboolean IsAlly (const edict_t *ent, const edict_t *other)
 {
 	if (!ent || !other)
 		return false;
@@ -486,10 +486,10 @@ void ShowAllyInviteMenu_handler (edict_t *ent, int option)
 		AbortAllyWait(e);
 
 		// close the invitation menu
-		closemenu(ent);
+		menu_close(ent, true);
 
-		if (InMenu(e, 0, ShowAllyWaitMenu_handler))
-			closemenu(e);
+		if (menu_active(e, 0, ShowAllyWaitMenu_handler))
+			menu_close(e, true);
 	}
 	else if (option == 2)
 	{
@@ -498,10 +498,10 @@ void ShowAllyInviteMenu_handler (edict_t *ent, int option)
 		AbortAllyWait(e);
 
 		// close the invitation menu
-		closemenu(ent);
+		menu_close(ent, true);
 
-		if (InMenu(e, 0, ShowAllyWaitMenu_handler))
-			closemenu(e);
+		if (menu_active(e, 0, ShowAllyWaitMenu_handler))
+			menu_close(e, true);
 
 		safe_cprintf(e, PRINT_HIGH, "%s declined your offer to ally.\n", ent->client->pers.netname);
 	}
@@ -511,27 +511,27 @@ void ShowAllyInviteMenu (edict_t *ent)
 {
 	edict_t *e = ent->client->allytarget;
 
-	 if (!ShowMenu(ent))
+	 if (!menu_can_show(ent))
         return;
 
-	clearmenu(ent);
+	menu_clear(ent);
 		//				xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
-	addlinetomenu(ent, va("%s", e->client->pers.netname), MENU_GREEN_CENTERED);
-	addlinetomenu(ent, "would like to ally.", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, va("%s", e->client->pers.netname), MENU_GREEN_CENTERED);
+	menu_add_line(ent, "would like to ally.", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
 
 	//Menu footer
-	addlinetomenu(ent, "Accept", 1);
-	addlinetomenu(ent, "Decline", 2);
+	menu_add_line(ent, "Accept", 1);
+	menu_add_line(ent, "Decline", 2);
 
 	//Set handler
-	setmenuhandler(ent, ShowAllyInviteMenu_handler);
+	menu_set_handler(ent, ShowAllyInviteMenu_handler);
 
 	//Set current line
 	ent->client->menustorage.currentline = 5;
 
 	//Display the menu
-	showmenu(ent);
+	menu_show(ent);
 }
 
 void ShowAllyWaitMenu_handler (edict_t *ent, int option)
@@ -540,43 +540,43 @@ void ShowAllyWaitMenu_handler (edict_t *ent, int option)
 
 	if (option == 666)	//ent closed the menu
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 
 	if (e)
 	{
 		AbortAllyWait(e);
-		if (InMenu(e, 0, ShowAllyInviteMenu_handler))
-			closemenu(e);
+		if (menu_active(e, 0, ShowAllyInviteMenu_handler))
+			menu_close(e, true);
 	}
 
 	AbortAllyWait(ent);
-	closemenu(ent);
+	menu_close(ent, true);
 }
 
 void ShowAllyWaitMenu (edict_t *ent)
 {
-	 if (!ShowMenu(ent))
+	 if (!menu_can_show(ent))
         return;
-	clearmenu(ent);
+	menu_clear(ent);
 		//				xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
-	addlinetomenu(ent, "Please wait for player to ", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, "accept your invitation. ", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, "Please wait for player to ", MENU_GREEN_CENTERED);
+	menu_add_line(ent, "accept your invitation. ", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
 
 	//Menu footer
-	addlinetomenu(ent, "Close Window", 666);
-	addlinetomenu(ent, "Cancel Invitation", 1);
+	menu_add_line(ent, "Close Window", 666);
+	menu_add_line(ent, "Cancel Invitation", 1);
 
 	//Set handler
-	setmenuhandler(ent, ShowAllyWaitMenu_handler);
+	menu_set_handler(ent, ShowAllyWaitMenu_handler);
 
 	//Set current line
 	ent->client->menustorage.currentline = 4;
 
 	//Display the menu
-	showmenu(ent);
+	menu_show(ent);
 }
 
 void ShowAddAllyMenu_handler (edict_t *ent, int option)
@@ -585,7 +585,7 @@ void ShowAddAllyMenu_handler (edict_t *ent, int option)
 
 	if (option == 666)	//ent closed the menu
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 
@@ -595,7 +595,7 @@ void ShowAddAllyMenu_handler (edict_t *ent, int option)
 	// make sure we're still allowed to ally
 	if (!CanAlly(ent, e, ALLY_RANGE))
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 
@@ -624,19 +624,19 @@ void ShowAddAllyMenu (edict_t *ent)
 	int j = 0;
 	edict_t *temp;
 
-	 if (!ShowMenu(ent))
+	 if (!menu_can_show(ent))
 		return;
-	clearmenu(ent);
+	menu_clear(ent);
 
-	addlinetomenu(ent, "Select a player:", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, "Select a player:", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
 
 	for_each_player(temp, i)
 	{
 		if (CanAlly(ent, temp, ALLY_RANGE))
 		{
 			//Add player to the list
-            addlinetomenu(ent, va(" %s (%s)", temp->myskills.player_name,
+            menu_add_line(ent, va(" %s (%s)", temp->myskills.player_name,
                                   vrx_get_class_string(temp->myskills.class_num)), GetClientNumber(temp));
 			++j;
 
@@ -650,17 +650,17 @@ void ShowAddAllyMenu (edict_t *ent)
 	}
 
 	//Menu footer
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Exit", 666);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Exit", 666);
 
 	//Set handler
-	setmenuhandler(ent, ShowAddAllyMenu_handler);
+	menu_set_handler(ent, ShowAddAllyMenu_handler);
 
 	//Set current line
 	ent->client->menustorage.currentline = 4 + j;
 
 	//Display the menu
-	showmenu(ent);
+	menu_show(ent);
 }
 
 void ShowRemoveAllyMenu_handler (edict_t *ent, int option)
@@ -669,13 +669,13 @@ void ShowRemoveAllyMenu_handler (edict_t *ent, int option)
 
 	if (option == 666)	//ent closed the menu
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 
 	e = V_getClientByNumber(option-1);
 	RemoveAlly(ent, e);
-	closemenu(ent);
+	menu_close(ent, true);
 
 	// notify player's allies
 	NotifyAllies(ent, 0, va("%s has removed %s from your team\n", ent->client->pers.netname, e->client->pers.netname));
@@ -694,36 +694,36 @@ void ShowRemoveAllyMenu (edict_t *ent)
 	int j = 0;
 	edict_t *temp;
 
-	 if (!ShowMenu(ent))
+	 if (!menu_can_show(ent))
         return;
-	clearmenu(ent);
+	menu_clear(ent);
 
-	addlinetomenu(ent, "Select a player:", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, "Select a player:", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
 
 	for_each_player(temp, i)
 	{
 		if (IsAlly(ent, temp))
 		{
 			//Add player to the list
-			addlinetomenu(ent, va(" %s", temp->myskills.player_name), GetClientNumber(temp));
+			menu_add_line(ent, va(" %s", temp->myskills.player_name), GetClientNumber(temp));
 			++j;
 		}
 		
 	}
 
 	//Menu footer
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Exit", 666);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Exit", 666);
 
 	//Set handler
-	setmenuhandler(ent, ShowRemoveAllyMenu_handler);
+	menu_set_handler(ent, ShowRemoveAllyMenu_handler);
 
 	//Set current line
 	ent->client->menustorage.currentline = 4 + j;
 
 	//Display the menu
-	showmenu(ent);
+	menu_show(ent);
 }
 
 void ShowAllyMenu_handler (edict_t *ent, int option)
@@ -733,7 +733,7 @@ void ShowAllyMenu_handler (edict_t *ent, int option)
 	else if (option == 2)
 		ShowRemoveAllyMenu(ent);
 	else
-		closemenu(ent);
+		menu_close(ent, true);
 }
 
 void ShowAllyMenu (edict_t *ent)
@@ -756,37 +756,37 @@ void ShowAllyMenu (edict_t *ent)
 		return;
 	}
 
-	 if (!ShowMenu(ent))
+	 if (!menu_can_show(ent))
         return;
-	clearmenu(ent);
+	menu_clear(ent);
 
-	addlinetomenu(ent, "Currently allied with:", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, "Currently allied with:", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
 
 	for_each_player(temp, i)
 	{
 		if (IsAlly(ent, temp))
 		{
 			//Add player to the list
-			addlinetomenu(ent, va(" %s", temp->myskills.player_name), 0);
+			menu_add_line(ent, va(" %s", temp->myskills.player_name), 0);
 			++j;
 		}
 	}
 
 	//Menu footer
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Add Ally", 1);
-	addlinetomenu(ent, "Remove Ally", 2);
-	addlinetomenu(ent, "Exit", 666);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Add Ally", 1);
+	menu_add_line(ent, "Remove Ally", 2);
+	menu_add_line(ent, "Exit", 666);
 
 	//Set handler
-	setmenuhandler(ent, ShowAllyMenu_handler);
+	menu_set_handler(ent, ShowAllyMenu_handler);
 
 	//Set current line
 	ent->client->menustorage.currentline = 6 + j;
 
 	//Display the menu
-	showmenu(ent);
+	menu_show(ent);
 }
 
 int AlliedTeamComp (const void *v1, const void *v2)

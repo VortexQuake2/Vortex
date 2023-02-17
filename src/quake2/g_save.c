@@ -1,5 +1,5 @@
 #include "g_local.h"
-#include "../characters/io/v_sqlite_unidb.h"
+#include "../characters/io/v_characterio.h"
 
 // settings.h
 const char *s1;
@@ -199,33 +199,12 @@ void InitGame(void)
 	gi.cvar_forceset("sv_allow_map", "2");
 #endif
 
+	defer_global_init();
 	vrx_init_lua();
     CreateDirIfNotExists(va("%s/settings", gamedir->string));
 
-	// Before anything else, prepare TagMalloc's mutexes and a mysql connection
-	if (savemethod->value == 2)
-	{
-#if (!defined NO_GDS)
-		V_GDS_StartConn(); // start connection to db
-#else
-		gi.dprintf("This server does not support MySQL. Forcing offline saving via SQLite.\n");
-		gi.cvar_forceset("savemethod", "3");
-#endif
-	}
-	else
-	{
-		gi.dprintf("DB: Using offline character saving (via %s)\n", savemethod->value == 1 ? "Binary" : "SQLite");
-        CreateDirIfNotExists(save_path->string);
-	}
-
-	if (savemethod->value == 3)
-	{
-		V_VSFU_StartConn(); // open up sqlite single connection database
-	}
-
-#if (!defined GDS_NOMULTITHREADING) && (!defined NO_GDS)
-	Mem_PrepareMutexes();
-#endif
+	vrx_init_char_io();
+	vrx_init_stash_io();
 
 #ifdef CMD_USEHASH
 	InitHash();
@@ -396,7 +375,7 @@ void InitGame(void)
 	voting = gi.cvar("voting", "1", CVAR_SERVERINFO);
 	pregame_time = gi.cvar("pregame_time", "60.0", 0);
 
-    start_level = gi.cvar("start_level", "0", CVAR_LATCH);
+    start_level = gi.cvar("start_level", "1", CVAR_LATCH);
 
     invasion_enabled = gi.cvar("vrx_invasion_enabled", "1", CVAR_LATCH);
 	vrx_pointmult = gi.cvar("vrx_pointmult", "1.0", CVAR_SERVERINFO/* | CVAR_LATCH*/);
@@ -428,10 +407,10 @@ void InitGame(void)
 	globals.num_edicts = game.maxclients + 1;
 
 	//3.0 Load the custom map lists
-	if (v_LoadMapList(MAPMODE_PVP) && v_LoadMapList(MAPMODE_PVM) && v_LoadMapList(MAPMODE_INV)
-		&& v_LoadMapList(MAPMODE_DOM) && v_LoadMapList(MAPMODE_CTF) && v_LoadMapList(MAPMODE_FFA)
-		&& v_LoadMapList(MAPMODE_TRA) && v_LoadMapList(MAPMODE_INH) && v_LoadMapList(MAPMODE_VHW)
-		&& v_LoadMapList(MAPMODE_TBI))
+	if (vrx_load_map_list(MAPMODE_PVP) && vrx_load_map_list(MAPMODE_PVM) && vrx_load_map_list(MAPMODE_INV)
+		&& vrx_load_map_list(MAPMODE_DOM) && vrx_load_map_list(MAPMODE_CTF) && vrx_load_map_list(MAPMODE_FFA)
+		&& vrx_load_map_list(MAPMODE_TRA) && vrx_load_map_list(MAPMODE_INH) && vrx_load_map_list(MAPMODE_VHW)
+		&& vrx_load_map_list(MAPMODE_TBI))
 		gi.dprintf("INFO: Vortex Custom Map Lists loaded successfully\n");
 	else
 		gi.dprintf("WARNING: Error loading custom map lists\n");

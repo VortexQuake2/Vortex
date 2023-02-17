@@ -22,7 +22,7 @@ qboolean G_EntValid(edict_t *ent)
 		return false;
 	return true;
 }
-qboolean visible (edict_t *self, edict_t *other)
+qboolean visible (const edict_t *self, const edict_t *other)
 {
 	vec3_t start, end;
 

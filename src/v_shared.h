@@ -11,6 +11,7 @@
 #include "combat/abilities/shaman.h"
 #include "combat/abilities/auras.h"
 #include "characters/Talents.h"
+#include "quake2/g_layout.h"
 
 /**************** v_abilitylist.c ***************/
 void vrx_enable_ability(edict_t *ent, int index, int level, int max_level, int general);
@@ -61,13 +62,13 @@ void ThrowShrapnel(edict_t* self, char* modelname, float speed, vec3_t origin, i
 //************ g_misc.c ************
 
 //************ g_utils.c ************
-char *CryptString(char *text, qboolean decrypt);
+char *vrx_encrypt_string(char *text, qboolean decrypt);
 qboolean G_ClearPath(edict_t *ignore1, edict_t *ignore2, int mask, vec3_t spot1, vec3_t spot2);
 int G_GetHypotenuse(vec3_t v);
 //************ g_utils.c ************
 
 //************ misc_stuff.c ************
-qboolean V_AssignClassSkin(edict_t *ent, char *s);
+qboolean vrx_assign_character_skin(edict_t *ent, char *s);
 void vrx_give_additional_respawn_weapons(edict_t *ent, int nextWeapon);
 //************ misc_stuff.c ************
 
@@ -106,16 +107,13 @@ void vrx_disable_abilities(edict_t *ent);
 //************ p_menu.c ***********
 
 //********** v_file_IO.c **********
-void vrx_get_character_file_path(char* path, edict_t* ent);
 char *CryptPassword(char *text);
 qboolean savePlayer(edict_t *ent);
-void VSF_SaveRunes(edict_t *player, char *path);
-qboolean openPlayer(edict_t *ent);
-void createOpenPlayerThread(edict_t *ent);
+qboolean vrx_load_player(edict_t *ent);
 //********** v_file_IO.c **********
 
 //********** v_maplist.c **********
-int v_LoadMapList(int mode);
+int vrx_load_map_list(int mode);
 //********** v_maplist.c **********
 
 //*********** v_items.c ***********
@@ -130,7 +128,7 @@ item_t *V_FindFreeItemSlot(edict_t *ent);
 item_t *V_FindFreeTradeSlot(edict_t *ent, int index);
 qboolean V_CanPickUpItem(edict_t *ent);
 void V_EquipItem(edict_t *ent, int index);
-void V_ItemCopy(item_t *dest, item_t *source);
+void V_ItemCopy(item_t *source, item_t *dest);
 void V_ItemClear(item_t *item);
 void V_PrintItemProperties(edict_t *player, item_t *item);
 int eqSetItems(edict_t *ent, item_t *rune);
@@ -200,11 +198,12 @@ char *GetArmoryItemString(int purchase_number);
 
 typedef struct item_menu_s
 {
-    char* str;
+    const char* str;
     int num;
 } item_menu_t;
 
 item_menu_t vrx_menu_item_display(item_t* item);//, char selected);
+lva_result_t vrx_get_item_menu_line(item_t* item);
 
 void PrintCommands(edict_t *ent);
 int CountRuneMods(item_t *rune);
@@ -261,8 +260,8 @@ int vrx_get_talent_level(const edict_t *ent, int talentID);
 //************ talents.c ************
 
 //************ player.c ************
-void vrx_set_new_player_data(edict_t *ent);
-int vrx_get_login_is_allowable(edict_t *ent);
+void vrx_create_new_character(edict_t *ent);
+int vrx_get_login_status(edict_t *ent);
 //************ player.c ************
 
 //************ invasion.c ************
@@ -324,7 +323,7 @@ qboolean PM_MonsterHasPilot(const edict_t *monster);
 
 qboolean PM_PlayerHasMonster(const edict_t *player);
 
-edict_t *PM_GetPlayer(edict_t *e); // returns player entity
+const edict_t * PM_GetPlayer(const edict_t *e); // returns player entity
 void PM_UpdateChasePlayers(edict_t *ent);
 
 //***** PLAYER-MONSTER STUFF ******
@@ -344,6 +343,7 @@ void G_Spawn_Trails(int type, vec3_t start, vec3_t endpos);
 // etc
 int vrx_get_ability_upgrade_cost(int index);
 void vrx_remove_chat_protect(edict_t* ent);
+#include "characters/v_stash.h"
 
 // ****** curses.c ******
 void vrx_curse_heal_all(edict_t* target);

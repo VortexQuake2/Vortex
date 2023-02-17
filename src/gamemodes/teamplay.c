@@ -255,7 +255,7 @@ void sortTeamsByLevel()
 
 			   // set team skin
 			   s = Info_ValueForKey (playerlist[i]->client->pers.userinfo, "skin");
-			   V_AssignClassSkin(playerlist[i], s);
+              vrx_assign_character_skin(playerlist[i], s);
           }	
      }
 }
@@ -418,7 +418,7 @@ qboolean SpawnWaitingPlayers (void)
 
 #ifndef NO_GDS
 #ifndef GDS_NOMULTITHREADING
-		if (player->ThreadStatus != 1) // Not loaded?
+		if (player->gds_thread_status != 1) // Not loaded?
 			continue; // Can't play
 #endif
 #endif
@@ -478,9 +478,9 @@ void OpenPTRJoinMenu (edict_t *ent)
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: OpenPTRJoinMenu()\n");
 
-	if (!ShowMenu(ent))
+	if (!menu_can_show(ent))
         return;
-	clearmenu(ent);
+	menu_clear(ent);
 
 	if (!InJoinedQueue(ent) && (level.time > pregame_time->value))
 	{
@@ -490,39 +490,39 @@ void OpenPTRJoinMenu (edict_t *ent)
 			time_left = 999;
 
 
-		addlinetomenu(ent, "Vortex PTR:", MENU_GREEN_CENTERED);
-		addlinetomenu(ent, "Protect The Retard!", MENU_GREEN_CENTERED);
-		addlinetomenu(ent, " ", 0);
-		addlinetomenu(ent, "The match has already", 0);
-		addlinetomenu(ent, va("begun. %d minutes until", time_left), 0);
-		addlinetomenu(ent, "next round.", 0);
-		addlinetomenu(ent, " ", 0);
-		addlinetomenu(ent, "Back", 2);
-		addlinetomenu(ent, "Exit", 3);
+		menu_add_line(ent, "Vortex PTR:", MENU_GREEN_CENTERED);
+		menu_add_line(ent, "Protect The Retard!", MENU_GREEN_CENTERED);
+		menu_add_line(ent, " ", 0);
+		menu_add_line(ent, "The match has already", 0);
+		menu_add_line(ent, va("begun. %d minutes until", time_left), 0);
+		menu_add_line(ent, "next round.", 0);
+		menu_add_line(ent, " ", 0);
+		menu_add_line(ent, "Back", 2);
+		menu_add_line(ent, "Exit", 3);
 
-		setmenuhandler(ent, teamselect_handler);
+		menu_set_handler(ent, teamselect_handler);
 		ent->client->menustorage.currentline = 8;
-		showmenu(ent);
+		menu_show(ent);
 		return;
 	}
 
-	addlinetomenu(ent, "Vortex PTR:", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, "Protect The Retard!", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Your goal is to gain", 0);
-	addlinetomenu(ent, "control of the retard. As", 0);
-	addlinetomenu(ent, "long as he stays alive,", 0);
-	addlinetomenu(ent, "you gain points. If he", 0);
-	addlinetomenu(ent, "is killed, the other team", 0);
-	addlinetomenu(ent, "gains control.", 0);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Join", 1);
-	addlinetomenu(ent, "Back", 2);
-	addlinetomenu(ent, "Exit", 3);
+	menu_add_line(ent, "Vortex PTR:", MENU_GREEN_CENTERED);
+	menu_add_line(ent, "Protect The Retard!", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Your goal is to gain", 0);
+	menu_add_line(ent, "control of the retard. As", 0);
+	menu_add_line(ent, "long as he stays alive,", 0);
+	menu_add_line(ent, "you gain points. If he", 0);
+	menu_add_line(ent, "is killed, the other team", 0);
+	menu_add_line(ent, "gains control.", 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Join", 1);
+	menu_add_line(ent, "Back", 2);
+	menu_add_line(ent, "Exit", 3);
 
-	setmenuhandler(ent, teamselect_handler);
+	menu_set_handler(ent, teamselect_handler);
 	ent->client->menustorage.currentline = 11;
-	showmenu(ent);
+	menu_show(ent);
 }
 
 void retard_shake (edict_t *self)

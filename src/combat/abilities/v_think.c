@@ -78,7 +78,7 @@ void think_trade(edict_t* ent) {//3.0 new trading
 		}
 
 		//cancel the trade (trade_with)
-		closemenu(ent->trade_with);
+		menu_close(ent->trade_with, true);
 		ent->trade_with->client->trade_accepted = false;
 		ent->trade_with->client->trade_final = false;
 		ent->trade_with->client->trading = false;

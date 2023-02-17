@@ -45,7 +45,7 @@ void TBI_AssignTeam(edict_t* ent)
 
 	ent->teamnum = TeamNum;
 
-	V_AssignClassSkin(ent, Info_ValueForKey(ent->client->pers.userinfo, "skin"));*/
+	vrx_assign_character_skin(ent, Info_ValueForKey(ent->client->pers.userinfo, "skin"));*/
 }
 
 qboolean TBI_CheckRules(edict_t* self)

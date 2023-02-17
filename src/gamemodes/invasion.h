@@ -16,3 +16,5 @@ struct invdata_s
 };
 
 extern struct invdata_s invasion_data;
+
+int G_GetEntityIndex(edict_t *ent);

@@ -1243,7 +1243,7 @@ void ClientEndServerFrame (edict_t *ent)
 	//GHz START
 	else if (!ent->client->showscores && ent->client->menustorage.menu_active)
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 	}
 	//GHz END
 	// az 

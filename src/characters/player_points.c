@@ -699,7 +699,6 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
         }
 
         // check for buffs, and award the buff-giver some exp and credits
-        // todo: add totems
         vrx_inv_award_curse_exp(player, targ, targetclient, player->curses, BLESS, dmgmod, true );
         vrx_inv_award_curse_exp(player, targ, targetclient, player->curses, HEALING, dmgmod, true );
         vrx_inv_award_curse_exp(player, targ, targetclient, player->curses, DEFLECT, dmgmod, true );

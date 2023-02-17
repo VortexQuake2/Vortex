@@ -350,7 +350,7 @@ void Check_full(edict_t *ent)
 	}
 }
 
-float entdist(edict_t *ent1, edict_t *ent2)
+float entdist(const edict_t *ent1, const edict_t *ent2)
 {
 	vec3_t	vec;
 

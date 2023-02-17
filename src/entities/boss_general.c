@@ -2,14 +2,14 @@
 #include "../gamemodes/boss.h"
 #include "../combat/abilities/jump.h"
 
-qboolean IsABoss(edict_t *ent)
+qboolean IsABoss(const edict_t *ent)
 {
 	return (ent && ent->inuse && !ent->client && ((ent->mtype == BOSS_TANK) || (ent->mtype == BOSS_MAKRON)));
 }
 
-qboolean IsBossTeam (edict_t *ent)
+qboolean IsBossTeam (const edict_t *ent)
 {
-	edict_t *e = G_GetClient(ent);
+	const edict_t *e = G_GetClient(ent);
 
 	return (e && IsABoss(e->owner));
 }

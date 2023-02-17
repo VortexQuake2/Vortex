@@ -1,6 +1,7 @@
 #include "g_local.h"
 #include "../characters/class_limits.h"
 #include "../characters/io/v_sqlite_unidb.h"
+#include "characters/io/v_characterio.h"
 
 armoryRune_t WeaponRunes[20];
 armoryRune_t AbilityRunes[20];
@@ -164,36 +165,36 @@ void armoryConfirmOption(edict_t *ent, int selection)
 {
 	char* selectionc = "";
 
-	if (!ShowMenu(ent))
+	if (!menu_can_show(ent))
 		return;
 
-	clearmenu(ent);
+	menu_clear(ent);
 
 
-	addlinetomenu(ent, "Confirm Selection", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, "Confirm Selection", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
 
 	switch (selection)
 	{
 	case 29: selectionc = "a character reset"; break;
 	}
 
-	addlinetomenu(ent, "Are you sure you " , MENU_WHITE_CENTERED);
-	addlinetomenu(ent, "want to buy", MENU_WHITE_CENTERED);
-	addlinetomenu(ent, va("%s?\n", selectionc), MENU_WHITE_CENTERED);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, "Are you sure you " , MENU_WHITE_CENTERED);
+	menu_add_line(ent, "want to buy", MENU_WHITE_CENTERED);
+	menu_add_line(ent, va("%s?\n", selectionc), MENU_WHITE_CENTERED);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " ", 0);
 
-	addlinetomenu(ent, "Yes", selection);
-	addlinetomenu(ent, "No", -1);
+	menu_add_line(ent, "Yes", selection);
+	menu_add_line(ent, "No", -1);
 
 	ent->client->menustorage.currentline = 11;
 
-	setmenuhandler(ent, buyPoint);
+	menu_set_handler(ent, buyPoint);
 
-	showmenu(ent);
+	menu_show(ent);
 }
 
 //************************************************************************************************
@@ -496,7 +497,7 @@ void PurchaseMenu_handler (edict_t *ent, int option)
 	//don't cause an invalid item to be selected (option 99 is checked as well)
 	else if ((option > ARMORY_ITEMS) || (option < 1))
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 
@@ -530,31 +531,31 @@ void OpenPurchaseMenu (edict_t *ent, int page_num, int lastline)
 	int i;
 
 	//Usual menu stuff
-	if (!ShowMenu(ent))
+	if (!menu_can_show(ent))
         return;
-	clearmenu(ent);
+	menu_clear(ent);
 
 	//Header
-	addlinetomenu(ent, va("You have %d credits", ent->myskills.credits), MENU_GREEN_CENTERED);
-	addlinetomenu(ent, "Please make a selection:", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, va("You have %d credits", ent->myskills.credits), MENU_GREEN_CENTERED);
+	menu_add_line(ent, "Please make a selection:", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
 
 	//Print this page's items
     for (i = (page_num-1)*10; i < page_num*10; ++i)
 	{
 		if (i < ARMORY_ITEMS)
-			addlinetomenu(ent, va("%s", GetArmoryItemString(i+1)), i+1);
-		else addlinetomenu(ent, " ", 0);
+			menu_add_line(ent, va("%s", GetArmoryItemString(i+1)), i+1);
+		else menu_add_line(ent, " ", 0);
 	}
 
 	//Footer
-	addlinetomenu(ent, " ", 0);
-	if (i < ARMORY_ITEMS) addlinetomenu(ent, "Next", (page_num*1000)+2);
-	addlinetomenu(ent, "Back", (page_num*1000)+1);
-	addlinetomenu(ent, "Exit", 99);
+	menu_add_line(ent, " ", 0);
+	if (i < ARMORY_ITEMS) menu_add_line(ent, "Next", (page_num*1000)+2);
+	menu_add_line(ent, "Back", (page_num*1000)+1);
+	menu_add_line(ent, "Exit", 99);
 
 	//Menu handler
-	setmenuhandler(ent, PurchaseMenu_handler);
+	menu_set_handler(ent, PurchaseMenu_handler);
 
 	//Set the menu cursor
 	if (lastline % 10)	//selected 0-9 in this page
@@ -566,7 +567,7 @@ void OpenPurchaseMenu (edict_t *ent, int page_num, int lastline)
 	else ent->client->menustorage.currentline = 5 + i % 10;
 
 	//Show the menu
-	showmenu(ent);
+	menu_show(ent);
 }
 
 //************************************************************************************************
@@ -612,26 +613,7 @@ void SellConfirmMenu_handler(edict_t *ent, int option)
 		gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/gold.wav"), 1, ATTN_NORM, 0);
 
 		//save the player file
-#ifndef NO_GDS
-		if (savemethod->value == 2)
-		{
-			V_GDS_Queue_Add(ent, GDS_SAVERUNES);
-		} else 
-#endif
-		if (savemethod->value == 1)
-			SaveCharacter(ent);
-		else if (savemethod->value == 3)
-		{
-			VSFU_SaveRunes(ent);
-		}
-		else if (savemethod->value == 0)
-		{
-			char path[MAX_QPATH];
-			memset(path, 0, sizeof path);
-            vrx_get_character_file_path(path, ent);
-			VSF_SaveRunes(ent, path);
-		}
-
+        vrx_char_io.save_player_runes(ent);
 	}
 	else if (option - 666 > 0)
 	{
@@ -647,7 +629,7 @@ void SellConfirmMenu_handler(edict_t *ent, int option)
 	else
 	{
 		//Closing menu
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 }
@@ -662,21 +644,21 @@ void OpenSellConfirmMenu(edict_t *ent, int itemindex)
 	StartShowInventoryMenu(ent, item);
 
 	//Menu footer
-	addlinetomenu(ent, va("  Sell value: %d", GetSellValue(item)), 0);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "  Sell this item?", 0);
-	addlinetomenu(ent, "No, I changed my mind!", 667 + itemindex);
-	addlinetomenu(ent, "Yes, sell this item.", 778 + itemindex);
+	menu_add_line(ent, va("  Sell value: %d", GetSellValue(item)), 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "  Sell this item?", 0);
+	menu_add_line(ent, "No, I changed my mind!", 667 + itemindex);
+	menu_add_line(ent, "Yes, sell this item.", 778 + itemindex);
 
 	//Set handler
-	setmenuhandler(ent, SellConfirmMenu_handler);
+	menu_set_handler(ent, SellConfirmMenu_handler);
 
 	ent->client->menustorage.currentline += 7;
 
 	//Display the menu
-	showmenu(ent);
+	menu_show(ent);
 }
 
 //************************************************************************************************
@@ -688,12 +670,12 @@ void SellMenu_handler (edict_t *ent, int option)
 	//Navigating the menu?
 	if (option == 666) //exit
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 	else if (option < 1 || option > MAX_VRXITEMS)	//exit
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 	else if (ent->myskills.items[option-1].itemtype == ITEM_NONE)
@@ -718,8 +700,8 @@ void OpenSellMenu (edict_t *ent, int lastline)
 {
 	//Use the item select menu and change the menu handler
 	ShowInventoryMenu(ent, lastline, true);
-	setmenuhandler(ent, SellMenu_handler);
-	showmenu(ent);
+	menu_set_handler(ent, SellMenu_handler);
+	menu_show(ent);
 }
 
 //************************************************************************************************
@@ -756,7 +738,7 @@ void BuyRuneConfirmMenu_handler (edict_t *ent, int option)
 		if (rune->itemtype == ITEM_NONE)
 		{
 			safe_cprintf(ent, PRINT_HIGH, "Sorry, someone else has purchased this rune.\n");
-			closemenu(ent);
+			menu_close(ent, true);
 			return;
 		}
 		cost = getBuyValue(rune);
@@ -780,29 +762,14 @@ void BuyRuneConfirmMenu_handler (edict_t *ent, int option)
 			V_ItemSwap(rune, slot);
 			ent->myskills.credits -= cost;
 			SaveArmory();
-			if (savemethod->value == 0)
-			{
-				char path[MAX_QPATH];
-				memset (path, 0, sizeof path);
-                vrx_get_character_file_path(path, ent);
-				VSF_SaveRunes(ent, path);
-			}
-			else if (savemethod->value == 1)
-                V_CommitCharacterData(ent);
-#ifndef NO_GDS
-			else if (savemethod->value == 2)
-				V_GDS_Queue_Add(ent, GDS_SAVERUNES);
-#endif
-			else if (savemethod->value == 3)
-			{
-				VSFU_SaveRunes(ent);
-			}
+			vrx_char_io.save_player_runes(ent);
+
 			safe_cprintf(ent, PRINT_HIGH, "Rune purchased for %d credits.\nYou have %d credits left.\n", cost, ent->myskills.credits);
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/gold.wav"), 1, ATTN_NORM, 0);
 		}
 
 		//done
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 	else
@@ -845,21 +812,21 @@ void OpenBuyRuneConfirmMenu(edict_t *ent, int option)
 	StartShowInventoryMenu(ent, rune);
 
 	//Menu footer
-	addlinetomenu(ent, va("  Price: %d", getBuyValue(rune)), 0);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "  Buy this item?", 0);
-	addlinetomenu(ent, "No, I changed my mind!", (page_num * 10) + selection);
-	addlinetomenu(ent, "Yes, GIMME GIMME!!.", option);
+	menu_add_line(ent, va("  Price: %d", getBuyValue(rune)), 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "  Buy this item?", 0);
+	menu_add_line(ent, "No, I changed my mind!", (page_num * 10) + selection);
+	menu_add_line(ent, "Yes, GIMME GIMME!!.", option);
 
 	//Set handler
-	setmenuhandler(ent, BuyRuneConfirmMenu_handler);
+	menu_set_handler(ent, BuyRuneConfirmMenu_handler);
 
 	ent->client->menustorage.currentline += 7;
 
 	//Display the menu
-	showmenu(ent);
+	menu_show(ent);
 	
 }
 
@@ -874,7 +841,7 @@ void BuyRuneMenu_handler (edict_t *ent, int option)
 
 	if (option == 99)
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 
@@ -899,7 +866,7 @@ void BuyRuneMenu_handler (edict_t *ent, int option)
 		
 		if ((selection > ARMORY_MAX_RUNES) || (selection < 1))
 		{
-			closemenu(ent);
+			menu_close(ent, true);
 			return;
 		}
 
@@ -918,9 +885,9 @@ void OpenBuyRuneMenu(edict_t *ent, int page_num, int lastline)
 	char* category;
 
 	//Usual menu stuff
-	if (!ShowMenu(ent))
+	if (!menu_can_show(ent))
         return;
-	clearmenu(ent);
+	menu_clear(ent);
 
 	switch(page_num)
 	{
@@ -948,9 +915,9 @@ void OpenBuyRuneMenu(edict_t *ent, int page_num, int lastline)
 	}
 
 	//Header
-	addlinetomenu(ent, va("You have %d credits", ent->myskills.credits), MENU_GREEN_CENTERED);
-	addlinetomenu(ent, va("Select %s:", category), MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, va("You have %d credits", ent->myskills.credits), MENU_GREEN_CENTERED);
+	menu_add_line(ent, va("Select %s:", category), MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
 
 	//Print this page's items
     for (i = 0; i < ARMORY_MAX_RUNES / 2; ++i)
@@ -960,7 +927,7 @@ void OpenBuyRuneMenu(edict_t *ent, int page_num, int lastline)
 		{
 			item_menu_t fmt = vrx_menu_item_display(rune);//, ' ');
 			lva_result_t txt = lva("%-13.13s %2d/%2d %5d", fmt.str, fmt.num, rune->itemLevel, getBuyValue(rune));
-			addlinetomenu(ent, txt.str, (page_num * 1000) + i + 1);
+			menu_add_line(ent, txt.str, (page_num * 1000) + i + 1);
 		}
 		else 
 		{
@@ -968,32 +935,32 @@ void OpenBuyRuneMenu(edict_t *ent, int page_num, int lastline)
 			{
 			case 1: 
 			case 2:
-				addlinetomenu(ent, "    <Empty Weapon Slot>", 0); break;
+				menu_add_line(ent, "    <Empty Weapon Slot>", 0); break;
 			case 3: 
 			case 4:
-				addlinetomenu(ent, "    <Empty Ability Slot>", 0); break;
+				menu_add_line(ent, "    <Empty Ability Slot>", 0); break;
 			case 5: 
 			case 6:
-				addlinetomenu(ent, "    <Empty Combo Slot>", 0); break;
+				menu_add_line(ent, "    <Empty Combo Slot>", 0); break;
 			}
 		}
 	}
 
 	//Footer
-	addlinetomenu(ent, " ", 0);
-	if (page_num < 6) addlinetomenu(ent, "Next", (page_num*10)+2);
-	addlinetomenu(ent, "Back", (page_num*10)+1);
-	addlinetomenu(ent, "Exit", 99);
+	menu_add_line(ent, " ", 0);
+	if (page_num < 6) menu_add_line(ent, "Next", (page_num*10)+2);
+	menu_add_line(ent, "Back", (page_num*10)+1);
+	menu_add_line(ent, "Exit", 99);
 
 	//Menu handler
-	setmenuhandler(ent, BuyRuneMenu_handler);
+	menu_set_handler(ent, BuyRuneMenu_handler);
 
 	//Set the menu cursor
 	if (lastline)	ent->client->menustorage.currentline = 4 + lastline;
 	else			ent->client->menustorage.currentline = 15;
 	
 	//Show the menu
-	showmenu(ent);
+	menu_show(ent);
 }
 
 //************************************************************************************************
@@ -1009,35 +976,35 @@ void armorymenu_handler (edict_t *ent, int option)
 	else if (option == 3)
 		OpenSellMenu(ent, 0);
 	else
-		closemenu(ent);
+		menu_close(ent, true);
 }
 
 //************************************************************************************************
 
 void OpenArmoryMenu (edict_t *ent)
 {
-	if (!ShowMenu(ent))
+	if (!menu_can_show(ent))
         return;
 
-	clearmenu(ent);
+	menu_clear(ent);
 
-	addlinetomenu(ent, "The Armory", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Welcome to the Armory!", 0);
-	addlinetomenu(ent, "Select the item you want", 0);
-	addlinetomenu(ent, "to purchase from the", 0);
-	addlinetomenu(ent, va("Armory. You have %d", ent->myskills.credits), 0);
-	addlinetomenu(ent, "credits.", 0);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, "The Armory", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Welcome to the Armory!", 0);
+	menu_add_line(ent, "Select the item you want", 0);
+	menu_add_line(ent, "to purchase from the", 0);
+	menu_add_line(ent, va("Armory. You have %d", ent->myskills.credits), 0);
+	menu_add_line(ent, "credits.", 0);
+	menu_add_line(ent, " ", 0);
 	if (level.time < pregame_time->value || trading->value)
-		addlinetomenu(ent, "Buy", 1);
-	addlinetomenu(ent, "Buy Runes", 2);
-	addlinetomenu(ent, "Sell", 3);
-	addlinetomenu(ent, "Exit", 4);
+		menu_add_line(ent, "Buy", 1);
+	menu_add_line(ent, "Buy Runes", 2);
+	menu_add_line(ent, "Sell", 3);
+	menu_add_line(ent, "Exit", 4);
 
-	setmenuhandler(ent, armorymenu_handler);
+	menu_set_handler(ent, armorymenu_handler);
 	ent->client->menustorage.currentline = 9;
-	showmenu(ent);
+	menu_show(ent);
 }
 
 //************************************************************************************************
