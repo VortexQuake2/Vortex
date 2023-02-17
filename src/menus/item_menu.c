@@ -28,7 +28,7 @@ void DeleteMenu_handler(edict_t *ent, int option) {
         return;
     } else {
         //Closing menu
-        closemenu(ent);
+        menu_close(ent, true);
         return;
     }
 }
@@ -42,18 +42,18 @@ void ItemDeleteMenu(edict_t *ent, int itemindex) {
     StartShowInventoryMenu(ent, item);
 
     //Menu footer
-    addlinetomenu(ent, " ", 0);
-    addlinetomenu(ent, "  Delete this item?", 0);
-    addlinetomenu(ent, "No, I changed my mind!", 667 + itemindex);
-    addlinetomenu(ent, "Yes, delete this item.", 778 + itemindex);
+    menu_add_line(ent, " ", 0);
+    menu_add_line(ent, "  Delete this item?", 0);
+    menu_add_line(ent, "No, I changed my mind!", 667 + itemindex);
+    menu_add_line(ent, "Yes, delete this item.", 778 + itemindex);
 
     //Set handler
-    setmenuhandler(ent, DeleteMenu_handler);
+    menu_set_handler(ent, DeleteMenu_handler);
 
     ent->client->menustorage.currentline += 4;
 
     //Display the menu
-    showmenu(ent);
+    menu_show(ent);
 }
 
 //************************************************************************************************
@@ -65,18 +65,18 @@ void StartShowInventoryMenu(edict_t *ent, item_t *item) {
     int linecount = 1;
     int i;
 
-    if (!ShowMenu(ent))
+    if (!menu_can_show(ent))
         return;
-    clearmenu(ent);
+    menu_clear(ent);
 
     //If item has a name, use that instead
     if (strlen(item->name) > 0) {
         if (item->setCode == 0)
-            addlinetomenu(ent, va(" %s", item->name), MENU_GREEN_LEFT);
-        else addlinetomenu(ent, va(" %s (set item)", item->name), MENU_GREEN_LEFT);
+            menu_add_line(ent, va(" %s", item->name), MENU_GREEN_LEFT);
+        else menu_add_line(ent, va(" %s (set item)", item->name), MENU_GREEN_LEFT);
     } else {
         //Print header, depending on the item type
-        addlinetomenu(ent, va("%s", V_MenuItemString (item, ' ')), MENU_GREEN_LEFT);
+        menu_add_line(ent, va("%s", V_MenuItemString (item, ' ')), MENU_GREEN_LEFT);
     }
 
     //Unique runes need to display stats too
@@ -88,10 +88,10 @@ void StartShowInventoryMenu(edict_t *ent, item_t *item) {
         case ITEM_WEAPON: {
             int wIndex = (item->modifiers[0].index / 100) - 10;
 
-            addlinetomenu(ent, " ", 0);
-            addlinetomenu(ent, va(" %s", GetWeaponString(wIndex)), 0);
-            addlinetomenu(ent, " ", 0);
-            addlinetomenu(ent, " Stats:", MENU_GREEN_LEFT);
+            menu_add_line(ent, " ", 0);
+            menu_add_line(ent, va(" %s", GetWeaponString(wIndex)), 0);
+            menu_add_line(ent, " ", 0);
+            menu_add_line(ent, " Stats:", MENU_GREEN_LEFT);
             linecount += 4;
             for (i = 0; i < MAX_VRXITEMMODS; ++i) {
                 int mIndex;
@@ -103,16 +103,16 @@ void StartShowInventoryMenu(edict_t *ent, item_t *item) {
                 mIndex = item->modifiers[i].index % 100;
                 strcpy(buf, GetModString(wIndex, mIndex));
                 padRight(buf, 20);
-                addlinetomenu(ent, va("  %s [%d]", buf, item->modifiers[i].value), 0);
+                menu_add_line(ent, va("  %s [%d]", buf, item->modifiers[i].value), 0);
                 ++linecount;
             }
-            addlinetomenu(ent, " ", 0);
+            menu_add_line(ent, " ", 0);
             ++linecount;
         }
             break;
         case ITEM_ABILITY: {
-            addlinetomenu(ent, " ", 0);
-            addlinetomenu(ent, " Stats:", MENU_GREEN_LEFT);
+            menu_add_line(ent, " ", 0);
+            menu_add_line(ent, " Stats:", MENU_GREEN_LEFT);
             linecount += 2;
             for (i = 0; i < MAX_VRXITEMMODS; ++i) {
                 int aIndex;
@@ -124,14 +124,14 @@ void StartShowInventoryMenu(edict_t *ent, item_t *item) {
 
                 strcpy(buf, GetAbilityString(aIndex));
                 padRight(buf, 20);
-                addlinetomenu(ent, va("  %s [%d]", buf, item->modifiers[i].value), 0);
+                menu_add_line(ent, va("  %s [%d]", buf, item->modifiers[i].value), 0);
                 linecount++;
             }
         }
             break;
         case ITEM_COMBO: {
-            addlinetomenu(ent, " ", 0);
-            addlinetomenu(ent, " Stats:", MENU_GREEN_LEFT);
+            menu_add_line(ent, " ", 0);
+            menu_add_line(ent, " Stats:", MENU_GREEN_LEFT);
             linecount += 2;
             for (i = 0; i < MAX_VRXITEMMODS; ++i) {
                 char buf[30];
@@ -145,7 +145,7 @@ void StartShowInventoryMenu(edict_t *ent, item_t *item) {
 
                         strcpy(buf, GetAbilityString(aIndex));
                         padRight(buf, 20);
-                        addlinetomenu(ent, va("  %s [%d]", buf, item->modifiers[i].value), 0);
+                        menu_add_line(ent, va("  %s [%d]", buf, item->modifiers[i].value), 0);
                         linecount++;
                     }
                         break;
@@ -156,7 +156,7 @@ void StartShowInventoryMenu(edict_t *ent, item_t *item) {
                         strcpy(buf, GetShortWeaponString(wIndex));
                         strcat(buf, va(" %s", GetModString(wIndex, mIndex)));
                         padRight(buf, 20);
-                        addlinetomenu(ent, va("  %s [%d]", buf, item->modifiers[i].value), 0);
+                        menu_add_line(ent, va("  %s [%d]", buf, item->modifiers[i].value), 0);
                         linecount++;
                     }
                         break;
@@ -165,8 +165,8 @@ void StartShowInventoryMenu(edict_t *ent, item_t *item) {
         }
             break;
         case ITEM_CLASSRUNE: {
-            addlinetomenu(ent, " ", 0);
-            addlinetomenu(ent, " Stats:", MENU_GREEN_LEFT);
+            menu_add_line(ent, " ", 0);
+            menu_add_line(ent, " Stats:", MENU_GREEN_LEFT);
             linecount += 2;
             for (i = 0; i < MAX_VRXITEMMODS; ++i) {
                 int aIndex;
@@ -179,7 +179,7 @@ void StartShowInventoryMenu(edict_t *ent, item_t *item) {
 
                 strcpy(buf, GetAbilityString(aIndex));
                 padRight(buf, 20);
-                addlinetomenu(ent, va("  %s [%d]", buf, item->modifiers[i].value), 0);
+                menu_add_line(ent, va("  %s [%d]", buf, item->modifiers[i].value), 0);
                 linecount++;
             }
         }
@@ -187,13 +187,13 @@ void StartShowInventoryMenu(edict_t *ent, item_t *item) {
     }
 
     //Menu footer
-    addlinetomenu(ent, " ", 0);
+    menu_add_line(ent, " ", 0);
 
     //Items such as Gravity boots need to show the number of charges left
     if ((item->itemtype & ITEM_GRAVBOOTS) || (item->itemtype & ITEM_FIRE_RESIST) ||
         (item->itemtype & ITEM_AUTO_TBALL)) {
-        addlinetomenu(ent, va(" Charges left: %d", item->quantity), 0);
-        addlinetomenu(ent, " ", 0);
+        menu_add_line(ent, va(" Charges left: %d", item->quantity), 0);
+        menu_add_line(ent, " ", 0);
         linecount += 2;
     }
 
@@ -209,8 +209,8 @@ void ShowItemMenu_handler(edict_t *ent, int option) {
     if (option - 14999 > 0) {
         OpenSellConfirmMenu(ent, option - 15000);
     } else if (option - 9999 > 0) {
-        //Delete item menu
-        ItemDeleteMenu(ent, option - 10000);
+        // stash
+        vrx_stash_store(ent, option - 10000);
     } else if (option - 7777 > 0) {
         //Previous menu
         ShowInventoryMenu(ent, option - 7777, false);
@@ -220,7 +220,7 @@ void ShowItemMenu_handler(edict_t *ent, int option) {
         V_EquipItem(ent, option - 4445);
     } else {
         //Closing menu
-        closemenu(ent);
+        menu_close(ent, true);
         return;
     }
 }
@@ -237,26 +237,23 @@ void ShowItemMenu(edict_t *ent, int itemindex) {
     //Check to see if this item can be equipped or not
     if (!((item->itemtype & ITEM_GRAVBOOTS) || (item->itemtype & ITEM_FIRE_RESIST) ||
           (item->itemtype & ITEM_AUTO_TBALL))) {
-        if (itemindex < 3) addlinetomenu(ent, "Stash this item", 4445 + itemindex);
-        else addlinetomenu(ent, "Equip this item", 4445 + itemindex);
+        if (itemindex < 3) menu_add_line(ent, "Unequip this item", 4445 + itemindex);
+        else menu_add_line(ent, "Equip this item", 4445 + itemindex);
         ++ent->client->menustorage.currentline;
     }
 
     //Append a footer to the menu
-    addlinetomenu(ent, "Previous menu", 7778 + itemindex);
-    addlinetomenu(ent, "Exit", 666);
-    addlinetomenu(ent, " ", 0);
-    addlinetomenu(ent, "Delete this item", 10000 + itemindex);
-    addlinetomenu(ent, "Sell this item", 15000 + itemindex);
+    menu_add_line(ent, "Previous menu", 7778 + itemindex);
+    menu_add_line(ent, "Exit", 666);
+    menu_add_line(ent, " ", 0);
+    if (strlen(ent->myskills.owner) > 0 || strlen(ent->myskills.email) > 0)
+		menu_add_line(ent, "Stash this item", 10000 + itemindex);
+    menu_add_line(ent, "Sell this item", 15000 + itemindex);
 
-    //set currentline
     ent->client->menustorage.currentline += 2;
 
-    //Set handler
-    setmenuhandler(ent, ShowItemMenu_handler);
-
-    //Display the menu
-    showmenu(ent);
+    menu_set_handler(ent, ShowItemMenu_handler);
+    menu_show(ent);
 }
 
 //************************************************************************************************
@@ -275,7 +272,7 @@ void ShowInventoryMenu_handler(edict_t *ent, int option) {
         //View selected item
         ShowItemMenu(ent, option - 1);
     } else if (option == 666) {
-        closemenu(ent);
+        menu_close(ent, true);
         return;
     }
 
@@ -308,13 +305,13 @@ void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling) {
     int i;
 
     //Usual menu stuff
-    if (!ShowMenu(ent))
+    if (!menu_can_show(ent))
         return;
-    clearmenu(ent);
+    menu_clear(ent);
 
     //Print header
-    addlinetomenu(ent, va("%s's items", ent->client->pers.netname), MENU_GREEN_CENTERED);
-    addlinetomenu(ent, " ", 0);
+    menu_add_line(ent, va("%s's items", ent->client->pers.netname), MENU_GREEN_CENTERED);
+    menu_add_line(ent, " ", 0);
 
     //Print each item
     for (i = 0; i < MAX_VRXITEMS; ++i) {
@@ -324,29 +321,29 @@ void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling) {
         //Print equip slot (if required)
         switch (i) {
             case 0:
-                addlinetomenu(ent, "Hand", MENU_GREEN_LEFT);
+                menu_add_line(ent, "Hand", MENU_GREEN_LEFT);
                 break;
             case 1:
-                addlinetomenu(ent, "Neck", MENU_GREEN_LEFT);
+                menu_add_line(ent, "Neck", MENU_GREEN_LEFT);
                 break;
             case 2:
-                addlinetomenu(ent, "Belt", MENU_GREEN_LEFT);
+                menu_add_line(ent, "Belt", MENU_GREEN_LEFT);
                 break;
             case 3:
-                addlinetomenu(ent, " ", MENU_GREEN_LEFT);
+                menu_add_line(ent, " ", MENU_GREEN_LEFT);
                 break;
         }
 
         lva_result_t s = vrx_get_item_menu_line(item);
-        addlinetomenu(ent, s.str, i + 1);
+        menu_add_line(ent, s.str, i + 1);
     }
 
     //Menu footer
-    addlinetomenu(ent, " ", 0);
-    addlinetomenu(ent, " Exit", 666);
+    menu_add_line(ent, " ", 0);
+    menu_add_line(ent, " Exit", 666);
 
     //Set handler
-    setmenuhandler(ent, ShowInventoryMenu_handler);
+    menu_set_handler(ent, ShowInventoryMenu_handler);
 
     //Where are we in the menu?
     if (lastline) {
@@ -367,5 +364,5 @@ void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling) {
     } else ent->client->menustorage.currentline = 18;
 
     //Display the menu (don't show it if this menu was loaded from the armory!)
-    if (!selling) showmenu(ent);
+    if (!selling) menu_show(ent);
 }

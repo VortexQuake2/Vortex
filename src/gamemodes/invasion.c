@@ -64,10 +64,8 @@ void INV_Init(void)
 	invasion_navicount = 0;
 	invasion_start_navicount = 0;
 
-	for (i = 0; i < MAX_CLIENTS; i++)   // down from 32 to 24
-		INV_PlayerSpawns[i] = NULL;
-
 	for (i = 0; i < 64; i++) {
+		INV_PlayerSpawns[i] = NULL;
 		INV_Navi[i] = NULL;
 		INV_StartNavi[i] = NULL;
 	}

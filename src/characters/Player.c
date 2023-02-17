@@ -35,20 +35,19 @@ qboolean vrx_is_playing_too_much(edict_t *ent)
 }
 
 
-void vrx_set_new_player_data(edict_t *ent)
+void vrx_create_new_character(edict_t *ent)
 {
 	ent->myskills.next_level = vrx_get_points_tnl(ent->myskills.level);
 	ent->myskills.respawn_weapon = 7;
 
-	//strcpy(ent->myskills.password, CryptPassword(Info_ValueForKey (ent->client->pers.userinfo, "vrx_password")) );
-
-	Q_strncpy (ent->myskills.password, CryptString(Info_ValueForKey	(ent->client->pers.userinfo, "vrx_password"), false), sizeof(ent->myskills.password)-1);
+	Q_strncpy (ent->myskills.password,
+               vrx_encrypt_string(Info_ValueForKey(ent->client->pers.userinfo, "vrx_password"), false), sizeof(ent->myskills.password) - 1);
 
 	strcpy(ent->myskills.member_since, va("%s at %s", CURRENT_DATE, CURRENT_TIME));
 }
 
 //Returns true if the player is able to join the game.
-int vrx_get_login_is_allowable(edict_t *ent)
+int vrx_get_login_status(edict_t *ent)
 {
 	char chkpassword[24];
 	char chkpassword2[24];
@@ -58,7 +57,7 @@ int vrx_get_login_is_allowable(edict_t *ent)
 	Q_strncpy (chkpassword, Info_ValueForKey (ent->client->pers.userinfo, "vrx_password"), sizeof(chkpassword)-1);
 
 	//strcpy(chkpassword2, CryptPassword(ent->myskills.password) );
-	Q_strncpy (chkpassword2, CryptString(ent->myskills.password, true), sizeof(chkpassword2)-1);
+	Q_strncpy (chkpassword2, vrx_encrypt_string(ent->myskills.password, true), sizeof(chkpassword2) - 1);
 
 	// check if userinfo password matches master password
 	// does not accept password if it contains '@' because it might be an email address

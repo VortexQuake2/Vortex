@@ -1,5 +1,6 @@
 #include "g_local.h"
 #include "../gamemodes/ctf.h"
+#include "characters/io/v_characterio.h"
 
 #define VOTE_MAP	1
 #define	VOTE_MODE	2
@@ -14,7 +15,7 @@ void OpenDOMJoinMenu (edict_t *ent);
 void ChaseCam(edict_t *ent)
 {
 	if (ent->client->menustorage.menu_active)
-		closemenu(ent);
+		menu_close(ent, true);
 
 	if (ent->client->chase_target) 
 	{
@@ -47,9 +48,9 @@ void vrx_start_reign(edict_t *ent)
 	average_player_level = AveragePlayerLevel();
 	ent->health = ent->myskills.current_health;
 
-	if(savemethod->value == 1) // binary .vrx style saving
-		for (i=0; i<game.num_items; i++, item++) // reload inventory.
-			ent->client->pers.inventory[ITEM_INDEX(item)] = ent->myskills.inventory[ITEM_INDEX(item)];
+//	if(savemethod->value == 1) // binary .vrx style saving
+//		for (i=0; i<game.num_items; i++, item++) // reload inventory.
+//			ent->client->pers.inventory[ITEM_INDEX(item)] = ent->myskills.inventory[ITEM_INDEX(item)];
 
 	ent->client->pers.inventory[flag_index] = 0; // NO FLAG FOR YOU!!!
 	ent->client->pers.inventory[red_flag_index] = 0;
@@ -108,11 +109,11 @@ void vrx_start_reign(edict_t *ent)
     vrx_write_to_logfile(ent, "Logged in.\n");
 
 #ifndef GDS_NOMULTITHREADING
-	ent->ThreadStatus = 0;
+	ent->gds_thread_status = 0;
 #endif
 
-    V_CommitCharacterData(ent); // Do we need to?
-	V_AssignClassSkin(ent, Info_ValueForKey(ent->client->pers.userinfo, "skin"));
+    vrx_commit_character(ent, false); // Do we need to?
+    vrx_assign_character_skin(ent, Info_ValueForKey(ent->client->pers.userinfo, "skin"));
     G_StuffPlayerCmds(ent, va("exec %s.cfg", ent->client->pers.netname));
 }
 
@@ -190,28 +191,36 @@ void OpenModeMenu(edict_t *ent)
 
 void JoinTheGame (edict_t *ent)
 {
-	int		returned;
-
 	if (ent->client->menustorage.menu_active)
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 
-	if (savemethod->value != 2)
-		returned = OpenConfigFile(ent);
-	else
-	{
-		// We can't use this function.
-		// We instead do it in somewhere else.
-		gi.dprintf("Warning: JoinTheGame Called on MYSQL mode!\n");
-		return; 
-	}
+    if (vrx_char_io.is_loading(ent))
+        return;
 
-	if (!CanJoinGame(ent, returned))
-		return;
+    if (vrx_char_io.handle_status) {
+        /*
+         * We're in multithreaded mode, so we can't go into the mode menu right away.
+         * this is kind of silly, sorry, but
+         * because vrx_load_player will very likely always
+         * be true in this circumstance where
+         * we're using multithreading, since it only
+         * validates that it's been successfully added to the
+         * queue, we mustn't do the rest of the procedure.
+         * handle_status will take care of it.
+         */
+        vrx_load_player(ent);
+    } else {
+        if (vrx_load_player(ent) == false)
+            vrx_create_new_character(ent);
 
-	OpenModeMenu(ent); // This implies the game will start.
+        if (!CanJoinGame(ent, vrx_get_login_status(ent)))
+            return;
+
+        OpenModeMenu(ent); // This implies the game will start.
+    }
 }
 
 qboolean StartClient(edict_t *ent)
@@ -229,19 +238,7 @@ void motdmenu_handler (edict_t *ent, int option)
     switch (option)
     {
         case 1:
-            gi.sound(ent, CHAN_AUTO, gi.soundindex("misc/startup.wav"), 1, ATTN_NORM, 0);
-            //If no GDS is running, join the game right away.
-#ifndef NO_GDS
-            if(savemethod->value != 2)
-#endif
             JoinTheGame(ent);
-#ifndef NO_GDS
-            else
-		{
-			safe_centerprintf(ent, "You have been queued for Loading.\n Please wait.\n");
-			V_GDS_Queue_Add(ent, GDS_LOAD);
-		}
-#endif
             break;
         case 2:
             OpenJoinMenu(ent);
@@ -250,32 +247,32 @@ void motdmenu_handler (edict_t *ent, int option)
 
 void OpenMOTDMenu (edict_t *ent)
 {
-    if (!ShowMenu(ent))
+    if (!menu_can_show(ent))
         return;
-    clearmenu(ent);
+    menu_clear(ent);
 
     //				    xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
 
-    addlinetomenu(ent, "Message of the Day", MENU_GREEN_CENTERED);
-    addlinetomenu(ent, " ", 0);    
-    addlinetomenu(ent, "Join us on Discord!", MENU_WHITE_CENTERED);
-    addlinetomenu(ent, "discord.gg/bX7Updq", MENU_GREEN_CENTERED);
-    addlinetomenu(ent, " ", 0);
-    addlinetomenu(ent, "Rules", MENU_GREEN_CENTERED);
-    addlinetomenu(ent, "- No racism, sexism, or", 0);
-    addlinetomenu(ent, "targeted harassment.", MENU_WHITE_CENTERED);
-    addlinetomenu(ent, "- Do not exploit bugs.", 0);
-    addlinetomenu(ent, "- Be kind when discussing", 0);
-    addlinetomenu(ent, "balancing issues.", MENU_WHITE_CENTERED);
-    addlinetomenu(ent, "- Don't be an asshole.", 0);
-    addlinetomenu(ent, " ", 0);
-    addlinetomenu(ent, " ", 0);
-    addlinetomenu(ent, "Accept", 1);
-    addlinetomenu(ent, "Back", 2);
+    menu_add_line(ent, "Message of the Day", MENU_GREEN_CENTERED);
+    menu_add_line(ent, " ", 0);    
+    menu_add_line(ent, "Join us on Discord!", MENU_WHITE_CENTERED);
+    menu_add_line(ent, "discord.gg/bX7Updq", MENU_GREEN_CENTERED);
+    menu_add_line(ent, " ", 0);
+    menu_add_line(ent, "Rules", MENU_GREEN_CENTERED);
+    menu_add_line(ent, "- No racism, sexism, or", 0);
+    menu_add_line(ent, "targeted harassment.", MENU_WHITE_CENTERED);
+    menu_add_line(ent, "- Do not exploit bugs.", 0);
+    menu_add_line(ent, "- Be kind when discussing", 0);
+    menu_add_line(ent, "balancing issues.", MENU_WHITE_CENTERED);
+    menu_add_line(ent, "- Don't be an asshole.", 0);
+    menu_add_line(ent, " ", 0);
+    menu_add_line(ent, " ", 0);
+    menu_add_line(ent, "Accept", 1);
+    menu_add_line(ent, "Back", 2);
 
-    setmenuhandler(ent, motdmenu_handler);
+    menu_set_handler(ent, motdmenu_handler);
     ent->client->menustorage.currentline = 15;
-    showmenu(ent);
+    menu_show(ent);
 }
 
 void joinmenu_handler (edict_t *ent, int option)
@@ -287,88 +284,88 @@ void joinmenu_handler (edict_t *ent, int option)
 	case 2: 
 		ChaseCam(ent); break;
 	case 3: 
-		closemenu(ent); break;
+		menu_close(ent, true); break;
 	}
 }
 
 void OpenJoinMenu (edict_t *ent)
 {
-	if (!ShowMenu(ent))
+	if (!menu_can_show(ent))
         return;
-	clearmenu(ent);
+	menu_clear(ent);
 
 	//				    xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
 
-	addlinetomenu(ent, "Vortex Revival", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, va("vrxcl v%s", VRX_VERSION), MENU_GREEN_CENTERED);
-	addlinetomenu(ent, "http://q2vortex.com", MENU_WHITE_CENTERED);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Kill players and monsters", 0);
-    addlinetomenu(ent, "for EXP to earn levels.", 0);
-    addlinetomenu(ent, "Every level you receive", 0);
-    addlinetomenu(ent, "ability and weapon points", 0);
-    addlinetomenu(ent, "to become stronger!", 0);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Maintained by", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, "The Vortex Revival Team", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, "github.com/zardoru/vrxcl", MENU_WHITE_CENTERED);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Start your reign", 1);
-	addlinetomenu(ent, "Toggle chasecam", 2);
-	addlinetomenu(ent, "Exit", 3);
+	menu_add_line(ent, "Vortex Revival", MENU_GREEN_CENTERED);
+	menu_add_line(ent, va("vrxcl v%s", VRX_VERSION), MENU_GREEN_CENTERED);
+	menu_add_line(ent, "http://q2vortex.com", MENU_WHITE_CENTERED);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Kill players and monsters", 0);
+    menu_add_line(ent, "for EXP to earn levels.", 0);
+    menu_add_line(ent, "Every level you receive", 0);
+    menu_add_line(ent, "ability and weapon points", 0);
+    menu_add_line(ent, "to become stronger!", 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Maintained by", MENU_GREEN_CENTERED);
+	menu_add_line(ent, "The Vortex Revival Team", MENU_GREEN_CENTERED);
+	menu_add_line(ent, "github.com/zardoru/vrxcl", MENU_WHITE_CENTERED);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Start your reign", 1);
+	menu_add_line(ent, "Toggle chasecam", 2);
+	menu_add_line(ent, "Exit", 3);
 
-	setmenuhandler(ent, joinmenu_handler);
+	menu_set_handler(ent, joinmenu_handler);
 	ent->client->menustorage.currentline = 16;
-	showmenu(ent);
+	menu_show(ent);
 }
 
 void myinfo_handler (edict_t *ent, int option)
 {
-	closemenu(ent);
+	menu_close(ent, true);
 }
 
 void OpenMyinfoMenu (edict_t *ent)
 {
-	if (!ShowMenu(ent))
+	if (!menu_can_show(ent))
         return;
-	clearmenu(ent);
+	menu_clear(ent);
 
 	//				    xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
-    addlinetomenu(ent, va("%s (%s)", ent->client->pers.netname,
+    menu_add_line(ent, va("%s (%s)", ent->client->pers.netname,
                           vrx_get_class_string(ent->myskills.class_num)), MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, va("Level:        %d", ent->myskills.level), 0);
-	addlinetomenu(ent, va("Experience:   %d", ent->myskills.experience), 0);
-	addlinetomenu(ent, va("Next Level:   %d", (ent->myskills.next_level-ent->myskills.experience)+ent->myskills.nerfme), 0);
-	addlinetomenu(ent, va("Credits:      %d", ent->myskills.credits), 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, va("Level:        %d", ent->myskills.level), 0);
+	menu_add_line(ent, va("Experience:   %d", ent->myskills.experience), 0);
+	menu_add_line(ent, va("Next Level:   %d", (ent->myskills.next_level-ent->myskills.experience)+ent->myskills.nerfme), 0);
+	menu_add_line(ent, va("Credits:      %d", ent->myskills.credits), 0);
 	if (ent->myskills.shots > 0)
-		addlinetomenu(ent, va("Hit Percent:  %d%c", (int)(100*((float)ent->myskills.shots_hit/ent->myskills.shots)), '%'), 0);
+		menu_add_line(ent, va("Hit Percent:  %d%c", (int)(100*((float)ent->myskills.shots_hit/ent->myskills.shots)), '%'), 0);
 	else
-		addlinetomenu(ent, "Hit Percent:  --", 0);
-	addlinetomenu(ent, va("Frags:        %d", ent->myskills.frags), 0);
-	addlinetomenu(ent, va("Fragged:      %d", ent->myskills.fragged), 0);
+		menu_add_line(ent, "Hit Percent:  --", 0);
+	menu_add_line(ent, va("Frags:        %d", ent->myskills.frags), 0);
+	menu_add_line(ent, va("Fragged:      %d", ent->myskills.fragged), 0);
 	if (ent->myskills.fragged > 0)
-		addlinetomenu(ent, va("Frag Percent: %d%c", (int)(100*((float)ent->myskills.frags/ent->myskills.fragged)), '%'), 0);
+		menu_add_line(ent, va("Frag Percent: %d%c", (int)(100*((float)ent->myskills.frags/ent->myskills.fragged)), '%'), 0);
 	else
-		addlinetomenu(ent, "Frag Percent: --", 0);
-	addlinetomenu(ent, va("Played Hrs:   %.1f", (float)ent->myskills.playingtime/3600), 0);
+		menu_add_line(ent, "Frag Percent: --", 0);
+	menu_add_line(ent, va("Played Hrs:   %.1f", (float)ent->myskills.playingtime/3600), 0);
 #ifndef REMOVE_RESPAWNS
-	addlinetomenu(ent, va("Respawns: %d", ent->myskills.weapon_respawns), 0);
+	menu_add_line(ent, va("Respawns: %d", ent->myskills.weapon_respawns), 0);
 #endif
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Exit", 1);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Exit", 1);
 
-	setmenuhandler(ent, myinfo_handler);
+	menu_set_handler(ent, myinfo_handler);
 		ent->client->menustorage.currentline = 13;
-	showmenu(ent);
+	menu_show(ent);
 }
 
 void respawnmenu_handler (edict_t *ent, int option)
 {
 	if (option == 99)
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 
@@ -398,7 +395,7 @@ char *GetRespawnString (edict_t *ent)
 
 void OpenRespawnWeapMenu(edict_t *ent)
 {
-    if (!ShowMenu(ent))
+    if (!menu_can_show(ent))
         return;
 
     if (ent->myskills.class_num == CLASS_KNIGHT) {
@@ -411,32 +408,32 @@ void OpenRespawnWeapMenu(edict_t *ent)
         return;
     }
 
-	clearmenu(ent);
+	menu_clear(ent);
 
 	//				xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
-	addlinetomenu(ent, "Pick a respawn weapon.", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Sword", 1);
-	addlinetomenu(ent, "Shotgun", 2);
-	addlinetomenu(ent, "Super Shotgun", 3);
-	addlinetomenu(ent, "Machinegun", 4);
-	addlinetomenu(ent, "Chaingun", 5);
-	addlinetomenu(ent, "Hand Grenades", 11);
-	addlinetomenu(ent, "Grenade Launcher", 6);
-	addlinetomenu(ent, "Rocket Launcher", 7);
-	addlinetomenu(ent, "Hyperblaster", 8);
-	addlinetomenu(ent, "Railgun", 9);
-	addlinetomenu(ent, "BFG10k", 10);
-	addlinetomenu(ent, "20mm Cannon", 12);
-	addlinetomenu(ent, "Blaster", 13);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, va("Respawn: %s", GetRespawnString(ent)), 0);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Exit", 99);
+	menu_add_line(ent, "Pick a respawn weapon.", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Sword", 1);
+	menu_add_line(ent, "Shotgun", 2);
+	menu_add_line(ent, "Super Shotgun", 3);
+	menu_add_line(ent, "Machinegun", 4);
+	menu_add_line(ent, "Chaingun", 5);
+	menu_add_line(ent, "Hand Grenades", 11);
+	menu_add_line(ent, "Grenade Launcher", 6);
+	menu_add_line(ent, "Rocket Launcher", 7);
+	menu_add_line(ent, "Hyperblaster", 8);
+	menu_add_line(ent, "Railgun", 9);
+	menu_add_line(ent, "BFG10k", 10);
+	menu_add_line(ent, "20mm Cannon", 12);
+	menu_add_line(ent, "Blaster", 13);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, va("Respawn: %s", GetRespawnString(ent)), 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Exit", 99);
 
-	setmenuhandler(ent, respawnmenu_handler);
+	menu_set_handler(ent, respawnmenu_handler);
 		ent->client->menustorage.currentline = 3;
-	showmenu(ent);
+	menu_show(ent);
 }
 
 void classmenu_handler (edict_t *ent, int option)
@@ -459,7 +456,7 @@ void classmenu_handler (edict_t *ent, int option)
     }
         //don't cause an invalid class to be created (option 99 is checked as well)
     else if ((option >= CLASS_MAX) || (option < 1)) {
-        closemenu(ent);
+        menu_close(ent, true);
         return;
     }
 
@@ -510,83 +507,83 @@ void classmenu_handler (edict_t *ent, int option)
 		ent->teamnum = GetRandom(1, 2);
 
     vrx_start_reign(ent);
-	SaveCharacter(ent);
+    vrx_save_character(ent, false);
 }
 
 void OpenClassMenu (edict_t *ent, int page_num)
 {
 	int i;
 
-	if (!ShowMenu(ent))
+	if (!menu_can_show(ent))
         return;
-	clearmenu(ent);
+	menu_clear(ent);
 
 	//				xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
-	addlinetomenu(ent, "Please select your", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, "character class:", MENU_GREEN_CENTERED);
-    addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, "Please select your", MENU_GREEN_CENTERED);
+	menu_add_line(ent, "character class:", MENU_GREEN_CENTERED);
+    menu_add_line(ent, " ", 0);
 
     for (i = ((page_num - 1) * 11); i < (page_num * 11); ++i) {
         if (i < CLASS_MAX - 1)
-            addlinetomenu(ent, va("%s", vrx_get_class_string(i + 1)), i + 1);
-        else addlinetomenu(ent, " ", 0);
+            menu_add_line(ent, va("%s", vrx_get_class_string(i + 1)), i + 1);
+        else menu_add_line(ent, " ", 0);
     }
 
-    addlinetomenu(ent, " ", 0);
-    if (i < CLASS_MAX - 1) addlinetomenu(ent, "Next", (page_num * 1000) + 2);
-    addlinetomenu(ent, "Back", (page_num * 1000) + 1);
-    addlinetomenu(ent, "Exit", 99);
+    menu_add_line(ent, " ", 0);
+    if (i < CLASS_MAX - 1) menu_add_line(ent, "Next", (page_num * 1000) + 2);
+    menu_add_line(ent, "Back", (page_num * 1000) + 1);
+    menu_add_line(ent, "Exit", 99);
 
-    setmenuhandler(ent, classmenu_handler);
+    menu_set_handler(ent, classmenu_handler);
     if (CLASS_MAX - 1 > 11)
         ent->client->menustorage.currentline = 15;
     else ent->client->menustorage.currentline = 5 + i;
-    showmenu(ent);
+    menu_show(ent);
 }
 
 void masterpw_handler (edict_t *ent, int option)
 {
-	closemenu(ent);
+	menu_close(ent, true);
 }
 
 void OpenMasterPasswordMenu (edict_t *ent)
 {
-	if (!ShowMenu(ent))
+	if (!menu_can_show(ent))
         return;
-	clearmenu(ent);
+	menu_clear(ent);
 
-	addlinetomenu(ent, "Master Password", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, "Master Password", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
 
 	if (strcmp(ent->myskills.email, ""))
 	{
-		addlinetomenu(ent, "A master password has", 0);
-		addlinetomenu(ent, "already been set and can't", 0);
-		addlinetomenu(ent, "be changed!", 0);
-		addlinetomenu(ent, " ", 0);
-		addlinetomenu(ent, " ", 0);
-		addlinetomenu(ent, " ", 0);
+		menu_add_line(ent, "A master password has", 0);
+		menu_add_line(ent, "already been set and can't", 0);
+		menu_add_line(ent, "be changed!", 0);
+		menu_add_line(ent, " ", 0);
+		menu_add_line(ent, " ", 0);
+		menu_add_line(ent, " ", 0);
 	}
 	else
 	{
 		// open prompt for password
 		stuffcmd(ent, "messagemode\n");
 
-		addlinetomenu(ent, "Please enter a master", 0);
-		addlinetomenu(ent, "password above. If you", 0);
-		addlinetomenu(ent, "forget your normal", 0);
-		addlinetomenu(ent, "password, you can use", 0);
-		addlinetomenu(ent, "this one to recover your", 0);
-		addlinetomenu(ent, "character.", 0);
+		menu_add_line(ent, "Please enter a master", 0);
+		menu_add_line(ent, "password above. If you", 0);
+		menu_add_line(ent, "forget your normal", 0);
+		menu_add_line(ent, "password, you can use", 0);
+		menu_add_line(ent, "this one to recover your", 0);
+		menu_add_line(ent, "character.", 0);
 	}
 
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Close", 1);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Close", 1);
 
-	setmenuhandler(ent, masterpw_handler);
+	menu_set_handler(ent, masterpw_handler);
 	ent->client->menustorage.currentline = 10;
 	ent->client->menustorage.menu_index = MENU_MASTER_PASSWORD;
-	showmenu(ent);
+	menu_show(ent);
 }
 
 void generalmenu_handler (edict_t *ent, int option)
@@ -606,65 +603,65 @@ void generalmenu_handler (edict_t *ent, int option)
 	case 11: ShowVoteModeMenu(ent); break;
 	case 12: ShowHelpMenu(ent, 0); break;
 	case 13: Cmd_Armory_f(ent, 31); break;
-	default: closemenu(ent);
+	default: menu_close(ent, true);
 	}
 }
 
 void OpenGeneralMenu (edict_t *ent)
 {
-	if (!ShowMenu(ent))
+	if (!menu_can_show(ent))
         return;
-	clearmenu(ent);
+	menu_clear(ent);
 
 		//				xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
-	addlinetomenu(ent, "Welcome to Vortex!", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, "Please choose a sub-menu.", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, "Welcome to Vortex!", MENU_GREEN_CENTERED);
+	menu_add_line(ent, "Please choose a sub-menu.", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
 	
 	if (!ent->myskills.speciality_points)
-		addlinetomenu(ent, "Upgrade abilities", 1);
+		menu_add_line(ent, "Upgrade abilities", 1);
 	else
-		addlinetomenu(ent, va("Upgrade abilities (%d)", ent->myskills.speciality_points), 1);
+		menu_add_line(ent, va("Upgrade abilities (%d)", ent->myskills.speciality_points), 1);
 	
 	if (!vrx_is_morphing_polt(ent))
 	{
 		if (!ent->myskills.weapon_points)
-			addlinetomenu(ent, "Upgrade weapons", 2);
+			menu_add_line(ent, "Upgrade weapons", 2);
 		else
-			addlinetomenu(ent, va("Upgrade weapons (%d)", ent->myskills.weapon_points), 2);
+			menu_add_line(ent, va("Upgrade weapons (%d)", ent->myskills.weapon_points), 2);
 	}
 	if (!ent->myskills.talents.talentPoints)
-		addlinetomenu(ent, "Upgrade talents", 3);
+		menu_add_line(ent, "Upgrade talents", 3);
 	else
-        addlinetomenu(ent, va("Upgrade talents (%d)", ent->myskills.talents.talentPoints), 3);
+        menu_add_line(ent, va("Upgrade talents (%d)", ent->myskills.talents.talentPoints), 3);
 
-    addlinetomenu(ent, " ", 0);
+    menu_add_line(ent, " ", 0);
     if (!vrx_is_morphing_polt(ent) &&
         ent->myskills.class_num != CLASS_KNIGHT)
-        addlinetomenu(ent, "Set respawn weapon", 4);
-    addlinetomenu(ent, "Set master password", 5);
-    addlinetomenu(ent, "Show character info", 6);
-    addlinetomenu(ent, "Access the armory", 7);
-    addlinetomenu(ent, "Access your items", 8);
+        menu_add_line(ent, "Set respawn weapon", 4);
+    menu_add_line(ent, "Set master password", 5);
+    menu_add_line(ent, "Show character info", 6);
+    menu_add_line(ent, "Access the armory", 7);
+    menu_add_line(ent, "Access your items", 8);
 
     if (!invasion->value) // az: don't need this there.
-        addlinetomenu(ent, "Form alliance", 9);
+        menu_add_line(ent, "Form alliance", 9);
 
-    addlinetomenu(ent, "Trade items", 10);
-    addlinetomenu(ent, "Vote for map/mode", 11);
-    addlinetomenu(ent, "Help", 12);
+    menu_add_line(ent, "Trade items", 10);
+    menu_add_line(ent, "Vote for map/mode", 11);
+    menu_add_line(ent, "Help", 12);
 
 #ifndef REMOVE_RESPAWNS
     if (pregame_time->value > level.time || trading->value) // we in pregame? you can buy respawns
     {
         if (ent->myskills.class_num != CLASS_KNIGHT && !vrx_is_morphing_polt(ent)) // A class that needs respawns?
-            addlinetomenu(ent, va("Buy Respawns (%d)", ent->myskills.weapon_respawns), 13);
+            menu_add_line(ent, va("Buy Respawns (%d)", ent->myskills.weapon_respawns), 13);
     }
 #endif
 
-	setmenuhandler(ent, generalmenu_handler);
+	menu_set_handler(ent, generalmenu_handler);
 	ent->client->menustorage.currentline = 4;
-	showmenu(ent);
+	menu_show(ent);
 }
 
 char *G_GetTruncatedIP (edict_t *player);
@@ -695,9 +692,9 @@ void OpenWhoisMenu (edict_t *ent)
 {
 	edict_t *player;
 
-	if (!ShowMenu(ent))
+	if (!menu_can_show(ent))
         return;
-	clearmenu(ent);
+	menu_clear(ent);
 
 	if ((player = FindPlayerByName(gi.argv(1))) == NULL)
 	{
@@ -708,36 +705,36 @@ void OpenWhoisMenu (edict_t *ent)
 	if (G_IsSpectator(player))
 		return;
 
-	addlinetomenu(ent, "Whois Information", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, "", 0);
+	menu_add_line(ent, "Whois Information", MENU_GREEN_CENTERED);
+	menu_add_line(ent, "", 0);
 
 	// print name and class
-    addlinetomenu(ent, va("%s (%s)", player->client->pers.netname,
+    menu_add_line(ent, va("%s (%s)", player->client->pers.netname,
                           vrx_get_class_string(player->myskills.class_num)), MENU_GREEN_CENTERED);
 
 	// print IP address
 	if (ent->myskills.administrator)
-		addlinetomenu(ent, player->client->pers.current_ip, MENU_GREEN_CENTERED);
+		menu_add_line(ent, player->client->pers.current_ip, MENU_GREEN_CENTERED);
 	else
-		addlinetomenu(ent, G_GetTruncatedIP(player), MENU_GREEN_CENTERED);
+		menu_add_line(ent, G_GetTruncatedIP(player), MENU_GREEN_CENTERED);
 
-	addlinetomenu(ent, "", 0);
+	menu_add_line(ent, "", 0);
 
-	addlinetomenu(ent, va("Admin:        %s", player->myskills.administrator?"Yes":"No"), 0);
-	addlinetomenu(ent, va("Owner:        %s", player->myskills.owner), 0);
-	addlinetomenu(ent, va("Status:       %s", GetStatusString(player)), 0);
-	addlinetomenu(ent, va("Team:         %s", GetTeamString(player)), 0);
-	addlinetomenu(ent, va("Level:        %d", player->myskills.level), 0);
-	addlinetomenu(ent, va("Experience:   %d", player->myskills.experience), 0);
-	addlinetomenu(ent, va("Hit Percent:  %d%c", (int)(100*((float)player->myskills.shots_hit/player->myskills.shots)), '%'), 0);
-	addlinetomenu(ent, va("Frag Percent: %d%c", (int)(100*((float)player->myskills.frags/player->myskills.fragged)), '%'), 0);
-	addlinetomenu(ent, va("Played Hours: %.1f", (float)player->myskills.playingtime/3600), 0);
+	menu_add_line(ent, va("Admin:        %s", player->myskills.administrator?"Yes":"No"), 0);
+	menu_add_line(ent, va("Owner:        %s", player->myskills.owner), 0);
+	menu_add_line(ent, va("Status:       %s", GetStatusString(player)), 0);
+	menu_add_line(ent, va("Team:         %s", GetTeamString(player)), 0);
+	menu_add_line(ent, va("Level:        %d", player->myskills.level), 0);
+	menu_add_line(ent, va("Experience:   %d", player->myskills.experience), 0);
+	menu_add_line(ent, va("Hit Percent:  %d%c", (int)(100*((float)player->myskills.shots_hit/player->myskills.shots)), '%'), 0);
+	menu_add_line(ent, va("Frag Percent: %d%c", (int)(100*((float)player->myskills.frags/player->myskills.fragged)), '%'), 0);
+	menu_add_line(ent, va("Played Hours: %.1f", (float)player->myskills.playingtime/3600), 0);
 
 
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Exit", 1);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Exit", 1);
 
-	setmenuhandler(ent, masterpw_handler);//FIXME: is this safe?
+	menu_set_handler(ent, masterpw_handler);//FIXME: is this safe?
 		ent->client->menustorage.currentline = 16;
-	showmenu(ent);
+	menu_show(ent);
 }

@@ -414,7 +414,7 @@ void DeathmatchScoreboard(edict_t *ent)
 {
 	//GHz START
 	if (ent->client->menustorage.menu_active)
-		closemenu(ent);
+		menu_close(ent, true);
 	//GHz END
 	DeathmatchScoreboardMessage(ent, ent->enemy);
 	gi.unicast(ent, false);

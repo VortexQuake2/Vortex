@@ -15,7 +15,7 @@ void DoMaplistFilename(int mode, char* filename)
 {
 	sprintf(filename, "%s/settings/maplists/", game_path->string);
 
-	switch(mode)
+	switch (mode)
 	{
 	case MAPMODE_PVP:
 		strcat(filename, "maplist_PVP.txt");
@@ -50,18 +50,17 @@ void DoMaplistFilename(int mode, char* filename)
 	}
 }
 
-int v_LoadMapList(int mode)
+int vrx_load_map_list(int mode)
 {
-	FILE *fptr;
-	v_maplist_t *maplist;
+	v_maplist_t* maplist;
 	char filename[256];
 	int iterator = 0;
-	
+
 	//determine path
 
 	DoMaplistFilename(mode, &filename[0]);
 
-	switch(mode)
+	switch (mode)
 	{
 	case MAPMODE_PVP:
 		maplist = &maplist_PVP;
@@ -94,66 +93,105 @@ int v_LoadMapList(int mode)
 		maplist = &maplist_TBI;
 		break;
 	default:
-		gi.dprintf("ERROR in v_LoadMapList(). Incorrect map mode. (%d)\n", mode);
+		gi.dprintf("ERROR in vrx_load_map_list(). Incorrect map mode. (%d)\n", mode);
 		return 0;
 	}
 
 	//gi.dprintf("mode = %d\n", mode);
 
 
-		if ((fptr = fopen(filename, "r")) != NULL)
-		{
-			char buf[MAX_INFO_STRING], *s;
+	FILE* fptr = fopen(filename, "r");
+	if (fptr == NULL)
+	{
+		gi.dprintf("Error loading map file: %s\n", filename);
+		maplist->nummaps = 0;
+		return 0;
+	}
 
-			while (fgets(buf, MAX_INFO_STRING, fptr) != NULL)
+	char buf[MAX_INFO_STRING];
+
+	while (fgets(buf, MAX_INFO_STRING, fptr) != NULL)
+	{
+		if (iterator >= MAX_MAPS)
+		{
+			gi.dprintf("Maplist for mode %d is too big - skipping extra entries. \n", mode);
+			break;
+		}
+
+		char* s = buf;
+
+		// skip spaces
+		s += strspn(s, " \r\n\t");
+
+		// remove comments
+		char* dismiss = strstr(s, "//");
+		if (dismiss) // substring found!
+			dismiss[0] = 0;
+
+		// tokenize string using comma as separator
+		const size_t len = strlen(s);
+		int column = 0;
+
+		if (len == 0) // empty line
+			continue;
+
+		const char* end = buf + len;
+		do
+		{
+			char buf_item[MAX_INFO_STRING];
+
+			// left trim
+			const size_t ltrim_index = strspn(s, " \r\n\t");
+			s += ltrim_index;
+
+			// skip to comma
+			const size_t comma_pos = strcspn(s, ",");
+			strncpy(buf_item, s, comma_pos);
+			buf_item[comma_pos] = 0;
+
+			// right trim
+			// no entry is supposed to have any spaces, so something like "q2dm1  20  "
+			// will make buf_item "q2dm1" instead of "q2dm1  20". This is fine.
+			const size_t rtrim_index = strcspn(buf_item, " \r\n\t");
+			buf_item[rtrim_index] = 0; // null terminate
+
+			// advance string
+			// skip current column ',' marker.
+			s += comma_pos;
+			if (s[0] == ',') s++; 
+
+			// sanity check and parse
+			if (strlen(buf_item) > 0)
 			{
-			    if (iterator >= MAX_MAPS)
-                {
-			        gi.dprintf("Maplist for mode %d is too big - skipping extra entries. \n", mode);
-			        break;
-                }
-
-				// tokenize string using comma as separator
-				if ((s = strtok(buf, ",")) != NULL)
+				switch (column)
 				{
-					// copy map name to list
-					strcpy(maplist->maps[iterator].name, s);
-
-					// terminate
-					int i = strcspn(s, " \r\n");
-					maplist->maps[iterator].name[i] = 0;
+				case 0:
+					strcpy(maplist->maps[iterator].name, buf_item);
+					break;
+				case 1:
+					// fixme: use strtol to report errors
+					maplist->maps[iterator].monsters = atoi(buf_item);
+					break;
+				case 2:
+					maplist->maps[iterator].min_players = atoi(buf_item);
+					break;
+				case 3:
+					maplist->maps[iterator].max_players = atoi(buf_item);
+					break;
+				default:
+					gi.dprintf("unrecognized column at line %d loading mode %d\n", iterator, mode);
+					break;
 				}
-				else
-				{
-					// couldn't find first token, fail
-					gi.dprintf("Error loading map file: %s\n", filename);
-					maplist->nummaps = 0;
-					fclose(fptr);
-					return 0;
-				}
-
-				// find next token
-				if ((s = strtok(NULL, ",")) != NULL)
-				{
-				    // terminate for atoi
-                    s[strcspn(s, " \r\n")] = 0;
-
-					// copy monster value to list
-					maplist->maps[iterator].monsters = atoi(s);
-				} else {
-					maplist->maps[iterator].monsters = 0; // use dm_monsters
-				}
-
-				++iterator;
 			}
-			fclose(fptr);
-			maplist->nummaps = iterator;
-		}
-		else
-		{
-			gi.dprintf("Error loading map file: %s\n", filename);
-			maplist->nummaps = 0;
-		}
+
+			column++;
+		} while (s < end);
+
+		++iterator;
+	}
+
+	fclose(fptr);
+	maplist->nummaps = iterator;
 
 
 	return maplist->nummaps;

@@ -16,21 +16,22 @@
 #define MENU_MULTI_UPGRADE		3
 #define MENU_COMBAT_PREFERENCES	4
 
-void addlinetomenu (edict_t *ent,char *line,int option);
-void clearmenu (edict_t *ent);
-void setmenuhandler (edict_t *ent,void (*optionselected)(edict_t *ent,int option));
-void clearallmenus (void);
+void menu_add_line (edict_t *ent,char *line,int option);
+void menu_clear (edict_t *ent);
+void menu_set_handler (edict_t *ent,void (*optionselected)(edict_t *ent,int option));
+void menu_set_close_handler(edict_t* ent, void (*onclose)(edict_t* ent));
+void menu_close_all (void);
 
-void menuup (edict_t *ent);
-void menudown (edict_t *ent);
-void menuselect (edict_t *ent);
+void menu_up (edict_t *ent);
+void menu_down (edict_t *ent);
+void menu_select (edict_t *ent);
 
-void initmenu (edict_t *ent);
-void showmenu (edict_t *ent);
-void closemenu (edict_t *ent);
+void menu_init (edict_t *ent);
+void menu_show (edict_t *ent);
+void menu_close (edict_t *ent, qboolean do_close_event);
 
-qboolean ShowMenu (edict_t *ent);
-qboolean InMenu (edict_t *ent,int index, void (*optionselected)(edict_t *ent,int option));
+qboolean menu_can_show (edict_t *ent);
+qboolean menu_active (edict_t *ent,int index, void (*optionselected)(edict_t *ent,int option));
 
 typedef struct menumsg_s
 {
@@ -42,6 +43,8 @@ typedef struct menusystem_s
 {
 	void 		(*optionselected)(edict_t *ent,int option);
 	void		(*oldmenuhandler)(edict_t *ent,int option);
+	void 		(*onclose)(edict_t* ent);
+	qboolean cancel_close_event;
 	qboolean 	menu_active;
 	qboolean	displaymsg;
 	int			oldline;

@@ -1123,7 +1123,7 @@ int Get_KindWeapon (gitem_t	*it)
 	else return WEAP_BLASTER;
 }
 
-edict_t *G_GetClient(edict_t *ent)
+edict_t *G_GetClient(const edict_t *ent)
 {
     if (ent == NULL)
         return NULL;
@@ -1144,7 +1144,7 @@ edict_t *G_GetClient(edict_t *ent)
 		return NULL;
 }
 
-edict_t *G_GetSummoner (edict_t *ent)
+edict_t *G_GetSummoner (const edict_t *ent)
 {
 	if (!ent->inuse)
 		return NULL;
@@ -1353,7 +1353,7 @@ qboolean G_ClearPath (edict_t *ignore1, edict_t *ignore2, int mask, vec3_t spot1
 	return false;
 }
 
-void G_EntViewPoint (edict_t *ent, vec3_t point)
+void G_EntViewPoint (const edict_t *ent, vec3_t point)
 {
 	vec3_t	start;
 
@@ -1405,7 +1405,7 @@ void G_EntViewPoint (edict_t *ent, vec3_t point)
 
 // returns true if there are no obstructions between shooter and target
 // start is optional and is only used if shooter is NULL
-qboolean G_ClearShot (edict_t *shooter, vec3_t start, edict_t *target)
+qboolean G_ClearShot (const edict_t *shooter, vec3_t start, const edict_t *target)
 {
 	vec3_t org, end;
 	trace_t tr;
@@ -1425,7 +1425,7 @@ qboolean G_ClearShot (edict_t *shooter, vec3_t start, edict_t *target)
 	return false;
 }
 
-void G_EntMidPoint (edict_t *ent, vec3_t point)
+void G_EntMidPoint (const edict_t *ent, vec3_t point)
 {
 	int	midheight;
 
@@ -1545,7 +1545,7 @@ qboolean nearfov (edict_t *ent, edict_t *other, int vertical_degrees, int horizo
 	return true;
 }
 
-char *CryptString (char *text, qboolean decrypt)
+char *vrx_encrypt_string (char *text, qboolean decrypt)
 {
 	int i;
 

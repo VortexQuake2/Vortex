@@ -268,7 +268,7 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
             damage = vrx_apply_morph_talent_damage(targ, attacker, damage);
 
             // az: apply cocoon bonus acquired unmorphed. 
-            edict_t *dclient = PM_GetPlayer(attacker);
+            const edict_t *dclient = PM_GetPlayer(attacker);
             if (dclient->cocoon_time > level.time && 
                 attacker->cocoon_time < level.time /* don't let it stack */)
                 damage *= dclient->cocoon_factor;
@@ -428,7 +428,7 @@ float vrx_apply_talent_retaliation_damage(const edict_t *attacker, float damage)
 }
 
 float vrx_apply_strength_tech(const edict_t *attacker, float damage) {
-    edict_t* dclient = PM_GetPlayer(attacker);
+    const edict_t* dclient = PM_GetPlayer(attacker);
 
     if (dclient)
         attacker = dclient;
@@ -550,7 +550,7 @@ float vrx_apply_combat_experience_damage_increase(const edict_t *targ, float dam
 }
 
 void vrx_apply_resistance(const edict_t *targ, float *Resistance) {
-    edict_t *dclient = PM_GetPlayer(targ);
+    const edict_t *dclient = PM_GetPlayer(targ);
     float temp = 1.0f;
 
     if (dclient) {
@@ -661,7 +661,7 @@ void vrx_apply_pack_animal(const edict_t *targ, float temp, float *Resistance) {
 float vrx_apply_cocoon_defense_bonus(const edict_t *targ, float Resistance) {
     float cocoon_time = targ->cocoon_time;
     float cocoon_factor = targ->cocoon_factor;
-    edict_t* dclient = PM_GetPlayer(targ);
+    const edict_t* dclient = PM_GetPlayer(targ);
 
     // az: apply cocoon to player tank if owner has it
     if (dclient) {
@@ -682,7 +682,7 @@ float vrx_apply_detector_resistence(const edict_t *targ, const edict_t *attacker
 }
 
 float vrx_apply_resistance_tech(const edict_t *targ, float Resistance) {
-    edict_t *dclient = PM_GetPlayer(targ);
+    const edict_t *dclient = PM_GetPlayer(targ);
 
     // az apply resist tech to tank poltergeists
     if (dclient) {

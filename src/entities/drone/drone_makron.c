@@ -9,7 +9,7 @@ Makron -- Final Boss
 #include "g_local.h"
 #include "../../quake2/monsterframes/m_boss32.h"
 
-qboolean visible (edict_t *self, edict_t *other);
+qboolean visible (const edict_t *self, const edict_t *other);
 
 void MakronRailgun (edict_t *self);
 void MakronHyperblaster (edict_t *self);

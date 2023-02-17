@@ -68,7 +68,7 @@ char *V_GetClassSkin(edict_t *ent) {
     return out;
 }
 
-qboolean V_AssignClassSkin(edict_t *ent, char *s) {
+qboolean vrx_assign_character_skin(edict_t *ent, char *s) {
     int playernum = ent - g_edicts - 1;
     char *p;
     char t[64];

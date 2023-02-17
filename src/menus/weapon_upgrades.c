@@ -74,7 +74,7 @@ void generalWeaponMenu_handler(edict_t *ent, int option)
 	//Are we just navigating?
 	if (option == 6666)
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 	else if (option >= 7777)
@@ -101,7 +101,7 @@ void generalWeaponMenu_handler(edict_t *ent, int option)
 	if (ent->myskills.weapon_points < 1)
 	{
 		safe_cprintf(ent, PRINT_HIGH, "You are out of weapon points.\n");
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 
@@ -124,17 +124,17 @@ void OpenGeneralWeaponMenu (edict_t *ent, int lastline)
 	int modIndex = (lastline % 100);
 	int i;
 
-	if (!ShowMenu(ent))
+	if (!menu_can_show(ent))
 		return;
-	clearmenu(ent);
+	menu_clear(ent);
 
-	addlinetomenu(ent, va("%s\n(%d%c)", GetWeaponString(WeaponIndex), V_WeaponUpgradeVal(ent, WeaponIndex), '%'), MENU_GREEN_CENTERED);
-	addlinetomenu(ent, va("Weapon points left: %d", ent->myskills.weapon_points), MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, " Select the weapon", 0);
-	addlinetomenu(ent, " attribute you want to", 0);
-	addlinetomenu(ent, " improve upon.", 0);
-	addlinetomenu(ent, " ", 0);
+	menu_add_line(ent, va("%s\n(%d%c)", GetWeaponString(WeaponIndex), V_WeaponUpgradeVal(ent, WeaponIndex), '%'), MENU_GREEN_CENTERED);
+	menu_add_line(ent, va("Weapon points left: %d", ent->myskills.weapon_points), MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " Select the weapon", 0);
+	menu_add_line(ent, " attribute you want to", 0);
+	menu_add_line(ent, " improve upon.", 0);
+	menu_add_line(ent, " ", 0);
 
 	for (i = 0; i < MAX_WEAPONMODS; ++i)
 	{
@@ -146,21 +146,21 @@ void OpenGeneralWeaponMenu (edict_t *ent, int lastline)
 		padRight(sMod, 15);
 		strcat(sMod, va("%d", level));
 		padRight(sMod, 18);
-		addlinetomenu(ent, va("%s[%d]", sMod, cur), ((WeaponIndex+10)*100) + i + 1);
+		menu_add_line(ent, va("%s[%d]", sMod, cur), ((WeaponIndex+10)*100) + i + 1);
 	}
 		
-	setmenuhandler(ent, generalWeaponMenu_handler);
+	menu_set_handler(ent, generalWeaponMenu_handler);
 
 	if (modIndex)
 		ent->client->menustorage.currentline = modIndex + 7;
 	else
 		ent->client->menustorage.currentline = 14;
 
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Previous Menu", 7777 + WeaponIndex);
-	addlinetomenu(ent, "Exit", 6666);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Previous Menu", 7777 + WeaponIndex);
+	menu_add_line(ent, "Exit", 6666);
 
-	showmenu(ent);
+	menu_show(ent);
 }
 
 //************************************************************************************************
@@ -172,7 +172,7 @@ void weaponmenu_handler (edict_t *ent, int option)
     int weap_num = (option/100)-10;
 	if (weap_num > MAX_WEAPONS || weap_num < 0)
 	{
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 
@@ -191,17 +191,16 @@ void OpenWeaponUpgradeMenu (edict_t *ent, int lastline)
 		return;
 	}
 
-	if (!ShowMenu(ent))
+	if (!menu_can_show(ent))
         return;
-    clearmenu(ent);
+    menu_clear(ent);
 
-    addlinetomenu(ent, "Weapon Upgrades", MENU_GREEN_CENTERED);
-    addlinetomenu(ent, " ", 0);
-    addlinetomenu(ent, "Select the weapon you", 0);
-    addlinetomenu(ent, "want to upgrade:", 0);
-    addlinetomenu(ent, " ", 0);
+    menu_add_line(ent, "Weapon Upgrades", MENU_GREEN_CENTERED);
+    menu_add_line(ent, " ", 0);
+    menu_add_line(ent, "Select the weapon you", 0);
+    menu_add_line(ent, "want to upgrade:", 0);
+    menu_add_line(ent, " ", 0);
 
-    // todo: unuglyfy
     qboolean is_knight = ent->myskills.class_num == CLASS_KNIGHT;
 
     for (i = 0; i < MAX_WEAPONS; ++i)
@@ -213,12 +212,12 @@ void OpenWeaponUpgradeMenu (edict_t *ent, int lastline)
 
         padRight(weaponString, 18);
         if (!is_knight || (is_knight && is_sword))
-            addlinetomenu(ent, va("%s%d%c", weaponString, V_WeaponUpgradeVal(ent, i),'%'), (i+10)*100);
+            menu_add_line(ent, va("%s%d%c", weaponString, V_WeaponUpgradeVal(ent, i),'%'), (i+10)*100);
     }
 
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Exit", 6666);
-	setmenuhandler(ent, weaponmenu_handler);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Exit", 6666);
+	menu_set_handler(ent, weaponmenu_handler);
 	if (lastline)
 		ent->client->menustorage.currentline = lastline + 5;
 	else {
@@ -227,7 +226,7 @@ void OpenWeaponUpgradeMenu (edict_t *ent, int lastline)
 	    else
             ent->client->menustorage.currentline = 8;
     }
-	showmenu(ent);
+	menu_show(ent);
 
 	// try to shortcut to chat-protect mode
 	if (ent->client->idle_frames < qf2sf(CHAT_PROTECT_FRAMES-51))

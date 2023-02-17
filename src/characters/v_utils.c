@@ -1461,7 +1461,7 @@ void vrx_change_class(char *playername, int newclass, int msgtype) {
         vrx_check_for_levelup(player, false);
 
         //Save the player.
-        V_CommitCharacterData(player);
+        vrx_commit_character(player, false);
         return;
     }
     gi.dprintf("Can't find player: %s\n", playername);
@@ -2074,7 +2074,7 @@ void vrx_reset_player_state(edict_t *ent) {
     // if teamplay mode, set team skin
     if (ctf->value || domination->value || tbi->value) {
         char *s = Info_ValueForKey(ent->client->pers.userinfo, "skin");
-        V_AssignClassSkin(ent, s);
+        vrx_assign_character_skin(ent, s);
 
         // drop the flag
         dom_dropflag(ent, FindItem("Flag"));

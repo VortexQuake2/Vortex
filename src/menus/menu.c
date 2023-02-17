@@ -1,7 +1,7 @@
 #include "g_local.h"
 
 // v3.12
-qboolean InMenu (edict_t *ent,int index, void (*optionselected)(edict_t *ent,int option))
+qboolean menu_active (edict_t *ent,int index, void (*optionselected)(edict_t *ent,int option))
 {
 	// don't need to be here if there's no menu open!
 	if (!ent->client->menustorage.menu_active)
@@ -13,7 +13,7 @@ qboolean InMenu (edict_t *ent,int index, void (*optionselected)(edict_t *ent,int
 	return (ent->client->menustorage.optionselected == optionselected);
 }
 
-void addlinetomenu (edict_t *ent,char *line,int option)
+void menu_add_line (edict_t *ent,char *line,int option)
 {
 	if (ent->client->menustorage.menu_active) // checks to see if the menu is showing
 		return;
@@ -26,7 +26,7 @@ void addlinetomenu (edict_t *ent,char *line,int option)
 	ent->client->menustorage.messages[ent->client->menustorage.num_of_lines].option = option;
 }
 
-void clearmenu(edict_t *ent)
+void menu_clear(edict_t *ent)
 {
 	int		i = 0;
 
@@ -50,6 +50,10 @@ void clearmenu(edict_t *ent)
 		ent->client->menustorage.oldline = ent->client->menustorage.currentline;
 	//GHz END
 	ent->client->menustorage.optionselected = NULL;
+	// az begin
+	ent->client->menustorage.onclose = NULL;
+	ent->client->menustorage.cancel_close_event = false;
+	// az end
 	ent->client->menustorage.currentline = 0;
 	ent->client->menustorage.num_of_lines = 0;
 	ent->client->menustorage.menu_index = 0; // 3.45
@@ -57,13 +61,18 @@ void clearmenu(edict_t *ent)
 
 void tradeconfirmation_handler (edict_t *ent, int option);
 void itemmenu_handler (edict_t *ent, int option);
-void setmenuhandler(edict_t *ent, void (*optionselected)(edict_t *ent,int option))
+void menu_set_handler(edict_t *ent, void (*optionselected)(edict_t *ent,int option))
 {
 	ent->client->menustorage.optionselected=optionselected;
 }
 
+void menu_set_close_handler(edict_t* ent, void(* onclose)(edict_t* ent))
+{
+	ent->client->menustorage.onclose = onclose;
+}
+
 //GHz START
-int topofmenu (edict_t *ent)
+int menu_top (edict_t *ent)
 {
 	int		i, option;
 
@@ -75,7 +84,7 @@ int topofmenu (edict_t *ent)
 	return i;
 }
 
-int bottomofmenu (edict_t *ent)
+int menu_bottom (edict_t *ent)
 {
 	int		i, option;
 
@@ -88,7 +97,7 @@ int bottomofmenu (edict_t *ent)
 }
 //GHz END
 
-void menudown(edict_t *ent)
+void menu_down(edict_t *ent)
 {
 	int	option;
 
@@ -102,15 +111,15 @@ void menudown(edict_t *ent)
 		if (ent->client->menustorage.currentline < ent->client->menustorage.num_of_lines)
 			ent->client->menustorage.currentline++;
 		else
-			ent->client->menustorage.currentline = topofmenu(ent);
+			ent->client->menustorage.currentline = menu_top(ent);
 		option = ent->client->menustorage.messages[ent->client->menustorage.currentline].option;
 	}
 	while (option == 0 || option == MENU_WHITE_CENTERED || option == MENU_GREEN_CENTERED 
 		|| option == MENU_GREEN_RIGHT || option == MENU_GREEN_LEFT);
-	showmenu(ent);
+	menu_show(ent);
 }
 
-void menuup(edict_t *ent)
+void menu_up(edict_t *ent)
 {
 	int	option;
 
@@ -121,45 +130,55 @@ void menuup(edict_t *ent)
 
 	do
 	{
-		if (ent->client->menustorage.currentline > topofmenu(ent))
+		if (ent->client->menustorage.currentline > menu_top(ent))
 			ent->client->menustorage.currentline--;
 		else
-			ent->client->menustorage.currentline = bottomofmenu(ent);
+			ent->client->menustorage.currentline = menu_bottom(ent);
 		option = ent->client->menustorage.messages[ent->client->menustorage.currentline].option;
 	}
 	while (option == 0 || option == MENU_WHITE_CENTERED || option == MENU_GREEN_CENTERED 
 		|| option == MENU_GREEN_RIGHT || option == MENU_GREEN_LEFT);
-	showmenu(ent);
+	menu_show(ent);
 }
 
 /*
 =============
-menuselect
+menu_select
 calls the menu handler with the currently selected option
 =============
 */
-void menuselect(edict_t *ent)
+void menu_select(edict_t *ent)
 {
 	int i;
 	//GHz START
 	if (debuginfo->value)
-		gi.dprintf("DEBUG: menuselect()\n");
+		gi.dprintf("DEBUG: menu_select()\n");
 	//GHz END
 
 	i = ent->client->menustorage.messages[ent->client->menustorage.currentline].option;
-	closemenu(ent); // close the menu as a selection has been made
+
+	// close the menu as a selection has been made.
+	// also cache "cancel" so it doesn't get ignored.
+	menu_close(ent, false);
+
 	// call the menu handler with the current option value
 	ent->client->menustorage.optionselected(ent, i);
-//	gi.dprintf("menuselect() at line %d\n", ent->client->menustorage.currentline);
+
+	if (ent->client->menustorage.onclose && !ent->client->menustorage.cancel_close_event)
+		ent->client->menustorage.onclose(ent);
+
+	/* consume the cancel close event flag */
+	if (ent->client->menustorage.cancel_close_event)
+		ent->client->menustorage.cancel_close_event = false;
 }
 
 /*
 =============
-initmenu
+menu_init
 clears all menus for this client
 =============
 */
-void initmenu (edict_t *ent)
+void menu_init (edict_t *ent)
 {
 	int i;
 
@@ -175,15 +194,17 @@ void initmenu (edict_t *ent)
 	ent->client->menustorage.currentline = 0;
 	ent->client->menustorage.num_of_lines = 0;
 	ent->client->menustorage.menu_index = 0; // 3.45
+	ent->client->menustorage.onclose = NULL;
+	ent->client->menustorage.cancel_close_event = false;
 }
 
 /*
 =============
-ShowMenu
+menu_can_show
 used every frame to display a player's menu
 =============
 */
-void showmenu(edict_t *ent)
+void menu_show(edict_t *ent)
 {
 	int		i, j;  // general purpose integer for temporary use :)
 	char	finalmenu[1024]; // where the control strings for the menu are assembled.
@@ -191,10 +212,10 @@ void showmenu(edict_t *ent)
 	int		center;
 
 	if (debuginfo->value)
-		gi.dprintf("DEBUG: showmenu()\n");
+		gi.dprintf("DEBUG: menu_show()\n");
 	if ((ent->client->menustorage.num_of_lines < 1) || (ent->client->menustorage.num_of_lines > MAX_LINES))
 	{
-		gi.dprintf("WARNING: showmenu() called with %d lines\n", ent->client->menustorage.num_of_lines);
+		gi.dprintf("WARNING: menu_show() called with %d lines\n", ent->client->menustorage.num_of_lines);
 		return;
 	}
 
@@ -251,30 +272,33 @@ void showmenu(edict_t *ent)
 	gi.WriteString (finalmenu);
 	gi.unicast (ent, true);
 
-	//gi.dprintf("showmenu() at line %d\n", ent->client->menustorage.currentline);
+	//gi.dprintf("menu_show() at line %d\n", ent->client->menustorage.currentline);
 }
 
-void closemenu (edict_t *ent)
+void menu_close (edict_t *ent, qboolean do_close_event)
 {
 	if (debuginfo->value)
-		gi.dprintf("DEBUG: closemenu()\n");
+		gi.dprintf("DEBUG: menu_close()\n");
 
-	clearmenu(ent); // reset all menu variables and strings
+	menu_clear(ent); // reset all menu variables and strings
 	ent->client->showscores = false;
 	ent->client->menustorage.menu_active = false;
 	ent->client->menustorage.displaymsg = false;
 	ent->client->showinventory = false;
 	ent->client->trading = false; // done trading
 	ent->client->layout.dirty = true; // update the layout asap
+
+	if (ent->client->menustorage.onclose && do_close_event)
+		ent->client->menustorage.onclose(ent);
 }
 
 /*
 =============
-clearallmenus
+menu_close_all
 cycles thru all clients and resets their menus
 =============
 */
-void clearallmenus (void)
+void menu_close_all (void)
 {
 	int i;
 	edict_t *ent;
@@ -282,17 +306,17 @@ void clearallmenus (void)
 	for (i=0 ; i < game.maxclients ; i++)
 	{
 		ent = g_edicts + 1 + i;
-		closemenu(ent);
+		menu_close(ent, true);
 	}
 }
 
 /*
 =============
-ShowMenu
+menu_can_show
 returns false if the client has another menu open
 =============
 */
-qboolean ShowMenu (edict_t *ent) 
+qboolean menu_can_show (edict_t *ent) 
 {
 	if (ent->client->showscores || ent->client->showinventory
 		|| ent->client->menustorage.menu_active || ent->client->pers.scanner_active)

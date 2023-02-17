@@ -9,7 +9,7 @@ jorg
 #include "g_local.h"
 #include "../../quake2/monsterframes/m_boss31.h"
 
-qboolean visible (edict_t *self, edict_t *other);
+qboolean visible (const edict_t *self, const edict_t *other);
 void drone_ai_stand (edict_t *self, float dist);
 void drone_ai_run (edict_t *self, float dist);
 void drone_ai_walk (edict_t *self, float dist);

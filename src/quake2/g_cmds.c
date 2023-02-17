@@ -1,5 +1,6 @@
 #include "g_local.h"
 #include "../gamemodes/ctf.h"
+#include "characters/io/v_characterio.h"
 #include "monsterframes/m_player.h"
 
 //Function prototypes required for this .c file:
@@ -7,7 +8,6 @@ void Grenade_Explode (edict_t *ent);
 void Cmd_CorpseExplode(edict_t *ent);
 void Cmd_HellSpawn_f (edict_t *ent);
 void Cmd_Caltrops_f (edict_t *ent);
-void Cmd_fmedi_f(edict_t *ent);
 //End prototypes
 
 void Cmd_DetPipes_f (edict_t *ent)
@@ -248,7 +248,7 @@ void FL_make(edict_t *self)
 } 
 //K03 End
 
-char *ClientTeam (edict_t *ent)
+char *ClientTeam (const edict_t *ent)
 {
 	char		*p;
 	static char	value[512];
@@ -392,7 +392,7 @@ void SelectNextItem (edict_t *ent, int itflags)
 //GHz START
 	if (ent->client->menustorage.menu_active)
 	{
-		menudown(ent);
+		menu_down(ent);
 		return;
 	} 
 	else if (cl->chase_target) 
@@ -431,7 +431,7 @@ void SelectPrevItem (edict_t *ent, int itflags)
 //GHz START
 	if (ent->client->menustorage.menu_active)
 	{
-		menuup(ent);
+		menu_up(ent);
 		return;
 	} 
 	else if (cl->chase_target) 
@@ -1229,7 +1229,7 @@ void Cmd_InvUse_f (edict_t *ent)
 //GHz START
 	if (ent->client->menustorage.menu_active)
 	{
-		menuselect(ent);
+		menu_select(ent);
 		return;
 
 	}
@@ -1389,7 +1389,7 @@ void Cmd_InvDrop_f (edict_t *ent)
 	{
 		int index = ent->client->menustorage.messages[ent->client->menustorage.currentline].option-2;
 
-		if (InMenu(ent, MENU_SPECIAL_UPGRADES, upgradeSpecialMenu_handler) && index < 500)
+		if (menu_active(ent, MENU_SPECIAL_UPGRADES, upgradeSpecialMenu_handler) && index < 500)
 		{
 			int			i;
 			int			list_index=0;
@@ -1410,7 +1410,7 @@ void Cmd_InvDrop_f (edict_t *ent)
 				{
 					upgrade->current_level--;
 					upgrade->level--;
-					showmenu(ent);
+					menu_show(ent);
 					gi.dprintf("%d. %s [%d]\n", index, GetAbilityString(i), upgrade->current_level);
 					return;
 				}
@@ -1484,6 +1484,9 @@ void Cmd_Kill_f (edict_t *ent)
 		// spawn flag at enemy base
 		CTF_SpawnFlagAtBase(NULL, CTF_GetEnemyTeam(ent->teamnum));
 	}
+
+	// az: trigger this close function
+	menu_close(ent, true);
 
 	ent->flags &= ~FL_GODMODE;
 	ent->health = 0;
@@ -1697,7 +1700,7 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 	}
 	
 	// master password prompt
-	if (InMenu(ent, MENU_MASTER_PASSWORD, masterpw_handler) && !strcmp(ent->myskills.email, ""))
+	if (menu_active(ent, MENU_MASTER_PASSWORD, masterpw_handler) && !strcmp(ent->myskills.email, ""))
 	{
 		int	len=strlen(p);
 
@@ -1711,7 +1714,7 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 
 		strcpy(ent->myskills.email, p);
 		safe_cprintf(ent, PRINT_HIGH, "Master password has been set to %s.\n", ent->myskills.email);
-		closemenu(ent);
+		menu_close(ent, true);
 		return;
 	}
 //GHz END
@@ -2246,25 +2249,39 @@ s = gi.argv(1);
 
 void Cmd_SetOwner_f (edict_t *ent)
 {
-	char *s;
-	s = gi.argv(1);
+	char* charname = gi.argv(1);
+	char* mpw = gi.argv(2);
+
 	if (strlen(ent->myskills.owner) > 0)
 	{
 		safe_cprintf(ent, PRINT_HIGH, "%s has already been claimed by %s.\n", ent->myskills.player_name, ent->myskills.owner);
 		return;
 	}
-	else if (strlen(s) < 1)
+	else if (strlen(charname) < 1)
 	{
-		safe_cprintf(ent, PRINT_HIGH, "%s has not yet been claimed.\nCommand: owner <name>\n", ent->myskills.player_name);
+		safe_cprintf(ent, PRINT_HIGH, "%s has not yet been claimed.\nCommand: owner <name> <master password>\n", ent->myskills.player_name);
 		return;
 	}
-	if (strlen(s) >= 24)
+	if (strlen(charname) >= 24)
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Owner string must be less than 24 characters long.\n");
 		return;
 	}
-	strcpy(ent->myskills.owner, s);
-	safe_cprintf(ent, PRINT_HIGH, "%s now belongs to %s.\n", ent->myskills.player_name, ent->myskills.owner);
+
+	int mpwlen = strlen(mpw);
+	if (mpwlen == 0)
+	{
+		safe_cprintf(ent, PRINT_HIGH, "Please include the master password of the owner.\n");
+		return;
+	}
+
+	if (mpwlen > 63)
+	{
+		safe_cprintf(ent, PRINT_HIGH, "Master password too long.\n");
+		return;
+	}
+
+	vrx_char_io.set_owner(ent, charname, mpw);
 }
 
 void cmd_whois(edict_t *ent, char *playername)
@@ -2728,7 +2745,6 @@ void Cmd_GetFloorPos_f (edict_t *ent, int add)
 
 	
 void Cmd_BombPlayer(edict_t *ent, float skill_mult, float cost_mult);
-Cmd_Thorns(edict_t *ent);
 void Cmd_HolyShock(edict_t *ent);
 int ClassNum(edict_t *ent, int team);
 void Cmd_VampireMode (edict_t *ent);

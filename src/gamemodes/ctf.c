@@ -1714,7 +1714,7 @@ void CTF_OpenJoinMenu (edict_t *ent)
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: CTF_OpenJoinMenu()\n");
 
-	if (!ShowMenu(ent))
+	if (!menu_can_show(ent))
         return;
 
 	// new character
@@ -1724,24 +1724,24 @@ void CTF_OpenJoinMenu (edict_t *ent)
 		return;
 	}
 
-	clearmenu(ent);
+	menu_clear(ent);
 
 	if (!ent->myskills.administrator && !InJoinedQueue(ent) && (level.time > pregame_time->value))
 	{
 //							xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
-		addlinetomenu(ent, "Vortex CTF", MENU_GREEN_CENTERED);
-		addlinetomenu(ent, " ", 0);
-		addlinetomenu(ent, "The match has already", 0);
-		addlinetomenu(ent, "begun. You will", 0);
-		addlinetomenu(ent, "automatically join when", 0);
-		addlinetomenu(ent, "a flag is captured.", 0);
-		addlinetomenu(ent, " ", 0);
-		addlinetomenu(ent, " ", 0);
-		addlinetomenu(ent, "Exit", 3);
+		menu_add_line(ent, "Vortex CTF", MENU_GREEN_CENTERED);
+		menu_add_line(ent, " ", 0);
+		menu_add_line(ent, "The match has already", 0);
+		menu_add_line(ent, "begun. You will", 0);
+		menu_add_line(ent, "automatically join when", 0);
+		menu_add_line(ent, "a flag is captured.", 0);
+		menu_add_line(ent, " ", 0);
+		menu_add_line(ent, " ", 0);
+		menu_add_line(ent, "Exit", 3);
 
-		setmenuhandler(ent, CTF_JoinMenuHandler);
+		menu_set_handler(ent, CTF_JoinMenuHandler);
 		ent->client->menustorage.currentline = 9;
-		showmenu(ent);
+		menu_show(ent);
 
 		// indicate that the player wants to join
 		ent->client->waiting_to_join = true;
@@ -1749,23 +1749,23 @@ void CTF_OpenJoinMenu (edict_t *ent)
 		return;
 	}
 
-	addlinetomenu(ent, "Vortex CTF", MENU_GREEN_CENTERED);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Your goal is to help your", 0);
-	addlinetomenu(ent, "team capture the enemy's", 0);
-	addlinetomenu(ent, "flag while simultaneously", 0);
-	addlinetomenu(ent, "defending your own base.", 0);
-	addlinetomenu(ent, "Work together to maximize", 0);
-	addlinetomenu(ent, "points! Don't let your", 0);
-	addlinetomenu(ent, "flag fall into enemy hands!", 0);
-	addlinetomenu(ent, " ", 0);
-	addlinetomenu(ent, "Join", 1);
-	addlinetomenu(ent, "Back", 2);
-	addlinetomenu(ent, "Exit", 3);
+	menu_add_line(ent, "Vortex CTF", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Your goal is to help your", 0);
+	menu_add_line(ent, "team capture the enemy's", 0);
+	menu_add_line(ent, "flag while simultaneously", 0);
+	menu_add_line(ent, "defending your own base.", 0);
+	menu_add_line(ent, "Work together to maximize", 0);
+	menu_add_line(ent, "points! Don't let your", 0);
+	menu_add_line(ent, "flag fall into enemy hands!", 0);
+	menu_add_line(ent, " ", 0);
+	menu_add_line(ent, "Join", 1);
+	menu_add_line(ent, "Back", 2);
+	menu_add_line(ent, "Exit", 3);
 
-	setmenuhandler(ent, CTF_JoinMenuHandler);
+	menu_set_handler(ent, CTF_JoinMenuHandler);
 	ent->client->menustorage.currentline = 11;
-	showmenu(ent);
+	menu_show(ent);
 }
 
 //SP_misc_teleporter_dest(self);

@@ -27,6 +27,7 @@ typedef struct
 {
 	char name[MAX_MAPNAME_LEN];
 	int monsters;
+	int min_players, max_players;
 } mapdata_t;
 
 typedef struct v_maplist_s
