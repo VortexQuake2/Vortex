@@ -794,8 +794,7 @@ qboolean drone_ai_findgoal (edict_t *self)
 //FIXME: M_MoveToGoal() won't let monster bump around if he doesn't have a goalentity
 void drone_ai_walk (edict_t *self, float dist)
 {
-	if (self->deadflag == DEAD_DEAD)
-		return;
+	//gi.dprintf("drone_ai_walk - health %d deadflag %d at %.1f\n", self->health, self->deadflag, level.time);
 	//if (self->monsterinfo.pausetime > level.time)
 	//	return;
 	//if (DRONE_DEBUG)
@@ -806,7 +805,10 @@ void drone_ai_walk (edict_t *self, float dist)
 		gi.dprintf("drone_ai_walk() AI_FINDNAVI %s goalentity %s\n", self->monsterinfo.aiflags & AI_FIND_NAVI ? "true" : "false", self->goalentity ? "true" : "false");
 	}
 
-	M_MoveToGoal(self, dist);
+	M_MoveToGoal(self, dist);//****NOTE: ent may touch something that hurts/kills it here!
+
+	if (self->deadflag == DEAD_DEAD)
+		return;
 
 	// we don't have an enemy
 	if (!self->enemy)
@@ -820,7 +822,10 @@ void drone_ai_walk (edict_t *self, float dist)
 	{
 		// make sure he is a valid target
 		if (drone_ValidChaseTarget(self, self->enemy))
+		{
+			//gi.dprintf("calling run from walk function at %.1f health %d deadflag %d\n", level.time, self->health, self->deadflag);
 			self->monsterinfo.run(self);
+		}
 		// otherwise, try to find a new one
 		else if (drone_findtarget(self, false))
 		{

@@ -662,13 +662,15 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 
 		if (G_IsValidLocation(target, target->s.origin, bmin, bmax) && M_Initialize(ent, target, 0.0f))
 		{
+			//gi.dprintf("resurrect drone at %.1f\n", level.time);
 			// restore this drone
 			target->monsterinfo.slots_freed = false; // reset freed flag
 			target->health = r_modifier*target->max_health;
 			target->monsterinfo.power_armor_power = r_modifier*target->monsterinfo.max_armor;
 			target->monsterinfo.resurrected_time = level.time + 10.0;
 			target->activator = ent; // transfer ownership!
-			target->nextthink = level.time + 1.0;
+			target->nextthink = level.time + FRAMETIME;//1.0; note: don't delay think--this may cause undesired behavior (monster sliding)
+			target->monsterinfo.attack_finished = level.time + 1.0;//delay attack--alternatively we can set the think func to drone_grow
 			gi.linkentity(target);
 			target->monsterinfo.stand(target);
 
@@ -913,6 +915,7 @@ void mymedic_cable_attack (edict_t *self)
 	{
 		int frames = qf2sf(6000/(12*self->monsterinfo.level));
 
+		//gi.dprintf("regenerate drone at %.1f\n", level.time);
 		if (!frames)
 			frames = 1;
 

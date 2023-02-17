@@ -403,7 +403,7 @@ void M_CheckGround (edict_t *ent)
 		if (!ent->groundentity && ent->monsterinfo.touchdown)
 			ent->monsterinfo.touchdown(ent);
 		//GHz END
-		VectorCopy (trace.endpos, ent->s.origin);
+		VectorCopy(trace.endpos, ent->s.origin);
 		ent->groundentity = trace.ent;
 		ent->groundentity_linkcount = trace.ent->linkcount;
 		ent->velocity[2] = 0;

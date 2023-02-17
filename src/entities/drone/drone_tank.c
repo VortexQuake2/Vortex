@@ -153,6 +153,7 @@ mmove_t	tank_move_stop_walk = {FRAME_walk21, FRAME_walk25, tank_frames_stop_walk
 
 void tank_walk (edict_t *self)
 {
+	//gi.dprintf("tank_walk called at %.1f on s.frame %d health %d deadflag %d\n", level.time, self->s.frame, self->health, self->deadflag);
 	if (!self->goalentity)
 		self->goalentity = world;
 	self->monsterinfo.currentmove = &tank_move_walk;
@@ -196,6 +197,20 @@ mmove_t	mytank_move_run = {FRAME_walk05, FRAME_walk20, mytank_frames_run, NULL};
 
 void mytank_run (edict_t *self)
 {
+	//gi.dprintf("mytank_run called at %.1f, health %d deadflag %d\n", (level.time), self->health, self->deadflag);//DEBUG
+
+	if (self->deadflag == DEAD_DEAD)
+	{/*
+		gi.dprintf("mytank_run called while dead! WTF!\n");
+		if (self->monsterinfo.currentmove == &mytank_move_death)
+			gi.dprintf("run called while in death animation\n");
+		else if (self->monsterinfo.currentmove == &tank_move_walk)
+			gi.dprintf("run called while monster in walk animation\n");
+		else if (self->monsterinfo.currentmove == &mytank_move_run || self->monsterinfo.currentmove == &mytank_move_start_run)
+			gi.dprintf("run called while monster in run animation\n");
+	*/
+		return;
+	}
 	if (self->enemy && self->enemy->client)
 		self->monsterinfo.aiflags |= AI_BRUTAL;
 	else
@@ -860,19 +875,12 @@ void mytank_sight (edict_t *self, edict_t *other)
 	//mytank_attack(self);
 }
 
-//
-// death
-//
-
-void mytank_dead (edict_t *self)
+void tank_nextmove(edict_t* self)
 {
-	VectorSet (self->mins, -16, -16, -16);
-	VectorSet (self->maxs, 16, 16, -0);
-	self->movetype = MOVETYPE_TOSS;
-	self->svflags |= SVF_DEADMONSTER;
-	//self->nextthink = 0;
-	gi.linkentity (self);
-	M_PrepBodyRemoval(self);
+	if (G_EntExists(self->enemy))
+		mytank_run(self);
+	else
+		tank_walk(self);
 }
 
 // pain
@@ -898,7 +906,7 @@ mframe_t tank_frames_pain_long[] =
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 };
-mmove_t tank_move_pain_long = { FRAME_pain301, FRAME_pain316, tank_frames_pain_long, tank_walk };
+mmove_t tank_move_pain_long = { FRAME_pain301, FRAME_pain316, tank_frames_pain_long, tank_nextmove };
 
 mframe_t tank_frames_pain_short1[] =
 {
@@ -908,7 +916,7 @@ mframe_t tank_frames_pain_short1[] =
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 };
-mmove_t tank_move_pain_short1 = { FRAME_pain201, FRAME_pain205, tank_frames_pain_short1, tank_walk };
+mmove_t tank_move_pain_short1 = { FRAME_pain201, FRAME_pain205, tank_frames_pain_short1, tank_nextmove };
 
 mframe_t tank_frames_pain_short2[] =
 {
@@ -918,7 +926,7 @@ mframe_t tank_frames_pain_short2[] =
 	ai_move, 0, NULL,
 };
 
-mmove_t tank_move_pain_short2 = { FRAME_pain101, FRAME_pain104, tank_frames_pain_short2, tank_walk };
+mmove_t tank_move_pain_short2 = { FRAME_pain101, FRAME_pain104, tank_frames_pain_short2, tank_nextmove };
 
 void tank_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
@@ -937,7 +945,7 @@ void tank_pain(edict_t* self, edict_t* other, float kick, int damage)
 		self->monsterinfo.currentmove == &tank_move_pain_short2)
 		return;
 
-	// monster players don't get pain state induced
+	// player-spawned monsters don't get pain state induced
 	if (G_GetClient(self))
 		return;
 
@@ -962,9 +970,22 @@ void tank_pain(edict_t* self, edict_t* other, float kick, int damage)
 	}
 }
 
+//
+// death
+//
 
+void mytank_dead(edict_t* self)
+{
+	VectorSet(self->mins, -16, -16, -16);
+	VectorSet(self->maxs, 16, 16, -0);
+	self->movetype = MOVETYPE_TOSS;
+	self->svflags |= SVF_DEADMONSTER;
+	//self->nextthink = 0;
+	gi.linkentity(self);
+	M_PrepBodyRemoval(self);
+}
 
-mframe_t mytank_frames_death1 [] =
+mframe_t mytank_frames_death1[] =
 {
 	ai_move, -7,  NULL,
 	ai_move, -2,  NULL,
@@ -999,12 +1020,13 @@ mframe_t mytank_frames_death1 [] =
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL
 };
-mmove_t	mytank_move_death = {FRAME_death101, FRAME_death132, mytank_frames_death1, mytank_dead};
+mmove_t	mytank_move_death = { FRAME_death101, FRAME_death132, mytank_frames_death1, mytank_dead };
 
 void mytank_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
 	int		n;
 
+	//gi.dprintf("mytank_die called at %.1f\n", level.time);//DEBUG
 	M_Notify(self);
 
 #ifdef OLD_NOLAG_STYLE

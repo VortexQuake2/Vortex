@@ -2120,7 +2120,7 @@ void Cmd_DrawBoundingBox_f (edict_t *ent)
 		yaw = tr.ent->s.angles[YAW];
 		AngleCheck(&yaw);
 		gi.dprintf("classname: %s clipmask: %d angles: %.0f adjusted angles: %.0f\n", tr.ent->classname, tr.ent->clipmask, tr.ent->s.angles[YAW], yaw);
-		gi.dprintf("gib health: %d\n", tr.ent->gib_health);
+		gi.dprintf("health: %d gib health: %d deadflag: %d movetype: %d nextthink: %.1f (%.1f)\n", tr.ent->health, tr.ent->gib_health, tr.ent->deadflag, tr.ent->movetype, tr.ent->nextthink, (float)(level.time));
 		gi.dprintf("origin[0] %d origin[1] %d origin[2] %d\n",
 			(int)tr.ent->s.origin[0], (int)tr.ent->s.origin[1], (int)tr.ent->s.origin[2]);
 		gi.dprintf("absmin[2] %d absmax[2] %d\n",

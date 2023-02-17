@@ -115,6 +115,14 @@ void baron_fire_run(edict_t* self)
 		self->monsterinfo.currentmove = &baron_fire_move_run;
 }
 
+void baron_fire_nextmove(edict_t* self)
+{
+	if (G_EntExists(self->enemy))
+		baron_fire_run(self);
+	else
+		baron_fire_walk(self);
+}
+
 mframe_t baron_fire_frames_pain[] =
 {
 	ai_move, 0,	 NULL,
@@ -124,7 +132,7 @@ mframe_t baron_fire_frames_pain[] =
 	ai_move, 0,  NULL,
 	ai_move, 0,  NULL
 };
-mmove_t baron_fire_move_pain = { FRAME_pain101, FRAME_pain106, baron_fire_frames_pain, baron_fire_walk };
+mmove_t baron_fire_move_pain = { FRAME_pain101, FRAME_pain106, baron_fire_frames_pain, baron_fire_nextmove };
 
 void baron_fire_pain(edict_t* self, edict_t* other, float kick, int damage)
 {

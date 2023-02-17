@@ -20,6 +20,9 @@ void spike_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 			}
 			else
 			{
+				// FIXME: this method of stunning works; however it may cause undesired behavior (monsters sliding)
+				// one possible fix would be to have a temporary stunned_think set while stunned that handles sliding, worldeffects, etc
+				// and switches back to the prev_think after the stun is complete
 				other->nextthink = level.time + self->dmg_radius;
 			}
 		}
