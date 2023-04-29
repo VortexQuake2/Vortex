@@ -13,6 +13,9 @@ lva_result_t lva(const char* format, ...)
 }
 
 #define MAX_SIDEBAR_ROWS 32
+#define STYLE_WHITE	0
+#define STYLE_GREEN	1
+#define STYLE_BLINK 2
 
 typedef struct sidebar_result_s
 {
@@ -20,6 +23,8 @@ typedef struct sidebar_result_s
 	lva_result_t data;
 	lva_result_t pic;
 	layout_pos_t pos;
+	int name_style; // 0 = white text, 1 = green text
+	int data_style; // 0 = white text, 1 = green text
 } sidebar_entry_t;
 
 typedef struct sidebar_s
@@ -436,7 +441,7 @@ sidebar_entry_t layout_add_aura_info(sidebar_t* sidebar, que_t* que)
 	}
 
 	if (que->ent->owner && que->ent->owner->client)
-		res.data = lva(
+		res.data = lva(0,
 			"%.1fs (%s)", 
 			que->time - level.time, 
 			que->ent->owner->client->pers.netname
@@ -480,7 +485,16 @@ void layout_generate_misc(edict_t* ent, sidebar_t* sidebar)
 
 	if (pregame_time->value > level.time && !trading->value)
 	{
+		float timeleft = pregame_time->value - level.time;
 		sidebar_entry_t entry = { 0 };
+
+		if (timeleft < 10)
+		{
+			entry.data_style = STYLE_BLINK;
+		}
+		//else
+			//entry.data_style = STYLE_WHITE;
+		//gi.dprintf("time left %.1f, set style to %d\n", timeleft, entry.data_style);
 		entry.pos = sidebar_get_next_line_pos(sidebar);
 		entry.name = lva("pregame");
 		entry.data = lva("%.0fs", pregame_time->value - level.time);
@@ -499,26 +513,6 @@ void layout_generate_misc(edict_t* ent, sidebar_t* sidebar)
 
 void layout_generate_curses(edict_t* ent, sidebar_t* sidebar)
 {
-	/*
-	if (ent->cocoon_time >= level.time) {
-		float dt = ent->cocoon_time - level.time;
-		sidebar_entry_t res = {0};
-		res.pos = sidebar_get_next_line_pos(sidebar);
-		res.name = lva("cocooned");
-		res.data = lva("%.1fs +%.1f%%", dt, (ent->cocoon_factor - 1) * 100.0f);
-		sidebar_add_entry(sidebar, res);
-	}
-
-	if (ent->fury_time >= level.time)
-	{
-		float dt = ent->fury_time - level.time;
-		sidebar_entry_t res = {0};
-		res.pos = sidebar_get_next_line_pos(sidebar);
-		res.name = lva("furied");
-		res.data = lva("%.2fs", dt);
-		sidebar_add_entry(sidebar, res);
-	}*/
-
 	for (int i = 0; i < QUE_MAXSIZE; i++)
 	{
 		que_t* curse = &ent->curses[i];
@@ -566,7 +560,17 @@ void sidebar_emit_layout(layout_t* layout, sidebar_t* sidebar)
 
 		// first, emit the name string
 		layout_apply_pos(layout, entry->pos);
-		layout_add_string(layout, entry->name.str);
+		if (entry->name_style == STYLE_GREEN)
+			layout_add_highlight_string(layout, entry->name.str);
+		else if (entry->data_style == STYLE_BLINK)
+		{
+			if (sf2qf(level.framenum) & 2)
+				layout_add_string(layout, entry->name.str);
+			else
+				layout_add_highlight_string(layout, entry->name.str);
+		}
+		else
+			layout_add_string(layout, entry->name.str);
 	}
 
 	// doing it this way we save cursor position changes from the 3rd row.
@@ -580,7 +584,17 @@ void sidebar_emit_layout(layout_t* layout, sidebar_t* sidebar)
 		// now emit the data string
 		npos.x += namelen * 8;
 		layout_apply_pos(layout, npos);
-		layout_add_string(layout, entry->data.str);
+		if (entry->data_style == STYLE_GREEN)
+			layout_add_highlight_string(layout, entry->data.str);
+		else if (entry->data_style == STYLE_BLINK)
+		{
+			if (sf2qf(level.framenum) & 2)
+				layout_add_string(layout, entry->data.str);
+			else
+				layout_add_highlight_string(layout, entry->data.str);
+		}
+		else
+			layout_add_string(layout, entry->data.str);
 	}
 
 	// emit pics
@@ -641,36 +655,6 @@ void layout_generate_all(edict_t* ent)
 
 	layout_clean_tracked_entity_list(&ent->client->layout);
 	layout_reset(&ent->client->layout);
-	/*
-	if (ent->client->ability_delay > level.time)
-	{
-		sidebar_entry_t entry = {0};
-		entry.pos = sidebar_get_next_line_pos(&sidebar);
-		entry.name = lva("cd");
-		entry.data = lva("%.1f", ent->client->ability_delay - level.time);
-
-		sidebar_add_entry(&sidebar, entry);
-	}
-
-	if (pregame_time->value > level.time && !trading->value)
-	{
-		sidebar_entry_t entry = {0};
-		entry.pos = sidebar_get_next_line_pos(&sidebar);
-		entry.name = lva("pregame");
-		entry.data = lva("%.0fs", pregame_time->value - level.time);
-
-		sidebar_add_entry(&sidebar, entry);
-	}
-
-	if (ent->client->tele_timeout > level.framenum)
-	{
-		sidebar_entry_t entry = { 0 };
-		entry.pos = sidebar_get_next_line_pos(&sidebar);
-		entry.name = lva("blinkStrike");
-		entry.data = lva("%ds", (int)(ent->client->tele_timeout - level.framenum)/10);
-
-		sidebar_add_entry(&sidebar, entry);
-	}*/
 	layout_generate_misc(ent, &sidebar);
 	layout_generate_entities(&ent->client->layout, &sidebar);
 	layout_generate_curses(ent, &sidebar);

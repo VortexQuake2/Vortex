@@ -474,7 +474,7 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             menu_add_line(ent, "higher level devices.", MENU_WHITE_CENTERED);
             menu_add_line(ent, "Can't be combined with", MENU_WHITE_CENTERED);
             menu_add_line(ent, "Rapid Assembly.", MENU_WHITE_CENTERED);
-            return 3;
+            return 5;
         case TALENT_STORAGE_UPGRADE:
             menu_add_line(ent, "Increases ammunition", MENU_WHITE_CENTERED);
             menu_add_line(ent, "capacity of SS/sentry/AC.", MENU_WHITE_CENTERED);
