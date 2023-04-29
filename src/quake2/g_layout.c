@@ -441,7 +441,7 @@ sidebar_entry_t layout_add_aura_info(sidebar_t* sidebar, que_t* que)
 	}
 
 	if (que->ent->owner && que->ent->owner->client)
-		res.data = lva(0,
+		res.data = lva(
 			"%.1fs (%s)", 
 			que->time - level.time, 
 			que->ent->owner->client->pers.netname
