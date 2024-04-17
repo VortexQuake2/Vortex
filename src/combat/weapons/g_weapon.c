@@ -1375,6 +1375,7 @@ void fire_rail (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick
 	int			mask;
 	qboolean	water;
 	int			mod;
+	int iters = 0;
 
 	// calling entity made a sound, used to alert monsters
 	self->lastsound = level.framenum;
@@ -1384,7 +1385,7 @@ void fire_rail (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick
 	ignore = self;
 	water = false;
 	mask = MASK_SHOT|CONTENTS_SLIME|CONTENTS_LAVA;
-	while (ignore)
+	while (ignore && iters++ < 500)
 	{
 		tr = gi.trace (from, NULL, NULL, end, ignore, mask);
 
