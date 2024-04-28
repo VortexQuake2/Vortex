@@ -975,7 +975,7 @@ mframe_t mymedic_frames_attackCable [] =
 	ai_charge, 0,		mymedic_cable_attack,
 	ai_charge, 0,		mymedic_cable_attack,
 	ai_charge, 0,		mymedic_cable_continue,	//227--loop from 218 to here
-	ai_charge, 0,		mymedic_cable_attack,
+	ai_charge, 0,		NULL,
 	ai_charge, 0,		mymedic_hook_retract,	//229
 	ai_charge, 0,		NULL,
 	ai_charge, 0,		NULL,

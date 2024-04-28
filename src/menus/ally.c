@@ -325,7 +325,7 @@ void AddAlly (edict_t *ent, edict_t *other)
 void RemoveAlly (edict_t *ent, edict_t *other)
 {
 	// will removing a player invalidate the team? (no more allies)
-    if (V_GetNumAllies(ent) - 1 < 1)
+    if (V_GetNumAllies(ent) - 1 < 1 && ent->teamnum >= 100 && ent->teamnum < 200)
 	{
 		// relinquish the team number for others to use
 		team_numbers[ent->teamnum - 100] = ent->teamnum;
