@@ -2527,11 +2527,14 @@ void MonsterAttack (edict_t *ent)
 		safe_centerprintf(ent, "Monsters will attack monster base.\n");
 	}
 
-	if (goal)
+	if (goal) {
 		goal = DroneTempEnt(ent, goal->s.origin, 0);
+	} else {
+		goal = findclosestreticle(goal, ent, 1024);
+	}
 
 	// search queue for drones
-	for (i=0; i<3; i++)
+	for (i=0; i<4; i++)
 	{
 		e = ent->selected[i];
 		// is this a live, visible monster that we own?
