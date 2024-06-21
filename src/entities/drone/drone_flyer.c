@@ -477,7 +477,7 @@ mmove_t flyer_move_loop_melee = {FRAME_attak107, FRAME_attak118, flyer_frames_lo
 
 void flyer_check_melee(edict_t *self)
 {
-	if (entdist (self, self->enemy) == RANGE_MELEE)
+	if (entdist (self, self->enemy) <= RANGE_MELEE)
 		if (random() <= 0.8)
 			self->monsterinfo.currentmove = &flyer_move_loop_melee;
 		else

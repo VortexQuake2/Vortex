@@ -204,7 +204,7 @@ void mymedic_fire_bolt (edict_t *self)
 	vec3_t	forward, start;
 
 	min = 4 * drone_damagelevel(self); // dmg.min: medic_fire_bolt
-	max = 50 + 25 * drone_damagelevel(self); // dmg.max: medic_fire_bolt
+	max = 30 + 10 * drone_damagelevel(self); // dmg.max: medic_fire_bolt
 
 	damage = GetRandom(min, max);
 

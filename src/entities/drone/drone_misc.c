@@ -183,7 +183,7 @@ float drone_damagelevel(const edict_t* ent)
 		return 1;
 	}
 
-	return min(7 * log10f(level) + 1, 20);
+	return min(7 * log10f(level), 20);
 }
 
 qboolean drone_ValidChaseTarget (edict_t *self, edict_t *target)
