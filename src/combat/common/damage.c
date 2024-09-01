@@ -27,11 +27,11 @@ int G_DamageType(int mod, int dflags) {
         case MOD_LAVA:
         case MOD_SLIME:
             return D_WORLD;
-            /*
-            Monster damage is classed as MOD_UNKNOWN
-            So lets make sure it works with thorns
-            */
-            // all morphed player attacks should go here
+        /*
+        Monster damage is classed as MOD_UNKNOWN
+        So lets make sure it works with thorns
+        */
+        // all morphed player attacks should go here
         case MOD_UNKNOWN:
         case MOD_HIT:
         case MOD_BRAINTENTACLE:
@@ -278,16 +278,20 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
         damage = vrx_apply_amp_damage(targ, damage);
 
         // weaken causes target to take more damage
-        damage = vrx_apply_weaken(targ, damage);
+        //damage = vrx_apply_weaken(targ, damage);
+    }
 
-        // targets "chilled" deal less damage.
-        if (attacker->chill_time > level.time)
-            damage /= 1.0 + 0.0333 * (float) attacker->chill_level; //chill level 10 = 25% less damage
+    // targets "chilled" deal less damage.
+    if (attacker->chill_time > level.time)
+        damage /= 1.0 + 0.0333 * (float)attacker->chill_level; //chill level 10 = 25% less damage
 
-        // targets cursed with "weaken" deal less damage
-        if ((slot = que_findtype(attacker->curses, NULL, WEAKEN)) != NULL)
-            damage /=
-                    WEAKEN_MULT_BASE + (slot->ent->owner->myskills.abilities[WEAKEN].current_level * WEAKEN_MULT_BONUS);
+    // targets cursed with "weaken" deal less damage
+    //temp = damage;//DEBUG: save value
+    if ((slot = que_findtype(attacker->curses, NULL, WEAKEN)) != NULL)
+    {
+        damage /=
+            WEAKEN_MULT_BASE + (slot->ent->owner->myskills.abilities[WEAKEN].current_level * WEAKEN_MULT_BONUS);
+        //gi.dprintf("damage before: %0.0f after %0.0f\n", temp, damage);
     }
 
     // it becomes increasingly difficult to hold onto the flag
@@ -785,7 +789,7 @@ float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float da
     int dtype;
     float temp = 0;
     que_t *aura = NULL;
-    int talentLevel;
+   // int talentLevel;
     qboolean invasion_friendlyfire = false;
     float Resistance = 1.0; // We find the highest resist value and only use THAT.
     qboolean is_target_morphed_player = IsMorphedPlayer(targ);

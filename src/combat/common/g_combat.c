@@ -806,7 +806,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	int			te_sparks;
 	int			talentLevel;
 	//int			thorns_dmg;//GHz
-    float before_sub;//GHz
+    float before_add,before_sub;//GHz
 	int			dtype = G_DamageType(mod, dflags);
 	float		temp=0;//K03
 	edict_t		*player = G_GetClient(attacker);
@@ -839,7 +839,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 	//gi.dprintf("original damage: %d target: %s (%.1f)\n", damage, targ->classname, level.time);
 
-	before_sub = damage = G_AddDamage(targ, inflictor, attacker, point, damage, dflags, mod);
+	before_add = damage = G_AddDamage(targ, inflictor, attacker, point, damage, dflags, mod);
 
 	//4.1 some abilities that increase damage are seperate from all the others.
 	if(player && (attacker_has_pilot || attacker->client) && (dtype & D_PHYSICAL))
@@ -858,7 +858,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	// try to deflect an attack first before all other resistances are checked
     DeflectHitscan(targ, inflictor, attacker, point, damage, knockback, dflags, mod);
 
-    damage = G_SubDamage(targ, inflictor, attacker, damage, dflags, mod);
+    before_sub = damage = G_SubDamage(targ, inflictor, attacker, damage, dflags, mod);
 
 	//4.1 some abilities that reduce damage are seperate from all the others.
 	if(target_has_pilot || targ->client)
@@ -883,13 +883,13 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	if ((slot = que_findtype(targ->curses, NULL, LOWER_RESIST)) != NULL && mod != MOD_CRIPPLE)
 	{
 		float lowerResistFactor = LOWER_RESIST_INITIAL_FACTOR + LOWER_RESIST_ADDON_FACTOR * slot->ent->owner->myskills.abilities[LOWER_RESIST].current_level;
-		float resistFactor = (startDamage - damage) / startDamage;
+		float resistFactor = (before_sub - damage) / before_sub;
 		float result = resistFactor - lowerResistFactor;
 
-	//	gi.dprintf("lower resist = %.1f resist = %.1f result = %.1f startdamage = %d", lowerResistFactor, resistFactor, result, damage);
+		//gi.dprintf("lower resist = %.1f resist = %.1f result = %.1f startdamage = %0.0f damage %0.0f ", lowerResistFactor, resistFactor, result, startDamage, damage);
 		if (damage > 0)
-			damage = startDamage * (1.0 - result);
-	//	gi.dprintf(" enddamage = %d\n", damage);
+			damage = damage * (1.0 - result);
+		//gi.dprintf(" enddamage = %0.0f\n", damage);
 
 	}
 
@@ -1165,7 +1165,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	}
 
 	if (take > 0)
-		psave = CheckPowerArmor (targ, point, normal, before_sub, dflags);
+		psave = CheckPowerArmor (targ, point, normal, before_add, dflags);
 	else
 		psave = CheckPowerArmor (targ, point, normal, 0, dflags);
 	take -= psave;
