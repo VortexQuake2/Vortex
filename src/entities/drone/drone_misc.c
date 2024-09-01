@@ -103,6 +103,9 @@ void DroneList_Remove(edict_t *ent)
 	        DroneList[DroneCount] = NULL; // we moved the monster at the end of the list, so now the end of the list is NULL
 
 	        ent->monsterinfo.dronelist_index = -1; // this monster has been removed from the drone list
+	    	if (ent->activator && ent->activator->notify_drone_death) {
+	    		ent->activator->notify_drone_death(ent);
+	    	}
 	    }
 #ifdef _DEBUG
         else {
