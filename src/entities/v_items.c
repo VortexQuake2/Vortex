@@ -800,7 +800,7 @@ void vrx_spawn_combo_rune(edict_t *rune, int targ_level)
 				mod_index = GetRandom(0, MAX_WEAPONMODS - 1);
 			}
 
-			rune->vrxitem.modifiers[i].value = GetRandom(1, min(targ_level, RUNE_WEAPON_MAXVALUE)); // az - from 3.
+			rune->vrxitem.modifiers[i].value = GetRandom(1, min(max(targ_level, 1), RUNE_WEAPON_MAXVALUE)); // az - from 3.
 			rune->vrxitem.modifiers[i].index = ((weapon_index + 10) * 100) + mod_index;	// ex: 1800 = rg damage
 			rune->vrxitem.modifiers[i].type = TYPE_WEAPON;
 
