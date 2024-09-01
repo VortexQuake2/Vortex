@@ -549,7 +549,62 @@ void TeleportForward (edict_t *ent) {
 	}
 }
 
+void NovaExplosionEffect(vec3_t org);
 
+void CrippleAttack (edict_t* ent, int cripple_level)
+{
+	float		damage, min_health, delta;
+	edict_t* target = NULL;
+
+	while ((target = findradius(target, ent->s.origin, CRIPPLE_RANGE)) != NULL)
+	{
+		if (!G_ValidTargetEnt(target, false) || OnSameTeam(ent, target))
+			continue;
+		// limit maximum damage inflicted to bosses and others to a percentage of max health
+		if (target->monsterinfo.control_cost >= 3)
+			min_health = 0.2 * target->max_health;
+		else
+			min_health = 0.1 * target->max_health;
+		// calculate damage
+		damage = target->health * (1 - (1 / (1 + 0.1 * cripple_level)));
+		// delta is the difference between current health and minimum health
+		delta = target->health - min_health;
+		// are we above our minimum?
+		if (delta > 0)
+		{
+			if (damage > delta)
+				damage = delta;
+			if (damage > CRIPPLE_MAX_DAMAGE)
+				damage = CRIPPLE_MAX_DAMAGE;
+			T_Damage(target, ent, ent, vec3_origin, target->s.origin, vec3_origin, damage, 0, DAMAGE_NO_ABILITIES, MOD_CRIPPLE);
+
+			gi.WriteByte(svc_temp_entity);
+			gi.WriteByte(TE_TELEPORT_EFFECT);
+			gi.WritePosition(target->s.origin);
+			gi.multicast(target->s.origin, MULTICAST_PVS);
+		}
+
+	}
+
+	// write a nice effect so everyone knows we've cast a spell
+	/*
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_TELEPORT_EFFECT);
+	gi.WritePosition(ent->s.origin);
+	gi.multicast(ent->s.origin, MULTICAST_PVS);*/
+
+	NovaExplosionEffect(ent->s.origin);
+	gi.sound(ent, CHAN_WEAPON, gi.soundindex("abilities/novaelec.wav"), 1, ATTN_NORM, 0);
+
+	if (ent->client)
+	{
+		ent->client->ability_delay = level.time + CRIPPLE_DELAY;
+		ent->client->pers.inventory[power_cube_index] -= CRIPPLE_COST;
+	}
+	// calling entity made a sound, used to alert monsters
+	ent->lastsound = level.framenum;
+}
+/*
 void CrippleAttack (edict_t *ent)
 {
 	int		damage;
@@ -597,6 +652,7 @@ void CrippleAttack (edict_t *ent)
 	// calling entity made a sound, used to alert monsters
 	ent->lastsound = level.framenum;
 }
+*/
 
 void Cmd_Cripple_f (edict_t *ent)
 {
@@ -610,7 +666,7 @@ void Cmd_Cripple_f (edict_t *ent)
 	//3.0 amnesia disables cripple
 	if (que_findtype(ent->curses, NULL, AMNESIA) != NULL)
 		return;
-	CrippleAttack(ent);
+	CrippleAttack(ent, ability_level);
 }
 
 void lightningbolt_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
