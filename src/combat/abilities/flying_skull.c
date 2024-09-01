@@ -259,8 +259,11 @@ void skull_attack (edict_t *self)
 
 	if (!visible(self, self->enemy))
 		return;
+	//if (!nearfov(self, self->enemy, 180, 180))
+	//if (!infov(self, self->enemy, 216))
 	if (!infront(self, self->enemy))
 		return;
+	//gi.dprintf("hellspawn distance to enemy: %0.1f\n", dist);
 	if (dist > SKULL_ATTACK_RANGE)
 		return;
 	if (que_typeexists(self->curses, AURA_HOLYFREEZE) && !(level.framenum % 2))
