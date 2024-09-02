@@ -217,6 +217,9 @@ void berserk_attack_strike (edict_t *self)
 	{
 		if (!G_ValidTarget(self, other, true))
 			continue;
+		// miss the attack if we are cursed/confused
+		if (que_typeexists(self->curses, CURSE) && rand() > 0.2)
+			continue;
 
 		VectorSubtract(other->s.origin, self->s.origin, v);
 		VectorNormalize(v);

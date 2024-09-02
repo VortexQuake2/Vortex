@@ -659,6 +659,9 @@ void mytank_meleeattack (edict_t *self)
 	{
 		if (!G_ValidTarget(self, other, true))
 			continue;
+		// miss the attack if we are cursed/confused
+		if (que_typeexists(self->curses, CURSE) && rand() > 0.2)
+			continue;
 		// bosses don't have to be facing their enemy, others do
 		//if ((self->monsterinfo.control_cost < 3) && !nearfov(self, other, 0, 60))//!infront(self, other))
 		//	continue;

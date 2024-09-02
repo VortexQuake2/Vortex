@@ -260,6 +260,10 @@ static qboolean ParasiteCanAttack (edict_t *self, vec3_t start, vec3_t end)
 	//if (!nearfov(self, self->enemy, 90, 45))
 	//	return false;
 
+	// miss the attack if we are cursed/confused
+	if (que_typeexists(self->curses, CURSE) && rand() > 0.2)
+		return false;
+
 	// get starting point
 	AngleVectors (self->s.angles, f, r, NULL);
 	VectorSet (offset, 24, 0, 6);

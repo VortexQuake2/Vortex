@@ -681,6 +681,9 @@ void mybrain_continue (edict_t *self)
 
 	if (!G_ValidTarget(self, self->enemy, true))
 		return;
+	// miss the attack if we are cursed/confused
+	if (que_typeexists(self->curses, CURSE) && rand() > 0.2)
+		return;
 
 	// higher chance to continue attack if our enemy is close
 	dist = entdist(self, self->enemy);

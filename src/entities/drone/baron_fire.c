@@ -244,7 +244,11 @@ void baron_fire_meteor(edict_t* self)
 	radius = METEOR_INITIAL_RADIUS + METEOR_ADDON_RADIUS * slvl;
 	speed = METEOR_INITIAL_SPEED + METEOR_ADDON_SPEED * slvl;
 
-	fire_meteor(self, self->enemy->s.origin, damage, radius, speed);
+	// miss the attack if we are cursed/confused
+	if (que_typeexists(self->curses, CURSE) && rand() > 0.2)
+		fire_meteor(self, self->s.origin, damage, radius, speed); // meteor drops on his head!
+	else
+		fire_meteor(self, self->enemy->s.origin, damage, radius, speed);
 
 	// write a nice effect so everyone knows we've cast a spell
 	gi.WriteByte(svc_temp_entity);

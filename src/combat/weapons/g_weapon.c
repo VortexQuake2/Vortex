@@ -111,6 +111,10 @@ qboolean fire_hit (edict_t *self, vec3_t aim, int damage, int kick)
 	if (!self->enemy)
 		return false;
 
+	// miss the attack if we are cursed/confused
+	if (que_typeexists(self->curses, CURSE) && rand() > 0.2)
+		return false;
+
 	// calling entity made a sound, used to alert monsters
 	self->lastsound = level.framenum;
 
