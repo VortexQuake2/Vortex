@@ -2225,7 +2225,7 @@ void drone_tempent_think (edict_t *self)
 	// if no monsters are following this combat point, then free it
 	if (!G_EntIsAlive(self->activator) || numDroneLinks(self) < 1)
 	{
-		gi.dprintf("freed combat point %d\n", numDroneLinks(self));
+		//gi.dprintf("freed combat point %d\n", numDroneLinks(self));
 		G_FreeEdict(self);
 		return;
 	}
@@ -2539,6 +2539,8 @@ void MonsterAttack (edict_t *ent)
 		goal = G_FindEntityByMtype(INVASION_MONSTERSPAWN, goal);
 		safe_centerprintf(ent, "Monsters will attack monster base.\n");
 	}
+	else
+		return;
 
 	if (goal)
 		goal = DroneTempEnt(ent, goal->s.origin, 0);
