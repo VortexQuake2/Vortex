@@ -259,7 +259,7 @@ void FindMonsterSpot(edict_t *self) {
         while (total_monsters < max_monsters) {
             int rnd;
             do {
-                rnd = GetRandom(1, 14); // az: don't spawn soldiers
+                rnd = GetRandom(1, 15); // az: don't spawn soldiers
             } while (rnd == 10);
 
             if ((scan = vrx_create_new_drone(self, rnd, true, true)) != NULL) {
@@ -542,10 +542,13 @@ int vrx_GetMonsterCost(int mtype) {
             cost = M_BRAIN_COST;
             break;
         case M_TANK:
-            cost = M_TANK_COST;
+            cost = M_TANK_COST; 
             break;
         case M_HOVER:
             cost = M_HOVER_COST;
+            break;
+        case M_SHAMBLER:
+            cost = M_TANK_COST; //using tank atm
             break;
         case M_SUPERTANK:
             cost = M_SUPERTANK_COST;
@@ -596,6 +599,9 @@ int vrx_GetMonsterControlCost(int mtype) {
             break;
         case M_TANK:
             cost = M_TANK_CONTROL_COST;
+            break;
+        case M_SHAMBLER:
+            cost = M_TANK_CONTROL_COST; //using tank atm
             break;
         case M_HOVER:
             cost = M_HOVER_CONTROL_COST;

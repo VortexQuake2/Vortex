@@ -2236,6 +2236,7 @@ void Cmd_LaserSight_f(edict_t *ent);
 #define M_MAKRON 22 // 3000
 #define M_COMMANDER 23
 #define M_BARON_FIRE	24
+#define M_SHAMBLER	25
 #define M_MINISENTRY	100
 #define M_SENTRY		101
 #define M_BFG_SENTRY	102
