@@ -728,6 +728,8 @@ extern double M_BARON_FIRE_INITIAL_HEALTH;
 extern double M_BARON_FIRE_ADDON_HEALTH;
 extern double M_BARON_FIRE_INITIAL_ARMOR;
 extern double M_BARON_FIRE_ADDON_ARMOR;
+extern double M_SHAMBLER_INITIAL_HEALTH;
+extern double M_SHAMBLER_ADDON_HEALTH;
 extern double M_BRAIN_INITIAL_PULL;
 extern double M_BRAIN_ADDON_PULL;
 extern double M_BRAIN_MAX_PULL;

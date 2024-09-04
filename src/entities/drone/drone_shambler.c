@@ -1064,11 +1064,6 @@ void shambler_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int dama
 
 void init_drone_shambler(edict_t* self)
 {
-
-	extern double M_SHAMBLER_INITIAL_HEALTH;
-	extern double M_SHAMBLER_ADDON_HEALTH;
-
-
 	self->s.modelindex = gi.modelindex("models/monsters/shambler/tris.md2");
 	VectorSet(self->mins, -32, -32, -24);
 	VectorSet(self->maxs, 32, 32, 64);
