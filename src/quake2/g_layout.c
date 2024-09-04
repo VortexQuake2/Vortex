@@ -327,6 +327,10 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 		name = lva("laser");
 		data = lva("+%d", ent->activator->health);
 		break;
+	case M_MAGMINE:
+		name = lva("magmine");
+		data = lva("%dc", ent->health);
+		break;
 	case TOTEM_FIRE:
 	case TOTEM_WATER:
 	case TOTEM_AIR:

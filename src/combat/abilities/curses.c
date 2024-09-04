@@ -387,6 +387,7 @@ char *GetCurseName (int type)
 	case AMP_DAMAGE: return "amp damage";
 	case WEAKEN: return "weaken";
 	case LIFE_DRAIN: return "life drain";
+	case CURSE_BURN: return "burning";
 	default: return "";
 	}
 }

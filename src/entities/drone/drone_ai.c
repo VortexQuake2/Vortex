@@ -34,6 +34,8 @@ ai_eval_targets
 
 Makes a list of all potential targets -- to avoid checking over and over once per enemy when finding
 new goals.
+
+IMPORTANT: Only ents validated by G_ValidTargetEnt are added to the list!
 =============
 */
 void ai_eval_targets() {
@@ -45,7 +47,8 @@ void ai_eval_targets() {
         // takedamage, is solid (so not a spectator), not respawning,
         // no chat protect, no notarget, not cloaked, not a forcewall
         // not in godmode, and not frozen.
-        if (!G_ValidTargetEnt(from, true)) continue;
+        if (!G_ValidTargetEnt(from, true) && from->mtype != M_MAGMINE)
+			continue;
         from->monsterinfo.target_index = potential_target_count;
         potential_targets[potential_target_count++] = from;
         from->monsterinfo.last_target_scanner = NULL; // forget who last looked at this ent
@@ -89,6 +92,7 @@ qboolean vrx_in_target_list(edict_t *ent) {
 
 // az: findclosestradius_monmask except ents are only validated once.
 // so it only does the checks that are specific to the current monster.
+// IMPORTANT: this list is populated by ai_eval_targets--only live, valid targets are added to it!
 edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t* self, float rad)
 {
 	edict_t *found = NULL;

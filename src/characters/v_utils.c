@@ -2429,7 +2429,7 @@ void V_SetEffects(edict_t *ent) {
     // clear all effects
     ent->s.effects = ent->s.renderfx = 0;
 
-    if (ent->health < 1)
+    if (ent->mtype != M_MAGMINE && ent->health < 1)
         return;
 
     // apply non-ability shell effects

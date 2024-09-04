@@ -27,16 +27,37 @@ void magmine_throwsparks(edict_t *self) {
 qboolean magmine_findtarget(edict_t *self) {
     edict_t *other = NULL;
 
-    while ((other = findclosestradius_targets(other,
-                                      self, self->dmg_radius)) != NULL) {
-        if (!G_ValidTarget_Lite(self, other, true))
+    while ((other = findclosestradius(other, self->s.origin, self->dmg_radius)) != NULL){
+        if (other == self)
             continue;
-        //if (!BrainValidTarget(self, other))
-        //	continue;
+        if (!G_ValidTarget(self, other, true))
+            continue;
         self->enemy = other;
         return true;
     }
     return false;
+}
+
+void magmine_use_energy(edict_t* self, int energy_use)
+{
+    if (self->health > energy_use)
+    {
+        self->health -= energy_use;
+        return;
+    }
+
+    //self->nextthink = level.time + FRAMETIME;
+    if (level.time > self->msg_time)
+    {
+        self->monsterinfo.selected_time = level.time + 1.0; // blink
+        self->msg_time = level.time + 10.0;
+    }
+
+    if (self->health > 0)
+    {
+        safe_cprintf(self->creator, PRINT_HIGH, "Your mag mine's energy cells are depleted. Touch it to recharge.\n");
+        self->health = 0;
+    }
 }
 
 void magmine_attack(edict_t *self) {
@@ -87,44 +108,122 @@ void magmine_remove(edict_t* self, qboolean print)
     }
 }
 
-void magmine_think(edict_t *self) {
+void magmine_think(edict_t *self) 
+{
     // check for valid position
-    if (gi.pointcontents(self->s.origin) & CONTENTS_SOLID) {
+    if (gi.pointcontents(self->s.origin) & CONTENTS_SOLID) 
+    {
         gi.dprintf("WARNING: A mag mine was removed from map due to invalid position.\n");
         safe_cprintf(self->creator, PRINT_HIGH, "Your mag mine was removed.\n");
         magmine_remove(self, true);
-        //self->creator->magmine = NULL;
-        //G_FreeEdict(self);
         return;
     }
 
-    qboolean shouldCallThrowSparks = false;
-    if (!self->enemy) {
-        if (magmine_findtarget(self)) {
+    // energy use
+    if (level.time > self->delay)
+    {
+        int cells_used = MAGMINE_IDLE_CELLS; // idle
+        self->delay = level.time + 1.0;
+        if (self->enemy)
+            cells_used = MAGMINE_ACTIVE_CELLS; // active
+        magmine_use_energy(self, cells_used);
+    }
+
+    if (self->health > 0) // magmine has enough energy to operate
+    {
+        qboolean shouldCallThrowSparks = false;
+
+        if (!self->enemy) {
+            if (magmine_findtarget(self)) {
+                magmine_attack(self);
+                shouldCallThrowSparks = true;
+            }
+        }
+        else if (G_ValidTarget(self, self->enemy, true)
+            && (entdist(self, self->enemy) <= self->dmg_radius)) {
             magmine_attack(self);
             shouldCallThrowSparks = true;
         }
-    } else if (G_ValidTarget(self, self->enemy, true)
-               && (entdist(self, self->enemy) <= self->dmg_radius)) {
-        magmine_attack(self);
-        shouldCallThrowSparks = true;
-    } else {
-        self->enemy = NULL;
-    }
+        else {
+            self->enemy = NULL;
+        }
 
-    if (shouldCallThrowSparks) {
-        magmine_throwsparks(self);
-    }
+        if (shouldCallThrowSparks) {
+            magmine_throwsparks(self);
+        }
 
+
+    }
     // Animate the mag mine
-	self->s.frame++;
-	if (self->s.frame > MAGMINE_FRAMES_END)
-		self->s.frame = MAGMINE_FRAMES_START;
-    
+    self->s.frame++;
+    if (self->s.frame > MAGMINE_FRAMES_END)
+        self->s.frame = MAGMINE_FRAMES_START;
+
     // Set shell color
     M_SetEffects(self);
 
     self->nextthink = level.time + FRAMETIME;
+}
+
+void magmine_reload (edict_t* self, edict_t* other)
+{
+    int	player_ammo;
+    edict_t* player;
+
+    // entity must be alive
+    if (!G_EntIsAlive(other))
+        return;
+    // must be a player entity
+    if (other->client)
+        player = other;
+    else if (PM_MonsterHasPilot(other))
+        player = other->owner;
+    else
+        return;
+
+    // must be in need of ammo
+    if (self->health < self->max_health)
+    {
+        player_ammo = player->client->pers.inventory[cell_index];
+
+        //If player has more cells than needed to fill up the magmine
+        if (self->health + 4 * player_ammo > self->max_health)
+        {
+            player_ammo -= 0.25 * (self->max_health - self->health);
+            self->health = self->max_health;
+        }
+        else	//Player loads all their cells into the magmine
+        {
+            self->health += 4 * player_ammo;
+            player_ammo = 0;
+        }
+
+        // has player's inventory been modified?
+        if (player->client->pers.inventory[cell_index] != player_ammo)
+        {
+            player->client->pers.inventory[cell_index] = player_ammo; // update player's ammo
+            gi.sound(self, CHAN_ITEM, gi.soundindex("misc/w_pkup.wav"), 1, ATTN_STATIC, 0);
+        }
+    }
+}
+
+void magmine_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* surf)
+{
+    V_Touch(self, other, plane, surf);
+
+    // limit how often sentry can be repaired/reloaded
+    if (self->sentrydelay > level.time)
+        return;
+    // other must be valid and a client
+    if (!G_EntIsAlive(other) || !other->client)
+        return;
+    // only teammates can repair/reload
+    if (!OnSameTeam(self, other))
+        return;
+
+    magmine_reload(self, other);
+    //safe_cprintf(other, PRINT_HIGH, "Mag mine cells reloaded. %d/%d\n", self->health, self->max_health);
+    self->sentrydelay = level.time + 1.0;
 }
 
 void magmine_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
@@ -147,7 +246,7 @@ void magmine_spawn(edict_t *ent, int cost, float skill_mult, float delay_mult) {
     mine->s.angles[PITCH] = 0;
     mine->s.angles[ROLL] = 0;
     mine->think = magmine_think;
-    mine->touch = V_Touch;
+    mine->touch = magmine_touch;
     mine->nextthink = level.time + FRAMETIME;
     mine->s.modelindex = gi.modelindex("models/objects/magmine/tris.md2");
     mine->solid = SOLID_BBOX;
@@ -155,15 +254,16 @@ void magmine_spawn(edict_t *ent, int cost, float skill_mult, float delay_mult) {
     mine->clipmask = MASK_MONSTERSOLID;
     mine->mass = 500;
     mine->classname = "magmine";
-    mine->takedamage = DAMAGE_YES;
+    //mine->takedamage = DAMAGE_YES;
     mine->monsterinfo.level = ent->myskills.abilities[MAGMINE].current_level * skill_mult;
     mine->health = MAGMINE_DEFAULT_HEALTH + MAGMINE_ADDON_HEALTH * mine->monsterinfo.level;
     mine->max_health = mine->health;
     mine->dmg_radius = MAGMINE_RANGE;
     mine->mtype = M_MAGMINE;//4.5
-    mine->die = magmine_die;
+    //mine->die = magmine_die;
     VectorSet(mine->mins, -12, -12, -4);
     VectorSet(mine->maxs, 12, 12, 0);
+    layout_add_tracked_entity(&ent->client->layout, mine); // add to HUD
 
     // calculate starting position
     AngleVectors(ent->client->v_angle, forward, right, NULL);
