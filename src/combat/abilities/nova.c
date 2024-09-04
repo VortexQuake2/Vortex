@@ -54,6 +54,8 @@ void Cmd_Nova_f (edict_t *ent, int frostLevel, float skill_mult, float cost_mult
 				continue;
 			if (!visible1(ent, target))
 				continue;
+			if (OnSameTeam(ent, target)) //  we won't freeze friendly/owned entities
+				continue;
 
             //curse with holyfreeze
 			target->chill_level = 2 * frostLevel;

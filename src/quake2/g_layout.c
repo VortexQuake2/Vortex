@@ -311,6 +311,7 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	case M_TANK:
 	case M_FORCEWALL:
 	case M_BARON_FIRE:
+	case M_SHAMBLER:
 		name = lva("%s", V_GetMonsterName(ent));
 		data = lva("+%d/%d", ent->health, ent->monsterinfo.power_armor_power);
 		break;

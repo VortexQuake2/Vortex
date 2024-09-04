@@ -1786,7 +1786,9 @@ char *V_GetMonsterKind(int mtype) {
         case P_TANK:
             return "tank";
         case M_SUPERTANK:
-            return "supertank";
+            return "supertank"; 
+        case M_SHAMBLER:
+            return "shambler";
         case M_JORG:
             return "jorg";
         case M_MAKRON:

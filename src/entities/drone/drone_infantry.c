@@ -590,10 +590,54 @@ mframe_t infantry_frames_attack2 [] =
 };
 mmove_t infantry_move_attack2 = {FRAME_attak201, FRAME_attak208, infantry_frames_attack2, infantry_run};
 
+void infantry_grenade(edict_t* self)
+{
+	vec3_t	start, forward;
+
+	// sanity check
+	if (!self->enemy || !self->enemy->inuse)
+		return;
+
+	float	speed = M_GRENADELAUNCHER_SPEED_BASE + M_GRENADELAUNCHER_SPEED_ADDON * drone_damagelevel(self);
+
+	if (M_GRENADELAUNCHER_SPEED_MAX && speed > M_GRENADELAUNCHER_SPEED_MAX)
+		speed = M_GRENADELAUNCHER_SPEED_MAX;
+
+	float   timer = 2.5;
+	int     damage = M_GRENADELAUNCHER_DMG_BASE + M_GRENADELAUNCHER_DMG_ADDON * drone_damagelevel(self);
+
+	if (M_GRENADELAUNCHER_DMG_MAX && damage > M_GRENADELAUNCHER_DMG_MAX)
+		damage = M_GRENADELAUNCHER_DMG_MAX;
+
+	float   damage_radius = 150;
+	int     radius_damage = 100;
+	float   accuracy = 0.8;
+
+	MonsterAim(self, accuracy, speed, true, MZ2_INFANTRY_MACHINEGUN_1, forward, start);
+
+	fire_grenade2(self, start, forward, damage, speed, timer, damage_radius, radius_damage, false);
+
+	gi.sound(self, CHAN_WEAPON, gi.soundindex("weapons/grenlf1a.wav"), 1, ATTN_NORM, 0);
+}
+
+mframe_t infantry_frames_attack_grenade[] =
+{
+	ai_charge, 0,  NULL,
+	ai_charge, 0,  NULL,
+	ai_charge, 0,  NULL,
+	ai_charge, 0,  NULL,
+	ai_charge, 0,  infantry_grenade,
+	ai_charge, 0,  NULL,
+	ai_charge, 0,  NULL,
+	ai_charge, 0,  NULL
+};
+mmove_t infantry_move_attack_grenade = { FRAME_attak201, FRAME_attak208, infantry_frames_attack_grenade, infantry_run };
+
 void infantry_attack(edict_t* self)
 {
 	int maxrange;
 	int range = entdist(self, self->enemy);
+	float r = random();
 
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 	{
@@ -609,42 +653,56 @@ void infantry_attack(edict_t* self)
 
 	M_DelayNextAttack(self, 0, true);
 
-	if (entdist(self, self->enemy) <= 64 && random() <= 0.5)
+	// Melee attack (short range)
+	if (range <= 64 && r <= 0.4)
 	{
-		self->monsterinfo.currentmove = &infantry_move_attack2;// melee attack
+		self->monsterinfo.currentmove = &infantry_move_attack2; // melee attack
 		return;
 	}
 
-	// machinegun attack
+	// Grenade attack (medium to long range)
+	if (range > 256 && range <= maxrange && r <= 0.4)
+	{
+		self->monsterinfo.currentmove = &infantry_move_attack_grenade; // new grenade attack
+		return;
+	}
+
+	// Machinegun attack (default)
 	self->monsterinfo.currentmove = &infantry_move_attack1;
 }
 
-void infantry_melee (edict_t *self)
+void infantry_melee(edict_t* self)
 {
 
 }
 
 /*QUAKED monster_infantry (1 .5 0) (-16 -16 -24) (16 16 32) Ambush Trigger_Spawn Sight
 */
-void init_drone_infantry (edict_t *self)
+void init_drone_infantry(edict_t* self)
 {
-	sound_pain1 = gi.soundindex ("infantry/infpain1.wav");
-	sound_pain2 = gi.soundindex ("infantry/infpain2.wav");
-	sound_die1 = gi.soundindex ("infantry/infdeth1.wav");
-	sound_die2 = gi.soundindex ("infantry/infdeth2.wav");
+	gi.soundindex("weapons/sgun1.wav");
+	gi.soundindex("weapons/grenlf1a.wav");
 
-	sound_gunshot = gi.soundindex ("infantry/infatck1.wav");
-	sound_weapon_cock = gi.soundindex ("infantry/infatck3.wav");
-	sound_punch_swing = gi.soundindex ("infantry/infatck2.wav");
-	sound_punch_hit = gi.soundindex ("infantry/melee2.wav");
-	
-	sound_sight = gi.soundindex ("infantry/infsght1.wav");
-	sound_search = gi.soundindex ("infantry/infsrch1.wav");
-	sound_idle = gi.soundindex ("infantry/infidle1.wav");
+	gi.modelindex("models/objects/shell1/tris.md2");
+	gi.modelindex("models/objects/grenade2/tris.md2");
+
+	sound_pain1 = gi.soundindex("infantry/infpain1.wav");
+	sound_pain2 = gi.soundindex("infantry/infpain2.wav");
+	sound_die1 = gi.soundindex("infantry/infdeth1.wav");
+	sound_die2 = gi.soundindex("infantry/infdeth2.wav");
+
+	sound_gunshot = gi.soundindex("infantry/infatck1.wav");
+	sound_weapon_cock = gi.soundindex("infantry/infatck3.wav");
+	sound_punch_swing = gi.soundindex("infantry/infatck2.wav");
+	sound_punch_hit = gi.soundindex("infantry/melee2.wav");
+
+	sound_sight = gi.soundindex("infantry/infsght1.wav");
+	sound_search = gi.soundindex("infantry/infsrch1.wav");
+	sound_idle = gi.soundindex("infantry/infidle1.wav");
 
 	self->s.modelindex = gi.modelindex("models/monsters/infantry/tris.md2");
-	VectorSet (self->mins, -16, -16, -24);
-	VectorSet (self->maxs, 16, 16, 32);
+	VectorSet(self->mins, -16, -16, -24);
+	VectorSet(self->maxs, 16, 16, 32);
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 
@@ -652,19 +710,19 @@ void init_drone_infantry (edict_t *self)
 
 	//don't override previous mtype
 	if (!self->mtype)
-		self->mtype = M_ENFORCER;	
+		self->mtype = M_ENFORCER;
 
 	self->monsterinfo.control_cost = M_ENFORCER_CONTROL_COST;
 	self->monsterinfo.cost = M_ENFORCER_COST;
 
 	// set health
-	self->health = M_ENFORCER_INITIAL_HEALTH+M_ENFORCER_ADDON_HEALTH*self->monsterinfo.level; // hlt: enforcer
+	self->health = M_ENFORCER_INITIAL_HEALTH + M_ENFORCER_ADDON_HEALTH * self->monsterinfo.level; // hlt: enforcer
 	self->max_health = self->health;
 	self->gib_health = -1.5 * BASE_GIB_HEALTH;
 
 	// set armor
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = M_ENFORCER_INITIAL_ARMOR+M_ENFORCER_ADDON_ARMOR*self->monsterinfo.level; // pow: soldier
+	self->monsterinfo.power_armor_power = M_ENFORCER_INITIAL_ARMOR + M_ENFORCER_ADDON_ARMOR * self->monsterinfo.level; // pow: soldier
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 
 	// jump and movement
@@ -687,7 +745,7 @@ void init_drone_infantry (edict_t *self)
 	//self->monsterinfo.idle = infantry_fidget;
 	self->monsterinfo.melee = infantry_melee;
 
-	gi.linkentity (self);
+	gi.linkentity(self);
 
 	self->monsterinfo.currentmove = &infantry_move_stand;
 	self->monsterinfo.scale = MODEL_SCALE;

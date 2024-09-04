@@ -30,6 +30,7 @@ void init_drone_infantry (edict_t *self);
 void init_drone_flyer (edict_t* self);
 void init_drone_floater(edict_t* self);
 void init_drone_hover(edict_t* self);
+void init_drone_shambler(edict_t* self);
 void init_baron_fire(edict_t* self);
 int crand (void);
 edict_t* INV_GetMonsterSpawn(edict_t* from);
@@ -818,7 +819,9 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	case 12: init_drone_flyer(drone);		break;
 	case 13: init_drone_floater(drone);		break;
 	case 14: init_drone_hover(drone);		break;
+	case 15: init_drone_shambler(drone);	break;
 	case 20: init_drone_decoy(drone);		break;
+
 	// bosses
 	case 30: init_drone_commander(drone);	break;
 	case 31: init_drone_makron(drone);		break;
@@ -1964,6 +1967,7 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	case M_FLYER: init_drone_flyer(monster); break;
 	case M_FLOATER: init_drone_floater(monster); break;
 	case M_HOVER: init_drone_hover(monster); break;
+	case M_SHAMBLER: init_drone_shambler(monster); break;
 	default: return false;
 	}
 
@@ -2042,6 +2046,10 @@ qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax)
 		VectorSet (boxmin, -24, -24, -16);
 		VectorSet (boxmax, 24, 24, 64);
 		break;
+	case M_SHAMBLER:
+		VectorSet(boxmin, -32, -32, -24);
+		VectorSet(boxmax, 32, 32, 64);
+		break;
 	case M_MEDIC:
 	case M_MUTANT:
 		VectorSet (boxmin, -24, -24, -24);
@@ -2107,6 +2115,7 @@ char *GetMonsterKindString (int mtype)
 		case M_FLYER: return "Flyer";
 		case M_FLOATER: return "Floater";
 		case M_HOVER: return "Hover";
+		case M_SHAMBLER: return "Shambler";
 		case M_BARON_FIRE: return "Fire Baron";
         default: return "Monster";
     }
@@ -2662,7 +2671,7 @@ void Cmd_Drone_f (edict_t *ent)
 	if (!Q_strcasecmp(s, "help"))
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Monster summoning:\n");
-		safe_cprintf(ent, PRINT_HIGH, "monster [gunner|parasite|brain|praetor|medic|tank|mutant|gladiator|berserker|soldier|enforcer|flyer|floater|hover\n");
+		safe_cprintf(ent, PRINT_HIGH, "monster [gunner|parasite|brain|praetor|medic|tank|mutant|gladiator|berserker|soldier|enforcer|flyer|floater|hover|shambler\n");
 		safe_cprintf(ent, PRINT_HIGH, "Monster utility commands:\n");
 		safe_cprintf(ent, PRINT_HIGH, "monster [remove|command|follow me|count|attack]\n");
 		return;
@@ -2708,6 +2717,8 @@ void Cmd_Drone_f (edict_t *ent)
 		vrx_create_new_drone(ent, 13, false, true);
 	else if (!Q_strcasecmp(s, "hover"))
 		vrx_create_new_drone(ent, 14, false, true);
+	else if (!Q_strcasecmp(s, "shambler"))
+		vrx_create_new_drone(ent, 15, false, true);
 	//else if (!Q_strcasecmp(s, "baron fire") && ent->myskills.administrator)
 		//vrx_create_new_drone(ent, 32, false, true);
 	//else if (!Q_strcasecmp(s, "jorg"))

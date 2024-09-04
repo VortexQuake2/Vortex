@@ -17,7 +17,7 @@ struct invdata_s invasion_data;
 /* reference vrx_create_drone_from_ent on drone_misc.c */
 // all monsters except medic
 static const int SET_EASY_MODE_MONSTERS[] = {
-	1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14
+	1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 };
 const int SET_EASY_MODE_MONSTERS_COUNT = sizeof(SET_EASY_MODE_MONSTERS) / sizeof(int);
 
@@ -44,9 +44,9 @@ static const int SET_RAGEQUIT_MONSTERS[] = {
 };
 const int SET_RAGEQUIT_MONSTERS_COUNT = sizeof(SET_RAGEQUIT_MONSTERS) / sizeof(int);
 
-// tank, mutant, berserker
+// tank, mutant, berserker, shambler!
 static const int SET_TANKY_MONSTERS[] = {
-	6, 7, 9
+	6, 7, 9, 15
 };
 const int SET_TANKY_MONSTERS_COUNT = sizeof(SET_TANKY_MONSTERS) / sizeof(int);
 
