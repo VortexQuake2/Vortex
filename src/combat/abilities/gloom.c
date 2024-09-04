@@ -1011,6 +1011,7 @@ void obstacle_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t 
 
 void obstacle_cloak (edict_t *self)
 {
+	self->flags |= FL_NOTARGET; // monsters won't target the obstacle until it hurts them
 	// already cloaked
 	if (self->svflags & SVF_NOCLIENT)
 	{

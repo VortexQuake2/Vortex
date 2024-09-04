@@ -329,7 +329,7 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 		break;
 	case M_MAGMINE:
 		name = lva("magmine");
-		data = lva("%dc", ent->health);
+		data = lva("+%d/%dc", ent->health, ent->light_level);
 		break;
 	case TOTEM_FIRE:
 	case TOTEM_WATER:

@@ -495,6 +495,8 @@ extern double MAGMINE_DELAY;
 extern double MAGMINE_MAX_COUNT;
 extern double MAGMINE_IDLE_CELLS;
 extern double MAGMINE_ACTIVE_CELLS;
+extern double MAGMINE_INITIAL_AMMO;
+extern double MAGMINE_ADDON_AMMO;
 extern double SELFDESTRUCT_RADIUS;
 extern double SELFDESTRUCT_BASE;
 extern double SELFDESTRUCT_BONUS;

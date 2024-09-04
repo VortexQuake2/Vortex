@@ -28,6 +28,7 @@ qboolean magmine_findtarget(edict_t *self) {
     edict_t *other = NULL;
 
     while ((other = findclosestradius(other, self->s.origin, self->dmg_radius)) != NULL){
+    //while ((other = findclosestradius_targets(other, self, self->dmg_radius)) != NULL) {
         if (other == self)
             continue;
         if (!G_ValidTarget(self, other, true))
@@ -40,9 +41,10 @@ qboolean magmine_findtarget(edict_t *self) {
 
 void magmine_use_energy(edict_t* self, int energy_use)
 {
-    if (self->health > energy_use)
+    // light_level is our current ammo level
+    if (self->light_level > energy_use)
     {
-        self->health -= energy_use;
+        self->light_level -= energy_use;
         return;
     }
 
@@ -53,10 +55,10 @@ void magmine_use_energy(edict_t* self, int energy_use)
         self->msg_time = level.time + 10.0;
     }
 
-    if (self->health > 0)
+    if (self->light_level > 0)
     {
         safe_cprintf(self->creator, PRINT_HIGH, "Your mag mine's energy cells are depleted. Touch it to recharge.\n");
-        self->health = 0;
+        self->light_level = 0;
     }
 }
 
@@ -119,6 +121,8 @@ void magmine_think(edict_t *self)
         return;
     }
 
+    V_HealthCache(self, (int)(0.2 * self->max_health), 1);
+
     // energy use
     if (level.time > self->delay)
     {
@@ -129,7 +133,7 @@ void magmine_think(edict_t *self)
         magmine_use_energy(self, cells_used);
     }
 
-    if (self->health > 0) // magmine has enough energy to operate
+    if (self->light_level > 0) // magmine has enough energy to operate
     {
         qboolean shouldCallThrowSparks = false;
 
@@ -164,7 +168,7 @@ void magmine_think(edict_t *self)
 
     self->nextthink = level.time + FRAMETIME;
 }
-
+/*
 void magmine_reload (edict_t* self, edict_t* other)
 {
     int	player_ammo;
@@ -206,6 +210,9 @@ void magmine_reload (edict_t* self, edict_t* other)
         }
     }
 }
+*/
+void minisentry_reload(edict_t* self, edict_t* other);
+void drone_heal(edict_t* self, edict_t* other, qboolean heal_while_being_damaged);
 
 void magmine_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* surf)
 {
@@ -221,8 +228,13 @@ void magmine_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* s
     if (!OnSameTeam(self, other))
         return;
 
-    magmine_reload(self, other);
-    //safe_cprintf(other, PRINT_HIGH, "Mag mine cells reloaded. %d/%d\n", self->health, self->max_health);
+    minisentry_reload(self, other);
+    if (self->health < self->max_health)
+    {
+        drone_heal(self, other, true);
+        gi.sound(self, CHAN_VOICE, gi.soundindex("weapons/repair.wav"), 1, ATTN_NORM, 0);
+    }
+    //safe_cprintf(other, PRINT_HIGH, "Mag mine repaired and reloaded. %d/%da\n", self->health, self->light_level);
     self->sentrydelay = level.time + 1.0;
 }
 
@@ -254,13 +266,17 @@ void magmine_spawn(edict_t *ent, int cost, float skill_mult, float delay_mult) {
     mine->clipmask = MASK_MONSTERSOLID;
     mine->mass = 500;
     mine->classname = "magmine";
-    //mine->takedamage = DAMAGE_YES;
+    mine->takedamage = DAMAGE_YES;
+    mine->flags |= FL_NOTARGET; // AI will ignore
     mine->monsterinfo.level = ent->myskills.abilities[MAGMINE].current_level * skill_mult;
     mine->health = MAGMINE_DEFAULT_HEALTH + MAGMINE_ADDON_HEALTH * mine->monsterinfo.level;
     mine->max_health = mine->health;
     mine->dmg_radius = MAGMINE_RANGE;
     mine->mtype = M_MAGMINE;//4.5
-    //mine->die = magmine_die;
+    mine->die = magmine_die;
+    mine->monsterinfo.jumpdn = MAGMINE_INITIAL_AMMO + MAGMINE_ADDON_AMMO * mine->monsterinfo.level; // max ammo
+    mine->light_level = mine->monsterinfo.jumpdn; // current ammo
+    mine->num_hammers = cell_index; // this magmine uses cells for ammo
     VectorSet(mine->mins, -12, -12, -4);
     VectorSet(mine->maxs, 12, 12, 0);
     layout_add_tracked_entity(&ent->client->layout, mine); // add to HUD
