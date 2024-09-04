@@ -47,7 +47,7 @@ void ai_eval_targets() {
         // takedamage, is solid (so not a spectator), not respawning,
         // no chat protect, no notarget, not cloaked, not a forcewall
         // not in godmode, and not frozen.
-        if (!G_ValidTargetEnt(from, true) && from->mtype != M_MAGMINE)
+        if (!G_ValidTargetEnt(from, true))
 			continue;
         from->monsterinfo.target_index = potential_target_count;
         potential_targets[potential_target_count++] = from;
