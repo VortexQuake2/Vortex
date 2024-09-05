@@ -579,9 +579,11 @@ void *gds_process_queue(void *unused)
 // MYSQL functions
 // *********************************
 
-#define QUERY(a, ...) { char* format = strdup(myva(a, __VA_ARGS__));\
+#define QUERY(a, ...) { char* format = strdup(myva(a, __VA_ARGS__ ));\
 	if (mysql_query(db, format)) { gi.dprintf("DB: %s", mysql_error(db)); };\
 	free (format); }
+
+#define QUERY2(a) { if (mysql_query(db, a)) { gi.dprintf("DB: %s", mysql_error(db)); }; }
 
 #define GET_RESULT result = mysql_store_result(db);\
 	row = mysql_fetch_row(result);
@@ -1202,7 +1204,7 @@ int gds_op_save(gds_queue_t *current, MYSQL* db)
 
 	QUERY ("CALL CharacterExists(\"%s\", @exists);", esc_pname)
 
-	QUERY ("SELECT @exists;")
+	QUERY2 ("SELECT @exists;")
 
 	GET_RESULT
 

@@ -1808,6 +1808,7 @@ struct edict_s
 	void		(*pain)(edict_t *self, edict_t *other, float kick, int damage);
 	void		(*pain_inner)(edict_t* self, edict_t* other, float kick, int damage); // az: for monsters that use drone_pain
 	void		(*die)(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point);
+	void		(*notify_drone_death)(edict_t *self);
 
 	float		touch_debounce_time;		// are all these legit?  do we need more/less of them?
 	float		pain_debounce_time;

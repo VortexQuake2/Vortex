@@ -1,6 +1,10 @@
 #include "g_local.h"
 #include "invasion.h"
 
+#define MAX_ACTIVE_MONSTERS 20
+// 70% of the wave needs to be cleared to advance
+#define WAVE_CLEAR_THRESHOLD 0.7
+
 //FIXME: need queue that holds all players that are waiting to respawn but all spawns are busy
 edict_t		*INV_SpawnQue[MAX_CLIENTS];
 int			invasion_max_playerspawns;
@@ -56,6 +60,7 @@ void INV_Init(void)
 	if (!pvm->value || !invasion->value)
 		return;
 
+	memset(&invasion_data, 0, sizeof (struct invdata_s));
 	INV_InitSpawnQue();
 	INVASION_OTHERSPAWNS_REMOVED = false;
 	invasion_difficulty_level = 1;
@@ -490,8 +495,8 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
 	}
 	else if (invasion->value == 2) // hard mode
 	{
-		float plog = log2(vrx_get_joined_players() + 1) / log2(4);
-		mhealth = 1 + 0.1 * invasion_difficulty_level * max(plog, 0);
+		float plog = log2(vrx_get_joined_players() + 1) / log2(8);
+		mhealth = 1 + 0.2 * sqrt(invasion_difficulty_level) * max(plog, 0);
 	}
 
 	monster->max_health = monster->health = monster->max_health*mhealth;
@@ -632,10 +637,12 @@ void INV_OnTimeout(edict_t *self) {
 	}
 	// remove monsters from the current wave before spawning the next
 	if (self->num_monsters_real)
-		PVM_RemoveAllMonsters(self);
-	// restart the last wave
-	if (!was_boss)
+		vrx_remove_all_monsters(self);
+
+	// restart the last wave if we were done spawning
+	if (!was_boss && self->count == MONSTERSPAWN_STATUS_IDLE) {
 		invasion_difficulty_level -= 1;
+	}
 
 	// increase the difficulty level for the next wave
 	//if (invasion->value == 1)
@@ -699,6 +706,9 @@ void INV_ShowLastWaveSummary() {
 }
 
 void INV_OnBeginWave(edict_t *self, int max_monsters) {
+	invasion_data.limitframe = level.time + TimeFormula();
+	invasion_data.printedmessage = true;
+
 	if (invasion_difficulty_level == 1)
 	{
 		if (invasion->value == 1)
@@ -716,6 +726,7 @@ void INV_OnBeginWave(edict_t *self, int max_monsters) {
 	G_PrintGreenText(va("Timelimit: %dm %ds.\n", (int)TimeFormula() / 60, (int)TimeFormula() % 60));
 
 	gi.sound(&g_edicts[0], CHAN_VOICE, gi.soundindex("misc/talk1.wav"), 1, ATTN_NONE, 0);
+	invasion_data.remaining_monsters = max_monsters * WAVE_CLEAR_THRESHOLD;
 
 	// check for a boss spawn
 	INV_BossCheck(self);
@@ -800,103 +811,38 @@ void INV_SelectMonsterSet(const edict_t* self, int const * * monster_set, int* m
 	}
 }
 
-void INV_SpawnMonsters(edict_t *self)
-{
-	const int players = vrx_get_joined_players();
+void INV_Spawnstate_Idle(edict_t *self, const int players) {
+	// if there's nobody playing, remove all monsters
 
-	// How many monsters should we spawn?
-	// 10 at lv 1, 30 by level 20. 41 by level 100
-	int max_monsters = (int)round(10 + 4.6276 * log2f((float)invasion_difficulty_level));
-
-	edict_t *e = NULL;
-	int SpawnTries = 0, MaxTriesThisFrame = 32;
-
-	// get the value of all of our monsters (BF flag mult * level * control_cost)
-	// max_monsters_value = PVM_TotalMonstersValue(self);
-	// update our drone count
-	PVM_TotalMonsters(self, true);
-	
-	//max_monsters = 1;//GHz DEBUG - REMOVE ME!
-	//self->nextthink = level.time + FRAMETIME;//GHz DEBUG - REMOVE ME!
-	//return;//GHz DEBUG - REMOVE ME!
-
-	if (!(invasion_difficulty_level % 5))
-	{
-		if (invasion->value == 1)
-			max_monsters = 4 * (vrx_get_joined_players() - 1);
-		else if (invasion->value == 2)
-			max_monsters = 6 * (vrx_get_joined_players() - 1);
-	}
-
-	// Idle State
-	// we're done spawning
-	if (self->count == MONSTERSPAWN_STATUS_IDLE)
-	{
-		// if there's nobody playing, remove all monsters
-		if (players < 1)
-		{
-		    // az: reset the current wave to avoid people skipping waves
-		    if (self->num_monsters_real) {
-                invasion_difficulty_level -= 1;
-                invasion_data.printedmessage = false;
-                PVM_RemoveAllMonsters(self);
-            }
-		}
-		
-		// the level ended, remove monsters
-		if (level.intermissiontime)
-		{
-			if (self->num_monsters_real)
-				PVM_RemoveAllMonsters(self);
-			return;
-		}
-
-		// were all monsters eliminated?
-		if (self->num_monsters_real == 0) {
-			// start spawning
-			self->nextthink = level.time + FRAMETIME;
-			self->count = MONSTERSPAWN_STATUS_WORKING;
-			return;
-		}
-
-
-		// Check for timeout
-		if (invasion_data.limitframe > level.time) // we still got time?
-		{
-			self->nextthink = level.time + FRAMETIME;
-			return;
-		}
-		else
-		{
-			// Timeout. We go straight to the working state.
-			INV_OnTimeout(self);
-			//self->count = MONSTERSPAWN_STATUS_WORKING;
-			return;
-		}
-	}
-
-	// Working State
-	//gi.dprintf("%d: level: %d max_monsters: %d\n", (int)(level.framenum), invasion_difficulty_level, max_monsters);
-	// if there's nobody playing, then wait until some join
 	if (players < 1)
 	{
-		self->nextthink = level.time + FRAMETIME;
-		return;
+		// az: reset the current wave to avoid people skipping waves
+		if (self->num_monsters_real) {
+			invasion_difficulty_level -= 1;
+			invasion_data.printedmessage = false;
+			vrx_remove_all_monsters(self);
+		}
+	}
+}
+
+qboolean INV_Spawnstate_Working(edict_t *self, const int players, int max_monsters, edict_t *e) {
+	int SpawnTries = 0, MaxTriesThisFrame = 32;
+
+	if (players < 1)
+	{
+		return true;
 	}
 
 	// print the message and set the timer the first frame we start working
 	if (!invasion_data.printedmessage) {
-		invasion_data.limitframe = level.time + TimeFormula();
 		INV_OnBeginWave(self, max_monsters);
-		invasion_data.printedmessage = true;
 		INV_SelectMonsterSet(NULL, &invasion_data.monster_set, &invasion_data.monster_set_count);
 	}
 
-    self->nextthink = level.time + FRAMETIME;
-
-	while ((e = INV_GetMonsterSpawn(e)) 
-		&& invasion_data.mspawned < max_monsters
-		&& SpawnTries < MaxTriesThisFrame)
+	while ((e = INV_GetMonsterSpawn(e))
+	       && invasion_data.mspawned < max_monsters
+	       && self->num_monsters_real < MAX_ACTIVE_MONSTERS
+	       && SpawnTries < MaxTriesThisFrame)
 	{
 		//const int* monster_set;
 		//int monster_set_count;
@@ -921,6 +867,81 @@ void INV_SpawnMonsters(edict_t *self)
 		self->count = MONSTERSPAWN_STATUS_IDLE;
 		//gi.dprintf("invasion level now: %d\n", invasion_difficulty_level);
 	}
+	return false;
+}
+
+void INV_NotifyMonsterDeath(edict_t * edict) {
+	invasion_data.remaining_monsters--;
+}
+
+void INV_SpawnMonsters(edict_t *self)
+{
+	const int players = vrx_get_joined_players();
+
+	// How many monsters should we spawn?
+	// 10 at lv 1, 30 by level 20. 41 by level 100
+	int max_monsters = (int)round(10 + 4.6276 * (float)(invasion_difficulty_level - 1));
+
+	edict_t *e = NULL;
+
+	self->nextthink = level.time + FRAMETIME;
+
+	// the level ended, remove monsters
+	if (level.intermissiontime)
+	{
+		if (self->num_monsters_real)
+			vrx_remove_all_monsters(self);
+		return;
+	}
+
+	// get the value of all of our monsters (BF flag mult * level * control_cost)
+	// max_monsters_value = PVM_TotalMonstersValue(self);
+	// update our drone count
+	vrx_pvm_update_total_owned_monsters(self, true);
+	
+	//max_monsters = 1;//GHz DEBUG - REMOVE ME!
+	//self->nextthink = level.time + FRAMETIME;//GHz DEBUG - REMOVE ME!
+	//return;//GHz DEBUG - REMOVE ME!
+
+	if (!(invasion_difficulty_level % 5))
+	{
+		if (invasion->value == 1)
+			max_monsters = 4 * (vrx_get_joined_players() - 1);
+		else if (invasion->value == 2)
+			max_monsters = 6 * (vrx_get_joined_players() - 1);
+	}
+
+	// were enough monsters eliminated?
+	if (invasion_data.remaining_monsters <= 0 && !invasion_data.boss) {
+		// start spawning
+		self->count = MONSTERSPAWN_STATUS_WORKING;
+	}
+
+	// Check for timeout if there are players
+	if (players >= 1 && invasion_difficulty_level > 1) {
+		if (invasion_data.limitframe > level.time) // we still got time?
+		{
+			self->nextthink = level.time + FRAMETIME;
+		}
+		else
+		{
+			// Timeout. We go straight to the working state.
+			INV_OnTimeout(self);
+		}
+	}
+
+	// Idle State
+	// we're done spawning
+	if (self->count == MONSTERSPAWN_STATUS_IDLE)
+	{
+		INV_Spawnstate_Idle(self, players);
+		return;
+	}
+
+	// Working State
+	//gi.dprintf("%d: level: %d max_monsters: %d\n", (int)(level.framenum), invasion_difficulty_level, max_monsters);
+	// if there's nobody playing, then wait until some join
+	INV_Spawnstate_Working(self, players, max_monsters, e);
 }
 
 void INV_SpawnPlayers(void)

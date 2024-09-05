@@ -1,5 +1,5 @@
 #include "g_local.h"
-
+#include <gamemodes/invasion.h>
 
 int vrx_get_joined_players() {
     edict_t *player;
@@ -185,7 +185,7 @@ int PVM_TotalMonstersValue(edict_t* monster_owner)
     return (int)temp;
 }
 
-int PVM_TotalMonsters(edict_t *monster_owner, qboolean update) {
+int vrx_pvm_update_total_owned_monsters(edict_t *monster_owner, qboolean update) {
     int i = 0;
     edict_t *e = NULL;
 
@@ -205,7 +205,7 @@ int PVM_TotalMonsters(edict_t *monster_owner, qboolean update) {
     return monster_owner->num_monsters_real; // will this work?
 }
 
-int PVM_RemoveAllMonsters(edict_t *monster_owner) {
+int vrx_remove_all_monsters(edict_t *monster_owner) {
     int i = 0;
     edict_t *e = NULL;
 
@@ -228,7 +228,7 @@ void FindMonsterSpot(edict_t *self) {
     int players = vrx_get_joined_players();
     int total_monsters, max_monsters = 0;
     int mtype = 0, num = 0, i = 0;
-    total_monsters = PVM_TotalMonsters(self, false);
+    total_monsters = vrx_pvm_update_total_owned_monsters(self, false);
 
     max_monsters = level.r_monsters;
 
@@ -237,7 +237,7 @@ void FindMonsterSpot(edict_t *self) {
         max_monsters = dm_monsters->value;
 
     if (level.time > self->delay) {
-        total_monsters = PVM_TotalMonsters(self, true);
+        total_monsters = vrx_pvm_update_total_owned_monsters(self, true);
         // adjust spawning delay based on efficiency of player monster kills
         if (total_monsters < max_monsters) {
             if (total_monsters < 0.5 * max_monsters) {
@@ -310,8 +310,6 @@ void SpawnRandomBoss(edict_t *self) {
     self->nextthink = level.time + 60.0;// try again in 1 minute
 }
 
-void INV_SpawnMonsters(edict_t *self);
-
 edict_t *InitMonsterEntity(qboolean manual_spawn) {
     edict_t *monster;
 
@@ -335,9 +333,10 @@ edict_t *InitMonsterEntity(qboolean manual_spawn) {
     monster->think = SpawnRandomBoss;//4.4
     else */
     // most of the time people don't like having their pvp interrupted by a boss
-    if (INVASION_OTHERSPAWNS_REMOVED)
+    if (INVASION_OTHERSPAWNS_REMOVED) {
         monster->think = INV_SpawnMonsters;
-    else
+        monster->notify_drone_death = INV_NotifyMonsterDeath;
+    } else
         monster->think = FindMonsterSpot;
 
     monster->nextthink = pregame_time->value + FRAMETIME;
