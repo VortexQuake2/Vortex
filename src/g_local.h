@@ -466,6 +466,10 @@ typedef struct
 		qboolean has_red_fallback;
 	} ctf;
 
+	struct {
+		int level_bonus;
+		float time_to_next_respawn;
+	} pvm;
 	
 /*	gdsfiles_t	gdsfiles[MAX_CLIENTS];*/
 
@@ -894,6 +898,7 @@ extern cvar_t *flood_msgs;
 extern cvar_t *flood_persecond;
 extern cvar_t *flood_waitdelay;
 extern cvar_t *gamedir;
+extern cvar_t *hostname;
 extern cvar_t *dm_monsters;
 extern cvar_t *reconnect_ip;
 extern cvar_t *invasion_enabled;
@@ -1264,7 +1269,9 @@ void M_CheckGround (edict_t *ent);
 void M_SetEffects (edict_t *ent);
 void M_MoveFrame (edict_t *self);
 void M_WorldEffects (edict_t *ent);
-edict_t *vrx_create_new_drone(edict_t *ent, int drone_type, qboolean worldspawn, qboolean link_now);
+edict_t *vrx_create_new_drone(edict_t *ent, int drone_type, qboolean worldspawn, qboolean link_now, int bonus_level);
+edict_t *
+vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type, qboolean worldspawn, qboolean link_now, int bonus_level);
 
 //
 // g_misc.c

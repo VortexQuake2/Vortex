@@ -609,35 +609,35 @@ void SVCmd_SpawnBoss_f (void)
         if (invasion->value)
             INV_SpawnBoss(m_worldspawn, 30);
         else
-            vrx_create_new_drone(m_worldspawn, 30, true, true);
+            vrx_create_new_drone(m_worldspawn, 30, true, true, 0);
     }
     else if (!strcmp(gi.argv(2), "makron"))
     {
         if (invasion->value)
             INV_SpawnBoss(m_worldspawn, 31);
         else
-            vrx_create_new_drone(m_worldspawn, 31, true, true);
+            vrx_create_new_drone(m_worldspawn, 31, true, true, 0);
     }
     else if (!strcmp(gi.argv(2), "firebaron"))
     {
         if (invasion->value)
             INV_SpawnBoss(m_worldspawn, 32);
         else
-            vrx_create_new_drone(m_worldspawn, 32, true, true);
+            vrx_create_new_drone(m_worldspawn, 32, true, true, 0);
     }
     else if (!strcmp(gi.argv(2), "supertank"))
     {
         if (invasion->value)
             INV_SpawnBoss(m_worldspawn, 33);
         else
-            vrx_create_new_drone(m_worldspawn, 33, true, true);
+            vrx_create_new_drone(m_worldspawn, 33, true, true, 0);
     }
     else if (!strcmp(gi.argv(2), "jorg"))
     {
         if (invasion->value)
             INV_SpawnBoss(m_worldspawn, 34);
         else
-            vrx_create_new_drone(m_worldspawn, 34, true, true);
+            vrx_create_new_drone(m_worldspawn, 34, true, true, 0);
     }
     else
         safe_cprintf(NULL, PRINT_HIGH, "Invalid boss type. Usage: sv spawnboss <type>\n");

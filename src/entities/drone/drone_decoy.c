@@ -544,7 +544,7 @@ void Cmd_Decoy_f (edict_t *ent)
 		return;
 	}
 
-	ret = vrx_create_new_drone(ent, 20, false, true);
+	ret = vrx_create_new_drone(ent, 20, false, true, 0);
 	if (ret)
 	{
 		ret->health_cache += (int)(0.50 * ret->max_health) + 1;
