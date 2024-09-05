@@ -460,12 +460,12 @@ SELFDESTRUCT_BASE                        = 50
 SELFDESTRUCT_BONUS                       = 50
 EXPLODING_ARMOR_COST                     = 0
 EXPLODING_ARMOR_MAX_COUNT                = 6
-EXPLODING_ARMOR_AMOUNT                   = 25
+EXPLODING_ARMOR_AMOUNT                   = 10
 EXPLODING_ARMOR_DMG_BASE                 = 100
 EXPLODING_ARMOR_DMG_ADDON                = 40
 EXPLODING_ARMOR_MAX_RADIUS               = 200
 EXPLODING_ARMOR_DELAY                    = 1
-EXPLODING_ARMOR_DETECTION                = 32
+EXPLODING_ARMOR_DETECTION                = 48
 MIRV_INITIAL_DAMAGE                      = 50
 MIRV_ADDON_DAMAGE                        = 10
 MIRV_INITIAL_RADIUS                      = 100
@@ -1024,11 +1024,11 @@ IMP_BOLT_DELAY                           = 0.3
 IMP_BOLT_RADIUS                          = 100
 
 
-SPIKE_INITIAL_DMG                        = 50
-SPIKE_ADDON_DMG                          = 15
+SPIKE_INITIAL_DMG                        = 0
+SPIKE_ADDON_DMG                          = 25
 SPIKE_SPEED                              = 1000
-SPIKE_COST                               = 25
-SPIKE_DELAY                              = 0.5
+SPIKE_COST                               = 10
+SPIKE_DELAY                              = 0.3
 SPIKE_STUN_ADDON                         = 0.05
 SPIKE_STUN_MIN                           = 0.2
 SPIKE_STUN_MAX                           = 1.0
@@ -1097,8 +1097,8 @@ BLACKHOLE_DELAY                          = 10.0
 BLACKHOLE_EXIT_TIME                      = 30.0
 
 
-CALTROPS_INITIAL_DAMAGE                  = 50
-CALTROPS_ADDON_DAMAGE                    = 25
+CALTROPS_INITIAL_DAMAGE                  = 0
+CALTROPS_ADDON_DAMAGE                    = 50
 CALTROPS_INITIAL_SLOW                    = 0
 CALTROPS_ADDON_SLOW                      = 0.1
 CALTROPS_INITIAL_SLOWED_TIME             = 0
@@ -1112,8 +1112,8 @@ CALTROPS_MAX_COUNT                       = 10
 SPIKEGRENADE_COST                        = 20
 SPIKEGRENADE_DELAY                       = 1.0
 SPIKEGRENADE_DURATION                    = 10.0
-SPIKEGRENADE_INITIAL_DAMAGE              = 50
-SPIKEGRENADE_ADDON_DAMAGE                = 15
+SPIKEGRENADE_INITIAL_DAMAGE              = 100
+SPIKEGRENADE_ADDON_DAMAGE                = 20
 SPIKEGRENADE_INITIAL_SPEED               = 600
 SPIKEGRENADE_ADDON_SPEED                 = 0
 SPIKEGRENADE_TURN_DEGREES                = 3
@@ -1168,10 +1168,10 @@ MIRROR_COST                              = 50
 MIRROR_DELAY                             = 1.0
 
 -- Fireball
-FIREBALL_INITIAL_DAMAGE                  = 50
+FIREBALL_INITIAL_DAMAGE                  = 100
 FIREBALL_ADDON_DAMAGE                    = 20
 FIREBALL_INITIAL_RADIUS                  = 100
-FIREBALL_ADDON_RADIUS                    = 2.5
+FIREBALL_ADDON_RADIUS                    = 5
 FIREBALL_INITIAL_SPEED                   = 650
 FIREBALL_ADDON_SPEED                     = 35
 FIREBALL_INITIAL_FLAMES                  = 5
@@ -1193,15 +1193,15 @@ LIGHTNING_ADDON_RADIUS                   = 0
 LIGHTNING_ABILITY_DELAY                  = 1.0
 
 -- Plasmabolt
-PLASMABOLT_INITIAL_DAMAGE                = 50
-PLASMABOLT_ADDON_DAMAGE                  = 15
+PLASMABOLT_INITIAL_DAMAGE                = 100
+PLASMABOLT_ADDON_DAMAGE                  = 20
 PLASMABOLT_INITIAL_RADIUS                = 100
 PLASMABOLT_ADDON_RADIUS                  = 5
 PLASMABOLT_INITIAL_SPEED                 = 750
 PLASMABOLT_ADDON_SPEED                   = 0
 PLASMABOLT_INITIAL_DURATION              = 2.0
 PLASMABOLT_ADDON_DURATION                = 0
-PLASMABOLT_COST                          = 20
+PLASMABOLT_COST                          = 10
 PLASMABOLT_DELAY                         = 0.3
 PLASMABOLT_DELAY_PVP                     = 0.7
 
@@ -1216,13 +1216,13 @@ ICEBOLT_INITIAL_CHILL_DURATION           = 0
 ICEBOLT_ADDON_CHILL_DURATION             = 0.4
 ICEBOLT_DELAY                            = 0.3
 
-HEALER_INITIAL_HEALTH                    = 100
-HEALER_ADDON_HEALTH                      = 40
+HEALER_INITIAL_HEALTH                    = 0
+HEALER_ADDON_HEALTH                      = 100
 HEALER_COST                              = 50
 HEALER_DELAY                             = 1.0
 
 OBSTACLE_INITIAL_HEALTH                  = 0
-OBSTACLE_ADDON_HEALTH                    = 145
+OBSTACLE_ADDON_HEALTH                    = 150
 OBSTACLE_INITIAL_DAMAGE                  = 0
 OBSTACLE_ADDON_DAMAGE                    = 40
 OBSTACLE_COST                            = 25
@@ -1234,7 +1234,7 @@ GASSER_INITIAL_DAMAGE                    = 0
 GASSER_ADDON_DAMAGE                      = 10
 GASSER_INITIAL_HEALTH                    = 100
 GASSER_ADDON_HEALTH                      = 40
-GASSER_INITIAL_ATTACK_RANGE              = 100
+GASSER_INITIAL_ATTACK_RANGE              = 128
 GASSER_ADDON_ATTACK_RANGE                = 0
 GASSER_COST                              = 25
 GASSER_DELAY                             = 1.0
@@ -1243,9 +1243,9 @@ GASCLOUD_POISON_DURATION                 = 10.0
 GASCLOUD_POISON_FACTOR                   = 0.1
 
 --Blink Strike
-BLINKSTRIKE_INITIAL_COST				 = 70
-BLINKSTRIKE_ADDON_COST					 = -5
-BLINKSTRIKE_MIN_COST					 = 20
+BLINKSTRIKE_INITIAL_COST				 = 50
+BLINKSTRIKE_ADDON_COST					 = -4
+BLINKSTRIKE_MIN_COST					 = 10
 BLINKSTRIKE_DELAY						 = 1.0
 BLINKSTRIKE_FRAMES						 = 50
 BLINKSTRIKE_INITIAL_BONUS				 = 0
@@ -1254,9 +1254,9 @@ BLINKSTRIKE_ADDON_BONUS					 = 0.1
 --Exploding Barrel
 EXPLODING_BARREL_INITIAL_HEALTH			 = 100
 EXPLODING_BARREL_ADDON_HEALTH			 = 0
-EXPLODING_BARREL_INITIAL_DAMAGE			 = 50
-EXPLODING_BARREL_ADDON_DAMAGE			 = 35
-EXPLODING_BARREL_COST					 = 20
+EXPLODING_BARREL_INITIAL_DAMAGE			 = 100
+EXPLODING_BARREL_ADDON_DAMAGE			 = 40
+EXPLODING_BARREL_COST					 = 5
 EXPLODING_BARREL_DELAY					 = 1.0
 EXPLODING_BARREL_MAX_COUNT				 = 4
 
