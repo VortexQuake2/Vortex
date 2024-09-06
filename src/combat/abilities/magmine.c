@@ -62,6 +62,7 @@ void magmine_use_energy(edict_t* self, int energy_use)
     }
 }
 
+void drone_pain(edict_t* self, edict_t* other, float kick, int damage);
 void magmine_attack(edict_t *self) {
     int pull;
     vec3_t start, end, dir;
@@ -85,6 +86,11 @@ void magmine_attack(edict_t *self) {
 
     if (level.time > self->delay) {
         gi.sound(self, CHAN_WEAPON, gi.soundindex("weapons/tlaser.wav"), 1, ATTN_IDLE, 0);
+
+        // force monsters to get angry and attack the magmine (despite FL_NOTARGET)
+        if (self->enemy->pain)
+            self->enemy->pain(self->enemy, self, 0, 0);
+
         self->delay = level.time + 2;
     }
 }
