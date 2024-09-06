@@ -281,6 +281,7 @@ void InitGame(void)
 
 	vrx_password = gi.cvar("vrx_password", "", CVAR_ARCHIVE | CVAR_USERINFO);
 	dm_monsters = gi.cvar("dm_monsters", "8", CVAR_SERVERINFO);
+	hostname = gi.cvar("hostname", "q2vortex.com", CVAR_SERVERINFO);
 
 	// vrxchile v1.3 ally half server
 	allies = gi.cvar("allies", "1", CVAR_SERVERINFO | CVAR_LATCH);
@@ -312,9 +313,9 @@ void InitGame(void)
 	// az end
 
 	// az: pvm_respawntime, pvm_monstermult and ffa_monstermult currently unused
-	pvm_respawntime = gi.cvar("pvm_respawntime", "10", 0);
+	pvm_respawntime = gi.cvar("pvm_respawntime", "15", 0);
 	pvm_monstermult = gi.cvar("pvm_monstermult", "1.0", 0);
-	ffa_respawntime = gi.cvar("ffa_respawntime", "20", 0);
+	ffa_respawntime = gi.cvar("ffa_respawntime", "15", 0);
 	ffa_monstermult = gi.cvar("ffa_monstermult", "1.0", 0);
 
 	// az note: only used in teamplay.c, which is unused....

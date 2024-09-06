@@ -506,6 +506,14 @@ void layout_generate_misc(edict_t* ent, sidebar_t* sidebar)
 		sidebar_add_entry(sidebar, entry);
 	}
 
+	if (pvm->value && pregame_time->value < level.time && !invasion->value) {
+		sidebar_entry_t entry = { 0 };
+		entry.pos = sidebar_get_next_line_pos(sidebar);
+		entry.name = lva("pvm");
+		entry.data = lva("%.0fs/%d", level.pvm.time_to_next_respawn, level.pvm.level_bonus);
+		sidebar_add_entry(sidebar, entry);
+	}
+
 	if (ent->client->tele_timeout > level.framenum)
 	{
 		sidebar_entry_t entry = { 0 };

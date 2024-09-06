@@ -724,7 +724,7 @@ void vrx_roll_to_make_champion(edict_t *drone, int *drone_type)
 	}
 }
 
-edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type, qboolean worldspawn, qboolean link_now)
+edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type, qboolean worldspawn, qboolean link_now, int bonus_level)
 {
 	vec3_t		forward, right, start, end, offset;
 	trace_t		tr;
@@ -741,7 +741,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 		else if (INVASION_OTHERSPAWNS_REMOVED)
 		{
 			if (invasion->value == 1)
-				drone->monsterinfo.level = GetRandom(LowestLevelPlayer(), HighestLevelPlayer())/*+invasion_difficulty_level-1*/;
+				drone->monsterinfo.level = GetRandom(LowestLevelPlayer(), HighestLevelPlayer());
 			else if (invasion->value == 2) // hard mode invasion
 			{
 				drone->monsterinfo.level = HighestLevelPlayer()+invasion_difficulty_level-1;
@@ -755,12 +755,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 			else
 				drone->monsterinfo.level = GetRandom(LowestLevelPlayer(), HighestLevelPlayer());
 
-			if (pvm->value) // In PvM mode... Make them tougher.
-			{
-				drone->health *= 1.5;
-				drone->max_health *= 1.5;
-			}
-
+			drone->monsterinfo.level += bonus_level;
 
 			// 4.5 assign monster bonus flags
 			// Champions spawn on invasion hard mode.
@@ -1007,9 +1002,9 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	return drone;
 }
 
-edict_t *vrx_create_new_drone(edict_t *ent, int drone_type, qboolean worldspawn, qboolean link_now)
+edict_t *vrx_create_new_drone(edict_t *ent, int drone_type, qboolean worldspawn, qboolean link_now, int bonus_level)
 {
-	return vrx_create_drone_from_ent(G_Spawn(), ent, drone_type, worldspawn, link_now);
+	return vrx_create_drone_from_ent(G_Spawn(), ent, drone_type, worldspawn, link_now, bonus_level);
 }
 
 void RemoveAllDrones (edict_t *ent, qboolean refund_player)
@@ -2695,35 +2690,35 @@ void Cmd_Drone_f (edict_t *ent)
 	}
 
 	if (!Q_strcasecmp(s, "gunner"))
-        vrx_create_new_drone(ent, 1, false, true);
+        vrx_create_new_drone(ent, 1, false, true, 0);
 	else if (!Q_strcasecmp(s, "parasite"))
-        vrx_create_new_drone(ent, 2, false, true);
+        vrx_create_new_drone(ent, 2, false, true, 0);
 	else if (!Q_strcasecmp(s, "brain"))
-        vrx_create_new_drone(ent, 4, false, true);
+        vrx_create_new_drone(ent, 4, false, true, 0);
 	else if (!Q_strcasecmp(s, "praetor"))
-        vrx_create_new_drone(ent, 3, false, true);
+        vrx_create_new_drone(ent, 3, false, true, 0);
 	else if (!Q_strcasecmp(s, "medic"))
-        vrx_create_new_drone(ent, 5, false, true);
+        vrx_create_new_drone(ent, 5, false, true, 0);
 	else if (!Q_strcasecmp(s, "tank"))
-        vrx_create_new_drone(ent, 6, false, true);
+        vrx_create_new_drone(ent, 6, false, true, 0);
 	else if (!Q_strcasecmp(s, "mutant"))
-        vrx_create_new_drone(ent, 7, false, true);
+        vrx_create_new_drone(ent, 7, false, true, 0);
 	else if (!Q_strcasecmp(s, "gladiator")/* && ent->myskills.administrator*/)
-        vrx_create_new_drone(ent, 8, false, true);
+        vrx_create_new_drone(ent, 8, false, true, 0);
 	else if (!Q_strcasecmp(s, "berserker"))
-        vrx_create_new_drone(ent, 9, false, true);
+        vrx_create_new_drone(ent, 9, false, true, 0);
 	else if (!Q_strcasecmp(s, "soldier"))
-        vrx_create_new_drone(ent, 10, false, true);
+        vrx_create_new_drone(ent, 10, false, true, 0);
 	else if (!Q_strcasecmp(s, "enforcer"))
-        vrx_create_new_drone(ent, 11, false, true);
+        vrx_create_new_drone(ent, 11, false, true, 0);
 	else if (!Q_strcasecmp(s, "flyer"))
-		vrx_create_new_drone(ent, 12, false, true);
+		vrx_create_new_drone(ent, 12, false, true, 0);
 	else if (!Q_strcasecmp(s, "floater"))
-		vrx_create_new_drone(ent, 13, false, true);
+		vrx_create_new_drone(ent, 13, false, true, 0);
 	else if (!Q_strcasecmp(s, "hover"))
-		vrx_create_new_drone(ent, 14, false, true);
+		vrx_create_new_drone(ent, 14, false, true, 0);
 	else if (!Q_strcasecmp(s, "shambler"))
-		vrx_create_new_drone(ent, 15, false, true);
+		vrx_create_new_drone(ent, 15, false, true, 0);
 	//else if (!Q_strcasecmp(s, "baron fire") && ent->myskills.administrator)
 		//vrx_create_new_drone(ent, 32, false, true);
 	//else if (!Q_strcasecmp(s, "jorg"))

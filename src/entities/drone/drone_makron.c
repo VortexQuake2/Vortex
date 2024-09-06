@@ -667,7 +667,7 @@ void MakronSpawn (edict_t *self)
 	vec3_t		forward;
 	edict_t		*makron;
 
-	makron = vrx_create_new_drone(self->activator, 33, true, true);
+	makron = vrx_create_new_drone(self->activator, 33, true, true, 0);
 	VectorCopy(self->s.origin, makron->s.origin);
 	gi.linkentity(makron);
 

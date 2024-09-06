@@ -99,6 +99,7 @@ int invasion_difficulty_level;
 qboolean found_flag;
 
 cvar_t *gamedir;
+cvar_t *hostname;
 cvar_t *dm_monsters;
 cvar_t *pvm_respawntime;
 cvar_t *pvm_monstermult;
