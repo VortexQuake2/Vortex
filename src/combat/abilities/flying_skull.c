@@ -425,6 +425,8 @@ void skull_remove (edict_t *self)
 	gi.unlinkentity(self);
 }
 
+#define SKULL_FOLLOW_DISTANCE	512		// skull will move towards activator if this range is exceeded
+
 void skull_return (edict_t *self)
 {
 	self->enemy = NULL;
@@ -432,8 +434,8 @@ void skull_return (edict_t *self)
 	// is our activator visible?
 	if (visible(self, self->activator))
 	{
-		// follow within 128 units
-		if (entdist(self, self->activator) > 128)
+		// follow within defined range
+		if (entdist(self, self->activator) > SKULL_FOLLOW_DISTANCE)
 		{
 			skull_movetogoal(self, self->activator);
 			return;
@@ -492,8 +494,8 @@ void skull_think (edict_t *self)
 		M_CheckGround(self);
 	}
 
-	if (!self->enemy)
-		skull_findtarget(self);
+	//if (!self->enemy)
+	//	skull_findtarget(self);
 	if (G_ValidTarget(self, self->enemy, false) // is the target still valid?
 		&& entdist(self->activator, self->enemy) <= SKULL_MAX_RANGE) // make sure the target isn't too far from activator (don't wander)
 	{
@@ -518,7 +520,15 @@ void skull_think (edict_t *self)
 		skull_attack(self);
 	}
 	else
-		skull_return(self);//skull_idle(self);
+	{
+		// no target or target isn't valid
+		self->enemy = NULL;
+		// try to find another target, otherwise return to the activator
+		if (skull_findtarget(self))
+			skull_attack(self);
+		else
+			skull_return(self);//skull_idle(self);
+	}
 		
 	skull_runframes(self);
 	M_SetEffects(self);
