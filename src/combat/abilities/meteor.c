@@ -7,7 +7,7 @@ void meteor_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *s
 	// burn targets within explosion radius
 	while ((e = findradius(e, self->s.origin, self->dmg_radius)) != NULL)
 	{
-		if (!G_ValidTarget(self, e, true))
+		if (!G_ValidTarget(self, e, true, true))
 			continue;
 		burn_person(e, self->owner, (int)(self->dmg*0.1));
 	}

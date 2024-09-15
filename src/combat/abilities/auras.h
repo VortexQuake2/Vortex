@@ -26,7 +26,7 @@ que_t *que_findtype(const que_t *src, que_t *dst, int type);
 
 void que_removeent(que_t *que, edict_t *other, qboolean free);
 void que_empty (que_t *que);
-void CurseRemove (edict_t *ent, int type);
+void CurseRemove (edict_t *ent, int type, int ignore);
 void AuraRemove (edict_t *ent, int type);
 
 #endif

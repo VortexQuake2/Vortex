@@ -36,7 +36,7 @@ void MoveClientToIntermission(edict_t *ent)
 	//	RemoveAllAuras(ent);
 	//	RemoveAllCurses(ent);
 	AuraRemove(ent, 0);
-	CurseRemove(ent, 0);
+	CurseRemove(ent, 0, 0);
 
 	// RAFAEL
 	ent->client->quadfire_framenum = 0;

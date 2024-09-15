@@ -254,7 +254,7 @@ void LeapAttack (edict_t *ent)
 
 	while ((e = findradius (e, ent->s.origin, 128)) != NULL)
 	{
-		if (!G_ValidTarget(ent, e, true))
+		if (!G_ValidTarget(ent, e, true, true))
 			continue;
 		if (!infront(ent, e))
 			continue;
@@ -913,7 +913,7 @@ void Cmd_Purge_f (edict_t *ent)
 	ent->client->ability_delay = level.time + PURGE_DELAY;
 
 	//Remove all curses
-	CurseRemove(ent, 0);
+	CurseRemove(ent, 0, 0);
 
 	ent->client->pers.inventory[power_cube_index] -= PURGE_COST;
 	ent->client->ability_delay = level.time + PURGE_DELAY;

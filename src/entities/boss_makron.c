@@ -120,7 +120,7 @@ void boss_makron_chain (edict_t *self, int flash_number)
 
 void boss_makron_attack (edict_t *self)
 {
-	if (!G_ValidTarget(self, self->enemy, true))
+	if (!G_ValidTarget(self, self->enemy, true, true))
 	{
 		if (!boss_findtarget(self))
 			self->enemy = NULL;

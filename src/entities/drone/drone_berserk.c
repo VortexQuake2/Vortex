@@ -215,7 +215,7 @@ void berserk_attack_strike (edict_t *self)
 	
 	while ((other = findradius(other, self->s.origin, 128)) != NULL)
 	{
-		if (!G_ValidTarget(self, other, true))
+		if (!G_ValidTarget(self, other, true, true))
 			continue;
 		// miss the attack if we are cursed/confused
 		if (que_typeexists(self->curses, CURSE) && rand() > 0.2)

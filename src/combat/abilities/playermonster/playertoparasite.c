@@ -283,7 +283,7 @@ void think_ability_parasite_attack(edict_t *ent)
 	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
 
 	// do we already have a valid target?
-	if (G_ValidTarget(ent, ent->parasite_target, true)
+	if (G_ValidTarget(ent, ent->parasite_target, true, true)
 		&& (entdist(ent, ent->parasite_target) <= PARASITE_RANGE)
 		&& infov(ent, ent->parasite_target, 90))
 	{

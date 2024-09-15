@@ -1582,6 +1582,10 @@ void body_think (edict_t *self)
 	self->s.effects = 0;
 	self->s.renderfx = 0;
 
+	// plague flies
+	if (que_typeexists(self->curses, CURSE_PLAGUE))
+		self->s.effects |= EF_FLIES;
+
 	if (self->linkcount != self->monsterinfo.linkcount)
 	{
 		self->monsterinfo.linkcount = self->linkcount;
@@ -1599,6 +1603,7 @@ void body_think (edict_t *self)
 
 void CopyToBodyQue (edict_t *ent)
 {
+	que_t		*slot = NULL;
 	edict_t		*body;
 
 	//gi.dprintf("CopyToBodyQue\n");
@@ -1610,6 +1615,22 @@ void CopyToBodyQue (edict_t *ent)
 	body = &g_edicts[(int)maxclients->value + level.body_que + 1];
 	level.body_que = (level.body_que + 1) % BODY_QUEUE_SIZE;
 
+	// is the player cursed with plague?
+	if ((slot = que_findtype(ent->curses, slot, CURSE_PLAGUE)) != NULL)
+	{
+		// try to add it to the body's curse list
+		if (!que_addent(body->curses, slot->ent, 999.0))
+		{
+			// failed, remove the curse entity
+			G_FreeEdict(slot->ent);
+		}
+		else
+			slot->ent->enemy = body; // make the plague entity target the body
+		
+		// remove plague from the player's curses
+		slot->ent = NULL;
+		slot->time = 0;
+	}
 	// FIXME: send an effect on the removed body
 
 	gi.unlinkentity (ent);
@@ -1634,8 +1655,8 @@ void CopyToBodyQue (edict_t *ent)
 	body->die = body_die;
 	body->takedamage = DAMAGE_YES;
 //GHz START
-	//body->think = body_think;
-	//body->nextthink = level.time + FRAMETIME;
+	body->think = body_think;
+	body->nextthink = level.time + FRAMETIME;
 	//body->delay = level.time + GetRandom(5, 10);// hide the body after some time
 	body->deadflag = DEAD_DEAD; // added so its easier to identify a body
 	body->gib_health = ent->gib_health; // necessary for corpse explosion and yin spirit

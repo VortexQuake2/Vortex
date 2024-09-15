@@ -98,7 +98,7 @@ retry_eyecam:
 
 	// if we're chasing a non-client entity that has a valid enemy
 	// within our sights, then modify our viewing pitch
-	if (eyecam && !targ->client && G_ValidTarget(targ, targ->enemy, true) 
+	if (eyecam && !targ->client && G_ValidTarget(targ, targ->enemy, true, true)
 		&& infov(targ, targ->enemy, 90))
 	{
 		VectorSubtract(targ->enemy->s.origin, targ->s.origin, forward);

@@ -632,7 +632,7 @@ void spiker_attack (edict_t *self)
 
 	while ((e = findradius(e, self->s.origin, range)) != NULL)
 	{
-		if (!G_ValidTarget(self, e, true))
+		if (!G_ValidTarget(self, e, true, true))
 			continue;
 		
 		// copy target location
@@ -1102,7 +1102,7 @@ void obstacle_attack(edict_t* self)
 		VectorCopy(end, self->move_origin); // save current position
 		end[2] -= 8192;
 		tr = gi.trace(self->s.origin, self->mins, self->maxs, end, self, MASK_SHOT);
-		if (G_ValidTarget(self, tr.ent, false))
+		if (G_ValidTarget(self, tr.ent, false, true))
 			self->movetype = MOVETYPE_STEP;
 	}
 	else
@@ -1430,7 +1430,7 @@ void gascloud_attack (edict_t *self)
 
 	while ((e = findradius(e, self->s.origin, self->dmg_radius)) != NULL)
 	{
-		if (G_ValidTarget(self, e, true))
+		if (G_ValidTarget(self, e, true, true))
 		{
 			// otherwise, update the attack frequency to once per server frame
 			if ((slot = que_findtype(e->curses, NULL, POISON)) != NULL)
@@ -1523,7 +1523,7 @@ void gasser_acidattack (edict_t *self)
 
 	while ((e = findradius(e, self->s.origin, range)) != NULL)
 	{
-		if (!G_ValidTarget(self, e, true))
+		if (!G_ValidTarget(self, e, true, true))
 			continue;
 		
 		// copy target location
@@ -2232,7 +2232,7 @@ void spikeball_findtarget (edict_t *self)
 {
     edict_t *e=NULL;
 
-    if (!G_ValidTarget(self, self->enemy, true))
+    if (!G_ValidTarget(self, self->enemy, true, true))
     {
         while ((e = findclosestradius_targets(e, self, self->dmg_radius)) != NULL)
         {

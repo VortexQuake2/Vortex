@@ -282,7 +282,7 @@ void NatureTotem_think(edict_t *self, edict_t *caster)
 			}
 
 			// We remove curses. -az
-			CurseRemove(target, 0);
+			CurseRemove(target, 0, 0);
 		}
 	}
 

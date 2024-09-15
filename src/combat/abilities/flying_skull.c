@@ -496,7 +496,7 @@ void skull_think (edict_t *self)
 
 	//if (!self->enemy)
 	//	skull_findtarget(self);
-	if (G_ValidTarget(self, self->enemy, false) // is the target still valid?
+	if (G_ValidTarget(self, self->enemy, false, true) // is the target still valid?
 		&& entdist(self->activator, self->enemy) <= SKULL_MAX_RANGE) // make sure the target isn't too far from activator (don't wander)
 	{
 		if (!visible(self, self->enemy))
@@ -675,7 +675,7 @@ void skull_attackcmd (edict_t *self)
 
 	tr = gi.trace(start, NULL, NULL, end, self->activator, MASK_SHOT);
 
-	if (G_ValidTarget(self, tr.ent, false))
+	if (G_ValidTarget(self, tr.ent, false, true))
 	{
 		self->enemy = tr.ent;
 		self->monsterinfo.search_frames = 0;

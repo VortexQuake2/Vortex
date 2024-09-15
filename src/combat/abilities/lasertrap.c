@@ -65,7 +65,7 @@ qboolean lasertrap_validtarget (edict_t *self, edict_t *target, float dist, qboo
 	vec3_t v;
 
 	// basic check
-	if (!G_ValidTarget(self, target, vis))
+	if (!G_ValidTarget(self, target, vis, true))
 		return false;
 
 	// check distance on a 2-D plane
@@ -149,7 +149,7 @@ void lasertrap_firelaser (edict_t *self, vec3_t dir)
 	gi.multicast(start, MULTICAST_PVS);
 
 	// hurt any valid target that touches the laser
-	if (G_ValidTarget(self, tr.ent, false))
+	if (G_ValidTarget(self, tr.ent, false, true))
 	{
 		// calculate attack vector
 		VectorSubtract(tr.ent->s.origin, start, forward);// up

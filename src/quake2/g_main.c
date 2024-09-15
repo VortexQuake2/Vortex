@@ -888,7 +888,7 @@ void G_RunPregame()
 				//RemoveAllCurses(ent);
 				//RemoveAllAuras(ent);
 				AuraRemove(ent, 0);
-				CurseRemove(ent, 0);
+				CurseRemove(ent, 0, 0);
 				ent->Slower = (int)(level.time - 1);
 			}
 		}

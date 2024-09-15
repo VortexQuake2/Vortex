@@ -42,7 +42,7 @@ void PlagueCloudSpawn(edict_t *ent) {
 
     // find someone nearby to infect
     while ((e = findradius(e, ent->s.origin, radius)) != NULL) {
-        if (!G_ValidTarget(ent, e, true))
+        if (!G_ValidTarget(ent, e, true, false))
             continue;
         //	if (HasActiveCurse(e, CURSE_PLAGUE))
         if (que_typeexists(e->curses, CURSE_PLAGUE))
@@ -61,7 +61,7 @@ void plague_think(edict_t *self) {
     edict_t *e = NULL;
 
     // plague self-terminates if:
-    if (!G_EntIsAlive(self->owner) || !G_EntIsAlive(self->enemy)    //someone dies
+    if (!G_EntIsAlive(self->owner) || !G_EntExists(self->enemy)// || !G_EntIsAlive(self->enemy)    //someone dies
         || (self->owner->flags & FL_WORMHOLE)                        // owner enters a wormhole
         || (self->owner->client->tball_delay > level.time)            //owner tballs away
         || (self->owner->flags & FL_CHATPROTECT)                    //3.0 owner is in chatprotect
@@ -70,6 +70,7 @@ void plague_think(edict_t *self) {
         || que_findtype(self->enemy->curses, NULL, HEALING) != NULL)    //3.0 player is blessed with healing
     {
         que_removeent(self->enemy->curses, self, true);
+        //gi.dprintf("que_removeent\n");
         return;
     }
 
@@ -84,7 +85,7 @@ void plague_think(edict_t *self) {
     while ((e = findradius(e, self->s.origin, radius)) != NULL) {
         if (e == self->enemy)
             continue;
-        if (!G_ValidTarget(self, e, true))
+        if (!G_ValidTarget(self, e, true, false))
             continue;
         // don't allow more than one curse of the same type
         if (que_typeexists(e->curses, CURSE_PLAGUE))
@@ -96,7 +97,7 @@ void plague_think(edict_t *self) {
         PlagueCloud(self->owner, e);
     }
 
-    if (level.time > self->wait) {
+    if (level.time > self->wait && self->enemy->health > 0) {
         int maxlevel;
 
         if (self->owner->mtype == M_MYPARASITE)
@@ -135,7 +136,7 @@ void PlagueCloud(edict_t *ent, edict_t *target) {
     plague->nextthink = level.time + FRAMETIME;
     plague->think = plague_think;
     plague->classname = "curse";
-    plague->mtype = CURSE_PLAGUE;
+    plague->mtype = plague->atype = CURSE_PLAGUE;
     VectorCopy(ent->s.origin, plague->s.origin);
 
     // abort if the target has too many curses

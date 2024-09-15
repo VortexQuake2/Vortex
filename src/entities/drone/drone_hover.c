@@ -413,7 +413,7 @@ mmove_t hover_move_end_attack = {FRAME_attak107, FRAME_attak108, hover_frames_en
 void hover_reattack (edict_t *self)
 {
 	// if our enemy is still valid, then continue firing
-	if (G_ValidTarget(self, self->enemy, true) && (random() <= 0.9))
+	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.9))
 	{
 		self->s.frame = FRAME_attak104;
 		//hover_fire_blaster(self);

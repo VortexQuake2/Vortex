@@ -558,7 +558,7 @@ void mymedic_refire(edict_t* self)
 {
 	float dist = 9999;
 
-	if (G_ValidTarget(self, self->enemy, true))
+	if (G_ValidTarget(self, self->enemy, true, true))
 	{
 		dist = entdist(self, self->enemy);
 
@@ -920,7 +920,7 @@ void mymedic_cable_attack (edict_t *self)
 			frames = 1;
 
 		// remove all curses
-		CurseRemove(self->enemy, 0);
+		CurseRemove(self->enemy, 0, 0);
 
 		//Give them a short period of curse immunity
 		self->enemy->holywaterProtection = level.time + 2.0; //2 seconds immunity
@@ -997,7 +997,7 @@ qboolean mymedic_findenemy (edict_t *self)
 
 	while ((target = findclosestradius (target, self->s.origin, 1024)) != NULL)
 	{
-		if (!G_ValidTarget(self, target, true))
+		if (!G_ValidTarget(self, target, true, true))
 			continue;
 		self->enemy = target;
 		drone_wakeallies(self);

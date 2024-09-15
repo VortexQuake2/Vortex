@@ -384,7 +384,7 @@ void drone_ai_checkattack (edict_t *self)
 	if (!tr.ent || tr.ent != self->enemy)
 	{
 		//gi.dprintf("blocked shot\n");
-		if (G_ValidTarget(self, tr.ent, false))
+		if (G_ValidTarget(self, tr.ent, false, true))
 			self->enemy = tr.ent;
 		else
 			return;
@@ -1890,11 +1890,15 @@ void M_BodyThink (edict_t *self)
 	if (self->solid == SOLID_NOT)
 		return;
 
+	// plague flies
+	if (que_typeexists(self->curses, CURSE_PLAGUE))
+		self->s.effects |= EF_FLIES;
+
 	// body becomes transparent before removal
 	if (level.time == self->delay-5.0)
-		self->s.effects = EF_PLASMA;
+		self->s.effects |= EF_PLASMA;
 	else if (level.time == self->delay-2.0)
-		self->s.effects = EF_SPHERETRANS;
+		self->s.effects |= EF_SPHERETRANS;
 
 	// remove the body
 	if (level.time >= self->delay)
@@ -2787,7 +2791,7 @@ qboolean M_ContinueAttack(edict_t* self, mmove_t* attack_move, mmove_t* end_move
 	if (attack_move)
 	{
 		// is the target still valid?
-		if (G_ValidTarget(self, self->enemy, true))
+		if (G_ValidTarget(self, self->enemy, true, true))
 		{
 			dist = entdist(self, self->enemy);
 

@@ -9,7 +9,7 @@ void fireball_explode (edict_t *self, cplane_t *plane)
 	// burn targets within explosion radius
 	while ((e = findradius(e, self->s.origin, self->dmg_radius)) != NULL)
 	{
-		if (!G_ValidTarget(self, e, true))
+		if (!G_ValidTarget(self, e, true, true))
 			continue;
 		burn_person(e, self->owner, self->radius_dmg);
 	}
@@ -144,7 +144,7 @@ void icebolt_explode (edict_t *self, cplane_t *plane)
 	// chill targets within explosion radius
 	while ((e = findradius(e, self->s.origin, self->dmg_radius)) != NULL)
 	{
-		if (!G_ValidTarget(self, e, true))
+		if (!G_ValidTarget(self, e, true, true))
 			continue;
 		e->chill_level = self->chill_level;
 		e->chill_time = level.time + self->chill_time;

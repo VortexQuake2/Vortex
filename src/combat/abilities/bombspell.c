@@ -424,6 +424,6 @@ void Cmd_BombPlayer(edict_t *ent, float skill_mult, float cost_mult)
 	VectorMA(start, BOMBPERSON_RANGE, forward, end);
 	tr = gi.trace(start, NULL, NULL, end, ent, MASK_SHOT);
 
-	if (G_ValidTarget(ent, tr.ent, false))
+	if (G_ValidTarget(ent, tr.ent, false, true))
 		BombPerson(tr.ent, ent, skill_mult);
 }

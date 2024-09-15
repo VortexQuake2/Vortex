@@ -259,7 +259,7 @@ mmove_t mygunner_move_attack_grenade = {FRAME_attak105, FRAME_attak113, mygunner
 void gunner_refire_grenade (edict_t *self)
 {
 	// continue firing unless enemy is no longer valid or out of range
-	if (G_ValidTarget(self, self->enemy, true) && (random() <= 0.8)
+	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.8)
 		&& (entdist(self, self->enemy) <= 384))
 		self->monsterinfo.currentmove = &mygunner_move_attack_grenade;
 	else
@@ -272,7 +272,7 @@ void gunner_refire_grenade (edict_t *self)
 void gunner_attack_grenade (edict_t *self)
 {
 	// continue attack sequence unless enemy is no longer valid
-	if (G_ValidTarget(self, self->enemy, true))
+	if (G_ValidTarget(self, self->enemy, true, true))
 		self->monsterinfo.currentmove = &mygunner_move_attack_grenade;
 	else
 		mygunnerrun(self);
@@ -307,7 +307,7 @@ mmove_t mygunner_move_runandshoot = {FRAME_runs01, FRAME_runs06, mygunner_frames
 
 void mygunner_continue (edict_t *self)
 {
-	if (G_ValidTarget(self, self->enemy, true) && (random() <= 0.9) 
+	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.9)
 		&& (entdist(self, self->enemy) <= 512))
 		self->monsterinfo.currentmove = &mygunner_move_runandshoot;
 	else
@@ -404,7 +404,7 @@ void mygunner_fire_chain(edict_t *self)
 void mygunner_refire_chain(edict_t *self)
 {
 	// keep firing
-	if (G_ValidTarget(self, self->enemy, true) && (random() <= 0.8)
+	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.8)
 		&& entdist(self, self->enemy) > 128)
 		self->monsterinfo.currentmove = &mygunner_move_fire_chain;
 	else

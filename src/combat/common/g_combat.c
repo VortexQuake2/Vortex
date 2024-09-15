@@ -1077,7 +1077,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		{
 			take = 0;
 			save = damage;
-			if ((level.time > pregame_time->value) && (G_ValidTarget(targ, attacker, false)))
+			if ((level.time > pregame_time->value) && (G_ValidTarget(targ, attacker, false, true)))
 				SpawnDamage(TE_BLOOD, point, normal);
 		}
 	}

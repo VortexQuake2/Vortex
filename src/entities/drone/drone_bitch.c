@@ -590,7 +590,7 @@ mmove_t mychick_move_end_attack1 = {FRAME_attak128, FRAME_attak132, mychick_fram
 
 void mychick_rerocket(edict_t *self)
 {
-	if (G_ValidTarget(self, self->enemy, true)) 
+	if (G_ValidTarget(self, self->enemy, true, true)) 
 	{
 		if (random() <= 0.8 && (entdist(self, self->enemy) <= 512 || (self->monsterinfo.aiflags & AI_STAND_GROUND)))
 			self->monsterinfo.currentmove = &mychick_move_attack1;
@@ -624,7 +624,7 @@ void mychick_runandshoot (edict_t *self)
 
 void mychick_continue (edict_t *self)
 {
-	if (G_ValidTarget(self, self->enemy, true) && (random() <= 0.9) 
+	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.9)
 		&& (entdist(self, self->enemy) <= 512)) 
 	{
 		self->monsterinfo.currentmove = &mychick_move_runandshoot;

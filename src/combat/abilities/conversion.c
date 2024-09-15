@@ -18,7 +18,7 @@ qboolean ConvertOwner (edict_t *ent, edict_t *other, float duration, qboolean pr
 
 	// don't convert to a player if they are not a valid target
 	//FIXME: this fails on players with godmode :(
-	if (ent->client && !G_ValidTarget(NULL, ent, false))
+	if (ent->client && !G_ValidTarget(NULL, ent, false, true))
 	{
 	//	gi.dprintf("%s is not a valid target\n", ent->client->pers.netname);
 		return false;

@@ -251,7 +251,7 @@ void m_soldier_runandshoot (edict_t* self)
 void m_soldier_attack1_refire1 (edict_t* self)
 {
 	// continue firing if the enemy is still close, or we are standing ground
-	if (G_ValidTarget(self, self->enemy, true) && (random() <= 0.9)
+	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.9)
 		&& ((entdist(self, self->enemy) <= 512) || (self->monsterinfo.aiflags & AI_STAND_GROUND)))
 		self->s.frame = FRAME_attak102;
 

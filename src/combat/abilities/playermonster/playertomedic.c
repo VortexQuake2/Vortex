@@ -333,7 +333,7 @@ void p_medic_heal (edict_t *ent)
 				tr.ent->holdtime = level.time + 0.2;
 
 			// remove all curses
-			CurseRemove(tr.ent, 0);
+			CurseRemove(tr.ent, 0, 0);
 
 			//Give them a short period of curse immunity
 			tr.ent->holywaterProtection = level.time + 2.0; //2 seconds immunity

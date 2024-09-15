@@ -422,7 +422,7 @@ mmove_t makron_move_attack5 = {FRAME_attak501, FRAME_attak516, makron_frames_att
 void makron_reattack_railgun(edict_t* self)
 {
 	// if our enemy is still valid, then continue firing
-	if (G_ValidTarget(self, self->enemy, true) && (random() <= 0.9))
+	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.9))
 	{
 		MakronRailgun(self);
 		self->s.frame = FRAME_attak509;

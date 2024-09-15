@@ -334,7 +334,7 @@ qboolean CTF_ApplySpecialFcRules (edict_t *ent)
     vrx_remove_player_summonables(ent);
 
 	// make sure bless and other auras are gone too
-	CurseRemove(ent, 0);
+	CurseRemove(ent, 0, 0);
 
 	return true;
 }

@@ -388,6 +388,7 @@ char *GetCurseName (int type)
 	case WEAKEN: return "weaken";
 	case LIFE_DRAIN: return "life drain";
 	case CURSE_BURN: return "burning";
+	case CURSE_PLAGUE: return "plague";
 	default: return "";
 	}
 }
@@ -696,7 +697,7 @@ void Bleed (edict_t *curse)
 	if (level.time < curse->wait)
 		return;
 
-	if (!G_ValidTarget(caster, curse->enemy, false))
+	if (!G_ValidTarget(caster, curse->enemy, false, true))
 	{
 		// remove the curse if the target dies
 		que_removeent(curse->enemy->curses, curse, true);
@@ -737,7 +738,7 @@ void LifeDrain (edict_t *curse)
 	if (level.time < curse->wait)
 		return;
 
-	if (!G_ValidTarget(caster, curse->enemy, false))
+	if (!G_ValidTarget(caster, curse->enemy, false, true))
 	{
 		// remove the curse if the target dies
 		que_removeent(curse->enemy->curses, curse, true);

@@ -1210,7 +1210,7 @@ qboolean G_ValidTargetEnt(const edict_t *target, qboolean alive) {
 	return true;
 }
 
-qboolean G_ValidTarget(const edict_t *self, const edict_t *target, qboolean vis)
+qboolean G_ValidTarget(const edict_t *self, const edict_t *target, qboolean vis, qboolean alive)
 {
 	if (!target)
 		return false;
@@ -1224,8 +1224,8 @@ qboolean G_ValidTarget(const edict_t *self, const edict_t *target, qboolean vis)
 		if (M_ValidMedicTarget(self, target))
 			return true;
 	}
-	
-	if (!G_ValidTargetEnt(target, true))
+
+	if (!G_ValidTargetEnt(target, alive))
 		return false;
 
 	if (self)

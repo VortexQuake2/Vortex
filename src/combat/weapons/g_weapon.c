@@ -392,7 +392,7 @@ void WeaponStun (edict_t *attacker, edict_t *target, int mod)
 	int		lvl;
 	float	duration, value=1.0;
 
-	if (!G_ValidTarget(attacker, target, false))
+	if (!G_ValidTarget(attacker, target, false, true))
 		return;
 
 	if (!attacker->client)
@@ -1311,7 +1311,7 @@ void smartrocket_think (edict_t *self)
 		return;
 	}
 
-	if (G_ValidTarget(self, self->enemy, true))
+	if (G_ValidTarget(self, self->enemy, true, true))
 		smartrocket_lockon(self);
 	
 	self->nextthink = level.time + FRAMETIME;

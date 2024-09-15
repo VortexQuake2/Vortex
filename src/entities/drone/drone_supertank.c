@@ -306,7 +306,7 @@ mmove_t supertank_move_attack3 = {FRAME_attak3_1, FRAME_attak3_27, supertank_fra
 
 void supertank_rerocket(edict_t *self)
 {
-	if (G_ValidTarget(self, self->enemy, true) && entdist(self, self->enemy) <= 512 && random() <= 0.8)
+	if (G_ValidTarget(self, self->enemy, true, true) && entdist(self, self->enemy) <= 512 && random() <= 0.8)
 		self->s.frame = 25;
 
 	self->monsterinfo.attack_finished = level.time + 2.0;
@@ -412,7 +412,7 @@ void supertank_reattack4(edict_t *self)
 */
 void supertank_reattack1(edict_t *self)
 {
-	if (G_ValidTarget(self, self->enemy, true) && random() <= 0.9)
+	if (G_ValidTarget(self, self->enemy, true, true) && random() <= 0.9)
 		self->monsterinfo.currentmove = &supertank_move_attack1;
 	else
 		self->monsterinfo.currentmove = &supertank_move_end_attack1;

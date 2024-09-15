@@ -377,7 +377,7 @@ mmove_t myparasite_move_runandattack = {FRAME_run03, FRAME_run09, myparasite_fra
 
 void myparasite_continue (edict_t *self)
 {
-	if (G_ValidTarget(self, self->enemy, true) && (entdist(self, self->enemy) <= 128))
+	if (G_ValidTarget(self, self->enemy, true, true) && (entdist(self, self->enemy) <= 128))
 		self->monsterinfo.currentmove = &myparasite_move_runandattack;
 }
 

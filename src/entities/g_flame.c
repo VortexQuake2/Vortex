@@ -79,7 +79,7 @@ void burn_person (edict_t *target, edict_t *owner, int damage)
 		return;
 	if (que_typeexists(target->curses, CURSE_FROZEN))
 		return; // attacker is frozen!
-	if (!G_ValidTarget(owner, target, false))
+	if (!G_ValidTarget(owner, target, false, true))
 		return;
 	while ((slot = que_findtype(target->curses, slot, CURSE_BURN)) != NULL)
 	{

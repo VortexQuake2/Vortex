@@ -210,7 +210,7 @@ qboolean Pickup_Adrenaline(edict_t *ent, edict_t *other) {
         other->health = other->max_health;
 //GHz START
     // adrenaline heals all curses
-    CurseRemove(other, 0);
+    CurseRemove(other, 0, 0);
     //RemoveAllCurses(other);
 //GHz END
 

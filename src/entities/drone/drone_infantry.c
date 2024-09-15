@@ -516,7 +516,7 @@ void infantry_fire(edict_t* self)
 	if (M_20MM_RANGE_MAX && range > M_20MM_RANGE_MAX)
 		range = M_20MM_RANGE_MAX;
 
-	if (!G_ValidTarget(self, self->enemy, true))
+	if (!G_ValidTarget(self, self->enemy, true, true))
 		return;
 
 	dist = entdist(self, self->enemy);

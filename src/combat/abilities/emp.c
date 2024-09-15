@@ -172,7 +172,7 @@ qboolean EMP_ValidTarget (edict_t *self, edict_t *other)
         && !(other->flags & FL_CHATPROTECT) && visible(self, other))
         return true;
 
-    return G_ValidTarget(self, other, true);
+    return G_ValidTarget(self, other, true, true);
 }
 
 

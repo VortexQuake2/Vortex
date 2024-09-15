@@ -357,7 +357,7 @@ float V_ModifyMovement(edict_t* ent, usercmd_t* ucmd, que_t* curse) {// assault 
 			if (other->absmin[2] + 1 < ent->absmin[2])
 				continue;
 
-			if (!G_ValidTarget(ent, other, true))
+			if (!G_ValidTarget(ent, other, true, true))
 				continue;
 
 			if (entdist(ent, other) > MAGMINE_RANGE)

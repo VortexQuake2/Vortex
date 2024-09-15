@@ -1104,7 +1104,7 @@ qboolean visible1 (edict_t *ent1, edict_t *ent2);
 qboolean G_CanUseAbilities (edict_t *ent, int ability_lvl, int pc_cost);
 qboolean V_CanUseAbilities (edict_t *ent, int ability_index, int ability_cost, qboolean print_msg);
 
-qboolean G_ValidTarget(const edict_t *self, const edict_t *target, qboolean vis);
+qboolean G_ValidTarget(const edict_t *self, const edict_t *target, qboolean vis, qboolean alive);
 qboolean G_ValidTargetEnt(const edict_t *target, qboolean alive);
 qboolean G_ValidTarget_Lite(const edict_t *self, const edict_t *target, qboolean vis);
 

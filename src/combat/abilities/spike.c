@@ -2,7 +2,7 @@
 
 void spike_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
-	if (G_ValidTarget(self->owner, other, false))
+	if (G_ValidTarget(self->owner, other, false, true))
 	{
 		T_Damage(other, self, self->owner, self->velocity, self->s.origin, 
 			plane->normal, self->dmg, self->dmg, 0, MOD_SPIKE);

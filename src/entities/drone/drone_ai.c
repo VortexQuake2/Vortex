@@ -207,7 +207,7 @@ void ai_charge (edict_t *self, float dist)
 		return;
 
 	// our current enemy has become invalid
-	if (!G_ValidTarget(self, self->enemy, true))
+	if (!G_ValidTarget(self, self->enemy, true, true))
 	{
 		// search for new targets (monsters and medic targets)
 		if ((target = drone_get_target(self, true, true, false)) != NULL)

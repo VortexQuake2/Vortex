@@ -14,7 +14,7 @@
 
 void minisentry_pain (edict_t *self, edict_t *other, float kick, int damage)
 {
-	if (!self->enemy && G_ValidTarget(self, other, true)
+	if (!self->enemy && G_ValidTarget(self, other, true, true)
 		&& (entdist(self, other) < SENTRY_ATTACK_RANGE))
 	{
 		//gi.dprintf("minisentry_pain is targetting %s\n", other->classname);
@@ -638,7 +638,7 @@ void minisentry_think (edict_t *self)
 	else
 	{
 		// valid target and in range or detected?
-		if (G_ValidTarget(self, self->enemy, true) && (entdist(self, self->enemy)<=SENTRY_ATTACK_RANGE || self->enemy->flags & FL_DETECTED))
+		if (G_ValidTarget(self, self->enemy, true, true) && (entdist(self, self->enemy)<=SENTRY_ATTACK_RANGE || self->enemy->flags & FL_DETECTED))
 		{
 			minisentry_attack(self);
 		}

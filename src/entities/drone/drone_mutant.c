@@ -261,7 +261,7 @@ void mutant_hit_right (edict_t *self)
 
 void mutant_check_refire (edict_t *self)
 {
-	if (G_ValidTarget(self, self->enemy, true) && (entdist(self, self->enemy) < 100) && (random() < 0.8))
+	if (G_ValidTarget(self, self->enemy, true, true) && (entdist(self, self->enemy) < 100) && (random() < 0.8))
 		self->monsterinfo.nextframe = FRAME_attack11;
 }
 

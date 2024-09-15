@@ -116,7 +116,7 @@ void sentrygun_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 
 void sentrygun_pain(edict_t *self, edict_t *other, float kick, int damage)
 {
-	if (!self->enemy && G_ValidTarget(self, other, true))
+	if (!self->enemy && G_ValidTarget(self, other, true, true))
 		self->enemy = other;
 
 	if (level.time < self->pain_debounce_time)

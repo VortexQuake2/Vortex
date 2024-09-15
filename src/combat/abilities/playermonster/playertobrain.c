@@ -211,7 +211,7 @@ void tentacle_attack (edict_t *self)
 	// make sure our target is still valid
 	// 3.6 ignore fov here, since sometimes our enemy
 	// snaps behind us due to massive pull forces
-	else if (G_ValidTarget(self, self->enemy, true) //BrainValidTarget(self, self->enemy))
+	else if (G_ValidTarget(self, self->enemy, true, true) //BrainValidTarget(self, self->enemy))
 		&& (entdist(self, self->enemy) < BRAIN_ATTACK_RANGE))
 	{
 		//gi.dprintf("%d: trying to pull valid target\n", (int)(level.framenum));

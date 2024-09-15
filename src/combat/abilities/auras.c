@@ -260,7 +260,7 @@ qboolean que_addent (que_t *que, edict_t *other, float duration)
 	return false;
 }
 
-void CurseRemove (edict_t *ent, int type)
+void CurseRemove (edict_t *ent, int type, int ignore)
 {
 	int			i;
 	que_t		*slot;
@@ -275,6 +275,10 @@ void CurseRemove (edict_t *ent, int type)
 
 		// the type doesn't match
 		if (type && slot->ent->inuse && slot->ent->mtype != type && slot->ent->atype != type)
+			continue;
+
+		// ignore this type
+		if (ignore && slot->ent->inuse && (slot->ent->mtype == ignore || slot->ent->atype == ignore))
 			continue;
 
 		// this curse is specifically targetting us, so destroy it
@@ -351,7 +355,7 @@ void holyfreeze_think (edict_t *self)
 		slot = NULL;
 		if (target == self->owner)
 			continue;
-		if (!G_ValidTarget(self->owner, target, true))
+		if (!G_ValidTarget(self->owner, target, true, true))
 			continue;
 		// FIXME: make this into a loop search if we plan to allow
 		// more than one curse of the same type

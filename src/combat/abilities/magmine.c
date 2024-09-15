@@ -31,7 +31,7 @@ qboolean magmine_findtarget(edict_t *self) {
     //while ((other = findclosestradius_targets(other, self, self->dmg_radius)) != NULL) {
         if (other == self)
             continue;
-        if (!G_ValidTarget(self, other, true))
+        if (!G_ValidTarget(self, other, true, true))
             continue;
         self->enemy = other;
         return true;
@@ -149,7 +149,7 @@ void magmine_think(edict_t *self)
                 shouldCallThrowSparks = true;
             }
         }
-        else if (G_ValidTarget(self, self->enemy, true)
+        else if (G_ValidTarget(self, self->enemy, true, true)
             && (entdist(self, self->enemy) <= self->dmg_radius)) {
             magmine_attack(self);
             shouldCallThrowSparks = true;

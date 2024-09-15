@@ -202,7 +202,7 @@ void gladiator_cleaver_refire (edict_t *self)
 	if (self->monsterinfo.bonus_flags & BF_UNIQUE_LIGHTNING)
 		return;
 
-	if (G_ValidTarget(self, self->enemy, true) 
+	if (G_ValidTarget(self, self->enemy, true, true)
 		&& (entdist(self, self->enemy) <= 96) && (random() <= 0.8))
 	{
 		self->s.frame = 41;
@@ -271,7 +271,7 @@ void GladiatorGun (edict_t *self)
 void gladiator_refire (edict_t *self)
 {
 	// if our enemy is still valid, then continue firing
-	if (G_ValidTarget(self, self->enemy, true) && (random() <= 0.8))
+	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.8))
 	{
 		self->s.frame = 49;
 		GladiatorGun(self);

@@ -99,7 +99,7 @@ void p_berserk_crush (edict_t *self, int damage, float range, int mod)
 	
 	while ((other = findradius(other, self->s.origin, range)) != NULL)
 	{
-		if (!G_ValidTarget(self, other, true))
+		if (!G_ValidTarget(self, other, true, true))
 			continue;
 		if (!nearfov(self, other, 0, 30))
 			continue;

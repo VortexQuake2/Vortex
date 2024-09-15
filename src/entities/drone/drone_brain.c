@@ -679,7 +679,7 @@ void mybrain_continue (edict_t *self)
 	float	dist, chance;
 	vec3_t	start, forward;
 
-	if (!G_ValidTarget(self, self->enemy, true))
+	if (!G_ValidTarget(self, self->enemy, true, true))
 		return;
 	// miss the attack if we are cursed/confused
 	if (que_typeexists(self->curses, CURSE) && rand() > 0.2)

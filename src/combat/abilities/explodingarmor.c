@@ -85,7 +85,7 @@ qboolean NearbyEnemy (edict_t *self, float radius)
 
 	while ((e = findradius(e, self->s.origin, radius)) != NULL)
 	{
-		if (!G_ValidTarget(self, e, true))
+		if (!G_ValidTarget(self, e, true, true))
 			continue;
 		return true;
 	}

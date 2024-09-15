@@ -211,7 +211,7 @@ void FlyerAttack (edict_t *ent)
 		//value = (float) FLYER_ROCKET_MAX_TURNRATE/FLYER_ROCKET_MAX_LOCKFRAMES;
 
 		// we've got a target in our sights
-		if (G_ValidTarget(ent, tr.ent, false))
+		if (G_ValidTarget(ent, tr.ent, false, true))
 		{
 			// if we don't already have a previous target, or if our new target is
 			// not the same as our old one, then use our new target and reset the

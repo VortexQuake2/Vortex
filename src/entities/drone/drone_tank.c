@@ -602,7 +602,7 @@ mmove_t mytank_move_attack_chain = {FRAME_attak406, FRAME_attak424, mytank_frame
 void mytank_attack_chain (edict_t *self)
 {
 	// continue attack sequence unless enemy is no longer valid
-	if (G_ValidTarget(self, self->enemy, true))
+	if (G_ValidTarget(self, self->enemy, true, true))
 		self->monsterinfo.currentmove = &mytank_move_attack_chain;
 	else
 		mytank_run(self);
@@ -657,7 +657,7 @@ void mytank_meleeattack (edict_t *self)
 	
 	while ((other = findradius(other, self->s.origin, 128)) != NULL)
 	{
-		if (!G_ValidTarget(self, other, true))
+		if (!G_ValidTarget(self, other, true, true))
 			continue;
 		// miss the attack if we are cursed/confused
 		if (que_typeexists(self->curses, CURSE) && rand() > 0.2)

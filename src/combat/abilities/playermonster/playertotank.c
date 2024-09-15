@@ -278,7 +278,7 @@ void p_tank_punch(edict_t *self) {
     gi.sound(self, CHAN_AUTO, gi.soundindex("tank/tnkatck5.wav"), 1, ATTN_NORM, 0);
 
     while ((other = findradius(other, self->s.origin, P_TANK_PUNCH_RADIUS)) != NULL) {
-        if (!G_ValidTarget(self, other, true))
+        if (!G_ValidTarget(self, other, true, true))
             continue;
         if (!nearfov(self, other, 0, 30))
             continue;

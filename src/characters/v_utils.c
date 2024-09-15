@@ -1994,6 +1994,7 @@ qboolean V_ArmorCache(edict_t *ent, int max_per_second, int update_frequency) {
 }
 
 void vrx_reset_player_state(edict_t *ent) {
+    //gi.dprintf("vrx_reset_player_state\n");
     if (PM_PlayerHasMonster(ent) || ent->mtype) {
         // restore the player to original state
         V_RestoreMorphed(ent, 0);
@@ -2057,8 +2058,8 @@ void vrx_reset_player_state(edict_t *ent) {
     // reset their velocity
     VectorClear(ent->velocity);
 
-    // remove curses
-    CurseRemove(ent, 0);
+    // remove all curses except plague, which will be transferred to a body upon player respawn
+    CurseRemove(ent, 0, CURSE_PLAGUE);
     // remove auras
     AuraRemove(ent, 0);
 
@@ -2347,10 +2348,6 @@ void V_NonShellEffects(edict_t *ent) {
             ent->s.effects |= EF_POWERSCREEN;
     }
 
-    // plague flies
-    if (que_typeexists(ent->curses, CURSE_PLAGUE))
-        ent->s.effects |= EF_FLIES;
-
     // ********** CLIENT-SPECIFIC EFFECTS BELOW **********
     if (ent->client) {
         // shield ability effect
@@ -2430,6 +2427,10 @@ void V_SetEffects(edict_t *ent) {
 
     // clear all effects
     ent->s.effects = ent->s.renderfx = 0;
+
+    // plague flies
+    if (que_typeexists(ent->curses, CURSE_PLAGUE))
+        ent->s.effects |= EF_FLIES;
 
     if (ent->mtype != M_MAGMINE && ent->health < 1)
         return;

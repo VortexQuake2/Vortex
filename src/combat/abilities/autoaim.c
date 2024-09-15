@@ -14,7 +14,7 @@ qboolean autoaim_findtarget (edict_t *ent)
 
 	while ((target = findclosestreticle(target, ent, AUTOAIM_TARGET_RADIUS)) != NULL)
 	{
-		if (!G_ValidTarget(ent, target, true))
+		if (!G_ValidTarget(ent, target, true, true))
 			continue;
 		if (!nearfov(ent, target, 0, 20))
 			continue;
@@ -120,7 +120,7 @@ void V_AutoAim (edict_t *player)
 		}
 	}
 	// we've got an invalid target
-	else if (!G_ValidTarget(player, player->enemy, true) || !infront(player, player->enemy))
+	else if (!G_ValidTarget(player, player->enemy, true, true) || !infront(player, player->enemy))
 	{
 		//gi.dprintf("have invalid target");
 
