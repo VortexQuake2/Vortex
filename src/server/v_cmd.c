@@ -138,7 +138,7 @@ const gameCommand_s commands[] =
 	{ "thrust",         Cmd_Thrust_f  },
 	{ "vote", 			ShowVoteModeMenu },
 	{ "wormhole",	    Cmd_WormHole_f },
-	{ "update",		    V_UpdatePlayerAbilities},
+	{ "update",		    vrx_normalize_abilities},
 	{ "berserker",	    Cmd_PlayerToBerserk_f },
 	// { "medicpack",		 Cmd_fmedi_f }, //lepi
 	{ "caltrops",	    Cmd_Caltrops_f },

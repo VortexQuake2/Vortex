@@ -88,7 +88,7 @@ void vrx_start_reign(edict_t *ent)
 		gi.bprintf( PRINT_HIGH, "%s starts %s reign.\n", ent->client->pers.netname, GetPossesiveAdjective(ent) );
 	}
 
-	V_UpdatePlayerAbilities(ent);
+	vrx_normalize_abilities(ent);
     V_UpdatePlayerTalents(ent);
 
 	//Set the player's name
@@ -483,6 +483,7 @@ void classmenu_handler (edict_t *ent, int option)
 	ent->myskills.class_num = option;
     vrx_assign_abilities(ent);
     vrx_set_talents(ent);
+	vrx_prestige_init(ent);
 	ent->myskills.weapon_respawns = 100;
 
     gi.dprintf("INFO: %s created a new %s!\n",
@@ -494,7 +495,7 @@ void classmenu_handler (edict_t *ent, int option)
                             ent->client->pers.netname,
                             vrx_get_class_string(ent->myskills.class_num)));
 
-    vrx_check_for_levelup(ent, true);
+    vrx_check_for_levelup(ent, false);
     vrx_update_all_character_maximums(ent);
     vrx_add_respawn_weapon(ent, ent->myskills.respawn_weapon);
     vrx_add_respawn_items(ent);
@@ -603,6 +604,7 @@ void generalmenu_handler (edict_t *ent, int option)
 	case 11: ShowVoteModeMenu(ent); break;
 	case 12: ShowHelpMenu(ent, 0); break;
 	case 13: Cmd_Armory_f(ent, 31); break;
+	case 20: vrx_prestige_open_menu(ent); break;
 	default: menu_close(ent, true);
 	}
 }
@@ -635,11 +637,24 @@ void OpenGeneralMenu (edict_t *ent)
 	else
         menu_add_line(ent, va("Upgrade talents (%d)", ent->myskills.talents.talentPoints), 3);
 
+	// az: only supported on sqlite. i'm lazy.
+	if (vrx_char_io.type == SAVEMETHOD_SQLITE) {
+		int prestigePotential = vrx_prestige_get_upgrade_points(ent->myskills.experience);
+		if (prestigePotential)
+			menu_add_line(ent, va("Prestige %d (%d)", ent->myskills.prestige.total, prestigePotential), 20);
+		else
+			menu_add_line(ent, va("Prestige %d", ent->myskills.prestige.total), 20);
+	}
+
     menu_add_line(ent, " ", 0);
     if (!vrx_is_morphing_polt(ent) &&
         ent->myskills.class_num != CLASS_KNIGHT)
         menu_add_line(ent, "Set respawn weapon", 4);
-    menu_add_line(ent, "Set master password", 5);
+
+	if (ent->myskills.email[0] == '\0')
+		menu_add_line(ent, "Set master password", 5);
+
+
     menu_add_line(ent, "Show character info", 6);
     menu_add_line(ent, "Access the armory", 7);
     menu_add_line(ent, "Access your items", 8);

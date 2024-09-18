@@ -316,7 +316,7 @@ menu_can_show
 returns false if the client has another menu open
 =============
 */
-qboolean menu_can_show (edict_t *ent) 
+qboolean menu_can_show (edict_t *ent)
 {
 	if (ent->client->showscores || ent->client->showinventory
 		|| ent->client->menustorage.menu_active || ent->client->pers.scanner_active)

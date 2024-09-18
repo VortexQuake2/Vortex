@@ -114,3 +114,7 @@
 #define EXPLODING_BARREL	110
 
 #define MAX_ABILITIES	160
+#include <stdint.h>
+
+
+typedef uint32_t abilitybitmap_t[MAX_ABILITIES / 32 + 1];

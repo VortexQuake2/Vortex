@@ -142,7 +142,7 @@ void OpenUpgradeMenu (edict_t *ent)
 	menu_add_line(ent, va("and you have %d points.", ent->myskills.speciality_points), 0);
 	menu_add_line(ent, " ", 0);
 
-	if (ent->myskills.class_num != CLASS_WEAPONMASTER) // WMs don't get class specific skills.
+	if (ent->myskills.class_num != CLASS_WEAPONMASTER || vrx_prestige_has_class_skills(ent)) // WMs don't get class specific skills.
 		menu_add_line(ent, "Class specific skills", 1);
 
 	menu_add_line(ent, "General skills", 2);

@@ -14,9 +14,9 @@
 // *********************************
 // Definitions
 // *********************************
-#define TOTAL_TABLES 14
+#define TOTAL_TABLES 15
 #define TOTAL_INSERTONCE 5
-#define TOTAL_RESETTABLES 6
+#define TOTAL_RESETTABLES 7
 
 void cdb_start_connection();
 
@@ -34,7 +34,8 @@ const char* VSFU_CREATEDBQUERY[TOTAL_TABLES] =
 	"CREATE TABLE [userdata] (  [char_idx] INTEGER,[title] CHAR(24), [playername] CHAR(64), [password] CHAR(24), [email] CHAR(64), [owner] CHAR(24), [member_since] CHAR(30), [last_played] CHAR(30), [playtime_total] INTEGER,[playingtime] INTEGER)",
 	"CREATE TABLE [weapon_meta] ([char_idx] INTEGER,[index] INTEGER, [disable] INTEGER)",
 	"CREATE TABLE [weapon_mods] ([char_idx] INTEGER,[weapon_index] INTEGER, [modindex] INTEGER, [level] INTEGER, [soft_max] INTEGER, [hard_max] INTEGER)",
-	"CREATE TABLE [character_data] ([char_idx] INTEGER,  [respawns] INTEGER,   [health] INTEGER,   [maxhealth] INTEGER,   [armour] INTEGER,   [maxarmour] INTEGER,   [nerfme] INTEGER,   [adminlevel] INTEGER,   [bosslevel] INTEGER)",
+	"CREATE TABLE [character_data] ([char_idx] INTEGER,  [respawns] INTEGER,   [health] INTEGER,   [maxhealth] INTEGER,   [armour] INTEGER,   [maxarmour] INTEGER,   [nerfme] INTEGER,   [adminlevel] INTEGER,   [bosslevel] INTEGER, [prestigelevel] INTEGER, [prestigepoints] INTEGER)",
+	"create table [prestige](char_idx int not null, pindex int not null, param int not null, level int not null, primary key (char_idx, pindex, param))"
 	"create table stash( char_idx int not null, lock_char_id int null, primary key (char_idx));",
 	"create table stash_runes_meta( char_idx int not null, stash_index int not null, itemtype int null, itemlevel int null, quantity int null, untradeable int null, id char(16) null, name char(24) null, nummods int null, setcode int null, classnum int null, primary key (char_idx, stash_index));",
 	"create table stash_runes_mods( char_idx int not null, stash_index int not null, rune_mod_index int not null, type int null, mod_index int null, value int null, [set] int null, primary key (char_idx, stash_index, rune_mod_index));"
@@ -42,7 +43,7 @@ const char* VSFU_CREATEDBQUERY[TOTAL_TABLES] =
 
 // SAVING
 
-const char* CreateCharacterData = "INSERT INTO character_data VALUES (%d,0,0,0,0,0,0,0,0)";
+const char* CreateCharacterData = "INSERT INTO character_data VALUES (%d,0,0,0,0,0,0,0,0,0,0)";
 const char* CreateCtfStats = "INSERT INTO ctf_stats VALUES (%d,0,0,0,0,0,0,0)";
 const char* CreateGameStats = "INSERT INTO game_stats VALUES (%d,0,0,0,0,0,0,0,0,0,0,0,0)";
 const char* CreatePointData = "INSERT INTO point_data VALUES (%d,0,0,0,0,0,0,0,0,0)";
@@ -53,6 +54,7 @@ const char* VSFU_RESETTABLES[TOTAL_RESETTABLES] =
 {
 	"DELETE FROM abilities WHERE char_idx=%d;",
 	"DELETE FROM talents WHERE char_idx=%d;",
+	"DELETE FROM prestige WHERE char_idx=%d;",
 	"DELETE FROM runes_meta WHERE char_idx=%d;",
 	"DELETE FROM runes_mods WHERE char_idx=%d;",
 	"DELETE FROM weapon_meta WHERE char_idx=%d;",
@@ -80,7 +82,9 @@ const char* VSFU_INSERTRMOD = "INSERT INTO runes_mods VALUES (%d,%d,%d,%d,%d,%d)
 const char* VSFU_INSERTRMODEX = "INSERT INTO runes_mods VALUES (%d,%d,0,%d,%d,%d,%d);";
 
 
-const char* VSFU_UPDATECDATA = "UPDATE character_data SET respawns=%d, health=%d, maxhealth=%d, armour=%d, maxarmour=%d, nerfme=%d, adminlevel=%d, bosslevel=%d WHERE char_idx=%d;";
+const char* VSFU_UPDATECDATA = "UPDATE character_data SET respawns=%d, health=%d, maxhealth=%d, armour=%d, "
+							   "maxarmour=%d, nerfme=%d, adminlevel=%d, bosslevel=%d, prestigelevel=%d, prestigepoints=%d"
+		  " WHERE char_idx=%d;";
 
 const char* VSFU_UPDATESTATS = "UPDATE game_stats SET shots=%d, shots_hit=%d, frags=%d, fragged=%d, num_sprees=%d, max_streak=%d, spree_wars=%d, broken_sprees=%d, broken_spreewars=%d, suicides=%d, teleports=%d, num_2fers=%d WHERE char_idx=%d;";
 
@@ -326,7 +330,10 @@ qboolean cdb_save_player(edict_t* player)
 			MAX_ARMOR(player),
 			player->myskills.nerfme,
 			player->myskills.administrator, // flags
-			player->myskills.boss, id));
+			player->myskills.boss,
+			player->myskills.prestige.total,
+			player->myskills.prestige.points,
+			id));
 
 
 		//*****************************
@@ -437,6 +444,34 @@ qboolean cdb_save_player(edict_t* player)
 			player->myskills.defense_kills,
 			player->myskills.assists, id));
 
+		// prestige
+		QUERY(va("INSERT INTO prestige(char_idx, pindex, param, level) VALUES (%d, %d, %d, %d);",
+			id, PRESTIGE_CREDITS, 0, player->myskills.prestige.creditLevel));
+
+		QUERY(va("INSERT INTO prestige(char_idx, pindex, param, level) VALUES (%d, %d, %d, %d);",
+			id, PRESTIGE_ABILITY_POINTS, 0, player->myskills.prestige.abilityPoints));
+
+		QUERY(va("INSERT INTO prestige(char_idx, pindex, param, level) VALUES (%d, %d, %d, %d);",
+			id, PRESTIGE_WEAPON_POINTS, 0, player->myskills.prestige.weaponPoints));
+
+		// softmax bump points - param is the ab index, level is the bump
+		for (i = 0; i < MAX_ABILITIES; i++)
+		{
+			if (player->myskills.prestige.softmaxBump[i] > 0) {
+				QUERY(va("INSERT INTO prestige(char_idx, pindex, param, level) VALUES (%d, %d, %d, %d);",
+					id, PRESTIGE_SOFTMAX_BUMP, i, player->myskills.prestige.softmaxBump[i]));
+			}
+		}
+
+		// class skills - param is the ab index, level is always 0
+		for (i = 0; i < MAX_ABILITIES; i++)
+		{
+			if (player->myskills.prestige.classSkill[i / 32] & (1 << (i % 32)))
+			{
+				QUERY(va("INSERT INTO prestige(char_idx, pindex, param, level) VALUES (%d, %d, %d, %d);",
+					id, PRESTIGE_CLASS_SKILL, i, 0));
+			}
+		}
 
 	} // end saving
 
@@ -749,6 +784,10 @@ qboolean cdb_load_player(edict_t* player)
 	//boss flag
 	player->myskills.boss = sqlite3_column_int(statement, 8);
 
+	// prestige
+	player->myskills.prestige.total = sqlite3_column_int(statement, 9);
+	player->myskills.prestige.points = sqlite3_column_int(statement, 10);
+
 	//*****************************
 	//stats
 	//*****************************
@@ -804,10 +843,42 @@ qboolean cdb_load_player(edict_t* player)
 
 	sqlite3_finalize(statement);
 
+	// prestige
+	format = va("SELECT * FROM prestige WHERE char_idx=%d", id);
+
+	r = sqlite3_prepare_v2(db, format, strlen(format), &statement, NULL);
+	while(sqlite3_step(statement) == SQLITE_ROW) {
+		int pindex = sqlite3_column_int(statement, 1);
+		int param = sqlite3_column_int(statement, 2);
+		int level = sqlite3_column_int(statement, 3);
+
+		switch (pindex)
+		{
+		case PRESTIGE_CREDITS:
+			player->myskills.prestige.creditLevel = level;
+			break;
+		case PRESTIGE_ABILITY_POINTS:
+			player->myskills.prestige.abilityPoints = level;
+			break;
+		case PRESTIGE_WEAPON_POINTS:
+			player->myskills.prestige.weaponPoints = level;
+			break;
+		case PRESTIGE_SOFTMAX_BUMP:
+			player->myskills.prestige.softmaxBump[param] = level;
+			break;
+		case PRESTIGE_CLASS_SKILL:
+			player->myskills.prestige.classSkill[param / 32] |= (1 << (param % 32));
+			break;
+		default: break;
+		}
+	}
+
+
+
 	//Apply runes
-	V_ResetAllStats(player);
+	vrx_runes_unapply(player);
 	for (i = 0; i < 4; ++i)
-		V_ApplyRune(player, &player->myskills.items[i]);
+		vrx_runes_apply(player, &player->myskills.items[i]);
 
 	//Apply health
 	if (player->myskills.current_health > MAX_HEALTH(player))

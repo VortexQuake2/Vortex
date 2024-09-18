@@ -116,7 +116,8 @@ void vrx_setup_sqlite_io() {
         .handle_status = NULL,
         .character_exists = &vrx_sqlite_character_exists,
         .is_loading = &vrx_sqlite_isloading,
-        .set_owner = &cdb_set_owner
+        .set_owner = &cdb_set_owner,
+        .type = SAVEMETHOD_SQLITE
     };
 
     cdb_start_connection();
@@ -170,7 +171,8 @@ void vrx_setup_mysql_io() {
             .load_player = &vrx_mysql_load_character,
             .is_loading = &vrx_mysql_isloading,
             .handle_status = &gds_handle_status,
-        .set_owner = &gds_queue_add_setowner
+        .set_owner = &gds_queue_add_setowner,
+        .type = SAVEMETHOD_MYSQL
     };
 
     gds_connect();

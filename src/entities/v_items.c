@@ -94,7 +94,7 @@ int V_GetRuneAbilityPts(edict_t *ent, item_t *rune)
 	return points;
 }
 
-void V_ApplyRune(edict_t *ent, item_t *rune)
+void vrx_runes_apply(edict_t *ent, item_t *rune)
 {
 	int i;
 
@@ -1085,7 +1085,7 @@ void V_ItemSwap(item_t *item1, item_t *item2)
 
 //************************************************************************************************
 
-void V_ResetAllStats(edict_t *ent)
+void vrx_runes_unapply(edict_t *ent)
 {
 	int i;
 
@@ -1179,11 +1179,11 @@ void V_EquipItem(edict_t *ent, int index)
 	}
 
 	//Reset all rune info
-	V_ResetAllStats(ent);
+	vrx_runes_unapply(ent);
 	for (i = 0; i < 3; ++i)
 	{
 		if (ent->myskills.items[i].itemtype != TYPE_NONE)
-			V_ApplyRune(ent, &ent->myskills.items[i]);
+			vrx_runes_apply(ent, &ent->myskills.items[i]);
 	}
 }
 

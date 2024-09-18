@@ -43,7 +43,7 @@
 typedef unsigned char 		byte;
 //k03 Begin
 #ifndef __cplusplus
-typedef enum { false, true}	qboolean;
+typedef enum { false, true }	qboolean;
 #else
 typedef bool qboolean;
 #endif
