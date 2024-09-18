@@ -276,6 +276,11 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		menu_add_line(ent, "damage from energy-based", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "weapons.", MENU_WHITE_CENTERED);
 		return 3;
+	case SPLASH_RESIST:
+		menu_add_line(ent, "Passive ability. Reduces", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "damage from explosive", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "weapons.", MENU_WHITE_CENTERED);
+		return 3;
 	case SCANNER:
 		menu_add_line(ent, "Shows nearby enemies and", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "allies on your HUD.", MENU_WHITE_CENTERED);
@@ -325,6 +330,7 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		menu_add_line(ent, "in all directions. Consumes", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "power cubes.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: mirv", MENU_WHITE_CENTERED);
+		return 5;
 	case EXPLODING_BARREL:
 		menu_add_line(ent, "Toss a barrel that explodes", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "and throws shrapnel after", MENU_WHITE_CENTERED);
@@ -842,6 +848,12 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		menu_add_line(ent, "touch. Uses power cubes.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: spike", MENU_WHITE_CENTERED);
 		return 4;
+	case ACID:
+		menu_add_line(ent, "Spits a volume of highly", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "poisonous and corrosive", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "liquid. Uses power cubes.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Command: acid", MENU_WHITE_CENTERED);
+		return 4;
 	case COCOON:
 		menu_add_line(ent, "Spawns an organism that", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "can boost your attack damage", MENU_WHITE_CENTERED);
@@ -908,8 +920,13 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		menu_add_line(ent, "power cubes.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: medic", MENU_WHITE_CENTERED);
 		return 5;
+	case FLASH:
+		menu_add_line(ent, "Teleports you to a random", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "location on the map.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Command: flash", MENU_WHITE_CENTERED);
+		return 3;
 	default:
-		menu_add_line(ent, "Unknown ability!", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Unknown ability--oops!", MENU_WHITE_CENTERED);
 		return 1;
 	}
 }
