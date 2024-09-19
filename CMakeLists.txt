@@ -1,7 +1,7 @@
 # Cmake script based off several sources, including cleancodequake2.
 
 # Specify minimum version of CMake required
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.25)
 
 # Project name
 project(VortexQuake2)
