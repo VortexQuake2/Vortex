@@ -35,7 +35,7 @@ const char* VSFU_CREATEDBQUERY[TOTAL_TABLES] =
 	"CREATE TABLE [weapon_meta] ([char_idx] INTEGER,[index] INTEGER, [disable] INTEGER)",
 	"CREATE TABLE [weapon_mods] ([char_idx] INTEGER,[weapon_index] INTEGER, [modindex] INTEGER, [level] INTEGER, [soft_max] INTEGER, [hard_max] INTEGER)",
 	"CREATE TABLE [character_data] ([char_idx] INTEGER,  [respawns] INTEGER,   [health] INTEGER,   [maxhealth] INTEGER,   [armour] INTEGER,   [maxarmour] INTEGER,   [nerfme] INTEGER,   [adminlevel] INTEGER,   [bosslevel] INTEGER, [prestigelevel] INTEGER, [prestigepoints] INTEGER)",
-	"create table [prestige](char_idx int not null, pindex int not null, param int not null, level int not null, primary key (char_idx, pindex, param))"
+	"create table [prestige](char_idx int not null, pindex int not null, param int not null, level int not null, primary key (char_idx, pindex, param))",
 	"create table stash( char_idx int not null, lock_char_id int null, primary key (char_idx));",
 	"create table stash_runes_meta( char_idx int not null, stash_index int not null, itemtype int null, itemlevel int null, quantity int null, untradeable int null, id char(16) null, name char(24) null, nummods int null, setcode int null, classnum int null, primary key (char_idx, stash_index));",
 	"create table stash_runes_mods( char_idx int not null, stash_index int not null, rune_mod_index int not null, type int null, mod_index int null, value int null, [set] int null, primary key (char_idx, stash_index, rune_mod_index));"
