@@ -558,11 +558,10 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             menu_add_line(ent, "Can't combine with Life Tap.", MENU_WHITE_CENTERED);
             return 2;
         case TALENT_OBLATION:
-            menu_add_line(ent, "Increases monster damage", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "but slowly saps life.", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "Increases monster damage.", MENU_WHITE_CENTERED);
             menu_add_line(ent, "Can't combine with", MENU_WHITE_CENTERED);
             menu_add_line(ent, "Corpulence.", MENU_WHITE_CENTERED);
-            return 4;
+            return 3;
         case TALENT_DIM_VISION:
             menu_add_line(ent, "Adds chance to", MENU_WHITE_CENTERED);
             menu_add_line(ent, "automatically curse", MENU_WHITE_CENTERED);

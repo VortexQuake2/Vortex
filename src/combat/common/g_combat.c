@@ -817,6 +817,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	int			dtype = G_DamageType(mod, dflags);
 	float		temp=0;//K03
 	edict_t		*player = G_GetClient(attacker);
+	edict_t		*targ_player = G_GetClient(targ);
 	float		startDamage = damage; //doomie
 	upgrade_t	*ability;//4.2 for fury
 	qboolean	target_has_pilot = PM_MonsterHasPilot(targ);
@@ -876,7 +877,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		double x = (double)(startDamage - damage) / startDamage;
 		
 		//Talent: Stone.
-		totem = NextNearestTotem(G_GetClient(targ), TOTEM_EARTH, NULL, true);
+		totem = NextNearestTotem(targ_player, TOTEM_EARTH, NULL, true);
 		if(totem && totem->activator)
 		{
             int resistLevel = vrx_get_talent_level(totem->activator, TALENT_STONE);
@@ -1110,25 +1111,26 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 			targ->svflags &= ~SVF_NOCLIENT;
 
 		//Talent: Dim Vision
-        if ((dtype & D_PHYSICAL) && targ->client && G_EntIsAlive(targ) && ((talentLevel = vrx_get_talent_level(targ,
-                                                                                                               TALENT_DIM_VISION)) >
-                                                                           0)
+        if (G_EntIsAlive(targ) && targ_player && ((talentLevel = vrx_get_talent_level(targ_player, TALENT_DIM_VISION)) > 0)
             && (level.framenum > targ->dim_vision_delay) && (targ != attacker)) // 10% chance per 1 second
 			// az- fix autocurse
 		{
 			int curse_level;
 			
-			temp = 0.04 * talentLevel;
+			//gi.dprintf("attempt to activate dim vision\n");
+			temp = 0.1 * talentLevel;
 			if (temp > random())
 			{
-				curse_level = targ->myskills.abilities[CURSE].current_level;
+				curse_level = targ_player->myskills.abilities[CURSE].current_level;
 
 				if (curse_level < 1)
 					curse_level = 1;
-
+				//gi.dprintf("activated level %d dim vision!\n", curse_level);
 				// add the curse
-				curse_add(attacker, targ, CURSE, curse_level, curse_level/2.0f);
-				CurseMessage(targ, attacker, CURSE, curse_level, true);
+				curse_add(attacker, targ_player, CURSE, curse_level, curse_level/2.0f);
+				CurseMessage(targ_player, attacker, CURSE, curse_level, true);
+				//Play the spell sound!
+				gi.sound(targ, CHAN_ITEM, gi.soundindex("curses/curse.wav"), 1, ATTN_NORM, 0);
 			}
 
 			// modify delay
