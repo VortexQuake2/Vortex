@@ -11,6 +11,7 @@
 #include "combat/abilities/shaman.h"
 #include "combat/abilities/auras.h"
 #include "characters/Talents.h"
+#include "characters/prestige.h"
 #include "quake2/g_layout.h"
 
 /**************** v_abilitylist.c ***************/
@@ -24,6 +25,9 @@ void vrx_disable_abilities(edict_t *ent);
 int vrx_get_hard_max(int index, qboolean general, int class);
 
 void vrx_assign_abilities(edict_t *ent);
+
+// get any class for which this ability is enabled
+int vrx_get_ability_class(int ability);
 
 
 #define DEFAULT_SOFTMAX 10
@@ -39,6 +43,15 @@ typedef struct {
 typedef const abilitydef_t *abilitylist_t;
 
 const abilitydef_t * vrx_get_ability_by_index(int index);
+void vrx_add_ability(edict_t *ent, int index);
+void vrx_ability_open_select_menu(
+    edict_t* self,
+    const char* title,
+    qboolean (*filter)(const abilitydef_t*, void*),
+    int page,
+    void* userdata,
+    void (*handler)(edict_t *ent,int option));
+
 /**************** v_abilitylist.c ***************/
 
 //************ lasersight.c ************
@@ -133,11 +146,11 @@ void V_ItemClear(item_t *item);
 void V_PrintItemProperties(edict_t *player, item_t *item);
 int eqSetItems(edict_t *ent, item_t *rune);
 void ApplyRune(edict_t *ent, item_t *rune);
-void V_ResetAllStats(edict_t *ent);
+void vrx_runes_unapply(edict_t *ent);
 
 void PurchaseRandomRune(edict_t *ent, int runetype);
 
-void V_ApplyRune(edict_t *ent, item_t *rune);
+void vrx_runes_apply(edict_t *ent, item_t *rune);
 
 void V_ItemSwap(item_t *item1, item_t *item2);
 

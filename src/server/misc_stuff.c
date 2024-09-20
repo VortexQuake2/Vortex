@@ -520,7 +520,7 @@ void vrx_write_to_logfile(edict_t *ent, char *s)
      gi.dprintf("ERROR: Failed to write to player log.\n");  
 }
 
-void WriteServerMsg (char *s, char *error_string, qboolean print_msg, qboolean save_to_logfile)  
+void WriteServerMsg (char *s, char *error_string, qboolean print_msg, qboolean save_to_logfile)
 {
 	cvar_t	*port;
 	char	buf[512];

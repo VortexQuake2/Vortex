@@ -547,7 +547,7 @@ qboolean SkipFrame (int frame, int *skip_frames)
 	return false;
 }
 
-void G_RunFrames1 (edict_t *ent, int start_frame, int end_frame, int *skip_frames, qboolean reverse) 
+void G_RunFrames1 (edict_t *ent, int start_frame, int end_frame, int *skip_frames, qboolean reverse)
 {
 	int next_frame=ent->s.frame;
 

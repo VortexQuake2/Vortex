@@ -11,7 +11,7 @@ void V_PushBackWalls(edict_t* self, float dist);
 void V_ModifyMorphedHealth (edict_t *ent, int type, qboolean morph);
 void V_RegenAbilityAmmo (edict_t *ent, int ability_index, int regen_frames, int regen_delay);
 void V_Touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf);
-void V_UpdatePlayerAbilities (edict_t *ent);
+void vrx_normalize_abilities (edict_t *ent);
 qboolean V_HealthCache (edict_t *ent, int max_per_second, int update_frequency_svframes);
 qboolean V_ArmorCache (edict_t *ent, int max_per_second, int update_frequency);
 void vrx_reset_player_state (edict_t *ent);

@@ -208,15 +208,14 @@ int vrx_get_credits(const edict_t *ent, float level_diff, int bonus, qboolean cl
     else
         add_credits = level_diff * (vrx_creditmult->value * vrx_pvmcreditmult->value * (CREDITS_OTHER_BASE));
 
-    // vrxchile v1.5 no credit cap
-    //if (add_credits > 250)
-    //	add_credits = 250;
-
     add_credits += bonus;
+    add_credits = (int) (add_credits * PRESTIGE_CREDIT_BUFF_MULTIPLIER);
     return add_credits;
 }
 
 void vrx_add_credits(edict_t *ent, int add_credits) {
+    if (add_credits < 0)
+        return;
 
     //FIXME: remove this after allocating more space
     if (ent->myskills.credits + add_credits > MAX_CREDITS)

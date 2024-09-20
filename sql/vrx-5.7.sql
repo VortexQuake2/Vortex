@@ -2,72 +2,83 @@ create table if not exists abilities
 (
     char_idx      int not null,
     aindex        int not null,
-    level         int null,
-    max_level     int null,
-    hard_max      int null,
-    modifier      int null,
-    disable       int null,
-    general_skill int null,
+    level         int not null,
+    max_level     int not null,
+    hard_max      int not null,
+    modifier      int not null,
+    disable       int not null,
+    general_skill int not null,
     primary key (char_idx, aindex)
+);
+
+create table if not exists prestige
+(
+    char_idx      int not null,
+    pindex        int not null,
+    param         int not null,
+    level         int not null,
+    primary key (char_idx, pindex, param)
 );
 
 create table if not exists character_data
 (
     char_idx   int not null,
-    respawns   int null,
-    health     int null,
-    maxhealth  int null,
-    armour     int null,
-    maxarmour  int null,
-    nerfme     int null,
-    adminlevel int null,
-    bosslevel  int null,
+    respawns   int not null default 0,
+    health     int not null default 100,
+    maxhealth  int not null default 100,
+    armour     int not null default 0,
+    maxarmour  int not null default 0,
+    nerfme     int not null default 0,
+    adminlevel int not null default 0,
+    bosslevel  int not null default 0,
+    prestigelevel int not null default 0,
+    prestigepoints int not null default 0,
     primary key (char_idx)
 );
 
 create table if not exists ctf_stats
 (
     char_idx      int not null,
-    flag_pickups  int null,
-    flag_captures int null,
-    flag_returns  int null,
-    flag_kills    int null,
-    offense_kills int null,
-    defense_kills int null,
-    assists       int null,
+    flag_pickups  int not null default 0,
+    flag_captures int not null default 0,
+    flag_returns  int not null default 0,
+    flag_kills    int not null default 0,
+    offense_kills int not null default 0,
+    defense_kills int not null default 0,
+    assists       int not null default 0,
     primary key (char_idx)
 );
 
 create table if not exists game_stats
 (
     char_idx         int not null,
-    shots            int null,
-    shots_hit        int null,
-    frags            int null,
-    fragged          int null,
-    num_sprees       int null,
-    max_streak       int null,
-    spree_wars       int null,
-    broken_sprees    int null,
-    broken_spreewars int null,
-    suicides         int null,
-    teleports        int null,
-    num_2fers        int null,
+    shots            int not null default 0,
+    shots_hit        int not null default 0,
+    frags            int not null default 0,
+    fragged          int not null default 0,
+    num_sprees       int not null default 0,
+    max_streak       int not null default 0,
+    spree_wars       int not null default 0,
+    broken_sprees    int not null default 0,
+    broken_spreewars int not null default 0,
+    suicides         int not null default 0,
+    teleports        int not null default 0,
+    num_2fers        int not null default 0,
     primary key (char_idx)
 );
 
 create table if not exists point_data
 (
     char_idx    int not null,
-    exp         int null,
-    exptnl      int null,
-    level       int null,
-    classnum    int null,
-    skillpoints int null,
-    credits     int null,
-    weap_points int null,
-    resp_weapon int null,
-    tpoints     int null,
+    exp         int not null,
+    exptnl      int not null,
+    level       int not null default 0,
+    classnum    int not null default 0,
+    skillpoints int not null default 0,
+    credits     int not null default 0,
+    weap_points int not null default 0,
+    resp_weapon int not null default 0,
+    tpoints     int not null default 0,
     primary key (char_idx)
 );
 

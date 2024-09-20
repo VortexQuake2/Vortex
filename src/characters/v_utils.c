@@ -4,6 +4,7 @@
 #include "class_limits.h"
 
 qboolean IsAllowedPregameSkills();
+
 //************************************************************************************************
 //			Indexing functions
 //************************************************************************************************
@@ -162,7 +163,7 @@ char *GetArmoryItemString(int purchase_number) {
             return "Reset Abilities/Weapons";
 #ifndef REMOVE_RESPAWNS
             case 30:
-                return "Respawns"; 
+                return "Respawns";
 #endif
         default:
             return "<BAD ITEM NUMBER>";
@@ -353,17 +354,17 @@ char *GetModString(int weapon_number, int mod_number) {
 //************************************************************************************************
 
 char *classnames[] = {
-        "Soldier",
-        "Poltergeist",
-        "Vampire",
-        "Mage",
-        "Engineer",
-        "Knight",
-        "Cleric",
-        "Necromancer",
-        "Shaman",
-        "Alien",
-        "Weapon Master"
+    "Soldier",
+    "Poltergeist",
+    "Vampire",
+    "Mage",
+    "Engineer",
+    "Knight",
+    "Cleric",
+    "Necromancer",
+    "Shaman",
+    "Alien",
+    "Weapon Master"
 };
 
 char *vrx_get_class_string(int class_num) {
@@ -392,7 +393,7 @@ char *GetTalentString(int talent_ID) {
             return "Bombardier";
         case TALENT_MONSTER_MASTERY:
             return "Mastery";
-            //Poltergeist Talents
+        //Poltergeist Talents
         case TALENT_MORPHING:
             return "Morphing";
         case TALENT_MORE_AMMO:
@@ -403,7 +404,7 @@ char *GetTalentString(int talent_ID) {
             return "Retaliation";
         case TALENT_PACK_ANIMAL:
             return "Pack Animal";
-            //Vampire Talents
+        //Vampire Talents
         case TALENT_IMP_CLOAK:
             return "Imp. Cloak";
         case TALENT_ARMOR_VAMP:
@@ -416,7 +417,7 @@ char *GetTalentString(int talent_ID) {
             return "Cannibalism";
         case TALENT_FATAL_WOUND:
             return "Fatal Wound";
-            //Mage Talents
+        //Mage Talents
         case TALENT_ICE_BOLT:
             return "Ice Bolt";
         case TALENT_MEDITATION:
@@ -429,8 +430,8 @@ char *GetTalentString(int talent_ID) {
             return "Mana Shield";
         case TALENT_OVERLOAD:
             return "Overload";
-            //Engineer Talents
-            //case TALENT_DEFENSIVE_CRATE:     return "Defensive Crate";
+        //Engineer Talents
+        //case TALENT_DEFENSIVE_CRATE:     return "Defensive Crate";
         case TALENT_LASER_PLATFORM:
             return "Laser Platform";
         case TALENT_ALARM:
@@ -443,7 +444,7 @@ char *GetTalentString(int talent_ID) {
             return "Precision Tune";
         case TALENT_STORAGE_UPGRADE:
             return "Storage Upgrade";
-            //Knight Talents
+        //Knight Talents
         case TALENT_REPEL:
             return "Repel";
         case TALENT_MAG_BOOTS:
@@ -454,7 +455,7 @@ char *GetTalentString(int talent_ID) {
             return "Mobility";
         case TALENT_DURABILITY:
             return "Durability";
-            //Cleric Talents
+        //Cleric Talents
         case TALENT_BALANCESPIRIT:
             return "Balance Spirit";
         case TALENT_HOLY_GROUND:
@@ -465,7 +466,7 @@ char *GetTalentString(int talent_ID) {
             return "Purge";
         case TALENT_BOOMERANG:
             return "Boomerang";
-            //Weapon Master Talents
+        //Weapon Master Talents
         case TALENT_BASIC_AMMO_REGEN:
             return "Ammo Regen";
         case TALENT_COMBAT_EXP:
@@ -474,7 +475,7 @@ char *GetTalentString(int talent_ID) {
             return "Tactics";
         case TALENT_SIDEARMS:
             return "Sidearms";
-            //Necromancer Talents
+        //Necromancer Talents
         case TALENT_EVIL_CURSE:
             return "Evil Curse";
         case TALENT_CHEAPER_CURSES:
@@ -487,7 +488,7 @@ char *GetTalentString(int talent_ID) {
             return "Dim Vision";
         case TALENT_FLIGHT:
             return "Flight";
-            //Shaman Talents
+        //Shaman Talents
         case TALENT_ICE:
             return "Ice";
         case TALENT_WIND:
@@ -502,7 +503,7 @@ char *GetTalentString(int talent_ID) {
             return "Volcanic";
         case TALENT_TOTEM:
             return "Totemic Focus";
-            //Alien Talents
+        //Alien Talents
         case TALENT_PHANTOM_OBSTACLE:
             return "Hidden Obstacle";
         case TALENT_SUPER_HEALER:
@@ -515,8 +516,8 @@ char *GetTalentString(int talent_ID) {
             return "Swarming";
         case TALENT_EXPLODING_BODIES:
             return "Exploding Body";
-            //case TALENT_FASTMOVE:			return "Run!";
-            // Kamikaze talents
+        //case TALENT_FASTMOVE:			return "Run!";
+        // Kamikaze talents
         case TALENT_MARTYR:
             return "Martyr";
         case TALENT_INSTANTPROXYS:
@@ -772,113 +773,113 @@ char *GetAbilityString(int ability_number) {
 
 typedef const char *class_rune_string_t[7];
 class_rune_string_t soldier_rune_val = {
-        "Newbie's",
-        "Greenhorn's",
-        "Sergent's",
-        "Soldier's",
-        "Warrior's",
-        "Veteran's",
-        "Master's"
+    "Newbie's",
+    "Greenhorn's",
+    "Sergent's",
+    "Soldier's",
+    "Warrior's",
+    "Veteran's",
+    "Master's"
 };
 
 class_rune_string_t mage_rune_val = {
-        "Apprentice's",
-        "Illusionist's",
-        "Sage's",
-        "Mage's",
-        "Wizard's",
-        "Sorcerer's",
-        "Archimage's",
+    "Apprentice's",
+    "Illusionist's",
+    "Sage's",
+    "Mage's",
+    "Wizard's",
+    "Sorcerer's",
+    "Archimage's",
 };
 
 class_rune_string_t necromancer_rune_val = {
-        "Exorcist's",
-        "Theurgist's",
-        "Shaman's",
-        "Necromancer's",
-        "Warlock's",
-        "Demi-Lich's",
-        "Lich's"
+    "Exorcist's",
+    "Theurgist's",
+    "Shaman's",
+    "Necromancer's",
+    "Warlock's",
+    "Demi-Lich's",
+    "Lich's"
 };
 
 class_rune_string_t engineer_rune_val = {
-        "Student's",
-        "Assistant's",
-        "Technician's",
-        "Mechanic's",
-        "Scientist's",
-        "Physicist's",
-        "Engineer's"
+    "Student's",
+    "Assistant's",
+    "Technician's",
+    "Mechanic's",
+    "Scientist's",
+    "Physicist's",
+    "Engineer's"
 };
 
 class_rune_string_t shaman_rune_val = {
-        "Dabbler's",
-        "Divinist's",
-        "Mystic's",
-        "Animist's",
-        "Gnostic's",
-        "Spiritualist's",
-        "Spirits'"
+    "Dabbler's",
+    "Divinist's",
+    "Mystic's",
+    "Animist's",
+    "Gnostic's",
+    "Spiritualist's",
+    "Spirits'"
 };
 
 class_rune_string_t vampire_rune_val = {
-        "Ghoul's",
-        "Geist's",
-        "Wraith's",
-        "Vampire's",
-        "Revenant's",
-        "Nosferatu's",
-        "Dracula's"
+    "Ghoul's",
+    "Geist's",
+    "Wraith's",
+    "Vampire's",
+    "Revenant's",
+    "Nosferatu's",
+    "Dracula's"
 };
 
 class_rune_string_t alien_rune_val = {
-        "Egg's",
-        "Hatchling's",
-        "Worm's",
-        "Pupa's",
-        "Insect's",
-        "Guard's",
-        "Royal's"
+    "Egg's",
+    "Hatchling's",
+    "Worm's",
+    "Pupa's",
+    "Insect's",
+    "Guard's",
+    "Royal's"
 };
 
 class_rune_string_t poltergeist_rune_val = {
-        "Spook's",
-        "Spirit's",
-        "Phantom's",
-        "Poltergeist's",
-        "Apparition's",
-        "Ghost's",
-        "Monster's"
+    "Spook's",
+    "Spirit's",
+    "Phantom's",
+    "Poltergeist's",
+    "Apparition's",
+    "Ghost's",
+    "Monster's"
 };
 
 class_rune_string_t knight_rune_val = {
-        "Commoner's",
-        "Squire's",
-        "Guard's",
-        "Knight's",
-        "Baron's",
-        "Lord's",
-        "King's"
+    "Commoner's",
+    "Squire's",
+    "Guard's",
+    "Knight's",
+    "Baron's",
+    "Lord's",
+    "King's"
 };
 
 class_rune_string_t cleric_rune_val = {
-        "Follower's",
-        "Acolyte's",
-        "Preacher's",
-        "Cleric's",
-        "Pastor's",
-        "Bishop's",
-        "Pope's"
+    "Follower's",
+    "Acolyte's",
+    "Preacher's",
+    "Cleric's",
+    "Pastor's",
+    "Bishop's",
+    "Pope's"
 };
 
 class_rune_string_t weaponmaster_rune_val = {
-        "Amateur's",
-        "Neophyte's",
-        "Novice's",
-        "Weapon Master's",
-        "Guru's",
-        "Expert's",
-        "Elite's"
+    "Amateur's",
+    "Neophyte's",
+    "Novice's",
+    "Weapon Master's",
+    "Guru's",
+    "Expert's",
+    "Elite's"
 };
 
 const char *GetRuneValString(item_t *rune) {
@@ -944,8 +945,8 @@ const char *GetRuneValString(item_t *rune) {
                     return "<Unknown Class>";
             }
             break;
-            default:
-                return "Strange";
+        default:
+            return "Strange";
         }
     }
 }
@@ -1051,7 +1052,7 @@ qboolean V_CanUseAbilities(edict_t *ent, int ability_index, int ability_cost, qb
         return false;
 
     if (level.time < pregame_time->value && !trading->value) {
-        if (!IsAllowedPregameSkills())  // allow use of abilities in pvm modes.
+        if (!IsAllowedPregameSkills()) // allow use of abilities in pvm modes.
         {
             if (print_msg)
                 safe_cprintf(ent, PRINT_HIGH, "You can't use abilities during pre-game.\n");
@@ -1171,25 +1172,25 @@ qboolean V_GiveAmmoClip(edict_t *ent, float qty, int ammotype) {
 //Returns an ammo type based on the player's respawn weapon.
 int V_GetRespawnAmmoType(edict_t *ent) {
     switch (ent->myskills.respawn_weapon) {
-        case 2:        //sg
-        case 3:        //ssg
-        case 12:    //20mm
+        case 2: //sg
+        case 3: //ssg
+        case 12: //20mm
             return AMMO_SHELLS;
-        case 4:        //mg
-        case 5:        //cg
+        case 4: //mg
+        case 5: //cg
             return AMMO_BULLETS;
-        case 6:        //gl
-        case 11:    //hg
+        case 6: //gl
+        case 11: //hg
             return AMMO_GRENADES;
-        case 7:        //rl
+        case 7: //rl
             return AMMO_ROCKETS;
-        case 9:        //rg
+        case 9: //rg
             return AMMO_SLUGS;
-        case 8:        //hb
-        case 10:    //bfg
+        case 8: //hb
+        case 10: //bfg
             return AMMO_CELLS;
-        default:    //blaster/sword
-            return 0;    //nothing
+        default: //blaster/sword
+            return 0; //nothing
     }
 }
 
@@ -1214,7 +1215,7 @@ int GetClientNumber(edict_t *ent)
         if (strlen(temp->myskills.player_name) < 1)
             continue;
 
-        if (Q_stricmp(ent->myskills.player_name, temp->myskills.player_name) == 0)    //same name
+        if (Q_stricmp(ent->myskills.player_name, temp->myskills.player_name) == 0) //same name
             return i + 1;
     }
     return 0;
@@ -1383,7 +1384,7 @@ int V_tFileCountLines(FILE *fptr, long size) {
     } while (++i < size);
 
     rewind(fptr);
-    return count - 1;    //Last line is always empty
+    return count - 1; //Last line is always empty
 }
 
 //************************************************************************************************
@@ -1408,6 +1409,7 @@ void V_tFileGotoLine(FILE *fptr, int linenumber, long size) {
 
 #define CHANGECLASS_MSG_CHANGE    1
 #define CHANGECLASS_MSG_RESET    2
+#define CHANGECLASS_MSG_ASCEND    3
 
 void vrx_change_class(char *playername, int newclass, int msgtype) {
     int i;
@@ -1436,11 +1438,12 @@ void vrx_change_class(char *playername, int newclass, int msgtype) {
         vrx_assign_abilities(player);
         vrx_reset_weapon_maximums(player);
         vrx_set_talents(player);
+        vrx_prestige_reapply_all(player);
 
         //Re-apply equipment
-        V_ResetAllStats(player);
+        vrx_runes_unapply(player);
         for (i = 0; i < 3; ++i)
-            V_ApplyRune(player, &player->myskills.items[i]);
+            vrx_runes_apply(player, &player->myskills.items[i]);
 
         if (msgtype == CHANGECLASS_MSG_CHANGE) {
             //Notify everyone
@@ -1452,10 +1455,24 @@ void vrx_change_class(char *playername, int newclass, int msgtype) {
             safe_cprintf(player, PRINT_HIGH, "Your ability and weapon upgrades have been reset!\n");
             vrx_write_to_logfile(player, "Character data was reset.\n");
             gi.dprintf("%s's character data was reset.\n", playername);
+        } else if (msgtype == CHANGECLASS_MSG_ASCEND) {
+            char* msg = HiPrint(va("*** %s has ascended to level %d! ***", playername, player->myskills.prestige.total));
+            safe_bprintf(PRINT_HIGH, "%s\n", msg);
+            vrx_write_to_logfile(player, va("Ascended to level %d.\n", player->myskills.prestige.total));
+            gi.dprintf("%s has ascended to level %d!\n", playername, player->myskills.prestige.total);
+            safe_centerprintf(player, "You have ascended to level %d.", player->myskills.prestige.total);
+            gi.sound(player, CHAN_AUTO, gi.soundindex("misc/keyuse.wav"), 1, ATTN_NORM, 0);
+            V_Free(msg);
         }
 
         player->myskills.level = 0;
         player->myskills.next_level = vrx_get_points_tnl(0);
+        player->myskills.experience = 0;
+
+        for (int j = 1; j <= start_level->value; ++j) {
+            player->myskills.experience += vrx_get_points_tnl(j - 1);
+        }
+
         player->myskills.speciality_points = 0;
         player->myskills.weapon_points = 0;
         vrx_check_for_levelup(player, false);
@@ -1550,7 +1567,7 @@ void V_ModifyMorphedHealth(edict_t *ent, int type, qboolean morph) {
             if (mult > 1.5)
                 mult = 1.5;
             break;
-            // nothing to modify
+        // nothing to modify
         default:
             return;
     }
@@ -1562,7 +1579,7 @@ void V_ModifyMorphedHealth(edict_t *ent, int type, qboolean morph) {
         ent->max_health = floattoint(ent->max_health * mult);
         //gi.dprintf("after = %d/%d\n", ent->health, ent->max_health);
     }
-        // remove multiplier
+    // remove multiplier
     else {
         ent->health = floattoint(ent->health / mult);
         ent->max_health = MAX_HEALTH(ent);
@@ -1570,48 +1587,41 @@ void V_ModifyMorphedHealth(edict_t *ent, int type, qboolean morph) {
 }
 
 // attempts to push (move) away from nearby wall(s) by dist
-void V_PushBackWalls(edict_t* self, float dist)
-{
-    vec3_t      start, end, v = { 0,0,0 };
-    trace_t     tr;
-    qboolean    move = false;
+void V_PushBackWalls(edict_t *self, float dist) {
+    vec3_t start, end, v = {0, 0, 0};
+    trace_t tr;
+    qboolean move = false;
 
     VectorCopy(self->s.origin, start);
 
     // gather plane normal vector(s)
-    for (int i = 0; i <= 3; i++)
-    {
+    for (int i = 0; i <= 3; i++) {
         VectorCopy(start, end);
 
         // trace in a circle around us to find nearby walls
-        switch (i)
-        {
-        case 0:
-            end[0] += dist;
-            break;
-        case 1:
-            end[1] += dist;
-            break;
-        case 2:
-            end[0] -= dist;
-            break;
-        case 3:
-            end[1] -= dist;
-            break;
+        switch (i) {
+            case 0:
+                end[0] += dist;
+                break;
+            case 1:
+                end[1] += dist;
+                break;
+            case 2:
+                end[0] -= dist;
+                break;
+            case 3:
+                end[1] -= dist;
+                break;
         }
         tr = gi.trace(start, self->mins, self->maxs, end, self, MASK_SOLID);
 
         // did we hit something?
-        if (tr.fraction < 1)
-        {
+        if (tr.fraction < 1) {
             move = true;
-            if (VectorEmpty(v))
-            {
+            if (VectorEmpty(v)) {
                 // first intersecting plane normal--this is our escape vector from one wall
                 VectorCopy(tr.plane.normal, v);
-            }
-            else
-            {
+            } else {
                 // second intersecting plane normal--this is another wall roughly perpendicular to the first
                 // now add the two plane normals together to get our final escape vector
                 VectorAdd(tr.plane.normal, v, v);
@@ -1620,15 +1630,13 @@ void V_PushBackWalls(edict_t* self, float dist)
         }
     }
     // we are adjacent to one or more walls, so try to push/move away
-    if (move)
-    {
+    if (move) {
         // ending position
         VectorMA(start, dist, v, end);
 
         tr = gi.trace(start, self->mins, self->maxs, end, self, MASK_SOLID);
         // nothing detected
-        if (!(tr.contents & MASK_SOLID) && tr.fraction == 1)
-        {
+        if (!(tr.contents & MASK_SOLID) && tr.fraction == 1) {
             // try to move target 'e' to new position
             VectorCopy(end, self->s.origin);
             gi.linkentity(self);
@@ -1637,16 +1645,14 @@ void V_PushBackWalls(edict_t* self, float dist)
 }
 
 // attempts to push/knock-away nearby entities by dist
-void V_PushBackEnts(edict_t* self, float dist)
-{
-    vec3_t      start, end, v;
-    trace_t     tr;
-    edict_t* e = NULL;
+void V_PushBackEnts(edict_t *self, float dist) {
+    vec3_t start, end, v;
+    trace_t tr;
+    edict_t *e = NULL;
 
     //gi.dprintf("V_PushBackEnts()\n");
 
-    while ((e = findradius(e, self->s.origin, dist)) != NULL)
-    {
+    while ((e = findradius(e, self->s.origin, dist)) != NULL) {
         if (!G_EntExists(e))
             continue;
         // ignore non-moving entities (e.g. forcewall)
@@ -1680,14 +1686,11 @@ void V_PushBackEnts(edict_t* self, float dist)
         tr = gi.trace(start, e->mins, e->maxs, end, e, MASK_SOLID);
 
         // nothing detected
-        if (!(tr.contents & MASK_SOLID) && tr.fraction == 1)
-        {
+        if (!(tr.contents & MASK_SOLID) && tr.fraction == 1) {
             // try to move target 'e' to new position
             VectorCopy(end, e->s.origin);
             gi.linkentity(e);
-        }
-        else
-        {
+        } else {
             //gi.dprintf("collided with solid\n");
         }
     }
@@ -1733,7 +1736,7 @@ void V_RestoreMorphed(edict_t *ent, int refund) {
 
     // az: restore v_flags we've set
     ent->v_flags &= ~SFLG_NO_BOB;
-    ent->client->lock_frames = 0;//4.2 reset smart-rocket lock-on counter
+    ent->client->lock_frames = 0; //4.2 reset smart-rocket lock-on counter
 }
 
 void mutant_checkattack(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf);
@@ -1786,7 +1789,7 @@ char *V_GetMonsterKind(int mtype) {
         case P_TANK:
             return "tank";
         case M_SUPERTANK:
-            return "supertank"; 
+            return "supertank";
         case M_SHAMBLER:
             return "shambler";
         case M_JORG:
@@ -2120,7 +2123,7 @@ void V_TouchSolids(edict_t *ent) {
     // list removed before we get to it (killtriggered)
     for (i = 0; i < num; i++) {
         hit = touch[i];
-        if (!hit->inuse || !hit->touch/* || !hit->takedamage */|| hit == ent)
+        if (!hit->inuse || !hit->touch/* || !hit->takedamage */ || hit == ent)
             continue;
         //gi.dprintf("V_TouchSolids called by %s hit %s\n", ent->classname, hit->classname);
         hit->touch(hit, ent, NULL, NULL);
@@ -2148,25 +2151,24 @@ void V_ShellNonAbilityEffects(edict_t *ent) {
     if ((ent->monsterinfo.selected_time > level.time) && (sf2qf(level.framenum) & 6)) {
         ent->s.effects |= EF_COLOR_SHELL;
         ent->s.renderfx |= RF_SHELL_GREEN;
-        return;// stop processing effects
+        return; // stop processing effects
     }
 
-    
+
     // spree war
     if (SPREE_WAR == true) {
         // spree dude and his summons glow white
         if (G_GetSummoner(ent) == SPREE_DUDE) {
-
             ent->s.effects |= EF_COLOR_SHELL;
             ent->s.renderfx |= (RF_SHELL_RED | RF_SHELL_GREEN | RF_SHELL_BLUE);
         }
-            // players and player-summoned monsters in FFA/PvP mode glow red
+        // players and player-summoned monsters in FFA/PvP mode glow red
         else if (cl_ent) {
             ent->s.effects |= EF_COLOR_SHELL;
             ent->s.renderfx |= (RF_SHELL_RED);
         }
 
-        return;// stop processing effects
+        return; // stop processing effects
     }
 
     // these effects apply to players and player-spawned monsters
@@ -2178,14 +2180,13 @@ void V_ShellNonAbilityEffects(edict_t *ent) {
                 // red team shell
                 if (cl_ent->teamnum == RED_TEAM)
                     ent->s.renderfx |= RF_SHELL_RED;
-                    // default blue shell (blue team and PvM aura or morphed/monster)
+                // default blue shell (blue team and PvM aura or morphed/monster)
                 else {
                     if (!V_IsPVP())
                         ent->s.renderfx |= RF_SHELL_BLUE;
                 }
             }
         }
-
 
 
         // CTF/Domination/PtR/PvM mode effects
@@ -2198,13 +2199,13 @@ void V_ShellNonAbilityEffects(edict_t *ent) {
                     ent->s.effects |= EF_FLAG1;
                     ent->s.renderfx |= RF_SHELL_RED;
                 }
-                    // blue flag
+                // blue flag
                 else if (ent->client->pers.inventory[blue_flag_index]) {
                     ent->s.effects |= EF_COLOR_SHELL;
                     ent->s.effects |= EF_FLAG2;
                     ent->s.renderfx |= RF_SHELL_BLUE;
                 }
-                    // domination
+                // domination
                 else if (ent->client->pers.inventory[flag_index]) {
                     ent->s.effects |= EF_COLOR_SHELL;
                     // red team
@@ -2212,7 +2213,7 @@ void V_ShellNonAbilityEffects(edict_t *ent) {
                         ent->s.effects |= EF_FLAG1;
                         ent->s.renderfx |= RF_SHELL_RED;
                     }
-                        // blue team
+                    // blue team
                     else {
                         ent->s.effects |= EF_FLAG2;
                         ent->s.renderfx |= RF_SHELL_BLUE;
@@ -2230,7 +2231,7 @@ void V_ShellNonAbilityEffects(edict_t *ent) {
             if (hw->value && !ent->client->pers.inventory[ITEM_INDEX(FindItem("Halo"))])
             {
             ent->s.effects |= EF_SPHERETRANS;
-            }*/            
+            }*/
         }
 
         // these effects only apply to FFA/PvP modes
@@ -2269,7 +2270,6 @@ void V_ShellNonAbilityEffects(edict_t *ent) {
         ent->s.effects |= EF_HALF_DAMAGE;
         ent->s.renderfx |= RF_SHELL_GREEN | RF_SHELL_RED;
     }
-
 }
 
 void V_ShellAbilityEffects(edict_t *ent) {
@@ -2285,12 +2285,12 @@ void V_ShellAbilityEffects(edict_t *ent) {
         // off-white color shell
         ent->s.effects |= EF_HALF_DAMAGE;
     }
-        // detector ability
+    // detector ability
     else if (ent->flags & FL_DETECTED && ent->detected_time > level.time) {
         ent->s.effects |= EF_COLOR_SHELL | EF_TAGTRAIL;
         ent->s.renderfx |= (RF_SHELL_YELLOW);
     }
-        // an active aura makes you glow cyan
+    // an active aura makes you glow cyan
     else if (que_typeexists(ent->auras, 0)) {
         ent->s.effects |= EF_COLOR_SHELL;
         ent->s.renderfx |= (RF_SHELL_CYAN);
@@ -2304,7 +2304,7 @@ void V_ShellAbilityEffects(edict_t *ent) {
             remaining = sf2qf(ent->client->quad_framenum - level.framenum);
             if (remaining > 30 || (remaining & 4))
                 ent->s.effects |= EF_QUAD;
-            if (remaining == 30 && (ent->svflags & SVF_MONSTER))    // beginning to fade
+            if (remaining == 30 && (ent->svflags & SVF_MONSTER)) // beginning to fade
                 gi.sound(ent, CHAN_ITEM, gi.soundindex("items/damage2.wav"), 1, ATTN_NORM, 0);
         }
 
@@ -2312,7 +2312,7 @@ void V_ShellAbilityEffects(edict_t *ent) {
             remaining = sf2qf(ent->client->quadfire_framenum - level.framenum);
             if (remaining > 30 || (remaining & 4))
                 ent->s.effects |= EF_QUAD;
-            if (remaining == 30 && (ent->svflags & SVF_MONSTER))    // beginning to fade
+            if (remaining == 30 && (ent->svflags & SVF_MONSTER)) // beginning to fade
                 gi.sound(ent, CHAN_ITEM, gi.soundindex("items/quadfire2.wav"), 1, ATTN_NORM, 0);
         }
 
@@ -2320,7 +2320,7 @@ void V_ShellAbilityEffects(edict_t *ent) {
             remaining = sf2qf(ent->client->invincible_framenum - level.framenum);
             if (remaining > 30 || (remaining & 4))
                 ent->s.effects |= EF_PENT;
-            if (remaining == 30 && (ent->svflags & SVF_MONSTER))    // beginning to fade
+            if (remaining == 30 && (ent->svflags & SVF_MONSTER)) // beginning to fade
                 gi.sound(ent, CHAN_ITEM, gi.soundindex("items/protect2.wav"), 1, ATTN_NORM, 0);
         }
         //END QUAD EFFECTS
@@ -2357,7 +2357,7 @@ void V_NonShellEffects(edict_t *ent) {
             // only non-shell effects are added here, so power shield effect is intentionally omitted
         }
 
-            // ghost effect applies to all classes except Poltergeist (who gets it for free)
+        // ghost effect applies to all classes except Poltergeist (who gets it for free)
         else if (ent->myskills.abilities[GHOST].current_level > 0 ||
                  vrx_is_morphing_polt(ent))
             ent->s.effects |= EF_PLASMA;
@@ -2389,7 +2389,7 @@ void V_NonShellEffects(edict_t *ent) {
     // ********** NON-CLIENT SPECIFIC EFFECTS BELOW **********
 
     // barrel is transparent if it has an owner
-    if (ent->mtype == M_BARREL && ent->owner && ent->owner->inuse)// && ent->owner->client)
+    if (ent->mtype == M_BARREL && ent->owner && ent->owner->inuse) // && ent->owner->client)
         ent->s.effects |= EF_SPHERETRANS;
 
     // obstacle becomes transparent before it cloaks

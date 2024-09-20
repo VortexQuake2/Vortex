@@ -1056,7 +1056,7 @@ qboolean G_EntIsAlive(const edict_t *ent)
 }
 
 
-void G_RunFrames (edict_t *ent, int start_frame, int end_frame, qboolean reverse) 
+void G_RunFrames (edict_t *ent, int start_frame, int end_frame, qboolean reverse)
 {
 	if (reverse)
 	{

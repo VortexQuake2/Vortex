@@ -13,6 +13,7 @@ typedef struct {
     qboolean (*is_loading) (edict_t* ent); // if it's already loading... don't bother calling load_player again.
     void (*handle_status)(edict_t* ent); // if not null, this is a multithreaded io system.
     void (*set_owner)(edict_t* ent, char* charname, char* mpw);
+    int type;
 } char_io_t;
 
 extern char_io_t vrx_char_io;

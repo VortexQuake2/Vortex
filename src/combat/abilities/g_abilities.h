@@ -93,6 +93,7 @@ typedef struct skills_s
 	upgrade_t		abilities[MAX_ABILITIES];
 
 	talentlist_t	talents;
+	prestigelist_t  prestige;
 }skills_t;
 
 #endif

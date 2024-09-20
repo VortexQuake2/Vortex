@@ -603,9 +603,9 @@ void SellConfirmMenu_handler(edict_t *ent, int option)
 		safe_cprintf(ent, PRINT_HIGH, "Item Sold for %d credits.\n", value);
 
 		//Re-apply equipment
-		V_ResetAllStats(ent);
+		vrx_runes_unapply(ent);
 		for (i = 0; i < 3; ++i)
-			V_ApplyRune(ent, &ent->myskills.items[i]);
+			vrx_runes_apply(ent, &ent->myskills.items[i]);
 
 		//refund some credits
 		ent->myskills.credits += value;
