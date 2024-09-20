@@ -715,7 +715,7 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
     }
 
     vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, AMP_DAMAGE, 1.0, false );
-    vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, LOWER_RESIST, 1.0, false );
+    vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, LIFE_TAP, 1.0, false );
     vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, WEAKEN, 1.0, false );
     vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, AURA_HOLYFREEZE, 1.0, false );
     

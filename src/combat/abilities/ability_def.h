@@ -96,7 +96,7 @@
 #define SCANNER			92
 #define EMP				93
 #define DOUBLE_JUMP		94
-#define LOWER_RESIST	95
+#define LIFE_TAP		95
 #define FIREBALL		96
 #define PLASMA_BOLT		97
 #define LIGHTNING_STORM	98

@@ -87,7 +87,7 @@ void PrintCommands(edict_t *ent) {
     safe_cprintf(ent, PRINT_HIGH,
                  "== Character abilities ==\n\n    acid\n    airtotem [protect]\n    ammosteal\n    amnesia\n    ampdamage\n    antigrav\n    armorbomb\n    aura_holyfreeze\n    aura_salvation\n    autocannon\n    balancespirit\n    beam_off\n    beam_on\n    berserker\n    bless\n    blessedhammer\n    bombspell\n    boomerang\n    boost\n    brain\n    cacodemon\n    caltrop\n    chainlightning\n    cocoon\n    convert\n    ");
     safe_cprintf(ent, PRINT_HIGH,
-                 "cripple\n    curse\n    darknesstotem\n    deathray\n    deflect\n    detector\n    detonatebody\n    detpipe\n    earthtotem\n    emp\n    explode\n    fireball\n    firetotem\n    flyer\n    forcewall\n    forcewall_off\n    frostnova\n    gasser\n    heal\n    healer\n    healray\n    hellspawn\n    holyfreeze\n    holyground\n    icebolt\n    laser\n    laser\n    laserplatform\n    lasertrap\n    lifedrain\n    lightningstorm\n    lowerresist\n    magicbolt\n    magmine\n    manashield\n    medic\n    meditate\n    meteor\n    minisentry\n    mirv\n    monster\n    mutant\n    napalm\n    naturetotem\n    nosspeed\n    nova\n    obstacle\n    overload\n    parasite\n    plasmabolt\n    proxy\n    purge\n    salvation\n    scanner\n    sentry\n    shieldoff\n    shieldon\n    spell_bomb\n    spell_boost\n    spell_corpse\n    spell_stealammo\n    spike\n    spikegrenade\n    spiker\n    spore\n    sprintoff\n    sprinton\n    sspeed\n    supplystation\n    tank\n    teleport_fwd\n    totem [remove]\n    unholyground\n    watertotem\n    weaken\n    wormhole\n    yang\n    yin\n");
+                 "cripple\n    curse\n    darknesstotem\n    deathray\n    deflect\n    detector\n    detonatebody\n    detpipe\n    earthtotem\n    emp\n    explode\n    fireball\n    firetotem\n    flyer\n    forcewall\n    forcewall_off\n    frostnova\n    gasser\n    heal\n    healer\n    healray\n    hellspawn\n    holyfreeze\n    holyground\n    icebolt\n    laser\n    laser\n    laserplatform\n    lasertrap\n    lifedrain\n    lightningstorm\n    lifetap\n    magicbolt\n    magmine\n    manashield\n    medic\n    meditate\n    meteor\n    minisentry\n    mirv\n    monster\n    mutant\n    napalm\n    naturetotem\n    nosspeed\n    nova\n    obstacle\n    overload\n    parasite\n    plasmabolt\n    proxy\n    purge\n    salvation\n    scanner\n    sentry\n    shieldoff\n    shieldon\n    spell_bomb\n    spell_boost\n    spell_corpse\n    spell_stealammo\n    spike\n    spikegrenade\n    spiker\n    spore\n    sprintoff\n    sprinton\n    sspeed\n    supplystation\n    tank\n    teleport_fwd\n    totem [remove]\n    unholyground\n    watertotem\n    weaken\n    wormhole\n    yang\n    yin\n");
     safe_cprintf(ent, PRINT_HIGH,
                  "\n\n== General commands ==\n\n    abilityindex\n    ally\n    allyinfo\n    combat\n    flashlight\n    gravjump \n    lasersight\n    masterpw\n    mute\n    owner\n    rune\n    speech\n    team\n    togglesecondary\n    trade\n    transfercredits\n    update\n    vrxhelp\n    vrxid\n    vrxmenu\n    whois\n    yell\n");
 
@@ -481,8 +481,8 @@ char *GetTalentString(int talent_ID) {
             return "Cheaper Curses";
         case TALENT_CORPULENCE:
             return "Corpulence";
-        case TALENT_LIFE_TAP:
-            return "Life Tap";
+        case TALENT_OBLATION:
+            return "Oblation";
         case TALENT_DIM_VISION:
             return "Dim Vision";
         case TALENT_FLIGHT:
@@ -728,8 +728,8 @@ char *GetAbilityString(int ability_number) {
             return "EMP";
         case DOUBLE_JUMP:
             return "Double Jump";
-        case LOWER_RESIST:
-            return "Lower Resist";
+        case LIFE_TAP:
+            return "Life Tap";
         case FIREBALL:
             return "Fireball";
         case PLASMA_BOLT:

@@ -383,7 +383,7 @@ char *GetCurseName (int type)
 	case BLESS: return "bless";
 	case DEFLECT: return "deflect";
 	case CURSE: return "confuse";
-	case LOWER_RESIST: return "lower resist";
+	case LIFE_TAP: return "life tap";
 	case AMP_DAMAGE: return "amp damage";
 	case WEAKEN: return "weaken";
 	case LIFE_DRAIN: return "life drain";
@@ -474,7 +474,7 @@ void CurseRadiusAttack (edict_t *caster, int type, int range, int radius, float 
 //************************************************************************************************
 //			Lower Resist Curse
 //************************************************************************************************
-
+/*
 void Cmd_LowerResist (edict_t *ent)
 {
 	int range, radius, talentLevel, cost=LOWER_RESIST_COST;
@@ -511,6 +511,46 @@ void Cmd_LowerResist (edict_t *ent)
 
 	//Play the spell sound!
 	gi.sound(ent, CHAN_ITEM, gi.soundindex("curses/lowerresist.wav"), 1, ATTN_NORM, 0);
+
+}
+*/
+
+void Cmd_LifeTap(edict_t* ent)
+{
+	int range, radius, talentLevel, cost = LIFE_TAP_COST;
+	float duration;
+
+	if (debuginfo->value)
+		gi.dprintf("DEBUG: %s just called Cmd_LifeTap()\n", ent->client->pers.netname);
+
+	//Talent: Cheaper Curses
+	if ((talentLevel = vrx_get_talent_level(ent, TALENT_CHEAPER_CURSES)) > 0)
+		cost *= 1.0 - 0.1 * talentLevel;
+
+	if (!V_CanUseAbilities(ent, LIFE_TAP, cost, true))
+		return;
+
+	range = LIFE_TAP_INITIAL_RANGE + LIFE_TAP_ADDON_RANGE * ent->myskills.abilities[LIFE_TAP].current_level;
+	radius = LIFE_TAP_INITIAL_RADIUS + LIFE_TAP_ADDON_RADIUS * ent->myskills.abilities[LIFE_TAP].current_level;
+	duration = LIFE_TAP_INITIAL_DURATION + LIFE_TAP_ADDON_DURATION * ent->myskills.abilities[LIFE_TAP].current_level;
+
+	// evil curse talent
+	talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
+	if (talentLevel > 0)
+		duration *= 1.0 + 0.25 * talentLevel;
+
+	if (duration < 1)
+		duration = 1;
+
+	CurseRadiusAttack(ent, LIFE_TAP, range, radius, duration, true);
+
+	//Finish casting the spell
+	//ent->client->ability_delay = level.time + LOWER_RESIST_DELAY;
+	ent->myskills.abilities[LIFE_TAP].delay = level.time + LIFE_TAP_DELAY;
+	ent->client->pers.inventory[power_cube_index] -= cost;
+
+	//Play the spell sound!
+	gi.sound(ent, CHAN_ITEM, gi.soundindex("curses/reversevampire.wav"), 1, ATTN_NORM, 0);
 
 }
 

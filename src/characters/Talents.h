@@ -56,7 +56,7 @@
 //Necromancer
 #define TALENT_CHEAPER_CURSES		80
 #define TALENT_CORPULENCE			81
-#define TALENT_LIFE_TAP				82
+#define TALENT_OBLATION				82
 #define TALENT_DIM_VISION			83
 #define TALENT_FLIGHT				84
 #define TALENT_EVIL_CURSE			85

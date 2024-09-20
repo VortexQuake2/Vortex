@@ -711,41 +711,48 @@ void DeflectHitscan(edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t
 	}		
 }
 
+void V_ApplyVampire(edict_t* attacker, float take, float vamp_factor, float health_factor, qboolean use_cache)
+{
+	int armorVampBase, steal;
+	int delta = (health_factor * attacker->max_health) - attacker->health;
+	
+
+	armorVampBase = steal = vamp_factor * take;
+	// don't give more health than we need
+	if (steal > delta)
+		steal = delta;
+	if (delta < 0) // players sometimes go over maximum health
+		steal = 0;;
+	//gi.dprintf("factor: %.1f steal: %d delta: %d take: %.0f\n", vamp_factor, steal, delta, take);
+	if (use_cache)
+		attacker->health += steal;
+	else
+		attacker->health_cache += steal;
+}
+
 void G_ApplyVampire(edict_t *attacker, float take)
 {
 	float temp;
-	float steal;
-	int	delta, armorVampBase;
-	int	*armor = &attacker->client->pers.inventory[body_armor_index];
-	int	max_health = attacker->max_health;
+	qboolean use_cache = true;
+	int* armor = &attacker->client->pers.inventory[body_armor_index];
 
 	temp = 0.075*attacker->myskills.abilities[VAMPIRE].current_level;
 
 	// brains and mutants with morph mastery use vamp
 	if (attacker->mtype == MORPH_BRAIN || attacker->mtype == MORPH_MUTANT)
+	{
 		temp += 0.25;
+		use_cache = false;
+	}
 
-	steal = (int)floor(0.5 + take*temp); // steal health
-	armorVampBase = steal; // save this value for armor vamp
-
-	delta = max_health - attacker->health;
-	// don't give more health than we need
-	if (steal > delta)
-		steal = delta;
-	if (delta < 0) // players sometimes go over maximum health
-		steal = 0;
-
-	if (attacker->mtype) // morphs don't use healthcache
-		attacker->health += steal;
-	else
-		attacker->health_cache += steal;
+	V_ApplyVampire(attacker, take, temp, 1.0, use_cache);
 
 	//Talent: Armor Vampire
-    if (*armor < MAX_ARMOR(attacker) && vrx_get_talent_level(attacker, TALENT_ARMOR_VAMP) > 0)
+	if (*armor < MAX_ARMOR(attacker) && vrx_get_talent_level(attacker, TALENT_ARMOR_VAMP) > 0)
 	{
 		//16.6% per point of health stolen gives armor as a bonus.
-        float mult = 0.1666 * vrx_get_talent_level(attacker, TALENT_ARMOR_VAMP);
-		attacker->armor_cache += (int)(mult * (float)armorVampBase);
+		float mult = 0.1666 * vrx_get_talent_level(attacker, TALENT_ARMOR_VAMP);
+		attacker->armor_cache += (int)(take * temp * mult);
 	}
 }
 
@@ -880,6 +887,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 	// lower resist curse
 	// az: "mod != MOD_CRIPPLE" to make lower resist Not Apply here
+	/*
 	if ((slot = que_findtype(targ->curses, NULL, LOWER_RESIST)) != NULL && mod != MOD_CRIPPLE)
 	{
 		float lowerResistFactor = LOWER_RESIST_INITIAL_FACTOR + LOWER_RESIST_ADDON_FACTOR * slot->ent->owner->myskills.abilities[LOWER_RESIST].current_level;
@@ -892,7 +900,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		//gi.dprintf(" enddamage = %0.0f\n", damage);
 
 	}
-
+	*/
 	dflags = vrx_apply_pierce(targ, attacker, damage, dflags, mod);
 	
 	if (targ->flags & FL_CHATPROTECT || trading->value)
@@ -1218,24 +1226,26 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 		if (attacker->monsterinfo.bonus_flags & BF_STYGIAN)
 		{
-			attacker->health += take;
-			if (attacker->health > 2*attacker->max_health)
-				attacker->health = 2*attacker->max_health;
+			V_ApplyVampire(attacker, take, 1.0, 2.0, true);
 		}
 
+		// hellspawn has vampire ability
 		if (attacker->mtype == M_SKULL)
 		{
-			attacker->health += 0.5*take;
-			if (attacker->health > 2*attacker->max_health)
-				attacker->health = 2*attacker->max_health;
+			V_ApplyVampire(attacker, take, 0.5, 2.0, true);
 		}
 
 		// spikeball has vampire ability
 		if (attacker->mtype == M_SPIKEBALL)
 		{
-			attacker->health += take;
-			if (attacker->health > attacker->max_health)
-				attacker->health = attacker->max_health;
+			V_ApplyVampire(attacker, take, 1.0, 1.0, true);
+		}
+
+		// life tap vampire effect
+		if ((slot = que_findtype(targ->curses, NULL, LIFE_TAP)) != NULL && mod != MOD_CRIPPLE)
+		{
+			float lifeTapFactor = LIFE_TAP_INITIAL_FACTOR + LIFE_TAP_ADDON_FACTOR * slot->ent->owner->myskills.abilities[LIFE_TAP].current_level;
+			V_ApplyVampire(attacker, take, lifeTapFactor, 1.0, true);
 		}
 
 		// vampire effect

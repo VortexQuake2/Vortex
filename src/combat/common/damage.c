@@ -275,11 +275,14 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
         }
 
         // targets cursed with "amp damage" take additional damage
-        damage = vrx_apply_amp_damage(targ, damage);
+        //damage = vrx_apply_amp_damage(targ, damage);
 
         // weaken causes target to take more damage
         //damage = vrx_apply_weaken(targ, damage);
     }
+
+    // targets cursed with "amp damage" take additional damage
+    damage = vrx_apply_amp_damage(targ, damage);
 
     // targets "chilled" deal less damage.
     if (attacker->chill_time > level.time)

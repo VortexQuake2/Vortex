@@ -863,12 +863,15 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 
 	if (!worldspawn)
 	{
+		float bonus = 0.1;
 		//Talent: Corpulence (also in M_Initialize)
-        talentLevel = vrx_get_talent_level(ent, TALENT_CORPULENCE);
-		if(talentLevel > 0)	mult +=	0.1 * talentLevel;	//+40% per upgrade
-
 		if (pvm->value)
-		    mult += 0.3; // base mult for player monsters in pvm
+			bonus = 0.2;
+        talentLevel = vrx_get_talent_level(ent, TALENT_CORPULENCE);
+		if(talentLevel > 0)	mult +=	bonus * talentLevel;	//+10-20% per upgrade
+
+		//if (pvm->value)
+		//    mult += 0.3; // base mult for player monsters in pvm
 	}
 
 	drone->health *= mult;
@@ -1976,9 +1979,12 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	if ( (ent && ent->inuse && ent->client) ||
 		(monster->activator && monster->activator->inuse && monster->activator->client) ) // player summons exception.
 	{
+		float bonus = 0.1;
 		//Talent: Corpulence
-        talentLevel = vrx_get_talent_level(ent, TALENT_CORPULENCE);
-		if(talentLevel > 0)	mult +=	0.05 * talentLevel;	//+5% per upgrade
+		if (pvm->value)
+			bonus = 0.2;
+		talentLevel = vrx_get_talent_level(ent, TALENT_CORPULENCE);
+		if (talentLevel > 0)	mult += bonus * talentLevel;	//+10-20% per upgrade
 
 		mult += dur_bonus; // caller defined monster multiplier.
 	}

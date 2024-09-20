@@ -441,11 +441,11 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		menu_add_line(ent, "Infects nearby enemies with", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "a life-sapping contagion!", MENU_WHITE_CENTERED);
 		return 3;
-	case LOWER_RESIST:
-		menu_add_line(ent, "Curse your enemies, causing.", MENU_WHITE_CENTERED);
-		menu_add_line(ent, "lowered damage resistance.", MENU_WHITE_CENTERED);
+	case LIFE_TAP:
+		menu_add_line(ent, "Curse your enemies, allowing.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "attacks to leech life!", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Uses power cubes.", MENU_WHITE_CENTERED);
-		menu_add_line(ent, "Command: lowerresist", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Command: lifetap", MENU_WHITE_CENTERED);
 		return 4;
 	case AMP_DAMAGE:
 		menu_add_line(ent, "Curse your enemies, causing", MENU_WHITE_CENTERED);

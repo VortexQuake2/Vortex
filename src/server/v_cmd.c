@@ -50,7 +50,7 @@ void Cmd_TossMirv (edict_t *ent);
 void Cmd_Healer_f (edict_t *ent);
 void Cmd_Spiker_f (edict_t *ent);
 void Cmd_Obstacle_f (edict_t *ent);
-void Cmd_box_f(edict_t *ent); //lepi
+//void Cmd_box_f(edict_t *ent); //lepi
 void Cmd_Gasser_f (edict_t *ent);
 void Cmd_TossSpikeball (edict_t *ent);
 void Cmd_FireAcid_f (edict_t *ent);
@@ -75,12 +75,13 @@ void Grenade_Explode (edict_t *ent);
 void Cmd_CorpseExplode(edict_t *ent);
 void Cmd_HellSpawn_f (edict_t *ent);
 void Cmd_Caltrops_f (edict_t *ent);
-void Cmd_fmedi_f(edict_t *ent);
+//void Cmd_fmedi_f(edict_t *ent);
 void Cmd_PrintCommandList(edict_t *ent);
 void Cmd_Mirror_f(edict_t* ent);
 void Cmd_BlinkStrike_f(edict_t* self);
 void Cmd_ExplodingBarrel_f(edict_t* ent);
 void Cmd_Stash_f(edict_t* ent);
+void Cmd_LifeTap(edict_t* ent);
 
 #define CommandTotal sizeof(commands) / sizeof(gameCommand_s)
 
@@ -114,7 +115,7 @@ const gameCommand_s commands[] =
 	{ "weaken", 		Cmd_Weaken },
 	{ "lifedrain", 		Cmd_LifeDrain },
 	{ "ampdamage", 		Cmd_AmpDamage },
-	{ "lowerresist", 	Cmd_LowerResist },
+	{ "lifetap", 		Cmd_LifeTap },
 	{ "selfdestruct",	Cmd_SelfDestruct_f },
 	{ "ally", 			ShowAllyMenu },
 	{ "magmine",		Cmd_SpawnMagmine_f },

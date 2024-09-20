@@ -55,7 +55,7 @@ const talentdef_t talents_vampire[] = {
 const talentdef_t talents_necromancer[] = {
         {TALENT_CHEAPER_CURSES, 5, false},
         {TALENT_CORPULENCE,     5, false},
-        {TALENT_LIFE_TAP,       5, false},
+        {TALENT_OBLATION,       5, false},
         {TALENT_DIM_VISION,     5, false},
         {TALENT_EVIL_CURSE,     5, false},
         {TALENT_FLIGHT,         5, false},
@@ -292,12 +292,12 @@ void vrx_upgrade_talent(edict_t *ent, int talentID) {
         safe_cprintf(ent, PRINT_HIGH, "Precision Tuning can't be combined with Rapid Assembly.\n");
         return;
     }
-    if (talentID == TALENT_CORPULENCE && vrx_get_talent_level(ent, TALENT_LIFE_TAP) > 0) {
-        safe_cprintf(ent, PRINT_HIGH, "Corpulence can't be combined with Life Tap.\n");
+    if (talentID == TALENT_CORPULENCE && vrx_get_talent_level(ent, TALENT_OBLATION) > 0) {
+        safe_cprintf(ent, PRINT_HIGH, "Corpulence can't be combined with Oblation.\n");
         return;
     }
-    if (talentID == TALENT_LIFE_TAP && vrx_get_talent_level(ent, TALENT_CORPULENCE) > 0) {
-        safe_cprintf(ent, PRINT_HIGH, "Life Tap can't be combined with Corpulence.\n");
+    if (talentID == TALENT_OBLATION && vrx_get_talent_level(ent, TALENT_CORPULENCE) > 0) {
+        safe_cprintf(ent, PRINT_HIGH, "Oblation can't be combined with Corpulence.\n");
         return;
     }
 
@@ -557,7 +557,7 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             menu_add_line(ent, "Increases monster health/armor", MENU_WHITE_CENTERED);
             menu_add_line(ent, "Can't combine with Life Tap.", MENU_WHITE_CENTERED);
             return 2;
-        case TALENT_LIFE_TAP:
+        case TALENT_OBLATION:
             menu_add_line(ent, "Increases monster damage", MENU_WHITE_CENTERED);
             menu_add_line(ent, "but slowly saps life.", MENU_WHITE_CENTERED);
             menu_add_line(ent, "Can't combine with", MENU_WHITE_CENTERED);

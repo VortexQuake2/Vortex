@@ -56,7 +56,7 @@ const abilitydef_t ability_necromancer[] = { // NECROMANCER
         {MONSTER_SUMMON, 0, DEFAULT_SOFTMAX,   0},
         {HELLSPAWN,      0, DEFAULT_SOFTMAX,   0},
         {PLAGUE,         0, DEFAULT_SOFTMAX,   0},
-        {LOWER_RESIST,   0, DEFAULT_SOFTMAX,   0},
+        {LIFE_TAP,       0, DEFAULT_SOFTMAX,   0},
         {AMP_DAMAGE,     0, DEFAULT_SOFTMAX,   0},
         {CRIPPLE,        0, DEFAULT_SOFTMAX,   0},
         {CURSE,          0, DEFAULT_SOFTMAX,   0},
