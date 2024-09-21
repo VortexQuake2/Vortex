@@ -11,6 +11,34 @@
 
 void PlagueCloud(edict_t *ent, edict_t *target);
 
+void InfectedCorpseTouch(edict_t* self, edict_t* other)
+{
+    que_t* q = NULL;
+
+    if (!G_EntExists(self))
+        return; // invalid entity
+    if (self->deadflag != DEAD_DEAD)
+        return; // not a corpse
+    if (!G_EntIsAlive(other))
+        return; // other isn't alive
+    if (other->flags & FL_BLACK_DEATH)
+        return; // already infected
+    if (OnSameTeam(self, other))
+        return; // don't infect teammates
+
+    if ((q = que_findtype(self->curses, NULL, CURSE_PLAGUE)) != NULL) // corpse is infected with plague
+    {
+        if (vrx_get_talent_level(q->ent->owner, TALENT_BLACK_DEATH)) // plague owner has upgraded black death talent
+        {
+            // flag entity with black death so that they take extra damage from plague
+            other->flags |= FL_BLACK_DEATH;
+            // kill the corpse
+            T_Damage(self, self, other, vec3_origin, self->s.origin, vec3_origin, 10000, 0, DAMAGE_NO_PROTECTION, MOD_CORPSEEXPLODE);
+            gi.sound(other, CHAN_ITEM, gi.soundindex("abilities/corpseexplodecast.wav"), 1, ATTN_NORM, 0);
+        }
+    }
+}
+
 void PlagueCloudSpawn(edict_t *ent) {
     float radius;
     edict_t *e = NULL;
@@ -56,7 +84,7 @@ void PlagueCloudSpawn(edict_t *ent) {
 }
 
 void plague_think(edict_t *self) {
-    int dmg;
+    int dmg, max_dmg;
     float radius;
     edict_t *e = NULL;
 
@@ -99,6 +127,7 @@ void plague_think(edict_t *self) {
 
     if (level.time > self->wait && self->enemy->health > 0) {
         int maxlevel;
+        float talentFactor;
 
         if (self->owner->mtype == M_MYPARASITE)
             maxlevel = max(self->owner->myskills.abilities[PLAGUE].current_level,
@@ -108,12 +137,19 @@ void plague_think(edict_t *self) {
 
         // e.g. at level 10: 5% of max hp per second for 20 seconds
         dmg = (float) maxlevel / 10 * ((float) self->enemy->max_health / 20);
-        if (!self->enemy->client && strcmp(self->enemy->classname, "player_tank") != 0)
-            dmg *= 2; // non-clients take double damage (helps with pvm)
+        max_dmg = 50 * maxlevel;
+        //if (!self->enemy->client && strcmp(self->enemy->classname, "player_tank") != 0)
+        //    dmg *= 2; // non-clients take double damage (helps with pvm)
+        if (self->enemy->flags & FL_BLACK_DEATH)
+        {
+            talentFactor = 1.0 + (0.2 * vrx_get_talent_level(self->owner, TALENT_BLACK_DEATH));
+            dmg *= talentFactor;
+            max_dmg *= talentFactor;
+        }
         if (dmg < 1)
             dmg = 1;
-        if (dmg > 100)
-            dmg = 100;
+        if (dmg > max_dmg)
+            dmg = max_dmg;
         T_Damage(self->enemy, self->enemy, self->owner, vec3_origin, self->enemy->s.origin, vec3_origin,
                  dmg, 0, DAMAGE_NO_ABILITIES, MOD_PLAGUE); // hurt 'em
         self->wait = level.time + PLAGUE_DELAY;

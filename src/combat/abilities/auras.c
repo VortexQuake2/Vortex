@@ -242,11 +242,11 @@ qboolean que_addent (que_t *que, edict_t *other, float duration)
 	// if it already exists in the que, update its time/duration
 	while ((slot = que_findent(que, slot, other)) != NULL)
 	{
-		if ((other->mtype == AURA_HOLYFREEZE) || (other->mtype == AURA_SALVATION))
+		//if ((other->mtype == AURA_HOLYFREEZE) || (other->mtype == AURA_SALVATION))
 			slot->time = level.time + duration;
-		else
+		//else
 			// add to it
-			slot->time += duration;
+			//slot->time += duration;
 		return true;
 	}
 

@@ -486,8 +486,8 @@ char *GetTalentString(int talent_ID) {
             return "Oblation";
         case TALENT_DIM_VISION:
             return "Dim Vision";
-        case TALENT_FLIGHT:
-            return "Flight";
+        case TALENT_BLACK_DEATH:
+            return "Black Death";
         //Shaman Talents
         case TALENT_ICE:
             return "Ice";
@@ -2016,7 +2016,7 @@ void vrx_reset_player_state(edict_t *ent) {
     ent->automag = 0;
 
     // boot them out of a wormhole, but don't forget to teleport them to a valid location!
-    ent->flags &= ~FL_WORMHOLE;
+    ent->flags &= ~(FL_WORMHOLE|FL_BLACK_DEATH);
     ent->svflags &= ~SVF_NOCLIENT;
     ent->movetype = MOVETYPE_WALK;
 
@@ -2109,6 +2109,7 @@ A modified version of G_TouchTriggers that will call the touch function
 of any valid intersecting entities
 ============
 */
+void InfectedCorpseTouch(edict_t* self, edict_t* other);
 void V_TouchSolids(edict_t *ent) {
     int i, num;
     edict_t *touch[MAX_EDICTS], *hit;
@@ -2116,13 +2117,15 @@ void V_TouchSolids(edict_t *ent) {
     // sanity check
     if (!ent || !ent->inuse || !ent->takedamage)
         return;
-
     num = gi.BoxEdicts(ent->absmin, ent->absmax, touch, MAX_EDICTS, AREA_SOLID);
 
     // be careful, it is possible to have an entity in this
     // list removed before we get to it (killtriggered)
     for (i = 0; i < num; i++) {
         hit = touch[i];
+        //if (ent->deadflag == DEAD_DEAD && G_EntIsAlive(hit))
+        //    gi.dprintf("corpse touched live entity\n");
+        InfectedCorpseTouch(ent, hit);
         if (!hit->inuse || !hit->touch/* || !hit->takedamage */ || hit == ent)
             continue;
         //gi.dprintf("V_TouchSolids called by %s hit %s\n", ent->classname, hit->classname);

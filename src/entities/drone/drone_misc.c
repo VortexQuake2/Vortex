@@ -597,6 +597,7 @@ void drone_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 {
 	vec3_t	forward, right, start, offset;
 
+	//gi.dprintf("drone_touch\n");
 	V_Touch(self, other, plane, surf);
 
 	// the monster's owner or allies can push him around
