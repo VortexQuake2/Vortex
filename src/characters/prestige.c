@@ -180,11 +180,15 @@ void vrx_prestige_menu_handler(edict_t *self, int option) {
             break;
         case PRESTIGE_ABILITY_POINTS:
             self->myskills.speciality_points += 1;
+            self->myskills.prestige.abilityPoints += 1;
             self->myskills.prestige.points -= 1;
+            gi.cprintf(self, PRINT_HIGH, "You have gained an additional ability point.\n");
             break;
         case PRESTIGE_WEAPON_POINTS:
-            self->myskills.weapon_points += 1;
+            self->myskills.weapon_points += 4;
+            self->myskills.prestige.weaponPoints += 1;
             self->myskills.prestige.points -= 1;
+            gi.cprintf(self, PRINT_HIGH, "You have gained additional weapon points.\n");
             break;
         case PRESTIGE_ASCEND:
             vrx_prestige_ascend(self);
@@ -250,7 +254,7 @@ void vrx_prestige_reapply_abilities(edict_t* self) {
 void vrx_prestige_reapply_all(edict_t *self) {
     struct prestigelist_s *pre = &self->myskills.prestige;
     self->myskills.speciality_points += pre->abilityPoints;
-    self->myskills.weapon_points += pre->weaponPoints;
+    self->myskills.weapon_points += pre->weaponPoints * 4;
 
     vrx_prestige_reapply_abilities(self);
 }
