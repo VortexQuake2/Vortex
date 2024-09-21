@@ -1467,14 +1467,17 @@ void vrx_change_class(char *playername, int newclass, int msgtype) {
 
         player->myskills.level = 0;
         player->myskills.next_level = vrx_get_points_tnl(0);
-        player->myskills.experience = 0;
 
-        for (int j = 1; j <= start_level->value; ++j) {
-            player->myskills.experience += vrx_get_points_tnl(j - 1);
+        // reset experience to zero but only if they are ascending
+        if (msgtype == CHANGECLASS_MSG_ASCEND) {
+            player->myskills.experience = 0;
+            for (int j = 1; j <= start_level->value; ++j) {
+                player->myskills.experience += vrx_get_points_tnl(j - 1);
+            }
         }
 
-        player->myskills.speciality_points = 0;
-        player->myskills.weapon_points = 0;
+        player->myskills.speciality_points = player->myskills.prestige.abilityPoints;
+        player->myskills.weapon_points = player->myskills.prestige.weaponPoints * 4;
         vrx_check_for_levelup(player, false);
 
         //Save the player.
