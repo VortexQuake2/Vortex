@@ -600,6 +600,19 @@ void Cmd_AmpDamage(edict_t *ent)
 //			Curse
 //************************************************************************************************
 
+float vrx_get_curse_duration(edict_t* ent)
+{
+	float talentLevel, duration = CURSE_DURATION_BASE + (CURSE_DURATION_BONUS * ent->myskills.abilities[CURSE].current_level);
+	//Talent: Evil curse
+	talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
+	if (talentLevel > 0)
+		duration *= 1.0 + 0.25 * talentLevel;
+
+	if (duration < 1)
+		duration = 1;
+	return duration;
+}
+
 void Cmd_Curse(edict_t *ent)
 {
 	int range, radius, talentLevel, cost=CURSE_COST;
@@ -618,15 +631,7 @@ void Cmd_Curse(edict_t *ent)
 
 	range = CURSE_DEFAULT_INITIAL_RANGE + CURSE_DEFAULT_ADDON_RANGE * ent->myskills.abilities[CURSE].current_level;
 	radius = CURSE_DEFAULT_INITIAL_RADIUS + CURSE_DEFAULT_ADDON_RADIUS * ent->myskills.abilities[CURSE].current_level;
-	duration = CURSE_DURATION_BASE + (CURSE_DURATION_BONUS * ent->myskills.abilities[CURSE].current_level);
-
-	//Talent: Evil curse
-    talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
-	if(talentLevel > 0)
-		duration *= 1.0 + 0.25 * talentLevel;
-
-	if (duration < 1)
-		duration = 1;
+	duration = vrx_get_curse_duration(ent);
 
 	CurseRadiusAttack(ent, CURSE, range, radius, duration, true);
 

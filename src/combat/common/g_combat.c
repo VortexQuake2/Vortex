@@ -48,7 +48,7 @@ float location_scaling(edict_t *targ, vec3_t point, int damage) {
 */
 
 void TossClientWeapon (edict_t *self);
-
+float vrx_get_curse_duration(edict_t* ent);
 
 qboolean HitTheWeapon (edict_t *targ, edict_t *attacker, const vec3_t point, int take, int dflags)
 {
@@ -1117,23 +1117,19 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		{
 			int curse_level;
 			
-			//gi.dprintf("attempt to activate dim vision\n");
 			temp = 0.1 * talentLevel;
 			if (temp > random())
 			{
 				curse_level = targ_player->myskills.abilities[CURSE].current_level;
-
 				if (curse_level < 1)
 					curse_level = 1;
-				//gi.dprintf("activated level %d dim vision!\n", curse_level);
 				// add the curse
-				curse_add(attacker, targ_player, CURSE, curse_level, curse_level/2.0f);
+				curse_add(attacker, targ_player, CURSE, curse_level, vrx_get_curse_duration(targ_player));
 				CurseMessage(targ_player, attacker, CURSE, curse_level, true);
 				//Play the spell sound!
 				gi.sound(targ, CHAN_ITEM, gi.soundindex("curses/curse.wav"), 1, ATTN_NORM, 0);
 			}
 
-			// modify delay
 			targ->dim_vision_delay = level.framenum + (int)(1 / FRAMETIME); // roll again in 1 second
 		}
 
