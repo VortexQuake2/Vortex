@@ -1031,7 +1031,7 @@ void shambler_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int dama
 			ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
 		ThrowHead(self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
 		//self->deadflag = DEAD_DEAD;
-		return;
+		//return;//FIXME: this will cause DroneList_Next to enter an infinite loop
 
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);
@@ -1048,12 +1048,12 @@ void shambler_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int dama
 	if (self->deadflag == DEAD_DEAD)
 		return;
 
+	DroneList_Remove(self);
+
 	gi.sound(self, CHAN_VOICE, sound_die, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
 	self->monsterinfo.currentmove = &shambler_move_death;
-
-	DroneList_Remove(self);
 
 	if (self->activator && !self->activator->client)
 	{

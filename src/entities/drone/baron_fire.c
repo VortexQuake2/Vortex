@@ -616,7 +616,7 @@ void baron_fire_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int da
 	if (self->deadflag == DEAD_DEAD)
 		return;
 
-	//DroneList_Remove(self);
+	DroneList_Remove(self);
 
 	// regular death
 	if (random() > 0.5)
@@ -626,7 +626,6 @@ void baron_fire_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int da
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
 	self->monsterinfo.currentmove = &baron_fire_move_death;
-	DroneList_Remove(self);
 }
 
 void baron_fire_melee(edict_t* self)

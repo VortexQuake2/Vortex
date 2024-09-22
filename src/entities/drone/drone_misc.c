@@ -65,7 +65,7 @@ edict_t *DroneList_Next(edict_t *ent)
 		if (next_drone != NULL && next_drone->monsterinfo.dronelist_index < ent->monsterinfo.dronelist_index) {
 			// wooee this is terrible 
 			gi.dprintf("another horrible hack: next monster would have put us in an infinite loop. removing.\n");
-			DroneList_Remove(next_drone);
+			DroneList_Remove(next_drone); // note: this will fail because the next drone on the list is freed and the drone_list index is 0
 			return DroneList_Next(ent);
 		}
 
@@ -87,6 +87,7 @@ void DroneList_Insert(edict_t* new_ent)
 }
 
 /* we don't free it, we just remove it from the list */
+//FIXME: add another parameter for index, so that if we accidentally pass it a freed entity on the list, it can actually remove it because the freed entity's dronelist_index is 0
 void DroneList_Remove(edict_t *ent)
 {
 	// is monster index within valid range of list?
