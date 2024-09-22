@@ -311,7 +311,8 @@ void decoy_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 
 	n = randomMT() % 2;
 	if (n == 0)		self->monsterinfo.currentmove = &actor_move_death1;
-	else			self->monsterinfo.currentmove = &actor_move_death2;	
+	else			self->monsterinfo.currentmove = &actor_move_death2;
+	DroneList_Remove(self);
 }
 
 mframe_t actor_frames_attack3[] =

@@ -30,10 +30,11 @@ void InfectedCorpseTouch(edict_t* self, edict_t* other)
     {
         if (vrx_get_talent_level(q->ent->owner, TALENT_BLACK_DEATH)) // plague owner has upgraded black death talent
         {
+            //gi.dprintf("touched infected corpse\n");
             // flag entity with black death so that they take extra damage from plague
             other->flags |= FL_BLACK_DEATH;
             // kill the corpse
-            T_Damage(self, self, other, vec3_origin, self->s.origin, vec3_origin, 10000, 0, DAMAGE_NO_PROTECTION, MOD_CORPSEEXPLODE);
+            T_Damage(self, world, world, vec3_origin, self->s.origin, vec3_origin, 10000, 0, DAMAGE_NO_PROTECTION, MOD_CORPSEEXPLODE);
             gi.sound(other, CHAN_ITEM, gi.soundindex("abilities/corpseexplodecast.wav"), 1, ATTN_NORM, 0);
         }
     }

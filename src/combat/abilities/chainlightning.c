@@ -52,6 +52,9 @@ qboolean ChainLightning_Attack (edict_t *ent, edict_t *target, int damage, int m
 
 	if (result && mode != CL_CHECK)
 	{
+		// do less damage to corpses
+		if (target->health < 1 && damage > 100)
+			damage = 100;
 		//gi.dprintf("CL did %d damage at %d\n", damage, level.framenum);
 		// deal damage
 		T_Damage(target, ent, ent, vec3_origin, target->s.origin, vec3_origin, 
@@ -70,6 +73,7 @@ void ChainLightning (edict_t *ent, vec3_t start, vec3_t aimdir, int damage, int 
 	edict_t	*prev_ed[CLIGHTNING_MAX_HOPS]; // list of entities we've previously hit
 	qboolean	found=false;
 
+	//gi.dprintf("ChainLightning damage: %d range: %d hop: %d\n", damage, attack_range, hop_range);
 	memset(prev_ed, 0, CLIGHTNING_MAX_HOPS*sizeof(prev_ed[0]));
 
 	// write a nice effect so everyone knows we've cast a spell

@@ -1030,7 +1030,7 @@ void shambler_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int dama
 		for (n = 0; n < 4; n++)
 			ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
 		ThrowHead(self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
-		self->deadflag = DEAD_DEAD;
+		//self->deadflag = DEAD_DEAD;
 		return;
 
 #ifdef OLD_NOLAG_STYLE

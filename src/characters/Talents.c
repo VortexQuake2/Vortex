@@ -53,7 +53,7 @@ const talentdef_t talents_vampire[] = {
 };
 
 const talentdef_t talents_necromancer[] = {
-        {TALENT_CHEAPER_CURSES, 5, false},
+        {TALENT_HELLSPAWN_MASTERY, 5, false},
         {TALENT_CORPULENCE,     5, false},
         {TALENT_OBLATION,       5, false},
         {TALENT_DIM_VISION,     5, false},
@@ -548,11 +548,13 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             return 4;
             //Necromancer talents
         case TALENT_EVIL_CURSE:
-            menu_add_line(ent, "Increases curse duration.", MENU_WHITE_CENTERED);
-            return 1;
-        case TALENT_CHEAPER_CURSES:
-            menu_add_line(ent, "Reduces curse cost.", MENU_WHITE_CENTERED);
-            return 1;
+            menu_add_line(ent, "Increases curse duration", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "and reduces cost.", MENU_WHITE_CENTERED);
+            return 2;
+        case TALENT_HELLSPAWN_MASTERY:
+            menu_add_line(ent, "Improves hellspawn. Adds", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "secondary attack.", MENU_WHITE_CENTERED);
+            return 2;
         case TALENT_CORPULENCE:
             menu_add_line(ent, "Increases monster health/armor", MENU_WHITE_CENTERED);
             menu_add_line(ent, "Can't combine with Life Tap.", MENU_WHITE_CENTERED);

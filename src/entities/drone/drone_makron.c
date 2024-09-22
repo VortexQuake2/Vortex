@@ -579,6 +579,7 @@ void makron_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	makron_torso (tempent);
 
 	self->monsterinfo.currentmove = &makron_move_death2;
+	DroneList_Remove(self);
 	
 }
 

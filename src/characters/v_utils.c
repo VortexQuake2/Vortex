@@ -478,8 +478,8 @@ char *GetTalentString(int talent_ID) {
         //Necromancer Talents
         case TALENT_EVIL_CURSE:
             return "Evil Curse";
-        case TALENT_CHEAPER_CURSES:
-            return "Cheaper Curses";
+        case TALENT_HELLSPAWN_MASTERY:
+            return "Hellspawn Mastery";
         case TALENT_CORPULENCE:
             return "Corpulence";
         case TALENT_OBLATION:

@@ -246,6 +246,8 @@ void skull_movetogoal (edict_t *self, edict_t *goal)
 	gi.linkentity(self);
 }
 
+void ChainLightning(edict_t* ent, vec3_t start, vec3_t aimdir, int damage, int attack_range, int hop_range);
+
 void skull_attack (edict_t *self)
 {
 	int		damage;//, knockback;
@@ -295,10 +297,26 @@ void skull_attack (edict_t *self)
 
 	// do the damage
 	damage = self->dmg;
+
 	//knockback = 2*damage;
 	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
 	if (G_EntExists(tr.ent))
 	{
+		// damage to non-players is increased
+		//if (!tr.ent->client)
+		//	damage *= 2;
+		// Talent: Hellspawn Mastery
+		// each talent upgrade increases the chance to proc a chainlightning attack
+		float chance = 0.1 * self->light_level; 
+		if (level.framenum > self->dim_vision_delay && chance > random())
+		{
+			int cl_dmg = 10 * damage;
+			//gi.dprintf("hellspawn firing CL. base dmg %d modified %d CL %d\n", self->dmg, damage, cl_dmg);
+			ChainLightning(self, start, v, cl_dmg, SKULL_ATTACK_RANGE, CLIGHTNING_INITIAL_HR);
+			self->dim_vision_delay = level.framenum + (int)(1 / FRAMETIME);
+			return; // done attacking
+		}
+
 		//if (tr.ent->groundentity)
 		//	knockback *= 2;
 		T_Damage(tr.ent, self, self, forward, tr.endpos, tr.plane.normal, 
@@ -586,9 +604,13 @@ void SpawnSkull (edict_t *ent)
 	skull->activator = ent;
 	skull->takedamage = DAMAGE_YES;
 	skull->monsterinfo.level = ent->myskills.abilities[HELLSPAWN].current_level; // used for monster exp
+	skull->light_level = vrx_get_talent_level(ent, TALENT_HELLSPAWN_MASTERY); // Talent: Hellspawn Mastery
 	skull->monsterinfo.control_cost = 3; // used for monster exp
 	skull->health = SKULL_INITIAL_HEALTH + SKULL_ADDON_HEALTH*ent->myskills.abilities[HELLSPAWN].current_level;//ent->myskills.level;
 	skull->dmg = SKULL_INITIAL_DAMAGE + SKULL_ADDON_DAMAGE*ent->myskills.abilities[HELLSPAWN].current_level;//*ent->myskills.level;
+	//gi.dprintf("skull base dmg %d at creation\n", skull->dmg);
+	skull->dmg *= 1.0 + 0.1 * skull->light_level; // Talent: Hellspawn Mastery increases damage
+	//gi.dprintf("skull dmg %d with talent %d\n", skull->dmg, skull->light_level);
 
 	// az: add decino's fix from vrx-indy
 	// az: un-add. let's make a new talent for this.

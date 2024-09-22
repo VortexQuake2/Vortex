@@ -57,14 +57,14 @@ edict_t *DroneList_Next(edict_t *ent)
     if (ent->monsterinfo.dronelist_index + 1 < MAX_EDICTS) {
 		edict_t *next_drone = DroneList[ent->monsterinfo.dronelist_index + 1];
 		if (ent == next_drone) {
-			gi.dprintf("invoking horrible drone list hack because we would otherwise infinite loop");
+			gi.dprintf("invoking horrible drone list hack because we would otherwise infinite loop\n");
 			ent->monsterinfo.dronelist_index = ent->monsterinfo.dronelist_index + 1;
 			return DroneList_Next(ent);
 		}
 
 		if (next_drone != NULL && next_drone->monsterinfo.dronelist_index < ent->monsterinfo.dronelist_index) {
 			// wooee this is terrible 
-			gi.dprintf("another horrible hack: next monster would have put us in an infinite loop. removing.");
+			gi.dprintf("another horrible hack: next monster would have put us in an infinite loop. removing.\n");
 			DroneList_Remove(next_drone);
 			return DroneList_Next(ent);
 		}
@@ -126,7 +126,7 @@ void DroneList_Remove(edict_t *ent)
 			}
 
 			if (duplicates > 0) {
-				gi.dprintf("removed monster has duplicates %d lol", duplicates);
+				gi.dprintf("removed monster has duplicates %d lol\n", duplicates);
 			}
         }
 #endif
@@ -2130,11 +2130,12 @@ char *GetMonsterKindString (int mtype)
     }
 }
 
+// NOTE: M_Notify only works for player-spawn monsters--don't expect it to do anything for worldspawned monsters!
 void M_Notify (edict_t *monster)
 {
 	if (!monster || !monster->inuse)
 		return;
-	if (!monster->activator || !monster->activator->inuse || !monster->activator->client)
+	if (!monster->activator || !monster->activator->inuse || !monster->activator->client) // only works for player-spawned monsters
 		return;
 
 	// don't call this more than once
