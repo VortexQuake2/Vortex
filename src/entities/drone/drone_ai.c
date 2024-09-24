@@ -1692,7 +1692,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 {
 	edict_t		*goal;
 	vec3_t		v, dest;
-	qboolean	goalVisible=false, goalChanged=false;
+	qboolean	goalVisible=false, goalChanged=false, clearPath=false;
 	float		maxZ;
 
 	// if we're dead, we shouldn't be here
@@ -1823,13 +1823,21 @@ void drone_ai_run1 (edict_t *self, float dist)
 		else
 			maxZ = 18;// step size
 
+		if (self->monsterinfo.last_sighting)
+		{
+			// if we lose line-of-sight to the last known coordinates of our goal, then delay any rettempt of a direct approach
+			// this is to prevent rapidly going back and forth between last sighting coordinates and waypoints, causing the monster to get stuck
+			if ((clearPath = G_IsClearPath(self, MASK_SOLID, self->s.origin, self->monsterinfo.last_sighting)) == false)
+				self->monsterinfo.trail_time = level.time + 2.0;
+		}
+
 		if (DRONE_DEBUG)
 		{
 			if (self->monsterinfo.last_sighting)
 			{
 				float Zdelta = fabs(self->s.origin[2] - self->monsterinfo.last_sighting[2]);
-				qboolean pCl = G_IsClearPath(self, MASK_SOLID, self->s.origin, self->monsterinfo.last_sighting);
-				gi.dprintf("Zdelta = %f clear = %d\n", Zdelta, pCl);
+				//qboolean pCl = G_IsClearPath(self, MASK_SOLID, self->s.origin, self->monsterinfo.last_sighting);
+				gi.dprintf("Zdelta = %f clear = %d\n", Zdelta, clearPath);
 			}
 			else
 			{
@@ -1838,19 +1846,20 @@ void drone_ai_run1 (edict_t *self, float dist)
 
 		}
 
+
 		//FIXME: monster will continue to follow the path even after the target has moved far away from it, potentially causing silly situations where the monster runs past
 		// players/enemies to complete the path--maybe we need another timer to let a path time-out if the target is no longer there?
 		// if we want to forgo the path check and allow monsters to pursue moving to a goal even when there is a path, then we probably need to clear the path somewhere below
 		// move to goal if monster has...
 		if (/*(!self->monsterinfo.numWaypoints || self->monsterinfo.nextWaypoint == self->monsterinfo.numWaypoints) // no waypoints, or we've reached last waypoint
 			&& */fabs(self->s.origin[2] - self->monsterinfo.last_sighting[2]) <= maxZ // we are on the same plane/level, within +/- step up/down
-			&& G_IsClearPath(self, MASK_SOLID, self->s.origin, self->monsterinfo.last_sighting))// we have a clear/unobstructed path to goal's last known or current position
+			&& clearPath && level.time > self->monsterinfo.trail_time)// we have a clear/unobstructed path to goal's last known or current position
 		{
 			float dst = distance(self->s.origin, self->monsterinfo.last_sighting);
 
 			// turn towards goal last sighting if we are very close to it
 			//if (dst <= G_GetHypotenuse(self->maxs) + 32)
-			if (SV_CloseEnough1(self, self->monsterinfo.last_sighting, dist))
+			if (SV_CloseEnough1(self, self->monsterinfo.last_sighting, dist)) // GHz: How would this work for flying monsters? They fly above their goals/targets, unlikely to touch last sighting coordinates.
 			{
 				if (DRONE_DEBUG)
 					gi.dprintf("close to last sighting\n");

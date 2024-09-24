@@ -2143,7 +2143,7 @@ void Lua_LoadVariables()
 	M_BARON_FIRE_ADDON_ARMOR = vrx_lua_get_variable("M_BARON_FIRE_ADDON_ARMOR", 0);
 
 	M_SHAMBLER_INITIAL_HEALTH = vrx_lua_get_variable("M_SHAMBLER_INITIAL_HEALTH", 250);
-	M_SHAMBLER_ADDON_HEALTH = vrx_lua_get_variable("M_SHAMBLER_ADDON_HEALTH", 70);
+	M_SHAMBLER_ADDON_HEALTH = vrx_lua_get_variable("M_SHAMBLER_ADDON_HEALTH", 125);
 
 	M_BRAIN_INITIAL_PULL = vrx_lua_get_variable("M_BRAIN_INITIAL_PULL", -60);
 	M_BRAIN_ADDON_PULL = vrx_lua_get_variable("M_BRAIN_ADDON_PULL", -2);
