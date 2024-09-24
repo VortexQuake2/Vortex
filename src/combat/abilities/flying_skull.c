@@ -167,6 +167,7 @@ void skull_move_vertical (edict_t *self, float dist)
 		VectorCopy(tr.endpos, self->s.origin);
 }
 
+// traces forward then down until it reaches a height at which it's able to move forward
 float V_LookAheadCeilingHeight (edict_t *self, float lookAheadDist, int stepHeight, int stepSize)
 {
 	vec3_t	start, end, forward;
@@ -269,6 +270,7 @@ void skull_movetogoal (edict_t *self, edict_t *goal)
 	float	temp, dist, speed, goalpos, ceilHeight;
 	vec3_t	v;
 	que_t	*slot=NULL;
+	qboolean goalVis = visible(self, goal);
 
 	self->style = SKULL_ATTACK;
 
@@ -290,7 +292,7 @@ void skull_movetogoal (edict_t *self, edict_t *goal)
 				self->monsterinfo.Zchange_delay = level.time + 1.0;
 				skull_move_vertical_goalpos(self, goalpos);
 			}
-			else if (visible(self, goal)) // no obstructions found, goal is visible
+			else if (goalVis) // no obstructions found, goal is visible
 			{
 				//gi.dprintf("goal visible, move above it\n");
 				// set ideal yaw to look at the goal
@@ -319,6 +321,7 @@ void skull_movetogoal (edict_t *self, edict_t *goal)
 		}
 		else // moving vertically to clear obstruction
 		{
+			//gi.dprintf("hellspawn is moving lower to clear obstruction...\n");
 			goalpos = self->monsterinfo.eta; // this is the height of the ceiling below us
 			skull_move_vertical_goalpos(self, goalpos);
 		}
@@ -330,7 +333,10 @@ void skull_movetogoal (edict_t *self, edict_t *goal)
 	}
 
 	// horizontal movement
-	dist = entdist(self, goal);
+	if (goalVis)
+		dist = entdist(self, goal);
+	else
+		dist = 8192; // keep travelling in a straight line if goal isn't visible
 
 	if (dist > SKULL_MAX_DIST)
 	{

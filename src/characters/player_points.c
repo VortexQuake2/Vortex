@@ -526,13 +526,13 @@ void vrx_inv_award_curse_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
     edict_t *assister = NULL;
 
     if ((slot = que_findtype(que, NULL, type)) != NULL) {
-        gi.dprintf("vrx_inv_award_exp: found curse/aura %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
-
+        //gi.dprintf("vrx_inv_award_exp: found curse/aura %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
+        /*
         if ( slot->ent->owner->client ) {
             gi.dprintf("named %s\n", slot->ent->owner->client->pers.netname);
         } else {
             gi.dprintf("\n");
-        }
+        }*/
 
         if ( slot->ent->owner->client && slot->ent->owner != attacker ) {
             leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
@@ -543,7 +543,7 @@ void vrx_inv_award_curse_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
             vrx_add_credits(slot->ent->owner, credits);
             slot->ent->owner->client->resp.wave_assist_exp += exp;
             slot->ent->owner->client->resp.wave_assist_credits += credits;
-            gi.dprintf("  add %dxp, %dcr\n", exp, credits);
+            //gi.dprintf("  add %dxp, %dcr\n", exp, credits);
         }
     }
 }
@@ -554,13 +554,13 @@ void vrx_inv_award_cooldown_exp( edict_t *attacker, edict_t *targ, edict_t *targ
     edict_t *assister = NULL;
 
     if ( time > level.time && owner ) {
-        gi.dprintf("vrx_inv_award_exp: found a cooldown, owner is a %s ", owner->classname );
-
+        //gi.dprintf("vrx_inv_award_exp: found a cooldown, owner is a %s ", owner->classname );
+        /*
         if ( owner->client ) {
             gi.dprintf("named %s\n", owner->client->pers.netname);
         } else {
             gi.dprintf("\n");
-        }
+        }*/
 
         if ( owner->client && owner != attacker ) {
             leveldiff = vrx_get_level_difference_multiplier(owner, targ, targetclient);
@@ -571,7 +571,7 @@ void vrx_inv_award_cooldown_exp( edict_t *attacker, edict_t *targ, edict_t *targ
             vrx_add_credits(owner, credits);
             owner->client->resp.wave_assist_exp += exp;
             owner->client->resp.wave_assist_credits += credits;
-            gi.dprintf("  add %dxp, %dcr\n", exp, credits);
+            //gi.dprintf("  add %dxp, %dcr\n", exp, credits);
         }
     }
 }
@@ -587,13 +587,13 @@ void vrx_inv_award_totem_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
     }
 
     if ( totem && totem->activator ) {
-        gi.dprintf("vrx_inv_award_exp: found a totem, owner is a %s ", totem->activator->classname );
-
+        //gi.dprintf("vrx_inv_award_exp: found a totem, owner is a %s ", totem->activator->classname );
+        /*
         if ( totem->activator->client ) {
             gi.dprintf("named %s\n", totem->activator->client->pers.netname);
         } else {
             gi.dprintf("\n");
-        }
+        }*/
 
         if ( totem->activator->client && totem->activator != attacker ) {
             leveldiff = vrx_get_level_difference_multiplier(totem->activator, targ, targetclient);
@@ -604,7 +604,7 @@ void vrx_inv_award_totem_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
             vrx_add_credits(totem->activator, credits);
             totem->activator->client->resp.wave_assist_exp += exp;
             totem->activator->client->resp.wave_assist_credits += credits;
-            gi.dprintf("  add %dxp, %dcr\n", exp, credits);
+            //gi.dprintf("  add %dxp, %dcr\n", exp, credits);
         }
     }
 }
