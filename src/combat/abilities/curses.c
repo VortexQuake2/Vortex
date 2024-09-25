@@ -389,6 +389,7 @@ char *GetCurseName (int type)
 	case LIFE_DRAIN: return "life drain";
 	case CURSE_BURN: return "burning";
 	case CURSE_PLAGUE: return "plague";
+	case POISON: return "poison";
 	default: return "";
 	}
 }

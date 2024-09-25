@@ -36,7 +36,7 @@ const talentdef_t talents_poltergeist[] = {
 const talentdef_t talents_alien[] = {
         {TALENT_SPITTING_GASSER, 5, false},
         {TALENT_SUPER_HEALER,     5, false},
-        {TALENT_PHANTOM_COCOON,   5, false},
+        {TALENT_DEADLY_SPIKES,   5, false},
         {TALENT_SWARMING,         5, false},
         {TALENT_EXPLODING_BODIES, 5, false},
         {-1,                      0, 0}
@@ -616,9 +616,10 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             menu_add_line(ent, "Allows healer to heal", MENU_WHITE_CENTERED);
             menu_add_line(ent, "beyond maximum health.", MENU_WHITE_CENTERED);
             return 2;
-        case TALENT_PHANTOM_COCOON:
-            menu_add_line(ent, "Allows cocoon to cloak.", MENU_WHITE_CENTERED);
-            return 1;
+        case TALENT_DEADLY_SPIKES:
+            menu_add_line(ent, "Increases damage of", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "spike and spikers.", MENU_WHITE_CENTERED);
+            return 2;
         case TALENT_SWARMING:
             menu_add_line(ent, "Increases spore damage.", MENU_WHITE_CENTERED);
             // menu_add_line(ent, "but reduces damage.", MENU_WHITE_CENTERED); // lol

@@ -807,9 +807,10 @@ edict_t *CreateSpiker (edict_t *ent, int skill_level)
 	e->takedamage = DAMAGE_AIM;
 	e->max_health = SPIKER_INITIAL_HEALTH + SPIKER_ADDON_HEALTH * skill_level;
 	e->health = 0.5*e->max_health;
-	e->dmg = SPIKER_INITIAL_DAMAGE + SPIKER_ADDON_DAMAGE * skill_level;
-
 	e->monsterinfo.level = skill_level;
+	e->light_level = vrx_get_talent_level(ent, TALENT_DEADLY_SPIKES); // Talent: Deadly Spikes
+	e->dmg = SPIKER_INITIAL_DAMAGE + SPIKER_ADDON_DAMAGE * skill_level;
+	e->dmg *= 1.0 + (0.1 * e->light_level); // damage increase from Deadly Spikes talent
 	e->gib_health = -1.5 * BASE_GIB_HEALTH;
 	e->die = spiker_die;
 	e->touch = organ_touch;
@@ -1375,7 +1376,7 @@ void CreatePoison (edict_t *ent, edict_t *targ, int damage, float duration, int 
 	e->owner = e->enemy = targ;
 	e->random = 1; // starting refire delay (in frames)
 	e->dmg = damage;
-	e->mtype = POISON;
+	e->mtype = e->atype = POISON;
 	e->style = meansOfDeath;
 	e->think = poison_think;
 	e->nextthink = level.time + FRAMETIME;
@@ -2166,7 +2167,7 @@ void cocoon_think (edict_t *self)
 edict_t *CreateCocoon (edict_t *ent, int skill_level)
 {
 	//Talent: Phantom Cocoon
-    int talentLevel = vrx_get_talent_level(ent, TALENT_PHANTOM_COCOON);
+    //int talentLevel = vrx_get_talent_level(ent, TALENT_PHANTOM_COCOON);
 
 	edict_t *e;
 
@@ -2189,9 +2190,9 @@ edict_t *CreateCocoon (edict_t *ent, int skill_level)
 	e->creator = ent;
 
 	//Talent: Phantom Cocoon - frames before cloaking
-	if (talentLevel > 0)
-		e->monsterinfo.jumpdn = 50 - 8 * talentLevel;
-	else
+	//if (talentLevel > 0)
+	//	e->monsterinfo.jumpdn = 50 - 8 * talentLevel;
+	//else
 		e->monsterinfo.jumpdn = -1; // cloak disabled
 
 	e->gib_health = -2 * BASE_GIB_HEALTH;

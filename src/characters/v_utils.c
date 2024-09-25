@@ -510,8 +510,8 @@ char *GetTalentString(int talent_ID) {
             return "Super Healer";
         case TALENT_LIFE_REG:
             return "Heart";
-        case TALENT_PHANTOM_COCOON:
-            return "Phantom Cocoon";
+        case TALENT_DEADLY_SPIKES:
+            return "Deadly Spikes";
         case TALENT_SWARMING:
             return "Swarming";
         case TALENT_EXPLODING_BODIES:

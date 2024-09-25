@@ -84,6 +84,7 @@ void SpikeAttack (edict_t *ent)
 
 	// calculate damage and stun length
 	damage = SPIKE_INITIAL_DMG+SPIKE_ADDON_DMG*ent->myskills.abilities[SPIKE].current_level;
+	damage *= 1.0 + 0.1 * vrx_get_talent_level(ent, TALENT_DEADLY_SPIKES); // Talent Deadly Spikes - increases spike damage
 
 	delay = SPIKE_STUN_ADDON * ent->myskills.abilities[SPIKE].current_level;
 	if (delay < SPIKE_STUN_MIN)
