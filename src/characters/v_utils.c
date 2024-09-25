@@ -504,8 +504,8 @@ char *GetTalentString(int talent_ID) {
         case TALENT_TOTEM:
             return "Totemic Focus";
         //Alien Talents
-        case TALENT_PHANTOM_OBSTACLE:
-            return "Hidden Obstacle";
+        case TALENT_SPITTING_GASSER:
+            return "Spitting Gasser";
         case TALENT_SUPER_HEALER:
             return "Super Healer";
         case TALENT_LIFE_REG:

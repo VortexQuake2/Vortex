@@ -34,7 +34,7 @@ const talentdef_t talents_poltergeist[] = {
 };
 
 const talentdef_t talents_alien[] = {
-        {TALENT_PHANTOM_OBSTACLE, 5, false},
+        {TALENT_SPITTING_GASSER, 5, false},
         {TALENT_SUPER_HEALER,     5, false},
         {TALENT_PHANTOM_COCOON,   5, false},
         {TALENT_SWARMING,         5, false},
@@ -606,9 +606,12 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             menu_add_line(ent, "totem to shoot a fireball.", MENU_WHITE_CENTERED);
             return 2;
             //Alien talents
-        case TALENT_PHANTOM_OBSTACLE:
-            menu_add_line(ent, "Reduces time to cloak.", MENU_WHITE_CENTERED);
-            return 1;
+        case TALENT_SPITTING_GASSER:
+            menu_add_line(ent, "Gives gassers an acid attack", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "which is tied to your", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "acid ability. Upgrades", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "increase rate of fire.", MENU_WHITE_CENTERED);
+            return 4;
         case TALENT_SUPER_HEALER:
             menu_add_line(ent, "Allows healer to heal", MENU_WHITE_CENTERED);
             menu_add_line(ent, "beyond maximum health.", MENU_WHITE_CENTERED);

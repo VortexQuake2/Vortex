@@ -1244,6 +1244,16 @@ GASSER_DELAY                             = 1.0
 GASCLOUD_POISON_DURATION                 = 10.0
 GASCLOUD_POISON_FACTOR                   = 0.1
 
+ACID_INITIAL_DAMAGE						 = 50
+ACID_ADDON_DAMAGE						 = 15
+ACID_INITIAL_SPEED						 = 600
+ACID_ADDON_SPEED 						 = 0
+ACID_INITIAL_RADIUS						 = 64
+ACID_ADDON_RADIUS						 = 0
+ACID_DURATION							 = 10.0
+ACID_DELAY								 = 0.2
+ACID_COST								 = 20
+
 --Blink Strike
 BLINKSTRIKE_INITIAL_COST				 = 50
 BLINKSTRIKE_ADDON_COST					 = -4

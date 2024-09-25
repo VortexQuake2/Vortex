@@ -1381,6 +1381,15 @@ double GASSER_COST;
 double GASSER_DELAY;
 double GASCLOUD_POISON_DURATION;
 double GASCLOUD_POISON_FACTOR;
+double ACID_INITIAL_DAMAGE;
+double ACID_ADDON_DAMAGE;
+double ACID_INITIAL_SPEED;
+double ACID_ADDON_SPEED;
+double ACID_INITIAL_RADIUS;
+double ACID_ADDON_RADIUS;
+double ACID_DURATION;
+double ACID_DELAY;
+double ACID_COST;
 double EXP_MINIBOSS;
 double BLINKSTRIKE_INITIAL_COST;
 double BLINKSTRIKE_ADDON_COST;
@@ -2635,6 +2644,16 @@ void Lua_LoadVariables()
     GASSER_DELAY = vrx_lua_get_variable("GASSER_DELAY", 1.0);
     GASCLOUD_POISON_DURATION = vrx_lua_get_variable("GASCLOUD_POISON_DURATION", 10.0);
     GASCLOUD_POISON_FACTOR = vrx_lua_get_variable("GASCLOUD_POISON_FACTOR", 0.1);
+
+	ACID_INITIAL_DAMAGE = vrx_lua_get_variable("ACID_INITIAL_DAMAGE", 50);
+	ACID_ADDON_DAMAGE = vrx_lua_get_variable("ACID_ADDON_DAMAGE", 15);
+	ACID_INITIAL_SPEED = vrx_lua_get_variable("ACID_INITIAL_SPEED", 600);
+	ACID_ADDON_SPEED = vrx_lua_get_variable("ACID_ADDON_SPEED", 0);
+	ACID_INITIAL_RADIUS = vrx_lua_get_variable("ACID_INITIAL_RADIUS", 64);
+	ACID_ADDON_RADIUS = vrx_lua_get_variable("ACID_ADDON_RADIUS", 0);
+	ACID_DURATION = vrx_lua_get_variable("ACID_DURATION", 10);
+	ACID_DELAY = vrx_lua_get_variable("ACID_DELAY", 0.2);
+	ACID_COST = vrx_lua_get_variable("ACID_COST", 20);
 
 	BLINKSTRIKE_INITIAL_COST = vrx_lua_get_variable("BLINKSTRIKE_INITIAL_COST", 75);
 	BLINKSTRIKE_ADDON_COST = vrx_lua_get_variable("BLINKSTRIKE_ADDON_COST", -5);
