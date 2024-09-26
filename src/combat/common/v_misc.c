@@ -234,7 +234,7 @@ void vrx_pvm_spawn_monsters(edict_t* self, int max_monsters, int total_monsters)
 	while (total_monsters < max_monsters && max_spawn_this_cycle > 0) {
 		int rnd;
 		do {
-			rnd = GetRandom(1, 14); // az: don't spawn soldiers
+			rnd = GetRandom(1, 15); // az: don't spawn soldiers
 		} while (rnd == 10);
 
 		edict_t* scan;
