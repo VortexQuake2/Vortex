@@ -57,15 +57,15 @@ edict_t *DroneList_Next(edict_t *ent)
     if (ent->monsterinfo.dronelist_index + 1 < MAX_EDICTS) {
 		edict_t *next_drone = DroneList[ent->monsterinfo.dronelist_index + 1];
 		if (ent == next_drone) {
-			gi.dprintf("invoking horrible drone list hack because we would otherwise infinite loop");
+			gi.dprintf("invoking horrible drone list hack because we would otherwise infinite loop\n");
 			ent->monsterinfo.dronelist_index = ent->monsterinfo.dronelist_index + 1;
 			return DroneList_Next(ent);
 		}
 
 		if (next_drone != NULL && next_drone->monsterinfo.dronelist_index < ent->monsterinfo.dronelist_index) {
 			// wooee this is terrible 
-			gi.dprintf("another horrible hack: next monster would have put us in an infinite loop. removing.");
-			DroneList_Remove(next_drone);
+			gi.dprintf("another horrible hack: next monster would have put us in an infinite loop. removing.\n");
+			DroneList_Remove(next_drone); // note: this will fail because the next drone on the list is freed and the drone_list index is 0
 			return DroneList_Next(ent);
 		}
 
@@ -87,6 +87,7 @@ void DroneList_Insert(edict_t* new_ent)
 }
 
 /* we don't free it, we just remove it from the list */
+//FIXME: add another parameter for index, so that if we accidentally pass it a freed entity on the list, it can actually remove it because the freed entity's dronelist_index is 0
 void DroneList_Remove(edict_t *ent)
 {
 	// is monster index within valid range of list?
@@ -126,7 +127,7 @@ void DroneList_Remove(edict_t *ent)
 			}
 
 			if (duplicates > 0) {
-				gi.dprintf("removed monster has duplicates %d lol", duplicates);
+				gi.dprintf("removed monster has duplicates %d lol\n", duplicates);
 			}
         }
 #endif
@@ -597,6 +598,7 @@ void drone_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 {
 	vec3_t	forward, right, start, offset;
 
+	//gi.dprintf("drone_touch\n");
 	V_Touch(self, other, plane, surf);
 
 	// the monster's owner or allies can push him around
@@ -863,12 +865,15 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 
 	if (!worldspawn)
 	{
+		float bonus = 0.1;
 		//Talent: Corpulence (also in M_Initialize)
-        talentLevel = vrx_get_talent_level(ent, TALENT_CORPULENCE);
-		if(talentLevel > 0)	mult +=	0.1 * talentLevel;	//+40% per upgrade
-
 		if (pvm->value)
-		    mult += 0.3; // base mult for player monsters in pvm
+			bonus = 0.2;
+        talentLevel = vrx_get_talent_level(ent, TALENT_CORPULENCE);
+		if(talentLevel > 0)	mult +=	bonus * talentLevel;	//+10-20% per upgrade
+
+		//if (pvm->value)
+		//    mult += 0.3; // base mult for player monsters in pvm
 	}
 
 	drone->health *= mult;
@@ -1976,9 +1981,12 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	if ( (ent && ent->inuse && ent->client) ||
 		(monster->activator && monster->activator->inuse && monster->activator->client) ) // player summons exception.
 	{
+		float bonus = 0.1;
 		//Talent: Corpulence
-        talentLevel = vrx_get_talent_level(ent, TALENT_CORPULENCE);
-		if(talentLevel > 0)	mult +=	0.05 * talentLevel;	//+5% per upgrade
+		if (pvm->value)
+			bonus = 0.2;
+		talentLevel = vrx_get_talent_level(ent, TALENT_CORPULENCE);
+		if (talentLevel > 0)	mult += bonus * talentLevel;	//+10-20% per upgrade
 
 		mult += dur_bonus; // caller defined monster multiplier.
 	}
@@ -2123,11 +2131,12 @@ char *GetMonsterKindString (int mtype)
     }
 }
 
+// NOTE: M_Notify only works for player-spawn monsters--don't expect it to do anything for worldspawned monsters!
 void M_Notify (edict_t *monster)
 {
 	if (!monster || !monster->inuse)
 		return;
-	if (!monster->activator || !monster->activator->inuse || !monster->activator->client)
+	if (!monster->activator || !monster->activator->inuse || !monster->activator->client) // only works for player-spawned monsters
 		return;
 
 	// don't call this more than once

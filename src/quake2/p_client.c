@@ -1548,26 +1548,6 @@ void body_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage,
 	}
 }
 
-void body_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
-{
-	vec3_t	forward, right, start, offset;
-	
-	V_Touch(self, other, plane, surf);
-
-	// push the body
-	if (G_EntIsAlive(other) && other->client)
-	{
-		AngleVectors (other->client->v_angle, forward, right, NULL);
-		VectorScale (forward, -3, other->client->kick_origin);
-		VectorSet(offset, 0, 7,  other->viewheight-8);
-		P_ProjectSource (other->client, other->s.origin, offset, forward, right, start);
-
-		self->velocity[0] += forward[0] * 30;
-		self->velocity[1] += forward[1] * 30;
-		self->velocity[2] = 100;
-	}
-}
-
 void body_think (edict_t *self)
 {
 	/*
@@ -1653,6 +1633,7 @@ void CopyToBodyQue (edict_t *ent)
 	body->owner = ent->owner;
 	body->movetype = ent->movetype;
 	body->die = body_die;
+	//body->touch = body_touch;
 	body->takedamage = DAMAGE_YES;
 //GHz START
 	body->think = body_think;

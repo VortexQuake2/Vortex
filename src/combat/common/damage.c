@@ -217,12 +217,13 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
         damage *= 2;
 
     // hellspawn gains extra damage against non-clients
+    /*
     if ((attacker->mtype == M_SKULL) && (targ->mtype != M_SKULL) && !targ->client) {
         if (pvm->value || invasion->value)
             damage *= 4;
         else
             damage *= 1.5;
-    }
+    }*/
 
     // proxy, caltrops and medic packs are 3 more effective against non-players
     if (((mod == MOD_CALTROPS) || (mod == MOD_PROXY) || (mod == MOD_FMEDICPACK)) && !targ->client && targ->mtype)
@@ -275,11 +276,14 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
         }
 
         // targets cursed with "amp damage" take additional damage
-        damage = vrx_apply_amp_damage(targ, damage);
+        //damage = vrx_apply_amp_damage(targ, damage);
 
         // weaken causes target to take more damage
         //damage = vrx_apply_weaken(targ, damage);
     }
+
+    // targets cursed with "amp damage" take additional damage
+    damage = vrx_apply_amp_damage(targ, damage);
 
     // targets "chilled" deal less damage.
     if (attacker->chill_time > level.time)

@@ -101,6 +101,7 @@ extern long FLAG_FRAMES;
 #define FL_CONVERTED			0x00040000	// entity was converted
 #define FL_COCOONED				0x00080000	// entitiy is cocooned
 #define FL_NO_TRADING_PROTECT	0x00100000	// let it be hurt in trading mode
+#define FL_BLACK_DEATH			0x00200000	// extra damage from plague
 #define FL_RESPAWN				0x80000000	// used for item respawning
 
 #define FRAMETIME		(1/sv_fps->value)
@@ -130,9 +131,9 @@ typedef enum
 	DAMAGE_AIM			// auto targeting recognizes this
 } damage_t;
 
-typedef enum 
+typedef enum
 {
-	WEAPON_READY, 
+	WEAPON_READY,
 	WEAPON_ACTIVATING,
 	WEAPON_DROPPING,
 	WEAPON_FIRING
@@ -143,12 +144,12 @@ typedef enum
 	AMMO_BULLETS = 1,
 	AMMO_SHELLS = 2,
 	AMMO_ROCKETS = 3,
-	AMMO_GRENADES = 4,  
-	AMMO_CELLS = 5, 
-	AMMO_SLUGS = 6, 
-    // RAFAEL 
-	AMMO_MAGSLUG = 7, 
-	AMMO_TRAP = 8, 
+	AMMO_GRENADES = 4,
+	AMMO_CELLS = 5,
+	AMMO_SLUGS = 6,
+    // RAFAEL
+	AMMO_MAGSLUG = 7,
+	AMMO_TRAP = 8,
 	// 3.5
 	AMMO_GENERATOR = 9
 } ammo_t;
@@ -307,15 +308,15 @@ typedef struct
 #define IT_HEALTH		256
 
 // gitem_t->weapmodel for weapons indicates model index
-#define WEAP_BLASTER			1 
-#define WEAP_SHOTGUN			2 
-#define WEAP_SUPERSHOTGUN		3 
-#define WEAP_MACHINEGUN			4 
-#define WEAP_CHAINGUN			5 
-#define WEAP_GRENADES			6 
-#define WEAP_GRENADELAUNCHER	7 
-#define WEAP_ROCKETLAUNCHER		8 
-#define WEAP_HYPERBLASTER		9 
+#define WEAP_BLASTER			1
+#define WEAP_SHOTGUN			2
+#define WEAP_SUPERSHOTGUN		3
+#define WEAP_MACHINEGUN			4
+#define WEAP_CHAINGUN			5
+#define WEAP_GRENADES			6
+#define WEAP_GRENADELAUNCHER	7
+#define WEAP_ROCKETLAUNCHER		8
+#define WEAP_HYPERBLASTER		9
 #define WEAP_RAILGUN			10
 #define WEAP_BFG				11
 #define WEAP_PHALANX			12
@@ -470,7 +471,7 @@ typedef struct
 		int level_bonus;
 		float time_to_next_respawn;
 	} pvm;
-	
+
 /*	gdsfiles_t	gdsfiles[MAX_CLIENTS];*/
 
 	// experimental monster pathfinding
@@ -663,11 +664,11 @@ extern	spawn_temp_t	st;
 extern int	sm_meat_index;
 extern int	snd_fry;
 
-extern int	jacket_armor_index; 
-extern int	combat_armor_index; 
-extern int	body_armor_index;  
-extern int	power_cube_index;  
-extern int	flag_index;  
+extern int	jacket_armor_index;
+extern int	combat_armor_index;
+extern int	body_armor_index;
+extern int	power_cube_index;
+extern int	flag_index;
 extern int	red_flag_index;
 extern int	blue_flag_index;
 extern int  halo_index;
@@ -675,13 +676,13 @@ extern int	resistance_index;
 extern int	strength_index;
 extern int	regeneration_index;
 extern int	haste_index;
-  
-//ammo  
-extern int	bullet_index;  
-extern int	shell_index;  
-extern int	grenade_index;  
-extern int	rocket_index;  
-extern int	slug_index;  
+
+//ammo
+extern int	bullet_index;
+extern int	shell_index;
+extern int	grenade_index;
+extern int	rocket_index;
+extern int	slug_index;
 extern int	cell_index;
 
 //pre searched items
@@ -1005,7 +1006,7 @@ extern cvar_t *vrx_pvmcreditmult;
 #define FFL_NOSPAWN			2
 
 typedef enum {
-	F_INT, 
+	F_INT,
 	F_FLOAT,
 	F_LSTRING,			// string on disk, pointer in memory, TAG_LEVEL
 	F_GSTRING,			// string on disk, pointer in memory, TAG_GAME
@@ -1631,7 +1632,7 @@ struct gclient_s
 	float		quadfire_framenum;
 	int	burst_count;
 	float		trap_time;
-	
+
 	int			silencer_shots;
 	int			weapon_sound;
 
@@ -1742,7 +1743,7 @@ struct edict_s
 
 	// FIXME: move these fields to a server private sv_entity_t
 	link_t		area;				// linked to a division node or leaf
-	
+
 	int			num_clusters;		// if -1, use headnode instead
 	int			clusternums[MAX_ENT_CLUSTERS];
 	int			headnode;			// unused if num_clusters != -1
@@ -1768,7 +1769,7 @@ struct edict_s
 
 	char		*model;
 	float		freetime;			// sv.time when the object was freed
-	
+
 	//
 	// only used locally in game, not by server
 	//
@@ -1881,7 +1882,7 @@ struct edict_s
 	monsterinfo_t	monsterinfo;
 
 	// jabot (vrxcl/newvrx)
-	ai_handle_t ai; 
+	ai_handle_t ai;
 
 	// RAFAEL
 	int			orders;
@@ -1921,7 +1922,7 @@ struct edict_s
 	float sentrydelay;
 	edict_t *lasersight;
 	float lasthbshot;
-	edict_t *decoy; 
+	edict_t *decoy;
 	edict_t *flashlight;
 	int mtype; // Type of Monstersee M_* defines.. (M_HOVER, etc)
 	int atype;	//3.0 used for new curses
@@ -2031,7 +2032,7 @@ struct edict_s
 
 	// "connection" id, not database id.
 	// kept around without NO_GDS to simplify preprocessor macros
-	volatile int gds_connection_id; 
+	volatile int gds_connection_id;
 #ifndef NO_GDS
 #ifndef GDS_NOMULTITHREADING
 	volatile int gds_thread_status; // vrxchile 3.0

@@ -383,7 +383,7 @@ char *GetCurseName (int type)
 	case BLESS: return "bless";
 	case DEFLECT: return "deflect";
 	case CURSE: return "confuse";
-	case LOWER_RESIST: return "lower resist";
+	case LIFE_TAP: return "life tap";
 	case AMP_DAMAGE: return "amp damage";
 	case WEAKEN: return "weaken";
 	case LIFE_DRAIN: return "life drain";
@@ -474,7 +474,7 @@ void CurseRadiusAttack (edict_t *caster, int type, int range, int radius, float 
 //************************************************************************************************
 //			Lower Resist Curse
 //************************************************************************************************
-
+/*
 void Cmd_LowerResist (edict_t *ent)
 {
 	int range, radius, talentLevel, cost=LOWER_RESIST_COST;
@@ -513,6 +513,46 @@ void Cmd_LowerResist (edict_t *ent)
 	gi.sound(ent, CHAN_ITEM, gi.soundindex("curses/lowerresist.wav"), 1, ATTN_NORM, 0);
 
 }
+*/
+
+void Cmd_LifeTap(edict_t* ent)
+{
+	int range, radius, talentLevel, cost = LIFE_TAP_COST;
+	float duration;
+
+	if (debuginfo->value)
+		gi.dprintf("DEBUG: %s just called Cmd_LifeTap()\n", ent->client->pers.netname);
+
+	//Talent: Cheaper Curses
+	if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
+		cost *= 1.0 - 0.1 * talentLevel;
+
+	if (!V_CanUseAbilities(ent, LIFE_TAP, cost, true))
+		return;
+
+	range = LIFE_TAP_INITIAL_RANGE + LIFE_TAP_ADDON_RANGE * ent->myskills.abilities[LIFE_TAP].current_level;
+	radius = LIFE_TAP_INITIAL_RADIUS + LIFE_TAP_ADDON_RADIUS * ent->myskills.abilities[LIFE_TAP].current_level;
+	duration = LIFE_TAP_INITIAL_DURATION + LIFE_TAP_ADDON_DURATION * ent->myskills.abilities[LIFE_TAP].current_level;
+
+	// evil curse talent
+	talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
+	if (talentLevel > 0)
+		duration *= 1.0 + 0.25 * talentLevel;
+
+	if (duration < 1)
+		duration = 1;
+
+	CurseRadiusAttack(ent, LIFE_TAP, range, radius, duration, true);
+
+	//Finish casting the spell
+	//ent->client->ability_delay = level.time + LOWER_RESIST_DELAY;
+	ent->myskills.abilities[LIFE_TAP].delay = level.time + LIFE_TAP_DELAY;
+	ent->client->pers.inventory[power_cube_index] -= cost;
+
+	//Play the spell sound!
+	gi.sound(ent, CHAN_ITEM, gi.soundindex("curses/reversevampire.wav"), 1, ATTN_NORM, 0);
+
+}
 
 //************************************************************************************************
 //			Amp Damage Curse
@@ -527,7 +567,7 @@ void Cmd_AmpDamage(edict_t *ent)
 		gi.dprintf("DEBUG: %s just called Cmd_AmpDamage()\n", ent->client->pers.netname);
 
 	//Talent: Cheaper Curses
-    if ((talentLevel = vrx_get_talent_level(ent, TALENT_CHEAPER_CURSES)) > 0)
+    if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
 		cost *= 1.0 - 0.1 * talentLevel;
 
 	if (!V_CanUseAbilities(ent, AMP_DAMAGE, cost, true))
@@ -560,6 +600,19 @@ void Cmd_AmpDamage(edict_t *ent)
 //			Curse
 //************************************************************************************************
 
+float vrx_get_curse_duration(edict_t* ent)
+{
+	float talentLevel, duration = CURSE_DURATION_BASE + (CURSE_DURATION_BONUS * ent->myskills.abilities[CURSE].current_level);
+	//Talent: Evil curse
+	talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
+	if (talentLevel > 0)
+		duration *= 1.0 + 0.25 * talentLevel;
+
+	if (duration < 1)
+		duration = 1;
+	return duration;
+}
+
 void Cmd_Curse(edict_t *ent)
 {
 	int range, radius, talentLevel, cost=CURSE_COST;
@@ -570,7 +623,7 @@ void Cmd_Curse(edict_t *ent)
 		gi.dprintf("DEBUG: %s just called Cmd_Curse()\n", ent->client->pers.netname);
 
 	//Talent: Cheaper Curses
-    if ((talentLevel = vrx_get_talent_level(ent, TALENT_CHEAPER_CURSES)) > 0)
+    if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
 		cost *= 1.0 - 0.1 * talentLevel;
 
 	if (!V_CanUseAbilities(ent, CURSE, cost, true))
@@ -578,15 +631,7 @@ void Cmd_Curse(edict_t *ent)
 
 	range = CURSE_DEFAULT_INITIAL_RANGE + CURSE_DEFAULT_ADDON_RANGE * ent->myskills.abilities[CURSE].current_level;
 	radius = CURSE_DEFAULT_INITIAL_RADIUS + CURSE_DEFAULT_ADDON_RADIUS * ent->myskills.abilities[CURSE].current_level;
-	duration = CURSE_DURATION_BASE + (CURSE_DURATION_BONUS * ent->myskills.abilities[CURSE].current_level);
-
-	//Talent: Evil curse
-    talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
-	if(talentLevel > 0)
-		duration *= 1.0 + 0.25 * talentLevel;
-
-	if (duration < 1)
-		duration = 1;
+	duration = vrx_get_curse_duration(ent);
 
 	CurseRadiusAttack(ent, CURSE, range, radius, duration, true);
 
@@ -615,7 +660,7 @@ void Cmd_Weaken(edict_t *ent)
 		gi.dprintf("DEBUG: %s just called Cmd_Weaken()\n", ent->client->pers.netname);
 
 	//Talent: Cheaper Curses
-    if ((talentLevel = vrx_get_talent_level(ent, TALENT_CHEAPER_CURSES)) > 0)
+    if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
 		cost *= 1.0 - 0.1 * talentLevel;
 
 	if (!V_CanUseAbilities(ent, WEAKEN, cost, true))
@@ -657,7 +702,7 @@ void Cmd_LifeDrain(edict_t *ent)
 		gi.dprintf("DEBUG: %s just called Cmd_LifeDrain()\n", ent->client->pers.netname);
 
 	//Talent: Cheaper Curses
-    if ((talentLevel = vrx_get_talent_level(ent, TALENT_CHEAPER_CURSES)) > 0)
+    if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
 		cost *= 1.0 - 0.1 * talentLevel;
 
 	if (!V_CanUseAbilities(ent, LIFE_DRAIN, cost, true))
@@ -809,7 +854,7 @@ void Cmd_Amnesia(edict_t *ent)
 		return;
 
 	//Talent: Cheaper Curses
-    if ((talentLevel = vrx_get_talent_level(ent, TALENT_CHEAPER_CURSES)) > 0)
+    if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
 		cost *= 1.0 - 0.1 * talentLevel;
 
 	if (!G_CanUseAbilities(ent, ent->myskills.abilities[AMNESIA].current_level, cost))

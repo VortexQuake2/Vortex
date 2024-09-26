@@ -1231,7 +1231,7 @@ edict_t *CreateObstacle (edict_t *ent, int skill_level)
 	e->max_health = OBSTACLE_INITIAL_HEALTH + OBSTACLE_ADDON_HEALTH * skill_level;
 	e->health = 0.5*e->max_health;
 	e->dmg = OBSTACLE_INITIAL_DAMAGE + OBSTACLE_ADDON_DAMAGE * skill_level;
-    e->monsterinfo.nextattack = 100 - 9 * vrx_get_talent_level(ent, TALENT_PHANTOM_OBSTACLE);
+	e->monsterinfo.nextattack = 100;// -9 * vrx_get_talent_level(ent, TALENT_PHANTOM_OBSTACLE);
 	e->monsterinfo.level = skill_level;
 	e->gib_health = -2 * BASE_GIB_HEALTH;
 	e->die = obstacle_die;
@@ -1510,8 +1510,8 @@ void fire_acid (edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damag
 void gasser_acidattack (edict_t *self)
 {
 	float	dist;
-	float	range=384;
-	int		speed=600;
+	float	range=self->monsterinfo.sight_range;
+	int		speed= ACID_INITIAL_SPEED;
 	vec3_t	forward, start, end;
 	edict_t *e=NULL;
 
@@ -1519,12 +1519,14 @@ void gasser_acidattack (edict_t *self)
 		return;
 
 	VectorCopy(self->s.origin, start);
-	start[2] = self->absmax[2] - 16;
+	start[2] = self->absmax[2] + 1;// -16;
 
-	while ((e = findradius(e, self->s.origin, range)) != NULL)
-	{
-		if (!G_ValidTarget(self, e, true, true))
-			continue;
+	e = self->enemy;
+	//while ((e = findradius(e, self->s.origin, range)) != NULL)
+	//{
+	if (!G_ValidTarget(self, e, true, true))
+		return;
+		//	continue;
 		
 		// copy target location
 		G_EntMidPoint(e, end);
@@ -1539,13 +1541,13 @@ void gasser_acidattack (edict_t *self)
 		VectorSubtract(end, start, forward);
 		VectorNormalize(forward);
 
-		fire_acid(self, self->s.origin, forward, 200, 64, speed, 20, 10.0);
+		fire_acid(self, start, forward, self->radius_dmg, ACID_INITIAL_RADIUS, speed, (0.1*self->radius_dmg), ACID_DURATION);
 		
 		//FIXME: only need to do this once
-		self->monsterinfo.attack_finished = level.time + 2.0;
+		self->monsterinfo.attack_finished = level.time + (3.0 - (0.4 * self->light_level)); // talent level reduces attack delay
 		self->s.frame = GASSER_FRAMES_ATTACK_END-2;
 		//gi.sound (self, CHAN_VOICE, gi.soundindex ("weapons/twang.wav"), 1, ATTN_NORM, 0);
-	}	
+	//}	
 }
 
 void gasser_attack (edict_t *self)
@@ -1558,6 +1560,8 @@ void gasser_attack (edict_t *self)
 	VectorCopy(self->s.origin, start);
 	start[2] = self->absmax[2] + 8;
 	SpawnGasCloud(self, start, self->dmg, self->dmg_radius, 4.0);
+	//gi.sound(self, CHAN_VOICE, gi.soundindex("weapons/poisonloopmedium2.wav"), 1, ATTN_NORM, 0);
+	gi.sound(self, CHAN_VOICE, gi.soundindex("weapons/gas1.wav"), 1, ATTN_NORM, 0);
 
 	self->s.frame = GASSER_FRAMES_ATTACK_START+2;
 	self->monsterinfo.attack_finished = level.time + GASSER_REFIRE;
@@ -1567,7 +1571,7 @@ qboolean gasser_findtarget (edict_t *self)
 {
 	edict_t *e=NULL;
 
-	while ((e = findclosestradius_targets(e, self, GASSER_RANGE)) != NULL)
+	while ((e = findclosestradius_targets(e, self, self->monsterinfo.sight_range)) != NULL)
 	{
 		if (!G_ValidTarget_Lite(self, e, true))
 			continue;
@@ -1592,8 +1596,12 @@ void gasser_think (edict_t *self)
 	V_HealthCache(self, (int)(0.2 * self->max_health), 1);
 
 	if (gasser_findtarget(self))
-		gasser_attack(self);
-	//gasser_acidattack(self);
+	{
+		if (entdist(self, self->enemy) < self->dmg_radius)
+			gasser_attack(self);
+		else if (self->light_level)
+			gasser_acidattack(self);
+	}
 
 	if (self->s.frame < GASSER_FRAMES_ATTACK_END)
 		G_RunFrames(self, GASSER_FRAMES_ATTACK_START, GASSER_FRAMES_ATTACK_END, false);
@@ -1730,7 +1738,7 @@ void gasser_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	gi.linkentity(self);
 }
 
-edict_t *CreateGasser (edict_t *ent, int skill_level)
+edict_t *CreateGasser (edict_t *ent, int skill_level, int talent_level)
 {
 	edict_t *e;
 
@@ -1752,8 +1760,20 @@ edict_t *CreateGasser (edict_t *ent, int skill_level)
 	e->health = 0.5*e->max_health;
 	e->dmg = GASSER_INITIAL_DAMAGE + GASSER_ADDON_DAMAGE * skill_level;
 	e->dmg_radius = GASSER_INITIAL_ATTACK_RANGE + GASSER_ADDON_ATTACK_RANGE * skill_level;
-
 	e->monsterinfo.level = skill_level;
+
+	e->light_level = talent_level; // Talent: Spitting Gasser
+	if (talent_level)
+	{
+		int acid_level = ent->myskills.abilities[ACID].current_level;
+		if (acid_level < 1)
+			acid_level = 1;
+		e->radius_dmg = ACID_INITIAL_DAMAGE + ACID_ADDON_DAMAGE * acid_level;
+		e->monsterinfo.sight_range = 384;
+	}
+	else
+		e->monsterinfo.sight_range = GASSER_RANGE;
+
 	e->gib_health = -1.25 * BASE_GIB_HEALTH;
 	e->s.frame = GASSER_FRAMES_IDLE_START;
 	e->die = gasser_die;
@@ -1801,7 +1821,7 @@ void Cmd_Gasser_f (edict_t *ent)
 		return;
 	}
 
-	gasser = CreateGasser(ent, ent->myskills.abilities[GASSER].current_level);
+	gasser = CreateGasser(ent, ent->myskills.abilities[GASSER].current_level, vrx_get_talent_level(ent, TALENT_SPITTING_GASSER)); // Talent: Spitting Gasser
 	if (!G_GetSpawnLocation(ent, 100, gasser->mins, gasser->maxs, start, NULL, PROJECT_HITBOX_FAR, false))
 	{
 		ent->num_gasser--;
@@ -2742,6 +2762,9 @@ void acid_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf
         return;
     }
 
+	if (other == ent->owner)
+		return;
+
     acid_explode(ent);
 }
 
@@ -2786,15 +2809,15 @@ void fire_acid (edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damag
     VectorSet (grenade->avelocity, 300, 300, 300);
 }
 
-#define ACID_INITIAL_DAMAGE		50
-#define ACID_ADDON_DAMAGE		15
-#define ACID_INITIAL_SPEED		600
-#define ACID_ADDON_SPEED		0
-#define ACID_INITIAL_RADIUS		64
-#define ACID_ADDON_RADIUS		0
-#define ACID_DURATION			10.0
-#define ACID_DELAY				0.2
-#define ACID_COST				20
+//#define ACID_INITIAL_DAMAGE		50
+//#define ACID_ADDON_DAMAGE		15
+//#define ACID_INITIAL_SPEED		600
+//#define ACID_ADDON_SPEED		0
+//#define ACID_INITIAL_RADIUS		64
+//#define ACID_ADDON_RADIUS		0
+//#define ACID_DURATION			10.0
+//#define ACID_DELAY				0.2
+//#define ACID_COST				20
 
 void Cmd_FireAcid_f (edict_t *ent)
 {

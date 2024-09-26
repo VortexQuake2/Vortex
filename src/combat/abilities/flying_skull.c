@@ -167,41 +167,176 @@ void skull_move_vertical (edict_t *self, float dist)
 		VectorCopy(tr.endpos, self->s.origin);
 }
 
+// traces forward then down until it reaches a height at which it's able to move forward
+float V_LookAheadCeilingHeight (edict_t *self, float lookAheadDist, int stepHeight, int stepSize)
+{
+	vec3_t	start, end, forward;
+	trace_t	tr;
+
+	// trace forward
+	VectorCopy(self->s.origin, start);
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+	VectorMA(start, lookAheadDist, forward, end);
+	tr = gi.trace(start, NULL, NULL, end, self, MASK_SOLID);
+	// check for obstruction
+	if (tr.fraction < 1)
+	{
+		/*
+		gi.WriteByte(svc_temp_entity);
+		gi.WriteByte(TE_DEBUGTRAIL);
+		gi.WritePosition(start);
+		gi.WritePosition(tr.endpos);
+		gi.multicast(tr.endpos, MULTICAST_ALL);
+		*/
+		VectorCopy(tr.endpos, start);
+		VectorCopy(tr.endpos, end);
+
+		while (1) // if we want to save cpu cycles, we could limit this to x vertical steps
+		{
+			// begin loop
+			end[2] -= stepHeight;
+			// trace down 1 step
+			tr = gi.trace(start, NULL, NULL, end, self, MASK_SOLID);
+			if (tr.fraction < 1)
+			{
+				//gi.dprintf("can't avoid obstruction with vertical move\n");
+				return self->s.origin[2]; // obstruction below, can't proceed any further (FIXME: returned value should be outside valid Z range, or just return current Z height)
+			}
+
+			// vertical line from wall to step below
+			/*
+			gi.WriteByte(svc_temp_entity);
+			gi.WriteByte(TE_DEBUGTRAIL);
+			gi.WritePosition(start);
+			gi.WritePosition(end);
+			gi.multicast(end, MULTICAST_ALL);
+			*/
+
+			start[2] = end[2]; // stepdown successful, start tracing at lower height
+			// trace forward 1 step
+			VectorMA(start, stepSize, forward, end);
+			tr = gi.trace(start, NULL, NULL, end, self, MASK_SOLID);
+			if (tr.fraction < 1)
+				continue; // obstruction ahead, continue loop until cleared or floor is reached
+
+			//gi.dprintf("cleared obstruction with vertical move!\n");
+
+			// horizontal line from step below to step forward below obstruction
+			/*
+			gi.WriteByte(svc_temp_entity);
+			gi.WriteByte(TE_DEBUGTRAIL);
+			gi.WritePosition(start);
+			gi.WritePosition(end);
+			gi.multicast(end, MULTICAST_ALL);
+			*/
+			//success = true; // found height that clears obstruction!
+			// now trace up from end to find the ceiling height
+			/*
+			VectorCopy(end, start);
+			end[2] += 8192;
+			tr = gi.trace(start, self->mins, self->maxs, end, self, MASK_SHOT);
+
+			// vertical line from cleared obstruction to ceiling
+			gi.WriteByte(svc_temp_entity);
+			gi.WriteByte(TE_DEBUGTRAIL);
+			gi.WritePosition(start);
+			gi.WritePosition(end);
+			gi.multicast(end, MULTICAST_ALL);
+
+			return tr.endpos[2];*/
+			return end[2];
+		}
+	}
+	// no obstruction
+	// now trace up from end to find the ceiling height
+	//gi.dprintf("no obstruction ahead\n");
+	VectorCopy(end, start);
+	end[2] += 8192;
+	tr = gi.trace(start, NULL, NULL, end, self, MASK_SOLID);
+	return tr.endpos[2];
+}
+
+void skull_move_vertical_goalpos(edict_t* self, float goalpos)
+{
+	// move up or down to get to the desired height
+	if (goalpos > self->s.origin[2])
+		skull_move_vertical(self, SKULL_MOVE_VERTICAL_SPEED);
+	if (goalpos < self->s.origin[2])
+		skull_move_vertical(self, -SKULL_MOVE_VERTICAL_SPEED);
+}
+
 void skull_movetogoal (edict_t *self, edict_t *goal)
 {
-	float	temp, dist, speed, goalpos;
+	float	temp, dist, speed, goalpos, ceilHeight;
 	vec3_t	v;
 	que_t	*slot=NULL;
+	qboolean goalVis = visible(self, goal);
 
 	self->style = SKULL_ATTACK;
+
+
 	// lock-on to enemy if he is visible, and we're not busy
 	// trying to avoid an obstruction
-	if (visible(self, goal) && (level.time > self->wait))
+	if (level.time > self->wait)
 	{
 		trace_t tr;
+		if (level.time > self->monsterinfo.Zchange_delay) // not trying to avoid obstruction vertically
+		{
+			ceilHeight = V_LookAheadCeilingHeight(self, 128, SKULL_MOVE_VERTICAL_SPEED, SKULL_MOVE_HORIZONTAL_SPEED);
+			if (ceilHeight < self->s.origin[2]) // found ceiling below us
+			{
+				ceilHeight -= 32; // subtract half-height of our bbox + 1, this is the highest we can go
+				//gi.dprintf("hellspawn is moving lower to clear obstruction\n");
+				goalpos = ceilHeight;
+				self->monsterinfo.eta = ceilHeight;
+				self->monsterinfo.Zchange_delay = level.time + 1.0;
+				skull_move_vertical_goalpos(self, goalpos);
+			}
+			else if (goalVis) // no obstructions found, goal is visible
+			{
+				//gi.dprintf("goal visible, move above it\n");
+				// set ideal yaw to look at the goal
+				VectorSubtract(goal->s.origin, self->s.origin, v);
+				self->ideal_yaw = vectoyaw(v);
 
-		VectorSubtract(goal->s.origin, self->s.origin, v);
-		self->ideal_yaw = vectoyaw(v);
+				// check for obstruction between goal origin and a position above it
+				goalpos = goal->absmax[2] + SKULL_HEIGHT; // float above enemy
+				VectorCopy(goal->s.origin, v);
+				v[2] = goalpos;
+				tr = gi.trace(goal->s.origin, NULL, NULL, v, goal, MASK_SOLID);
+				goalpos = tr.endpos[2];
 
-		// vertical movement
-		goalpos = goal->absmax[2] + SKULL_HEIGHT; // float above enemy
+				// move up or down to get to the desired height
+				skull_move_vertical_goalpos(self, goalpos);
 
-		// check for obstruction
-		VectorCopy(goal->s.origin, v);
-		v[2] = goalpos;
-		tr = gi.trace(goal->s.origin, NULL, NULL, v, goal, MASK_SOLID);
-		goalpos = tr.endpos[2];
+				// strafe left or right around the goal once we get within desired range
+				skull_strafe(self, 0.5 * SKULL_MOVE_HORIZONTAL_SPEED);
+			}
+			else
+			{
+				//gi.dprintf("can't see goal. ceil %.0f height %.0f\n", ceilHeight, self->s.origin[2]);
+			}
+			
+			//gi.dprintf("ceiling height %.1f\n", ceilHeight);
+		}
+		else // moving vertically to clear obstruction
+		{
+			//gi.dprintf("hellspawn is moving lower to clear obstruction...\n");
+			goalpos = self->monsterinfo.eta; // this is the height of the ceiling below us
+			skull_move_vertical_goalpos(self, goalpos);
+		}
 
-		if (goalpos > self->s.origin[2])
-			skull_move_vertical(self, SKULL_MOVE_VERTICAL_SPEED);
-		if (goalpos < self->s.origin[2])
-			skull_move_vertical(self, -SKULL_MOVE_VERTICAL_SPEED);
-
-		skull_strafe(self, 0.5*SKULL_MOVE_HORIZONTAL_SPEED);
+	}
+	else
+	{
+		//gi.dprintf("hellspawn is bumping around\n");
 	}
 
 	// horizontal movement
-	dist = entdist(self, goal);
+	if (goalVis)
+		dist = entdist(self, goal);
+	else
+		dist = 8192; // keep travelling in a straight line if goal isn't visible
 
 	if (dist > SKULL_MAX_DIST)
 	{
@@ -245,6 +380,8 @@ void skull_movetogoal (edict_t *self, edict_t *goal)
 	M_ChangeYaw(self);
 	gi.linkentity(self);
 }
+
+void ChainLightning(edict_t* ent, vec3_t start, vec3_t aimdir, int damage, int attack_range, int hop_range);
 
 void skull_attack (edict_t *self)
 {
@@ -295,10 +432,26 @@ void skull_attack (edict_t *self)
 
 	// do the damage
 	damage = self->dmg;
+
 	//knockback = 2*damage;
 	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
 	if (G_EntExists(tr.ent))
 	{
+		// damage to non-players is increased
+		//if (!tr.ent->client)
+		//	damage *= 2;
+		// Talent: Hellspawn Mastery
+		// each talent upgrade increases the chance to proc a chainlightning attack
+		float chance = 0.1 * self->light_level; 
+		if (level.framenum > self->dim_vision_delay && chance > random())
+		{
+			int cl_dmg = 10 * damage;
+			//gi.dprintf("hellspawn firing CL. base dmg %d modified %d CL %d\n", self->dmg, damage, cl_dmg);
+			ChainLightning(self, start, v, cl_dmg, SKULL_ATTACK_RANGE, CLIGHTNING_INITIAL_HR);
+			self->dim_vision_delay = level.framenum + (int)(1 / FRAMETIME);
+			return; // done attacking
+		}
+
 		//if (tr.ent->groundentity)
 		//	knockback *= 2;
 		T_Damage(tr.ent, self, self, forward, tr.endpos, tr.plane.normal, 
@@ -586,9 +739,13 @@ void SpawnSkull (edict_t *ent)
 	skull->activator = ent;
 	skull->takedamage = DAMAGE_YES;
 	skull->monsterinfo.level = ent->myskills.abilities[HELLSPAWN].current_level; // used for monster exp
+	skull->light_level = vrx_get_talent_level(ent, TALENT_HELLSPAWN_MASTERY); // Talent: Hellspawn Mastery
 	skull->monsterinfo.control_cost = 3; // used for monster exp
 	skull->health = SKULL_INITIAL_HEALTH + SKULL_ADDON_HEALTH*ent->myskills.abilities[HELLSPAWN].current_level;//ent->myskills.level;
 	skull->dmg = SKULL_INITIAL_DAMAGE + SKULL_ADDON_DAMAGE*ent->myskills.abilities[HELLSPAWN].current_level;//*ent->myskills.level;
+	//gi.dprintf("skull base dmg %d at creation\n", skull->dmg);
+	skull->dmg *= 1.0 + 0.1 * skull->light_level; // Talent: Hellspawn Mastery increases damage
+	//gi.dprintf("skull dmg %d with talent %d\n", skull->dmg, skull->light_level);
 
 	// az: add decino's fix from vrx-indy
 	// az: un-add. let's make a new talent for this.

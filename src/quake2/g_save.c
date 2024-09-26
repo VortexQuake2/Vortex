@@ -205,6 +205,7 @@ void InitGame(void)
 
 	vrx_init_char_io();
 	vrx_init_stash_io();
+	vrx_prestige_global_init();
 
 #ifdef CMD_USEHASH
 	InitHash();

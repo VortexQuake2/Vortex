@@ -17,9 +17,9 @@ void DeleteMenu_handler(edict_t *ent, int option) {
         memset(&ent->myskills.items[option - 778], 0, sizeof(item_t));
 
         //Re-apply equipment
-        V_ResetAllStats(ent);
+        vrx_runes_unapply(ent);
         for (i = 0; i < 3; ++i)
-            V_ApplyRune(ent, &ent->myskills.items[i]);
+            vrx_runes_apply(ent, &ent->myskills.items[i]);
 
         safe_cprintf(ent, PRINT_HIGH, "Item deleted.\n");
     } else if (option - 666 > 0) {

@@ -3,11 +3,14 @@
 
 float vrx_increase_monster_damage_by_talent(edict_t *owner, float damage)
 {
+	float bonus = 0.1;
 	if(owner && owner->client)
 	{
-		// cl5.0: 5% dmg/lv
-        int talentLevel = vrx_get_talent_level(owner, TALENT_LIFE_TAP);
-		if (talentLevel > 0) damage *= 1 + 0.05 * talentLevel;
+		// oblation talent provides +10-20% dmg/lv
+		if (pvm->value)
+			bonus = 0.2;
+        int talentLevel = vrx_get_talent_level(owner, TALENT_OBLATION);
+		if (talentLevel > 0) damage *= 1 + bonus * talentLevel;
 	}
 	return damage;
 }

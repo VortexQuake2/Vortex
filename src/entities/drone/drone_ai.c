@@ -54,7 +54,7 @@ void ai_eval_targets() {
         from->monsterinfo.last_target_scanner = NULL; // forget who last looked at this ent
     }
 
-	/* 
+	/*
 		the older findclosestradius sort of takes the center between the origin and
 		the bounding box. this seems a little unneccesary. i give that up
 		for a little more efficiency by not calculating distance vectors
@@ -156,7 +156,7 @@ qboolean G_ValidTarget_Lite(const edict_t *self, const edict_t *target, qboolean
 {
 	if (trading->value && !(target->flags & FL_NO_TRADING_PROTECT))
 		return false;
-		
+
 	// check for targets that require medic healing
 	if (self && self->mtype == M_MEDIC)
 	{
@@ -229,7 +229,7 @@ void ai_charge (edict_t *self, float dist)
 				// trigger sight function, if available
 				if (self->monsterinfo.sight)
 					self->monsterinfo.sight(self, self->enemy);
-				
+
 				// alert nearby monsters and make them chase our enemy
 				drone_wakeallies(self);
 			}
@@ -266,10 +266,10 @@ void ai_run_slide(edict_t *self, float distance)
 		ofs = 90;
 	else
 		ofs = -90;
-	
+
 	if (M_walkmove (self, self->ideal_yaw + ofs, distance))
 		return;
-		
+
 	self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
 	M_walkmove (self, self->ideal_yaw - ofs, distance);
 
@@ -370,7 +370,7 @@ qboolean M_ValidMedicTarget(const edict_t *self, const edict_t *target) {
 		if (!strcmp(target->classname, "drone"))
 		{
 			// if we are player-owned, don't resurrect more than maximum limit
-			if (self->activator && self->activator->client 
+			if (self->activator && self->activator->client
 				&& (self->activator->num_monsters + target->monsterinfo.control_cost > MAX_MONSTERS))
 				return false;
 			return true;
@@ -380,7 +380,7 @@ qboolean M_ValidMedicTarget(const edict_t *self, const edict_t *target) {
 		if (!strcmp(target->classname, "bodyque") || !strcmp(target->classname, "player"))
 		{
 			// if we are player-owned, don't resurrect more than maximum limit
-			if (self->activator && self->activator->client 
+			if (self->activator && self->activator->client
 				&& (self->activator->num_monsters + 1 > MAX_MONSTERS))
 				return false;
 			return true;
@@ -390,7 +390,7 @@ qboolean M_ValidMedicTarget(const edict_t *self, const edict_t *target) {
 		if (!strcmp(target->classname, "spiker"))
 		{
 			// if we are player-owned, don't resurrect more than maximum limit
-			if (self->activator && self->activator->client 
+			if (self->activator && self->activator->client
 				&& (self->activator->num_spikers + 1 > SPIKER_MAX_COUNT))
 				return false;
 			return true;
@@ -400,7 +400,7 @@ qboolean M_ValidMedicTarget(const edict_t *self, const edict_t *target) {
 		if (!strcmp(target->classname, "obstacle"))
 		{
 			// if we are player-owned, don't resurrect more than maximum limit
-			if (self->activator && self->activator->client 
+			if (self->activator && self->activator->client
 				&& (self->activator->num_obstacle + 1 > OBSTACLE_MAX_COUNT))
 				return false;
 			return true;
@@ -410,7 +410,7 @@ qboolean M_ValidMedicTarget(const edict_t *self, const edict_t *target) {
 		if (!strcmp(target->classname, "gasser"))
 		{
 			// if we are player-owned, don't resurrect more than maximum limit
-			if (self->activator && self->activator->client 
+			if (self->activator && self->activator->client
 				&& (self->activator->num_gasser + 1 > GASSER_MAX_COUNT))
 				return false;
 			return true;
@@ -470,7 +470,7 @@ qboolean drone_heartarget (edict_t *target)
 }
 
 qboolean M_IgnoreInferiorTarget (edict_t *self, edict_t *target)
-{	
+{
 	// doesn't work in invasion mode
 	if (invasion->value)
 		return false;
@@ -549,7 +549,7 @@ edict_t *drone_get_enemy (edict_t *self)
 
 edict_t *drone_findnavi (edict_t *self);
 
-edict_t *drone_get_target (edict_t *self, 
+edict_t *drone_get_target (edict_t *self,
 			qboolean get_medic_target, qboolean get_enemy, qboolean get_navi)
 {
 	edict_t	*target = NULL;
@@ -576,7 +576,7 @@ edict_t *drone_get_target (edict_t *self,
 =============
 drone_findtarget
 
-Searches a spherical area for enemies and 
+Searches a spherical area for enemies and
 returns true if one is found within range
 =============
 */
@@ -754,7 +754,7 @@ qboolean drone_ai_findgoal (edict_t *self)
 				self->monsterinfo.run(self);
 			return true;
 		}
-	
+
 		// no longer valid, so forget about him
 		self->oldenemy = NULL;
 	}
@@ -791,7 +791,7 @@ qboolean drone_ai_findgoal (edict_t *self)
 		// the leader is no longer valid, so forget about him
 		self->monsterinfo.leader = NULL;
 	}
-	
+
 	// didn't find anything to chase
 	return false;
 
@@ -886,7 +886,7 @@ void drone_ai_stand (edict_t *self, float dist)
 				drone_ai_checkattack(self);
 				return;
 			}
-		
+
 			self->enemy = NULL;
 			return;
 		}
@@ -916,7 +916,7 @@ FindPlat
 returns true if a nearby platform/elevator is found
 
 self		the entity searching for the platform
-plat_pos	the position of the platform (if found)	
+plat_pos	the position of the platform (if found)
 =============
 */
 qboolean FindPlat (edict_t *self, vec3_t plat_pos)
@@ -928,7 +928,7 @@ qboolean FindPlat (edict_t *self, vec3_t plat_pos)
 	if (!self->enemy)
 		return false; // what are we doing here?
 
-	while((e = G_Find(e, FOFS(classname), "func_plat")) != NULL) 
+	while((e = G_Find(e, FOFS(classname), "func_plat")) != NULL)
 	{
 		// this is an ugly hack, but it's the only way to test the distance
 		// or visiblity of a plat, since the origin and bbox yield no useful
@@ -1046,7 +1046,7 @@ void FindHigherGoal (edict_t *self, float dist)
 				VectorCopy(tr.endpos, best);
 			// we may find more than one position at the same height
 			// so take it if it's farther from us
-			else if ((tr.endpos[2] == best[2]) && (distance(self->absmin, 
+			else if ((tr.endpos[2] == best[2]) && (distance(self->absmin,
 				tr.endpos) > distance(self->absmin, best)))
 				VectorCopy(tr.endpos, best);
 		}
@@ -1068,12 +1068,12 @@ void FindHigherGoal (edict_t *self, float dist)
 	}
 	if (DRONE_DEBUG)
 		gi.dprintf("found higher goal at %d, current %d\n", (int)best[2], (int)self->absmin[2]);
-	
+
 	self->goalentity = SpawnGoalEntity(self, best);
 	VectorSubtract(self->goalentity->s.origin, self->s.origin, forward);
 	self->ideal_yaw = vectoyaw(forward);
 	M_MoveToGoal(self, dist);
-	
+
 }
 
 /*
@@ -1130,7 +1130,7 @@ void FindLowerGoal (edict_t *self, float dist)
 				VectorCopy(tr.endpos, best);
 			// we may find more than one position at the same height
 			// so take it if it's farther from us
-			else if ((tr.endpos[2] == best[2]) && (distance(self->absmin, 
+			else if ((tr.endpos[2] == best[2]) && (distance(self->absmin,
 				tr.endpos) > distance(self->absmin, best)))
 				VectorCopy(tr.endpos, best);
 		}
@@ -1155,7 +1155,7 @@ void FindLowerGoal (edict_t *self, float dist)
 	VectorSubtract(self->goalentity->s.origin, self->s.origin, forward);
 	self->ideal_yaw = vectoyaw(forward);
 	M_MoveToGoal(self, dist);
-	
+
 
 }
 
@@ -1171,7 +1171,7 @@ qboolean FollowWall (edict_t *self, vec3_t endpos, vec3_t wall_normal, float dis
 
 	for (i=90; i<180; i*=2)
 	{
-		
+
 		vectoangles(wall_normal, angles);
 		angles[YAW] += i;
 		if (angles[YAW] > 360)
@@ -1203,7 +1203,7 @@ qboolean FollowWall (edict_t *self, vec3_t endpos, vec3_t wall_normal, float dis
 	}
 	gi.dprintf("*** FAILED at %d degrees ***\n", i);
 	return false;
-	
+
 }
 */
 
@@ -1279,7 +1279,7 @@ void drone_unstuck (edict_t *self)
 		forward[0] = cos(DEG2RAD(yaw));
 		forward[1] = sin(DEG2RAD(yaw));
 		forward[2] = 0;
-		
+
 		// trace from current position
 		VectorMA(self->s.origin, 64, forward, start);
 		tr = gi.trace(self->s.origin, self->mins, self->maxs, start, self, MASK_SHOT);
@@ -1385,7 +1385,7 @@ void drone_pursue_goal (edict_t *self, float dist)
 				if (tr.fraction < 1)
 				{
 					M_MoveToGoal(self, dist);
-					return;	
+					return;
 				}
 
 				VectorSubtract(goal_origin, self->s.origin, v);
@@ -1415,7 +1415,7 @@ void drone_ai_run_slide (edict_t *self, float dist)
 {
 	float	ofs, range;
 	vec3_t	v;
-	
+
 	VectorSubtract(self->enemy->s.origin, self->s.origin, v);
 	self->ideal_yaw = vectoyaw(v);
 	M_ChangeYaw (self);
@@ -1437,15 +1437,15 @@ void drone_ai_run_slide (edict_t *self, float dist)
 		ofs = 90;
 	else
 		ofs = -90;
-	
+
 	if (M_walkmove (self, self->ideal_yaw + ofs, dist))
 		return;
-		
+
 	// change direction and try strafing in the opposite direction
 	self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
 	M_walkmove (self, self->ideal_yaw - ofs, dist);
 }
-		
+
 void TeleportForward (edict_t *ent, vec3_t vec, float dist);
 
 void drone_cleargoal (edict_t *self)
@@ -1492,10 +1492,10 @@ void drone_ai_giveup (edict_t *self)
 	// if we have no melee function, then make sure we can circle strafe
 	if (!self->monsterinfo.melee)
 		self->monsterinfo.aiflags  &= ~AI_NO_CIRCLE_STRAFE;
-	
+
 	// we're not lost anymore, but just idle
 	self->monsterinfo.aiflags &= ~AI_LOST_SIGHT;
-			
+
 	// if we can walk, walk
 	if (self->monsterinfo.walk)
 		self->monsterinfo.walk(self);
@@ -1562,7 +1562,7 @@ void M_FindPath (edict_t *self, vec3_t goalpos, qboolean compute_path_now)
 
 		if (DRONE_DEBUG)
 			gi.dprintf("M_FindPath() trying to recalc path\n");
-		// 
+		//
 		// get node location nearest to us and our goal
 		if (!(NearestNodeLocation(self->s.origin, v1, 0, true))
 			||!(NearestNodeLocation(goalpos, v2, 0, true)))
@@ -1571,7 +1571,7 @@ void M_FindPath (edict_t *self, vec3_t goalpos, qboolean compute_path_now)
 			M_ClearPath(self);
 			return;
 		}
-		
+
 		// try to find a path between these two nodes
 		if (self->flags & FL_FLY)
 			searchType = SEARCHTYPE_FLY;
@@ -1581,7 +1581,7 @@ void M_FindPath (edict_t *self, vec3_t goalpos, qboolean compute_path_now)
 		if (FindPath(searchType, v1, v2))
 		{
 			if (DRONE_DEBUG)
-				gi.dprintf("%s (%d) is recalculating path at %d\n", 
+				gi.dprintf("%s (%d) is recalculating path at %d\n",
 					GetMonsterKindString(self->mtype), G_GetEntityIndex(self), level.framenum);
 
 			// copy waypoints to monster
@@ -1597,7 +1597,7 @@ void M_FindPath (edict_t *self, vec3_t goalpos, qboolean compute_path_now)
 		else
 		{
 			if (DRONE_DEBUG)
-				gi.dprintf("%s (%d) failed to recalculate path at %d\n", 
+				gi.dprintf("%s (%d) failed to recalculate path at %d\n",
 					GetMonsterKindString(self->mtype), G_GetEntityIndex(self), level.framenum);
 
 			// couldn't find a path to our goal
@@ -1692,7 +1692,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 {
 	edict_t		*goal;
 	vec3_t		v, dest;
-	qboolean	goalVisible=false, goalChanged=false;
+	qboolean	goalVisible=false, goalChanged=false, clearPath=false;
 	float		maxZ;
 
 	// if we're dead, we shouldn't be here
@@ -1726,7 +1726,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 	self->monsterinfo.idle_frames = 0;
 
 	// decoys make step sounds
-	if ((self->mtype == M_DECOY) && (level.time > self->wait)) 
+	if ((self->mtype == M_DECOY) && (level.time > self->wait))
 	{
 		gi.sound (self, CHAN_BODY, gi.soundindex(va("player/step%i.wav", (randomMT()%4)+1)), 1, ATTN_NORM, 0);
 		self->wait = level.time + 0.3;
@@ -1794,7 +1794,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 					drone_ai_run_slide(self, dist);
 					return;
 				}
-				
+
 				// don't let a search time-out as long as we can see the enemy
 				self->monsterinfo.search_frames = 0;
 			}
@@ -1823,13 +1823,21 @@ void drone_ai_run1 (edict_t *self, float dist)
 		else
 			maxZ = 18;// step size
 
+		if (self->monsterinfo.last_sighting)
+		{
+			// if we lose line-of-sight to the last known coordinates of our goal, then delay any rettempt of a direct approach
+			// this is to prevent rapidly going back and forth between last sighting coordinates and waypoints, causing the monster to get stuck
+			if ((clearPath = G_IsClearPath(self, MASK_SOLID, self->s.origin, self->monsterinfo.last_sighting)) == false)
+				self->monsterinfo.trail_time = level.time + 2.0;
+		}
+
 		if (DRONE_DEBUG)
 		{
 			if (self->monsterinfo.last_sighting)
 			{
 				float Zdelta = fabs(self->s.origin[2] - self->monsterinfo.last_sighting[2]);
-				qboolean pCl = G_IsClearPath(self, MASK_SOLID, self->s.origin, self->monsterinfo.last_sighting);
-				gi.dprintf("Zdelta = %f clear = %d\n", Zdelta, pCl);
+				//qboolean pCl = G_IsClearPath(self, MASK_SOLID, self->s.origin, self->monsterinfo.last_sighting);
+				gi.dprintf("Zdelta = %f clear = %d\n", Zdelta, clearPath);
 			}
 			else
 			{
@@ -1838,29 +1846,30 @@ void drone_ai_run1 (edict_t *self, float dist)
 
 		}
 
+
 		//FIXME: monster will continue to follow the path even after the target has moved far away from it, potentially causing silly situations where the monster runs past
 		// players/enemies to complete the path--maybe we need another timer to let a path time-out if the target is no longer there?
 		// if we want to forgo the path check and allow monsters to pursue moving to a goal even when there is a path, then we probably need to clear the path somewhere below
 		// move to goal if monster has...
 		if (/*(!self->monsterinfo.numWaypoints || self->monsterinfo.nextWaypoint == self->monsterinfo.numWaypoints) // no waypoints, or we've reached last waypoint
 			&& */fabs(self->s.origin[2] - self->monsterinfo.last_sighting[2]) <= maxZ // we are on the same plane/level, within +/- step up/down
-			&& G_IsClearPath(self, MASK_SOLID, self->s.origin, self->monsterinfo.last_sighting))// we have a clear/unobstructed path to goal's last known or current position
+			&& clearPath && level.time > self->monsterinfo.trail_time)// we have a clear/unobstructed path to goal's last known or current position
 		{
 			float dst = distance(self->s.origin, self->monsterinfo.last_sighting);
 
 			// turn towards goal last sighting if we are very close to it
 			//if (dst <= G_GetHypotenuse(self->maxs) + 32)
-			if (SV_CloseEnough1(self, self->monsterinfo.last_sighting, dist))
+			if (SV_CloseEnough1(self, self->monsterinfo.last_sighting, dist)) // GHz: How would this work for flying monsters? They fly above their goals/targets, unlikely to touch last sighting coordinates.
 			{
 				if (DRONE_DEBUG)
 					gi.dprintf("close to last sighting\n");
 				// we've reached the temporary entity used for movement commands
 				if (self->monsterinfo.aiflags & AI_COMBAT_POINT)
 				{
-					
+
 					if (DRONE_DEBUG)
 						gi.dprintf("reached combat point\n");
-					
+
 					// az: follow the chain
 					if (!G_GetClient(self)) // non-player spawned monster, i.e. owned by worldspawn
 					{
@@ -1874,7 +1883,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 									gi.dprintf("reached end\n");
 								}
 							}
-							
+
 
 						}
                         if (invasion->value) {
@@ -1965,7 +1974,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 		if (goalChanged)
 		{
 			if (DRONE_DEBUG)
-				gi.dprintf("%s (%d) goal changed at %d\n", 
+				gi.dprintf("%s (%d) goal changed at %d\n",
 					GetMonsterKindString(self->mtype), G_GetEntityIndex(self), level.framenum);
 			// calculate path immediately
 			M_FindPath(self, self->monsterinfo.last_sighting, true);
@@ -1978,7 +1987,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 		if (!VectorCompare(self->monsterinfo.prevGoalPos, self->monsterinfo.last_sighting))
 		{
 			if (DRONE_DEBUG)
-				gi.dprintf("%s (%d) goal position changed at %d\n", 
+				gi.dprintf("%s (%d) goal position changed at %d\n",
 					GetMonsterKindString(self->mtype), G_GetEntityIndex(self), level.framenum);
 			// compute path after a delay
 			self->monsterinfo.updatePath = true;
@@ -2001,7 +2010,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 		{
 			if (DRONE_DEBUG)
 			gi.dprintf("drone has waypoints\n");
-			// 
+			//
 			// have we reached the end of the path we are searching?
 			if (self->monsterinfo.nextWaypoint < self->monsterinfo.numWaypoints)
 			{
@@ -2037,7 +2046,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 
 				//FIXME: code above looks for a clear path to goalent, and follows it regardless of waypoints; either we force waypoints to be followed if present OR
 				// we change the code below to find the nearest waypoint, and then find the next waypoint from that one
-				
+
 				// get the position of the next waypoint
 				GetNodePosition(self->monsterinfo.waypoint[self->monsterinfo.nextWaypoint], dest);
 
@@ -2128,7 +2137,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 			if (DRONE_DEBUG)
 				gi.dprintf("couldnt find valid path\n");
 			// we couldn't determine a valid path
-			drone_ai_lost(self, goal, dist);			
+			drone_ai_lost(self, goal, dist);
 		}
 	}
 	else
@@ -2168,7 +2177,7 @@ void drone_ai_run (edict_t *self, float dist)
 
 
 	// decoys make step sounds
-	if ((self->mtype == M_DECOY) && (level.time > self->wait)) 
+	if ((self->mtype == M_DECOY) && (level.time > self->wait))
 	{
 		gi.sound (self, CHAN_BODY, gi.soundindex(va("player/step%i.wav", (randomMT()%4)+1)), 1, ATTN_NORM, 0);
 		self->wait = level.time + 0.3;
@@ -2241,7 +2250,7 @@ void drone_ai_run (edict_t *self, float dist)
 
 
 			// circle-strafe our target if we are close
-			if ((entdist(self, self->enemy) < 256) 
+			if ((entdist(self, self->enemy) < 256)
 				&& !(self->monsterinfo.aiflags & AI_NO_CIRCLE_STRAFE))
 			{
 				drone_ai_run_slide(self, dist);
@@ -2314,8 +2323,8 @@ void drone_ai_run (edict_t *self, float dist)
 
 		// if we are on a platform going up, wait around until we've reached the top
 		if (self->groundentity && (self->monsterinfo.aiflags & AI_PURSUE_PLAT_GOAL)
-			&& (self->groundentity->style == FUNC_PLAT) 
-			&& (self->groundentity->moveinfo.state == STATE_UP)) 
+			&& (self->groundentity->style == FUNC_PLAT)
+			&& (self->groundentity->moveinfo.state == STATE_UP))
 		{
 			//      gi.dprintf("standing on plat!\n");
 			// divide by speed to get time to reach destination
@@ -2367,7 +2376,7 @@ void drone_ai_run (edict_t *self, float dist)
 			}
 		}
 		else
-		{       
+		{
 			// we don't already have a goal, make the enemy our goal
 			self->goalentity = self->enemy;
 
@@ -2415,13 +2424,13 @@ void drone_ai_run (edict_t *self, float dist)
 		self->monsterinfo.stand(self);
 	}
 #endif
-}				
+}
 
 void drone_togglelight (edict_t *self)
 {
 	if (self->health > 0)
 	{
-		if (level.daytime && self->flashlight) 
+		if (level.daytime && self->flashlight)
 		{
 			// turn light off
 			G_FreeEdict(self->flashlight);
@@ -2478,7 +2487,7 @@ qboolean drone_validposition (edict_t *self)
 	{
 		//if (self->activator && self->activator->inuse && !self->activator->client)
 		//	respawned = vrx_find_random_spawn_point(self, false);
-		
+
 		//if (!respawned)
 		//{
 			WriteServerMsg("A drone was removed from a solid object.", "Info", true, false);
@@ -2576,7 +2585,7 @@ void drone_return(edict_t* self)
 		return;
 
 	// teleport back to our leader if we can't reach him
-	if (!self->enemy && leader && leader->inuse && self->monsterinfo.search_frames > 300 
+	if (!self->enemy && leader && leader->inuse && self->monsterinfo.search_frames > 300
 		&& level.time > self->monsterinfo.teleport_delay)
 	{
 		TeleportNearArea(self, self->activator->s.origin, 256, false);

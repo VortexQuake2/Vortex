@@ -616,7 +616,7 @@ void baron_fire_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int da
 	if (self->deadflag == DEAD_DEAD)
 		return;
 
-	//DroneList_Remove(self);
+	DroneList_Remove(self);
 
 	// regular death
 	if (random() > 0.5)

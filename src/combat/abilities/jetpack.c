@@ -11,7 +11,7 @@ void think_ability_jetpack(edict_t *ent)
 
 	if(ent->myskills.abilities[JETPACK].disable && level.time > pregame_time->value)
 		return;
-
+	/*
 	//Talent: Flight
     if ((talentLevel = vrx_get_talent_level(ent, TALENT_FLIGHT)) > 0)
 	{
@@ -21,7 +21,7 @@ void think_ability_jetpack(edict_t *ent)
 		if (num < 1)
 			num = 1;
 		cost -= num;
-	}
+	}*/
 
 	//4.0 better jetpack check.
 	if ((level.time > pregame_time->value) && !trading->value)  // allow jetpack in pregame and trading

@@ -1,7 +1,7 @@
 # Cmake script based off several sources, including cleancodequake2.
 
 # Specify minimum version of CMake required
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.25)
 
 # Project name
 project(VortexQuake2)
@@ -17,7 +17,7 @@ option(VRX_Q2PRO "Use map/gamemap differentiation (for q2pro)." TRUE)
 option(VRX_OLD_NOLAG "Use old NOLAG style. Not recommended." FALSE)
 option(VRX_OLD_VOTE "Use old vote system." FALSE)
 
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
 # Source files

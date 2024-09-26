@@ -56,7 +56,7 @@ const abilitydef_t ability_necromancer[] = { // NECROMANCER
         {MONSTER_SUMMON, 0, DEFAULT_SOFTMAX,   0},
         {HELLSPAWN,      0, DEFAULT_SOFTMAX,   0},
         {PLAGUE,         0, DEFAULT_SOFTMAX,   0},
-        {LOWER_RESIST,   0, DEFAULT_SOFTMAX,   0},
+        {LIFE_TAP,       0, DEFAULT_SOFTMAX,   0},
         {AMP_DAMAGE,     0, DEFAULT_SOFTMAX,   0},
         {CRIPPLE,        0, DEFAULT_SOFTMAX,   0},
         {CURSE,          0, DEFAULT_SOFTMAX,   0},
@@ -309,6 +309,24 @@ int vrx_get_hard_max(int index, qboolean general, int class) {
     return abilities_by_index[index]->softmax;
 }
 
+void vrx_add_ability(edict_t* ent, int index) {
+    if (index < 0 || index >= MAX_ABILITIES)
+        return;
+
+    int class = vrx_get_ability_class(index);
+    if (class == CLASS_NULL)
+        return;
+
+    const abilitydef_t *ability = abilities_by_index[index];
+    int hardmax = vrx_get_hard_max(index, 0, class);
+    vrx_enable_ability(
+        ent, index,
+        ability->start,
+        ability->softmax + ent->myskills.prestige.softmaxBump[index],
+        0
+        );
+}
+
 void vrx_enable_ability(edict_t *ent, int index, int level, int max_level, int general) {
     ent->myskills.abilities[index].disable = false;
 
@@ -437,7 +455,8 @@ void vrx_init_ability_list() {
         // iterate through class' ability list
         while (first->index != -1) {
             if (abilities_by_index[first->index]) {
-                // get the one with the highest softmax
+                // get the one with the highest softmax, since we want to track the abilities
+                // as they exist on their class.
                 if (abilities_by_index[first->index]->softmax < first->softmax) {
                     abilities_by_index[first->index] = first;
                 }
@@ -499,7 +518,7 @@ void vrx_update_free_abilities(edict_t *ent) {
 
 
 //FIXME: this doesn't work with 2-4 point abilities
-void V_UpdatePlayerAbilities(edict_t *ent) {
+void vrx_normalize_abilities(edict_t *ent) {
     int i, refunded = 0;
     upgrade_t old_abilities[MAX_ABILITIES];
     qboolean points_refunded = false;
@@ -514,6 +533,7 @@ void V_UpdatePlayerAbilities(edict_t *ent) {
     memset(ent->myskills.abilities, 0, sizeof(upgrade_t) * MAX_ABILITIES);
 
     vrx_assign_abilities(ent);
+    vrx_prestige_reapply_abilities(ent);
 
     for (i = 0; i < MAX_ABILITIES; ++i) {
         // if this ability was previously enabled, restore the upgrade level
@@ -540,9 +560,9 @@ void V_UpdatePlayerAbilities(edict_t *ent) {
     }
 
     // re-apply equipment
-    V_ResetAllStats(ent);
+    vrx_runes_unapply(ent);
     for (i = 0; i < 3; ++i)
-        V_ApplyRune(ent, &ent->myskills.items[i]);
+        vrx_runes_apply(ent, &ent->myskills.items[i]);
 
     /*safe_cprintf(ent, PRINT_HIGH, "Your abilities have been updated.\n");	*/
 
@@ -551,4 +571,87 @@ void V_UpdatePlayerAbilities(edict_t *ent) {
         ent->myskills.speciality_points += old_abilities[i].level;
         safe_cprintf(ent, PRINT_HIGH, "%d ability points have been refunded.\n", refunded);
     }
+}
+
+int vrx_get_ability_class(int abil) {
+    if (abil < 0 || abil >= MAX_ABILITIES)
+        return 0;
+
+    for (int i = 1; i < CLASS_MAX; i++) {
+        if (ability_class[abil][i])
+            return i;
+    }
+
+    return 0;
+}
+
+void vrx_ability_open_select_menu(
+    edict_t* self,
+    const char* title,
+    qboolean (*filter)(const abilitydef_t*, void*),
+    int page,
+    void* userdata,
+    void (*handler)(edict_t *ent,int option)) {
+    if (!menu_can_show(self))
+        return;
+
+    abilitybitmap_t skills;
+
+    memset(skills, 0, sizeof(abilitybitmap_t));
+
+    for (int i = 0; i < MAX_ABILITIES; i++) {
+        const abilitydef_t *ability = vrx_get_ability_by_index(i);
+        if (ability && filter(ability, userdata)) {
+            skills[i / 32] |= 1 << (i % 32);
+        }
+    }
+
+    int ab_count = 0;
+    int start_index = -1;
+    // find the first ability to display
+    for (int i = 0; i < MAX_ABILITIES; i++) {
+        if (skills[i / 32] & (1 << (i % 32))) {
+            ab_count++;
+        }
+
+        if (ab_count > 10 * page && start_index == -1) {
+            start_index = i;
+        }
+    }
+
+    menu_clear(self);
+    menu_add_line(self, "Ability Selection", MENU_GREEN_CENTERED);
+    if (title)
+        menu_add_line(self, title, MENU_WHITE_CENTERED);
+
+    menu_add_line(self, " ", 0);
+
+    int ab_count_on_page = 0;
+    int limit = 10;
+    for (int i = 0; i < limit && ab_count_on_page <= 10 && i < MAX_ABILITIES; i++) {
+        int index = start_index + i;
+        // if the ability is enabled by the filter
+        if (skills[index / 32] & (1 << (index % 32))) {
+            const abilitydef_t *ability = vrx_get_ability_by_index(index);
+            if (ability) {
+                menu_add_line(self, va("%s", GetAbilityString(index)), index + 1000);
+                ab_count_on_page++;
+            }
+        } else {
+            limit++;
+        }
+    }
+
+    menu_add_line(self, " ", 0);
+
+    if (page > 0)
+        menu_add_line(self, "Previous Page", 10000 + page - 1);
+    if (ab_count > 10 * (page + 1))
+        menu_add_line(self, "Next Page", 10000 + page + 1);
+
+    menu_add_line(self, "Exit", 666);
+
+    self->client->menustorage.currentline += self->client->menustorage.num_of_lines - 1;
+    menu_set_handler(self, handler);
+    menu_show(self);
 }

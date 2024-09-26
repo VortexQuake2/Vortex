@@ -208,15 +208,14 @@ int vrx_get_credits(const edict_t *ent, float level_diff, int bonus, qboolean cl
     else
         add_credits = level_diff * (vrx_creditmult->value * vrx_pvmcreditmult->value * (CREDITS_OTHER_BASE));
 
-    // vrxchile v1.5 no credit cap
-    //if (add_credits > 250)
-    //	add_credits = 250;
-
     add_credits += bonus;
+    add_credits = (int) (add_credits * PRESTIGE_CREDIT_BUFF_MULTIPLIER);
     return add_credits;
 }
 
 void vrx_add_credits(edict_t *ent, int add_credits) {
+    if (add_credits < 0)
+        return;
 
     //FIXME: remove this after allocating more space
     if (ent->myskills.credits + add_credits > MAX_CREDITS)
@@ -527,13 +526,13 @@ void vrx_inv_award_curse_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
     edict_t *assister = NULL;
 
     if ((slot = que_findtype(que, NULL, type)) != NULL) {
-        gi.dprintf("vrx_inv_award_exp: found curse/aura %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
-
+        //gi.dprintf("vrx_inv_award_exp: found curse/aura %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
+        /*
         if ( slot->ent->owner->client ) {
             gi.dprintf("named %s\n", slot->ent->owner->client->pers.netname);
         } else {
             gi.dprintf("\n");
-        }
+        }*/
 
         if ( slot->ent->owner->client && slot->ent->owner != attacker ) {
             leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
@@ -544,7 +543,7 @@ void vrx_inv_award_curse_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
             vrx_add_credits(slot->ent->owner, credits);
             slot->ent->owner->client->resp.wave_assist_exp += exp;
             slot->ent->owner->client->resp.wave_assist_credits += credits;
-            gi.dprintf("  add %dxp, %dcr\n", exp, credits);
+            //gi.dprintf("  add %dxp, %dcr\n", exp, credits);
         }
     }
 }
@@ -555,13 +554,13 @@ void vrx_inv_award_cooldown_exp( edict_t *attacker, edict_t *targ, edict_t *targ
     edict_t *assister = NULL;
 
     if ( time > level.time && owner ) {
-        gi.dprintf("vrx_inv_award_exp: found a cooldown, owner is a %s ", owner->classname );
-
+        //gi.dprintf("vrx_inv_award_exp: found a cooldown, owner is a %s ", owner->classname );
+        /*
         if ( owner->client ) {
             gi.dprintf("named %s\n", owner->client->pers.netname);
         } else {
             gi.dprintf("\n");
-        }
+        }*/
 
         if ( owner->client && owner != attacker ) {
             leveldiff = vrx_get_level_difference_multiplier(owner, targ, targetclient);
@@ -572,7 +571,7 @@ void vrx_inv_award_cooldown_exp( edict_t *attacker, edict_t *targ, edict_t *targ
             vrx_add_credits(owner, credits);
             owner->client->resp.wave_assist_exp += exp;
             owner->client->resp.wave_assist_credits += credits;
-            gi.dprintf("  add %dxp, %dcr\n", exp, credits);
+            //gi.dprintf("  add %dxp, %dcr\n", exp, credits);
         }
     }
 }
@@ -588,13 +587,13 @@ void vrx_inv_award_totem_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
     }
 
     if ( totem && totem->activator ) {
-        gi.dprintf("vrx_inv_award_exp: found a totem, owner is a %s ", totem->activator->classname );
-
+        //gi.dprintf("vrx_inv_award_exp: found a totem, owner is a %s ", totem->activator->classname );
+        /*
         if ( totem->activator->client ) {
             gi.dprintf("named %s\n", totem->activator->client->pers.netname);
         } else {
             gi.dprintf("\n");
-        }
+        }*/
 
         if ( totem->activator->client && totem->activator != attacker ) {
             leveldiff = vrx_get_level_difference_multiplier(totem->activator, targ, targetclient);
@@ -605,7 +604,7 @@ void vrx_inv_award_totem_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
             vrx_add_credits(totem->activator, credits);
             totem->activator->client->resp.wave_assist_exp += exp;
             totem->activator->client->resp.wave_assist_credits += credits;
-            gi.dprintf("  add %dxp, %dcr\n", exp, credits);
+            //gi.dprintf("  add %dxp, %dcr\n", exp, credits);
         }
     }
 }
@@ -715,7 +714,7 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
     }
 
     vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, AMP_DAMAGE, 1.0, false );
-    vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, LOWER_RESIST, 1.0, false );
+    vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, LIFE_TAP, 1.0, false );
     vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, WEAKEN, 1.0, false );
     vrx_inv_award_curse_exp(player, targ, targetclient, targ->curses, AURA_HOLYFREEZE, 1.0, false );
     
