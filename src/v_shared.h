@@ -361,4 +361,8 @@ void vrx_remove_chat_protect(edict_t* ent);
 // ****** curses.c ******
 void vrx_curse_heal_all(edict_t* target);
 
+// v_misc.c
+void vrx_remove_all_monsters(edict_t* ent);
+int vrx_pvm_update_total_owned_monsters(edict_t *monster_owner, qboolean update);
+
 #endif

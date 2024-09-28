@@ -742,6 +742,7 @@ void INV_OnBeginWave(edict_t *self, int max_monsters) {
 
 	gi.sound(&g_edicts[0], CHAN_VOICE, gi.soundindex("misc/talk1.wav"), 1, ATTN_NONE, 0);
 	invasion_data.remaining_monsters = max_monsters * WAVE_CLEAR_THRESHOLD;
+	invasion_data.mspawned = 0;
 
 	// check for a boss spawn
 	INV_BossCheck(self);
