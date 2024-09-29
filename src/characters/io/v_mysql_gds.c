@@ -660,7 +660,7 @@ void gds_subop_stash_get_page(int owner_id, item_t* page, int items_per_page, in
 		QUERY("select stash_index, itemtype, itemlevel, quantity, untradeable, "
 			"id, name, nummods, setcode, classnum "
 			"from stash_runes_meta where char_idx=%d "
-			"and stash_index >= %d and stash_index <= %d",
+			"and stash_index >= %d and stash_index < %d",
 			owner_id, start_index, end_index);
 
 		MYSQL_RES* item_head_result = mysql_store_result(db);
@@ -701,13 +701,13 @@ void gds_subop_stash_get_page(int owner_id, item_t* page, int items_per_page, in
 	{
 		QUERY("select stash_index, rune_mod_index, type, mod_index, value, rset "
 			"from stash_runes_mods where char_idx = %d "
-			"and stash_index >= %d and stash_index <= %d order by stash_index", owner_id, start_index, end_index);
+			"and stash_index >= %d and stash_index < %d order by stash_index", owner_id, start_index, end_index);
 
 		MYSQL_RES* item_modifier_result = mysql_store_result(db);
 		MYSQL_ROW item_modifier_row = mysql_fetch_row(item_modifier_result);
 		int last_row = 0;
 		int mod_index = 0;
-		while (item_modifier_row && mod_index < MAX_VRXITEMMODS)
+		while (item_modifier_row)
 		{
 			const int page_row_index = atoi(item_modifier_row[0]) - start_index;
 			assert(page_row_index >= 0 && page_row_index < items_per_page);
@@ -717,8 +717,10 @@ void gds_subop_stash_get_page(int owner_id, item_t* page, int items_per_page, in
 				last_row = page_row_index;
 			}
 
-			/*const int modn = atoi(item_modifier_row[1]);
-			assert(modn >= 0 && modn < MAX_VRXITEMMODS);*/
+			if (mod_index >= MAX_VRXITEMMODS) {
+				r = sqlite3_step(statement);
+				continue;
+			}
 
 			imodifier_t* mod = &page[page_row_index].modifiers[mod_index];
 
