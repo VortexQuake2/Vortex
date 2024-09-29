@@ -246,7 +246,7 @@ void vrx_prestige_reapply_abilities(edict_t* self) {
             vrx_add_ability(self, abIndex);
         }
 
-        self->myskills.abilities[abIndex].max_level += pre->softmaxBump[arrIdx];
+        self->myskills.abilities[abIndex].max_level += pre->softmaxBump[abIndex];
     }
 }
 
