@@ -427,7 +427,7 @@ void gds_queue_add(edict_t *ent, int operation, int index)
 #endif
 }
 
-void gds_queue_add_setowner(edict_t* ent, char* charname, char* masterpw)
+void gds_queue_add_setowner(edict_t* ent, char* charname, char* masterpw, qboolean reset)
 {
 #ifndef GDS_NOMULTITHREADING
 	pthread_mutex_lock(&mutex_gds_queue);

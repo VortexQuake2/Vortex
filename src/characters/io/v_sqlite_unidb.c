@@ -1142,7 +1142,7 @@ qboolean cdb_stash_close(edict_t* ent)
 	return true;
 }
 
-void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw)
+void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean reset)
 {
 	int new_owner_id = cdb_get_id(owner_name);
 
@@ -1151,7 +1151,29 @@ void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw)
 	evt->ent = ent;
 	evt->connection_id = ent->gds_connection_id;
 
-	if (new_owner_id == -1)
+	// if reset is true, make a sqlite query that resets the owner to null
+	if (reset) {
+		int id = cdb_get_id(ent->client->pers.netname);
+
+		sqlite3_stmt* statement;
+		int r;
+		char sql[] = "update userdata "
+			"set owner = '' "
+			"where char_idx = ?";
+
+		r = sqlite3_prepare_v2(db, sql, sizeof sql, &statement, NULL);
+		CHECK_ERR();
+
+		sqlite3_bind_int(statement, 1, id);
+		sqlite3_step(statement);
+		sqlite3_finalize(statement);
+		memset(evt->owner_name, 0, sizeof evt->owner_name);
+		memset(ent->myskills.owner, 0, sizeof ent->myskills.owner);
+		return;
+	}
+
+
+	if (new_owner_id == -1 && !reset)
 	{
 		vrx_notify_owner_nonexistent(evt);
 		return;
@@ -1186,8 +1208,6 @@ void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw)
 		vrx_notify_owner_bad_password(evt);
 	else
 		vrx_notify_owner_success(evt);
-
-	
 }
 
 qboolean cdb_stash_take(edict_t* ent, int stash_index)
