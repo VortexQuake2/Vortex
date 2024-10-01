@@ -193,18 +193,22 @@ float drone_damagelevel(const edict_t* ent)
 
 qboolean drone_ValidChaseTarget (edict_t *self, edict_t *target)
 {
-	/*if (target && target->inuse && target->classname)
+	/*
+	if (target && target->inuse && target->classname)
 		gi.dprintf("drone_ValidChaseTarget() is checking %s\n", target->classname);
 	else
-		gi.dprintf("drone_ValidChaseTarget() is checking <unknown>\n");*/
-
+		gi.dprintf("drone_ValidChaseTarget() is checking <unknown>\n");
+	*/
 	if (!target || !target->inuse)
+	{
+		//gi.dprintf("target invalid or not in use\n");
 		return false;
+	}
 
 	// chasing a combat point/goal
 	if ((self->monsterinfo.aiflags & AI_COMBAT_POINT) && target->inuse
 		&& ((target->mtype == INVASION_NAVI) || (target->mtype == PLAYER_NAVI)
-		|| (target->mtype == M_COMBAT_POINT) || target->mtype == INVASION_PLAYERSPAWN))
+			|| (target->mtype == M_COMBAT_POINT) || target->mtype == INVASION_PLAYERSPAWN))
 		return true;
 
 	//FIXME: we should clean this up
@@ -216,7 +220,10 @@ qboolean drone_ValidChaseTarget (edict_t *self, edict_t *target)
 		return true;
 
 	if (!target->takedamage || (target->solid == SOLID_NOT))
+	{
+		//gi.dprintf("target cannot take damage or is non-solid\n");
 		return false;
+	}
 
 	//if (!G_EntExists(target))
 	//	return false;
@@ -225,7 +232,10 @@ qboolean drone_ValidChaseTarget (edict_t *self, edict_t *target)
 	// ignore enemies that move outside of this range (since we can't attack them)
 	if ((self->monsterinfo.aiflags & AI_STAND_GROUND)
 		&& (entdist(self, target) > self->monsterinfo.sight_range))
+	{
+		//gi.dprintf("target is out of range\n");
 		return false;
+	}
 
 	if ((self->monsterinfo.aiflags & AI_MEDIC) && M_ValidMedicTarget(self, self->enemy))
 		return true;
@@ -235,10 +245,16 @@ qboolean drone_ValidChaseTarget (edict_t *self, edict_t *target)
 		return false;
 
 	if (target->flags & FL_GODMODE)
+	{
+		//gi.dprintf("target has godmode\n");
 		return false;
+	}
 
-	if (target->svflags & SVF_NOCLIENT)
+	if (target->svflags & SVF_NOCLIENT && target->mtype != M_FORCEWALL)
+	{
+		//gi.dprintf("target is invisible\n");
 		return false;
+	}
 
 	if (target->client)
 	{
@@ -249,14 +265,23 @@ qboolean drone_ValidChaseTarget (edict_t *self, edict_t *target)
 	}
 
 	if (target->health < 1 || target->deadflag == DEAD_DEAD)
+	{
+		//gi.dprintf("target is dead\n");
 		return false;
+	}
 
 	if (que_typeexists(target->curses, CURSE_FROZEN))
+	{
+		//gi.dprintf("target is frozen\n");
 		return false;
+	}
 
 	//FIXME: we should do a better check than this
 	if (self->enemy && OnSameTeam(self, target))
+	{
+		//gi.dprintf("target is a teammate\n");
 		return false;
+	}
 	return true;
 }
 
