@@ -15,7 +15,7 @@
 #include "quake2/g_layout.h"
 
 /**************** v_abilitylist.c ***************/
-void vrx_enable_ability(edict_t *ent, int index, int level, int max_level, int general);
+void vrx_enable_ability(edict_t *ent, int abil, int level, int max_level, int general);
 void vrx_update_free_abilities(edict_t* ent);
 
 int vrx_get_last_enabled_skill_index(edict_t *ent, int mode);

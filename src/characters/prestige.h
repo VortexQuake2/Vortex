@@ -36,5 +36,6 @@ void vrx_prestige_reapply_abilities(edict_t *self);
 void vrx_prestige_open_menu(edict_t *self);
 uint32_t vrx_prestige_get_upgrade_points(uint32_t exp);
 qboolean vrx_prestige_has_class_skills(edict_t *self);
+qboolean vrx_prestige_has_ability(struct prestigelist_s *pre, uint32_t abIndex);
 
 #endif //PRESTIGE_H

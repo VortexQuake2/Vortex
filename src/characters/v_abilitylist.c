@@ -327,20 +327,23 @@ void vrx_add_ability(edict_t* ent, int index) {
         );
 }
 
-void vrx_enable_ability(edict_t *ent, int index, int level, int max_level, int general) {
-    ent->myskills.abilities[index].disable = false;
+void vrx_enable_ability(edict_t *ent, int abil, int level, int max_level, int general) {
+    ent->myskills.abilities[abil].disable = false;
 
     // we can pass this function -1 if we don't want to alter these variables
     if (max_level != -1)
-        ent->myskills.abilities[index].max_level = max_level;
+        ent->myskills.abilities[abil].max_level = max_level;
 
     if (level != -1) {
-        ent->myskills.abilities[index].level = level;
-        ent->myskills.abilities[index].current_level = level;
+        ent->myskills.abilities[abil].level = level;
+        ent->myskills.abilities[abil].current_level = level;
     }
 
-    ent->myskills.abilities[index].general_skill = general;
-    ent->myskills.abilities[index].hard_max = vrx_get_hard_max(index, general, ent->myskills.class_num);
+    ent->myskills.abilities[abil].general_skill = general;
+    if (vrx_prestige_has_ability(&ent->myskills.prestige, abil))
+        ent->myskills.abilities[abil].hard_max = vrx_get_hard_max(abil, general, vrx_get_ability_class(abil));
+    else
+        ent->myskills.abilities[abil].hard_max = vrx_get_hard_max(abil, general, ent->myskills.class_num);
 }
 
 void vrx_disable_abilities(edict_t *ent) {

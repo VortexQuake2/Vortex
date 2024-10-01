@@ -216,11 +216,16 @@ void UpgradeAbility(edict_t *ent, int ability_index) {
         else safe_cprintf(ent, PRINT_HIGH, va("You need one point to upgrade this ability.\n"));
         return;
     }
-	if (ent->myskills.abilities[ability_index].level < ent->myskills.abilities[ability_index].max_level || ent->myskills.administrator > 999)
+
+	qboolean below_max = ent->myskills.abilities[ability_index].level < ent->myskills.abilities[ability_index].max_level;
+	qboolean below_hardmax = ent->myskills.abilities[ability_index].current_level < ent->myskills.abilities[ability_index].hard_max;
+	if (below_max || ent->myskills.administrator > 999)
 	{
 		ent->myskills.speciality_points -= cost;
 		ent->myskills.abilities[ability_index].level++;
-		ent->myskills.abilities[ability_index].current_level++;
+
+		if (below_hardmax)
+			ent->myskills.abilities[ability_index].current_level++;
 	}
 	else 
 	{
