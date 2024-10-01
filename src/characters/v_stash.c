@@ -218,25 +218,17 @@ void vrx_show_stash_item(edict_t* ent, item_t* item, int stash_index)
 
 void handler_stash_page(edict_t* ent, int opt)
 {
-	if (opt >= 2000)
-	{
-		// next pg
-		ent->client->menustorage.cancel_close_event = true;
-		vrx_stash_io.get_page(ent, opt - 2000, sizeof ent->client->stash.page / sizeof(item_t));
-		return;
-	}
-
-	if (opt == 1500)
+	if (opt == 19999)
 	{
 		// exit
 		return;
 	}
 
-	if (opt >= 1000)
+	if (opt >= 10000)
 	{
 		// prev pg
+		vrx_stash_io.get_page(ent, opt - 10000, sizeof ent->client->stash.page / sizeof(item_t));
 		ent->client->menustorage.cancel_close_event = true;
-		vrx_stash_io.get_page(ent, opt - 1000, sizeof ent->client->stash.page / sizeof(item_t));
 		return;
 	}
 
@@ -248,7 +240,7 @@ void handler_stash_page(edict_t* ent, int opt)
 	if (it->itemtype != ITEM_NONE)
 		vrx_show_stash_item(ent, it, opt - 100);
 	else
-		vrx_stash_open_page(ent, ent->client->stash.page, page_len, page);
+		vrx_stash_io.get_page(ent, page, sizeof ent->client->stash.page / sizeof(item_t));
 
 	ent->client->menustorage.cancel_close_event = true;
 }
@@ -276,15 +268,15 @@ void vrx_stash_open_page(edict_t* ent, item_t* page, int item_count, int page_in
 
 	menu_add_line(ent, "", 0);
 	if (page_index < 99)
-	menu_add_line(ent, "Next", 1000 + page_index + 1);
+		menu_add_line(ent, "Next", 10000 + page_index + 1);
 
 	int amt = 1;
 	if (page_index > 0) {
-		menu_add_line(ent, "Previous", 2000 + page_index - 1);
+		menu_add_line(ent, "Previous", 10000 + page_index - 1);
 		amt++;
 	}
 
-	menu_add_line(ent, "Exit", 1500);
+	menu_add_line(ent, "Exit", 19999);
 
 	menu_set_handler(ent, handler_stash_page);
 	menu_set_close_handler(ent, vrx_stash_close);

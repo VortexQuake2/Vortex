@@ -1009,7 +1009,7 @@ qboolean cdb_stash_get_page(edict_t* ent, int page_index, int items_per_page)
 		QUERY_RESULT(va("select stash_index, itemtype, itemlevel, quantity, untradeable, "
 			"id, name, nummods, setcode, classnum "
 			"from stash_runes_meta where char_idx=%d "
-			"and stash_index >= %d and stash_index <= %d",
+			"and stash_index >= %d and stash_index < %d",
 			owner_id, start_index, end_index));
 
 		int safeguard_items = 0;
@@ -1046,14 +1046,14 @@ qboolean cdb_stash_get_page(edict_t* ent, int page_index, int items_per_page)
 			"select stash_index, "
 			"type, mod_index, value, [set] "
 			"from stash_runes_mods where char_idx = %d "
-			"and stash_index >= %d and stash_index <= %d "
+			"and stash_index >= %d and stash_index < %d "
 			"order by stash_index", 
 			owner_id, start_index, end_index
 		))
 
 		int last_row = 0;
 		int mod_index = 0;
-		while (r == SQLITE_ROW && mod_index < MAX_VRXITEMMODS)
+		while (r == SQLITE_ROW)
 		{
 			const int page_row_index = sqlite3_column_int(statement, 0) - start_index;
 			assert(page_row_index >= 0 && page_row_index < items_per_page);
@@ -1063,8 +1063,10 @@ qboolean cdb_stash_get_page(edict_t* ent, int page_index, int items_per_page)
 				last_row = page_row_index;
 			}
 
-			/*const int modn = atoi(item_modifier_row[1]);
-			assert(modn >= 0 && modn < MAX_VRXITEMMODS);*/
+			if (mod_index >= MAX_VRXITEMMODS) {
+				r = sqlite3_step(statement);
+				continue;
+			}
 
 			imodifier_t* mod = &page[page_row_index].modifiers[mod_index];
 
@@ -1140,7 +1142,7 @@ qboolean cdb_stash_close(edict_t* ent)
 	return true;
 }
 
-void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw)
+void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean reset)
 {
 	int new_owner_id = cdb_get_id(owner_name);
 
@@ -1149,7 +1151,29 @@ void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw)
 	evt->ent = ent;
 	evt->connection_id = ent->gds_connection_id;
 
-	if (new_owner_id == -1)
+	// if reset is true, make a sqlite query that resets the owner to null
+	if (reset) {
+		int id = cdb_get_id(ent->client->pers.netname);
+
+		sqlite3_stmt* statement;
+		int r;
+		char sql[] = "update userdata "
+			"set owner = '' "
+			"where char_idx = ?";
+
+		r = sqlite3_prepare_v2(db, sql, sizeof sql, &statement, NULL);
+		CHECK_ERR();
+
+		sqlite3_bind_int(statement, 1, id);
+		sqlite3_step(statement);
+		sqlite3_finalize(statement);
+		memset(evt->owner_name, 0, sizeof evt->owner_name);
+		memset(ent->myskills.owner, 0, sizeof ent->myskills.owner);
+		return;
+	}
+
+
+	if (new_owner_id == -1 && !reset)
 	{
 		vrx_notify_owner_nonexistent(evt);
 		return;
@@ -1184,8 +1208,6 @@ void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw)
 		vrx_notify_owner_bad_password(evt);
 	else
 		vrx_notify_owner_success(evt);
-
-	
 }
 
 qboolean cdb_stash_take(edict_t* ent, int stash_index)
