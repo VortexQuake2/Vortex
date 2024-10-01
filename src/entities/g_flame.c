@@ -94,7 +94,7 @@ void burn_person (edict_t *target, edict_t *owner, int damage)
 	VectorClear(flame->maxs);
 	flame->owner = owner;
 	flame->enemy = target;
-	flame->mtype = CURSE_BURN;
+	flame->mtype = flame->atype = CURSE_BURN;
 	flame->delay = level.time + 10;
 	flame->nextthink = level.time + FRAMETIME;
 	flame->PlasmaDelay = level.time + FRAMETIME;

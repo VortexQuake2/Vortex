@@ -47,6 +47,9 @@ void fireball_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *
 		return;
 	}
 
+	if (other == ent->owner)
+		return;
+
 	//FIXME: this sound is overridden by BecomeExplosion1()'s sound
     gi.sound(ent, CHAN_VOICE, gi.soundindex(va("abilities/largefireimpact%d.wav", GetRandom(1, 3))), 1, ATTN_NORM, 0);
 	fireball_explode(ent, plane);
