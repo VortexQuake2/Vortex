@@ -129,9 +129,11 @@ void FireTotem_think(edict_t *self, edict_t *caster)
 			{
 				vec3_t forward, end;
 				int damage = FIRETOTEM_DAMAGE_BASE + self->monsterinfo.level * FIRETOTEM_DAMAGE_MULT;
-				int count = 10 + self->monsterinfo.level;
+				int fb_dmg = FIREBALL_INITIAL_DAMAGE + self->monsterinfo.level * FIREBALL_ADDON_DAMAGE;
+				//int count = 10 + self->monsterinfo.level;
 				int speed = 600;
 				float	val, dist;
+				float	rad = FIREBALL_INITIAL_RADIUS + FIREBALL_ADDON_RADIUS * self->monsterinfo.level;
 				qboolean fireball=false;
 
 				// copy target location
@@ -165,9 +167,9 @@ void FireTotem_think(edict_t *self, edict_t *caster)
 
 				// spawn flames
 				if (fireball)
-					fire_fireball(self, self->s.origin, forward, 200, 125, 600, 5, 20);//4.4
+					fire_fireball(self, self->s.origin, forward, fb_dmg, rad, speed, FIREBALL_INITIAL_FLAMES, damage);//4.4
 				else
-					ThrowFlame(self, self->s.origin, forward, distance(self->s.origin, target->s.origin), speed, damage, GetRandom(2, 4));
+					ThrowFlame(self, self->s.origin, forward, distance(self->s.origin, target->s.origin), speed, damage, 1.0);
 				
 				self->lastsound = level.framenum;
 
