@@ -235,14 +235,16 @@ void vrx_prestige_open_menu(edict_t *self) {
     menu_show(self);
 }
 
+qboolean vrx_prestige_has_ability(struct prestigelist_s *pre, uint32_t abIndex) {
+    uint32_t arrIdx = abIndex / 32;
+    uint32_t mask = 1 << (abIndex % 32);
+    return (pre->classSkill[arrIdx] & mask) != 0;
+}
+
 void vrx_prestige_reapply_abilities(edict_t* self) {
     struct prestigelist_s *pre = &self->myskills.prestige;
     for (uint32_t abIndex = 0; abIndex < MAX_ABILITIES; abIndex++) {
-        uint32_t arrIdx = abIndex / 32;
-        uint32_t mask = 1 << (abIndex % 32);
-        qboolean isPrestigeAbility = (pre->classSkill[arrIdx] & mask) != 0;
-
-        if (isPrestigeAbility) {
+        if (vrx_prestige_has_ability(pre, abIndex)) {
             vrx_add_ability(self, abIndex);
         }
 

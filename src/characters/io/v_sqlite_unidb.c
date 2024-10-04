@@ -466,7 +466,7 @@ qboolean cdb_save_player(edict_t* player)
 		// class skills - param is the ab index, level is always 0
 		for (i = 0; i < MAX_ABILITIES; i++)
 		{
-			if (player->myskills.prestige.classSkill[i / 32] & (1 << (i % 32)))
+			if (vrx_prestige_has_ability(&player->myskills.prestige, i))
 			{
 				QUERY(va("INSERT INTO prestige(char_idx, pindex, param, level) VALUES (%d, %d, %d, %d);",
 					id, PRESTIGE_CLASS_SKILL, i, 0));
