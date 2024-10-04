@@ -1182,7 +1182,7 @@ qboolean G_ValidTargetEnt(const edict_t *target, qboolean alive) {
         return false;
 
     //4.2 G_EntIsAlive() will return true for player-monsters, but we never want to target them
-	if (!target->takedamage || (target->solid == SOLID_NOT))
+	if (!target->takedamage || (target->solid == SOLID_NOT) || (target->solid == SOLID_BSP))
 		return false;
 	// don't target players with invulnerability
 	//if (target->client && (target->client->invincible_framenum > level.framenum))

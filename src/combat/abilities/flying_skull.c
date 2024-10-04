@@ -670,6 +670,7 @@ void skull_think (edict_t *self)
 		else
 			self->monsterinfo.search_frames = 0;
 
+		//gi.dprintf("hellspawn is attacking %s\n", self->enemy->classname);
 		skull_attack(self);
 	}
 	else

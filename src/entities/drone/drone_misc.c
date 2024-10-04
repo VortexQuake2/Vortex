@@ -1450,7 +1450,7 @@ double randfrac(void) {
 void MonsterAim (edict_t *self, float accuracy, int projectile_speed, qboolean rocket,
 				 int flash_number, vec3_t forward, vec3_t start)
 {
-	float	velocity, dist, rnd, crnd;
+	float	velocity, dist, rnd, crnd;//, base_acc = accuracy;
 	vec3_t	target, end;
 	vec3_t	right, offset;
 	trace_t	tr;
@@ -1503,6 +1503,7 @@ void MonsterAim (edict_t *self, float accuracy, int projectile_speed, qboolean r
 		// non-moving targets have a high minimum accuracy
 		if (accuracy < 0.9 && velocity == 0)
 			accuracy = 0.9;
+		//base_acc = accuracy;//DEBUG
 
 		//4.5 monster bonus flags
 		if (self->monsterinfo.bonus_flags & BF_CHAMPION)
@@ -1568,7 +1569,7 @@ void MonsterAim (edict_t *self, float accuracy, int projectile_speed, qboolean r
 		crnd = 1;
 	else
 		crnd = -1;
-	//gi.dprintf("%f %.0f\n", accuracy, velocity);
+	//gi.dprintf("%s %.1f %.1f %.0f\n", GetMonsterKindString(self->mtype), base_acc, accuracy, velocity);
 	if (accuracy >= 0 && rnd > accuracy)
 	{
 		/*
