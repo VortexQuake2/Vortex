@@ -49,9 +49,70 @@ void V_Push (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 	}
 }
 
+qboolean vrx_attach_ceiling(edict_t* ent, edict_t *other, cplane_t *plane)
+{
+	vec3_t angles;
+	float pitch, save;
+
+	if (ent->mtype != M_SPIKER)
+		return false; // not an entity that can be attached to the ceiling
+	if (ent->groundentity)
+	{
+		if (ent->s.angles[PITCH] == 180)
+		{
+			//gi.dprintf("touched ground, flip upright\n");
+			// flip upright
+			ent->s.angles[PITCH] = 0;
+			save = ent->mins[2];
+			ent->mins[2] = ent->maxs[2] * -1;
+			ent->maxs[2] = save * -1;
+			// adjust the position
+			ent->s.origin[2] -= ent->maxs[2];
+			gi.linkentity(ent);
+		}
+		return false; // on the ground
+	}
+	if (ent->s.angles[PITCH] == 180)
+		return false; // already flipped
+	if (!plane)
+		return false; // not touching a plane
+
+	// calculate the pitch angle of the plane
+	vectoangles(plane->normal, angles);
+	pitch = angles[PITCH] * -1;
+
+	// touched a ceiling owned by worldspawn
+	//FIXME: we probably want to periodically verify if the ceiling still exists or moved, and flip over otherwise
+	if (other && other->inuse && other == world && pitch == 270)
+	{
+		// flip over
+		//gi.dprintf("touched ceiling, flip over\n");
+		// adjust the position
+		ent->s.origin[2] += ent->maxs[2];
+		// flip the model over 180 degrees
+		ent->s.angles[PITCH] = 180;
+		ent->movetype = MOVETYPE_NONE;
+		// flip the bbox
+		save = ent->mins[2];
+		ent->mins[2] = ent->maxs[2] * -1;
+		ent->maxs[2] = save * -1;
+		gi.linkentity(ent);
+		return true;
+	}
+	return false;
+}
+
 // touch function for all the gloom stuff
 void organ_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
+	//if (ent->groundentity)
+	//	gi.dprintf("%s touched the ground\n", ent->classname);
+	//else if (other && other->inuse)
+	//	gi.dprintf("%s touching %s\n", ent->classname, other->classname);
+	//else
+	//	gi.dprintf("%s not touching the ground\n", ent->classname);
+
+	vrx_attach_ceiling(ent, other, plane);
 	V_Touch(ent, other, plane, surf);
 
 	// don't push or heal something that's already dead or invalid
@@ -285,12 +346,15 @@ qboolean healer_validtarget(edict_t* self, edict_t* target)
 	//if (!G_ClearShot(self, NULL, target))
 	//	return false;
 
-	velocity = VectorLength(target->velocity);
-	// make sure target is touching the ground and isn't moving
-	if (!target->groundentity || velocity > 1)
+	if (target->movetype != MOVETYPE_NONE)
 	{
-		//gi.dprintf("groundentity: %s velocity: %f\n", target->groundentity?"true":"false", velocity);
-		return false;
+		velocity = VectorLength(target->velocity);
+		// make sure target is touching the ground and isn't moving
+		if (!target->groundentity || velocity > 1)
+		{
+			//gi.dprintf("groundentity: %s velocity: %f\n", target->groundentity ? "true" : "false", velocity);
+			return false;
+		}
 	}
 
 	// make sure target is alive!
@@ -622,12 +686,17 @@ void spiker_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	self->s.frame = SPIKER_FRAME_DEAD;
 	self->movetype = MOVETYPE_TOSS;
 	self->maxs[2] = 16;
+
+	// flip spiker upright
+	self->mins[2] = 0;
+	self->s.angles[PITCH] = 0;
+
 	gi.linkentity(self);
 }
 
 void spiker_attack (edict_t *self)
 {
-	float	dist;
+	float	dist, chance = 0.02 * self->light_level; // Talent: Deadly Spikes
 	float	range=SPIKER_INITIAL_RANGE+SPIKER_ADDON_RANGE*self->monsterinfo.level;
 	int		speed=SPIKER_INITIAL_SPEED+SPIKER_ADDON_SPEED*self->monsterinfo.level;
 	vec3_t	forward, start, end;
@@ -637,7 +706,10 @@ void spiker_attack (edict_t *self)
 		return;
 
 	VectorCopy(self->s.origin, start);
-	start[2] = self->absmax[2] - 16;
+	if (self->s.angles[PITCH] == 180) // flipped spiker
+		start[2] = self->absmin[2] + 16;
+	else
+		start[2] = self->absmax[2] - 16;
 
 	while ((e = findradius(e, self->s.origin, range)) != NULL)
 	{
@@ -657,7 +729,11 @@ void spiker_attack (edict_t *self)
 		VectorSubtract(end, start, forward);
 		VectorNormalize(forward);
 
-		fire_spike(self, start, forward, self->dmg, 0, speed);
+		// Deadly Spikes talent provides a chance to shoot a spike that will stun enemies
+		if (chance > random())
+			fire_spike(self, start, forward, self->dmg, 0, speed);
+		else
+			fire_spike(self, start, forward, self->dmg, 0.5, speed);
 		
 		//FIXME: only need to do this once
 		self->monsterinfo.attack_finished = level.time + SPIKER_REFIRE_DELAY;
@@ -666,8 +742,8 @@ void spiker_attack (edict_t *self)
 	}	
 }
 
-void NearestNodeLocation (vec3_t start, vec3_t node_loc);
-int FindPath(vec3_t start, vec3_t destination);
+//void NearestNodeLocation (vec3_t start, vec3_t node_loc);
+//int FindPath(vec3_t start, vec3_t destination);
 void spiker_think (edict_t *self)
 {
 	edict_t *e=NULL;
@@ -811,6 +887,9 @@ void spiker_grow (edict_t *self)
 
 edict_t *CreateSpiker (edict_t *ent, int skill_level)
 {
+	int spike_level = ent->myskills.abilities[SPIKE].current_level;
+	float synergy_bonus = 1.0 + SPIKE_SPIKER_SYNERGY_BONUS * spike_level;
+
 	edict_t *e;
 
 	e = G_Spawn();
@@ -832,8 +911,8 @@ edict_t *CreateSpiker (edict_t *ent, int skill_level)
 	e->health = 0.5*e->max_health;
 	e->monsterinfo.level = skill_level;
 	e->light_level = vrx_get_talent_level(ent, TALENT_DEADLY_SPIKES); // Talent: Deadly Spikes
-	e->dmg = SPIKER_INITIAL_DAMAGE + SPIKER_ADDON_DAMAGE * skill_level;
-	e->dmg *= 1.0 + (0.1 * e->light_level); // damage increase from Deadly Spikes talent
+	e->dmg = (SPIKER_INITIAL_DAMAGE + SPIKER_ADDON_DAMAGE * skill_level) * synergy_bonus;
+	//e->dmg *= 1.0 + (0.1 * e->light_level); // damage increase from Deadly Spikes talent
 	e->gib_health = -1.5 * BASE_GIB_HEALTH;
 	e->die = spiker_die;
 	e->touch = organ_touch;
@@ -1540,7 +1619,7 @@ void fire_acid (edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damag
 void gasser_acidattack (edict_t *self)
 {
 	float	dist;
-	float	range=self->monsterinfo.sight_range;
+	//float	range=self->monsterinfo.sight_range;
 	int		speed= ACID_INITIAL_SPEED;
 	vec3_t	forward, start, end;
 	edict_t *e=NULL;
@@ -1773,6 +1852,8 @@ void gasser_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 
 edict_t *CreateGasser (edict_t *ent, int skill_level, int talent_level)
 {
+	int acid_level = ent->myskills.abilities[ACID].current_level;
+	float synergy_bonus = 1.0 + ACID_GASSER_SYNERGY_BONUS * acid_level;
 	edict_t *e;
 
 	e = G_Spawn();
@@ -1791,18 +1872,15 @@ edict_t *CreateGasser (edict_t *ent, int skill_level, int talent_level)
 	e->takedamage = DAMAGE_AIM;
 	e->max_health = GASSER_INITIAL_HEALTH + GASSER_ADDON_HEALTH * skill_level;
 	e->health = 0.5*e->max_health;
-	e->dmg = GASSER_INITIAL_DAMAGE + GASSER_ADDON_DAMAGE * skill_level;
+	e->dmg = (GASSER_INITIAL_DAMAGE + GASSER_ADDON_DAMAGE * skill_level) * synergy_bonus;
 	e->dmg_radius = GASSER_INITIAL_ATTACK_RANGE + GASSER_ADDON_ATTACK_RANGE * skill_level;
 	e->monsterinfo.level = skill_level;
 
 	e->light_level = talent_level; // Talent: Spitting Gasser
 	if (talent_level)
 	{
-		int acid_level = ent->myskills.abilities[ACID].current_level;
-		if (acid_level < 1)
-			acid_level = 1;
-		e->radius_dmg = ACID_INITIAL_DAMAGE + ACID_ADDON_DAMAGE * acid_level;
-		e->monsterinfo.sight_range = 384;
+		e->radius_dmg = (ACID_INITIAL_DAMAGE + ACID_ADDON_DAMAGE * skill_level) * synergy_bonus;
+		e->monsterinfo.sight_range = GASSER_ACID_RANGE;
 	}
 	else
 		e->monsterinfo.sight_range = GASSER_RANGE;
@@ -2854,13 +2932,18 @@ void fire_acid (edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damag
 
 void Cmd_FireAcid_f (edict_t *ent)
 {
-    int		damage = ACID_INITIAL_DAMAGE + ACID_ADDON_DAMAGE * ent->myskills.abilities[ACID].current_level;
-    int		speed = ACID_INITIAL_SPEED + ACID_ADDON_SPEED * ent->myskills.abilities[ACID].current_level;
-    float	radius = ACID_INITIAL_RADIUS + ACID_ADDON_RADIUS * ent->myskills.abilities[ACID].current_level;
+	int		gasser_level = ent->myskills.abilities[GASSER].current_level;
+	int		acid_level = ent->myskills.abilities[ACID].current_level;
+    int		damage = ACID_INITIAL_DAMAGE + ACID_ADDON_DAMAGE * acid_level;
+	int		speed = ACID_INITIAL_SPEED + ACID_ADDON_SPEED * acid_level;
+    float	radius = ACID_INITIAL_RADIUS + ACID_ADDON_RADIUS * acid_level;
+	float	synergy_bonus = 1.0 + ACID_GASSER_SYNERGY_BONUS * gasser_level; // synergy bonus from gasser
     vec3_t	forward, right, start, offset;
 
     if (!V_CanUseAbilities(ent, ACID, ACID_COST, true))
         return;
+
+	damage *= synergy_bonus;
 
     // get starting position and forward vector
     AngleVectors (ent->client->v_angle, forward, right, NULL);

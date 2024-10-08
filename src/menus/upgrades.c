@@ -819,9 +819,11 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 	case SPIKER:
 		menu_add_line(ent, "Spawns an organism that", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "shoots spikes at enemies.", MENU_WHITE_CENTERED);
-		menu_add_line(ent, "Uses power cubes.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Receives synergy bonus", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "from spike. Users power", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "cubes.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: spiker [remove]", MENU_WHITE_CENTERED);
-		return 4;
+		return 6;
 	case OBSTACLE:
 		menu_add_line(ent, "Spawns an organism that", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "damages enemies that touch", MENU_WHITE_CENTERED);
@@ -831,9 +833,11 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 	case GASSER:
 		menu_add_line(ent, "Spawns an organism that", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "spits a damaging gas cloud", MENU_WHITE_CENTERED);
-		menu_add_line(ent, "at enemies. Uses power cubes.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "at enemies. Receives synergy", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "bonus from acid. Uses power", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "cubes.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: gasser [remove]", MENU_WHITE_CENTERED);
-		return 4;
+		return 6;
 	case HEALER:
 		menu_add_line(ent, "Spawns an organism that", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "heals friendly units. Uses", MENU_WHITE_CENTERED);
@@ -850,15 +854,18 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 	case SPIKE:
 		menu_add_line(ent, "Fires a volley of spikes that", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "damage and stun enemies they", MENU_WHITE_CENTERED);
-		menu_add_line(ent, "touch. Uses power cubes.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "touch. Receives synergy bonus", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "from spiker. Users power cubes.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: spike", MENU_WHITE_CENTERED);
-		return 4;
+		return 5;
 	case ACID:
 		menu_add_line(ent, "Spits a volume of highly", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "poisonous and corrosive", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "liquid. Uses power cubes.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Receives synergy bonus", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "from gassers.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: acid", MENU_WHITE_CENTERED);
-		return 4;
+		return 6;
 	case COCOON:
 		menu_add_line(ent, "Spawns an organism that", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "can boost your attack damage", MENU_WHITE_CENTERED);

@@ -1199,6 +1199,7 @@ extern double GASSER_INITIAL_HEALTH;
 extern double GASSER_ADDON_HEALTH;
 extern double GASSER_INITIAL_ATTACK_RANGE;
 extern double GASSER_ADDON_ATTACK_RANGE;
+extern double GASSER_ACID_RANGE;
 extern double GASSER_COST;
 extern double GASSER_DELAY;
 extern double GASCLOUD_POISON_DURATION;
@@ -1226,5 +1227,7 @@ extern double EXPLODING_BARREL_ADDON_DAMAGE;
 extern double EXPLODING_BARREL_COST;
 extern double EXPLODING_BARREL_DELAY;
 extern double EXPLODING_BARREL_MAX_COUNT;
+extern double ACID_GASSER_SYNERGY_BONUS;
+extern double SPIKE_SPIKER_SYNERGY_BONUS;
 
 #endif

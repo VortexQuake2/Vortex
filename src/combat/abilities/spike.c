@@ -64,8 +64,11 @@ void fire_spike (edict_t *self, vec3_t start, vec3_t dir, int damage, float stun
 
 void SpikeAttack (edict_t *ent)
 {
+	int spike_level = ent->myskills.abilities[SPIKE].current_level;
+	int spiker_level = ent->myskills.abilities[SPIKER].current_level;
 	int		i, move, damage;
 	float	delay;
+	float synergy_bonus = 1.0 + SPIKE_SPIKER_SYNERGY_BONUS * spiker_level;
 	vec3_t	angles, v, org;
 	vec3_t	offset, forward, right, start;
 
@@ -83,8 +86,8 @@ void SpikeAttack (edict_t *ent)
 	move = SPIKE_FOV/SPIKE_SHOTS;
 
 	// calculate damage and stun length
-	damage = SPIKE_INITIAL_DMG+SPIKE_ADDON_DMG*ent->myskills.abilities[SPIKE].current_level;
-	damage *= 1.0 + 0.1 * vrx_get_talent_level(ent, TALENT_DEADLY_SPIKES); // Talent Deadly Spikes - increases spike damage
+	damage = (SPIKE_INITIAL_DMG + SPIKE_ADDON_DMG * spike_level) * synergy_bonus;
+	//damage *= 1.0 + 0.1 * vrx_get_talent_level(ent, TALENT_DEADLY_SPIKES); // Talent Deadly Spikes - increases spike damage
 
 	delay = SPIKE_STUN_ADDON * ent->myskills.abilities[SPIKE].current_level;
 	if (delay < SPIKE_STUN_MIN)

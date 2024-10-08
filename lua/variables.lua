@@ -337,6 +337,8 @@ OBSTACLE_MAX_COUNT                       = 6
 SPIKEBALL_MAX_COUNT                      = 3
 DELAY_MONSTER_THINK                      = 3
 DELAY_MONSTER                            = 3
+ACID_GASSER_SYNERGY_BONUS				 = 0.05
+SPIKE_SPIKER_SYNERGY_BONUS				 = 0.05
 
 -- summon costs
 M_FLYER_COST                             = 25
@@ -1238,6 +1240,7 @@ GASSER_INITIAL_HEALTH                    = 100
 GASSER_ADDON_HEALTH                      = 40
 GASSER_INITIAL_ATTACK_RANGE              = 128
 GASSER_ADDON_ATTACK_RANGE                = 0
+GASSER_ACID_RANGE						 = 512
 GASSER_COST                              = 25
 GASSER_DELAY                             = 1.0
 

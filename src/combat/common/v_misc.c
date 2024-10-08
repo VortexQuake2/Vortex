@@ -891,6 +891,8 @@ void vrx_set_pickup_owner(edict_t* self)
 		{
 			self->owner = owner;
 			self->flags |= FL_PICKUP;
+			if (self->movetype == MOVETYPE_NONE)
+				self->movetype = MOVETYPE_STEP; // detach entity from ceilings and other surfaces
 		}
 	}
 	// player is no longer holding barrel--is owner set?

@@ -607,18 +607,17 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             return 2;
             //Alien talents
         case TALENT_SPITTING_GASSER:
-            menu_add_line(ent, "Gives gassers an acid attack", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "which is tied to your", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "acid ability. Upgrades", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "increase rate of fire.", MENU_WHITE_CENTERED);
-            return 4;
+            menu_add_line(ent, "Gives gassers an acid", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "attack. Upgrades increase", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "rate of fire.", MENU_WHITE_CENTERED);
+            return 3;
         case TALENT_SUPER_HEALER:
             menu_add_line(ent, "Allows healer to heal", MENU_WHITE_CENTERED);
             menu_add_line(ent, "beyond maximum health.", MENU_WHITE_CENTERED);
             return 2;
         case TALENT_DEADLY_SPIKES:
-            menu_add_line(ent, "Increases damage of", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "spike and spikers.", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "Adds chance that", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "spikers will stun.", MENU_WHITE_CENTERED);
             return 2;
         case TALENT_SWARMING:
             menu_add_line(ent, "Increases spore damage.", MENU_WHITE_CENTERED);
