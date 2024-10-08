@@ -180,7 +180,7 @@ qboolean PM_MorphPlayerHitbox (edict_t* ent, vec3_t boxmin, vec3_t boxmax)
 
     // distance parameter is units away from nearby wall(s)
     dist = boxmax[1] + 8;
-    V_PushBackWalls(ent, dist);
+    V_PushBackWalls(ent, ent->s.origin, dist, MASK_SOLID, false);
 
     // make sure don't get stuck in a wall
     tr = gi.trace(ent->s.origin, boxmin, boxmax, ent->s.origin, ent, MASK_SHOT);

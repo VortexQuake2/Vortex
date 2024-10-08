@@ -1589,13 +1589,23 @@ void V_ModifyMorphedHealth(edict_t *ent, int type, qboolean morph) {
     }
 }
 
-// attempts to push (move) away from nearby wall(s) by dist
-void V_PushBackWalls(edict_t *self, float dist) {
-    vec3_t start, end, v = {0, 0, 0};
+qboolean V_GetCorrectedOrigin(edict_t *self, vec3_t start, float dist, int mask, vec3_t corrected_org, qboolean minimum_move)
+{
+    vec3_t end, v = { 0, 0, 0 };
     trace_t tr;
-    qboolean move = false;
+    qboolean escape_vector = false;
 
-    VectorCopy(self->s.origin, start);
+    // is starting position already unobstructed?
+    if (minimum_move)
+    {
+        tr = gi.trace(start, self->mins, self->maxs, start, self, mask);
+        if (!(tr.contents & mask) && !tr.allsolid && !tr.startsolid)
+        {
+            //gi.dprintf("starting position already unobstructed\n");
+            VectorCopy(start, corrected_org);
+            return true;
+        }
+    }
 
     // gather plane normal vector(s)
     for (int i = 0; i <= 3; i++) {
@@ -1603,28 +1613,30 @@ void V_PushBackWalls(edict_t *self, float dist) {
 
         // trace in a circle around us to find nearby walls
         switch (i) {
-            case 0:
-                end[0] += dist;
-                break;
-            case 1:
-                end[1] += dist;
-                break;
-            case 2:
-                end[0] -= dist;
-                break;
-            case 3:
-                end[1] -= dist;
-                break;
+        case 0:
+            end[0] += dist;
+            break;
+        case 1:
+            end[1] += dist;
+            break;
+        case 2:
+            end[0] -= dist;
+            break;
+        case 3:
+            end[1] -= dist;
+            break;
         }
-        tr = gi.trace(start, self->mins, self->maxs, end, self, MASK_SOLID);
+        tr = gi.trace(start, NULL, NULL, end, self, mask);// mins and maxs are NULL because we assume bbox is obstructed
 
         // did we hit something?
         if (tr.fraction < 1) {
-            move = true;
+            //move = true;
             if (VectorEmpty(v)) {
                 // first intersecting plane normal--this is our escape vector from one wall
                 VectorCopy(tr.plane.normal, v);
-            } else {
+                escape_vector = true;
+            }
+            else {
                 // second intersecting plane normal--this is another wall roughly perpendicular to the first
                 // now add the two plane normals together to get our final escape vector
                 VectorAdd(tr.plane.normal, v, v);
@@ -1632,19 +1644,44 @@ void V_PushBackWalls(edict_t *self, float dist) {
             }
         }
     }
-    // we are adjacent to one or more walls, so try to push/move away
-    if (move) {
-        // ending position
+    // we are adjacent to one or more walls and have an escape vector, so try to push/move away
+    if (escape_vector) {
+       // gi.dprintf("found an escape vector for %s\n", self->classname);
+        // calculate ending position using escape vector v
         VectorMA(start, dist, v, end);
-
-        tr = gi.trace(start, self->mins, self->maxs, end, self, MASK_SOLID);
+        // check for obstructions
+        tr = gi.trace(end, self->mins, self->maxs, end, self, mask);
         // nothing detected
-        if (!(tr.contents & MASK_SOLID) && tr.fraction == 1) {
-            // try to move target 'e' to new position
-            VectorCopy(end, self->s.origin);
-            gi.linkentity(self);
+        if (!(tr.contents & mask) && tr.fraction == 1) {
+            if (minimum_move)
+            {
+                // the new position is good, but we may have moved farther away from our original position than necessary, so try a move back in the opposite direction
+                // check for obstructions
+                tr = gi.trace(end, self->mins, self->maxs, start, self, mask);
+            }
+            // copy new position
+            VectorCopy(tr.endpos, corrected_org);
+            //gi.dprintf("successful move via escape vector\n");
+            return true;
         }
     }
+   // gi.dprintf("couldnt find escape vector for %s\n", self->classname);
+    return false;
+}
+
+// attempts to push (move) away from nearby wall(s) by dist
+qboolean V_PushBackWalls(edict_t *self, vec3_t start, float dist, int mask, qboolean minimum_move) {
+    vec3_t end;
+
+    if (V_GetCorrectedOrigin(self, start, dist, mask, end, minimum_move))
+    {
+        // move to new position
+        VectorCopy(end, self->s.origin);
+        gi.linkentity(self);
+        return true;
+    }
+    return false;
+
 }
 
 // attempts to push/knock-away nearby entities by dist
@@ -2394,9 +2431,16 @@ void V_NonShellEffects(edict_t *ent) {
     }
     // ********** NON-CLIENT SPECIFIC EFFECTS BELOW **********
 
-    // barrel is transparent if it has an owner
-    if (ent->mtype == M_BARREL && ent->owner && ent->owner->inuse) // && ent->owner->client)
-        ent->s.effects |= EF_SPHERETRANS;
+    // picked-up entity is transparent if it has an owner
+    //if (ent->owner && ent->owner->inuse)
+    if (ent->flags & FL_PICKUP)
+    {
+        //edict_t* cl = G_GetClient(ent);
+        //FIXME: this is probably a good reason that picked up entities should have a reverse pointer back to the owner (other than owner)
+        // do we have a creator/activator? if so, are we being picked up?
+        //if (cl && cl->client->pickup && cl->client->pickup->inuse  && cl->client->pickup == ent)
+            ent->s.effects |= EF_SPHERETRANS;
+    }
 
     // obstacle becomes transparent before it cloaks
     if (ent->mtype == M_OBSTACLE) {

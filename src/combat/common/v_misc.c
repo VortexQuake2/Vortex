@@ -721,3 +721,261 @@ void ThrowShrapnel(edict_t* self, char* modelname, float speed, vec3_t origin, i
 		chunk->creator = self;
 	gi.linkentity(chunk);
 }
+
+// finds a vector parallel to a wall plane pointing in the direction of lookDir
+void projectOntoWall(vec3_t lookDir, vec3_t wallNormal, vec3_t parallelVector) {
+	vec3_t projectionOntoNormal;
+	// Calculate dot product L · N
+	float dot = DotProduct(lookDir, wallNormal);
+
+	// Project L onto N: (L · N) * N
+	VectorScale(wallNormal, dot, projectionOntoNormal);
+
+	// Subtract this from L to get the parallel vector
+	VectorSubtract(lookDir, projectionOntoNormal, parallelVector);
+
+	// Normalize the parallel vector to get a unit direction vector
+	VectorNormalize(parallelVector);
+}
+
+// positions the picked-up entity in-front of the player, constantly checking for obstructions
+void V_PickUpEntity(edict_t* ent)
+{
+	float	dist;
+	edict_t* e = ent, * other = ent->client->pickup;
+	vec3_t forward, right, offset, start, org;
+	trace_t tr;
+
+	if (!G_EntIsAlive(ent) || !ent->client)
+	{
+		//gi.dprintf("V_PickUpEntity aborted: ent isn't alive\n");
+		return;
+	}
+	// is the barrel dead?
+	if (!G_EntIsAlive(other))
+	{
+		//gi.dprintf("V_PickUpEntity aborted: barrel is dead\n");
+		// drop it
+		ent->client->pickup = NULL;
+		return;
+	}
+	// is this a player-tank?
+	if (PM_PlayerHasMonster(ent))
+	{
+		//gi.dprintf("V_PickUpEntity: player tank\n");
+		e = ent->owner;
+	}
+
+	// get view origin
+	AngleVectors(ent->client->v_angle, forward, right, NULL);
+	VectorSet(offset, 0, 8, ent->viewheight - 8);
+	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+	// calculate point in-front of us, leaving just enough room so that our bounding boxes don't collide
+	dist = e->maxs[0] + other->maxs[0] + 0.1 * VectorLength(ent->velocity) + 8;
+	VectorMA(start, dist, forward, start);
+	// begin trace at calling entity's origin, adjusted to fit the height of the entity we're carrying
+	VectorCopy(e->s.origin, org);
+	org[2] = e->absmin[2] + fabs(other->mins[2]) + 1;
+	// check for obstructions at our starting position - this will cover situations where the player can squeeze under a staircase
+	tr = gi.trace(org, other->mins, other->maxs, org, other, MASK_SHOT);
+	if (tr.allsolid || tr.startsolid || tr.fraction < 1)
+	{
+		dist = other->maxs[0];
+		// attempt to reposition the pickup entity so its origin is clear of obstructions
+		if (!V_PushBackWalls(other, org, dist, MASK_MONSTERSOLID, true))
+		{
+			//gi.dprintf("obstruction at start: %s at %.0f distance and %.0f height fraction %.1f allsolid %d startsolid %d\n", tr.ent->classname, dist, tr.endpos[2], tr.fraction, tr.allsolid, tr.startsolid);
+			return;
+		}
+		VectorCopy(other->s.origin, org);
+		// check for obstructions between our starting and ending positions
+		tr = gi.trace(org, NULL, NULL, start, other, MASK_SHOT);
+		if (tr.fraction < 1)
+		{
+			//gi.dprintf("clipped wall\n");
+			VectorCopy(tr.endpos, start);
+		}
+		else
+		{
+			//gi.dprintf("clipped nothing\n");
+		}
+		if (!V_GetCorrectedOrigin(other, start, dist, MASK_MONSTERSOLID, start, true))
+		{
+			//gi.dprintf("couldn't correct ending position\n");
+			//return;
+		}
+
+	}
+	// check for obstructions between our starting and ending positions
+	tr = gi.trace(org, other->mins, other->maxs, start, other, MASK_SHOT);
+	if (tr.allsolid)// || tr.fraction < 1) 
+	{ //FIXME the tr.startsolid check causes the entity to get stuck on walls :(
+		// the issue is that entities with bboxes bigger than the player cause this problem
+		// might need to do a little more work to adjust the position of the entity to account for picked up ents larger than the player
+		//gi.dprintf("obstruction between: %s at %.0f distance and %.0f height fraction %.1f allsolid %d startsolid %d\n", tr.ent->classname, dist, tr.endpos[2], tr.fraction, tr.allsolid, tr.startsolid);
+		//ent->client->pickup = NULL;
+		return;
+	}
+	//DEBUG
+	//if (tr.fraction < 1)
+	//{
+		//gi.dprintf("allowed obstruction %s at %.0f distance and %.0f height fraction %.1f allsolid %d startsolid %d\n", tr.ent->classname, dist, tr.endpos[2], tr.fraction, tr.allsolid, tr.startsolid);
+	//}
+	// move into position
+	VectorCopy(tr.endpos, other->s.origin);
+	VectorCopy(tr.endpos, other->s.old_origin);
+	gi.linkentity(other);
+	VectorClear(other->velocity);
+}
+
+// move entity into position in front of the player, remove the entity and return false if we can't
+qboolean vrx_position_player_summonable(edict_t* ent, edict_t* other, float dist)
+{
+	vec3_t forward, right, start, offset;
+
+	// get view origin
+	AngleVectors(ent->client->v_angle, forward, right, NULL);
+	VectorSet(offset, 0, 8, ent->viewheight - 8);
+	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+
+	//FIXME: this function modifies start and returns the tr.endpos, so the next bit of code may push the starting position into a wall!
+	if (!G_GetSpawnLocation(ent, dist, other->mins, other->maxs, start, NULL, PROJECT_HITBOX_FAR, false))
+	{
+		G_FreeEdict(other);
+		return false;
+	}
+
+	// move entity into position
+	VectorCopy(start, other->s.origin);
+	VectorCopy(start, other->s.old_origin);
+	//VectorMA(start, 48, forward, other->s.origin);
+	gi.linkentity(other);
+
+	VectorCopy(ent->s.angles, other->s.angles);
+	other->s.angles[PITCH] = 0;
+	other->s.angles[ROLL] = 0;
+	return true;
+}
+
+// return true if there isn't a previously dropped entity that would prevent us from dropping another
+qboolean CanDropPickupEnt(edict_t* ent)
+{
+	edict_t* pickup_prev = ent->client->pickup_prev;
+	// don't have a pickup entity to drop
+	if (!ent->client->pickup || !ent->client->pickup->inuse)
+		return false;
+	// previous pickup entity might get in the way
+	if (pickup_prev && pickup_prev->inuse && pickup_prev->owner && pickup_prev->owner->inuse && pickup_prev->owner == ent)
+		return false;
+	return true;
+
+}
+
+// sets owner when this entity is picked up, making it non-solid to the player
+void vrx_set_pickup_owner(edict_t* self)
+{
+	edict_t	*cl = NULL, *owner = NULL;
+
+	// get preferred owner of barrel
+	cl = owner = G_GetClient(self);
+	// if the player is piloting another entity (e.g. morphed tank), set owner to the other entity
+	if (PM_PlayerHasMonster(owner))
+		owner = owner->owner;
+
+	// is a player holding this barrel?
+	if (cl->client && cl->client->pickup && cl->client->pickup == self)
+	{
+		// if owner isn't set or invalid, set it to the preferred owner
+		// this will make barrel non-solid to the player (or player-monster)
+		if (!self->owner || !self->owner->inuse || self->owner != owner)
+		{
+			self->owner = owner;
+			self->flags |= FL_PICKUP;
+		}
+	}
+	// player is no longer holding barrel--is owner set?
+	else if (self->owner)
+	{
+		//gi.dprintf("let go!\n");
+		// need to make this null first so that the trace works
+		self->owner = NULL;
+		// barrel isn't being held, so make it solid again to player if it's clear of obstructions
+		trace_t tr = gi.trace(self->s.origin, self->mins, self->maxs, self->s.origin, self, MASK_PLAYERSOLID);
+		//FIXME: the owner won't be cleared if the player managed to stick the barrel in a bad spot
+		if (tr.allsolid || tr.startsolid || tr.fraction < 1)
+		{
+			//gi.dprintf("bad spot!\n");
+			self->owner = owner;
+		}
+		else
+			self->flags &= ~FL_PICKUP;
+	}
+}
+
+// clears player's pointer to picked-up entity
+void vrx_clear_pickup_ent(gclient_t* player, edict_t *other)
+{
+	// stop tracking this previously picked up entity
+	if (player->pickup_prev && player->pickup_prev->inuse && player->pickup_prev == other)
+		player->pickup_prev = NULL;
+	// drop it
+	if (player->pickup && player->pickup->inuse && player->pickup == other)
+		player->pickup = NULL;
+}
+
+// search for entity to pick up, or drop the one we're holding
+// return false if there is nothing to do, otherwise return true
+qboolean vrx_toggle_pickup(edict_t* ent, int mtype, float dist)
+{
+	edict_t* e = NULL;
+	vec3_t forward;
+
+	// already picked up an entity?
+	if (ent->client->pickup && ent->client->pickup->inuse)
+	{
+		//gi.dprintf("have pickup\n");
+		if (CanDropPickupEnt(ent))//FIXME: entities can clip on nearby walls, maybe do a final trace here before we allow it to drop?
+		{
+			//gi.dprintf("dropping it\n");
+			AngleVectors(ent->client->v_angle, forward, NULL, NULL);
+			// toss it forward if it's airborne
+			if (!ent->client->pickup->groundentity)
+			{
+				VectorScale(forward, 400, ent->client->pickup->velocity);
+				ent->client->pickup->velocity[2] += 200;
+			}
+			// save a pointer to dropped entity
+			ent->client->pickup_prev = ent->client->pickup;
+			// let go
+			ent->client->pickup = NULL;
+		}
+		//else
+			//gi.dprintf("can't drop it\n");
+		return true;
+	}
+	//gi.dprintf("no pickup\n");
+
+	// find an entity close to the player's aiming reticle
+	while ((e = findclosestreticle(e, ent, dist)) != NULL)
+	{
+		edict_t* e_owner = NULL;
+		if (!G_EntIsAlive(e))
+			continue;
+		if (!visible(ent, e))
+			continue;
+		if (!infront(ent, e))
+			continue;
+		e_owner = G_GetClient(e);
+		if (!e_owner || e_owner != ent)
+			continue;
+		if (e->mtype != mtype)
+			continue;
+		// found one--pick it up!
+		ent->client->pickup = e;
+		// clear pickup_prev if we've picked up the same entity we previously dropped
+		if (ent->client->pickup_prev && ent->client->pickup_prev->inuse && ent->client->pickup_prev == e)
+			ent->client->pickup_prev = NULL;
+		return true;
+	}
+	return false; // nothing to drop, nothing to pick up either
+}

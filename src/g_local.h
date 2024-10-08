@@ -85,7 +85,7 @@ extern long FLAG_FRAMES;
 #define FL_IMMUNE_LASER			0x00000004
 #define	FL_INWATER				0x00000008
 #define	FL_GODMODE				0x00000010
-#define	FL_NOTARGET				0x00000020
+#define	FL_NOTARGET				0x00000020	// monsters won't target this entity until it hurts them
 #define FL_IMMUNE_SLIME			0x00000040
 #define FL_IMMUNE_LAVA			0x00000080
 #define	FL_PARTIALGROUND		0x00000100	// not all corners are valid
@@ -102,6 +102,7 @@ extern long FLAG_FRAMES;
 #define FL_COCOONED				0x00080000	// entitiy is cocooned
 #define FL_NO_TRADING_PROTECT	0x00100000	// let it be hurt in trading mode
 #define FL_BLACK_DEATH			0x00200000	// extra damage from plague
+#define FL_PICKUP				0x00400000	// entity is being picked up by player
 #define FL_RESPAWN				0x80000000	// used for item respawning
 
 #define FRAMETIME		(1/sv_fps->value)
@@ -2169,7 +2170,7 @@ qboolean M_MeleeAttack(edict_t *self, float range, int damage, int knockback);
 qboolean M_ContinueAttack(edict_t* self, mmove_t* attack_move, mmove_t* end_move, float min_dist, float max_dist, float chance);
 void M_DelayNextAttack(edict_t* self, float delay, qboolean add_attack_frames);
 qboolean M_ValidMedicTarget(const edict_t *self, const edict_t *target);
-
+void M_Touchdown(edict_t* self);
 qboolean M_Upkeep(edict_t *self, int delay, int upkeep_cost);
 void M_FindPath (edict_t *self, vec3_t goalpos, qboolean compute_path_now);
 void M_Remove (edict_t *self, qboolean refund, qboolean effect);

@@ -72,6 +72,11 @@ int PvMAveragePlayerLevel(void);
 int PVM_TotalMonsters(edict_t *monster_owner, qboolean update);
 int PVM_TotalMonstersValue(edict_t* monster_owner);
 void ThrowShrapnel(edict_t* self, char* modelname, float speed, vec3_t origin, int dmg, int mod);
+qboolean vrx_position_player_summonable(edict_t* ent, edict_t* other, float dist);
+void V_PickUpEntity(edict_t* ent);
+qboolean vrx_toggle_pickup(edict_t* ent, int mtype, float dist);
+void vrx_set_pickup_owner(edict_t* self);
+void vrx_clear_pickup_ent(gclient_t* player, edict_t* other);
 //************ g_misc.c ************
 
 //************ g_utils.c ************

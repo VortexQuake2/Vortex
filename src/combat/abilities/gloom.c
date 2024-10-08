@@ -17,9 +17,14 @@ void V_Push (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 		if (other->groundentity && other->groundentity == self)
 			return;
 		
-		self->movetype_prev = self->movetype;
-		self->movetype_frame = (int)(level.framenum + 0.5 / FRAMETIME);
-		self->movetype = MOVETYPE_STEP;
+		if (self->movetype != MOVETYPE_STEP) // needed by obstacle which uses MOVETYPE_NONE to stay glued to the ground
+		{
+			self->movetype_prev = self->movetype;
+			self->movetype_frame = (int)(level.framenum + 0.5 / FRAMETIME);
+			self->movetype = MOVETYPE_STEP;
+			//self->touch_debounce_time = level.time + 0.5;
+			//gi.dprintf("%f %f\n", level.time, self->touch_debounce_time);
+		}
 
 		AngleVectors (other->client->v_angle, forward, right, NULL);
 		VectorScale (forward, -3, other->client->kick_origin);
@@ -89,6 +94,9 @@ void organ_remove (edict_t *self, qboolean refund)
 	{
 		if (!self->monsterinfo.slots_freed)
 		{
+			// stop tracking this previously picked up entity
+			vrx_clear_pickup_ent(self->activator->client, self);
+
 			if (self->mtype == M_OBSTACLE)
 				self->activator->num_obstacle--;
 			else if (self->mtype == M_SPIKER)
@@ -142,6 +150,7 @@ qboolean organ_checkowner (edict_t *self)
 	return true;
 }
 
+// used to restore a prevous movetype (MOVETYPE_TOSS or MOVETYPE_NONE) needed for V_Push to work (MOVETYPE_STEP)
 void organ_restoreMoveType (edict_t *self)
 {
 	if (self->movetype_prev && level.framenum >= self->movetype_frame)
@@ -278,9 +287,9 @@ qboolean healer_validtarget(edict_t* self, edict_t* target)
 
 	velocity = VectorLength(target->velocity);
 	// make sure target is touching the ground and isn't moving
-	if (!target->groundentity || velocity != 0)
+	if (!target->groundentity || velocity > 1)
 	{
-		//gi.dprintf("groundentity: %s velocity: %.0f\n", target->groundentity?"true":"false", velocity);
+		//gi.dprintf("groundentity: %s velocity: %f\n", target->groundentity?"true":"false", velocity);
 		return false;
 	}
 
@@ -481,7 +490,7 @@ edict_t *CreateHealer (edict_t *ent, int skill_level)
 	e->s.modelindex = gi.modelindex ("models/objects/organ/healer/tris.md2");
 	e->s.renderfx |= RF_IR_VISIBLE;
 	e->solid = SOLID_BBOX;
-	e->movetype = MOVETYPE_TOSS;
+	e->movetype = MOVETYPE_STEP;//MOVETYPE_TOSS;
 	e->clipmask = MASK_MONSTERSOLID;
 	e->mass = 500;
 	e->classname = "healer";
@@ -666,7 +675,13 @@ void spiker_think (edict_t *self)
 	if (!organ_checkowner(self))
 		return;
 
-	organ_restoreMoveType(self);
+	vrx_set_pickup_owner(self); // sets owner when this entity is picked up, making it non-solid to the player
+
+	// don't attack while picked up
+	if (self->flags & FL_PICKUP)
+		self->monsterinfo.attack_finished = level.time + 1.0;
+
+	//organ_restoreMoveType(self);
 
 	if (self->removetime > 0)
 	{
@@ -722,8 +737,10 @@ void spiker_think (edict_t *self)
 	}
 
 	// if position has been updated, check for ground entity
+	// note: this is checked every frame if using MOVETYPE_STEP, whereas MOVETYPE_TOSS may require gi.linkentity to be run on velocity/position changes
 	if (self->linkcount != self->monsterinfo.linkcount)
 	{
+		//gi.dprintf("%s ground position updated\n", self->classname);
 		self->monsterinfo.linkcount = self->linkcount;
 		M_CheckGround (self);
 	}
@@ -734,12 +751,14 @@ void spiker_think (edict_t *self)
 		self->velocity[0] *= 0.5;
 		self->velocity[1] *= 0.5;
 	}
+	//else
+	//	gi.dprintf("spiker not touching the ground\n");
 	
 	M_CatagorizePosition (self);
 	M_WorldEffects (self);
 	M_SetEffects (self);
 
-	gi.linkentity(self);
+	//gi.linkentity(self);
 	
 	self->nextthink = level.time + FRAMETIME;
 }
@@ -749,13 +768,16 @@ void spiker_grow (edict_t *self)
 	if (!organ_checkowner(self))
 		return;
 
-	organ_restoreMoveType(self);
+	vrx_set_pickup_owner(self); // sets owner when this entity is picked up, making it non-solid to the player
+
+	//organ_restoreMoveType(self);
 
 	V_HealthCache(self, (int)(0.2 * self->max_health), 1);
 
 	// if position has been updated, check for ground entity
 	if (self->linkcount != self->monsterinfo.linkcount)
 	{
+		//gi.dprintf("%s ground position updated\n", self->classname);
 		self->monsterinfo.linkcount = self->linkcount;
 		M_CheckGround (self);
 	}
@@ -799,9 +821,10 @@ edict_t *CreateSpiker (edict_t *ent, int skill_level)
 	e->s.modelindex = gi.modelindex ("models/objects/organ/spiker/tris.md2");
 	e->s.renderfx |= RF_IR_VISIBLE;
 	e->solid = SOLID_BBOX;
-	e->movetype = MOVETYPE_TOSS;
+	e->movetype = MOVETYPE_STEP;
 	e->clipmask = MASK_MONSTERSOLID;
 	e->svflags |= SVF_MONSTER;//Note/Important/Hint: tells MOVETYPE_STEP physics to clip on any solid object (not just walls)
+	e->monsterinfo.touchdown = M_Touchdown;
 	e->mass = 500;
 	e->classname = "spiker";
 	e->takedamage = DAMAGE_AIM;
@@ -837,6 +860,9 @@ void Cmd_Spiker_f (edict_t *ent)
 		return;
 	}
 
+	if (vrx_toggle_pickup(ent, M_SPIKER, 128)) // search for entity to pick up, or drop the one we're holding
+		return;
+
 	if (ctf->value && (CTF_DistanceFromBase(ent, NULL, CTF_GetEnemyTeam(ent->teamnum)) < CTF_BASE_DEFEND_RANGE))
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Can't build in enemy base!\n");
@@ -858,21 +884,21 @@ void Cmd_Spiker_f (edict_t *ent)
 	}
 
 	spiker = CreateSpiker(ent, ent->myskills.abilities[SPIKER].current_level);
-	if (!G_GetSpawnLocation(ent, 100, spiker->mins, spiker->maxs, start, NULL, PROJECT_HITBOX_FAR, false))
+	if (!vrx_position_player_summonable(ent, spiker, 100))// move spiker into position in front of us
 	{
 		ent->num_spikers--;
-		G_FreeEdict(spiker);
 		return;
 	}
-	VectorCopy(start, spiker->s.origin);
-	VectorCopy(ent->s.angles, spiker->s.angles);
-	spiker->s.angles[PITCH] = 0;
-	gi.linkentity(spiker);
+
 	spiker->monsterinfo.attack_finished = level.time + 2.0;
 	spiker->monsterinfo.cost = cost;
 
 	if (ent->client)
+	{
 		layout_add_tracked_entity(&ent->client->layout, spiker);
+		// pick it up!
+		ent->client->pickup = spiker;
+	}
 
 	safe_cprintf(ent, PRINT_HIGH, "Spiker created (%d/%d)\n", ent->num_spikers, (int)SPIKER_MAX_COUNT);
 
@@ -1047,8 +1073,11 @@ void obstacle_move (edict_t *self)
 		if (self->s.angles[PITCH] != 180)
 		{
 			// stick to the ground
-			if (self->groundentity && self->groundentity == world)
+			if (self->groundentity && self->groundentity == world && level.time > self->touch_debounce_time)
+			{
+				//gi.dprintf("obstacle sticking to the ground %f %f\n", level.time, self->touch_debounce_time);
 				self->movetype = MOVETYPE_NONE;
+			}
 			else
 				self->movetype = MOVETYPE_STEP;
 		}
@@ -1150,7 +1179,7 @@ void obstacle_think (edict_t *self)
 	if (!organ_checkowner(self))
 		return;
 
-	organ_restoreMoveType(self);
+	organ_restoreMoveType(self); // needed to restore movetype from MOVETYPE_NONE to MOVETYPE_STEP after being pushed!
 	obstacle_cloak(self);
 	obstacle_attack(self);
 	obstacle_move(self);
@@ -1172,7 +1201,7 @@ void obstacle_grow (edict_t *self)
 	if (!organ_checkowner(self))
 		return;
 	//gi.dprintf("movetype: %d pitch: %.0f\n", self->movetype, self->s.angles[PITCH]);
-	organ_restoreMoveType(self);
+	//organ_restoreMoveType(self);
 
 	V_HealthCache(self, (int)(0.2 * self->max_health), 1);
 
@@ -1184,7 +1213,7 @@ void obstacle_grow (edict_t *self)
 	}
 
 	// don't slide
-	if (self->groundentity)
+	if (self->groundentity && level.time > self->touch_debounce_time)
 		VectorClear(self->velocity);
 	
 	M_CatagorizePosition (self);
@@ -1223,7 +1252,7 @@ edict_t *CreateObstacle (edict_t *ent, int skill_level)
 	e->s.modelindex = gi.modelindex ("models/objects/organ/obstacle/tris.md2");
 	e->s.renderfx |= RF_IR_VISIBLE;
 	e->solid = SOLID_BBOX;
-	e->movetype = MOVETYPE_TOSS;
+	e->movetype = MOVETYPE_STEP;
 	e->svflags |= SVF_MONSTER;
 	e->clipmask = MASK_MONSTERSOLID;
 	e->mass = 500;
@@ -1589,7 +1618,7 @@ void gasser_think (edict_t *self)
 	if (!organ_checkowner(self))
 		return;
 
-	organ_restoreMoveType(self);
+	//organ_restoreMoveType(self);
 
 //	if (level.time > self->lasthurt + 1.0)
 //		M_Regenerate(self, 300, 10, true, false, false, &self->monsterinfo.regen_delay1);
@@ -1615,8 +1644,10 @@ void gasser_think (edict_t *self)
 	}
 
 	// if position has been updated, check for ground entity
+	// note: this is checked every frame if using MOVETYPE_STEP, whereas MOVETYPE_TOSS may require gi.linkentity to be run on velocity/position changes
 	if (self->linkcount != self->monsterinfo.linkcount)
 	{
+		//gi.dprintf("position updated, check for ground\n");
 		self->monsterinfo.linkcount = self->linkcount;
 		M_CheckGround (self);
 	}
@@ -1631,6 +1662,7 @@ void gasser_think (edict_t *self)
 	M_CatagorizePosition (self);
 	M_WorldEffects (self);
 	M_SetEffects (self);
+	//gi.linkentity(self);
 
 	self->nextthink = level.time + FRAMETIME;
 }
@@ -1640,7 +1672,7 @@ void gasser_grow (edict_t *self)
 	if (!organ_checkowner(self))
 		return;
 
-	organ_restoreMoveType(self);
+	//organ_restoreMoveType(self);
 
 	V_HealthCache(self, (int)(0.2 * self->max_health), 1);
 
@@ -1751,7 +1783,7 @@ edict_t *CreateGasser (edict_t *ent, int skill_level, int talent_level)
 	e->s.modelindex = gi.modelindex ("models/objects/organ/gas/tris.md2");
 	e->s.renderfx |= RF_IR_VISIBLE;
 	e->solid = SOLID_BBOX;
-	e->movetype = MOVETYPE_TOSS;
+	e->movetype = MOVETYPE_STEP;
 	e->clipmask = MASK_MONSTERSOLID;
 	e->svflags |= SVF_MONSTER;// tells physics to clip on any solid object (not just walls)
 	e->mass = 500;

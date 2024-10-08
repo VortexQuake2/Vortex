@@ -2950,3 +2950,12 @@ qboolean M_TryRespawn(edict_t* self, qboolean remove_if_fail)
 	}
 	return false;
 }
+
+void M_Touchdown(edict_t* self)
+{
+	if (level.time > self->monsterinfo.touchdown_delay)
+	{
+		gi.sound(self, CHAN_VOICE, gi.soundindex("world/land.wav"), 1, ATTN_IDLE, 0);
+	}
+	self->monsterinfo.touchdown_delay = level.time + 1.0;
+}
