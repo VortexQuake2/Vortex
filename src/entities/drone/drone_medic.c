@@ -643,7 +643,7 @@ static vec3_t	mymedic_cable_offsets[] =
 
 edict_t *CreateSpiker (edict_t *ent, int skill_level);
 edict_t *CreateObstacle (edict_t *ent, int skill_level);
-edict_t *CreateGasser (edict_t *ent, int skill_level);
+edict_t* CreateGasser(edict_t* ent, int skill_level, int talent_level);
 void organ_remove (edict_t *self, qboolean refund);
 
 void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, qboolean printMsg)
@@ -832,7 +832,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 		if (ent->client && (ent->num_gasser + 1 > GASSER_MAX_COUNT))
 			return;
 
-		e = CreateGasser(ent, r_level);
+		e = CreateGasser(ent, r_level, vrx_get_talent_level(ent, TALENT_SPITTING_GASSER));
 
 		// make sure the new entity fits
 		if (!G_IsValidLocation(target, target->s.origin, e->mins, e->maxs))

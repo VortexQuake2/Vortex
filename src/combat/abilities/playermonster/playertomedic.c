@@ -36,7 +36,7 @@ qboolean p_medic_healframe (edict_t *ent)
 
 edict_t *CreateSpiker (edict_t *ent, int skill_level);
 edict_t *CreateObstacle (edict_t *ent, int skill_level);
-edict_t *CreateGasser (edict_t *ent, int skill_level);
+edict_t* CreateGasser(edict_t* ent, int skill_level, int talent_level);
 edict_t *CreateCocoon (edict_t *ent, int skill_level);
 edict_t* CreateHealer(edict_t* ent, int skill_level);
 void organ_remove (edict_t *self, qboolean refund);
@@ -183,12 +183,12 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 		// make sure the new entity fits
 		if (!G_IsValidLocation(target, target->s.origin, e->mins, e->maxs))
 		{
-			gi.dprintf("obstacle won't fit\n");
+			//gi.dprintf("obstacle won't fit\n");
 			ent->num_obstacle--;
 			G_FreeEdict(e);
 			return;
 		}
-		gi.dprintf("obstacle will fit\n");
+		//gi.dprintf("obstacle will fit\n");
 		
 		e->monsterinfo.cost = target->monsterinfo.cost;
 		e->health = 0.33 * e->max_health;
@@ -201,7 +201,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 	}
 	else if (!strcmp(target->classname, "gasser") && ent->num_gasser + 1 <= GASSER_MAX_COUNT)
 	{
-		e = CreateGasser(ent, skill_level);
+		e = CreateGasser(ent, skill_level, vrx_get_talent_level(ent, TALENT_SPITTING_GASSER));
 
 		// make sure the new entity fits
 		if (!G_IsValidLocation(target, target->s.origin, e->mins, e->maxs))
