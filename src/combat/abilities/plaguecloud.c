@@ -90,7 +90,7 @@ void plague_think(edict_t *self) {
     edict_t *e = NULL;
 
     // plague self-terminates if:
-    if (!G_EntIsAlive(self->owner) || !G_EntExists(self->enemy)// || !G_EntIsAlive(self->enemy)    //someone dies
+    if (!G_EntIsAlive(self->owner) || !G_EntExists(self->enemy)// owner dies or target is freed
         || (self->owner->flags & FL_WORMHOLE)                        // owner enters a wormhole
         || (self->owner->client->tball_delay > level.time)            //owner tballs away
         || (self->owner->flags & FL_CHATPROTECT)                    //3.0 owner is in chatprotect
@@ -126,8 +126,8 @@ void plague_think(edict_t *self) {
         PlagueCloud(self->owner, e);
     }
 
-    if (level.time > self->wait && self->enemy->health > 0) {
-        int maxlevel;
+    if (level.time > self->wait) {
+        int maxlevel, health;
         float talentFactor;
 
         if (self->owner->mtype == M_MYPARASITE)
@@ -136,8 +136,12 @@ void plague_think(edict_t *self) {
         else
             maxlevel = self->owner->myskills.abilities[PLAGUE].current_level;
 
+        if (self->enemy->health > 0)
+            health = self->enemy->max_health;
+        else
+            health = abs(self->enemy->gib_health);
         // e.g. at level 10: 5% of max hp per second for 20 seconds
-        dmg = (float) maxlevel / 10 * ((float) self->enemy->max_health / 20);
+        dmg = (float) maxlevel / 10 * ((float) health / 20);
         max_dmg = 50 * maxlevel;
         //if (!self->enemy->client && strcmp(self->enemy->classname, "player_tank") != 0)
         //    dmg *= 2; // non-clients take double damage (helps with pvm)

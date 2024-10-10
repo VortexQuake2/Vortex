@@ -801,7 +801,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 		drone->monsterinfo.level = 1;
 
 	drone->activator = ent;
-	drone->svflags |= SVF_MONSTER;
+	//drone->svflags |= SVF_MONSTER;
 	drone->yaw_speed = 20;
 	drone->takedamage = DAMAGE_AIM;
 	drone->clipmask = MASK_MONSTERSOLID;

@@ -49,6 +49,60 @@ void V_Push (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 	}
 }
 
+qboolean vrx_attach_wall (edict_t* ent, edict_t* other, cplane_t* plane)
+{
+	vec3_t angles;
+	float pitch, save;
+
+	if (ent->mtype != M_GASSER)
+		return false; // not an entity that can be attached to the wall
+	if (ent->groundentity)
+	{
+		if (ent->s.angles[PITCH] == 90)
+		{
+			//gi.dprintf("touched ground, flip upright\n");
+			// flip upright
+			ent->s.angles[PITCH] = 0;
+			//save = ent->mins[2];
+			//ent->mins[2] = ent->maxs[2] * -1;
+			//ent->maxs[2] = save * -1;
+			// adjust the position
+			//ent->s.origin[2] -= ent->maxs[2];
+			gi.linkentity(ent);
+		}
+		return false; // on the ground
+	}
+	if (ent->s.angles[PITCH] == 90)
+		return false; // already flipped
+	if (!plane)
+		return false; // not touching a plane
+
+	// calculate the pitch angle of the plane, 270 = ceiling, 90 = floor, 0 = wall
+	vectoangles(plane->normal, angles);
+	pitch = angles[PITCH] * -1;
+
+	// touched a wall owned by worldspawn
+	//FIXME: we probably want to periodically verify if the wall still exists or moved, and flip over otherwise
+	if (other && other->inuse && other == world && pitch == 0)
+	{
+		// flip over
+		//gi.dprintf("touched wall, flip over\n");
+		// adjust the position
+		ent->s.origin[2] += ent->maxs[2];
+		// flip the model over 90 degrees
+		ent->s.angles[PITCH] = 90;
+		ent->s.angles[YAW] = angles[YAW];
+		ent->movetype = MOVETYPE_NONE;
+		// flip the bbox
+		//save = ent->mins[2];
+		//ent->mins[2] = ent->maxs[2] * -1;
+		//ent->maxs[2] = save * -1;
+		gi.linkentity(ent);
+		return true;
+	}
+	return false;
+}
+
 qboolean vrx_attach_ceiling(edict_t* ent, edict_t *other, cplane_t *plane)
 {
 	vec3_t angles;
@@ -77,7 +131,7 @@ qboolean vrx_attach_ceiling(edict_t* ent, edict_t *other, cplane_t *plane)
 	if (!plane)
 		return false; // not touching a plane
 
-	// calculate the pitch angle of the plane
+	// calculate the pitch angle of the plane, 270 = ceiling, 90 = floor, 0 = wall
 	vectoangles(plane->normal, angles);
 	pitch = angles[PITCH] * -1;
 
@@ -105,13 +159,22 @@ qboolean vrx_attach_ceiling(edict_t* ent, edict_t *other, cplane_t *plane)
 // touch function for all the gloom stuff
 void organ_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
-	//if (ent->groundentity)
-	//	gi.dprintf("%s touched the ground\n", ent->classname);
-	//else if (other && other->inuse)
-	//	gi.dprintf("%s touching %s\n", ent->classname, other->classname);
-	//else
-	//	gi.dprintf("%s not touching the ground\n", ent->classname);
-
+	/*
+	if (ent->groundentity)
+		gi.dprintf("%s touched the ground\n", ent->classname);
+	else if (other && other->inuse)
+		gi.dprintf("%s touching %s\n", ent->classname, other->classname);
+	else
+		gi.dprintf("%s not touching the ground\n", ent->classname);
+	if (plane)
+	{
+		float pitch, yaw, roll;
+		vec3_t angles;
+		vectoangles(plane->normal, angles);
+		gi.dprintf("touching plane pitch %.0f yaw %.0f roll %.0f\n", angles[PITCH], angles[YAW], angles[ROLL]);
+	}
+	*/
+	vrx_attach_wall(ent, other, plane);
 	vrx_attach_ceiling(ent, other, plane);
 	V_Touch(ent, other, plane, surf);
 
@@ -119,8 +182,8 @@ void organ_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *sur
 	if (!ent || !ent->inuse || !ent->takedamage || ent->health < 1)
 		return;
 
-	// allow organ to be pushed if it's not flipped (attached to ceiling)
-	if (ent->s.angles[PITCH] != 180)
+	// allow organ to be pushed if it's not flipped (attached to ceiling or wall)
+	if (ent->s.angles[PITCH] != 180 && ent->s.angles[PITCH] != 90)
 		V_Push(ent, other, plane, surf);
 
 	if (G_EntIsAlive(other) && other->client && OnSameTeam(ent, other) 
@@ -1610,6 +1673,7 @@ void SpawnGasCloud (edict_t *ent, vec3_t start, int damage, float radius, float 
 	e->nextthink = level.time + FRAMETIME;
 	VectorCopy(start, e->s.origin);
 	VectorCopy(ent->s.angles, e->s.angles);
+	e->s.angles[PITCH] = 0;//always upright
 	gi.linkentity(e);
 }
 
@@ -1697,6 +1761,12 @@ void gasser_think (edict_t *self)
 	if (!organ_checkowner(self))
 		return;
 
+	vrx_set_pickup_owner(self); // sets owner when this entity is picked up, making it non-solid to the player
+
+	// don't attack while picked up
+	if (self->flags & FL_PICKUP)
+		self->monsterinfo.attack_finished = level.time + 1.0;
+
 	//organ_restoreMoveType(self);
 
 //	if (level.time > self->lasthurt + 1.0)
@@ -1704,7 +1774,7 @@ void gasser_think (edict_t *self)
 
 	V_HealthCache(self, (int)(0.2 * self->max_health), 1);
 
-	if (gasser_findtarget(self))
+	if (self->monsterinfo.attack_finished > level.time && gasser_findtarget(self))
 	{
 		if (entdist(self, self->enemy) < self->dmg_radius)
 			gasser_attack(self);
@@ -1750,6 +1820,8 @@ void gasser_grow (edict_t *self)
 {
 	if (!organ_checkowner(self))
 		return;
+
+	vrx_set_pickup_owner(self); // sets owner when this entity is picked up, making it non-solid to the player
 
 	//organ_restoreMoveType(self);
 
@@ -1847,6 +1919,11 @@ void gasser_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	self->nextthink = level.time + FRAMETIME;
 	self->s.frame = GASSER_FRAME_DEAD;
 	self->movetype = MOVETYPE_TOSS;
+
+	// flip gasser upright
+	self->mins[2] = 0;
+	self->s.angles[PITCH] = 0;
+
 	gi.linkentity(self);
 }
 
@@ -1864,6 +1941,7 @@ edict_t *CreateGasser (edict_t *ent, int skill_level, int talent_level)
 	e->s.modelindex = gi.modelindex ("models/objects/organ/gas/tris.md2");
 	e->s.renderfx |= RF_IR_VISIBLE;
 	e->solid = SOLID_BBOX;
+	e->monsterinfo.touchdown = M_Touchdown;
 	e->movetype = MOVETYPE_STEP;
 	e->clipmask = MASK_MONSTERSOLID;
 	e->svflags |= SVF_MONSTER;// tells physics to clip on any solid object (not just walls)
@@ -1889,8 +1967,8 @@ edict_t *CreateGasser (edict_t *ent, int skill_level, int talent_level)
 	e->s.frame = GASSER_FRAMES_IDLE_START;
 	e->die = gasser_die;
 	e->touch = organ_touch;
-	VectorSet(e->mins, -8, -8, -5);
-	VectorSet(e->maxs, 8, 8, 15);
+	VectorSet(e->mins, -6, -6, -5);
+	VectorSet(e->maxs, 6, 6, 15);
 	e->mtype = M_GASSER;
 
 	ent->num_gasser++;
@@ -1911,6 +1989,9 @@ void Cmd_Gasser_f (edict_t *ent)
 		ent->num_gasser = 0;
 		return;
 	}
+
+	if (vrx_toggle_pickup(ent, M_GASSER, 128)) // search for entity to pick up, or drop the one we're holding
+		return;
 
 	if (ctf->value && (CTF_DistanceFromBase(ent, NULL, CTF_GetEnemyTeam(ent->teamnum)) < CTF_BASE_DEFEND_RANGE))
 	{
@@ -1947,7 +2028,11 @@ void Cmd_Gasser_f (edict_t *ent)
 	gasser->monsterinfo.cost = cost;
 
 	if (ent->client)
+	{
 		layout_add_tracked_entity(&ent->client->layout, gasser);
+		// pick it up!
+		ent->client->pickup = gasser;
+	}
 
 	safe_cprintf(ent, PRINT_HIGH, "Gasser created (%d/%d)\n", ent->num_gasser, (int)GASSER_MAX_COUNT);
 

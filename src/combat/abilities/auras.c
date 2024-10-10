@@ -284,7 +284,10 @@ void CurseRemove (edict_t *ent, int type, int ignore)
 		// this curse is specifically targetting us, so destroy it
 		if (!slot->ent->takedamage // make sure that the curse is really a curse!
 			&& slot->ent->enemy && slot->ent->enemy->inuse && (slot->ent->enemy == ent))
+		{
+			//gi.dprintf("removed curse with mtype %d\n", slot->ent->mtype);
 			G_FreeEdict(slot->ent);
+		}
 
 		// remove entry from the queue
 		slot->ent = NULL;

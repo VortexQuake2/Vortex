@@ -841,6 +841,31 @@ void INV_Spawnstate_Idle(edict_t *self, const int players) {
 	}
 }
 
+void INV_CheckSpawnCamp(edict_t* monsterSpawn)
+{
+	edict_t* e = NULL;
+
+	while ((e = findradius(e, monsterSpawn->s.origin, 256)) != NULL)
+	{
+		if (!G_EntExists(e))
+			continue;
+		// is this a corpse infected with plague?
+		if (e->health < 1 && que_findtype(e->curses, NULL, CURSE_PLAGUE))
+		{
+			//gi.dprintf("removed curse from corpse\n");
+			CurseRemove(e, 0, 0);
+			continue;
+		}
+		//FIXME: ugly check to see if world-owned monster
+		if (e->svflags & SVF_MONSTER && e->health > 0 && e->activator && e->activator->inuse && !e->activator->client && visible(monsterSpawn, e))
+		{
+			//gi.dprintf("attempt to remove plague from world-spawned monster\n");
+			CurseRemove(e, CURSE_PLAGUE, 0);
+			continue;
+		}
+	}
+}
+
 qboolean INV_Spawnstate_Working(edict_t *self, const int players, int max_monsters, edict_t *e) {
 	int SpawnTries = 0, MaxTriesThisFrame = 32;
 
@@ -872,6 +897,7 @@ qboolean INV_Spawnstate_Working(edict_t *self, const int players, int max_monste
 		SpawnTries++;
 		if (INV_SpawnDrone(self, e, monster)) // Wait for now
 			invasion_data.mspawned++;
+		INV_CheckSpawnCamp(e); // remove spawn-camper stuff
 	}
 
 	if (invasion_data.mspawned >= max_monsters)
