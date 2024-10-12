@@ -38,13 +38,11 @@ qboolean gds_enabled();
 void gds_finish_thread();
 void gds_handle_status(edict_t *player);
 
-void Mem_PrepareMutexes();
-
 qboolean vrx_mysql_isloading(edict_t *ent);
 qboolean vrx_mysql_saveclose_character(edict_t* player);
 
 #endif //NO_GDS
 
-
+void Mem_PrepareMutexes();
 
 #endif // MYSQL_GDS

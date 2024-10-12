@@ -16,7 +16,7 @@
 #define MENU_MULTI_UPGRADE		3
 #define MENU_COMBAT_PREFERENCES	4
 
-void menu_add_line (edict_t *ent,char *line,int option);
+void menu_add_line (edict_t *ent, const char *line,int option);
 void menu_clear (edict_t *ent);
 void menu_set_handler (edict_t *ent,void (*optionselected)(edict_t *ent,int option));
 void menu_set_close_handler(edict_t* ent, void (*onclose)(edict_t* ent));

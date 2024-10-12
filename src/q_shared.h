@@ -26,7 +26,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
-
+#include <limits.h>
 #endif
 //K03 End
 

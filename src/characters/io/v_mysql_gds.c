@@ -1,12 +1,21 @@
 #include "g_local.h"
 #include "v_characterio.h"
+
+#include <pthread.h>
+
+// Threading
+static pthread_t QueueThread;
+static pthread_attr_t attr;
+static pthread_mutex_t mutex_gds_queue;
+static pthread_mutex_t MemMutex_Free;
+static pthread_mutex_t MemMutex_Malloc;
+static pthread_mutex_t mutex_gds_thread_status;
+
 #ifndef NO_GDS
 
 #include <mysql.h>
 #include "gds.h"
 #include "characters/class_limits.h"
-
-#include <pthread.h>
 
 #ifdef _WIN32
 #pragma warning ( disable : 4090 ; disable : 4996 )
@@ -85,14 +94,6 @@ static gds_queue_t *last = NULL;
 // if gds_singleserver is set then bypass the isplaying check.
 static cvar_t *gds_singleserver;
 static cvar_t *gds_serverkey;
-
-// Threading
-static pthread_t QueueThread;
-static pthread_attr_t attr;
-static pthread_mutex_t mutex_gds_queue;
-static pthread_mutex_t MemMutex_Free;
-static pthread_mutex_t MemMutex_Malloc;
-static pthread_mutex_t mutex_gds_thread_status;
 
 static qboolean ThreadRunning;
 
@@ -1931,11 +1932,6 @@ qboolean gds_connect() {
     return true;
 }
 
-void Mem_PrepareMutexes() {
-    pthread_mutex_init(&MemMutex_Malloc, NULL);
-    pthread_mutex_init(&MemMutex_Free, NULL);
-}
-
 qboolean gds_enabled() {
     return GDS_MySQL != NULL;
 }
@@ -1978,6 +1974,11 @@ void gds_finish_thread() {
 }
 
 #endif // NO_GDS
+
+void Mem_PrepareMutexes() {
+    pthread_mutex_init(&MemMutex_Malloc, NULL);
+    pthread_mutex_init(&MemMutex_Free, NULL);
+}
 
 void *vrx_malloc(size_t Size, int Tag) {
     void *Memory;

@@ -72,19 +72,12 @@ endif ()
 
 if (WIN32)
     set(CC_LINK_LIBS ${CC_LINK_LIBS} Wininet Winmm)
-endif ()
 
-if (UNIX AND VRX_USE_MULTITHREAD)
-    find_package(Threads)
-    set(CC_LINK_LIBS ${CC_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT})
-endif ()
-
-if (WIN32 AND VRX_USE_MULTITHREAD)
     if (MSVC)
         FetchContent_Declare(
-            pthreads
-            GIT_REPOSITORY https://github.com/GerHobbelt/pthread-win32
-            GIT_TAG master
+                pthreads
+                GIT_REPOSITORY https://github.com/GerHobbelt/pthread-win32
+                GIT_TAG master
         )
 
         FetchContent_MakeAvailable(pthreads)
@@ -94,6 +87,11 @@ if (WIN32 AND VRX_USE_MULTITHREAD)
         # we've got pthreads already, just use it
         set(CC_LINK_LIBS ${CC_LINK_LIBS} pthread)
     endif ()
+endif ()
+
+if (UNIX)
+    find_package(Threads)
+    set(CC_LINK_LIBS ${CC_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 endif ()
 
 if (VRX_REMOVERESPAWNS)

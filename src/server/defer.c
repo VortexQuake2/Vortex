@@ -15,7 +15,7 @@ void defer_global_init()
 	pthread_mutexattr_t attr;
 	pthread_mutexattr_init(&attr);
 
-	pthread_mutexattr_setkind_np(&attr, PTHREAD_MUTEX_RECURSIVE_NP);
+	pthread_mutexattr_setrobust(&attr, PTHREAD_MUTEX_RECURSIVE);
 
 	pthread_mutex_init(&defer_mutex, &attr);
 
