@@ -326,7 +326,7 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 		break;
 	case M_LASER:
 		name = lva("laser");
-		data = lva("+%d", ent->activator->health);
+		data = lva("+%d/%dc", ent->health, ent->activator->health);
 		break;
 	case M_MAGMINE:
 		name = lva("magmine");

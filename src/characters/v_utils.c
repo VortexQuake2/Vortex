@@ -1889,6 +1889,8 @@ char *V_GetMonsterKind(int mtype) {
             return "cocoon";
         case M_LASERPLATFORM:
             return "laser platform";
+        case M_LASER:
+            return "laser";
         case M_PROXY:
             return "proxy grenade";
         case M_MAGMINE:

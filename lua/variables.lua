@@ -13,7 +13,7 @@ SHIELD_BODY_PROTECTION                   = 0.8
 SHIELD_ABILITY_DELAY                     = 0.3
 SMARTROCKET_LOCKFRAMES                   = 3
 DAMAGE_ESCAPE_DELAY                      = 0.1
-AMMO_REGEN_DELAY 			 = 3.5
+AMMO_REGEN_DELAY 						 = 3.5
 MAX_KNOCKBACK                            = 300
 CHAT_PROTECT_FRAMES                      = 200
 MAX_HOURS                                = 24
@@ -24,11 +24,16 @@ CLOAK_COST                               = 50
 CLOAK_ACTIVATE_TIME                      = 2
 LASER_TIMEUP                             = 60
 LASER_COST                               = 25
-LASER_CUTDAMAGE                          = 15
+--LASER_CUTDAMAGE                          = 15
 MAX_LASERS                               = 6
 LASER_SPAWN                              = 3
 SUPERSPEED_DRAIN_COST                    = 2
 RESPAWN_INVIN_TIME                       = 20
+LASER_INITIAL_HEALTH					 = 0
+LASER_ADDON_HEALTH						 = 150
+LASER_INITIAL_DAMAGE					 = 100
+LASER_ADDON_DAMAGE						 = 40
+LASER_NONCLIENT_MOD						 = 0.5
 
 -- Antigravity
 ANTIGRAV_COST                            = 1

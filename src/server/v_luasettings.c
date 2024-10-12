@@ -313,9 +313,14 @@ double CLOAK_COST;
 double CLOAK_ACTIVATE_TIME;
 double LASER_TIMEUP;
 double LASER_COST;
-double LASER_CUTDAMAGE;
+//double LASER_CUTDAMAGE;
 double MAX_LASERS;
 double LASER_SPAWN;
+double LASER_INITIAL_HEALTH;
+double LASER_ADDON_HEALTH;
+double LASER_INITIAL_DAMAGE;
+double LASER_ADDON_DAMAGE;
+double LASER_NONCLIENT_MOD;
 double SUPERSPEED_DRAIN_COST;
 double RESPAWN_INVIN_TIME;
 double ANTIGRAV_COST;
@@ -1444,8 +1449,13 @@ void Lua_LoadVariables()
 
 	LASER_TIMEUP = vrx_lua_get_variable("LASER_TIMEUP", 70);
 	LASER_COST = vrx_lua_get_variable("LASER_COST", 25);
-	LASER_CUTDAMAGE = vrx_lua_get_variable("LASER_CUTDAMAGE", 55);
-	MAX_LASERS = vrx_lua_get_variable("MAX_LASERS", 5);
+	//LASER_CUTDAMAGE = vrx_lua_get_variable("LASER_CUTDAMAGE", 55);
+	MAX_LASERS = vrx_lua_get_variable("MAX_LASERS", 6);
+	LASER_INITIAL_HEALTH = vrx_lua_get_variable("LASER_INITIAL_HEALTH", 0);
+	LASER_ADDON_HEALTH = vrx_lua_get_variable("LASER_ADDON_HEALTH", 150);
+	LASER_INITIAL_DAMAGE = vrx_lua_get_variable("LASER_INITIAL_DAMAGE", 100);
+	LASER_ADDON_DAMAGE = vrx_lua_get_variable("LASER_ADDON_DAMAGE", 40);
+	LASER_NONCLIENT_MOD = vrx_lua_get_variable("LASER_NONCLIENT_MOD", 0.5);
 
 	LASER_SPAWN = vrx_lua_get_variable("LASER_SPAWN", 3);
 	SUPERSPEED_DRAIN_COST = vrx_lua_get_variable("SUPERSPEED_DRAIN_COST", 0);
@@ -1887,13 +1897,13 @@ void Lua_LoadVariables()
 	SELFDESTRUCT_BONUS = vrx_lua_get_variable("SELFDESTRUCT_BONUS", 50);
 
 	EXPLODING_ARMOR_COST = vrx_lua_get_variable("EXPLODING_ARMOR_COST", 0);
-	EXPLODING_ARMOR_MAX_COUNT = vrx_lua_get_variable("EXPLODING_ARMOR_MAX_COUNT", 4);
-	EXPLODING_ARMOR_AMOUNT = vrx_lua_get_variable("EXPLODING_ARMOR_AMOUNT", 50);
-	EXPLODING_ARMOR_DMG_BASE = vrx_lua_get_variable("EXPLODING_ARMOR_DMG_BASE", 90);
-	EXPLODING_ARMOR_DMG_ADDON = vrx_lua_get_variable("EXPLODING_ARMOR_DMG_ADDON", 35);
-	EXPLODING_ARMOR_MAX_RADIUS = vrx_lua_get_variable("EXPLODING_ARMOR_MAX_RADIUS", 180);
+	EXPLODING_ARMOR_MAX_COUNT = vrx_lua_get_variable("EXPLODING_ARMOR_MAX_COUNT", 6);
+	EXPLODING_ARMOR_AMOUNT = vrx_lua_get_variable("EXPLODING_ARMOR_AMOUNT", 10);
+	EXPLODING_ARMOR_DMG_BASE = vrx_lua_get_variable("EXPLODING_ARMOR_DMG_BASE", 100);
+	EXPLODING_ARMOR_DMG_ADDON = vrx_lua_get_variable("EXPLODING_ARMOR_DMG_ADDON", 40);
+	EXPLODING_ARMOR_MAX_RADIUS = vrx_lua_get_variable("EXPLODING_ARMOR_MAX_RADIUS", 200);
 	EXPLODING_ARMOR_DELAY = vrx_lua_get_variable("EXPLODING_ARMOR_DELAY", 1);
-	EXPLODING_ARMOR_DETECTION = vrx_lua_get_variable("EXPLODING_ARMOR_DETECTION", 32);
+	EXPLODING_ARMOR_DETECTION = vrx_lua_get_variable("EXPLODING_ARMOR_DETECTION", 48);
 
 	MIRV_INITIAL_DAMAGE = vrx_lua_get_variable("MIRV_INITIAL_DAMAGE", 40);
 	MIRV_ADDON_DAMAGE = vrx_lua_get_variable("MIRV_ADDON_DAMAGE", 7);

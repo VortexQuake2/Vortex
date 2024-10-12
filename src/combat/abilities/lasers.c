@@ -2,14 +2,14 @@
 #include "../../gamemodes/ctf.h"
 
 #define LASER_SPAWN_DELAY		1.0	// time before emitter creates laser beam
-#define LASER_INITIAL_DAMAGE	100	// beam damage per frame
-#define LASER_ADDON_DAMAGE		40
+//#define LASER_INITIAL_DAMAGE	100	// beam damage per frame
+//#define LASER_ADDON_DAMAGE		40
 #define LASER_TIMEOUT_DELAY		120
-#define LASER_NONCLIENT_MOD		0.5 // modifier applied to damage prior to reducing laser health on non-client laser targets
+//#define LASER_NONCLIENT_MOD		0.5 // modifier applied to damage prior to reducing laser health on non-client laser targets
 
 // cumulative maximum damage a laser can deal
-#define LASER_INITIAL_HEALTH	0
-#define LASER_ADDON_HEALTH		100
+//#define LASER_INITIAL_HEALTH	0
+//#define LASER_ADDON_HEALTH		100
 
 void RemoveLasers (edict_t *ent)
 {
@@ -72,14 +72,22 @@ qboolean NearbyProxy (edict_t *ent, vec3_t org)
 
 void laser_remove (edict_t *self)
 {
-	// remove emitter/grenade
-	self->think = BecomeExplosion1;
-	self->nextthink = level.time+FRAMETIME;
+	if (self->deadflag == DEAD_DEAD)
+		return;
 
-	// remove laser beam
+	self->deadflag = DEAD_DEAD;
+
+	// remove laser
+	self->think = G_FreeEdict;
+	self->nextthink = level.time + FRAMETIME;
+
+	// remove emitter
 	if (self->owner && self->owner->inuse)
 	{
-		self->owner->think = G_FreeEdict;
+		// prepare for removal
+		self->owner->deadflag = DEAD_DEAD;
+		self->owner->takedamage = DAMAGE_NO;
+		self->owner->think = BecomeExplosion1;
 		self->owner->nextthink = level.time+FRAMETIME;
 	}
 
@@ -204,15 +212,16 @@ void emitter_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *s
 	//gi.dprintf("%s %s %s\n", OnSameTeam(ent, other)?"y":"n", ent->health<ent->max_health?"y":"n", level.framenum>ent->monsterinfo.regen_delay1?"y":"n");
 
 	if (G_EntIsAlive(other) && other->client && OnSameTeam(ent, other) // a player on our team
-		&& other->client->pers.inventory[power_cube_index] >= 5 // has power cubes
-		&& ent->activator->health < 0.5*ent->activator->max_health // only repair below 50% health (to prevent excessive cube use/repair noise)
+		&& other->client->pers.inventory[cell_index] >= 5 // has cells
+		&& (ent->activator->health < 0.8*ent->activator->max_health || ent->health < ent->max_health) // only repair if >20% ammo depleted or emitter is damaged
 		&& level.framenum > ent->activator->monsterinfo.regen_delay1) // check delay
 	{
+		ent->health = ent->max_health;
 		ent->activator->health = ent->activator->max_health;
-		other->client->pers.inventory[power_cube_index] -= 5;
+		other->client->pers.inventory[cell_index] -= 5;
 		ent->activator->monsterinfo.regen_delay1 = level.framenum + 2 / FRAMETIME;
 		gi.sound(other, CHAN_VOICE, gi.soundindex("weapons/repair.wav"), 1, ATTN_NORM, 0);
-		safe_cprintf(other, PRINT_HIGH, "Emitter repaired. Maximum output: %d/%d damage.\n", ent->activator->health, ent->activator->max_health);
+		safe_cprintf(other, PRINT_HIGH, "Emitter recharged and repaired. Maximum output: %d/%d damage.\n", ent->activator->health, ent->activator->max_health);
 	}
 
 }
@@ -243,6 +252,12 @@ void emitter_think (edict_t *self)
 		self->s.renderfx = self->s.effects = 0;
 
 	self->nextthink = level.time + FRAMETIME;
+}
+
+void emitter_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point)
+{
+	if (self->activator && self->activator->inuse)
+		laser_remove(self->activator);
 }
 
 void SpawnLaser (edict_t *ent, int cost, float skill_mult, float delay_mult)
@@ -335,12 +350,16 @@ void SpawnLaser (edict_t *ent, int cost, float skill_mult, float delay_mult)
 	grenade->solid = SOLID_BBOX;
 	VectorSet(grenade->mins, -3, -3, 0);
 	VectorSet(grenade->maxs, 3, 3, 6);
-	grenade->takedamage = DAMAGE_NO;
+	grenade->takedamage = DAMAGE_YES;
+	grenade->health = grenade->max_health = 100;
+	grenade->die = emitter_die;
+	grenade->flags |= FL_NOTARGET; // AI will ignore
 	grenade->s.modelindex = gi.modelindex("models/objects/grenade2/tris.md2");
     grenade->creator = ent; // link to player
     grenade->activator = laser; // link to laser
 	grenade->classname = "emitter";
 	grenade->mtype = M_LASER;//4.5
+	grenade->monsterinfo.level = laser->monsterinfo.level;
 	grenade->nextthink = level.time+FRAMETIME;//delay; // time before self-destruct
 	//grenade->delay = level.time + delay;//4.4 time before self destruct
 	grenade->think = emitter_think;//laser_remove;
