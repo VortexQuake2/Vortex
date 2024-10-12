@@ -1,4 +1,3 @@
-#undef NO_GDS
 #include "g_local.h"
 #include "v_characterio.h"
 #ifndef NO_GDS
