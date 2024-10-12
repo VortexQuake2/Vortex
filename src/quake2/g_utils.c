@@ -670,7 +670,7 @@ char *G_CopyString (char *in)
 {
 	char	*out;
 	
-	out = V_Malloc (strlen(in)+1, TAG_LEVEL);
+	out = vrx_malloc (strlen(in)+1, TAG_LEVEL);
 	strcpy (out, in);
 	return out;
 }
@@ -1623,7 +1623,7 @@ void G_PrintGreenText (char *text)
 {
 	char *msg = HiPrint(text);
 	gi.bprintf(PRINT_HIGH, "%s\n", msg);
-	V_Free(msg);
+	vrx_free(msg);
 }
 
 qboolean G_IsSpectator(const edict_t *ent)

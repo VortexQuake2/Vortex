@@ -334,7 +334,7 @@ void AddVote(edict_t *ent, int mode, int mapnum)
 		text1 = HiPrint(va("%s", smode));
 		text2 = HiPrint(va("%s", maplist->maps[mapnum].name));
 		Com_sprintf (strBuffer, 1024, "vote in progress: %son %s\n", text1, text2);
-		V_Free(text1); V_Free(text2);
+		vrx_free(text1); vrx_free(text2);
 		
 		
 		gi.configstring(CS_GENERAL+MAX_CLIENTS+1, strBuffer);

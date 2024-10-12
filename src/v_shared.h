@@ -146,7 +146,7 @@ item_t *V_FindFreeItemSlot(edict_t *ent);
 item_t *V_FindFreeTradeSlot(edict_t *ent, int index);
 qboolean V_CanPickUpItem(edict_t *ent);
 void V_EquipItem(edict_t *ent, int index);
-void V_ItemCopy(item_t *source, item_t *dest);
+void vrx_item_copy(item_t *source, item_t *dest);
 void V_ItemClear(item_t *item);
 void V_PrintItemProperties(edict_t *player, item_t *item);
 int eqSetItems(edict_t *ent, item_t *rune);

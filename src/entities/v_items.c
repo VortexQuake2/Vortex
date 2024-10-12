@@ -932,7 +932,7 @@ qboolean Pickup_Rune (edict_t *ent, edict_t *other)
 
 	//Give them the rune
 	slot = V_FindFreeItemSlot(other);
-	V_ItemCopy(&ent->vrxitem, slot);
+	vrx_item_copy(&ent->vrxitem, slot);
 
 	//Save the player file (prevents lost runes)
 	vrx_char_io.save_player_runes(other);
@@ -945,7 +945,7 @@ qboolean Pickup_Rune (edict_t *ent, edict_t *other)
 //************************************************************************************************
 //************************************************************************************************
 
-void V_ItemCopy(item_t *source, item_t *dest)
+void vrx_item_copy(item_t *source, item_t *dest)
 {
 	memcpy(dest, source, sizeof(item_t));
 }

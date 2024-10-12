@@ -1,6 +1,6 @@
 #include "g_local.h"
 
-const abilitydef_t *abilities_by_index[MAX_ABILITIES];
+abilitydef_t *abilities_by_index[MAX_ABILITIES];
 uint8_t ability_class[MAX_ABILITIES][CLASS_MAX]; // whether ability i is in character class k (1 or 0)
 
 const abilitydef_t ability_general[] = {
@@ -322,7 +322,7 @@ void vrx_add_ability(edict_t* ent, int index) {
     vrx_enable_ability(
         ent, index,
         ability->start,
-        ability->softmax + ent->myskills.prestige.softmaxBump[index],
+        ability->softmax,
         0
         );
 }

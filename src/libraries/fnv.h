@@ -142,6 +142,6 @@ enum fnv_type {
 
 /* hash_32a.c */
 extern Fnv32_t fnv_32a_buf(void *buf, size_t len, Fnv32_t hashval);
-extern Fnv32_t fnv_32a_str(char *buf, Fnv32_t hashval);
+extern Fnv32_t fnv_32a_str(const char *buf, Fnv32_t hashval);
 
 #endif /* __FNV_H__ */

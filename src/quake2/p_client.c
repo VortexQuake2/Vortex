@@ -2029,30 +2029,12 @@ deathmatch mode, so clear everything out before starting them.
 */
 void ClientBeginDeathmatch (edict_t *ent)
 {
-#ifndef NO_GDS
-	static int lastID = 0;
-#endif
 	if (debuginfo->value > 1)
 		gi.dprintf("ClientBeginDeathmatch()\n");
 
 	G_InitEdict (ent);
 
 	InitClientResp (ent->client);
-
-	// az begin
-#ifndef NO_GDS
-	ent->gds_connection_id = lastID;
-	lastID++;
-
-	if (lastID > 100000000)
-	{
-		gi.dprintf("We seem to have passed a big player ID. Resetting!");
-		lastID = 0;
-	}
-#else
-	ent->gds_connection_id = 0;
-#endif
-	// az end
 
 	//K03 Begin
 	ent->client->pers.spectator = true;
@@ -2193,15 +2175,13 @@ void ClientUserinfoChanged (edict_t *ent, char *userinfo)
 		if (strlen(ent->client->pers.netname) > 3)
 			gi.bprintf(PRINT_HIGH, "%s changed name to %s\n", ent->client->pers.netname, s);
 	}
-	if (strlen( ent->client->pers.netname) < 1 || (G_IsSpectator(ent) 
-#ifndef NO_GDS
-		&& !ent->gds_thread_status // Not loaded.
-#endif
-		)) {
+
+	if (strlen( ent->client->pers.netname) < 1 || G_IsSpectator(ent)) {
         strncpy(ent->client->pers.netname, s, sizeof(ent->client->pers.netname) - 1);
         if (ent->client->menustorage.optionselected == classmenu_handler)
             menu_close(ent, true); // az. just in case
     }
+
 	Info_SetValueForKey(userinfo, "name", ent->client->pers.netname);
 
 	if (!ClientCanConnect(ent, userinfo))
@@ -2265,6 +2245,7 @@ loadgames will.
 */
 qboolean ClientConnect (edict_t *ent, char *userinfo)
 {
+	static int lastID = 1;
 	char	ip[16];
 	char	*value;
 	
@@ -2377,6 +2358,16 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 	ent->svflags = 0;// make sure we start with known default
 	ent->client->pers.connected = true;
 	ent->ai.is_bot = false;
+
+	ent->gds_connection_id = lastID;
+	lastID++;
+
+	if (lastID == INT_MAX - 1)
+	{
+		gi.dprintf("We seem to have passed a big player ID. Resetting!");
+		lastID = 1;
+	}
+
 	return true;
 }
 
@@ -2548,13 +2539,6 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 
     que_t *curse = NULL;
 	int		viewheight;
-
-	/* this is another method of deferral,
-	 * but it's kept to play nice with
-	 * older code. -az
-	 */
-    if (vrx_char_io.handle_status)
-        vrx_char_io.handle_status(ent);
 
 	defer_run(&ent->client->defers);
 

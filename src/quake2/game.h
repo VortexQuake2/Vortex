@@ -105,7 +105,7 @@ typedef struct
 	int		(*soundindex) (const char *name);
 	int		(*imageindex) (const char *name);
 
-	void	(*setmodel) (edict_t *ent, char *name);
+	void	(*setmodel) (edict_t *ent, const char *name);
 
 	// collision detection
 	trace_t	(*trace) (vec3_t start, const vec3_t mins, const vec3_t maxs, vec3_t end, const edict_t *passent, int contentmask);
@@ -142,9 +142,9 @@ typedef struct
 	void	(*FreeTags) (int tag);
 
 	// console variable interaction
-	cvar_t	*(*cvar) (char *var_name, char *value, int flags);
-	cvar_t	*(*cvar_set) (char *var_name, char *value);
-	cvar_t	*(*cvar_forceset) (char *var_name, char *value);
+	cvar_t	*(*cvar) (const char *var_name, const char *value, int flags);
+	cvar_t	*(*cvar_set) (const char *var_name, const char *value);
+	cvar_t	*(*cvar_forceset) (const char *var_name, const char *value);
 
 	// ClientCommand and coneole command parameter checking
 	int		(*argc) (void);

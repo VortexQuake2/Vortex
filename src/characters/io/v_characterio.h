@@ -11,7 +11,7 @@ typedef struct {
     qboolean (*load_player)(edict_t* ent); // if successful, it "locks" the player in a playing state.
     qboolean (*character_exists) (edict_t* ent); // checking char existence should be skipped if this function is null.
     qboolean (*is_loading) (edict_t* ent); // if it's already loading... don't bother calling load_player again.
-    void (*handle_status)(edict_t* ent); // if not null, this is a multithreaded io system.
+    qboolean multithread;
     void (*set_owner)(edict_t* ent, char* charname, char* mpw, qboolean reset);
     int type;
 } char_io_t;

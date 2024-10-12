@@ -61,7 +61,7 @@ gridStack_t *Stack=NULL;
 void Push(node_t *Node) {
 gridStack_t *STK;
 
-  STK=(gridStack_t *)V_Malloc(sizeof(gridStack_t), TAG_LEVEL);
+  STK=(gridStack_t *)vrx_malloc(sizeof(gridStack_t), TAG_LEVEL);
   STK->StackPtr=Stack; // NULL at start
   STK->NodePtr=Node;   // Tie the Node
   Stack=STK;           // Set to start of Stack
@@ -77,7 +77,7 @@ gridStack_t *STK;
   STK=Stack;             // Start of Stack
   tNode=Stack->NodePtr;  // Grab this Node.
   Stack=Stack->StackPtr; // Move Stack Pointer
-  V_Free(STK);       // Free this node
+  vrx_free(STK);       // Free this node
 
   return (tNode);
 }
@@ -142,7 +142,7 @@ gridStack_t *STK;
    while (PathNode) {
     tNode=PathNode;
     PathNode=PathNode->PrevNode;
-	V_Free(tNode); 
+	vrx_free(tNode); 
 	//free(tNode);
    NumFreed++;
    }
@@ -151,7 +151,7 @@ gridStack_t *STK;
   {
     tNode=CLOSED;
     CLOSED=CLOSED->NextNode;
-    V_Free(tNode);
+    vrx_free(tNode);
 	//free(tNode);
 	NumFreed++;
   }
@@ -159,7 +159,7 @@ gridStack_t *STK;
   while (OPEN) {
     tNode=OPEN;
 	OPEN=OPEN->NextNode;
-    V_Free(tNode); 
+    vrx_free(tNode); 
 	//free(tNode);
   NumFreed++;
   }
@@ -167,7 +167,7 @@ gridStack_t *STK;
   while (Stack) {
     STK=Stack;
     Stack=Stack->StackPtr;
-    V_Free(STK); 
+    vrx_free(STK); 
 	//free(STK);
   NumFreed++;
   }
@@ -265,7 +265,7 @@ float h;
   // Make Successor a Child of StartNode
   //=======================================
   //Successor=(node_t *)malloc(sizeof(node_t));
-  Successor=(node_t *)V_Malloc(sizeof(node_t), TAG_LEVEL);
+  Successor=(node_t *)vrx_malloc(sizeof(node_t), TAG_LEVEL);
   Successor->nodenum=NodeNumS;
   Successor->g=g=StartNode->g+1;
 
@@ -611,7 +611,7 @@ int FillGridList(int searchType, int NodeNumStart)
 		gridlist[j++] = i;
 	}
 
-	cached_gridlist[NodeNumStart] = V_Malloc(sizeof(int) * j, TAG_LEVEL);
+	cached_gridlist[NodeNumStart] = vrx_malloc(sizeof(int) * j, TAG_LEVEL);
 	for (int k = 0; k < j; k++) // az: copy to cache
 	{
 		cached_gridlist[NodeNumStart][k] = gridlist[k];
@@ -910,18 +910,18 @@ int FindPath(int searchType, vec3_t start, vec3_t destination) {
 	//gi.dprintf("starting node = %d, end = %d\n", NodeNumS, NodeNumD);
 
 	// Allocate OPEN/CLOSED list pointers..
-	OPEN = (node_t *)V_Malloc(sizeof(node_t), TAG_LEVEL);
+	OPEN = (node_t *)vrx_malloc(sizeof(node_t), TAG_LEVEL);
 	// OPEN=(node_t *)malloc(sizeof(node_t));
 	OPEN->NextNode = NULL;
 
-	CLOSED = (node_t *)V_Malloc(sizeof(node_t), TAG_LEVEL);
+	CLOSED = (node_t *)vrx_malloc(sizeof(node_t), TAG_LEVEL);
 	//CLOSED=(node_t *)malloc(sizeof(node_t));
 	CLOSED->NextNode = NULL;
 
 	//================================================
 	// This is our very first NODE!  Our start vector
 	//================================================
-	StartNode = (node_t *)V_Malloc(sizeof(node_t), TAG_LEVEL);
+	StartNode = (node_t *)vrx_malloc(sizeof(node_t), TAG_LEVEL);
 	//StartNode=(node_t *)malloc(sizeof(node_t));
 	StartNode->nodenum = NodeNumS; // starting position nodenum
 	StartNode->g = g = 0; // we haven't gone anywhere yet
@@ -1002,7 +1002,7 @@ int FindPath(int searchType, vec3_t start, vec3_t destination) {
 	//GHz - free old memory
 	//V_Free(Waypoint);
 
-	Waypoint = (int *)V_Malloc(numpts*sizeof(int), TAG_LEVEL);
+	Waypoint = (int *)vrx_malloc(numpts*sizeof(int), TAG_LEVEL);
 	//Waypoint=(int *)malloc(numpts*sizeof(int));
 
 	// Now, we have to assign the nodenum's along
@@ -1220,7 +1220,7 @@ void InvalidateGridCache() {
     for (int i = 0; i < numnodes; i++) {
         if (cached_gridlist[i])
         {
-            V_Free(cached_gridlist[i]);
+            vrx_free(cached_gridlist[i]);
             cached_gridlist[i] = NULL;
             cached_gridlist_count[i] = 0;
         }

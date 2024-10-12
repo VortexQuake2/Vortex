@@ -145,7 +145,7 @@ void GiveRuneToArmory(item_t *rune)
 	//If we found a place for this rune, add it!
 	if (slot != NULL)
 	{
-        V_ItemCopy(rune, slot);
+        vrx_item_copy(rune, slot);
 		gi.dprintf("Item sold to armory. Price = %d.\n", newPrice);
 		SaveArmory();
 	}

@@ -13,7 +13,7 @@ qboolean menu_active (edict_t *ent,int index, void (*optionselected)(edict_t *en
 	return (ent->client->menustorage.optionselected == optionselected);
 }
 
-void menu_add_line (edict_t *ent,char *line,int option)
+void menu_add_line (edict_t *ent, const char *line,int option)
 {
 	if (ent->client->menustorage.menu_active) // checks to see if the menu is showing
 		return;
@@ -21,8 +21,10 @@ void menu_add_line (edict_t *ent,char *line,int option)
 		return;
 		
 	ent->client->menustorage.num_of_lines++; // adds to the number of lines that can be seen
-	ent->client->menustorage.messages[ent->client->menustorage.num_of_lines].msg = V_Malloc (strlen(line)+1, TAG_GAME);
-	strcpy(ent->client->menustorage.messages[ent->client->menustorage.num_of_lines].msg, line);
+
+	size_t size = strlen(line) + 1;
+	ent->client->menustorage.messages[ent->client->menustorage.num_of_lines].msg = vrx_malloc (size, TAG_GAME);
+	strcpy_s(ent->client->menustorage.messages[ent->client->menustorage.num_of_lines].msg, size, line);
 	ent->client->menustorage.messages[ent->client->menustorage.num_of_lines].option = option;
 }
 
@@ -36,7 +38,7 @@ void menu_clear(edict_t *ent)
 	for (i = 0; i < MAX_LINES; i++){
 		ent->client->menustorage.messages[i].option = 0;
 		if (ent->client->menustorage.messages[i].msg != NULL){
-			V_Free (ent->client->menustorage.messages[i].msg);
+			vrx_free (ent->client->menustorage.messages[i].msg);
 			//GHz START
 			ent->client->menustorage.messages[i].msg = NULL;
 			//GHz END

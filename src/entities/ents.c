@@ -41,7 +41,7 @@ char *ReadTextFile(char *filename) {
 		if (!fp) break;
 
 		i = ReadFromFile(fp, NULL);
-		filestring = V_Malloc(i, TAG_LEVEL);
+		filestring = vrx_malloc(i, TAG_LEVEL);
 		if (!filestring)
 			break;
 
