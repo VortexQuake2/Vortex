@@ -644,7 +644,6 @@ static vec3_t	mymedic_cable_offsets[] =
 edict_t *CreateSpiker (edict_t *ent, int skill_level);
 edict_t *CreateObstacle (edict_t *ent, int skill_level);
 edict_t* CreateGasser(edict_t* ent, int skill_level, int talent_level);
-void organ_remove (edict_t *self, qboolean refund);
 
 void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, qboolean printMsg)
 {

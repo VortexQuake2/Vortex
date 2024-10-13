@@ -39,7 +39,6 @@ edict_t *CreateObstacle (edict_t *ent, int skill_level);
 edict_t* CreateGasser(edict_t* ent, int skill_level, int talent_level);
 edict_t *CreateCocoon (edict_t *ent, int skill_level);
 edict_t* CreateHealer(edict_t* ent, int skill_level);
-void organ_remove (edict_t *self, qboolean refund);
 
 void p_medic_reanimate (edict_t *ent, edict_t *target)
 {

@@ -362,6 +362,7 @@ void G_Spawn_Trails(int type, vec3_t start, vec3_t endpos);
 int vrx_get_ability_upgrade_cost(int index);
 void vrx_remove_chat_protect(edict_t* ent);
 #include "characters/v_stash.h"
+void organ_remove(edict_t* self, qboolean refund);
 
 // ****** curses.c ******
 void vrx_curse_heal_all(edict_t* target);
