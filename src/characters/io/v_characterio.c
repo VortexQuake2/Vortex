@@ -83,7 +83,7 @@ void vrx_notify_owner_success(void* args)
     }
 
     assert(sizeof evt->ent->myskills.owner == sizeof evt->owner_name);
-    strcpy_s(evt->ent->myskills.owner, sizeof evt->ent->myskills.owner, evt->owner_name);
+    strcpy(evt->ent->myskills.owner, evt->owner_name);
 
     gi.cprintf(evt->ent, PRINT_HIGH, "Owner set successfully.\n");
 }

@@ -1151,7 +1151,7 @@ void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean rese
 	int new_owner_id = cdb_get_id(owner_name);
 
 	event_owner_error_t* evt = vrx_malloc(sizeof(event_owner_error_t), TAG_GAME);
-	strcpy_s(evt->owner_name, sizeof evt->owner_name, owner_name);
+	strcpy(evt->owner_name, owner_name);
 	evt->ent = ent;
 	evt->connection_id = ent->gds_connection_id;
 
@@ -1269,8 +1269,8 @@ qboolean cdb_stash_take(edict_t* ent, int stash_index)
 			item.itemLevel   = sqlite3_column_int(statement, 2);
 			item.quantity    = sqlite3_column_int(statement, 3);
 			item.untradeable = sqlite3_column_int(statement, 4);
-			strcpy_s(item.id, sizeof item.id, sqlite3_column_text(statement, 5));
-			strcpy_s(item.name, sizeof item.name, sqlite3_column_text(statement, 6));
+			strcpy(item.id, sqlite3_column_text(statement, 5));
+			strcpy(item.name, sqlite3_column_text(statement, 6));
 			item.numMods     = sqlite3_column_int(statement, 7);
 			item.setCode     = sqlite3_column_int(statement, 8);
 			item.classNum    = sqlite3_column_int(statement, 9);
@@ -1310,7 +1310,7 @@ qboolean cdb_stash_take(edict_t* ent, int stash_index)
 	evt->ent = ent;
 	evt->gds_connection_id = ent->gds_connection_id;
 	vrx_item_copy(&item, &evt->taken);
-	strcpy_s(evt->requester, sizeof evt->requester, ent->client->pers.netname);
+	strcpy(evt->requester, ent->client->pers.netname);
 
 	vrx_notify_stash_taken(evt);
 	vrx_free(evt);
