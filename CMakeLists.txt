@@ -61,6 +61,7 @@ if (VRX_USE_MYSQL)
             NAMES mysql.h
             PATHS
             $ENV{ProgramFiles}/MySQL/*/include
+            /usr/include/mysql
     )
 
     target_include_directories(${CC_LIB_NAME} PRIVATE ${MYSQL_INCLUDE_DIR})

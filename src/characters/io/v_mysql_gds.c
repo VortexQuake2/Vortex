@@ -94,6 +94,7 @@ static gds_queue_t *last = NULL;
 // if gds_singleserver is set then bypass the isplaying check.
 static cvar_t *gds_singleserver;
 static cvar_t *gds_serverkey;
+static cvar_t *gds_dbport;
 
 static qboolean ThreadRunning;
 
@@ -1896,11 +1897,12 @@ qboolean gds_connect() {
     const char *user = gi.cvar("gds_dbuser", MYSQL_USER, 0)->string;
     const char *pw = gi.cvar("gds_dbpass", MYSQL_PW, 0)->string;
     const char *dbname = gi.cvar("gds_dbname", MYSQL_DBNAME, 0)->string;
+    int dbport = gi.cvar("gds_dbport", 0, 0)->value;
 
     if (!GDS_MySQL) {
         GDS_MySQL = mysql_init(NULL);
         if (mysql_real_connect(GDS_MySQL,
-            database, user, pw, dbname, 0, NULL, 0) == NULL) {
+            database, user, pw, dbname, dbport, NULL, 0) == NULL) {
             gi.dprintf("Failure: %s\n", mysql_error(GDS_MySQL));
             mysql_close(GDS_MySQL);
             GDS_MySQL = NULL;
