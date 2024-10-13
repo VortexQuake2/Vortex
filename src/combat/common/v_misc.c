@@ -421,8 +421,6 @@ void detector_removeall(edict_t* ent);
 
 void minisentry_remove(edict_t* self);
 
-void organ_remove(edict_t* self, qboolean refund);
-
 void organ_removeall(edict_t* self, char* classname, qboolean refund);
 
 void RemoveMiniSentries(edict_t* ent);
@@ -671,7 +669,7 @@ void shrapnel_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* 
 		return;
 	}
 
-	if (other->takedamage)
+	if (G_ValidTarget(self->creator, other, false, true))
 	{
 		T_Damage(other, self, self->creator, self->velocity, self->s.origin, plane->normal, self->dmg, 0, 0, self->style);
 
@@ -751,10 +749,10 @@ void V_PickUpEntity(edict_t* ent)
 		//gi.dprintf("V_PickUpEntity aborted: ent isn't alive\n");
 		return;
 	}
-	// is the barrel dead?
-	if (!G_EntIsAlive(other))
+	// is the pickup entity still valid?
+	if (!other || !other->inuse || other->solid == SOLID_NOT || (other->max_health && other->health < 1))
 	{
-		//gi.dprintf("V_PickUpEntity aborted: barrel is dead\n");
+		//gi.dprintf("V_PickUpEntity aborted: pickup entity is dead\n");
 		// drop it
 		ent->client->pickup = NULL;
 		return;
@@ -864,8 +862,9 @@ qboolean CanDropPickupEnt(edict_t* ent)
 	// don't have a pickup entity to drop
 	if (!ent->client->pickup || !ent->client->pickup->inuse)
 		return false;
-	// previous pickup entity might get in the way
-	if (pickup_prev && pickup_prev->inuse && pickup_prev->owner && pickup_prev->owner->inuse && pickup_prev->owner == ent)
+	// previous solid pickup entity might get in the way
+	if (pickup_prev && pickup_prev->inuse && pickup_prev->solid == SOLID_BBOX 
+		&& pickup_prev->owner && pickup_prev->owner->inuse && pickup_prev->owner == ent)
 		return false;
 	return true;
 
@@ -961,8 +960,14 @@ qboolean vrx_toggle_pickup(edict_t* ent, int mtype, float dist)
 	while ((e = findclosestreticle(e, ent, dist)) != NULL)
 	{
 		edict_t* e_owner = NULL;
-		if (!G_EntIsAlive(e))
+		//if (!G_EntIsAlive(e))
+		//	continue;
+		if (e && e->inuse && e->solid == SOLID_NOT && !e->deadflag)
+		{
+			//if (e && e->inuse)
+			//	gi.dprintf("rejected %s\n", e->classname);
 			continue;
+		}
 		if (!visible(ent, e))
 			continue;
 		if (!infront(ent, e))

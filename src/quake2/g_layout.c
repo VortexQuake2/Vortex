@@ -354,7 +354,10 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 		break;
 	case M_ARMOR:
 		name = lva("armor");
-		data = lva("%dd %dr %ds", ent->dmg, (int)ceil(ent->dmg_radius), (int)ceil(ent->delay-level.time));
+		if (ent->delay)
+			data = lva("%dd %dr %ds", ent->dmg, (int)ceil(ent->dmg_radius), (int)ceil(ent->delay-level.time));
+		else
+			data = lva("(standby)");
 		break;
 	case M_COCOON:
 		name = lva("cocoon");

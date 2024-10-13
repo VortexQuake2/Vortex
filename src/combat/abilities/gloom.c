@@ -197,11 +197,51 @@ void organ_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *sur
 	}
 }
 
-// generic remove function for all the gloom stuff
-void organ_remove (edict_t *self, qboolean refund)
+void organ_death_message(edict_t* self, edict_t* attacker, int max)
 {
-	if (!self || !self->inuse || self->deadflag == DEAD_DEAD)
-		return;
+	int qty = self->activator->num_spikers;
+	char* organTypeString = V_GetMonsterName(self);
+
+	if (attacker && attacker->inuse)
+	{
+		if (PM_MonsterHasPilot(attacker))
+			attacker = attacker->owner;
+
+		if (attacker->client)
+			safe_cprintf(self->activator, PRINT_HIGH, "Your %s was killed by %s (%d/%d remain)\n", organTypeString, attacker->client->pers.netname, qty, max);
+		else if (attacker->mtype)
+			safe_cprintf(self->activator, PRINT_HIGH, "Your %s was killed by a %s (%d/%d remain)\n", organTypeString, V_GetMonsterName(attacker), qty, max);
+		else
+			safe_cprintf(self->activator, PRINT_HIGH, "Your %s was killed by a %s (%d/%d remain)\n", organTypeString, attacker->classname, qty, max);
+	}
+	else
+		safe_cprintf(self->activator, PRINT_HIGH, "Your %s was killed (%d/%d remain)\n", organTypeString, qty, max);
+}
+
+void organ_death_cleanup(edict_t* self, edict_t* attacker, int* organCounter, int max, qboolean message)
+{
+	if (organCounter)
+	{
+		*organCounter -= 1;
+	}
+	else
+	{
+		if (self->mtype == M_OBSTACLE)
+			self->activator->num_obstacle--;
+		else if (self->mtype == M_SPIKER)
+			self->activator->num_spikers--;
+		else if (self->mtype == M_HEALER)
+			self->activator->healer = NULL;
+		else if (self->mtype == M_COCOON)
+			self->activator->cocoon = NULL;
+		else if (self->mtype == M_GASSER)
+			self->activator->num_gasser--;
+		else if (self->mtype == M_SPIKEBALL)
+			self->activator->num_spikeball--;
+	}
+	self->monsterinfo.slots_freed = true;
+
+	self->s.effects &= ~(EF_PLASMA | EF_SPHERETRANS); // remove transparency from growth/pickup
 
 	if (self->mtype == M_COCOON)
 	{
@@ -210,39 +250,38 @@ void organ_remove (edict_t *self, qboolean refund)
 		{
 			self->enemy->movetype = self->count;
 			self->enemy->svflags &= ~SVF_NOCLIENT;
-			self->enemy->flags &= FL_COCOONED;//4.4
+			self->enemy->flags &= FL_COCOONED;
 		}
-	}
-
-	if (self->activator && self->activator->inuse)
-	{
-		if (!self->monsterinfo.slots_freed)
-		{
-			// stop tracking this previously picked up entity
-			vrx_clear_pickup_ent(self->activator->client, self);
-
-			if (self->mtype == M_OBSTACLE)
-				self->activator->num_obstacle--;
-			else if (self->mtype == M_SPIKER)
-				self->activator->num_spikers--;
-			else if (self->mtype == M_HEALER)
-				self->activator->healer = NULL;
-			else if (self->mtype == M_COCOON)
-				self->activator->cocoon = NULL;
-			else if (self->mtype == M_GASSER)
-				self->activator->num_gasser--;
-			else if (self->mtype == M_SPIKEBALL)
-				self->activator->num_spikeball--;
-
-			self->monsterinfo.slots_freed = true;
-		}
-
-		if (refund)
-			self->activator->client->pers.inventory[power_cube_index] += (self->health / self->max_health) * self->monsterinfo.cost;
 	}
 
 	if (self->activator->client)
+	{
 		layout_remove_tracked_entity(&self->activator->client->layout, self);
+
+		// stop tracking this previously picked up entity and drop it
+		vrx_clear_pickup_ent(self->activator->client, self);
+
+		self->flags &= ~FL_PICKUP;
+		// note: owner isn't cleared because it's possible the organ is clipping the player's bbox
+
+		if (message)
+			organ_death_message(self, attacker, max);
+	}
+}
+
+// generic remove function for all the gloom stuff
+void organ_remove (edict_t *self, qboolean refund)
+{
+	if (!self || !self->inuse || self->deadflag == DEAD_DEAD)
+		return;
+
+	if (!self->monsterinfo.slots_freed && self->activator && self->activator->inuse)
+	{
+		organ_death_cleanup(self, NULL, NULL, SPIKER_MAX_COUNT, false);
+
+		if (refund && self->activator->client)
+			self->activator->client->pers.inventory[power_cube_index] += (self->health / self->max_health) * self->monsterinfo.cost;
+	}
 
 	self->think = G_FreeEdict;
 	self->nextthink = level.time + FRAMETIME;
@@ -703,27 +742,9 @@ void spiker_dead (edict_t *self)
 
 void spiker_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int max = SPIKER_MAX_COUNT;
-	int cur;
-
 	if (!self->monsterinfo.slots_freed && self->activator && self->activator->inuse)
 	{
-		self->activator->num_spikers--;
-		cur = self->activator->num_spikers;
-		self->monsterinfo.slots_freed = true;
-		
-		if (PM_MonsterHasPilot(attacker))
-			attacker = attacker->owner;
-
-		if (self->activator->client)
-			layout_remove_tracked_entity(&self->activator->client->layout, self);
-
-		if (attacker->client)
-			safe_cprintf(self->activator, PRINT_HIGH, "Your spiker was killed by %s (%d/%d remain)\n", attacker->client->pers.netname, cur, max);
-		else if (attacker->mtype)
-			safe_cprintf(self->activator, PRINT_HIGH, "Your spiker was killed by a %s (%d/%d remain)\n", V_GetMonsterName(attacker), cur, max);
-		else
-			safe_cprintf(self->activator, PRINT_HIGH, "Your spiker was killed by a %s (%d/%d remain)\n", attacker->classname, cur, max);
+		organ_death_cleanup(self, attacker, &self->activator->num_spikers, SPIKER_MAX_COUNT, true);
 	}
 
 	if (self->health <= self->gib_health || organ_explode(self))
@@ -1748,10 +1769,11 @@ qboolean gasser_findtarget (edict_t *self)
 	{
 		if (!G_ValidTarget_Lite(self, e, true))
 			continue;
-
+		//gi.dprintf("gasser found a target\n");
 		self->enemy = e;
 		return true;
 	}
+	//gi.dprintf("can't find a target %.0f\n", self->monsterinfo.sight_range);
 	self->enemy = NULL;
 	return false;
 }
@@ -1774,13 +1796,16 @@ void gasser_think (edict_t *self)
 
 	V_HealthCache(self, (int)(0.2 * self->max_health), 1);
 
-	if (self->monsterinfo.attack_finished > level.time && gasser_findtarget(self))
+	if (level.time > self->monsterinfo.attack_finished && gasser_findtarget(self))
 	{
+		//gi.dprintf("gasser wants to attack\n");
 		if (entdist(self, self->enemy) < self->dmg_radius)
 			gasser_attack(self);
 		else if (self->light_level)
 			gasser_acidattack(self);
 	}
+	//else
+		//gi.dprintf("cant attack\n");
 
 	if (self->s.frame < GASSER_FRAMES_ATTACK_END)
 		G_RunFrames(self, GASSER_FRAMES_ATTACK_START, GASSER_FRAMES_ATTACK_END, false);
@@ -1879,22 +1904,7 @@ void gasser_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 
 	if (!self->monsterinfo.slots_freed && self->activator && self->activator->inuse)
 	{
-		self->activator->num_gasser--;
-		cur = self->activator->num_gasser;
-		self->monsterinfo.slots_freed = true;
-		
-		if (PM_MonsterHasPilot(attacker))
-			attacker = attacker->owner;
-
-		if (self->activator->client)
-			layout_remove_tracked_entity(&self->activator->client->layout, self);
-
-		if (attacker->client)
-			safe_cprintf(self->activator, PRINT_HIGH, "Your gasser was killed by %s (%d/%d remain)\n", attacker->client->pers.netname, cur, max);
-		else if (attacker->mtype)
-			safe_cprintf(self->activator, PRINT_HIGH, "Your gasser was killed by a %s (%d/%d remain)\n", V_GetMonsterName(attacker), cur, max);
-		else
-			safe_cprintf(self->activator, PRINT_HIGH, "Your gasser was killed by a %s (%d/%d remain)\n", attacker->classname, cur, max);
+		organ_death_cleanup(self, attacker, &self->activator->num_gasser, GASSER_MAX_COUNT, true);
 	}
 
 	if (self->health <= self->gib_health || organ_explode(self))
@@ -1921,7 +1931,7 @@ void gasser_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	self->movetype = MOVETYPE_TOSS;
 
 	// flip gasser upright
-	self->mins[2] = 0;
+	self->maxs[2] = 6;
 	self->s.angles[PITCH] = 0;
 
 	gi.linkentity(self);
