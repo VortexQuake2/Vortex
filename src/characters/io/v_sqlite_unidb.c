@@ -919,11 +919,12 @@ qboolean cdb_stash_store(edict_t* ent, int itemindex)
 	int owner_id = cdb_get_owner_id(ent);
 	if (owner_id == -1)
 	{
-		stash_event_t* notif = V_Malloc(sizeof(stash_event_t), TAG_GAME);
+		stash_event_t* notif = vrx_malloc(sizeof(stash_event_t), TAG_GAME);
 		notif->ent = ent;
 		notif->gds_connection_id = ent->gds_connection_id;
 
 		vrx_notify_stash_no_owner(notif);
+		vrx_free(notif);
 		return false;
 	}
 
@@ -991,7 +992,7 @@ qboolean cdb_stash_store(edict_t* ent, int itemindex)
 qboolean cdb_stash_get_page(edict_t* ent, int page_index, int items_per_page)
 {
 	int owner_id = cdb_get_owner_id(ent);
-	stash_page_event_t* evt = V_Malloc(sizeof(stash_page_event_t), TAG_GAME);
+	stash_page_event_t* evt = vrx_malloc(sizeof(stash_page_event_t), TAG_GAME);
 	evt->gds_connection_id = ent->gds_connection_id;
 	evt->gds_owner_id = owner_id;
 	evt->ent = ent;
@@ -1083,6 +1084,7 @@ qboolean cdb_stash_get_page(edict_t* ent, int page_index, int items_per_page)
 	}
 
 	vrx_notify_open_stash(evt);
+	vrx_free(evt);
 	return true;
 }
 
@@ -1091,11 +1093,12 @@ qboolean cdb_stash_open(edict_t* ent)
 	int owner_id = cdb_get_owner_id(ent);
 	if (owner_id == -1)
 	{
-		stash_event_t* notif = V_Malloc(sizeof(stash_event_t), TAG_GAME);
+		stash_event_t* notif = vrx_malloc(sizeof(stash_event_t), TAG_GAME);
 		notif->ent = ent;
 		notif->gds_connection_id = ent->gds_connection_id;
 
 		vrx_notify_stash_no_owner(notif);
+		vrx_free(notif);
 		return false;
 	}
 
@@ -1109,11 +1112,12 @@ qboolean cdb_stash_open(edict_t* ent)
 		{
 			if (sqlite3_column_type(statement, 0) != SQLITE_NULL)
 			{
-				stash_event_t* notif = V_Malloc(sizeof(stash_event_t), TAG_GAME);
+				stash_event_t* notif = vrx_malloc(sizeof(stash_event_t), TAG_GAME);
 				notif->ent = ent;
 				notif->gds_connection_id = ent->gds_connection_id;
 
 				vrx_notify_stash_locked(notif);
+				vrx_free(notif);
 				sqlite3_finalize(statement);
 				return false;
 			}
@@ -1146,8 +1150,8 @@ void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean rese
 {
 	int new_owner_id = cdb_get_id(owner_name);
 
-	event_owner_error_t* evt = V_Malloc(sizeof(event_owner_error_t), TAG_GAME);
-	strcpy(evt->owner_name, owner_name);
+	event_owner_error_t* evt = vrx_malloc(sizeof(event_owner_error_t), TAG_GAME);
+	strcpy_s(evt->owner_name, sizeof evt->owner_name, owner_name);
 	evt->ent = ent;
 	evt->connection_id = ent->gds_connection_id;
 
@@ -1176,6 +1180,7 @@ void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean rese
 	if (new_owner_id == -1 && !reset)
 	{
 		vrx_notify_owner_nonexistent(evt);
+		vrx_free(evt);
 		return;
 	}
 
@@ -1204,10 +1209,14 @@ void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean rese
 	sqlite3_finalize(statement);
 
 	int rows = sqlite3_changes(db);
-	if (rows == 0)
+	if (rows == 0) {
 		vrx_notify_owner_bad_password(evt);
-	else
+		vrx_free(evt);
+	}
+	else {
 		vrx_notify_owner_success(evt);
+		vrx_free(evt);
+	}
 }
 
 qboolean cdb_stash_take(edict_t* ent, int stash_index)
@@ -1229,7 +1238,7 @@ qboolean cdb_stash_take(edict_t* ent, int stash_index)
 
 		if (!got_result || someone_else_locked_it)
 		{
-			stash_event_t* notif = V_Malloc(sizeof(stash_event_t), TAG_GAME);
+			stash_event_t* notif = vrx_malloc(sizeof(stash_event_t), TAG_GAME);
 			notif->ent = ent;
 			notif->gds_connection_id = ent->gds_connection_id;
 
@@ -1260,8 +1269,8 @@ qboolean cdb_stash_take(edict_t* ent, int stash_index)
 			item.itemLevel   = sqlite3_column_int(statement, 2);
 			item.quantity    = sqlite3_column_int(statement, 3);
 			item.untradeable = sqlite3_column_int(statement, 4);
-			strncpy(item.id, sqlite3_column_text(statement, 5), sizeof item.id);
-			strncpy(item.name, sqlite3_column_text(statement, 6), sizeof item.name);
+			strcpy_s(item.id, sizeof item.id, sqlite3_column_text(statement, 5));
+			strcpy_s(item.name, sizeof item.name, sqlite3_column_text(statement, 6));
 			item.numMods     = sqlite3_column_int(statement, 7);
 			item.setCode     = sqlite3_column_int(statement, 8);
 			item.classNum    = sqlite3_column_int(statement, 9);
@@ -1297,13 +1306,14 @@ qboolean cdb_stash_take(edict_t* ent, int stash_index)
 	QUERY(va("delete from stash_runes_meta where stash_index=%d and char_idx=%d", stash_index, owner_id));
 	QUERY(va("delete from stash_runes_mods where stash_index=%d and char_idx=%d", stash_index, owner_id));
 
-	stash_taken_event_t* evt = V_Malloc(sizeof(stash_taken_event_t), TAG_GAME);
+	stash_taken_event_t* evt = vrx_malloc(sizeof(stash_taken_event_t), TAG_GAME);
 	evt->ent = ent;
 	evt->gds_connection_id = ent->gds_connection_id;
-	V_ItemCopy(&item, &evt->taken);
-	strcpy(evt->requester, ent->client->pers.netname);
+	vrx_item_copy(&item, &evt->taken);
+	strcpy_s(evt->requester, sizeof evt->requester, ent->client->pers.netname);
 
 	vrx_notify_stash_taken(evt);
+	vrx_free(evt);
 	return true;
 }
 

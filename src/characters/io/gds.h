@@ -1,33 +1,21 @@
 #ifndef MYSQL_GDS
 #define MYSQL_GDS
 
-/* 
-So back then there was a GDS 
-and it had issues.
-
-But now, we're doing it Right!<tm>
-
-So, with a few pointers from KOTS2007
-(ideas borrowed from kots. heheh)
-we're having a MYSQL GDS.
-
-						-az
-
-*/
 #ifndef NO_GDS
 
-#define GDS_LOAD 1
-#define GDS_SAVE 2
-#define GDS_SAVECLOSE 3
-#define GDS_SAVERUNES 4
-#define GDS_STASH_OPEN 5
-#define GDS_STASH_TAKE 6
-#define GDS_STASH_STORE 7
-#define GDS_STASH_CLOSE 8
-#define GDS_STASH_GET_PAGE 9
-#define GDS_SET_OWNER 10
-#define GDS_EXITTHREAD 11
-
+typedef enum {
+ GDS_LOAD,
+ GDS_SAVE,
+ GDS_SAVECLOSE,
+ GDS_SAVERUNES,
+ GDS_STASH_OPEN,
+ GDS_STASH_TAKE,
+ GDS_STASH_STORE,
+ GDS_STASH_CLOSE,
+ GDS_STASH_GET_PAGE,
+ GDS_SET_OWNER,
+ GDS_DISCONNECT,
+} gds_op;
 
 typedef enum threadstatus_s {
     GDS_STATUS_OK,
@@ -44,23 +32,17 @@ qboolean gds_connect();
 
 // for STASH_TAKE/STORE index means what index
 // of the stash or inventory to take from respectively.
-void gds_queue_add(edict_t *ent, int operation, int index);
-void gds_queue_add_setowner(edict_t* ent, char* charname, char* masterpw);
+void gds_queue_add(edict_t *ent, gds_op operation, int index);
+void gds_queue_add_setowner(edict_t* ent, char* charname, char* masterpw, qboolean reset);
 qboolean gds_enabled();
-#ifndef GDS_NOMULTITHREADING
 void gds_finish_thread();
 void gds_handle_status(edict_t *player);
-#endif
-
-void Mem_PrepareMutexes();
 
 qboolean vrx_mysql_isloading(edict_t *ent);
 qboolean vrx_mysql_saveclose_character(edict_t* player);
 
 #endif //NO_GDS
 
-// Wrapped, thread safe mem allocation.
-void *V_Malloc(size_t Size, int Tag);
-void V_Free (void* mem);
+void Mem_PrepareMutexes();
 
 #endif // MYSQL_GDS

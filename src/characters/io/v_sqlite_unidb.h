@@ -29,6 +29,6 @@ qboolean cdb_stash_take(edict_t* ent, int stash_index);
 
 qboolean cdb_stash_get_page(edict_t* ent, int page, int numitems);
 
-void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw);
+void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean reset);
 
 #endif //VORTEXQUAKE2_V_SQLITE_UNIDB_H

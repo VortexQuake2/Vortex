@@ -843,8 +843,8 @@ void	ServerCommand (void)
         // az begin
     else if (Q_stricmp(cmd, "avglevel") == 0)
         gi.dprintf("Average level: %d\n", AveragePlayerLevel());
-#if (!defined GDS_NOMULTITHREADING) && (!defined NO_GDS)
-        else if (Q_stricmp (cmd, "connectgds") == 0)
+#ifndef NO_GDS
+    else if (Q_stricmp (cmd, "connectgds") == 0)
 		gds_connect();
 	// az end
 #endif

@@ -1790,7 +1790,6 @@ struct edict_s
 //ponko
 	edict_t		*union_ent;			//union item
 	edict_t		*trainteam;			//train team
-	int			arena;				//arena
 //ponko
 	float		speed, accel, decel;
 	vec3_t		movedir;
@@ -2034,11 +2033,9 @@ struct edict_s
 	// "connection" id, not database id.
 	// kept around without NO_GDS to simplify preprocessor macros
 	volatile int gds_connection_id;
-#ifndef NO_GDS
-#ifndef GDS_NOMULTITHREADING
-	volatile int gds_thread_status; // vrxchile 3.0
-#endif
-#endif
+
+	// -1 and 0 should both be invalid.
+	volatile int gds_connection_load_id;
 
 	float		removetime; //4.07 time to auto-remove
 	edict_t		*prev_owner; // for conversion
@@ -2362,8 +2359,8 @@ do { \
 
 
 // missing definitions
-void OpenModeMenu(edict_t *ent);
-qboolean CanJoinGame(edict_t *ent, int returned);
+void vrx_open_mode_menu(edict_t *ent);
+qboolean vrx_print_login_status(edict_t *ent, int returned);
 qboolean ToggleSecondary (edict_t *ent, gitem_t *item, qboolean printmsg);
 void plat_go_up (edict_t *ent);
 void weapon_grenade_fire(edict_t *ent, qboolean held);

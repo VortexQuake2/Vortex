@@ -113,7 +113,6 @@ void vrx_notify_stash_no_owner(void* args)
 			"Sorry, you need to set an owner or your master password in order to access the stash.\n"
 		);
 
-	V_Free(args);
 }
 
 void vrx_notify_stash_taken(void* args)
@@ -130,13 +129,11 @@ void vrx_notify_stash_taken(void* args)
 
 	if (slot) {
 		gi.sound(evt->ent, CHAN_ITEM, gi.soundindex("misc/amulet.wav"), 1, ATTN_NORM, 0);
-		V_ItemCopy(&evt->taken, slot);
+		vrx_item_copy(&evt->taken, slot);
 	}
 	else {
 		// TODO: put item back in stash
 	}
-
-	V_Free(args);
 }
 
 void vrx_notify_stash_locked(void* args)
@@ -149,8 +146,6 @@ void vrx_notify_stash_locked(void* args)
 			"Close it in your other characters to become able to use it again,\n"
 			"or contact an administrator if you're having issues."
 		);
-
-	V_Free(args);
 }
 
 void vrx_notify_open_stash(void* args)
@@ -161,13 +156,10 @@ void vrx_notify_open_stash(void* args)
 	{
 		if (vrx_stash_io.close_stash_by_id)
 			vrx_stash_io.close_stash_by_id(notif->gds_owner_id);
-
-		V_Free(args);
 		return;
 	}
 
 	vrx_stash_open_page(notif->ent, notif->page, sizeof notif->page / sizeof(item_t), notif->pagenum);
-	V_Free(args);
 }
 
 /*

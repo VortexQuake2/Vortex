@@ -108,16 +108,12 @@ void vrx_start_reign(edict_t *ent)
 	}
     vrx_write_to_logfile(ent, "Logged in.\n");
 
-#ifndef GDS_NOMULTITHREADING
-	ent->gds_thread_status = 0;
-#endif
-
     vrx_commit_character(ent, false); // Do we need to?
     vrx_assign_character_skin(ent, Info_ValueForKey(ent->client->pers.userinfo, "skin"));
     G_StuffPlayerCmds(ent, va("exec %s.cfg", ent->client->pers.netname));
 }
 
-qboolean CanJoinGame(edict_t *ent, int returned)
+qboolean vrx_print_login_status(edict_t *ent, int returned)
 {
 	switch(returned)
 	{
@@ -160,7 +156,7 @@ qboolean CanJoinGame(edict_t *ent, int returned)
 	}
 }
 
-void OpenModeMenu(edict_t *ent)
+void vrx_open_mode_menu(edict_t *ent)
 {
 	if (ptr->value)
 	{
@@ -200,7 +196,7 @@ void JoinTheGame (edict_t *ent)
     if (vrx_char_io.is_loading(ent))
         return;
 
-    if (vrx_char_io.handle_status) {
+    if (vrx_char_io.multithread) {
         /*
          * We're in multithreaded mode, so we can't go into the mode menu right away.
          * this is kind of silly, sorry, but
@@ -216,10 +212,10 @@ void JoinTheGame (edict_t *ent)
         if (vrx_load_player(ent) == false)
             vrx_create_new_character(ent);
 
-        if (!CanJoinGame(ent, vrx_get_login_status(ent)))
+        if (!vrx_print_login_status(ent, vrx_get_login_status(ent)))
             return;
 
-        OpenModeMenu(ent); // This implies the game will start.
+        vrx_open_mode_menu(ent); // This implies the game will start.
     }
 }
 
@@ -637,14 +633,11 @@ void OpenGeneralMenu (edict_t *ent)
 	else
         menu_add_line(ent, va("Upgrade talents (%d)", ent->myskills.talents.talentPoints), 3);
 
-	// az: only supported on sqlite. i'm lazy.
-	if (vrx_char_io.type == SAVEMETHOD_SQLITE) {
-		int prestigePotential = vrx_prestige_get_upgrade_points(ent->myskills.experience);
-		if (prestigePotential)
-			menu_add_line(ent, va("Prestige %d (%d)", ent->myskills.prestige.total, prestigePotential), 20);
-		else
-			menu_add_line(ent, va("Prestige %d", ent->myskills.prestige.total), 20);
-	}
+	int prestigePotential = vrx_prestige_get_upgrade_points(ent->myskills.experience);
+	if (prestigePotential)
+		menu_add_line(ent, va("Prestige %d (%d)", ent->myskills.prestige.total, prestigePotential), 20);
+	else
+		menu_add_line(ent, va("Prestige %d", ent->myskills.prestige.total), 20);
 
     menu_add_line(ent, " ", 0);
     if (!vrx_is_morphing_polt(ent) &&

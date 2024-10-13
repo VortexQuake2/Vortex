@@ -4,6 +4,8 @@
 #ifndef Q_SHARED
 #define Q_SHARED
 
+#define __STDC_LIB_EXT1__ 1
+
 #ifdef _MSC_VER
 // unknown pragmas are SUPPOSED to be ignored, but....
 #pragma warning(disable : 4244)     // MIPS
@@ -24,7 +26,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
-
+#include <limits.h>
 #endif
 //K03 End
 
@@ -1224,5 +1226,9 @@ typedef struct
 extern int vidref_val;
 // PGM
 // ==================
+
+// Wrapped, thread safe mem allocation.
+void *vrx_malloc(size_t Size, int Tag);
+void vrx_free (void* mem);
 
 #endif

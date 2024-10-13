@@ -929,10 +929,6 @@ void G_RunFrame(void)
 	int		i;//j;
 	edict_t	*ent;
 
-#if (defined GDS_NOMULTITHREADING) && (!defined NO_GDS)
-	GDS_ProcessQueue(NULL);
-#endif
-
 	level.framenum++;
 
 	level.time = level.framenum*FRAMETIME;

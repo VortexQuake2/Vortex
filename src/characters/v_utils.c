@@ -68,7 +68,7 @@ char *GetRandomString(int len) {
     int i;
     char *s;
 
-    s = (char *) V_Malloc(len * sizeof(char), TAG_GAME);
+    s = (char *) vrx_malloc(len * sizeof(char), TAG_GAME);
     for (i = 0; i < len - 1; i++) {
         s[i] = GetRandomChar();
     }
@@ -1462,7 +1462,7 @@ void vrx_change_class(char *playername, int newclass, int msgtype) {
             gi.dprintf("%s has ascended to level %d!\n", playername, player->myskills.prestige.total);
             safe_centerprintf(player, "You have ascended to level %d.", player->myskills.prestige.total);
             gi.sound(player, CHAN_AUTO, gi.soundindex("misc/keyuse.wav"), 1, ATTN_NORM, 0);
-            V_Free(msg);
+            vrx_free(msg);
         }
 
         player->myskills.level = 0;

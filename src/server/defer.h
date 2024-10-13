@@ -1,4 +1,4 @@
-#define DEFER_MAX_CALLS 4
+#define DEFER_MAX_CALLS 32
 
 typedef void (*deferred_function_t) (void* args);
 

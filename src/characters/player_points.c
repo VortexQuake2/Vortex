@@ -5,7 +5,7 @@ char *HiPrint(char *text) {
     int i;
     char *ReturnVal;
 
-    ReturnVal = V_Malloc(strlen(text) + 1, TAG_LEVEL);
+    ReturnVal = vrx_malloc(strlen(text) + 1, TAG_LEVEL);
 
     strcpy(ReturnVal, text);
 
@@ -513,8 +513,8 @@ int vrx_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient, int b
                 s1, (dmgmod * 100), s2
         );
 
-        V_Free(s1);
-        V_Free(s2);
+        vrx_free(s1);
+        vrx_free(s2);
     }
 
     return exp_points;

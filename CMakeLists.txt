@@ -3,12 +3,13 @@
 # Specify minimum version of CMake required
 cmake_minimum_required(VERSION 3.25)
 
+include(FetchContent)
+
 # Project name
 project(VortexQuake2)
 
 include(CMakeDependentOption)
 option(VRX_USE_MYSQL "Use MySQL/MariaDB based GDS" FALSE)
-option(VRX_USE_MULTITHREAD "Use multithreading (only valid when using mysql)" FALSE)
 option(VRX_ALLOW_ADMIN "Allow usage of admin commands via rcon/sv commands." TRUE)
 option(VRX_LOCKDEFAULTS "Disallow changing exp/credits rates via cvar." FALSE)
 option(VRX_REMOVERESPAWNS "Remove the usage of the respawns system." TRUE)
@@ -25,7 +26,12 @@ file(GLOB_RECURSE VRX_FILES ./src/*.c)
 
 # Set the platform-specific library name and use platform-specific files.
 if (WIN32)
-    set(CC_LIB_NAME gamex86)
+    if (CMAKE_CL_64)
+        set(CC_LIB_NAME gamex86_64)
+    else ()
+        set(CC_LIB_NAME gamex86)
+    endif ()
+
     add_definitions(-DWIN32)
     #file (GLOB CC_PLATFORM_FILES source/Platform/windows/*)
 elseif (UNIX)
@@ -59,48 +65,37 @@ if (VRX_USE_MYSQL)
 
     target_include_directories(${CC_LIB_NAME} PRIVATE ${MYSQL_INCLUDE_DIR})
 
-    message(NOTICE "MYSQL at ${MYSQL_LIBRARY} + ${MYSQL_INCLUDE_DIR}")
+    message(NOTICE "MYSQL at ${MYSQL_LIBRARY_CLIENT} + ${MYSQL_INCLUDE_DIR}")
 
     set(CC_LINK_LIBS ${CC_LINK_LIBS} ${MYSQL_LIBRARY_CLIENT})
 endif ()
 
 if (WIN32)
     set(CC_LINK_LIBS ${CC_LINK_LIBS} Wininet Winmm)
-endif ()
 
-if (UNIX AND VRX_USE_MULTITHREAD)
-    find_package(Threads)
-    set(CC_LINK_LIBS ${CC_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT})
-endif ()
-
-if (WIN32 AND VRX_USE_MULTITHREAD)
     if (MSVC)
-        # find pthreads
-        find_library(PTHREADS_LIB_WIN
-                NAMES libpthreadVC3 pthreadVC3
-                )
-
-        find_path(
-                PTHREADS_INCLUDE_DIR
-                NAMES pthread.h
+        FetchContent_Declare(
+                pthreads
+                GIT_REPOSITORY https://github.com/GerHobbelt/pthread-win32
+                GIT_TAG master
         )
 
-        message(NOTICE "pthreads at " ${PTHREADS_LIB_WIN} "+" ${PTHREADS_INCLUDE_DIR})
-        set(CC_LINK_LIBS ${CC_LINK_LIBS} ${PTHREADS_LIB_WIN})
-
-        target_include_directories(${CC_LIB_NAME} PRIVATE ${PTHREADS_INCLUDE_DIR})
+        FetchContent_MakeAvailable(pthreads)
+        target_include_directories(${CC_LIB_NAME} PRIVATE ${pthreads_SOURCE_DIR})
+        target_link_libraries(${CC_LIB_NAME} pthreadVC3)
     else ()
         # we've got pthreads already, just use it
         set(CC_LINK_LIBS ${CC_LINK_LIBS} pthread)
     endif ()
 endif ()
 
-if (VRX_REMOVERESPAWNS)
-    add_definitions(-DREMOVE_RESPAWNS)
+if (UNIX)
+    find_package(Threads)
+    set(CC_LINK_LIBS ${CC_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 endif ()
 
-if (NOT VRX_USE_MULTITHREAD)
-    add_definitions(-DGDS_NOMULTITHREADING)
+if (VRX_REMOVERESPAWNS)
+    add_definitions(-DREMOVE_RESPAWNS)
 endif ()
 
 if (NOT VRX_USE_MYSQL)

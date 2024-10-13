@@ -1,6 +1,7 @@
 #include "g_local.h"
 #include "ctf.h"
 #include "../quake2/monsterframes/m_insane.h"
+#include <characters/io/v_characterio.h>
 
 joined_t	players[MAX_CLIENTS];
 
@@ -417,10 +418,8 @@ qboolean SpawnWaitingPlayers (void)
 			continue;
 
 #ifndef NO_GDS
-#ifndef GDS_NOMULTITHREADING
-		if (player->gds_thread_status != 1) // Not loaded?
+		if (vrx_char_io.is_loading(player)) // Not loaded?
 			continue; // Can't play
-#endif
 #endif
 
 		if (!player->client->waiting_to_join)

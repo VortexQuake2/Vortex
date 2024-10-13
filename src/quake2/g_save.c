@@ -77,9 +77,6 @@ field_t fields[] = {
 	{ "map", FOFS(map), F_LSTRING },
 	{"wf_team", FOFS(teamnum), F_INT },
 
-	//arena
-	{ "arena", FOFS(arena), F_INT },
-	//end arena
 	// temp spawn vars -- only valid when the spawn function is called
 	{ "lip", STOFS(lip), F_INT, FFL_SPAWNTEMP },
 	{ "distance", STOFS(distance), F_INT, FFL_SPAWNTEMP },
@@ -399,13 +396,13 @@ void InitGame(void)
 
 	// initialize all entities for this game
 	game.maxentities = maxentities->value;
-	g_edicts = V_Malloc(game.maxentities * sizeof(g_edicts[0]), TAG_GAME);
+	g_edicts = vrx_malloc(game.maxentities * sizeof(g_edicts[0]), TAG_GAME);
 	globals.edicts = g_edicts;
 	globals.max_edicts = game.maxentities;
 
 	// initialize all clients for this game
 	game.maxclients = maxclients->value;
-	game.clients = V_Malloc(game.maxclients * sizeof(game.clients[0]), TAG_GAME);
+	game.clients = vrx_malloc(game.maxclients * sizeof(game.clients[0]), TAG_GAME);
 	globals.num_edicts = game.maxclients + 1;
 
 	//3.0 Load the custom map lists
@@ -523,7 +520,7 @@ static void ReadField(FILE *f, field_t *field, byte *base)
 			*(char **)p = NULL;
 		else
 		{
-			*(char **)p = V_Malloc(len, TAG_LEVEL);
+			*(char **)p = vrx_malloc(len, TAG_LEVEL);
 			fread(*(char **)p, len, 1, f);
 		}
 		break;
@@ -533,7 +530,7 @@ static void ReadField(FILE *f, field_t *field, byte *base)
 			*(char **)p = NULL;
 		else
 		{
-			*(char **)p = V_Malloc(len, TAG_GAME);
+			*(char **)p = vrx_malloc(len, TAG_GAME);
 			fread(*(char **)p, len, 1, f);
 		}
 		break;
@@ -676,11 +673,11 @@ void ReadGame(char *filename)
 		gi.error("Savegame from an older version.\n");
 	}
 
-	g_edicts = V_Malloc(game.maxentities * sizeof(g_edicts[0]), TAG_GAME);
+	g_edicts = vrx_malloc(game.maxentities * sizeof(g_edicts[0]), TAG_GAME);
 	globals.edicts = g_edicts;
 
 	fread(&game, sizeof(game), 1, f);
-	game.clients = V_Malloc(game.maxclients * sizeof(game.clients[0]), TAG_GAME);
+	game.clients = vrx_malloc(game.maxclients * sizeof(game.clients[0]), TAG_GAME);
 	for (i = 0; i<game.maxclients; i++)
 		ReadClient(f, &game.clients[i]);
 

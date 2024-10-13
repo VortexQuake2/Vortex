@@ -374,7 +374,7 @@ char *ED_NewString (char *string)
 	
 	l = strlen(string) + 1;
 
-	newb = V_Malloc (l, TAG_LEVEL);
+	newb = vrx_malloc (l, TAG_LEVEL);
 
 	new_p = newb;
 

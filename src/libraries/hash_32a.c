@@ -119,7 +119,7 @@ fnv_32a_buf(void *buf, size_t len, Fnv32_t hval)
  *  	 hval arg on the first call to either fnv_32a_buf() or fnv_32a_str().
  */
 Fnv32_t
-fnv_32a_str(char *str, Fnv32_t hval)
+fnv_32a_str(const char *str, Fnv32_t hval)
 {
     unsigned char *s = (unsigned char *)str;	/* unsigned string */
 
