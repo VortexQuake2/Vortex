@@ -24,7 +24,7 @@ void menu_add_line (edict_t *ent, const char *line,int option)
 
 	size_t size = strlen(line) + 1;
 	ent->client->menustorage.messages[ent->client->menustorage.num_of_lines].msg = vrx_malloc (size, TAG_GAME);
-	strcpy_s(ent->client->menustorage.messages[ent->client->menustorage.num_of_lines].msg, size, line);
+	strcpy(ent->client->menustorage.messages[ent->client->menustorage.num_of_lines].msg, line);
 	ent->client->menustorage.messages[ent->client->menustorage.num_of_lines].option = option;
 }
 
