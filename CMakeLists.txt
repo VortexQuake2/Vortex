@@ -54,6 +54,7 @@ if (VRX_USE_MYSQL)
             NAMES libmysqlclient mysqlclient
             PATHS
             $ENV{ProgramFiles}/MySQL/*/lib
+            /usr/lib/mysql
             )
 
     find_path(
