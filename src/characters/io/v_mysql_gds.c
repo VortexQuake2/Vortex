@@ -94,6 +94,7 @@ static gds_queue_t *last = NULL;
 // if gds_singleserver is set then bypass the isplaying check.
 static cvar_t *gds_singleserver;
 static cvar_t *gds_serverkey;
+static cvar_t *gds_dbport;
 
 static qboolean ThreadRunning;
 
@@ -293,7 +294,7 @@ void gds_queue_add(edict_t *ent, gds_op operation, int index) {
 
     if (ent) {
         assert(sizeof last->char_name == sizeof ent->client->pers.netname);
-        strcpy_s(last->char_name, sizeof last->char_name, ent->client->pers.netname);
+        strcpy(last->char_name, ent->client->pers.netname);
     }
 
     if (operation == GDS_STASH_TAKE) {
@@ -334,12 +335,12 @@ void gds_queue_add_setowner(edict_t *ent, char *charname, char *masterpw, qboole
     last->ent = ent;
     last->operation = GDS_SET_OWNER;
     last->connection_id = ent->gds_connection_id;
-    strcpy_s(last->owner_name, sizeof last->owner_name, charname);
-    strcpy_s(last->char_name, sizeof last->char_name, ent->client->pers.netname);
+    strcpy(last->owner_name, charname);
+    strcpy(last->char_name, ent->client->pers.netname);
 
     // these verifications should be done by Cmd_SetOwner_f
     // if (strlen(masterpw) < sizeof last->masterpw)
-    strcpy_s(last->masterpw, sizeof last->masterpw, masterpw);
+    strcpy(last->masterpw, masterpw);
     // else {}
 
     if (!gds_process_queue_thread_running())
@@ -636,7 +637,7 @@ void gds_op_set_owner(gds_queue_t *current, MYSQL *db) {
 
     event_owner_error_t *evt = vrx_malloc(sizeof(event_owner_error_t), TAG_GAME);
     assert(sizeof evt->owner_name == sizeof current->owner_name);
-    strcpy_s(evt->owner_name, sizeof evt->owner_name, current->owner_name);
+    strcpy(evt->owner_name, current->owner_name);
     evt->ent = current->ent;
     evt->connection_id = current->connection_id;
 
@@ -984,7 +985,7 @@ void gds_op_stash_take(gds_queue_t *current, MYSQL *db) {
     vrx_item_copy(&item, &evt->taken);
 
     assert(sizeof evt->requester == sizeof current->char_name);
-    strcpy_s(evt->requester, sizeof evt->requester, current->char_name);
+    strcpy(evt->requester, current->char_name);
 
     defer_add(&current->ent->client->defers, (defer_t){
                   .function = vrx_notify_stash_taken,
@@ -1483,24 +1484,24 @@ qboolean gds_op_load(gds_queue_t *current, MYSQL *db) {
 
     if (row) {
         if (row[1])
-            strcpy_s(sk.title, sizeof sk.title, row[1]);
+            strcpy(sk.title, row[1]);
 
-        strcpy_s(sk.player_name, sizeof sk.player_name, row[2]);
+        strcpy(sk.player_name, row[2]);
 
         if (row[3])
-            strcpy_s(sk.password, sizeof sk.password, row[3]);
+            strcpy(sk.password, row[3]);
 
         if (row[4])
-            strcpy_s(sk.email, sizeof sk.email, row[4]);
+            strcpy(sk.email, row[4]);
 
         if (row[5])
-            strcpy_s(sk.owner, sizeof sk.owner, row[5]);
+            strcpy(sk.owner, row[5]);
 
         if (row[6])
-            strcpy_s(sk.member_since, sizeof sk.member_since, row[6]);
+            strcpy(sk.member_since, row[6]);
 
         if (row[7])
-            strcpy_s(sk.last_played, sizeof sk.last_played, row[7]);
+            strcpy(sk.last_played, row[7]);
 
         if (row[8])
             sk.total_playtime = strtol(row[8], NULL, 10);
@@ -1657,8 +1658,8 @@ qboolean gds_op_load(gds_queue_t *current, MYSQL *db) {
             sk.items[index].itemLevel = strtol(row[3], NULL, 10);
             sk.items[index].quantity = strtol(row[4], NULL, 10);
             sk.items[index].untradeable = strtol(row[5], NULL, 10);
-            strcpy_s(sk.items[index].id, sizeof sk.items[index].id, row[6]);
-            strcpy_s(sk.items[index].name, sizeof sk.items[index].name, row[7]);
+            strcpy(sk.items[index].id, row[6]);
+            strcpy(sk.items[index].name, row[7]);
             sk.items[index].numMods = strtol(row[8], NULL, 10);
             sk.items[index].setCode = strtol(row[9], NULL, 10);
             sk.items[index].classNum = strtol(row[10], NULL, 10);
@@ -1896,11 +1897,12 @@ qboolean gds_connect() {
     const char *user = gi.cvar("gds_dbuser", MYSQL_USER, 0)->string;
     const char *pw = gi.cvar("gds_dbpass", MYSQL_PW, 0)->string;
     const char *dbname = gi.cvar("gds_dbname", MYSQL_DBNAME, 0)->string;
+    int dbport = gi.cvar("gds_dbport", 0, 0)->value;
 
     if (!GDS_MySQL) {
         GDS_MySQL = mysql_init(NULL);
         if (mysql_real_connect(GDS_MySQL,
-            database, user, pw, dbname, 0, NULL, 0) == NULL) {
+            database, user, pw, dbname, dbport, NULL, 0) == NULL) {
             gi.dprintf("Failure: %s\n", mysql_error(GDS_MySQL));
             mysql_close(GDS_MySQL);
             GDS_MySQL = NULL;
