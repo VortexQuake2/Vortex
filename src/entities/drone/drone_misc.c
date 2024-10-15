@@ -470,7 +470,7 @@ void drone_pain (edict_t *self, edict_t *other, float kick, int damage)
 	if ((self->s.modelindex != 255) && (self->health < (0.5*self->max_health)))
 		self->s.skinnum |= 1;
 
-	if (self->pain_inner)
+	if (damage > 0 && self->pain_inner)
 		self->pain_inner(self, other, kick, damage);
 
 	// ignore non-living objects

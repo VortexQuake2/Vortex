@@ -58,11 +58,15 @@ void ProjectileLockon (edict_t *proj)
 {
 	vec3_t forward, start;
 
+	if (VectorEmpty(proj->velocity))
+		return; // projectile isn't moving
+
 	G_EntMidPoint(proj->enemy, start);
 	VectorSubtract(start, proj->s.origin, forward);
 	VectorNormalize(forward);
 	VectorCopy (forward, proj->movedir);
-	vectoangles (forward, proj->s.angles);// this might look strange for fire, which is normally always upright
+	if (proj->solid != SOLID_TRIGGER) // excludes exploding armor and flames
+		vectoangles (forward, proj->s.angles); // change projectile angles
 	VectorCopy(proj->s.angles, proj->move_angles);// fix for hammer
 	VectorScale (forward, VectorLength(proj->velocity), proj->velocity);
 }
@@ -143,6 +147,11 @@ qboolean detector_findtarget (edict_t *self)
 		// flag them as detected
 		target->flags |= FL_DETECTED;
 		target->detected_time = level.time + DETECTOR_FLAG_DURATION;
+
+		// force monsters to get angry and attack the detector (despite FL_NOTARGET)
+		if (target->pain)
+			target->pain(target, self, 0, 0);
+
 		foundTarget = true;
 
 		// decloak them
@@ -287,6 +296,7 @@ void BuildDetector (edict_t *self, vec3_t start, vec3_t forward, int slvl, float
 	detector->nextthink = level.time + FRAMETIME;
 	detector->solid = SOLID_BBOX;
 	detector->takedamage = DAMAGE_AIM;
+	detector->flags |= FL_NOTARGET; // AI will ignore
 	
 	detector->die = detector_die;
 	detector->clipmask = MASK_SHOT;

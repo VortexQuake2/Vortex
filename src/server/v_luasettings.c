@@ -1837,15 +1837,15 @@ void Lua_LoadVariables()
 	COST_FOR_HOLYFREEZE = vrx_lua_get_variable("COST_FOR_HOLYFREEZE", 1);
 	COST_FOR_HOOK = vrx_lua_get_variable("COST_FOR_HOOK", 8);
 
-	MAX_BOMB_RANGE = vrx_lua_get_variable("MAX_BOMB_RANGE", 768);
-	COST_FOR_BOMB = vrx_lua_get_variable("COST_FOR_BOMB", 25);
-	METEOR_COST = vrx_lua_get_variable("METEOR_COST", 25);
-	ICEBOLT_COST = vrx_lua_get_variable("ICEBOLT_COST", 25);
-	FIREBALL_COST = vrx_lua_get_variable("FIREBALL_COST", 25);
-	NOVA_COST = vrx_lua_get_variable("NOVA_COST", 25);
-	BOLT_COST = vrx_lua_get_variable("BOLT_COST", 15);
-	CLIGHTNING_COST = vrx_lua_get_variable("CLIGHTNING_COST", 25);
-	LIGHTNING_COST = vrx_lua_get_variable("LIGHTNING_COST", 25);
+	MAX_BOMB_RANGE = vrx_lua_get_variable("MAX_BOMB_RANGE", 8192);
+	COST_FOR_BOMB = vrx_lua_get_variable("COST_FOR_BOMB", 20);
+	METEOR_COST = vrx_lua_get_variable("METEOR_COST", 20);
+	ICEBOLT_COST = vrx_lua_get_variable("ICEBOLT_COST", 20);
+	FIREBALL_COST = vrx_lua_get_variable("FIREBALL_COST", 20);
+	NOVA_COST = vrx_lua_get_variable("NOVA_COST", 10);
+	BOLT_COST = vrx_lua_get_variable("BOLT_COST", 10);
+	CLIGHTNING_COST = vrx_lua_get_variable("CLIGHTNING_COST", 10);
+	LIGHTNING_COST = vrx_lua_get_variable("LIGHTNING_COST", 20);
 
 	RADIUS_AMMOSTEAL = vrx_lua_get_variable("RADIUS_AMMOSTEAL", 512);
 	RADIUS_FREEZE = vrx_lua_get_variable("RADIUS_FREEZE", 512);

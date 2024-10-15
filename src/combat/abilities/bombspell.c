@@ -252,7 +252,7 @@ void BombArea (edict_t *ent, float skill_mult, float cost_mult)
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
 	VectorSet(offset, 0, 7, ent->viewheight-8);
 	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
-	VectorMA(start, 8192, forward, end);
+	VectorMA(start, MAX_BOMB_RANGE, forward, end);
 	tr = gi.trace(start, NULL, NULL, end, ent, MASK_SOLID);
 
 	// make sure this is a floor
@@ -280,7 +280,7 @@ void BombArea (edict_t *ent, float skill_mult, float cost_mult)
 	bomb->owner = ent;
 	bomb->delay = level.time + BOMBAREA_DURATION + BOMBAREA_STARTUP_DELAY;
 	bomb->nextthink = level.time + BOMBAREA_STARTUP_DELAY;
-	bomb->dmg = 50 + 10*ent->myskills.abilities[BOMB_SPELL].current_level*skill_mult;
+	bomb->dmg = CARPETBOMB_INITIAL_DAMAGE + CARPETBOMB_ADDON_DAMAGE *ent->myskills.abilities[BOMB_SPELL].current_level*skill_mult;
 	bomb->think = bombarea_think;
 	VectorCopy(tr.endpos, bomb->s.origin);
 	VectorCopy(tr.endpos, bomb->s.old_origin);
@@ -362,7 +362,7 @@ void BombPerson (edict_t *target, edict_t *owner, float skill_mult)
 	bomb->owner = owner;
 	bomb->enemy = target;
 	bomb->delay = level.time + BOMBPERSON_DURATION;
-	bomb->dmg = 50 + 10*owner->myskills.abilities[BOMB_SPELL].current_level*skill_mult;
+	bomb->dmg = CARPETBOMB_INITIAL_DAMAGE + CARPETBOMB_ADDON_DAMAGE * owner->myskills.abilities[BOMB_SPELL].current_level*skill_mult;
 	bomb->mtype = CURSE_BOMBS;
 	bomb->nextthink = level.time + 1.0;
 	bomb->think = bombperson_think;
