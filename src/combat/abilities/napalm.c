@@ -82,7 +82,7 @@ void SpawnFlames (edict_t *self, vec3_t start, int num_flames, int damage, int t
 		fire->dmg = damage;
 		fire->classname = "fire";
 		fire->s.sound = gi.soundindex ("weapons/bfg__l1a.wav");
-		fire->delay = level.time + GetRandom(3, 6);
+		fire->delay = level.time + GetRandom(1, 3);
 		fire->think = bfire_think;
 		fire->touch = bfire_touch;
 		fire->nextthink = level.time+FRAMETIME;

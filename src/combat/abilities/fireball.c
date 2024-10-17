@@ -6,6 +6,12 @@ void fireball_explode (edict_t *self, cplane_t *plane)
 	vec3_t	forward;
 	edict_t *e=NULL;
 
+	// don't call this more than once
+	if (self->solid == SOLID_NOT)
+		return;
+
+	self->solid = SOLID_NOT;
+
 	// burn targets within explosion radius
 	while ((e = findradius(e, self->s.origin, self->dmg_radius)) != NULL)
 	{
@@ -31,11 +37,23 @@ void fireball_explode (edict_t *self, cplane_t *plane)
 		forward[PITCH] += 0.5 * crandom();
 
 		// create the flame entities
-		ThrowFlame(self->owner, self->s.origin, forward, 0, GetRandom(50, 150), self->radius_dmg, GetRandom(3, 5));
+		ThrowFlame(self->owner, self->s.origin, forward, 0, GetRandom(50, 150), self->radius_dmg, GetRandom(1, 3));
 	}
 
 	T_RadiusDamage(self, self->owner, self->dmg, NULL, self->dmg_radius, MOD_FIREBALL);
-	BecomeExplosion1(self);
+
+	// create explosion effect
+	gi.WriteByte(svc_temp_entity);
+	if (self->waterlevel)
+		gi.WriteByte(TE_ROCKET_EXPLOSION_WATER);
+	else
+		gi.WriteByte(TE_EXPLOSION1);
+	gi.WritePosition(self->s.origin);
+	gi.multicast(self->s.origin, MULTICAST_PHS);
+
+	// remove fireball entity next frame
+	self->think = G_FreeEdict;
+	self->nextthink = level.time + FRAMETIME;
 }
 
 void fireball_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)

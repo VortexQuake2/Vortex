@@ -602,8 +602,8 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             menu_add_line(ent, "regenerate your power cubes.", MENU_WHITE_CENTERED);
             return 2;
         case TALENT_VOLCANIC:
-            menu_add_line(ent, "Adds a chance for fire", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "totem to shoot a fireball.", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "Gives your fire totem a", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "secondary meteor attack.", MENU_WHITE_CENTERED);
             return 2;
             //Alien talents
         case TALENT_SPITTING_GASSER:

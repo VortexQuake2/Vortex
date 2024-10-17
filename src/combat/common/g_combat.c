@@ -1372,6 +1372,9 @@ void T_RadiusDamage (edict_t *inflictor, edict_t *attacker, float damage, edict_
 			if (CanDamage (ent, inflictor))
 			{
 				int knockback = (int) points;
+				
+				if (mod == MOD_FIREBALL)
+					knockback = 100;
 
 				//4.2 limit knockback
 				if (knockback > MAX_KNOCKBACK)

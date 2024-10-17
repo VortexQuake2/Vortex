@@ -4,6 +4,12 @@ void meteor_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *s
 {
 	edict_t *e=NULL;
 
+	// don't call this more than once
+	if (self->solid == SOLID_NOT)
+		return;
+
+	self->solid = SOLID_NOT;
+
 	// burn targets within explosion radius
 	while ((e = findradius(e, self->s.origin, self->dmg_radius)) != NULL)
 	{

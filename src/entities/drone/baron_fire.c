@@ -339,7 +339,7 @@ void flame_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* sur
 	}
 }
 
-void circle_of_flames(edict_t* self, int count, int damage, int burn_damage, float speed)
+void circle_of_flames(edict_t* self, int count, int damage, int burn_damage, float speed, float duration)
 {
 	int			i;
 	float		deg;
@@ -376,7 +376,7 @@ void circle_of_flames(edict_t* self, int count, int damage, int burn_damage, flo
 		flame->dmg_radius = burn_damage;
 		flame->s.frame = 15;//21-32
 		flame->classname = "flame";
-		flame->delay = level.time + 10.0;
+		flame->delay = level.time + duration;
 		gi.linkentity(flame);
 		flame->nextthink = level.time + FRAMETIME;
 		VectorScale(forward, speed, flame->velocity);
@@ -391,7 +391,7 @@ void fire_baron_cof_attack(edict_t* self)
 	damage = METEOR_INITIAL_DMG + METEOR_ADDON_DMG * slvl;
 	burn = 0.1 * damage;
 
-	circle_of_flames(self, 16, damage, burn, 350);
+	circle_of_flames(self, 16, damage, burn, 350, 10.0);
 }
 
 mframe_t baron_fire_frames_swipe[] =

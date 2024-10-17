@@ -109,75 +109,144 @@ int GetTotemLevel(edict_t *ent, int totemType, qboolean allied)
 //			Totem Think Functions
 //************************************************************************************************
 void fire_fireball (edict_t *self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int flames, int flame_damage);
+
+void FireTotem_meteor_attack(edict_t* self, edict_t *target)
+{
+	int damage, radius, speed;
+	float slvl = self->monsterinfo.level;
+
+	//if (!G_EntExists(self->enemy))
+	//	return;
+
+	damage = METEOR_INITIAL_DMG + METEOR_ADDON_DMG * slvl;
+	radius = METEOR_INITIAL_RADIUS + METEOR_ADDON_RADIUS * slvl;
+	speed = METEOR_INITIAL_SPEED + METEOR_ADDON_SPEED * slvl;
+
+	// miss the attack if we are cursed/confused
+	if (que_typeexists(self->curses, CURSE) && rand() > 0.2)
+		fire_meteor(self, self->s.origin, damage, radius, speed); // meteor drops on his head!
+	else
+		fire_meteor(self, target->s.origin, damage, radius, speed);
+
+	// write a nice effect so everyone knows we've cast a spell
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_TELEPORT_EFFECT);
+	gi.WritePosition(self->s.origin);
+	gi.multicast(self->s.origin, MULTICAST_PVS);
+
+	// made a sound
+	self->lastsound = level.framenum;
+}
+
+void FireTotem_fireball_attack(edict_t* self, edict_t *target, qboolean fireball)
+{
+	int damage = FIRETOTEM_DAMAGE_BASE + self->monsterinfo.level * FIRETOTEM_DAMAGE_MULT;
+	int fb_dmg = FIREBALL_INITIAL_DAMAGE + self->monsterinfo.level * FIREBALL_ADDON_DAMAGE;
+	int speed = 600;
+	float	val, dist;
+	float	rad = FIREBALL_INITIAL_RADIUS + FIREBALL_ADDON_RADIUS * self->monsterinfo.level;
+	vec3_t start, forward, end;
+
+	//int count = 10 + self->monsterinfo.level;
+
+	// copy target location
+	G_EntMidPoint(target, end);
+
+	// calculate distance to target
+	dist = distance(end, self->s.origin);
+
+	// move our target point based on projectile and enemy velocity
+	VectorMA(end, (float)dist / speed, target->velocity, end);
+
+	//Talent: Volcanic - chance to shoot a fireball
+	//if (talentLevel > 0 && chance > random())
+	//fireball = true;
+
+	// aim up
+	if (fireball)
+		val = ((dist / 2048) * (dist / 2048) * 2048) + (end[2] - self->s.origin[2]);//4.4
+	else
+		val = ((dist / 512) * (dist / 512) * 512) + (end[2] - self->s.origin[2]);
+	if (val < 0)
+		val = 0;
+	end[2] += val;
+
+	// firing origin
+	VectorCopy(self->s.origin, start);
+	start[2] += self->maxs[2];
+	// calculate direction vector to target
+	VectorSubtract(end, start, forward);
+	VectorNormalize(forward);
+
+	// don't fire in a perfectly straight line
+	forward[1] += 0.05 * crandom();
+
+	// spawn flames
+	if (fireball)
+		fire_fireball(self, start, forward, fb_dmg, rad, speed, FIREBALL_INITIAL_FLAMES, damage);//4.4
+	else
+		ThrowFlame(self, start, forward, distance(start, target->s.origin), speed, damage, 1.0);
+
+	// made a sound
+	self->lastsound = level.framenum;
+}
+
 void FireTotem_think(edict_t *self, edict_t *caster)
 {
-	int talentLevel;
-	float chance;
-	edict_t *target = NULL;
+	int talentLevel = vrx_get_talent_level(caster, TALENT_VOLCANIC);
 
-	//Totem should not work underwater (gee I wonder why).
-	if(!self->waterlevel)
+	// regenerate fireballs every 1 second
+	if (level.framenum > self->monsterinfo.lefty && self->light_level < 3)
 	{
-		//Talent: Volcanic
-        talentLevel = vrx_get_talent_level(caster, TALENT_VOLCANIC);
-		chance = 0.02 * talentLevel;
+		self->light_level = 3; //fireballs
+		self->monsterinfo.lefty = level.framenum + (int)(1 / FRAMETIME);
+	}
+
+	// regen meteors if we've upgraded Volcanic talent
+	if (talentLevel && level.time > self->monsterinfo.attack_finished && self->monsterinfo.jumpdn < 1)
+	{
+		self->monsterinfo.jumpdn = 1; //meteors
+		
+	}
+
+	// fire totem doesn't work underwater and needs ammo
+	if (!self->waterlevel)
+	{
+		edict_t* target = NULL;
 
 		//Find players in radius and attack them.
 		while ((target = findclosestradius_targets(target, self, self->monsterinfo.sight_range)) != NULL)
 		{
-			if (G_ValidTarget_Lite(self, target, true) && (self->s.origin[2]+64>target->s.origin[2]))
+			if (G_ValidTarget_Lite(self, target, true))
 			{
-				vec3_t forward, end;
-				int damage = FIRETOTEM_DAMAGE_BASE + self->monsterinfo.level * FIRETOTEM_DAMAGE_MULT;
-				int fb_dmg = FIREBALL_INITIAL_DAMAGE + self->monsterinfo.level * FIREBALL_ADDON_DAMAGE;
-				//int count = 10 + self->monsterinfo.level;
-				int speed = 600;
-				float	val, dist;
-				float	rad = FIREBALL_INITIAL_RADIUS + FIREBALL_ADDON_RADIUS * self->monsterinfo.level;
-				qboolean fireball=false;
+				if (self->light_level && (self->s.origin[2] + 64 > target->s.origin[2]))
+				{
+					FireTotem_fireball_attack(self, target, true);
+					// use ammo
+					self->light_level--;
+					continue; // try to get a new target if possible--this is also a safety measure in case target is freed by fireball attack
+				}
 
-				// copy target location
-				G_EntMidPoint(target, end);
+				if (level.time > self->monsterinfo.attack_finished)
+				{
+					//gi.dprintf("fired meteor at %.1f\n", level.time);
+					FireTotem_meteor_attack(self, target);
+					self->monsterinfo.attack_finished = level.time + (5.0 - (0.8 * talentLevel)); // talent level reduces refire time
+					// use ammo
+					self->monsterinfo.jumpdn--;
+				}
 
-				// calculate distance to target
-				dist = distance(end, self->s.origin);
-
-				// move our target point based on projectile and enemy velocity
-				VectorMA(end, (float)dist/speed, target->velocity, end);
-
-				//Talent: Volcanic - chance to shoot a fireball
-				if (talentLevel > 0 && chance > random())
-					fireball = true;
-
-				// aim up
-				if (fireball)
-					val = ((dist/2048)*(dist/2048)*2048) + (end[2]-self->s.origin[2]);//4.4
-				else
-					val = ((dist/512)*(dist/512)*512) + (end[2]-self->s.origin[2]);
-				if (val < 0)
-					val = 0;
-				end[2] += val;
-
-				// calculate direction vector to target
-				VectorSubtract(end, self->s.origin, forward);
-				VectorNormalize(forward);
-				
-				// don't fire in a perfectly straight line
-				forward[1] += 0.05*crandom(); 
-
-				// spawn flames
-				if (fireball)
-					fire_fireball(self, self->s.origin, forward, fb_dmg, rad, speed, FIREBALL_INITIAL_FLAMES, damage);//4.4
-				else
-					ThrowFlame(self, self->s.origin, forward, distance(self->s.origin, target->s.origin), speed, damage, 1.0);
-				
-				self->lastsound = level.framenum;
-
-				// refire delay
-				self->delay = level.time + 0.1;
+				// ran out of ammo-- abort searching for targets
+				if (self->light_level < 1)
+					break;
 			}
 		}
 	}
+	//else
+	//	gi.dprintf("out of ammo or underwater\n");
+
+	// delay until FireTotem_think is called again
+	//self->delay = level.time + FRAMETIME;
 
 }
 
@@ -378,6 +447,10 @@ void totem_general_think(edict_t *self)
 	if (self->groundentity)
 		VectorClear(self->velocity);
 	
+	// run firetotem model frames
+	if (self->mtype == TOTEM_FIRE)
+		G_RunFrames(self, 0, 4, false);
+
 	M_CatagorizePosition (self);
 	M_WorldEffects (self);
 //GHz
@@ -508,6 +581,8 @@ void SpawnTotem(edict_t *ent, int abilityID)
 	totem = DropTotem(ent);
 	totem->mtype = totemType;
 	totem->monsterinfo.level = ent->myskills.abilities[abilityID].current_level;
+	totem->light_level = 0;// ammo for fire totem
+	totem->monsterinfo.jumpdn = 0;//ammo
 	totem->classname = "totem";
 	/*totem->owner =*/ totem->activator = ent;
 	totem->think = totem_general_think;
@@ -519,10 +594,12 @@ void SpawnTotem(edict_t *ent, int abilityID)
 	totem->monsterinfo.sight_range = TOTEM_MAX_RANGE; // az
 
 	//TODO: update this with the new model.
-	totem->s.modelindex = gi.modelindex("models/items/mega_h/tris.md2");
+	if (totem->mtype == TOTEM_FIRE)
+		totem->s.modelindex = gi.modelindex("models/objects/brazshrt/tris.md2");
+		//totem->s.modelindex = gi.modelindex("models/objects/bufftotem/tris.md2");
+	else
+		totem->s.modelindex = gi.modelindex("models/items/mega_h/tris.md2");
 	//totem->s.angles[ROLL] = 270;
-	VectorSet (totem->mins, -8, -8, -12);
-	VectorSet (totem->maxs, 8, 8, 16);
 	VectorCopy(ent->s.origin, totem->s.origin);
 	
 	totem->health = TOTEM_HEALTH_BASE + TOTEM_HEALTH_MULT * totem->monsterinfo.level;
@@ -537,6 +614,14 @@ void SpawnTotem(edict_t *ent, int abilityID)
 		totem->health *= 2;
 		// fire totem has a longer delay
 		totem->delay = level.time + 2.0;
+
+		VectorSet(totem->mins, -8, -8, -16);
+		VectorSet(totem->maxs, 8, 8, 16);
+	}
+	else
+	{
+		VectorSet(totem->mins, -8, -8, -12);
+		VectorSet(totem->maxs, 8, 8, 16);
 	}
 
 	totem->max_health = totem->health*2;
@@ -555,12 +640,13 @@ void SpawnTotem(edict_t *ent, int abilityID)
 
 	//Graphical effects
 	//TODO: update this to make it look better.
-	totem->s.effects |= EF_PLASMA | EF_COLOR_SHELL | EF_SPHERETRANS;
+	if (totem->mtype != TOTEM_FIRE)
+		totem->s.effects |= EF_PLASMA | EF_COLOR_SHELL | EF_SPHERETRANS;
 	switch(totemType)
 	{
 	case TOTEM_FIRE:
 		totem->s.effects |= 262144;		//red radius light
-		totem->s.renderfx |= RF_SHELL_RED;
+		//totem->s.renderfx |= RF_SHELL_RED;
 		break;
 	case TOTEM_WATER:
 		totem->s.effects |= 524288;		//blue radius light
