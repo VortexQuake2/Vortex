@@ -650,7 +650,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 	vec3_t	bmin, bmax;
 	edict_t *e;
 
-	if (!strcmp(target->classname, "drone"))
+	if (!strcmp(target->classname, "drone") && !(target->flags & FL_UNDEAD) && target->mtype != M_DECOY) // can't revive decoys and undead/skeletons
 	{
 		// if the summoner is a player, check for sufficient monster slots
 		if (ent->client && (ent->num_monsters + target->monsterinfo.control_cost > MAX_MONSTERS))

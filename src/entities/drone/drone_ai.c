@@ -369,6 +369,8 @@ qboolean M_ValidMedicTarget(const edict_t *self, const edict_t *target) {
 		// is this a monster corpse?
 		if (!strcmp(target->classname, "drone"))
 		{
+			if (target->mtype == M_DECOY || target->flags & FL_UNDEAD) // don't target decoys and the undead (skeletons)
+				return false;
 			// if we are player-owned, don't resurrect more than maximum limit
 			if (self->activator && self->activator->client
 				&& (self->activator->num_monsters + target->monsterinfo.control_cost > MAX_MONSTERS))

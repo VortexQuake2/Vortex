@@ -49,7 +49,8 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 	skill_level = floattoint((1.0+MEDIC_RESURRECT_BONUS)*ent->myskills.abilities[MEDIC].current_level);
 
 	if (!strcmp(target->classname, "drone") 
-		&& (ent->num_monsters + target->monsterinfo.control_cost <= MAX_MONSTERS))
+		&& (ent->num_monsters + target->monsterinfo.control_cost <= MAX_MONSTERS)
+		&& !(target->flags & FL_UNDEAD) && target->mtype != M_DECOY) // don't revive decoys and undead (skeletons)
 	{
 		target->monsterinfo.level = skill_level;
 		M_SetBoundingBox(target->mtype, bmin, bmax);
