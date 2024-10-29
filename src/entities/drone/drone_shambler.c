@@ -477,97 +477,6 @@ static void shambler_fieryskull_update(edict_t* self)
 	gi.multicast(left_pos, MULTICAST_PVS);
 }
 
-//ICEBOLT
-qboolean Shambler_ValidIceboltTarget(const edict_t* self, const edict_t* target)
-{
-	if (!target)
-		return false;
-	if (trading->value && !(target->flags & FL_NO_TRADING_PROTECT))
-		return false;
-	if (!G_ValidTargetEnt(target, true))
-		return false;
-	if (!visible(self, target))
-		return false;
-
-	// Allow freezing of enemy monsters and players, but not allies
-	if (target->client || target->svflags & SVF_MONSTER)
-	{
-		return !OnSameTeam(self, target);
-	}
-
-	return false;
-}
-
-void shambler_icebolt_explode(edict_t* self, cplane_t* plane)
-{
-	edict_t* e = NULL;
-
-	// chill targets within explosion radius
-	while ((e = findradius(e, self->s.origin, self->dmg_radius)) != NULL)
-	{
-		if (Shambler_ValidIceboltTarget(self->owner, e))
-		{
-			e->chill_level = self->chill_level;
-			e->chill_time = level.time + self->chill_time;
-		}
-	}
-
-	T_RadiusDamage(self, self->owner, self->dmg, NULL, self->dmg_radius, MOD_ICEBOLT);
-	BecomeTE(self);
-}
-
-void shambler_icebolt_touch(edict_t* ent, edict_t* other, cplane_t* plane, csurface_t* surf)
-{
-	// remove icebolt if owner dies or becomes invalid or if we touch a sky brush
-	if (!G_EntIsAlive(ent->owner) || (surf && (surf->flags & SURF_SKY)))
-	{
-		G_FreeEdict(ent);
-		return;
-	}
-
-	gi.sound(ent, CHAN_VOICE, gi.soundindex(va("abilities/blastimpact%d.wav", GetRandom(1, 3))), 1, ATTN_NORM, 0);
-	shambler_icebolt_explode(ent, plane);
-}
-
-void icebolt_think(edict_t* self);
-
-static void monster_fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int chillLevel, float chillDuration)
-{
-	edict_t* icebolt;
-	vec3_t dir;
-	vec3_t forward;
-
-	// Get aiming angles
-	vectoangles(aimdir, dir);
-	// Get directional vectors
-	AngleVectors(dir, forward, NULL, NULL);
-
-	// Spawn icebolt entity
-	icebolt = G_Spawn();
-	VectorCopy(start, icebolt->s.origin);
-	icebolt->s.effects |= EF_COLOR_SHELL;
-	icebolt->s.renderfx |= RF_SHELL_BLUE;
-	icebolt->movetype = MOVETYPE_FLYMISSILE;
-	icebolt->clipmask = MASK_SHOT;
-	icebolt->solid = SOLID_BBOX;
-	icebolt->s.modelindex = gi.modelindex("models/objects/flball/tris.md2");
-	icebolt->owner = self;
-	icebolt->touch = shambler_icebolt_touch;
-	icebolt->think = icebolt_think;
-	icebolt->dmg_radius = damage_radius;
-	icebolt->dmg = damage;
-	icebolt->chill_level = chillLevel;
-	icebolt->chill_time = chillDuration;
-	icebolt->classname = "icebolt";
-	icebolt->delay = level.time + 10.0;
-	gi.linkentity(icebolt);
-	icebolt->nextthink = level.time + FRAMETIME;
-	VectorCopy(dir, icebolt->s.angles);
-
-	// Adjust velocity
-	VectorScale(aimdir, speed, icebolt->velocity);
-}
-
 // New function to calculate aim direction
 void CalculateAimDirection(edict_t* self, vec3_t start, vec3_t aim)
 {
@@ -581,6 +490,7 @@ void CalculateAimDirection(edict_t* self, vec3_t start, vec3_t aim)
 	VectorNormalize(aim);
 }
 
+void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int chillLevel, float chillDuration);
 void ShamblerCastIcebolt(edict_t* self)
 {
 	vec3_t forward, right, up;
@@ -612,21 +522,22 @@ void ShamblerCastIcebolt(edict_t* self)
 	start_right[2] = self->s.origin[2] + lightning_right_hand[frame_offset][2];
 
 	// Calculate damage and other parameters
-	int damage = 30 + 15 * self->monsterinfo.level;
-	float damage_radius = 125;
-	int speed = 1200;
-	int chillLevel = 2 * self->monsterinfo.level;
-	float chillDuration = 3.0;
+	float slvl = drone_damagelevel(self);
+	int damage = ICEBOLT_INITIAL_DAMAGE + ICEBOLT_ADDON_DAMAGE * slvl;
+	float damage_radius = ICEBOLT_INITIAL_RADIUS + ICEBOLT_ADDON_RADIUS * slvl;
+	int speed = ICEBOLT_INITIAL_SPEED + ICEBOLT_ADDON_SPEED * slvl;
+	int chillLevel = 2 * slvl;
+	float chillDuration = ICEBOLT_INITIAL_CHILL_DURATION + ICEBOLT_ADDON_CHILL_DURATION * slvl;
 
 	// Use MonsterAim for both hands
 	MonsterAim(self, accuracy, speed, false, -1, aim_left, start_left);
 	MonsterAim(self, accuracy, speed, false, -1, aim_right, start_right);
 
 	// Fire icebolt from left hand
-	monster_fire_icebolt(self, start_left, aim_left, damage, damage_radius, speed, chillLevel, chillDuration);
+	fire_icebolt(self, start_left, aim_left, damage, damage_radius, speed, chillLevel, chillDuration);
 
 	// Fire icebolt from right hand
-	monster_fire_icebolt(self, start_right, aim_right, damage, damage_radius, speed, chillLevel, chillDuration);
+	fire_icebolt(self, start_right, aim_right, damage, damage_radius, speed, chillLevel, chillDuration);
 
 	// Play sound effect
 	gi.sound(self, CHAN_WEAPON, gi.soundindex("spells/coldcast.wav"), 1, ATTN_NORM, 0);

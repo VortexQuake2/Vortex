@@ -2077,3 +2077,51 @@ const char* Time()
 	strftime(buf, 100, "%X", ltime);
 	return buf;
 }
+
+// note: this creates lots of tempents that can cause lagginess/overflows if you overdo it!
+void G_DrawSparks(vec3_t start, vec3_t end, int primary_color, int secondary_color, int num, float dist_between_sparks, int min_rad, int max_rad)
+{
+	int		i, j, loops;
+	float	dist;
+	vec3_t	org, forward;
+
+	// 0 = black, 8 = grey, 15 = white, 16 = light brown, 20 = brown, 57 = light orange, 66 = orange/red, 73 = maroon
+	// 106 = pink, 113 = light blue, 119 = blue, 123 = dark blue, 200 = pale green, 205 = dark green, 209 = bright green
+	// 217 = white, 220 = yellow, 226 = orange, 231 = red/orange, 240 = red, 243 = dark blue
+
+	VectorSubtract(end, start, forward);
+	dist = VectorLength(forward);
+	VectorNormalize(forward);
+	//VectorMA(start, -8, forward, start);
+	//VectorCopy(start, org);
+	// 
+	// calculate number of loops needed to cover the distance between start and end
+	loops = dist / dist_between_sparks;
+	if (loops < 1)
+		loops = 1;
+
+	for (j = 0; j < loops; j++)
+	{
+		for (i = 0; i < num; i++)
+		{
+			VectorCopy(start, org);
+			org[0] += crandom() * GetRandom(min_rad, max_rad);
+			org[1] += crandom() * GetRandom(min_rad, max_rad);
+			//org[2] += crandom() * GetRandom(0, (int) self->dmg_radius);
+
+			gi.WriteByte(svc_temp_entity);
+			gi.WriteByte(TE_LASER_SPARKS);
+			gi.WriteByte(1); // number of sparks
+			gi.WritePosition(org);
+			gi.WriteDir(vec3_origin);
+			//gi.WriteByte(GetRandom(200, 209)); // color
+			if (random() <= 0.33)
+				gi.WriteByte(secondary_color);
+			else
+				gi.WriteByte(primary_color);
+			gi.multicast(org, MULTICAST_PVS);
+		}
+		// move spawn point forward
+		VectorMA(start, dist_between_sparks, forward, start);
+	}
+}

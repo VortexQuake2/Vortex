@@ -522,12 +522,12 @@ edict_t *drone_get_medic_target (edict_t *self)
 	return NULL;
 }
 
-edict_t *drone_get_enemy (edict_t *self)
+edict_t *drone_get_enemy (edict_t *self, float range)
 {
 	edict_t *target = NULL;
 
 	// find an enemy
-	while ((target = findclosestradius_targets (target, self, self->monsterinfo.sight_range)) != NULL)
+	while ((target = findclosestradius_targets (target, self, range)) != NULL)
 	{
 		// screen out invalid targets
 		// az: Replaced G_ValidTarget for lighter check.
@@ -559,7 +559,7 @@ edict_t *drone_get_target (edict_t *self,
 		return target;
 
 	// find enemies
-	if (get_enemy && (target = drone_get_enemy(self)) != NULL)
+	if (get_enemy && (target = drone_get_enemy(self, self->monsterinfo.sight_range)) != NULL)
 		return target;
 
 	// find navi
@@ -684,7 +684,7 @@ void drone_ai_idle (edict_t *self)
 	if (self->mtype == M_MEDIC)
 		M_Regenerate(self, qf2sf(300), qf2sf(10), 1.0, true, true, false, &self->monsterinfo.regen_delay1);
 
-	else if (self->mtype != M_DECOY && self->health >= 0.5 * self->max_health)
+	else if (self->mtype != M_DECOY && self->mtype != M_SKELETON && self->health >= 0.5 * self->max_health)
 	{
 		// change skin if we are being healed by someone else
 		self->s.skinnum &= ~1;
@@ -771,12 +771,15 @@ qboolean drone_ai_findgoal (edict_t *self)
 	// are we supposed to be following someone?
 	else if (self->monsterinfo.leader)
 	{
+		//gi.dprintf("monster has a leader\n");
 		// the leader is still alive or is a combat point
 		if (drone_ValidLeader(self->monsterinfo.leader))
 		{
-			// the leader is more than 256 units away
-			if (entdist(self, self->monsterinfo.leader) > 256)
+			//gi.dprintf("leader is still valid\n");
+			// the leader is more than 512 units away
+			if (entdist(self, self->monsterinfo.leader) > 512)
 			{
+				//gi.dprintf("pursue the leader!\n");
 				// pursue the leader
 				self->goalentity = self->monsterinfo.leader;
 				VectorCopy(self->goalentity->s.origin, self->monsterinfo.last_sighting);
@@ -785,9 +788,10 @@ qboolean drone_ai_findgoal (edict_t *self)
 				self->monsterinfo.run(self);
 				return true;
 			}
+			//gi.dprintf("leader is too far away\n");
 			return false;
 		}
-
+		//gi.dprintf("leader is no longer valid\n");
 		// the leader is no longer valid, so forget about him
 		self->monsterinfo.leader = NULL;
 	}
@@ -1714,7 +1718,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 		gi.dprintf("drone_ai_run1() AI_FINDNAVI %s goalentity %s\n", self->monsterinfo.aiflags & AI_FIND_NAVI ? "true" : "false", self->goalentity ? "true" : "false");
 	}
 
-	if (self->mtype != M_DECOY && self->health >= 0.5 * self->max_health)
+	if (self->mtype != M_DECOY && self->mtype != M_SKELETON && self->health >= 0.5 * self->max_health)
 	{
 		// change skin if we are being healed by someone else
 		self->s.skinnum &= ~1;
@@ -1797,6 +1801,21 @@ void drone_ai_run1 (edict_t *self, float dist)
 
 				// don't let a search time-out as long as we can see the enemy
 				self->monsterinfo.search_frames = 0;
+			}
+			else if (self->monsterinfo.leader && goal == self->monsterinfo.leader && self->monsterinfo.leader->mtype != M_COMBAT_POINT)
+			{
+				if (DRONE_DEBUG)
+					gi.dprintf("drone is following the leader\n");
+				if (entdist(self, goal) <= 256)
+				{
+					if (DRONE_DEBUG)
+						gi.dprintf("drone is close enough to the leader\n");
+					// we're close enough, clear the goal
+					self->monsterinfo.aiflags &= ~AI_COMBAT_POINT;
+					drone_ai_giveup(self);
+					return;
+				}
+
 			}
 		}
 		// we can't see our goal and the goal entity is not at the last known position

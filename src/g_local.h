@@ -103,6 +103,7 @@ extern long FLAG_FRAMES;
 #define FL_NO_TRADING_PROTECT	0x00100000	// let it be hurt in trading mode
 #define FL_BLACK_DEATH			0x00200000	// extra damage from plague
 #define FL_PICKUP				0x00400000	// entity is being picked up by player
+#define FL_UNDEAD				0x00800000	// entity cannot die (temporary death until resurrection)
 #define FL_RESPAWN				0x80000000	// used for item respawning
 
 #define FRAMETIME		(1/sv_fps->value)
@@ -1078,6 +1079,7 @@ edict_t *findclosestradius (edict_t *prev_ed, vec3_t org, float rad);//GHz
 edict_t *findclosestradius1 (edict_t *prev_ed, vec3_t org, float rad);//GHz
 edict_t *G_FindEntityByMtype (int mtype, edict_t *from);//GHz
 float Get2dDistance (vec3_t v1, vec3_t v2);//GHz
+void G_DrawSparks(vec3_t start, vec3_t end, int primary_color, int secondary_color, int num, float dist_between_sparks, int min_rad, int max_rad);//GHz
 edict_t *G_PickTarget (char *targetname);
 void	G_UseTargets (edict_t *ent, edict_t *activator);
 void	G_SetMovedir (vec3_t angles, vec3_t movedir);
@@ -1257,6 +1259,9 @@ void monster_fire_railgun (edict_t *self, vec3_t start, vec3_t aimdir, int damag
 void monster_fire_bfg (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int kick, float damage_radius, int flashtype);
 void monster_fire_sword (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype); //Ghz
 void monster_fire_20mm(edict_t* self, vec3_t start, vec3_t dir, int damage, int kick, int flashtype);
+void monster_fire_fireball(edict_t* self);
+void monster_fire_poison(edict_t* self);
+void monster_fire_icebolt(edict_t* self);
 void M_droptofloor (edict_t *ent);
 void monster_think (edict_t *self);
 void walkmonster_start (edict_t *self);
@@ -1943,7 +1948,7 @@ struct edict_s
 	int num_obstacle;
 	int num_magmine;
 	int num_barrels;
-
+	int num_skeletons;
 	int	num_spikeball;
 	int	num_laserplatforms; //4.4 Talent: Laser Platform
 	int num_hammers; //4.4 Talent: Boomerang
@@ -2163,7 +2168,7 @@ void Cmd_Decoy_f (edict_t *ent);
 qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, qboolean regen_health, qboolean regen_armor, qboolean regen_ammo, int *nextframe);
 qboolean M_NeedRegen (const edict_t *ent);
 qboolean M_IgnoreInferiorTarget (edict_t *self, edict_t *target);//4.5
-qboolean M_MeleeAttack(edict_t *self, float range, int damage, int knockback);
+edict_t *M_MeleeAttack(edict_t *self, float range, int damage, int knockback);
 qboolean M_ContinueAttack(edict_t* self, mmove_t* attack_move, mmove_t* end_move, float min_dist, float max_dist, float chance);
 void M_DelayNextAttack(edict_t* self, float delay, qboolean add_attack_frames);
 qboolean M_ValidMedicTarget(const edict_t *self, const edict_t *target);
@@ -2244,6 +2249,7 @@ void Cmd_LaserSight_f(edict_t *ent);
 #define M_COMMANDER 23
 #define M_BARON_FIRE	24
 #define M_SHAMBLER	25
+#define M_SKELETON	26
 #define M_MINISENTRY	100
 #define M_SENTRY		101
 #define M_BFG_SENTRY	102

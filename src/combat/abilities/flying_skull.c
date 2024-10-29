@@ -44,7 +44,7 @@ qboolean skull_checkposition (edict_t *self)
 			self->activator->client->pers.inventory[power_cube_index] += SKULL_COST;
 			safe_centerprintf(self->activator, "Skull was removed.\n");
 		}
-		G_FreeEdict(self);
+		G_FreeEdict(self);//FIXME: this is not a very safe way to remove an entity!
 		gi.dprintf("WARNING: Skull removed from solid.\n");
 		return false;
 	}

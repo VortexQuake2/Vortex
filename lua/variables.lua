@@ -14,7 +14,7 @@ SHIELD_ABILITY_DELAY                     = 0.3
 SMARTROCKET_LOCKFRAMES                   = 3
 DAMAGE_ESCAPE_DELAY                      = 0.1
 AMMO_REGEN_DELAY 						 = 3.5
-MAX_KNOCKBACK                            = 300
+MAX_KNOCKBACK                            = 200
 CHAT_PROTECT_FRAMES                      = 200
 MAX_HOURS                                = 24
 MAX_CREDITS                              = 10000000
@@ -340,6 +340,7 @@ SPIKER_MAX_COUNT                         = 4
 GASSER_MAX_COUNT                         = 4
 OBSTACLE_MAX_COUNT                       = 6
 SPIKEBALL_MAX_COUNT                      = 3
+SKELETON_MAX							 = 4
 DELAY_MONSTER_THINK                      = 3
 DELAY_MONSTER                            = 3
 ACID_GASSER_SYNERGY_BONUS				 = 0.05
@@ -629,6 +630,9 @@ SKULL_COST                               = 100
 SKULL_REGEN_FRAMES                       = 400
 SKULL_DELAY                              = 2
 SKULL_SEARCH_TIMEOUT                     = 50
+SKELETON_COST							 = 50
+SKELETON_INITIAL_HEALTH					 = 0
+SKELETON_ADDON_HEALTH					 = 100
 
 -- Monsters --
 M_SOLDIER_INITIAL_HEALTH                 = 50	-- 200
@@ -723,6 +727,7 @@ M_RAILGUN_DMG_MAX				=	0
 M_MELEE_DMG_BASE				=	50
 M_MELEE_DMG_ADDON				=	25
 M_MELEE_DMG_MAX					=	0
+M_MELEE_RANGE					=	96
 M_HYPERBLASTER_DMG_BASE			=	20
 M_HYPERBLASTER_DMG_ADDON		=	3
 M_HYPERBLASTER_DMG_MAX			=	0
@@ -1251,6 +1256,15 @@ GASSER_DELAY                             = 1.0
 
 GASCLOUD_POISON_DURATION                 = 10.0
 GASCLOUD_POISON_FACTOR                   = 0.1
+
+POISON_INITIAL_DAMAGE					 = 0
+POISON_ADDON_DAMAGE						 = 3
+POISON_INITIAL_SPEED					 = 600
+POISON_ADDON_SPEED						 = 0
+POISON_INITIAL_DURATION					 = 10
+POISON_ADDON_DURATION					 = 0
+POISON_INITIAL_RADIUS					 = 100
+POISON_ADDON_RADIUS						 = 0
 
 ACID_INITIAL_DAMAGE						 = 50
 ACID_ADDON_DAMAGE						 = 20

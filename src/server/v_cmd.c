@@ -52,6 +52,7 @@ void Cmd_Spiker_f (edict_t *ent);
 void Cmd_Obstacle_f (edict_t *ent);
 //void Cmd_box_f(edict_t *ent); //lepi
 void Cmd_Gasser_f (edict_t *ent);
+void Cmd_Raise_Skeleton_f(edict_t* ent);
 void Cmd_TossSpikeball (edict_t *ent);
 void Cmd_FireAcid_f (edict_t *ent);
 void Cmd_Cocoon_f (edict_t *ent);
@@ -159,6 +160,7 @@ const gameCommand_s commands[] =
 	{ "spore",		    Cmd_TossSpikeball },
 	{ "acid",		    Cmd_FireAcid_f },
 	{ "cocoon",		    Cmd_Cocoon_f },
+	{ "skeleton",		Cmd_Raise_Skeleton_f },
 	{ "meditate"   ,	Cmd_Meditate_f },
 	{ "overload",	    Cmd_Overload_f },
 	{ "laserplatform",  Cmd_CreateLaserPlatform_f },

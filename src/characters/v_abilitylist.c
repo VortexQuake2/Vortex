@@ -6,7 +6,7 @@ uint8_t ability_class[MAX_ABILITIES][CLASS_MAX]; // whether ability i is in char
 const abilitydef_t ability_general[] = {
         {VITALITY,        0, DEFAULT_SOFTMAX,  1},
         {MAX_AMMO,        0, DEFAULT_SOFTMAX,  1},
-        {POWER_REGEN,     1, DEFAULT_SOFTMAX,                1},
+        {POWER_REGEN,     1, DEFAULT_SOFTMAX,  1},
         {WORLD_RESIST,    0, 1,                1},
         {AMMO_REGEN,      0, DEFAULT_SOFTMAX,  1},
         {REGENERATION,    0, 5,                1},
@@ -21,9 +21,11 @@ const abilitydef_t ability_general[] = {
         {SCANNER,         0, 1,                1},
         {HA_PICKUP,       0, DEFAULT_SOFTMAX,  1},
         {FLASH,           0, 1,                1},
+        {MONSTER_SUMMON,  0, 5,                1},
         {-1,              0, 0,                0} // Guardian (Add skills above this)
 };
 
+// theme: run and gun! max mobility and offense-biased
 const abilitydef_t ability_soldier[] = {
         {STRENGTH,         0, DEFAULT_SOFTMAX,   0},
         {RESISTANCE,       0, DEFAULT_SOFTMAX,   0},
@@ -38,24 +40,27 @@ const abilitydef_t ability_soldier[] = {
         {-1,            0, 0,                 0} // Guardian (Add skills above this)
 };
 
+// theme: undead-themed soldier but better defense
 const abilitydef_t ability_vampire[] = {
         {VAMPIRE,        0, DEFAULT_SOFTMAX,   0},
         {GHOST,          0, DEFAULT_SOFTMAX,   0},
         {LIFE_DRAIN,     0, DEFAULT_SOFTMAX,   0},
         {FLESH_EATER,    0, DEFAULT_SOFTMAX,   0},
-        {CORPSE_EXPLODE, 0, DEFAULT_SOFTMAX,   0},
+        {PLAGUE,         0, DEFAULT_SOFTMAX,   0},
         {MIND_ABSORB,    0, DEFAULT_SOFTMAX,   0},
         {BLINKSTRIKE,    0, DEFAULT_SOFTMAX,   0},
         {CONVERSION,     0, DEFAULT_SOFTMAX,   0},
-        {CLOAK,          1, 1,                 0},
+        {CLOAK,          0, 1,                 0},
+        {JETPACK,        1, 1,                 0},
         {-1,             0, 0,                 0} // Guardian (Add skills above this)
 };
 
+// theme: undead-themed camper with skills that complement summons
 const abilitydef_t ability_necromancer[] = { // NECROMANCER
 
-        {MONSTER_SUMMON, 0, DEFAULT_SOFTMAX,   0},
+        {SKELETON,       0, DEFAULT_SOFTMAX,   0},
         {HELLSPAWN,      0, DEFAULT_SOFTMAX,   0},
-        {PLAGUE,         0, DEFAULT_SOFTMAX,   0},
+        {CORPSE_EXPLODE, 0, DEFAULT_SOFTMAX,   0},
         {LIFE_TAP,       0, DEFAULT_SOFTMAX,   0},
         {AMP_DAMAGE,     0, DEFAULT_SOFTMAX,   0},
         {CRIPPLE,        0, DEFAULT_SOFTMAX,   0},
@@ -65,6 +70,7 @@ const abilitydef_t ability_necromancer[] = { // NECROMANCER
         {-1,             0, 0,                 0} // Guardian (Add skills above this)
 };
 
+// theme: high-touch static defense
 const abilitydef_t ability_engineer[] = { // ENGINEER
         {PROXY,           0, DEFAULT_SOFTMAX,   0},
         {BUILD_SENTRY,    0, DEFAULT_SOFTMAX,   0},
@@ -80,6 +86,7 @@ const abilitydef_t ability_engineer[] = { // ENGINEER
         {-1,              0, 0,                 0} // Guardian (Add skills above this)
 };
 
+// theme: high mobility camper/soldier hybrid
 const abilitydef_t ability_shaman[] = { // SHAMAN
         {FIRE_TOTEM,    0, DEFAULT_SOFTMAX, 0},
         {WATER_TOTEM,   0, DEFAULT_SOFTMAX, 0},
@@ -94,6 +101,7 @@ const abilitydef_t ability_shaman[] = { // SHAMAN
         {-1,            0, 0,               0} // Guardian (Add skills above this)
 };
 
+// theme: high mobility all out magical offense
 const abilitydef_t ability_mage[] = { // MAGE
         {MAGICBOLT,       0, DEFAULT_SOFTMAX,   0},
         {NOVA,            0, DEFAULT_SOFTMAX,   0},
@@ -121,6 +129,7 @@ const abilitydef_t ability_cleric[] = {
         {-1,          0, 0,               0} // Guardian (Add skills above this)
 };
 
+// theme: mostly melee tank
 const abilitydef_t ability_knight[] = { // knight
 
         {ARMOR_UPGRADE, 0, DEFAULT_SOFTMAX,   0},
@@ -135,6 +144,7 @@ const abilitydef_t ability_knight[] = { // knight
         {-1,            0, 0,                 0} // Guardian (Add skills above this)
 };
 
+// theme: alien-themed camper with low-touch bio static defense
 const abilitydef_t ability_alien[] = {
         {SPIKER,    0, DEFAULT_SOFTMAX, 0},
         {OBSTACLE,  0, DEFAULT_SOFTMAX, 0},

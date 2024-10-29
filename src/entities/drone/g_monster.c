@@ -330,7 +330,78 @@ void monster_fire_sword (edict_t *self, vec3_t start, vec3_t aimdir, int damage,
 	gi.multicast (start, MULTICAST_PVS);
 }
 
+void fire_fireball(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int flames, int flame_damage);
+void monster_fire_fireball(edict_t* self)
+{
+	int damage, radius, speed, flames, flame_damage;
+	vec3_t	forward, start;
 
+	if (!G_EntExists(self->enemy))
+		return;
+
+	float slvl = drone_damagelevel(self);
+
+	damage = FIREBALL_INITIAL_DAMAGE + FIREBALL_ADDON_DAMAGE * slvl;
+	radius = FIREBALL_INITIAL_RADIUS + FIREBALL_ADDON_RADIUS * slvl;
+	flame_damage = FIREBALL_ADDON_FLAMEDMG * slvl;
+	speed = FIREBALL_INITIAL_SPEED + FIREBALL_ADDON_SPEED * slvl;
+	flames = FIREBALL_INITIAL_FLAMES + FIREBALL_ADDON_FLAMES * slvl;
+
+	MonsterAim(self, M_PROJECTILE_ACC, speed, true, 0, forward, start);
+	fire_fireball(self, start, forward, damage, radius, speed, flames, flame_damage);
+
+	gi.sound(self, CHAN_ITEM, gi.soundindex("abilities/firecast.wav"), 1, ATTN_NORM, 0);
+}
+
+void fire_poison(edict_t* self, vec3_t start, vec3_t aimdir, int impact_dmg, float impact_rad, int speed, int poison_dmg, int poison_dur, qboolean cloud);
+void monster_fire_poison(edict_t* self)
+{
+	int damage, radius, speed;
+	float slvl, chance;
+	vec3_t	forward, start;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	slvl = drone_damagelevel(self);
+
+	damage = POISON_INITIAL_DAMAGE + POISON_ADDON_DAMAGE * slvl;
+	radius = POISON_INITIAL_RADIUS + POISON_ADDON_RADIUS * slvl;
+	speed = POISON_INITIAL_SPEED + POISON_ADDON_SPEED * slvl;
+
+	MonsterAim(self, M_PROJECTILE_ACC, speed, true, 0, forward, start);
+
+	// chance that a poison cloud spawns on impact increases with level
+	chance = 0.02 * slvl;
+
+	if (chance > random())
+		fire_poison(self, start, forward, 0, radius, speed, damage, 10, true);
+	else
+		fire_poison(self, start, forward, 0, radius, speed, damage, 10, false);
+}
+
+void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int chillLevel, float chillDuration);
+void monster_fire_icebolt(edict_t* self)
+{
+	int damage, radius, speed;
+	float slvl, duration;
+	vec3_t	forward, start;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	slvl = drone_damagelevel(self);
+
+	damage = ICEBOLT_INITIAL_DAMAGE + ICEBOLT_ADDON_DAMAGE * slvl;
+	radius = ICEBOLT_INITIAL_RADIUS + ICEBOLT_ADDON_RADIUS * slvl;
+	speed = ICEBOLT_INITIAL_SPEED + ICEBOLT_ADDON_SPEED * slvl;
+	duration = ICEBOLT_INITIAL_CHILL_DURATION + ICEBOLT_ADDON_CHILL_DURATION * slvl;
+
+	MonsterAim(self, M_PROJECTILE_ACC, speed, true, 0, forward, start);
+	fire_icebolt(self, start, forward, damage, radius, speed, (int)(2 * slvl), duration);
+	// Play sound effect
+	gi.sound(self, CHAN_WEAPON, gi.soundindex("spells/coldcast.wav"), 1, ATTN_NORM, 0);
+}
 //
 // Monster utility functions
 //
@@ -525,20 +596,138 @@ void M_SetEffects (edict_t *ent)
 	V_SetEffects(ent);
 }
 
-void M_MoveFrame (edict_t *self)
+void vrx_adjust_moveframe_scale(edict_t* self)
 {
-	mmove_t	*move;
-	int		index;
-//	int		frames;
 	float	temp;
-//	edict_t *curse;
-	que_t	*slot=NULL;
+	que_t* slot = NULL;
+
+	//4.5 monster bonus flags
+	if (self->monsterinfo.bonus_flags & BF_FANATICAL)
+		self->monsterinfo.scale *= 2.0;
+	if (self->monsterinfo.bonus_flags & BF_GHOSTLY)
+		self->monsterinfo.scale *= 0.5;
+
+	// is this monster slowed by the holyfreeze aura?
+	slot = que_findtype(self->curses, slot, AURA_HOLYFREEZE);
+	if (slot)
+	{
+		temp = 1 / (1 + 0.1 * slot->ent->owner->myskills.abilities[HOLY_FREEZE].current_level);
+		if (temp < 0.25) temp = 0.25;
+		self->monsterinfo.scale *= temp;
+	}
+
+	// chill effect slows monster movement rate
+	if (self->chill_time > level.time)
+		self->monsterinfo.scale *= 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
+
+	// 3.5 weaken slows down target
+	if ((slot = que_findtype(self->curses, NULL, WEAKEN)) != NULL)
+	{
+		temp = 1 / (1 + WEAKEN_SLOW_BASE + WEAKEN_SLOW_BONUS
+			* slot->ent->owner->myskills.abilities[WEAKEN].current_level);
+		self->monsterinfo.scale *= temp;
+	}
+
+	//caltrops
+	if (self->slowed_time > level.time)
+		self->monsterinfo.scale *= self->slowed_factor;
+}
+
+void M_MoveFrame_Reverse (edict_t* self)
+{
+	mmove_t* move;
+	int		index;
 
 	if (!self->inuse)
 		return;
 
 	move = self->monsterinfo.currentmove;
 
+	// is the next frame between the first and last frame of currentmove?
+	if ((self->monsterinfo.nextframe) && (self->monsterinfo.nextframe >= move->lastframe)
+		&& (self->monsterinfo.nextframe <= move->firstframe))
+	{
+		self->s.frame = self->monsterinfo.nextframe;
+		self->monsterinfo.nextframe = 0;
+	}
+	else
+	{
+		// have we reached the last frame of currentmove?
+		if (self->s.frame == move->lastframe)
+		{
+			// does the currentmove have an end function?
+			if (move->endfunc)
+			{
+				// call it
+				move->endfunc(self);
+
+				// regrab move, endfunc is very likely to change it
+				move = self->monsterinfo.currentmove;
+
+				// check for death
+				if (self->svflags & SVF_DEADMONSTER)
+					return;
+			}
+		}
+
+		// is current frame not within the bounds of the first and last frame of currentmove?
+		if (self->s.frame < move->lastframe || self->s.frame > move->firstframe)
+		{
+			self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+			self->s.frame = move->firstframe;
+		}
+		else
+		{
+			if (!(self->monsterinfo.aiflags & AI_HOLD_FRAME))
+			{
+				self->s.frame--;
+				if (self->s.frame < move->lastframe)
+					self->s.frame = move->firstframe;
+			}
+		}
+	}
+
+	index = move->firstframe - self->s.frame;
+	if (move->frame[index].aifunc)
+		if (!(self->monsterinfo.aiflags & AI_HOLD_FRAME))
+		{
+			self->monsterinfo.scale = 1.0;
+			vrx_adjust_moveframe_scale(self);
+
+			move->frame[index].aifunc(self, move->frame[index].dist * self->monsterinfo.scale);
+		}
+		else
+		{
+			// we're not going anywhere!
+			move->frame[index].aifunc(self, 0);
+		}
+
+	if (move->frame[index].thinkfunc)
+		move->frame[index].thinkfunc(self);
+}
+
+void M_MoveFrame (edict_t *self)
+{
+	mmove_t	*move;
+	int		index;
+//	int		frames;
+
+//	edict_t *curse;
+
+
+	if (!self->inuse)
+		return;
+
+	move = self->monsterinfo.currentmove;
+
+	// if move frames are in reverse order, call reverse function
+	if (move->firstframe > move->lastframe)
+	{
+		M_MoveFrame_Reverse(self);
+		return;
+	}
+
+	// is the next frame between the first and last frame of currentmove?
 	if ((self->monsterinfo.nextframe) && (self->monsterinfo.nextframe >= move->firstframe) 
 		&& (self->monsterinfo.nextframe <= move->lastframe))
 	{
@@ -547,10 +736,13 @@ void M_MoveFrame (edict_t *self)
 	}
 	else
 	{
+		// have we reached the last frame of currentmove?
 		if (self->s.frame == move->lastframe)
 		{
+			// does the currentmove have an end function?
 			if (move->endfunc)
 			{
+				// call it
 				move->endfunc (self);
 
 				// regrab move, endfunc is very likely to change it
@@ -562,6 +754,7 @@ void M_MoveFrame (edict_t *self)
 			}
 		}
 
+		// is current frame not within the bounds of the first and last frame of currentmove?
 		if (self->s.frame < move->firstframe || self->s.frame > move->lastframe)
 		{
 			self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
@@ -583,38 +776,8 @@ void M_MoveFrame (edict_t *self)
 		if (!(self->monsterinfo.aiflags & AI_HOLD_FRAME))
 		{
 			self->monsterinfo.scale = 1.0;
-
-			//4.5 monster bonus flags
-			if (self->monsterinfo.bonus_flags & BF_FANATICAL)
-				self->monsterinfo.scale *= 2.0;
-			if (self->monsterinfo.bonus_flags & BF_GHOSTLY)
-				self->monsterinfo.scale *= 0.5;
-
-			// is this monster slowed by the holyfreeze aura?
-			slot = que_findtype(self->curses, slot, AURA_HOLYFREEZE);
-			if (slot)
-			{
-				temp = 1 / (1 + 0.1 * slot->ent->owner->myskills.abilities[HOLY_FREEZE].current_level);
-				if (temp < 0.25) temp = 0.25;
-				self->monsterinfo.scale *= temp;
-			}
-
-			// chill effect slows monster movement rate
-			if(self->chill_time > level.time)
-				self->monsterinfo.scale *= 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
-
-			// 3.5 weaken slows down target
-			if ((slot = que_findtype(self->curses, NULL, WEAKEN)) != NULL)
-			{
-				temp = 1 / (1 + WEAKEN_SLOW_BASE + WEAKEN_SLOW_BONUS 
-					* slot->ent->owner->myskills.abilities[WEAKEN].current_level);
-				self->monsterinfo.scale *= temp;
-			}
-
-			//caltrops
-			if (self->slowed_time > level.time)
-				self->monsterinfo.scale *= self->slowed_factor;
-
+			vrx_adjust_moveframe_scale(self);
+			
 			move->frame[index].aifunc (self, move->frame[index].dist * self->monsterinfo.scale);
 		}
 		else

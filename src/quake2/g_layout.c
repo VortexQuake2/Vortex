@@ -259,7 +259,7 @@ void layout_clean_tracked_entity_list(layout_t* layout)
 	qboolean cleaned = false;
 	for (int i = 0; i < layout->tracked_count; i++)
 	{
-		if (!layout->tracked_list[i]->inuse || layout->tracked_list[i]->deadflag != DEAD_NO)
+		if (!layout->tracked_list[i]->inuse || (layout->tracked_list[i]->deadflag != DEAD_NO && !(layout->tracked_list[i]->flags & FL_UNDEAD)))
 		{
 			layout->tracked_list[i] = layout->tracked_list[--layout->tracked_count];
 			i--; // continue with this entity
@@ -312,6 +312,7 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	case M_FORCEWALL:
 	case M_BARON_FIRE:
 	case M_SHAMBLER:
+	case M_SKELETON:
 		name = lva("%s", V_GetMonsterName(ent));
 		data = lva("+%d/%d", ent->health, ent->monsterinfo.power_armor_power);
 		break;
@@ -488,6 +489,16 @@ void layout_generate_misc(edict_t* ent, sidebar_t* sidebar)
 		res.pos = sidebar_get_next_line_pos(sidebar);
 		res.name = lva("furied");
 		res.data = lva("%.2fs", dt);
+		sidebar_add_entry(sidebar, res);
+	}
+
+	if (ent->chill_time >= level.time)
+	{
+		float dt = ent->chill_time - level.time;
+		sidebar_entry_t res = { 0 };
+		res.pos = sidebar_get_next_line_pos(sidebar);
+		res.name = lva("chilled");
+		res.data = lva("%.2fs (%d)", dt, ent->chill_level);
 		sidebar_add_entry(sidebar, res);
 	}
 

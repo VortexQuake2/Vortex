@@ -227,7 +227,7 @@ void FireTotem_think(edict_t *self, edict_t *caster)
 					continue; // try to get a new target if possible--this is also a safety measure in case target is freed by fireball attack
 				}
 
-				if (level.time > self->monsterinfo.attack_finished)
+				if (self->monsterinfo.jumpdn && level.time > self->monsterinfo.attack_finished)
 				{
 					//gi.dprintf("fired meteor at %.1f\n", level.time);
 					FireTotem_meteor_attack(self, target);

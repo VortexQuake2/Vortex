@@ -567,6 +567,10 @@ double SPIKER_MAX_COUNT;
 double GASSER_MAX_COUNT;
 double OBSTACLE_MAX_COUNT;
 double SPIKEBALL_MAX_COUNT;
+double SKELETON_MAX;
+double SKELETON_COST;
+double SKELETON_INITIAL_HEALTH;
+double SKELETON_ADDON_HEALTH;
 double MAX_MONSTERS;
 double DELAY_MONSTER_THINK;
 double DELAY_MONSTER;
@@ -946,6 +950,7 @@ double M_RAILGUN_DMG_MAX;
 double M_MELEE_DMG_BASE;
 double M_MELEE_DMG_ADDON;
 double M_MELEE_DMG_MAX;
+double M_MELEE_RANGE;
 double M_HYPERBLASTER_DMG_BASE;
 double M_HYPERBLASTER_DMG_ADDON;
 double M_HYPERBLASTER_DMG_MAX;
@@ -1387,6 +1392,14 @@ double GASSER_COST;
 double GASSER_DELAY;
 double GASCLOUD_POISON_DURATION;
 double GASCLOUD_POISON_FACTOR;
+double POISON_INITIAL_DAMAGE;
+double POISON_ADDON_DAMAGE;
+double POISON_INITIAL_SPEED;
+double POISON_ADDON_SPEED;
+double POISON_INITIAL_DURATION;
+double POISON_ADDON_DURATION;
+double POISON_INITIAL_RADIUS;
+double POISON_ADDON_RADIUS;
 double ACID_INITIAL_DAMAGE;
 double ACID_ADDON_DAMAGE;
 double ACID_INITIAL_SPEED;
@@ -1438,7 +1451,7 @@ void Lua_LoadVariables()
 	EXP_WORLD_MONSTER = vrx_lua_get_variable("EXP_WORLD_MONSTER", 35);
 	EXP_MINIBOSS = vrx_lua_get_variable("EXP_MINIBOSS", 100);
 	AMMO_REGEN_DELAY = vrx_lua_get_variable("AMMO_REGEN_DELAY", 3);
-	MAX_KNOCKBACK = vrx_lua_get_variable("MAX_KNOCKBACK", 300);
+	MAX_KNOCKBACK = vrx_lua_get_variable("MAX_KNOCKBACK", 200);
 	CHAT_PROTECT_FRAMES = vrx_lua_get_variable("CHAT_PROTECT_FRAMES", 200);
 	MAX_HOURS = vrx_lua_get_variable("MAX_HOURS", 24);
 	MAX_CREDITS = vrx_lua_get_variable("MAX_CREDITS", 10000000);
@@ -1765,6 +1778,11 @@ void Lua_LoadVariables()
 	OBSTACLE_MAX_COUNT = vrx_lua_get_variable("OBSTACLE_MAX_COUNT", 5);
 
 	SPIKEBALL_MAX_COUNT = vrx_lua_get_variable("SPIKEBALL_MAX_COUNT", 3);
+
+	SKELETON_MAX = vrx_lua_get_variable("SKELETON_MAX", 4);
+	SKELETON_COST = vrx_lua_get_variable("SKELETON_COST", 50);
+	SKELETON_INITIAL_HEALTH = vrx_lua_get_variable("SKELETON_INITIAL_HEALTH", 0);
+	SKELETON_ADDON_HEALTH = vrx_lua_get_variable("SKELETON_ADDON_HEALTH", 100);
 
 	MAX_MONSTERS = vrx_lua_get_variable("MAX_MONSTERS", 3);
 
@@ -2201,6 +2219,7 @@ void Lua_LoadVariables()
 	M_MELEE_DMG_BASE = vrx_lua_get_variable("M_MELEE_DMG_BASE", 50);
 	M_MELEE_DMG_ADDON = vrx_lua_get_variable("M_MELEE_DMG_ADDON", 25);
 	M_MELEE_DMG_MAX = vrx_lua_get_variable("M_MELEE_DMG_MAX", 0);
+	M_MELEE_RANGE = vrx_lua_get_variable("M_MELEE_RANGE", 96);
 
 	M_HYPERBLASTER_DMG_BASE = vrx_lua_get_variable("M_HYPERBLASTER_DMG_BASE", 20);
 	M_HYPERBLASTER_DMG_ADDON = vrx_lua_get_variable("M_HYPERBLASTER_DMG_ADDON", 3);
@@ -2658,7 +2677,14 @@ void Lua_LoadVariables()
     GASCLOUD_POISON_DURATION = vrx_lua_get_variable("GASCLOUD_POISON_DURATION", 10.0);
     GASCLOUD_POISON_FACTOR = vrx_lua_get_variable("GASCLOUD_POISON_FACTOR", 0.1);
 	GASSER_ACID_RANGE = vrx_lua_get_variable("GASSER_ACID_RANGE", 512);
-
+	POISON_INITIAL_DAMAGE = vrx_lua_get_variable("POISON_INITIAL_DAMAGE", 0);
+	POISON_ADDON_DAMAGE = vrx_lua_get_variable("POISON_ADDON_DAMAGE", 3);
+	POISON_INITIAL_SPEED = vrx_lua_get_variable("POISON_INITIAL_SPEED", 600);
+	POISON_ADDON_SPEED = vrx_lua_get_variable("POISON_ADDON_SPEED", 0);
+	POISON_INITIAL_DURATION = vrx_lua_get_variable("POISON_INITIAL_DURATION", 10.0);
+	POISON_ADDON_DURATION = vrx_lua_get_variable("POISON_ADDON_DURATION", 0);
+	POISON_INITIAL_RADIUS = vrx_lua_get_variable("POISON_INITIAL_RADIUS", 100);
+	POISON_ADDON_RADIUS = vrx_lua_get_variable("POISON_ADDON_RADIUS", 0);
 	ACID_INITIAL_DAMAGE = vrx_lua_get_variable("ACID_INITIAL_DAMAGE", 50);
 	ACID_ADDON_DAMAGE = vrx_lua_get_variable("ACID_ADDON_DAMAGE", 15);
 	ACID_INITIAL_SPEED = vrx_lua_get_variable("ACID_INITIAL_SPEED", 600);

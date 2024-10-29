@@ -53,6 +53,7 @@ void ThrowFlame (edict_t *ent, vec3_t start, vec3_t forward, float dist, int spe
 
 	//gi.dprintf(" velocity[2] = %.0f\n", fire->velocity[2]);
 	fire->movetype = MOVETYPE_TOSS;
+	fire->s.effects |= EF_BLASTER;
 	fire->owner = ent;
 	fire->dmg = damage;
 	fire->classname = "fire";
@@ -78,6 +79,7 @@ void SpawnFlames (edict_t *self, vec3_t start, int num_flames, int damage, int t
 		fire = G_Spawn();
 		VectorCopy(start, fire->s.origin);
 		fire->movetype = MOVETYPE_TOSS;
+		fire->s.effects |= EF_BLASTER;
 		fire->owner = self;
 		fire->dmg = damage;
 		fire->classname = "fire";

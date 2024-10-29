@@ -112,6 +112,7 @@
 #define FLASH			108
 #define DECOY			109 // az 3.2b add decoy back into engineer.
 #define EXPLODING_BARREL	110
+#define SKELETON		111
 
 #define MAX_ABILITIES	160
 #include <stdint.h>

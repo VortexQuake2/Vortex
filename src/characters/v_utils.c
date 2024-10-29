@@ -762,6 +762,8 @@ char *GetAbilityString(int ability_number) {
         case EXPLODING_BARREL:
             //      xxxxxxxxxxxxxx (14 chars)
             return "Barrel Bombs";
+        case SKELETON:
+            return "Skeleton";
         default:
             return "<ERROR: NO NAME>";
     }
@@ -1832,6 +1834,8 @@ char *V_GetMonsterKind(int mtype) {
             return "supertank";
         case M_SHAMBLER:
             return "shambler";
+        case M_SKELETON:
+            return "skeleton";
         case M_JORG:
             return "jorg";
         case M_MAKRON:
@@ -1941,6 +1945,15 @@ char *V_GetMonsterName(edict_t *monster) {
         strcat(buf, "stygian ");
     else if (monster->monsterinfo.bonus_flags & BF_CHAMPION)
         strcat(buf, "champion ");
+    else if (monster->mtype == M_SKELETON)
+    {
+        if (monster->s.skinnum == 0)
+            strcat(buf, "ice ");
+        else if (monster->s.skinnum == 1)
+            strcat(buf, "poison ");
+        else
+            strcat(buf, "fire ");
+    }
 
     strcat(buf, V_GetMonsterKind(monster->mtype));
 
@@ -2335,6 +2348,15 @@ void V_ShellAbilityEffects(edict_t *ent) {
         ent->s.effects |= EF_COLOR_SHELL | EF_TAGTRAIL;
         ent->s.renderfx |= (RF_SHELL_YELLOW);
     }
+    // poison effects
+    else if (que_typeexists(ent->curses, POISON))
+    {
+        if (ent->client) {
+            SV_AddBlend(0, 0.75, 0, 0.6, ent->client->ps.blend);
+            ent->client->ps.rdflags |= RDF_UNDERWATER;
+        }
+        ent->s.effects |= EF_BLASTER | EF_TRACKER;
+    }
     // an active aura makes you glow cyan
     else if (que_typeexists(ent->auras, 0)) {
         ent->s.effects |= EF_COLOR_SHELL;
@@ -2393,6 +2415,10 @@ void V_NonShellEffects(edict_t *ent) {
             ent->s.effects |= EF_POWERSCREEN;
     }
 
+    // super speed effect
+    if (ent->superspeed)
+        ent->s.effects |= EF_TAGTRAIL;
+
     // ********** CLIENT-SPECIFIC EFFECTS BELOW **********
     if (ent->client) {
         // shield ability effect
@@ -2406,10 +2432,6 @@ void V_NonShellEffects(edict_t *ent) {
         else if (ent->myskills.abilities[GHOST].current_level > 0 ||
                  vrx_is_morphing_polt(ent))
             ent->s.effects |= EF_PLASMA;
-
-        // super speed effect
-        if (ent->superspeed)
-            ent->s.effects |= EF_TAGTRAIL;
 
         // cloak transparency effect
         if ((level.time > ent->client->ability_delay) && !que_typeexists(ent->auras, 0)

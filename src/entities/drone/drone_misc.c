@@ -32,6 +32,7 @@ void init_drone_floater(edict_t* self);
 void init_drone_hover(edict_t* self);
 void init_drone_shambler(edict_t* self);
 void init_baron_fire(edict_t* self);
+void init_skeleton(edict_t* self);
 int crand (void);
 edict_t* INV_GetMonsterSpawn(edict_t* from);
 
@@ -467,7 +468,7 @@ void drone_pain (edict_t *self, edict_t *other, float kick, int damage)
 {
 	//vec3_t	forward, start;
 
-	if ((self->s.modelindex != 255) && (self->health < (0.5*self->max_health)))
+	if ((self->s.modelindex != 255) && (self->mtype != M_SKELETON) && (self->health < (0.5*self->max_health)))
 		self->s.skinnum |= 1;
 
 	if (damage > 0 && self->pain_inner)
@@ -697,7 +698,7 @@ void drone_grow (edict_t *self)
 	if (self->health >= self->max_health)
 		self->think = drone_think;
 	// check for heal
-	else if (self->mtype != M_DECOY && self->health >= 0.3 * self->max_health)
+	else if (self->mtype != M_DECOY && self->mtype != M_SKELETON && self->health >= 0.3 * self->max_health)
 	{
 		self->s.skinnum &= ~1;
 	}
@@ -846,6 +847,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	case 14: init_drone_hover(drone);		break;
 	case 15: init_drone_shambler(drone);	break;
 	case 20: init_drone_decoy(drone);		break;
+	case 21: init_skeleton(drone);			break;
 
 	// bosses
 	case 30: init_drone_commander(drone);	break;
@@ -1475,10 +1477,17 @@ void MonsterAim (edict_t *self, float accuracy, int projectile_speed, qboolean r
 				start[2] += 32;
 		}
 	}
-	else
+	else // can't determine the muzzle origin
 	{
-		// can't determine the muzzle origin, so assume we fire directly ahead of our bbox
-		VectorCopy(self->s.origin, start);
+		// is viewheight set? if so, use that as a starting point
+		if (self->viewheight)
+		{
+			VectorCopy(self->s.origin, start);
+			start[2] += self->viewheight;
+		}
+		else // otherwise, use the mid-point of the bounding box
+			G_EntMidPoint(self, start);
+		// move starting point forward
 		VectorMA(start, self->maxs[1]+8, forward, start);
 	}
 
@@ -1626,17 +1635,17 @@ void MonsterAim (edict_t *self, float accuracy, int projectile_speed, qboolean r
 	VectorNormalize (forward);
 }
 
-qboolean M_MeleeAttack (edict_t *self, float range, int damage, int knockback)
+edict_t *M_MeleeAttack (edict_t *self, float range, int damage, int knockback)
 {
 	vec3_t	start, forward, end;
 	trace_t	tr;
 
 	if (!self->enemy)
-		return false;
+		return NULL;
 
 	// miss the attack if we are cursed/confused
 	if (que_typeexists(self->curses, CURSE) && rand() > 0.2)
-		return false;
+		return NULL;
 
 	self->lastsound = level.framenum;
 
@@ -1653,11 +1662,12 @@ qboolean M_MeleeAttack (edict_t *self, float range, int damage, int knockback)
 
 	if (G_EntExists(tr.ent))
 	{
+		damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 		T_Damage(tr.ent, self, self, forward, tr.endpos, tr.plane.normal, damage, knockback, 0, MOD_HIT);
-		return true; // hit a damageable ent
+		return tr.ent; // hit a damageable ent
 	}
 
-	return false;
+	return NULL;
 }
 
 qboolean M_NeedRegen (const edict_t *ent)
@@ -1724,7 +1734,7 @@ qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, q
 				self->health = max_health;
 
 			// switch to normal monster skin when it's healed
-			if (!self->client && (self->svflags & SVF_MONSTER) && (self->mtype != M_DECOY)
+			if (!self->client && (self->svflags & SVF_MONSTER) && (self->mtype != M_DECOY) && (self->mtype != M_SKELETON)
 				&& (self->health >= 0.5 * self->max_health))
 			{
 				self->s.skinnum &= ~1;
@@ -1875,6 +1885,8 @@ void M_Remove (edict_t *self, qboolean refund, qboolean effect)
 
 		// reduce monster count
 		self->activator->num_monsters -= self->monsterinfo.control_cost;
+		if (self->mtype == M_SKELETON)
+			self->activator->num_skeletons--;
 		if (self->activator->num_monsters < 0)
 			self->activator->num_monsters = 0;
 	
@@ -2001,6 +2013,7 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	case M_FLOATER: init_drone_floater(monster); break;
 	case M_HOVER: init_drone_hover(monster); break;
 	case M_SHAMBLER: init_drone_shambler(monster); break;
+	case M_SKELETON: init_skeleton(monster); break;
 	default: return false;
 	}
 
@@ -2152,6 +2165,7 @@ char *GetMonsterKindString (int mtype)
 		case M_FLOATER: return "Floater";
 		case M_HOVER: return "Hover";
 		case M_SHAMBLER: return "Shambler";
+		case M_SKELETON: return "Skeleton";
 		case M_BARON_FIRE: return "Fire Baron";
         default: return "Monster";
     }
@@ -2160,6 +2174,8 @@ char *GetMonsterKindString (int mtype)
 // NOTE: M_Notify only works for player-spawn monsters--don't expect it to do anything for worldspawned monsters!
 void M_Notify (edict_t *monster)
 {
+	int count, max;
+
 	if (!monster || !monster->inuse)
 		return;
 	if (!monster->activator || !monster->activator->inuse || !monster->activator->client) // only works for player-spawned monsters
@@ -2176,10 +2192,19 @@ void M_Notify (edict_t *monster)
 	if (monster->activator->num_monsters < 0)
 		monster->activator->num_monsters = 0;
 
-	safe_cprintf(monster->activator, PRINT_HIGH, "You lost a %s! (%d/%d)\n",
-		GetMonsterKindString(monster->mtype),
-		monster->activator->num_monsters,
-		(int)MAX_MONSTERS);
+	if (monster->mtype == M_SKELETON)
+	{
+		monster->activator->num_skeletons--;
+		count = monster->activator->num_skeletons;
+		max = SKELETON_MAX;
+	}
+	else
+	{
+		count = monster->activator->num_monsters;
+		max = MAX_MONSTERS;
+	}
+
+	safe_cprintf(monster->activator, PRINT_HIGH, "You lost a %s! (%d/%d)\n", GetMonsterKindString(monster->mtype), count, max);
 
 	monster->monsterinfo.slots_freed = true;
 
@@ -2549,7 +2574,7 @@ void MonsterFollowMe (edict_t *ent)
 			VectorClear(e->monsterinfo.spot1);
 			VectorClear(e->monsterinfo.spot2);
 			VectorCopy(ent->s.origin, e->monsterinfo.last_sighting);
-			if (entdist(ent, e) > 256)
+			if (entdist(ent, e) > 512)
 				e->monsterinfo.run(e);
 			e->monsterinfo.selected_time = level.time + MONSTER_BLINK_DURATION; // blink
 		}
@@ -2596,7 +2621,7 @@ void MonsterAttack (edict_t *ent)
 			VectorCopy(goal->s.origin, e->monsterinfo.last_sighting);
 			VectorCopy(goal->s.origin, e->monsterinfo.spot1);
 			VectorClear(e->monsterinfo.spot2);
-			if (entdist(e, goal) > 256)
+			if (entdist(e, goal) > 512)
 				e->monsterinfo.run(e);
 			e->monsterinfo.selected_time = level.time + MONSTER_BLINK_DURATION;
 		}
@@ -2758,6 +2783,8 @@ void Cmd_Drone_f (edict_t *ent)
 		vrx_create_new_drone(ent, 14, false, true, 0);
 	else if (!Q_strcasecmp(s, "shambler"))
 		vrx_create_new_drone(ent, 15, false, true, 0);
+	//else if (!Q_strcasecmp(s, "skeleton") && ent->myskills.administrator)
+	//	vrx_create_new_drone(ent, 21, false, true, 0);
 	//else if (!Q_strcasecmp(s, "baron fire") && ent->myskills.administrator)
 		//vrx_create_new_drone(ent, 32, false, true);
 	//else if (!Q_strcasecmp(s, "jorg"))

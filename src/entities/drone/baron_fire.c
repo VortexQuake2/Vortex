@@ -429,7 +429,7 @@ void baron_fire_fireball(edict_t* self)
 	damage = FIREBALL_INITIAL_DAMAGE + FIREBALL_ADDON_DAMAGE * slvl;
 	radius = FIREBALL_INITIAL_RADIUS + FIREBALL_ADDON_RADIUS * slvl;
 	flame_damage = FIREBALL_ADDON_FLAMEDMG * slvl;
-	speed = FIREBALL_INITIAL_SPEED + FIREBALL_ADDON_SPEED * slvl;
+	speed = 300;//FIREBALL_INITIAL_SPEED + FIREBALL_ADDON_SPEED * slvl;
 	flames = FIREBALL_INITIAL_FLAMES + FIREBALL_ADDON_FLAMES * slvl;
 
 	MonsterAim(self, M_PROJECTILE_ACC, speed, true, 0, forward, start);
@@ -661,7 +661,7 @@ void init_baron_fire(edict_t* self)
 
 	self->max_health = self->health;
 	self->gib_health = -BASE_GIB_HEALTH;
-	self->mass = 200;
+	self->mass = 400;
 	self->monsterinfo.jumpdn = 512;
 	self->monsterinfo.jumpup = 64;
 

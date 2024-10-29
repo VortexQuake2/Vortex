@@ -1,6 +1,10 @@
 #include "g_local.h"
 #include "../../gamemodes/ctf.h"
 
+static int poison_sound1;
+static int poison_sound2;
+static int poison_sound3;
+static int poison_sound4;
 
 // az's note for anyone who looks at this in the future: for organ_touch
 void V_Push (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
@@ -1540,12 +1544,14 @@ void poison_think (edict_t *self)
 {
 	if (!G_EntIsAlive(self->enemy) || !G_EntIsAlive(self->activator) || (level.time > self->delay))
 	{
+		//gi.dprintf("poison did %d damage\n", self->dmg_counter);
 		G_FreeEdict(self);
 		return;
 	}
 
 	if (level.framenum >= self->monsterinfo.nextattack)
 	{
+		//self->dmg_counter += self->dmg;
 		T_Damage(self->enemy, self, self->activator, vec3_origin, self->enemy->s.origin, vec3_origin, self->dmg, 0, 0, self->style);
 		self->monsterinfo.nextattack = level.framenum + floattoint(self->random);
 		self->random *= 1.25;
@@ -1616,6 +1622,56 @@ void gascloud_runframes (edict_t *self)
 		G_RunFrames(self, GASCLOUD_FRAMES_GROW_START, GASCLOUD_FRAMES_GROW_END, false);
 }
 
+void poison_curse_sound(edict_t* self)
+{
+	int sound;
+
+	poison_sound1 = gi.soundindex("curses/green1.wav");
+	poison_sound2 = gi.soundindex("curses/green2.wav");
+	poison_sound3 = gi.soundindex("curses/green3.wav");
+	poison_sound4 = gi.soundindex("curses/green4.wav");
+
+	switch (GetRandom(1, 4))
+	{
+	case 1: sound = poison_sound1; break;
+	case 2: sound = poison_sound2; break;
+	case 3: sound = poison_sound3; break;
+	case 4: sound = poison_sound4; break;
+	}
+	gi.sound(self, CHAN_ITEM, sound, 1.0, ATTN_NORM, 0);
+}
+
+void poison_target(edict_t* ent, edict_t* target, int damage, float duration, int meansOfdeath, qboolean stack)
+{
+	que_t* slot = NULL;
+
+	// is there an existing poison curse?
+	//if ((slot = que_findtype(target->curses, NULL, POISON)) != NULL)
+	while ((slot = que_findtype(target->curses, slot, POISON)) != NULL)
+	{
+		if (!stack) // stacking of poison curses is not allowed, so refresh the curse instead
+		{
+			slot->ent->random = 1; // initial refire delay for next attack
+			slot->ent->monsterinfo.nextattack = level.framenum + 1; // next attack server frame
+			slot->ent->delay = level.time + duration;
+			slot->time = level.time + duration;
+			return;
+		}
+		else if (slot->time - level.time >= 9)
+			return; // only allow 1 poison curse per second
+		//gi.dprintf("prev poison time %.1f\n", slot->time - level.time);
+	}
+	// if target is not already poisoned, create poison entity
+
+	CreatePoison(ent, target, damage, duration, meansOfdeath);
+	poison_curse_sound(target);
+	//gi.dprintf("poisoned at %.1f\n", level.time);
+
+
+	//gi.sound(target, CHAN_ITEM, gi.soundindex("curses/poison.wav"), 1, ATTN_NORM, 0);
+	
+}
+
 void gascloud_attack (edict_t *self)
 {
 	que_t	*slot=NULL;
@@ -1625,17 +1681,7 @@ void gascloud_attack (edict_t *self)
 	{
 		if (G_ValidTarget(self, e, true, true))
 		{
-			// otherwise, update the attack frequency to once per server frame
-			if ((slot = que_findtype(e->curses, NULL, POISON)) != NULL)
-			{
-				slot->ent->random = 1;
-				slot->ent->monsterinfo.nextattack = level.framenum + 1;
-				slot->ent->delay = level.time + self->radius_dmg;
-				slot->time = level.time + self->radius_dmg;
-			}
-			// if target is not already poisoned, create poison entity
-			else
-				CreatePoison(self->activator, e, (int)(GASCLOUD_POISON_FACTOR*self->dmg), self->radius_dmg, MOD_GAS);
+			poison_target(self->activator, e, (int)(GASCLOUD_POISON_FACTOR * self->dmg), self->radius_dmg, MOD_GAS, true);
 			T_Damage(e, self, self->activator, vec3_origin, e->s.origin, vec3_origin, (int)((1.0-GASCLOUD_POISON_FACTOR)*self->dmg), 0, 0, MOD_GAS);
 		}
 		else if (e && e->inuse && e->takedamage && visible(self, e) && !OnSameTeam(self, e))
@@ -1697,6 +1743,260 @@ void SpawnGasCloud (edict_t *ent, vec3_t start, int damage, float radius, float 
 	e->s.angles[PITCH] = 0;//always upright
 	gi.linkentity(e);
 }
+
+void poisonball_remove(edict_t* self)
+{
+	// remove poisonball entity next frame
+	self->think = G_FreeEdict;
+	self->nextthink = level.time + FRAMETIME;
+}
+
+//FIXME: these effects don't appear to be working on impact
+void poisonball_explode_effects(edict_t* self, cplane_t* plane)
+{
+	int i;
+	vec3_t forward;
+
+	for (i = 0; i < 5; i++)
+	{
+		if (plane)
+		{
+			VectorCopy(plane->normal, forward);
+		}
+		else
+		{
+			VectorNegate(self->velocity, forward);
+			VectorNormalize(forward);
+		}
+
+		// randomize aiming vector
+		forward[YAW] += 0.5 * crandom();
+		forward[PITCH] += 0.5 * crandom();
+		
+		gi.WriteByte(svc_temp_entity);
+		gi.WriteByte(TE_LASER_SPARKS);
+		gi.WriteByte(1); // number of sparks
+		gi.WritePosition(self->s.origin);
+		gi.WriteDir(forward);
+		gi.WriteByte(205); // color
+		gi.multicast(self->s.origin, MULTICAST_PVS);
+
+		gi.WriteByte(svc_temp_entity);
+		gi.WriteByte(TE_LASER_SPARKS);
+		gi.WriteByte(1); // number of sparks
+		gi.WritePosition(self->s.origin);
+		gi.WriteDir(forward);
+		gi.WriteByte(209); // color
+		gi.multicast(self->s.origin, MULTICAST_PVS);
+	}
+}
+
+void tempent_ball_touch(edict_t* ent, edict_t* other, cplane_t* plane, csurface_t* surf)
+{
+	// remove if we touch a sky brush
+	if (surf && (surf->flags & SURF_SKY))
+	{
+		G_FreeEdict(ent);
+		return;
+	}
+}
+
+void tempent_ball_think(edict_t* self)
+{
+	// remove if entity times out
+	if (level.time > self->delay)
+	{
+		G_FreeEdict(self);
+		return;
+	}
+
+	G_RunFrames(self, 0, 7, false);
+
+	self->nextthink = level.time + FRAMETIME;
+}
+
+void tempent_ball_explode(vec3_t start, int skinnum, vec3_t dir, float speed, float delay)
+{
+	edict_t* ball;
+	vec3_t angles;
+
+	// spawn ball entity
+	ball = G_Spawn();
+	VectorCopy(start, ball->s.origin);
+	ball->movetype = MOVETYPE_FLYMISSILE;
+	ball->clipmask = MASK_SHOT;
+	ball->solid = SOLID_BBOX;
+	ball->s.effects |= EF_PLASMA;
+	ball->s.modelindex = gi.modelindex("models/proj/minoball/tris.md2");
+	ball->s.skinnum = skinnum;
+	//poison->owner = self;
+	ball->touch = tempent_ball_touch;
+	ball->think = tempent_ball_think;
+	ball->delay = level.time + delay;
+	ball->classname = "te_ball_ex";
+	gi.linkentity(ball);
+	ball->nextthink = level.time + FRAMETIME;
+
+	// get angles
+	vectoangles(dir, angles);
+	VectorCopy(dir, ball->s.angles);
+	// get directional vectors
+	//AngleVectors(dir, NULL, NULL, up);
+	// adjust velocity
+	VectorScale(dir, speed, ball->velocity);
+}
+
+void poisonball_explode(edict_t* self, cplane_t* plane)
+{
+	vec3_t	up;
+	edict_t* e=NULL;
+
+	// find targets
+	while ((e = findradius(e, self->s.origin, self->dmg_radius)) != NULL)
+	{
+		if (!G_ValidTarget(self, e, true, true))
+			continue;
+		// poison target
+		poison_target(self->owner, e, self->dmg, 10.0, MOD_GAS, true);
+		// apply impact damage, if any
+		if (self->radius_dmg)
+			T_Damage(e, self, self->owner, vec3_origin, e->s.origin, vec3_origin, self->radius_dmg, 0, 0, MOD_GAS);
+	}
+
+	// spawn a gas cloud on impact?
+	if (self->sucking)
+		SpawnGasCloud(self->owner, self->s.origin, self->dmg, 128, 4.0);
+
+	// impact particle effect
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_BLASTER2);
+	gi.WritePosition(self->s.origin);
+	if (!plane)
+		gi.WriteDir(vec3_origin);
+	else
+		gi.WriteDir(plane->normal);
+	gi.multicast(self->s.origin, MULTICAST_PVS);
+
+	// create temporary entity that slowly moves up
+	AngleVectors(self->s.angles, NULL, NULL, up);
+	tempent_ball_explode(self->s.origin, 1, up, 25, 0.7);
+
+	poisonball_remove(self);
+	self->exploded = true;
+}
+
+void poisonball_touch(edict_t* ent, edict_t* other, cplane_t* plane, csurface_t* surf)
+{
+	if (ent->exploded)
+		return;
+
+	// remove poisonball if owner dies or becomes invalid or if we touch a sky brush
+	if (!G_EntIsAlive(ent->owner) || (surf && (surf->flags & SURF_SKY)))
+	{
+		poisonball_remove(ent);
+		return;
+	}
+
+	if (other == ent->owner)
+		return;
+
+	//gi.sound(ent, CHAN_VOICE, gi.soundindex(va("abilities/largefireimpact%d.wav", GetRandom(1, 3))), 1, ATTN_NORM, 0);
+	gi.sound(ent, CHAN_ITEM, gi.soundindex("abilities/poisoned.wav"), 1, ATTN_NORM, 0);
+	poisonball_explode(ent, plane);
+}
+
+void poisonball_think(edict_t* self)
+{
+	//int i;
+	//vec3_t start, forward;
+
+	if (level.time > self->delay || self->waterlevel)
+	{
+		G_FreeEdict(self);
+		return;
+	}
+
+	// 0 = black, 8 = grey, 15 = white, 16 = light brown, 20 = brown, 57 = light orange, 66 = orange/red, 73 = maroon
+	// 106 = pink, 113 = light blue, 119 = blue, 123 = dark blue, 200 = pale green, 205 = dark green, 209 = bright green
+	// 217 = white, 220 = yellow, 226 = orange, 231 = red/orange, 240 = red, 243 = dark blue
+	/*
+	VectorCopy(self->s.origin, start);
+	VectorCopy(self->velocity, forward);
+	VectorNormalize(forward);
+
+	// create a trail behind the fireball
+	for (i = 0; i < 6; i++)
+	{
+
+		gi.WriteByte(svc_temp_entity);
+		gi.WriteByte(TE_LASER_SPARKS);
+		gi.WriteByte(1); // number of sparks
+		gi.WritePosition(start);
+		gi.WriteDir(forward);
+		gi.WriteByte(205); // color
+		gi.multicast(start, MULTICAST_PVS);
+
+		gi.WriteByte(svc_temp_entity);
+		gi.WriteByte(TE_LASER_SPARKS);
+		gi.WriteByte(1); // number of sparks
+		gi.WritePosition(start);
+		gi.WriteDir(forward);
+		gi.WriteByte(209); // color
+		gi.multicast(start, MULTICAST_PVS);
+
+		VectorMA(start, -16, forward, start);
+	}*/
+
+	self->nextthink = level.time + FRAMETIME;
+}
+
+void fire_poison(edict_t* self, vec3_t start, vec3_t aimdir, int impact_dmg, float impact_rad, int speed, int poison_dmg, int poison_dur, qboolean cloud)
+{
+	edict_t* poison;
+	vec3_t	dir;
+	vec3_t	forward;
+
+	//  entity made a sound, used to alert monsters
+	self->lastsound = level.framenum;
+
+	// get aiming angles
+	vectoangles(aimdir, dir);
+	// get directional vectors
+	AngleVectors(dir, forward, NULL, NULL);
+
+	// spawn grenade entity
+	poison = G_Spawn();
+	VectorCopy(start, poison->s.origin);
+	poison->movetype = MOVETYPE_FLYMISSILE;
+	poison->clipmask = MASK_SHOT;
+	poison->solid = SOLID_BBOX;
+	poison->s.effects |= EF_PLASMA|EF_BLASTER|EF_TRACKER|EF_COLOR_SHELL;
+	//poison->s.effects |= (EF_PLASMA | EF_COLOR_SHELL);
+	poison->s.renderfx |= RF_SHELL_GREEN;
+	//poison->s.modelindex = gi.modelindex("models/proj/minopoison/tris.md2");
+	poison->s.modelindex = gi.modelindex("models/objects/spore/tris.md2");
+	poison->s.skinnum = 1;
+	poison->owner = self;
+	poison->activator = G_GetSummoner(self); // needed for OnSameTeam() checks
+	poison->touch = poisonball_touch;
+	poison->think = poisonball_think;
+	poison->dmg_radius = impact_rad; // radius of impact
+	poison->dmg = poison_dmg; // poison damage over time from poison curse
+	poison->radius_dmg = impact_dmg; // instantaneous damage caused on impact
+	poison->sucking = cloud; // spawn poison cloud on immpact?
+	poison->classname = "poisonball";
+	poison->delay = level.time + 10.0;
+	gi.linkentity(poison);
+	poison->nextthink = level.time + FRAMETIME;
+	VectorCopy(dir, poison->s.angles);
+
+	// adjust velocity
+	VectorScale(aimdir, speed, poison->velocity);
+	//poison->velocity[2] += 150;
+
+	gi.sound(poison, CHAN_WEAPON, gi.soundindex("abilities/poisonnova.wav"), 1, ATTN_NORM, 0);
+}
+
 
 void fire_acid (edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damage, float radius, 
 				int speed, int acid_damage, float acid_duration);

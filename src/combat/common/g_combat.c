@@ -1375,6 +1375,8 @@ void T_RadiusDamage (edict_t *inflictor, edict_t *attacker, float damage, edict_
 				
 				if (mod == MOD_FIREBALL)
 					knockback = 100;
+				else if (mod == MOD_ICEBOLT || mod == MOD_GAS)
+					knockback = 0;
 
 				//4.2 limit knockback
 				if (knockback > MAX_KNOCKBACK)

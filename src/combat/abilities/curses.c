@@ -390,6 +390,7 @@ char *GetCurseName (int type)
 	case CURSE_BURN: return "burning";
 	case CURSE_PLAGUE: return "plague";
 	case POISON: return "poison";
+	case CURSE_FROZEN: return "frozen";
 	default: return "";
 	}
 }
