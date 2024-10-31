@@ -456,8 +456,7 @@ void skeleton_set_bbox(vec3_t mins, vec3_t maxs)
 void skeleton_revive(edict_t* self)
 {
 	//gi.dprintf("revive!\n");
-	self->movetype = MOVETYPE_STEP;
-	self->svflags &= ~SVF_DEADMONSTER;
+	//self->svflags &= ~SVF_DEADMONSTER;
 	self->deadflag = DEAD_NO;
 	self->enemy = NULL;
 	self->monsterinfo.attack_finished = level.time + 1.0;
@@ -511,9 +510,12 @@ void skeleton_wait_for_revival(edict_t* self)
 		// begin revive frames
 		self->monsterinfo.currentmove = &skeleton_move_revive;
 		self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+
 		// set bounding box before another entity gets in the way!
 		skeleton_set_bbox(self->mins, self->maxs);
 		gi.linkentity(self);
+		self->movetype = MOVETYPE_STEP; // affects collision detection
+		self->svflags &= ~SVF_DEADMONSTER; // affects collision detection
 	}
 }
 
