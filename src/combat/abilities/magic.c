@@ -310,13 +310,15 @@ void Cmd_CorpseExplode(edict_t *ent)
 	{
 		if (!G_EntExists(e))
 			continue;
-		if (e->health > 0)
+		if (e->health > 0) // skip alive entities
 			continue;
-		if (e->max_health < 1)
+		if (e->max_health < 1) // skip non-living entities
+			continue;
+		if (e->flags & FL_UNDEAD) // skip undead (skeletons)
 			continue;
 
 		// kill the corpse
-		T_Damage(e, e, ent, vec3_origin, e->s.origin, vec3_origin, 10000, 0, DAMAGE_NO_PROTECTION, MOD_CORPSEEXPLODE);
+		T_Damage(e, e, e, vec3_origin, e->s.origin, vec3_origin, 10000, 0, DAMAGE_NO_PROTECTION, 0);
 
 		// inflict damage
 		fraction = 0.1 * GetRandom(5, 10);

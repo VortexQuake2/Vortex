@@ -9,12 +9,13 @@ SKELETON
 #include "g_local.h"
 #include "../../quake2/monsterframes/skeleton.h"
 
-#define SKELETON_TYPE_ICE		0
-#define SKELETON_TYPE_POISON	1
-#define SKELETON_TYPE_FIRE		2
+#define SKELETON_TYPE_ICE			0			// ice skeleton skinnum
+#define SKELETON_TYPE_POISON		1			// poison skeleton skinnum
+#define SKELETON_TYPE_FIRE			2			// fire skeleton skinnum
 
-#define SKELETON_RAPID_ATTACKS	4		// number of rapid-fire slash attacks before attack move ends
-#define SKELETON_REVIVE_TIME	5.0		// time it takes before a skeleton auto-revives
+#define SKELETON_RAPID_ATTACKS		4			// number of rapid-fire slash attacks before attack move ends
+#define SKELETON_REVIVE_TIME		5.0			// seconds before a skeleton auto-revives
+#define SKELETON_ELEMENTAL_CHANCE	0.33		// chance a melee strike causes elemental damage/effects
 
 static int sound_step1;
 static int sound_step2;
@@ -332,7 +333,7 @@ void skeleton_attack_swing(edict_t* self)
 	{
 		//gi.dprintf("skeleton swing attack caused enemy to burn\n");
 		// a successful strike has a chance to cause elemental damage/effects
-		if (random() < 0.3)
+		if (random() <= SKELETON_ELEMENTAL_CHANCE)
 		{
 			int slvl = drone_damagelevel(self);
 			if (self->s.skinnum == SKELETON_TYPE_ICE) // blue skin = cold enchanted
@@ -343,11 +344,15 @@ void skeleton_attack_swing(edict_t* self)
 			else if (self->s.skinnum == SKELETON_TYPE_POISON) // green skin = poison enchanted
 			{
 				damage = POISON_INITIAL_DAMAGE + POISON_ADDON_DAMAGE * slvl;
+				damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
+				//gi.dprintf("skeleton poisoned target: damage %d\n", damage);
 				poison_target(self->activator, e, damage, 10.0, MOD_GAS, true);
 			}
 			else // fire enchanted
 			{
 				damage = FIREBALL_INITIAL_FLAMEDMG + FIREBALL_ADDON_FLAMEDMG * self->monsterinfo.level;
+				damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
+				//gi.dprintf("skeleton burned target: damage %d\n", damage);
 				burn_person(e, self, damage);
 			}
 		}
@@ -508,6 +513,7 @@ void skeleton_wait_for_revival(edict_t* self)
 		self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
 		// set bounding box before another entity gets in the way!
 		skeleton_set_bbox(self->mins, self->maxs);
+		gi.linkentity(self);
 	}
 }
 

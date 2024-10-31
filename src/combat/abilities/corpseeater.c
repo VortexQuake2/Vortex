@@ -40,9 +40,9 @@ void EatCorpses(edict_t *ent) {
         //Figure out what their max health is
         maxhp *= ent->max_health;
 
-        if (tr.ent->health < 1) {
+        if (tr.ent->health < 1 && !(tr.ent->flags & FL_UNDEAD)) {
             // kill the corpse
-            T_Damage(tr.ent, tr.ent, world, vec3_origin, tr.ent->s.origin, vec3_origin,
+            T_Damage(tr.ent, tr.ent, tr.ent, vec3_origin, tr.ent->s.origin, vec3_origin,
                      10000, 0, DAMAGE_NO_PROTECTION, 0);
 
             //heal the player

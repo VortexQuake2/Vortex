@@ -342,6 +342,7 @@ void monster_fire_fireball(edict_t* self)
 	float slvl = drone_damagelevel(self);
 
 	damage = FIREBALL_INITIAL_DAMAGE + FIREBALL_ADDON_DAMAGE * slvl;
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	radius = FIREBALL_INITIAL_RADIUS + FIREBALL_ADDON_RADIUS * slvl;
 	flame_damage = FIREBALL_ADDON_FLAMEDMG * slvl;
 	speed = FIREBALL_INITIAL_SPEED + FIREBALL_ADDON_SPEED * slvl;
@@ -366,6 +367,7 @@ void monster_fire_poison(edict_t* self)
 	slvl = drone_damagelevel(self);
 
 	damage = POISON_INITIAL_DAMAGE + POISON_ADDON_DAMAGE * slvl;
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	radius = POISON_INITIAL_RADIUS + POISON_ADDON_RADIUS * slvl;
 	speed = POISON_INITIAL_SPEED + POISON_ADDON_SPEED * slvl;
 
@@ -393,6 +395,7 @@ void monster_fire_icebolt(edict_t* self)
 	slvl = drone_damagelevel(self);
 
 	damage = ICEBOLT_INITIAL_DAMAGE + ICEBOLT_ADDON_DAMAGE * slvl;
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	radius = ICEBOLT_INITIAL_RADIUS + ICEBOLT_ADDON_RADIUS * slvl;
 	speed = ICEBOLT_INITIAL_SPEED + ICEBOLT_ADDON_SPEED * slvl;
 	duration = ICEBOLT_INITIAL_CHILL_DURATION + ICEBOLT_ADDON_CHILL_DURATION * slvl;
