@@ -21,8 +21,6 @@ option(VRX_OLD_VOTE "Use old vote system." FALSE)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-return-mismatch -Wno-incompatible-pointer-types -Wno-implicit-function-declaration")
-
 # Source files
 file(GLOB_RECURSE VRX_FILES ./src/*.c)
 
@@ -37,6 +35,7 @@ if (WIN32)
     add_definitions(-DWIN32)
     #file (GLOB CC_PLATFORM_FILES source/Platform/windows/*)
 elseif (UNIX)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-return-mismatch -Wno-incompatible-pointer-types -Wno-implicit-function-declaration")
     # Get machine hardware name (arch), force 386 (if applicable), strip newlines, and store in ARCH
     execute_process(COMMAND uname -m COMMAND sed s/i.86/i386/ COMMAND tr -d \n OUTPUT_VARIABLE ARCH)
     set(CC_LIB_NAME game${ARCH})
