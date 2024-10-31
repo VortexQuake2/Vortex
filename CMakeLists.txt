@@ -21,6 +21,8 @@ option(VRX_OLD_VOTE "Use old vote system." FALSE)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-return-mismatch -Wno-incompatible-pointer-types -Wno-implicit-function-declaration")
+
 # Source files
 file(GLOB_RECURSE VRX_FILES ./src/*.c)
 
