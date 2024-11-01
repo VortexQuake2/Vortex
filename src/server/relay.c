@@ -63,8 +63,20 @@ void vrx_relay_connect() {
             continue;
         }
 
+        char ip[INET6_ADDRSTRLEN];
+        if (p->ai_family == AF_INET) {
+            struct sockaddr_in* addr = (struct sockaddr_in*)p->ai_addr;
+            inet_ntop(p->ai_family, &addr->sin_addr, ip, sizeof ip);
+            ip[INET_ADDRSTRLEN] = '\0';
+        } else {
+            struct sockaddr_in6* addr = (struct sockaddr_in6*)p->ai_addr;
+            inet_ntop(p->ai_family, &addr->sin6_addr, ip, sizeof ip);
+        }
+
         if (connect(vrx_relay_socket, p->ai_addr, p->ai_addrlen) == -1) {
 #ifdef WIN32
+            int err = WSAGetLastError();
+            gi.dprintf("RS: Error connecting to Relay server (%s): (%d)\n", ip, err);
             closesocket(vrx_relay_socket);
 #else
             close(vrx_relay_socket);
@@ -376,10 +388,11 @@ void vrx_relay_recv() {
             case RESULT_NEED_MORE_DATA:
             case RESULT_SUCCESS:
                 continue_parsing = false;
-            case RESULT_CONTINUE:
                 // az: we need to wait for more data, memmove the reminder to the beginning
                 memmove(pending_buf, pending_buf + start, pending_buf_size - start);
                 pending_buf_size -= start;
+                break;
+            case RESULT_CONTINUE:
                 break;
         }
     }
