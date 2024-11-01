@@ -2,6 +2,7 @@
 #include "../gamemodes/ctf.h"
 #include "characters/io/v_characterio.h"
 #include "monsterframes/m_player.h"
+#include "../server/relay.h"
 
 //Function prototypes required for this .c file:
 void Grenade_Explode (edict_t *ent);
@@ -1802,6 +1803,8 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 		}
 		//GHz END
 	}
+
+	vrx_relay_message(text);
 }
 
 void Cmd_Yell (edict_t *ent, int soundnum)
