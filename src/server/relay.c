@@ -246,8 +246,7 @@ relay_parse_result_t vrx_relay_parse_message(size_t* start) {
 #ifdef LITTLE_ENDIAN
     uint32_t magic = curbuf[0] | curbuf[1] << 8 | curbuf[2] << 16 | curbuf[3] << 24;
     uint32_t size = curbuf[4] | curbuf[5] << 8 | curbuf[6] << 16 | curbuf[7] << 24;
-#endif
-#ifdef BIG_ENDIAN
+#elif BIG_ENDIAN
     uint32_t magic = curbuf[3] | curbuf[2] << 8 | curbuf[1] << 16 | curbuf[0] << 24;
     uint32_t size = curbuf[7] | curbuf[6] << 8 | curbuf[5] << 16 | curbuf[4] << 24;
 #endif
