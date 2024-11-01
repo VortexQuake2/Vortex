@@ -202,11 +202,7 @@ void FL_think (edict_t *self)
     vectoangles(tr.plane.normal, self->s.angles);
     VectorCopy(tr.endpos, self->s.origin);
 
-	gi.WriteByte(svc_temp_entity);
-	gi.WriteByte(TE_FLASHLIGHT);
-	gi.WritePosition(self->s.origin);
-	gi.WriteShort(self->owner - world);
-	gi.multicast(self->s.origin, MULTICAST_PVS);
+	self->s.effects |= EF_HYPERBLASTER;
 
     gi.linkentity(self);
     self->nextthink = level.time + FRAMETIME;
