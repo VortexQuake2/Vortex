@@ -7,6 +7,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <errno.h>
+#include <fcntl.h>
+
 #ifndef SOCKET
 #define SOCKET int
 #endif
@@ -81,7 +83,6 @@ void vrx_relay_connect() {
     } else {
 #ifndef WIN32
         fcntl(vrx_relay_socket, F_SETFL, O_NONBLOCK);  // set to non-blocking
-        fcntl(vrx_relay_socket, F_SETFL, O_ASYNC);     // set to asynchronous I/O
 #else
         u_long iMode = 1;
         ioctlsocket(vrx_relay_socket, FIONBIO, &iMode);
