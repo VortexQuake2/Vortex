@@ -6,7 +6,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-
+#include <errno.h>
 #ifndef SOCKET
 #define SOCKET int
 #endif
