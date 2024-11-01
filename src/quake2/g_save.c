@@ -1,5 +1,6 @@
 #include "g_local.h"
 #include "../characters/io/v_characterio.h"
+#include "../server/relay.h"
 
 // settings.h
 const char *s1;
@@ -209,6 +210,7 @@ void InitGame(void)
 #endif
 
     vrx_init_ability_list();
+	vrx_relay_connect();
 	// az end
 
 	gun_x = gi.cvar("gun_x", "0", 0);
