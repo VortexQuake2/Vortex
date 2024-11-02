@@ -112,6 +112,8 @@ void AI_SetGoal(edict_t *self, int goal_node, qboolean LongRange)
 {
 	int			node;
 
+	AI_DebugPrintf("AI_SetGoal()\n");
+
 	if (LongRange)
 	{
 		self->ai.lrgoal_node = goal_node;
@@ -152,6 +154,8 @@ qboolean AI_FollowPath(edict_t *self)
 {
 	vec3_t			v;
 	float			dist;
+
+	AI_DebugPrintf("AI_FollowPath()\n");
 
 	// Show the path
 	if (bot_showpath->value)

@@ -132,3 +132,4 @@ void		debug_printf(char *fmt, ...);
 void		safe_cprintf (edict_t *ent, int printlevel, char *fmt, ...);
 void		safe_centerprintf (edict_t *ent, char *fmt, ...);
 void		safe_bprintf (int printlevel, char *fmt, ...);
+void		AI_DebugPrintf(char* fmt, ...);//GHz

@@ -41,6 +41,8 @@ qboolean AI_CanMove(edict_t* self, int direction)
 	vec3_t angles;
 	trace_t tr;
 
+	AI_DebugPrintf("AI_CanMove()\n");
+
 	// Now check to see if move will move us off an edge
 	VectorCopy(self->s.angles, angles);
 
@@ -79,6 +81,8 @@ qboolean AI_CanMove1(edict_t *self, int direction)
 	vec3_t offset,start,end;
 	vec3_t angles;
 	trace_t tr;
+
+	AI_DebugPrintf("AI_CanMove1()\n");
 
 	// Now check to see if move will move us off an edge
 	VectorCopy(self->s.angles,angles);
@@ -146,6 +150,8 @@ qboolean AI_IsStep (edict_t *ent)
 	vec3_t		point;
 	trace_t		trace;
 	
+	AI_DebugPrintf("AI_IsStep()\n");
+
 	//determine a point below
 	point[0] = ent->s.origin[0];
 	point[1] = ent->s.origin[1];
@@ -172,6 +178,8 @@ qboolean AI_IsLadder(vec3_t origin, vec3_t v_angle, vec3_t mins, vec3_t maxs, ed
 	vec3_t	spot;
 	vec3_t	flatforward, zforward;
 	trace_t	trace;
+
+	AI_DebugPrintf("AI_IsLadder()\n");
 
 	AngleVectors( v_angle, zforward, NULL, NULL);
 
@@ -206,6 +214,8 @@ qboolean AI_CheckEyes(edict_t *self, usercmd_t *ucmd)
 	vec3_t  dir,offset;
 	trace_t traceRight;
 	trace_t traceLeft;
+
+	AI_DebugPrintf("AI_CheckEyes()\n");
 
 	// Get current angle and set up "eyes"
 	VectorCopy(self->s.angles,dir);
@@ -253,6 +263,8 @@ qboolean AI_SpecialMove(edict_t *self, usercmd_t *ucmd)
 	vec3_t forward;
 	trace_t tr;
 	vec3_t	boxmins, boxmaxs, boxorigin;
+
+	AI_DebugPrintf("AI_SpecialMove()\n");
 
 	// Get current direction
 	AngleVectors( tv(0, self->s.angles[YAW], 0), forward, NULL, NULL );
@@ -417,6 +429,7 @@ qboolean AI_MoveToGoalEntity(edict_t *self, usercmd_t *ucmd)
 		return false;
 	}
 
+	AI_DebugPrintf("AI_MoveToGoalEntity()\n");
 	gi.dprintf("movetarget: %s\n", self->movetarget->classname);
 
 	// If a rocket or grenade is around deal with it

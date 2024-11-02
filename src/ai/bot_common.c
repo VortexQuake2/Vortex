@@ -308,3 +308,20 @@ void safe_bprintf (int printlevel, char *fmt, ...)
 		safe_cprintf(cl_ent, printlevel, bigbuffer);
 	}
 }
+
+//GHz: for extended (spammy) debugging...
+void AI_DebugPrintf (char* fmt, ...)
+{
+	char	bigbuffer[0x400];
+	va_list		argptr;
+	int len;
+
+	if (!AIDevel.debugMode)
+		return;
+	va_start(argptr, fmt);
+	len = vsprintf(bigbuffer, fmt, argptr);
+	va_end(argptr);
+
+	gi.dprintf(bigbuffer);
+
+}

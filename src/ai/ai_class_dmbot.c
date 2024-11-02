@@ -45,6 +45,8 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	int	current_link_type = 0;
 	int i;
 
+	AI_DebugPrintf("BOT_DMclass_Move()\n");
+
 	current_node_flags = nodes[self->ai.current_node].flags;
 	next_node_flags = nodes[self->ai.next_node].flags;
 	if( AI_PlinkExists( self->ai.current_node, self->ai.next_node ))
@@ -106,16 +108,16 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 		gi.dprintf("falling off a ledge...\n");
 		AI_ChangeAngle(self);
 		if (current_link_type == LINK_JUMPPAD ) {
-			gi.dprintf("walk forward\n");
+			//gi.dprintf("walk forward\n");
 			ucmd->forwardmove = 100;
 		} else if( current_link_type == LINK_JUMP ) {
 			self->velocity[0] = self->ai.move_vector[0] * 280;
 			self->velocity[1] = self->ai.move_vector[1] * 280;
-			gi.dprintf("jump forward?\n");
+			//gi.dprintf("jump forward?\n");
 		} else {
 			self->velocity[0] = self->ai.move_vector[0] * 160;
 			self->velocity[1] = self->ai.move_vector[1] * 160;
-			gi.dprintf("jump back?\n");
+			//gi.dprintf("jump back?\n");
 		}
 		return;
 	}
@@ -153,7 +155,7 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	// drop from them and have to repeat the process from the beginning
 	if (AI_MoveToGoalEntity(self, ucmd))
 	{
-		gi.dprintf("move to short range goal\n");
+		AI_DebugPrintf("move to short range goal\n");
 		return;
 	}
 
@@ -173,7 +175,7 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	// Check to see if stuck, and if so try to free us
  	if(VectorLength(self->velocity) < 37)
 	{
-		gi.dprintf("movement stuck...\n");
+		AI_DebugPrintf("movement stuck...\n");
 		// Keep a random factor just in case....
 		if( random() > 0.1 && AI_SpecialMove(self, ucmd) ) //jumps, crouches, turns...
 			return;
@@ -209,6 +211,8 @@ void BOT_DMclass_Wander(edict_t *self, usercmd_t *ucmd)
 
 	if (self->deadflag)
 		return;
+
+	AI_DebugPrintf("BOT_DMclass_Wander()\n");
 
 	// Special check for elevators, stand still until the ride comes to a complete stop.
 	if(self->groundentity != NULL && self->groundentity->use == Use_Plat)
@@ -267,7 +271,7 @@ void BOT_DMclass_Wander(edict_t *self, usercmd_t *ucmd)
 	// Check for special movement
  	if(VectorLength(self->velocity) < 37)
 	{
-		gi.dprintf("wandering stuck\n");
+		AI_DebugPrintf("wandering stuck\n");
 		if(random() > 0.1 && AI_SpecialMove(self,ucmd))	//jumps, crouches, turns...
 			return;
 
@@ -309,6 +313,8 @@ void BOT_DMclass_CombatMovement( edict_t *self, usercmd_t *ucmd )
 	//it to dodge, but still follow paths, chasing enemy or
 	//running away... hmmm... maybe it will need 2 different BOT_STATEs
 
+	AI_DebugPrintf("BOT_DMclass_CombatMovement()\n");
+
 	if(!self->enemy) {
 
 		//do whatever (tmp move wander)
@@ -347,6 +353,8 @@ qboolean BOT_DMclass_CheckShot(edict_t *ent, vec3_t	point)
 	trace_t tr;
 	vec3_t	start, forward, right, offset;
 
+	AI_DebugPrintf("BOT_DMclass_CheckShot()\n");
+
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
 
 	VectorSet(offset, 8, 8, ent->viewheight-8);
@@ -384,6 +392,8 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 
 	if (level.time < pregame_time->value) // No enemies in pregame lol
 		return false;
+
+	AI_DebugPrintf("BOT_DMclass_FindEnemy()\n");
 
 	// Find Enemy
 	for (i = 0;i < num_AIEnemies;i++)
@@ -541,6 +551,8 @@ qboolean BOT_DMClass_ChangeWeapon (edict_t *ent, gitem_t *item)
 	int			ammo_index;
 	gitem_t		*ammo_item;
 
+	AI_DebugPrintf("BOT_DMclass_ChangeWeapon()\n");
+
 	// see if we're already using it
 	if (!item || item == ent->client->pers.weapon)
 		return true;
@@ -585,6 +597,8 @@ void BOT_DMclass_ChooseWeapon(edict_t *self)
 
 	if( self->ai.changeweapon_timeout > level.time )
 		return;
+
+	AI_DebugPrintf("BOT_DMclass_ChooseWeapon()\n");
 
 	// Base weapon selection on distance: 
 	VectorSubtract (self->s.origin, self->enemy->s.origin, v);
@@ -653,6 +667,8 @@ void BOT_DMclass_FireWeapon (edict_t *self, usercmd_t *ucmd)
 	if (!self->enemy)
 		return;
 
+	AI_DebugPrintf("BOT_DMclass_FireWeapon()\n");
+
 	//weapon = self->s.skinnum & 0xff;
 	if (self->client->pers.weapon)
 			weapon = (self->client->pers.weapon->weapmodel & 0xff);
@@ -716,6 +732,8 @@ void BOT_DMclass_FireWeapon (edict_t *self, usercmd_t *ucmd)
 void BOT_DMclass_WeightPlayers(edict_t *self)
 {
 	int i;
+
+	AI_DebugPrintf("BOT_DMclass_WeightPlayers()\n");
 
 	//clear
 	memset(self->ai.status.playersWeights, 0, sizeof (self->ai.status.playersWeights));
@@ -820,6 +838,8 @@ void BOT_DMclass_WeightInventory(edict_t *self)
 	float		LowNeedFactor = 0.5;
 	gclient_t	*client;
 	int			i;
+
+	AI_DebugPrintf("BOT_DMclass_WeightInventory()\n");
 
 	client = self->client;
 
@@ -949,6 +969,8 @@ void BOT_DMclass_WeightInventory(edict_t *self)
 //==========================================
 void BOT_DMclass_UpdateStatus( edict_t *self )
 {
+	AI_DebugPrintf("BOT_DMclass_UpdateStatus()\n");
+
 	self->enemy = NULL;
 	self->movetarget = NULL;
 
@@ -980,6 +1002,7 @@ void BOT_DMclass_UpdateStatus( edict_t *self )
 //==========================================
 void BOT_DMClass_BloquedTimeout( edict_t *self )
 {
+	AI_DebugPrintf("BOT_DMclass_BloquedTimeout()\n");
 	self->health = 0;
 	self->ai.bloqued_timeout = level.time + 15.0;
 	self->die(self, self, self, 100000, vec3_origin);
@@ -995,6 +1018,7 @@ void BOT_DMclass_DeadFrame( edict_t *self )
 {
 	usercmd_t	ucmd;
 
+	AI_DebugPrintf("BOT_DMclass_DeadFrame()\n");
 	// ask for respawn
 	self->client->buttons = 0;
 	ucmd.buttons = BUTTON_ATTACK;

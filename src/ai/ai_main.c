@@ -61,6 +61,8 @@ void AI_NewMap(void)
 //==========================================
 void AI_SetUpMoveWander( edict_t *ent )
 {
+	AI_DebugPrintf("AI_SetupMoveWander()\n");
+
 	if (AIDevel.debugChased && bot_showlrgoal->value)
 		safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: couldn't find a path. Bot will wander instead.\n", ent->client->pers.netname);//GHz
 
@@ -83,6 +85,8 @@ void AI_SetUpMoveWander( edict_t *ent )
 //==========================================
 void AI_ResetWeights(edict_t *ent)
 {
+	AI_DebugPrintf("AI_ResetWeights()\n");
+
 	//restore defaults from bot persistant
 	memset(ent->ai.status.inventoryWeights, 0, sizeof (ent->ai.status.inventoryWeights));
 	memcpy(ent->ai.status.inventoryWeights, ent->ai.pers.inventoryWeights, sizeof(ent->ai.pers.inventoryWeights));
@@ -96,6 +100,8 @@ void AI_ResetWeights(edict_t *ent)
 void AI_ResetNavigation(edict_t *ent)
 {
 	int		i;
+
+	AI_DebugPrintf("AI_ResetNavigation()\n");
 
 	ent->enemy = NULL;
 	ent->movetarget = NULL;
@@ -136,6 +142,8 @@ qboolean AI_BotRoamForLRGoal(edict_t *self, int current_node)
 
 	if (!nav.num_broams)
 		return false;
+
+	AI_DebugPrintf("AI_BotRoamForLRGoal()\n");
 
 	for( i=0; i<nav.num_broams; i++)
 	{
@@ -208,6 +216,8 @@ void AI_PickLongRangeGoal(edict_t *self)
 	edict_t *goal_ent = NULL;
 	float	cost;
 	float dist;
+
+	AI_DebugPrintf("AI_PickLongRangeGoal()\n");
 
 	// look for a target
 	current_node = AI_FindClosestReachableNode(self->s.origin, self,((1+self->ai.nearest_node_tries)*NODE_DENSITY),NODE_ALL);
@@ -345,6 +355,8 @@ void AI_PickShortRangeGoal(edict_t *self)
 	if( !self->client )
 		return;
 
+	AI_DebugPrintf("AI_PickShortRangeGoal()\n");
+
 	// look for a target (should make more efficent later)
 	target = findradius(NULL, self->s.origin, AI_GOAL_SR_RADIUS);
 
@@ -415,6 +427,8 @@ void AI_PickShortRangeGoal(edict_t *self)
 void AI_CategorizePosition (edict_t *ent)
 {
 	qboolean stepping = AI_IsStep(ent);
+
+	AI_DebugPrintf("AI_CategorizePosition()\n");
 
 	ent->ai.was_swim = ent->ai.is_swim;
 	ent->ai.was_step = ent->ai.is_step;
