@@ -251,8 +251,8 @@ void OpenMOTDMenu (edict_t *ent)
 
     menu_add_line(ent, "Message of the Day", MENU_GREEN_CENTERED);
     menu_add_line(ent, " ", 0);    
-    menu_add_line(ent, "Join us on Discord!", MENU_WHITE_CENTERED);
-    menu_add_line(ent, "discord.gg/bX7Updq", MENU_GREEN_CENTERED);
+    menu_add_line(ent, "Join our NEW Discord!", MENU_WHITE_CENTERED);
+    menu_add_line(ent, "discord.gg/9b4VnWryJz", MENU_GREEN_CENTERED);
     menu_add_line(ent, " ", 0);
     menu_add_line(ent, "Rules", MENU_GREEN_CENTERED);
     menu_add_line(ent, "- No racism, sexism, or", 0);

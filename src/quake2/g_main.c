@@ -3,6 +3,8 @@
 #include "../gamemodes/v_hw.h"
 #include "../characters/io/v_characterio.h"
 
+#include <server/relay.h>
+
 game_locals_t	game;
 level_locals_t	level;
 game_import_t	gi;
@@ -223,6 +225,7 @@ void ShutdownGame(void)
 
     vrx_close_char_io();
 	defer_global_close();
+	vrx_relay_disconnect();
 
 	gi.FreeTags(TAG_LEVEL);
 	gi.FreeTags(TAG_GAME);
@@ -1033,4 +1036,5 @@ void G_RunFrame(void)
 
 	PTRCheckJoinedQue();
 	INV_SpawnPlayers();
+	vrx_relay_recv();
 }

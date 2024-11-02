@@ -1,4 +1,5 @@
 #include "g_local.h"
+#include <server/relay.h>
 
 typedef struct
 {
@@ -702,6 +703,10 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	V_VoteReset();
 	cs_reset();
 	seedMT(time(NULL));
+	if (!vrx_relay_is_connected())
+	{
+		vrx_relay_connect();
+	}
 	// az end
 
 	g_freeEdictsH = g_freeEdictsT = NULL;

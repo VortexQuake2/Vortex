@@ -2,6 +2,7 @@
 #include "../gamemodes/ctf.h"
 #include "characters/io/v_characterio.h"
 #include "monsterframes/m_player.h"
+#include "../server/relay.h"
 
 //Function prototypes required for this .c file:
 void Grenade_Explode (edict_t *ent);
@@ -201,11 +202,7 @@ void FL_think (edict_t *self)
     vectoangles(tr.plane.normal, self->s.angles);
     VectorCopy(tr.endpos, self->s.origin);
 
-	gi.WriteByte(svc_temp_entity);
-	gi.WriteByte(TE_FLASHLIGHT);
-	gi.WritePosition(self->s.origin);
-	gi.WriteShort(self->owner - world);
-	gi.multicast(self->s.origin, MULTICAST_PVS);
+	self->s.effects |= EF_HYPERBLASTER;
 
     gi.linkentity(self);
     self->nextthink = level.time + FRAMETIME;
@@ -1802,6 +1799,8 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 		}
 		//GHz END
 	}
+
+	vrx_relay_message(text);
 }
 
 void Cmd_Yell (edict_t *ent, int soundnum)

@@ -35,6 +35,7 @@ if (WIN32)
     add_definitions(-DWIN32)
     #file (GLOB CC_PLATFORM_FILES source/Platform/windows/*)
 elseif (UNIX)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-return-mismatch -Wno-incompatible-pointer-types -Wno-implicit-function-declaration")
     # Get machine hardware name (arch), force 386 (if applicable), strip newlines, and store in ARCH
     execute_process(COMMAND uname -m COMMAND sed s/i.86/i386/ COMMAND tr -d \n OUTPUT_VARIABLE ARCH)
     set(CC_LIB_NAME game${ARCH})
@@ -85,6 +86,10 @@ if (WIN32)
         FetchContent_MakeAvailable(pthreads)
         target_include_directories(${CC_LIB_NAME} PRIVATE ${pthreads_SOURCE_DIR})
         target_link_libraries(${CC_LIB_NAME} pthreadVC3)
+        # add /fsanitize=address to the compiler flags
+        # if (SANITIZE_ADDRESS)
+        #     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /fsanitize=address")
+        # endif ()
     else ()
         # we've got pthreads already, just use it
         set(CC_LINK_LIBS ${CC_LINK_LIBS} pthread)
@@ -128,8 +133,25 @@ if (VRX_LOCKDEFAULTS)
     add_definitions(-DLOCK_DEFAULTS)
 endif ()
 
+FetchContent_Declare(
+    MsgPack
+    GIT_REPOSITORY https://github.com/msgpack/msgpack-c/
+    GIT_TAG c_master
+)
 
+FetchContent_MakeAvailable(MsgPack)
+
+set(CC_LINK_LIBS ${CC_LINK_LIBS} msgpack-c)
+target_include_directories(${CC_LIB_NAME} PRIVATE ${msgpack_SOURCE_DIR}/include ${msgpack_BINARY_DIR}/include/msgpack ${msgpack_BINARY_DIR}/include )
 target_link_libraries(${CC_LIB_NAME} ${CC_LINK_LIBS})
+
+include (TestBigEndian)
+TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
+if(IS_BIG_ENDIAN)
+    target_compile_definitions(${CC_LIB_NAME} PRIVATE BIG_ENDIAN)
+else()
+    target_compile_definitions(${CC_LIB_NAME} PRIVATE LITTLE_ENDIAN)
+endif()
 
 # If host is Unix-like, remove "lib" prefix from the library's file name
 if (UNIX)
