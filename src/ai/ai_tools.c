@@ -32,28 +32,32 @@ in NO WAY supported by Steve Yeager.
 //==========================================
 void AIDebug_ToogleBotDebug(void)
 {
-/*	if (AIDevel.debugMode || !sv_cheats->integer )
+	if (AIDevel.debugMode /* || !sv_cheats->integer */)
 	{
-//		G_Printf ("BOT: Debug Mode Off\n");
+		safe_bprintf(PRINT_MEDIUM, "BOT: Debug Mode Off\n");
 		AIDevel.debugMode = false;
 		return;
 	}
 
 	//Activate debug mode
-	G_Printf ("\n======================================\n");
-	G_Printf ("--==[ D E B U G ]==--\n");
-	G_Printf ("======================================\n");
-	G_Printf ("'addnode [nodetype]' -- Add [specified] node to players current location\n");
-	G_Printf ("'movenode [node] [x y z]' -- Move [node] to [x y z] coordinates\n");
-	G_Printf ("'findnode' -- Finds closest node\n");
-	G_Printf ("'removelink [node1 node2]' -- Removes link between two nodes\n");
-	G_Printf ("'addlink [node1 node2]' -- Adds a link between two nodes\n");
-	G_Printf ("======================================\n\n");
+	safe_bprintf(PRINT_MEDIUM, "\n======================================\n");
+	safe_bprintf(PRINT_MEDIUM, "--==[ D E B U G ]==--\n");
+	safe_bprintf(PRINT_MEDIUM, "======================================\n");
+	safe_bprintf(PRINT_MEDIUM, "'addnode [nodetype]' -- Add [specified] node to players current location\n");
+	safe_bprintf(PRINT_MEDIUM, "'movenode [node] [x y z]' -- Move [node] to [x y z] coordinates\n");
+	safe_bprintf(PRINT_MEDIUM, "'findnode' -- Finds closest node\n");
+	safe_bprintf(PRINT_MEDIUM, "'removelink [node1 node2]' -- Removes link between two nodes\n");
+	safe_bprintf(PRINT_MEDIUM, "'addlink [node1 node2]' -- Adds a link between two nodes\n");
+	safe_bprintf(PRINT_MEDIUM, "======================================\n\n");
 
-	G_Printf ("BOT: Debug Mode On\n");
-
+	safe_bprintf(PRINT_MEDIUM, "BOT: Debug Mode On\n");
+	gi.cvar_set("bot_showpath", "1");
+	gi.cvar_set("bot_showcombat", "1");
+	gi.cvar_set("bot_showlrgoal", "1");
+	gi.cvar_set("bot_showsrgoal", "1");
+	gi.cvar_set("bot_debugmonster", "1");
 	AIDevel.debugMode = true;
-*/
+
 }
 
 
@@ -65,11 +69,11 @@ void AIDebug_ToogleBotDebug(void)
 //==========================================
 void AIDebug_SetChased(edict_t *ent)
 {
-/*	int i;
+	int i;
 	AIDevel.chaseguy = NULL;
 	AIDevel.debugChased = false;
 
-	if (!AIDevel.debugMode || !sv_cheats->integer)
+	if (!AIDevel.debugMode /* || !sv_cheats->integer*/)
 		return;
 
 	//find if anyone is chasing this bot
@@ -89,7 +93,7 @@ void AIDebug_SetChased(edict_t *ent)
 		return;
 
 	AIDevel.debugChased = true;
-*/
+
 }
 
 
@@ -104,16 +108,18 @@ void AIDebug_SetChased(edict_t *ent)
 // AITools_DrawLine
 // Just so I don't hate to write the event every time
 //==========================================
+/*
 void AITools_DrawLine(vec3_t origin, vec3_t dest)
 {
-/*
+
 	edict_t		*event;
 	
 	event = G_SpawnEvent ( EV_BFG_LASER, 0, origin );
 	event->svflags = SVF_FORCEOLDORIGIN;
 	VectorCopy ( dest, event->s.origin2 );
-*/
+
 }
+*/
 
 
 //==========================================
@@ -123,7 +129,7 @@ void AITools_DrawLine(vec3_t origin, vec3_t dest)
 static int	drawnpath_timeout;
 void AITools_DrawPath(edict_t *self, int node_from, int node_to)
 {
-/*
+
 	int			count = 0;
 	int			pos = 0;
 
@@ -131,30 +137,30 @@ void AITools_DrawPath(edict_t *self, int node_from, int node_to)
 	if (level.time < drawnpath_timeout)
 		return;
 	drawnpath_timeout = level.time + 4*FRAMETIME;
-
-	if( self->ai.path->goalNode != node_to )
+	if( self->ai.path.goalNode != node_to )
 		return;
 
 	//find position in stored path
-	while( self->ai.path->nodes[pos] != node_from )
+	while( self->ai.path.nodes[pos] != node_from )
 	{
 		pos++;
-		if( self->ai.path->goalNode == self->ai.path->nodes[pos] )
+		if( self->ai.path.goalNode == self->ai.path.nodes[pos] )
 			return;	//failed
 	}
 
 	// Now set up and display the path
-	while( self->ai.path->nodes[pos] != node_to && count < 32)
+	while( self->ai.path.nodes[pos] != node_to && count < 32)
 	{
-		edict_t		*event;
+		//edict_t		*event;
 		
-		event = G_SpawnEvent ( EV_BFG_LASER, 0, nodes[self->ai.path->nodes[pos]].origin );
-		event->svflags = SVF_FORCEOLDORIGIN;
-		VectorCopy ( nodes[self->ai.path->nodes[pos+1]].origin, event->s.origin2 );		
+		//event = G_SpawnEvent ( EV_BFG_LASER, 0, nodes[self->ai.path->nodes[pos]].origin );
+		//event->svflags = SVF_FORCEOLDORIGIN;
+		//VectorCopy ( nodes[self->ai.path->nodes[pos+1]].origin, event->s.origin2 );
+		G_DrawDebugTrail(nodes[self->ai.path.nodes[pos + 1]].origin, nodes[self->ai.path.nodes[pos]].origin);//GHz
 		pos++;
 		count++;
 	}
-*/
+
 }
 
 //==========================================
@@ -164,7 +170,7 @@ void AITools_DrawPath(edict_t *self, int node_from, int node_to)
 static int	debugdrawplinks_timeout;
 void AITools_ShowPlinks( void )
 {
-/*	int		current_node;
+	int		current_node;
 	int		plink_node;
 	int		i;
 
@@ -177,16 +183,16 @@ void AITools_ShowPlinks( void )
 	debugdrawplinks_timeout = level.time + 4*FRAMETIME;
 
 	//do it
-	current_node = AI_FindClosestReachableNode(AIDevel.plinkguy,NODE_DENSITY*3,NODE_ALL);
+	current_node = AI_FindClosestReachableNode(AIDevel.plinkguy->s.origin, AIDevel.plinkguy,NODE_DENSITY*3,NODE_ALL);
 	if (!pLinks[current_node].numLinks)
 		return;
 
 	for (i=0; i<nav.num_items;i++){
 		if (nav.items[i].node == current_node){
 			if( !nav.items[i].ent->classname )
-				G_CenterPrintMsg(AIDevel.plinkguy, "no classname");
+				safe_centerprintf(AIDevel.plinkguy, "no classname");
 			else
-				G_CenterPrintMsg(AIDevel.plinkguy, "%s", nav.items[i].ent->classname);
+				safe_centerprintf(AIDevel.plinkguy, "%s", nav.items[i].ent->classname);
 			break;
 		}
 	}
@@ -194,9 +200,10 @@ void AITools_ShowPlinks( void )
 	for (i=0; i<pLinks[current_node].numLinks; i++) 
 	{
 		plink_node = pLinks[current_node].nodes[i];
-		AITools_DrawLine(nodes[current_node].origin, nodes[plink_node].origin);
+		//AITools_DrawLine(nodes[current_node].origin, nodes[plink_node].origin);
+		G_DrawDebugTrail(nodes[current_node].origin, nodes[plink_node].origin);//GHz
 	}
-*/
+
 }
 
 

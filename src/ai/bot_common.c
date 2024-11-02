@@ -57,7 +57,7 @@ qboolean BOT_ServerCommand (void)
 
 	cmd = gi.argv (1);
 
-	return false; // az: unused...
+	//return false; // az: unused...
 
 	if (!ctf->value)
 		name = gi.argv(2);
@@ -92,6 +92,9 @@ qboolean BOT_ServerCommand (void)
 
 	else if( !Q_stricmp (cmd, "addmonster") )
     	M_default_Spawn ();
+
+	else if (!Q_stricmp(cmd, "aidebug"))
+		AIDebug_ToogleBotDebug();
 
 	else
 		return false;

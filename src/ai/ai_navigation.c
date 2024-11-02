@@ -135,8 +135,8 @@ void AI_SetGoal(edict_t *self, int goal_node, qboolean LongRange)
 	self->ai.current_node = self->ai.path.nodes[self->ai.path_position];
 	//-------------------------
 
-	//	if(AIDevel.debugChased && bot_showlrgoal->value)
-	//		G_PrintMsg (AIDevel.chaseguy, PRINT_HIGH, "%s: GOAL: new START NODE selected %d\n", self->ai.pers.netname, node);
+		if(AIDevel.debugChased && bot_showlrgoal->value)
+			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: GOAL: new START NODE selected %d\n", self->ai.pers.netname, node);
 
 	self->ai.next_node = self->ai.current_node; // make sure we get to the nearest node first
 	self->ai.node_timeout = 0;
@@ -164,13 +164,15 @@ qboolean AI_FollowPath(edict_t *self)
 		return false;
 
 	// Try again?
-	if (self->ai.node_timeout++ > 30)
+	if (self->ai.node_timeout++ > 30) // frames we've tried to reach next node
 	{
-		if (self->ai.tries++ > 3)
-			return false;
+		if (self->ai.tries++ > 3) // number of attempts we've tried to grab a new start node
+			return false; // after so many attempts, return false and wander instead because we can't reach the nearest node
 		else
 			AI_SetGoal(self, self->ai.goal_node, false);
 	}
+
+	//gi.dprintf("node_timeout %d tries %d\n", self->ai.node_timeout, self->ai.tries);
 
 	// Are we there yet?
 	VectorSubtract(self->s.origin, nodes[self->ai.next_node].origin, v);
@@ -192,8 +194,8 @@ qboolean AI_FollowPath(edict_t *self)
 
 		if (self->ai.next_node == self->ai.goal_node)
 		{
-			//if(AIDevel.debugChased && bot_showlrgoal->value)
-			//	G_PrintMsg (AIDevel.chaseguy, PRINT_HIGH, "%s: GOAL REACHED!\n", self->ai.pers.netname);
+			if(AIDevel.debugChased && bot_showlrgoal->value)
+				safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: GOAL REACHED!\n", self->ai.pers.netname);
 
 			//if botroam, setup a timeout for it
 			if (nodes[self->ai.goal_node].flags & NODEFLAGS_BOTROAM)
@@ -203,9 +205,9 @@ qboolean AI_FollowPath(edict_t *self)
 					if (nav.broams[i].node != self->ai.goal_node)
 						continue;
 
-					//if(AIDevel.debugChased && bot_showlrgoal->integer)
-					//	G_PrintMsg (AIDevel.chaseguy, PRINT_HIGH, "%s: BotRoam Time Out set up for node %i\n", self->ai.pers.netname, nav.broams[i].node);
-					//Com_Printf( "%s: BotRoam Time Out set up for node %i\n", self->ai.pers.netname, nav.broams[i].node);
+					if(AIDevel.debugChased && bot_showlrgoal->value)
+						safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: BotRoam Time Out set up for node %i\n", self->ai.pers.netname, nav.broams[i].node);
+					Com_Printf("%s: BotRoam Time Out set up for node %i\n", self->ai.pers.netname, nav.broams[i].node);
 					self->ai.status.broam_timeouts[i] = level.time + 15.0;
 					break;
 				}

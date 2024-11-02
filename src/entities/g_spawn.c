@@ -773,7 +773,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 
 //	gi.dprintf ("%i entities inhibited\n", inhibit);
 
-	// AI_NewMap();//JABot
+	AI_NewMap();//JABot
 
 	vrx_lua_run_map_settings(mapname);
 

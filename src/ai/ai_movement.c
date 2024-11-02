@@ -34,7 +34,46 @@ in NO WAY supported by Steve Yeager.
 // Also, this is not a real accurate check, but does a
 // pretty good job and looks for lava/slime.  
 //==========================================
-qboolean AI_CanMove(edict_t *self, int direction)
+qboolean AI_CanMove(edict_t* self, int direction)
+{
+	vec3_t forward, right;
+	vec3_t offset, start, end;
+	vec3_t angles;
+	trace_t tr;
+
+	// Now check to see if move will move us off an edge
+	VectorCopy(self->s.angles, angles);
+
+	if (direction == BOT_MOVE_LEFT)
+		angles[1] += 90;
+	else if (direction == BOT_MOVE_RIGHT)
+		angles[1] -= 90;
+	else if (direction == BOT_MOVE_BACK)
+		angles[1] -= 180;
+
+
+	// Set up the vectors
+	AngleVectors(angles, forward, right, NULL);
+
+	VectorSet(offset, 36, 0, 24);
+	G_ProjectSource(self->s.origin, offset, forward, right, start);
+
+	VectorSet(offset, 36, 0, -100);
+	G_ProjectSource(self->s.origin, offset, forward, right, end);
+
+	tr = gi.trace(start, NULL, NULL, end, self, MASK_AISOLID);
+
+	if (tr.fraction == 1.0 || tr.contents & (CONTENTS_LAVA | CONTENTS_SLIME))
+	{
+		if (AIDevel.debugChased)	//jal: is too spammy. Temporary disabled
+			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: move blocked\n", self->ai.pers.netname);
+		return false;
+	}
+
+	return true;// yup, can move
+}
+
+qboolean AI_CanMove1(edict_t *self, int direction)
 {
 	vec3_t forward, right;
 	vec3_t offset,start,end;
@@ -65,8 +104,8 @@ qboolean AI_CanMove(edict_t *self, int direction)
 
 	if(tr.fraction == 1.0 || tr.contents & (CONTENTS_LAVA|CONTENTS_SLIME))
 	{
-		//if(AIDevel.debugChased)	//jal: is too spammy. Temporary disabled
-		//	G_PrintMsg (AIDevel.devguy, PRINT_HIGH, "%s: move blocked\n", self->bot.botStatus.netname);
+		if(AIDevel.debugChased)	//jal: is too spammy. Temporary disabled
+			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: move blocked\n", self->ai.pers.netname);
 		return false;
 	}
 
@@ -84,10 +123,12 @@ qboolean AI_CanMove(edict_t *self, int direction)
 	{
 		if (tr.ent->takedamage && tr.ent->solid != SOLID_NOT)
 			self->enemy = tr.ent;
+		gi.dprintf("blocked1\n");
 		return false;
 	}
 	if(tr.fraction != 1.0 || tr.contents & (CONTENTS_SOLID))
 	{
+		gi.dprintf("blocked2\n");
 		return false;
 	}
 
@@ -220,8 +261,11 @@ qboolean AI_SpecialMove(edict_t *self, usercmd_t *ucmd)
 	VectorCopy( self->s.origin, boxorigin );
 	VectorMA( boxorigin, 8, forward, boxorigin ); //move box by 8 to front
 	tr = gi.trace( self->s.origin, self->mins, self->maxs, boxorigin, self, MASK_AISOLID);
-	if( !tr.startsolid && tr.fraction == 1.0 ) // not bloqued
+	if (!tr.startsolid && tr.fraction == 1.0) // not bloqued
+	{
+		gi.dprintf("not blocked?\n");
 		return false;
+	}
 
 	if( self->ai.pers.moveTypesMask & LINK_CROUCH || self->ai.is_swim )
 	{
@@ -258,6 +302,7 @@ qboolean AI_SpecialMove(edict_t *self, usercmd_t *ucmd)
 			tr = gi.trace( boxorigin, boxmins, boxmaxs, boxorigin, self, MASK_AISOLID);
 			if( !tr.startsolid )	//can move by jumping
 			{
+				gi.dprintf("can move by jumping\n");
 				ucmd->forwardmove = 400;
 				ucmd->upmove = 400;
 				
@@ -367,7 +412,12 @@ void AI_ChangeAngle (edict_t *ent)
 qboolean AI_MoveToGoalEntity(edict_t *self, usercmd_t *ucmd)
 {
 	if (!self->movetarget || !self->client)
+	{
+		//gi.dprintf("AI_MoveToGoalEntity invalid\n");
 		return false;
+	}
+
+	gi.dprintf("movetarget: %s\n", self->movetarget->classname);
 
 	// If a rocket or grenade is around deal with it
 	// Simple, but effective (could be rewritten to be more accurate)
@@ -377,8 +427,8 @@ qboolean AI_MoveToGoalEntity(edict_t *self, usercmd_t *ucmd)
 	{
 		VectorSubtract (self->movetarget->s.origin, self->s.origin, self->ai.move_vector);
 		AI_ChangeAngle(self);
-//		if(AIDevel.debugChased && bot_showcombat->value)
-//			G_PrintMsg (AIDevel.chaseguy, PRINT_HIGH, "%s: Oh crap a rocket!\n",self->ai.pers.netname);
+		if(AIDevel.debugChased && bot_showcombat->value)
+			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: Oh crap a rocket!\n",self->ai.pers.netname);
 
 		// strafe left/right
 		if(randomMT()%1 && AI_CanMove(self, BOT_MOVE_LEFT))
@@ -394,6 +444,7 @@ qboolean AI_MoveToGoalEntity(edict_t *self, usercmd_t *ucmd)
 	AI_ChangeAngle(self);
 	if(!AI_CanMove(self, BOT_MOVE_FORWARD) ) 
 	{
+		gi.dprintf("bot can't move forward\n");//GHz
 		self->movetarget = NULL;
 		ucmd->forwardmove = -400;
 		return false;

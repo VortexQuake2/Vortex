@@ -79,6 +79,48 @@ extern gitem_armor_t bodyarmor_info;
 // AI_CanUseArmor
 // Check if we can use the armor
 //==========================================
+qboolean AI_CanUseArmor(gitem_t* item, edict_t* other)//GHz - mostly a copy & paste from Pickup_Armor
+{
+	int armor, current_armor, max_armor, delta;
+	gitem_armor_t* newinfo;
+	qboolean shard = false;
+
+	if (!other->client)
+		return false;
+
+	// get info on new armor
+	newinfo = (gitem_armor_t*)item->info;
+
+	// how much armor we already have
+	current_armor = other->client->pers.inventory[body_armor_index];
+	// maximum armor we can hold
+	max_armor = MAX_ARMOR(other);
+
+	// handle armor shards specially
+	if (item->tag == ARMOR_SHARD) {
+		armor = 2;
+		// we can hold double our max with shards
+		max_armor *= 2;
+		shard = true;
+	}
+	else {
+		// amount of armor to be picked up
+		armor = newinfo->base_count;
+	}
+
+	// don't pick up armor if we are already at or beyond our max
+	if (current_armor >= max_armor) {
+		// let them pick up shards for power cubes even when full
+		if (shard) {
+			other->client->pers.inventory[power_cube_index] += 5;
+			return true;
+		}
+		return false;
+	}
+
+	return true;
+}
+/*
 qboolean AI_CanUseArmor (gitem_t *item, edict_t *other)
 {
 	int				old_armor_index;
@@ -94,7 +136,7 @@ qboolean AI_CanUseArmor (gitem_t *item, edict_t *other)
 	// get info on new armor
 	newinfo = (gitem_armor_t *)item->info;
 
-	old_armor_index = ArmorIndex (other);
+	old_armor_index = ArmorIndex(other);
 
 	// handle armor shards specially
 	if (item->tag == ARMOR_SHARD)
@@ -128,6 +170,7 @@ qboolean AI_CanUseArmor (gitem_t *item, edict_t *other)
 
 	return true;
 }
+*/
 
 //==========================================
 // AI_CanPick_Ammo
@@ -187,6 +230,22 @@ qboolean AI_ItemIsReachable(edict_t *self, vec3_t goal)
 		return false;
 }
 
+//==========================================
+// AI_IsItem
+// GHz: is this really an item and not a monster or other entity that is carrying one?
+//==========================================
+qboolean AI_IsItem(edict_t* it)
+{
+	if (!it || !it->inuse)
+		return false;
+	if (!it->item)
+		return false;
+	if (!(it->spawnflags & DROPPED_ITEM))
+		return false;
+	if (it->solid != SOLID_TRIGGER)
+		return false;
+	return true;
+}
 
 //==========================================
 // AI_ItemWeight

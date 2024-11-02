@@ -1475,6 +1475,7 @@ qboolean visible1 (edict_t *ent1, edict_t *ent2)
 
 void stuffcmd(edict_t *ent, char *s) 	
 {
+	//gi.dprintf("running stuffcmd on %s\n", ent->classname);
 	if(ent->svflags & SVF_MONSTER) return;
 
    	gi.WriteByte (svc_stufftext);
@@ -1944,7 +1945,6 @@ void G_DrawLaserBBox (edict_t *ent, int laser_color, int laser_size)
 	G_DrawLaser(ent, p1, p2, laser_color, laser_size);
 }
 
-
 void G_DrawBoundingBox (edict_t *ent)
 {
 	vec3_t origin, p1, p2;
@@ -2031,6 +2031,15 @@ void G_DrawBoundingBox (edict_t *ent)
 	gi.WritePosition (p1);
 	gi.WritePosition (p2);
 	gi.multicast (p1, MULTICAST_ALL);
+}
+
+void G_DrawDebugTrail(vec3_t start, vec3_t end)
+{
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_DEBUGTRAIL);
+	gi.WritePosition(start);
+	gi.WritePosition(end);
+	gi.multicast(end, MULTICAST_ALL);
 }
 
 edict_t *G_FindEntityByMtype (int mtype, edict_t *from)

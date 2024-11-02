@@ -116,7 +116,7 @@ void		AI_ResetWeights(edict_t *ent);
 //----------------------------------------------------------
 float		AI_ItemWeight(edict_t *ent, edict_t *item);
 qboolean	AI_ItemIsReachable(edict_t *self,vec3_t goal);
-
+qboolean	AI_IsItem(edict_t* it);//GHz
 
 // ai_movement.c
 //----------------------------------------------------------
@@ -149,11 +149,12 @@ void AITools_AddBotRoamNode(void);
 //----------------------------------------------------------
 void		AIDebug_SetChased(edict_t *ent);
 void		AITools_DrawPath(edict_t *self, int node_from, int node_to);
-void		AITools_DrawLine(vec3_t origin, vec3_t dest);
+//void		AITools_DrawLine(vec3_t origin, vec3_t dest);
 void		AITools_InitEditnodes( void );
 void		AITools_InitMakenodes( void );
 void		AITools_SaveNodes( void );
 qboolean	AI_LoadPLKFile( char *mapname );
+void		AIDebug_ToogleBotDebug(void);//GHz
 
 // ai_links.c
 //----------------------------------------------------------

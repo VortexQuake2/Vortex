@@ -2101,6 +2101,7 @@ void Cmd_DrawBoundingBox_f (edict_t *ent)
 	vec3_t	angles;
 	trace_t	tr;
 
+	gi.dprintf("absmin[2] %.0f\n", ent->absmin[2]);
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
 	gi.dprintf("v_angle YAW %.0f PITCH %.0f\n", ent->client->v_angle[YAW], ent->client->v_angle[PITCH]);
 	VectorSet(offset, 0, 7,  ent->viewheight-8);

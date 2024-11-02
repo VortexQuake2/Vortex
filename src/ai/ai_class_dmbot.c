@@ -50,7 +50,10 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	if( AI_PlinkExists( self->ai.current_node, self->ai.next_node ))
 	{
 		current_link_type = AI_PlinkMoveType( self->ai.current_node, self->ai.next_node );
-		//Com_Printf("%s\n", AI_LinkString( current_link_type ));
+
+		if (AIDevel.debugChased)//GHz
+			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: LINKTYPE: %s\n", self->ai.pers.netname, AI_LinkString(current_link_type));//GHz
+		//if (current_link_type && current_link_type != LINK_INVALID)//GHz
 	}
 
 	// Platforms
@@ -100,15 +103,19 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	// Falling off ledge
 	if(!self->groundentity && !self->ai.is_step && !self->ai.is_swim )
 	{
+		gi.dprintf("falling off a ledge...\n");
 		AI_ChangeAngle(self);
 		if (current_link_type == LINK_JUMPPAD ) {
+			gi.dprintf("walk forward\n");
 			ucmd->forwardmove = 100;
 		} else if( current_link_type == LINK_JUMP ) {
 			self->velocity[0] = self->ai.move_vector[0] * 280;
 			self->velocity[1] = self->ai.move_vector[1] * 280;
+			gi.dprintf("jump forward?\n");
 		} else {
 			self->velocity[0] = self->ai.move_vector[0] * 160;
 			self->velocity[1] = self->ai.move_vector[1] * 160;
+			gi.dprintf("jump back?\n");
 		}
 		return;
 	}
@@ -118,6 +125,7 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	{
 		trace_t trace;
 		vec3_t  v1, v2;
+		gi.dprintf("jumping over\n");
 		//check floor in front, if there's none... Jump!
 		VectorCopy( self->s.origin, v1 );
 		VectorCopy( self->ai.move_vector, v2 );
@@ -127,6 +135,7 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 		trace = gi.trace( v1, tv(-2, -2, -AI_JUMPABLE_HEIGHT), tv(2, 2, 0), v1, self, MASK_AISOLID );
 		if( !trace.startsolid && trace.fraction == 1.0 )
 		{
+			gi.dprintf("jump!\n");
 			//jump!
 			ucmd->forwardmove = 400;
 			//prevent double jumping on crates
@@ -142,8 +151,11 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	// Move To Short Range goal (not following paths)
 	// plats, grapple, etc have higher priority than SR Goals, cause the bot will 
 	// drop from them and have to repeat the process from the beginning
-	if (AI_MoveToGoalEntity(self,ucmd))
+	if (AI_MoveToGoalEntity(self, ucmd))
+	{
+		gi.dprintf("move to short range goal\n");
 		return;
+	}
 
 	// swimming
 	if( self->ai.is_swim )
@@ -161,6 +173,7 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	// Check to see if stuck, and if so try to free us
  	if(VectorLength(self->velocity) < 37)
 	{
+		gi.dprintf("movement stuck...\n");
 		// Keep a random factor just in case....
 		if( random() > 0.1 && AI_SpecialMove(self, ucmd) ) //jumps, crouches, turns...
 			return;
@@ -254,6 +267,7 @@ void BOT_DMclass_Wander(edict_t *self, usercmd_t *ucmd)
 	// Check for special movement
  	if(VectorLength(self->velocity) < 37)
 	{
+		gi.dprintf("wandering stuck\n");
 		if(random() > 0.1 && AI_SpecialMove(self,ucmd))	//jumps, crouches, turns...
 			return;
 
@@ -273,7 +287,7 @@ void BOT_DMclass_Wander(edict_t *self, usercmd_t *ucmd)
 		ucmd->forwardmove = 400;
 	else
 	{
-		AI_PickLongRangeGoal( self );
+		//AI_PickLongRangeGoal( self ); //GHz: commented out because we wouldn't be here if we weren't supposed to wander!
 		ucmd->forwardmove = -400;
 	}
 }
@@ -355,6 +369,85 @@ qboolean BOT_DMclass_CheckShot(edict_t *ent, vec3_t	point)
 // BOT_DMclass_FindEnemy
 // Scan for enemy (simplifed for now to just pick any visible enemy)
 //==========================================
+qboolean BOT_DMclass_FindEnemy(edict_t* self)
+{
+	int i;
+
+	edict_t* bestenemy = NULL;
+	float		bestweight = 99999;
+	float		weight;
+	vec3_t		dist;
+
+	// we already set up an enemy this frame (reacting to attacks)
+	if (self->enemy != NULL)
+		return true;
+
+	if (level.time < pregame_time->value) // No enemies in pregame lol
+		return false;
+
+	// Find Enemy
+	for (i = 0;i < num_AIEnemies;i++)
+	{
+		if (AIEnemies[i] == NULL || AIEnemies[i] == self)
+			continue;
+		if (!G_ValidTargetEnt(AIEnemies[i], true))
+			continue;
+
+		//Ignore players with 0 weight (was set at botstatus)
+		if (self->ai.status.playersWeights[i] == 0)
+			continue;
+
+		if (!visible1(self, AIEnemies[i]))
+			continue;
+		if (!infront(self, AIEnemies[i]))
+			continue;
+
+		//(weight enemies from fusionbot) Is enemy visible, or is it too close to ignore 
+		VectorSubtract(self->s.origin, AIEnemies[i]->s.origin, dist);
+		weight = VectorLength(dist);
+
+		//modify weight based on precomputed player weights
+		weight *= (1.0 - self->ai.status.playersWeights[i]);
+
+		if (weight < 500)
+		{
+			// Check if best target, or better than current target
+			if (weight < bestweight)
+			{
+				bestweight = weight;
+				bestenemy = AIEnemies[i];
+			}
+		}
+	}
+
+	// If best enemy, set up
+	if (bestenemy)
+	{
+		if (AIDevel.debugChased && bot_showcombat->value)
+		{
+			if (bestenemy->ai.is_bot)
+				safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: selected %s as enemy.\n",
+					self->ai.pers.netname, bestenemy->ai.pers.netname);
+			else if (bestenemy->client)
+				safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: selected %s as enemy.\n",
+					self->ai.pers.netname, bestenemy->client->pers.netname);
+			else
+				safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: selected %s as enemy.\n",
+					self->ai.pers.netname, bestenemy->classname);
+		}
+
+		//if (bestenemy->takedamage != DAMAGE_NO //GHz: enemy can take damage
+		//	&& !strstr(bestenemy->classname, "tech_")) //GHz: and isn't a tech? why would the enemy be a tech??
+		//{
+			//gi.dprintf("bot set enemy\n");
+			self->enemy = bestenemy;
+			return true;
+		//}
+	}
+
+	return false;	// NO enemy
+}
+/*
 qboolean BOT_DMclass_FindEnemy(edict_t *self)
 {
 	int i;
@@ -374,8 +467,7 @@ qboolean BOT_DMclass_FindEnemy(edict_t *self)
 	// Find Enemy
 	for(i=0;i<num_AIEnemies;i++)
 	{
-		if( AIEnemies[i] == NULL || AIEnemies[i] == self 
-			|| AIEnemies[i]->solid == SOLID_NOT)
+		if( AIEnemies[i] == NULL || AIEnemies[i] == self || AIEnemies[i]->solid == SOLID_NOT)
 			continue;
 
 		//Ignore players with 0 weight (was set at botstatus)
@@ -415,13 +507,23 @@ qboolean BOT_DMclass_FindEnemy(edict_t *self)
 	// If best enemy, set up
 	if(bestenemy)
 	{
-//		if (AIDevel.debugChased && bot_showcombat->value && bestenemy->ai.is_bot)
-//			G_PrintMsg (AIDevel.chaseguy, PRINT_HIGH, "%s: selected %s as enemy.\n",
-//			self->ai.pers.netname,
-//			bestenemy->ai.pers.netname);
-
-		if (bestenemy->takedamage != DAMAGE_NO && !strstr(bestenemy->classname,"tech_"))
+		if (AIDevel.debugChased && bot_showcombat->value)
 		{
+			if (bestenemy->ai.is_bot)
+				safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: selected %s as enemy.\n", 
+					self->ai.pers.netname, bestenemy->ai.pers.netname);
+			else if (bestenemy->client)
+				safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: selected %s as enemy.\n",
+					self->ai.pers.netname, bestenemy->client->pers.netname);
+			else
+				safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: selected %s as enemy.\n",
+					self->ai.pers.netname, bestenemy->classname);
+		}
+
+		if (bestenemy->takedamage != DAMAGE_NO //GHz: enemy can take damage
+			&& !strstr(bestenemy->classname,"tech_")) //GHz: and isn't a tech? why would the enemy be a tech??
+		{
+			gi.dprintf("bot set enemy\n");
 			self->enemy = bestenemy;
 			return true;
 		}
@@ -429,7 +531,7 @@ qboolean BOT_DMclass_FindEnemy(edict_t *self)
 
 	return false;	// NO enemy
 }
-
+*/
 
 //==========================================
 // BOT_DMClass_ChangeWeapon
@@ -593,7 +695,7 @@ void BOT_DMclass_FireWeapon (edict_t *self, usercmd_t *ucmd)
 
 	// Set direction
 	VectorSubtract (target, self->s.origin, self->ai.move_vector);
-	vectoangles (self->ai.move_vector, angles);
+	vectoangles(self->ai.move_vector, angles);
 	VectorCopy(angles,self->s.angles);
 
 
@@ -602,8 +704,8 @@ void BOT_DMclass_FireWeapon (edict_t *self, usercmd_t *ucmd)
 	if (firedelay > (MAX_BOT_SKILL - self->ai.pers.skillLevel) && BOT_DMclass_CheckShot(self, target))
 		ucmd->buttons = BUTTON_ATTACK;
 
-	//if(AIDevel.debugChased && bot_showcombat->integer)
-	//	G_PrintMsg (AIDevel.devguy, PRINT_HIGH, "%s: attacking %s\n",self->bot.pers.netname ,self->enemy->r.client->pers.netname);
+	if(AIDevel.debugChased && bot_showcombat->value)
+		safe_cprintf (AIDevel.chaseguy, PRINT_HIGH, "%s: attacking %s\n",self->ai.pers.netname ,self->enemy->classname);
 }
 
 

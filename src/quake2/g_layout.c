@@ -701,6 +701,9 @@ void layout_send(edict_t* ent)
 	if (!ent->client)
 		return;
 
+	if (ent->ai.is_bot)
+		return;
+
 	gi.WriteByte(svc_layout);
 	gi.WriteString(ent->client->layout.layout);
 	gi.unicast(ent, false);

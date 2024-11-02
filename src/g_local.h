@@ -1122,6 +1122,7 @@ qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs
 void G_DrawBoundingBox (edict_t *ent);
 void G_DrawLaserBBox (edict_t *ent, int laser_color, int laser_size);
 void G_DrawLaser (edict_t *ent, vec3_t v1, vec3_t v2, int laser_color, int laser_size);
+void G_DrawDebugTrail(vec3_t start, vec3_t end);
 void G_ResetPlayerState (edict_t *ent); // 3.78
 int G_GetNumSummonable (edict_t *ent, char *classname); // 3.9
 void G_EntMidPoint (const edict_t *ent, vec3_t point);

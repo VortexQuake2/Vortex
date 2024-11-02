@@ -40,6 +40,7 @@ in NO WAY supported by Steve Yeager.
 ///////////////////////////////////////////////////////////////////////
 void BOT_Respawn (edict_t *self)
 {
+	gi.dprintf("BOT_Respawn\n");
 	CopyToBodyQue (self);
 
 	PutClientInServer (self);
@@ -110,10 +111,10 @@ void BOT_SetName(edict_t *bot, char *name, char *skin, char *team)
 		strcpy(bot_name,name);
 
 	// skin
-	/*if(strlen(skin) == 0)
+	if(strlen(skin) == 0)
 	{
 		// randomly choose skin 
-		rnd = random();
+		float rnd = random();
 		if(rnd  < 0.05)
 			sprintf(bot_skin,"female/athena");
 		else if(rnd < 0.1)
@@ -156,7 +157,7 @@ void BOT_SetName(edict_t *bot, char *name, char *skin, char *team)
 			sprintf(bot_skin,"male/sniper");
 	}
 	else
-		strcpy(bot_skin,skin);*/
+		strcpy(bot_skin,skin);
 
 	// initialise userinfo
 	memset (userinfo, 0, sizeof(userinfo));
@@ -165,6 +166,7 @@ void BOT_SetName(edict_t *bot, char *name, char *skin, char *team)
 	Info_SetValueForKey (userinfo, "name", bot_name);
 	Info_SetValueForKey (userinfo, "skin", bot_skin);
 	Info_SetValueForKey (userinfo, "hand", "2"); // bot is center handed for now!
+	Info_SetValueForKey(userinfo, "ip", "127.0.0.1");
 
 	ClientConnect (bot, userinfo);
 
@@ -302,6 +304,8 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 	char *s;
 	//int rnd = CLASS_PALADIN;
 
+	gi.dprintf("BOT_DMClass_JoinGame\n");
+
 	if ( !BOT_JoinCTFTeam(ent, team_name) )
 		gi.bprintf (PRINT_HIGH,  "[BOT] %s joined the game.\n",
 		ent->client->pers.netname);
@@ -359,6 +363,8 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 //==========================================
 void BOT_StartAsSpectator (edict_t *ent)
 {
+	gi.dprintf("BOT_StartAsSpectator\n");
+
 	// start as 'observer'
 	ent->movetype = MOVETYPE_NOCLIP;
 	ent->solid = SOLID_NOT;
@@ -418,7 +424,7 @@ void BOT_SpawnBot (char *team, char *name, char *skin, char *userinfo)
 		BOT_SetName(bot, name, skin, team);
 	else
 		ClientConnect (bot, userinfo);
-	
+	bot->ai.is_bot = true;//GHz: because this gets set to 'false' in ClientConnect
 	G_InitEdict (bot);
 	InitClientResp (bot->client);
 
@@ -437,7 +443,7 @@ void BOT_SpawnBot (char *team, char *name, char *skin, char *userinfo)
 	AI_ResetNavigation(bot);
 
 	bot->think = BOT_JoinGame;
-	bot->nextthink = level.time + (int)(random()*6.0);
+	bot->nextthink = level.time + (int)(random() * 6.0);
 	if( ctf->value && team != NULL )
 	{
 		if( !Q_stricmp( team, "blue" ) )
@@ -459,11 +465,13 @@ void BOT_RemoveBot(char *name)
 	qboolean freed=false;
 	edict_t *bot;
 
+	gi.dprintf("BOT_RemoveBot\n");
 	for(i=0;i<maxclients->value;i++)
 	{
 		bot = g_edicts + i + 1;
 		if(bot->inuse)
 		{
+			gi.dprintf("found %s\n", bot->classname);
 			if(bot->ai.is_bot && (strcmp(bot->client->pers.netname,name)==0 || strcmp(name,"all")==0))
 			{
 				bot->health = 0;
@@ -473,13 +481,13 @@ void BOT_RemoveBot(char *name)
 				bot->inuse = false;
 				freed = true;
 				AI_EnemyRemoved (bot);
-//				safe_bprintf (PRINT_MEDIUM, "%s removed\n", bot->client->pers.netname);
+				safe_bprintf (PRINT_MEDIUM, "%s removed\n", bot->client->pers.netname);
 			}
 		}
 	}
 
-//	if(!freed)	
-//		safe_bprintf (PRINT_MEDIUM, "%s not found\n", name);
+	if(!freed)	
+		safe_bprintf (PRINT_MEDIUM, "%s not found\n", name);
 	
-//	ACESP_SaveBots(); // Save them again
+	//ACESP_SaveBots(); // Save them again
 }
