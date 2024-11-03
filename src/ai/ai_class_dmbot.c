@@ -296,7 +296,7 @@ void BOT_DMclass_Wander(edict_t *self, usercmd_t *ucmd)
 	}
 }
 
-
+qboolean CanTball(edict_t* ent, qboolean print);
 //==========================================
 // BOT_DMclass_CombatMovement
 //
@@ -1171,7 +1171,6 @@ void BOT_DMclass_InitPersistant(edict_t *self)
 //==========================================
 // BOT_DMclass_Pain
 //==========================================
-qboolean CanTball(edict_t* ent, qboolean print);
 void BOT_DMclass_Pain(edict_t* self, edict_t* other, float kick, int damage)
 {
 	if (!self->ai.is_bot)
