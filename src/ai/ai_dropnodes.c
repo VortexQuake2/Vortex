@@ -255,43 +255,53 @@ void AI_WaterJumpNode( void )
 
 	VectorCopy( player.ent->s.origin, waterorigin );
 
+	//gi.dprintf("player[2] %0.f ", waterorigin[2]);
+
 	//move the origin to water limit
-	if( gi.pointcontents(waterorigin) & MASK_WATER )
+	if( gi.pointcontents(waterorigin) & MASK_WATER )//GHz: player is in the water (at our origin)
 	{
 		//reverse
 		trace = gi.trace( waterorigin, 
 			vec3_origin, 
 			vec3_origin,
-			tv( waterorigin[0], waterorigin[1], waterorigin[2] + NODE_DENSITY*2 ),
+			tv( waterorigin[0], waterorigin[1], waterorigin[2] + NODE_DENSITY*2 ),//GHz: trace up to 256 units above bot
 			player.ent,
 			MASK_ALL );
 		
 		VectorCopy( trace.endpos, waterorigin );
-		if( gi.pointcontents(waterorigin) & MASK_WATER )
+		if( gi.pointcontents(waterorigin) & MASK_WATER )//GHz: still in the water?
 			return;
 	}
 	
+	//gi.dprintf("water[2]+ %0.f ", waterorigin[2]);
+
 	//find water limit
 	trace = gi.trace( waterorigin, 
 		vec3_origin, 
 		vec3_origin,
-		tv( waterorigin[0], waterorigin[1], waterorigin[2] - NODE_DENSITY*2 ),
+		tv( waterorigin[0], waterorigin[1], waterorigin[2] - NODE_DENSITY*2 ),//GHz: trace down 256 units from upper limit
 		player.ent,
 		MASK_WATER );
 	
+	//gi.dprintf("water[2]- %0.f\n", trace.endpos[2]);
+
 	if( trace.fraction == 1.0 )
 		return;
 	else
 		VectorCopy( trace.endpos, waterorigin );
 	
+	//GHz: commented out lines below due to infinite loop
+	// 
 	//tmp test (should just move 1 downwards)
 	if( !(gi.pointcontents(waterorigin) & MASK_WATER) ) {
-		int	k = 0;
-		while( !(gi.pointcontents(waterorigin) & MASK_WATER) ){
+	//	int	k = 0;
+	//	while( !(gi.pointcontents(waterorigin) & MASK_WATER) ){
 			waterorigin[2]--;
-			k++;
-		}
+	//		k++;
+	//	}
 	}
+
+	//gi.dprintf("water final[2] %0.f\n", waterorigin[2]);
 
 	ent = *player.ent;
 	VectorCopy( waterorigin, ent.s.origin);
