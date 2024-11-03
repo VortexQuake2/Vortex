@@ -142,6 +142,8 @@ void AI_DropLadderNodes( edict_t *self )
 	int		step;
 	trace_t trace;
 
+	AI_DebugPrintf("AI_DropLadderNodes\n");
+
 	//find top & bottom of the ladder
 	VectorCopy( self->s.origin, torigin );
 	VectorCopy( self->s.origin, borigin );
@@ -202,6 +204,8 @@ void AI_DropLadderNodes( edict_t *self )
 qboolean AI_CheckForLadder(edict_t *self)
 {
 	int			closest_node;
+
+	AI_DebugPrintf("AI_CheckForLadder\n\n");
 
 	// If there is a ladder and we are moving up, see if we should add a ladder node
 	if ( self->velocity[2] < 5 )
@@ -318,6 +322,8 @@ static float last_update=0;
 void AI_PathMap( void )
 {
 	int			 closest_node;
+
+	AI_DebugPrintf("AI_PathMap\n");
 
 	//DROP WATER JUMP NODE (not limited by delayed updates)
 	if ( !player.ent->ai.is_swim && player.last_node != -1 
@@ -440,6 +446,7 @@ void AITools_DropNodes(edict_t *ent)
 	/*if( nav.loaded )
 		return;
 	*/
+	AI_DebugPrintf("AITools_DropNodes\n");
 	AI_CategorizePosition (ent);
 	player.ent = ent;
 	AI_PathMap();
