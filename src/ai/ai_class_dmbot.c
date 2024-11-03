@@ -105,7 +105,7 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	// Falling off ledge
 	if(!self->groundentity && !self->ai.is_step && !self->ai.is_swim )
 	{
-		gi.dprintf("falling off a ledge...\n");
+		//gi.dprintf("falling off a ledge...\n");
 		AI_ChangeAngle(self);
 		if (current_link_type == LINK_JUMPPAD ) {
 			//gi.dprintf("walk forward\n");
@@ -127,7 +127,7 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	{
 		trace_t trace;
 		vec3_t  v1, v2;
-		gi.dprintf("jumping over\n");
+		//gi.dprintf("jumping over\n");
 		//check floor in front, if there's none... Jump!
 		VectorCopy( self->s.origin, v1 );
 		VectorCopy( self->ai.move_vector, v2 );
@@ -137,7 +137,7 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 		trace = gi.trace( v1, tv(-2, -2, -AI_JUMPABLE_HEIGHT), tv(2, 2, 0), v1, self, MASK_AISOLID );
 		if( !trace.startsolid && trace.fraction == 1.0 )
 		{
-			gi.dprintf("jump!\n");
+			//gi.dprintf("jump!\n");
 			//jump!
 			ucmd->forwardmove = 400;
 			//prevent double jumping on crates
@@ -315,6 +315,20 @@ void BOT_DMclass_CombatMovement( edict_t *self, usercmd_t *ucmd )
 
 	AI_DebugPrintf("BOT_DMclass_CombatMovement()\n");
 
+	//if (CanTball(self, false))
+	//	gi.dprintf("bot can tball\n");
+	//gi.dprintf("bot has %d tballs\n", self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)]);
+	//GHz: health critically low and have a tball?
+	if (self->health <= 0.2 * self->max_health && CanTball(self, false) && self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)])
+	{
+		//gi.dprintf("bot tried to tball\n");
+		// use tball to teleport away!
+		self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)]--;
+		Tball_Aura(self, self->s.origin);
+		// if we were angry at someone, forget it so that we can focus on rearming/healing
+		self->enemy = NULL;
+	}
+
 	if(!self->enemy) {
 
 		//do whatever (tmp move wander)
@@ -387,7 +401,7 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 	vec3_t		dist;
 
 	// we already set up an enemy this frame (reacting to attacks)
-	if (self->enemy != NULL)
+	if (self->enemy && self->enemy->inuse && visible(self, self->enemy))//GHz: don't bother finding a new enemy if the last one is still visible
 		return true;
 
 	if (level.time < pregame_time->value) // No enemies in pregame lol
@@ -779,8 +793,15 @@ void BOT_DMclass_WeightPlayers(edict_t *self)
 				}
 			} 
 		}
-		else	//if not at ctf every player has some value
-			self->ai.status.playersWeights[i] = 0.3;
+		else
+		{
+			// GHz: chase enemies!
+			if (self->enemy && self->enemy->inuse && AIEnemies[i] == self->enemy)
+				self->ai.status.playersWeights[i] = 0.9;
+			else
+				//if not at ctf every player has some value
+				self->ai.status.playersWeights[i] = 0.3;
+		}
 	
 	}
 }
@@ -971,7 +992,8 @@ void BOT_DMclass_UpdateStatus( edict_t *self )
 {
 	AI_DebugPrintf("BOT_DMclass_UpdateStatus()\n");
 
-	self->enemy = NULL;
+	if (!G_EntIsAlive(self->enemy))//GHz: stay angry at this entity--used for LR goal setting
+		self->enemy = NULL;
 	self->movetarget = NULL;
 
 	// Set up for new client movement: jalfixme
@@ -1146,4 +1168,33 @@ void BOT_DMclass_InitPersistant(edict_t *self)
 	}
 }
 
+//==========================================
+// BOT_DMclass_Pain
+//==========================================
+qboolean CanTball(edict_t* ent, qboolean print);
+void BOT_DMclass_Pain(edict_t* self, edict_t* other, float kick, int damage)
+{
+	if (!self->ai.is_bot)
+		return;
+	if (!G_EntIsAlive(other))
+		return;
+	if (other->flags & FL_GODMODE)
+		return;
+	if (OnSameTeam(self, other))
+		return;
 
+	self->enemy = other;
+
+	if (AIDevel.debugChased && bot_showcombat->value)
+	{
+		if (other->ai.is_bot)
+			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: is angry at %s!\n",
+				self->ai.pers.netname, other->ai.pers.netname);
+		else if (other->client)
+			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: is angry at %s!\n",
+				self->ai.pers.netname, other->client->pers.netname);
+		else
+			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: is angry at %s!\n",
+				self->ai.pers.netname, other->classname);
+	}
+}

@@ -133,3 +133,6 @@ void		safe_cprintf (edict_t *ent, int printlevel, char *fmt, ...);
 void		safe_centerprintf (edict_t *ent, char *fmt, ...);
 void		safe_bprintf (int printlevel, char *fmt, ...);
 void		AI_DebugPrintf(char* fmt, ...);//GHz
+
+//ai_class_dmbot.c
+void		BOT_DMclass_Pain(edict_t* self, edict_t* other, float kick, int damage);//GHz

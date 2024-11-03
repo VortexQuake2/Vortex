@@ -40,7 +40,7 @@ in NO WAY supported by Steve Yeager.
 ///////////////////////////////////////////////////////////////////////
 void BOT_Respawn (edict_t *self)
 {
-	gi.dprintf("BOT_Respawn\n");
+	//gi.dprintf("BOT_Respawn\n");
 	CopyToBodyQue (self);
 
 	PutClientInServer (self);
@@ -465,13 +465,13 @@ void BOT_RemoveBot(char *name)
 	qboolean freed=false;
 	edict_t *bot;
 
-	gi.dprintf("BOT_RemoveBot\n");
+	//gi.dprintf("BOT_RemoveBot\n");
 	for(i=0;i<maxclients->value;i++)
 	{
 		bot = g_edicts + i + 1;
 		if(bot->inuse)
 		{
-			gi.dprintf("found %s\n", bot->classname);
+			//gi.dprintf("found %s\n", bot->classname);
 			if(bot->ai.is_bot && (strcmp(bot->client->pers.netname,name)==0 || strcmp(name,"all")==0))
 			{
 				bot->health = 0;

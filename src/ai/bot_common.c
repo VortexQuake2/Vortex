@@ -316,7 +316,7 @@ void AI_DebugPrintf (char* fmt, ...)
 	va_list		argptr;
 	int len;
 	
-	if (!AIDevel.debugMode)
+	//if (!AIDevel.debugMode)
 		return;
 	va_start(argptr, fmt);
 	len = vsprintf(bigbuffer, fmt, argptr);

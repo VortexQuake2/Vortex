@@ -172,6 +172,7 @@ void SP_info_player_intermission(void)
 
 void player_pain (edict_t *self, edict_t *other, float kick, int damage)
 {
+	BOT_DMclass_Pain(self, other, kick, damage);//GHz
 	// player pain is handled at the end of the frame in P_DamageFeedback
 }
 
@@ -985,7 +986,7 @@ void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 		self->client->ps.pmove.pm_type = PM_DEAD;
 		ClientObituary (self, inflictor, attacker);
 		//TossClientWeapon (self);
-		if (deathmatch->value)
+		if (deathmatch->value && !self->ai.is_bot) // GHz: don't send unicast packets to bots!
 			Cmd_Help_f (self);		// show scores
 		// clear inventory
 		memset(self->client->pers.inventory, 0, sizeof(self->client->pers.inventory));

@@ -298,12 +298,14 @@ void AI_PickLongRangeGoal(edict_t *self)
 
 		if(cost == INVALID || cost < 4) // ignore invalid and very short hops
 			continue;
-
+		
 		//precomputed player weights
 		weight = self->ai.status.playersWeights[i];
 
 		//weight *= random(); // Allow random variations
 		weight /= cost; // Check against cost of getting there
+
+		//gi.dprintf("LR enemy goal %s weight %f\n", AIEnemies[i]->classname, weight);
 
 		if(weight > best_weight)
 		{		
@@ -333,7 +335,7 @@ void AI_PickLongRangeGoal(edict_t *self)
 	self->ai.tries = 0;	// Reset the count of how many times we tried this goal
 
 	if(goal_ent != NULL && AIDevel.debugChased && bot_showlrgoal->value)
-		safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: selected a %s at node %d for LR goal.\n",self->ai.pers.netname, goal_ent->classname, goal_node);
+		safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: selected %s (wt %f) @ node %d for LR goal.\n",self->ai.pers.netname, goal_ent->classname, best_weight, goal_node);
 
 	AI_SetGoal(self,goal_node, true);
 }

@@ -127,12 +127,12 @@ qboolean AI_CanMove1(edict_t *self, int direction)
 	{
 		if (tr.ent->takedamage && tr.ent->solid != SOLID_NOT)
 			self->enemy = tr.ent;
-		gi.dprintf("blocked1\n");
+		//gi.dprintf("blocked1\n");
 		return false;
 	}
 	if(tr.fraction != 1.0 || tr.contents & (CONTENTS_SOLID))
 	{
-		gi.dprintf("blocked2\n");
+		//gi.dprintf("blocked2\n");
 		return false;
 	}
 
@@ -275,7 +275,7 @@ qboolean AI_SpecialMove(edict_t *self, usercmd_t *ucmd)
 	tr = gi.trace( self->s.origin, self->mins, self->maxs, boxorigin, self, MASK_AISOLID);
 	if (!tr.startsolid && tr.fraction == 1.0) // not bloqued
 	{
-		gi.dprintf("not blocked?\n");
+		//gi.dprintf("not blocked?\n");
 		return false;
 	}
 
@@ -314,7 +314,7 @@ qboolean AI_SpecialMove(edict_t *self, usercmd_t *ucmd)
 			tr = gi.trace( boxorigin, boxmins, boxmaxs, boxorigin, self, MASK_AISOLID);
 			if( !tr.startsolid )	//can move by jumping
 			{
-				gi.dprintf("can move by jumping\n");
+				//gi.dprintf("can move by jumping\n");
 				ucmd->forwardmove = 400;
 				ucmd->upmove = 400;
 				
@@ -430,7 +430,7 @@ qboolean AI_MoveToGoalEntity(edict_t *self, usercmd_t *ucmd)
 	}
 
 	AI_DebugPrintf("AI_MoveToGoalEntity()\n");
-	gi.dprintf("movetarget: %s\n", self->movetarget->classname);
+	//gi.dprintf("movetarget: %s\n", self->movetarget->classname);
 
 	// If a rocket or grenade is around deal with it
 	// Simple, but effective (could be rewritten to be more accurate)
@@ -457,7 +457,7 @@ qboolean AI_MoveToGoalEntity(edict_t *self, usercmd_t *ucmd)
 	AI_ChangeAngle(self);
 	if(!AI_CanMove(self, BOT_MOVE_FORWARD) ) 
 	{
-		gi.dprintf("bot can't move forward\n");//GHz
+		//gi.dprintf("bot can't move forward\n");//GHz
 		self->movetarget = NULL;
 		ucmd->forwardmove = -400;
 		return false;
