@@ -292,6 +292,8 @@ int AI_GravityBoxStep( vec3_t origin, float scale, vec3_t destvec, vec3_t newori
 	float	ydist, yscale;
 	float	dist;
 
+	AI_DebugPrintf("AI_GravityBoxStep\n");
+
 	trace = gi.trace( origin, mins, maxs, origin, LINKS_PASSENT, MASK_NODESOLID );
 	if( trace.startsolid )
 		return LINK_INVALID;
@@ -748,6 +750,8 @@ int AI_IsLadderLink( int n1, int n2 )
 	vec3_t	eorg;
 	float	xzdist;
 
+	AI_DebugPrintf("AI_IsLadderLink\n");
+
 	for (j=0 ; j<2 ; j++)
 		eorg[j] = nodes[n2].origin[j] - nodes[n1].origin[j];
 	eorg[2] = 0; //ignore height
@@ -858,6 +862,8 @@ int AI_IsJumpLink(int n1, int n2)
 {
 	int		link;
 	int climblink = 0;
+
+	AI_DebugPrintf("AI_IsJumpLink\n");
 
 	if( n1 == n2 || n1 == INVALID || n2 == INVALID )
 		return LINK_INVALID;

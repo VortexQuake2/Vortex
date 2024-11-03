@@ -236,6 +236,8 @@ void AI_WaterJumpNode( void )
 	trace_t		trace;
 	edict_t		ent;
 
+	AI_DebugPrintf("AI_WaterJumpNode\n");
+
 	//don't drop if player is riding elevator or climbing a ladder
 	if( player.ent->groundentity && player.ent->groundentity != world) {
 		if( player.ent->groundentity->classname ) {
