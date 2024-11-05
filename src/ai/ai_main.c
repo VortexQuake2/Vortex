@@ -368,7 +368,8 @@ void AI_PickShortRangeGoal(edict_t *self)
 			return;
 		
 		// Missile detection code
-		if(strcmp(target->classname,"rocket")==0 || strcmp(target->classname,"grenade")==0)
+		if((strcmp(target->classname,"rocket")==0 || strcmp(target->classname,"grenade")==0) && target->owner 
+			&& target->owner->inuse && !OnSameTeam(self, target->owner)) // GHz: don't get angry at teammates
 		{
 			//if player who shoot is a potential enemy
 			if (self->ai.status.playersWeights[target->owner->s.number-1])

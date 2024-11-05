@@ -78,16 +78,16 @@ in NO WAY supported by Steve Yeager.
 
 #define LINK_INVALID			0x00001000
 
+#define MAX_SPATH	1024 //GHz: maximum number of previous paths to store in memory
 
 typedef struct nav_plink_s
 {
-	int			numLinks;
-	int			nodes[NODES_MAX_PLINKS];
-	int			dist[NODES_MAX_PLINKS];
-	int			moveType[NODES_MAX_PLINKS];
+	int			numLinks;					// number of links between adjacent nodes
+	int			nodes[NODES_MAX_PLINKS];	// adjacent node indexes
+	int			dist[NODES_MAX_PLINKS];		// distance to adjacent nodes
+	int			moveType[NODES_MAX_PLINKS];	// move type between adjacent nodes
 
 } nav_plink_t;
-
 
 typedef struct nav_node_s
 {
@@ -97,3 +97,11 @@ typedef struct nav_node_s
 
 } nav_node_t;
 
+typedef struct
+{
+	int	numNodes;
+	int path[MAX_NODES];
+} spath_t;
+
+spath_t Spath[MAX_SPATH];	//GHz: searchable list of previously computed paths, used to speed up pathfinding
+int	Spath_numNodes;		//GHz: number of saved paths

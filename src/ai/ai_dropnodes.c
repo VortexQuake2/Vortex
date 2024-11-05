@@ -27,7 +27,7 @@ in NO WAY supported by Steve Yeager.
 #include "ai_local.h"
 
 
-nav_plink_t pLinks[MAX_NODES];		// pLinks array
+nav_plink_t pLinks[MAX_NODES];		// pLinks array - links or connections between nodes; used for pathfinding (determining distance/cost between nodes)
 nav_node_t nodes[MAX_NODES];		// nodes array
 ai_navigation_t	nav;
 
@@ -87,7 +87,7 @@ int AI_AddNode( vec3_t origin, int flagsmask )
 	nodes[nav.num_nodes].flags = flagsmask;
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, player.ent );
 
-	//Com_Printf("Dropped Node\n");
+	//gi.dprintf("Dropped Node\n");
 	//if( sv_cheats->value )
 	//	Com_Printf("Dropped Node\n");
 

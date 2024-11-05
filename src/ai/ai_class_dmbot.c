@@ -421,7 +421,7 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 		if (self->ai.status.playersWeights[i] == 0)
 			continue;
 
-		if (!visible1(self, AIEnemies[i]))
+		if (!visible(self, AIEnemies[i]))
 			continue;
 		if (!infront(self, AIEnemies[i]))
 			continue;

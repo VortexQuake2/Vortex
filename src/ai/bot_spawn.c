@@ -304,7 +304,7 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 	char *s;
 	//int rnd = CLASS_PALADIN;
 
-	gi.dprintf("BOT_DMClass_JoinGame\n");
+	//gi.dprintf("BOT_DMClass_JoinGame\n");
 
 	if ( !BOT_JoinCTFTeam(ent, team_name) )
 		gi.bprintf (PRINT_HIGH,  "[BOT] %s joined the game.\n",
@@ -363,7 +363,7 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 //==========================================
 void BOT_StartAsSpectator (edict_t *ent)
 {
-	gi.dprintf("BOT_StartAsSpectator\n");
+	//gi.dprintf("BOT_StartAsSpectator\n");
 
 	// start as 'observer'
 	ent->movetype = MOVETYPE_NOCLIP;

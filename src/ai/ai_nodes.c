@@ -898,6 +898,8 @@ void AI_InitNavigationData(void)
 	nav.num_nodes = 0;
 	memset( nodes, 0, sizeof(nav_node_t) * MAX_NODES );
 	memset( pLinks, 0, sizeof(nav_plink_t) * MAX_NODES );
+	memset( Spath, 0, sizeof(spath_t) * MAX_SPATH );//GHz
+	Spath_numNodes = 0;//GHz
 
 	//Load nodes from file
 	nav.loaded = AI_LoadPLKFile( level.mapname );
