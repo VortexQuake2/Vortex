@@ -97,11 +97,11 @@ typedef struct nav_node_s
 
 } nav_node_t;
 
-typedef struct
+typedef struct spath_s
 {
 	int	numNodes;
 	int path[MAX_NODES];
 } spath_t;
 
-spath_t Spath[MAX_SPATH];	//GHz: searchable list of previously computed paths, used to speed up pathfinding
-int	Spath_numNodes;		//GHz: number of saved paths
+extern spath_t Spath[MAX_SPATH];	//GHz: searchable list of previously computed paths, used to speed up pathfinding
+extern int Spath_numNodes;		//GHz: number of saved paths

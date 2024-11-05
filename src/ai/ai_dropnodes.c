@@ -30,6 +30,8 @@ in NO WAY supported by Steve Yeager.
 nav_plink_t pLinks[MAX_NODES];		// pLinks array - links or connections between nodes; used for pathfinding (determining distance/cost between nodes)
 nav_node_t nodes[MAX_NODES];		// nodes array
 ai_navigation_t	nav;
+spath_t Spath[MAX_SPATH];	//GHz: searchable list of previously computed paths, used to speed up pathfinding
+int Spath_numNodes;		//GHz: number of saved paths
 
 //ACE
 
