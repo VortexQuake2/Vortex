@@ -143,7 +143,7 @@ void send_sbuffer(SOCKET s, msgpack_sbuffer* sbuf) {
     memcpy(data + sizeof(MAGIC), &sbuf->size, sizeof (uint32_t));
     memcpy(data + HEADER_SIZE, sbuf->data, sbuf->size);
 
-    while (sent < sbuf->size) {
+    while (sent < size) {
         int n = send(s, data + sent, size - sent, 0);
         if (n == -1) {
 #ifdef WIN32
@@ -248,10 +248,10 @@ qboolean vrx_relay_try_message_relay(msgpack_object_str *type, msgpack_object_ar
 }
 
 typedef enum {
-    RESULT_INVALID,
-    RESULT_NEED_MORE_DATA,
-    RESULT_CONTINUE,
-    RESULT_SUCCESS
+    RESULT_INVALID, // "we got an invalid message"
+    RESULT_NEED_MORE_DATA, // "we need more data to parse the message"
+    RESULT_CONTINUE, // "we got a message successfully, but continue parsing"
+    RESULT_SUCCESS // "we got a message successfully, but stop parsing."
 } relay_parse_result_t;
 
 relay_parse_result_t vrx_relay_parse_message(size_t* start) {
@@ -396,9 +396,11 @@ void vrx_relay_recv() {
             case RESULT_NEED_MORE_DATA:
             case RESULT_SUCCESS:
                 continue_parsing = false;
+
                 // az: we need to wait for more data, memmove the reminder to the beginning
                 memmove(pending_buf, pending_buf + start, pending_buf_size - start);
                 pending_buf_size -= start;
+                start = 0;
                 break;
             case RESULT_CONTINUE:
                 break;
