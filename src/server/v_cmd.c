@@ -83,6 +83,9 @@ void Cmd_BlinkStrike_f(edict_t* self);
 void Cmd_ExplodingBarrel_f(edict_t* ent);
 void Cmd_Stash_f(edict_t* ent);
 void Cmd_LifeTap(edict_t* ent);
+void Cmd_ShowPlinks_f(edict_t* ent);
+void Cmd_AI_AddNode_f(edict_t* ent);
+void Cmd_AI_RemoveNode_f(edict_t* ent);
 
 #define CommandTotal sizeof(commands) / sizeof(gameCommand_s)
 
@@ -176,6 +179,9 @@ const gameCommand_s commands[] =
 	{ "deleteallnodes", Cmd_DeleteAllNodes_f },
 	{ "computenodes",   Cmd_ComputeNodes_f },
 	{ "showgrid",	    Cmd_ToggleShowGrid },
+	{ "showplinks",		Cmd_ShowPlinks_f },
+	{ "aiaddnode",		Cmd_AI_AddNode_f },
+	{ "airemovenode",	Cmd_AI_RemoveNode_f },
 	{ "writepos",	    Cmd_WritePos_f },
 	{ "rune",		    Cmd_Rune_f },
 	{ "vrxid",		    Cmd_IdentifyPlayer },

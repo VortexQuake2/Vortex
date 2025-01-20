@@ -23,11 +23,20 @@ This program is a modification of the ACE Bot, and is therefore
 in NO WAY supported by Steve Yeager.
 */
 
+//GHz: define ideal combat ranges for various weapons
+#define AI_RANGE_MELEE	64
+#define AI_RANGE_SHORT	128
+#define AI_RANGE_MEDIUM	256
+#define AI_RANGE_LONG	512
+#define AI_RANGE_SNIPER	1024
+
 enum
 {
+	AI_AIMSTYLE_NONE,
 	AI_AIMSTYLE_INSTANTHIT,
 	AI_AIMSTYLE_PREDICTION,
 	AI_AIMSTYLE_PREDICTION_EXPLOSIVE,
+	AI_AIMSTYLE_BALLISTIC,
 	AI_AIMSTYLE_DROP,
 	
 	AIWEAP_AIM_TYPES
@@ -39,6 +48,7 @@ enum
 	AIWEAP_SHORT_RANGE,
 	AIWEAP_MEDIUM_RANGE,
 	AIWEAP_LONG_RANGE,
+	AIWEAP_SNIPER_RANGE,
 	
 	AIWEAP_RANGES
 };
@@ -46,7 +56,7 @@ enum
 typedef struct
 {
 	int		aimType;
-
+	float	idealRange;							//GHz: the ideal combat range for this weapon (FIXME: this could be calculated by rangeweights...)
 	float	RangeWeight[AIWEAP_RANGES];
 
 	gitem_t	*weaponItem;
@@ -55,3 +65,15 @@ typedef struct
 } ai_weapon_t;
 
 extern ai_weapon_t		AIWeapons[WEAP_TOTAL];
+
+typedef struct
+{
+	int			aimType;
+	float		idealRange;
+	float		RangeWeight[AIWEAP_RANGES];
+	qboolean	is_weapon;						// true if ability can be fired like a weapon
+
+} ai_ability_t;
+
+extern ai_ability_t		AIAbilities[MAX_ABILITIES];
+

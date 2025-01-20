@@ -1654,12 +1654,6 @@ void respawn (edict_t *self)
 		gi.dprintf("respawn()\n");
 	if (deathmatch->value || coop->value)
 	{
-		//JABot[start]
-		if (self->ai.is_bot){
-			BOT_Respawn (self);
-			return;
-		}
-		//JABot[end]
 		// don't let them respawn unless they've been assigned a spawn
 		if (INVASION_OTHERSPAWNS_REMOVED)
 		{
@@ -1669,6 +1663,13 @@ void respawn (edict_t *self)
 				return;
 			}
 		}
+
+		//JABot[start]
+		if (self->ai.is_bot) {
+			BOT_Respawn(self);
+			return;
+		}
+		//JABot[end]
 
 		vrx_print_newbie_tip(self);
 
@@ -2729,6 +2730,11 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			}
 		}
 
+		//GHz: bots should call touchdown function if they have one after landing
+		if (ent->ai.is_bot && !ent->groundentity && pm.groundentity && ent->monsterinfo.touchdown)
+		{
+			ent->monsterinfo.touchdown(ent);
+		}
 		ent->viewheight = pm.viewheight;
 		ent->waterlevel = pm.waterlevel;
 		ent->watertype = pm.watertype;

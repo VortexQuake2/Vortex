@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "ai_local.h"
 
 //ACE
-
+ai_ability_t	AIAbilities[MAX_ABILITIES];//GHz
 ai_weapon_t		AIWeapons[WEAP_TOTAL];
 int	num_AIEnemies;
 edict_t *AIEnemies[MAX_EDICTS];		// pointers to all players in the game
@@ -33,49 +33,232 @@ edict_t *AIEnemies[MAX_EDICTS];		// pointers to all players in the game
 static gitem_t *redflag;
 static gitem_t *blueflag;
 
+//GHz: turn the bot away from current angles to avoid obstruction
+void BOT_DMClass_TurnAway(edict_t* self)
+{
+	vec3_t angles, forward;
 
+	AI_DebugPrintf("turn away from obstruction\n");
+	VectorCopy(self->s.angles, angles);
+	angles[YAW] += random() * 180 - 90;
+	AngleVectors(angles, forward, NULL, NULL);
+	VectorCopy(forward, self->ai.move_vector);
+	AI_ChangeAngle(self);
+	self->monsterinfo.bump_delay = level.time + GetRandom(2, 5) * FRAMETIME;
+}
+
+//GHz: returns the velocity of the bot in a forward direction
+float AI_ForwardVelocity(edict_t* self)
+{
+	vec3_t forward;
+
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+	VectorNormalize(forward);
+	return DotProduct(forward, self->velocity);
+}
+
+// returns dot product value (ranging from 1 to -1) by comparing move_vec to a vector pointing to the right of the bot
+// a value of > 0 indicates move_vector points to the right of the bot, < 0 is to the left, 0 is parallel and pointing in the same direction, -1/1 is parallel in the opposite direction
+// note: it's important to understand that the result indicates the relative direction the vectors are POINTING, and has nothing to do with their positions
+float AI_MoveRight(edict_t* self, vec3_t move_vec)
+{
+	vec3_t	vec;
+	float	dot, value;
+	vec3_t	right;
+
+	AngleVectors(self->s.angles, NULL, right, NULL);
+	VectorNormalize(right);
+	VectorCopy(move_vec, vec);
+	VectorNormalize(vec);
+	dot = DotProduct(right, vec);
+	if (dot >= 0)
+	{
+		//gi.dprintf("AI_MoveRight: %f: move_vec points to the right of bot -->\n", dot);
+		//return true;
+	}
+	else
+	{
+		//gi.dprintf("AI_MoveRight: %f: move_vec points to the left of bot <--\n", dot);
+		//return false;
+	}
+	return dot;
+}
+
+// return true if move_vector is in front (forward) of the bot
+qboolean AI_MoveForward(edict_t* self)
+{
+	vec3_t	vec;
+	float	dot, value;
+	vec3_t	forward;
+
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+	VectorCopy(self->ai.move_vector, vec);
+	VectorNormalize(vec);
+	dot = DotProduct(forward, vec);
+	if (dot >= 0)
+		return true;
+	return false;
+}
+
+// return true if move_vector is above the bot
+qboolean AI_MoveUp(edict_t* self)
+{
+	vec3_t	vec;
+	float	dot, value;
+	vec3_t	up;
+
+	AngleVectors(self->s.angles, NULL, NULL, up);
+	VectorCopy(self->ai.move_vector, vec);
+	VectorNormalize(vec);
+	dot = DotProduct(up, vec);
+	if (dot >= 0)
+		return true;
+	return false;
+}
+
+qboolean AI_IsProjectile(edict_t* ent);
+// moves the bot towards move_vector using ucmds, returns true if the bot was able to move
+qboolean BOT_DMclass_Ucmd_Move(edict_t* self, float movespeed, usercmd_t* ucmd, qboolean move_vertical, qboolean check_move)
+{
+	qboolean moved = false;
+	vec3_t	move_vec;
+
+	//if (VectorEmpty(self->ai.link_vector))
+		VectorCopy(self->ai.move_vector, move_vec);
+	//else
+	//	VectorCopy(self->ai.link_vector, move_vec);
+
+	if (move_vertical)
+	{
+		if (AI_MoveUp(self))
+			ucmd->upmove = movespeed;
+		else
+			ucmd->upmove = -movespeed;
+		moved = true;
+	}
+
+	if (AI_MoveForward(self))
+	{
+		if (!check_move || AI_CanMove(self, BOT_MOVE_FORWARD))
+		{
+			ucmd->forwardmove = movespeed;
+			moved = true;
+		}
+	}
+	else
+	{
+		if (!check_move || AI_CanMove(self, BOT_MOVE_BACK))
+		{
+			ucmd->forwardmove = -movespeed;
+			moved = true;
+		}
+	}
+	if (AI_MoveRight(self, move_vec) >= 0)
+	{
+		if (!check_move || AI_CanMove(self, BOT_MOVE_RIGHT))
+		{
+			ucmd->sidemove = movespeed;
+			moved = true;
+		}
+	}
+	else
+	{
+		if (!check_move || AI_CanMove(self, BOT_MOVE_LEFT))
+		{
+			ucmd->sidemove = -movespeed;
+			moved = true;
+		}
+	}
+	return moved;
+}
+
+void BOT_DMclass_AvoidDrowning(edict_t* self, usercmd_t *ucmd)
+{
+	// we're 3 seconds away from drowning--move up!
+	if (level.time + 3.0 > self->air_finished)
+		ucmd->upmove = 400;
+}
+
+void BOT_DMclass_AvoidObstacles(edict_t* self, usercmd_t* ucmd, int current_node_flags)
+{
+	if (random() > 0.1 && AI_SpecialMove(self, ucmd)) //jumps, crouches, turns...
+		return;
+	if (random() > 0.6 && current_node_flags & NODEFLAGS_PLATFORM) //GHz: standing on a platform--if we can't move, maybe it's for a reason?
+	{
+		self->ai.next_move_time = level.time + (GetRandom(2, 5) * FRAMETIME);
+		return;
+	}
+	BOT_DMClass_TurnAway(self);
+	ucmd->forwardmove = 400;
+}
+
+void BOT_DMclass_BunnyHop(edict_t* self, usercmd_t* ucmd, qboolean forwardmove);
 //==========================================
-// BOT_DMclass_Move
-// DMClass is generic bot class
+// BOT_DMclass_MoveAttack
+// derivative of BOT_DMclass_Move that allows the bot to move along a path (mostly) independent of view angles
+// this allows the bot to attack an enemy while following a path to it (or another goal), allowing it to navigate around obstructions
 //==========================================
-void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
+void BOT_DMclass_MoveAttack(edict_t* self, usercmd_t* ucmd)
 {
 	int current_node_flags = 0;
 	int next_node_flags = 0;
 	int	current_link_type = 0;
 	int i;
 
-	AI_DebugPrintf("BOT_DMclass_Move()\n");
+	AI_DebugPrintf("BOT_DMclass_MoveAttack()\n");
+
+	if (self->ai.next_move_time > level.time)
+		return;//GHz
 
 	current_node_flags = nodes[self->ai.current_node].flags;
 	next_node_flags = nodes[self->ai.next_node].flags;
-	if( AI_PlinkExists( self->ai.current_node, self->ai.next_node ))
-	{
-		current_link_type = AI_PlinkMoveType( self->ai.current_node, self->ai.next_node );
 
-		if (AIDevel.debugChased)//GHz
-			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: LINKTYPE: %s\n", self->ai.pers.netname, AI_LinkString(current_link_type));//GHz
+	//GHz: bot was stuck, so give it time to turn and move away from the obstruction
+	if (self->monsterinfo.bump_delay > level.time)
+	{
+		//current_link_type = AI_PlinkMoveType(self->ai.current_node, self->ai.next_node);
+		//AI_DebugPrintf("BUMP AROUND : % d(% s) -> % s -> % d(% s)\n",
+		//	self->ai.current_node, AI_NodeString(current_node_flags),
+		//	AI_LinkString(current_link_type), self->ai.next_node, AI_NodeString(next_node_flags));//GHz
+		//if (!(current_node_flags & NODEFLAGS_PLATFORM))
+		ucmd->forwardmove = 400;
+		return;
+	}
+
+	// is there a path link between the current node we're on to the next one in the chain?
+	if (AI_PlinkExists(self->ai.current_node, self->ai.next_node))
+	{
+		current_link_type = AI_PlinkMoveType(self->ai.current_node, self->ai.next_node);
+
+		if (AIDevel.debugChased && current_link_type != self->ai.linktype)//GHz
+			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: CURRENT MOVE: %d (%s) -> %s -> %d (%s)\n",
+				self->ai.pers.netname, self->ai.current_node, AI_NodeString(current_node_flags),
+				AI_LinkString(current_link_type), self->ai.next_node, AI_NodeString(next_node_flags));//GHz
 		//if (current_link_type && current_link_type != LINK_INVALID)//GHz
+		self->ai.linktype = current_link_type;//GHz
 	}
 
 	// Platforms
-	if( current_link_type == LINK_PLATFORM )
+	if (current_link_type == LINK_PLATFORM) // currently riding a platform
 	{
 		// Move to the center
 		self->ai.move_vector[2] = 0; // kill z movement
-		if(VectorLength(self->ai.move_vector) > 10)
-			ucmd->forwardmove = 200; // walk to center
+		if (VectorLength(self->ai.move_vector) > 10)
+			BOT_DMclass_Ucmd_Move(self, 200, ucmd, false, false);
+			//ucmd->forwardmove = 200; // walk to center
 
-		AI_ChangeAngle(self);
+		//AI_ChangeAngle(self);
 
 		return; // No move, riding elevator
 	}
-	else if( next_node_flags & NODEFLAGS_PLATFORM )
+	else if (next_node_flags & NODEFLAGS_PLATFORM) // the next node is a platform
 	{
+		//gi.dprintf("next node is a platform\n");
 		// is lift down?
-		for(i=0;i<nav.num_ents;i++){
-			if( nav.ents[i].node == self->ai.next_node )
+		for (i = 0;i < nav.num_ents;i++) {
+			if (nav.ents[i].node == self->ai.next_node)
 			{
+				//gi.dprintf("found next node entity %s\n", nav.ents[i].ent->classname);
 				//testing line
 				//vec3_t	tPoint;
 				//int		j;
@@ -86,9 +269,219 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 				//AITools_DrawLine( self->s.origin, tPoint );
 
 				//if not reachable, wait for it (only height matters)
+				/*
 				if( (nav.ents[i].ent->s.origin[2] + nav.ents[i].ent->maxs[2])
 					> (self->s.origin[2] + self->mins[2] + AI_JUMPABLE_HEIGHT) )
+				{
+					gi.dprintf("waiting for platform to arrive...\n");
 					return; //wait for elevator
+				}
+				*/
+				if (nav.ents[i].ent->moveinfo.state != STATE_BOTTOM)//GHz
+				{
+					//gi.dprintf("waiting for platform. state %d dist %f height %f\n", 
+					//	nav.ents[i].ent->moveinfo.state, nav.ents[i].ent->moveinfo.remaining_distance, nav.ents[i].ent->s.origin[2]);
+					return; //wait for it
+				}
+			}
+		}
+	}
+
+	// Ladder movement
+	if (self->ai.is_ladder) // climbing ladder
+	{
+		ucmd->forwardmove = 70;
+		ucmd->upmove = 200;
+		ucmd->sidemove = 0;
+		return;
+	}
+
+	// Falling off ledge
+	if (!self->groundentity && !self->ai.is_step && !self->ai.is_swim)
+	{
+		//gi.dprintf("falling off a ledge...\n");
+		AI_ChangeAngle(self);
+		if (current_link_type == LINK_JUMPPAD) {
+			//gi.dprintf("walk forward\n");
+			BOT_DMclass_Ucmd_Move(self, 100, ucmd, false, false);
+			//ucmd->forwardmove = 100; // move forward slowly
+		}
+		else if (current_link_type == LINK_JUMP) {
+			self->velocity[0] = self->ai.move_vector[0] * 280; // adjust x/y velocity to push us (rapidly) towards our move vector
+			self->velocity[1] = self->ai.move_vector[1] * 280;
+			//gi.dprintf("jump forward?\n");
+		}
+		else {
+			self->velocity[0] = self->ai.move_vector[0] * 160; // same as above, but slower
+			self->velocity[1] = self->ai.move_vector[1] * 160;
+			//gi.dprintf("jump back?\n");
+		}
+		return;
+	}
+
+	// jumping over (keep fall before this)
+	if (current_link_type == LINK_JUMP && self->groundentity) // feet are still on the ground, but we're supposed to jump somewhere along this path link
+	{
+		trace_t trace;
+		vec3_t  v1, v2;
+		//gi.dprintf("jump over...\n");
+		//check floor in front, if there's none... Jump!
+		VectorCopy(self->s.origin, v1);
+		VectorCopy(self->ai.move_vector, v2);
+		VectorNormalize(v2);
+		VectorMA(v1, 12, v2, v1);
+		v1[2] += self->mins[2];
+		trace = gi.trace(v1, tv(-2, -2, -AI_JUMPABLE_HEIGHT), tv(2, 2, 0), v1, self, MASK_AISOLID);
+		if (!trace.startsolid && trace.fraction == 1.0)
+		{
+			//gi.dprintf("jump!\n");
+			//jump!
+			BOT_DMclass_Ucmd_Move(self, 400, ucmd, false, false);
+			//ucmd->forwardmove = 400;
+			//prevent double jumping on crates
+			VectorCopy(self->s.origin, v1);
+			v1[2] += self->mins[2];
+			trace = gi.trace(v1, tv(-12, -12, -8), tv(12, 12, 0), v1, self, MASK_AISOLID);
+			if (trace.startsolid)
+				ucmd->upmove = 400;
+			return;
+		}
+	}
+
+	// Move To Short Range goal (not following paths)
+	// plats, grapple, etc have higher priority than SR Goals, cause the bot will 
+	// drop from them and have to repeat the process from the beginning
+	if (AI_MoveToGoalEntity(self, ucmd))
+	{
+		AI_DebugPrintf("move to short range goal\n");
+		return;
+	}
+
+	// swimming
+	if (self->ai.is_swim)
+	{
+		// We need to be pointed up/down
+		//AI_ChangeAngle(self);
+		
+		if (!(gi.pointcontents(nodes[self->ai.next_node].origin) & MASK_WATER)) // Exit water
+			ucmd->upmove = 400;
+		else
+			BOT_DMclass_AvoidDrowning(self, ucmd);//GHz: exit water if we're running out of air
+
+		BOT_DMclass_Ucmd_Move(self, 300, ucmd, true, false);
+		//ucmd->forwardmove = 300;
+		return;
+	}
+
+	// Check to see if stuck, and if so try to free us
+	if (VectorLength(self->velocity) < 37)
+	{
+		//AI_DebugPrintf("STUCK : % d(% s) -> % s -> % d(% s)\n",
+		//	self->ai.current_node, AI_NodeString(current_node_flags),
+		//	AI_LinkString(current_link_type), self->ai.next_node, AI_NodeString(next_node_flags));//GHz
+		BOT_DMclass_AvoidObstacles(self, ucmd, current_node_flags);
+		return;
+	}
+
+
+	//AI_ChangeAngle(self);
+
+	// Otherwise move as fast as we can... 
+	//ucmd->forwardmove = 400;
+	BOT_DMclass_Ucmd_Move(self, 400, ucmd, false, false);
+	//BOT_DMclass_BunnyHop(self, ucmd, true);
+}
+
+//==========================================
+// BOT_DMclass_Move
+// DMClass is generic bot class
+// GHz: IMPORTANT: any changes made here should (most likely) be duplicated in BOT_DMclass_MoveAttack()
+//==========================================
+void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
+{
+	int current_node_flags = 0;
+	int next_node_flags = 0;
+	int	current_link_type = 0;
+	int i;
+
+	//AI_DebugPrintf("BOT_DMclass_Move()\n");
+
+	if (self->ai.next_move_time > level.time)
+		return;//GHz
+
+	current_node_flags = nodes[self->ai.current_node].flags;
+	next_node_flags = nodes[self->ai.next_node].flags;
+
+	//GHz: bot was stuck, so give it time to turn and move away from the obstruction
+	if (self->monsterinfo.bump_delay > level.time)
+	{
+		//current_link_type = AI_PlinkMoveType(self->ai.current_node, self->ai.next_node);
+		//AI_DebugPrintf("BUMP AROUND : % d(% s) -> % s -> % d(% s)\n",
+		//	self->ai.current_node, AI_NodeString(current_node_flags),
+		//	AI_LinkString(current_link_type), self->ai.next_node, AI_NodeString(next_node_flags));//GHz
+		//if (!(current_node_flags & NODEFLAGS_PLATFORM))
+			ucmd->forwardmove = 400;
+		return;
+	}
+
+	// is there a path link between the current node we're on to the next one in the chain?
+	if( AI_PlinkExists( self->ai.current_node, self->ai.next_node ))
+	{
+		current_link_type = AI_PlinkMoveType( self->ai.current_node, self->ai.next_node );
+
+		if (AIDevel.debugChased && current_link_type != self->ai.linktype)//GHz
+			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: CURRENT MOVE: %d (%s) -> %s -> %d (%s)\n", 
+				self->ai.pers.netname, self->ai.current_node, AI_NodeString(current_node_flags), 
+				AI_LinkString(current_link_type), self->ai.next_node, AI_NodeString(next_node_flags));//GHz
+		//if (current_link_type && current_link_type != LINK_INVALID)//GHz
+		self->ai.linktype = current_link_type;//GHz
+	}
+
+	// Platforms
+	if( current_link_type == LINK_PLATFORM ) // currently riding a platform
+	{
+		//gi.dprintf("currently riding a platform...\n");
+		// Move to the center
+		self->ai.move_vector[2] = 0; // kill z movement
+		if(VectorLength(self->ai.move_vector) > 10)
+			ucmd->forwardmove = 200; // walk to center
+
+		AI_ChangeAngle(self);
+
+		return; // No move, riding elevator
+	}
+	else if( next_node_flags & NODEFLAGS_PLATFORM ) // the next node is a platform
+	{
+		//gi.dprintf("next node is a platform\n");
+		// is lift down?
+		for(i=0;i<nav.num_ents;i++){
+			if( nav.ents[i].node == self->ai.next_node )
+			{
+				//gi.dprintf("found next node entity %s\n", nav.ents[i].ent->classname);
+				//testing line
+				//vec3_t	tPoint;
+				//int		j;
+				//for(j=0; j<3; j++)//center of the ent
+				//	tPoint[j] = nav.ents[i].ent->s.origin[j] + 0.5*(nav.ents[i].ent->mins[j] + nav.ents[i].ent->maxs[j]);
+				//tPoint[2] = nav.ents[i].ent->s.origin[2] + nav.ents[i].ent->maxs[2];
+				//tPoint[2] += 8;
+				//AITools_DrawLine( self->s.origin, tPoint );
+
+				//if not reachable, wait for it (only height matters)
+				/*
+				if( (nav.ents[i].ent->s.origin[2] + nav.ents[i].ent->maxs[2])
+					> (self->s.origin[2] + self->mins[2] + AI_JUMPABLE_HEIGHT) )
+				{
+					gi.dprintf("waiting for platform to arrive...\n");
+					return; //wait for elevator
+				}
+				*/
+				if (nav.ents[i].ent->moveinfo.state != STATE_BOTTOM)//GHz
+				{
+					//gi.dprintf("waiting for platform. state %d dist %f height %f\n", 
+					//	nav.ents[i].ent->moveinfo.state, nav.ents[i].ent->moveinfo.remaining_distance, nav.ents[i].ent->s.origin[2]);
+					return; //wait for it
+				}
 			}
 		}
 	}
@@ -103,19 +496,19 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	}
 
 	// Falling off ledge
-	if(!self->groundentity && !self->ai.is_step && !self->ai.is_swim )
+	if(!self->groundentity && !self->ai.is_step && !self->ai.is_swim && !self->ai.is_bunnyhop)//GHz: don't adjust velocity if we're bunnyhopping!
 	{
-		//gi.dprintf("falling off a ledge...\n");
+		//gi.dprintf("%d falling off a ledge...\n", level.framenum);
 		AI_ChangeAngle(self);
 		if (current_link_type == LINK_JUMPPAD ) {
 			//gi.dprintf("walk forward\n");
-			ucmd->forwardmove = 100;
+			ucmd->forwardmove = 100; // move forward slowly
 		} else if( current_link_type == LINK_JUMP ) {
-			self->velocity[0] = self->ai.move_vector[0] * 280;
+			self->velocity[0] = self->ai.move_vector[0] * 280; // adjust x/y velocity to push us (rapidly) towards our move vector
 			self->velocity[1] = self->ai.move_vector[1] * 280;
 			//gi.dprintf("jump forward?\n");
 		} else {
-			self->velocity[0] = self->ai.move_vector[0] * 160;
+			self->velocity[0] = self->ai.move_vector[0] * 160; // same as above, but slower
 			self->velocity[1] = self->ai.move_vector[1] * 160;
 			//gi.dprintf("jump back?\n");
 		}
@@ -123,11 +516,11 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	}
 
 	// jumping over (keep fall before this)
-	if( current_link_type == LINK_JUMP && self->groundentity) 
+	if( current_link_type == LINK_JUMP && self->groundentity) // feet are still on the ground, but we're supposed to jump somewhere along this path link
 	{
 		trace_t trace;
 		vec3_t  v1, v2;
-		//gi.dprintf("jumping over\n");
+		//gi.dprintf("jump over...\n");
 		//check floor in front, if there's none... Jump!
 		VectorCopy( self->s.origin, v1 );
 		VectorCopy( self->ai.move_vector, v2 );
@@ -155,7 +548,7 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	// drop from them and have to repeat the process from the beginning
 	if (AI_MoveToGoalEntity(self, ucmd))
 	{
-		AI_DebugPrintf("move to short range goal\n");
+		//AI_DebugPrintf("move to short range goal\n");
 		return;
 	}
 
@@ -173,29 +566,22 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	}
 
 	// Check to see if stuck, and if so try to free us
- 	if(VectorLength(self->velocity) < 37)
+	if (VectorLength(self->velocity) < 37)
 	{
-		AI_DebugPrintf("movement stuck...\n");
-		// Keep a random factor just in case....
-		if( random() > 0.1 && AI_SpecialMove(self, ucmd) ) //jumps, crouches, turns...
-			return;
-
-		self->s.angles[YAW] += random() * 180 - 90;
-
-		AI_ChangeAngle(self);
-
-		ucmd->forwardmove = 400;
-
+		//AI_DebugPrintf("STUCK : % d(% s) -> % s -> % d(% s)\n",
+		//	self->ai.current_node, AI_NodeString(current_node_flags),
+		//	AI_LinkString(current_link_type), self->ai.next_node, AI_NodeString(next_node_flags));//GHz
+		BOT_DMclass_AvoidObstacles(self, ucmd, current_node_flags);
 		return;
 	}
-
 
 	AI_ChangeAngle(self);
 
 	// Otherwise move as fast as we can... 
 	ucmd->forwardmove = 400;
+	if (current_link_type == LINK_MOVE || current_link_type == LINK_STAIRS)
+		BOT_DMclass_BunnyHop(self, ucmd, false);
 }
-
 
 //==========================================
 // BOT_DMclass_Wander
@@ -213,6 +599,13 @@ void BOT_DMclass_Wander(edict_t *self, usercmd_t *ucmd)
 		return;
 
 	AI_DebugPrintf("BOT_DMclass_Wander()\n");
+
+	//GHz: bot was stuck, so give it time to turn and move away from the obstruction
+	if (self->monsterinfo.bump_delay > level.time)
+	{
+		ucmd->forwardmove = 400;
+		return;
+	}
 
 	// Special check for elevators, stand still until the ride comes to a complete stop.
 	if(self->groundentity != NULL && self->groundentity->use == Use_Plat)
@@ -271,12 +664,12 @@ void BOT_DMclass_Wander(edict_t *self, usercmd_t *ucmd)
 	// Check for special movement
  	if(VectorLength(self->velocity) < 37)
 	{
-		AI_DebugPrintf("wandering stuck\n");
+		//AI_DebugPrintf("wandering stuck\n");
 		if(random() > 0.1 && AI_SpecialMove(self,ucmd))	//jumps, crouches, turns...
 			return;
+		BOT_DMClass_TurnAway(self);
+		//self->s.angles[YAW] += random() * 180 - 90;
 
-		self->s.angles[YAW] += random() * 180 - 90;
- 
 		if (!self->ai.is_step)// if there is ground continue otherwise wait for next move
 			AI_ResetNavigation(self);
 		else if( AI_CanMove( self, BOT_MOVE_FORWARD))
@@ -287,16 +680,271 @@ void BOT_DMclass_Wander(edict_t *self, usercmd_t *ucmd)
 
 
 	// Otherwise move slowly, walking wondering what's going on
-	if( AI_CanMove( self, BOT_MOVE_FORWARD))
+	if (AI_CanMove(self, BOT_MOVE_FORWARD))
+	{
+		//gi.dprintf("move forward\n");
 		ucmd->forwardmove = 400;
+	}
 	else
 	{
+		BOT_DMClass_TurnAway(self);
+		//gi.dprintf("move backward\n");
 		//AI_PickLongRangeGoal( self ); //GHz: commented out because we wouldn't be here if we weren't supposed to wander!
-		ucmd->forwardmove = -400;
+		//ucmd->forwardmove = -400;
 	}
 }
 
-qboolean CanTball(edict_t* ent, qboolean print);
+void BOT_DMclass_FireWeapon(edict_t* self, usercmd_t* ucmd);
+void BOT_DMclass_ChooseWeapon(edict_t* self);
+qboolean BOT_DMclass_RunAway(edict_t* self, qboolean moveattack, usercmd_t *ucmd)
+{
+	int current_node, goal_node;
+
+	if (self->ai.attack_delay > level.time)// || self->ai.evade_delay > level.time)
+	{
+		//gi.dprintf("already running away\n");
+		return true;
+	}
+
+	if (self->ai.evade_delay > level.time)
+	{
+		//gi.dprintf("already evading\n");
+		return false;
+	}
+	if (random() < 0.5)
+	{
+		//gi.dprintf("random fail to evade\n");
+		return false;
+	}
+	//if ((self->ai.state == BOT_STATE_MOVEATTACK || self->ai.state == BOT_STATE_MOVE) && self->ai.goal_node)
+	//	return true;
+
+	// attempt to find starting node
+	if ((current_node = AI_FindClosestReachableNode(self->s.origin, self, 2 * NODE_DENSITY, NODE_ALL)) == -1)
+	{
+		//gi.dprintf("no closest node\n");
+		return false;
+	}
+
+	self->ai.current_node = current_node;
+
+	// attempt to find ending node nearby that the enemy can't see
+	if ((goal_node = AI_FindFarthestHiddenNode(self, 1024, NODE_ALL)) == -1)
+	{
+		//gi.dprintf("couldn't find a hidden node\n");
+		return false;
+	}
+
+	//set up the goal
+	if (moveattack)
+	{
+		self->ai.state = BOT_STATE_MOVEATTACK;
+		//BOT_DMclass_ChooseWeapon(self); // chose the best weapon for the job
+		//BOT_DMclass_FireWeapon(self, ucmd); // fire!
+		self->ai.evade_delay = level.time + 15.0;// don't try to evade again for awhile
+		//gi.dprintf("SUCCESS! bot will evade the enemy!\n");
+	}
+	else
+	{
+		self->ai.state = BOT_STATE_MOVE;
+		self->ai.attack_delay = level.time + 5.0;// we're trying to run away, so don't try to attack for a bit
+	}
+	self->ai.tries = 0;	// Reset the count of how many times we tried this goal
+
+	if (AIDevel.debugChased && bot_showlrgoal->value)
+		safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: is trying to evade towards node %d!\n", self->ai.pers.netname, goal_node);
+
+	AI_SetGoal(self, goal_node, true);
+	//self->ai.state_combat_timeout = level.time + 1.0;//GHz: timeout for moveattack after it loses sight of enemy
+	
+	if (moveattack)
+		return false;
+	return true;
+}
+
+qboolean BOT_DMclassEvadeEnemy(edict_t* self, usercmd_t *ucmd)
+{
+	// low health?
+	if (self->health > 0.4 * self->max_health)
+		return false;
+	// moving toward one of our summons?
+	if (self->movetarget && self->movetarget->inuse && AI_IsOwnedSummons(self, self->movetarget))
+		return false;
+	// try to tball away
+	if (BOT_DMclass_UseTball(self, true))
+		return true;
+	
+	return BOT_DMclass_RunAway(self, true, ucmd);
+}
+
+void BOT_DMclassJumpAttack(edict_t* self, usercmd_t* ucmd, float ideal_range)
+{
+	// we aren't on the ground or we're swimming
+	if (!self->groundentity || self->waterlevel > 2)
+		return;
+	// enemy is on the ground or swimming
+	if (self->enemy->groundentity || self->enemy->waterlevel > 2)
+		return;
+	// ignoring Z height, enemy is out of range
+	if (Get2dDistance(self->s.origin, self->enemy->s.origin) > ideal_range)
+		return;
+	// enemy isn't over our head
+	if (self->enemy->absmin[2] < self->absmax[2])
+		return;
+	//gi.dprintf("try jumpattack?\n");
+	// jump if it gets us close enough to attack
+	if (self->s.origin[2] + self->viewheight + ideal_range + AI_JUMPABLE_HEIGHT >= self->enemy->absmin[2])
+	{
+		//gi.dprintf("***JUMP ATTACK****\n");
+		ucmd->upmove = 400;
+	}
+}
+
+//float vectoanglediff2(vec3_t v1, vec3_t v2);
+void BOT_DMclass_BunnyHop(edict_t* self, usercmd_t* ucmd, qboolean forwardmove)
+{
+	float fwd_spd, mv_spd, dot;
+	vec3_t move_vec, link_vec, vel;
+	qboolean straight_path;
+
+	if (self->groundentity)// on the ground? reset state--we haven't decided yet if the bot should bunnyhop again
+		self->ai.is_bunnyhop = false;
+
+	// vector pointing in the direction we should be moving
+	VectorCopy(self->ai.move_vector, move_vec);
+	move_vec[2] = 0;
+	VectorNormalize(move_vec);
+
+	// vector pointing in the direction we're travelling
+	VectorCopy(self->velocity, vel);
+	vel[2] = 0;
+	VectorNormalize(vel);
+
+	// not following a path?
+	if (VectorEmpty(self->ai.link_vector))
+	{
+		// airborne? randomly strafe left/right to build momentum
+		if (!self->groundentity)
+		{
+			if (random() < 0.5)
+				ucmd->sidemove = 400;
+			else
+				ucmd->sidemove = -400;
+			return; // nothing else to do until we land
+		}
+		// note: we're using fabs() to handle cases where the bot is jumping backwards
+		dot = fabsf(DotProduct(move_vec, vel)); // returns 1 if velocity is parallel and in the same direction as move_vec
+		mv_spd = fabsf(DotProduct(move_vec, self->velocity));// speed in the direction of our goal
+		//gi.dprintf("dot:%f mv_spd:%f fwd_spd:%f\n", dot, mv_spd, AI_ForwardVelocity(self));
+		if (dot > 0.9 && mv_spd > 280)
+		{
+			ucmd->upmove = 400;
+			self->ai.is_bunnyhop = true;
+		}
+		return;
+	}
+	else
+		VectorCopy(self->ai.link_vector, link_vec); // vector from current node to next node
+	link_vec[2] = 0;
+	VectorNormalize(link_vec);
+	
+
+	//if (self->groundentity) 
+	//	self->ai.is_bunnyhop = false;
+	if (!self->groundentity) // steer the bot towards move_vector to stay on-course
+	{
+		if (forwardmove)
+		{
+			// move along x-y axis while staying close to move_vector
+			BOT_DMclass_Ucmd_Move(self, 400, ucmd, false, false);
+		}
+		else
+		{
+			//vec3_t cross;
+			//CrossProduct(move_vec, vel, cross);
+			//gi.dprintf("cross: [0]%f [1]%f [2]%f\n", cross[0], cross[1], cross[2]);
+			//gi.dprintf("angle diff:%f\n", vectoanglediff2(self->ai.move_vector, move_vec));
+			//if (toright(self, nodes[self->ai.current_node].origin))
+			//	gi.dprintf("current node is to the RIGHT");
+			//else
+			//	gi.dprintf("current node is to the LEFT");
+			// need to strafe side-to-side while airborne to pick up extra speed, regardless of viewing angles
+			if (AI_MoveRight(self, link_vec) > 0)
+			{
+				//gi.dprintf(", so move LEFT!\n");
+				ucmd->sidemove = -400;// viewing angles/vector points left of move_vec (move_vec is right of view), i.e. we've swung too far right of path, so compensate by moving left
+			}
+			else
+			{
+				//gi.dprintf(", so move RIGHT!\n");
+				ucmd->sidemove = 400;
+			}
+		}
+		return;// nothing else to do until we touch the ground again
+	}
+
+	// can't bunnyhop in the water!
+	if (self->waterlevel > 2)
+		return;
+
+	//gi.dprintf("trying to bunnyhop while following a path...\n");
+	//VectorCopy(self->ai.move_vector, move_vec);//FIXME: testing--this should become a parameter
+	//move_vec[2] = 0;// we only care about x-y values
+	fwd_spd = AI_ForwardVelocity(self); // speed in the direction we are facing
+	
+	mv_spd = DotProduct(link_vec, self->velocity);// speed in the direction of our goal
+
+	//dot = DotProduct(move_vec, vel); // returns 1 if velocity is parallel and in the same direction as move_vec
+	dot = DotProduct(link_vec, move_vec); // returns 1 if the direction we're trying to move in aligns (is parallel) with the direction of our goal
+
+	// note: AI_JUMPABLE_DISTANCE is very conservative and likely assumes no running start and no strafe jumping, hence the extra distance added (200+ is common)
+	// this distance keeps the bot from potentially overshooting the path, forcing it to turn around and get back on-track
+	straight_path = AI_StraightPath(self, AI_JUMPABLE_DISTANCE + 60, 0.8); // returns 1 if the nodes ahead of us are (mostly) in a straight line
+
+	// is the bot moving towards the path?
+	if (dot < 0.95) // 1: vectors pointing in the same direction, 0: vectors are perpendicular, -1: vectors are pointing in the opposite direction
+		return;
+	// is the bot going fast enough towards the path?
+	if (mv_spd <= 280)
+		return;
+	// is the path ahead mostly straight?
+	if (!straight_path)
+		return;
+
+	//gi.dprintf("%d: ", level.framenum);
+	//gi.dprintf("bunnyhop fwd_spd: %f mv_spd: %f dot: %f", fwd_spd, mv_spd, dot);
+
+	//if (self->ai.is_step)
+	//	gi.dprintf("[step:true]");
+	//else
+	//	gi.dprintf("[step:false]");
+
+	// velocity needs to be mostly parallel with move_vec and speed needs to be 280+
+	//if (dot > 0.9)
+	//	gi.dprintf("[parallel: OK!]");
+	//else
+	//	gi.dprintf("[parallel: fail]");
+	//if (mv_spd > 280)
+	//	gi.dprintf("[speed: OK!]");
+	//else
+	//	gi.dprintf("[speed: fail]");
+	//if (straight_path)
+	//	gi.dprintf("[straight:TRUE]\n");
+	//else
+	//	gi.dprintf("[straight:FALSE]\n");
+
+	self->ai.is_bunnyhop = true;
+
+	//if (self->groundentity)
+	//{
+		//VectorCopy(self->s.origin, self->monsterinfo.spot1);//GHz: for testing to determine maximum jump distance
+		// jump immediately after touching down in order to maintain momentum
+		ucmd->upmove = 400;
+	//}
+	
+	
+}
+
 //==========================================
 // BOT_DMclass_CombatMovement
 //
@@ -305,29 +953,16 @@ qboolean CanTball(edict_t* ent, qboolean print);
 //==========================================
 void BOT_DMclass_CombatMovement( edict_t *self, usercmd_t *ucmd )
 {
+	int		weapon;
 	float	c;
 	vec3_t	attackvector;
-	float	dist;
+	float	dist, ideal, forward_speed;
 
 	//jalToDo: Convert CombatMovement to a BOT_STATE, allowing
 	//it to dodge, but still follow paths, chasing enemy or
 	//running away... hmmm... maybe it will need 2 different BOT_STATEs
 
 	AI_DebugPrintf("BOT_DMclass_CombatMovement()\n");
-
-	//if (CanTball(self, false))
-	//	gi.dprintf("bot can tball\n");
-	//gi.dprintf("bot has %d tballs\n", self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)]);
-	//GHz: health critically low and have a tball?
-	if (self->health <= 0.2 * self->max_health && CanTball(self, false) && self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)])
-	{
-		//gi.dprintf("bot tried to tball\n");
-		// use tball to teleport away!
-		self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)]--;
-		Tball_Aura(self, self->s.origin);
-		// if we were angry at someone, forget it so that we can focus on rearming/healing
-		self->enemy = NULL;
-	}
 
 	if(!self->enemy) {
 
@@ -337,26 +972,84 @@ void BOT_DMclass_CombatMovement( edict_t *self, usercmd_t *ucmd )
 		return;
 	}
 
-	// Randomly choose a movement direction
-	c = random();
+	// Move To Short Range goal (not following paths)
+	if (AI_MoveToGoalEntity(self, ucmd))
+	{
+		AI_DebugPrintf("move to short range goal\n");
+		return;
+	}
 
-	if(c < 0.2 && AI_CanMove(self,BOT_MOVE_LEFT))
-		ucmd->sidemove -= 400;
-	else if(c < 0.4 && AI_CanMove(self,BOT_MOVE_RIGHT))
-		ucmd->sidemove += 400;
-	else if(c < 0.6 && AI_CanMove(self,BOT_MOVE_FORWARD))
-		ucmd->forwardmove += 400;
-	else if(c < 0.8 && AI_CanMove(self,BOT_MOVE_BACK))
-		ucmd->forwardmove -= 400;
-
-
-	VectorSubtract( self->s.origin, self->enemy->s.origin, attackvector);
+	// determine weapmodel index for equipped weapon
+	if (self->client->pers.weapon)
+		weapon = (self->client->pers.weapon->weapmodel & 0xff);
+	else
+		weapon = 0;
+	// calculate aiming vector to enemy
+	//VectorSubtract( self->s.origin, self->enemy->s.origin, attackvector);
+	VectorSubtract(self->enemy->s.origin, self->s.origin, attackvector);
+	// calculate enemy distance
 	dist = VectorLength( attackvector);
+	// get ideal range of equipped weapon
+	ideal = AIWeapons[weapon].idealRange;
+	if (ideal > AI_RANGE_LONG)
+		ideal = AI_RANGE_LONG;
+	
+	// if distance is greater than ideal range, get closer; otherwise, move back
+	if (dist > ideal)
+	{
+		ucmd->forwardmove += 400;
+		//gi.dprintf("%s: ideal: %.0f dist: %.0f -- closing distance\n", __func__, ideal, dist);
+	}
+	else
+	{
+		ucmd->forwardmove -= 400;
+		//gi.dprintf("%s: ideal: %.0f dist: %.0f -- moving away\n", __func__, ideal, dist);
+	}
 
-	if(dist < 75)
-		ucmd->forwardmove -= 200;
+	// calculate forward movement velocity
+	//forward_speed = AI_ForwardVelocity(self);
+
+	//gi.dprintf("combat: weapon: %d ideal range: %f actual: %f spd:%f\n", weapon, ideal, dist, forward_speed);
+	/*
+	// if we're moving rapidly forward and are greater than 1 jump away from ideal distance, jump
+	if (forward_speed > 280 && dist - ideal > AI_JUMPABLE_DISTANCE)
+	{
+		BOT_DMclass_BunnyHop(self, ucmd, false);
+		//gi.dprintf("bunny hop FORWARD: fspd: %f velocity: %f dist: %f ideal: %f\n", forward_speed, VectorLength(self->velocity), dist, ideal);
+	}
+	// if we're moving rapidly backward and are greater than 1 jump away from ideal distance, jump
+	else if (forward_speed < -280 && ideal - dist > AI_JUMPABLE_DISTANCE)
+	{
+		BOT_DMclass_BunnyHop(self, ucmd, false);
+		//gi.dprintf("bunny hop BACKWARD: fspd: %f velocity: %f dist: %f ideal: %f\n", forward_speed, VectorLength(self->velocity), dist, ideal);
+	}
+	
+	else*/
+	qboolean strafe = true;
+	// if the ideal distance is greater than jump distance, then try to bunnyhop
+	if (fabsf(dist - ideal) > AI_JUMPABLE_DISTANCE)
+	{
+		BOT_DMclass_BunnyHop(self, ucmd, false);
+		if (self->ai.is_bunnyhop) // note: is_bunnyhop is set/reset by preceding function--don't rely on an accurate value without calling it beforehand!
+			strafe = false;
+	}
+
+	if (strafe)
+	{
+		// Randomly choose a movement direction
+		c = random();
+		if (c < 0.4 && AI_CanMove(self, BOT_MOVE_LEFT))
+			ucmd->sidemove -= 400;
+		else if (c < 0.8 && AI_CanMove(self, BOT_MOVE_RIGHT))
+			ucmd->sidemove += 400;
+		//gi.dprintf("moving side to side\n");
+		//gi.dprintf("fspd bot: %f fspd enemy: %f\n", forward_speed, AI_ForwardVelocity(self->enemy));
+	}
+
+	// while using melee weapons, try jumping if the enemy is at close range and overhead
+	if (AIWeapons[weapon].idealRange == AI_RANGE_MELEE && dist < AI_RANGE_SHORT)
+		BOT_DMclassJumpAttack(self, ucmd, ideal);
 }
-
 
 //==========================================
 // BOT_DMclass_CheckShot
@@ -386,7 +1079,7 @@ qboolean BOT_DMclass_CheckShot(edict_t *ent, vec3_t	point)
 	return true;
 }
 
-
+// GHz note: probably want to switch to findclosestradius_targets in the future!
 //==========================================
 // BOT_DMclass_FindEnemy
 // Scan for enemy (simplifed for now to just pick any visible enemy)
@@ -400,6 +1093,9 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 	float		weight;
 	vec3_t		dist;
 
+	if (self->ai.attack_delay > level.time)
+		return false;
+
 	// we already set up an enemy this frame (reacting to attacks)
 	if (self->enemy && self->enemy->inuse && visible(self, self->enemy))//GHz: don't bother finding a new enemy if the last one is still visible
 		return true;
@@ -407,7 +1103,7 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 	if (level.time < pregame_time->value) // No enemies in pregame lol
 		return false;
 
-	AI_DebugPrintf("BOT_DMclass_FindEnemy()\n");
+	//AI_DebugPrintf("BOT_DMclass_FindEnemy()\n");
 
 	// Find Enemy
 	for (i = 0;i < num_AIEnemies;i++)
@@ -415,6 +1111,8 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 		if (AIEnemies[i] == NULL || AIEnemies[i] == self)
 			continue;
 		if (!G_ValidTargetEnt(AIEnemies[i], true))
+			continue;
+		if (OnSameTeam(self, AIEnemies[i]))
 			continue;
 
 		//Ignore players with 0 weight (was set at botstatus)
@@ -565,7 +1263,7 @@ qboolean BOT_DMClass_ChangeWeapon (edict_t *ent, gitem_t *item)
 	int			ammo_index;
 	gitem_t		*ammo_item;
 
-	AI_DebugPrintf("BOT_DMclass_ChangeWeapon()\n");
+	//AI_DebugPrintf("BOT_DMclass_ChangeWeapon()\n");
 
 	// see if we're already using it
 	if (!item || item == ent->client->pers.weapon)
@@ -612,24 +1310,32 @@ void BOT_DMclass_ChooseWeapon(edict_t *self)
 	if( self->ai.changeweapon_timeout > level.time )
 		return;
 
-	AI_DebugPrintf("BOT_DMclass_ChooseWeapon()\n");
+	if (self->myskills.class_num == CLASS_KNIGHT)
+		return;
+
+	//AI_DebugPrintf("BOT_DMclass_ChooseWeapon()\n");
 
 	// Base weapon selection on distance: 
 	VectorSubtract (self->s.origin, self->enemy->s.origin, v);
 	dist = VectorLength(v);
 
-	if(dist < 150)
+	//if(dist < 150)
+	if (dist < AI_RANGE_MELEE)
 		weapon_range = AIWEAP_MELEE_RANGE;
 
-	else if(dist < 500)	//Medium range limit is Grenade Laucher range
+	//else if(dist < 500)	//Medium range limit is Grenade Laucher range
+	else if (dist < AI_RANGE_SHORT)
 		weapon_range = AIWEAP_SHORT_RANGE;
 
-	else if(dist < 900)
+	//else if(dist < 900)
+	else if (dist < AI_RANGE_MEDIUM)
 		weapon_range = AIWEAP_MEDIUM_RANGE;
 
-	else 
+	else if (dist < AI_RANGE_LONG)
 		weapon_range = AIWEAP_LONG_RANGE;
 
+	else 
+		weapon_range = AIWEAP_SNIPER_RANGE;
 
 	for(i=0; i<WEAP_TOTAL; i++)
 	{
@@ -640,29 +1346,30 @@ void BOT_DMclass_ChooseWeapon(edict_t *self)
 		if (!self->client->pers.inventory[ITEM_INDEX(AIWeapons[i].weaponItem)] )
 			continue;
 		
+		//gi.dprintf("%s: weight: ", AIWeapons[i].weaponItem->classname);
 		//ignore those we don't have ammo for
 		if (AIWeapons[i].ammoItem != NULL	//excepting for those not using ammo
 			&& !self->client->pers.inventory[ITEM_INDEX(AIWeapons[i].ammoItem)] )
 			continue;
 		
 		//compare range weights
-		if (AIWeapons[i].RangeWeight[weapon_range] > best_weight) {
-			best_weight = AIWeapons[i].RangeWeight[weapon_range];
+		float weight = AIWeapons[i].RangeWeight[weapon_range] + self->ai.status.weaponWeights[i];//GHz
+		//gi.dprintf("%f\n", weight);
+		if (weight > best_weight) {
+			best_weight = weight;
 			best_weapon = AIWeapons[i].weaponItem;
 		}
 		//jal: enable randomnes later
-		//else if (AIWeapons[i].RangeWeight[weapon_range] == best_weight && random() > 0.2) {	//allow some random for equal weights
-		//	best_weight = AIWeapons[i].RangeWeight[weapon_range];
-		//	best_weapon = AIWeapons[i].weaponItem;
-		//}
+		else if (weight == best_weight && random() > 0.2) {	//allow some random for equal weights
+			best_weight = weight;
+			best_weapon = AIWeapons[i].weaponItem;
+		}
 	}
 	
 	//do the change (same weapon, or null best_weapon is covered at ChangeWeapon)
 	BOT_DMClass_ChangeWeapon( self, best_weapon );
-
 	return;
 }
-
 
 //==========================================
 // BOT_DMclass_FireWeapon
@@ -671,45 +1378,73 @@ void BOT_DMclass_ChooseWeapon(edict_t *self)
 void BOT_DMclass_FireWeapon (edict_t *self, usercmd_t *ucmd)
 {
 	//float	c;
-	float	firedelay;
+	float	dist, velocity, firedelay;
+	float projectile_speed=0;//GHz
 	vec3_t  target;
 	vec3_t  angles;
 	int		weapon;
 	//vec3_t	attackvector;
 	//float	dist;
+	qboolean use_prediction = false;//GHz
+	qboolean override_pitch = false;//GHz
 
 	if (!self->enemy)
 		return;
 
-	AI_DebugPrintf("BOT_DMclass_FireWeapon()\n");
+	//AI_DebugPrintf("BOT_DMclass_FireWeapon()\n");
 
 	//weapon = self->s.skinnum & 0xff;
 	if (self->client->pers.weapon)
-			weapon = (self->client->pers.weapon->weapmodel & 0xff);
+		weapon = (self->client->pers.weapon->weapmodel & 0xff);
 	else
 		weapon = 0;
 
+	//gi.dprintf("fireweapon %d\n", weapon);
 	//jalToDo: Add different aiming types (explosive aim to legs, hitscan aim to body)
 
 	//was find range. I might use it later
 	//VectorSubtract( self->s.origin, self->enemy->s.origin, attackvector);
 	//dist = VectorLength( attackvector);
 
-	
 	// Aim
-	VectorCopy(self->enemy->s.origin,target);
+	//VectorCopy(self->enemy->s.origin,target);
+	G_EntMidPoint(self->enemy, target);
+
+	// get enemy distance and velocity
+	dist = entdist(self, self->enemy);
+	velocity = VectorLength(self->enemy->velocity);
+
+	//GHz: switch to lance if enemy is outside sword range
+	if (weapon == WEAP_SWORD && dist > AI_RANGE_SHORT)
+	{
+		self->client->weapon_mode = 1; //switch to lance mode--FIXME: shouldn't this be done @ chooseweapon?
+		//target[2] = self->enemy->absmin[2]-32;//aim at the feet
+		use_prediction = true;
+		override_pitch = true;
+	}
+	else
+		self->client->weapon_mode = 0;
 
 	// find out our weapon AIM style
 	if( AIWeapons[weapon].aimType == AI_AIMSTYLE_PREDICTION_EXPLOSIVE )
 	{
 		//aim to the feets when enemy isn't higher
-		if( self->s.origin[2] + self->viewheight > target[2] + (self->enemy->mins[2] * 0.8) )
-			target[2] += self->enemy->mins[2];
+		//if( self->s.origin[2] + self->viewheight > target[2] + (self->enemy->mins[2] * 0.8) )
+		//	target[2] += self->enemy->mins[2];
+		if (self->enemy->groundentity && (self->s.origin[2] + self->viewheight > self->enemy->absmin[2]))//GHz
+			target[2] = self->enemy->absmin[2];//GHz
+		use_prediction = true;
+		
 	}
-	else if ( AIWeapons[weapon].aimType == AI_AIMSTYLE_PREDICTION )
+	
+	if ( AIWeapons[weapon].aimType == AI_AIMSTYLE_PREDICTION || use_prediction)
 	{
 		//jalToDo
-
+		
+		// move our target point based on projectile and enemy velocity
+		if (projectile_speed = AI_GetWeaponProjectileVelocity(self, weapon))
+			VectorMA(target, (float)dist / projectile_speed, self->enemy->velocity, target);
+		//gi.dprintf("projectile speed: %f\n", projectile_speed);
 	}
 	else if ( AIWeapons[weapon].aimType == AI_AIMSTYLE_DROP )
 	{
@@ -724,20 +1459,39 @@ void BOT_DMclass_FireWeapon (edict_t *self, usercmd_t *ucmd)
 	target[1] += (random()-0.5) * ((MAX_BOT_SKILL - self->ai.pers.skillLevel) *2);
 
 	// Set direction
-	VectorSubtract (target, self->s.origin, self->ai.move_vector);
-	vectoangles(self->ai.move_vector, angles);
-	VectorCopy(angles,self->s.angles);
+	if (self->ai.state == BOT_STATE_MOVEATTACK)//GHz: don't set/modify move_vector in this state
+	{
+		VectorSubtract(target, self->s.origin, angles);
+		vectoangles(angles, angles);
+	}
+	else
+	{
+		VectorSubtract(target, self->s.origin, self->ai.move_vector);
+		vectoangles(self->ai.move_vector, angles);
+	}
+	VectorCopy(angles,self->s.angles); // set aiming/viewing angles
+	VectorCopy(angles, self->client->v_angle);
+	if (override_pitch && projectile_speed)
+	{
+		if ((self->s.angles[PITCH] = BOT_DMclass_ThrowingPitch1(self, projectile_speed)) < -90)
+		{
+			self->s.angles[PITCH] = angles[PITCH];
+			self->client->v_angle[PITCH] = angles[PITCH];
+		}
+	}
 
+	//GHz: don't bother firing if we're unlikely to hit anything
+	if (AI_GetWeaponRangeWeightByDistance(weapon, dist) < 0.1)
+		return;
 
 	// Set the attack 
 	firedelay = random()*(MAX_BOT_SKILL*1.8);
 	if (firedelay > (MAX_BOT_SKILL - self->ai.pers.skillLevel) && BOT_DMclass_CheckShot(self, target))
 		ucmd->buttons = BUTTON_ATTACK;
 
-	if(AIDevel.debugChased && bot_showcombat->value)
-		safe_cprintf (AIDevel.chaseguy, PRINT_HIGH, "%s: attacking %s\n",self->ai.pers.netname ,self->enemy->classname);
+	//if(AIDevel.debugChased && bot_showcombat->value)
+	//	safe_cprintf (AIDevel.chaseguy, PRINT_HIGH, "%s: attacking %s\n",self->ai.pers.netname ,self->enemy->classname);
 }
-
 
 //==========================================
 // BOT_DMclass_WeightPlayers
@@ -747,14 +1501,14 @@ void BOT_DMclass_WeightPlayers(edict_t *self)
 {
 	int i;
 
-	AI_DebugPrintf("BOT_DMclass_WeightPlayers()\n");
+	//AI_DebugPrintf("BOT_DMclass_WeightPlayers()\n");
 
 	//clear
 	memset(self->ai.status.playersWeights, 0, sizeof (self->ai.status.playersWeights));
 
 	for( i=0; i<num_AIEnemies; i++ )
 	{
-		if( AIEnemies[i] == NULL )
+		if( AIEnemies[i] == NULL || !AIEnemies[i]->inuse)
 			continue;
 
 		if( AIEnemies[i] == self )
@@ -849,6 +1603,74 @@ gitem_t	*BOT_DMclass_WantedFlag (edict_t *self)
 	return NULL;
 }
 
+int AI_GetPSlevel(edict_t* ent)
+{
+	// use power shield level or brain level, whichever is highest
+	int pslevel = ent->myskills.abilities[POWER_SHIELD].current_level;
+	if (ent->mtype == MORPH_BRAIN && ent->myskills.abilities[BRAIN].current_level > pslevel)
+		pslevel = ent->myskills.abilities[BRAIN].current_level;
+	if (ent->mtype == MORPH_BERSERK && ent->myskills.abilities[BERSERK].current_level > pslevel)
+		pslevel = ent->myskills.abilities[BERSERK].current_level;
+	return pslevel;
+}
+
+// adjusts the weight of ammo (downward) based on bot's current needs
+void AI_AdjustAmmoNeedFactor(edict_t *self, gitem_t *ammoItem, ...)
+{
+	int weapIndex;
+	qboolean has_weapon = false;
+	qboolean is_fighting = false;
+
+	va_list list;
+	va_start(list, ammoItem);
+
+	int ammo_index = ITEM_INDEX(ammoItem);
+
+	// if we can't pick it up, reduce the weight to 0
+	if (!AI_CanPick_Ammo(self, ammoItem))
+		self->ai.status.inventoryWeights[ammo_index] = 0.0;
+
+	// does the bot need cells for power screen/shield?
+	if (ammo_index == cell_index && AI_GetPSlevel(self))
+		return; // don't reduce cells weight
+
+	// are we fighting?
+	if (self->ai.state == BOT_STATE_ATTACK || self->ai.state == BOT_STATE_MOVEATTACK)
+		is_fighting = true;
+
+	// if we don't have the weapon, reduce the weight
+	while (1)
+	{
+		// get the next argument in the list
+		weapIndex = va_arg(list, int);
+		// reached the end of the weapons list (no additional parameters)
+		if (!weapIndex)
+			break;
+		// is the bot fighting and is this weapon our respawn weapon?
+		if (is_fighting && weapIndex != AI_RespawnWeaponToWeapIndex(self->myskills.respawn_weapon))
+			continue; // nope, check the next weapon on the list
+		gitem_t* weaponItem = AIWeapons[weapIndex].weaponItem;
+		// does the bot have this weapon?
+		if (self->client->pers.inventory[ITEM_INDEX(weaponItem)])
+		{
+			has_weapon = true;
+			break;
+		}
+	}
+	// clean up the argument list
+	va_end(list);
+
+	// if the bot doesn't have any weapons that use this ammo type, then reduce the ammo weight
+	if (!has_weapon)
+	{
+		// if the bot is fighting, only our respawn weapon's ammo matters
+		if (is_fighting)
+			self->ai.status.inventoryWeights[ammo_index] = 0.0;
+		else
+			self->ai.status.inventoryWeights[ammo_index] *= 0.5;
+	}
+
+}
 
 //==========================================
 // BOT_DMclass_WeightInventory
@@ -860,7 +1682,7 @@ void BOT_DMclass_WeightInventory(edict_t *self)
 	gclient_t	*client;
 	int			i;
 
-	AI_DebugPrintf("BOT_DMclass_WeightInventory()\n");
+	//AI_DebugPrintf("BOT_DMclass_WeightInventory()\n");
 
 	client = self->client;
 
@@ -872,8 +1694,17 @@ void BOT_DMclass_WeightInventory(edict_t *self)
 	//or denny weight for it, if bot is packed up.
 	//------------------------------------------------------
 
+	AI_AdjustAmmoNeedFactor(self, Fdi_BULLETS, WEAP_CHAINGUN, WEAP_MACHINEGUN, 0);
+	AI_AdjustAmmoNeedFactor(self, Fdi_SHELLS, WEAP_SHOTGUN, WEAP_SUPERSHOTGUN, WEAP_20MM, 0);
+	AI_AdjustAmmoNeedFactor(self, Fdi_ROCKETS, WEAP_ROCKETLAUNCHER, 0);
+	AI_AdjustAmmoNeedFactor(self, Fdi_GRENADES, WEAP_GRENADELAUNCHER, 0);
+	AI_AdjustAmmoNeedFactor(self, Fdi_CELLS, WEAP_HYPERBLASTER, WEAP_BFG, 0);
+	AI_AdjustAmmoNeedFactor(self, Fdi_SLUGS, WEAP_RAILGUN, 0);
+	//gi.dprintf("b:%.1f c:%.1f s:%.1f r:%.1f g:%.1f s:%.1f\n", self->ai.status.inventoryWeights[bullet_index], self->ai.status.inventoryWeights[cell_index], 
+	//	self->ai.status.inventoryWeights[shell_index], self->ai.status.inventoryWeights[rocket_index], self->ai.status.inventoryWeights[grenade_index], 
+	//	self->ai.status.inventoryWeights[slug_index]);
 	//AMMO_BULLETS
-
+	/*
 	if (!AI_CanPick_Ammo (self, AIWeapons[WEAP_MACHINEGUN].ammoItem) )
 		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_MACHINEGUN].ammoItem)] = 0.0;
 	//find out if it has a weapon for this amno
@@ -926,7 +1757,7 @@ void BOT_DMclass_WeightInventory(edict_t *self)
 	//find out if it has a weapon for this amno
 	else if (!client->pers.inventory[ITEM_INDEX(AIWeapons[WEAP_RAILGUN].weaponItem)] )
 		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_RAILGUN].ammoItem)] *= LowNeedFactor;
-
+	*/
 
 	//WEAPONS
 	//-----------------------------------------------------
@@ -990,11 +1821,12 @@ void BOT_DMclass_WeightInventory(edict_t *self)
 //==========================================
 void BOT_DMclass_UpdateStatus( edict_t *self )
 {
-	AI_DebugPrintf("BOT_DMclass_UpdateStatus()\n");
+	//AI_DebugPrintf("BOT_DMclass_UpdateStatus()\n");
 
 	if (!G_EntIsAlive(self->enemy))//GHz: stay angry at this entity--used for LR goal setting
 		self->enemy = NULL;
-	self->movetarget = NULL;
+	//if (self->movetarget && (!self->movetarget->inuse || self->movetarget->solid == SOLID_NOT))//GHz: need to clear picked up items
+	//	self->movetarget = NULL;
 
 	// Set up for new client movement: jalfixme
 	VectorCopy(self->client->ps.viewangles,self->s.angles);
@@ -1025,9 +1857,14 @@ void BOT_DMclass_UpdateStatus( edict_t *self )
 void BOT_DMClass_BloquedTimeout( edict_t *self )
 {
 	AI_DebugPrintf("BOT_DMclass_BloquedTimeout()\n");
-	self->health = 0;
-	self->ai.bloqued_timeout = level.time + 15.0;
-	self->die(self, self, self, 100000, vec3_origin);
+
+	if (!BOT_DMclass_UseTball(self, false))
+	{
+		AI_DebugPrintf("bot suicide!\n");
+		self->health = 0;
+		self->ai.bloqued_timeout = level.time + 15.0;
+		self->die(self, self, self, 100000, vec3_origin);
+	}
 	self->nextthink = level.time + FRAMETIME;
 }
 
@@ -1040,7 +1877,7 @@ void BOT_DMclass_DeadFrame( edict_t *self )
 {
 	usercmd_t	ucmd;
 
-	AI_DebugPrintf("BOT_DMclass_DeadFrame()\n");
+	//AI_DebugPrintf("BOT_DMclass_DeadFrame()\n");
 	// ask for respawn
 	self->client->buttons = 0;
 	ucmd.buttons = BUTTON_ATTACK;
@@ -1048,7 +1885,23 @@ void BOT_DMclass_DeadFrame( edict_t *self )
 	self->nextthink = level.time + FRAMETIME;
 }
 
+qboolean BOT_DMclass_ChooseMoveAttack(edict_t* self)
+{
+	// use moveattack if...
+	// enemy isn't visible
+	if (!visible(self, self->enemy))
+		return true;
+	// enemy is on different Z plane, isn't flying, and is beyond medium range
+	//if (fabs(self->absmin[2] - self->enemy->absmin[2]) > (AI_JUMPABLE_HEIGHT + AI_STEPSIZE) && !(self->enemy->flags & FL_FLY) && entdist(self, self->enemy) > AI_RANGE_MEDIUM)
+	//	return true;
+	if (!AI_ClearWalkingPath(self, self->s.origin, self->enemy->s.origin))
+		return true;
+	// enemy should be easily reachable, so pathfinding isn't needed, just attack!
+	return false;
+}
 
+qboolean AI_SetupMoveAttack(edict_t* self);//GHz
+void AI_SetUpCombatMovement(edict_t* ent);//GHz
 //==========================================
 // BOT_DMclass_RunFrame
 // States Machine & call client movement
@@ -1059,31 +1912,60 @@ void BOT_DMclass_RunFrame( edict_t *self )
 	memset( &ucmd, 0, sizeof(ucmd) );
 
 	// Look for enemies
-	if( BOT_DMclass_FindEnemy(self) )
+	if( BOT_DMclass_FindEnemy(self) ) // find an enemy
 	{
-		BOT_DMclass_ChooseWeapon( self );
-		BOT_DMclass_FireWeapon( self, &ucmd );
-		self->ai.state = BOT_STATE_ATTACK;
-		self->ai.state_combat_timeout = level.time + 1.0;
+		if (!BOT_DMclassEvadeEnemy(self, &ucmd)) // run away if we have to
+		{
+			//gi.dprintf("attack enemy!\n");
+			BOT_DMclass_ChooseWeapon(self); // chose the best weapon for the job
+			BOT_DMclass_FireWeapon(self, &ucmd); // fire!
+
+			BOT_DMclass_UseBoost(self); // if we have boost, use it to get closer to the enemy
+			BOT_DMclass_UseBlinkStrike(self); // if we have blinkstrike, use it to get closer & behind the enemy
+			int attack_ability = BOT_DMclass_ChooseAbility(self); // chose the best ability to attack with
+			BOT_DMclass_FireAbility(self, attack_ability); // fire!
+
+			if (level.time > self->ai.evade_delay) // not a tactical retreat (aka run away while attacking)
+			{
+				if (BOT_DMclass_ChooseMoveAttack(self)) // do we need pathfinding to get to the enemy?
+					AI_SetupMoveAttack(self);
+				else
+					AI_SetUpCombatMovement(self); // nope, use simple combat movement instead
+			}
+			self->ai.state_combat_timeout = level.time + 1.0;
+		}
 	
-	} else if( self->ai.state == BOT_STATE_ATTACK && 
+	} else if( (self->ai.state == BOT_STATE_ATTACK || self->ai.state == BOT_STATE_MOVEATTACK) &&
 		level.time > self->ai.state_combat_timeout)
 	{
+		if (self->ai.state == BOT_STATE_MOVEATTACK && self->ai.evade_delay > level.time)//bot was evading
+		{
+			//gi.dprintf("ENEMY CLEARED!\n");
+			self->enemy = NULL;//GHz:  clear enemy so that the bot looks for a different goal
+		}
 		//Jalfixme: change to: AI_SetUpStateMove(self);
 		self->ai.state = BOT_STATE_MOVE;
+		//GHz: is the bot evading?
+
+		self->ai.evade_delay = 0;
+	}
+	else
+	{
+		BOT_DMclass_UseSkeleton(self); // try to spawn skeletons if upgraded and we have less than max
 	}
 
 	// Execute the move, or wander
-	if( self->ai.state == BOT_STATE_MOVE )
-		BOT_DMclass_Move( self, &ucmd );
+	if (self->ai.state == BOT_STATE_MOVE)
+		BOT_DMclass_Move(self, &ucmd); // use pathfinding to reach a goal
 
-	else if(self->ai.state == BOT_STATE_ATTACK)
-		BOT_DMclass_CombatMovement( self, &ucmd );
+	else if (self->ai.state == BOT_STATE_ATTACK)
+		BOT_DMclass_CombatMovement(self, &ucmd);
 
-	else if ( self->ai.state == BOT_STATE_WANDER )
+	else if (self->ai.state == BOT_STATE_MOVEATTACK)
+		BOT_DMclass_MoveAttack(self, &ucmd);//GHz
+
+	else if ( self->ai.state == BOT_STATE_WANDER ) // bot wanders when it has no goal or path to it
 		BOT_DMclass_Wander( self, &ucmd );
-
-	
 
 	//set up for pmove
 	ucmd.angles[PITCH] = ANGLE2SHORT(self->s.angles[PITCH]);
@@ -1128,7 +2010,9 @@ void BOT_DMclass_InitPersistant(edict_t *self)
 
 	//weapons
 	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_BLASTER].weaponItem)] = 0.0;
+	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_SWORD].weaponItem)] = 0.0;
 	//self->bot.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("weapon_blaster"))] = 0.0; //it's the same thing
+	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_20MM].weaponItem)] = 0.0;
 	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_SHOTGUN].weaponItem)] = 0.5;
 	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_SUPERSHOTGUN].weaponItem)] = 0.7;
 	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_MACHINEGUN].weaponItem)] = 0.5;
@@ -1141,15 +2025,15 @@ void BOT_DMclass_InitPersistant(edict_t *self)
 	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_BFG].weaponItem)] = 0.5;
 
 	//ammo
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("ammo_shells"))] = 0.5;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("ammo_bullets"))] = 0.5;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("ammo_cells"))] = 0.5;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("ammo_rockets"))] = 0.5;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("ammo_slugs"))] = 0.5;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("ammo_grenades"))] = 0.5;
+	self->ai.pers.inventoryWeights[shell_index] = 0.5;
+	self->ai.pers.inventoryWeights[bullet_index] = 0.5;
+	self->ai.pers.inventoryWeights[cell_index] = 0.5;
+	self->ai.pers.inventoryWeights[rocket_index] = 0.5;
+	self->ai.pers.inventoryWeights[slug_index] = 0.5;
+	self->ai.pers.inventoryWeights[grenade_index] = 0.5;
 	
 	//armor
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_armor_body"))] = 0.9;
+	self->ai.pers.inventoryWeights[body_armor_index] = 0.9;
 	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_armor_combat"))] = 0.8;
 	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_armor_jacket"))] = 0.5;
 	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_armor_shard"))] = 0.2;
@@ -1159,6 +2043,9 @@ void BOT_DMclass_InitPersistant(edict_t *self)
 	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("tech_strength"))] = 0.5;
 	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("tech_regeneration"))] = 0.5;
 	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("tech_haste"))] = 0.5;
+
+	//GHz: misc
+	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_pack"))] = 0.6;
 
 	if( ctf->value ) {
 		redflag = FindItemByClassname("item_flag_team1");	// store pointers to flags gitem_t, for 

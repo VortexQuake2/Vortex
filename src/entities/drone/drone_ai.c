@@ -778,8 +778,11 @@ qboolean drone_ai_findgoal (edict_t *self)
 		if (drone_ValidLeader(self->monsterinfo.leader))
 		{
 			//gi.dprintf("leader is still valid\n");
-			// the leader is more than 512 units away
-			if (entdist(self, self->monsterinfo.leader) > 512)
+			// the leader is too far away
+			int follow_distance = 512;
+			if (self->monsterinfo.leader->ai.is_bot) // stay closer to bots
+				follow_distance = 256;
+			if (entdist(self, self->monsterinfo.leader) > follow_distance)
 			{
 				//gi.dprintf("pursue the leader!\n");
 				// pursue the leader
@@ -2614,15 +2617,53 @@ void drone_return(edict_t* self)
 	}
 }
 
+//float AI_MoveRight(edict_t* self, vec3_t move_vec);
+//float vectoanglediff2(vec3_t v1, vec3_t v2);
+//float vectoanglediff1(vec3_t v1, vec3_t v2);
 void drone_think (edict_t *self)
 {
+	//float dot, delta, angle;
+	//vec3_t forward, v, cross;
 	//gi.dprintf("drone_think()\n");
 
 	if (!drone_validposition(self))
 		return;
 	if (!drone_boss_stuff(self))
 		return;
+	/*
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+	AngleVectors(self->activator->s.angles, v, NULL, NULL);
+		//VectorCopy(self->activator->s.angles, v);
+	VectorNormalize(forward);
+	VectorNormalize(v);
+	CrossProduct(v, forward, cross);
+	//delta = 180.0 / M_PI * atan2(v[1] - forward[1], v[0] - forward[0]);
+	//delta = fabsf(vectoyaw(v) - vectoyaw(forward));
+	dot = DotProduct(v, forward);
+	delta = acos(dot) * 180 / M_PI;
+	
+	//delta = fabsf(old_angles[YAW] - new_angles[YAW]);
+	if (delta > 180.0f)
+		delta = 360.0f - delta;
 
+	angle = vectoyaw(v) - vectoyaw(forward) * 180/M_PI;
+	if (angle > 180.0f)
+		angle -= 360.0f;
+	else if (angle < -180.0f)
+		angle += 360.0f;
+
+	delta = vectoanglediff1(forward, v);
+	angle = vectoanglediff2(forward, v);
+
+	if ((dot=AI_MoveRight(self, self->activator->s.angles)) >= 0)
+	{
+		gi.dprintf("%f: activator is looking to my right, delta:%f angle:%f\n", dot, delta, angle);
+		//gi.dprintf("%f: activator is looking to my right, cross[2]:%f vectoyaw[v]:%f angles[activator]:%f vectoyaw[f]:%f angles[bot]:%f\n", dot, cross[2], vectoyaw(v), self->activator->s.angles[YAW], vectoyaw(forward), self->s.angles[YAW]);//cross[2], acos(dot)*180/M_PI);
+	}
+	else
+		gi.dprintf("%f: activator is looking to my left, delta:%f angle:%f\n", dot, delta, angle);
+		//gi.dprintf("%f activator is looking to my left, cross[2]:%f vectoyaw[v]:%f angles[activator]:%f vectoyaw[f]:%f angles[bot]:%f\n", dot, cross[2], vectoyaw(v), self->activator->s.angles[YAW], vectoyaw(forward), self->s.angles[YAW]);//cross[2], acos(dot)*180/M_PI);
+	*/
 	drone_return(self);
 	//decoy_copy(self);
 

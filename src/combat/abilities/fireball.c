@@ -104,6 +104,9 @@ void fire_fireball (edict_t *self, vec3_t start, vec3_t aimdir, int damage, floa
 
 	// get aiming angles
 	vectoangles(aimdir, dir);
+
+	//gi.dprintf("%s: pitch: %.1f\n", __func__, dir[PITCH]);
+
 	// get directional vectors
 	AngleVectors(dir, forward, NULL, NULL);
 
@@ -131,7 +134,8 @@ void fire_fireball (edict_t *self, vec3_t start, vec3_t aimdir, int damage, floa
 	// adjust velocity
 	VectorScale (aimdir, speed, fireball->velocity);
 	// push up
-	fireball->velocity[2] += 150;
+	if (!self->ai.is_bot && !self->lockon)//GHz: don't boost vertical velocity for bots as it will affect ballistic calculations (i.e. finding the right pitch to hit the target)
+		fireball->velocity[2] += 150;
 	// make it spin/roll
 	VectorSet(fireball->avelocity, 0, 0, 600);
 	// play a sound

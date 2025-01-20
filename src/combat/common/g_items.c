@@ -40,6 +40,21 @@ int rocket_index;
 int slug_index;
 int cell_index;
 
+//weapons
+int sword_index;
+int blaster_index;
+int shotgun_index;
+int supershotgun_index;
+int machinegun_index;
+int chaingun_index;
+int grenadelauncher_index;
+int rocketlauncher_index;
+int hyperblaster_index;
+int railgun_index;
+int _20mmcannon_index;
+int bfg10k_index;
+
+
 static int power_screen_index;
 static int power_shield_index;
 
@@ -1032,6 +1047,10 @@ void Touch_Item(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
     }
     if (other->health < 1)
         return;        // dead people can't pickup
+
+    if (other->ai.is_bot && other->movetarget && other->movetarget == ent)
+        other->movetarget = NULL;//GHz: clear the item as a SR goal, even if we can't pick it up
+
     if (!ent->item->pickup)
         return;        // not a grabbable item?
     if (!ent->item->pickup(ent, other))
@@ -1740,7 +1759,8 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */
-                        "models/objects/rocket/tris.md2 weapons/rockfly.wav weapons/rocklf1a.wav weapons/rocklr1b.wav models/objects/debris2/tris.md2 a_rockets_hud"
+                        "models/objects/rocket/tris.md2 weapons/rockfly.wav weapons/rocklf1a.wav weapons/rocklr1b.wav models/objects/debris2/tris.md2 a_rockets_hud",
+                        WEAP_ROCKETLAUNCHER
                 },
 
 /*QUAKED weapon_hyperblaster (.3 .3 1) (-16 -16 -16) (16 16 16)	13
@@ -2220,7 +2240,7 @@ gives +1 to maximum health
 /* width */        2,
                         45, // az- 45 seconds to respawn.
                         NULL,
-                        0,
+                        IT_HEALTH,//GHz
                         NULL,
                         0,
 /* precache */ ""
@@ -2264,7 +2284,7 @@ gives +1 to maximum health
 /* width */        2,
                         180,
                         NULL,
-                        0,
+                        IT_AMMO,//GHz
                         NULL,
                         0,
 /* precache */ ""
@@ -2907,6 +2927,20 @@ void SetItemNames(void) {
     rocket_index = ITEM_INDEX(FindItem("Rockets"));
     slug_index = ITEM_INDEX(FindItem("Slugs"));
     cell_index = ITEM_INDEX(FindItem("Cells"));
+
+    //weapons
+    sword_index = ITEM_INDEX(FindItem("Sword"));
+    blaster_index = ITEM_INDEX(FindItem("Blaster"));
+    shotgun_index = ITEM_INDEX(FindItem("Shotgun"));
+    supershotgun_index = ITEM_INDEX(FindItem("Super Shotgun"));
+    machinegun_index = ITEM_INDEX(FindItem("Machinegun"));
+    chaingun_index = ITEM_INDEX(FindItem("Chaingun"));
+    grenadelauncher_index = ITEM_INDEX(FindItem("Grenade Launcher"));
+    rocketlauncher_index = ITEM_INDEX(FindItem("Rocket Launcher"));
+    hyperblaster_index = ITEM_INDEX(FindItem("HyperBlaster"));
+    railgun_index = ITEM_INDEX(FindItem("Railgun"));
+    _20mmcannon_index = ITEM_INDEX(FindItem("20mm Cannon"));
+    bfg10k_index = ITEM_INDEX(FindItem("BFG10K"));
 }
 
 int GetWorldAmmoCount(char *pickupName) {

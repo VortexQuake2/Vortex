@@ -32,6 +32,7 @@ nav_node_t nodes[MAX_NODES];		// nodes array
 ai_navigation_t	nav;
 spath_t Spath[MAX_SPATH];	//GHz: searchable list of previously computed paths, used to speed up pathfinding
 int Spath_numNodes;		//GHz: number of saved paths
+float dropNodeTime;//GHz
 
 //ACE
 
@@ -66,6 +67,7 @@ edict_t *AI_PlayerDroppingNodesPassent(void)
 // AI_AddNode
 // Add a node of normal navigation types.
 // Not valid to add nodes from entities nor items
+// Note: Nodes are not linked until AITools_SaveNodes is called
 //==========================================
 int AI_AddNode( vec3_t origin, int flagsmask )
 {
@@ -89,7 +91,18 @@ int AI_AddNode( vec3_t origin, int flagsmask )
 	nodes[nav.num_nodes].flags = flagsmask;
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, player.ent );
 
-	//gi.dprintf("Dropped Node\n");
+	AI_DebugPrintf("dropped node %d\n", nav.num_nodes);
+
+	if (AIDevel.debugMode)
+	{
+		// send effect
+		gi.WriteByte(svc_muzzleflash);
+		gi.WriteShort(player.ent - g_edicts);
+		gi.WriteByte(MZ_RESPAWN);
+		gi.multicast(nodes[nav.num_nodes].origin, MULTICAST_PVS);
+
+		//G_Spawn_Splash(TE_LASER_SPARKS, 10, 200, origin, vec3_origin, origin);//GHz
+	}
 	//if( sv_cheats->value )
 	//	Com_Printf("Dropped Node\n");
 
@@ -102,10 +115,15 @@ int AI_AddNode( vec3_t origin, int flagsmask )
 //==========================================
 // AI_UpdateNodeEdge
 // Add/Update node connections (paths)
+// GHz: FIXME: this doesn't do anything except determine if a pLink exists between nodes, and if so, what type it is
+// the orginal ACEBot code actually used this function to create links between nodes
+// the fact this doesn't work doesn't break anything because paths are resolved (pLinks created) on every map load
 //==========================================
 void AI_UpdateNodeEdge( int from, int to )
 {
 	int	link;
+	//float dist;//GHz
+	//qboolean noPlink = false;//GHz
 
 	if(from == -1 || to == -1 || from == to)
 		return; // safety
@@ -114,13 +132,25 @@ void AI_UpdateNodeEdge( int from, int to )
 	if(AI_PlinkExists(from, to))
 	{
 		link = AI_PlinkMoveType(from, to);
-	} else
-		link = AI_FindLinkType( from, to );
+	}
+	else
+	{
+		link = AI_FindLinkType(from, to);
+		//noPlink = true;//GHz
+		//AI_AddLink(from, to, link);//GHz
+		//GHz: FIXME: don't we need a reciprocal ink, e.g. AI_AddLink(to, from, link)
+	}
 
 	//Com_Printf("Link: %d -> %d. ", from, to);
 	//Com_Printf("%s\n", AI_LinkString(link) );
 	//if( sv_cheats->value )
-	//	Com_Printf("Link: %d -> %d. %s\n", from, to, AI_LinkString(link) );
+	/*
+	dist = distance(nodes[from].origin, nodes[to].origin);
+	if (noPlink)
+		AI_DebugPrintf("Link: %d -> %d [%s] dist: %.0f\n", from, to, AI_LinkString(link), dist);
+	else
+		AI_DebugPrintf("Link: %d -> %d (%s) dist: %.0f\n", from, to, AI_LinkString(link), dist);
+		*/
 }
 
 
@@ -144,7 +174,7 @@ void AI_DropLadderNodes( edict_t *self )
 	int		step;
 	trace_t trace;
 
-	AI_DebugPrintf("AI_DropLadderNodes\n");
+	//AI_DebugPrintf("AI_DropLadderNodes\n");
 
 	//find top & bottom of the ladder
 	VectorCopy( self->s.origin, torigin );
@@ -207,7 +237,7 @@ qboolean AI_CheckForLadder(edict_t *self)
 {
 	int			closest_node;
 
-	AI_DebugPrintf("AI_CheckForLadder\n\n");
+	//AI_DebugPrintf("AI_CheckForLadder\n\n");
 
 	// If there is a ladder and we are moving up, see if we should add a ladder node
 	if ( self->velocity[2] < 5 )
@@ -238,7 +268,7 @@ void AI_WaterJumpNode( void )
 	trace_t		trace;
 	edict_t		ent;
 
-	AI_DebugPrintf("AI_WaterJumpNode\n");
+	//AI_DebugPrintf("AI_WaterJumpNode\n");
 
 	//don't drop if player is riding elevator or climbing a ladder
 	if( player.ent->groundentity && player.ent->groundentity != world) {
@@ -331,31 +361,36 @@ void AI_WaterJumpNode( void )
 // This routine is called to hook in the pathing code and sets
 // the current node if valid.
 //==========================================
-static float last_update=0;
+
 #define NODE_UPDATE_DELAY	0.10;
 void AI_PathMap( void )
 {
 	int			 closest_node;
 
-	AI_DebugPrintf("AI_PathMap\n");
+	//AI_DebugPrintf("AI_PathMap\n");
 
 	//DROP WATER JUMP NODE (not limited by delayed updates)
 	if ( !player.ent->ai.is_swim && player.last_node != -1 
 		&& player.ent->ai.is_swim != player.ent->ai.was_swim) 
 	{
+		//gi.dprintf("drop water jump node\n");
 		AI_WaterJumpNode();
-		last_update = level.time + NODE_UPDATE_DELAY; // slow down updates a bit
+		dropNodeTime = level.time + NODE_UPDATE_DELAY; // slow down updates a bit
 		return;
 	}
 
-	if( level.time < last_update )
+	if (level.time < dropNodeTime)
+	{
+		//gi.dprintf("don't drop node yet %f %f\n", level.time, dropNodeTime);
 		return;
+	}
 
-	last_update = level.time + NODE_UPDATE_DELAY; // slow down updates a bit
+	dropNodeTime = level.time + NODE_UPDATE_DELAY; // slow down updates a bit
 
 	//don't drop nodes when riding movers
 	if( player.ent->groundentity && player.ent->groundentity != world) {
 		if( player.ent->groundentity->classname ) {
+			//gi.dprintf("groundentity is not world\n");
 			if( !strcmp( player.ent->groundentity->classname, "func_plat")
 				|| !strcmp(player.ent->groundentity->classname, "trigger_push")
 				|| !strcmp(player.ent->groundentity->classname, "func_train")
@@ -367,12 +402,16 @@ void AI_PathMap( void )
 	}
 
 	// Special check for ladder nodes
-	if(AI_CheckForLadder(player.ent))
+	if (AI_CheckForLadder(player.ent))
+	{
+		//gi.dprintf("ladder check\n");
 		return;
+	}
 
 	// Not on ground, and not in the water, so bail (deeper check by using a splitmodels function)
 	if (!player.ent->ai.is_step )
 	{
+		//gi.dprintf("not on ground and not in water\n");
 		if ( !player.ent->ai.is_swim ){
 			player.was_falling = true;
 			return;
@@ -386,9 +425,8 @@ void AI_PathMap( void )
 	{
 		if ( !player.ent->groundentity ) //not until it REALLY touches ground
 			return;
-
 		//normal nodes
-
+		//gi.dprintf("attempt to add node after jumping\n");
 		//check for duplicates (prevent adding too many)
 		closest_node = AI_FindClosestReachableNode( player.ent->s.origin, player.ent, 64, NODE_ALL);
 		
@@ -420,6 +458,7 @@ void AI_PathMap( void )
 	// Add Nodes as needed
 	if( closest_node == INVALID )
 	{
+		//gi.dprintf("couldn't find nearby node, so add one\n");
 		// Add nodes in the water as needed
 		if( player.ent->ai.is_swim )
 			closest_node = AI_AddNode( player.ent->s.origin, (NODEFLAGS_WATER|NODEFLAGS_FLOAT) );
@@ -433,8 +472,11 @@ void AI_PathMap( void )
 	else if( closest_node != player.last_node && player.last_node != INVALID )
 		AI_UpdateNodeEdge( player.last_node, closest_node );
 
-	if( closest_node != -1 )
+	if (closest_node != -1)
+	{
 		player.last_node = closest_node; // set visited to last
+		//gi.dprintf("set closest node %d\n", closest_node);
+	}
 }
 
 
@@ -444,8 +486,8 @@ void AI_PathMap( void )
 //==========================================
 void AITools_AddBotRoamNode(void)
 {
-	if( nav.loaded )
-		return;
+	//if( nav.loaded )
+	//	return;
 
 	AI_AddNode( player.ent->s.origin, NODEFLAGS_BOTROAM );
 }
@@ -457,12 +499,17 @@ void AITools_AddBotRoamNode(void)
 //==========================================
 void AITools_DropNodes(edict_t *ent)
 {
+	if (!bot_enable->value)
+		return;
+	player.ent = ent;
+	if (!bot_dropnodes->value)
+		return;
 	/*if( nav.loaded )
 		return;
 	*/
-	AI_DebugPrintf("AITools_DropNodes\n");
+	//AI_DebugPrintf("AITools_DropNodes\n");
 	AI_CategorizePosition (ent);
-	player.ent = ent;
+	
 	AI_PathMap();
 }
 
@@ -508,15 +555,18 @@ void AITools_InitEditnodes( void )
 		nav.loaded = false;
 	}
 	
+	gi.dprintf("AI: cleared nav data from memory and loaded nodes/pLinks from file ONLY\n");
 	Com_Printf("EDITNODES: on\n");
+	gi.cvar_set("bot_dropnodes", "1");
 }
 
 void AITools_InitMakenodes( void )
 {
 	if(nav.loaded)
 		AITools_EraseNodes();
-
+	gi.dprintf("AI: ALL navigational data cleared, starting from scratch\n");
 	Com_Printf("EDITNODES: on\n");
+	gi.cvar_set("bot_dropnodes", "1");
 }
 
 
@@ -574,10 +624,11 @@ void AITools_SaveNodes( void )
 	int	jumplinks;
 
 	if( !nav.num_nodes ) {
-		Com_Printf("CGame AITools: No nodes to save\n");
+		Com_Printf("AI: No nodes to save\n");
 		return;
 	}
-
+	AI_RemoveEntNodes();//GHz
+	gi.dprintf("AI: %d nodes in memory before saving\n", nav.num_nodes);
 	//find links
 	newlinks = AI_LinkCloseNodes();
 	Com_Printf ("       : Added %i new links\n", newlinks);
@@ -590,7 +641,7 @@ void AITools_SaveNodes( void )
 		Com_Printf ("       : Failed: Couldn't create the nodes file\n");
 	else
 		Com_Printf ("       : Nodes files saved\n");
-
+	gi.dprintf("AI: %d nodes in memory after saving\n", nav.num_nodes);
 	//restart navigation
 	AITools_EraseNodes();
 	AI_InitNavigationData();

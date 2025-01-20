@@ -12,8 +12,8 @@ int vrx_get_joined_players() {
 			continue;
 		if (G_IsSpectator(player))
 			continue;
-		if (player->ai.is_bot)
-			continue;
+		//if (player->ai.is_bot)
+		//	continue;
 
 		clients++;
 	}
@@ -877,6 +877,15 @@ void vrx_set_pickup_owner(edict_t* self)
 
 	// get preferred owner of barrel
 	cl = owner = G_GetClient(self);
+
+	// entity is owned by a non-client (e.g. world-spawned medic)
+	if (!cl)
+	{
+		if (self->owner)
+			self->owner = NULL;
+		return;
+	}
+
 	// if the player is piloting another entity (e.g. morphed tank), set owner to the other entity
 	if (PM_PlayerHasMonster(owner))
 		owner = owner->owner;

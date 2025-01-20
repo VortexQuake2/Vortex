@@ -280,7 +280,7 @@ void vrx_process_exp(edict_t *attacker, edict_t *targ);
 void drone_death (edict_t *self, edict_t *attacker);
 void Killed (edict_t *targ, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	if (targ->health < -999)
+	if (targ->gib_health > -999 && targ->health < -999)
 		targ->health = -999;
 
 	if (targ->mtype != M_COCOON)// cocoon uses enemy after death to restore cocooned entity

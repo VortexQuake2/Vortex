@@ -37,7 +37,86 @@ in NO WAY supported by Steve Yeager.
 //
 //===========================================================
 
+//==========================================
+// AI_NodeString
+//==========================================
+char* AI_NodeString(int nodetype)
+{
+	static char s[50];
+	s[0] = 0;
 
+	if (nodetype & NODEFLAGS_WATER)
+		strcat(s, "WATER");
+	if (nodetype & NODEFLAGS_LADDER)
+	{
+		if (strlen(s)> 0)
+			strcat(s, "|");
+		strcat(s, "LADDER");
+	}
+	if (nodetype & NODEFLAGS_SERVERLINK)
+	{
+		if (strlen(s) > 0)
+			strcat(s, "|");
+		strcat(s, "SERVERLINK");
+	}
+	if (nodetype & NODEFLAGS_BOTROAM)
+	{
+		if (strlen(s) > 0)
+			strcat(s, "|");
+		strcat(s, "BOTROAM");
+	}
+	if (nodetype & NODEFLAGS_JUMPPAD)
+	{
+		if (strlen(s) > 0)
+			strcat(s, "|");
+		strcat(s, "JUMPPAD");
+	}
+	if (nodetype & NODEFLAGS_JUMPPAD_LAND)
+	{
+		if (strlen(s) > 0)
+			strcat(s, "|");
+		strcat(s, "JUMPPAD_LAND");
+	}
+	if (nodetype & NODEFLAGS_PLATFORM)
+	{
+		if (strlen(s) > 0)
+			strcat(s, "|");
+		strcat(s, "PLATFORM");
+	}
+	if (nodetype & NODEFLAGS_TELEPORTER_IN)
+	{
+		if (strlen(s) > 0)
+			strcat(s, "|");
+		strcat(s, "TELEPORTER_IN");
+	}
+	if (nodetype & NODEFLAGS_TELEPORTER_OUT)
+	{
+		if (strlen(s) > 0)
+			strcat(s, "|");
+		strcat(s, "TELEPORTER_OUT");
+	}
+	if (nodetype & NODEFLAGS_REACHATTOUCH)
+	{
+		if (strlen(s) > 0)
+			strcat(s, "|");
+		strcat(s, "REAHATTOUCH");
+	}
+	if (nodetype & NODE_ALL)
+	{
+		if (strlen(s) > 0)
+			strcat(s, "|");
+		strcat(s, "NODE_ALL");
+	}
+
+	if (strlen(s) < 1)
+	{
+		if (nodetype)
+			strcat(s, "UNKNOWN");
+		else
+			strcat(s, "NONE");
+	}
+	return &s[0];
+}
 
 //==========================================
 // AI_DropNodeOriginToFloor
@@ -245,7 +324,7 @@ int AI_AddNode_JumpPad( edict_t *ent )
 	nodes[nav.num_nodes].origin[2] = ent->maxs[2] + 16;	//raise it up a bit
 
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
-	
+	//gi.dprintf("AI_AddNode_JumpPad: %d: created origin node\n", nav.num_nodes);
 	nav.num_nodes++;
 	
 	// Destiny node
@@ -260,6 +339,7 @@ int AI_AddNode_JumpPad( edict_t *ent )
 	// link jumpad to dest
 	AI_AddLink( nav.num_nodes-1 , nav.num_nodes, LINK_JUMPPAD );
 
+	//gi.dprintf("AI_AddNode_JumpPad: %d: created destination node\n", nav.num_nodes);
 	nav.num_nodes++;
 	return nav.num_nodes -1;
 }
@@ -307,6 +387,7 @@ int AI_AddNode_Door( edict_t *ent )
 #ifdef SHOW_JUMPAD_GUESS
 	AI_JumpadGuess_ShowPoint( nodes[nav.num_nodes].origin, "models/powerups/health/mega_sphere.md3" );
 #endif
+	//gi.dprintf("AI_AddNode_Door: %d: created door 1 node\n", nav.num_nodes);
 	nav.num_nodes++;
 
 	//add node 2
@@ -320,7 +401,7 @@ int AI_AddNode_Door( edict_t *ent )
 	//add links in both directions
 	AI_AddLink( nav.num_nodes, nav.num_nodes-1, LINK_MOVE );
 	AI_AddLink( nav.num_nodes-1, nav.num_nodes, LINK_MOVE );
-
+	//gi.dprintf("AI_AddNode_Door: %d: created door 2 node\n", nav.num_nodes);
 	nav.num_nodes++;
 	return nav.num_nodes-1;
 }
@@ -334,7 +415,7 @@ int AI_AddNode_Platform( edict_t *ent )
 {
 	vec3_t		v1,v2;
 
-	if (nav.num_nodes + 1 > MAX_NODES)
+	if (nav.num_nodes + 1 > MAX_NODES)//GHz: FIXME: shouldn't this be nav.num_nodes + 2 since we have to add a lower and upper node?
 		return INVALID;
 
 	// Upper node 
@@ -352,6 +433,7 @@ int AI_AddNode_Platform( edict_t *ent )
 	nav.ents[nav.num_ents].node = nav.num_nodes;
 	nav.num_ents++;
 	
+	gi.dprintf("AI_AddNode_Platform: %d: created upper node\n", nav.num_nodes);
 	nav.num_nodes++;
 	
 	// Lower node
@@ -365,6 +447,7 @@ int AI_AddNode_Platform( edict_t *ent )
 	//put into ents table
 	nav.ents[nav.num_ents].ent = ent;
 	nav.ents[nav.num_ents].node = nav.num_nodes;
+	gi.dprintf("AI_AddNode_Platform: %d: created lower node\n", nav.num_nodes);
 	nav.num_ents++;
 
 	// link lower to upper
@@ -404,6 +487,7 @@ int AI_AddNode_Teleporter( edict_t *ent )
 
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, ent );
 	
+	//gi.dprintf("AI_AddNode_Teleporter: %d: created teleporter IN node\n", nav.num_nodes);
 	nav.num_nodes++;
 	
 	//NODE_TELEPORTER_OUT
@@ -419,45 +503,100 @@ int AI_AddNode_Teleporter( edict_t *ent )
 	// link from teleport_in
 	AI_AddLink( nav.num_nodes-1, nav.num_nodes, LINK_TELEPORT );
 	
+	//gi.dprintf("AI_AddNode_Teleporter: %d: created teleporter OUT node\n", nav.num_nodes);
 	nav.num_nodes++;
 	return nav.num_nodes -1;
 }
 
 
 //==========================================
-// AI_AddNode_BotRoam
+// AI_AddNode_BotRoam_f (force)
 // add nodes from bot roam entities
+// adds the node even if another node is nearby
 //==========================================
-int AI_AddNode_BotRoam( edict_t *ent )
+int AI_AddNode_BotRoam_f(edict_t* ent)
 {
-	if( nav.num_nodes + 1 > MAX_NODES )
+	int node;
+
+	if (nav.num_nodes + 1 > MAX_NODES)
 		return INVALID;
 
 	nodes[nav.num_nodes].flags = (NODEFLAGS_BOTROAM);//bot roams are not NODEFLAGS_NOWORLD
 
 	// Set location
-	VectorCopy( ent->s.origin, nodes[nav.num_nodes].origin );
-	if ( ent->spawnflags & 1 ) // floating items
+	VectorCopy(ent->s.origin, nodes[nav.num_nodes].origin);
+	if (ent->spawnflags & 1) // floating items
 		nodes[nav.num_nodes].flags |= NODEFLAGS_FLOAT;
 	else
-		if( !AI_DropNodeOriginToFloor( nodes[nav.num_nodes].origin, NULL ) )
+		if (!AI_DropNodeOriginToFloor(nodes[nav.num_nodes].origin, NULL))
 			return INVALID;//spawned inside solid
 
-	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
+	nodes[nav.num_nodes].flags |= AI_FlagsForNode(nodes[nav.num_nodes].origin, NULL);
 
 	//count into bot_roams table
 	nav.broams[nav.num_broams].node = nav.num_nodes;
-	
-	if( ent->count )
+
+	if (ent->count)
 		nav.broams[nav.num_broams].weight = ent->count * 0.01;//count is a int with a value in between 0 and 100
 	else
 		nav.broams[nav.num_broams].weight = 0.3;
-	
+
 	nav.num_broams++;
+	//gi.dprintf("AI_AddNode_BotRoam: %d: created botroam node\n", nav.num_nodes);
 	nav.num_nodes++;
-	return nav.num_nodes-1; // return the node added
+	return nav.num_nodes - 1; // return the node added
 }
 
+//==========================================
+// AI_AddNode_BotRoam
+// add nodes from bot roam entities
+// doesn't create new nodes if others are nearby, unless 'force' parameter is true
+//==========================================
+int AI_AddNode_BotRoam( edict_t *ent, qboolean force)
+{
+	int node;
+
+	if( nav.num_nodes + 1 > MAX_NODES )
+		return INVALID;
+
+	if (force)
+	{
+		return AI_AddNode_BotRoam_f(ent); // return the node added
+	}
+	else
+	{
+		//if we have a available node close enough to the item, use it instead of dropping a new node
+		node = AI_FindClosestReachableNode(ent->s.origin, NULL, 48, NODE_ALL);
+		if (node != -1 &&
+			!(nodes[node].flags & NODEFLAGS_SERVERLINK) &&
+			!(nodes[node].flags & NODEFLAGS_LADDER))
+		{
+			float heightdiff = 0;
+			heightdiff = ent->s.origin[2] - nodes[node].origin[2];
+			if (heightdiff < 0) heightdiff = -heightdiff;
+
+			if (heightdiff < AI_STEPSIZE && nav.num_broams < MAX_BOT_ROAMS) //near enough
+			{
+				nodes[node].flags |= NODEFLAGS_BOTROAM;
+				//add node to botroam list
+				if (ent->count)
+					nav.broams[nav.num_broams].weight = ent->count * 0.01;//count is a int with a value in between 0 and 100
+				else
+					nav.broams[nav.num_broams].weight = 0.3; //jalfixme: add cmd to weight (dropped by console cmd, self is player)
+
+				nav.broams[nav.num_broams].node = node;
+				nav.num_broams++;
+				return nav.num_nodes - 1; // return the node added
+			}
+		}
+		//drop a new node
+		if (nav.num_broams < MAX_BOT_ROAMS) {
+			return AI_AddNode_BotRoam_f(ent);
+		}
+	}
+
+	return INVALID;
+}
 
 //==========================================
 // AI_AddNode_ItemNode
@@ -477,10 +616,10 @@ int AI_AddNode_ItemNode( edict_t *ent )
 
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
 
+	//gi.dprintf("AI_AddNode_ItemNode: %d: created item %d node\n", nav.num_nodes, nav.num_items);
 	nav.num_nodes++;
 	return nav.num_nodes-1; // return the node added
 }
-
 
 //==========================================
 // AI_CreateNodesForEntities
@@ -492,6 +631,7 @@ void AI_CreateNodesForEntities ( void )
 {
 	edict_t *ent;
 	int		node;
+	int		nodes_start=nav.num_nodes;//GHz
 
 	nav.num_ents = 0;
 	memset( nav.ents, 0, sizeof(nav_ents_t) * MAX_EDICTS );
@@ -547,37 +687,10 @@ void AI_CreateNodesForEntities ( void )
 		if( !ent->classname )		
 			continue;
 
-		if( !strcmp( ent->classname,"item_botroam" ) )
+		if(!strcmp( ent->classname,"item_botroam") || !strcmp(ent->classname, "info_player_deathmatch"))//GHz
 		{
-			//if we have a available node close enough to the item, use it instead of dropping a new node
-			node = AI_FindClosestReachableNode( ent->s.origin, NULL, 48, NODE_ALL );
-			if( node != -1 &&
-				!(nodes[node].flags & NODEFLAGS_SERVERLINK) &&
-				!(nodes[node].flags & NODEFLAGS_LADDER) )
-			{
-				float heightdiff = 0;
-				heightdiff = ent->s.origin[2] - nodes[node].origin[2];
-				if( heightdiff < 0 ) heightdiff = -heightdiff;
-				
-				if( heightdiff < AI_STEPSIZE && nav.num_broams < MAX_BOT_ROAMS ) //near enough
-				{
-					nodes[node].flags |= NODEFLAGS_BOTROAM;
-					//add node to botroam list
-					if( ent->count )
-						nav.broams[nav.num_broams].weight = ent->count * 0.01;//count is a int with a value in between 0 and 100
-					else
-						nav.broams[nav.num_broams].weight = 0.3; //jalfixme: add cmd to weight (dropped by console cmd, self is player)
-					
-					nav.broams[nav.num_broams].node = node;
-					nav.num_broams++;
-					continue;
-				}
-			}
-
-			//drop a new node
-			if( nav.num_broams < MAX_BOT_ROAMS ){
-				AI_AddNode_BotRoam( ent );
-			}
+			//gi.dprintf("AI: added  node for %s\n", ent->classname);
+			AI_AddNode_BotRoam(ent, false);
 		}
 	}
 
@@ -627,6 +740,7 @@ void AI_CreateNodesForEntities ( void )
 			nav.num_items++;
 		}
 	}
+	gi.dprintf("AI_CreateNodesForEntities: created %d nodes\n", nav.num_nodes - nodes_start);//GHz
 }
 
 
@@ -689,7 +803,7 @@ int AI_IsPlatformLink( int n1, int n2 )
 	if( nodes[n1].flags & NODEFLAGS_PLATFORM && !(nodes[n2].flags & NODEFLAGS_PLATFORM) )
 	{
 		edict_t *n1ent = NULL;
-		int		othernode;
+		int		othernode = -1;
 
 		// find ent
 		for(i=0;i<nav.num_ents;i++) {
@@ -735,7 +849,7 @@ int AI_IsPlatformLink( int n1, int n2 )
 	if( !(nodes[n1].flags & NODEFLAGS_PLATFORM) && nodes[n2].flags & NODEFLAGS_PLATFORM )
 	{
 		edict_t *n2ent = NULL;
-		int		othernode;
+		int		othernode = -1;
 
 		// find ent
 		for(i=0;i<nav.num_ents;i++) {
@@ -897,9 +1011,10 @@ void AI_InitNavigationData(void)
 	//Init nodes arrays
 	nav.num_nodes = 0;
 	memset( nodes, 0, sizeof(nav_node_t) * MAX_NODES );
-	memset( pLinks, 0, sizeof(nav_plink_t) * MAX_NODES );
+	memset( pLinks, 0, sizeof(nav_plink_t) * MAX_NODES );//GHz: FIXME: is 2048 pLinks enough?
 	memset( Spath, 0, sizeof(spath_t) * MAX_SPATH );//GHz
 	Spath_numNodes = 0;//GHz
+	dropNodeTime = 0;//GHz
 
 	//Load nodes from file
 	nav.loaded = AI_LoadPLKFile( level.mapname );
@@ -917,13 +1032,11 @@ void AI_InitNavigationData(void)
 	AI_CreateNodesForEntities();
 	newlinks = AI_LinkServerNodes( servernodesstart );
 	newjumplinks = AI_LinkCloseNodes_JumpPass( servernodesstart );
-	
+	//gi.dprintf("AI: map ents %d broams %d items %d\n", nav.num_ents, nav.num_broams, nav.num_items);
 	Com_Printf("-------------------------------------\n" );
-	Com_Printf("       : AI: Nodes Initialized.\n" );
-	Com_Printf("       : loaded nodes:%i.\n", servernodesstart );
-	Com_Printf("       : added nodes:%i.\n", nav.num_nodes - servernodesstart );
-	Com_Printf("       : total nodes:%i.\n", nav.num_nodes );
-	Com_Printf("       : loaded links:%i.\n", linkscount );
-	Com_Printf("       : added links:%i.\n", newlinks );
-	Com_Printf("       : added jump links:%i.\n", newjumplinks );
+	Com_Printf("AI: Nodes Initialized.\n" );
+	Com_Printf("Nodes: %d loaded %d added %d total\n", servernodesstart, nav.num_nodes - servernodesstart, nav.num_nodes);
+	Com_Printf("Links: %d loaded %d added %d total\n", linkscount, newlinks+newjumplinks, linkscount+newlinks+newjumplinks);
+	Com_Printf("-------------------------------------\n");
+	// note: loaded = nodes loaded from .nav file, added = nodes generated at map load (for map ents, items, etc.)
 }

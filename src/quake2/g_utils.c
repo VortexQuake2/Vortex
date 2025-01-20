@@ -618,7 +618,6 @@ void G_SetMovedir (vec3_t angles, vec3_t movedir)
 	VectorClear (angles);
 }
 
-
 float vectoyaw (vec3_t vec)
 {
 	float	yaw;
@@ -634,7 +633,6 @@ float vectoyaw (vec3_t vec)
 
 	return yaw;
 }
-
 
 void vectoangles (vec3_t value1, vec3_t angles)
 {
@@ -664,6 +662,30 @@ void vectoangles (vec3_t value1, vec3_t angles)
 	angles[PITCH] = -pitch;
 	angles[YAW] = yaw;
 	angles[ROLL] = 0;
+}
+
+//GHz: returns an angle between two vectors from 0 to 180
+// note: vectors v1 and v2 should be normalized
+float vectoanglediff1(vec3_t v1, vec3_t v2)
+{
+	float delta = acos(DotProduct(v2, v1)) * 180 / M_PI;
+	if (delta > 180.0f)
+		delta = 360.0f - delta;
+	return delta;
+}
+
+//GHz: returns an angle between two vectors from 0 to 180 (ccw/left) or -0 to -180 (cw/right) degrees
+// thus providing both the difference in angle between vectors but also the direction to rotate v1 to meet v2
+// note: vectors v1 and v2 should be normalized
+float vectoanglediff2(vec3_t v1, vec3_t v2)
+{
+	//float angle = vectoyaw(v2) - vectoyaw(v1);
+	float angle = (atan2(v2[YAW], v2[PITCH]) - atan2(v1[YAW], v1[PITCH])) * 180 / M_PI;
+	if (angle > 180.0f)
+		angle -= 360.0f;
+	else if (angle < -180.0f)
+		angle += 360.0f;
+	return angle;
 }
 
 char *G_CopyString (char *in)
@@ -1481,6 +1503,28 @@ void stuffcmd(edict_t *ent, char *s)
    	gi.WriteByte (svc_stufftext);
 	gi.WriteString (s);
     gi.unicast (ent, true);	
+}
+
+// return true if the point is to the right of us
+qboolean toright(edict_t* self, vec3_t point)
+{
+	vec3_t	vec;
+	float	dot, value;
+	vec3_t	right;
+
+	AngleVectors(self->s.angles, NULL, right, NULL);
+	VectorSubtract(point, self->s.origin, vec);
+	VectorNormalize(vec);
+	dot = DotProduct(right, vec);
+	//value = 1.0 - (float)degrees / 180.0;
+	//gi.dprintf("dot: %f ", dot);
+	if (dot >= 0)
+	{
+		//gi.dprintf("right\n");
+		return true;
+	}
+	//gi.dprintf("left\n");
+	return false;
 }
 
 qboolean nearfov (edict_t *ent, edict_t *other, int vertical_degrees, int horizontal_degrees)

@@ -166,7 +166,7 @@ void vrx_check_for_levelup(edict_t *ent, qboolean print_message) {
 
         ent->myskills.next_level += points_needed;
 
-        if (ent->myskills.level <= 10)
+        if (ent->myskills.level <= 10 || ent->ai.is_bot) // bots and players under level 10 get 2 ability points per level
             ent->myskills.speciality_points += 2;
         else
             ent->myskills.speciality_points += 1;

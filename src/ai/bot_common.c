@@ -57,6 +57,8 @@ qboolean BOT_ServerCommand (void)
 
 	cmd = gi.argv (1);
 
+	if (!bot_enable->value)
+		return false;
 	//return false; // az: unused...
 
 	if (!ctf->value)
@@ -69,10 +71,10 @@ qboolean BOT_ServerCommand (void)
 
 	if( !Q_stricmp (cmd, "addbot") )
 	{ 
-		if(ctf->value) // name, skin, team
-			BOT_SpawnBot ( gi.argv(2), gi.argv(3), gi.argv(4), NULL );
-		else // name, skin
-			BOT_SpawnBot ( NULL, name, gi.argv(3), NULL );
+		if(ctf->value) // team, name, class
+			BOT_SpawnBot(gi.argv(2), gi.argv(3), NULL, NULL, gi.argv(4));//BOT_SpawnBot(gi.argv(2), gi.argv(3), gi.argv(4), NULL);
+		else // name, class
+			BOT_SpawnBot(NULL, name, NULL, NULL, gi.argv(3));//BOT_SpawnBot ( NULL, name, gi.argv(3), NULL );
 	}	
 	// removebot
     else if( !Q_stricmp (cmd, "removebot") )
@@ -316,7 +318,7 @@ void AI_DebugPrintf (char* fmt, ...)
 	va_list		argptr;
 	int len;
 	
-	//if (!AIDevel.debugMode)
+	if (!AIDevel.debugMode)
 		return;
 	va_start(argptr, fmt);
 	len = vsprintf(bigbuffer, fmt, argptr);

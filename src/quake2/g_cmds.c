@@ -2988,7 +2988,20 @@ void Cmd_WritePos_f (edict_t *ent)
 
 	if ((fptr = fopen(filename, "a")) != NULL)
 	{
-		if (!Q_strcasecmp(gi.argv(1), "defenderspawn"))
+		if (!Q_strcasecmp(gi.argv(1), "botroam"))
+		{
+			pos[2] += 8;
+
+			WriteStr(fptr, "{\n");
+			WriteStr(fptr, " \"classname\" \"item_botroam\"\n");
+			WriteStr(fptr, " \"count\" \"30\"\n");//weight 0-100
+			WriteStr(fptr, va(" \"origin\" \"%d %d %d\"\n",
+				(int)pos[0], (int)pos[1], (int)pos[2]));
+			WriteStr(fptr, "}\n");
+
+			safe_cprintf(ent, PRINT_HIGH, "Added botroam to file.\n");
+		}
+		else if (!Q_strcasecmp(gi.argv(1), "defenderspawn"))
 		{
 			pos[2] += 8;
 

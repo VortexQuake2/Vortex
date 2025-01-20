@@ -33,13 +33,29 @@ in NO WAY supported by Steve Yeager.
 //
 //===============================================================
 
-
+void BOT_DebugInventory(edict_t* self)
+{
+	int i;
+	gitem_t* it;
+	for (i = 0; i < MAX_ITEMS; i++)
+	{
+		if (!self->client->pers.inventory[i])
+			continue;
+		it = &itemlist[i];
+		//if (it->flags & IT_WEAPON)
+		//	gi.dprintf("%s\n", GetWeaponString(self->client->pers.inventory[i]));
+		//else
+			gi.dprintf("%s: %d\n", it->pickup_name, self->client->pers.inventory[i]);
+	}
+}
 
 ///////////////////////////////////////////////////////////////////////
 // Respawn the bot
 ///////////////////////////////////////////////////////////////////////
 void BOT_Respawn (edict_t *self)
 {
+	int Windex;
+	gitem_t* it;
 	//gi.dprintf("BOT_Respawn\n");
 	CopyToBodyQue (self);
 
@@ -56,6 +72,11 @@ void BOT_Respawn (edict_t *self)
 
 	AI_ResetWeights(self);
 	AI_ResetNavigation(self);
+
+	Windex = vrx_WeapIDtoWeapIndex(self->myskills.respawn_weapon);
+	it = &itemlist[Windex];
+	//gi.dprintf("bot REspawned in game, weapon: %s\n", it->pickup_name);
+	//BOT_DebugInventory(self);
 }
 
 
@@ -111,7 +132,7 @@ void BOT_SetName(edict_t *bot, char *name, char *skin, char *team)
 		strcpy(bot_name,name);
 
 	// skin
-	if(strlen(skin) == 0)
+	if(!skin || strlen(skin) == 0)
 	{
 		// randomly choose skin 
 		float rnd = random();
@@ -256,45 +277,222 @@ qboolean BOT_JoinCTFTeam (edict_t *ent, char *team_name)
 }
 
 #define skill(sk,cost) if(cost > ent->myskills.speciality_points)\
-	mval = cost;\
+	mval = ent->myskills.speciality_points;\
 	{\
 		ent->myskills.abilities[sk].level += mval;\
 		ent->myskills.abilities[sk].current_level += mval;\
 		ent->myskills.speciality_points -= mval;\
 	}
 
+void BOT_UpgradeSkill(edict_t* ent, int ability_index, int amount)
+{
+	if (!ent->ai.is_bot)
+		return;
+	if (amount > ent->myskills.speciality_points)
+		amount = ent->myskills.speciality_points;
+	ent->myskills.abilities[ability_index].level += amount;
+	ent->myskills.abilities[ability_index].current_level += amount;
+	ent->myskills.speciality_points -= amount;
+}
+
 void BOT_SoldierAssignSkills(edict_t *ent)
 {
-	int mval = 10;
-	
-	skill(STRENGTH, 5);
-	skill(HASTE, 2);
-	skill(RESISTANCE, 5);
-	skill(VITALITY, 5);
-	skill(GRAPPLE_HOOK, 1);
+	BOT_UpgradeSkill(ent, STRENGTH, 10);
+	BOT_UpgradeSkill(ent, CREATE_QUAD, 1);
+	BOT_UpgradeSkill(ent, EMP, 10);
+	BOT_UpgradeSkill(ent, RESISTANCE, 5);
+	BOT_UpgradeSkill(ent, VITALITY, 5);
+	BOT_UpgradeSkill(ent, RESISTANCE, 5);
+	BOT_UpgradeSkill(ent, STRENGTH, 5);
+	BOT_UpgradeSkill(ent, RESISTANCE, 5);
+	BOT_UpgradeSkill(ent, CREATE_INVIN, 1);
+	BOT_UpgradeSkill(ent, VITALITY, 5);
+	BOT_UpgradeSkill(ent, NAPALM, 10);
+	BOT_UpgradeSkill(ent, MIRV, 10);
+}
 
-	skill(HASTE, 2);
-	
-	skill(STRENGTH, 5);
-	skill(VITALITY, 5);
-	skill(RESISTANCE, 5);
-	skill(HASTE, 1);
-	skill(GRAPPLE_HOOK, 2);
+void BOT_MageAssignSkills(edict_t* ent)
+{
+	BOT_UpgradeSkill(ent, MAGICBOLT, 1);
+	BOT_UpgradeSkill(ent, POWER_REGEN, 3); // clvl 2
+	BOT_UpgradeSkill(ent, MAGICBOLT, 9);
+	BOT_UpgradeSkill(ent, POWER_REGEN, 2); // clvl 8
+	BOT_UpgradeSkill(ent, METEOR, 10); // clvl 13
+	BOT_UpgradeSkill(ent, NOVA, 10);
+	BOT_UpgradeSkill(ent, MAGICBOLT, 5);
+	BOT_UpgradeSkill(ent, METEOR, 5);
+	BOT_UpgradeSkill(ent, NOVA, 5);
+	BOT_UpgradeSkill(ent, LIGHTNING, 10);
+	BOT_UpgradeSkill(ent, FIREBALL, 10);
+	BOT_UpgradeSkill(ent, LIGHTNING_STORM, 10);
+}
 
-	skill(STRENGTH, 5);
-	skill(VITALITY, 5);
-	skill(RESISTANCE, 5);
+void BOT_KnightAssignSkills(edict_t* ent)
+{
+	BOT_UpgradeSkill(ent, PLASMA_BOLT, 1);
+	BOT_UpgradeSkill(ent, ARMOR_REGEN, 1);
+	BOT_UpgradeSkill(ent, REGENERATION, 1);
+	BOT_UpgradeSkill(ent, ARMOR_UPGRADE, 10); // clvl 2-7
+	BOT_UpgradeSkill(ent, REGENERATION, 4);
+	BOT_UpgradeSkill(ent, VITALITY, 3); // clvl 10
+	BOT_UpgradeSkill(ent, ARMOR_REGEN, 4); // clvl 11-12
+	BOT_UpgradeSkill(ent, PLASMA_BOLT, 4); // clvl 13-14
+	BOT_UpgradeSkill(ent, POWER_REGEN, 2); // clvl 15
+	BOT_UpgradeSkill(ent, ARMOR_REGEN, 5);
+	BOT_UpgradeSkill(ent, REGENERATION, 5); // clvl 20
+	BOT_UpgradeSkill(ent, PLASMA_BOLT, 5);
+	BOT_UpgradeSkill(ent, POWER_SHIELD, 10);
+}
+
+void BOT_VampireAssignSkills(edict_t* ent)
+{
+	BOT_UpgradeSkill(ent, VAMPIRE, 5);
+	BOT_UpgradeSkill(ent, GHOST, 5); // clvl 5
+	BOT_UpgradeSkill(ent, BLINKSTRIKE, 5);
+	BOT_UpgradeSkill(ent, POWER_REGEN, 1); // clvl 8
+	BOT_UpgradeSkill(ent, VITALITY, 4); // clvl 10
+	BOT_UpgradeSkill(ent, GHOST, 5);
+	BOT_UpgradeSkill(ent, VAMPIRE, 5); // clvl 15
+	BOT_UpgradeSkill(ent, BLINKSTRIKE, 5);
+	BOT_UpgradeSkill(ent, VITALITY, 5);
+	BOT_UpgradeSkill(ent, PLAGUE, 10); // clvl 25
+}
+
+void BOT_NecroAssignSkills(edict_t* ent)
+{
+	BOT_UpgradeSkill(ent, POWER_REGEN, 4); // clvl 2
+	BOT_UpgradeSkill(ent, SKELETON, 10); // clvl 7
+	BOT_UpgradeSkill(ent, POWER_REGEN, 2); // clvl 8
+	BOT_UpgradeSkill(ent, AMP_DAMAGE, 10); // clvl 13
+	BOT_UpgradeSkill(ent, SKELETON, 5); // clvl 16
+	BOT_UpgradeSkill(ent, CRIPPLE, 10); // clvl 21
+	BOT_UpgradeSkill(ent, AMP_DAMAGE, 5); // clvl 23
+}
+
+void BOT_UpgradeWeapon(edict_t* ent, int weapID)
+{
+	int i, w, max;
+
+	//gi.dprintf("%d weapon points\n", ent->myskills.weapon_points);
+
+	// converts weapon ID stored in respawn_weapon to weapon index needed for weapon upgrades
+	// this is confusing because it doesn't exactly align with the values needed for inventory
+	/*
+	if (weapID == 1)
+		w = WEAPON_SWORD;
+	else if (weapID == 11)
+		w = WEAPON_HANDGRENADE;
+	else if (weapID == 13)
+		w = WEAPON_BLASTER;
+	else
+		w = weapID - 1;*/
+	w = AI_RespawnWeaponToWeapIndex(weapID);
+	for (i = 0; i < MAX_WEAPONMODS;++i)
+	{
+		while (ent->myskills.weapon_points > 0)
+		{
+			max = ent->myskills.weapons[w].mods[i].soft_max;
+			//gi.dprintf("soft max: %d level: %d\n", max, ent->myskills.weapons[weapon_index].mods[i].current_level);
+			if (ent->myskills.weapons[w].mods[i].current_level < max)
+			{
+				ent->myskills.weapons[w].mods[i].current_level++;
+				ent->myskills.weapon_points--;
+				continue;
+			}
+			break;
+		}
+		int Windex = vrx_WeapIDtoWeapIndex(weapID);
+		gitem_t* it = &itemlist[Windex];
+		gi.dprintf("%s (%d) %s upgraded to level %d (%d%%)\n", it->pickup_name, w, GetModString(w,i), 
+			ent->myskills.weapons[w].mods[i].current_level, V_WeaponUpgradeVal(ent,w));
+	}
+	ent->ai.status.weaponWeights[w] = 0.01 * V_WeaponUpgradeVal(ent, w);
+}
+
+void BOT_UpgradeWeapons(edict_t* ent)
+{
+	//BOT_UpgradeWeapon(ent, vrx_WeapIDtoWeapIndex(ent->myskills.respawn_weapon));
+	BOT_UpgradeWeapon(ent, ent->myskills.respawn_weapon);
+}
+
+// randomly selects a class-appropriate respawn weapon
+void BOT_SelectRespawnWeapon(edict_t* ent)
+{
+	int soldierWeapons[] = { 2,3,4,5,7,8,12 };
+	int necroWeapons[] = { 7,8,9 };
+	int mageWeapons[] = { 2,4,5,9,12 }; // medium-long range hitscan preferred
+	int vampireWeapons[] = { 1,2,3,4,5 }; // short range preferred
+	int* weaponArray;
+	int weaponCount, randomIndex;
+
+	switch (ent->myskills.class_num)
+	{
+	case CLASS_KNIGHT:
+		// knights can only use sword
+		ent->myskills.respawn_weapon = 1;
+		return;
+	case CLASS_SOLDIER: 
+		weaponArray = soldierWeapons;
+		weaponCount = sizeof(soldierWeapons) / sizeof(soldierWeapons[0]);
+		break;
+	case CLASS_MAGE:
+		weaponArray = mageWeapons;
+		weaponCount = sizeof(mageWeapons) / sizeof(mageWeapons[0]);
+		break;
+	case CLASS_VAMPIRE:
+		weaponArray = vampireWeapons;
+		weaponCount = sizeof(vampireWeapons) / sizeof(vampireWeapons[0]);
+		break;
+	case CLASS_NECROMANCER:
+		weaponArray = necroWeapons;
+		weaponCount = sizeof(necroWeapons) / sizeof(necroWeapons[0]);
+		break;
+	default:
+		ent->myskills.respawn_weapon = GetRandom(1, 13);
+		return;
+	}
+
+	//weaponCount = sizeof(&weaponArray) / sizeof(&weaponArray[0]);
+	randomIndex = GetRandom(0, weaponCount-1);
+	int i = weaponArray[randomIndex];
+	//gi.dprintf("%s: weaponCount: %d randomIndex: %d selected: %d\n", __func__, weaponCount, randomIndex, i);
+	ent->myskills.respawn_weapon = i;
 }
 
 void BOT_VortexAssignSkills(edict_t *ent)
 {
 	switch (ent->myskills.class_num)
 	{
+	case CLASS_SOLDIER: BOT_SoldierAssignSkills(ent); break;
+	case CLASS_MAGE: BOT_MageAssignSkills(ent); break;
+	case CLASS_KNIGHT: BOT_KnightAssignSkills(ent); break;
+	case CLASS_VAMPIRE: BOT_VampireAssignSkills(ent); break;
+	case CLASS_NECROMANCER: BOT_NecroAssignSkills(ent); break;
 	default:
 		BOT_SoldierAssignSkills(ent);
 	}
 }
+//==========================================
+// BOT_DMClass_Touchdown
+// called when the bot touches the ground after jumping
+//==========================================
+void BOT_Touchdown(edict_t* self)
+{
+	vec3_t jump_start, jump_end, v;
 
+	gi.dprintf("groundentity:%s ", self->groundentity ? "true" : "false");
+	gi.dprintf("is_step:%s ", self->ai.is_step ? "true" : "false");
+	gi.dprintf("was_step:%s\n", self->ai.was_step ? "true" : "false");
+
+	VectorCopy(self->monsterinfo.spot1, jump_start);
+	jump_start[2] = 0;
+	VectorCopy(self->s.origin, jump_end);
+	jump_end[2] = 0;
+	VectorSubtract(jump_end, jump_start, v);
+
+	gi.dprintf("jump landed, dist: %f\n", VectorLength(v));
+	gi.sound(self, CHAN_VOICE, gi.soundindex("world/land.wav"), 1, ATTN_IDLE, 0);
+}
 //==========================================
 // BOT_DMClass_JoinGame
 // put the bot into the game.
@@ -312,12 +510,14 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 
 	ent->think = AI_Think;
 	ent->nextthink = level.time + FRAMETIME;
+	//ent->monsterinfo.touchdown = BOT_Touchdown;//GHz: for testing
 
 	// az: Vortex stuff
     vrx_disable_abilities(ent);
 
 	ent->myskills.level = AveragePlayerLevel();
 	ent->myskills.speciality_points = ent->myskills.level * 2;
+	ent->myskills.weapon_points = ent->myskills.level * 4;//GHz
 
 	s = Info_ValueForKey (ent->client->pers.userinfo, "skin");
 
@@ -329,14 +529,38 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 	}
 
 	ent->myskills.class_num = rnd;*/
-	ent->myskills.class_num = CLASS_SOLDIER; 
-	ent->myskills.respawn_weapon = GetRandom(1, 11);
+	if (!ent->myskills.class_num)
+	{
+		float r = random();
+		if (r < 0.2)
+			ent->myskills.class_num = CLASS_SOLDIER;
+		else if (r < 0.4)
+			ent->myskills.class_num = CLASS_KNIGHT;
+		else if (r < 0.6)
+			ent->myskills.class_num = CLASS_VAMPIRE;
+		else if (r < 0.8)
+			ent->myskills.class_num = CLASS_NECROMANCER;
+		else
+			ent->myskills.class_num = CLASS_MAGE;
+	}
+	// for respawn_weapon index values, see vrx_WeapIDtoWeapIndex
+	//if (random() > 0.8)
+	//	ent->myskills.respawn_weapon = 9;//GetRandom(1, 11);
+	//else
+	//	ent->myskills.respawn_weapon = 1;//GetRandom(1, 11);
+	//if (ent->myskills.class_num == CLASS_KNIGHT)
+	//	ent->myskills.respawn_weapon = 1;
+	//else
+	//	ent->myskills.respawn_weapon = GetRandom(1, 13);
+	BOT_SelectRespawnWeapon(ent);//GHz
+	vrx_reset_weapon_maximums(ent);//GHz
+	BOT_UpgradeWeapons(ent);//GHz
 
 	ent->client->pers.spectator = false;
 	ent->client->resp.spectator = false;
 
-    vrx_add_respawn_items(ent);
-    vrx_add_respawn_weapon(ent, ent->myskills.respawn_weapon);
+    vrx_add_respawn_items(ent);//GHz: isn't this redundant with PutClientInServer() below?
+    vrx_add_respawn_weapon(ent, ent->myskills.respawn_weapon);//GHz: isn't this redundant with PutClientInServer() below?
 
     vrx_assign_abilities(ent);
     vrx_set_talents(ent);
@@ -356,6 +580,10 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 	{	// could't spawn in?
 	}
 	gi.linkentity (ent);
+
+	int Windex = vrx_WeapIDtoWeapIndex(ent->myskills.respawn_weapon);
+	gitem_t *it = &itemlist[Windex];
+	gi.dprintf("bot spawned in game, weapon: %s\n", it->pickup_name);
 }
 
 //==========================================
@@ -397,7 +625,7 @@ void BOT_JoinGame (edict_t *ent)
 ///////////////////////////////////////////////////////////////////////
 // Spawn the bot
 ///////////////////////////////////////////////////////////////////////
-void BOT_SpawnBot (char *team, char *name, char *skin, char *userinfo)
+void BOT_SpawnBot (char *team, char *name, char *skin, char *userinfo, char *classname)
 {
 	edict_t	*bot;
 
@@ -453,6 +681,34 @@ void BOT_SpawnBot (char *team, char *name, char *skin, char *userinfo)
 	}
 	
 	AI_EnemyAdded (bot); // let the ai know we added another
+
+	// set character class, if specified
+	if (classname)
+	{
+		if (!Q_stricmp(classname, "soldier"))
+			bot->myskills.class_num = CLASS_SOLDIER;
+		else if (!Q_stricmp(classname, "poltergeist"))
+			bot->myskills.class_num = CLASS_POLTERGEIST;
+		else if (!Q_stricmp(classname, "vampire"))
+			bot->myskills.class_num = CLASS_VAMPIRE;
+		else if (!Q_stricmp(classname, "mage"))
+			bot->myskills.class_num = CLASS_MAGE;
+		else if (!Q_stricmp(classname, "engineer"))
+			bot->myskills.class_num = CLASS_ENGINEER;
+		else if (!Q_stricmp(classname, "knight"))
+			bot->myskills.class_num = CLASS_KNIGHT;
+		else if (!Q_stricmp(classname, "cleric"))
+			bot->myskills.class_num = CLASS_CLERIC;
+		else if (!Q_stricmp(classname, "necromancer"))
+			bot->myskills.class_num = CLASS_NECROMANCER;
+		else if (!Q_stricmp(classname, "shaman"))
+			bot->myskills.class_num = CLASS_SHAMAN;
+		else if (!Q_stricmp(classname, "alien"))
+			bot->myskills.class_num = CLASS_ALIEN;
+		else if (!Q_stricmp(classname, "weaponmaster"))
+			bot->myskills.class_num = CLASS_WEAPONMASTER;
+	}
+	//gi.dprintf("BOT_SpawnBot: weapon: %s\n", GetWeaponString(bot->myskills.respawn_weapon));
 }
 
 
@@ -490,4 +746,60 @@ void BOT_RemoveBot(char *name)
 		safe_bprintf (PRINT_MEDIUM, "%s not found\n", name);
 	
 	//ACESP_SaveBots(); // Save them again
+}
+
+edict_t* CTF_GetFlagBaseEnt(int teamnum);
+
+// returns all bots back to their base
+// teamnum is optional--use 0 for all bots/teams
+void BOT_ReturnToBase(int teamnum)
+{
+	edict_t *bot, *base;
+	for (int i = 0; i < maxclients->value; i++)
+	{
+		bot = g_edicts + i + 1;
+		if (bot->inuse && bot->health > 1)
+		{
+			// find base entity
+			if (ctf->value && (!teamnum || bot->teamnum == teamnum))
+				base = CTF_GetFlagBaseEnt(bot->teamnum);
+			else if (INVASION_OTHERSPAWNS_REMOVED)
+				base = INV_SelectPlayerSpawnPoint(bot);
+			if (!base)
+				continue;
+
+			// if we're already close to base, no need to return to it!
+			if (entdist(bot, base) < 1024)
+				continue;
+
+			// use tball to return to base immediately, if possible, otherwise pathfind home
+			if (!BOT_DMclass_UseTball(bot, true))
+			{
+				int goal_node, current_node;
+
+				// find the node closest to the bot
+				if ((current_node = AI_FindClosestReachableNode(bot->s.origin, bot, NODE_DENSITY * 2, NODE_ALL)) == -1)
+					continue;
+				// this is our starting point
+				bot->ai.current_node = current_node;
+
+				// now find the node closest to the base
+				if ((goal_node = AI_FindClosestReachableNode(base->s.origin, base, NODE_DENSITY * 4, NODE_ALL)) != -1)
+				{
+					// get the bot moving
+					if (bot->ai.state != BOT_STATE_MOVEATTACK)
+						bot->ai.state = BOT_STATE_MOVE;
+					bot->ai.tries = 0;	// Reset the count of how many times we tried this goal
+
+					if (AIDevel.debugChased && bot_showlrgoal->value)
+						safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: RETURNING TO BASE @ node %d!\n", bot->ai.pers.netname, goal_node);
+					//gi.dprintf("**** BASE UNDER ATTACK: RETURNING %s TO BASE! ****", bot->ai.pers.netname);
+					AI_SetGoal(bot, goal_node, true);
+					bot->goalentity = base;// used in AI_PickShortRangeGoal to prevent overriding LR goal pathfinding/movement
+				}
+			}
+			//else
+			//	gi.dprintf("**** BASE UNDER ATTACK: %s TELEPORTED BACK TO BASE! ****", bot->ai.pers.netname);
+		}
+	}
 }

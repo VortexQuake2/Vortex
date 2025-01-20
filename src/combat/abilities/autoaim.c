@@ -46,6 +46,14 @@ void autoaim_getfiringparameters (edict_t *ent, int *speed, qboolean *rocket)
 	}
 	else if (ent->client->pers.weapon)
 	{
+		if (ent->client->pers.weapon->weaponthink == Weapon_Sword && ent->client->weapon_mode == 1)//lance
+		{
+			float sword_bonus = 1.0;
+			// calculate knight bonus
+			if (ent->myskills.class_num == CLASS_KNIGHT)
+				sword_bonus = 1.5;
+			*speed = 850 + (15 * ent->myskills.weapons[WEAPON_SWORD].mods[2].current_level * sword_bonus);
+		}
 		if (ent->client->pers.weapon->weaponthink == Weapon_Blaster)
 		{
 			*speed = BLASTER_INITIAL_SPEED + BLASTER_ADDON_SPEED * ent->myskills.weapons[WEAPON_BLASTER].mods[2].current_level;
@@ -73,8 +81,14 @@ void autoaim_getfiringparameters (edict_t *ent, int *speed, qboolean *rocket)
 	}
 }
 
+float AI_GetWeaponProjectileVelocity(edict_t* ent, int weapmodelIndex);
+float BOT_DMclass_ThrowingPitch3(edict_t* self, float speed);
+float BOT_DMclass_ThrowingPitch2(edict_t* self, float v_xy, float v_z);
+float BOT_DMclass_ThrowingPitch1(edict_t* self, float v);
+float BOT_DMclass_ThrowingPitch(edict_t* self, float speed);
 void autoaim_lockontarget (edict_t *ent)
 {
+	int		weapon;
 	int			i, speed = 0;
 	qboolean	rocket = false;
 	vec3_t		forward, start;
@@ -89,6 +103,21 @@ void autoaim_lockontarget (edict_t *ent)
 	vectoangles(forward, forward);
 	if (forward[PITCH] < -180)
 		forward[PITCH] += 360;
+	//TESTING
+	if (ent->client->pers.weapon && ent->client->pers.weapon->weaponthink == Weapon_Sword && ent->client->weapon_mode == 1)//lance
+	{
+		if (ent->client->pers.weapon)
+			weapon = (ent->client->pers.weapon->weapmodel & 0xff);
+		else
+			weapon = 0;
+		speed = AI_GetWeaponProjectileVelocity(ent, weapon);
+		//forward[PITCH] = BOT_DMclass_ThrowingPitch2(ent, speed, speed + 300);
+		forward[PITCH] = BOT_DMclass_ThrowingPitch1(ent, speed);
+		if (forward[PITCH] < -90)
+			forward[PITCH] = -45;
+		//forward[PITCH] = BOT_DMclass_ThrowingPitch3(ent, speed);
+		//forward[PITCH] = BOT_DMclass_ThrowingPitch(ent, speed);
+	}
 
 	// set view angles to target
 	ent->client->ps.pmove.pm_type = PM_FREEZE;

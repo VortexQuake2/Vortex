@@ -48,7 +48,7 @@ endif ()
 include_directories(./src/)
 
 # Specify the source files for the game library
-add_library(${CC_LIB_NAME} SHARED ${VRX_FILES} "src/characters/v_stash.h" "src/entities/drone/skeleton.c")
+add_library(${CC_LIB_NAME} SHARED ${VRX_FILES} "src/characters/v_stash.h" "src/entities/drone/skeleton.c" "src/ai/bot_abilities.c" "src/ai/ai_util.c")
 
 if (VRX_USE_MYSQL)
     find_library(MYSQL_LIBRARY_CLIENT

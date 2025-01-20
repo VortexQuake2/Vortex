@@ -1020,7 +1020,8 @@ void INV_SpawnPlayers(void)
 				e->wait = level.time + 1.0;
 				continue;
 			}
-
+			//if (cl_ent->ai.is_bot)
+			//	gi.dprintf("%d: %s: spawn %d clear for %s\n", (int)level.framenum, __func__, e->s.number, cl_ent->ai.pers.netname);
 			e->wait = level.time + 2.0; // delay before other players can use this spawn
 			cl_ent->spawn = e; // player may use this spawn
 			respawn(cl_ent);
@@ -1086,6 +1087,7 @@ void info_player_invasion_death(edict_t *self, edict_t *inflictor, edict_t *atta
 	self->nextthink = level.time + FRAMETIME;
 	gi.bprintf(PRINT_HIGH, "A human spawn was destroyed by a %s!\n", GetMonsterKindString(attacker->mtype));
 	INV_RemoveFromSpawnlist(self);
+	BOT_ReturnToBase(0); // return bots to base ASAP!
 }
 
 void info_player_invasion_think(edict_t *self)

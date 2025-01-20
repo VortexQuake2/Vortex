@@ -47,9 +47,16 @@ void vrx_relay_connect() {
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    gi.dprintf("RS: Connecting to relay server...\n");
     cvar_t* server = gi.cvar("vrx_relay_server", "localhost", 0);
     cvar_t* port = gi.cvar("vrx_relay_port", "9999", 0);
+
+    if (strlen(server->string) < 1)
+    {
+        gi.dprintf("RS: Relay server is disabled.\n");
+        return;
+    }
+
+    gi.dprintf("RS: Connecting to relay server...\n");
 
     int rv = getaddrinfo(server->string, port->string, &hints, &servinfo);
     if (rv != 0) {

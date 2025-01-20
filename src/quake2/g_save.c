@@ -36,7 +36,8 @@ gitem_t	*Fdi_POWERCUBE;
 int headindex;
 int	skullindex;
 
-
+cvar_t				*bot_enable;//GHz: Set to 1 to enable bots
+cvar_t				*bot_dropnodes;//GHz: Set to 1 to allow players to automatically drop nodes used for bot pathing
 cvar_t				*bot_showpath;
 cvar_t				*bot_showcombat;
 cvar_t				*bot_showsrgoal;

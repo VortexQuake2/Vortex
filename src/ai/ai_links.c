@@ -35,32 +35,34 @@ char *AI_LinkString( int linktype )
 {
 	char *s;
 
-	if( linktype == LINK_MOVE )
+	if (linktype == LINK_MOVE)
 		s = "LINK_MOVE";
-	else if( linktype == LINK_STAIRS )
+	else if (linktype == LINK_STAIRS)
 		s = "LINK_STAIRS";
-	else if( linktype == LINK_FALL )
+	else if (linktype == LINK_FALL)
 		s = "LINK_FALL";
-	else if( linktype == LINK_CLIMB )
+	else if (linktype == LINK_CLIMB)
 		s = "LINK_CLIMB";
-	else if( linktype == LINK_TELEPORT )
+	else if (linktype == LINK_TELEPORT)
 		s = "LINK_TELEPORT";
-	else if( linktype == LINK_PLATFORM )
+	else if (linktype == LINK_PLATFORM)
 		s = "LINK_PLATFORM";
-	else if( linktype == LINK_JUMPPAD )
+	else if (linktype == LINK_JUMPPAD)
 		s = "LINK_JUMPAD";
-	else if( linktype == LINK_WATER )
+	else if (linktype == LINK_WATER)
 		s = "LINK_WATER";
-	else if( linktype == LINK_WATERJUMP )
+	else if (linktype == LINK_WATERJUMP)
 		s = "LINK_WATERJUMP";
-	else if( linktype == LINK_LADDER )
+	else if (linktype == LINK_LADDER)
 		s = "LINK_LADDER";
-	else if( linktype == LINK_INVALID )
+	else if (linktype == LINK_INVALID)
 		s = "LINK_INVALID";
-	else if( linktype == LINK_JUMP )
+	else if (linktype == LINK_JUMP)
 		s = "LINK_JUMP";
-	else if( linktype )
+	else if (linktype)
 		s = "UNKNOWN";
+	else
+		s = "(none)";
 
 	return s;
 }
@@ -221,8 +223,10 @@ int AI_PlinkMoveType(int n1, int n2)
 	if( n1 == n2 )
 		return LINK_INVALID;
 
+	
+
 	for (i=0; i<pLinks[n1].numLinks; i++) {
-		if ( pLinks[n1].nodes[i] == n2 )
+		if (pLinks[n1].nodes[i] == n2)
 			return pLinks[n1].moveType[i];
 	}
 
@@ -292,7 +296,7 @@ int AI_GravityBoxStep( vec3_t origin, float scale, vec3_t destvec, vec3_t newori
 	float	ydist, yscale;
 	float	dist;
 
-	AI_DebugPrintf("AI_GravityBoxStep\n");
+	//AI_DebugPrintf("AI_GravityBoxStep\n");
 
 	trace = gi.trace( origin, mins, maxs, origin, LINKS_PASSENT, MASK_NODESOLID );
 	if( trace.startsolid )
@@ -750,7 +754,7 @@ int AI_IsLadderLink( int n1, int n2 )
 	vec3_t	eorg;
 	float	xzdist;
 
-	AI_DebugPrintf("AI_IsLadderLink\n");
+	//AI_DebugPrintf("AI_IsLadderLink\n");
 
 	for (j=0 ; j<2 ; j++)
 		eorg[j] = nodes[n2].origin[j] - nodes[n1].origin[j];
@@ -863,7 +867,7 @@ int AI_IsJumpLink(int n1, int n2)
 	int		link;
 	int climblink = 0;
 
-	AI_DebugPrintf("AI_IsJumpLink\n");
+	//AI_DebugPrintf("AI_IsJumpLink\n");
 
 	if( n1 == n2 || n1 == INVALID || n2 == INVALID )
 		return LINK_INVALID;

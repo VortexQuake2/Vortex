@@ -644,6 +644,7 @@ void healer_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	self->delay = level.time + 20.0;
 	self->nextthink = level.time + FRAMETIME;
 	self->s.frame = HEALER_FRAME_DEAD;
+	self->movetype = MOVETYPE_TOSS;
 	self->maxs[2] = 4;
 	gi.linkentity(self);
 }
@@ -2038,7 +2039,7 @@ void gasser_acidattack (edict_t *self)
 		fire_acid(self, start, forward, self->radius_dmg, ACID_INITIAL_RADIUS, speed, (0.1*self->radius_dmg), ACID_DURATION);
 		
 		//FIXME: only need to do this once
-		self->monsterinfo.attack_finished = level.time + (3.0 - (0.4 * self->light_level)); // talent level reduces attack delay
+		self->monsterinfo.attack_finished = level.time + (3.0 - (0.5 * self->light_level)); // talent level reduces attack delay
 		self->s.frame = GASSER_FRAMES_ATTACK_END-2;
 		//gi.sound (self, CHAN_VOICE, gi.soundindex ("weapons/twang.wav"), 1, ATTN_NORM, 0);
 	//}	

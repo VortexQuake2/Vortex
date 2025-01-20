@@ -159,6 +159,28 @@ void vrx_give_additional_respawn_weapons(edict_t *ent, int nextWeapon) {
     vrx_add_respawn_weapon(ent, picks[nextEmptyslot - 1] + 1);
 }
 
+// converts the index value stored in respawn_weapon to the inventory weapon index
+int vrx_WeapIDtoWeapIndex(int weaponID)
+{
+    switch (weaponID)
+    {
+    case 1: return sword_index;
+    case 2: return shotgun_index;
+    case 3: return supershotgun_index;
+    case 4: return machinegun_index;
+    case 5: return chaingun_index;
+    case 6: return grenadelauncher_index;
+    case 7: return rocketlauncher_index;
+    case 8: return hyperblaster_index;
+    case 9: return railgun_index;
+    case 10: return bfg10k_index;
+    case 11: return grenade_index;
+    case 12: return _20mmcannon_index;
+    case 13: return blaster_index;
+    default: return blaster_index;
+    }
+}
+
 void vrx_add_respawn_weapon(edict_t *ent, int weaponID) {
     //vrx_add_respawn_items(ent);
 
@@ -183,6 +205,7 @@ void vrx_add_respawn_weapon(edict_t *ent, int weaponID) {
 
     //3.02 begin new respawn weapon code
     //Give them the weapon
+    /*
     switch (weaponID) {
         case 2:
             ent->client->pers.inventory[ITEM_INDEX(Fdi_SHOTGUN)] = 1;
@@ -224,6 +247,8 @@ void vrx_add_respawn_weapon(edict_t *ent, int weaponID) {
             ent->client->pers.inventory[ITEM_INDEX(Fdi_BLASTER)] = 1;
             break;
     }
+    */
+    ent->client->pers.inventory[vrx_WeapIDtoWeapIndex(weaponID)] = 1;
 
     //Give them the ammo
     V_GiveAmmoClip(ent, 2, V_GetRespawnAmmoType(ent));
@@ -236,7 +261,9 @@ void vrx_add_respawn_weapon(edict_t *ent, int weaponID) {
 }
 
 void vrx_pick_respawn_weapon(edict_t *ent) {
+    int index;
     gitem_t *item;
+    /*
 
     switch (ent->myskills.respawn_weapon) {
         case 1:
@@ -282,8 +309,11 @@ void vrx_pick_respawn_weapon(edict_t *ent) {
             item = Fdi_BLASTER;
             break;
     }
+    */
+    index = vrx_WeapIDtoWeapIndex(ent->myskills.respawn_weapon);
+    item = &itemlist[index];
 
-    ent->client->pers.selected_item = ITEM_INDEX(item);
+    ent->client->pers.selected_item = index;//ITEM_INDEX(item);
     ent->client->pers.weapon = item;
     ent->client->pers.lastweapon = item;
     ent->client->newweapon = item;

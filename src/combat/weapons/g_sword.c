@@ -274,12 +274,15 @@ void lance_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *sur
 	// calculate position for the explosion entity
 	VectorMA (ent->s.origin, -0.02, ent->velocity, origin);
 
+	//gi.dprintf("%s: hit %s\n", __func__, other->classname);
 	if (other->takedamage){
-		T_Damage (other, ent, ent->owner, ent->velocity, ent->s.origin, plane->normal, ent->dmg, 0, 0, MOD_SWORD);
+		T_Damage (other, ent, ent->owner, ent->velocity, ent->s.origin, plane->normal, ent->dmg, ent->dmg, DAMAGE_ENERGY, MOD_SWORD);
 
 		if (ent->owner->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1)
 			gi.sound (other, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav") , 1, ATTN_NORM, 0);
 	}
+	else
+		gi.sound(other, CHAN_WEAPON, gi.soundindex("weapons/sword6_impact.wav"), 1, ATTN_NORM, 0);
 
 	gi.WriteByte (svc_temp_entity);
 	gi.WriteByte (TE_BFG_EXPLOSION);
@@ -300,22 +303,25 @@ void lance_think (edict_t *self)
 		return;
 	}
 
+	
 	vectoangles(self->velocity, self->s.angles);
 	ValidateAngles(self->s.angles);
+	/*
 	AngleVectors(self->s.angles, forward, NULL, NULL);
 	VectorMA(self->s.origin, self->dmg_radius, forward, end);
 	tr = gi.trace (self->s.origin, NULL, NULL, end, self->owner, MASK_SHOT);
-
-	/*gi.WriteByte (svc_temp_entity);
-	gi.WriteByte (TE_BFG_LASER);
+	
+	gi.WriteByte (svc_temp_entity);
+	gi.WriteByte (TE_DEBUGTRAIL);
 	gi.WritePosition (self->s.origin);
 	gi.WritePosition (tr.endpos);
-	gi.multicast (self->s.origin, MULTICAST_PHS);*/
-
+	gi.multicast (self->s.origin, MULTICAST_PHS);
+	
 	// if we hit something, damage it and burn if it's upgraded
 	if (tr.ent && tr.ent->takedamage && T_Damage(tr.ent, self, self->owner, forward, tr.endpos, tr.plane.normal, self->dmg, self->dmg, DAMAGE_ENERGY, MOD_SWORD)
 		&& self->owner->myskills.weapons[WEAPON_SWORD].mods[3].current_level >= 1)
 	{
+		
 		gi.sound (self, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav") , 1, ATTN_NORM, 0); 
 		burn_person(tr.ent, self->owner, self->radius_dmg);
 	}
@@ -323,6 +329,8 @@ void lance_think (edict_t *self)
 	// if we hit anything at all, remove ent
 	if (tr.fraction < 1)
 	{
+		//gi.dprintf("%s: hit %s\n", __func__, tr.ent->classname);
+
 		gi.WriteByte (svc_temp_entity);
 		gi.WriteByte (TE_BFG_EXPLOSION);
 		gi.WritePosition (tr.endpos);
@@ -330,7 +338,7 @@ void lance_think (edict_t *self)
 
 		G_FreeEdict(self);
 		return;
-	}
+	}*/
 
 	self->nextthink = level.time + FRAMETIME;
 }
@@ -339,25 +347,29 @@ void fire_lance (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int bur
 {
 	edict_t	*lance;
 
-
 	//  entity made a sound, used to alert monsters
 	self->lastsound = level.framenum;
 
-	// spawn grenade entity
+	// spawn lance entity
 	lance = G_Spawn();
 	VectorCopy (start, lance->s.origin);
 	lance->movetype = MOVETYPE_TOSS;
-	lance->s.modelindex = 1;
+	lance->clipmask = MASK_SHOT;//GHz
+	lance->solid = SOLID_BBOX;//GHz
+	lance->s.modelindex = gi.modelindex("models/objects/javelin/tris.md2");
+	VectorSet(lance->mins, -8, -8, 8);
+	VectorSet(lance->maxs, 8, 8, 8);
     // az: we got a model!! thanks moesh
 	// lance->svflags |= SVF_NOCLIENT;
 	lance->owner = self;
 	lance->think = lance_think;
-	lance->dmg_radius = length;
+	lance->touch = lance_touch;//GHz
+	//lance->dmg_radius = length;
 	lance->dmg = damage;
 	lance->radius_dmg = burn_damage;
 	lance->classname = "lance";
 	lance->delay = level.time + 10.0;
-    gi.setmodel(lance, "models/objects/javelin/tris.md2");
+    //gi.setmodel(lance, "models/objects/javelin/tris.md2");
 	// lance->s.skinnum = 1;
 
 	gi.linkentity (lance);
@@ -366,7 +378,9 @@ void fire_lance (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int bur
 
 	// adjust velocity
 	VectorScale (aimdir, speed, lance->velocity);
-	lance->velocity[2] += 300;
+	if (!self->ai.is_bot && !self->lockon)//GHz: don't boost vertical velocity for bots as it will affect ballistic calculations (i.e. finding the right pitch to hit the target)
+		lance->velocity[2] += 300;
+	//gi.dprintf("lance speed: %f\n", (float)VectorLength(lance->velocity));
 }
 
 void sword_attack (edict_t *ent, vec3_t g_offset, int damage)

@@ -132,7 +132,7 @@ void MeteorAttack (edict_t *ent, int damage, int radius, int speed, float skill_
 	// get end position for trace
 	VectorMA(start, METEOR_RANGE, forward, end);
 
-	tr = gi.trace (start, NULL, NULL, end, ent, MASK_SOLID);
+	tr = gi.trace (start, NULL, NULL, end, ent, MASK_SHOT);
 
 	// make sure we're starting at the floor
 	VectorCopy(tr.endpos, start);

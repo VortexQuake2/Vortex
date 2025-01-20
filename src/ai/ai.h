@@ -35,6 +35,7 @@ typedef struct
 	qboolean	jumpadReached;
 	qboolean	TeleportReached;
 
+	float		weaponWeights[WEAP_TOTAL];//GHz: dynamic, per-bot weights are based on weapon upgrades
 	float		inventoryWeights[MAX_ITEMS];
 	float		playersWeights[MAX_EDICTS];
 	float		broam_timeouts[MAX_BOT_ROAMS];	//revisit bot roams
@@ -69,10 +70,13 @@ typedef struct
 	//NPC state
 	int				state;			// Bot State (WANDER, MOVE, etc)
 	float			state_combat_timeout;
+	float			attack_delay;//GHz
+	float			evade_delay;//GHz
 
 	qboolean		is_swim;
 	qboolean		is_step;
 	qboolean		is_ladder;
+	qboolean		is_bunnyhop;//GHz
 	qboolean		was_swim;
 	qboolean		was_step;
 
@@ -82,6 +86,9 @@ typedef struct
 	float			wander_timeout;
 	float			bloqued_timeout;
 	float			changeweapon_timeout;
+	float			locked_movetime;//GHz
+	short			locked_forwardmove;//GHz
+	short			locked_sidemove;//GHz
 
 	// nodes
 	int				current_node;
@@ -97,6 +104,8 @@ typedef struct
 	int				path_position;
 
 	int				nearest_node_tries;	//for increasing radius of search with each try
+	int				linktype;//GHz: Current linktype we are following, used for debugging
+	vec3_t			link_vector;//GHz: vector pointing from current_node to next_node, used to determine if the bot is on-course or deviating from the intended path
 
 } ai_handle_t;
 
@@ -114,9 +123,10 @@ void		AI_EnemyAdded(edict_t *ent);
 void		AI_EnemyRemoved(edict_t *ent);
 
 // bot_spawn.c
-void		BOT_SpawnBot (char *team, char *name, char *skin, char *userinfo);
+void		BOT_SpawnBot(char* team, char* name, char* skin, char* userinfo, char* classname);
 void		BOT_RemoveBot(char *name);
 void		BOT_Respawn (edict_t *self);
+void		BOT_ReturnToBase(int teamnum);//GHz
 
 //bot_misc.c
 void		AI_BotObituary (edict_t *self, edict_t *inflictor, edict_t *attacker);

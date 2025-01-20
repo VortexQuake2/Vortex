@@ -30,7 +30,8 @@ in NO WAY supported by Steve Yeager.
 #include "ai_weapons.h"
 //#include "AStar.h" //jabot092
 
-
+extern cvar_t				*bot_enable;//GHz
+extern cvar_t				*bot_dropnodes;//GHz
 //bot debug_chase options
 extern  cvar_t				*bot_showpath;
 extern  cvar_t				*bot_showcombat;
@@ -56,6 +57,7 @@ extern	cvar_t				*bot_debugmonster;
 #define BOT_STATE_WANDER		2
 #define BOT_STATE_ATTACK		3
 #define BOT_STATE_DEFEND		4
+#define BOT_STATE_MOVEATTACK	5//GHz
 
 
 #define BOT_MOVE_LEFT			0
@@ -81,7 +83,6 @@ typedef struct
 
 	qboolean	debugChased;
 	edict_t		*chaseguy;
-
 } ai_devel_t;
 extern ai_devel_t	AIDevel;
 
@@ -126,11 +127,14 @@ qboolean	AI_SpecialMove(edict_t *self, usercmd_t *ucmd);
 qboolean	AI_CanMove(edict_t *self, int direction);
 qboolean	AI_IsLadder(vec3_t origin, vec3_t v_angle, vec3_t mins, vec3_t maxs, edict_t *passent);
 qboolean	AI_IsStep (edict_t *ent);
+float		AI_ForwardVelocity(edict_t* self);//GHz
 
 // ai_navigation.c
 //----------------------------------------------------------
 int			AI_FindCost(int from, int to, int movetypes);
 int			AI_FindClosestReachableNode( vec3_t origin, edict_t *passent, int range, int flagsmask );
+int			AI_FindClosestHiddenNode(edict_t* ent, int range, int flagsmask);//GHz
+int			AI_FindFarthestHiddenNode(edict_t* ent, int range, int flagsmask);//GHz
 void		AI_SetGoal(edict_t *self, int goal_node, qboolean LongRange);
 qboolean	AI_FollowPath(edict_t *self);
 
@@ -143,6 +147,7 @@ int			AI_FlagsForNode( vec3_t origin, edict_t *passent );
 float		AI_Distance( vec3_t o1, vec3_t o2 );
 
 void AITools_AddBotRoamNode(void);
+char* AI_NodeString(int nodetype);//GHz
 
 
 // ai_tools.c
@@ -184,6 +189,26 @@ void		M_default_Spawn (void);
 //ai_weapons.c
 //----------------------------------------------------------
 void		AI_InitAIWeapons (void);
-
-
+float		AI_GetWeaponRangeWeightByDistance(int weapmodelIndex, float distance);//GHz
+float		AI_GetWeaponProjectileVelocity(edict_t* ent, int weapmodelIndex);//GHz
 qboolean	AI_IsLadder(vec3_t origin, vec3_t v_angle, vec3_t mins, vec3_t maxs, edict_t *passent);
+
+//bot_abilities
+//----------------------------------------------------------
+int BOT_DMclass_ChooseAbility(edict_t* self);
+void BOT_DMclass_FireAbility(edict_t* self, int ability_index);
+void AI_InitAIAbilities(void);
+void BOT_DMclass_UseBoost(edict_t* self);
+void BOT_DMclass_UseBlinkStrike(edict_t* self);
+void BOT_DMclass_UseSkeleton(edict_t* self);
+qboolean BOT_DMclass_UseTball(edict_t* self, qboolean forget_enemy);
+
+//ai_util.c
+//----------------------------------------------------------
+qboolean AI_IsProjectile(edict_t* ent);
+qboolean AI_IsOwnedSummons(edict_t* self, edict_t* other);
+qboolean AI_ValidMoveTarget(edict_t* self, edict_t* target, qboolean check_range);
+qboolean AI_StraightPath(edict_t* self, float dist, float min_dp_value);
+qboolean AI_ClearWalkingPath(edict_t* self, vec3_t start, vec3_t end);
+float BOT_DMclass_ThrowingPitch1(edict_t* self, float v);
+int AI_RespawnWeaponToWeapIndex(int respawn_weapon);

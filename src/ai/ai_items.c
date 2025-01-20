@@ -217,6 +217,10 @@ qboolean AI_ItemIsReachable(edict_t *self, vec3_t goal)
 	trace_t trace;
 	vec3_t v;
 
+	//GHz: we should be level with our goal's Z height, +/- 1 step
+	if (fabs(self->s.origin[2] - goal[2]) > AI_STEPSIZE)
+		return false;
+
 	VectorCopy(self->mins,v);
 	v[2] += AI_STEPSIZE;
 
@@ -240,9 +244,11 @@ qboolean AI_IsItem(edict_t* it)
 		return false;
 	if (!it->item)
 		return false;
-	if (!(it->spawnflags & DROPPED_ITEM))
-		return false;
+	//if (!(it->spawnflags & DROPPED_ITEM))
+	//	return false;
 	if (it->solid != SOLID_TRIGGER)
+		return false;
+	if (it->movetype != MOVETYPE_TOSS)
 		return false;
 	return true;
 }
@@ -293,6 +299,16 @@ float AI_ItemWeight(edict_t *self, edict_t *it)
 			if (self->health >= self->max_health)
 				return 0;
 		}
+
+		if (!Q_stricmp(it->classname, "item_adrenaline"))
+		{
+			float health_f = self->health / self->max_health;
+			weight = 1.0 - health_f;
+			if (weight < 0)
+				weight = 0;
+			return weight;//GHz
+		}
+
 		if (self->health >= 250 && it->count > 25)
 			return 0;
 
@@ -326,8 +342,8 @@ float AI_ItemWeight(edict_t *self, edict_t *it)
 		return 0;
 
 	//item didn't have a recognizable item flag
-//	if (AIDevel.debugMode)
-//		G_PrintMsg (NULL, PRINT_HIGH, "(AI_ItemWeight) WARNING: Item with unhandled item flag:%s\n", it->classname);
+	if (AIDevel.debugMode)
+		AI_DebugPrintf("(AI_ItemWeight) WARNING: Item with unhandled item flag:%s\n", it->classname);
 
 	return 0;
 }

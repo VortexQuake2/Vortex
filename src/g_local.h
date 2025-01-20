@@ -310,23 +310,27 @@ typedef struct
 #define IT_HEALTH		256
 
 // gitem_t->weapmodel for weapons indicates model index
-#define WEAP_BLASTER			1
-#define WEAP_SHOTGUN			2
-#define WEAP_SUPERSHOTGUN		3
-#define WEAP_MACHINEGUN			4
-#define WEAP_CHAINGUN			5
-#define WEAP_GRENADES			6
-#define WEAP_GRENADELAUNCHER	7
-#define WEAP_ROCKETLAUNCHER		8
-#define WEAP_HYPERBLASTER		9
-#define WEAP_RAILGUN			10
-#define WEAP_BFG				11
-#define WEAP_PHALANX			12
+#define WEAP_BLASTER			0
+#define WEAP_SHOTGUN			1
+#define WEAP_SUPERSHOTGUN		2
+#define WEAP_MACHINEGUN			3
+#define WEAP_CHAINGUN			4
 
-#define WEAP_BOOMER				13
+#define WEAP_GRENADELAUNCHER	5
+#define WEAP_ROCKETLAUNCHER		6
+#define WEAP_HYPERBLASTER		7
+#define WEAP_RAILGUN			8
+#define WEAP_BFG				9
+#define WEAP_SWORD				10//K03
+#define WEAP_20MM				11//GHz
+#define WEAP_GRENADES			12
 
-#define WEAP_DISRUPTOR			12		// PGM
-#define WEAP_ETFRIFLE			13		// PGM
+//#define WEAP_PHALANX			12
+
+//#define WEAP_BOOMER				13
+
+//#define WEAP_DISRUPTOR			12		// PGM
+//#define WEAP_ETFRIFLE			13		// PGM
 #define WEAP_PLASMA				14		// PGM
 #define WEAP_PROXLAUNCH			15		// PGM
 #define WEAP_CHAINFIST			16		// PGM
@@ -343,8 +347,7 @@ typedef struct
 
 #define MPI_INDEX				24	//MPI count
 
-#define WEAP_SWORD				25//K03
-#define WEAP_20MM				26//GHz
+
 
 typedef struct gitem_s
 {
@@ -686,6 +689,20 @@ extern int	grenade_index;
 extern int	rocket_index;
 extern int	slug_index;
 extern int	cell_index;
+
+//weapons
+extern int sword_index;
+extern int blaster_index;
+extern int shotgun_index;
+extern int supershotgun_index;
+extern int machinegun_index;
+extern int chaingun_index;
+extern int grenadelauncher_index;
+extern int rocketlauncher_index;
+extern int hyperblaster_index;
+extern int railgun_index;
+extern int _20mmcannon_index;
+extern int bfg10k_index;
 
 //pre searched items
 extern gitem_t	*Fdi_GRAPPLE;
@@ -1175,7 +1192,7 @@ void dom_checkforflag(edict_t *ent);
 void dom_fragaward(edict_t *attacker, edict_t *target);
 
 qboolean nearfov(edict_t *ent, edict_t *other, int vertical_degrees, int horizontal_degrees);
-
+qboolean toright(edict_t* self, vec3_t point);
 void StuffPlayerCmds(edict_t *ent); //3.50
 qboolean G_StuffPlayerCmds(edict_t *ent, const char *s);
 

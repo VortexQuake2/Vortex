@@ -88,6 +88,7 @@ int G_GetHypotenuse(vec3_t v);
 //************ misc_stuff.c ************
 qboolean vrx_assign_character_skin(edict_t *ent, char *s);
 void vrx_give_additional_respawn_weapons(edict_t *ent, int nextWeapon);
+int vrx_WeapIDtoWeapIndex(int weaponID);
 //************ misc_stuff.c ************
 
 //************ g_main.c ************
@@ -357,6 +358,7 @@ qboolean SpawnWaitingPlayers(void);
 #define SEARCHTYPE_WALK 1	// find nodes on horizontal plane with limited Z delta
 #define SEARCHTYPE_FLY	2	// find nodes regardless of Z delta between start end ending positions
 void G_Spawn_Trails(int type, vec3_t start, vec3_t endpos);
+void G_Spawn_Splash(int type, int count, int color, vec3_t start, vec3_t movdir, vec3_t origin);
 
 // etc
 int vrx_get_ability_upgrade_cost(int index);

@@ -811,6 +811,22 @@ GRENADE
 #define GRENADE_INITIAL_SPEED    800
 #define GRENADE_ADDON_SPEED        40
 
+float get_weapon_grenade_speed(edict_t* ent)
+{
+    int speed, min_speed;
+    int max_speed = GRENADE_INITIAL_SPEED + GRENADE_ADDON_SPEED * ent->myskills.weapons[WEAPON_HANDGRENADE].mods[1].current_level;
+    float timer;
+
+    timer = ent->client->grenade_time - level.time;
+    min_speed = 0.5 * max_speed;
+
+    if (ent->health <= 0)
+        speed = min_speed;
+    else
+        speed = min_speed + (GRENADE_TIMER - timer) * ((max_speed - min_speed) / GRENADE_TIMER);
+    return speed;
+}
+
 void weapon_grenade_fire(edict_t *ent, qboolean held) {
     vec3_t offset;
     vec3_t forward, right;
@@ -820,9 +836,10 @@ void weapon_grenade_fire(edict_t *ent, qboolean held) {
     int radius_damage = GRENADE_INITIAL_RADIUS_DAMAGE +
                         GRENADE_ADDON_RADIUS_DAMAGE * ent->myskills.weapons[WEAPON_HANDGRENADE].mods[0].current_level;
     float timer;
-    int speed, min_speed;
-    int max_speed = GRENADE_INITIAL_SPEED +
-                    GRENADE_ADDON_SPEED * ent->myskills.weapons[WEAPON_HANDGRENADE].mods[1].current_level;
+    float speed;
+   // int speed, min_speed;
+   // int max_speed = GRENADE_INITIAL_SPEED +
+    //                GRENADE_ADDON_SPEED * ent->myskills.weapons[WEAPON_HANDGRENADE].mods[1].current_level;
     float radius;
 
     //3.0 disable chat protect (somehow throwing a hg does not reset a client's idle frames)
@@ -845,15 +862,17 @@ void weapon_grenade_fire(edict_t *ent, qboolean held) {
     VectorSet(offset, 8, 8, ent->viewheight - 8);
     AngleVectors(ent->client->v_angle, forward, right, NULL);
     P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
-
+    
     timer = ent->client->grenade_time - level.time;
+    /*
     min_speed = 0.5 * max_speed;
     
     if ( ent->health <= 0 )
         speed = min_speed;
     else
         speed = min_speed + (GRENADE_TIMER - timer) * ((max_speed - min_speed) / GRENADE_TIMER);
-
+    */
+    speed = get_weapon_grenade_speed(ent);
 
     fire_grenade2(ent, start, forward, damage, speed, timer, radius, radius_damage, held);
     //gi.dprintf("fired grenade at %.1f\n", level.time);
