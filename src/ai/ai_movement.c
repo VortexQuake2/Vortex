@@ -26,6 +26,9 @@ in NO WAY supported by Steve Yeager.
 #include "g_local.h"
 #include "ai_local.h"
 
+qboolean AI_IsProjectile(edict_t* ent);
+qboolean BOT_DMclass_Ucmd_Move(edict_t* self, float movespeed, usercmd_t* ucmd, qboolean move_vertical, qboolean check_move);
+
 //ACE
 
 //GHz: FIXME: this function fails when the bot is against a box
@@ -439,9 +442,6 @@ void AI_ChangeAngle (edict_t *ent)
 		ent->s.angles[PITCH] = anglemod (current_pitch + move);
 	}
 }
-
-qboolean AI_IsProjectile(edict_t* ent);
-qboolean BOT_DMclass_Ucmd_Move(edict_t* self, float movespeed, usercmd_t* ucmd, qboolean move_vertical, qboolean check_move);
 
 //==========================================
 // AI_DodgeProjectiles
