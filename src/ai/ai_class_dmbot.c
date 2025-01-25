@@ -38,7 +38,7 @@ void BOT_DMClass_TurnAway(edict_t* self)
 {
 	vec3_t angles, forward;
 
-	AI_DebugPrintf("turn away from obstruction\n");
+	//AI_DebugPrintf("turn away from obstruction\n");
 	VectorCopy(self->s.angles, angles);
 	angles[YAW] += random() * 180 - 90;
 	AngleVectors(angles, forward, NULL, NULL);
@@ -205,7 +205,7 @@ void BOT_DMclass_MoveAttack(edict_t* self, usercmd_t* ucmd)
 	int	current_link_type = 0;
 	int i;
 
-	AI_DebugPrintf("BOT_DMclass_MoveAttack()\n");
+	//AI_DebugPrintf("BOT_DMclass_MoveAttack()\n");
 
 	if (self->ai.next_move_time > level.time)
 		return;//GHz
@@ -353,7 +353,7 @@ void BOT_DMclass_MoveAttack(edict_t* self, usercmd_t* ucmd)
 	// drop from them and have to repeat the process from the beginning
 	if (AI_MoveToGoalEntity(self, ucmd))
 	{
-		AI_DebugPrintf("move to short range goal\n");
+		//AI_DebugPrintf("move to short range goal\n");
 		return;
 	}
 
@@ -598,7 +598,7 @@ void BOT_DMclass_Wander(edict_t *self, usercmd_t *ucmd)
 	if (self->deadflag)
 		return;
 
-	AI_DebugPrintf("BOT_DMclass_Wander()\n");
+	//AI_DebugPrintf("BOT_DMclass_Wander()\n");
 
 	//GHz: bot was stuck, so give it time to turn and move away from the obstruction
 	if (self->monsterinfo.bump_delay > level.time)
@@ -762,14 +762,121 @@ qboolean BOT_DMclass_RunAway(edict_t* self, qboolean moveattack, usercmd_t *ucmd
 	return true;
 }
 
+// tells the bot to go find its nearest summoned entity (for protection)
+qboolean BOT_DMclass_FindSummons(edict_t* self, qboolean moveattack, usercmd_t* ucmd)
+{
+	int current_node, goal_node;
+	edict_t* e = NULL;
+
+	//gi.dprintf("BOT_DMclass_FindSummons()\n");
+
+	// already evading, don't try to attack for awhile
+	if (self->ai.attack_delay > level.time)
+	{
+		//gi.dprintf("already evading\n");
+		return true;
+	}
+	// already evading, but continue attacking anyway
+	if (self->ai.evade_delay > level.time)
+	{
+		//gi.dprintf("already moving to summons\n");
+		return false;
+	}
+	// random chance to fail to evade
+	if (random() < 0.5)
+		return false;
+
+	// attempt to find starting node
+	if ((current_node = AI_FindClosestReachableNode(self->s.origin, self, 2 * NODE_DENSITY, NODE_ALL)) == -1)
+		return false;
+	//gi.dprintf("trying to find summons\n");
+	self->ai.current_node = current_node;
+
+	// find a summons that places us farthest away from danger
+	float farthest_dist = entdist(self, self->enemy);
+	edict_t *farthest_ent = NULL;
+	for (e = g_edicts; e < &g_edicts[globals.num_edicts]; e++)
+	{
+		// sanity checks
+		if (!e->inuse)
+			continue;
+		if (e->solid == SOLID_NOT)
+			continue;
+		if (!e->classname)
+			continue;
+		// is this a summoned entity that the bot owns?
+		if (!AI_IsOwnedSummons(self, e))
+			continue;
+
+		float dist;
+		// if the summons has an enemy, calculate distance to its enemy
+		if (e->enemy && e->enemy->inuse)
+			dist = entdist(e->enemy, e);
+		// otherwise, calculate distance between it and our enemy
+		else
+			dist = entdist(self->enemy, e);
+		// would moving closer to our summons place us further away from danger?
+		if (dist > farthest_dist)
+		{
+			farthest_dist = dist;
+			farthest_ent = e;
+		}
+	}
+
+	// either we don't have any summons or moving closer to them would place us closer to the enemy
+	if (!farthest_ent)
+		return false;
+
+	// attempt to find a node closest to the summoned entity
+	if ((goal_node = AI_FindClosestReachableNode(farthest_ent->s.origin, farthest_ent, NODE_DENSITY, NODE_ALL)) == -1)
+		return false;
+
+	//set up the goal
+	if (moveattack)
+	{
+		// continue to fight the enemy while moving toward our summons
+		self->ai.state = BOT_STATE_MOVEATTACK;
+		self->ai.evade_delay = level.time + 15.0;// don't try to evade again for awhile
+		gi.dprintf("** %s: bot is evading toward summons! **\n", __func__);
+	}
+	else
+	{
+		self->ai.state = BOT_STATE_MOVE;
+		self->ai.attack_delay = level.time + 5.0;// we're trying to run away, so don't try to attack for a bit
+	}
+	self->ai.tries = 0;	// Reset the count of how many times we tried this goal
+
+	if (AIDevel.debugChased && bot_showlrgoal->value)
+		safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: is evading to find summons at node %d!\n", self->ai.pers.netname, goal_node);
+
+	AI_SetGoal(self, goal_node, true);
+	self->goalentity = farthest_ent; // used in BOT_DMclassEvadeEnemy
+	//self->ai.state_combat_timeout = level.time + 1.0;//GHz: timeout for moveattack after it loses sight of enemy
+
+	if (moveattack)
+		return false;
+	return true;
+}
+
 qboolean BOT_DMclassEvadeEnemy(edict_t* self, usercmd_t *ucmd)
 {
+	// moving toward one of our summons?
+	edict_t* goalent = NULL;
+	if (self->movetarget && self->movetarget->inuse) // SR goal
+		goalent = self->movetarget;
+	else if (self->goalentity && self->goalentity->inuse) // LR goal
+		goalent = self->goalentity;
+	if (goalent && AI_IsOwnedSummons(self, goalent))
+		return true;
+
+	// do we have summons? if so, find the closest one and move to it!(LR goal)
+	if (AI_NumSummons(self) > 0)
+		return BOT_DMclass_FindSummons(self, true, ucmd);
+
 	// low health?
 	if (self->health > 0.4 * self->max_health)
 		return false;
-	// moving toward one of our summons?
-	if (self->movetarget && self->movetarget->inuse && AI_IsOwnedSummons(self, self->movetarget))
-		return false;
+
 	// try to tball away
 	if (BOT_DMclass_UseTball(self, true))
 		return true;
@@ -962,7 +1069,7 @@ void BOT_DMclass_CombatMovement( edict_t *self, usercmd_t *ucmd )
 	//it to dodge, but still follow paths, chasing enemy or
 	//running away... hmmm... maybe it will need 2 different BOT_STATEs
 
-	AI_DebugPrintf("BOT_DMclass_CombatMovement()\n");
+	//AI_DebugPrintf("BOT_DMclass_CombatMovement()\n");
 
 	if(!self->enemy) {
 
@@ -975,7 +1082,7 @@ void BOT_DMclass_CombatMovement( edict_t *self, usercmd_t *ucmd )
 	// Move To Short Range goal (not following paths)
 	if (AI_MoveToGoalEntity(self, ucmd))
 	{
-		AI_DebugPrintf("move to short range goal\n");
+		//AI_DebugPrintf("move to short range goal\n");
 		return;
 	}
 
@@ -1060,7 +1167,7 @@ qboolean BOT_DMclass_CheckShot(edict_t *ent, vec3_t	point)
 	trace_t tr;
 	vec3_t	start, forward, right, offset;
 
-	AI_DebugPrintf("BOT_DMclass_CheckShot()\n");
+	//AI_DebugPrintf("BOT_DMclass_CheckShot()\n");
 
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
 
@@ -1096,9 +1203,11 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 	if (self->ai.attack_delay > level.time)
 		return false;
 
+	//FIXME: it's probably worth recalculating every frame, but maybe we need an aggro timer so the bot doesn't change targets too often
+	// especially when the bot is hurt by an enemy (even if they are further away)
 	// we already set up an enemy this frame (reacting to attacks)
-	if (self->enemy && self->enemy->inuse && visible(self, self->enemy))//GHz: don't bother finding a new enemy if the last one is still visible
-		return true;
+	//if (self->enemy && self->enemy->inuse && visible(self, self->enemy))//GHz: don't bother finding a new enemy if the last one is still visible
+	//	return true;
 
 	if (level.time < pregame_time->value) // No enemies in pregame lol
 		return false;
@@ -1110,6 +1219,7 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 	{
 		if (AIEnemies[i] == NULL || AIEnemies[i] == self)
 			continue;
+
 		if (!G_ValidTargetEnt(AIEnemies[i], true))
 			continue;
 		if (OnSameTeam(self, AIEnemies[i]))
@@ -1145,6 +1255,12 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 	// If best enemy, set up
 	if (bestenemy)
 	{
+		//if (bestenemy->ai.is_bot)
+		//	gi.dprintf("%s: is angry at %s\n", self->ai.pers.netname, bestenemy->ai.pers.netname);
+		//else if (bestenemy->mtype)
+		//	gi.dprintf("%s: is angry at %s\n", self->ai.pers.netname, V_GetMonsterName(bestenemy));
+		//else
+		//	gi.dprintf("%s: is angry at %s\n", self->ai.pers.netname, bestenemy->classname);
 		if (AIDevel.debugChased && bot_showcombat->value)
 		{
 			if (bestenemy->ai.is_bot)

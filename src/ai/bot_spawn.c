@@ -754,18 +754,19 @@ edict_t* CTF_GetFlagBaseEnt(int teamnum);
 // teamnum is optional--use 0 for all bots/teams
 void BOT_ReturnToBase(int teamnum)
 {
-	edict_t *bot, *base;
+	edict_t* bot;
 	for (int i = 0; i < maxclients->value; i++)
 	{
 		bot = g_edicts + i + 1;
 		if (bot->inuse && bot->health > 1)
 		{
+			edict_t* base = NULL;
 			// find base entity
 			if (ctf->value && (!teamnum || bot->teamnum == teamnum))
 				base = CTF_GetFlagBaseEnt(bot->teamnum);
 			else if (INVASION_OTHERSPAWNS_REMOVED)
 				base = INV_SelectPlayerSpawnPoint(bot);
-			if (!base)
+			if (!base || !base->inuse)
 				continue;
 
 			// if we're already close to base, no need to return to it!

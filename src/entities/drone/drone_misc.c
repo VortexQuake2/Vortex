@@ -1901,6 +1901,7 @@ void M_Remove (edict_t *self, qboolean refund, qboolean effect)
 	}
 
 	DroneList_Remove(self);
+	AI_EnemyRemoved(self);
 
 	// mark this entity for removal
 	if (effect)
@@ -2065,6 +2066,7 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	monster->touch = drone_touch;
 	monster->think = drone_think;
 	DroneList_Insert(monster);
+	AI_EnemyAdded(monster);
 	if (ent->client)
 		layout_add_tracked_entity(&ent->client->layout, monster);
 		
@@ -2209,6 +2211,7 @@ void M_Notify (edict_t *monster)
 	monster->monsterinfo.slots_freed = true;
 
 	DroneList_Remove(monster);
+	AI_EnemyRemoved(monster);
 	DroneRemoveSelected(monster->activator, monster);//4.2 remove from selection list
 }
 

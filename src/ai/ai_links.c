@@ -186,6 +186,8 @@ qboolean AI_AddLink( int n1, int n2, int linkType )
 	
 	pLinks[n1].numLinks++;
 	
+	if (nodes[n1].flags & NODEFLAGS_DOOR || nodes[n2].flags & NODEFLAGS_DOOR)
+		gi.dprintf("%s: %d -> %s -> %d (@%d)\n", __func__, n1, AI_LinkString(linkType), n2, (int)AI_FindLinkDistance(n1, n2));
 	return true;
 }
 

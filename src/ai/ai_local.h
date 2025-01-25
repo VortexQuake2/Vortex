@@ -160,6 +160,7 @@ void		AITools_InitMakenodes( void );
 void		AITools_SaveNodes( void );
 qboolean	AI_LoadPLKFile( char *mapname );
 void		AIDebug_ToogleBotDebug(void);//GHz
+void		AI_RemoveMapNodes(void);//GHz
 
 // ai_links.c
 //----------------------------------------------------------
@@ -212,3 +213,4 @@ qboolean AI_StraightPath(edict_t* self, float dist, float min_dp_value);
 qboolean AI_ClearWalkingPath(edict_t* self, vec3_t start, vec3_t end);
 float BOT_DMclass_ThrowingPitch1(edict_t* self, float v);
 int AI_RespawnWeaponToWeapIndex(int respawn_weapon);
+int AI_NumSummons(edict_t* self);

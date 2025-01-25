@@ -14,6 +14,33 @@ qboolean AI_IsOwnedSummons(edict_t* self, edict_t* other)
 	return other->mtype && other->solid == SOLID_BBOX && other->takedamage && other->health > 0 && G_GetSummoner(other) == self;
 }
 
+// returns the number of entities that the bot has summoned
+int AI_NumSummons(edict_t* self)
+{
+	int num_summons = 0;
+	// hellspawn
+	if (self->skull)
+		num_summons++;
+	// totems
+	if (self->totem1)
+		num_summons++;
+	if (self->totem2)
+		num_summons++;
+	// non-exhaustive list of other summons
+	num_summons += self->num_monsters;
+	num_summons += self->num_skeletons;
+	num_summons += self->num_autocannon;
+	num_summons += self->num_detectors;
+	num_summons += self->num_gasser;
+	num_summons += self->num_lasers;
+	num_summons += self->num_magmine;
+	num_summons += self->num_obstacle;
+	num_summons += self->num_sentries;
+	num_summons += self->num_proxy;
+	num_summons += self->num_spikers;
+	return num_summons;
+}
+
 qboolean AI_ValidMoveTarget(edict_t* self, edict_t* target, qboolean check_range)
 {
 	// invalid/freed
@@ -25,8 +52,13 @@ qboolean AI_ValidMoveTarget(edict_t* self, edict_t* target, qboolean check_range
 	float	dist = 0;
 	if (check_range)
 		dist = entdist(self, target);
-	if (!AI_IsProjectile(target) && dist <= AI_RANGE_LONG)
+	// projectiles
+	if (AI_IsProjectile(target) && dist <= AI_RANGE_LONG)
 		return true;
+	// reachable summons
+	if (AI_IsOwnedSummons(self, target) && AI_ClearWalkingPath(self, self->s.origin, target->s.origin))
+		return true;
+	// reachable items
 	if (AI_IsItem(target) && AI_ItemIsReachable(self, target->s.origin) && dist <= AI_GOAL_SR_RADIUS)
 		return true;
 	return false;

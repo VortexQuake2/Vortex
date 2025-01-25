@@ -380,18 +380,20 @@ int AI_AddNode_Door( edict_t *ent )
 	VectorNormalize( right );
 
 	//add node
-	nodes[nav.num_nodes].flags = 0;
+	//nodes[nav.num_nodes].flags = 0;
+	nodes[nav.num_nodes].flags = (NODEFLAGS_DOOR|NODEFLAGS_SERVERLINK);//GHz: for testing
 	VectorMA( door_origin, 32, right, nodes[nav.num_nodes].origin);
 	AI_DropNodeOriginToFloor( nodes[nav.num_nodes].origin, NULL );
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
 #ifdef SHOW_JUMPAD_GUESS
 	AI_JumpadGuess_ShowPoint( nodes[nav.num_nodes].origin, "models/powerups/health/mega_sphere.md3" );
 #endif
-	//gi.dprintf("AI_AddNode_Door: %d: created door 1 node\n", nav.num_nodes);
+	gi.dprintf("AI_AddNode_Door: %d: created door 1 node\n", nav.num_nodes);
 	nav.num_nodes++;
 
 	//add node 2
-	nodes[nav.num_nodes].flags = 0;
+	//nodes[nav.num_nodes].flags = 0;
+	nodes[nav.num_nodes].flags = (NODEFLAGS_DOOR | NODEFLAGS_SERVERLINK);//GHz: for testing
 	VectorMA( door_origin, -32, right, nodes[nav.num_nodes].origin);
 	AI_DropNodeOriginToFloor( nodes[nav.num_nodes].origin, NULL );
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
@@ -401,7 +403,7 @@ int AI_AddNode_Door( edict_t *ent )
 	//add links in both directions
 	AI_AddLink( nav.num_nodes, nav.num_nodes-1, LINK_MOVE );
 	AI_AddLink( nav.num_nodes-1, nav.num_nodes, LINK_MOVE );
-	//gi.dprintf("AI_AddNode_Door: %d: created door 2 node\n", nav.num_nodes);
+	gi.dprintf("AI_AddNode_Door: %d: created door 2 node\n", nav.num_nodes);
 	nav.num_nodes++;
 	return nav.num_nodes-1;
 }
@@ -426,6 +428,9 @@ int AI_AddNode_Platform( edict_t *ent )
 	nodes[nav.num_nodes].origin[1] = (v1[1] - v2[1]) / 2 + v2[1];
 	nodes[nav.num_nodes].origin[2] = ent->maxs[2] + 8;
 
+	//gi.dprintf("%s: platform node origin: %.0f %.0f %.0f\n", __func__, nodes[nav.num_nodes].origin[0], nodes[nav.num_nodes].origin[1], nodes[nav.num_nodes].origin[2]);
+	//gi.dprintf("%s: platform actual origin: %.0f %.0f %.0f\n", __func__, ent->s.origin[0], ent->s.origin[1], ent->s.origin[2]);
+
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
 
 	//put into ents table
@@ -433,7 +438,7 @@ int AI_AddNode_Platform( edict_t *ent )
 	nav.ents[nav.num_ents].node = nav.num_nodes;
 	nav.num_ents++;
 	
-	gi.dprintf("AI_AddNode_Platform: %d: created upper node\n", nav.num_nodes);
+	//gi.dprintf("AI_AddNode_Platform: %d: created upper node\n", nav.num_nodes);
 	nav.num_nodes++;
 	
 	// Lower node
@@ -447,7 +452,7 @@ int AI_AddNode_Platform( edict_t *ent )
 	//put into ents table
 	nav.ents[nav.num_ents].ent = ent;
 	nav.ents[nav.num_ents].node = nav.num_nodes;
-	gi.dprintf("AI_AddNode_Platform: %d: created lower node\n", nav.num_nodes);
+	//gi.dprintf("AI_AddNode_Platform: %d: created lower node\n", nav.num_nodes);
 	nav.num_ents++;
 
 	// link lower to upper
@@ -479,14 +484,19 @@ int AI_AddNode_Teleporter( edict_t *ent )
 	//NODE_TELEPORTER_IN
 	nodes[nav.num_nodes].flags = (NODEFLAGS_TELEPORTER_IN|NODEFLAGS_SERVERLINK);
 	
-	VectorCopy( ent->maxs, v1 );
-	VectorCopy( ent->mins, v2 );
-	nodes[nav.num_nodes].origin[0] = (v1[0] - v2[0]) / 2 + v2[0];
-	nodes[nav.num_nodes].origin[1] = (v1[1] - v2[1]) / 2 + v2[1];
-	nodes[nav.num_nodes].origin[2] = ent->mins[2]+32;
+	//VectorCopy( ent->maxs, v1 );
+	//VectorCopy( ent->mins, v2 );
+	//nodes[nav.num_nodes].origin[0] = (v1[0] - v2[0]) / 2 + v2[0];
+	//nodes[nav.num_nodes].origin[1] = (v1[1] - v2[1]) / 2 + v2[1];
+	//nodes[nav.num_nodes].origin[2] = ent->mins[2]+32;
 
+	//GHz: the origin is/should already be 24 units above floor height
+	VectorCopy(ent->s.origin, nodes[nav.num_nodes].origin);
+	//nodes[nav.num_nodes].origin[2] += 32;
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, ent );
 	
+	//gi.dprintf("%s: teleporter node origin: %.0f %.0f %.0f\n", __func__, nodes[nav.num_nodes].origin[0], nodes[nav.num_nodes].origin[1], nodes[nav.num_nodes].origin[2]);
+	//gi.dprintf("%s: teleporter actual origin: %.0f %.0f %.0f\n", __func__, ent->s.origin[0], ent->s.origin[1], ent->s.origin[2]);
 	//gi.dprintf("AI_AddNode_Teleporter: %d: created teleporter IN node\n", nav.num_nodes);
 	nav.num_nodes++;
 	
@@ -649,7 +659,8 @@ void AI_CreateNodesForEntities ( void )
 			AI_AddNode_Platform( ent );
 		}
 		// teleporters
-		else if( !strcmp( ent->classname,"trigger_teleport" ) )
+		//else if( !strcmp( ent->classname,"trigger_teleport" ) )
+		else if (!strcmp(ent->classname, "misc_teleporter"))
 		{
 			AI_AddNode_Teleporter( ent );
 		}

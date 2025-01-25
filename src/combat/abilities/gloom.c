@@ -203,8 +203,20 @@ void organ_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *sur
 
 void organ_death_message(edict_t* self, edict_t* attacker, int max)
 {
-	int qty = self->activator->num_spikers;
-	char* organTypeString = V_GetMonsterName(self);
+	int qty;
+	if (self->mtype == M_SPIKER)
+		qty = self->activator->num_spikers;
+	else if (self->mtype == M_GASSER)
+		qty = self->activator->num_gasser;
+	else if (self->mtype == M_OBSTACLE)
+		qty = self->activator->num_obstacle;
+	else if (self->mtype == M_SPIKEBALL)
+		qty = self->activator->num_spikeball;
+
+	char buf[100];
+	buf[0] = 0;
+
+	strcat(buf, va("Your %s was killed", V_GetMonsterKind(self->mtype)));
 
 	if (attacker && attacker->inuse)
 	{
@@ -212,14 +224,18 @@ void organ_death_message(edict_t* self, edict_t* attacker, int max)
 			attacker = attacker->owner;
 
 		if (attacker->client)
-			safe_cprintf(self->activator, PRINT_HIGH, "Your %s was killed by %s (%d/%d remain)\n", organTypeString, attacker->client->pers.netname, qty, max);
+			strcat(buf, va("by %s", attacker->client->pers.netname));
 		else if (attacker->mtype)
-			safe_cprintf(self->activator, PRINT_HIGH, "Your %s was killed by a %s (%d/%d remain)\n", organTypeString, V_GetMonsterName(attacker), qty, max);
-		else
-			safe_cprintf(self->activator, PRINT_HIGH, "Your %s was killed by a %s (%d/%d remain)\n", organTypeString, attacker->classname, qty, max);
+			strcat(buf, va("by a %s", V_GetMonsterName(attacker)));
+		else if (attacker->classname)
+			strcat(buf, va("by a %s", attacker->classname));
 	}
-	else
-		safe_cprintf(self->activator, PRINT_HIGH, "Your %s was killed (%d/%d remain)\n", organTypeString, qty, max);
+
+	if (max > 1)
+		strcat(buf, va(" (%d/%d remain)", qty, max));
+		
+	safe_cprintf(self->activator, PRINT_HIGH, "%s\n", buf);
+	
 }
 
 void organ_death_cleanup(edict_t* self, edict_t* attacker, int* organCounter, int max, qboolean message)

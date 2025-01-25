@@ -223,7 +223,7 @@ qboolean AI_CheckEyes(edict_t *self, usercmd_t *ucmd)
 	trace_t traceRight;
 	trace_t traceLeft;
 
-	AI_DebugPrintf("AI_CheckEyes()\n");
+	//AI_DebugPrintf("AI_CheckEyes()\n");
 
 	// Get current angle and set up "eyes"
 	VectorCopy(self->s.angles,dir);
@@ -273,7 +273,7 @@ qboolean AI_SpecialMove(edict_t *self, usercmd_t *ucmd)
 	vec3_t	boxmins, boxmaxs, boxorigin;
 	qboolean moveattack = false;//GHz
 
-	AI_DebugPrintf("AI_SpecialMove()\n");
+	//AI_DebugPrintf("AI_SpecialMove()\n");
 
 	// Get current direction
 	if (self->ai.state == BOT_STATE_MOVEATTACK)//GHz: use move_vec instead when using MOVEATTACK state, since we're moving independent of view angles
@@ -630,15 +630,29 @@ qboolean AI_MoveToGoalEntity(edict_t *self, usercmd_t *ucmd)
 			return false;
 		}
 
+		gi.dprintf("** %s: trying to hide behind summons **\n", __func__);
 		VectorCopy(self->movetarget->s.origin, start);
 		// get vector pointing behind our summons
 		VectorSubtract(start, self->enemy->s.origin, v);
+		// ignore Z height
+		v[2] = 0;
 		// normalize it
 		VectorNormalize(v);
 		// find a point behind the summons
 		VectorMA(start, 256, v, end);
-		tr = gi.trace(start, NULL, NULL, end, self->movetarget, MASK_AISOLID);
+		tr = gi.trace(start, NULL, NULL, end, self->movetarget, MASK_SOLID);
 		VectorCopy(tr.endpos, dest);
+
+		// show BFG explosion at projectile origin
+		gi.WriteByte(svc_temp_entity);
+		gi.WriteByte(TE_BFG_EXPLOSION);
+		gi.WritePosition(dest);
+		gi.multicast(dest, MULTICAST_PVS);
+
+		// draw debug trail between the projectile origin and us
+		G_DrawDebugTrail(dest, start);
+		//G_DrawLaser(self, start, self->s.origin, 0xd0d1d2d3, 1);
+// 
 		// set movement direction toward hiding spot
 		// this places the summons safely between the bot and our enemy
 		VectorSubtract(dest, self->s.origin, self->ai.move_vector);

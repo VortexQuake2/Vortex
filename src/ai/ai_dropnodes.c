@@ -627,7 +627,10 @@ void AITools_SaveNodes( void )
 		Com_Printf("AI: No nodes to save\n");
 		return;
 	}
+
+	AI_RemoveMapNodes();//GHz
 	AI_RemoveEntNodes();//GHz
+
 	gi.dprintf("AI: %d nodes in memory before saving\n", nav.num_nodes);
 	//find links
 	newlinks = AI_LinkCloseNodes();

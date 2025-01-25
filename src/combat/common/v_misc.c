@@ -98,8 +98,8 @@ int AveragePlayerLevel(void) {
 		if (player->myskills.boss)
 			continue;
 
-		if (player->ai.is_bot) // az: heheh
-			continue;
+		//if (player->ai.is_bot) // az: heheh
+		//	continue;
 
 		players++;
 		levels += player->myskills.level;

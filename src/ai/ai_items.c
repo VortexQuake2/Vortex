@@ -31,6 +31,7 @@ in NO WAY supported by Steve Yeager.
 //==========================================
 // AI_EnemyAdded
 // Add the Player to our list
+// GHz: this should be added anywhere DroneList_Insert is used
 //==========================================
 void AI_EnemyAdded(edict_t *ent)
 {
@@ -41,6 +42,7 @@ void AI_EnemyAdded(edict_t *ent)
 //==========================================
 // AI_EnemyRemoved
 // Remove the Player from list
+// GHz: this should be added anywhere DroneList_Remove is used
 //==========================================
 void AI_EnemyRemoved(edict_t *ent)
 {

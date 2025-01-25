@@ -477,8 +477,12 @@ void AI_PickShortRangeGoal(edict_t* self)
 
 		dist = entdist(self, e);
 
+		// is this really a short-range goal?
+		if (dist > AI_RANGE_LONG)
+			continue;
+
 		// is this a weapon projectile?
-		if (AI_IsProjectile(e) && dist <= AI_RANGE_LONG)
+		if (AI_IsProjectile(e))
 		{
 			// does it have an owner that is a valid target that isn't a teammate (excluding self)?
 			if (e->owner && G_ValidTargetEnt(e->owner, true) && ((e->owner == self && e->radius_dmg) || !OnSameTeam(self, e->owner)))
@@ -497,16 +501,21 @@ void AI_PickShortRangeGoal(edict_t* self)
 		weight = 0;
 
 		// are we attacking?
-		if (self->ai.state == BOT_STATE_ATTACK)
+		if (self->ai.state == BOT_STATE_ATTACK && self->enemy && self->enemy->inuse)
 		{
-			// bots should move toward their summons in combat--ideally the one furthest away
-			if (self->myskills.class_num == CLASS_NECROMANCER && AI_IsOwnedSummons(self, e) && dist <= AI_RANGE_LONG && dist > AI_RANGE_SHORT)
+			// calculate distance between entity and our enemy
+			float enemy_dist = entdist(e, self->enemy);
+
+			// bots should move toward their summons in combat
+			if (AI_NumSummons(self) > 0 && AI_IsOwnedSummons(self, e) && dist > AI_RANGE_SHORT && visible(self, e) 
+				&& AI_ClearWalkingPath(self, self->s.origin, e->s.origin))
 			{
-				weight = 0.5 + dist / AI_RANGE_LONG;
+				// assign higher weight to the summons that places us farthest from danger
+				weight = 0.5 + enemy_dist / AI_RANGE_LONG;
 				//gi.dprintf("found summons that we own, weight: %.1f\n", weight);
 			}
 			// don't move towards items that place us outside of (usable) weapon range
-			else if (AI_GetWeaponRangeWeightByDistance(weapon, dist) <= 0.1)
+			else if (AI_GetWeaponRangeWeightByDistance(weapon, enemy_dist) <= 0.1)
 				in_weapon_range = false;
 		}
 
@@ -539,7 +548,7 @@ void AI_PickShortRangeGoal(edict_t* self)
 		self->goalentity = best;
 		if (AIDevel.debugChased && bot_showsrgoal->value)
 			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: selected a %s for SR goal.\n", self->ai.pers.netname, self->movetarget->classname);
-		//gi.dprintf("%d: AI_PickShortRangeGoal: selected % s for SR goal\n", (int)level.framenum, self->movetarget->classname);
+		//gi.dprintf("%d: %s: selected %s for SR goal\n", (int)level.framenum, self->ai.pers.netname, self->movetarget->classname);
 
 	}
 }

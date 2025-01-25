@@ -52,6 +52,7 @@ in NO WAY supported by Steve Yeager.
 #define NODEFLAGS_SERVERLINK		0x00000004	//plats, doors, teles. Only server can link 2 nodes with this flag
 #define	NODEFLAGS_FLOAT				0x00000008	//don't drop node to floor ( air & water )
 //#define	NODEFLAGS_ITEM			0x00000010	//jal remove me
+#define	NODEFLAGS_DOOR				0x00000010	//GHz: for testing
 #define	NODEFLAGS_BOTROAM			0x00000020
 #define NODEFLAGS_JUMPPAD			0x00000040	// jalfixme: add NODEFLAGS_REACHATTOUCH
 #define NODEFLAGS_JUMPPAD_LAND		0x00000080
