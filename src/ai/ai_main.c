@@ -32,6 +32,7 @@ void AI_Init(void)
 {
 	bot_enable = gi.cvar("bot_enable", "0", CVAR_SERVERINFO|CVAR_LATCH);//GHz
 	bot_dropnodes = gi.cvar("bot_dropnodes", "0", CVAR_SERVERINFO);//GHz
+	bot_autospawn = gi.cvar("bot_autospawn", "0", CVAR_SERVERINFO|CVAR_LATCH);//GHz
 	//Init developer mode
 	bot_showpath = gi.cvar("bot_showpath", "0", CVAR_SERVERINFO);
 	bot_showcombat = gi.cvar("bot_showcombat", "0", CVAR_SERVERINFO);
@@ -46,6 +47,7 @@ void AI_Init(void)
 	AIDevel.plinkguy = NULL;
 }
 
+void BOT_AutoSpawn(void);
 //==========================================
 // AI_NewMap
 // Inits Map local parameters
@@ -61,6 +63,7 @@ void AI_NewMap(void)
 	AI_InitNavigationData();
 	AI_InitAIWeapons();
 	AI_InitAIAbilities();//GHz
+	BOT_AutoSpawn();//GHz
 }
 
 qboolean AI_SetupMoveAttack(edict_t* self)
@@ -285,6 +288,8 @@ qboolean AI_BotRoamForLRGoal(edict_t *self, int current_node)
 #define IT_TECH			64
 //ZOID
 
+qboolean BOT_DMclass_FindSummons(edict_t* self, qboolean moveattack, usercmd_t* ucmd);
+
 //==========================================
 // AI_PickLongRangeGoal
 //
@@ -326,6 +331,62 @@ void AI_PickLongRangeGoal(edict_t *self)
 		return;
 	}
 	self->ai.nearest_node_tries = 0;
+	/*
+	// do we have an enemy? are we a summoner?
+	float farthest_dist = 0;
+	if (self->enemy && self->enemy->inuse && AI_NumSummons(self) > 0)
+	{
+		edict_t* farthest_ent = NULL;
+		// find a summons that places us farthest away from danger
+		float farthest_dist = entdist(self, self->enemy);
+		for (edict_t *e = g_edicts; e < &g_edicts[globals.num_edicts]; e++)
+		{
+			// sanity checks
+			if (!e->inuse)
+				continue;
+			if (e->solid == SOLID_NOT)
+				continue;
+			if (!e->classname)
+				continue;
+			// is this a summoned entity that the bot owns?
+			if (!AI_IsOwnedSummons(self, e))
+				continue;
+			// not a long-range goal
+			if (visible(self, e) && entdist(self, e) < AI_RANGE_LONG)
+				continue;
+
+			// if the summons has an enemy, calculate distance to its enemy
+			if (e->enemy && e->enemy->inuse)
+				dist = entdist(e->enemy, e);
+			// otherwise, calculate distance between it and our enemy
+			else
+				dist = entdist(self->enemy, e);
+			// would moving closer to our summons place us further away from danger?
+			if (dist > farthest_dist)
+			{
+				best_weight = 0.5 + (dist / AI_RANGE_LONG);
+				//goal_ent = e;
+				farthest_dist = dist;
+				farthest_ent = e;
+			}
+		}
+		// found a summons further away from the enemy?
+		if (farthest_ent)
+		{
+			// is there a node nearby to pathfind to?
+			if ((goal_node = AI_FindClosestReachableNode(farthest_ent->s.origin, farthest_ent, NODE_DENSITY, NODE_ALL)) != -1)
+			{
+				// this summons is our goal entity
+				goal_ent = farthest_ent;
+			}
+			else
+			{
+				// no nearby node, so clear goal entity & weight
+				best_weight = 0;
+				goal_ent = NULL;
+			}
+		}
+	}*/
 
 	// Items
 	for(i=0;i<nav.num_items;i++)
@@ -431,7 +492,13 @@ void AI_PickLongRangeGoal(edict_t *self)
 
 	if(goal_ent != NULL && AIDevel.debugChased && bot_showlrgoal->value)
 		safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: selected %s (wt %f) @ node %d for LR goal.\n",self->ai.pers.netname, goal_ent->classname, best_weight, goal_node);
-
+	/*if (goal_ent)
+	{
+		if (AI_IsOwnedSummons(self, goal_ent))
+			gi.dprintf("** %d: %s: selected SUMMONS (%s) (wt %f) @ node %d for LR goal.**\n", (int)level.framenum, self->ai.pers.netname, goal_ent->classname, best_weight, goal_node);
+		else
+			gi.dprintf("%d: %s: selected %s (wt %f) @ node %d for LR goal.\n", (int)level.framenum, self->ai.pers.netname, goal_ent->classname, best_weight, goal_node);
+	}*/
 	AI_SetGoal(self,goal_node, true);
 	self->goalentity = goal_ent;//GHz: used in AI_PickShortRangeGoal to prevent overriding LR goal pathfinding/movement
 }

@@ -34,18 +34,109 @@ qboolean BOT_Commands(edict_t *ent)
 	return false;
 }
 
+typedef struct {
+	char* name;
+	char* class;
+} bot_selection_t;
+
+bot_selection_t botlist[] = {
+	{"robotico", "soldier"},
+	{"faildozer", "soldier"},
+	{"T-800", "soldier"},
+	{"terminator", "soldier"},
+	{"jailbroken", "mage"},
+	{"Yandexter", "mage"},
+	{"Taybot", "mage"},
+	{"twitbot", "mage"},
+	{"Bender", "knight"},
+	{"reject", "knight"},
+	{"junkbot", "knight"},
+	{"R2-D2", "knight"},
+	{"Optimus Prime", "knight"},
+	{"WALL-E", "vampire"},
+	{"Johnny 5", "vampire"},
+	{"C-3PO", "vampire"},
+	{"Roboflop", "vampire"},
+	{"ED-209", "necromancer"},
+	{"HAL 9000", "necromancer"},
+	{"Roomba", "necromancer"},
+	{"Eufy", "necromancer"}
+};
+
+#define LIST_SIZE (sizeof(botlist) / sizeof(botlist[0]))
+
+int selected_indices[LIST_SIZE];  // Track used indices
+int remaining = LIST_SIZE;        // Counter for remaining unique selections
+
+bot_selection_t get_random_unique_entry() {
+	if (remaining == 0) {
+		// Reset selection tracking
+		remaining = LIST_SIZE;
+	}
+
+	int index;
+	int unique = 0;
+
+	// Find an unused index
+	while (!unique) {
+		index = rand() % LIST_SIZE;
+		unique = 1;
+		for (int i = 0; i < (LIST_SIZE - remaining); i++) {
+			if (selected_indices[i] == index) {
+				unique = 0;
+				break;
+			}
+		}
+	}
+
+	// Store the used index
+	selected_indices[LIST_SIZE - remaining] = index;
+	remaining--;
+
+	return botlist[index];
+}
+
 char *bot_names[] = 
 		{
-			"BOTty",
-			"BOTon",
-			"BOTeo",
-			"BOTas",
-			"BOTes",
-			"BOTarengo",
-			"BOTalocado",
-			"BOTeonado"
+			"robotico",
+			"faildozer",
+			"terminator",
+			"jailbroken",
+			"Yandexter",
+			"Taybot",
+			"twitbot",
+			"Bender",
+			"reject",
+			"junkbot",
+			"R2-D2",
+			"Optimus Prime",
+			"WALL-E",
+			"Johnny 5",
+			"C-3PO",
+			"Roboflop",
+			"ED-209",
+			"HAL 9000"
 		};
 
+void BOT_AutoSpawn(void)
+{
+	int num_bots = bot_autospawn->value;
+	char* name;
+	if (!nav.loaded)
+		return;
+	if (num_bots < 1)
+		return;
+	// game modes currently unsupported
+	if (ctf->value || domination->value || tbi->value || hw->value)
+		return;
+	for (int i = 0; i < num_bots; i++)
+	{
+		bot_selection_t e = get_random_unique_entry();
+		//name = bot_names[GetRandom(0, sizeof(bot_names - 1))];
+		name = e.name;
+		BOT_SpawnBot(NULL, name, NULL, NULL, e.class);
+	}
+}
 
 //==========================================
 // BOT_ServerCommand
@@ -53,7 +144,7 @@ char *bot_names[] =
 //==========================================
 qboolean BOT_ServerCommand (void)
 {
-	char	*cmd, *name;
+	char	*cmd, *name=NULL;
 
 	cmd = gi.argv (1);
 
@@ -61,12 +152,20 @@ qboolean BOT_ServerCommand (void)
 		return false;
 	//return false; // az: unused...
 
-	if (!ctf->value)
-		name = gi.argv(2);
-
-	if (strlen(name) < 5)
+	if (ctf->value)
 	{
-		name = bot_names[GetRandom(0, sizeof bot_names - 1)];
+		if (gi.argc() > 3)
+			name = gi.argv(3);
+	}
+	else
+	{
+		if (gi.argc() > 2)
+			name = gi.argv(2);
+	}
+
+	if (!name || strlen(name) < 5)
+	{
+		name = bot_names[GetRandom(0, sizeof(bot_names - 1))];
 	}
 
 	if( !Q_stricmp (cmd, "addbot") )

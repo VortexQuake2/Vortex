@@ -380,7 +380,7 @@ void PTRCheckJoinedQue (void)
 	// check every second
 	if (!(level.framenum% (int)(1 / FRAMETIME)))
 	{
-		if (vrx_get_joined_players() < 1)
+		if (vrx_get_joined_players(true) < 1)
 			return;
 		if (NumInJoinedQue() < 1)
 			return;

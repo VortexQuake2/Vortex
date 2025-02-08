@@ -77,6 +77,7 @@ void V_PickUpEntity(edict_t* ent);
 qboolean vrx_toggle_pickup(edict_t* ent, int mtype, float dist);
 void vrx_set_pickup_owner(edict_t* self);
 void vrx_clear_pickup_ent(gclient_t* player, edict_t* other);
+void vrx_stun(edict_t* self, edict_t* other, float time);
 //************ g_misc.c ************
 
 //************ g_utils.c ************
@@ -235,7 +236,7 @@ void vrx_change_class(char *playername, int newclass, int msgtype);
 char *GetTalentString(int talent_ID);
 char *V_TruncateString(char *string, int newStringLength);
 
-int vrx_get_joined_players();
+int vrx_get_joined_players(qboolean include_bots);
 //*********** v_utils.c ***********
 
 //*********** v_client.c **********

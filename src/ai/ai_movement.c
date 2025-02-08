@@ -630,7 +630,7 @@ qboolean AI_MoveToGoalEntity(edict_t *self, usercmd_t *ucmd)
 			return false;
 		}
 
-		gi.dprintf("** %s: trying to hide behind summons **\n", __func__);
+		//gi.dprintf("** %s: trying to hide behind summons **\n", __func__);
 		VectorCopy(self->movetarget->s.origin, start);
 		// get vector pointing behind our summons
 		VectorSubtract(start, self->enemy->s.origin, v);

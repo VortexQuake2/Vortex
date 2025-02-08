@@ -239,7 +239,7 @@ void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 		gi.dprintf("Invalid map index (%d) defaulting to current map.\n", mapindex);
 		strcpy(level.nextmap, level.mapname);
 	}
-	if (vrx_get_joined_players() == 0)
+	if (vrx_get_joined_players(false) == 0)
 		ExitLevel();
 }
 
@@ -284,7 +284,7 @@ void AddVote(edict_t *ent, int mode, int mapnum)
 	
   
 	//check for valid choice
-	int players = vrx_get_joined_players();
+	int players = vrx_get_joined_players(false);
 	if (mode && (maplist->nummaps > mapnum))
 	{
 		if (maplist->maps[mapnum].min_players > players)
@@ -355,7 +355,7 @@ void AddVote(edict_t *ent, int mode, int mapnum)
 
 int V_VoteDone ()
 {
-	int players = vrx_get_joined_players();
+	int players = vrx_get_joined_players(false);
 
 	if (players < 1)
 		return 0;
@@ -698,7 +698,7 @@ void ShowVoteModeMenu(edict_t *ent)
 	menu_add_line(ent, " ", 0);
 
 //GHz START
-	players = vrx_get_joined_players();
+	players = vrx_get_joined_players(false);
 	// pvm and invasion are only available when there are few players on the server
 #ifdef FORCE_PVP_WITH_A_LOT_OF_PLAYERS
 	if (0.33 * maxclients->value < 4)

@@ -8,7 +8,7 @@ qboolean vrx_is_newbie_basher(const edict_t *player) {
 	qboolean levelAboveAverage = player->myskills.level > newbie_protection->value * AveragePlayerLevel();
 	qboolean isHighLevel = player->myskills.level >= 8;
 	qboolean isNotPVM = !(pvm->value != 0 || invasion->value != 0);
-	qboolean situationRequestsProtection = newbie_protection->value && player->client && (vrx_get_joined_players() > 1);
+	qboolean situationRequestsProtection = newbie_protection->value && player->client && (vrx_get_joined_players(true) > 1);
 	qboolean levelQualifies = isHighLevel && levelAboveAverage;
 
 	return (situationRequestsProtection && isNotPVM && levelQualifies);
@@ -87,12 +87,12 @@ int vrx_get_login_status(edict_t *ent)
 		return -5;	//playing too much
 	
 	
-	if (!invasion->value || !pvm->value || (ffa->value && vrx_get_joined_players() > 1))
+	if (!invasion->value || !pvm->value || (ffa->value && vrx_get_joined_players(false) > 1))
 		if (newbie_protection->value && vrx_is_newbie_basher(ent))
 			return -6;	//newbie basher can't play on non pvm modes
 	
 	
-	if (ent->myskills.boss && vrx_get_joined_players() < (0.5*maxclients->value)
+	if (ent->myskills.boss && vrx_get_joined_players(false) < (0.5*maxclients->value)
         && !trading->value && (!pvm->value || !invasion->value) && vrx_is_newbie_basher(ent)) // trading, pvm or invasion modes means the boss actually can play.
 		return -7; //boss can't play
 

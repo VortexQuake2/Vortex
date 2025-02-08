@@ -377,10 +377,11 @@ void BOT_DMclass_UseBlinkStrike(edict_t* self)
 	int cost = BLINKSTRIKE_INITIAL_COST + BLINKSTRIKE_ADDON_COST * self->myskills.abilities[BLINKSTRIKE].current_level;
 	if (BLINKSTRIKE_MIN_COST && cost < BLINKSTRIKE_MIN_COST)
 		cost = BLINKSTRIKE_MIN_COST;
-
+	
 	// can't use blinkstrike
-	if (!V_CanUseAbilities(self, BLINKSTRIKE, cost, false))
-		return;
+	//if (!V_CanUseAbilities(self, BLINKSTRIKE, cost, false))
+	//	return;
+	//gi.dprintf("%s: %s\n", self->ai.pers.netname, __func__);
 	// range check
 	float dist = entdist(self, self->enemy);
 	if (dist > AI_RANGE_SNIPER || dist < AI_RANGE_SHORT)
@@ -391,6 +392,7 @@ void BOT_DMclass_UseBlinkStrike(edict_t* self)
 	// bot should be attacking and using CombatMovement
 	if (self->ai.state != BOT_STATE_ATTACK)
 		return;
+	//gi.dprintf("%s attempted to call %s\n", self->ai.pers.netname, __func__);
 	Cmd_BlinkStrike_f(self);
 }
 

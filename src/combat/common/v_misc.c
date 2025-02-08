@@ -1,7 +1,7 @@
 #include "g_local.h"
 #include <gamemodes/invasion.h>
 
-int vrx_get_joined_players() {
+int vrx_get_joined_players(qboolean include_bots) {
 	edict_t* player;
 	int i, clients = 0;
 
@@ -12,8 +12,8 @@ int vrx_get_joined_players() {
 			continue;
 		if (G_IsSpectator(player))
 			continue;
-		//if (player->ai.is_bot)
-		//	continue;
+		if (!include_bots && player->ai.is_bot)
+			continue;
 
 		clients++;
 	}
@@ -263,7 +263,7 @@ void vrx_pvm_try_spawn_boss(edict_t* self, int players)
 
 //qboolean SpawnWorldMonster(edict_t *ent, int mtype);
 void vrx_pvm_spawn_world_monsters(edict_t* self) {
-	int players = vrx_get_joined_players();
+	int players = vrx_get_joined_players(true);
 	total_monsters = vrx_pvm_update_total_owned_monsters(self, false);
 
 	// dm_monsters cvar sets the default number of monsters in a given map
@@ -991,7 +991,31 @@ qboolean vrx_toggle_pickup(edict_t* ent, int mtype, float dist)
 		// clear pickup_prev if we've picked up the same entity we previously dropped
 		if (ent->client->pickup_prev && ent->client->pickup_prev->inuse && ent->client->pickup_prev == e)
 			ent->client->pickup_prev = NULL;
+		//gi.dprintf("found pickup\n");
 		return true;
 	}
 	return false; // nothing to drop, nothing to pick up either
+}
+
+void vrx_stun(edict_t* self, edict_t* other, float time)
+{
+	// force monsters into idle mode
+	if (!strcmp(other->classname, "drone"))
+	{
+		// bosses can't be stunned easily
+		if (other->monsterinfo.control_cost >= M_COMMANDER_CONTROL_COST || other->monsterinfo.bonus_flags & BF_UNIQUE_FIRE
+			|| other->monsterinfo.bonus_flags & BF_UNIQUE_LIGHTNING)
+			time *= 0.2;
+
+		other->empeffect_time = level.time + time;
+		other->empeffect_owner = self->owner;
+		other->monsterinfo.pausetime = level.time + time;
+		other->monsterinfo.stand(other);
+	}
+	// stun anything else
+	else
+	{
+		other->empeffect_time = level.time + time;
+		other->holdtime = level.time + time;
+	}
 }

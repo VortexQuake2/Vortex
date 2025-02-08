@@ -837,7 +837,7 @@ qboolean BOT_DMclass_FindSummons(edict_t* self, qboolean moveattack, usercmd_t* 
 		// continue to fight the enemy while moving toward our summons
 		self->ai.state = BOT_STATE_MOVEATTACK;
 		self->ai.evade_delay = level.time + 15.0;// don't try to evade again for awhile
-		gi.dprintf("** %s: bot is evading toward summons! **\n", __func__);
+		//gi.dprintf("%d: ** %s: bot is evading toward summons! **\n", (int)level.framenum, __func__);
 	}
 	else
 	{
@@ -1665,12 +1665,25 @@ void BOT_DMclass_WeightPlayers(edict_t *self)
 		}
 		else
 		{
-			// GHz: chase enemies!
-			if (self->enemy && self->enemy->inuse && AIEnemies[i] == self->enemy)
-				self->ai.status.playersWeights[i] = 0.9;
+			// summoners prefer to hang around their own summons or allies for safety
+			if (AI_NumSummons(self) > 0)
+			{
+				if (AI_IsOwnedSummons(self, AIEnemies[i]))
+					self->ai.status.playersWeights[i] = 0.4;
+				else if (IsAlly(self, AIEnemies[i]))
+					self->ai.status.playersWeights[i] = 0.3;
+				else
+					self->ai.status.playersWeights[i] = 0.2;
+			}
 			else
-				//if not at ctf every player has some value
-				self->ai.status.playersWeights[i] = 0.3;
+			{
+				// GHz: chase enemies!
+				if (self->enemy && self->enemy->inuse && AIEnemies[i] == self->enemy)
+					self->ai.status.playersWeights[i] = 0.9;
+				else
+					//if not at ctf every player has some value
+					self->ai.status.playersWeights[i] = 0.3;
+			}
 		}
 	
 	}
@@ -2186,6 +2199,21 @@ void BOT_DMclass_Pain(edict_t* self, edict_t* other, float kick, int damage)
 		return;
 
 	self->enemy = other;
+
+	if (self->health < (0.4 * self->max_health) && level.time > self->pain_debounce_time)
+	{
+		float r = random();
+		if (r < 0.33)
+			gi.sound(self, CHAN_VOICE, gi.soundindex("speech/yell/saveme1.wav"), 1, ATTN_NORM, 0);
+		else if (r < 0.66)
+			gi.sound(self, CHAN_VOICE, gi.soundindex("speech/yell/saveme1.wav"), 1, ATTN_NORM, 0);
+		else
+			gi.sound(self, CHAN_VOICE, gi.soundindex("speech/call911.wav"), 1, ATTN_NORM, 0);
+		gi.WriteByte(svc_temp_entity);
+		gi.WriteByte(TE_TELEPORT_EFFECT);
+		gi.WritePosition(self->s.origin);
+		gi.multicast(self->s.origin, MULTICAST_PVS);
+	}
 
 	if (AIDevel.debugChased && bot_showcombat->value)
 	{

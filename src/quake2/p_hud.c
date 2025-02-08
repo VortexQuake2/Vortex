@@ -56,7 +56,7 @@ void MoveClientToIntermission(edict_t *ent)
 
 	// add the layout
 
-	if (deathmatch->value && !(ent->svflags & SVF_MONSTER))
+	if (deathmatch->value && !(ent->svflags & SVF_MONSTER) && !ent->ai.is_bot)
 	{
 		DeathmatchScoreboardMessage(ent, NULL);
 		gi.unicast(ent, true);
@@ -277,7 +277,7 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 			(time_left / 60),
 			(time_left - (time_left / 60) * 60),
 			frag_left,
-			vrx_get_joined_players()
+			vrx_get_joined_players(true)
 		);
 	}
 	else if (invasion->value)
@@ -286,7 +286,7 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 			(time_left / 60),
 			(time_left - (time_left / 60) * 60),
 			invasion_difficulty_level,
-			vrx_get_joined_players()
+			vrx_get_joined_players(true)
 		);
 	}
 	else
@@ -295,7 +295,7 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 			(time_left / 60),
 			(time_left - (time_left / 60) * 60),
 			frag_left,
-			vrx_get_joined_players()
+			vrx_get_joined_players(true)
 		);
 	}
 

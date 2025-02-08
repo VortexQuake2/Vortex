@@ -58,7 +58,7 @@ qboolean vrx_attach_wall (edict_t* ent, edict_t* other, cplane_t* plane)
 	vec3_t angles;
 	float pitch, save;
 
-	if (ent->mtype != M_GASSER)
+	if (ent->mtype != M_GASSER && ent->mtype != M_HEALER)
 		return false; // not an entity that can be attached to the wall
 	if (ent->groundentity)
 	{
@@ -112,7 +112,7 @@ qboolean vrx_attach_ceiling(edict_t* ent, edict_t *other, cplane_t *plane)
 	vec3_t angles;
 	float pitch, save;
 
-	if (ent->mtype != M_SPIKER)
+	if (ent->mtype != M_SPIKER && ent->mtype != M_OBSTACLE && ent->mtype != M_HEALER)
 		return false; // not an entity that can be attached to the ceiling
 	if (ent->groundentity)
 	{
@@ -224,11 +224,11 @@ void organ_death_message(edict_t* self, edict_t* attacker, int max)
 			attacker = attacker->owner;
 
 		if (attacker->client)
-			strcat(buf, va("by %s", attacker->client->pers.netname));
+			strcat(buf, va(" by %s", attacker->client->pers.netname));
 		else if (attacker->mtype)
-			strcat(buf, va("by a %s", V_GetMonsterName(attacker)));
+			strcat(buf, va(" by a %s", V_GetMonsterName(attacker)));
 		else if (attacker->classname)
-			strcat(buf, va("by a %s", attacker->classname));
+			strcat(buf, va(" by a %s", attacker->classname));
 	}
 
 	if (max > 1)
@@ -355,6 +355,7 @@ void organ_removeall (edict_t *ent, char *classname, qboolean refund)
 }
 
 //Talent: Exploding Bodies
+/*
 qboolean organ_explode (edict_t *self)
 {
     int damage, radius, talentLevel = vrx_get_talent_level(self->activator, TALENT_EXPLODING_BODIES);
@@ -370,7 +371,7 @@ qboolean organ_explode (edict_t *self)
 
     gi.sound(self, CHAN_VOICE, gi.soundindex(va("abilities/corpse_explode%d.wav", GetRandom(1, 6))), 1, ATTN_NORM, 0);
 	return true;
-}
+}*/
 
 #define HEALER_FRAMES_GROW_START	0
 #define HEALER_FRAMES_GROW_END		15
@@ -534,6 +535,8 @@ void healer_think (edict_t *self)
 		return;
 	}
 
+	vrx_set_pickup_owner(self); // sets owner when this entity is picked up, making it non-solid to the player
+
 	// if position has been updated, check for ground entity
 	if (self->linkcount != self->monsterinfo.linkcount)
 	{
@@ -562,6 +565,8 @@ void healer_think (edict_t *self)
 
 void healer_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
+	//vrx_attach_wall(ent, other, plane);
+	vrx_attach_ceiling(ent, other, plane);
 	V_Touch(ent, other, plane, surf);
 	healer_heal(ent, other);	
 }
@@ -573,6 +578,8 @@ void healer_grow (edict_t *self)
 		organ_remove(self, false);
 		return;
 	}
+
+	vrx_set_pickup_owner(self); // sets owner when this entity is picked up, making it non-solid to the player
 
 	// if position has been updated, check for ground entity
 	if (self->linkcount != self->monsterinfo.linkcount)
@@ -641,7 +648,7 @@ void healer_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 			safe_cprintf(self->activator, PRINT_HIGH, "Your healer was killed by a %s\n", attacker->classname);
 	}
 
-	if (self->health <= self->gib_health || organ_explode(self))
+	if (self->health <= self->gib_health /* || organ_explode(self)*/)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
 		for (n= 0; n < 2; n++)
@@ -678,6 +685,7 @@ edict_t *CreateHealer (edict_t *ent, int skill_level)
 	e->s.renderfx |= RF_IR_VISIBLE;
 	e->solid = SOLID_BBOX;
 	e->movetype = MOVETYPE_STEP;//MOVETYPE_TOSS;
+	e->svflags |= SVF_MONSTER;
 	e->clipmask = MASK_MONSTERSOLID;
 	e->mass = 500;
 	e->classname = "healer";
@@ -702,6 +710,9 @@ void Cmd_Healer_f (edict_t *ent)
 	edict_t *healer;
 	vec3_t	start;
 
+	if (vrx_toggle_pickup(ent, M_HEALER, 150)) // search for entity to pick up, or drop the one we're holding
+		return;
+
 	if (ent->healer && ent->healer->inuse)
 	{
 		organ_remove(ent->healer, true);
@@ -724,7 +735,11 @@ void Cmd_Healer_f (edict_t *ent)
 	healer->s.angles[PITCH] = 0;
 
 	if (ent->client)
+	{
 		layout_add_tracked_entity(&ent->client->layout, healer);
+		// pick it up!
+		ent->client->pickup = healer;
+	}
 
 	gi.linkentity(healer);
 	healer->monsterinfo.cost = HEALER_COST;
@@ -768,7 +783,7 @@ void spiker_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 		organ_death_cleanup(self, attacker, &self->activator->num_spikers, SPIKER_MAX_COUNT, true);
 	}
 
-	if (self->health <= self->gib_health || organ_explode(self))
+	if (self->health <= self->gib_health /* || organ_explode(self)*/)
 	{
 		int n;
 
@@ -1163,7 +1178,7 @@ void obstacle_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 			safe_cprintf(self->activator, PRINT_HIGH, "Your obstacle was killed by a %s (%d/%d remain)\n", attacker->classname, cur, max);
 	}
 
-	if (self->health <= self->gib_health || organ_explode(self))
+	if (self->health <= self->gib_health /* || organ_explode(self)*/)
 	{
 		int n;
 
@@ -1300,10 +1315,22 @@ qboolean obstacle_attack_clear(edict_t* self, edict_t* target)
 	return true;
 }
 
+qboolean magmine_findtarget(edict_t* self, float range, int pull);
+void magmine_throwsparks(edict_t* self);
+
 void obstacle_attack(edict_t* self)
 {
 	vec3_t end;
 	trace_t	tr;
+
+	if (self->light_level > 0)
+	{
+		if (magmine_findtarget(self, self->monsterinfo.sight_range, self->count))
+		{
+			magmine_throwsparks(self);
+			self->monsterinfo.idle_frames = 0;
+		}
+	}
 
 	// must be flipped
 	if (self->s.angles[PITCH] != 180)
@@ -1363,6 +1390,7 @@ void obstacle_think (edict_t *self)
 	if (!organ_checkowner(self))
 		return;
 
+	vrx_set_pickup_owner(self); // sets owner when this entity is picked up, making it non-solid to the player
 	organ_restoreMoveType(self); // needed to restore movetype from MOVETYPE_NONE to MOVETYPE_STEP after being pushed!
 	obstacle_cloak(self);
 	obstacle_attack(self);
@@ -1386,6 +1414,8 @@ void obstacle_grow (edict_t *self)
 		return;
 	//gi.dprintf("movetype: %d pitch: %.0f\n", self->movetype, self->s.angles[PITCH]);
 	//organ_restoreMoveType(self);
+
+	vrx_set_pickup_owner(self); // sets owner when this entity is picked up, making it non-solid to the player
 
 	V_HealthCache(self, (int)(0.2 * self->max_health), 1);
 
@@ -1424,7 +1454,7 @@ void obstacle_grow (edict_t *self)
 		G_RunFrames(self, OBSTACLE_FRAMES_GROW_START, OBSTACLE_FRAMES_GROW_END, false);
 }
 
-edict_t *CreateObstacle (edict_t *ent, int skill_level)
+edict_t *CreateObstacle (edict_t *ent, int skill_level, int talent_level)
 {
 	edict_t *e;
 
@@ -1447,6 +1477,13 @@ edict_t *CreateObstacle (edict_t *ent, int skill_level)
 	e->dmg = OBSTACLE_INITIAL_DAMAGE + OBSTACLE_ADDON_DAMAGE * skill_level;
 	e->monsterinfo.nextattack = 100;// -9 * vrx_get_talent_level(ent, TALENT_PHANTOM_OBSTACLE);
 	e->monsterinfo.level = skill_level;
+	if (talent_level)
+	{
+		e->light_level = talent_level; // Talent: Magnetism
+		e->monsterinfo.sight_range = (0.2 * MAGMINE_RANGE) * talent_level; // range
+		e->count = MAGMINE_DEFAULT_PULL + (2 * MAGMINE_ADDON_PULL * talent_level); // pull
+		//gi.dprintf("magnetism: level: %d range: %.0f pull: %d\n", e->light_level, e->monsterinfo.sight_range, e->style);
+	}
 	e->gib_health = -2 * BASE_GIB_HEALTH;
 	e->die = obstacle_die;
 	e->touch = organ_touch;
@@ -1473,6 +1510,9 @@ void Cmd_Obstacle_f (edict_t *ent)
 		return;
 	}
 
+	if (vrx_toggle_pickup(ent, M_OBSTACLE, 128)) // search for entity to pick up, or drop the one we're holding
+		return;
+
 	if (ctf->value && (CTF_DistanceFromBase(ent, NULL, CTF_GetEnemyTeam(ent->teamnum)) < CTF_BASE_DEFEND_RANGE))
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Can't build in enemy base!\n");
@@ -1493,7 +1533,7 @@ void Cmd_Obstacle_f (edict_t *ent)
 		return;
 	}
 
-	obstacle = CreateObstacle(ent, ent->myskills.abilities[OBSTACLE].current_level);
+	obstacle = CreateObstacle(ent, ent->myskills.abilities[OBSTACLE].current_level, vrx_get_talent_level(ent, TALENT_MAGNETISM));
 	if (!G_GetSpawnLocation(ent, 100, obstacle->mins, obstacle->maxs, start, angles, PROJECT_HITBOX_FAR, false))
 	{
 		ent->num_obstacle--;
@@ -1529,7 +1569,11 @@ void Cmd_Obstacle_f (edict_t *ent)
 	VectorCopy(start, obstacle->s.origin);
 
 	if (ent->client)
+	{
 		layout_add_tracked_entity(&ent->client->layout, obstacle);
+		// pick it up!
+		ent->client->pickup = obstacle;
+	}
 
 	gi.linkentity(obstacle);
 	obstacle->monsterinfo.cost = cost;
@@ -2224,7 +2268,7 @@ void gasser_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 		organ_death_cleanup(self, attacker, &self->activator->num_gasser, GASSER_MAX_COUNT, true);
 	}
 
-	if (self->health <= self->gib_health || organ_explode(self))
+	if (self->health <= self->gib_health /* || organ_explode(self)*/)
 	{
 		int n;
 
@@ -2429,7 +2473,7 @@ void cocoon_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 		}
 	}
 
-	if (self->health <= self->gib_health || organ_explode(self))
+	if (self->health <= self->gib_health /* || organ_explode(self)*/)
 	{
 		int n;
 

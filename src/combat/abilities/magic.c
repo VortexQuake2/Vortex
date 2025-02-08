@@ -1029,7 +1029,9 @@ void TeleportBehindTarget(edict_t* self, edict_t* target, float dist)
 		self->s.angles[YAW] = forward[YAW];
 
 		// set view angles to target
-		if (self->client)
+		if (self->ai.is_bot)
+			VectorCopy(forward, self->client->v_angle);
+		else if (self->client)
 		{
 			for (i = 0; i < 3; i++)
 				self->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(forward[i] - self->client->resp.cmd_angles[i]);

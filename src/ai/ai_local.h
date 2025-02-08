@@ -30,8 +30,9 @@ in NO WAY supported by Steve Yeager.
 #include "ai_weapons.h"
 //#include "AStar.h" //jabot092
 
-extern cvar_t				*bot_enable;//GHz
-extern cvar_t				*bot_dropnodes;//GHz
+extern cvar_t				*bot_enable;//GHz: set to 1 to enable bots
+extern cvar_t				*bot_dropnodes;//GHz: set to 1 to allow players to automatically drop nodes in the map used for bot navigation
+extern cvar_t				*bot_autospawn;//GHz: set to number of bots that will automatically spawn at the beginning of each map
 //bot debug_chase options
 extern  cvar_t				*bot_showpath;
 extern  cvar_t				*bot_showcombat;

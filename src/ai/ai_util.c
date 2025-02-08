@@ -341,6 +341,10 @@ qboolean AI_ClearWalkingPath(edict_t* self, vec3_t start, vec3_t end)
 	vec3_t path_start, path_end, tr_start, tr_end, tr_pos, dir;
 	trace_t tr;
 
+	// did the bot fall out of the map or are we using noclip?!
+	if (self->solid == SOLID_NOT)
+		return true;
+
 	// find our standing position off of the floor at start
 	VectorCopy(start, tr_start);
 	tr_start[2] -= 8192;

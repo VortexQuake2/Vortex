@@ -614,7 +614,7 @@ void CTF_AwardPlayer (edict_t *ent, int points, int credits)
 	if (G_IsSpectator(ent))
 		return;
 
-	if (vrx_get_joined_players() < CTF_MINIMUM_PLAYERS)
+	if (vrx_get_joined_players(true) < CTF_MINIMUM_PLAYERS)
 		return;
 
    	vrx_add_credits(ent, credits);
@@ -910,7 +910,7 @@ void CTF_AwardFrag (edict_t *attacker, edict_t *target)
 	int		enemy_teamnum;
 	edict_t* team_fc, * enemy_fc, * team_base, * enemy_base;//, * team_spawn, * enemy_spawn;
 
-	if (vrx_get_joined_players() < CTF_MINIMUM_PLAYERS)
+	if (vrx_get_joined_players(true) < CTF_MINIMUM_PLAYERS)
 		return;
 
 	edict_t* attacker_cl = G_GetClient(attacker);
@@ -1029,7 +1029,7 @@ void CTF_AwardFlagCapture (edict_t *carrier, int teamnum)
 	edict_t	*cl_ent;
 	qboolean uneventeams=false;
 
-	if (vrx_get_joined_players() < CTF_MINIMUM_PLAYERS)
+	if (vrx_get_joined_players(true) < CTF_MINIMUM_PLAYERS)
 		return;
 
 	if (teamnum == RED_TEAM)

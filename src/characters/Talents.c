@@ -38,7 +38,7 @@ const talentdef_t talents_alien[] = {
         {TALENT_SUPER_HEALER,     5, false},
         {TALENT_DEADLY_SPIKES,   5, false},
         {TALENT_SWARMING,         5, false},
-        {TALENT_EXPLODING_BODIES, 5, false},
+        {TALENT_MAGNETISM, 5, false},
         {-1,                      0, 0}
 };
 
@@ -623,10 +623,11 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             menu_add_line(ent, "Increases spore damage.", MENU_WHITE_CENTERED);
             // menu_add_line(ent, "but reduces damage.", MENU_WHITE_CENTERED); // lol
             return 1;
-        case TALENT_EXPLODING_BODIES:
-            menu_add_line(ent, "Makes alien-summons'", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "corpses explode.", MENU_WHITE_CENTERED);
-            return 2;
+        case TALENT_MAGNETISM:
+            menu_add_line(ent, "Makes obstacles magnetic,", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "causing enemies to be", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "pulled toward them.", MENU_WHITE_CENTERED);
+            return 3;
             // Kamikaze talents
         case TALENT_MARTYR:
             menu_add_line(ent, "Creates an explotion", MENU_WHITE_CENTERED);

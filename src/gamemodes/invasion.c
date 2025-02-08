@@ -496,7 +496,7 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
 	}
 	else if (invasion->value == 2) // hard mode
 	{
-		float plog = log2(vrx_get_joined_players() + 1) / log2(8);
+		float plog = log2(vrx_get_joined_players(true) + 1) / log2(8);
 		mhealth = 1 + 0.2 * sqrt(invasion_difficulty_level) * max(plog, 0);
 	}
 
@@ -919,7 +919,7 @@ void INV_NotifyMonsterDeath(edict_t * edict) {
 
 void INV_SpawnMonsters(edict_t *self)
 {
-	const int players = vrx_get_joined_players();
+	const int players = vrx_get_joined_players(true);
 
 	// How many monsters should we spawn?
 	// 10 at lv 1, 30 by level 20. 41 by level 100
@@ -949,9 +949,9 @@ void INV_SpawnMonsters(edict_t *self)
 	if (!(invasion_difficulty_level % 5))
 	{
 		if (invasion->value == 1)
-			max_monsters = 4 * (vrx_get_joined_players() - 1);
+			max_monsters = 4 * (vrx_get_joined_players(true) - 1);
 		else if (invasion->value == 2)
-			max_monsters = 6 * (vrx_get_joined_players() - 1);
+			max_monsters = 6 * (vrx_get_joined_players(true) - 1);
 	}
 
 	// were enough monsters eliminated?

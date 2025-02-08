@@ -1729,9 +1729,12 @@ qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, q
 		// heal them if they are weakened
 		if (self->health < max_health)
 		{
+			int health_needed = max_health - self->health;
+			if (health > health_needed)
+				health = health_needed;
 			self->health += health;
-			if (self->health > max_health)
-				self->health = max_health;
+			//if (self->health > max_health)
+			//	self->health = max_health;
 
 			// switch to normal monster skin when it's healed
 			if (!self->client && (self->svflags & SVF_MONSTER) && (self->mtype != M_DECOY) && (self->mtype != M_SKELETON)

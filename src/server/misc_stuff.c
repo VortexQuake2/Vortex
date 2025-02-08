@@ -664,7 +664,8 @@ void V_PrintSayPrefix (edict_t *speaker, edict_t *listener, char *text)
 	}
 	Com_sprintf (temp, sizeof(temp), "%s%s", temp, text);
 
-	gi.cprintf (listener, PRINT_CHAT, "%s", temp);
+	//gi.cprintf (listener, PRINT_CHAT, "%s", temp);
+	safe_cprintf(listener, PRINT_CHAT, "%s", temp);
 }
 
 void tech_checkrespawn(edict_t* ent);

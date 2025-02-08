@@ -514,8 +514,8 @@ char *GetTalentString(int talent_ID) {
             return "Deadly Spikes";
         case TALENT_SWARMING:
             return "Swarming";
-        case TALENT_EXPLODING_BODIES:
-            return "Exploding Body";
+        case TALENT_MAGNETISM:
+            return "Magnetism";
         //case TALENT_FASTMOVE:			return "Run!";
         // Kamikaze talents
         case TALENT_MARTYR:

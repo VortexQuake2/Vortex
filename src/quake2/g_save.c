@@ -38,6 +38,7 @@ int	skullindex;
 
 cvar_t				*bot_enable;//GHz: Set to 1 to enable bots
 cvar_t				*bot_dropnodes;//GHz: Set to 1 to allow players to automatically drop nodes used for bot pathing
+cvar_t				*bot_autospawn;//GHz: Set to # of bots to spawn when map loads
 cvar_t				*bot_showpath;
 cvar_t				*bot_showcombat;
 cvar_t				*bot_showsrgoal;

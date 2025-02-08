@@ -1847,47 +1847,6 @@ void PutClientInServer (edict_t *ent)
 	// copy some data from the client to the entity
 	FetchClientEntData (ent);
 
-	//K03 Begin
-	if (ent->myskills.class_num > 0)
-	{
-		int talentLevel;
-
-        vrx_update_all_character_maximums(ent);
-        vrx_add_respawn_weapon(ent, ent->myskills.respawn_weapon);
-        vrx_add_respawn_items(ent);
-
-		//Talent: Sidearms
-        talentLevel = vrx_get_talent_level(ent, TALENT_SIDEARMS);
-		if(talentLevel > 0)
-		{
-			int i;
-
-			//Give the player one additional respawn weapon for every point in the talent.
-			//This does not give them ammo.
-			for(i = 0; i < talentLevel+1; ++i)
-				vrx_give_additional_respawn_weapons(ent, i+1);
-		}
-
-		// az: restore blaster ammo on death
-		ent->monsterinfo.lefty = 25 + 12.5 * ent->myskills.abilities[MAX_AMMO].level;
-
-		//4.57 give a partial ability charge
-		if (ent->myskills.abilities[SHIELD].current_level > 0)
-			ent->myskills.abilities[SHIELD].charge = 50;
-		if (ent->myskills.abilities[BERSERK].current_level > 0)
-			ent->myskills.abilities[BERSERK].charge = 50;
-		if (ent->myskills.abilities[BEAM].current_level > 0)
-			ent->myskills.abilities[BEAM].charge = 50;
-		
-		// armor regen grants starting armor
-		if (ent->myskills.abilities[ARMOR_REGEN].current_level > 0) {
-			float factor = ent->myskills.abilities[ARMOR_REGEN].current_level * 0.05f;
-			ent->client->pers.inventory[body_armor_index] += MAX_ARMOR(ent) * factor; 
-		}
-
-	}
-	//K03 End
-
 	// clear entity values
 	ent->groundentity = NULL;
 	ent->client = &game.clients[index];
@@ -1917,6 +1876,47 @@ void PutClientInServer (edict_t *ent)
 	VectorCopy (mins, ent->mins);
 	VectorCopy (maxs, ent->maxs);
 	VectorClear (ent->velocity);
+
+	//K03 Begin
+	if (ent->myskills.class_num > 0)
+	{
+		int talentLevel;
+
+		vrx_update_all_character_maximums(ent);
+		vrx_add_respawn_weapon(ent, ent->myskills.respawn_weapon);
+		vrx_add_respawn_items(ent);
+
+		//Talent: Sidearms
+		talentLevel = vrx_get_talent_level(ent, TALENT_SIDEARMS);
+		if (talentLevel > 0)
+		{
+			int i;
+
+			//Give the player one additional respawn weapon for every point in the talent.
+			//This does not give them ammo.
+			for (i = 0; i < talentLevel + 1; ++i)
+				vrx_give_additional_respawn_weapons(ent, i + 1);
+		}
+
+		// az: restore blaster ammo on death
+		ent->monsterinfo.lefty = 25 + 12.5 * ent->myskills.abilities[MAX_AMMO].level;
+
+		//4.57 give a partial ability charge
+		if (ent->myskills.abilities[SHIELD].current_level > 0)
+			ent->myskills.abilities[SHIELD].charge = 50;
+		if (ent->myskills.abilities[BERSERK].current_level > 0)
+			ent->myskills.abilities[BERSERK].charge = 50;
+		if (ent->myskills.abilities[BEAM].current_level > 0)
+			ent->myskills.abilities[BEAM].charge = 50;
+
+		// armor regen grants starting armor
+		if (ent->myskills.abilities[ARMOR_REGEN].current_level > 0) {
+			float factor = ent->myskills.abilities[ARMOR_REGEN].current_level * 0.05f;
+			ent->client->pers.inventory[body_armor_index] += MAX_ARMOR(ent) * factor;
+		}
+
+	}
+	//K03 End
 
 	vrx_reset_player_state(ent);
 

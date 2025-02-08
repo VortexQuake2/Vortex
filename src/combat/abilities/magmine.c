@@ -9,7 +9,8 @@ void magmine_throwsparks(edict_t *self) {
 
     AngleVectors(self->s.angles, NULL, NULL, up);
     VectorCopy(self->s.origin, start);
-    start[2] += 8;
+    start[2] = self->absmax[2];
+    //start[2] += 8;
 
     for (i = 0; i < 8; i++) {
         start[2] += 4;
@@ -24,19 +25,59 @@ void magmine_throwsparks(edict_t *self) {
     }
 }
 
-qboolean magmine_findtarget(edict_t *self) {
-    edict_t *other = NULL;
+void drone_pain(edict_t* self, edict_t* other, float kick, int damage);
+void magmine_attack(edict_t* self, edict_t* enemy, int pull) {
+    //int pull;
+    vec3_t start, end, dir;
 
-    while ((other = findclosestradius(other, self->s.origin, self->dmg_radius)) != NULL){
+    // magmine will not pull a target that is below it
+    // this prevents players from placing magmines to pull a target off their feet
+    if (enemy->absmin[2] + 1 < self->absmin[2])
+        return;
+
+    //gi.dprintf("%s: pull %d enemy: %s\n", __func__, pull, enemy->classname);
+
+    G_EntMidPoint(enemy, end);
+    G_EntMidPoint(self, start);
+    VectorSubtract(end, start, dir);
+    VectorNormalize(dir);
+
+    //pull = MAGMINE_DEFAULT_PULL + MAGMINE_ADDON_PULL * self->monsterinfo.level;
+    if (enemy->groundentity)
+        pull *= 2;
+
+    // pull them in!
+    T_Damage(enemy, self, self, dir, end, vec3_origin, 0, pull, 0, 0);
+
+    if (level.time > self->wait) {
+        gi.sound(self, CHAN_WEAPON, gi.soundindex("weapons/tlaser.wav"), 1, ATTN_IDLE, 0);
+
+        // force monsters to get angry and attack the magmine (despite FL_NOTARGET)
+        if (enemy->pain)
+            enemy->pain(enemy, self, 0, 0);
+
+        self->wait = level.time + 2;
+    }
+}
+
+qboolean magmine_findtarget(edict_t *self, float range, int pull) 
+{
+    edict_t *other = NULL;
+    qboolean found_target = false;
+
+    while ((other = findclosestradius(other, self->s.origin, range)) != NULL){
     //while ((other = findclosestradius_targets(other, self, self->dmg_radius)) != NULL) {
         if (other == self)
             continue;
         if (!G_ValidTarget(self, other, true, true))
             continue;
-        self->enemy = other;
-        return true;
+        magmine_attack(self, other, pull);
+        found_target = true;
+        //self->enemy = other;
+        //return true;
     }
-    return false;
+    //return false;
+    return found_target;
 }
 
 void magmine_use_energy(edict_t* self, int energy_use)
@@ -59,39 +100,6 @@ void magmine_use_energy(edict_t* self, int energy_use)
     {
         safe_cprintf(self->creator, PRINT_HIGH, "Your mag mine's energy cells are depleted. Touch it to recharge.\n");
         self->light_level = 0;
-    }
-}
-
-void drone_pain(edict_t* self, edict_t* other, float kick, int damage);
-void magmine_attack(edict_t *self) {
-    int pull;
-    vec3_t start, end, dir;
-
-    // magmine will not pull a target that is below it
-    // this prevents players from placing magmines to pull a target off their feet
-    if (self->enemy->absmin[2] + 1 < self->absmin[2])
-        return;
-
-    G_EntMidPoint(self->enemy, end);
-    G_EntMidPoint(self, start);
-    VectorSubtract(end, start, dir);
-    VectorNormalize(dir);
-
-    pull = MAGMINE_DEFAULT_PULL + MAGMINE_ADDON_PULL * self->monsterinfo.level;
-    if (self->enemy->groundentity)
-        pull *= 2;
-
-    // pull them in!
-    T_Damage(self->enemy, self, self, dir, end, vec3_origin, 0, pull, 0, 0);
-
-    if (level.time > self->delay) {
-        gi.sound(self, CHAN_WEAPON, gi.soundindex("weapons/tlaser.wav"), 1, ATTN_IDLE, 0);
-
-        // force monsters to get angry and attack the magmine (despite FL_NOTARGET)
-        if (self->enemy->pain)
-            self->enemy->pain(self->enemy, self, 0, 0);
-
-        self->delay = level.time + 2;
     }
 }
 
@@ -128,19 +136,24 @@ void magmine_think(edict_t *self)
     }
 
     V_HealthCache(self, (int)(0.2 * self->max_health), 1);
-
-    // energy use
-    if (level.time > self->delay)
-    {
-        int cells_used = MAGMINE_IDLE_CELLS; // idle
-        self->delay = level.time + 1.0;
-        if (self->enemy)
-            cells_used = MAGMINE_ACTIVE_CELLS; // active
-        magmine_use_energy(self, cells_used);
-    }
+    int cells_used = MAGMINE_IDLE_CELLS; // idle
 
     if (self->light_level > 0) // magmine has enough energy to operate
     {
+        int pull = MAGMINE_DEFAULT_PULL + MAGMINE_ADDON_PULL * self->monsterinfo.level;
+        if (magmine_findtarget(self, self->dmg_radius, pull))
+        {
+            magmine_throwsparks(self);
+            cells_used = MAGMINE_ACTIVE_CELLS; // active
+        }
+
+        // energy use
+        if (level.time > self->delay)
+        {
+            self->delay = level.time + 1.0;
+            magmine_use_energy(self, cells_used);
+        }
+        /*
         qboolean shouldCallThrowSparks = false;
 
         if (!self->enemy) {
@@ -160,7 +173,7 @@ void magmine_think(edict_t *self)
 
         if (shouldCallThrowSparks) {
             magmine_throwsparks(self);
-        }
+        }*/
 
 
     }

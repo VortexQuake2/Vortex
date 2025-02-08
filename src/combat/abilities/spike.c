@@ -10,9 +10,11 @@ void spike_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 		gi.sound (other, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav"), 1, ATTN_NORM, 0);
 
 		// only stun if the entity is alive and they haven't been stunned too recently
-		if (G_EntIsAlive(other) && (level.time > (other->holdtime + 1.0)))
+		if (G_EntIsAlive(other))// && (level.time > (other->holdtime + 1.0)))
 		{
+			vrx_stun(self, other, self->dmg_radius);
 			// stun them
+			/*
 			if (other->client)
 			{
 				other->client->ability_delay = level.time + self->dmg_radius;
@@ -24,7 +26,7 @@ void spike_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 				// one possible fix would be to have a temporary stunned_think set while stunned that handles sliding, worldeffects, etc
 				// and switches back to the prev_think after the stun is complete
 				other->nextthink = level.time + self->dmg_radius;
-			}
+			}*/
 		}
 
 		

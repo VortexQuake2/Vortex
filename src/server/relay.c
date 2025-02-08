@@ -171,6 +171,8 @@ void vrx_relay_message(const char* message) {
     msgpack_sbuffer sbuf;
     msgpack_packer pk;
 
+    if (!vrx_relay_is_connected())
+        return;
     msgpack_sbuffer_init(&sbuf);
     msgpack_packer_init(&pk, &sbuf, msgpack_sbuffer_write);
 

@@ -401,10 +401,10 @@ void BOT_UpgradeWeapon(edict_t* ent, int weapID)
 			}
 			break;
 		}
-		int Windex = vrx_WeapIDtoWeapIndex(weapID);
-		gitem_t* it = &itemlist[Windex];
-		gi.dprintf("%s (%d) %s upgraded to level %d (%d%%)\n", it->pickup_name, w, GetModString(w,i), 
-			ent->myskills.weapons[w].mods[i].current_level, V_WeaponUpgradeVal(ent,w));
+		//int Windex = vrx_WeapIDtoWeapIndex(weapID);
+		//gitem_t* it = &itemlist[Windex];
+		//gi.dprintf("%s (%d) %s upgraded to level %d (%d%%)\n", it->pickup_name, w, GetModString(w,i), 
+		//	ent->myskills.weapons[w].mods[i].current_level, V_WeaponUpgradeVal(ent,w));
 	}
 	ent->ai.status.weaponWeights[w] = 0.01 * V_WeaponUpgradeVal(ent, w);
 }
@@ -502,7 +502,7 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 	char *s;
 	//int rnd = CLASS_PALADIN;
 
-	//gi.dprintf("BOT_DMClass_JoinGame\n");
+	gi.dprintf("%s called for %s\n", __func__, ent->ai.pers.netname);
 
 	if ( !BOT_JoinCTFTeam(ent, team_name) )
 		gi.bprintf (PRINT_HIGH,  "[BOT] %s joined the game.\n",
@@ -671,7 +671,13 @@ void BOT_SpawnBot (char *team, char *name, char *skin, char *userinfo, char *cla
 	AI_ResetNavigation(bot);
 
 	bot->think = BOT_JoinGame;
-	bot->nextthink = level.time + (int)(random() * 6.0);
+
+	// players should join before bots
+	float delay = 0;
+	if (vrx_get_joined_players(false) < 1)
+		delay = 10;
+	bot->nextthink = level.time + (GetRandom(10, 100) * FRAMETIME) + delay;
+
 	if( ctf->value && team != NULL )
 	{
 		if( !Q_stricmp( team, "blue" ) )
@@ -718,9 +724,12 @@ void BOT_SpawnBot (char *team, char *name, char *skin, char *userinfo, char *cla
 void BOT_RemoveBot(char *name)
 {
 	int i;
-	qboolean freed=false;
+	qboolean freed = false;
+	qboolean all = false;
 	edict_t *bot;
 
+	if (strcmp(name, "all") == 0)
+		all = true;
 	//gi.dprintf("BOT_RemoveBot\n");
 	for(i=0;i<maxclients->value;i++)
 	{
@@ -728,7 +737,7 @@ void BOT_RemoveBot(char *name)
 		if(bot->inuse)
 		{
 			//gi.dprintf("found %s\n", bot->classname);
-			if(bot->ai.is_bot && (strcmp(bot->client->pers.netname,name)==0 || strcmp(name,"all")==0))
+			if(bot->ai.is_bot && (all || strcmp(bot->client->pers.netname,name)==0))
 			{
 				bot->health = 0;
 				player_die (bot, bot, bot, 100000, vec3_origin);
@@ -742,7 +751,7 @@ void BOT_RemoveBot(char *name)
 		}
 	}
 
-	if(!freed)	
+	if(!all && !freed)	
 		safe_bprintf (PRINT_MEDIUM, "%s not found\n", name);
 	
 	//ACESP_SaveBots(); // Save them again
@@ -758,7 +767,8 @@ void BOT_ReturnToBase(int teamnum)
 	for (int i = 0; i < maxclients->value; i++)
 	{
 		bot = g_edicts + i + 1;
-		if (bot->inuse && bot->health > 1)
+		// find live bots
+		if (bot->inuse && bot->ai.is_bot && bot->health > 1)
 		{
 			edict_t* base = NULL;
 			// find base entity

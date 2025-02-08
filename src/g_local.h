@@ -1775,7 +1775,7 @@ struct edict_s
 
 	//================================
 
-	int			svflags;
+	int			svflags;			// note: SVF_MONSTER tells physics to clip on any solid object (not just walls)
 	vec3_t		mins, maxs;
 	vec3_t		absmin, absmax, size;
 	solid_t		solid;

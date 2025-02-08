@@ -209,11 +209,11 @@ void EMP_Explode (edict_t *self)
         // blow-up player ammo
         if (e->client)
             ExplodeAmmo(self, e);
-            // blow up ammo boxes
+        // blow up ammo boxes
         else if (ammoBox)
         {
-            damage = EMP_AMMOBOX_INITIAL_DAMAGE+EMP_AMMOBOX_ADDON_DAMAGE*self->monsterinfo.level;
-            radius = 0.5*damage;
+            damage = EMP_AMMOBOX_INITIAL_DAMAGE + EMP_AMMOBOX_ADDON_DAMAGE * self->monsterinfo.level;
+            radius = 0.5 * damage;
 
             if (radius < EMP_MIN_RADIUS)
                 radius = EMP_MIN_RADIUS;
@@ -223,36 +223,19 @@ void EMP_Explode (edict_t *self)
             T_RadiusDamage(self, self->owner, damage, NULL, radius, MOD_EMP);
 
             // explosion effect
-            gi.WriteByte (svc_temp_entity);
-            gi.WriteByte (TE_EXPLOSION1);
-            gi.WritePosition (e->s.origin);
-            gi.multicast (e->s.origin, MULTICAST_PVS);
+            gi.WriteByte(svc_temp_entity);
+            gi.WriteByte(TE_EXPLOSION1);
+            gi.WritePosition(e->s.origin);
+            gi.multicast(e->s.origin, MULTICAST_PVS);
 
             // don't respawn if it's a dropped item
-            if (!(e->spawnflags & (DROPPED_ITEM|DROPPED_PLAYER_ITEM)))
+            if (!(e->spawnflags & (DROPPED_ITEM | DROPPED_PLAYER_ITEM)))
                 SetRespawn(e, 30);
             else
                 G_FreeEdict(e);
         }
-            // force monsters into idle mode
-        else if (!strcmp(e->classname, "drone"))
-        {
-            // bosses can't be stunned easily
-            if (e->monsterinfo.control_cost >= M_COMMANDER_CONTROL_COST || e->monsterinfo.bonus_flags & BF_UNIQUE_FIRE
-                || e->monsterinfo.bonus_flags & BF_UNIQUE_LIGHTNING)
-                time *= 0.2;
-
-            e->empeffect_time = level.time + time;
-            e->empeffect_owner = self->owner;
-            e->monsterinfo.pausetime = level.time + time;
-            e->monsterinfo.stand(e);
-        }
-            // stun anything else
-        else
-        {
-            e->empeffect_time = level.time + time;
-            e->holdtime = level.time + time;
-        }
+        else // stun everything else
+            vrx_stun(self, e, time);
     }
 
     gi.WriteByte (svc_temp_entity);

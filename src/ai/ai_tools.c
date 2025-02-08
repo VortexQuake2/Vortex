@@ -182,6 +182,7 @@ void AITools_ShowPlinks( void )
 	int		current_node;
 	int		plink_node;
 	int		i;
+	vec3_t start;
 
 	if (AIDevel.plinkguy == NULL || !AIDevel.showPLinks)
 	{
@@ -211,6 +212,9 @@ void AITools_ShowPlinks( void )
 	if (!pLinks[current_node].numLinks)
 	{
 		//gi.dprintf("no links");
+		safe_centerprintf(AIDevel.plinkguy, "node %d has 0 links", current_node);
+		VectorCopy(nodes[current_node].origin, start);
+		G_Spawn_Splash(TE_LASER_SPARKS, 5, 200, start, vec3_origin, start);//GHz
 		return;
 	}
 
@@ -226,7 +230,7 @@ void AITools_ShowPlinks( void )
 
 	for (i=0; i<pLinks[current_node].numLinks; i++) 
 	{
-		vec3_t start, end;
+		vec3_t end;
 		plink_node = pLinks[current_node].nodes[i];
 		VectorCopy(nodes[current_node].origin, start);
 		VectorCopy(nodes[plink_node].origin, end);

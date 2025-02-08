@@ -526,7 +526,7 @@ void EndDMLevel(void)
 				mode = MAPMODE_TBI;
 			else mode = MAPMODE_PVP;
 
-			if (tradingmode_enabled->value && vrx_get_joined_players() == 0)
+			if (tradingmode_enabled->value && vrx_get_joined_players(false) == 0)
 			{
 				mode = MAPMODE_TRA; // default to trading mode when no people's in
 			}
@@ -688,7 +688,8 @@ void CheckDMRules(void)
 		//K03 End
 		if (level.time >= timelimit->value * 60)
 		{
-			gi.bprintf(PRINT_HIGH, "Timelimit hit.\n");
+			//gi.bprintf(PRINT_HIGH, "Timelimit hit.\n");
+			safe_bprintf(PRINT_HIGH, "Timelimit hit.\n");
 			EndDMLevel();
 
 			if (invasion->value > 1) // we hit timelimit on hard mode invasion = we win

@@ -115,7 +115,7 @@ void hw_awardpoints (void)
 		return;
 
 	// not enough players
-	if (vrx_get_joined_players() < HW_MINIMUM_PLAYERS)
+	if (vrx_get_joined_players(true) < HW_MINIMUM_PLAYERS)
 		return;
 
 	points = HW_POINTS;
