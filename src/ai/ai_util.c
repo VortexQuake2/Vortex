@@ -342,7 +342,7 @@ qboolean AI_ClearWalkingPath(edict_t* self, vec3_t start, vec3_t end)
 	trace_t tr;
 
 	// did the bot fall out of the map or are we using noclip?!
-	if (self->solid == SOLID_NOT)
+	if (self->solid == SOLID_NOT || gi.pointcontents(self->s.origin) & MASK_SOLID)
 		return true;
 
 	// find our standing position off of the floor at start
@@ -378,7 +378,8 @@ qboolean AI_ClearWalkingPath(edict_t* self, vec3_t start, vec3_t end)
 	tr_pos[2] += AI_STEPSIZE;
 	path_end[2] += AI_STEPSIZE;
 
-	while (distance(tr_pos, path_end) > 36)
+	int i = 0;// sanity check
+	while (distance(tr_pos, path_end) > 36 && i < 10000)
 	{
 		// try to take a step forward
 		VectorMA(tr_pos, 36, dir, tr_end);
@@ -397,6 +398,7 @@ qboolean AI_ClearWalkingPath(edict_t* self, vec3_t start, vec3_t end)
 		VectorCopy(tr.endpos, tr_pos);
 		tr_pos[2] += AI_STEPSIZE;
 		//gi.dprintf("remaining distance: %f\n", distance(tr_pos, path_end));
+		i++;
 	}
 	return true;
 }
