@@ -29,12 +29,29 @@ in NO WAY supported by Steve Yeager.
 //ACE
 
 //==========================================
+// AI_FindEnemyListPosition
+// Find the position of ent in the AIEnemies list
+// returns -1 if the entity is not found
+//==========================================
+int AI_FindEnemyListPosition(edict_t* ent)
+{
+	for (int i = 0; i < num_AIEnemies; i++)
+	{
+		if (ent == AIEnemies[i])
+			return i;
+	}
+	return -1;
+}
+//==========================================
 // AI_EnemyAdded
 // Add the Player to our list
 // GHz: this should be added anywhere DroneList_Insert is used
 //==========================================
 void AI_EnemyAdded(edict_t *ent)
 {
+	if (AI_FindEnemyListPosition(ent) != -1)
+		return;//GHz: enemy is already in the list
+
 	if( num_AIEnemies < MAX_EDICTS )
 		AIEnemies[num_AIEnemies++] = ent;
 }
@@ -49,6 +66,8 @@ void AI_EnemyRemoved(edict_t *ent)
 	int i;
 	int pos = 0;
 
+	if (!ent)
+		return;
 	// watch for 0 players
 	if(num_AIEnemies < 1)
 		return;
@@ -61,9 +80,12 @@ void AI_EnemyRemoved(edict_t *ent)
 	}
 
 	// Find the player
-	for(i=0;i<num_AIEnemies;i++)
-		if(ent == AIEnemies[i])
-			pos = i;
+	//for(i=0;i<num_AIEnemies;i++)
+	//	if(ent == AIEnemies[i])
+	//		pos = i;
+
+	if ((pos = AI_FindEnemyListPosition(ent)) == -1)
+		return;//GHz: couldn't find the entity in the list
 
 	// decrement
 	for( i=pos; i<num_AIEnemies-1; i++ )

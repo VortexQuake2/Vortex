@@ -159,7 +159,7 @@ void vrx_notify_open_stash(void* args)
 		return;
 	}
 
-	vrx_stash_open_page(notif->ent, notif->page, sizeof notif->page / sizeof(item_t), notif->pagenum);
+	vrx_stash_open_page(notif->ent, notif->page, sizeof notif->page / sizeof(item_t), notif->pagenum, 0);
 }
 
 /*
@@ -170,13 +170,15 @@ void vrx_notify_open_stash(void* args)
 
 void handler_stash_item(edict_t* ent, int option)
 {
+	//gi.dprintf("%s: option: %d\n", __func__, option);
 	if (option >= 5000) {
 		// do not close the stash
 		vrx_stash_open_page(
 			ent, 
 			ent->client->stash.page, 
 			sizeof ent->client->stash.page / sizeof(item_t), 
-			option - 5000
+			(option - 5000) / 10,
+			(option - 5000) % 10 + 1
 		);
 		ent->client->menustorage.cancel_close_event = true;
 		return;
@@ -192,18 +194,19 @@ void vrx_show_stash_item(edict_t* ent, item_t* item, int stash_index)
 
 	menu_clear(ent);
 
+	//gi.dprintf("%s: stash_index: %d\n", __func__, stash_index);
 	menu_add_line(ent, V_MenuItemString(item, ' '), MENU_GREEN_LEFT);
 
 	StartShowInventoryMenu(ent, item);
 
 	menu_add_line(ent, "", 0);
 	menu_add_line(ent, "Take", 1000 + stash_index);
-	menu_add_line(ent, "Back", 5000 + stash_index / 10);
+	menu_add_line(ent, "Back", 5000 + stash_index);// / 10);
 
 	menu_set_handler(ent, handler_stash_item);
 	menu_set_close_handler(ent, vrx_stash_close); // ran after selection or if menu is unexpectedly closed
 
-	ent->client->menustorage.currentline = ent->client->menustorage.num_of_lines - 1;
+	ent->client->menustorage.currentline = ent->client->menustorage.num_of_lines;// -1;
 
 	menu_show(ent);
 }
@@ -242,11 +245,13 @@ void vrx_stash_open(edict_t* ent)
 	vrx_stash_io.open_stash(ent);
 }
 
-void vrx_stash_open_page(edict_t* ent, item_t* page, int item_count, int page_index)
+void vrx_stash_open_page(edict_t* ent, item_t* page, int item_count, int page_index, int lastline)
 {
 	if (!menu_can_show(ent))
 		return;
 	menu_clear(ent);
+
+	//gi.dprintf("%s: item_count: %d page_index: %d lastline %d\n", __func__, item_count, page_index, lastline);
 
 	menu_add_line(ent, va("%s's stash (Page %d)", ent->client->pers.netname, page_index + 1), MENU_GREEN_CENTERED);
 	menu_add_line(ent, "", 0);
@@ -273,7 +278,10 @@ void vrx_stash_open_page(edict_t* ent, item_t* page, int item_count, int page_in
 	menu_set_handler(ent, handler_stash_page);
 	menu_set_close_handler(ent, vrx_stash_close);
 
-	ent->client->menustorage.currentline = ent->client->menustorage.num_of_lines - amt;
+	if (!lastline)
+		ent->client->menustorage.currentline = ent->client->menustorage.num_of_lines - amt;
+	else
+		ent->client->menustorage.currentline = lastline + 2;
 
 	menu_show(ent);
 

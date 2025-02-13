@@ -20,7 +20,7 @@ void autocannon_remove (edict_t *self, char *message)
 
 		if (self->creator->client)
 			layout_remove_tracked_entity(&self->creator->client->layout, self);
-
+		AI_EnemyRemoved(self);
 
 		if (self->creator->inuse && message)
 			safe_cprintf(self->creator, PRINT_HIGH, message);
@@ -513,6 +513,7 @@ void CreateAutoCannon (edict_t *ent, int cost, float skill_mult, float delay_mul
 	ent->num_autocannon++; // increment counter
 
 	layout_add_tracked_entity(&ent->client->layout, cannon);
+	AI_EnemyAdded(cannon);
 
 	safe_cprintf(ent, PRINT_HIGH, "Built %d/%d autocannons.\n", ent->num_autocannon, (int)AUTOCANNON_MAX_UNITS);
 }

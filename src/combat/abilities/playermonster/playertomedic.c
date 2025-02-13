@@ -125,6 +125,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 			{
 				DroneList_Remove(e); // az: STILL AAAARGH
 				layout_remove_tracked_entity(&ent->client->layout, e);
+				AI_EnemyRemoved(e);
 				G_FreeEdict(e);
 				return;
 			}
@@ -161,6 +162,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 		VectorCopy(target->s.origin, e->s.origin);
 		gi.linkentity(e);
 		layout_add_tracked_entity(&ent->client->layout, e);
+		AI_EnemyAdded(e);
 
 		organ_remove(target, false);
 	}
@@ -196,6 +198,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 		VectorCopy(target->s.origin, e->s.origin);
 		gi.linkentity(e);
 		layout_add_tracked_entity(&ent->client->layout, e);
+		AI_EnemyAdded(e);
 
 		organ_remove(target, false);
 	}
@@ -219,6 +222,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 		VectorCopy(target->s.origin, e->s.origin);
 		gi.linkentity(e);
 		layout_add_tracked_entity(&ent->client->layout, e);
+		AI_EnemyAdded(e);
 
 		organ_remove(target, false);
 	} 
@@ -242,6 +246,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
         VectorCopy(target->s.origin, e->s.origin);
         gi.linkentity(e);
 		layout_add_tracked_entity(&ent->client->layout, e);
+		AI_EnemyAdded(e);
 
         organ_remove(target, false);
 	}
@@ -264,7 +269,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 		VectorCopy(target->s.origin, e->s.origin);
 		gi.linkentity(e);
 		layout_add_tracked_entity(&ent->client->layout, e);
-
+		AI_EnemyAdded(e);
 		organ_remove(target, false);
 	}
 

@@ -20,7 +20,7 @@ void barrel_remove(edict_t* self, qboolean refund)
 		// remove from HUD
 		layout_remove_tracked_entity(&cl->layout, self);
 	}
-
+	AI_EnemyRemoved(self);
 	self->think = BecomeExplosion1;
 	self->nextthink = level.time + FRAMETIME;
 	self->svflags |= SVF_NOCLIENT;
@@ -165,7 +165,7 @@ void SpawnExplodingBarrel(edict_t* ent)
 		return;
 
 	layout_add_tracked_entity(&ent->client->layout, barrel); // add to HUD
-
+	AI_EnemyAdded(barrel);
 	// pick it up!
 	ent->client->pickup = barrel;
 

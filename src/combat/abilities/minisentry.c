@@ -42,6 +42,7 @@ void minisentry_remove (edict_t *self)
 
 	if (self->creator && self->creator->client)
 		layout_remove_tracked_entity(&self->creator->client->layout, self);
+	AI_EnemyRemoved(self);
 
 	// prep sentry for removal
 	self->think = BecomeExplosion1;
@@ -875,6 +876,7 @@ void base_createturret (edict_t *self)
 
 	if (self->creator && self->creator->client)
 		layout_add_tracked_entity(&self->creator->client->layout, sentry);
+	AI_EnemyAdded(sentry);
 
 	VectorCopy(tr.endpos, sentry->s.origin);
 	VectorCopy(sentry->s.angles, sentry->move_angles);// save for idle animation

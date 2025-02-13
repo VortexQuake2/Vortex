@@ -23,6 +23,8 @@ void RemoveTotem(edict_t *self)
 			layout_remove_tracked_entity(&self->activator->client->layout, self);
 	}
 
+	AI_EnemyRemoved(self);
+
 	// prep for removal
 	self->think = BecomeTE;
 	self->takedamage = DAMAGE_NO;
@@ -682,6 +684,7 @@ void SpawnTotem(edict_t *ent, int abilityID)
 	else				ent->totem2 = totem;
 
 	layout_add_tracked_entity(&ent->client->layout, totem);
+	AI_EnemyAdded(totem);
 
 	ent->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)] -= cost;
 

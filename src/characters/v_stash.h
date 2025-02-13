@@ -14,7 +14,7 @@ typedef struct
 void vrx_init_stash_io();
 void vrx_close_stash_io();
 void vrx_stash_open(edict_t* ent);
-void vrx_stash_open_page(edict_t* ent, item_t* page, int item_count, int page_index);
+void vrx_stash_open_page(edict_t* ent, item_t* page, int item_count, int page_index, int lastline);
 void vrx_stash_close(edict_t* ent);
 void vrx_stash_store(edict_t* ent, int itemindex);
 

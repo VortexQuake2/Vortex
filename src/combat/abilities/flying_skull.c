@@ -567,7 +567,7 @@ void skull_remove (edict_t *self)
 		if (self->activator->client)
 			layout_remove_tracked_entity(&self->activator->client->layout, self);
 	}
-
+	AI_EnemyRemoved(self);
 	// prep for removal
 	self->think = BecomeExplosion1;
 	self->takedamage = DAMAGE_NO;
@@ -803,6 +803,7 @@ void SpawnSkull (edict_t *ent)
 
 	if (ent->client)
 		layout_add_tracked_entity(&ent->client->layout, skull);
+	AI_EnemyAdded(skull);
 
 	VectorCopy(end, skull->s.origin);
 	VectorCopy(end, skull->move_origin);

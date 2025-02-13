@@ -1097,6 +1097,7 @@ edict_t *findclosestradius1 (edict_t *prev_ed, vec3_t org, float rad);//GHz
 edict_t *G_FindEntityByMtype (int mtype, edict_t *from);//GHz
 float Get2dDistance (vec3_t v1, vec3_t v2);//GHz
 void G_DrawSparks(vec3_t start, vec3_t end, int primary_color, int secondary_color, int num, float dist_between_sparks, int min_rad, int max_rad);//GHz
+int G_NearbyEnts(vec3_t const org, float rad, qboolean is_visible);//GHz
 edict_t *G_PickTarget (char *targetname);
 void	G_UseTargets (edict_t *ent, edict_t *activator);
 void	G_SetMovedir (vec3_t angles, vec3_t movedir);

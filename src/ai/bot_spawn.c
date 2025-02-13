@@ -502,7 +502,7 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 	char *s;
 	//int rnd = CLASS_PALADIN;
 
-	gi.dprintf("%s called for %s\n", __func__, ent->ai.pers.netname);
+	//gi.dprintf("%s called for %s\n", __func__, ent->ai.pers.netname);
 
 	if ( !BOT_JoinCTFTeam(ent, team_name) )
 		gi.bprintf (PRINT_HIGH,  "[BOT] %s joined the game.\n",
@@ -583,7 +583,7 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 
 	int Windex = vrx_WeapIDtoWeapIndex(ent->myskills.respawn_weapon);
 	gitem_t *it = &itemlist[Windex];
-	gi.dprintf("bot spawned in game, weapon: %s\n", it->pickup_name);
+	//gi.dprintf("bot spawned in game, weapon: %s\n", it->pickup_name);
 }
 
 //==========================================

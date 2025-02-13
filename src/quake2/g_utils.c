@@ -1215,8 +1215,8 @@ qboolean G_ValidTargetEnt(const edict_t *target, qboolean alive) {
 	// don't target players in chat-protect
 	if (!ptr->value && (target->flags & FL_CHATPROTECT))
 		return false;
-	// don't target entities with FL_NOTARGET set (AI should ignore this entity)
-	if (target->flags & FL_NOTARGET)
+	// don't target entities with FL_NOTARGET set (non-bot AI should ignore this entity)
+	if (target->flags & FL_NOTARGET && !target->ai.is_bot)
 		return false;
 	// don't target spawning world monsters
 	if (target->activator && !target->activator->client && (target->svflags & SVF_MONSTER) 
@@ -2177,4 +2177,32 @@ void G_DrawSparks(vec3_t start, vec3_t end, int primary_color, int secondary_col
 		// move spawn point forward
 		VectorMA(start, dist_between_sparks, forward, start);
 	}
+}
+
+
+/*
+=================
+G_NearbyEnts
+Returns number of entities within a spherical area
+=================
+*/
+int G_NearbyEnts(vec3_t const org, float rad, qboolean is_visible)
+{
+	int num_ents = 0;
+	for (edict_t *e = g_edicts; e < &g_edicts[globals.num_edicts]; e++)
+	{
+		if (!e->inuse)
+			continue;
+		if (e->solid == SOLID_NOT)
+			continue;
+		if (e->svflags & SVF_NOCLIENT)
+			continue;
+		if (distance(org, e->s.origin) > rad)
+			continue;
+		if (is_visible && !G_IsClearPath(NULL, MASK_SOLID, org, e->s.origin))
+			continue;
+		num_ents++;
+	}
+	//gi.dprintf("%s: rad: %.0f ents: %d\n", __func__, rad, num_ents);
+	return num_ents;
 }

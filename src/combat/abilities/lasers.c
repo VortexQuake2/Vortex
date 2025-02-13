@@ -29,7 +29,7 @@ void RemoveLasers (edict_t *ent)
 			// remove the emitter
 			if (e->creator->client)
 				layout_remove_tracked_entity(&e->creator->client->layout, e);
-
+			AI_EnemyRemoved(e);
 			e->think = BecomeExplosion1;
 			e->nextthink = level.time + FRAMETIME;
 			//BecomeExplosion1(e);
@@ -367,6 +367,7 @@ void SpawnLaser (edict_t *ent, int cost, float skill_mult, float delay_mult)
 	gi.linkentity(grenade);
 
 	layout_add_tracked_entity(&ent->client->layout, grenade);
+	AI_EnemyAdded(laser);
 
 	// cost is doubled if you are a flyer or cacodemon below skill level 5
 	if ((ent->mtype == MORPH_FLYER && ent->myskills.abilities[FLYER].current_level < 5) 

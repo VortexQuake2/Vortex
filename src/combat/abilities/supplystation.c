@@ -511,6 +511,7 @@ void depot_remove (edict_t *self, edict_t *owner, qboolean effect)
 		if (self->creator->client)
 			layout_remove_tracked_entity(&self->creator->client->layout, self);
 	}
+	AI_EnemyRemoved(self);
 
 	if (effect)
 		self->think = BecomeExplosion1;
@@ -838,5 +839,6 @@ void Cmd_CreateSupplyStation_f (edict_t *ent)
 	ent->client->pers.inventory[power_cube_index] -= cost;
 	ent->holdtime = level.time + DEPOT_BUILD_TIME * delay_mult;
 	layout_add_tracked_entity(&ent->client->layout, depot); // add to HUD
+	AI_EnemyAdded(depot);
 	gi.sound(depot, CHAN_ITEM, gi.soundindex("weapons/repair.wav"), 1, ATTN_NORM, 0);
 }

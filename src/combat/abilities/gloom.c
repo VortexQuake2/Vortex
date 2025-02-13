@@ -287,6 +287,7 @@ void organ_death_cleanup(edict_t* self, edict_t* attacker, int* organCounter, in
 		if (message)
 			organ_death_message(self, attacker, max);
 	}
+	AI_EnemyRemoved(self);
 }
 
 // generic remove function for all the gloom stuff
@@ -737,6 +738,7 @@ void Cmd_Healer_f (edict_t *ent)
 	if (ent->client)
 	{
 		layout_add_tracked_entity(&ent->client->layout, healer);
+		AI_EnemyAdded(healer);
 		// pick it up!
 		ent->client->pickup = healer;
 	}
@@ -1095,6 +1097,7 @@ void Cmd_Spiker_f (edict_t *ent)
 	if (ent->client)
 	{
 		layout_add_tracked_entity(&ent->client->layout, spiker);
+		AI_EnemyAdded(spiker);
 		// pick it up!
 		ent->client->pickup = spiker;
 	}
@@ -1162,7 +1165,8 @@ void obstacle_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 		self->activator->num_obstacle--;
 		cur = self->activator->num_obstacle;
 		self->monsterinfo.slots_freed = true;
-		
+		AI_EnemyRemoved(self);
+
 		if (PM_MonsterHasPilot(attacker))
 			attacker = attacker->owner;
 
@@ -1571,6 +1575,7 @@ void Cmd_Obstacle_f (edict_t *ent)
 	if (ent->client)
 	{
 		layout_add_tracked_entity(&ent->client->layout, obstacle);
+		AI_EnemyAdded(obstacle);
 		// pick it up!
 		ent->client->pickup = obstacle;
 	}
@@ -2401,6 +2406,7 @@ void Cmd_Gasser_f (edict_t *ent)
 	if (ent->client)
 	{
 		layout_add_tracked_entity(&ent->client->layout, gasser);
+		AI_EnemyAdded(gasser);
 		// pick it up!
 		ent->client->pickup = gasser;
 	}
@@ -2444,7 +2450,8 @@ void cocoon_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	{
 		self->activator->cocoon = NULL;
 		self->monsterinfo.slots_freed = true;
-		
+		AI_EnemyRemoved(self);
+
 		if (PM_MonsterHasPilot(attacker))
 			attacker = attacker->owner;
 
@@ -2804,6 +2811,7 @@ void Cmd_Cocoon_f (edict_t *ent)
 
 	if (ent->client)
 		layout_add_tracked_entity(&ent->client->layout, cocoon);
+	AI_EnemyAdded(cocoon);
 
 	safe_cprintf(ent, PRINT_HIGH, "Cocoon created\n");
 	gi.sound(cocoon, CHAN_VOICE, gi.soundindex("organ/organe3.wav"), 1, ATTN_STATIC, 0);
@@ -3120,6 +3128,7 @@ void fire_spikeball (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int
 
 	if (self->client)
 		layout_add_tracked_entity(&self->client->layout, grenade);
+	AI_EnemyAdded(grenade);
 
     gi.linkentity (grenade);
     grenade->nextthink = level.time + 1.0;

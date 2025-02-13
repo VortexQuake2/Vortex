@@ -642,15 +642,15 @@ qboolean AI_MoveToGoalEntity(edict_t *self, usercmd_t *ucmd)
 		VectorMA(start, 256, v, end);
 		tr = gi.trace(start, NULL, NULL, end, self->movetarget, MASK_SOLID);
 		VectorCopy(tr.endpos, dest);
-
+		/*
 		// show BFG explosion at projectile origin
 		gi.WriteByte(svc_temp_entity);
 		gi.WriteByte(TE_BFG_EXPLOSION);
 		gi.WritePosition(dest);
 		gi.multicast(dest, MULTICAST_PVS);
-
+		*/
 		// draw debug trail between the projectile origin and us
-		G_DrawDebugTrail(dest, start);
+		//G_DrawDebugTrail(dest, start);
 		//G_DrawLaser(self, start, self->s.origin, 0xd0d1d2d3, 1);
 // 
 		// set movement direction toward hiding spot

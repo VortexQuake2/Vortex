@@ -10,7 +10,9 @@ void detector_remove (edict_t *self)
 		if (self->owner->client)
 		{
 			safe_cprintf(self->owner, PRINT_HIGH, "%d/%d detectors remaining.\n", self->owner->num_detectors, (int)DETECTOR_MAX_COUNT);
-			layout_add_tracked_entity(&self->owner->client->layout, self); // remove from HUD
+			//layout_add_tracked_entity(&self->owner->client->layout, self); // remove from HUD
+			layout_remove_tracked_entity(&self->owner->client->layout, self);
+			AI_EnemyRemoved(self);
 		}
 	}
 
@@ -350,6 +352,7 @@ void BuildDetector (edict_t *self, vec3_t start, vec3_t forward, int slvl, float
 	self->client->ability_delay = self->holdtime = level.time + DETECTOR_DELAY * delay_mult;
 	self->client->pers.inventory[power_cube_index] -= cost;
 	layout_add_tracked_entity(&self->client->layout, detector); // add to HUD
+	AI_EnemyAdded(detector);
 
 	//  entity made a sound, used to alert monsters
 	self->lastsound = level.framenum;

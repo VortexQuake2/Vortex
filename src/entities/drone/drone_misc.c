@@ -540,7 +540,7 @@ void drone_death (edict_t *self, edict_t *attacker)
 
 		// world monsters sometimes drop ammo
 		if (self->activator && !self->activator->client
-			&& self->item && (random() >= 0.2))
+			&& self->item && (random() >= 0.2) && G_NearbyEnts(self->s.origin, 1024, true) < 50)
 			Drop_Item(self, self->item);
 	}
 

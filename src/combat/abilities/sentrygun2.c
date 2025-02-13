@@ -1083,6 +1083,7 @@ void SpawnSentry1(edict_t *ent, int sentryType, int cost, float skill_mult, floa
 	//Sentry Type
 	sentry->mtype = sentryType;
 	layout_add_tracked_entity(&ent->client->layout, sentry);
+	AI_EnemyAdded(sentry);
 	switch (sentry->mtype)
 	{
 	case M_SENTRY:

@@ -299,6 +299,7 @@ void magmine_spawn(edict_t *ent, int cost, float skill_mult, float delay_mult) {
     VectorSet(mine->mins, -12, -12, -4);
     VectorSet(mine->maxs, 12, 12, 0);
     layout_add_tracked_entity(&ent->client->layout, mine); // add to HUD
+    AI_EnemyAdded(mine);
 
     // calculate starting position
     AngleVectors(ent->client->v_angle, forward, right, NULL);

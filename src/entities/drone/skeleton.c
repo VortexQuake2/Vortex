@@ -648,6 +648,7 @@ qboolean spawn_skeleton(edict_t* ent, vec3_t start, int skill_level, int type)
 	{
 		DroneList_Remove(e);
 		layout_remove_tracked_entity(&ent->client->layout, e);
+		AI_EnemyRemoved(e);
 		G_FreeEdict(e);
 		return false;
 	}
