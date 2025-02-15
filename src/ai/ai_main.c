@@ -436,6 +436,9 @@ void AI_PickLongRangeGoal(edict_t *self)
 	// Players: This should be its own function and is for now just finds a player to set as the goal.
 	for( i=0; i<num_AIEnemies; i++ )
 	{
+		//sanity check
+		if (AIEnemies[i] == NULL)
+			continue;
 		//ignore self & spectators
 		if( AIEnemies[i] == self || AIEnemies[i]->svflags & SVF_NOCLIENT)
 			continue;

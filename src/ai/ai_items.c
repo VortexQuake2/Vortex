@@ -31,6 +31,8 @@ in NO WAY supported by Steve Yeager.
 void AI_InitEnemiesList()
 {
 	memset(&AIEnemies, 0, sizeof(AIEnemies));
+	num_AIEnemies = 0;
+	//gi.dprintf("%s\n", __func__);
 }
 
 //==========================================
@@ -61,6 +63,7 @@ void AI_EnemyAdded(edict_t *ent)
 
 	if( num_AIEnemies < MAX_EDICTS )
 		AIEnemies[num_AIEnemies++] = ent;
+	//gi.dprintf("%s: num_AIEnemies %d\n", __func__, num_AIEnemies);
 }
 
 //==========================================
