@@ -168,35 +168,36 @@ qboolean BOT_ServerCommand (void)
 		name = bot_names[GetRandom(0, sizeof(bot_names - 1))];
 	}
 
-	if( !Q_stricmp (cmd, "addbot") )
-	{ 
-		if(ctf->value) // team, name, class
+	if (!Q_stricmp(cmd, "addbot"))
+	{
+		if (ctf->value) // team, name, class
 			BOT_SpawnBot(gi.argv(2), gi.argv(3), NULL, NULL, gi.argv(4));//BOT_SpawnBot(gi.argv(2), gi.argv(3), gi.argv(4), NULL);
 		else // name, class
 			BOT_SpawnBot(NULL, name, NULL, NULL, gi.argv(3));//BOT_SpawnBot ( NULL, name, gi.argv(3), NULL );
-	}	
+	}
 	// removebot
-    else if( !Q_stricmp (cmd, "removebot") )
-    	BOT_RemoveBot(gi.argv(2));
+	else if (!Q_stricmp(cmd, "removebot"))
+		BOT_RemoveBot(gi.argv(2));
 
-	else if( !Q_stricmp (cmd, "editnodes") )
+	else if (!Q_stricmp(cmd, "editnodes"))
 		AITools_InitEditnodes();
 
-	else if( !Q_stricmp (cmd, "makenodes") )
+	else if (!Q_stricmp(cmd, "makenodes"))
 		AITools_InitMakenodes();
 
-	else if( !Q_stricmp (cmd, "savenodes") )
+	else if (!Q_stricmp(cmd, "savenodes"))
 		AITools_SaveNodes();
 
-	else if( !Q_stricmp (cmd, "addbotroam") )
+	else if (!Q_stricmp(cmd, "addbotroam"))
 		AITools_AddBotRoamNode();
 
-	else if( !Q_stricmp (cmd, "addmonster") )
-    	M_default_Spawn ();
+	else if (!Q_stricmp(cmd, "addmonster"))
+		M_default_Spawn();
 
 	else if (!Q_stricmp(cmd, "aidebug"))
 		AIDebug_ToogleBotDebug();
-
+	//else if (!Q_stricmp(cmd, "aitest"))
+	//	AI_InitEnemiesList();
 	else
 		return false;
 

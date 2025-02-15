@@ -119,6 +119,7 @@ void		AI_ResetWeights(edict_t *ent);
 float		AI_ItemWeight(edict_t *ent, edict_t *item);
 qboolean	AI_ItemIsReachable(edict_t *self,vec3_t goal);
 qboolean	AI_IsItem(edict_t* it);//GHz
+void AI_InitEnemiesList();//GHz
 
 // ai_movement.c
 //----------------------------------------------------------

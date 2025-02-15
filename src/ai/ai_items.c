@@ -28,6 +28,11 @@ in NO WAY supported by Steve Yeager.
 
 //ACE
 
+void AI_InitEnemiesList()
+{
+	memset(&AIEnemies, 0, sizeof(AIEnemies));
+}
+
 //==========================================
 // AI_FindEnemyListPosition
 // Find the position of ent in the AIEnemies list
@@ -49,6 +54,8 @@ int AI_FindEnemyListPosition(edict_t* ent)
 //==========================================
 void AI_EnemyAdded(edict_t *ent)
 {
+	if (!bot_enable->value)
+		return;
 	if (AI_FindEnemyListPosition(ent) != -1)
 		return;//GHz: enemy is already in the list
 
@@ -66,6 +73,8 @@ void AI_EnemyRemoved(edict_t *ent)
 	int i;
 	int pos = 0;
 
+	if (!bot_enable->value)
+		return;
 	if (!ent)
 		return;
 	// watch for 0 players

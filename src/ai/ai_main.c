@@ -62,6 +62,7 @@ void AI_NewMap(void)
 	//Load nodes
 	AI_InitNavigationData();
 	AI_InitAIWeapons();
+	AI_InitEnemiesList();//GHz
 	AI_InitAIAbilities();//GHz
 	BOT_AutoSpawn();//GHz
 }
