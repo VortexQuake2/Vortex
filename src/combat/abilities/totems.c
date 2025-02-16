@@ -538,17 +538,22 @@ void SpawnTotem(edict_t *ent, int abilityID)
 	default: return;
 	}
 
+	// remove totem if player tries to spawn the same type
+	if (ent->totem1 && ent->totem1->inuse && totemType == ent->totem1->mtype)
+	{
+		RemoveTotem(ent->totem1);
+		return;
+	}
+	if (ent->totem2 && ent->totem2->inuse && totemType == ent->totem2->mtype)
+	{
+		RemoveTotem(ent->totem2);
+		return;
+	}
+
 	//Can't create too many totems.
 	if(ent->totem1)
 	{
-		//Can't have more than one totem without the talent.
-        /*if(vrx_get_talent_level(ent, TALENT_TOTEM) < 1)
-        {
-            safe_cprintf(ent, PRINT_HIGH, "You already have a totem active.\n");
-            return;
-        }
-        //Can't have more than two totems.
-        else*/ if(ent->totem2)
+		if(ent->totem2)
 		{
 			safe_cprintf(ent, PRINT_HIGH, "You already have two totems active.\n");
 			return;
@@ -569,11 +574,6 @@ void SpawnTotem(edict_t *ent, int abilityID)
 			if(totemType == opposite)
 			{
 				safe_cprintf(ent, PRINT_HIGH, "You can't create two totems of opposite elemental alignment.\n");
-				return;
-			}
-			else if(totemType == ent->totem1->mtype)
-			{
-				safe_cprintf(ent, PRINT_HIGH, "You can't create totems of the same type.\n");
 				return;
 			}
 		}
