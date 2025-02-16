@@ -484,8 +484,8 @@ char *GetTalentString(int talent_ID) {
             return "Corpulence";
         case TALENT_OBLATION:
             return "Oblation";
-        case TALENT_DIM_VISION:
-            return "Dim Vision";
+        case TALENT_AUTOCURSE:
+            return "Autocurse";
         case TALENT_BLACK_DEATH:
             return "Black Death";
         //Shaman Talents

@@ -473,7 +473,8 @@ float vrx_apply_bless_damage_bonus(const edict_t *attacker, float damage, int dt
 float vrx_apply_weaken(const edict_t *targ, float damage) {
     que_t *slot = que_findtype(targ->curses, NULL, WEAKEN);
     if (slot != NULL) {
-        float temp = WEAKEN_MULT_BASE + (slot->ent->owner->myskills.abilities[WEAKEN].current_level * WEAKEN_MULT_BONUS);
+        float temp = WEAKEN_MULT_BASE + (slot->ent->monsterinfo.level * WEAKEN_MULT_BONUS);
+            //(slot->ent->owner->myskills.abilities[WEAKEN].current_level * WEAKEN_MULT_BONUS);
         damage *= temp;
     }
     return damage;
@@ -482,11 +483,12 @@ float vrx_apply_weaken(const edict_t *targ, float damage) {
 float vrx_apply_amp_damage(const edict_t *targ, float damage) {
     que_t *slot = que_findtype(targ->curses, NULL, AMP_DAMAGE);
     if (slot  != NULL) {
-        float temp = AMP_DAMAGE_MULT_BASE +
-               (slot->ent->owner->myskills.abilities[AMP_DAMAGE].current_level * AMP_DAMAGE_MULT_BONUS);
+        float temp = AMP_DAMAGE_MULT_BASE + (slot->ent->monsterinfo.level * AMP_DAMAGE_MULT_BONUS);
+               //(slot->ent->owner->myskills.abilities[AMP_DAMAGE].current_level * AMP_DAMAGE_MULT_BONUS);
         // cap amp damage at 3x damage
         if (temp > 3)
             temp = 3;
+        //gi.dprintf("amp damage (%d) multiplier: %.1fx\n", slot->ent->monsterinfo.level, temp);
         damage *= temp;
     }
     return damage;

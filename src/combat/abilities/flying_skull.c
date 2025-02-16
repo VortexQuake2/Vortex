@@ -443,12 +443,12 @@ void skull_attack (edict_t *self)
 		// Talent: Hellspawn Mastery
 		// each talent upgrade increases the chance to proc a chainlightning attack
 		float chance = 0.1 * self->light_level; 
-		if (level.framenum > self->dim_vision_delay && chance > random())
+		if (level.framenum > self->autocurse_delay && chance > random())
 		{
 			int cl_dmg = 10 * damage;
 			//gi.dprintf("hellspawn firing CL. base dmg %d modified %d CL %d\n", self->dmg, damage, cl_dmg);
 			ChainLightning(self, start, v, cl_dmg, SKULL_ATTACK_RANGE, CLIGHTNING_INITIAL_HR);
-			self->dim_vision_delay = level.framenum + (int)(1 / FRAMETIME);
+			self->autocurse_delay = level.framenum + (int)(1 / FRAMETIME);
 			return; // done attacking
 		}
 

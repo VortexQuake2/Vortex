@@ -2032,7 +2032,7 @@ struct edict_s
 	edict_t		*cocoon;
 	edict_t		*holyground;			//Talent: Holy/Unholy Ground
 	int			mirroredPosition;
-	int			dim_vision_delay;		//Talent: Dim Vision - next server frame that chance trigger is rolled
+	int			autocurse_delay;		//Talent: Autocurse - next server frame that chance trigger is rolled
 	float		fury_time;
 	float		slowed_factor;
 	float		slowed_time;

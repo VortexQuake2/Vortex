@@ -20,6 +20,28 @@ void vrx_curse_heal_all(edict_t* target) {
     }
 }
 
+float vrx_get_curse_duration(edict_t* ent, int type)
+{
+	float talentLevel, duration;
+
+	switch (type)
+	{
+	case CURSE: duration = CURSE_DURATION_BASE + (CURSE_DURATION_BONUS * ent->myskills.abilities[CURSE].current_level); break;
+	case WEAKEN: duration = WEAKEN_DURATION_BASE + (WEAKEN_DURATION_BONUS * ent->myskills.abilities[WEAKEN].current_level); break;
+	case LIFE_DRAIN: duration = LIFE_DRAIN_DURATION_BASE + LIFE_DRAIN_DURATION_BONUS * ent->myskills.abilities[LIFE_DRAIN].current_level; break;
+	case AMP_DAMAGE: duration = AMP_DAMAGE_DURATION_BASE + AMP_DAMAGE_DURATION_BONUS * ent->myskills.abilities[AMP_DAMAGE].current_level; break;
+	case LIFE_TAP: duration = LIFE_TAP_INITIAL_DURATION + LIFE_TAP_ADDON_DURATION * ent->myskills.abilities[LIFE_TAP].current_level; break;
+	default: duration = CURSE_DURATION_BASE + (CURSE_DURATION_BONUS * ent->myskills.abilities[CURSE].current_level); break;
+	}
+	//Talent: Evil curse
+	talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
+	if (talentLevel > 0)
+		duration *= 1.0 + 0.25 * talentLevel;
+
+	if (duration < 1)
+		duration = 1;
+	return duration;
+}
 
 //************************************************************************************************
 //			Bless think
@@ -395,7 +417,7 @@ char *GetCurseName (int type)
 	}
 }
 
-void CurseMessage (edict_t *caster, edict_t *target, int type, float duration, qboolean isCurse)
+void CurseMessage (edict_t *caster, edict_t *target, int type, int curseLevel, float duration, qboolean isCurse)
 {
 	char *curseName = GetCurseName(type);
 	char *typeName;
@@ -408,28 +430,78 @@ void CurseMessage (edict_t *caster, edict_t *target, int type, float duration, q
 	//Notify the target
 	if ((target->client) && !(target->svflags & SVF_MONSTER))
 	{
-		safe_cprintf(target, PRINT_HIGH, "**You have been %s with %s for %0.1f second(s)**\n", typeName, curseName, duration);
+		safe_cprintf(target, PRINT_HIGH, "**You have been %s with %s (%d) for %0.1f second(s)**\n", typeName, curseName, curseLevel, duration);
 		if (caster && caster->client)
-			safe_cprintf(caster, PRINT_HIGH, "%s %s with %s for %0.1f second(s)\n", typeName, target->myskills.player_name, curseName, duration);
+			safe_cprintf(caster, PRINT_HIGH, "%s %s with %s (%d) for %0.1f second(s)\n", typeName, target->myskills.player_name, curseName, curseLevel, duration);
 	}
 	else if (target->mtype)
 	{
 		if (PM_MonsterHasPilot(target))
 		{
-			safe_cprintf(target->activator, PRINT_HIGH, "**You have been %s with %s for %0.1f second(s)**\n", typeName, curseName, duration);
+			safe_cprintf(target->activator, PRINT_HIGH, "**You have been %s with %s (%d) for %0.1f second(s)**\n", typeName, curseName, curseLevel, duration);
 			if (caster && caster->client)
-				safe_cprintf(caster, PRINT_HIGH, "%s %s with %s for %0.1f second(s)\n", typeName, target->activator->client->pers.netname, curseName, duration);
+				safe_cprintf(caster, PRINT_HIGH, "%s %s with %s (%d) for %0.1f second(s)\n", typeName, target->activator->client->pers.netname, curseName, curseLevel, duration);
 			return;
 		}
 
 		if (caster && caster->client)
-			safe_cprintf(caster, PRINT_HIGH, "%s %s with %s for %0.1f second(s)\n", typeName, V_GetMonsterName(target), curseName, duration);
+			safe_cprintf(caster, PRINT_HIGH, "%s %s with %s (%d) for %0.1f second(s)\n", typeName, V_GetMonsterName(target), curseName, curseLevel, duration);
 	}
 	else if (caster && caster->client)
-		safe_cprintf(caster, PRINT_HIGH, "%s %s with %s for %0.1f second(s)\n", typeName, target->classname, curseName, duration);
+		safe_cprintf(caster, PRINT_HIGH, "%s %s with %s (%d) for %0.1f second(s)\n", typeName, target->classname, curseName, curseLevel, duration);
 }
 
-void CurseRadiusAttack (edict_t *caster, int type, int range, int radius, float duration, qboolean isCurse)
+// curse enemies nearby target
+void CurseRadius(edict_t* caster, edict_t *targ, int type, int curse_level, int radius, float duration, qboolean isCurse, qboolean play_sound)
+{
+	// write a nice effect so everyone knows we've cast a spell
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_TELEPORT_EFFECT);
+	gi.WritePosition(caster->s.origin);
+	gi.multicast(caster->s.origin, MULTICAST_PVS);
+
+	//Play the spell sound!
+	if (play_sound)
+	{
+		switch (type)
+		{
+		case LIFE_TAP: gi.sound(caster, CHAN_ITEM, gi.soundindex("curses/reversevampire.wav"), 1, ATTN_NORM, 0); break;
+		case AMP_DAMAGE: gi.sound(caster, CHAN_ITEM, gi.soundindex("curses/amplifydamage.wav"), 1, ATTN_NORM, 0); break;
+		case CURSE: gi.sound(caster, CHAN_ITEM, gi.soundindex("curses/curse.wav"), 1, ATTN_NORM, 0); break;
+		case WEAKEN: gi.sound(caster, CHAN_ITEM, gi.soundindex("curses/weaken.wav"), 1, ATTN_NORM, 0); break;
+		default: gi.sound(caster, CHAN_ITEM, gi.soundindex("curses/curse.wav"), 1, ATTN_NORM, 0); break;
+		}
+	}
+	
+	if (caster->client)
+	{
+		caster->client->idle_frames = 0;
+		caster->client->ability_delay = level.time;// for monster hearing (check if ability was recently used/cast)
+	}
+
+	edict_t* e = NULL;
+
+	// make sure the curse owner is the client summoner, if available
+	edict_t* curse_owner = G_GetClient(caster);
+	if (!curse_owner)
+		curse_owner = caster;
+
+	// target anything nearby target
+	while ((e = findradius(e, targ->s.origin, radius)) != NULL)
+	{
+		if (!CanCurseTarget(caster, e, type, isCurse, true))
+			continue;
+		// clear path between org and target origin (alternate vis check)
+		//if (!G_IsClearPath(NULL, MASK_SOLID, org, e->s.origin))
+		//	continue;
+		// try to add the curse
+		if (!curse_add(e, curse_owner, type, curse_level, duration))
+			continue;
+		CurseMessage(curse_owner, e, type, curse_level, duration, isCurse);
+	}
+}
+
+void CurseRadiusAttack (edict_t *caster, int type, int curse_level, int range, int radius, float duration, qboolean isCurse)
 {
 	edict_t *e=NULL, *f=NULL;
 
@@ -451,9 +523,9 @@ void CurseRadiusAttack (edict_t *caster, int type, int range, int radius, float 
 			continue;
 		if (!infront(caster, e))
 			continue;
-		if (!curse_add(e, caster, type, 0, duration))
+		if (!curse_add(e, caster, type, curse_level, duration))
 			continue;
-		CurseMessage(caster, e, type, duration, isCurse);
+		CurseMessage(caster, e, type, curse_level, duration, isCurse);
 
 		// target anything in-range of this entity
 		while ((f = findradius(f, e->s.origin, radius)) != NULL)
@@ -464,9 +536,9 @@ void CurseRadiusAttack (edict_t *caster, int type, int range, int radius, float 
 				continue;
 			if (!visible(e, f))
 				continue;
-			if (!curse_add(f, caster, type, 0, duration))
+			if (!curse_add(f, caster, type, curse_level, duration))
 				continue;
-			CurseMessage(caster, f, type, duration, isCurse);
+			CurseMessage(caster, f, type, curse_level, duration, isCurse);
 		}
 
 		break;
@@ -519,7 +591,7 @@ void Cmd_LowerResist (edict_t *ent)
 
 void Cmd_LifeTap(edict_t* ent)
 {
-	int range, radius, talentLevel, cost = LIFE_TAP_COST;
+	int range, radius, talentLevel, curseLevel, cost = LIFE_TAP_COST;
 	float duration;
 
 	if (debuginfo->value)
@@ -532,19 +604,20 @@ void Cmd_LifeTap(edict_t* ent)
 	if (!V_CanUseAbilities(ent, LIFE_TAP, cost, true))
 		return;
 
-	range = LIFE_TAP_INITIAL_RANGE + LIFE_TAP_ADDON_RANGE * ent->myskills.abilities[LIFE_TAP].current_level;
-	radius = LIFE_TAP_INITIAL_RADIUS + LIFE_TAP_ADDON_RADIUS * ent->myskills.abilities[LIFE_TAP].current_level;
-	duration = LIFE_TAP_INITIAL_DURATION + LIFE_TAP_ADDON_DURATION * ent->myskills.abilities[LIFE_TAP].current_level;
+	curseLevel = ent->myskills.abilities[LIFE_TAP].current_level;
+	range = LIFE_TAP_INITIAL_RANGE + LIFE_TAP_ADDON_RANGE * curseLevel;
+	radius = LIFE_TAP_INITIAL_RADIUS + LIFE_TAP_ADDON_RADIUS * curseLevel;
+	//duration = LIFE_TAP_INITIAL_DURATION + LIFE_TAP_ADDON_DURATION * curseLevel;
 
 	// evil curse talent
-	talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
-	if (talentLevel > 0)
-		duration *= 1.0 + 0.25 * talentLevel;
+	//talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
+	//if (talentLevel > 0)
+	//	duration *= 1.0 + 0.25 * talentLevel;
 
-	if (duration < 1)
-		duration = 1;
-
-	CurseRadiusAttack(ent, LIFE_TAP, range, radius, duration, true);
+	//if (duration < 1)
+	//	duration = 1;
+	duration = vrx_get_curse_duration(ent, LIFE_TAP);
+	CurseRadiusAttack(ent, LIFE_TAP, curseLevel, range, radius, duration, true);
 
 	//Finish casting the spell
 	//ent->client->ability_delay = level.time + LOWER_RESIST_DELAY;
@@ -562,7 +635,7 @@ void Cmd_LifeTap(edict_t* ent)
 
 void Cmd_AmpDamage(edict_t *ent)
 {
-	int range, radius, talentLevel, cost=AMP_DAMAGE_COST;
+	int range, radius, talentLevel, curseLevel, cost=AMP_DAMAGE_COST;
 	float duration;
 
 	if (debuginfo->value)
@@ -575,19 +648,22 @@ void Cmd_AmpDamage(edict_t *ent)
 	if (!V_CanUseAbilities(ent, AMP_DAMAGE, cost, true))
 		return;
 
-	range = CURSE_DEFAULT_INITIAL_RANGE + CURSE_DEFAULT_ADDON_RANGE * ent->myskills.abilities[AMP_DAMAGE].current_level;
-	radius = CURSE_DEFAULT_INITIAL_RADIUS + CURSE_DEFAULT_ADDON_RADIUS * ent->myskills.abilities[AMP_DAMAGE].current_level;
-	duration = AMP_DAMAGE_DURATION_BASE + AMP_DAMAGE_DURATION_BONUS * ent->myskills.abilities[AMP_DAMAGE].current_level;
+	curseLevel = ent->myskills.abilities[AMP_DAMAGE].current_level;
+	range = CURSE_DEFAULT_INITIAL_RANGE + CURSE_DEFAULT_ADDON_RANGE * curseLevel;
+	radius = CURSE_DEFAULT_INITIAL_RADIUS + CURSE_DEFAULT_ADDON_RADIUS * curseLevel;
+	//duration = AMP_DAMAGE_DURATION_BASE + AMP_DAMAGE_DURATION_BONUS * ent->myskills.abilities[AMP_DAMAGE].current_level;
 
 	//Talent: Evil curse
-    talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
-	if(talentLevel > 0)
-		duration *= 1.0 + 0.25 * talentLevel;
+   // talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
+	//if(talentLevel > 0)
+	//	duration *= 1.0 + 0.25 * talentLevel;
 
-	if (duration < 1)
-		duration = 1;
+	//if (duration < 1)
+	//	duration = 1;
 
-	CurseRadiusAttack(ent, AMP_DAMAGE, range, radius, duration, true);
+	duration = vrx_get_curse_duration(ent, AMP_DAMAGE);
+	//gi.dprintf("%s: duration %f\n", __func__, duration);
+	CurseRadiusAttack(ent, AMP_DAMAGE, curseLevel, range, radius, duration, true);
 	
 	//Finish casting the spell
 	//ent->client->ability_delay = level.time + AMP_DAMAGE_DELAY;
@@ -602,22 +678,9 @@ void Cmd_AmpDamage(edict_t *ent)
 //			Curse
 //************************************************************************************************
 
-float vrx_get_curse_duration(edict_t* ent)
-{
-	float talentLevel, duration = CURSE_DURATION_BASE + (CURSE_DURATION_BONUS * ent->myskills.abilities[CURSE].current_level);
-	//Talent: Evil curse
-	talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
-	if (talentLevel > 0)
-		duration *= 1.0 + 0.25 * talentLevel;
-
-	if (duration < 1)
-		duration = 1;
-	return duration;
-}
-
 void Cmd_Curse(edict_t *ent)
 {
-	int range, radius, talentLevel, cost=CURSE_COST;
+	int range, radius, talentLevel, curseLevel, cost=CURSE_COST;
 	float duration;
 	edict_t *target = NULL;
 
@@ -631,11 +694,12 @@ void Cmd_Curse(edict_t *ent)
 	if (!V_CanUseAbilities(ent, CURSE, cost, true))
 		return;
 
-	range = CURSE_DEFAULT_INITIAL_RANGE + CURSE_DEFAULT_ADDON_RANGE * ent->myskills.abilities[CURSE].current_level;
-	radius = CURSE_DEFAULT_INITIAL_RADIUS + CURSE_DEFAULT_ADDON_RADIUS * ent->myskills.abilities[CURSE].current_level;
-	duration = vrx_get_curse_duration(ent);
+	curseLevel = ent->myskills.abilities[CURSE].current_level;
+	range = CURSE_DEFAULT_INITIAL_RANGE + CURSE_DEFAULT_ADDON_RANGE * curseLevel;
+	radius = CURSE_DEFAULT_INITIAL_RADIUS + CURSE_DEFAULT_ADDON_RADIUS * curseLevel;
+	duration = vrx_get_curse_duration(ent, CURSE);
 
-	CurseRadiusAttack(ent, CURSE, range, radius, duration, true);
+	CurseRadiusAttack(ent, CURSE, curseLevel, range, radius, duration, true);
 
 	//Finish casting the spell
 	//ent->client->ability_delay = level.time + CURSE_DELAY;
@@ -655,7 +719,7 @@ void Cmd_Curse(edict_t *ent)
 
 void Cmd_Weaken(edict_t *ent)
 {
-	int range, radius, talentLevel, cost=WEAKEN_COST;
+	int range, radius, talentLevel, curseLevel, cost=WEAKEN_COST;
 	float duration;
 
 	if (debuginfo->value)
@@ -668,19 +732,21 @@ void Cmd_Weaken(edict_t *ent)
 	if (!V_CanUseAbilities(ent, WEAKEN, cost, true))
 		return;
 
-	range = CURSE_DEFAULT_INITIAL_RANGE + CURSE_DEFAULT_ADDON_RANGE * ent->myskills.abilities[WEAKEN].current_level;
-	radius = CURSE_DEFAULT_INITIAL_RADIUS + CURSE_DEFAULT_ADDON_RADIUS * ent->myskills.abilities[WEAKEN].current_level;
-	duration = WEAKEN_DURATION_BASE + (WEAKEN_DURATION_BONUS * ent->myskills.abilities[WEAKEN].current_level);
+	curseLevel = ent->myskills.abilities[WEAKEN].current_level;
+	range = CURSE_DEFAULT_INITIAL_RANGE + CURSE_DEFAULT_ADDON_RANGE * curseLevel;
+	radius = CURSE_DEFAULT_INITIAL_RADIUS + CURSE_DEFAULT_ADDON_RADIUS * curseLevel;
+	//duration = WEAKEN_DURATION_BASE + (WEAKEN_DURATION_BONUS * curseLevel);
 
 	//Talent: Evil curse
-    talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
-	if(talentLevel > 0)
-		duration *= 1.0 + 0.25 * talentLevel;
+    //talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
+	//if(talentLevel > 0)
+	//	duration *= 1.0 + 0.25 * talentLevel;
 
-	if (duration < 1)
-		duration = 1;
+	//if (duration < 1)
+	//	duration = 1;
 
-	CurseRadiusAttack(ent, WEAKEN, range, radius, duration, true);
+	duration = vrx_get_curse_duration(ent, WEAKEN);
+	CurseRadiusAttack(ent, WEAKEN, curseLevel, range, radius, duration, true);
 	
 	//Finish casting the spell
 	//ent->client->ability_delay = level.time + WEAKEN_DELAY;
@@ -697,7 +763,7 @@ void Cmd_Weaken(edict_t *ent)
 
 void Cmd_LifeDrain(edict_t *ent)
 {
-	int		range, radius, talentLevel, cost=LIFE_DRAIN_COST;
+	int		range, radius, talentLevel, curseLevel, cost=LIFE_DRAIN_COST;
 	float	duration;
 
 	if (debuginfo->value)
@@ -710,19 +776,20 @@ void Cmd_LifeDrain(edict_t *ent)
 	if (!V_CanUseAbilities(ent, LIFE_DRAIN, cost, true))
 		return;
 
-	range = CURSE_DEFAULT_INITIAL_RANGE + CURSE_DEFAULT_ADDON_RANGE * ent->myskills.abilities[LIFE_DRAIN].current_level;
-	radius = CURSE_DEFAULT_INITIAL_RADIUS + CURSE_DEFAULT_ADDON_RADIUS * ent->myskills.abilities[LIFE_DRAIN].current_level;
-	duration = LIFE_DRAIN_DURATION_BASE + LIFE_DRAIN_DURATION_BONUS * ent->myskills.abilities[LIFE_DRAIN].current_level;
+	curseLevel = ent->myskills.abilities[LIFE_DRAIN].current_level;
+	range = CURSE_DEFAULT_INITIAL_RANGE + CURSE_DEFAULT_ADDON_RANGE * curseLevel;
+	radius = CURSE_DEFAULT_INITIAL_RADIUS + CURSE_DEFAULT_ADDON_RADIUS * curseLevel;
+	//duration = LIFE_DRAIN_DURATION_BASE + LIFE_DRAIN_DURATION_BONUS * curseLevel;
 
 	//Talent: Evil curse
-    talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
-	if(talentLevel > 0)
-		duration *= 1.0 + 0.25 * talentLevel;
+    //talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
+	//if(talentLevel > 0)
+	//	duration *= 1.0 + 0.25 * talentLevel;
 
-	if (duration < 1)
-		duration = 1;
-
-	CurseRadiusAttack(ent, LIFE_DRAIN, range, radius, duration, true);
+	//if (duration < 1)
+	//	duration = 1;
+	duration = vrx_get_curse_duration(ent, LIFE_DRAIN);
+	CurseRadiusAttack(ent, LIFE_DRAIN, curseLevel, range, radius, duration, true);
 	
 	//Finish casting the spell
 	//ent->client->ability_delay = level.time + LIFE_DRAIN_DELAY;
@@ -1322,3 +1389,45 @@ void CurseEffects (edict_t *self, int num, int color)
 	gi.multicast(start, MULTICAST_PVS);
 }
 
+// number of curses eligible for Autocurse selection
+#define NUM_CURSES 4
+const int CURSE_INDICES[NUM_CURSES] = { LIFE_TAP, AMP_DAMAGE, CURSE, WEAKEN }; // curse indices
+
+// selects randomly between the two highest-level curses and returns the index
+// returns -1 if nothing is upgraded
+int SelectRandomTopCurse(edict_t* player) 
+{
+	int highest_index = -1, second_highest_index = -1;
+	int highest_level = 0, second_highest_level = 0;
+
+	// Find the two highest level curses
+	for (int i = 0; i < NUM_CURSES; i++) {
+		int index = CURSE_INDICES[i];  // Get the actual ability index
+		int level = player->myskills.abilities[index].current_level;
+
+		if (level > highest_level) {
+			second_highest_level = highest_level;
+			second_highest_index = highest_index;
+
+			highest_level = level;
+			highest_index = index;
+		}
+		else if (level > second_highest_level) {
+			second_highest_level = level;
+			second_highest_index = index;
+		}
+	}
+
+	// If only one curse is upgraded, return that one
+	if (highest_index != -1 && second_highest_index == -1) {
+		return highest_index;
+	}
+
+	// Randomly choose between the highest and second highest
+	if (rand() % 2 == 0) {
+		return highest_index;
+	}
+	else {
+		return second_highest_index;
+	}
+}

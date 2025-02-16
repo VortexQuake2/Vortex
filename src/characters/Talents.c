@@ -56,7 +56,7 @@ const talentdef_t talents_necromancer[] = {
         {TALENT_HELLSPAWN_MASTERY, 5, false},
         {TALENT_CORPULENCE,     5, false},
         {TALENT_OBLATION,       5, false},
-        {TALENT_DIM_VISION,     5, false},
+        {TALENT_AUTOCURSE,     5, false},
         {TALENT_EVIL_CURSE,     5, false},
         {TALENT_BLACK_DEATH,    5, false},
         {-1,                    0, 0}
@@ -564,10 +564,10 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             menu_add_line(ent, "Can't combine with", MENU_WHITE_CENTERED);
             menu_add_line(ent, "Corpulence.", MENU_WHITE_CENTERED);
             return 3;
-        case TALENT_DIM_VISION:
+        case TALENT_AUTOCURSE:
             menu_add_line(ent, "Adds chance to", MENU_WHITE_CENTERED);
             menu_add_line(ent, "automatically curse", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "enemies that shoot you.", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "enemies that attack you.", MENU_WHITE_CENTERED);
             return 3;
         case TALENT_BLACK_DEATH:
             menu_add_line(ent, "Enemies that touch infected", MENU_WHITE_CENTERED);

@@ -48,7 +48,7 @@ float location_scaling(edict_t *targ, vec3_t point, int damage) {
 */
 
 void TossClientWeapon (edict_t *self);
-float vrx_get_curse_duration(edict_t* ent);
+float vrx_get_curse_duration(edict_t* ent, int type);
 
 qboolean HitTheWeapon (edict_t *targ, edict_t *attacker, const vec3_t point, int take, int dflags)
 {
@@ -799,9 +799,11 @@ int G_AutoTBall(edict_t *targ, float take)
 void AddDmgList (edict_t *self, edict_t *other, int damage);
 void tech_checkrespawn (edict_t *ent);
 qboolean curse_add(edict_t *target, edict_t *caster, int type, int curse_level, float duration);//4.4
-void CurseMessage (edict_t *caster, edict_t *target, int type, float duration, qboolean isCurse);//4.4
+void CurseMessage(edict_t* caster, edict_t* target, int type, int curseLevel, float duration, qboolean isCurse);//4.4
 void hw_checkflag(edict_t* ent); // az
 qboolean M_TryRespawn(edict_t* self, qboolean remove_if_fail);
+int SelectRandomTopCurse(edict_t* player);
+void CurseRadius(edict_t* caster, edict_t *targ, int type, int curse_level, int radius, float duration, qboolean isCurse, qboolean play_sound);
 int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker, 
 			   vec3_t dir, vec3_t point, vec3_t normal, float damage, int knockback, int dflags, int mod)
 {
@@ -1110,31 +1112,36 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		if (targ->mtype == M_OBSTACLE)
 			targ->svflags &= ~SVF_NOCLIENT;
 
-		//Talent: Dim Vision
-        if (G_EntIsAlive(targ) && targ_player && ((talentLevel = vrx_get_talent_level(targ_player, TALENT_DIM_VISION)) > 0)
-            && (level.framenum > targ->dim_vision_delay) && (targ != attacker)) // 10% chance per 1 second
+		//Talent: Autocurse
+        if (G_EntIsAlive(targ) && targ_player && ((talentLevel = vrx_get_talent_level(targ_player, TALENT_AUTOCURSE)) > 0)
+            && (level.framenum > targ->autocurse_delay) && (targ != attacker)) // 10% chance per 1 second
 			// az- fix autocurse
 		{
-			int curse_level;
-			
+			//int curse_level;
 			temp = 0.1 * talentLevel;
 			if (temp > random())
 			{
-				curse_level = targ_player->myskills.abilities[CURSE].current_level;
-				if (curse_level < 1)
-					curse_level = 1;
-				// add the curse
-				curse_add(attacker, targ_player, CURSE, curse_level, vrx_get_curse_duration(targ_player));
-				CurseMessage(targ_player, attacker, CURSE, curse_level, true);
-				//Play the spell sound!
-				gi.sound(targ, CHAN_ITEM, gi.soundindex("curses/curse.wav"), 1, ATTN_NORM, 0);
+				int curse_index;
+				
+				if ((curse_index = SelectRandomTopCurse(targ_player)) != -1)
+				{
+					int curse_level = targ_player->myskills.abilities[curse_index].current_level;
+					//if (curse_level < 1)
+					//	curse_level = 1;
+					CurseRadius(targ, attacker, curse_index, curse_level, 150, vrx_get_curse_duration(targ_player, curse_index), true, true);
+					// add the curse
+					//curse_add(attacker, targ_player, CURSE, curse_level, vrx_get_curse_duration(targ_player));
+					//CurseMessage(targ_player, attacker, CURSE, curse_level, true);
+					//Play the spell sound!
+					//gi.sound(targ, CHAN_ITEM, gi.soundindex("curses/curse.wav"), 1, ATTN_NORM, 0);
+				}
 			}
 
-			targ->dim_vision_delay = level.framenum + (int)(1 / FRAMETIME); // roll again in 1 second
+			targ->autocurse_delay = level.framenum + (int)(1 / FRAMETIME); // roll again in 1 second
 		}
 
 		//4.5 monster bonus flag ghostly chills targets
-		if (G_EntIsAlive(targ) && level.framenum > targ->dim_vision_delay)
+		if (G_EntIsAlive(targ) && level.framenum > targ->autocurse_delay)
 		{
 			if (attacker->monsterinfo.bonus_flags & BF_GHOSTLY)
 			{
@@ -1153,7 +1160,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 						safe_cprintf(targ, PRINT_HIGH, "You have been chilled for 10 seconds\n");
 				}
 
-				targ->dim_vision_delay = level.framenum + (int)(1 / FRAMETIME);
+				targ->autocurse_delay = level.framenum + (int)(1 / FRAMETIME);
 			}
 
 			if (attacker->monsterinfo.bonus_flags & BF_STYGIAN)
@@ -1162,10 +1169,10 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 				{
 					// add the curse
 					curse_add(targ, attacker, AMP_DAMAGE, 10, 10.0);
-					CurseMessage(attacker, targ, AMP_DAMAGE, 10.0, true);
+					CurseMessage(attacker, targ, AMP_DAMAGE, 10, 10.0, true);
 				}
 
-				targ->dim_vision_delay = level.framenum + (int)(1 / FRAMETIME);
+				targ->autocurse_delay = level.framenum + (int)(1 / FRAMETIME);
 			}
 		}
 	}
@@ -1242,7 +1249,8 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		// life tap vampire effect
 		if ((slot = que_findtype(targ->curses, NULL, LIFE_TAP)) != NULL && mod != MOD_CRIPPLE)
 		{
-			float lifeTapFactor = LIFE_TAP_INITIAL_FACTOR + LIFE_TAP_ADDON_FACTOR * slot->ent->owner->myskills.abilities[LIFE_TAP].current_level;
+			float lifeTapFactor = LIFE_TAP_INITIAL_FACTOR + LIFE_TAP_ADDON_FACTOR * slot->ent->monsterinfo.level;
+				//slot->ent->owner->myskills.abilities[LIFE_TAP].current_level;
 			V_ApplyVampire(attacker, take, lifeTapFactor, 1.0, true);
 		}
 
