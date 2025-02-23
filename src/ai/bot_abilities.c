@@ -81,15 +81,15 @@ void AI_InitAIAbilities(void)
 	AIAbilities[NOVA].RangeWeight[AIWEAP_SHORT_RANGE] = 0.5;
 	AIAbilities[NOVA].RangeWeight[AIWEAP_MELEE_RANGE] = 0.5;
 
-	//CRIPPLE (aka static field!)
-	AIAbilities[CRIPPLE].is_weapon = true;
-	AIAbilities[CRIPPLE].aimType = AI_AIMSTYLE_NONE; // radius attack, no aiming needed
-	AIAbilities[CRIPPLE].idealRange = AI_RANGE_LONG;
-	AIAbilities[CRIPPLE].RangeWeight[AIWEAP_SNIPER_RANGE] = 0; // exceeds cripple max range
-	AIAbilities[CRIPPLE].RangeWeight[AIWEAP_LONG_RANGE] = 0.5;
-	AIAbilities[CRIPPLE].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0.5;
-	AIAbilities[CRIPPLE].RangeWeight[AIWEAP_SHORT_RANGE] = 0.5;
-	AIAbilities[CRIPPLE].RangeWeight[AIWEAP_MELEE_RANGE] = 0.5;
+	//STATIC_FIELD
+	AIAbilities[STATIC_FIELD].is_weapon = true;
+	AIAbilities[STATIC_FIELD].aimType = AI_AIMSTYLE_NONE; // radius attack, no aiming needed
+	AIAbilities[STATIC_FIELD].idealRange = AI_RANGE_LONG;
+	AIAbilities[STATIC_FIELD].RangeWeight[AIWEAP_SNIPER_RANGE] = 0; // exceeds SF max range
+	AIAbilities[STATIC_FIELD].RangeWeight[AIWEAP_LONG_RANGE] = 0.5;
+	AIAbilities[STATIC_FIELD].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0.5;
+	AIAbilities[STATIC_FIELD].RangeWeight[AIWEAP_SHORT_RANGE] = 0.5;
+	AIAbilities[STATIC_FIELD].RangeWeight[AIWEAP_MELEE_RANGE] = 0.5;
 
 	//LIGHTNING
 	AIAbilities[LIGHTNING].is_weapon = true;
@@ -210,7 +210,7 @@ float AI_GetAbilityCost(edict_t* ent, int ability_index)
 	case LIGHTNING_STORM: return LIGHTNING_COST;
 	case BOMB_SPELL: return COST_FOR_BOMB;
 	case PLASMA_BOLT: return PLASMABOLT_COST;
-	case CRIPPLE: return CRIPPLE_COST;
+	case STATIC_FIELD: return STATICFIELD_COST;
 	case AMP_DAMAGE: return AMP_DAMAGE_COST;
 	}
 	return 0;
@@ -294,7 +294,7 @@ void Cmd_ChainLightning_f(edict_t* ent, float skill_mult, float cost_mult);
 void Cmd_Meteor_f(edict_t* ent, float skill_mult, float cost_mult);
 void Cmd_LightningStorm_f(edict_t* ent, float skill_mult, float cost_mult);
 void Cmd_Plasmabolt_f(edict_t* ent);
-void Cmd_Cripple_f(edict_t* ent);
+void Cmd_StaticField_f(edict_t* ent);
 void Cmd_AmpDamage(edict_t* ent);
 
 // aims and fires at enemy using the specified ability
@@ -365,7 +365,7 @@ void BOT_DMclass_FireAbility(edict_t* self, int ability_index)
 	case METEOR: Cmd_Meteor_f(self, 1.0, 1.0); break;
 	case LIGHTNING_STORM: Cmd_LightningStorm_f(self, 1.0, 1.0); break;
 	case PLASMA_BOLT: Cmd_Plasmabolt_f(self); break;
-	case CRIPPLE: Cmd_Cripple_f(self); break;
+	case STATIC_FIELD: Cmd_StaticField_f(self); break;
 	case AMP_DAMAGE: Cmd_AmpDamage(self); break;
 	}
 }

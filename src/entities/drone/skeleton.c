@@ -329,7 +329,7 @@ void skeleton_attack_swing(edict_t* self)
 	else
 		gi.sound(self, CHAN_WEAPON, sound_swing2, 1, ATTN_NORM, 0);
 
-	if ((e = M_MeleeAttack(self, M_MELEE_RANGE, damage, 0)) != NULL)
+	if ((e = M_MeleeAttack(self, self->enemy, M_MELEE_RANGE, damage, 0)) != NULL)
 	{
 		//gi.dprintf("skeleton swing attack caused enemy to burn\n");
 		// a successful strike has a chance to cause elemental damage/effects
@@ -644,7 +644,7 @@ qboolean spawn_skeleton(edict_t* ent, vec3_t start, int skill_level, int type)
 	e->mtype = M_SKELETON;
 	e->s.skinnum = type;
 	
-	if (!M_Initialize(ent, e, 1.0) || !G_IsValidLocation(NULL, start, e->mins, e->maxs))
+	if (!M_Initialize(ent, e, 0) || !G_IsValidLocation(NULL, start, e->mins, e->maxs))
 	{
 		DroneList_Remove(e);
 		layout_remove_tracked_entity(&ent->client->layout, e);

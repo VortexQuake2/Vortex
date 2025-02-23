@@ -476,10 +476,12 @@ char *GetTalentString(int talent_ID) {
         case TALENT_SIDEARMS:
             return "Sidearms";
         //Necromancer Talents
-        case TALENT_EVIL_CURSE:
-            return "Evil Curse";
+        //case TALENT_EVIL_CURSE:
+        //    return "Evil Curse";
         case TALENT_HELLSPAWN_MASTERY:
             return "Hellspawn Mastery";
+        case TALENT_GOLEM_MASTERY:
+            return "Golem Mastery";
         case TALENT_CORPULENCE:
             return "Corpulence";
         case TALENT_OBLATION:
@@ -637,8 +639,8 @@ char *GetAbilityString(int ability_number) {
             return "Beam";
         case MAGMINE:
             return "Mag Mine";
-        case CRIPPLE:
-            return "Cripple";
+        case STATIC_FIELD:
+            return "Static Field";
         case MAGICBOLT:
             return "Magic Bolt";
         case TELEPORT:
@@ -764,6 +766,8 @@ char *GetAbilityString(int ability_number) {
             return "Barrel Bombs";
         case SKELETON:
             return "Skeleton";
+        case GOLEM:
+            return "Golem";
         default:
             return "<ERROR: NO NAME>";
     }
@@ -1836,6 +1840,8 @@ char *V_GetMonsterKind(int mtype) {
             return "shambler";
         case M_SKELETON:
             return "skeleton";
+        case M_GOLEM:
+            return "golem";
         case M_JORG:
             return "jorg";
         case M_MAKRON:
@@ -2564,4 +2570,10 @@ qboolean vrx_is_morphing_polt(edict_t *ent) {
     return ent->myskills.class_num == CLASS_POLTERGEIST &&
            ent->myskills.abilities[MORPH_MASTERY].current_level &&
            !ent->myskills.abilities[MORPH_MASTERY].disable;
+}
+
+// returns true if ent has a pain/damaged skin
+qboolean vrx_has_pain_skin(edict_t* ent)
+{
+    return (ent->mtype != M_DECOY && ent->mtype != M_SKELETON && ent->mtype != M_GOLEM);
 }

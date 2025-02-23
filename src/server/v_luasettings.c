@@ -571,6 +571,10 @@ double SKELETON_MAX;
 double SKELETON_COST;
 double SKELETON_INITIAL_HEALTH;
 double SKELETON_ADDON_HEALTH;
+double GOLEM_MAX;
+double GOLEM_COST;
+double GOLEM_INITIAL_HEALTH;
+double GOLEM_ADDON_HEALTH;
 double MAX_MONSTERS;
 double DELAY_MONSTER_THINK;
 double DELAY_MONSTER;
@@ -718,10 +722,10 @@ double CORPSE_EXPLOSION_INITIAL_RADIUS;
 double CORPSE_EXPLOSION_ADDON_RADIUS;
 double CORPSE_EXPLOSION_MAX_RANGE;
 double CORPSE_EXPLOSION_SEARCH_RADIUS;
-double CRIPPLE_RANGE;
-double CRIPPLE_COST;
-double CRIPPLE_DELAY;
-double CRIPPLE_MAX_DAMAGE;
+double STATICFIELD_RANGE;
+double STATICFIELD_COST;
+double STATICFIELD_DELAY;
+double STATICFIELD_MAX_DAMAGE;
 double TELEPORT_COST;
 double PLAYERSPAWN_REGEN_FRAMES;
 double PLAYERSPAWN_REGEN_DELAY;
@@ -1292,6 +1296,12 @@ double SPIKEGRENADE_TURN_DEGREES;
 double SPIKEGRENADE_TURN_DELAY;
 double SPIKEGRENADE_TURNS;
 double SPIKEGRENADE_MAX_COUNT;
+double EMP_COST;
+double EMP_DELAY;
+double EMP_INITIAL_TIME;
+double EMP_ADDON_TIME;
+double EMP_INITIAL_RADIUS;
+double EMP_ADDON_RADIUS;
 double LASERTRAP_INITIAL_HEALTH;
 double LASERTRAP_ADDON_HEALTH;
 double LASERTRAP_INITIAL_DAMAGE;
@@ -1784,6 +1794,11 @@ void Lua_LoadVariables()
 	SKELETON_INITIAL_HEALTH = vrx_lua_get_variable("SKELETON_INITIAL_HEALTH", 0);
 	SKELETON_ADDON_HEALTH = vrx_lua_get_variable("SKELETON_ADDON_HEALTH", 100);
 
+	GOLEM_MAX = vrx_lua_get_variable("GOLEM_MAX", 1);
+	GOLEM_COST = vrx_lua_get_variable("GOLEM_COST", 100);
+	GOLEM_INITIAL_HEALTH = vrx_lua_get_variable("GOLEM_INITIAL_HEALTH", 0);
+	GOLEM_ADDON_HEALTH = vrx_lua_get_variable("GOLEM_ADDON_HEALTH", 1000);
+
 	MAX_MONSTERS = vrx_lua_get_variable("MAX_MONSTERS", 3);
 
 	DELAY_MONSTER_THINK = vrx_lua_get_variable("DELAY_MONSTER_THINK", 1);
@@ -1949,10 +1964,10 @@ void Lua_LoadVariables()
 	CORPSE_EXPLOSION_MAX_RANGE = vrx_lua_get_variable("CORPSE_EXPLOSION_MAX_RANGE", 8192);
 	CORPSE_EXPLOSION_SEARCH_RADIUS = vrx_lua_get_variable("CORPSE_EXPLOSION_SEARCH_RADIUS", 128);
 
-	CRIPPLE_RANGE = vrx_lua_get_variable("CRIPPLE_RANGE", 256);
-	CRIPPLE_COST = vrx_lua_get_variable("CRIPPLE_COST", 25);
-	CRIPPLE_DELAY = vrx_lua_get_variable("CRIPPLE_DELAY", 2.0);
-	CRIPPLE_MAX_DAMAGE = vrx_lua_get_variable("CRIPPLE_MAX_DAMAGE", 1000);
+	STATICFIELD_RANGE = vrx_lua_get_variable("STATICFIELD_RANGE", 512);
+	STATICFIELD_COST = vrx_lua_get_variable("STATICFIELD_COST", 25);
+	STATICFIELD_DELAY = vrx_lua_get_variable("STATICFIELD_DELAY", 0.5);
+	STATICFIELD_MAX_DAMAGE = vrx_lua_get_variable("STATICFIELD_MAX_DAMAGE", 10000);
 
 	TELEPORT_COST = vrx_lua_get_variable("TELEPORT_COST", 20);
 
@@ -1987,7 +2002,7 @@ void Lua_LoadVariables()
 	LIFE_TAP_COST = vrx_lua_get_variable("LIFE_TAP_COST", 50);
 	LIFE_TAP_DELAY = vrx_lua_get_variable("LIFE_TAP_DELAY", 1.0);
 	LIFE_TAP_INITIAL_FACTOR = vrx_lua_get_variable("LIFE_TAP_INITIAL_FACTOR", 0.00);
-	LIFE_TAP_ADDON_FACTOR = vrx_lua_get_variable("LIFE_TAP_ADDON_FACTOR", 0.05);
+	LIFE_TAP_ADDON_FACTOR = vrx_lua_get_variable("LIFE_TAP_ADDON_FACTOR", 0.1);
 
 	AMP_DAMAGE_DELAY = vrx_lua_get_variable("AMP_DAMAGE_DELAY", 1);
 	AMP_DAMAGE_DURATION_BASE = vrx_lua_get_variable("AMP_DAMAGE_DURATION_BASE", 0);
@@ -2576,6 +2591,14 @@ void Lua_LoadVariables()
 	SPIKEGRENADE_TURN_DELAY = vrx_lua_get_variable("SPIKEGRENADE_TURN_DELAY", 1.0);
 	SPIKEGRENADE_TURNS = vrx_lua_get_variable("SPIKEGRENADE_TURNS", 8);
 	SPIKEGRENADE_MAX_COUNT = vrx_lua_get_variable("SPIKEGRENADE_MAX_COUNT", 3);
+
+	EMP_COST = vrx_lua_get_variable("EMP_COST", 25);
+	EMP_DELAY = vrx_lua_get_variable("EMP_DELAY", 0.5);
+	EMP_INITIAL_TIME = vrx_lua_get_variable("EMP_INITIAL_TIME", 0);
+	EMP_ADDON_TIME = vrx_lua_get_variable("EMP_ADDON_TIME", 0.5);
+	EMP_INITIAL_RADIUS = vrx_lua_get_variable("EMP_INITIAL_RADIUS", 150);
+	EMP_ADDON_RADIUS = vrx_lua_get_variable("EMP_ADDON_RADIUS", 0);
+
 	LASERTRAP_INITIAL_HEALTH = vrx_lua_get_variable("LASERTRAP_INITIAL_HEALTH", 0);
 	LASERTRAP_ADDON_HEALTH = vrx_lua_get_variable("LASERTRAP_ADDON_HEALTH", 100);
 	LASERTRAP_INITIAL_DAMAGE = vrx_lua_get_variable("LASERTRAP_INITIAL_DAMAGE", 0);

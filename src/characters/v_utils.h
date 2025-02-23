@@ -1,10 +1,10 @@
 //************************************************************************************************
 //			String functions
 //************************************************************************************************
-
 void padRight(char *String, int numChars);
 char *GetWeaponString (int weapon_number);
 char *GetModString (int weapon_number, int mod_number);
+//************************************************************************************************
 void V_RestoreMorphed (edict_t *ent, int refund);
 void V_PushBackEnts(edict_t* self, float dist);
 qboolean V_PushBackWalls(edict_t* self, vec3_t start, float dist, int mask, qboolean minimum_move);
@@ -26,4 +26,4 @@ int V_GetNumPlayerPrefs (qboolean monsters, qboolean players);//4.5
 qboolean V_MatchPlayerPrefs (edict_t *player, int monsters, int players);//4.5
 qboolean isMonster (edict_t *ent);
 qboolean vrx_is_morphing_polt(edict_t *ent);
-//************************************************************************************************
+qboolean vrx_has_pain_skin(edict_t* ent);

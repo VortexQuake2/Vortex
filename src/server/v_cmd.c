@@ -28,7 +28,7 @@ void cmd_SentryGun(edict_t *ent);
 void PlayerToParasite (edict_t *ent);
 void Cmd_DetPipes_f (edict_t *ent);
 void Cmd_ExplodingArmor_f (edict_t *ent);
-void Cmd_Cripple_f (edict_t *ent);
+void Cmd_StaticField_f(edict_t *ent);
 void Cmd_SpawnMagmine_f (edict_t *ent);
 void Cmd_ExplodingArmor_f (edict_t *ent);
 void Cmd_Togglesecondary_f (edict_t *ent);
@@ -53,6 +53,7 @@ void Cmd_Obstacle_f (edict_t *ent);
 //void Cmd_box_f(edict_t *ent); //lepi
 void Cmd_Gasser_f (edict_t *ent);
 void Cmd_Raise_Skeleton_f(edict_t* ent);
+void Cmd_Golem_f(edict_t* ent);
 void Cmd_TossSpikeball (edict_t *ent);
 void Cmd_FireAcid_f (edict_t *ent);
 void Cmd_Cocoon_f (edict_t *ent);
@@ -98,7 +99,7 @@ const gameCommand_s commands[] =
 	{ "vrxmenu", 		OpenGeneralMenu },
 	{ "proxy", 			Cmd_BuildProxyGrenade },
 	{ "napalm", 		Cmd_Napalm_f },
-	{ "cripple", 		Cmd_Cripple_f },
+	{ "staticfield", 		Cmd_StaticField_f },
 	{ "antigrav", 		Cmd_Antigrav_f },
 	{ "masterpw", 		Cmd_SetMasterPassword_f },
 	{ "owner", 			Cmd_SetOwner_f },
@@ -164,6 +165,7 @@ const gameCommand_s commands[] =
 	{ "acid",		    Cmd_FireAcid_f },
 	{ "cocoon",		    Cmd_Cocoon_f },
 	{ "skeleton",		Cmd_Raise_Skeleton_f },
+	{ "golem",			Cmd_Golem_f },
 	{ "meditate"   ,	Cmd_Meditate_f },
 	{ "overload",	    Cmd_Overload_f },
 	{ "laserplatform",  Cmd_CreateLaserPlatform_f },

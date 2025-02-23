@@ -2790,7 +2790,7 @@ void Cmd_ExplodingArmor_f (edict_t *ent);
 void Cmd_Nova_f (edict_t *ent, int frostLevel, float skill_mult, float cost_mult);
 void Cmd_FrostNova_f (edict_t *ent, float skill_mult, float cost_mult);
 void Cmd_Magicbolt_f (edict_t *ent, float skill_mult, float cost_mult);
-void Cmd_Cripple_f (edict_t *ent);
+void Cmd_StaticField_f(edict_t *ent);
 void Cmd_FireBeam_f (edict_t *ent, int toggle);
 void Cmd_SpawnMagmine_f (edict_t *ent);
 void Cmd_ExplodingArmor_f (edict_t *ent);

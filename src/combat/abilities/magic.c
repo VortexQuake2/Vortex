@@ -553,12 +553,12 @@ void TeleportForward (edict_t *ent) {
 
 void NovaExplosionEffect(vec3_t org);
 
-void CrippleAttack (edict_t* ent, int cripple_level)
+void StaticFieldAttack (edict_t* ent, int cripple_level)
 {
 	float		damage, min_health, delta;
 	edict_t* target = NULL;
 
-	while ((target = findradius(target, ent->s.origin, CRIPPLE_RANGE)) != NULL)
+	while ((target = findradius(target, ent->s.origin, STATICFIELD_RANGE)) != NULL)
 	{
 		if (!G_ValidTargetEnt(target, false) || OnSameTeam(ent, target))
 			continue;
@@ -568,6 +568,7 @@ void CrippleAttack (edict_t* ent, int cripple_level)
 		else
 			min_health = 0.1 * target->max_health;
 		// calculate damage
+		// 50% at level 10, 66% at level 20
 		damage = target->health * (1 - (1 / (1 + 0.1 * cripple_level)));
 		// delta is the difference between current health and minimum health
 		delta = target->health - min_health;
@@ -576,8 +577,8 @@ void CrippleAttack (edict_t* ent, int cripple_level)
 		{
 			if (damage > delta)
 				damage = delta;
-			if (damage > CRIPPLE_MAX_DAMAGE)
-				damage = CRIPPLE_MAX_DAMAGE;
+			if (damage > STATICFIELD_MAX_DAMAGE)
+				damage = STATICFIELD_MAX_DAMAGE;
 			T_Damage(target, ent, ent, vec3_origin, target->s.origin, vec3_origin, damage, 0, DAMAGE_NO_ABILITIES, MOD_CRIPPLE);
 
 			gi.WriteByte(svc_temp_entity);
@@ -595,13 +596,13 @@ void CrippleAttack (edict_t* ent, int cripple_level)
 	gi.WritePosition(ent->s.origin);
 	gi.multicast(ent->s.origin, MULTICAST_PVS);*/
 
-	NovaExplosionEffect(ent->s.origin);
-	gi.sound(ent, CHAN_WEAPON, gi.soundindex("abilities/novaelec.wav"), 1, ATTN_NORM, 0);
+	//NovaExplosionEffect(ent->s.origin);
+	gi.sound(ent, CHAN_WEAPON, gi.soundindex("abilities/eleccast.wav"), 1, ATTN_NORM, 0);
 
 	if (ent->client)
 	{
-		ent->client->ability_delay = level.time + CRIPPLE_DELAY;
-		ent->client->pers.inventory[power_cube_index] -= CRIPPLE_COST;
+		ent->client->ability_delay = level.time + STATICFIELD_DELAY;
+		ent->client->pers.inventory[power_cube_index] -= STATICFIELD_COST;
 	}
 	// calling entity made a sound, used to alert monsters
 	ent->lastsound = level.framenum;
@@ -614,7 +615,7 @@ void CrippleAttack (edict_t *ent)
 	trace_t	tr;
 	edict_t	*e=NULL;
 
-	while ((e = findclosestreticle(e, ent, CRIPPLE_RANGE)) != NULL)
+	while ((e = findclosestreticle(e, ent, STATICFIELD_RANGE)) != NULL)
 	{
 		if (!G_ValidTarget(ent, e, true))
 			continue;
@@ -624,8 +625,8 @@ void CrippleAttack (edict_t *ent)
 			continue;
 
 		damage = e->health * (1-(1/(1+0.2*ent->myskills.abilities[CRIPPLE].current_level)));
-		if (damage > CRIPPLE_MAX_DAMAGE)
-			damage = CRIPPLE_MAX_DAMAGE;
+		if (damage > STATICFIELD_MAX_DAMAGE)
+			damage = STATICFIELD_MAX_DAMAGE;
 		T_Damage(e, ent, ent, vec3_origin, e->s.origin, vec3_origin, damage, 0, DAMAGE_NO_ABILITIES, MOD_CRIPPLE);
 
 		VectorCopy(e->s.origin, end);
@@ -648,27 +649,27 @@ void CrippleAttack (edict_t *ent)
 	gi.multicast (ent->s.origin, MULTICAST_PVS);
 
     gi.sound(ent, CHAN_WEAPON, gi.soundindex("abilities/eleccast.wav"), 1, ATTN_NORM, 0);
-	ent->client->ability_delay = level.time + CRIPPLE_DELAY;
-	ent->client->pers.inventory[power_cube_index]-=CRIPPLE_COST;
+	ent->client->ability_delay = level.time + STATICFIELD_DELAY;
+	ent->client->pers.inventory[power_cube_index]-=STATICFIELD_COST;
 
 	// calling entity made a sound, used to alert monsters
 	ent->lastsound = level.framenum;
 }
 */
 
-void Cmd_Cripple_f (edict_t *ent)
+void Cmd_StaticField_f (edict_t *ent)
 {
-	int	ability_level=ent->myskills.abilities[CRIPPLE].current_level;
+	int	ability_level=ent->myskills.abilities[STATIC_FIELD].current_level;
 
-	if (!G_CanUseAbilities(ent, ability_level, CRIPPLE_COST))
+	if (!G_CanUseAbilities(ent, ability_level, STATICFIELD_COST))
 		return;
-	if (ent->myskills.abilities[CRIPPLE].disable)
+	if (ent->myskills.abilities[STATIC_FIELD].disable)
 		return;
 
 	//3.0 amnesia disables cripple
 	if (que_findtype(ent->curses, NULL, AMNESIA) != NULL)
 		return;
-	CrippleAttack(ent, ability_level);
+	StaticFieldAttack(ent, ability_level);
 }
 
 void lightningbolt_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)

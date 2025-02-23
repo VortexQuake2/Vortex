@@ -538,7 +538,7 @@ void mybrain_hit_right (edict_t *self)
 	if (damage > M_MELEE_DMG_MAX)
 		damage = M_MELEE_DMG_MAX;
 	
-	if (M_MeleeAttack(self, MELEE_DISTANCE, damage, 0))
+	if (M_MeleeAttack(self, self->enemy, MELEE_DISTANCE, damage, 0))
 		gi.sound (self, CHAN_WEAPON, sound_melee3, 1, ATTN_NORM, 0);
 }
 
@@ -560,7 +560,7 @@ void mybrain_hit_left (edict_t *self)
 	if (damage > M_MELEE_DMG_MAX)
 		damage = M_MELEE_DMG_MAX;
 
-	if (M_MeleeAttack(self, MELEE_DISTANCE, damage, 0))
+	if (M_MeleeAttack(self, self->enemy, MELEE_DISTANCE, damage, 0))
 		gi.sound (self, CHAN_WEAPON, sound_melee3, 1, ATTN_NORM, 0);
 }
 
@@ -601,7 +601,7 @@ void mybrain_tentacle_attack (edict_t *self)
 	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * drone_damagelevel(self); // dmg: brain_tentacle_attack_world
 	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
 		damage = M_MELEE_DMG_MAX;
-	M_MeleeAttack(self, MELEE_DISTANCE, damage, 0);
+	M_MeleeAttack(self, self->enemy, MELEE_DISTANCE, damage, 0);
 
 	gi.sound (self, CHAN_WEAPON, sound_tentacles_retract, 1, ATTN_NORM, 0);
 }
@@ -840,11 +840,14 @@ void mybrain_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		for (n= 0; n < 2; n++)
-			ThrowGib (self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-		for (n= 0; n < 4; n++)
-			ThrowGib (self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-		//ThrowHead (self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
+		if (G_NearbyEnts(self->s.origin, NEARBY_ENTITIES_RANGE, true) < NEARBY_ENTITIES_MAX)
+		{
+			for (n = 0; n < 2; n++)
+				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
+			for (n = 0; n < 4; n++)
+				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
+			//ThrowHead (self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
+		}
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);
 #else

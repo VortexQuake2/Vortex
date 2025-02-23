@@ -54,10 +54,11 @@ const talentdef_t talents_vampire[] = {
 
 const talentdef_t talents_necromancer[] = {
         {TALENT_HELLSPAWN_MASTERY, 5, false},
+        {TALENT_GOLEM_MASTERY, 5, false},
         {TALENT_CORPULENCE,     5, false},
         {TALENT_OBLATION,       5, false},
         {TALENT_AUTOCURSE,     5, false},
-        {TALENT_EVIL_CURSE,     5, false},
+        //{TALENT_EVIL_CURSE,     5, false},
         {TALENT_BLACK_DEATH,    5, false},
         {-1,                    0, 0}
 };
@@ -547,14 +548,21 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             menu_add_line(ent, "weapon upgrade level.", MENU_WHITE_CENTERED);
             return 4;
             //Necromancer talents
-        case TALENT_EVIL_CURSE:
-            menu_add_line(ent, "Increases curse duration", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "and reduces cost.", MENU_WHITE_CENTERED);
-            return 2;
+        //case TALENT_EVIL_CURSE:
+        //    menu_add_line(ent, "Increases curse duration", MENU_WHITE_CENTERED);
+        //    menu_add_line(ent, "and reduces cost.", MENU_WHITE_CENTERED);
+        //    return 2;
         case TALENT_HELLSPAWN_MASTERY:
             menu_add_line(ent, "Improves hellspawn. Adds", MENU_WHITE_CENTERED);
             menu_add_line(ent, "secondary attack.", MENU_WHITE_CENTERED);
             return 2;
+        case TALENT_GOLEM_MASTERY:
+            menu_add_line(ent, "Improves golem. Adds thorns", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "aura, causing damage", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "inflicted on your golem to", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "be reflected back to the", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "enemy!", MENU_WHITE_CENTERED);
+            return 5;
         case TALENT_CORPULENCE:
             menu_add_line(ent, "Increases monster health/armor", MENU_WHITE_CENTERED);
             menu_add_line(ent, "Can't combine with Life Tap.", MENU_WHITE_CENTERED);

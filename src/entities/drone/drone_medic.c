@@ -350,11 +350,14 @@ void mymedic_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		for (n= 0; n < 2; n++)
-			ThrowGib (self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-		for (n= 0; n < 4; n++)
-			ThrowGib (self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-		//ThrowHead (self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
+		if (G_NearbyEnts(self->s.origin, NEARBY_ENTITIES_RANGE, true) < NEARBY_ENTITIES_MAX)
+		{
+			for (n = 0; n < 2; n++)
+				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
+			for (n = 0; n < 4; n++)
+				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
+			//ThrowHead (self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
+		}
 		//self->deadflag = DEAD_DEAD;
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);
@@ -650,7 +653,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 	vec3_t	bmin, bmax;
 	edict_t *e;
 
-	if (!strcmp(target->classname, "drone") && !(target->flags & FL_UNDEAD) && target->mtype != M_DECOY) // can't revive decoys and undead/skeletons
+	if (!strcmp(target->classname, "drone") && !(target->flags & FL_UNDEAD) && target->mtype != M_DECOY && target->mtype != M_GOLEM) // can't revive decoys, golem, and undead/skeletons
 	{
 		// if the summoner is a player, check for sufficient monster slots
 		if (ent->client && (ent->num_monsters + target->monsterinfo.control_cost > MAX_MONSTERS))

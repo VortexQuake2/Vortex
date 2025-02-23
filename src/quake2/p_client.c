@@ -1029,9 +1029,12 @@ void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	{	// gib
         V_GibSound(self, GetRandom(1, 6));
 //GHz END
-		for (n= 0; n < 4; n++)
-			ThrowGib (self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-		ThrowClientHead (self, damage);
+		if (G_NearbyEnts(self->s.origin, NEARBY_ENTITIES_RANGE, false) < NEARBY_ENTITIES_MAX)
+		{
+			for (n = 0; n < 4; n++)
+				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
+			ThrowClientHead(self, damage);
+		}
 //ZOID
 		self->client->anim_priority = ANIM_DEATH;
 		self->client->anim_end = 0;

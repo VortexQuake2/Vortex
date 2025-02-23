@@ -15,12 +15,12 @@ void check_dodge (edict_t *self, vec3_t start, vec3_t dir, int speed, int radius
 #define EMP_MAX_DAMAGE					1000
 #define EMP_INITIAL_AMMO				0
 #define EMP_ADDON_AMMO					0.05	// 5% ammo per level is detonated
-#define EMP_COST						25
-#define EMP_DELAY						0.5
-#define EMP_INITIAL_TIME				0
-#define EMP_ADDON_TIME					0.5
-#define EMP_INITIAL_RADIUS				150
-#define EMP_ADDON_RADIUS				0
+//#define EMP_COST						25
+//#define EMP_DELAY						0.5
+//#define EMP_INITIAL_TIME				0
+//#define EMP_ADDON_TIME					0.5
+//#define EMP_INITIAL_RADIUS				150
+//#define EMP_ADDON_RADIUS				0
 #define EMP_AMMOBOX_INITIAL_DAMAGE		50
 #define EMP_AMMOBOX_ADDON_DAMAGE		5
 

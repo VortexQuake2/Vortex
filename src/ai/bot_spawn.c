@@ -365,7 +365,7 @@ void BOT_NecroAssignSkills(edict_t* ent)
 	BOT_UpgradeSkill(ent, POWER_REGEN, 2); // clvl 8
 	BOT_UpgradeSkill(ent, AMP_DAMAGE, 10); // clvl 13
 	BOT_UpgradeSkill(ent, SKELETON, 5); // clvl 16
-	BOT_UpgradeSkill(ent, CRIPPLE, 10); // clvl 21
+	BOT_UpgradeSkill(ent, STATIC_FIELD, 10); // clvl 21
 	BOT_UpgradeSkill(ent, AMP_DAMAGE, 5); // clvl 23
 }
 

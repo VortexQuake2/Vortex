@@ -647,6 +647,19 @@ void skull_think (edict_t *self)
 		M_CheckGround(self);
 	}
 
+	// hellspawn is stunned
+	if (self->holdtime > level.time)
+	{
+		// reset to idle state
+		self->style = 0;
+		self->monsterinfo.idle_frames++;
+		self->enemy = NULL;
+		skull_runframes(self);
+		M_SetEffects(self);
+		self->nextthink = level.time + FRAMETIME;
+		return;
+	}
+
 	//if (!self->enemy)
 	//	skull_findtarget(self);
 	if (G_ValidTarget(self, self->enemy, false, true) // is the target still valid?
@@ -663,7 +676,7 @@ void skull_think (edict_t *self)
 			{
 				self->enemy = NULL;
 				skull_idle(self); //skull_return(self);
-				self->nextthink = level.time + 0.1;
+				self->nextthink = level.time + FRAMETIME;
 				return;
 			}
 		}
@@ -687,7 +700,7 @@ void skull_think (edict_t *self)
 	skull_runframes(self);
 	M_SetEffects(self);
 
-	self->nextthink = level.time + 0.1;
+	self->nextthink = level.time + FRAMETIME;
 }
 
 void skull_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)

@@ -63,7 +63,8 @@ const abilitydef_t ability_necromancer[] = { // NECROMANCER
         {CORPSE_EXPLODE, 0, DEFAULT_SOFTMAX,   0},
         {LIFE_TAP,       0, DEFAULT_SOFTMAX,   0},
         {AMP_DAMAGE,     0, DEFAULT_SOFTMAX,   0},
-        {CRIPPLE,        0, DEFAULT_SOFTMAX,   0},
+        //{CRIPPLE,        0, DEFAULT_SOFTMAX,   0},
+        {GOLEM,          0, DEFAULT_SOFTMAX,   0},
         {CURSE,          0, DEFAULT_SOFTMAX,   0},
         {WEAKEN,         0, DEFAULT_SOFTMAX,   0},
         {JETPACK,        1, 1,                 0},
@@ -111,6 +112,7 @@ const abilitydef_t ability_mage[] = { // MAGE
         {METEOR,          0, DEFAULT_SOFTMAX,   0},
         {FIREBALL,        0, DEFAULT_SOFTMAX,   0},
         {LIGHTNING_STORM, 0, DEFAULT_SOFTMAX,   0},
+        {STATIC_FIELD,    0, DEFAULT_SOFTMAX,   0},
         {TELEPORT,        1, 1,                 0},
         {-1,              0, 0,                 0} // Guardian (Add skills above this)
 };

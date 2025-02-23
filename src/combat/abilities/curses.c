@@ -34,9 +34,9 @@ float vrx_get_curse_duration(edict_t* ent, int type)
 	default: duration = CURSE_DURATION_BASE + (CURSE_DURATION_BONUS * ent->myskills.abilities[CURSE].current_level); break;
 	}
 	//Talent: Evil curse
-	talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
-	if (talentLevel > 0)
-		duration *= 1.0 + 0.25 * talentLevel;
+	//talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
+	//if (talentLevel > 0)
+	//	duration *= 1.0 + 0.25 * talentLevel;
 
 	if (duration < 1)
 		duration = 1;
@@ -598,8 +598,8 @@ void Cmd_LifeTap(edict_t* ent)
 		gi.dprintf("DEBUG: %s just called Cmd_LifeTap()\n", ent->client->pers.netname);
 
 	//Talent: Cheaper Curses
-	if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
-		cost *= 1.0 - 0.1 * talentLevel;
+	//if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
+	//	cost *= 1.0 - 0.1 * talentLevel;
 
 	if (!V_CanUseAbilities(ent, LIFE_TAP, cost, true))
 		return;
@@ -642,8 +642,8 @@ void Cmd_AmpDamage(edict_t *ent)
 		gi.dprintf("DEBUG: %s just called Cmd_AmpDamage()\n", ent->client->pers.netname);
 
 	//Talent: Cheaper Curses
-    if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
-		cost *= 1.0 - 0.1 * talentLevel;
+    //if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
+	//	cost *= 1.0 - 0.1 * talentLevel;
 
 	if (!V_CanUseAbilities(ent, AMP_DAMAGE, cost, true))
 		return;
@@ -688,8 +688,8 @@ void Cmd_Curse(edict_t *ent)
 		gi.dprintf("DEBUG: %s just called Cmd_Curse()\n", ent->client->pers.netname);
 
 	//Talent: Cheaper Curses
-    if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
-		cost *= 1.0 - 0.1 * talentLevel;
+    //if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
+	//	cost *= 1.0 - 0.1 * talentLevel;
 
 	if (!V_CanUseAbilities(ent, CURSE, cost, true))
 		return;
@@ -726,8 +726,8 @@ void Cmd_Weaken(edict_t *ent)
 		gi.dprintf("DEBUG: %s just called Cmd_Weaken()\n", ent->client->pers.netname);
 
 	//Talent: Cheaper Curses
-    if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
-		cost *= 1.0 - 0.1 * talentLevel;
+    //if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
+	//	cost *= 1.0 - 0.1 * talentLevel;
 
 	if (!V_CanUseAbilities(ent, WEAKEN, cost, true))
 		return;
@@ -770,8 +770,8 @@ void Cmd_LifeDrain(edict_t *ent)
 		gi.dprintf("DEBUG: %s just called Cmd_LifeDrain()\n", ent->client->pers.netname);
 
 	//Talent: Cheaper Curses
-    if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
-		cost *= 1.0 - 0.1 * talentLevel;
+    //if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
+	//	cost *= 1.0 - 0.1 * talentLevel;
 
 	if (!V_CanUseAbilities(ent, LIFE_DRAIN, cost, true))
 		return;
@@ -923,8 +923,8 @@ void Cmd_Amnesia(edict_t *ent)
 		return;
 
 	//Talent: Cheaper Curses
-    if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
-		cost *= 1.0 - 0.1 * talentLevel;
+    //if ((talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE)) > 0)
+	//	cost *= 1.0 - 0.1 * talentLevel;
 
 	if (!G_CanUseAbilities(ent, ent->myskills.abilities[AMNESIA].current_level, cost))
 		return;
@@ -933,9 +933,9 @@ void Cmd_Amnesia(edict_t *ent)
 	duration = AMNESIA_DURATION_BASE + (AMNESIA_DURATION_BONUS * ent->myskills.abilities[AMNESIA].current_level);
 
 	//Talent: Evil curse
-    talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
-	if(talentLevel > 0)
-		duration *= 1.0 + 0.25 * talentLevel;
+    //talentLevel = vrx_get_talent_level(ent, TALENT_EVIL_CURSE);
+	//if(talentLevel > 0)
+	//	duration *= 1.0 + 0.25 * talentLevel;
 
 	target = curse_Attack(ent, AMNESIA, radius, duration, true);
 	if (target != NULL)

@@ -33,6 +33,7 @@ void init_drone_hover(edict_t* self);
 void init_drone_shambler(edict_t* self);
 void init_baron_fire(edict_t* self);
 void init_skeleton(edict_t* self);
+void init_golem(edict_t* self);
 int crand (void);
 edict_t* INV_GetMonsterSpawn(edict_t* from);
 
@@ -468,7 +469,8 @@ void drone_pain (edict_t *self, edict_t *other, float kick, int damage)
 {
 	//vec3_t	forward, start;
 
-	if ((self->s.modelindex != 255) && (self->mtype != M_SKELETON) && (self->health < (0.5*self->max_health)))
+	// decoys, skeletons, and golems don't use pain skins
+	if ((self->s.modelindex != 255) && vrx_has_pain_skin(self) && (self->health < (0.5*self->max_health)))
 		self->s.skinnum |= 1;
 
 	if (damage > 0 && self->pain_inner)
@@ -540,7 +542,7 @@ void drone_death (edict_t *self, edict_t *attacker)
 
 		// world monsters sometimes drop ammo
 		if (self->activator && !self->activator->client
-			&& self->item && (random() >= 0.2) && G_NearbyEnts(self->s.origin, 1024, true) < 50)
+			&& self->item && (random() >= 0.2) && G_NearbyEnts(self->s.origin, NEARBY_ENTITIES_RANGE, true) < NEARBY_ENTITIES_MAX)
 			Drop_Item(self, self->item);
 	}
 
@@ -698,7 +700,7 @@ void drone_grow (edict_t *self)
 	if (self->health >= self->max_health)
 		self->think = drone_think;
 	// check for heal
-	else if (self->mtype != M_DECOY && self->mtype != M_SKELETON && self->health >= 0.3 * self->max_health)
+	else if (vrx_has_pain_skin(self) && self->health >= 0.3 * self->max_health)
 	{
 		self->s.skinnum &= ~1;
 	}
@@ -848,6 +850,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	case 15: init_drone_shambler(drone);	break;
 	case 20: init_drone_decoy(drone);		break;
 	case 21: init_skeleton(drone);			break;
+	case 22: init_golem(drone);				break;
 
 	// bosses
 	case 30: init_drone_commander(drone);	break;
@@ -1635,12 +1638,12 @@ void MonsterAim (edict_t *self, float accuracy, int projectile_speed, qboolean r
 	VectorNormalize (forward);
 }
 
-edict_t *M_MeleeAttack (edict_t *self, float range, int damage, int knockback)
+edict_t *M_MeleeAttack (edict_t *self, edict_t *targ, float range, int damage, int knockback)
 {
 	vec3_t	start, forward, end;
 	trace_t	tr;
 
-	if (!self->enemy)
+	if (!targ)
 		return NULL;
 
 	// miss the attack if we are cursed/confused
@@ -1651,7 +1654,7 @@ edict_t *M_MeleeAttack (edict_t *self, float range, int damage, int knockback)
 
 	// get starting and ending positions
 	G_EntMidPoint(self, start);
-	G_EntMidPoint(self->enemy, end);
+	G_EntMidPoint(targ, end);
 
 	// get vector to target
 	VectorSubtract(end, start, forward);
@@ -1737,8 +1740,7 @@ qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, q
 			//	self->health = max_health;
 
 			// switch to normal monster skin when it's healed
-			if (!self->client && (self->svflags & SVF_MONSTER) && (self->mtype != M_DECOY) && (self->mtype != M_SKELETON)
-				&& (self->health >= 0.5 * self->max_health))
+			if (!self->client && (self->svflags & SVF_MONSTER) && vrx_has_pain_skin(self) && (self->health >= 0.5 * self->max_health))
 			{
 				self->s.skinnum &= ~1;
 				if (self->mtype != M_COMMANDER)
@@ -1888,10 +1890,13 @@ void M_Remove (edict_t *self, qboolean refund, qboolean effect)
 
 		// reduce monster count
 		self->activator->num_monsters -= self->monsterinfo.control_cost;
-		if (self->mtype == M_SKELETON)
-			self->activator->num_skeletons--;
 		if (self->activator->num_monsters < 0)
 			self->activator->num_monsters = 0;
+		if (self->mtype == M_SKELETON)
+			self->activator->num_skeletons--;
+		else if (self->mtype == M_GOLEM)
+			self->activator->num_golems--;
+
 	
 		self->activator->num_monsters_real--;
 		// gi.bprintf(PRINT_HIGH, "releasing %p (%d)\n", self, self->activator->num_monsters_real);
@@ -2018,6 +2023,7 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	case M_HOVER: init_drone_hover(monster); break;
 	case M_SHAMBLER: init_drone_shambler(monster); break;
 	case M_SKELETON: init_skeleton(monster); break;
+	case M_GOLEM: init_golem(monster); break;
 	default: return false;
 	}
 
@@ -2034,6 +2040,7 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 		mult += dur_bonus; // caller defined monster multiplier.
 	}
 
+	//gi.dprintf("talentLevel: %d multiplier: %.1f durability bonus = %.1f\n", talentLevel, mult, dur_bonus);
 	monster->health *= mult;
 	monster->max_health *= mult;
 	monster->monsterinfo.power_armor_power *= mult;
@@ -2171,6 +2178,7 @@ char *GetMonsterKindString (int mtype)
 		case M_HOVER: return "Hover";
 		case M_SHAMBLER: return "Shambler";
 		case M_SKELETON: return "Skeleton";
+		case M_GOLEM: return "Golem";
 		case M_BARON_FIRE: return "Fire Baron";
         default: return "Monster";
     }
@@ -2202,6 +2210,12 @@ void M_Notify (edict_t *monster)
 		monster->activator->num_skeletons--;
 		count = monster->activator->num_skeletons;
 		max = SKELETON_MAX;
+	}
+	else if (monster->mtype == M_GOLEM)
+	{
+		monster->activator->num_golems--;
+		count = monster->activator->num_golems;
+		max = GOLEM_MAX;
 	}
 	else
 	{
@@ -2789,8 +2803,8 @@ void Cmd_Drone_f (edict_t *ent)
 		vrx_create_new_drone(ent, 14, false, true, 0);
 	else if (!Q_strcasecmp(s, "shambler"))
 		vrx_create_new_drone(ent, 15, false, true, 0);
-	//else if (!Q_strcasecmp(s, "skeleton") && ent->myskills.administrator)
-	//	vrx_create_new_drone(ent, 21, false, true, 0);
+	else if (!Q_strcasecmp(s, "golem") && ent->myskills.administrator)
+		vrx_create_new_drone(ent, 22, false, true, 0);
 	//else if (!Q_strcasecmp(s, "baron fire") && ent->myskills.administrator)
 		//vrx_create_new_drone(ent, 32, false, true);
 	//else if (!Q_strcasecmp(s, "jorg"))
@@ -2820,6 +2834,12 @@ void Cmd_Drone_f (edict_t *ent)
 
 }
 
+//==========================================
+// M_DelayNextAttack
+// delays the next monster attack based on specified parameters
+// add_attack_frames - delays the next attack by the number of frames remaining in currentmove + delay
+// delay - the amount of time to delay the next attack + remaining frames (if add_attack_frames is true)
+//==========================================
 void M_DelayNextAttack(edict_t* self, float delay, qboolean add_attack_frames)
 {
 	if (add_attack_frames)

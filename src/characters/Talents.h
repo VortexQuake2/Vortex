@@ -59,7 +59,8 @@
 #define TALENT_OBLATION				82
 #define TALENT_AUTOCURSE			83
 #define TALENT_BLACK_DEATH			84
-#define TALENT_EVIL_CURSE			85
+//#define TALENT_EVIL_CURSE			85
+#define TALENT_GOLEM_MASTERY		85
 //Shaman
 #define TALENT_WIND					90
 #define TALENT_STONE				91

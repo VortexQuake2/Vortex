@@ -686,7 +686,7 @@ void drone_ai_idle (edict_t *self)
 	if (self->mtype == M_MEDIC)
 		M_Regenerate(self, qf2sf(300), qf2sf(10), 1.0, true, true, false, &self->monsterinfo.regen_delay1);
 
-	else if (self->mtype != M_DECOY && self->mtype != M_SKELETON && self->health >= 0.5 * self->max_health)
+	else if (vrx_has_pain_skin(self) && self->health >= 0.5 * self->max_health)
 	{
 		// change skin if we are being healed by someone else
 		self->s.skinnum &= ~1;
@@ -1723,7 +1723,8 @@ void drone_ai_run1 (edict_t *self, float dist)
 		gi.dprintf("drone_ai_run1() AI_FINDNAVI %s goalentity %s\n", self->monsterinfo.aiflags & AI_FIND_NAVI ? "true" : "false", self->goalentity ? "true" : "false");
 	}
 
-	if (self->mtype != M_DECOY && self->mtype != M_SKELETON && self->health >= 0.5 * self->max_health)
+	// decoys, skeletons, and golems don't use pain skins
+	if (vrx_has_pain_skin(self) && self->health >= 0.5 * self->max_health)
 	{
 		// change skin if we are being healed by someone else
 		self->s.skinnum &= ~1;

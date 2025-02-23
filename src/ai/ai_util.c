@@ -29,6 +29,7 @@ int AI_NumSummons(edict_t* self)
 	// non-exhaustive list of other summons
 	num_summons += self->num_monsters;
 	num_summons += self->num_skeletons;
+	num_summons += self->num_golems;
 	num_summons += self->num_autocannon;
 	num_summons += self->num_detectors;
 	num_summons += self->num_gasser;
@@ -247,10 +248,11 @@ float BOT_DMclass_ThrowingPitch3(edict_t* self, float speed)
 //FIXME: angle2 (high angle) is currently unused because it usually hits the sky/ceiling--need to check for this somewhere!
 float BOT_DMclass_ThrowingPitch1(edict_t* self, float v)
 {
-	vec3_t offset, forward, right, start, end;
-	VectorSet(offset, 8, 8, self->viewheight - 8);
-	AngleVectors(self->client->v_angle, forward, right, NULL);
-	P_ProjectSource(self->client, self->s.origin, offset, forward, right, start);
+	vec3_t start, end;
+	//vec3_t offset, forward, right, start, end;
+	//VectorSet(offset, 8, 8, self->viewheight - 8);
+	//AngleVectors(self->client->v_angle, forward, right, NULL);
+	//P_ProjectSource(self->client, self->s.origin, offset, forward, right, start);
 
 	float g = sv_gravity->value;
 	float d;// = Get2dDistance(start, self->enemy->s.origin);//Horizontal distance to the target.

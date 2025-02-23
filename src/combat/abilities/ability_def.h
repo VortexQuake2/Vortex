@@ -49,7 +49,7 @@
 #define BEAM			47
 #define BRAIN			48
 #define MAGMINE			49
-#define CRIPPLE			50
+#define STATIC_FIELD	50
 #define MAGICBOLT		51
 #define TELEPORT		52
 #define NOVA			53
@@ -113,6 +113,7 @@
 #define DECOY			109 // az 3.2b add decoy back into engineer.
 #define EXPLODING_BARREL	110
 #define SKELETON		111
+#define GOLEM			112
 
 #define MAX_ABILITIES	160
 #include <stdint.h>

@@ -444,6 +444,14 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		menu_add_line(ent, "skeleton [remove|command", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "follow me]", MENU_WHITE_CENTERED);
 		return 8;
+	case GOLEM:
+		menu_add_line(ent, "Raise a golem to protect", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "you and fight your enemies!", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Uses power cubes.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Commands:", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "golem [remove|command", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "follow me]", MENU_WHITE_CENTERED);
+		return 6;
 	case HELLSPAWN:
 		menu_add_line(ent, "Summon a hellspawn to protect", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "you and fight your enemies!", MENU_WHITE_CENTERED);
@@ -469,11 +477,11 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		menu_add_line(ent, "Uses power cubes.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: ampdamage", MENU_WHITE_CENTERED);
 		return 5;
-	case CRIPPLE:
+	case STATIC_FIELD:
 		menu_add_line(ent, "Reduces an enemy's health", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "by a percentage. Uses power", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "cubes.", MENU_WHITE_CENTERED);
-		menu_add_line(ent, "Command: cripple", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Command: staticfield", MENU_WHITE_CENTERED);
 		return 4;
 	case CURSE:
 		menu_add_line(ent, "Curse your enemies, causing", MENU_WHITE_CENTERED);

@@ -318,7 +318,7 @@ void AuraRemove (edict_t *ent, int type)
 
 void holyfreeze_think (edict_t *self)
 {
-	int		radius;
+	//int		radius;
 	edict_t *target=NULL, *curse=NULL;
 	que_t	*slot;
 
@@ -349,11 +349,11 @@ void holyfreeze_think (edict_t *self)
 		return;
 
 	// scan for targets
-	radius = DEFAULT_AURA_MIN_RADIUS+self->owner->myskills.abilities[HOLY_FREEZE].current_level*DEFAULT_AURA_ADDON_RADIUS;
-	if (radius > DEFAULT_AURA_MAX_RADIUS)
-		radius = DEFAULT_AURA_MAX_RADIUS;
+	//radius = DEFAULT_AURA_MIN_RADIUS+self->owner->myskills.abilities[HOLY_FREEZE].current_level*DEFAULT_AURA_ADDON_RADIUS;
+	//if (radius > DEFAULT_AURA_MAX_RADIUS)
+	//	radius = DEFAULT_AURA_MAX_RADIUS;
 
-	while ((target = findradius (target, self->s.origin, radius)) != NULL)
+	while ((target = findradius (target, self->s.origin, self->monsterinfo.sight_range)) != NULL)
 	{
 		slot = NULL;
 		if (target == self->owner)
@@ -379,6 +379,33 @@ void holyfreeze_think (edict_t *self)
 	}
 }
 
+typedef void (*thinkfunc)(edict_t* self);
+
+// generic function for auras
+void aura_create(edict_t* ent, int aura_type, int aura_level, float duration, float radius, thinkfunc aura_think)
+{
+	edict_t* aura;
+
+	aura = G_Spawn();
+	aura->movetype = MOVETYPE_NOCLIP;
+	aura->svflags |= SVF_NOCLIENT;
+	aura->solid = SOLID_NOT;
+	VectorClear(aura->mins);
+	VectorClear(aura->maxs);
+	aura->owner = ent;
+	aura->nextthink = level.time + FRAMETIME;
+	aura->think = aura_think;
+	aura->classname = "Aura";
+	aura->mtype = aura_type;
+	aura->monsterinfo.sight_range = radius;
+	aura->monsterinfo.level = aura_level;
+	VectorCopy(ent->s.origin, aura->s.origin);
+
+	if (!que_addent(ent->auras, aura, duration))
+		G_FreeEdict(aura); // too many auras
+}
+
+/*
 void aura_holyfreeze(edict_t *ent) 
 {
 	edict_t *holyfreeze;
@@ -401,6 +428,7 @@ void aura_holyfreeze(edict_t *ent)
 
 	//que_list(ent->auras);
 }
+*/
 
 void Cmd_HolyFreeze(edict_t *ent)
 {
@@ -412,7 +440,9 @@ void Cmd_HolyFreeze(edict_t *ent)
 	if(ent->myskills.abilities[HOLY_FREEZE].disable)
 		return;
 
-	if (!G_CanUseAbilities(ent, ent->myskills.abilities[HOLY_FREEZE].current_level, 0))
+	int aura_level = ent->myskills.abilities[HOLY_FREEZE].current_level;
+
+	if (!G_CanUseAbilities(ent, aura_level, 0))
 		return;
 	// if we already had an aura on, remove it
 	if (que_typeexists(ent->auras, AURA_HOLYFREEZE))
@@ -433,12 +463,18 @@ void Cmd_HolyFreeze(edict_t *ent)
 	ent->client->pers.inventory[power_cube_index] -= DEFAULT_AURA_INIT_COST;
 	gi.sound(ent, CHAN_ITEM, gi.soundindex("auras/holywind.wav"), 1, ATTN_NORM, 0);
 	safe_cprintf(ent, PRINT_HIGH, "Now using holy freeze aura.\n");
-	aura_holyfreeze(ent);
+	//aura_holyfreeze(ent);
+
+	float radius = DEFAULT_AURA_MIN_RADIUS + aura_level * DEFAULT_AURA_ADDON_RADIUS;
+	if (radius > DEFAULT_AURA_MAX_RADIUS)
+		radius = DEFAULT_AURA_MAX_RADIUS;
+
+	aura_create(ent, AURA_HOLYFREEZE, aura_level, DEFAULT_AURA_DURATION, radius, holyfreeze_think);
 }
 
 void salvation_think (edict_t *self)
 {
-	int		radius;
+	//int		radius;
 	edict_t *other=NULL;
 	que_t	*slot=NULL;
 
@@ -463,10 +499,10 @@ void salvation_think (edict_t *self)
 	if (sf2qf(level.framenum) % DEFAULT_AURA_SCAN_FRAMES)
 		return;
 
-	radius = 256;
+	//radius = 256;
 
 	// scan for targets
-	while ((other = findradius (other, self->s.origin, radius)) != NULL)
+	while ((other = findradius (other, self->s.origin, self->monsterinfo.sight_range)) != NULL)
 	{
 		slot = NULL;
 		if (other == self->owner)
@@ -486,6 +522,7 @@ void salvation_think (edict_t *self)
 	}
 }
 
+/*
 void aura_salvation(edict_t *ent) 
 {
 	edict_t *salvation;
@@ -506,6 +543,7 @@ void aura_salvation(edict_t *ent)
 	if (!que_addent(ent->auras, salvation, DEFAULT_AURA_DURATION))
 		G_FreeEdict(salvation); // too many auras
 }
+*/
 
 void Cmd_Salvation(edict_t *ent)
 {
@@ -517,7 +555,9 @@ void Cmd_Salvation(edict_t *ent)
 
 	if(ent->myskills.abilities[SALVATION].disable)
 		return;
-	if (!G_CanUseAbilities(ent, ent->myskills.abilities[SALVATION].current_level, 0))
+
+	int aura_level = ent->myskills.abilities[SALVATION].current_level;
+	if (!G_CanUseAbilities(ent, aura_level, 0))
 		return;
 
 	// if we already had an aura on, remove it
@@ -546,8 +586,65 @@ void Cmd_Salvation(edict_t *ent)
 	ent->client->pers.inventory[power_cube_index] -= DEFAULT_AURA_INIT_COST;
 	gi.sound(ent, CHAN_ITEM, gi.soundindex("auras/salvation.wav"), 1, ATTN_NORM, 0);
 	safe_cprintf(ent, PRINT_HIGH, "Now using salvation aura.\n");
-	aura_salvation(ent);
+	//aura_salvation(ent);
+	aura_create(ent, AURA_SALVATION, aura_level, DEFAULT_AURA_DURATION, 256, salvation_think);
 }
+
+void thorns_think(edict_t* self)
+{
+	//int		radius;
+	edict_t* other = NULL;
+	que_t* slot = NULL;
+
+	// check status of owner
+	// remove if dead or insufficient power cubes for aura
+	if (!G_EntIsAlive(self->owner) || (self->owner->client && self->owner->client->pers.inventory[power_cube_index] < COST_FOR_SALVATION))//FIXME
+	{
+		que_removeent(self->owner->auras, self, true);
+		return;
+	}
+
+	// use cubes
+	if (!(sf2qf(level.framenum) % DEFAULT_AURA_FRAMES))
+	{
+		int cube_cost = DEFAULT_AURA_COST;
+
+		if (self->owner->client)
+			self->owner->client->pers.inventory[power_cube_index] -= cube_cost;
+	}
+	que_addent(self->owner->auras, self, DEFAULT_AURA_DURATION);
+	// move aura with owner
+	VectorCopy(self->owner->s.origin, self->s.origin);
+	self->nextthink = level.time + FRAMETIME;
+	if (sf2qf(level.framenum) % DEFAULT_AURA_SCAN_FRAMES)
+		return;
+
+	//radius = 256;
+
+	// scan for targets
+	while ((other = findradius(other, self->s.origin, self->monsterinfo.sight_range)) != NULL)
+	{
+		slot = NULL;
+		if (other == self->owner)
+			continue;
+		if (!G_EntExists(other))
+			continue;
+		if (other->health < 1)
+			continue;
+		if (OnSameTeam(self->owner, other) < 2)
+			continue;
+		if (!visible(self->owner, other))
+			continue;
+		//  does the target already have thorns?
+		slot = que_findtype(other->auras, slot, AURA_THORNS);
+		if (slot && (slot->ent->owner != self->owner))
+			continue; // not ours--don't touch it
+		que_addent(other->auras, self, DEFAULT_AURA_DURATION);
+		if (!slot) // target didn't have thorns before, so play a sound
+			gi.sound(other, CHAN_ITEM, gi.soundindex("auras/thorns.wav"), 1, ATTN_IDLE, 0);
+	}
+}
+
 /*
 #define HOLYSHOCK_DEFAULT_RADIUS	56
 #define HOLYSHOCK_ADDON_RADIUS		20

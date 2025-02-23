@@ -405,6 +405,7 @@ void monster_fire_icebolt(edict_t* self)
 	// Play sound effect
 	gi.sound(self, CHAN_WEAPON, gi.soundindex("spells/coldcast.wav"), 1, ATTN_NORM, 0);
 }
+
 //
 // Monster utility functions
 //

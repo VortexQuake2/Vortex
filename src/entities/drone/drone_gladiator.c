@@ -191,7 +191,7 @@ void GaldiatorMelee (edict_t *self)
 		damage = M_MELEE_DMG_MAX;
 
 	VectorSet (aim, MELEE_DISTANCE, self->mins[0], -4);
-	if (M_MeleeAttack(self, 96, damage, 200))
+	if (M_MeleeAttack(self, self->enemy, 96, damage, 200))
 		gi.sound (self, CHAN_AUTO, sound_cleaver_hit, 1, ATTN_NORM, 0);
 	else
 		gi.sound (self, CHAN_AUTO, sound_cleaver_miss, 1, ATTN_NORM, 0);
@@ -399,10 +399,13 @@ void gladiator_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int da
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		for (n= 0; n < 2; n++)
-			ThrowGib (self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-		for (n= 0; n < 4; n++)
-			ThrowGib (self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
+		if (G_NearbyEnts(self->s.origin, NEARBY_ENTITIES_RANGE, true) < NEARBY_ENTITIES_MAX)
+		{
+			for (n = 0; n < 2; n++)
+				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
+			for (n = 0; n < 4; n++)
+				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
+		}
 
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);

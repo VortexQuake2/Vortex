@@ -50,12 +50,12 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 
 	if (!strcmp(target->classname, "drone") 
 		&& (ent->num_monsters + target->monsterinfo.control_cost <= MAX_MONSTERS)
-		&& !(target->flags & FL_UNDEAD) && target->mtype != M_DECOY) // don't revive decoys and undead (skeletons)
+		&& !(target->flags & FL_UNDEAD) && target->mtype != M_DECOY && target->mtype != M_GOLEM) // don't revive decoys, golem, and undead (skeletons)
 	{
 		target->monsterinfo.level = skill_level;
 		M_SetBoundingBox(target->mtype, bmin, bmax);
 
-		if (G_IsValidLocation(target, target->s.origin, bmin, bmax) && M_Initialize(ent, target, 0.5f))
+		if (G_IsValidLocation(target, target->s.origin, bmin, bmax) && M_Initialize(ent, target, 0.0f))
 		{
 			// restore this drone
 			target->monsterinfo.slots_freed = false; // reset freed flag
@@ -111,7 +111,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 
 		e->activator = ent;
 		e->monsterinfo.level = skill_level;
-		M_Initialize(ent, e, 0.5f);
+		M_Initialize(ent, e, 0.0f);
 		e->health = 0.2f*e->max_health;
 		e->monsterinfo.power_armor_power = 0.2f*e->monsterinfo.max_armor;
 		e->s.skinnum |= 1; // injured skin

@@ -5,6 +5,9 @@ static int poison_sound1;
 static int poison_sound2;
 static int poison_sound3;
 static int poison_sound4;
+static int sound_poisoned;
+static int sound_poisonnova;
+static int sound_gas;
 
 // az's note for anyone who looks at this in the future: for organ_touch
 void V_Push (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
@@ -1690,21 +1693,13 @@ void gascloud_runframes (edict_t *self)
 
 void poison_curse_sound(edict_t* self)
 {
-	int sound;
-
-	poison_sound1 = gi.soundindex("curses/green1.wav");
-	poison_sound2 = gi.soundindex("curses/green2.wav");
-	poison_sound3 = gi.soundindex("curses/green3.wav");
-	poison_sound4 = gi.soundindex("curses/green4.wav");
-
 	switch (GetRandom(1, 4))
 	{
-	case 1: sound = poison_sound1; break;
-	case 2: sound = poison_sound2; break;
-	case 3: sound = poison_sound3; break;
-	case 4: sound = poison_sound4; break;
+	case 1: gi.sound(self, CHAN_ITEM, poison_sound1, 1.0, ATTN_NORM, 0); break;
+	case 2: gi.sound(self, CHAN_ITEM, poison_sound2, 1.0, ATTN_NORM, 0); break;
+	case 3: gi.sound(self, CHAN_ITEM, poison_sound3, 1.0, ATTN_NORM, 0); break;
+	case 4: gi.sound(self, CHAN_ITEM, poison_sound4, 1.0, ATTN_NORM, 0); break;
 	}
-	gi.sound(self, CHAN_ITEM, sound, 1.0, ATTN_NORM, 0);
 }
 
 void poison_target(edict_t* ent, edict_t* target, int damage, float duration, int meansOfdeath, qboolean stack)
@@ -1790,6 +1785,13 @@ void SpawnGasCloud (edict_t *ent, vec3_t start, int damage, float radius, float 
 {
 	edict_t *e;
 
+	// initialize sound
+	poison_sound1 = gi.soundindex("curses/green1.wav");
+	poison_sound2 = gi.soundindex("curses/green2.wav");
+	poison_sound3 = gi.soundindex("curses/green3.wav");
+	poison_sound4 = gi.soundindex("curses/green4.wav");
+
+	// spawn gascloud entity
 	e = G_Spawn();
 	e->activator = ent->activator;
 	e->solid = SOLID_NOT;
@@ -1967,7 +1969,7 @@ void poisonball_touch(edict_t* ent, edict_t* other, cplane_t* plane, csurface_t*
 		return;
 
 	//gi.sound(ent, CHAN_VOICE, gi.soundindex(va("abilities/largefireimpact%d.wav", GetRandom(1, 3))), 1, ATTN_NORM, 0);
-	gi.sound(ent, CHAN_ITEM, gi.soundindex("abilities/poisoned.wav"), 1, ATTN_NORM, 0);
+	gi.sound(ent, CHAN_ITEM, sound_poisoned, 1, ATTN_NORM, 0);
 	poisonball_explode(ent, plane);
 }
 
@@ -2022,6 +2024,10 @@ void fire_poison(edict_t* self, vec3_t start, vec3_t aimdir, int impact_dmg, flo
 	vec3_t	dir;
 	vec3_t	forward;
 
+	// initialize sound
+	sound_poisoned = gi.soundindex("abilities/poisoned.wav");
+	sound_poisonnova = gi.soundindex("abilities/poisoned.wav");
+
 	//  entity made a sound, used to alert monsters
 	self->lastsound = level.framenum;
 
@@ -2060,7 +2066,7 @@ void fire_poison(edict_t* self, vec3_t start, vec3_t aimdir, int impact_dmg, flo
 	VectorScale(aimdir, speed, poison->velocity);
 	//poison->velocity[2] += 150;
 
-	gi.sound(poison, CHAN_WEAPON, gi.soundindex("abilities/poisonnova.wav"), 1, ATTN_NORM, 0);
+	gi.sound(poison, CHAN_WEAPON, sound_poisonnova, 1, ATTN_NORM, 0);
 }
 
 
@@ -2121,7 +2127,7 @@ void gasser_attack (edict_t *self)
 	start[2] = self->absmax[2] + 8;
 	SpawnGasCloud(self, start, self->dmg, self->dmg_radius, 4.0);
 	//gi.sound(self, CHAN_VOICE, gi.soundindex("weapons/poisonloopmedium2.wav"), 1, ATTN_NORM, 0);
-	gi.sound(self, CHAN_VOICE, gi.soundindex("weapons/gas1.wav"), 1, ATTN_NORM, 0);
+	gi.sound(self, CHAN_VOICE, sound_gas, 1, ATTN_NORM, 0);
 
 	self->s.frame = GASSER_FRAMES_ATTACK_START+2;
 	self->monsterinfo.attack_finished = level.time + GASSER_REFIRE;
@@ -2308,6 +2314,9 @@ edict_t *CreateGasser (edict_t *ent, int skill_level, int talent_level)
 	int acid_level = ent->myskills.abilities[ACID].current_level;
 	float synergy_bonus = 1.0 + ACID_GASSER_SYNERGY_BONUS * acid_level;
 	edict_t *e;
+
+	// initialize sound
+	sound_gas = gi.soundindex("weapons/gas1.wav");
 
 	e = G_Spawn();
 	e->style = 1; //growing

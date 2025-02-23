@@ -1281,6 +1281,7 @@ void monster_fire_20mm(edict_t* self, vec3_t start, vec3_t dir, int damage, int 
 void monster_fire_fireball(edict_t* self);
 void monster_fire_poison(edict_t* self);
 void monster_fire_icebolt(edict_t* self);
+void monster_fire_rocks(edict_t* self);
 void M_droptofloor (edict_t *ent);
 void monster_think (edict_t *self);
 void walkmonster_start (edict_t *self);
@@ -1968,6 +1969,7 @@ struct edict_s
 	int num_magmine;
 	int num_barrels;
 	int num_skeletons;
+	int num_golems;
 	int	num_spikeball;
 	int	num_laserplatforms; //4.4 Talent: Laser Platform
 	int num_hammers; //4.4 Talent: Boomerang
@@ -2187,7 +2189,7 @@ void Cmd_Decoy_f (edict_t *ent);
 qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, qboolean regen_health, qboolean regen_armor, qboolean regen_ammo, int *nextframe);
 qboolean M_NeedRegen (const edict_t *ent);
 qboolean M_IgnoreInferiorTarget (edict_t *self, edict_t *target);//4.5
-edict_t *M_MeleeAttack(edict_t *self, float range, int damage, int knockback);
+edict_t *M_MeleeAttack(edict_t *self, edict_t *targ, float range, int damage, int knockback);
 qboolean M_ContinueAttack(edict_t* self, mmove_t* attack_move, mmove_t* end_move, float min_dist, float max_dist, float chance);
 void M_DelayNextAttack(edict_t* self, float delay, qboolean add_attack_frames);
 qboolean M_ValidMedicTarget(const edict_t *self, const edict_t *target);
@@ -2269,6 +2271,7 @@ void Cmd_LaserSight_f(edict_t *ent);
 #define M_BARON_FIRE	24
 #define M_SHAMBLER	25
 #define M_SKELETON	26
+#define M_GOLEM		27
 #define M_MINISENTRY	100
 #define M_SENTRY		101
 #define M_BFG_SENTRY	102
@@ -2335,6 +2338,7 @@ void Cmd_LaserSight_f(edict_t *ent);
 #define AURA_SALVATION	202
 #define AURA_HOLYSHOCK	203
 #define AURA_MANASHIELD	204
+#define AURA_THORNS		205
 #define CURSE_FROZEN	301
 #define CURSE_BURN		302
 #define CURSE_BOMBS		303
@@ -2370,6 +2374,9 @@ void vrx_award_all_attackers(edict_t* targ, edict_t* targetclient, edict_t* play
 int vrx_award_exp(edict_t* attacker, edict_t* targ, edict_t* targetclient, int bonus_xp);
 float vrx_increase_monster_damage_by_talent(edict_t *owner, float damage);
 //K03 End
+
+#define NEARBY_ENTITIES_MAX	33	// max # of ents before we start trying to limit them
+#define NEARBY_ENTITIES_RANGE 1024 // default range to look for nearby entities
 
 #define BASE_GIB_HEALTH 400
 

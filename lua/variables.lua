@@ -341,6 +341,7 @@ GASSER_MAX_COUNT                         = 4
 OBSTACLE_MAX_COUNT                       = 6
 SPIKEBALL_MAX_COUNT                      = 3
 SKELETON_MAX							 = 4
+GOLEM_MAX								 = 1
 DELAY_MONSTER_THINK                      = 3
 DELAY_MONSTER                            = 3
 ACID_GASSER_SYNERGY_BONUS				 = 0.05
@@ -497,10 +498,10 @@ CORPSE_EXPLOSION_INITIAL_RADIUS          = 100
 CORPSE_EXPLOSION_ADDON_RADIUS            = 10
 CORPSE_EXPLOSION_MAX_RANGE               = 8192
 CORPSE_EXPLOSION_SEARCH_RADIUS           = 128
-CRIPPLE_RANGE                            = 512
-CRIPPLE_COST                             = 25
-CRIPPLE_DELAY                            = 2.0
-CRIPPLE_MAX_DAMAGE                       = 5000
+STATICFIELD_RANGE                        = 512
+STATICFIELD_COST                         = 25
+STATICFIELD_DELAY                        = 0.3
+STATICFIELD_MAX_DAMAGE                   = 10000
 TELEPORT_COST                            = 20
 PLAYERSPAWN_REGEN_FRAMES                 = 800
 PLAYERSPAWN_REGEN_DELAY                  = 10
@@ -524,7 +525,7 @@ LIFE_TAP_ADDON_DURATION					 = 1.0
 LIFE_TAP_COST							 = 25
 LIFE_TAP_DELAY							 = 2.0
 LIFE_TAP_INITIAL_FACTOR					 = 0.0
-LIFE_TAP_ADDON_FACTOR					 = 0.05
+LIFE_TAP_ADDON_FACTOR					 = 0.1
 AMP_DAMAGE_DELAY                         = 2
 AMP_DAMAGE_DURATION_BASE                 = 0
 AMP_DAMAGE_DURATION_BONUS                = 1.0
@@ -633,6 +634,9 @@ SKULL_SEARCH_TIMEOUT                     = 50
 SKELETON_COST							 = 50
 SKELETON_INITIAL_HEALTH					 = 0
 SKELETON_ADDON_HEALTH					 = 100
+GOLEM_COST								 = 100
+GOLEM_INITIAL_HEALTH					 = 0
+GOLEM_ADDON_HEALTH						 = 1000
 
 -- Monsters --
 M_SOLDIER_INITIAL_HEALTH                 = 50	-- 200
@@ -1134,6 +1138,12 @@ SPIKEGRENADE_TURN_DEGREES                = 3
 SPIKEGRENADE_TURN_DELAY                  = 1.0
 SPIKEGRENADE_TURNS                       = 8
 SPIKEGRENADE_MAX_COUNT                   = 3
+
+EMP_COST								 = 25
+EMP_DELAY								 = 0.5
+EMP_INITIAL_TIME						 = 0
+EMP_ADDON_TIME							 = 0.5
+EMP_INITIAL_RADIUS						 = 150
 
 -- Laser trap
 LASERTRAP_INITIAL_HEALTH                 = 0

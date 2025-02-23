@@ -136,7 +136,7 @@ void berserk_attack_spike (edict_t *self)
 	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
 		damage = M_MELEE_DMG_MAX;
 
-	M_MeleeAttack(self, 96, damage, 400);
+	M_MeleeAttack(self, self->enemy, 96, damage, 400);
 	//FIXME: add bleed curse
 }
 
@@ -168,7 +168,7 @@ void berserk_attack_club (edict_t *self)
 	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
 		damage = M_MELEE_DMG_MAX;
 
-	M_MeleeAttack(self, 96, damage, 400);
+	M_MeleeAttack(self, self->enemy, 96, damage, 400);
 }
 
 mframe_t berserk_frames_attack_club [] =
@@ -372,11 +372,14 @@ void berserk_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		for (n= 0; n < 2; n++)
-			ThrowGib (self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-		for (n= 0; n < 4; n++)
-			ThrowGib (self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-		//ThrowHead (self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
+		if (G_NearbyEnts(self->s.origin, NEARBY_ENTITIES_RANGE, true) < NEARBY_ENTITIES_MAX)
+		{
+			for (n = 0; n < 2; n++)
+				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
+			for (n = 0; n < 4; n++)
+				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
+			//ThrowHead (self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
+		}
 #ifdef OLD_NOLAG_STYLE
         M_Remove(self, false, false);
 #else

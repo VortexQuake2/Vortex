@@ -662,6 +662,34 @@ qboolean CanUseVampire (edict_t *targ, edict_t *attacker, int dflags, int mod)
 		&& (targ->mtype != M_FORCEWALL) && (targ->mtype != MOD_LASER_DEFENSE));
 }
 
+void ApplyThorns(edict_t* targ, edict_t* inflictor, edict_t* attacker, vec3_t point, float damage, int knockback,
+	int dflags, int mod)
+{
+	que_t* slot = NULL;
+
+	// no damage
+	if (damage < 1)
+		return;
+	// attacker is invalid/dead--nobody to hurt
+	if (!G_EntIsAlive(attacker))
+		return;
+	// attacker has deflect or thorns--no infinite loops please!
+	if (que_findtype(attacker->curses, NULL, DEFLECT) || que_findtype(attacker->auras, NULL, AURA_THORNS))
+		return;
+	// target does not have a thorns aura
+	if (!(slot = que_findtype(targ->auras, NULL, AURA_THORNS)))
+		return;
+
+	// 4x damage returned by level 10, 8x by 20
+	float mult = 0.4 * slot->ent->monsterinfo.level;
+	// players take less damage from thorns since they have far less health than monsters!
+	if (attacker->client)
+		mult *= 0.1;
+
+	// try to hurt them
+	T_Damage(attacker, targ, targ, vec3_origin, attacker->s.origin, vec3_origin, (damage * mult), 0, dflags, mod);
+}
+
 void DeflectHitscan(edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t point, float damage, int knockback,
                     int dflags, int mod)
 {		
@@ -703,7 +731,7 @@ void DeflectHitscan(edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t
 		tr = gi.trace(point, NULL, NULL, end, targ, MASK_SHOT);
 
 		// try to hurt them if they are not blessed with deflect (avoid infinite loop)
-		if (tr.ent && tr.ent->takedamage && (que_findtype(tr.ent->curses, NULL, DEFLECT) == NULL))
+		if (tr.ent && tr.ent->takedamage && !que_findtype(tr.ent->curses, NULL, DEFLECT) && !que_findtype(tr.ent->auras, NULL, AURA_THORNS))
 			T_Damage(tr.ent, targ, targ, newDir, tr.endpos, tr.plane.normal, damage, knockback, dflags, mod);
 				
 		// deflect may absorb some or all damage
@@ -867,6 +895,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 	// try to deflect an attack first before all other resistances are checked
     DeflectHitscan(targ, inflictor, attacker, point, damage, knockback, dflags, mod);
+	ApplyThorns(targ, inflictor, attacker, point, damage, knockback, dflags, mod);
 
     before_sub = damage = G_SubDamage(targ, inflictor, attacker, damage, dflags, mod);
 
@@ -1251,6 +1280,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		{
 			float lifeTapFactor = LIFE_TAP_INITIAL_FACTOR + LIFE_TAP_ADDON_FACTOR * slot->ent->monsterinfo.level;
 				//slot->ent->owner->myskills.abilities[LIFE_TAP].current_level;
+			//gi.dprintf("%s: take: %.0f lifeTapFactor: %.1f\n", __func__, take, lifeTapFactor);
 			V_ApplyVampire(attacker, take, lifeTapFactor, 1.0, true);
 		}
 

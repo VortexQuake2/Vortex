@@ -2193,8 +2193,8 @@ int G_NearbyEnts(vec3_t const org, float rad, qboolean is_visible)
 	{
 		if (!e->inuse)
 			continue;
-		if (e->solid == SOLID_NOT)
-			continue;
+		//if (e->solid == SOLID_NOT)
+		//	continue;
 		if (e->svflags & SVF_NOCLIENT)
 			continue;
 		if (distance(org, e->s.origin) > rad)
