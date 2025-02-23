@@ -2203,6 +2203,6 @@ int G_NearbyEnts(vec3_t const org, float rad, qboolean is_visible)
 			continue;
 		num_ents++;
 	}
-	//gi.dprintf("%s: rad: %.0f ents: %d\n", __func__, rad, num_ents);
+	//gi.dprintf("%s: rad: %.0f ents: %d", __func__, rad, num_ents);
 	return num_ents;
 }

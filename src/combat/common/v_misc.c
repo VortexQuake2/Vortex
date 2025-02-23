@@ -1019,3 +1019,33 @@ void vrx_stun(edict_t* self, edict_t* other, float time)
 		other->holdtime = level.time + time;
 	}
 }
+
+// returns false if a non-essential entity (e.g. visual effects, gibs) should be spawned at org
+qboolean vrx_spawn_nonessential_ent(vec3_t org)
+{
+	int ents = 0; // counter for ents being sent to clients at org
+
+	for (edict_t* e = g_edicts; e < &g_edicts[globals.num_edicts]; e++)
+	{
+		// freed entities don't (or shouldn't ) count
+		if (!e->inuse)
+			continue;
+		// entities with this flag aren't sent to clients
+		if (e->svflags & SVF_NOCLIENT)
+			continue;
+		// entities outside of current PVS shouldn't be sent to clients
+		if (!gi.inPVS(org, e->s.origin))
+			continue;
+		// other possible checks could include visiblity and range (>1024 units)
+		//if (distance(org, e->s.origin) > rad)
+		//	continue;
+		//if (is_visible && !G_IsClearPath(NULL, MASK_SOLID, org, e->s.origin))
+		//	continue;
+		ents++;
+	}
+
+	//gi.dprintf("%s: %d entities are potentially being sent to clients\n", __func__, ents);
+	if (ents < NEARBY_ENTITIES_MAX)
+		return true;
+	return false;
+}

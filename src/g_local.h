@@ -2375,8 +2375,8 @@ int vrx_award_exp(edict_t* attacker, edict_t* targ, edict_t* targetclient, int b
 float vrx_increase_monster_damage_by_talent(edict_t *owner, float damage);
 //K03 End
 
-#define NEARBY_ENTITIES_MAX	33	// max # of ents before we start trying to limit them
-#define NEARBY_ENTITIES_RANGE 1024 // default range to look for nearby entities
+#define NEARBY_ENTITIES_MAX	100	// max # of ents before we start trying to limit them
+//#define NEARBY_ENTITIES_RANGE 1024 // default range to look for nearby entities
 
 #define BASE_GIB_HEALTH 400
 

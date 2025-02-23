@@ -61,6 +61,9 @@ float		dist;
 
   if (!deathmatch->value) return;
 
+  if (!vrx_spawn_nonessential_ent(player->s.origin))
+	  return;
+
 	if(player->enemy && player->enemy != player)
 	{
 		if(player->enemy->classname[0] == 'p')

@@ -381,6 +381,11 @@ void golem_restrike(edict_t* self)
 		self->s.frame = FRAME_punch10;
 }
 
+void golem_delay(edict_t* self)
+{
+	self->monsterinfo.attack_finished = level.time + random();
+}
+
 mframe_t golem_frames_punch[] =
 {
 	ai_charge, 15, NULL,
@@ -406,7 +411,7 @@ mframe_t golem_frames_punch[] =
 	ai_charge, 15, NULL,
 	ai_charge, 15, NULL,
 	ai_charge, 15, NULL,
-	ai_charge, 15, NULL,
+	ai_charge, 15, golem_delay,
 	ai_charge, 15, golem_step
 };
 mmove_t golem_move_punch = { FRAME_punch01, FRAME_punch25, golem_frames_punch, golem_run };
@@ -441,7 +446,7 @@ mframe_t golem_frames_bash[] =
 	ai_charge, 15, NULL,
 	ai_charge, 15, NULL,
 	ai_charge, 15, NULL,
-	ai_charge, 15, NULL
+	ai_charge, 15, golem_delay
 };
 mmove_t golem_move_bash = { FRAME_bash01, FRAME_bash23, golem_frames_bash, golem_run };
 
@@ -471,7 +476,7 @@ mframe_t golem_frames_stomp[] =
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
-	ai_charge, 0, NULL
+	ai_charge, 0, golem_delay
 };
 mmove_t golem_move_stomp = { FRAME_stomp01, FRAME_stomp25, golem_frames_stomp, golem_run };
 
@@ -505,7 +510,7 @@ mframe_t golem_frames_backhand[] =
 	ai_charge, 15, NULL,
 	ai_charge, 15, NULL,
 	ai_charge, 15, NULL,
-	ai_charge, 15, NULL
+	ai_charge, 15, golem_delay
 };
 mmove_t golem_move_backhand = { FRAME_backhand01, FRAME_backhand23, golem_frames_backhand, golem_run };
 
@@ -596,7 +601,7 @@ void golem_attack(edict_t* self)
 	}
 
 	golem_attack_sound(self);
-	M_DelayNextAttack(self, random(), true);
+	//M_DelayNextAttack(self, random(), true);
 }
 
 void golem_sight(edict_t* self, edict_t* other)
@@ -662,7 +667,7 @@ void golem_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage,
 	if (self->health <= self->gib_health)
 	{
 		gi.sound(self, CHAN_VOICE, gi.soundindex("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (G_NearbyEnts(self->s.origin, NEARBY_ENTITIES_RANGE, true) < NEARBY_ENTITIES_MAX)
+		if (vrx_spawn_nonessential_ent(self->s.origin))
 		{
 			//FIXME: throw rocks instead?
 			for (n = 0; n < 2; n++)

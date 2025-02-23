@@ -42,7 +42,7 @@ void rock_remove(edict_t* self)
 
 void rock_explode(edict_t* self, cplane_t* plane)
 {
-	if (G_NearbyEnts(self->s.origin, NEARBY_ENTITIES_RANGE, true) < NEARBY_ENTITIES_MAX)
+	if (vrx_spawn_nonessential_ent(self->s.origin))
 	{
 		// throw chunks of rock
 		int n = randomMT() % 5;
@@ -112,6 +112,8 @@ void fire_rocks(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float sp
 	rock->movetype = MOVETYPE_TOSS;
 	rock->clipmask = MASK_SHOT;
 	rock->solid = SOLID_BBOX;
+	VectorSet(rock->mins, -4, -4, 4);
+	VectorSet(rock->maxs, 4, 4, 4);
 
 	// randomize model
 	if (random() > 0.5)

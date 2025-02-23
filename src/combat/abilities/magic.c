@@ -798,9 +798,16 @@ void DeflectProjectiles (edict_t *self, float chance, qboolean in_front)
 	DeflectProjectile(self, "skull", chance, in_front);
 	DeflectProjectile(self, "spike", chance, in_front);
 	DeflectProjectile(self, "spikey", chance, in_front);
+	DeflectProjectile(self, "spikeball", chance, in_front);
 	DeflectProjectile(self, "fireball", chance, in_front);
+	DeflectProjectile(self, "icebolt", chance, in_front);
+	DeflectProjectile(self, "fire", chance, in_front);
 	DeflectProjectile(self, "plasma bolt", chance, in_front);
 	DeflectProjectile(self, "acid", chance, in_front);
+	DeflectProjectile(self, "poisonball", chance, in_front);
+	DeflectProjectile(self, "rock", chance, in_front);
+	DeflectProjectile(self, "lance", chance, in_front);
+	DeflectProjectile(self, "hammer", chance, in_front);
 }
 
 

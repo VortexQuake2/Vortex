@@ -218,7 +218,7 @@ void icebolt_explode (edict_t *self, cplane_t *plane)
 	// damage nearby entities
 	T_RadiusDamage(self, self->owner, self->dmg, NULL, self->dmg_radius, MOD_ICEBOLT);//CHANGEME--fix MOD
 
-	if (G_NearbyEnts(self->s.origin, NEARBY_ENTITIES_RANGE, true) < NEARBY_ENTITIES_MAX)
+	if (vrx_spawn_nonessential_ent(self->s.origin))
 	{
 		// throw chunks of ice
 		n = randomMT() % 5;

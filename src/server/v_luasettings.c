@@ -1966,10 +1966,10 @@ void Lua_LoadVariables()
 
 	STATICFIELD_RANGE = vrx_lua_get_variable("STATICFIELD_RANGE", 512);
 	STATICFIELD_COST = vrx_lua_get_variable("STATICFIELD_COST", 25);
-	STATICFIELD_DELAY = vrx_lua_get_variable("STATICFIELD_DELAY", 0.5);
+	STATICFIELD_DELAY = vrx_lua_get_variable("STATICFIELD_DELAY", 0.3);
 	STATICFIELD_MAX_DAMAGE = vrx_lua_get_variable("STATICFIELD_MAX_DAMAGE", 10000);
 
-	TELEPORT_COST = vrx_lua_get_variable("TELEPORT_COST", 20);
+	TELEPORT_COST = vrx_lua_get_variable("TELEPORT_COST", 10);
 
 	PLAYERSPAWN_REGEN_FRAMES = vrx_lua_get_variable("PLAYERSPAWN_REGEN_FRAMES", 800);
 	PLAYERSPAWN_REGEN_DELAY = vrx_lua_get_variable("PLAYERSPAWN_REGEN_DELAY", 20);

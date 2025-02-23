@@ -3295,6 +3295,8 @@ void ClientCommand (edict_t *ent)
 	{
 		if (!ent->myskills.administrator)
 			return;
+		//gi.dprintf("%s: ", __func__);
+		//G_NearbyEnts(ent->s.origin, 1024, false);
 	}
 	else if (Q_stricmp (cmd, "navipos") == 0)
 	{

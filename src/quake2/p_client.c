@@ -1029,12 +1029,14 @@ void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	{	// gib
         V_GibSound(self, GetRandom(1, 6));
 //GHz END
-		if (G_NearbyEnts(self->s.origin, NEARBY_ENTITIES_RANGE, false) < NEARBY_ENTITIES_MAX)
+		if (vrx_spawn_nonessential_ent(self->s.origin))
 		{
 			for (n = 0; n < 4; n++)
 				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
 			ThrowClientHead(self, damage);
 		}
+		else
+			self->svflags |= SVF_NOCLIENT;//GHz: don't waste client bandwidth!
 //ZOID
 		self->client->anim_priority = ANIM_DEATH;
 		self->client->anim_end = 0;
@@ -1541,11 +1543,16 @@ void body_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage,
 
 	if (self->health < self->gib_health) //GHz changed from -40
 	{
-		gi.sound (self, CHAN_BODY, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		for (n= 0; n < 4; n++)
-			ThrowGib (self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-		self->s.origin[2] -= 48;
-		ThrowClientHead (self, damage);
+		if (vrx_spawn_nonessential_ent(self->s.origin))
+		{
+			gi.sound(self, CHAN_BODY, gi.soundindex("misc/udeath.wav"), 1, ATTN_NORM, 0);
+			for (n = 0; n < 4; n++)
+				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
+			self->s.origin[2] -= 48;
+			ThrowClientHead(self, damage);
+		}
+		else
+			self->svflags |= SVF_NOCLIENT;//GHz: don't waste client bandwidth!
 		self->s.frame = 0;
 		self->takedamage = DAMAGE_NO; //3.0 gibbed corpses should not be solid! ;)
 		self->solid = SOLID_NOT;
@@ -1638,7 +1645,7 @@ void CopyToBodyQue (edict_t *ent)
 	body->movetype = ent->movetype;
 	body->die = body_die;
 	//body->touch = body_touch;
-	body->takedamage = DAMAGE_YES;
+	body->takedamage = ent->takedamage;//DAMAGE_YES;
 //GHz START
 	body->think = body_think;
 	body->nextthink = level.time + FRAMETIME;

@@ -1045,7 +1045,7 @@ void mytank_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (G_NearbyEnts(self->s.origin, NEARBY_ENTITIES_RANGE, true) < NEARBY_ENTITIES_MAX)
+		if (vrx_spawn_nonessential_ent(self->s.origin))
 		{
 			for (n = 0; n < 1; n++)
 				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
