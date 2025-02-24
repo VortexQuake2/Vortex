@@ -379,8 +379,8 @@ edict_t *InitMonsterEntity(qboolean manual_spawn) {
     else */
     // most of the time people don't like having their pvp interrupted by a boss
     if (INVASION_OTHERSPAWNS_REMOVED) {
-        monster->think = INV_SpawnMonsters;
-        monster->notify_drone_death = INV_NotifyMonsterDeath;
+        monster->think = vrx_inv_spawn_monsters;
+        monster->notify_drone_death = vrx_inv_notify_monster_death;
     } else
         monster->think = vrx_pvm_spawn_world_monsters;
 
@@ -723,10 +723,10 @@ void ThrowShrapnel(edict_t* self, char* modelname, float speed, vec3_t origin, i
 // finds a vector parallel to a wall plane pointing in the direction of lookDir
 void projectOntoWall(vec3_t lookDir, vec3_t wallNormal, vec3_t parallelVector) {
 	vec3_t projectionOntoNormal;
-	// Calculate dot product L · N
+	// Calculate dot product L ï¿½ N
 	float dot = DotProduct(lookDir, wallNormal);
 
-	// Project L onto N: (L · N) * N
+	// Project L onto N: (L ï¿½ N) * N
 	VectorScale(wallNormal, dot, projectionOntoNormal);
 
 	// Subtract this from L to get the parallel vector

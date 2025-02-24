@@ -584,7 +584,7 @@ void SVCmd_GenerateNodes_f (void)
 	gi.dprintf("%d nodes generated\n", l);
 }
 */
-void INV_SpawnBoss(edict_t* self, int index);
+void vrx_inv_spawn_boss(edict_t* self, int index);
 void SVCmd_SpawnBoss_f (void)
 {
     edict_t *e;
@@ -607,35 +607,35 @@ void SVCmd_SpawnBoss_f (void)
     if (!strcmp(gi.argv(2), "commander"))
     {
         if (invasion->value)
-            INV_SpawnBoss(m_worldspawn, 30);
+            vrx_inv_spawn_boss(m_worldspawn, 30);
         else
             vrx_create_new_drone(m_worldspawn, 30, true, true, 0);
     }
     else if (!strcmp(gi.argv(2), "makron"))
     {
         if (invasion->value)
-            INV_SpawnBoss(m_worldspawn, 31);
+            vrx_inv_spawn_boss(m_worldspawn, 31);
         else
             vrx_create_new_drone(m_worldspawn, 31, true, true, 0);
     }
     else if (!strcmp(gi.argv(2), "firebaron"))
     {
         if (invasion->value)
-            INV_SpawnBoss(m_worldspawn, 32);
+            vrx_inv_spawn_boss(m_worldspawn, 32);
         else
             vrx_create_new_drone(m_worldspawn, 32, true, true, 0);
     }
     else if (!strcmp(gi.argv(2), "supertank"))
     {
         if (invasion->value)
-            INV_SpawnBoss(m_worldspawn, 33);
+            vrx_inv_spawn_boss(m_worldspawn, 33);
         else
             vrx_create_new_drone(m_worldspawn, 33, true, true, 0);
     }
     else if (!strcmp(gi.argv(2), "jorg"))
     {
         if (invasion->value)
-            INV_SpawnBoss(m_worldspawn, 34);
+            vrx_inv_spawn_boss(m_worldspawn, 34);
         else
             vrx_create_new_drone(m_worldspawn, 34, true, true, 0);
     }

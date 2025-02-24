@@ -775,7 +775,7 @@ void BOT_ReturnToBase(int teamnum)
 			if (ctf->value && (!teamnum || bot->teamnum == teamnum))
 				base = CTF_GetFlagBaseEnt(bot->teamnum);
 			else if (INVASION_OTHERSPAWNS_REMOVED)
-				base = INV_SelectPlayerSpawnPoint(bot);
+				base = vrx_inv_select_player_spawn_point(bot);
 			if (!base || !base->inuse)
 				continue;
 

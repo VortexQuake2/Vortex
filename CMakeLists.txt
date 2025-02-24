@@ -74,7 +74,10 @@ if (VRX_USE_MYSQL)
 endif ()
 
 if (WIN32)
-    set(CC_LINK_LIBS ${CC_LINK_LIBS} Wininet Winmm)
+
+
+    set(CC_LINK_LIBS ${CC_LINK_LIBS} Wininet Winmm Ws2_32)
+
 
     if (MSVC)
         FetchContent_Declare(
@@ -82,18 +85,17 @@ if (WIN32)
                 GIT_REPOSITORY https://github.com/GerHobbelt/pthread-win32
                 GIT_TAG master
         )
-
         FetchContent_MakeAvailable(pthreads)
         target_include_directories(${CC_LIB_NAME} PRIVATE ${pthreads_SOURCE_DIR})
         target_link_libraries(${CC_LIB_NAME} pthreadVC3)
-        # add /fsanitize=address to the compiler flags
-        # if (SANITIZE_ADDRESS)
-        #     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /fsanitize=address")
-        # endif ()
-    else ()
-        # we've got pthreads already, just use it
-        set(CC_LINK_LIBS ${CC_LINK_LIBS} pthread)
-    endif ()
+    else()
+        target_link_libraries(${CC_LIB_NAME} pthread)
+    endif()
+
+    # add /fsanitize=address to the compiler flags
+    # if (SANITIZE_ADDRESS)
+    #     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /fsanitize=address")
+    # endif ()
 endif ()
 
 if (UNIX)

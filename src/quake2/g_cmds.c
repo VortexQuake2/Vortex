@@ -2507,7 +2507,7 @@ void Cmd_AdminCmd (edict_t *ent)
 
 	if (!Q_stricmp(cmd1, "closestnavi"))
     {
-        edict_t *navi = INV_ClosestNavi(ent);
+        edict_t *navi = vrx_inv_closest_navi(ent);
         if (!navi) return;
         safe_cprintf(ent, PRINT_HIGH, "%s\n", vtos(navi->s.origin));
         gi.WriteByte (svc_temp_entity);
@@ -2519,7 +2519,7 @@ void Cmd_AdminCmd (edict_t *ent)
 
     if (!Q_stricmp(cmd1, "closestnaviany"))
     {
-        edict_t *navi = INV_ClosestNaviAny(ent);
+        edict_t *navi = vrx_inv_closest_navi_any(ent);
         if (!navi) return;
         safe_cprintf(
                 ent,
@@ -2547,7 +2547,7 @@ void Cmd_AdminCmd (edict_t *ent)
 
 	if (!Q_stricmp(cmd1, "closestpspawn"))
     {
-	    edict_t *navi = INV_GiveClosestPSpawn(ent);
+	    edict_t *navi = vrx_inv_give_closest_player_spawn(ent);
         safe_cprintf(ent, PRINT_HIGH, "%s\n", vtos(navi->s.origin));
         gi.WriteByte (svc_temp_entity);
         gi.WriteByte (TE_BFG_EXPLOSION);
@@ -2650,8 +2650,8 @@ void Cmd_AdminCmd (edict_t *ent)
 	}
 	else if (Q_stricmp(cmd1, "incinv") == 0)
 	{
-		invasion_difficulty_level++;
-		safe_cprintf(ent, PRINT_HIGH, "invasion level now %d\n", invasion_difficulty_level);
+		next_invasion_wave_level++;
+		safe_cprintf(ent, PRINT_HIGH, "invasion level now %d\n", next_invasion_wave_level);
 	}
 	else if (Q_stricmp(cmd1, "title") == 0)
 	{

@@ -35,7 +35,7 @@ void init_baron_fire(edict_t* self);
 void init_skeleton(edict_t* self);
 void init_golem(edict_t* self);
 int crand (void);
-edict_t* INV_GetMonsterSpawn(edict_t* from);
+edict_t* vrx_inv_get_monster_spawn(edict_t* from);
 
 // Drone Lists -az
 
@@ -774,7 +774,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 				drone->monsterinfo.level = GetRandom(LowestLevelPlayer(), HighestLevelPlayer());
 			else if (invasion->value == 2) // hard mode invasion
 			{
-				drone->monsterinfo.level = HighestLevelPlayer()+invasion_difficulty_level-1;
+				drone->monsterinfo.level = HighestLevelPlayer()+next_invasion_wave_level-1;
                 vrx_roll_to_make_champion(drone, &drone_type);
 			}
 		}
@@ -2951,7 +2951,7 @@ qboolean M_TryRespawn(edict_t* self, qboolean remove_if_fail)
 		{
 			// try to get an available invasion monster spawn
 			// note: if this fails, we could also use TeleportNearArea() to teleport near a monster spawn
-			if ((e = INV_GetMonsterSpawn(e)) != NULL)
+			if ((e = vrx_inv_get_monster_spawn(e)) != NULL)
 			{
 				// calculate starting position just above the spawn point
 				VectorCopy(e->s.origin, start);

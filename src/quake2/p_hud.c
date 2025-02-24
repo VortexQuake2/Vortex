@@ -285,7 +285,7 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 		entry = lva("Time:%2im %2is    Wave:%3i    Players:%3i",
 			(time_left / 60),
 			(time_left - (time_left / 60) * 60),
-			invasion_difficulty_level,
+			next_invasion_wave_level,
 			vrx_get_joined_players(true)
 		);
 	}
