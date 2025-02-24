@@ -935,7 +935,7 @@ void vrx_inv_notify_monster_death(edict_t * edict) {
 	if (edict->count) // spawned properly, has a wave assigned
 	{
 		invasion_data.wave_remaining--;
-		gi.dprintf("%d rem mons\n", invasion_data.wave_remaining);
+		// gi.dprintf("%d rem mons\n", invasion_data.wave_remaining);
 	}
 }
 
