@@ -651,6 +651,7 @@ void vrx_inv_timeout(edict_t *self) {
 		gi.multicast(invasion_data.boss->s.origin, MULTICAST_PVS);
 		//DroneList_Remove(invasion_data.boss); // az: WHY DID I FORGET THIS
 		//G_FreeEdict(invasion_data.boss);
+		M_Remove(invasion_data.boss, false, true);
 		invasion_data.boss = NULL;
 		was_boss = true;
 	}
