@@ -1144,6 +1144,7 @@ EMP_DELAY								 = 0.5
 EMP_INITIAL_TIME						 = 0
 EMP_ADDON_TIME							 = 0.5
 EMP_INITIAL_RADIUS						 = 150
+EMP_ADDON_RADIUS						 = 0
 
 -- Laser trap
 LASERTRAP_INITIAL_HEALTH                 = 0

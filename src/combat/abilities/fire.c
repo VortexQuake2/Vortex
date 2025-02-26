@@ -443,7 +443,7 @@ void flames_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* su
 	if (G_EntExists(other) && !OnSameTeam(self, other))
 	{
 		// set them on fire
-		burn_person(other, self->owner, sf2qf(self->dmg_radius));
+		burn_person(other, self->owner, sf2qf(self->dmg));
 
 		// hurt them
 		if (level.framenum >= self->monsterinfo.nextattack)

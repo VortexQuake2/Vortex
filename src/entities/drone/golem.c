@@ -718,15 +718,10 @@ void thorns_think(edict_t* self);
 
 void init_golem(edict_t* self)
 {
-
-
 	sound_pain1 = gi.soundindex("golem/pain1.wav");
 	sound_pain2 = gi.soundindex("golem/pain2.wav");
-	
-
 	sound_melee1 = gi.soundindex("golem/attack3.wav");
 	sound_melee2 = gi.soundindex("golem/attack4.wav");
-
 	sound_sight = gi.soundindex("golem/sight.wav");
 	sound_death = gi.soundindex("golem/death.wav");
 	sound_idle1 = gi.soundindex("golem/idle1a.wav");

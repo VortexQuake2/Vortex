@@ -146,6 +146,11 @@ void fire_rocks(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float sp
 
 float BOT_DMclass_ThrowingPitch1(edict_t* self, float v);
 
+#define ROCK_INITIAL_DAMAGE 0
+#define ROCK_ADDON_DAMAGE	50
+#define ROCK_INITIAL_SPEED	650
+#define ROCK_ADDON_SPEED	0
+
 void monster_fire_rocks(edict_t* self)
 {
 	int damage, radius, speed;
@@ -157,10 +162,10 @@ void monster_fire_rocks(edict_t* self)
 
 	slvl = drone_damagelevel(self);
 
-	damage = 50 * slvl;
+	damage = ROCK_INITIAL_DAMAGE + ROCK_ADDON_DAMAGE * slvl;
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	//radius = ICEBOLT_INITIAL_RADIUS + ICEBOLT_ADDON_RADIUS * slvl;
-	speed = ICEBOLT_INITIAL_SPEED + ICEBOLT_ADDON_SPEED * slvl;
+	speed = ROCK_INITIAL_SPEED + ROCK_ADDON_SPEED * slvl;
 	//duration = ICEBOLT_INITIAL_CHILL_DURATION + ICEBOLT_ADDON_CHILL_DURATION * slvl;
 
 	MonsterAim(self, M_PROJECTILE_ACC, speed, true, 0, forward, start);
