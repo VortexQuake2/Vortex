@@ -1806,21 +1806,67 @@ float G_GetBoxHypotenuse(vec3_t size)
 	return sqrt(((size[0]*size[0]) + (size[1]*size[1]) + (size[2]*size[2])));
 }
 
+// attempts to move box away from plane at start using the smallest move based on box size
+// returns the plane's pitch angle
+float G_PushAwayFromPlane(vec3_t start, trace_t tr, vec3_t mins, vec3_t maxs)
+{
+	float	pitch, dist = 0;
+	vec3_t	angles, size;
+
+	// calculate worst case distance
+	VectorSet(size, fabs(mins[0]) + maxs[0], fabs(mins[1]) + maxs[1], fabs(mins[2]) + maxs[2]);
+	// distance is half of the longest line (i.e diagonal) that can fit within our mins/maxs box
+	float max_dist = 0.5 * G_GetBoxHypotenuse(size) + 1;
+
+	// calculate the pitch angle of the clipped solid
+	vectoangles(tr.plane.normal, angles);
+	//gi.dprintf("yaw: %.0f\n", angles[YAW]);
+	pitch = fabs(angles[PITCH]);
+	if (pitch == 270) // ceiling
+		dist = maxs[2] + 1;
+	else if (pitch == 0) // wall
+	{
+		// wall is at a 90 degree angle
+		if (fmodf(angles[YAW], 90) == 0)
+			dist = maxs[1] + 1;
+		else
+			dist = max_dist;
+	}
+	else if (pitch == 90) // floor
+		dist = fabs(mins[2]) + 1;
+	else // irregular pitch (non right angle)
+	{
+		dist = max_dist;
+	}
+	//gi.dprintf("pitch %.1f yaw %.0f dist %.1f\n", pitch, angles[YAW], dist);
+	// try to move away from the obstruction just enough to clear it
+	// note: if this doesn't work, we could try to move backward from aiming vector 'forward' but we won't know how far!
+	VectorMA(start, dist, tr.plane.normal, start);
+	//VectorMA(start, -dist, forward, start);
+	return pitch;
+}
+
 // returns true if the box defined by mins and maxs is clear of obstruction at least range distance from ent
 // note: range should be no less than the minimum distance between the two entities where the hitboxes don't overlap/intersect
 // mode - use PROJECT_HITBOX_NEAR if you want the box defined by mins and maxs to be traced between start and ending positions
 //        use PROJECT_HITBOX_FAR if you want the box to be traced only at the ending position
+//		  use PROJECT_HITBOX_FLOOR if you want the box to be traced to the floor using MASK_SOLID
 //        default is PROJECT_HITBOX_FAR if mode is not set (0)
 qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs, vec3_t start, vec3_t normal, int mode, qboolean ignore_self_clip)
 {
-	int		addheight = ent->viewheight - 8;
+	int		mask1 = MASK_SHOT;
+	int		mask2 = MASK_MONSTERSOLID;
+	int		addheight = ent->viewheight;// -8;
 	int		aimheight;
 	int		minheight;
 	vec3_t	forward, right, offset, end;
+	//vec3_t	muzzleloc,aimspot;//for testing
 	trace_t	tr;
 
 	if (!mode)
 		mode = PROJECT_HITBOX_FAR;
+	else if (mode == PROJECT_HITBOX_FLOOR)
+		mask1 = mask2 = MASK_SOLID;
 
 	// get starting position and forward vector
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
@@ -1840,34 +1886,40 @@ qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs
 			//gi.dprintf("adjusting aimheight up %d\n", addheight);
 		}
 	}
-	VectorSet(offset, 0, 8,  addheight); // note: player's viewheight is 22
+	VectorSet(offset, 0, 7,  addheight); // note: player's viewheight is 22
 	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+	//VectorCopy(start, muzzleloc);// for testing/debugging
 
 	// get ending position
 	VectorCopy(start, end);
 	VectorMA(start, range, forward, end);
 
-	if (mode == PROJECT_HITBOX_FAR)
-		tr = gi.trace(start, NULL, NULL, end, ent, MASK_SHOT); // don't trace box
+	if (mode == PROJECT_HITBOX_FAR || mode == PROJECT_HITBOX_FLOOR)
+		tr = gi.trace(start, NULL, NULL, end, ent, mask1); // don't trace box
 	else
-		tr = gi.trace(start, mins, maxs, end, ent, MASK_SHOT); // trace box
+		tr = gi.trace(start, mins, maxs, end, ent, mask1); // trace box
 	if (tr.allsolid || tr.startsolid)
 	{
-		//gi.dprintf("allsolid %d startsolid %d fraction %.1f\n", tr.allsolid, tr.startsolid, tr.fraction);
+		//gi.dprintf("trace1: allsolid %d startsolid %d fraction %.1f\n", tr.allsolid, tr.startsolid, tr.fraction);
 		return false;
 	}
+
 	// copy the normal if the trace touched worldspawn (i.e. a wall or ceiling)
 	VectorCopy(tr.endpos, start);
 	if (normal && tr.fraction < 1 && tr.ent && tr.ent->inuse && tr.ent == world)
 		VectorCopy(tr.plane.normal, normal);
 
-	if (tr.fraction < 1 && mode == PROJECT_HITBOX_FAR)
+	float pitch=0;
+	if (tr.fraction < 1 && (mode == PROJECT_HITBOX_FAR || mode == PROJECT_HITBOX_FLOOR))
 	{
+		pitch = G_PushAwayFromPlane(start, tr, mins, maxs);
+		/*
 		float	pitch, dist = 0;
 		vec3_t	angles, size;
 
 		// calculate the pitch angle of the clipped solid
 		vectoangles(tr.plane.normal, angles);
+		gi.dprintf("yaw: %.0f\n", angles[YAW]);
 		pitch = angles[PITCH] * -1;
 		if (pitch == 270) // ceiling
 			dist = maxs[2] + 1;
@@ -1880,17 +1932,42 @@ qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs
 			VectorSet(size, fabs(mins[0]) + maxs[0], fabs(mins[1]) + maxs[1], fabs(mins[2]) + maxs[2]);
 			// distance is "worst case" i.e. (half of) the longest line that can fit within our mins/maxs box
 			dist = 0.5 * G_GetBoxHypotenuse(size) + 1;
-			//gi.dprintf("pitch %.1f dist %.1f\n", pitch, dist);
+			
 		}
+		gi.dprintf("pitch %.1f dist %.1f\n", pitch, dist);
 		// try to move away from the obstruction just enough to clear it
 		// note: if this doesn't work, we could try to move backward from aiming vector 'forward' but we won't know how far!
 		VectorMA(start, dist, tr.plane.normal, start);
 		//VectorMA(start, -dist, forward, start);
+		*/
+	}
+
+	//VectorCopy(start, aimspot);//for testing
+	//G_DrawDebugTrail(muzzleloc, aimspot);
+
+	if (mode == PROJECT_HITBOX_FLOOR)
+	{
+		// trace down to the floor
+		//VectorCopy(tr.endpos, start);
+		VectorCopy(start, end);
+		end[2] -= 8192;
+		tr = gi.trace(start, NULL, NULL, end, ent, mask1);
+		if (tr.allsolid || tr.startsolid)
+		{
+			//gi.dprintf("trace2: allsolid %d startsolid %d fraction %.1f\n", tr.allsolid, tr.startsolid, tr.fraction);
+			return false;
+		}
+		VectorCopy(tr.endpos, start);
+		// push away from the floor, but not if we already did so
+		if (pitch != 90)
+			G_PushAwayFromPlane(start, tr, mins, maxs);
 	}
 
 	// we need to make picked up/previously picked up entities solid to player so that the trace function works
-	tr = gi.trace(start, mins, maxs, start, NULL, MASK_MONSTERSOLID);
+	tr = gi.trace(start, mins, maxs, start, NULL, mask2);
+	//G_DrawDebugTrail(aimspot, tr.endpos);
 	//gi.dprintf("ignore %d tr.ent %s allsolid %d startsolid %d fraction %.1f\n", ignore_self_clip, tr.ent->classname, tr.allsolid, tr.startsolid, tr.fraction);
+	//gi.dprintf("tr.endpos: %.0f %.0f %.0f\n", tr.endpos[0], tr.endpos[1], tr.endpos[2]);
 	if (tr.fraction < 1)
 	{
 		// ignore clipping against self (set ignore_self_clip to true if it's OK if trace intersects calling entity)
@@ -1898,6 +1975,7 @@ qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs
 		// barrels take measures to prevent this from occuring by not allowing the player to spawn/drop a barrel while inside one previously spawned
 		if (tr.ent && tr.ent == ent && ignore_self_clip)
 			return true;
+		//gi.dprintf("trace fail\n");
 		return false;
 	}
 	return true;

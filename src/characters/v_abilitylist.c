@@ -22,6 +22,7 @@ const abilitydef_t ability_general[] = {
         {HA_PICKUP,       0, DEFAULT_SOFTMAX,  1},
         {FLASH,           0, 1,                1},
         {MONSTER_SUMMON,  0, 5,                1},
+        {FORCE_WALL,      0, 5,                1}, // deprecated--rework for engy?
         {-1,              0, 0,                0} // Guardian (Add skills above this)
 };
 
@@ -107,7 +108,8 @@ const abilitydef_t ability_mage[] = { // MAGE
         {MAGICBOLT,       0, DEFAULT_SOFTMAX,   0},
         {NOVA,            0, DEFAULT_SOFTMAX,   0},
         {BOMB_SPELL,      0, DEFAULT_SOFTMAX,   0},
-        {FORCE_WALL,      0, DEFAULT_SOFTMAX,   0},
+        //{FORCE_WALL,      0, DEFAULT_SOFTMAX,   0},
+        {FIREWALL,        0, DEFAULT_SOFTMAX,   0},
         {LIGHTNING,       0, DEFAULT_SOFTMAX,   0},
         {METEOR,          0, DEFAULT_SOFTMAX,   0},
         {FIREBALL,        0, DEFAULT_SOFTMAX,   0},

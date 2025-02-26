@@ -1867,6 +1867,8 @@ void Cmd_Speech (edict_t *ent, int soundnum)
 		gi.sound (ent, CHAN_VOICE, gi.soundindex("speech/pekaboo.wav"), 1, ATTN_NORM, 0);break;
 	case 11:
 		gi.sound (ent, CHAN_VOICE, gi.soundindex("speech/threat.wav"), 1, ATTN_NORM, 0);break;
+	case 12:
+		gi.sound(ent, CHAN_VOICE, gi.soundindex("speech/LeroyJenkins.wav"), 1, ATTN_NORM, 0);break;
 	default:
 		safe_cprintf(ent, PRINT_HIGH, "Unknown sound.\n");return;
 	}	
@@ -2839,6 +2841,7 @@ void Cmd_SaveNodes_f (edict_t *ent);
 void Cmd_LoadNodes_f (edict_t *ent);
 void Cmd_ComputeNodes_f (edict_t *ent);
 void Cmd_ToggleShowGrid (edict_t *ent);
+void Cmd_Firewall_f(edict_t* ent, float skill_mult, float cost_mult);
 
 que_t *que_ptr (que_t *src, que_t *dst)
 {
@@ -2894,6 +2897,11 @@ void Cmd_Overload_f (edict_t *ent)
 	{
 		if (GetOverloadValues(ent, talentLevel, cubes, FIREBALL_COST, &cost_mult, &skill_mult))
 			Cmd_Fireball_f(ent, skill_mult, cost_mult);
+	}
+	else if (Q_stricmp(cmd, "firewall") == 0)
+	{
+		if (GetOverloadValues(ent, talentLevel, cubes, FIREWALL_COST, &cost_mult, &skill_mult))
+			Cmd_Firewall_f(ent, skill_mult, cost_mult);
 	}
 	else if (Q_stricmp(cmd, "icebolt") == 0)
 	{
@@ -3295,6 +3303,7 @@ void ClientCommand (edict_t *ent)
 	{
 		if (!ent->myskills.administrator)
 			return;
+		//Cmd_Firewall_f(ent);
 		//gi.dprintf("%s: ", __func__);
 		//G_NearbyEnts(ent->s.origin, 1024, false);
 	}
@@ -3479,6 +3488,8 @@ void ClientCommand (edict_t *ent)
 		Cmd_IceBolt_f (ent, 1.0, 1.0);
 	else if (Q_stricmp (cmd, "lightningstorm") == 0)
 		Cmd_LightningStorm_f (ent, 1.0, 1.0);
+	else if (Q_stricmp(cmd, "firewall") == 0)
+		Cmd_Firewall_f(ent, 1.0, 1.0);
 	//K03 End
 	else safe_cprintf(ent, PRINT_HIGH, "Unknown client command: %s\n", cmd);
 	/*

@@ -1257,5 +1257,10 @@ extern double EXPLODING_BARREL_DELAY;
 extern double EXPLODING_BARREL_MAX_COUNT;
 extern double ACID_GASSER_SYNERGY_BONUS;
 extern double SPIKE_SPIKER_SYNERGY_BONUS;
-
+extern double FIREWALL_RANGE;
+extern double FIREWALL_INITIAL_DAMAGE;
+extern double FIREWALL_ADDON_DAMAGE;
+extern double FIREWALL_DELAY;
+extern double FIREWALL_DURATION;
+extern double FIREWALL_COST;
 #endif

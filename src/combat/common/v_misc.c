@@ -431,6 +431,7 @@ void holyground_remove(edict_t* ent, edict_t* self);
 void depot_remove(edict_t* self, edict_t* owner, qboolean effect);
 
 void lasertrap_removeall(edict_t* ent, qboolean effect);
+void RemoveFirewalls(edict_t* ent);
 
 void vrx_remove_player_summonables(edict_t* self) {
 	edict_t* from;
@@ -462,6 +463,7 @@ void vrx_remove_player_summonables(edict_t* self) {
 	RemoveAutoCannons(self);
 	RemoveMiniSentries(self);
 	RemoveAllLaserPlatforms(self);
+	RemoveFirewalls(self);
 
 	// scan for edicts that we own
 	for (from = g_edicts; from < &g_edicts[globals.num_edicts]; from++) {
@@ -483,6 +485,8 @@ void vrx_remove_player_summonables(edict_t* self) {
 			M_Remove(from, false, true);
 			self->num_monsters = 0;
 			self->num_monsters_real = 0;
+			self->num_skeletons = 0;
+			self->num_golems = 0;
 			continue;
 		}
 

@@ -768,6 +768,8 @@ char *GetAbilityString(int ability_number) {
             return "Skeleton";
         case GOLEM:
             return "Golem";
+        case FIREWALL:
+            return "Firewall";
         default:
             return "<ERROR: NO NAME>";
     }
@@ -2189,7 +2191,7 @@ void V_TouchSolids(edict_t *ent) {
         InfectedCorpseTouch(ent, hit);
         if (!hit->inuse || !hit->touch/* || !hit->takedamage */ || hit == ent)
             continue;
-        //gi.dprintf("V_TouchSolids called by %s hit %s\n", ent->classname, hit->classname);
+        //gi.dprintf("%d: V_TouchSolids called by %s hit %s\n", (int)level.framenum, ent->classname, hit->classname);
         hit->touch(hit, ent, NULL, NULL);
     }
 }

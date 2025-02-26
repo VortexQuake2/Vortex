@@ -1133,8 +1133,9 @@ qboolean G_ValidTarget_Lite(const edict_t *self, const edict_t *target, qboolean
 qboolean G_ValidAlliedTarget(edict_t *self, edict_t *target, qboolean vis);//4.1 Archer
 edict_t *G_GetClient(const edict_t *ent);
 // G_GetSpawnLocation
-#define PROJECT_HITBOX_NEAR	1
-#define PROJECT_HITBOX_FAR	2
+#define PROJECT_HITBOX_NEAR		1
+#define PROJECT_HITBOX_FAR		2
+#define PROJECT_HITBOX_FLOOR	3
 qboolean G_GetSpawnLocation (edict_t *ent, float range, vec3_t mins, vec3_t maxs, vec3_t start, vec3_t normal, int mode, qboolean ignore_self_clip);
 
 void G_DrawBoundingBox (edict_t *ent);
@@ -1970,6 +1971,7 @@ struct edict_s
 	int num_barrels;
 	int num_skeletons;
 	int num_golems;
+	int num_firewalls;
 	int	num_spikeball;
 	int	num_laserplatforms; //4.4 Talent: Laser Platform
 	int num_hammers; //4.4 Talent: Boomerang
@@ -2306,6 +2308,7 @@ void Cmd_LaserSight_f(edict_t *ent);
 #define M_BEAMSENTRY	131
 #define M_BARREL		132
 #define M_ARMOR			133
+#define M_FIREWALL		134
 #define P_TANK			200
 #define MORPH_MUTANT	400
 #define MORPH_CACODEMON	401

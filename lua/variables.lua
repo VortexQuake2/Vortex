@@ -1304,6 +1304,14 @@ EXPLODING_BARREL_COST					 = 5
 EXPLODING_BARREL_DELAY					 = 1.0
 EXPLODING_BARREL_MAX_COUNT				 = 4
 
+--Firewall
+FIREWALL_RANGE							 = 8192 
+FIREWALL_INITIAL_DAMAGE					 = 0
+FIREWALL_ADDON_DAMAGE					 = 50
+FIREWALL_DELAY							 = 1.0
+FIREWALL_DURATION						 = 10.0
+FIREWALL_COST							 = 25
+
 -- Monster Counts
 sewer64_monsters			 = 100
 base64_monsters				= 100

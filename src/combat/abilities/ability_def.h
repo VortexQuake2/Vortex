@@ -90,7 +90,6 @@
 #define CALTROPS		87
 #define SPIKE_GRENADE	88
 #define BOX				89
-#define DETECTOR		133
 #define CONVERSION		90
 #define DEFLECT			91
 #define SCANNER			92
@@ -114,6 +113,8 @@
 #define EXPLODING_BARREL	110
 #define SKELETON		111
 #define GOLEM			112
+#define FIREWALL		113
+#define DETECTOR		133
 
 #define MAX_ABILITIES	160
 #include <stdint.h>

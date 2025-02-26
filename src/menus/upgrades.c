@@ -718,6 +718,12 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		menu_add_line(ent, "enemies! Uses power cubes.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: lightningstorm", MENU_WHITE_CENTERED);
 		return 5;
+	case FIREWALL:
+		menu_add_line(ent, "Creates an inferno that", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "quickly grows to a wall of", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "flames! Uses power cubes.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Command: firewall", MENU_WHITE_CENTERED);
+		return 4;
 	case TELEPORT:
 		menu_add_line(ent, "Teleport in the direction you", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "aiming! Uses power cubes.", MENU_WHITE_CENTERED);
