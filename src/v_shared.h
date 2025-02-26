@@ -286,18 +286,18 @@ int vrx_get_login_status(edict_t *ent);
 //************ player.c ************
 
 //************ invasion.c ************
-edict_t *INV_SelectPlayerSpawnPoint(edict_t *ent);
-void INV_InitSpawnQue(void);
-qboolean INV_RemoveSpawnQue(edict_t *ent);
-void INV_Init(void);
-void INV_InitPostEntities(void);
-void INV_SpawnPlayers(void);
-qboolean INV_AddSpawnQue(edict_t *ent);
-int INV_GetNumPlayerSpawns(void);
-void INV_AwardPlayers(void);
-edict_t* INV_ClosestNavi(edict_t* self); // az: only spawn ones
-edict_t* INV_ClosestNaviAny(edict_t* self); // any navi
-edict_t* INV_GiveClosestPSpawn(edict_t* self);
+edict_t *vrx_inv_select_player_spawn_point(edict_t *ent);
+void vrx_inv_init_spawn_que(void);
+qboolean vrx_inv_remove_spawn_que(edict_t *ent);
+void vrx_inv_init(void);
+void vrx_inv_init_post_entities(void);
+void vrx_inv_spawn_players(void);
+qboolean vrx_inv_add_spawn_que(edict_t *ent);
+int vrx_inv_get_num_player_spawns(void);
+void vrx_inv_award_players(void);
+edict_t* vrx_inv_closest_navi(edict_t* self); // az: only spawn ones
+edict_t* vrx_inv_closest_navi_any(edict_t* self); // any navi
+edict_t* vrx_inv_give_closest_player_spawn(edict_t* self);
 //************ invasion.c ************
 
 //************ totems.c ************

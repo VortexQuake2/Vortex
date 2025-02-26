@@ -15,7 +15,9 @@ void defer_global_init()
 	pthread_mutexattr_t attr;
 	pthread_mutexattr_init(&attr);
 
+#if !(__GNUC__ && WIN32)
 	pthread_mutexattr_setrobust(&attr, PTHREAD_MUTEX_RECURSIVE);
+#endif
 
 	pthread_mutex_init(&defer_mutex, &attr);
 

@@ -1450,9 +1450,9 @@ qboolean SelectSpawnPoint (edict_t *ent, vec3_t origin, vec3_t angles)
 	else if (INVASION_OTHERSPAWNS_REMOVED)
 	{
 		// if a spot is not found, they'll have to wait until a spawn is free
-		if ((spot = INV_SelectPlayerSpawnPoint(ent)) != NULL)
+		if ((spot = vrx_inv_select_player_spawn_point(ent)) != NULL)
 		{
-			INV_RemoveSpawnQue(ent); // remove from waiting list
+			vrx_inv_remove_spawn_que(ent); // remove from waiting list
 			ent->spawn = NULL; // player is no longer assigned this spawn
 
             VectorCopy (spot->s.angles, angles);
@@ -1669,7 +1669,7 @@ void respawn (edict_t *self)
 		{
 			if (!self->spawn)
 			{
-				INV_AddSpawnQue(self);
+				vrx_inv_add_spawn_que(self);
 				return;
 			}
 		}
@@ -2424,7 +2424,7 @@ void ClientDisconnect (edict_t *ent)
 
 	// remove from list of players waiting to spawn
 	if (INVASION_OTHERSPAWNS_REMOVED)
-		INV_RemoveSpawnQue(ent);
+		vrx_inv_remove_spawn_que(ent);
 
 	if (ent->teamnum && !G_IsSpectator(ent))
 	{

@@ -177,6 +177,20 @@ void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode)
 			//gi.cvar_set("dm_monsters", "4");
 		}
 		break;
+		case MAPMODE_INHE: {
+			timelimit = vrx_lua_get_variable("inhe_timelimit", 60)+pregame_time->value/60;
+			// invasion mode - hard
+			gi.cvar_set("ffa", "0");
+			gi.cvar_set("domination", "0");
+			gi.cvar_set("ctf", "0");
+			gi.cvar_set("pvm", "1");
+			gi.cvar_set("invasion", "2");
+			gi.cvar_set("fraglimit", "0");
+			gi.cvar_set("timelimit", va("%d", timelimit));
+			gi.cvar_set("trading", "0");
+			gi.cvar_set("hw", "0");
+			gi.cvar_set("tbi", "0");
+		} break;
 		case MAPMODE_TRA:
 		{
 			gi.cvar_set("ffa", "0");
@@ -260,7 +274,11 @@ v_maplist_t *GetMapList(int mode)
 	case MAPMODE_FFA:	return &maplist_FFA;
 	case MAPMODE_INV:	return &maplist_INV;
 	case MAPMODE_TRA:   return &maplist_TRA; // vrxchile 2.5: trading mode maplist
-	case MAPMODE_INH:	return &maplist_INH; // vrxchile 2.6: invasion hard mode
+
+	// vrxchile 2.6: invasion hard mode
+	case MAPMODE_INHE:
+	case MAPMODE_INH:	return &maplist_INH;
+
 	case MAPMODE_VHW:	return &maplist_VHW; // vrxchile 3.0: vortex holy wars mode
 	case MAPMODE_TBI:	return &maplist_TBI; // vrxchile 3.4: destroy the spawn mode
 	default:
@@ -272,7 +290,7 @@ v_maplist_t *GetMapList(int mode)
 
 //************************************************************************************************
 
-void AddVote(edict_t *ent, int mode, int mapnum)
+void vrx_start_vote(edict_t *ent, int mode, int mapnum)
 {
 	v_maplist_t *maplist = GetMapList(mode);
 
@@ -326,6 +344,7 @@ void AddVote(edict_t *ent, int mode, int mapnum)
 			case MAPMODE_INV:	smode =  "Invasion ";				break;
 			case MAPMODE_TRA:	smode =  "Trading ";					break;
 			case MAPMODE_INH:	smode =  "Invasion (Hard mode) ";	break;
+			case MAPMODE_INHE:	smode =  "Invasion (Extended hard mode) ";	break;
 			case MAPMODE_VHW:	smode =  "Vortex HolyWars ";			break;
 			case MAPMODE_TBI:   smode =  "Destroy the Spawn ";		break;
 		}
@@ -347,7 +366,7 @@ void AddVote(edict_t *ent, int mode, int mapnum)
 
 	}
 	else 
-		gi.dprintf("Error in AddVote(): map number = %d, mode number = %d\n", mapnum, mode);
+		gi.dprintf("Error in vrx_start_vote(): map number = %d, mode number = %d\n", mapnum, mode);
 }
 
 #define CHANGE_NOW		1	// change the map/mode immediately
@@ -508,7 +527,7 @@ void ShowVoteMapMenu_handler(edict_t *ent, int option)
 		}
 
 		//Add the player's vote
-		AddVote(ent, mode, mapnum-1);
+		vrx_start_vote(ent, mode, mapnum-1);
 	}
 }
 
@@ -739,7 +758,8 @@ void ShowVoteModeMenu(edict_t *ent)
 
 	if (invasion_enabled->value && (ThereIsOneLevelTen() || vrx_get_alive_players() >= min_players) )
 	{
-		menu_add_line(ent, " Invasion (Hard mode)", MAPMODE_INH);
+		menu_add_line(ent, " Invasion (Hard)", MAPMODE_INH);
+		menu_add_line(ent, " Invasion (Hard extended)", MAPMODE_INHE);
 		lastline++;
 	}
 	

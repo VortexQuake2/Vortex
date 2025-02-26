@@ -22,7 +22,7 @@
 #include <msgpack.h>
 
 // relay server constants
-const size_t HEADER_SIZE = sizeof(uint32_t) * 2;
+const size_t HEADER_SIZE = sizeof(uint32_t) * 2; // magic + size
 const uint32_t MAGIC = 0xC0A7BEEF;
 const char* COMMAND_RELAY = "Relay";
 
@@ -148,7 +148,7 @@ void send_sbuffer(SOCKET s, msgpack_sbuffer* sbuf) {
         if (n == -1) {
 #ifdef WIN32
             int err = WSAGetLastError();
-            if (err == EWOULDBLOCK) {
+            if (err == WSAEWOULDBLOCK) {
                 continue;
             }
 #else

@@ -44,7 +44,7 @@ extern int red_flag_caps;
 extern int blue_flag_caps;
 extern qboolean SPREE_WAR;
 extern qboolean INVASION_OTHERSPAWNS_REMOVED;
-extern int invasion_difficulty_level;
+extern int next_invasion_wave_level;
 extern float SPREE_TIME;
 extern int average_player_level;
 extern int pvm_average_level;

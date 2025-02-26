@@ -55,16 +55,20 @@ static const int SET_TANKY_MONSTERS[] = {
 };
 const int SET_TANKY_MONSTERS_COUNT = sizeof(SET_TANKY_MONSTERS) / sizeof(int);
 
-void INV_Init(void)
+qboolean vrx_inv_is_boss_wave(int wave) {
+	return wave % 5 == 0 && wave > 0;
+}
+
+void vrx_inv_init(void)
 {
 	int i;
 	if (!pvm->value || !invasion->value)
 		return;
 
 	memset(&invasion_data, 0, sizeof (struct invdata_s));
-	INV_InitSpawnQue();
+	vrx_inv_init_spawn_que();
 	INVASION_OTHERSPAWNS_REMOVED = false;
-	invasion_difficulty_level = 1;
+	next_invasion_wave_level = 1;
 	invasion_max_playerspawns = 0;
 	invasion_spawncount = 0;
 	invasion_navicount = 0;
@@ -79,7 +83,7 @@ void INV_Init(void)
 }
 
 // Ran after edicts have been initialized
-void INV_InitPostEntities(void)
+void vrx_inv_init_post_entities(void)
 {
 	if (!invasion->value)
 		return;
@@ -113,7 +117,7 @@ void INV_InitPostEntities(void)
 }
 
 // initialize array values to NULL
-void INV_InitSpawnQue(void)
+void vrx_inv_init_spawn_que(void)
 {
 	int i;
 
@@ -121,7 +125,7 @@ void INV_InitSpawnQue(void)
 		INV_SpawnQue[i] = NULL;
 }
 
-edict_t *INV_GiveClosestPSpawn(edict_t *ent)
+edict_t *vrx_inv_give_closest_player_spawn(edict_t *ent)
 {
 	float bestdist = 8192 * 8192; // using dist. sqr.
 	vec3_t eorg;
@@ -144,7 +148,7 @@ edict_t *INV_GiveClosestPSpawn(edict_t *ent)
 	return ret; // can be null if no pspawns
 }
 
-edict_t *INV_GiveRandomPSpawn()
+edict_t *vrx_inv_give_random_p_spawn()
 {
 	if (invasion_spawncount > 1)
 	{
@@ -162,7 +166,7 @@ edict_t *INV_GiveRandomPSpawn()
 
 //FIXME: should we do a visibility check?
 // this function returns the closest START navi, i.e. a navi at the start of a chain
-edict_t* INV_ClosestNavi(edict_t* self)
+edict_t* vrx_inv_closest_navi(edict_t* self)
 {
 	vec3_t eorg;
 	float best = 8192 * 8192;
@@ -183,7 +187,7 @@ edict_t* INV_ClosestNavi(edict_t* self)
 }
 
 // returns the nearest navi
-edict_t* INV_ClosestNaviAny(edict_t* self) {
+edict_t* vrx_inv_closest_navi_any(edict_t* self) {
     vec3_t eorg;
     float best = 8192 * 8192;
     edict_t *ret = NULL;
@@ -209,7 +213,7 @@ void DrawNavi(edict_t* ent)
 	vec3_t		start, end;
 	trace_t		tr;
 
-	if (((navi = INV_ClosestNaviAny(ent)) != NULL) && navi->target_ent)
+	if (((navi = vrx_inv_closest_navi_any(ent)) != NULL) && navi->target_ent)
 	{
 		VectorCopy(navi->s.origin, start);
 		VectorCopy(navi->target_ent->s.origin, end);
@@ -244,7 +248,7 @@ edict_t *drone_findnavi(edict_t *self)
 		if (!invasion->value)
 			return NULL;
 		// if we reached this point we're no longer looking for navis. we should be looking for spawns!
-		return INV_GiveClosestPSpawn(self); 
+		return vrx_inv_give_closest_player_spawn(self);
 	}
 
 	/*if (invasion->value && level.pathfinding)
@@ -275,15 +279,15 @@ edict_t *drone_findnavi(edict_t *self)
 #endif
 
 	if (invasion_start_navicount > 0) {
-		return INV_ClosestNaviAny(self);// INV_ClosestNavi(self);
+		return vrx_inv_closest_navi_any(self);// INV_ClosestNavi(self);
 	}
 	
 	// no navis, return a player spawn...
-	return INV_GiveRandomPSpawn();
+	return vrx_inv_give_random_p_spawn();
 }
 
 
-qboolean INV_IsSpawnQueEmpty()
+qboolean vrx_inv_is_spawn_que_empty()
 {
 	int i;
 	for (i = 0; i < MAX_CLIENTS; i++)
@@ -294,7 +298,7 @@ qboolean INV_IsSpawnQueEmpty()
 	return true;
 }
 
-qboolean INV_InSpawnQue(edict_t *ent)
+qboolean vrx_inv_in_spawn_que(edict_t *ent)
 {
 	int i;
 
@@ -305,7 +309,7 @@ qboolean INV_InSpawnQue(edict_t *ent)
 }
 
 // add player to the spawn queue
-qboolean INV_AddSpawnQue(edict_t *ent)
+qboolean vrx_inv_add_spawn_que(edict_t *ent)
 {
 	int i;
 
@@ -313,7 +317,7 @@ qboolean INV_AddSpawnQue(edict_t *ent)
 		return false;
 
 	// don't add them if they are already in the queue
-	if (INV_InSpawnQue(ent))
+	if (vrx_inv_in_spawn_que(ent))
 		return false;
 
 	for (i = 0; i < MAX_CLIENTS; i++)
@@ -329,7 +333,7 @@ qboolean INV_AddSpawnQue(edict_t *ent)
 }
 
 // remove player from the queue
-qboolean INV_RemoveSpawnQue(edict_t *ent)
+qboolean vrx_inv_remove_spawn_que(edict_t *ent)
 {
 	int i;
 
@@ -346,7 +350,7 @@ qboolean INV_RemoveSpawnQue(edict_t *ent)
 }
 
 // return player that is waiting to respawn
-edict_t *INV_GetSpawnPlayer(void)
+edict_t *vrx_inv_get_spawn_player(void)
 {
 	int i;
 
@@ -361,7 +365,7 @@ edict_t *INV_GetSpawnPlayer(void)
 	return NULL;
 }
 
-edict_t *INV_GetMonsterSpawn(edict_t *from)
+edict_t *vrx_inv_get_monster_spawn(edict_t *from)
 {
 	if (from)
 		from++;
@@ -378,9 +382,9 @@ edict_t *INV_GetMonsterSpawn(edict_t *from)
 	return NULL;
 }
 
-void INV_AwardPlayers(void)
+void vrx_inv_award_players(void)
 {
-	int		i, points, credits, num_spawns = INV_GetNumPlayerSpawns(), num_winners = 0;
+	int		i, points, credits, num_spawns = vrx_inv_get_num_player_spawns(), num_winners = 0;
 	edict_t *player;
 
 	// we're not in invasion mode
@@ -402,7 +406,7 @@ void INV_AwardPlayers(void)
 			continue;
 
 		if (invasion->value == 2)
-			points = 2.0f / 5.0f * player->client->resp.score*((float)num_spawns / invasion_max_playerspawns) + 300 * sqrt(invasion_difficulty_level);
+			points = 2.0f / 5.0f * player->client->resp.score*((float)num_spawns / invasion_max_playerspawns) + 300 * sqrt(next_invasion_wave_level);
 		else
 			points = 1.5f / 10.0f * player->client->resp.score*((float)num_spawns / invasion_max_playerspawns);
 
@@ -412,7 +416,7 @@ void INV_AwardPlayers(void)
 		if (invasion->value < 2)
 			credits = INVASION_BONUS_CREDITS*((float)num_spawns / invasion_max_playerspawns);
 		else
-			credits = 2.0f / 5.0f * INVASION_BONUS_CREDITS*((float)num_spawns / invasion_max_playerspawns) + 300 * sqrt(invasion_difficulty_level);
+			credits = 2.0f / 5.0f * INVASION_BONUS_CREDITS*((float)num_spawns / invasion_max_playerspawns) + 300 * sqrt(next_invasion_wave_level);
 
 		//	gi.dprintf("points=%d credits=%d spawns=%d max=%d\n", 
 		//		points, credits, num_spawns, invasion_max_playerspawns);
@@ -432,7 +436,7 @@ void INV_AwardPlayers(void)
 		gi.bprintf(PRINT_HIGH, "Humans win! Players were awarded a bonus.\n");
 }
 
-edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
+edict_t* vrx_inv_spawn_drone(edict_t* self, edict_t *spawn_point, int index)
 {
 	edict_t *monster = vrx_create_new_drone(self, index, true, false, invasion_bonus_levels);
 	vec3_t	start;
@@ -489,15 +493,15 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
 	// az: we modify the monsters' health lightly
 	if (invasion->value == 1) // easy mode
 	{
-		if (invasion_difficulty_level < 5)
+		if (next_invasion_wave_level < 5)
 			mhealth = 1;
-		else if (invasion_difficulty_level >= 5)
-			mhealth = 1 + 0.05 * log2(invasion_difficulty_level - 4);
+		else if (next_invasion_wave_level >= 5)
+			mhealth = 1 + 0.05 * log2(next_invasion_wave_level - 4);
 	}
 	else if (invasion->value == 2) // hard mode
 	{
 		float plog = log2(vrx_get_joined_players(true) + 1) / log2(8);
-		mhealth = 1 + 0.2 * sqrt(invasion_difficulty_level) * max(plog, 0);
+		mhealth = 1 + 0.2 * sqrt(next_invasion_wave_level) * max(plog, 0);
 	}
 
 	monster->max_health = monster->health = monster->max_health*mhealth;
@@ -529,15 +533,16 @@ edict_t* INV_SpawnDrone(edict_t* self, edict_t *spawn_point, int index)
         monster->monsterinfo.inv_framenum = level.framenum - 1;
 	}
 
+	monster->count = invasion_data.wave;
 	gi.linkentity(monster);
 	return monster;
 }
 
-float TimeFormula()
+float vrx_inv_time_formula()
 {
 	int base = 4 * 60;
 	int playeramt = vrx_get_alive_players() * 8;
-	int levelamt = invasion_difficulty_level * 7;
+	int levelamt = next_invasion_wave_level * 7;
 	int cap = 60;
 	int rval = base - playeramt - levelamt;
 
@@ -565,7 +570,7 @@ void invasion_boss_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int
 }
 */
 
-void INV_SpawnBoss(edict_t* self, int index)
+void vrx_inv_spawn_boss(edict_t* self, int index)
 {
 	edict_t* spawn=NULL;
 
@@ -574,9 +579,9 @@ void INV_SpawnBoss(edict_t* self, int index)
 	if (index < 30)
 		return;
 
-	while (spawn = INV_GetMonsterSpawn(spawn))
+	while (spawn = vrx_inv_get_monster_spawn(spawn))
 	{
-		if (!(invasion_data.boss = INV_SpawnDrone(self, spawn, index)))
+		if (!(invasion_data.boss = vrx_inv_spawn_drone(self, spawn, index)))
 			continue;
 		else
 		{
@@ -588,54 +593,53 @@ void INV_SpawnBoss(edict_t* self, int index)
 	gi.dprintf("Unable to spawn boss.\n");
 }
 
-void INV_BossCheck(edict_t *self)
+void vrx_inv_boss_check(edict_t *self)
 {
 	edict_t *e = NULL;
 
-	if (!(invasion_difficulty_level % 5))// every 5 levels, spawn a boss
+	if (!vrx_inv_is_boss_wave(invasion_data.wave))// every 5 levels, spawn a boss
 	{
-		int bcount = 0;
-		int iter = 0;
-		while (((e = INV_GetMonsterSpawn(e)) != NULL) && (bcount < 1))
-		{
-			if (!invasion_data.boss)
-			{
-				if (!(invasion_data.boss = INV_SpawnDrone(self, e, GetRandom(30,32))))
-				{
-					iter++;
-
-					if (iter < 256) // 256 tries before quitting with spawning this boss
-						continue;
-					else
-						break;
-				}
-				bcount++;
-				total_monsters++;
-				//invasion_data.boss->die = invasion_boss_die;
-				G_PrintGreenText(va("A level %d %s has spawned!", invasion_data.boss->monsterinfo.level, V_GetMonsterName(invasion_data.boss)));
-				break;
-			}
-		}
-	}
-	else
 		invasion_data.boss = NULL;
+		return;
+	}
+
+	int iter = 0;
+	while ((e = vrx_inv_get_monster_spawn(e)) != NULL) {
+		if (invasion_data.boss) continue;
+
+		invasion_data.boss = vrx_inv_spawn_drone(self, e, GetRandom(30, 32));
+		if (!invasion_data.boss) {
+			iter++;
+
+			if (iter < 256) // 256 tries before quitting with spawning this boss
+				continue;
+
+			break;
+		}
+
+		total_monsters++;
+		//invasion_data.boss->die = invasion_boss_die;
+		G_PrintGreenText(va("A level %d %s has spawned!", invasion_data.boss->monsterinfo.level,
+		                    V_GetMonsterName(invasion_data.boss)));
+		return;
+	}
 }
 
-void INV_Change_Level(int amt)
+void vrx_inv_change_next_level(int amt)
 {
-	invasion_difficulty_level += amt;
+	next_invasion_wave_level += amt;
 
-	if (invasion_difficulty_level > 1)
+	if (next_invasion_wave_level > 1)
 		// fixed difficulty pacing
-		invasion_bonus_levels = (int)sqrt(invasion_difficulty_level - 1);
+		invasion_bonus_levels = (int)sqrt(next_invasion_wave_level - 1);
 	else
 	{
 		// cumulative difficulty
-		invasion_bonus_levels += (int)sqrt(invasion_difficulty_level);
+		invasion_bonus_levels += (int)sqrt(next_invasion_wave_level);
 	}
 }
 
-void INV_OnTimeout(edict_t *self) {
+void vrx_inv_timeout(edict_t *self) {
 	qboolean was_boss = false;
 	gi.bprintf(PRINT_HIGH, "Time's up!\n");
 	if (invasion_data.boss && invasion_data.boss->deadflag != DEAD_DEAD) // out of time for the boss.
@@ -647,24 +651,30 @@ void INV_OnTimeout(edict_t *self) {
 		gi.multicast(invasion_data.boss->s.origin, MULTICAST_PVS);
 		//DroneList_Remove(invasion_data.boss); // az: WHY DID I FORGET THIS
 		//G_FreeEdict(invasion_data.boss);
+		M_Remove(invasion_data.boss, false, true);
 		invasion_data.boss = NULL;
 		was_boss = true;
 	}
 	// remove monsters from the current wave before spawning the next
-	if (self->num_monsters_real)
-		vrx_remove_all_monsters(self);
+	if (self->num_monsters_real) {
+		if (invasion->value == 1) {
+			vrx_remove_all_monsters(self);
+			G_PrintGreenText("Monsters have been reset.");
+		}
+	}
 
 	// restart the last wave if we were done spawning
 	if (!was_boss && self->count == MONSTERSPAWN_STATUS_IDLE) {
-		invasion_difficulty_level -= 1;
+		next_invasion_wave_level -= 1;
 	}
 
 	// increase the difficulty level for the next wave
 	if (invasion->value == 1)
-		INV_Change_Level(1);
+		vrx_inv_change_next_level(1);
 	else
-		INV_Change_Level(2); // Hard mode.
-	invasion_data.printedmessage = 0;
+		vrx_inv_change_next_level(2); // Hard mode.
+
+	invasion_data.wave_triggered = false;
 	gi.sound(&g_edicts[0], CHAN_VOICE, gi.soundindex("misc/tele_up.wav"), 1, ATTN_NONE, 0);
 
 	// start spawning
@@ -672,7 +682,7 @@ void INV_OnTimeout(edict_t *self) {
 	self->count = MONSTERSPAWN_STATUS_WORKING;
 }
 
-void INV_ShowLastWaveSummary() {
+void vrx_inv_show_last_wave_summary() {
 	// print exp summaries
 	for (int i = 1; i <= maxclients->value; i++) {
 		edict_t *player = &g_edicts[i];
@@ -720,35 +730,13 @@ void INV_ShowLastWaveSummary() {
 	}
 }
 
-void INV_OnBeginWave(edict_t *self, int max_monsters) {
-	invasion_data.limitframe = level.time + TimeFormula();
-	invasion_data.printedmessage = true;
-
-	if (invasion_difficulty_level == 1)
-	{
-		if (invasion->value == 1)
-			gi.bprintf(PRINT_HIGH, "The invasion begins!\n");
-		else
-			gi.bprintf(PRINT_HIGH, "The invasion... begins.\n");
-	} else {
-		INV_ShowLastWaveSummary();
-	}
-
-	if (invasion_difficulty_level % 5)
-		gi.bprintf(PRINT_HIGH, "Welcome to level %d. %d monsters incoming!\n", invasion_difficulty_level, max_monsters);
-	else
-		gi.bprintf(PRINT_HIGH, "Welcome to level %d.\n", invasion_difficulty_level, max_monsters);
-	G_PrintGreenText(va("Timelimit: %dm %ds.\n", (int)TimeFormula() / 60, (int)TimeFormula() % 60));
-
-	gi.sound(&g_edicts[0], CHAN_VOICE, gi.soundindex("misc/talk1.wav"), 1, ATTN_NONE, 0);
-	invasion_data.remaining_monsters = max_monsters * WAVE_CLEAR_THRESHOLD;
-	invasion_data.mspawned = 0;
-
-	// check for a boss spawn
-	INV_BossCheck(self);
+void vrx_inv_reset_monster_spawn_count(int max_monsters) {
+	invasion_data.wave_max_spawn = max_monsters;
+	invasion_data.wave_remaining = max_monsters * WAVE_CLEAR_THRESHOLD;
+	invasion_data.wave_spawned = 0;
 }
 
-void INV_SelectMonsterSet(const edict_t* self, int const * * monster_set, int* monster_set_count)
+void vrx_inv_select_monster_set(const edict_t* self, int const * * monster_set, int* monster_set_count)
 {
 	int const **default_monster_set = &invasion_data.default_monster_set;
 	int* default_monster_set_count = &invasion_data.default_set_count;
@@ -827,21 +815,52 @@ void INV_SelectMonsterSet(const edict_t* self, int const * * monster_set, int* m
 	}
 }
 
-void INV_Spawnstate_Idle(edict_t *self, const int players) {
-	// if there's nobody playing, remove all monsters
+int vrx_inv_get_max_monsters(int wave) {
+	// How many monsters should we spawn?
+	// 10 at lv 1, 30 by level 20. 41 by level 100
+	int maxmon = (int)round(10 + 4.6276 * (float)(wave - 1));
 
-	if (players < 1)
+	if (vrx_inv_is_boss_wave(wave))
 	{
-		// az: reset the current wave to avoid people skipping waves
-		if (self->num_monsters_real) {
-			invasion_difficulty_level -= 1;
-			invasion_data.printedmessage = false;
-			vrx_remove_all_monsters(self);
-		}
+		if (invasion->value == 1)
+			maxmon = 4 * (vrx_get_joined_players(true) - 1);
+		else if (invasion->value == 2)
+			maxmon = 6 * (vrx_get_joined_players(true) - 1);
 	}
+
+	return maxmon;
 }
 
-void INV_CheckSpawnCamp(edict_t* monsterSpawn)
+void vrx_inv_on_begin_wave(edict_t *self) {
+	invasion_data.limitframe = level.time + vrx_inv_time_formula();
+	invasion_data.wave = next_invasion_wave_level;
+
+	if (!invasion_data.started)
+	{
+		invasion_data.started = true;
+		if (invasion->value == 1)
+			gi.bprintf(PRINT_HIGH, "The invasion begins!\n");
+		else
+			gi.bprintf(PRINT_HIGH, "The invasion... begins.\n");
+	} else {
+		vrx_inv_show_last_wave_summary();
+	}
+
+	int next_max_monsters = vrx_inv_get_max_monsters(invasion_data.wave);
+	gi.bprintf(PRINT_HIGH, "Welcome to level %d. %d monsters incoming!\n", invasion_data.wave, next_max_monsters);
+	G_PrintGreenText(va("Timelimit: %02d:%02d.\n", (int)vrx_inv_time_formula() / 60, (int)vrx_inv_time_formula() % 60));
+
+	gi.sound(&g_edicts[0], CHAN_VOICE, gi.soundindex("misc/talk1.wav"), 1, ATTN_NONE, 0);
+	vrx_inv_reset_monster_spawn_count(next_max_monsters);
+
+	// check for a boss spawn
+	vrx_inv_boss_check(self);
+	vrx_inv_select_monster_set(NULL, &invasion_data.monster_set, &invasion_data.monster_set_count);
+}
+
+
+
+void vrx_inv_check_spawn_camp(edict_t* monsterSpawn)
 {
 	edict_t* e = NULL;
 
@@ -866,8 +885,8 @@ void INV_CheckSpawnCamp(edict_t* monsterSpawn)
 	}
 }
 
-qboolean INV_Spawnstate_Working(edict_t *self, const int players, int max_monsters, edict_t *e) {
-	int SpawnTries = 0, MaxTriesThisFrame = 32;
+qboolean vrx_inv_spawnstate_working(edict_t *self, const int players, edict_t *e) {
+	int spawn_tries = 0, max_tries_this_frame = 32;
 
 	if (players < 1)
 	{
@@ -875,55 +894,57 @@ qboolean INV_Spawnstate_Working(edict_t *self, const int players, int max_monste
 	}
 
 	// print the message and set the timer the first frame we start working
-	if (!invasion_data.printedmessage) {
-		INV_OnBeginWave(self, max_monsters);
-		INV_SelectMonsterSet(NULL, &invasion_data.monster_set, &invasion_data.monster_set_count);
+	if (!invasion_data.wave_triggered) {
+		invasion_data.wave_triggered = true;
+
+		vrx_inv_on_begin_wave(self);
 	}
 
-	while ((e = INV_GetMonsterSpawn(e))
-	       && invasion_data.mspawned < max_monsters
+	while ((e = vrx_inv_get_monster_spawn(e))
+	       && invasion_data.wave_spawned < invasion_data.wave_max_spawn
 	       && self->num_monsters_real < MAX_ACTIVE_MONSTERS
-	       && SpawnTries < MaxTriesThisFrame)
+	       && spawn_tries < max_tries_this_frame)
 	{
 		//const int* monster_set;
 		//int monster_set_count;
 		int pick;
 		int monster ;
 
-		INV_SelectMonsterSet(e, &invasion_data.monster_set, &invasion_data.monster_set_count);
+		vrx_inv_select_monster_set(e, &invasion_data.monster_set, &invasion_data.monster_set_count);
 		pick = GetRandom(1, invasion_data.monster_set_count) - 1;
 		monster = invasion_data.monster_set[pick];
 
-		SpawnTries++;
-		if (INV_SpawnDrone(self, e, monster)) // Wait for now
-			invasion_data.mspawned++;
-		INV_CheckSpawnCamp(e); // remove spawn-camper stuff
+		spawn_tries++;
+		if (vrx_inv_spawn_drone(self, e, monster)) // Wait for now
+			invasion_data.wave_spawned++;
+		vrx_inv_check_spawn_camp(e); // remove spawn-camper stuff
 	}
 
-	if (invasion_data.mspawned >= max_monsters)
+	if (invasion_data.wave_spawned >= invasion_data.wave_max_spawn)
 	{
 		// increase the difficulty level for the next wave
-		INV_Change_Level(1);
+		vrx_inv_change_next_level(1);
+		invasion_data.wave_triggered = false;
 
-		invasion_data.printedmessage = 0;
-		invasion_data.mspawned = 0;
 		self->count = MONSTERSPAWN_STATUS_IDLE;
 		//gi.dprintf("invasion level now: %d\n", invasion_difficulty_level);
 	}
 	return false;
 }
 
-void INV_NotifyMonsterDeath(edict_t * edict) {
-	invasion_data.remaining_monsters--;
+void vrx_inv_notify_monster_death(edict_t * edict) {
+	if (edict->count) // spawned properly, has a wave assigned
+	{
+		invasion_data.wave_remaining--;
+		// gi.dprintf("%d rem mons\n", invasion_data.wave_remaining);
+	}
 }
 
-void INV_SpawnMonsters(edict_t *self)
+void vrx_inv_spawn_monsters(edict_t *self)
 {
 	const int players = vrx_get_joined_players(true);
 
-	// How many monsters should we spawn?
-	// 10 at lv 1, 30 by level 20. 41 by level 100
-	int max_monsters = (int)round(10 + 4.6276 * (float)(invasion_difficulty_level - 1));
+
 
 	edict_t *e = NULL;
 
@@ -937,39 +958,51 @@ void INV_SpawnMonsters(edict_t *self)
 		return;
 	}
 
+	if (players < 1)
+	{
+		// az: reset the current wave to avoid people skipping waves
+		if (self->num_monsters_real) {
+			next_invasion_wave_level -= 1;
+			invasion_data.wave_triggered = false;
+			vrx_remove_all_monsters(self);
+			return;
+		}
+	}
+
 	// get the value of all of our monsters (BF flag mult * level * control_cost)
 	// max_monsters_value = PVM_TotalMonstersValue(self);
 	// update our drone count
 	vrx_pvm_update_total_owned_monsters(self, true);
-	
+
 	//max_monsters = 1;//GHz DEBUG - REMOVE ME!
 	//self->nextthink = level.time + FRAMETIME;//GHz DEBUG - REMOVE ME!
 	//return;//GHz DEBUG - REMOVE ME!
 
-	if (!(invasion_difficulty_level % 5))
-	{
-		if (invasion->value == 1)
-			max_monsters = 4 * (vrx_get_joined_players(true) - 1);
-		else if (invasion->value == 2)
-			max_monsters = 6 * (vrx_get_joined_players(true) - 1);
-	}
+
 
 	// were enough monsters eliminated?
-	if (invasion_data.remaining_monsters <= 0 && !invasion_data.boss) {
+	qboolean boss_wave = vrx_inv_is_boss_wave(invasion_data.wave);
+	qboolean boss_eliminated = boss_wave && !invasion_data.boss;
+	qboolean forces_eliminated = !boss_wave && (invasion_data.wave_remaining <= 0);
+	qboolean force_next_wave =
+		boss_eliminated || forces_eliminated;
+	if (force_next_wave && invasion_data.started) {
 		// start spawning
-		self->count = MONSTERSPAWN_STATUS_WORKING;
+		invasion_data.wave_triggered = false;
+
+		if (self->count == MONSTERSPAWN_STATUS_WORKING) {
+			vrx_inv_change_next_level(1);
+		} else {
+			self->count = MONSTERSPAWN_STATUS_WORKING;
+		}
 	}
 
 	// Check for timeout if there are players
-	if (players >= 1 && invasion_difficulty_level > 1) {
-		if (invasion_data.limitframe > level.time) // we still got time?
-		{
-			self->nextthink = level.time + FRAMETIME;
-		}
-		else
+	if (players >= 1 && invasion_data.started) {
+		if (invasion_data.limitframe <= level.time)
 		{
 			// Timeout. We go straight to the working state.
-			INV_OnTimeout(self);
+			vrx_inv_timeout(self);
 		}
 	}
 
@@ -977,17 +1010,16 @@ void INV_SpawnMonsters(edict_t *self)
 	// we're done spawning
 	if (self->count == MONSTERSPAWN_STATUS_IDLE)
 	{
-		INV_Spawnstate_Idle(self, players);
 		return;
 	}
 
 	// Working State
 	//gi.dprintf("%d: level: %d max_monsters: %d\n", (int)(level.framenum), invasion_difficulty_level, max_monsters);
 	// if there's nobody playing, then wait until some join
-	INV_Spawnstate_Working(self, players, max_monsters, e);
+	vrx_inv_spawnstate_working(self, players, e);
 }
 
-void INV_SpawnPlayers(void)
+void vrx_inv_spawn_players(void)
 {
 	edict_t *e, *cl_ent;
 	vec3_t	start;
@@ -998,7 +1030,7 @@ void INV_SpawnPlayers(void)
 		return;
 
 	// if there are no players waiting to be spawned, then we're done
-	if (!(cl_ent = INV_GetSpawnPlayer()))
+	if (!(cl_ent = vrx_inv_get_spawn_player()))
 		return;
 
 	for (int i = 0; i < invasion_spawncount; i++)
@@ -1027,39 +1059,39 @@ void INV_SpawnPlayers(void)
 			respawn(cl_ent);
 
 			// get another waiting player
-			if (!(cl_ent = INV_GetSpawnPlayer()))
+			if (!(cl_ent = vrx_inv_get_spawn_player()))
 				return;
 		}
 	}
 }
 
-edict_t *INV_SelectPlayerSpawnPoint(edict_t *ent)
+edict_t *vrx_inv_select_player_spawn_point(edict_t *ent)
 {
 	if (!ent || !ent->inuse)
 		return NULL;
 
 	// spectators always get a spawn
 	if (G_IsSpectator(ent))
-		return INV_GiveRandomPSpawn();
+		return vrx_inv_give_random_p_spawn();
 
 	if (ent->spawn && ent->spawn->inuse)
 		return ent->spawn;
 	else // We requested a spawn point, but we don't have one. What now?
 	{
 		// Try to find one. But only if the spawn que is empty.
-		if (INV_IsSpawnQueEmpty())
-			return INV_GiveRandomPSpawn();
+		if (vrx_inv_is_spawn_que_empty())
+			return vrx_inv_give_random_p_spawn();
 	}
 
 	return NULL;
 }
 
-int INV_GetNumPlayerSpawns(void)
+int vrx_inv_get_num_player_spawns(void)
 {
 	return invasion_spawncount;
 }
 
-void INV_RemoveFromSpawnlist(edict_t *self)
+void vrx_inv_remove_from_spawnlist(edict_t *self)
 {
 	// az: move the last one to our current slot
 	// this works out fine if list_index = invasion_spawncount
@@ -1086,7 +1118,7 @@ void info_player_invasion_death(edict_t *self, edict_t *inflictor, edict_t *atta
 	self->think = BecomeExplosion1;
 	self->nextthink = level.time + FRAMETIME;
 	gi.bprintf(PRINT_HIGH, "A human spawn was destroyed by a %s!\n", GetMonsterKindString(attacker->mtype));
-	INV_RemoveFromSpawnlist(self);
+	vrx_inv_remove_from_spawnlist(self);
 	BOT_ReturnToBase(0); // return bots to base ASAP!
 }
 

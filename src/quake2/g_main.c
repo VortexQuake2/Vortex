@@ -97,7 +97,7 @@ int average_player_level;
 int pvm_average_level;
 qboolean SPREE_WAR;
 qboolean INVASION_OTHERSPAWNS_REMOVED;
-int invasion_difficulty_level;
+int next_invasion_wave_level;
 qboolean found_flag;
 
 cvar_t *gamedir;
@@ -355,7 +355,7 @@ void VortexEndLevel(void)
 	int		i;
 	edict_t *tempent;
 
-	INV_AwardPlayers();
+	vrx_inv_award_players();
 
 	gi.dprintf("Vortex is shutting down...\n");
 
@@ -1036,6 +1036,6 @@ void G_RunFrame(void)
 		hw_awardpoints();
 
 	PTRCheckJoinedQue();
-	INV_SpawnPlayers();
+	vrx_inv_spawn_players();
 	vrx_relay_recv();
 }

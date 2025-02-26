@@ -724,7 +724,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	DroneList_Clear();
 
 	//K03 Begin
-	INV_Init();
+	vrx_inv_init();
 	entities = LoadEntities(mapname, entities);
 	//K03 End
 
@@ -809,7 +809,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	// if (level.pathfinding)
 	CreateGrid(false);
 
-	INV_InitPostEntities(); // az
+	vrx_inv_init_post_entities(); // az
 
 //GHz END
 
