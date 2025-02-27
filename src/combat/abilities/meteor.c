@@ -227,7 +227,7 @@ void Cmd_Meteor_f (edict_t *ent, float skill_mult, float cost_mult)
 	if (ent->myskills.abilities[METEOR].disable)
 		return;
 
-	MeteorAttack(ent, damage, radius, speed, skill_mult, cost_mult);
+	MeteorAttack(ent, damage, radius, speed, (skill_mult * vrx_get_synergy_mult(ent, METEOR)), cost_mult);
 
 	//  entity made a sound, used to alert monsters
 	ent->lastsound = level.framenum;

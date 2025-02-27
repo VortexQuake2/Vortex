@@ -569,7 +569,7 @@ void StaticFieldAttack (edict_t* ent, int cripple_level)
 			min_health = 0.1 * target->max_health;
 		// calculate damage
 		// 50% at level 10, 66% at level 20
-		damage = target->health * (1 - (1 / (1 + 0.1 * cripple_level)));
+		damage = target->health * (1 - (1 / (1 + 0.1 * (cripple_level * vrx_get_synergy_mult(ent, STATIC_FIELD)))));
 		// delta is the difference between current health and minimum health
 		delta = target->health - min_health;
 		// are we above our minimum?

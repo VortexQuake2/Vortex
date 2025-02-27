@@ -194,7 +194,7 @@ void Cmd_ChainLightning_f (edict_t *ent, float skill_mult, float cost_mult)
 	if (ent->myskills.abilities[LIGHTNING].disable)
 		return;
 
-	damage *= skill_mult;
+	damage *= skill_mult * vrx_get_synergy_mult(ent, LIGHTNING);
 
 	// get starting position and forward vector
 	AngleVectors (ent->client->v_angle, forward, right, NULL);

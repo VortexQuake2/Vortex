@@ -1442,6 +1442,9 @@ double FIREWALL_ADDON_DAMAGE;
 double FIREWALL_DELAY;
 double FIREWALL_DURATION;
 double FIREWALL_COST;
+double FIRE_SYNERGY_BONUS;
+double ICE_SYNERGY_BONUS;
+double LIGHTNING_SYNERGY_BONUS;
 
 void Lua_LoadVariables()
 {
@@ -2749,4 +2752,8 @@ void Lua_LoadVariables()
 	FIREWALL_DELAY = vrx_lua_get_variable("FIREWALL_DELAY", 1.0);
 	FIREWALL_DURATION = vrx_lua_get_variable("FIREWALL_DURATION", 10.0);
 	FIREWALL_COST = vrx_lua_get_variable("FIREWALL_COST", 25);
+
+	FIRE_SYNERGY_BONUS = vrx_lua_get_variable("FIRE_SYNERGY_BONUS", 0.05);
+	ICE_SYNERGY_BONUS = vrx_lua_get_variable("ICE_SYNERGY_BONUS", 0.05);
+	LIGHTNING_SYNERGY_BONUS = vrx_lua_get_variable("LIGHTNING_SYNERGY_BONUS", 0.05);
 }

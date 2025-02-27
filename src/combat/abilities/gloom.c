@@ -1012,9 +1012,6 @@ void spiker_grow (edict_t *self)
 
 edict_t *CreateSpiker (edict_t *ent, int skill_level)
 {
-	int spike_level = ent->myskills.abilities[SPIKE].current_level;
-	float synergy_bonus = 1.0 + SPIKE_SPIKER_SYNERGY_BONUS * spike_level;
-
 	edict_t *e;
 
 	e = G_Spawn();
@@ -1036,7 +1033,7 @@ edict_t *CreateSpiker (edict_t *ent, int skill_level)
 	e->health = 0.5*e->max_health;
 	e->monsterinfo.level = skill_level;
 	e->light_level = vrx_get_talent_level(ent, TALENT_DEADLY_SPIKES); // Talent: Deadly Spikes
-	e->dmg = (SPIKER_INITIAL_DAMAGE + SPIKER_ADDON_DAMAGE * skill_level) * synergy_bonus;
+	e->dmg = (SPIKER_INITIAL_DAMAGE + SPIKER_ADDON_DAMAGE * skill_level) * vrx_get_synergy_mult(ent, SPIKER);
 	//e->dmg *= 1.0 + (0.1 * e->light_level); // damage increase from Deadly Spikes talent
 	e->gib_health = -1.5 * BASE_GIB_HEALTH;
 	e->die = spiker_die;
@@ -2311,8 +2308,7 @@ void gasser_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 
 edict_t *CreateGasser (edict_t *ent, int skill_level, int talent_level)
 {
-	int acid_level = ent->myskills.abilities[ACID].current_level;
-	float synergy_bonus = 1.0 + ACID_GASSER_SYNERGY_BONUS * acid_level;
+	float synergy_bonus = vrx_get_synergy_mult(ent, GASSER);
 	edict_t *e;
 
 	// initialize sound
@@ -3411,13 +3407,13 @@ void Cmd_FireAcid_f (edict_t *ent)
     int		damage = ACID_INITIAL_DAMAGE + ACID_ADDON_DAMAGE * acid_level;
 	int		speed = ACID_INITIAL_SPEED + ACID_ADDON_SPEED * acid_level;
     float	radius = ACID_INITIAL_RADIUS + ACID_ADDON_RADIUS * acid_level;
-	float	synergy_bonus = 1.0 + ACID_GASSER_SYNERGY_BONUS * gasser_level; // synergy bonus from gasser
+	//float	synergy_bonus = 1.0 + ACID_GASSER_SYNERGY_BONUS * gasser_level; // synergy bonus from gasser
     vec3_t	forward, right, start, offset;
 
     if (!V_CanUseAbilities(ent, ACID, ACID_COST, true))
         return;
 
-	damage *= synergy_bonus;
+	damage *= vrx_get_synergy_mult(ent, ACID);
 
     // get starting position and forward vector
     AngleVectors (ent->client->v_angle, forward, right, NULL);

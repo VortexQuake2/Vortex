@@ -109,11 +109,11 @@ const abilitydef_t ability_mage[] = { // MAGE
         {NOVA,            0, DEFAULT_SOFTMAX,   0},
         {BOMB_SPELL,      0, DEFAULT_SOFTMAX,   0},
         //{FORCE_WALL,      0, DEFAULT_SOFTMAX,   0},
-        {FIREWALL,        0, DEFAULT_SOFTMAX,   0},
-        {LIGHTNING,       0, DEFAULT_SOFTMAX,   0},
-        {METEOR,          0, DEFAULT_SOFTMAX,   0},
-        {FIREBALL,        0, DEFAULT_SOFTMAX,   0},
-        {LIGHTNING_STORM, 0, DEFAULT_SOFTMAX,   0},
+        {FIREWALL,        0, DEFAULT_SOFTMAX,   0},//synergy:fire
+        {LIGHTNING,       0, DEFAULT_SOFTMAX,   0},//synergy:lightning
+        {METEOR,          0, DEFAULT_SOFTMAX,   0},//synergy:fire
+        {FIREBALL,        0, DEFAULT_SOFTMAX,   0},//synergy:fire
+        {LIGHTNING_STORM, 0, DEFAULT_SOFTMAX,   0},//synergy:lightning
         {STATIC_FIELD,    0, DEFAULT_SOFTMAX,   0},
         {TELEPORT,        1, 1,                 0},
         {-1,              0, 0,                 0} // Guardian (Add skills above this)
@@ -150,13 +150,13 @@ const abilitydef_t ability_knight[] = { // knight
 
 // theme: alien-themed camper with low-touch bio static defense
 const abilitydef_t ability_alien[] = {
-        {SPIKER,    0, DEFAULT_SOFTMAX, 0},
+        {SPIKER,    0, DEFAULT_SOFTMAX, 0},//synergy:spike
         {OBSTACLE,  0, DEFAULT_SOFTMAX, 0},
-        {GASSER,    0, DEFAULT_SOFTMAX, 0},
+        {GASSER,    0, DEFAULT_SOFTMAX, 0},//synergy:acid
         {HEALER,    0, DEFAULT_SOFTMAX, 0},
         {SPORE,     0, DEFAULT_SOFTMAX, 0},
-        {ACID,      0, DEFAULT_SOFTMAX, 0},
-        {SPIKE,     0, DEFAULT_SOFTMAX, 0},
+        {ACID,      0, DEFAULT_SOFTMAX, 0},//synergy:gasser
+        {SPIKE,     0, DEFAULT_SOFTMAX, 0},//synergy:spiker
         {COCOON,    0, DEFAULT_SOFTMAX, 0},
         {BLACKHOLE, 1, 1,               0},
         {-1,        0, 0,               0} // Guardian (Add skills above this)

@@ -262,11 +262,11 @@ void Cmd_Fireball_f(edict_t* ent, float skill_mult, float cost_mult)
 	if (ent->waterlevel > 1)
 		return;
 
-	damage = (FIREBALL_INITIAL_DAMAGE + FIREBALL_ADDON_DAMAGE * slvl) * skill_mult;
+	damage = (FIREBALL_INITIAL_DAMAGE + FIREBALL_ADDON_DAMAGE * slvl) * (skill_mult * vrx_get_synergy_mult(ent, FIREBALL));
 	radius = FIREBALL_INITIAL_RADIUS + FIREBALL_ADDON_RADIUS * slvl;
 	speed = FIREBALL_INITIAL_SPEED + FIREBALL_ADDON_SPEED * slvl;
 	flames = FIREBALL_INITIAL_FLAMES + FIREBALL_ADDON_FLAMES * slvl;
-	flamedmg = (FIREBALL_INITIAL_FLAMEDMG + FIREBALL_ADDON_FLAMEDMG * slvl) * skill_mult;
+	flamedmg = (FIREBALL_INITIAL_FLAMEDMG + FIREBALL_ADDON_FLAMEDMG * slvl) * (skill_mult * vrx_get_synergy_mult(ent, FIREBALL));
 
 	// get starting position and forward vector
 	AngleVectors(ent->client->v_angle, forward, right, NULL);
@@ -511,7 +511,7 @@ void Cmd_Firewall_f(edict_t* ent, float skill_mult, float cost_mult)
 		return;
 
 	vec3_t start, angles;
-	edict_t *flames = CreateFirewallFlames(ent, skill_level, skill_mult);
+	edict_t* flames = CreateFirewallFlames(ent, skill_level, (skill_mult * vrx_get_synergy_mult(ent, FIREWALL)));
 
 	if (!G_GetSpawnLocation(ent, FIREWALL_RANGE, flames->mins, flames->maxs, start, angles, PROJECT_HITBOX_FLOOR, true))
 	{

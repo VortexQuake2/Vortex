@@ -81,7 +81,7 @@ void Cmd_LightningStorm_f (edict_t *ent, float skill_mult, float cost_mult)
 	if (!V_CanUseAbilities(ent, LIGHTNING_STORM, cost, true))
 		return;
 
-	damage = LIGHTNING_INITIAL_DAMAGE + LIGHTNING_ADDON_DAMAGE * slvl * skill_mult;
+	damage = (LIGHTNING_INITIAL_DAMAGE + LIGHTNING_ADDON_DAMAGE * slvl) * (skill_mult * vrx_get_synergy_mult(ent, LIGHTNING_STORM));
 	duration = LIGHTNING_INITIAL_DURATION + LIGHTNING_ADDON_DURATION * slvl;
 	radius = LIGHTNING_INITIAL_RADIUS + LIGHTNING_ADDON_DURATION * slvl;
 

@@ -1088,6 +1088,10 @@ METEOR_CEILING_HEIGHT                    = 1024
 METEOR_RANGE                             = 8192
 METEOR_DELAY                             = 1.0
 
+ -- mage synergy bonuses
+FIRE_SYNERGY_BONUS						 = 0.05
+LIGHTNING_SYNERGY_BONUS					 = 0.05
+ICE_SYNERGY_BONUS						 = 0.05
 
 CLIGHTNING_COLOR                         = 15
 CLIGHTNING_PARTICLES                     = 3

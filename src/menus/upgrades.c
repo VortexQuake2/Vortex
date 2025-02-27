@@ -693,6 +693,7 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		menu_add_line(ent, "that damages enemies and", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "jumps between them. Uses", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "power cubes.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Synergy: Lightning", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: chainlightning", MENU_WHITE_CENTERED);
 		return 5;
 	case METEOR:
@@ -701,27 +702,31 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		menu_add_line(ent, "impact, setting enemies", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "on fire and throwing", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "flames! Uses power cubes.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Synergy: Fire", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: meteor", MENU_WHITE_CENTERED);
-		return 6;
+		return 7;
 	case FIREBALL:
 		menu_add_line(ent, "Toss a fireball, causing", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "radius damage on impact,", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "setting enemies on fire and", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "throwing flames! Uses power", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "cubes.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Synergy: Fire", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: fireball", MENU_WHITE_CENTERED);
-		return 6;
+		return 7;
 	case LIGHTNING_STORM:
 		menu_add_line(ent, "Creates a lightning storm,", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "causing bolts to shoot from", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "the sky and strike your", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "enemies! Uses power cubes.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Synergy: Lightning", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: lightningstorm", MENU_WHITE_CENTERED);
-		return 5;
+		return 6;
 	case FIREWALL:
 		menu_add_line(ent, "Creates an inferno that", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "quickly grows to a wall of", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "flames! Uses power cubes.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Synergy: Fire", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: firewall", MENU_WHITE_CENTERED);
 		return 4;
 	case TELEPORT:

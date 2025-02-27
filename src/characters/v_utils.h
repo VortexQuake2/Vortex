@@ -27,3 +27,4 @@ qboolean V_MatchPlayerPrefs (edict_t *player, int monsters, int players);//4.5
 qboolean isMonster (edict_t *ent);
 qboolean vrx_is_morphing_polt(edict_t *ent);
 qboolean vrx_has_pain_skin(edict_t* ent);
+float vrx_get_synergy_mult(const edict_t* ent, int ability_index);

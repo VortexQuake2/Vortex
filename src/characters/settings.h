@@ -1263,4 +1263,7 @@ extern double FIREWALL_ADDON_DAMAGE;
 extern double FIREWALL_DELAY;
 extern double FIREWALL_DURATION;
 extern double FIREWALL_COST;
+extern double FIRE_SYNERGY_BONUS;
+extern double ICE_SYNERGY_BONUS;
+extern double LIGHTNING_SYNERGY_BONUS;
 #endif

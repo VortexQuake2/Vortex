@@ -2579,3 +2579,49 @@ qboolean vrx_has_pain_skin(edict_t* ent)
 {
     return (ent->mtype != M_DECOY && ent->mtype != M_SKELETON && ent->mtype != M_GOLEM);
 }
+
+// returns a value >= 1 based on any synergy bonuses that apply for ability_index
+// note: if no bonus applies, the value returned is 1.0
+float vrx_get_synergy_mult(const edict_t* ent, int ability_index)
+{
+    int slvl;
+    float bonus = 1.0;
+
+    switch (ability_index)
+    {
+    // alien
+    case SPIKE: bonus += ent->myskills.abilities[SPIKER].current_level * SPIKE_SPIKER_SYNERGY_BONUS; break;
+    case SPIKER: bonus += ent->myskills.abilities[SPIKE].current_level * SPIKE_SPIKER_SYNERGY_BONUS; break;
+    case GASSER: bonus += ent->myskills.abilities[ACID].current_level * ACID_GASSER_SYNERGY_BONUS; break;
+    case ACID: bonus += ent->myskills.abilities[GASSER].current_level * ACID_GASSER_SYNERGY_BONUS; break;
+    // mage: fire synergies
+    case FIREBALL: 
+        bonus += ent->myskills.abilities[FIREWALL].current_level * FIRE_SYNERGY_BONUS;
+        bonus += ent->myskills.abilities[METEOR].current_level * FIRE_SYNERGY_BONUS;
+        break;
+    case METEOR:
+        bonus += ent->myskills.abilities[FIREBALL].current_level * FIRE_SYNERGY_BONUS;
+        bonus += ent->myskills.abilities[FIREWALL].current_level * FIRE_SYNERGY_BONUS;
+        break;
+    case FIREWALL:
+        bonus += ent->myskills.abilities[FIREBALL].current_level * FIRE_SYNERGY_BONUS;
+        bonus += ent->myskills.abilities[METEOR].current_level * FIRE_SYNERGY_BONUS;
+        break;
+    // mage: lightning synergies
+    case LIGHTNING: 
+        bonus += ent->myskills.abilities[LIGHTNING_STORM].current_level * LIGHTNING_SYNERGY_BONUS;
+        bonus += ent->myskills.abilities[STATIC_FIELD].current_level * LIGHTNING_SYNERGY_BONUS;
+        break;
+    case LIGHTNING_STORM: 
+        bonus += ent->myskills.abilities[LIGHTNING].current_level * LIGHTNING_SYNERGY_BONUS;
+        bonus += ent->myskills.abilities[STATIC_FIELD].current_level * LIGHTNING_SYNERGY_BONUS;
+        break;
+    case STATIC_FIELD:
+        bonus += ent->myskills.abilities[LIGHTNING].current_level * LIGHTNING_SYNERGY_BONUS;
+        bonus += ent->myskills.abilities[LIGHTNING_STORM].current_level * LIGHTNING_SYNERGY_BONUS;
+        break;
+    }
+    if (bonus > 2.0) // cap at 2x multiplier
+        return 2.0;
+    return bonus;
+}
