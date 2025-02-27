@@ -575,37 +575,43 @@ void OpenPurchaseMenu (edict_t *ent, int page_num, int lastline)
 //************************************************************************************************
 void ShowItemMenu_handler(edict_t *ent, int option); // item_menu.c
 
+void vrx_reapply_items(edict_t *ent) {
+	vrx_runes_unapply(ent);
+	for (int i = 0; i < 3; ++i)
+		vrx_runes_apply(ent, &ent->myskills.items[i]);
+}
+
+int vrx_sell_item(edict_t *ent, item_t* slot) {
+	int value = GetSellValue(slot);
+	int wpts, apts, total_pts;
+
+	wpts = V_GetRuneWeaponPts(ent, slot);
+	apts = V_GetRuneAbilityPts(ent, slot);
+	// calculate weighted total
+	total_pts = ceil(0.5*wpts + 0.75*apts);//was 0.66,2.0
+
+	if (total_pts < 30)
+		GiveRuneToArmory(slot);
+
+	memset(slot, 0, sizeof(item_t));
+
+	//Re-apply equipment
+	vrx_reapply_items(ent);
+
+	return value;
+}
+
 void SellConfirmMenu_handler(edict_t *ent, int option)
 {
 	if (option - 777 > 0)
 	{
 		int i;
 		item_t *slot = &ent->myskills.items[option - 778];
-		int value = GetSellValue(slot);
-		int wpts, apts, total_pts;
-
 
 		//log the sale
+		int value = vrx_sell_item(ent, slot);
         vrx_write_to_logfile(ent, va("Selling rune for %d credits. [%s]", value, slot->id));
-
-		// calculate number of weapon and ability points separately
-		wpts = V_GetRuneWeaponPts(ent, slot);
-		apts = V_GetRuneAbilityPts(ent, slot);
-		// calculate weighted total
-		total_pts = ceil(0.5*wpts + 0.75*apts);//was 0.66,2.0
-
-		//Copy item to armory
-		if (total_pts < 30) // only if SOMEONE can actually equip it!
-			GiveRuneToArmory(slot);
-
-		//Delete item
-		memset(slot, 0, sizeof(item_t));
 		safe_cprintf(ent, PRINT_HIGH, "Item Sold for %d credits.\n", value);
-
-		//Re-apply equipment
-		vrx_runes_unapply(ent);
-		for (i = 0; i < 3; ++i)
-			vrx_runes_apply(ent, &ent->myskills.items[i]);
 
 		//refund some credits
 		ent->myskills.credits += value;
@@ -967,6 +973,49 @@ void OpenBuyRuneMenu(edict_t *ent, int page_num, int lastline)
 //		**ARMORY MAIN MENU**
 //************************************************************************************************
 
+
+
+void SellAllMenu_handler(edict_t * ent, int option) {
+	int totalValue = 0;
+
+	for (int i = 3; i < MAX_VRXITEMS; ++i)
+		totalValue += vrx_sell_item(ent, &ent->myskills.items[i]);
+
+	//refund some credits
+	ent->myskills.credits += totalValue;
+	safe_cprintf(
+		ent,
+		PRINT_HIGH,
+		"You sold your items for %d credits. You now have %d credits.\n",
+		totalValue,
+		ent->myskills.credits);
+	gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/gold.wav"), 1, ATTN_NORM, 0);
+
+	//save the player file
+	vrx_char_io.save_player_runes(ent);
+}
+
+void OpenConfirmSellAll(edict_t * ent, int i) {
+	if (!menu_can_show(ent))
+		return;
+	menu_clear(ent);
+
+	menu_add_line(ent, "Confirm Selection", MENU_GREEN_CENTERED);
+	menu_add_line(ent, " ", 0);
+
+	menu_add_line(ent, "Are you sure you want to", MENU_WHITE_CENTERED);
+	menu_add_line(ent, "sell all unequipped items", MENU_WHITE_CENTERED);
+	menu_add_line(ent, "in your inventory?", MENU_WHITE_CENTERED);
+	menu_add_line(ent, " ", 0);
+
+	menu_add_line(ent, "Yes", 4);
+	menu_add_line(ent, "No", 5);
+
+	menu_set_handler(ent, SellAllMenu_handler);
+	ent->client->menustorage.currentline = 8;
+	menu_show(ent);
+}
+
 void armorymenu_handler (edict_t *ent, int option)
 {
 	if (option == 1)
@@ -975,6 +1024,8 @@ void armorymenu_handler (edict_t *ent, int option)
 		OpenBuyRuneMenu(ent, 1, 0);
 	else if (option == 3)
 		OpenSellMenu(ent, 0);
+	else if (option == 4)
+		OpenConfirmSellAll(ent, 0);
 	else
 		menu_close(ent, true);
 }
@@ -1000,7 +1051,8 @@ void OpenArmoryMenu (edict_t *ent)
 		menu_add_line(ent, "Buy", 1);
 	menu_add_line(ent, "Buy Runes", 2);
 	menu_add_line(ent, "Sell", 3);
-	menu_add_line(ent, "Exit", 4);
+	menu_add_line(ent, "Sell All", 4);
+	menu_add_line(ent, "Exit", 5);
 
 	menu_set_handler(ent, armorymenu_handler);
 	ent->client->menustorage.currentline = 9;
