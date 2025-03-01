@@ -479,7 +479,8 @@ void CurseRadius(edict_t* caster, edict_t *targ, int type, int curse_level, int 
 		caster->client->ability_delay = level.time;// for monster hearing (check if ability was recently used/cast)
 	}
 
-	edict_t* e = NULL;
+	int num_cursed = 0;
+	edict_t *e = NULL, *found = NULL;
 
 	// make sure the curse owner is the client summoner, if available
 	edict_t* curse_owner = G_GetClient(caster);
@@ -497,7 +498,19 @@ void CurseRadius(edict_t* caster, edict_t *targ, int type, int curse_level, int 
 		// try to add the curse
 		if (!curse_add(e, curse_owner, type, curse_level, duration))
 			continue;
-		CurseMessage(curse_owner, e, type, curse_level, duration, isCurse);
+		// track the number of cursed entities and last cursed entity
+		num_cursed++;
+		found = e;
+		//CurseMessage(curse_owner, e, type, curse_level, duration, isCurse);
+	}
+
+	// print a message, but only 1 line please!
+	if (found)
+	{
+		if (num_cursed > 1)
+			safe_cprintf(curse_owner, PRINT_HIGH, "Cursed %d targets with %s (%d) for %0.1f second(s)\n", num_cursed, GetCurseName(type), curse_level, duration);
+		else
+			CurseMessage(curse_owner, found, type, curse_level, duration, isCurse);
 	}
 }
 

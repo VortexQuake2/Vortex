@@ -728,7 +728,7 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		menu_add_line(ent, "flames! Uses power cubes.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Synergy: Fire", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: firewall", MENU_WHITE_CENTERED);
-		return 4;
+		return 5;
 	case TELEPORT:
 		menu_add_line(ent, "Teleport in the direction you", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "aiming! Uses power cubes.", MENU_WHITE_CENTERED);

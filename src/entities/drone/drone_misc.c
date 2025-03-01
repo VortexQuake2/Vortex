@@ -1991,7 +1991,8 @@ qboolean M_Upkeep (edict_t *self, int delay, int upkeep_cost)
 		// owner can't pay upkeep, so we're dead :(
 		safe_cprintf(self->activator, PRINT_HIGH, "Couldn't keep up the cost of %s - Removing!\n",
 			GetMonsterKindString(self->mtype));
-		T_Damage(self, world, world, vec3_origin, self->s.origin, vec3_origin, 100000, 0, 0, 0);
+		//T_Damage(self, world, world, vec3_origin, self->s.origin, vec3_origin, 100000, 0, 0, 0);
+		M_Remove(self, false, true);
 		return false;
 	}
 

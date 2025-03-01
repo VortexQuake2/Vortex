@@ -217,6 +217,47 @@ void golem_run(edict_t* self)
 		self->monsterinfo.currentmove = &golem_move_run;
 }
 
+void golem_heal(edict_t* self)
+{
+	gi.sound(self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
+	self->health_cache += (int)(self->monsterinfo.level * 0.10 * self->max_health) + 1;
+	self->monsterinfo.regen_delay1 = level.framenum + (int)(1 / FRAMETIME);
+}
+
+mframe_t golem_frames_flex[] =
+{
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, golem_heal,//peak
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL
+};
+mmove_t	golem_move_flex = { FRAME_flex01, FRAME_flex24, golem_frames_flex, golem_run };
+
+void golem_flex(edict_t* self)
+{
+	self->monsterinfo.currentmove = &golem_move_flex;
+}
+
 void golem_pain_nextmove(edict_t* self)
 {
 	if (G_EntExists(self->enemy))
@@ -562,6 +603,17 @@ void golem_attack(edict_t* self)
 	int nearby, in_front, stunned;
 	float range = entdist(self, self->enemy);
 
+	// Talent: Golem Mastery - allows golem to self-heal when his health is low
+	int talentLevel = vrx_get_talent_level(self->activator, TALENT_GOLEM_MASTERY);
+	float healthFrac = (float)self->health / self->max_health;
+	if (talentLevel > 1 && healthFrac < 0.5 && level.framenum > self->monsterinfo.regen_delay1)
+	{
+		//gi.dprintf("%s: healthFrac %.1f\n", __func__, healthFrac);
+		float chance = (1 - healthFrac) + 0.1;
+		if (chance > random())
+			golem_flex(self);
+		return;
+	}
 
 	nearby = in_front = stunned = 0; // initialize
 	golem_nearbyenemies(self, GOLEM_AOE_ATTACK_RANGE, &nearby, &in_front, &stunned);

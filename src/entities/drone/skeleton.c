@@ -726,7 +726,7 @@ void raise_skeleton(edict_t* ent, int type)
 	if (spawn_skeleton(ent, start, slvl, type))
 		ent->client->pers.inventory[power_cube_index] -= SKELETON_COST;
 }
-void RemoveDrone(edict_t* ent);
+
 void MonsterCommand(edict_t* ent);
 void MonsterFollowMe(edict_t* ent);
 

@@ -489,6 +489,7 @@ float vrx_apply_amp_damage(const edict_t *targ, float damage) {
         if (temp > 3)
             temp = 3;
         //gi.dprintf("amp damage (%d) multiplier: %.1fx\n", slot->ent->monsterinfo.level, temp);
+       // gi.dprintf("amp damage: before: %.0f after: %.0f\n", damage, (damage * temp));
         damage *= temp;
     }
     return damage;
@@ -811,8 +812,8 @@ float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float da
 
     if (dflags & DAMAGE_NO_PROTECTION)
         return damage;
-    if (targ->deadflag == DEAD_DEAD || targ->health < 1)
-        return damage; // corpses take full damage
+    if ((targ->deadflag == DEAD_DEAD || targ->health < 1) && !(targ->flags & FL_UNDEAD))
+        return damage; // corpses (except undead) take full damage
     if (mod == MOD_TELEFRAG)
         return damage;
 

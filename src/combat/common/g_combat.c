@@ -673,6 +673,9 @@ void ApplyThorns(edict_t* targ, edict_t* inflictor, edict_t* attacker, vec3_t po
 	// attacker is invalid/dead--nobody to hurt
 	if (!G_EntIsAlive(attacker))
 		return;
+	// teammates can't hurt each other
+	if (OnSameTeam(targ, attacker))
+		return;
 	// attacker has deflect or thorns--no infinite loops please!
 	if (que_findtype(attacker->curses, NULL, DEFLECT) || que_findtype(attacker->auras, NULL, AURA_THORNS))
 		return;
@@ -686,6 +689,7 @@ void ApplyThorns(edict_t* targ, edict_t* inflictor, edict_t* attacker, vec3_t po
 	if (attacker->client)
 		mult *= 0.1;
 
+	//gi.dprintf("%s: attacker damage: %.0f thorns (%d %.1f): %.0f\n", __func__, damage, slot->ent->monsterinfo.level, mult, (damage * mult));
 	// try to hurt them
 	T_Damage(attacker, targ, targ, vec3_origin, attacker->s.origin, vec3_origin, (damage * mult), 0, dflags, mod);
 }
@@ -1229,6 +1233,13 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 			SpawnDamage(TE_BLOOD, point, normal);
 		else
 			SpawnDamage(te_sparks, point, normal);
+
+		// corpse explode should kill but not gib--we need those corpses for ammo!
+		int remainingHealth = targ->max_health - targ->health;
+		if (take > targ->health && mod == MOD_CORPSEEXPLODE)
+			take = targ->health;
+		if (take < 1)
+			take = 0;
 
 		targ->health -= take;
 

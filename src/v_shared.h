@@ -325,6 +325,7 @@ void OpenTalentUpgradeMenu(edict_t *ent, int lastline);				//upgrade your talent
 //************* MENUS *************
 void laser_remove(edict_t *self);
 void RemoveAllDrones(edict_t *ent, qboolean refund_player);
+void RemoveDrone(edict_t* ent);
 void RemoveHellspawn(edict_t *ent);
 void RemoveMiniSentries(edict_t *ent);
 void DroneRemoveSelected(edict_t *ent, edict_t *drone);

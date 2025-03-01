@@ -318,7 +318,7 @@ void Cmd_CorpseExplode(edict_t *ent)
 			continue;
 
 		// kill the corpse
-		T_Damage(e, e, e, vec3_origin, e->s.origin, vec3_origin, 10000, 0, DAMAGE_NO_PROTECTION, 0);
+		T_Damage(e, ent, ent, vec3_origin, e->s.origin, vec3_origin, 100000, 0, DAMAGE_NO_PROTECTION, 0);
 
 		// inflict damage
 		fraction = 0.1 * GetRandom(5, 10);
@@ -326,7 +326,7 @@ void Cmd_CorpseExplode(edict_t *ent)
 		
 		// calculate min/max damage range
 		min_dmg = CORPSE_EXPLOSION_INITIAL_DAMAGE + CORPSE_EXPLOSION_ADDON_DAMAGE * slvl;
-		max_dmg = 5 * min_dmg;
+		max_dmg = 10 * min_dmg;
 
 		if (damage < min_dmg)
 			damage = min_dmg;
@@ -343,7 +343,10 @@ void Cmd_CorpseExplode(edict_t *ent)
         gi.sound(e, CHAN_ITEM, gi.soundindex("abilities/corpseexplodecast.wav"), 1, ATTN_NORM, 0);
 		ent->client->pers.inventory[power_cube_index] -= COST_FOR_CORPSEEXPLODE;
 		ent->client->ability_delay = level.time + DELAY_CORPSEEXPLODE;
-		safe_cprintf(ent, PRINT_HIGH, "Corpse exploded for %d damage!\n", damage);
+		//if (e->mtype)
+		//	safe_cprintf(ent, PRINT_HIGH, "%s corpse exploded for %d damage!\n", V_GetMonsterName(e), damage);
+		//else
+		//	safe_cprintf(ent, PRINT_HIGH, "Corpse exploded for %d damage!\n", damage);
 
 		//decino: explosion effect
 		gi.WriteByte (svc_temp_entity);
