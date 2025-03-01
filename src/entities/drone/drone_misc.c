@@ -785,12 +785,12 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 			else
 				drone->monsterinfo.level = GetRandom(LowestLevelPlayer(), HighestLevelPlayer());
 
-			drone->monsterinfo.level += bonus_level;
-
 			// 4.5 assign monster bonus flags
 			// Champions spawn on invasion hard mode.
             vrx_roll_to_make_champion(drone, &drone_type);
 		}
+
+		drone->monsterinfo.level += bonus_level;
 	}
 	else
 	{

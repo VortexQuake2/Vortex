@@ -440,7 +440,7 @@ edict_t* vrx_inv_spawn_drone(edict_t* self, edict_t *spawn_point, int index)
 {
 	edict_t *monster = vrx_create_new_drone(self, index, true, false, invasion_bonus_levels);
 	vec3_t	start;
-	int mhealth = 1;
+	float mhealth = 1;
 
 	if (!monster)
 	{
@@ -491,18 +491,18 @@ edict_t* vrx_inv_spawn_drone(edict_t* self, edict_t *spawn_point, int index)
 
 
 	// az: we modify the monsters' health lightly
-	if (invasion->value == 1) // easy mode
-	{
-		if (next_invasion_wave_level < 5)
-			mhealth = 1;
-		else if (next_invasion_wave_level >= 5)
-			mhealth = 1 + 0.05 * log2(next_invasion_wave_level - 4);
-	}
-	else if (invasion->value == 2) // hard mode
-	{
-		float plog = log2(vrx_get_joined_players(true) + 1) / log2(8);
-		mhealth = 1 + 0.2 * sqrt(next_invasion_wave_level) * max(plog, 0);
-	}
+	// if (invasion->value == 1) // easy mode
+	// {
+	// 	if (next_invasion_wave_level < 5)
+	// 		mhealth = 1;
+	// 	else if (next_invasion_wave_level >= 5)
+	// 		mhealth = 1 + 0.05 * log2(next_invasion_wave_level - 4);
+	// }
+	// else if (invasion->value == 2) // hard mode
+	// {
+	// 	float plog = log2(vrx_get_joined_players(true) + 1) / log2(8);
+	// 	mhealth = 1 + 0.2 * sqrt(next_invasion_wave_level) * max(plog, 0);
+	// }
 
 	monster->max_health = monster->health = monster->max_health*mhealth;
 
@@ -827,6 +827,11 @@ int vrx_inv_get_max_monsters(int wave) {
 		else if (invasion->value == 2)
 			maxmon = 6 * (vrx_get_joined_players(true) - 1);
 	}
+
+	// more than this is pretty unreasonable in practice due to invuln frames,
+	// max spawns per frame, etc..
+	if (maxmon > 150)
+		maxmon = 150;
 
 	return maxmon;
 }
