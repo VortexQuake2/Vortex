@@ -1070,8 +1070,8 @@ NAPALM_ATTACK_DELAY                      = 1.0
 NAPALM_DELAY                             = 0.5
 NAPALM_COST                              = 10
 NAPALM_DURATION                          = 10.0
-NAPALM_INITIAL_DMG                       = 100
-NAPALM_ADDON_DMG                         = 20
+NAPALM_INITIAL_DMG                       = 50
+NAPALM_ADDON_DMG                         = 25
 NAPALM_INITIAL_RADIUS                    = 100.0
 NAPALM_ADDON_RADIUS                      = 5.0
 NAPALM_INITIAL_BURN                      = 0
@@ -1080,8 +1080,8 @@ NAPALM_ADDON_BURN                        = 3
 
 METEOR_INITIAL_DMG                       = 100
 METEOR_ADDON_DMG                         = 40
-METEOR_INITIAL_RADIUS                    = 200
-METEOR_ADDON_RADIUS                      = 0
+METEOR_INITIAL_RADIUS                    = 100
+METEOR_ADDON_RADIUS                      = 20
 METEOR_INITIAL_SPEED                     = 1000
 METEOR_ADDON_SPEED                       = 0
 METEOR_CEILING_HEIGHT                    = 1024
@@ -1197,24 +1197,24 @@ MIRROR_COST                              = 50
 MIRROR_DELAY                             = 1.0
 
 -- Fireball
-FIREBALL_INITIAL_DAMAGE                  = 100
-FIREBALL_ADDON_DAMAGE                    = 20
+FIREBALL_INITIAL_DAMAGE                  = 50
+FIREBALL_ADDON_DAMAGE                    = 25
 FIREBALL_INITIAL_RADIUS                  = 100
 FIREBALL_ADDON_RADIUS                    = 5
 FIREBALL_INITIAL_SPEED                   = 650
 FIREBALL_ADDON_SPEED                     = 35
 FIREBALL_INITIAL_FLAMES                  = 5
 FIREBALL_ADDON_FLAMES                    = 0
-FIREBALL_INITIAL_FLAMEDMG                = 1
-FIREBALL_ADDON_FLAMEDMG                  = 2
-FIREBALL_DELAY                           = 0.3
+FIREBALL_INITIAL_FLAMEDMG                = 1	-- deprecated
+FIREBALL_ADDON_FLAMEDMG                  = 2	-- deprecated
+FIREBALL_DELAY                           = 0.3	
 
 -- Lightning
 LIGHTNING_STRIKE_RADIUS                  = 64
 LIGHTNING_MIN_DELAY                      = 1
 LIGHTNING_MAX_DELAY                      = 3
 LIGHTNING_INITIAL_DAMAGE                 = 50
-LIGHTNING_ADDON_DAMAGE                   = 15
+LIGHTNING_ADDON_DAMAGE                   = 20
 LIGHTNING_INITIAL_DURATION               = 5.0
 LIGHTNING_ADDON_DURATION                 = 0
 LIGHTNING_INITIAL_RADIUS                 = 128
@@ -1235,8 +1235,8 @@ PLASMABOLT_DELAY                         = 0.3
 PLASMABOLT_DELAY_PVP                     = 0.7
 
 -- Icebolt
-ICEBOLT_INITIAL_DAMAGE                   = 100
-ICEBOLT_ADDON_DAMAGE                     = 20
+ICEBOLT_INITIAL_DAMAGE                   = 50
+ICEBOLT_ADDON_DAMAGE                     = 25
 ICEBOLT_INITIAL_RADIUS                   = 100
 ICEBOLT_ADDON_RADIUS                     = 0
 ICEBOLT_INITIAL_SPEED                    = 650

@@ -274,7 +274,8 @@ void Cmd_Fireball_f(edict_t* ent, float skill_mult, float cost_mult)
 	radius = FIREBALL_INITIAL_RADIUS + FIREBALL_ADDON_RADIUS * slvl;
 	speed = FIREBALL_INITIAL_SPEED + FIREBALL_ADDON_SPEED * slvl;
 	flames = FIREBALL_INITIAL_FLAMES + FIREBALL_ADDON_FLAMES * slvl;
-	flamedmg = (FIREBALL_INITIAL_FLAMEDMG + FIREBALL_ADDON_FLAMEDMG * slvl) * (skill_mult * vrx_get_synergy_mult(ent, FIREBALL));
+	//flamedmg = (FIREBALL_INITIAL_FLAMEDMG + FIREBALL_ADDON_FLAMEDMG * slvl) * (skill_mult * vrx_get_synergy_mult(ent, FIREBALL));
+	flamedmg = 0.1 * damage;
 
 	// get starting position and forward vector
 	AngleVectors(ent->client->v_angle, forward, right, NULL);
