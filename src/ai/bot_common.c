@@ -353,7 +353,7 @@ void safe_cprintf (edict_t *ent, int printlevel, char *fmt, ...)
 	len = vsprintf (bigbuffer,fmt,argptr);
 	va_end (argptr);
 
-	gi.cprintf(ent, printlevel, bigbuffer);
+	gi.cprintf(ent, printlevel, "%s", bigbuffer);
 	
 }
 
