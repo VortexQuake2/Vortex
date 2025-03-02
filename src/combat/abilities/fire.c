@@ -69,6 +69,10 @@ void ThrowFlame(edict_t* ent, vec3_t start, vec3_t forward, float dist, int spee
 	fire->clipmask = MASK_SHOT;
 	fire->s.modelindex = gi.modelindex("models/fire/tris.md2");
 	gi.linkentity(fire);
+
+	// cloak a player-owned fire in PvM if there are too many entities nearby
+	if (pvm->value && G_GetClient(ent) && !vrx_spawn_nonessential_ent(fire->s.origin))
+		fire->svflags |= SVF_NOCLIENT;
 }
 
 void SpawnFlames(edict_t* self, vec3_t start, int num_flames, int damage, int toss_speed)
@@ -100,6 +104,10 @@ void SpawnFlames(edict_t* self, vec3_t start, int num_flames, int damage, int to
 		AngleVectors(fire->s.angles, forward, NULL, NULL);
 		VectorScale(forward, GetRandom((int)(toss_speed * 0.5), (int)(toss_speed * 1.5)), fire->velocity);
 		fire->velocity[2] = GetRandom(200, 400);
+
+		// cloak a player-owned fire in PvM if there are too many entities nearby
+		if (pvm->value && G_GetClient(self) && !vrx_spawn_nonessential_ent(fire->s.origin))
+			fire->svflags |= SVF_NOCLIENT;
 	}
 }
 

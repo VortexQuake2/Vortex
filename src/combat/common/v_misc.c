@@ -694,6 +694,7 @@ void ThrowShrapnel(edict_t* self, char* modelname, float speed, vec3_t origin, i
 
 	chunk = G_Spawn();
 	VectorCopy(origin, chunk->s.origin);
+	//gi.dprintf("%s: origin: %.0f %.0f %.0f\n", __func__, origin[0], origin[1], origin[2]);
 	gi.setmodel(chunk, modelname);
 	v[0] = 100 * crandom();
 	v[1] = 100 * crandom();
@@ -722,6 +723,10 @@ void ThrowShrapnel(edict_t* self, char* modelname, float speed, vec3_t origin, i
 	else
 		chunk->creator = self;
 	gi.linkentity(chunk);
+
+	// cloak player-owned shrapnel in PvM if there are too many entities nearby
+	if (pvm->value && cl && !vrx_spawn_nonessential_ent(chunk->s.origin))
+		chunk->svflags |= SVF_NOCLIENT;
 }
 
 // finds a vector parallel to a wall plane pointing in the direction of lookDir
@@ -1038,6 +1043,7 @@ qboolean vrx_spawn_nonessential_ent(vec3_t org)
 		if (e->svflags & SVF_NOCLIENT)
 			continue;
 		// entities outside of current PVS shouldn't be sent to clients
+		// note: entities outside the map or in a solid will always fail this check
 		if (!gi.inPVS(org, e->s.origin))
 			continue;
 		// other possible checks could include visiblity and range (>1024 units)
@@ -1048,8 +1054,11 @@ qboolean vrx_spawn_nonessential_ent(vec3_t org)
 		ents++;
 	}
 
-	//gi.dprintf("%s: %d entities are potentially being sent to clients\n", __func__, ents);
-	if (ents < NEARBY_ENTITIES_MAX)
+	gi.dprintf("%s: %d entities are potentially being sent to clients\n", __func__, ents);
+	//if (!ents)
+		//gi.dprintf("%s: WARNING: org is in a solid or outside the map!\n");
+	if (ents && ents < NEARBY_ENTITIES_MAX)
 		return true;
+	//gi.dprintf("don't spawn non-essential entity!\n");
 	return false;
 }

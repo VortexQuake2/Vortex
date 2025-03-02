@@ -62,6 +62,10 @@ void fire_spike (edict_t *self, vec3_t start, vec3_t dir, int damage, float stun
 	bolt->dmg_radius = stun_length;
 	bolt->classname = "spike";
 	gi.linkentity (bolt);
+
+	// cloak a player-owned spike in PvM if there are too many entities nearby
+	if (pvm->value && G_GetClient(self) && !vrx_spawn_nonessential_ent(bolt->s.origin))
+		bolt->svflags |= SVF_NOCLIENT;
 }
 
 void SpikeAttack (edict_t *ent)

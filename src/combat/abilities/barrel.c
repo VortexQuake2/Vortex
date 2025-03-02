@@ -90,36 +90,45 @@ void BarrelDetonate(edict_t* self)
 
 	// throw shrapnel around
 	VectorCopy(self->s.origin, start);
-	VectorMA(self->absmin, 0.5, self->size, start);
+	//VectorMA(self->absmin, 0.5, self->size, start);
 	// small chunks
 	spd = 2 * self->dmg / 200;
 	for (i = 0;i < GetRandom(4, 6);i++)
 	{
-		org[0] = start[0] + crandom() * self->size[0];
-		org[1] = start[1] + crandom() * self->size[1];
-		org[2] = start[2] + crandom() * self->size[2];
+		// randomize starting origin of shrapnel, but keep it inside the bbox of the barrel
+		// note: the small adjustments are to accommodate the bbox of the shrapnel entity
+		org[0] = start[0] + crandom() * (self->size[0]-8);
+		org[1] = start[1] + crandom() * (self->size[1]-8);
+		org[2] = start[2] + GetRandom(2, 38);
 		ThrowShrapnel(self, "models/objects/debris2/tris.md2", spd, org, self->dmg, MOD_SHRAPNEL);
 	}
 	// big chunks
 	spd = 1.5 * (float)self->dmg / 200.0;
 	for (i = 0;i < GetRandom(2, 3);i++)
 	{
-		org[0] = start[0] + crandom() * self->size[0];
-		org[1] = start[1] + crandom() * self->size[1];
-		org[2] = start[2] + crandom() * self->size[2];
+		org[0] = start[0] + crandom() * (self->size[0]-8);
+		org[1] = start[1] + crandom() * (self->size[1]-8);
+		org[2] = start[2] + GetRandom(2, 38);
 		ThrowShrapnel(self, "models/objects/debris1/tris.md2", spd, org, self->dmg, MOD_SHRAPNEL);
 	}
+	
+	vec3_t adjusted_absmin;
+	VectorCopy(self->absmin, adjusted_absmin);
+	// the shrapnel has a bbox, so we need to adjust for that
+	adjusted_absmin[0] += 8;
+	adjusted_absmin[1] += 8;
+	adjusted_absmin[2] += 2;
 	// bottom corners
 	spd = 1.75 * (float)self->dmg / 200.0;
-	VectorCopy(self->absmin, org);
+	VectorCopy(adjusted_absmin, org);
 	ThrowShrapnel(self, "models/objects/debris3/tris.md2", spd, org, self->dmg, MOD_SHRAPNEL);
-	VectorCopy(self->absmin, org);
+	VectorCopy(adjusted_absmin, org);
 	org[0] += self->size[0];
 	ThrowShrapnel(self, "models/objects/debris3/tris.md2", spd, org, self->dmg, MOD_SHRAPNEL);
-	VectorCopy(self->absmin, org);
+	VectorCopy(adjusted_absmin, org);
 	org[1] += self->size[1];
 	ThrowShrapnel(self, "models/objects/debris3/tris.md2", spd, org, self->dmg, MOD_SHRAPNEL);
-	VectorCopy(self->absmin, org);
+	VectorCopy(adjusted_absmin, org);
 	org[0] += self->size[0];
 	org[1] += self->size[1];
 	ThrowShrapnel(self, "models/objects/debris3/tris.md2", spd, org, self->dmg, MOD_SHRAPNEL);
