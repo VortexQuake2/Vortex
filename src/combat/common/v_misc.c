@@ -1054,7 +1054,7 @@ qboolean vrx_spawn_nonessential_ent(vec3_t org)
 		ents++;
 	}
 
-	gi.dprintf("%s: %d entities are potentially being sent to clients\n", __func__, ents);
+	//gi.dprintf("%s: %d entities are potentially being sent to clients\n", __func__, ents);
 	//if (!ents)
 		//gi.dprintf("%s: WARNING: org is in a solid or outside the map!\n");
 	if (ents && ents < NEARBY_ENTITIES_MAX)
