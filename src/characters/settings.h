@@ -10,7 +10,7 @@ const char* Time();
 #define	CURRENT_DATE				s1 = Date()
 #define CURRENT_TIME				s2 = Time()
 
-#define VRX_VERSION "5.7.5"
+#define VRX_VERSION "5.7.6"
 
 // autosave interval
 #define AUTOSAVE_FRAMES (300)

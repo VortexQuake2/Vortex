@@ -1014,6 +1014,10 @@ void vrx_stun(edict_t* self, edict_t* other, float time)
 	// force monsters into idle mode
 	if (!strcmp(other->classname, "drone"))
 	{
+		// don't stun monsters in invasion mode that are invincible
+		if (invasion->value && other->monsterinfo.inv_framenum > level.framenum)
+			return;
+
 		// bosses can't be stunned easily
 		if (other->monsterinfo.control_cost >= M_COMMANDER_CONTROL_COST || other->monsterinfo.bonus_flags & BF_UNIQUE_FIRE
 			|| other->monsterinfo.bonus_flags & BF_UNIQUE_LIGHTNING)

@@ -63,9 +63,6 @@ void MoveClientToIntermission(edict_t *ent)
 	}
 
 }
-void SetLVChanged(int i);
-int GetLVChanged(void);
-
 //3.0 new intermission routine
 void VortexBeginIntermission(char *nextmap)
 {

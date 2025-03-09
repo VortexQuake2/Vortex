@@ -836,27 +836,289 @@ void hw_checkflag(edict_t* ent); // az
 qboolean M_TryRespawn(edict_t* self, qboolean remove_if_fail);
 int SelectRandomTopCurse(edict_t* player);
 void CurseRadius(edict_t* caster, edict_t *targ, int type, int curse_level, int radius, float duration, qboolean isCurse, qboolean play_sound);
-int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker, 
-			   vec3_t dir, vec3_t point, vec3_t normal, float damage, int knockback, int dflags, int mod)
+
+qboolean vrx_reduce_knockback(edict_t *targ, edict_t *inflictor, edict_t *attacker, int *knockback) {
+	int talentLevel;
+	if (targ->flags & FL_CHATPROTECT || trading->value)
+		*knockback = 0;
+
+	//Talent: Mag Boots
+	if (targ->client && (talentLevel = vrx_get_talent_level(targ, TALENT_MAG_BOOTS)) > 0)
+		*knockback *= 1.0 - 0.16 * talentLevel;
+
+	// assault cannon users receive no knockback
+	/*
+	if(targ && targ->client && targ->client->pers.weapon && (targ->client->weapon_mode)
+		&& (targ->client->pers.weapon->weaponthink == Weapon_Chaingun))
+		knockback = 0;
+	*/
+
+	// teammates can't knock your summonables around
+	if (OnSameTeam(targ, attacker) && (attacker != targ) && !(targ->activator && (targ->activator == attacker))
+	    && !(targ->creator && (targ->creator == attacker)))
+		*knockback = 0;
+
+	// CreateUserData does not kick other corpses
+	if ((targ->deadflag == DEAD_DEAD) && (inflictor->deadflag == DEAD_DEAD)
+	    && (targ != inflictor))
+		*knockback = 0;
+
+	// player bosses don't receive knockback
+	if (targ->activator && G_EntIsAlive(targ) && IsABoss(targ))
+	{
+		if (attacker == targ)
+			return true; // boss can't hurt himself
+		*knockback = 0;
+	}
+
+	// players can't knockback monsters in invasion mode while they are invulnerable
+	if (!G_GetClient(targ) && invasion->value && targ->monsterinfo.inv_framenum > level.framenum)
+		*knockback = 0;
+
+	if (targ->flags & FL_NO_KNOCKBACK)
+		*knockback = 0;
+
+	return false;
+}
+
+void vrx_apply_darkness_totem(edict_t *attacker, float take, edict_t *player, qboolean attacker_has_pilot) {
+	if(player && (attacker_has_pilot || attacker->client) && !OnSameTeam(player, attacker))
+	{
+		edict_t *totem = NextNearestTotem(player, TOTEM_DARKNESS, NULL, true);
+		int maxHP = player->max_health;//MAX_HEALTH(player);
+
+		if(totem != NULL)
+		{
+			//Talent: Shadow. Players can go beyond their "normal" max health.
+			maxHP *= 1.0 + DARKNESSTOTEM_MAX_MULT * vrx_get_talent_level(totem->activator, TALENT_SHADOW);
+
+			if(player->health < maxHP)
+			{
+				player->health += totem->monsterinfo.level * take * DARKNESSTOTEM_VAMP_MULT;
+
+				if (player->health > maxHP)
+					player->health = maxHP;
+
+				if (attacker_has_pilot)//4.2 sync monster and player health
+					player->owner->health = player->health;
+			}
+		}
+	}
+}
+
+void vrx_apply_vampire_abilities(edict_t *targ, edict_t *attacker, int dflags, int mod, float take, que_t *slot) {
+	qboolean same_team = OnSameTeam(targ, attacker);
+
+	//4.2 give hellspawn vampire ability (50% = 150hp/sec assuming 300dmg/sec)
+	if (attacker->monsterinfo.bonus_flags & BF_STYGIAN)
+	{
+		V_ApplyVampire(attacker, take, 1.0, 2.0, true);
+	}
+
+	// hellspawn has vampire ability
+	if (attacker->mtype == M_SKULL)
+	{
+		V_ApplyVampire(attacker, take, 0.5, 2.0, true);
+	}
+
+	// spikeball has vampire ability
+	if (attacker->mtype == M_SPIKEBALL)
+	{
+		V_ApplyVampire(attacker, take, 1.0, 1.0, true);
+	}
+
+	// life tap vampire effect
+	if ((slot = que_findtype(targ->curses, NULL, LIFE_TAP)) != NULL && mod != MOD_CRIPPLE)
+	{
+		float lifeTapFactor = LIFE_TAP_INITIAL_FACTOR + LIFE_TAP_ADDON_FACTOR * slot->ent->monsterinfo.level;
+		//slot->ent->owner->myskills.abilities[LIFE_TAP].current_level;
+		//gi.dprintf("%s: take: %.0f lifeTapFactor: %.1f\n", __func__, take, lifeTapFactor);
+		V_ApplyVampire(attacker, take, lifeTapFactor, 1.0, true);
+	}
+
+	// vampire effect
+	if (CanUseVampire(targ, attacker, dflags, mod) && !same_team)
+		G_ApplyVampire(attacker, take);
+}
+
+void vrx_apply_autocurse(edict_t *targ, edict_t *attacker) {
+	int talentLevel;
+	float temp;
+	edict_t		*targ_player = G_GetClient(targ);
+
+	if (G_EntIsAlive(targ) && targ_player && ((talentLevel = vrx_get_talent_level(targ_player, TALENT_AUTOCURSE)) > 0)
+	    && (level.framenum > targ->autocurse_delay) && (targ != attacker)) // 10% chance per 1 second
+	// az- fix autocurse
+	{
+		//int curse_level;
+		temp = 0.1 * talentLevel;
+		if (temp > random())
+		{
+			int curse_index;
+
+			if ((curse_index = SelectRandomTopCurse(targ_player)) != -1)
+			{
+				int curse_level = targ_player->myskills.abilities[curse_index].current_level;
+				CurseRadius(targ, attacker, curse_index, curse_level, 150, vrx_get_curse_duration(targ_player, curse_index), true, true);
+			}
+		}
+
+		targ->autocurse_delay = level.framenum + (int)(1 / FRAMETIME); // roll again in 1 second
+	}
+}
+
+void vrx_apply_knockback(edict_t *targ, edict_t *attacker, vec_t *dir, int knockback, int dflags) {
+	if (dflags & DAMAGE_NO_KNOCKBACK)
+		return;
+
+	if (knockback && (targ->movetype != MOVETYPE_NONE) && (targ->movetype != MOVETYPE_BOUNCE)
+	    && (targ->movetype != MOVETYPE_PUSH) && (targ->movetype != MOVETYPE_STOP)
+	    && !que_typeexists(targ->curses, CURSE_FROZEN))
+	{
+		vec3_t	kvel;
+		float	mass;
+
+		if (targ->mass < 50)
+			mass = 50;
+		else
+			mass = targ->mass;
+
+		if (targ->client  && attacker == targ)
+			VectorScale (dir, 1600.0 * (float)knockback / mass, kvel);	// the rocket jump hack...
+		else
+			VectorScale (dir, 500.0 * (float)knockback / mass, kvel);
+
+		VectorAdd (targ->velocity, kvel, targ->velocity);
+	}
+}
+
+void vrx_apply_invincibility(edict_t *targ, float damage, int dflags, float *take, float *save) {
+	gclient_t	*client = G_GetClient(targ);
+	qboolean invincible = (client && client->invincible_framenum > level.framenum);
+	qboolean bypass_invincibility = (dflags & DAMAGE_NO_PROTECTION);
+
+	// az: add decino's invincibility not working for tank morphs from indy
+	qboolean is_player_tank = targ->mtype == P_TANK && targ->owner && targ->owner->client;
+	qboolean ptank_invincible = (is_player_tank && targ->owner->client->invincible_framenum > level.framenum);
+	if ((invincible || ptank_invincible) && !bypass_invincibility)
+	{
+		if (targ->pain_debounce_time < level.time)
+		{
+			gi.sound(targ, CHAN_ITEM, gi.soundindex("items/protect3.wav"), 1, ATTN_NORM, 0);
+			targ->pain_debounce_time = level.time + 2;
+		}
+		*take = 0;
+		*save = damage;
+	}
+}
+
+void vrx_apply_champion_autocurse(edict_t *targ, edict_t *attacker) {
+	if (!G_EntIsAlive(targ) || level.framenum <= targ->autocurse_delay)
+		return;
+
+	if (attacker->monsterinfo.bonus_flags & BF_GHOSTLY)
+	{
+		if (random() <= 0.2)
+		{
+			// freeze em
+			targ->chill_level = 10;
+			targ->chill_time = level.time + 10.0;
+
+			if (random() > 0.5)
+				gi.sound(targ, CHAN_ITEM, gi.soundindex("abilities/blue1.wav"), 1, ATTN_NORM, 0);
+			else
+				gi.sound(targ, CHAN_ITEM, gi.soundindex("abilities/blue3.wav"), 1, ATTN_NORM, 0);
+
+			if (targ->client)
+				safe_cprintf(targ, PRINT_HIGH, "You have been chilled for 10 seconds\n");
+		}
+
+		targ->autocurse_delay = level.framenum + (int)(1 / FRAMETIME);
+	}
+
+	if (attacker->monsterinfo.bonus_flags & BF_STYGIAN)
+	{
+		if (random() <= 0.2)
+		{
+			// add the curse
+			curse_add(targ, attacker, AMP_DAMAGE, 10, 10.0);
+			CurseMessage(attacker, targ, AMP_DAMAGE, 10, 10.0, true);
+		}
+
+		targ->autocurse_delay = level.framenum + (int)(1 / FRAMETIME);
+	}
+}
+
+void vrx_apply_talent_stone(edict_t *targ, float *damage, float startDamage) {
+	qboolean	target_has_pilot = PM_MonsterHasPilot(targ);
+
+	if(!target_has_pilot && !targ->client)
+		return;
+
+	edict_t *totem;
+	edict_t *targ_player = G_GetClient(targ);
+
+	//Calculate the amount of resist the player has already received.
+	double x = (double)(startDamage - *damage) / startDamage;
+
+	//Talent: Stone.
+	totem = NextNearestTotem(targ_player, TOTEM_EARTH, NULL, true);
+	if(totem && totem->activator)
+	{
+		int resistLevel = vrx_get_talent_level(totem->activator, TALENT_STONE);
+		if(x < resistLevel * EARTHTOTEM_RESIST_MULT)
+			*damage = startDamage * (1.0 - EARTHTOTEM_RESIST_MULT * resistLevel);
+	}
+}
+
+void vrx_do_friendly_fire(edict_t *targ, edict_t *attacker, float *damage, int *mod) {
+	qboolean same_team = OnSameTeam(targ, attacker);
+
+	if ((targ != attacker) && ((deathmatch->value && ((int)(dmflags->value) & (DF_MODELTEAMS | DF_SKINTEAMS))) || coop->value))
+	{
+		if (same_team)
+		{
+			if ((int)(dmflags->value) & DF_NO_FRIENDLY_FIRE)
+				*damage = 0;
+			else
+				*mod |= MOD_FRIENDLY_FIRE;
+		}
+	}
+}
+
+void vrx_do_dmg_counter(float damage, edict_t *player) {
+	if (player)
+	{
+		// keep a counter for rapid-fire weapons so we have a more
+		// accurate reading of their damage over time
+		if (level.time-player->lastdmg <= 0.2 && player->dmg_counter <= 32767)
+			player->dmg_counter += damage;
+		else
+			player->dmg_counter = damage;
+
+		player->client->ps.stats[STAT_ID_DAMAGE] = player->dmg_counter;
+
+		player->lastdmg = level.time;
+		player->client->idle_frames = 0; // player is no longer idle! (uncloak em!)
+	}
+}
+
+int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
+              vec3_t dir, vec3_t point, vec3_t normal, float damage, int knockback, int dflags, int mod)
 {
-	gclient_t	*client;
 	float		take;
 	float		save;
 	int			asave;
 	int			psave;
-	int			te_sparks;
-	int			talentLevel;
 	//int			thorns_dmg;//GHz
     float before_add,before_sub;//GHz
 	int			dtype = G_DamageType(mod, dflags);
-	float		temp=0;//K03
 	edict_t		*player = G_GetClient(attacker);
-	edict_t		*targ_player = G_GetClient(targ);
+
 	float		startDamage = damage; //doomie
 	upgrade_t	*ability;//4.2 for fury
 	qboolean	target_has_pilot = PM_MonsterHasPilot(targ);
 	qboolean	attacker_has_pilot = PM_MonsterHasPilot(attacker);
-	qboolean	same_team = false;//GHz
 	que_t		*slot=NULL;
 
 	//gi.dprintf("T_damage\n");
@@ -881,7 +1143,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 	//gi.dprintf("original damage: %d target: %s (%.1f)\n", damage, targ->classname, level.time);
 
-	before_add = damage = G_AddDamage(targ, inflictor, attacker, point, damage, dflags, mod);
+	before_add = damage = vrx_increase_damage(targ, inflictor, attacker, point, damage, dflags, mod);
 
 	//4.1 some abilities that increase damage are seperate from all the others.
 	if(player && (attacker_has_pilot || attacker->client) && (dtype & D_PHYSICAL))
@@ -901,85 +1163,16 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
     DeflectHitscan(targ, inflictor, attacker, point, damage, knockback, dflags, mod);
 	ApplyThorns(targ, inflictor, attacker, point, damage, knockback, dflags, mod);
 
-    before_sub = damage = G_SubDamage(targ, inflictor, attacker, damage, dflags, mod);
+    before_sub = damage = vrx_resist_damage(targ, inflictor, attacker, damage, dflags, mod);
 
 	//4.1 some abilities that reduce damage are seperate from all the others.
-	if(target_has_pilot || targ->client)
-	{
-		edict_t *totem;
+	vrx_apply_talent_stone(targ, &damage, startDamage);
 
-		//Calculate the amount of resist the player has already received.
-		double x = (double)(startDamage - damage) / startDamage;
-		
-		//Talent: Stone.
-		totem = NextNearestTotem(targ_player, TOTEM_EARTH, NULL, true);
-		if(totem && totem->activator)
-		{
-            int resistLevel = vrx_get_talent_level(totem->activator, TALENT_STONE);
-			if(x < resistLevel * EARTHTOTEM_RESIST_MULT)
-				damage = startDamage * (1.0 - EARTHTOTEM_RESIST_MULT * resistLevel);
-		}
-	}
-
-	// lower resist curse
-	// az: "mod != MOD_CRIPPLE" to make lower resist Not Apply here
-	/*
-	if ((slot = que_findtype(targ->curses, NULL, LOWER_RESIST)) != NULL && mod != MOD_CRIPPLE)
-	{
-		float lowerResistFactor = LOWER_RESIST_INITIAL_FACTOR + LOWER_RESIST_ADDON_FACTOR * slot->ent->owner->myskills.abilities[LOWER_RESIST].current_level;
-		float resistFactor = (before_sub - damage) / before_sub;
-		float result = resistFactor - lowerResistFactor;
-
-		//gi.dprintf("lower resist = %.1f resist = %.1f result = %.1f startdamage = %0.0f damage %0.0f ", lowerResistFactor, resistFactor, result, startDamage, damage);
-		if (damage > 0)
-			damage = damage * (1.0 - result);
-		//gi.dprintf(" enddamage = %0.0f\n", damage);
-
-	}
-	*/
 	dflags = vrx_apply_pierce(targ, attacker, damage, dflags, mod);
 	
-	if (targ->flags & FL_CHATPROTECT || trading->value)
-		knockback = 0;
+	if (vrx_reduce_knockback(targ, inflictor, attacker, &knockback))
+		return 0;
 
-	//Talent: Mag Boots
-    if (targ->client && (talentLevel = vrx_get_talent_level(targ, TALENT_MAG_BOOTS)) > 0)
-		knockback *= 1.0 - 0.16 * talentLevel;
-
-	// assault cannon users receive no knockback
-	/*
-	if(targ && targ->client && targ->client->pers.weapon && (targ->client->weapon_mode)
-		&& (targ->client->pers.weapon->weaponthink == Weapon_Chaingun))
-		knockback = 0;
-	*/
-	
-	// teammates can't knock your summonables around
-	same_team = OnSameTeam(targ, attacker);
-	if (same_team && (attacker != targ) && !(targ->activator && (targ->activator == attacker)) 
-		&& !(targ->creator && (targ->creator == attacker)))
-		knockback = 0;
-
-	// CreateUserData does not kick other corpses
-	if ((targ->deadflag == DEAD_DEAD) && (inflictor->deadflag == DEAD_DEAD)
-		&& (targ != inflictor))
-		knockback = 0;
-
-	// player bosses don't receive knockback
-	if (targ->activator && G_EntIsAlive(targ) && IsABoss(targ))
-	{
-		if (attacker == targ)
-			return 0; // boss can't hurt himself
-		knockback = 0;
-	}
-
-	// can't hurt world monsters that are spawning
-	//if (targ->activator && !targ->activator->client && (targ->svflags & SVF_MONSTER) 
-	//	&& (targ->deadflag != DEAD_DEAD) && (targ->nextthink-level.time > 2*FRAMETIME))
-	//{
-	//	damage = 0;
-	//	knockback = 0;
-	//}
-	
 	// proxy owner can't be hurt or receive knockback
 	if ((mod == MOD_PROXY) && (attacker == targ))
 	{
@@ -990,29 +1183,18 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	// friendly fire avoidance
 	// if enabled you can't hurt teammates (but you can hurt yourself)
 	// knockback still occurs
-	if ((targ != attacker) && ((deathmatch->value && ((int)(dmflags->value) & (DF_MODELTEAMS | DF_SKINTEAMS))) || coop->value))
-	{
-		if (same_team)
-		{
-			if ((int)(dmflags->value) & DF_NO_FRIENDLY_FIRE)
-				damage = 0;
-			else
-				mod |= MOD_FRIENDLY_FIRE;
-		}
-	}
+
+	vrx_do_friendly_fire(targ, attacker, &damage, &mod);
 
 	meansOfDeath = mod;
-	client = targ->client;
 
+	int te_sparks = TE_SPARKS;
 	if (dflags & DAMAGE_BULLET)
 		te_sparks = TE_BULLET_SPARKS;
-	else
-		te_sparks = TE_SPARKS;
 
 	VectorNormalize(dir);
 
-	if (targ->flags & FL_NO_KNOCKBACK)
-		knockback = 0;
+
 //GHz START
 	if (damage > 0)
 	{
@@ -1034,20 +1216,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		// if the player has a summonable, then treat its damage as if
 		// the player did the damage himself
 		//player = G_GetClient(attacker);
-		if (player)
-		{
-			// keep a counter for rapid-fire weapons so we have a more
-			// accurate reading of their damage over time
-			if (level.time-player->lastdmg <= 0.2 && player->dmg_counter <= 32767)				
-				player->dmg_counter += damage;
-			else
-				player->dmg_counter = damage;
-			
-			player->client->ps.stats[STAT_ID_DAMAGE] = player->dmg_counter;
-			
-			player->lastdmg = level.time;
-			player->client->idle_frames = 0; // player is no longer idle! (uncloak em!)
-		}
+		vrx_do_dmg_counter(damage, player);
 	
 		attacker->monsterinfo.idle_frames = 0;
 		
@@ -1060,51 +1229,13 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 //GHz END
 
 // figure momentum add
-	if (!(dflags & DAMAGE_NO_KNOCKBACK))
-	{
-		if (knockback && (targ->movetype != MOVETYPE_NONE) && (targ->movetype != MOVETYPE_BOUNCE) 
-			&& (targ->movetype != MOVETYPE_PUSH) && (targ->movetype != MOVETYPE_STOP) 
-			&& !que_typeexists(targ->curses, CURSE_FROZEN))
-		{
-			vec3_t	kvel;
-			float	mass;
-
-			if (targ->mass < 50)
-				mass = 50;
-			else
-				mass = targ->mass;
-
-			if (targ->client  && attacker == targ)
-				VectorScale (dir, 1600.0 * (float)knockback / mass, kvel);	// the rocket jump hack...
-			else
-				VectorScale (dir, 500.0 * (float)knockback / mass, kvel);
-
-			VectorAdd (targ->velocity, kvel, targ->velocity);
-		}
-	}
+	vrx_apply_knockback(targ, attacker, dir, knockback, dflags);
 
 	take = damage;
 	save = 0;
 
 	// check for invincibility
-	{
-		qboolean invincible = (client && client->invincible_framenum > level.framenum);
-		qboolean bypass_invincibility = (dflags & DAMAGE_NO_PROTECTION);
-
-		// az: add decino's invincibility not working for tank morphs from indy
-		qboolean is_player_tank = targ->mtype == P_TANK && targ->owner && targ->owner->client;
-		qboolean ptank_invincible = (is_player_tank && targ->owner->client->invincible_framenum > level.framenum);
-		if ((invincible || ptank_invincible) && !bypass_invincibility)
-		{
-			if (targ->pain_debounce_time < level.time)
-			{
-				gi.sound(targ, CHAN_ITEM, gi.soundindex("items/protect3.wav"), 1, ATTN_NORM, 0);
-				targ->pain_debounce_time = level.time + 2;
-			}
-			take = 0;
-			save = damage;
-		}
-	}
+	vrx_apply_invincibility(targ, damage, dflags, &take, &save);
 
 	//dtype = G_DamageType(mod, dflags);
 	if ((dtype & D_PHYSICAL) && HitTheWeapon(targ, attacker, point, take, dflags))
@@ -1121,7 +1252,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		{
 			take = 0;
 			save = damage;
-			if ((level.time > pregame_time->value) && (G_ValidTarget(targ, attacker, false, true)))
+			if (level.time > pregame_time->value && G_ValidTarget(targ, attacker, false, true))
 				SpawnDamage(TE_BLOOD, point, normal);
 		}
 	}
@@ -1146,68 +1277,10 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 			targ->svflags &= ~SVF_NOCLIENT;
 
 		//Talent: Autocurse
-        if (G_EntIsAlive(targ) && targ_player && ((talentLevel = vrx_get_talent_level(targ_player, TALENT_AUTOCURSE)) > 0)
-            && (level.framenum > targ->autocurse_delay) && (targ != attacker)) // 10% chance per 1 second
-			// az- fix autocurse
-		{
-			//int curse_level;
-			temp = 0.1 * talentLevel;
-			if (temp > random())
-			{
-				int curse_index;
-				
-				if ((curse_index = SelectRandomTopCurse(targ_player)) != -1)
-				{
-					int curse_level = targ_player->myskills.abilities[curse_index].current_level;
-					//if (curse_level < 1)
-					//	curse_level = 1;
-					CurseRadius(targ, attacker, curse_index, curse_level, 150, vrx_get_curse_duration(targ_player, curse_index), true, true);
-					// add the curse
-					//curse_add(attacker, targ_player, CURSE, curse_level, vrx_get_curse_duration(targ_player));
-					//CurseMessage(targ_player, attacker, CURSE, curse_level, true);
-					//Play the spell sound!
-					//gi.sound(targ, CHAN_ITEM, gi.soundindex("curses/curse.wav"), 1, ATTN_NORM, 0);
-				}
-			}
-
-			targ->autocurse_delay = level.framenum + (int)(1 / FRAMETIME); // roll again in 1 second
-		}
+        vrx_apply_autocurse(targ, attacker);
 
 		//4.5 monster bonus flag ghostly chills targets
-		if (G_EntIsAlive(targ) && level.framenum > targ->autocurse_delay)
-		{
-			if (attacker->monsterinfo.bonus_flags & BF_GHOSTLY)
-			{
-				if (random() <= 0.2)
-				{
-					// freeze em
-					targ->chill_level = 10;
-					targ->chill_time = level.time + 10.0;
-
-					if (random() > 0.5)
-                        gi.sound(targ, CHAN_ITEM, gi.soundindex("abilities/blue1.wav"), 1, ATTN_NORM, 0);
-					else
-                        gi.sound(targ, CHAN_ITEM, gi.soundindex("abilities/blue3.wav"), 1, ATTN_NORM, 0);
-					
-					if (targ->client)
-						safe_cprintf(targ, PRINT_HIGH, "You have been chilled for 10 seconds\n");
-				}
-
-				targ->autocurse_delay = level.framenum + (int)(1 / FRAMETIME);
-			}
-
-			if (attacker->monsterinfo.bonus_flags & BF_STYGIAN)
-			{
-				if (random() <= 0.2)
-				{
-					// add the curse
-					curse_add(targ, attacker, AMP_DAMAGE, 10, 10.0);
-					CurseMessage(attacker, targ, AMP_DAMAGE, 10, 10.0, true);
-				}
-
-				targ->autocurse_delay = level.framenum + (int)(1 / FRAMETIME);
-			}
-		}
+		vrx_apply_champion_autocurse(targ, attacker);
 	}
 
 	if (take > 0)
@@ -1229,13 +1302,12 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		if (G_AutoTBall(targ, take))
 			return 0;
 
-		if ((targ->svflags & SVF_MONSTER) || (client))
+		if ((targ->svflags & SVF_MONSTER) || (targ->client))
 			SpawnDamage(TE_BLOOD, point, normal);
 		else
 			SpawnDamage(te_sparks, point, normal);
 
 		// corpse explode should kill but not gib--we need those corpses for ammo!
-		int remainingHealth = targ->max_health - targ->health;
 		if (take > targ->health && mod == MOD_CORPSEEXPLODE)
 			take = targ->health;
 		if (take < 1)
@@ -1244,60 +1316,8 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		targ->health -= take;
 
 		//4.1 Darkness totem gives players a seperate vampire effect.
-		if(player && (attacker_has_pilot || attacker->client) && !same_team)
-		{
-			edict_t *totem = NextNearestTotem(player, TOTEM_DARKNESS, NULL, true);
-			int maxHP = player->max_health;//MAX_HEALTH(player);
-
-			if(totem != NULL)
-			{
-				//Talent: Shadow. Players can go beyond their "normal" max health.
-                maxHP *= 1.0 + DARKNESSTOTEM_MAX_MULT * vrx_get_talent_level(totem->activator, TALENT_SHADOW);
-
-				if(player->health < maxHP)
-				{
-					player->health += totem->monsterinfo.level * take * DARKNESSTOTEM_VAMP_MULT;
-
-					if (player->health > maxHP)
-						player->health = maxHP;
-
-					if (attacker_has_pilot)//4.2 sync monster and player health
-						player->owner->health = player->health;
-				}
-			}
-		}
-	
-		//4.2 give hellspawn vampire ability (50% = 150hp/sec assuming 300dmg/sec)
-
-		if (attacker->monsterinfo.bonus_flags & BF_STYGIAN)
-		{
-			V_ApplyVampire(attacker, take, 1.0, 2.0, true);
-		}
-
-		// hellspawn has vampire ability
-		if (attacker->mtype == M_SKULL)
-		{
-			V_ApplyVampire(attacker, take, 0.5, 2.0, true);
-		}
-
-		// spikeball has vampire ability
-		if (attacker->mtype == M_SPIKEBALL)
-		{
-			V_ApplyVampire(attacker, take, 1.0, 1.0, true);
-		}
-
-		// life tap vampire effect
-		if ((slot = que_findtype(targ->curses, NULL, LIFE_TAP)) != NULL && mod != MOD_CRIPPLE)
-		{
-			float lifeTapFactor = LIFE_TAP_INITIAL_FACTOR + LIFE_TAP_ADDON_FACTOR * slot->ent->monsterinfo.level;
-				//slot->ent->owner->myskills.abilities[LIFE_TAP].current_level;
-			//gi.dprintf("%s: take: %.0f lifeTapFactor: %.1f\n", __func__, take, lifeTapFactor);
-			V_ApplyVampire(attacker, take, lifeTapFactor, 1.0, true);
-		}
-
-		// vampire effect
-		if (CanUseVampire(targ, attacker, dflags, mod) && !same_team)
-			G_ApplyVampire(attacker, take);
+		vrx_apply_darkness_totem(attacker, take, player, attacker_has_pilot);
+		vrx_apply_vampire_abilities(targ, attacker, dflags, mod, take, slot);
 
 		//4.1 Players with fury might get their ability triggered
 		ability = &attacker->myskills.abilities[FURY];
@@ -1315,7 +1335,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 					AddDmgList(targ, player, take+targ->health+asave+psave);
 			}
 
-			if ((targ->svflags & SVF_MONSTER) || (client))
+			if ((targ->svflags & SVF_MONSTER) || targ->client)
 				targ->flags |= FL_NO_KNOCKBACK;
 			Killed (targ, inflictor, attacker, take, point);
 			return take;
@@ -1331,7 +1351,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 			AddDmgList(targ, player, damage);
 	}
 
-	if (client)
+	if (targ->client)
 	{
 		if (!(targ->flags & FL_GODMODE) && (take))
 			targ->pain (targ, attacker, knockback, take);
@@ -1359,13 +1379,13 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	// add to the damage inflicted on a player this frame
 	// the total will be turned into screen blends and view angle kicks
 	// at the end of the frame
-	if (client)
+	if (targ->client)
 	{
-		client->damage_parmor += psave;
-		client->damage_armor += asave;
-		client->damage_blood += take;
-		client->damage_knockback += knockback;
-		VectorCopy (point, client->damage_from);
+		targ->client->damage_parmor += psave;
+		targ->client->damage_armor += asave;
+		targ->client->damage_blood += take;
+		targ->client->damage_knockback += knockback;
+		VectorCopy (point, targ->client->damage_from);
 	}
 
 	return take;

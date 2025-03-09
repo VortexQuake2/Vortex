@@ -182,8 +182,91 @@ float vrx_get_pack_modifier(const edict_t *ent) {
     return 1.0;
 }
 
-float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
-                  vec3_t point, float damage, int dflags, int mod) {
+void vrx_apply_player_damage_bonus(edict_t *targ, edict_t *attacker, float *damage, int mod, int dtype, qboolean physicalDamage) {
+
+    // Blink Strike damage bonus applies before attacker has to teleport back, targ is our Blink Strike target, and attacker is not in-front of target
+    if (attacker->client->tele_timeout > level.framenum && attacker->client->blinkStrike_targ && attacker->client->blinkStrike_targ == targ && !infront(targ, attacker))
+    {
+        float temp = 1 + BLINKSTRIKE_INITIAL_BONUS + BLINKSTRIKE_ADDON_BONUS * attacker->myskills.abilities[BLINKSTRIKE].current_level;
+        *damage *= temp;
+    }
+
+    // increase physical or morphed-player damage
+    if (dtype & D_PHYSICAL) {
+        // strength tech effect
+        *damage = vrx_apply_strength_tech(attacker, *damage);
+
+        if (attacker->mtype)
+            *damage = vrx_apply_morph_talent_damage(targ, attacker, *damage);
+    }
+
+    // only physical damage is increased
+    if (physicalDamage) {
+        // handle accuracy
+        if (mod != MOD_BFG_LASER) {
+            attacker->shots_hit++;
+            attacker->myskills.shots_hit++;
+        }
+
+        // strength effect
+        if (!attacker->myskills.abilities[STRENGTH].disable) {
+            int talentLevel;
+            float temp = 1 + STRENGTH_BONUS * attacker->myskills.abilities[STRENGTH].current_level;
+
+            //Talent: Improved Strength
+            talentLevel = vrx_get_talent_level(attacker, TALENT_IMP_STRENGTH);
+            if (talentLevel > 0)
+                temp += IMP_STRENGTH_BONUS * talentLevel;
+
+
+            talentLevel = vrx_get_talent_level(attacker, TALENT_IMP_RESIST);
+            if(talentLevel > 0)
+                temp -= 0.1 * talentLevel;
+
+            //don't allow damage under 100%
+            if (temp < 1.0f)
+                temp = 1.0f;
+
+            *damage *= temp;
+        }
+
+        //Talent: Combat Experience
+        if (vrx_get_talent_slot(attacker, TALENT_COMBAT_EXP) != -1)
+            *damage *= 1.0 + 0.05 * vrx_get_talent_level(attacker, TALENT_COMBAT_EXP);    //+5% per upgrade
+
+        // ******TALENT BLOOD OF ARES START {****** //
+        if (vrx_get_talent_slot(attacker, TALENT_BLOOD_OF_ARES) != -1) {
+            int level = vrx_get_talent_level(attacker, TALENT_BLOOD_OF_ARES);
+            float temp;
+
+            // BoA is more effective in PvM
+            if (pvm->value || invasion->value)
+                temp = level * 0.02f * attacker->myskills.streak;
+            else
+                temp = level * 0.01f * attacker->myskills.streak;
+
+            // Limit bonus to +100%
+            // let the talent level be the limit
+            if (temp > 1.5) temp = 1.5;
+
+            *damage *= 1.0 + temp;
+        }
+        // ******TALENT BLOOD OF ARES END }****** //
+
+        // fury ability increases damage.
+        if (attacker->fury_time > level.time) {
+            // (apple)
+            // Changed to attacker instead of target's fury level!
+            float temp = FURY_INITIAL_FACTOR + (FURY_ADDON_FACTOR * attacker->myskills.abilities[FURY].current_level);
+            if (temp > FURY_FACTOR_MAX)
+                temp = FURY_FACTOR_MAX;
+            *damage *= temp;
+        }
+    }
+}
+
+float vrx_increase_damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
+                          vec3_t point, float damage, int dflags, int mod) {
     int dtype;
     float temp;
     que_t *slot = NULL;
@@ -317,87 +400,7 @@ float G_AddDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
     // player-only damage bonuses
     if (attacker->client && (attacker != targ)) {
-
-        // Blink Strike damage bonus applies before attacker has to teleport back, targ is our Blink Strike target, and attacker is not in-front of target
-        if (attacker->client->tele_timeout > level.framenum && attacker->client->blinkStrike_targ && attacker->client->blinkStrike_targ == targ && !infront(targ, attacker))
-        {
-            temp = 1 + BLINKSTRIKE_INITIAL_BONUS + BLINKSTRIKE_ADDON_BONUS * attacker->myskills.abilities[BLINKSTRIKE].current_level;
-            damage *= temp;
-        }
-
-        // increase physical or morphed-player damage
-        if (dtype & D_PHYSICAL) {
-            // strength tech effect
-            damage = vrx_apply_strength_tech(attacker, damage);
-
-            if (attacker->mtype)
-                damage = vrx_apply_morph_talent_damage(targ, attacker, damage);
-        }
-
-        // only physical damage is increased
-        if (physicalDamage) {
-            // handle accuracy
-            if (mod != MOD_BFG_LASER) {
-                attacker->shots_hit++;
-                attacker->myskills.shots_hit++;
-            }
-
-            // strength effect
-            if (!attacker->myskills.abilities[STRENGTH].disable) {
-                int talentLevel;
-
-                temp = 1 + STRENGTH_BONUS * attacker->myskills.abilities[STRENGTH].current_level;
-
-                //Talent: Improved Strength
-                talentLevel = vrx_get_talent_level(attacker, TALENT_IMP_STRENGTH);
-                if (talentLevel > 0)
-                    temp += IMP_STRENGTH_BONUS * talentLevel;
-
-
-                talentLevel = vrx_get_talent_level(attacker, TALENT_IMP_RESIST);
-                if(talentLevel > 0)
-                    temp -= 0.1 * talentLevel;
-
-                //don't allow damage under 100%
-                if (temp < 1.0f)
-                    temp = 1.0f;
-
-                damage *= temp;
-            }
-
-            //Talent: Combat Experience
-            if (vrx_get_talent_slot(attacker, TALENT_COMBAT_EXP) != -1)
-                damage *= 1.0 + 0.05 * vrx_get_talent_level(attacker, TALENT_COMBAT_EXP);    //+5% per upgrade
-
-            // ******TALENT BLOOD OF ARES START {****** //
-            if (vrx_get_talent_slot(attacker, TALENT_BLOOD_OF_ARES) != -1) {
-                int level = vrx_get_talent_level(attacker, TALENT_BLOOD_OF_ARES);
-                float temp;
-
-                // BoA is more effective in PvM
-                if (pvm->value || invasion->value)
-                    temp = level * 0.02f * attacker->myskills.streak;
-                else
-                    temp = level * 0.01f * attacker->myskills.streak;
-
-                // Limit bonus to +100%
-                // let the talent level be the limit
-                if (temp > 1.5) temp = 1.5;
-
-                damage *= 1.0 + temp;
-            }
-            // ******TALENT BLOOD OF ARES END }****** //
-
-            // fury ability increases damage.
-            if (attacker->fury_time > level.time) {
-                // (apple)
-                // Changed to attacker instead of target's fury level!
-                temp = FURY_INITIAL_FACTOR + (FURY_ADDON_FACTOR * attacker->myskills.abilities[FURY].current_level);
-                if (temp > FURY_FACTOR_MAX)
-                    temp = FURY_FACTOR_MAX;
-                damage *= temp;
-            }
-        }
+        vrx_apply_player_damage_bonus(targ, attacker, &damage, mod, dtype, physicalDamage);
     }
 
     return damage;
@@ -796,7 +799,7 @@ qboolean vrx_should_apply_ghost(edict_t *targ) {
     return false;
 }
 
-float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float damage, int dflags, int mod) {
+float vrx_resist_damage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float damage, int dflags, int mod) {
     int dtype;
     float temp = 0;
     que_t *aura = NULL;
@@ -930,6 +933,7 @@ float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float da
             else if (vrx_is_morphing_polt(targ) && !is_target_morphed_player)
                 return 0;    //Poltergeists can not take world damage in human form
         }
+
         if ((targ == attacker) && (mod == MOD_BOMBS))
             return 0; // cannot bomb yourself
 
