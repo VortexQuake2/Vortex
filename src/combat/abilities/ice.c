@@ -9,6 +9,7 @@ void icebolt_remove(edict_t* self)
 	// remove icebolt entity next frame
 	self->think = G_FreeEdict;
 	self->nextthink = level.time + FRAMETIME;
+	self->solid = SOLID_NOT;// to prevent touch function from being called again, delaying removal
 }
 
 void icebolt_think_remove(edict_t* self)
@@ -61,6 +62,7 @@ void chill_target(edict_t* target, int chill_level, float duration)
 		gi.sound(target, CHAN_BODY, gi.soundindex("abilities/blue3.wav"), 1, ATTN_NORM, 0);
 }
 
+qboolean curse_add(edict_t* target, edict_t* caster, int type, int curse_level, float duration);
 void icebolt_explode(edict_t* self, cplane_t* plane)
 {
 	int		n;
@@ -75,6 +77,9 @@ void icebolt_explode(edict_t* self, cplane_t* plane)
 			continue;
 		e->chill_level = self->chill_level;
 		e->chill_time = level.time + self->chill_time;
+
+		//if (self->owner && self->owner->client)//TESTING!!!!!!!!!!!
+		//	curse_add(e, self->owner, CURSE_FROZEN, 0, 3.0);
 	}
 
 	// damage nearby entities
@@ -256,6 +261,215 @@ void Cmd_IceBolt_f(edict_t* ent, float skill_mult, float cost_mult)
 	fire_icebolt(ent, start, forward, damage, radius, speed, 2 * slvl, chill_duration);
 
 	ent->client->ability_delay = level.time + ICEBOLT_DELAY/* * cost_mult*/;
+	ent->client->pers.inventory[power_cube_index] -= cost;
+
+	// write a nice effect so everyone knows we've cast a spell
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_TELEPORT_EFFECT);
+	gi.WritePosition(ent->s.origin);
+	gi.multicast(ent->s.origin, MULTICAST_PVS);
+
+	gi.sound(ent, CHAN_ITEM, gi.soundindex("abilities/coldcast.wav"), 1, ATTN_NORM, 0);
+}
+
+//************************************************************************************************
+//		FROZEN ORB
+//************************************************************************************************
+
+void iceshard_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* surf)
+{
+	if (!G_EntIsAlive(self->owner) || (surf && (surf->flags & SURF_SKY)))
+	{
+		icebolt_remove(self);
+		return;
+	}
+
+	if (G_ValidTarget(self, other, false, true))
+	{
+		T_Damage(other, self, self->creator, self->velocity, self->s.origin, plane->normal, self->dmg, 0, 0, MOD_ICEBOLT);//FIXME (MOD)
+		chill_target(other, self->chill_level, self->chill_time);
+
+		//gi.sound(other, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav"), 1, ATTN_NORM, 0);
+	}
+	gi.sound(self, CHAN_VOICE, gi.soundindex("weapons/coldimpact1.wav"), 1, ATTN_NORM, 0);
+	icebolt_remove(self);
+}
+
+void fire_iceshard(edict_t* self, vec3_t start, vec3_t dir, float speed, int damage, int chillLevel, float chillDuration)
+{
+	edict_t* bolt;
+
+	//gi.dprintf("%d: %s\n", (int)level.framenum, __func__);
+	// create bolt
+	bolt = G_Spawn();
+	bolt->s.modelindex = gi.modelindex("models/objects/spike/tris.md2");
+	bolt->s.effects |= (EF_HALF_DAMAGE | EF_FLAG2);
+	VectorCopy(start, bolt->s.origin);
+	VectorCopy(start, bolt->s.old_origin);
+	vectoangles(dir, bolt->s.angles);
+	VectorScale(dir, speed, bolt->velocity);
+	bolt->movetype = MOVETYPE_FLYMISSILE;
+	bolt->clipmask = MASK_SHOT;
+	bolt->solid = SOLID_BBOX;
+	bolt->owner = self;
+	bolt->creator = self;
+	bolt->touch = iceshard_touch;
+	bolt->nextthink = level.time + 5;
+	bolt->think = G_FreeEdict;
+	bolt->dmg = damage;
+	bolt->chill_level = chillLevel;
+	bolt->chill_time = chillDuration;
+	bolt->classname = "ice shard";
+	gi.linkentity(bolt);
+
+	// cloak a player-owned ice shard in PvM if there are too many entities nearby
+	if (pvm->value && G_GetClient(self) && !vrx_spawn_nonessential_ent(bolt->s.origin))
+		bolt->svflags |= SVF_NOCLIENT;
+}
+
+void frozenorb_attack(edict_t* self, int num_shards)
+{
+	float turn_degrees = 360 / num_shards;
+	vec3_t forward;
+
+	for (int i = 0; i < num_shards; i++)
+	{
+		self->s.angles[YAW] += turn_degrees;
+		AngleCheck(&self->s.angles[YAW]);
+		AngleVectors(self->s.angles, forward, NULL, NULL);
+		fire_iceshard(self->owner, self->s.origin, forward, 650, self->dmg, 10, 10);//FIXME: speed & chill values
+	}
+}
+
+void frozenorb_think(edict_t* self)
+{
+	//int i;
+	vec3_t start, forward;
+
+	if (level.time > self->delay)
+	{
+		frozenorb_attack(self, 12);
+		G_FreeEdict(self);
+		return;
+	}
+
+	if (level.time > self->monsterinfo.attack_finished)
+	{
+		frozenorb_attack(self, 8);
+		self->monsterinfo.attack_finished = level.time + 0.3;//SPIKEGRENADE_TURN_DELAY;
+	}
+
+	//self->s.angles[YAW] += SPIKEGRENADE_TURN_DEGREES;
+	//AngleCheck(&self->s.angles[YAW]);
+	
+	//G_EntMidPoint(self, start);
+	//AngleVectors(self->s.angles, forward, NULL, NULL);
+	//fire_iceshard(self->owner, start, forward, 650, self->dmg, 10, 10);
+
+	// extra particle effects
+	G_DrawSparks(self->s.origin, self->s.origin, 113, 217, 4, 1, 0, 0);
+
+	self->nextthink = level.time + FRAMETIME;
+}
+
+void frozenorb_touch(edict_t* ent, edict_t* other, cplane_t* plane, csurface_t* surf)
+{
+	if (ent->exploded)
+		return;
+
+	// only stop on walls
+	if (other->takedamage)
+		return;
+
+	// remove icebolt if owner dies or becomes invalid or if we touch a sky brush
+	if (!G_EntIsAlive(ent->owner) || (surf && (surf->flags & SURF_SKY)))
+	{
+		icebolt_remove(ent);
+		return;
+	}
+
+	gi.sound(ent, CHAN_VOICE, gi.soundindex("weapons/coldimpact1.wav"), 1, ATTN_NORM, 0);
+	
+	if (vrx_spawn_nonessential_ent(ent->s.origin))
+	{
+		// throw chunks of ice
+		int n = randomMT() % 5;
+		while (n--)
+			ThrowIceChunks(ent, "models/objects/debris2/tris.md2", 2, ent->s.origin);
+	}
+	// particle effects at impact site
+	SpawnDamage(TE_ELECTRIC_SPARKS, ent->s.origin, plane->normal);
+
+	frozenorb_attack(ent, 12);
+	icebolt_remove(ent);
+	ent->exploded = true;
+
+}
+
+void fire_frozenorb(edict_t* self, vec3_t start, vec3_t aimdir, int damage, int chillLevel, float chillDuration)
+{
+	edict_t* orb;
+	vec3_t	dir;
+	vec3_t	forward;
+
+	//  entity made a sound, used to alert monsters
+	self->lastsound = level.framenum;
+
+	// get aiming angles
+	vectoangles(aimdir, dir);
+	// get directional vectors
+	AngleVectors(dir, forward, NULL, NULL);
+
+	// spawn icebolt entity
+	orb = G_Spawn();
+	VectorCopy(start, orb->s.origin);
+	orb->s.effects |= (EF_HALF_DAMAGE | EF_FLAG2);
+	orb->movetype = MOVETYPE_FLYMISSILE;
+	orb->clipmask = MASK_SOLID; // stop on walls
+	orb->solid = SOLID_BBOX;
+	orb->s.modelindex = gi.modelindex("models/pbullet/tris.md2");
+	orb->owner = self;
+	orb->activator = G_GetSummoner(self); // needed for OnSameTeam() checks
+	orb->touch = frozenorb_touch;
+	orb->think = frozenorb_think;
+	orb->dmg = damage;
+	orb->chill_level = chillLevel;
+	orb->chill_time = chillDuration;
+	orb->classname = "frozen orb";
+	orb->delay = level.time + FROZEN_ORB_DURATION; // timeout
+	gi.linkentity(orb);
+	orb->nextthink = level.time + FRAMETIME;
+	// set angles
+	VectorCopy(dir, orb->s.angles);
+	orb->s.angles[PITCH] = 0;
+	// adjust angular velocity (make it roll)
+	//VectorSet(orb->avelocity, GetRandom(300, 1000), 0, 0);
+	VectorSet(orb->avelocity, 0, GetRandom(300, 1000), 0);
+	// adjust velocity (movement)
+	VectorScale(aimdir, FROZEN_ORB_SPEED, orb->velocity);
+}
+
+void Cmd_FrozenOrb_f(edict_t* ent, float skill_mult, float cost_mult)
+{
+	vec3_t	forward, right, start, offset;
+
+	int cost = FROZEN_ORB_COST * cost_mult;
+
+	if (!V_CanUseAbilities(ent, FROZEN_ORB, cost, true))
+		return;
+
+	int	skill_level = ent->myskills.abilities[FROZEN_ORB].current_level;
+	int damage = (FROZEN_ORB_INITIAL_DAMAGE + FROZEN_ORB_ADDON_DAMAGE * skill_level) * (skill_mult * vrx_get_synergy_mult(ent, FROZEN_ORB));
+	float chill_duration = (FROZEN_ORB_INITIAL_CHILL + FROZEN_ORB_ADDON_CHILL * skill_level) * skill_mult;
+
+	// get starting position and forward vector
+	AngleVectors(ent->client->v_angle, forward, right, NULL);
+	VectorSet(offset, 0, 8, ent->viewheight - 8);
+	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+
+	fire_frozenorb(ent, start, forward, damage, (2 * skill_level), chill_duration);
+
+	ent->client->ability_delay = level.time + FROZEN_ORB_DELAY;
 	ent->client->pers.inventory[power_cube_index] -= cost;
 
 	// write a nice effect so everyone knows we've cast a spell

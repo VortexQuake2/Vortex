@@ -114,6 +114,7 @@
 #define SKELETON		111
 #define GOLEM			112
 #define FIREWALL		113
+#define FROZEN_ORB		114
 #define DETECTOR		133
 
 #define MAX_ABILITIES	160

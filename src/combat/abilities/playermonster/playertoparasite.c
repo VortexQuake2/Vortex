@@ -15,7 +15,7 @@ static qboolean parasite_cantarget (edict_t *self, edict_t *target)
 {
 	int para_range = PARASITE_ATTACK_RANGE;
 
-	return (G_EntExists(target) && !que_typeexists(target->curses, CURSE_FROZEN) 
+	return (G_EntExists(target) /* && !que_typeexists(target->curses, CURSE_FROZEN) */
 		&& !OnSameTeam(self, target) && visible(self, target) && nearfov(self, target, 45, 45) 
 		&& (entdist(self, target) <= para_range));
 }

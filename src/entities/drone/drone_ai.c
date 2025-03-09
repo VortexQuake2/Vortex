@@ -206,6 +206,9 @@ void ai_charge (edict_t *self, float dist)
 	if (!self || !self->inuse)
 		return;
 
+	if (que_typeexists(self->curses, CURSE_FROZEN))
+		return;
+
 	// our current enemy has become invalid
 	if (!G_ValidTarget(self, self->enemy, true, true))
 	{
@@ -341,8 +344,8 @@ qboolean M_ValidMedicTarget(const edict_t *self, const edict_t *target) {
 		return false;
 
 	// don't target frozen players
-	if (que_typeexists(target->curses, CURSE_FROZEN))
-		return false;
+	//if (que_typeexists(target->curses, CURSE_FROZEN))
+	//	return false;
 
 	// invasion medics shouldn't try to heal base defenders
 	if (invasion->value && (self->monsterinfo.aiflags & AI_FIND_NAVI) && !(target->monsterinfo.aiflags & AI_FIND_NAVI))

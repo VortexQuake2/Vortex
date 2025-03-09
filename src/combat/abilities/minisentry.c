@@ -599,7 +599,7 @@ void minisentry_think (edict_t *self)
 	V_ArmorCache(self, (int)(0.2 * self->monsterinfo.max_armor), 1);
 
 	// sentry is stunned
-	if (self->holdtime > level.time)
+	if (self->holdtime > level.time || que_typeexists(self->curses, CURSE_FROZEN))
 	{
 		M_SetEffects(self);
 		self->nextthink = level.time + FRAMETIME;

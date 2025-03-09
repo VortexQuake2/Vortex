@@ -108,12 +108,13 @@ const abilitydef_t ability_mage[] = { // MAGE
         {MAGICBOLT,       0, DEFAULT_SOFTMAX,   0},
         {NOVA,            0, DEFAULT_SOFTMAX,   0},
         {BOMB_SPELL,      0, DEFAULT_SOFTMAX,   0},
+        {FROZEN_ORB,      0, DEFAULT_SOFTMAX,   0},
         //{FORCE_WALL,      0, DEFAULT_SOFTMAX,   0},
-        {FIREWALL,        0, DEFAULT_SOFTMAX,   0},//synergy:fire
-        {LIGHTNING,       0, DEFAULT_SOFTMAX,   0},//synergy:lightning
-        {METEOR,          0, DEFAULT_SOFTMAX,   0},//synergy:fire
-        {FIREBALL,        0, DEFAULT_SOFTMAX,   0},//synergy:fire
-        {LIGHTNING_STORM, 0, DEFAULT_SOFTMAX,   0},//synergy:lightning
+        {FIREWALL,        0, DEFAULT_SOFTMAX,   0},
+        {LIGHTNING,       0, DEFAULT_SOFTMAX,   0},
+        {METEOR,          0, DEFAULT_SOFTMAX,   0},
+        {FIREBALL,        0, DEFAULT_SOFTMAX,   0},
+        {LIGHTNING_STORM, 0, DEFAULT_SOFTMAX,   0},
         {STATIC_FIELD,    0, DEFAULT_SOFTMAX,   0},
         {TELEPORT,        1, 1,                 0},
         {-1,              0, 0,                 0} // Guardian (Add skills above this)

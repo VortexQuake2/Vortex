@@ -801,7 +801,7 @@ void sentrygun_think(edict_t *self)
 	}
 
 	// sentry is stunned
-	if (self->holdtime > level.time)
+	if (self->holdtime > level.time || que_typeexists(self->curses, CURSE_FROZEN))
 	{
 		M_SetEffects(self);
 		self->nextthink = level.time + FRAMETIME;

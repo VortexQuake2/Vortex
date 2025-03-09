@@ -1227,8 +1227,8 @@ qboolean G_ValidTargetEnt(const edict_t *target, qboolean alive) {
 		return false;
 	if (target->flags & FL_GODMODE)
 		return false;
-	if (que_typeexists(target->curses, CURSE_FROZEN))
-		return false;
+	//if (que_typeexists(target->curses, CURSE_FROZEN))
+	//	return false;
 	return true;
 }
 
@@ -1280,7 +1280,7 @@ qboolean G_ValidAlliedTarget (edict_t *self, edict_t *target, qboolean vis)
 		return false;
 	if (vis && !visible(self, target))
 		return false;
-	return (!(target->flags & FL_GODMODE) && !que_typeexists(target->curses, CURSE_FROZEN)
+	return (!(target->flags & FL_GODMODE) /* && !que_typeexists(target->curses, CURSE_FROZEN) */
 		&& OnSameTeam(self, target));
 }
 

@@ -272,11 +272,11 @@ qboolean drone_ValidChaseTarget (edict_t *self, edict_t *target)
 		return false;
 	}
 
-	if (que_typeexists(target->curses, CURSE_FROZEN))
+	/*if (que_typeexists(target->curses, CURSE_FROZEN))
 	{
 		//gi.dprintf("target is frozen\n");
 		return false;
-	}
+	}*/
 
 	//FIXME: we should do a better check than this
 	if (self->enemy && OnSameTeam(self, target))
@@ -1967,7 +1967,7 @@ qboolean M_Upkeep (edict_t *self, int delay, int upkeep_cost)
 	int		*cubes;
 	edict_t *e;
 
-	if (self->mtype == M_DECOY)
+	if (self->mtype == M_DECOY || self->mtype == M_SKELETON || self->mtype == M_GOLEM)
 		return true;
 
 	if (delay > 0)

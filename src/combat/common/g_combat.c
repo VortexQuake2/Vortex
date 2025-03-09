@@ -238,7 +238,7 @@ qboolean G_CanUseAbilities(edict_t *ent, int ability_lvl, int pc_cost) {
         return false;
     }
 //	if (HasActiveCurse(ent, CURSE_FROZEN))
-    if (que_typeexists(ent->curses, CURSE_FROZEN))
+    if (que_typeexists(ent->curses, CURSE_FROZEN)) // can't use abilities while frozen
         return false;
     if (level.time < pregame_time->value && !trading->value) {
         if (!pvm->value && !invasion->value) // pvm modes allow abilities in pregame.

@@ -1317,6 +1317,16 @@ FIREWALL_DELAY							 = 1.0
 FIREWALL_DURATION						 = 10.0
 FIREWALL_COST							 = 25
 
+--Frozen Orb
+FROZEN_ORB_SPEED						 = 200
+FROZEN_ORB_DURATION						 = 3.0
+FROZEN_ORB_DELAY						 = 1.0
+FROZEN_ORB_COST							 = 20
+FROZEN_ORB_INITIAL_DAMAGE				 = 50
+FROZEN_ORB_ADDON_DAMAGE					 = 25
+FROZEN_ORB_INITIAL_CHILL				 = 0
+FROZEN_ORB_ADDON_CHILL					 = 0.5
+
 -- Monster Counts
 sewer64_monsters			 = 100
 base64_monsters				= 100

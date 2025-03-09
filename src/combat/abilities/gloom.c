@@ -458,8 +458,8 @@ qboolean healer_validtarget(edict_t* self, edict_t* target)
 		return false;
 
 	// don't target frozen players
-	if (que_typeexists(target->curses, CURSE_FROZEN))
-		return false;
+	//if (que_typeexists(target->curses, CURSE_FROZEN))
+	//	return false;
 
 	// target must be visible
 	if (!visible(self, target))
@@ -556,10 +556,13 @@ void healer_think (edict_t *self)
 	M_WorldEffects (self);
 	M_SetEffects (self);
 
-	if (level.time > self->lasthurt + 1.0)
+	if (!que_typeexists(self->curses, CURSE_FROZEN))
 	{
-		healer_attack(self);
-		M_Regenerate(self, qf2sf(300), qf2sf(10), 1.0, true, false, false, &self->monsterinfo.regen_delay1);
+		if (level.time > self->lasthurt + 1.0)
+		{
+			healer_attack(self);
+			M_Regenerate(self, qf2sf(300), qf2sf(10), 1.0, true, false, false, &self->monsterinfo.regen_delay1);
+		}
 	}
 
 	G_RunFrames(self, HEALER_FRAMES_START, HEALER_FRAMES_END, false);
@@ -821,13 +824,16 @@ void spiker_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 
 void spiker_attack (edict_t *self)
 {
-	float	dist, chance = 0.02 * self->light_level; // Talent: Deadly Spikes
+	float	dist, chance = 0.05 * self->light_level; // Talent: Deadly Spikes gives 5% chance/level to stun
 	float	range=SPIKER_INITIAL_RANGE+SPIKER_ADDON_RANGE*self->monsterinfo.level;
 	int		speed=SPIKER_INITIAL_SPEED+SPIKER_ADDON_SPEED*self->monsterinfo.level;
 	vec3_t	forward, start, end;
 	edict_t *e=NULL;
 
 	if (self->monsterinfo.attack_finished > level.time)
+		return;
+
+	if (que_typeexists(self->curses, CURSE_FROZEN))
 		return;
 
 	VectorCopy(self->s.origin, start);
@@ -856,9 +862,9 @@ void spiker_attack (edict_t *self)
 
 		// Deadly Spikes talent provides a chance to shoot a spike that will stun enemies
 		if (chance > random())
-			fire_spike(self, start, forward, self->dmg, 0, speed);
-		else
 			fire_spike(self, start, forward, self->dmg, 0.5, speed);
+		else
+			fire_spike(self, start, forward, self->dmg, 0, speed);
 		
 		//FIXME: only need to do this once
 		self->monsterinfo.attack_finished = level.time + SPIKER_REFIRE_DELAY;
@@ -1396,11 +1402,14 @@ void obstacle_think (edict_t *self)
 
 	vrx_set_pickup_owner(self); // sets owner when this entity is picked up, making it non-solid to the player
 	organ_restoreMoveType(self); // needed to restore movetype from MOVETYPE_NONE to MOVETYPE_STEP after being pushed!
-	obstacle_cloak(self);
-	obstacle_attack(self);
-	obstacle_move(self);
 
-	V_HealthCache(self, (int)(0.2 * self->max_health), 1);
+	if (!que_typeexists(self->curses, CURSE_FROZEN))
+	{
+		obstacle_cloak(self);
+		obstacle_attack(self);
+		obstacle_move(self);
+		V_HealthCache(self, (int)(0.2 * self->max_health), 1);
+	}
 
 //	if (level.time > self->lasthurt + 1.0)
 //		M_Regenerate(self, 300, 10, true, false, false, &self->monsterinfo.regen_delay1);
@@ -2163,27 +2172,30 @@ void gasser_think (edict_t *self)
 //	if (level.time > self->lasthurt + 1.0)
 //		M_Regenerate(self, 300, 10, true, false, false, &self->monsterinfo.regen_delay1);
 
-	V_HealthCache(self, (int)(0.2 * self->max_health), 1);
-
-	if (level.time > self->monsterinfo.attack_finished && gasser_findtarget(self))
+	if (!que_typeexists(self->curses, CURSE_FROZEN))
 	{
-		//gi.dprintf("gasser wants to attack\n");
-		if (entdist(self, self->enemy) < self->dmg_radius)
-			gasser_attack(self);
-		else if (self->light_level)
-			gasser_acidattack(self);
-	}
-	//else
-		//gi.dprintf("cant attack\n");
+		V_HealthCache(self, (int)(0.2 * self->max_health), 1);
 
-	if (self->s.frame < GASSER_FRAMES_ATTACK_END)
-		G_RunFrames(self, GASSER_FRAMES_ATTACK_START, GASSER_FRAMES_ATTACK_END, false);
-	else if (self->s.frame < GASSER_FRAMES_REARM_END && level.time > self->monsterinfo.attack_finished - 0.2)
-		G_RunFrames(self, GASSER_FRAMES_REARM_START, GASSER_FRAMES_REARM_END, false);
-	else if (level.time > self->monsterinfo.attack_finished)
-	{
-		gascloud_sparks(self, 1, 32);
-		G_RunFrames(self, GASSER_FRAMES_IDLE_START, GASSER_FRAMES_IDLE_END, false);
+		if (level.time > self->monsterinfo.attack_finished && gasser_findtarget(self))
+		{
+			//gi.dprintf("gasser wants to attack\n");
+			if (entdist(self, self->enemy) < self->dmg_radius)
+				gasser_attack(self);
+			else if (self->light_level)
+				gasser_acidattack(self);
+		}
+		//else
+			//gi.dprintf("cant attack\n");
+
+		if (self->s.frame < GASSER_FRAMES_ATTACK_END)
+			G_RunFrames(self, GASSER_FRAMES_ATTACK_START, GASSER_FRAMES_ATTACK_END, false);
+		else if (self->s.frame < GASSER_FRAMES_REARM_END && level.time > self->monsterinfo.attack_finished - 0.2)
+			G_RunFrames(self, GASSER_FRAMES_REARM_START, GASSER_FRAMES_REARM_END, false);
+		else if (level.time > self->monsterinfo.attack_finished)
+		{
+			gascloud_sparks(self, 1, 32);
+			G_RunFrames(self, GASSER_FRAMES_IDLE_START, GASSER_FRAMES_IDLE_END, false);
+		}
 	}
 
 	// if position has been updated, check for ground entity
@@ -2535,6 +2547,9 @@ void cocoon_attack (edict_t *self)
 	int		frames;
 	float	time;
 	vec3_t	start;
+
+	if (que_typeexists(self->curses, CURSE_FROZEN))
+		return;
 
 	if (!G_EntIsAlive(self->enemy))
 	{
@@ -3052,10 +3067,14 @@ void spikeball_think (edict_t *self)
     if (!M_Upkeep(self, 1.3 / FRAMETIME, 1))
         return;
 
+	
     spikeball_effects(self);
-    spikeball_findtarget(self);
-    //spikeball_recall(self);
-    spikeball_move(self);
+	if (level.time > self->holdtime && !que_typeexists(self->curses, CURSE_FROZEN))
+	{
+		spikeball_findtarget(self);
+		//spikeball_recall(self);
+		spikeball_move(self);
+	}
     spikeball_idle_friction(self);
 
     self->nextthink = level.time + FRAMETIME;

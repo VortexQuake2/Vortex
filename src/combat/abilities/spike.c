@@ -4,8 +4,7 @@ void spike_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 {
 	if (G_ValidTarget(self->owner, other, false, true))
 	{
-		T_Damage(other, self, self->owner, self->velocity, self->s.origin, 
-			plane->normal, self->dmg, self->dmg, 0, MOD_SPIKE);
+		T_Damage(other, self, self->owner, self->velocity, self->s.origin, plane->normal, self->dmg, 100, 0, MOD_SPIKE);
 
 		gi.sound (other, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav"), 1, ATTN_NORM, 0);
 

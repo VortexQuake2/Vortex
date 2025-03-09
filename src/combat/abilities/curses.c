@@ -188,8 +188,8 @@ qboolean G_CurseValidTarget (edict_t *self, edict_t *target, qboolean vis, qbool
 		return false;
 	if (vis && !visible(self, target))
 		return false;
-	if(que_typeexists(target->curses, CURSE_FROZEN))
-		return false;
+	//if(que_typeexists(target->curses, CURSE_FROZEN))
+	//	return false;
 	if (isCurse && (target->flags & FL_GODMODE || OnSameTeam(self, target)))
 		return false;
 	if (target == self)
@@ -211,7 +211,8 @@ void curse_think(edict_t *self)
 		return;
 	}
 
-	CurseEffects(self->enemy, 10, 242);
+	if (self->atype != CURSE_FROZEN)
+		CurseEffects(self->enemy, 10, 242);
 
 	//Stick with the target
 	VectorCopy(self->enemy->s.origin, self->s.origin);
@@ -382,8 +383,8 @@ qboolean CanCurseTarget (edict_t *caster, edict_t *target, int type, qboolean is
 		return false;
 	if (vis && !visible(caster, target))
 		return false;
-    if (que_typeexists(target->curses, CURSE_FROZEN))
-        return false;
+    //if (que_typeexists(target->curses, CURSE_FROZEN))
+    //    return false;
     if (isCurse && (target->flags & FL_GODMODE || OnSameTeam(caster, target)))
         return false;
     if (target == caster)

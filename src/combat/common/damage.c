@@ -832,8 +832,8 @@ float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float da
         } else if (targ->mtype != M_BARREL)
             return 0;  // can't damage teammates
     }
-    if (que_typeexists(targ->curses, CURSE_FROZEN))
-        return 0; // can't damage frozen entities
+    //if (que_typeexists(targ->curses, CURSE_FROZEN))
+    //    return 0; // can't damage frozen entities
     if (targ->flags & FL_CHATPROTECT)
         return 0; // can't kill someone in chat-protect
     if (!targ->client && (attacker == targ) && !PM_MonsterHasPilot(targ))//4.03 added player-monster exception

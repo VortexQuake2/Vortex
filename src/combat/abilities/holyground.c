@@ -81,8 +81,8 @@ void holyground_attack (edict_t *self, float radius)
 			continue;
 		if (target->svflags & SVF_NOCLIENT && target->mtype != M_FORCEWALL)
 			continue;
-		if (que_typeexists(target->curses, CURSE_FROZEN))
-			continue;
+		//if (que_typeexists(target->curses, CURSE_FROZEN))
+		//	continue;
 
 		// target must be on the ground
 		if (!target->groundentity)

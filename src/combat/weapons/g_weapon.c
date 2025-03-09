@@ -1754,11 +1754,11 @@ void bfg_think (edict_t *self)
 			continue;
 
 		// dont trap frozen targets
-		if (que_typeexists(target->curses, CURSE_FROZEN))
+		/*if (que_typeexists(target->curses, CURSE_FROZEN))
 		{
 			G_FreeEdict(self);
 			return;
-		}
+		}*/
 
 		VectorSubtract(target->s.origin, self->s.origin, dir);
 		VectorNormalize(dir);

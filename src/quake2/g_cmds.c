@@ -2842,6 +2842,7 @@ void Cmd_LoadNodes_f (edict_t *ent);
 void Cmd_ComputeNodes_f (edict_t *ent);
 void Cmd_ToggleShowGrid (edict_t *ent);
 void Cmd_Firewall_f(edict_t* ent, float skill_mult, float cost_mult);
+void Cmd_FrozenOrb_f(edict_t* ent, float skill_mult, float cost_mult);
 
 que_t *que_ptr (que_t *src, que_t *dst)
 {
@@ -2902,6 +2903,11 @@ void Cmd_Overload_f (edict_t *ent)
 	{
 		if (GetOverloadValues(ent, talentLevel, cubes, FIREWALL_COST, &cost_mult, &skill_mult))
 			Cmd_Firewall_f(ent, skill_mult, cost_mult);
+	}
+	else if (Q_stricmp(cmd, "frozenorb") == 0)
+	{
+		if (GetOverloadValues(ent, talentLevel, cubes, ICEBOLT_COST, &cost_mult, &skill_mult))
+			Cmd_FrozenOrb_f(ent, skill_mult, cost_mult);
 	}
 	else if (Q_stricmp(cmd, "icebolt") == 0)
 	{
@@ -3303,6 +3309,7 @@ void ClientCommand (edict_t *ent)
 	{
 		if (!ent->myskills.administrator)
 			return;
+		//Cmd_FrozenOrb_f(ent, 1.0, 1.0);
 		//Cmd_Firewall_f(ent);
 		//gi.dprintf("%s: ", __func__);
 		//G_NearbyEnts(ent->s.origin, 1024, false);
@@ -3486,6 +3493,8 @@ void ClientCommand (edict_t *ent)
 		Cmd_Fireball_f (ent, 1.0, 1.0);
 	else if (Q_stricmp (cmd, "icebolt") == 0)
 		Cmd_IceBolt_f (ent, 1.0, 1.0);
+	else if (Q_stricmp(cmd, "frozenorb") == 0)
+		Cmd_FrozenOrb_f(ent, 1.0, 1.0);
 	else if (Q_stricmp (cmd, "lightningstorm") == 0)
 		Cmd_LightningStorm_f (ent, 1.0, 1.0);
 	else if (Q_stricmp(cmd, "firewall") == 0)

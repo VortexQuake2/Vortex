@@ -1008,6 +1008,9 @@ qboolean vrx_toggle_pickup(edict_t* ent, int mtype, float dist)
 
 void vrx_stun(edict_t* self, edict_t* other, float time)
 {
+	if (time < FRAMETIME)
+		return;
+
 	// force monsters into idle mode
 	if (!strcmp(other->classname, "drone"))
 	{

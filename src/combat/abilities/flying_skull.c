@@ -648,7 +648,7 @@ void skull_think (edict_t *self)
 	}
 
 	// hellspawn is stunned
-	if (self->holdtime > level.time)
+	if (self->holdtime > level.time || que_typeexists(self->curses, CURSE_FROZEN))
 	{
 		// reset to idle state
 		self->style = 0;

@@ -735,6 +735,8 @@ char *GetAbilityString(int ability_number) {
             return "Life Tap";
         case FIREBALL:
             return "Fireball";
+        case FROZEN_ORB:
+            return "Frozen Orb";
         case PLASMA_BOLT:
             return "Plasma Bolt";
         case LIGHTNING_STORM:
@@ -1056,6 +1058,7 @@ qboolean V_CanUseAbilities(edict_t *ent, int ability_index, int ability_cost, qb
         return false;
     }
 
+    // can't use abilities while frozen
     if (que_typeexists(ent->curses, CURSE_FROZEN))
         return false;
 

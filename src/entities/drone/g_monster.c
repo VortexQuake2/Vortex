@@ -600,6 +600,11 @@ void M_SetEffects (edict_t *ent)
 	V_SetEffects(ent);
 }
 
+qboolean vrx_holdframe(edict_t* self)
+{
+	return self->monsterinfo.aiflags & AI_HOLD_FRAME || (self->health > 0 && que_typeexists(self->curses, CURSE_FROZEN));
+}
+
 void vrx_adjust_moveframe_scale(edict_t* self)
 {
 	float	temp;
@@ -682,7 +687,7 @@ void M_MoveFrame_Reverse (edict_t* self)
 		}
 		else
 		{
-			if (!(self->monsterinfo.aiflags & AI_HOLD_FRAME))
+			if (!vrx_holdframe(self))
 			{
 				self->s.frame--;
 				if (self->s.frame < move->lastframe)
@@ -693,7 +698,7 @@ void M_MoveFrame_Reverse (edict_t* self)
 
 	index = move->firstframe - self->s.frame;
 	if (move->frame[index].aifunc)
-		if (!(self->monsterinfo.aiflags & AI_HOLD_FRAME))
+		if (!vrx_holdframe(self))
 		{
 			self->monsterinfo.scale = 1.0;
 			vrx_adjust_moveframe_scale(self);
@@ -766,7 +771,7 @@ void M_MoveFrame (edict_t *self)
 		}
 		else
 		{
-			if (!(self->monsterinfo.aiflags & AI_HOLD_FRAME))
+			if (!vrx_holdframe(self))
 			{
 				self->s.frame++;
 				if (self->s.frame > move->lastframe)
@@ -777,7 +782,7 @@ void M_MoveFrame (edict_t *self)
 
 	index = self->s.frame - move->firstframe;
 	if (move->frame[index].aifunc)
-		if (!(self->monsterinfo.aiflags & AI_HOLD_FRAME))
+		if (!vrx_holdframe(self))
 		{
 			self->monsterinfo.scale = 1.0;
 			vrx_adjust_moveframe_scale(self);
