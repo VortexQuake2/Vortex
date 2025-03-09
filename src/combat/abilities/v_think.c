@@ -38,19 +38,23 @@ void think_ability_ammo_regen(edict_t* ent) {
 }
 
 void think_ability_power_regen(edict_t* ent) {
-	gitem_t* item;
-	int index, temp;
+	if (ent->myskills.abilities[POWER_REGEN].current_level <= 0) return;
+
+	ent->pcr_time += FRAMETIME;
+
+	double regen_time = (5.0f / ent->myskills.abilities[POWER_REGEN].current_level);
 
 	if (ent->myskills.abilities[POWER_REGEN].disable)
 		return;
 
-	item = Fdi_POWERCUBE;
-	if (item) {
-		index = ITEM_INDEX(item);
-		if (ent->client->pers.inventory[index] < ent->client->pers.max_powercubes) {
-			temp = 5/**ent->myskills.abilities[POWER_REGEN].current_level*/;
+	gitem_t* item = Fdi_POWERCUBE;
+	if (!item) return;
 
-			ent->client->pers.inventory[index] += temp;
+	int index = ITEM_INDEX(item);
+
+	while (ent->pcr_time > regen_time) {
+		if (ent->client->pers.inventory[index] < ent->client->pers.max_powercubes) {
+			ent->client->pers.inventory[index] += 5;
 
 			if (ent->client->pers.inventory[index] > ent->client->pers.max_powercubes)
 				ent->client->pers.inventory[index] = ent->client->pers.max_powercubes;
@@ -58,8 +62,9 @@ void think_ability_power_regen(edict_t* ent) {
 			if (ent->client->pers.inventory[index] < 0)
 				ent->client->pers.inventory[index] = 0;
 		}
-	}
 
+		ent->pcr_time -= regen_time;
+	}
 }
 
 void think_trade(edict_t* ent) {//3.0 new trading
@@ -926,10 +931,7 @@ void vrx_client_think(edict_t* ent) {
 		think_ability_ammo_regen(ent);
 
 	// We simply restore 5 cubes more often.
-	int regen_frame = (int)(5.0f / ent->myskills.abilities[POWER_REGEN].current_level / FRAMETIME);
-	qboolean is_regen_frame = !(level.framenum % regen_frame);
-	if (ent->myskills.abilities[POWER_REGEN].current_level > 0 && is_regen_frame)
-		think_ability_power_regen(ent);
+	think_ability_power_regen(ent);
 
 	//3.0 Mind absorb every x seconds
 	think_ability_mind_absorb(ent);

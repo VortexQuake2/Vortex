@@ -8,7 +8,7 @@
 #define D_WORLD		128
 
 int		G_DamageType (int mod, int dflags);
-float	G_AddDamage (edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t point, float damage, int dflags, int mod);
+float	vrx_increase_damage (edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t point, float damage, int dflags, int mod);
 
-float G_SubDamage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float damage, int dflags, int mod);
+float vrx_resist_damage(edict_t *targ, edict_t *inflictor, edict_t *attacker, float damage, int dflags, int mod);
 int vrx_apply_pierce(const edict_t *targ, const edict_t *attacker, float damage, int dflags, int mod);
