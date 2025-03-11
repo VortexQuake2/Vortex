@@ -1,7 +1,15 @@
 #include "g_local.h"
 
+void chill_target_sound(edict_t* self)
+{
+	if (random() > 0.5)
+		gi.sound(self, CHAN_ITEM, gi.soundindex("abilities/blue1.wav"), 1, ATTN_NORM, 0);
+	else
+		gi.sound(self, CHAN_ITEM, gi.soundindex("abilities/blue3.wav"), 1, ATTN_NORM, 0);
+}
+
 //************************************************************************************************
-//		ICEBOLT
+//		ICEBOLT / GLACIAL SPIKE
 //************************************************************************************************
 
 void icebolt_remove(edict_t* self)
@@ -52,14 +60,11 @@ void ThrowIceChunks(edict_t* self, char* modelname, float speed, vec3_t origin)
 	gi.linkentity(chunk);
 }
 
-void chill_target(edict_t* target, int chill_level, float duration)
+void chill_target(edict_t* self, edict_t* target, int chill_level, float duration)
 {
 	target->chill_level = chill_level;
 	target->chill_time = level.time + duration;
-	if (random() > 0.5)
-		gi.sound(target, CHAN_BODY, gi.soundindex("abilities/blue1.wav"), 1, ATTN_NORM, 0);
-	else
-		gi.sound(target, CHAN_BODY, gi.soundindex("abilities/blue3.wav"), 1, ATTN_NORM, 0);
+	chill_target_sound(self);
 }
 
 qboolean curse_add(edict_t* target, edict_t* caster, int type, int curse_level, float duration);
@@ -75,11 +80,13 @@ void icebolt_explode(edict_t* self, cplane_t* plane)
 	{
 		if (!G_ValidTarget(self, e, true, true))
 			continue;
-		e->chill_level = self->chill_level;
-		e->chill_time = level.time + self->chill_time;
+		//e->chill_level = self->chill_level;
+		//e->chill_time = level.time + self->chill_time;
+		chill_target(self, e, self->chill_level, self->chill_time);
 
-		//if (self->owner && self->owner->client)//TESTING!!!!!!!!!!!
-		//	curse_add(e, self->owner, CURSE_FROZEN, 0, 3.0);
+		// Glacial Spike: Freeze targets!
+		if (self->owner && self->owner->inuse && self->PlasmaDelay > 0)
+			curse_add(e, self->owner, CURSE_FROZEN, 0, self->PlasmaDelay);
 	}
 
 	// damage nearby entities
@@ -177,7 +184,18 @@ void icebolt_think(edict_t* self)
 	self->nextthink = level.time + FRAMETIME;
 }
 
-void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int chillLevel, float chillDuration)
+void glacial_spike_sound(edict_t* self)
+{
+	float r = random();
+	if (r < 0.33)
+		gi.sound(self, CHAN_WEAPON, gi.soundindex("abilities/icespike1.wav"), 1, ATTN_NORM, 0);
+	else if (r < 0.66)
+		gi.sound(self, CHAN_WEAPON, gi.soundindex("abilities/icespike2.wav"), 1, ATTN_NORM, 0);
+	else
+		gi.sound(self, CHAN_WEAPON, gi.soundindex("abilities/icespike3.wav"), 1, ATTN_NORM, 0);
+}
+
+void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int chillLevel, float chillDuration, float freezeDuration)
 {
 	edict_t* icebolt;
 	vec3_t	dir;
@@ -199,9 +217,31 @@ void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float 
 	icebolt->movetype = MOVETYPE_FLYMISSILE;
 	icebolt->clipmask = MASK_SHOT;
 	icebolt->solid = SOLID_BBOX;
-	icebolt->s.modelindex = gi.modelindex("models/proj/proj_drole/tris.md2");
-	icebolt->s.skinnum = 1;
-	icebolt->s.frame = 4;
+	// set angles
+	VectorCopy(dir, icebolt->s.angles);
+
+	if (freezeDuration > 0)
+	{
+		//icebolt->s.modelindex = gi.modelindex("models/proj/proj_fireball/tris.md2");
+		//icebolt->s.modelindex = gi.modelindex("models/proj/gaplasma/tris.md2");
+		icebolt->s.modelindex = gi.modelindex("models/icebomb_fx/tris.md2");
+		icebolt->s.skinnum = 1;
+		icebolt->s.frame = 1;
+		icebolt->s.angles[PITCH] -= 90;
+		//AngleCheck(&icebolt->s.angles[PITCH]);
+		//VectorSet(icebolt->avelocity, 0, 0, 0);
+		icebolt->PlasmaDelay = freezeDuration;
+		//glacial_spike_sound(icebolt);
+	}
+	else
+	{
+		icebolt->s.modelindex = gi.modelindex("models/proj/proj_drole/tris.md2");
+		icebolt->s.skinnum = 1;
+		icebolt->s.frame = 4;
+		// adjust angular velocity (make it roll)
+		VectorSet(icebolt->avelocity, GetRandom(300, 1000), 0, 0);
+	}
+
 	icebolt->owner = self;
 	icebolt->activator = G_GetSummoner(self); // needed for OnSameTeam() checks
 	icebolt->touch = icebolt_touch;
@@ -214,10 +254,8 @@ void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float 
 	icebolt->delay = level.time + 10.0; // timeout
 	gi.linkentity(icebolt);
 	icebolt->nextthink = level.time + FRAMETIME;
-	// set angles
-	VectorCopy(dir, icebolt->s.angles);
-	// adjust angular velocity (make it roll)
-	VectorSet(icebolt->avelocity, GetRandom(300, 1000), 0, 0);
+
+
 	// adjust velocity (movement)
 	VectorScale(aimdir, speed, icebolt->velocity);
 }
@@ -258,7 +296,7 @@ void Cmd_IceBolt_f(edict_t* ent, float skill_mult, float cost_mult)
 	VectorSet(offset, 0, 8, ent->viewheight - 8);
 	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
 
-	fire_icebolt(ent, start, forward, damage, radius, speed, 2 * slvl, chill_duration);
+	fire_icebolt(ent, start, forward, damage, radius, speed, 2 * slvl, chill_duration, 0);
 
 	ent->client->ability_delay = level.time + ICEBOLT_DELAY/* * cost_mult*/;
 	ent->client->pers.inventory[power_cube_index] -= cost;
@@ -270,6 +308,45 @@ void Cmd_IceBolt_f(edict_t* ent, float skill_mult, float cost_mult)
 	gi.multicast(ent->s.origin, MULTICAST_PVS);
 
 	gi.sound(ent, CHAN_ITEM, gi.soundindex("abilities/coldcast.wav"), 1, ATTN_NORM, 0);
+}
+
+void Cmd_GlacialSpike_f(edict_t* ent, float skill_mult, float cost_mult)
+{
+	int		damage, speed, cost = GLACIAL_SPIKE_COST * cost_mult;
+	float	radius, chill_duration, freeze_duration;
+	vec3_t	forward, right, start, offset;
+
+	if (!V_CanUseAbilities(ent, GLACIAL_SPIKE, cost, true))
+		return;
+
+	int skill_level = ent->myskills.abilities[GLACIAL_SPIKE].current_level;
+
+	chill_duration = (GLACIAL_SPIKE_INITIAL_CHILL + GLACIAL_SPIKE_ADDON_CHILL * skill_level) * skill_mult;
+	freeze_duration = (GLACIAL_SPIKE_INITIAL_FREEZE + GLACIAL_SPIKE_ADDON_FREEZE * skill_level) * skill_mult;
+	damage = (GLACIAL_SPIKE_INITIAL_DAMAGE + GLACIAL_SPIKE_ADDON_DAMAGE * skill_level) * (skill_mult * vrx_get_synergy_mult(ent, GLACIAL_SPIKE));
+	radius = GLACIAL_SPIKE_INITIAL_RADIUS + GLACIAL_SPIKE_ADDON_RADIUS * skill_level;
+	speed = GLACIAL_SPIKE_INITIAL_SPEED + GLACIAL_SPIKE_ADDON_SPEED * skill_level;
+
+	//gi.dprintf("dmg:%d slvl:%d skill_mult:%f chill_duration:%f\n",damage,slvl,skill_mult,chill_duration);
+
+	// get starting position and forward vector
+	AngleVectors(ent->client->v_angle, forward, right, NULL);
+	VectorSet(offset, 0, 8, ent->viewheight - 8);
+	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+
+	fire_icebolt(ent, start, forward, damage, radius, speed, 2 * skill_level, chill_duration, freeze_duration);
+
+	ent->client->ability_delay = level.time + GLACIAL_SPIKE_DELAY/* * cost_mult*/;
+	ent->client->pers.inventory[power_cube_index] -= cost;
+
+	// write a nice effect so everyone knows we've cast a spell
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_TELEPORT_EFFECT);
+	gi.WritePosition(ent->s.origin);
+	gi.multicast(ent->s.origin, MULTICAST_PVS);
+
+	gi.sound(ent, CHAN_ITEM, gi.soundindex("abilities/coldcast.wav"), 1, ATTN_NORM, 0);
+	glacial_spike_sound(ent);
 }
 
 //************************************************************************************************
@@ -287,7 +364,7 @@ void iceshard_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* 
 	if (G_ValidTarget(self, other, false, true))
 	{
 		T_Damage(other, self, self->creator, self->velocity, self->s.origin, plane->normal, self->dmg, 0, 0, MOD_ICEBOLT);//FIXME (MOD)
-		chill_target(other, self->chill_level, self->chill_time);
+		chill_target(self, other, self->chill_level, self->chill_time);
 
 		//gi.sound(other, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav"), 1, ATTN_NORM, 0);
 	}

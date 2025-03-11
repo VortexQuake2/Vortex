@@ -729,6 +729,13 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		menu_add_line(ent, "Synergy: Fire", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: firewall", MENU_WHITE_CENTERED);
 		return 5;
+	case GLACIAL_SPIKE:
+		menu_add_line(ent, "Fires a glacial spike", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "that damages and freezes", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "enemies! Uses power cubes.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Synergy: Ice", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Command: glacialspike", MENU_WHITE_CENTERED);
+		return 5;
 	case FROZEN_ORB:
 		menu_add_line(ent, "Fires a frozen orb that", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "shoots icy shards to damage", MENU_WHITE_CENTERED);

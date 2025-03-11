@@ -64,8 +64,8 @@ const talentdef_t talents_necromancer[] = {
 };
 
 const talentdef_t talents_mage[] = {
-        {TALENT_ICE_BOLT,      5, false},
-        {TALENT_FROST_NOVA,    5, false},
+  //     {TALENT_ICE_BOLT,      5, false},
+ //       {TALENT_FROST_NOVA,    5, false},
         {TALENT_IMP_MAGICBOLT, 5, false},
         {TALENT_MANASHIELD,    5, false},
         {TALENT_MEDITATION,    5, false},
@@ -424,10 +424,11 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             menu_add_line(ent, "health using corpse eater.", MENU_WHITE_CENTERED);
             return 2;
             //Mage talents
+            /*
         case TALENT_ICE_BOLT:
             menu_add_line(ent, "Use 'icebolt' instead of", MENU_WHITE_CENTERED);
             menu_add_line(ent, "fireball to chill targets.", MENU_WHITE_CENTERED);
-            return 2;
+            return 2;*/
         case TALENT_MEDITATION:
             menu_add_line(ent, "Recharge your power", MENU_WHITE_CENTERED);
             menu_add_line(ent, "cubes at a whim (cmd '+manacharge').", MENU_WHITE_CENTERED);
@@ -439,11 +440,12 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             menu_add_line(ent, "effectiveness", MENU_WHITE_CENTERED);
             menu_add_line(ent, "(cmd 'overload').", MENU_WHITE_CENTERED);
             return 5;
+            /*
         case TALENT_FROST_NOVA:
             menu_add_line(ent, "Special nova spell", MENU_WHITE_CENTERED);
             menu_add_line(ent, "that chills players.", MENU_WHITE_CENTERED);
             menu_add_line(ent, "(cmd frostnova)", MENU_WHITE_CENTERED);
-            return 3;
+            return 3;*/
         case TALENT_IMP_MAGICBOLT:
             menu_add_line(ent, "Power cubes are refunded", MENU_WHITE_CENTERED);
             menu_add_line(ent, "on successful hits.", MENU_WHITE_CENTERED);

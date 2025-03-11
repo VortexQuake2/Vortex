@@ -382,7 +382,7 @@ void monster_fire_poison(edict_t* self)
 		fire_poison(self, start, forward, 0, radius, speed, damage, 10, false);
 }
 
-void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int chillLevel, float chillDuration);
+void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int chillLevel, float chillDuration, float freezeDuration);
 void monster_fire_icebolt(edict_t* self)
 {
 	int damage, radius, speed;
@@ -401,7 +401,7 @@ void monster_fire_icebolt(edict_t* self)
 	duration = ICEBOLT_INITIAL_CHILL_DURATION + ICEBOLT_ADDON_CHILL_DURATION * slvl;
 
 	MonsterAim(self, M_PROJECTILE_ACC, speed, true, 0, forward, start);
-	fire_icebolt(self, start, forward, damage, radius, speed, (int)(2 * slvl), duration);
+	fire_icebolt(self, start, forward, damage, radius, speed, (int)(2 * slvl), duration, 0);
 	// Play sound effect
 	gi.sound(self, CHAN_WEAPON, gi.soundindex("spells/coldcast.wav"), 1, ATTN_NORM, 0);
 }

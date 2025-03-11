@@ -2789,8 +2789,8 @@ qboolean vrx_find_random_spawn_point (edict_t *ent, qboolean air);
 void lasersight_off (edict_t *ent);
 void cmd_SentryGun(edict_t *ent);
 void Cmd_ExplodingArmor_f (edict_t *ent);
-void Cmd_Nova_f (edict_t *ent, int frostLevel, float skill_mult, float cost_mult);
-void Cmd_FrostNova_f (edict_t *ent, float skill_mult, float cost_mult);
+//void Cmd_Nova_f(edict_t* ent, float skill_mult, float cost_mult);
+void Cmd_FrostNova_f(edict_t* ent, float skill_mult, float cost_mult);
 void Cmd_Magicbolt_f (edict_t *ent, float skill_mult, float cost_mult);
 void Cmd_StaticField_f(edict_t *ent);
 void Cmd_FireBeam_f (edict_t *ent, int toggle);
@@ -2843,6 +2843,7 @@ void Cmd_ComputeNodes_f (edict_t *ent);
 void Cmd_ToggleShowGrid (edict_t *ent);
 void Cmd_Firewall_f(edict_t* ent, float skill_mult, float cost_mult);
 void Cmd_FrozenOrb_f(edict_t* ent, float skill_mult, float cost_mult);
+void Cmd_GlacialSpike_f(edict_t* ent, float skill_mult, float cost_mult);
 
 que_t *que_ptr (que_t *src, que_t *dst)
 {
@@ -2906,24 +2907,29 @@ void Cmd_Overload_f (edict_t *ent)
 	}
 	else if (Q_stricmp(cmd, "frozenorb") == 0)
 	{
-		if (GetOverloadValues(ent, talentLevel, cubes, ICEBOLT_COST, &cost_mult, &skill_mult))
+		if (GetOverloadValues(ent, talentLevel, cubes, FROZEN_ORB_COST, &cost_mult, &skill_mult))
 			Cmd_FrozenOrb_f(ent, skill_mult, cost_mult);
 	}
+	else if (Q_stricmp(cmd, "glacialspike") == 0)
+	{
+		if (GetOverloadValues(ent, talentLevel, cubes, ICEBOLT_COST, &cost_mult, &skill_mult))//FIXME
+			Cmd_GlacialSpike_f(ent, skill_mult, cost_mult);
+	}/*
 	else if (Q_stricmp(cmd, "icebolt") == 0)
 	{
 		if (GetOverloadValues(ent, talentLevel, cubes, ICEBOLT_COST, &cost_mult, &skill_mult))
 			Cmd_IceBolt_f(ent, skill_mult, cost_mult);
-	}
+	}*/
 	else if (Q_stricmp(cmd, "meteor") == 0)
 	{
 		if (GetOverloadValues(ent, talentLevel, cubes, METEOR_COST, &cost_mult, &skill_mult))
 			Cmd_Meteor_f(ent, skill_mult, cost_mult);
-	}
+	}/*
 	else if (Q_stricmp(cmd, "nova") == 0)
 	{
 		if (GetOverloadValues(ent, talentLevel, cubes, NOVA_COST, &cost_mult, &skill_mult))
 			Cmd_Nova_f(ent, 0, skill_mult, cost_mult);
-	}
+	}*/
 	else if (Q_stricmp(cmd, "frostnova") == 0)
 	{
 		if (GetOverloadValues(ent, talentLevel, cubes, NOVA_COST, &cost_mult, &skill_mult))
@@ -3414,8 +3420,8 @@ void ClientCommand (edict_t *ent)
 		Cmd_FireBeam_f(ent, 0);
 	else if (!Q_stricmp(cmd, "magicbolt"))
 		Cmd_Magicbolt_f(ent, 1.0, 1.0);
-	else if (!Q_stricmp(cmd, "nova"))
-		Cmd_Nova_f(ent, 0, 1.0, 1.0);
+	//else if (!Q_stricmp(cmd, "nova"))
+	//	Cmd_Nova_f(ent, 0, 1.0, 1.0);
 	//Talent: Frost Nova
 	else if (!Q_stricmp(cmd, "frostnova"))
 		Cmd_FrostNova_f(ent, 1.0, 1.0);
@@ -3491,14 +3497,16 @@ void ClientCommand (edict_t *ent)
 		SpawnTotem(ent, NATURE_TOTEM);
 	else if (Q_stricmp (cmd, "fireball") == 0)
 		Cmd_Fireball_f (ent, 1.0, 1.0);
-	else if (Q_stricmp (cmd, "icebolt") == 0)
-		Cmd_IceBolt_f (ent, 1.0, 1.0);
+	//else if (Q_stricmp (cmd, "icebolt") == 0)
+	//	Cmd_IceBolt_f (ent, 1.0, 1.0);
 	else if (Q_stricmp(cmd, "frozenorb") == 0)
 		Cmd_FrozenOrb_f(ent, 1.0, 1.0);
 	else if (Q_stricmp (cmd, "lightningstorm") == 0)
 		Cmd_LightningStorm_f (ent, 1.0, 1.0);
 	else if (Q_stricmp(cmd, "firewall") == 0)
 		Cmd_Firewall_f(ent, 1.0, 1.0);
+	else if (Q_stricmp(cmd, "glacialspike") == 0)
+		Cmd_GlacialSpike_f(ent, 1.0, 1.0);
 	//K03 End
 	else safe_cprintf(ent, PRINT_HIGH, "Unknown client command: %s\n", cmd);
 	/*

@@ -23,6 +23,8 @@ const abilitydef_t ability_general[] = {
         {FLASH,           0, 1,                1},
         {MONSTER_SUMMON,  0, 5,                1},
         {FORCE_WALL,      0, 5,                1}, // deprecated--rework for engy?
+        {BOMB_SPELL,      0, 5,                1}, // deprecated
+        {MAGICBOLT,       0, 5,                1}, // deprecated
         {-1,              0, 0,                0} // Guardian (Add skills above this)
 };
 
@@ -105,11 +107,9 @@ const abilitydef_t ability_shaman[] = { // SHAMAN
 
 // theme: high mobility all out magical offense
 const abilitydef_t ability_mage[] = { // MAGE
-        {MAGICBOLT,       0, DEFAULT_SOFTMAX,   0},
         {NOVA,            0, DEFAULT_SOFTMAX,   0},
-        {BOMB_SPELL,      0, DEFAULT_SOFTMAX,   0},
         {FROZEN_ORB,      0, DEFAULT_SOFTMAX,   0},
-        //{FORCE_WALL,      0, DEFAULT_SOFTMAX,   0},
+        {GLACIAL_SPIKE,   0, DEFAULT_SOFTMAX,   0},
         {FIREWALL,        0, DEFAULT_SOFTMAX,   0},
         {LIGHTNING,       0, DEFAULT_SOFTMAX,   0},
         {METEOR,          0, DEFAULT_SOFTMAX,   0},

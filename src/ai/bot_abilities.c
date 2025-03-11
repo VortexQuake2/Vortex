@@ -204,7 +204,7 @@ float AI_GetAbilityCost(edict_t* ent, int ability_index)
 	case EMP: return (25 - vrx_get_talent_level(ent, TALENT_BOMBARDIER));
 	case MAGICBOLT: return BOLT_COST;
 	case FIREBALL: return FIREBALL_COST;
-	case NOVA: return NOVA_COST;
+	case NOVA: return FROST_NOVA_COST;
 	case LIGHTNING: return LIGHTNING_COST;
 	case METEOR: return METEOR_COST;
 	case LIGHTNING_STORM: return LIGHTNING_COST;
@@ -289,7 +289,7 @@ void Cmd_Napalm_f(edict_t* ent);
 void Cmd_TossEMP(edict_t* ent);
 void Cmd_Magicbolt_f(edict_t* ent, float skill_mult, float cost_mult);
 void Cmd_Fireball_f(edict_t* ent, float skill_mult, float cost_mult);
-void Cmd_Nova_f(edict_t* ent, int frostLevel, float skill_mult, float cost_mult);
+void Cmd_FrostNova_f(edict_t* ent, float skill_mult, float cost_mult);
 void Cmd_ChainLightning_f(edict_t* ent, float skill_mult, float cost_mult);
 void Cmd_Meteor_f(edict_t* ent, float skill_mult, float cost_mult);
 void Cmd_LightningStorm_f(edict_t* ent, float skill_mult, float cost_mult);
@@ -360,7 +360,7 @@ void BOT_DMclass_FireAbility(edict_t* self, int ability_index)
 	case EMP: Cmd_TossEMP(self); break;
 	case MAGICBOLT: Cmd_Magicbolt_f(self, 1.0, 1.0); break;
 	case FIREBALL: Cmd_Fireball_f(self, 1.0, 1.0); break;
-	case NOVA: Cmd_Nova_f(self, 0, 1.0, 1.0); break;
+	case NOVA: Cmd_FrostNova_f(self, 1.0, 1.0); break;
 	case LIGHTNING: Cmd_ChainLightning_f(self, 1.0, 1.0); break;
 	case METEOR: Cmd_Meteor_f(self, 1.0, 1.0); break;
 	case LIGHTNING_STORM: Cmd_LightningStorm_f(self, 1.0, 1.0); break;

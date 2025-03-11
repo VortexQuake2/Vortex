@@ -418,12 +418,12 @@ char *GetTalentString(int talent_ID) {
         case TALENT_FATAL_WOUND:
             return "Fatal Wound";
         //Mage Talents
-        case TALENT_ICE_BOLT:
-            return "Ice Bolt";
+       // case TALENT_ICE_BOLT:
+        //    return "Ice Bolt";
         case TALENT_MEDITATION:
             return "Mana Charge";
-        case TALENT_FROST_NOVA:
-            return "Frost Nova";
+        //case TALENT_FROST_NOVA:
+        //    return "Frost Nova";
         case TALENT_IMP_MAGICBOLT:
             return "Imp. Magicbolt";
         case TALENT_MANASHIELD:
@@ -646,7 +646,7 @@ char *GetAbilityString(int ability_number) {
         case TELEPORT:
             return "Teleport";
         case NOVA:
-            return "Nova";
+            return "Frost Nova";
         case EXPLODING_ARMOR:
             return "Exploding Armor";
         case MIND_ABSORB:
@@ -772,6 +772,8 @@ char *GetAbilityString(int ability_number) {
             return "Golem";
         case FIREWALL:
             return "Firewall";
+        case GLACIAL_SPIKE:
+            return "Glacial Spike";
         default:
             return "<ERROR: NO NAME>";
     }
@@ -2622,6 +2624,19 @@ float vrx_get_synergy_mult(const edict_t* ent, int ability_index)
     case STATIC_FIELD:
         bonus += ent->myskills.abilities[LIGHTNING].current_level * LIGHTNING_SYNERGY_BONUS;
         bonus += ent->myskills.abilities[LIGHTNING_STORM].current_level * LIGHTNING_SYNERGY_BONUS;
+        break;
+    // mage: ice synergies
+    case NOVA:
+        bonus += ent->myskills.abilities[GLACIAL_SPIKE].current_level * ICE_SYNERGY_BONUS;
+        bonus += ent->myskills.abilities[FROZEN_ORB].current_level * ICE_SYNERGY_BONUS;
+        break;
+    case GLACIAL_SPIKE:
+        bonus += ent->myskills.abilities[NOVA].current_level * ICE_SYNERGY_BONUS;
+        bonus += ent->myskills.abilities[FROZEN_ORB].current_level * ICE_SYNERGY_BONUS;
+        break;
+    case FROZEN_ORB:
+        bonus += ent->myskills.abilities[GLACIAL_SPIKE].current_level * ICE_SYNERGY_BONUS;
+        bonus += ent->myskills.abilities[NOVA].current_level * ICE_SYNERGY_BONUS;
         break;
     }
     if (bonus > 2.0) // cap at 2x multiplier

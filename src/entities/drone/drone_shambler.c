@@ -490,7 +490,7 @@ void CalculateAimDirection(edict_t* self, vec3_t start, vec3_t aim)
 	VectorNormalize(aim);
 }
 
-void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int chillLevel, float chillDuration);
+void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int chillLevel, float chillDuration, float freezeDuration);
 void ShamblerCastIcebolt(edict_t* self)
 {
 	vec3_t forward, right, up;
@@ -534,10 +534,10 @@ void ShamblerCastIcebolt(edict_t* self)
 	MonsterAim(self, accuracy, speed, false, -1, aim_right, start_right);
 
 	// Fire icebolt from left hand
-	fire_icebolt(self, start_left, aim_left, damage, damage_radius, speed, chillLevel, chillDuration);
+	fire_icebolt(self, start_left, aim_left, damage, damage_radius, speed, chillLevel, chillDuration, 0);
 
 	// Fire icebolt from right hand
-	fire_icebolt(self, start_right, aim_right, damage, damage_radius, speed, chillLevel, chillDuration);
+	fire_icebolt(self, start_right, aim_right, damage, damage_radius, speed, chillLevel, chillDuration, 0);
 
 	// Play sound effect
 	gi.sound(self, CHAN_WEAPON, gi.soundindex("spells/coldcast.wav"), 1, ATTN_NORM, 0);

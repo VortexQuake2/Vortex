@@ -313,15 +313,15 @@ void BOT_SoldierAssignSkills(edict_t *ent)
 
 void BOT_MageAssignSkills(edict_t* ent)
 {
-	BOT_UpgradeSkill(ent, MAGICBOLT, 1);
+	BOT_UpgradeSkill(ent, FIREBALL, 1);
 	BOT_UpgradeSkill(ent, POWER_REGEN, 3); // clvl 2
-	BOT_UpgradeSkill(ent, MAGICBOLT, 9);
+	BOT_UpgradeSkill(ent, FIREBALL, 9);
 	BOT_UpgradeSkill(ent, POWER_REGEN, 2); // clvl 8
 	BOT_UpgradeSkill(ent, METEOR, 10); // clvl 13
-	BOT_UpgradeSkill(ent, NOVA, 10);
-	BOT_UpgradeSkill(ent, MAGICBOLT, 5);
+	//BOT_UpgradeSkill(ent, NOVA, 10);
+	BOT_UpgradeSkill(ent, FIREBALL, 5);
 	BOT_UpgradeSkill(ent, METEOR, 5);
-	BOT_UpgradeSkill(ent, NOVA, 5);
+	//BOT_UpgradeSkill(ent, NOVA, 5);
 	BOT_UpgradeSkill(ent, LIGHTNING, 10);
 	BOT_UpgradeSkill(ent, FIREBALL, 10);
 	BOT_UpgradeSkill(ent, LIGHTNING_STORM, 10);
