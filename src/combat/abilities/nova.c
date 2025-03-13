@@ -79,7 +79,16 @@ void Cmd_FrostNova_f (edict_t *ent, float skill_mult, float cost_mult)
 
     gi.sound(ent, CHAN_WEAPON, gi.soundindex("abilities/novaice.wav"), 1, ATTN_NORM, 0);
 
-	ent->client->ability_delay = level.time + FROST_NOVA_DELAY/* * cost_mult*/;
+	//Talent: Wizardry - makes spell timer ability-specific instead of global
+	int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
+	if (talentLevel > 0)
+	{
+		ent->myskills.abilities[NOVA].delay = level.time + FROST_NOVA_DELAY;
+		ent->client->ability_delay = level.time + FROST_NOVA_DELAY * (1 - 0.2 * talentLevel);
+	}
+	else
+		ent->client->ability_delay = level.time + FROST_NOVA_DELAY/* * cost_mult*/;
+
 	ent->client->pers.inventory[power_cube_index] -= cost;
 
 	// calling entity made a sound, used to alert monsters

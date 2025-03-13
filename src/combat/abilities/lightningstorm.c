@@ -1,26 +1,32 @@
 #include "g_local.h"
 
-void lightningstorm_think (edict_t *self) {
-    edict_t *e = NULL;
-    vec3_t start, end, dir;
-    trace_t tr;
+void lightningstorm_sound(edict_t* self)
+{
+	float r = random();
+	if (r > 0.33)
+		gi.sound(self, CHAN_ITEM, gi.soundindex("abilities/chargedbolt1.wav"), 1, ATTN_NORM, 0);
+	else if (r < 0.66)
+		gi.sound(self, CHAN_ITEM, gi.soundindex("abilities/chargedbolt2.wav"), 1, ATTN_NORM, 0);
+	else
+		gi.sound(self, CHAN_ITEM, gi.soundindex("abilities/chargedbolt4.wav"), 1, ATTN_NORM, 0);
+}
 
-    // owner must be alive
-    if (!G_EntIsAlive(self->owner) || vrx_has_flag(self->owner) || (self->delay < level.time)) {
-        G_FreeEdict(self);
-        return;
-    }
+void lightningstorm_attack(edict_t* self, vec3_t start)
+{
+	edict_t* e = NULL;
+	vec3_t end, dir;
+	trace_t tr;
 
-    // calculate randomized starting position
-    VectorCopy(self->s.origin, start);
-    start[0] += GetRandom(0, (int) self->dmg_radius) * crandom();
-    start[1] += GetRandom(0, (int) self->dmg_radius) * crandom();
-    tr = gi.trace(self->s.origin, NULL, NULL, start, NULL, MASK_SOLID);
-	VectorCopy(tr.endpos, start);
-	VectorCopy(start, end);
-	end[2] += 8192;
-	tr = gi.trace(start, NULL, NULL, end, NULL, MASK_SOLID);
-	VectorCopy(tr.endpos, start);
+	// calculate randomized starting position
+	//VectorCopy(self->s.origin, start);
+	//start[0] += GetRandom(0, (int)self->dmg_radius) * crandom();
+	//start[1] += GetRandom(0, (int)self->dmg_radius) * crandom();
+	//tr = gi.trace(self->s.origin, NULL, NULL, start, NULL, MASK_SOLID);
+	//VectorCopy(tr.endpos, start);
+	//VectorCopy(start, end);
+	//end[2] += 8192;
+	//tr = gi.trace(start, NULL, NULL, end, NULL, MASK_SOLID);
+	//VectorCopy(tr.endpos, start);
 
 	// calculate ending position
 	VectorCopy(start, end);
@@ -28,6 +34,7 @@ void lightningstorm_think (edict_t *self) {
 	tr = gi.trace(start, NULL, NULL, end, NULL, MASK_SHOT);
 	VectorCopy(tr.endpos, end);
 
+	// find targets within radius of the impact site to damage
 	while ((e = findradius(e, tr.endpos, LIGHTNING_STRIKE_RADIUS)) != NULL)
 	{
 		//FIXME: make a noise when we hit something?
@@ -39,15 +46,42 @@ void lightningstorm_think (edict_t *self) {
 			T_Damage(e, self, self->owner, dir, tr.endpos, tr.plane.normal, self->dmg, 0, DAMAGE_ENERGY, MOD_LIGHTNING_STORM);
 		}
 	}
-	
-	gi.WriteByte (svc_temp_entity);
-	gi.WriteByte (TE_HEATBEAM);
-	gi.WriteShort (self-g_edicts);
-	gi.WritePosition (start);
-	gi.WritePosition (end);
-	gi.multicast (end, MULTICAST_PVS);
 
-//	gi.sound (self, CHAN_WEAPON, gi.soundindex("abilities/chargedbolt1.wav"), 1, ATTN_NORM, 0);
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_HEATBEAM);
+	gi.WriteShort(self - g_edicts);
+	gi.WritePosition(start);
+	gi.WritePosition(end);
+	gi.multicast(end, MULTICAST_PVS);
+
+	lightningstorm_sound(self);
+	//gi.sound(self, CHAN_ITEM, gi.soundindex("abilities/chargedbolt1.wav"), 1, ATTN_NORM, 0);
+}
+
+void lightningstorm_think (edict_t *self) 
+{
+	vec3_t start;
+	trace_t tr;
+
+    // owner must be alive
+    if (!G_EntIsAlive(self->owner) || vrx_has_flag(self->owner) || (self->delay < level.time)) {
+        G_FreeEdict(self);
+        return;
+    }
+	
+	// calculate randomized firing position
+	VectorCopy(self->s.origin, start);
+	start[0] += GetRandom(0, (int)self->dmg_radius) * crandom();
+	start[1] += GetRandom(0, (int)self->dmg_radius) * crandom();
+	tr = gi.trace(self->s.origin, NULL, NULL, start, self, MASK_SOLID);
+
+	// Talent: Chainlightning Storm
+	int talentLevel = vrx_get_talent_level(self->owner, TALENT_CL_STORM);
+
+	if (talentLevel && 0.05 * talentLevel > random())
+		fire_chainlightning(self, tr.endpos, tv(0, 0, -1), self->dmg, self->dmg_radius, 8192, CLIGHTNING_INITIAL_HR, 4);
+	else
+		lightningstorm_attack(self, tr.endpos);
 
 	self->nextthink = level.time + GetRandom(LIGHTNING_MIN_DELAY, LIGHTNING_MAX_DELAY) * FRAMETIME;
 }
@@ -57,6 +91,7 @@ void SpawnLightningStorm (edict_t *ent, vec3_t start, float radius, int duration
 	edict_t *storm;
 
 	storm = G_Spawn();
+	storm->classname = "lightning storm";
 	storm->solid = SOLID_NOT;
 	storm->svflags |= SVF_NOCLIENT;
 	storm->owner = ent;
@@ -99,9 +134,23 @@ void Cmd_LightningStorm_f (edict_t *ent, float skill_mult, float cost_mult)
 
 	tr = gi.trace(start, NULL, NULL, end, ent, MASK_SHOT);
 
+	// trace up to the ceiling/skybox
+	VectorCopy(tr.endpos, start);
+	VectorCopy(tr.endpos, end);
+	end[2] += 8192;
+	tr = gi.trace(start, NULL, NULL, end, ent, MASK_SOLID);
+
 	SpawnLightningStorm(ent, tr.endpos, radius, duration, damage);
 
-	ent->client->ability_delay = level.time + LIGHTNING_ABILITY_DELAY/* * cost_mult*/;
+	//Talent: Wizardry - makes spell timer ability-specific instead of global
+	int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
+	if (talentLevel > 0)
+	{
+		ent->myskills.abilities[LIGHTNING_STORM].delay = level.time + LIGHTNING_ABILITY_DELAY;
+		ent->client->ability_delay = level.time + LIGHTNING_ABILITY_DELAY * (1 - 0.2 * talentLevel);
+	}
+	else
+		ent->client->ability_delay = level.time + LIGHTNING_ABILITY_DELAY/* * cost_mult*/;
 	ent->client->pers.inventory[power_cube_index] -= cost;
 
 	// write a nice effect so everyone knows we've cast a spell

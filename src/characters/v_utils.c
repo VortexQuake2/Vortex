@@ -424,8 +424,12 @@ char *GetTalentString(int talent_ID) {
             return "Mana Charge";
         //case TALENT_FROST_NOVA:
         //    return "Frost Nova";
-        case TALENT_IMP_MAGICBOLT:
-            return "Imp. Magicbolt";
+        //case TALENT_IMP_MAGICBOLT:
+         //   return "Imp. Magicbolt";
+        case TALENT_CL_STORM:
+            return "CL Storm";
+        case TALENT_WIZARDRY:
+            return "Wizardry";
         case TALENT_MANASHIELD:
             return "Mana Shield";
         case TALENT_OVERLOAD:

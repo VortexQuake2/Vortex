@@ -381,7 +381,7 @@ void skull_movetogoal (edict_t *self, edict_t *goal)
 	gi.linkentity(self);
 }
 
-void ChainLightning(edict_t* ent, vec3_t start, vec3_t aimdir, int damage, int attack_range, int hop_range);
+//void ChainLightning(edict_t* ent, vec3_t start, vec3_t aimdir, int damage, int attack_range, int hop_range);
 
 void skull_attack (edict_t *self)
 {
@@ -447,7 +447,8 @@ void skull_attack (edict_t *self)
 		{
 			int cl_dmg = 10 * damage;
 			//gi.dprintf("hellspawn firing CL. base dmg %d modified %d CL %d\n", self->dmg, damage, cl_dmg);
-			ChainLightning(self, start, v, cl_dmg, SKULL_ATTACK_RANGE, CLIGHTNING_INITIAL_HR);
+			//ChainLightning(self, start, v, cl_dmg, SKULL_ATTACK_RANGE, CLIGHTNING_INITIAL_HR);
+			fire_chainlightning(self, start, v, cl_dmg, 0, SKULL_ATTACK_RANGE, CLIGHTNING_INITIAL_HR, 4);
 			self->autocurse_delay = level.framenum + (int)(1 / FRAMETIME);
 			return; // done attacking
 		}

@@ -9,7 +9,7 @@ void MagicBoltExplode(edict_t *self, edict_t *other)
 void magicbolt_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
 	//Talent: Improved Magic Bolt
-    int talentLevel = vrx_get_talent_level(self->owner, TALENT_IMP_MAGICBOLT);
+    //int talentLevel = vrx_get_talent_level(self->owner, TALENT_IMP_MAGICBOLT);
 
 	if (G_EntExists(other))
 	{
@@ -17,8 +17,8 @@ void magicbolt_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t
 			plane->normal, self->dmg, /*self->dmg*/ 0, 0, MOD_MAGICBOLT);
 
 		// scoring a hit refunds power cubes
-		if (talentLevel > 0)
-			self->owner->client->pers.inventory[power_cube_index] += self->monsterinfo.cost * (0.4 * talentLevel);
+		//if (talentLevel > 0)
+		//	self->owner->client->pers.inventory[power_cube_index] += self->monsterinfo.cost * (0.4 * talentLevel);
 	}
 
 	gi.WriteByte (svc_temp_entity);

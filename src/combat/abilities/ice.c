@@ -327,6 +327,8 @@ void Cmd_GlacialSpike_f(edict_t* ent, float skill_mult, float cost_mult)
 	radius = GLACIAL_SPIKE_INITIAL_RADIUS + GLACIAL_SPIKE_ADDON_RADIUS * skill_level;
 	speed = GLACIAL_SPIKE_INITIAL_SPEED + GLACIAL_SPIKE_ADDON_SPEED * skill_level;
 
+	
+
 	//gi.dprintf("dmg:%d slvl:%d skill_mult:%f chill_duration:%f\n",damage,slvl,skill_mult,chill_duration);
 
 	// get starting position and forward vector
@@ -336,7 +338,16 @@ void Cmd_GlacialSpike_f(edict_t* ent, float skill_mult, float cost_mult)
 
 	fire_icebolt(ent, start, forward, damage, radius, speed, 2 * skill_level, chill_duration, freeze_duration);
 
-	ent->client->ability_delay = level.time + GLACIAL_SPIKE_DELAY/* * cost_mult*/;
+	//Talent: Wizardry - makes spell timer ability-specific instead of global
+	int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
+	if (talentLevel > 0)
+	{
+		ent->myskills.abilities[GLACIAL_SPIKE].delay = level.time + GLACIAL_SPIKE_DELAY;
+		ent->client->ability_delay = level.time + GLACIAL_SPIKE_DELAY * (1 - 0.2 * talentLevel);
+	}
+	else
+		ent->client->ability_delay = level.time + GLACIAL_SPIKE_DELAY/* * cost_mult*/;
+
 	ent->client->pers.inventory[power_cube_index] -= cost;
 
 	// write a nice effect so everyone knows we've cast a spell
@@ -546,7 +557,16 @@ void Cmd_FrozenOrb_f(edict_t* ent, float skill_mult, float cost_mult)
 
 	fire_frozenorb(ent, start, forward, damage, (2 * skill_level), chill_duration);
 
-	ent->client->ability_delay = level.time + FROZEN_ORB_DELAY;
+	//Talent: Wizardry - makes spell timer ability-specific instead of global
+	int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
+	if (talentLevel > 0)
+	{
+		ent->myskills.abilities[FROZEN_ORB].delay = level.time + FROZEN_ORB_DELAY;
+		ent->client->ability_delay = level.time + FROZEN_ORB_DELAY * (1 - 0.2 * talentLevel);
+		//gi.dprintf("%d: %s: delay: %.1f ability_delay: %.1f\n", (int)level.framenum, __func__, ent->myskills.abilities[GLACIAL_SPIKE].delay, ent->client->ability_delay);
+	}
+	else
+		ent->client->ability_delay = level.time + FROZEN_ORB_DELAY;
 	ent->client->pers.inventory[power_cube_index] -= cost;
 
 	// write a nice effect so everyone knows we've cast a spell

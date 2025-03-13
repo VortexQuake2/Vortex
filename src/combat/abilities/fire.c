@@ -284,7 +284,16 @@ void Cmd_Fireball_f(edict_t* ent, float skill_mult, float cost_mult)
 
 	fire_fireball(ent, start, forward, damage, radius, speed, flames, flamedmg);
 
-	ent->client->ability_delay = level.time + FIREBALL_DELAY/* * cost_mult*/;
+	//Talent: Wizardry - makes spell timer ability-specific instead of global
+	int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
+	if (talentLevel > 0)
+	{
+		ent->myskills.abilities[FIREBALL].delay = level.time + FIREBALL_DELAY;
+		ent->client->ability_delay = level.time + FIREBALL_DELAY * (1 - 0.2 * talentLevel);
+	}
+	else
+		ent->client->ability_delay = level.time + FIREBALL_DELAY/* * cost_mult*/;
+
 	ent->client->pers.inventory[power_cube_index] -= cost;
 
 	// write a nice effect so everyone knows we've cast a spell
@@ -542,7 +551,15 @@ void Cmd_Firewall_f(edict_t* ent, float skill_mult, float cost_mult)
 	//  entity made a sound, used to alert monsters
 	ent->lastsound = level.framenum;
 
-	ent->client->ability_delay = level.time + FIREWALL_DELAY;
+	//Talent: Wizardry - makes spell timer ability-specific instead of global
+	int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
+	if (talentLevel > 0)
+	{
+		ent->myskills.abilities[FIREWALL].delay = level.time + FIREWALL_DELAY;
+		ent->client->ability_delay = level.time + FIREWALL_DELAY * (1 - 0.2 * talentLevel);
+	}
+	else
+		ent->client->ability_delay = level.time + FIREWALL_DELAY;
 	ent->client->pers.inventory[power_cube_index] -= cost;
 	ent->num_firewalls++;// increase firewall counter
 }

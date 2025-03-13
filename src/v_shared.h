@@ -376,4 +376,11 @@ void vrx_curse_heal_all(edict_t* target);
 int vrx_remove_all_monsters(edict_t* ent);
 int vrx_pvm_update_total_owned_monsters(edict_t *monster_owner, qboolean update);
 
+
+// chainlightning.c
+void fire_chainlightning(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float radius, int attack_range, int hop_range, int max_hops);
+
+// ice.c
+void chill_target(edict_t* self, edict_t* target, int chill_level, float duration);
+
 #endif

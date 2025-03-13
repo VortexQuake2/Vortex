@@ -66,7 +66,9 @@ const talentdef_t talents_necromancer[] = {
 const talentdef_t talents_mage[] = {
   //     {TALENT_ICE_BOLT,      5, false},
  //       {TALENT_FROST_NOVA,    5, false},
-        {TALENT_IMP_MAGICBOLT, 5, false},
+ //       {TALENT_IMP_MAGICBOLT, 5, false},
+        {TALENT_CL_STORM,      5, false},
+        {TALENT_WIZARDRY,      5, false},
         {TALENT_MANASHIELD,    5, false},
         {TALENT_MEDITATION,    5, false},
         {TALENT_OVERLOAD,      5, false},
@@ -445,11 +447,22 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             menu_add_line(ent, "Special nova spell", MENU_WHITE_CENTERED);
             menu_add_line(ent, "that chills players.", MENU_WHITE_CENTERED);
             menu_add_line(ent, "(cmd frostnova)", MENU_WHITE_CENTERED);
-            return 3;*/
+            return 3;
         case TALENT_IMP_MAGICBOLT:
             menu_add_line(ent, "Power cubes are refunded", MENU_WHITE_CENTERED);
             menu_add_line(ent, "on successful hits.", MENU_WHITE_CENTERED);
-            return 2;
+            return 2;*/
+        case TALENT_WIZARDRY:
+            menu_add_line(ent, "Switches spell timers to be", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "ability-specific instead of", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "global, allowing you to use", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "them simultaneously!", MENU_WHITE_CENTERED);
+            return 4;
+        case TALENT_CL_STORM:
+            menu_add_line(ent, "Adds chance for lightning", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "storms to fire chain", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "lightning!", MENU_WHITE_CENTERED);
+            return 3;
         case TALENT_MANASHIELD:
             menu_add_line(ent, "Reduces physical damage", MENU_WHITE_CENTERED);
             menu_add_line(ent, "by 80%%. All damage", MENU_WHITE_CENTERED);

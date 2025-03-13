@@ -695,7 +695,7 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		menu_add_line(ent, "power cubes.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Synergy: Lightning", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: chainlightning", MENU_WHITE_CENTERED);
-		return 5;
+		return 6;
 	case METEOR:
 		menu_add_line(ent, "Drops a meteor from the sky", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "causing radius damage on", MENU_WHITE_CENTERED);

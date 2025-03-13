@@ -208,7 +208,15 @@ void MeteorAttack (edict_t *ent, int damage, int radius, int speed, float skill_
 	gi.multicast (ent->s.origin, MULTICAST_PVS);
 
     //gi.sound(meteor, CHAN_WEAPON, gi.soundindex("abilities/meteorlaunch_short.wav"), 1, ATTN_NORM, 0);
-	ent->client->ability_delay = level.time + METEOR_DELAY/* * cost_mult*/;
+	//Talent: Wizardry - makes spell timer ability-specific instead of global
+	int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
+	if (talentLevel > 0)
+	{
+		ent->myskills.abilities[METEOR].delay = level.time + METEOR_DELAY;
+		ent->client->ability_delay = level.time + METEOR_DELAY * (1 - 0.2 * talentLevel);
+	}
+	else
+		ent->client->ability_delay = level.time + METEOR_DELAY/* * cost_mult*/;
 	ent->client->pers.inventory[power_cube_index] -= METEOR_COST * cost_mult;
 
 	// calling entity made a sound, used to alert monsters

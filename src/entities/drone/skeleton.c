@@ -303,7 +303,7 @@ void skeleton_swing_hit(edict_t* self)
 }
 
 void poison_target(edict_t* ent, edict_t* target, int damage, float duration, int meansOfdeath, qboolean stack);
-void chill_target(edict_t* target, int chill_level, float duration);
+//void chill_target(edict_t* target, int chill_level, float duration);
 
 void skeleton_attack_swing(edict_t* self)
 {
@@ -339,7 +339,7 @@ void skeleton_attack_swing(edict_t* self)
 			if (self->s.skinnum == SKELETON_TYPE_ICE) // blue skin = cold enchanted
 			{
 				float duration = ICEBOLT_INITIAL_CHILL_DURATION + ICEBOLT_ADDON_CHILL_DURATION * slvl;
-				chill_target(e, (2 * slvl), duration);
+				chill_target(self, e, (2 * slvl), duration);
 			}
 			else if (self->s.skinnum == SKELETON_TYPE_POISON) // green skin = poison enchanted
 			{

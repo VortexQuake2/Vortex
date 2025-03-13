@@ -993,8 +993,8 @@ void vrx_apply_knockback(edict_t *targ, edict_t *attacker, vec_t *dir, int knock
 }
 
 void vrx_apply_invincibility(edict_t *targ, float damage, int dflags, float *take, float *save) {
-	gclient_t	*client = G_GetClient(targ);
-	qboolean invincible = (client && client->invincible_framenum > level.framenum);
+	edict_t* cl_ent = G_GetClient(targ);
+	qboolean invincible = (cl_ent && cl_ent->client && cl_ent->client->invincible_framenum > level.framenum);
 	qboolean bypass_invincibility = (dflags & DAMAGE_NO_PROTECTION);
 
 	// az: add decino's invincibility not working for tank morphs from indy

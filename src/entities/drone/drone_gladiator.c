@@ -229,7 +229,7 @@ void gladiator_melee(edict_t *self)
 }
 
 
-void ChainLightning (edict_t *ent, vec3_t start, vec3_t aimdir, int damage, int attack_range, int hop_range);
+//void ChainLightning (edict_t *ent, vec3_t start, vec3_t aimdir, int damage, int attack_range, int hop_range);
 
 void GladiatorChainLightning (edict_t *self)
 {
@@ -242,7 +242,8 @@ void GladiatorChainLightning (edict_t *self)
 	damage = 50 + 15 * drone_damagelevel(self); // dmg: gladiator_chain_lightning
 
 	MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, MZ2_GLADIATOR_RAILGUN_1, forward, start);
-	ChainLightning(self, start, forward, damage, 1024, 256);
+	//ChainLightning(self, start, forward, damage, 1024, 256);
+	fire_chainlightning(self, start, forward, damage, 0, 1024, CLIGHTNING_INITIAL_HR, 4);
 }
 
 void GladiatorGun (edict_t *self)
