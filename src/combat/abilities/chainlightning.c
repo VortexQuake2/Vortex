@@ -32,9 +32,7 @@ void G_SpawnParticleTrail (vec3_t start, vec3_t end, int particles, int color)
 		VectorMA(org, spacing, dir, org);
 	}
 }
-
-
-
+/*
 #define CL_CHECK_AND_ATTACK			1		// check if target is valid, then attack
 #define CL_CHECK					2		// check if the target is valid
 #define CL_ATTACK					3		// attack only
@@ -65,6 +63,7 @@ qboolean ChainLightning_Attack (edict_t *ent, edict_t *target, int damage, int m
 
 	return result;
 }
+*/
 
 void CL_attack(edict_t* self, edict_t *target, int damage)
 {
@@ -230,6 +229,7 @@ void fire_chainlightning(edict_t* self, vec3_t start, vec3_t aimdir, int damage,
 	lightning->monsterinfo.dmglist[lightning->monsterinfo.target_index++].player = enemy;
 }
 
+/*
 void ChainLightning (edict_t *ent, vec3_t start, vec3_t aimdir, int damage, int attack_range, int hop_range)
 {
 	int		i=0, hops=CLIGHTNING_MAX_HOPS;
@@ -346,6 +346,7 @@ void ChainLightning (edict_t *ent, vec3_t start, vec3_t aimdir, int damage, int 
 		}
 	}
 }
+*/
 
 void Cmd_ChainLightning_f (edict_t *ent, float skill_mult, float cost_mult)
 {

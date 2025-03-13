@@ -1,5 +1,9 @@
 #include "g_local.h"
 
+// needed for Meteoric Fire talent
+edict_t* CreateFirewallFlames(edict_t* ent, int skill_level, float skill_mult);
+void flames_med_bbox(vec3_t mins, vec3_t maxs);
+
 void meteor_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
 	edict_t *e=NULL;
@@ -30,8 +34,32 @@ void meteor_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *s
 	gi.WritePosition (self->s.origin);
 	gi.multicast (self->s.origin, MULTICAST_PHS);
 
+	// Talent: Meteoric Fire - adds a chance to spawn a firewall
+	if (self->style && 0.1 * self->style > random() && self->owner->num_firewalls < 4)//FIXME: firewall max count
+	{
+		vec3_t start, end, mins, maxs;
+		edict_t* flames = CreateFirewallFlames(self->owner, self->monsterinfo.level, vrx_get_synergy_mult(self->owner, FIREWALL));
+		// trace to the floor
+		VectorCopy(self->s.origin, start);
+		VectorCopy(start, end);
+		end[2] = -8192;
+		trace_t tr = gi.trace(start, NULL, NULL, end, self, MASK_SOLID);
+		VectorCopy(tr.endpos, start);
+		// check if firewall bbox will fit
+		flames_med_bbox(mins, maxs);
+		tr = gi.trace(start, mins, maxs, start, self, MASK_SOLID);
+		if (tr.fraction == 1)
+		{
+			VectorCopy(start, flames->s.origin);
+			gi.linkentity(flames);
+			self->owner->num_firewalls++;
+		}
+		else
+			G_FreeEdict(flames);
+	}
+
 	// create flames near point of detonation
-	SpawnFlames(self->owner, self->s.origin, 10, (int)(self->dmg*0.1), 100);
+	SpawnFlames(self->owner, self->s.origin, 10, (int)(self->dmg*0.2), 100);
 
 	// remove meteor entity
 	self->think = G_FreeEdict;
@@ -99,6 +127,18 @@ void fire_meteor (edict_t *self, vec3_t end, int damage, int radius, int speed)
 	meteor->dmg_radius = radius;
 	meteor->classname = "meteor";
 
+	// Talent: Meteoric Fire - spawns a firewall on meteor impact
+	int talentLevel = vrx_get_talent_level(self, TALENT_METEORIC_FIRE);
+	if (talentLevel > 0)
+	{
+		meteor->style = talentLevel;
+		// use firewall level
+		meteor->monsterinfo.level = self->myskills.abilities[FIREWALL].current_level;
+		// set to level 1 if not upgraded
+		if (meteor->monsterinfo.level < 1)
+			meteor->monsterinfo.level = 1;
+	}
+
 	// copy meteor starting origin
 	VectorCopy (tr.endpos, meteor->s.origin);
 	VectorCopy (tr.endpos, meteor->s.old_origin);
@@ -134,8 +174,13 @@ void MeteorAttack (edict_t *ent, int damage, int radius, int speed, float skill_
 
 	tr = gi.trace (start, NULL, NULL, end, ent, MASK_SHOT);
 
+	// aimed at something?
+	if (G_ValidTargetEnt(tr.ent, false))
+		VectorCopy(tr.ent->s.origin, start);
+	else
+		VectorCopy(tr.endpos, start);
+
 	// make sure we're starting at the floor
-	VectorCopy(tr.endpos, start);
 	VectorCopy(start, end);
 	end[2] -= 8192;
 	tr = gi.trace (start, NULL, NULL, end, ent, MASK_SOLID);
@@ -230,7 +275,9 @@ void Cmd_Meteor_f (edict_t *ent, float skill_mult, float cost_mult)
 	int radius=METEOR_INITIAL_RADIUS+METEOR_ADDON_RADIUS*ent->myskills.abilities[METEOR].current_level;
 	int	cost=METEOR_COST*cost_mult;
 
-	if (!G_CanUseAbilities(ent, ent->myskills.abilities[METEOR].current_level, cost))
+	//if (!G_CanUseAbilities(ent, ent->myskills.abilities[METEOR].current_level, cost))
+	//	return;
+	if (!V_CanUseAbilities(ent, METEOR, cost, true))
 		return;
 	if (ent->myskills.abilities[METEOR].disable)
 		return;

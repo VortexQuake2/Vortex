@@ -1442,7 +1442,7 @@ void T_RadiusDamage (edict_t *inflictor, edict_t *attacker, float damage, edict_
 			{
 				int knockback = (int) points;
 				
-				if (mod == MOD_FIREBALL)
+				if (mod == MOD_FIREBALL || mod == MOD_METEOR)
 					knockback = 100;
 				else if (mod == MOD_ICEBOLT || mod == MOD_GAS)
 					knockback = 0;

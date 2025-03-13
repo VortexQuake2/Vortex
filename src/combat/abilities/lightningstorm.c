@@ -79,7 +79,7 @@ void lightningstorm_think (edict_t *self)
 	int talentLevel = vrx_get_talent_level(self->owner, TALENT_CL_STORM);
 
 	if (talentLevel && 0.05 * talentLevel > random())
-		fire_chainlightning(self, tr.endpos, tv(0, 0, -1), self->dmg, self->dmg_radius, 8192, CLIGHTNING_INITIAL_HR, 4);
+		fire_chainlightning(self, tr.endpos, tv(0, 0, -1), self->dmg_counter, self->dmg_radius, 8192, CLIGHTNING_INITIAL_HR, 4);
 	else
 		lightningstorm_attack(self, tr.endpos);
 
@@ -103,6 +103,17 @@ void SpawnLightningStorm (edict_t *ent, vec3_t start, float radius, int duration
 	storm->dmg_radius = radius;
 	storm->dmg = damage;
 	gi.linkentity(storm);
+
+	// Talent: Chainlightning Storm
+	int talentLevel = vrx_get_talent_level(ent, TALENT_CL_STORM);
+	if (talentLevel > 1)
+	{
+		int skill_level = ent->myskills.abilities[LIGHTNING].current_level;
+		if (skill_level < 1)
+			skill_level = 1;
+		// set chainlightning damage
+		storm->dmg_counter = CLIGHTNING_INITIAL_DMG + (CLIGHTNING_ADDON_DMG * skill_level * vrx_get_synergy_mult(ent, LIGHTNING));
+	}
 }
 
 void Cmd_LightningStorm_f (edict_t *ent, float skill_mult, float cost_mult)

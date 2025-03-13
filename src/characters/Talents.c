@@ -68,6 +68,7 @@ const talentdef_t talents_mage[] = {
  //       {TALENT_FROST_NOVA,    5, false},
  //       {TALENT_IMP_MAGICBOLT, 5, false},
         {TALENT_CL_STORM,      5, false},
+        {TALENT_METEORIC_FIRE, 5, false},
         {TALENT_WIZARDRY,      5, false},
         {TALENT_MANASHIELD,    5, false},
         {TALENT_MEDITATION,    5, false},
@@ -462,6 +463,11 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             menu_add_line(ent, "Adds chance for lightning", MENU_WHITE_CENTERED);
             menu_add_line(ent, "storms to fire chain", MENU_WHITE_CENTERED);
             menu_add_line(ent, "lightning!", MENU_WHITE_CENTERED);
+            return 3;
+        case TALENT_METEORIC_FIRE:
+            menu_add_line(ent, "Adds chance for meteor", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "to create a firewall on", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "impact.", MENU_WHITE_CENTERED);
             return 3;
         case TALENT_MANASHIELD:
             menu_add_line(ent, "Reduces physical damage", MENU_WHITE_CENTERED);

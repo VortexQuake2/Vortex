@@ -262,6 +262,7 @@ void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float 
 
 // note: there are only 5 talent levels, so addon values will be higher
 //Talent: Ice Bolt
+/*
 void Cmd_IceBolt_f(edict_t* ent, float skill_mult, float cost_mult)
 {
 	int slvl = vrx_get_talent_level(ent, TALENT_ICE_BOLT);
@@ -298,7 +299,7 @@ void Cmd_IceBolt_f(edict_t* ent, float skill_mult, float cost_mult)
 
 	fire_icebolt(ent, start, forward, damage, radius, speed, 2 * slvl, chill_duration, 0);
 
-	ent->client->ability_delay = level.time + ICEBOLT_DELAY/* * cost_mult*/;
+	ent->client->ability_delay = level.time + ICEBOLT_DELAY
 	ent->client->pers.inventory[power_cube_index] -= cost;
 
 	// write a nice effect so everyone knows we've cast a spell
@@ -308,7 +309,7 @@ void Cmd_IceBolt_f(edict_t* ent, float skill_mult, float cost_mult)
 	gi.multicast(ent->s.origin, MULTICAST_PVS);
 
 	gi.sound(ent, CHAN_ITEM, gi.soundindex("abilities/coldcast.wav"), 1, ATTN_NORM, 0);
-}
+}*/
 
 void Cmd_GlacialSpike_f(edict_t* ent, float skill_mult, float cost_mult)
 {
