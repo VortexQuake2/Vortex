@@ -68,6 +68,7 @@ const talentdef_t talents_mage[] = {
  //       {TALENT_FROST_NOVA,    5, false},
  //       {TALENT_IMP_MAGICBOLT, 5, false},
         {TALENT_CL_STORM,      5, false},
+        {TALENT_NOVA_ORB,      5, false},
         {TALENT_METEORIC_FIRE, 5, false},
         {TALENT_WIZARDRY,      5, false},
         {TALENT_MANASHIELD,    5, false},
@@ -459,6 +460,10 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             menu_add_line(ent, "global, allowing you to use", MENU_WHITE_CENTERED);
             menu_add_line(ent, "them simultaneously!", MENU_WHITE_CENTERED);
             return 4;
+        case TALENT_NOVA_ORB:
+            menu_add_line(ent, "Adds chance for frozen orb", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "to explode into a frost nova!", MENU_WHITE_CENTERED);
+            return 2;
         case TALENT_CL_STORM:
             menu_add_line(ent, "Adds chance for lightning", MENU_WHITE_CENTERED);
             menu_add_line(ent, "storms to fire chain", MENU_WHITE_CENTERED);

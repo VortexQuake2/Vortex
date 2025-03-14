@@ -416,17 +416,30 @@ void fire_iceshard(edict_t* self, vec3_t start, vec3_t dir, float speed, int dam
 		bolt->svflags |= SVF_NOCLIENT;
 }
 
-void frozenorb_attack(edict_t* self, int num_shards)
+void frozenorb_attack(edict_t* self, int num_shards, qboolean explode)
 {
 	float turn_degrees = 360 / num_shards;
 	vec3_t forward;
+
+	//Talent: Nova Orb - adds chance for frozen orb to explode into a frost nova
+	int talentLevel = vrx_get_talent_level(self->owner, TALENT_NOVA_ORB);
+	float chance = 0.2 * talentLevel;
+	if (explode && talentLevel > 0 && chance > random())
+	{
+		int skill_level = self->owner->myskills.abilities[NOVA].current_level;
+		int damage = (FROST_NOVA_INITIAL_DAMAGE + FROST_NOVA_ADDON_DAMAGE * skill_level) * vrx_get_synergy_mult(self->owner, NOVA);
+		float radius = FROST_NOVA_INITIAL_RADIUS + FROST_NOVA_ADDON_RADIUS * skill_level;
+		float chill = (FROST_NOVA_INITIAL_CHILL + FROST_NOVA_ADDON_CHILL * skill_level);
+
+		fire_nova(self, self->owner, damage, radius, 2 * skill_level, chill);
+	}
 
 	for (int i = 0; i < num_shards; i++)
 	{
 		self->s.angles[YAW] += turn_degrees;
 		AngleCheck(&self->s.angles[YAW]);
 		AngleVectors(self->s.angles, forward, NULL, NULL);
-		fire_iceshard(self->owner, self->s.origin, forward, 650, self->dmg, 10, 10);//FIXME: speed & chill values
+		fire_iceshard(self->owner, self->s.origin, forward, 650, self->dmg, self->chill_level, self->chill_time);
 	}
 }
 
@@ -437,14 +450,15 @@ void frozenorb_think(edict_t* self)
 
 	if (level.time > self->delay)
 	{
-		frozenorb_attack(self, 12);
+		frozenorb_attack(self, 12, true);
+
 		G_FreeEdict(self);
 		return;
 	}
 
 	if (level.time > self->monsterinfo.attack_finished)
 	{
-		frozenorb_attack(self, 8);
+		frozenorb_attack(self, 8, false);
 		self->monsterinfo.attack_finished = level.time + 0.3;//SPIKEGRENADE_TURN_DELAY;
 	}
 
@@ -489,7 +503,7 @@ void frozenorb_touch(edict_t* ent, edict_t* other, cplane_t* plane, csurface_t* 
 	// particle effects at impact site
 	SpawnDamage(TE_ELECTRIC_SPARKS, ent->s.origin, plane->normal);
 
-	frozenorb_attack(ent, 12);
+	frozenorb_attack(ent, 12, true);
 	icebolt_remove(ent);
 	ent->exploded = true;
 

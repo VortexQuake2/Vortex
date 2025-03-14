@@ -376,6 +376,8 @@ void vrx_curse_heal_all(edict_t* target);
 int vrx_remove_all_monsters(edict_t* ent);
 int vrx_pvm_update_total_owned_monsters(edict_t *monster_owner, qboolean update);
 
+// nova.c
+void fire_nova(edict_t* inflictor, edict_t* attacker, int damage, float radius, int chillLevel, float chillDuration);
 
 // chainlightning.c
 void fire_chainlightning(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float radius, int attack_range, int hop_range, int max_hops);

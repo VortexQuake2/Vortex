@@ -58,6 +58,12 @@ void fire_think (edict_t *self)
 		return;
 	}
 
+	// fire removes ice effects
+	CurseRemove(self->enemy, CURSE_FROZEN, 0);
+	self->enemy->chill_level = 0;
+	self->enemy->chill_time = 0;
+	self->enemy->chill_owner = NULL;
+
 	damage = self->dmg;	
 
 	VectorCopy(self->enemy->s.origin,self->s.origin);
@@ -77,8 +83,8 @@ void burn_person (edict_t *target, edict_t *owner, int damage)
 
 	if (level.time < pregame_time->value)
 		return;
-	if (que_typeexists(target->curses, CURSE_FROZEN))
-		return; // attacker is frozen!
+	//if (que_typeexists(target->curses, CURSE_FROZEN))
+	//	return; // attacker is frozen!
 	if (!G_ValidTarget(owner, target, false, true))
 		return;
 	while ((slot = que_findtype(target->curses, slot, CURSE_BURN)) != NULL)

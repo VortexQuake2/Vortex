@@ -475,7 +475,7 @@ void flames_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* su
 	}
 }
 
-#define FIREWALL_MAX 4
+#define FIREWALL_MAX 4 //FIXME: add to lua
 
 edict_t* CreateFirewallFlames(edict_t* ent, int skill_level, float skill_mult)
 {

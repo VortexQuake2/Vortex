@@ -430,6 +430,8 @@ char *GetTalentString(int talent_ID) {
             return "CL Storm";
         case TALENT_WIZARDRY:
             return "Wizardry";
+        case TALENT_NOVA_ORB:
+            return "Nova Orb";
         case TALENT_METEORIC_FIRE:
             return "Meteoric Fire";
         case TALENT_MANASHIELD:
