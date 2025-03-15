@@ -2081,6 +2081,7 @@ void BOT_DMclass_RunFrame( edict_t *self )
 	else
 	{
 		BOT_DMclass_UseSkeleton(self); // try to spawn skeletons if upgraded and we have less than max
+		BOT_DMclass_UseGolem(self); // try to spawn golems if upgraded and we have less than max
 	}
 
 	// Execute the move, or wander

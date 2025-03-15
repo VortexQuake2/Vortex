@@ -313,18 +313,46 @@ void BOT_SoldierAssignSkills(edict_t *ent)
 
 void BOT_MageAssignSkills(edict_t* ent)
 {
-	BOT_UpgradeSkill(ent, FIREBALL, 1);
-	BOT_UpgradeSkill(ent, POWER_REGEN, 3); // clvl 2
-	BOT_UpgradeSkill(ent, FIREBALL, 9);
-	BOT_UpgradeSkill(ent, POWER_REGEN, 2); // clvl 8
-	BOT_UpgradeSkill(ent, METEOR, 10); // clvl 13
-	//BOT_UpgradeSkill(ent, NOVA, 10);
-	BOT_UpgradeSkill(ent, FIREBALL, 5);
-	BOT_UpgradeSkill(ent, METEOR, 5);
-	//BOT_UpgradeSkill(ent, NOVA, 5);
-	BOT_UpgradeSkill(ent, LIGHTNING, 10);
-	BOT_UpgradeSkill(ent, FIREBALL, 10);
-	BOT_UpgradeSkill(ent, LIGHTNING_STORM, 10);
+	if (random() > 0.5)
+	{
+		// ice/cold-lightning build
+		BOT_UpgradeSkill(ent, GLACIAL_SPIKE, 1);
+		BOT_UpgradeSkill(ent, POWER_REGEN, 3); // clvl 2
+		BOT_UpgradeSkill(ent, GLACIAL_SPIKE, 9);
+		BOT_UpgradeSkill(ent, POWER_REGEN, 2); // clvl 8
+		BOT_UpgradeSkill(ent, FROZEN_ORB, 10); // clvl 13
+		BOT_UpgradeSkill(ent, POWER_REGEN, 5); // clvl 15: PCR is maxed
+		BOT_UpgradeSkill(ent, NOVA, 10); // clvl 20: all ice skills are level 10
+		BOT_UpgradeSkill(ent, FROZEN_ORB, 5);
+		BOT_UpgradeSkill(ent, GLACIAL_SPIKE, 5); // clvl 25
+		BOT_UpgradeSkill(ent, NOVA, 5); // clvl 28: all ice skills are level 15
+		BOT_UpgradeSkill(ent, STATIC_FIELD, 10); // clvl 33: lightning build begins with SF, which benefits all skills
+		BOT_UpgradeSkill(ent, LIGHTNING_STORM, 10);
+		BOT_UpgradeSkill(ent, LIGHTNING, 10); // clvl 43: all lightning skills are level 10
+		BOT_UpgradeSkill(ent, STATIC_FIELD, 5);
+		BOT_UpgradeSkill(ent, LIGHTNING_STORM, 5);
+		BOT_UpgradeSkill(ent, LIGHTNING, 5); // clvl 50: all lightning skills are level 15
+	}
+	else
+	{
+		// lightning-ice/cold build
+		BOT_UpgradeSkill(ent, LIGHTNING, 1);
+		BOT_UpgradeSkill(ent, POWER_REGEN, 3); // clvl 2
+		BOT_UpgradeSkill(ent, LIGHTNING, 9);
+		BOT_UpgradeSkill(ent, POWER_REGEN, 2); // clvl 8
+		BOT_UpgradeSkill(ent, LIGHTNING_STORM, 10); // clvl 13
+		BOT_UpgradeSkill(ent, POWER_REGEN, 5); // clvl 15: PCR is maxed
+		BOT_UpgradeSkill(ent, STATIC_FIELD, 10); // clvl 20: all lightning skills are level 10
+		BOT_UpgradeSkill(ent, LIGHTNING_STORM, 5);
+		BOT_UpgradeSkill(ent, LIGHTNING, 5); // clvl 25
+		BOT_UpgradeSkill(ent, STATIC_FIELD, 5); // clvl 28: all lightning skills are level 15
+		BOT_UpgradeSkill(ent, GLACIAL_SPIKE, 10); // clvl 33: ice/cold build begins with GS to freeze enemies in-place
+		BOT_UpgradeSkill(ent, FROZEN_ORB, 10);
+		BOT_UpgradeSkill(ent, NOVA, 10); // clvl 43: all ice/cold skills are level 10
+		BOT_UpgradeSkill(ent, GLACIAL_SPIKE, 5);
+		BOT_UpgradeSkill(ent, FROZEN_ORB, 5);
+		BOT_UpgradeSkill(ent, NOVA, 5); // clvl 50: all ice/cold skills are level 15
+	}
 }
 
 void BOT_KnightAssignSkills(edict_t* ent)
@@ -332,16 +360,26 @@ void BOT_KnightAssignSkills(edict_t* ent)
 	BOT_UpgradeSkill(ent, PLASMA_BOLT, 1);
 	BOT_UpgradeSkill(ent, ARMOR_REGEN, 1);
 	BOT_UpgradeSkill(ent, REGENERATION, 1);
-	BOT_UpgradeSkill(ent, ARMOR_UPGRADE, 10); // clvl 2-7
-	BOT_UpgradeSkill(ent, REGENERATION, 4);
-	BOT_UpgradeSkill(ent, VITALITY, 3); // clvl 10
-	BOT_UpgradeSkill(ent, ARMOR_REGEN, 4); // clvl 11-12
-	BOT_UpgradeSkill(ent, PLASMA_BOLT, 4); // clvl 13-14
+	BOT_UpgradeSkill(ent, ARMOR_UPGRADE, 10); // clvl 7
+	BOT_UpgradeSkill(ent, REGENERATION, 3); // clvl 8
+	BOT_UpgradeSkill(ent, VITALITY, 4); // clvl 10
+	BOT_UpgradeSkill(ent, ARMOR_REGEN, 4); // clvl 12
+	BOT_UpgradeSkill(ent, PLASMA_BOLT, 4); // clvl 14
 	BOT_UpgradeSkill(ent, POWER_REGEN, 2); // clvl 15
 	BOT_UpgradeSkill(ent, ARMOR_REGEN, 5);
-	BOT_UpgradeSkill(ent, REGENERATION, 5); // clvl 20
+	BOT_UpgradeSkill(ent, REGENERATION, 6); // clvl 21
+	BOT_UpgradeSkill(ent, PLASMA_BOLT, 5); // clvl 23: all primary skills are level 10
+	BOT_UpgradeSkill(ent, POWER_REGEN, 4);
+	BOT_UpgradeSkill(ent, VITALITY, 6); // clvl 28
+	BOT_UpgradeSkill(ent, ARMOR_UPGRADE, 5);
+	BOT_UpgradeSkill(ent, ARMOR_REGEN, 5);
+	BOT_UpgradeSkill(ent, REGENERATION, 5);
+	BOT_UpgradeSkill(ent, PLASMA_BOLT, 5); // clvl 38: all primary skills are level 15
+	BOT_UpgradeSkill(ent, RESISTANCE, 5);
+	BOT_UpgradeSkill(ent, GHOST, 5); // clvl 43
+	BOT_UpgradeSkill(ent, ARMOR_UPGRADE, 5);
 	BOT_UpgradeSkill(ent, PLASMA_BOLT, 5);
-	BOT_UpgradeSkill(ent, POWER_SHIELD, 10);
+	BOT_UpgradeSkill(ent, POWER_REGEN, 4); // clvl 50 
 }
 
 void BOT_VampireAssignSkills(edict_t* ent)
@@ -360,13 +398,19 @@ void BOT_VampireAssignSkills(edict_t* ent)
 
 void BOT_NecroAssignSkills(edict_t* ent)
 {
+	BOT_UpgradeSkill(ent, SKELETON, 1);
 	BOT_UpgradeSkill(ent, POWER_REGEN, 4); // clvl 2
-	BOT_UpgradeSkill(ent, SKELETON, 10); // clvl 7
-	BOT_UpgradeSkill(ent, POWER_REGEN, 2); // clvl 8
-	BOT_UpgradeSkill(ent, AMP_DAMAGE, 10); // clvl 13
-	BOT_UpgradeSkill(ent, SKELETON, 5); // clvl 16
-	BOT_UpgradeSkill(ent, STATIC_FIELD, 10); // clvl 21
-	BOT_UpgradeSkill(ent, AMP_DAMAGE, 5); // clvl 23
+	BOT_UpgradeSkill(ent, SKELETON, 9); // clvl 7
+	BOT_UpgradeSkill(ent, GOLEM, 10); // clvl 12: skeleton/golem is level 10
+	BOT_UpgradeSkill(ent, AMP_DAMAGE, 10); // clvl 17
+	BOT_UpgradeSkill(ent, LIFE_TAP, 10); // clvl 22: curses are level 10
+	BOT_UpgradeSkill(ent, POWER_REGEN, 2); // clvl 23
+	BOT_UpgradeSkill(ent, GOLEM, 10);
+	BOT_UpgradeSkill(ent, SKELETON, 10); // clvl 33: skeleton/golem is level 20
+	BOT_UpgradeSkill(ent, AMP_DAMAGE, 10);
+	BOT_UpgradeSkill(ent, LIFE_TAP, 10); // clvl 43: curses are level 20
+	BOT_UpgradeSkill(ent, PLAGUE, 10); // clvl 48
+	BOT_UpgradeSkill(ent, POWER_REGEN, 4); // clvl 50: PCR is maxed
 }
 
 void BOT_UpgradeWeapon(edict_t* ent, int weapID)
@@ -392,7 +436,7 @@ void BOT_UpgradeWeapon(edict_t* ent, int weapID)
 		while (ent->myskills.weapon_points > 0)
 		{
 			max = ent->myskills.weapons[w].mods[i].soft_max;
-			//gi.dprintf("soft max: %d level: %d\n", max, ent->myskills.weapons[weapon_index].mods[i].current_level);
+			//gi.dprintf("soft max: %d level: %d\n", max, ent->myskills.weapons[w].mods[i].current_level);
 			if (ent->myskills.weapons[w].mods[i].current_level < max)
 			{
 				ent->myskills.weapons[w].mods[i].current_level++;

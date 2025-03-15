@@ -204,6 +204,7 @@ void AI_InitAIAbilities(void);
 void BOT_DMclass_UseBoost(edict_t* self);
 void BOT_DMclass_UseBlinkStrike(edict_t* self);
 void BOT_DMclass_UseSkeleton(edict_t* self);
+void BOT_DMclass_UseGolem(edict_t* self);
 qboolean BOT_DMclass_UseTball(edict_t* self, qboolean forget_enemy);
 
 //ai_util.c

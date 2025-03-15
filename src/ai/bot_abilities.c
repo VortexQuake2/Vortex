@@ -77,9 +77,29 @@ void AI_InitAIAbilities(void)
 	AIAbilities[NOVA].idealRange = AI_RANGE_SHORT;
 	AIAbilities[NOVA].RangeWeight[AIWEAP_SNIPER_RANGE] = 0;
 	AIAbilities[NOVA].RangeWeight[AIWEAP_LONG_RANGE] = 0;
-	AIAbilities[NOVA].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0; // nova can't hit anything beyond short range
+	AIAbilities[NOVA].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0; // nova can't hit anything much beyond short range
 	AIAbilities[NOVA].RangeWeight[AIWEAP_SHORT_RANGE] = 0.5;
 	AIAbilities[NOVA].RangeWeight[AIWEAP_MELEE_RANGE] = 0.5;
+
+	//GLACIAL_SPIKE
+	AIAbilities[GLACIAL_SPIKE].is_weapon = true;
+	AIAbilities[GLACIAL_SPIKE].aimType = AI_AIMSTYLE_PREDICTION;
+	AIAbilities[GLACIAL_SPIKE].idealRange = AI_RANGE_MEDIUM;
+	AIAbilities[GLACIAL_SPIKE].RangeWeight[AIWEAP_SNIPER_RANGE] = 0.1; // doubleful we'll hit anything
+	AIAbilities[GLACIAL_SPIKE].RangeWeight[AIWEAP_LONG_RANGE] = 0.2; // likely to miss--fireball is better
+	AIAbilities[GLACIAL_SPIKE].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0.5; // ideal range for GS
+	AIAbilities[GLACIAL_SPIKE].RangeWeight[AIWEAP_SHORT_RANGE] = 0.2; // highly likely we'll take some damage
+	AIAbilities[GLACIAL_SPIKE].RangeWeight[AIWEAP_MELEE_RANGE] = 0;
+
+	//FROZEN_ORB
+	AIAbilities[FROZEN_ORB].is_weapon = true;
+	AIAbilities[FROZEN_ORB].aimType = AI_AIMSTYLE_PREDICTION_EXPLOSIVE;
+	AIAbilities[FROZEN_ORB].idealRange = AI_RANGE_MEDIUM;
+	AIAbilities[FROZEN_ORB].RangeWeight[AIWEAP_SNIPER_RANGE] = 0; // FO will never get this far--don't bother
+	AIAbilities[FROZEN_ORB].RangeWeight[AIWEAP_LONG_RANGE] = 0.4; // FO explodes due to timeout slightly beyond this range
+	AIAbilities[FROZEN_ORB].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0.5; // ideal range to actually hit our target
+	AIAbilities[FROZEN_ORB].RangeWeight[AIWEAP_SHORT_RANGE] = 0.4;
+	AIAbilities[FROZEN_ORB].RangeWeight[AIWEAP_MELEE_RANGE] = 0.4; // nova is better
 
 	//STATIC_FIELD
 	AIAbilities[STATIC_FIELD].is_weapon = true;
@@ -96,7 +116,7 @@ void AI_InitAIAbilities(void)
 	AIAbilities[LIGHTNING].aimType = AI_AIMSTYLE_INSTANTHIT;
 	AIAbilities[LIGHTNING].idealRange = AI_RANGE_MEDIUM;
 	AIAbilities[LIGHTNING].RangeWeight[AIWEAP_SNIPER_RANGE] = 0;
-	AIAbilities[LIGHTNING].RangeWeight[AIWEAP_LONG_RANGE] = 0.4; // meteor/lightning storm is better
+	AIAbilities[LIGHTNING].RangeWeight[AIWEAP_LONG_RANGE] = 0.5;
 	AIAbilities[LIGHTNING].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0.5;
 	AIAbilities[LIGHTNING].RangeWeight[AIWEAP_SHORT_RANGE] = 0.4; // nova is better
 	AIAbilities[LIGHTNING].RangeWeight[AIWEAP_MELEE_RANGE] = 0.4;
@@ -116,8 +136,8 @@ void AI_InitAIAbilities(void)
 	AIAbilities[LIGHTNING_STORM].aimType = AI_AIMSTYLE_INSTANTHIT;
 	AIAbilities[LIGHTNING_STORM].idealRange = AI_RANGE_SNIPER;
 	AIAbilities[LIGHTNING_STORM].RangeWeight[AIWEAP_SNIPER_RANGE] = 0.5;
-	AIAbilities[LIGHTNING_STORM].RangeWeight[AIWEAP_LONG_RANGE] = 0.5;
-	AIAbilities[LIGHTNING_STORM].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0.4; // fireball/lightning/magicbolt is better
+	AIAbilities[LIGHTNING_STORM].RangeWeight[AIWEAP_LONG_RANGE] = 0.4; // CL is slightly better (lower risk)
+	AIAbilities[LIGHTNING_STORM].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0.2; // LS is very risky at this range
 	AIAbilities[LIGHTNING_STORM].RangeWeight[AIWEAP_SHORT_RANGE] = 0;
 	AIAbilities[LIGHTNING_STORM].RangeWeight[AIWEAP_MELEE_RANGE] = 0;
 
@@ -191,6 +211,8 @@ float AI_GetAbilityProjectileVelocity(edict_t* ent, int ability_index)
 	case MAGICBOLT: return BOLT_SPEED;
 	case FIREBALL: return (FIREBALL_INITIAL_SPEED + FIREBALL_ADDON_SPEED * slvl);
 	case PLASMA_BOLT: return (PLASMABOLT_INITIAL_SPEED + PLASMABOLT_ADDON_SPEED * slvl);
+	case GLACIAL_SPIKE: return (GLACIAL_SPIKE_INITIAL_SPEED + GLACIAL_SPIKE_ADDON_SPEED * slvl);
+	case FROZEN_ORB: return FROZEN_ORB_SPEED;
 	}
 	return 0;
 }
@@ -212,8 +234,23 @@ float AI_GetAbilityCost(edict_t* ent, int ability_index)
 	case PLASMA_BOLT: return PLASMABOLT_COST;
 	case STATIC_FIELD: return STATICFIELD_COST;
 	case AMP_DAMAGE: return AMP_DAMAGE_COST;
+	case GLACIAL_SPIKE: return GLACIAL_SPIKE_COST;
+	case FROZEN_ORB: return FROZEN_ORB_COST;
 	}
 	return 0;
+}
+
+// return true if the bot isn't done summoning any minions
+qboolean AI_NotDoneSummoning(edict_t* ent)
+{
+	if (ent->myskills.abilities[SKELETON].current_level > 0 && ent->num_skeletons < SKELETON_MAX)
+		return true;
+	if (ent->myskills.abilities[GOLEM].current_level > 0 && ent->num_golems < GOLEM_MAX)
+		return true;
+	if (ent->myskills.abilities[HELLSPAWN].current_level > 0 && !ent->skull)
+		return true;
+	return false;
+
 }
 
 qboolean CanCurseTarget(edict_t* caster, edict_t* target, int type, qboolean isCurse, qboolean vis);
@@ -262,9 +299,9 @@ int BOT_DMclass_ChooseAbility(edict_t* self)
 		// not enough power cubes to use this ability
 		if (self->client->pers.inventory[power_cube_index] < AI_GetAbilityCost(self, i))
 			continue;
-		// don't try to curse uncurseable targets or use the same curse
+		// don't try to curse uncurseable targets or use the same curse; also don't curse if we're not done summoning!
 		if ((i == AMP_DAMAGE || i == WEAKEN || i == LIFE_TAP || i == CURSE) 
-			&& (!CanCurseTarget(self, self->enemy, i, true, false) || que_typeexists(self->enemy->curses, i)))
+			&& (!CanCurseTarget(self, self->enemy, i, true, false) || que_typeexists(self->enemy->curses, i) || AI_NotDoneSummoning(self)))
 			continue;
 
 		//compare range weights
@@ -296,6 +333,8 @@ void Cmd_LightningStorm_f(edict_t* ent, float skill_mult, float cost_mult);
 void Cmd_Plasmabolt_f(edict_t* ent);
 void Cmd_StaticField_f(edict_t* ent);
 void Cmd_AmpDamage(edict_t* ent);
+void Cmd_GlacialSpike_f(edict_t* ent, float skill_mult, float cost_mult);
+void Cmd_FrozenOrb_f(edict_t* ent, float skill_mult, float cost_mult);
 
 // aims and fires at enemy using the specified ability
 void BOT_DMclass_FireAbility(edict_t* self, int ability_index)
@@ -367,6 +406,8 @@ void BOT_DMclass_FireAbility(edict_t* self, int ability_index)
 	case PLASMA_BOLT: Cmd_Plasmabolt_f(self); break;
 	case STATIC_FIELD: Cmd_StaticField_f(self); break;
 	case AMP_DAMAGE: Cmd_AmpDamage(self); break;
+	case GLACIAL_SPIKE: Cmd_GlacialSpike_f(self, 1.0, 1.0); break;
+	case FROZEN_ORB: Cmd_FrozenOrb_f(self, 1.0, 1.0); break;
 	}
 }
 
@@ -435,11 +476,13 @@ void BOT_DMclass_UseBoost(edict_t* self)
 
 void Cmd_Raise_Skeleton_f(edict_t* ent);
 void skeleton_set_bbox(vec3_t mins, vec3_t maxs);
+void Cmd_Golem_f(edict_t* ent);
+void golem_set_bbox(vec3_t mins, vec3_t maxs);
 
 void BOT_DMclass_UseSkeleton(edict_t* self)
 {
 	// can't use skeleton
-	if (!V_CanUseAbilities(self, SKELETON, SKELETON_COST+10, false))
+	if (!V_CanUseAbilities(self, SKELETON, SKELETON_COST, false))
 		return;
 	// can't spawn any more
 	if (self->num_skeletons >= SKELETON_MAX)
@@ -456,4 +499,26 @@ void BOT_DMclass_UseSkeleton(edict_t* self)
 		return;
 
 	Cmd_Raise_Skeleton_f(self);
+}
+
+void BOT_DMclass_UseGolem(edict_t* self)
+{
+	// can't use golem
+	if (!V_CanUseAbilities(self, GOLEM, GOLEM_COST, false))
+		return;
+	// can't spawn any more
+	if (self->num_golems >= GOLEM_MAX)
+		return;
+	// get view origin
+	vec3_t forward, right, start, offset, mins, maxs;
+	AngleVectors(self->client->v_angle, forward, right, NULL);
+	VectorSet(offset, 0, 8, self->viewheight - 8);
+	P_ProjectSource(self->client, self->s.origin, offset, forward, right, start);
+	// get skeleton bounding box mins and maxs
+	golem_set_bbox(mins, maxs);
+	// abort if the skeleton can't fit at start
+	if (!G_GetSpawnLocation(self, 64, mins, maxs, start, NULL, PROJECT_HITBOX_FAR, false))
+		return;
+
+	Cmd_Golem_f(self);
 }
