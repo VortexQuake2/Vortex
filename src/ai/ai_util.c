@@ -5,6 +5,8 @@
 
 qboolean AI_IsProjectile(edict_t* ent)
 {
+	if (ent->mtype == M_LIGHTNINGSTORM)
+		return true;
 	return ent->clipmask == MASK_SHOT && (ent->solid == SOLID_BBOX  || ent->solid == SOLID_TRIGGER) && ent->s.modelindex && (ent->dmg || ent->radius_dmg);
 }
 

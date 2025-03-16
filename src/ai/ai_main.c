@@ -541,7 +541,7 @@ void AI_PickShortRangeGoal(edict_t* self)
 	{
 		if (!e->inuse)
 			continue;
-		if (e->solid == SOLID_NOT)
+		if (e->solid == SOLID_NOT && e->mtype != M_LIGHTNINGSTORM)
 			continue;
 		if (!e->classname)
 			continue;

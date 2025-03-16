@@ -1176,6 +1176,10 @@ qboolean BOT_DMclass_CheckShot(edict_t *ent, vec3_t	point)
 
 	//bloqued, don't shoot
 	tr = gi.trace( start, vec3_origin, vec3_origin, point, ent, MASK_AISOLID);
+
+	if (tr.ent && tr.ent->inuse && OnSameTeam(ent, tr.ent))
+		return false; //GHz: bots tend to suicide by trying to shoot past allies
+
 //	trap_Trace( &tr, self->s.origin, vec3_origin, vec3_origin, point, self, MASK_AISOLID);
 	if (tr.fraction < 0.3) //just enough to prevent self damage (by now)
 		return false;

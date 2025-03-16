@@ -69,11 +69,11 @@ void lightningstorm_think (edict_t *self)
         return;
     }
 	
-	// calculate randomized firing position
-	VectorCopy(self->s.origin, start);
+	// calculate randomized firing position from the ceiling/skybox
+	VectorCopy(self->pos1, start);
 	start[0] += GetRandom(0, (int)self->dmg_radius) * crandom();
 	start[1] += GetRandom(0, (int)self->dmg_radius) * crandom();
-	tr = gi.trace(self->s.origin, NULL, NULL, start, self, MASK_SOLID);
+	tr = gi.trace(self->pos1, NULL, NULL, start, self, MASK_SOLID);
 
 	// Talent: Chainlightning Storm
 	int talentLevel = vrx_get_talent_level(self->owner, TALENT_CL_STORM);
@@ -89,7 +89,14 @@ void lightningstorm_think (edict_t *self)
 void SpawnLightningStorm (edict_t *ent, vec3_t start, float radius, int duration, int damage)
 {
 	edict_t *storm;
+	vec3_t end;
+	trace_t tr;
 
+	// trace up to the ceiling/skybox
+	VectorCopy(start, end);
+	end[2] = 8192;
+	tr = gi.trace(start, NULL, NULL, end, ent, MASK_SOLID);
+	
 	storm = G_Spawn();
 	storm->classname = "lightning storm";
 	storm->solid = SOLID_NOT;
@@ -100,8 +107,11 @@ void SpawnLightningStorm (edict_t *ent, vec3_t start, float radius, int duration
 	storm->think = lightningstorm_think;
 	VectorCopy(start, storm->s.origin);
 	VectorCopy(start, storm->s.old_origin);
-	storm->dmg_radius = radius;
+	VectorCopy(tr.endpos, storm->pos1); // store the ceiling/skybox position
+	storm->dmg_radius = radius; // radius of lightning strikes
+	storm->radius_dmg = damage; // used for bot AI hazard detection
 	storm->dmg = damage;
+	storm->mtype = M_LIGHTNINGSTORM; // used for bot AI hazard detection
 	gi.linkentity(storm);
 
 	// Talent: Chainlightning Storm
@@ -146,10 +156,10 @@ void Cmd_LightningStorm_f (edict_t *ent, float skill_mult, float cost_mult)
 	tr = gi.trace(start, NULL, NULL, end, ent, MASK_SHOT);
 
 	// trace up to the ceiling/skybox
-	VectorCopy(tr.endpos, start);
-	VectorCopy(tr.endpos, end);
-	end[2] += 8192;
-	tr = gi.trace(start, NULL, NULL, end, ent, MASK_SOLID);
+	//VectorCopy(tr.endpos, start);
+	//VectorCopy(tr.endpos, end);
+	//end[2] += 8192;
+	//tr = gi.trace(start, NULL, NULL, end, ent, MASK_SOLID);
 
 	SpawnLightningStorm(ent, tr.endpos, radius, duration, damage);
 

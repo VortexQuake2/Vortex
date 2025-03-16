@@ -2329,6 +2329,7 @@ void Cmd_LaserSight_f(edict_t *ent);
 #define TBI_PLAYERSPAWN			706 // Team Based Invasion PlayerSpawn.
 #define HW_FLAG			707
 #define M_COMBAT_POINT			800 // temporary entity for monster navigation
+#define M_LIGHTNINGSTORM		801 // used by bot AI to ID lightning storm for hazard avoidance
 #define FUNC_DOOR				900
 //4.1 Archer
 #define TOTEM_FIRE		605

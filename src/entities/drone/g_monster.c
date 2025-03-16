@@ -120,7 +120,8 @@ void monster_fire_20mm(edict_t* self, vec3_t start, vec3_t dir, int damage, int 
 
 	gi.sound(self, CHAN_WEAPON, gi.soundindex("weapons/sgun1.wav"), 1, ATTN_NORM, 0);
 
-	ThrowShell(self, "models/objects/shell1/tris.md2", start);
+	if (vrx_spawn_nonessential_ent(self->s.origin))
+		ThrowShell(self, "models/objects/shell1/tris.md2", start);
 }
 
 void monster_fire_shotgun (edict_t *self, vec3_t start, vec3_t aimdir, float damage, int kick, int hspread, int vspread, int count, int flashtype)
