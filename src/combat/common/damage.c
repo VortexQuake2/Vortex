@@ -188,6 +188,7 @@ void vrx_apply_player_damage_bonus(edict_t *targ, edict_t *attacker, float *dama
     if (attacker->client->tele_timeout > level.framenum && attacker->client->blinkStrike_targ && attacker->client->blinkStrike_targ == targ && !infront(targ, attacker))
     {
         float temp = 1 + BLINKSTRIKE_INITIAL_BONUS + BLINKSTRIKE_ADDON_BONUS * attacker->myskills.abilities[BLINKSTRIKE].current_level;
+		//gi.dprintf("Blink Strike damage bonus: %.1fx\n", temp);
         *damage *= temp;
     }
 

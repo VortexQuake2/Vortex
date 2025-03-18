@@ -5,7 +5,7 @@
 
 qboolean AI_IsProjectile(edict_t* ent)
 {
-	if (ent->mtype == M_LIGHTNINGSTORM)
+	if (ent->mtype == M_LIGHTNINGSTORM || ent->mtype == M_BARREL)
 		return true;
 	return ent->clipmask == MASK_SHOT && (ent->solid == SOLID_BBOX  || ent->solid == SOLID_TRIGGER) && ent->s.modelindex && (ent->dmg || ent->radius_dmg);
 }
@@ -13,7 +13,7 @@ qboolean AI_IsProjectile(edict_t* ent)
 // return true if other is a summons that we own
 qboolean AI_IsOwnedSummons(edict_t* self, edict_t* other)
 {
-	return other->mtype && other->solid == SOLID_BBOX && other->takedamage && other->health > 0 && G_GetSummoner(other) == self;
+	return other->mtype && other->mtype != M_BARREL && other->solid == SOLID_BBOX && other->takedamage && other->health > 0 && G_GetSummoner(other) == self;
 }
 
 // returns the number of entities that the bot has summoned

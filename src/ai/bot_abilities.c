@@ -160,6 +160,16 @@ void AI_InitAIAbilities(void)
 	AIAbilities[AMP_DAMAGE].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0.6; // prefer to curse a target before using other attacks, except at med-close range
 	AIAbilities[AMP_DAMAGE].RangeWeight[AIWEAP_SHORT_RANGE] = 0.5;
 	AIAbilities[AMP_DAMAGE].RangeWeight[AIWEAP_MELEE_RANGE] = 0.5;
+
+	//EXPLODING_BARREL
+	AIAbilities[EXPLODING_BARREL].is_weapon = true;
+	AIAbilities[EXPLODING_BARREL].aimType = AI_AIMSTYLE_BALLISTIC;
+	AIAbilities[EXPLODING_BARREL].idealRange = AI_RANGE_LONG;
+	AIAbilities[EXPLODING_BARREL].RangeWeight[AIWEAP_SNIPER_RANGE] = 0; // unlikely to hit anything
+	AIAbilities[EXPLODING_BARREL].RangeWeight[AIWEAP_LONG_RANGE] = 0.5; // ideal range for barrels
+	AIAbilities[EXPLODING_BARREL].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0.2; // high risk of suicide
+	AIAbilities[EXPLODING_BARREL].RangeWeight[AIWEAP_SHORT_RANGE] = 0;
+	AIAbilities[EXPLODING_BARREL].RangeWeight[AIWEAP_MELEE_RANGE] = 0;
 }
 
 qboolean CanTball(edict_t* ent, qboolean print);
@@ -213,6 +223,7 @@ float AI_GetAbilityProjectileVelocity(edict_t* ent, int ability_index)
 	case PLASMA_BOLT: return (PLASMABOLT_INITIAL_SPEED + PLASMABOLT_ADDON_SPEED * slvl);
 	case GLACIAL_SPIKE: return (GLACIAL_SPIKE_INITIAL_SPEED + GLACIAL_SPIKE_ADDON_SPEED * slvl);
 	case FROZEN_ORB: return FROZEN_ORB_SPEED;
+	case EXPLODING_BARREL: return 400;
 	}
 	return 0;
 }
@@ -236,6 +247,7 @@ float AI_GetAbilityCost(edict_t* ent, int ability_index)
 	case AMP_DAMAGE: return AMP_DAMAGE_COST;
 	case GLACIAL_SPIKE: return GLACIAL_SPIKE_COST;
 	case FROZEN_ORB: return FROZEN_ORB_COST;
+	case EXPLODING_BARREL: return EXPLODING_BARREL_COST;
 	}
 	return 0;
 }
@@ -272,7 +284,11 @@ int BOT_DMclass_ChooseAbility(edict_t* self)
 		return -1;
 
 	// no power cubes
-	if (self->client->pers.inventory[power_cube_index] < 1)
+	//if (self->client->pers.inventory[power_cube_index] < 1)
+	//	return -1;
+
+	// can't use abilities
+	if (!V_CanUseAbilities(self, -1, 0, false))
 		return -1;
 
 	dist = entdist(self, self->enemy);
@@ -294,10 +310,13 @@ int BOT_DMclass_ChooseAbility(edict_t* self)
 		if (!AIAbilities[i].is_weapon)
 			continue;
 		// ability is disabled or not upgraded
-		if (self->myskills.abilities[i].disable || self->myskills.abilities[i].current_level < 1)
-			continue;
+		//if (self->myskills.abilities[i].disable || self->myskills.abilities[i].current_level < 1)
+		//	continue;
 		// not enough power cubes to use this ability
-		if (self->client->pers.inventory[power_cube_index] < AI_GetAbilityCost(self, i))
+		//if (self->client->pers.inventory[power_cube_index] < AI_GetAbilityCost(self, i))
+		//	continue;
+		// can't use this ability right now
+		if (!V_CanUseAbility(self, i, AI_GetAbilityCost(self, i), false))
 			continue;
 		// don't try to curse uncurseable targets or use the same curse; also don't curse if we're not done summoning!
 		if ((i == AMP_DAMAGE || i == WEAKEN || i == LIFE_TAP || i == CURSE) 
@@ -335,8 +354,10 @@ void Cmd_StaticField_f(edict_t* ent);
 void Cmd_AmpDamage(edict_t* ent);
 void Cmd_GlacialSpike_f(edict_t* ent, float skill_mult, float cost_mult);
 void Cmd_FrozenOrb_f(edict_t* ent, float skill_mult, float cost_mult);
+void Cmd_ExplodingBarrel_f(edict_t* ent);
 
 // aims and fires at enemy using the specified ability
+// note: the bot will use the ability continuously until it runs out of power cubes
 void BOT_DMclass_FireAbility(edict_t* self, int ability_index)
 {
 	vec3_t forward, start;
@@ -394,9 +415,21 @@ void BOT_DMclass_FireAbility(edict_t* self, int ability_index)
 	// use the ability
 	switch (ability_index)
 	{
-	case MIRV: Cmd_TossMirv(self); break;
-	case NAPALM: Cmd_Napalm_f(self); break;
-	case EMP: Cmd_TossEMP(self); break;
+	case MIRV: 
+		Cmd_TossMirv(self);
+		// don't spam MIRV
+		self->myskills.abilities[MIRV].delay = level.time + 1.0;
+		break;
+	case NAPALM: 
+		Cmd_Napalm_f(self);
+		// don't spam napalm
+		self->myskills.abilities[NAPALM].delay = level.time + 1.0;
+		break;
+	case EMP: 
+		Cmd_TossEMP(self);
+		// don't spam EMP
+		self->myskills.abilities[EMP].delay = level.time + 1.0;
+		break;
 	case MAGICBOLT: Cmd_Magicbolt_f(self, 1.0, 1.0); break;
 	case FIREBALL: Cmd_Fireball_f(self, 1.0, 1.0); break;
 	case NOVA: Cmd_FrostNova_f(self, 1.0, 1.0); break;
@@ -408,6 +441,11 @@ void BOT_DMclass_FireAbility(edict_t* self, int ability_index)
 	case AMP_DAMAGE: Cmd_AmpDamage(self); break;
 	case GLACIAL_SPIKE: Cmd_GlacialSpike_f(self, 1.0, 1.0); break;
 	case FROZEN_ORB: Cmd_FrozenOrb_f(self, 1.0, 1.0); break;
+	case EXPLODING_BARREL: 
+		Cmd_ExplodingBarrel_f(self); 
+		// don't spam exploding barrels
+		self->myskills.abilities[EXPLODING_BARREL].delay = level.time + 1.0;
+		break;
 	}
 }
 
@@ -431,8 +469,8 @@ void BOT_DMclass_UseBlinkStrike(edict_t* self)
 	if (self->enemy->flags & FL_FLY)
 		return;
 	// bot should be attacking and using CombatMovement
-	if (self->ai.state != BOT_STATE_ATTACK)
-		return;
+	//if (self->ai.state != BOT_STATE_ATTACK)
+	//	return;
 	//gi.dprintf("%s attempted to call %s\n", self->ai.pers.netname, __func__);
 	Cmd_BlinkStrike_f(self);
 }
@@ -521,4 +559,70 @@ void BOT_DMclass_UseGolem(edict_t* self)
 		return;
 
 	Cmd_Golem_f(self);
+}
+
+int AI_NearbyEnemies(edict_t* self, vec3_t org, float radius)
+{
+	int enemies = 0;
+	edict_t* e = NULL;
+
+	while ((e = findradius(e, org, radius)) != NULL)
+	{
+		if (!G_ValidTarget(self, e, true, true))
+			continue;
+		enemies++;
+	}
+	return enemies;
+}
+
+// find a barrel that we own that can damage the maximum number of enemies, then target it; return true if we found one
+qboolean BOT_DMclass_TargetBarrel(edict_t* self)
+{
+	//float dist, best = 9999;
+	int enemies, best = 0;
+	edict_t* bestTarget = NULL;
+
+	// no barrels of ours to target
+	if (self->num_barrels < 1)
+		return false;
+
+	// Find Enemy
+	for (int i = 0;i < num_AIEnemies;i++)
+	{
+		if (!G_ValidTargetEnt(AIEnemies[i], true))
+			continue;
+		// not a barrel
+		if (AIEnemies[i]->mtype != M_BARREL)
+			continue;
+		if (!visible(self, AIEnemies[i]))
+			continue;
+		if (!infront(self, AIEnemies[i]))
+			continue;
+		// not ours
+		if (AIEnemies[i]->creator != self)
+			continue;
+		// too close
+		if (entdist(self, AIEnemies[i]) <= AIEnemies[i]->dmg_radius)
+			continue;
+
+		enemies = AI_NearbyEnemies(self, AIEnemies[i]->s.origin, AIEnemies[i]->dmg_radius);
+
+		// update target with highest enemy count
+		if (enemies > best)
+		{
+			best = enemies;
+			bestTarget = AIEnemies[i];
+		}
+	}
+
+	if (bestTarget)
+	{
+		self->enemy = bestTarget;
+
+		if (AIDevel.debugChased && bot_showcombat->value)
+			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: targetting %s because of nearby enemies!\n", self->ai.pers.netname, bestTarget->classname);
+		return true;
+	}
+
+	return false;
 }

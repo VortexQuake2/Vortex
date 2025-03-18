@@ -555,18 +555,21 @@ void AI_PickShortRangeGoal(edict_t* self)
 		// is this a weapon projectile?
 		if (AI_IsProjectile(e))
 		{
-			// does it have an owner that is a valid target that isn't a teammate (excluding self)?
-			if (e->owner && G_ValidTargetEnt(e->owner, true) && ((e->owner == self && e->radius_dmg) || !OnSameTeam(self, e->owner)))
+			// determine the projectile owner
+			edict_t* proj_owner = G_GetSummoner(e);
+			// avoid the projectile if: it doesn't have an owner, the owner isn't a teammate, or if we're the owner and it's an explosive
+			if (!proj_owner || !OnSameTeam(self, proj_owner) || (proj_owner == self && e->radius_dmg))
 			{
+				self->movetarget = e; // avoid this entity as SR goal (via AI_DodgeProjectiles)
 				//gi.dprintf("%d: AI_PickShortRangeGoal: Detected incoming projectile %s\n", (int)level.framenum, e->classname);
 				if (AIDevel.debugChased && bot_showcombat->value)
 					safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: WEAPON FIRE INCOMING: %s!\n", self->ai.pers.netname, e->classname);
 				// make the bot angry at the owner of the projectile
-				if (e->owner != self)
-					self->enemy = e->owner;
-				self->movetarget = e;
-				return; // done searching for short-range goals for now
+				if (proj_owner && proj_owner != self)
+					self->enemy = proj_owner;
+				return; // done searching for SR goal
 			}
+			continue; // the projectile is non-hazardous--continue searching for SR goal
 		}
 
 		weight = 0;

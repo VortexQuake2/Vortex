@@ -917,6 +917,10 @@ void BOT_DMclass_BunnyHop(edict_t* self, usercmd_t* ucmd, qboolean forwardmove)
 	if (self->groundentity)// on the ground? reset state--we haven't decided yet if the bot should bunnyhop again
 		self->ai.is_bunnyhop = false;
 
+	// don't bunnyhop with the 20mm if we have an enemy
+	if (self->client->pers.weapon == Fdi_20MM && self->enemy)
+		return;
+
 	// vector pointing in the direction we should be moving
 	VectorCopy(self->ai.move_vector, move_vec);
 	move_vec[2] = 0;
@@ -1096,10 +1100,17 @@ void BOT_DMclass_CombatMovement( edict_t *self, usercmd_t *ucmd )
 	VectorSubtract(self->enemy->s.origin, self->s.origin, attackvector);
 	// calculate enemy distance
 	dist = VectorLength( attackvector);
-	// get ideal range of equipped weapon
-	ideal = AIWeapons[weapon].idealRange;
-	if (ideal > AI_RANGE_LONG)
-		ideal = AI_RANGE_LONG;
+
+	// if we're using flesh/corpse eater, we want to be as close as possible
+	if (self->myskills.abilities[FLESH_EATER].current_level > 0)
+		ideal = 0;
+	else
+	{
+		// get ideal range of equipped weapon
+		ideal = AIWeapons[weapon].idealRange;
+		if (ideal > AI_RANGE_LONG)
+			ideal = AI_RANGE_LONG;
+	}
 	
 	// if distance is greater than ideal range, get closer; otherwise, move back
 	if (dist > ideal)
@@ -1177,7 +1188,7 @@ qboolean BOT_DMclass_CheckShot(edict_t *ent, vec3_t	point)
 	//bloqued, don't shoot
 	tr = gi.trace( start, vec3_origin, vec3_origin, point, ent, MASK_AISOLID);
 
-	if (tr.ent && tr.ent->inuse && OnSameTeam(ent, tr.ent))
+	if (tr.ent && tr.ent->inuse && OnSameTeam(ent, tr.ent) && tr.ent->mtype != M_BARREL)
 		return false; //GHz: bots tend to suicide by trying to shoot past allies
 
 //	trap_Trace( &tr, self->s.origin, vec3_origin, vec3_origin, point, self, MASK_AISOLID);
@@ -1190,6 +1201,8 @@ qboolean BOT_DMclass_CheckShot(edict_t *ent, vec3_t	point)
 	return true;
 }
 
+qboolean BOT_DMclass_TargetBarrel(edict_t* self);
+
 // GHz note: probably want to switch to findclosestradius_targets in the future!
 //==========================================
 // BOT_DMclass_FindEnemy
@@ -1201,8 +1214,8 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 
 	edict_t* bestenemy = NULL;
 	float		bestweight = 99999;
-	float		weight;
-	vec3_t		dist;
+	float		dist, weight;
+	//vec3_t		dist;
 
 	if (self->ai.attack_delay > level.time)
 		return false;
@@ -1218,6 +1231,10 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 
 	//AI_DebugPrintf("BOT_DMclass_FindEnemy()\n");
 
+	// if we own any barrels, target the one with the highest number of nearby enemies
+	if (BOT_DMclass_TargetBarrel(self))
+		return true;
+
 	// Find Enemy
 	for (i = 0;i < num_AIEnemies;i++)
 	{
@@ -1226,8 +1243,18 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 
 		if (!G_ValidTargetEnt(AIEnemies[i], true))
 			continue;
+
+		dist = entdist(self, AIEnemies[i]);
+
 		if (OnSameTeam(self, AIEnemies[i]))
-			continue;
+		{/*
+			// target barrels if they're ours and they are on the ground
+			if (AIEnemies[i]->mtype != M_BARREL // not a barrel
+				|| AIEnemies[i]->creator && AIEnemies[i]->creator != self // not ours
+				|| dist < AIEnemies[i]->dmg_radius) // too close */
+				//|| !AIEnemies[i]->groundentity) // not on the ground
+				continue;
+		}
 
 		//Ignore players with 0 weight (was set at botstatus)
 		if (self->ai.status.playersWeights[i] == 0)
@@ -1239,8 +1266,8 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 			continue;
 
 		//(weight enemies from fusionbot) Is enemy visible, or is it too close to ignore 
-		VectorSubtract(self->s.origin, AIEnemies[i]->s.origin, dist);
-		weight = VectorLength(dist);
+		//VectorSubtract(self->s.origin, AIEnemies[i]->s.origin, dist);
+		weight = dist;//VectorLength(dist);
 
 		//modify weight based on precomputed player weights
 		weight *= (1.0 - self->ai.status.playersWeights[i]);

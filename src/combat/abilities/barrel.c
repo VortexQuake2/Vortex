@@ -166,6 +166,7 @@ void SpawnExplodingBarrel(edict_t* ent)
 	barrel->die = barrel_die;
 	barrel->dmg = EXPLODING_BARREL_INITIAL_DAMAGE + EXPLODING_BARREL_ADDON_DAMAGE * barrel->monsterinfo.level;
 	barrel->dmg_radius = 100 + 0.25 * barrel->dmg;
+	barrel->radius_dmg = barrel->dmg; // for bot AI hazard detection
 	barrel->think = barrel_think;//M_droptofloor;
 	barrel->nextthink = level.time + FRAMETIME;
 	gi.linkentity(barrel);
@@ -210,20 +211,24 @@ void Cmd_ExplodingBarrel_f(edict_t* ent)
 	if (vrx_toggle_pickup(ent, M_BARREL, 128)) // search for entity to pick up, or drop the one we're holding
 		return;
 
-	if (!G_CanUseAbilities(ent, ent->myskills.abilities[EXPLODING_BARREL].current_level, EXPLODING_ARMOR_COST))
+	//if (!G_CanUseAbilities(ent, ent->myskills.abilities[EXPLODING_BARREL].current_level, EXPLODING_ARMOR_COST))
+	//	return;
+	if (!V_CanUseAbilities(ent, EXPLODING_BARREL, EXPLODING_BARREL_COST, true))
 		return;
-	if (ent->myskills.abilities[EXPLODING_BARREL].disable)
-		return;
-	if (ent->client->pers.inventory[power_cube_index] < EXPLODING_ARMOR_AMOUNT)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "You need at least %d power cubes to use this ability.\n", (int)EXPLODING_BARREL_COST);
-		return;
-	}
-	if (ent->num_barrels >= EXPLODING_BARREL_MAX_COUNT)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Unable to spawn additional exploding barrels (%d/%d).\n", ent->num_barrels, (int)EXPLODING_BARREL_MAX_COUNT);
-		return;
-	}
+	//if (ent->myskills.abilities[EXPLODING_BARREL].disable)
+	//	return;
+	//if (ent->client->pers.inventory[power_cube_index] < EXPLODING_ARMOR_AMOUNT)
+	//{
+	//	safe_cprintf(ent, PRINT_HIGH, "You need at least %d power cubes to use this ability.\n", (int)EXPLODING_BARREL_COST);
+	//	return;
+	//}
+	//if (ent->num_barrels >= EXPLODING_BARREL_MAX_COUNT)
+	//{
+	//	safe_cprintf(ent, PRINT_HIGH, "Unable to spawn additional exploding barrels (%d/%d).\n", ent->num_barrels, (int)EXPLODING_BARREL_MAX_COUNT);
+	//	return;
+	//}
 
 	SpawnExplodingBarrel(ent);
+	if (ent->ai.is_bot)
+		vrx_toggle_pickup(ent, M_BARREL, 128); // toss the barrel
 }

@@ -1016,6 +1016,70 @@ void V_ResetAbilityDelays(edict_t *ent)
 
 //************************************************************************************************
 
+// returns true if the player can use the specified ability; does not perform general ability checks
+qboolean V_CanUseAbility(edict_t* ent, int ability_index, int ability_cost, qboolean print_msg)
+{
+    // ability is disabled
+    if (ent->myskills.abilities[ability_index].disable)
+        return false;
+
+    if (ent->myskills.abilities[ability_index].general_skill == 2 &&
+        pregame_time->value > level.time) // mobility in pregame
+        return true;
+
+    // poltergeist cannot use abilities in human form
+    if (vrx_is_morphing_polt(ent) && !ent->mtype) 
+    {
+        // allow them to morph
+        if (!PM_PlayerHasMonster(ent) && (ability_index != CACODEMON) && (ability_index != MUTANT) && (ability_index != BRAIN) && (ability_index != FLYER)
+            && (ability_index != MEDIC) && (ability_index != BLOOD_SUCKER) && (ability_index != TANK) && (ability_index != BERSERK)) 
+        {
+            if (print_msg)
+                safe_cprintf(ent, PRINT_HIGH, "You can't use abilities in human form!\n");
+            return false;
+        }
+    }
+
+    // ability hasn't been upgraded
+    if (ent->myskills.abilities[ability_index].current_level < 1) 
+    {
+        if (print_msg)
+            safe_cprintf(ent, PRINT_HIGH, "You have to upgrade to use this ability!\n");
+        return false;
+    }
+
+	// ability is on cooldown
+    if (ent->myskills.abilities[ability_index].delay > level.time) 
+    {
+        if (print_msg)
+            safe_cprintf(ent, PRINT_HIGH, "You can't use this ability for another %2.1f seconds.\n",
+                ent->myskills.abilities[ability_index].delay - level.time);
+        return false;
+    }
+
+    // can't use abilities if you don't have enough power cubes
+    if (ability_cost && (ent->client->pers.inventory[power_cube_index] < ability_cost)) 
+    {
+        if (print_msg)
+            safe_cprintf(ent, PRINT_HIGH, "You need more %d power cubes to use this ability.\n",
+                ability_cost - ent->client->pers.inventory[power_cube_index]);
+        return false;
+    }
+
+	if (ability_index == EXPLODING_BARREL && ent->num_barrels >= EXPLODING_BARREL_MAX_COUNT)
+	{
+		if (print_msg)
+            safe_cprintf(ent, PRINT_HIGH, "Unable to spawn additional exploding barrels (%d/%d).\n", ent->num_barrels, (int)EXPLODING_BARREL_MAX_COUNT);
+		return false;
+	}
+
+    return true;
+}
+
+//************************************************************************************************
+
+// returns true if the player can use abilities, false otherwise
+// ability_index = index of the ability to check--set to -1 to check if any ability can be used
 qboolean V_CanUseAbilities(edict_t *ent, int ability_index, int ability_cost, qboolean print_msg) {
     if (!ent->client)
         return false;
@@ -1023,12 +1087,12 @@ qboolean V_CanUseAbilities(edict_t *ent, int ability_index, int ability_cost, qb
     if (!G_EntIsAlive(ent))
         return false;
 
-    if (ent->myskills.abilities[ability_index].general_skill == 2 &&
+    if (ability_index != -1 && ent->myskills.abilities[ability_index].general_skill == 2 &&
         pregame_time->value > level.time) // mobility in pregame
         return true;
 
-    if (ent->myskills.abilities[ability_index].disable)
-        return false;
+    //if (ent->myskills.abilities[ability_index].disable)
+    //    return false;
 
     //4.2 can't use abilities in wormhole/noclip
     if (ent->flags & FL_WORMHOLE)
@@ -1038,6 +1102,7 @@ qboolean V_CanUseAbilities(edict_t *ent, int ability_index, int ability_cost, qb
         return false;
 
     // poltergeist cannot use abilities in human form
+    /*
     if (vrx_is_morphing_polt(ent) && !ent->mtype) {
         // allow them to morph
         if (!PM_PlayerHasMonster(ent) &&
@@ -1059,7 +1124,7 @@ qboolean V_CanUseAbilities(edict_t *ent, int ability_index, int ability_cost, qb
         if (print_msg)
             safe_cprintf(ent, PRINT_HIGH, "You have to upgrade to use this ability!\n");
         return false;
-    }
+    }*/
 
     // enforce special rules on flag carrier in CTF mode
     if (ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent)) {
@@ -1095,21 +1160,13 @@ qboolean V_CanUseAbilities(edict_t *ent, int ability_index, int ability_cost, qb
                          ent->client->ability_delay - level.time);
         return false;
     }
-
+    /*
     if (ent->myskills.abilities[ability_index].delay > level.time) {
         if (print_msg)
             safe_cprintf(ent, PRINT_HIGH, "You can't use this ability for another %2.1f seconds.\n",
                          ent->myskills.abilities[ability_index].delay - level.time);
         return false;
-    }
-
-    // can't use abilities if you don't have enough power cubes
-    if (ability_cost && (ent->client->pers.inventory[power_cube_index] < ability_cost)) {
-        if (print_msg)
-            safe_cprintf(ent, PRINT_HIGH, "You need more %d power cubes to use this ability.\n",
-                         ability_cost - ent->client->pers.inventory[power_cube_index]);
-        return false;
-    }
+    }*/
 
     // players cursed by amnesia can't use abilities
     if (que_findtype(ent->curses, NULL, AMNESIA) != NULL) {
@@ -1117,6 +1174,9 @@ qboolean V_CanUseAbilities(edict_t *ent, int ability_index, int ability_cost, qb
             safe_cprintf(ent, PRINT_HIGH, "You have been cursed with amnesia and can't use any abilities!!\n");
         return false;
     }
+
+    if (ability_index != -1)
+		return V_CanUseAbility(ent, ability_index, ability_cost, print_msg);
     return true;
 }
 

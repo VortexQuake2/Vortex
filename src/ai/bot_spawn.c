@@ -298,17 +298,18 @@ void BOT_UpgradeSkill(edict_t* ent, int ability_index, int amount)
 void BOT_SoldierAssignSkills(edict_t *ent)
 {
 	BOT_UpgradeSkill(ent, STRENGTH, 10);
-	BOT_UpgradeSkill(ent, CREATE_QUAD, 1);
-	BOT_UpgradeSkill(ent, EMP, 10);
-	BOT_UpgradeSkill(ent, RESISTANCE, 5);
+	BOT_UpgradeSkill(ent, VAMPIRE, 5);
 	BOT_UpgradeSkill(ent, VITALITY, 5);
-	BOT_UpgradeSkill(ent, RESISTANCE, 5);
-	BOT_UpgradeSkill(ent, STRENGTH, 5);
-	BOT_UpgradeSkill(ent, RESISTANCE, 5);
+	BOT_UpgradeSkill(ent, RESISTANCE, 10); // clvl 15: str/res are level 10
+	BOT_UpgradeSkill(ent, HASTE, 10); // clvl 20
 	BOT_UpgradeSkill(ent, CREATE_INVIN, 1);
+	BOT_UpgradeSkill(ent, CREATE_QUAD, 1); // clvl 24
+	BOT_UpgradeSkill(ent, STRENGTH, 5);
+	BOT_UpgradeSkill(ent, RESISTANCE, 5); // clvl 29: str/res are level 15, haste is level 10
 	BOT_UpgradeSkill(ent, VITALITY, 5);
-	BOT_UpgradeSkill(ent, NAPALM, 10);
-	BOT_UpgradeSkill(ent, MIRV, 10);
+	BOT_UpgradeSkill(ent, POWER_REGEN, 5); // clvl 34
+	BOT_UpgradeSkill(ent, EXPLODING_BARREL, 15);
+	BOT_UpgradeSkill(ent, EMP, 15); // clvl 49
 }
 
 void BOT_MageAssignSkills(edict_t* ent)
@@ -386,14 +387,18 @@ void BOT_VampireAssignSkills(edict_t* ent)
 {
 	BOT_UpgradeSkill(ent, VAMPIRE, 5);
 	BOT_UpgradeSkill(ent, GHOST, 5); // clvl 5
-	BOT_UpgradeSkill(ent, BLINKSTRIKE, 5);
-	BOT_UpgradeSkill(ent, POWER_REGEN, 1); // clvl 8
-	BOT_UpgradeSkill(ent, VITALITY, 4); // clvl 10
-	BOT_UpgradeSkill(ent, GHOST, 5);
-	BOT_UpgradeSkill(ent, VAMPIRE, 5); // clvl 15
-	BOT_UpgradeSkill(ent, BLINKSTRIKE, 5);
 	BOT_UpgradeSkill(ent, VITALITY, 5);
-	BOT_UpgradeSkill(ent, PLAGUE, 10); // clvl 25
+	BOT_UpgradeSkill(ent, VAMPIRE, 5);
+	BOT_UpgradeSkill(ent, GHOST, 5);
+	BOT_UpgradeSkill(ent, VITALITY, 5); // clvl 15: vampire/ghost/vitality are level 10
+	BOT_UpgradeSkill(ent, POWER_REGEN, 3);
+	BOT_UpgradeSkill(ent, BLINKSTRIKE, 15);
+	BOT_UpgradeSkill(ent, VAMPIRE, 5);
+	BOT_UpgradeSkill(ent, GHOST, 5); // clvl 29: vampire/ghost/blinkstrike are level 15
+	BOT_UpgradeSkill(ent, VITALITY, 5);
+	BOT_UpgradeSkill(ent, STRENGTH, 10);
+	BOT_UpgradeSkill(ent, PLAGUE, 15); // clvl 44
+	BOT_UpgradeSkill(ent, HASTE, 10); // clvl 49
 }
 
 void BOT_NecroAssignSkills(edict_t* ent)
@@ -462,10 +467,10 @@ void BOT_UpgradeWeapons(edict_t* ent)
 // randomly selects a class-appropriate respawn weapon
 void BOT_SelectRespawnWeapon(edict_t* ent)
 {
-	int soldierWeapons[] = { 2,3,4,5,7,8,12 };
+	int soldierWeapons[] = { 7, 9, 12 };//{ 2,3,4,5,7,8,12 };
 	int necroWeapons[] = { 7,8,9 };
 	int mageWeapons[] = { 2,4,5,9,12 }; // medium-long range hitscan preferred
-	int vampireWeapons[] = { 1,2,3,4,5 }; // short range preferred
+	int vampireWeapons[] = { 1,3,5 };// { 1, 2, 3, 4, 5 }; // short range preferred
 	int* weaponArray;
 	int weaponCount, randomIndex;
 

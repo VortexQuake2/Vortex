@@ -974,6 +974,10 @@ qboolean vrx_toggle_pickup(edict_t* ent, int mtype, float dist)
 	}
 	//gi.dprintf("no pickup\n");
 
+	// bots can't pick up entities--they can only drop them
+	if (ent->ai.is_bot)
+		return false;
+
 	// find an entity close to the player's aiming reticle
 	while ((e = findclosestreticle(e, ent, dist)) != NULL)
 	{

@@ -464,6 +464,10 @@ qboolean AI_DodgeProjectiles(edict_t* self, usercmd_t* ucmd)
 		return true;
 	}
 
+	// barrels aren't hazardous if there's no enemy to shoot at them
+	if (self->movetarget->mtype == M_BARREL && !self->enemy)
+		return false;
+
 	// copy projectile's origin to start
 	VectorCopy(self->movetarget->s.origin, start);
 	// is it moving?
