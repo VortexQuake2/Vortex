@@ -1056,6 +1056,8 @@ void BOT_DMclass_BunnyHop(edict_t* self, usercmd_t* ucmd, qboolean forwardmove)
 	
 }
 
+void BOT_DMclass_UseSprint(edict_t* self);
+
 //==========================================
 // BOT_DMclass_CombatMovement
 //
@@ -1101,8 +1103,8 @@ void BOT_DMclass_CombatMovement( edict_t *self, usercmd_t *ucmd )
 	// calculate enemy distance
 	dist = VectorLength( attackvector);
 
-	// if we're using flesh/corpse eater, we want to be as close as possible
-	if (self->myskills.abilities[FLESH_EATER].current_level > 0)
+	// if we're using flesh/corpse eater or berserk, we want to be as close as possible
+	if (self->myskills.abilities[FLESH_EATER].current_level > 0 || self->mtype == MORPH_BERSERK)
 		ideal = 0;
 	else
 	{
@@ -1115,11 +1117,18 @@ void BOT_DMclass_CombatMovement( edict_t *self, usercmd_t *ucmd )
 	// if distance is greater than ideal range, get closer; otherwise, move back
 	if (dist > ideal)
 	{
+		// toggle superspeed
+		if (dist - ideal > 48)
+			BOT_DMclass_UseSprint(self);
+		else
+			self->superspeed = false;
+
 		ucmd->forwardmove += 400;
 		//gi.dprintf("%s: ideal: %.0f dist: %.0f -- closing distance\n", __func__, ideal, dist);
 	}
 	else
 	{
+		self->superspeed = false;
 		ucmd->forwardmove -= 400;
 		//gi.dprintf("%s: ideal: %.0f dist: %.0f -- moving away\n", __func__, ideal, dist);
 	}
@@ -1225,6 +1234,10 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 	// we already set up an enemy this frame (reacting to attacks)
 	//if (self->enemy && self->enemy->inuse && visible(self, self->enemy))//GHz: don't bother finding a new enemy if the last one is still visible
 	//	return true;
+
+	// save last enemy to detect target changes
+	if (self->enemy && self->enemy->inuse)
+		self->oldenemy = self->enemy;
 
 	if (level.time < pregame_time->value) // No enemies in pregame lol
 		return false;
@@ -1457,7 +1470,7 @@ void BOT_DMclass_ChooseWeapon(edict_t *self)
 	if( self->ai.changeweapon_timeout > level.time )
 		return;
 
-	if (self->myskills.class_num == CLASS_KNIGHT)
+	if (self->myskills.class_num == CLASS_KNIGHT || self->mtype)
 		return;
 
 	//AI_DebugPrintf("BOT_DMclass_ChooseWeapon()\n");
@@ -1541,7 +1554,9 @@ void BOT_DMclass_FireWeapon (edict_t *self, usercmd_t *ucmd)
 	//AI_DebugPrintf("BOT_DMclass_FireWeapon()\n");
 
 	//weapon = self->s.skinnum & 0xff;
-	if (self->client->pers.weapon)
+	if (self->mtype) // morphed
+		weapon = -1;
+	else if (self->client->pers.weapon)
 		weapon = (self->client->pers.weapon->weapmodel & 0xff);
 	else
 		weapon = 0;
@@ -1561,44 +1576,48 @@ void BOT_DMclass_FireWeapon (edict_t *self, usercmd_t *ucmd)
 	dist = entdist(self, self->enemy);
 	velocity = VectorLength(self->enemy->velocity);
 
-	//GHz: switch to lance if enemy is outside sword range
-	if (weapon == WEAP_SWORD && dist > AI_RANGE_SHORT)
+	if (weapon != -1)
 	{
-		self->client->weapon_mode = 1; //switch to lance mode--FIXME: shouldn't this be done @ chooseweapon?
-		//target[2] = self->enemy->absmin[2]-32;//aim at the feet
-		use_prediction = true;
-		override_pitch = true;
-	}
-	else
-		self->client->weapon_mode = 0;
+		//GHz: switch to lance if enemy is outside sword range
+		if (weapon == WEAP_SWORD && dist > AI_RANGE_SHORT)
+		{
+			self->client->weapon_mode = 1; //switch to lance mode--FIXME: shouldn't this be done @ chooseweapon?
+			//target[2] = self->enemy->absmin[2]-32;//aim at the feet
+			use_prediction = true;
+			override_pitch = true;
+		}
+		else
+			self->client->weapon_mode = 0;
 
-	// find out our weapon AIM style
-	if( AIWeapons[weapon].aimType == AI_AIMSTYLE_PREDICTION_EXPLOSIVE )
-	{
-		//aim to the feets when enemy isn't higher
-		//if( self->s.origin[2] + self->viewheight > target[2] + (self->enemy->mins[2] * 0.8) )
-		//	target[2] += self->enemy->mins[2];
-		if (self->enemy->groundentity && (self->s.origin[2] + self->viewheight > self->enemy->absmin[2]))//GHz
-			target[2] = self->enemy->absmin[2];//GHz
-		use_prediction = true;
-		
-	}
-	
-	if ( AIWeapons[weapon].aimType == AI_AIMSTYLE_PREDICTION || use_prediction)
-	{
-		//jalToDo
-		
-		// move our target point based on projectile and enemy velocity
-		if (projectile_speed = AI_GetWeaponProjectileVelocity(self, weapon))
-			VectorMA(target, (float)dist / projectile_speed, self->enemy->velocity, target);
-		//gi.dprintf("projectile speed: %f\n", projectile_speed);
-	}
-	else if ( AIWeapons[weapon].aimType == AI_AIMSTYLE_DROP )
-	{
-		//jalToDo
+		// find out our weapon AIM style
+		if (AIWeapons[weapon].aimType == AI_AIMSTYLE_PREDICTION_EXPLOSIVE)
+		{
+			//aim to the feets when enemy isn't higher
+			//if( self->s.origin[2] + self->viewheight > target[2] + (self->enemy->mins[2] * 0.8) )
+			//	target[2] += self->enemy->mins[2];
+			if (self->enemy->groundentity && (self->s.origin[2] + self->viewheight > self->enemy->absmin[2]))//GHz
+				target[2] = self->enemy->absmin[2];//GHz
+			use_prediction = true;
 
-	} else { //AI_AIMSTYLE_INSTANTHIT
+		}
 
+		if (AIWeapons[weapon].aimType == AI_AIMSTYLE_PREDICTION || use_prediction)
+		{
+			//jalToDo
+
+			// move our target point based on projectile and enemy velocity
+			if (projectile_speed = AI_GetWeaponProjectileVelocity(self, weapon))
+				VectorMA(target, (float)dist / projectile_speed, self->enemy->velocity, target);
+			//gi.dprintf("projectile speed: %f\n", projectile_speed);
+		}
+		else if (AIWeapons[weapon].aimType == AI_AIMSTYLE_DROP)
+		{
+			//jalToDo
+
+		}
+		else { //AI_AIMSTYLE_INSTANTHIT
+
+		}
 	}
 
 	// modify attack angles based on accuracy (mess this up to make the bot's aim not so deadly)
@@ -1628,13 +1647,23 @@ void BOT_DMclass_FireWeapon (edict_t *self, usercmd_t *ucmd)
 	}
 
 	//GHz: don't bother firing if we're unlikely to hit anything
-	if (AI_GetWeaponRangeWeightByDistance(weapon, dist) < 0.1)
+	if (weapon != -1 && AI_GetWeaponRangeWeightByDistance(weapon, dist) < 0.1)
 		return;
 
-	// Set the attack 
-	firedelay = random()*(MAX_BOT_SKILL*1.8);
-	if (firedelay > (MAX_BOT_SKILL - self->ai.pers.skillLevel) && BOT_DMclass_CheckShot(self, target))
-		ucmd->buttons = BUTTON_ATTACK;
+	// Set the attack
+	if (BOT_DMclass_CheckShot(self, target)) // can hit the target
+	{
+		if (self->oldenemy && self->oldenemy->inuse && self->enemy == self->oldenemy)
+			ucmd->buttons = BUTTON_ATTACK; // target hasn't changed--continue attack
+		else // target has changed, so add firing delay
+		{
+			firedelay = random() * (MAX_BOT_SKILL * 1.8);
+			if (firedelay > (MAX_BOT_SKILL - self->ai.pers.skillLevel))
+				ucmd->buttons = BUTTON_ATTACK;
+		}
+	}
+
+	//gi.dprintf("%d: %s: buttons: %d\n", (int)level.framenum, __func__, ucmd->buttons);
 
 	//if(AIDevel.debugChased && bot_showcombat->value)
 	//	safe_cprintf (AIDevel.chaseguy, PRINT_HIGH, "%s: attacking %s\n",self->ai.pers.netname ,self->enemy->classname);
@@ -1985,6 +2014,9 @@ void BOT_DMclass_UpdateStatus( edict_t *self )
 
 	if (!G_EntIsAlive(self->enemy))//GHz: stay angry at this entity--used for LR goal setting
 		self->enemy = NULL;
+
+	if (self->ai.state != BOT_STATE_ATTACK)
+		self->superspeed = false;//GHz: only use sprint/superspeed in CombatMovement
 	//if (self->movetarget && (!self->movetarget->inuse || self->movetarget->solid == SOLID_NOT))//GHz: need to clear picked up items
 	//	self->movetarget = NULL;
 
@@ -2060,8 +2092,10 @@ qboolean BOT_DMclass_ChooseMoveAttack(edict_t* self)
 	return false;
 }
 
+void BOT_DMclass_MorphPlayer(edict_t* self);//GHz
 qboolean AI_SetupMoveAttack(edict_t* self);//GHz
 void AI_SetUpCombatMovement(edict_t* ent);//GHz
+
 //==========================================
 // BOT_DMclass_RunFrame
 // States Machine & call client movement
@@ -2071,11 +2105,14 @@ void BOT_DMclass_RunFrame( edict_t *self )
 	usercmd_t	ucmd;
 	memset( &ucmd, 0, sizeof(ucmd) );
 
+	BOT_DMclass_MorphPlayer(self);// try to morph
+
 	// Look for enemies
 	if( BOT_DMclass_FindEnemy(self) ) // find an enemy
 	{
 		if (!BOT_DMclassEvadeEnemy(self, &ucmd)) // run away if we have to
 		{
+			AITools_ShowArrowMarker(self);//TEST
 			//gi.dprintf("attack enemy!\n");
 			BOT_DMclass_ChooseWeapon(self); // chose the best weapon for the job
 			BOT_DMclass_FireWeapon(self, &ucmd); // fire!
@@ -2138,6 +2175,8 @@ void BOT_DMclass_RunFrame( edict_t *self )
 	self->client->ping = ucmd.msec;
 
 	// send command through id's code
+	//if (ucmd.buttons & BUTTON_ATTACK)
+	//	gi.dprintf("%d: %s BUTTON_ATTACK\n", (int)level.framenum, __func__);
 	ClientThink( self, &ucmd );
 	self->nextthink = level.time + FRAMETIME;
 }

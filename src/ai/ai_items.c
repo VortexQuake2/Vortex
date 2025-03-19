@@ -124,6 +124,7 @@ qboolean AI_CanUseArmor(gitem_t* item, edict_t* other)//GHz - mostly a copy & pa
 	if (!other->client)
 		return false;
 
+	//gi.dprintf("%d: %s\n", (int)level.framenum, __func__);
 	// get info on new armor
 	newinfo = (gitem_armor_t*)item->info;
 
@@ -148,7 +149,7 @@ qboolean AI_CanUseArmor(gitem_t* item, edict_t* other)//GHz - mostly a copy & pa
 	if (current_armor >= max_armor) {
 		// let them pick up shards for power cubes even when full
 		if (shard) {
-			other->client->pers.inventory[power_cube_index] += 5;
+			//other->client->pers.inventory[power_cube_index] += 5;
 			return true;
 		}
 		return false;

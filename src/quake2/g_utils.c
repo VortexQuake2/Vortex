@@ -1498,7 +1498,7 @@ qboolean visible1 (edict_t *ent1, edict_t *ent2)
 void stuffcmd(edict_t *ent, char *s) 	
 {
 	//gi.dprintf("running stuffcmd on %s\n", ent->classname);
-	if(ent->svflags & SVF_MONSTER) return;
+	if(ent->svflags & SVF_MONSTER || ent->ai.is_bot) return;
 
    	gi.WriteByte (svc_stufftext);
 	gi.WriteString (s);
@@ -2283,4 +2283,27 @@ int G_NearbyEnts(vec3_t const org, float rad, qboolean is_visible)
 	}
 	//gi.dprintf("%s: rad: %.0f ents: %d", __func__, rad, num_ents);
 	return num_ents;
+}
+
+// creates an arrow at start pointing in the specified direction and returns a pointer to the temporary entity
+edict_t* G_CreateArrowMarker(vec3_t start, vec3_t dir, int skinnum, float duration)
+{
+	vec3_t angles;
+	edict_t* arrow;
+
+	arrow = G_Spawn();
+	arrow->movetype = MOVETYPE_NONE;
+	arrow->solid = SOLID_NOT;
+	//arrow->s.effects |= EF_ROTATE;
+	arrow->s.modelindex = 1; // must be non-zero
+	arrow->classname = "arrow marker";
+	arrow->s.modelindex = gi.modelindex("models/misc_corner1/tris.md2");
+	arrow->s.skinnum = skinnum;// 0: yellow, 3: white, 4: red
+	arrow->think = G_FreeEdict;
+	VectorCopy(start, arrow->s.origin);
+	vectoangles(dir, angles);
+	VectorCopy(angles, arrow->s.angles);
+	gi.linkentity(arrow);
+	arrow->nextthink = level.time + duration;
+	return arrow;
 }

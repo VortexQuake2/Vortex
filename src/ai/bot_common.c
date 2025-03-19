@@ -344,7 +344,14 @@ void safe_cprintf (edict_t *ent, int printlevel, char *fmt, ...)
 	int len;
 
 	if (ent && (!ent->inuse || ent->ai.is_bot))
+	{
+		/*
+		va_start(argptr, fmt);
+		len = vsprintf(bigbuffer, fmt, argptr);
+		va_end(argptr);
+		gi.dprintf("%s: %s", __func__, bigbuffer);*/
 		return;
+	}
 
 	if (ent && !ent->client) // az: it happens.
 		return;

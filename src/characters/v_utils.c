@@ -1081,6 +1081,8 @@ qboolean V_CanUseAbility(edict_t* ent, int ability_index, int ability_cost, qboo
 // returns true if the player can use abilities, false otherwise
 // ability_index = index of the ability to check--set to -1 to check if any ability can be used
 qboolean V_CanUseAbilities(edict_t *ent, int ability_index, int ability_cost, qboolean print_msg) {
+	//gi.dprintf("%s: index: %d cost %d\n", __func__, ability_index, ability_cost);
+
     if (!ent->client)
         return false;
 

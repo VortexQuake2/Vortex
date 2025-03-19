@@ -284,6 +284,36 @@ qboolean BOT_JoinCTFTeam (edict_t *ent, char *team_name)
 		ent->myskills.speciality_points -= mval;\
 	}
 
+void BOT_UpgradeTalent(edict_t* ent, int talent_index, int amount)
+{
+	// not a bot
+	if (!ent->ai.is_bot)
+		return;
+	// cap amount to the number of talent points we have
+	if (amount > ent->myskills.talents.talentPoints)
+		amount = ent->myskills.talents.talentPoints;
+	int slot = vrx_get_talent_slot(ent, talent_index);
+	// invalid talent
+	if (slot == -1)
+		return;
+	talent_t* talent = &ent->myskills.talents.talent[slot];
+	int levels_to_max = talent->maxLevel - talent->upgradeLevel;
+	// talent can't be upgraded any further
+	if (levels_to_max < 1)
+		return;
+	// don't exceed talent level cap
+	if (amount > levels_to_max)
+		amount = levels_to_max;
+
+	// upgrade the talent
+	talent->upgradeLevel += amount;
+	// reduce talent points
+	ent->myskills.talents.talentPoints -= amount;
+
+	gi.dprintf("%s upgraded to level %d/%d.\n", GetTalentString(talent->id), talent->upgradeLevel, talent->maxLevel);
+	gi.dprintf("Talent points remaining: %d\n", ent->myskills.talents.talentPoints);
+}
+
 void BOT_UpgradeSkill(edict_t* ent, int ability_index, int amount)
 {
 	if (!ent->ai.is_bot)
@@ -310,6 +340,10 @@ void BOT_SoldierAssignSkills(edict_t *ent)
 	BOT_UpgradeSkill(ent, POWER_REGEN, 5); // clvl 34
 	BOT_UpgradeSkill(ent, EXPLODING_BARREL, 15);
 	BOT_UpgradeSkill(ent, EMP, 15); // clvl 49
+
+	BOT_UpgradeTalent(ent, TALENT_IMP_STRENGTH, 5);
+	BOT_UpgradeTalent(ent, TALENT_IMP_RESIST, 5);
+	BOT_UpgradeTalent(ent, TALENT_BLOOD_OF_ARES, 5);
 }
 
 void BOT_MageAssignSkills(edict_t* ent)
@@ -333,6 +367,9 @@ void BOT_MageAssignSkills(edict_t* ent)
 		BOT_UpgradeSkill(ent, STATIC_FIELD, 5);
 		BOT_UpgradeSkill(ent, LIGHTNING_STORM, 5);
 		BOT_UpgradeSkill(ent, LIGHTNING, 5); // clvl 50: all lightning skills are level 15
+
+		BOT_UpgradeTalent(ent, TALENT_NOVA_ORB, 5);
+		BOT_UpgradeTalent(ent, TALENT_CL_STORM, 5);
 	}
 	else
 	{
@@ -353,7 +390,12 @@ void BOT_MageAssignSkills(edict_t* ent)
 		BOT_UpgradeSkill(ent, GLACIAL_SPIKE, 5);
 		BOT_UpgradeSkill(ent, FROZEN_ORB, 5);
 		BOT_UpgradeSkill(ent, NOVA, 5); // clvl 50: all ice/cold skills are level 15
+
+		BOT_UpgradeTalent(ent, TALENT_CL_STORM, 5);
+		BOT_UpgradeTalent(ent, TALENT_NOVA_ORB, 5);
 	}
+
+	BOT_UpgradeTalent(ent, TALENT_WIZARDRY, 5);
 }
 
 void BOT_KnightAssignSkills(edict_t* ent)
@@ -380,7 +422,11 @@ void BOT_KnightAssignSkills(edict_t* ent)
 	BOT_UpgradeSkill(ent, GHOST, 5); // clvl 43
 	BOT_UpgradeSkill(ent, ARMOR_UPGRADE, 5);
 	BOT_UpgradeSkill(ent, PLASMA_BOLT, 5);
-	BOT_UpgradeSkill(ent, POWER_REGEN, 4); // clvl 50 
+	BOT_UpgradeSkill(ent, POWER_REGEN, 4); // clvl 50
+
+	BOT_UpgradeTalent(ent, TALENT_DURABILITY, 5);
+	BOT_UpgradeTalent(ent, TALENT_LEAP_ATTACK, 5);
+	BOT_UpgradeTalent(ent, TALENT_MAG_BOOTS, 5);
 }
 
 void BOT_VampireAssignSkills(edict_t* ent)
@@ -399,6 +445,9 @@ void BOT_VampireAssignSkills(edict_t* ent)
 	BOT_UpgradeSkill(ent, STRENGTH, 10);
 	BOT_UpgradeSkill(ent, PLAGUE, 15); // clvl 44
 	BOT_UpgradeSkill(ent, HASTE, 10); // clvl 49
+
+	BOT_UpgradeTalent(ent, TALENT_SECOND_CHANCE, 5);
+	BOT_UpgradeTalent(ent, TALENT_ARMOR_VAMP, 5);
 }
 
 void BOT_NecroAssignSkills(edict_t* ent)
@@ -416,6 +465,28 @@ void BOT_NecroAssignSkills(edict_t* ent)
 	BOT_UpgradeSkill(ent, LIFE_TAP, 10); // clvl 43: curses are level 20
 	BOT_UpgradeSkill(ent, PLAGUE, 10); // clvl 48
 	BOT_UpgradeSkill(ent, POWER_REGEN, 4); // clvl 50: PCR is maxed
+
+	BOT_UpgradeTalent(ent, TALENT_OBLATION, 5);
+	BOT_UpgradeTalent(ent, TALENT_GOLEM_MASTERY, 5);
+	BOT_UpgradeTalent(ent, TALENT_AUTOCURSE, 5);
+}
+
+void BOT_PoltAssignSkills(edict_t* ent)
+{
+	BOT_UpgradeSkill(ent, BERSERK, 15);
+	BOT_UpgradeSkill(ent, VITALITY, 10);
+	BOT_UpgradeSkill(ent, VAMPIRE, 10); // clvl 18
+	BOT_UpgradeSkill(ent, POWER_REGEN, 4); // clvl 20
+	BOT_UpgradeSkill(ent, SPIKE, 10); // clvl 25
+	BOT_UpgradeSkill(ent, POWER_REGEN, 6); // clvl 28: PCR maxed
+	BOT_UpgradeSkill(ent, CREATE_INVIN, 1);
+	BOT_UpgradeSkill(ent, BERSERK, 5); // BERSERK at level 20
+	BOT_UpgradeSkill(ent, SPIKE, 5); // clvl 35: spike at 15
+	BOT_UpgradeSkill(ent, AMP_DAMAGE, 15);
+	BOT_UpgradeSkill(ent, FLESH_EATER, 15); // clvl 50
+
+	BOT_UpgradeTalent(ent, TALENT_SUPERIORITY, 5);
+	BOT_UpgradeTalent(ent, TALENT_RETALIATION, 5);
 }
 
 void BOT_UpgradeWeapon(edict_t* ent, int weapID)
@@ -517,6 +588,7 @@ void BOT_VortexAssignSkills(edict_t *ent)
 	case CLASS_KNIGHT: BOT_KnightAssignSkills(ent); break;
 	case CLASS_VAMPIRE: BOT_VampireAssignSkills(ent); break;
 	case CLASS_NECROMANCER: BOT_NecroAssignSkills(ent); break;
+	case CLASS_POLTERGEIST: BOT_PoltAssignSkills(ent); break;
 	default:
 		BOT_SoldierAssignSkills(ent);
 	}
@@ -566,6 +638,7 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 
 	ent->myskills.level = AveragePlayerLevel();
 	ent->myskills.speciality_points = ent->myskills.level * 2;
+	ent->myskills.talents.talentPoints = (int)(0.5 * ent->myskills.level);
 	ent->myskills.weapon_points = ent->myskills.level * 4;//GHz
 
 	s = Info_ValueForKey (ent->client->pers.userinfo, "skin");
@@ -578,19 +651,18 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 	}
 
 	ent->myskills.class_num = rnd;*/
+
 	if (!ent->myskills.class_num)
 	{
-		float r = random();
-		if (r < 0.2)
-			ent->myskills.class_num = CLASS_SOLDIER;
-		else if (r < 0.4)
-			ent->myskills.class_num = CLASS_KNIGHT;
-		else if (r < 0.6)
-			ent->myskills.class_num = CLASS_VAMPIRE;
-		else if (r < 0.8)
-			ent->myskills.class_num = CLASS_NECROMANCER;
-		else
-			ent->myskills.class_num = CLASS_MAGE;
+		switch (GetRandom(1, 6))
+		{
+		case 1: ent->myskills.class_num = CLASS_SOLDIER; break;
+		case 2: ent->myskills.class_num = CLASS_KNIGHT; break;
+		case 3: ent->myskills.class_num = CLASS_VAMPIRE; break;
+		case 4: ent->myskills.class_num = CLASS_NECROMANCER; break;
+		case 5: ent->myskills.class_num = CLASS_MAGE; break;
+		case 6: ent->myskills.class_num = CLASS_POLTERGEIST; break;
+		}
 	}
 	// for respawn_weapon index values, see vrx_WeapIDtoWeapIndex
 	//if (random() > 0.8)

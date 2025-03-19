@@ -468,6 +468,42 @@ void Cmd_ShowPlinks_f(edict_t* ent)
 	safe_cprintf(ent, PRINT_HIGH, "Show Plinks ON\n");
 }
 
+void AITools_ShowArrowMarker(edict_t* self)
+{
+	vec3_t start;
+	if (!AIDevel.debugChased)
+		return;
+	if (AIDevel.chaseguy && AIDevel.chaseguy->inuse && AIDevel.chaseguy->client->chase_target == self)
+	{
+		
+		if (self->enemy && self->enemy->inuse)
+		{
+			// place a red arrow over the head of our enemy
+			VectorCopy(self->enemy->s.origin, start);
+			start[2] = self->enemy->absmax[2] + 48;
+			G_CreateArrowMarker(start, tv(0, 0, -1), 4, FRAMETIME);
+		}
+
+		// place a yellow arrow over our head pointing in the direction of our intended path
+		if (!VectorEmpty(self->ai.move_vector))
+		{
+			vec3_t forward;
+			// calculate start position over our head
+			VectorCopy(self->s.origin, start);
+			start[2] = self->absmin[2] + 32;
+			
+			// remove pitch
+			VectorCopy(self->ai.move_vector, forward);
+			VectorNormalize(forward);
+			forward[2] = 0;
+
+			// move forward
+			VectorMA(start, 64, forward, start);
+			G_CreateArrowMarker(start, forward, 0, FRAMETIME);
+		}
+	}
+
+}
 
 //=======================================================================
 //=======================================================================

@@ -50,13 +50,15 @@ int p_berserk_melee (edict_t *self, vec3_t forward, vec3_t dir, int damage, int 
 	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
 
 	// bfg laser effect
-	gi.WriteByte (svc_temp_entity);
-	gi.WriteByte (TE_BFG_LASER);
-	gi.WritePosition (start);
-	gi.WritePosition (tr.endpos);
-	//gi.multicast (start, MULTICAST_PHS);
-	gi.unicast(self, true);
-
+	if (!self->ai.is_bot)
+	{
+		gi.WriteByte(svc_temp_entity);
+		gi.WriteByte(TE_BFG_LASER);
+		gi.WritePosition(start);
+		gi.WritePosition(tr.endpos);
+		//gi.multicast (start, MULTICAST_PHS);
+		gi.unicast(self, true);
+	}
 	//safe_cprintf(self, PRINT_HIGH, "Attack\n");
 
 	if (G_EntExists(tr.ent))
@@ -125,12 +127,29 @@ void p_berserk_swing (edict_t *ent)
 		gi.sound (ent, CHAN_WEAPON, gi.soundindex ("berserk/attack.wav"), 1, ATTN_STATIC, 0);
 }
 
+// return true if input_frame is within the specified range of start and end frames
+qboolean berserk_frames_in_range(int input_frame, int start_frame, int end_frame)
+{
+	return (input_frame >= start_frame && input_frame <= end_frame);
+}
+
+// translates between berserker standing punch and running punch frames
+int berserk_translate_attack_frame(int input_frame)
+{
+	if (input_frame > BERSERK_FRAMES_PUNCH_END)
+		return input_frame - 58;
+	else
+		return input_frame + 58;
+}
+
 void p_berserk_attack (edict_t *ent, int move_state)
 {
 	int		punch_dmg = BERSERK_PUNCH_INITIAL_DAMAGE + BERSERK_PUNCH_ADDON_DAMAGE * ent->myskills.abilities[BERSERK].current_level;
 	int		slash_dmg = BERSERK_SLASH_INITIAL_DAMAGE + BERSERK_SLASH_ADDON_DAMAGE * ent->myskills.abilities[BERSERK].current_level;
 	int		crush_dmg = BERSERK_CRUSH_INITIAL_DAMAGE + BERSERK_CRUSH_ADDON_DAMAGE * ent->myskills.abilities[BERSERK].current_level;
 	vec3_t	forward, right, up, angles;
+
+	//gi.dprintf("%d: %s: frame: %d state: %d\n", (int)level.framenum, __func__, ent->s.frame, move_state);
 
 	ent->client->idle_frames = 0;
 	AngleVectors(ent->s.angles, NULL, right, up);
@@ -139,6 +158,10 @@ void p_berserk_attack (edict_t *ent, int move_state)
 	
 	if (move_state == BERSERK_RUN_FORWARD)
 	{
+		// continue attack if we were previously doing stand & punch
+		if (berserk_frames_in_range(ent->s.frame, BERSERK_FRAMES_PUNCH_START, BERSERK_FRAMES_PUNCH_END))
+			ent->s.frame = berserk_translate_attack_frame(ent->s.frame);
+
 		G_RunFrames(ent, BERSERK_FRAMES_RUNATTACK1_START, BERSERK_FRAMES_RUNATTACK1_END, false);
 
 		// swing left-right
@@ -165,6 +188,10 @@ void p_berserk_attack (edict_t *ent, int move_state)
 	}
 	else if (move_state == BERSERK_RUN_BACKWARD)
 	{
+		// continue attack if we were previously doing stand & punch
+		if (berserk_frames_in_range(ent->s.frame, BERSERK_FRAMES_PUNCH_START, BERSERK_FRAMES_PUNCH_END))
+			ent->s.frame = berserk_translate_attack_frame(ent->s.frame);
+
 		G_RunFrames(ent, BERSERK_FRAMES_RUNATTACK1_START, BERSERK_FRAMES_RUNATTACK1_END, true);
 
 		// swing left-right
@@ -205,6 +232,10 @@ void p_berserk_attack (edict_t *ent, int move_state)
 	}
 	else // punch
 	{
+		// continue attack if we were previously doing run & attack
+		if (berserk_frames_in_range(ent->s.frame, BERSERK_FRAMES_RUNATTACK1_START, BERSERK_FRAMES_RUNATTACK1_END))
+			ent->s.frame = berserk_translate_attack_frame(ent->s.frame);
+
 		G_RunFrames(ent, BERSERK_FRAMES_PUNCH_START, BERSERK_FRAMES_PUNCH_END, false);
 		
 		// swing left-right
@@ -243,6 +274,11 @@ void RunBerserkFrames (edict_t *ent, usercmd_t *ucmd)
 
 	if (level.framenum >= ent->count)
 	{
+		//if (ent->client->buttons & BUTTON_ATTACK)
+		//	gi.dprintf("%d: %s BUTTON_ATTACK\n", (int)level.framenum, __func__);
+		//else
+		//	gi.dprintf("%d: %s\n", (int)level.framenum, __func__);
+
 		int regen_frames = qf2sf(BERSERK_REGEN_FRAMES);
 
 		// morph mastery reduces regen time

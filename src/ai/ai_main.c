@@ -778,7 +778,8 @@ void AI_Think (edict_t *self)
 	if(VectorLength(self->velocity) > 37)
 		self->ai.bloqued_timeout = level.time + 10.0;
 
-	if( self->ai.bloqued_timeout < level.time ) {
+	// can't move or stuck in a solid
+	if( self->ai.bloqued_timeout < level.time || gi.pointcontents(self->s.origin) & MASK_SOLID) {
 		self->ai.pers.bloquedTimeout(self); //GHz: do something about it!
 		return;
 	}

@@ -69,7 +69,7 @@ void vrx_add_basic_weapons(gclient_t *client, gitem_t *item, int spectator) {
 }
 
 void vrx_add_respawn_items(edict_t *ent) {
-//	gi.dprintf("vrx_add_respawn_items()\n");
+	//gi.dprintf("vrx_add_respawn_items()\n");
 
     ent->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = ent->myskills.inventory[ITEM_INDEX(Fdi_POWERCUBE)];
     ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)] = ent->myskills.inventory[ITEM_INDEX(Fdi_TBALL)];

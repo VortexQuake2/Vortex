@@ -136,6 +136,7 @@ void		AIDebug_ToogleBotDebug(void);
 
 void		AITools_Frame(void);
 void		AITools_DropNodes(edict_t *ent);
+void		AITools_ShowArrowMarker(edict_t* self);//GHz
 
 // safe **cough** prints
 void		debug_printf(char *fmt, ...);

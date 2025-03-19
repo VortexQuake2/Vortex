@@ -170,6 +170,16 @@ void AI_InitAIAbilities(void)
 	AIAbilities[EXPLODING_BARREL].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0.2; // high risk of suicide
 	AIAbilities[EXPLODING_BARREL].RangeWeight[AIWEAP_SHORT_RANGE] = 0;
 	AIAbilities[EXPLODING_BARREL].RangeWeight[AIWEAP_MELEE_RANGE] = 0;
+
+	//SPIKE
+	AIAbilities[SPIKE].is_weapon = true;
+	AIAbilities[SPIKE].aimType = AI_AIMSTYLE_PREDICTION;
+	AIAbilities[SPIKE].idealRange = AI_RANGE_MEDIUM;
+	AIAbilities[SPIKE].RangeWeight[AIWEAP_SNIPER_RANGE] = 0.1; // doubleful we'll hit anything
+	AIAbilities[SPIKE].RangeWeight[AIWEAP_LONG_RANGE] = 0.4;
+	AIAbilities[SPIKE].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0.5; // ideal range
+	AIAbilities[SPIKE].RangeWeight[AIWEAP_SHORT_RANGE] = 0.4;
+	AIAbilities[SPIKE].RangeWeight[AIWEAP_MELEE_RANGE] = 0.4;
 }
 
 qboolean CanTball(edict_t* ent, qboolean print);
@@ -224,6 +234,7 @@ float AI_GetAbilityProjectileVelocity(edict_t* ent, int ability_index)
 	case GLACIAL_SPIKE: return (GLACIAL_SPIKE_INITIAL_SPEED + GLACIAL_SPIKE_ADDON_SPEED * slvl);
 	case FROZEN_ORB: return FROZEN_ORB_SPEED;
 	case EXPLODING_BARREL: return 400;
+	case SPIKE: return SPIKE_SPEED;
 	}
 	return 0;
 }
@@ -248,6 +259,7 @@ float AI_GetAbilityCost(edict_t* ent, int ability_index)
 	case GLACIAL_SPIKE: return GLACIAL_SPIKE_COST;
 	case FROZEN_ORB: return FROZEN_ORB_COST;
 	case EXPLODING_BARREL: return EXPLODING_BARREL_COST;
+	case SPIKE: return SPIKE_COST;
 	}
 	return 0;
 }
@@ -355,6 +367,7 @@ void Cmd_AmpDamage(edict_t* ent);
 void Cmd_GlacialSpike_f(edict_t* ent, float skill_mult, float cost_mult);
 void Cmd_FrozenOrb_f(edict_t* ent, float skill_mult, float cost_mult);
 void Cmd_ExplodingBarrel_f(edict_t* ent);
+void Cmd_Spike_f(edict_t* ent);
 
 // aims and fires at enemy using the specified ability
 // note: the bot will use the ability continuously until it runs out of power cubes
@@ -441,6 +454,13 @@ void BOT_DMclass_FireAbility(edict_t* self, int ability_index)
 	case AMP_DAMAGE: Cmd_AmpDamage(self); break;
 	case GLACIAL_SPIKE: Cmd_GlacialSpike_f(self, 1.0, 1.0); break;
 	case FROZEN_ORB: Cmd_FrozenOrb_f(self, 1.0, 1.0); break;
+	case SPIKE: 
+		if (self->enemy->flags & FL_FLY || level.time > self->enemy->empeffect_time)
+			Cmd_Spike_f(self);
+		else
+			// delay using spike again until stun effect wears off
+			self->myskills.abilities[SPIKE].delay = level.time + (self->enemy->empeffect_time - level.time);
+		break;
 	case EXPLODING_BARREL: 
 		Cmd_ExplodingBarrel_f(self); 
 		// don't spam exploding barrels
@@ -458,8 +478,8 @@ void BOT_DMclass_UseBlinkStrike(edict_t* self)
 		cost = BLINKSTRIKE_MIN_COST;
 	
 	// can't use blinkstrike
-	//if (!V_CanUseAbilities(self, BLINKSTRIKE, cost, false))
-	//	return;
+	if (!V_CanUseAbilities(self, BLINKSTRIKE, cost, false))
+		return;
 	//gi.dprintf("%s: %s\n", self->ai.pers.netname, __func__);
 	// range check
 	float dist = entdist(self, self->enemy);
@@ -625,4 +645,30 @@ qboolean BOT_DMclass_TargetBarrel(edict_t* self)
 	}
 
 	return false;
+}
+
+void Cmd_PlayerToBerserk_f(edict_t* ent);
+void BOT_DMclass_MorphPlayer(edict_t* self)
+{
+	// already morphed
+	if (self->mtype)
+		return;
+	// can't use abilities
+	if (!V_CanUseAbilities(self, BERSERK, BERSERK_COST, false))
+		return;
+	// upgraded
+	if (self->myskills.abilities[BERSERK].current_level > 0)
+	{
+		//gi.dprintf("%s: morphing to berserk\n", self->ai.pers.netname);
+		Cmd_PlayerToBerserk_f(self);
+	}
+}
+
+void BOT_DMclass_UseSprint(edict_t* self)
+{
+	// not a berserker or superspeed isn't upgraded
+	if (self->mtype != MORPH_BERSERK && self->myskills.abilities[SUPER_SPEED].current_level < 1)
+		return;
+	// try to use sprint/superspeed
+	self->superspeed = true;
 }
