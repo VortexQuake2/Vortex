@@ -310,8 +310,8 @@ void BOT_UpgradeTalent(edict_t* ent, int talent_index, int amount)
 	// reduce talent points
 	ent->myskills.talents.talentPoints -= amount;
 
-	gi.dprintf("%s upgraded to level %d/%d.\n", GetTalentString(talent->id), talent->upgradeLevel, talent->maxLevel);
-	gi.dprintf("Talent points remaining: %d\n", ent->myskills.talents.talentPoints);
+	//gi.dprintf("%s upgraded to level %d/%d.\n", GetTalentString(talent->id), talent->upgradeLevel, talent->maxLevel);
+	//gi.dprintf("Talent points remaining: %d\n", ent->myskills.talents.talentPoints);
 }
 
 void BOT_UpgradeSkill(edict_t* ent, int ability_index, int amount)
