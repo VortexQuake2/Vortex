@@ -192,7 +192,7 @@ void		M_default_Spawn (void);
 //ai_weapons.c
 //----------------------------------------------------------
 void		AI_InitAIWeapons (void);
-float		AI_GetWeaponRangeWeightByDistance(int weapmodelIndex, float distance);//GHz
+float		AI_GetWeaponRangeWeightByDistance(edict_t *self, int weapmodelIndex, float distance);//GHz
 float		AI_GetWeaponProjectileVelocity(edict_t* ent, int weapmodelIndex);//GHz
 qboolean	AI_IsLadder(vec3_t origin, vec3_t v_angle, vec3_t mins, vec3_t maxs, edict_t *passent);
 

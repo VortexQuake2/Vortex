@@ -672,6 +672,7 @@ extern int	snd_fry;
 extern int	jacket_armor_index;
 extern int	combat_armor_index;
 extern int	body_armor_index;
+extern int	armor_shard_index;
 extern int	power_cube_index;
 extern int	flag_index;
 extern int	red_flag_index;

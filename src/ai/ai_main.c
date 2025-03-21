@@ -589,7 +589,7 @@ void AI_PickShortRangeGoal(edict_t* self)
 				//gi.dprintf("found summons that we own, weight: %.1f\n", weight);
 			}
 			// don't move towards items that place us outside of (usable) weapon range
-			else if (AI_GetWeaponRangeWeightByDistance(weapon, enemy_dist) <= 0.1)
+			else if (AI_GetWeaponRangeWeightByDistance(self, weapon, enemy_dist) <= 0.1)
 				in_weapon_range = false;
 		}
 

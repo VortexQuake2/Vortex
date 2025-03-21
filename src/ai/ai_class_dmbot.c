@@ -1182,7 +1182,7 @@ void BOT_DMclass_CombatMovement( edict_t *self, usercmd_t *ucmd )
 // BOT_DMclass_CheckShot
 // Checks if shot is blocked or if too far to shoot
 //==========================================
-qboolean BOT_DMclass_CheckShot(edict_t *ent, vec3_t	point)
+qboolean BOT_DMclass_CheckShot(edict_t *ent, vec3_t	point, qboolean ignore_self_dmg)
 {
 	trace_t tr;
 	vec3_t	start, forward, right, offset;
@@ -1198,14 +1198,23 @@ qboolean BOT_DMclass_CheckShot(edict_t *ent, vec3_t	point)
 	tr = gi.trace( start, vec3_origin, vec3_origin, point, ent, MASK_AISOLID);
 
 	if (tr.ent && tr.ent->inuse && OnSameTeam(ent, tr.ent) && tr.ent->mtype != M_BARREL)
+	{
+		//gi.dprintf("%s: can't attack %s (blocked by ally)\n", ent->ai.pers.netname, ent->enemy->classname);
 		return false; //GHz: bots tend to suicide by trying to shoot past allies
+	}
 
 //	trap_Trace( &tr, self->s.origin, vec3_origin, vec3_origin, point, self, MASK_AISOLID);
-	if (tr.fraction < 0.3) //just enough to prevent self damage (by now)
+	if (!ignore_self_dmg && tr.fraction < 0.3) //just enough to prevent self damage (by now)
+	{
+		//gi.dprintf("%s: can't attack %s (partially obstructed %.1f)\n", ent->ai.pers.netname, ent->enemy->classname, tr.fraction);
 		return false;
+	}
 
 	if (tr.surface && !tr.ent) // we hit solid. we're blocked
+	{
+		//gi.dprintf("%s: can't attack %s (fully blocked)\n", ent->ai.pers.netname, ent->enemy->classname);
 		return false;
+	}
 
 	return true;
 }
@@ -1547,6 +1556,7 @@ void BOT_DMclass_FireWeapon (edict_t *self, usercmd_t *ucmd)
 	//float	dist;
 	qboolean use_prediction = false;//GHz
 	qboolean override_pitch = false;//GHz
+	qboolean ignore_self_dmg = false;//GHz
 
 	if (!self->enemy)
 		return;
@@ -1555,7 +1565,10 @@ void BOT_DMclass_FireWeapon (edict_t *self, usercmd_t *ucmd)
 
 	//weapon = self->s.skinnum & 0xff;
 	if (self->mtype) // morphed
+	{
 		weapon = -1;
+		ignore_self_dmg = true;
+	}
 	else if (self->client->pers.weapon)
 		weapon = (self->client->pers.weapon->weapmodel & 0xff);
 	else
@@ -1647,21 +1660,25 @@ void BOT_DMclass_FireWeapon (edict_t *self, usercmd_t *ucmd)
 	}
 
 	//GHz: don't bother firing if we're unlikely to hit anything
-	if (weapon != -1 && AI_GetWeaponRangeWeightByDistance(weapon, dist) < 0.1)
+	if (AI_GetWeaponRangeWeightByDistance(self, weapon, dist) < 0.1)
 		return;
 
 	// Set the attack
-	if (BOT_DMclass_CheckShot(self, target)) // can hit the target
+	if (BOT_DMclass_CheckShot(self, target, ignore_self_dmg)) // can hit the target
 	{
 		if (self->oldenemy && self->oldenemy->inuse && self->enemy == self->oldenemy)
 			ucmd->buttons = BUTTON_ATTACK; // target hasn't changed--continue attack
-		else // target has changed, so add firing delay
+		else // target has changed--attack may be delayed until next frame (or longer)
 		{
 			firedelay = random() * (MAX_BOT_SKILL * 1.8);
 			if (firedelay > (MAX_BOT_SKILL - self->ai.pers.skillLevel))
 				ucmd->buttons = BUTTON_ATTACK;
+			//else
+			//	gi.dprintf("%s: can't attack %s (delayed)\n", self->ai.pers.netname, self->enemy->classname);
 		}
 	}
+	//else
+		//gi.dprintf("%s: can't attack %s (blocked)\n", self->ai.pers.netname, self->enemy->classname);
 
 	//gi.dprintf("%d: %s: buttons: %d\n", (int)level.framenum, __func__, ucmd->buttons);
 
@@ -1817,11 +1834,21 @@ void AI_AdjustAmmoNeedFactor(edict_t *self, gitem_t *ammoItem, ...)
 
 	// if we can't pick it up, reduce the weight to 0
 	if (!AI_CanPick_Ammo(self, ammoItem))
+	{
 		self->ai.status.inventoryWeights[ammo_index] = 0.0;
+		return;
+	}
 
 	// does the bot need cells for power screen/shield?
 	if (ammo_index == cell_index && AI_GetPSlevel(self))
 		return; // don't reduce cells weight
+
+	// morphed players don't typically need ammo (except for summoners, e.g. engy)
+	if (self->mtype || PM_PlayerHasMonster(self))
+	{
+		self->ai.status.inventoryWeights[ammo_index] = 0.0;
+		return;
+	}
 
 	// are we fighting?
 	if (self->ai.state == BOT_STATE_ATTACK || self->ai.state == BOT_STATE_MOVEATTACK)
@@ -1951,30 +1978,40 @@ void BOT_DMclass_WeightInventory(edict_t *self)
 	//WEAPONS
 	//-----------------------------------------------------
 
-	//weight weapon down if bot already has it
+	
 	for (i=0; i<WEAP_TOTAL; i++) {
-		if ( AIWeapons[i].weaponItem && client->pers.inventory[ITEM_INDEX(AIWeapons[i].weaponItem)])
-			self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[i].weaponItem)] = 0;
+		gitem_t* it = AIWeapons[i].weaponItem;
+		// weapon doesn't exist in the AIWeapons list
+		if (!it)
+			continue;
+		int weap_index = ITEM_INDEX(AIWeapons[i].weaponItem);
+		// morphed players have no use for weapons
+		if (self->mtype || PM_PlayerHasMonster(self))
+			self->ai.status.inventoryWeights[weap_index] = 0.0;
+		// already have this weapon
+		else if (client->pers.inventory[weap_index])
+			self->ai.status.inventoryWeights[weap_index] = 0.0;
 	}
 
 	//ARMOR
 	//-----------------------------------------------------
 	//shards are ALWAYS accepted but still...
 	if (!AI_CanUseArmor ( FindItemByClassname("item_armor_shard"), self ))
-		self->ai.status.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_armor_shard"))] = 0.0;
+		self->ai.status.inventoryWeights[armor_shard_index] = 0.0;
 
 	if (!AI_CanUseArmor ( FindItemByClassname("item_armor_jacket"), self ))
-		self->ai.status.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_armor_jacket"))] = 0.0;
+		self->ai.status.inventoryWeights[jacket_armor_index] = 0.0;
 
 	if (!AI_CanUseArmor ( FindItemByClassname("item_armor_combat"), self ))
-		self->ai.status.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_armor_combat"))] = 0.0;
+		self->ai.status.inventoryWeights[combat_armor_index] = 0.0;
 
 	if (!AI_CanUseArmor ( FindItemByClassname("item_armor_body"), self ))
-		self->ai.status.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_armor_body"))] = 0.0;
+		self->ai.status.inventoryWeights[body_armor_index] = 0.0;
 
 	
 	//TECH :
 	//-----------------------------------------------------
+	// you can only carry one tech at a time
 	if ( self->client->pers.inventory[ITEM_INDEX( FindItemByClassname("tech_resistance"))] 
 		|| self->client->pers.inventory[ITEM_INDEX( FindItemByClassname("tech_strength"))] 
 		|| self->client->pers.inventory[ITEM_INDEX( FindItemByClassname("tech_regeneration"))] 

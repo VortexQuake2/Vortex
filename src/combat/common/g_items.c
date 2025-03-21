@@ -21,6 +21,7 @@ gitem_armor_t bodyarmor_info = {100, 200, .80, .60, ARMOR_BODY};
 
 int jacket_armor_index;
 int combat_armor_index;
+int armor_shard_index;
 int resistance_index;
 int strength_index;
 int regeneration_index;
@@ -2908,6 +2909,7 @@ void SetItemNames(void) {
     jacket_armor_index = ITEM_INDEX(FindItem("Jacket Armor"));
     combat_armor_index = ITEM_INDEX(FindItem("Combat Armor"));
     body_armor_index = ITEM_INDEX(FindItem("Body Armor"));
+    armor_shard_index = ITEM_INDEX(FindItem("Armor Shard"));
     power_screen_index = ITEM_INDEX(FindItem("Power Screen"));
     power_shield_index = ITEM_INDEX(FindItem("Power Shield"));
     power_cube_index = ITEM_INDEX(FindItem("Power Cube"));

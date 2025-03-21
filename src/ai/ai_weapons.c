@@ -67,17 +67,35 @@ float AI_GetWeaponProjectileVelocity(edict_t *ent, int weapmodelIndex)
 	return 0;
 }
 
-float AI_GetWeaponRangeWeightByDistance(int weapmodelIndex, float distance)
+float AI_GetWeaponRangeWeightByDistance(edict_t *self, int weapmodelIndex, float distance)
 {
 	//FIXME: these distances don't match up with those in ChooseWeapon
 	if (distance <= AI_RANGE_MELEE)
-		return AIWeapons[weapmodelIndex].RangeWeight[AIWEAP_MELEE_RANGE];
+	{
+		if (self->mtype == MORPH_BERSERK)
+			return 1.0;
+		else if (weapmodelIndex != -1)
+			return AIWeapons[weapmodelIndex].RangeWeight[AIWEAP_MELEE_RANGE];
+	}
 	else if (distance <= AI_RANGE_SHORT)
-		return AIWeapons[weapmodelIndex].RangeWeight[AIWEAP_SHORT_RANGE];
+	{
+		if (self->mtype == MORPH_BERSERK)
+			return 0.2;
+		else if (weapmodelIndex != -1)
+			return AIWeapons[weapmodelIndex].RangeWeight[AIWEAP_SHORT_RANGE];
+	}
 	else if (distance <= AI_RANGE_MEDIUM)
-		return AIWeapons[weapmodelIndex].RangeWeight[AIWEAP_MEDIUM_RANGE];
+	{
+		if (weapmodelIndex != -1)
+			return AIWeapons[weapmodelIndex].RangeWeight[AIWEAP_MEDIUM_RANGE];
+	}
 	else
-		return AIWeapons[weapmodelIndex].RangeWeight[AIWEAP_LONG_RANGE];
+	{
+		if (weapmodelIndex != -1)
+			return AIWeapons[weapmodelIndex].RangeWeight[AIWEAP_LONG_RANGE];
+	}
+
+	return 0; // unknown weapModelIndex
 }
 
 //==========================================
