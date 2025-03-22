@@ -207,6 +207,11 @@ void organ_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *sur
 void organ_death_message(edict_t* self, edict_t* attacker, int max)
 {
 	int qty;
+
+	// don't need to print a message if the revived organ expired
+	if (attacker && attacker->inuse && attacker == world && level.time >= self->monsterinfo.resurrected_timeout)
+		return;
+
 	if (self->mtype == M_SPIKER)
 		qty = self->activator->num_spikers;
 	else if (self->mtype == M_GASSER)
@@ -315,6 +320,8 @@ void organ_remove (edict_t *self, qboolean refund)
 	self->deadflag = DEAD_DEAD;
 }
 
+// removes organ if activator becomes invalid
+// returns false if the organ was removed, true if not
 qboolean organ_checkowner (edict_t *self)
 {
 	qboolean remove = false;
@@ -334,6 +341,22 @@ qboolean organ_checkowner (edict_t *self)
 		return false;
 	}
 
+	return true;
+}
+
+// kills organ if it expires
+// return false if the organ died, true if not
+qboolean organ_checkrevived(edict_t* self)
+{
+	//gi.dprintf("%s: %d %.1f %.1f\n", __func__, self->monsterinfo.resurrected_level, self->monsterinfo.resurrected_timeout, (float)level.time);
+	// resurrected organ has expired
+	if (self->monsterinfo.resurrected_level && level.time > self->monsterinfo.resurrected_timeout)
+	{
+		// kill it!
+		self->health = 0;
+		self->die(self, world, world, 0, vec3_origin);
+		return false;
+	}
 	return true;
 }
 
@@ -879,7 +902,7 @@ void spiker_think (edict_t *self)
 {
 	edict_t *e=NULL;
 
-	if (!organ_checkowner(self))
+	if (!organ_checkowner(self) || !organ_checkrevived(self))
 		return;
 
 	vrx_set_pickup_owner(self); // sets owner when this entity is picked up, making it non-solid to the player
@@ -972,7 +995,7 @@ void spiker_think (edict_t *self)
 
 void spiker_grow (edict_t *self)
 {
-	if (!organ_checkowner(self))
+	if (!organ_checkowner(self) || !organ_checkrevived(self))
 		return;
 
 	vrx_set_pickup_owner(self); // sets owner when this entity is picked up, making it non-solid to the player
@@ -1397,7 +1420,7 @@ void obstacle_attack(edict_t* self)
 
 void obstacle_think (edict_t *self)
 {
-	if (!organ_checkowner(self))
+	if (!organ_checkowner(self) || !organ_checkrevived(self))
 		return;
 
 	vrx_set_pickup_owner(self); // sets owner when this entity is picked up, making it non-solid to the player
@@ -1423,7 +1446,7 @@ void obstacle_think (edict_t *self)
 
 void obstacle_grow (edict_t *self)
 {
-	if (!organ_checkowner(self))
+	if (!organ_checkowner(self) || !organ_checkrevived(self))
 		return;
 	//gi.dprintf("movetype: %d pitch: %.0f\n", self->movetype, self->s.angles[PITCH]);
 	//organ_restoreMoveType(self);
@@ -2158,7 +2181,7 @@ qboolean gasser_findtarget (edict_t *self)
 
 void gasser_think (edict_t *self)
 {
-	if (!organ_checkowner(self))
+	if (!organ_checkowner(self) || !organ_checkrevived(self))
 		return;
 
 	vrx_set_pickup_owner(self); // sets owner when this entity is picked up, making it non-solid to the player
@@ -2224,7 +2247,7 @@ void gasser_think (edict_t *self)
 
 void gasser_grow (edict_t *self)
 {
-	if (!organ_checkowner(self))
+	if (!organ_checkowner(self) || !organ_checkrevived(self))
 		return;
 
 	vrx_set_pickup_owner(self); // sets owner when this entity is picked up, making it non-solid to the player
@@ -2704,6 +2727,9 @@ void cocoon_think (edict_t *self)
 		organ_remove(self, false);
 		return;
 	}
+
+	if (!organ_checkrevived(self))
+		return;
 
 	cocoon_attack(self);
 

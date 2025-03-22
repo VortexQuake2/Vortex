@@ -829,7 +829,9 @@ MEDIC_BOLT_INITIAL_SPEED                 = 1500
 MEDIC_BOLT_ADDON_SPEED                   = 0
 MEDIC_BOLT_AMMO                          = 10
 MEDIC_RESURRECT_DELAY                    = 1.0
-MEDIC_RESURRECT_BONUS                    = 0.25
+MEDIC_RESURRECT_BONUS                    = 0.05
+MEDIC_RESURRECT_BASE					 = 1.0
+MEDIC_RESURRECT_TIMEOUT					 = 180.0
 
 -- Player Tank
 P_TANK_PUNCH_RADIUS                      = 128

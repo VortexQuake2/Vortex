@@ -645,13 +645,18 @@ static vec3_t	mymedic_cable_offsets[] =
 };
 
 edict_t *CreateSpiker (edict_t *ent, int skill_level);
-edict_t *CreateObstacle (edict_t *ent, int skill_level);
+edict_t* CreateObstacle(edict_t* ent, int skill_level, int talent_level);
 edict_t* CreateGasser(edict_t* ent, int skill_level, int talent_level);
 
 void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, qboolean printMsg)
 {
 	vec3_t	bmin, bmax;
 	edict_t *e;
+
+	// save the original monster's level
+	// note: this isn't strictly needed for monsters since they don't apply any bonuses--it's mainly here for player-medics
+	if (!target->monsterinfo.resurrected_level)
+		target->monsterinfo.resurrected_level = target->monsterinfo.level;
 
 	if (!strcmp(target->classname, "drone") && !(target->flags & FL_UNDEAD) && target->mtype != M_DECOY && target->mtype != M_GOLEM) // can't revive decoys, golem, and undead/skeletons
 	{
@@ -661,7 +666,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 
 		target->monsterinfo.level = r_level;
 		M_SetBoundingBox(target->mtype, bmin, bmax);
-
+		
 		if (G_IsValidLocation(target, target->s.origin, bmin, bmax) && M_Initialize(ent, target, 0.0f))
 		{
 			//gi.dprintf("resurrect drone at %.1f\n", level.time);
@@ -672,6 +677,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 			target->monsterinfo.resurrected_time = level.time + 10.0;
 			target->activator = ent; // transfer ownership!
 			target->nextthink = level.time + FRAMETIME;//1.0; note: don't delay think--this may cause undesired behavior (monster sliding)
+			target->monsterinfo.resurrected_timeout = target->nextthink + MEDIC_RESURRECT_TIMEOUT; // resurrected monster dies when this timer is exceeded
 			target->monsterinfo.attack_finished = level.time + 1.0;//delay attack--alternatively we can set the think func to drone_grow
 			gi.linkentity(target);
 			target->monsterinfo.stand(target);
@@ -753,7 +759,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 		VectorCopy(start, e->s.origin);
 		gi.linkentity(e);
 		e->nextthink = level.time + 1.0;
-
+		e->monsterinfo.resurrected_timeout = e->nextthink + MEDIC_RESURRECT_TIMEOUT; // resurrected monster dies when this timer is exceeded
 		ent->num_monsters += e->monsterinfo.control_cost;
 		ent->num_monsters_real++;
 		// gi.bprintf(PRINT_HIGH, "adding %p (%d)\n", e, ent->num_monsters_real);
@@ -789,6 +795,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 		e->monsterinfo.cost = target->monsterinfo.cost;
 		e->health = r_modifier * e->max_health;
 		e->monsterinfo.resurrected_time = level.time + 10.0;
+		e->monsterinfo.resurrected_timeout = e->nextthink + MEDIC_RESURRECT_TIMEOUT; // resurrected spiker dies when this timer is exceeded
 		e->s.frame = 4;
 		VectorCopy(target->s.origin, e->s.origin);
 		gi.linkentity(e);
@@ -804,7 +811,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 		if (ent->client && (ent->num_obstacle + 1 > OBSTACLE_MAX_COUNT))
 			return;
 
-		e = CreateObstacle(ent, r_level);
+		e = CreateObstacle(ent, r_level, vrx_get_talent_level(ent, TALENT_MAGNETISM));
 
 		// make sure the new entity fits
 		if (!G_IsValidLocation(target, target->s.origin, e->mins, e->maxs))
@@ -818,6 +825,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 		e->s.angles[PITCH] = 0;
 		e->monsterinfo.cost = target->monsterinfo.cost;
 		e->monsterinfo.resurrected_time = level.time + 10.0;
+		e->monsterinfo.resurrected_timeout = e->nextthink + MEDIC_RESURRECT_TIMEOUT; // resurrected obstacle dies when this timer is exceeded
 		e->health = r_modifier * e->max_health;
 		e->s.frame = 6;
 		VectorCopy(target->s.origin, e->s.origin);
@@ -848,6 +856,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 		e->s.angles[PITCH] = 0;
 		e->monsterinfo.cost = target->monsterinfo.cost;
 		e->monsterinfo.resurrected_time = level.time + 10.0;
+		e->monsterinfo.resurrected_timeout = e->nextthink + MEDIC_RESURRECT_TIMEOUT; // resurrected gasser dies when this timer is exceeded
 		e->health = r_modifier * e->max_health;
 		e->s.frame = 0;
 		VectorCopy(target->s.origin, e->s.origin);

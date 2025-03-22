@@ -1981,6 +1981,15 @@ qboolean M_Upkeep (edict_t *self, int delay, int upkeep_cost)
 
 	e = G_GetClient(self);
 
+	// resurrected monster has expired
+	if (self->monsterinfo.resurrected_level && level.time > self->monsterinfo.resurrected_timeout)
+	{
+		// kill it!
+		self->health = 0;
+		self->die(self, world, world, 0, vec3_origin);
+		return true; // must return true for monster to continue thinking and processing death animation
+	}
+
 	if (!e)
 		return true; // probably owned by world; doesn't pay upkeep
 

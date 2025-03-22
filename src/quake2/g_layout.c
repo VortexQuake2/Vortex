@@ -315,7 +315,13 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	case M_SKELETON:
 	case M_GOLEM:
 		name = lva("%s", V_GetMonsterName(ent));
-		data = lva("+%d/%d", ent->health, ent->monsterinfo.power_armor_power);
+		if (ent->monsterinfo.resurrected_timeout)
+		{
+			float time_remaining = ent->monsterinfo.resurrected_timeout - level.time;
+			data = lva("(%d) +%d/%d %.0f", ent->monsterinfo.level, ent->health, ent->monsterinfo.power_armor_power, time_remaining);
+		}
+		else
+			data = lva("(%d) +%d/%d", ent->monsterinfo.level, ent->health, ent->monsterinfo.power_armor_power);
 		break;
 	case M_SENTRY:
 		name = lva("sentry");
@@ -348,7 +354,13 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	case M_GASSER:
 	case M_DECOY:
 		name = lva("%s", V_GetMonsterName(ent));
-		data = lva("+%d", ent->health);
+		if (ent->monsterinfo.resurrected_timeout)
+		{
+			float time_remaining = ent->monsterinfo.resurrected_timeout - level.time;
+			data = lva("(%d) +%d %.0f", ent->monsterinfo.level, ent->health, time_remaining);
+		}
+		else
+			data = lva("(%d) +%d", ent->monsterinfo.level, ent->health);
 		break;
 	case M_BARREL:
 		name = lva("barrel");

@@ -636,6 +636,8 @@ typedef struct
 	float		Zchange_delay;		// delay before we can adjust Z position again (to prevent bouncing)
 	qboolean	Zchanged;			// has our Z position changed recently?
 	float		resurrected_time;	// time when resurrection from a medic is complete
+	int			resurrected_level;  // used to store the original level of the monster before resurrection bonus is applied
+	float		resurrected_timeout;// time when the resurrected monster will expire
 	float		backtrack_delay;	// delay until we can backtrack to a closer waypoint (to prevent getting stuck)
 	float		path_time;			// time when monster can compute a path
 	vec3_t		prevGoalPos;		// last goal position, used for deciding when to re-compute paths

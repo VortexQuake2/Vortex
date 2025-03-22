@@ -848,6 +848,8 @@ extern double MEDIC_BOLT_ADDON_SPEED;
 extern double MEDIC_BOLT_AMMO;
 extern double MEDIC_RESURRECT_DELAY;
 extern double MEDIC_RESURRECT_BONUS;
+extern double MEDIC_RESURRECT_BASE;
+extern double MEDIC_RESURRECT_TIMEOUT;
 extern double P_TANK_PUNCH_RADIUS;
 extern double P_TANK_PUNCH_INITIAL_DMG;
 extern double P_TANK_PUNCH_ADDON_DMG;
