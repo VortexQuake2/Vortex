@@ -850,6 +850,8 @@ extern double MEDIC_RESURRECT_DELAY;
 extern double MEDIC_RESURRECT_BONUS;
 extern double MEDIC_RESURRECT_BASE;
 extern double MEDIC_RESURRECT_TIMEOUT;
+extern double MEDIC_RESURRECT_INITIAL_TIME;
+extern double MEDIC_RESURRECT_ADDON_TIME;
 extern double P_TANK_PUNCH_RADIUS;
 extern double P_TANK_PUNCH_INITIAL_DMG;
 extern double P_TANK_PUNCH_ADDON_DMG;

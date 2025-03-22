@@ -44,10 +44,11 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 {
 	int		res_level;
 	int		skill_level;
-	float	skill_bonus;
+	float	skill_bonus, res_time;
 	vec3_t	bmin, bmax;
 	edict_t *e;
 
+	res_time = MEDIC_RESURRECT_INITIAL_TIME + MEDIC_RESURRECT_ADDON_TIME * ent->myskills.abilities[MEDIC].current_level;
 	// calculate skill bonus from medic
 	skill_bonus = MEDIC_RESURRECT_BASE + MEDIC_RESURRECT_BONUS * ent->myskills.abilities[MEDIC].current_level;
 	// save the original monster's level so we don't apply the bonus more than once
@@ -76,7 +77,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 			target->monsterinfo.resurrected_time = level.time + 2.0;
 			target->activator = ent; // transfer ownership!
 			target->nextthink = level.time + MEDIC_RESURRECT_DELAY;
-			target->monsterinfo.resurrected_timeout = target->nextthink + MEDIC_RESURRECT_TIMEOUT; // resurrected monster dies when this timer is exceeded
+			target->monsterinfo.resurrected_timeout = target->nextthink + res_time; // resurrected monster dies when this timer is exceeded
 			gi.linkentity(target);
 			target->monsterinfo.stand(target);
 
@@ -146,7 +147,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 
 		VectorCopy(start, e->s.origin);
 		gi.linkentity(e);
-		e->nextthink = level.time + MEDIC_RESURRECT_DELAY;
+		e->nextthink = level.time + res_time;
 		e->monsterinfo.resurrected_timeout = e->nextthink + MEDIC_RESURRECT_TIMEOUT; // resurrected monster dies when this timer is exceeded
 		ent->num_monsters += e->monsterinfo.control_cost;
 		ent->num_monsters_real++;
@@ -207,7 +208,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 		}
 		//gi.dprintf("obstacle will fit\n");
 		e->monsterinfo.resurrected_level = res_level;
-		e->monsterinfo.resurrected_timeout = e->nextthink + MEDIC_RESURRECT_TIMEOUT; // resurrected obstacle dies when this timer is exceeded
+		e->monsterinfo.resurrected_timeout = e->nextthink + res_time; // resurrected obstacle dies when this timer is exceeded
 		e->monsterinfo.cost = target->monsterinfo.cost;
 		e->health = 0.33 * e->max_health;
 		e->s.frame = 6;
@@ -230,7 +231,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 			return;
 		}
 		e->monsterinfo.resurrected_level = res_level;
-		e->monsterinfo.resurrected_timeout = e->nextthink + MEDIC_RESURRECT_TIMEOUT; // resurrected gasser dies when this timer is exceeded
+		e->monsterinfo.resurrected_timeout = e->nextthink + res_time; // resurrected gasser dies when this timer is exceeded
 		VectorCopy(target->s.angles, e->s.angles);
 		e->s.angles[PITCH] = 0;
 		e->monsterinfo.cost = target->monsterinfo.cost;
@@ -256,7 +257,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
         }
 
 		e->monsterinfo.resurrected_level = res_level;
-		e->monsterinfo.resurrected_timeout = e->nextthink + MEDIC_RESURRECT_TIMEOUT; // resurrected spiker dies when this timer is exceeded
+		e->monsterinfo.resurrected_timeout = e->nextthink + res_time; // resurrected spiker dies when this timer is exceeded
         VectorCopy(target->s.angles, e->s.angles);
         e->s.angles[PITCH] = 0;
         e->monsterinfo.cost = target->monsterinfo.cost;
@@ -281,7 +282,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 		}
 
 		e->monsterinfo.resurrected_level = res_level;
-		e->monsterinfo.resurrected_timeout = e->nextthink + MEDIC_RESURRECT_TIMEOUT; // resurrected healer dies when this timer is exceeded
+		e->monsterinfo.resurrected_timeout = e->nextthink + res_time; // resurrected healer dies when this timer is exceeded
 		VectorCopy(target->s.angles, e->s.angles);
 		e->s.angles[PITCH] = 0;
 		//e->monsterinfo.cost = target->monsterinfo.cost;
