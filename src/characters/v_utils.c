@@ -1658,6 +1658,10 @@ void V_ModifyMorphedHealth(edict_t *ent, int type, qboolean morph) {
             return;
     }
 
+    // apply tank synergy bonus
+    if (type != P_TANK && ent->myskills.abilities[TANK].current_level > 1)
+        mult += 0.05 * ent->myskills.abilities[TANK].current_level;
+
     // apply multiplier
     if (morph) {
         //gi.dprintf("mult = %.2f, before = %d/%d, ", mult, ent->health, ent->max_health);

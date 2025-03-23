@@ -19,6 +19,8 @@ float vrx_apply_talent_retaliation_damage(const edict_t *attacker, float damage)
 
 float vrx_apply_morph_talent_damage(const edict_t *targ, const edict_t *attacker, float damage);
 
+float vrx_apply_berserk_synergy(const edict_t* attacker, int mod, float damage);
+
 int G_DamageType(int mod, int dflags) {
     switch (mod) {
         // world damage
@@ -198,7 +200,10 @@ void vrx_apply_player_damage_bonus(edict_t *targ, edict_t *attacker, float *dama
         *damage = vrx_apply_strength_tech(attacker, *damage);
 
         if (attacker->mtype)
+        {
+            *damage = vrx_apply_berserk_synergy(attacker, mod, *damage);
             *damage = vrx_apply_morph_talent_damage(targ, attacker, *damage);
+        }
     }
 
     // only physical damage is increased
@@ -350,6 +355,7 @@ float vrx_increase_damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
         // player-monster damage bonuses
         if (!attacker->client && attacker->mtype && PM_MonsterHasPilot(attacker)) {
             damage = vrx_apply_strength_tech(attacker, damage);
+            damage = vrx_apply_berserk_synergy(attacker, mod, damage);
             damage = vrx_apply_morph_talent_damage(targ, attacker, damage);
 
             // az: apply cocoon bonus acquired unmorphed. 
@@ -441,6 +447,21 @@ float vrx_apply_talent_retaliation_damage(const edict_t *attacker, float damage)
         damage *= 1.0 + ((0.2 * talentLevel) * (1.0 - temp));
     }
     return damage;
+}
+
+float vrx_apply_berserk_synergy(const edict_t* attacker, int mod, float damage) {
+    // bonus only applies to these melee attacks
+    if (mod != MOD_TENTACLE && mod != MOD_MUTANT && mod != MOD_PARASITE && mod != MOD_TANK_PUNCH)
+        return damage;
+    const edict_t* dclient = PM_GetPlayer(attacker); // get a pointer to the player, even if they're a player-tank
+    if (dclient)
+        attacker = dclient;
+    // synergy bonus applies to all morphs except berserker
+    if (attacker->mtype == MORPH_BERSERK)
+        return damage;
+    if (attacker->myskills.abilities[BERSERK].current_level <= 1)
+        return damage;
+    return damage *= 1.0 + 0.05 * attacker->myskills.abilities[BERSERK].current_level; 
 }
 
 float vrx_apply_strength_tech(const edict_t *attacker, float damage) {

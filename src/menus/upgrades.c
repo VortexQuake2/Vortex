@@ -936,8 +936,10 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		menu_add_line(ent, "the ability to sprint short", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "distances with the +sprint", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "command. Uses power cubes.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Increases melee damage of", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "other morphs.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: berserker", MENU_WHITE_CENTERED);
-		return 5;
+		return 7;
 	case CACODEMON:
 		menu_add_line(ent, "Morph into the cacodemon!", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Uses power cubes.", MENU_WHITE_CENTERED);
@@ -945,9 +947,10 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		return 3;
 	case BLOOD_SUCKER:
 		menu_add_line(ent, "Morph into a parasite! Uses", MENU_WHITE_CENTERED);
-		menu_add_line(ent, "power cubes.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "power cubes. Adds vampire", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "effect to other morphs.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: parasite", MENU_WHITE_CENTERED);
-		return 3;
+		return 4;
 	case BRAIN:
 		menu_add_line(ent, "Morph into a brain! Uses", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "power cubes.", MENU_WHITE_CENTERED);
@@ -965,9 +968,10 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		return 3;
 	case TANK:
 		menu_add_line(ent, "Morph into a tank! Uses", MENU_WHITE_CENTERED);
-		menu_add_line(ent, "power cubes.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "power cubes. Increases", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "health of other morphs.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: tank", MENU_WHITE_CENTERED);
-		return 3;
+		return 4;
 	case MEDIC:
 		//					xxxxxxxxxxxxxxxxxxxxxxxxxxxxx (max 21 lines)
 		menu_add_line(ent, "Morph into a medic! Can heal", MENU_WHITE_CENTERED);

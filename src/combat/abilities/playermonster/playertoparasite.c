@@ -115,11 +115,11 @@ void myparasite_fire (edict_t *self)
 			pull *= 2;
 		T_Damage(tr.ent, self, self, v, tr.endpos, 
 			tr.plane.normal, damage, pull, DAMAGE_NO_ABILITIES, MOD_PARASITE);
-		if (self->health < self->max_health)
+		if (self->health < 2*self->max_health)
 		{
 			self->health += damage;
-			if (self->health > self->max_health)
-				self->health = self->max_health;
+			if (self->health > 2*self->max_health)
+				self->health = 2*self->max_health;
 		}
 	}
 

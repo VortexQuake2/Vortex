@@ -632,6 +632,15 @@ static int CheckArmor(edict_t *ent, vec3_t point, vec3_t normal, int damage, int
 qboolean CanUseVampire (edict_t *targ, edict_t *attacker, int dflags, int mod)
 {
     int dtype = G_DamageType(mod, dflags);
+	//const edict_t* dclient = PM_GetPlayer(attacker); // get a pointer to the player, even if they're a player-tank
+
+	qboolean has_pilot;
+	
+	if ((has_pilot = PM_MonsterHasPilot(attacker)) == true)
+		attacker = attacker->activator;
+
+	//if (dclient)
+	//	attacker = dclient;
 
     if (!attacker->client)
         return false;
@@ -646,8 +655,12 @@ qboolean CanUseVampire (edict_t *targ, edict_t *attacker, int dflags, int mod)
 
     // is vampire upgraded?
     if (attacker->myskills.abilities[VAMPIRE].current_level < 1) {
-        // are we a brain or mutant?
-        if ((attacker->mtype != MORPH_BRAIN) && (attacker->mtype != MORPH_MUTANT))
+		// morphed?
+		if (!attacker->mtype && !has_pilot)
+			return false;
+        // are we a brain or mutant? is parasite upgraded (thus granting synergy bonus vampire)?
+        if ((attacker->mtype != MORPH_BRAIN) && (attacker->mtype != MORPH_MUTANT) 
+			&& attacker->myskills.abilities[BLOOD_SUCKER].current_level <= 1)
             return false;
         // is morph mastery upgraded?
         if (attacker->myskills.abilities[MORPH_MASTERY].current_level < 1)
@@ -658,8 +671,7 @@ qboolean CanUseVampire (edict_t *targ, edict_t *attacker, int dflags, int mod)
 	if (que_findtype(attacker->curses, NULL, CURSE))
 		return false;
 
-	return (attacker->client && (attacker->health > 0) && (dtype & D_PHYSICAL)
-		&& (targ->mtype != M_FORCEWALL) && (targ->mtype != MOD_LASER_DEFENSE));
+	return (attacker->health > 0 && (dtype & D_PHYSICAL) && (targ->mtype != M_FORCEWALL) && (targ->mtype != MOD_LASER_DEFENSE));
 }
 
 void ApplyThorns(edict_t* targ, edict_t* inflictor, edict_t* attacker, vec3_t point, float damage, int knockback,
@@ -764,20 +776,39 @@ void V_ApplyVampire(edict_t* attacker, float take, float vamp_factor, float heal
 
 void G_ApplyVampire(edict_t *attacker, float take)
 {
-	float temp;
-	qboolean use_cache = true;
-	int* armor = &attacker->client->pers.inventory[body_armor_index];
+	qboolean use_cache = true, has_pilot = false;
+	edict_t* monster = NULL;
 
-	temp = 0.075*attacker->myskills.abilities[VAMPIRE].current_level;
-
-	// brains and mutants with morph mastery use vamp
-	if (attacker->mtype == MORPH_BRAIN || attacker->mtype == MORPH_MUTANT)
+	if ((has_pilot = PM_MonsterHasPilot(attacker)) == true)
 	{
-		temp += 0.25;
-		use_cache = false;
+		monster = attacker; // needed so we can apply the vamp to the monster, not the player pilot
+		attacker = attacker->activator;
 	}
 
-	V_ApplyVampire(attacker, take, temp, 1.0, use_cache);
+	int* armor = &attacker->client->pers.inventory[body_armor_index];
+	float temp = 0.075*attacker->myskills.abilities[VAMPIRE].current_level;
+
+	if (attacker->mtype || has_pilot)
+	{
+		// brains and mutants with morph mastery use vamp
+		if (attacker->mtype == MORPH_BRAIN || attacker->mtype == MORPH_MUTANT)
+		{
+			temp += 0.25;
+			use_cache = false;
+		}
+
+		// parasite synergy bonus
+		if (attacker->myskills.abilities[BLOOD_SUCKER].current_level > 1)
+			temp += 0.05 * attacker->myskills.abilities[BLOOD_SUCKER].current_level;
+	}
+
+	if (monster)
+	{
+		V_ApplyVampire(monster, take, temp, 1.0, use_cache);
+		return;
+	}
+	else
+		V_ApplyVampire(attacker, take, temp, 1.0, use_cache);
 
 	//Talent: Armor Vampire
 	if (*armor < MAX_ARMOR(attacker) && vrx_get_talent_level(attacker, TALENT_ARMOR_VAMP) > 0)
