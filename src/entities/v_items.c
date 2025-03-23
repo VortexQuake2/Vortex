@@ -905,7 +905,8 @@ qboolean Pickup_Rune (edict_t *ent, edict_t *other)
 {
 	item_t *slot;
 
-	if (!other->client)
+	// bots and other non-clients can't pick up runes
+	if (!other->client || other->ai.is_bot)
 		return false;
 
 	//Show the user what kind of rune it is

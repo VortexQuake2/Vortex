@@ -175,7 +175,7 @@ void MeteorAttack (edict_t *ent, int damage, int radius, int speed, float skill_
 	tr = gi.trace (start, NULL, NULL, end, ent, MASK_SHOT);
 
 	// aimed at something?
-	if (G_ValidTargetEnt(tr.ent, false))
+	if (G_ValidTargetEnt(ent, tr.ent, false))
 		VectorCopy(tr.ent->s.origin, start);
 	else
 		VectorCopy(tr.endpos, start);

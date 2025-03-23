@@ -124,6 +124,10 @@ qboolean AI_CanUseArmor(gitem_t* item, edict_t* other)//GHz - mostly a copy & pa
 	if (!other->client)
 		return false;
 
+	// morphed players can only use armor shards
+	if (item->tag != ARMOR_SHARD && (other->mtype || PM_PlayerHasMonster(other)))
+		return false;
+
 	//gi.dprintf("%d: %s\n", (int)level.framenum, __func__);
 	// get info on new armor
 	newinfo = (gitem_armor_t*)item->info;
@@ -346,14 +350,14 @@ float AI_ItemWeight(edict_t *self, edict_t *it)
 			return weight;//GHz
 		}
 
-		if (self->health >= 250 && it->count > 25)
+		if (self->health >= 250 && it->count > 25)//FIXME
 			return 0;
 
 		//find the weight
 		weight = 0;
 		if (self->health < 100)
 			weight = ((100 - self->health) + it->count)*0.01;
-		else if (self->health <= 250 && it->count == 100)//mega
+		else if (self->health <= 250 && it->count == 100)//mega//FIXME
 			weight = 8.0;
 
 		weight += (self->health < 25);//we just NEED IT!!!
@@ -366,7 +370,7 @@ float AI_ItemWeight(edict_t *self, edict_t *it)
 
 	//IT_POWERUP
 	if (it->item->flags & IT_POWERUP)
-		return 0.7;
+		return self->ai.status.inventoryWeights[ITEM_INDEX(it->item)];
 
 	//IT_TECH
 	if (it->item->flags & IT_TECH)

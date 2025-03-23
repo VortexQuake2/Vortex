@@ -563,7 +563,7 @@ void StaticFieldAttack (edict_t* ent, int cripple_level)
 
 	while ((target = findradius(target, ent->s.origin, STATICFIELD_RANGE)) != NULL)
 	{
-		if (!G_ValidTargetEnt(target, false) || OnSameTeam(ent, target))
+		if (!G_ValidTargetEnt(ent, target, false) || OnSameTeam(ent, target))
 			continue;
 		// limit maximum damage inflicted to bosses and others to a percentage of max health
 		if (target->monsterinfo.control_cost >= 3)

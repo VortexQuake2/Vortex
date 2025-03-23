@@ -1518,6 +1518,8 @@ edict_t *CreateObstacle (edict_t *ent, int skill_level, int talent_level)
 		e->light_level = talent_level; // Talent: Magnetism
 		e->monsterinfo.sight_range = (0.2 * MAGMINE_RANGE) * talent_level; // range
 		e->count = MAGMINE_DEFAULT_PULL + (2 * MAGMINE_ADDON_PULL * talent_level); // pull
+		e->radius_dmg = e->dmg; // for bot AI hazard detection
+		e->dmg_radius = e->monsterinfo.sight_range; // for bot AI hazard detection
 		//gi.dprintf("magnetism: level: %d range: %.0f pull: %d\n", e->light_level, e->monsterinfo.sight_range, e->style);
 	}
 	e->gib_health = -2 * BASE_GIB_HEALTH;
@@ -2690,7 +2692,7 @@ void cocoon_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *su
 		return;
 	if (level.framenum < ent->monsterinfo.nextattack)
 		return;
-	if (!G_ValidTargetEnt(other, true) || !OnSameTeam(ent, other))
+	if (!G_ValidTargetEnt(ent, other, true) || !OnSameTeam(ent, other))
 		return;
 	if (other->mtype == M_SPIKEBALL)//4.4
 		return;

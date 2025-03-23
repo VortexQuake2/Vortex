@@ -1131,7 +1131,7 @@ qboolean G_CanUseAbilities (edict_t *ent, int ability_lvl, int pc_cost);
 qboolean V_CanUseAbilities (edict_t *ent, int ability_index, int ability_cost, qboolean print_msg);
 qboolean V_CanUseAbility(edict_t* ent, int ability_index, int ability_cost, qboolean print_msg);
 qboolean G_ValidTarget(const edict_t *self, const edict_t *target, qboolean vis, qboolean alive);
-qboolean G_ValidTargetEnt(const edict_t *target, qboolean alive);
+qboolean G_ValidTargetEnt(edict_t* self, edict_t* target, qboolean alive);
 qboolean G_ValidTarget_Lite(const edict_t *self, const edict_t *target, qboolean vis);
 
 qboolean G_ValidAlliedTarget(edict_t *self, edict_t *target, qboolean vis);//4.1 Archer

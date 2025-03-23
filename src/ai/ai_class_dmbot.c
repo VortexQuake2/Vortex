@@ -1263,7 +1263,7 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 		if (AIEnemies[i] == NULL || AIEnemies[i] == self)
 			continue;
 
-		if (!G_ValidTargetEnt(AIEnemies[i], true))
+		if (!G_ValidTargetEnt(self, AIEnemies[i], true))
 			continue;
 
 		dist = entdist(self, AIEnemies[i]);
@@ -1756,10 +1756,17 @@ void BOT_DMclass_WeightPlayers(edict_t *self)
 			{
 				// GHz: chase enemies!
 				if (self->enemy && self->enemy->inuse && AIEnemies[i] == self->enemy)
-					self->ai.status.playersWeights[i] = 0.9;
+					self->ai.status.playersWeights[i] = 0.9; // active enemy always has the highest priority/weight
+				else if (AIEnemies[i]->client)
+				{
+					if (AIEnemies[i]->myskills.streak >= SPREE_START)
+						self->ai.status.playersWeights[i] = 0.6; // spreeing players are weighed much higher
+					else
+						self->ai.status.playersWeights[i] = 0.3; // players have more weight than non-clients (e.g. monsters)
+				}
 				else
 					//if not at ctf every player has some value
-					self->ai.status.playersWeights[i] = 0.3;
+					self->ai.status.playersWeights[i] = 0.2;
 			}
 		}
 	
@@ -1840,10 +1847,14 @@ void AI_AdjustAmmoNeedFactor(edict_t *self, gitem_t *ammoItem, ...)
 	}
 
 	// does the bot need cells for power screen/shield?
-	if (ammo_index == cell_index && AI_GetPSlevel(self))
+	if (ammo_index == cell_index && AI_GetPSlevel(self) && self->client->pers.inventory[cell_index] < self->client->pers.max_cells)
+	{
+		self->ai.status.inventoryWeights[ammo_index] = 0.5;
 		return; // don't reduce cells weight
+	}
 
 	// morphed players don't typically need ammo (except for summoners, e.g. engy)
+	// note: this adjustment may be redundant if the bot is a poltergeist, since the weight should already be 0 in ai.pers.inventoryWeights
 	if (self->mtype || PM_PlayerHasMonster(self))
 	{
 		self->ai.status.inventoryWeights[ammo_index] = 0.0;
@@ -1998,6 +2009,8 @@ void BOT_DMclass_WeightInventory(edict_t *self)
 	//shards are ALWAYS accepted but still...
 	if (!AI_CanUseArmor ( FindItemByClassname("item_armor_shard"), self ))
 		self->ai.status.inventoryWeights[armor_shard_index] = 0.0;
+	else if (self->client->pers.inventory[power_cube_index] < 50) // low on power cubes?
+		self->ai.status.inventoryWeights[armor_shard_index] *= 2.0; // increase weight of armor shards
 
 	if (!AI_CanUseArmor ( FindItemByClassname("item_armor_jacket"), self ))
 		self->ai.status.inventoryWeights[jacket_armor_index] = 0.0;
@@ -2007,7 +2020,8 @@ void BOT_DMclass_WeightInventory(edict_t *self)
 
 	if (!AI_CanUseArmor ( FindItemByClassname("item_armor_body"), self ))
 		self->ai.status.inventoryWeights[body_armor_index] = 0.0;
-
+	//gi.dprintf("sh:%.1f ja:%.1f co:%.1f bo:%.1f\n", self->ai.status.inventoryWeights[armor_shard_index], self->ai.status.inventoryWeights[jacket_armor_index],
+	//	self->ai.status.inventoryWeights[combat_armor_index], self->ai.status.inventoryWeights[body_armor_index]);
 	
 	//TECH :
 	//-----------------------------------------------------
@@ -2218,6 +2232,105 @@ void BOT_DMclass_RunFrame( edict_t *self )
 	self->nextthink = level.time + FRAMETIME;
 }
 
+void BOT_PrintItemWeights(edict_t* self)
+{
+	gi.dprintf("sh:%.1f bu:%.1f ce:%.1f ro:%.1f sl:%.1f gr:%.1f\n", self->ai.pers.inventoryWeights[shell_index], self->ai.pers.inventoryWeights[bullet_index],
+		self->ai.pers.inventoryWeights[cell_index], self->ai.pers.inventoryWeights[rocket_index], self->ai.pers.inventoryWeights[slug_index],
+		self->ai.pers.inventoryWeights[grenade_index]);
+}
+
+void BOT_DMclass_InitPersistantWeights(edict_t* self)
+{
+	//Persistant Inventory Weights (0 = can not pick)
+	memset(self->ai.pers.inventoryWeights, 0, sizeof(self->ai.pers.inventoryWeights));
+
+	// note: the weights below are baseline and will later be adjusted based on bot status/need by BOT_DMclass_WeightInventory
+
+	if (self->myskills.class_num == CLASS_KNIGHT || self->myskills.class_num == CLASS_POLTERGEIST) // knights and poltergeists don't use weapons and ammo
+	{
+		//weapons
+		self->ai.pers.inventoryWeights[blaster_index] = 0.0;
+		self->ai.pers.inventoryWeights[sword_index] = 0.0;
+		self->ai.pers.inventoryWeights[_20mmcannon_index] = 0.0;
+		self->ai.pers.inventoryWeights[shotgun_index] = 0.0;
+		self->ai.pers.inventoryWeights[supershotgun_index] = 0.0;
+		self->ai.pers.inventoryWeights[machinegun_index] = 0.0;
+		self->ai.pers.inventoryWeights[chaingun_index] = 0.0;
+		self->ai.pers.inventoryWeights[grenadelauncher_index] = 0.0;
+		self->ai.pers.inventoryWeights[rocketlauncher_index] = 0.0;
+		self->ai.pers.inventoryWeights[hyperblaster_index] = 0.0;
+		self->ai.pers.inventoryWeights[railgun_index] = 0.0;
+		self->ai.pers.inventoryWeights[bfg10k_index] = 0.0;
+
+		//ammo
+		self->ai.pers.inventoryWeights[shell_index] = 0.0;
+		self->ai.pers.inventoryWeights[bullet_index] = 0.0;
+		self->ai.pers.inventoryWeights[cell_index] = 0.0;
+		self->ai.pers.inventoryWeights[rocket_index] = 0.0;
+		self->ai.pers.inventoryWeights[slug_index] = 0.0;
+		self->ai.pers.inventoryWeights[grenade_index] = 0.0;
+	}
+	else
+	{
+		//weapons
+		self->ai.pers.inventoryWeights[blaster_index] = 0.0;
+		self->ai.pers.inventoryWeights[sword_index] = 0.0;
+		self->ai.pers.inventoryWeights[_20mmcannon_index] = 0.0;
+		self->ai.pers.inventoryWeights[shotgun_index] = 0.5;
+		self->ai.pers.inventoryWeights[supershotgun_index] = 0.7;
+		self->ai.pers.inventoryWeights[machinegun_index] = 0.5;
+		self->ai.pers.inventoryWeights[chaingun_index] = 0.7;
+		self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_GRENADES].weaponItem)] = 0.5;// isn't this redundant with grenade_index below?
+		self->ai.pers.inventoryWeights[grenadelauncher_index] = 0.6;
+		self->ai.pers.inventoryWeights[rocketlauncher_index] = 0.8;
+		self->ai.pers.inventoryWeights[hyperblaster_index] = 0.7;
+		self->ai.pers.inventoryWeights[railgun_index] = 0.8;
+		self->ai.pers.inventoryWeights[bfg10k_index] = 0.5;
+
+		//ammo
+		self->ai.pers.inventoryWeights[shell_index] = 0.5;
+		self->ai.pers.inventoryWeights[bullet_index] = 0.5;
+		self->ai.pers.inventoryWeights[cell_index] = 0.5;
+		self->ai.pers.inventoryWeights[rocket_index] = 0.5;
+		self->ai.pers.inventoryWeights[slug_index] = 0.5;
+		self->ai.pers.inventoryWeights[grenade_index] = 0.5;
+	}
+
+	//armor
+	if (self->myskills.class_num == CLASS_POLTERGEIST) // poltergeists don't use body armor
+	{
+		self->ai.pers.inventoryWeights[body_armor_index] = 0.0;
+		self->ai.pers.inventoryWeights[combat_armor_index] = 0.0;
+		self->ai.pers.inventoryWeights[jacket_armor_index] = 0.0;
+		self->ai.pers.inventoryWeights[armor_shard_index] = 0.2; // for powercubes
+	}
+	else
+	{
+		self->ai.pers.inventoryWeights[body_armor_index] = 0.9;
+		self->ai.pers.inventoryWeights[combat_armor_index] = 0.8;
+		self->ai.pers.inventoryWeights[jacket_armor_index] = 0.5;
+		self->ai.pers.inventoryWeights[armor_shard_index] = 0.2;
+	}
+
+	//techs
+	self->ai.pers.inventoryWeights[resistance_index] = 0.5;
+	self->ai.pers.inventoryWeights[strength_index] = 0.5;
+	self->ai.pers.inventoryWeights[regeneration_index] = 0.5;
+	self->ai.pers.inventoryWeights[haste_index] = 0.5;
+
+	//GHz: misc items and powerups
+	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_pack"))] = 0.6;
+	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_quad"))] = 2.0;
+	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_invulnerability"))] = 2.0;
+
+	if (ctf->value) {
+		redflag = FindItemByClassname("item_flag_team1");	// store pointers to flags gitem_t, for 
+		blueflag = FindItemByClassname("item_flag_team2");// simpler comparisons inside this archive
+		self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_flag_team1"))] = 3.0;
+		self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_flag_team2"))] = 3.0;
+	}
+	//BOT_PrintItemWeights(self);//TESTING!!!!!!!!!!!!!!!
+}
 
 //==========================================
 // BOT_DMclass_InitPersistant
@@ -2242,54 +2355,7 @@ void BOT_DMclass_InitPersistant(edict_t *self)
 	//available moveTypes for this class
 	self->ai.pers.moveTypesMask = (LINK_MOVE|LINK_STAIRS|LINK_FALL|LINK_WATER|LINK_WATERJUMP|LINK_JUMPPAD|LINK_PLATFORM|LINK_TELEPORT|LINK_LADDER|LINK_JUMP|LINK_CROUCH);
 
-	//Persistant Inventory Weights (0 = can not pick)
-	memset(self->ai.pers.inventoryWeights, 0, sizeof (self->ai.pers.inventoryWeights));
-
-	//weapons
-	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_BLASTER].weaponItem)] = 0.0;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_SWORD].weaponItem)] = 0.0;
-	//self->bot.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("weapon_blaster"))] = 0.0; //it's the same thing
-	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_20MM].weaponItem)] = 0.0;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_SHOTGUN].weaponItem)] = 0.5;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_SUPERSHOTGUN].weaponItem)] = 0.7;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_MACHINEGUN].weaponItem)] = 0.5;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_CHAINGUN].weaponItem)] = 0.7;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_GRENADES].weaponItem)] = 0.5;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_GRENADELAUNCHER].weaponItem)] = 0.6;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_ROCKETLAUNCHER].weaponItem)] = 0.8;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_HYPERBLASTER].weaponItem)] = 0.7;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_RAILGUN].weaponItem)] = 0.8;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_BFG].weaponItem)] = 0.5;
-
-	//ammo
-	self->ai.pers.inventoryWeights[shell_index] = 0.5;
-	self->ai.pers.inventoryWeights[bullet_index] = 0.5;
-	self->ai.pers.inventoryWeights[cell_index] = 0.5;
-	self->ai.pers.inventoryWeights[rocket_index] = 0.5;
-	self->ai.pers.inventoryWeights[slug_index] = 0.5;
-	self->ai.pers.inventoryWeights[grenade_index] = 0.5;
-	
-	//armor
-	self->ai.pers.inventoryWeights[body_armor_index] = 0.9;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_armor_combat"))] = 0.8;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_armor_jacket"))] = 0.5;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_armor_shard"))] = 0.2;
-
-	//techs
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("tech_resistance"))] = 0.5;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("tech_strength"))] = 0.5;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("tech_regeneration"))] = 0.5;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("tech_haste"))] = 0.5;
-
-	//GHz: misc
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_pack"))] = 0.6;
-
-	if( ctf->value ) {
-		redflag = FindItemByClassname("item_flag_team1");	// store pointers to flags gitem_t, for 
-		blueflag = FindItemByClassname("item_flag_team2");// simpler comparisons inside this archive
-		self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_flag_team1"))] = 3.0;
-		self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_flag_team2"))] = 3.0;
-	}
+	//BOT_DMclass_InitPersistantWeights(self);
 }
 
 //==========================================

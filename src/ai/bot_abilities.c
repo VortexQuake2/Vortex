@@ -609,7 +609,7 @@ qboolean BOT_DMclass_TargetBarrel(edict_t* self)
 	// Find Enemy
 	for (int i = 0;i < num_AIEnemies;i++)
 	{
-		if (!G_ValidTargetEnt(AIEnemies[i], true))
+		if (!G_ValidTargetEnt(self, AIEnemies[i], true))
 			continue;
 		// not a barrel
 		if (AIEnemies[i]->mtype != M_BARREL)

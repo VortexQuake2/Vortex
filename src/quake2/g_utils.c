@@ -1185,18 +1185,8 @@ edict_t *G_GetSummoner (const edict_t *ent)
 		return NULL;
 }
 
-/*
-=============
-G_ValidTarget
-returns true if the target is valid, but does not check allied/team status
-
-self		the entity searching for a target (used for visibility and team checks
-target		the entity we are checking
-vis			whether or not a visibility check should be run
-alive		true if a valid target must be alive
-=============
-*/
-qboolean G_ValidTargetEnt(const edict_t *target, qboolean alive) {
+qboolean G_ValidTargetEnt(edict_t *self, edict_t *target, qboolean alive) 
+{
     if (alive) {
         if (!G_EntIsAlive(target))
             return false;
@@ -1215,8 +1205,8 @@ qboolean G_ValidTargetEnt(const edict_t *target, qboolean alive) {
 	// don't target players in chat-protect
 	if (!ptr->value && (target->flags & FL_CHATPROTECT))
 		return false;
-	// don't target entities with FL_NOTARGET set (non-bot AI should ignore this entity)
-	if (target->flags & FL_NOTARGET && !target->ai.is_bot)
+	// non-bots don't target entities with FL_NOTARGET set
+	if (target->flags & FL_NOTARGET && (!self || !self->ai.is_bot))
 		return false;
 	// don't target spawning world monsters
 	if (target->activator && !target->activator->client && (target->svflags & SVF_MONSTER) 
@@ -1231,6 +1221,18 @@ qboolean G_ValidTargetEnt(const edict_t *target, qboolean alive) {
 	//	return false;
 	return true;
 }
+
+/*
+=============
+G_ValidTarget
+returns true if the target is valid, but does not check allied/team status
+
+self		the entity searching for a target (used for visibility and team checks
+target		the entity we are checking
+vis			whether or not a visibility check should be run
+alive		true if a valid target must be alive
+=============
+*/
 
 qboolean G_ValidTarget(const edict_t *self, const edict_t *target, qboolean vis, qboolean alive)
 {
@@ -1247,7 +1249,7 @@ qboolean G_ValidTarget(const edict_t *self, const edict_t *target, qboolean vis,
 			return true;
 	}
 
-	if (!G_ValidTargetEnt(target, alive))
+	if (!G_ValidTargetEnt(self, target, alive))
 		return false;
 
 	if (self)

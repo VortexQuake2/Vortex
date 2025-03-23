@@ -468,6 +468,10 @@ qboolean AI_DodgeProjectiles(edict_t* self, usercmd_t* ucmd)
 	if (self->movetarget->mtype == M_BARREL && !self->enemy)
 		return false;
 
+	// obstacles aren't dangerous if they're dead!
+	//if (self->movetarget->mtype == M_OBSTACLE && self->movetarget->health < 1)
+	//	return false;
+
 	// copy projectile's origin to start
 	VectorCopy(self->movetarget->s.origin, start);
 	// is it moving?

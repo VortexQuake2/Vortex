@@ -614,6 +614,9 @@ void BOT_Touchdown(edict_t* self)
 	gi.dprintf("jump landed, dist: %f\n", VectorLength(v));
 	gi.sound(self, CHAN_VOICE, gi.soundindex("world/land.wav"), 1, ATTN_IDLE, 0);
 }
+
+void BOT_DMclass_InitPersistantWeights(edict_t* self);
+
 //==========================================
 // BOT_DMClass_JoinGame
 // put the bot into the game.
@@ -695,6 +698,7 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 	ent->svflags &= ~SVF_NOCLIENT;
 	ent->client->ps.gunindex = 0;
 
+	BOT_DMclass_InitPersistantWeights(ent);//GHz: moved here because weights are adjusted based on class selection
 	PutClientInServer(ent);
 
 	if (!KillBox (ent))
@@ -791,7 +795,7 @@ void BOT_SpawnBot (char *team, char *name, char *skin, char *userinfo, char *cla
 	AI_ResetWeights(bot);
 	AI_ResetNavigation(bot);
 
-	bot->think = BOT_JoinGame;
+	bot->think = BOT_JoinGame; // note: this randomly assigns a class if one is not already set
 
 	// players should join before bots
 	float delay = 0;

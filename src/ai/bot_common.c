@@ -40,6 +40,10 @@ typedef struct {
 } bot_selection_t;
 
 bot_selection_t botlist[] = {
+	{"abort-retry-fail", "poltergeist"},
+	{"BSOD", "poltergeist"},
+	{"ctrl-alt-del", "poltergeist"},
+	{"kernel panic", "poltergeist"},
 	{"robotico", "soldier"},
 	{"faildozer", "soldier"},
 	{"T-800", "soldier"},

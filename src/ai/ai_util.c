@@ -5,6 +5,8 @@
 
 qboolean AI_IsProjectile(edict_t* ent)
 {
+	if (ent->mtype == M_OBSTACLE && ent->health > 0)
+		return true;
 	if (ent->mtype == M_LIGHTNINGSTORM || ent->mtype == M_BARREL)
 		return true;
 	return ent->clipmask == MASK_SHOT && (ent->solid == SOLID_BBOX  || ent->solid == SOLID_TRIGGER) && ent->s.modelindex && (ent->dmg || ent->radius_dmg);
@@ -57,7 +59,11 @@ qboolean AI_ValidMoveTarget(edict_t* self, edict_t* target, qboolean check_range
 		dist = entdist(self, target);
 	// projectiles
 	if (AI_IsProjectile(target) && dist <= AI_RANGE_LONG)
+	{
+		//if (target->mtype == M_OBSTACLE && target->health < 1)
+		//	return false; // don't worry about dead obstacles!
 		return true;
+	}
 	// reachable summons
 	if (AI_IsOwnedSummons(self, target) && AI_ClearWalkingPath(self, self->s.origin, target->s.origin))
 		return true;

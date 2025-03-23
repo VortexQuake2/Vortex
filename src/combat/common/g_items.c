@@ -2107,7 +2107,7 @@ always owned, never in the world
 /* width */        2,
                         60,
                         NULL,
-                        0,
+                        IT_POWERUP,
                         NULL,
                         0,
 /* precache */ "items/damage.wav items/damage2.wav items/damage3.wav"
@@ -2129,7 +2129,7 @@ always owned, never in the world
 /* width */        2,
                         300,
                         NULL,
-                        0,
+                        IT_POWERUP,
                         NULL,
                         0,
 /* precache */ "items/protect.wav items/protect2.wav items/protect3.wav"
