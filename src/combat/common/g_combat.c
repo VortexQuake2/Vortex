@@ -1024,17 +1024,18 @@ void vrx_apply_knockback(edict_t *targ, edict_t *attacker, vec_t *dir, int knock
 }
 
 void vrx_apply_invincibility(edict_t *targ, float damage, int dflags, float *take, float *save) {
-	edict_t* cl_ent = G_GetClient(targ);
-	qboolean invincible = (cl_ent && cl_ent->client && cl_ent->client->invincible_framenum > level.framenum);
+	edict_t* cl_ent = PM_GetPlayer(targ);//G_GetClient(targ);
+	qboolean invincible = (cl_ent && cl_ent->client->invincible_framenum > level.framenum);
 	qboolean bypass_invincibility = (dflags & DAMAGE_NO_PROTECTION);
 
 	// az: add decino's invincibility not working for tank morphs from indy
-	qboolean is_player_tank = targ->mtype == P_TANK && targ->owner && targ->owner->client;
-	qboolean ptank_invincible = (is_player_tank && targ->owner->client->invincible_framenum > level.framenum);
-	if ((invincible || ptank_invincible) && !bypass_invincibility)
+	//qboolean is_player_tank = targ->mtype == P_TANK && targ->owner && targ->owner->client;
+	//qboolean ptank_invincible = (is_player_tank && targ->owner->client->invincible_framenum > level.framenum);
+	if ((invincible /* || ptank_invincible*/) && !bypass_invincibility)
 	{
 		if (targ->pain_debounce_time < level.time)
 		{
+			//gi.dprintf("%s: %s is invincible\n", __func__, targ->classname);
 			gi.sound(targ, CHAN_ITEM, gi.soundindex("items/protect3.wav"), 1, ATTN_NORM, 0);
 			targ->pain_debounce_time = level.time + 2;
 		}
