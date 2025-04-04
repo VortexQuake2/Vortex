@@ -25,10 +25,10 @@ const talentdef_t talents_soldier[] = {
 };
 
 const talentdef_t talents_poltergeist[] = {
-        {TALENT_MORPHING,    5, false},
+        {TALENT_MELEE_MASTERY,  5, false},
         {TALENT_MORE_AMMO,   5, false},
         {TALENT_SUPERIORITY, 5, false},
-        {TALENT_RETALIATION, 5, false},
+        {TALENT_RANGE_MASTERY, 5, false},
         {TALENT_PACK_ANIMAL, 5, false},
         {-1,                 0, 0}
 };
@@ -376,11 +376,13 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             menu_add_line(ent, "grenade damage and", MENU_WHITE_CENTERED);
             menu_add_line(ent, "reduces cost.", MENU_WHITE_CENTERED);
             return 3;
-            //Poltergeist talents
-        case TALENT_MORPHING:
-            menu_add_line(ent, "Reduces the cost", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "of your morphs.", MENU_WHITE_CENTERED);
-            return 2;
+        //Poltergeist talents
+        case TALENT_MELEE_MASTERY:
+            menu_add_line(ent, "Upgrades the attack of", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "the following morphs:", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "Berserker, Mutant", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "Parasite, and Brain.", MENU_WHITE_CENTERED);
+            return 4;
         case TALENT_MORE_AMMO:
             menu_add_line(ent, "Increases maximum ammo", MENU_WHITE_CENTERED);
             menu_add_line(ent, "capacity for", MENU_WHITE_CENTERED);
@@ -390,10 +392,12 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             menu_add_line(ent, "Increased damage and", MENU_WHITE_CENTERED);
             menu_add_line(ent, "resistance to monsters.", MENU_WHITE_CENTERED);
             return 2;
-        case TALENT_RETALIATION:
-            menu_add_line(ent, "Damage increases as", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "health is reduced.", MENU_WHITE_CENTERED);
-            return 2;
+        case TALENT_RANGE_MASTERY:
+            menu_add_line(ent, "Upgrades the attack of", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "the following morphs:", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "Tank, Medic, Flyer", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "and Cacodemon.", MENU_WHITE_CENTERED);
+            return 4;
         case TALENT_PACK_ANIMAL:
             menu_add_line(ent, "Increased damage and", MENU_WHITE_CENTERED);
             menu_add_line(ent, "resistance when near", MENU_WHITE_CENTERED);

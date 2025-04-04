@@ -408,8 +408,8 @@ void Cmd_PlayerToFlyer_f (edict_t *ent)
 	}
 
     //Talent: Morphing
-    if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
-        flyer_cubecost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
+    //if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
+    //    flyer_cubecost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
 
     //if (!G_CanUseAbilities(ent, ent->myskills.abilities[FLYER].current_level, flyer_cubecost))
     //	return;

@@ -486,6 +486,7 @@ void vrx_remove_player_summonables(edict_t* self) {
 			self->num_monsters = 0;
 			self->num_monsters_real = 0;
 			self->num_skeletons = 0;
+			self->num_packanimals = 0;
 			self->num_golems = 0;
 			continue;
 		}
@@ -676,9 +677,15 @@ void shrapnel_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* 
 	if (G_ValidTarget(self->creator, other, false, true))
 	{
 		T_Damage(other, self, self->creator, self->velocity, self->s.origin, plane->normal, self->dmg, 0, 0, self->style);
-
 		gi.sound(other, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav"), 1, ATTN_NORM, 0);
 		G_FreeEdict(self);
+	}
+	else if (self->s.effects & EF_GIB) // this is actually a deadly gib
+	{
+		if (vrx_spawn_nonessential_ent(self->s.origin))
+			self->nextthink = level.time + (GetRandom(1, 10) * FRAMETIME); // remove in 1-10 frames
+		else
+			G_FreeEdict(self); // remove immediately
 	}
 }
 
@@ -727,6 +734,52 @@ void ThrowShrapnel(edict_t* self, char* modelname, float speed, vec3_t origin, i
 	// cloak player-owned shrapnel in PvM if there are too many entities nearby
 	if (pvm->value && cl && !vrx_spawn_nonessential_ent(chunk->s.origin))
 		chunk->svflags |= SVF_NOCLIENT;
+}
+
+void deadly_gib_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point)
+{
+	G_FreeEdict(self);
+}
+
+void ThrowDeadlyGib(edict_t* self, char* modelname, vec3_t origin, vec3_t dir, int type, int dmg, float speed, int mod)
+{
+	edict_t	*gib, *cl;
+	vec3_t	size;
+
+	gib = G_Spawn();
+	gib->classname = "deadly gib";
+	VectorScale(self->size, 0.2, size);
+	//VectorAdd(self->absmin, size, origin);
+	gib->s.origin[0] = origin[0] + crandom() * size[0];
+	gib->s.origin[1] = origin[1] + crandom() * size[1];
+	gib->s.origin[2] = origin[2] + crandom() * size[2];
+	gi.setmodel(gib, modelname);
+	gib->solid = SOLID_BBOX;//SOLID_NOT
+	gib->clipmask = MASK_SHOT;
+	gib->s.effects |= EF_GIB;
+	gib->flags |= FL_NO_KNOCKBACK;
+	gib->takedamage = DAMAGE_YES;
+	gib->dmg = dmg;
+	gib->style = mod;
+	if (cl = G_GetClient(self))
+		gib->creator = cl; // owner-creator of shrapnel
+	else
+		gib->creator = self;
+	gib->die = deadly_gib_die;
+	gib->touch = shrapnel_touch;
+	if (type == GIB_ORGANIC)
+		gib->movetype = MOVETYPE_TOSS;
+	else
+		gib->movetype = MOVETYPE_BOUNCE;
+	VectorScale(dir, speed, gib->velocity);
+	if (!self->ai.is_bot && !self->lockon)//GHz: don't boost vertical velocity for bots as it will affect ballistic calculations (i.e. finding the right pitch to hit the target)
+		gib->velocity[2] += 150;
+	gib->avelocity[0] = random() * 600;
+	gib->avelocity[1] = random() * 600;
+	gib->avelocity[2] = random() * 600;
+	gib->think = G_FreeEdict;
+	gib->nextthink = level.time + 10.0;
+	gi.linkentity(gib);
 }
 
 // finds a vector parallel to a wall plane pointing in the direction of lookDir
@@ -1040,7 +1093,26 @@ void vrx_stun(edict_t* self, edict_t* other, float time)
 	}
 }
 
-// returns false if a non-essential entity (e.g. visual effects, gibs) should be spawned at org
+// stuns enemies nearby org for specified duration, returns true if at least one enemy is found
+qboolean vrx_stunradius(edict_t* self, vec3_t org, float radius, float duration, qboolean visible, qboolean infront)
+{
+	qboolean found_target = false;
+	edict_t* e = NULL;
+
+	while ((e = findradius(e, self->s.origin, radius)) != NULL)
+	{
+		if (!G_ValidTarget(self, e, visible, true))
+			continue;
+		vrx_stun(self, e, duration);
+		found_target = true;
+	}
+
+	if (found_target)
+		return true;
+	return false;
+}
+
+// returns false if a non-essential entity (e.g. visual effects, gibs) shouldn't be spawned at org
 qboolean vrx_spawn_nonessential_ent(vec3_t org)
 {
 	int ents = 0; // counter for ents being sent to clients at org

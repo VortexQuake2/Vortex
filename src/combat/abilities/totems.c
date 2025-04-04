@@ -110,7 +110,6 @@ int GetTotemLevel(edict_t *ent, int totemType, qboolean allied)
 //************************************************************************************************
 //			Totem Think Functions
 //************************************************************************************************
-void fire_fireball (edict_t *self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int flames, int flame_damage);
 
 void FireTotem_meteor_attack(edict_t* self, edict_t *target)
 {

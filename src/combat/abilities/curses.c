@@ -835,7 +835,7 @@ void Bleed (edict_t *curse)
 	curse_level = curse->monsterinfo.level;
 	// damage cap based on monster melee damage
 	max = M_MELEE_DMG_BASE + (M_MELEE_DMG_ADDON * curse_level);
-	// 33-99% health taken over duration of curse at level 10
+	// 50-99% health taken over duration of curse at level 10
 	take = (curse->enemy->max_health * (0.033 * curse_level)) / curse->monsterinfo.selected_time;
 
 	//gi.dprintf("target %s take %d health %d/%d level %d time %.1f\n", 
@@ -849,10 +849,10 @@ void Bleed (edict_t *curse)
 		take = max;
 
 	T_Damage(curse->enemy, caster, caster, vec3_origin, vec3_origin, 
-		vec3_origin, take, 0, DAMAGE_NO_ABILITIES, MOD_LIFE_DRAIN);
+		vec3_origin, take, 0, DAMAGE_NO_ABILITIES, MOD_LIFE_DRAIN);//FIXME: MoD
 
-	// bleed (damage) every 3-10 frames (0.3 - 1.0 second)
-	curse->wait = level.time + (GetRandom(3, 10) * FRAMETIME);
+	// bleed (damage) every 3-5 frames (0.3 - 0.5 second)
+	curse->wait = level.time + (GetRandom(3, 5) * FRAMETIME);
 }
 
 void LifeDrain (edict_t *curse)

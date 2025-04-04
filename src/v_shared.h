@@ -71,13 +71,13 @@ int AveragePlayerLevel(void);
 int PvMAveragePlayerLevel(void);
 int PVM_TotalMonsters(edict_t *monster_owner, qboolean update);
 int PVM_TotalMonstersValue(edict_t* monster_owner);
-void ThrowShrapnel(edict_t* self, char* modelname, float speed, vec3_t origin, int dmg, int mod);
 qboolean vrx_position_player_summonable(edict_t* ent, edict_t* other, float dist);
 void V_PickUpEntity(edict_t* ent);
 qboolean vrx_toggle_pickup(edict_t* ent, int mtype, float dist);
 void vrx_set_pickup_owner(edict_t* self);
 void vrx_clear_pickup_ent(gclient_t* player, edict_t* other);
 void vrx_stun(edict_t* self, edict_t* other, float time);
+qboolean vrx_stunradius(edict_t* self, vec3_t org, float radius, float duration, qboolean visible, qboolean infront);
 qboolean vrx_spawn_nonessential_ent(vec3_t org);
 //************ g_misc.c ************
 
@@ -102,7 +102,7 @@ void VortexEndLevel(void);
 void cmd_mjump(edict_t *ent);
 void proxy_remove(edict_t *self, qboolean print);
 void magmine_remove(edict_t* self, qboolean print);
-qboolean ConvertOwner(edict_t *ent, edict_t *other, float duration, qboolean print);
+qboolean ConvertOwner(edict_t* ent, edict_t* other, float duration, qboolean pack_animal, qboolean print);
 qboolean RestorePreviousOwner(edict_t *ent);
 void ProjectileLockon(edict_t *proj);
 //************ magic.c ************
@@ -245,8 +245,8 @@ void V_GibSound(edict_t *self, int index);
 
 void vrx_player_death(edict_t *self, edict_t *attacker, edict_t *inflictor);
 
-void vrx_morph_think(edict_t* ent);
-
+void vrx_morph_think(edict_t* ent, usercmd_t* ucmd);
+void V_Player_Touchdown(edict_t* ent);
 //************ vote.c *************
 void CheckPlayerVotes(void);
 void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode);
@@ -375,6 +375,8 @@ void vrx_curse_heal_all(edict_t* target);
 // v_misc.c
 int vrx_remove_all_monsters(edict_t* ent);
 int vrx_pvm_update_total_owned_monsters(edict_t *monster_owner, qboolean update);
+void ThrowShrapnel(edict_t* self, char* modelname, float speed, vec3_t origin, int dmg, int mod);
+void ThrowDeadlyGib(edict_t* self, char* modelname, vec3_t origin, vec3_t dir, int type, int dmg, float speed, int mod);
 
 // nova.c
 void fire_nova(edict_t* inflictor, edict_t* attacker, int damage, float radius, int chillLevel, float chillDuration);
@@ -385,4 +387,10 @@ void fire_chainlightning(edict_t* self, vec3_t start, vec3_t aimdir, int damage,
 // ice.c
 void chill_target(edict_t* self, edict_t* target, int chill_level, float duration);
 
+// fire.c
+void ShootFireballsAtNearbyEnemies(edict_t* self, float radius, int max_targets, int fireball_level);
+void fire_fireball(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int flames, int flame_damage);
+
+// mirv.c
+void fire_mirv_grenade(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float radius, int speed, float timer);
 #endif

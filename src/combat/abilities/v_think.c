@@ -851,6 +851,9 @@ void PlagueCloudSpawn(edict_t* ent);
 
 void DrawNavi(edict_t* ent);
 
+// conversion.c
+void think_talent_pack_animal(edict_t* ent);
+
 void vrx_client_think(edict_t* ent) {
 	int max_armor;    // 3.5 max armor client can hold
 	int* armor;        // 3.5 pointer to client armor
@@ -926,6 +929,8 @@ void vrx_client_think(edict_t* ent) {
 	//Talent: Basic Ammo Regeneration
 	think_talent_ammo_regen(ent);
 
+	//Talent: Pack Animal
+	//think_talent_pack_animal(ent);
 
 	if (ent->myskills.abilities[AMMO_REGEN].current_level > 0)
 		think_ability_ammo_regen(ent);

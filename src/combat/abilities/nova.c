@@ -44,7 +44,7 @@ void nova_think (edict_t *self)
 	self->nextthink = level.time + FRAMETIME;
 }
 
-void NovaExplosionEffect (vec3_t org)
+void NovaExplosionEffect(vec3_t org, qboolean coldeffect)
 {
 	edict_t *tempent;
 
@@ -52,7 +52,8 @@ void NovaExplosionEffect (vec3_t org)
 	tempent->s.modelindex = gi.modelindex ("models/objects/nova/tris.md2");
 	tempent->think = nova_think;
 	tempent->nextthink = level.time + FRAMETIME;
-	tempent->s.effects |= /*EF_PLASMA |*/ EF_HALF_DAMAGE | EF_FLAG2 | EF_SPINNINGLIGHTS;
+	if (coldeffect)
+		tempent->s.effects |= /*EF_PLASMA |*/ EF_HALF_DAMAGE | EF_FLAG2 | EF_SPINNINGLIGHTS;
 	tempent->delay = level.time + 0.7;
 	VectorCopy(org, tempent->s.origin);
 	gi.linkentity(tempent);
@@ -82,13 +83,13 @@ void fire_nova(edict_t* inflictor, edict_t *attacker, int damage, float radius, 
 		}
 		// damage them
 		T_RadiusDamage(inflictor, attacker, damage, attacker, radius, MOD_ICEBOLT);//FIXME: MoD
+		NovaExplosionEffect(inflictor->s.origin, true);
 	}
 	else
 	{
 		T_RadiusDamage(inflictor, attacker, damage, attacker, radius, MOD_NOVA);
+		NovaExplosionEffect(inflictor->s.origin, false);
 	}
-
-	NovaExplosionEffect(inflictor->s.origin);
 }
 
 void Cmd_FrostNova_f (edict_t *ent, float skill_mult, float cost_mult)

@@ -2188,7 +2188,7 @@ void weapon_railgun_fire(edict_t *ent) {
     ent->client->refire_frames = 0;
 }
 
-void fire_20mm(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick);
+//void fire_20mm(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, float range);
 
 void weapon_20mm_fire(edict_t *ent) {
     vec3_t start;
@@ -2226,8 +2226,9 @@ void weapon_20mm_fire(edict_t *ent) {
     VectorSet(offset, 0, 7, ent->viewheight - 8);
     P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
 
+    int range = WEAPON_20MM_INITIAL_RANGE + (WEAPON_20MM_ADDON_RANGE * ent->myskills.weapons[WEAPON_20MM].mods[1].current_level);
     //gi.dprintf("called fire_20mm() at %f for %d damage\n", level.time, damage);
-    fire_20mm(ent, start, forward, damage, kick);
+    fire_20mm(ent, start, forward, damage, kick, range);
 
     if (ent->myskills.weapons[WEAPON_20MM].mods[4].current_level < 1) {
         // send muzzle flash

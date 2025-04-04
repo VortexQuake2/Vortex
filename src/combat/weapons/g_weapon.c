@@ -1276,6 +1276,15 @@ void smartrocket_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_
 	// do direct damage
 	if (other->takedamage)
 		T_Damage (other, ent, ent->owner, ent->velocity, ent->s.origin, plane->normal, ent->dmg, 0, 0, MOD_ROCKET);
+	
+	// Talent: Range Mastery
+	int talentLevel = vrx_get_talent_level(ent->owner, TALENT_RANGE_MASTERY);
+	if (talentLevel > 0)
+	{
+		int damage = ent->dmg * (0.2 * talentLevel);
+		fire_mirv_grenade(ent->owner, ent->s.origin, vec3_origin, damage, ent->dmg_radius, 0, FRAMETIME);
+	}
+
 	// do radius damage
 	T_RadiusDamage(ent, ent->owner, ent->radius_dmg, other, ent->dmg_radius, MOD_R_SPLASH);
 	BecomeExplosion1(ent);
@@ -1467,7 +1476,7 @@ void fire_rail (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick
 fire_20mm
 =================
 */
-void fire_20mm (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick)
+void fire_20mm (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, float range)
 {
 	vec3_t		from;
 	vec3_t		end;
@@ -1477,7 +1486,7 @@ void fire_20mm (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick
 	int			mask;
 	qboolean	water, ducked;
 
-	int range = WEAPON_20MM_INITIAL_RANGE + (WEAPON_20MM_ADDON_RANGE * self->myskills.weapons[WEAPON_20MM].mods[1].current_level);
+	//int range = WEAPON_20MM_INITIAL_RANGE + (WEAPON_20MM_ADDON_RANGE * self->myskills.weapons[WEAPON_20MM].mods[1].current_level);
 
 	// calling entity made a sound, used to alert monsters
 	self->lastsound = level.framenum;

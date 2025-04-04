@@ -1,6 +1,5 @@
 #include "g_local.h"
 
-
 #define PARASITE_ATTACK_FRAMES		20
 #define PARASITE_REFIRE				0.5//1.0
 #define	PARASITE_INIT_COST			50
@@ -10,6 +9,7 @@
 #define PARASITE_DELAY		2
 #define PARASITE_COST		50
 
+qboolean ParasiteAttack(edict_t* ent, vec3_t start, vec3_t aimdir, float damage, int pull, int attack_range, int hop_range);
 
 static qboolean parasite_cantarget (edict_t *self, edict_t *target)
 {
@@ -62,6 +62,9 @@ void myparasite_fire (edict_t *self)
 	// morph mastery increases damage
 	if (self->myskills.abilities[MORPH_MASTERY].current_level > 0)
 		damage *= 1.5;
+	pull = PARASITE_INITIAL_KNOCKBACK + PARASITE_ADDON_KNOCKBACK * self->monsterinfo.level;
+	if (PARASITE_MAX_KNOCKBACK && pull < PARASITE_MAX_KNOCKBACK)
+		pull = PARASITE_MAX_KNOCKBACK;
 
 	self->lastsound = level.framenum;
 	if (self->shots == 0)
@@ -93,6 +96,8 @@ void myparasite_fire (edict_t *self)
 		VectorSubtract(end, start, v);
 		VectorNormalize(v);
 		VectorMA(start, para_range, v, end);
+
+		ParasiteAttack(self, start, v, damage, pull, para_range, para_range);
 		
 	}
 	else
@@ -100,12 +105,15 @@ void myparasite_fire (edict_t *self)
 		AngleVectors(self->client->v_angle, forward, NULL, NULL);
 		// fire straight ahead
 		VectorMA(start, para_range, forward, end);
+
+		ParasiteAttack(self, start, forward, damage, pull, para_range, para_range);
 	}
 
-	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
+	//tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
 
 	// make sure we are actually hitting our enemy
 	//if (tr.ent && (tr.ent==self->enemy))
+	/*
 	if (G_EntExists(tr.ent) && !OnSameTeam(self, tr.ent))
 	{
 		pull = PARASITE_INITIAL_KNOCKBACK + PARASITE_ADDON_KNOCKBACK*self->monsterinfo.level;
@@ -121,16 +129,17 @@ void myparasite_fire (edict_t *self)
 			if (self->health > 2*self->max_health)
 				self->health = 2*self->max_health;
 		}
-	}
-
+	}*/
+	
 	// make the parasite toungue!
+	/*
 	gi.WriteByte (svc_temp_entity);
 	gi.WriteByte (TE_PARASITE_ATTACK);
 	gi.WriteShort (self-g_edicts);
 	gi.WritePosition (start);
 	gi.WritePosition (tr.endpos);
 	gi.multicast (start, MULTICAST_PVS);
-
+	*/
 	self->shots++;
 	if (self->shots == PARASITE_ATTACK_FRAMES)
 		gi.sound (self, CHAN_AUTO, gi.soundindex("parasite/paratck4.wav"), 1, ATTN_NORM, 0);
@@ -352,8 +361,8 @@ void Cmd_PlayerToParasite_f (edict_t *ent)
 	}
 
     //Talent: Morphing
-    if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
-        para_cubecost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
+    //if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
+    //    para_cubecost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
 
 //	if (!G_CanUseAbilities(ent, ent->myskills.abilities[BLOOD_SUCKER].current_level, para_cubecost))
     //	return;
@@ -393,4 +402,103 @@ void Cmd_PlayerToParasite_f (edict_t *ent)
 	lasersight_off(ent);
 
     gi.sound(ent, CHAN_WEAPON, gi.soundindex("abilities/morph.wav"), 1, ATTN_NORM, 0);
+}
+
+// **************************************************************************************
+
+#define PARASITE_MAX_HOPS	5
+
+qboolean ParasiteDamageTarget(edict_t* self, edict_t *target, vec3_t dir, vec3_t point, vec3_t normal, float damage, int pull)
+{
+	if (G_EntExists(target) && !OnSameTeam(self,target))
+	{
+		if (target->groundentity)
+			pull *= 2;
+		T_Damage(target, self, self, dir, point, normal, damage, pull, DAMAGE_NO_ABILITIES, MOD_PARASITE);
+		if (self->health < 2 * self->max_health)
+		{
+			self->health += damage;
+			if (self->health > 2 * self->max_health)
+				self->health = 2 * self->max_health;
+		}
+		return true;
+	}
+	return false;
+}
+
+qboolean ParasiteAttack(edict_t* ent, vec3_t start, vec3_t aimdir, float damage, int pull, int attack_range, int hop_range)
+{
+	vec3_t	end;
+	trace_t	tr;
+	edict_t* target = NULL;
+	edict_t* prev_ed[PARASITE_MAX_HOPS]; // list of entities we've previously hit
+	qboolean	found = false;
+
+	memset(prev_ed, 0, PARASITE_MAX_HOPS * sizeof(prev_ed[0]));
+
+	// calling entity made a sound, used to alert monsters
+	ent->lastsound = level.framenum;
+
+	// get ending position
+	VectorMA(start, attack_range, aimdir, end);
+
+	// trace from attacker to ending position
+	tr = gi.trace(start, NULL, NULL, end, ent, MASK_SHOT);
+
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_PARASITE_ATTACK);
+	gi.WriteShort(ent - g_edicts);
+	gi.WritePosition(start);
+	gi.WritePosition(tr.endpos);
+	gi.multicast(ent->s.origin, MULTICAST_PVS);
+
+	// hit a non-world entity?
+	if (tr.ent && tr.ent != world)
+	{
+		// try to attack it
+		if (ParasiteDamageTarget(ent, tr.ent, aimdir, tr.endpos, tr.plane.normal, damage, pull))
+		{
+			prev_ed[0] = tr.ent;
+		}
+		else
+			return false; // give up
+	}
+
+	// we never hit a valid target, so give up
+	if (!prev_ed[0])
+		return false;
+
+	int i = 0;
+	// Talent: Melee Mastery - allows parasite tongue to strike multiple targets like chain lightning
+	int max_hops = floattoint(vrx_get_talent_level(ent, TALENT_MELEE_MASTERY) * 0.5) + 1;
+	if (max_hops > PARASITE_MAX_HOPS)
+		max_hops = PARASITE_MAX_HOPS;
+	//gi.dprintf("max hops: %d\n", max_hops);
+
+	if (max_hops < 2)
+		return false;
+
+	// find nearby targets and bounce between them
+	while ((i < max_hops - 1) && ((target = findradius(target, prev_ed[i]->s.origin, hop_range)) != NULL))
+	{
+		if (target == prev_ed[0])
+			continue;
+		// calculate vector between previous entity and next--this will cause the next entity to get pulled toward the previous
+		vec3_t v;
+		VectorSubtract(target->s.origin, prev_ed[i]->s.origin, v);
+		VectorNormalize(v);
+		// try to attack, if successful then add entity to list
+		if (ParasiteDamageTarget(ent, target, v, target->s.origin, vec3_origin, damage, pull))
+		{
+			gi.WriteByte(svc_temp_entity);
+			gi.WriteByte(TE_PARASITE_ATTACK);
+			gi.WriteShort(prev_ed[i] - g_edicts);
+			gi.WritePosition(prev_ed[i]->s.origin);
+			gi.WritePosition(target->s.origin);
+			gi.multicast(prev_ed[i]->s.origin, MULTICAST_PVS);
+
+			prev_ed[++i] = target;
+		}
+	}
+	return true;
 }

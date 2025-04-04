@@ -305,6 +305,34 @@ void Cmd_Fireball_f(edict_t* ent, float skill_mult, float cost_mult)
 	gi.sound(ent, CHAN_ITEM, gi.soundindex("abilities/firecast.wav"), 1, ATTN_NORM, 0);
 }
 
+void ShootFireballsAtNearbyEnemies(edict_t* self, float radius, int max_targets, int fireball_level)
+{
+	edict_t* e = NULL;
+
+	int damage = FIREBALL_INITIAL_DAMAGE + FIREBALL_ADDON_DAMAGE * fireball_level;
+	float fb_radius = FIREBALL_INITIAL_RADIUS + FIREBALL_ADDON_RADIUS * fireball_level;
+	//float speed = FIREBALL_INITIAL_SPEED + FIREBALL_ADDON_SPEED * fireball_level;
+	int flames = FIREBALL_INITIAL_FLAMES + FIREBALL_ADDON_FLAMES * fireball_level;
+	int flamedmg = 0.1 * damage;
+	vec3_t forward, start;
+	edict_t* owner = G_GetSummoner(self);
+
+	int num_targets = 0; // initialize counter
+	while ((e = findradius(e, self->s.origin, radius)) != NULL)
+	{
+		if (num_targets >= max_targets)
+			break;
+		if (!G_ValidTarget(self, e, true, true))
+			continue;
+		//gi.dprintf("%s: found target\n", __func__);
+		//MonsterAim(self, -1, speed, true, 0, forward, start);
+		VectorSubtract(e->s.origin, self->s.origin, forward);
+		VectorNormalize(forward);
+		fire_fireball(owner, self->s.origin, forward, damage, fb_radius, 400, flames, flamedmg);
+		num_targets++;
+	}
+}
+
 //************************************************************************************************
 //		FIREWALL
 //************************************************************************************************

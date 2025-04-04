@@ -104,6 +104,7 @@ extern long FLAG_FRAMES;
 #define FL_BLACK_DEATH			0x00200000	// extra damage from plague
 #define FL_PICKUP				0x00400000	// entity is being picked up by player
 #define FL_UNDEAD				0x00800000	// entity cannot die (temporary death until resurrection)
+#define FL_PACKANIMAL			0x01000000	// pack animal: use num_packanimals to track active quantity
 #define FL_RESPAWN				0x80000000	// used for item respawning
 
 #define FRAMETIME		(1/sv_fps->value)
@@ -1282,7 +1283,7 @@ void monster_fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, i
 void monster_fire_railgun (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype);
 void monster_fire_bfg (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int kick, float damage_radius, int flashtype);
 void monster_fire_sword (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype); //Ghz
-void monster_fire_20mm(edict_t* self, vec3_t start, vec3_t dir, int damage, int kick, int flashtype);
+void monster_fire_20mm(edict_t* self, vec3_t start, vec3_t dir, int damage, int kick, float range, int flashtype);
 void monster_fire_fireball(edict_t* self);
 void monster_fire_poison(edict_t* self);
 void monster_fire_icebolt(edict_t* self);
@@ -1378,7 +1379,7 @@ void fire_blueblaster (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 void fire_plasma (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius, int radius_damage);
 void fire_trap (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float timer, float damage_radius, qboolean held);
 void fire_smartrocket (edict_t *self, edict_t *target, vec3_t start, vec3_t dir, int damage, int speed, int turn_speed, float damage_radius, int radius_damage);
-void fire_20mm(edict_t* self, vec3_t start, vec3_t aimdir, int damage, int kick);
+void fire_20mm(edict_t* self, vec3_t start, vec3_t aimdir, int damage, int kick, float range);
 
 //
 // g_ptrail.c
@@ -1975,6 +1976,7 @@ struct edict_s
 	int num_barrels;
 	int num_skeletons;
 	int num_golems;
+	int num_packanimals;
 	int num_firewalls;
 	int	num_spikeball;
 	int	num_laserplatforms; //4.4 Talent: Laser Platform

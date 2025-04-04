@@ -91,7 +91,7 @@ void ThrowShell(edict_t* self, char* modelname, vec3_t start)
 	gi.linkentity(chunk);
 }
 
-void monster_fire_20mm(edict_t* self, vec3_t start, vec3_t dir, int damage, int kick, int flashtype)
+void monster_fire_20mm(edict_t* self, vec3_t start, vec3_t dir, int damage, int kick, float range, int flashtype)
 {
 	float chance;
 
@@ -111,7 +111,7 @@ void monster_fire_20mm(edict_t* self, vec3_t start, vec3_t dir, int damage, int 
 	}
 
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
-	fire_20mm(self, start, dir, damage, kick);
+	fire_20mm(self, start, dir, damage, kick, range);
 
 	gi.WriteByte(svc_muzzleflash);
 	gi.WriteShort(self - g_edicts);
@@ -331,7 +331,6 @@ void monster_fire_sword (edict_t *self, vec3_t start, vec3_t aimdir, int damage,
 	gi.multicast (start, MULTICAST_PVS);
 }
 
-void fire_fireball(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int flames, int flame_damage);
 void monster_fire_fireball(edict_t* self)
 {
 	int damage, radius, speed, flames, flame_damage;

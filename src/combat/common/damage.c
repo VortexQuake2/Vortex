@@ -15,7 +15,7 @@ float vrx_apply_bless_damage_bonus(const edict_t *attacker, float damage, int dt
 
 float vrx_apply_strength_tech(const edict_t *attacker, float damage);
 
-float vrx_apply_talent_retaliation_damage(const edict_t *attacker, float damage);
+//float vrx_apply_talent_retaliation_damage(const edict_t *attacker, float damage);
 
 float vrx_apply_morph_talent_damage(const edict_t *targ, const edict_t *attacker, float damage);
 
@@ -422,7 +422,7 @@ float vrx_apply_morph_talent_damage(const edict_t *targ, const edict_t *attacker
 
     // Talent: Retaliation
     // increases damage as percentage of remaining health is reduced
-    damage = vrx_apply_talent_retaliation_damage(attacker, damage);
+    //damage = vrx_apply_talent_retaliation_damage(attacker, damage);
 
     // Talent: Superiority
     // increases damage/resistance of morphed players against monsters
@@ -438,6 +438,7 @@ float vrx_apply_morph_talent_damage(const edict_t *targ, const edict_t *attacker
     return damage;
 }
 
+/*
 float vrx_apply_talent_retaliation_damage(const edict_t *attacker, float damage) {
     int talentLevel = vrx_get_talent_level(attacker, TALENT_RETALIATION);
     if (talentLevel > 0) {
@@ -448,6 +449,7 @@ float vrx_apply_talent_retaliation_damage(const edict_t *attacker, float damage)
     }
     return damage;
 }
+*/
 
 float vrx_apply_berserk_synergy(const edict_t* attacker, int mod, float damage) {
     // bonus only applies to these melee attacks

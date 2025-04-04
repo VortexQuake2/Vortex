@@ -394,14 +394,14 @@ char *GetTalentString(int talent_ID) {
         case TALENT_MONSTER_MASTERY:
             return "Mastery";
         //Poltergeist Talents
-        case TALENT_MORPHING:
-            return "Morphing";
+        case TALENT_MELEE_MASTERY:
+            return "Melee Mastery";
         case TALENT_MORE_AMMO:
             return "More Ammo";
         case TALENT_SUPERIORITY:
             return "Superiority";
-        case TALENT_RETALIATION:
-            return "Retaliation";
+        case TALENT_RANGE_MASTERY:
+            return "Range Mastery";
         case TALENT_PACK_ANIMAL:
             return "Pack Animal";
         //Vampire Talents

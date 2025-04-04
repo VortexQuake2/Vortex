@@ -1653,6 +1653,7 @@ void CopyToBodyQue (edict_t *ent)
 	body->deadflag = DEAD_DEAD; // added so its easier to identify a body
 	body->gib_health = ent->gib_health; // necessary for corpse explosion and yin spirit
 	body->max_health = ent->max_health;//4.55
+	body->monsterinfo.level = ent->myskills.level; // needed for medic resurrection / soldier creation
 //GHz END
 
 	gi.linkentity (body);
@@ -2528,9 +2529,6 @@ usually be a couple times for each server frame.
 ==============
 */
 
-
-void RunParasiteFrames (edict_t *ent, usercmd_t *ucmd);
-void RunBrainFrames (edict_t *ent, usercmd_t *ucmd);
 void V_AutoAim (edict_t *player);
 void UpdateMirroredEntities (edict_t *ent);
 void LeapAttack (edict_t *ent);
@@ -2740,10 +2738,10 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			}
 		}
 
-		//GHz: bots should call touchdown function if they have one after landing
-		if (ent->ai.is_bot && !ent->groundentity && pm.groundentity && ent->monsterinfo.touchdown)
+		// player has just landed
+		if (!ent->groundentity && pm.groundentity)
 		{
-			ent->monsterinfo.touchdown(ent);
+			V_Player_Touchdown(ent);
 		}
 		ent->viewheight = pm.viewheight;
 		ent->waterlevel = pm.waterlevel;
@@ -2898,17 +2896,9 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
     think_trade(ent);
 
     boss_update(ent, ucmd);
-	RunParasiteFrames(ent, ucmd);
-	RunCacodemonFrames(ent, ucmd);
-	//RunTankFrames(ent, ucmd);
-	RunBrainFrames(ent, ucmd);
-	RunFlyerFrames(ent, ucmd);
-	RunMutantFrames(ent, ucmd);
-	RunMedicFrames(ent, ucmd);
-	RunBerserkFrames(ent, ucmd);
 	EatCorpses(ent);
 	UpdateMirroredEntities(ent);
-	vrx_morph_think(ent);
+	vrx_morph_think(ent, ucmd);
 	BlinkStrike_think(ent);
 	V_PickUpEntity(ent);
 }

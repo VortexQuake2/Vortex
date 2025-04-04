@@ -12,15 +12,14 @@
 
 void bskull_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf) {
     int num;
-    int damage = CACODEMON_ADDON_BURN * self->owner->myskills.abilities[CACODEMON].current_level;
+    int skill_level = self->owner->myskills.abilities[CACODEMON].current_level;
+    int damage = CACODEMON_ADDON_BURN * skill_level;
 
     // deal direct damage
     if (G_EntExists(other))
-        T_Damage(other, self, self->owner, self->velocity, self->s.origin,
-                 plane->normal, self->dmg, 1, DAMAGE_RADIUS, MOD_CACODEMON_FIREBALL);
+        T_Damage(other, self, self->owner, self->velocity, self->s.origin, plane->normal, self->dmg, 1, DAMAGE_RADIUS, MOD_CACODEMON_FIREBALL);
     // deal radius damage
-    T_RadiusDamage(self, self->owner, self->radius_dmg, other,
-                   self->dmg_radius, MOD_CACODEMON_FIREBALL);
+    T_RadiusDamage(self, self->owner, self->radius_dmg, other, self->dmg_radius, MOD_CACODEMON_FIREBALL);
 /*
 	if (self->owner->myskills.abilities[MORPH_MASTERY].current_level > 0)
 	{
@@ -32,6 +31,11 @@ void bskull_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
     num = GetRandom(3, 6);
 
     SpawnFlames(self->owner, self->s.origin, num, damage, 100);
+
+    // Talent: Range Mastery
+    int talentLevel = vrx_get_talent_level(self, TALENT_RANGE_MASTERY);
+    if (talentLevel > 0)
+        ShootFireballsAtNearbyEnemies(self, 200, talentLevel, skill_level);
     BecomeExplosion1(self);
 }
 
@@ -180,8 +184,8 @@ void Cmd_PlayerToCacodemon_f(edict_t *ent) {
     }
 
     //Talent: Morphing
-    if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
-        caco_cubecost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
+    //if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
+    //    caco_cubecost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
 
     //if (!G_CanUseAbilities(ent, ent->myskills.abilities[CACODEMON].current_level, caco_cubecost))
     //	return;

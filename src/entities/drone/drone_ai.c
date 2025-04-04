@@ -2699,7 +2699,7 @@ void drone_think (edict_t *self)
 	}
 
 	// if owner can't pay upkeep, monster dies
-	if (!M_Upkeep(self, 1 / FRAMETIME, self->monsterinfo.cost/20))
+	if (!M_Upkeep(self, 1 / FRAMETIME, /*self->monsterinfo.cost / 2*/0))
 		return;
 
 	M_UpdateLastSight(self);

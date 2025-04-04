@@ -224,17 +224,36 @@ void tentacle_attack (edict_t *self)
 		self->enemy = NULL;
 	}
 
+	damage = BRAIN_DEFAULT_TENTACLE_DMG + BRAIN_ADDON_TENTACLE_DMG * self->myskills.abilities[BRAIN].current_level;
+
 	// damage zone
 	AngleVectors(self->client->v_angle, forward, NULL, NULL);
 	VectorCopy(self->s.origin, start);
 	start[2] += self->viewheight;
+	// Talent: Melee Mastery - adds projectile (gib) vomit to brain's primary attack
+	int talentLevel = vrx_get_talent_level(self, TALENT_MELEE_MASTERY);
+	if (talentLevel > 0)
+	{
+		int frames = 11 - (2 * talentLevel);
+		if (level.framenum % frames == 0)
+		{
+			VectorMA(start, 16, forward, start);
+			switch (GetRandom(1, 4))
+			{
+			case 1: ThrowDeadlyGib(self, "models/objects/gibs/sm_meat/tris.md2", start, forward, GIB_ORGANIC, damage, 400, MOD_BRAINTENTACLE); break;
+			case 2: ThrowDeadlyGib(self, "models/objects/gibs/sm_metal/tris.md2", start, forward, GIB_METALLIC, damage, 400, MOD_BRAINTENTACLE); break;
+			case 3: ThrowDeadlyGib(self, "models/objects/gibs/bone2/tris.md2", start, forward, GIB_ORGANIC, damage, 400, MOD_BRAINTENTACLE); break;
+			case 4: ThrowDeadlyGib(self, "models/objects/gibs/head2/tris.md2", start, forward, GIB_ORGANIC, damage, 400, MOD_BRAINTENTACLE); break;
+			}
+		}
+	}
+	
 	VectorMA(start, 64, forward, end);
 	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
 
 	if (G_EntExists(tr.ent))
 	{
-		damage = BRAIN_DEFAULT_TENTACLE_DMG+BRAIN_ADDON_TENTACLE_DMG
-			*self->myskills.abilities[BRAIN].current_level;
+		
 		T_Damage(tr.ent, self, self, forward, tr.endpos, tr.plane.normal, damage, 0, 0, MOD_TENTACLE);
 	}
 }
@@ -326,8 +345,8 @@ void Cmd_PlayerToBrain_f (edict_t *ent)
 	}
 
     //Talent: Morphing
-    if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
-        brain_cubecost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
+    //if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
+    //    brain_cubecost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
 
     //if (!G_CanUseAbilities(ent, ent->myskills.abilities[BRAIN].current_level, brain_cubecost))
     //	return;

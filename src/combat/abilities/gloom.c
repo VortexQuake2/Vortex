@@ -520,12 +520,35 @@ qboolean healer_validtarget(edict_t* self, edict_t* target)
 
 //void G_Spawn_Trails(int type, vec3_t start, vec3_t endpos);
 void G_Spawn_Splash(int type, int count, int color, vec3_t start, vec3_t movdir, vec3_t origin);
+
+void healer_healeffects(edict_t* self, edict_t *target)
+{
+	vec3_t		start, end, forward;//, angles;
+	trace_t		tr;
+	// start and end position of effect is slightly above the floor
+	VectorCopy(self->s.origin, start);
+	start[2] = self->absmin[2] + 4;
+	VectorCopy(target->s.origin, end);
+	end[2] = target->absmin[2] + 4;
+
+	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
+
+	// move effect slightly to the right or left
+	VectorSubtract(start, end, forward);
+	VectorNormalize(forward);
+	vectoangles(forward, forward);
+	AngleVectors(forward, NULL, forward, NULL);
+	VectorMA(tr.endpos, crandom() * target->maxs[1], forward, end);
+
+	G_Spawn_Splash(TE_LASER_SPARKS, 6, GetRandom(200, 217), end, forward, end);
+
+}
 void healer_attack (edict_t *self)
 {
 	edict_t*	target =NULL;
 	float		range = self->monsterinfo.sight_range;
-	vec3_t		start, end, forward;//, angles;
-	trace_t		tr;
+	//vec3_t		start, end, forward;//, angles;
+	//trace_t		tr;
 
 	while ((target = findradius(target, self->s.origin, range)) != NULL)
 	{
@@ -534,6 +557,8 @@ void healer_attack (edict_t *self)
 
 		if (healer_heal(self, target))
 		{
+			healer_healeffects(self, target);
+			/*
 			// start and end position of effect is slightly above the floor
 			VectorCopy(self->s.origin, start);
 			start[2] = self->absmin[2] + 4;
@@ -549,7 +574,7 @@ void healer_attack (edict_t *self)
 			AngleVectors(forward, NULL, forward, NULL);
 			VectorMA(tr.endpos, crandom()*target->maxs[1], forward, end);
 
-			G_Spawn_Splash(TE_LASER_SPARKS, 6, GetRandom(200, 217), end, forward, end);
+			G_Spawn_Splash(TE_LASER_SPARKS, 6, GetRandom(200, 217), end, forward, end);*/
 		}
 	}
 }
@@ -925,7 +950,7 @@ void spiker_think (edict_t *self)
 			// if we were converted, try to convert back to previous owner
 			if (converted && self->prev_owner && self->prev_owner->inuse)
 			{
-				if (!ConvertOwner(self->prev_owner, self, 0, false))
+				if (!ConvertOwner(self->prev_owner, self, 0, false, false))
 				{
 					organ_remove(self, false);
 					return;
@@ -3073,7 +3098,7 @@ void spikeball_think (edict_t *self)
             // if we were converted, try to convert back to previous owner
             if (converted && self->prev_owner && self->prev_owner->inuse)
             {
-                if (!ConvertOwner(self->prev_owner, self, 0, false))
+                if (!ConvertOwner(self->prev_owner, self, 0, false, false))
                 {
                     organ_remove(self, false);
                     return;

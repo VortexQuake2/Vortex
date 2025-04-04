@@ -43,14 +43,15 @@ edict_t* CreateHealer(edict_t* ent, int skill_level);
 void p_medic_reanimate (edict_t *ent, edict_t *target)
 {
 	int		res_level;
+	int		medic_level = ent->myskills.abilities[MEDIC].current_level;
 	int		skill_level;
 	float	skill_bonus, res_time;
 	vec3_t	bmin, bmax;
 	edict_t *e;
 
-	res_time = MEDIC_RESURRECT_INITIAL_TIME + MEDIC_RESURRECT_ADDON_TIME * ent->myskills.abilities[MEDIC].current_level;
+	res_time = MEDIC_RESURRECT_INITIAL_TIME + MEDIC_RESURRECT_ADDON_TIME * medic_level;
 	// calculate skill bonus from medic
-	skill_bonus = MEDIC_RESURRECT_BASE + MEDIC_RESURRECT_BONUS * ent->myskills.abilities[MEDIC].current_level;
+	skill_bonus = MEDIC_RESURRECT_BASE + MEDIC_RESURRECT_BONUS * medic_level;
 	// save the original monster's level so we don't apply the bonus more than once
 	if (!target->monsterinfo.resurrected_level)
 		res_level = target->monsterinfo.resurrected_level = target->monsterinfo.level;
@@ -298,6 +299,80 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 		
 }
 
+void p_medic_apply_healing(edict_t* ent, edict_t *other, int frames)
+{
+	int exp;
+
+	M_Regenerate(other, frames, 0, 1.0, true, true, false, &other->monsterinfo.regen_delay2);
+
+	if (ent->client && other->owner != ent && other->activator != ent) {
+		exp = floattoint((float)other->max_health / ((float)frames) / 10);
+		exp *= (1 - INVASION_EXP_SPLIT);
+		vrx_apply_experience(ent, exp);
+		ent->client->resp.wave_assist_exp += exp;
+	}
+
+	// hold monsters in-place
+	if (other->svflags & SVF_MONSTER)
+		other->holdtime = level.time + 0.2;
+
+	// remove all curses
+	CurseRemove(other, 0, 0);
+
+	//Give them a short period of curse immunity
+	other->holywaterProtection = level.time + 2.0; //2 seconds immunity
+
+	//give exp if they do something useful shortly after being healed
+	other->heal_exp_owner = ent;
+	if (other->heal_exp_time < level.time)
+		other->heal_exp_time = level.time;
+	if (other->heal_exp_time < level.time + 60.0) {
+		other->heal_exp_time += 15.0;
+	}
+}
+
+//void G_SpawnParticleTrail(vec3_t start, vec3_t end, int particles, int color);
+void healer_healeffects(edict_t* self, edict_t* target);
+
+void p_medic_healradius(edict_t* self, float radius, int frames)
+{
+	edict_t* e = NULL;
+	//vec3_t start, end;
+
+	//VectorCopy(self->s.origin, start);
+	//start[2] = self->absmin[2] + 1;
+
+	while ((e = findradius(e, self->s.origin, radius)) != NULL)
+	{
+		//if (!G_ValidTarget(self, e, true, false))
+		//	continue;
+		if (!G_ValidTargetEnt(self, e, false))
+			continue;
+		if (!visible(self, e))
+			continue;
+		if (!infront(self, e))
+			continue;
+		// live target
+		if (e->health > 0)
+		{
+			if (!OnSameTeam(self, e))
+				continue;
+			if (!M_NeedRegen(e))
+				continue;
+			p_medic_apply_healing(self, e, frames);
+			healer_healeffects(self, e);
+			//VectorCopy(e->s.origin, end);
+			//end[2] = e->absmin[2] + 1;
+			//G_SpawnParticleTrail(start, end, 8, 221);
+		}/*
+		else
+		// corpse
+		{
+			p_medic_reanimate(self, e);
+		}*/
+	}
+}
+
 void p_medic_heal (edict_t *ent)
 {
 	int exp;
@@ -312,6 +387,21 @@ void p_medic_heal (edict_t *ent)
 	else if (ent->s.frame == 227)
 		gi.sound (ent, CHAN_WEAPON, gi.soundindex("medic/medatck5.wav"), 1, ATTN_NORM, 0);
 
+	int frames = qf2sf(600 / (float)ent->myskills.abilities[MEDIC].current_level);
+
+	// Talent: Range Mastery - allows medic to heal/resurrect multiple targets
+	int talentLevel = vrx_get_talent_level(ent, TALENT_RANGE_MASTERY);
+	if (talentLevel > 0)
+	{
+		float range = 40 * talentLevel;
+		p_medic_healradius(ent, range, frames);
+		if (ent->s.frame == 220)
+			gi.sound(ent, CHAN_WEAPON, gi.soundindex("medic/medatck4.wav"), 1, ATTN_NORM, 0);
+		// cable becomes redundant once radius is large enough
+		//if (range >= MEDIC_CABLE_RANGE)
+		//	return;
+	}
+
 	// get muzzle location
 	AngleVectors (ent->s.angles, forward, right, NULL);
 	VectorCopy(p_medic_cable_offsets[ent->s.frame - 218], offset);
@@ -323,7 +413,7 @@ void p_medic_heal (edict_t *ent)
 	AngleVectors (ent->client->v_angle, forward, NULL, NULL);
 	VectorMA(start, MEDIC_CABLE_RANGE, forward, end);
 
-	tr = gi.trace (org, NULL, NULL, end, ent, MASK_SHOT);
+	tr = gi.trace (start, NULL, NULL, end, ent, MASK_SHOT);
 
 	// bfg laser effect
 	gi.WriteByte (svc_temp_entity);
@@ -337,19 +427,22 @@ void p_medic_heal (edict_t *ent)
 		// try to heal them if they are alive
 		if ((tr.ent->deadflag != DEAD_DEAD) && (tr.ent->health > 0))
 		{
-			int frames = qf2sf(600/(float)ent->myskills.abilities[MEDIC].current_level);
-			
+			//int frames = qf2sf(600 / (float)ent->myskills.abilities[MEDIC].current_level);
+
 			if (!M_NeedRegen(tr.ent))
 				return;
 
 			if (ent->s.frame == 220)
-				gi.sound (ent, CHAN_WEAPON, gi.soundindex ("medic/medatck4.wav"), 1, ATTN_NORM, 0);
-			
+				gi.sound(ent, CHAN_WEAPON, gi.soundindex("medic/medatck4.wav"), 1, ATTN_NORM, 0);
+
+			//gi.dprintf("%d: %s: trying to heal %s\n", (int)level.framenum, __func__, tr.ent->classname);
+			p_medic_apply_healing(ent, tr.ent, frames);
 			// heal them
+			/*
 			M_Regenerate(tr.ent, frames, 0, 1.0, true, true, false, &tr.ent->monsterinfo.regen_delay2);
 
-			if ( ent->client && tr.ent->owner != ent && tr.ent->activator != ent ) {
-				exp = floattoint( (float)tr.ent->max_health / ((float)frames) / 10 );
+			if (ent->client && tr.ent->owner != ent && tr.ent->activator != ent) {
+				exp = floattoint((float)tr.ent->max_health / ((float)frames) / 10);
 				exp *= (1 - INVASION_EXP_SPLIT);
 				vrx_apply_experience(ent, exp);
 				ent->client->resp.wave_assist_exp += exp;
@@ -367,11 +460,11 @@ void p_medic_heal (edict_t *ent)
 
 			//give exp if they do something useful shortly after being healed
 			tr.ent->heal_exp_owner = ent;
-			if ( tr.ent->heal_exp_time < level.time )
+			if (tr.ent->heal_exp_time < level.time)
 				tr.ent->heal_exp_time = level.time;
-			if ( tr.ent->heal_exp_time < level.time + 60.0 ) {
+			if (tr.ent->heal_exp_time < level.time + 60.0) {
 				tr.ent->heal_exp_time += 15.0;
-			}
+			}*/
 		}
 		else
 		{
@@ -379,6 +472,8 @@ void p_medic_heal (edict_t *ent)
 			p_medic_reanimate(ent, tr.ent);
 		}
 	}
+	//else
+	//	gi.dprintf("%d: %s: no target\n", (int)level.framenum, __func__);
 }
 
 void p_medic_hb_regen (edict_t *ent, int regen_frames, int regen_delay)
@@ -590,8 +685,8 @@ void Cmd_PlayerToMedic_f (edict_t *ent)
     }
 
     //Talent: Morphing
-    if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
-        cost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
+    //if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
+    //    cost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
 
     if (!V_CanUseAbilities(ent, MEDIC, cost, true))
         return;

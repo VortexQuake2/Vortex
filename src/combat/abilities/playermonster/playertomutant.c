@@ -160,6 +160,33 @@ void mutant_checkattack (edict_t *self, edict_t *other, cplane_t *plane, csurfac
 	}
 }
 
+// call when mutant lands after jumping to stun nearby enemies
+void mutant_stunattack(edict_t* ent)
+{
+	// not a mutant
+	if (ent->mtype != MORPH_MUTANT)
+		return;
+	// Talent: Melee Mastery
+	int talentLevel = vrx_get_talent_level(ent, TALENT_MELEE_MASTERY);
+	// talent isn't upgraded
+	if (talentLevel < 1)
+		return;
+	if (vrx_stunradius(ent, ent->s.origin, 128, 0.2 * talentLevel, true, false)) // stun enemies
+	{
+		// play a sound
+		switch (GetRandom(1, 3))
+		{
+		case 1: gi.sound(ent, CHAN_WEAPON, gi.soundindex("golem/stun1.wav"), 1, ATTN_NORM, 0); break;
+		case 2: gi.sound(ent, CHAN_WEAPON, gi.soundindex("golem/stun2.wav"), 1, ATTN_NORM, 0); break;
+		case 3: gi.sound(ent, CHAN_WEAPON, gi.soundindex("golem/stun3.wav"), 1, ATTN_NORM, 0); break;
+		}
+	}
+
+	int damage = (0.2 * talentLevel) * (MUTANT_INITIAL_JUMP_DMG + MUTANT_ADDON_JUMP_DMG * ent->myskills.abilities[MUTANT].current_level);
+	fire_nova(ent, ent, damage, 150.0, 0, 0);
+}
+
+/*
 void mutant_jumpattack (edict_t *self)
 {
 	int			dmg;
@@ -204,6 +231,7 @@ void mutant_jumpattack (edict_t *self)
 		}
 	}
 }
+*/
 
 void RunMutantFrames (edict_t *ent, usercmd_t *ucmd)
 {
@@ -276,8 +304,8 @@ void Cmd_PlayerToMutant_f (edict_t *ent)
 	}
 
     //Talent: Morphing
-    if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
-        mutant_cubecost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
+    //if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
+    //    mutant_cubecost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
 
 //	if (!G_CanUseAbilities(ent, ent->myskills.abilities[MUTANT].current_level, mutant_cubecost))
 //		return;

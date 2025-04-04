@@ -1894,6 +1894,8 @@ void M_Remove (edict_t *self, qboolean refund, qboolean effect)
 			self->activator->num_monsters = 0;
 		if (self->mtype == M_SKELETON)
 			self->activator->num_skeletons--;
+		else if (self->flags & FL_PACKANIMAL)
+			self->activator->num_packanimals -= self->monsterinfo.control_cost;
 		else if (self->mtype == M_GOLEM)
 			self->activator->num_golems--;
 
@@ -2220,6 +2222,12 @@ void M_Notify (edict_t *monster)
 		monster->activator->num_skeletons--;
 		count = monster->activator->num_skeletons;
 		max = SKELETON_MAX;
+	}
+	else if (monster->flags & FL_PACKANIMAL)
+	{
+		monster->activator->num_packanimals -= monster->monsterinfo.control_cost;
+		count = monster->activator->num_packanimals;
+		max = vrx_get_talent_level(monster->activator, TALENT_PACK_ANIMAL);
 	}
 	else if (monster->mtype == M_GOLEM)
 	{

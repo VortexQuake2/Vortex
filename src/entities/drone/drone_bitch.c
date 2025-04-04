@@ -471,8 +471,6 @@ void myChickSlash (edict_t *self)
 	fire_hit (self, aim, (10 + (randomMT() %6)), 100);
 }
 
-void fire_fireball (edict_t *self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int flames, int flame_damage);
-
 void myChickFireball (edict_t *self)
 {
 	int damage, speed, flame_damage;

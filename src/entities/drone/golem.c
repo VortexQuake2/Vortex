@@ -82,7 +82,7 @@ void golem_idle(edict_t* self)
 
 void golem_stun(edict_t* self)
 {
-	switch (GetRandom(1, 4))
+	switch (GetRandom(1, 3))
 	{
 	case 1: gi.sound(self, CHAN_WEAPON, sound_stun1, 1, ATTN_NORM, 0); break;
 	case 2: gi.sound(self, CHAN_WEAPON, sound_stun2, 1, ATTN_NORM, 0); break;

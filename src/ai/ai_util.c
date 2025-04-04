@@ -43,6 +43,7 @@ int AI_NumSummons(edict_t* self)
 	num_summons += self->num_sentries;
 	num_summons += self->num_proxy;
 	num_summons += self->num_spikers;
+	num_summons += self->num_packanimals;
 	return num_summons;
 }
 

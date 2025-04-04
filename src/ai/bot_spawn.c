@@ -486,7 +486,7 @@ void BOT_PoltAssignSkills(edict_t* ent)
 	BOT_UpgradeSkill(ent, FLESH_EATER, 15); // clvl 50
 
 	BOT_UpgradeTalent(ent, TALENT_SUPERIORITY, 5);
-	BOT_UpgradeTalent(ent, TALENT_RETALIATION, 5);
+	BOT_UpgradeTalent(ent, TALENT_MELEE_MASTERY, 5);//FIXME: bot won't use special attack yet!
 }
 
 void BOT_UpgradeWeapon(edict_t* ent, int weapID)

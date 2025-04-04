@@ -213,6 +213,7 @@ void Infantry20mm(edict_t* self)
 {
 	vec3_t	start, forward, right, vec;
 	int		damage, flash_number;
+	float range = M_20MM_RANGE_BASE + M_20MM_RANGE_ADDON * drone_damagelevel(self);
 
 	damage = M_20MM_DMG_BASE + M_20MM_DMG_ADDON * drone_damagelevel(self);
 	if (M_20MM_DMG_MAX && damage > M_20MM_DMG_MAX)
@@ -234,7 +235,7 @@ void Infantry20mm(edict_t* self)
 		AngleVectors(vec, forward, NULL, NULL);
 	}
 
-	monster_fire_20mm(self, start, forward, damage, damage, MZ_IONRIPPER | MZ_SILENCED);
+	monster_fire_20mm(self, start, forward, damage, damage, range, MZ_IONRIPPER | MZ_SILENCED);
 }
 
 void infantry_sight (edict_t *self, edict_t *other)

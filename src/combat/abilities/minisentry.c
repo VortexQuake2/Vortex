@@ -576,7 +576,7 @@ void minisentry_think (edict_t *self)
 			// if we were converted, try to convert back to previous owner
 			if (converted && self->prev_owner && self->prev_owner->inuse)
 			{
-				if (!ConvertOwner(self->prev_owner, self, 0, false))
+				if (!ConvertOwner(self->prev_owner, self, 0, false, false))
 				{
 					minisentry_remove(self);
 					return;

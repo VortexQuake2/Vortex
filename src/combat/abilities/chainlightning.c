@@ -32,6 +32,7 @@ void G_SpawnParticleTrail (vec3_t start, vec3_t end, int particles, int color)
 		VectorMA(org, spacing, dir, org);
 	}
 }
+
 /*
 #define CL_CHECK_AND_ATTACK			1		// check if target is valid, then attack
 #define CL_CHECK					2		// check if the target is valid
@@ -44,7 +45,7 @@ qboolean ChainLightning_Attack (edict_t *ent, edict_t *target, int damage, int m
 
 	if (mode != CL_ATTACK)
 	{
-		if (G_ValidTargetEnt(target, false) && !OnSameTeam(ent, target))
+		if (G_ValidTargetEnt(ent, target, false) && !OnSameTeam(ent, target))
 			result = true;
 	}
 	else
@@ -339,8 +340,7 @@ void ChainLightning (edict_t *ent, vec3_t start, vec3_t aimdir, int damage, int 
 			// damage is modified with each hop
 			damage *= CLIGHTNING_DMG_MOD; 
 
-			G_SpawnParticleTrail(prev_ed[i]->s.origin, target->s.origin, 
-				CLIGHTNING_PARTICLES, CLIGHTNING_COLOR);
+			G_SpawnParticleTrail(prev_ed[i]->s.origin, target->s.origin, CLIGHTNING_PARTICLES, CLIGHTNING_COLOR);
 
 			prev_ed[++i] = target;
 		}

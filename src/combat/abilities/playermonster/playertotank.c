@@ -342,6 +342,30 @@ int p_tank_getFirePos(edict_t *self, vec3_t start, vec3_t forward) {
     return flash_number;
 }
 
+void p_tank_20mm(edict_t* self, vec3_t start, vec3_t forward, int flash_number, int talentLevel) {
+	int skill_level = self->monsterinfo.level;
+    int damage = WEAPON_20MM_INITIAL_DMG + WEAPON_20MM_ADDON_DMG * skill_level;
+    int kick = damage;
+    float range = 250 + talentLevel * 150;
+
+    // bullet ammo counter
+    if (!self->monsterinfo.lefty)
+        return;
+    self->monsterinfo.lefty--;
+
+    gi.sound(self, CHAN_WEAPON, gi.soundindex("weapons/sgun1.wav"), 1, ATTN_NORM, 0);
+   // fire_bullet(self, start, forward, damage, kick, 225, 375, MOD_TANK_BULLET);
+    fire_20mm(self, start, forward, damage, kick, range);
+
+    gi.WriteByte(svc_muzzleflash2);
+    gi.WriteShort(self - g_edicts);
+    gi.WriteByte(flash_number);
+    gi.multicast(start, MULTICAST_PVS);
+
+    //if (vrx_spawn_nonessential_ent(self->s.origin))
+    //    ThrowShell(self, "models/objects/shell1/tris.md2", start);
+}
+
 void p_tank_bullet(edict_t *self, vec3_t start, vec3_t forward, int flash_number) {
     int damage = P_TANK_BULLET_INITIAL_DMG + P_TANK_BULLET_ADDON_DMG * self->monsterinfo.level;
     int kick = damage;
@@ -432,7 +456,11 @@ void p_tank_attack(edict_t *ent) {
     }
         // bullet attack
     else if (ent->owner->client->weapon_mode == 2) {
-        p_tank_bullet(ent, start, forward, flash_number);
+        int talentLevel = vrx_get_talent_level(ent, TALENT_RANGE_MASTERY);
+		if (talentLevel > 0)
+			p_tank_20mm(ent, start, forward, flash_number, talentLevel);
+		else
+            p_tank_bullet(ent, start, forward, flash_number);
         return;
     }
         // bullet attack
@@ -660,8 +688,8 @@ void Cmd_PlayerToTank_f(edict_t *ent) {
     }
 
     //Talent: Morphing
-    if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
-        tank_cubecost *= 1.0 - 0.2 * vrx_get_talent_level(ent, TALENT_MORPHING);
+    //if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
+    //    tank_cubecost *= 1.0 - 0.2 * vrx_get_talent_level(ent, TALENT_MORPHING);
 
     if (!V_CanUseAbilities(ent, TANK, tank_cubecost, true))
         return;

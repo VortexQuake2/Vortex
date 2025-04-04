@@ -90,10 +90,14 @@ void p_berserk_crush (edict_t *self, int damage, float range, int mod)
 	trace_t tr;
 	edict_t *other=NULL;
 	vec3_t	v;
+	qboolean stunned = false;
 
 	// must be on the ground to punch
 	if (!self->groundentity)
 		return;
+
+	// Talent: Melee Mastery
+	int talentLevel = vrx_get_talent_level(self, TALENT_MELEE_MASTERY);
 
 	self->lastsound = level.framenum;
 
@@ -106,11 +110,29 @@ void p_berserk_crush (edict_t *self, int damage, float range, int mod)
 		if (!nearfov(self, other, 0, 30))
 			continue;
 
+		// Melee Mastery stuns enemies
+		if (talentLevel > 0)
+		{
+			vrx_stun(self, other, 0.2 * talentLevel);
+			stunned = true;
+		}
+
 		VectorSubtract(other->s.origin, self->s.origin, v);
 		VectorNormalize(v);
 		tr = gi.trace(self->s.origin, NULL, NULL, other->s.origin, self, (MASK_PLAYERSOLID | MASK_MONSTERSOLID));
 		T_Damage (other, self, self, v, other->s.origin, tr.plane.normal, damage, damage, 0, mod);
 		other->velocity[2] += damage / 2;
+	}
+
+	if (stunned)
+	{
+		// play a sound
+		switch (GetRandom(1, 3))
+		{
+		case 1: gi.sound(self, CHAN_WEAPON, gi.soundindex("golem/stun1.wav"), 1, ATTN_NORM, 0); break;
+		case 2: gi.sound(self, CHAN_WEAPON, gi.soundindex("golem/stun2.wav"), 1, ATTN_NORM, 0); break;
+		case 3: gi.sound(self, CHAN_WEAPON, gi.soundindex("golem/stun3.wav"), 1, ATTN_NORM, 0); break;
+		}
 	}
 }
 
@@ -342,8 +364,8 @@ void Cmd_PlayerToBerserk_f (edict_t *ent)
     }
 
     //Talent: Morphing
-    if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
-        cost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
+    //if (vrx_get_talent_slot(ent, TALENT_MORPHING) != -1)
+    //    cost *= 1.0 - 0.25 * vrx_get_talent_level(ent, TALENT_MORPHING);
 
     if (!V_CanUseAbilities(ent, BERSERK, cost, true))
         return;

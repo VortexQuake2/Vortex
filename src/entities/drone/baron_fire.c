@@ -414,8 +414,6 @@ mframe_t baron_fire_frames_swipe[] =
 };
 mmove_t baron_fire_move_swipe = { FRAME_swipe01, FRAME_swipe15, baron_fire_frames_swipe, baron_fire_run };
 
-void fire_fireball(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int flames, int flame_damage);
-
 void baron_fire_fireball(edict_t* self)
 {
 	int damage, radius, speed, flames, flame_damage;

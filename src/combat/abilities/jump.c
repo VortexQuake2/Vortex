@@ -16,6 +16,8 @@ void V_PlayerJump(edict_t *ent) {
         PlayerNoise(ent, ent->s.origin, PNOISE_SELF);
     }
 
+    ent->monsterinfo.jumpup = 1; // player has jumped, cleared on touch-down
+
     qboolean has_cloak = ent->myskills.abilities[CLOAK].current_level > 0;
     if (ent->mtype == MORPH_MUTANT) {
         if (mutant_boost(ent) && !has_cloak)
@@ -32,7 +34,7 @@ void V_PlayerJump(edict_t *ent) {
         ent->velocity[1] *= 1.66;
         //ent->velocity[2] *= 1.66;
         // FIXME: we probably should do this for any ability that can get the player up in the air
-        ent->monsterinfo.jumpup = 1; // player has jumped, cleared on touch-down
+        //ent->monsterinfo.jumpup = 1; // player has jumped, cleared on touch-down
     }
 }
 

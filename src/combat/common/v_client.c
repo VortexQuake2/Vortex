@@ -5,6 +5,8 @@ void vrx_death_cleanup(edict_t *attacker, edict_t *targ);
 
 void vrx_process_exp(edict_t *attacker, edict_t *targ);
 
+void RunParasiteFrames(edict_t* ent, usercmd_t* ucmd);
+void RunBrainFrames(edict_t* ent, usercmd_t* ucmd);
 
 void V_GibSound(edict_t *self, int index) {
     switch (index) {
@@ -323,14 +325,39 @@ void vrx_pick_respawn_weapon(edict_t *ent) {
 
 void Use_PowerArmor(edict_t* ent, gitem_t* item);
 
-void vrx_morph_think(edict_t* ent)
+void vrx_morph_think(edict_t* ent, usercmd_t* ucmd)
 {
     // only valid player-morphs should be calling this function
     if (!ent || !ent->inuse || !ent->client || !ent->mtype)
         return;
+
+    RunParasiteFrames(ent, ucmd);
+    RunCacodemonFrames(ent, ucmd);
+    //RunTankFrames(ent, ucmd);
+    RunBrainFrames(ent, ucmd);
+    RunFlyerFrames(ent, ucmd);
+    RunMutantFrames(ent, ucmd);
+    RunMedicFrames(ent, ucmd);
+    RunBerserkFrames(ent, ucmd);
+
     // activate power screen for berserk and brain automatically when player has cells for it
     if ((ent->mtype == MORPH_BERSERK || ent->mtype == MORPH_BRAIN) && ent->client->pers.inventory[cell_index] && !(ent->flags & FL_POWER_ARMOR))
         Use_PowerArmor(ent, NULL);
+}
+
+void mutant_stunattack(edict_t* ent);
+
+// modify player state or call additional functions when the player first touches the ground
+void V_Player_Touchdown(edict_t* ent)
+{
+   // gi.dprintf("%d: %s: deltav[2] %.0f \n", (int)level.framenum, __func__, ent->velocity[2] - ent->client->oldvelocity[2]);
+
+    // player just landed after jumping
+    if (ent->monsterinfo.jumpup)
+        mutant_stunattack(ent);
+    // bots should call touchdown function if they have one
+    if (ent->ai.is_bot && ent->monsterinfo.touchdown)
+        ent->monsterinfo.touchdown(ent);
 }
 
 void BlinkStrike_think(edict_t* ent)

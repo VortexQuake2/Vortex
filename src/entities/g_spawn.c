@@ -1405,144 +1405,228 @@ void SP_worldspawn (edict_t *ent)
 	Fdi_TBALL			= FindItem("tballs");
 	//K03 End
 
-	if (invasion->value || pvm->value || ffa->value)
-	{
-		gi.soundindex ("berserk/berpain2.wav");
-		gi.soundindex ("berserk/berdeth2.wav");
-		gi.soundindex ("berserk/beridle1.wav");
-		gi.soundindex ("berserk/attack.wav");
-		gi.soundindex ("berserk/bersrch1.wav");
-		gi.soundindex ("berserk/sight.wav");
+	//if (invasion->value || pvm->value || ffa->value)
+	//{
+	gi.soundindex ("berserk/berpain2.wav");
+	gi.soundindex ("berserk/berdeth2.wav");
+	gi.soundindex ("berserk/beridle1.wav");
+	gi.soundindex ("berserk/attack.wav");
+	gi.soundindex ("berserk/bersrch1.wav");
+	gi.soundindex ("berserk/sight.wav");
+	gi.modelindex("models/monsters/berserk/tris.md2");
 
-		gi.modelindex("models/monsters/berserk/tris.md2");
-
-		gi.soundindex ("chick/chkatck1.wav");	
-		gi.soundindex ("chick/chkatck2.wav");	
-		gi.soundindex ("chick/chkatck3.wav");	
-		gi.soundindex ("chick/chkatck4.wav");	
-		gi.soundindex ("chick/chkatck5.wav");	
-		gi.soundindex ("chick/chkdeth1.wav");	
-		gi.soundindex ("chick/chkdeth2.wav");	
-		gi.soundindex ("chick/chkfall1.wav");	
-		gi.soundindex ("chick/chkidle1.wav");	
-		gi.soundindex ("chick/chkidle2.wav");	
-		gi.soundindex ("chick/chkpain1.wav");	
-		gi.soundindex ("chick/chkpain2.wav");	
-		gi.soundindex ("chick/chkpain3.wav");	
-		gi.soundindex ("chick/chksght1.wav");	
-		gi.soundindex ("chick/chksrch1.wav");	
-		gi.modelindex ("models/monsters/bitch/tris.md2");
+	gi.soundindex ("chick/chkatck1.wav");	
+	gi.soundindex ("chick/chkatck2.wav");	
+	gi.soundindex ("chick/chkatck3.wav");	
+	gi.soundindex ("chick/chkatck4.wav");	
+	gi.soundindex ("chick/chkatck5.wav");	
+	gi.soundindex ("chick/chkdeth1.wav");	
+	gi.soundindex ("chick/chkdeth2.wav");	
+	gi.soundindex ("chick/chkfall1.wav");	
+	gi.soundindex ("chick/chkidle1.wav");	
+	gi.soundindex ("chick/chkidle2.wav");	
+	gi.soundindex ("chick/chkpain1.wav");	
+	gi.soundindex ("chick/chkpain2.wav");	
+	gi.soundindex ("chick/chkpain3.wav");	
+	gi.soundindex ("chick/chksght1.wav");	
+	gi.soundindex ("chick/chksrch1.wav");	
+	gi.modelindex ("models/monsters/bitch/tris.md2");
 
 
-		gi.soundindex ("brain/brnatck1.wav");
+	gi.soundindex ("brain/brnatck1.wav");
+	gi.soundindex ("brain/brnatck2.wav");
+	gi.soundindex ("brain/brnatck3.wav");
+	gi.soundindex ("brain/brndeth1.wav");
+	gi.soundindex ("brain/brnidle1.wav");
+	gi.soundindex ("brain/brnidle2.wav");
+	gi.soundindex ("brain/brnlens1.wav");
+	gi.soundindex ("brain/brnpain1.wav");
+	gi.soundindex ("brain/brnpain2.wav");
+	gi.soundindex ("brain/brnsght1.wav");
+	gi.soundindex ("brain/brnsrch1.wav");
+	gi.soundindex ("brain/melee1.wav");
+	gi.soundindex ("brain/melee2.wav");
+	gi.soundindex ("brain/melee3.wav");
 
-		gi.soundindex ("brain/brnatck2.wav");
+	gi.soundindex ("player/land1.wav");
 
-		gi.soundindex ("brain/brnatck3.wav");
-
-		gi.soundindex ("brain/brndeth1.wav");
-
-		gi.soundindex ("brain/brnidle1.wav");
-
-		gi.soundindex ("brain/brnidle2.wav");
-
-		gi.soundindex ("brain/brnlens1.wav");
-
-		gi.soundindex ("brain/brnpain1.wav");
-		gi.soundindex ("brain/brnpain2.wav");
-		gi.soundindex ("brain/brnsght1.wav");
-		gi.soundindex ("brain/brnsrch1.wav");
-		gi.soundindex ("brain/melee1.wav");
-		gi.soundindex ("brain/melee2.wav");
-		gi.soundindex ("brain/melee3.wav");
-		gi.soundindex ("player/land1.wav");
-
-		gi.modelindex ("models/monsters/brain/tris.md2");
+	gi.modelindex ("models/monsters/brain/tris.md2");
 		
 
-		gi.soundindex ("gladiator/glddeth2.wav");	
-		gi.soundindex ("gladiator/railgun.wav");
-		gi.soundindex ("gladiator/melee1.wav");
-		gi.soundindex ("gladiator/melee2.wav");
-		gi.soundindex ("gladiator/melee3.wav");
-		gi.soundindex ("gladiator/gldidle1.wav");
-		gi.soundindex ("gladiator/gldsrch1.wav");
-		gi.soundindex ("gladiator/sight.wav");
+	gi.soundindex ("gladiator/glddeth2.wav");	
+	gi.soundindex ("gladiator/railgun.wav");
+	gi.soundindex ("gladiator/melee1.wav");
+	gi.soundindex ("gladiator/melee2.wav");
+	gi.soundindex ("gladiator/melee3.wav");
+	gi.soundindex ("gladiator/gldidle1.wav");
+	gi.soundindex ("gladiator/gldsrch1.wav");
+	gi.soundindex ("gladiator/sight.wav");
 
-		gi.modelindex ("models/monsters/gladiatr/tris.md2");
+	gi.modelindex ("models/monsters/gladiatr/tris.md2");
 
-		gi.soundindex ("gunner/death1.wav");	
-		gi.soundindex ("gunner/gunpain2.wav");	
-		gi.soundindex ("gunner/gunpain1.wav");	
-		gi.soundindex ("gunner/gunidle1.wav");	
-		gi.soundindex ("gunner/gunatck1.wav");	
-		gi.soundindex ("gunner/gunsrch1.wav");	
-		gi.soundindex ("gunner/sight1.wav");
-		gi.soundindex ("player/land1.wav");
+	gi.soundindex ("gunner/death1.wav");	
+	gi.soundindex ("gunner/gunpain2.wav");	
+	gi.soundindex ("gunner/gunpain1.wav");	
+	gi.soundindex ("gunner/gunidle1.wav");	
+	gi.soundindex ("gunner/gunatck1.wav");	
+	gi.soundindex ("gunner/gunsrch1.wav");	
+	gi.soundindex ("gunner/sight1.wav");
+	gi.soundindex ("player/land1.wav");
 
-		gi.soundindex ("gunner/gunatck2.wav");
-		gi.soundindex ("gunner/gunatck3.wav");
+	gi.soundindex ("gunner/gunatck2.wav");
+	gi.soundindex ("gunner/gunatck3.wav");
 
 
-		gi.soundindex ("medic/idle.wav");
-		gi.soundindex ("medic/medpain1.wav");
-		gi.soundindex ("medic/medpain2.wav");
-		gi.soundindex ("medic/meddeth1.wav");
-		gi.soundindex ("medic/medsght1.wav");
-		gi.soundindex ("medic/medsrch1.wav");
-		gi.soundindex ("medic/medatck2.wav");
-		gi.soundindex ("medic/medatck3.wav");
-		gi.soundindex ("medic/medatck4.wav");
-		gi.soundindex ("medic/medatck5.wav");
+	gi.soundindex ("medic/idle.wav");
+	gi.soundindex ("medic/medpain1.wav");
+	gi.soundindex ("medic/medpain2.wav");
+	gi.soundindex ("medic/meddeth1.wav");
+	gi.soundindex ("medic/medsght1.wav");
+	gi.soundindex ("medic/medsrch1.wav");
+	gi.soundindex ("medic/medatck2.wav");
+	gi.soundindex ("medic/medatck3.wav");
+	gi.soundindex ("medic/medatck4.wav");
+	gi.soundindex ("medic/medatck5.wav");
 
-		gi.soundindex ("medic/medatck1.wav");
+	gi.soundindex ("medic/medatck1.wav");
 
-		gi.soundindex ("mutant/mutatck1.wav");
-		gi.soundindex ("mutant/mutatck2.wav");
-		gi.soundindex ("mutant/mutatck3.wav");
-		gi.soundindex ("mutant/mutdeth1.wav");
-		gi.soundindex ("mutant/mutidle1.wav");
-		gi.soundindex ("mutant/mutsght1.wav");
-		gi.soundindex ("mutant/step1.wav");
-		gi.soundindex ("mutant/step2.wav");
-		gi.soundindex ("mutant/step3.wav");
-		gi.soundindex ("mutant/thud1.wav");
+	gi.soundindex ("mutant/mutatck1.wav");
+	gi.soundindex ("mutant/mutatck2.wav");
+	gi.soundindex ("mutant/mutatck3.wav");
+	gi.soundindex ("mutant/mutdeth1.wav");
+	gi.soundindex ("mutant/mutidle1.wav");
+	gi.soundindex ("mutant/mutsght1.wav");
+	gi.soundindex ("mutant/step1.wav");
+	gi.soundindex ("mutant/step2.wav");
+	gi.soundindex ("mutant/step3.wav");
+	gi.soundindex ("mutant/thud1.wav");
 
-		gi.modelindex ("models/monsters/mutant/tris.md2");
+	gi.modelindex ("models/monsters/mutant/tris.md2");
 
-		gi.soundindex ("parasite/parpain1.wav");	
-		gi.soundindex ("parasite/parpain2.wav");	
-		gi.soundindex ("parasite/pardeth1.wav");	
-		gi.soundindex("parasite/paratck1.wav");
-		gi.soundindex("parasite/paratck2.wav");
-		gi.soundindex("parasite/paratck3.wav");
-		gi.soundindex("parasite/paratck4.wav");
-		gi.soundindex("parasite/parsght1.wav");
-		gi.soundindex("parasite/paridle1.wav");
-		gi.soundindex("parasite/paridle2.wav");
-		gi.soundindex("parasite/parsrch1.wav");
+	gi.soundindex ("parasite/parpain1.wav");	
+	gi.soundindex ("parasite/parpain2.wav");	
+	gi.soundindex ("parasite/pardeth1.wav");	
+	gi.soundindex("parasite/paratck1.wav");
+	gi.soundindex("parasite/paratck2.wav");
+	gi.soundindex("parasite/paratck3.wav");
+	gi.soundindex("parasite/paratck4.wav");
+	gi.soundindex("parasite/parsght1.wav");
+	gi.soundindex("parasite/paridle1.wav");
+	gi.soundindex("parasite/paridle2.wav");
+	gi.soundindex("parasite/parsrch1.wav");
 
-		gi.modelindex ("models/monsters/parasite/tris.md2");
+	gi.modelindex ("models/monsters/parasite/tris.md2");
 
-		gi.modelindex ("models/monsters/tank/tris.md2");
+	gi.modelindex ("models/monsters/tank/tris.md2");
 
-		gi.soundindex ("tank/tnkpain2.wav");
-		gi.soundindex ("tank/tnkdeth2.wav");
-		gi.soundindex ("tank/tnkidle1.wav");
-		gi.soundindex ("tank/death.wav");
-		gi.soundindex ("tank/step.wav");
-		gi.soundindex ("tank/tnkatck4.wav");
-		gi.soundindex ("tank/tnkatck5.wav");
-		gi.soundindex ("tank/sight1.wav");
+	gi.soundindex ("tank/tnkpain2.wav");
+	gi.soundindex ("tank/tnkdeth2.wav");
+	gi.soundindex ("tank/tnkidle1.wav");
+	gi.soundindex ("tank/death.wav");
+	gi.soundindex ("tank/step.wav");
+	gi.soundindex ("tank/tnkatck4.wav");
+	gi.soundindex ("tank/tnkatck5.wav");
+	gi.soundindex ("tank/sight1.wav");
 
-		gi.soundindex ("tank/tnkatck1.wav");
-		gi.soundindex ("tank/tnkatk2a.wav");
-		gi.soundindex ("tank/tnkatk2b.wav");
-		gi.soundindex ("tank/tnkatk2c.wav");
-		gi.soundindex ("tank/tnkatk2d.wav");
-		gi.soundindex ("tank/tnkatk2e.wav");
-		gi.soundindex ("tank/tnkatck3.wav");
-	}	
+	gi.soundindex ("tank/tnkatck1.wav");
+	gi.soundindex ("tank/tnkatk2a.wav");
+	gi.soundindex ("tank/tnkatk2b.wav");
+	gi.soundindex ("tank/tnkatk2c.wav");
+	gi.soundindex ("tank/tnkatk2d.wav");
+	gi.soundindex ("tank/tnkatk2e.wav");
+	gi.soundindex ("tank/tnkatck3.wav");
+//GHz START
+	// baron_fire.c
+	gi.soundindex("baron/death.wav");
+	gi.soundindex("baron/death2.wav");
+	gi.soundindex("baron/pain1.wav");
+	gi.soundindex("baron/pain2.wav");
+	gi.soundindex("baron/idle1.wav");
+	gi.soundindex("baron/idle2.wav");
+	gi.soundindex("baron/sight1.wav");
+	gi.soundindex("baron/sight1.wav");
+	gi.soundindex("baron/melee1.wav");
+	gi.soundindex("baron/melee2.wav");
+	gi.soundindex("baron/step.wav");
+	gi.soundindex("baron/stepdistant.wav");
+	gi.modelindex("models/monsters/baron_fire/tris.md2");
+	// skeleton.c
+	gi.soundindex("skeleton/walk1.wav");
+	gi.soundindex("skeleton/walk2.wav");
+	gi.soundindex("skeleton/walk3.wav");
+	gi.soundindex("skeleton/walk4.wav");
+	gi.soundindex("skeleton/walk5.wav");
+	gi.soundindex("skeleton/walk6.wav");
+	gi.soundindex("skeleton/death1.wav");
+	gi.soundindex("skeleton/death2.wav");
+	gi.soundindex("skeleton/death3.wav");
+	gi.soundindex("skeleton/death4.wav");
+	gi.soundindex("skeleton/death5.wav");
+	gi.soundindex("weapons/1h_swing_lg01.wav");
+	gi.soundindex("weapons/1h_swing_lg02.wav");
+	gi.soundindex("weapons/sword1_impact.wav");
+	gi.soundindex("weapons/sword2_impact.wav");
+	gi.soundindex("weapons/sword3_impact.wav");
+	gi.soundindex("weapons/sword4_impact.wav");
+	gi.soundindex("weapons/sword5_impact.wav");
+	gi.soundindex("weapons/sword6_impact.wav");
+	gi.soundindex("skeleton/raiseskeleton.wav");
+	gi.modelindex("models/monsters/skel/tris.md2");
+	// golem.c
+	gi.soundindex("golem/pain1.wav");
+	gi.soundindex("golem/pain2.wav");
+	gi.soundindex("golem/attack3.wav");
+	gi.soundindex("golem/attack4.wav");
+	gi.soundindex("golem/sight.wav");
+	gi.soundindex("golem/death.wav");
+	gi.soundindex("golem/idle1a.wav");
+	gi.soundindex("golem/idle1b.wav");
+	gi.soundindex("golem/idle2a.wav");
+	gi.soundindex("golem/idle2b.wav");
+	gi.soundindex("golem/claywalk1.wav");
+	gi.soundindex("golem/claywalk2.wav");
+	gi.soundindex("golem/claywalk3.wav");
+	gi.soundindex("golem/claywalk4.wav");
+	gi.soundindex("golem/stonehit1.wav");
+	gi.soundindex("golem/stonehit2.wav");
+	gi.soundindex("golem/stonehit3.wav");
+	gi.soundindex("golem/stonehit4.wav");
+	gi.soundindex("golem/stonehit5.wav");
+	gi.soundindex("golem/stonehit6.wav");
+	gi.soundindex("golem/stonehit7.wav");
+	gi.soundindex("golem/stonehit8.wav");
+	gi.soundindex("golem/stonehit9.wav");
+	gi.soundindex("golem/staff blunt03.wav");
+	gi.soundindex("golem/staff blunt04.wav");
+	gi.soundindex("golem/stun1.wav");
+	gi.soundindex("golem/stun2.wav");
+	gi.soundindex("golem/stun3.wav");
+	gi.soundindex("golem/rockstorm.wav");
+	gi.soundindex("golem/spawnclay.wav");
+	gi.soundindex("golem/deepthud.wav");
+	gi.modelindex("models/monsters/golem/tris.md2");
+	// rocks.c
+	gi.modelindex("models/proj/proj_golemrock1/tris.md2");
+	gi.modelindex("models/proj/proj_golemrock2/tris.md2");
+	// fire.c
+	gi.soundindex("abilities/firecast.wav");
+	gi.modelindex("models/fire/tris.md2");
+	gi.modelindex("models/proj/proj_dguardq/tris.md2");
+	gi.modelindex("models/flames_med/tris.md2");
+	gi.modelindex("models/flames_big/tris.md2");
+	// ice.c
+	gi.soundindex("abilities/blue1.wav");
+	gi.soundindex("abilities/blue3.wav");
+	gi.soundindex("weapons/coldimpact1.wav");
+	gi.soundindex("abilities/icespike1.wav");
+	gi.soundindex("abilities/icespike2.wav");
+	gi.soundindex("abilities/icespike3.wav");
+	gi.modelindex("models/icebomb_fx/tris.md2");
+	gi.modelindex("models/proj/proj_drole/tris.md2");
+	gi.modelindex("models/objects/spike/tris.md2");
+	gi.modelindex("models/pbullet/tris.md2");
+//GHz END
+	//}	
 }
 
 
