@@ -148,6 +148,10 @@ qboolean IsMorphedPlayer(const edict_t *ent) {
             || ent->mtype == MORPH_BERSERK || ent->mtype == M_MYPARASITE);
 }
 
+qboolean IsMonster(const edict_t* ent) {
+    return (ent->mtype && (ent->mtype <= M_TANK || ent->mtype == M_SHAMBLER));
+}
+
 float vrx_get_pack_modifier(const edict_t *ent) {
     //Talent: Pack Animal
     int talentLevel = 0;
@@ -175,10 +179,9 @@ float vrx_get_pack_modifier(const edict_t *ent) {
         // must be on our team
         if (!OnSameTeam(ent, e))
             continue;
-        // must be morphed
-        if (!IsMorphedPlayer(e))
-            continue;
-        return 1.0f + 0.1f * talentLevel; // +10% per level
+        // must be player or standard, non-boss monster/drone
+        if (e->client || IsMorphedPlayer(e) || IsMonster(e))
+            return 1.0f + 0.2f * talentLevel; // +20% per level
     }
 
     return 1.0;
