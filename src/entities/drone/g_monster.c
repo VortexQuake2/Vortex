@@ -382,7 +382,7 @@ void monster_fire_poison(edict_t* self)
 		fire_poison(self, start, forward, 0, radius, speed, damage, 10, false);
 }
 
-void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int chillLevel, float chillDuration, float freezeDuration);
+//void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int chillLevel, float chillDuration, float freezeDuration);
 void monster_fire_icebolt(edict_t* self)
 {
 	int damage, radius, speed;

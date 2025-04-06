@@ -251,6 +251,136 @@ void FireTotem_think(edict_t *self, edict_t *caster)
 
 }
 
+void glacial_spike_sound(edict_t* self);
+
+void WaterTotem_glacialspike_attack(edict_t* self, edict_t* target)
+{
+	float	val, dist;
+	vec3_t start, forward, end;
+
+	int skill_level = self->monsterinfo.level;
+	float chill_duration = GLACIAL_SPIKE_INITIAL_CHILL + GLACIAL_SPIKE_ADDON_CHILL * skill_level;
+	float freeze_duration = GLACIAL_SPIKE_INITIAL_FREEZE + GLACIAL_SPIKE_ADDON_FREEZE * skill_level;
+	int damage = GLACIAL_SPIKE_INITIAL_DAMAGE + GLACIAL_SPIKE_ADDON_DAMAGE * skill_level;
+	float radius = GLACIAL_SPIKE_INITIAL_RADIUS + GLACIAL_SPIKE_ADDON_RADIUS * skill_level;
+	float speed = GLACIAL_SPIKE_INITIAL_SPEED + GLACIAL_SPIKE_ADDON_SPEED * skill_level;
+
+	// copy target location
+	G_EntMidPoint(target, end);
+
+	// calculate distance to target
+	dist = distance(end, self->s.origin);
+
+	// move our target point based on projectile and enemy velocity
+	VectorMA(end, (float)dist / speed, target->velocity, end);
+
+	// firing origin
+	VectorCopy(self->s.origin, start);
+	start[2] += self->maxs[2]+8;
+
+	// calculate direction vector to target
+	VectorSubtract(end, start, forward);
+	VectorNormalize(forward);
+
+	// don't fire in a perfectly straight line
+	forward[1] += 0.05 * crandom();
+
+	fire_icebolt(self, start, forward, damage, radius, speed, 2 * skill_level, chill_duration, freeze_duration);
+
+	// made a sound
+	self->lastsound = level.framenum;
+
+	glacial_spike_sound(self);
+}
+
+void WaterTotem_frozenorb_attack(edict_t* self, edict_t* target)
+{
+	float	val, dist;
+	vec3_t start, forward, end;
+
+	int skill_level = self->monsterinfo.level;
+	int damage = FROZEN_ORB_INITIAL_DAMAGE + FROZEN_ORB_ADDON_DAMAGE * skill_level;
+	float chill_duration = FROZEN_ORB_INITIAL_CHILL + FROZEN_ORB_ADDON_CHILL * skill_level;
+
+	// copy target location
+	G_EntMidPoint(target, end);
+
+	// calculate distance to target
+	dist = distance(end, self->s.origin);
+
+	// move our target point based on projectile and enemy velocity
+	VectorMA(end, (float)dist / FROZEN_ORB_SPEED, target->velocity, end);
+
+	// firing origin
+	VectorCopy(self->s.origin, start);
+	start[2] += self->maxs[2] + 8;
+
+	// calculate direction vector to target
+	VectorSubtract(end, start, forward);
+	VectorNormalize(forward);
+
+	// don't fire in a perfectly straight line
+	forward[1] += 0.05 * crandom();
+
+	fire_frozenorb(self, start, forward, damage, (2 * skill_level), chill_duration);
+
+	// made a sound
+	self->lastsound = level.framenum;
+
+	// write a nice effect so everyone knows we've cast a spell
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_TELEPORT_EFFECT);
+	gi.WritePosition(self->s.origin);
+	gi.multicast(self->s.origin, MULTICAST_PVS);
+
+	gi.sound(self, CHAN_ITEM, gi.soundindex("abilities/coldcast.wav"), 1, ATTN_NORM, 0);
+}
+
+void WaterTotem_think(edict_t* self, edict_t* caster)
+{
+	edict_t* e = NULL;
+	int talentLevel = vrx_get_talent_level(caster, TALENT_ICE);
+	float FO_refire = 5.0 - (0.8 * talentLevel); // talent level reduces refire time
+
+	// regen frozen orbs if we've upgraded Volcanic talent
+	if (talentLevel && level.time > self->monsterinfo.attack_finished && self->monsterinfo.jumpdn < 1)
+	{
+		self->monsterinfo.jumpdn = 1; //ammo
+	}
+
+	// regenerate glacial spikes every 1 second
+	if (level.framenum > self->monsterinfo.lefty && self->light_level < 3)
+	{
+		self->light_level = 3; //ammo
+		self->monsterinfo.lefty = level.framenum + (int)(1 / FRAMETIME);
+	}
+
+	while ((e = findclosestradius_targets(e, self, self->monsterinfo.sight_range)) != NULL)
+	{
+		if (!G_ValidTarget_Lite(self, e, true))
+			continue;
+		// totem has ammo for glacial spike
+		if (self->light_level)
+		{
+			WaterTotem_glacialspike_attack(self, e);
+			self->light_level--;
+		}
+		// totem can fire frozen orb
+		if (self->monsterinfo.jumpdn && level.time > self->monsterinfo.attack_finished)
+		{
+			WaterTotem_frozenorb_attack(self, e);
+			self->monsterinfo.attack_finished = level.time + FO_refire;
+			// use ammo
+			self->monsterinfo.jumpdn--;
+		}
+
+		// ran out of ammo-- abort searching for targets
+		if (self->light_level < 1)
+			break;
+	}
+}
+
+/*
 void WaterTotem_think(edict_t *self, edict_t *caster)
 {
 	edict_t *target = NULL;
@@ -294,6 +424,7 @@ void WaterTotem_think(edict_t *self, edict_t *caster)
 	//Next think.
 	self->delay = level.time + WATERTOTEM_REFIRE_BASE + WATERTOTEM_REFIRE_MULT * self->monsterinfo.level;
 }
+*/
 
 void NatureTotem_think(edict_t *self, edict_t *caster)
 {

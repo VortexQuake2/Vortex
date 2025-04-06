@@ -386,6 +386,8 @@ void fire_chainlightning(edict_t* self, vec3_t start, vec3_t aimdir, int damage,
 
 // ice.c
 void chill_target(edict_t* self, edict_t* target, int chill_level, float duration);
+void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int chillLevel, float chillDuration, float freezeDuration);
+void fire_frozenorb(edict_t* self, vec3_t start, vec3_t aimdir, int damage, int chillLevel, float chillDuration);
 
 // fire.c
 void ShootFireballsAtNearbyEnemies(edict_t* self, float radius, int max_targets, int fireball_level);

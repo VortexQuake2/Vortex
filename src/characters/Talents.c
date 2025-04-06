@@ -78,7 +78,7 @@ const talentdef_t talents_mage[] = {
 };
 
 const talentdef_t talents_shaman[] = {
-        {TALENT_ICE,      4, false},
+        {TALENT_ICE,      5, false},
         {TALENT_WIND,     4, false},
         {TALENT_STONE,    4, false},
         {TALENT_SHADOW,   4, false},
@@ -620,7 +620,7 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             return 3;
         case TALENT_ICE:
             menu_add_line(ent, "Allows your water totem", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "to damage its targets.", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "to shoot frozen orbs.", MENU_WHITE_CENTERED);
             return 2;
         case TALENT_WIND:
             menu_add_line(ent, "Allows your air totem to", MENU_WHITE_CENTERED);

@@ -490,7 +490,7 @@ void CalculateAimDirection(edict_t* self, vec3_t start, vec3_t aim)
 	VectorNormalize(aim);
 }
 
-void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int chillLevel, float chillDuration, float freezeDuration);
+//void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float damage_radius, int speed, int chillLevel, float chillDuration, float freezeDuration);
 void ShamblerCastIcebolt(edict_t* self)
 {
 	vec3_t forward, right, up;
