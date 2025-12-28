@@ -6,6 +6,7 @@
 #include "../gamemodes/boss.h"
 #include "characters/class_limits.h"
 #include "characters/io/v_characterio.h"
+#include "server/relay.h"
 
 //Function prototypes required for this .c file:
 void ClientUserinfoChanged (edict_t *ent, char *userinfo);
@@ -2123,6 +2124,7 @@ void ClientBegin (edict_t *ent)
 		//[QBS]end
 	}
 
+	vrx_relay_notify_client_begin(ent->client->pers.netname);
 	ClientBeginDeathmatch (ent);
 }
 
@@ -2400,9 +2402,7 @@ void SaveCharacterQuit (edict_t *ent);
 void ClientDisconnect (edict_t *ent)
 {
 	int		i;
-	edict_t	*scan = NULL;
 	edict_t *player;
-    vec3_t zvec={0,0,0};
 	int		playernum;
 
 	if (debuginfo->value > 1)
@@ -2413,6 +2413,7 @@ void ClientDisconnect (edict_t *ent)
 
 	KillMyVote (ent);
 
+	vrx_relay_notify_client_disconnected(ent->client->pers.netname);
     vrx_clean_damage_list(ent, true);
 	vrx_reset_player_state(ent);
 

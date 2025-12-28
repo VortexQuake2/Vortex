@@ -238,6 +238,7 @@ char *GetTalentString(int talent_ID);
 char *V_TruncateString(char *string, int newStringLength);
 
 int vrx_get_joined_players(qboolean include_bots);
+int vrx_get_player_count();
 //*********** v_utils.c ***********
 
 //*********** v_client.c **********

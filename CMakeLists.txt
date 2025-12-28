@@ -48,7 +48,7 @@ endif ()
 include_directories(./src/)
 
 # Specify the source files for the game library
-add_library(${CC_LIB_NAME} SHARED ${VRX_FILES} "src/characters/v_stash.h" "src/entities/drone/skeleton.c" "src/ai/bot_abilities.c" "src/ai/ai_util.c" "src/quake2/monsterframes/golem.h" "src/entities/drone/golem.c" "src/combat/abilities/rocks.c" "src/combat/abilities/fire.c" "src/combat/abilities/ice.c")
+add_library(${CC_LIB_NAME} SHARED ${VRX_FILES})
 
 if (VRX_USE_MYSQL)
     find_library(MYSQL_LIBRARY_CLIENT
@@ -74,8 +74,6 @@ if (VRX_USE_MYSQL)
 endif ()
 
 if (WIN32)
-
-
     set(CC_LINK_LIBS ${CC_LINK_LIBS} Wininet Winmm Ws2_32)
 
 

@@ -920,8 +920,6 @@ void drone_ai_stand (edict_t *self, float dist)
 #define STATE_UP			2
 #define STATE_DOWN			3
 
-qboolean G_IsClearPath (edict_t *ignore, int mask, vec3_t spot1, vec3_t spot2);
-
 /*
 =============
 FindPlat

@@ -31,6 +31,9 @@ const char* COMMAND_RELAY = "Relay";
 SOCKET vrx_relay_socket = -1;
 uint8_t pending_buf[16 * 1024] = {0};
 size_t pending_buf_size = 0;
+qboolean relay_authorized = false;
+
+static void vrx_relay_authorize(const char* key, const char* hostname, uint32_t player_count);
 
 qboolean vrx_relay_is_connected() {
     return vrx_relay_socket != -1;
@@ -49,6 +52,7 @@ void vrx_relay_connect() {
 
     cvar_t* server = gi.cvar("vrx_relay_server", "localhost", 0);
     cvar_t* port = gi.cvar("vrx_relay_port", "9999", 0);
+    cvar_t* key = gi.cvar("vrx_relay_key", "", 0);
 
     if (strlen(server->string) < 1)
     {
@@ -107,6 +111,13 @@ void vrx_relay_connect() {
         u_long iMode = 1;
         ioctlsocket(vrx_relay_socket, FIONBIO, &iMode);
 #endif
+
+        // on successful connection attempt to authorize
+        vrx_relay_authorize(
+            key->string,
+            hostname->string,
+            vrx_get_player_count()
+        );
     }
 
     freeaddrinfo(servinfo);
@@ -173,17 +184,109 @@ void vrx_relay_message(const char* message) {
 
     if (!vrx_relay_is_connected())
         return;
+
+    // don't waste bandwidth if we're not allowed to anyway
+    if (!relay_authorized)
+        return;
+
     msgpack_sbuffer_init(&sbuf);
     msgpack_packer_init(&pk, &sbuf, msgpack_sbuffer_write);
 
     msgpack_pack_array(&pk, 2);
-    msgpack_pack_str(&pk, 5);
-    msgpack_pack_str_body(&pk, COMMAND_RELAY, 5);
+    msgpack_pack_str(&pk, strlen(COMMAND_RELAY));
+    msgpack_pack_str_body(&pk, COMMAND_RELAY, strlen(COMMAND_RELAY));
     msgpack_pack_str(&pk, strlen(message));
     msgpack_pack_str_body(&pk, message, strlen(message));
 
     send_sbuffer(vrx_relay_socket, &sbuf);
 
+    msgpack_sbuffer_destroy(&sbuf);
+}
+
+static void vrx_relay_authorize(const char* key, const char* hostname, uint32_t player_count) {
+    const char* COMMAND_AUTHORIZE = "Authorize";
+    const char* COMMAND_AUTHORIZE_REQUEST = "Request";
+
+    msgpack_sbuffer sbuf;
+    msgpack_packer pk;
+
+    if (!vrx_relay_is_connected())
+        return;
+
+    // no need to check whether we're authorized or not, obviously.
+
+    msgpack_sbuffer_init(&sbuf);
+    msgpack_packer_init(&pk, &sbuf, msgpack_sbuffer_write);
+
+    msgpack_pack_array(&pk, 2);
+    msgpack_pack_str(&pk, strlen(COMMAND_AUTHORIZE));
+    msgpack_pack_str_body(&pk, COMMAND_AUTHORIZE, strlen(COMMAND_AUTHORIZE));
+
+    msgpack_pack_array(&pk, 4);
+    msgpack_pack_str(&pk, strlen(COMMAND_AUTHORIZE_REQUEST));
+    msgpack_pack_str_body(&pk, COMMAND_AUTHORIZE_REQUEST, strlen(COMMAND_AUTHORIZE_REQUEST));
+    msgpack_pack_str(&pk, strlen(key));
+    msgpack_pack_str_body(&pk, key, strlen(key));
+    msgpack_pack_str(&pk, strlen(hostname));
+    msgpack_pack_str_body(&pk, hostname, strlen(hostname));
+    msgpack_pack_uint32(&pk, player_count);
+
+    send_sbuffer(vrx_relay_socket, &sbuf);
+
+    msgpack_sbuffer_destroy(&sbuf);
+}
+
+void vrx_relay_notify_client_begin(const char* name) {
+    const char* COMMAND_CLIENTBEGIN = "ClientBegin";
+
+    msgpack_sbuffer sbuf;
+    msgpack_packer pk;
+
+    if (!vrx_relay_is_connected())
+        return;
+
+    if (!relay_authorized)
+        return;
+
+    msgpack_sbuffer_init(&sbuf);
+    msgpack_packer_init(&pk, &sbuf, msgpack_sbuffer_write);
+
+    msgpack_pack_array(&pk, 2);
+
+    msgpack_pack_str(&pk, strlen(COMMAND_CLIENTBEGIN));
+    msgpack_pack_str_body(&pk, COMMAND_CLIENTBEGIN, strlen(COMMAND_CLIENTBEGIN));
+
+    msgpack_pack_str(&pk, strlen(name));
+    msgpack_pack_str_body(&pk, name, strlen(name));
+
+    send_sbuffer(vrx_relay_socket, &sbuf);
+    msgpack_sbuffer_destroy(&sbuf);
+}
+
+void vrx_relay_notify_client_disconnected(const char* name) {
+    const char* COMMAND_DISCONNECTED = "ClientDisconnect";
+
+    msgpack_sbuffer sbuf;
+    msgpack_packer pk;
+
+    if (!vrx_relay_is_connected())
+        return;
+
+    if (!relay_authorized)
+        return;
+
+    msgpack_sbuffer_init(&sbuf);
+    msgpack_packer_init(&pk, &sbuf, msgpack_sbuffer_write);
+
+    msgpack_pack_array(&pk, 2);
+
+    msgpack_pack_str(&pk, strlen(COMMAND_DISCONNECTED));
+    msgpack_pack_str_body(&pk, COMMAND_DISCONNECTED, strlen(COMMAND_DISCONNECTED));
+
+    msgpack_pack_str(&pk, strlen(name));
+    msgpack_pack_str_body(&pk, name, strlen(name));
+
+    send_sbuffer(vrx_relay_socket, &sbuf);
     msgpack_sbuffer_destroy(&sbuf);
 }
 
@@ -211,13 +314,14 @@ int msgpack_streq(msgpack_object_str* str, const char* cmp) {
     return str->size == strlen(cmp) && memcmp(str->ptr, cmp, str->size) == 0;
 }
 
-qboolean vrx_relay_try_message_relay(msgpack_object_str *type, msgpack_object_array *arr) {
+qboolean vrx_relay_try_message_relay(msgpack_object_str *type, msgpack_object_array *arr, qboolean* invalid) {
     if (!msgpack_streq(type, COMMAND_RELAY))
-        return true;
+        return false;
 
     msgpack_object_str* message = arr->ptr[1].type == MSGPACK_OBJECT_STR ? &arr->ptr[1].via.str : NULL;
     if (message == NULL) {
         gi.dprintf("RS: Received relay message does not have a valid message field.\n");
+        *invalid = true;
         return false;
     }
 
@@ -225,6 +329,7 @@ qboolean vrx_relay_try_message_relay(msgpack_object_str *type, msgpack_object_ar
     char* msg = calloc(message->size + 1, 1);
     if (msg == NULL) {
         gi.dprintf("RS: Failed to allocate memory for relay message.\n");
+        *invalid = true;
         return false;
     }
 
@@ -245,6 +350,42 @@ qboolean vrx_relay_try_message_relay(msgpack_object_str *type, msgpack_object_ar
     // az: print to the server console
     gi.cprintf(NULL, PRINT_CHAT, "[relay] %s\n", msg);
     free(msg);
+
+    return true;
+}
+
+qboolean vrx_relay_try_authorized(msgpack_object_str *type, msgpack_object_array *arr, qboolean* invalid) {
+    const char* COMMAND_AUTHORIZE = "Authorize";
+    const char* COMMAND_AUTHORIZE_SUCCESS = "Authorized";
+
+    if (!msgpack_streq(type, COMMAND_AUTHORIZE)) {
+        return false;
+    }
+
+    msgpack_object_array* result = arr->ptr[1].type == MSGPACK_OBJECT_ARRAY ? &arr->ptr[1].via.array : NULL;
+    if (result == NULL) {
+        gi.dprintf("RS: Received relay message does not have a valid message field.\n");
+        *invalid = true;
+        return false;
+    }
+
+    if (result->size != 1) {
+        gi.dprintf("RS: unexpected authorization result; result type length is != 1: %d\n", result->size);
+        *invalid = true;
+        return false;
+    }
+
+    msgpack_object_str* result_type = result->ptr[0].type == MSGPACK_OBJECT_STR ? &result->ptr[0].via.str : NULL;
+    if (result_type == NULL) {
+        gi.dprintf("RS: unexpected authorization result; result type is not a string");
+        *invalid = true;
+        return false;
+    }
+
+    if (msgpack_streq(result_type, COMMAND_AUTHORIZE_SUCCESS)) {
+        relay_authorized = true;
+        return true;
+    }
 
     return true;
 }
@@ -305,7 +446,7 @@ relay_parse_result_t vrx_relay_parse_message(size_t* start) {
         return RESULT_INVALID;
     }
 
-    if (obj.via.array.size <= 1) {
+    if (obj.via.array.size == 0) {
         gi.dprintf("RS: Received message from relay server is not a valid message.\n");
         return RESULT_INVALID;
     }
@@ -319,11 +460,13 @@ relay_parse_result_t vrx_relay_parse_message(size_t* start) {
         return RESULT_INVALID;
     }
 
-    qboolean success = false;
-    success |= vrx_relay_try_message_relay(type, arr);
+    qboolean message_processed = false;
+    qboolean message_invalid = false;
+    message_processed |= vrx_relay_try_message_relay(type, arr, &message_invalid);
+    message_processed |= vrx_relay_try_authorized(type, arr, &message_invalid);
 
     msgpack_unpacked_destroy(&result);
-    if (success) {
+    if (!message_invalid) {
         // advance the start to the next message
         *start += HEADER_SIZE + size;
 
@@ -334,9 +477,9 @@ relay_parse_result_t vrx_relay_parse_message(size_t* start) {
 
         // we have processed all messages
         return RESULT_SUCCESS;
-    } else {
-        return RESULT_INVALID;
     }
+
+    return RESULT_INVALID;
 }
 
 void vrx_relay_recv() {
@@ -344,8 +487,8 @@ void vrx_relay_recv() {
         return;
     }
 
-    char recbuf[16 * 1024];
-    int n = recv(vrx_relay_socket, recbuf, sizeof(recbuf), 0);
+    char recv_buf[16 * 1024];
+    int n = recv(vrx_relay_socket, recv_buf, sizeof(recv_buf), 0);
     if (n == -1) {
 #ifndef WIN32
         if (errno == EWOULDBLOCK) {
@@ -378,7 +521,7 @@ void vrx_relay_recv() {
         return;
     }
 
-    memcpy(pending_buf + pending_buf_size, recbuf, n);
+    memcpy(pending_buf + pending_buf_size, recv_buf, n);
     pending_buf_size += n;
 
     size_t start = 0;

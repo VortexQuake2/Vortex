@@ -1,6 +1,26 @@
 #include "g_local.h"
 #include <gamemodes/invasion.h>
 
+int vrx_get_player_count() {
+	int clients = 0;
+
+	for (int i = 1; i <= maxclients->value; i++) {
+		const edict_t *player = &g_edicts[i];
+
+		if (!player->inuse)
+			continue;
+		if (player->ai.is_bot)
+			continue;
+
+		clients++;
+	}
+
+	if (clients < 1)
+		return 0;
+
+	return clients;
+}
+
 int vrx_get_joined_players(qboolean include_bots) {
 	edict_t* player;
 	int i, clients = 0;
