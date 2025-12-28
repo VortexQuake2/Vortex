@@ -305,7 +305,7 @@ void OpenJoinMenu (edict_t *ent)
 	menu_add_line(ent, " ", 0);
 	menu_add_line(ent, "Maintained by", MENU_GREEN_CENTERED);
 	menu_add_line(ent, "The Vortex Revival Team", MENU_GREEN_CENTERED);
-	menu_add_line(ent, "github.com/zardoru/vrxcl", MENU_WHITE_CENTERED);
+	menu_add_line(ent, "github: VortexQuake2/Vortex", MENU_WHITE_CENTERED);
 	menu_add_line(ent, " ", 0);
 	menu_add_line(ent, "Start your reign", 1);
 	menu_add_line(ent, "Toggle chasecam", 2);
