@@ -401,7 +401,8 @@ void fire_iceshard(edict_t* self, vec3_t start, vec3_t dir, float speed, int dam
 	bolt->clipmask = MASK_SHOT;
 	bolt->solid = SOLID_BBOX;
 	bolt->owner = self;
-	bolt->creator = self;
+	//bolt->creator = self;
+	bolt->creator = bolt->activator = G_GetSummoner(self);// needed for OnSameTeam() checks
 	bolt->touch = iceshard_touch;
 	bolt->nextthink = level.time + 5;
 	bolt->think = G_FreeEdict;
