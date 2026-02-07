@@ -1125,7 +1125,7 @@ void vectoangles (vec3_t vec, vec3_t angles);
 
 qboolean G_EntIsAlive(const edict_t *ent);//GHz
 qboolean G_IsValidLocation (edict_t *ignore, vec3_t point, vec3_t mins, vec3_t maxs);//GHz
-qboolean G_IsClearPath (edict_t *ignore, int mask, vec3_t spot1, vec3_t spot2);
+qboolean G_IsClearPath (edict_t *ignore, int mask, const vec3_t spot1, const vec3_t spot2);
 qboolean G_ClientExists(edict_t *player);
 qboolean visible1 (edict_t *ent1, edict_t *ent2);
 qboolean G_CanUseAbilities (edict_t *ent, int ability_lvl, int pc_cost);

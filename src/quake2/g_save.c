@@ -212,7 +212,6 @@ void InitGame(void)
 #endif
 
     vrx_init_ability_list();
-	vrx_relay_connect();
 	// az end
 
 	gun_x = gi.cvar("gun_x", "0", 0);
@@ -391,6 +390,7 @@ void InitGame(void)
     adminpass = gi.cvar("vrx_admin_pass", "", CVAR_ARCHIVE);
 	//K03 End
 
+
 	// items
 	InitItems();
 
@@ -408,6 +408,9 @@ void InitGame(void)
 	game.maxclients = maxclients->value;
 	game.clients = vrx_malloc(game.maxclients * sizeof(game.clients[0]), TAG_GAME);
 	globals.num_edicts = game.maxclients + 1;
+
+	// az: requires hostname and g_edicts to be initialized, so it's placed here
+	vrx_relay_connect();
 
 	//3.0 Load the custom map lists
 	if (vrx_load_map_list(MAPMODE_PVP) && vrx_load_map_list(MAPMODE_PVM) && vrx_load_map_list(MAPMODE_INV)

@@ -1354,7 +1354,7 @@ G_IsClearPath
 Returns true if the path is clear from obstruction
 =============
 */
-qboolean G_IsClearPath (edict_t *ignore, int mask, vec3_t spot1, vec3_t spot2) {
+qboolean G_IsClearPath (edict_t *ignore, int mask, const vec3_t spot1, const vec3_t spot2) {
 	return (gi.trace(spot1, NULL, NULL, spot2, ignore, mask).fraction == 1.0);
 }
 
