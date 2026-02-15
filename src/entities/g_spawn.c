@@ -810,6 +810,7 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	CreateGrid(false);
 
 	vrx_inv_init_post_entities(); // az
+	vrx_relay_notify_spawn_entities(mapname);
 
 //GHz END
 

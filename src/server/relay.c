@@ -263,6 +263,34 @@ void vrx_relay_notify_client_begin(const char* name) {
     msgpack_sbuffer_destroy(&sbuf);
 }
 
+
+void vrx_relay_notify_spawn_entities(const char* name) {
+    const char* COMMAND_SPAWNENTITIES = "SpawnEntities";
+
+    msgpack_sbuffer sbuf;
+    msgpack_packer pk;
+
+    if (!vrx_relay_is_connected())
+        return;
+
+    if (!relay_authorized)
+        return;
+
+    msgpack_sbuffer_init(&sbuf);
+    msgpack_packer_init(&pk, &sbuf, msgpack_sbuffer_write);
+
+    msgpack_pack_array(&pk, 2);
+
+    msgpack_pack_str(&pk, strlen(COMMAND_SPAWNENTITIES));
+    msgpack_pack_str_body(&pk, COMMAND_SPAWNENTITIES, strlen(COMMAND_SPAWNENTITIES));
+
+    msgpack_pack_str(&pk, strlen(name));
+    msgpack_pack_str_body(&pk, name, strlen(name));
+
+    send_sbuffer(vrx_relay_socket, &sbuf);
+    msgpack_sbuffer_destroy(&sbuf);
+}
+
 void vrx_relay_notify_client_disconnected(const char* name) {
     const char* COMMAND_DISCONNECTED = "ClientDisconnect";
 

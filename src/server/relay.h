@@ -12,5 +12,6 @@ void vrx_relay_recv();
 qboolean vrx_relay_is_connected();
 void vrx_relay_notify_client_begin(const char* name);
 void vrx_relay_notify_client_disconnected(const char* name);
+void vrx_relay_notify_spawn_entities(const char* name);
 
 #endif //RELAY_H
