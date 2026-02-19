@@ -1,3 +1,4 @@
+
 #include "g_local.h"
 #include "../characters/io/v_sqlite_unidb.h"
 #include "../characters/class_limits.h"
@@ -249,6 +250,9 @@ void vrx_join_redundant_mods(edict_t *rune, int mod_index)
 				{
 					/* sum the worthwhile mods. */
 					rune->vrxitem.modifiers[b_i].value += rune->vrxitem.modifiers[mod_index].value;
+
+					if (rune->vrxitem.modifiers[b_i].value > RUNE_WEAPON_MAXVALUE)
+						rune->vrxitem.modifiers[b_i].value = RUNE_WEAPON_MAXVALUE;
 				} else
 				{
 					/* it's one of those one-point things, so don't bother. */
@@ -265,6 +269,16 @@ void vrx_join_redundant_mods(edict_t *rune, int mod_index)
 	}
 }
 
+void vrx_delinearize_rune_level(int *targ_level, int _peak_level) {
+	const float ftarget = (float)*targ_level;
+	const float peak_level = _peak_level;
+	const float progression = min(ftarget / peak_level, 1.0f);
+
+	// delinearize so higher levels get increasingly better runes
+	// this sigmoid maps to an S curve between 0 and 1, close to 0 at 0 and close to 1 at 1
+	const float scurve = (float)sigmoid((progression * 2.f - 1.f) * 5.f) ;
+	*targ_level = (int)roundf(scurve * peak_level);
+}
 
 /* az- With this, our rune generation woes are finished, finally! */
 const abilitydef_t * vrx_get_random_ability();
@@ -303,8 +317,8 @@ void vrx_create_ability_modifier(edict_t *rune, qboolean is_class, int i, int ta
 	}
 	else
 	{
-	    int modmax = max(min(RUNE_ABILITY_MAXVALUE, targ_level), 1);
-		rune->vrxitem.modifiers[i].value = GetRandom(1, modmax);
+		int modmax = max((int)roundf(5.0f * ((min(targ_level, 25.0f)) / 15.0f)), 1);
+		rune->vrxitem.modifiers[i].value = min(rand_clt_distribute(1, modmax, 3), RUNE_ABILITY_MAXVALUE);
 	}
 
 	hard_max = vrx_get_hard_max(ability->index, !is_class, 0);
@@ -316,13 +330,57 @@ void vrx_create_ability_modifier(edict_t *rune, qboolean is_class, int i, int ta
 	vrx_join_redundant_mods(rune, i);
 }
 
+
+
+edict_t* vrx_do_random_rune_drop(edict_t* spawner, int targ_level) {
+	gitem_t* item = FindItem("Rune");		// get the item properties
+	edict_t* rune = Drop_Item(spawner, item);	// create the entity that holds those properties
+	V_ItemClear(&rune->vrxitem);	// initialize the rune
+	rune->clipmask = MASK_SOLID | MASK_MONSTERSOLID;
+
+	rune->vrxitem.quantity = 1;
+
+	//Spawn a random rune
+	int iRandom = GetRandom(0, 1000);
+
+	if (iRandom < CHANCE_UNIQUE)
+	{
+		//spawn a unique
+#ifdef ENABLE_UNIQUES
+		if (!vrx_spawn_unique_rune(rune, 0))
+#endif
+			vrx_spawn_normal_rune(rune, targ_level, 0);
+	}
+	else if (iRandom < CHANCE_UNIQUE + CHANCE_CLASS)
+	{
+		//spawn a class-specific rune
+		vrx_spawn_class_rune(rune, targ_level);
+	}
+	else if (iRandom < CHANCE_UNIQUE + CHANCE_CLASS + CHANCE_COMBO)
+	{
+		//spawn a combo rune
+		vrx_spawn_combo_rune(rune, targ_level);
+	}
+	else if (iRandom < CHANCE_UNIQUE + CHANCE_CLASS + CHANCE_COMBO + CHANCE_NORM)
+	{
+		//spawn a normal rune
+		vrx_spawn_normal_rune(rune, targ_level, 0);
+	}
+	else
+	{
+		G_FreeEdict(rune);
+		return NULL;
+	}
+
+	//Randomize id
+	strcpy(rune->vrxitem.id, GetRandomString(16));
+	return rune;
+}
+
 edict_t *V_SpawnRune (edict_t *self, edict_t *attacker, float base_drop_chance, float levelmod)
 {
-	int		iRandom;
 	int		targ_level;
 	float	temp = 0;
-	gitem_t *item;
-	edict_t *rune;
 
 	attacker = G_GetClient(attacker);
 
@@ -367,60 +425,18 @@ edict_t *V_SpawnRune (edict_t *self, edict_t *attacker, float base_drop_chance, 
 	else
 		return NULL;
 
-	item = FindItem("Rune");		// get the item properties
-	rune = Drop_Item(self, item);	// create the entity that holds those properties
-	V_ItemClear(&rune->vrxitem);	// initialize the rune
-	rune->clipmask = MASK_SOLID | MASK_MONSTERSOLID;
-
 	if (levelmod)
 		targ_level *= levelmod;
-	
-	rune->vrxitem.quantity = 1;
 
-	//Spawn a random rune
-    iRandom = GetRandom(0, 1000);
-
-	if (iRandom < CHANCE_UNIQUE)
-	{
-		//spawn a unique 
-		// vrx chile 1.4 no uniques until someone makes them
-		if (!vrx_spawn_unique_rune(rune, 0))
-            vrx_spawn_class_rune(rune, targ_level);
-	}
-	else if (iRandom < CHANCE_UNIQUE + CHANCE_CLASS)
-	{
-		//spawn a class-specific rune
-		vrx_spawn_class_rune(rune, targ_level);
-	}
-	else if (iRandom < CHANCE_UNIQUE + CHANCE_CLASS + CHANCE_COMBO)
-	{
-		//spawn a combo rune
-		vrx_spawn_combo_rune(rune, targ_level);
-	}
-	else if (iRandom < CHANCE_UNIQUE + CHANCE_CLASS + CHANCE_COMBO + CHANCE_NORM)
-	{
-		//spawn a normal rune
-		vrx_spawn_normal_rune(rune, targ_level, 0);
-	}
-	else
-	{
-		G_FreeEdict(rune);
-		return NULL;
-	}
-
-	//Randomize id
-	strcpy(rune->vrxitem.id, GetRandomString(16));
-
-	return rune;
+	vrx_delinearize_rune_level(&targ_level, 25);
+	return vrx_do_random_rune_drop(self, targ_level);
 }
+
 
 void vrx_roll_rune_drop(edict_t *self, edict_t *attacker, qboolean debug)
 {
-	int		iRandom;
 	int		targ_level = 0;
 	float	temp = 0;
-	gitem_t *item;
-	edict_t *rune;
 
 	attacker = G_GetClient(attacker);
 
@@ -466,14 +482,14 @@ void vrx_roll_rune_drop(edict_t *self, edict_t *attacker, qboolean debug)
 		if (attacker->myskills.boss > 0)
             temp = (float)attacker->myskills.boss * 5;
 		else
-            temp = (float) (self->myskills.level + 1) / (attacker->myskills.level + 1);
+            temp = (float) (self->myskills.level + 1) / (float) (attacker->myskills.level + 1);
 		
 		// miniboss has greater chance of dropping a rune
 		if (vrx_is_newbie_basher(self))
 			temp *= 2;
 		
 		//boss has a greater chance of dropping a rune
-		temp *= 1.0 + ((float)self->myskills.boss / 2.0);
+		temp *= 1.0f + ((float)self->myskills.boss / 2.0f);
 		
 		if (RUNE_SPAWN_BASE * temp < random())
 			return;
@@ -484,51 +500,13 @@ void vrx_roll_rune_drop(edict_t *self, edict_t *attacker, qboolean debug)
 	else if (debug == false)
 		return;
 
-	item = FindItem("Rune");		// get the item properties
-	rune = Drop_Item(self, item);	// create the entity that holds those properties
-	V_ItemClear(&rune->vrxitem);	// initialize the rune
-	rune->clipmask = MASK_SOLID | MASK_MONSTERSOLID;
+	vrx_delinearize_rune_level(&targ_level, 25);
 
 	//set target level to 20 if we are debugging
 	if (debug == true)
 		targ_level = 20;
 	
-	rune->vrxitem.quantity = 1;
-
-	//Spawn a random rune
-    iRandom = GetRandom(0, 1000);
-
-	if (iRandom < CHANCE_UNIQUE)
-	{
-		//spawn a unique
-#ifdef ENABLE_UNIQUES
-		if (!vrx_spawn_unique_rune(rune, 0))
-#endif
-			vrx_spawn_normal_rune(rune, targ_level, 0);
-	}
-	else if (iRandom < CHANCE_UNIQUE + CHANCE_CLASS)
-	{
-		//spawn a class-specific rune
-		vrx_spawn_class_rune(rune, targ_level);
-	}
-	else if (iRandom < CHANCE_UNIQUE + CHANCE_CLASS + CHANCE_COMBO)
-	{
-		//spawn a combo rune
-		vrx_spawn_combo_rune(rune, targ_level);
-	}
-	else if (iRandom < CHANCE_UNIQUE + CHANCE_CLASS + CHANCE_COMBO + CHANCE_NORM)
-	{
-		//spawn a normal rune
-		vrx_spawn_normal_rune(rune, targ_level, 0);
-	}
-	else
-	{
-		G_FreeEdict(rune);
-		return;
-	}
-
-	//Randomize id
-	strcpy(rune->vrxitem.id, GetRandomString(16));
+	vrx_do_random_rune_drop(self, targ_level);
 }
 
 //************************************************************************************************
@@ -559,7 +537,7 @@ void vrx_make_weapon_rune(edict_t* rune, int targ_level)
 		if (GetRandom(0, 4) == 0)
 			continue;
 
-		rune->vrxitem.modifiers[i].value = GetRandom(1, RUNE_WEAPON_MAXVALUE);
+		rune->vrxitem.modifiers[i].value = rand_clt_distribute(1, RUNE_WEAPON_MAXVALUE, 5);
 		rune->vrxitem.modifiers[i].index = ((weaponIndex + 10) * 100) + modIndex;	// ex: 1800 = rg damage
 		rune->vrxitem.modifiers[i].type = TYPE_WEAPON;
 		rune->vrxitem.modifiers[i].set = 0;
@@ -579,21 +557,16 @@ void vrx_make_weapon_rune(edict_t* rune, int targ_level)
 void vrx_make_ability_rune(edict_t* rune, int targ_level)
 {
 	int max_mods = 1 + (0.25 * targ_level); //This means lvl 20+ can get 6 mods
-	int num_mods;
 
 	rune->vrxitem.itemtype = ITEM_ABILITY;
 
 	if (max_mods > MAX_VRXITEMMODS)
 		max_mods = MAX_VRXITEMMODS;
 
-	num_mods = GetRandom(0, max_mods);
+	int num_mods = rand_clt_distribute(1, max_mods, 6);
 
 	for (int i = 0; i < num_mods; ++i)
 	{
-		// 20% chance for rune mod not to show up
-		if (GetRandom(0, 4) == 0)
-			continue;
-
 		vrx_create_ability_modifier(rune, false, i, targ_level);
 	}
 	rune->vrxitem.numMods = CountRuneMods(&rune->vrxitem);
@@ -624,14 +597,8 @@ void vrx_spawn_normal_rune(edict_t *rune, int targ_level, int type)
 //************************************************************************************************
 
 void vrx_spawn_class_rune(edict_t *rune, int targ_level) {
-    int i;
-    int max_mods, num_mods;
-
-    max_mods = 1 + (0.2 * targ_level);    //This means lvl 15+ can get 4 mods
-    if (max_mods > 4)
-        max_mods = 4;
-
-    num_mods = GetRandom(1, max_mods); // az: from 1 - don't be a dick
+	int max_mods = 1 + (0.2 * targ_level);    //This means lvl 15+ can get 4 mods
+    int num_mods = min(rand_clt_distribute(1, max_mods, 3), 5); // az: from 1 - don't be a dick
     rune->vrxitem.itemtype = ITEM_CLASSRUNE;
     rune->vrxitem.classNum = GetRandom(1, CLASS_MAX - 1);    //class number
 
@@ -641,7 +608,7 @@ void vrx_spawn_class_rune(edict_t *rune, int targ_level) {
         return;
     }
 
-    for (i = 0; i < num_mods; ++i) {
+    for (int i = 0; i < num_mods; ++i) {
         vrx_create_ability_modifier(rune, true, i, targ_level);
 	}
 	rune->vrxitem.numMods = CountRuneMods(&rune->vrxitem);
@@ -705,7 +672,7 @@ qboolean vrx_spawn_unique_rune(edict_t *rune, int index)
 
 	if ((fptr = fopen(filename, "r")) != NULL)
 	{
-		int linenumber, maxlines;
+		int linenumber;
 		char *iterator;
 		long size;
 		int count = 0;
@@ -716,7 +683,7 @@ qboolean vrx_spawn_unique_rune(edict_t *rune, int index)
 		rewind(fptr);
 
 		//Find a unique
-		maxlines = V_tFileCountLines(fptr, size);
+		int maxlines = V_tFileCountLines(fptr, size);
 
 		if ((index == 0) || (index > maxlines))
 		{
@@ -769,29 +736,35 @@ qboolean vrx_spawn_unique_rune(edict_t *rune, int index)
 
 void vrx_spawn_combo_rune(edict_t *rune, int targ_level)
 {
-	int i;
-	int max_mods, num_mods;
+	const int max_mods = (int)roundf(1.f + (0.15f * (float) targ_level));
+	int num_mods = rand_clt_distribute(1, max_mods, 3);
+	const int weapon_index	= GetRandom(0, MAX_WEAPONS-1);
+
+	// allow num_mods to grow past level 25 for biasing it to having more mods.
+	if (num_mods > 5)
+		num_mods = 5;
 
 	rune->vrxitem.itemtype = ITEM_COMBO;
-	max_mods = 1 + (0.2 * targ_level);
-	if (max_mods > 4)
-		max_mods = 4;
-	num_mods = GetRandom(0, max_mods);
-	
-	for (i = 0; i < num_mods; ++i)
+
+	// 15% weapon rune
+	int bias_type = 15;
+
+	// with 4 or 5 mods, give rolling a weapon mod a higher chance of spawning
+	// 45% weapon rune
+	if (num_mods > 3)
+		bias_type = 45;
+
+	for (int i = 0; i < num_mods; ++i)
 	{
-		int type = GetRandom(1, 10);
-		//50% chance of ability mod
-		if (type > 5)
+		const int type = GetRandom(1, 100);
+		if (type > bias_type)
 		{
             vrx_create_ability_modifier(rune, false, i, targ_level);
 		}
-		else	//50% chance of weapon mod
+		else
 		{
 			int mod_index		= GetRandom(0, MAX_WEAPONMODS-1);
-			int weapon_index	= GetRandom(0, MAX_WEAPONS-1);
 
-			
 			while ((mod_index > 3) || ((mod_index > 2) && (weapon_index != WEAPON_SWORD)))
 			{
 				// this weapon mod is one of the kinda useless ones.
@@ -800,7 +773,7 @@ void vrx_spawn_combo_rune(edict_t *rune, int targ_level)
 				mod_index = GetRandom(0, MAX_WEAPONMODS - 1);
 			}
 
-			rune->vrxitem.modifiers[i].value = GetRandom(1, min(max(targ_level, 1), RUNE_WEAPON_MAXVALUE)); // az - from 3.
+			rune->vrxitem.modifiers[i].value = rand_clt_distribute(1, min(max(targ_level, 1), RUNE_WEAPON_MAXVALUE), 5);
 			rune->vrxitem.modifiers[i].index = ((weapon_index + 10) * 100) + mod_index;	// ex: 1800 = rg damage
 			rune->vrxitem.modifiers[i].type = TYPE_WEAPON;
 

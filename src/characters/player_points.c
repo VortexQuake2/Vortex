@@ -72,12 +72,6 @@ gitem_t *GetWeaponForNumber(int i) {
     return Fdi_ROCKETLAUNCHER;
 }
 
-double sigmoid (double x) 
-{
-    double result;
-    result = 1 / (1 + exp(-x));
-    return result;
-}
 
 double vrx_get_points_tnl (int level) 
 {

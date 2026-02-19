@@ -1231,4 +1231,12 @@ extern int vidref_val;
 void *vrx_malloc(size_t Size, int Tag);
 void vrx_free (void* mem);
 
+double sigmoid (const double x);
+int sigmoid_distribute(int min, int max, int value);
+int rand_sigmoid_distribute (int min, int max);
+
+// rng a number within the range with a uniform distribution n times and take the average.
+// simulates a bell curve. more iters = more centralized
+int rand_clt_distribute(int min, int max, int itercnt);
+
 #endif

@@ -1,5 +1,7 @@
 #include "q_shared.h"
 
+#include "g_local.h"
+
 vec3_t vec3_origin = {0,0,0};
 
 //============================================================================
@@ -7,6 +9,40 @@ vec3_t vec3_origin = {0,0,0};
 #ifdef _WIN32
 #pragma optimize( "", off )
 #endif
+
+
+double sigmoid (const double x)
+{
+	const double result = 1 / (1 + exp(-x));
+	return result;
+}
+
+// distribute numbers in a sigmoid manner
+int sigmoid_distribute (int min, int max, int value) {
+	const float range = (float)(max - min);
+	const float target = (float)(value - min) / range;
+	const float curved = (float)sigmoid((target * 2.f - 1.f) * 5.f);
+
+	const int ret = (int)(roundf(curved * range)) + min;
+	return ret;
+}
+
+int rand_sigmoid_distribute(int min, int max) {
+	const int i = (int)(randomMT() & 0x7FFFFFFF) % (max - min);
+	return sigmoid_distribute(min, max, i);
+}
+
+int rand_clt_distribute(int min, int max, int itercnt) {
+	int sum = 0;
+	const int range = (max - min) + 1;
+
+	for (int j = 0; j < itercnt; j++) {
+		const int i = (int)(randomMT() & 0x7FFFFFFF) % range;
+		sum += i;
+	}
+
+	return sum / itercnt + min;
+}
 
 void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, float degrees )
 {
