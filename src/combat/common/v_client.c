@@ -164,6 +164,8 @@ void vrx_give_additional_respawn_weapons(edict_t *ent, int nextWeapon) {
 // converts the index value stored in respawn_weapon to the inventory weapon index
 int vrx_WeapIDtoWeapIndex(int weaponID)
 {
+    gitem_t *item = NULL;
+
     switch (weaponID)
     {
     case 1: return sword_index;
@@ -179,6 +181,30 @@ int vrx_WeapIDtoWeapIndex(int weaponID)
     case 11: return grenade_index;
     case 12: return _20mmcannon_index;
     case 13: return blaster_index;
+    case 14:
+        item = FindItem("Ionripper");
+        return item ? ITEM_INDEX(item) : blaster_index;
+    case 15:
+        item = FindItem("Phalanx");
+        return item ? ITEM_INDEX(item) : blaster_index;
+    case 16:
+        item = FindItem("Trap");
+        return item ? ITEM_INDEX(item) : blaster_index;
+    case 17:
+        item = FindItem("ETF Rifle");
+        return item ? ITEM_INDEX(item) : blaster_index;
+    case 18:
+        item = FindItem("Plasma Beam");
+        return item ? ITEM_INDEX(item) : blaster_index;
+    case 19:
+        item = FindItem("Prox Launcher");
+        return item ? ITEM_INDEX(item) : blaster_index;
+    case 20:
+        item = FindItem("Chainfist");
+        return item ? ITEM_INDEX(item) : blaster_index;
+    case 21:
+        item = FindItem("Tesla");
+        return item ? ITEM_INDEX(item) : blaster_index;
     default: return blaster_index;
     }
 }

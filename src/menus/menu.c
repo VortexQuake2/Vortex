@@ -17,7 +17,8 @@ void menu_add_line (edict_t *ent, const char *line,int option)
 {
 	if (ent->client->menustorage.menu_active) // checks to see if the menu is showing
 		return;
-	if (ent->client->menustorage.num_of_lines >= MAX_LINES) // checks to see if there is space
+	// Menu lines are 1-based in storage; index 0 is unused.
+	if (ent->client->menustorage.num_of_lines >= (MAX_LINES - 1)) // checks to see if there is space
 		return;
 		
 	ent->client->menustorage.num_of_lines++; // adds to the number of lines that can be seen
@@ -215,7 +216,7 @@ void menu_show(edict_t *ent)
 
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: menu_show()\n");
-	if ((ent->client->menustorage.num_of_lines < 1) || (ent->client->menustorage.num_of_lines > MAX_LINES))
+	if ((ent->client->menustorage.num_of_lines < 1) || (ent->client->menustorage.num_of_lines > (MAX_LINES - 1)))
 	{
 		gi.dprintf("WARNING: menu_show() called with %d lines\n", ent->client->menustorage.num_of_lines);
 		return;
@@ -240,33 +241,33 @@ void menu_show(edict_t *ent)
 		center = 216/2 - strlen(ent->client->menustorage.messages[i].msg)*4 + 52;
 		if (ent->client->menustorage.messages[i].option == 0)// print white text
 		{
-			sprintf(tmp,"xv 52 yv %i string \"%s\" ",j,ent->client->menustorage.messages[i].msg);
+			Com_sprintf(tmp, sizeof(tmp), "xv 52 yv %i string \"%s\" ", j, ent->client->menustorage.messages[i].msg);
 		}
 		else if (ent->client->menustorage.messages[i].option == MENU_GREEN_LEFT)// print green text
 		{
-			sprintf(tmp,"xv 52 yv %i string2 \"%s\" ",j,ent->client->menustorage.messages[i].msg);
+			Com_sprintf(tmp, sizeof(tmp), "xv 52 yv %i string2 \"%s\" ", j, ent->client->menustorage.messages[i].msg);
 		}
 		else if (ent->client->menustorage.messages[i].option == MENU_GREEN_CENTERED)// print centered green text
 		{
-			sprintf(tmp,"xv %d yv %i string2 \"%s\" ", center, j, ent->client->menustorage.messages[i].msg);
+			Com_sprintf(tmp, sizeof(tmp), "xv %d yv %i string2 \"%s\" ", center, j, ent->client->menustorage.messages[i].msg);
 		}
 		else if (ent->client->menustorage.messages[i].option == MENU_WHITE_CENTERED)// print centered white text
 		{
-			sprintf(tmp,"xv %d yv %i string \"%s\" ", center, j, ent->client->menustorage.messages[i].msg);
+			Com_sprintf(tmp, sizeof(tmp), "xv %d yv %i string \"%s\" ", center, j, ent->client->menustorage.messages[i].msg);
 		}
 		else if (ent->client->menustorage.messages[i].option == MENU_GREEN_RIGHT)// print right-aligned green text
 		{
 			center = 216 - strlen(ent->client->menustorage.messages[i].msg)*8 + 52;
-			sprintf(tmp,"xv %d yv %i string2 \"%s\" ", center, j, ent->client->menustorage.messages[i].msg);
+			Com_sprintf(tmp, sizeof(tmp), "xv %d yv %i string2 \"%s\" ", center, j, ent->client->menustorage.messages[i].msg);
 		}
 		else if (i == ent->client->menustorage.currentline)
 		{
-			sprintf(tmp,"xv 52 yv %i string2 \">> %s\" ",j,ent->client->menustorage.messages[i].msg);
+			Com_sprintf(tmp, sizeof(tmp), "xv 52 yv %i string2 \">> %s\" ", j, ent->client->menustorage.messages[i].msg);
 		}
 		else 
-			sprintf(tmp,"xv 52 yv %i string \"   %s\" ",j,ent->client->menustorage.messages[i].msg); 
+			Com_sprintf(tmp, sizeof(tmp), "xv 52 yv %i string \"   %s\" ", j, ent->client->menustorage.messages[i].msg); 
 		// add the control string to our final menu space
-		strcat(finalmenu, tmp);
+		strncat(finalmenu, tmp, sizeof(finalmenu) - strlen(finalmenu) - 1);
 		j += LINE_SPACING;
 	}
 

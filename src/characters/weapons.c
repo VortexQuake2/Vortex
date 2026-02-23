@@ -128,6 +128,8 @@ qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 		}
 		else return false;
 		break;
+	default:
+		return false;
 	}
 	return true;
 }

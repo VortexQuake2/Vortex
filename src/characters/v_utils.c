@@ -165,6 +165,22 @@ char *GetArmoryItemString(int purchase_number) {
             case 30:
                 return "Respawns";
 #endif
+        case 31:
+            return "Ionripper";
+        case 32:
+            return "Phalanx";
+        case 33:
+            return "Trap";
+        case 34:
+            return "ETF Rifle";
+        case 35:
+            return "Plasma Beam";
+        case 36:
+            return "Prox Launcher";
+        case 37:
+            return "Chainfist";
+        case 38:
+            return "Tesla";
         default:
             return "<BAD ITEM NUMBER>";
     }
@@ -203,6 +219,22 @@ char *GetShortWeaponString(int weapon_number) {
             return "20mm";
         case WEAPON_HANDGRENADE:
             return "HG";
+        case WEAPON_IONRIPPER:
+            return "IR";
+        case WEAPON_PHALANX:
+            return "PH";
+        case WEAPON_TRAP:
+            return "Trap";
+        case WEAPON_ETFRIFLE:
+            return "ETF";
+        case WEAPON_PLASMABEAM:
+            return "PB";
+        case WEAPON_PROXLAUNCHER:
+            return "PL";
+        case WEAPON_CHAINFIST:
+            return "CF";
+        case WEAPON_TESLA:
+            return "Tesla";
         default:
             return "<BAD WEAPON NUMBER>";
     }
@@ -238,6 +270,22 @@ char *GetWeaponString(int weapon_number) {
             return "20mm Cannon";
         case WEAPON_HANDGRENADE:
             return "Hand Grenade";
+        case WEAPON_IONRIPPER:
+            return "Ionripper";
+        case WEAPON_PHALANX:
+            return "Phalanx";
+        case WEAPON_TRAP:
+            return "Trap";
+        case WEAPON_ETFRIFLE:
+            return "ETF Rifle";
+        case WEAPON_PLASMABEAM:
+            return "Plasma Beam";
+        case WEAPON_PROXLAUNCHER:
+            return "Prox Launcher";
+        case WEAPON_CHAINFIST:
+            return "Chainfist";
+        case WEAPON_TESLA:
+            return "Tesla";
         default:
             return "<BAD WEAPON NUMBER>";
     }
@@ -277,6 +325,22 @@ char *GetModString(int weapon_number, int mod_number) {
                     return "Range";
                 case WEAPON_HANDGRENADE:
                     return "Range";
+                case WEAPON_IONRIPPER:
+                    return "Bounce";
+                case WEAPON_PHALANX:
+                    return "Radius";
+                case WEAPON_TRAP:
+                    return "Duration";
+                case WEAPON_ETFRIFLE:
+                    return "Spread";
+                case WEAPON_PLASMABEAM:
+                    return "Duration";
+                case WEAPON_PROXLAUNCHER:
+                    return "Radius";
+                case WEAPON_CHAINFIST:
+                    return "Refire";
+                case WEAPON_TESLA:
+                    return "Duration";
                 default:
                     return "<BAD WEAPON NUMBER>";
             }
@@ -307,6 +371,22 @@ char *GetModString(int weapon_number, int mod_number) {
                 case WEAPON_20MM:
                     return "Recoil";
                 case WEAPON_HANDGRENADE:
+                    return "Radius";
+                case WEAPON_IONRIPPER:
+                    return "Speed";
+                case WEAPON_PHALANX:
+                    return "Speed";
+                case WEAPON_TRAP:
+                    return "Radius";
+                case WEAPON_ETFRIFLE:
+                    return "Speed";
+                case WEAPON_PLASMABEAM:
+                    return "Range";
+                case WEAPON_PROXLAUNCHER:
+                    return "Speed";
+                case WEAPON_CHAINFIST:
+                    return "Range";
+                case WEAPON_TESLA:
                     return "Radius";
                 default:
                     return "<BAD WEAPON NUMBER>";
@@ -339,6 +419,22 @@ char *GetModString(int weapon_number, int mod_number) {
                     return "Caliber";
                 case WEAPON_HANDGRENADE:
                     return "Trails";
+                case WEAPON_IONRIPPER:
+                    return "Trails";
+                case WEAPON_PHALANX:
+                    return "Trails";
+                case WEAPON_TRAP:
+                    return "Pull";
+                case WEAPON_ETFRIFLE:
+                    return "Trails";
+                case WEAPON_PLASMABEAM:
+                    return "Width";
+                case WEAPON_PROXLAUNCHER:
+                    return "Mines";
+                case WEAPON_CHAINFIST:
+                    return "Lifesteal";
+                case WEAPON_TESLA:
+                    return "Chains";
                 default:
                     return "<BAD WEAPON NUMBER>";
             }
@@ -1223,6 +1319,16 @@ qboolean V_GiveAmmoClip(edict_t *ent, float qty, int ammotype) {
             current = &ent->client->pers.inventory[cell_index];
             max = &ent->client->pers.max_cells;
             break;
+        case AMMO_MAGSLUG:
+            amount = SLUGS_PICKUP;
+            current = &ent->client->pers.inventory[magslug_index];
+            max = &ent->client->pers.max_magslug;
+            break;
+        case AMMO_TRAP:
+            amount = GRENADES_PICKUP;
+            current = &ent->client->pers.inventory[trap_index];
+            max = &ent->client->pers.max_trap;
+            break;
         default:
             return false;
     }
@@ -1263,9 +1369,13 @@ int V_GetRespawnAmmoType(edict_t *ent) {
             return AMMO_SHELLS;
         case 4: //mg
         case 5: //cg
+        case 17: //etf
             return AMMO_BULLETS;
         case 6: //gl
         case 11: //hg
+        case 16: //trap
+        case 19: //prox launcher
+        case 21: //tesla
             return AMMO_GRENADES;
         case 7: //rl
             return AMMO_ROCKETS;
@@ -1273,6 +1383,9 @@ int V_GetRespawnAmmoType(edict_t *ent) {
             return AMMO_SLUGS;
         case 8: //hb
         case 10: //bfg
+        case 14: //ionripper
+        case 15: //phalanx
+        case 18: //plasma beam
             return AMMO_CELLS;
         default: //blaster/sword
             return 0; //nothing

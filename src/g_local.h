@@ -741,12 +741,14 @@ extern int regeneration_index;
 extern int haste_index;
 
 //ammo
-extern int bullet_index;
-extern int shell_index;
-extern int grenade_index;
-extern int rocket_index;
-extern int slug_index;
-extern int cell_index;
+extern int	bullet_index;
+extern int	shell_index;
+extern int	grenade_index;
+extern int	rocket_index;
+extern int	slug_index;
+extern int	cell_index;
+extern int	magslug_index;
+extern int	trap_index;
 
 //weapons
 extern int sword_index;
@@ -761,6 +763,7 @@ extern int hyperblaster_index;
 extern int railgun_index;
 extern int _20mmcannon_index;
 extern int bfg10k_index;
+//TODO: add missionpack weapons here?
 
 //pre searched items
 extern gitem_t *Fdi_GRAPPLE;

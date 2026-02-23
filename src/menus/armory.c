@@ -207,14 +207,18 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 	int			qty = 0;
 	item_t		*slot;
 	int			type = ITEM_NONE;
+    qboolean    is_weapon = false;
 	//int			talentLevel;
 
 	if (ent->deadflag == DEAD_DEAD)
 		return;
 
 	//What is the price/qty of the item?
-	if ((selection < 11) && (selection > 0))
+	if (((selection < 11) && (selection > 0)) || (selection >= 31 && selection <= 38))
+    {
 		price = ARMORY_PRICE_WEAPON;
+        is_weapon = true;
+    }
 	else if (selection < 17)
 		price = ARMORY_PRICE_AMMO;
 	
@@ -231,6 +235,14 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 		case 8:		item = FindItem("Railgun");			break;	//rg
 		case 9:		item = FindItem("bfg10k");			break;	//bfg
 		case 10:	item = FindItem("20mm Cannon");		break;	//20mm
+        case 31:    item = FindItem("Ionripper");      break;
+        case 32:    item = FindItem("Phalanx");        break;
+        case 33:    item = FindItem("Trap");           break;
+        case 34:    item = FindItem("ETF Rifle");      break;
+        case 35:    item = FindItem("Plasma Beam");    break;
+        case 36:    item = FindItem("Prox Launcher");  break;
+        case 37:    item = FindItem("Chainfist");      break;
+        case 38:    item = FindItem("Tesla");          break;
 
 		//ammo
 		case 11:
@@ -358,8 +370,13 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 	}
 
 	//If a weapon was purchased
-	if ((selection < 11) && (selection > 0))
+	if (is_weapon)
 	{
+        if (!item)
+        {
+            safe_cprintf(ent, PRINT_HIGH, "This weapon is not available on this build.\n");
+            return;
+        }
 		ent->client->pers.inventory[ITEM_INDEX(item)] = 1;
 		safe_cprintf(ent, PRINT_HIGH, "You bought a %s.\n", item->pickup_name);
 	}

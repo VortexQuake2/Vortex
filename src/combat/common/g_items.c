@@ -40,6 +40,8 @@ int grenade_index;
 int rocket_index;
 int slug_index;
 int cell_index;
+int magslug_index;
+int trap_index;
 
 //weapons
 int sword_index;
@@ -1794,6 +1796,27 @@ always owned, never in the world
 /*QUAKED weapon_railgun (.3 .3 1) (-16 -16 -16) (16 16 16)	14
 */
                 {
+                        "weapon_boomer",
+                        Pickup_Weapon,
+                        Use_Weapon,
+                        Drop_Weapon,
+                        Weapon_HyperBlaster,
+                        "misc/w_pkup.wav",
+                        "models/weapons/g_boom/tris.md2", EF_ROTATE,
+                        "models/weapons/v_boomer/tris.md2",
+/* icon */        "w_ripper",
+/* pickup */    "Ionripper",
+                        0,
+                        2,
+                        "Cells",
+                        IT_WEAPON,
+                        NULL,
+                        0,
+/* precache */ "weapons/rg_hum.wav weapons/rippfire.wav a_cells_hud",
+                        WEAP_HYPERBLASTER
+                },
+
+                {
                         "weapon_railgun",
                         Pickup_Weapon,
                         // RAFAEL
@@ -1840,6 +1863,29 @@ always owned, never in the world
 /*QUAKED weapon_bfg (.3 .3 1) (-16 -16 -16) (16 16 16)	15
 */
                 {
+                        "weapon_phalanx",
+                        Pickup_Weapon,
+                        Use_Weapon,
+                        Drop_Weapon,
+                        Weapon_20mm,
+                        "misc/w_pkup.wav",
+                        "models/weapons/g_shotx/tris.md2", EF_ROTATE,
+                        "models/weapons/v_shotx/tris.md2",
+/* icon */        "w_phallanx",
+/* pickup */    "Phalanx",
+                        0,
+                        1,
+                        "Mag Slug",
+                        IT_WEAPON,
+                        NULL,
+                        0,
+/* precache */ "weapons/plasshot.wav a_slugs_hud",
+                        WEAP_20MM
+                },
+
+/*QUAKED weapon_bfg (.3 .3 1) (-16 -16 -16) (16 16 16)	15
+*/
+                {
                         "weapon_bfg",
                         Pickup_Weapon,
                         Use_Weapon,
@@ -1863,6 +1909,86 @@ always owned, never in the world
                 },
                 /*QUAKED weapon_machinegun (.3 .3 1) (-16 -16 -16) (16 16 16)	9
 */
+                {
+                        "weapon_etf_rifle",
+                        Pickup_Weapon,
+                        Use_Weapon,
+                        Drop_Weapon,
+                        Weapon_Machinegun,
+                        "misc/w_pkup.wav",
+                        "models/weapons/g_etf_rifle/tris.md2", EF_ROTATE,
+                        "models/weapons/v_etf_rifle/tris.md2",
+/* icon */        "w_etf_rifle",
+/* pickup */    "ETF Rifle",
+                        0,
+                        1,
+                        "Bullets",
+                        IT_WEAPON,
+                        NULL,
+                        0,
+/* precache */ "weapons/nail1.wav models/proj/flechette/tris.md2 a_bullets_hud",
+                        WEAP_MACHINEGUN
+                },
+                {
+                        "weapon_plasmabeam",
+                        Pickup_Weapon,
+                        Use_Weapon,
+                        Drop_Weapon,
+                        Weapon_HyperBlaster,
+                        "misc/w_pkup.wav",
+                        "models/weapons/g_beamer/tris.md2", EF_ROTATE,
+                        "models/weapons/v_beamer/tris.md2",
+/* icon */        "w_heatbeam",
+/* pickup */    "Plasma Beam",
+                        0,
+                        2,
+                        "Cells",
+                        IT_WEAPON,
+                        NULL,
+                        0,
+/* precache */ "models/weapons/v_beamer2/tris.md2 weapons/bfg__l1a.wav a_cells_hud",
+                        WEAP_PLASMA
+                },
+                {
+                        "weapon_proxlauncher",
+                        Pickup_Weapon,
+                        Use_Weapon,
+                        Drop_Weapon,
+                        Weapon_GrenadeLauncher,
+                        "misc/w_pkup.wav",
+                        "models/weapons/g_plaunch/tris.md2", EF_ROTATE,
+                        "models/weapons/v_plaunch/tris.md2",
+/* icon */        "w_proxlaunch",
+/* pickup */    "Prox Launcher",
+                        0,
+                        1,
+                        "Grenades",
+                        IT_WEAPON,
+                        NULL,
+                        0,
+/* precache */ "weapons/grenlf1a.wav weapons/grenlr1b.wav weapons/grenlb1b.wav weapons/proxwarn.wav weapons/proxopen.wav a_grenades_hud",
+                        WEAP_PROXLAUNCH
+                },
+                {
+                        "weapon_chainfist",
+                        Pickup_Weapon,
+                        Use_Weapon,
+                        Drop_Weapon,
+                        Weapon_Sword,
+                        "misc/w_pkup.wav",
+                        "models/weapons/g_chainf/tris.md2", EF_ROTATE,
+                        "models/weapons/v_chainf/tris.md2",
+/* icon */        "w_chainfist",
+/* pickup */    "Chainfist",
+                        0,
+                        0,
+                        NULL,
+                        IT_WEAPON,
+                        NULL,
+                        0,
+/* precache */ "weapons/sawidle.wav weapons/sawhit.wav",
+                        WEAP_CHAINFIST
+                },
                 {
                         "weapon_flamethrower",
                         Pickup_Weapon,
@@ -2048,6 +2174,46 @@ always owned, never in the world
 
 /*QUAKED ammo_slugs (.3 .3 1) (-16 -16 -16) (16 16 16)
 */
+                {
+                        "ammo_magslug",
+                        Pickup_Ammo,
+                        NULL,
+                        Drop_Ammo,
+                        NULL,
+                        "misc/am_pkup.wav",
+                        "models/items/ammo/slugs/medium/tris.md2", 0,
+                        NULL,
+/* icon */        "a_slugs",
+/* pickup */    "Mag Slug",
+/* width */        3,
+                        0,
+                        NULL,
+                        IT_AMMO,
+                        NULL,
+                        AMMO_MAGSLUG,
+/* precache */ ""
+                },
+
+                {
+                        "ammo_trap",
+                        Pickup_Ammo,
+                        Use_Weapon,
+                        Drop_Ammo,
+                        Weapon_Grenade,
+                        "misc/am_pkup.wav",
+                        "models/weapons/g_trap/tris.md2", EF_ROTATE,
+                        "models/weapons/v_trap/tris.md2",
+/* icon */        "a_trap",
+/* pickup */    "Trap",
+/* width */        3,
+                        1,
+                        "trap",
+                        IT_AMMO | IT_WEAPON,
+                        NULL,
+                        AMMO_TRAP,
+/* precache */ "weapons/trapcock.wav weapons/traploop.wav weapons/trapsuck.wav weapons/trapdown.wav"
+                },
+
                 {
                         "ammo_slugs",
                         Pickup_Ammo,
@@ -2929,6 +3095,8 @@ void SetItemNames(void) {
     rocket_index = ITEM_INDEX(FindItem("Rockets"));
     slug_index = ITEM_INDEX(FindItem("Slugs"));
     cell_index = ITEM_INDEX(FindItem("Cells"));
+    magslug_index = ITEM_INDEX(FindItem("Mag Slug"));
+    trap_index = ITEM_INDEX(FindItem("Trap"));
 
     //weapons
     sword_index = ITEM_INDEX(FindItem("Sword"));
@@ -3006,4 +3174,3 @@ void SpawnWorldAmmo(void) {
         gi.dprintf("World spawned %d cell packs\n", need);
     }
 }
-
