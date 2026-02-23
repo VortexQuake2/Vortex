@@ -190,7 +190,6 @@ typedef enum {
     WEAPON_FIRING
 } weaponstate_t;
 
-
 //deadflag
 #define DEAD_NO					0
 #define DEAD_DYING				1
@@ -749,6 +748,7 @@ extern int	slug_index;
 extern int	cell_index;
 extern int	magslug_index;
 extern int	trap_index;
+extern int	tesla_index;
 
 //weapons
 extern int sword_index;
@@ -1344,35 +1344,28 @@ void vrx_check_for_levelup(edict_t *ent, qboolean print_message);
 
 double vrx_get_points_tnl(int level);
 
-
-void Weapon_Blaster(edict_t *ent);
-
-void Weapon_Shotgun(edict_t *ent);
-
-void Weapon_SuperShotgun(edict_t *ent);
-
-void Weapon_Machinegun(edict_t *ent);
-
-void Weapon_Chaingun(edict_t *ent);
-
-void Weapon_HyperBlaster(edict_t *ent);
-
-void Weapon_RocketLauncher(edict_t *ent);
-
-void Weapon_Grenade(edict_t *ent);
-
-void Weapon_GrenadeLauncher(edict_t *ent);
-
-void Weapon_Railgun(edict_t *ent);
-
-void Weapon_BFG(edict_t *ent);
+void Weapon_Blaster (edict_t *ent);
+void Weapon_Shotgun (edict_t *ent);
+void Weapon_SuperShotgun (edict_t *ent);
+void Weapon_Machinegun (edict_t *ent);
+void Weapon_Chaingun (edict_t *ent);
+void Weapon_HyperBlaster (edict_t *ent);
+void Weapon_RocketLauncher (edict_t *ent);
+void Weapon_Grenade (edict_t *ent);
+void Weapon_GrenadeLauncher (edict_t *ent);
+void Weapon_Railgun (edict_t *ent);
+void Weapon_BFG (edict_t *ent);
+void Weapon_20mm (edict_t *ent);
 
 // RAFAEL
-void Weapon_Ionripper(edict_t *ent);
-
-void Weapon_Phalanx(edict_t *ent);
-
-void Weapon_Trap(edict_t *ent);
+void Weapon_Ionripper (edict_t *ent);
+void Weapon_Phalanx (edict_t *ent);
+void Weapon_Trap (edict_t *ent);
+void Weapon_ETF_Rifle (edict_t *ent);
+void Weapon_Heatbeam (edict_t *ent);
+void Weapon_ProxLauncher (edict_t *ent);
+void Weapon_ChainFist (edict_t *ent);
+void Weapon_Tesla (edict_t *ent);
 
 //K03 Begin
 void Weapon_Sword(edict_t *ent);
@@ -1723,22 +1716,17 @@ void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick)
 void fire_bfg(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius);
 
 // RAFAEL
-void fire_ionripper(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int effect);
+void fire_ionripper (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int effect);
+void fire_flechette (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int kick);
+void fire_heat (edict_t *self, vec3_t start, vec3_t aimdir, vec3_t offset, int damage, int kick, qboolean monster);
+void fire_blueblaster (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int effect);
+void fire_plasma (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius, int radius_damage);
+void fire_prox (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float damage_radius);
+void fire_tesla (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float damage_radius);
+void fire_trap (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float timer, float damage_radius, qboolean held);
+void fire_smartrocket (edict_t *self, edict_t *target, vec3_t start, vec3_t dir, int damage, int speed, int turn_speed, float damage_radius, int radius_damage);
 
-void fire_heat(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius, int radius_damage);
-
-void fire_blueblaster(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int effect);
-
-void fire_plasma(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius,
-                 int radius_damage);
-
-void fire_trap(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float timer, float damage_radius,
-               qboolean held);
-
-void fire_smartrocket(edict_t *self, edict_t *target, vec3_t start, vec3_t dir, int damage, int speed, int turn_speed,
-                      float damage_radius, int radius_damage);
-
-void fire_20mm(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, float range);
+void fire_20mm(edict_t* self, vec3_t start, vec3_t aimdir, int damage, int kick, float range);
 
 //
 // g_ptrail.c
@@ -1894,16 +1882,17 @@ typedef struct {
     int selected_item;
     int inventory[MAX_ITEMS];
 
-    // ammo capacities
-    int max_bullets;
-    int max_shells;
-    int max_rockets;
-    int max_grenades;
-    int max_cells;
-    int max_slugs;
-    // RAFAEL
-    int max_magslug;
-    int max_trap;
+	// ammo capacities
+	int			max_bullets;
+	int			max_shells;
+	int			max_rockets;
+	int			max_grenades;
+	int			max_cells;
+	int			max_slugs;
+	// RAFAEL
+	int			max_magslug;
+	int			max_trap;
+	int			max_tesla;
 
     gitem_t *weapon;
     gitem_t *lastweapon;

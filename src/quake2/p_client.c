@@ -1134,6 +1134,7 @@ void InitClientPersistant (gclient_t *client)
 	// RAFAEL
 	client->pers.max_magslug	= 50;
 	client->pers.max_trap		= 5;
+	client->pers.max_tesla		= 5;
 
 	//K03 Begin
 	client->pers.max_powercubes = 200;

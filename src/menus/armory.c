@@ -378,6 +378,25 @@ void Cmd_Armory_f(edict_t *ent, int selection)
             return;
         }
 		ent->client->pers.inventory[ITEM_INDEX(item)] = 1;
+
+		// New missionpack weapons can require ammo types players may not be carrying.
+		// Grant the minimum needed ammo and auto-select the weapon for immediate use.
+		if (selection >= 31 && selection <= 38)
+		{
+			if (item->ammo)
+			{
+				gitem_t *ammo = FindItem(item->ammo);
+				if (ammo)
+				{
+					int ammo_index = ITEM_INDEX(ammo);
+					if (ent->client->pers.inventory[ammo_index] < item->quantity)
+						ent->client->pers.inventory[ammo_index] = item->quantity;
+				}
+			}
+			if (item->use)
+				item->use(ent, item);
+		}
+
 		safe_cprintf(ent, PRINT_HIGH, "You bought a %s.\n", item->pickup_name);
 	}
 	//If ammo was purchased (or T-Balls)
@@ -546,6 +565,8 @@ void PurchaseMenu_handler (edict_t *ent, int option)
 void OpenPurchaseMenu (edict_t *ent, int page_num, int lastline)
 {
 	int i;
+	int purchase_number;
+	const char *item_name;
 
 	//Usual menu stuff
 	if (!menu_can_show(ent))
@@ -560,9 +581,30 @@ void OpenPurchaseMenu (edict_t *ent, int page_num, int lastline)
 	//Print this page's items
     for (i = (page_num-1)*10; i < page_num*10; ++i)
 	{
-		if (i < ARMORY_ITEMS)
-			menu_add_line(ent, va("%s", GetArmoryItemString(i+1)), i+1);
-		else menu_add_line(ent, " ", 0);
+		purchase_number = i + 1;
+		if (purchase_number > ARMORY_ITEMS)
+		{
+			menu_add_line(ent, " ", 0);
+			continue;
+		}
+
+#ifdef REMOVE_RESPAWNS
+		// Slot 30 is respawns; hide it if respawns are compiled out.
+		if (purchase_number == 30)
+		{
+			menu_add_line(ent, " ", 0);
+			continue;
+		}
+#endif
+
+		item_name = GetArmoryItemString(purchase_number);
+		if (!item_name || !item_name[0] || !Q_strcasecmp(item_name, "<BAD ITEM NUMBER>"))
+		{
+			menu_add_line(ent, " ", 0);
+			continue;
+		}
+
+		menu_add_line(ent, va("%s", item_name), purchase_number);
 	}
 
 	//Footer

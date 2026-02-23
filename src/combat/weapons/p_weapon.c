@@ -2664,3 +2664,529 @@ void Weapon_Flamethrower(edict_t* ent) {
 	if (is_quadfire)
 		Weapon_Generic(ent, 3, 5, 45, 49, pause_frames, fire_frames, Flamethrower_Fire);
 }
+
+/*
+======================================================================
+MISSIONPACK WEAPONS
+======================================================================
+*/
+
+static void weapon_ionripper_fire(edict_t *ent)
+{
+    vec3_t start, forward, right, offset, tempang;
+    int damage = (deathmatch->value ? 30 : 50) + 2 * ent->myskills.weapons[WEAPON_IONRIPPER].mods[0].current_level;
+    int kick = (deathmatch->value ? 40 : 60);
+    int speed = 500 + 20 * ent->myskills.weapons[WEAPON_IONRIPPER].mods[2].current_level;
+
+    if (is_quad)
+    {
+        damage *= 4;
+        kick *= 4;
+    }
+
+    VectorCopy(ent->client->v_angle, tempang);
+    tempang[YAW] += crandom();
+    AngleVectors(tempang, forward, right, NULL);
+
+    VectorScale(forward, -3, ent->client->kick_origin);
+    ent->client->kick_angles[0] = -3;
+
+    VectorSet(offset, 16, 7, ent->viewheight - 8);
+    P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+
+    fire_ionripper(ent, start, forward, damage, speed, EF_IONRIPPER);
+
+    gi.WriteByte(svc_muzzleflash);
+    gi.WriteShort(ent - g_edicts);
+    gi.WriteByte(MZ_IONRIPPER | is_silenced);
+    gi.multicast(ent->s.origin, MULTICAST_PVS);
+
+    ent->client->ps.gunframe++;
+    PlayerNoise(ent, start, PNOISE_WEAPON);
+
+    if (!((int)dmflags->value & DF_INFINITE_AMMO))
+    {
+        ent->client->pers.inventory[ent->client->ammo_index] -= ent->client->pers.weapon->quantity;
+        if (ent->client->pers.inventory[ent->client->ammo_index] < 0)
+            ent->client->pers.inventory[ent->client->ammo_index] = 0;
+    }
+}
+
+void Weapon_Ionripper(edict_t *ent)
+{
+    static int pause_frames[] = {36, 0};
+    static int fire_frames[] = {5, 0};
+
+    Weapon_Generic(ent, 4, 6, 36, 39, pause_frames, fire_frames, weapon_ionripper_fire);
+    if (is_quadfire)
+        Weapon_Generic(ent, 4, 6, 36, 39, pause_frames, fire_frames, weapon_ionripper_fire);
+}
+
+static void weapon_phalanx_fire(edict_t *ent)
+{
+    vec3_t start, forward, right, up, offset, v;
+    int damage = 70 + (int)(random() * 10.0) + 2 * ent->myskills.weapons[WEAPON_PHALANX].mods[0].current_level;
+    int radius_damage = 120 + 2 * ent->myskills.weapons[WEAPON_PHALANX].mods[1].current_level;
+    float damage_radius = 120 + 2 * ent->myskills.weapons[WEAPON_PHALANX].mods[1].current_level;
+    int speed = 725 + 15 * ent->myskills.weapons[WEAPON_PHALANX].mods[2].current_level;
+
+    if (is_quad)
+    {
+        damage *= 4;
+        radius_damage *= 4;
+    }
+
+    AngleVectors(ent->client->v_angle, forward, right, NULL);
+
+    VectorScale(forward, -2, ent->client->kick_origin);
+    ent->client->kick_angles[0] = -2;
+
+    VectorSet(offset, 0, 8, ent->viewheight - 8);
+    P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+
+    if (ent->client->ps.gunframe == 8)
+    {
+        v[PITCH] = ent->client->v_angle[PITCH];
+        v[YAW] = ent->client->v_angle[YAW] - 1.5;
+        v[ROLL] = ent->client->v_angle[ROLL];
+        AngleVectors(v, forward, right, up);
+
+        fire_plasma(ent, start, forward, damage, speed, 120, 30);
+
+        if (!((int)dmflags->value & DF_INFINITE_AMMO))
+            ent->client->pers.inventory[ent->client->ammo_index]--;
+    }
+    else
+    {
+        v[PITCH] = ent->client->v_angle[PITCH];
+        v[YAW] = ent->client->v_angle[YAW] + 1.5;
+        v[ROLL] = ent->client->v_angle[ROLL];
+        AngleVectors(v, forward, right, up);
+        fire_plasma(ent, start, forward, damage, speed, damage_radius, radius_damage);
+
+        gi.WriteByte(svc_muzzleflash);
+        gi.WriteShort(ent - g_edicts);
+        gi.WriteByte(MZ_PHALANX | is_silenced);
+        gi.multicast(ent->s.origin, MULTICAST_PVS);
+
+        PlayerNoise(ent, start, PNOISE_WEAPON);
+    }
+
+    ent->client->ps.gunframe++;
+}
+
+void Weapon_Phalanx(edict_t *ent)
+{
+    static int pause_frames[] = {29, 42, 55, 0};
+    static int fire_frames[] = {7, 8, 0};
+
+    Weapon_Generic(ent, 5, 20, 58, 63, pause_frames, fire_frames, weapon_phalanx_fire);
+    if (is_quadfire)
+        Weapon_Generic(ent, 5, 20, 58, 63, pause_frames, fire_frames, weapon_phalanx_fire);
+}
+
+void weapon_trap_fire(edict_t *ent, qboolean held)
+{
+    vec3_t offset, forward, right, start;
+    int damage = 125 + 4 * ent->myskills.weapons[WEAPON_TRAP].mods[0].current_level;
+    float timer;
+    int speed;
+    float radius = damage + 40 + 2 * ent->myskills.weapons[WEAPON_TRAP].mods[1].current_level;
+
+    if (is_quad)
+        damage *= 4;
+
+    VectorSet(offset, 8, 8, ent->viewheight - 8);
+    AngleVectors(ent->client->v_angle, forward, right, NULL);
+    P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+
+    timer = ent->client->grenade_time - level.time;
+    speed = GRENADE_MINSPEED + (GRENADE_TIMER - timer) * ((GRENADE_MAXSPEED - GRENADE_MINSPEED) / GRENADE_TIMER);
+    speed += 10 * ent->myskills.weapons[WEAPON_TRAP].mods[2].current_level;
+
+    fire_trap(ent, start, forward, damage, speed, timer, radius, held);
+
+    ent->client->pers.inventory[ent->client->ammo_index]--;
+    ent->client->grenade_time = level.time + 1.0;
+}
+
+void Weapon_Trap(edict_t *ent)
+{
+    if ((ent->client->newweapon) && (ent->client->weaponstate == WEAPON_READY))
+    {
+        ChangeWeapon(ent);
+        return;
+    }
+
+    if (ent->client->weaponstate == WEAPON_ACTIVATING)
+    {
+        ent->client->weaponstate = WEAPON_READY;
+        ent->client->ps.gunframe = 16;
+        return;
+    }
+
+    if (ent->client->weaponstate == WEAPON_READY)
+    {
+        if (((ent->client->latched_buttons | ent->client->buttons) & BUTTON_ATTACK))
+        {
+            ent->client->latched_buttons &= ~BUTTON_ATTACK;
+            if (ent->client->pers.inventory[ent->client->ammo_index])
+            {
+                ent->client->ps.gunframe = 1;
+                ent->client->weaponstate = WEAPON_FIRING;
+                ent->client->grenade_time = 0;
+            }
+            else
+            {
+                if (level.time >= ent->pain_debounce_time)
+                {
+                    gi.sound(ent, CHAN_VOICE, gi.soundindex("weapons/noammo.wav"), 1, ATTN_NORM, 0);
+                    ent->pain_debounce_time = level.time + 1;
+                }
+                NoAmmoWeaponChange(ent);
+            }
+            return;
+        }
+
+        if ((ent->client->ps.gunframe == 29) || (ent->client->ps.gunframe == 34) ||
+            (ent->client->ps.gunframe == 39) || (ent->client->ps.gunframe == 48))
+        {
+            if (rand() & 15)
+                return;
+        }
+
+        if (++ent->client->ps.gunframe > 48)
+            ent->client->ps.gunframe = 16;
+        return;
+    }
+
+    if (ent->client->weaponstate == WEAPON_FIRING)
+    {
+        if (ent->client->ps.gunframe == 5)
+            gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/trapcock.wav"), 1, ATTN_NORM, 0);
+
+        if (ent->client->ps.gunframe == 11)
+        {
+            if (!ent->client->grenade_time)
+            {
+                ent->client->grenade_time = level.time + GRENADE_TIMER + 0.2;
+                ent->client->weapon_sound = gi.soundindex("weapons/traploop.wav");
+            }
+
+            if (!ent->client->grenade_blew_up && level.time >= ent->client->grenade_time)
+            {
+                ent->client->weapon_sound = 0;
+                weapon_trap_fire(ent, true);
+                ent->client->grenade_blew_up = true;
+            }
+
+            if (ent->client->buttons & BUTTON_ATTACK)
+                return;
+
+            if (ent->client->grenade_blew_up)
+            {
+                if (level.time >= ent->client->grenade_time)
+                {
+                    ent->client->ps.gunframe = 15;
+                    ent->client->grenade_blew_up = false;
+                }
+                else
+                {
+                    return;
+                }
+            }
+        }
+
+        if (ent->client->ps.gunframe == 12)
+        {
+            ent->client->weapon_sound = 0;
+            weapon_trap_fire(ent, false);
+            if (ent->client->pers.inventory[ent->client->ammo_index] == 0)
+                NoAmmoWeaponChange(ent);
+        }
+
+        if ((ent->client->ps.gunframe == 15) && (level.time < ent->client->grenade_time))
+            return;
+
+        ent->client->ps.gunframe++;
+
+        if (ent->client->ps.gunframe == 16)
+        {
+            ent->client->grenade_time = 0;
+            ent->client->weaponstate = WEAPON_READY;
+        }
+    }
+}
+
+static void weapon_etf_rifle_fire(edict_t *ent)
+{
+    vec3_t forward, right, angles, start, offset;
+    int damage = 10 + ent->myskills.weapons[WEAPON_ETFRIFLE].mods[0].current_level;
+    int kick = 3;
+    int speed = 750 + 15 * ent->myskills.weapons[WEAPON_ETFRIFLE].mods[2].current_level;
+
+    if (ent->client->pers.inventory[ent->client->ammo_index] < ent->client->pers.weapon->quantity)
+    {
+        VectorClear(ent->client->kick_origin);
+        VectorClear(ent->client->kick_angles);
+        ent->client->ps.gunframe = 8;
+
+        if (level.time >= ent->pain_debounce_time)
+        {
+            gi.sound(ent, CHAN_VOICE, gi.soundindex("weapons/noammo.wav"), 1, ATTN_NORM, 0);
+            ent->pain_debounce_time = level.time + 1;
+        }
+        NoAmmoWeaponChange(ent);
+        return;
+    }
+
+    if (is_quad)
+    {
+        damage *= 4;
+        kick *= 4;
+    }
+
+    VectorAdd(ent->client->v_angle, ent->client->kick_angles, angles);
+    AngleVectors(angles, forward, right, NULL);
+
+    if (ent->client->ps.gunframe == 6)
+        VectorSet(offset, 15, 8, ent->viewheight - 8);
+    else
+        VectorSet(offset, 15, 6, ent->viewheight - 8);
+
+    P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+    fire_flechette(ent, start, forward, damage, speed, kick);
+
+    gi.WriteByte(svc_muzzleflash);
+    gi.WriteShort(ent - g_edicts);
+    gi.WriteByte(MZ_ETF_RIFLE | is_silenced);
+    gi.multicast(ent->s.origin, MULTICAST_PVS);
+
+    PlayerNoise(ent, start, PNOISE_WEAPON);
+    ent->client->ps.gunframe++;
+    ent->client->pers.inventory[ent->client->ammo_index] -= ent->client->pers.weapon->quantity;
+}
+
+void Weapon_ETF_Rifle(edict_t *ent)
+{
+    static int pause_frames[] = {18, 28, 0};
+    static int fire_frames[] = {6, 7, 0};
+
+    if (ent->client->weaponstate == WEAPON_FIRING)
+    {
+        if (ent->client->pers.inventory[ent->client->ammo_index] <= 0)
+            ent->client->ps.gunframe = 8;
+    }
+
+    Weapon_Generic(ent, 4, 7, 37, 41, pause_frames, fire_frames, weapon_etf_rifle_fire);
+    if (ent->client->ps.gunframe == 8 && (ent->client->buttons & BUTTON_ATTACK))
+        ent->client->ps.gunframe = 6;
+}
+
+#define HEATBEAM_DM_DMG 15
+#define HEATBEAM_SP_DMG 15
+static void PlasmaBeam_Fire(edict_t *ent)
+{
+    vec3_t start;
+    vec3_t forward, right;
+    vec3_t offset;
+    int damage;
+    int kick;
+
+    if (ent->client->pers.inventory[ent->client->ammo_index] < ent->client->pers.weapon->quantity)
+    {
+        if (level.time >= ent->pain_debounce_time)
+        {
+            gi.sound(ent, CHAN_VOICE, gi.soundindex("weapons/noammo.wav"), 1, ATTN_NORM, 0);
+            ent->pain_debounce_time = level.time + 1;
+        }
+        NoAmmoWeaponChange(ent);
+        return;
+    }
+
+    if (deathmatch->value)
+        damage = HEATBEAM_DM_DMG;
+    else
+        damage = HEATBEAM_SP_DMG;
+
+    if (deathmatch->value)
+        kick = 75;
+    else
+        kick = 30;
+
+    ent->client->ps.gunframe++;
+    ent->client->ps.gunindex = gi.modelindex("models/weapons/v_beamer2/tris.md2");
+
+    if (is_quad)
+    {
+        damage *= 4;
+        kick *= 4;
+    }
+
+    VectorClear(ent->client->kick_origin);
+    VectorClear(ent->client->kick_angles);
+
+    AngleVectors(ent->client->v_angle, forward, right, NULL);
+    VectorSet(offset, 7, 2, ent->viewheight - 3);
+    P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+    VectorSet(offset, 2, 7, -3);
+    fire_heat(ent, start, forward, offset, damage, kick, false);
+
+    gi.WriteByte(svc_muzzleflash);
+    gi.WriteShort(ent - g_edicts);
+    gi.WriteByte(MZ_HEATBEAM | is_silenced);
+    gi.multicast(ent->s.origin, MULTICAST_PVS);
+
+    PlayerNoise(ent, start, PNOISE_WEAPON);
+
+    if (!((int)dmflags->value & DF_INFINITE_AMMO))
+        ent->client->pers.inventory[ent->client->ammo_index] -= ent->client->pers.weapon->quantity;
+
+    ent->client->anim_priority = ANIM_ATTACK;
+    if (ent->client->ps.pmove.pm_flags & PMF_DUCKED)
+    {
+        ent->s.frame = FRAME_crattak1 - 1;
+        ent->client->anim_end = FRAME_crattak9;
+    }
+    else
+    {
+        ent->s.frame = FRAME_attack1 - 1;
+        ent->client->anim_end = FRAME_attack8;
+    }
+}
+
+void Weapon_Heatbeam(edict_t *ent)
+{
+    static int pause_frames[] = {35, 0};
+    static int fire_frames[] = {9, 10, 11, 12, 0};
+
+    if (ent->client->weaponstate == WEAPON_FIRING)
+    {
+        ent->client->weapon_sound = gi.soundindex("weapons/bfg__l1a.wav");
+        if ((ent->client->pers.inventory[ent->client->ammo_index] >= ent->client->pers.weapon->quantity)
+            && ((ent->client->buttons) & BUTTON_ATTACK))
+        {
+            if (ent->client->ps.gunframe >= 13)
+            {
+                ent->client->ps.gunframe = 9;
+                ent->client->ps.gunindex = gi.modelindex("models/weapons/v_beamer2/tris.md2");
+            }
+            else
+            {
+                ent->client->ps.gunindex = gi.modelindex("models/weapons/v_beamer2/tris.md2");
+            }
+        }
+        else
+        {
+            ent->client->ps.gunframe = 13;
+            ent->client->ps.gunindex = gi.modelindex("models/weapons/v_beamer/tris.md2");
+        }
+    }
+    else
+    {
+        ent->client->ps.gunindex = gi.modelindex("models/weapons/v_beamer/tris.md2");
+        ent->client->weapon_sound = 0;
+    }
+
+    Weapon_Generic(ent, 8, 12, 39, 44, pause_frames, fire_frames, PlasmaBeam_Fire);
+}
+
+static void weapon_proxlauncher_fire(edict_t *ent)
+{
+    vec3_t offset, start, forward, right;
+    int damage = 90 + 4 * ent->myskills.weapons[WEAPON_PROXLAUNCHER].mods[0].current_level;
+    float radius = damage + 30 + 2 * ent->myskills.weapons[WEAPON_PROXLAUNCHER].mods[1].current_level;
+    int speed = 600 + 15 * ent->myskills.weapons[WEAPON_PROXLAUNCHER].mods[2].current_level;
+
+    if (is_quad)
+        damage *= 4;
+
+    AngleVectors(ent->client->v_angle, forward, right, NULL);
+    VectorScale(forward, -2, ent->client->kick_origin);
+    ent->client->kick_angles[0] = -1;
+
+    VectorSet(offset, 8, 8, ent->viewheight - 8);
+    P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+    fire_prox(ent, start, forward, damage, speed, radius);
+
+    gi.WriteByte(svc_muzzleflash);
+    gi.WriteShort(ent - g_edicts);
+    gi.WriteByte(MZ_GRENADE | is_silenced);
+    gi.multicast(ent->s.origin, MULTICAST_PVS);
+    PlayerNoise(ent, start, PNOISE_WEAPON);
+
+    if (!((int)dmflags->value & DF_INFINITE_AMMO))
+        ent->client->pers.inventory[ent->client->ammo_index] -= ent->client->pers.weapon->quantity;
+
+    ent->client->ps.gunframe++;
+}
+
+void Weapon_ProxLauncher(edict_t *ent)
+{
+    static int pause_frames[] = {34, 51, 59, 0};
+    static int fire_frames[] = {6, 0};
+
+    Weapon_Generic(ent, 5, 16, 59, 64, pause_frames, fire_frames, weapon_proxlauncher_fire);
+}
+
+static void weapon_chainfist_fire(edict_t *ent)
+{
+    vec3_t aim;
+    int damage = 30 + 2 * ent->myskills.weapons[WEAPON_CHAINFIST].mods[0].current_level;
+    int kick = 80;
+
+    if (is_quad)
+        damage *= 4;
+
+    VectorSet(aim, 64, 0, 0);
+    if (fire_hit(ent, aim, damage, kick))
+        gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/sawhit.wav"), 1, ATTN_NORM, 0);
+
+    ent->client->ps.gunframe++;
+    PlayerNoise(ent, ent->s.origin, PNOISE_WEAPON);
+}
+
+void Weapon_ChainFist(edict_t *ent)
+{
+    static int pause_frames[] = {0};
+    static int fire_frames[] = {8, 9, 16, 17, 18, 30, 31, 0};
+
+    ent->client->weapon_sound = 0;
+
+    Weapon_Generic(ent, 4, 32, 57, 60, pause_frames, fire_frames, weapon_chainfist_fire);
+}
+
+static void weapon_tesla_fire(edict_t *ent)
+{
+    vec3_t offset, start, forward, right;
+    int damage = 3 + ent->myskills.weapons[WEAPON_TESLA].mods[0].current_level;
+    float radius = 128 + 4 * ent->myskills.weapons[WEAPON_TESLA].mods[1].current_level;
+    int speed = 500 + 15 * ent->myskills.weapons[WEAPON_TESLA].mods[2].current_level;
+
+    if (is_quad)
+        damage *= 4;
+
+    VectorSet(offset, 8, 8, ent->viewheight - 8);
+    AngleVectors(ent->client->v_angle, forward, right, NULL);
+    P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+    fire_tesla(ent, start, forward, damage, speed, radius);
+
+    gi.WriteByte(svc_muzzleflash);
+    gi.WriteShort(ent - g_edicts);
+    gi.WriteByte(MZ_GRENADE | is_silenced);
+    gi.multicast(ent->s.origin, MULTICAST_PVS);
+    PlayerNoise(ent, start, PNOISE_WEAPON);
+
+    if (!((int)dmflags->value & DF_INFINITE_AMMO))
+        ent->client->pers.inventory[ent->client->ammo_index] -= ent->client->pers.weapon->quantity;
+
+    ent->client->ps.gunframe++;
+}
+
+void Weapon_Tesla(edict_t *ent)
+{
+    static int pause_frames[] = {34, 51, 59, 0};
+    static int fire_frames[] = {6, 0};
+
+    Weapon_Generic(ent, 5, 16, 59, 64, pause_frames, fire_frames, weapon_tesla_fire);
+}
