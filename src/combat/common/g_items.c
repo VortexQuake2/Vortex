@@ -42,6 +42,7 @@ int slug_index;
 int cell_index;
 int magslug_index;
 int trap_index;
+int tesla_index;
 
 //weapons
 int sword_index;
@@ -1800,7 +1801,7 @@ always owned, never in the world
                         Pickup_Weapon,
                         Use_Weapon,
                         Drop_Weapon,
-                        Weapon_HyperBlaster,
+                        Weapon_Ionripper,
                         "misc/w_pkup.wav",
                         "models/weapons/g_boom/tris.md2", EF_ROTATE,
                         "models/weapons/v_boomer/tris.md2",
@@ -1867,7 +1868,7 @@ always owned, never in the world
                         Pickup_Weapon,
                         Use_Weapon,
                         Drop_Weapon,
-                        Weapon_20mm,
+                        Weapon_Phalanx,
                         "misc/w_pkup.wav",
                         "models/weapons/g_shotx/tris.md2", EF_ROTATE,
                         "models/weapons/v_shotx/tris.md2",
@@ -1914,7 +1915,7 @@ always owned, never in the world
                         Pickup_Weapon,
                         Use_Weapon,
                         Drop_Weapon,
-                        Weapon_Machinegun,
+                        Weapon_ETF_Rifle,
                         "misc/w_pkup.wav",
                         "models/weapons/g_etf_rifle/tris.md2", EF_ROTATE,
                         "models/weapons/v_etf_rifle/tris.md2",
@@ -1934,7 +1935,7 @@ always owned, never in the world
                         Pickup_Weapon,
                         Use_Weapon,
                         Drop_Weapon,
-                        Weapon_HyperBlaster,
+                        Weapon_Heatbeam,
                         "misc/w_pkup.wav",
                         "models/weapons/g_beamer/tris.md2", EF_ROTATE,
                         "models/weapons/v_beamer/tris.md2",
@@ -1954,7 +1955,7 @@ always owned, never in the world
                         Pickup_Weapon,
                         Use_Weapon,
                         Drop_Weapon,
-                        Weapon_GrenadeLauncher,
+                        Weapon_ProxLauncher,
                         "misc/w_pkup.wav",
                         "models/weapons/g_plaunch/tris.md2", EF_ROTATE,
                         "models/weapons/v_plaunch/tris.md2",
@@ -1974,7 +1975,7 @@ always owned, never in the world
                         Pickup_Weapon,
                         Use_Weapon,
                         Drop_Weapon,
-                        Weapon_Sword,
+                        Weapon_ChainFist,
                         "misc/w_pkup.wav",
                         "models/weapons/g_chainf/tris.md2", EF_ROTATE,
                         "models/weapons/v_chainf/tris.md2",
@@ -1988,6 +1989,26 @@ always owned, never in the world
                         0,
 /* precache */ "weapons/sawidle.wav weapons/sawhit.wav",
                         WEAP_CHAINFIST
+                },
+                {
+                        "weapon_tesla",
+                        Pickup_Weapon,
+                        Use_Weapon,
+                        Drop_Weapon,
+                        Weapon_Tesla,
+                        "misc/w_pkup.wav",
+                        "models/weapons/g_tesla/tris.md2", EF_ROTATE,
+                        "models/weapons/v_tesla/tris.md2",
+/* icon */        "a_tesla",
+/* pickup */    "Tesla",
+                        0,
+                        1,
+                        "Tesla Ammo",
+                        IT_WEAPON,
+                        NULL,
+                        0,
+/* precache */ "models/weapons/v_tesla2/tris.md2 weapons/teslaopen.wav weapons/hgrenb1a.wav weapons/hgrenb2a.wav models/weapons/g_tesla/tris.md2",
+                        WEAP_TRAP
                 },
                 {
                         "weapon_flamethrower",
@@ -2199,7 +2220,7 @@ always owned, never in the world
                         Pickup_Ammo,
                         Use_Weapon,
                         Drop_Ammo,
-                        Weapon_Grenade,
+                        Weapon_Trap,
                         "misc/am_pkup.wav",
                         "models/weapons/g_trap/tris.md2", EF_ROTATE,
                         "models/weapons/v_trap/tris.md2",
@@ -2207,11 +2228,30 @@ always owned, never in the world
 /* pickup */    "Trap",
 /* width */        3,
                         1,
-                        "trap",
+                        "Trap",
                         IT_AMMO | IT_WEAPON,
                         NULL,
                         AMMO_TRAP,
 /* precache */ "weapons/trapcock.wav weapons/traploop.wav weapons/trapsuck.wav weapons/trapdown.wav"
+                },
+                {
+                        "ammo_tesla",
+                        Pickup_Ammo,
+                        Use_Weapon,
+                        Drop_Ammo,
+                        Weapon_Tesla,
+                        "misc/am_pkup.wav",
+                        "models/weapons/g_tesla/tris.md2", EF_ROTATE,
+                        "models/weapons/v_tesla/tris.md2",
+/* icon */        "a_tesla",
+/* pickup */    "Tesla Ammo",
+/* width */        3,
+                        1,
+                        "Tesla Ammo",
+                        IT_AMMO | IT_WEAPON,
+                        NULL,
+                        AMMO_TESLA,
+/* precache */ "models/weapons/v_tesla2/tris.md2 weapons/teslaopen.wav weapons/hgrenb1a.wav weapons/hgrenb2a.wav models/weapons/g_tesla/tris.md2"
                 },
 
                 {
@@ -3097,6 +3137,7 @@ void SetItemNames(void) {
     cell_index = ITEM_INDEX(FindItem("Cells"));
     magslug_index = ITEM_INDEX(FindItem("Mag Slug"));
     trap_index = ITEM_INDEX(FindItem("Trap"));
+    tesla_index = ITEM_INDEX(FindItem("Tesla Ammo"));
 
     //weapons
     sword_index = ITEM_INDEX(FindItem("Sword"));

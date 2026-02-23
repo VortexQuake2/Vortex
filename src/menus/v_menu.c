@@ -11,6 +11,7 @@ void vrx_check_for_levelup(edict_t *ent, qboolean print_message);
 void Cmd_Armory_f(edict_t*ent, int selection);
 //Function prototypes required for this .c file:
 void OpenDOMJoinMenu (edict_t *ent);
+static int RespawnMenuPageForOption(int option);
 
 void ChaseCam(edict_t *ent)
 {
@@ -395,6 +396,7 @@ void respawnmenu_handler (edict_t *ent, int option)
 		return;
 
 	ent->myskills.respawn_weapon = option;
+	OpenRespawnWeapMenu(ent, RespawnMenuPageForOption(option));
 }
 
 char *GetRespawnString (edict_t *ent)
@@ -426,40 +428,55 @@ char *GetRespawnString (edict_t *ent)
 	}
 }
 
+typedef struct {
+	const char *name;
+	int option;
+} respawn_menu_item_t;
+
+static const respawn_menu_item_t respawn_items[] = {
+	{"Sword", 1},
+	{"Shotgun", 2},
+	{"Super Shotgun", 3},
+	{"Machinegun", 4},
+	{"Chaingun", 5},
+	{"Hand Grenades", 11},
+	{"Grenade Launcher", 6},
+	{"Rocket Launcher", 7},
+	{"Hyperblaster", 8},
+	{"Railgun", 9},
+	{"BFG10k", 10},
+	{"20mm Cannon", 12},
+	{"Ionripper", 14},
+	{"Phalanx", 15},
+	{"Trap", 16},
+	{"ETF Rifle", 17},
+	{"Plasma Beam", 18},
+	{"Prox Launcher", 19},
+	{"Chainfist", 20},
+	{"Tesla", 21},
+	{"Blaster", 13}
+};
+
+static int RespawnMenuPageForOption(int option)
+{
+	int i;
+	for (i = 0; i < (int)(sizeof(respawn_items) / sizeof(respawn_items[0])); i++)
+	{
+		if (respawn_items[i].option == option)
+			return (i / 10) + 1;
+	}
+	return 1;
+}
+
 void OpenRespawnWeapMenu(edict_t *ent, int page_num)
 {
 	int i;
 	int first;
 	int last;
 	int total;
-	static const struct {
-		const char *name;
-		int option;
-	} respawn_items[] = {
-		{"Sword", 1},
-		{"Shotgun", 2},
-		{"Super Shotgun", 3},
-		{"Machinegun", 4},
-		{"Chaingun", 5},
-		{"Hand Grenades", 11},
-		{"Grenade Launcher", 6},
-		{"Rocket Launcher", 7},
-		{"Hyperblaster", 8},
-		{"Railgun", 9},
-		{"BFG10k", 10},
-		{"20mm Cannon", 12},
-		{"Ionripper", 14},
-		{"Phalanx", 15},
-		{"Trap", 16},
-		{"ETF Rifle", 17},
-		{"Plasma Beam", 18},
-		{"Prox Launcher", 19},
-		{"Chainfist", 20},
-		{"Tesla", 21},
-		{"Blaster", 13}
-	};
 
-    if (!menu_can_show(ent))
+    // Allow internal page flips after selection even if transient menu state flags are set.
+    if ((page_num <= 1) && !menu_can_show(ent))
         return;
 
     if (ent->myskills.class_num == CLASS_KNIGHT) {

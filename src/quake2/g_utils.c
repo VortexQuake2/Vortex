@@ -1146,6 +1146,16 @@ int Get_KindWeapon (gitem_t	*it)
 	else if(it->weaponthink == Weapon_HyperBlaster) return WEAP_HYPERBLASTER;
 	else if(it->weaponthink == Weapon_Railgun)		return WEAP_RAILGUN;
 	else if(it->weaponthink == Weapon_BFG)			return WEAP_BFG;
+	else if(it->weaponthink == Weapon_20mm)		return WEAP_20MM;
+	else if(it->weaponthink == Weapon_Sword)		return WEAP_SWORD;
+	else if(it->weaponthink == Weapon_Ionripper)	return WEAP_HYPERBLASTER;
+	else if(it->weaponthink == Weapon_Phalanx)		return WEAP_PLASMA;
+	else if(it->weaponthink == Weapon_Trap)		return WEAP_TRAP;
+	else if(it->weaponthink == Weapon_ETF_Rifle)	return WEAP_MACHINEGUN;
+	else if(it->weaponthink == Weapon_Heatbeam)	return WEAP_PLASMA;
+	else if(it->weaponthink == Weapon_ProxLauncher) return WEAP_PROXLAUNCH;
+	else if(it->weaponthink == Weapon_ChainFist)	return WEAP_CHAINFIST;
+	else if(it->weaponthink == Weapon_Tesla)		return WEAP_TRAP;
 	else return WEAP_BLASTER;
 }
 

@@ -164,6 +164,9 @@ char *GetArmoryItemString(int purchase_number) {
 #ifndef REMOVE_RESPAWNS
             case 30:
                 return "Respawns";
+#else
+        case 30:
+            return " ";
 #endif
         case 31:
             return "Ionripper";
@@ -182,7 +185,7 @@ char *GetArmoryItemString(int purchase_number) {
         case 38:
             return "Tesla";
         default:
-            return "<BAD ITEM NUMBER>";
+            return " ";
     }
 }
 
@@ -1329,6 +1332,11 @@ qboolean V_GiveAmmoClip(edict_t *ent, float qty, int ammotype) {
             current = &ent->client->pers.inventory[trap_index];
             max = &ent->client->pers.max_trap;
             break;
+        case AMMO_TESLA:
+            amount = GRENADES_PICKUP;
+            current = &ent->client->pers.inventory[tesla_index];
+            max = &ent->client->pers.max_tesla;
+            break;
         default:
             return false;
     }
@@ -1373,18 +1381,21 @@ int V_GetRespawnAmmoType(edict_t *ent) {
             return AMMO_BULLETS;
         case 6: //gl
         case 11: //hg
-        case 16: //trap
         case 19: //prox launcher
-        case 21: //tesla
             return AMMO_GRENADES;
+        case 16: //trap
+            return AMMO_TRAP;
+        case 21: //tesla
+            return AMMO_TESLA;
         case 7: //rl
             return AMMO_ROCKETS;
         case 9: //rg
             return AMMO_SLUGS;
+        case 15: //phalanx
+            return AMMO_MAGSLUG;
         case 8: //hb
         case 10: //bfg
         case 14: //ionripper
-        case 15: //phalanx
         case 18: //plasma beam
             return AMMO_CELLS;
         default: //blaster/sword

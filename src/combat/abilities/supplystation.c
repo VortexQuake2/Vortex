@@ -173,6 +173,12 @@ int MaxAmmoType (edict_t *ent, int ammo_index)
 		return ent->client->pers.max_cells;
 	else if (ammo_index == slug_index)//ITEM_INDEX(FindItemByClassname("ammo_slugs")))
 		return ent->client->pers.max_slugs;
+	else if (ammo_index == magslug_index)
+		return ent->client->pers.max_magslug;
+	else if (ammo_index == trap_index)
+		return ent->client->pers.max_trap;
+	else if (ammo_index == tesla_index)
+		return ent->client->pers.max_tesla;
 	else return 0;
 }
 
@@ -254,10 +260,10 @@ int G_GetAmmoIndexByWeaponIndex (int weapon_index)
 		return cell_index;
 	item = FindItem("Phalanx");
 	if (item && weapon_index == ITEM_INDEX(item))
-		return cell_index;
+		return magslug_index;
 	item = FindItem("Trap");
 	if (item && weapon_index == ITEM_INDEX(item))
-		return grenade_index;
+		return trap_index;
 	item = FindItem("ETF Rifle");
 	if (item && weapon_index == ITEM_INDEX(item))
 	{
@@ -275,7 +281,7 @@ int G_GetAmmoIndexByWeaponIndex (int weapon_index)
 		return 0;
 	item = FindItem("Tesla");
 	if (item && weapon_index == ITEM_INDEX(item))
-		return grenade_index;
+		return tesla_index;
 	if (weapon_index == grenade_index)
 		return grenade_index;
 	return 0;
