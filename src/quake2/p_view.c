@@ -919,6 +919,10 @@ void G_SetClientFrame (edict_t *ent)
 	if (ent->s.modelindex != 255)
 		return; // not in the player model
 
+	// run at 10 fps.
+	if (level.framenum % qf2sf(1) != 0)
+		return;
+
 	client = ent->client;
 
 	if (client->ps.pmove.pm_flags & PMF_DUCKED)
