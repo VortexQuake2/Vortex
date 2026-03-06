@@ -287,8 +287,10 @@ void SV_CalcViewOffset (edict_t *ent)
 
 	// add view height
 
+	// az: the viewheight as part of pm.s makes this unnecessary now
+#ifndef VRX_REPRO
 	v[2] += ent->viewheight;
-
+#endif
 	// add fall height
 
 	ratio = (ent->client->fall_time - level.time) / FALL_TIME;
@@ -418,8 +420,8 @@ void SV_CalcBlend (edict_t *ent)
 	vec3_t	vieworg;
 	int		remaining;
 
-	ent->client->ps.blend[0] = ent->client->ps.blend[1] = 
-		ent->client->ps.blend[2] = ent->client->ps.blend[3] = 0;
+	ent->client->ps.screen_blend[0] = ent->client->ps.screen_blend[1] =
+		ent->client->ps.screen_blend[2] = ent->client->ps.screen_blend[3] = 0;
 
 	// add for contents
 	VectorAdd (ent->s.origin, ent->client->ps.viewoffset, vieworg);
@@ -430,19 +432,19 @@ void SV_CalcBlend (edict_t *ent)
 		ent->client->ps.rdflags &= ~RDF_UNDERWATER;
 
 	if (contents & (CONTENTS_SOLID|CONTENTS_LAVA))
-		SV_AddBlend (1.0, 0.3, 0.0, 0.6, ent->client->ps.blend);
+		SV_AddBlend (1.0, 0.3, 0.0, 0.6, ent->client->ps.screen_blend);
 	else if (contents & CONTENTS_SLIME)
-		SV_AddBlend (0.0, 0.1, 0.05, 0.6, ent->client->ps.blend);
+		SV_AddBlend (0.0, 0.1, 0.05, 0.6, ent->client->ps.screen_blend);
 	else if (contents & CONTENTS_WATER)
-		SV_AddBlend (0.5, 0.3, 0.2, 0.4, ent->client->ps.blend);
+		SV_AddBlend (0.5, 0.3, 0.2, 0.4, ent->client->ps.screen_blend);
 	//GHz: lowlight vision effect
 	if (ent->client->ps.rdflags & RDF_IRGOGGLES)
-		SV_AddBlend (1, 0, 0, 0.2, ent->client->ps.blend);
+		SV_AddBlend (1, 0, 0, 0.2, ent->client->ps.screen_blend);
 	//K03 Begin
 	if (ent->client->cloaking && (ent->svflags & SVF_NOCLIENT))
-		SV_AddBlend (-1, -1, -1, 0.3, ent->client->ps.blend);
+		SV_AddBlend (-1, -1, -1, 0.3, ent->client->ps.screen_blend);
 	if(ent->client->bfg_blend)
-		SV_AddBlend (0, 1, 0, 0.3, ent->client->ps.blend);
+		SV_AddBlend (0, 1, 0, 0.3, ent->client->ps.screen_blend);
 	//K03 End
 
 	// add for powerups
@@ -452,7 +454,7 @@ void SV_CalcBlend (edict_t *ent)
 		if (remaining == 30)	// beginning to fade
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("items/damage2.wav"), 1, ATTN_NORM, 0);
 		if (remaining > 30 || (remaining & 4) )
-			SV_AddBlend (0, 0, 1, 0.08, ent->client->ps.blend);
+			SV_AddBlend (0, 0, 1, 0.08, ent->client->ps.screen_blend);
 	}
 	// RAFAEL
 	else if (ent->client->quadfire_framenum > level.framenum)
@@ -461,7 +463,7 @@ void SV_CalcBlend (edict_t *ent)
 		if (remaining == 30)	// beginning to fade
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("items/quadfire2.wav"), 1, ATTN_NORM, 0);
 		if (remaining > 30 || (remaining & 4) )
-			SV_AddBlend (1, 0.2, 0.5, 0.08, ent->client->ps.blend);
+			SV_AddBlend (1, 0.2, 0.5, 0.08, ent->client->ps.screen_blend);
 	}
 	else if (ent->client->invincible_framenum > level.framenum)
 	{
@@ -469,7 +471,7 @@ void SV_CalcBlend (edict_t *ent)
 		if (remaining == 30)	// beginning to fade
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("items/protect2.wav"), 1, ATTN_NORM, 0);
 		if (remaining > 30 || (remaining & 4) )
-			SV_AddBlend (1, 1, 0, 0.08, ent->client->ps.blend);
+			SV_AddBlend (1, 1, 0, 0.08, ent->client->ps.screen_blend);
 	}
 	else if (ent->client->enviro_framenum > level.framenum)
 	{
@@ -477,7 +479,7 @@ void SV_CalcBlend (edict_t *ent)
 		if (remaining == 30)	// beginning to fade
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("items/airout.wav"), 1, ATTN_NORM, 0);
 		if (remaining > 30 || (remaining & 4) )
-			SV_AddBlend (0, 1, 0, 0.08, ent->client->ps.blend);
+			SV_AddBlend (0, 1, 0, 0.08, ent->client->ps.screen_blend);
 	}
 	else if (ent->client->breather_framenum > level.framenum)
 	{
@@ -485,16 +487,16 @@ void SV_CalcBlend (edict_t *ent)
 		if (remaining == 30)	// beginning to fade
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("items/airout.wav"), 1, ATTN_NORM, 0);
 		if (remaining > 30 || (remaining & 4) )
-			SV_AddBlend (0.4, 1, 0.4, 0.04, ent->client->ps.blend);
+			SV_AddBlend (0.4, 1, 0.4, 0.04, ent->client->ps.screen_blend);
 	}
 
 	// add for damage
 	if (ent->client->damage_alpha > 0)
 		SV_AddBlend (ent->client->damage_blend[0],ent->client->damage_blend[1]
-		,ent->client->damage_blend[2], ent->client->damage_alpha, ent->client->ps.blend);
+		,ent->client->damage_blend[2], ent->client->damage_alpha, ent->client->ps.screen_blend);
 
 	if (ent->client->bonus_alpha > 0)
-		SV_AddBlend (0.85, 0.7, 0.3, ent->client->bonus_alpha, ent->client->ps.blend);
+		SV_AddBlend (0.85, 0.7, 0.3, ent->client->bonus_alpha, ent->client->ps.screen_blend);
 
 	// drop the damage value
 	ent->client->damage_alpha -= 0.06 * 10.0 / sv_fps->value;
@@ -852,7 +854,8 @@ void G_SetClientEvent (edict_t *ent)
 	if ( ent->groundentity && xyspeed > 225)
 	{
 		// called with each player step
-		if ( (int)(current_client->bobtime+bobmove) != bobcycle 
+		if ( (int)(current_client->bobtime+bobmove) != bobcycle
+			&& level.framenum %	qf2sf(1) == 0 // don'd do the funny rapidfire burst of steps lol
 			&& (ent->client->pers.inventory[ITEM_INDEX(FindItem("Stealth Boots"))] < 1)	&& !ent->mtype)
 		{
 			if ((ent->myskills.abilities[CLOAK].disable) || (ent->myskills.abilities[CLOAK].current_level < 1))
@@ -1115,11 +1118,19 @@ void ClientEndServerFrame (edict_t *ent)
 	// If it wasn't updated here, the view position would lag a frame
 	// behind the body position when pushed -- "sinking into plats"
 	//
+#ifndef VRX_REPRO
 	for (i=0 ; i<3 ; i++)
 	{
 		current_client->ps.pmove.origin[i] = ent->s.origin[i]*8.0;
 		current_client->ps.pmove.velocity[i] = ent->velocity[i]*8.0;
 	}
+#else
+	for (i=0 ; i<3 ; i++)
+	{
+		current_client->ps.pmove.origin[i] = ent->s.origin[i];
+		current_client->ps.pmove.velocity[i] = ent->velocity[i];
+	}
+#endif
 
 	//
 	// If the end of unit layout is displayed, don't give
@@ -1128,7 +1139,7 @@ void ClientEndServerFrame (edict_t *ent)
 	if (level.intermissiontime)
 	{
 		// FIXME: add view drifting here?
-		current_client->ps.blend[3] = 0;
+		current_client->ps.screen_blend[3] = 0;
 		current_client->ps.fov = 90;
 		G_SetStats (ent);
 		return;

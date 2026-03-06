@@ -189,7 +189,7 @@ void BOT_SetName(edict_t *bot, char *name, char *skin, char *team)
 	Info_SetValueForKey (userinfo, "hand", "2"); // bot is center handed for now!
 	Info_SetValueForKey(userinfo, "ip", "127.0.0.1");
 
-	ClientConnect (bot, userinfo);
+	ClientConnect (bot, userinfo, NULL, true);
 
 //	ACESP_SaveBots(); // make sure to save the bots
 }
@@ -776,7 +776,7 @@ void BOT_SpawnBot (char *team, char *name, char *skin, char *userinfo, char *cla
 	if(userinfo == NULL)
 		BOT_SetName(bot, name, skin, team);
 	else
-		ClientConnect (bot, userinfo);
+			ClientConnect (bot, userinfo, NULL, true);
 	bot->ai.is_bot = true;//GHz: because this gets set to 'false' in ClientConnect
 	G_InitEdict (bot);
 	InitClientResp (bot->client);

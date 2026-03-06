@@ -485,9 +485,6 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 		if (!check->solid) continue;
 
 //ponko
-		//r1: FIXME: what the fuck?
-		if(check->classname[0] == 'R' && (check->classname[6] == 'X' || check->classname[6] == '3') ) continue;
-
 		if (check->movetype == MOVETYPE_PUSH
 		|| check->movetype == MOVETYPE_STOP
 		|| check->movetype == MOVETYPE_NONE
@@ -495,8 +492,13 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 			continue;
 
 //		if(check->movetype == MOVETYPE_STEP) M_CheckGround(check);
+#ifndef VRX_REPRO
 		if (!check->area.prev)
 			continue;		// not linked in anywhere
+#else
+		if (!check->linked)
+			continue;
+#endif
 
 	// if the entity is standing on the pusher, it will definitely be moved
 		if (check->groundentity != pusher)

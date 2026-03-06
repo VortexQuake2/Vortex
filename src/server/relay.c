@@ -9,6 +9,10 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#ifdef __APPLE__
+#include <unistd.h>
+#endif
+
 #ifndef SOCKET
 #define SOCKET int
 #endif

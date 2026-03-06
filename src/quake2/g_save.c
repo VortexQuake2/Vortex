@@ -173,12 +173,25 @@ is loaded.
 ============
 */
 
+#ifdef VRX_REPRO
+void PreInit() {
+	// coop = gire.
+	gi.cvar_forceset("sv_fps", va("%d", gire.tick_rate));
+
+	deathmatch = gire.cvar("deathmatch", "0", CVAR_LATCH);
+	coop = gire.cvar("coop", "0", CVAR_LATCH);
+
+	if (!deathmatch->integer && !coop->integer) {
+		gire.cvar_forceset("deathmatch", "1");
+	}
+}
+#endif
+
 
 
 void InitGame(void)
 {
 	gi.dprintf("==== InitGame ====\n");
-
 
 	//K03 Begin
 	srand((unsigned)time(0));
@@ -186,7 +199,6 @@ void InitGame(void)
 	gamedir = gi.cvar("gamedir", "vortex", CVAR_SERVERINFO);
 	save_path = gi.cvar("save_path", va("%s//characters", gamedir->string), CVAR_LATCH);
 	//K03 End
-
 
 	// az begin
 	gi.cvar_forceset("g_features", va("%d", GMF_VARIABLE_FPS));
@@ -235,10 +247,12 @@ void InitGame(void)
 	gi.cvar("gamedate", __DATE__, CVAR_SERVERINFO | CVAR_LATCH);
 
 	maxclients = gi.cvar("maxclients", "4", CVAR_SERVERINFO | CVAR_LATCH);
-	deathmatch = gi.cvar("deathmatch", "0", CVAR_LATCH);
-	coop = gi.cvar("coop", "0", CVAR_LATCH);
 	skill = gi.cvar("skill", "1", CVAR_SERVERINFO);
+#ifndef VRX_REPRO
 	maxentities = gi.cvar("maxentities", "1024", CVAR_LATCH);
+#else
+	maxentities = gi.cvar("maxentities", "8096", CVAR_LATCH);
+#endif
 	//chain edit flag
 	//vwep support
 	vwep = gi.cvar("vwep", "1", CVAR_LATCH);
@@ -413,17 +427,32 @@ void InitGame(void)
 	vrx_relay_connect();
 
 	//3.0 Load the custom map lists
-	if (vrx_load_map_list(MAPMODE_PVP) && vrx_load_map_list(MAPMODE_PVM) && vrx_load_map_list(MAPMODE_INV)
-		&& vrx_load_map_list(MAPMODE_DOM) && vrx_load_map_list(MAPMODE_CTF) && vrx_load_map_list(MAPMODE_FFA)
-		&& vrx_load_map_list(MAPMODE_TRA) && vrx_load_map_list(MAPMODE_INH) && vrx_load_map_list(MAPMODE_VHW)
-		&& vrx_load_map_list(MAPMODE_TBI))
+	int modes[] = {
+		MAPMODE_PVP,
+		MAPMODE_PVM,
+		MAPMODE_INV,
+		MAPMODE_DOM,
+		MAPMODE_CTF,
+		MAPMODE_FFA,
+		MAPMODE_TRA,
+		MAPMODE_INH,
+		MAPMODE_VHW,
+		MAPMODE_TBI
+	};
+
+	qboolean mload_success = true;
+	for (int i = 0; i < (sizeof(modes) / sizeof(modes[0])); i++) {
+		if (!vrx_load_map_list(modes[i])) {
+			gi.dprintf("WARNING: Error loading custom map list (%d)\n", i);
+			mload_success = false;
+		}
+	}
+
+	if (mload_success)
 		gi.dprintf("INFO: Vortex Custom Map Lists loaded successfully\n");
-	else
-		gi.dprintf("WARNING: Error loading custom map lists\n");
 
 	//3.0 Load the armory
 	LoadArmory();
-
 	InitializeTeamNumbers(); // for allies
 
 	// az begin
@@ -918,7 +947,10 @@ void ReadLevel(char *filename)
 		ReadEdict(f, ent);
 
 		// let the server rebuild world links for this ent
+		// TODO?
+#ifndef VRX_REPRO
 		memset(&ent->area, 0, sizeof(ent->area));
+#endif
 		gi.linkentity(ent);
 	}
 

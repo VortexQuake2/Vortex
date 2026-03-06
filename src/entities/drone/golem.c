@@ -8,6 +8,8 @@ GOLEM
 
 #include "g_local.h"
 #include "../../quake2/monsterframes/golem.h"
+void MonsterCommand(edict_t *ent);
+void MonsterFollowMe(edict_t *ent);
 
 #define GOLEM_BACKHAND_RANGE		512 // range for backhand attack (throw rocks)
 #define GOLEM_AOE_ATTACK_RANGE		200 // range for punch/avalanche/stun attacks

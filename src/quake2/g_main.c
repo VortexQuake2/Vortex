@@ -1,3 +1,5 @@
+#include <stdarg.h>
+
 #include "g_local.h"
 #include "../gamemodes/ctf.h"
 #include "../gamemodes/v_hw.h"
@@ -5,10 +7,17 @@
 
 #include <server/relay.h>
 
+#include "bg_local.h"
+#include "q_recompat.h"
+
 game_locals_t	game;
 level_locals_t	level;
 game_import_t	gi;
+#ifndef VRX_REPRO
 game_export_t	globals;
+#else
+repro_export_t globals = {0};
+#endif
 spawn_temp_t	st;
 
 int	sm_meat_index;
@@ -98,7 +107,6 @@ int pvm_average_level;
 qboolean SPREE_WAR;
 qboolean INVASION_OTHERSPAWNS_REMOVED;
 int next_invasion_wave_level;
-qboolean found_flag;
 
 cvar_t *gamedir;
 cvar_t *hostname;
@@ -181,10 +189,10 @@ cvar_t *generalabmode;
 
 void SpawnEntities(char *mapname, char *entities, char *spawnpoint);
 void ClientThink(edict_t *ent, usercmd_t *cmd);
-qboolean ClientConnect(edict_t *ent, char *userinfo);
+bool ClientConnect(edict_t *ent, char *userinfo, const char *social_id, bool is_bot);
 void ClientUserinfoChanged(edict_t *ent, char *userinfo);
 void ClientDisconnect(edict_t *ent);
-void ClientBegin(edict_t *ent, qboolean loadgame);
+void ClientBegin(edict_t *ent);
 void ClientCommand(edict_t *ent);
 void RunEntity(edict_t *ent);
 void WriteGame(char *filename, qboolean autosave);
@@ -192,7 +200,11 @@ void ReadGame(char *filename);
 void WriteLevel(char *filename);
 void ReadLevel(char *filename);
 void InitGame(void);
+#ifndef VRX_REPRO
 void G_RunFrame(void);
+#else
+void G_RunFrame(bool main_loop);
+#endif
 void dom_init(void);
 void dom_awardpoints(void);
 void PTRCheckJoinedQue(void);
@@ -231,12 +243,8 @@ void ShutdownGame(void)
 	gi.FreeTags(TAG_GAME);
 }
 
-#ifndef _WINDOWS
-__attribute__((visibility("default")))
-#else
-__declspec(dllexport)
-#endif
-game_export_t *GetGameAPI(game_import_t *import)
+#ifndef VRX_REPRO
+q_export game_export_t *GetGameAPI(game_import_t *import)
 {
 	gi = *import;
 
@@ -267,34 +275,77 @@ game_export_t *GetGameAPI(game_import_t *import)
 
 	return &globals;
 }
+#else
 
-#ifndef GAME_HARD_LINKED
-// this is only here so the functions in q_shared.c and q_shwin.c can link
-void Sys_Error(char *error, ...)
-{
-	va_list		argptr;
-	char		text[1024];
-
-	va_start(argptr, error);
-	vsprintf(text, error, argptr);
-	va_end(argptr);
-
-	gi.error(ERR_FATAL, "%s", text);
+bool CanSave() {
+	// not supported
+	return false;
 }
 
-void Com_Printf(char *msg, ...)
+void PreInit();
+// TODO: all these missing thingies.
+repro_export_t *GetGameAPI(repro_import_t *import)
+{
+	vrx_repro_getgameapi(import, &gi);
+
+	globals.apiversion = GAME_API_VERSION;
+	globals.PreInit = PreInit;
+	globals.Init = InitGame;
+	globals.Shutdown = ShutdownGame;
+	globals.SpawnEntities = SpawnEntities;
+
+	globals.WriteGameJson = repro_write_game_json;
+	globals.ReadGameJson = repro_read_game_json;
+	globals.WriteLevelJson = repro_write_level_json;
+	globals.ReadLevelJson = repro_read_level_json;
+
+	globals.CanSave = CanSave;
+
+	globals.ClientChooseSlot = repro_choose_client_slot;
+
+	globals.ClientConnect = ClientConnect;
+	globals.ClientBegin = ClientBegin;
+	globals.ClientUserinfoChanged = ClientUserinfoChanged;
+	globals.ClientDisconnect = ClientDisconnect;
+	globals.ClientCommand = ClientCommand;
+	globals.ClientThink = ClientThink;
+
+
+	globals.RunFrame = G_RunFrame;
+	globals.PrepFrame = repro_prep_frame;
+
+	globals.ServerCommand = ServerCommand;
+
+	globals.edict_size = sizeof(edict_t);
+
+	globals.server_flags = SERVER_FLAGS_NONE;
+	globals.Pmove = Pmove;
+	globals.GetExtension = repro_get_extension;
+	globals.Bot_SetWeapon = repro_bot_set_weapon;
+	globals.Bot_TriggerEdict = repro_bot_trigger_edict;
+	globals.Bot_UseItem = repro_bot_use_item;
+	globals.Bot_GetItemID = repro_bot_get_item_id;
+	globals.Edict_ForceLookAtPoint = repro_edict_force_look_at_point;
+	globals.Bot_PickedUpItem = repro_bot_picked_up_item;
+
+	globals.Entity_IsVisibleToPlayer = repro_visible_to_player;
+	globals.GetShadowLightData = repro_get_shadow_light_data;
+
+	return &globals;
+}
+#endif
+
+void Com_Printf(const char *msg, ...)
 {
 	va_list		argptr;
 	char		text[1024];
 
 	va_start(argptr, msg);
-	vsprintf(text, msg, argptr);
+	vsnprintf(text, sizeof(text), msg, argptr);
 	va_end(argptr);
 
 	gi.dprintf("%s", text);
 }
-
-#endif
 
 //======================================================================
 
@@ -594,31 +645,7 @@ void EndDMLevel(void)
 }
 
 
-/*
-=================
-CheckNeedPass
-=================
-*/
-void CheckNeedPass(void)
-{
-	int need;
 
-	// if password or spectator_password has changed, update needpass
-	// as needed
-	if (password->modified || spectator_password->modified)
-	{
-		password->modified = spectator_password->modified = false;
-
-		need = 0;
-
-		if (*password->string && Q_stricmp(password->string, "none"))
-			need |= 1;
-		if (*spectator_password->string && Q_stricmp(spectator_password->string, "none"))
-			need |= 2;
-
-		gi.cvar_set("needpass", va("%d", need));
-	}
-}
 
 /*
 =================
@@ -928,7 +955,11 @@ Advances the world by
 
 
 void RunVotes();
+#ifndef VRX_REPRO
 void G_RunFrame(void)
+#else
+void G_RunFrame(bool main_loop)
+#endif
 {
 	int		i;//j;
 	edict_t	*ent;
@@ -1004,9 +1035,6 @@ void G_RunFrame(void)
 
 	// see if it is time to end a deathmatch
 	CheckDMRules();
-
-	// see if needpass needs updated
-	CheckNeedPass();
 
 	// build the playerstate_t structures for all players
 	ClientEndServerFrames();

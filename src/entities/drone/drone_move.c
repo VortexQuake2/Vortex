@@ -2,7 +2,6 @@
 
 #include "g_local.h"
 
-#define	STEPSIZE	18
 
 /*
 =============
