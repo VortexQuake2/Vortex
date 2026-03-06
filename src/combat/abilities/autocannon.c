@@ -260,7 +260,7 @@ void autocannon_think (edict_t *self)
 
 	if (!autocannon_checkstatus(self))
 	{
-		autocannon_remove(self, NULL);
+		autocannon_remove(self, nullptr);
 		return;
 	}
 

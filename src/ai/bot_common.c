@@ -18,6 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#include <stdarg.h>
+
 #include "g_local.h"
 #include "ai_local.h"
 
@@ -169,7 +171,7 @@ qboolean BOT_ServerCommand (void)
 
 	if (!name || strlen(name) < 5)
 	{
-		name = bot_names[GetRandom(0, sizeof(bot_names - 1))];
+		name = bot_names[GetRandom(0, sizeof(bot_names) - 1)];
 	}
 
 	if (!Q_stricmp(cmd, "addbot"))

@@ -1,3 +1,5 @@
+#include <stdarg.h>
+
 #include "g_local.h"
 
 lva_result_t lva(const char* format, ...)
