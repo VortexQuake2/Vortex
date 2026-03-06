@@ -2,13 +2,33 @@
 #define GAMEHEAD
 // game.h -- game dll information visible to server
 
-#define	GAME_API_VERSION	3
+#define	GAME_API_VERSION 2023
+#define CGAME_API_VERSION 2022
+#include <stdint.h>
+
+#include "q_shared.h"
 
 // edict->svflags
+enum svflags_t : uint32_t
+{
+	SVF_NONE        = 0,          // no serverflags
+	SVF_NOCLIENT    = 1 << 0,   // don't send entity to clients, even if it has effects
+	SVF_DEADMONSTER = 1 << 1,   // treat as CONTENTS_DEADMONSTER for collision
+	SVF_MONSTER     = 1 << 2,   // treat as CONTENTS_MONSTER for collision
+#ifdef VRX_REPRO
+	SVF_PLAYER      = 1 << 3,   // [Paril-KEX] treat as CONTENTS_PLAYER for collision
+	SVF_BOT         = 1 << 4,   // entity is controlled by a bot AI.
+	SVF_NOBOTS      = 1 << 5,   // don't allow bots to use/interact with entity
+	SVF_RESPAWNING  = 1 << 6,   // entity will respawn on it's next think.
+	SVF_PROJECTILE  = 1 << 7,   // treat as CONTENTS_PROJECTILE for collision
+	SVF_INSTANCED   = 1 << 8,   // entity has different visibility per player
+	SVF_DOOR        = 1 << 9,   // entity is a door of some kind
+	SVF_NOCULL      = 1 << 10,  // always send, even if we normally wouldn't
+	SVF_HULL        = 1 << 11   // always use hull when appropriate (triggers, etc; for gi.clip)
+#endif
+};
 
-#define	SVF_NOCLIENT			0x00000001	// don't send entity to clients, even if it has effects
-#define	SVF_DEADMONSTER			0x00000002	// treat as CONTENTS_DEADMONSTER for collision
-#define	SVF_MONSTER				0x00000004	// treat as CONTENTS_MONSTER for collision
+
 
 // edict->solid values
 
@@ -19,6 +39,18 @@ typedef enum
     SOLID_BBOX,			// touch on edge
     SOLID_BSP			// bsp clip, touch on edge
 } solid_t;
+
+// bitflags for STAT_LAYOUTS
+enum layout_flags_t : int16_t
+{
+	LAYOUTS_LAYOUT		      = 0, // svc_layout is active; escape remapped to putaway
+	LAYOUTS_INVENTORY	      = 1, // inventory is active; escape remapped to putaway
+	LAYOUTS_HIDE_HUD	      = 2, // hide entire hud, for cameras, etc
+	LAYOUTS_INTERMISSION      = 3, // intermission is being drawn; collapse splitscreen into 1 view
+	LAYOUTS_HELP              = 4, // help is active; escape remapped to putaway
+	LAYOUTS_HIDE_CROSSHAIR	  = 5 // hide crosshair only
+};
+
 
 //===============================================================
 
@@ -34,48 +66,6 @@ typedef struct link_s
 typedef struct edict_s edict_t;
 typedef struct gclient_s gclient_t;
 
-
-#ifndef GAME_INCLUDE
-
-typedef struct gclient_s
-{
-	player_state_t	ps;		// communicated by server to clients
-	int				ping;
-	// the game dll can add anything it wants after
-	// this point in the structure
-} gclient_t;
-
-
-struct edict_s
-{
-	entity_state_t	s;
-	struct gclient_s	*client;
-	qboolean	inuse;
-	int			linkcount;
-
-	// FIXME: move these fields to a server private sv_entity_t
-	link_t		area;				// linked to a division node or leaf
-	
-	int			num_clusters;		// if -1, use headnode instead
-	int			clusternums[MAX_ENT_CLUSTERS];
-	int			headnode;			// unused if num_clusters != -1
-	int			areanum, areanum2;
-
-	//================================
-
-	int			svflags;			// SVF_NOCLIENT, SVF_DEADMONSTER, SVF_MONSTER, etc
-	vec3_t		mins, maxs;
-	vec3_t		absmin, absmax, size;
-	solid_t		solid;
-	int			clipmask;
-	edict_t		*owner;
-
-	// the game dll can add anything it wants after
-	// this point in the structure
-};
-
-#endif		// GAME_INCLUDE
-
 //===============================================================
 
 //
@@ -88,7 +78,7 @@ typedef struct
 	void	(*dprintf) (const char *fmt, ...);
 	void	(*cprintf) (const edict_t *ent, int printlevel, const char *fmt, ...);
 	void	(*centerprintf) (const edict_t *ent,  const char *fmt, ...);
-	void	(*sound) (const edict_t *ent, int channel, int soundindex, float volume, float attenuation, float timeofs);
+	void	(*sound) (const edict_t *ent, enum soundchan_t channel, int soundindex, float volume, float attenuation, float timeofs);
 	void	(*positioned_sound) (vec3_t origin, edict_t *ent, int channel, int soundindex, float volume, float attenuation, float timeofs);
 
 	// config strings hold all the index strings, the lightstyles,
@@ -137,7 +127,7 @@ typedef struct
 	void	(*WriteAngle) (float f);
 
 	// managed memory allocation
-	void	*(*TagMalloc) (int size, int tag);
+	void	*(*TagMalloc) (size_t size, int tag);
 	void	(*TagFree) (void *block);
 	void	(*FreeTags) (int tag);
 

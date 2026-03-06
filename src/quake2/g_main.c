@@ -5,10 +5,16 @@
 
 #include <server/relay.h>
 
+#include "q_recompat.h"
+
 game_locals_t	game;
 level_locals_t	level;
 game_import_t	gi;
+#ifndef VRX_REPRO
 game_export_t	globals;
+#else
+repro_export_t globals;
+#endif
 spawn_temp_t	st;
 
 int	sm_meat_index;
@@ -98,7 +104,6 @@ int pvm_average_level;
 qboolean SPREE_WAR;
 qboolean INVASION_OTHERSPAWNS_REMOVED;
 int next_invasion_wave_level;
-qboolean found_flag;
 
 cvar_t *gamedir;
 cvar_t *hostname;
@@ -231,11 +236,12 @@ void ShutdownGame(void)
 	gi.FreeTags(TAG_GAME);
 }
 
-#ifndef _WINDOWS
+#if (!defined _MSC_VER) && ((defined __linux__) || (defined __APPLE__))
 __attribute__((visibility("default")))
-#else
+#elif _MSC_VER // _WINDOWS
 __declspec(dllexport)
 #endif
+#ifndef VRX_REPRO
 game_export_t *GetGameAPI(game_import_t *import)
 {
 	gi = *import;
@@ -267,21 +273,77 @@ game_export_t *GetGameAPI(game_import_t *import)
 
 	return &globals;
 }
+#else
 
-#ifndef GAME_HARD_LINKED
-// this is only here so the functions in q_shared.c and q_shwin.c can link
-void Sys_Error(char *error, ...)
-{
-	va_list		argptr;
-	char		text[1024];
+void PreInit() {}
 
-	va_start(argptr, error);
-	vsprintf(text, error, argptr);
-	va_end(argptr);
-
-	gi.error(ERR_FATAL, "%s", text);
+bool CanSave() {
+	// not supported
+	return false;
 }
 
+// unused (for now?)
+void PrepFrame () {}
+
+char* WriteGameJson(bool autosave, size_t *out_size) { return nullptr; }
+void ReadGameJson(const char* json) { /* stub */ }
+char* WriteLevelJson(bool autosave, size_t *out_size) { return nullptr; }
+void ReadLevelJson(const char* json) {}
+
+// TODO: all these missing thingies.
+repro_export_t *GetGameAPI(repro_import_t *import)
+{
+	vrx_repro_getgameapi(&gire, import);
+
+	globals.apiversion = GAME_API_VERSION;
+	globals.PreInit = PreInit;
+	globals.Init = InitGame;
+	globals.Shutdown = ShutdownGame;
+	globals.SpawnEntities = SpawnEntities;
+
+	globals.WriteGameJson = WriteGameJson;
+	globals.ReadGameJson = ReadGameJson;
+	globals.WriteLevelJson = WriteLevelJson;
+	globals.ReadLevelJson = ReadLevelJson;
+
+	globals.CanSave = CanSave;
+
+	// globals.ClientChooseSlot =
+
+	globals.ClientConnect = ClientConnect;
+	globals.ClientBegin = ClientBegin;
+	globals.ClientUserinfoChanged = ClientUserinfoChanged;
+	globals.ClientDisconnect = ClientDisconnect;
+	globals.ClientCommand = ClientCommand;
+	globals.ClientThink = ClientThink;
+
+	globals.RunFrame = G_RunFrame;
+	globals.PrepFrame = PrepFrame;
+
+	globals.ServerCommand = ServerCommand;
+
+	globals.edict_size = sizeof(edict_t);
+
+	// globals.server_flags
+	// globals.Pmove
+	// globals.GetExtension
+	// globals.Bot_SetWeapon
+	// globals.Bot_TriggerEdict
+	// globals.Bot_UseItem
+	// globals.Bot_GetItemID
+	// globals.Edict_ForceLookAtPoint
+	// globals.Bot_PickedUpItem
+
+	// globals.Entity_IsVisibleToPlayer
+	// globals.GetShadowLightData
+
+	cs_override_init(); // az: fuck gi.soundindex
+
+	return &globals;
+}
+#endif
+
+#ifndef GAME_HARD_LINKED
 void Com_Printf(char *msg, ...)
 {
 	va_list		argptr;
@@ -594,31 +656,7 @@ void EndDMLevel(void)
 }
 
 
-/*
-=================
-CheckNeedPass
-=================
-*/
-void CheckNeedPass(void)
-{
-	int need;
 
-	// if password or spectator_password has changed, update needpass
-	// as needed
-	if (password->modified || spectator_password->modified)
-	{
-		password->modified = spectator_password->modified = false;
-
-		need = 0;
-
-		if (*password->string && Q_stricmp(password->string, "none"))
-			need |= 1;
-		if (*spectator_password->string && Q_stricmp(spectator_password->string, "none"))
-			need |= 2;
-
-		gi.cvar_set("needpass", va("%d", need));
-	}
-}
 
 /*
 =================
@@ -1004,9 +1042,6 @@ void G_RunFrame(void)
 
 	// see if it is time to end a deathmatch
 	CheckDMRules();
-
-	// see if needpass needs updated
-	CheckNeedPass();
 
 	// build the playerstate_t structures for all players
 	ClientEndServerFrames();

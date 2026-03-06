@@ -17,8 +17,9 @@ option(VRX_USEHASH "Use hashing on commands instead of iterating through the lis
 option(VRX_Q2PRO "Use map/gamemap differentiation (for q2pro)." TRUE)
 option(VRX_OLD_NOLAG "Use old NOLAG style. Not recommended." FALSE)
 option(VRX_OLD_VOTE "Use old vote system." FALSE)
+option(VRX_REPRO "Support q2repro (remaster, EXPERIMENTAL)" FALSE)
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
 # Source files
@@ -132,6 +133,10 @@ endif ()
 if (VRX_LOCKDEFAULTS)
     add_definitions(-DLOCK_DEFAULTS)
 endif ()
+
+if (VRX_REPRO)
+    add_definitions(-DVRX_REPRO)
+endif()
 
 FetchContent_Declare(
     MsgPack

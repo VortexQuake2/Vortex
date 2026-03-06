@@ -2671,10 +2671,12 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 
 		pm.cmd = *ucmd;
 
+		// TODO: check PM_trace
 		pm.trace = PM_trace;	// adds default parms
 		
-
+#ifndef VRX_REPRO
 		pm.pointcontents = gi.pointcontents;
+#endif
 
 		// perform a pmove
 		gi.Pmove (&pm);
@@ -2701,7 +2703,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		// if this is a morphed player, restore saved viewheight
 		// this locks them into that viewheight
 		if (ent->mtype)
-			pm.viewheight = viewheight;
+			pm_set_viewheight(&pm, viewheight);
 //GHz END
 
 
@@ -2744,7 +2746,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		{
 			V_Player_Touchdown(ent);
 		}
-		ent->viewheight = pm.viewheight;
+		ent->viewheight = pm_get_viewheight(&pm);
 		ent->waterlevel = pm.waterlevel;
 		ent->watertype = pm.watertype;
 		ent->groundentity = pm.groundentity;
@@ -2839,7 +2841,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 
 	// save light level the player is standing on for
 	// monster sighting AI
-	ent->light_level = ucmd->lightlevel;
+	// ent->light_level = ucmd->;
 
 	// fire weapon from final position if needed
 	if (client->latched_buttons & BUTTON_ATTACK)

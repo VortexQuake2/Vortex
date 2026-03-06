@@ -414,9 +414,6 @@ void sword_attack (edict_t *ent, vec3_t g_offset, int damage)
 	}
 	*/
 
-	if (ent->swordtimer >= level.time)
-		return;
-
     fire_sword (
 		ent, 
 		start, 

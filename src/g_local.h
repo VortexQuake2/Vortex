@@ -25,17 +25,16 @@
 /* twister.c */
 #include <stdint.h>
 
+#include "quake2/q_recompat.h"
 #include "server/defer.h"
 void seedMT(uint32_t seed);
 uint32_t randomMT(void);
 
 // the "gameversion" client command will print this plus compile date
-#define	GAMEVERSION	"Vortex"//K03 "baseq2"
+#define	GAMEVERSION	"vortex"//K03 "baseq2"
 //#define MAX_NODES	1024
 //K03 Begin
 
-extern qboolean MonstersInUse;
-extern qboolean found_flag;
 extern int total_monsters;
 extern edict_t *SPREE_DUDE;
 extern edict_t *red_base;
@@ -56,13 +55,58 @@ extern long FLAG_FRAMES;
 //K03 End
 
 // protocol bytes that can be directly added to messages
-#define	svc_muzzleflash		1
-#define	svc_muzzleflash2	2
-#define	svc_temp_entity		3
-#define	svc_layout			4
-#define	svc_inventory		5
-#define	svc_stufftext		11
-#define	svc_configstring	13
+enum server_command_t : uint8_t
+{
+	svc_bad,
+
+	svc_muzzleflash,
+	svc_muzzleflash2,
+	svc_temp_entity,
+	svc_layout,
+	svc_inventory,
+
+#ifdef VRX_REPRO
+	svc_nop,
+	svc_disconnect,
+	svc_reconnect,
+	svc_sound,                  // <see code>
+	svc_print,                  // [byte] id [string] null terminated string
+#endif
+
+	svc_stufftext = 11,              // [string] stuffed into client's console buffer, should be \n terminated
+
+#ifdef VRX_REPRO
+	svc_serverdata,             // [long] protocol ...
+#endif
+
+	svc_configstring = 13,           // [short] [string]
+#ifdef VRX_REPRO
+	svc_spawnbaseline,
+	svc_centerprint,            // [string] to put in center of the screen
+	svc_download,               // [short] size [size bytes]
+	svc_playerinfo,             // variable
+	svc_packetentities,         // [...]
+	svc_deltapacketentities,    // [...]
+	svc_frame,
+
+	svc_splitclient,
+
+	svc_configblast,            // [Kex] A compressed version of svc_configstring
+	svc_spawnbaselineblast,     // [Kex] A compressed version of svc_spawnbaseline
+	svc_level_restart,          // [Paril-KEX] level was soft-rebooted
+	svc_damage,                 // [Paril-KEX] damage indicators
+	svc_locprint,               // [Kex] localized + libfmt version of print
+	svc_fog,                    // [Paril-KEX] change current fog values
+	svc_waitingforplayers,      // [Kex-Edward] Inform clients that the server is waiting for remaining players
+	svc_bot_chat,               // [Kex] bot specific chat
+	svc_poi,                    // [Paril-KEX] point of interest
+	svc_help_path,              // [Paril-KEX] help path
+	svc_muzzleflash3,           // [Paril-KEX] muzzleflashes, but ushort id
+	svc_achievement,            // [Paril-KEX]
+#endif
+	svc_last // only for checks
+};
+
 //==================================================================
 
 // view pitching times
@@ -667,7 +711,11 @@ typedef struct
 extern	game_locals_t	game;
 extern	level_locals_t	level;
 extern	game_import_t	gi;
+#ifndef VRX_REPRO
 extern	game_export_t	globals;
+#else
+extern	repro_export_t	globals;
+#endif
 extern	spawn_temp_t	st;
 
 extern int	sm_meat_index;
@@ -1780,6 +1828,101 @@ struct gclient_s
 	edict_t		*pickup_prev;		// previously picked up entity
 };
 
+#ifdef VRX_REPRO
+
+static constexpr int32_t    Team_None = 0;
+static constexpr int32_t    Item_UnknownRespawnTime = INT_MAX;
+static constexpr int32_t    Item_Invalid = -1;
+static constexpr int32_t    Item_Null = 0;
+
+enum sv_ent_flags_t : uint64_t {
+    SVFL_NONE               = 0, // no flags
+    SVFL_ONGROUND           = 1 << 0 ,
+    SVFL_HAS_DMG_BOOST      = 1 << 1 ,
+    SVFL_HAS_PROTECTION     = 1 << 2 ,
+    SVFL_HAS_INVISIBILITY   = 1 << 3 ,
+    SVFL_IS_JUMPING         = 1 << 4 ,
+    SVFL_IS_CROUCHING       = 1 << 5 ,
+    SVFL_IS_ITEM            = 1 << 6 ,
+    SVFL_IS_OBJECTIVE       = 1 << 7 ,
+    SVFL_HAS_TELEPORTED     = 1 << 8 ,
+    SVFL_TAKES_DAMAGE       = 1 << 9 ,
+    SVFL_IS_HIDDEN          = 1 << 10 ,
+    SVFL_IS_NOCLIP          = 1 << 11 ,
+    SVFL_IN_WATER           = 1 << 12 ,
+    SVFL_NO_TARGET          = 1 << 13 ,
+    SVFL_GOD_MODE           = 1 << 14 ,
+    SVFL_IS_FLIPPING_OFF    = 1 << 15 ,
+    SVFL_IS_SALUTING        = 1 << 16 ,
+    SVFL_IS_TAUNTING        = 1 << 17 ,
+    SVFL_IS_WAVING          = 1 << 18 ,
+    SVFL_IS_POINTING        = 1 << 19 ,
+    SVFL_ON_LADDER          = 1 << 20 ,
+    SVFL_MOVESTATE_TOP      = 1 << 21 ,
+    SVFL_MOVESTATE_BOTTOM   = 1 << 22 ,
+    SVFL_MOVESTATE_MOVING   = 1 << 23 ,
+    SVFL_IS_LOCKED_DOOR     = 1 << 24 ,
+    SVFL_CAN_GESTURE        = 1 << 25 ,
+    SVFL_WAS_TELEFRAGGED    = 1 << 26 ,
+    SVFL_TRAP_DANGER        = 1 << 27 ,
+    SVFL_ACTIVE             = 1 << 28 ,
+    SVFL_IS_SPECTATOR       = 1 << 29 ,
+    SVFL_IN_TEAM            = 1 << 30
+};
+
+
+struct armorInfo_t {
+	int32_t item_id;
+	int32_t max_count;
+};
+
+enum water_level_t : uint8_t
+{
+	WATER_NONE,
+	WATER_FEET,
+	WATER_WAIST,
+	WATER_UNDER
+};
+
+#define MAX_NETNAME         32
+#define MAX_ARMOR_TYPES     3
+#define MAX_ITEMS           256
+
+typedef struct sv_entity_s {
+	bool                        init;
+	enum sv_ent_flags_t              ent_flags;
+	enum button_t                    buttons;
+	uint32_t	                spawnflags;
+	int32_t                     item_id;
+	int32_t                     armor_type;
+	int32_t                     armor_value;
+	int32_t                     health;
+	int32_t                     max_health;
+	int32_t                     starting_health;
+	int32_t                     weapon;
+	int32_t                     team;
+	int32_t                     lobby_usernum;
+	int32_t                     respawntime;
+	int32_t                     viewheight;
+	int32_t                     last_attackertime;
+	enum water_level_t               waterlevel;
+	vec3_t                     viewangles;
+	vec3_t                     viewforward;
+	vec3_t                     velocity;
+	vec3_t                     start_origin;
+	vec3_t                     end_origin;
+	edict_t *                   enemy;
+	edict_t *                   ground_entity;
+	const char *                classname;
+	const char *                targetname;
+	char                        netname[ MAX_NETNAME ];
+	int32_t                     inventory[ MAX_ITEMS ];
+	struct armorInfo_t                 armor_info[ MAX_ARMOR_TYPES ];
+
+} sv_entity_t;
+
+#endif
+
 struct edict_s
 {
 	entity_state_t	s;
@@ -1788,7 +1931,8 @@ struct edict_s
 									// of gclient_s to be a player_state_t
 									// but the rest of it is opaque
 
-	qboolean	inuse;
+#ifndef VRX_REPRO
+	_rebool		inuse;
 	int			linkcount;
 
 	// FIXME: move these fields to a server private sv_entity_t
@@ -1798,14 +1942,21 @@ struct edict_s
 	int			clusternums[MAX_ENT_CLUSTERS];
 	int			headnode;			// unused if num_clusters != -1
 	int			areanum, areanum2;
+#else
+	sv_entity_t	sv;
+	bool inuse;
 
+	bool linked;
+	int32_t linkcount;
+	int32_t areanum, areanum2;
+#endif
 	//================================
 
-	int			svflags;			// note: SVF_MONSTER tells physics to clip on any solid object (not just walls)
+	enum svflags_t			svflags;			// note: SVF_MONSTER tells physics to clip on any solid object (not just walls)
 	vec3_t		mins, maxs;
 	vec3_t		absmin, absmax, size;
 	solid_t		solid;
-	int			clipmask;
+	enum contents_t			clipmask;
 	edict_t		*owner;
 
 
@@ -2013,64 +2164,84 @@ struct edict_s
 
 	// az begin
 	qboolean	exploded; // az: don't explode more than once at death. lol
-	int			list_index;
+	int			list_index; // invasion queue position
 	// az end
 
-	edict_t		*selected[4];
-	edict_t		*other;
+	edict_t		*selected[4]; // drone selection
+	edict_t		*other; // laser effect for hw/ctf
 	edict_t		*supplystation;
 	//edict_t		*magmine;
 //GHz START
-	// rune stuff
+
+	// trade
 	edict_t		*trade_with;
 	item_t		*trade_item[3];
 	float		msg_time;
+
 	//3.0 rune stuff
 	item_t		vrxitem;
-	// teamplay
-	int			teamnum;
-	float		incontrol_time;
-	edict_t		*skull;
+
+	int			teamnum; // teamplay, team we belong to
+	edict_t		*skull; // hellspawn
+
 	que_t		auras[QUE_MAXSIZE];
 	que_t		curses[QUE_MAXSIZE];
 	float		corpseeater_time;
+
+	// parasite
 	int			parasite_frames;
 	edict_t		*parasite_target;
+
 	// 3.03+ spirit
 	edict_t		*spirit;
+
 	// 3.12 curse effects
 	int			curse_dir;
 	int			curse_delay;
+
 	//4.0 "chilled effect"
 	int			chill_level;
 	float		chill_time;
 	edict_t		*chill_owner;			// for assist exp tracking
+
 	//4.0 "manashield"
 	qboolean	manashield;
+
 	//4.0
 	edict_t		*megahealth;
 	edict_t		*spawn;					// available invasion-mode spawn point
 	float		holywaterProtection;	//holy water gives a few seconds of curse immunity
+
 	//4.1
 	edict_t		*totem1;
 	edict_t		*totem2;
+
 	edict_t		*mirror1;
 	edict_t		*mirror2;
-	edict_t		*healer;
-	edict_t		*cocoon;
+
 	edict_t		*holyground;			//Talent: Holy/Unholy Ground
 	int			mirroredPosition;
 	int			autocurse_delay;		//Talent: Autocurse - next server frame that chance trigger is rolled
 	float		fury_time;
+
+	// caltrops
 	float		slowed_factor;
 	float		slowed_time;
+
+	// detector
 	float		detected_time;
+
+	// EMP
 	float		empeffect_time;
 	edict_t		*empeffect_owner; 		// for assist exp tracking
+
+	// cocoon
+	edict_t		*cocoon;
 	float		cocoon_time;
 	float		cocoon_factor;
 	edict_t		*cocoon_owner;			// for assist exp tracking
 
+	edict_t		*healer;
 	float		heal_exp_time;
 	edict_t		*heal_exp_owner;			// for assist exp tracking
 
@@ -2079,9 +2250,9 @@ struct edict_s
 
 	int			showPathDebug;			// show path debug information (0=off,1=on)
 
-	float       swordtimer;             //decino: time before we can reattack
 
-	float	    pcr_time; // time elapsed since last power cube regen
+	// time elapsed since last power cube regen
+	float	    pcr_time;
 
 	// "connection" id, not database id.
 	// kept around without NO_GDS to simplify preprocessor macros
@@ -2094,7 +2265,7 @@ struct edict_s
 	edict_t		*prev_owner; // for conversion
 //GHz END
 	edict_t *prev_navi;
-	edict_t *laser;
+	edict_t *laser; // for hook
 };
 
 #include "combat/abilities/auras.h"
@@ -2106,7 +2277,7 @@ struct edict_s
 extern v_maplist_t maplist_PVP;
 extern v_maplist_t maplist_DOM;
 extern v_maplist_t maplist_PVM;
-extern v_maplist_t	maplist_CTF;
+extern v_maplist_t maplist_CTF;
 extern v_maplist_t maplist_FFA;
 extern v_maplist_t maplist_INV;
 extern v_maplist_t maplist_TRA;
@@ -2455,6 +2626,9 @@ void cs_reset();
 
 /* v_newbie_tips.c */
 void vrx_print_newbie_tip(edict_t *ent);
+
+void pm_set_viewheight(pmove_t *pm, int viewheight);
+int pm_get_viewheight(pmove_t *pm);
 
 //az end
 
