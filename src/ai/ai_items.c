@@ -25,6 +25,7 @@ in NO WAY supported by Steve Yeager.
 
 #include "g_local.h"
 #include "ai_local.h"
+#include "characters/class_limits.h"
 
 //ACE
 

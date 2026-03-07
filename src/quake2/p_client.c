@@ -2258,7 +2258,11 @@ Changing levels will NOT cause this to be called again, but
 loadgames will.
 ============
 */
+#ifndef VRX_REPRO
 qboolean ClientConnect (edict_t *ent, char *userinfo)
+#else
+bool ClientConnect (edict_t *ent, char *userinfo, const char* social_id, bool is_bot)
+#endif
 {
 	static int lastID = 1;
 	char	ip[16];
@@ -2278,8 +2282,6 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 
 	// Reset names!
 	memset(ent->client->pers.netname, 0, sizeof(ent->client->pers.netname)-1);
-
-
 	strncpy (ent->client->pers.netname, value, sizeof(ent->client->pers.netname)-1);
 
 	// update current ip
@@ -2295,8 +2297,6 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 
 		strncpy(ent->client->pers.current_ip, ip, sizeof(ent->client->pers.current_ip)-1);
 	}
-
-	//Info_SetValueForKey(userinfo, "ip", value);
 
 	if (!ClientCanConnect(ent, userinfo))
 		return false;

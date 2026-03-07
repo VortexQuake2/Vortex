@@ -42,7 +42,7 @@ typedef bool _rebool;
 
 #define	MAX_STRING_CHARS	1024	// max length of a string passed to Cmd_TokenizeString
 #define	MAX_STRING_TOKENS	80		// max tokens resulting from Cmd_TokenizeString
-#define	MAX_TOKEN_CHARS		256		// max length of an individual token
+#define	MAX_TOKEN_CHARS		512		// max length of an individual token
 
 #define	MAX_QPATH			64		// max length of a quake game pathname
 #define	MAX_OSPATH			128		// max length of a filesystem pathname
@@ -51,13 +51,23 @@ typedef bool _rebool;
 // per-level limits
 //
 #define	MAX_CLIENTS			256		// absolute limit
+#ifndef VRX_REPRO
 #define	MAX_EDICTS			1024	// must change protocol to increase more
-#define	MAX_LIGHTSTYLES		256
 #define	MAX_MODELS			256		// these are sent over the net as bytes
 #define	MAX_SOUNDS			256		// so they cannot be blindly increased
 #define	MAX_IMAGES			256
+#else
+#define MAX_EDICTS			8192
+#define	MAX_MODELS			8192
+#define	MAX_SOUNDS			2048		// so they cannot be blindly increased
+#define	MAX_IMAGES			512
+
+#endif
+#define	MAX_LIGHTSTYLES		256
 #define	MAX_ITEMS			256
 #define MAX_GENERAL			(MAX_CLIENTS*2)	// general config strings
+
+#define MAX_SHADOW_LIGHTS 256
 
 #define U32BIT(x) ((uint32_t)1 << (uint32_t)x)
 #define U64BIT(x) ((uint64_t)1 << (uint64_t)x)
@@ -369,7 +379,7 @@ char *Sys_FindNext(unsigned musthave, unsigned canthave);
 void Sys_FindClose(void);
 
 
-void Com_Printf(char *msg, ...);
+void Com_Printf(const char *msg, ...);
 
 
 /*

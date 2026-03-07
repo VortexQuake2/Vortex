@@ -16838,7 +16838,7 @@ static int math_random (lua_State *L) {
   return 1;
 }
 
-
+int randomMT();// twister.c
 static int math_randomseed (lua_State *L) {
   srand(luaL_checkunsigned(L, 1));
   (void)randomMT(); /* discard first value to avoid undesirable correlations */

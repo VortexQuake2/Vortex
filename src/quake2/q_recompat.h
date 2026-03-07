@@ -116,6 +116,18 @@ typedef struct
     vec3_t      conedirection;
 } shadow_light_data_t;
 
+enum server_flags_t
+{
+    SERVER_FLAGS_NONE           = 0,
+    SERVER_FLAG_SLOW_TIME       = 1,
+    SERVER_FLAG_INTERMISSION    = 2,
+    SERVER_FLAG_LOADING         = 4
+};
+
+// todo: cgame?
+// todo: pmove
+// todo: bots?
+
 typedef struct repro_import_s
 {
     uint32_t    tick_rate;
@@ -337,7 +349,7 @@ typedef struct repro_export_s {
     uint32_t    max_edicts;
 
     // [Paril-KEX] special flags to indicate something to the server
-    int server_flags;
+    enum server_flags_t server_flags;
 
     // [KEX]: Pmove as export
     void (*Pmove)(pmove_t *pmove); // player movement code called by server & client
@@ -364,5 +376,21 @@ typedef struct repro_export_s {
 extern repro_import_t gire;
 
 void vrx_repro_getgameapi(repro_import_t *pr, game_import_t *gi);
+edict_t *repro_choose_client_slot(const char *userinfo, const char *social_id, bool isBot, edict_t **ignore, size_t num_ignore, bool cinematic);
+void *repro_get_extension(const char *name);
+void repro_prep_frame(void);
+bool repro_visible_to_player(edict_t* ent, edict_t* player);
+const shadow_light_data_t *repro_get_shadow_light_data(int32_t entity_number);
+
+char* repro_write_game_json(bool autosave, size_t *out_size) ;
+void repro_read_game_json(const char* json) ;
+char* repro_write_level_json(bool autosave, size_t *out_size) ;
+void repro_read_level_json(const char* json) ;
+void repro_bot_set_weapon(edict_t *botEdict, int weaponIndex, bool instantSwitch);
+void repro_bot_trigger_edict(edict_t *botEdict, edict_t *edict);
+void repro_bot_use_item(edict_t *botEdict, int32_t itemID);
+int32_t repro_bot_get_item_id(const char *classname);
+void repro_edict_force_look_at_point(edict_t *edict, const vec3_t point);
+bool repro_bot_picked_up_item(edict_t *botEdict, edict_t *itemEdict);
 
 #endif //VORTEXQUAKE2_Q_RECOMPAT_H

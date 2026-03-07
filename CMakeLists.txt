@@ -25,12 +25,19 @@ set(CMAKE_C_STANDARD_REQUIRED TRUE)
 # Source files
 file(GLOB_RECURSE VRX_FILES ./src/*.c)
 
+if (NOT VRX_REPRO)
+    set(GAME_NAME game)
+else ()
+    # serraboof comments: game_ is the remaster's convention for game dlls
+    set(GAME_NAME game_)
+endif ()
+
 # Set the platform-specific library name and use platform-specific files.
 if (WIN32)
     if (CMAKE_CL_64)
-        set(CC_LIB_NAME gamex86_64)
+        set(CC_LIB_NAME ${GAME_NAME}x86_64)
     else ()
-        set(CC_LIB_NAME gamex86)
+        set(CC_LIB_NAME ${GAME_NAME}x86)
     endif ()
 
     add_definitions(-DWIN32)
@@ -39,7 +46,7 @@ elseif (UNIX)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-return-mismatch -Wno-incompatible-pointer-types -Wno-implicit-function-declaration")
     # Get machine hardware name (arch), force 386 (if applicable), strip newlines, and store in ARCH
     execute_process(COMMAND uname -m COMMAND sed s/i.86/i386/ COMMAND tr -d \n OUTPUT_VARIABLE ARCH)
-    set(CC_LIB_NAME game${ARCH})
+    set(CC_LIB_NAME ${GAME_NAME}${ARCH})
     #file (GLOB CC_PLATFORM_FILES source/Platform/unix/*)
     link_libraries(dl m)
 else ()
@@ -57,7 +64,7 @@ if (VRX_USE_MYSQL)
             PATHS
             $ENV{ProgramFiles}/MySQL/*/lib
             /usr/lib/mysql
-            )
+    )
 
     find_path(
             MYSQL_INCLUDE_DIR
@@ -77,7 +84,6 @@ endif ()
 if (WIN32)
     set(CC_LINK_LIBS ${CC_LINK_LIBS} Wininet Winmm Ws2_32)
 
-
     if (MSVC)
         FetchContent_Declare(
                 pthreads
@@ -87,9 +93,9 @@ if (WIN32)
         FetchContent_MakeAvailable(pthreads)
         target_include_directories(${CC_LIB_NAME} PRIVATE ${pthreads_SOURCE_DIR})
         target_link_libraries(${CC_LIB_NAME} pthreadVC3)
-    else()
+    else ()
         target_link_libraries(${CC_LIB_NAME} pthread)
-    endif()
+    endif ()
 
     # add /fsanitize=address to the compiler flags
     # if (SANITIZE_ADDRESS)
@@ -136,31 +142,36 @@ endif ()
 
 if (VRX_REPRO)
     add_definitions(-DVRX_REPRO)
-endif()
+endif ()
 
 FetchContent_Declare(
-    MsgPack
-    GIT_REPOSITORY https://github.com/msgpack/msgpack-c/
-    GIT_TAG c_master
+        MsgPack
+        GIT_REPOSITORY https://github.com/msgpack/msgpack-c/
+        GIT_TAG c_master
 )
 
 FetchContent_MakeAvailable(MsgPack)
 
 set(CC_LINK_LIBS ${CC_LINK_LIBS} msgpack-c)
-target_include_directories(${CC_LIB_NAME} PRIVATE ${msgpack_SOURCE_DIR}/include ${msgpack_BINARY_DIR}/include/msgpack ${msgpack_BINARY_DIR}/include )
+target_include_directories(${CC_LIB_NAME} PRIVATE ${msgpack_SOURCE_DIR}/include ${msgpack_BINARY_DIR}/include/msgpack ${msgpack_BINARY_DIR}/include)
 target_link_libraries(${CC_LIB_NAME} ${CC_LINK_LIBS})
 
-include (TestBigEndian)
+include(TestBigEndian)
 TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
-if(IS_BIG_ENDIAN)
+if (IS_BIG_ENDIAN)
     target_compile_definitions(${CC_LIB_NAME} PRIVATE BIG_ENDIAN)
-else()
+else ()
     target_compile_definitions(${CC_LIB_NAME} PRIVATE LITTLE_ENDIAN)
-endif()
+endif ()
 
 # If host is Unix-like, remove "lib" prefix from the library's file name
 if (UNIX)
-    add_custom_command(TARGET ${CC_LIB_NAME} POST_BUILD COMMAND mv lib${CC_LIB_NAME}.so ${CC_LIB_NAME}.so)
+    if (APPLE)
+        set (DLEXT .dylib)
+    else()
+        set (DLEXT .so)
+    endif()
+    add_custom_command(TARGET ${CC_LIB_NAME} POST_BUILD COMMAND mv lib${CC_LIB_NAME}${DLEXT} ${CC_LIB_NAME}${DLEXT})
 else ()
     # add_custom_command (TARGET ${CC_LIB_NAME} POST_BUILD COMMAND copy lib${CC_LIB_NAME}.dll ${CC_LIB_NAME}.dll)
 endif ()

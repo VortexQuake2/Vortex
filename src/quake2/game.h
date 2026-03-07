@@ -8,6 +8,40 @@
 
 #include "q_shared.h"
 
+#define	STEPSIZE	18
+
+enum water_level_t : uint8_t
+{
+	WATER_NONE,
+	WATER_FEET,
+	WATER_WAIST,
+	WATER_UNDER
+};
+
+
+typedef enum
+{
+	AMMO_BULLETS = 1,
+	AMMO_SHELLS = 2,
+	AMMO_ROCKETS = 3,
+	AMMO_GRENADES = 4,
+	AMMO_CELLS = 5,
+	AMMO_SLUGS = 6,
+	// RAFAEL
+	AMMO_MAGSLUG = 7,
+	AMMO_TRAP = 8,
+	// 3.5
+	AMMO_GENERATOR = 9,
+
+	// ROGUE
+	AMMO_FLECHETTES,
+	AMMO_TESLA,
+	AMMO_DISRUPTOR,
+	AMMO_PROX,
+	// ROGUE
+	AMMO_MAX
+} ammo_t;
+
 // edict->svflags
 enum svflags_t : uint32_t
 {

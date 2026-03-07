@@ -1,3 +1,5 @@
+#include <stdarg.h>
+
 #include "g_local.h"
 #include "../gamemodes/ctf.h"
 #include "../gamemodes/v_hw.h"
@@ -5,6 +7,7 @@
 
 #include <server/relay.h>
 
+#include "bg_local.h"
 #include "q_recompat.h"
 
 game_locals_t	game;
@@ -13,7 +16,7 @@ game_import_t	gi;
 #ifndef VRX_REPRO
 game_export_t	globals;
 #else
-repro_export_t globals;
+repro_export_t globals = {0};
 #endif
 spawn_temp_t	st;
 
@@ -186,10 +189,10 @@ cvar_t *generalabmode;
 
 void SpawnEntities(char *mapname, char *entities, char *spawnpoint);
 void ClientThink(edict_t *ent, usercmd_t *cmd);
-qboolean ClientConnect(edict_t *ent, char *userinfo);
+bool ClientConnect(edict_t *ent, char *userinfo, const char *social_id, bool is_bot);
 void ClientUserinfoChanged(edict_t *ent, char *userinfo);
 void ClientDisconnect(edict_t *ent);
-void ClientBegin(edict_t *ent, qboolean loadgame);
+void ClientBegin(edict_t *ent);
 void ClientCommand(edict_t *ent);
 void RunEntity(edict_t *ent);
 void WriteGame(char *filename, qboolean autosave);
@@ -197,7 +200,11 @@ void ReadGame(char *filename);
 void WriteLevel(char *filename);
 void ReadLevel(char *filename);
 void InitGame(void);
+#ifndef VRX_REPRO
 void G_RunFrame(void);
+#else
+void G_RunFrame(bool main_loop);
+#endif
 void dom_init(void);
 void dom_awardpoints(void);
 void PTRCheckJoinedQue(void);
@@ -275,20 +282,16 @@ game_export_t *GetGameAPI(game_import_t *import)
 }
 #else
 
-void PreInit() {}
+void PreInit() {
+	// coop = gire.
+}
 
 bool CanSave() {
 	// not supported
 	return false;
 }
 
-// unused (for now?)
-void PrepFrame () {}
 
-char* WriteGameJson(bool autosave, size_t *out_size) { return nullptr; }
-void ReadGameJson(const char* json) { /* stub */ }
-char* WriteLevelJson(bool autosave, size_t *out_size) { return nullptr; }
-void ReadLevelJson(const char* json) {}
 
 // TODO: all these missing thingies.
 repro_export_t *GetGameAPI(repro_import_t *import)
@@ -301,14 +304,14 @@ repro_export_t *GetGameAPI(repro_import_t *import)
 	globals.Shutdown = ShutdownGame;
 	globals.SpawnEntities = SpawnEntities;
 
-	globals.WriteGameJson = WriteGameJson;
-	globals.ReadGameJson = ReadGameJson;
-	globals.WriteLevelJson = WriteLevelJson;
-	globals.ReadLevelJson = ReadLevelJson;
+	globals.WriteGameJson = repro_write_game_json;
+	globals.ReadGameJson = repro_read_game_json;
+	globals.WriteLevelJson = repro_write_level_json;
+	globals.ReadLevelJson = repro_read_level_json;
 
 	globals.CanSave = CanSave;
 
-	// globals.ClientChooseSlot =
+	globals.ClientChooseSlot = repro_choose_client_slot;
 
 	globals.ClientConnect = ClientConnect;
 	globals.ClientBegin = ClientBegin;
@@ -317,46 +320,42 @@ repro_export_t *GetGameAPI(repro_import_t *import)
 	globals.ClientCommand = ClientCommand;
 	globals.ClientThink = ClientThink;
 
+
 	globals.RunFrame = G_RunFrame;
-	globals.PrepFrame = PrepFrame;
+	globals.PrepFrame = repro_prep_frame;
 
 	globals.ServerCommand = ServerCommand;
 
 	globals.edict_size = sizeof(edict_t);
 
-	// globals.server_flags
-	// globals.Pmove
-	// globals.GetExtension
-	// globals.Bot_SetWeapon
-	// globals.Bot_TriggerEdict
-	// globals.Bot_UseItem
-	// globals.Bot_GetItemID
-	// globals.Edict_ForceLookAtPoint
-	// globals.Bot_PickedUpItem
+	globals.server_flags = SERVER_FLAGS_NONE;
+	globals.Pmove = Pmove;
+	globals.GetExtension = repro_get_extension;
+	globals.Bot_SetWeapon = repro_bot_set_weapon;
+	globals.Bot_TriggerEdict = repro_bot_trigger_edict;
+	globals.Bot_UseItem = repro_bot_use_item;
+	globals.Bot_GetItemID = repro_bot_get_item_id;
+	globals.Edict_ForceLookAtPoint = repro_edict_force_look_at_point;
+	globals.Bot_PickedUpItem = repro_bot_picked_up_item;
 
-	// globals.Entity_IsVisibleToPlayer
-	// globals.GetShadowLightData
-
-	cs_override_init(); // az: fuck gi.soundindex
+	globals.Entity_IsVisibleToPlayer = repro_visible_to_player;
+	globals.GetShadowLightData = repro_get_shadow_light_data;
 
 	return &globals;
 }
 #endif
 
-#ifndef GAME_HARD_LINKED
-void Com_Printf(char *msg, ...)
+void Com_Printf(const char *msg, ...)
 {
 	va_list		argptr;
 	char		text[1024];
 
 	va_start(argptr, msg);
-	vsprintf(text, msg, argptr);
+	vsnprintf(text, sizeof(text), msg, argptr);
 	va_end(argptr);
 
 	gi.dprintf("%s", text);
 }
-
-#endif
 
 //======================================================================
 
@@ -966,7 +965,11 @@ Advances the world by
 
 
 void RunVotes();
+#ifndef VRX_REPRO
 void G_RunFrame(void)
+#else
+void G_RunFrame(bool main_loop)
+#endif
 {
 	int		i;//j;
 	edict_t	*ent;

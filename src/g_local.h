@@ -186,20 +186,6 @@ typedef enum
 	WEAPON_FIRING
 } weaponstate_t;
 
-typedef enum
-{
-	AMMO_BULLETS = 1,
-	AMMO_SHELLS = 2,
-	AMMO_ROCKETS = 3,
-	AMMO_GRENADES = 4,
-	AMMO_CELLS = 5,
-	AMMO_SLUGS = 6,
-    // RAFAEL
-	AMMO_MAGSLUG = 7,
-	AMMO_TRAP = 8,
-	// 3.5
-	AMMO_GENERATOR = 9
-} ammo_t;
 
 
 //deadflag
@@ -456,6 +442,13 @@ typedef struct
 } game_locals_t;
 
 
+struct shadow_light_info_t
+{
+	int entity_number;
+	shadow_light_data_t shadowlight;
+};
+
+
 //
 // this structure is cleared as each map is entered
 // it is read/written to the level.sav file for savegames
@@ -522,7 +515,11 @@ typedef struct
 		float time_to_next_respawn;
 	} pvm;
 
-/*	gdsfiles_t	gdsfiles[MAX_CLIENTS];*/
+	struct {
+		int32_t count;
+		struct shadow_light_info_t info[MAX_SHADOW_LIGHTS];
+	} shadow_lights ;
+	/*	gdsfiles_t	gdsfiles[MAX_CLIENTS];*/
 
 	// experimental monster pathfinding
 	//int			total_nodes;
@@ -1876,13 +1873,6 @@ struct armorInfo_t {
 	int32_t max_count;
 };
 
-enum water_level_t : uint8_t
-{
-	WATER_NONE,
-	WATER_FEET,
-	WATER_WAIST,
-	WATER_UNDER
-};
 
 #define MAX_NETNAME         32
 #define MAX_ARMOR_TYPES     3
@@ -2422,7 +2412,11 @@ void PrintNumEntities (qboolean list);
 
 void Weapon_Generic (edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST, int FRAME_IDLE_LAST, int FRAME_DEACTIVATE_LAST, int *pause_frames, int *fire_frames, void (*fire)(edict_t *ent));
 void ClientUserinfoChanged (edict_t *ent, char *userinfo);
+#ifndef VRX_REPRO
 qboolean ClientConnect (edict_t *ent, char *userinfo);
+#else
+bool ClientConnect (edict_t *ent, char *userinfo, const char* social_id, bool is_bot);
+#endif
 void SpawnDamage(int type, vec3_t origin, vec3_t normal);
 qboolean SelectSpawnPoint (edict_t *ent, vec3_t origin, vec3_t angles);
 

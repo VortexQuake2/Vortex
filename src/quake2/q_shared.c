@@ -1,5 +1,7 @@
 #include "q_shared.h"
 
+#include <stdarg.h>
+
 #include "g_local.h"
 
 vec3_t vec3_origin = {0,0,0};
