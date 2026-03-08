@@ -114,12 +114,12 @@ struct cl_bind_t bind_from_string(const char* bind_str, const char* purpose_str)
     return bind;
 }
 
-inline bool CG_ViewingLayout(const player_state_t *ps)
+bool CG_ViewingLayout(const player_state_t *ps)
 {
     return ps->stats[STAT_LAYOUTS] & (LAYOUTS_LAYOUT | LAYOUTS_INVENTORY);
 }
 
-inline bool CG_InIntermission(const player_state_t *ps)
+bool CG_InIntermission(const player_state_t *ps)
 {
     return ps->stats[STAT_LAYOUTS] & LAYOUTS_INTERMISSION;
 }
