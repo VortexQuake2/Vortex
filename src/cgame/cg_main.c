@@ -2,7 +2,7 @@
 // Licensed under the GNU General Public License 2.0.
 
 #include "cg_local.h"
-#include "m_flash.h"
+//#include "m_flash.h"
 
 struct cgame_import_t cgi;
 struct cgame_export_t cglobals;
@@ -93,7 +93,7 @@ Returns a pointer to the structure with all entry points
 and global variables
 =================
 */
-Q2GAME_API struct cgame_export_t *GetCGameAPI(struct cgame_import_t *import)
+q_export struct cgame_export_t *GetCGameAPI(struct cgame_import_t *import)
 {
 	cgi = *import;
 

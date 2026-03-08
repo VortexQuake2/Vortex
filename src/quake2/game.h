@@ -20,30 +20,6 @@ enum water_level_t : uint8_t
 	WATER_UNDER
 };
 
-
-typedef enum
-{
-	AMMO_BULLETS = 1,
-	AMMO_SHELLS = 2,
-	AMMO_ROCKETS = 3,
-	AMMO_GRENADES = 4,
-	AMMO_CELLS = 5,
-	AMMO_SLUGS = 6,
-	// RAFAEL
-	AMMO_MAGSLUG = 7,
-	AMMO_TRAP = 8,
-	// 3.5
-	AMMO_GENERATOR = 9,
-
-	// ROGUE
-	AMMO_FLECHETTES,
-	AMMO_TESLA,
-	AMMO_DISRUPTOR,
-	AMMO_PROX,
-	// ROGUE
-	AMMO_MAX
-} ammo_t;
-
 // edict->svflags
 enum svflags_t : uint32_t
 {
@@ -98,11 +74,16 @@ typedef struct link_s
 
 #define	MAX_ENT_CLUSTERS	16
 
-
 typedef struct edict_s edict_t;
 typedef struct gclient_s gclient_t;
 
 //===============================================================
+
+#if (!defined _MSC_VER) && ((defined __linux__) || (defined __APPLE__))
+#define q_export __attribute__((visibility("default")))
+#elif _MSC_VER // _WINDOWS
+#define q_export __declspec(dllexport)
+#endif
 
 //
 // functions provided by the main engine
@@ -268,6 +249,8 @@ constexpr int32_t PROTOCOL_VERSION_3XX   = 34;
 constexpr int32_t PROTOCOL_VERSION_DEMOS = 2022;
 constexpr int32_t PROTOCOL_VERSION       = 2023;
 
+struct player_state_t;
+
 //
 // functions provided by main engine for client
 //
@@ -369,29 +352,29 @@ struct cgame_export_t
     	struct vrect_t hud_safe,
     	int32_t scale,
     	int32_t playernum,
-    	const player_state_t *ps
+    	const struct player_state_t *ps
     );
 
     // [Paril-KEX] precache special pics used by hud
     void (*TouchPics) ();
 
     // [Paril-KEX] layout flags; see layout_flags_t
-    enum layout_flags_t (*LayoutFlags) (const player_state_t *ps);
+    enum layout_flags_t (*LayoutFlags) (const struct player_state_t *ps);
 
     // [Paril-KEX] fetch the current wheel weapon ID in use
-    int32_t (*GetActiveWeaponWheelWeapon) (const player_state_t *ps);
+    int32_t (*GetActiveWeaponWheelWeapon) (const struct player_state_t *ps);
 
     // [Paril-KEX] fetch owned weapon IDs
-    uint32_t (*GetOwnedWeaponWheelWeapons) (const player_state_t *ps);
+    uint32_t (*GetOwnedWeaponWheelWeapons) (const struct player_state_t *ps);
 
     // [Paril-KEX] fetch ammo count for given ammo id
-    int16_t (*GetWeaponWheelAmmoCount)(const player_state_t *ps, int32_t ammo_id);
+    int16_t (*GetWeaponWheelAmmoCount)(const struct player_state_t *ps, int32_t ammo_id);
 
     // [Paril-KEX] fetch powerup count for given powerup id
-    int16_t (*GetPowerupWheelCount)(const player_state_t *ps, int32_t powerup_id);
+    int16_t (*GetPowerupWheelCount)(const struct player_state_t *ps, int32_t powerup_id);
 
     // [Paril-KEX] fetch how much damage was registered by these stats
-    int16_t (*GetHitMarkerDamage)(const player_state_t *ps);
+    int16_t (*GetHitMarkerDamage)(const struct player_state_t *ps);
 
     // [KEX]: Pmove as export
     void (*Pmove)(pmove_t *pmove); // player movement code called by server & client

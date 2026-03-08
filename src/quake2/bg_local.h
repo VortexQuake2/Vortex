@@ -107,6 +107,30 @@ typedef enum
 	POWERUP_MAX
 } powerup_t;
 
+typedef enum
+{
+	AMMO_BULLETS = 1,
+	AMMO_SHELLS = 2,
+	AMMO_ROCKETS = 3,
+	AMMO_GRENADES = 4,
+	AMMO_CELLS = 5,
+	AMMO_SLUGS = 6,
+	// RAFAEL
+	AMMO_MAGSLUG = 7,
+	AMMO_TRAP = 8,
+	// 3.5
+	AMMO_GENERATOR = 9,
+
+	// ROGUE
+	AMMO_FLECHETTES,
+	AMMO_TESLA,
+	AMMO_DISRUPTOR,
+	AMMO_PROX,
+	// ROGUE
+	AMMO_MAX
+} ammo_t;
+
+
 // ammo stats compressed in 9 bits per entry
 // since the range is 0-300
 #define BITS_PER_AMMO 9
@@ -150,7 +174,7 @@ static inline uint16_t G_GetAmmoStat(uint16_t *start, uint8_t ammo_id)
 // 3 is the max you'll ever hold, and for some
 // (flashlight) it's to indicate on/off state
 #define NUM_BITS_PER_POWERUP 2
-#define NUM_POWERUP_STATS num_of_type_for_bits(uint16_t, NUM_BITS_PER_POWERUP * POWERUP_MAX)
+constexpr size_t NUM_POWERUP_STATS = num_of_type_for_bits(uint16_t, NUM_BITS_PER_POWERUP * POWERUP_MAX);
 
 static inline void G_SetPowerupStat(uint16_t *start, uint8_t powerup_id, uint16_t count)
 {

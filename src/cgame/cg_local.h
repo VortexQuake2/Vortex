@@ -4,10 +4,13 @@
 // g_local.h -- local definitions for game module
 #pragma once
 
-#include "../quake2/bg_local.h"
+#include "../q_shared.h"
 
 extern struct cgame_import_t cgi;
 extern struct cgame_export_t cglobals;
+
+// az: bleh
+struct configstring_remap_t CS_REMAP(int32_t id);
 
 #define SERVER_TICK_RATE cgi.tick_rate // in hz
 #define FRAME_TIME_S cgi.frame_time_s

@@ -6,6 +6,7 @@
 #define __STDC_LIB_EXT1__ 1
 #include <stdint.h>
 
+
 #ifdef _MSC_VER
 // unknown pragmas are SUPPOSED to be ignored, but....
 #pragma warning(disable : 4018)     // signed/unsigned mismatch
@@ -48,6 +49,7 @@ typedef bool _rebool;
 
 #define	MAX_QPATH			64		// max length of a quake game pathname
 #define	MAX_OSPATH			128		// max length of a filesystem pathname
+#define MAX_SPLIT_PLAYERS   4
 
 //
 // per-level limits
@@ -98,6 +100,20 @@ enum print_type_t {
 #define PRINT_DEVELOPER		1		// only print when "developer 1"
 #define PRINT_ALERT			2
 
+// [Paril-KEX] max number of arguments (not including the base) for
+// localization prints
+constexpr size_t MAX_LOCALIZATION_ARGS = 8;
+
+// remaps old configstring IDs to new ones
+// for old DLL & demo support
+struct configstring_remap_t {
+    // start position in the configstring list
+    // to write into
+    size_t start;
+    // max length to write into; [start+length-1] should always
+    // be set to '\0'
+    size_t length;
+};
 
 // destination class for gi.multicast()
 typedef enum {
@@ -144,6 +160,7 @@ typedef vec_t vec5_t[5];
 typedef union {
     uint32_t u32;
     uint8_t u8[4];
+
     struct {
         uint8_t r, g, b, a;
     };
@@ -153,13 +170,16 @@ typedef union {
     struct {
         vec_t x, y;
     };
+
     vec_t v[2];
 } vec2_t;
 
 typedef color_t rgba_t;
-constexpr rgba_t rgba_white = { .r = 255, .g = 255, .b = 255, .a = 255 };
-constexpr rgba_t rgba_black = { .r = 0, .g = 0, .b = 0, .a = 255 };
-
+constexpr rgba_t rgba_white = {.r = 255, .g = 255, .b = 255, .a = 255};
+constexpr rgba_t rgba_black = {.r = 0, .g = 0, .b = 0, .a = 255};
+constexpr rgba_t rgba_red = {.r = 255, .g = 0, .b = 0, .a = 255};
+constexpr rgba_t rgba_green = {.r = 0, .g = 255, .b = 0, .a = 255};
+constexpr rgba_t rgba_blue = {.r = 0, .g = 0, .b = 255, .a = 255};
 
 struct cplane_s;
 
@@ -316,6 +336,8 @@ int Q_stricmp(char *s1, char *s2);
 int Q_strcasecmp(const char *s1, const char *s2);
 
 int Q_strncasecmp(const char *s1, const char *s2, int n);
+
+size_t Q_strlcpy(char *dst, const char *src, size_t siz);
 
 //=============================================
 
@@ -757,8 +779,8 @@ typedef struct {
     // clip against world & entities
     trace_t (*trace)(
         vec3_t start,
-        vec3_t* mins,
-        vec3_t* maxs,
+        vec3_t *mins,
+        vec3_t *maxs,
         vec3_t end,
         const struct edict_s *passent,
         enum contents_t contentmask);
@@ -766,8 +788,8 @@ typedef struct {
     // [Paril-KEX] clip against world only
     trace_t (*clip)(
         vec3_t start,
-        vec3_t* mins,
-        vec3_t* maxs,
+        vec3_t *mins,
+        vec3_t *maxs,
         vec3_t end,
         enum contents_t contentmask);
 #endif
@@ -1273,7 +1295,7 @@ enum monster_muzzleflash_id_t : uint16_t {
     MZ2_LAST
 };
 
-extern vec3_t monster_flash_offset[];
+extern vec3_t monster_flash_offset[212];
 
 
 // temp entity events
@@ -1390,56 +1412,14 @@ enum soundchan_t : uint8_t {
     CHAN_RELIABLE = 16, // send by reliable message, not datagram
 };
 
+
+
 // sound attenuation values
 #define	ATTN_NONE               0	// full volume the entire level
 #define	ATTN_NORM               1
 #define	ATTN_IDLE               2
 #define	ATTN_STATIC             3	// diminish very rapidly with distance
 
-
-// player_state->stats[] indexes
-
-// #define STAT_HEALTH_ICON		0
-#define	STAT_HEALTH				1
-#define	STAT_AMMO_ICON			2
-#define	STAT_AMMO				3
-// #define	STAT_ARMOR_ICON		4
-#define	STAT_ARMOR				5
-#define	STAT_SELECTED_ICON		6
-#define	STAT_PICKUP_ICON		7
-#define	STAT_PICKUP_STRING		8
-#define	STAT_TIMER_ICON			9
-#define	STAT_TIMER				10
-#define	STAT_HELPICON			11
-#define	STAT_SELECTED_ITEM		12
-#define	STAT_LAYOUTS			13
-#define	STAT_FRAGS				14
-#define	STAT_FLASHES			15		// cleared each frame, 1 = health, 2 = armor
-#define STAT_CHASE				16
-
-//K03 Begin
-#define STAT_TEAM_ICON			17
-#define STAT_STATION_ICON		18
-#define STAT_STATION_TIME		19
-#define STAT_CHARGE_LEVEL		20
-#define STAT_INVASIONTIME		21 // -az
-#define STAT_VOTESTRING			22
-//#define STAT_RANK             24
-#define STAT_ID_DAMAGE			24
-#define STAT_STREAK		        25
-#define STAT_ID_ARMOR			26
-#define STAT_SELECTED_NUM		27
-#define STAT_TIMEMIN			28
-#define STAT_SPECTATOR			29
-#define	STAT_ID_HEALTH			30
-#define STAT_ID_AMMO			31
-//K03 End
-
-#ifdef VRX_REPRO
-#define MAX_STATS 64
-#else
-#define	MAX_STATS				32
-#endif
 
 // dmflags->value flags
 #define	DF_NO_HEALTH		0x00000001	// 1
@@ -1523,8 +1503,95 @@ enum {
     MAX_CONFIGSTRINGS
 };
 
+// [Sam-KEX] New define for max config string length
+#ifdef VRX_REPRO
+constexpr size_t CS_MAX_STRING_LENGTH = 96;
+#else
+constexpr size_t CS_MAX_STRING_LENGTH = 64;
+#endif
+constexpr size_t CS_MAX_STRING_LENGTH_OLD = 64;
+
+#include "quake2/bg_local.h"
 
 //==============================================
+
+// player_state->stats[] indexes
+enum player_stat_t {
+    // #define STAT_HEALTH_ICON		0
+    STAT_HEALTH = 1,
+    STAT_AMMO_ICON = 2,
+    STAT_AMMO = 3,
+    // 	STAT_ARMOR_ICON =		4,
+    STAT_ARMOR = 5,
+    STAT_SELECTED_ICON = 6,
+    STAT_PICKUP_ICON = 7,
+    STAT_PICKUP_STRING = 8,
+    STAT_TIMER_ICON = 9,
+    STAT_TIMER = 10,
+    STAT_HELPICON = 11,
+    STAT_SELECTED_ITEM = 12,
+    STAT_LAYOUTS = 13,
+    STAT_FRAGS = 14,
+    STAT_FLASHES = 15, // cleared each frame, 1 = health, 2 = armor
+    STAT_CHASE = 16,
+
+    //K03 Begin
+    STAT_TEAM_ICON = 17,
+    STAT_STATION_ICON = 18,
+    STAT_STATION_TIME = 19,
+    STAT_CHARGE_LEVEL = 20,
+    STAT_INVASIONTIME = 21, // -az
+    STAT_VOTESTRING = 22,
+    // STAT_RANK =             24,
+    STAT_ID_DAMAGE = 24,
+    STAT_STREAK = 25,
+    STAT_ID_ARMOR = 26,
+    STAT_SELECTED_NUM = 27,
+    STAT_TIMEMIN = 28,
+    STAT_SPECTATOR = 29,
+    STAT_ID_HEALTH = 30,
+    STAT_ID_AMMO = 31,
+    //K03 End
+
+    // [Kex] More stats for weapon wheel
+STAT_WEAPONS_OWNED_1 = 32,
+STAT_WEAPONS_OWNED_2 = 33,
+STAT_AMMO_INFO_START = 34,
+STAT_AMMO_INFO_END = STAT_AMMO_INFO_START + NUM_AMMO_STATS - 1,
+STAT_POWERUP_INFO_START,
+STAT_POWERUP_INFO_END = STAT_POWERUP_INFO_START + NUM_POWERUP_STATS - 1,
+
+// [Paril-KEX] Key display
+STAT_KEY_A,
+STAT_KEY_B,
+STAT_KEY_C,
+
+// [Paril-KEX] currently active wheel weapon (or one we're switching to)
+STAT_ACTIVE_WHEEL_WEAPON,
+// [Paril-KEX] top of screen coop respawn state
+STAT_COOP_RESPAWN,
+// [Paril-KEX] respawns remaining
+STAT_LIVES,
+// [Paril-KEX] hit marker; # of damage we successfully landed
+STAT_HIT_MARKER,
+// [Paril-KEX]
+STAT_SELECTED_ITEM_NAME,
+// [Paril-KEX]
+STAT_HEALTH_BARS, // two health bar values; 7 bits for value, 1 bit for active
+// [Paril-KEX]
+STAT_ACTIVE_WEAPON,
+
+// don't use; just for verification
+STAT_LAST
+};
+
+#ifdef VRX_REPRO
+#define MAX_STATS 64
+#else
+#define	MAX_STATS				32
+#endif
+
+static_assert(STAT_LAST <= MAX_STATS, "playerstats overfilled");
 
 
 // entity_state_t->event values
@@ -1550,16 +1617,16 @@ typedef enum {
 
 #ifdef VRX_REPRO
 // [Paril-KEX] player s.skinnum's encode additional data
-union player_skinnum_t
-{
-    int32_t         skinnum;
+union player_skinnum_t {
+    int32_t skinnum;
+
     struct {
-        uint8_t     client_num; // client index
-        uint8_t     vwep_index; // vwep index
-        int8_t      viewheight; // viewheight
-        uint8_t     team_index : 4; // team #; note that teams are 1-indexed here, with 0 meaning no team
+        uint8_t client_num; // client index
+        uint8_t vwep_index; // vwep index
+        int8_t viewheight; // viewheight
+        uint8_t team_index: 4; // team #; note that teams are 1-indexed here, with 0 meaning no team
         // (spectators in CTF would be 0, for instance)
-        uint8_t     poi_icon : 4;   // poi icon; 0 default friendly, 1 dead, others unused
+        uint8_t poi_icon: 4; // poi icon; 0 default friendly, 1 dead, others unused
     };
 };
 #endif
@@ -1588,21 +1655,21 @@ typedef struct entity_state_s {
     // are automatically cleared each frame
 
 #ifdef VRX_REPRO
-    float          alpha;   // [Paril-KEX] alpha scalar; 0 is a "default" value, which will respect other
+    float alpha; // [Paril-KEX] alpha scalar; 0 is a "default" value, which will respect other
     // settings (default 1.0 for most things, EF_TRANSLUCENT will default this
     // to 0.3, etc)
-    float          scale;   // [Paril-KEX] model scale scalar; 0 is a "default" value, like with alpha.
-    uint8_t        instance_bits; // [Paril-KEX] players that *can't* see this entity will have a bit of 1. handled by
+    float scale; // [Paril-KEX] model scale scalar; 0 is a "default" value, like with alpha.
+    uint8_t instance_bits; // [Paril-KEX] players that *can't* see this entity will have a bit of 1. handled by
     // the server, do not set directly.
     // [Paril-KEX] allow specifying volume/attn for looping noises; note that
     // zero will be defaults (1.0 and 3.0 respectively); -1 attenuation is used
     // for "none" (similar to target_speaker) for no phs/pvs looping noises
-    float          loop_volume;
-    float          loop_attenuation;
+    float loop_volume;
+    float loop_attenuation;
     // [Paril-KEX] for proper client-side owner collision skipping
-    int32_t        owner;
+    int32_t owner;
     // [Paril-KEX] for custom interpolation stuff
-    int32_t        old_frame;
+    int32_t old_frame;
 #endif
 } entity_state_t;
 
@@ -1654,14 +1721,19 @@ typedef struct {
 
 // Wrapped, thread safe mem allocation.
 void *vrx_malloc(size_t Size, int Tag);
+
 void vrx_free(void *mem);
 
 double sigmoid(const double x);
+
 int sigmoid_distribute(int min, int max, int value);
+
 int rand_sigmoid_distribute(int min, int max);
 
 // rng a number within the range with a uniform distribution n times and take the average.
 // simulates a bell curve. more iters = more centralized
 int rand_clt_distribute(int min, int max, int itercnt);
+
+
 
 #endif

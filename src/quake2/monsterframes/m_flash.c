@@ -5,7 +5,7 @@
 // this file is included in both the game dll and quake2,
 // the game needs it to source shot locations, the client
 // needs it to position muzzle flashes
-vec3_t monster_flash_offset [] =
+vec3_t monster_flash_offset [212] =
 {
 // flash 0 is not used
 	0.0, 0.0, 0.0,

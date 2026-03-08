@@ -3,8 +3,6 @@
 #include <math.h>
 
 #define GAME_INCLUDE
-#include "bg_local.h"
-#include "game.h"
 #include "q_shared.h"
 #include "q_recompat.h"
 

@@ -243,13 +243,8 @@ void ShutdownGame(void)
 	gi.FreeTags(TAG_GAME);
 }
 
-#if (!defined _MSC_VER) && ((defined __linux__) || (defined __APPLE__))
-__attribute__((visibility("default")))
-#elif _MSC_VER // _WINDOWS
-__declspec(dllexport)
-#endif
 #ifndef VRX_REPRO
-game_export_t *GetGameAPI(game_import_t *import)
+q_export game_export_t *GetGameAPI(game_import_t *import)
 {
 	gi = *import;
 
