@@ -29,6 +29,8 @@ typedef int32_t qboolean;
 #define DEG2RAD( a ) ( a * M_PI ) / 180.0F
 //K03 End
 
+
+// for things we need abi compatibility for with the old version of the api
 #ifndef VRX_REPRO
 typedef qboolean _rebool;
 #else
@@ -127,6 +129,13 @@ MATHLIB
 ==============================================================
 */
 
+#ifndef min
+#define min(a,b) ((a) > (b) ? (b) : (a))
+#endif
+#ifndef max
+#define max(a,b) ((a) > (b) ? (a) : (b))
+#endif
+
 typedef float vec_t;
 typedef vec_t vec3_t[3];
 typedef vec_t vec4_t[4];
@@ -139,6 +148,18 @@ typedef union {
         uint8_t r, g, b, a;
     };
 } color_t;
+
+typedef union {
+    struct {
+        vec_t x, y;
+    };
+    vec_t v[2];
+} vec2_t;
+
+typedef color_t rgba_t;
+constexpr rgba_t rgba_white = { .r = 255, .g = 255, .b = 255, .a = 255 };
+constexpr rgba_t rgba_black = { .r = 0, .g = 0, .b = 0, .a = 255 };
+
 
 struct cplane_s;
 
@@ -394,6 +415,7 @@ CVARS (console variables)
 #define	CVAR
 
 enum cvar_flags_t {
+    CVAR_NOFLAGS = 0,
     CVAR_ARCHIVE = 1, // set to cause it to be saved to vars.rc
     CVAR_USERINFO = 2, // added to userinfo  when changed
     CVAR_SERVERINFO = 4, // added to serverinfo when changed
@@ -1376,6 +1398,7 @@ enum soundchan_t : uint8_t {
 
 
 // player_state->stats[] indexes
+
 // #define STAT_HEALTH_ICON		0
 #define	STAT_HEALTH				1
 #define	STAT_AMMO_ICON			2
@@ -1412,8 +1435,11 @@ enum soundchan_t : uint8_t {
 #define STAT_ID_AMMO			31
 //K03 End
 
+#ifdef VRX_REPRO
+#define MAX_STATS 64
+#else
 #define	MAX_STATS				32
-
+#endif
 
 // dmflags->value flags
 #define	DF_NO_HEALTH		0x00000001	// 1

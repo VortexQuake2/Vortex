@@ -14,7 +14,6 @@ enum BoxEdictsResult_t
 	Flags = End
 };
 
-typedef color_t rgba_t;
 
 enum goalReturnCode_t {
 	Error = 0,

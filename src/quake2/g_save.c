@@ -236,7 +236,11 @@ void InitGame(void)
 	deathmatch = gi.cvar("deathmatch", "0", CVAR_LATCH);
 	coop = gi.cvar("coop", "0", CVAR_LATCH);
 	skill = gi.cvar("skill", "1", CVAR_SERVERINFO);
+#ifndef VRX_REPRO
 	maxentities = gi.cvar("maxentities", "1024", CVAR_LATCH);
+#else
+	maxentities = gi.cvar("maxentities", "8096", CVAR_LATCH);
+#endif
 	//chain edit flag
 	//vwep support
 	vwep = gi.cvar("vwep", "1", CVAR_LATCH);

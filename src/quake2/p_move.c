@@ -13,8 +13,6 @@
 #define CONTENTS_CURRENT_DOWN CONTENT_CURRENTS_DOWN
 #endif
 
-#define q_countof(a) (sizeof(a) / sizeof((a)[0]))
-
 static const vec3_t vec3_up = { 0, 0, 1 };
 static const vec3_t vec3_down = { 0, 0, -1 };
 
