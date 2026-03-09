@@ -291,7 +291,7 @@ bool CanSave() {
 // TODO: all these missing thingies.
 repro_export_t *GetGameAPI(repro_import_t *import)
 {
-	vrx_repro_getgameapi(&gire, import);
+	vrx_repro_getgameapi(import, &gi);
 
 	globals.apiversion = GAME_API_VERSION;
 	globals.PreInit = PreInit;

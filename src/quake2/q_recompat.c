@@ -16,7 +16,7 @@ void vrx_repro_shim(game_import_t *gi);
 repro_import_t gire;
 
 void vrx_repro_getgameapi(repro_import_t *pr, game_import_t *gi) {
-    memcpy(pr, &gire, sizeof(repro_import_t));
+    memcpy(&gire, pr, sizeof(repro_import_t));
     vrx_repro_shim(gi);
 }
 
@@ -269,6 +269,9 @@ const shadow_light_data_t *repro_get_shadow_light_data(int32_t entity_number)
 	return nullptr;
 }
 
+int shim_boxedicts(vec3_t mins, vec3_t maxs, edict_t **list, size_t maxcount, enum solidity_area_t areatype) {
+	return gire.BoxEdicts(mins, maxs, list, maxcount, areatype, nullptr, nullptr);
+}
 
 void vrx_repro_shim(game_import_t *gi) {
     gi->bprintf = shim_bprintf;
@@ -297,7 +300,7 @@ void vrx_repro_shim(game_import_t *gi) {
 
     gi->linkentity = gire.linkentity;
     gi->unlinkentity = gire.unlinkentity;
-    gi->BoxEdicts = gire.BoxEdicts;
+    gi->BoxEdicts = shim_boxedicts;
 
     gi->Pmove = Pmove;
 

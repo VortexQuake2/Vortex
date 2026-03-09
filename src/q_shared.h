@@ -779,8 +779,8 @@ typedef struct {
     // clip against world & entities
     trace_t (*trace)(
         vec3_t start,
-        vec3_t *mins,
-        vec3_t *maxs,
+        const vec3_t *mins,
+        const vec3_t *maxs,
         vec3_t end,
         const struct edict_s *passent,
         enum contents_t contentmask);
