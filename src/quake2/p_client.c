@@ -1938,6 +1938,7 @@ void PutClientInServer (edict_t *ent)
 	client->ps.pmove.origin[0] = spawn_origin[0]*8;
 	client->ps.pmove.origin[1] = spawn_origin[1]*8;
 	client->ps.pmove.origin[2] = spawn_origin[2]*8;
+
 //ZOID
 	client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
 //ZOID
@@ -1958,11 +1959,16 @@ void PutClientInServer (edict_t *ent)
 	if (client->pers.weapon)//K03
 		client->ps.gunindex = gi.modelindex(client->pers.weapon->view_model);
 
+	client->ps.pmove.viewheight = ent->viewheight;
+
 	// clear entity state values
 	ent->s.effects = 0;
 	ent->s.skinnum = ent - g_edicts - 1;
+	// az: 255 = PLAYER MODEL. Repro sets mi2 as well.
 	ent->s.modelindex = 255;		// will use the skin specified model
-//	ent->s.modelindex2 = 255;		// custom gun model
+#ifdef VRX_REPRO
+	ent->s.modelindex2 = 255;		// custom gun model
+#endif
 	ShowGun(ent);					// ### Hentai ### special gun model
 	ent->s.frame = 0;
 	VectorCopy (spawn_origin, ent->s.origin);
@@ -2690,7 +2696,6 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 
 		pm.cmd = *ucmd;
 
-		// TODO: check PM_trace
 #ifndef VRX_REPRO
 		pm.trace = PM_trace;	// adds default parms
 		pm.pointcontents = gi.pointcontents;
@@ -2728,8 +2733,13 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 // GHz START
 		// if this is a morphed player, restore saved viewheight
 		// this locks them into that viewheight
-		if (ent->mtype)
-			pm_set_viewheight(&pm, viewheight);
+		if (ent->mtype) {
+#ifndef VRX_REPRO
+			pm.viewheight = viewheight;
+#else
+			pm.s.viewheight = viewheight;
+#endif
+		}
 //GHz END
 
 		// save results of pmove

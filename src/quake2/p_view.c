@@ -852,7 +852,8 @@ void G_SetClientEvent (edict_t *ent)
 	if ( ent->groundentity && xyspeed > 225)
 	{
 		// called with each player step
-		if ( (int)(current_client->bobtime+bobmove) != bobcycle 
+		if ( (int)(current_client->bobtime+bobmove) != bobcycle
+			&& level.framenum %	qf2sf(1) == 0 // don'd do the funny rapidfire burst of steps lol
 			&& (ent->client->pers.inventory[ITEM_INDEX(FindItem("Stealth Boots"))] < 1)	&& !ent->mtype)
 		{
 			if ((ent->myskills.abilities[CLOAK].disable) || (ent->myskills.abilities[CLOAK].current_level < 1))

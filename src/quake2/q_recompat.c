@@ -23,8 +23,10 @@ void vrx_repro_getgameapi(repro_import_t *pr, game_import_t *gi) {
 #define VA_PRELUDE(x) va_list argptr;\
     va_start(argptr, fmt);\
     int len = vsnprintf(NULL, 0, fmt, argptr);\
-    char _##x[len];\
+    char _##x[len+2];\
     vsnprintf(_##x, len, fmt, argptr);\
+    _##x[len]='\n';\
+    _##x[len+1]='\0';\
     va_end(argptr);
 
 void	shim_bprintf (int printlevel, const char *fmt, ...) {
@@ -337,11 +339,9 @@ void vrx_repro_shim(game_import_t *gi) {
 
 #ifdef VRX_REPRO
 void pm_set_viewheight(pmove_t *pm, int viewheight) {
-    VectorSet(pm->viewoffset, 0, 0, viewheight);
 }
 
 int pm_get_viewheight(pmove_t *pm) {
-    return pm->viewoffset[2];
 }
 #else
 void pm_set_viewheight(pmove_t *pm, int viewheight) {

@@ -2097,11 +2097,12 @@ struct edict_s
 
 	int shots_hit;
 	int shots;
+
 	float lastkill;
 	int nfer;
 	float lastdmg;
 	float lasthurt; // last time we took non-world damage
-	int	lastsound; // last frame we made a sound
+	uint64_t	lastsound; // last frame we made a sound
 	int dmg_counter;
 	int flipping;              // flipping data
 	edict_t *creator;

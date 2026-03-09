@@ -491,6 +491,7 @@ void CG_ParseCenterPrint (const char *str, const int isplit, const bool instant)
         center->bind_count++;
     }
 
+    const char* s_start = s;
     // echo it to the console
     cgi.Com_Print("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
 
@@ -524,9 +525,10 @@ void CG_ParseCenterPrint (const char *str, const int isplit, const bool instant)
     cgi.Com_Print("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
     CG_ClearNotify (isplit);
 
+    s = s_start;
     for (size_t line_end = 0; ; )
     {
-        line_end = FindEndOfUTF8Codepoint(string, line_end);
+        line_end = FindEndOfUTF8Codepoint(s, line_end);
 
         if (line_end == SIZE_MAX)
         {
@@ -538,7 +540,7 @@ void CG_ParseCenterPrint (const char *str, const int isplit, const bool instant)
 
         // char part of current line;
         // if newline, end line and cut off
-        const char ch = string[line_end];
+        const char ch = s[line_end];
 
         if (ch == '\n')
         {
