@@ -1251,6 +1251,24 @@ static void CG_ExecuteLayoutString (const char *s, struct vrect_t hud_vrect, str
             continue;
         }
 
+        if (!strcmp(token, "ifeq")) {
+            // stat index
+            token = COM_Parse (&s);
+
+            if_depth++;
+
+            int stat_index = atoi(token);
+            if (stat_index < 0 || stat_index >= MAX_STATS)
+                cgi.Com_Error("Bad stat_index");
+
+            token = COM_Parse (&s);
+            int value = atoi(token);
+            if (ps->stats[stat_index] != value) {
+                skip_depth = true;
+                endif_depth = if_depth;
+            }
+        }
+
         if (!strcmp(token, "ifgef"))
         {
             // if stmt
@@ -1804,8 +1822,10 @@ void CG_DrawHUD (
     }
 
     // draw HUD
-    if (!cl_skipHud->integer && !(ps->stats[STAT_LAYOUTS] & LAYOUTS_HIDE_HUD))
-        CG_ExecuteLayoutString(cgi.get_configstring(CS_STATUSBAR), hud_vrect, hud_safe, scale, playernum, ps);
+    if (!cl_skipHud->integer && !(ps->stats[STAT_LAYOUTS] & LAYOUTS_HIDE_HUD)) {
+        auto sbar = cgi.get_configstring(CS_STATUSBAR);
+        CG_ExecuteLayoutString(sbar, hud_vrect, hud_safe, scale, playernum, ps);
+    }
 
     // draw centerprint string
     CG_CheckDrawCenterString(ps, hud_vrect, hud_safe, isplit, scale);

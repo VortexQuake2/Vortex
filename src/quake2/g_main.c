@@ -277,17 +277,12 @@ q_export game_export_t *GetGameAPI(game_import_t *import)
 }
 #else
 
-void PreInit() {
-	// coop = gire.
-}
-
 bool CanSave() {
 	// not supported
 	return false;
 }
 
-
-
+void PreInit();
 // TODO: all these missing thingies.
 repro_export_t *GetGameAPI(repro_import_t *import)
 {

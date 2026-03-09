@@ -1970,9 +1970,13 @@ void PutClientInServer (edict_t *ent)
 	VectorCopy (ent->s.origin, ent->s.old_origin);
 
 	// set the delta angle
+#ifndef VRX_REPRO
 	for (i=0 ; i<3 ; i++)
 		client->ps.pmove.delta_angles[i] = ANGLE2SHORT(spawn_angles[i] - client->resp.cmd_angles[i]);
-
+#else
+	for (i=0 ; i<3 ; i++)
+		client->ps.pmove.delta_angles[i] = (spawn_angles[i] - client->resp.cmd_angles[i]);
+#endif
 	ent->s.angles[PITCH] = 0;
 	ent->s.angles[YAW] = spawn_angles[YAW];
 	ent->s.angles[ROLL] = 0;
@@ -2620,7 +2624,8 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		memset (&pm, 0, sizeof(pm));
 		
 		if (ent->movetype == MOVETYPE_NOCLIP)
-			client->ps.pmove.pm_type = PM_SPECTATOR;
+			// TODO - PM_SPECTATOR works differently from baseline.
+			client->ps.pmove.pm_type = PM_NOCLIP;//PM_SPECTATOR;
 		else if (ent->deadflag)
 			client->ps.pmove.pm_type = PM_DEAD;
 		else
@@ -2666,11 +2671,19 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		    ucmd->sidemove *= velocity_mod;
 		}
 
+#ifndef VRX_REPRO
 		for (i=0 ; i<3 ; i++)
 		{
 			pm.s.origin[i] = ent->s.origin[i]*8;
             pm.s.velocity[i] = ent->velocity[i] * 8;
 		}
+#else
+		for (i=0 ; i<3 ; i++)
+		{
+			pm.s.origin[i] = ent->s.origin[i];
+			pm.s.velocity[i] = ent->velocity[i];
+		}
+#endif
 
 		if (memcmp(&client->old_pmove, &pm.s, sizeof(pm.s)))
 			pm.snapinitial = true;
@@ -2695,6 +2708,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		// az: for SPEED, run a Pmove twice
 		// we don't wan't to compound on the existing velocity
 		// thus we undo the change in velocity right after...
+#ifndef VRX_REPRO
 		if (velocity_mod > 1) {
 		    float oldZpos, oldZspeed;
 		    oldZpos = pm.s.origin[2];
@@ -2709,6 +2723,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
             pm.s.origin[2] = oldZpos;
             pm.s.velocity[2] = oldZspeed;
 		}
+#endif
 
 // GHz START
 		// if this is a morphed player, restore saved viewheight
@@ -2717,26 +2732,39 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			pm_set_viewheight(&pm, viewheight);
 //GHz END
 
-
-
 		// save results of pmove
 		client->ps.pmove = pm.s;
 		client->old_pmove = pm.s;
 
 		for (i=0 ; i<3 ; i++)
 		{
+#ifndef VRX_REPRO
 			ent->s.origin[i] = pm.s.origin[i]*0.125;
 			ent->velocity[i] = pm.s.velocity[i]*0.125;
+#else
+			// full precision
+			ent->s.origin[i] = pm.s.origin[i];
+			ent->velocity[i] = pm.s.velocity[i];
+#endif
 		}
 
 		VectorCopy (pm.mins, ent->mins);
 		VectorCopy (pm.maxs, ent->maxs);
 
+		// TODO
+#ifndef VRX_REPRO
 		if (!(ent->lockon == 1 && ent->enemy)){
 			client->resp.cmd_angles[0] = SHORT2ANGLE(ucmd->angles[0]);
 			client->resp.cmd_angles[1] = SHORT2ANGLE(ucmd->angles[1]);
 			client->resp.cmd_angles[2] = SHORT2ANGLE(ucmd->angles[2]);
 		}
+#else
+		if (!(ent->lockon == 1 && ent->enemy)){
+			client->resp.cmd_angles[0] = (ucmd->angles[0]);
+			client->resp.cmd_angles[1] = (ucmd->angles[1]);
+			client->resp.cmd_angles[2] = (ucmd->angles[2]);
+		}
+#endif
 
 		//K03 Begin
 		//4.07 can't superspeed while being hurt

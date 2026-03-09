@@ -1115,11 +1115,19 @@ void ClientEndServerFrame (edict_t *ent)
 	// If it wasn't updated here, the view position would lag a frame
 	// behind the body position when pushed -- "sinking into plats"
 	//
+#ifndef VRX_REPRO
 	for (i=0 ; i<3 ; i++)
 	{
 		current_client->ps.pmove.origin[i] = ent->s.origin[i]*8.0;
 		current_client->ps.pmove.velocity[i] = ent->velocity[i]*8.0;
 	}
+#else
+	for (i=0 ; i<3 ; i++)
+	{
+		current_client->ps.pmove.origin[i] = ent->s.origin[i];
+		current_client->ps.pmove.velocity[i] = ent->velocity[i];
+	}
+#endif
 
 	//
 	// If the end of unit layout is displayed, don't give

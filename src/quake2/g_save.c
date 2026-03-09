@@ -173,6 +173,20 @@ is loaded.
 ============
 */
 
+#ifdef VRX_REPRO
+void PreInit() {
+	// coop = gire.
+	gi.cvar_forceset("sv_fps", va("%d", gire.tick_rate));
+
+	deathmatch = gire.cvar("deathmatch", "0", CVAR_LATCH);
+	coop = gire.cvar("coop", "0", CVAR_LATCH);
+
+	if (!deathmatch->integer && !coop->integer) {
+		gire.cvar_forceset("deathmatch", "1");
+	}
+}
+#endif
+
 
 
 void InitGame(void)
@@ -233,8 +247,6 @@ void InitGame(void)
 	gi.cvar("gamedate", __DATE__, CVAR_SERVERINFO | CVAR_LATCH);
 
 	maxclients = gi.cvar("maxclients", "4", CVAR_SERVERINFO | CVAR_LATCH);
-	deathmatch = gi.cvar("deathmatch", "0", CVAR_LATCH);
-	coop = gi.cvar("coop", "0", CVAR_LATCH);
 	skill = gi.cvar("skill", "1", CVAR_SERVERINFO);
 #ifndef VRX_REPRO
 	maxentities = gi.cvar("maxentities", "1024", CVAR_LATCH);
