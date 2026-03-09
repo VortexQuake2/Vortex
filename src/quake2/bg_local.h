@@ -6,12 +6,6 @@
 #define GAME_INCLUDE
 #include "game.h"
 
-// [Paril-KEX] generic touch list; used for contact entities
-typedef struct touch_list_s
-{
-	size_t	num;
-	trace_t traces[MAXTOUCH];
-} touch_list_t;
 
 //
 // p_move.c

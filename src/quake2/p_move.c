@@ -246,7 +246,7 @@ void PM_ClipVelocity(const vec3_t in, const vec3_t normal, vec3_t out, float ove
 }
 
 trace_t PM_Clip(const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, enum contents_t mask) {
-    return gire.clip(pm->player, (float *) start, (float *) mins, (float *) maxs, (float *) end, mask);
+    return pm->clip(start,  mins,  maxs,  end, mask);
 }
 
 trace_t PM_Trace(const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, enum contents_t mask) {
@@ -265,7 +265,7 @@ trace_t PM_Trace(const vec3_t start, const vec3_t mins, const vec3_t maxs, const
             mask &= ~CONTENTS_PLAYER;
     }
 
-    return pm->trace(pm->player, start, mins, maxs, end, mask);
+    return pm->trace(start, mins, maxs, end, pm->player, mask);
 }
 
 // only here to satisfy pm_trace_t
@@ -442,12 +442,8 @@ void PM_StepSlideMove_Generic(vec3_t origin, vec3_t velocity, float frametime, c
 }
 
 static inline void PM_StepSlideMove_() {
-    touch_list_t touch;
-    touch.num = 0;
-    PM_StepSlideMove_Generic(pml.origin, pml.velocity, pml.frametime, pm->mins, pm->maxs, &touch,
+    PM_StepSlideMove_Generic(pml.origin, pml.velocity, pml.frametime, pm->mins, pm->maxs, &pm->touch,
                              (qboolean) pm->s.pm_time, PM_Trace_Auto);
-    for (size_t i = 0; i < touch.num && pm->numtouch < MAXTOUCH; i++)
-        pm->touchents[pm->numtouch++] = touch.traces[i].ent;
 }
 
 /*
@@ -1015,8 +1011,8 @@ void PM_CatagorizePosition() {
             }
         }
 
-        if (pm->numtouch < MAXTOUCH)
-            pm->touchents[pm->numtouch++] = trace.ent;
+        if (pm->touch.num < MAXTOUCH)
+            pm->touch.traces[pm->touch.num++] = trace;
     }
 
     //
@@ -1500,7 +1496,7 @@ void Pmove(pmove_t *pmove) {
     pm = pmove;
 
     // clear results
-    pm->numtouch = 0;
+    pm->touch.num = 0;
     VectorClear(pm->viewangles);
     pm->s.viewheight = 0;
     pm->groundentity = NULL;

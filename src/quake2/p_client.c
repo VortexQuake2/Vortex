@@ -2540,6 +2540,12 @@ void think_trade(edict_t *ent);
 void BlinkStrike_think(edict_t* ent);
 void V_PickUpEntity(edict_t* ent);
 
+trace_t SV_PM_Clip(const vec3_t start, const vec3_t *mins, const vec3_t *maxs, const vec3_t end, enum contents_t mask)
+{
+	return gire.clip(world, start, mins, maxs, end, mask);
+}
+
+
 void ClientThink (edict_t *ent, usercmd_t *ucmd)
 {
 	gclient_t	*client;
@@ -2672,10 +2678,15 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		pm.cmd = *ucmd;
 
 		// TODO: check PM_trace
-		pm.trace = PM_trace;	// adds default parms
-		
 #ifndef VRX_REPRO
+		pm.trace = PM_trace;	// adds default parms
 		pm.pointcontents = gi.pointcontents;
+#else
+		pm.player = ent;
+		pm.trace = gire.trace;
+		pm.clip = SV_PM_Clip;
+		VectorCopy(ent->client->ps.viewoffset, pm.viewoffset);
+		// pm.pointcontents = gire.pointcontents;
 #endif
 
 		// perform a pmove
@@ -2772,6 +2783,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			G_TouchTriggers (ent);
 
 		// touch other objects
+#ifndef VRX_REPRO
 		for (i=0 ; i<pm.numtouch ; i++)
 		{
 			other = pm.touchents[i];
@@ -2780,11 +2792,23 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 					break;
 			if (j != i)
 				continue;	// duplicated
+			other = pm.touches[i].ent;
 			if (!other->touch)
 				continue;
-			other->touch (other, ent, NULL, NULL);
+			other->touch (other, ent, nullptr, nullptr);
+		}
+#else
+		// touch other objects
+		for (i = 0; i < pm.touch.num; i++)
+		{
+			trace_t *tr = &pm.touch.traces[i];
+			other = tr->ent;
+
+			if (other->touch)
+				other->touch(other, ent, &tr->plane, tr->surface);
 		}
 
+#endif
 					//3.0 begin doomie
 	
 			/*************************************************************************

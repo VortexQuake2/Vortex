@@ -740,6 +740,13 @@ typedef struct usercmd_s {
 
 #define	MAXTOUCH	32
 
+// [Paril-KEX] generic touch list; used for contact entities
+typedef struct touch_list_s
+{
+    size_t	num;
+    trace_t traces[MAXTOUCH];
+} touch_list_t;
+
 typedef struct {
     // state (in / out)
     pmove_state_t s;
@@ -749,9 +756,12 @@ typedef struct {
     _rebool snapinitial; // if s has been changed outside pmove
 
     // results (out)
+#ifndef VRX_REPRO
     int numtouch;
     struct edict_s *touchents[MAXTOUCH];
-
+#else
+    struct touch_list_s touch;
+#endif
     vec3_t viewangles; // clamped
 #ifndef VRX_REPRO
     float viewheight;
@@ -767,15 +777,13 @@ typedef struct {
     enum contents_t watertype;
     int waterlevel;
 
-#ifdef VRX_REPRO
-    struct edict_s *player; // edict_t
-#endif
-
 #ifndef VRX_REPRO
     // callbacks to test the world
     trace_t (*trace)(vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end);
     int (*pointcontents)(vec3_t point);
 #else
+    struct edict_s *player; // edict_t
+
     // clip against world & entities
     trace_t (*trace)(
         vec3_t start,
@@ -792,17 +800,16 @@ typedef struct {
         vec3_t *maxs,
         vec3_t end,
         enum contents_t contentmask);
-#endif
 
-#ifdef VRX_REPRO
+    int (*pointcontents)(vec3_t point);
     vec3_t viewoffset;
-#endif
 
     vec4_t screen_blend;
     enum refdef_flags_t rdflags;
     _rebool jump_sound;
     _rebool step_clip;
     float impact_delta;
+#endif
 } pmove_t;
 
 
