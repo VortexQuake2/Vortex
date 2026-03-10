@@ -23,10 +23,9 @@ void vrx_repro_getgameapi(repro_import_t *pr, game_import_t *gi) {
 #define VA_PRELUDE(x) va_list argptr;\
     va_start(argptr, fmt);\
     int len = vsnprintf(NULL, 0, fmt, argptr);\
-    char _##x[len+2];\
-    vsnprintf(_##x, len, fmt, argptr);\
-    _##x[len]='\n';\
-    _##x[len+1]='\0';\
+    char _##x[len+1];\
+    vsnprintf(_##x, len + 1, fmt, argptr);\
+    _##x[len]='\0';\
     va_end(argptr);
 
 void	shim_bprintf (int printlevel, const char *fmt, ...) {

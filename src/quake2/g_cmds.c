@@ -208,6 +208,34 @@ void FL_think (edict_t *self)
     self->nextthink = level.time + FRAMETIME;
 }
 
+bool create_flashlight_entity(edict_t *self, vec3_t start, vec3_t forward, vec3_t right, vec3_t end) {
+	if (self->flashlight)
+	{
+		G_FreeEdict(self->flashlight);
+		self->flashlight = NULL;
+		return true;
+	}
+	if (self->client)
+		AngleVectors(self->client->v_angle, forward, right, NULL);
+	else
+		AngleVectors(self->s.angles, forward, right, NULL);
+	VectorSet(end, 100, 0, 0);
+	G_ProjectSource(self->s.origin, end, forward, right, start);
+	self->flashlight = G_Spawn ();
+	self->flashlight->owner = self;
+	self->flashlight->movetype = MOVETYPE_NOCLIP;
+	self->flashlight->solid = SOLID_NOT;
+	self->flashlight->classname = "flashlight";
+	self->flashlight->s.modelindex = gi.modelindex ("models/objects/flash/tris.md2");
+	self->flashlight->s.skinnum = 0;
+	self->flashlight->s.effects |= 0x10000000; //transparency
+	self->flashlight->s.effects |= EF_HYPERBLASTER;
+
+	self->flashlight->think = FL_think;
+	self->flashlight->nextthink = level.time + FRAMETIME;
+	return false;
+}
+
 /*
 ===============
 FL_make
@@ -217,30 +245,11 @@ void FL_make(edict_t *self)
 {
     vec3_t    start,forward,right,end;
 
-    if (self->flashlight)
-    {
-        G_FreeEdict(self->flashlight);
-        self->flashlight = NULL;
-        return;
-    }
-	if (self->client)
-		AngleVectors(self->client->v_angle, forward, right, NULL);
-	else
-		AngleVectors(self->s.angles, forward, right, NULL);
-    VectorSet(end, 100, 0, 0);
-    G_ProjectSource(self->s.origin, end, forward, right, start);
-    self->flashlight = G_Spawn ();
-    self->flashlight->owner = self;
-    self->flashlight->movetype = MOVETYPE_NOCLIP;
-    self->flashlight->solid = SOLID_NOT;
-    self->flashlight->classname = "flashlight";
-    self->flashlight->s.modelindex = gi.modelindex ("models/objects/flash/tris.md2"); 
-    self->flashlight->s.skinnum = 0;
-    self->flashlight->s.effects |= 0x10000000; //transparency
-    self->flashlight->s.effects |= EF_HYPERBLASTER;
-
-    self->flashlight->think = FL_think;
-    self->flashlight->nextthink = level.time + FRAMETIME;
+#ifndef VRX_REPRO
+    if (create_flashlight_entity(self, start, forward, right, end)) return;
+#else
+	self->flags ^= FL_FLASHLIGHT;
+#endif
 
 } 
 //K03 End
