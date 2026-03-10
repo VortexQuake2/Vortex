@@ -2506,6 +2506,10 @@ void V_NonShellEffects(edict_t *ent) {
     if (ent->superspeed)
         ent->s.effects |= EF_TAGTRAIL;
 
+    if (ent->flags & FL_FLASHLIGHT) {
+        ent->s.effects |= EF_FLASHLIGHT;
+    }
+
     // ********** CLIENT-SPECIFIC EFFECTS BELOW **********
     if (ent->client) {
         // shield ability effect
