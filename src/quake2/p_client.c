@@ -2795,7 +2795,11 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		{
 			V_Player_Touchdown(ent);
 		}
-		ent->viewheight = pm_get_viewheight(&pm);
+#ifndef VRX_REPRO
+		ent->viewheight = pm.viewheight;
+#else
+		ent->viewheight = pm.s.viewheight;
+#endif
 		ent->waterlevel = pm.waterlevel;
 		ent->watertype = pm.watertype;
 		ent->groundentity = pm.groundentity;

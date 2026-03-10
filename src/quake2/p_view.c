@@ -287,8 +287,10 @@ void SV_CalcViewOffset (edict_t *ent)
 
 	// add view height
 
+	// az: the viewheight as part of pm.s makes this unnecessary now
+#ifndef VRX_REPRO
 	v[2] += ent->viewheight;
-
+#endif
 	// add fall height
 
 	ratio = (ent->client->fall_time - level.time) / FALL_TIME;
