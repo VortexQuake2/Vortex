@@ -2298,10 +2298,10 @@ struct edict_s {
 
     float lastkill;
     int nfer;
-    float lastdmg;
+    double lastdmg;
     float lasthurt; // last time we took non-world damage
     uint64_t lastsound; // last frame we made a sound
-    int dmg_counter;
+    int32_t dmg_counter;
     int flipping; // flipping data
     edict_t *creator;
     //sentry stuff
