@@ -1123,13 +1123,17 @@ void vrx_do_dmg_counter(float damage, edict_t *player) {
 	{
 		// keep a counter for rapid-fire weapons so we have a more
 		// accurate reading of their damage over time
+
+#ifndef VRX_REPRO
 		if (level.time-player->lastdmg <= 0.2 && player->dmg_counter <= 32767)
 			player->dmg_counter += damage;
 		else
 			player->dmg_counter = damage;
 
 		player->client->ps.stats[STAT_ID_DAMAGE] = player->dmg_counter;
-
+#else
+		player->dmg_counter += damage;
+#endif
 		player->lastdmg = level.time;
 		player->client->idle_frames = 0; // player is no longer idle! (uncloak em!)
 	}

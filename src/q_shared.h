@@ -178,6 +178,7 @@ typedef color_t rgba_t;
 constexpr rgba_t rgba_white = {.r = 255, .g = 255, .b = 255, .a = 255};
 constexpr rgba_t rgba_black = {.r = 0, .g = 0, .b = 0, .a = 255};
 constexpr rgba_t rgba_red = {.r = 255, .g = 0, .b = 0, .a = 255};
+constexpr rgba_t rgba_orange = {.r = 255, .g = 127, .b = 0, .a = 255};
 constexpr rgba_t rgba_green = {.r = 0, .g = 255, .b = 0, .a = 255};
 constexpr rgba_t rgba_blue = {.r = 0, .g = 0, .b = 255, .a = 255};
 
@@ -1484,9 +1485,9 @@ enum {
     CS_STATUSBAR, // display program string
 
 #ifndef VRX_REPRO
-    CS_AIRACCEL,  // air acceleration control
+    CS_AIRACCEL = 29,   // air acceleration control
 #else
-    CS_AIRACCEL, // air acceleration control
+    CS_AIRACCEL = 59, // air acceleration control
 #endif
     CS_MAXCLIENTS,
     CS_MAPCHECKSUM, // for catching cheater maps
@@ -1504,11 +1505,14 @@ enum {
     CS_WHEEL_AMMO = CS_WHEEL_WEAPONS + MAX_WHEEL_ITEMS, // [Paril-KEX] see MAX_WHEEL_ITEMS
     CS_WHEEL_POWERUPS = CS_WHEEL_AMMO + MAX_WHEEL_ITEMS, // [Paril-KEX] see MAX_WHEEL_ITEMS
     CS_CD_LOOP_COUNT = CS_WHEEL_POWERUPS + MAX_WHEEL_ITEMS, // [Paril-KEX] override default loop count
-    CS_GAME_STYLE, // [Paril-KEX] see game_style_t
+    // az: repro doesn't seem to care about this
+    //CS_GAME_STYLE, // [Paril-KEX] see game_style_t
 #endif
 
     MAX_CONFIGSTRINGS
 };
+
+static_assert(MAX_CONFIGSTRINGS <= 0x7FFF, "too many configstrings");
 
 // [Sam-KEX] New define for max config string length
 #ifdef VRX_REPRO
@@ -1538,7 +1542,7 @@ enum player_stat_t {
     STAT_HELPICON = 11,
     STAT_SELECTED_ITEM = 12,
     STAT_LAYOUTS = 13,
-    STAT_FRAGS = 14,
+    STAT_SCORE = 14,
     STAT_FLASHES = 15, // cleared each frame, 1 = health, 2 = armor
     STAT_CHASE = 16,
 
@@ -1560,37 +1564,42 @@ enum player_stat_t {
     STAT_ID_AMMO = 31,
     //K03 End
 
+#ifdef VRX_REPRO
     // [Kex] More stats for weapon wheel
-STAT_WEAPONS_OWNED_1 = 32,
-STAT_WEAPONS_OWNED_2 = 33,
-STAT_AMMO_INFO_START = 34,
-STAT_AMMO_INFO_END = STAT_AMMO_INFO_START + NUM_AMMO_STATS - 1,
-STAT_POWERUP_INFO_START,
-STAT_POWERUP_INFO_END = STAT_POWERUP_INFO_START + NUM_POWERUP_STATS - 1,
+    STAT_WEAPONS_OWNED_1 = 32,
+    STAT_WEAPONS_OWNED_2 = 33,
+    STAT_AMMO_INFO_START = 34,
+    STAT_AMMO_INFO_END = STAT_AMMO_INFO_START + NUM_AMMO_STATS - 1,
+    STAT_POWERUP_INFO_START,
+    STAT_POWERUP_INFO_END = STAT_POWERUP_INFO_START + NUM_POWERUP_STATS - 1,
 
-// [Paril-KEX] Key display
-STAT_KEY_A,
-STAT_KEY_B,
-STAT_KEY_C,
+    // [Paril-KEX] Key display
+    STAT_KEY_A,
+    STAT_KEY_B,
+    STAT_KEY_C,
 
-// [Paril-KEX] currently active wheel weapon (or one we're switching to)
-STAT_ACTIVE_WHEEL_WEAPON,
-// [Paril-KEX] top of screen coop respawn state
-STAT_COOP_RESPAWN,
-// [Paril-KEX] respawns remaining
-STAT_LIVES,
-// [Paril-KEX] hit marker; # of damage we successfully landed
-STAT_HIT_MARKER,
-// [Paril-KEX]
-STAT_SELECTED_ITEM_NAME,
-// [Paril-KEX]
-STAT_HEALTH_BARS, // two health bar values; 7 bits for value, 1 bit for active
-// [Paril-KEX]
-STAT_ACTIVE_WEAPON,
-
-// don't use; just for verification
-STAT_LAST
-};
+    // [Paril-KEX] currently active wheel weapon (or one we're switching to)
+    STAT_ACTIVE_WHEEL_WEAPON,
+    // [Paril-KEX] top of screen coop respawn state
+    STAT_COOP_RESPAWN,
+    // [Paril-KEX] respawns remaining
+    STAT_LIVES,
+    // [Paril-KEX] hit marker; # of damage we successfully landed
+    STAT_HIT_MARKER,
+    // [Paril-KEX]
+    STAT_SELECTED_ITEM_NAME,
+    // [Paril-KEX]
+    STAT_HEALTH_BARS, // two health bar values; 7 bits for value, 1 bit for active
+    // [Paril-KEX]
+    STAT_ACTIVE_WEAPON,
+    // az, for repro higher capacity numbers
+    STAT_ID_DAMAGE2,
+    STAT_SCORE2,
+#endif
+    // don't use; just for verification
+    STAT_LAST
+}
+;
 
 #ifdef VRX_REPRO
 #define MAX_STATS 64

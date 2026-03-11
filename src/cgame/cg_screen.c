@@ -114,6 +114,14 @@ struct cl_bind_t bind_from_string(const char* bind_str, const char* purpose_str)
     return bind;
 }
 
+int32_t ps_instant_dmg_value(const player_state_t *ps) {
+    return (int32_t) (((uint32_t)(uint16_t)ps->stats[STAT_ID_DAMAGE]) | (((uint32_t)(uint16_t)ps->stats[STAT_ID_DAMAGE2]) << 16));
+}
+
+int32_t ps_score_value(const player_state_t * ps) {
+    return (int32_t) ((uint32_t)(uint16_t)ps->stats[STAT_SCORE] | (uint32_t)(uint16_t)ps->stats[STAT_SCORE2] << 16);
+}
+
 bool CG_ViewingLayout(const player_state_t *ps)
 {
     return ps->stats[STAT_LAYOUTS] & (LAYOUTS_LAYOUT | LAYOUTS_INVENTORY);
@@ -149,6 +157,10 @@ struct hud_data_t {
     struct cl_centerprint_t centers[MAX_CENTER_PRINTS]; // list of centers
     int32_t center_index; // current index we're drawing, or -1 if none left
     struct cl_notify_t notify[MAX_NOTIFY]; // list of notifies
+
+    int32_t dmg_counter;
+    int32_t dmg_instant;
+    uint64_t last_dmg_time;
 };
 
 
@@ -759,8 +771,9 @@ static void CG_DrawField(int x, const int y, const int color, int width, int val
         return;
 
     // draw number string
-    if (width > 5)
-        width = 5;
+    // az: from 5
+    if (width > 7)
+        width = 7;
 
     int l = snprintf(num, sizeof(num), "%d", value);
     if (l >= sizeof(num))
@@ -842,6 +855,17 @@ static void CG_DrawTable(int x, int y, const uint32_t width, const uint32_t heig
         }
 
         x += hud_temp.column_widths[i] + cgi.SCR_MeasureFontString(" ", 1).x;
+    }
+}
+
+
+static void vrx_apply_stat_hax(const player_state_t *ps, int *value, int stat) {
+    if (stat == STAT_ID_DAMAGE) {
+        *value = ps_instant_dmg_value(ps);
+    }
+
+    if (stat == STAT_SCORE) {
+        *value = ps_score_value(ps);
     }
 }
 
@@ -1072,7 +1096,13 @@ static void CG_ExecuteLayoutString (const char *s, struct vrect_t hud_vrect, str
             token = COM_Parse (&s);
             if (!skip_depth)
             {
-                value = ps->stats[atoi(token)];
+                int stat = atoi(token);
+                value = ps->stats[stat];
+
+                // az: the damage and game hacks for vortex
+                vrx_apply_stat_hax(ps, &value, stat);
+
+
                 CG_DrawField (x, y, 0, width, value, scale);
             }
             continue;
@@ -1095,7 +1125,7 @@ static void CG_ExecuteLayoutString (const char *s, struct vrect_t hud_vrect, str
             {
                 int     color;
 
-                width = 3;
+                width = 5;
                 value = ps->stats[STAT_HEALTH];
                 if (value > 25)
                     color = 0;  // green
@@ -1114,6 +1144,26 @@ static void CG_ExecuteLayoutString (const char *s, struct vrect_t hud_vrect, str
             continue;
         }
 
+        if (!strcmp(token, "dmgnum")) {
+                // damage number
+                if (!skip_depth && hud_data[playernum].dmg_counter)
+                {
+                    width = 8;
+                    value = hud_data[playernum].dmg_counter;
+
+                    if (hud_data[playernum].last_dmg_time + 50 > cgi.CL_ClientTime())
+                    {
+                        cgi.SCR_DrawColorPic(x, y, 16 * (width - 1) * scale, 28 * scale, "_white", &rgba_orange);
+                    }
+
+                    const char* total_s = va("%d total", value);
+                    auto len = strlen(total_s) + 2;
+                    CG_DrawField (x, y, 0, width, hud_data[playernum].dmg_instant, scale);
+                    CG_DrawString(x + (16 * width - len * 8) * scale, y + 32 * scale, scale, total_s, false, true);
+                }
+                continue;
+        }
+
         if (!strcmp(token, "anum"))
         {
             // ammo number
@@ -1121,7 +1171,7 @@ static void CG_ExecuteLayoutString (const char *s, struct vrect_t hud_vrect, str
             {
                 int     color;
 
-                width = 3;
+                width = 5;
                 value = ps->stats[STAT_AMMO];
 
                 int32_t min_ammo = cgi.CL_GetWarnAmmoCount(ps->stats[STAT_ACTIVE_WEAPON]);
@@ -1153,7 +1203,7 @@ static void CG_ExecuteLayoutString (const char *s, struct vrect_t hud_vrect, str
             {
                 int     color;
 
-                width = 3;
+                width = 5;
                 value = ps->stats[STAT_ARMOR];
                 if (value < 0)
                     continue;
@@ -1823,6 +1873,18 @@ void CG_DrawHUD (
         return;
     }
 
+    int instant_dmg = ps_instant_dmg_value(ps);
+    if (instant_dmg) {
+        hud_data[playernum].dmg_instant = instant_dmg;
+        hud_data[playernum].dmg_counter += hud_data[playernum].dmg_instant;
+        hud_data[playernum].last_dmg_time = cgi.CL_ClientTime();
+    }
+
+    if (cgi.CL_ClientTime() > hud_data[playernum].last_dmg_time + 2000 && hud_data[playernum].dmg_counter) {
+        hud_data[playernum].dmg_counter = 0;
+        hud_data[playernum].dmg_instant = 0;
+    }
+
     // draw HUD
     if (!cl_skipHud->integer && !(ps->stats[STAT_LAYOUTS] & LAYOUTS_HIDE_HUD)) {
         auto sbar = cgi.get_configstring(CS_STATUSBAR);
@@ -1875,5 +1937,6 @@ void CG_InitScreen()
     ui_acc_alttypeface = cgi.cvar("ui_acc_alttypeface", "0", CVAR_NOFLAGS);
 
     memset(&hud_data, 0, sizeof(hud_data));
-    hud_data->center_index = -1;
+    for (int i = 0; i < MAX_SPLIT_PLAYERS; i++)
+        hud_data[i].center_index = -1;
 }

@@ -1051,7 +1051,10 @@ void G_SetStats(edict_t *ent)
 	//
 	// frags
 	//
-	ent->client->ps.stats[STAT_FRAGS] = ent->client->resp.score;
+	ent->client->ps.stats[STAT_SCORE] = ent->client->resp.score;
+#ifdef VRX_REPRO
+	ent->client->ps.stats[STAT_SCORE2] = ent->client->resp.score >> 16;
+#endif
 
 	//
 	// help icon / current weapon if not shown
@@ -1106,8 +1109,20 @@ void G_SetStats(edict_t *ent)
 	// id code
 	//GHz End
 	//GHz START
-	if (level.time > ent->lastdmg + 3)
+#ifdef VRX_REPRO
+	// immediately clear the damage since we don't accumulate it.
+	// repro does the accumulating
+	ent->client->ps.stats[STAT_ID_DAMAGE] = ent->dmg_counter;
+	ent->client->ps.stats[STAT_ID_DAMAGE2] = ent->dmg_counter >> 16;
+
+	ent->dmg_counter = 0;
+
+#else
+	if (level.time > ent->lastdmg + 3) {
 		ent->client->ps.stats[STAT_ID_DAMAGE] = 0;
+		ent->dmg_counter = 0;
+	}
+#endif
 	//GHz END
 
 }
