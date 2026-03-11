@@ -54,7 +54,7 @@ void vrx_relay_connect() {
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    cvar_t* server = gi.cvar("vrx_relay_server", "localhost", 0);
+    cvar_t* server = gi.cvar("vrx_relay_server", "", 0);
     cvar_t* port = gi.cvar("vrx_relay_port", "9999", 0);
     cvar_t* key = gi.cvar("vrx_relay_key", "", 0);
 
