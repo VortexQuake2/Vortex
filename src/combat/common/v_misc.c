@@ -549,9 +549,8 @@ void vrx_remove_player_summonables(edict_t* self) {
 		G_FreeEdict(self->lasersight);
 		self->lasersight = NULL;
 	}
-	if (self->flashlight) {
-		G_FreeEdict(self->flashlight);
-		self->flashlight = NULL;
+	if (FL_exists(self)) {
+		FL_toggle(self);
 	}
 
 	if (self->supplystation) {

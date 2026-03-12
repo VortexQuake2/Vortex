@@ -810,10 +810,10 @@ void sentrygun_think(edict_t *self)
 	}
 
 	// toggle sentry spotlight
-	if (level.daytime && self->flashlight)
-		FL_make(self);
-	else if (!level.daytime && !self->flashlight)
-		FL_make(self);
+	if (level.daytime && FL_exists(self))
+		FL_toggle(self);
+	else if (!level.daytime && !FL_exists(self))
+		FL_toggle(self);
 
 	// is the sentry slowed by holy freeze?
 	temp = self->yaw_speed;

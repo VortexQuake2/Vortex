@@ -2457,27 +2457,16 @@ void drone_togglelight (edict_t *self)
 {
 	if (self->health > 0)
 	{
-		if (level.daytime && self->flashlight)
-		{
-			// turn light off
-			G_FreeEdict(self->flashlight);
-			self->flashlight = NULL;
-			return;;
-		}
-		else if (!level.daytime && !self->flashlight)
-		{
-			FL_make(self);
-		}
+		if (level.daytime && FL_exists(self))
+			FL_toggle(self);
+		else if (!level.daytime && !FL_exists(self))
+			FL_toggle(self);
 	}
 	else
 	{
 		// turn off the flashlight if we're dead!
-		if (self->flashlight)
-		{
-			G_FreeEdict(self->flashlight);
-			self->flashlight = NULL;
-			return;
-		}
+		if (FL_exists(self))
+			FL_toggle(self);
 	}
 }
 
