@@ -60,7 +60,8 @@ enum layout_flags_t : int16_t
 	LAYOUTS_HIDE_HUD	      = 1 << 2, // hide entire hud, for cameras, etc
 	LAYOUTS_INTERMISSION      = 1 << 3, // intermission is being drawn; collapse splitscreen into 1 view
 	LAYOUTS_HELP              = 1 << 4, // help is active; escape remapped to putaway
-	LAYOUTS_HIDE_CROSSHAIR	  = 1 << 5 // hide crosshair only
+	LAYOUTS_HIDE_CROSSHAIR	  = 1 << 5, // hide crosshair only
+	LAYOUTS_SIDEBAR = 1 << 6,
 };
 
 

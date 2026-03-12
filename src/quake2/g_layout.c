@@ -722,7 +722,15 @@ void layout_send(edict_t* ent)
 	if (ent->ai.is_bot)
 		return;
 
+#ifndef VRX_REPRO
 	gi.WriteByte(svc_layout);
 	gi.WriteString(ent->client->layout.layout);
 	gi.unicast(ent, false);
+#else
+	// as above but sent to CS_GENERAL + 2.
+	gi.WriteByte(svc_configstring);
+	gi.WriteShort(CONFIG_SIDEBAR);
+	gi.WriteString(ent->client->layout.layout);
+	gi.unicast(ent, false);
+#endif
 }

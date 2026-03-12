@@ -1035,8 +1035,18 @@ void G_SetStats(edict_t *ent)
 
 	if (deathmatch->value) {
 		if (ent->client->pers.health <= 0 || level.intermissiontime
-			|| ent->client->showscores || ent->client->pers.scanner_active || ent->client->layout.current_len)
+			|| ent->client->showscores || ent->client->pers.scanner_active
+#ifndef VRX_REPRO
+			|| ent->client->layout.current_len
+#endif
+			)
 			ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_LAYOUT;
+
+#ifdef VRX_REPRO
+			if (ent->client->layout.current_len)
+				ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_SIDEBAR;
+#endif
+
 		if (ent->client->showinventory && ent->client->pers.health > 0)
 			ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_INVENTORY;
 	}
