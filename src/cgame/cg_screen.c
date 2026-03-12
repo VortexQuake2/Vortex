@@ -1853,6 +1853,20 @@ static void CG_DrawInventory(const player_state_t *ps, const int16_t inventory[M
 
 extern uint64_t cgame_init_time;
 
+void CG_DrawCharge(const player_state_t * ps, struct vrect_t hud_vrect, struct vrect_t hud_safe, int32_t scale) {
+    int charge = ps->stats[STAT_CHARGE_LEVEL];
+    int cx = (hud_vrect.width / 2) * scale + hud_safe.x;
+    int cy = (hud_vrect.height / 2) * scale + hud_safe.y + 96 * scale;
+
+    if (charge > 0) {
+        int charge_width = 100;
+        int charge_height = 8 * scale;
+        CG_DrawString(cx - 3 * CONCHAR_WIDTH * scale, cy - 8 * scale, scale, "charge", false, true);
+        cgi.SCR_DrawColorPic(cx - charge_width * 0.5f, cy, charge_width, charge_height, "_white", &rgba_black);
+        cgi.SCR_DrawColorPic(cx - charge_width * 0.5f, cy, charge_width * charge / 100.f, charge_height, "_white", &rgba_green);
+    }
+}
+
 void CG_DrawHUD (
     const int32_t isplit,
     const struct cg_server_data_t *data,
@@ -1896,6 +1910,8 @@ void CG_DrawHUD (
 
     // draw notify
     CG_DrawNotify(isplit, hud_vrect, hud_safe, scale);
+
+    CG_DrawCharge(ps, hud_vrect, hud_safe, scale);
 
     // svc_layout still drawn with hud off
     if (ps->stats[STAT_LAYOUTS] & LAYOUTS_LAYOUT)
