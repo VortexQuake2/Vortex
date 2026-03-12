@@ -135,7 +135,7 @@ const gameCommand_s commands[] =
 	{ "laser", 			Cmd_BuildLaser },
     { "sentry", 		cmd_SentryGun },
 	{ "lasersight", 	Cmd_LaserSight_f },
-	{ "flashlight",     FL_make  },
+	{ "flashlight",     FL_toggle  },
 	{ "monster", 		Cmd_Drone_f },
 	{ "detpipes", 		Cmd_DetPipes_f  },
 	{ "vrxinfo", 		OpenMyinfoMenu },

@@ -1111,7 +1111,8 @@ void Cmd_Help_f(edict_t *ent);
 
 void Cmd_Score_f(edict_t *ent);
 
-void FL_make(edict_t *self);
+void FL_toggle(edict_t *self);
+bool FL_exists(edict_t *self);
 
 //
 // g_items.c

@@ -241,7 +241,7 @@ bool create_flashlight_entity(edict_t *self, vec3_t start, vec3_t forward, vec3_
 FL_make
 ===============
 */
-void FL_make(edict_t *self)
+void FL_toggle(edict_t *self)
 {
     vec3_t    start,forward,right,end;
 
@@ -251,7 +251,15 @@ void FL_make(edict_t *self)
 	self->flags ^= FL_FLASHLIGHT;
 #endif
 
-} 
+}
+
+bool FL_exists(edict_t *self) {
+#ifndef VRX_REPRO
+	return self->flashlight != NULL;
+#else
+	return self->flags & FL_FLASHLIGHT;
+#endif
+}
 //K03 End
 
 char *ClientTeam (const edict_t *ent)
