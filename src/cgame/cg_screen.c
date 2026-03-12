@@ -1867,6 +1867,15 @@ void CG_DrawCharge(const player_state_t * ps, struct vrect_t hud_vrect, struct v
     }
 }
 
+void CG_DrawSidebar(const player_state_t * ps, struct vrect_t hud_vrect, struct vrect_t hud_safe, int32_t scale, int pnum) {
+    if (!(ps->stats[STAT_LAYOUTS] & LAYOUTS_SIDEBAR))
+        return;
+
+
+    const char* cs = cgi.get_configstring(CS_GENERAL + 2);
+    CG_ExecuteLayoutString(cs, hud_vrect, hud_safe, scale, pnum, ps);
+}
+
 void CG_DrawHUD (
     const int32_t isplit,
     const struct cg_server_data_t *data,
@@ -1912,6 +1921,7 @@ void CG_DrawHUD (
     CG_DrawNotify(isplit, hud_vrect, hud_safe, scale);
 
     CG_DrawCharge(ps, hud_vrect, hud_safe, scale);
+    CG_DrawSidebar(ps, hud_vrect, hud_safe, scale, isplit);
 
     // svc_layout still drawn with hud off
     if (ps->stats[STAT_LAYOUTS] & LAYOUTS_LAYOUT)
