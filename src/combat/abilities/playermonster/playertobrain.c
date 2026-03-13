@@ -288,12 +288,12 @@ void RunBrainFrames (edict_t *ent, usercmd_t *ucmd)
 		// moving forward animation
 		else if ((ucmd->forwardmove > 0) || ucmd->sidemove)
 		{
-			G_RunFrames(ent, BRAIN_WALK_START, BRAIN_WALK_END, false);
+			G_RunFrames(ent, BRAIN_WALK_START, BRAIN_WALK_END, false, true);
 		}
 		// play animation in reverse if we are going backwards
 		else if (ucmd->forwardmove < 0)
 		{
-			G_RunFrames(ent, BRAIN_WALK_START, BRAIN_WALK_END, true);
+			G_RunFrames(ent, BRAIN_WALK_START, BRAIN_WALK_END, true, true);
 		}
 		else if (BrainCanAttack(ent) && (ent->client->buttons & BUTTON_ATTACK))
 		{
@@ -307,7 +307,7 @@ void RunBrainFrames (edict_t *ent, usercmd_t *ucmd)
 			else if (level.time > ent->monsterinfo.attack_finished)
 			{
 				// tentacle attack
-				G_RunFrames(ent, BRAIN_FRAME_TENTACLE_START, BRAIN_FRAME_TENTACLE_END, false);
+				G_RunFrames(ent, BRAIN_FRAME_TENTACLE_START, BRAIN_FRAME_TENTACLE_END, false, true);
 				tentacle_attack(ent);
 				ent->client->idle_frames = 0;
 			}
@@ -315,7 +315,7 @@ void RunBrainFrames (edict_t *ent, usercmd_t *ucmd)
 		else
 		{
 			// run idle frames
-			G_RunFrames(ent, BRAIN_FRAME_IDLE_START, BRAIN_FRAME_IDLE_END, false);
+			G_RunFrames(ent, BRAIN_FRAME_IDLE_START, BRAIN_FRAME_IDLE_END, false, true);
 		}
 
 		ent->count = level.framenum + qf2sf(1);

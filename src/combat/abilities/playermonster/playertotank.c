@@ -472,7 +472,7 @@ void p_tank_attack(edict_t *ent) {
 }
 
 void p_tank_idle(edict_t *self) {
-    G_RunFrames(self, TANK_FRAMES_START_STAND, TANK_FRAMES_END_STAND, false);
+    G_RunFrames(self, TANK_FRAMES_START_STAND, TANK_FRAMES_END_STAND, false, true);
 }
 
 void p_tank_think(edict_t *self) {
@@ -495,21 +495,21 @@ void p_tank_think(edict_t *self) {
     PM_SyncWithPlayer(self);
 
     if (self->style == FRAMES_RUN_FORWARD)
-        G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, false);
+        G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, false, false);
     else if (self->style == FRAMES_RUN_BACKWARD)
-        G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, true);
+        G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, true, false);
     else if ((self->style == FRAMES_ATTACK) && (level.time > self->owner->monsterinfo.attack_finished)) {
         if (self->owner->client->weapon_mode == 1)
-            G_RunFrames(self, TANK_FRAMES_START_PUNCH, TANK_FRAMES_END_PUNCH, false);
+            G_RunFrames(self, TANK_FRAMES_START_PUNCH, TANK_FRAMES_END_PUNCH, false, false);
         else if (self->owner->client->weapon_mode == 2)
-            G_RunFrames(self, TANK_FRAMES_START_BULLET, TANK_FRAMES_END_BULLET, false);
+            G_RunFrames(self, TANK_FRAMES_START_BULLET, TANK_FRAMES_END_BULLET, false, false);
         else if (self->owner->client->weapon_mode == 3) {
             if (self->s.frame != TANK_FRAMES_BLASTER_END)
-                G_RunFrames(self, TANK_FRAMES_BLASTER_START, TANK_FRAMES_BLASTER_END, false);
+                G_RunFrames(self, TANK_FRAMES_BLASTER_START, TANK_FRAMES_BLASTER_END, false, false);
             else
                 self->s.frame = 65; // cycle from this frame forward
         } else
-            G_RunFrames(self, TANK_FRAMES_START_ROCKET, TANK_FRAMES_END_ROCKET, false);
+            G_RunFrames(self, TANK_FRAMES_START_ROCKET, TANK_FRAMES_END_ROCKET, false, false);
     } else
         p_tank_idle(self);
 

@@ -132,9 +132,9 @@ qboolean BOT_DMclass_Ucmd_Move(edict_t* self, float movespeed, usercmd_t* ucmd, 
 	if (move_vertical)
 	{
 		if (AI_MoveUp(self))
-			ucmd->upmove = movespeed;
+			cmd_jump(ucmd);
 		else
-			ucmd->upmove = -movespeed;
+			cmd_duck(ucmd);
 		moved = true;
 	}
 
@@ -177,7 +177,7 @@ void BOT_DMclass_AvoidDrowning(edict_t* self, usercmd_t *ucmd)
 {
 	// we're 3 seconds away from drowning--move up!
 	if (level.time + 3.0 > self->air_finished)
-		ucmd->upmove = 400;
+		cmd_jump(ucmd);
 }
 
 void BOT_DMclass_AvoidObstacles(edict_t* self, usercmd_t* ucmd, int current_node_flags)
@@ -292,7 +292,7 @@ void BOT_DMclass_MoveAttack(edict_t* self, usercmd_t* ucmd)
 	if (self->ai.is_ladder) // climbing ladder
 	{
 		ucmd->forwardmove = 70;
-		ucmd->upmove = 200;
+		cmd_jump(ucmd);
 		ucmd->sidemove = 0;
 		return;
 	}
@@ -344,7 +344,7 @@ void BOT_DMclass_MoveAttack(edict_t* self, usercmd_t* ucmd)
 			v1[2] += self->mins[2];
 			trace = gi.trace(v1, tv(-12, -12, -8), tv(12, 12, 0), v1, self, MASK_AISOLID);
 			if (trace.startsolid)
-				ucmd->upmove = 400;
+				cmd_jump(ucmd);
 			return;
 		}
 	}
@@ -365,7 +365,7 @@ void BOT_DMclass_MoveAttack(edict_t* self, usercmd_t* ucmd)
 		//AI_ChangeAngle(self);
 		
 		if (!(gi.pointcontents(nodes[self->ai.next_node].origin) & MASK_WATER)) // Exit water
-			ucmd->upmove = 400;
+			cmd_jump(ucmd);
 		else
 			BOT_DMclass_AvoidDrowning(self, ucmd);//GHz: exit water if we're running out of air
 
@@ -491,7 +491,7 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	if( self->ai.is_ladder )
 	{
 		ucmd->forwardmove = 70;
-		ucmd->upmove = 200;
+		cmd_jump(ucmd);
 		ucmd->sidemove = 0;
 		return;
 	}
@@ -539,7 +539,7 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 			v1[2] += self->mins[2];
 			trace = gi.trace( v1, tv(-12, -12, -8), tv(12, 12, 0), v1, self, MASK_AISOLID );
 			if( trace.startsolid )
-				ucmd->upmove = 400;
+				cmd_jump(ucmd);
 			return;
 		}
 	}
@@ -560,8 +560,8 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 		AI_ChangeAngle(self);
 
 		if( !(gi.pointcontents(nodes[self->ai.next_node].origin) & MASK_WATER) ) // Exit water
-			ucmd->upmove = 400;
-		
+			cmd_jump(ucmd);
+
 		ucmd->forwardmove = 300;
 		return;
 	}
@@ -636,11 +636,11 @@ void BOT_DMclass_Wander(edict_t *self, usercmd_t *ucmd)
 		// If drowning and no node, move up
 		if( self->client && self->client->next_drown_time > 0 )	//jalfixme: client references must pass into botStatus
 		{
-			ucmd->upmove = 100;
+			cmd_jump(ucmd);
 			self->s.angles[PITCH] = -45;
 		}
 		else
-			ucmd->upmove = 15;
+			cmd_jump(ucmd);
 
 		ucmd->forwardmove = 300;
 	}
@@ -655,9 +655,9 @@ void BOT_DMclass_Wander(edict_t *self, usercmd_t *ucmd)
 		self->s.angles[YAW] += random() * 360 - 180;
 		ucmd->forwardmove = 400;
 		if(self->groundentity)
-			ucmd->upmove = 400;
+			cmd_jump(ucmd);
 		else
-			ucmd->upmove = 0;
+			cmd_stand(ucmd);
 		return;
 	}
 
@@ -904,7 +904,7 @@ void BOT_DMclassJumpAttack(edict_t* self, usercmd_t* ucmd, float ideal_range)
 	if (self->s.origin[2] + self->viewheight + ideal_range + AI_JUMPABLE_HEIGHT >= self->enemy->absmin[2])
 	{
 		//gi.dprintf("***JUMP ATTACK****\n");
-		ucmd->upmove = 400;
+			cmd_jump(ucmd);
 	}
 }
 
@@ -950,7 +950,7 @@ void BOT_DMclass_BunnyHop(edict_t* self, usercmd_t* ucmd, qboolean forwardmove)
 		//gi.dprintf("dot:%f mv_spd:%f fwd_spd:%f\n", dot, mv_spd, AI_ForwardVelocity(self));
 		if (dot > 0.9 && mv_spd > 280)
 		{
-			ucmd->upmove = 400;
+			cmd_jump(ucmd);
 			self->ai.is_bunnyhop = true;
 		}
 		return;
@@ -1051,7 +1051,7 @@ void BOT_DMclass_BunnyHop(edict_t* self, usercmd_t* ucmd, qboolean forwardmove)
 	//{
 		//VectorCopy(self->s.origin, self->monsterinfo.spot1);//GHz: for testing to determine maximum jump distance
 		// jump immediately after touching down in order to maintain momentum
-		ucmd->upmove = 400;
+			cmd_jump(ucmd);
 	//}
 	
 	

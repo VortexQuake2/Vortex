@@ -140,7 +140,7 @@ void p_berserk_jump (edict_t *ent)
 {
 	// run jump animation forward until last frame, then hold it
 	if (ent->s.frame != BERSERK_FRAMES_JUMP_END)
-		G_RunFrames(ent, BERSERK_FRAMES_DUCK_START, BERSERK_FRAMES_DUCK_END, false);
+		G_RunFrames(ent, BERSERK_FRAMES_DUCK_START, BERSERK_FRAMES_DUCK_END, false, true);
 }
 
 void p_berserk_swing (edict_t *ent)
@@ -184,7 +184,7 @@ void p_berserk_attack (edict_t *ent, int move_state)
 		if (berserk_frames_in_range(ent->s.frame, BERSERK_FRAMES_PUNCH_START, BERSERK_FRAMES_PUNCH_END))
 			ent->s.frame = berserk_translate_attack_frame(ent->s.frame);
 
-		G_RunFrames(ent, BERSERK_FRAMES_RUNATTACK1_START, BERSERK_FRAMES_RUNATTACK1_END, false);
+		G_RunFrames(ent, BERSERK_FRAMES_RUNATTACK1_START, BERSERK_FRAMES_RUNATTACK1_END, false, true);
 
 		// swing left-right
 		if (ent->s.frame == 124)
@@ -214,7 +214,7 @@ void p_berserk_attack (edict_t *ent, int move_state)
 		if (berserk_frames_in_range(ent->s.frame, BERSERK_FRAMES_PUNCH_START, BERSERK_FRAMES_PUNCH_END))
 			ent->s.frame = berserk_translate_attack_frame(ent->s.frame);
 
-		G_RunFrames(ent, BERSERK_FRAMES_RUNATTACK1_START, BERSERK_FRAMES_RUNATTACK1_END, true);
+		G_RunFrames(ent, BERSERK_FRAMES_RUNATTACK1_START, BERSERK_FRAMES_RUNATTACK1_END, true, true);
 
 		// swing left-right
 		if (ent->s.frame == 124)
@@ -240,14 +240,14 @@ void p_berserk_attack (edict_t *ent, int move_state)
 	}
 	else if (ent->client->weapon_mode == 1)	// slash
 	{
-		G_RunFrames(ent, BERSERK_FRAMES_SLASH_START, BERSERK_FRAMES_SLASH_END, false);
+		G_RunFrames(ent, BERSERK_FRAMES_SLASH_START, BERSERK_FRAMES_SLASH_END, false, true);
 
 		if ((ent->s.frame == 79) || (ent->s.frame == 80))
 			p_berserk_melee(ent, forward, up, slash_dmg, BERSERK_SLASH_KNOCKBACK, BERSERK_SLASH_RANGE, MOD_BERSERK_SLASH);
 	}
 	else if (ent->client->weapon_mode == 2)	// crush
 	{
-		G_RunFrames(ent, BERSERK_FRAMES_SLAM_START, BERSERK_FRAMES_SLAM_END, false);
+		G_RunFrames(ent, BERSERK_FRAMES_SLAM_START, BERSERK_FRAMES_SLAM_END, false, true);
 
 		if (ent->s.frame == 154)
 			p_berserk_crush(ent, crush_dmg, BERSERK_CRUSH_RANGE, MOD_BERSERK_CRUSH);
@@ -258,7 +258,7 @@ void p_berserk_attack (edict_t *ent, int move_state)
 		if (berserk_frames_in_range(ent->s.frame, BERSERK_FRAMES_RUNATTACK1_START, BERSERK_FRAMES_RUNATTACK1_END))
 			ent->s.frame = berserk_translate_attack_frame(ent->s.frame);
 
-		G_RunFrames(ent, BERSERK_FRAMES_PUNCH_START, BERSERK_FRAMES_PUNCH_END, false);
+		G_RunFrames(ent, BERSERK_FRAMES_PUNCH_START, BERSERK_FRAMES_PUNCH_END, false, true);
 		
 		// swing left-right
 		if (ent->s.frame == 66)
@@ -316,7 +316,7 @@ void RunBerserkFrames (edict_t *ent, usercmd_t *ucmd)
 			if ((ent->client->buttons & BUTTON_ATTACK) && (level.time > ent->monsterinfo.attack_finished))
 				p_berserk_attack(ent, BERSERK_RUN_FORWARD);
 			else
-				G_RunFrames(ent, BERSERK_FRAMES_RUN_START, BERSERK_FRAMES_RUN_END, false);
+				G_RunFrames(ent, BERSERK_FRAMES_RUN_START, BERSERK_FRAMES_RUN_END, false, true);
 		}
 		// play animation in reverse if we are going backwards
 		else if (ucmd->forwardmove < 0)
@@ -324,7 +324,7 @@ void RunBerserkFrames (edict_t *ent, usercmd_t *ucmd)
 			if ((ent->client->buttons & BUTTON_ATTACK) && (level.time > ent->monsterinfo.attack_finished))
 				p_berserk_attack(ent, BERSERK_RUN_BACKWARD);
 			else
-				G_RunFrames(ent, BERSERK_FRAMES_RUN_START, BERSERK_FRAMES_RUN_END, true);
+				G_RunFrames(ent, BERSERK_FRAMES_RUN_START, BERSERK_FRAMES_RUN_END, true, true);
 		}
 		// standing attack
 		else if ((ent->client->buttons & BUTTON_ATTACK) && (level.time > ent->monsterinfo.attack_finished))
@@ -333,7 +333,7 @@ void RunBerserkFrames (edict_t *ent, usercmd_t *ucmd)
 		else if (!ent->groundentity && (ent->waterlevel < 2))
 			p_berserk_jump(ent);
 		else
-			G_RunFrames(ent, BERSERK_FRAMES_IDLE1_START, BERSERK_FRAMES_IDLE1_END, false); // run idle frames
+			G_RunFrames(ent, BERSERK_FRAMES_IDLE1_START, BERSERK_FRAMES_IDLE1_END, false, true); // run idle frames
 
 		ent->count = level.framenum + qf2sf(1);
 	}
