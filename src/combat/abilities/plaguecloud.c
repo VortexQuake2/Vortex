@@ -160,8 +160,7 @@ void plague_think(edict_t *self) {
         self->wait = level.time + PLAGUE_DELAY;
     }
 
-    self->nextthink = level.time + FRAMETIME;
-
+    self->nextthink = level.time + 0.1f;
 }
 
 void PlagueCloud(edict_t *ent, edict_t *target) {
