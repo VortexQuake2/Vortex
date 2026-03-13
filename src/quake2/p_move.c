@@ -814,6 +814,9 @@ void PM_WaterMove() {
         wishspeed = pm_duckspeed;
     }
 
+    if (pm->s.pm_flags & PMF_SUPERSPEED)
+        wishspeed *= 3;
+
     PM_Accelerate(wishdir, wishspeed, pm_wateraccelerate);
 
     PM_StepSlideMove();
@@ -855,6 +858,7 @@ void PM_AirMove() {
         wishspeed = maxspeed;
     }
 
+
     if (pm->s.pm_flags & PMF_ON_LADDER) {
         PM_Accelerate(wishdir, wishspeed, pm_accelerate);
         if (!wishvel[2]) {
@@ -872,7 +876,9 @@ void PM_AirMove() {
     } else if (pm->groundentity) {
         // walking on ground
         pml.velocity[2] = 0; //!!! this is before the accel
-        PM_Accelerate(wishdir, wishspeed, pm_accelerate);
+
+        float mod_wishspeed = pm->s.pm_flags & PMF_SUPERSPEED ? wishspeed * 3 : wishspeed;
+        PM_Accelerate(wishdir, mod_wishspeed, pm_accelerate);
 
         // PGM	-- fix for negative trigger_gravity fields
         //		pml.velocity[2] = 0;
@@ -893,7 +899,8 @@ void PM_AirMove() {
             PM_Accelerate(wishdir, wishspeed, 1);
 
         // add gravity
-        if (pm->s.pm_type != PM_GRAPPLE)
+        bool skipgravity = pm->s.pm_flags & PMF_CACODEMON && pm->cmd.buttons & BUTTON_JUMP;
+        if (pm->s.pm_type != PM_GRAPPLE && !skipgravity)
             pml.velocity[2] -= pm->s.gravity * pml.frametime;
 
         PM_StepSlideMove();
@@ -1027,7 +1034,11 @@ PM_CheckJump
 =============
 */
 void PM_CheckJump() {
-    if (pm->s.pm_flags & PMF_TIME_LAND) {
+    if (pm->s.pm_type == PM_DEAD)
+        return;
+
+    bool cacodemon = (pm->s.pm_flags & PMF_CACODEMON);
+    if (pm->s.pm_flags & PMF_TIME_LAND && !cacodemon) {
         // hasn't been long enough since landing to jump again
         return;
     }
@@ -1042,17 +1053,14 @@ void PM_CheckJump() {
     if (pm->s.pm_flags & PMF_JUMP_HELD)
         return;
 
-    if (pm->s.pm_type == PM_DEAD)
-        return;
-
     if (pm->waterlevel >= WATER_WAIST) {
         // swimming, not jumping
         pm->groundentity = NULL;
         return;
     }
 
-    if (pm->groundentity == NULL)
-        return; // in air, so no effect
+    if (pm->groundentity == NULL && !cacodemon)
+        return; // in air, so no effect, except for cacodemon
 
     pm->s.pm_flags |= PMF_JUMP_HELD;
     pm->jump_sound = 1;
@@ -1321,6 +1329,10 @@ Sets mins, maxs, and pm->viewheight
 qboolean PM_CheckDuck() {
     if (pm->s.pm_type == PM_GIB)
         return 0;
+
+    if (pm->s.pm_flags & PMF_NOCROUCH) {
+        return 0;
+    }
 
     trace_t trace;
     qboolean flags_changed = 0;

@@ -137,6 +137,7 @@ void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
         }
 
         // add thrust
+#ifndef VRX_REPRO
         if (cmd_jumping(ucmd)) {
             ent->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
             if (ent->groundentity)
@@ -148,6 +149,9 @@ void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
         } else {
             ent->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
         }
+#else
+      // pmove handles it
+#endif
 
         ent->count = (int)(level.framenum + qf2sf(1));
     }
