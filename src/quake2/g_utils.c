@@ -1077,10 +1077,12 @@ qboolean G_EntIsAlive(const edict_t *ent)
 	return true;
 }
 
-
-void G_RunFrames (edict_t *ent, int start_frame, int end_frame, qboolean reverse)
+// if something is already limiting the frequency at which G_RunFrames is ran to 10hz
+// and it is not ran every frame
+// set limit_rate to true.
+void G_RunFrames (edict_t *ent, int start_frame, int end_frame, qboolean reverse, bool limit_rate)
 {
-	if ( ( level.framenum % qf2sf(1) ) == 0 ) {
+	if ( ( level.framenum % qf2sf(1) ) == 0 || !limit_rate) {
 		if (reverse)
 		{
 			if ((ent->s.frame > start_frame) && (ent->s.frame <= end_frame))

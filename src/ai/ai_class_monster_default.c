@@ -79,8 +79,8 @@ void M_default_Move(edict_t *self, usercmd_t *ucmd)
 
 		//if( !(trap_PointContents(nodes[self->ai.next_node].origin) & MASK_WATER) ) // Exit water
 		if( !(gi.pointcontents(nodes[self->ai.next_node].origin) & MASK_WATER) ) // Exit water
-			ucmd->upmove = 400;
-		
+			cmd_jump(ucmd);
+
 		ucmd->forwardmove = 300;
 		return;
 	}

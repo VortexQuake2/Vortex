@@ -41,12 +41,12 @@ void V_PlayerJump(edict_t *ent) {
 qboolean CanDoubleJump(edict_t *ent, usercmd_t *ucmd) {
     if (ent->client)
         return (!ent->waterlevel && !ent->groundentity && !(ent->v_flags & SFLG_DOUBLEJUMP) && !vrx_has_flag(ent)
-                && (ucmd->upmove > 0) && !ent->client->jump && !ent->myskills.abilities[DOUBLE_JUMP].disable
+                && (cmd_jumping(ucmd)) && !ent->client->jump && !ent->myskills.abilities[DOUBLE_JUMP].disable
                 && (ent->myskills.abilities[DOUBLE_JUMP].current_level > 0));
     else if (PM_MonsterHasPilot(ent))
         return (!ent->waterlevel && !ent->groundentity && !(ent->v_flags & SFLG_DOUBLEJUMP) && !vrx_has_flag(
                 ent->activator)
-                && (ucmd->upmove > 0) && !ent->activator->client->jump &&
+                && (cmd_jumping(ucmd)) && !ent->activator->client->jump &&
                 !ent->activator->myskills.abilities[DOUBLE_JUMP].disable
                 && (ent->activator->myskills.abilities[DOUBLE_JUMP].current_level > 0));
     else

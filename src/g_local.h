@@ -157,6 +157,7 @@ enum flags_t {
 
 
 #define FRAMETIME		(1.0f/sv_fps->value)
+#define VectorScaleFPS(v, o) (VectorScale(v, 10.0f/sv_fps->value, o))
 
 // scale 10 fps value to sv_fps value
 double scale_fps(double value);
@@ -1252,7 +1253,7 @@ qboolean G_ClearShot(const edict_t *shooter, vec3_t start, const edict_t *target
 
 float distance(vec3_t p1, vec3_t p2);
 
-void G_RunFrames(edict_t *ent, int start_frame, int end_frame, qboolean reverse);
+void G_RunFrames(edict_t *ent, int start_frame, int end_frame, qboolean reverse, bool limit_rate);
 
 void AngleCheck(float *val);
 

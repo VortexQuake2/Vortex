@@ -724,20 +724,28 @@ enum button_t : uint8_t {
 
 // usercmd_t is sent to the server each client frame
 typedef struct usercmd_s {
+#ifndef VRX_REPRO
     byte msec;
     enum button_t buttons;
-#ifndef VRX_REPRO
     short angles[3];
     short forwardmove, sidemove, upmove;
     byte impulse; // remove?
     byte lightlevel; // light level the player is standing on
 #else
+    byte msec;
+    enum button_t buttons;
     vec3_t angles;
-    float forwardmove, sidemove, upmove;
+    float forwardmove, sidemove;
     uint32_t server_frame;
 #endif
 } usercmd_t;
 
+bool cmd_jumping(usercmd_t *cmd);
+bool cmd_ducking(usercmd_t *cmd);
+bool cmd_standing(usercmd_t *cmd);
+void cmd_jump(usercmd_t *cmd);
+void cmd_duck(usercmd_t *cmd);
+void cmd_stand(usercmd_t *cmd);
 
 #define	MAXTOUCH	32
 

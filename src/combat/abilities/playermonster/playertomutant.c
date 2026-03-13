@@ -256,21 +256,21 @@ void RunMutantFrames (edict_t *ent, usercmd_t *ucmd)
 			ent->s.frame = MUTANT_FRAMES_JUMP;
 		// play running animation if we are moving forward or strafing
 		else if ((ucmd->forwardmove > 0) || ucmd->sidemove)
-			G_RunFrames(ent, MUTANT_FRAMES_WALK_START, MUTANT_FRAMES_WALK_END, false);
+			G_RunFrames(ent, MUTANT_FRAMES_WALK_START, MUTANT_FRAMES_WALK_END, false, true);
 		// play animation in reverse if we are going backwards
 		else if (ucmd->forwardmove < 0)
-			G_RunFrames(ent, MUTANT_FRAMES_WALK_START, MUTANT_FRAMES_WALK_END, true);
+			G_RunFrames(ent, MUTANT_FRAMES_WALK_START, MUTANT_FRAMES_WALK_END, true, true);
 		else if ((ent->client->buttons & BUTTON_ATTACK) 
 			&& (level.time > ent->monsterinfo.attack_finished))
 		{
 			ent->client->idle_frames = 0;
 			// run attack frames
-			G_RunFrames(ent, MUTANT_FRAMES_SWING_START, MUTANT_FRAMES_SWING_END, false);
+			G_RunFrames(ent, MUTANT_FRAMES_SWING_START, MUTANT_FRAMES_SWING_END, false, true);
 			mutant_swing_attack(ent);
 		}
 		else
 		{
-			G_RunFrames(ent, MUTANT_FRAMES_IDLE_START, MUTANT_FRAMES_IDLE_END, false); // run idle frames
+			G_RunFrames(ent, MUTANT_FRAMES_IDLE_START, MUTANT_FRAMES_IDLE_END, false, true); // run idle frames
 		}
 
 		ent->count = level.framenum + qf2sf(1);

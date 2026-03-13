@@ -531,7 +531,7 @@ void p_medic_jump (edict_t *ent)
 {
 	// run jump animation forward until last frame, then hold it
 	if (ent->s.frame != MEDIC_FRAMES_JUMP_END)
-		G_RunFrames(ent, MEDIC_FRAMES_JUMP_START, MEDIC_FRAMES_JUMP_END, false);
+		G_RunFrames(ent, MEDIC_FRAMES_JUMP_START, MEDIC_FRAMES_JUMP_END, false, true);
 }
 
 void p_medic_firehb (edict_t *ent)
@@ -594,7 +594,7 @@ void p_medic_attack (edict_t *ent)
 	{
 		// cable/healing mode
 		if (ent->s.frame != MEDIC_FRAMES_CABLE_END)
-			G_RunFrames(ent, MEDIC_FRAMES_CABLE_START, MEDIC_FRAMES_CABLE_END, false);
+			G_RunFrames(ent, MEDIC_FRAMES_CABLE_START, MEDIC_FRAMES_CABLE_END, false, true);
 		else
 			ent->s.frame = 218; // loop from this frame forward
 		p_medic_heal(ent);
@@ -603,7 +603,7 @@ void p_medic_attack (edict_t *ent)
 	{
 		// blaster bolt mode
 		if (ent->s.frame != MEDIC_FRAMES_BOLT_END)
-			G_RunFrames(ent, MEDIC_FRAMES_BOLT_START, MEDIC_FRAMES_BOLT_END, false);
+			G_RunFrames(ent, MEDIC_FRAMES_BOLT_START, MEDIC_FRAMES_BOLT_END, false, true);
 		else
 			ent->s.frame = 185; // loop from this frame forward
 		p_medic_firebolt(ent);
@@ -612,7 +612,7 @@ void p_medic_attack (edict_t *ent)
 	{
 		// hyperblaster mode
 		if (ent->s.frame != MEDIC_FRAMES_HB_END)
-			G_RunFrames(ent, MEDIC_FRAMES_HB_START, MEDIC_FRAMES_HB_END, false);
+			G_RunFrames(ent, MEDIC_FRAMES_HB_START, MEDIC_FRAMES_HB_END, false, true);
 		else
 			ent->s.frame = 195; // loop from this frame forward
 		p_medic_firehb(ent);
@@ -638,10 +638,10 @@ void RunMedicFrames (edict_t *ent, usercmd_t *ucmd)
 		
 		// play running animation if we are moving forward or strafing
 		if ((ucmd->forwardmove > 0) || ucmd->sidemove)
-			G_RunFrames(ent, MEDIC_FRAMES_RUN_START, MEDIC_FRAMES_RUN_END, false);
+			G_RunFrames(ent, MEDIC_FRAMES_RUN_START, MEDIC_FRAMES_RUN_END, false, true);
 		// play animation in reverse if we are going backwards
 		else if (ucmd->forwardmove < 0)
-			G_RunFrames(ent, MEDIC_FRAMES_RUN_START, MEDIC_FRAMES_RUN_END, true);
+			G_RunFrames(ent, MEDIC_FRAMES_RUN_START, MEDIC_FRAMES_RUN_END, true, true);
 		// attack
 		else if ((ent->client->buttons & BUTTON_ATTACK) 
 			&& (level.time > ent->monsterinfo.attack_finished))
@@ -650,7 +650,7 @@ void RunMedicFrames (edict_t *ent, usercmd_t *ucmd)
 		else if (!ent->groundentity && (ent->waterlevel < 2))
 			p_medic_jump(ent);
 		else
-			G_RunFrames(ent, MEDIC_FRAMES_IDLE_START, MEDIC_FRAMES_IDLE_END, false); // run idle frames
+			G_RunFrames(ent, MEDIC_FRAMES_IDLE_START, MEDIC_FRAMES_IDLE_END, false, true); // run idle frames
 
 		ent->count = level.framenum + qf2sf(1);
 	}

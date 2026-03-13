@@ -218,17 +218,17 @@ void RunParasiteFrames (edict_t *ent, usercmd_t *ucmd)
 
 		// play running animation if we are moving forward or strafing
 		if ((ucmd->forwardmove > 0) || ucmd->sidemove)
-			G_RunFrames(ent, 70, 76, false);
+			G_RunFrames(ent, 70, 76, false, true);
 		// play animation in reverse if we are going backwards
 		else if (ucmd->forwardmove < 0)
-			G_RunFrames(ent, 70, 76, true);
+			G_RunFrames(ent, 70, 76, true, true);
 		else
 			idle = true;
 		
 		if ((ent->client->buttons & BUTTON_ATTACK) && myparasite_attack(ent) && idle)
 		{
 			// run attack frames
-			G_RunFrames(ent, 39, 51, false);
+			G_RunFrames(ent, 39, 51, false, true);
 			ent->client->idle_frames = 0;
 		}
 		else if (idle)
@@ -245,12 +245,12 @@ void RunParasiteFrames (edict_t *ent, usercmd_t *ucmd)
 			if (ent->oldenemy)
 			{
 				if (ent->s.frame < 56)
-					G_RunFrames(ent, 39, 56, false); // run end attack frames
+					G_RunFrames(ent, 39, 56, false, true); // run end attack frames
 				else
 					ent->oldenemy = NULL; // we're done
 			}
 			else
-				G_RunFrames(ent, 83, 99, false); // run idle frames
+				G_RunFrames(ent, 83, 99, false, true); // run idle frames
 
 			// play parasite's tapping sound
 			if (ent->groundentity && ((ent->s.frame==85) || (ent->s.frame==87) || (ent->s.frame==91) 

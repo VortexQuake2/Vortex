@@ -120,7 +120,7 @@ void boss_tank_attack (edict_t *ent)
 
 void boss_idle (edict_t *self)
 {
-	G_RunFrames(self, TANK_FRAMES_START_STAND, TANK_FRAMES_END_STAND, false);
+	G_RunFrames(self, TANK_FRAMES_START_STAND, TANK_FRAMES_END_STAND, false, true);
 }
 
 void boss_tank_think (edict_t *self)
@@ -139,15 +139,15 @@ void boss_tank_think (edict_t *self)
 	self->monsterinfo.trail_time = level.time + 1; // stay in eye-cam
 
 	if (self->style == FRAMES_RUN_FORWARD)
-		G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, false);
+		G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, false, true);
 	else if (self->style == FRAMES_RUN_BACKWARD)
-		G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, true);
+		G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, true, true);
 	else if (self->style == FRAMES_ATTACK)
 	{
 		if (self->owner->client->weapon_mode)
-			G_RunFrames(self, TANK_FRAMES_START_PUNCH, TANK_FRAMES_END_PUNCH, false);
+			G_RunFrames(self, TANK_FRAMES_START_PUNCH, TANK_FRAMES_END_PUNCH, false, true);
 		else
-			G_RunFrames(self, TANK_FRAMES_START_ROCKET, TANK_FRAMES_END_ROCKET, false);
+			G_RunFrames(self, TANK_FRAMES_START_ROCKET, TANK_FRAMES_END_ROCKET, false, true);
 	}
 	else
 		boss_idle(self);

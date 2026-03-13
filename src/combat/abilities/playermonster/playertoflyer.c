@@ -142,9 +142,9 @@ void PlayerAutoThrust (edict_t *ent, usercmd_t *ucmd)
 
 	AngleVectors(ent->s.angles, forward, right, NULL);
 
-	if (ucmd->upmove > 0) // up
+	if (cmd_jumping(ucmd)) // up
 		FlyerVerticalThrust(ent, FLYER_ACCEL_SPEED*2, max_velocity);
-	else if (ucmd->upmove < 0) // down
+	else if (cmd_ducking(ucmd)) // down
 		FlyerVerticalThrust(ent, -FLYER_ACCEL_SPEED*2, max_velocity);
 	else
 		FlyerBrakeVertical(ent);
@@ -368,16 +368,16 @@ void RunFlyerFrames (edict_t *ent, usercmd_t *ucmd)
 		{
 			if (ent->s.frame == FLYER_FRAMES_BANK_R_END) // done with bank animation
 				return; // so don't update the frames
-			G_RunFrames(ent, FLYER_FRAMES_BANK_R_START, FLYER_FRAMES_BANK_R_END, false);
+			G_RunFrames(ent, FLYER_FRAMES_BANK_R_START, FLYER_FRAMES_BANK_R_END, false, true);
 		}
 		else if (ucmd->sidemove < 0) // left
 		{
 			if (ent->s.frame == FLYER_FRAMES_BANK_L_END)
 				return;
-			G_RunFrames(ent, FLYER_FRAMES_BANK_L_START, FLYER_FRAMES_BANK_L_END, false);
+			G_RunFrames(ent, FLYER_FRAMES_BANK_L_START, FLYER_FRAMES_BANK_L_END, false, true);
 		}
 		else // default
-			G_RunFrames(ent, FLYER_FRAMES_STAND_START, FLYER_FRAMES_STAND_END, false);
+			G_RunFrames(ent, FLYER_FRAMES_STAND_START, FLYER_FRAMES_STAND_END, false, true);
 	}
 }
 

@@ -7,7 +7,7 @@
 void bfire_think(edict_t* self)
 {
 	if (self->s.frame > 3)
-		G_RunFrames(self, 4, 15, false); // burning frames
+		G_RunFrames(self, 4, 15, false, true); // burning frames
 	else
 		self->s.frame++; // ignite frames
 
@@ -203,7 +203,7 @@ void fireball_think(edict_t* self)
 	vectoangles(self->velocity, angles);
 	VectorCopy(angles, self->s.angles);
 	// run model animation
-	G_RunFrames(self, 0, 3, false);
+	G_RunFrames(self, 0, 3, false, true);
 
 	self->nextthink = level.time + FRAMETIME;
 }

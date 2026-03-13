@@ -46,6 +46,54 @@ int rand_clt_distribute(int min, int max, int itercnt) {
 	return sum / itercnt + min;
 }
 
+bool cmd_jumping(usercmd_t* self) {
+#ifndef VRX_REPRO
+	return self->upmove > 0;
+#else
+	return self->buttons & BUTTON_JUMP;
+#endif
+}
+
+void cmd_jump(usercmd_t *self) {
+#ifndef VRX_REPRO
+	self->upmove = 400;
+#else
+	self->buttons |= BUTTON_JUMP;
+#endif
+}
+
+#ifdef VRX_REPRO
+void cmd_duck(usercmd_t *self) {
+	self->buttons |= BUTTON_CROUCH;
+}
+
+void cmd_stand(usercmd_t *self) {
+	self->buttons &= ~(BUTTON_CROUCH | BUTTON_JUMP);
+}
+
+bool cmd_ducking(usercmd_t *self) {
+	return self->buttons & BUTTON_CROUCH;
+}
+
+bool cmd_standing(usercmd_t *self) {
+	return !(self->buttons & (BUTTON_CROUCH | BUTTON_JUMP));
+}
+#else
+void cmd_duck(usercmd_t *self) {
+	self->upmove = -400;
+}
+
+bool cmd_ducking(usercmd_t *self) {
+	return self->upmove < 0;
+}
+void cmd_stand(usercmd_t *self) {
+	self->upmove = 0;
+}
+
+bool cmd_standing(usercmd_t *self) {
+	return self->upmove == 0;
+}
+#endif
 void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, float degrees )
 {
 	float	m[3][3];

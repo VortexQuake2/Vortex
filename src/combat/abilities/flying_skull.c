@@ -441,9 +441,9 @@ void skull_attack(edict_t *self) {
 
 void skull_runframes(edict_t *self) {
     if (self->style == SKULL_ATTACK)
-        G_RunFrames(self, SKULL_FRAMES_ATTACK_START, SKULL_FRAMES_ATTACK_END, false);
+        G_RunFrames(self, SKULL_FRAMES_ATTACK_START, SKULL_FRAMES_ATTACK_END, false, true);
     else
-        G_RunFrames(self, SKULL_FRAMES_IDLE_START, SKULL_FRAMES_IDLE_END, false);
+        G_RunFrames(self, SKULL_FRAMES_IDLE_START, SKULL_FRAMES_IDLE_END, false, true);
 }
 
 void skull_regenerate(edict_t *self) {
