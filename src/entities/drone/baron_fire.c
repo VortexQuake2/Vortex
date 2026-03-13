@@ -288,7 +288,7 @@ mmove_t baron_fire_move_crush = { FRAME_crush01, FRAME_crush23, baron_fire_frame
 void flame_think(edict_t* self)
 {
 	if (self->style != 1 && self->s.frame > 20)
-		G_RunFrames(self, 21, 32, false); // burning frames
+		G_RunFrames(self, 21, 32, false, true); // burning frames
 	else
 		self->s.frame++; // ignite frames
 

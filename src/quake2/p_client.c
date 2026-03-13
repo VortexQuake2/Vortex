@@ -2655,7 +2655,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		//K03 End
 
 		// reset jump flag
-		if (!ucmd->upmove)
+		if (cmd_standing(ucmd))
 			ent->client->jump = false;
 
 		// double jump
@@ -2780,7 +2780,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		//4.07 can't superspeed while being hurt
         // pm = V_Think_ApplySuperSpeed(ent, ucmd, client, i, &pm, viewheight);
 
-		if (/*ent->groundentity && !pm.groundentity &&*/ (pm.cmd.upmove >= 10) /*&& (pm.waterlevel == 0)*/)
+		if (cmd_jumping(&pm.cmd))
 		{
 			if (((ent->mtype == MORPH_BRAIN || ent->mtype == MORPH_MUTANT) && pm.waterlevel > 0) || 
 				 (ent->groundentity && !pm.groundentity))
@@ -2945,7 +2945,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	}
 
 	if (client->resp.spectator) {
-		if (ucmd->upmove >= 10) {
+		if (cmd_jumping(ucmd)) {
 			if (!(client->ps.pmove.pm_flags & PMF_JUMP_HELD)) {
 				client->ps.pmove.pm_flags |= PMF_JUMP_HELD;
 				if (client->chase_target)
