@@ -984,6 +984,7 @@ enum player_muzzle_t : uint8_t {
 // monster muzzle flashes
 //
 enum monster_muzzleflash_id_t : uint16_t {
+    MZ2_UNUSED,
     MZ2_TANK_BLASTER_1,
     MZ2_TANK_BLASTER_2,
     MZ2_TANK_BLASTER_3,

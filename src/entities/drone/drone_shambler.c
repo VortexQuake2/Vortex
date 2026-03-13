@@ -319,8 +319,14 @@ static void shambler_lightning_update(edict_t* self)
 	right_pos[2] += lightning_right_hand[frame_offset][2];
 
 	gi.WriteByte(svc_temp_entity);
-	gi.WriteByte(TE_MONSTER_HEATBEAM);
+#ifdef VRX_REPRO
+	gi.WriteByte(TE_LIGHTNING);
 	gi.WriteShort(self - g_edicts);
+	gi.WriteShort(0);
+#else
+	gi.WriteByte(TE_MONSTER_HEATBEAM)
+	gi.WriteShort(self - g_edicts);
+#endif
 	gi.WritePosition(left_pos);
 	gi.WritePosition(right_pos);
 	gi.multicast(left_pos, MULTICAST_PVS);
@@ -407,8 +413,14 @@ void ShamblerCastLightning(edict_t* self)
 
 	//unused TE_LIGHTNING, doesn't work here or any attack 
 	gi.WriteByte(svc_temp_entity);
+#ifdef VRX_REPRO
+	gi.WriteByte(TE_LIGHTNING);
+	gi.WriteShort(self - g_edicts);
+	gi.WriteShort(0);
+#else
 	gi.WriteByte(TE_MONSTER_HEATBEAM);
 	gi.WriteShort(self - g_edicts);
+#endif
 	gi.WritePosition(start);
 	gi.WritePosition(tr.endpos);
 	gi.multicast(start, MULTICAST_PVS);
@@ -470,8 +482,15 @@ static void shambler_fieryskull_update(edict_t* self)
 	right_pos[2] += lightning_right_hand[frame_offset][2];
 
 	gi.WriteByte(svc_temp_entity);
+#ifndef VRX_REPRO
 	gi.WriteByte(TE_MONSTER_HEATBEAM);
 	gi.WriteShort(self - g_edicts);
+#else
+	gi.WriteByte(TE_LIGHTNING);
+	gi.WriteShort(self - g_edicts);
+	gi.WriteShort(0);
+#endif
+
 	gi.WritePosition(left_pos);
 	gi.WritePosition(right_pos);
 	gi.multicast(left_pos, MULTICAST_PVS);
@@ -496,7 +515,7 @@ void ShamblerCastIcebolt(edict_t* self)
 	vec3_t forward, right, up;
 	vec3_t start_left, start_right;
 	vec3_t aim_left, aim_right;
-	float accuracy = 0.8; // Aumentamos la precisión base
+	float accuracy = 0.8; // Aumentamos la precisiï¿½n base
 
 	if (!G_EntIsAlive(self->enemy))
 		return;
@@ -652,7 +671,7 @@ static void shambler_fire_update(edict_t* self)
 	VectorMA(right_pos, lightning_right_hand[frame_offset][1], r, right_pos);
 	right_pos[2] += lightning_right_hand[frame_offset][2];
 
-	// Crear efectos de cráneo en ambas manos
+	// Crear efectos de crï¿½neo en ambas manos
 	edict_t* left_fire = G_Spawn();
 	edict_t* right_fire = G_Spawn();
 
