@@ -428,9 +428,14 @@ void skull_attack(edict_t *self) {
     }
 
     gi.WriteByte(svc_temp_entity);
+#ifndef VRX_REPRO
     gi.WriteByte(TE_MONSTER_HEATBEAM);
-    //gi.WriteByte (TE_LIGHTNING);
     gi.WriteShort(self - g_edicts);
+#else
+    gi.WriteByte(TE_LIGHTNING);
+    gi.WriteShort(self - g_edicts);
+    gi.WriteShort(0);
+#endif
     gi.WritePosition(start);
     gi.WritePosition(tr.endpos);
     gi.multicast(start, MULTICAST_PVS);
