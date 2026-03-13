@@ -452,6 +452,9 @@ void Cmd_PlayerToFlyer_f (edict_t *ent)
 	ent->client->pers.weapon = NULL;
 	ent->client->ps.gunindex = 0;
 
+	// az: how did we forget this
+	ent->v_flags |= SFLG_NO_BOB;
+
 	lasersight_off(ent);
 
     gi.sound(ent, CHAN_WEAPON, gi.soundindex("abilities/morph.wav"), 1, ATTN_NORM, 0);
