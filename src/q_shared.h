@@ -670,6 +670,9 @@ enum pmflags_t : uint16_t {
     PMF_NO_ANGULAR_PREDICTION = 1 << 8, // temporary disables angular prediction
     PMF_IGNORE_PLAYER_COLLISION = 1 << 9, // don't collide with other players
     PMF_TIME_TRICK = 1 << 10, // pm_time is trick jump time
+    PMF_CACODEMON = 1 << 11, // do not apply gravity on upmove
+    PMF_NOCROUCH = 1 << 12, // We can't actually crouch in this shape.
+    PMF_SUPERSPEED = 1 << 13,
     PMF_NO_PREDICTION = PMF_NO_ANGULAR_PREDICTION | PMF_NO_POSITIONAL_PREDICTION
 #endif
 };
