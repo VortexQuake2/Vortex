@@ -82,8 +82,12 @@ typedef struct gclient_s gclient_t;
 
 #if (!defined _MSC_VER) && ((defined __linux__) || (defined __APPLE__))
 #define q_export __attribute__((visibility("default")))
-#elif _MSC_VER // _WINDOWS
+#elif defined(_WIN32)
 #define q_export __declspec(dllexport)
+#endif
+
+#ifndef q_export
+#define q_export
 #endif
 
 //
