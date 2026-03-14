@@ -92,22 +92,35 @@ const char* VSFU_UPDATEPDATA = "UPDATE point_data SET exp=%d, exptnl=%d, level=%
 
 const char* VSFU_UPDATECTFSTATS = "UPDATE ctf_stats SET flag_pickups=%d, flag_captures=%d, flag_returns=%d, flag_kills=%d, offense_kills=%d, defense_kills=%d, assists=%d WHERE char_idx=%d;";
 
-#define CHECK_ERR_RETURN() if(r!=SQLITE_OK){ if(r != SQLITE_ROW && r != SQLITE_OK && r != SQLITE_DONE){gi.dprintf("sqlite error %d: %s\n", r, sqlite3_errmsg(db));return false;}}
-#define CHECK_ERR() if(r!=SQLITE_OK){ if(r != SQLITE_ROW && r != SQLITE_OK && r != SQLITE_DONE){gi.dprintf("sqlite error %d: %s\n", r, sqlite3_errmsg(db));}}
+#define SQLITE_ERR_OK(r) ((r) == SQLITE_OK || (r) == SQLITE_ROW || (r) == SQLITE_DONE)
+#define CHECK_ERR_RETURN_FALSE() { if (!SQLITE_ERR_OK(r)) { gi.dprintf("sqlite error %d: %s\n", r, sqlite3_errmsg(db)); return false; } }
+#define CHECK_ERR_RETURN() { if (!SQLITE_ERR_OK(r)) { gi.dprintf("sqlite error %d: %s\n", r, sqlite3_errmsg(db)); return; } }
+#define CHECK_ERR() { if (!SQLITE_ERR_OK(r)) { gi.dprintf("sqlite error %d: %s\n", r, sqlite3_errmsg(db)); } }
 
-#define QUERY(x) { char* format=x;\
+#define QUERY(x) { const char* format = (x); \
 	sqlite3_stmt* statement; \
 	int r = sqlite3_prepare_v2(db, format, strlen(format), &statement, NULL); \
-	CHECK_ERR_RETURN()\
+	CHECK_ERR_RETURN_FALSE(); \
 	r = sqlite3_step(statement); \
-	CHECK_ERR_RETURN()\
-	sqlite3_finalize(statement); }
+	CHECK_ERR_RETURN_FALSE(); \
+	sqlite3_finalize(statement); \
+}
 
-#define QUERY_RESULT(x) { char* format=x;\
-	r=sqlite3_prepare_v2(db, format, strlen(format), &statement, NULL);\
-	CHECK_ERR()\
-	r=sqlite3_step(statement);\
-	CHECK_ERR()}
+#define QUERY_VOID(x) { const char* format = (x); \
+	sqlite3_stmt* statement; \
+	int r = sqlite3_prepare_v2(db, format, strlen(format), &statement, NULL); \
+	CHECK_ERR_RETURN(); \
+	r = sqlite3_step(statement); \
+	CHECK_ERR_RETURN(); \
+	sqlite3_finalize(statement); \
+}
+
+#define QUERY_RESULT(x) { const char* format = (x); \
+	r = sqlite3_prepare_v2(db, format, strlen(format), &statement, NULL); \
+	CHECK_ERR(); \
+	r = sqlite3_step(statement); \
+	CHECK_ERR(); \
+}
 
 #define DEFAULT_PATH va("%s/settings/characters.db", game_path->string)
 sqlite3* db = NULL;
@@ -115,12 +128,12 @@ sqlite3* db = NULL;
 
 void cdb_begin_tran(sqlite3* db)
 {
-	QUERY("BEGIN TRANSACTION;");
+	QUERY_VOID("BEGIN TRANSACTION;");
 }
 
 void cdb_commit_tran(sqlite3* db)
 {
-	QUERY("COMMIT;")
+	QUERY_VOID("COMMIT;");
 }
 
 int cdb_get_id(char* playername)
@@ -145,7 +158,7 @@ int cdb_get_id(char* playername)
 }
 
 // az begin
-void cdb_save_runes(edict_t* player)
+qboolean cdb_save_runes(edict_t* player)
 {
 	int numRunes = CountRunes(player);
 	int id = cdb_get_id(player->client->pers.netname);
@@ -198,6 +211,7 @@ void cdb_save_runes(edict_t* player)
 	//end runes
 
 	cdb_commit_tran(db);
+	return true;
 }
 
 int cdb_make_id()
@@ -1348,7 +1362,7 @@ void cdb_start_connection()
 	{
 		for (i = 0; i < TOTAL_TABLES; i++)
 		{
-			QUERY(va(VSFU_CREATEDBQUERY[i]))
+			QUERY_VOID(va(VSFU_CREATEDBQUERY[i]));
 		}
 	}
 

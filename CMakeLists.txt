@@ -17,13 +17,17 @@ option(VRX_USEHASH "Use hashing on commands instead of iterating through the lis
 option(VRX_Q2PRO "Use map/gamemap differentiation (for q2pro)." TRUE)
 option(VRX_OLD_NOLAG "Use old NOLAG style. Not recommended." FALSE)
 option(VRX_OLD_VOTE "Use old vote system." FALSE)
-option(VRX_REPRO "Support q2repro (remaster, EXPERIMENTAL)" FALSE)
+option(VRX_REPRO "Support q2repro (remaster, EXPERIMENTAL)" TRUE)
 
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
 # Source files
-file(GLOB_RECURSE VRX_FILES ./src/*.c)
+file(GLOB_RECURSE VRX_FILES CONFIGURE_DEPENDS ./src/*.c)
+
+if (NOT VRX_USE_MYSQL)
+    list(FILTER VRX_FILES EXCLUDE REGEX ".*/src/characters/io/v_mysql_gds\\.c$")
+endif ()
 
 if (NOT VRX_REPRO)
     set(GAME_NAME game)
@@ -34,8 +38,12 @@ endif ()
 
 # Set the platform-specific library name and use platform-specific files.
 if (WIN32)
-    if (CMAKE_CL_64)
-        set(CC_LIB_NAME ${GAME_NAME}x86_64)
+    if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+        if (VRX_REPRO)
+            set(CC_LIB_NAME ${GAME_NAME}x64)
+        else ()
+            set(CC_LIB_NAME ${GAME_NAME}x86_64)
+        endif ()
     else ()
         set(CC_LIB_NAME ${GAME_NAME}x86)
     endif ()
@@ -57,6 +65,14 @@ include_directories(./src/)
 
 # Specify the source files for the game library
 add_library(${CC_LIB_NAME} SHARED ${VRX_FILES})
+set_target_properties(${CC_LIB_NAME} PROPERTIES PREFIX "")
+
+if (WIN32 AND CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    target_compile_options(${CC_LIB_NAME} PRIVATE
+        -Wno-incompatible-function-pointer-types
+        -Wno-incompatible-pointer-types
+    )
+endif ()
 
 if (VRX_USE_MYSQL)
     find_library(MYSQL_LIBRARY_CLIENT
@@ -94,7 +110,21 @@ if (WIN32)
         target_include_directories(${CC_LIB_NAME} PRIVATE ${pthreads_SOURCE_DIR})
         target_link_libraries(${CC_LIB_NAME} pthreadVC3)
     else ()
-        target_link_libraries(${CC_LIB_NAME} pthread)
+        if (CMAKE_C_COMPILER_ID STREQUAL "Clang" AND CMAKE_C_COMPILER_FRONTEND_VARIANT STREQUAL "GNU")
+            execute_process(
+                COMMAND ${CMAKE_C_COMPILER} --print-file-name=libwinpthread.a
+                OUTPUT_VARIABLE WINPTHREAD_STATIC
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+
+            if (EXISTS "${WINPTHREAD_STATIC}")
+                target_link_libraries(${CC_LIB_NAME} "${WINPTHREAD_STATIC}")
+            else ()
+                target_link_libraries(${CC_LIB_NAME} pthread)
+            endif ()
+        else ()
+            target_link_libraries(${CC_LIB_NAME} pthread)
+        endif ()
     endif ()
 
     # add /fsanitize=address to the compiler flags
@@ -144,6 +174,12 @@ if (VRX_REPRO)
     add_definitions(-DVRX_REPRO)
 endif ()
 
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(MSGPACK_ENABLE_SHARED OFF CACHE BOOL "" FORCE)
+set(MSGPACK_ENABLE_STATIC ON CACHE BOOL "" FORCE)
+set(MSGPACK_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(MSGPACK_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+
 FetchContent_Declare(
         MsgPack
         GIT_REPOSITORY https://github.com/msgpack/msgpack-c/
@@ -153,7 +189,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(MsgPack)
 
 set(CC_LINK_LIBS ${CC_LINK_LIBS} msgpack-c)
-target_include_directories(${CC_LIB_NAME} PRIVATE ${msgpack_SOURCE_DIR}/include ${msgpack_BINARY_DIR}/include/msgpack ${msgpack_BINARY_DIR}/include)
+target_include_directories(${CC_LIB_NAME} PRIVATE
+    ${msgpack_SOURCE_DIR}/include
+    ${msgpack_BINARY_DIR}/include/msgpack
+    ${msgpack_BINARY_DIR}/include
+)
 target_link_libraries(${CC_LIB_NAME} ${CC_LINK_LIBS})
 
 include(TestBigEndian)

@@ -7,8 +7,6 @@
 static pthread_t QueueThread;
 static pthread_attr_t attr;
 static pthread_mutex_t mutex_gds_queue;
-static pthread_mutex_t MemMutex_Free;
-static pthread_mutex_t MemMutex_Malloc;
 static pthread_mutex_t mutex_gds_thread_status;
 
 #ifndef NO_GDS
@@ -1977,21 +1975,3 @@ void gds_finish_thread() {
 
 #endif // NO_GDS
 
-void Mem_PrepareMutexes() {
-    pthread_mutex_init(&MemMutex_Malloc, NULL);
-    pthread_mutex_init(&MemMutex_Free, NULL);
-}
-
-void *vrx_malloc(size_t Size, int Tag) {
-    void *Memory;
-    pthread_mutex_lock(&MemMutex_Malloc);
-    Memory = gi.TagMalloc(Size, Tag);
-    pthread_mutex_unlock(&MemMutex_Malloc);
-    return Memory;
-}
-
-void vrx_free(void *mem) {
-    pthread_mutex_lock(&MemMutex_Free);
-    gi.TagFree(mem);
-    pthread_mutex_unlock(&MemMutex_Free);
-}
