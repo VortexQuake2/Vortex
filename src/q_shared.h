@@ -24,6 +24,10 @@
 #include <limits.h>
 //K03 End
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 typedef unsigned char byte;
 
 typedef int32_t qboolean;

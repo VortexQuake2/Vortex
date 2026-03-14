@@ -284,7 +284,7 @@ bool CanSave() {
 
 void PreInit();
 // TODO: all these missing thingies.
-repro_export_t *GetGameAPI(repro_import_t *import)
+q_export repro_export_t *GetGameAPI(repro_import_t *import)
 {
 	vrx_repro_getgameapi(import, &gi);
 
