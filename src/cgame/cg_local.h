@@ -4,7 +4,7 @@
 // g_local.h -- local definitions for game module
 #pragma once
 
-#include "../quake2/game.h"
+#include "../q_shared.h"
 
 extern struct cgame_import_t cgi;
 extern struct cgame_export_t cglobals;
