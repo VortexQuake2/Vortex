@@ -425,6 +425,10 @@ void SV_CalcBlend (edict_t *ent)
 
 	// add for contents
 	VectorAdd (ent->s.origin, ent->client->ps.viewoffset, vieworg);
+#ifdef VRX_REPRO
+	// viewheight no longer part of offset
+	vieworg[2] += ent->viewheight;
+#endif
 	contents = gi.pointcontents (vieworg);
 	if (contents & (CONTENTS_LAVA|CONTENTS_SLIME|CONTENTS_WATER) )
 		ent->client->ps.rdflags |= RDF_UNDERWATER;
