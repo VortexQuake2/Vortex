@@ -922,17 +922,17 @@ static void PM_GetWaterLevel(const vec3_t position, enum water_level_t *level, e
 
     point[2] += pm->mins[2] + 1;
 
-    int cont = gire.pointcontents(point);
+   int cont = pm->pointcontents(point);
 
     if (cont & MASK_WATER) {
         *type = cont;
         *level = WATER_FEET;
         point[2] = pml.origin[2] + pm->mins[2] + sample1;
-        cont = gire.pointcontents(point);
+        cont = pm->pointcontents(point);
         if (cont & MASK_WATER) {
             *level = WATER_WAIST;
             point[2] = pml.origin[2] + pm->mins[2] + sample2;
-            cont = gire.pointcontents(point);
+            cont = pm->pointcontents(point);
             if (cont & MASK_WATER)
                 *level = WATER_UNDER;
         }
@@ -1305,7 +1305,7 @@ void PM_SetDimensions() {
 static qboolean PM_AboveWater() {
     vec3_t below;
     VectorSet(below, pml.origin[0], pml.origin[1], pml.origin[2] - 8);
-    qboolean solid_below = gire.trace((float *) pml.origin, (float *) pm->mins, (float *) pm->maxs, (float *) below,
+    qboolean solid_below = pm->trace((float *) pml.origin, (float *) pm->mins, (float *) pm->maxs, (float *) below,
                                       pm->player, MASK_SOLID).fraction < 1.0f;
 
     if (solid_below)
@@ -1487,7 +1487,7 @@ static void PM_ScreenEffects() {
     vec3_t vieworg;
     VectorAdd(pml.origin, pm->viewoffset, vieworg);
     vieworg[2] += (float) pm->s.viewheight;
-    int contents = gire.pointcontents(vieworg);
+    int contents = pm->pointcontents(vieworg);
 
     if (contents & (CONTENTS_LAVA | CONTENTS_SLIME | CONTENTS_WATER))
         pm->rdflags |= RDF_UNDERWATER;

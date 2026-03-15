@@ -2704,7 +2704,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		pm.trace = gire.trace;
 		pm.clip = SV_PM_Clip;
 		VectorCopy(ent->client->ps.viewoffset, pm.viewoffset);
-		// pm.pointcontents = gire.pointcontents;
+		pm.pointcontents = gire.pointcontents;
 #endif
 
 		// perform a pmove
