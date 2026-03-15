@@ -90,7 +90,7 @@ void mirv_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf
     }
 
     // bounce off things that can't be hurt
-    if (!other->takedamage)
+    if (!other->takedamage && ent != other)
     {
         if (random() > 0.5)
             gi.sound (ent, CHAN_VOICE, gi.soundindex ("weapons/hgrenb1a.wav"), 1, ATTN_NORM, 0);
