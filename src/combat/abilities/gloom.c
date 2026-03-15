@@ -2626,7 +2626,7 @@ void cocoon_attack (edict_t *self)
 
 		if (self->enemy->client && !self->enemy->ai.is_bot)
 			gi.cprintf(self->enemy, PRINT_HIGH, "You have gained a damage/defense bonus of +%.0f%c for %.0f seconds\n",
-				(factor * 100) - 100, '%', duration); 
+				(factor * 100) - 100, '%', duration);
 		
 		//4.4 give some health
 		heal = self->enemy->max_health * (0.25 + (0.075 * self->monsterinfo.level));
@@ -2645,6 +2645,7 @@ void cocoon_attack (edict_t *self)
 		self->enemy->svflags &= ~SVF_NOCLIENT;
 		self->enemy->movetype = self->count;
 		self->enemy->flags &= ~FL_COCOONED;//4.4
+		self->enemy->holdtime = 0;
 	//	self->owner = self->enemy;
 		self->enemy = NULL;
 		self->s.frame = COCOON_FRAME_STANDBY;
@@ -2653,11 +2654,17 @@ void cocoon_attack (edict_t *self)
 		return;
 	}
 
-	if (!(level.framenum % (int)(sv_fps->value)) && self->enemy->client)
-		safe_cprintf(self->enemy, PRINT_HIGH, "You will emerge from the cocoon in %d second(s)\n", 
-			(int)((self->monsterinfo.nextattack - level.framenum) * FRAMETIME));
+	const auto frames_left = (int)(self->monsterinfo.nextattack - level.framenum);
+	const int secs_left = (int)((float)frames_left * FRAMETIME);
+	if (frames_left % (int)sv_fps->value == 0 && self->enemy->client)
+		safe_cprintf(
+			self->enemy,
+			PRINT_HIGH,
+			"You will emerge from the cocoon in %d second(s)\n",
+			secs_left
+		);
 
-	time = level.time + FRAMETIME;
+	time = level.time + qf2sf(1);
 
 	// hold target in-place
 	if (!strcmp(self->enemy->classname, "drone"))
@@ -2709,8 +2716,6 @@ void cocoon_attack (edict_t *self)
 
 void cocoon_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
-	int frames;
-
 	V_Touch(ent, other, plane, surf);
 	
 	if (!ent->groundentity || ent->groundentity != world)
@@ -2726,10 +2731,10 @@ void cocoon_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *su
 
 	ent->enemy = other;
 
-	frames = COCOON_INITIAL_DURATION + COCOON_ADDON_DURATION * ent->monsterinfo.level;
+	int frames = COCOON_INITIAL_DURATION + COCOON_ADDON_DURATION * ent->monsterinfo.level;
 	if (frames < COCOON_MINIMUM_DURATION)
 		frames = COCOON_MINIMUM_DURATION;
-	ent->monsterinfo.nextattack = level.framenum + sf2qf(frames);
+	ent->monsterinfo.nextattack = level.framenum + qf2sf(frames);
 
 	// don't let them move (or fall out of the map)
 	ent->count = other->movetype;
@@ -2796,7 +2801,8 @@ void cocoon_think (edict_t *self)
 		}
 		return;
 	}
-	else if (self->s.frame > COCOON_FRAME_STANDBY && self->s.frame < COCOON_FRAMES_GROW_END)
+
+	if (self->s.frame > COCOON_FRAME_STANDBY && self->s.frame < COCOON_FRAMES_GROW_END)
 	{
 		G_RunFrames(self, COCOON_FRAMES_GROW_START, COCOON_FRAMES_GROW_END, false, true);
 	}

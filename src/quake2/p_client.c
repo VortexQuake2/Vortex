@@ -2634,6 +2634,8 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			client->ps.pmove.pm_type = PM_NOCLIP;//PM_SPECTATOR;
 		else if (ent->deadflag)
 			client->ps.pmove.pm_type = PM_DEAD;
+		else if (ent->flags & FL_COCOONED)
+			client->ps.pmove.pm_type = PM_FREEZE;
 		else
 			client->ps.pmove.pm_type = PM_NORMAL;
 		//K03 Begin
