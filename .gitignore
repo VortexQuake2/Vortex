@@ -3,6 +3,9 @@
 /.vscode/
 /.vs/
 
+# macOS
+.DS_Store
+
 # Generic build dirs
 /build/
 /out/
@@ -26,3 +29,4 @@ util/list.lua
 util/settings.txt
 util/v_luasettings_*.c
 util/v_luasettings_*.h
+
