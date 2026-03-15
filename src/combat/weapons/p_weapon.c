@@ -293,7 +293,7 @@ void ChangeWeapon(edict_t* ent) {
 	ent->client->newweapon = NULL;
 	ent->client->machinegun_shots = 0;
 	ent->client->burst_count = 0;
-	ent->client->vrr.gun_time = 0;
+	ent->client->vrr.gun_statemachine_time = 0;
 
 	if (ent->client->pers.weapon && ent->client->pers.weapon->ammo)
 		ent->client->ammo_index = ITEM_INDEX(FindItem(ent->client->pers.weapon->ammo));
@@ -392,7 +392,7 @@ void Think_Weapon(edict_t* ent) {
 		ChangeWeapon(ent);
 	}
 
-	ent->client->vrr.gun_time += FRAMETIME;
+	ent->client->vrr.gun_statemachine_time += FRAMETIME;
 
 	// call active weapon think routine
 	if (ent->client->pers.weapon && ent->client->pers.weapon->weaponthink) {
@@ -520,9 +520,9 @@ void print_wp_state(edict_t* ent, char* state)
 {
 	gi.dprintf("%f\t%f\t%f\t%d\t%d\t%s\n",
 		level.time,
-		ent->client->vrr.gun_time,
-		ent->client->vrr.gun_wait_time,
-		ent->client->vrr.gun_time >= 0.1 - 0.0001,
+		ent->client->vrr.gun_statemachine_time,
+		ent->client->vrr.gun_fire_time,
+		ent->client->vrr.gun_statemachine_time >= 0.1 - 0.0001,
 		ent->client->ps.gunframe,
 		state
 	);
@@ -531,10 +531,26 @@ void print_wp_state(edict_t* ent, char* state)
 #define print_wp_state(...) 
 #endif
 
+/**
+ * Manages the state and behavior of a generic weapon, including activation, firing, idle, and deactivation states.
+ *
+ * This function handles weapon state transitions (activating, ready, firing, dropping), animating frames,
+ * and calling the weapon's firing logic. It also enforces constraints like preventing the weapon's usage
+ * under specific conditions (e.g., player morphed, shield active, no ammo, etc.).
+ *
+ * @param ent Pointer to the entity using the weapon (usually the player).
+ * @param FRAME_ACTIVATE_LAST The last frame of the activation animation.
+ * @param FRAME_FIRE_LAST The last frame of the firing animation sequence.
+ * @param FRAME_IDLE_LAST The last frame of the idle animation sequence.
+ * @param FRAME_DEACTIVATE_LAST The last frame of the deactivation animation.
+ * @param pause_frames A pointer to an array of frame numbers where the weapon may pause in its idle state.
+ * @param fire_frames A pointer to an array of frame numbers that represent firing animation frames.
+ * @param fire A function pointer representing the weapon's firing logic. It is called during the firing state.
+ */
 void Weapon_Generic2(edict_t* ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST, int FRAME_IDLE_LAST,
-	int FRAME_DEACTIVATE_LAST, int* pause_frames, int* fire_frames, void (*fire)(edict_t* ent)) {
+                     int FRAME_DEACTIVATE_LAST, int* pause_frames, int* fire_frames, void (*fire)(edict_t* ent)) {
 	int n;
-	qboolean can_run_frame = ent->client->vrr.gun_time >= 0.1 - T_EPSILON;
+	qboolean can_run_frame = ent->client->vrr.gun_statemachine_time >= 0.1 - T_EPSILON;
 	qboolean started_at_ready = false;
 
 	//K03 Begin
@@ -576,7 +592,7 @@ void Weapon_Generic2(edict_t* ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 
 		if (can_run_frame) {
 			ent->client->ps.gunframe++;
-			ent->client->vrr.gun_time -= 0.1;
+			ent->client->vrr.gun_statemachine_time -= 0.1;
 		}
 		return;
 	}
@@ -595,7 +611,7 @@ void Weapon_Generic2(edict_t* ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 
 		if (can_run_frame) {
 			ent->client->ps.gunframe++;
-			ent->client->vrr.gun_time -= 0.1;
+			ent->client->vrr.gun_statemachine_time -= 0.1;
 		}
 
 		return;
@@ -633,7 +649,7 @@ void Weapon_Generic2(edict_t* ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 
 	if (ent->client->weaponstate == WEAPON_READY) {
 		if (((ent->client->latched_buttons | ent->client->buttons) & BUTTON_ATTACK)) {
-			if (ent->client->vrr.gun_wait_time > level.time + T_EPSILON)
+			if (ent->client->vrr.gun_fire_time > level.time + T_EPSILON)
 				return;
 
 			print_wp_state(ent, "READY");
@@ -686,7 +702,6 @@ void Weapon_Generic2(edict_t* ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 			}
 			// don't run idle frames at 60 fps
 			if (can_run_frame) {
-
 				if (pause_frames) {
 					for (n = 0; pause_frames[n]; n++) {
 						if (ent->client->ps.gunframe == pause_frames[n]) {
@@ -698,7 +713,7 @@ void Weapon_Generic2(edict_t* ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 
 
 				ent->client->ps.gunframe++;
-				ent->client->vrr.gun_time -= 0.1;
+				ent->client->vrr.gun_statemachine_time -= 0.1;
 			}
 			return;
 		}
@@ -709,7 +724,7 @@ void Weapon_Generic2(edict_t* ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 		for (n = 0; fire_frames[n]; n++) {
 			if (ent->client->ps.gunframe == fire_frames[n]) {
 				// a small epsilon for rounding issues that skips frames that shouldn't
-				if (ent->client->vrr.gun_wait_time >= level.time + T_EPSILON)
+				if (ent->client->vrr.gun_fire_time >= level.time + T_EPSILON)
 				{
 					return;
 				}
@@ -748,7 +763,7 @@ void Weapon_Generic2(edict_t* ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 
 				print_wp_state(ent, "FIRE");
 				fire(ent);
-				ent->client->vrr.gun_time = 0.0f;
+				ent->client->vrr.gun_statemachine_time = 0.0f;
 				//gi.dprintf("fired at %d\n",level.framenum);
 				break;
 			}
@@ -757,14 +772,14 @@ void Weapon_Generic2(edict_t* ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 		if (!fire_frames[n]) {
 			if (can_run_frame) {
 				ent->client->ps.gunframe++;
-				ent->client->vrr.gun_time -= 0.1;
+				ent->client->vrr.gun_statemachine_time -= 0.1;
 				print_wp_state(ent, "CD");
 			}
 		}
 
 		if (ent->client->ps.gunframe == FRAME_IDLE_FIRST + 1) {
 			ent->client->weaponstate = WEAPON_READY;
-			ent->client->vrr.gun_wait_time = level.time + 0.1;
+			ent->client->vrr.gun_fire_time = level.time + 0.1;
 		}
 	}
 }
@@ -853,8 +868,8 @@ void Weapon_Generic(
 		// if enough frames have passed by, then call the weapon func
 		// an additional time
 		while (ent->haste_time >= haste_wait) {
-			ent->client->vrr.gun_time += 0.1;
-			ent->client->vrr.gun_wait_time = level.time;
+			ent->client->vrr.gun_statemachine_time += 0.1;
+			ent->client->vrr.gun_fire_time = level.time;
 			Weapon_Generic2(ent, FRAME_ACTIVATE_LAST, FRAME_FIRE_LAST,
 				FRAME_IDLE_LAST, FRAME_DEACTIVATE_LAST, pause_frames, fire_frames, fire);
 			ent->haste_time -= haste_wait;
@@ -1007,7 +1022,7 @@ void weapon_grenade_fire(edict_t* ent, qboolean held) {
 }
 
 void Weapon_Grenade2(edict_t* ent) {
-	qboolean can_run_frame = ent->client->vrr.gun_time >= 0.1;
+	qboolean can_run_frame = ent->client->vrr.gun_statemachine_time >= 0.1;
 
 	if (ent->shield)
 		return;
@@ -1044,14 +1059,14 @@ void Weapon_Grenade2(edict_t* ent) {
 				NoAmmoWeaponChange(ent);
 			}
 
-			ent->client->vrr.gun_time = 0.0;
+			ent->client->vrr.gun_statemachine_time = 0.0;
 			return;
 		}
 
 		if ((ent->client->ps.gunframe == 29) || (ent->client->ps.gunframe == 34) || (ent->client->ps.gunframe == 39) ||
 			(ent->client->ps.gunframe == 48)) {
 			if (randomMT() & 15) {
-				ent->client->vrr.gun_time -= 0.1; // advance the frame timer anyway
+				ent->client->vrr.gun_statemachine_time -= 0.1; // advance the frame timer anyway
 				return;
 			}
 		}
@@ -1059,7 +1074,7 @@ void Weapon_Grenade2(edict_t* ent) {
 		if (can_run_frame) {
 			// print_wp_state(ent, "READY");
 			++ent->client->ps.gunframe;
-			ent->client->vrr.gun_time -= 0.1;
+			ent->client->vrr.gun_statemachine_time -= 0.1;
 		}
 
 		if (ent->client->ps.gunframe > 48)
@@ -1110,7 +1125,7 @@ void Weapon_Grenade2(edict_t* ent) {
 		if (ent->client->ps.gunframe == 12) {
 			ent->client->weapon_sound = 0;
 			weapon_grenade_fire(ent, false);
-			ent->client->vrr.gun_time = 0.1;
+			ent->client->vrr.gun_statemachine_time = 0.1;
 			can_run_frame = true;
 		}
 
@@ -1138,7 +1153,7 @@ void Weapon_Grenade2(edict_t* ent) {
 				ent->client->ps.gunframe++;
 				
 			}
-			ent->client->vrr.gun_time -= 0.1;
+			ent->client->vrr.gun_statemachine_time -= 0.1;
 		}
 
 		if (ent->client->ps.gunframe >= 16 && ent->client->grenade_delay == 0) {
@@ -1587,7 +1602,7 @@ void Weapon_HyperBlaster_Fire(edict_t* ent) {
 			}
 		}
 
-		ent->client->vrr.gun_wait_time = level.time + 0.1;
+		ent->client->vrr.gun_fire_time = level.time + 0.1;
 		ent->client->ps.gunframe++;
 		if (ent->client->ps.gunframe == 12 && ent->client->pers.inventory[ent->client->ammo_index])
 			ent->client->ps.gunframe = 6;
@@ -1735,7 +1750,7 @@ void Machinegun_Fire(edict_t* ent) {
 		ent->client->anim_end = FRAME_attack8;
 	}
 	ent->client->weaponstate = WEAPON_READY;
-	ent->client->vrr.gun_wait_time = level.time + 0.1; // wait before next firing
+	ent->client->vrr.gun_fire_time = level.time + 0.1; // wait before next firing
 }
 
 void Weapon_Machinegun(edict_t* ent) {
@@ -1868,7 +1883,7 @@ void Chaingun_Fire(edict_t* ent) {
 		fire_bullet(ent, start, forward, damage, 5, hspread, vspread, MOD_CHAINGUN);
 	}
 
-	ent->client->vrr.gun_wait_time = level.time + 0.1;
+	ent->client->vrr.gun_fire_time = level.time + 0.1;
 
 	//K03 begin
 	if (ent->myskills.weapons[WEAPON_CHAINGUN].mods[2].current_level >= 1)
@@ -1939,13 +1954,16 @@ void AssaultCannon_Fire(edict_t* ent) {
 		// beginning animation, so play spin-up sound
 		if (ent->client->ps.gunframe == 5)
 			gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/asscan_spinup.wav"), f, ATTN_NORM, 0);
+
 		ent->client->ps.gunframe++; // we're done, so advance to next frame
+		ent->client->vrr.gun_fire_time = level.time + 0.1;
 		return;
 	}
 	else if ((ent->client->ps.gunframe == 15) && !(ent->client->buttons & BUTTON_ATTACK)) {
 		ent->client->ps.gunframe = 32;
 		ent->client->weapon_sound = 0;
 		ent->client->weaponstate = WEAPON_READY;
+		ent->client->vrr.gun_fire_time = level.time + 0.1;
 		return;
 	}
 	// attack frames loop
@@ -1956,6 +1974,8 @@ void AssaultCannon_Fire(edict_t* ent) {
 	else {
 		ent->client->ps.gunframe++;
 	}
+
+	ent->client->vrr.gun_fire_time = level.time + 0.1;
 
 	if (ent->groundentity && (VectorLength(ent->velocity) < 1))
 		canfire = true;
@@ -1968,6 +1988,7 @@ void AssaultCannon_Fire(edict_t* ent) {
 		else
 			gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/asscan_pause.wav"), f, ATTN_NORM, 0);
 	}
+
 
 	if (!canfire)
 		return;
@@ -2361,8 +2382,8 @@ void weapon_20mm_fire(edict_t* ent) {
 		gi.multicast(ent->s.origin, MULTICAST_PVS);
 	}
 
-
 	ent->client->ps.gunframe++;
+	ent->client->vrr.gun_fire_time = level.time + 0.1;
 
 	if (ent->myskills.weapons[WEAPON_20MM].mods[4].current_level < 1) {
 		PlayerNoise(ent, start, PNOISE_WEAPON);
