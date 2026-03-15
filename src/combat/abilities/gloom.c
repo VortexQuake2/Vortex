@@ -2533,6 +2533,7 @@ void cocoon_remove_hold (edict_t *self, edict_t *other)
 	other->svflags &= ~SVF_NOCLIENT;
 	// clear flag
 	other->flags &= ~FL_COCOONED;
+	other->holdtime = 0;
 }
 
 void cocoon_apply_hold (edict_t *self, edict_t *other)
@@ -2740,12 +2741,17 @@ void cocoon_transform (edict_t *self)
 		return;
 	}
 
-	// notify target of time remaining
-	if (!(level.framenum % (int)(sv_fps->value)) && self->enemy->client)
-		safe_cprintf(self->enemy, PRINT_HIGH, "You will emerge from the cocoon in %d second(s)\n", 
-			(int)((self->monsterinfo.nextattack - level.framenum) * FRAMETIME));
+	const auto frames_left = (int)(self->monsterinfo.nextattack - level.framenum);
+	const int secs_left = (int)((float)frames_left * FRAMETIME);
+	if (frames_left % (int)sv_fps->value == 0 && self->enemy->client)
+		safe_cprintf(
+			self->enemy,
+			PRINT_HIGH,
+			"You will emerge from the cocoon in %d second(s)\n",
+			secs_left
+		);
 
-	time = level.time + FRAMETIME;
+	time = level.time + qf2sf(1);
 
 	// hold target in-place
 	if (!strcmp(self->enemy->classname, "drone"))
@@ -2828,7 +2834,7 @@ qboolean cocoon_excluded_mtype(int mtype)
 }
 
 // return true if target is valid for cocoon attack
-qboolean cocoon_validtarget (edict_t *self, edict_t *target)
+qboolean cocoon_validtarget (edict_t *self, edict_t *target, bool touching)
 {
 	float velocity;
 
@@ -2891,7 +2897,7 @@ qboolean cocoon_validtarget (edict_t *self, edict_t *target)
 	{
 		velocity = VectorLength(target->velocity);
 		// make sure target is touching the ground and isn't moving
-		if (!target->groundentity || velocity > 1)
+		if ((!target->groundentity || velocity > 1) && !touching)
 		{
 			//gi.dprintf("groundentity: %s velocity: %f\n", target->groundentity ? "true" : "false", velocity);
 			return false;
@@ -2909,7 +2915,7 @@ void cocoon_attack (edict_t *self, edict_t *other)
 	int frames = COCOON_INITIAL_DURATION + COCOON_ADDON_DURATION * self->monsterinfo.level;
 	if (frames < COCOON_MINIMUM_DURATION)
 		frames = COCOON_MINIMUM_DURATION;
-	self->monsterinfo.nextattack = level.framenum + sf2qf(frames);
+	self->monsterinfo.nextattack = level.framenum + qf2sf(frames);
 
 	// don't let them move (or fall out of the map)
 	self->count = other->movetype; // store movetype so we can restore it later
@@ -2930,7 +2936,7 @@ void cocoon_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *su
 	V_Touch(ent, other, plane, surf);
 	
 	// try to attack (transform) the target if we can
-	if (cocoon_canattack(ent) && cocoon_validtarget(ent, other))
+	if (cocoon_canattack(ent) && cocoon_validtarget(ent, other, true))
 		cocoon_attack(ent, other);
 }
 
@@ -2942,7 +2948,7 @@ qboolean cocoon_findtarget (edict_t *self)
 	{
 		//if (!healer_validtarget(self, e))
 		//	continue;
-		if (!cocoon_validtarget(self, e))
+		if (!cocoon_validtarget(self, e, false))
 			continue;
 		if (e->cocoon_time > level.time) // already has a cocoon bonus
 			continue;
@@ -3020,7 +3026,8 @@ void cocoon_think (edict_t *self)
 		}
 		return;
 	}
-	else if (self->s.frame > COCOON_FRAME_STANDBY && self->s.frame < COCOON_FRAMES_GROW_END)
+
+	if (self->s.frame > COCOON_FRAME_STANDBY && self->s.frame < COCOON_FRAMES_GROW_END)
 	{
 		G_RunFrames(self, COCOON_FRAMES_GROW_START, COCOON_FRAMES_GROW_END, false, true);
 	}
