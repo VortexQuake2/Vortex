@@ -48,8 +48,14 @@ void lightningstorm_attack(edict_t* self, vec3_t start)
 	}
 
 	gi.WriteByte(svc_temp_entity);
+#ifndef VRX_REPRO
 	gi.WriteByte(TE_HEATBEAM);
 	gi.WriteShort(self - g_edicts);
+#else
+	gi.WriteByte(TE_LIGHTNING);
+	gi.WriteShort(self - g_edicts);
+	gi.WriteShort(0);
+#endif
 	gi.WritePosition(start);
 	gi.WritePosition(end);
 	gi.multicast(end, MULTICAST_PVS);

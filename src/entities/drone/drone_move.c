@@ -2,7 +2,6 @@
 
 #include "g_local.h"
 
-#define	STEPSIZE	18
 
 /*
 =============
@@ -1160,7 +1159,7 @@ void M_ChangeYaw (edict_t *ent)
 		return;
 
 	move = ideal - current;
-	speed = ent->yaw_speed;
+	speed = ent->yaw_speed * FRAMETIME * 10;
 	if (ideal > current)
 	{
 		if (move >= 180)
@@ -1490,7 +1489,7 @@ qboolean M_walkmove (edict_t *ent, float yaw, float dist)
 		return false;
 
 	yaw = yaw*M_PI*2 / 360;
-	
+
 	move[0] = cos(yaw)*dist;
 	move[1] = sin(yaw)*dist;
 	move[2] = 0;

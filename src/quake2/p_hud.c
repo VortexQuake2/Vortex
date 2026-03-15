@@ -20,7 +20,7 @@ void MoveClientToIntermission(edict_t *ent)
 	VectorCopy(level.intermission_angle, ent->client->ps.viewangles);
 	ent->client->ps.pmove.pm_type = PM_FREEZE;
 	ent->client->ps.gunindex = 0;
-	ent->client->ps.blend[3] = 0;
+	ent->client->ps.screen_blend[3] = 0;
 	ent->client->ps.viewangles[ROLL] = 0;
 	ent->client->ps.kick_angles[ROLL] = 0;
 
@@ -1033,26 +1033,38 @@ void G_SetStats(edict_t *ent)
 	//
 	ent->client->ps.stats[STAT_LAYOUTS] = 0;
 
-	if (deathmatch->value)
-	{
+	if (deathmatch->value) {
 		if (ent->client->pers.health <= 0 || level.intermissiontime
-			|| ent->client->showscores || ent->client->pers.scanner_active || ent->client->layout.current_len)
-			ent->client->ps.stats[STAT_LAYOUTS] |= 1;
+			|| ent->client->showscores || ent->client->pers.scanner_active
+#ifndef VRX_REPRO
+			|| ent->client->layout.current_len
+#endif
+			)
+			ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_LAYOUT;
+
+#ifdef VRX_REPRO
+			if (ent->client->layout.current_len)
+				ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_SIDEBAR;
+#endif
+
 		if (ent->client->showinventory && ent->client->pers.health > 0)
-			ent->client->ps.stats[STAT_LAYOUTS] |= 2;
+			ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_INVENTORY;
 	}
 	else
 	{
 		if (ent->client->showscores || ent->client->showhelp)
-			ent->client->ps.stats[STAT_LAYOUTS] |= 1;
+			ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_LAYOUT;
 		if (ent->client->showinventory && ent->client->pers.health > 0)
-			ent->client->ps.stats[STAT_LAYOUTS] |= 2;
+			ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_INVENTORY;
 	}
 
 	//
 	// frags
 	//
-	ent->client->ps.stats[STAT_FRAGS] = ent->client->resp.score;
+	ent->client->ps.stats[STAT_SCORE] = ent->client->resp.score;
+#ifdef VRX_REPRO
+	ent->client->ps.stats[STAT_SCORE2] = ent->client->resp.score >> 16;
+#endif
 
 	//
 	// help icon / current weapon if not shown
@@ -1107,8 +1119,20 @@ void G_SetStats(edict_t *ent)
 	// id code
 	//GHz End
 	//GHz START
-	if (level.time > ent->lastdmg + 3)
+#ifdef VRX_REPRO
+	// immediately clear the damage since we don't accumulate it.
+	// repro does the accumulating
+	ent->client->ps.stats[STAT_ID_DAMAGE] = ent->dmg_counter;
+	ent->client->ps.stats[STAT_ID_DAMAGE2] = ent->dmg_counter >> 16;
+
+	ent->dmg_counter = 0;
+
+#else
+	if (level.time > ent->lastdmg + 3) {
 		ent->client->ps.stats[STAT_ID_DAMAGE] = 0;
+		ent->dmg_counter = 0;
+	}
+#endif
 	//GHz END
 
 }
@@ -1202,9 +1226,9 @@ void G_SetSpectatorStats(edict_t *ent)
 	// layouts are independant in spectator
 	cl->ps.stats[STAT_LAYOUTS] = 0;
 	if (cl->pers.health <= 0 || level.intermissiontime || cl->showscores)
-		cl->ps.stats[STAT_LAYOUTS] |= 1;
+		cl->ps.stats[STAT_LAYOUTS] |= LAYOUTS_LAYOUT;
 	if (cl->showinventory && cl->pers.health > 0)
-		cl->ps.stats[STAT_LAYOUTS] |= 2;
+		cl->ps.stats[STAT_LAYOUTS] |= LAYOUTS_INVENTORY;
 }
 
 

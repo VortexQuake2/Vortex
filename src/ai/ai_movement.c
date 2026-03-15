@@ -315,7 +315,7 @@ qboolean AI_SpecialMove(edict_t *self, usercmd_t *ucmd)
 				BOT_DMclass_Ucmd_Move(self, 400, ucmd, false, false);
 			else
 				ucmd->forwardmove = 400;
-			ucmd->upmove = -400;
+			cmd_duck(ucmd);
 			return true;
 		}
 	}
@@ -342,7 +342,7 @@ qboolean AI_SpecialMove(edict_t *self, usercmd_t *ucmd)
 					BOT_DMclass_Ucmd_Move(self, 400, ucmd, false, false);
 				else
 					ucmd->forwardmove = 400;
-				ucmd->upmove = 400;
+				cmd_jump(ucmd);
 
 				return true;
 			}
@@ -389,7 +389,7 @@ void AI_ChangeAngle (edict_t *ent)
 	if (current_yaw != ideal_yaw)
 	{
 		move = ideal_yaw - current_yaw;
-		speed = ent->yaw_speed;
+		speed = ent->yaw_speed * FRAMETIME * 10.0f;
 		if (ideal_yaw > current_yaw)
 		{
 			if (move >= 180)
@@ -418,7 +418,7 @@ void AI_ChangeAngle (edict_t *ent)
 	if (current_pitch != ideal_pitch)
 	{
 		move = ideal_pitch - current_pitch;
-		speed = ent->yaw_speed;
+		speed = ent->yaw_speed * FRAMETIME * 10.0f;
 		if (ideal_pitch > current_pitch)
 		{
 			if (move >= 180)
@@ -513,7 +513,7 @@ qboolean AI_DodgeProjectiles(edict_t* self, usercmd_t* ucmd)
 				mv_spd = fabsf(DotProduct(self->ai.move_vector, self->velocity));
 				// if we're going fast enough in that direction, jump to gain additional speed and distance
 				if (mv_spd > 250 && self->groundentity)
-					ucmd->upmove = 400;
+					cmd_jump(ucmd);
 				//gi.dprintf("AI_DodgeProjectiles: *** INCOMING %s! eta:%.2f GET OUTTA THE WAY! ***\n", self->movetarget->classname, eta);
 				gi.sound(self, CHAN_VOICE, gi.soundindex("speech/yell/lookout.wav"), 1, ATTN_NORM, 0);
 				gi.WriteByte(svc_temp_entity);
@@ -568,7 +568,7 @@ qboolean AI_DodgeProjectiles(edict_t* self, usercmd_t* ucmd)
 		BOT_DMclass_Ucmd_Move(self, 400, ucmd, false, false);//move!
 		mv_spd = fabsf(DotProduct(self->ai.move_vector, self->velocity));// speed in the direction of escape vector
 		if (mv_spd > 250 && self->groundentity)
-			ucmd->upmove = 400;//jump!
+			cmd_jump(ucmd);
 		//gi.dprintf("%d: %s: *** EXPLOSIVE %s NEARBY! GET OUTTA THE WAY! ***\n", (int)level.framenum, __func__, self->movetarget->classname);
 		gi.sound(self, CHAN_VOICE, gi.soundindex("speech/yell/firehole.wav"), 1, ATTN_NORM, 0);
 		gi.WriteByte(svc_temp_entity);

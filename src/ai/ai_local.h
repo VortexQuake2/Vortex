@@ -97,7 +97,6 @@ void		CopyToBodyQue (edict_t *ent);
 void		Use_Plat (edict_t *ent, edict_t *other, edict_t *activator);
 void		ClientThink (edict_t *ent, usercmd_t *ucmd);
 qboolean		SelectSpawnPoint (edict_t *ent, vec3_t origin, vec3_t angles);
-qboolean	ClientConnect (edict_t *ent, char *userinfo);
 
 // bot_spawn.c
 //----------------------------------------------------------
@@ -163,6 +162,7 @@ void		AITools_SaveNodes( void );
 qboolean	AI_LoadPLKFile( char *mapname );
 void		AIDebug_ToogleBotDebug(void);//GHz
 void		AI_RemoveMapNodes(void);//GHz
+void AI_RemoveEntNodes();
 
 // ai_links.c
 //----------------------------------------------------------

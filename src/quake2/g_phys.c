@@ -93,7 +93,7 @@ qboolean SV_RunThink (edict_t *ent)
 	thinktime = ent->nextthink;
 	if (thinktime <= 0)
 		return true;
-	if (thinktime > level.time+0.001)
+	if (thinktime > level.time+FRAMETIME-0.001)
 		return true;
 	//gi.dprintf("SV_RunThink()\n");
 	//GHz START
@@ -485,9 +485,6 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 		if (!check->solid) continue;
 
 //ponko
-		//r1: FIXME: what the fuck?
-		if(check->classname[0] == 'R' && (check->classname[6] == 'X' || check->classname[6] == '3') ) continue;
-
 		if (check->movetype == MOVETYPE_PUSH
 		|| check->movetype == MOVETYPE_STOP
 		|| check->movetype == MOVETYPE_NONE
@@ -495,8 +492,13 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 			continue;
 
 //		if(check->movetype == MOVETYPE_STEP) M_CheckGround(check);
+#ifndef VRX_REPRO
 		if (!check->area.prev)
 			continue;		// not linked in anywhere
+#else
+		if (!check->linked)
+			continue;
+#endif
 
 	// if the entity is standing on the pusher, it will definitely be moved
 		if (check->groundentity != pusher)
@@ -739,15 +741,12 @@ void SV_Physics_Toss (edict_t *ent)
 		if (!ent->groundentity->inuse)
 			ent->groundentity = NULL;
 
-
-
 // if onground, return without moving
 	if (ent->groundentity)
 	{
 		V_TouchSolids(ent);
 		return;
 	}
-
 
 	VectorCopy (ent->s.origin, old_origin);
 

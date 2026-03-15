@@ -99,20 +99,20 @@ void think_trade(edict_t* ent) {//3.0 new trading
 
 }
 
-void think_chat_protect_activate(edict_t* ent) {
-	if (!ptr->value && !domination->value && !ctf->value &&
-		!(hw->value && vrx_has_flag(ent))  // the game isn't holywars and the player doesn't have the flag
-		&& !ent->myskills.administrator // Not an admin
-		&& !que_typeexists(ent->curses, 0)  // Not cursed
-		&& (ent->myskills.streak < SPREE_START)) // Not on a spree
-	{
-		if (!((!ent->myskills.abilities[CLOAK].disable) && ((ent->myskills.abilities[CLOAK].current_level > 0)))) {
-			if (!trading->value && !ent->automag) // trading mode no chat protection or if automagging either
-			{
-				if (sf2qf(ent->client->idle_frames) == CHAT_PROTECT_FRAMES - 100)
-					safe_centerprintf(ent, "10 seconds to chat-protect.\n");
-				else if (sf2qf(ent->client->idle_frames) == CHAT_PROTECT_FRAMES - 50)
-					safe_centerprintf(ent, "5 seconds to chat-protect.\n");
+void think_chat_protect_activate(edict_t *ent) {
+    if (!ptr->value && !domination->value && !ctf->value &&
+        !(hw->value && vrx_has_flag(ent))  // the game isn't holywars and the player doesn't have the flag
+        && !ent->myskills.administrator // Not an admin
+        && !que_typeexists(ent->curses, 0)  // Not cursed
+        && (ent->myskills.streak < SPREE_START)) // Not on a spree
+    {
+        if (!((!ent->myskills.abilities[CLOAK].disable) && ((ent->myskills.abilities[CLOAK].current_level > 0)))) {
+            if (!trading->value && !ent->automag) // trading mode no chat protection or if automagging either
+            {
+                if (sf2qf(ent->client->idle_frames) == qf2sf(CHAT_PROTECT_FRAMES - 100))
+                    safe_centerprintf(ent, "10 seconds to chat-protect.\n");
+                else if (sf2qf(ent->client->idle_frames) == qf2sf(CHAT_PROTECT_FRAMES - 50))
+                    safe_centerprintf(ent, "5 seconds to chat-protect.\n");
 
 				if (sf2qf(ent->client->idle_frames) == qf2sf(CHAT_PROTECT_FRAMES)) {
 					safe_centerprintf(ent, "Now in chat-protect mode.\n");
@@ -225,69 +225,6 @@ qboolean CanSuperSpeed(edict_t* ent) {
 	return false;
 }
 
-/*
-pmove_t
-V_Think_ApplySuperSpeed(edict_t *ent, const usercmd_t *ucmd, gclient_t *client, int i, pmove_t *pm, int viewheight) {
-	if (ent->superspeed) {
-
-		if (!CanSuperSpeed(ent)) {
-			ent->superspeed = false;
-		} else if (level.time > ent->lasthurt + DAMAGE_ESCAPE_DELAY) {
-			// ent->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
-			(*pm).s = client->ps.pmove;
-
-			{
-				(*pm).s.origin[i] = ent->s.origin[i] * 6;
-				//pm.s.velocity[i] = ent->velocity[i]*8;
-			}
-			(*pm).s.velocity[0] = ent->velocity[0] * 6;
-			(*pm).s.velocity[1] = ent->velocity[1] * 6;
-
-			if (memcmp(&client->old_pmove, &(*pm).s, sizeof((*pm).s)) != 0) {
-				(*pm).snapinitial = true;
-				//		gi.dprintf ("pmove changed!\n");
-			}
-
-			(*pm).cmd = *ucmd;
-
-			(*pm).trace = PM_trace;    // adds default parms
-
-			(*pm).pointcontents = gi.pointcontents;
-
-			// perform a pmove
-			gi.Pmove(pm);
-
-// GHz START
-			// if this is a morphed player, restore saved viewheight
-			// this locks them into that viewheight
-			if (ent->mtype)
-				(*pm).viewheight = viewheight;
-//GHz END
-			// save results of pmove
-			client->ps.pmove = (*pm).s;
-			client->old_pmove = (*pm).s;
-
-			for (i = 0; i < 3; i++) {
-				ent->s.origin[i] = (*pm).s.origin[i] * 0.125;
-				//ent->velocity[i] = pm.s.velocity[i]*0.125;
-			}
-			ent->velocity[0] = (*pm).s.velocity[0] * 0.125;
-			ent->velocity[1] = (*pm).s.velocity[1] * 0.125;
-
-			VectorCopy ((*pm).mins, ent->mins);
-			VectorCopy ((*pm).maxs, ent->maxs);
-
-			client->resp.cmd_angles[0] = SHORT2ANGLE(ucmd->angles[0]);
-			client->resp.cmd_angles[1] = SHORT2ANGLE(ucmd->angles[1]);
-			client->resp.cmd_angles[2] = SHORT2ANGLE(ucmd->angles[2]);
-
-			// ent->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
-		}
-	}
-	//K03 End
-
-	return (*pm);
-}*/
 
 float V_ModifyMovement(edict_t* ent, usercmd_t* ucmd, que_t* curse) {// assault cannon slows you down
 	float vel_modification = 1;
@@ -384,10 +321,17 @@ float V_ModifyMovement(edict_t* ent, usercmd_t* ucmd, que_t* curse) {// assault 
 		az: rewrite how superspeed works because it fucking sucks
 	*/
 	qboolean superspeed = ent->superspeed && CanSuperSpeed(ent) && level.time > ent->lasthurt + DAMAGE_ESCAPE_DELAY;
+#ifndef VRX_REPRO
 	if (superspeed) {
 		vel_modification *= 1.75;
 	}
-
+#else
+	// handled by pmove
+	if (superspeed)
+		ent->client->ps.pmove.pm_flags |= PMF_SUPERSPEED;
+	else
+		ent->client->ps.pmove.pm_flags &= ~PMF_SUPERSPEED;
+#endif
 
 	//K03 Begin
 	qboolean hook = (ent->client->hook_state == HOOK_ON) && (VectorLength(ent->velocity) < 10);
@@ -399,6 +343,16 @@ float V_ModifyMovement(edict_t* ent, usercmd_t* ucmd, que_t* curse) {// assault 
 		ent->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
 	}
 	//K03 End
+
+	if (ent->mtype == MORPH_CACODEMON)
+		ent->client->ps.pmove.pm_flags |= PMF_CACODEMON;
+	else
+		ent->client->ps.pmove.pm_flags &= ~PMF_CACODEMON;
+
+	if (ent->mtype == MORPH_FLYER)
+		ent->client->ps.pmove.pm_flags |= PMF_NOCROUCH;
+	else
+		ent->client->ps.pmove.pm_flags &= ~PMF_NOCROUCH;
 
 	return vel_modification;
 }

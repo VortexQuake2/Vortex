@@ -126,8 +126,15 @@ void chainlightning_think(edict_t* self)
 
 		// lightning graphical effect
 		gi.WriteByte(svc_temp_entity);
+#ifndef VRX_REPRO
 		gi.WriteByte(TE_HEATBEAM);
 		gi.WriteShort(self - g_edicts);
+#else
+		gi.WriteByte(TE_LIGHTNING);
+		gi.WriteShort(self - g_edicts);
+		gi.WriteShort(0);
+#endif
+
 		gi.WritePosition(self->s.old_origin);
 		gi.WritePosition(self->s.origin);
 		gi.multicast(self->s.origin, MULTICAST_PVS);

@@ -613,7 +613,7 @@ void healer_think (edict_t *self)
 		}
 	}
 
-	G_RunFrames(self, HEALER_FRAMES_START, HEALER_FRAMES_END, false);
+	G_RunFrames(self, HEALER_FRAMES_START, HEALER_FRAMES_END, false, true);
 
 	self->nextthink = level.time + FRAMETIME;
 }
@@ -664,7 +664,7 @@ void healer_grow (edict_t *self)
 	if (self->s.frame == HEALER_FRAMES_GROW_START)
 		gi.sound(self, CHAN_VOICE, gi.soundindex("organ/organe3.wav"), 1, ATTN_STATIC, 0);
 
-	G_RunFrames(self, HEALER_FRAMES_GROW_START, HEALER_FRAMES_GROW_END, false);
+	G_RunFrames(self, HEALER_FRAMES_GROW_START, HEALER_FRAMES_GROW_END, false, true);
 }
 
 void healer_dead (edict_t *self)
@@ -981,12 +981,12 @@ void spiker_think (edict_t *self)
 	if (self->monsterinfo.attack_finished - 0.5 > level.time)
 	{
 		if (self->s.frame != SPIKER_FRAME_READY)
-			G_RunFrames(self, SPIKER_FRAMES_NOAMMO_START, SPIKER_FRAMES_NOAMMO_END, false);
+			G_RunFrames(self, SPIKER_FRAMES_NOAMMO_START, SPIKER_FRAMES_NOAMMO_END, false, true);
 	}
 	else
 	{
 		if (self->s.frame != SPIKER_FRAME_READY && self->s.frame != SPIKER_FRAMES_REARM_END)
-			G_RunFrames(self, SPIKER_FRAMES_REARM_START, SPIKER_FRAMES_REARM_END, false);
+			G_RunFrames(self, SPIKER_FRAMES_REARM_START, SPIKER_FRAMES_REARM_END, false, true);
 		else
 			self->s.frame = SPIKER_FRAME_READY;
 	}
@@ -1061,7 +1061,7 @@ void spiker_grow (edict_t *self)
 		gi.sound(self, CHAN_VOICE, gi.soundindex("organ/organe3.wav"), 1, ATTN_NORM, 0);
 
 	if (self->s.frame != SPIKER_FRAMES_GROW_END)
-		G_RunFrames(self, SPIKER_FRAMES_GROW_START, SPIKER_FRAMES_GROW_END, false);
+		G_RunFrames(self, SPIKER_FRAMES_GROW_START, SPIKER_FRAMES_GROW_END, false, true);
 }
 
 edict_t *CreateSpiker (edict_t *ent, int skill_level)
@@ -1512,7 +1512,7 @@ void obstacle_grow (edict_t *self)
 		gi.sound(self, CHAN_VOICE, gi.soundindex("organ/organe3.wav"), 1, ATTN_NORM, 0);
 
 	if (self->s.frame != OBSTACLE_FRAMES_GROW_END)
-		G_RunFrames(self, OBSTACLE_FRAMES_GROW_START, OBSTACLE_FRAMES_GROW_END, false);
+		G_RunFrames(self, OBSTACLE_FRAMES_GROW_START, OBSTACLE_FRAMES_GROW_END, false, true);
 }
 
 edict_t *CreateObstacle (edict_t *ent, int skill_level, int talent_level)
@@ -1678,7 +1678,7 @@ void poison_think (edict_t *self)
 	{
 		//self->dmg_counter += self->dmg;
 		T_Damage(self->enemy, self, self->activator, vec3_origin, self->enemy->s.origin, vec3_origin, self->dmg, 0, 0, self->style);
-		self->monsterinfo.nextattack = level.framenum + floattoint(self->random);
+		self->monsterinfo.nextattack = level.framenum + qf2sf( floattoint(self->random) ); 
 		self->random *= 1.25;
 	}
 
@@ -1697,7 +1697,7 @@ void CreatePoison (edict_t *ent, edict_t *targ, int damage, float duration, int 
 	e->classname = "poison";
 	e->delay = level.time + duration;
 	e->owner = e->enemy = targ;
-	e->random = 1; // starting refire delay (in frames)
+	e->random = 1; // starting refire delay (in quake frames)
 	e->dmg = damage;
 	e->mtype = e->atype = POISON;
 	e->style = meansOfDeath;
@@ -1740,11 +1740,11 @@ void gascloud_runframes (edict_t *self)
 {
 	if (level.time > self->delay - 0.8)
 	{
-		G_RunFrames(self, GASCLOUD_FRAMES_GROW_START, GASCLOUD_FRAMES_GROW_END, true);
+		G_RunFrames(self, GASCLOUD_FRAMES_GROW_START, GASCLOUD_FRAMES_GROW_END, true, true);
 		self->s.effects |= EF_SPHERETRANS;
 	}
 	else if (self->s.frame < GASCLOUD_FRAMES_GROW_END)
-		G_RunFrames(self, GASCLOUD_FRAMES_GROW_START, GASCLOUD_FRAMES_GROW_END, false);
+		G_RunFrames(self, GASCLOUD_FRAMES_GROW_START, GASCLOUD_FRAMES_GROW_END, false, true);
 }
 
 void poison_curse_sound(edict_t* self)
@@ -1769,7 +1769,7 @@ void poison_target(edict_t* ent, edict_t* target, int damage, float duration, in
 		if (!stack) // stacking of poison curses is not allowed, so refresh the curse instead
 		{
 			slot->ent->random = 1; // initial refire delay for next attack
-			slot->ent->monsterinfo.nextattack = level.framenum + 1; // next attack server frame
+				slot->ent->monsterinfo.nextattack = level.framenum + qf2sf(1);
 			slot->ent->delay = level.time + duration;
 			slot->time = level.time + duration;
 			return;
@@ -1934,7 +1934,7 @@ void tempent_ball_think(edict_t* self)
 		return;
 	}
 
-	G_RunFrames(self, 0, 7, false);
+	G_RunFrames(self, 0, 7, false, true);
 
 	self->nextthink = level.time + FRAMETIME;
 }
@@ -2238,13 +2238,13 @@ void gasser_think (edict_t *self)
 			//gi.dprintf("cant attack\n");
 
 		if (self->s.frame < GASSER_FRAMES_ATTACK_END)
-			G_RunFrames(self, GASSER_FRAMES_ATTACK_START, GASSER_FRAMES_ATTACK_END, false);
+			G_RunFrames(self, GASSER_FRAMES_ATTACK_START, GASSER_FRAMES_ATTACK_END, false, true);
 		else if (self->s.frame < GASSER_FRAMES_REARM_END && level.time > self->monsterinfo.attack_finished - 0.2)
-			G_RunFrames(self, GASSER_FRAMES_REARM_START, GASSER_FRAMES_REARM_END, false);
+			G_RunFrames(self, GASSER_FRAMES_REARM_START, GASSER_FRAMES_REARM_END, false, true);
 		else if (level.time > self->monsterinfo.attack_finished)
 		{
 			gascloud_sparks(self, 1, 32);
-			G_RunFrames(self, GASSER_FRAMES_IDLE_START, GASSER_FRAMES_IDLE_END, false);
+			G_RunFrames(self, GASSER_FRAMES_IDLE_START, GASSER_FRAMES_IDLE_END, false, true);
 		}
 	}
 
@@ -2626,7 +2626,7 @@ void cocoon_attack (edict_t *self)
 
 		if (self->enemy->client && !self->enemy->ai.is_bot)
 			gi.cprintf(self->enemy, PRINT_HIGH, "You have gained a damage/defense bonus of +%.0f%c for %.0f seconds\n",
-				(factor * 100) - 100, '%', duration); 
+				(factor * 100) - 100, '%', duration);
 		
 		//4.4 give some health
 		heal = self->enemy->max_health * (0.25 + (0.075 * self->monsterinfo.level));
@@ -2645,6 +2645,7 @@ void cocoon_attack (edict_t *self)
 		self->enemy->svflags &= ~SVF_NOCLIENT;
 		self->enemy->movetype = self->count;
 		self->enemy->flags &= ~FL_COCOONED;//4.4
+		self->enemy->holdtime = 0;
 	//	self->owner = self->enemy;
 		self->enemy = NULL;
 		self->s.frame = COCOON_FRAME_STANDBY;
@@ -2653,11 +2654,17 @@ void cocoon_attack (edict_t *self)
 		return;
 	}
 
-	if (!(level.framenum % (int)(sv_fps->value)) && self->enemy->client)
-		safe_cprintf(self->enemy, PRINT_HIGH, "You will emerge from the cocoon in %d second(s)\n", 
-			(int)((self->monsterinfo.nextattack - level.framenum) * FRAMETIME));
+	const auto frames_left = (int)(self->monsterinfo.nextattack - level.framenum);
+	const int secs_left = (int)((float)frames_left * FRAMETIME);
+	if (frames_left % (int)sv_fps->value == 0 && self->enemy->client)
+		safe_cprintf(
+			self->enemy,
+			PRINT_HIGH,
+			"You will emerge from the cocoon in %d second(s)\n",
+			secs_left
+		);
 
-	time = level.time + FRAMETIME;
+	time = level.time + qf2sf(1);
 
 	// hold target in-place
 	if (!strcmp(self->enemy->classname, "drone"))
@@ -2709,8 +2716,6 @@ void cocoon_attack (edict_t *self)
 
 void cocoon_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
-	int frames;
-
 	V_Touch(ent, other, plane, surf);
 	
 	if (!ent->groundentity || ent->groundentity != world)
@@ -2726,10 +2731,10 @@ void cocoon_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *su
 
 	ent->enemy = other;
 
-	frames = COCOON_INITIAL_DURATION + COCOON_ADDON_DURATION * ent->monsterinfo.level;
+	int frames = COCOON_INITIAL_DURATION + COCOON_ADDON_DURATION * ent->monsterinfo.level;
 	if (frames < COCOON_MINIMUM_DURATION)
 		frames = COCOON_MINIMUM_DURATION;
-	ent->monsterinfo.nextattack = level.framenum + sf2qf(frames);
+	ent->monsterinfo.nextattack = level.framenum + qf2sf(frames);
 
 	// don't let them move (or fall out of the map)
 	ent->count = other->movetype;
@@ -2796,9 +2801,10 @@ void cocoon_think (edict_t *self)
 		}
 		return;
 	}
-	else if (self->s.frame > COCOON_FRAME_STANDBY && self->s.frame < COCOON_FRAMES_GROW_END)
+
+	if (self->s.frame > COCOON_FRAME_STANDBY && self->s.frame < COCOON_FRAMES_GROW_END)
 	{
-		G_RunFrames(self, COCOON_FRAMES_GROW_START, COCOON_FRAMES_GROW_END, false);
+		G_RunFrames(self, COCOON_FRAMES_GROW_START, COCOON_FRAMES_GROW_END, false, true);
 	}
 	else if (self->s.frame == COCOON_FRAMES_GROW_END)
 	{
@@ -2807,7 +2813,7 @@ void cocoon_think (edict_t *self)
 		self->s.frame = COCOON_FRAMES_IDLE_START;
 	}
 	else
-		G_RunFrames(self, COCOON_FRAMES_IDLE_START, COCOON_FRAMES_IDLE_END, false);
+		G_RunFrames(self, COCOON_FRAMES_IDLE_START, COCOON_FRAMES_IDLE_END, false, true);
 }
 
 edict_t *CreateCocoon (edict_t *ent, int skill_level)

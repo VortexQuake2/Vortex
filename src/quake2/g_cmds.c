@@ -208,41 +208,58 @@ void FL_think (edict_t *self)
     self->nextthink = level.time + FRAMETIME;
 }
 
+bool create_flashlight_entity(edict_t *self, vec3_t start, vec3_t forward, vec3_t right, vec3_t end) {
+	if (self->flashlight)
+	{
+		G_FreeEdict(self->flashlight);
+		self->flashlight = NULL;
+		return true;
+	}
+	if (self->client)
+		AngleVectors(self->client->v_angle, forward, right, NULL);
+	else
+		AngleVectors(self->s.angles, forward, right, NULL);
+	VectorSet(end, 100, 0, 0);
+	G_ProjectSource(self->s.origin, end, forward, right, start);
+	self->flashlight = G_Spawn ();
+	self->flashlight->owner = self;
+	self->flashlight->movetype = MOVETYPE_NOCLIP;
+	self->flashlight->solid = SOLID_NOT;
+	self->flashlight->classname = "flashlight";
+	self->flashlight->s.modelindex = gi.modelindex ("models/objects/flash/tris.md2");
+	self->flashlight->s.skinnum = 0;
+	self->flashlight->s.effects |= 0x10000000; //transparency
+	self->flashlight->s.effects |= EF_HYPERBLASTER;
+
+	self->flashlight->think = FL_think;
+	self->flashlight->nextthink = level.time + FRAMETIME;
+	return false;
+}
+
 /*
 ===============
 FL_make
 ===============
 */
-void FL_make(edict_t *self)
+void FL_toggle(edict_t *self)
 {
     vec3_t    start,forward,right,end;
 
-    if (self->flashlight)
-    {
-        G_FreeEdict(self->flashlight);
-        self->flashlight = NULL;
-        return;
-    }
-	if (self->client)
-		AngleVectors(self->client->v_angle, forward, right, NULL);
-	else
-		AngleVectors(self->s.angles, forward, right, NULL);
-    VectorSet(end, 100, 0, 0);
-    G_ProjectSource(self->s.origin, end, forward, right, start);
-    self->flashlight = G_Spawn ();
-    self->flashlight->owner = self;
-    self->flashlight->movetype = MOVETYPE_NOCLIP;
-    self->flashlight->solid = SOLID_NOT;
-    self->flashlight->classname = "flashlight";
-    self->flashlight->s.modelindex = gi.modelindex ("models/objects/flash/tris.md2"); 
-    self->flashlight->s.skinnum = 0;
-    self->flashlight->s.effects |= 0x10000000; //transparency
-    self->flashlight->s.effects |= EF_HYPERBLASTER;
+#ifndef VRX_REPRO
+    if (create_flashlight_entity(self, start, forward, right, end)) return;
+#else
+	self->flags ^= FL_FLASHLIGHT;
+#endif
 
-    self->flashlight->think = FL_think;
-    self->flashlight->nextthink = level.time + FRAMETIME;
+}
 
-} 
+bool FL_exists(edict_t *self) {
+#ifndef VRX_REPRO
+	return self->flashlight != NULL;
+#else
+	return self->flags & FL_FLASHLIGHT;
+#endif
+}
 //K03 End
 
 char *ClientTeam (const edict_t *ent)
@@ -1517,8 +1534,8 @@ int PlayerSort (void const *a, void const *b)
 	anum = *(int *)a;
 	bnum = *(int *)b;
 
-	anum = game.clients[anum].ps.stats[STAT_FRAGS];
-	bnum = game.clients[bnum].ps.stats[STAT_FRAGS];
+	anum = game.clients[anum].ps.stats[STAT_SCORE];
+	bnum = game.clients[bnum].ps.stats[STAT_SCORE];
 
 	if (anum < bnum)
 		return -1;
@@ -1557,7 +1574,7 @@ void Cmd_Players_f (edict_t *ent)
 	for (i = 0 ; i < count ; i++)
 	{
 		Com_sprintf (smallq2, sizeof(smallq2), "%3i %s\n",
-			game.clients[indexq2[i]].ps.stats[STAT_FRAGS],
+			game.clients[indexq2[i]].ps.stats[STAT_SCORE],
 			game.clients[indexq2[i]].pers.netname);
 		if (strlen (smallq2) + strlen(largeq2) > sizeof(largeq2) - 100 )
 		{	// can't print all of them in one packet

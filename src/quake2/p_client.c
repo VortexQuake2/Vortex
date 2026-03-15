@@ -1938,6 +1938,7 @@ void PutClientInServer (edict_t *ent)
 	client->ps.pmove.origin[0] = spawn_origin[0]*8;
 	client->ps.pmove.origin[1] = spawn_origin[1]*8;
 	client->ps.pmove.origin[2] = spawn_origin[2]*8;
+
 //ZOID
 	client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
 //ZOID
@@ -1958,11 +1959,16 @@ void PutClientInServer (edict_t *ent)
 	if (client->pers.weapon)//K03
 		client->ps.gunindex = gi.modelindex(client->pers.weapon->view_model);
 
+	client->ps.pmove.viewheight = ent->viewheight;
+
 	// clear entity state values
 	ent->s.effects = 0;
 	ent->s.skinnum = ent - g_edicts - 1;
+	// az: 255 = PLAYER MODEL. Repro sets mi2 as well.
 	ent->s.modelindex = 255;		// will use the skin specified model
-//	ent->s.modelindex2 = 255;		// custom gun model
+#ifdef VRX_REPRO
+	ent->s.modelindex2 = 255;		// custom gun model
+#endif
 	ShowGun(ent);					// ### Hentai ### special gun model
 	ent->s.frame = 0;
 	VectorCopy (spawn_origin, ent->s.origin);
@@ -1970,9 +1976,13 @@ void PutClientInServer (edict_t *ent)
 	VectorCopy (ent->s.origin, ent->s.old_origin);
 
 	// set the delta angle
+#ifndef VRX_REPRO
 	for (i=0 ; i<3 ; i++)
 		client->ps.pmove.delta_angles[i] = ANGLE2SHORT(spawn_angles[i] - client->resp.cmd_angles[i]);
-
+#else
+	for (i=0 ; i<3 ; i++)
+		client->ps.pmove.delta_angles[i] = (spawn_angles[i] - client->resp.cmd_angles[i]);
+#endif
 	ent->s.angles[PITCH] = 0;
 	ent->s.angles[YAW] = spawn_angles[YAW];
 	ent->s.angles[ROLL] = 0;
@@ -2258,7 +2268,11 @@ Changing levels will NOT cause this to be called again, but
 loadgames will.
 ============
 */
+#ifndef VRX_REPRO
 qboolean ClientConnect (edict_t *ent, char *userinfo)
+#else
+bool ClientConnect (edict_t *ent, char *userinfo, const char* social_id, bool is_bot)
+#endif
 {
 	static int lastID = 1;
 	char	ip[16];
@@ -2278,8 +2292,6 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 
 	// Reset names!
 	memset(ent->client->pers.netname, 0, sizeof(ent->client->pers.netname)-1);
-
-
 	strncpy (ent->client->pers.netname, value, sizeof(ent->client->pers.netname)-1);
 
 	// update current ip
@@ -2295,8 +2307,6 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 
 		strncpy(ent->client->pers.current_ip, ip, sizeof(ent->client->pers.current_ip)-1);
 	}
-
-	//Info_SetValueForKey(userinfo, "ip", value);
 
 	if (!ClientCanConnect(ent, userinfo))
 		return false;
@@ -2540,6 +2550,12 @@ void think_trade(edict_t *ent);
 void BlinkStrike_think(edict_t* ent);
 void V_PickUpEntity(edict_t* ent);
 
+trace_t SV_PM_Clip(const vec3_t start, const vec3_t *mins, const vec3_t *maxs, const vec3_t end, enum contents_t mask)
+{
+	return gire.clip(world, start, mins, maxs, end, mask);
+}
+
+
 void ClientThink (edict_t *ent, usercmd_t *ucmd)
 {
 	gclient_t	*client;
@@ -2614,9 +2630,12 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		memset (&pm, 0, sizeof(pm));
 		
 		if (ent->movetype == MOVETYPE_NOCLIP)
-			client->ps.pmove.pm_type = PM_SPECTATOR;
+			// TODO - PM_SPECTATOR works differently from baseline.
+			client->ps.pmove.pm_type = PM_NOCLIP;//PM_SPECTATOR;
 		else if (ent->deadflag)
 			client->ps.pmove.pm_type = PM_DEAD;
+		else if (ent->flags & FL_COCOONED)
+			client->ps.pmove.pm_type = PM_FREEZE;
 		else
 			client->ps.pmove.pm_type = PM_NORMAL;
 		//K03 Begin
@@ -2638,7 +2657,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		//K03 End
 
 		// reset jump flag
-		if (!ucmd->upmove)
+		if (cmd_standing(ucmd))
 			ent->client->jump = false;
 
 		// double jump
@@ -2660,21 +2679,35 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		    ucmd->sidemove *= velocity_mod;
 		}
 
+#ifndef VRX_REPRO
 		for (i=0 ; i<3 ; i++)
 		{
 			pm.s.origin[i] = ent->s.origin[i]*8;
             pm.s.velocity[i] = ent->velocity[i] * 8;
 		}
+#else
+		for (i=0 ; i<3 ; i++)
+		{
+			pm.s.origin[i] = ent->s.origin[i];
+			pm.s.velocity[i] = ent->velocity[i];
+		}
+#endif
 
 		if (memcmp(&client->old_pmove, &pm.s, sizeof(pm.s)))
 			pm.snapinitial = true;
 
 		pm.cmd = *ucmd;
 
+#ifndef VRX_REPRO
 		pm.trace = PM_trace;	// adds default parms
-		
-
 		pm.pointcontents = gi.pointcontents;
+#else
+		pm.player = ent;
+		pm.trace = gire.trace;
+		pm.clip = SV_PM_Clip;
+		VectorCopy(ent->client->ps.viewoffset, pm.viewoffset);
+		pm.pointcontents = gire.pointcontents;
+#endif
 
 		// perform a pmove
 		gi.Pmove (&pm);
@@ -2682,6 +2715,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		// az: for SPEED, run a Pmove twice
 		// we don't wan't to compound on the existing velocity
 		// thus we undo the change in velocity right after...
+#ifndef VRX_REPRO
 		if (velocity_mod > 1) {
 		    float oldZpos, oldZspeed;
 		    oldZpos = pm.s.origin[2];
@@ -2696,15 +2730,19 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
             pm.s.origin[2] = oldZpos;
             pm.s.velocity[2] = oldZspeed;
 		}
+#endif
 
 // GHz START
 		// if this is a morphed player, restore saved viewheight
 		// this locks them into that viewheight
-		if (ent->mtype)
+		if (ent->mtype) {
+#ifndef VRX_REPRO
 			pm.viewheight = viewheight;
+#else
+			pm.s.viewheight = viewheight;
+#endif
+		}
 //GHz END
-
-
 
 		// save results of pmove
 		client->ps.pmove = pm.s;
@@ -2712,24 +2750,39 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 
 		for (i=0 ; i<3 ; i++)
 		{
+#ifndef VRX_REPRO
 			ent->s.origin[i] = pm.s.origin[i]*0.125;
 			ent->velocity[i] = pm.s.velocity[i]*0.125;
+#else
+			// full precision
+			ent->s.origin[i] = pm.s.origin[i];
+			ent->velocity[i] = pm.s.velocity[i];
+#endif
 		}
 
 		VectorCopy (pm.mins, ent->mins);
 		VectorCopy (pm.maxs, ent->maxs);
 
+		// TODO
+#ifndef VRX_REPRO
 		if (!(ent->lockon == 1 && ent->enemy)){
 			client->resp.cmd_angles[0] = SHORT2ANGLE(ucmd->angles[0]);
 			client->resp.cmd_angles[1] = SHORT2ANGLE(ucmd->angles[1]);
 			client->resp.cmd_angles[2] = SHORT2ANGLE(ucmd->angles[2]);
 		}
+#else
+		if (!(ent->lockon == 1 && ent->enemy)){
+			client->resp.cmd_angles[0] = (ucmd->angles[0]);
+			client->resp.cmd_angles[1] = (ucmd->angles[1]);
+			client->resp.cmd_angles[2] = (ucmd->angles[2]);
+		}
+#endif
 
 		//K03 Begin
 		//4.07 can't superspeed while being hurt
         // pm = V_Think_ApplySuperSpeed(ent, ucmd, client, i, &pm, viewheight);
 
-		if (/*ent->groundentity && !pm.groundentity &&*/ (pm.cmd.upmove >= 10) /*&& (pm.waterlevel == 0)*/)
+		if (cmd_jumping(&pm.cmd))
 		{
 			if (((ent->mtype == MORPH_BRAIN || ent->mtype == MORPH_MUTANT) && pm.waterlevel > 0) || 
 				 (ent->groundentity && !pm.groundentity))
@@ -2744,7 +2797,11 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		{
 			V_Player_Touchdown(ent);
 		}
+#ifndef VRX_REPRO
 		ent->viewheight = pm.viewheight;
+#else
+		ent->viewheight = pm.s.viewheight;
+#endif
 		ent->waterlevel = pm.waterlevel;
 		ent->watertype = pm.watertype;
 		ent->groundentity = pm.groundentity;
@@ -2770,6 +2827,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			G_TouchTriggers (ent);
 
 		// touch other objects
+#ifndef VRX_REPRO
 		for (i=0 ; i<pm.numtouch ; i++)
 		{
 			other = pm.touchents[i];
@@ -2778,11 +2836,23 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 					break;
 			if (j != i)
 				continue;	// duplicated
+			other = pm.touches[i].ent;
 			if (!other->touch)
 				continue;
-			other->touch (other, ent, NULL, NULL);
+			other->touch (other, ent, nullptr, nullptr);
+		}
+#else
+		// touch other objects
+		for (i = 0; i < pm.touch.num; i++)
+		{
+			trace_t *tr = &pm.touch.traces[i];
+			other = tr->ent;
+
+			if (other->touch)
+				other->touch(other, ent, &tr->plane, tr->surface);
 		}
 
+#endif
 					//3.0 begin doomie
 	
 			/*************************************************************************
@@ -2839,7 +2909,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 
 	// save light level the player is standing on for
 	// monster sighting AI
-	ent->light_level = ucmd->lightlevel;
+	// ent->light_level = ucmd->;
 
 	// fire weapon from final position if needed
 	if (client->latched_buttons & BUTTON_ATTACK)
@@ -2877,7 +2947,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	}
 
 	if (client->resp.spectator) {
-		if (ucmd->upmove >= 10) {
+		if (cmd_jumping(ucmd)) {
 			if (!(client->ps.pmove.pm_flags & PMF_JUMP_HELD)) {
 				client->ps.pmove.pm_flags |= PMF_JUMP_HELD;
 				if (client->chase_target)
@@ -2995,11 +3065,12 @@ void ClientBeginServerFrame (edict_t *ent)
 
 	// run weapon animations if it hasn't been done by a ucmd_t
 	if (!client->weapon_thunk
-//ZOID
+		//ZOID
 		&& ent->movetype != MOVETYPE_NOCLIP
-//ZOID
-		)
-		Think_Weapon (ent);
+		//ZOID
+		) {
+		Think_Weapon(ent);
+	}
 	else
 		client->weapon_thunk = false;
 

@@ -339,7 +339,9 @@ void Cmd_CorpseExplode(edict_t *ent)
 
 		//Spells like corpse explode shouldn't display 10000 damage, so show the corpse damage instead
 		ent->client->ps.stats[STAT_ID_DAMAGE] = damage;
-
+#ifdef VRX_REPRO
+		ent->client->ps.stats[STAT_ID_DAMAGE2] = damage >> 16;
+#endif
         gi.sound(e, CHAN_ITEM, gi.soundindex("abilities/corpseexplodecast.wav"), 1, ATTN_NORM, 0);
 		ent->client->pers.inventory[power_cube_index] -= COST_FOR_CORPSEEXPLODE;
 		ent->client->ability_delay = level.time + DELAY_CORPSEEXPLODE;

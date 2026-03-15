@@ -468,7 +468,7 @@ qboolean drone_heartarget (edict_t *target)
 		return true;
 
 	// target used an ability
-	if (target->client->ability_delay + 0.4 >= level.time)
+	if (target->client->ability_delay + (0.4 / FRAMETIME) >= level.time)
 		return true;
 
 	return false;
@@ -593,11 +593,12 @@ qboolean drone_findtarget (edict_t *self, qboolean force)
 	if (level.time < pregame_time->value)
 		return false; // pre-game time
 
+
 	// if a monster hasn't found a target for awhile, it becomes less alert
 	// and searches less often, freeing up CPU cycles
 	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND)
-		&& self->monsterinfo.idle_frames > DRONE_SLEEP_FRAMES)
-		frames = (int)(0.4 / FRAMETIME);
+		&& self->monsterinfo.idle_frames > qf2sf(DRONE_SLEEP_FRAMES))
+		frames = qf2sf(DRONE_FINDTARGET_FRAMES * 5);
 	else
 		frames = qf2sf(DRONE_FINDTARGET_FRAMES);
 
@@ -707,7 +708,7 @@ void drone_ai_idle (edict_t *self)
 
 	// world monsters suicide if they haven't found an enemy in awhile
 	if (self->activator && !self->activator->client && !(self->monsterinfo.aiflags & AI_STAND_GROUND)
-		&& (self->monsterinfo.idle_frames > DRONE_SUICIDE_FRAMES))
+		&& (self->monsterinfo.idle_frames > qf2sf(DRONE_SUICIDE_FRAMES)))
 	{
 		if (self->monsterinfo.control_cost >= M_TANK_CONTROL_COST) // we're a boss
 			self->activator->num_sentries--;
@@ -2456,27 +2457,16 @@ void drone_togglelight (edict_t *self)
 {
 	if (self->health > 0)
 	{
-		if (level.daytime && self->flashlight)
-		{
-			// turn light off
-			G_FreeEdict(self->flashlight);
-			self->flashlight = NULL;
-			return;;
-		}
-		else if (!level.daytime && !self->flashlight)
-		{
-			FL_make(self);
-		}
+		if (level.daytime && FL_exists(self))
+			FL_toggle(self);
+		else if (!level.daytime && !FL_exists(self))
+			FL_toggle(self);
 	}
 	else
 	{
 		// turn off the flashlight if we're dead!
-		if (self->flashlight)
-		{
-			G_FreeEdict(self->flashlight);
-			self->flashlight = NULL;
-			return;
-		}
+		if (FL_exists(self))
+			FL_toggle(self);
 	}
 }
 
@@ -2746,26 +2736,7 @@ void drone_think (edict_t *self)
 	
 	// this must come before M_MoveFrame() because a monster's dead
 	// function may set the nextthink to 0
-	self->nextthink = level.time + 0.1; // run at 10 frames/sec
-	/*
-	if (self->mtype == M_DECOY && level.framenum % 10)
-	{
-		self->model = self->activator->model;
-		self->s.skinnum = self->activator->s.skinnum;
-		self->s.modelindex = self->activator->s.modelindex;
-		self->s.modelindex2 = self->activator->s.modelindex2;
-		self->s.modelindex3 = self->activator->s.modelindex3;
-		self->s.modelindex4 = self->activator->s.modelindex4;
-
-		if (self->activator && self->activator->inuse)
-		{
-			gi.dprintf("class skin: %s\n", V_GetClassModel(self->activator));
-			gi.dprintf("activator model: %s skinnum: %d modelindex: %d modelindex2: %d\n", self->activator->model, self->activator->s.skinnum, self->activator->s.modelindex, self->activator->s.modelindex2);
-			gi.dprintf("decoy model: %s skinnum: %d modelindex: %d modelindex2: %d\n", self->model, self->s.skinnum, self->s.modelindex, self->s.modelindex2);
-		}
-		else
-			gi.dprintf("no activator\n");
-	}*/
+	self->nextthink = level.time + FRAMETIME; // run at 10 frames/sec
 
 	M_MoveFrame (self);
 	M_CatagorizePosition (self);

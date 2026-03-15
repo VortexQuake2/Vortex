@@ -4,6 +4,7 @@
 #include "g_local.h"
 #include "../../gamemodes/ctf.h"
 #include "../../characters/class_limits.h"
+void fire_meteor(edict_t *self, vec3_t end, int damage, int radius, int speed);
 
 void RemoveTotem(edict_t *self)
 {
@@ -581,7 +582,7 @@ void totem_general_think(edict_t *self)
 	
 	// run firetotem model frames
 	if (self->mtype == TOTEM_FIRE)
-		G_RunFrames(self, 0, 4, false);
+		G_RunFrames(self, 0, 4, false, true);
 
 	M_CatagorizePosition (self);
 	M_WorldEffects (self);

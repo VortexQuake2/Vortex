@@ -2423,7 +2423,7 @@ void V_ShellAbilityEffects(edict_t *ent) {
         (ent->chill_time > level.time)) {
         // client-specific
         if (ent->client) {
-            SV_AddBlend(0.75, 0.75, 0.75, 0.6, ent->client->ps.blend);
+            SV_AddBlend(0.75, 0.75, 0.75, 0.6, ent->client->ps.screen_blend);
             ent->client->ps.rdflags |= RDF_UNDERWATER;
         }
 
@@ -2439,7 +2439,7 @@ void V_ShellAbilityEffects(edict_t *ent) {
     else if (que_typeexists(ent->curses, POISON))
     {
         if (ent->client) {
-            SV_AddBlend(0, 0.75, 0, 0.6, ent->client->ps.blend);
+            SV_AddBlend(0, 0.75, 0, 0.6, ent->client->ps.screen_blend);
             ent->client->ps.rdflags |= RDF_UNDERWATER;
         }
         ent->s.effects |= EF_BLASTER | EF_TRACKER;
@@ -2506,6 +2506,10 @@ void V_NonShellEffects(edict_t *ent) {
     if (ent->superspeed)
         ent->s.effects |= EF_TAGTRAIL;
 
+    if (ent->flags & FL_FLASHLIGHT) {
+        ent->s.effects |= EF_FLASHLIGHT;
+    }
+
     // ********** CLIENT-SPECIFIC EFFECTS BELOW **********
     if (ent->client) {
         // shield ability effect
@@ -2532,7 +2536,7 @@ void V_NonShellEffects(edict_t *ent) {
         // chat protect changes view, but doesn't add effects
         //FIXME: move this?
         if (ent->flags & FL_CHATPROTECT)
-            SV_AddBlend(0.5, 0, 0, 0.3, ent->client->ps.blend);
+            SV_AddBlend(0.5, 0, 0, 0.3, ent->client->ps.screen_blend);
 
         // manashield effects = EF_HALF_DAMAGE and EF_TAGTRAIL
         if (ent->manashield)

@@ -72,7 +72,8 @@ gibs
 */
 void gib_think(edict_t *self)
 {
-	self->s.frame++;
+	if ( ( level.framenum % qf2sf(1) ) == 0 ) 
+		self->s.frame++;
 	self->nextthink = level.time + FRAMETIME;
 
 	if (self->s.frame == 10)
@@ -699,6 +700,7 @@ Default _cone value is 10 (used to set size of light for spotlights)
 */
 
 #define START_OFF	1
+// TODO: shadow light data setup
 
 static void light_use(edict_t *self, edict_t *other, edict_t *activator)
 {
@@ -1640,7 +1642,8 @@ void SP_misc_transport(edict_t *ent)
 */
 void misc_satellite_dish_think(edict_t *self)
 {
-	self->s.frame++;
+	if ( ( level.framenum % qf2sf(1) ) == 0 ) 
+		self->s.frame++;
 	if (self->s.frame < 38)
 		self->nextthink = level.time + FRAMETIME;
 }

@@ -122,7 +122,7 @@ void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
         if (ent->client->buttons & BUTTON_ATTACK) {
             ent->client->idle_frames = 0;
             // run attack frames
-            G_RunFrames(ent, CACODEMON_FRAME_ATTACK_START, CACODEMON_FRAME_ATTACK_END, false);
+            G_RunFrames(ent, CACODEMON_FRAME_ATTACK_START, CACODEMON_FRAME_ATTACK_END, false, true);
             cacodemon_attack(ent);
         } else {
             frame = ent->s.frame;
@@ -133,11 +133,12 @@ void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
                 G_RunFrames(ent, CACODEMON_FRAME_BLINK_START, CACODEMON_FRAME_BLINK_END, false);
             else*/ 
                 // run idle frames
-                G_RunFrames(ent, CACODEMON_FRAME_IDLE_START, CACODEMON_FRAME_IDLE_END, false);
+                G_RunFrames(ent, CACODEMON_FRAME_IDLE_START, CACODEMON_FRAME_IDLE_END, false, true);
         }
 
         // add thrust
-        if (ucmd->upmove > 0) {
+#ifndef VRX_REPRO
+        if (cmd_jumping(ucmd)) {
             ent->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
             if (ent->groundentity)
                 ent->velocity[2] = 150;
@@ -148,6 +149,9 @@ void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
         } else {
             ent->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
         }
+#else
+      // pmove handles it
+#endif
 
         ent->count = (int)(level.framenum + qf2sf(1));
     }

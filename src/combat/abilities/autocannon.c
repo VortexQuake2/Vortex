@@ -99,7 +99,7 @@ void mzfire_think (edict_t *self)
 	
 
 	// play frame sequence
-	G_RunFrames(self, 4, 15, false);
+	G_RunFrames(self, 4, 15, false, true);
 
 	self->nextthink = level.time + FRAMETIME;
 }
@@ -170,7 +170,7 @@ void autocannon_runframes (edict_t *self)
 {
 	if (self->style == AUTOCANNON_STATUS_ATTACK)
 	{
-		G_RunFrames(self, AUTOCANNON_FRAME_ATTACK_START, AUTOCANNON_FRAME_ATTACK_END, false);
+		G_RunFrames(self, AUTOCANNON_FRAME_ATTACK_START, AUTOCANNON_FRAME_ATTACK_END, false, true);
 		if (self->s.frame == AUTOCANNON_FRAME_ATTACK_END)
 		{
 			self->s.frame = 0; // reset frame
@@ -190,7 +190,7 @@ void autocannon_aim (edict_t *self)
 	{
 		VectorCopy(self->move_origin, v);
 		// 0.1=5-6 degrees/frame, 0.2=11-12 degrees/frame, 0.3=17-18 degrees/frame
-		VectorScale(v, 0.1, v);
+		VectorScale(v, FRAMETIME, v);
 		VectorAdd(v, self->movedir, v);
 		VectorNormalize(v);
 		VectorCopy(v, self->movedir);
@@ -260,7 +260,7 @@ void autocannon_think (edict_t *self)
 
 	if (!autocannon_checkstatus(self))
 	{
-		autocannon_remove(self, NULL);
+		autocannon_remove(self, nullptr);
 		return;
 	}
 
@@ -322,7 +322,7 @@ void autocannon_think (edict_t *self)
 void autocannon_buildthink (edict_t *self)
 {
 	// play sleep frames in reverse, gun is waking up
-	G_RunFrames(self, AUTOCANNON_FRAME_SLEEP_START, AUTOCANNON_FRAME_SLEEP_END, true);
+	G_RunFrames(self, AUTOCANNON_FRAME_SLEEP_START, AUTOCANNON_FRAME_SLEEP_END, true, true);
 	if (self->s.frame == AUTOCANNON_FRAME_SLEEP_START)
 	{
 		if (!autocannon_checkstatus(self))

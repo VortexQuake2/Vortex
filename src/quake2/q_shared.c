@@ -1,5 +1,7 @@
 #include "q_shared.h"
 
+#include <stdarg.h>
+
 #include "g_local.h"
 
 vec3_t vec3_origin = {0,0,0};
@@ -44,6 +46,54 @@ int rand_clt_distribute(int min, int max, int itercnt) {
 	return sum / itercnt + min;
 }
 
+bool cmd_jumping(usercmd_t* self) {
+#ifndef VRX_REPRO
+	return self->upmove > 0;
+#else
+	return self->buttons & BUTTON_JUMP;
+#endif
+}
+
+void cmd_jump(usercmd_t *self) {
+#ifndef VRX_REPRO
+	self->upmove = 400;
+#else
+	self->buttons |= BUTTON_JUMP;
+#endif
+}
+
+#ifdef VRX_REPRO
+void cmd_duck(usercmd_t *self) {
+	self->buttons |= BUTTON_CROUCH;
+}
+
+void cmd_stand(usercmd_t *self) {
+	self->buttons &= ~(BUTTON_CROUCH | BUTTON_JUMP);
+}
+
+bool cmd_ducking(usercmd_t *self) {
+	return self->buttons & BUTTON_CROUCH;
+}
+
+bool cmd_standing(usercmd_t *self) {
+	return !(self->buttons & (BUTTON_CROUCH | BUTTON_JUMP));
+}
+#else
+void cmd_duck(usercmd_t *self) {
+	self->upmove = -400;
+}
+
+bool cmd_ducking(usercmd_t *self) {
+	return self->upmove < 0;
+}
+void cmd_stand(usercmd_t *self) {
+	self->upmove = 0;
+}
+
+bool cmd_standing(usercmd_t *self) {
+	return self->upmove == 0;
+}
+#endif
 void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, float degrees )
 {
 	float	m[3][3];
@@ -1060,6 +1110,69 @@ void Swap_Init (void)
 
 }
 
+constexpr size_t MAX_MODELS_OLD = 256, MAX_SOUNDS_OLD = 256, MAX_IMAGES_OLD = 256;
+
+enum
+{
+    CS_NAME_OLD,
+    CS_CDTRACK_OLD,
+    CS_SKY_OLD,
+    CS_SKYAXIS_OLD, // %f %f %f format
+    CS_SKYROTATE_OLD,
+    CS_STATUSBAR_OLD, // display program string
+
+    CS_AIRACCEL_OLD = 29, // air acceleration control
+    CS_MAXCLIENTS_OLD,
+    CS_MAPCHECKSUM_OLD, // for catching cheater maps
+
+    CS_MODELS_OLD,
+    CS_SOUNDS_OLD = (CS_MODELS_OLD + MAX_MODELS_OLD),
+    CS_IMAGES_OLD = (CS_SOUNDS_OLD + MAX_SOUNDS_OLD),
+    CS_LIGHTS_OLD = (CS_IMAGES_OLD + MAX_IMAGES_OLD),
+    CS_ITEMS_OLD = (CS_LIGHTS_OLD + MAX_LIGHTSTYLES),
+    CS_PLAYERSKINS_OLD = (CS_ITEMS_OLD + MAX_ITEMS),
+    CS_GENERAL_OLD = (CS_PLAYERSKINS_OLD + MAX_CLIENTS),
+    MAX_CONFIGSTRINGS_OLD = (CS_GENERAL_OLD + MAX_GENERAL)
+};
+
+struct configstring_remap_t CS_REMAP(int32_t id)
+{
+    // direct mapping
+    if (id < CS_STATUSBAR_OLD)
+        return (struct configstring_remap_t) { id * CS_MAX_STRING_LENGTH, CS_MAX_STRING_LENGTH };
+    // statusbar needs a bit of special handling, since we have a different
+    // max configstring length and these are just segments of a longer string
+    else if (id < CS_AIRACCEL_OLD)
+        return (struct configstring_remap_t) { (CS_STATUSBAR * CS_MAX_STRING_LENGTH) + ((id - CS_STATUSBAR_OLD) * CS_MAX_STRING_LENGTH_OLD), (CS_AIRACCEL - CS_STATUSBAR) * CS_MAX_STRING_LENGTH };
+    // offset
+    else if (id < CS_MODELS_OLD)
+        return (struct configstring_remap_t) { (id + (CS_AIRACCEL - CS_AIRACCEL_OLD)) * CS_MAX_STRING_LENGTH, CS_MAX_STRING_LENGTH };
+    else if (id < CS_SOUNDS_OLD)
+        return (struct configstring_remap_t) { (id + (CS_MODELS - CS_MODELS_OLD)) * CS_MAX_STRING_LENGTH, CS_MAX_STRING_LENGTH };
+    else if (id < CS_IMAGES_OLD)
+        return (struct configstring_remap_t) { (id + (CS_SOUNDS - CS_SOUNDS_OLD)) * CS_MAX_STRING_LENGTH, CS_MAX_STRING_LENGTH };
+    else if (id < CS_LIGHTS_OLD)
+        return (struct configstring_remap_t) { (id + (CS_IMAGES - CS_IMAGES_OLD)) * CS_MAX_STRING_LENGTH, CS_MAX_STRING_LENGTH };
+    else if (id < CS_ITEMS_OLD)
+        return (struct configstring_remap_t) { (id + (CS_LIGHTS - CS_LIGHTS_OLD)) * CS_MAX_STRING_LENGTH, CS_MAX_STRING_LENGTH };
+    else if (id < CS_PLAYERSKINS_OLD)
+        return (struct configstring_remap_t) { (id + (CS_ITEMS - CS_ITEMS_OLD)) * CS_MAX_STRING_LENGTH, CS_MAX_STRING_LENGTH };
+    else if (id < CS_GENERAL_OLD)
+        return (struct configstring_remap_t) { (id + (CS_PLAYERSKINS - CS_PLAYERSKINS_OLD)) * CS_MAX_STRING_LENGTH, CS_MAX_STRING_LENGTH };
+
+    // general also needs some special handling because it's both
+    // offset *and* allowed to overflow
+    return (struct configstring_remap_t){ (id + (CS_GENERAL - CS_GENERAL_OLD)) * CS_MAX_STRING_LENGTH_OLD, (MAX_CONFIGSTRINGS - CS_GENERAL) * CS_MAX_STRING_LENGTH };
+}
+
+// static_assert(CS_REMAP(CS_MODELS_OLD).start == (CS_MODELS * 96), "check CS_REMAP");
+// static_assert(CS_REMAP(CS_SOUNDS_OLD).start == (CS_SOUNDS * 96), "check CS_REMAP");
+// static_assert(CS_REMAP(CS_IMAGES_OLD).start == (CS_IMAGES * 96), "check CS_REMAP");
+// static_assert(CS_REMAP(CS_LIGHTS_OLD).start == (CS_LIGHTS * 96), "check CS_REMAP");
+// static_assert(CS_REMAP(CS_PLAYERSKINS_OLD).start == (CS_PLAYERSKINS * 96), "check CS_REMAP");
+// static_assert(CS_REMAP(CS_ITEMS_OLD).start == (CS_ITEMS * 96), "check CS_REMAP");
+// static_assert(CS_REMAP(CS_GENERAL_OLD).start == (CS_GENERAL * 64), "check CS_REMAP");
+// static_assert(CS_REMAP(CS_AIRACCEL_OLD).start == (CS_AIRACCEL * 96), "check CS_REMAP");
 
 
 /*
@@ -1074,10 +1187,10 @@ FIXME: make this buffer size safe someday
 char	*va(const char *format, ...)
 {
 	va_list		argptr;
-	static char		string[1024];
+	static char		string[2048];
 	
 	va_start (argptr, format);
-	vsnprintf (string, 1024, format,argptr);
+	vsnprintf (string, 2048, format,argptr);
 	va_end (argptr);
 
 	return string;	
@@ -1241,6 +1354,39 @@ int Q_strcasecmp (const char *s1, const char *s2)
 	return Q_strncasecmp (s1, s2, 99999);
 }
 
+/*
+ * Copy src to string dst of size siz.  At most siz-1 characters
+ * will be copied.  Always NUL terminates (unless siz == 0).
+ * Returns strlen(src); if retval >= siz, truncation occurred.
+ */
+size_t Q_strlcpy(char *dst, const char *src, size_t siz)
+{
+	char *d = dst;
+	const char *s = src;
+	size_t n = siz;
+
+	/* Copy as many bytes as will fit */
+	if(n != 0 && --n != 0)
+	{
+		do
+		{
+			if((*d++ = *s++) == 0)
+				break;
+		}
+		while(--n != 0);
+	}
+
+	/* Not enough room in dst, add NUL and traverse rest of src */
+	if(n == 0)
+	{
+		if(siz != 0)
+			*d = '\0'; /* NUL-terminate dst */
+		while(*s++)
+			; // counter loop
+	}
+
+	return (s - src - 1); /* count does not include NUL */
+}
 
 
 void Com_sprintf (char *dest, int size, char *fmt, ...)

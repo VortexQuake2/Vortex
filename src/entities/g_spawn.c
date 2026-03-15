@@ -924,7 +924,12 @@ char *dm_statusbar =
 "yb	-72 "
 // health
 "xl	24 "
+#ifndef VRX_REPRO
 "num 4 1 "
+#else
+// we can go back to hnum because we can set the width with cgame
+"hnum "
+#endif
 
 // armor
 "yb -24 "
@@ -985,9 +990,14 @@ char *dm_statusbar =
 "yb -116 "
 "string \"Game\" "
 
-"xr	-81 "
 "yb -108 "
+#ifdef VRX_REPRO
+"xr	-113 "
+"num 7 14 "
+#else
+"xr	-81 "
 "num 5 14 "
+#endif
 //K03 End
 // spectator
 "if 29 "
@@ -1038,6 +1048,8 @@ char *dm_statusbar =
 
 //GHz START
 // show damage done to target
+#ifndef VRX_REPRO
+
 "if 24 "
 	"xv	136 "
 	"yv	150 "
@@ -1046,6 +1058,11 @@ char *dm_statusbar =
 	"yv	159 "
 	"num	5 24 "
 "endif "
+#else // az: repro-enhanced dmg num
+"xv	130 "
+"yv	159 "
+"dmgnum "
+#endif
 //GHz END
 //Show the Streak
 "xr -42 "
@@ -1067,16 +1084,10 @@ char *dm_statusbar =
 "num 4 28 "
 //GHz START
 
-"if 24 "
-	"xv 136 "
-	"yv  150 "
-	"string2 \"DMG-ID\" "
-	"xv 130 "
-	"yv 159  "
-	"num 5 24 "
-"endif "
 
 // 3.5 show ability charge percent
+// az: manually shown in cgame
+#ifndef VRX_REPRO
 "if 20 "
 	"xr -50 "
 	"yt  133 "
@@ -1084,6 +1095,7 @@ char *dm_statusbar =
 	"yt 142 "
 	"num 3 20 "
 "endif "
+#endif
 //GHz END
 ;
 
@@ -1206,7 +1218,7 @@ void SP_worldspawn (edict_t *ent)
 	else
 		gi.configstring (CS_SKY, "unit1_");
 
-	gi.configstring (CS_SKYROTATE, va("%f", st.skyrotate) );
+	gi.configstring (CS_SKYROTATE, va("%f", scale_fps(st.skyrotate)) );
 
 	gi.configstring (CS_SKYAXIS, va("%f %f %f",
 		st.skyaxis[0], st.skyaxis[1], st.skyaxis[2]) );
@@ -1216,10 +1228,7 @@ void SP_worldspawn (edict_t *ent)
 	gi.configstring (CS_MAXCLIENTS, va("%i", (int)(maxclients->value) ) );
 
 	// status bar program
-	if (deathmatch->value)
-		gi.configstring (CS_STATUSBAR, dm_statusbar);
-	else
-		gi.configstring (CS_STATUSBAR, single_statusbar);
+	gi.configstring (CS_STATUSBAR, dm_statusbar);
 
 	//---------------
 
