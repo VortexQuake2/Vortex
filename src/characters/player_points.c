@@ -138,6 +138,28 @@ double vrx_get_points_tnl(int level) {
 }
 #endif
 
+// xptbl[i] = exp to get to level i
+static uint32_t xptbl[MAX_LEVEL] = {0};
+void vrx_fill_xp_accum_table() {
+    for (int i = 1; i < MAX_LEVEL; i++) {
+        xptbl[i] = xptbl[i - 1] + vrx_get_points_tnl(i - 1);
+    }
+}
+
+int16_t vrx_get_xp_percent(long xp, int level) {
+    if (level == MAX_LEVEL || level < 0)
+        return INT16_MAX;
+
+    const auto difference = xp - xptbl[level];
+    const auto range = xptbl[level + 1] - xptbl[level];
+    const auto ratio = difference / (double) range;
+
+    if (difference < 0)
+        return 0;
+
+    return ratio * INT16_MAX;
+}
+
 void vrx_check_for_levelup(edict_t *ent, qboolean print_message) {
 	qboolean levelup = false;
 
@@ -148,7 +170,7 @@ void vrx_check_for_levelup(edict_t *ent, qboolean print_message) {
         levelup = true;
 
         // maximum level cap
-        if (!ent->myskills.administrator && ent->myskills.level >= 50) // cap to 50
+        if (!ent->myskills.administrator && ent->myskills.level >= MAX_LEVEL) // cap to 50
         {
             ent->myskills.next_level = ent->myskills.experience;
             return;
@@ -178,7 +200,7 @@ void vrx_check_for_levelup(edict_t *ent, qboolean print_message) {
         }
 
         // maximum level cap
-        if (!ent->myskills.administrator && ent->myskills.level >= 50) {
+        if (!ent->myskills.administrator && ent->myskills.level >= MAX_LEVEL) {
             ent->myskills.next_level = ent->myskills.experience;
             break;
         }

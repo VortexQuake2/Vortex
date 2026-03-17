@@ -1080,6 +1080,7 @@ void G_SetStats(edict_t *ent)
 	//K03 Begin
 	//ent->client->ps.stats[STAT_LEVEL] = ent->myskills.level;
 	ent->client->ps.stats[STAT_STREAK] = ent->myskills.streak;
+	ent->client->ps.stats[STAT_XP_PERCENT] = vrx_get_xp_percent(ent->myskills.experience, ent->myskills.level);
 
 	/*if (timelimit->value)
 	time_left = (timelimit->value*60 - level.time);

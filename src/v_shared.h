@@ -32,6 +32,9 @@ int vrx_get_ability_class(int ability);
 
 #define DEFAULT_SOFTMAX 10
 #define GENERAL_SOFTMAX 5
+#define MAX_LEVEL 50
+void vrx_fill_xp_accum_table();
+int16_t vrx_get_xp_percent(long xp, int level);
 
 typedef struct {
     int index;

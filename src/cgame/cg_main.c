@@ -2,7 +2,6 @@
 // Licensed under the GNU General Public License 2.0.
 
 #include "cg_local.h"
-//#include "m_flash.h"
 
 struct cgame_import_t cgi;
 struct cgame_export_t cglobals;
@@ -19,7 +18,6 @@ uint64_t cgame_init_time = 0;
 static void InitCGame()
 {
 	CG_InitScreen();
-
 	cgame_init_time = cgi.CL_ClientRealTime();
 
 	pm_config.n64_physics = !!atoi(cgi.get_configstring(CONFIG_N64_PHYSICS));

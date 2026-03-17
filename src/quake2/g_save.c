@@ -425,6 +425,7 @@ void InitGame(void)
 
 	// az: requires hostname and g_edicts to be initialized, so it's placed here
 	vrx_relay_connect();
+	vrx_fill_xp_accum_table();
 
 	//3.0 Load the custom map lists
 	int modes[] = {

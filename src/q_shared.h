@@ -184,6 +184,7 @@ constexpr rgba_t rgba_black = {.r = 0, .g = 0, .b = 0, .a = 255};
 constexpr rgba_t rgba_red = {.r = 255, .g = 0, .b = 0, .a = 255};
 constexpr rgba_t rgba_orange = {.r = 255, .g = 127, .b = 0, .a = 255};
 constexpr rgba_t rgba_green = {.r = 0, .g = 255, .b = 0, .a = 255};
+constexpr rgba_t rgba_darkgreen = {.r = 0, .g = 127, .b = 0, .a = 255};
 constexpr rgba_t rgba_blue = {.r = 0, .g = 0, .b = 255, .a = 255};
 
 struct cplane_s;
@@ -1594,6 +1595,8 @@ enum player_stat_t {
     STAT_POWERUP_INFO_START,
     STAT_POWERUP_INFO_END = STAT_POWERUP_INFO_START + NUM_POWERUP_STATS - 1,
 
+    STAT_XP_PERCENT,
+
     // [Paril-KEX] Key display
     STAT_KEY_A,
     STAT_KEY_B,
@@ -1771,6 +1774,16 @@ int rand_sigmoid_distribute(int min, int max);
 // simulates a bell curve. more iters = more centralized
 int rand_clt_distribute(int min, int max, int itercnt);
 
+#define BITSET(count, name) \
+uint32_t name[count / 32 + 1] = {0}
 
+#define BITSET_SET(bitset, n) {\
+size_t index = (n) / 32;\
+size_t bit = 1 << ((n) % 32);\
+bitset[index] |= bit;\
+}
+
+#define BITSET_GET(bitset, n) \
+(bitset[n / 32] & ((1 << n) % 32))
 
 #endif
