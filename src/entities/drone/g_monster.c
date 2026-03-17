@@ -600,9 +600,14 @@ void M_SetEffects (edict_t *ent)
 	V_SetEffects(ent);
 }
 
+qboolean vrx_is_frozen(edict_t* self)
+{
+	return que_typeexists(self->curses, CURSE_FROZEN);
+}
+
 qboolean vrx_holdframe(edict_t* self)
 {
-	return self->monsterinfo.aiflags & AI_HOLD_FRAME || (self->health > 0 && que_typeexists(self->curses, CURSE_FROZEN));
+	return self->monsterinfo.aiflags & AI_HOLD_FRAME || (self->health > 0 && vrx_is_frozen(self));
 }
 
 void vrx_adjust_moveframe_scale(edict_t* self)
@@ -711,7 +716,7 @@ void M_MoveFrame_Reverse (edict_t* self)
 			move->frame[index].aifunc(self, 0);
 		}
 
-	if (move->frame[index].thinkfunc)
+	if (move->frame[index].thinkfunc && !vrx_is_frozen(self))
 		move->frame[index].thinkfunc(self);
 }
 
@@ -795,7 +800,7 @@ void M_MoveFrame (edict_t *self)
 			move->frame[index].aifunc (self, 0);
 		}
 
-	if (move->frame[index].thinkfunc)
+	if (move->frame[index].thinkfunc && !vrx_is_frozen(self))
 		move->frame[index].thinkfunc (self);
 }
 

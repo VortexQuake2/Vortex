@@ -1004,7 +1004,7 @@ void vrx_apply_knockback(edict_t *targ, edict_t *attacker, vec_t *dir, int knock
 
 	if (knockback && (targ->movetype != MOVETYPE_NONE) && (targ->movetype != MOVETYPE_BOUNCE)
 	    && (targ->movetype != MOVETYPE_PUSH) && (targ->movetype != MOVETYPE_STOP)
-	    && !que_typeexists(targ->curses, CURSE_FROZEN))
+	    /*&& !que_typeexists(targ->curses, CURSE_FROZEN)*/)
 	{
 		vec3_t	kvel;
 		float	mass;

@@ -199,7 +199,7 @@ void FireTotem_think(edict_t *self, edict_t *caster)
 	// regenerate fireballs every 1 second
 	if (level.framenum > self->monsterinfo.lefty && self->light_level < 3)
 	{
-		self->light_level = 3; //fireballs
+		self->light_level = 4; //fireballs
 		self->monsterinfo.lefty = level.framenum + (int)(1 / FRAMETIME);
 	}
 

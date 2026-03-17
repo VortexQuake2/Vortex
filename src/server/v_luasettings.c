@@ -1833,7 +1833,7 @@ void Lua_LoadVariables()
 	SKELETON_MAX = vrx_lua_get_variable("SKELETON_MAX", 4);
 	SKELETON_COST = vrx_lua_get_variable("SKELETON_COST", 50);
 	SKELETON_INITIAL_HEALTH = vrx_lua_get_variable("SKELETON_INITIAL_HEALTH", 0);
-	SKELETON_ADDON_HEALTH = vrx_lua_get_variable("SKELETON_ADDON_HEALTH", 100);
+	SKELETON_ADDON_HEALTH = vrx_lua_get_variable("SKELETON_ADDON_HEALTH", 200);
 
 	GOLEM_MAX = vrx_lua_get_variable("GOLEM_MAX", 1);
 	GOLEM_COST = vrx_lua_get_variable("GOLEM_COST", 100);
@@ -2734,7 +2734,7 @@ void Lua_LoadVariables()
     GASSER_RANGE = vrx_lua_get_variable("GASSER_RANGE", 128);
     GASSER_REFIRE = vrx_lua_get_variable("GASSER_REFIRE", 5.0);
     GASSER_INITIAL_DAMAGE = vrx_lua_get_variable("GASSER_INITIAL_DAMAGE", 0);
-    GASSER_ADDON_DAMAGE = vrx_lua_get_variable("GASSER_ADDON_DAMAGE", 10);
+    GASSER_ADDON_DAMAGE = vrx_lua_get_variable("GASSER_ADDON_DAMAGE", 20);
     GASSER_INITIAL_HEALTH = vrx_lua_get_variable("GASSER_INITIAL_HEALTH", 100);
     GASSER_ADDON_HEALTH = vrx_lua_get_variable("GASSER_ADDON_HEALTH", 40);
     GASSER_INITIAL_ATTACK_RANGE = vrx_lua_get_variable("GASSER_INITIAL_ATTACK_RANGE", 100);

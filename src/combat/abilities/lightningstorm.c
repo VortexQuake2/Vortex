@@ -38,7 +38,7 @@ void lightningstorm_attack(edict_t* self, vec3_t start)
 	while ((e = findradius(e, tr.endpos, LIGHTNING_STRIKE_RADIUS)) != NULL)
 	{
 		//FIXME: make a noise when we hit something?
-		if (e && e->inuse && e->takedamage)
+		if (e && e->inuse && e->takedamage && !OnSameTeam(self->owner, e))
 		{
 			tr = gi.trace(end, NULL, NULL, e->s.origin, NULL, MASK_SHOT);
 			VectorSubtract(tr.endpos, end, dir);
