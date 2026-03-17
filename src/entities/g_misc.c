@@ -1712,8 +1712,8 @@ void SP_misc_gib_arm(edict_t *ent)
 
 void misc_dummy_think(edict_t* ent) {
 	if (ent->health < ent->max_health) {
-		int rate = max(ent->max_health - ent->health, 10);
-		int effective_heal_rate = rate * FRAMETIME;
+		const int rate = max(ent->max_health - ent->health, 10);
+		const int effective_heal_rate = rate * FRAMETIME;
 
 		if (ent->health + effective_heal_rate > ent->max_health) {
 			ent->health = ent->max_health;

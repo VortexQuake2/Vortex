@@ -48,7 +48,7 @@ int melee_attack (edict_t *self, int damage, int range)
 
 void mutant_swing_attack (edict_t *self)
 {
-	int	dmg = MUTANT_INITIAL_SWING_DMG+MUTANT_ADDON_SWING_DMG*self->myskills.abilities[MUTANT].current_level;
+	const int	dmg = MUTANT_INITIAL_SWING_DMG+MUTANT_ADDON_SWING_DMG*self->myskills.abilities[MUTANT].current_level;
 
 	if (self->s.frame == 10) // left
 	{
@@ -167,7 +167,7 @@ void mutant_stunattack(edict_t* ent)
 	if (ent->mtype != MORPH_MUTANT)
 		return;
 	// Talent: Melee Mastery
-	int talentLevel = vrx_get_talent_level(ent, TALENT_MELEE_MASTERY);
+	const int talentLevel = vrx_get_talent_level(ent, TALENT_MELEE_MASTERY);
 	// talent isn't upgraded
 	if (talentLevel < 1)
 		return;
@@ -182,7 +182,7 @@ void mutant_stunattack(edict_t* ent)
 		}
 	}
 
-	int damage = (0.2 * talentLevel) * (MUTANT_INITIAL_JUMP_DMG + MUTANT_ADDON_JUMP_DMG * ent->myskills.abilities[MUTANT].current_level);
+	const int damage = (0.2 * talentLevel) * (MUTANT_INITIAL_JUMP_DMG + MUTANT_ADDON_JUMP_DMG * ent->myskills.abilities[MUTANT].current_level);
 	fire_nova(ent, ent, damage, 150.0, 0, 0);
 }
 
@@ -281,7 +281,7 @@ void Cmd_PlayerToMutant_f (edict_t *ent)
 {
 	vec3_t	boxmin, boxmax;
 	//trace_t	tr;
-	int mutant_cubecost = MUTANT_INIT_COST;
+	const int mutant_cubecost = MUTANT_INIT_COST;
 
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: %s just called Cmd_PlayerToMutant_f()\n", ent->client->pers.netname);

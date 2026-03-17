@@ -102,7 +102,7 @@ edict_t *NextNearestTotem(edict_t *ent, int totemType, edict_t *lastTotem, qbool
 
 int GetTotemLevel(edict_t *ent, int totemType, qboolean allied)
 {
-	edict_t *totem = NextNearestTotem(ent, totemType, NULL, allied);
+	const edict_t *totem = NextNearestTotem(ent, totemType, NULL, allied);
 	if(totem != NULL)		return totem->monsterinfo.level;
 	
 	return 0;
@@ -115,7 +115,7 @@ int GetTotemLevel(edict_t *ent, int totemType, qboolean allied)
 void FireTotem_meteor_attack(edict_t* self, edict_t *target)
 {
 	int damage, radius, speed;
-	float slvl = self->monsterinfo.level;
+	const float slvl = self->monsterinfo.level;
 
 	//if (!G_EntExists(self->enemy))
 	//	return;
@@ -142,11 +142,11 @@ void FireTotem_meteor_attack(edict_t* self, edict_t *target)
 
 void FireTotem_fireball_attack(edict_t* self, edict_t *target, qboolean fireball)
 {
-	int damage = FIRETOTEM_DAMAGE_BASE + self->monsterinfo.level * FIRETOTEM_DAMAGE_MULT;
-	int fb_dmg = FIREBALL_INITIAL_DAMAGE + self->monsterinfo.level * FIREBALL_ADDON_DAMAGE;
-	int speed = 600;
+	const int damage = FIRETOTEM_DAMAGE_BASE + self->monsterinfo.level * FIRETOTEM_DAMAGE_MULT;
+	const int fb_dmg = FIREBALL_INITIAL_DAMAGE + self->monsterinfo.level * FIREBALL_ADDON_DAMAGE;
+	const int speed = 600;
 	float	val, dist;
-	float	rad = FIREBALL_INITIAL_RADIUS + FIREBALL_ADDON_RADIUS * self->monsterinfo.level;
+	const float	rad = FIREBALL_INITIAL_RADIUS + FIREBALL_ADDON_RADIUS * self->monsterinfo.level;
 	vec3_t start, forward, end;
 
 	//int count = 10 + self->monsterinfo.level;
@@ -195,7 +195,7 @@ void FireTotem_fireball_attack(edict_t* self, edict_t *target, qboolean fireball
 
 void FireTotem_think(edict_t *self, edict_t *caster)
 {
-	int talentLevel = vrx_get_talent_level(caster, TALENT_VOLCANIC);
+	const int talentLevel = vrx_get_talent_level(caster, TALENT_VOLCANIC);
 
 	// regenerate fireballs every 1 second
 	if (level.framenum > self->monsterinfo.lefty && self->light_level < 3)
@@ -259,12 +259,12 @@ void WaterTotem_glacialspike_attack(edict_t* self, edict_t* target)
 	float	val, dist;
 	vec3_t start, forward, end;
 
-	int skill_level = self->monsterinfo.level;
-	float chill_duration = GLACIAL_SPIKE_INITIAL_CHILL + GLACIAL_SPIKE_ADDON_CHILL * skill_level;
-	float freeze_duration = GLACIAL_SPIKE_INITIAL_FREEZE + GLACIAL_SPIKE_ADDON_FREEZE * skill_level;
-	int damage = GLACIAL_SPIKE_INITIAL_DAMAGE + GLACIAL_SPIKE_ADDON_DAMAGE * skill_level;
-	float radius = GLACIAL_SPIKE_INITIAL_RADIUS + GLACIAL_SPIKE_ADDON_RADIUS * skill_level;
-	float speed = GLACIAL_SPIKE_INITIAL_SPEED + GLACIAL_SPIKE_ADDON_SPEED * skill_level;
+	const int skill_level = self->monsterinfo.level;
+	const float chill_duration = GLACIAL_SPIKE_INITIAL_CHILL + GLACIAL_SPIKE_ADDON_CHILL * skill_level;
+	const float freeze_duration = GLACIAL_SPIKE_INITIAL_FREEZE + GLACIAL_SPIKE_ADDON_FREEZE * skill_level;
+	const int damage = GLACIAL_SPIKE_INITIAL_DAMAGE + GLACIAL_SPIKE_ADDON_DAMAGE * skill_level;
+	const float radius = GLACIAL_SPIKE_INITIAL_RADIUS + GLACIAL_SPIKE_ADDON_RADIUS * skill_level;
+	const float speed = GLACIAL_SPIKE_INITIAL_SPEED + GLACIAL_SPIKE_ADDON_SPEED * skill_level;
 
 	// copy target location
 	G_EntMidPoint(target, end);
@@ -299,9 +299,9 @@ void WaterTotem_frozenorb_attack(edict_t* self, edict_t* target)
 	float	val, dist;
 	vec3_t start, forward, end;
 
-	int skill_level = self->monsterinfo.level;
-	int damage = FROZEN_ORB_INITIAL_DAMAGE + FROZEN_ORB_ADDON_DAMAGE * skill_level;
-	float chill_duration = FROZEN_ORB_INITIAL_CHILL + FROZEN_ORB_ADDON_CHILL * skill_level;
+	const int skill_level = self->monsterinfo.level;
+	const int damage = FROZEN_ORB_INITIAL_DAMAGE + FROZEN_ORB_ADDON_DAMAGE * skill_level;
+	const float chill_duration = FROZEN_ORB_INITIAL_CHILL + FROZEN_ORB_ADDON_CHILL * skill_level;
 
 	// copy target location
 	G_EntMidPoint(target, end);
@@ -340,8 +340,8 @@ void WaterTotem_frozenorb_attack(edict_t* self, edict_t* target)
 void WaterTotem_think(edict_t* self, edict_t* caster)
 {
 	edict_t* e = NULL;
-	int talentLevel = vrx_get_talent_level(caster, TALENT_ICE);
-	float FO_refire = 5.0 - (0.8 * talentLevel); // talent level reduces refire time
+	const int talentLevel = vrx_get_talent_level(caster, TALENT_ICE);
+	const float FO_refire = 5.0 - (0.8 * talentLevel); // talent level reduces refire time
 
 	// regen frozen orbs if we've upgraded Volcanic talent
 	if (talentLevel && level.time > self->monsterinfo.attack_finished && self->monsterinfo.jumpdn < 1)
@@ -535,7 +535,7 @@ void totem_general_think(edict_t *self)
 		int *cubes = &caster->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)];
 
 		//Talent: Totemic Focus.
-        int cost = 10;//30 - vrx_get_talent_level(caster, TALENT_TOTEM) * 5;
+        const int cost = 10;//30 - vrx_get_talent_level(caster, TALENT_TOTEM) * 5;
         if(*cubes < cost)
 		{
 			*cubes = 0;

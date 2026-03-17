@@ -30,9 +30,9 @@ void Spirit_Shoot(edict_t *self, edict_t *target, int damage, float next_shot)
 void Spirit_AttackSomething(edict_t *self)
 {
 	edict_t *target = NULL;
-	int abilitylevel = self->activator->myskills.abilities[YANG].current_level;
+	const int abilitylevel = self->activator->myskills.abilities[YANG].current_level;
 	int damage = YANG_DAMAGE_BASE	+ (abilitylevel * YANG_DAMAGE_MULT);
-	float refire = YANG_ATTACK_DELAY_BASE / (1 + (abilitylevel * YANG_ATTACK_DELAY_MULT));
+	const float refire = YANG_ATTACK_DELAY_BASE / (1 + (abilitylevel * YANG_ATTACK_DELAY_MULT));
 	int talentLevel;
 
 	//Randomize damage
@@ -74,7 +74,7 @@ void Spirit_AttackSomething(edict_t *self)
 void Spirit_AttackCorpse(edict_t *self)
 {
 	edict_t *target = NULL;
-	int abilitylevel = self->activator->myskills.abilities[YIN].current_level;
+	const int abilitylevel = self->activator->myskills.abilities[YIN].current_level;
 	int heal = YIN_HEAL_BASE	+ (abilitylevel * YIN_HEAL_MULT);
 	float refire = YIN_ATTACK_DELAY_BASE / (1 + (abilitylevel * YIN_ATTACK_DELAY_MULT));
 	edict_t *caster = self->activator;
@@ -94,8 +94,8 @@ void Spirit_AttackCorpse(edict_t *self)
 	if ((caster->health < MAX_HEALTH(caster)) || (ammo < 1.0) //4.2 added ammo check
 		|| (caster->client->pers.inventory[body_armor_index] < MAX_ARMOR(caster)))
 	{
-		int max_hp = MAX_HEALTH(caster);
-		int max_ar = MAX_ARMOR(caster);
+		const int max_hp = MAX_HEALTH(caster);
+		const int max_ar = MAX_ARMOR(caster);
 		int talentLevel;
 
 		//Randomize healing amount

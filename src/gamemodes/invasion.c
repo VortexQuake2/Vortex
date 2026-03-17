@@ -153,7 +153,7 @@ edict_t *vrx_inv_give_random_p_spawn()
 	if (invasion_spawncount > 1)
 	{
 		// pick a random active spawn
-		int rand = GetRandom(1, invasion_spawncount) - 1;
+		const int rand = GetRandom(1, invasion_spawncount) - 1;
 		return INV_PlayerSpawns[rand];
 	}
 	else if (invasion_spawncount == 1)
@@ -209,7 +209,7 @@ edict_t* vrx_inv_closest_navi_any(edict_t* self) {
 void DrawNavi(edict_t* ent)
 {
 	float		dist, flrht;
-	edict_t*	navi=NULL;
+	const edict_t*	navi=NULL;
 	vec3_t		start, end;
 	trace_t		tr;
 
@@ -423,7 +423,7 @@ void vrx_inv_award_players(void)
 
 		if (!G_IsSpectator(player))
 		{
-			int fexp = vrx_apply_experience(player, points);
+			const int fexp = vrx_apply_experience(player, points);
 			player->myskills.credits += credits;
 			safe_cprintf(player, PRINT_MEDIUM, "Earned %d exp and %d credits!\n", fexp, credits);
 
@@ -440,7 +440,7 @@ edict_t* vrx_inv_spawn_drone(edict_t* self, edict_t *spawn_point, int index)
 {
 	edict_t *monster = vrx_create_new_drone(self, index, true, false, invasion_bonus_levels);
 	vec3_t	start;
-	float mhealth = 1;
+	const float mhealth = 1;
 
 	if (!monster)
 	{
@@ -452,7 +452,7 @@ edict_t* vrx_inv_spawn_drone(edict_t* self, edict_t *spawn_point, int index)
 	VectorCopy(spawn_point->s.origin, start);
 	start[2] = spawn_point->absmax[2] + 1 + fabsf(monster->mins[2]);
 
-	trace_t tr = gi.trace(start, monster->mins, monster->maxs, start, NULL, MASK_SHOT);
+	const trace_t tr = gi.trace(start, monster->mins, monster->maxs, start, NULL, MASK_SHOT);
 
 	// starting point is occupied
 	if (tr.fraction < 1)
@@ -546,9 +546,9 @@ edict_t* vrx_inv_spawn_drone(edict_t* self, edict_t *spawn_point, int index)
 
 float vrx_inv_time_formula()
 {
-	int base = 4 * 60;
-	int playeramt = vrx_get_alive_players() * 8;
-	int levelamt = next_invasion_wave_level * 7;
+	const int base = 4 * 60;
+	const int playeramt = vrx_get_alive_players() * 8;
+	const int levelamt = next_invasion_wave_level * 7;
 	int cap = 60;
 	int rval = base - playeramt - levelamt;
 
@@ -585,9 +585,9 @@ void vrx_inv_spawn_boss(edict_t* self, int index)
 	if (index < 30)
 		return;
 
-	while (spawn = vrx_inv_get_monster_spawn(spawn))
+	while ((spawn = vrx_inv_get_monster_spawn(spawn)))
 	{
-		if (!(invasion_data.boss = vrx_inv_spawn_drone(self, spawn, index)))
+		if (!((invasion_data.boss = vrx_inv_spawn_drone(self, spawn, index))))
 			continue;
 		else
 		{
@@ -857,7 +857,7 @@ void vrx_inv_on_begin_wave(edict_t *self) {
 		vrx_inv_show_last_wave_summary();
 	}
 
-	int next_max_monsters = vrx_inv_get_max_monsters(invasion_data.wave);
+	const int next_max_monsters = vrx_inv_get_max_monsters(invasion_data.wave);
 	gi.bprintf(PRINT_HIGH, "Welcome to level %d. %d monsters incoming!\n", invasion_data.wave, next_max_monsters);
 	G_PrintGreenText(va("Timelimit: %02d:%02d.\n", (int)vrx_inv_time_formula() / 60, (int)vrx_inv_time_formula() % 60));
 
@@ -992,10 +992,10 @@ void vrx_inv_spawn_monsters(edict_t *self)
 
 
 	// were enough monsters eliminated?
-	qboolean boss_wave = vrx_inv_is_boss_wave(invasion_data.wave);
-	qboolean boss_eliminated = boss_wave && !invasion_data.boss;
-	qboolean forces_eliminated = !boss_wave && (invasion_data.wave_remaining <= 0);
-	qboolean force_next_wave =
+	const qboolean boss_wave = vrx_inv_is_boss_wave(invasion_data.wave);
+	const qboolean boss_eliminated = boss_wave && !invasion_data.boss;
+	const qboolean forces_eliminated = !boss_wave && (invasion_data.wave_remaining <= 0);
+	const qboolean force_next_wave =
 		boss_eliminated || forces_eliminated;
 	if (force_next_wave && invasion_data.started) {
 		// start spawning

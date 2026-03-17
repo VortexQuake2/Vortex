@@ -233,10 +233,10 @@ void tentacle_attack (edict_t *self)
 	VectorCopy(self->s.origin, start);
 	start[2] += self->viewheight;
 	// Talent: Melee Mastery - adds projectile (gib) vomit to brain's primary attack
-	int talentLevel = vrx_get_talent_level(self, TALENT_MELEE_MASTERY);
+	const int talentLevel = vrx_get_talent_level(self, TALENT_MELEE_MASTERY);
 	if (talentLevel > 0)
 	{
-		int frames = 11 - (2 * talentLevel);
+		const int frames = 11 - (2 * talentLevel);
 		if (level.framenum % frames == 0)
 		{
 			VectorMA(start, 16, forward, start);
@@ -324,7 +324,7 @@ void RunBrainFrames (edict_t *ent, usercmd_t *ucmd)
 
 void Cmd_PlayerToBrain_f (edict_t *ent)
 {
-	int brain_cubecost = BRAIN_INIT_COST;
+	const int brain_cubecost = BRAIN_INIT_COST;
 
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: %s just called Cmd_PlayerToBrain_f()\n", ent->client->pers.netname);

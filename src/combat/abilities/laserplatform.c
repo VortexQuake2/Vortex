@@ -116,9 +116,9 @@ void RemoveAllLaserPlatforms (edict_t *ent)
 }
 
 void Cmd_CreateLaserPlatform_f (edict_t *ent)
-{	
-	int		*cubes = &ent->client->pers.inventory[power_cube_index];
-    int talentLevel = vrx_get_talent_level(ent, TALENT_LASER_PLATFORM);
+{
+	const int		*cubes = &ent->client->pers.inventory[power_cube_index];
+    const int talentLevel = vrx_get_talent_level(ent, TALENT_LASER_PLATFORM);
 	vec3_t	start;
 	edict_t *laserplatform;
 

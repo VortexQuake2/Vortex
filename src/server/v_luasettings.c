@@ -126,14 +126,14 @@ int q2lua_get_nextmap(lua_State *L)
 
 int q2lua_get_ability_name(lua_State *L)
 {
-	int index = luaL_checkinteger(State, 1);
+	const int index = luaL_checkinteger(State, 1);
 	lua_pushstring(L, GetAbilityString(index));
 	return 1;
 }
 
 int q2lua_get_is_ability_in_use(lua_State *L)
 {
-	int index = luaL_checkinteger(State, 1);
+	const int index = luaL_checkinteger(State, 1);
 	lua_pushboolean(L, vrx_get_ability_by_index(index) != NULL);
 	return 1;
 }
@@ -275,7 +275,7 @@ qboolean vrx_lua_start_table_iter(const char *tablename)
 
 int vrx_lua_iter_next_string(char **out)
 {
-	int retval = lua_next(State, -2);
+	const int retval = lua_next(State, -2);
 	if (retval != 0)
 	{
 		*out = strdup(lua_tostring(State, -1));

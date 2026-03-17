@@ -17,7 +17,7 @@ void vrx_init_char_io() {
         return;
     }
 
-    int method = savemethod->value;
+    const int method = savemethod->value;
     switch (method) {
 #ifndef NO_GDS
         case SAVEMETHOD_MYSQL:
@@ -37,7 +37,7 @@ void vrx_init_char_io() {
 void vrx_close_char_io() {
     memset(&vrx_char_io, 0, sizeof vrx_char_io);
 
-    int method = savemethod->value;
+    const int method = savemethod->value;
     switch (method) {
 #ifndef NO_GDS
         case 2:
@@ -65,7 +65,7 @@ void vrx_notify_owner_nonexistent(void* args)
 
 void vrx_notify_owner_bad_password(void* args)
 {
-    event_owner_error_t* evt = args;
+    const event_owner_error_t* evt = args;
 
     if (evt->connection_id != evt->ent->gds_connection_id) {
         return;
@@ -76,7 +76,7 @@ void vrx_notify_owner_bad_password(void* args)
 
 void vrx_notify_owner_success(void* args)
 {
-    event_owner_error_t* evt = args;
+    const event_owner_error_t* evt = args;
 
     if (evt->connection_id != evt->ent->gds_connection_id) {
         return;

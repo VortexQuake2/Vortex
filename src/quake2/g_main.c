@@ -595,7 +595,7 @@ void EndDMLevel(void)
 				//Select a random map for this game mode
 				while (1)
 				{
-					int max = maplist->nummaps - 1;
+					const int max = maplist->nummaps - 1;
 					// get a random map index from the map list
 					if (max <= 0)
 					{
@@ -658,7 +658,7 @@ void SP_target_speaker(edict_t *ent);
 void CheckDMRules(void)
 {
 	int			i, check;//K03
-	float		totaltime = ((timelimit->value * 60) - level.time);//K03 added totaltime
+	const float		totaltime = ((timelimit->value * 60) - level.time);//K03 added totaltime
 	gclient_t	*cl;
 
 	if (level.intermissiontime)
@@ -931,17 +931,17 @@ double scale_fps(double value) {
 }
 
 uint64_t sf2qf(uint64_t framecount) {
-	double ratio = 10.0 / sv_fps->value;
+	const double ratio = 10.0 / sv_fps->value;
 	uint64_t rounded = (uint64_t)round(framecount * ratio);
 	if ( rounded == 0 ) {
-		uint64_t iratio = sv_fps->value / 10;
+		const uint64_t iratio = sv_fps->value / 10;
 		rounded = level.framenum % iratio ? 0 : 1;
 	}
 	return rounded;
 }
 
 uint64_t qf2sf(uint64_t frames) {
-	double ratio = sv_fps->value / 10.0f;
+	const double ratio = sv_fps->value / 10.0f;
 	return (uint64_t)round(frames * ratio);
 }
 

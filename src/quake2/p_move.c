@@ -643,7 +643,7 @@ void PM_AddCurrents(vec3_t wishvel) {
     if (pm->s.pm_flags & PMF_ON_LADDER) {
         if (pm->cmd.buttons & (BUTTON_JUMP | BUTTON_CROUCH)) {
             // [Paril-KEX]: if we're underwater, use full speed on ladders
-            float ladder_speed = pm->waterlevel >= WATER_WAIST ? pm_maxspeed : 200;
+            const float ladder_speed = pm->waterlevel >= WATER_WAIST ? pm_maxspeed : 200;
 
             if (pm->cmd.buttons & BUTTON_JUMP)
                 wishvel[2] = ladder_speed;
@@ -651,7 +651,7 @@ void PM_AddCurrents(vec3_t wishvel) {
                 wishvel[2] = -ladder_speed;
         } else if (pm->cmd.forwardmove) {
             // [Paril-KEX] clamp the speed a bit so we're not too fast
-            float ladder_speed = (pm->cmd.forwardmove < -200.f
+            const float ladder_speed = (pm->cmd.forwardmove < -200.f
                                       ? -200.f
                                       : (pm->cmd.forwardmove > 200.f ? 200.f : pm->cmd.forwardmove));
 
@@ -877,7 +877,7 @@ void PM_AirMove() {
         // walking on ground
         pml.velocity[2] = 0; //!!! this is before the accel
 
-        float mod_wishspeed = pm->s.pm_flags & PMF_SUPERSPEED ? wishspeed * 3 : wishspeed;
+        const float mod_wishspeed = pm->s.pm_flags & PMF_SUPERSPEED ? wishspeed * 3 : wishspeed;
         PM_Accelerate(wishdir, mod_wishspeed, pm_accelerate);
 
         // PGM	-- fix for negative trigger_gravity fields
@@ -899,7 +899,7 @@ void PM_AirMove() {
             PM_Accelerate(wishdir, wishspeed, 1);
 
         // add gravity
-        bool skipgravity = pm->s.pm_flags & PMF_CACODEMON && pm->cmd.buttons & BUTTON_JUMP;
+        const bool skipgravity = pm->s.pm_flags & PMF_CACODEMON && pm->cmd.buttons & BUTTON_JUMP;
         if (pm->s.pm_type != PM_GRAPPLE && !skipgravity)
             pml.velocity[2] -= pm->s.gravity * pml.frametime;
 
@@ -914,8 +914,8 @@ static void PM_GetWaterLevel(const vec3_t position, enum water_level_t *level, e
     *level = WATER_NONE;
     *type = CONTENTS_NONE;
 
-    int32_t sample2 = (int) (pm->s.viewheight - pm->mins[2]);
-    int32_t sample1 = sample2 / 2;
+    const int32_t sample2 = (int) (pm->s.viewheight - pm->mins[2]);
+    const int32_t sample1 = sample2 / 2;
 
     vec3_t point;
     VectorCopy(position, point);
@@ -975,7 +975,7 @@ void PM_CatagorizePosition() {
         if (slanted_ground) {
             vec3_t slant_end;
             VectorAdd(pml.origin, trace.plane.normal, slant_end);
-            trace_t slant = PM_Trace(pml.origin, pm->mins, pm->maxs, slant_end, 0);
+            const trace_t slant = PM_Trace(pml.origin, pm->mins, pm->maxs, slant_end, 0);
 
             if (slant.fraction < 1.0f && !slant.startsolid)
                 slanted_ground = 0;
@@ -1037,7 +1037,7 @@ void PM_CheckJump() {
     if (pm->s.pm_type == PM_DEAD)
         return;
 
-    bool cacodemon = (pm->s.pm_flags & PMF_CACODEMON);
+    const bool cacodemon = (pm->s.pm_flags & PMF_CACODEMON);
     if (pm->s.pm_flags & PMF_TIME_LAND && !cacodemon) {
         // hasn't been long enough since landing to jump again
         return;
@@ -1067,7 +1067,7 @@ void PM_CheckJump() {
     pm->groundentity = NULL;
     pm->s.pm_flags &= ~PMF_ON_GROUND;
 
-    float jump_height = 270.f;
+    const float jump_height = 270.f;
 
     pml.velocity[2] += jump_height;
     if (pml.velocity[2] < jump_height)
@@ -1135,7 +1135,7 @@ void PM_CheckSpecialMovement() {
     touch_list_t touches;
     vec3_t waterjump_origin;
     VectorCopy(pml.origin, waterjump_origin);
-    float time = 0.1f;
+    const float time = 0.1f;
     qboolean has_time = 1;
 
     int wj_max = (int32_t) (10 * (800.f / pm->s.gravity));
@@ -1305,13 +1305,13 @@ void PM_SetDimensions() {
 static qboolean PM_AboveWater() {
     vec3_t below;
     VectorSet(below, pml.origin[0], pml.origin[1], pml.origin[2] - 8);
-    qboolean solid_below = pm->trace((float *) pml.origin, (float *) pm->mins, (float *) pm->maxs, (float *) below,
+    const qboolean solid_below = pm->trace((float *) pml.origin, (float *) pm->mins, (float *) pm->maxs, (float *) below,
                                       pm->player, MASK_SOLID).fraction < 1.0f;
 
     if (solid_below)
         return 0;
 
-    qboolean water_below = pm->trace(pml.origin, &pm->mins, &pm->maxs, below, pm->player, MASK_WATER).fraction < 1.0f;
+    const qboolean water_below = pm->trace(pml.origin, &pm->mins, &pm->maxs, below, pm->player, MASK_WATER).fraction < 1.0f;
 
     if (water_below)
         return 1;
@@ -1350,7 +1350,7 @@ qboolean PM_CheckDuck() {
         // duck
         if (!(pm->s.pm_flags & PMF_DUCKED)) {
             // check that duck won't be blocked
-            vec3_t check_maxs = {pm->maxs[0], pm->maxs[1], 4};
+            const vec3_t check_maxs = {pm->maxs[0], pm->maxs[1], 4};
             trace = PM_Trace(pml.origin, pm->mins, check_maxs, pml.origin, 0);
             if (!trace.allsolid) {
                 pm->s.pm_flags |= PMF_DUCKED;
@@ -1361,7 +1361,7 @@ qboolean PM_CheckDuck() {
         // stand up if possible
         if (pm->s.pm_flags & PMF_DUCKED) {
             // try to stand up
-            vec3_t check_maxs = {pm->maxs[0], pm->maxs[1], 32};
+            const vec3_t check_maxs = {pm->maxs[0], pm->maxs[1], 32};
             trace = PM_Trace(pml.origin, pm->mins, check_maxs, pml.origin, 0);
             if (!trace.allsolid) {
                 pm->s.pm_flags &= ~PMF_DUCKED;
@@ -1402,7 +1402,7 @@ qboolean PM_GoodPosition() {
     if (pm->s.pm_type == PM_NOCLIP)
         return 1;
 
-    trace_t trace = PM_Trace(pm->s.origin, pm->mins, pm->maxs, pm->s.origin, 0);
+    const trace_t trace = PM_Trace(pm->s.origin, pm->mins, pm->maxs, pm->s.origin, 0);
 
     return !trace.allsolid;
 }
@@ -1487,7 +1487,7 @@ static void PM_ScreenEffects() {
     vec3_t vieworg;
     VectorAdd(pml.origin, pm->viewoffset, vieworg);
     vieworg[2] += (float) pm->s.viewheight;
-    int contents = pm->pointcontents(vieworg);
+    const int contents = pm->pointcontents(vieworg);
 
     if (contents & (CONTENTS_LAVA | CONTENTS_SLIME | CONTENTS_WATER))
         pm->rdflags |= RDF_UNDERWATER;

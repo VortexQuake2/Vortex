@@ -86,7 +86,7 @@ void StartShowInventoryMenu(edict_t *ent, item_t *item) {
     //Item's stats
     switch (type) {
         case ITEM_WEAPON: {
-            int wIndex = (item->modifiers[0].index / 100) - 10;
+            const int wIndex = (item->modifiers[0].index / 100) - 10;
 
             menu_add_line(ent, " ", 0);
             menu_add_line(ent, va(" %s", GetWeaponString(wIndex)), 0);
@@ -150,8 +150,8 @@ void StartShowInventoryMenu(edict_t *ent, item_t *item) {
                     }
                         break;
                     case TYPE_WEAPON: {
-                        int wIndex = (item->modifiers[i].index / 100) - 10;
-                        int mIndex = item->modifiers[i].index % 100;
+                        const int wIndex = (item->modifiers[i].index / 100) - 10;
+                        const int mIndex = item->modifiers[i].index % 100;
 
                         strcpy(buf, GetShortWeaponString(wIndex));
                         strcat(buf, va(" %s", GetModString(wIndex, mIndex)));
@@ -247,7 +247,7 @@ void ShowItemMenu(edict_t *ent, int itemindex) {
     menu_add_line(ent, "Exit", 666);
     menu_add_line(ent, " ", 0);
 
-    qboolean hasStash = strlen(ent->myskills.owner) > 0 || strlen(ent->myskills.email) > 0;
+    const qboolean hasStash = strlen(ent->myskills.owner) > 0 || strlen(ent->myskills.email) > 0;
     if (hasStash && itemindex >= 3)
 		menu_add_line(ent, "Stash this item", 10000 + itemindex);
     menu_add_line(ent, "Sell this item", 15000 + itemindex);
@@ -286,7 +286,7 @@ void ShowInventoryMenu_handler(edict_t *ent, int option) {
 
 lva_result_t vrx_get_item_menu_line(item_t* item)
 {
-	item_menu_t fmt = vrx_menu_item_display(item);//, ' ');
+	const item_menu_t fmt = vrx_menu_item_display(item);//, ' ');
 	if (fmt.num >= 0) {
 		char* abbr = "";
 		if (item->itemtype == ITEM_COMBO)
@@ -336,7 +336,7 @@ void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling) {
                 break;
         }
 
-        lva_result_t s = vrx_get_item_menu_line(item);
+        const lva_result_t s = vrx_get_item_menu_line(item);
         menu_add_line(ent, s.str, i + 1);
     }
 

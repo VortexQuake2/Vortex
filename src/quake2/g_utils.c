@@ -1822,7 +1822,7 @@ float G_PushAwayFromPlane(vec3_t start, trace_t tr, vec3_t mins, vec3_t maxs)
 	// calculate worst case distance
 	VectorSet(size, fabs(mins[0]) + maxs[0], fabs(mins[1]) + maxs[1], fabs(mins[2]) + maxs[2]);
 	// distance is half of the longest line (i.e diagonal) that can fit within our mins/maxs box
-	float max_dist = 0.5 * G_GetBoxHypotenuse(size) + 1;
+	const float max_dist = 0.5 * G_GetBoxHypotenuse(size) + 1;
 
 	// calculate the pitch angle of the clipped solid
 	vectoangles(tr.plane.normal, angles);

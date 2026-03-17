@@ -74,7 +74,7 @@ void vrx_setup_sqlite_stash()
 
 void vrx_init_stash_io()
 {
-	int method = savemethod->value;
+	const int method = savemethod->value;
 	switch (method) {
 #ifndef NO_GDS
 	case SAVEMETHOD_MYSQL:
@@ -106,7 +106,7 @@ void vrx_stash_store(edict_t* ent, int itemindex)
 
 void vrx_notify_stash_no_owner(void* args)
 {
-	stash_event_t* notif = args;
+	const stash_event_t* notif = args;
 
 	if (notif->ent->gds_connection_id == notif->gds_connection_id && notif->ent->inuse)
 		gi.cprintf(notif->ent, PRINT_HIGH,
@@ -138,7 +138,7 @@ void vrx_notify_stash_taken(void* args)
 
 void vrx_notify_stash_locked(void* args)
 {
-	stash_event_t* notif = args;
+	const stash_event_t* notif = args;
 
 	if (notif->ent->gds_connection_id == notif->gds_connection_id && notif->ent->inuse)
 		gi.cprintf(notif->ent, PRINT_HIGH,
@@ -229,8 +229,8 @@ void handler_stash_page(edict_t* ent, int opt)
 
 	// show stash item
 	const int page_len = sizeof ent->client->stash.page / sizeof(item_t);
-	int item_index = (opt - 100) % page_len;
-	int page = (opt - 100) / page_len;
+	const int item_index = (opt - 100) % page_len;
+	const int page = (opt - 100) / page_len;
 	item_t* it = &ent->client->stash.page[item_index];
 	if (it->itemtype != ITEM_NONE)
 		vrx_show_stash_item(ent, it, opt - 100);
@@ -258,8 +258,8 @@ void vrx_stash_open_page(edict_t* ent, item_t* page, int item_count, int page_in
 
 	for (int i = 0; i < item_count; i++)
 	{
-		lva_result_t line = vrx_get_item_menu_line(&page[i]);
-		int opt = 100 + page_index * 10 + i;
+		const lva_result_t line = vrx_get_item_menu_line(&page[i]);
+		const int opt = 100 + page_index * 10 + i;
 		menu_add_line(ent, line.str, opt);
 	}
 

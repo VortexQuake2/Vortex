@@ -150,7 +150,7 @@ const talentclasslist_t talents_by_class[] = {
  * @param maxLevel max level of the talent
  */
 void vrx_add_talent(edict_t *ent, int talentID, int maxLevel) {
-    int nextEmptySlot = ent->myskills.talents.count;
+    const int nextEmptySlot = ent->myskills.talents.count;
     int i = 0;
 
     //Don't add too many talents.
@@ -174,11 +174,11 @@ void vrx_add_talent(edict_t *ent, int talentID, int maxLevel) {
 /// \param talentID talent id to remove
 /// \return number of points the talent was upgraded
 int vrx_remove_talent(edict_t *ent, int talentID) {
-    int count = ent->myskills.talents.count;
+    const int count = ent->myskills.talents.count;
     int ret = 0;
 
     for (int i = 0; i < count; i++) {
-        talent_t *player_talent = &ent->myskills.talents.talent[i];
+        const talent_t *player_talent = &ent->myskills.talents.talent[i];
         if (player_talent->id != talentID) {
             continue;
         }
@@ -281,7 +281,7 @@ int vrx_get_talent_level(const edict_t *ent, int talentID) {
 
 //Upgrades the talent with a matching talentID
 void vrx_upgrade_talent(edict_t *ent, int talentID) {
-    int slot = vrx_get_talent_slot(ent, talentID);
+    const int slot = vrx_get_talent_slot(ent, talentID);
     talent_t *talent;
 
     if (slot == -1)
@@ -345,7 +345,7 @@ void TalentUpgradeMenu_handler(edict_t *ent, int option) {
         OpenTalentUpgradeMenu(ent, vrx_get_talent_slot(ent, option - 1) + 1);
     } else    //upgrading
     {
-        int talentID = (option * -1) - 1;
+        const int talentID = (option * -1) - 1;
         // upgrade the talent
         vrx_upgrade_talent(ent, talentID);
         // refresh the menu
@@ -698,8 +698,8 @@ int writeTalentDescription(edict_t *ent, int talentID) {
 void vrx_open_talent_menu(edict_t *ent, int talentID, qboolean select_upgrade) {
     talent_t* talent;// = &ent->myskills.talents.talent[vrx_get_talent_slot(ent, talentID)];
     int level;// = talent->upgradeLevel;
-    int slot = vrx_get_talent_slot(ent, talentID);
-    int talentPoints = ent->myskills.talents.talentPoints;
+    const int slot = vrx_get_talent_slot(ent, talentID);
+    const int talentPoints = ent->myskills.talents.talentPoints;
     int lineCount = 7;//12;
     qboolean can_upgrade = false;
 
@@ -812,7 +812,7 @@ void V_UpdatePlayerTalents(edict_t *ent) {
 
     // see differences between class talents and player talents
     for (int i = 0; i < ent->myskills.talents.count; ++i) {
-        int talentId = ent->myskills.talents.talent[i].id;
+        const int talentId = ent->myskills.talents.talent[i].id;
         talent_t *player_talent = &ent->myskills.talents.talent[i];
         const talentdef_t *class_talent = NULL;
 
@@ -841,7 +841,7 @@ void V_UpdatePlayerTalents(edict_t *ent) {
 
             // upgrade level past max level
             if (player_talent->upgradeLevel > player_talent->maxLevel) {
-                int difference = player_talent->upgradeLevel - player_talent->maxLevel;
+                const int difference = player_talent->upgradeLevel - player_talent->maxLevel;
                 player_talent->upgradeLevel -= difference;
                 refunded += difference;
             }
@@ -852,7 +852,7 @@ void V_UpdatePlayerTalents(edict_t *ent) {
     for (const talentdef_t* talent = talents_by_class[ent->myskills.class_num];
          talent->talent_id != -1;
          talent++) {
-        int talentLevel = vrx_get_talent_slot(ent, talent->talent_id);
+        const int talentLevel = vrx_get_talent_slot(ent, talent->talent_id);
         if (talentLevel == -1) { // not found
             vrx_add_talent(ent, talent->talent_id, talent->max_level);
         }

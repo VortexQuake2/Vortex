@@ -113,7 +113,7 @@ retry_eyecam:
 	if (eyecam)
 	{
         // save current player fov
-        float fov = ent->client->ps.fov;
+        const float fov = ent->client->ps.fov;
 
         if (targ->viewheight)
             start[2] += targ->viewheight;
@@ -191,7 +191,7 @@ retry_eyecam:
 		vec3_t dist;
 		VectorSubtract(goal, pivot, dist);
 
-		vec_t len = VectorLength(dist);
+		const vec_t len = VectorLength(dist);
 		if (len < 24) {
 			eyecam = true;
 			goto retry_eyecam;

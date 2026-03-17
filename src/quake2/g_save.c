@@ -428,7 +428,7 @@ void InitGame(void)
 	vrx_fill_xp_accum_table();
 
 	//3.0 Load the custom map lists
-	int modes[] = {
+	const int modes[] = {
 		MAPMODE_PVP,
 		MAPMODE_PVM,
 		MAPMODE_INV,

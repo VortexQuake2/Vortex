@@ -219,7 +219,7 @@ void vrx_award_boss_kill (edict_t *boss)
 	int			i, damage, exp_points, credits, players;
 	float		levelmod, dmgmod;
 	edict_t		*player;
-	dmglist_t	*slot=NULL;
+	const dmglist_t	*slot=NULL;
 
 	// find the player that did the most damage
 	slot = findHighestDmgPlayer(boss);

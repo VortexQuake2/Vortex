@@ -235,7 +235,7 @@ void InitHash()
 
 	for (i = 0; i < CommandTotal; i++)
 	{
-		unsigned int index = fnv_32a_str(commands[i].FunctionName, FNV1_32A_INIT) % (MAXCOMMANDS);
+		const unsigned int index = fnv_32a_str(commands[i].FunctionName, FNV1_32A_INIT) % (MAXCOMMANDS);
 		memcpy(&hashedList[index], &commands[i], sizeof(gameCommand_s));
 	}
 

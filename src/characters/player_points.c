@@ -77,13 +77,13 @@ double vrx_get_points_tnl (int level)
 {
     long    tnl = 0;
     // this is the top of our sigmoid 'S' curve, where it becomes asymptotic
-    long    max_exp_tnl = 50000;
+    const long    max_exp_tnl = 50000;
 
     // note: for loop below can be removed to make curve more 'S' like than current exponential curve by changing the max_exp_tnl, e.g. 250000
     // for reference, the old system would return 149K TNL at level 20, whereas this one returns 546K
     for (int i = 0; i <= level; i++) {
         // this is the 'x' input value into the sigmoid function that allows up to determine which part of the curve to utilize
-        double x = i - 5 - (0.5 * i);
+        const double x = i - 5 - (0.5 * i);
         tnl += (long)(sigmoid(x) * max_exp_tnl) + 1000;
         //gi.dprintf("%i x: %f tnl: %d\n", i, x, tnl);
     }
@@ -177,7 +177,7 @@ void vrx_check_for_levelup(edict_t *ent, qboolean print_message) {
         }
 
         ent->myskills.level++;
-        double points_needed = vrx_get_points_tnl(ent->myskills.level);
+        const double points_needed = vrx_get_points_tnl(ent->myskills.level);
 
 
         ent->myskills.next_level += points_needed;
@@ -245,8 +245,8 @@ void vrx_trigger_spree_abilities(edict_t *attacker) {
     // otherwise the player will keep getting 10 seconds of quad/invuln
 
     //New quad/invin duration variables
-    int base_duration = 5 / FRAMETIME;    //5 seconds
-    int kill_duration = 0.5 / FRAMETIME;    //0.5 seconds per kill
+    const int base_duration = 5 / FRAMETIME;    //5 seconds
+    const int kill_duration = 0.5 / FRAMETIME;    //0.5 seconds per kill
 
     if (!attacker->client)
         return;
@@ -417,7 +417,7 @@ int vrx_get_kill_base_experience(
     // apply the damage mod?
     if (dmgmod_out) {
         // calculate damage modifier
-        float damage = GetPlayerBossDamage(attacker, targ);
+        const float damage = GetPlayerBossDamage(attacker, targ);
         if (damage < 1) {
 
             // az: EVERYONE. I MEAN EVERYONE GETS A BONUS. EVERYONE!!
@@ -538,7 +538,7 @@ int vrx_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient, int b
 
 void vrx_inv_award_curse_exp( edict_t *attacker, edict_t *targ, edict_t *targetclient, que_t *que, int type, float mult, qboolean is_blessing ) {
     int leveldiff = 0, exp = 0, credits = 0;
-    que_t *slot = NULL;
+    const que_t *slot = NULL;
     edict_t *assister = NULL;
 
     if ((slot = que_findtype(que, NULL, type)) != NULL) {
@@ -594,7 +594,7 @@ void vrx_inv_award_cooldown_exp( edict_t *attacker, edict_t *targ, edict_t *targ
 
 void vrx_inv_award_totem_exp( edict_t *attacker, edict_t *targ, edict_t *targetclient, int type, float mult, qboolean is_allied ) {
     int exp = 0, credits = 0, leveldiff = 0;
-    edict_t *totem = NULL;
+    const edict_t *totem = NULL;
 
     if ( is_allied ) {
         totem = NextNearestTotem(attacker, type, NULL, true);
@@ -632,7 +632,7 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
     float player_cnt = 0;
     float dmgmod = 0;
     que_t *slot = NULL;
-    qboolean attacker_was_null = attacker == NULL;
+    const qboolean attacker_was_null = attacker == NULL;
 
     for (i = 1; i <= maxclients->value; i++) {
         player = &g_edicts[i];
@@ -799,7 +799,7 @@ void vrx_get_player_kill_xp(
         int *break_points,
         float *bonus) {
 
-    qboolean is_mini = vrx_is_newbie_basher(target);
+    const qboolean is_mini = vrx_is_newbie_basher(target);
     // spree break bonus points
     if (target->myskills.streak >= SPREE_START)
         (*break_points) = SPREE_BREAKBONUS;
@@ -983,7 +983,7 @@ void vrx_process_exp(edict_t *attacker, edict_t *targ) {
 
     // give your team some experience
     if ((int) (dmflags->value) & (DF_MODELTEAMS | DF_SKINTEAMS)) {
-        int exp_points = vrx_award_exp(attacker, targ, targetclient, 0);
+        const int exp_points = vrx_award_exp(attacker, targ, targetclient, 0);
         vrx_add_team_exp(attacker, (int) (0.5 * exp_points));
         return;
     }

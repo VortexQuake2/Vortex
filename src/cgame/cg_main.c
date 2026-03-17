@@ -44,7 +44,7 @@ uint32_t CG_GetOwnedWeaponWheelWeapons(const player_state_t *ps)
 
 int16_t CG_GetWeaponWheelAmmoCount(const player_state_t *ps, int32_t ammo_id)
 {
-	uint16_t ammo = G_GetAmmoStat((uint16_t *) &ps->stats[STAT_AMMO_INFO_START], ammo_id);
+	const uint16_t ammo = G_GetAmmoStat((uint16_t *) &ps->stats[STAT_AMMO_INFO_START], ammo_id);
 
 	if (ammo == AMMO_VALUE_INFINITE)
 		return -1;

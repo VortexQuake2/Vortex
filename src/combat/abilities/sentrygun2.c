@@ -529,7 +529,7 @@ qboolean sentReload(edict_t *self, edict_t *other)
 	case M_SENTRY:
 	{
 		int client_bullets, client_rockets;
-		edict_t *player = other;
+		const edict_t *player = other;
 
 		//Point to player's ammo
 		client_bullets = player->client->pers.inventory[ITEM_INDEX(FindItem("Bullets"))];
@@ -765,7 +765,7 @@ void sentRotate(edict_t *self)
 
 void sentrygun_think(edict_t *self)
 {
-	edict_t *target = NULL;
+	const edict_t *target = NULL;
 	qboolean damaged = false;
 	float temp, modifier;
 	que_t *slot = NULL;
@@ -830,7 +830,7 @@ void sentrygun_think(edict_t *self)
 
 	if (!self->enemy) //If we do not have a target yet
 	{
-		if (target = sentry_findtarget(self))
+		if ((target = sentry_findtarget(self)))
 			attack(self);
 	}
 	else if (CanTarget(self))

@@ -12,7 +12,7 @@ void think_ability_ammo_regen(edict_t* ent) {
 	}
 
 	if (level.time > ent->client->ammo_regentime) {
-		float regen_level = (float)ent->myskills.abilities[AMMO_REGEN].current_level;
+		const float regen_level = (float)ent->myskills.abilities[AMMO_REGEN].current_level;
 
 		V_GiveAmmoClip(ent,
 			regen_level * 0.2f * amount_mult,
@@ -42,7 +42,7 @@ void think_ability_power_regen(edict_t* ent) {
 
 	ent->pcr_time += FRAMETIME;
 
-	double regen_time = (5.0f / ent->myskills.abilities[POWER_REGEN].current_level);
+	const double regen_time = (5.0f / ent->myskills.abilities[POWER_REGEN].current_level);
 
 	if (ent->myskills.abilities[POWER_REGEN].disable)
 		return;
@@ -50,7 +50,7 @@ void think_ability_power_regen(edict_t* ent) {
 	gitem_t* item = Fdi_POWERCUBE;
 	if (!item) return;
 
-	int index = ITEM_INDEX(item);
+	const int index = ITEM_INDEX(item);
 
 	while (ent->pcr_time > regen_time) {
 		if (ent->client->pers.inventory[index] < ent->client->pers.max_powercubes) {
@@ -132,7 +132,7 @@ void think_chat_protect_activate(edict_t *ent) {
 
 void think_player_inactivity(edict_t* ent) {
 	if (level.time > pregame_time->value && vrx_get_joined_players(false) > maxclients->value * 0.8) {
-		int frames = MAX_IDLE_FRAMES;
+		const int frames = MAX_IDLE_FRAMES;
 
 		if (!ent->myskills.administrator && !trading->value) {
 			if (ent->client->still_frames == frames - 300)
@@ -159,7 +159,7 @@ void think_idle_frame_counter(const edict_t* ent) {
 
 
 			//Make sure they have the talent
-			int talentLevel = vrx_get_talent_level(ent, TALENT_IMP_CLOAK);
+			const int talentLevel = vrx_get_talent_level(ent, TALENT_IMP_CLOAK);
 
 			if (talentLevel > 0) {
 				int cloak_cubecost = 6 - talentLevel;
@@ -266,7 +266,7 @@ float V_ModifyMovement(edict_t* ent, usercmd_t* ucmd, que_t* curse) {// assault 
 
 	// 3.5 weaken slows down target
 	if ((curse = que_findtype(ent->curses, NULL, WEAKEN)) != NULL) {
-		float modifier = 1 / (1 + WEAKEN_SLOW_BASE + WEAKEN_SLOW_BONUS
+		const float modifier = 1 / (1 + WEAKEN_SLOW_BASE + WEAKEN_SLOW_BONUS
 			* curse->ent->owner->myskills.abilities[WEAKEN].current_level);
 		vel_modification *= modifier;
 	}
@@ -320,7 +320,7 @@ float V_ModifyMovement(edict_t* ent, usercmd_t* ucmd, que_t* curse) {// assault 
 	/*
 		az: rewrite how superspeed works because it fucking sucks
 	*/
-	qboolean superspeed = ent->superspeed && CanSuperSpeed(ent) && level.time > ent->lasthurt + DAMAGE_ESCAPE_DELAY;
+	const qboolean superspeed = ent->superspeed && CanSuperSpeed(ent) && level.time > ent->lasthurt + DAMAGE_ESCAPE_DELAY;
 #ifndef VRX_REPRO
 	if (superspeed) {
 		vel_modification *= 1.75;
@@ -334,7 +334,7 @@ float V_ModifyMovement(edict_t* ent, usercmd_t* ucmd, que_t* curse) {// assault 
 #endif
 
 	//K03 Begin
-	qboolean hook = (ent->client->hook_state == HOOK_ON) && (VectorLength(ent->velocity) < 10);
+	const qboolean hook = (ent->client->hook_state == HOOK_ON) && (VectorLength(ent->velocity) < 10);
 
 	if (hook/* || vel_modification != 1*/) {
 		ent->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
@@ -402,7 +402,7 @@ void think_recharge_abilities(edict_t* ent) {
 		}
 
 		// az: super speed sprint
-		qboolean can_superspeed = !ent->myskills.abilities[SUPER_SPEED].disable && ent->myskills.abilities[SUPER_SPEED].current_level;
+		const qboolean can_superspeed = !ent->myskills.abilities[SUPER_SPEED].disable && ent->myskills.abilities[SUPER_SPEED].current_level;
 		if (!ent->superspeed && can_superspeed) {
 			if (ent->myskills.abilities[SUPER_SPEED].charge < SPRINT_MAX_CHARGE) {
 				ent->myskills.abilities[SUPER_SPEED].charge += SPRINT_CHARGE_RATE;
@@ -434,13 +434,13 @@ void think_ability_cloak(edict_t* ent) {
 			min_idle_frames = 1;
 		}
 
-		qboolean idled_enough = ent->client->idle_frames >= min_idle_frames;
-		qboolean has_no_curses = !que_typeexists(ent->auras, 0);
-		qboolean ability_delay_over = (level.time > ent->client->ability_delay);
-		qboolean has_no_flag = !vrx_has_flag(ent);
-		qboolean has_no_summons = !V_HasSummons(ent);
-		qboolean is_not_automagging = !ent->automag;
-		qboolean can_cloak = idled_enough
+		const qboolean idled_enough = ent->client->idle_frames >= min_idle_frames;
+		const qboolean has_no_curses = !que_typeexists(ent->auras, 0);
+		const qboolean ability_delay_over = (level.time > ent->client->ability_delay);
+		const qboolean has_no_flag = !vrx_has_flag(ent);
+		const qboolean has_no_summons = !V_HasSummons(ent);
+		const qboolean is_not_automagging = !ent->automag;
+		const qboolean can_cloak = idled_enough
 			&& has_no_curses
 			&& ability_delay_over
 			&& has_no_flag
@@ -483,7 +483,7 @@ void think_ability_antigrav(edict_t* ent) {
 void think_ability_superspeed(edict_t* ent) {
 	if (ent->superspeed && ent->deadflag != DEAD_DEAD) {
 		//3.0 Blessed players get a speed boost too
-		que_t* slot = NULL;
+		const que_t* slot = NULL;
 		slot = que_findtype(ent->curses, NULL, BLESS);
 
 		//eat cubes if the player isn't blessed
@@ -561,7 +561,7 @@ void think_ability_health_regen(edict_t* ent) {
 		&& !(ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent))) {
 		//3.0 cursed players can't heal through regeneration
 		if (que_findtype(ent->curses, NULL, CURSE) == NULL) {
-			int health_factor = 1 * ent->myskills.abilities[REGENERATION].current_level; // Regeneration OP. :D
+			const int health_factor = 1 * ent->myskills.abilities[REGENERATION].current_level; // Regeneration OP. :D
 			ent->health += health_factor;
 
 			if (ent->health > ent->max_health)
@@ -605,9 +605,9 @@ void think_tech_regeneration(edict_t* ent) {
 void think_ability_fury(edict_t* ent) {
 	if (!(level.framenum % (int)(1 / FRAMETIME)) && (ent->fury_time > level.time && ent->client)) {
 		if (G_EntIsAlive(ent) && !(ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent))) {
-			int maxHP = MAX_HEALTH(ent);
-			int maxAP = MAX_ARMOR(ent);
-			int* armor = &ent->client->pers.inventory[body_armor_index];
+			const int maxHP = MAX_HEALTH(ent);
+			const int maxAP = MAX_ARMOR(ent);
+			const int* armor = &ent->client->pers.inventory[body_armor_index];
 			float factor = FURY_INITIAL_REGEN + (FURY_ADDON_REGEN * ent->myskills.abilities[FURY].current_level);
 
 			if (factor > FURY_MAX_REGEN)
@@ -670,9 +670,9 @@ void think_talent_life_regen(edict_t* ent) {
 		&& vrx_get_talent_slot(ent, TALENT_LIFE_REG) != -1
 		&& G_EntIsAlive(ent) && (ent->health < ent->max_health)) {
 
-		talent_t* talent = &ent->myskills.talents.talent[vrx_get_talent_slot(ent, TALENT_LIFE_REG)];
+		const talent_t* talent = &ent->myskills.talents.talent[vrx_get_talent_slot(ent, TALENT_LIFE_REG)];
 		if (talent->upgradeLevel > 0) {
-			int health_factor = 1;
+			const int health_factor = 1;
 			ent->health += health_factor;
 			if (ent->health > ent->max_health)
 				ent->health = ent->max_health;

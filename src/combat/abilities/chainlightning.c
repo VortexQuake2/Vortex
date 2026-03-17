@@ -188,7 +188,7 @@ void fire_chainlightning(edict_t* self, vec3_t start, vec3_t aimdir, int damage,
 			end[0] = end[0] + GetRandom(0, (int)targ->maxs[0]) * crandom();
 			end[1] = end[1] + GetRandom(0, (int)targ->maxs[1]) * crandom();
 			// recalculate starting position directly above endpoint
-			trace_t tr = gi.trace(end, NULL, NULL, tv(end[0], end[1], 8192), self, MASK_SOLID);
+			const trace_t tr = gi.trace(end, NULL, NULL, tv(end[0], end[1], 8192), self, MASK_SOLID);
 			VectorCopy(tr.endpos, start);
 		}
 		else
@@ -358,9 +358,9 @@ void ChainLightning (edict_t *ent, vec3_t start, vec3_t aimdir, int damage, int 
 void Cmd_ChainLightning_f (edict_t *ent, float skill_mult, float cost_mult)
 {
 	int damage=CLIGHTNING_INITIAL_DMG+CLIGHTNING_ADDON_DMG*ent->myskills.abilities[LIGHTNING].current_level;
-	int attack_range=CLIGHTNING_INITIAL_AR+CLIGHTNING_ADDON_AR*ent->myskills.abilities[LIGHTNING].current_level;
-	int hop_range=CLIGHTNING_INITIAL_HR+CLIGHTNING_ADDON_HR*ent->myskills.abilities[LIGHTNING].current_level;
-	int cost=CLIGHTNING_COST*cost_mult;
+	const int attack_range=CLIGHTNING_INITIAL_AR+CLIGHTNING_ADDON_AR*ent->myskills.abilities[LIGHTNING].current_level;
+	const int hop_range=CLIGHTNING_INITIAL_HR+CLIGHTNING_ADDON_HR*ent->myskills.abilities[LIGHTNING].current_level;
+	const int cost=CLIGHTNING_COST*cost_mult;
 	vec3_t start, forward, right, offset;
 
 	if (!G_CanUseAbilities(ent, ent->myskills.abilities[LIGHTNING].current_level, cost))
@@ -379,7 +379,7 @@ void Cmd_ChainLightning_f (edict_t *ent, float skill_mult, float cost_mult)
 	fire_chainlightning(ent, start, forward, damage, 0, attack_range, hop_range, 4);
 
 	//Talent: Wizardry - makes spell timer ability-specific instead of global
-	int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
+	const int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
 	if (talentLevel > 0)
 	{
 		ent->myskills.abilities[LIGHTNING].delay = level.time + CLIGHTNING_DELAY;

@@ -251,7 +251,7 @@ void skull_movetogoal(edict_t *self, edict_t *goal) {
     float temp, dist, speed, goalpos, ceilHeight;
     vec3_t v;
     que_t *slot = NULL;
-    qboolean goalVis = visible(self, goal);
+    const qboolean goalVis = visible(self, goal);
 
     self->style = SKULL_ATTACK;
 
@@ -409,9 +409,9 @@ void skull_attack(edict_t *self) {
         //	damage *= 2;
         // Talent: Hellspawn Mastery
         // each talent upgrade increases the chance to proc a chainlightning attack
-        float chance = 0.1 * self->light_level;
+        const float chance = 0.1 * self->light_level;
         if (level.framenum > self->autocurse_delay && chance > random()) {
-            int cl_dmg = 10 * damage;
+            const int cl_dmg = 10 * damage;
             //gi.dprintf("hellspawn firing CL. base dmg %d modified %d CL %d\n", self->dmg, damage, cl_dmg);
             //ChainLightning(self, start, v, cl_dmg, SKULL_ATTACK_RANGE, CLIGHTNING_INITIAL_HR);
             fire_chainlightning(self, start, v, cl_dmg, 0, SKULL_ATTACK_RANGE, CLIGHTNING_INITIAL_HR, 4);
@@ -685,7 +685,7 @@ float vrx_increase_monster_damage_by_talent(edict_t *owner, float damage);
 
 void SpawnSkull(edict_t *ent) {
     int cost = SKULL_COST;
-    float mult = 1.0;
+    const float mult = 1.0;
     vec3_t forward, right, start, end, offset;
     edict_t *skull, *ignore = ent;
     trace_t tr;

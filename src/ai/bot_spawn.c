@@ -135,7 +135,7 @@ void BOT_SetName(edict_t *bot, char *name, char *skin, char *team)
 	if(!skin || strlen(skin) == 0)
 	{
 		// randomly choose skin 
-		float rnd = random();
+		const float rnd = random();
 		if(rnd  < 0.05)
 			sprintf(bot_skin,"female/athena");
 		else if(rnd < 0.1)
@@ -292,12 +292,12 @@ void BOT_UpgradeTalent(edict_t* ent, int talent_index, int amount)
 	// cap amount to the number of talent points we have
 	if (amount > ent->myskills.talents.talentPoints)
 		amount = ent->myskills.talents.talentPoints;
-	int slot = vrx_get_talent_slot(ent, talent_index);
+	const int slot = vrx_get_talent_slot(ent, talent_index);
 	// invalid talent
 	if (slot == -1)
 		return;
 	talent_t* talent = &ent->myskills.talents.talent[slot];
-	int levels_to_max = talent->maxLevel - talent->upgradeLevel;
+	const int levels_to_max = talent->maxLevel - talent->upgradeLevel;
 	// talent can't be upgraded any further
 	if (levels_to_max < 1)
 		return;
@@ -574,7 +574,7 @@ void BOT_SelectRespawnWeapon(edict_t* ent)
 
 	//weaponCount = sizeof(&weaponArray) / sizeof(&weaponArray[0]);
 	randomIndex = GetRandom(0, weaponCount-1);
-	int i = weaponArray[randomIndex];
+	const int i = weaponArray[randomIndex];
 	//gi.dprintf("%s: weaponCount: %d randomIndex: %d selected: %d\n", __func__, weaponCount, randomIndex, i);
 	ent->myskills.respawn_weapon = i;
 }
@@ -706,7 +706,7 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 	}
 	gi.linkentity (ent);
 
-	int Windex = vrx_WeapIDtoWeapIndex(ent->myskills.respawn_weapon);
+	const int Windex = vrx_WeapIDtoWeapIndex(ent->myskills.respawn_weapon);
 	gitem_t *it = &itemlist[Windex];
 	//gi.dprintf("bot spawned in game, weapon: %s\n", it->pickup_name);
 }

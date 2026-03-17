@@ -5,11 +5,11 @@
 
 // returns true if the player should be affected by newbie protection
 qboolean vrx_is_newbie_basher(const edict_t *player) {
-	qboolean levelAboveAverage = player->myskills.level > newbie_protection->value * AveragePlayerLevel();
-	qboolean isHighLevel = player->myskills.level >= 8;
-	qboolean isNotPVM = !(pvm->value != 0 || invasion->value != 0);
-	qboolean situationRequestsProtection = newbie_protection->value && player->client && (vrx_get_joined_players(true) > 1);
-	qboolean levelQualifies = isHighLevel && levelAboveAverage;
+	const qboolean levelAboveAverage = player->myskills.level > newbie_protection->value * AveragePlayerLevel();
+	const qboolean isHighLevel = player->myskills.level >= 8;
+	const qboolean isNotPVM = !(pvm->value != 0 || invasion->value != 0);
+	const qboolean situationRequestsProtection = newbie_protection->value && player->client && (vrx_get_joined_players(true) > 1);
+	const qboolean levelQualifies = isHighLevel && levelAboveAverage;
 
 	return (situationRequestsProtection && isNotPVM && levelQualifies);
 }

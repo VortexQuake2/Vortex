@@ -9,7 +9,7 @@ float vrx_increase_monster_damage_by_talent(edict_t *owner, float damage)
 		// oblation talent provides +10-20% dmg/lv
 		if (pvm->value)
 			bonus = 0.2;
-        int talentLevel = vrx_get_talent_level(owner, TALENT_OBLATION);
+        const int talentLevel = vrx_get_talent_level(owner, TALENT_OBLATION);
 		if (talentLevel > 0) damage *= 1 + bonus * talentLevel;
 	}
 	return damage;
@@ -339,7 +339,7 @@ void monster_fire_fireball(edict_t* self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	float slvl = drone_damagelevel(self);
+	const float slvl = drone_damagelevel(self);
 
 	damage = FIREBALL_INITIAL_DAMAGE + FIREBALL_ADDON_DAMAGE * slvl;
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
@@ -702,7 +702,7 @@ void M_MoveFrame_Reverse (edict_t* self)
 	}
 
 	index = move->firstframe - self->s.frame;
-	if (move->frame[index].aifunc)
+	if (move->frame[index].aifunc) {
 		if (!vrx_holdframe(self))
 		{
 			self->monsterinfo.scale = 1.0;
@@ -715,6 +715,7 @@ void M_MoveFrame_Reverse (edict_t* self)
 			// we're not going anywhere!
 			move->frame[index].aifunc(self, 0);
 		}
+	}
 
 	if (move->frame[index].thinkfunc && !vrx_is_frozen(self))
 		move->frame[index].thinkfunc(self);
@@ -791,7 +792,7 @@ void M_MoveFrame (edict_t *self)
 	}
 
 	index = self->s.frame - move->firstframe;
-	if (move->frame[index].aifunc)
+	if (move->frame[index].aifunc) {
 		if (!vrx_holdframe(self))
 		{
 			self->monsterinfo.scale = FRAMETIME * 10;
@@ -804,6 +805,7 @@ void M_MoveFrame (edict_t *self)
 			// we're not going anywhere!
 			move->frame[index].aifunc (self, 0);
 		}
+	}
 
 	if (move->frame[index].thinkfunc && !vrx_is_frozen(self) && runthink)
 		move->frame[index].thinkfunc (self);

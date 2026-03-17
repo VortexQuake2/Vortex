@@ -18,7 +18,7 @@ void V_PlayerJump(edict_t *ent) {
 
     ent->monsterinfo.jumpup = 1; // player has jumped, cleared on touch-down
 
-    qboolean has_cloak = ent->myskills.abilities[CLOAK].current_level > 0;
+    const qboolean has_cloak = ent->myskills.abilities[CLOAK].current_level > 0;
     if (ent->mtype == MORPH_MUTANT) {
         if (mutant_boost(ent) && !has_cloak)
             gi.sound(ent, CHAN_VOICE, gi.soundindex("mutant/mutsght1.wav"), 1, ATTN_NORM, 0);

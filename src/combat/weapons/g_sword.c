@@ -33,9 +33,9 @@ void Laser_PreThink(edict_t *self)
 	//if the radius isn't the final length then adjust it
 	if (self->s.frame != self->health)
 	{
-		int difference = self->health - self->max_health;
-		float total_time = self->delay - self->wait;
-		float time_ellapsed = level.time - self->wait;
+		const int difference = self->health - self->max_health;
+		const float total_time = self->delay - self->wait;
+		const float time_ellapsed = level.time - self->wait;
 		self->s.frame = self->max_health + (int)((difference / total_time) * time_ellapsed);
 	}
 
@@ -109,12 +109,12 @@ void fire_sword_old ( edict_t *self, vec3_t start, vec3_t aimdir, int damage, in
     vec3_t end;
     vec3_t begin;
     vec3_t begin_offset;
-    float sword_bonus = 1;
+    const float sword_bonus = 1;
 
     // calling entity made a sound, used to alert monsters
     self->lastsound = level.framenum;
 
-    float swordrange = SABRE_INITIAL_RANGE * sword_bonus +
+    const float swordrange = SABRE_INITIAL_RANGE * sword_bonus +
                  (SABRE_ADDON_RANGE * self->myskills.weapons[WEAPON_SWORD].mods[2].current_level);
 
     VectorSet(begin_offset, 0, 0, self->viewheight - 8);
@@ -449,7 +449,7 @@ void Weapon_Sword_Fire (edict_t *ent) {
 	 if ((ent->client->ps.gunframe == 5) && (ent->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1))
 		gi.sound (ent, CHAN_WEAPON, gi.soundindex("misc/power1.wav") , 1, ATTN_NORM, 0);
 
-	 int frames_per_frame = sv_fps->value / 10.0;
+	 const int frames_per_frame = sv_fps->value / 10.0;
 
      if ( ent->client->buttons & BUTTON_ATTACK )
 		sword_attack (ent, vec3_origin, damage / frames_per_frame);
@@ -462,9 +462,7 @@ void Weapon_Sword_Fire (edict_t *ent) {
 }
 
 void Weapon_Lance_Fire (edict_t *ent) {
-    int sword_bonus = 1.0;
-    int damage, burn_damage;
-    float speed;
+    float sword_bonus = 1.0;
     vec3_t forward, start, right, offset;
 
     // special rules; flag carrier can't use weapons
@@ -475,10 +473,10 @@ void Weapon_Lance_Fire (edict_t *ent) {
     if (ent->myskills.class_num == CLASS_KNIGHT)
         sword_bonus = 1.5;
 
-    damage = SABRE_INITIAL_DAMAGE +
-             (SABRE_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_SWORD].mods[0].current_level * sword_bonus);
-    burn_damage = SABRE_ADDON_HEATDAMAGE * ent->myskills.weapons[WEAPON_SWORD].mods[3].current_level * sword_bonus;
-    speed = 850 + (15 * ent->myskills.weapons[WEAPON_SWORD].mods[2].current_level * sword_bonus);
+    int damage = SABRE_INITIAL_DAMAGE +
+                 (SABRE_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_SWORD].mods[0].current_level * sword_bonus);
+    const int burn_damage = SABRE_ADDON_HEATDAMAGE * ent->myskills.weapons[WEAPON_SWORD].mods[3].current_level * sword_bonus;
+    const float speed = 850 + (15 * ent->myskills.weapons[WEAPON_SWORD].mods[2].current_level * sword_bonus);
 
     // lance modifier
     damage *= 2;

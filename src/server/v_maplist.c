@@ -118,7 +118,7 @@ int vrx_load_map_list(int mode)
 			break;
 		}
 
-		char* s = buf;
+		const char* s = buf;
 
 		// skip spaces
 		s += strspn(s, " \r\n\t");

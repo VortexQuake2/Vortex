@@ -774,7 +774,7 @@ qboolean TeleportNearTarget (edict_t *self, edict_t *target)
 
 void commander_attack (edict_t *self)
 {
-	float r = random();
+	const float r = random();
 	float range = entdist(self, self->enemy);
 
 	// short range attack
@@ -822,8 +822,8 @@ void commander_attack (edict_t *self)
 
 void tank_attack(edict_t* self)
 {
-	float r = random();
-	float range = entdist(self, self->enemy);
+	const float r = random();
+	const float range = entdist(self, self->enemy);
 
 	//gi.dprintf("%d tank_attack()\n", level.framenum);
 

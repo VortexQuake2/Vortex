@@ -89,8 +89,8 @@ void GiveRuneToArmory(item_t *rune)
 {
 	armoryRune_t *firstItem;
 	item_t *slot;
-	int type = rune->itemtype;
-	int newPrice = getBuyValue(rune);
+	const int type = rune->itemtype;
+	const int newPrice = getBuyValue(rune);
 	int i;
 
 	//discard the rune if it's worthless
@@ -201,8 +201,8 @@ void armoryConfirmOption(edict_t *ent, int selection)
 
 void Cmd_Armory_f(edict_t *ent, int selection)
 {
-	int			cur_credits=ent->myskills.credits;
-	gitem_t		*item = 0;
+	const int			cur_credits=ent->myskills.credits;
+	const gitem_t		*item = 0;
 	int			price = 0;
 	int			qty = 0;
 	item_t		*slot;
@@ -479,7 +479,7 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 void PurchaseMenu_handler (edict_t *ent, int option)
 {
 	int page_num = (option / 1000);
-	int page_choice = (option % 1000);
+	const int page_choice = (option % 1000);
 
 	if ((page_num == 1) && (page_choice == 1))
 	{
@@ -582,7 +582,7 @@ void vrx_reapply_items(edict_t *ent) {
 }
 
 int vrx_sell_item(edict_t *ent, item_t* slot) {
-	int value = GetSellValue(slot);
+	const int value = GetSellValue(slot);
 	int wpts, apts, total_pts;
 
 	wpts = V_GetRuneWeaponPts(ent, slot);
@@ -609,7 +609,7 @@ void SellConfirmMenu_handler(edict_t *ent, int option)
 		item_t *slot = &ent->myskills.items[option - 778];
 
 		//log the sale
-		int value = vrx_sell_item(ent, slot);
+		const int value = vrx_sell_item(ent, slot);
         vrx_write_to_logfile(ent, va("Selling rune for %d credits. [%s]", value, slot->id));
 		safe_cprintf(ent, PRINT_HIGH, "Item Sold for %d credits.\n", value);
 
@@ -719,8 +719,8 @@ void BuyRuneConfirmMenu_handler (edict_t *ent, int option)
 	//Navigating the menu?
 	if (option > 100)
 	{
-		int page_num = option / 1000;
-		int selection = (option % 1000)-1;
+		const int page_num = option / 1000;
+		const int selection = (option % 1000)-1;
 		item_t *slot = V_FindFreeItemSlot(ent);
 		int cost;
 
@@ -780,8 +780,8 @@ void BuyRuneConfirmMenu_handler (edict_t *ent, int option)
 	}
 	else
 	{
-		int page_num = option / 10;
-		int selection = option % 10;
+		const int page_num = option / 10;
+		const int selection = option % 10;
 
 		OpenBuyRuneMenu(ent, page_num, selection);
 		return;
@@ -793,8 +793,8 @@ void BuyRuneConfirmMenu_handler (edict_t *ent, int option)
 
 void OpenBuyRuneConfirmMenu(edict_t *ent, int option)
 {
-	int page_num = option / 1000;
-	int selection = (option % 1000)-1;
+	const int page_num = option / 1000;
+	const int selection = (option % 1000)-1;
 
 	armoryRune_t *firstItem;
 	item_t *rune;
@@ -843,7 +843,7 @@ void OpenBuyRuneConfirmMenu(edict_t *ent, int option)
 void BuyRuneMenu_handler (edict_t *ent, int option)
 {
 	int page_num = (option / 10);
-	int page_choice = (option % 10);
+	const int page_choice = (option % 10);
 
 	if (option == 99)
 	{
@@ -867,7 +867,7 @@ void BuyRuneMenu_handler (edict_t *ent, int option)
 	//don't cause an invalid item to be selected
 	else 
 	{
-		int selection = (option % 1000);
+		const int selection = (option % 1000);
 		page_num = option / 1000;
 		
 		if ((selection > ARMORY_MAX_RUNES) || (selection < 1))
@@ -931,8 +931,8 @@ void OpenBuyRuneMenu(edict_t *ent, int page_num, int lastline)
 		item_t *rune = &((firstItem + i)->rune);
 		if (rune->itemtype != ITEM_NONE)
 		{
-			item_menu_t fmt = vrx_menu_item_display(rune);//, ' ');
-			lva_result_t txt = lva("%-13.13s %2d/%2d %5d", fmt.str, fmt.num, rune->itemLevel, getBuyValue(rune));
+			const item_menu_t fmt = vrx_menu_item_display(rune);//, ' ');
+			const lva_result_t txt = lva("%-13.13s %2d/%2d %5d", fmt.str, fmt.num, rune->itemLevel, getBuyValue(rune));
 			menu_add_line(ent, txt.str, (page_num * 1000) + i + 1);
 		}
 		else 

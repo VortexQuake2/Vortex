@@ -251,7 +251,7 @@ qboolean M_Move (edict_t *ent, vec3_t move, qboolean relink)
 {
 	vec3_t		oldorg, neworg, end;
 	trace_t		trace;//, tr;
-	float		stepsize=STEPSIZE;
+	const float		stepsize=STEPSIZE;
 
 // try the move	
 	VectorCopy (ent->s.origin, oldorg);
@@ -338,7 +338,7 @@ qboolean M_MoveVertical(edict_t* ent, vec3_t dest, vec3_t neworg)
 {
 	float        dz;                        // delta Z
 	float        idealZ;                // ideal Z position, either a destination waypoint/node or a goal entity
-	float        zSpeed = 8;        // Z movement speed
+	const float        zSpeed = 8;        // Z movement speed
 	vec3_t        end, goalpos;
 	trace_t        trace;
 	//qboolean stopOnCollision=false;
@@ -352,7 +352,7 @@ qboolean M_MoveVertical(edict_t* ent, vec3_t dest, vec3_t neworg)
 	}
 	else if (ent->goalentity)
 	{
-		if (ent->goalentity = world)
+		if (ent->goalentity == world)
 			return true;
 		idealZ = ent->goalentity->s.origin[2] + 16;
 		VectorCopy(ent->goalentity->s.origin, goalpos);
@@ -1041,7 +1041,7 @@ void SV_NewChaseDir3(edict_t* actor, vec3_t goalpos, float dist)
 	}
 
 	// try other directions
-	if (((rand() & 3) & 1) || abs(deltay) > abs(deltax))
+	if (((rand() & 3) & 1) || fabsf(deltay) > fabsf(deltax))
 	{
 		tdir = d[1];
 		d[1] = d[2];
@@ -1482,7 +1482,7 @@ M_walkmove
 */
 qboolean M_walkmove (edict_t *ent, float yaw, float dist)
 {
-	float	original_yaw=yaw;//GHz
+	const float	original_yaw=yaw;//GHz
 	vec3_t	move;
 	
 	if (!ent->groundentity && !(ent->flags & (FL_FLY|FL_SWIM)))

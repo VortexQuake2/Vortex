@@ -126,7 +126,7 @@ char *bot_names[] =
 
 void BOT_AutoSpawn(void)
 {
-	int num_bots = bot_autospawn->value;
+	const int num_bots = bot_autospawn->value;
 	char* name;
 	if (!nav.loaded)
 		return;
@@ -137,7 +137,7 @@ void BOT_AutoSpawn(void)
 		return;
 	for (int i = 0; i < num_bots; i++)
 	{
-		bot_selection_t e = get_random_unique_entry();
+		const bot_selection_t e = get_random_unique_entry();
 		//name = bot_names[GetRandom(0, sizeof(bot_names - 1))];
 		name = e.name;
 		BOT_SpawnBot(NULL, name, NULL, NULL, e.class);

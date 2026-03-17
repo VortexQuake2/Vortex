@@ -97,7 +97,7 @@ void p_berserk_crush (edict_t *self, int damage, float range, int mod)
 		return;
 
 	// Talent: Melee Mastery
-	int talentLevel = vrx_get_talent_level(self, TALENT_MELEE_MASTERY);
+	const int talentLevel = vrx_get_talent_level(self, TALENT_MELEE_MASTERY);
 
 	self->lastsound = level.framenum;
 
@@ -166,9 +166,9 @@ int berserk_translate_attack_frame(int input_frame)
 
 void p_berserk_attack (edict_t *ent, int move_state)
 {
-	int		punch_dmg = BERSERK_PUNCH_INITIAL_DAMAGE + BERSERK_PUNCH_ADDON_DAMAGE * ent->myskills.abilities[BERSERK].current_level;
-	int		slash_dmg = BERSERK_SLASH_INITIAL_DAMAGE + BERSERK_SLASH_ADDON_DAMAGE * ent->myskills.abilities[BERSERK].current_level;
-	int		crush_dmg = BERSERK_CRUSH_INITIAL_DAMAGE + BERSERK_CRUSH_ADDON_DAMAGE * ent->myskills.abilities[BERSERK].current_level;
+	const int		punch_dmg = BERSERK_PUNCH_INITIAL_DAMAGE + BERSERK_PUNCH_ADDON_DAMAGE * ent->myskills.abilities[BERSERK].current_level;
+	const int		slash_dmg = BERSERK_SLASH_INITIAL_DAMAGE + BERSERK_SLASH_ADDON_DAMAGE * ent->myskills.abilities[BERSERK].current_level;
+	const int		crush_dmg = BERSERK_CRUSH_INITIAL_DAMAGE + BERSERK_CRUSH_ADDON_DAMAGE * ent->myskills.abilities[BERSERK].current_level;
 	vec3_t	forward, right, up, angles;
 
 	//gi.dprintf("%d: %s: frame: %d state: %d\n", (int)level.framenum, __func__, ent->s.frame, move_state);
@@ -341,7 +341,7 @@ void RunBerserkFrames (edict_t *ent, usercmd_t *ucmd)
 
 void Cmd_PlayerToBerserk_f (edict_t *ent)
 {
-	int cost = BERSERK_COST;
+	const int cost = BERSERK_COST;
 
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: %s just called Cmd_PlayerToBerserk_f()\n", ent->client->pers.netname);

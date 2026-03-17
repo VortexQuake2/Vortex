@@ -340,8 +340,6 @@ void vrx_repro_shim(game_import_t *gi) {
 void pm_set_viewheight(pmove_t *pm, int viewheight) {
 }
 
-int pm_get_viewheight(pmove_t *pm) {
-}
 #else
 void pm_set_viewheight(pmove_t *pm, int viewheight) {
     pm->viewheight = viewheight;

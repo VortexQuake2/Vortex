@@ -569,7 +569,7 @@ void myparasite_melee (edict_t *self)
 
 void myparasite_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
-	double rng = random();
+	const double rng = random();
 	if (self->health < (self->max_health / 2))
 		self->s.skinnum = 1;
 

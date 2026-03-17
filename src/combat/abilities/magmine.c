@@ -140,7 +140,7 @@ void magmine_think(edict_t *self)
 
     if (self->light_level > 0) // magmine has enough energy to operate
     {
-        int pull = MAGMINE_DEFAULT_PULL + MAGMINE_ADDON_PULL * self->monsterinfo.level;
+        const int pull = MAGMINE_DEFAULT_PULL + MAGMINE_ADDON_PULL * self->monsterinfo.level;
         if (magmine_findtarget(self, self->dmg_radius, pull))
         {
             magmine_throwsparks(self);
@@ -341,7 +341,7 @@ void RemoveMagmines(edict_t* ent)
 void Cmd_SpawnMagmine_f(edict_t *ent) {
     int talentLevel, cost = MAGMINE_COST;
     float skill_mult = 1.0, cost_mult = 1.0, delay_mult = 1.0;//Talent: Rapid Assembly & Precision Tuning
-    char *opt = gi.argv(1);
+    const char *opt = gi.argv(1);
 
     if (ent->myskills.abilities[MAGMINE].disable)
         return;

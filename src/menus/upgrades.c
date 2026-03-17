@@ -12,13 +12,13 @@ void OpenMultiUpgradeMenu (edict_t *ent, int lastline, int page, int generaltype
 void upgradeSpecialMenu_handler(edict_t *ent, int option)
 {
     int cost = vrx_get_ability_upgrade_cost(option - 1);
-    int inc_max = ent->myskills.abilities[option - 1].max_level + 1;
+    const int inc_max = ent->myskills.abilities[option - 1].max_level + 1;
     qboolean isLimitedMax = true;
     qboolean doubledcost = false;
 
     if (ent->myskills.abilities[option - 1].level == inc_max - 1) // we've reached the limit of this skill
     {
-        int hmax = vrx_get_hard_max(option - 1, ent->myskills.abilities[option - 1].general_skill, ent->myskills.class_num);
+        const int hmax = vrx_get_hard_max(option - 1, ent->myskills.abilities[option - 1].general_skill, ent->myskills.class_num);
         cost *= 2;
         doubledcost = true; // we're getting past the max level
 
@@ -85,7 +85,7 @@ void OpenSpecialUpgradeMenu(edict_t *ent, int lastline)
 	for (i = 0; i < MAX_ABILITIES; i++)
 	{
 		upgrade_t *upgrade;
-		int num = i + 1;
+		const int num = i + 1;
 		char buffer[30];
 
 		upgrade = &ent->myskills.abilities[i];
@@ -217,8 +217,8 @@ void UpgradeAbility(edict_t *ent, int ability_index) {
         return;
     }
 
-	qboolean below_max = ent->myskills.abilities[ability_index].level < ent->myskills.abilities[ability_index].max_level;
-	qboolean below_hardmax = ent->myskills.abilities[ability_index].current_level < ent->myskills.abilities[ability_index].hard_max;
+	const qboolean below_max = ent->myskills.abilities[ability_index].level < ent->myskills.abilities[ability_index].max_level;
+	const qboolean below_hardmax = ent->myskills.abilities[ability_index].current_level < ent->myskills.abilities[ability_index].hard_max;
 	if (below_max || ent->myskills.administrator > 999)
 	{
 		ent->myskills.speciality_points -= cost;
@@ -1055,8 +1055,8 @@ void vrx_open_ability_menu(
 	int last_line, 
 	qboolean use_upgrade_line
 ) {
-	upgrade_t* ability = &ent->myskills.abilities[ability_index];
-	int level = ability->level;//current_level;
+	const upgrade_t* ability = &ent->myskills.abilities[ability_index];
+	const int level = ability->level;//current_level;
 	int lineCount = 7;//12;
 
 	if (!menu_can_show(ent))

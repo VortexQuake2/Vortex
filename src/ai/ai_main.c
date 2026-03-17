@@ -578,7 +578,7 @@ void AI_PickShortRangeGoal(edict_t* self)
 		if (self->ai.state == BOT_STATE_ATTACK && self->enemy && self->enemy->inuse)
 		{
 			// calculate distance between entity and our enemy
-			float enemy_dist = entdist(e, self->enemy);
+			const float enemy_dist = entdist(e, self->enemy);
 
 			// bots should move toward their summons in combat
 			if (AI_NumSummons(self) > 0 && AI_IsOwnedSummons(self, e) && dist > AI_RANGE_SHORT && visible(self, e) 
@@ -738,7 +738,7 @@ void AI_PickShortRangeGoal(edict_t *self)
 //===================
 void AI_CategorizePosition (edict_t *ent)
 {
-	qboolean stepping = AI_IsStep(ent);
+	const qboolean stepping = AI_IsStep(ent);
 
 	//AI_DebugPrintf("AI_CategorizePosition()\n");
 

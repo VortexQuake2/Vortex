@@ -66,7 +66,7 @@ void autocannon_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int d
 
 void mzfire_think (edict_t *self)
 {
-	int		attack_frame=AUTOCANNON_FRAME_ATTACK_START;
+	const int		attack_frame=AUTOCANNON_FRAME_ATTACK_START;
 	float	dist=10;
 	vec3_t	start, forward;
 
@@ -350,7 +350,7 @@ void autocannon_status (edict_t *self, edict_t *other)
 
 void autocannon_reload (edict_t *self, edict_t *other)
 {
-	int required_ammo = self->count-self->light_level;
+	const int required_ammo = self->count-self->light_level;
 	int	*player_ammo = &other->client->pers.inventory[shell_index];
 
 	// full ammo

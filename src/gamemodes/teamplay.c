@@ -18,7 +18,7 @@ joined_t	players[MAX_CLIENTS];
 
 void AssignTeamSkin (edict_t *ent, char *s)
 {
-	int		playernum = ent-g_edicts-1;
+	const int		playernum = ent-g_edicts-1;
 	char	*p;
 	char	t[64];
 

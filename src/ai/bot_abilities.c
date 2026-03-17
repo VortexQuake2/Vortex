@@ -222,7 +222,7 @@ float AI_GetAbilityRangeWeightByDistance(int ability_index, float distance)
 
 float AI_GetAbilityProjectileVelocity(edict_t* ent, int ability_index)
 {
-	int slvl = ent->myskills.abilities[ability_index].current_level;
+	const int slvl = ent->myskills.abilities[ability_index].current_level;
 	switch (ability_index)
 	{
 	case MIRV: return 600;
@@ -336,7 +336,7 @@ int BOT_DMclass_ChooseAbility(edict_t* self)
 			continue;
 
 		//compare range weights
-		float weight = AIAbilities[i].RangeWeight[weapon_range];
+		const float weight = AIAbilities[i].RangeWeight[weapon_range];
 		if (weight > best_weight) {
 			best_weight = weight;
 			best_ability = i;
@@ -382,7 +382,7 @@ void BOT_DMclass_FireAbility(edict_t* self, int ability_index)
 		return;
 
 	// range check
-	float dist = entdist(self, self->enemy);
+	const float dist = entdist(self, self->enemy);
 
 	// don't bother firing if we're unlikely to hit anything
 	if (AI_GetAbilityRangeWeightByDistance(ability_index, dist) < 0.1)
@@ -396,8 +396,8 @@ void BOT_DMclass_FireAbility(edict_t* self, int ability_index)
 		//	return;
 
 		// get firing parameters
-		int aimType = AIAbilities[ability_index].aimType;
-		float speed = AI_GetAbilityProjectileVelocity(self, ability_index);
+		const int aimType = AIAbilities[ability_index].aimType;
+		const float speed = AI_GetAbilityProjectileVelocity(self, ability_index);
 		if (aimType == AI_AIMSTYLE_BALLISTIC)
 			is_ballistic = true;
 		else if (aimType == AI_AIMSTYLE_PREDICTION_EXPLOSIVE)
@@ -482,7 +482,7 @@ void BOT_DMclass_UseBlinkStrike(edict_t* self)
 		return;
 	//gi.dprintf("%s: %s\n", self->ai.pers.netname, __func__);
 	// range check
-	float dist = entdist(self, self->enemy);
+	const float dist = entdist(self, self->enemy);
 	if (dist > AI_RANGE_SNIPER || dist < AI_RANGE_SHORT)
 		return;
 	// don't bother against flying opponents
@@ -510,7 +510,7 @@ void BOT_DMclass_UseBoost(edict_t* self)
 	if (self->ai.state != BOT_STATE_ATTACK)
 		return;
 	// range check
-	float dist = entdist(self, self->enemy);
+	const float dist = entdist(self, self->enemy);
 	if (dist > AI_RANGE_SNIPER || dist < AI_RANGE_SHORT)
 		return;
 
@@ -584,7 +584,7 @@ void BOT_DMclass_UseGolem(edict_t* self)
 int AI_NearbyEnemies(edict_t* self, vec3_t org, float radius)
 {
 	int enemies = 0;
-	edict_t* e = NULL;
+	const edict_t* e = NULL;
 
 	while ((e = findradius(e, org, radius)) != NULL)
 	{

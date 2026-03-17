@@ -12,7 +12,7 @@ static int sound_gas;
 // az's note for anyone who looks at this in the future: for organ_touch
 void V_Push (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
-	float maxvel = 300;
+	const float maxvel = 300;
 
 	// our activator or ally can push us
 	if (other && other->inuse && other->client && self->activator && self->activator->inuse 
@@ -419,7 +419,7 @@ qboolean healer_heal (edict_t *self, edict_t *other)
 	// but used G_EntIsAlive for consistency.
 	//if (G_EntIsAlive(other) && G_EntIsAlive(self) && OnSameTeam(self, other) && other != self)
 	//{
-		int frames = qf2sf(5000 / (15 * self->monsterinfo.level)); // idk how much would this change tbh
+		const int frames = qf2sf(5000 / (15 * self->monsterinfo.level)); // idk how much would this change tbh
 
         value = 1.0f + 0.1f * vrx_get_talent_level(self->activator, TALENT_SUPER_HEALER);
 
@@ -546,7 +546,7 @@ void healer_healeffects(edict_t* self, edict_t *target)
 void healer_attack (edict_t *self)
 {
 	edict_t*	target =NULL;
-	float		range = self->monsterinfo.sight_range;
+	const float		range = self->monsterinfo.sight_range;
 	//vec3_t		start, end, forward;//, angles;
 	//trace_t		tr;
 
@@ -873,8 +873,8 @@ void spiker_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 void spiker_attack (edict_t *self)
 {
 	float	dist, chance = 0.05 * self->light_level; // Talent: Deadly Spikes gives 5% chance/level to stun
-	float	range=SPIKER_INITIAL_RANGE+SPIKER_ADDON_RANGE*self->monsterinfo.level;
-	int		speed=SPIKER_INITIAL_SPEED+SPIKER_ADDON_SPEED*self->monsterinfo.level;
+	const float	range=SPIKER_INITIAL_RANGE+SPIKER_ADDON_RANGE*self->monsterinfo.level;
+	const int		speed=SPIKER_INITIAL_SPEED+SPIKER_ADDON_SPEED*self->monsterinfo.level;
 	vec3_t	forward, start, end;
 	edict_t *e=NULL;
 
@@ -1202,7 +1202,7 @@ void obstacle_return(edict_t* self)
 
 void obstacle_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int max = OBSTACLE_MAX_COUNT;
+	const int max = OBSTACLE_MAX_COUNT;
 	int cur;
 	qboolean flipped = false;
 
@@ -2142,7 +2142,7 @@ void gasser_acidattack (edict_t *self)
 {
 	float	dist, chance;
 	//float	range=self->monsterinfo.sight_range;
-	int		speed= ACID_INITIAL_SPEED;
+	const int		speed= ACID_INITIAL_SPEED;
 	vec3_t	forward, start, end;
 	edict_t *e=NULL;
 
@@ -2384,7 +2384,7 @@ void gasser_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 
 edict_t *CreateGasser (edict_t *ent, int skill_level, int talent_level)
 {
-	float synergy_bonus = vrx_get_synergy_mult(ent, GASSER);
+	const float synergy_bonus = vrx_get_synergy_mult(ent, GASSER);
 	edict_t *e;
 
 	// initialize sound
@@ -3189,7 +3189,7 @@ void spikeball_move (edict_t *self)
 {
     vec3_t	start, forward, end, goalpos;
     trace_t	tr;
-    float	max_velocity = 350;
+    const float	max_velocity = 350;
 
     if (self->monsterinfo.attack_finished > level.time)
         return;
@@ -3470,10 +3470,10 @@ void Cmd_TossSpikeball (edict_t *ent)
 {
     int		talentLevel;
     int		cost = SPIKEBALL_COST, max_count = SPIKEBALL_MAX_COUNT;
-    int		health = SPIKEBALL_INITIAL_HEALTH + SPIKEBALL_ADDON_HEALTH * ent->myskills.abilities[SPORE].current_level;
+    const int		health = SPIKEBALL_INITIAL_HEALTH + SPIKEBALL_ADDON_HEALTH * ent->myskills.abilities[SPORE].current_level;
     int		damage = SPIKEBALL_INITIAL_DAMAGE + SPIKEBALL_ADDON_DAMAGE * ent->myskills.abilities[SPORE].current_level;
-    float	duration = SPIKEBALL_INITIAL_DURATION + SPIKEBALL_ADDON_DURATION * ent->myskills.abilities[SPORE].current_level;
-    float	range = SPIKEBALL_INITIAL_RANGE + SPIKEBALL_ADDON_RANGE * ent->myskills.abilities[SPORE].current_level;
+    const float	duration = SPIKEBALL_INITIAL_DURATION + SPIKEBALL_ADDON_DURATION * ent->myskills.abilities[SPORE].current_level;
+    const float	range = SPIKEBALL_INITIAL_RANGE + SPIKEBALL_ADDON_RANGE * ent->myskills.abilities[SPORE].current_level;
     vec3_t	forward, right, start, offset;
 
     if (ent->num_spikeball > 0 && Q_strcasecmp (gi.args(), "move") == 0)

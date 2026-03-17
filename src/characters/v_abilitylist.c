@@ -328,7 +328,7 @@ void vrx_add_ability(edict_t* ent, int index) {
     if (index < 0 || index >= MAX_ABILITIES)
         return;
 
-    int class = vrx_get_ability_class(index);
+    const int class = vrx_get_ability_class(index);
     if (class == CLASS_NULL)
         return;
 
@@ -647,7 +647,7 @@ void vrx_ability_open_select_menu(
     int ab_count_on_page = 0;
     int limit = 10;
     for (int i = 0; i < limit && ab_count_on_page <= 10 && i < MAX_ABILITIES; i++) {
-        int index = start_index + i;
+        const int index = start_index + i;
         // if the ability is enabled by the filter
         if (skills[index / 32] & (1 << (index % 32))) {
             const abilitydef_t *ability = vrx_get_ability_by_index(index);

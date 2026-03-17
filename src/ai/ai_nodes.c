@@ -641,7 +641,7 @@ void AI_CreateNodesForEntities ( void )
 {
 	edict_t *ent;
 	int		node;
-	int		nodes_start=nav.num_nodes;//GHz
+	const int		nodes_start=nav.num_nodes;//GHz
 
 	nav.num_ents = 0;
 	memset( nav.ents, 0, sizeof(nav_ents_t) * MAX_EDICTS );
@@ -969,8 +969,8 @@ int AI_LinkServerNodes( int start )
 {
 	int			n1, n2;
 	int			count = 0;
-	float		pLinkRadius = NODE_DENSITY*1.2;
-	qboolean	ignoreHeight = true;
+	const float		pLinkRadius = NODE_DENSITY*1.2;
+	const qboolean	ignoreHeight = true;
 
 	if( start >= nav.num_nodes )
 		return 0;

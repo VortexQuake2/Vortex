@@ -57,7 +57,7 @@ edict_t *pack;
 vec3_t forward, right, up;
 float		dist;
 	vec3_t		v;
-	edict_t		*enemy = NULL;
+	const edict_t		*enemy = NULL;
 
   if (!deathmatch->value) return;
 

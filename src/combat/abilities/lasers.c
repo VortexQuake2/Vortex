@@ -42,7 +42,7 @@ void RemoveLasers (edict_t *ent)
 
 qboolean NearbyLasers (edict_t *ent, vec3_t org)
 {
-	edict_t *e=NULL;
+	const edict_t *e=NULL;
 
 	while((e = findradius(e, org, 8)) != NULL)
 	{
@@ -57,7 +57,7 @@ qboolean NearbyLasers (edict_t *ent, vec3_t org)
 
 qboolean NearbyProxy (edict_t *ent, vec3_t org)
 {
-	edict_t *e=NULL;
+	const edict_t *e=NULL;
 
 	while((e = findradius(e, org, 8)) != NULL)
 	{

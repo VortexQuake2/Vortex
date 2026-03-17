@@ -458,7 +458,7 @@ int AI_RunGravityBox( int n1, int n2 )
 {
 	int			move;
 	int			movemask = 0;
-	float		movescale = 8;
+	const float		movescale = 8;
 	trace_t		trace;
 	vec3_t		boxmins, boxmaxs;
 	vec3_t		o1;
@@ -600,7 +600,7 @@ int	AI_FindFallOrigin( int n1, int n2, vec3_t fallorigin )
 {
 	int			move;
 	int			movemask = 0;
-	float		movescale = 8;
+	const float		movescale = 8;
 	trace_t		trace;
 	vec3_t		boxmins, boxmaxs;
 	vec3_t		o1;
@@ -770,7 +770,7 @@ int AI_IsLadderLink( int n1, int n2 )
 	//if both are ladder nodes
 	if( nodes[n1].flags & NODEFLAGS_LADDER && nodes[n2].flags & NODEFLAGS_LADDER )
 	{
-		int	candidate = AI_LadderLink_FindUpperNode( n1 );
+		const int	candidate = AI_LadderLink_FindUpperNode( n1 );
 		if( candidate != n2 )
 			return LINK_INVALID;
 
@@ -953,8 +953,8 @@ int AI_LinkCloseNodes_JumpPass( int start )
 {
 	int			n1, n2;
 	int			count = 0;
-	float		pLinkRadius = NODE_DENSITY*2;
-	qboolean	ignoreHeight = true;
+	const float		pLinkRadius = NODE_DENSITY*2;
+	const qboolean	ignoreHeight = true;
 	int			linkType;
 
 	if( nav.num_nodes < 1 )
@@ -999,8 +999,8 @@ int AI_LinkCloseNodes( void )
 {
 	int			n1, n2;
 	int			count = 0;
-	float		pLinkRadius = NODE_DENSITY*1.5;
-	qboolean	ignoreHeight = true;
+	const float		pLinkRadius = NODE_DENSITY*1.5;
+	const qboolean	ignoreHeight = true;
 
 	//do it for everynode in the list
 	for( n1=0; n1<nav.num_nodes; n1++ )

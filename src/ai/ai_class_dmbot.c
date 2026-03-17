@@ -1523,7 +1523,7 @@ void BOT_DMclass_ChooseWeapon(edict_t *self)
 			continue;
 		
 		//compare range weights
-		float weight = AIWeapons[i].RangeWeight[weapon_range] + self->ai.status.weaponWeights[i];//GHz
+		const float weight = AIWeapons[i].RangeWeight[weapon_range] + self->ai.status.weaponWeights[i];//GHz
 		//gi.dprintf("%f\n", weight);
 		if (weight > best_weight) {
 			best_weight = weight;
@@ -1620,7 +1620,7 @@ void BOT_DMclass_FireWeapon (edict_t *self, usercmd_t *ucmd)
 			//jalToDo
 
 			// move our target point based on projectile and enemy velocity
-			if (projectile_speed = AI_GetWeaponProjectileVelocity(self, weapon))
+			if ((projectile_speed = AI_GetWeaponProjectileVelocity(self, weapon)))
 				VectorMA(target, (float)dist / projectile_speed, self->enemy->velocity, target);
 			//gi.dprintf("projectile speed: %f\n", projectile_speed);
 		}
@@ -1838,7 +1838,7 @@ void AI_AdjustAmmoNeedFactor(edict_t *self, gitem_t *ammoItem, ...)
 	va_list list;
 	va_start(list, ammoItem);
 
-	int ammo_index = ITEM_INDEX(ammoItem);
+	const int ammo_index = ITEM_INDEX(ammoItem);
 
 	// if we can't pick it up, reduce the weight to 0
 	if (!AI_CanPick_Ammo(self, ammoItem))
@@ -1877,7 +1877,7 @@ void AI_AdjustAmmoNeedFactor(edict_t *self, gitem_t *ammoItem, ...)
 		// is the bot fighting and is this weapon our respawn weapon?
 		if (is_fighting && weapIndex != AI_RespawnWeaponToWeapIndex(self->myskills.respawn_weapon))
 			continue; // nope, check the next weapon on the list
-		gitem_t* weaponItem = AIWeapons[weapIndex].weaponItem;
+		const gitem_t* weaponItem = AIWeapons[weapIndex].weaponItem;
 		// does the bot have this weapon?
 		if (self->client->pers.inventory[ITEM_INDEX(weaponItem)])
 		{
@@ -1996,7 +1996,7 @@ void BOT_DMclass_WeightInventory(edict_t *self)
 		// weapon doesn't exist in the AIWeapons list
 		if (!it)
 			continue;
-		int weap_index = ITEM_INDEX(AIWeapons[i].weaponItem);
+		const int weap_index = ITEM_INDEX(AIWeapons[i].weaponItem);
 		// morphed players have no use for weapons
 		if (self->mtype || PM_PlayerHasMonster(self))
 			self->ai.status.inventoryWeights[weap_index] = 0.0;
@@ -2171,7 +2171,7 @@ void BOT_DMclass_RunFrame( edict_t *self )
 
 			BOT_DMclass_UseBoost(self); // if we have boost, use it to get closer to the enemy
 			BOT_DMclass_UseBlinkStrike(self); // if we have blinkstrike, use it to get closer & behind the enemy
-			int attack_ability = BOT_DMclass_ChooseAbility(self); // chose the best ability to attack with
+			const int attack_ability = BOT_DMclass_ChooseAbility(self); // chose the best ability to attack with
 			BOT_DMclass_FireAbility(self, attack_ability); // fire!
 
 			if (level.time > self->ai.evade_delay) // not a tactical retreat (aka run away while attacking)
@@ -2377,7 +2377,7 @@ void BOT_DMclass_Pain(edict_t* self, edict_t* other, float kick, int damage)
 
 	if (self->health < (0.4 * self->max_health) && level.time > self->pain_debounce_time)
 	{
-		float r = random();
+		const float r = random();
 		if (r < 0.33)
 			gi.sound(self, CHAN_VOICE, gi.soundindex("speech/yell/saveme1.wav"), 1, ATTN_NORM, 0);
 		else if (r < 0.66)

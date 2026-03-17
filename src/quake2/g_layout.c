@@ -247,7 +247,7 @@ qboolean layout_add_tracked_entity(layout_t* layout, edict_t* ent)
 
 qboolean layout_remove_tracked_entity(layout_t* layout, edict_t* ent)
 {
-	int index = layout_has_tracked_entity(layout, ent);
+	const int index = layout_has_tracked_entity(layout, ent);
 
 	if (index == -1) return false;
 	
@@ -275,7 +275,7 @@ void layout_clean_tracked_entity_list(layout_t* layout)
 
 layout_pos_t sidebar_get_next_line_pos(sidebar_t* sidebar)
 {
-	layout_pos_t ret = layout_set_cursor_xy(
+	const layout_pos_t ret = layout_set_cursor_xy(
 		5, XM_LEFT,
 		(sidebar->line + 2) * 8 + sidebar->y_offset, YM_CENTER
 	);

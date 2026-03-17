@@ -6,7 +6,7 @@
 qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 {
 	weapon_t *weapon;
-	int maxLevel = 40;		//All hard maximums for the weapon master are set to this number.
+	const int maxLevel = 40;		//All hard maximums for the weapon master are set to this number.
 
 	if (generalabmode->value == 0) // No weapon master bonuses in non-general ab mode.
 		return false;
@@ -137,7 +137,7 @@ qboolean GiveKnightUpgrade(edict_t *ent, int WeaponIndex, int ModIndex) {
         return false;
 
     weapon_t *weapon;
-    int maxLevel = 40;		// Sword hard maximums for the knight are set to this number.
+    const int maxLevel = 40;		// Sword hard maximums for the knight are set to this number.
 
     //Point to the correct weapon
     weapon = &ent->myskills.weapons[WeaponIndex];

@@ -68,8 +68,8 @@ int V_WeaponUpgradeVal(edict_t *ent, int weapnum)
 
 void generalWeaponMenu_handler(edict_t *ent, int option)
 {
-	int WeaponIndex	= (option / 100)-10;
-	int ModIndex	= (option % 100) - 1;
+	const int WeaponIndex	= (option / 100)-10;
+	const int ModIndex	= (option % 100) - 1;
 	
 	//Are we just navigating?
 	if (option == 6666)
@@ -80,7 +80,7 @@ void generalWeaponMenu_handler(edict_t *ent, int option)
 	else if (option >= 7777)
 	{
 	    if (ent->myskills.class_num != CLASS_KNIGHT) {
-            int LastWeapon = option - 7777;
+            const int LastWeapon = option - 7777;
             OpenWeaponUpgradeMenu(ent, LastWeapon + 1);
         } else {
             OpenWeaponUpgradeMenu(ent, 0);
@@ -120,8 +120,8 @@ void generalWeaponMenu_handler(edict_t *ent, int option)
 
 void OpenGeneralWeaponMenu (edict_t *ent, int lastline)
 {
-	int WeaponIndex = (lastline / 100) - 10;
-	int modIndex = (lastline % 100);
+	const int WeaponIndex = (lastline / 100) - 10;
+	const int modIndex = (lastline % 100);
 	int i;
 
 	if (!menu_can_show(ent))
@@ -169,7 +169,7 @@ void OpenGeneralWeaponMenu (edict_t *ent, int lastline)
 
 void weaponmenu_handler (edict_t *ent, int option)
 {
-    int weap_num = (option/100)-10;
+    const int weap_num = (option/100)-10;
 	if (weap_num > MAX_WEAPONS || weap_num < 0)
 	{
 		menu_close(ent, true);
@@ -201,14 +201,14 @@ void OpenWeaponUpgradeMenu (edict_t *ent, int lastline)
     menu_add_line(ent, "want to upgrade:", 0);
     menu_add_line(ent, " ", 0);
 
-    qboolean is_knight = ent->myskills.class_num == CLASS_KNIGHT;
+    const qboolean is_knight = ent->myskills.class_num == CLASS_KNIGHT;
 
     for (i = 0; i < MAX_WEAPONS; ++i)
     {
         char weaponString[24];
         strcpy(weaponString, GetWeaponString(i));
 
-        qboolean is_sword = !strcmp(weaponString, "Sword");
+        const qboolean is_sword = !strcmp(weaponString, "Sword");
 
         padRight(weaponString, 18);
         if (!is_knight || (is_knight && is_sword))

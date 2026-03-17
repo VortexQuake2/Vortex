@@ -344,7 +344,7 @@ float AI_ItemWeight(edict_t *self, edict_t *it)
 
 		if (!Q_stricmp(it->classname, "item_adrenaline"))
 		{
-			float health_f = self->health / self->max_health;
+			const float health_f = self->health / self->max_health;
 			weight = 1.0 - health_f;
 			if (weight < 0)
 				weight = 0;

@@ -213,7 +213,7 @@ void Infantry20mm(edict_t* self)
 {
 	vec3_t	start, forward, right, vec;
 	int		damage, flash_number;
-	float range = M_20MM_RANGE_BASE + M_20MM_RANGE_ADDON * drone_damagelevel(self);
+	const float range = M_20MM_RANGE_BASE + M_20MM_RANGE_ADDON * drone_damagelevel(self);
 
 	damage = M_20MM_DMG_BASE + M_20MM_DMG_ADDON * drone_damagelevel(self);
 	if (M_20MM_DMG_MAX && damage > M_20MM_DMG_MAX)
@@ -285,7 +285,7 @@ mmove_t infantry_move_pain2 = { FRAME_pain201, FRAME_pain210, infantry_frames_pa
 
 void infantry_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
-	double rng = random();
+	const double rng = random();
 	if (self->health < (self->max_health / 2))
 		self->s.skinnum = 1;
 
@@ -607,15 +607,15 @@ void infantry_grenade(edict_t* self)
 	if (M_GRENADELAUNCHER_SPEED_MAX && speed > M_GRENADELAUNCHER_SPEED_MAX)
 		speed = M_GRENADELAUNCHER_SPEED_MAX;
 
-	float   timer = 2.5;
+	const float   timer = 2.5;
 	int     damage = M_GRENADELAUNCHER_DMG_BASE + M_GRENADELAUNCHER_DMG_ADDON * drone_damagelevel(self);
 
 	if (M_GRENADELAUNCHER_DMG_MAX && damage > M_GRENADELAUNCHER_DMG_MAX)
 		damage = M_GRENADELAUNCHER_DMG_MAX;
 
-	float   damage_radius = 150;
-	int     radius_damage = 100;
-	float   accuracy = 0.8;
+	const float   damage_radius = 150;
+	const int     radius_damage = 100;
+	const float   accuracy = 0.8;
 
 	MonsterAim(self, accuracy, speed, true, MZ2_INFANTRY_MACHINEGUN_1, forward, start);
 
@@ -640,8 +640,8 @@ mmove_t infantry_move_attack_grenade = { FRAME_attak201, FRAME_attak208, infantr
 void infantry_attack(edict_t* self)
 {
 	int maxrange;
-	int range = entdist(self, self->enemy);
-	float r = random();
+	const int range = entdist(self, self->enemy);
+	const float r = random();
 
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 	{

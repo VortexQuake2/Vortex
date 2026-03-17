@@ -55,11 +55,11 @@ void fire_spike (edict_t *self, vec3_t start, vec3_t dir, int damage, float stun
 
 void SpikeAttack (edict_t *ent)
 {
-	int spike_level = ent->myskills.abilities[SPIKE].current_level;
-	int spiker_level = ent->myskills.abilities[SPIKER].current_level;
+	const int spike_level = ent->myskills.abilities[SPIKE].current_level;
+	const int spiker_level = ent->myskills.abilities[SPIKER].current_level;
 	int		i, move, damage;
 	float	delay;
-	float synergy_bonus = 1.0 + SPIKE_SPIKER_SYNERGY_BONUS * spiker_level;
+	const float synergy_bonus = 1.0 + SPIKE_SPIKER_SYNERGY_BONUS * spiker_level;
 	vec3_t	angles, v, org;
 	vec3_t	offset, forward, right, start;
 

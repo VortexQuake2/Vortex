@@ -317,7 +317,7 @@ void ThrowLaserTrap (edict_t *self, vec3_t start, vec3_t aimdir, int skill_level
 
 void Cmd_LaserTrap_f (edict_t *ent)
 {
-    int talentLevel = vrx_get_talent_level(ent, TALENT_ALARM);
+    const int talentLevel = vrx_get_talent_level(ent, TALENT_ALARM);
 	vec3_t	forward, start;
 
 	if (Q_strcasecmp (gi.args(), "remove") == 0)

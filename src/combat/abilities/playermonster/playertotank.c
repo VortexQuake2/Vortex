@@ -343,10 +343,10 @@ int p_tank_getFirePos(edict_t *self, vec3_t start, vec3_t forward) {
 }
 
 void p_tank_20mm(edict_t* self, vec3_t start, vec3_t forward, int flash_number, int talentLevel) {
-	int skill_level = self->monsterinfo.level;
-    int damage = WEAPON_20MM_INITIAL_DMG + WEAPON_20MM_ADDON_DMG * skill_level;
-    int kick = damage;
-    float range = 250 + talentLevel * 150;
+	const int skill_level = self->monsterinfo.level;
+    const int damage = WEAPON_20MM_INITIAL_DMG + WEAPON_20MM_ADDON_DMG * skill_level;
+    const int kick = damage;
+    const float range = 250 + talentLevel * 150;
 
     // bullet ammo counter
     if (!self->monsterinfo.lefty)
@@ -367,8 +367,8 @@ void p_tank_20mm(edict_t* self, vec3_t start, vec3_t forward, int flash_number, 
 }
 
 void p_tank_bullet(edict_t *self, vec3_t start, vec3_t forward, int flash_number) {
-    int damage = P_TANK_BULLET_INITIAL_DMG + P_TANK_BULLET_ADDON_DMG * self->monsterinfo.level;
-    int kick = damage;
+    const int damage = P_TANK_BULLET_INITIAL_DMG + P_TANK_BULLET_ADDON_DMG * self->monsterinfo.level;
+    const int kick = damage;
 
     // bullet ammo counter
     if (!self->monsterinfo.lefty)
@@ -384,7 +384,7 @@ void p_tank_bullet(edict_t *self, vec3_t start, vec3_t forward, int flash_number
 }
 
 void p_tank_rocket(edict_t *self, vec3_t start, vec3_t forward, int flash_number) {
-    int damage = P_TANK_ROCKET_INITIAL_DMG + P_TANK_ROCKET_ADDON_DMG * self->monsterinfo.level;
+    const int damage = P_TANK_ROCKET_INITIAL_DMG + P_TANK_ROCKET_ADDON_DMG * self->monsterinfo.level;
     int speed = P_TANK_ROCKET_INITIAL_SPD + P_TANK_ROCKET_ADDON_SPD * self->monsterinfo.level;
     float radius = damage;
 
@@ -408,8 +408,8 @@ void p_tank_rocket(edict_t *self, vec3_t start, vec3_t forward, int flash_number
 }
 
 void p_tank_blaster(edict_t *self, vec3_t start, vec3_t forward, int flash_number) {
-    int damage = P_TANK_BLASTER_INITIAL_DMG + P_TANK_BLASTER_ADDON_DMG * self->monsterinfo.level;
-    int speed = P_TANK_BLASTER_INITIAL_SPD + P_TANK_BLASTER_ADDON_SPD * self->monsterinfo.level;
+    const int damage = P_TANK_BLASTER_INITIAL_DMG + P_TANK_BLASTER_ADDON_DMG * self->monsterinfo.level;
+    const int speed = P_TANK_BLASTER_INITIAL_SPD + P_TANK_BLASTER_ADDON_SPD * self->monsterinfo.level;
 
     // blaster ammo counter
     if (!self->monsterinfo.radius)
@@ -456,7 +456,7 @@ void p_tank_attack(edict_t *ent) {
     }
         // bullet attack
     else if (ent->owner->client->weapon_mode == 2) {
-        int talentLevel = vrx_get_talent_level(ent, TALENT_RANGE_MASTERY);
+        const int talentLevel = vrx_get_talent_level(ent, TALENT_RANGE_MASTERY);
 		if (talentLevel > 0)
 			p_tank_20mm(ent, start, forward, flash_number, talentLevel);
 		else
@@ -558,7 +558,7 @@ void p_tank_spawn(edict_t *ent, int cost) {
     vec3_t boxmin, boxmax;
     //trace_t tr;
     //Talent: More Ammo
-    int talentLevel = vrx_get_talent_level(ent, TALENT_MORE_AMMO);
+    const int talentLevel = vrx_get_talent_level(ent, TALENT_MORE_AMMO);
 
     // make sure we don't get stuck in a wall
     VectorSet (boxmin, -24, -24, -16);
@@ -664,7 +664,7 @@ void p_tank_spawn(edict_t *ent, int cost) {
 }
 
 void Cmd_PlayerToTank_f(edict_t *ent) {
-    int tank_cubecost = P_TANK_INIT_COST;
+    const int tank_cubecost = P_TANK_INIT_COST;
 
     if (debuginfo->value)
         gi.dprintf("DEBUG: %s just called Cmd_PlayerToTank_f()\n", ent->client->pers.netname);

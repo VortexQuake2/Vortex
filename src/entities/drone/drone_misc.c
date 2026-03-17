@@ -94,7 +94,7 @@ void DroneList_Remove(edict_t *ent)
 {
 	// is monster index within valid range of list?
 	if (ent->monsterinfo.dronelist_index >= 0 && ent->monsterinfo.dronelist_index < DroneCount) {
-        int index = ent->monsterinfo.dronelist_index;
+        const int index = ent->monsterinfo.dronelist_index;
 		// have we found this monster within the drone list?
 	    if (DroneList[index] == ent) { // follows the same logic as player spawn list
 	        DroneCount--; // reduce the count, and hence, the length of the list, by 1
@@ -174,7 +174,7 @@ void DroneList_Print(edict_t* ent, edict_t *owner)
 
 float drone_damagelevel(const edict_t* ent)
 {
-	int level = ent->monsterinfo.level;
+	const int level = ent->monsterinfo.level;
 
 	// player monsters don't get softcapped
 	if (G_GetClient(ent)) 
@@ -737,7 +737,7 @@ void vrx_roll_to_make_champion(edict_t *drone, int *drone_type)
 		if ( (!invasion->value && GetRandom(1, 100) <= 33) // 33% chance to spawn a special champion
 			|| (invasion->value == 2 && GetRandom(1, 100) <= 5) )  // 5% chance in invasion.
 		{
-			int r = GetRandom(1, 7);
+			const int r = GetRandom(1, 7);
 
 			switch (r)
 			{
@@ -1447,7 +1447,7 @@ qboolean infov (edict_t *self, edict_t *other, int degrees)
 
 // return a random double in [0.0, 1.0)
 double randfrac(void) {
-	double res = (rand() % RAND_MAX) / (double)RAND_MAX;
+	const double res = (rand() % RAND_MAX) / (double)RAND_MAX;
 	return res;
 }
 
@@ -1733,7 +1733,7 @@ qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, q
 		// heal them if they are weakened
 		if (self->health < max_health)
 		{
-			int health_needed = max_health - self->health;
+			const int health_needed = max_health - self->health;
 			if (health > health_needed)
 				health = health_needed;
 			self->health += health;
@@ -1815,8 +1815,8 @@ qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, q
 	{
 		if (self->client)
 		{
-			int ammoIndex = G_GetAmmoIndexByWeaponIndex(G_GetRespawnWeaponIndex(self));
-			int maxAmmo = MaxAmmoType(self, ammoIndex) * mult;
+			const int ammoIndex = G_GetAmmoIndexByWeaponIndex(G_GetRespawnWeaponIndex(self));
+			const int maxAmmo = MaxAmmoType(self, ammoIndex) * mult;
 
 			if (AmmoLevel(self, ammoIndex) < mult)
 			{
@@ -2864,7 +2864,7 @@ void M_DelayNextAttack(edict_t* self, float delay, qboolean add_attack_frames)
 	if (add_attack_frames)
 	{
 		int startframe;
-		mmove_t* move = self->monsterinfo.currentmove;
+		const mmove_t* move = self->monsterinfo.currentmove;
 
 		// if we haven't begun this move yet or we are at the tail-end of
 		// an attack (re-attack) then start at the first frame

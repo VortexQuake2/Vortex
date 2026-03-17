@@ -45,7 +45,7 @@ void check_dodge (edict_t *self, vec3_t start, vec3_t dir, int speed, int radius
 {
 	vec3_t	end;
 	vec3_t	v;
-	vec3_t	zvec = {0,0,0};
+	const vec3_t	zvec = {0,0,0};
 	trace_t	tr;
 	float	eta;
 	edict_t *blip = NULL;
@@ -1278,10 +1278,10 @@ void smartrocket_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_
 		T_Damage (other, ent, ent->owner, ent->velocity, ent->s.origin, plane->normal, ent->dmg, 0, 0, MOD_ROCKET);
 	
 	// Talent: Range Mastery
-	int talentLevel = vrx_get_talent_level(ent->owner, TALENT_RANGE_MASTERY);
+	const int talentLevel = vrx_get_talent_level(ent->owner, TALENT_RANGE_MASTERY);
 	if (talentLevel > 0)
 	{
-		int damage = ent->dmg * (0.2 * talentLevel);
+		const int damage = ent->dmg * (0.2 * talentLevel);
 		fire_mirv_grenade(ent->owner, ent->s.origin, vec3_origin, damage, ent->dmg_radius, 0, FRAMETIME);
 	}
 

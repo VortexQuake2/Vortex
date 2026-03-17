@@ -567,7 +567,7 @@ mmove_t mutant_move_pain_short2 = { FRAME_pain101, FRAME_pain105, mutant_frames_
 
 void mutant_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
-	double rng = random();
+	const double rng = random();
 	if (self->health < (self->max_health / 2))
 		self->s.skinnum = 1;
 

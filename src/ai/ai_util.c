@@ -184,10 +184,10 @@ float BOT_DMclass_ThrowingPitch2(edict_t* self, float v_xy, float v_z)
 //FIXME: move to q_shared.c if this function is used elsewhere
 void ProjectOnPlane(vec3_t dst, const vec3_t p, const vec3_t normal)
 {
-	float sqrMag = DotProduct(normal, normal);
+	const float sqrMag = DotProduct(normal, normal);
 	if (sqrMag < FLT_EPSILON)
 		return;
-	float dot = DotProduct(normal, p);
+	const float dot = DotProduct(normal, p);
 	dst[0] = p[0] - normal[0] * dot / sqrMag;
 	dst[1] = p[1] - normal[1] * dot / sqrMag;
 	dst[2] = p[2] - normal[2] * dot / sqrMag;
@@ -263,7 +263,7 @@ float BOT_DMclass_ThrowingPitch1(edict_t* self, float v)
 	//AngleVectors(self->client->v_angle, forward, right, NULL);
 	//P_ProjectSource(self->client, self->s.origin, offset, forward, right, start);
 
-	float g = sv_gravity->value;
+	const float g = sv_gravity->value;
 	float d;// = Get2dDistance(start, self->enemy->s.origin);//Horizontal distance to the target.
 	float h;// = self->enemy->s.origin[2] - start[2]; //Vertical difference between the projectile's initial height and the target height.
 
@@ -273,7 +273,7 @@ float BOT_DMclass_ThrowingPitch1(edict_t* self, float v)
 	//gi.dprintf("displacement: h: %.0f v: %.0f\n", h_d, v_d);
 
 	//float h = 1.0*(self->enemy->absmin[2] - self->absmax[2]);
-	double discriminant = pow(v, 4) - g * (g * pow(d, 2) + (2 * h * pow(v, 2)));
+	const double discriminant = pow(v, 4) - g * (g * pow(d, 2) + (2 * h * pow(v, 2)));
 
 	if (discriminant <= 0)
 	{

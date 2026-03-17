@@ -664,7 +664,7 @@ void CrippleAttack (edict_t *ent)
 
 void Cmd_StaticField_f (edict_t *ent)
 {
-	int	ability_level=ent->myskills.abilities[STATIC_FIELD].current_level;
+	const int	ability_level=ent->myskills.abilities[STATIC_FIELD].current_level;
 
 	if (!G_CanUseAbilities(ent, ability_level, STATICFIELD_COST))
 		return;
@@ -860,7 +860,7 @@ void meditate_think (edict_t *self)
 void Cmd_Meditate_f (edict_t *ent)
 {
 	//Talent: Meditation
-    int talentLevel = vrx_get_talent_level(ent, TALENT_MEDITATION);
+    const int talentLevel = vrx_get_talent_level(ent, TALENT_MEDITATION);
 
 	if (talentLevel < 1)
 		return;
@@ -897,7 +897,7 @@ void Cmd_Meditate_f (edict_t *ent)
 void Cmd_Purge_f (edict_t *ent)
 {
 	//Talent: Purge
-    int talentLevel = vrx_get_talent_level(ent, TALENT_PURGE);
+    const int talentLevel = vrx_get_talent_level(ent, TALENT_PURGE);
 
 	if (talentLevel < 1)
 	{

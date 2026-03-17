@@ -50,7 +50,7 @@ void P_DamageFeedback (edict_t *player)
 {
 	gclient_t	*client;
 	float	side;
-	float	realcount, count, kick;
+	float	realcount, count;
 	vec3_t	v;
 	int		r, l;
 	static	vec3_t	power_color = {0.0, 1.0, 0.0};
@@ -151,7 +151,7 @@ void P_DamageFeedback (edict_t *player)
 	//
 	// calculate view angle kicks
 	//
-	kick = fabsf(client->damage_knockback);
+	float kick = abs(client->damage_knockback);
 	if (kick && player->health > 0)	// kick of 0 means no view adjust at all
 	{
 		kick = kick * 100 / player->health;
@@ -1269,8 +1269,8 @@ void ClientEndServerFrame (edict_t *ent)
 	else if (!ent->client->showscores && !ent->client->pers.scanner_active && !ent->client->menustorage.menu_active)
 	{
 		// once a sec
-		qboolean this_tick = !(level.framenum % (int)sv_fps->value);
-		qboolean has_cooldown = (ent->client->ability_delay - level.time) > -0.001;
+		const qboolean this_tick = !(level.framenum % (int)sv_fps->value);
+		const qboolean has_cooldown = (ent->client->ability_delay - level.time) > -0.001;
 		if (this_tick || ent->client->layout.dirty || has_cooldown)
 		{
 			layout_generate_all(ent);

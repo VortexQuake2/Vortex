@@ -997,7 +997,7 @@ Use an inventory item
 void Cmd_Use_f (edict_t *ent)
 {
 	int			index;
-	int			weapMode=ent->client->weapon_mode;
+	const int			weapMode=ent->client->weapon_mode;
 	gitem_t		*it;
 	char		*s;
 
@@ -1361,7 +1361,7 @@ void Cmd_WeapLast_f (edict_t *ent)
 	// player-monsters switch between weapon modes
 	if (ent->mtype || PM_PlayerHasMonster(ent))
 	{
-		int currentMode = ent->client->weapon_mode;
+		const int currentMode = ent->client->weapon_mode;
 
 		ent->client->weapon_mode = ent->client->last_weapon_mode;
 		ent->client->last_weapon_mode = currentMode;
@@ -1401,7 +1401,7 @@ void Cmd_InvDrop_f (edict_t *ent)
 
 	if (ent->myskills.administrator && ent->client->menustorage.menu_active)
 	{
-		int index = ent->client->menustorage.messages[ent->client->menustorage.currentline].option-2;
+		const int index = ent->client->menustorage.messages[ent->client->menustorage.currentline].option-2;
 
 		if (menu_active(ent, MENU_SPECIAL_UPGRADES, upgradeSpecialMenu_handler) && index < 500)
 		{
@@ -1716,7 +1716,7 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 	// master password prompt
 	if (menu_active(ent, MENU_MASTER_PASSWORD, masterpw_handler) && !strcmp(ent->myskills.email, ""))
 	{
-		int	len=strlen(p);
+		const int	len=strlen(p);
 
 		// check for valid input
 		if ((len < 4) || (len > 23) || strstr(p, "@"))
@@ -2309,7 +2309,7 @@ void Cmd_SetOwner_f (edict_t *ent)
 		return;
 	}
 
-	int mpwlen = strlen(mpw);
+	const int mpwlen = strlen(mpw);
 	if (mpwlen == 0)
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Please include the master password of the owner.\n");
@@ -2647,7 +2647,7 @@ void Cmd_AdminCmd (edict_t *ent)
 	}
 	else if (Q_stricmp(cmd1, "srune") == 0)
 	{
-		int index = atoi(cmd3);
+		const int index = atoi(cmd3);
 		int type = ITEM_ABILITY;
 
 		if (ent->myskills.administrator < 10)
@@ -2877,7 +2877,7 @@ que_t *que_ptr (que_t *src, que_t *dst)
 qboolean GetOverloadValues (edict_t *ent, int talentLevel, int cubes, int cost, float *cost_mult, float *skill_mult)
 {
 	// maximum skill/cost multiplier
-	float max_multiplier = 1 + 0.2 * talentLevel;
+	const float max_multiplier = 1 + 0.2 * talentLevel;
 
 	// input skill/cost multiplier
 	*cost_mult = (float)cubes / cost;
@@ -3103,7 +3103,7 @@ void Cmd_Rune_f(edict_t *ent)
 		{
 			if (!strcmp(gi.argv(1), "manip"))
 			{
-				int index = atoi(gi.argv(2));
+				const int index = atoi(gi.argv(2));
 				if (index < 0)
 				{
 					safe_cprintf(ent, PRINT_LOW, "Very funny.\n");
@@ -3122,8 +3122,8 @@ void Cmd_Rune_f(edict_t *ent)
 		{
 			if (!strcmp(gi.argv(1), "swap"))
 			{
-				int index = atoi(gi.argv(2)); // where from
-				int moveto = atoi(gi.argv(3)); // where to
+				const int index = atoi(gi.argv(2)); // where from
+				const int moveto = atoi(gi.argv(3)); // where to
 
 				if (index < 3) // Equiped rune
 				{
@@ -3304,7 +3304,7 @@ void ClientCommand (edict_t *ent)
 	//NewB
 	else if (Q_stricmp (cmd, "trade") == 0)
 	{
-		char *opt = gi.argv(1);
+		const char *opt = gi.argv(1);
 		if (Q_strcasecmp(opt, "on") == 0)
 		{
 			safe_cprintf(ent, PRINT_HIGH, "Trading is enabled.\nPlayers may now trade with you.\n");
@@ -3413,7 +3413,7 @@ void ClientCommand (edict_t *ent)
 	else if (Q_stricmp (cmd, "abilityindex") == 0)
 	{
 		//Return string of ability at that index
-		int index = atoi(gi.argv(1));
+		const int index = atoi(gi.argv(1));
 		if ((index < 0) || (index > MAX_ABILITIES))
 			safe_cprintf(ent, PRINT_HIGH, "Bad Ability index: %d\n", index);
 		else safe_cprintf(ent, PRINT_HIGH, "Ability number %d = %s\n", index, GetAbilityString(index));
@@ -3422,7 +3422,7 @@ void ClientCommand (edict_t *ent)
 	//3.0 bless commands
 	else if (Q_stricmp (cmd, "mute") == 0)
 	{
-		int time = atoi(gi.argv(2));		
+		const int time = atoi(gi.argv(2));		
 		if (time > 0) cmd_PlayerMute(ent, gi.argv(1), time);
 		else safe_cprintf(ent, PRINT_HIGH, "Invalid mute duration.\n  Command: mute <playername> <seconds>\n");
 	}

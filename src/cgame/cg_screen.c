@@ -186,7 +186,7 @@ static void CG_Notify_CheckExpire(struct hud_data_t *data) {
 
         for (size_t i = 1; i < MAX_NOTIFY; i++)
             if (data->notify[i].is_active) {
-                struct cl_notify_t cur = data->notify[i];
+                const struct cl_notify_t cur = data->notify[i];
                 data->notify[i] = data->notify[i - 1];
                 data->notify[i - 1] = cur;
             }
@@ -631,8 +631,8 @@ static void CG_DrawCenterString(const player_state_t *ps, const struct vrect_t h
     for (size_t i = 0; i < center->row_count; i++) {
         cgi.SCR_SetAltTypeface(ui_acc_alttypeface->integer && true);
 
-        auto line = center->lines[i];
-        auto len = strlen(line);
+        const auto line = center->lines[i];
+        const auto len = strlen(line);
 
         buffer[0] = 0;
 
@@ -646,7 +646,7 @@ static void CG_DrawCenterString(const player_state_t *ps, const struct vrect_t h
         if (ui_acc_contrast->integer && len) {
             vec2_t sz = cgi.SCR_MeasureFontString(line, scale);
             sz.x += 10; // extra padding for black bars
-            int barY = ui_acc_alttypeface->integer ? y - 8 : y;
+            const int barY = ui_acc_alttypeface->integer ? y - 8 : y;
             cgi.SCR_DrawColorPic((hud_vrect.x + hud_vrect.width / 2) * scale - sz.x / 2, barY, sz.x, lineHeight,
                                  "_white", &rgba_black);
         }
@@ -761,12 +761,12 @@ static void CG_DrawField(int x, const int y, const int color, int width, int val
 // [Paril-KEX]
 static void CG_DrawTable(int x, int y, const uint32_t width, const uint32_t height, const int32_t scale) {
     // half left
-    int32_t width_pixels = width;
+    const int32_t width_pixels = width;
     x -= width_pixels / 2;
     y += CONCHAR_WIDTH * scale;
     // use Y as top though
 
-    int32_t height_pixels = height;
+    const int32_t height_pixels = height;
 
     // draw border
     // KEX_FIXME method that requires less chars
@@ -1679,7 +1679,7 @@ static void CG_DrawInventory(const player_state_t *ps, const int16_t inventory[M
     int i;
     int index[MAX_ITEMS];
 
-    int selected = ps->stats[STAT_SELECTED_ITEM];
+    const int selected = ps->stats[STAT_SELECTED_ITEM];
 
     int num = 0;
     int selected_num = 0;
@@ -1702,8 +1702,8 @@ static void CG_DrawInventory(const player_state_t *ps, const int16_t inventory[M
 
     int x = hud_vrect.x * scale;
     int y = hud_vrect.y * scale;
-    int width = hud_vrect.width;
-    int height = hud_vrect.height;
+    const int width = hud_vrect.width;
+    const int height = hud_vrect.height;
 
     x += (width / 2 - 256 / 2) * scale;
     y += (height / 2 - 216 / 2) * scale;
@@ -1716,7 +1716,7 @@ static void CG_DrawInventory(const player_state_t *ps, const int16_t inventory[M
     x += 22 * scale;
 
     for (i = top; i < num && i < top + DISPLAY_ITEMS; i++) {
-        int item = index[i];
+        const int item = index[i];
         if (item == selected) // draw a blinky cursor by the selected item
         {
             if (cgi.CL_ClientRealTime() * 10 & 1)
@@ -1745,13 +1745,13 @@ static void CG_DrawInventory(const player_state_t *ps, const int16_t inventory[M
 extern uint64_t cgame_init_time;
 
 void CG_DrawCharge(const player_state_t *ps, struct vrect_t hud_vrect, struct vrect_t hud_safe, int32_t scale) {
-    int charge = ps->stats[STAT_CHARGE_LEVEL];
-    int cx = (hud_vrect.width / 2) * scale + hud_safe.x;
-    int cy = (hud_vrect.height / 2) * scale + hud_safe.y + 96 * scale;
+    const int charge = ps->stats[STAT_CHARGE_LEVEL];
+    const int cx = (hud_vrect.width / 2) * scale + hud_safe.x;
+    const int cy = (hud_vrect.height / 2) * scale + hud_safe.y + 96 * scale;
 
     if (charge > 0) {
-        int charge_width = 100;
-        int charge_height = 8 * scale;
+        const int charge_width = 100;
+        const int charge_height = 8 * scale;
         CG_DrawString(cx - 3 * CONCHAR_WIDTH * scale, cy - 8 * scale, scale, "charge", false, true);
         cgi.SCR_DrawColorPic(cx - charge_width * 0.5f, cy, charge_width, charge_height, "_white", &rgba_black);
         cgi.SCR_DrawColorPic(cx - charge_width * 0.5f, cy, charge_width * charge / 100.f, charge_height, "_white",
@@ -1770,8 +1770,8 @@ void CG_DrawSidebar(const player_state_t *ps, struct vrect_t hud_vrect, struct v
 }
 
 void CG_DoExperienceBar(struct vrect_t hud_vrect, int32_t scale, int32_t playernum, const player_state_t *ps) {
-    auto hud = &hud_data[playernum];
-    auto xppst = ps->stats[STAT_XP_PERCENT];
+    const auto hud = &hud_data[playernum];
+    const auto xppst = ps->stats[STAT_XP_PERCENT];
     if (hud->next_value != xppst) {
         hud->next_value = xppst;
     }
@@ -1790,14 +1790,14 @@ void CG_DoExperienceBar(struct vrect_t hud_vrect, int32_t scale, int32_t playern
         hud->last_value = hud->next_value;
     }
 
-    float xp_percent = hud->last_value / (float) (INT16_MAX);
-    float filling_xp_percent = hud->next_value / (float) (INT16_MAX);
+    const float xp_percent = hud->last_value / (float) (INT16_MAX);
+    const float filling_xp_percent = hud->next_value / (float) (INT16_MAX);
 
-    float xp_width = hud_vrect.width * scale;
-    float xp_height = 8 * scale;
+    const float xp_width = hud_vrect.width * scale;
+    const float xp_height = 8 * scale;
 
-    float xp_x = hud_vrect.x * scale;
-    float xp_y = hud_vrect.height - xp_height;
+    const float xp_x = hud_vrect.x * scale;
+    const float xp_y = hud_vrect.height - xp_height;
 
     cgi.SCR_DrawColorPic(xp_x, xp_y, xp_width, xp_height, "_white", &rgba_black);
     cgi.SCR_DrawColorPic(xp_x, xp_y, xp_width * filling_xp_percent, xp_height, "_white",
@@ -1824,7 +1824,7 @@ void CG_DrawHUD(
         return;
     }
 
-    int instant_dmg = ps_instant_dmg_value(ps);
+    const int instant_dmg = ps_instant_dmg_value(ps);
     if (instant_dmg) {
         hud_data[playernum].dmg_instant = instant_dmg;
         hud_data[playernum].dmg_counter += hud_data[playernum].dmg_instant;
@@ -1840,7 +1840,7 @@ void CG_DrawHUD(
 
     // draw HUD
     if (!cl_skipHud->integer && !(ps->stats[STAT_LAYOUTS] & LAYOUTS_HIDE_HUD)) {
-        auto sbar = cgi.get_configstring(CS_STATUSBAR);
+        const auto sbar = cgi.get_configstring(CS_STATUSBAR);
         CG_ExecuteLayoutString(sbar, hud_vrect, hud_safe, scale, playernum, ps);
     }
 

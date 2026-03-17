@@ -550,7 +550,7 @@ void print_wp_state(edict_t* ent, char* state)
 void Weapon_Generic2(edict_t* ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST, int FRAME_IDLE_LAST,
                      int FRAME_DEACTIVATE_LAST, int* pause_frames, int* fire_frames, void (*fire)(edict_t* ent)) {
 	int n;
-	qboolean can_run_frame = ent->client->vrr.gun_statemachine_time >= 0.1 - T_EPSILON;
+	const qboolean can_run_frame = ent->client->vrr.gun_statemachine_time >= 0.1 - T_EPSILON;
 	qboolean started_at_ready = false;
 
 	//K03 Begin
@@ -897,7 +897,7 @@ GRENADE
 float get_weapon_grenade_speed(edict_t* ent)
 {
     int speed, min_speed;
-    int max_speed = GRENADE_INITIAL_SPEED + GRENADE_ADDON_SPEED * ent->myskills.weapons[WEAPON_HANDGRENADE].mods[1].current_level;
+    const int max_speed = GRENADE_INITIAL_SPEED + GRENADE_ADDON_SPEED * ent->myskills.weapons[WEAPON_HANDGRENADE].mods[1].current_level;
     float timer;
 
     timer = ent->client->grenade_time - level.time;
@@ -916,7 +916,7 @@ void weapon_grenade_fire(edict_t* ent, qboolean held) {
 	vec3_t start;
 	int damage = GRENADE_INITIAL_DAMAGE +
 		GRENADE_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_HANDGRENADE].mods[0].current_level;//K03
-	int radius_damage = GRENADE_INITIAL_RADIUS_DAMAGE +
+	const int radius_damage = GRENADE_INITIAL_RADIUS_DAMAGE +
 		GRENADE_ADDON_RADIUS_DAMAGE * ent->myskills.weapons[WEAPON_HANDGRENADE].mods[0].current_level;
 	float timer;
     float speed;
@@ -1201,13 +1201,13 @@ void weapon_grenadelauncher_fire(edict_t* ent) {
 	int damage = (int)(GRENADELAUNCHER_INITIAL_DAMAGE +
 		GRENADELAUNCHER_ADDON_DAMAGE *
 		ent->myskills.weapons[WEAPON_GRENADELAUNCHER].mods[0].current_level);
-	float radius = (float)(GRENADELAUNCHER_INITIAL_RADIUS +
+	const float radius = (float)(GRENADELAUNCHER_INITIAL_RADIUS +
 		GRENADELAUNCHER_ADDON_RADIUS *
 		ent->myskills.weapons[WEAPON_GRENADELAUNCHER].mods[1].current_level);
-	int speed = (int)(GRENADELAUNCHER_INITIAL_SPEED +
+	const int speed = (int)(GRENADELAUNCHER_INITIAL_SPEED +
 		(GRENADELAUNCHER_ADDON_SPEED *
 			ent->myskills.weapons[WEAPON_GRENADELAUNCHER].mods[2].current_level));
-	int radius_damage = (int)(GRENADELAUNCHER_INITIAL_RADIUS_DAMAGE +
+	const int radius_damage = (int)(GRENADELAUNCHER_INITIAL_RADIUS_DAMAGE +
 		GRENADELAUNCHER_ADDON_RADIUS_DAMAGE *
 		ent->myskills.weapons[WEAPON_GRENADELAUNCHER].mods[0].current_level);
 
@@ -1255,7 +1255,7 @@ void weapon_grenadelauncher_fire(edict_t* ent) {
 }
 
 void Weapon_GrenadeLauncher(edict_t* ent) {
-	int fire_last = 13;//16;
+	const int fire_last = 13;//16;
 	static int pause_frames[] = { 34, 51, 59, 0 };
 	static int fire_frames[] = { 6, 0 };
 
@@ -1285,7 +1285,7 @@ void Weapon_RocketLauncher_Fire(edict_t* ent) {
 	int radius_damage;
 
 	//K03 Begin
-	int speed = ROCKETLAUNCHER_INITIAL_SPEED +
+	const int speed = ROCKETLAUNCHER_INITIAL_SPEED +
 		ROCKETLAUNCHER_ADDON_SPEED * ent->myskills.weapons[WEAPON_ROCKETLAUNCHER].mods[2].current_level;
 	damage = ROCKETLAUNCHER_INITIAL_DAMAGE +
 		ROCKETLAUNCHER_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_ROCKETLAUNCHER].mods[0].current_level;
@@ -1333,7 +1333,7 @@ void Weapon_RocketLauncher(edict_t* ent) {
 	static int fire_frames[] = { 5, 0 };
 
 	//K03 Begin
-	int fire_last = 12;
+	const int fire_last = 12;
 
 	Weapon_Generic(ent, 4, fire_last, 50, 54, pause_frames, fire_frames, Weapon_RocketLauncher_Fire);
 	//K03 End
@@ -1430,7 +1430,7 @@ void Blaster_Fire(edict_t* ent, vec3_t g_offset, int damage, qboolean hyperblast
 
 void Weapon_Blaster_Fire(edict_t* ent) {
 	int min, max, damage, effect, ammo;
-	int speed =
+	const int speed =
 		BLASTER_INITIAL_SPEED + BLASTER_ADDON_SPEED * ent->myskills.weapons[WEAPON_BLASTER].mods[2].current_level;
 	float temp;
 
@@ -2100,7 +2100,7 @@ void weapon_shotgun_fire(edict_t* ent) {
 		SHOTGUN_INITIAL_DAMAGE + SHOTGUN_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_SHOTGUN].mods[0].current_level;
 	int vspread = 500;
 	int hspread = 500;
-	int bullets = SHOTGUN_INITIAL_BULLETS +
+	const int bullets = SHOTGUN_INITIAL_BULLETS +
 		SHOTGUN_ADDON_BULLETS * ent->myskills.weapons[WEAPON_SHOTGUN].mods[2].current_level;
 	if (ent->myskills.weapons[WEAPON_SHOTGUN].mods[3].current_level >= 1) {
 		vspread *= 0.75;
@@ -2163,7 +2163,7 @@ void Weapon_Shotgun(edict_t* ent) {
 	static int fire_frames[] = { 8, 9, 0 };
 
 	//K03 Begin
-	int fire_last = 16;
+	const int fire_last = 16;
 	/*
 	if (ent->myskills.weapons[WEAPON_SHOTGUN].mods[1].current_level > 0)
 	{
@@ -2370,7 +2370,7 @@ void weapon_20mm_fire(edict_t* ent) {
 	VectorSet(offset, 0, 7, ent->viewheight - 8);
 	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
 
-    int range = WEAPON_20MM_INITIAL_RANGE + (WEAPON_20MM_ADDON_RANGE * ent->myskills.weapons[WEAPON_20MM].mods[1].current_level);
+    const int range = WEAPON_20MM_INITIAL_RANGE + (WEAPON_20MM_ADDON_RANGE * ent->myskills.weapons[WEAPON_20MM].mods[1].current_level);
 	//gi.dprintf("called fire_20mm() at %f for %d damage\n", level.time, damage);
     fire_20mm(ent, start, forward, damage, kick, range);
 
@@ -2400,7 +2400,7 @@ void weapon_20mm_fire(edict_t* ent) {
 void Weapon_Railgun(edict_t* ent) {
 	static int pause_frames[] = { 56, 0 };
 	static int fire_frames[] = { 4, 0 };
-	int fire_last = 18;
+	const int fire_last = 18;
 
 	if (ent->mtype)
 		return;

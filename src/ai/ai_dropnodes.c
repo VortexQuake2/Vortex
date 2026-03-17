@@ -583,8 +583,8 @@ qboolean AI_SavePLKFile( char *mapname )
 	FILE		*pOut;
 	char		filename[MAX_OSPATH];
 	int			i;
-	int			version = NAV_FILE_VERSION;
-	cvar_t *game_dir = gi.cvar("game_dir", "vortex", 0);
+	const int			version = NAV_FILE_VERSION;
+	const cvar_t *game_dir = gi.cvar("game_dir", "vortex", 0);
 
 	Com_sprintf (filename, sizeof(filename), "%s/%s/%s.%s", AI_MOD_FOLDER, AI_NODES_FOLDER, mapname, NAV_FILE_EXTENSION );
 	pOut = fopen (filename, "wb");

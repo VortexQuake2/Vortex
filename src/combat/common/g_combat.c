@@ -52,7 +52,7 @@ float vrx_get_curse_duration(edict_t* ent, int type);
 
 qboolean HitTheWeapon (edict_t *targ, edict_t *attacker, const vec3_t point, int take, int dflags)
 {
-	edict_t *cl_ent=attacker;
+	const edict_t *cl_ent=attacker;
 	float z_rel;
 
 	if (PM_MonsterHasPilot(attacker))
@@ -173,13 +173,13 @@ qboolean CanDamage (edict_t *targ, edict_t *inflictor)
 
 void G_ApplyFury(edict_t *attacker)
 {
-	int chance = attacker->myskills.abilities[FURY].current_level;
-	int r = GetRandom(0, 100);
+	const int chance = attacker->myskills.abilities[FURY].current_level;
+	const int r = GetRandom(0, 100);
 
 	//The following is truncated so that every 4th point adds an extra 1%.
 	if (r < chance)
 	{
-		float duration = FURY_DURATION_BASE + FURY_DURATION_BONUS * chance;
+		const float duration = FURY_DURATION_BASE + FURY_DURATION_BONUS * chance;
 
 		if (attacker->client)
 			safe_cprintf(attacker, PRINT_HIGH, "For the next %0.1f seconds you will become the fury.\n", duration);
@@ -366,7 +366,7 @@ dflags		these flags are used to control how T_Damage works
 static int CheckShield (edict_t *ent, vec3_t point, vec3_t normal, int damage, int dflags)
 {
 	int		save, pa_te_type;
-	edict_t *cl_ent = NULL;
+	const edict_t *cl_ent = NULL;
 
 	if (!damage)
 		return 0;
@@ -631,7 +631,7 @@ static int CheckArmor(edict_t *ent, vec3_t point, vec3_t normal, int damage, int
 
 qboolean CanUseVampire (edict_t *targ, edict_t *attacker, int dflags, int mod)
 {
-    int dtype = G_DamageType(mod, dflags);
+    const int dtype = G_DamageType(mod, dflags);
 	//const edict_t* dclient = PM_GetPlayer(attacker); // get a pointer to the player, even if they're a player-tank
 
 	qboolean has_pilot;
@@ -677,7 +677,7 @@ qboolean CanUseVampire (edict_t *targ, edict_t *attacker, int dflags, int mod)
 void ApplyThorns(edict_t* targ, edict_t* inflictor, edict_t* attacker, vec3_t point, float damage, int knockback,
 	int dflags, int mod)
 {
-	que_t* slot = NULL;
+	const que_t* slot = NULL;
 
 	// no damage
 	if (damage < 1)
@@ -708,8 +708,8 @@ void ApplyThorns(edict_t* targ, edict_t* inflictor, edict_t* attacker, vec3_t po
 
 void DeflectHitscan(edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t point, float damage, int knockback,
                     int dflags, int mod)
-{		
-	que_t	*slot = NULL;	
+{
+	const que_t	*slot = NULL;	
 	float	modifier, chance;
 	trace_t tr;
 	vec3_t	newDir, end;
@@ -758,7 +758,7 @@ void DeflectHitscan(edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t
 void V_ApplyVampire(edict_t* attacker, float take, float vamp_factor, float health_factor, qboolean use_cache)
 {
 	int armorVampBase, steal;
-	int delta = (health_factor * attacker->max_health) - attacker->health;
+	const int delta = (health_factor * attacker->max_health) - attacker->health;
 	
 
 	armorVampBase = steal = vamp_factor * take;
@@ -785,7 +785,7 @@ void G_ApplyVampire(edict_t *attacker, float take)
 		attacker = attacker->activator;
 	}
 
-	int* armor = &attacker->client->pers.inventory[body_armor_index];
+	const int* armor = &attacker->client->pers.inventory[body_armor_index];
 	float temp = 0.075*attacker->myskills.abilities[VAMPIRE].current_level;
 
 	if (attacker->mtype || has_pilot)
@@ -814,7 +814,7 @@ void G_ApplyVampire(edict_t *attacker, float take)
 	if (*armor < MAX_ARMOR(attacker) && vrx_get_talent_level(attacker, TALENT_ARMOR_VAMP) > 0)
 	{
 		//16.6% per point of health stolen gives armor as a bonus.
-		float mult = 0.1666 * vrx_get_talent_level(attacker, TALENT_ARMOR_VAMP);
+		const float mult = 0.1666 * vrx_get_talent_level(attacker, TALENT_ARMOR_VAMP);
 		attacker->armor_cache += (int)(take * temp * mult);
 	}
 }
@@ -915,7 +915,7 @@ qboolean vrx_reduce_knockback(edict_t *targ, edict_t *inflictor, edict_t *attack
 void vrx_apply_darkness_totem(edict_t *attacker, float take, edict_t *player, qboolean attacker_has_pilot) {
 	if(player && (attacker_has_pilot || attacker->client) && !OnSameTeam(player, attacker))
 	{
-		edict_t *totem = NextNearestTotem(player, TOTEM_DARKNESS, NULL, true);
+		const edict_t *totem = NextNearestTotem(player, TOTEM_DARKNESS, NULL, true);
 		int maxHP = player->max_health;//MAX_HEALTH(player);
 
 		if(totem != NULL)
@@ -938,7 +938,7 @@ void vrx_apply_darkness_totem(edict_t *attacker, float take, edict_t *player, qb
 }
 
 void vrx_apply_vampire_abilities(edict_t *targ, edict_t *attacker, int dflags, int mod, float take, que_t *slot) {
-	qboolean same_team = OnSameTeam(targ, attacker);
+	const qboolean same_team = OnSameTeam(targ, attacker);
 
 	//4.2 give hellspawn vampire ability (50% = 150hp/sec assuming 300dmg/sec)
 	if (attacker->monsterinfo.bonus_flags & BF_STYGIAN)
@@ -961,7 +961,7 @@ void vrx_apply_vampire_abilities(edict_t *targ, edict_t *attacker, int dflags, i
 	// life tap vampire effect
 	if ((slot = que_findtype(targ->curses, NULL, LIFE_TAP)) != NULL && mod != MOD_CRIPPLE)
 	{
-		float lifeTapFactor = LIFE_TAP_INITIAL_FACTOR + LIFE_TAP_ADDON_FACTOR * slot->ent->monsterinfo.level;
+		const float lifeTapFactor = LIFE_TAP_INITIAL_FACTOR + LIFE_TAP_ADDON_FACTOR * slot->ent->monsterinfo.level;
 		//slot->ent->owner->myskills.abilities[LIFE_TAP].current_level;
 		//gi.dprintf("%s: take: %.0f lifeTapFactor: %.1f\n", __func__, take, lifeTapFactor);
 		V_ApplyVampire(attacker, take, lifeTapFactor, 1.0, true);
@@ -989,7 +989,7 @@ void vrx_apply_autocurse(edict_t *targ, edict_t *attacker) {
 
 			if ((curse_index = SelectRandomTopCurse(targ_player)) != -1)
 			{
-				int curse_level = targ_player->myskills.abilities[curse_index].current_level;
+				const int curse_level = targ_player->myskills.abilities[curse_index].current_level;
 				CurseRadius(targ, attacker, curse_index, curse_level, 150, vrx_get_curse_duration(targ_player, curse_index), true, true);
 			}
 		}
@@ -1024,9 +1024,9 @@ void vrx_apply_knockback(edict_t *targ, edict_t *attacker, vec_t *dir, int knock
 }
 
 void vrx_apply_invincibility(edict_t *targ, float damage, int dflags, float *take, float *save) {
-	edict_t* cl_ent = PM_GetPlayer(targ);//G_GetClient(targ);
-	qboolean invincible = (cl_ent && cl_ent->client->invincible_framenum > level.framenum);
-	qboolean bypass_invincibility = (dflags & DAMAGE_NO_PROTECTION);
+	const edict_t* cl_ent = PM_GetPlayer(targ);//G_GetClient(targ);
+	const qboolean invincible = (cl_ent && cl_ent->client->invincible_framenum > level.framenum);
+	const qboolean bypass_invincibility = (dflags & DAMAGE_NO_PROTECTION);
 
 	// az: add decino's invincibility not working for tank morphs from indy
 	//qboolean is_player_tank = targ->mtype == P_TANK && targ->owner && targ->owner->client;
@@ -1082,7 +1082,7 @@ void vrx_apply_champion_autocurse(edict_t *targ, edict_t *attacker) {
 }
 
 void vrx_apply_talent_stone(edict_t *targ, float *damage, float startDamage) {
-	qboolean	target_has_pilot = PM_MonsterHasPilot(targ);
+	const qboolean	target_has_pilot = PM_MonsterHasPilot(targ);
 
 	if(!target_has_pilot && !targ->client)
 		return;
@@ -1091,20 +1091,20 @@ void vrx_apply_talent_stone(edict_t *targ, float *damage, float startDamage) {
 	edict_t *targ_player = G_GetClient(targ);
 
 	//Calculate the amount of resist the player has already received.
-	double x = (double)(startDamage - *damage) / startDamage;
+	const double x = (double)(startDamage - *damage) / startDamage;
 
 	//Talent: Stone.
 	totem = NextNearestTotem(targ_player, TOTEM_EARTH, NULL, true);
 	if(totem && totem->activator)
 	{
-		int resistLevel = vrx_get_talent_level(totem->activator, TALENT_STONE);
+		const int resistLevel = vrx_get_talent_level(totem->activator, TALENT_STONE);
 		if(x < resistLevel * EARTHTOTEM_RESIST_MULT)
 			*damage = startDamage * (1.0 - EARTHTOTEM_RESIST_MULT * resistLevel);
 	}
 }
 
 void vrx_do_friendly_fire(edict_t *targ, edict_t *attacker, float *damage, int *mod) {
-	qboolean same_team = OnSameTeam(targ, attacker);
+	const qboolean same_team = OnSameTeam(targ, attacker);
 
 	if ((targ != attacker) && ((deathmatch->value && ((int)(dmflags->value) & (DF_MODELTEAMS | DF_SKINTEAMS))) || coop->value))
 	{
@@ -1148,13 +1148,13 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	int			psave;
 	//int			thorns_dmg;//GHz
     float before_add,before_sub;//GHz
-	int			dtype = G_DamageType(mod, dflags);
+	const int			dtype = G_DamageType(mod, dflags);
 	edict_t		*player = G_GetClient(attacker);
 
-	float		startDamage = damage; //doomie
+	const float		startDamage = damage; //doomie
 	upgrade_t	*ability;//4.2 for fury
-	qboolean	target_has_pilot = PM_MonsterHasPilot(targ);
-	qboolean	attacker_has_pilot = PM_MonsterHasPilot(attacker);
+	const qboolean	target_has_pilot = PM_MonsterHasPilot(targ);
+	const qboolean	attacker_has_pilot = PM_MonsterHasPilot(attacker);
 	que_t		*slot=NULL;
 
 	//gi.dprintf("T_damage\n");
@@ -1187,7 +1187,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		edict_t *totem;
 
 		//Calculate the damage bonus the player has already received.
-		double x = (double)(damage - startDamage) / startDamage;
+		const double x = (double)(damage - startDamage) / startDamage;
 
         //4.1 earth totem strength bonus.
 		totem = NextNearestTotem(player, TOTEM_EARTH, NULL, true);

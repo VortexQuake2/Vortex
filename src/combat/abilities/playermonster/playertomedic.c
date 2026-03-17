@@ -43,7 +43,7 @@ edict_t* CreateHealer(edict_t* ent, int skill_level);
 void p_medic_reanimate (edict_t *ent, edict_t *target)
 {
 	int		res_level;
-	int		medic_level = ent->myskills.abilities[MEDIC].current_level;
+	const int		medic_level = ent->myskills.abilities[MEDIC].current_level;
 	int		skill_level;
 	float	skill_bonus, res_time;
 	vec3_t	bmin, bmax;
@@ -92,7 +92,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 	else if ((!strcmp(target->classname, "bodyque") || !strcmp(target->classname, "player"))
 		&& (ent->num_monsters + 1 <= MAX_MONSTERS))
 	{
-		int		random=GetRandom(1, 3);
+		const int		random=GetRandom(1, 3);
 		vec3_t	start;
 
 		e = G_Spawn();
@@ -387,13 +387,13 @@ void p_medic_heal (edict_t *ent)
 	else if (ent->s.frame == 227)
 		gi.sound (ent, CHAN_WEAPON, gi.soundindex("medic/medatck5.wav"), 1, ATTN_NORM, 0);
 
-	int frames = qf2sf(600 / (float)ent->myskills.abilities[MEDIC].current_level);
+	const int frames = qf2sf(600 / (float)ent->myskills.abilities[MEDIC].current_level);
 
 	// Talent: Range Mastery - allows medic to heal/resurrect multiple targets
-	int talentLevel = vrx_get_talent_level(ent, TALENT_RANGE_MASTERY);
+	const int talentLevel = vrx_get_talent_level(ent, TALENT_RANGE_MASTERY);
 	if (talentLevel > 0)
 	{
-		float range = 40 * talentLevel;
+		const float range = 40 * talentLevel;
 		p_medic_healradius(ent, range, frames);
 		if (ent->s.frame == 220)
 			gi.sound(ent, CHAN_WEAPON, gi.soundindex("medic/medatck4.wav"), 1, ATTN_NORM, 0);
@@ -479,7 +479,7 @@ void p_medic_heal (edict_t *ent)
 void p_medic_hb_regen (edict_t *ent, int regen_frames, int regen_delay)
 {
 	int ammo;
-	int max = ent->myskills.abilities[MEDIC].max_ammo;
+	const int max = ent->myskills.abilities[MEDIC].max_ammo;
 	int *current = &ent->myskills.abilities[MEDIC].ammo;
 	int *delay = &ent->myskills.abilities[MEDIC].ammo_regenframe;
 
@@ -536,8 +536,8 @@ void p_medic_jump (edict_t *ent)
 
 void p_medic_firehb (edict_t *ent)
 {
-	int		damage = MEDIC_HB_INITIAL_DMG+MEDIC_HB_ADDON_DMG*ent->myskills.abilities[MEDIC].current_level;
-	int		speed = MEDIC_HB_INITIAL_SPEED+MEDIC_HB_ADDON_SPEED*ent->myskills.abilities[MEDIC].current_level;
+	const int		damage = MEDIC_HB_INITIAL_DMG+MEDIC_HB_ADDON_DMG*ent->myskills.abilities[MEDIC].current_level;
+	const int		speed = MEDIC_HB_INITIAL_SPEED+MEDIC_HB_ADDON_SPEED*ent->myskills.abilities[MEDIC].current_level;
 	vec3_t	forward, right, start;
 
 	if (!ent->myskills.abilities[MEDIC].ammo)
@@ -558,7 +558,7 @@ void p_medic_firebolt (edict_t *ent)
 {
 	int		min_dmg;
 	int		damage = MEDIC_BOLT_INITIAL_DMG+MEDIC_BOLT_ADDON_DMG*ent->myskills.abilities[MEDIC].current_level;
-	int		speed = MEDIC_BOLT_INITIAL_SPEED+MEDIC_BOLT_ADDON_SPEED*ent->myskills.abilities[MEDIC].current_level;
+	const int		speed = MEDIC_BOLT_INITIAL_SPEED+MEDIC_BOLT_ADDON_SPEED*ent->myskills.abilities[MEDIC].current_level;
 	vec3_t	forward, right, start;
 
 	// is this a firing frame?
@@ -660,9 +660,9 @@ void Cmd_PlayerToMedic_f (edict_t *ent)
 {
 	vec3_t	boxmin, boxmax;
 	//trace_t	tr;
-	int cost = MEDIC_INIT_COST;
+	const int cost = MEDIC_INIT_COST;
 	//Talent: More Ammo
-    int talentLevel = vrx_get_talent_level(ent, TALENT_MORE_AMMO);
+    const int talentLevel = vrx_get_talent_level(ent, TALENT_MORE_AMMO);
 
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: %s just called Cmd_PlayerToMedic_f()\n", ent->client->pers.netname);

@@ -214,7 +214,7 @@ int GetGender(edict_t *ent) {
 }
 
 char *GetPossesiveAdjective(edict_t *ent) {
-	int gender = GetGender(ent);
+	const int gender = GetGender(ent);
 	char *info;
 
 	switch( gender ) {
@@ -235,7 +235,7 @@ char *GetPossesiveAdjective(edict_t *ent) {
 }
 
 char *GetReflexivePronoun(edict_t *ent) {
-	int gender = GetGender(ent);
+	const int gender = GetGender(ent);
 	char *info;
 
 	switch( gender ) {
@@ -833,7 +833,7 @@ void TossClientWeapon (edict_t *self)
 	qboolean	quadfire;
 	float		dist;
 	vec3_t		v;
-	edict_t		*enemy = NULL;
+	const edict_t		*enemy = NULL;
 	float		spread;
 
 	if(self->enemy && self->enemy != self)
@@ -1102,8 +1102,8 @@ void InitClientPersistant (gclient_t *client)
 {
 	//K03 Begin
 	gitem_t		*item;
-	
-	int spectator=client->pers.spectator;
+
+	const int spectator=client->pers.spectator;
 
 	if (debuginfo->value > 1)
 		gi.dprintf("InitClientPersistant()\n");
@@ -1724,7 +1724,7 @@ void spectator_respawn (edict_t *ent)
 	// exceed max_spectators
 
 	if (ent->client->pers.spectator) {
-		char *value = Info_ValueForKey (ent->client->pers.userinfo, "spectator");
+		const char *value = Info_ValueForKey (ent->client->pers.userinfo, "spectator");
 		if (*spectator_password->string && 
 			strcmp(spectator_password->string, "none") && 
 			strcmp(spectator_password->string, value)) {
@@ -1753,7 +1753,7 @@ void spectator_respawn (edict_t *ent)
 	} else {
 		// he was a spectator and wants to join the game
 		// he must have the right password
-		char *value = Info_ValueForKey (ent->client->pers.userinfo, "password");
+		const char *value = Info_ValueForKey (ent->client->pers.userinfo, "password");
 		if (*password->string && strcmp(password->string, "none") && 
 			strcmp(password->string, value)) {
 			safe_cprintf(ent, PRINT_HIGH, "Password incorrect.\n");

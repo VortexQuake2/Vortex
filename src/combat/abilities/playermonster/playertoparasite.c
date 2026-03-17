@@ -13,7 +13,7 @@ qboolean ParasiteAttack(edict_t* ent, vec3_t start, vec3_t aimdir, float damage,
 
 static qboolean parasite_cantarget (edict_t *self, edict_t *target)
 {
-	int para_range = PARASITE_ATTACK_RANGE;
+	const int para_range = PARASITE_ATTACK_RANGE;
 
 	return (G_EntExists(target) /* && !que_typeexists(target->curses, CURSE_FROZEN) */
 		&& !OnSameTeam(self, target) && visible(self, target) && nearfov(self, target, 45, 45) 
@@ -24,7 +24,7 @@ static qboolean parasite_cantarget (edict_t *self, edict_t *target)
 qboolean myparasite_findtarget (edict_t *self)
 {
 	edict_t *other=NULL;
-	int para_range = PARASITE_ATTACK_RANGE;
+	const int para_range = PARASITE_ATTACK_RANGE;
 
 	while ((other = findclosestradius(other, self->s.origin, para_range)) != NULL)
 	{
@@ -44,7 +44,7 @@ void myparasite_fire (edict_t *self)
 {
 	int		pull;
 	int		damage;
-	int		para_range	= PARASITE_ATTACK_RANGE;
+	const int		para_range	= PARASITE_ATTACK_RANGE;
 	vec3_t	v, start, end, forward;
 	trace_t	tr;
 
@@ -338,7 +338,7 @@ void think_ability_parasite_attack(edict_t *ent)
 
 void Cmd_PlayerToParasite_f (edict_t *ent)
 {
-	int para_cubecost = PARASITE_INIT_COST;
+	const int para_cubecost = PARASITE_INIT_COST;
 
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: %s just called Cmd_PlayerToParasite_f()\n", ent->client->pers.netname);

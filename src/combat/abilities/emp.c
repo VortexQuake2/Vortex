@@ -187,7 +187,7 @@ void EMP_Explode (edict_t *self)
 {
     int		damage;
     float		radius;
-    float		time = EMP_INITIAL_TIME + (EMP_ADDON_TIME * self->monsterinfo.level);
+    const float		time = EMP_INITIAL_TIME + (EMP_ADDON_TIME * self->monsterinfo.level);
     edict_t		*e=NULL;
     qboolean	ammoBox;
 

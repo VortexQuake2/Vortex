@@ -12,8 +12,8 @@
 
 void bskull_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf) {
     int num;
-    int skill_level = self->owner->myskills.abilities[CACODEMON].current_level;
-    int damage = CACODEMON_ADDON_BURN * skill_level;
+    const int skill_level = self->owner->myskills.abilities[CACODEMON].current_level;
+    const int damage = CACODEMON_ADDON_BURN * skill_level;
 
     // deal direct damage
     if (G_EntExists(other))
@@ -33,7 +33,7 @@ void bskull_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
     SpawnFlames(self->owner, self->s.origin, num, damage, 100);
 
     // Talent: Range Mastery
-    int talentLevel = vrx_get_talent_level(self, TALENT_RANGE_MASTERY);
+    const int talentLevel = vrx_get_talent_level(self, TALENT_RANGE_MASTERY);
     if (talentLevel > 0)
         ShootFireballsAtNearbyEnemies(self, 200, talentLevel, skill_level);
     BecomeExplosion1(self);
@@ -160,9 +160,9 @@ void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
 void Cmd_PlayerToCacodemon_f(edict_t *ent) {
     vec3_t mins, maxs;
     //trace_t tr;
-    int caco_cubecost = CACODEMON_INIT_COST;
+    const int caco_cubecost = CACODEMON_INIT_COST;
     //Talent: More Ammo
-    int talentLevel = vrx_get_talent_level(ent, TALENT_MORE_AMMO);
+    const int talentLevel = vrx_get_talent_level(ent, TALENT_MORE_AMMO);
 
     if (debuginfo->value)
         gi.dprintf("DEBUG: %s just called Cmd_PlayerToCacodemon_f()\n", ent->client->pers.netname);

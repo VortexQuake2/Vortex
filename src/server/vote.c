@@ -302,7 +302,7 @@ void vrx_start_vote(edict_t *ent, int mode, int mapnum)
 	
   
 	//check for valid choice
-	int players = vrx_get_joined_players(false);
+	const int players = vrx_get_joined_players(false);
 	if (mode && (maplist->nummaps > mapnum))
 	{
 		if (maplist->maps[mapnum].min_players > players)
@@ -361,7 +361,7 @@ void vrx_start_vote(edict_t *ent, int mode, int mapnum)
 		G_PrintGreenText(tempBuffer2);
 		gi.sound(&g_edicts[0], CHAN_VOICE, gi.soundindex("misc/comp_up.wav"), 1, ATTN_NONE, 0);
 
-        uint64_t timeRem = (voteTimeLeft-level.framenum) / (uint64_t)sv_fps->value;
+        const uint64_t timeRem = (voteTimeLeft-level.framenum) / (uint64_t)sv_fps->value;
 		gi.bprintf (PRINT_HIGH, "Please place your vote by typing 'vote yes' or 'vote no' within the next %u seconds.\n", timeRem);
 
 	}
@@ -374,7 +374,7 @@ void vrx_start_vote(edict_t *ent, int mode, int mapnum)
 
 int V_VoteDone ()
 {
-	int players = vrx_get_joined_players(false);
+	const int players = vrx_get_joined_players(false);
 
 	if (players < 1)
 		return 0;
@@ -496,8 +496,8 @@ void ShowVoteMapMenu_handler(edict_t *ent, int option)
 
 	if (option > 20000)
 	{
-		int mode = (option / 1000) - 20;
-		int nextpage = option % 1000;		//page number we will end up in (page 0 = main menu)
+		const int mode = (option / 1000) - 20;
+		const int nextpage = option % 1000;		//page number we will end up in (page 0 = main menu)
 		if (nextpage != 0)
 			ShowVoteMapMenu(ent, nextpage, mode);
 		else
@@ -505,8 +505,8 @@ void ShowVoteMapMenu_handler(edict_t *ent, int option)
 	}
 	else
 	{
-		int mode = option / 1000;
-		int mapnum = option % 1000;
+		const int mode = option / 1000;
+		const int mapnum = option % 1000;
 		v_maplist_t *maplist = GetMapList(mode);
 
 		if (!maplist) return;
@@ -635,7 +635,7 @@ qboolean ThereIsOneLevelTen()
 	int i;
 	for (i = 1; i <= maxclients->value; i++)
 	{
-		edict_t* cl = g_edicts+i;
+		const edict_t* cl = g_edicts+i;
 		if (cl->client && !G_IsSpectator(cl) && cl->inuse)
 			if (cl->myskills.level >= 10)
 				return true;
@@ -648,7 +648,7 @@ void ShowVoteModeMenu(edict_t *ent)
 
 	int	players, lastline=6, min_players;
 
-	char *cmd2 = gi.argv(1);
+	const char *cmd2 = gi.argv(1);
 
 	//Voting enabled?
 	if (!voting->value)

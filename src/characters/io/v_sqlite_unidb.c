@@ -141,7 +141,7 @@ int cdb_get_id(char* playername)
 	sqlite3_stmt* stmt;
 	int r, id;
 
-	char sql[] = "SELECT char_idx FROM userdata WHERE playername=?";
+	const char sql[] = "SELECT char_idx FROM userdata WHERE playername=?";
 	sqlite3_prepare_v2(db, sql, sizeof sql, &stmt, NULL);
 	sqlite3_bind_text(stmt, 1, playername, strlen(playername), SQLITE_STATIC);
 	r = sqlite3_step(stmt);
@@ -160,8 +160,8 @@ int cdb_get_id(char* playername)
 // az begin
 qboolean cdb_save_runes(edict_t* player)
 {
-	int numRunes = CountRunes(player);
-	int id = cdb_get_id(player->client->pers.netname);
+	const int numRunes = CountRunes(player);
+	const int id = cdb_get_id(player->client->pers.netname);
 
 	cdb_begin_tran(db);
 
@@ -171,7 +171,7 @@ qboolean cdb_save_runes(edict_t* player)
 	//begin runes
 	for (int i = 0; i < numRunes; ++i)
 	{
-		int index = FindRuneIndex(i + 1, player);
+		const int index = FindRuneIndex(i + 1, player);
 		if (index != -1)
 		{
 			QUERY(va(VSFU_INSERTRMETA,
@@ -499,7 +499,7 @@ qboolean cdb_save_player(edict_t* player)
 
 qboolean cdb_saveclose_player(edict_t* player)
 {
-	int id = cdb_get_id(player->client->pers.netname);
+	const int id = cdb_get_id(player->client->pers.netname);
 	cdb_save_player(player);
 
 	QUERY(va("update stash set lock_char_id = NULL where lock_char_id=%d", id));
@@ -862,9 +862,9 @@ qboolean cdb_load_player(edict_t* player)
 
 	r = sqlite3_prepare_v2(db, format, strlen(format), &statement, NULL);
 	while(sqlite3_step(statement) == SQLITE_ROW) {
-		int pindex = sqlite3_column_int(statement, 1);
-		int param = sqlite3_column_int(statement, 2);
-		int level = sqlite3_column_int(statement, 3);
+		const int pindex = sqlite3_column_int(statement, 1);
+		const int param = sqlite3_column_int(statement, 2);
+		const int level = sqlite3_column_int(statement, 3);
 
 		switch (pindex)
 		{
@@ -907,7 +907,7 @@ qboolean cdb_load_player(edict_t* player)
 }
 
 int cdb_get_owner_id (edict_t* ent) {
-	char sql[] =
+	const char sql[] =
 		"select char_idx from userdata "
 		"where playername = (select owner from userdata where playername = :1) "
 		"or (playername = :1 and email is not null and LENGTH(email) > 0)";
@@ -930,7 +930,7 @@ int cdb_get_owner_id (edict_t* ent) {
 
 qboolean cdb_stash_store(edict_t* ent, int itemindex)
 {
-	int owner_id = cdb_get_owner_id(ent);
+	const int owner_id = cdb_get_owner_id(ent);
 	if (owner_id == -1)
 	{
 		stash_event_t* notif = vrx_malloc(sizeof(stash_event_t), TAG_GAME);
@@ -956,7 +956,7 @@ qboolean cdb_stash_store(edict_t* ent, int itemindex)
 
 		while (r == SQLITE_ROW)
 		{
-			int index_result = sqlite3_column_int(statement, 0);
+			const int index_result = sqlite3_column_int(statement, 0);
 
 			// we found a free slot
 			if (index < index_result)
@@ -1005,7 +1005,7 @@ qboolean cdb_stash_store(edict_t* ent, int itemindex)
 
 qboolean cdb_stash_get_page(edict_t* ent, int page_index, int items_per_page)
 {
-	int owner_id = cdb_get_owner_id(ent);
+	const int owner_id = cdb_get_owner_id(ent);
 	stash_page_event_t* evt = vrx_malloc(sizeof(stash_page_event_t), TAG_GAME);
 	evt->gds_connection_id = ent->gds_connection_id;
 	evt->gds_owner_id = owner_id;
@@ -1104,7 +1104,7 @@ qboolean cdb_stash_get_page(edict_t* ent, int page_index, int items_per_page)
 
 qboolean cdb_stash_open(edict_t* ent)
 {
-	int owner_id = cdb_get_owner_id(ent);
+	const int owner_id = cdb_get_owner_id(ent);
 	if (owner_id == -1)
 	{
 		stash_event_t* notif = vrx_malloc(sizeof(stash_event_t), TAG_GAME);
@@ -1140,7 +1140,7 @@ qboolean cdb_stash_open(edict_t* ent)
 		sqlite3_finalize(statement);
 	}
 
-	int id = cdb_get_id(ent->client->pers.netname);
+	const int id = cdb_get_id(ent->client->pers.netname);
 	QUERY(va("update stash set lock_char_id=%d where char_idx=%d", id, owner_id));
 
 	cdb_stash_get_page(ent, 0, sizeof ent->client->stash.page / sizeof(item_t));
@@ -1155,14 +1155,14 @@ qboolean cdb_stash_close_id(int owner_id)
 
 qboolean cdb_stash_close(edict_t* ent)
 {
-	int owner_id = cdb_get_owner_id(ent);
+	const int owner_id = cdb_get_owner_id(ent);
 	cdb_stash_close_id(owner_id);
 	return true;
 }
 
 void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean reset)
 {
-	int new_owner_id = cdb_get_id(owner_name);
+	const int new_owner_id = cdb_get_id(owner_name);
 
 	event_owner_error_t* evt = vrx_malloc(sizeof(event_owner_error_t), TAG_GAME);
 	strcpy(evt->owner_name, owner_name);
@@ -1171,11 +1171,11 @@ void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean rese
 
 	// if reset is true, make a sqlite query that resets the owner to null
 	if (reset) {
-		int id = cdb_get_id(ent->client->pers.netname);
+		const int id = cdb_get_id(ent->client->pers.netname);
 
 		sqlite3_stmt* statement;
 		int r;
-		char sql[] = "update userdata "
+		const char sql[] = "update userdata "
 			"set owner = '' "
 			"where char_idx = ?";
 
@@ -1198,11 +1198,11 @@ void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean rese
 		return;
 	}
 
-	int id = cdb_get_id(ent->client->pers.netname);
+	const int id = cdb_get_id(ent->client->pers.netname);
 
 	sqlite3_stmt* statement;
 	int r;
-	char sql[] = "update userdata "
+	const char sql[] = "update userdata "
 		"set owner = ? "
 		"from (select 1 as e from userdata o "
 		"       where "
@@ -1222,7 +1222,7 @@ void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean rese
 	sqlite3_step(statement);
 	sqlite3_finalize(statement);
 
-	int rows = sqlite3_changes(db);
+	const int rows = sqlite3_changes(db);
 	if (rows == 0) {
 		vrx_notify_owner_bad_password(evt);
 		vrx_free(evt);
@@ -1235,8 +1235,8 @@ void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean rese
 
 qboolean cdb_stash_take(edict_t* ent, int stash_index)
 {
-	int owner_id = cdb_get_owner_id(ent);
-	int id = cdb_get_id(ent->client->pers.netname);
+	const int owner_id = cdb_get_owner_id(ent);
+	const int id = cdb_get_id(ent->client->pers.netname);
 
 	// check if we're the owners of the stash before taking
 	{
@@ -1244,7 +1244,7 @@ qboolean cdb_stash_take(edict_t* ent, int stash_index)
 		int r;
 		QUERY_RESULT(va("select char_idx from stash where lock_char_id=%d", id));
 
-		qboolean got_result = r == SQLITE_ROW;
+		const qboolean got_result = r == SQLITE_ROW;
 		qboolean someone_else_locked_it = false;
 
 		if (got_result)

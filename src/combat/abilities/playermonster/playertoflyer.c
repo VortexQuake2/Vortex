@@ -138,7 +138,7 @@ void FlyerVerticalThrust (edict_t *ent, int speed, int max_speed)
 void PlayerAutoThrust (edict_t *ent, usercmd_t *ucmd)
 {
 	vec3_t	forward, right;
-	int max_velocity = FLYER_MAX_VELOCITY;
+	const int max_velocity = FLYER_MAX_VELOCITY;
 
 	AngleVectors(ent->s.angles, forward, right, NULL);
 
@@ -173,7 +173,7 @@ void FlyerCheckForImpact (edict_t *ent)
 	speed = VectorLength(ent->velocity);
 	if (ent->client->oldspeed-speed > FLYER_IMPACT_VELOCITY) // check for drastic decelleration
 	{
-		int flyer_selfdamage = FLYER_IMPACT_DAMAGE;
+		const int flyer_selfdamage = FLYER_IMPACT_DAMAGE;
 
 		gi.sound (ent, CHAN_AUTO, gi.soundindex ("tank/thud.wav"), 1, ATTN_NORM, 0);
 		T_Damage(ent, ent, ent, vec3_origin, ent->s.origin, 
@@ -383,9 +383,9 @@ void RunFlyerFrames (edict_t *ent, usercmd_t *ucmd)
 
 void Cmd_PlayerToFlyer_f (edict_t *ent)
 {
-	int flyer_cubecost = FLYER_INIT_COST;
+	const int flyer_cubecost = FLYER_INIT_COST;
 	//Talent: More Ammo
-    int talentLevel = vrx_get_talent_level(ent, TALENT_MORE_AMMO);
+    const int talentLevel = vrx_get_talent_level(ent, TALENT_MORE_AMMO);
 
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: %s just called Cmd_PlayerToFlyer_f()\n", ent->client->pers.netname);

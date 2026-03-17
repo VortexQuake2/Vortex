@@ -242,9 +242,9 @@ void vrx_join_redundant_mods(edict_t *rune, int mod_index)
 			} else
 			{
 				/* weapon mods are a little trickier*/
-				int mod = rune->vrxitem.modifiers[mod_index].index;
-				int weap_mod_index = vrx_weapon_mod_index_from_mod_index(mod);
-				int weap = vrx_weapon_index_from_mod_index(mod);
+				const int mod = rune->vrxitem.modifiers[mod_index].index;
+				const int weap_mod_index = vrx_weapon_mod_index_from_mod_index(mod);
+				const int weap = vrx_weapon_index_from_mod_index(mod);
 
 				if (weap_mod_index <= 3 && (weap_mod_index <= 2 || weap == WEAPON_SWORD))
 				{
@@ -317,7 +317,7 @@ void vrx_create_ability_modifier(edict_t *rune, qboolean is_class, int i, int ta
 	}
 	else
 	{
-		int modmax = max((int)roundf(5.0f * ((min(targ_level, 25.0f)) / 15.0f)), 1);
+		const int modmax = max((int)roundf(5.0f * ((min(targ_level, 25.0f)) / 15.0f)), 1);
 		rune->vrxitem.modifiers[i].value = min(rand_clt_distribute(1, modmax, 3), RUNE_ABILITY_MAXVALUE);
 	}
 
@@ -341,7 +341,7 @@ edict_t* vrx_do_random_rune_drop(edict_t* spawner, int targ_level) {
 	rune->vrxitem.quantity = 1;
 
 	//Spawn a random rune
-	int iRandom = GetRandom(0, 1000);
+	const int iRandom = GetRandom(0, 1000);
 
 	if (iRandom < CHANCE_UNIQUE)
 	{
@@ -448,7 +448,7 @@ void vrx_roll_rune_drop(edict_t *self, edict_t *attacker, qboolean debug)
 		// is this a world monster?
 		if (self->mtype && (self->svflags & SVF_MONSTER) && self->activator && !self->activator->client)
 		{
-            float levelRatio = (float) (self->monsterinfo.level + 1) / (attacker->myskills.level + 1);
+            const float levelRatio = (float) (self->monsterinfo.level + 1) / (attacker->myskills.level + 1);
 			if (IsABoss(self) || (self->mtype == M_COMMANDER))
 			//boss has a 100% chance to spawn a rune
                 temp = levelRatio * 100.0f;
@@ -517,7 +517,7 @@ void vrx_make_weapon_rune(edict_t* rune, int targ_level)
 {
 	int max_mods = 1 + (0.25 * targ_level); //This means lvl 16+ can get all 5 mods
 	int num_mods;
-	int weaponIndex = GetRandom(0, MAX_WEAPONS-1);	// random weapon
+	const int weaponIndex = GetRandom(0, MAX_WEAPONS-1);	// random weapon
 
 	
 	if (max_mods > MAX_WEAPONMODS)
@@ -531,7 +531,7 @@ void vrx_make_weapon_rune(edict_t* rune, int targ_level)
 		
 	for (int i = 0; i < num_mods; ++i)
 	{
-		int modIndex	= i;
+		const int modIndex	= i;
 
 		//25% chance for rune mod not to show up
 		if (GetRandom(0, 4) == 0)
@@ -563,7 +563,7 @@ void vrx_make_ability_rune(edict_t* rune, int targ_level)
 	if (max_mods > MAX_VRXITEMMODS)
 		max_mods = MAX_VRXITEMMODS;
 
-	int num_mods = rand_clt_distribute(1, max_mods, 6);
+	const int num_mods = rand_clt_distribute(1, max_mods, 6);
 
 	for (int i = 0; i < num_mods; ++i)
 	{
@@ -597,8 +597,8 @@ void vrx_spawn_normal_rune(edict_t *rune, int targ_level, int type)
 //************************************************************************************************
 
 void vrx_spawn_class_rune(edict_t *rune, int targ_level) {
-	int max_mods = 1 + (0.2 * targ_level);    //This means lvl 15+ can get 4 mods
-    int num_mods = min(rand_clt_distribute(1, max_mods, 3), 5); // az: from 1 - don't be a dick
+	const int max_mods = 1 + (0.2 * targ_level);    //This means lvl 15+ can get 4 mods
+    const int num_mods = min(rand_clt_distribute(1, max_mods, 3), 5); // az: from 1 - don't be a dick
     rune->vrxitem.itemtype = ITEM_CLASSRUNE;
     rune->vrxitem.classNum = GetRandom(1, CLASS_MAX - 1);    //class number
 
@@ -683,7 +683,7 @@ qboolean vrx_spawn_unique_rune(edict_t *rune, int index)
 		rewind(fptr);
 
 		//Find a unique
-		int maxlines = V_tFileCountLines(fptr, size);
+		const int maxlines = V_tFileCountLines(fptr, size);
 
 		if ((index == 0) || (index > maxlines))
 		{
@@ -1202,7 +1202,7 @@ void cmd_Drink(edict_t *ent, int itemtype, int index) {
 	{
 	case ITEM_POTION:
 		{
-			int max_hp = MAX_HEALTH(ent);
+			const int max_hp = MAX_HEALTH(ent);
 
 			if (ent->health < max_hp)
 			{
@@ -1264,10 +1264,10 @@ item_menu_t vrx_get_weapon_rune_string(item_t* item)
 
 	for (int i = 0; i < MAX_VRXITEMMODS; i++)
 	{
-		imodifier_t* mod = &item->modifiers[i];
+		const imodifier_t* mod = &item->modifiers[i];
 		if (mod->index > 0 && mod->value > 0 && mod->type == TYPE_WEAPON)
 		{
-			int weap = vrx_weapon_index_from_mod_index(mod->index);
+			const int weap = vrx_weapon_index_from_mod_index(mod->index);
 			wstring = GetWeaponString(weap);
 			if (mod->value > max) max = mod->value;
 		}
@@ -1324,7 +1324,7 @@ item_menu_t vrx_get_ability_rune_string(item_t* item)
 
 	for (int i = 0; i < MAX_VRXITEMMODS; i++)
 	{
-		imodifier_t* mod = &item->modifiers[i];
+		const imodifier_t* mod = &item->modifiers[i];
 		if (mod->index > 0 && mod->value > 0 && mod->type == TYPE_ABILITY && max < mod->value)
 		{
 			max = mod->value;
@@ -1340,12 +1340,12 @@ item_menu_t vrx_get_ability_rune_string(item_t* item)
 
 item_menu_t vrx_get_combo_rune_string(item_t* item)
 {
-	char *astring = "Combo";
+	const char *astring = "Combo";
 	int max = 0;
 
 	for (int i = 0; i < MAX_VRXITEMMODS; i++)
 	{
-		imodifier_t* mod = &item->modifiers[i];
+		const imodifier_t* mod = &item->modifiers[i];
 		if (mod->index > 0 && mod->value > 0 && mod->type == TYPE_ABILITY && max < mod->value)
 		{
 			max = mod->value;

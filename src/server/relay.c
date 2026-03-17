@@ -54,9 +54,9 @@ void vrx_relay_connect() {
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    cvar_t* server = gi.cvar("vrx_relay_server", "", 0);
-    cvar_t* port = gi.cvar("vrx_relay_port", "9999", 0);
-    cvar_t* key = gi.cvar("vrx_relay_key", "", 0);
+    const cvar_t* server = gi.cvar("vrx_relay_server", "", 0);
+    const cvar_t* port = gi.cvar("vrx_relay_port", "9999", 0);
+    const cvar_t* key = gi.cvar("vrx_relay_key", "", 0);
 
     if (strlen(server->string) < 1)
     {
@@ -66,14 +66,14 @@ void vrx_relay_connect() {
 
     gi.dprintf("RS: Connecting to relay server...\n");
 
-    int rv = getaddrinfo(server->string, port->string, &hints, &servinfo);
+    const int rv = getaddrinfo(server->string, port->string, &hints, &servinfo);
     if (rv != 0) {
         gi.dprintf("RS: Failed to resolve relay server address. Errno: %s.\n", gai_strerror(rv));
         return;
     }
 
     qboolean connected = false;
-    for (struct addrinfo* p = servinfo; p != NULL; p = p->ai_next) {
+    for (const struct addrinfo* p = servinfo; p != NULL; p = p->ai_next) {
         vrx_relay_socket = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
         if (vrx_relay_socket == -1) {
             continue;
@@ -81,11 +81,11 @@ void vrx_relay_connect() {
 
         char ip[INET6_ADDRSTRLEN];
         if (p->ai_family == AF_INET) {
-            struct sockaddr_in* addr = (struct sockaddr_in*)p->ai_addr;
+            const struct sockaddr_in* addr = (struct sockaddr_in*)p->ai_addr;
             inet_ntop(p->ai_family, &addr->sin_addr, ip, sizeof ip);
             ip[INET_ADDRSTRLEN] = '\0';
         } else {
-            struct sockaddr_in6* addr = (struct sockaddr_in6*)p->ai_addr;
+            const struct sockaddr_in6* addr = (struct sockaddr_in6*)p->ai_addr;
             inet_ntop(p->ai_family, &addr->sin6_addr, ip, sizeof ip);
         }
 
@@ -140,7 +140,7 @@ void vrx_relay_disconnect() {
 
 void send_sbuffer(SOCKET s, msgpack_sbuffer* sbuf) {
     int sent = 0;
-    size_t size = sizeof (uint32_t) * 2 + sbuf->size;
+    const size_t size = sizeof (uint32_t) * 2 + sbuf->size;
 
     if (sbuf->size > UINT_MAX) {
         gi.dprintf("RS: Message size is too large.\n");
@@ -159,7 +159,7 @@ void send_sbuffer(SOCKET s, msgpack_sbuffer* sbuf) {
     memcpy(data + HEADER_SIZE, sbuf->data, sbuf->size);
 
     while (sent < size) {
-        int n = send(s, data + sent, size - sent, 0);
+        const int n = send(s, data + sent, size - sent, 0);
         if (n == -1) {
 #ifdef WIN32
             int err = WSAGetLastError();
@@ -167,7 +167,7 @@ void send_sbuffer(SOCKET s, msgpack_sbuffer* sbuf) {
                 continue;
             }
 #else
-            int err = errno;
+            const int err = errno;
             if (errno == EWOULDBLOCK) {
                 continue;
             }
@@ -368,7 +368,7 @@ qboolean vrx_relay_try_message_relay(msgpack_object_str *type, msgpack_object_ar
     memcpy(msg, message->ptr, message->size);
 
     for (int j = 1; j <= game.maxclients; j++) {
-        edict_t *other = &g_edicts[j];
+        const edict_t *other = &g_edicts[j];
         if (!other->inuse)
             continue;
         if (!other->client)
@@ -394,7 +394,7 @@ qboolean vrx_relay_try_authorized(msgpack_object_str *type, msgpack_object_array
         return false;
     }
 
-    msgpack_object_array* result = arr->ptr[1].type == MSGPACK_OBJECT_ARRAY ? &arr->ptr[1].via.array : NULL;
+    const msgpack_object_array* result = arr->ptr[1].type == MSGPACK_OBJECT_ARRAY ? &arr->ptr[1].via.array : NULL;
     if (result == NULL) {
         gi.dprintf("RS: Received relay message does not have a valid message field.\n");
         *invalid = true;
@@ -436,11 +436,11 @@ relay_parse_result_t vrx_relay_parse_message(size_t* start) {
         return RESULT_NEED_MORE_DATA;
     }
 
-    uint8_t* curbuf = (uint8_t*)&pending_buf[*start];
+    const uint8_t* curbuf = (uint8_t*)&pending_buf[*start];
     // az: read the magic and size, little-endian
 #ifdef LITTLE_ENDIAN
-    uint32_t magic = curbuf[0] | curbuf[1] << 8 | curbuf[2] << 16 | curbuf[3] << 24;
-    uint32_t size = curbuf[4] | curbuf[5] << 8 | curbuf[6] << 16 | curbuf[7] << 24;
+    const uint32_t magic = curbuf[0] | curbuf[1] << 8 | curbuf[2] << 16 | curbuf[3] << 24;
+    const uint32_t size = curbuf[4] | curbuf[5] << 8 | curbuf[6] << 16 | curbuf[7] << 24;
 #elif BIG_ENDIAN
     uint32_t magic = curbuf[3] | curbuf[2] << 8 | curbuf[1] << 16 | curbuf[0] << 24;
     uint32_t size = curbuf[7] | curbuf[6] << 8 | curbuf[5] << 16 | curbuf[4] << 24;
@@ -461,7 +461,7 @@ relay_parse_result_t vrx_relay_parse_message(size_t* start) {
     msgpack_unpacked result;
     msgpack_unpacked_init(&result);
 
-    msgpack_unpack_return ret = msgpack_unpack_next(&result, curbuf + HEADER_SIZE, size, &off);
+    const msgpack_unpack_return ret = msgpack_unpack_next(&result, curbuf + HEADER_SIZE, size, &off);
     if (ret == MSGPACK_UNPACK_CONTINUE) {
         return RESULT_NEED_MORE_DATA;
     }
@@ -559,7 +559,7 @@ void vrx_relay_recv() {
     size_t start = 0;
     qboolean continue_parsing = true;
     while (continue_parsing) {
-        relay_parse_result_t res = vrx_relay_parse_message(&start);
+        const relay_parse_result_t res = vrx_relay_parse_message(&start);
 
         switch (res) {
             case RESULT_INVALID:

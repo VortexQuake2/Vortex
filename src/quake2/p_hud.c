@@ -1095,7 +1095,7 @@ void G_SetStats(edict_t *ent)
 	// az invasion stuff.
 	if (invasion->value && level.time > pregame_time->value && !level.intermissiontime)
 	{
-		int invtime = ceil(invasion_data.limitframe - level.time);
+		const int invtime = ceil(invasion_data.limitframe - level.time);
 		if (invtime > 0)
 			ent->client->ps.stats[STAT_INVASIONTIME] = invtime;
 		else

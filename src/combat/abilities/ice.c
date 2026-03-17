@@ -186,7 +186,7 @@ void icebolt_think(edict_t* self)
 
 void glacial_spike_sound(edict_t* self)
 {
-	float r = random();
+	const float r = random();
 	if (r < 0.33)
 		gi.sound(self, CHAN_WEAPON, gi.soundindex("abilities/icespike1.wav"), 1, ATTN_NORM, 0);
 	else if (r < 0.66)
@@ -320,7 +320,7 @@ void Cmd_GlacialSpike_f(edict_t* ent, float skill_mult, float cost_mult)
 	if (!V_CanUseAbilities(ent, GLACIAL_SPIKE, cost, true))
 		return;
 
-	int skill_level = ent->myskills.abilities[GLACIAL_SPIKE].current_level;
+	const int skill_level = ent->myskills.abilities[GLACIAL_SPIKE].current_level;
 
 	chill_duration = (GLACIAL_SPIKE_INITIAL_CHILL + GLACIAL_SPIKE_ADDON_CHILL * skill_level) * skill_mult;
 	freeze_duration = (GLACIAL_SPIKE_INITIAL_FREEZE + GLACIAL_SPIKE_ADDON_FREEZE * skill_level) * skill_mult;
@@ -340,7 +340,7 @@ void Cmd_GlacialSpike_f(edict_t* ent, float skill_mult, float cost_mult)
 	fire_icebolt(ent, start, forward, damage, radius, speed, 2 * skill_level, chill_duration, freeze_duration);
 
 	//Talent: Wizardry - makes spell timer ability-specific instead of global
-	int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
+	const int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
 	if (talentLevel > 0)
 	{
 		ent->myskills.abilities[GLACIAL_SPIKE].delay = level.time + GLACIAL_SPIKE_DELAY;
@@ -419,18 +419,18 @@ void fire_iceshard(edict_t* self, vec3_t start, vec3_t dir, float speed, int dam
 
 void frozenorb_attack(edict_t* self, int num_shards, qboolean explode)
 {
-	float turn_degrees = 360 / num_shards;
+	const float turn_degrees = 360 / num_shards;
 	vec3_t forward;
 
 	//Talent: Nova Orb - adds chance for frozen orb to explode into a frost nova
-	int talentLevel = vrx_get_talent_level(self->owner, TALENT_NOVA_ORB);
-	float chance = 0.2 * talentLevel;
+	const int talentLevel = vrx_get_talent_level(self->owner, TALENT_NOVA_ORB);
+	const float chance = 0.2 * talentLevel;
 	if (explode && talentLevel > 0 && chance > random())
 	{
-		int skill_level = self->owner->myskills.abilities[NOVA].current_level;
-		int damage = (FROST_NOVA_INITIAL_DAMAGE + FROST_NOVA_ADDON_DAMAGE * skill_level) * vrx_get_synergy_mult(self->owner, NOVA);
-		float radius = FROST_NOVA_INITIAL_RADIUS + FROST_NOVA_ADDON_RADIUS * skill_level;
-		float chill = (FROST_NOVA_INITIAL_CHILL + FROST_NOVA_ADDON_CHILL * skill_level);
+		const int skill_level = self->owner->myskills.abilities[NOVA].current_level;
+		const int damage = (FROST_NOVA_INITIAL_DAMAGE + FROST_NOVA_ADDON_DAMAGE * skill_level) * vrx_get_synergy_mult(self->owner, NOVA);
+		const float radius = FROST_NOVA_INITIAL_RADIUS + FROST_NOVA_ADDON_RADIUS * skill_level;
+		const float chill = (FROST_NOVA_INITIAL_CHILL + FROST_NOVA_ADDON_CHILL * skill_level);
 
 		fire_nova(self, self->owner, damage, radius, 2 * skill_level, chill);
 	}
@@ -557,14 +557,14 @@ void Cmd_FrozenOrb_f(edict_t* ent, float skill_mult, float cost_mult)
 {
 	vec3_t	forward, right, start, offset;
 
-	int cost = FROZEN_ORB_COST * cost_mult;
+	const int cost = FROZEN_ORB_COST * cost_mult;
 
 	if (!V_CanUseAbilities(ent, FROZEN_ORB, cost, true))
 		return;
 
-	int	skill_level = ent->myskills.abilities[FROZEN_ORB].current_level;
-	int damage = (FROZEN_ORB_INITIAL_DAMAGE + FROZEN_ORB_ADDON_DAMAGE * skill_level) * (skill_mult * vrx_get_synergy_mult(ent, FROZEN_ORB));
-	float chill_duration = (FROZEN_ORB_INITIAL_CHILL + FROZEN_ORB_ADDON_CHILL * skill_level) * skill_mult;
+	const int	skill_level = ent->myskills.abilities[FROZEN_ORB].current_level;
+	const int damage = (FROZEN_ORB_INITIAL_DAMAGE + FROZEN_ORB_ADDON_DAMAGE * skill_level) * (skill_mult * vrx_get_synergy_mult(ent, FROZEN_ORB));
+	const float chill_duration = (FROZEN_ORB_INITIAL_CHILL + FROZEN_ORB_ADDON_CHILL * skill_level) * skill_mult;
 
 	// get starting position and forward vector
 	AngleVectors(ent->client->v_angle, forward, right, NULL);
@@ -574,7 +574,7 @@ void Cmd_FrozenOrb_f(edict_t* ent, float skill_mult, float cost_mult)
 	fire_frozenorb(ent, start, forward, damage, (2 * skill_level), chill_duration);
 
 	//Talent: Wizardry - makes spell timer ability-specific instead of global
-	int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
+	const int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
 	if (talentLevel > 0)
 	{
 		ent->myskills.abilities[FROZEN_ORB].delay = level.time + FROZEN_ORB_DELAY;

@@ -294,7 +294,7 @@ mmove_t gladiator_move_attack_gun = {FRAME_attack4, FRAME_attack8, gladiator_fra
 
 void gladiator_lightning_attack (edict_t *self)
 {
-	float r = random();
+	const float r = random();
 
 	// medium range (30% chance LS, 70% chance CL)
 	if (entdist(self, self->enemy) <= 512)

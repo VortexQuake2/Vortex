@@ -905,7 +905,7 @@ class_rune_string_t weaponmaster_rune_val = {
 };
 
 const char *GetRuneValString(item_t *rune) {
-    int level = rune->itemLevel;
+    const int level = rune->itemLevel;
 
     switch (rune->itemtype) {
         case ITEM_WEAPON:
@@ -939,7 +939,7 @@ const char *GetRuneValString(item_t *rune) {
             }
         }
         case ITEM_CLASSRUNE: {
-            int idx = min(level / 2, 6);
+            const int idx = min(level / 2, 6);
             switch (rune->classNum) {
                 case CLASS_SOLDIER:
                     return soldier_rune_val[idx];
@@ -1355,7 +1355,7 @@ void ReadString(char *buf, FILE *fptr) {
 //************************************************************************************************
 
 void WriteString(FILE *fptr, char *String) {
-    int Length = strlen(String);
+    const int Length = strlen(String);
     WriteChar(fptr, (char) Length);
     fwrite(String, Length, 1, fptr);
 }
@@ -1590,7 +1590,7 @@ char *V_TruncateString(char *string, int newStringLength) {
 
 void V_RegenAbilityAmmo(edict_t *ent, int ability_index, int regen_frames, int regen_delay) {
     int ammo;
-    int max = ent->myskills.abilities[ability_index].max_ammo;
+    const int max = ent->myskills.abilities[ability_index].max_ammo;
     int *current = &ent->myskills.abilities[ability_index].ammo;
     int *delay = &ent->myskills.abilities[ability_index].ammo_regenframe;
 
@@ -2291,8 +2291,8 @@ void EmpEffects(edict_t *ent);
 void SV_AddBlend(float r, float g, float b, float a, float *v_blend);
 
 void V_ShellNonAbilityEffects(edict_t *ent) {
-    qboolean finalEffects = true;
-    edict_t *cl_ent = G_GetClient(ent);
+    const qboolean finalEffects = true;
+    const edict_t *cl_ent = G_GetClient(ent);
 
     // ********** NON-ENTITY SPECIFIC EFFECTS BELOW **********
     // drones flash briefly when selected for orders

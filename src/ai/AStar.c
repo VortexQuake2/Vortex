@@ -222,7 +222,7 @@ static int AStar_FindInOpen_BestF ( void )
 
 	for ( i=0; i<alist_numNodes; i++ )
 	{
-		int node = alist[i];
+		const int node = alist[i];
 
 		if( astarnodes[node].list != OPENLIST )
 			continue;

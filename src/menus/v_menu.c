@@ -434,8 +434,8 @@ void OpenRespawnWeapMenu(edict_t *ent)
 
 void classmenu_handler (edict_t *ent, int option)
 {
-	int page_num = (option / 1000);
-	int page_choice = (option % 1000);
+	const int page_num = (option / 1000);
+	const int page_choice = (option % 1000);
 	int i;
 
 	if ((page_num == 1) && (page_choice == 1))
@@ -633,7 +633,7 @@ void OpenGeneralMenu (edict_t *ent)
 	else
         menu_add_line(ent, va("Upgrade talents (%d)", ent->myskills.talents.talentPoints), 3);
 
-	int prestigePotential = vrx_prestige_get_upgrade_points(ent->myskills.experience);
+	const int prestigePotential = vrx_prestige_get_upgrade_points(ent->myskills.experience);
 	if (prestigePotential)
 		menu_add_line(ent, va("Prestige %d (%d)", ent->myskills.prestige.total, prestigePotential), 20);
 	else

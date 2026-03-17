@@ -74,7 +74,7 @@ void ai_eval_targets() {
 			VectorSubtract(potential_targets[i]->s.origin, potential_targets[j]->s.origin, eorg);
 
 			// make use of that symmetry
-			float len = VectorLengthSqr(eorg);
+			const float len = VectorLengthSqr(eorg);
 			//gi.dprintf("%s %s distance to %s %s is %.0f\n", potential_targets[i]->classname, V_GetMonsterName(potential_targets[i]), potential_targets[j]->classname, V_GetMonsterName(potential_targets[j]), len);
 			potential_target_distances[i][j] = len;
 			potential_target_distances[j][i] = len;
@@ -116,7 +116,7 @@ edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t* self, float rad)
 	for (int i = 0; i < potential_target_count; i++)
 	{
 		edict_t* from = potential_targets[i];
-		float vlen = potential_target_distances[self->monsterinfo.target_index][i];
+		const float vlen = potential_target_distances[self->monsterinfo.target_index][i];
 
 		/*for (int j = 0; j < 3; j++)
 			eorg[j] = self->s.origin[j] - (from->s.origin[j] + (from->mins[j] + from->maxs[j])*0.5);
@@ -1686,7 +1686,7 @@ qboolean M_CanCircleStrafe (edict_t *self, edict_t *target)
 	if (entdist(self, target) > 256)
 		return false;
 	// target must be within +/- 18 units (1 step) on the Z axis
-	if (!self->flags & FL_FLY && fabs(self->absmin[2] - target->absmin[2]) > 18)
+	if (!(self->flags & FL_FLY) && fabs(self->absmin[2] - target->absmin[2]) > 18)
 		return false;
 	// check if anything is blocking our attack
 	G_EntMidPoint(self, start);
@@ -1835,11 +1835,11 @@ void drone_ai_run1 (edict_t *self, float dist)
 			return;
 		}
 
-		if (DRONE_DEBUG)
-		{
-			if (self->monsterinfo.last_sighting)
-				gi.dprintf("drone last sighting: %f %f %f\n", self->monsterinfo.last_sighting[0], self->monsterinfo.last_sighting[1], self->monsterinfo.last_sighting[2]);
-		}
+		// if (DRONE_DEBUG)
+		// {
+		// 	if (self->monsterinfo.last_sighting)
+		// 		gi.dprintf("drone last sighting: %f %f %f\n", self->monsterinfo.last_sighting[0], self->monsterinfo.last_sighting[1], self->monsterinfo.last_sighting[2]);
+		// }
 		/* az note 2: move towards last sighting */
 		// goal position is within +/- 1 step of our elevation and we have a clear line of sight
 		//FIXME: if goal entity is taller than us (e.g. jorg), this wont work very well!
@@ -1850,16 +1850,17 @@ void drone_ai_run1 (edict_t *self, float dist)
 		else
 			maxZ = 18;// step size
 
-		if (self->monsterinfo.last_sighting)
-		{
-			// if we lose line-of-sight to the last known coordinates of our goal, then delay any rettempt of a direct approach
-			// this is to prevent rapidly going back and forth between last sighting coordinates and waypoints, causing the monster to get stuck
-			if ((clearPath = G_IsClearPath(self, MASK_SOLID, self->s.origin, self->monsterinfo.last_sighting)) == false)
-				self->monsterinfo.trail_time = level.time + 2.0;
-		}
+		// if (self->monsterinfo.last_sighting)
+		// {
+		// 	// if we lose line-of-sight to the last known coordinates of our goal, then delay any rettempt of a direct approach
+		// 	// this is to prevent rapidly going back and forth between last sighting coordinates and waypoints, causing the monster to get stuck
+		// 	if ((clearPath = G_IsClearPath(self, MASK_SOLID, self->s.origin, self->monsterinfo.last_sighting)) == false)
+		// 		self->monsterinfo.trail_time = level.time + 2.0;
+		// }
 
 		if (DRONE_DEBUG)
 		{
+			/*
 			if (self->monsterinfo.last_sighting)
 			{
 				float Zdelta = fabs(self->s.origin[2] - self->monsterinfo.last_sighting[2]);
@@ -1870,6 +1871,7 @@ void drone_ai_run1 (edict_t *self, float dist)
 			{
 				gi.dprintf("can't move to goal with no last sighting!\n");
 			}
+			*/
 
 		}
 
@@ -2471,9 +2473,9 @@ void drone_togglelight (edict_t *self)
 }
 
 void drone_dodgeprojectiles (edict_t *self) {
-    qboolean alive = self->health > 0;
-    qboolean can_dodge = self->monsterinfo.dodge && (self->monsterinfo.aiflags & AI_DODGE);
-    qboolean stand_ground = (self->monsterinfo.aiflags & AI_STAND_GROUND);
+    const qboolean alive = self->health > 0;
+    const qboolean can_dodge = self->monsterinfo.dodge && (self->monsterinfo.aiflags & AI_DODGE);
+    const qboolean stand_ground = (self->monsterinfo.aiflags & AI_STAND_GROUND);
 
     // dodge incoming projectiles
     if (alive && can_dodge && !stand_ground) // don't dodge if we are holding position
@@ -2595,7 +2597,7 @@ void M_UpdateLastSight (edict_t *self)
 
 void drone_return(edict_t* self)
 {
-	edict_t* leader = self->monsterinfo.leader;
+	const edict_t* leader = self->monsterinfo.leader;
 
 	if (self->mtype != M_DECOY)
 		return;

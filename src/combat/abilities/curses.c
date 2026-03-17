@@ -82,7 +82,7 @@ void Healing_think(edict_t *self)
 	//Find my slot
 	que_t *slot = NULL;	
 	int heal_amount = HEALING_HEAL_BASE + HEALING_HEAL_BONUS * self->owner->myskills.abilities[HEALING].current_level;
-	float cooldown = 1.0;
+	const float cooldown = 1.0;
 
 	slot = que_findtype(self->enemy->curses, NULL, HEALING);
 
@@ -230,7 +230,7 @@ void curse_think(edict_t *self)
 qboolean curse_add(edict_t *target, edict_t *caster, int type, int curse_level, float duration)
 {
 	edict_t *curse;
-	que_t	*slot = NULL;
+	const que_t	*slot = NULL;
 	
 	if (type != BLESS && type != HEALING && type != DEFLECT)
 		if (target == caster)
@@ -696,7 +696,7 @@ void Cmd_Curse(edict_t *ent)
 {
 	int range, radius, talentLevel, curseLevel, cost=CURSE_COST;
 	float duration;
-	edict_t *target = NULL;
+	const edict_t *target = NULL;
 
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: %s just called Cmd_Curse()\n", ent->client->pers.netname);
@@ -1014,7 +1014,7 @@ void Cmd_Healing(edict_t *ent)
 	}
 	if (target != NULL)
 	{
-		que_t *slot = NULL;
+		const que_t *slot = NULL;
 
 		//Finish casting the spell
 		ent->client->ability_delay = level.time + HEALING_DELAY;
@@ -1093,7 +1093,7 @@ void Cmd_Bless(edict_t *ent)
 
 	if (target != NULL)
 	{
-		que_t *slot = NULL;
+		const que_t *slot = NULL;
 
 		//Finish casting the spell
 		ent->client->ability_delay = level.time + BLESS_DELAY;
@@ -1201,7 +1201,7 @@ void Cmd_Deflect_f(edict_t *ent)
 
 	if (target != NULL)
 	{
-		que_t *slot = NULL;
+		const que_t *slot = NULL;
 
 		//Finish casting the spell
 		ent->client->ability_delay = level.time + DEFLECT_DELAY;
@@ -1249,7 +1249,7 @@ void MindAbsorb(edict_t *ent)
 	int radius;  
 	int take;  
 	int total;
-	int abilityLevel = ent->myskills.abilities[MIND_ABSORB].current_level;   
+	const int abilityLevel = ent->myskills.abilities[MIND_ABSORB].current_level;   
 	
 	if(ent->myskills.abilities[MIND_ABSORB].disable)   
 		return;   
@@ -1416,8 +1416,8 @@ int SelectRandomTopCurse(edict_t* player)
 
 	// Find the two highest level curses
 	for (int i = 0; i < NUM_CURSES; i++) {
-		int index = CURSE_INDICES[i];  // Get the actual ability index
-		int level = player->myskills.abilities[index].current_level;
+		const int index = CURSE_INDICES[i];  // Get the actual ability index
+		const int level = player->myskills.abilities[index].current_level;
 
 		if (level > highest_level) {
 			second_highest_level = highest_level;

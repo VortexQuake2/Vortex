@@ -17,7 +17,7 @@ qboolean CheckAuraOwner (edict_t *self, int aura_cost)
 qboolean que_valident (que_t *que)
 {
 	// 3.5 aura/curse is no longer valid if the owner dies
-	qboolean owner_valid = (que->ent && que->ent->inuse && que->time > level.time);
+	const qboolean owner_valid = (que->ent && que->ent->inuse && que->time > level.time);
 
 	if (owner_valid) {
 		if (pvm->value) return G_EntExists(que->ent->owner);
@@ -337,7 +337,7 @@ void holyfreeze_think (edict_t *self)
 	// use cubes
 	if (!(sf2qf(level.framenum) % DEFAULT_AURA_FRAMES))
 	{
-		int cube_cost = DEFAULT_AURA_COST;
+		const int cube_cost = DEFAULT_AURA_COST;
 
 		self->owner->client->pers.inventory[power_cube_index] -= cube_cost;
 	}
@@ -440,7 +440,7 @@ void Cmd_HolyFreeze(edict_t *ent)
 	if(ent->myskills.abilities[HOLY_FREEZE].disable)
 		return;
 
-	int aura_level = ent->myskills.abilities[HOLY_FREEZE].current_level;
+	const int aura_level = ent->myskills.abilities[HOLY_FREEZE].current_level;
 
 	if (!G_CanUseAbilities(ent, aura_level, 0))
 		return;
@@ -488,7 +488,7 @@ void salvation_think (edict_t *self)
 	// use cubes
 	if (!(sf2qf(level.framenum) % DEFAULT_AURA_FRAMES))
 	{
-		int cube_cost = DEFAULT_AURA_COST;
+		const int cube_cost = DEFAULT_AURA_COST;
 
 		self->owner->client->pers.inventory[power_cube_index] -= cube_cost;
 	}
@@ -556,7 +556,7 @@ void Cmd_Salvation(edict_t *ent)
 	if(ent->myskills.abilities[SALVATION].disable)
 		return;
 
-	int aura_level = ent->myskills.abilities[SALVATION].current_level;
+	const int aura_level = ent->myskills.abilities[SALVATION].current_level;
 	if (!G_CanUseAbilities(ent, aura_level, 0))
 		return;
 
@@ -607,7 +607,7 @@ void thorns_think(edict_t* self)
 	// use cubes
 	if (!(sf2qf(level.framenum) % DEFAULT_AURA_FRAMES))
 	{
-		int cube_cost = DEFAULT_AURA_COST;
+		const int cube_cost = DEFAULT_AURA_COST;
 
 		if (self->owner->client)
 			self->owner->client->pers.inventory[power_cube_index] -= cube_cost;

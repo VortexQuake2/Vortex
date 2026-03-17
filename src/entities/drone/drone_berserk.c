@@ -319,7 +319,7 @@ mmove_t berserk_move_pain_long = { FRAME_painb1, FRAME_painb20, berserk_frames_p
 
 void berserk_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
-	double rng = random();
+	const double rng = random();
 	if (self->health < (self->max_health / 2))
 		self->s.skinnum = 1;
 
@@ -414,7 +414,7 @@ void berserk_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 void berserk_attack (edict_t *self)
 {
 	float	r = random();
-	float	dist = entdist(self, self->enemy);
+	const float	dist = entdist(self, self->enemy);
 
 	if (dist > 128)
 		return;

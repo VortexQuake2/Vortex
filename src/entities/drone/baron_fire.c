@@ -136,7 +136,7 @@ mmove_t baron_fire_move_pain = { FRAME_pain101, FRAME_pain106, baron_fire_frames
 
 void baron_fire_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
-	double rng = random();
+	const double rng = random();
 	//if (self->health < (self->max_health / 2))
 	//	self->s.skinnum = 1;
 
@@ -188,7 +188,7 @@ void baron_fire_check_landing(edict_t* self)
 
 void baron_fire_jump(edict_t* self)
 {
-	int	speed = 1000;
+	const int	speed = 1000;
 	vec3_t	forward, start;
 
 	//gi.dprintf("%d: baron_fire_jump %d\n", (int)(level.framenum), self->s.frame);
@@ -235,7 +235,7 @@ mmove_t baron_fire_move_jump = { FRAME_jump01, FRAME_jump16, baron_fire_frames_j
 void baron_fire_meteor(edict_t* self)
 {
 	int damage, radius, speed;
-	float slvl = drone_damagelevel(self);
+	const float slvl = drone_damagelevel(self);
 
 	if (!G_EntExists(self->enemy))
 		return;
@@ -386,7 +386,7 @@ void circle_of_flames(edict_t* self, int count, int damage, int burn_damage, flo
 void fire_baron_cof_attack(edict_t* self)
 {
 	int damage, burn;
-	float slvl = drone_damagelevel(self);
+	const float slvl = drone_damagelevel(self);
 
 	damage = METEOR_INITIAL_DMG + METEOR_ADDON_DMG * slvl;
 	burn = 0.1 * damage;
@@ -422,7 +422,7 @@ void baron_fire_fireball(edict_t* self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	float slvl = drone_damagelevel(self);
+	const float slvl = drone_damagelevel(self);
 
 	damage = FIREBALL_INITIAL_DAMAGE + FIREBALL_ADDON_DAMAGE * slvl;
 	radius = FIREBALL_INITIAL_RADIUS + FIREBALL_ADDON_RADIUS * slvl;
@@ -466,9 +466,9 @@ void baron_fire_attack_sound(edict_t* self)
 
 void baron_fire_stand_attack(edict_t* self)
 {
-	float	zDelta = fabs(self->absmin[2] - self->enemy->absmin[2]);
-	float	dist = entdist(self, self->enemy);
-	float	r = random();
+	const float	zDelta = fabs(self->absmin[2] - self->enemy->absmin[2]);
+	const float	dist = entdist(self, self->enemy);
+	const float	r = random();
 
 	if (dist <= 512)
 	{
@@ -485,9 +485,9 @@ void baron_fire_stand_attack(edict_t* self)
 
 void baron_fire_move_attack(edict_t* self)
 {
-	float	zDelta = fabs(self->absmin[2] - self->enemy->absmin[2]);
-	float	dist = entdist(self, self->enemy);
-	float	r = random();
+	const float	zDelta = fabs(self->absmin[2] - self->enemy->absmin[2]);
+	const float	dist = entdist(self, self->enemy);
+	const float	r = random();
 
 	if (dist <= 256)
 	{

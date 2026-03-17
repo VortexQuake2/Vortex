@@ -198,7 +198,7 @@ void TradeFinalMenu_handler(edict_t *ent, int option)
 	else if(option % 10 == 0)
 	{
 		int type;
-		int itemnumber = (option / 10) - 1;
+		const int itemnumber = (option / 10) - 1;
 // GHz START
 		// 3.7 make sure this item is still valid
 		// it is possible the other player somehow unselected it
@@ -272,7 +272,7 @@ void TradeFinalMenu(edict_t *ent)
 		item = ent->trade_with->trade_item[i];
 		if (item != NULL)
 		{
-			lva_result_t s = vrx_get_item_menu_line(item);
+			const lva_result_t s = vrx_get_item_menu_line(item);
 			menu_add_line(ent, s.str, (i+1)*10);	//10, 20, 30
 			++linecount;
 		}

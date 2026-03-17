@@ -22,7 +22,7 @@ int	team_colors[] =
 
 int GetTeamColor (int teamnum)
 {
-	int index = teamnum - 100;
+	const int index = teamnum - 100;
 
 	if (index < 10)
 		return team_colors[index];
@@ -412,7 +412,7 @@ void AllyID (edict_t *ent)
 {
 	vec3_t	forward, right, offset, start, end;
 	trace_t tr;
-	edict_t *e=NULL;
+	const edict_t *e=NULL;
 
 	if (!allies->value)
 		return;
@@ -509,7 +509,7 @@ void ShowAllyInviteMenu_handler (edict_t *ent, int option)
 
 void ShowAllyInviteMenu (edict_t *ent)
 {
-	edict_t *e = ent->client->allytarget;
+	const edict_t *e = ent->client->allytarget;
 
 	 if (!menu_can_show(ent))
         return;

@@ -664,7 +664,7 @@ void SVCmd_MakeBoss_f (void)
 void SVCmd_ChangeClass_f (void)
 {
     char	*playername = gi.argv(2);
-    int		newclass = getClassNum(gi.argv(3));
+    const int		newclass = getClassNum(gi.argv(3));
     edict_t *p;
 
     if ((newclass < 1) || (newclass > CLASS_MAX))
@@ -683,7 +683,7 @@ void SVCmd_ExpHole_f()
 {
     char *pname = gi.argv(2);
     edict_t *p;
-    int value = atoi(gi.argv(3));
+    const int value = atoi(gi.argv(3));
 
     if ((value < 0) || (value > 1000000) || (strlen(pname) < 1))
     {
@@ -706,7 +706,7 @@ void SVCmd_SetTeam_f()
 {
     char *pname = gi.argv(2);
     edict_t *p;
-    int value = atoi(gi.argv(3));
+    const int value = atoi(gi.argv(3));
 
     if ((value < 0) || (strlen(pname) < 0))
     {
@@ -779,7 +779,7 @@ void DoMaplistFilename(int mode, char* filename);
 
 void SV_AddMapToMaplist()
 {
-    int mode = atoi(gi.argv(2));
+    const int mode = atoi(gi.argv(2));
     char* map = gi.argv(3);
     char filename[256];
     qboolean IsAppend = true;

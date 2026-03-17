@@ -238,7 +238,7 @@ void BombArea (edict_t *ent, float skill_mult, float cost_mult)
 	vec3_t	forward, right, start, end;
 	trace_t	tr;
 	edict_t *bomb;
-	int		cost=COST_FOR_BOMB*cost_mult;
+	const int		cost=COST_FOR_BOMB*cost_mult;
 
 #ifdef OLD_NOLAG_STYLE
 	// 3.5 don't allow bomb area to prevent lag
@@ -374,7 +374,7 @@ void BombPerson (edict_t *target, edict_t *owner, float skill_mult)
 
 void Cmd_BombPlayer(edict_t *ent, float skill_mult, float cost_mult)
 {
-	int		cost=COST_FOR_BOMB*cost_mult;
+	const int		cost=COST_FOR_BOMB*cost_mult;
 	vec3_t	forward, right, start, end, offset;
 	trace_t	tr;
 //	edict_t *other=NULL;

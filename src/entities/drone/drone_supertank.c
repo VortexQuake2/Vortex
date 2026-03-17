@@ -457,8 +457,8 @@ void supertankMachineGun (edict_t *self)
 
 void supertank_attack(edict_t *self)
 {
-	float	range = entdist(self, self->enemy);
-	float	r = random();
+	const float	range = entdist(self, self->enemy);
+	const float	r = random();
 
 	// medium range
 	if (range <= 512)

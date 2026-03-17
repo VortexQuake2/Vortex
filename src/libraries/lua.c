@@ -3766,7 +3766,7 @@ const char lua_ident[] =
 
 
 static TValue *index2addr (lua_State *L, int idx) {
-  CallInfo *ci = L->ci;
+  const CallInfo *ci = L->ci;
   if (idx > 0) {
     TValue *o = ci->func + idx;
     api_check(L, idx <= ci->top - (ci->func + 1), "unacceptable index");
@@ -3797,7 +3797,7 @@ static TValue *index2addr (lua_State *L, int idx) {
 ** capturing memory errors
 */
 static void growstack (lua_State *L, void *ud) {
-  int size = *(int *)ud;
+  const int size = *(int *)ud;
   luaD_growstack(L, size);
 }
 
@@ -3809,7 +3809,7 @@ LUA_API int lua_checkstack (lua_State *L, int size) {
   if (L->stack_last - L->top > size)  /* stack large enough? */
     res = 1;  /* yes; check is OK */
   else {  /* no; need to grow stack */
-    int inuse = cast_int(L->top - L->stack) + EXTRA_STACK;
+    const int inuse = cast_int(L->top - L->stack) + EXTRA_STACK;
     if (inuse > LUAI_MAXSTACK - size)  /* can grow without overflow? */
       res = 0;  /* no */
     else  /* try to grow stack */
@@ -3876,7 +3876,7 @@ LUA_API int lua_gettop (lua_State *L) {
 
 
 LUA_API void lua_settop (lua_State *L, int idx) {
-  StkId func = L->ci->func;
+  const StkId func = L->ci->func;
   lua_lock(L);
   if (idx >= 0) {
     api_check(L, idx <= L->stack_last - (func + 1), "new top too large");
@@ -3960,7 +3960,7 @@ LUA_API void lua_pushvalue (lua_State *L, int idx) {
 
 
 LUA_API int lua_type (lua_State *L, int idx) {
-  StkId o = index2addr(L, idx);
+  const StkId o = index2addr(L, idx);
   return (isvalid(o) ? ttypenv(o) : LUA_TNONE);
 }
 
@@ -3972,7 +3972,7 @@ LUA_API const char *lua_typename (lua_State *L, int t) {
 
 
 LUA_API int lua_iscfunction (lua_State *L, int idx) {
-  StkId o = index2addr(L, idx);
+  const StkId o = index2addr(L, idx);
   return (ttislcf(o) || (ttisCclosure(o)));
 }
 
@@ -3985,7 +3985,7 @@ LUA_API int lua_isnumber (lua_State *L, int idx) {
 
 
 LUA_API int lua_isstring (lua_State *L, int idx) {
-  int t = lua_type(L, idx);
+  const int t = lua_type(L, idx);
   return (t == LUA_TSTRING || t == LUA_TNUMBER);
 }
 
@@ -3997,8 +3997,8 @@ LUA_API int lua_isuserdata (lua_State *L, int idx) {
 
 
 LUA_API int lua_rawequal (lua_State *L, int index1, int index2) {
-  StkId o1 = index2addr(L, index1);
-  StkId o2 = index2addr(L, index2);
+  const StkId o1 = index2addr(L, index1);
+  const StkId o2 = index2addr(L, index2);
   return (isvalid(o1) && isvalid(o2)) ? luaV_rawequalobj(o1, o2) : 0;
 }
 
@@ -4064,7 +4064,7 @@ LUA_API lua_Integer lua_tointegerx (lua_State *L, int idx, int *isnum) {
   const TValue *o = index2addr(L, idx);
   if (tonumber(o, &n)) {
     lua_Integer res;
-    lua_Number num = nvalue(o);
+    const lua_Number num = nvalue(o);
     lua_number2integer(res, num);
     if (isnum) *isnum = 1;
     return res;
@@ -4081,7 +4081,7 @@ LUA_API lua_Unsigned lua_tounsignedx (lua_State *L, int idx, int *isnum) {
   const TValue *o = index2addr(L, idx);
   if (tonumber(o, &n)) {
     lua_Unsigned res;
-    lua_Number num = nvalue(o);
+    const lua_Number num = nvalue(o);
     lua_number2unsigned(res, num);
     if (isnum) *isnum = 1;
     return res;
@@ -4118,7 +4118,7 @@ LUA_API const char *lua_tolstring (lua_State *L, int idx, size_t *len) {
 
 
 LUA_API size_t lua_rawlen (lua_State *L, int idx) {
-  StkId o = index2addr(L, idx);
+  const StkId o = index2addr(L, idx);
   switch (ttypenv(o)) {
     case LUA_TSTRING: return tsvalue(o)->len;
     case LUA_TUSERDATA: return uvalue(o)->len;
@@ -4129,7 +4129,7 @@ LUA_API size_t lua_rawlen (lua_State *L, int idx) {
 
 
 LUA_API lua_CFunction lua_tocfunction (lua_State *L, int idx) {
-  StkId o = index2addr(L, idx);
+  const StkId o = index2addr(L, idx);
   if (ttislcf(o)) return fvalue(o);
   else if (ttisCclosure(o))
     return clCvalue(o)->f;
@@ -4138,7 +4138,7 @@ LUA_API lua_CFunction lua_tocfunction (lua_State *L, int idx) {
 
 
 LUA_API void *lua_touserdata (lua_State *L, int idx) {
-  StkId o = index2addr(L, idx);
+  const StkId o = index2addr(L, idx);
   switch (ttypenv(o)) {
     case LUA_TUSERDATA: return (rawuvalue(o) + 1);
     case LUA_TLIGHTUSERDATA: return pvalue(o);
@@ -4148,13 +4148,13 @@ LUA_API void *lua_touserdata (lua_State *L, int idx) {
 
 
 LUA_API lua_State *lua_tothread (lua_State *L, int idx) {
-  StkId o = index2addr(L, idx);
+  const StkId o = index2addr(L, idx);
   return (!ttisthread(o)) ? NULL : thvalue(o);
 }
 
 
 LUA_API const void *lua_topointer (lua_State *L, int idx) {
-  StkId o = index2addr(L, idx);
+  const StkId o = index2addr(L, idx);
   switch (ttype(o)) {
     case LUA_TTABLE: return hvalue(o);
     case LUA_TLCL: return clLvalue(o);
@@ -4638,7 +4638,7 @@ struct CallS {  /* data to `f_call' */
 
 
 static void f_call (lua_State *L, void *ud) {
-  struct CallS *c = cast(struct CallS *, ud);
+  const struct CallS *c = cast(struct CallS *, ud);
   luaD_call(L, c->func, c->nresults, 0);
 }
 
@@ -4658,7 +4658,7 @@ LUA_API int lua_pcallk (lua_State *L, int nargs, int nresults, int errfunc,
   if (errfunc == 0)
     func = 0;
   else {
-    StkId o = index2addr(L, errfunc);
+    const StkId o = index2addr(L, errfunc);
     api_checkvalidindex(L, o);
     func = savestack(L, o);
   }
@@ -4698,7 +4698,7 @@ LUA_API int lua_load (lua_State *L, lua_Reader reader, void *data,
   luaZ_init(L, &z, reader, data);
   status = luaD_protectedparser(L, &z, chunkname, mode);
   if (status == LUA_OK) {  /* no errors? */
-    LClosure *f = clLvalue(L->top - 1);  /* get newly created function */
+    const LClosure *f = clLvalue(L->top - 1);  /* get newly created function */
     if (f->nupvalues == 1) {  /* does it have one upvalue? */
       /* get global table from registry */
       Table *reg = hvalue(&G(L)->l_registry);
@@ -4915,9 +4915,9 @@ static const char *aux_upvalue (StkId fi, int n, TValue **val,
       return "";
     }
     case LUA_TLCL: {  /* Lua closure */
-      LClosure *f = clLvalue(fi);
+      const LClosure *f = clLvalue(fi);
       TString *name;
-      Proto *p = f->p;
+      const Proto *p = f->p;
       if (!(1 <= n && n <= p->sizeupvalues)) return NULL;
       *val = f->upvals[n-1]->v;
       if (owner) *owner = obj2gco(f->upvals[n - 1]);
@@ -4964,7 +4964,7 @@ LUA_API const char *lua_setupvalue (lua_State *L, int funcindex, int n) {
 
 static UpVal **getupvalref (lua_State *L, int fidx, int n, LClosure **pf) {
   LClosure *f;
-  StkId fi = index2addr(L, fidx);
+  const StkId fi = index2addr(L, fidx);
   api_check(L, ttisLclosure(fi), "Lua function expected");
   f = clLvalue(fi);
   api_check(L, (1 <= n && n <= f->p->sizeupvalues), "invalid upvalue index");
@@ -4974,7 +4974,7 @@ static UpVal **getupvalref (lua_State *L, int fidx, int n, LClosure **pf) {
 
 
 LUA_API void *lua_upvalueid (lua_State *L, int fidx, int n) {
-  StkId fi = index2addr(L, fidx);
+  const StkId fi = index2addr(L, fidx);
   switch (ttype(fi)) {
     case LUA_TLCL: {  /* lua closure */
       return *getupvalref(L, fidx, n, NULL);
@@ -5043,8 +5043,8 @@ void luaK_nil (FuncState *fs, int from, int n) {
   if (fs->pc > fs->lasttarget) {  /* no jumps to current position? */
     previous = &fs->f->code[fs->pc-1];
     if (GET_OPCODE(*previous) == OP_LOADNIL) {
-      int pfrom = GETARG_A(*previous);
-      int pl = pfrom + GETARG_B(*previous);
+      const int pfrom = GETARG_A(*previous);
+      const int pl = pfrom + GETARG_B(*previous);
       if ((pfrom <= from && from <= pl + 1) ||
           (from <= pfrom && pfrom <= l + 1)) {  /* can connect both? */
         if (pfrom < from) from = pfrom;  /* from = min(from, pfrom) */
@@ -5060,7 +5060,7 @@ void luaK_nil (FuncState *fs, int from, int n) {
 
 
 int luaK_jump (FuncState *fs) {
-  int jpc = fs->jpc;  /* save list of jumps to here */
+  const int jpc = fs->jpc;  /* save list of jumps to here */
   int j;
   fs->jpc = NO_JUMP;
   j = luaK_codeAsBx(fs, OP_JMP, 0, NO_JUMP);
@@ -5082,7 +5082,7 @@ static int condjump (FuncState *fs, OpCode op, int A, int B, int C) {
 
 static void fixjump (FuncState *fs, int pc, int dest) {
   Instruction *jmp = &fs->f->code[pc];
-  int offset = dest-(pc+1);
+  const int offset = dest-(pc+1);
   lua_assert(dest != NO_JUMP);
   if (abs(offset) > MAXARG_sBx)
     luaX_syntaxerror(fs->ls, "control structure too long");
@@ -5101,7 +5101,7 @@ int luaK_getlabel (FuncState *fs) {
 
 
 static int getjump (FuncState *fs, int pc) {
-  int offset = GETARG_sBx(fs->f->code[pc]);
+  const int offset = GETARG_sBx(fs->f->code[pc]);
   if (offset == NO_JUMP)  /* point to itself represents end of list */
     return NO_JUMP;  /* end of list */
   else
@@ -5124,7 +5124,7 @@ static Instruction *getjumpcontrol (FuncState *fs, int pc) {
 */
 static int need_value (FuncState *fs, int list) {
   for (; list != NO_JUMP; list = getjump(fs, list)) {
-    Instruction i = *getjumpcontrol(fs, list);
+    const Instruction i = *getjumpcontrol(fs, list);
     if (GET_OPCODE(i) != OP_TESTSET) return 1;
   }
   return 0;  /* not found */
@@ -5153,7 +5153,7 @@ static void removevalues (FuncState *fs, int list) {
 static void patchlistaux (FuncState *fs, int list, int vtarget, int reg,
                           int dtarget) {
   while (list != NO_JUMP) {
-    int next = getjump(fs, list);
+    const int next = getjump(fs, list);
     if (patchtestreg(fs, list, reg))
       fixjump(fs, list, vtarget);
     else
@@ -5182,7 +5182,7 @@ void luaK_patchlist (FuncState *fs, int list, int target) {
 LUAI_FUNC void luaK_patchclose (FuncState *fs, int list, int level) {
   level++;  /* argument is +1 to reserve 0 as non-op */
   while (list != NO_JUMP) {
-    int next = getjump(fs, list);
+    const int next = getjump(fs, list);
     lua_assert(GET_OPCODE(fs->f->code[list]) == OP_JMP &&
                 (GETARG_A(fs->f->code[list]) == 0 ||
                  GETARG_A(fs->f->code[list]) >= level));
@@ -5254,7 +5254,7 @@ int luaK_codek (FuncState *fs, int reg, int k) {
   if (k <= MAXARG_Bx)
     return luaK_codeABx(fs, OP_LOADK, reg, k);
   else {
-    int p = luaK_codeABx(fs, OP_LOADKX, reg, 0);
+    const int p = luaK_codeABx(fs, OP_LOADKX, reg, 0);
     codeextraarg(fs, k);
     return p;
   }
@@ -5262,7 +5262,7 @@ int luaK_codek (FuncState *fs, int reg, int k) {
 
 
 void luaK_checkstack (FuncState *fs, int n) {
-  int newstack = fs->freereg + n;
+  const int newstack = fs->freereg + n;
   if (newstack > fs->f->maxstacksize) {
     if (newstack >= MAXSTACK)
       luaX_syntaxerror(fs->ls, "function or expression too complex");
@@ -5297,7 +5297,7 @@ static int addk (FuncState *fs, TValue *key, TValue *v) {
   Proto *f = fs->f;
   int k, oldsize;
   if (ttisnumber(idx)) {
-    lua_Number n = nvalue(idx);
+    const lua_Number n = nvalue(idx);
     lua_number2int(k, n);
     if (luaV_rawequalobj(&f->k[k], v))
       return k;
@@ -5478,7 +5478,7 @@ static void exp2reg (FuncState *fs, expdesc *e, int reg) {
     int p_f = NO_JUMP;  /* position of an eventual LOAD false */
     int p_t = NO_JUMP;  /* position of an eventual LOAD true */
     if (need_value(fs, e->t) || need_value(fs, e->f)) {
-      int fj = (e->k == VJMP) ? NO_JUMP : luaK_jump(fs);
+      const int fj = (e->k == VJMP) ? NO_JUMP : luaK_jump(fs);
       p_f = code_label(fs, reg, 0, 1);
       p_t = code_label(fs, reg, 1, 0);
       luaK_patchtohere(fs, fj);
@@ -5567,13 +5567,13 @@ void luaK_storevar (FuncState *fs, expdesc *var, expdesc *ex) {
       return;
     }
     case VUPVAL: {
-      int e = luaK_exp2anyreg(fs, ex);
+      const int e = luaK_exp2anyreg(fs, ex);
       luaK_codeABC(fs, OP_SETUPVAL, e, var->u.info, 0);
       break;
     }
     case VINDEXED: {
-      OpCode op = (var->u.ind.vt == VLOCAL) ? OP_SETTABLE : OP_SETTABUP;
-      int e = luaK_exp2RK(fs, ex);
+      const OpCode op = (var->u.ind.vt == VLOCAL) ? OP_SETTABLE : OP_SETTABUP;
+      const int e = luaK_exp2RK(fs, ex);
       luaK_codeABC(fs, op, var->u.ind.t, var->u.ind.idx, e);
       break;
     }
@@ -5609,7 +5609,7 @@ static void invertjump (FuncState *fs, expdesc *e) {
 
 static int jumponcond (FuncState *fs, expdesc *e, int cond) {
   if (e->k == VRELOCABLE) {
-    Instruction ie = getcode(fs, e);
+    const Instruction ie = getcode(fs, e);
     if (GET_OPCODE(ie) == OP_NOT) {
       fs->pc--;  /* remove previous OP_NOT */
       return condjump(fs, OP_TEST, GETARG_B(ie), 0, !cond);
@@ -5698,7 +5698,8 @@ static void codenot (FuncState *fs, expdesc *e) {
     }
   }
   /* interchange true and false lists */
-  { int temp = e->f; e->f = e->t; e->t = temp; }
+  {
+ const int temp = e->f; e->f = e->t; e->t = temp; }
   removevalues(fs, e->f);
   removevalues(fs, e->t);
 }
@@ -5730,8 +5731,8 @@ static void codearith (FuncState *fs, OpCode op,
   if (constfolding(op, e1, e2))
     return;
   else {
-    int o2 = (op != OP_UNM && op != OP_LEN) ? luaK_exp2RK(fs, e2) : 0;
-    int o1 = luaK_exp2RK(fs, e1);
+    const int o2 = (op != OP_UNM && op != OP_LEN) ? luaK_exp2RK(fs, e2) : 0;
+    const int o1 = luaK_exp2RK(fs, e1);
     if (o1 > o2) {
       freeexp(fs, e1);
       freeexp(fs, e2);
@@ -5869,8 +5870,8 @@ void luaK_fixline (FuncState *fs, int line) {
 
 
 void luaK_setlist (FuncState *fs, int base, int nelems, int tostore) {
-  int c =  (nelems - 1)/LFIELDS_PER_FLUSH + 1;
-  int b = (tostore == LUA_MULTRET) ? 0 : tostore;
+  const int c =  (nelems - 1)/LFIELDS_PER_FLUSH + 1;
+  const int b = (tostore == LUA_MULTRET) ? 0 : tostore;
   lua_assert(tostore != 0);
   if (c <= MAXARG_C)
     luaK_codeABC(fs, OP_SETLIST, base, b, c);
@@ -5983,14 +5984,14 @@ LUA_API int lua_getstack (lua_State *L, int level, lua_Debug *ar) {
 
 
 static const char *upvalname (Proto *p, int uv) {
-  TString *s = check_exp(uv < p->sizeupvalues, p->upvalues[uv].name);
+  const TString *s = check_exp(uv < p->sizeupvalues, p->upvalues[uv].name);
   if (s == NULL) return "?";
   else return getstr(s);
 }
 
 
 static const char *findvararg (CallInfo *ci, int n, StkId *pos) {
-  int nparams = clLvalue(ci->func)->p->numparams;
+  const int nparams = clLvalue(ci->func)->p->numparams;
   if (n >= ci->u.l.base - ci->func - nparams)
     return NULL;  /* no such vararg */
   else {
@@ -6015,7 +6016,7 @@ static const char *findlocal (lua_State *L, CallInfo *ci, int n,
   else
     base = ci->func + 1;
   if (name == NULL) {  /* no 'standard' name? */
-    StkId limit = (ci == L->ci) ? L->top : ci->next->func;
+    const StkId limit = (ci == L->ci) ? L->top : ci->next->func;
     if (limit - base >= n && n > 0)  /* is 'n' inside 'ci' stack? */
       name = "(*temporary)";  /* generic name for any valid slot */
     else
@@ -6068,7 +6069,7 @@ static void funcinfo (lua_Debug *ar, Closure *cl) {
     ar->what = "C";
   }
   else {
-    Proto *p = cl->l.p;
+    const Proto *p = cl->l.p;
     ar->source = p->source ? getstr(p->source) : "=?";
     ar->linedefined = p->linedefined;
     ar->lastlinedefined = p->lastlinedefined;
@@ -6086,7 +6087,7 @@ static void collectvalidlines (lua_State *L, Closure *f) {
   else {
     int i;
     TValue v;
-    int *lineinfo = f->l.p->lineinfo;
+    const int *lineinfo = f->l.p->lineinfo;
     Table *t = luaH_new(L);  /* new table to store active lines */
     sethvalue(L, L->top, t);  /* push it on stack */
     incr_top(L);
@@ -6194,7 +6195,7 @@ static const char *getobjname (Proto *p, int lastpc, int reg,
 */
 static void kname (Proto *p, int pc, int c, const char **name) {
   if (ISK(c)) {  /* is 'c' a constant? */
-    TValue *kvalue = &p->k[INDEXK(c)];
+    const TValue *kvalue = &p->k[INDEXK(c)];
     if (ttisstring(kvalue)) {  /* literal constant? */
       *name = svalue(kvalue);  /* it is its own name */
       return;
@@ -6219,12 +6220,12 @@ static int findsetreg (Proto *p, int lastpc, int reg) {
   int pc;
   int setreg = -1;  /* keep last instruction that changed 'reg' */
   for (pc = 0; pc < lastpc; pc++) {
-    Instruction i = p->code[pc];
-    OpCode op = GET_OPCODE(i);
-    int a = GETARG_A(i);
+    const Instruction i = p->code[pc];
+    const OpCode op = GET_OPCODE(i);
+    const int a = GETARG_A(i);
     switch (op) {
       case OP_LOADNIL: {
-        int b = GETARG_B(i);
+        const int b = GETARG_B(i);
         if (a <= reg && reg <= a + b)  /* set registers from 'a' to 'a+b' */
           setreg = pc;
         break;
@@ -6239,8 +6240,8 @@ static int findsetreg (Proto *p, int lastpc, int reg) {
         break;
       }
       case OP_JMP: {
-        int b = GETARG_sBx(i);
-        int dest = pc + 1 + b;
+        const int b = GETARG_sBx(i);
+        const int dest = pc + 1 + b;
         /* jump is forward and do not skip `lastpc'? */
         if (pc < dest && dest <= lastpc)
           pc += b;  /* do the jump */
@@ -6269,19 +6270,19 @@ static const char *getobjname (Proto *p, int lastpc, int reg,
   /* else try symbolic execution */
   pc = findsetreg(p, lastpc, reg);
   if (pc != -1) {  /* could find instruction? */
-    Instruction i = p->code[pc];
-    OpCode op = GET_OPCODE(i);
+    const Instruction i = p->code[pc];
+    const OpCode op = GET_OPCODE(i);
     switch (op) {
       case OP_MOVE: {
-        int b = GETARG_B(i);  /* move from 'b' to 'a' */
+        const int b = GETARG_B(i);  /* move from 'b' to 'a' */
         if (b < GETARG_A(i))
           return getobjname(p, pc, b, name);  /* get name for 'b' */
         break;
       }
       case OP_GETTABUP:
       case OP_GETTABLE: {
-        int k = GETARG_C(i);  /* key index */
-        int t = GETARG_B(i);  /* table index */
+        const int k = GETARG_C(i);  /* key index */
+        const int t = GETARG_B(i);  /* table index */
         const char *vn = (op == OP_GETTABLE)  /* name of indexed variable */
                          ? luaF_getlocalname(p, t + 1, pc)
                          : upvalname(p, t);
@@ -6294,7 +6295,7 @@ static const char *getobjname (Proto *p, int lastpc, int reg,
       }
       case OP_LOADK:
       case OP_LOADKX: {
-        int b = (op == OP_LOADK) ? GETARG_Bx(i)
+        const int b = (op == OP_LOADK) ? GETARG_Bx(i)
                                  : GETARG_Ax(p->code[pc + 1]);
         if (ttisstring(&p->k[b])) {
           *name = svalue(&p->k[b]);
@@ -6303,7 +6304,7 @@ static const char *getobjname (Proto *p, int lastpc, int reg,
         break;
       }
       case OP_SELF: {
-        int k = GETARG_C(i);  /* key index */
+        const int k = GETARG_C(i);  /* key index */
         kname(p, pc, k, name);
         return "method";
       }
@@ -6317,8 +6318,8 @@ static const char *getobjname (Proto *p, int lastpc, int reg,
 static const char *getfuncname (lua_State *L, CallInfo *ci, const char **name) {
   TMS tm;
   Proto *p = ci_func(ci)->p;  /* calling function */
-  int pc = currentpc(ci);  /* calling instruction index */
-  Instruction i = p->code[pc];  /* calling instruction */
+  const int pc = currentpc(ci);  /* calling instruction index */
+  const Instruction i = p->code[pc];  /* calling instruction */
   switch (GET_OPCODE(i)) {
     case OP_CALL:
     case OP_TAILCALL:  /* get function name */
@@ -6370,7 +6371,7 @@ static int isinstack (CallInfo *ci, const TValue *o) {
 
 static const char *getupvalname (CallInfo *ci, const TValue *o,
                                  const char **name) {
-  LClosure *c = ci_func(ci);
+  const LClosure *c = ci_func(ci);
   int i;
   for (i = 0; i < c->nupvalues; i++) {
     if (c->upvals[i]->v == o) {
@@ -6430,8 +6431,8 @@ static void addinfo (lua_State *L, const char *msg) {
   CallInfo *ci = L->ci;
   if (isLua(ci)) {  /* is Lua code? */
     char buff[LUA_IDSIZE];  /* add file:line information */
-    int line = currentline(ci);
-    TString *src = ci_func(ci)->p->source;
+    const int line = currentline(ci);
+    const TString *src = ci_func(ci)->p->source;
     if (src)
       luaO_chunkid(buff, getstr(src), LUA_IDSIZE);
     else {  /* no source available; use "?" instead */
@@ -6444,7 +6445,7 @@ static void addinfo (lua_State *L, const char *msg) {
 
 l_noret luaG_errormsg (lua_State *L) {
   if (L->errfunc != 0) {  /* is there an error handling function? */
-    StkId errfunc = restorestack(L, L->errfunc);
+    const StkId errfunc = restorestack(L, L->errfunc);
     if (!ttisfunction(errfunc)) luaD_throw(L, LUA_ERRERR);
     setobjs2s(L, L->top, L->top - 1);  /* move argument */
     setobjs2s(L, L->top - 1, errfunc);  /* push function */
@@ -6588,7 +6589,7 @@ l_noret luaD_throw (lua_State *L, int errcode) {
 
 
 int luaD_rawrunprotected (lua_State *L, Pfunc f, void *ud) {
-  unsigned short oldnCcalls = L->nCcalls;
+  const unsigned short oldnCcalls = L->nCcalls;
   struct lua_longjmp lj;
   lj.status = LUA_OK;
   lj.previous = L->errorJmp;  /* chain new error handler */
@@ -6638,11 +6639,11 @@ void luaD_reallocstack (lua_State *L, int newsize) {
 
 
 void luaD_growstack (lua_State *L, int n) {
-  int size = L->stacksize;
+  const int size = L->stacksize;
   if (size > LUAI_MAXSTACK)  /* error after extra size? */
     luaD_throw(L, LUA_ERRERR);
   else {
-    int needed = cast_int(L->top - L->stack) + n + EXTRA_STACK;
+    const int needed = cast_int(L->top - L->stack) + n + EXTRA_STACK;
     int newsize = 2 * size;
     if (newsize > LUAI_MAXSTACK) newsize = LUAI_MAXSTACK;
     if (newsize < needed) newsize = needed;
@@ -6668,7 +6669,7 @@ static int stackinuse (lua_State *L) {
 
 
 void luaD_shrinkstack (lua_State *L) {
-  int inuse = stackinuse(L);
+  const int inuse = stackinuse(L);
   int goodsize = inuse + (inuse / 8) + 2*EXTRA_STACK;
   if (goodsize > LUAI_MAXSTACK) goodsize = LUAI_MAXSTACK;
   if (inuse > LUAI_MAXSTACK ||  /* handling stack overflow? */
@@ -6680,11 +6681,11 @@ void luaD_shrinkstack (lua_State *L) {
 
 
 void luaD_hook (lua_State *L, int event, int line) {
-  lua_Hook hook = L->hook;
+  const lua_Hook hook = L->hook;
   if (hook && L->allowhook) {
     CallInfo *ci = L->ci;
-    ptrdiff_t top = savestack(L, L->top);
-    ptrdiff_t ci_top = savestack(L, ci->top);
+    const ptrdiff_t top = savestack(L, L->top);
+    const ptrdiff_t ci_top = savestack(L, ci->top);
     lua_Debug ar;
     ar.event = event;
     ar.currentline = line;
@@ -6721,7 +6722,7 @@ static void callhook (lua_State *L, CallInfo *ci) {
 
 static StkId adjust_varargs (lua_State *L, Proto *p, int actual) {
   int i;
-  int nfixargs = p->numparams;
+  const int nfixargs = p->numparams;
   StkId base, fixed;
   lua_assert(actual >= nfixargs);
   /* move fixed parameters to final position */
@@ -6738,7 +6739,7 @@ static StkId adjust_varargs (lua_State *L, Proto *p, int actual) {
 static StkId tryfuncTM (lua_State *L, StkId func) {
   const TValue *tm = luaT_gettmbyobj(L, func, TM_CALL);
   StkId p;
-  ptrdiff_t funcr = savestack(L, func);
+  const ptrdiff_t funcr = savestack(L, func);
   if (!ttisfunction(tm))
     luaG_typeerror(L, func, "call");
   /* Open a hole inside the stack at `func' */
@@ -6761,7 +6762,7 @@ int luaD_precall (lua_State *L, StkId func, int nresults) {
   lua_CFunction f;
   CallInfo *ci;
   int n;  /* number of arguments (Lua) or returns (C) */
-  ptrdiff_t funcr = savestack(L, func);
+  const ptrdiff_t funcr = savestack(L, func);
   switch (ttype(func)) {
     case LUA_TLCF:  /* light C function */
       f = fvalue(func);
@@ -6818,10 +6819,10 @@ int luaD_precall (lua_State *L, StkId func, int nresults) {
 int luaD_poscall (lua_State *L, StkId firstResult) {
   StkId res;
   int wanted, i;
-  CallInfo *ci = L->ci;
+  const CallInfo *ci = L->ci;
   if (L->hookmask & (LUA_MASKRET | LUA_MASKLINE)) {
     if (L->hookmask & LUA_MASKRET) {
-      ptrdiff_t fr = savestack(L, firstResult);  /* hook may change stack */
+      const ptrdiff_t fr = savestack(L, firstResult);  /* hook may change stack */
       luaD_hook(L, LUA_HOOKRET, -1);
       firstResult = restorestack(L, fr);
     }
@@ -6947,7 +6948,7 @@ static l_noret resume_error (lua_State *L, const char *msg, StkId firstArg) {
 ** do the work for 'lua_resume' in protected mode
 */
 static void resume (lua_State *L, void *ud) {
-  int nCcalls = L->nCcalls;
+  const int nCcalls = L->nCcalls;
   StkId firstArg = cast(StkId, ud);
   CallInfo *ci = L->ci;
   if (nCcalls >= LUAI_MAXCCALLS)
@@ -7048,13 +7049,13 @@ int luaD_pcall (lua_State *L, Pfunc func, void *u,
                 ptrdiff_t old_top, ptrdiff_t ef) {
   int status;
   CallInfo *old_ci = L->ci;
-  lu_byte old_allowhooks = L->allowhook;
-  unsigned short old_nny = L->nny;
-  ptrdiff_t old_errfunc = L->errfunc;
+  const lu_byte old_allowhooks = L->allowhook;
+  const unsigned short old_nny = L->nny;
+  const ptrdiff_t old_errfunc = L->errfunc;
   L->errfunc = ef;
   status = luaD_rawrunprotected(L, func, u);
   if (status != LUA_OK) {  /* an error occurred? */
-    StkId oldtop = restorestack(L, old_top);
+    const StkId oldtop = restorestack(L, old_top);
     luaF_close(L, oldtop);  /* close possible pending closures */
     seterrorobj(L, status, oldtop);
     L->ci = old_ci;
@@ -7093,7 +7094,7 @@ static void f_parser (lua_State *L, void *ud) {
   int i;
   Closure *cl;
   struct SParser *p = cast(struct SParser *, ud);
-  int c = zgetc(p->z);  /* read first character */
+  const int c = zgetc(p->z);  /* read first character */
   if (c == LUA_SIGNATURE[0]) {
     checkmode(L, p->mode, "binary");
     cl = luaU_undump(L, p->z, &p->buff, p->name);
@@ -7171,7 +7172,7 @@ static void DumpBlock(const void* b, size_t size, DumpState* D)
 
 static void DumpChar(int y, DumpState* D)
 {
- char x=(char)y;
+ const char x=(char)y;
  DumpVar(x,D);
 }
 
@@ -7195,12 +7196,12 @@ static void DumpString(const TString* s, DumpState* D)
 {
  if (s==NULL)
  {
-  size_t size=0;
+  const size_t size=0;
   DumpVar(size,D);
  }
  else
  {
-  size_t size=s->tsv.len+1;		/* include trailing '\0' */
+  const size_t size=s->tsv.len+1;		/* include trailing '\0' */
   DumpVar(size,D);
   DumpBlock(getstr(s),size*sizeof(char),D);
  }
@@ -7733,7 +7734,7 @@ static void reallymarkobject (global_State *g, GCObject *o) {
       break;
     }
     case LUA_TUPVAL: {
-      UpVal *uv = gco2uv(o);
+      const UpVal *uv = gco2uv(o);
       markvalue(g, uv->v);
       if (uv->v != &uv->u.value)  /* open? */
         return;  /* open upvalues remain gray */
@@ -7975,7 +7976,7 @@ static lu_mem traversestack (global_State *g, lua_State *th) {
   for (; o < th->top; o++)
     markvalue(g, o);
   if (g->gcstate == GCSatomic) {  /* final traversal? */
-    StkId lim = th->stack + th->stacksize;  /* real end of stack */
+    const StkId lim = th->stack + th->stacksize;  /* real end of stack */
     for (; o < lim; o++)  /* clear not-marked stack slice */
       setnilvalue(o);
   }
@@ -8093,7 +8094,7 @@ static void convergeephemerons (global_State *g) {
 */
 static void clearkeys (global_State *g, GCObject *l, GCObject *f) {
   for (; l != f; l = gco2t(l)->gclist) {
-    Table *h = gco2t(l);
+    const Table *h = gco2t(l);
     Node *n, *limit = gnodelast(h);
     for (n = gnode(h, 0); n < limit; n++) {
       if (!ttisnil(gval(n)) && (iscleared(g, gkey(n)))) {
@@ -8111,7 +8112,7 @@ static void clearkeys (global_State *g, GCObject *l, GCObject *f) {
 */
 static void clearvalues (global_State *g, GCObject *l, GCObject *f) {
   for (; l != f; l = gco2t(l)->gclist) {
-    Table *h = gco2t(l);
+    const Table *h = gco2t(l);
     Node *n, *limit = gnodelast(h);
     int i;
     for (i = 0; i < h->sizearray; i++) {
@@ -8186,8 +8187,8 @@ static void sweepthread (lua_State *L, lua_State *L1) {
 ** When object is a thread, sweep its list of open upvalues too.
 */
 static GCObject **sweeplist (lua_State *L, GCObject **p, lu_mem count) {
-  global_State *g = G(L);
-  int ow = otherwhite(g);
+  const global_State *g = G(L);
+  const int ow = otherwhite(g);
   int toclear, toset;  /* bits to clear and to set in all live objects */
   int tostop;  /* stop sweep when this is true */
   if (isgenerational(g)) {  /* generational mode? */
@@ -8202,7 +8203,7 @@ static GCObject **sweeplist (lua_State *L, GCObject **p, lu_mem count) {
   }
   while (*p != NULL && count-- > 0) {
     GCObject *curr = *p;
-    int marked = gch(curr)->marked;
+    const int marked = gch(curr)->marked;
     if (isdeadm(ow, marked)) {  /* is 'curr' dead? */
       *p = gch(curr)->next;  /* remove 'curr' from list */
       freeobj(L, curr);  /* erase 'curr' */
@@ -8247,7 +8248,7 @@ static GCObject **sweeptolive (lua_State *L, GCObject **p, int *n) {
 static void checkSizes (lua_State *L) {
   global_State *g = G(L);
   if (g->gckind != KGC_EMERGENCY) {  /* do not change sizes in emergency */
-    int hs = g->strt.size / 2;  /* half the size of the string table */
+    const int hs = g->strt.size / 2;  /* half the size of the string table */
     if (g->strt.nuse < cast(lu_int32, hs))  /* using less than that half? */
       luaS_resize(L, hs);  /* halve its size */
     luaZ_freebuffer(L, &g->buff);  /* free concatenation buffer */
@@ -8283,8 +8284,8 @@ static void GCTM (lua_State *L, int propagateerrors) {
   tm = luaT_gettmbyobj(L, &v, TM_GC);
   if (tm != NULL && ttisfunction(tm)) {  /* is there a finalizer? */
     int status;
-    lu_byte oldah = L->allowhook;
-    int running  = g->gcrunning;
+    const lu_byte oldah = L->allowhook;
+    const int running  = g->gcrunning;
     L->allowhook = 0;  /* stop debug hooks during GC metamethod */
     g->gcrunning = 0;  /* avoid GC steps */
     setobj2s(L, L->top, tm);  /* push finalizer... */
@@ -8426,7 +8427,7 @@ void luaC_changemode (lua_State *L, int mode) {
 ** call all pending finalizers
 */
 static void callallpendingfinalizers (lua_State *L, int propagateerrors) {
-  global_State *g = G(L);
+  const global_State *g = G(L);
   while (g->tobefnz) {
     resetoldbit(g->tobefnz);
     GCTM(L, propagateerrors);
@@ -8506,7 +8507,7 @@ static lu_mem singlestep (lua_State *L) {
     }
     case GCSpropagate: {
       if (g->gray) {
-        lu_mem oldtrav = g->GCmemtrav;
+        const lu_mem oldtrav = g->GCmemtrav;
         propagatemark(g);
         return g->GCmemtrav - oldtrav;  /* memory traversed in this step */
       }
@@ -8564,7 +8565,7 @@ static lu_mem singlestep (lua_State *L) {
 ** by 'statemask'
 */
 void luaC_runtilstate (lua_State *L, int statesmask) {
-  global_State *g = G(L);
+  const global_State *g = G(L);
   while (!testbit(statesmask, g->gcstate))
     singlestep(L);
 }
@@ -8577,7 +8578,7 @@ static void generationalcollection (lua_State *L) {
     g->GCestimate = gettotalbytes(g);  /* update control */
   }
   else {
-    lu_mem estimate = g->GCestimate;
+    const lu_mem estimate = g->GCestimate;
     luaC_runtilstate(L, ~bitmask(GCSpause));  /* run complete cycle */
     luaC_runtilstate(L, bitmask(GCSpause));
     if (gettotalbytes(g) > (estimate / 100) * g->gcmajorinc)
@@ -8596,7 +8597,7 @@ static void incstep (lua_State *L) {
   debt = (debt / STEPMULADJ) + 1;
   debt = (debt < MAX_LMEM / stepmul) ? debt * stepmul : MAX_LMEM;
   do {  /* always perform at least one single step */
-    lu_mem work = singlestep(L);  /* do some work */
+    const lu_mem work = singlestep(L);  /* do some work */
     debt -= work;
   } while (debt > -GCSTEPSIZE && g->gcstate != GCSpause);
   if (g->gcstate == GCSpause)
@@ -8611,7 +8612,7 @@ static void incstep (lua_State *L) {
 ** performs a basic GC step
 */
 void luaC_forcestep (lua_State *L) {
-  global_State *g = G(L);
+  const global_State *g = G(L);
   int i;
   if (isgenerational(g)) generationalcollection(L);
   else incstep(L);
@@ -8638,8 +8639,8 @@ void luaC_step (lua_State *L) {
 */
 void luaC_fullgc (lua_State *L, int isemergency) {
   global_State *g = G(L);
-  int origkind = g->gckind;
-  int someblack = keepinvariant(g);
+  const int origkind = g->gckind;
+  const int someblack = keepinvariant(g);
   lua_assert(origkind != KGC_EMERGENCY);
   if (isemergency)  /* do not run finalizers during emergency GC */
     g->gckind = KGC_EMERGENCY;
@@ -8815,7 +8816,7 @@ TString *luaX_newstring (LexState *ls, const char *str, size_t l) {
 ** \n, \r, \n\r, or \r\n)
 */
 static void inclinenumber (LexState *ls) {
-  int old = ls->current;
+  const int old = ls->current;
   lua_assert(currIsNewline(ls));
   next(ls);  /* skip `\n' or `\r' */
   if (currIsNewline(ls) && ls->current != old)
@@ -8882,7 +8883,7 @@ static void buffreplace (LexState *ls, char from, char to) {
 ** the one defined in the current locale and check again
 */
 static void trydecpoint (LexState *ls, SemInfo *seminfo) {
-  char old = ls->decpoint;
+  const char old = ls->decpoint;
   ls->decpoint = getlocaledecpoint();
   buffreplace(ls, old, ls->decpoint);  /* try new decimal separator */
   if (!buff2d(ls->buff, &seminfo->r)) {
@@ -8900,7 +8901,7 @@ static void trydecpoint (LexState *ls, SemInfo *seminfo) {
 */
 static void read_numeral (LexState *ls, SemInfo *seminfo) {
   const char *expo = "Ee";
-  int first = ls->current;
+  const int first = ls->current;
   lua_assert(lisdigit(ls->current));
   save_and_next(ls);
   if (first == '0' && check_next(ls, "Xx"))  /* hexadecimal? */
@@ -8925,7 +8926,7 @@ static void read_numeral (LexState *ls, SemInfo *seminfo) {
 */
 static int skip_sep (LexState *ls) {
   int count = 0;
-  int s = ls->current;
+  const int s = ls->current;
   lua_assert(s == '[' || s == ']');
   save_and_next(ls);
   while (ls->current == '=') {
@@ -9085,7 +9086,7 @@ static int llex (LexState *ls, SemInfo *seminfo) {
         /* else is a comment */
         next(ls);
         if (ls->current == '[') {  /* long comment? */
-          int sep = skip_sep(ls);
+          const int sep = skip_sep(ls);
           luaZ_resetbuffer(ls->buff);  /* `skip_sep' may dirty the buffer */
           if (sep >= 0) {
             read_long_string(ls, NULL, sep);  /* skip long comment */
@@ -9099,7 +9100,7 @@ static int llex (LexState *ls, SemInfo *seminfo) {
         break;
       }
       case '[': {  /* long string or simply '[' */
-        int sep = skip_sep(ls);
+        const int sep = skip_sep(ls);
         if (sep >= 0) {
           read_long_string(ls, seminfo, sep);
           return TK_STRING;
@@ -9170,7 +9171,7 @@ static int llex (LexState *ls, SemInfo *seminfo) {
           }
         }
         else {  /* single-char tokens (+ - / ...) */
-          int c = ls->current;
+          const int c = ls->current;
           next(ls);
           return c;
         }
@@ -9274,7 +9275,7 @@ l_noret luaM_toobig (lua_State *L) {
 void *luaM_realloc_ (lua_State *L, void *block, size_t osize, size_t nsize) {
   void *newblock;
   global_State *g = G(L);
-  size_t realosize = (block) ? osize : 0;
+  const size_t realosize = (block) ? osize : 0;
   lua_assert((realosize == 0) == (block == NULL));
 #if defined(HARDMEMTESTS)
   if (nsize > realosize && g->gcrunning)
@@ -9344,7 +9345,7 @@ int luaO_int2fb (unsigned int x) {
 
 /* converts back */
 int luaO_fb2int (int x) {
-  int e = (x >> 3) & 0x1f;
+  const int e = (x >> 3) & 0x1f;
   if (e == 0) return x;
   else return ((x & 7) + 8) << (e - 1);
 }
@@ -9507,7 +9508,7 @@ const char *luaO_pushvfstring (lua_State *L, const char *fmt, va_list argp) {
       }
       case 'p': {
         char buff[4*sizeof(void *) + 8]; /* should be enough space for a `%p' */
-        int l = sprintf(buff, "%p", va_arg(argp, void *));
+        const int l = sprintf(buff, "%p", va_arg(argp, void *));
         pushstr(L, buff, l);
         break;
       }
@@ -9755,7 +9756,7 @@ static void anchor_token (LexState *ls) {
   /* last token from outer function must be EOS */
   lua_assert(ls->fs != NULL || ls->t.token == TK_EOS);
   if (ls->t.token == TK_NAME || ls->t.token == TK_STRING) {
-    TString *ts = ls->t.seminfo.ts;
+    const TString *ts = ls->t.seminfo.ts;
     luaX_newstring(ls, getstr(ts), ts->tsv.len);
   }
 }
@@ -9777,7 +9778,7 @@ static l_noret error_expected (LexState *ls, int token) {
 static l_noret errorlimit (FuncState *fs, int limit, const char *what) {
   lua_State *L = fs->ls->L;
   const char *msg;
-  int line = fs->f->linedefined;
+  const int line = fs->f->linedefined;
   const char *where = (line == 0)
                       ? "main function"
                       : luaO_pushfstring(L, "function at line %d", line);
@@ -9872,7 +9873,7 @@ static int registerlocalvar (LexState *ls, TString *varname) {
 static void new_localvar (LexState *ls, TString *name) {
   FuncState *fs = ls->fs;
   Dyndata *dyd = ls->dyd;
-  int reg = registerlocalvar(ls, name);
+  const int reg = registerlocalvar(ls, name);
   checklimit(fs, dyd->actvar.n + 1 - fs->firstlocal,
                   MAXVARS, "local variables");
   luaM_growvector(ls->L, dyd->actvar.arr, dyd->actvar.n + 1,
@@ -9890,7 +9891,7 @@ static void new_localvarliteral_ (LexState *ls, const char *name, size_t sz) {
 
 
 static LocVar *getlocvar (FuncState *fs, int i) {
-  int idx = fs->ls->dyd->actvar.arr[fs->firstlocal + i].idx;
+  const int idx = fs->ls->dyd->actvar.arr[fs->firstlocal + i].idx;
   lua_assert(idx < fs->nlocvars);
   return &fs->f->locvars[idx];
 }
@@ -9914,7 +9915,7 @@ static void removevars (FuncState *fs, int tolevel) {
 
 static int searchupvalue (FuncState *fs, TString *name) {
   int i;
-  Upvaldesc *up = fs->f->upvalues;
+  const Upvaldesc *up = fs->f->upvalues;
   for (i = 0; i < fs->nups; i++) {
     if (luaS_eqstr(up[i].name, name)) return i;
   }
@@ -9966,7 +9967,7 @@ static int singlevaraux (FuncState *fs, TString *n, expdesc *var, int base) {
   if (fs == NULL)  /* no more levels? */
     return VVOID;  /* default is global */
   else {
-    int v = searchvar(fs, n);  /* look up locals at current level */
+    const int v = searchvar(fs, n);  /* look up locals at current level */
     if (v >= 0) {  /* found? */
       init_exp(var, VLOCAL, v);  /* variable is local */
       if (!base)
@@ -10013,7 +10014,7 @@ static void adjust_assign (LexState *ls, int nvars, int nexps, expdesc *e) {
   else {
     if (e->k != VVOID) luaK_exp2nextreg(fs, e);  /* close last expression */
     if (extra > 0) {
-      int reg = fs->freereg;
+      const int reg = fs->freereg;
       luaK_reserveregs(fs, extra);
       luaK_nil(fs, reg, extra);
     }
@@ -10035,10 +10036,10 @@ static void closegoto (LexState *ls, int g, Labeldesc *label) {
   int i;
   FuncState *fs = ls->fs;
   Labellist *gl = &ls->dyd->gt;
-  Labeldesc *gt = &gl->arr[g];
+  const Labeldesc *gt = &gl->arr[g];
   lua_assert(luaS_eqstr(gt->name, label->name));
   if (gt->nactvar < label->nactvar) {
-    TString *vname = getlocvar(fs, gt->nactvar)->varname;
+    const TString *vname = getlocvar(fs, gt->nactvar)->varname;
     const char *msg = luaO_pushfstring(ls->L,
       "<goto %s> at line %d jumps into the scope of local " LUA_QS,
       getstr(gt->name), gt->line, getstr(vname));
@@ -10057,9 +10058,9 @@ static void closegoto (LexState *ls, int g, Labeldesc *label) {
 */
 static int findlabel (LexState *ls, int g) {
   int i;
-  BlockCnt *bl = ls->fs->bl;
-  Dyndata *dyd = ls->dyd;
-  Labeldesc *gt = &dyd->gt.arr[g];
+  const BlockCnt *bl = ls->fs->bl;
+  const Dyndata *dyd = ls->dyd;
+  const Labeldesc *gt = &dyd->gt.arr[g];
   /* check labels in current block for a match */
   for (i = bl->firstlabel; i < dyd->label.n; i++) {
     Labeldesc *lb = &dyd->label.arr[i];
@@ -10077,7 +10078,7 @@ static int findlabel (LexState *ls, int g) {
 
 static int newlabelentry (LexState *ls, Labellist *l, TString *name,
                           int line, int pc) {
-  int n = l->n;
+  const int n = l->n;
   luaM_growvector(ls->L, l->arr, n, l->size,
                   Labeldesc, SHRT_MAX, "labels/gotos");
   l->arr[n].name = name;
@@ -10094,7 +10095,7 @@ static int newlabelentry (LexState *ls, Labellist *l, TString *name,
 ** block; solves forward jumps
 */
 static void findgotos (LexState *ls, Labeldesc *lb) {
-  Labellist *gl = &ls->dyd->gt;
+  const Labellist *gl = &ls->dyd->gt;
   int i = ls->fs->bl->firstgoto;
   while (i < gl->n) {
     if (luaS_eqstr(gl->arr[i].name, lb->name))
@@ -10113,7 +10114,7 @@ static void findgotos (LexState *ls, Labeldesc *lb) {
 */
 static void movegotosout (FuncState *fs, BlockCnt *bl) {
   int i = bl->firstgoto;
-  Labellist *gl = &fs->ls->dyd->gt;
+  const Labellist *gl = &fs->ls->dyd->gt;
   /* correct pending gotos to current block and try to close it
      with visible labels */
   while (i < gl->n) {
@@ -10146,7 +10147,7 @@ static void enterblock (FuncState *fs, BlockCnt *bl, lu_byte isloop) {
 */
 static void breaklabel (LexState *ls) {
   TString *n = luaS_new(ls->L, "break");
-  int l = newlabelentry(ls, &ls->dyd->label, n, 0, ls->fs->pc);
+  const int l = newlabelentry(ls, &ls->dyd->label, n, 0, ls->fs->pc);
   findgotos(ls, &ls->dyd->label.arr[l]);
 }
 
@@ -10168,7 +10169,7 @@ static void leaveblock (FuncState *fs) {
   LexState *ls = fs->ls;
   if (bl->previous && bl->upval) {
     /* create a 'jump to here' to close upvalues */
-    int j = luaK_jump(fs);
+    const int j = luaK_jump(fs);
     luaK_patchclose(fs, j, bl->nactvar);
     luaK_patchtohere(fs, j);
   }
@@ -10343,7 +10344,7 @@ struct ConsControl {
 static void recfield (LexState *ls, struct ConsControl *cc) {
   /* recfield -> (NAME | `['exp1`]') = exp1 */
   FuncState *fs = ls->fs;
-  int reg = ls->fs->freereg;
+  const int reg = ls->fs->freereg;
   expdesc key, val;
   int rkkey;
   if (ls->t.token == TK_NAME) {
@@ -10422,8 +10423,8 @@ static void constructor (LexState *ls, expdesc *t) {
   /* constructor -> '{' [ field { sep field } [sep] ] '}'
      sep -> ',' | ';' */
   FuncState *fs = ls->fs;
-  int line = ls->linenumber;
-  int pc = luaK_codeABC(fs, OP_NEWTABLE, 0, 0, 0);
+  const int line = ls->linenumber;
+  const int pc = luaK_codeABC(fs, OP_NEWTABLE, 0, 0, 0);
   struct ConsControl cc;
   cc.na = cc.nh = cc.tostore = 0;
   cc.t = t;
@@ -10569,7 +10570,7 @@ static void primaryexp (LexState *ls, expdesc *v) {
   /* primaryexp -> NAME | '(' expr ')' */
   switch (ls->t.token) {
     case '(': {
-      int line = ls->linenumber;
+      const int line = ls->linenumber;
       luaX_next(ls);
       expr(ls, v);
       check_match(ls, ')', '(', line);
@@ -10591,7 +10592,7 @@ static void suffixedexp (LexState *ls, expdesc *v) {
   /* suffixedexp ->
        primaryexp { '.' NAME | '[' exp ']' | ':' NAME funcargs | funcargs } */
   FuncState *fs = ls->fs;
-  int line = ls->linenumber;
+  const int line = ls->linenumber;
   primaryexp(ls, v);
   for (;;) {
     switch (ls->t.token) {
@@ -10731,7 +10732,7 @@ static BinOpr subexpr (LexState *ls, expdesc *v, int limit) {
   enterlevel(ls);
   uop = getunopr(ls->t.token);
   if (uop != OPR_NOUNOPR) {
-    int line = ls->linenumber;
+    const int line = ls->linenumber;
     luaX_next(ls);
     subexpr(ls, v, UNARY_PRIORITY);
     luaK_prefix(ls->fs, uop, v, line);
@@ -10742,7 +10743,7 @@ static BinOpr subexpr (LexState *ls, expdesc *v, int limit) {
   while (op != OPR_NOBINOPR && priority[op].left > limit) {
     expdesc v2;
     BinOpr nextop;
-    int line = ls->linenumber;
+    const int line = ls->linenumber;
     luaX_next(ls);
     luaK_infix(ls->fs, op, v);
     /* read sub-expression with higher priority */
@@ -10798,7 +10799,7 @@ struct LHS_assign {
 */
 static void check_conflict (LexState *ls, struct LHS_assign *lh, expdesc *v) {
   FuncState *fs = ls->fs;
-  int extra = fs->freereg;  /* eventual position to save local variable */
+  const int extra = fs->freereg;  /* eventual position to save local variable */
   int conflict = 0;
   for (; lh; lh = lh->prev) {  /* check all previous assignments */
     if (lh->v.k == VINDEXED) {  /* assigning to a table? */
@@ -10817,7 +10818,7 @@ static void check_conflict (LexState *ls, struct LHS_assign *lh, expdesc *v) {
   }
   if (conflict) {
     /* copy upvalue/local value to a temporary (in position 'extra') */
-    OpCode op = (v->k == VLOCAL) ? OP_MOVE : OP_GETUPVAL;
+    const OpCode op = (v->k == VLOCAL) ? OP_MOVE : OP_GETUPVAL;
     luaK_codeABC(fs, op, extra, v->u.info, 0);
     luaK_reserveregs(fs, 1);
   }
@@ -10868,7 +10869,7 @@ static int cond (LexState *ls) {
 
 
 static void gotostat (LexState *ls, int pc) {
-  int line = ls->linenumber;
+  const int line = ls->linenumber;
   TString *label;
   int g;
   if (testnext(ls, TK_GOTO))
@@ -10944,7 +10945,7 @@ static void repeatstat (LexState *ls, int line) {
   /* repeatstat -> REPEAT block UNTIL cond */
   int condexit;
   FuncState *fs = ls->fs;
-  int repeat_init = luaK_getlabel(fs);
+  const int repeat_init = luaK_getlabel(fs);
   BlockCnt bl1, bl2;
   enterblock(fs, &bl1, 1);  /* loop block */
   enterblock(fs, &bl2, 0);  /* scope block */
@@ -11000,7 +11001,7 @@ static void forbody (LexState *ls, int base, int line, int nvars, int isnum) {
 static void fornum (LexState *ls, TString *varname, int line) {
   /* fornum -> NAME = exp1,exp1[,exp1] forbody */
   FuncState *fs = ls->fs;
-  int base = fs->freereg;
+  const int base = fs->freereg;
   new_localvarliteral(ls, "(for index)");
   new_localvarliteral(ls, "(for limit)");
   new_localvarliteral(ls, "(for step)");
@@ -11025,7 +11026,7 @@ static void forlist (LexState *ls, TString *indexname) {
   expdesc e;
   int nvars = 4;  /* gen, state, control, plus at least one declared var */
   int line;
-  int base = fs->freereg;
+  const int base = fs->freereg;
   /* create control variables */
   new_localvarliteral(ls, "(for generator)");
   new_localvarliteral(ls, "(for state)");
@@ -11170,7 +11171,7 @@ static void funcstat (LexState *ls, int line) {
 
 static void exprstat (LexState *ls) {
   /* stat -> func | assignment */
-  FuncState *fs = ls->fs;
+  const FuncState *fs = ls->fs;
   struct LHS_assign v;
   suffixedexp(ls, &v.v);
   if (ls->t.token == '=' || ls->t.token == ',') { /* stat -> assignment ? */
@@ -11218,7 +11219,7 @@ static void retstat (LexState *ls) {
 
 
 static void statement (LexState *ls) {
-  int line = ls->linenumber;  /* may be needed for error messages */
+  const int line = ls->linenumber;  /* may be needed for error messages */
   enterlevel(ls);
   switch (ls->t.token) {
     case ';': {  /* stat -> ';' (empty statement) */
@@ -11682,7 +11683,7 @@ LUA_API void lua_close (lua_State *L) {
 ** equality for long strings
 */
 int luaS_eqlngstr (TString *a, TString *b) {
-  size_t len = a->tsv.len;
+  const size_t len = a->tsv.len;
   lua_assert(a->tsv.tt == LUA_TLNGSTR && b->tsv.tt == LUA_TLNGSTR);
   return (a == b) ||  /* same instance or... */
     ((len == b->tsv.len) &&  /* equal length and ... */
@@ -11702,7 +11703,7 @@ int luaS_eqstr (TString *a, TString *b) {
 unsigned int luaS_hash (const char *str, size_t l, unsigned int seed) {
   unsigned int h = seed ^ l;
   size_t l1;
-  size_t step = (l >> LUAI_HASHLIMIT) + 1;
+  const size_t step = (l >> LUAI_HASHLIMIT) + 1;
   for (l1 = l; l1 >= step; l1 -= step)
     h = h ^ ((h<<5) + (h>>2) + cast_byte(str[l1 - 1]));
   return h;
@@ -11727,7 +11728,7 @@ void luaS_resize (lua_State *L, int newsize) {
     tb->hash[i] = NULL;
     while (p) {  /* for each node in the list */
       GCObject *next = gch(p)->next;  /* save next */
-      unsigned int h = lmod(gco2ts(p)->hash, newsize);  /* new position */
+      const unsigned int h = lmod(gco2ts(p)->hash, newsize);  /* new position */
       gch(p)->next = tb->hash[h];  /* chain it */
       tb->hash[h] = p;
       resetoldbit(p);  /* see MOVE OLD rule */
@@ -11783,8 +11784,8 @@ static TString *newshrstr (lua_State *L, const char *str, size_t l,
 */
 static TString *internshrstr (lua_State *L, const char *str, size_t l) {
   GCObject *o;
-  global_State *g = G(L);
-  unsigned int h = luaS_hash(str, l, g->seed);
+  const global_State *g = G(L);
+  const unsigned int h = luaS_hash(str, l, g->seed);
   for (o = g->strt.hash[lmod(h, g->strt.size)];
        o != NULL;
        o = gch(o)->next) {
@@ -12000,7 +12001,7 @@ static TString* LoadString(LoadState* S)
 
 static void LoadCode(LoadState* S, Proto* f)
 {
- int n=LoadInt(S);
+ const int n=LoadInt(S);
  f->code=luaM_newvector(S->L,n,Instruction);
  f->sizecode=n;
  LoadVector(S,f->code,n,sizeof(Instruction));
@@ -12018,7 +12019,7 @@ static void LoadConstants(LoadState* S, Proto* f)
  for (i=0; i<n; i++)
  {
   TValue* o=&f->k[i];
-  int t=LoadChar(S);
+  const int t=LoadChar(S);
   switch (t)
   {
    case LUA_TNIL:
@@ -12274,8 +12275,8 @@ int luaV_tostring (lua_State *L, StkId obj) {
     return 0;
   else {
     char s[LUAI_MAXNUMBER2STR];
-    lua_Number n = nvalue(obj);
-    int l = lua_number2str(s, n);
+    const lua_Number n = nvalue(obj);
+    const int l = lua_number2str(s, n);
     setsvalue2s(L, obj, luaS_newlstr(L, s, l));
     return 1;
   }
@@ -12284,8 +12285,8 @@ int luaV_tostring (lua_State *L, StkId obj) {
 
 static void traceexec (lua_State *L) {
   CallInfo *ci = L->ci;
-  lu_byte mask = L->hookmask;
-  int counthook = ((mask & LUA_MASKCOUNT) && L->hookcount == 0);
+  const lu_byte mask = L->hookmask;
+  const int counthook = ((mask & LUA_MASKCOUNT) && L->hookcount == 0);
   if (counthook)
     resethookcount(L);  /* reset count */
   if (ci->callstatus & CIST_HOOKYIELD) {  /* called hook last time? */
@@ -12295,9 +12296,9 @@ static void traceexec (lua_State *L) {
   if (counthook)
     luaD_hook(L, LUA_HOOKCOUNT, -1);  /* call count hook */
   if (mask & LUA_MASKLINE) {
-    Proto *p = ci_func(ci)->p;
-    int npc = pcRel(ci->u.l.savedpc, p);
-    int newline = getfuncline(p, npc);
+    const Proto *p = ci_func(ci)->p;
+    const int npc = pcRel(ci->u.l.savedpc, p);
+    const int newline = getfuncline(p, npc);
     if (npc == 0 ||  /* call linehook when enter a new function, */
         ci->u.l.savedpc <= L->oldpc ||  /* when jump back (loop), or when */
         newline != getfuncline(p, pcRel(L->oldpc, p)))  /* enter a new line */
@@ -12317,7 +12318,7 @@ static void traceexec (lua_State *L) {
 
 static void callTM (lua_State *L, const TValue *f, const TValue *p1,
                     const TValue *p2, TValue *p3, int hasres) {
-  ptrdiff_t result = savestack(L, p3);
+  const ptrdiff_t result = savestack(L, p3);
   setobj2s(L, L->top++, f);  /* push function */
   setobj2s(L, L->top++, p1);  /* 1st argument */
   setobj2s(L, L->top++, p2);  /* 2nd argument */
@@ -12438,7 +12439,7 @@ static int l_strcmp (const TString *ls, const TString *rs) {
   const char *r = getstr(rs);
   size_t lr = rs->tsv.len;
   for (;;) {
-    int temp = strcoll(l, r);
+    const int temp = strcoll(l, r);
     if (temp != 0) return temp;
     else {  /* strings are equal up to a `\0' */
       size_t len = strlen(l);  /* index of first `\0' in both strings */
@@ -12519,7 +12520,7 @@ int luaV_equalobj_ (lua_State *L, const TValue *t1, const TValue *t2) {
 void luaV_concat (lua_State *L, int total) {
   lua_assert(total >= 2);
   do {
-    StkId top = L->top;
+    const StkId top = L->top;
     int n = 2;  /* number of elements handled in this pass (at least 2) */
     if (!(ttisstring(top-2) || ttisnumber(top-2)) || !tostring(L, top-1)) {
       if (!call_binTM(L, top-2, top-1, top-2, TM_CONCAT))
@@ -12537,7 +12538,7 @@ void luaV_concat (lua_State *L, int total) {
       int i;
       /* collect total length */
       for (i = 1; i < total && tostring(L, top-i-1); i++) {
-        size_t l = tsvalue(top-i-1)->len;
+        const size_t l = tsvalue(top-i-1)->len;
         if (l >= (MAX_SIZET/sizeof(char)) - tl)
           luaG_runerror(L, "string length overflow");
         tl += l;
@@ -12546,7 +12547,7 @@ void luaV_concat (lua_State *L, int total) {
       tl = 0;
       n = i;
       do {  /* concat all strings */
-        size_t l = tsvalue(top-i)->len;
+        const size_t l = tsvalue(top-i)->len;
         memcpy(buffer+tl, svalue(top-i), l * sizeof(char));
         tl += l;
       } while (--i > 0);
@@ -12589,7 +12590,7 @@ void luaV_arith (lua_State *L, StkId ra, const TValue *rb,
   const TValue *b, *c;
   if ((b = luaV_tonumber(rb, &tempb)) != NULL &&
       (c = luaV_tonumber(rc, &tempc)) != NULL) {
-    lua_Number res = luaO_arith(op - TM_ADD + LUA_OPADD, nvalue(b), nvalue(c));
+    const lua_Number res = luaO_arith(op - TM_ADD + LUA_OPADD, nvalue(b), nvalue(c));
     setnvalue(ra, res);
   }
   else if (!call_binTM(L, rb, rc, ra, op))
@@ -12605,11 +12606,11 @@ void luaV_arith (lua_State *L, StkId ra, const TValue *rb,
 static Closure *getcached (Proto *p, UpVal **encup, StkId base) {
   Closure *c = p->cache;
   if (c != NULL) {  /* is there a cached closure? */
-    int nup = p->sizeupvalues;
-    Upvaldesc *uv = p->upvalues;
+    const int nup = p->sizeupvalues;
+    const Upvaldesc *uv = p->upvalues;
     int i;
     for (i = 0; i < nup; i++) {  /* check whether it has right upvalues */
-      TValue *v = uv[i].instack ? base + uv[i].idx : encup[uv[i].idx]->v;
+      const TValue *v = uv[i].instack ? base + uv[i].idx : encup[uv[i].idx]->v;
       if (c->l.upvals[i]->v != v)
         return NULL;  /* wrong upvalue; cannot reuse closure */
     }
@@ -12626,8 +12627,8 @@ static Closure *getcached (Proto *p, UpVal **encup, StkId base) {
 */
 static void pushclosure (lua_State *L, Proto *p, UpVal **encup, StkId base,
                          StkId ra) {
-  int nup = p->sizeupvalues;
-  Upvaldesc *uv = p->upvalues;
+  const int nup = p->sizeupvalues;
+  const Upvaldesc *uv = p->upvalues;
   int i;
   Closure *ncl = luaF_newLclosure(L, nup);
   ncl->l.p = p;
@@ -12648,9 +12649,9 @@ static void pushclosure (lua_State *L, Proto *p, UpVal **encup, StkId base,
 */
 void luaV_finishOp (lua_State *L) {
   CallInfo *ci = L->ci;
-  StkId base = ci->u.l.base;
-  Instruction inst = *(ci->u.l.savedpc - 1);  /* interrupted instruction */
-  OpCode op = GET_OPCODE(inst);
+  const StkId base = ci->u.l.base;
+  const Instruction inst = *(ci->u.l.savedpc - 1);  /* interrupted instruction */
+  const OpCode op = GET_OPCODE(inst);
   switch (op) {  /* finish its execution */
     case OP_ADD: case OP_SUB: case OP_MUL: case OP_DIV:
     case OP_MOD: case OP_POW: case OP_UNM: case OP_LEN:
@@ -12672,9 +12673,9 @@ void luaV_finishOp (lua_State *L) {
       break;
     }
     case OP_CONCAT: {
-      StkId top = L->top - 1;  /* top when 'call_binTM' was called */
-      int b = GETARG_B(inst);      /* first element to concatenate */
-      int total = cast_int(top - 1 - (base + b));  /* yet to concatenate */
+      const StkId top = L->top - 1;  /* top when 'call_binTM' was called */
+      const int b = GETARG_B(inst);      /* first element to concatenate */
+      const int total = cast_int(top - 1 - (base + b));  /* yet to concatenate */
       setobj2s(L, top - 2, top);  /* put TM result in proper position */
       if (total > 1) {  /* are there elements to concat? */
         L->top = top - 1;  /* top is one after last element (at top-2) */
@@ -13307,7 +13308,7 @@ static Node *mainposition (const Table *t, const TValue *key) {
 */
 static int arrayindex (const TValue *key) {
   if (ttisnumber(key)) {
-    lua_Number n = nvalue(key);
+    const lua_Number n = nvalue(key);
     int k;
     lua_number2int(k, n);
     if (luai_numeq(cast_num(k), n))
@@ -13329,7 +13330,7 @@ static int findindex (lua_State *L, Table *t, StkId key) {
   if (0 < i && i <= t->sizearray)  /* is `key' inside array part? */
     return i-1;  /* yes; that's the index (corrected to C) */
   else {
-    Node *n = mainposition(t, key);
+    const Node *n = mainposition(t, key);
     for (;;) {  /* check whether `key' is somewhere in the chain */
       /* key may be dead already, but it is ok to use it in `next' */
       if (luaV_rawequalobj(gkey(n), key) ||
@@ -13397,7 +13398,7 @@ static int computesizes (int nums[], int *narray) {
 
 
 static int countint (const TValue *key, int *nums) {
-  int k = arrayindex(key);
+  const int k = arrayindex(key);
   if (0 < k && k <= MAXASIZE) {  /* is `key' an appropriate array index? */
     nums[luaO_ceillog2(k)]++;  /* count as such */
     return 1;
@@ -13437,7 +13438,7 @@ static int numusehash (const Table *t, int *nums, int *pnasize) {
   int ause = 0;  /* summation of `nums' */
   int i = sizenode(t);
   while (i--) {
-    Node *n = &t->node[i];
+    const Node *n = &t->node[i];
     if (!ttisnil(gval(n))) {
       ause += countint(gkey(n), nums);
       totaluse++;
@@ -13484,8 +13485,8 @@ static void setnodevector (lua_State *L, Table *t, int size) {
 
 void luaH_resize (lua_State *L, Table *t, int nasize, int nhsize) {
   int i;
-  int oldasize = t->sizearray;
-  int oldhsize = t->lsizenode;
+  const int oldasize = t->sizearray;
+  const int oldhsize = t->lsizenode;
   Node *nold = t->node;  /* save old hash ... */
   if (nasize > oldasize)  /* array part must grow? */
     setarrayvector(L, t, nasize);
@@ -13503,7 +13504,7 @@ void luaH_resize (lua_State *L, Table *t, int nasize, int nhsize) {
   }
   /* re-insert elements from hash part */
   for (i = twoto(oldhsize) - 1; i >= 0; i--) {
-    Node *old = nold+i;
+    const Node *old = nold+i;
     if (!ttisnil(gval(old))) {
       /* doesn't need barrier/invalidate cache, as entry was
          already present in the table */
@@ -13516,7 +13517,7 @@ void luaH_resize (lua_State *L, Table *t, int nasize, int nhsize) {
 
 
 void luaH_resizearray (lua_State *L, Table *t, int nasize) {
-  int nsize = isdummy(t->node) ? 0 : sizenode(t);
+  const int nsize = isdummy(t->node) ? 0 : sizenode(t);
   luaH_resize(L, t, nasize, nsize);
 }
 
@@ -13629,8 +13630,8 @@ const TValue *luaH_getint (Table *t, int key) {
   if (cast(unsigned int, key-1) < cast(unsigned int, t->sizearray))
     return &t->array[key-1];
   else {
-    lua_Number nk = cast_num(key);
-    Node *n = hashnum(t, nk);
+    const lua_Number nk = cast_num(key);
+    const Node *n = hashnum(t, nk);
     do {  /* check whether `key' is somewhere in the chain */
       if (ttisnumber(gkey(n)) && luai_numeq(nvalue(gkey(n)), nk))
         return gval(n);  /* that's it */
@@ -13645,7 +13646,7 @@ const TValue *luaH_getint (Table *t, int key) {
 ** search function for short strings
 */
 const TValue *luaH_getstr (Table *t, TString *key) {
-  Node *n = hashstr(t, key);
+  const Node *n = hashstr(t, key);
   lua_assert(key->tsv.tt == LUA_TSHRSTR);
   do {  /* check whether `key' is somewhere in the chain */
     if (ttisshrstring(gkey(n)) && eqshrstr(rawtsvalue(gkey(n)), key))
@@ -13665,14 +13666,14 @@ const TValue *luaH_get (Table *t, const TValue *key) {
     case LUA_TSHRSTR: return luaH_getstr(t, rawtsvalue(key));
     case LUA_TNUMBER: {
       int k;
-      lua_Number n = nvalue(key);
+      const lua_Number n = nvalue(key);
       lua_number2int(k, n);
       if (luai_numeq(cast_num(k), nvalue(key))) /* index is int? */
         return luaH_getint(t, k);  /* use specialized version */
       /* else go through */
     }
     default: {
-      Node *n = mainposition(t, key);
+      const Node *n = mainposition(t, key);
       do {  /* check whether `key' is somewhere in the chain */
         if (luaV_rawequalobj(gkey(n), key))
           return gval(n);  /* that's it */
@@ -13726,7 +13727,7 @@ static int unbound_search (Table *t, unsigned int j) {
   }
   /* now do a binary search between them */
   while (j - i > 1) {
-    unsigned int m = (i+j)/2;
+    const unsigned int m = (i+j)/2;
     if (ttisnil(luaH_getint(t, m))) j = m;
     else i = m;
   }
@@ -13744,7 +13745,7 @@ int luaH_getn (Table *t) {
     /* there is a boundary in the array part: (binary) search for it */
     unsigned int i = 0;
     while (j - i > 1) {
-      unsigned int m = (i+j)/2;
+      const unsigned int m = (i+j)/2;
       if (ttisnil(&t->array[m - 1])) j = m;
       else i = m;
     }
@@ -13838,7 +13839,7 @@ static int findfield (lua_State *L, int objidx, int level) {
 
 
 static int pushglobalfuncname (lua_State *L, lua_Debug *ar) {
-  int top = lua_gettop(L);
+  const int top = lua_gettop(L);
   lua_getinfo(L, "f", ar);  /* push function */
   lua_pushglobaltable(L);
   if (findfield(L, top + 1, 2)) {
@@ -13878,7 +13879,7 @@ static int countlevels (lua_State *L) {
   while (lua_getstack(L, le, &ar)) { li = le; le *= 2; }
   /* do a binary search */
   while (li < le) {
-    int m = (li + le)/2;
+    const int m = (li + le)/2;
     if (lua_getstack(L, m, &ar)) li = m + 1;
     else le = m;
   }
@@ -13889,9 +13890,9 @@ static int countlevels (lua_State *L) {
 LUALIB_API void luaL_traceback (lua_State *L, lua_State *L1,
                                 const char *msg, int level) {
   lua_Debug ar;
-  int top = lua_gettop(L);
-  int numlevels = countlevels(L1);
-  int mark = (numlevels > LEVELS1 + LEVELS2) ? LEVELS1 : 0;
+  const int top = lua_gettop(L);
+  const int numlevels = countlevels(L1);
+  const int mark = (numlevels > LEVELS1 + LEVELS2) ? LEVELS1 : 0;
   if (msg) lua_pushfstring(L, "%s\n", msg);
   lua_pushliteral(L, "stack traceback:");
   while (lua_getstack(L1, level++, &ar)) {
@@ -13977,7 +13978,7 @@ LUALIB_API int luaL_error (lua_State *L, const char *fmt, ...) {
 
 
 LUALIB_API int luaL_fileresult (lua_State *L, int stat, const char *fname) {
-  int en = errno;  /* calls to Lua API may change this value */
+  const int en = errno;  /* calls to Lua API may change this value */
   if (stat) {
     lua_pushboolean(L, 1);
     return 1;
@@ -14146,7 +14147,7 @@ LUALIB_API const char *luaL_optlstring (lua_State *L, int narg,
 
 LUALIB_API lua_Number luaL_checknumber (lua_State *L, int narg) {
   int isnum;
-  lua_Number d = lua_tonumberx(L, narg, &isnum);
+  const lua_Number d = lua_tonumberx(L, narg, &isnum);
   if (!isnum)
     tag_error(L, narg, LUA_TNUMBER);
   return d;
@@ -14160,7 +14161,7 @@ LUALIB_API lua_Number luaL_optnumber (lua_State *L, int narg, lua_Number def) {
 
 LUALIB_API lua_Integer luaL_checkinteger (lua_State *L, int narg) {
   int isnum;
-  lua_Integer d = lua_tointegerx(L, narg, &isnum);
+  const lua_Integer d = lua_tointegerx(L, narg, &isnum);
   if (!isnum)
     tag_error(L, narg, LUA_TNUMBER);
   return d;
@@ -14169,7 +14170,7 @@ LUALIB_API lua_Integer luaL_checkinteger (lua_State *L, int narg) {
 
 LUALIB_API lua_Unsigned luaL_checkunsigned (lua_State *L, int narg) {
   int isnum;
-  lua_Unsigned d = lua_tounsignedx(L, narg, &isnum);
+  const lua_Unsigned d = lua_tounsignedx(L, narg, &isnum);
   if (!isnum)
     tag_error(L, narg, LUA_TNUMBER);
   return d;
@@ -14404,7 +14405,7 @@ LUALIB_API int luaL_loadfilex (lua_State *L, const char *filename,
   LoadF lf;
   int status, readstatus;
   int c;
-  int fnameindex = lua_gettop(L) + 1;  /* index of filename on the stack */
+  const int fnameindex = lua_gettop(L) + 1;  /* index of filename on the stack */
   if (filename == NULL) {
     lua_pushliteral(L, "=stdin");
     lf.f = stdin;
@@ -14674,7 +14675,7 @@ LUALIB_API void luaL_requiref (lua_State *L, const char *modname,
 LUALIB_API const char *luaL_gsub (lua_State *L, const char *s, const char *p,
                                                                const char *r) {
   const char *wild;
-  size_t l = strlen(p);
+  const size_t l = strlen(p);
   luaL_Buffer b;
   luaL_buffinit(L, &b);
   while ((wild = strstr(s, p)) != NULL) {
@@ -14755,7 +14756,7 @@ LUALIB_API void luaL_checkversion_ (lua_State *L, lua_Number ver) {
 
 
 static int luaB_print (lua_State *L) {
-  int n = lua_gettop(L);  /* number of arguments */
+  const int n = lua_gettop(L);  /* number of arguments */
   int i;
   lua_getglobal(L, "tostring");
   for (i=1; i<=n; i++) {
@@ -14782,7 +14783,7 @@ static int luaB_print (lua_State *L) {
 static int luaB_tonumber (lua_State *L) {
   if (lua_isnoneornil(L, 2)) {  /* standard conversion */
     int isnum;
-    lua_Number n = lua_tonumberx(L, 1, &isnum);
+    const lua_Number n = lua_tonumberx(L, 1, &isnum);
     if (isnum) {
       lua_pushnumber(L, n);
       return 1;
@@ -14793,7 +14794,7 @@ static int luaB_tonumber (lua_State *L) {
     size_t l;
     const char *s = luaL_checklstring(L, 1, &l);
     const char *e = s + l;  /* end point for 's' */
-    int base = luaL_checkint(L, 2);
+    const int base = luaL_checkint(L, 2);
     int neg = 0;
     luaL_argcheck(L, 2 <= base && base <= 36, 2, "base out of range");
     s += strspn(s, SPACECHARS);  /* skip initial spaces */
@@ -14802,7 +14803,7 @@ static int luaB_tonumber (lua_State *L) {
     if (isalnum((unsigned char)*s)) {
       lua_Number n = 0;
       do {
-        int digit = (isdigit((unsigned char)*s)) ? *s - '0'
+        const int digit = (isdigit((unsigned char)*s)) ? *s - '0'
                        : toupper((unsigned char)*s) - 'A' + 10;
         if (digit >= base) break;  /* invalid numeral; force a fail */
         n = n * (lua_Number)base + (lua_Number)digit;
@@ -14821,7 +14822,7 @@ static int luaB_tonumber (lua_State *L) {
 
 
 static int luaB_error (lua_State *L) {
-  int level = luaL_optint(L, 2, 1);
+  const int level = luaL_optint(L, 2, 1);
   lua_settop(L, 1);
   if (lua_isstring(L, 1) && level > 0) {  /* add extra information? */
     luaL_where(L, level);
@@ -14844,7 +14845,7 @@ static int luaB_getmetatable (lua_State *L) {
 
 
 static int luaB_setmetatable (lua_State *L) {
-  int t = lua_type(L, 2);
+  const int t = lua_type(L, 2);
   luaL_checktype(L, 1, LUA_TTABLE);
   luaL_argcheck(L, t == LUA_TNIL || t == LUA_TTABLE, 2,
                     "nil or table expected");
@@ -14865,7 +14866,7 @@ static int luaB_rawequal (lua_State *L) {
 
 
 static int luaB_rawlen (lua_State *L) {
-  int t = lua_type(L, 1);
+  const int t = lua_type(L, 1);
   luaL_argcheck(L, t == LUA_TTABLE || t == LUA_TSTRING, 1,
                    "table or string expected");
   lua_pushinteger(L, lua_rawlen(L, 1));
@@ -14898,12 +14899,12 @@ static int luaB_collectgarbage (lua_State *L) {
   static const int optsnum[] = {LUA_GCSTOP, LUA_GCRESTART, LUA_GCCOLLECT,
     LUA_GCCOUNT, LUA_GCSTEP, LUA_GCSETPAUSE, LUA_GCSETSTEPMUL,
     LUA_GCSETMAJORINC, LUA_GCISRUNNING, LUA_GCGEN, LUA_GCINC};
-  int o = optsnum[luaL_checkoption(L, 1, "collect", opts)];
-  int ex = luaL_optint(L, 2, 0);
-  int res = lua_gc(L, o, ex);
+  const int o = optsnum[luaL_checkoption(L, 1, "collect", opts)];
+  const int ex = luaL_optint(L, 2, 0);
+  const int res = lua_gc(L, o, ex);
   switch (o) {
     case LUA_GCCOUNT: {
-      int b = lua_gc(L, LUA_GCCOUNTB, 0);
+      const int b = lua_gc(L, LUA_GCCOUNTB, 0);
       lua_pushnumber(L, res + ((lua_Number)b/1024));
       lua_pushinteger(L, b);
       return 2;
@@ -14990,8 +14991,8 @@ static int load_aux (lua_State *L, int status) {
 static int luaB_loadfile (lua_State *L) {
   const char *fname = luaL_optstring(L, 1, NULL);
   const char *mode = luaL_optstring(L, 2, NULL);
-  int env = !lua_isnone(L, 3);  /* 'env' parameter? */
-  int status = luaL_loadfilex(L, fname, mode);
+  const int env = !lua_isnone(L, 3);  /* 'env' parameter? */
+  const int status = luaL_loadfilex(L, fname, mode);
   if (status == LUA_OK && env) {  /* 'env' parameter? */
     lua_pushvalue(L, 3);
     lua_setupvalue(L, -2, 1);  /* set it as 1st upvalue of loaded chunk */
@@ -15041,7 +15042,7 @@ static const char *generic_reader (lua_State *L, void *ud, size_t *size) {
 static int luaB_load (lua_State *L) {
   int status;
   size_t l;
-  int top = lua_gettop(L);
+  const int top = lua_gettop(L);
   const char *s = lua_tolstring(L, 1, &l);
   const char *mode = luaL_optstring(L, 3, "bt");
   if (s != NULL) {  /* loading a string? */
@@ -15086,7 +15087,7 @@ static int luaB_assert (lua_State *L) {
 
 
 static int luaB_select (lua_State *L) {
-  int n = lua_gettop(L);
+  const int n = lua_gettop(L);
   if (lua_type(L, 1) == LUA_TSTRING && *lua_tostring(L, 1) == '#') {
     lua_pushinteger(L, n-1);
     return 1;
@@ -15115,7 +15116,7 @@ static int finishpcall (lua_State *L, int status) {
 
 
 static int pcallcont (lua_State *L) {
-  int status = lua_getctx(L, NULL);
+  const int status = lua_getctx(L, NULL);
   return finishpcall(L, (status == LUA_YIELD));
 }
 
@@ -15132,7 +15133,7 @@ static int luaB_pcall (lua_State *L) {
 
 static int luaB_xpcall (lua_State *L) {
   int status;
-  int n = lua_gettop(L);
+  const int n = lua_gettop(L);
   luaL_argcheck(L, n >= 2, 2, "value expected");
   lua_pushvalue(L, 1);  /* exchange function... */
   lua_copy(L, 2, 1);  /* ...and error handler */
@@ -15236,14 +15237,14 @@ static b_uint andaux (lua_State *L) {
 
 
 static int b_and (lua_State *L) {
-  b_uint r = andaux(L);
+  const b_uint r = andaux(L);
   lua_pushunsigned(L, r);
   return 1;
 }
 
 
 static int b_test (lua_State *L) {
-  b_uint r = andaux(L);
+  const b_uint r = andaux(L);
   lua_pushboolean(L, r != 0);
   return 1;
 }
@@ -15270,7 +15271,7 @@ static int b_xor (lua_State *L) {
 
 
 static int b_not (lua_State *L) {
-  b_uint r = ~luaL_checkunsigned(L, 1);
+  const b_uint r = ~luaL_checkunsigned(L, 1);
   lua_pushunsigned(L, trim(r));
   return 1;
 }
@@ -15305,7 +15306,7 @@ static int b_rshift (lua_State *L) {
 
 static int b_arshift (lua_State *L) {
   b_uint r = luaL_checkunsigned(L, 1);
-  int i = luaL_checkint(L, 2);
+  const int i = luaL_checkint(L, 2);
   if (i < 0 || !(r & ((b_uint)1 << (LUA_NBITS - 1))))
     return b_shift(L, r, -i);
   else {  /* arithmetic shift for 'negative' number */
@@ -15343,8 +15344,8 @@ static int b_rrot (lua_State *L) {
 ** checking whether they are valid
 */
 static int fieldargs (lua_State *L, int farg, int *width) {
-  int f = luaL_checkint(L, farg);
-  int w = luaL_optint(L, farg + 1, 1);
+  const int f = luaL_checkint(L, farg);
+  const int w = luaL_optint(L, farg + 1, 1);
   luaL_argcheck(L, 0 <= f, farg, "field cannot be negative");
   luaL_argcheck(L, 0 < w, farg + 1, "width must be positive");
   if (f + w > LUA_NBITS)
@@ -15357,7 +15358,7 @@ static int fieldargs (lua_State *L, int farg, int *width) {
 static int b_extract (lua_State *L) {
   int w;
   b_uint r = luaL_checkunsigned(L, 1);
-  int f = fieldargs(L, 2, &w);
+  const int f = fieldargs(L, 2, &w);
   r = (r >> f) & mask(w);
   lua_pushunsigned(L, r);
   return 1;
@@ -15368,8 +15369,8 @@ static int b_replace (lua_State *L) {
   int w;
   b_uint r = luaL_checkunsigned(L, 1);
   b_uint v = luaL_checkunsigned(L, 2);
-  int f = fieldargs(L, 3, &w);
-  int m = mask(w);
+  const int f = fieldargs(L, 3, &w);
+  const int m = mask(w);
   v &= m;  /* erase bits outside given width */
   r = (r & ~(m << f)) | (v << f);
   lua_pushunsigned(L, r);
@@ -15432,7 +15433,7 @@ static int auxresume (lua_State *L, lua_State *co, int narg) {
   lua_xmove(L, co, narg);
   status = lua_resume(co, L, narg);
   if (status == LUA_OK || status == LUA_YIELD) {
-    int nres = lua_gettop(co);
+    const int nres = lua_gettop(co);
     if (!lua_checkstack(L, nres + 1)) {
       lua_pop(co, nres);  /* remove results anyway */
       lua_pushliteral(L, "too many results to resume");
@@ -15468,7 +15469,7 @@ static int luaB_coresume (lua_State *L) {
 
 static int luaB_auxwrap (lua_State *L) {
   lua_State *co = lua_tothread(L, lua_upvalueindex(1));
-  int r = auxresume(L, co, lua_gettop(L));
+  const int r = auxresume(L, co, lua_gettop(L));
   if (r < 0) {
     if (lua_isstring(L, -1)) {  /* error object is a string? */
       luaL_where(L, 1);  /* add extra info */
@@ -15532,7 +15533,7 @@ static int luaB_costatus (lua_State *L) {
 
 
 static int luaB_corunning (lua_State *L) {
-  int ismain = lua_pushthread(L);
+  const int ismain = lua_pushthread(L);
   lua_pushboolean(L, ismain);
   return 2;
 }
@@ -15595,7 +15596,7 @@ static int db_getmetatable (lua_State *L) {
 
 
 static int db_setmetatable (lua_State *L) {
-  int t = lua_type(L, 2);
+  const int t = lua_type(L, 2);
   luaL_argcheck(L, t == LUA_TNIL || t == LUA_TTABLE, 2,
                     "nil or table expected");
   lua_settop(L, 2);
@@ -15721,7 +15722,7 @@ static int db_getlocal (lua_State *L) {
   lua_State *L1 = getthread(L, &arg);
   lua_Debug ar;
   const char *name;
-  int nvar = luaL_checkint(L, arg+2);  /* local-variable index */
+  const int nvar = luaL_checkint(L, arg+2);  /* local-variable index */
   if (lua_isfunction(L, arg + 1)) {  /* function argument? */
     lua_pushvalue(L, arg + 1);  /* push function */
     lua_pushstring(L, lua_getlocal(L, NULL, nvar));  /* push local name */
@@ -15761,7 +15762,7 @@ static int db_setlocal (lua_State *L) {
 
 static int auxupvalue (lua_State *L, int get) {
   const char *name;
-  int n = luaL_checkint(L, 2);
+  const int n = luaL_checkint(L, 2);
   luaL_checktype(L, 1, LUA_TFUNCTION);
   name = get ? lua_getupvalue(L, 1, n) : lua_setupvalue(L, 1, n);
   if (name == NULL) return 0;
@@ -15784,7 +15785,7 @@ static int db_setupvalue (lua_State *L) {
 
 static int checkupval (lua_State *L, int argf, int argnup) {
   lua_Debug ar;
-  int nup = luaL_checkint(L, argnup);
+  const int nup = luaL_checkint(L, argnup);
   luaL_checktype(L, argf, LUA_TFUNCTION);
   lua_pushvalue(L, argf);
   lua_getinfo(L, ">u", &ar);
@@ -15794,15 +15795,15 @@ static int checkupval (lua_State *L, int argf, int argnup) {
 
 
 static int db_upvalueid (lua_State *L) {
-  int n = checkupval(L, 1, 2);
+  const int n = checkupval(L, 1, 2);
   lua_pushlightuserdata(L, lua_upvalueid(L, 1, n));
   return 1;
 }
 
 
 static int db_upvaluejoin (lua_State *L) {
-  int n1 = checkupval(L, 1, 2);
-  int n2 = checkupval(L, 3, 4);
+  const int n1 = checkupval(L, 1, 2);
+  const int n2 = checkupval(L, 3, 4);
   luaL_argcheck(L, !lua_iscfunction(L, 1), 1, "Lua function expected");
   luaL_argcheck(L, !lua_iscfunction(L, 3), 3, "Lua function expected");
   lua_upvaluejoin(L, 1, n1, 3, n2);
@@ -15882,8 +15883,8 @@ static int db_gethook (lua_State *L) {
   int arg;
   lua_State *L1 = getthread(L, &arg);
   char buff[5];
-  int mask = lua_gethookmask(L1);
-  lua_Hook hook = lua_gethook(L1);
+  const int mask = lua_gethookmask(L1);
+  const lua_Hook hook = lua_gethook(L1);
   if (hook != NULL && hook != hookf)  /* external hook? */
     lua_pushliteral(L, "external hook");
   else {
@@ -15920,7 +15921,7 @@ static int db_traceback (lua_State *L) {
   if (msg == NULL && !lua_isnoneornil(L, arg + 1))  /* non-string 'msg'? */
     lua_pushvalue(L, arg + 1);  /* return it untouched */
   else {
-    int level = luaL_optint(L, arg + 2, (L == L1) ? 1 : 0);
+    const int level = luaL_optint(L, arg + 2, (L == L1) ? 1 : 0);
     luaL_traceback(L, L1, msg, level);
   }
   return 1;
@@ -16082,7 +16083,7 @@ static int io_type (lua_State *L) {
 
 
 static int f_tostring (lua_State *L) {
-  LStream *p = tolstream(L);
+  const LStream *p = tolstream(L);
   if (isclosed(p))
     lua_pushliteral(L, "file (closed)");
   else
@@ -16092,7 +16093,7 @@ static int f_tostring (lua_State *L) {
 
 
 static FILE *tofile (lua_State *L) {
-  LStream *p = tolstream(L);
+  const LStream *p = tolstream(L);
   if (isclosed(p))
     luaL_error(L, "attempt to use a closed file");
   lua_assert(p->f);
@@ -16115,7 +16116,7 @@ static LStream *newprefile (lua_State *L) {
 
 static int aux_close (lua_State *L) {
   LStream *p = tolstream(L);
-  lua_CFunction cf = p->closef;
+  const lua_CFunction cf = p->closef;
   p->closef = NULL;  /* mark stream as closed */
   return (*cf)(L);  /* close it */
 }
@@ -16130,7 +16131,7 @@ static int io_close (lua_State *L) {
 
 
 static int f_gc (lua_State *L) {
-  LStream *p = tolstream(L);
+  const LStream *p = tolstream(L);
   if (!isclosed(p) && p->f != NULL)
     aux_close(L);  /* ignore closed and incompletely open files */
   return 0;
@@ -16141,8 +16142,8 @@ static int f_gc (lua_State *L) {
 ** function to close regular files
 */
 static int io_fclose (lua_State *L) {
-  LStream *p = tolstream(L);
-  int res = fclose(p->f);
+  const LStream *p = tolstream(L);
+  const int res = fclose(p->f);
   return luaL_fileresult(L, (res == 0), NULL);
 }
 
@@ -16248,7 +16249,7 @@ static int io_readline (lua_State *L);
 
 static void aux_lines (lua_State *L, int toclose) {
   int i;
-  int n = lua_gettop(L) - 1;  /* number of arguments to read */
+  const int n = lua_gettop(L) - 1;  /* number of arguments to read */
   /* ensure that arguments will fit here and into 'io_readline' stack */
   luaL_argcheck(L, n <= LUA_MINSTACK - 3, LUA_MINSTACK - 3, "too many options");
   lua_pushvalue(L, 1);  /* file handle */
@@ -16307,7 +16308,7 @@ static int read_number (lua_State *L, FILE *f) {
 
 
 static int test_eof (lua_State *L, FILE *f) {
-  int c = getc(f);
+  const int c = getc(f);
   ungetc(c, f);
   lua_pushlstring(L, NULL, 0);
   return (c != EOF);
@@ -16344,7 +16345,7 @@ static void read_all (lua_State *L, FILE *f) {
   luaL_buffinit(L, &b);
   for (;;) {
     char *p = luaL_prepbuffsize(&b, rlen);
-    size_t nr = fread(p, sizeof(char), rlen, f);
+    const size_t nr = fread(p, sizeof(char), rlen, f);
     luaL_addsize(&b, nr);
     if (nr < rlen) break;  /* eof? */
     else if (rlen <= (MAX_SIZE_T / 4))  /* avoid buffers too large */
@@ -16381,7 +16382,7 @@ static int g_read (lua_State *L, FILE *f, int first) {
     success = 1;
     for (n = first; nargs-- && success; n++) {
       if (lua_type(L, n) == LUA_TNUMBER) {
-        size_t l = (size_t)lua_tointeger(L, n);
+        const size_t l = (size_t)lua_tointeger(L, n);
         success = (l == 0) ? test_eof(L, f) : read_chars(L, f, l);
       }
       else {
@@ -16428,7 +16429,7 @@ static int f_read (lua_State *L) {
 
 
 static int io_readline (lua_State *L) {
-  LStream *p = (LStream *)lua_touserdata(L, lua_upvalueindex(1));
+  const LStream *p = (LStream *)lua_touserdata(L, lua_upvalueindex(1));
   int i;
   int n = (int)lua_tointeger(L, lua_upvalueindex(2));
   if (isclosed(p))  /* file is already closed? */
@@ -16494,7 +16495,7 @@ static int f_seek (lua_State *L) {
   static const char *const modenames[] = {"set", "cur", "end", NULL};
   FILE *f = tofile(L);
   int op = luaL_checkoption(L, 2, "cur", modenames);
-  lua_Number p3 = luaL_optnumber(L, 3, 0);
+  const lua_Number p3 = luaL_optnumber(L, 3, 0);
   l_seeknum offset = (l_seeknum)p3;
   luaL_argcheck(L, (lua_Number)offset == p3, 3,
                   "not an integer in proper range");
@@ -16512,9 +16513,9 @@ static int f_setvbuf (lua_State *L) {
   static const int mode[] = {_IONBF, _IOFBF, _IOLBF};
   static const char *const modenames[] = {"no", "full", "line", NULL};
   FILE *f = tofile(L);
-  int op = luaL_checkoption(L, 2, NULL, modenames);
-  lua_Integer sz = luaL_optinteger(L, 3, LUAL_BUFFERSIZE);
-  int res = setvbuf(f, NULL, mode[op], sz);
+  const int op = luaL_checkoption(L, 2, NULL, modenames);
+  const lua_Integer sz = luaL_optinteger(L, 3, LUAL_BUFFERSIZE);
+  const int res = setvbuf(f, NULL, mode[op], sz);
   return luaL_fileresult(L, res == 0, NULL);
 }
 
@@ -16715,7 +16716,7 @@ static int math_fmod (lua_State *L) {
 
 static int math_modf (lua_State *L) {
   lua_Number ip;
-  lua_Number fp = l_tg(modf)(luaL_checknumber(L, 1), &ip);
+  const lua_Number fp = l_tg(modf)(luaL_checknumber(L, 1), &ip);
   lua_pushnumber(L, ip);
   lua_pushnumber(L, fp);
   return 2;
@@ -16733,12 +16734,12 @@ static int math_pow (lua_State *L) {
 }
 
 static int math_log (lua_State *L) {
-  lua_Number x = luaL_checknumber(L, 1);
+  const lua_Number x = luaL_checknumber(L, 1);
   lua_Number res;
   if (lua_isnoneornil(L, 2))
     res = l_tg(log)(x);
   else {
-    lua_Number base = luaL_checknumber(L, 2);
+    const lua_Number base = luaL_checknumber(L, 2);
     if (base == 10.0) res = l_tg(log10)(x);
     else res = l_tg(log)(x)/l_tg(log)(base);
   }
@@ -16784,11 +16785,11 @@ static int math_ldexp (lua_State *L) {
 
 
 static int math_min (lua_State *L) {
-  int n = lua_gettop(L);  /* number of arguments */
+  const int n = lua_gettop(L);  /* number of arguments */
   lua_Number dmin = luaL_checknumber(L, 1);
   int i;
   for (i=2; i<=n; i++) {
-    lua_Number d = luaL_checknumber(L, i);
+    const lua_Number d = luaL_checknumber(L, i);
     if (d < dmin)
       dmin = d;
   }
@@ -16798,11 +16799,11 @@ static int math_min (lua_State *L) {
 
 
 static int math_max (lua_State *L) {
-  int n = lua_gettop(L);  /* number of arguments */
+  const int n = lua_gettop(L);  /* number of arguments */
   lua_Number dmax = luaL_checknumber(L, 1);
   int i;
   for (i=2; i<=n; i++) {
-    lua_Number d = luaL_checknumber(L, i);
+    const lua_Number d = luaL_checknumber(L, i);
     if (d > dmax)
       dmax = d;
   }
@@ -16814,21 +16815,21 @@ static int math_max (lua_State *L) {
 static int math_random (lua_State *L) {
   /* the `%' avoids the (rare) case of r==1, and is needed also because on
      some systems (SunOS!) `randomMT()' may return a value larger than RAND_MAX */
-  lua_Number r = (lua_Number)(rand()%RAND_MAX) / (lua_Number)RAND_MAX;
+  const lua_Number r = (lua_Number)(rand()%RAND_MAX) / (lua_Number)RAND_MAX;
   switch (lua_gettop(L)) {  /* check number of arguments */
     case 0: {  /* no arguments */
       lua_pushnumber(L, r);  /* Number between 0 and 1 */
       break;
     }
     case 1: {  /* only upper limit */
-      lua_Number u = luaL_checknumber(L, 1);
+      const lua_Number u = luaL_checknumber(L, 1);
       luaL_argcheck(L, 1.0 <= u, 1, "interval is empty");
       lua_pushnumber(L, l_tg(floor)(r*u) + 1.0);  /* int in [1, u] */
       break;
     }
     case 2: {  /* lower and upper limits */
-      lua_Number l = luaL_checknumber(L, 1);
-      lua_Number u = luaL_checknumber(L, 2);
+      const lua_Number l = luaL_checknumber(L, 1);
+      const lua_Number u = luaL_checknumber(L, 2);
       luaL_argcheck(L, l <= u, 2, "interval is empty");
       lua_pushnumber(L, l_tg(floor)(r*(u-l+1)) + l);  /* int in [l, u] */
       break;
@@ -17190,7 +17191,7 @@ static int ll_loadfunc (lua_State *L, const char *path, const char *sym) {
     return 0;  /* no errors */
   }
   else {
-    lua_CFunction f = ll_sym(L, reg, sym);
+    const lua_CFunction f = ll_sym(L, reg, sym);
     if (f == NULL)
       return ERRFUNC;  /* unable to find function */
     lua_pushcfunction(L, f);  /* else create new function */
@@ -17202,7 +17203,7 @@ static int ll_loadfunc (lua_State *L, const char *path, const char *sym) {
 static int ll_loadlib (lua_State *L) {
   const char *path = luaL_checkstring(L, 1);
   const char *init = luaL_checkstring(L, 2);
-  int stat = ll_loadfunc(L, path, init);
+  const int stat = ll_loadfunc(L, path, init);
   if (stat == 0)  /* no errors? */
     return 1;  /* return the loaded function */
   else {  /* error; error message is on stack top */
@@ -17699,7 +17700,7 @@ LUAMOD_API int luaopen_package (lua_State *L) {
 
 static int os_execute (lua_State *L) {
   const char *cmd = luaL_optstring(L, 1, NULL);
-  int stat = system(cmd);
+  const int stat = system(cmd);
   if (cmd != NULL)
     return luaL_execresult(L, stat);
   else {
@@ -17814,7 +17815,7 @@ static const char *checkoption (lua_State *L, const char *conv, char *buff) {
 
 static int os_date (lua_State *L) {
   const char *s = luaL_optstring(L, 1, "%c");
-  time_t t = luaL_opt(L, (time_t)luaL_checknumber, 2, time(NULL));
+  const time_t t = luaL_opt(L, (time_t)luaL_checknumber, 2, time(NULL));
   struct tm tmr, *stm;
   if (*s == '!') {  /* UTC? */
     stm = l_gmtime(&t, &tmr);
@@ -17898,7 +17899,7 @@ static int os_setlocale (lua_State *L) {
   static const char *const catnames[] = {"all", "collate", "ctype", "monetary",
      "numeric", "time", NULL};
   const char *l = luaL_optstring(L, 1, NULL);
-  int op = luaL_checkoption(L, 2, "all", catnames);
+  const int op = luaL_checkoption(L, 2, "all", catnames);
   lua_pushstring(L, setlocale(cat[op], l));
   return 1;
 }
@@ -18057,7 +18058,7 @@ static int str_rep (lua_State *L) {
   else if (l + lsep < l || l + lsep >= MAXSIZE / n)  /* may overflow? */
     return luaL_error(L, "resulting string too large");
   else {
-    size_t totallen = n * l + (n - 1) * lsep;
+    const size_t totallen = n * l + (n - 1) * lsep;
     luaL_Buffer b;
     char *p = luaL_buffinitsize(L, &b, totallen);
     while (n-- > 1) {  /* first n-1 copies (followed by separator) */
@@ -18093,12 +18094,12 @@ static int str_byte (lua_State *L) {
 
 
 static int str_char (lua_State *L) {
-  int n = lua_gettop(L);  /* number of arguments */
+  const int n = lua_gettop(L);  /* number of arguments */
   int i;
   luaL_Buffer b;
   char *p = luaL_buffinitsize(L, &b, n);
   for (i=1; i<=n; i++) {
-    int c = luaL_checkint(L, i);
+    const int c = luaL_checkint(L, i);
     luaL_argcheck(L, uchar(c) == c, i, "value out of range");
     p[i - 1] = uchar(c);
   }
@@ -18257,8 +18258,8 @@ static const char *matchbalance (MatchState *ms, const char *s,
                       "(missing arguments to " LUA_QL("%%b") ")");
   if (*s != *p) return NULL;
   else {
-    int b = *p;
-    int e = *(p+1);
+    const int b = *p;
+    const int e = *(p+1);
     int cont = 1;
     while (++s < ms->src_end) {
       if (*s == e) {
@@ -18302,7 +18303,7 @@ static const char *min_expand (MatchState *ms, const char *s,
 static const char *start_capture (MatchState *ms, const char *s,
                                     const char *p, int what) {
   const char *res;
-  int level = ms->level;
+  const int level = ms->level;
   if (level >= LUA_MAXCAPTURES) luaL_error(ms->L, "too many captures");
   ms->capture[level].init = s;
   ms->capture[level].len = what;
@@ -18315,7 +18316,7 @@ static const char *start_capture (MatchState *ms, const char *s,
 
 static const char *end_capture (MatchState *ms, const char *s,
                                   const char *p) {
-  int l = capture_to_close(ms);
+  const int l = capture_to_close(ms);
   const char *res;
   ms->capture[l].len = s - ms->capture[l].init;  /* close capture */
   if ((res = match(ms, s, p)) == NULL)  /* match failed? */
@@ -18385,7 +18386,7 @@ static const char *match (MatchState *ms, const char *s, const char *p) {
     }
     default: dflt: {  /* pattern class plus optional suffix */
       const char *ep = classend(ms, p);  /* points to what is next */
-      int m = s < ms->src_end && singlematch(uchar(*s), p, ep);
+      const int m = s < ms->src_end && singlematch(uchar(*s), p, ep);
       switch (*ep) {
         case '?': {  /* optional */
           const char *res;
@@ -18444,7 +18445,7 @@ static void push_onecapture (MatchState *ms, int i, const char *s,
       luaL_error(ms->L, "invalid capture index");
   }
   else {
-    ptrdiff_t l = ms->capture[i].len;
+    const ptrdiff_t l = ms->capture[i].len;
     if (l == CAP_UNFINISHED) luaL_error(ms->L, "unfinished capture");
     if (l == CAP_POSITION)
       lua_pushinteger(ms->L, ms->capture[i].init - ms->src_init + 1);
@@ -18456,7 +18457,7 @@ static void push_onecapture (MatchState *ms, int i, const char *s,
 
 static int push_captures (MatchState *ms, const char *s, const char *e) {
   int i;
-  int nlevels = (ms->level == 0 && s) ? 1 : ms->level;
+  const int nlevels = (ms->level == 0 && s) ? 1 : ms->level;
   luaL_checkstack(ms->L, nlevels, "too many captures");
   for (i = 0; i < nlevels; i++)
     push_onecapture(ms, i, s, e);
@@ -18499,7 +18500,7 @@ static int str_find_aux (lua_State *L, int find) {
   else {
     MatchState ms;
     const char *s1 = s + init - 1;
-    int anchor = (*p == '^');
+    const int anchor = (*p == '^');
     if (anchor) {
       p++; lp--;  /* skip anchor character */
     }
@@ -18634,9 +18635,9 @@ static int str_gsub (lua_State *L) {
   size_t srcl, lp;
   const char *src = luaL_checklstring(L, 1, &srcl);
   const char *p = luaL_checklstring(L, 2, &lp);
-  int tr = lua_type(L, 3);
-  size_t max_s = luaL_optinteger(L, 4, srcl+1);
-  int anchor = (*p == '^');
+  const int tr = lua_type(L, 3);
+  const size_t max_s = luaL_optinteger(L, 4, srcl+1);
+  const int anchor = (*p == '^');
   size_t n = 0;
   MatchState ms;
   luaL_Buffer b;
@@ -18776,9 +18777,9 @@ static const char *scanformat (lua_State *L, const char *strfrmt, char *form) {
 ** add length modifier into formats
 */
 static void addlenmod (char *form, const char *lenmod) {
-  size_t l = strlen(form);
-  size_t lm = strlen(lenmod);
-  char spec = form[l - 1];
+  const size_t l = strlen(form);
+  const size_t lm = strlen(lenmod);
+  const char spec = form[l - 1];
   strcpy(form + l - 1, lenmod);
   form[l + lm - 1] = spec;
   form[l + lm] = '\0';
@@ -18786,7 +18787,7 @@ static void addlenmod (char *form, const char *lenmod) {
 
 
 static int str_format (lua_State *L) {
-  int top = lua_gettop(L);
+  const int top = lua_gettop(L);
   int arg = 1;
   size_t sfl;
   const char *strfrmt = luaL_checklstring(L, arg, &sfl);
@@ -18811,9 +18812,9 @@ static int str_format (lua_State *L) {
           break;
         }
         case 'd':  case 'i': {
-          lua_Number n = luaL_checknumber(L, arg);
+          const lua_Number n = luaL_checknumber(L, arg);
           LUA_INTFRM_T ni = (LUA_INTFRM_T)n;
-          lua_Number diff = n - (lua_Number)ni;
+          const lua_Number diff = n - (lua_Number)ni;
           luaL_argcheck(L, -1 < diff && diff < 1, arg,
                         "not a number in proper range");
           addlenmod(form, LUA_INTFRMLEN);
@@ -18821,9 +18822,9 @@ static int str_format (lua_State *L) {
           break;
         }
         case 'o':  case 'u':  case 'x':  case 'X': {
-          lua_Number n = luaL_checknumber(L, arg);
-          unsigned LUA_INTFRM_T ni = (unsigned LUA_INTFRM_T)n;
-          lua_Number diff = n - (lua_Number)ni;
+          const lua_Number n = luaL_checknumber(L, arg);
+          const unsigned LUA_INTFRM_T ni = (unsigned LUA_INTFRM_T)n;
+          const lua_Number diff = n - (lua_Number)ni;
           luaL_argcheck(L, -1 < diff && diff < 1, arg,
                         "not a non-negative number in proper range");
           addlenmod(form, LUA_INTFRMLEN);
@@ -18981,7 +18982,7 @@ static int tinsert (lua_State *L) {
 
 
 static int tremove (lua_State *L) {
-  int e = aux_getn(L, 1);
+  const int e = aux_getn(L, 1);
   int pos = luaL_optint(L, 2, e);
   if (!(1 <= pos && pos <= e))  /* position is outside bounds? */
     return 0;  /* nothing to remove */
@@ -19032,7 +19033,7 @@ static int tconcat (lua_State *L) {
 */
 
 static int pack (lua_State *L) {
-  int n = lua_gettop(L);  /* number of elements to pack */
+  const int n = lua_gettop(L);  /* number of elements to pack */
   lua_createtable(L, n, 1);  /* create result table */
   lua_pushinteger(L, n);
   lua_setfield(L, -2, "n");  /* t.n = number of elements */
@@ -19160,7 +19161,7 @@ static void auxsort (lua_State *L, int l, int u) {
 }
 
 static int sort (lua_State *L) {
-  int n = aux_getn(L, 1);
+  const int n = aux_getn(L, 1);
   luaL_checkstack(L, 40, "");  /* assume array is smaller than 2^40 */
   if (!lua_isnoneornil(L, 2))  /* is there a 2nd argument? */
     luaL_checktype(L, 2, LUA_TFUNCTION);

@@ -4,7 +4,7 @@
 
 void KickPlayerBack(edict_t *ent)
 {
-	edict_t *other=NULL;
+	const edict_t *other=NULL;
 
 	while ((other = findradius(other, ent->s.origin, 175)) != NULL)
 	{

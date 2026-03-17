@@ -76,8 +76,8 @@ void boss_update(edict_t *ent, usercmd_t *ucmd) {
     else
         maxspeed = BOSS_MAXVELOCITY;
 
-    float norm_fspeed = scale_fps(forwardspeed / div);
-    float norm_sspeed = scale_fps(sidespeed / div);
+    const float norm_fspeed = scale_fps(forwardspeed / div);
+    const float norm_sspeed = scale_fps(sidespeed / div);
 
     if (!(ent->client->buttons & BUTTON_ATTACK)) {
         if (forwardspeed > 0) {
@@ -321,7 +321,7 @@ void boss_pain(edict_t *self, edict_t *other, float kick, int damage) {
 
 // returns true if there is a nearby, visible player boss
 qboolean findNearbyBoss(edict_t *self) {
-    edict_t *other = NULL;
+    const edict_t *other = NULL;
 
     while ((other = findradius(other, self->s.origin, BOSS_ALLY_BONUS_RANGE)) != NULL) {
         if (!IsABoss(other))
@@ -351,8 +351,8 @@ void boss_eyecam(edict_t *player, edict_t *boss) {
 void boss_position_player(edict_t *player, edict_t *boss) {
     float hdist = 0, vdist = 0;
     vec3_t forward, start, goal;
-    vec3_t boxmin = {-4, -4, 0};
-    vec3_t boxmax = {4, 4, 0};
+    const vec3_t boxmin = {-4, -4, 0};
+    const vec3_t boxmax = {4, 4, 0};
     trace_t tr;
 
     if (boss->monsterinfo.trail_time > level.time) {

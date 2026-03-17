@@ -479,7 +479,7 @@ void myChickFireball (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	float slvl = drone_damagelevel(self);
+	const float slvl = drone_damagelevel(self);
 	
 	damage = 50 + 15 * slvl; // dmg: myChickFireball
 	flame_damage = 2 * slvl; // dmg: myChickFireballFlames
@@ -672,7 +672,7 @@ void mychick_reslash(edict_t *self)
 {
 	if (self->enemy->health > 0)
 	{
-		if (entdist (self, self->enemy) == 32)
+		if (entdist (self, self->enemy) == 32) {
 			if (random() <= 0.9)
 			{				
 				self->monsterinfo.currentmove = &mychick_move_slash;
@@ -683,6 +683,7 @@ void mychick_reslash(edict_t *self)
 				self->monsterinfo.currentmove = &mychick_move_end_slash;
 				return;
 			}
+		}
 	}
 	self->monsterinfo.currentmove = &mychick_move_end_slash;
 }
@@ -710,8 +711,8 @@ void mychick_melee(edict_t *self)
 
 void chick_fire_attack (edict_t *self)
 {
-	float r = random();
-	float range = entdist(self, self->enemy);
+	const float r = random();
+	const float range = entdist(self, self->enemy);
 
 	// medium-long range
 	if (range <= 768)
@@ -828,7 +829,7 @@ mmove_t mychick_move_pain_long = { FRAME_pain301, FRAME_pain321, mychick_frames_
 
 void mychick_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
-	double rng = random();
+	const double rng = random();
 	if (self->health < (self->max_health / 2))
 		self->s.skinnum = 1;
 

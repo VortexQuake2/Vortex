@@ -300,8 +300,8 @@ void station_dropitem (edict_t *self)
 		// have some rockets or bullets to feed the sentry
 		if ((ammo == 1.0) && PlayerHasSentry(self->enemy))
 		{
-			int bullet_ammo = self->enemy->client->pers.inventory[bullet_index];
-			int rocket_ammo = self->enemy->client->pers.inventory[rocket_index];
+			const int bullet_ammo = self->enemy->client->pers.inventory[bullet_index];
+			const int rocket_ammo = self->enemy->client->pers.inventory[rocket_index];
 
 			if (!bullet_ammo || !rocket_ammo)
 			{

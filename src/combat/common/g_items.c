@@ -621,7 +621,7 @@ int ArmorIndex(edict_t *ent) {
 
 qboolean Pickup_Armor(edict_t *ent, edict_t *other) {
     int armor, current_armor, max_armor, delta;
-    gitem_armor_t *newinfo = (gitem_armor_t *) ent->item->info;
+    const gitem_armor_t *newinfo = (gitem_armor_t *) ent->item->info;
     qboolean shard = false;
     float temp = 1.0;
 
@@ -885,7 +885,7 @@ qboolean CanTball(edict_t *ent, qboolean print) {
 void Tball_Aura(edict_t *owner, vec3_t origin) {
     edict_t *other = NULL;
     int i = 0;
-    int radius = 160;
+    const int radius = 160;
 
     //3.0 new algorithm for tball code (faster)
     for (i = 1; i <= game.maxclients; i++) {
@@ -1032,7 +1032,7 @@ void Touch_Item(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
 //GHz START
     // if this is a player-controlled monster, then the player should
     // be able to pick up the items that the monster touches
-    int pm = PM_MonsterHasPilot(other);
+    const int pm = PM_MonsterHasPilot(other);
 
     if (pm && (other->mtype != BOSS_TANK) && (other->mtype != BOSS_MAKRON))
         other = other->activator;
@@ -2948,7 +2948,7 @@ void SetItemNames(void) {
 int GetWorldAmmoCount(char *pickupName) {
     int count = 0;
     edict_t *e = NULL;
-    gitem_t *it = FindItem(pickupName);
+    const gitem_t *it = FindItem(pickupName);
 
     while ((e = G_Find(e, FOFS(classname), it->classname)) != NULL) {
         if (e->inuse && !(e->spawnflags & DROPPED_ITEM))

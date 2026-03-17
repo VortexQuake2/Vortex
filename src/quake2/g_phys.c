@@ -724,7 +724,7 @@ void SV_Physics_Toss (edict_t *ent)
 	qboolean	isinwater;
 	vec3_t		old_origin;
 
-	qboolean	forcethrough = false;
+	const qboolean	forcethrough = false;
 
 // regular thinking
 	SV_RunThink (ent);
@@ -799,7 +799,7 @@ void SV_Physics_Toss (edict_t *ent)
 		// spikeball never stops bouncing
 		if (ent->mtype == M_SPIKEBALL)
 		{
-			float delta = 275 - ent->velocity[2];
+			const float delta = 275 - ent->velocity[2];
 
 			// don't get stuck on the ceiling
 			if (trace.plane.normal[2] != -1.0)

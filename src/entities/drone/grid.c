@@ -109,7 +109,7 @@ node_t *tNode;
 void PrintNodes (node_t *Node, qboolean reverse)
 {
 	int nodeNumber;
-	node_t *tNode = Node;
+	const node_t *tNode = Node;
 
 	while (tNode)
 	{
@@ -469,7 +469,7 @@ int GetVerticalNodeNum (vec3_t start, float x, float y, float max_z_range, int n
 		if (Get2dDistance(v, pathnode[i]) > 1)
 			continue;
 		// is it within our specified z range?
-		if (fabsf((int)pathnode[i][2]-(int)start[2]) > max_z_range)
+		if (abs((int)pathnode[i][2]-(int)start[2]) > max_z_range)
 			continue;
 		return i;
 	}
@@ -519,7 +519,7 @@ qboolean CheckPath1 (vec3_t start, vec3_t end)
 {
 	int		i;
 	vec3_t	from;
-	edict_t *ignore=NULL;
+	const edict_t *ignore=NULL;
 	trace_t	tr;
 
 	VectorCopy(start, from);

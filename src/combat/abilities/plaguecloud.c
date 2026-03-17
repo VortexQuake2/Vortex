@@ -13,7 +13,7 @@ void PlagueCloud(edict_t *ent, edict_t *target);
 
 void InfectedCorpseTouch(edict_t* self, edict_t* other)
 {
-    que_t* q = NULL;
+    const que_t* q = NULL;
 
     if (!G_EntExists(self))
         return; // invalid entity

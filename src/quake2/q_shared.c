@@ -1084,7 +1084,7 @@ Swap_Init
 */
 void Swap_Init (void)
 {
-	byte	swaptest[2] = {1,0};
+	const byte	swaptest[2] = {1,0};
 
 // set the byte swapping variables in a portable manner	
 	if ( *(short *)swaptest == 1)
@@ -1522,7 +1522,7 @@ void Info_SetValueForKey (char *s, char *key, char *value)
 {
 	char	newi[MAX_INFO_STRING], *v;
 	int		c;
-	int		maxsize = MAX_INFO_STRING;
+	const int		maxsize = MAX_INFO_STRING;
 
 	if (strstr (key, "\\") || strstr (value, "\\") )
 	{

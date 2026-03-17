@@ -753,9 +753,9 @@ int CTF_NumPlayerSpawns (int type, int teamnum)
 
 void CTF_PlayerRespawnTime (edict_t *ent)
 {
-	int team_spawns = CTF_NumPlayerSpawns(0, ent->teamnum) + 1;
-	int total_spawns = CTF_NumPlayerSpawns(0, 0) + 1;
-	float ratio = team_spawns / total_spawns;
+	const int team_spawns = CTF_NumPlayerSpawns(0, ent->teamnum) + 1;
+	const int total_spawns = CTF_NumPlayerSpawns(0, 0) + 1;
+	const float ratio = team_spawns / total_spawns;
 	float time = CTF_PLAYERSPAWN_TIME;
 	
 	// don't apply ratio unless all spawns have been captured
@@ -796,8 +796,8 @@ edict_t *CTF_NearestPlayerSpawn (edict_t *ent, int teamnum, float range, qboolea
 
 void ctf_playerspawn_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int		points = CTF_PLAYERSPAWN_CAPTURE_EXPERIENCE;
-	int		credits = CTF_PLAYERSPAWN_CAPTURE_CREDITS;
+	const int		points = CTF_PLAYERSPAWN_CAPTURE_EXPERIENCE;
+	const int		credits = CTF_PLAYERSPAWN_CAPTURE_CREDITS;
 	edict_t *cl;
 
 	if (attacker && attacker->inuse && ((cl = G_GetClient(attacker)) != NULL))
@@ -1333,7 +1333,7 @@ qboolean CTF_GetFlagPosition (int teamnum, vec3_t pos)
 		const vec3_t up = { 0, 0, 24 };
 		VectorAdd(pos, down, down);
 
-		trace_t tr = gi.trace(pos, vec3_origin, vec3_origin, down, NULL, MASK_SOLID);
+		const trace_t tr = gi.trace(pos, vec3_origin, vec3_origin, down, NULL, MASK_SOLID);
 
 		VectorCopy(tr.endpos, pos);
 		VectorAdd(up, pos, pos);
@@ -1821,7 +1821,7 @@ qboolean CTF_CorrectSpawnPosition(edict_t* self)
 			const vec3_t down = { 0, 0, -8192 };
 			vec3_t end;
 			VectorAdd(self->s.origin, down, end);
-			trace_t tr = gi.trace(self->s.origin, mins, maxs, end, self, MASK_PLAYERSOLID);
+			const trace_t tr = gi.trace(self->s.origin, mins, maxs, end, self, MASK_PLAYERSOLID);
 
 			if (tr.ent == g_edicts) 
 			{
@@ -1854,7 +1854,7 @@ void SP_info_player_team1(edict_t* self)
 		return;
 	}
 
-	qboolean success = CTF_CorrectSpawnPosition(self);
+	const qboolean success = CTF_CorrectSpawnPosition(self);
 
 	if (ctf->value && debuginfo->value > 0 && success)
 	{
@@ -1873,8 +1873,8 @@ void SP_info_player_team2(edict_t* self)
 		G_FreeEdict(self);
 		return;
 	}
-	
-	qboolean success = CTF_CorrectSpawnPosition(self);
+
+	const qboolean success = CTF_CorrectSpawnPosition(self);
 
 	if (ctf->value && debuginfo->value > 0 && success)
 	{
