@@ -1482,11 +1482,8 @@ void fire_20mm (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick
 	vec3_t		end;
 	vec3_t		forward, right, start1, offset;
 	trace_t		tr;
-	edict_t		*ignore;
-	int			mask;
-	qboolean	water, ducked;
-
-	//int range = WEAPON_20MM_INITIAL_RANGE + (WEAPON_20MM_ADDON_RANGE * self->myskills.weapons[WEAPON_20MM].mods[1].current_level);
+	qboolean ducked;
+	int itercount = 0;
 
 	// calling entity made a sound, used to alert monsters
 	self->lastsound = level.framenum;
@@ -1495,17 +1492,16 @@ void fire_20mm (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick
 
 	VectorMA (start, range, aimdir, end);
 	VectorCopy (start, from);
-	ignore = self;
-	water = false;
-	mask = MASK_SHOT|CONTENTS_SLIME|CONTENTS_LAVA;
-	while (ignore)
+	const edict_t *ignore = self;
+	int mask = MASK_SHOT | CONTENTS_SLIME | CONTENTS_LAVA;
+
+	while (ignore && itercount++ < 500)
 	{
 		tr = gi.trace (from, NULL, NULL, end, ignore, mask);
 
 		if (tr.contents & (CONTENTS_SLIME|CONTENTS_LAVA))
 		{
 			mask &= ~(CONTENTS_SLIME|CONTENTS_LAVA);
-			water = true;
 		}
 		else
 		{
@@ -1540,7 +1536,7 @@ void fire_20mm (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick
 		}
 
 	//GHz Start
-		if (!self->client || (self->client->ps.pmove.pm_flags & PMF_DUCKED))
+		if (!self->client || self->client->ps.pmove.pm_flags & PMF_DUCKED)
 			ducked = true;
 		else
 			ducked = false;
