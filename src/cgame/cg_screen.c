@@ -390,7 +390,7 @@ void CG_NotifyMessage(const int32_t isplit, const char *msg, const bool is_chat)
 
 // centerprint stuff
 static struct cl_centerprint_t *CG_QueueCenterPrint(const int isplit, const bool instant) {
-    auto *icl = &hud_data[isplit];
+    auto icl = &hud_data[isplit];
 
     // just use first index
     if (icl->center_index == -1 || instant) {
@@ -570,7 +570,7 @@ static void CG_DrawCenterString(const player_state_t *ps, const struct vrect_t h
     // easy!
     if (center->instant) {
         for (size_t i = 0; i < center->row_count; i++) {
-            const auto *line = center->lines[i];
+            const auto line = center->lines[i];
 
             cgi.SCR_SetAltTypeface(ui_acc_alttypeface->integer && true);
 
@@ -590,7 +590,7 @@ static void CG_DrawCenterString(const player_state_t *ps, const struct vrect_t h
         }
 
         for (size_t i = 0; i < center->bind_count; i++) {
-            const auto *bind = &center->binds[i];
+            const auto bind = &center->binds[i];
             y += lineHeight * 2;
             cgi.SCR_DrawBind(isplit, bind->bind, bind->purpose, (hud_vrect.x + hud_vrect.width / 2) * scale, y, scale);
         }
@@ -1550,7 +1550,7 @@ static void CG_ExecuteLayoutString(const char *s, struct vrect_t hud_vrect, stru
                 }
             }
 
-            auto *row = &hud_temp.table_rows[hud_temp.num_rows];
+            auto row = &hud_temp.table_rows[hud_temp.num_rows];
 
             for (int i = 0; i < value; i++) {
                 token = COM_Parse(&s);
