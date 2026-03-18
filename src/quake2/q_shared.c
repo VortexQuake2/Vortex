@@ -1110,7 +1110,9 @@ void Swap_Init (void)
 
 }
 
-constexpr size_t MAX_MODELS_OLD = 256, MAX_SOUNDS_OLD = 256, MAX_IMAGES_OLD = 256;
+constexpr size_t MAX_MODELS_OLD = 256;
+constexpr size_t MAX_SOUNDS_OLD = 256;
+constexpr size_t MAX_IMAGES_OLD = 256;
 
 enum
 {
