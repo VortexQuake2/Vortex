@@ -1100,7 +1100,7 @@ void G_RunFrames (edict_t *ent, int start_frame, int end_frame, qboolean reverse
 	}
 }
 
-float distance (vec3_t p1, vec3_t p2)
+float distance (const vec3_t p1, const vec3_t p2)
 {
 	vec3_t v;
 
@@ -1189,7 +1189,7 @@ edict_t *G_GetSummoner (const edict_t *ent)
 		return NULL;
 }
 
-qboolean G_ValidTargetEnt(edict_t *self, edict_t *target, qboolean alive) 
+qboolean G_ValidTargetEnt(const edict_t *self, const edict_t *target, qboolean alive)
 {
     if (alive) {
         if (!G_EntIsAlive(target))

@@ -15,7 +15,6 @@
 #define DRONE_DEBUG				0		// set to 1 to enable drone AI debugging
 
 qboolean drone_ValidChaseTarget (edict_t *self, edict_t *target);
-float distance (vec3_t p1, vec3_t p2);
 edict_t *SpawnGoalEntity (edict_t *ent, vec3_t org);
 void drone_ai_checkattack (edict_t *self);
 qboolean drone_findtarget (edict_t *self, qboolean force);

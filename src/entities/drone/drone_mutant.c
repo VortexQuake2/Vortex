@@ -631,7 +631,7 @@ void init_drone_mutant (edict_t *self)
 	sound_pain1 = gi.soundindex ("mutant/mutpain1.wav");
 	sound_pain2 = gi.soundindex ("mutant/mutpain2.wav");
 	sound_sight = gi.soundindex ("mutant/mutsght1.wav");
-	0;//sound_search = gi.soundindex ("mutant/mutsrch1.wav");
+	//sound_search = gi.soundindex ("mutant/mutsrch1.wav");
 	sound_step1 = gi.soundindex ("mutant/step1.wav");
 	sound_step2 = gi.soundindex ("mutant/step2.wav");
 	sound_step3 = gi.soundindex ("mutant/step3.wav");

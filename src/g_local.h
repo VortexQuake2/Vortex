@@ -1221,7 +1221,7 @@ qboolean V_CanUseAbility(edict_t *ent, int ability_index, int ability_cost, qboo
 
 qboolean G_ValidTarget(const edict_t *self, const edict_t *target, qboolean vis, qboolean alive);
 
-qboolean G_ValidTargetEnt(edict_t *self, edict_t *target, qboolean alive);
+qboolean G_ValidTargetEnt(const edict_t *self, const edict_t *target, qboolean alive);
 
 qboolean G_ValidTarget_Lite(const edict_t *self, const edict_t *target, qboolean vis);
 
@@ -1251,7 +1251,7 @@ void G_EntMidPoint(const edict_t *ent, vec3_t point);
 void G_EntViewPoint(const edict_t *ent, vec3_t point); //4.55
 qboolean G_ClearShot(const edict_t *shooter, vec3_t start, const edict_t *target);
 
-float distance(vec3_t p1, vec3_t p2);
+float distance(const vec3_t p1, const vec3_t p2);
 
 void G_RunFrames(edict_t *ent, int start_frame, int end_frame, qboolean reverse, bool limit_rate);
 

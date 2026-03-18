@@ -4,7 +4,7 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "cppcoreguidelines-narrowing-conversions"
 
-int MAX_ARMOR(struct edict_s *ent) {
+int MAX_ARMOR(const struct edict_s *ent) {
     int vitlvl = 0;
     int talentlevel;
     int value;
@@ -136,37 +136,37 @@ int MAX_HEALTH(const edict_t *ent) {
     return value;
 }
 
-int MAX_BULLETS(struct edict_s *ent) {
+int MAX_BULLETS(const struct edict_s *ent) {
     if (ent->myskills.abilities[MAX_AMMO].disable)
         return 0;
     return (100 * ent->myskills.abilities[MAX_AMMO].current_level);
 }
 
-int MAX_SHELLS(struct edict_s *ent) {
+int MAX_SHELLS(const struct edict_s *ent) {
     if (ent->myskills.abilities[MAX_AMMO].disable)
         return 0;
     return (50 * ent->myskills.abilities[MAX_AMMO].current_level);
 }
 
-int MAX_ROCKETS(struct edict_s *ent) {
+int MAX_ROCKETS(const struct edict_s *ent) {
     if (ent->myskills.abilities[MAX_AMMO].disable)
         return 0;
     return (25 * ent->myskills.abilities[MAX_AMMO].current_level);
 }
 
-int MAX_GRENADES(struct edict_s *ent) {
+int MAX_GRENADES(const struct edict_s *ent) {
     if (ent->myskills.abilities[MAX_AMMO].disable)
         return 0;
     return (25 * ent->myskills.abilities[MAX_AMMO].current_level);
 }
 
-int MAX_CELLS(struct edict_s *ent) {
+int MAX_CELLS(const struct edict_s *ent) {
     if (ent->myskills.abilities[MAX_AMMO].disable)
         return 0;
     return (100 * ent->myskills.abilities[MAX_AMMO].current_level);
 }
 
-int MAX_SLUGS(struct edict_s *ent) {
+int MAX_SLUGS(const struct edict_s *ent) {
     if (ent->myskills.abilities[MAX_AMMO].disable)
         return 0;
     return (25 * ent->myskills.abilities[MAX_AMMO].current_level);
@@ -175,7 +175,7 @@ int MAX_SLUGS(struct edict_s *ent) {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "cppcoreguidelines-narrowing-conversions"
 
-int MAX_POWERCUBES(struct edict_s *ent) {
+int MAX_POWERCUBES(const struct edict_s *ent) {
     int value = 100, clvl;
 
     if (ent->myskills.abilities[MAX_AMMO].disable)

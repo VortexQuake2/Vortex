@@ -440,7 +440,7 @@ void CG_ParseCenterPrint(const char *str, const int isplit, const bool instant) 
     size_t line_start = 0;
 
     const size_t slen = strlen(str);
-    const char string[slen + 1];
+    char string[slen + 1];
     strncpy(string, str, slen + 1);
 
     center->bind_count = 0;

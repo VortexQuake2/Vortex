@@ -1,6 +1,6 @@
 #include "g_local.h"
 
-abilitydef_t *abilities_by_index[MAX_ABILITIES];
+const abilitydef_t *abilities_by_index[MAX_ABILITIES];
 uint8_t ability_class[MAX_ABILITIES][CLASS_MAX]; // whether ability i is in character class k (1 or 0)
 
 const abilitydef_t ability_general[] = {
@@ -211,8 +211,7 @@ void vrx_assign_abilities(edict_t *ent) {
 
     // enable all skills (weaponmaster/ab or generalabmode is on)
     if (ent->myskills.class_num == CLASS_WEAPONMASTER || generalabmode->value) {
-        int i;
-        for (i = 0; i < MAX_ABILITIES; i++) {
+        for (int i = 0; i < MAX_ABILITIES; i++) {
             const abilitydef_t *first = abilities_by_index[i];
 
             if (first) {
@@ -460,7 +459,6 @@ const abilitydef_t * vrx_get_random_ability() {
 }
 
 void vrx_init_ability_list() {
-    const abilitydef_t *first;
     // gi.dprintf("INFO: Initializing ability list... ");
 
     memset(abilities_by_index, 0, sizeof abilities_by_index);
@@ -468,7 +466,7 @@ void vrx_init_ability_list() {
 
     for (int i = 0; i < CLASS_MAX; i++) {
         // iterate through our pointer list
-        first = abilities_by_class[i];
+        const abilitydef_t *first = abilities_by_class[i];
 
         // iterate through class' ability list
         while (first->index != -1) {
