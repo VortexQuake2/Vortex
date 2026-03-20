@@ -2064,6 +2064,7 @@ struct edict_s
 	float       swordtimer;             //decino: time before we can reattack
 
 	float	    pcr_time; // time elapsed since last power cube regen
+	float		detected_factor; // how much extra damage we take from being detected
 
 	// "connection" id, not database id.
 	// kept around without NO_GDS to simplify preprocessor macros

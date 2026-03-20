@@ -169,7 +169,7 @@ const gameCommand_s commands[] =
 	{ "meditate"   ,	Cmd_Meditate_f },
 	{ "overload",	    Cmd_Overload_f },
 	{ "laserplatform",  Cmd_CreateLaserPlatform_f },
-	{ "lasertrap",	    Cmd_LaserTrap_f },
+	//{ "lasertrap",	    Cmd_LaserTrap_f },
 	{ "holyground",	    Cmd_HolyGround_f },
 	{ "unholyground",   Cmd_UnHolyGround_f },
 	{ "purge",		    Cmd_Purge_f },

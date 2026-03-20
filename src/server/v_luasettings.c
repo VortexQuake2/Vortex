@@ -2655,10 +2655,10 @@ void Lua_LoadVariables()
 	DETECTOR_COST = vrx_lua_get_variable("DETECTOR_COST", 25);
 	DETECTOR_DELAY = vrx_lua_get_variable("DETECTOR_DELAY", 2.0);
 	DETECTOR_MAX_COUNT = vrx_lua_get_variable("DETECTOR_MAX_COUNT", 3);
-	DETECTOR_INITIAL_HEALTH = vrx_lua_get_variable("DETECTOR_INITIAL_HEALTH", 50);
-	DETECTOR_ADDON_HEALTH = vrx_lua_get_variable("DETECTOR_ADDON_HEALTH", 10);
-	DETECTOR_INITIAL_RANGE = vrx_lua_get_variable("DETECTOR_INITIAL_RANGE", 96);
-	DETECTOR_ADDON_RANGE = vrx_lua_get_variable("DETECTOR_ADDON_RANGE", 16);
+	DETECTOR_INITIAL_HEALTH = vrx_lua_get_variable("DETECTOR_INITIAL_HEALTH", 0);
+	DETECTOR_ADDON_HEALTH = vrx_lua_get_variable("DETECTOR_ADDON_HEALTH", 100);
+	DETECTOR_INITIAL_RANGE = vrx_lua_get_variable("DETECTOR_INITIAL_RANGE", 100);
+	DETECTOR_ADDON_RANGE = vrx_lua_get_variable("DETECTOR_ADDON_RANGE", 46.2);
 	DETECTOR_DURATION = vrx_lua_get_variable("DETECTOR_DURATION", 120.0);
 	DETECTOR_FLAG_DURATION = vrx_lua_get_variable("DETECTOR_FLAG_DURATION", 1.0);
 	DETECTOR_GLOW_TIME = vrx_lua_get_variable("DETECTOR_GLOW_TIME", 1.0);

@@ -490,10 +490,9 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             menu_add_line(ent, "(cmd 'laserplatform').", MENU_WHITE_CENTERED);
             return 2;
         case TALENT_ALARM:
-            menu_add_line(ent, "Use 'lasertrap' instead", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "of detector to build a", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "laser trap.", MENU_WHITE_CENTERED);
-            return 3;
+            menu_add_line(ent, "Detected enemies take", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "more damage.", MENU_WHITE_CENTERED);
+            return 2;
         case TALENT_RAPID_ASSEMBLY:
             menu_add_line(ent, "Reduces build time.", MENU_WHITE_CENTERED);
             menu_add_line(ent, "Can't be combined with", MENU_WHITE_CENTERED);
@@ -645,10 +644,9 @@ int writeTalentDescription(edict_t *ent, int talentID) {
             return 2;
             //Alien talents
         case TALENT_SPITTING_GASSER:
-            menu_add_line(ent, "Gives gassers an acid", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "attack. Upgrades increase", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "rate of fire.", MENU_WHITE_CENTERED);
-            return 3;
+            menu_add_line(ent, "Adds chance that acid will", MENU_WHITE_CENTERED);
+            menu_add_line(ent, "spawn a gas cloud on impact.", MENU_WHITE_CENTERED);
+            return 2;
         case TALENT_SUPER_HEALER:
             menu_add_line(ent, "Allows healer to heal", MENU_WHITE_CENTERED);
             menu_add_line(ent, "beyond maximum health.", MENU_WHITE_CENTERED);

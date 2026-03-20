@@ -1841,6 +1841,7 @@ void SpawnGasCloud (edict_t *ent, vec3_t start, int damage, float radius, float 
 {
 	edict_t *e;
 
+	//gi.dprintf("%.1f spawned gas cloud: damage: %d radius: %.1f duration: %.1f\n", level.time, damage, radius, duration);
 	// initialize sound
 	poison_sound1 = gi.soundindex("curses/green1.wav");
 	poison_sound2 = gi.soundindex("curses/green2.wav");
@@ -1849,7 +1850,10 @@ void SpawnGasCloud (edict_t *ent, vec3_t start, int damage, float radius, float 
 
 	// spawn gascloud entity
 	e = G_Spawn();
-	e->activator = ent->activator;
+	if (ent->activator) // spawned by a gasser or other summon
+		e->activator = ent->activator;
+	else // likely spawned by a player
+		e->activator = ent;
 	e->solid = SOLID_NOT;
 	e->movetype = MOVETYPE_NOCLIP;
 	e->classname = "gas cloud";
@@ -2125,13 +2129,15 @@ void fire_poison(edict_t* self, vec3_t start, vec3_t aimdir, int impact_dmg, flo
 	gi.sound(poison, CHAN_WEAPON, sound_poisonnova, 1, ATTN_NORM, 0);
 }
 
+// Talent: Spitting Gasser - chance that acid attack will spawn a gas cloud on impact
+#define SPITTING_GASSER_CHANCE 0.05
 
-void fire_acid (edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damage, float radius, 
-				int speed, int acid_damage, float acid_duration);
+void fire_acid (edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damage, float radius,
+                int speed, int acid_damage, float acid_duration, int gas_damage, float gas_radius, float gas_duration);
 
 void gasser_acidattack (edict_t *self)
 {
-	float	dist;
+	float	dist, chance;
 	//float	range=self->monsterinfo.sight_range;
 	int		speed= ACID_INITIAL_SPEED;
 	vec3_t	forward, start, end;
@@ -2163,10 +2169,15 @@ void gasser_acidattack (edict_t *self)
 		VectorSubtract(end, start, forward);
 		VectorNormalize(forward);
 
-		fire_acid(self, start, forward, self->radius_dmg, ACID_INITIAL_RADIUS, speed, (0.1*self->radius_dmg), ACID_DURATION);
-		
+		// Talent: Spitting Gasser - chance that acid spawns a gas cloud on impact
+		chance = SPITTING_GASSER_CHANCE * self->light_level; // talent level increases chance
+		if (chance > random())
+			fire_acid(self, start, forward, self->radius_dmg, ACID_INITIAL_RADIUS, speed, (0.1*self->radius_dmg), ACID_DURATION, self->dmg, self->dmg_radius, 4.0);
+		else
+			fire_acid(self, start, forward, self->radius_dmg, ACID_INITIAL_RADIUS, speed, (0.1*self->radius_dmg), ACID_DURATION, 0, 0, 0);
+
 		//FIXME: only need to do this once
-		self->monsterinfo.attack_finished = level.time + (2.2 - (0.4 * self->light_level)); // talent level reduces attack delay
+		self->monsterinfo.attack_finished = level.time + 0.8;//(2.2 - (0.4 * self->light_level)); // talent level reduces attack delay
 		self->s.frame = GASSER_FRAMES_ATTACK_END-2;
 		//gi.sound (self, CHAN_VOICE, gi.soundindex ("weapons/twang.wav"), 1, ATTN_NORM, 0);
 	//}	
@@ -2231,8 +2242,8 @@ void gasser_think (edict_t *self)
 			//gi.dprintf("gasser wants to attack\n");
 			if (entdist(self, self->enemy) < self->dmg_radius)
 				gasser_attack(self);
-			else if (self->light_level)
-				gasser_acidattack(self);
+			//else if (self->light_level)
+			gasser_acidattack(self);
 		}
 		//else
 			//gi.dprintf("cant attack\n");
@@ -2398,13 +2409,13 @@ edict_t *CreateGasser (edict_t *ent, int skill_level, int talent_level)
 	e->monsterinfo.level = skill_level;
 
 	e->light_level = talent_level; // Talent: Spitting Gasser
-	if (talent_level)
-	{
+	//if (talent_level)
+	//{
 		e->radius_dmg = (ACID_INITIAL_DAMAGE + ACID_ADDON_DAMAGE * skill_level) * synergy_bonus;
 		e->monsterinfo.sight_range = GASSER_ACID_RANGE;
-	}
-	else
-		e->monsterinfo.sight_range = GASSER_RANGE;
+	//}
+	//else
+	//	e->monsterinfo.sight_range = GASSER_RANGE;
 
 	e->gib_health = -1.25 * BASE_GIB_HEALTH;
 	e->s.frame = GASSER_FRAMES_IDLE_START;
@@ -3396,6 +3407,10 @@ void acid_explode (edict_t *self)
         }
     }
 
+	// Talent: Spitting Gasser: Spawn a gas cloud on impact?
+	if (self->light_level > 0 && self->random > 0 && self->PlasmaDelay > 0)
+		SpawnGasCloud(self->owner, self->s.origin, self->light_level, self->random, self->PlasmaDelay);
+
     VectorCopy(self->s.origin, start);
     start[2] += 8;
     acid_sparks(start, 20, self->dmg_radius);
@@ -3422,7 +3437,7 @@ void acid_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf
 }
 
 void fire_acid (edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damage, float radius,
-                int speed, int acid_damage, float acid_duration)
+                int speed, int acid_damage, float acid_duration, int gas_damage, float gas_radius, float gas_duration)
 {
     edict_t	*grenade;
     vec3_t	dir;
@@ -3452,6 +3467,13 @@ void fire_acid (edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damag
     grenade->dmg_radius = radius;
     grenade->delay = acid_duration;
     grenade->classname = "acid";
+	// Talent: Spitting Gasser
+	if (gas_damage > 0 && gas_radius > 0 && gas_duration > 0)
+	{
+		grenade->light_level = gas_damage; // use light level to store gas damage
+		grenade->random = gas_radius; // use random to store gas radius
+		grenade->PlasmaDelay = gas_duration; // use PlasmaDelay to store gas duration
+	}
     gi.linkentity (grenade);
     grenade->nextthink = level.time + 10.0;
 
@@ -3474,11 +3496,11 @@ void fire_acid (edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damag
 
 void Cmd_FireAcid_f (edict_t *ent)
 {
-	int		gasser_level = ent->myskills.abilities[GASSER].current_level;
 	int		acid_level = ent->myskills.abilities[ACID].current_level;
     int		damage = ACID_INITIAL_DAMAGE + ACID_ADDON_DAMAGE * acid_level;
 	int		speed = ACID_INITIAL_SPEED + ACID_ADDON_SPEED * acid_level;
     float	radius = ACID_INITIAL_RADIUS + ACID_ADDON_RADIUS * acid_level;
+	float	chance_gascloud = SPITTING_GASSER_CHANCE * vrx_get_talent_level(ent, TALENT_SPITTING_GASSER); // percent chance to spawn gas cloud on impact/explosion
 	//float	synergy_bonus = 1.0 + ACID_GASSER_SYNERGY_BONUS * gasser_level; // synergy bonus from gasser
     vec3_t	forward, right, start, offset;
 
@@ -3492,7 +3514,14 @@ void Cmd_FireAcid_f (edict_t *ent)
     VectorSet(offset, 0, 8,  ent->viewheight-8);
     P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
 
-    fire_acid(ent, start, forward, damage, radius, speed, (int)(0.1 * damage), ACID_DURATION);
+	if (chance_gascloud > random())
+	{
+		int gas_damage = GASSER_INITIAL_DAMAGE + GASSER_ADDON_DAMAGE * acid_level;
+		float gas_radius = GASSER_INITIAL_ATTACK_RANGE + GASSER_ADDON_ATTACK_RANGE * acid_level;
+		fire_acid(ent, start, forward, damage, radius, speed, (int)(0.1 * damage), ACID_DURATION, gas_damage, gas_radius, 4.0);
+	}
+	else
+    	fire_acid(ent, start, forward, damage, radius, speed, (int)(0.1 * damage), ACID_DURATION, 0, 0, 0);
 
     ent->client->ability_delay = level.time + ACID_DELAY;
     ent->client->pers.inventory[power_cube_index] -= ACID_COST;

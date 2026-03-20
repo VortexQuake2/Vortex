@@ -472,11 +472,10 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		return 4;
 	case AMP_DAMAGE:
 		menu_add_line(ent, "Curse your enemies, causing", MENU_WHITE_CENTERED);
-		menu_add_line(ent, "increased damage to physical", MENU_WHITE_CENTERED);
-		menu_add_line(ent, "damage sources.", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "increased damage.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Uses power cubes.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Command: ampdamage", MENU_WHITE_CENTERED);
-		return 5;
+		return 4;
 	case STATIC_FIELD:
 		menu_add_line(ent, "Reduces an enemy's health", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "by a percentage. Uses power", MENU_WHITE_CENTERED);

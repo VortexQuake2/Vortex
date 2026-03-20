@@ -443,7 +443,7 @@ char *GetTalentString(int talent_ID) {
         case TALENT_LASER_PLATFORM:
             return "Laser Platform";
         case TALENT_ALARM:
-            return "Laser Trap";
+            return "Flaw Detector";
         case TALENT_ARMOR_REG:
             return "NanoSuit";
         case TALENT_RAPID_ASSEMBLY:
@@ -2165,6 +2165,7 @@ void vrx_reset_player_state(edict_t *ent) {
     // reset detected state
     ent->flags &= ~FL_DETECTED;
     ent->detected_time = 0;
+    ent->detected_factor = 0;
 
     // reset cocooned state
     ent->cocoon_time = 0;

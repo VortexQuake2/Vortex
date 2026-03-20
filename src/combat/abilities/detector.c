@@ -148,6 +148,8 @@ qboolean detector_findtarget (edict_t *self)
 
 		// flag them as detected
 		target->flags |= FL_DETECTED;
+
+		target->detected_factor = 0.5 * self->light_level; // Talent: Alarm - target takes 2.5x damage at max level
 		target->detected_time = level.time + DETECTOR_FLAG_DURATION;
 
 		// force monsters to get angry and attack the detector (despite FL_NOTARGET)
@@ -282,7 +284,7 @@ void detector_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 	detector_remove(self);
 }
 
-void BuildDetector (edict_t *self, vec3_t start, vec3_t forward, int slvl, float duration, int cost, float delay_mult)
+void BuildDetector (edict_t *self, vec3_t start, vec3_t forward, int slvl, int talent_level, float duration, int cost, float delay_mult)
 {
 	edict_t *detector;
 	trace_t	tr;
@@ -306,22 +308,23 @@ void BuildDetector (edict_t *self, vec3_t start, vec3_t forward, int slvl, float
 	detector->die = detector_die;
 	detector->clipmask = MASK_SHOT;
 
-	//Talent: Alarm
-	if (duration)
-	{
+	
+	//if (duration)
+	//{
 		detector->mtype = M_DETECTOR;
 		detector->health = detector->max_health = DETECTOR_INITIAL_HEALTH + DETECTOR_ADDON_HEALTH * slvl;
 		detector->delay = level.time + duration;
 		detector->dmg_radius = DETECTOR_INITIAL_RANGE + DETECTOR_ADDON_RANGE * slvl;
-	}
-	else
+		detector->light_level = talent_level;//Talent: Alarm
+	//}
+	/*else
 	{
 		detector->mtype = M_ALARM;
 		detector->flags |= FL_NOTARGET;
 		detector->health = ALARM_INITIAL_HEALTH + ALARM_ADDON_HEALTH * slvl;
 		detector->delay = level.time + 9999.0;
 		detector->dmg_radius = ALARM_INITIAL_RANGE + ALARM_ADDON_RANGE * slvl;
-	}
+	}*/
 
 	detector->s.modelindex = gi.modelindex ("models/objects/detector/tris.md2");
 
@@ -407,5 +410,8 @@ void Cmd_Detector_f (edict_t *ent)
 	start[2] += ent->viewheight - 8;
 	AngleVectors(ent->client->v_angle, forward, NULL, NULL);
 	//VectorMA(start, 24, forward, start);
-	BuildDetector(ent, start, forward, (int)(ent->myskills.abilities[DETECTOR].current_level * skill_mult), DETECTOR_DURATION, cost, delay_mult);
+
+	//Talent: Alarm
+	talentLevel = vrx_get_talent_level(ent, TALENT_ALARM);
+	BuildDetector(ent, start, forward, (int)(ent->myskills.abilities[DETECTOR].current_level * skill_mult), talentLevel, DETECTOR_DURATION, cost, delay_mult);
 }

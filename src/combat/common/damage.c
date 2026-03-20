@@ -377,7 +377,7 @@ float vrx_increase_damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
     // detector targets take additional damage
     if (targ->flags & FL_DETECTED && targ->detected_time > level.time)
-        damage *= 1.5;
+        damage *= 1.0 + targ->detected_factor;
 
     // targets cursed with "amp damage" take additional damage
     damage = vrx_apply_amp_damage(targ, damage);
