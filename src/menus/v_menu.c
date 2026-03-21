@@ -293,7 +293,11 @@ void OpenJoinMenu (edict_t *ent)
 	//				    xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
 
 	menu_add_line(ent, "Vortex Revival", MENU_GREEN_CENTERED);
-	menu_add_line(ent, va("vrxcl v%s", VRX_VERSION), MENU_GREEN_CENTERED);
+#ifndef VRX_REPRO
+	menu_add_line(ent, va("vrx v%s", VRX_VERSION), MENU_GREEN_CENTERED);
+#else
+	menu_add_line(ent, va("vrx-repro v%s", VRX_VERSION), MENU_GREEN_CENTERED);
+#endif
 	menu_add_line(ent, "http://q2vortex.com", MENU_WHITE_CENTERED);
 	menu_add_line(ent, " ", 0);
 	menu_add_line(ent, " ", 0);

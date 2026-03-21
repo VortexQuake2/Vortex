@@ -27,7 +27,8 @@ constexpr int32_t CONCHAR_WIDTH = 8;
 
 static int32_t font_y_offset;
 
-constexpr rgba_t alt_color = {.r = 112, 255, 52, 255};
+// constexpr rgba_t alt_color = {.r = 112, 255, 52, 255};
+constexpr rgba_t alt_color = {.r = 240, 140, 60, 255};
 
 static cvar_t *scr_usekfont;
 

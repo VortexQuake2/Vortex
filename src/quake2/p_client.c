@@ -2955,8 +2955,11 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 				else
 					GetChaseTarget(ent);
 			}
-		} else
+		}
+#ifndef VRX_REPRO
+		else
 			client->ps.pmove.pm_flags &= ~PMF_JUMP_HELD;
+#endif
 	}
 
 	UpdateChaseCam(ent);
