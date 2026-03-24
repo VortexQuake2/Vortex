@@ -24,6 +24,8 @@ void vrx_repro_getgameapi(repro_import_t *pr, game_import_t *gi) {
     va_start(argptr, fmt);\
     int len = vsnprintf(NULL, 0, fmt, argptr);\
     char _##x[len+1];\
+	va_end(argptr);\
+	va_start(argptr, fmt);\
     vsnprintf(_##x, len + 1, fmt, argptr);\
     _##x[len]='\0';\
     va_end(argptr);
@@ -34,7 +36,7 @@ void	shim_bprintf (int printlevel, const char *fmt, ...) {
 }
 
 void	shim_dprintf (const char *fmt, ...) {
-    VA_PRELUDE(msg)
+	VA_PRELUDE(msg)
     gire.Com_Print(_msg);
 }
 void	shim_cprintf (const edict_t *ent, int printlevel, const char *fmt, ...) {

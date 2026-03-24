@@ -1125,6 +1125,8 @@ void G_SetStats(edict_t *ent)
 	// repro does the accumulating
 	ent->client->ps.stats[STAT_ID_DAMAGE] = ent->dmg_counter;
 	ent->client->ps.stats[STAT_ID_DAMAGE2] = ent->dmg_counter >> 16;
+	// debouncer stat
+	ent->client->ps.stats[STAT_DMG_INSTANCE]++;
 
 	ent->dmg_counter = 0;
 

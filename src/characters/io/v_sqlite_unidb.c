@@ -237,7 +237,7 @@ qboolean cdb_save_player(edict_t* player)
 	int numRunes = CountRunes(player);
 
 
-	id = cdb_get_id(player->client->pers.netname);
+	id = cdb_get_id(player->myskills.player_name);
 
 	cdb_begin_tran(db);
 
@@ -289,7 +289,7 @@ qboolean cdb_save_player(edict_t* player)
 			sqlite3_bind_text(stmt, 1, player->myskills.title, strlen(player->myskills.title), SQLITE_STATIC);
 			sqlite3_bind_text(stmt, 2, player->client->pers.netname, strlen(player->client->pers.netname), SQLITE_STATIC);
 			sqlite3_bind_text(stmt, 3, player->myskills.password, strlen(player->myskills.password), SQLITE_STATIC);
-			sqlite3_bind_text(stmt, 4, player->myskills.email, strlen(player->myskills.email), SQLITE_STATIC);
+			sqlite3_bind_text(stmt, 4, player->myskills.masterpw, strlen(player->myskills.masterpw), SQLITE_STATIC);
 			sqlite3_bind_text(stmt, 5, player->myskills.owner, strlen(player->myskills.owner), SQLITE_STATIC);
 			sqlite3_bind_text(stmt, 6, player->myskills.member_since, strlen(player->myskills.member_since), SQLITE_STATIC);
 			sqlite3_bind_text(stmt, 7, player->myskills.last_played, strlen(player->myskills.last_played), SQLITE_STATIC);
@@ -319,7 +319,7 @@ qboolean cdb_save_player(edict_t* player)
 			{
 				char* format = va(VSFU_INSERTABILITY, id, index,
 					player->myskills.abilities[index].level,
-					player->myskills.abilities[index].max_level,
+					player->myskills.abilities[index].soft_max,
 					player->myskills.abilities[index].hard_max,
 					player->myskills.abilities[index].modifier,
 					(int)player->myskills.abilities[index].disable,
@@ -524,7 +524,7 @@ qboolean cdb_load_player(edict_t* player)
 	strcpy(player->myskills.title, sqlite3_column_text(statement, 1));
 	strcpy(player->myskills.player_name, sqlite3_column_text(statement, 2));
 	strcpy(player->myskills.password, sqlite3_column_text(statement, 3));
-	strcpy(player->myskills.email, sqlite3_column_text(statement, 4));
+	strcpy(player->myskills.masterpw, sqlite3_column_text(statement, 4));
 	strcpy(player->myskills.owner, sqlite3_column_text(statement, 5));
 	strcpy(player->myskills.member_since, sqlite3_column_text(statement, 6));
 	strcpy(player->myskills.last_played, sqlite3_column_text(statement, 7));
@@ -590,7 +590,7 @@ qboolean cdb_load_player(edict_t* player)
 		if ((index >= 0) && (index < MAX_ABILITIES))
 		{
 			player->myskills.abilities[index].level = sqlite3_column_int(statement, 2);
-			player->myskills.abilities[index].max_level = sqlite3_column_int(statement, 3);
+			player->myskills.abilities[index].soft_max = sqlite3_column_int(statement, 3);
 			player->myskills.abilities[index].hard_max = sqlite3_column_int(statement, 4);
 			player->myskills.abilities[index].modifier = sqlite3_column_int(statement, 5);
 			player->myskills.abilities[index].disable = sqlite3_column_int(statement, 6);
@@ -928,23 +928,19 @@ int cdb_get_owner_id (edict_t* ent) {
 	return id;
 }
 
-qboolean cdb_stash_store(edict_t* ent, int itemindex)
+qboolean cdb_stash_store(edict_t* ent, item_t* item)
 {
 	const int owner_id = cdb_get_owner_id(ent);
 	if (owner_id == -1)
 	{
 		stash_event_t* notif = vrx_malloc(sizeof(stash_event_t), TAG_GAME);
 		notif->ent = ent;
-		notif->gds_connection_id = ent->gds_connection_id;
+		notif->gds_connection_id = ent->gds.connection_id;
 
 		vrx_notify_stash_no_owner(notif);
 		vrx_free(notif);
 		return false;
 	}
-
-	item_t item;
-	V_ItemClear(&item);
-	V_ItemSwap(&item, &ent->myskills.items[itemindex]);
 
 	int index = 0;
 	{
@@ -974,30 +970,30 @@ qboolean cdb_stash_store(edict_t* ent, int itemindex)
 		"VALUES (%d,%d,%d,%d,%d,%d,\"%s\",\"%s\",%d,%d,%d)",
 		owner_id,
 		index,
-		item.itemtype,
-		item.itemLevel,
-		item.quantity,
-		item.untradeable,
-		item.id,
-		item.name,
-		item.numMods,
-		item.setCode,
-		item.classNum))
+		item->itemtype,
+		item->itemLevel,
+		item->quantity,
+		item->untradeable,
+		item->id,
+		item->name,
+		item->numMods,
+		item->setCode,
+		item->classNum))
 
 		for (int j = 0; j < MAX_VRXITEMMODS; ++j)
 		{
 			// TYPE_NONE, so skip it
-			if (item.modifiers[j].type == 0 ||
-				item.modifiers[j].value == 0)
+			if (item->modifiers[j].type == 0 ||
+				item->modifiers[j].value == 0)
 				continue;
 
 			QUERY(va("INSERT INTO stash_runes_mods "
 				"VALUES (%d,%d,%d,%d,%d,%d,%d)",
 				owner_id, index, j,
-				item.modifiers[j].type,
-				item.modifiers[j].index,
-				item.modifiers[j].value,
-				item.modifiers[j].set))
+				item->modifiers[j].type,
+				item->modifiers[j].index,
+				item->modifiers[j].value,
+				item->modifiers[j].set))
 		}
 
 	return true;
@@ -1007,7 +1003,7 @@ qboolean cdb_stash_get_page(edict_t* ent, int page_index, int items_per_page)
 {
 	const int owner_id = cdb_get_owner_id(ent);
 	stash_page_event_t* evt = vrx_malloc(sizeof(stash_page_event_t), TAG_GAME);
-	evt->gds_connection_id = ent->gds_connection_id;
+	evt->gds_connection_id = ent->gds.connection_id;
 	evt->gds_owner_id = owner_id;
 	evt->ent = ent;
 	evt->pagenum = page_index;
@@ -1109,7 +1105,7 @@ qboolean cdb_stash_open(edict_t* ent)
 	{
 		stash_event_t* notif = vrx_malloc(sizeof(stash_event_t), TAG_GAME);
 		notif->ent = ent;
-		notif->gds_connection_id = ent->gds_connection_id;
+		notif->gds_connection_id = ent->gds.connection_id;
 
 		vrx_notify_stash_no_owner(notif);
 		vrx_free(notif);
@@ -1128,7 +1124,7 @@ qboolean cdb_stash_open(edict_t* ent)
 			{
 				stash_event_t* notif = vrx_malloc(sizeof(stash_event_t), TAG_GAME);
 				notif->ent = ent;
-				notif->gds_connection_id = ent->gds_connection_id;
+				notif->gds_connection_id = ent->gds.connection_id;
 
 				vrx_notify_stash_locked(notif);
 				vrx_free(notif);
@@ -1167,7 +1163,7 @@ void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean rese
 	event_owner_error_t* evt = vrx_malloc(sizeof(event_owner_error_t), TAG_GAME);
 	strcpy(evt->owner_name, owner_name);
 	evt->ent = ent;
-	evt->connection_id = ent->gds_connection_id;
+	evt->connection_id = ent->gds.connection_id;
 
 	// if reset is true, make a sqlite query that resets the owner to null
 	if (reset) {
@@ -1254,7 +1250,7 @@ qboolean cdb_stash_take(edict_t* ent, int stash_index)
 		{
 			stash_event_t* notif = vrx_malloc(sizeof(stash_event_t), TAG_GAME);
 			notif->ent = ent;
-			notif->gds_connection_id = ent->gds_connection_id;
+			notif->gds_connection_id = ent->gds.connection_id;
 
 			vrx_notify_stash_locked(notif);
 			sqlite3_finalize(statement);
@@ -1322,7 +1318,7 @@ qboolean cdb_stash_take(edict_t* ent, int stash_index)
 
 	stash_taken_event_t* evt = vrx_malloc(sizeof(stash_taken_event_t), TAG_GAME);
 	evt->ent = ent;
-	evt->gds_connection_id = ent->gds_connection_id;
+	evt->gds_connection_id = ent->gds.connection_id;
 	vrx_item_copy(&item, &evt->taken);
 	strcpy(evt->requester, ent->client->pers.netname);
 

@@ -207,49 +207,6 @@ void vrx_add_respawn_weapon(edict_t *ent, int weaponID) {
 
     //3.02 begin new respawn weapon code
     //Give them the weapon
-    /*
-    switch (weaponID) {
-        case 2:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_SHOTGUN)] = 1;
-            break;
-        case 3:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_SUPERSHOTGUN)] = 1;
-            break;
-        case 4:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_MACHINEGUN)] = 1;
-            break;
-        case 5:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_CHAINGUN)] = 1;
-            break;
-        case 6:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_GRENADELAUNCHER)] = 1;
-            break;
-        case 7:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_ROCKETLAUNCHER)] = 1;
-            break;
-        case 8:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_HYPERBLASTER)] = 1;
-            break;
-        case 9:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_RAILGUN)] = 1;
-            break;
-        case 10:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_BFG)] = 1;
-            break;
-        case 11:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_GRENADES)] = 1;
-            break;
-        case 12:
-            ent->client->pers.inventory[ITEM_INDEX(FindItem("20mm Cannon"))] = 1;
-            break;
-        case 13:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_BLASTER)] = 1;
-            break;
-        default:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_BLASTER)] = 1;
-            break;
-    }
-    */
     ent->client->pers.inventory[vrx_WeapIDtoWeapIndex(weaponID)] = 1;
 
     //Give them the ammo
@@ -263,57 +220,8 @@ void vrx_add_respawn_weapon(edict_t *ent, int weaponID) {
 }
 
 void vrx_pick_respawn_weapon(edict_t *ent) {
-    int index;
-    gitem_t *item;
-    /*
-
-    switch (ent->myskills.respawn_weapon) {
-        case 1:
-            item = FindItem("Sword");
-            break;
-        case 2:
-            item = Fdi_SHOTGUN;
-            break;
-        case 3:
-            item = Fdi_SUPERSHOTGUN;
-            break;
-        case 4:
-            item = Fdi_MACHINEGUN;
-            break;
-        case 5:
-            item = Fdi_CHAINGUN;
-            break;
-        case 6:
-            item = Fdi_GRENADELAUNCHER;
-            break;
-        case 7:
-            item = Fdi_ROCKETLAUNCHER;
-            break;
-        case 8:
-            item = Fdi_HYPERBLASTER;
-            break;
-        case 9:
-            item = Fdi_RAILGUN;
-            break;
-        case 10:
-            item = Fdi_BFG;
-            break;
-        case 11:
-            item = Fdi_GRENADES;
-            break;
-        case 12:
-            item = FindItem("20mm Cannon");
-            break;
-        case 13:
-            item = Fdi_BLASTER;
-            break;
-        default:
-            item = Fdi_BLASTER;
-            break;
-    }
-    */
-    index = vrx_WeapIDtoWeapIndex(ent->myskills.respawn_weapon);
-    item = &itemlist[index];
+    const int index = vrx_WeapIDtoWeapIndex(ent->myskills.respawn_weapon);
+    gitem_t *item = &itemlist[index];
 
     ent->client->pers.selected_item = index;//ITEM_INDEX(item);
     ent->client->pers.weapon = item;

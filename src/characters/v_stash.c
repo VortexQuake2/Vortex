@@ -1,6 +1,7 @@
 #include "../g_local.h"
 #include "io/v_characterio.h"
 #include "io/v_sqlite_unidb.h"
+#include "server/relay.h"
 
 stash_io_t vrx_stash_io = {0};
 
@@ -9,56 +10,6 @@ stash_io_t vrx_stash_io = {0};
  * BASIC IO
  *
  */
-
-#ifndef NO_GDS
-qboolean mysql_stash_store(edict_t* ent, int itemindex)
-{
-	gds_queue_add(ent, GDS_STASH_STORE, itemindex);
-	return true;
-}
-
-qboolean mysql_stash_get_page(edict_t* ent, int page, int numitems)
-{
-	gds_queue_add(ent, GDS_STASH_GET_PAGE, page);
-	return true;
-}
-
-qboolean mysql_stash_open(edict_t* ent)
-{
-	gds_queue_add(ent, GDS_STASH_OPEN, -1);
-	return true;
-}
-
-qboolean mysql_stash_close(edict_t* ent)
-{
-	gds_queue_add(ent, GDS_STASH_CLOSE, -1);
-	return true;
-}
-
-qboolean mysql_stash_take(edict_t* ent, int stash_index)
-{
-	gds_queue_add(ent, GDS_STASH_TAKE, stash_index);
-	return true;
-}
-
-qboolean mysql_stash_close_id(int owner_id)
-{
-	gds_queue_add(NULL, GDS_STASH_CLOSE, owner_id);
-	return true;
-}
-
-void vrx_setup_mysql_stash()
-{
-	vrx_stash_io = (stash_io_t){
-		.open_stash = mysql_stash_open,
-		.close_stash = mysql_stash_close,
-		.close_stash_by_id = mysql_stash_close_id,
-		.take = mysql_stash_take,
-		.get_page = mysql_stash_get_page,
-		.store = mysql_stash_store
-	};
-}
-#endif
 
 void vrx_setup_sqlite_stash()
 {
@@ -72,15 +23,14 @@ void vrx_setup_sqlite_stash()
 	};
 }
 
+
 void vrx_init_stash_io()
 {
 	const int method = savemethod->value;
 	switch (method) {
-#ifndef NO_GDS
-	case SAVEMETHOD_MYSQL:
-		vrx_setup_mysql_stash();
+	case SAVEMETHOD_RELAY:
+		vrx_setup_relay_stash_io();
 		break;
-#endif
 	default:
 		gi.dprintf("stash io: unsupported method, defaulting to 3 (sqlite single file mode)");
 	case SAVEMETHOD_SQLITE:
@@ -101,25 +51,30 @@ void Cmd_Stash_f(edict_t* ent)
 
 void vrx_stash_store(edict_t* ent, int itemindex)
 {
-	vrx_stash_io.store(ent, itemindex);
+	if (itemindex < 0 || itemindex >= MAX_VRXITEMS) return;
+	if (ent->myskills.items[itemindex].itemtype == ITEM_NONE) return;
+
+	item_t* item = &ent->myskills.items[itemindex];
+	if (vrx_stash_io.store(ent, item)) {
+		memset(item, 0, sizeof(item_t));
+	}
 }
 
 void vrx_notify_stash_no_owner(void* args)
 {
 	const stash_event_t* notif = args;
 
-	if (notif->ent->gds_connection_id == notif->gds_connection_id && notif->ent->inuse)
+	if (notif->ent->gds.connection_id == notif->gds_connection_id && notif->ent->inuse)
 		gi.cprintf(notif->ent, PRINT_HIGH,
 			"Sorry, you need to set an owner or your master password in order to access the stash.\n"
 		);
-
 }
 
 void vrx_notify_stash_taken(void* args)
 {
 	stash_taken_event_t* evt = args;
 
-	if (evt->ent->gds_connection_id != evt->gds_connection_id)
+	if (evt->ent->gds.connection_id != evt->gds_connection_id)
 	{
 		// TODO: put item back in stash
 		return;
@@ -128,11 +83,14 @@ void vrx_notify_stash_taken(void* args)
 	item_t* slot = V_FindFreeItemSlot(evt->ent);
 
 	if (slot) {
+		gi.cprintf(evt->ent, PRINT_HIGH, "Item taken from stash.");
 		gi.sound(evt->ent, CHAN_ITEM, gi.soundindex("misc/amulet.wav"), 1, ATTN_NORM, 0);
 		vrx_item_copy(&evt->taken, slot);
 	}
 	else {
-		// TODO: put item back in stash
+		// restore item to stash
+		gi.cprintf(evt->ent, PRINT_HIGH, "Your inventory is full, item was returned to stash.");
+		vrx_stash_io.store(evt->ent, &evt->taken);
 	}
 }
 
@@ -140,7 +98,7 @@ void vrx_notify_stash_locked(void* args)
 {
 	const stash_event_t* notif = args;
 
-	if (notif->ent->gds_connection_id == notif->gds_connection_id && notif->ent->inuse)
+	if (notif->ent->gds.connection_id == notif->gds_connection_id && notif->ent->inuse)
 		gi.cprintf(notif->ent, PRINT_HIGH,
 			"Sorry, your stash is currently in use.\n"
 			"Close it in your other characters to become able to use it again,\n"
@@ -152,7 +110,7 @@ void vrx_notify_open_stash(void* args)
 {
 	stash_page_event_t* notif = args;
 
-	if (notif->ent->gds_connection_id != notif->gds_connection_id || !notif->ent->inuse)
+	if (notif->ent->gds.connection_id != notif->gds_connection_id || !notif->ent->inuse)
 	{
 		if (vrx_stash_io.close_stash_by_id)
 			vrx_stash_io.close_stash_by_id(notif->gds_owner_id);
@@ -253,13 +211,18 @@ void vrx_stash_open_page(edict_t* ent, item_t* page, int item_count, int page_in
 
 	//gi.dprintf("%s: item_count: %d page_index: %d lastline %d\n", __func__, item_count, page_index, lastline);
 
-	menu_add_line(ent, va("%s's stash (Page %d)", ent->client->pers.netname, page_index + 1), MENU_GREEN_CENTERED);
+    auto name = ent->client->pers.netname;
+
+    if (strlen(ent->myskills.owner)) {
+	    name = ent->myskills.owner;
+    }
+	menu_add_line(ent, va("%s's stash (Page %d)", name, page_index + 1), MENU_GREEN_CENTERED);
 	menu_add_line(ent, "", 0);
 
 	for (int i = 0; i < item_count; i++)
 	{
 		const lva_result_t line = vrx_get_item_menu_line(&page[i]);
-		const int opt = 100 + page_index * 10 + i;
+		const int opt = 100 + page_index * MAX_STASH_PAGE_ITEMS + i;
 		menu_add_line(ent, line.str, opt);
 	}
 

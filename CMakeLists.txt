@@ -9,7 +9,6 @@ include(FetchContent)
 project(VortexQuake2)
 
 include(CMakeDependentOption)
-option(VRX_USE_MYSQL "Use MySQL/MariaDB based GDS" FALSE)
 option(VRX_ALLOW_ADMIN "Allow usage of admin commands via rcon/sv commands." TRUE)
 option(VRX_LOCKDEFAULTS "Disallow changing exp/credits rates via cvar." FALSE)
 option(VRX_REMOVERESPAWNS "Remove the usage of the respawns system." TRUE)
@@ -24,6 +23,7 @@ set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
 # Source files
 file(GLOB_RECURSE VRX_FILES CONFIGURE_DEPENDS ./src/*.c)
+list(APPEND VRX_FILES ./src/server/relay_msgpack.c ./src/server/relay_handlers.c ./src/characters/io/v_relay_io.c)
 
 if (NOT VRX_USE_MYSQL)
     list(FILTER VRX_FILES EXCLUDE REGEX ".*/src/characters/io/v_mysql_gds\\.c$")
@@ -140,10 +140,6 @@ endif ()
 
 if (VRX_REMOVERESPAWNS)
     add_definitions(-DREMOVE_RESPAWNS)
-endif ()
-
-if (NOT VRX_USE_MYSQL)
-    add_definitions(-DNO_GDS)
 endif ()
 
 if (VRX_OLD_NOLAG)

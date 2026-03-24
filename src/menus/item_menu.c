@@ -247,7 +247,7 @@ void ShowItemMenu(edict_t *ent, int itemindex) {
     menu_add_line(ent, "Exit", 666);
     menu_add_line(ent, " ", 0);
 
-    const qboolean hasStash = strlen(ent->myskills.owner) > 0 || strlen(ent->myskills.email) > 0;
+    const qboolean hasStash = strlen(ent->myskills.owner) > 0 || strlen(ent->myskills.masterpw) > 0;
     if (hasStash && itemindex >= 3)
 		menu_add_line(ent, "Stash this item", 10000 + itemindex);
     menu_add_line(ent, "Sell this item", 15000 + itemindex);

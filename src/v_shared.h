@@ -15,7 +15,7 @@
 #include "quake2/g_layout.h"
 
 /**************** v_abilitylist.c ***************/
-void vrx_enable_ability(edict_t *ent, int abil, int level, int max_level, int general);
+void vrx_enable_ability(edict_t *ent, int abil, int level, int soft_max, int general);
 void vrx_update_free_abilities(edict_t* ent);
 
 int vrx_get_last_enabled_skill_index(edict_t *ent, int mode);
@@ -40,7 +40,16 @@ typedef struct {
     int index;
     int start;
     int softmax;
-    int general;
+    bool general;
+    // if true, allows prestige to use this skill as a class upgrade
+    bool allow_class_upgrade;
+
+    // if true, overrides the softmax for this ability when used as a class ability
+    // this can cause unintended effects if you accidentally make it more than 10
+    // like a hardmax < softmax because of prestige
+    // abilities that are allow_class_upgrade with a softmax != 10 to
+    // be either softmax bumped or, if allow_class_upgrade, added as a class skill.
+    int class_softmax_override;
 } abilitydef_t;
 
 typedef const abilitydef_t *abilitylist_t;

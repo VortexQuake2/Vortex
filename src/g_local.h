@@ -1736,13 +1736,13 @@ typedef struct {
     char netname[16];
     int hand;
 
-    qboolean connected; // a loadgame will leave valid entities that
+    bool connected; // a loadgame will leave valid entities that
     // just don't have a connection yet
 
     // values saved and restored from edicts when changing levels
     int health;
     int max_health;
-    qboolean powerArmorActive;
+    bool powerArmorActive;
 
     int selected_item;
     int inventory[MAX_ITEMS];
@@ -1767,7 +1767,7 @@ typedef struct {
     int game_helpchanged;
     int helpchanged;
 
-    qboolean spectator; // client is a spectator
+    bool spectator; // client is a spectator
 
     //K03 Begin
     int max_powercubes;
@@ -1793,12 +1793,12 @@ typedef struct {
     int game_helpchanged;
     int helpchanged;
 
-    qboolean spectator; // client is a spectator
+    bool spectator; // client is a spectator
 
     //K03 Begin
     int frags;
     //K03 End
-    qboolean HasVoted; //GHz
+    bool HasVoted; //GHz
     int voteType; // 1 yes, 2 no, 0 neither
     float VoteTimeout;
 
@@ -1841,8 +1841,19 @@ struct vrr_t {
     int stretched_frames; // for sword
 };
 
+struct gds_state_t {
+    // "connection" id, not database id.
+    // kept around without NO_GDS to simplify preprocessor macros
+    // connection id triggered at clientconnect time
+    _Atomic int64_t connection_id;
+
+    // -1 and 0 should both be invalid.
+    // connection id for load attempt
+    _Atomic int64_t connection_load_id;
+};
+
 // this structure is cleared on each PutClientInServer(),
-// except for 'client->pers'
+// except for 'client->pers' and gds
 struct gclient_s {
     // known to server
     player_state_t ps; // communicated by server to clients
@@ -1853,7 +1864,7 @@ struct gclient_s {
     client_respawn_t resp;
     pmove_state_t old_pmove; // for detecting out-of-pmove changes
 
-    qboolean showscores; // set layout stat
+    bool showscores; // set layout stat
 
     // az begin
     // for the dynamic hud
@@ -1865,8 +1876,8 @@ struct gclient_s {
     stash_state_t stash;
     // az end
 
-    qboolean showinventory; // set layout stat
-    qboolean showhelp;
+    bool showinventory; // set layout stat
+    bool showhelp;
 
     int ammo_index;
 
@@ -1874,7 +1885,7 @@ struct gclient_s {
     int oldbuttons;
     int latched_buttons;
 
-    qboolean weapon_thunk;
+    bool weapon_thunk;
 
     gitem_t *newweapon;
 
@@ -1910,8 +1921,8 @@ struct gclient_s {
     // animation vars
     int anim_end;
     int anim_priority;
-    qboolean anim_duck;
-    qboolean anim_run;
+    bool anim_duck;
+    bool anim_run;
 
     // powerup timers
     float quad_framenum;
@@ -1919,7 +1930,7 @@ struct gclient_s {
     float breather_framenum;
     float enviro_framenum;
 
-    qboolean grenade_blew_up;
+    bool grenade_blew_up;
     float grenade_time;
     int grenade_delay;
     // RAFAEL
@@ -1943,22 +1954,22 @@ struct gclient_s {
     float flood_locktill; // locked from talking
     float flood_when[10]; // when messages were said
     int flood_whenhead; // head pointer for when said
-    qboolean thrusting;
+    bool thrusting;
     int thrustdrain;
     float next_thrust_sound;
 
-    qboolean cloakable;
-    qboolean cloaking;
+    bool cloakable;
+    bool cloaking;
     float cloaktime;
     int cloakdrain;
 
-    qboolean boosted; //Talent: Leap Attack - true if player used boost and is still airbourne
+    bool boosted; //Talent: Leap Attack - true if player used boost and is still airbourne
 
     float healthregen_time;
     float armorregen_time;
 
     int hook_state;
-    qboolean firebeam; //GHz
+    bool firebeam; //GHz
     float beamtime; //GHz
 	qboolean		fireacid;//GHz
 	float			acidtime;//GHz
@@ -1973,7 +1984,7 @@ struct gclient_s {
     int refire_frames;
     int idle_frames; // number of frames player has been standing still and not firing
     int still_frames; // number of frames player has been standing still (used for idle kick)
-    qboolean lowlight;
+    bool lowlight;
     float tball_delay;
     float ability_delay;
     float disconnect_time;
@@ -1982,10 +1993,10 @@ struct gclient_s {
     float oldfov;
     float oldspeed; // GHz: used for flyer for comparison (impact with object)
 
-    qboolean trading; // is player trading?
-    qboolean trade_off; // is the player blocking trades?
-    qboolean trade_accepted; // has player accepted trade?
-    qboolean trade_final; // is the player in the final trade menu?
+    bool trading; // is player trading?
+    bool trade_off; // is the player blocking trades?
+    bool trade_accepted; // has player accepted trade?
+    bool trade_final; // is the player in the final trade menu?
     edict_t *menutarget; // ent stats we are viewing with menu (ent->other is just for clients)
     menusystem_t menustorage; // stores menu data
 
@@ -1997,8 +2008,8 @@ struct gclient_s {
 
     // v3.12 ally menu stuff
     edict_t *allytarget; // player we are trying to ally with
-    qboolean ally_accept; // have we accepted the alliance?
-    qboolean allying; // is the player trying to ally with someone?
+    bool ally_accept; // have we accepted the alliance?
+    bool allying; // is the player trying to ally with someone?
     float ally_time; // when did we begin invitation?
 
     // 3.5 some abilties don't use power cubes, and instead rely on a charge
@@ -2009,18 +2020,20 @@ struct gclient_s {
     float ammo_regentime; // next ammo regen tick
     float wormhole_time; // must exit wormhole by this time
 
-    qboolean jump;
-    qboolean show_allyinfo; // displays ally info data (health/armor bars)
+    bool jump;
+    bool show_allyinfo; // displays ally info data (health/armor bars)
 
-    qboolean waiting_to_join; // this player has indicated that they want to join the game (used for teamplay queues)
+    bool waiting_to_join; // this player has indicated that they want to join the game (used for teamplay queues)
     float waiting_time; // the exact time when the player indicated they wanted to join
     int showGridDebug; // show grid debug information (0=off,1=grid,2=children)
     float lastCommand; // 'double click' delay for monster commands
     vec3_t lastPosition; // last selected position for monster command
     edict_t *lastEnt; // last selected entity for monster command
-    qboolean update_chase;
+    bool update_chase;
 
     struct vrr_t vrr; // variable refresh rate data
+
+
     vec3_t oldpos; // used by Blink Strike to store position prior to teleportation
     int tele_timeout;
     // used by Blink Strike to store level.framenum when attack ends and player teleports (back) to oldpos
@@ -2290,12 +2303,12 @@ struct edict_s {
     int packitems[MAX_ITEMS];
     float PlasmaDelay;
     float holdtime;
-    qboolean slow;
-    qboolean superspeed;
-    qboolean sucking; //GHz
-    qboolean antigrav;
-    qboolean automag; // az: magmining self?
-    qboolean manacharging; // az: charging mana?
+    bool slow;
+    bool superspeed;
+    bool sucking; //GHz
+    bool antigrav;
+    bool automag; // az: magmining self?
+    bool manacharging; // az: charging mana?
     int lockon;
 
     int FrameShot;
@@ -2355,8 +2368,8 @@ struct edict_s {
     // the next server frame we will attempt to transfer from health_cache to entity's health
     int armor_cache;
     int armor_cache_nextframe;
-    qboolean spikeball_follow;
-    qboolean spikeball_recall;
+    bool spikeball_follow;
+    bool spikeball_recall;
     int shield; //4.2 shielding value, 0=no shield, 1=front, 2=whole body
     float shield_activate_time; // when shield will activate
     int movetype_prev; // previous movetype, used by V_Push()
@@ -2364,7 +2377,7 @@ struct edict_s {
     //K03 End
 
     // az begin
-    qboolean exploded; // az: don't explode more than once at death. lol
+    bool exploded; // az: don't explode more than once at death. lol
     int list_index; // invasion queue position
     // az end
 
@@ -2406,7 +2419,7 @@ struct edict_s {
     edict_t *chill_owner; // for assist exp tracking
 
     //4.0 "manashield"
-    qboolean manashield;
+    bool manashield;
 
     //4.0
     edict_t *megahealth;
@@ -2456,18 +2469,13 @@ struct edict_s {
     float pcr_time;
 	float		detected_factor; // how much extra damage we take from being detected
 
-    // "connection" id, not database id.
-    // kept around without NO_GDS to simplify preprocessor macros
-    volatile int gds_connection_id;
-
-    // -1 and 0 should both be invalid.
-    volatile int gds_connection_load_id;
-
     float removetime; //4.07 time to auto-remove
     edict_t *prev_owner; // for conversion
     //GHz END
     edict_t *prev_navi;
     edict_t *laser; // for hook
+
+    struct gds_state_t gds; // gds data
 };
 
 #include "combat/abilities/auras.h"

@@ -344,7 +344,6 @@ SV_CalcGunOffset
 void SV_CalcGunOffset (edict_t *ent)
 {
 	int		i;
-	float	delta;
 
 	// gun angles from bobbing
 	ent->client->ps.gunangles[ROLL] = xyspeed * bobfracsin * 0.005;
@@ -360,7 +359,7 @@ void SV_CalcGunOffset (edict_t *ent)
 	// gun angles from delta movement
 	for (i=0 ; i<3 ; i++)
 	{
-		delta = ent->client->oldviewangles[i] - ent->client->ps.viewangles[i];
+		float delta = ent->client->oldviewangles[i] - ent->client->ps.viewangles[i];
 		if (delta > 180)
 			delta -= 360;
 		if (delta < -180)
@@ -369,9 +368,10 @@ void SV_CalcGunOffset (edict_t *ent)
 			delta = 45;
 		if (delta < -45)
 			delta = -45;
+
 		if (i == YAW)
-			ent->client->ps.gunangles[ROLL] += 0.1*delta;
-		ent->client->ps.gunangles[i] += 0.2 * delta;
+			ent->client->ps.gunangles[ROLL] += scale_fps(0.1)*delta;
+		ent->client->ps.gunangles[i] += scale_fps(0.2) * delta;
 	}
 
 	// gun height
@@ -1195,7 +1195,7 @@ void ClientEndServerFrame (edict_t *ent)
 	bobtime = (current_client->bobtime += scale_fps(bobmove));
 
 	if (current_client->ps.pmove.pm_flags & PMF_DUCKED)
-		bobtime *= 4;
+		bobtime *= scale_fps(4);
 
 	bobcycle = (int)bobtime;
 	bobfracsin = fabs(sin(bobtime*M_PI));

@@ -20,12 +20,12 @@ char *HiPrint(char *text) {
 // this needs to match vrx_update_free_abilities() in v_utils.c
 void vrx_add_levelup_boons(edict_t *ent) {
     if ((ent->myskills.level % 5) == 0) {
-        if (ent->myskills.abilities[MAX_AMMO].level < ent->myskills.abilities[MAX_AMMO].max_level) {
+        if (ent->myskills.abilities[MAX_AMMO].level < ent->myskills.abilities[MAX_AMMO].soft_max) {
             ent->myskills.abilities[MAX_AMMO].level++;
             ent->myskills.abilities[MAX_AMMO].current_level++;
         } else ent->myskills.speciality_points++;
 
-        if (ent->myskills.abilities[VITALITY].level < ent->myskills.abilities[VITALITY].max_level) {
+        if (ent->myskills.abilities[VITALITY].level < ent->myskills.abilities[VITALITY].soft_max) {
             ent->myskills.abilities[VITALITY].level++;
             ent->myskills.abilities[VITALITY].current_level++;
         } else ent->myskills.speciality_points++;
@@ -316,12 +316,10 @@ void vrx_trigger_spree_abilities(edict_t *attacker) {
 }
 
 int vrx_apply_experience(edict_t *player, int exp) {
-    float mod, playtime_minutes;
-
     // reduce experience as play time increases
-    playtime_minutes = player->myskills.playingtime / 60.0;
+    float playtime_minutes = player->myskills.playingtime / 60.0;
     if (playtime_minutes > PLAYTIME_MIN_MINUTES) {
-        mod = 1.0 + playtime_minutes / PLAYTIME_MAX_MINUTES;
+        float mod = 1.0 + playtime_minutes / PLAYTIME_MAX_MINUTES;
         if (mod >= PLAYTIME_MAX_PENALTY)
             mod = PLAYTIME_MAX_PENALTY;
         exp /= mod;

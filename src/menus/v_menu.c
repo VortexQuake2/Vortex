@@ -193,8 +193,10 @@ void JoinTheGame (edict_t *ent)
 		return;
 	}
 
-    if (vrx_char_io.is_loading(ent))
-        return;
+    if (vrx_char_io.is_loading(ent)) {
+    	gi.cprintf(ent, PRINT_HIGH, "Character loading in progress, please wait.\n");
+	    return;
+    }
 
     if (vrx_char_io.multithread) {
         /*
@@ -292,7 +294,7 @@ void OpenJoinMenu (edict_t *ent)
 
 	//				    xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
 
-	menu_add_line(ent, "Vortex Revival", MENU_GREEN_CENTERED);
+	menu_add_line(ent, "Quake 2 Vortex", MENU_GREEN_CENTERED);
 #ifndef VRX_REPRO
 	menu_add_line(ent, va("vrx v%s", VRX_VERSION), MENU_GREEN_CENTERED);
 #else
@@ -308,7 +310,7 @@ void OpenJoinMenu (edict_t *ent)
     menu_add_line(ent, "to become stronger!", 0);
 	menu_add_line(ent, " ", 0);
 	menu_add_line(ent, "Maintained by", MENU_GREEN_CENTERED);
-	menu_add_line(ent, "The Vortex Revival Team", MENU_GREEN_CENTERED);
+	menu_add_line(ent, "The Vortex Team", MENU_GREEN_CENTERED);
 	menu_add_line(ent, "github: VortexQuake2/Vortex", MENU_WHITE_CENTERED);
 	menu_add_line(ent, " ", 0);
 	menu_add_line(ent, "Start your reign", 1);
@@ -436,6 +438,37 @@ void OpenRespawnWeapMenu(edict_t *ent)
 	menu_show(ent);
 }
 
+void vrx_initialize_player_class(edict_t *ent, int option) {
+	vrx_create_new_character(ent);
+	ent->myskills.experience = 0;
+	for (int i = 0; i < start_level->value; ++i)
+	{
+		ent->myskills.experience += vrx_get_points_tnl(i);
+	}
+
+	ent->myskills.class_num = option;
+	vrx_assign_abilities(ent);
+	vrx_set_talents(ent);
+	vrx_prestige_init(ent);
+	ent->myskills.weapon_respawns = 100;
+
+	gi.dprintf("INFO: %s created a new %s!\n",
+	           ent->client->pers.netname,
+	           vrx_get_class_string(ent->myskills.class_num));
+
+	vrx_write_to_logfile(ent,
+	                     va("%s created a %s.\n",
+	                        ent->client->pers.netname,
+	                        vrx_get_class_string(ent->myskills.class_num)));
+
+	vrx_check_for_levelup(ent, false);
+	vrx_update_all_character_maximums(ent);
+	vrx_add_respawn_weapon(ent, ent->myskills.respawn_weapon);
+	vrx_add_respawn_items(ent);
+
+	vrx_reset_weapon_maximums(ent);
+}
+
 void classmenu_handler (edict_t *ent, int option)
 {
 	const int page_num = (option / 1000);
@@ -474,33 +507,7 @@ void classmenu_handler (edict_t *ent, int option)
 		ent->teamnum = GetRandom(1, 2);
 	}
 
-    ent->myskills.experience = 0;
-	for (i = 0; i < start_level->value; ++i)
-	{
-        ent->myskills.experience += vrx_get_points_tnl(i);
-	}
-
-	ent->myskills.class_num = option;
-    vrx_assign_abilities(ent);
-    vrx_set_talents(ent);
-	vrx_prestige_init(ent);
-	ent->myskills.weapon_respawns = 100;
-
-    gi.dprintf("INFO: %s created a new %s!\n",
-               ent->client->pers.netname,
-               vrx_get_class_string(ent->myskills.class_num));
-
-    vrx_write_to_logfile(ent,
-                         va("%s created a %s.\n",
-                            ent->client->pers.netname,
-                            vrx_get_class_string(ent->myskills.class_num)));
-
-    vrx_check_for_levelup(ent, false);
-    vrx_update_all_character_maximums(ent);
-    vrx_add_respawn_weapon(ent, ent->myskills.respawn_weapon);
-    vrx_add_respawn_items(ent);
-
-    vrx_reset_weapon_maximums(ent);
+    vrx_initialize_player_class(ent, option);
 
 	// FIXME: we should do a better job of selecting a team OR block them from joining (temp make non-spec to make savechar() happy)
 	// we need to select a team if we're past pre-game time in CTF or Domination modes
@@ -556,7 +563,7 @@ void OpenMasterPasswordMenu (edict_t *ent)
 	menu_add_line(ent, "Master Password", MENU_GREEN_CENTERED);
 	menu_add_line(ent, " ", 0);
 
-	if (strcmp(ent->myskills.email, ""))
+	if (strcmp(ent->myskills.masterpw, ""))
 	{
 		menu_add_line(ent, "A master password has", 0);
 		menu_add_line(ent, "already been set and can't", 0);
@@ -648,7 +655,7 @@ void OpenGeneralMenu (edict_t *ent)
         ent->myskills.class_num != CLASS_KNIGHT)
         menu_add_line(ent, "Set respawn weapon", 4);
 
-	if (ent->myskills.email[0] == '\0')
+	if (ent->myskills.masterpw[0] == '\0')
 		menu_add_line(ent, "Set master password", 5);
 
 

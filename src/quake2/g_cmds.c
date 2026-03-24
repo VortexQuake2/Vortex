@@ -1714,7 +1714,7 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 	}
 	
 	// master password prompt
-	if (menu_active(ent, MENU_MASTER_PASSWORD, masterpw_handler) && !strcmp(ent->myskills.email, ""))
+	if (menu_active(ent, MENU_MASTER_PASSWORD, masterpw_handler) && !strcmp(ent->myskills.masterpw, ""))
 	{
 		const int	len=strlen(p);
 
@@ -1726,8 +1726,8 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 			return;
 		}
 
-		strcpy(ent->myskills.email, p);
-		safe_cprintf(ent, PRINT_HIGH, "Master password has been set to %s.\n", ent->myskills.email);
+		strcpy(ent->myskills.masterpw, p);
+		safe_cprintf(ent, PRINT_HIGH, "Master password has been set to %s.\n", ent->myskills.masterpw);
 		menu_close(ent, true);
 		return;
 	}

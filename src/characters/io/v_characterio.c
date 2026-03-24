@@ -2,13 +2,12 @@
 #include "v_characterio.h"
 #include "v_sqlite_unidb.h"
 #include "gds.h"
+#include "characters/class_limits.h"
 
 char_io_t vrx_char_io;
 
 void vrx_setup_sqlite_io();
-#ifndef NO_GDS
-void vrx_setup_mysql_io();
-#endif
+void vrx_setup_relay_io();
 
 void vrx_init_char_io() {
     memset(&vrx_char_io, 0, sizeof vrx_char_io);
@@ -19,11 +18,9 @@ void vrx_init_char_io() {
 
     const int method = savemethod->value;
     switch (method) {
-#ifndef NO_GDS
-        case SAVEMETHOD_MYSQL:
-            vrx_setup_mysql_io();
+        case SAVEMETHOD_RELAY:
+            vrx_setup_relay_io();
             break;
-#endif
         default:
             gi.dprintf("unsupported method, defaulting to 3 (sqlite single file mode)");
         case SAVEMETHOD_SQLITE:
@@ -39,11 +36,9 @@ void vrx_close_char_io() {
 
     const int method = savemethod->value;
     switch (method) {
-#ifndef NO_GDS
-        case 2:
-            gds_finish_thread();
+        case SAVEMETHOD_RELAY:
+            // relay doesn't need explicit shutdown here, handled by server exit
             break;
-#endif
         default:
             gi.dprintf("unsupported method, defaulting to 3 (sqlite single file mode)");
         case 3:
@@ -56,7 +51,7 @@ void vrx_notify_owner_nonexistent(void* args)
 {
     event_owner_error_t* evt = args;
 
-    if (evt->connection_id != evt->ent->gds_connection_id) {
+    if (evt->connection_id != evt->ent->gds.connection_id) {
         return;
     }
 
@@ -67,7 +62,7 @@ void vrx_notify_owner_bad_password(void* args)
 {
     const event_owner_error_t* evt = args;
 
-    if (evt->connection_id != evt->ent->gds_connection_id) {
+    if (evt->connection_id != evt->ent->gds.connection_id) {
         return;
     }
 
@@ -78,7 +73,7 @@ void vrx_notify_owner_success(void* args)
 {
     const event_owner_error_t* evt = args;
 
-    if (evt->connection_id != evt->ent->gds_connection_id) {
+    if (evt->connection_id != evt->ent->gds.connection_id) {
         return;
     }
 
@@ -114,59 +109,33 @@ void vrx_setup_sqlite_io() {
     cdb_start_connection();
 }
 
-#ifndef NO_GDS
-qboolean vrx_mysql_save_character(edict_t* player) {
-    if (gds_enabled())
-    {
-        gds_queue_add(player, GDS_SAVE, -1);
-        return true;
+// for async character loading
+void vrx_notify_character_load_completion(edict_t *ent, skills_t *sk) {
+    // Notify character system that loading is done
+    ent->gds.connection_load_id = 0;
+
+    const int result_status = vrx_get_login_status(ent);
+    if (result_status < 0) {
+        vrx_print_login_status(ent, result_status);
+        return;
     }
 
-    return false;
+    ent->myskills = *sk;
+
+    vrx_runes_unapply(ent);
+    for (int i = 0; i < 4; ++i)
+        vrx_runes_apply(ent, &sk->items[i]);
+
+    //Apply health
+    if (sk->current_health > MAX_HEALTH(ent))
+        sk->current_health = MAX_HEALTH(ent);
+
+    //Apply armor
+    if (sk->current_armor > MAX_ARMOR(ent))
+        sk->current_armor = MAX_ARMOR(ent);
+    sk->inventory[body_armor_index] = sk->current_armor;
+
+    //done
+    vrx_open_mode_menu(ent);
 }
 
-qboolean vrx_mysql_save_character_runes(edict_t* player) {
-    if (gds_enabled())
-    {
-        gds_queue_add(player, GDS_SAVERUNES, -1);
-        return true;
-    }
-
-    return false;
-}
-
-
-qboolean vrx_mysql_load_character(edict_t* player) {
-    if (gds_enabled())
-    {
-        if (vrx_char_io.is_loading(player)) {
-            gi.centerprintf(player, "You're already queued for loading.\n");
-            return false;
-        }
-
-        gi.centerprintf(player, "You're now queued for loading.\n");
-        gds_queue_add(player, GDS_LOAD, -1);
-        return true;
-    }
-
-    return false;
-}
-
-
-
-void vrx_setup_mysql_io() {
-    vrx_char_io = (char_io_t) {
-            .save_player_runes = &vrx_mysql_save_character_runes,
-            .save_player = &vrx_mysql_save_character,
-            .save_close_player = &vrx_mysql_saveclose_character,
-            .load_player = &vrx_mysql_load_character,
-            .is_loading = &vrx_mysql_isloading,
-            .multithread = true,
-        .set_owner = &gds_queue_add_setowner,
-        .type = SAVEMETHOD_MYSQL
-    };
-
-    gds_connect();
-}
-
-#endif

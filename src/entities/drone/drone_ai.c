@@ -2732,7 +2732,7 @@ void drone_think (edict_t *self)
 			self->velocity[2] = 0;
 	}
 
-	/*drone_togglelight(self);*/
+	drone_togglelight(self);
 	drone_dodgeprojectiles(self);
 	
 	// this must come before M_MoveFrame() because a monster's dead

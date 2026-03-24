@@ -39,11 +39,11 @@ qboolean vrx_prestige_filter_class_skill(const abilitydef_t *pAbility, void *use
     const edict_t *pUser = user;
 
     // general skills cannot become class skills
-    if (pAbility->general)
+    if (pAbility->general && !pAbility->allow_class_upgrade)
         return false;
 
     // non-scaleable abilities cannot become class skills
-    if (pAbility->softmax != DEFAULT_SOFTMAX)
+    if (pAbility->softmax != DEFAULT_SOFTMAX && !pAbility->class_softmax_override)
         return false;
 
     // already a class skill
@@ -56,8 +56,9 @@ qboolean vrx_prestige_filter_class_skill(const abilitydef_t *pAbility, void *use
 qboolean vrx_prestige_filter_softmax_bump(const abilitydef_t *pAbility, void *user) {
     const edict_t *pUser = user;
 
-    if (pAbility->softmax != DEFAULT_SOFTMAX)
+    if (pAbility->softmax != DEFAULT_SOFTMAX && !pAbility->class_softmax_override) {
         return false;
+    }
 
     // Don't show the skill if it has reached the maximum softmax bump.
     if (pUser->myskills.prestige.softmaxBump[pAbility->index] >= MAX_SOFTMAX_BUMP)
@@ -123,7 +124,7 @@ void vrx_prestige_handle_softmax_bump(edict_t *ent, int option) {
 
     ent->myskills.prestige.softmaxBump[option] += 1;
     ent->myskills.prestige.points -= 1;
-    ent->myskills.abilities[option].max_level += 1;
+    ent->myskills.abilities[option].soft_max += 1;
     ent->myskills.abilities[option].hard_max = vrx_get_hard_max(option, 0, vrx_get_ability_class(option));
 
     gi.cprintf(ent, PRINT_HIGH, "You have increased the softmax of %s by 1.\n", GetAbilityString(option));
@@ -243,12 +244,12 @@ qboolean vrx_prestige_has_ability(struct prestigelist_s *pre, uint32_t abIndex) 
 
 void vrx_prestige_reapply_abilities(edict_t* self) {
     struct prestigelist_s *pre = &self->myskills.prestige;
-    for (uint32_t abIndex = 0; abIndex < MAX_ABILITIES; abIndex++) {
+    for (size_t abIndex = 0; abIndex < MAX_ABILITIES; abIndex++) {
         if (vrx_prestige_has_ability(pre, abIndex)) {
             vrx_add_ability(self, abIndex);
         }
 
-        self->myskills.abilities[abIndex].max_level += pre->softmaxBump[abIndex];
+        self->myskills.abilities[abIndex].soft_max += pre->softmaxBump[abIndex];
     }
 }
 
@@ -262,8 +263,8 @@ void vrx_prestige_reapply_all(edict_t *self) {
 }
 
 qboolean vrx_prestige_has_class_skills(edict_t *self) {
-    const int size = sizeof(self->myskills.prestige.classSkill) / sizeof(self->myskills.prestige.classSkill[0]);
-    for (uint32_t i = 0; i < size; i++) {
+    const size_t size = sizeof(self->myskills.prestige.classSkill) / sizeof(self->myskills.prestige.classSkill[0]);
+    for (size_t i = 0; i < size; i++) {
         if (self->myskills.prestige.classSkill[i])
             return true;
     }

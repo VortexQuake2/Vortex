@@ -1,125 +1,131 @@
-#define VITALITY		0
-#define REGENERATION	1
-#define RESISTANCE		2
-#define STRENGTH		3
-#define HASTE			4
-#define VAMPIRE			5
-#define JETPACK			6
-#define CLOAK			7
-#define WEAPON_KNOCK	8
-#define ARMOR_UPGRADE	9
-#define BLINKSTRIKE		10
-#define ID				11
-#define MAX_AMMO		12
-#define GRAPPLE_HOOK	13
-#define SUPPLY_STATION	14
-//#define FREEZE_SPELL	15
-#define CREATE_QUAD		15
-#define CREATE_INVIN	16
-#define POWER_SHIELD	17
-#define CORPSE_EXPLODE	18
-#define GHOST			19
-#define SALVATION		20
-#define FORCE_WALL		21
-#define AMMO_REGEN		22
-#define POWER_REGEN		23
-#define BUILD_LASER		24
-#define HA_PICKUP		25
-#define BUILD_SENTRY	26
-#define BOOST_SPELL		27
-#define BLOOD_SUCKER	28
-#define PROXY			29
-#define MONSTER_SUMMON	30
-#define SUPER_SPEED		31
-#define ARMOR_REGEN		32
-#define BOMB_SPELL		33
-#define LIGHTNING		34
-#define ANTIGRAV		35
-#define HOLY_FREEZE		36
-#define WORLD_RESIST	37
-#define BULLET_RESIST	38
-#define SHELL_RESIST	39
-#define ENERGY_RESIST	40
-#define PIERCING_RESIST	41
-#define SPLASH_RESIST	42
-#define CACODEMON		43
-#define PLAGUE			44
-#define FLESH_EATER		45
-#define HELLSPAWN		46
-#define BEAM			47
-#define BRAIN			48
-#define MAGMINE			49
-#define STATIC_FIELD	50
-#define MAGICBOLT		51
-#define TELEPORT		52
-#define NOVA			53
-#define EXPLODING_ARMOR	54
-#define MIND_ABSORB		55
-#define LIFE_DRAIN		56
-#define	AMP_DAMAGE		57
-#define	CURSE			58
-#define	BLESS			59
-#define	WEAKEN			60
-#define	AMNESIA			61
-#define	HEALING			62
-#define AMMO_UPGRADE	63
-#define YIN				64
-#define YANG			65
-#define FLYER			66
-#define MUTANT			67
-#define SPIKE			68
-#define MORPH_MASTERY	69
-#define NAPALM			70
-#define TANK			71
-#define MEDIC			72
-#define METEOR			73
-#define AUTOCANNON		74
-#define HAMMER			75
-#define BLACKHOLE		76
-//4.1
-#define FIRE_TOTEM		77
-#define WATER_TOTEM		78
-#define AIR_TOTEM		79
-#define EARTH_TOTEM		80
-#define DARK_TOTEM		81
-#define NATURE_TOTEM	82
-#define FURY			83
-#define TOTEM_MASTERY	84
-#define	BERSERK			85
-#define SHIELD			86
-#define CALTROPS		87
-#define SPIKE_GRENADE	88
-#define BOX				89
-#define CONVERSION		90
-#define DEFLECT			91
-#define SCANNER			92
-#define EMP				93
-#define DOUBLE_JUMP		94
-#define LIFE_TAP		95
-#define FIREBALL		96
-#define PLASMA_BOLT		97
-#define LIGHTNING_STORM	98
-#define MIRV			99
-#define SPIKER			100
-#define HEALER			101
-#define OBSTACLE		102
-#define GASSER			103
-#define COCOON			104
-#define ACID			105
-#define SPORE			106
-#define SELFDESTRUCT    107
-#define FLASH			108
-#define DECOY			109 // az 3.2b add decoy back into engineer.
-#define EXPLODING_BARREL	110
-#define SKELETON		111
-#define GOLEM			112
-#define FIREWALL		113
-#define FROZEN_ORB		114
-#define GLACIAL_SPIKE	115
-#define DETECTOR		133
+#pragma once
 
-#define MAX_ABILITIES	160
-#include <stdint.h>
+enum ability_id_t {
+    VITALITY = 0,
+    REGENERATION = 1,
+    RESISTANCE = 2,
+    STRENGTH = 3,
+    HASTE = 4,
+    VAMPIRE = 5,
+    JETPACK = 6,
+    CLOAK = 7,
+    WEAPON_KNOCK = 8,
+    ARMOR_UPGRADE = 9,
+    BLINKSTRIKE = 10,
+    ID = 11,
+    MAX_AMMO = 12,
+    GRAPPLE_HOOK = 13,
+    SUPPLY_STATION = 14,
+    // FREEZE_SPELL =	15,
+    CREATE_QUAD = 15,
+    CREATE_INVIN = 16,
+    POWER_SHIELD = 17,
+    CORPSE_EXPLODE = 18,
+    GHOST = 19,
+    SALVATION = 20,
+    FORCE_WALL = 21,
+    AMMO_REGEN = 22,
+    POWER_REGEN = 23,
+    BUILD_LASER = 24,
+    HA_PICKUP = 25,
+    BUILD_SENTRY = 26,
+    BOOST_SPELL = 27,
+    BLOOD_SUCKER = 28,
+    PROXY = 29,
+    MONSTER_SUMMON = 30,
+    SUPER_SPEED = 31,
+    ARMOR_REGEN = 32,
+    BOMB_SPELL = 33,
+    LIGHTNING = 34,
+    ANTIGRAV = 35,
+    HOLY_FREEZE = 36,
+    WORLD_RESIST = 37,
+    BULLET_RESIST = 38,
+    SHELL_RESIST = 39,
+    ENERGY_RESIST = 40,
+    PIERCING_RESIST = 41,
+    SPLASH_RESIST = 42,
+    CACODEMON = 43,
+    PLAGUE = 44,
+    FLESH_EATER = 45,
+    HELLSPAWN = 46,
+    BEAM = 47,
+    BRAIN = 48,
+    MAGMINE = 49,
+    STATIC_FIELD = 50,
+    MAGICBOLT = 51,
+    TELEPORT = 52,
+    NOVA = 53,
+    EXPLODING_ARMOR = 54,
+    MIND_ABSORB = 55,
+    LIFE_DRAIN = 56,
+    AMP_DAMAGE = 57,
+    CURSE = 58,
+    BLESS = 59,
+    WEAKEN = 60,
+    AMNESIA = 61,
+    HEALING = 62,
+    AMMO_UPGRADE = 63,
+    YIN = 64,
+    YANG = 65,
+    FLYER = 66,
+    MUTANT = 67,
+    SPIKE = 68,
+    MORPH_MASTERY = 69,
+    NAPALM = 70,
+    TANK = 71,
+    MEDIC = 72,
+    METEOR = 73,
+    AUTOCANNON = 74,
+    HAMMER = 75,
+    BLACKHOLE = 76,
+    //4.1
+    FIRE_TOTEM = 77,
+    WATER_TOTEM = 78,
+    AIR_TOTEM = 79,
+    EARTH_TOTEM = 80,
+    DARK_TOTEM = 81,
+    NATURE_TOTEM = 82,
+    FURY = 83,
+    TOTEM_MASTERY = 84,
+    BERSERK = 85,
+    SHIELD = 86,
+    CALTROPS = 87,
+    SPIKE_GRENADE = 88,
+    BOX = 89,
+    CONVERSION = 90,
+    DEFLECT = 91,
+    SCANNER = 92,
+    EMP = 93,
+    DOUBLE_JUMP = 94,
+    LIFE_TAP = 95,
+    FIREBALL = 96,
+    PLASMA_BOLT = 97,
+    LIGHTNING_STORM = 98,
+    MIRV = 99,
+    SPIKER = 100,
+    HEALER = 101,
+    OBSTACLE = 102,
+    GASSER = 103,
+    COCOON = 104,
+    ACID = 105,
+    SPORE = 106,
+    SELFDESTRUCT = 107,
+    FLASH = 108,
+    DECOY = 109, // az 3.2b add decoy back into engineer.
+    EXPLODING_BARREL = 110,
+    SKELETON = 111,
+    GOLEM = 112,
+    FIREWALL = 113,
+    FROZEN_ORB = 114,
+    GLACIAL_SPIKE = 115,
+    DETECTOR = 133,
+
+    ABILITY_LAST
+};
+
+constexpr size_t MAX_ABILITIES = 160;
+static_assert(ABILITY_LAST <= MAX_ABILITIES, "MAX_ABILITIES is too small");
 
 
 typedef uint32_t abilitybitmap_t[MAX_ABILITIES / 32 + 1];

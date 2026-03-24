@@ -44,6 +44,7 @@ typedef struct menusystem_s
 	void 		(*optionselected)(edict_t *ent,int option);
 	void		(*oldmenuhandler)(edict_t *ent,int option);
 	void 		(*onclose)(edict_t* ent);
+	// if this is true, do not call onclose when the current menu is closed.
 	qboolean cancel_close_event;
 	qboolean 	menu_active;
 	qboolean	displaymsg;

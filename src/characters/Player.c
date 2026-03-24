@@ -37,6 +37,7 @@ qboolean vrx_is_playing_too_much(edict_t *ent)
 
 void vrx_create_new_character(edict_t *ent)
 {
+	memset(&ent->myskills, 0, sizeof(ent->myskills));
 	ent->myskills.next_level = vrx_get_points_tnl(ent->myskills.level);
 	ent->myskills.respawn_weapon = 7;
 
@@ -60,10 +61,8 @@ int vrx_get_login_status(edict_t *ent)
 	Q_strncpy (chkpassword2, vrx_encrypt_string(ent->myskills.password, true), sizeof(chkpassword2) - 1);
 
 	// check if userinfo password matches master password
-	// does not accept password if it contains '@' because it might be an email address
-	// remove this requirement after a reset
-	if ((strlen(ent->myskills.email) > 0) && !strstr(ent->myskills.email, "@") 
-		&& !Q_stricmp(chkpassword, ent->myskills.email))
+	if (strlen(ent->myskills.masterpw) > 0
+		&& !Q_stricmp(chkpassword, ent->myskills.masterpw))
 		masterPasswordMatch = true;
 
 	// compare normal and master password against userinfo value

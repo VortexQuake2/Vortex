@@ -3,6 +3,7 @@
 
 #define SAVEMETHOD_MYSQL 2
 #define SAVEMETHOD_SQLITE 3
+#define SAVEMETHOD_RELAY 4
 
 typedef struct {
     qboolean (*save_player)(edict_t* ent); // saves player, but does not change playing status.
@@ -34,8 +35,7 @@ typedef struct {
     qboolean(*close_stash_by_id) (int owner_id);
 
     // event shows what item was stored.
-    // this call will take the item out of the player inventory.
-    qboolean (*store) (edict_t* ent, int itemindex);
+    qboolean (*store) (edict_t* ent, item_t* item);
 
     // event shows what item was stored.
     // this call expects it to be put into inventory
@@ -62,6 +62,8 @@ typedef struct
 void vrx_notify_owner_nonexistent(void* args);
 void vrx_notify_owner_bad_password(void* args);
 void vrx_notify_owner_success(void* args);
+
+void vrx_notify_character_load_completion(edict_t *ent, skills_t *sk);
 
 #endif //VORTEXQUAKE2_V_CHARACTERIO_H
 

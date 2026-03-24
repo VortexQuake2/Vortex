@@ -2108,31 +2108,30 @@ to be placed into the game.  This will happen every level load.
 */
 void ClientBegin (edict_t *ent)
 {
-
 	if (debuginfo->value > 1)
 		gi.dprintf("ClientBegin()\n");
 
 	ent->client = game.clients + (ent - g_edicts - 1);
 
-	if (!ent->ai.is_bot)
-	{
-		//[QBS]
-		// set msg mode fully on so zbot would receive text & crash :)
-		gi.WriteByte (svc_stufftext);
-		gi.WriteString ("msg 4\n");
-		gi.unicast(ent, true);
-
-		//[QBS] RATBOT STOPPER 
-		gi.WriteByte (svc_stufftext);
-		gi.WriteString (".==|please.disconnect.all.bots|==.\n");
-		gi.unicast(ent, true);
-		//[QBS]
-
-		gi.WriteByte (svc_stufftext);
-		gi.WriteString ("msg 0\n");
-		gi.unicast(ent, true);
-		//[QBS]end
-	}
+	// if (!ent->ai.is_bot)
+	// {
+	// 	//[QBS]
+	// 	// set msg mode fully on so zbot would receive text & crash :)
+	// 	gi.WriteByte (svc_stufftext);
+	// 	gi.WriteString ("msg 4\n");
+	// 	gi.unicast(ent, true);
+	//
+	// 	//[QBS] RATBOT STOPPER
+	// 	gi.WriteByte (svc_stufftext);
+	// 	gi.WriteString (".==|please.disconnect.all.bots|==.\n");
+	// 	gi.unicast(ent, true);
+	// 	//[QBS]
+	//
+	// 	gi.WriteByte (svc_stufftext);
+	// 	gi.WriteString ("msg 0\n");
+	// 	gi.unicast(ent, true);
+	// 	//[QBS]end
+	// }
 
 	vrx_relay_notify_client_begin(ent->client->pers.netname);
 	ClientBeginDeathmatch (ent);
@@ -2274,7 +2273,7 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 bool ClientConnect (edict_t *ent, char *userinfo, const char* social_id, bool is_bot)
 #endif
 {
-	static int lastID = 1;
+	static int64_t lastID = 1;
 	char	ip[16];
 	char	*value;
 	
@@ -2384,10 +2383,11 @@ bool ClientConnect (edict_t *ent, char *userinfo, const char* social_id, bool is
 	ent->client->pers.connected = true;
 	ent->ai.is_bot = false;
 
-	ent->gds_connection_id = lastID;
+	ent->gds.connection_id = lastID;
+	ent->gds.connection_load_id = 0;
 	lastID++;
 
-	if (lastID == INT_MAX - 1)
+	if (lastID == INT64_MAX - 1)
 	{
 		gi.dprintf("We seem to have passed a big player ID. Resetting!");
 		lastID = 1;
@@ -2411,8 +2411,6 @@ void SaveCharacterQuit (edict_t *ent);
 
 void ClientDisconnect (edict_t *ent)
 {
-	int		i;
-	edict_t *player;
 	int		playernum;
 
 	if (debuginfo->value > 1)
@@ -2454,8 +2452,8 @@ void ClientDisconnect (edict_t *ent)
 	// make sure there are no mini-bosses on spree war status
 	if (deathmatch->value)
 	{
-		for (i = 1; i <= maxclients->value; i++) {
-			player = &g_edicts[i];
+		for (int i = 1; i <= maxclients->value; i++) {
+			edict_t *player = &g_edicts[i];
 			if (!player->inuse)
 				continue;
 			if (player->solid == SOLID_NOT)

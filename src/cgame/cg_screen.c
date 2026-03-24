@@ -160,11 +160,13 @@ struct hud_data_t {
     // damage counter
     int32_t dmg_counter;
     int32_t dmg_instant;
+    int16_t dmg_instance;
     uint64_t last_dmg_time;
 
     // experience
     int16_t last_value;
     int16_t next_value;
+
 };
 
 
@@ -1826,10 +1828,11 @@ void CG_DrawHUD(
     }
 
     const int instant_dmg = ps_instant_dmg_value(ps);
-    if (instant_dmg) {
+    if (instant_dmg && ps->stats[STAT_DMG_INSTANCE] != hud_data[playernum].dmg_instance) {
         hud_data[playernum].dmg_instant = instant_dmg;
         hud_data[playernum].dmg_counter += hud_data[playernum].dmg_instant;
         hud_data[playernum].last_dmg_time = cgi.CL_ClientTime();
+        hud_data[playernum].dmg_instance = ps->stats[STAT_DMG_INSTANCE];
     }
 
     if (cgi.CL_ClientTime() > hud_data[playernum].last_dmg_time + 2000 && hud_data[playernum].dmg_counter) {

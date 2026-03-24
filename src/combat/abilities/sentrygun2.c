@@ -1222,7 +1222,7 @@ qboolean canBuildSentry(edict_t *ent, int cost)
 	//Check if player has too many sentries already
 	if (!(ent->num_sentries < SENTRY_MAXIMUM))
 	{
-		safe_cprintf(ent, PRINT_HIGH, "You have reached the max of %d sentry gun(s).\n", SENTRY_MAXIMUM);
+		safe_cprintf(ent, PRINT_HIGH, "You have reached the max of %d sentry gun(s).\n", (int)SENTRY_MAXIMUM);
 		return false;
 	}
 

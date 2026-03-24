@@ -12,7 +12,7 @@ void OpenMultiUpgradeMenu (edict_t *ent, int lastline, int page, int generaltype
 void upgradeSpecialMenu_handler(edict_t *ent, int option)
 {
     int cost = vrx_get_ability_upgrade_cost(option - 1);
-    const int inc_max = ent->myskills.abilities[option - 1].max_level + 1;
+    const int inc_max = ent->myskills.abilities[option - 1].soft_max + 1;
     qboolean isLimitedMax = true;
     qboolean doubledcost = false;
 
@@ -56,14 +56,14 @@ void upgradeSpecialMenu_handler(edict_t *ent, int option)
 
 		if (doubledcost) // the skill is going above max level
 		{
-			ent->myskills.abilities[option - 1].max_level++;
+			ent->myskills.abilities[option - 1].soft_max++;
 			ent->myskills.abilities[option - 1].hard_max++;
 		}
 	}
 	else 
 	{
 		safe_cprintf(ent, PRINT_HIGH, va("You have already reached the maximum level in this skill. (%d)\n", 
-			ent->myskills.abilities[option-1].max_level));
+			ent->myskills.abilities[option-1].soft_max));
 	}
 	// refresh the menu
 	OpenSpecialUpgradeMenu(ent, ent->client->menustorage.currentline);
@@ -217,7 +217,7 @@ void UpgradeAbility(edict_t *ent, int ability_index) {
         return;
     }
 
-	const qboolean below_max = ent->myskills.abilities[ability_index].level < ent->myskills.abilities[ability_index].max_level;
+	const qboolean below_max = ent->myskills.abilities[ability_index].level < ent->myskills.abilities[ability_index].soft_max;
 	const qboolean below_hardmax = ent->myskills.abilities[ability_index].current_level < ent->myskills.abilities[ability_index].hard_max;
 	if (below_max || ent->myskills.administrator > 999)
 	{
@@ -230,7 +230,7 @@ void UpgradeAbility(edict_t *ent, int ability_index) {
 	else 
 	{
 		safe_cprintf(ent, PRINT_HIGH, va("You have already reached the maximum level in this skill. (%d)\n", 
-			ent->myskills.abilities[ability_index].max_level));
+			ent->myskills.abilities[ability_index].soft_max));
 		// doon't close the menu. -az
 		//return;
 	}
@@ -1063,7 +1063,7 @@ void vrx_open_ability_menu(
 		return;
 	menu_clear(ent);
 
-	menu_add_line(ent, va("%s: %d/%d\n", GetAbilityString(ability_index), level, ability->max_level), MENU_GREEN_CENTERED);
+	menu_add_line(ent, va("%s: %d/%d\n", GetAbilityString(ability_index), level, ability->soft_max), MENU_GREEN_CENTERED);
 	menu_add_line(ent, " ", 0);
 
 	lineCount += writeAbilityDescription(ent, ability_index);
@@ -1078,7 +1078,7 @@ void vrx_open_ability_menu(
 	int option_encoded = (last_line << 24) | (page << 16) | ability_index;
 	if (general_type) option_encoded |= GENERAL_BIT;
 
-	if (level < ability->max_level)
+	if (level < ability->soft_max)
 		// we're going to upgrade it, so set the skill bit.
 		menu_add_line(ent, "Upgrade this ability.", option_encoded | SKILL_BIT);
 	else 
