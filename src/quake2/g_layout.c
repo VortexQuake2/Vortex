@@ -540,6 +540,14 @@ void layout_generate_misc(edict_t* ent, sidebar_t* sidebar)
 		sidebar_add_entry(sidebar, res);
 	}
 
+	if (ent->flags & FL_WORMHOLE) {
+		sidebar_entry_t res = { 0 };
+		res.pos = sidebar_get_next_line_pos(sidebar);
+		res.name = lva("wormhole");
+		res.data = lva("%.1fs", ent->client->wormhole_time - level.time);
+		sidebar_add_entry(sidebar, res);
+	}
+
 	if (pregame_time->value > level.time && !trading->value)
 	{
 		float timeleft = pregame_time->value - level.time;
