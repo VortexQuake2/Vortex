@@ -2822,7 +2822,7 @@ void Cmd_Obstacle_f (edict_t *ent);
 void Cmd_Gasser_f (edict_t *ent);
 //void Cmd_Raise_Skeleton_f(edict_t* ent);
 void Cmd_TossSpikeball (edict_t *ent);
-void Cmd_FireAcid_f (edict_t *ent);
+void Cmd_FireAcid_f (edict_t *ent, int toggle);
 void Cmd_Cocoon_f (edict_t *ent);
 void Cmd_IceBolt_f (edict_t *ent, float skill_mult, float cost_mult);
 void Cmd_Meditate_f (edict_t *ent);
@@ -3418,6 +3418,10 @@ void ClientCommand (edict_t *ent)
 		Cmd_FireBeam_f(ent, 1);
 	else if (!Q_stricmp(cmd, "beam_off"))
 		Cmd_FireBeam_f(ent, 0);
+	else if (!Q_stricmp(cmd, "acid_on"))
+		Cmd_FireAcid_f(ent, 1);
+	else if (!Q_stricmp(cmd, "acid_off"))
+		Cmd_FireAcid_f(ent, 0);
 	else if (!Q_stricmp(cmd, "magicbolt"))
 		Cmd_Magicbolt_f(ent, 1.0, 1.0);
 	//else if (!Q_stricmp(cmd, "nova"))

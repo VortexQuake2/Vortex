@@ -518,14 +518,16 @@ char *GetTalentString(int talent_ID) {
             return "Spitting Gasser";
         case TALENT_SUPER_HEALER:
             return "Super Healer";
-        case TALENT_LIFE_REG:
-            return "Heart";
+        //case TALENT_LIFE_REG:
+        //    return "Heart";
         case TALENT_DEADLY_SPIKES:
             return "Deadly Spikes";
         case TALENT_SWARMING:
             return "Swarming";
         case TALENT_MAGNETISM:
             return "Magnetism";
+        case TALENT_TELECOON:
+            return "Telecoon";
         //case TALENT_FASTMOVE:			return "Run!";
         // Kamikaze talents
         case TALENT_MARTYR:
@@ -2564,15 +2566,16 @@ void V_NonShellEffects(edict_t *ent) {
 
     //Talent: Phantom Cocoon
     // cocoon becomes transparent before it cloaks
+    /*
     if (ent->mtype == M_COCOON && ent->monsterinfo.jumpdn != -1) {
         if (ent->monsterinfo.jumpup >= ent->monsterinfo.jumpdn - 10)
             ent->s.effects |= EF_SPHERETRANS;
         else if (ent->monsterinfo.jumpup >= ent->monsterinfo.jumpdn - 20)
             ent->s.effects |= EF_PLASMA;
-    }
+    }*/
 
     // conversion sparks
-    if (ent->flags & FL_CONVERTED)
+    if (ent->flags & FL_CONVERTED /*|| ent->cocoon_time > level.time*/)
         CurseEffects(ent, 10, 210);
 
     // EMP sparks

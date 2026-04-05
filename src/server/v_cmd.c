@@ -55,7 +55,7 @@ void Cmd_Gasser_f (edict_t *ent);
 void Cmd_Raise_Skeleton_f(edict_t* ent);
 void Cmd_Golem_f(edict_t* ent);
 void Cmd_TossSpikeball (edict_t *ent);
-void Cmd_FireAcid_f (edict_t *ent);
+//void Cmd_FireAcid_f (edict_t *ent);
 void Cmd_Cocoon_f (edict_t *ent);
 void Cmd_Meditate_f (edict_t *ent);
 void Cmd_CreateLaserPlatform_f (edict_t *ent);
@@ -162,7 +162,7 @@ const gameCommand_s commands[] =
 	{ "obstacle",	    Cmd_Obstacle_f },
 	{ "gasser",		    Cmd_Gasser_f },
 	{ "spore",		    Cmd_TossSpikeball },
-	{ "acid",		    Cmd_FireAcid_f },
+	//{ "acid",		    Cmd_FireAcid_f },
 	{ "cocoon",		    Cmd_Cocoon_f },
 	{ "skeleton",		Cmd_Raise_Skeleton_f },
 	{ "golem",			Cmd_Golem_f },

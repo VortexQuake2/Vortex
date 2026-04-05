@@ -518,16 +518,22 @@ edict_t* vrx_inv_spawn_drone(edict_t* self, edict_t *spawn_point, int index)
 	// az: non-bosses get quad/inven for preventing spawn camp
 	// bosses don't get it because it makes it inevitable for the players
 	// to lose spawns sometimes.
+	int default_inv_framenum = level.framenum + (int)(3 / FRAMETIME);
 	if (index < 30) {
 		if (spawn_point->count)
 			monster->monsterinfo.inv_framenum = level.framenum + spawn_point->count;
 		else
+			monster->monsterinfo.inv_framenum = default_inv_framenum;
+		// cap invulnerability frames at 3 seconds
+		if (monster->monsterinfo.inv_framenum > default_inv_framenum)
+			monster->monsterinfo.inv_framenum = default_inv_framenum;
+		/*
 		{
 			if (invasion->value == 1)
 				monster->monsterinfo.inv_framenum = level.framenum + (int)(6 / FRAMETIME); // give them quad/invuln to prevent spawn-camping
 			else if (invasion->value == 2)
 				monster->monsterinfo.inv_framenum = level.framenum + (int)(8 / FRAMETIME); // Hard mode invin
-		}
+		}*/
 	} else {
         // remove any existing invuln. from boss
         monster->monsterinfo.inv_framenum = level.framenum - 1;

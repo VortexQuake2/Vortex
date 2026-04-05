@@ -606,7 +606,7 @@ void healer_think (edict_t *self)
 
 	if (!que_typeexists(self->curses, CURSE_FROZEN))
 	{
-		if (level.time > self->lasthurt + 1.0)
+		if (level.time > self->lasthurt + 1.0 && level.time > self->holdtime)
 		{
 			healer_attack(self);
 			M_Regenerate(self, qf2sf(300), qf2sf(10), 1.0, true, false, false, &self->monsterinfo.regen_delay1);
@@ -1277,6 +1277,9 @@ void obstacle_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 
 void obstacle_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
+	if (self->flags & FL_COCOONED)
+		return;
+
 	organ_touch(self, other, plane, surf);
 
 	if (other && other->inuse && other->takedamage && !OnSameTeam(self->activator, other) 
@@ -1451,7 +1454,7 @@ void obstacle_think (edict_t *self)
 	vrx_set_pickup_owner(self); // sets owner when this entity is picked up, making it non-solid to the player
 	organ_restoreMoveType(self); // needed to restore movetype from MOVETYPE_NONE to MOVETYPE_STEP after being pushed!
 
-	if (!que_typeexists(self->curses, CURSE_FROZEN))
+	if (!que_typeexists(self->curses, CURSE_FROZEN) && level.time > self->holdtime && !(self->flags & FL_COCOONED))
 	{
 		obstacle_cloak(self);
 		obstacle_attack(self);
@@ -2522,6 +2525,26 @@ void cocoon_dead (edict_t *self)
 	self->nextthink = level.time + FRAMETIME;
 }
 
+void cocoon_remove_hold (edict_t *self, edict_t *other)
+{
+	// restore movetype
+	other->movetype = self->count;
+	// unhide the entity
+	other->svflags &= ~SVF_NOCLIENT;
+	// clear flag
+	other->flags &= ~FL_COCOONED;
+}
+
+void cocoon_apply_hold (edict_t *self, edict_t *other)
+{
+	// prevent from moving
+	other->movetype = MOVETYPE_NONE;
+	// hide the entity
+	other->svflags |= SVF_NOCLIENT;
+	// set flag so we know to restore it later
+	other->flags |= FL_COCOONED;
+}
+
 void cocoon_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
 	if (!self->monsterinfo.slots_freed && self->activator && self->activator->inuse)
@@ -2547,9 +2570,7 @@ void cocoon_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	// restore cocooned entity
 	if (self->enemy && self->enemy->inuse && !self->deadflag)
 	{
-		self->enemy->movetype = self->count;
-		self->enemy->svflags &= ~SVF_NOCLIENT;
-		self->enemy->flags &= FL_COCOONED;
+		cocoon_remove_hold(self, self->enemy);
 
 		if (self->enemy->client)
 		{
@@ -2603,15 +2624,90 @@ void cocoon_cloak (edict_t *self)
 		self->svflags |= SVF_NOCLIENT;
 }
 
-void cocoon_attack (edict_t *self)
+void cocoon_apply_bonus (edict_t *self, edict_t *other)
+{
+	int		heal;
+		float	duration = COCOON_INITIAL_TIME + COCOON_ADDON_TIME * self->monsterinfo.level;
+		float	factor = COCOON_INITIAL_FACTOR + COCOON_ADDON_FACTOR * self->monsterinfo.level;
+
+		//gi.dprintf("DEBUG: Applying cocoon bonus to %s: duration %.1f, factor %.2f\n", other->classname, duration, factor);
+
+		// give them a damage/defense bonus for awhile
+		other->cocoon_time = level.time + duration;
+		other->cocoon_factor = factor;
+		other->cocoon_owner = self->creator;
+
+		if (self->creator && self->creator->client)
+			self->creator->client->layout.dirty = true;
+
+		if (other->client && !other->ai.is_bot)
+			gi.cprintf(other, PRINT_HIGH, "You have gained a damage/defense bonus of +%.0f%c for %.0f seconds\n",
+				(factor * 100) - 100, '%', duration); 
+		
+		//4.4 give some health
+		heal = other->max_health * (0.25 + (0.075 * self->monsterinfo.level));
+		if (other->health < other->max_health)
+		{
+			other->health += heal;
+			if (other->health > other->max_health)
+				other->health = other->max_health;
+		}
+}
+
+// attempts to return the cocooned entity to its original position
+void cocoon_return(edict_t* self, edict_t *other)
+{
+	vec3_t start;
+
+	// talent isn't upgraded or original position isn't set
+	if (self->monsterinfo.sight_range < 1 || !self->monsterinfo.jumpdn || VectorEmpty(self->move_origin))
+		return;
+
+	VectorCopy(self->move_origin, start);
+	// check position
+    trace_t tr = gi.trace(start, other->mins, other->maxs, start, other, MASK_SHOT);
+	// if the original position is blocked, attempt to teleport them nearby instead
+    if (tr.allsolid || tr.startsolid || tr.fraction < 1)
+    {
+		TeleportNearArea(other, start, 128, MASK_SHOT);
+		return;
+	}
+	// move them back to their original position
+	VectorCopy(self->move_origin, other->s.origin);
+	VectorCopy(self->move_origin, other->s.old_origin);
+	gi.linkentity(other);
+	// teleportation effect
+	other->s.event = EV_PLAYER_TELEPORT;
+	// clear velocity
+	VectorClear(other->velocity);
+
+	// reset flag and move origin so we don't keep trying to return the target
+	self->monsterinfo.jumpdn = 0;
+	VectorClear(self->move_origin);
+}
+
+void cocoon_movetarget (edict_t *self, edict_t *other)
+{
+	vec3_t start;
+
+	VectorCopy(self->s.origin, start);
+	start[2] += fabsf(other->mins[2]) + 1;
+	VectorCopy(start, other->s.origin);
+	gi.linkentity(other);
+}
+
+// moves target to cocoon's location, holds them there, and applies bonuses when transformation is complete
+void cocoon_transform (edict_t *self)
 {
 	int		frames;
 	float	time;
 	vec3_t	start;
 
+	// can't transform if frozen
 	if (que_typeexists(self->curses, CURSE_FROZEN))
 		return;
 
+	// can't transform if target is dead or invalid
 	if (!G_EntIsAlive(self->enemy))
 	{
 		if (self->enemy)
@@ -2619,43 +2715,23 @@ void cocoon_attack (edict_t *self)
 		return;
 	}
 	
-	cocoon_cloak(self);
+	//cocoon_cloak(self);
 
+	// transformation complete-- remove target from cocoon and apply bonuses
 	if (level.framenum >= self->monsterinfo.nextattack)
 	{
-		int		heal;
-		float	duration = COCOON_INITIAL_TIME + COCOON_ADDON_TIME * self->monsterinfo.level;
-		float	factor = COCOON_INITIAL_FACTOR + COCOON_ADDON_FACTOR * self->monsterinfo.level;
-
-		// give them a damage/defense bonus for awhile
-		self->enemy->cocoon_time = level.time + duration;
-		self->enemy->cocoon_factor = factor;
-		self->enemy->cocoon_owner = self->creator;
-
-		if (self->creator && self->creator->client)
-			self->creator->client->layout.dirty = true;
-
-		if (self->enemy->client && !self->enemy->ai.is_bot)
-			gi.cprintf(self->enemy, PRINT_HIGH, "You have gained a damage/defense bonus of +%.0f%c for %.0f seconds\n",
-				(factor * 100) - 100, '%', duration); 
+		cocoon_apply_bonus(self, self->enemy);
 		
-		//4.4 give some health
-		heal = self->enemy->max_health * (0.25 + (0.075 * self->monsterinfo.level));
-		if (self->enemy->health < self->enemy->max_health)
-		{
-			self->enemy->health += heal;
-			if (self->enemy->health > self->enemy->max_health)
-				self->enemy->health = self->enemy->max_health;
-		}
-		
+		// Force layout update to show cocoon bonus on emerged entity
+		if (self->activator && self->activator->client)
+			self->activator->client->layout.dirty = true;
 		
 		//Talent: Phantom Cocoon - decloak when entity emerges
-		self->svflags &= ~SVF_NOCLIENT; 
-		self->monsterinfo.jumpup = 0;
+		//self->svflags &= ~SVF_NOCLIENT; 
+		//self->monsterinfo.jumpup = 0;
 
-		self->enemy->svflags &= ~SVF_NOCLIENT;
-		self->enemy->movetype = self->count;
-		self->enemy->flags &= ~FL_COCOONED;//4.4
+		cocoon_remove_hold(self, self->enemy);
+		cocoon_return(self, self->enemy);
 	//	self->owner = self->enemy;
 		self->enemy = NULL;
 		self->s.frame = COCOON_FRAME_STANDBY;
@@ -2664,6 +2740,7 @@ void cocoon_attack (edict_t *self)
 		return;
 	}
 
+	// notify target of time remaining
 	if (!(level.framenum % (int)(sv_fps->value)) && self->enemy->client)
 		safe_cprintf(self->enemy, PRINT_HIGH, "You will emerge from the cocoon in %d second(s)\n", 
 			(int)((self->monsterinfo.nextattack - level.framenum) * FRAMETIME));
@@ -2676,8 +2753,6 @@ void cocoon_attack (edict_t *self)
 		self->enemy->monsterinfo.pausetime = time;
 		self->enemy->monsterinfo.stand(self->enemy);
 	}
-	else
-		self->enemy->holdtime = time;
 
 	// keep morphed players from shooting
 	if (PM_MonsterHasPilot(self->enemy))
@@ -2691,15 +2766,13 @@ void cocoon_attack (edict_t *self)
 		if (self->enemy->client)
 			self->enemy->client->ability_delay = time;
 		//if(strcmp(self->enemy->classname, "spiker") != 0)
-		if (self->enemy->mtype == M_SPIKER)
-			self->enemy->monsterinfo.attack_finished = time;
+		//if (self->enemy->mtype == M_SPIKER)
+		self->enemy->monsterinfo.attack_finished = time;
+		self->enemy->holdtime = time;
 	}
 	
-	// move position
-	VectorCopy(self->s.origin, start);
-	start[2] += fabsf(self->enemy->mins[2]) + 1;
-	VectorCopy(start, self->enemy->s.origin);
-	gi.linkentity(self->enemy);
+	// move target to cocoon's location
+	cocoon_movetarget(self, self->enemy);
 	
 	// hide them
 	self->enemy->svflags |= SVF_NOCLIENT;
@@ -2715,51 +2788,175 @@ void cocoon_attack (edict_t *self)
 	}
 	*/
 
-	self->monsterinfo.jumpup++;//Talent: Phantom Cocoon - keep track of attack frames
+	//self->monsterinfo.jumpup++;//Talent: Phantom Cocoon - keep track of attack frames
 }
 
-void cocoon_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
+// return true if cocoon can attack (transform) the target
+qboolean cocoon_canattack (edict_t *self)
 {
-	int frames;
+	// only attack if we're on the ground
+	if (!self->groundentity || self->groundentity != world)
+		return false;
+	// can't attack yet
+	if (level.framenum < self->monsterinfo.nextattack)
+		return false;
+	return true;
+}
 
-	V_Touch(ent, other, plane, surf);
-	
-	if (!ent->groundentity || ent->groundentity != world)
-		return;
-	if (level.framenum < ent->monsterinfo.nextattack)
-		return;
-	if (!G_ValidTargetEnt(ent, other, true) || !OnSameTeam(ent, other))
-		return;
-	if (other->mtype == M_SPIKEBALL)//4.4
-		return;
-	if (other->movetype == MOVETYPE_NONE)
-		return;
+qboolean cocoon_excluded_mtype(int mtype)
+{
+    static const int excluded_mtypes[] = {
+        M_SPIKEBALL,
+        M_COCOON,
+        INVASION_PLAYERSPAWN,
+		M_FORCEWALL,
+		M_DETECTOR,
+		M_LASER,
+		M_ALARM,
+		M_PROXY,
+		M_BARREL,
+		M_MAGMINE,
+        // Add more excluded mtypes here as needed
+    };
+    int i;
+    
+    for (i = 0; i < sizeof(excluded_mtypes) / sizeof(excluded_mtypes[0]); i++) {
+        if (mtype == excluded_mtypes[i])
+            return true;
+    }
+    return false;
+}
 
-	ent->enemy = other;
+// return true if target is valid for cocoon attack
+qboolean cocoon_validtarget (edict_t *self, edict_t *target)
+{
+	float velocity;
 
-	frames = COCOON_INITIAL_DURATION + COCOON_ADDON_DURATION * ent->monsterinfo.level;
+	if (target == self)
+		return false;
+
+	if (!G_EntIsAlive(target))
+		return false;
+
+	// target is being held by player
+	if (target->flags & FL_PICKUP)
+		return false;
+
+	// target is stunned and shouldn't be moved
+	if (target->holdtime > level.time)
+		return false;
+
+	// don't target minisentry that's still being built
+	if (target->orders == M_MINISENTRY)
+		return false;
+
+	// don't target alien summons that are still growing
+	if ((target->mtype == M_GASSER || target->mtype == M_SPIKER || target->mtype == M_HEALER 
+		|| target->mtype == M_OBSTACLE) && target->style == 1)
+		return false;
+
+	// exclude these monster types
+	if (cocoon_excluded_mtype(target->mtype))
+    	return false;
+
+	// target is already cocooned
+	if (target->flags & FL_COCOONED)
+		return false;
+
+	// don't target players with invulnerability
+	if (target->client && (target->client->invincible_framenum > level.framenum))
+		return false;
+
+	// don't target spawning players
+	if (target->client && (target->client->respawn_time > level.time))
+		return false;
+
+	// don't target players in chat-protect
+	if (target->client && ((target->flags & FL_CHATPROTECT) || (target->flags & FL_GODMODE)))
+		return false;
+
+	// don't target frozen players
+	//if (que_typeexists(target->curses, CURSE_FROZEN))
+	//	return false;
+
+	// target needs to be on our team
+	if (OnSameTeam(self, target) < 2)
+		return false;
+
+	// target must be visible
+	if (!visible(self, target))
+		return false;
+
+	if (target->movetype != MOVETYPE_NONE)
+	{
+		velocity = VectorLength(target->velocity);
+		// make sure target is touching the ground and isn't moving
+		if (!target->groundentity || velocity > 1)
+		{
+			//gi.dprintf("groundentity: %s velocity: %f\n", target->groundentity ? "true" : "false", velocity);
+			return false;
+		}
+	}
+
+	return true;
+}
+
+void cocoon_attack (edict_t *self, edict_t *other)
+{
+	self->enemy = other;
+
+	// apply attack delay
+	int frames = COCOON_INITIAL_DURATION + COCOON_ADDON_DURATION * self->monsterinfo.level;
 	if (frames < COCOON_MINIMUM_DURATION)
 		frames = COCOON_MINIMUM_DURATION;
-	ent->monsterinfo.nextattack = level.framenum + sf2qf(frames);
+	self->monsterinfo.nextattack = level.framenum + sf2qf(frames);
 
 	// don't let them move (or fall out of the map)
-	ent->count = other->movetype;
-	other->movetype = MOVETYPE_NONE;
-	other->flags |= FL_COCOONED;//4.4
+	self->count = other->movetype; // store movetype so we can restore it later
+	cocoon_apply_hold(self, other);
 
 	if (other->client)
 		safe_cprintf(other, PRINT_HIGH, "You have been cocooned for %d seconds\n", (int)(frames / 10));
 
-	if (ent->activator && ent->activator->client)
+	// force HUD layout update
+	if (self->activator && self->activator->client)
 	{
-		ent->activator->client->layout.dirty = true;
+		self->activator->client->layout.dirty = true;
 	}
+}
+
+void cocoon_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
+{
+	V_Touch(ent, other, plane, surf);
+	
+	// try to attack (transform) the target if we can
+	if (cocoon_canattack(ent) && cocoon_validtarget(ent, other))
+		cocoon_attack(ent, other);
+}
+
+qboolean cocoon_findtarget (edict_t *self)
+{
+	edict_t *e=NULL;
+
+	while ((e = findradius(e, self->s.origin, self->monsterinfo.sight_range)) != NULL)
+	{
+		//if (!healer_validtarget(self, e))
+		//	continue;
+		if (!cocoon_validtarget(self, e))
+			continue;
+		if (e->cocoon_time > level.time) // already has a cocoon bonus
+			continue;
+		self->enemy = e;
+		return true;
+	}
+	return false;
 }
 
 void cocoon_think (edict_t *self)
 {
 	trace_t tr;
 
+	// if owner is dead or invalid, remove the cocoon
 	if (!G_EntIsAlive(self->activator))
 	{
 		organ_remove(self, false);
@@ -2769,7 +2966,23 @@ void cocoon_think (edict_t *self)
 	if (!organ_checkrevived(self))
 		return;
 
-	cocoon_attack(self);
+	// Talent: Telecoon - teleports targets into the cocoon and returns them after transformation
+	if (!self->style && !self->enemy && self->monsterinfo.sight_range > 0 && (self) && cocoon_findtarget(self))
+	{
+		//gi.dprintf("cocoon found a target to teleport\n");
+
+		// store original position so that we can try to return them later
+		VectorCopy(self->enemy->s.origin, self->move_origin);
+		// move target to cocoon's location
+		cocoon_movetarget(self, self->enemy);
+		// teleportation effect
+		self->enemy->s.event = EV_PLAYER_TELEPORT;
+		// set flag to indicate target's original position has been stored
+		self->monsterinfo.jumpdn = 1;
+		cocoon_attack(self, self->enemy);
+	}
+
+	cocoon_transform(self);
 
 	if (level.time > self->lasthurt + 1.0)
 		M_Regenerate(self, qf2sf(300), qf2sf(10),  1.0, true, false, false, &self->monsterinfo.regen_delay1);
@@ -2823,9 +3036,6 @@ void cocoon_think (edict_t *self)
 
 edict_t *CreateCocoon (edict_t *ent, int skill_level)
 {
-	//Talent: Phantom Cocoon
-    //int talentLevel = vrx_get_talent_level(ent, TALENT_PHANTOM_COCOON);
-
 	edict_t *e;
 
 	e = G_Spawn();
@@ -2850,13 +3060,18 @@ edict_t *CreateCocoon (edict_t *ent, int skill_level)
 	//if (talentLevel > 0)
 	//	e->monsterinfo.jumpdn = 50 - 8 * talentLevel;
 	//else
-		e->monsterinfo.jumpdn = -1; // cloak disabled
+	//	e->monsterinfo.jumpdn = -1; // cloak disabled
+
+	//Talent: Telecoon - teleports targets into the cocoon and returns them after transformation
+	int talentLevel = vrx_get_talent_level(ent, TALENT_TELECOON);
+	if (talentLevel > 0)
+		e->monsterinfo.sight_range = 102.4 * talentLevel;
 
 	e->gib_health = -2 * BASE_GIB_HEALTH;
 	e->s.frame = COCOON_FRAME_STANDBY;
 	e->die = cocoon_die;
 	e->touch = V_Touch;
-	VectorSet(e->mins, -50, -50, -40);
+	VectorSet(e->mins, -50, -50, -36);
 	VectorSet(e->maxs, 50, 50, 40);
 	e->mtype = M_COCOON;
 
@@ -3494,35 +3709,60 @@ void fire_acid (edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damag
 //#define ACID_DELAY				0.2
 //#define ACID_COST				20
 
-void Cmd_FireAcid_f (edict_t *ent)
+void player_fire_acid (edict_t *self)
 {
-	int		acid_level = ent->myskills.abilities[ACID].current_level;
-    int		damage = ACID_INITIAL_DAMAGE + ACID_ADDON_DAMAGE * acid_level;
+	vec3_t	forward, right, start, offset;
+	int		acid_level = self->myskills.abilities[ACID].current_level;
+	int		damage = ACID_INITIAL_DAMAGE + ACID_ADDON_DAMAGE * acid_level;
 	int		speed = ACID_INITIAL_SPEED + ACID_ADDON_SPEED * acid_level;
-    float	radius = ACID_INITIAL_RADIUS + ACID_ADDON_RADIUS * acid_level;
-	float	chance_gascloud = SPITTING_GASSER_CHANCE * vrx_get_talent_level(ent, TALENT_SPITTING_GASSER); // percent chance to spawn gas cloud on impact/explosion
-	//float	synergy_bonus = 1.0 + ACID_GASSER_SYNERGY_BONUS * gasser_level; // synergy bonus from gasser
-    vec3_t	forward, right, start, offset;
+	float	radius = ACID_INITIAL_RADIUS + ACID_ADDON_RADIUS * acid_level;
+	float	chance_gascloud = SPITTING_GASSER_CHANCE * vrx_get_talent_level(self, TALENT_SPITTING_GASSER); // percent chance to spawn gas cloud on impact/explosion
+	float 	synergy_mult = vrx_get_synergy_mult(self, ACID);		
 
-    if (!V_CanUseAbilities(ent, ACID, ACID_COST, true))
-        return;
+	if (!V_CanUseAbilities(self, ACID, ACID_COST, false))
+	{
+		self->client->fireacid = false;
+		return;
+	}
 
-	damage *= vrx_get_synergy_mult(ent, ACID);
+	// refire cooldown
+	if (self->client->acidtime > level.time)
+		return;
 
-    // get starting position and forward vector
-    AngleVectors (ent->client->v_angle, forward, right, NULL);
-    VectorSet(offset, 0, 8,  ent->viewheight-8);
-    P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+	damage *= synergy_mult; // apply synergy bonus to acid damage
+
+	// get starting position and forward vector
+	AngleVectors (self->client->v_angle, forward, right, NULL);
+	VectorSet(offset, 0, 8,  self->viewheight-8);
+	P_ProjectSource(self->client, self->s.origin, offset, forward, right, start);
 
 	if (chance_gascloud > random())
 	{
-		int gas_damage = GASSER_INITIAL_DAMAGE + GASSER_ADDON_DAMAGE * acid_level;
+		int gas_damage = GASSER_INITIAL_DAMAGE + (GASSER_ADDON_DAMAGE * acid_level) * synergy_mult;
 		float gas_radius = GASSER_INITIAL_ATTACK_RANGE + GASSER_ADDON_ATTACK_RANGE * acid_level;
-		fire_acid(ent, start, forward, damage, radius, speed, (int)(0.1 * damage), ACID_DURATION, gas_damage, gas_radius, 4.0);
+		fire_acid(self, start, forward, damage, radius, speed, (int)(0.1 * damage), ACID_DURATION, gas_damage, gas_radius, 4.0);
 	}
 	else
-    	fire_acid(ent, start, forward, damage, radius, speed, (int)(0.1 * damage), ACID_DURATION, 0, 0, 0);
+    	fire_acid(self, start, forward, damage, radius, speed, (int)(0.1 * damage), ACID_DURATION, 0, 0, 0);
 
-    ent->client->ability_delay = level.time + ACID_DELAY;
-    ent->client->pers.inventory[power_cube_index] -= ACID_COST;
+	//self->myskills.abilities[ACID].delay = level.time + ACID_DELAY;
+	//self->client->ability_delay = level.time + ACID_DELAY;
+	self->client->acidtime = level.time + ACID_DELAY;
+	self->client->pers.inventory[power_cube_index] -= ACID_COST;
+}
+
+void Cmd_FireAcid_f (edict_t *ent, int toggle)
+{
+    if (!V_CanUseAbilities(ent, ACID, ACID_COST, true))
+        return;
+
+	if (!toggle)
+	{
+		ent->client->fireacid = false;
+		return;
+	}
+
+	ent->client->fireacid = true;
+    //ent->client->ability_delay = level.time + ACID_DELAY;
+    //ent->client->pers.inventory[power_cube_index] -= ACID_COST;
 }

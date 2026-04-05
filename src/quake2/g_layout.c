@@ -287,6 +287,12 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	sidebar_entry_t res = {0};
 	layout_pos_t pos = sidebar_get_next_line_pos(sidebar);
 
+	char bonus_str[16] = "";
+	if (ent->cocoon_time >= level.time && ent->mtype != M_COCOON) {
+		sprintf(bonus_str, " +%.1f%%", (ent->cocoon_factor - 1) * 100.0f);
+		//gi.dprintf("DEBUG: Cocoon bonus for %s: %s (time %.1f, factor %.2f)\n", ent->classname, bonus_str, ent->cocoon_time - level.time, ent->cocoon_factor);
+	}
+
 	lva_result_t name = { 0 };
 	lva_result_t data = { 0 };
 	switch (ent->mtype)
@@ -411,6 +417,19 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	res.name = name;
 	res.data = data;
 	res.pos = pos;
+
+	// Append cocoon bonus if active
+	if (bonus_str[0]) {
+		int bonus_len = strlen(bonus_str);
+		if (res.data.len + bonus_len < MAX_LVA_SIZE) {
+			strcat(res.data.str, bonus_str);
+			res.data.len += bonus_len;
+			//gi.dprintf("DEBUG: Appended bonus to %s: %s\n", ent->classname, res.data.str);
+		} else {
+			gi.dprintf("DEBUG: Failed to append bonus to %s, data too long\n", ent->classname);
+		}
+	}
+
 	return res;
 }
 
@@ -432,6 +451,7 @@ void layout_generate_entities(const layout_t* layout, sidebar_t* sidebar)
 {
 	for (int i = 0; i < layout->tracked_count; i++)
 	{
+		//gi.dprintf("DEBUG: Generating layout for tracked entity %s (mtype %d)\n", layout->tracked_list[i]->classname, layout->tracked_list[i]->mtype);
 		const sidebar_entry_t res = layout_add_entity_info(sidebar, layout->tracked_list[i]);
 		sidebar_add_entry(sidebar, res);
 	}

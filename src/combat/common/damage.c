@@ -351,10 +351,6 @@ float vrx_increase_damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 
     if (dtype & D_PHYSICAL) {
-        // cocoon bonus
-        if (attacker->cocoon_time > level.time)
-            damage *= attacker->cocoon_factor;
-
         // player-monster damage bonuses
         if (!attacker->client && attacker->mtype && PM_MonsterHasPilot(attacker)) {
             damage = vrx_apply_strength_tech(attacker, damage);
@@ -407,6 +403,10 @@ float vrx_increase_damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
     // attackers blessed deal additional damage
     damage = vrx_apply_bless_damage_bonus(attacker, damage, dtype);
+
+    // cocooned attackers deal additional damage
+    if (attacker->cocoon_time > level.time)
+        damage *= attacker->cocoon_factor;
 
     // player-only damage bonuses
     if (attacker->client && (attacker != targ)) {

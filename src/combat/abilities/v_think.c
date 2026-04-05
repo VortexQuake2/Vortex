@@ -710,6 +710,7 @@ void think_talent_ammo_regen(edict_t* ent) {
 	}
 }
 
+/*
 void think_talent_life_regen(edict_t* ent) {
 	if (ent->client
 		&& vrx_get_talent_slot(ent, TALENT_LIFE_REG) != -1
@@ -725,6 +726,7 @@ void think_talent_life_regen(edict_t* ent) {
 		}
 	}
 }
+*/
 
 void think_talent_armor_regen(const edict_t* ent, int max_armor, int* armor) {
 	if (ent->client
@@ -846,6 +848,9 @@ void think_ability_parasite_attack(edict_t* ent);
 // class_brain.c
 void brain_fire_beam(edict_t* self);
 
+// gloom.c
+void player_fire_acid (edict_t *self);
+
 // class_demon.c
 void PlagueCloudSpawn(edict_t* ent);
 
@@ -924,7 +929,7 @@ void vrx_client_think(edict_t* ent) {
 	think_talent_armor_regen(ent, max_armor, armor);
 
 	//Talent: Life Alien
-	think_talent_life_regen(ent);
+	//think_talent_life_regen(ent);
 
 	//Talent: Basic Ammo Regeneration
 	think_talent_ammo_regen(ent);
@@ -976,6 +981,9 @@ void vrx_client_think(edict_t* ent) {
 
 	if (ent->client->firebeam)
 		brain_fire_beam(ent);
+
+	if (ent->client->fireacid)
+		player_fire_acid(ent);
 
 	if (ent->myskills.administrator == 11)
 		ent->client->ping = GetRandom(300, 400);

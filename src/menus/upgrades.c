@@ -907,7 +907,7 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		menu_add_line(ent, "liquid. Uses power cubes.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Receives synergy bonus", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "from gassers.", MENU_WHITE_CENTERED);
-		menu_add_line(ent, "Command: acid", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Command: +acid", MENU_WHITE_CENTERED);
 		return 6;
 	case COCOON:
 		menu_add_line(ent, "Spawns an organism that", MENU_WHITE_CENTERED);

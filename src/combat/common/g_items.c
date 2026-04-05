@@ -1106,7 +1106,7 @@ void Touch_Item(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
     ent->touch = Touch_Item;
     if (deathmatch->value) {
         // runes are freed after 2 minutes instead of 30 seconds
-        if (ent->vrxitem.itemLevel)
+        if (ent->vrxitem.itemLevel >= 5)
             ent->nextthink = level.time + 119;
         // dropped player items, 30 seconds
         else if (ent->spawnflags == DROPPED_PLAYER_ITEM)
