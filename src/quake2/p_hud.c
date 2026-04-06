@@ -314,8 +314,8 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 	
 
 	// add the clients in sorted order 
-	if (total > 24)
-		total = 24;
+	if (total > 16)
+		total = 16;
 	/* The screen is only so big :( */
 
 	for (i = 0; i<total; i++)
@@ -378,7 +378,7 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 		}
 		else
 		{
-			entry = lva("%s%s %2i %s %5i %3i %3i %3i",
+			entry = lva("%s%s %2i %s %7i %3i %3i %3i",
 				prefix, name,
 				cl_ent->client->resp.spectator ? 0 : cl_ent->myskills.level,
 				cl_ent->client->resp.spectator ? "??" : classname,

@@ -24,3 +24,4 @@ extern struct invdata_s invasion_data;
 int G_GetEntityIndex(edict_t *ent);
 void vrx_inv_spawn_monsters(edict_t *self);
 void vrx_inv_notify_monster_death(edict_t * edict);
+void vrx_inv_monster_refund(int mtype);

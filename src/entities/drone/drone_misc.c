@@ -1907,6 +1907,9 @@ void M_Remove (edict_t *self, qboolean refund, qboolean effect)
 		if (self->activator->num_monsters_real < 0)
 			self->activator->num_monsters_real = 0;
 
+		if (refund)
+			vrx_inv_monster_refund(self->mtype);
+
 		// mark the player slots as being refunded, so it can't happen again
 		self->monsterinfo.slots_freed = true;
 	}

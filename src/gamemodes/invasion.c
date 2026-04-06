@@ -16,6 +16,7 @@ int			invasion_bonus_levels = 0;
 edict_t		*INV_PlayerSpawns[64];
 edict_t		*INV_Navi[64];
 edict_t		*INV_StartNavi[64];
+edict_t     *INV_Spawner;
 
 struct invdata_s invasion_data;
 
@@ -931,10 +932,12 @@ qboolean vrx_inv_spawnstate_working(edict_t *self, const int players, edict_t *e
 		vrx_inv_check_spawn_camp(e); // remove spawn-camper stuff
 	}
 
-	if (invasion_data.wave_spawned >= invasion_data.wave_max_spawn)
+	if (invasion_data.wave_spawned >= invasion_data.wave_max_spawn )
 	{
 		// increase the difficulty level for the next wave
-		vrx_inv_change_next_level(1);
+		if (invasion_data.wave == next_invasion_wave_level)
+			vrx_inv_change_next_level(1);
+
 		invasion_data.wave_triggered = false;
 
 		self->count = MONSTERSPAWN_STATUS_IDLE;
@@ -951,12 +954,24 @@ void vrx_inv_notify_monster_death(edict_t * edict) {
 	}
 }
 
+void vrx_inv_monster_refund(int mtype) {
+	if (!invasion->value)
+		return;
+
+	invasion_data.wave_spawned -= 1;
+
+	// restart the spawning process if we must, and unset the pending state
+	// of the next wave.
+	if (INV_Spawner && INV_Spawner->count == MONSTERSPAWN_STATUS_IDLE) {
+		invasion_data.wave_triggered = true;
+		INV_Spawner->count = MONSTERSPAWN_STATUS_WORKING;
+	}
+}
+
 void vrx_inv_spawn_monsters(edict_t *self)
 {
 	const int players = vrx_get_joined_players(true);
-
-
-
+	INV_Spawner = self;
 	edict_t *e = NULL;
 
 	self->nextthink = level.time + FRAMETIME;
