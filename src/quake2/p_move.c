@@ -1132,7 +1132,7 @@ void PM_CheckSpecialMovement() {
     // simulate what would happen if we jumped out here, and
     // if we land on a dry spot we're good!
     // simulate 1 sec worth of movement
-    touch_list_t touches;
+    touch_list_t touches = {};
     vec3_t waterjump_origin;
     VectorCopy(pml.origin, waterjump_origin);
     const float time = 0.1f;
