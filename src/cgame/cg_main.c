@@ -1,6 +1,8 @@
 // Copyright (c) ZeniMax Media Inc.
 // Licensed under the GNU General Public License 2.0.
 
+
+#include "q_shared.h"
 #include "cg_local.h"
 
 struct cgame_import_t cgi;
@@ -28,21 +30,21 @@ static void ShutdownCGame()
 {
 }
 
-void CG_DrawHUD (int32_t isplit, const struct cg_server_data_t *data, struct vrect_t hud_vrect, struct vrect_t hud_safe, int32_t scale, int32_t playernum, const player_state_t *ps);
+void CG_DrawHUD (int32_t isplit, const struct cg_server_data_t *data, struct vrect_t hud_vrect, struct vrect_t hud_safe, int32_t scale, int32_t playernum, const struct player_state_t *ps);
 void CG_TouchPics();
-enum layout_flags_t CG_LayoutFlags(const player_state_t *ps);
+enum layout_flags_t CG_LayoutFlags(const struct player_state_t *ps);
 
-int32_t CG_GetActiveWeaponWheelWeapon(const player_state_t *ps)
+int32_t CG_GetActiveWeaponWheelWeapon(const struct player_state_t *ps)
 {
 	return ps->stats[STAT_ACTIVE_WHEEL_WEAPON];
 }
 
-uint32_t CG_GetOwnedWeaponWheelWeapons(const player_state_t *ps)
+uint32_t CG_GetOwnedWeaponWheelWeapons(const struct player_state_t *ps)
 {
 	return ((uint32_t) (uint16_t) ps->stats[STAT_WEAPONS_OWNED_1]) | ((uint32_t) (uint16_t) (ps->stats[STAT_WEAPONS_OWNED_2]) << 16);
 }
 
-int16_t CG_GetWeaponWheelAmmoCount(const player_state_t *ps, int32_t ammo_id)
+int16_t CG_GetWeaponWheelAmmoCount(const struct player_state_t *ps, int32_t ammo_id)
 {
 	const uint16_t ammo = G_GetAmmoStat((uint16_t *) &ps->stats[STAT_AMMO_INFO_START], ammo_id);
 
@@ -52,12 +54,12 @@ int16_t CG_GetWeaponWheelAmmoCount(const player_state_t *ps, int32_t ammo_id)
 	return ammo;
 }
 
-int16_t CG_GetPowerupWheelCount(const player_state_t *ps, int32_t powerup_id)
+int16_t CG_GetPowerupWheelCount(const struct player_state_t *ps, int32_t powerup_id)
 {
 	return G_GetPowerupStat((uint16_t *) &ps->stats[STAT_POWERUP_INFO_START], powerup_id);
 }
 
-int16_t CG_GetHitMarkerDamage(const player_state_t *ps)
+int16_t CG_GetHitMarkerDamage(const struct player_state_t *ps)
 {
 	return ps->stats[STAT_HIT_MARKER];
 }

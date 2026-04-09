@@ -116,28 +116,28 @@ struct cl_bind_t bind_from_string(const char *bind_str, const char *purpose_str)
     return bind;
 }
 
-int32_t ps_instant_dmg_value(const player_state_t *ps) {
+int32_t ps_instant_dmg_value(const struct player_state_t *ps) {
     return (int32_t) (((uint32_t) (uint16_t) ps->stats[STAT_ID_DAMAGE]) | (
                           ((uint32_t) (uint16_t) ps->stats[STAT_ID_DAMAGE2]) << 16));
 }
 
-int32_t ps_score_value(const player_state_t *ps) {
+int32_t ps_score_value(const struct player_state_t *ps) {
     return (int32_t) ((uint32_t) (uint16_t) ps->stats[STAT_SCORE] | (uint32_t) (uint16_t) ps->stats[STAT_SCORE2] << 16);
 }
 
-bool CG_ViewingLayout(const player_state_t *ps) {
+bool CG_ViewingLayout(const struct player_state_t *ps) {
     return ps->stats[STAT_LAYOUTS] & (LAYOUTS_LAYOUT | LAYOUTS_INVENTORY);
 }
 
-bool CG_InIntermission(const player_state_t *ps) {
+bool CG_InIntermission(const struct player_state_t *ps) {
     return ps->stats[STAT_LAYOUTS] & LAYOUTS_INTERMISSION;
 }
 
-inline bool CG_HudHidden(const player_state_t *ps) {
+inline bool CG_HudHidden(const struct player_state_t *ps) {
     return ps->stats[STAT_LAYOUTS] & LAYOUTS_HIDE_HUD;
 }
 
-enum layout_flags_t CG_LayoutFlags(const player_state_t *ps) {
+enum layout_flags_t CG_LayoutFlags(const struct player_state_t *ps) {
     return (enum layout_flags_t) ps->stats[STAT_LAYOUTS];
 }
 
@@ -556,7 +556,7 @@ void CG_ParseCenterPrint(const char *str, const int isplit, const bool instant) 
 }
 
 
-static void CG_DrawCenterString(const player_state_t *ps, const struct vrect_t hud_vrect, const struct vrect_t hud_safe,
+static void CG_DrawCenterString(const struct player_state_t *ps, const struct vrect_t hud_vrect, const struct vrect_t hud_safe,
                                 const int isplit, const int scale, struct cl_centerprint_t *center) {
     int32_t y = hud_vrect.y * scale;
 
@@ -672,7 +672,7 @@ static void CG_DrawCenterString(const player_state_t *ps, const struct vrect_t h
     }
 }
 
-static void CG_CheckDrawCenterString(const player_state_t *ps, const struct vrect_t hud_vrect,
+static void CG_CheckDrawCenterString(const struct player_state_t *ps, const struct vrect_t hud_vrect,
                                      const struct vrect_t hud_safe, const int isplit, const int scale) {
     if (CG_InIntermission(ps))
         return;
@@ -816,7 +816,7 @@ static void CG_DrawTable(int x, int y, const uint32_t width, const uint32_t heig
 }
 
 
-static void vrx_apply_stat_hax(const player_state_t *ps, int *value, int stat) {
+static void vrx_apply_stat_hax(const struct player_state_t *ps, int *value, int stat) {
     if (stat == STAT_ID_DAMAGE) {
         *value = ps_instant_dmg_value(ps);
     }
@@ -833,7 +833,7 @@ CG_ExecuteLayoutString
 ================
 */
 static void CG_ExecuteLayoutString(const char *s, struct vrect_t hud_vrect, struct vrect_t hud_safe, int32_t scale,
-                                   int32_t playernum, const player_state_t *ps) {
+                                   int32_t playernum, const struct player_state_t *ps) {
     int x, y;
     int w, h;
     int hx, hy;
@@ -1677,7 +1677,7 @@ CL_DrawInventory
 */
 constexpr size_t DISPLAY_ITEMS = 19;
 
-static void CG_DrawInventory(const player_state_t *ps, const int16_t inventory[MAX_ITEMS],
+static void CG_DrawInventory(const struct player_state_t *ps, const int16_t inventory[MAX_ITEMS],
                              const struct vrect_t hud_vrect, const int32_t scale) {
     int i;
     int index[MAX_ITEMS];
@@ -1747,7 +1747,7 @@ static void CG_DrawInventory(const player_state_t *ps, const int16_t inventory[M
 
 extern uint64_t cgame_init_time;
 
-void CG_DrawCharge(const player_state_t *ps, struct vrect_t hud_vrect, struct vrect_t hud_safe, int32_t scale) {
+void CG_DrawCharge(const struct player_state_t *ps, struct vrect_t hud_vrect, struct vrect_t hud_safe, int32_t scale) {
     const int charge = ps->stats[STAT_CHARGE_LEVEL];
     const int cx = (hud_vrect.width / 2) * scale + hud_safe.x;
     const int cy = (hud_vrect.height / 2) * scale + hud_safe.y + 96 * scale;
@@ -1762,7 +1762,7 @@ void CG_DrawCharge(const player_state_t *ps, struct vrect_t hud_vrect, struct vr
     }
 }
 
-void CG_DrawSidebar(const player_state_t *ps, struct vrect_t hud_vrect, struct vrect_t hud_safe, int32_t scale,
+void CG_DrawSidebar(const struct player_state_t *ps, struct vrect_t hud_vrect, struct vrect_t hud_safe, int32_t scale,
                     int pnum) {
     if (!(ps->stats[STAT_LAYOUTS] & LAYOUTS_SIDEBAR))
         return;
@@ -1772,7 +1772,7 @@ void CG_DrawSidebar(const player_state_t *ps, struct vrect_t hud_vrect, struct v
     CG_ExecuteLayoutString(cs, hud_vrect, hud_safe, scale, pnum, ps);
 }
 
-void CG_DoExperienceBar(struct vrect_t hud_vrect, int32_t scale, int32_t playernum, const player_state_t *ps) {
+void CG_DoExperienceBar(struct vrect_t hud_vrect, int32_t scale, int32_t playernum, const struct player_state_t *ps) {
     const auto hud = &hud_data[playernum];
     const auto xppst = ps->stats[STAT_XP_PERCENT];
     if (hud->next_value != xppst) {
@@ -1815,7 +1815,7 @@ void CG_DrawHUD(
     const struct vrect_t hud_safe,
     const int32_t scale,
     const int32_t playernum,
-    const player_state_t *ps) {
+    const struct player_state_t *ps) {
     if (cgi.CL_InAutoDemoLoop()) {
         if (cl_paused->integer) return; // demo is paused, menu is open
 

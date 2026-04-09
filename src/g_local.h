@@ -1967,7 +1967,7 @@ struct gds_state_t {
 // except for 'client->pers' and gds
 struct gclient_s {
     // known to server
-    player_state_t ps; // communicated by server to clients
+    struct player_state_t ps; // communicated by server to clients
     int ping;
 
     // private to game

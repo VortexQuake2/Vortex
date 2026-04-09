@@ -1721,7 +1721,7 @@ typedef struct entity_state_s {
 // to rendered a view.  There will only be 10 player_state_t sent each second,
 // but the number of pmove_state_t changes will be reletive to client
 // frame rates
-typedef struct {
+struct player_state_t {
     pmove_state_t pmove; // for prediction
 
     // these fields do not need to be communicated bit-precise
@@ -1756,7 +1756,7 @@ typedef struct {
 #ifdef VRX_REPRO
     uint8_t team_id;
 #endif
-} player_state_t;
+};
 
 // ==================
 
