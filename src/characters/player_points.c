@@ -1,6 +1,7 @@
 #include "g_local.h"
 #include "../gamemodes/ctf.h"
 
+#ifndef TEST_RUNNER
 char *HiPrint(char *text) {
     int i;
     char *ReturnVal;
@@ -16,6 +17,11 @@ char *HiPrint(char *text) {
             ReturnVal[i] = (byte) ReturnVal[i] + 128;
     return ReturnVal;
 }
+#else
+char* HiPrint(char* ch) {
+    return strdup(ch);
+}
+#endif
 
 // this needs to match vrx_update_free_abilities() in v_utils.c
 void vrx_add_levelup_boons(edict_t *ent) {
@@ -335,11 +341,12 @@ int vrx_apply_experience(edict_t *player, int exp) {
         exp -= player->myskills.nerfme;
     }
 
-    if (player->myskills.level < 50) // hasn't reached the cap
+    if (player->myskills.level <= MAX_LEVEL) // hasn't reached the cap
     {
         if (!player->ai.is_bot) // not a bot? have exp
         {
             player->myskills.experience += exp;
+            player->myskills.experience = min(player->myskills.experience, vrx_get_prestige_max_xp());
         }
     }
     player->client->resp.score += exp;

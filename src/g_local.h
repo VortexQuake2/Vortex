@@ -1730,6 +1730,117 @@ void DisableChaseCam(edict_t *ent); // az
 #define ANIM_REVERSE	6
 // ### Hentai ### END
 
+//==========================================
+//========= TYPES OF MONSTERS ==============
+//==========================================
+
+// TYPE OF MONSTER ---- HEALTH
+enum mtype_t {
+    M_SOLDIERLT = 1, // 20
+    M_SOLDIER = 2, // 30
+    M_SOLDIERSS = 3, // 40
+    M_FLIPPER = 4, // 50
+    M_FLYER = 5, // 50
+    M_INFANTRY = 6, // 100
+    M_ENFORCER = 6, // 100
+    M_INSANE = 7, // 100 - Crazy Marine
+    M_GUNNER = 8, // 175
+    M_CHICK = 9, // 175
+    M_PARASITE = 10, // 175
+    M_FLOATER = 11, // 200
+    M_HOVER = 12, // 240
+    M_BERSERK = 13, // 240
+    M_MEDIC = 14, // 300
+    M_MUTANT = 15, // 300
+    M_BRAIN = 16, // 300
+    M_GLADIATOR = 17, // 400
+    M_TANK = 18, // 750
+    M_SUPERTANK = 19, // 1500
+    M_BOSS2 = 20, // 2000
+    M_JORG = 21, // 3000
+    M_MAKRON = 22, // 3000
+    M_COMMANDER = 23,
+    M_BARON_FIRE = 24,
+    M_SHAMBLER = 25,
+    M_SKELETON = 26,
+    M_GOLEM = 27,
+    M_MINISENTRY = 100,
+    M_SENTRY = 101,
+    M_BFG_SENTRY = 102,
+    M_MYPARASITE = 103,
+    M_FORCEWALL = 104,
+    M_DECOY = 105,
+    M_RETARD = 107, // teamplay
+    M_SKULL = 108,
+    M_YINSPIRIT = 109,
+    M_YANGSPIRIT = 110,
+    M_BALANCESPIRIT = 111,
+    M_AUTOCANNON = 112,
+    M_DETECTOR = 113,
+    M_MIRROR = 114,
+    M_SUPPLYSTATION = 115,
+    M_MIRV = 116, // need this to differentiate from normal grenade
+    M_HEALER = 117,
+    M_SPIKER = 118,
+    M_OBSTACLE = 119,
+    M_BOX = 350,
+    M_GASSER = 120,
+    M_SPIKEBALL = 121,
+    M_COCOON = 122,
+    M_LASERPLATFORM = 123,
+    M_ALARM = 124,
+    M_LASER = 125,
+    M_PROXY = 126,
+    M_MAGMINE = 127,
+    M_SPIKE_GRENADE = 128,
+    M_HOLYGROUND = 129,
+    M_WORLDSPAWN = 130,
+    M_BEAMSENTRY = 131,
+    M_BARREL = 132,
+    M_ARMOR = 133,
+    M_FIREWALL = 134,
+    P_TANK = 200,
+    MORPH_MUTANT = 400,
+    MORPH_CACODEMON = 401,
+    MORPH_TANK = 402,
+    MORPH_BRAIN = 403,
+    MORPH_FLYER = 404,
+    MORPH_MEDIC = 405,
+    MORPH_BERSERK = 406,
+    BOSS_TANK = 501,
+    BOSS_MAKRON = 502,
+    INVASION_PLAYERSPAWN = 700,
+    INVASION_NAVI = 701,
+    INVASION_MONSTERSPAWN = 702,
+    PLAYER_NAVI = 703,
+    INVASION_DEFENDERSPAWN = 704,
+    CTF_PLAYERSPAWN = 705,
+    TBI_PLAYERSPAWN = 706, // Team Based Invasion PlayerSpawn.
+    HW_FLAG = 707,
+    M_COMBAT_POINT = 800, // temporary entity for monster navigation
+    M_LIGHTNINGSTORM = 801, // used by bot AI to ID lightning storm for hazard avoidance
+    FUNC_DOOR = 900,
+    //4.1 Archer
+    TOTEM_FIRE = 605,
+    TOTEM_WATER = 606,
+    TOTEM_AIR = 607,
+    TOTEM_EARTH = 608,
+    TOTEM_NATURE = 609,
+    TOTEM_DARKNESS = 610,
+
+    AURA_HOLYFREEZE = 201,
+    AURA_SALVATION = 202,
+    AURA_HOLYSHOCK = 203,
+    AURA_MANASHIELD = 204,
+    AURA_THORNS = 205,
+    CURSE_FROZEN = 301,
+    CURSE_BURN = 302,
+    CURSE_BOMBS = 303,
+    CURSE_PLAGUE = 304,
+    BLEEDING = 305,
+    POISON = 306,
+};
+
 // client data that stays across multiple level loads
 typedef struct {
     char userinfo[MAX_INFO_STRING];
@@ -2337,7 +2448,7 @@ struct edict_s {
     float lasthbshot;
     edict_t *decoy;
     edict_t *flashlight;
-    int mtype; // Type of Monstersee M_* defines.. (M_HOVER, etc)
+    enum mtype_t mtype; // Type of Monstersee M_* defines.. (M_HOVER, etc)
     int atype; //3.0 used for new curses
     int num_sentries;
     int num_monsters;
@@ -2467,7 +2578,7 @@ struct edict_s {
 
     // time elapsed since last power cube regen
     float pcr_time;
-	float		detected_factor; // how much extra damage we take from being detected
+    float detected_factor; // how much extra damage we take from being detected
 
     float removetime; //4.07 time to auto-remove
     edict_t *prev_owner; // for conversion
@@ -2707,115 +2818,6 @@ void CTF_SummonableCheck(edict_t *self);
 void Use_Lasers(edict_t *ent, gitem_t *item);
 
 void Cmd_LaserSight_f(edict_t *ent);
-
-//==========================================
-//========= TYPES OF MONSTERS ==============
-//==========================================
-
-// TYPE OF MONSTER ---- HEALTH
-#define M_SOLDIERLT 1 // 20
-#define M_SOLDIER 2 // 30
-#define M_SOLDIERSS 3 // 40
-#define M_FLIPPER 4 // 50
-#define M_FLYER 5 // 50
-#define M_INFANTRY 6 // 100
-#define M_ENFORCER 6 // 100
-#define M_INSANE 7 // 100 - Crazy Marine
-#define M_GUNNER 8 // 175
-#define M_CHICK 9 // 175
-#define M_PARASITE 10 // 175
-#define M_FLOATER 11 // 200
-#define M_HOVER 12 // 240
-#define M_BERSERK 13 // 240
-#define M_MEDIC 14 // 300
-#define M_MUTANT 15 // 300
-#define M_BRAIN 16 // 300
-#define M_GLADIATOR 17 // 400
-#define M_TANK 18 // 750
-#define M_SUPERTANK 19 // 1500
-#define M_BOSS2 20 // 2000
-#define M_JORG 21 // 3000
-#define M_MAKRON 22 // 3000
-#define M_COMMANDER 23
-#define M_BARON_FIRE	24
-#define M_SHAMBLER	25
-#define M_SKELETON	26
-#define M_GOLEM		27
-#define M_MINISENTRY	100
-#define M_SENTRY		101
-#define M_BFG_SENTRY	102
-#define	M_MYPARASITE	103
-#define M_FORCEWALL		104
-#define M_DECOY			105
-#define M_RETARD		107 // teamplay
-#define M_SKULL			108
-#define M_YINSPIRIT		109
-#define M_YANGSPIRIT	110
-#define M_BALANCESPIRIT	111
-#define M_AUTOCANNON	112
-#define M_DETECTOR		113
-#define M_MIRROR		114
-#define M_SUPPLYSTATION	115
-#define M_MIRV			116 // need this to differentiate from normal grenade
-#define M_HEALER		117
-#define M_SPIKER		118
-#define M_OBSTACLE		119
-#define M_BOX 350
-#define M_GASSER		120
-#define M_SPIKEBALL		121
-#define M_COCOON		122
-#define M_LASERPLATFORM	123
-#define M_ALARM			124
-#define M_LASER			125
-#define M_PROXY			126
-#define M_MAGMINE		127
-#define M_SPIKE_GRENADE	128
-#define M_HOLYGROUND	129
-#define M_WORLDSPAWN	130
-#define M_BEAMSENTRY	131
-#define M_BARREL		132
-#define M_ARMOR			133
-#define M_FIREWALL		134
-#define P_TANK			200
-#define MORPH_MUTANT	400
-#define MORPH_CACODEMON	401
-#define MORPH_TANK		402
-#define MORPH_BRAIN		403
-#define MORPH_FLYER		404
-#define MORPH_MEDIC		405
-#define MORPH_BERSERK	406
-#define BOSS_TANK		501
-#define BOSS_MAKRON		502
-#define INVASION_PLAYERSPAWN	700
-#define INVASION_NAVI			701
-#define INVASION_MONSTERSPAWN	702
-#define	PLAYER_NAVI				703
-#define INVASION_DEFENDERSPAWN	704
-#define CTF_PLAYERSPAWN			705
-#define TBI_PLAYERSPAWN			706 // Team Based Invasion PlayerSpawn.
-#define HW_FLAG			707
-#define M_COMBAT_POINT			800 // temporary entity for monster navigation
-#define M_LIGHTNINGSTORM		801 // used by bot AI to ID lightning storm for hazard avoidance
-#define FUNC_DOOR				900
-//4.1 Archer
-#define TOTEM_FIRE		605
-#define TOTEM_WATER		606
-#define TOTEM_AIR		607
-#define TOTEM_EARTH		608
-#define TOTEM_NATURE	609
-#define TOTEM_DARKNESS	610
-
-#define AURA_HOLYFREEZE 201
-#define AURA_SALVATION	202
-#define AURA_HOLYSHOCK	203
-#define AURA_MANASHIELD	204
-#define AURA_THORNS		205
-#define CURSE_FROZEN	301
-#define CURSE_BURN		302
-#define CURSE_BOMBS		303
-#define CURSE_PLAGUE	304
-#define BLEEDING		305
-#define POISON			306
 
 #define	FUNC_PLAT		1
 

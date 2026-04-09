@@ -17,13 +17,15 @@ option(VRX_Q2PRO "Use map/gamemap differentiation (for q2pro)." TRUE)
 option(VRX_OLD_NOLAG "Use old NOLAG style. Not recommended." FALSE)
 option(VRX_OLD_VOTE "Use old vote system." FALSE)
 option(VRX_REPRO "Support q2repro (remaster, EXPERIMENTAL)" TRUE)
+option(BUILD_TESTS "Build test driver" TRUE)
 
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
 # Source files
 file(GLOB_RECURSE VRX_FILES CONFIGURE_DEPENDS ./src/*.c)
-list(APPEND VRX_FILES ./src/server/relay_msgpack.c ./src/server/relay_handlers.c ./src/characters/io/v_relay_io.c)
+file(GLOB_RECURSE TEST_FILES CONFIGURE_DEPENDS ./tests/*.c)
+
 
 if (NOT VRX_USE_MYSQL)
     list(FILTER VRX_FILES EXCLUDE REGEX ".*/src/characters/io/v_mysql_gds\\.c$")
@@ -67,34 +69,17 @@ include_directories(./src/)
 add_library(${CC_LIB_NAME} SHARED ${VRX_FILES})
 set_target_properties(${CC_LIB_NAME} PROPERTIES PREFIX "")
 
+if (BUILD_TESTS)
+    add_executable(vrxtestdriver ${VRX_FILES} ${TEST_FILES})
+    add_test(NAME vrxtestdriver COMMAND vrxtestdriver)
+    target_compile_definitions(vrxtestdriver PRIVATE TEST_RUNNER)
+endif()
+
 if (WIN32 AND CMAKE_C_COMPILER_ID STREQUAL "Clang")
     target_compile_options(${CC_LIB_NAME} PRIVATE
         -Wno-incompatible-function-pointer-types
         -Wno-incompatible-pointer-types
     )
-endif ()
-
-if (VRX_USE_MYSQL)
-    find_library(MYSQL_LIBRARY_CLIENT
-            NAMES libmysqlclient mysqlclient
-            PATHS
-            $ENV{ProgramFiles}/MySQL/*/lib
-            /usr/lib/mysql
-    )
-
-    find_path(
-            MYSQL_INCLUDE_DIR
-            NAMES mysql.h
-            PATHS
-            $ENV{ProgramFiles}/MySQL/*/include
-            /usr/include/mysql
-    )
-
-    target_include_directories(${CC_LIB_NAME} PRIVATE ${MYSQL_INCLUDE_DIR})
-
-    message(NOTICE "MYSQL at ${MYSQL_LIBRARY_CLIENT} + ${MYSQL_INCLUDE_DIR}")
-
-    set(CC_LINK_LIBS ${CC_LINK_LIBS} ${MYSQL_LIBRARY_CLIENT})
 endif ()
 
 if (WIN32)
@@ -108,7 +93,7 @@ if (WIN32)
         )
         FetchContent_MakeAvailable(pthreads)
         target_include_directories(${CC_LIB_NAME} PRIVATE ${pthreads_SOURCE_DIR})
-        target_link_libraries(${CC_LIB_NAME} pthreadVC3)
+        set(CC_LINK_LIBS ${CC_LINK_LIBS} pthreadVC3)
     else ()
         if (CMAKE_C_COMPILER_ID STREQUAL "Clang" AND CMAKE_C_COMPILER_FRONTEND_VARIANT STREQUAL "GNU")
             execute_process(
@@ -118,12 +103,12 @@ if (WIN32)
             )
 
             if (EXISTS "${WINPTHREAD_STATIC}")
-                target_link_libraries(${CC_LIB_NAME} "${WINPTHREAD_STATIC}")
+                set(CC_LINK_LIBS ${CC_LINK_LIBS} "${WINPTHREAD_STATIC}")
             else ()
-                target_link_libraries(${CC_LIB_NAME} pthread)
+                set(CC_LINK_LIBS ${CC_LINK_LIBS} pthread)
             endif ()
         else ()
-            target_link_libraries(${CC_LIB_NAME} pthread)
+            set(CC_LINK_LIBS ${CC_LINK_LIBS} pthread)
         endif ()
     endif ()
 
@@ -190,7 +175,18 @@ target_include_directories(${CC_LIB_NAME} PRIVATE
     ${msgpack_BINARY_DIR}/include/msgpack
     ${msgpack_BINARY_DIR}/include
 )
+
 target_link_libraries(${CC_LIB_NAME} ${CC_LINK_LIBS})
+
+if (BUILD_TESTS)
+    target_include_directories(vrxtestdriver PRIVATE
+            ${msgpack_SOURCE_DIR}/include
+            ${msgpack_BINARY_DIR}/include/msgpack
+            ${msgpack_BINARY_DIR}/include
+    )
+
+    target_link_libraries(vrxtestdriver ${CC_LINK_LIBS})
+endif()
 
 include(TestBigEndian)
 TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
@@ -198,4 +194,10 @@ if (IS_BIG_ENDIAN)
     target_compile_definitions(${CC_LIB_NAME} PRIVATE BIG_ENDIAN)
 else ()
     target_compile_definitions(${CC_LIB_NAME} PRIVATE LITTLE_ENDIAN)
+endif ()
+
+if (BUILD_TESTS)
+    target_compile_definitions(vrxtestdriver PRIVATE BIG_ENDIAN)
+else ()
+    target_compile_definitions(vrxtestdriver PRIVATE LITTLE_ENDIAN)
 endif ()

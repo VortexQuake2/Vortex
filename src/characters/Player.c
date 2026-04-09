@@ -47,6 +47,38 @@ void vrx_create_new_character(edict_t *ent)
 	strcpy(ent->myskills.member_since, va("%s at %s", CURRENT_DATE, CURRENT_TIME));
 }
 
+void vrx_initialize_player_class(edict_t *ent, int option) {
+	vrx_create_new_character(ent);
+	ent->myskills.experience = 0;
+	for (int i = 0; i < start_level->value; ++i)
+	{
+		ent->myskills.experience += vrx_get_points_tnl(i);
+	}
+
+	ent->myskills.class_num = option;
+	vrx_assign_abilities(ent);
+	vrx_set_talents(ent);
+	vrx_prestige_init(ent);
+	ent->myskills.weapon_respawns = 100;
+
+	gi.dprintf("INFO: %s created a new %s!\n",
+			   ent->client->pers.netname,
+			   vrx_get_class_string(ent->myskills.class_num));
+
+	vrx_write_to_logfile(ent,
+						 va("%s created a %s.\n",
+							ent->client->pers.netname,
+							vrx_get_class_string(ent->myskills.class_num)));
+
+	vrx_check_for_levelup(ent, false);
+	vrx_update_all_character_maximums(ent);
+	vrx_add_respawn_weapon(ent, ent->myskills.respawn_weapon);
+	vrx_add_respawn_items(ent);
+
+	vrx_reset_weapon_maximums(ent);
+}
+
+
 //Returns true if the player is able to join the game.
 int vrx_get_login_status(edict_t *ent)
 {

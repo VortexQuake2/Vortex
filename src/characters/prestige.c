@@ -35,6 +35,10 @@ uint32_t vrx_prestige_get_upgrade_points(uint32_t exp) {
     return exp / PRESTIGE_THRESHOLD;
 }
 
+uint32_t vrx_get_prestige_max_xp() {
+    return PRESTIGE_THRESHOLD * PRESTIGE_MAX_POINTS;
+}
+
 qboolean vrx_prestige_filter_class_skill(const abilitydef_t *pAbility, void *user) {
     const edict_t *pUser = user;
 

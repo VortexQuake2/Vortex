@@ -321,10 +321,8 @@ void SVCmd_AddExp_f (void)
             return;
         }
 
-        e->myskills.experience += points;
-        e->client->resp.score += points;
+        vrx_apply_experience(e, points);
         safe_cprintf(NULL, PRINT_HIGH, "Gave %d experience to %s.\n", points, e->client->pers.netname);
-        vrx_check_for_levelup(e, true);
         vrx_write_to_logfile(e, va("Experience was modified. (amount = %d)\n", points));
         return;
     }

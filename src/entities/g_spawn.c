@@ -1174,6 +1174,34 @@ void SP_monster_brain(edict_t *ent)
 }
 
 
+void initialize_item_references(void) {
+	//pre searched items
+	Fdi_GRAPPLE			= FindItem ("Grapple");
+	Fdi_BLASTER			= FindItem ("Blaster");
+	Fdi_SHOTGUN			= FindItem ("Shotgun");
+	Fdi_SUPERSHOTGUN	= FindItem ("Super Shotgun");
+	Fdi_MACHINEGUN		= FindItem ("Machinegun");
+	Fdi_CHAINGUN		= FindItem ("Chaingun");
+	Fdi_GRENADES		= FindItem ("Grenades");
+	Fdi_GRENADELAUNCHER	= FindItem ("Grenade Launcher");
+	Fdi_ROCKETLAUNCHER	= FindItem ("Rocket Launcher");
+	Fdi_HYPERBLASTER	= FindItem ("HyperBlaster");
+	Fdi_RAILGUN			= FindItem ("Railgun");
+	Fdi_BFG				= FindItem ("BFG10K");
+	Fdi_20MM			= FindItem ("20mm Cannon");
+
+	Fdi_SHELLS			= FindItem ("Shells");
+	Fdi_BULLETS			= FindItem ("Bullets");
+	Fdi_CELLS			= FindItem ("Cells");
+	Fdi_ROCKETS			= FindItem ("Rockets");
+	Fdi_SLUGS			= FindItem ("Slugs");
+
+	//K03 Begin
+	Fdi_POWERCUBE		= FindItem("Power Cube");
+	Fdi_TBALL			= FindItem("tballs");
+	//K03 End
+}
+
 /*QUAKED worldspawn (0 0 0) ?
 
 Only used for the world.
@@ -1389,31 +1417,7 @@ void SP_worldspawn (edict_t *ent)
 //----------------------------------------------
 
 
-	//pre searched items
-	Fdi_GRAPPLE			= FindItem ("Grapple");
-	Fdi_BLASTER			= FindItem ("Blaster");
-	Fdi_SHOTGUN			= FindItem ("Shotgun");
-	Fdi_SUPERSHOTGUN	= FindItem ("Super Shotgun");
-	Fdi_MACHINEGUN		= FindItem ("Machinegun");
-	Fdi_CHAINGUN		= FindItem ("Chaingun");
-	Fdi_GRENADES		= FindItem ("Grenades");
-	Fdi_GRENADELAUNCHER	= FindItem ("Grenade Launcher");
-	Fdi_ROCKETLAUNCHER	= FindItem ("Rocket Launcher");
-	Fdi_HYPERBLASTER	= FindItem ("HyperBlaster");
-	Fdi_RAILGUN			= FindItem ("Railgun");
-	Fdi_BFG				= FindItem ("BFG10K");
-	Fdi_20MM			= FindItem ("20mm Cannon");
-
-	Fdi_SHELLS			= FindItem ("Shells");
-	Fdi_BULLETS			= FindItem ("Bullets");
-	Fdi_CELLS			= FindItem ("Cells");
-	Fdi_ROCKETS			= FindItem ("Rockets");
-	Fdi_SLUGS			= FindItem ("Slugs");
-
-	//K03 Begin
-	Fdi_POWERCUBE		= FindItem("Power Cube");
-	Fdi_TBALL			= FindItem("tballs");
-	//K03 End
+	initialize_item_references();
 
 	//if (invasion->value || pvm->value || ffa->value)
 	//{

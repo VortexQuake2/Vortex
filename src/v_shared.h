@@ -295,6 +295,8 @@ int vrx_get_talent_level(const edict_t *ent, int talentID);
 
 //************ player.c ************
 void vrx_create_new_character(edict_t *ent);
+// includes creating new character
+void vrx_initialize_player_class(edict_t *ent, int option);
 int vrx_get_login_status(edict_t *ent);
 //************ player.c ************
 
