@@ -761,6 +761,7 @@ extern int bfg10k_index;
 
 //pre searched items
 extern gitem_t *Fdi_GRAPPLE;
+extern gitem_t *Fdi_SWORD;
 extern gitem_t *Fdi_BLASTER;
 extern gitem_t *Fdi_SHOTGUN;
 extern gitem_t *Fdi_SUPERSHOTGUN;

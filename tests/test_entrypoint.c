@@ -1,5 +1,4 @@
 #include "mock.h"
-#include "../src/g_local.h"
 #include "munit.h"
 
 #ifndef WIN32

@@ -1537,7 +1537,11 @@ void Pmove(pmove_t *pmove) {
     PM_ClampAngles();
 
     if (pm->s.pm_type == PM_SPECTATOR || pm->s.pm_type == PM_NOCLIP) {
-        pm->s.pm_flags = PMF_NONE;
+        // funny vortex hack for chase not to retrigger lol
+        if (pm->s.pm_flags & PMF_JUMP_HELD)
+            pm->s.pm_flags = PMF_JUMP_HELD;
+        else
+            pm->s.pm_flags = PMF_NONE;
 
         if (pm->s.pm_type == PM_SPECTATOR) {
             pm->mins[0] = -8;

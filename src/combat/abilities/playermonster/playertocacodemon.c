@@ -17,17 +17,18 @@ void bskull_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 
     // deal direct damage
     if (G_EntExists(other))
-        T_Damage(other, self, self->owner, self->velocity, self->s.origin, plane->normal, self->dmg, 1, DAMAGE_RADIUS, MOD_CACODEMON_FIREBALL);
+        T_Damage(other, self, self->owner, self->velocity, self->s.origin, plane->normal, self->dmg, 1, DAMAGE_RADIUS,
+                 MOD_CACODEMON_FIREBALL);
     // deal radius damage
     T_RadiusDamage(self, self->owner, self->radius_dmg, other, self->dmg_radius, MOD_CACODEMON_FIREBALL);
-/*
-	if (self->owner->myskills.abilities[MORPH_MASTERY].current_level > 0)
-	{
-		num = GetRandom(4, 8);
-		damage *= 1.5;
-	}
-	else
-*/
+    /*
+        if (self->owner->myskills.abilities[MORPH_MASTERY].current_level > 0)
+        {
+            num = GetRandom(4, 8);
+            damage *= 1.5;
+        }
+        else
+    */
     num = GetRandom(3, 6);
 
     SpawnFlames(self->owner, self->s.origin, num, damage, 100);
@@ -58,8 +59,8 @@ void fire_skull(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, 
     skull->movetype = MOVETYPE_TOSS;
     skull->clipmask = MASK_SHOT;
     skull->solid = SOLID_BBOX;
-    VectorClear (skull->mins);
-    VectorClear (skull->maxs);
+    VectorClear(skull->mins);
+    VectorClear(skull->maxs);
     skull->s.modelindex = gi.modelindex("models/objects/gibs/skull/tris.md2");
     skull->owner = self;
     skull->touch = bskull_touch;
@@ -72,8 +73,8 @@ void fire_skull(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, 
     skull->delay = level.time + 10;
     skull->think = bskull_think;
     skull->nextthink = level.time + FRAMETIME;
-//	if (self->client)
-//		check_dodge (self, skull->s.origin, dir, speed, damage_radius);
+    //	if (self->client)
+    //		check_dodge (self, skull->s.origin, dir, speed, damage_radius);
     gi.linkentity(skull);
 }
 
@@ -88,10 +89,10 @@ void cacodemon_attack(edict_t *ent) {
     if (level.time > ent->monsterinfo.attack_finished) {
         damage =
                 (CACODEMON_INITIAL_DAMAGE +
-                CACODEMON_ADDON_DAMAGE * ent->myskills.abilities[CACODEMON].current_level) *
+                 CACODEMON_ADDON_DAMAGE * ent->myskills.abilities[CACODEMON].current_level) *
                 2;
         radius = CACODEMON_INITIAL_RADIUS +
-                CACODEMON_ADDON_RADIUS * ent->myskills.abilities[CACODEMON].current_level;
+                 CACODEMON_ADDON_RADIUS * ent->myskills.abilities[CACODEMON].current_level;
 
         ent->s.frame = CACODEMON_FRAME_ATTACK_FIRE;
 
@@ -109,31 +110,28 @@ void cacodemon_attack(edict_t *ent) {
 }
 
 void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
-    int frame;
-
     // if we aren't a cacodemon or we are dead, we shouldn't be here!
     if ((ent->mtype != MORPH_CACODEMON) || (ent->deadflag == DEAD_DEAD))
         return;
 
-        if (level.framenum >= ent->count) {
+    if (level.framenum >= ent->count) {
         MorphRegenerate(ent, qf2sf(CACODEMON_REGEN_DELAY), qf2sf(CACODEMON_REGEN_FRAMES));
         //	ent->client->ability_delay = level.time + CACODEMON_DELAY; // can't use abilities
 
         if (ent->client->buttons & BUTTON_ATTACK) {
             ent->client->idle_frames = 0;
             // run attack frames
-            G_RunFrames(ent, CACODEMON_FRAME_ATTACK_START, CACODEMON_FRAME_ATTACK_END, false, true);
+            G_RunFrames(ent, CACODEMON_FRAME_ATTACK_START, CACODEMON_FRAME_ATTACK_END, false, false);
             cacodemon_attack(ent);
         } else {
-            frame = ent->s.frame;
             // az: hi decino
             /*if (((random() <= 0.5) && (frame == CACODEMON_FRAME_IDLE_END))
                 || ((frame >= CACODEMON_FRAME_BLINK_START) && (frame < CACODEMON_FRAME_BLINK_END)))
                 // run blink frames
                 G_RunFrames(ent, CACODEMON_FRAME_BLINK_START, CACODEMON_FRAME_BLINK_END, false);
-            else*/ 
-                // run idle frames
-                G_RunFrames(ent, CACODEMON_FRAME_IDLE_START, CACODEMON_FRAME_IDLE_END, false, true);
+            else*/
+            // run idle frames
+            G_RunFrames(ent, CACODEMON_FRAME_IDLE_START, CACODEMON_FRAME_IDLE_END, false, false);
         }
 
         // add thrust
@@ -150,10 +148,10 @@ void RunCacodemonFrames(edict_t *ent, usercmd_t *ucmd) {
             ent->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
         }
 #else
-      // pmove handles it
+        // pmove handles it
 #endif
 
-        ent->count = (int)(level.framenum + qf2sf(1));
+        ent->count = (int) (level.framenum + qf2sf(1));
     }
 }
 
@@ -218,12 +216,12 @@ void Cmd_PlayerToCacodemon_f(edict_t *ent) {
     ent->s.modelindex2 = 0;
     ent->s.skinnum = 0;
 
-    ent->monsterinfo.attack_finished = level.time + 0.5;// can't attack immediately
+    ent->monsterinfo.attack_finished = level.time + 0.5; // can't attack immediately
 
     // set maximum skull ammo
     ent->myskills.abilities[CACODEMON].max_ammo = CACODEMON_SKULL_INITIAL_AMMO + CACODEMON_SKULL_ADDON_AMMO
-                                                                                 *
-                                                                                 ent->myskills.abilities[CACODEMON].current_level;
+                                                  *
+                                                  ent->myskills.abilities[CACODEMON].current_level;
 
     // Talent: More Ammo
     // increases ammo 10% per talent level
@@ -240,9 +238,3 @@ void Cmd_PlayerToCacodemon_f(edict_t *ent) {
 
     gi.sound(ent, CHAN_WEAPON, gi.soundindex("abilities/morph.wav"), 1, ATTN_NORM, 0);
 }
-
-
-
-
-
-

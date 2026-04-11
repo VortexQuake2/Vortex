@@ -23,7 +23,7 @@ void nullprintf(const char* ch, ...) {
     printf("%s", buffer);
     va_end(ap);
     free(buffer)
-    #endif;
+    #endif
 }
 
 void nullbprintf(int printlevel, const char* ch, ...) {

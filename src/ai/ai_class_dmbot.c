@@ -2109,7 +2109,7 @@ void BOT_DMClass_BloquedTimeout( edict_t *self )
 		self->ai.bloqued_timeout = level.time + 15.0;
 		self->die(self, self, self, 100000, vec3_origin);
 	}
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 }
 
 
@@ -2126,7 +2126,7 @@ void BOT_DMclass_DeadFrame( edict_t *self )
 	self->client->buttons = 0;
 	ucmd.buttons = BUTTON_ATTACK;
 	ClientThink (self, &ucmd);
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 }
 
 qboolean BOT_DMclass_ChooseMoveAttack(edict_t* self)
@@ -2218,13 +2218,22 @@ void BOT_DMclass_RunFrame( edict_t *self )
 		BOT_DMclass_Wander( self, &ucmd );
 
 	//set up for pmove
+#ifndef VRX_REPRO
 	ucmd.angles[PITCH] = ANGLE2SHORT(self->s.angles[PITCH]);
 	ucmd.angles[YAW] = ANGLE2SHORT(self->s.angles[YAW]);
 	ucmd.angles[ROLL] = ANGLE2SHORT(self->s.angles[ROLL]);
+#else
+	ucmd.angles[PITCH] = (self->s.angles[PITCH]);
+	ucmd.angles[YAW] = (self->s.angles[YAW]);
+	ucmd.angles[ROLL] = (self->s.angles[ROLL]);
+#endif
 
 	// set approximate ping and show values
-	ucmd.msec = 75 + floor (random () * 25) + 1;
-	self->client->ping = ucmd.msec;
+	// ucmd.msec = 75 + floor (random () * 25) + 1;
+	self->client->ping = 75 + floor (random () * 25) + 1;
+
+	// az: msec can't just be whatever value.
+	ucmd.msec = FRAMETIME * 1000;
 
 	// send command through id's code
 	//if (ucmd.buttons & BUTTON_ATTACK)

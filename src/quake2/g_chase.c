@@ -115,18 +115,29 @@ retry_eyecam:
         // save current player fov
         const float fov = ent->client->ps.fov;
 
+#ifndef VRX_REPRO
         if (targ->viewheight)
             start[2] += targ->viewheight;
         else
             start[2] = targ->absmax[2] - 8;
+#endif
         VectorMA(start, targ->maxs[1] + 16, forward, start);
 
         // update HUD
         // az: don't show weapons with any of these classes
-        if (targ->client && targ->myskills.class_num != CLASS_KNIGHT && !vrx_is_morphing_polt(targ))
+        if (targ->client)
             ent->client->ps = targ->client->ps;
-        else
+
+		if (targ->client && (targ->client->pers.weapon == Fdi_SWORD || vrx_is_morphing_polt(targ)))
             ent->client->ps.gunindex = 0;
+
+#ifdef VRX_REPRO
+		if (!targ->viewheight)
+			ent->client->ps.pmove.viewheight = targ->absmax[2] - 8;
+		else
+			ent->client->ps.pmove.viewheight = targ->viewheight;
+#endif
+
         // restore player's fov (don't use target's fov)
         ent->client->ps.fov = fov;
     }
@@ -143,11 +154,6 @@ retry_eyecam:
 		}
 		else
 		{
-			if (targ->viewheight)
-				start[2] += targ->viewheight;
-			else
-				start[2] = targ->absmax[2]-8;
-			
 			start[2] += 16; // az: put him a little bit above
 			// from 16 to 24
 			VectorCopy(start, pivot);
@@ -156,8 +162,9 @@ retry_eyecam:
 	}
 
 	// jump animation lifts
-	if (!targ->groundentity)
-		start[2] += 16;
+	// if (!targ->groundentity)
+	// 	start[2] += 16;
+
 	tr = gi.trace(targ->s.origin, NULL, NULL, start, targ, MASK_SOLID);
 	VectorCopy(tr.endpos, start);
 	if (tr.fraction < 1)
@@ -192,7 +199,7 @@ retry_eyecam:
 		VectorSubtract(goal, pivot, dist);
 
 		const vec_t len = VectorLength(dist);
-		if (len < 24) {
+		if (len < 28) {
 			eyecam = true;
 			goto retry_eyecam;
 		}

@@ -8,6 +8,7 @@ const char *s2;
 
 // g_local.h
 gitem_t	*Fdi_GRAPPLE;
+gitem_t	*Fdi_SWORD;
 gitem_t	*Fdi_BLASTER;
 gitem_t *Fdi_SHOTGUN;
 gitem_t *Fdi_SUPERSHOTGUN;

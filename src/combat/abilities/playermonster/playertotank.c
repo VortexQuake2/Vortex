@@ -472,7 +472,7 @@ void p_tank_attack(edict_t *ent) {
 }
 
 void p_tank_idle(edict_t *self) {
-    G_RunFrames(self, TANK_FRAMES_START_STAND, TANK_FRAMES_END_STAND, false, true);
+    G_RunFrames(self, TANK_FRAMES_START_STAND, TANK_FRAMES_END_STAND, false, false);
 }
 
 void p_tank_think(edict_t *self) {

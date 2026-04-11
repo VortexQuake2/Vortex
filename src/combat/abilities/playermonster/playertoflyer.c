@@ -368,16 +368,16 @@ void RunFlyerFrames (edict_t *ent, usercmd_t *ucmd)
 		{
 			if (ent->s.frame == FLYER_FRAMES_BANK_R_END) // done with bank animation
 				return; // so don't update the frames
-			G_RunFrames(ent, FLYER_FRAMES_BANK_R_START, FLYER_FRAMES_BANK_R_END, false, true);
+			G_RunFrames(ent, FLYER_FRAMES_BANK_R_START, FLYER_FRAMES_BANK_R_END, false, false);
 		}
 		else if (ucmd->sidemove < 0) // left
 		{
 			if (ent->s.frame == FLYER_FRAMES_BANK_L_END)
 				return;
-			G_RunFrames(ent, FLYER_FRAMES_BANK_L_START, FLYER_FRAMES_BANK_L_END, false, true);
+			G_RunFrames(ent, FLYER_FRAMES_BANK_L_START, FLYER_FRAMES_BANK_L_END, false, false);
 		}
 		else // default
-			G_RunFrames(ent, FLYER_FRAMES_STAND_START, FLYER_FRAMES_STAND_END, false, true);
+			G_RunFrames(ent, FLYER_FRAMES_STAND_START, FLYER_FRAMES_STAND_END, false, false);
 	}
 }
 

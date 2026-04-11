@@ -634,7 +634,7 @@ void M_default_RunFrame( edict_t *self )
 	//M_Default_SetUpAnimMoveFlags( self, &ucmd );
 	//G_SetPModelFrame ( self );
 	
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 }
 
 
@@ -678,7 +678,7 @@ void M_default_Start( edict_t *self )
 
 
 	self->think = AI_Think;
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 	self->yaw_speed = 100;
 	M_default_InitPersistant(self);
 	AI_ResetNavigation(self);

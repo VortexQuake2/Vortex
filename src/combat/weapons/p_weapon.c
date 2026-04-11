@@ -784,6 +784,38 @@ void Weapon_Generic2(edict_t* ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 	}
 }
 
+float calculate_haste_wait(edict_t *ent) {
+	// time when to fire next shot
+	float haste_wait = -1;
+	float haste_tech = INFINITY; // "never"
+	float haste_skill = INFINITY; // "never"
+
+	if (ent->myskills.abilities[HASTE].current_level >= 1)
+		haste_skill = 1.0f / ent->myskills.abilities[HASTE].current_level;
+
+	// haste tech
+	if (ent->client->pers.inventory[haste_index]) {
+		haste_tech = 0.1; // 100% improvement (2x firing rate)
+	}
+
+	haste_wait = min(haste_tech, haste_skill);
+	return haste_wait;
+}
+
+#define HASTE_RUN_FRAME(haste_wait, call, ent) { while (ent->haste_time >= haste_wait) { \
+			ent->client->vrr.gun_statemachine_time += 0.1; \
+			ent->client->vrr.gun_fire_time = level.time; \
+			{ call; } \
+			ent->haste_time -= haste_wait; \
+		} \
+		ent->haste_time += FRAMETIME; \
+}
+
+int32_t is_haste_active(edict_t *ent) {
+	return (!ent->myskills.abilities[HASTE].disable && ent->myskills.abilities[HASTE].current_level >= 1)
+	       || ent->client->pers.inventory[haste_index];
+}
+
 //K03 Begin
 void Weapon_Generic(
 	edict_t* ent,
@@ -846,35 +878,17 @@ void Weapon_Generic(
 
 	// ent->FrameShot = 0;
 
-	if ((!ent->myskills.abilities[HASTE].disable && ent->myskills.abilities[HASTE].current_level >= 1)
-		|| ent->client->pers.inventory[haste_index]) {
-		// time when to fire next shot
-		float haste_wait = -1;
-		float haste_tech = INFINITY; // "never"
-		float haste_skill = INFINITY; // "never"
-
-		if (ent->myskills.abilities[HASTE].current_level >= 1)
-			haste_skill = 1.0f / ent->myskills.abilities[HASTE].current_level;
-
-		// haste tech
-		if (ent->client->pers.inventory[haste_index]) {
-			haste_tech = 0.1; // 100% improvement (2x firing rate)
-		}
-
-		haste_wait = min(haste_tech, haste_skill);
+	if (is_haste_active(ent)) {
+		float haste_wait = calculate_haste_wait(ent);
 		if (haste_wait <= 0) // safeguard lol
 			return;
 
 		// if enough frames have passed by, then call the weapon func
 		// an additional time
-		while (ent->haste_time >= haste_wait) {
-			ent->client->vrr.gun_statemachine_time += 0.1;
-			ent->client->vrr.gun_fire_time = level.time;
-			Weapon_Generic2(ent, FRAME_ACTIVATE_LAST, FRAME_FIRE_LAST,
-				FRAME_IDLE_LAST, FRAME_DEACTIVATE_LAST, pause_frames, fire_frames, fire);
-			ent->haste_time -= haste_wait;
-		}
-		ent->haste_time += FRAMETIME;
+		HASTE_RUN_FRAME(haste_wait,
+			Weapon_Generic2(ent, FRAME_ACTIVATE_LAST, FRAME_FIRE_LAST, \
+				FRAME_IDLE_LAST, FRAME_DEACTIVATE_LAST, pause_frames, fire_frames, fire),
+		ent)
 	}
 
 	//gi.dprintf("gunframe=%d\n", ent->client->ps.gunframe);
@@ -1022,7 +1036,9 @@ void weapon_grenade_fire(edict_t* ent, qboolean held) {
 }
 
 void Weapon_Grenade2(edict_t* ent) {
+	start:
 	qboolean can_run_frame = ent->client->vrr.gun_statemachine_time >= 0.1;
+	auto haste_wait = calculate_haste_wait(ent);
 
 	if (ent->shield)
 		return;
@@ -1031,8 +1047,6 @@ void Weapon_Grenade2(edict_t* ent) {
 		ChangeWeapon(ent);
 		return;
 	}
-
-	
 
 	if (ent->client->weaponstate == WEAPON_ACTIVATING) {
 		ent->client->weaponstate = WEAPON_READY;
@@ -1049,6 +1063,9 @@ void Weapon_Grenade2(edict_t* ent) {
 				ent->client->weaponstate = WEAPON_FIRING;
 				ent->client->grenade_time = 0;
 				ent->client->grenade_delay = 0;
+
+				ent->client->vrr.gun_statemachine_time = 0.0;
+				ent->haste_time = 0;
 			}
 			else {
 				if (level.time >= ent->pain_debounce_time) {
@@ -1059,7 +1076,6 @@ void Weapon_Grenade2(edict_t* ent) {
 				NoAmmoWeaponChange(ent);
 			}
 
-			ent->client->vrr.gun_statemachine_time = 0.0;
 			return;
 		}
 
@@ -1129,7 +1145,9 @@ void Weapon_Grenade2(edict_t* ent) {
 			can_run_frame = true;
 		}
 
-		if ((ent->client->ps.gunframe == 15) && (level.time < ent->client->grenade_time))
+		bool grenade_pending = (level.time < ent->client->grenade_time);
+		// az: let em spam nades with haste
+		if ((ent->client->ps.gunframe == 15) && (grenade_pending && !is_haste_active(ent)))
 			return;
 
 		//ent->client->ps.gunframe++;
@@ -1153,6 +1171,7 @@ void Weapon_Grenade2(edict_t* ent) {
 				ent->client->ps.gunframe++;
 				
 			}
+
 			ent->client->vrr.gun_statemachine_time -= 0.1;
 		}
 
@@ -1160,6 +1179,17 @@ void Weapon_Grenade2(edict_t* ent) {
 			ent->client->grenade_time = 0;
 			ent->client->weaponstate = WEAPON_READY;
 			print_wp_state(ent, "ChangetoREADY");
+		}
+
+		bool is_haste_frame = ent->client->ps.gunframe < 11 ||
+			(ent->client->ps.gunframe > 11 && ent->client->grenade_delay > 0);
+		if (is_haste_frame && is_haste_active(ent)) {
+			if (haste_wait != -1 && ent->haste_time > haste_wait) {
+				ent->client->vrr.gun_statemachine_time += 0.1;
+				ent->haste_time -= haste_wait;
+				goto start;
+			}
+			ent->haste_time += FRAMETIME;
 		}
 	}
 }
@@ -1543,8 +1573,8 @@ void Weapon_HyperBlaster_Fire(edict_t* ent) {
 	// get weapon properties
 	damage = HYPERBLASTER_INITIAL_DAMAGE +
 		HYPERBLASTER_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_HYPERBLASTER].mods[0].current_level;
-	speed = HYPERBLASTER_INITIAL_SPEED +
-		HYPERBLASTER_ADDON_SPEED * ent->myskills.weapons[WEAPON_HYPERBLASTER].mods[2].current_level;
+	speed = (HYPERBLASTER_INITIAL_SPEED +
+		HYPERBLASTER_ADDON_SPEED * ent->myskills.weapons[WEAPON_HYPERBLASTER].mods[2].current_level);
 
 	if (ent->myskills.weapons[WEAPON_HYPERBLASTER].mods[4].current_level)
 		is_silenced = MZ_SILENCED;
