@@ -280,13 +280,17 @@ edict_t *drone_findnavi(edict_t *self)
 #endif
 
 	if (invasion_start_navicount > 0) {
-		return vrx_inv_closest_navi_any(self);// INV_ClosestNavi(self);
+		return INV_StartNavi[GetRandom(1, invasion_start_navicount) - 1];
+		// az: a little bit more variety as to what path they take is the reason
+		// we don't just take the shortest.
+		// navis usually imply mapper-picked paths, so
+		// we want to follow those, and reach between them with A*.
+		// return vrx_inv_closest_navi_any(self);// INV_ClosestNavi(self);
 	}
 	
 	// no navis, return a player spawn...
 	return vrx_inv_give_random_p_spawn();
 }
-
 
 qboolean vrx_inv_is_spawn_que_empty()
 {
@@ -453,7 +457,7 @@ edict_t* vrx_inv_spawn_drone(edict_t* self, edict_t *spawn_point, int index)
 	VectorCopy(spawn_point->s.origin, start);
 	start[2] = spawn_point->absmax[2] + 1 + fabsf(monster->mins[2]);
 
-	const trace_t tr = gi.trace(start, monster->mins, monster->maxs, start, NULL, MASK_SHOT);
+	const trace_t tr = gi.trace(start, monster->mins, monster->maxs, start, NULL, MASK_MONSTERSOLID);
 
 	// starting point is occupied
 	if (tr.fraction < 1)
@@ -1202,7 +1206,7 @@ void SP_info_player_invasion(edict_t *self)
 	self->nextthink = level.time + FRAMETIME;
 	//self->touch = info_player_invasion_touch;
 	self->solid = SOLID_BBOX;
-	VectorSet(self->mins, -32, -32, -24);
+	VectorSet(self->mins, 32, -32, -24);
 	VectorSet(self->maxs, 32, 32, -16);
 	gi.linkentity(self);
 
@@ -1211,6 +1215,77 @@ void SP_info_player_invasion(edict_t *self)
 
 	invasion_max_playerspawns++;
 	invasion_spawncount++;
+}
+
+bool validate_invasion_point(edict_t * self) {
+	vec3_t mins = {
+		-32, -32, 0
+	};
+	vec3_t maxs = {32, 32, 32};
+	vec3_t start;
+
+	if (gi.pointcontents(self->s.origin) == CONTENTS_SOLID)
+		return false;
+
+	VectorCopy(self->s.origin, start);
+	start[2] += mins[2] + 1;
+
+	trace_t tr = gi.trace(self->s.origin, mins, maxs, self->s.origin, nullptr, MASK_MONSTERSOLID);
+
+	if (tr.fraction == 1.0)
+		return true;
+
+	//
+	// vec3_t wiggle_dirs[] = {
+	// 	{1, 0, 0},
+	// 	{-1, 0, 0},
+	// 	{0, 1, 0},
+	// 	{0, -1, 0},
+	// 	{0, 0, 1},
+	// 	{0, 0, -1}
+	// };
+	//
+	// vec3_t wiggle_start;
+	// VectorCopy(self->s.origin, wiggle_start);
+	//
+	// for (int i = 0; i < sizeof(wiggle_dirs) / sizeof(vec3_t); i++) {
+	// 	vec3_t wiggle_end;
+	// 	vec3_t normal;
+	// 	VectorScale(wiggle_dirs[i], 24, normal);
+	// 	VectorAdd(wiggle_start, normal, wiggle_end);
+	//
+	// 	tr = gi.trace(wiggle_start, nullptr, nullptr, wiggle_end, nullptr, MASK_MONSTERSOLID);
+	//
+	// 	if (tr.allsolid || tr.startsolid)
+	// 		continue;
+	//
+	// 	if (tr.fraction == 1.0)
+	// 		continue;
+	//
+	// 	VectorCopy(tr.endpos, wiggle_end);
+	// 	VectorCopy(tr.plane.normal, normal);
+	//
+	// 	VectorScale(normal, fabsf(mins[2]), normal);
+	// 	VectorAdd(wiggle_start, normal, wiggle_end);
+	//
+	// 	VectorCopy(tr.endpos, wiggle_start);
+	// }
+	//
+	// trace_t tr2 = gi.trace(wiggle_start, mins, maxs, wiggle_start, nullptr, MASK_MONSTERSOLID);
+	// if (tr2.fraction == 1.0) {
+	// 	VectorCopy(tr2.endpos, self->s.origin);
+	// 	return true;
+	// }
+
+	gi.dprintf("Invalid invasion point at %f %f %f\n", self->s.origin[0], self->s.origin[1], self->s.origin[2]);
+	return false;
+}
+
+void drawbounds(edict_t * edict) {
+#ifdef VRX_REPRO
+	gire.Draw_Bounds(edict->absmin, edict->absmax, &rgba_white, 0.1, true);
+	edict->nextthink = level.time + 0.1;
+#endif
 }
 
 void SP_info_monster_invasion(edict_t *self)
@@ -1222,6 +1297,11 @@ void SP_info_monster_invasion(edict_t *self)
 		return;
 	}
 
+	if (!validate_invasion_point(self)) {
+		//G_FreeEdict(self);
+		//return;
+	}
+
 	self->mtype = INVASION_MONSTERSPAWN;
 	self->solid = SOLID_NOT;
 	self->s.effects |= EF_BLASTER;
@@ -1229,6 +1309,12 @@ void SP_info_monster_invasion(edict_t *self)
 
 	if (debuginfo->value == 0)
 	    self->svflags |= SVF_NOCLIENT;
+	else {
+		VectorCopy(tv(32, 32, 64), self->maxs);
+		VectorCopy(tv(-32, -32, 0), self->mins);
+		self->think = drawbounds;
+		self->nextthink = level.time + 0.1;
+	}
 
 	gi.linkentity(self);
 

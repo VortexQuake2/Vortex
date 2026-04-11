@@ -258,7 +258,7 @@ void SV_CalcViewOffset (edict_t *ent)
 
 		// add angles based on bob
 
-		if (!(ent->v_flags & SFLG_NO_BOB))
+		if (!(ent->v_flags & SFLG_NO_BOB) && !G_IsSpectator(ent))
 		{
 			// pitch
 			delta = bobfracsin * bob_pitch->value * xyspeed;
