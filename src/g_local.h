@@ -2923,7 +2923,7 @@ void InitTBI();
 #include "server/v_luasettings.h"
 
 /* g_configstring_override.c */
-typedef void (*gi_sound_func_t)(const edict_t *ent, int channel, int soundindex, float volume, float attenuation,
+typedef void (*gi_sound_func_t)(const edict_t *ent, enum soundchan_t channel, int soundindex, float volume, float attenuation,
                                 float timeofs);
 
 void cs_override_init();
