@@ -461,11 +461,13 @@ edict_t* vrx_inv_spawn_drone(edict_t* self, edict_t *spawn_point, int index)
 		// is this an entity (monster) that we own?
 		if (tr.ent && tr.ent->inuse && tr.ent->activator && tr.ent->activator->inuse && (tr.ent->activator == self))
 		{
+			// M_Remove delays the release of the monster for 0.1 secs, so we free it immediately after M_Remove.
 			//gi.dprintf("another monster occupies this space\n");
 			// if we're trying to spawn a non-boss monster, remove the monster and try again later
 			if (index < 30)
 			{
 				M_Remove(monster, false, false);
+				G_FreeEdict(monster);
 				return NULL;
 			}
 			else
@@ -473,6 +475,7 @@ edict_t* vrx_inv_spawn_drone(edict_t* self, edict_t *spawn_point, int index)
 				//gi.dprintf("tried to make a boss and remove another ent\n");
 				// if we are trying to spawn a boss, remove the monster currently occupying this space
 				M_Remove(tr.ent, false, false);
+				G_FreeEdict(monster);
 			}
 		}
 		else
@@ -480,6 +483,7 @@ edict_t* vrx_inv_spawn_drone(edict_t* self, edict_t *spawn_point, int index)
 			//gi.dprintf("spawn area occupied by something else\n");
 			// we've hit something else, remove the monster and try again later
 			M_Remove(monster, false, false);
+			G_FreeEdict(monster);
 			return NULL;
 		}
 	}
