@@ -53,15 +53,26 @@ void fire_spike (edict_t *self, vec3_t start, vec3_t dir, int damage, float stun
 		bolt->svflags |= SVF_NOCLIENT;
 }
 
-void SpikeAttack (edict_t *ent)
+void player_fire_spike (edict_t *ent)
 {
 	int spike_level = ent->myskills.abilities[SPIKE].current_level;
-	int spiker_level = ent->myskills.abilities[SPIKER].current_level;
+	//int spiker_level = ent->myskills.abilities[SPIKER].current_level;
 	int		i, move, damage;
 	float	delay;
-	float synergy_bonus = 1.0 + SPIKE_SPIKER_SYNERGY_BONUS * spiker_level;
+	float 	synergy_mult = vrx_get_synergy_mult(ent, SPIKE);
+	//float synergy_bonus = 1.0 + SPIKE_SPIKER_SYNERGY_BONUS * spiker_level;
 	vec3_t	angles, v, org;
 	vec3_t	offset, forward, right, start;
+
+	if (!V_CanUseAbilities(ent, SPIKE, SPIKE_COST, false))
+	{
+		ent->client->firespike = false;
+		return;
+	}
+
+	// refire cooldown
+	if (ent->client->spiketime > level.time)
+		return;
 
 	// get starting position and forward vector
 	AngleVectors (ent->client->v_angle, forward, right, NULL);
@@ -77,7 +88,7 @@ void SpikeAttack (edict_t *ent)
 	move = SPIKE_FOV/SPIKE_SHOTS;
 
 	// calculate damage and stun length
-	damage = (SPIKE_INITIAL_DMG + SPIKE_ADDON_DMG * spike_level) * synergy_bonus;
+	damage = (SPIKE_INITIAL_DMG + SPIKE_ADDON_DMG * spike_level) * synergy_mult;
 	//damage *= 1.0 + 0.1 * vrx_get_talent_level(ent, TALENT_DEADLY_SPIKES); // Talent Deadly Spikes - increases spike damage
 
 	delay = SPIKE_STUN_ADDON * ent->myskills.abilities[SPIKE].current_level;
@@ -112,9 +123,26 @@ void SpikeAttack (edict_t *ent)
 	}
 
 	ent->client->pers.inventory[power_cube_index] -= SPIKE_COST;
-	ent->client->ability_delay = level.time + SPIKE_DELAY;
+	//ent->client->ability_delay = level.time + SPIKE_DELAY;
+	ent->client->spiketime = level.time + SPIKE_DELAY;
 
 	gi.sound (ent, CHAN_WEAPON, gi.soundindex("brain/brnatck2.wav"), 1, ATTN_NORM, 0);
+}
+
+void Cmd_FireSpike_f (edict_t *ent, int toggle)
+{
+    if (!V_CanUseAbilities(ent, SPIKE, SPIKE_COST, true))
+        return;
+
+	if (!toggle)
+	{
+		ent->client->firespike = false;
+		return;
+	}
+
+	ent->client->firespike = true;
+    //ent->client->ability_delay = level.time + ACID_DELAY;
+    //ent->client->pers.inventory[power_cube_index] -= ACID_COST;
 }
 
 void Cmd_Spike_f (edict_t *ent)

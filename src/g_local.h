@@ -1700,6 +1700,8 @@ struct gclient_s
 	float			beamtime;//GHz
 	qboolean		fireacid;//GHz
 	float			acidtime;//GHz
+	qboolean		firespike;//GHz
+	float			spiketime;//GHz
     edict_t       *hook;
 	int				chasecam_mode;
 

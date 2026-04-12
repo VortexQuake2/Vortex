@@ -851,6 +851,9 @@ void brain_fire_beam(edict_t* self);
 // gloom.c
 void player_fire_acid (edict_t *self);
 
+// spike.c
+void player_fire_spike (edict_t *ent);
+
 // class_demon.c
 void PlagueCloudSpawn(edict_t* ent);
 
@@ -985,6 +988,9 @@ void vrx_client_think(edict_t* ent) {
 	if (ent->client->fireacid)
 		player_fire_acid(ent);
 
+	if (ent->client->firespike)
+		player_fire_spike(ent);
+		
 	if (ent->myskills.administrator == 11)
 		ent->client->ping = GetRandom(300, 400);
 
