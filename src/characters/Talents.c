@@ -121,8 +121,8 @@ const talentdef_t talents_knight[] = {
 const talentdef_t talents_weaponmaster[] = {
         {TALENT_BASIC_AMMO_REGEN, 5, false},
         {TALENT_COMBAT_EXP,       5, false},
-        {TALENT_TACTICS,          3, false},
-        {TALENT_SIDEARMS,         3, false},
+        {TALENT_TACTICS,          5, false},
+        {TALENT_SIDEARMS,         5, false},
         {-1,                      0, 0}
 };
 
