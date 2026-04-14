@@ -477,7 +477,7 @@ void p_tank_idle(edict_t *self) {
 
 void p_tank_think(edict_t *self) {
     int frame, regenFrames = qf2sf(P_TANK_REGEN_FRAMES), regenAmmoFrames = qf2sf(P_TANK_AMMOREGEN_FRAMES);
-    int delayFrames = P_TANK_REGEN_DELAY, delayAmmoFrames = P_TANK_AMMOREGEN_DELAY;
+    int delayFrames = qf2sf(P_TANK_REGEN_DELAY), delayAmmoFrames = qf2sf(P_TANK_AMMOREGEN_DELAY);
 
     if (!boss_checkstatus(self))
         return;
@@ -488,30 +488,32 @@ void p_tank_think(edict_t *self) {
     }
 
     PM_Effects(self);
-
-    self->monsterinfo.trail_time = level.time + 1; // stay in eye-cam
     M_Regenerate(self, regenFrames, delayFrames, 1.0, true, false, false, &self->monsterinfo.regen_delay1);
     PM_RegenAmmo(self, regenAmmoFrames, delayAmmoFrames);
     PM_SyncWithPlayer(self);
 
-    if (self->style == FRAMES_RUN_FORWARD)
-        G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, false, false);
-    else if (self->style == FRAMES_RUN_BACKWARD)
-        G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, true, false);
-    else if ((self->style == FRAMES_ATTACK) && (level.time > self->owner->monsterinfo.attack_finished)) {
-        if (self->owner->client->weapon_mode == 1)
-            G_RunFrames(self, TANK_FRAMES_START_PUNCH, TANK_FRAMES_END_PUNCH, false, false);
-        else if (self->owner->client->weapon_mode == 2)
-            G_RunFrames(self, TANK_FRAMES_START_BULLET, TANK_FRAMES_END_BULLET, false, false);
-        else if (self->owner->client->weapon_mode == 3) {
-            if (self->s.frame != TANK_FRAMES_BLASTER_END)
-                G_RunFrames(self, TANK_FRAMES_BLASTER_START, TANK_FRAMES_BLASTER_END, false, false);
-            else
-                self->s.frame = 65; // cycle from this frame forward
+    self->monsterinfo.trail_time = level.time + 1; // stay in eye-cam
+    if (level.framenum >= self->count) {
+
+        if (self->style == FRAMES_RUN_FORWARD)
+            G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, false, false);
+        else if (self->style == FRAMES_RUN_BACKWARD)
+            G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, true, false);
+        else if ((self->style == FRAMES_ATTACK) && (level.time > self->owner->monsterinfo.attack_finished)) {
+            if (self->owner->client->weapon_mode == 1)
+                G_RunFrames(self, TANK_FRAMES_START_PUNCH, TANK_FRAMES_END_PUNCH, false, false);
+            else if (self->owner->client->weapon_mode == 2)
+                G_RunFrames(self, TANK_FRAMES_START_BULLET, TANK_FRAMES_END_BULLET, false, false);
+            else if (self->owner->client->weapon_mode == 3) {
+                if (self->s.frame != TANK_FRAMES_BLASTER_END)
+                    G_RunFrames(self, TANK_FRAMES_BLASTER_START, TANK_FRAMES_BLASTER_END, false, false);
+                else
+                    self->s.frame = 65; // cycle from this frame forward
+            } else
+                G_RunFrames(self, TANK_FRAMES_START_ROCKET, TANK_FRAMES_END_ROCKET, false, false);
         } else
-            G_RunFrames(self, TANK_FRAMES_START_ROCKET, TANK_FRAMES_END_ROCKET, false, false);
-    } else
-        p_tank_idle(self);
+            p_tank_idle(self);
+    }
 
     p_tank_attack(self);
 
