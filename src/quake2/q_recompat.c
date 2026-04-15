@@ -11,13 +11,13 @@
 #include "g_local.h"
 
 
-void vrx_repro_shim(game_import_t *gi);
+void vrx_repro_shim(game_import_t *_gi);
 
 repro_import_t gire;
 
-void vrx_repro_getgameapi(repro_import_t *pr, game_import_t *gi) {
+void vrx_repro_getgameapi(const repro_import_t *pr, game_import_t *_gi) {
     memcpy(&gire, pr, sizeof(repro_import_t));
-    vrx_repro_shim(gi);
+    vrx_repro_shim(_gi);
 }
 
 #define VA_PRELUDE(x) va_list argptr;\
@@ -30,7 +30,7 @@ void vrx_repro_getgameapi(repro_import_t *pr, game_import_t *gi) {
     _##x[len]='\0';\
     va_end(argptr);
 
-void	shim_bprintf (int printlevel, const char *fmt, ...) {
+void	shim_bprintf (const int printlevel, const char *fmt, ...) {
     VA_PRELUDE(msg)
     gire.Loc_Print(nullptr, printlevel | PRINT_BROADCAST, _msg, nullptr, 0);
 }
@@ -39,7 +39,7 @@ void	shim_dprintf (const char *fmt, ...) {
 	VA_PRELUDE(msg)
     gire.Com_Print(_msg);
 }
-void	shim_cprintf (const edict_t *ent, int printlevel, const char *fmt, ...) {
+void	shim_cprintf (const edict_t *ent, const int printlevel, const char *fmt, ...) {
     VA_PRELUDE(msg)
 	gire.Loc_Print(ent, printlevel, _msg, nullptr, 0);
     // gire.Client_Print(ent, printlevel, _msg);
@@ -76,7 +76,7 @@ void repro_read_game_json(const char* json) { /* stub */ }
 char* repro_write_level_json(bool autosave, size_t *out_size) { return nullptr; }
 void repro_read_level_json(const char* json) {}
 
-bool IsSlotIgnored(edict_t *slot, edict_t **ignore, size_t num_ignore)
+bool IsSlotIgnored(const edict_t *slot, edict_t **ignore, const size_t num_ignore)
 {
 	for (size_t i = 0; i < num_ignore; i++)
 		if (slot == ignore[i])
@@ -85,7 +85,7 @@ bool IsSlotIgnored(edict_t *slot, edict_t **ignore, size_t num_ignore)
 	return false;
 }
 
-edict_t *ClientChooseSlot_Any(edict_t **ignore, size_t num_ignore)
+edict_t *ClientChooseSlot_Any(edict_t **ignore, const size_t num_ignore)
 {
 	for (size_t i = 0; i < game.maxclients; i++)
 		if (!IsSlotIgnored(globals.edicts + i + 1, ignore, num_ignore) && !game.clients[i].pers.connected)
@@ -213,7 +213,7 @@ edict_t *ClientChooseSlot_Any(edict_t **ignore, size_t num_ignore)
 // }
 
 
-edict_t *repro_choose_client_slot(const char *userinfo, const char *social_id, bool isBot, edict_t **ignore, size_t num_ignore, bool cinematic)
+edict_t *repro_choose_client_slot(const char *userinfo, const char *social_id, bool isBot, edict_t **ignore, const size_t num_ignore, bool cinematic)
 {
 	// coop and non-bots is the only thing that we need to do special behavior on
 	// az: no coop supported yet
@@ -263,7 +263,7 @@ bool repro_visible_to_player(edict_t* ent, edict_t* player)
 
 
 // az: compared to og kex, we move this to levels
-const shadow_light_data_t *repro_get_shadow_light_data(int32_t entity_number)
+const shadow_light_data_t *repro_get_shadow_light_data(const int32_t entity_number)
 {
 	for (int32_t i = 0; i < level.shadow_lights.count; i++)
 	{
@@ -274,7 +274,7 @@ const shadow_light_data_t *repro_get_shadow_light_data(int32_t entity_number)
 	return nullptr;
 }
 
-int shim_boxedicts(vec3_t mins, vec3_t maxs, edict_t **list, size_t maxcount, enum solidity_area_t areatype) {
+int shim_boxedicts(vec3_t mins, vec3_t maxs, edict_t **list, const int32_t maxcount, const enum solidity_area_t areatype) {
 	return gire.BoxEdicts(mins, maxs, list, maxcount, areatype, nullptr, nullptr);
 }
 
@@ -286,64 +286,81 @@ qboolean shim_inPHS(vec3_t p1, vec3_t p2) {
 	return gire.inPHS(p1, p2, false);
 }
 
-void vrx_repro_shim(game_import_t *gi) {
-    gi->bprintf = shim_bprintf;
-    gi->dprintf = shim_dprintf;
-    gi->cprintf = shim_cprintf;
-    gi->centerprintf = shim_centerprintf;
-    gi->sound = gire.sound;
-    gi->positioned_sound = gire.positioned_sound;
+void shim_SetAreaPortalState(const int portalnum, const int state) {
+	gire.SetAreaPortalState(portalnum, state);
+}
 
-    gi->configstring = gire.configstring;
+int shim_AreasConnected(const int area1, const int area2) {
+	return gire.AreasConnected(area1, area2);
+}
 
-    gi->error = shim_error;
+void shim_multicast(vec3_t origin, const multicast_t to) {
+	gire.multicast(origin, to, false);
+}
 
-    gi->modelindex = gire.modelindex;
-    gi->soundindex = gire.soundindex;
-    gi->imageindex = gire.imageindex;
+void shim_unicast(edict_t* origin, const qboolean reliable) {
+	static int32_t key = 1;
+	gire.unicast(origin, reliable, key++);
+}
 
-    gi->setmodel = gire.setmodel;
+void vrx_repro_shim(game_import_t *_gi) {
+    _gi->bprintf = shim_bprintf;
+    _gi->dprintf = shim_dprintf;
+    _gi->cprintf = shim_cprintf;
+    _gi->centerprintf = shim_centerprintf;
+    _gi->sound = gire.sound;
+    _gi->positioned_sound = gire.positioned_sound;
 
-    gi->trace = gire.trace;
-    gi->pointcontents = gire.pointcontents;
-    gi->inPVS = shim_inPVS;
-    gi->inPHS = shim_inPHS;
-    gi->SetAreaPortalState = gire.SetAreaPortalState;
-    gi->AreasConnected = gire.AreasConnected;
+    _gi->configstring = gire.configstring;
 
-    gi->linkentity = gire.linkentity;
-    gi->unlinkentity = gire.unlinkentity;
-    gi->BoxEdicts = shim_boxedicts;
+    _gi->error = shim_error;
 
-    gi->Pmove = Pmove;
+    _gi->modelindex = gire.modelindex;
+    _gi->soundindex = gire.soundindex;
+    _gi->imageindex = gire.imageindex;
 
-    gi->multicast = gire.multicast;
-    gi->unicast = gire.unicast;
+    _gi->setmodel = gire.setmodel;
 
-    gi->WriteChar = gire.WriteChar;
-    gi->WriteByte = gire.WriteByte;
-    gi->WriteShort = gire.WriteShort;
-    gi->WriteLong = gire.WriteLong;
-    gi->WriteFloat = gire.WriteFloat;
-    gi->WriteString = gire.WriteString;
-    gi->WritePosition = gire.WritePosition;
-    gi->WriteDir = gire.WriteDir;
-    gi->WriteAngle = gire.WriteAngle;
+    _gi->trace = gire.trace;
+    _gi->pointcontents = gire.pointcontents;
+    _gi->inPVS = shim_inPVS;
+    _gi->inPHS = shim_inPHS;
+    _gi->SetAreaPortalState = shim_SetAreaPortalState;
+    _gi->AreasConnected = shim_AreasConnected;
 
-    gi->TagMalloc = gire.TagMalloc;
-    gi->TagFree = gire.TagFree;
-    gi->FreeTags = gire.FreeTags;
+    _gi->linkentity = gire.linkentity;
+    _gi->unlinkentity = gire.unlinkentity;
+    _gi->BoxEdicts = shim_boxedicts;
 
-    gi->cvar = gire.cvar;
-    gi->cvar_set = gire.cvar_set;
-    gi->cvar_forceset = gire.cvar_forceset;
+    _gi->Pmove = Pmove;
 
-    gi->argc = gire.argc;
-    gi->argv = gire.argv;
-    gi->args = gire.args;
+    _gi->multicast = shim_multicast;
+    _gi->unicast = shim_unicast;
 
-    gi->AddCommandString = gire.AddCommandString;
-    gi->DebugGraph = gire.DebugGraph;
+    _gi->WriteChar = gire.WriteChar;
+    _gi->WriteByte = gire.WriteByte;
+    _gi->WriteShort = gire.WriteShort;
+    _gi->WriteLong = gire.WriteLong;
+    _gi->WriteFloat = gire.WriteFloat;
+    _gi->WriteString = gire.WriteString;
+    _gi->WritePosition = gire.WritePosition;
+    _gi->WriteDir = gire.WriteDir;
+    _gi->WriteAngle = gire.WriteAngle;
+
+    _gi->TagMalloc = gire.TagMalloc;
+    _gi->TagFree = gire.TagFree;
+    _gi->FreeTags = gire.FreeTags;
+
+    _gi->cvar = gire.cvar;
+    _gi->cvar_set = gire.cvar_set;
+    _gi->cvar_forceset = gire.cvar_forceset;
+
+    _gi->argc = gire.argc;
+    _gi->argv = gire.argv;
+    _gi->args = gire.args;
+
+    _gi->AddCommandString = gire.AddCommandString;
+    _gi->DebugGraph = gire.DebugGraph;
 }
 
 

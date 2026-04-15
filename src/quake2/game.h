@@ -101,7 +101,7 @@ typedef struct
 	void	(*cprintf) (const edict_t *ent, int printlevel, const char *fmt, ...);
 	void	(*centerprintf) (const edict_t *ent,  const char *fmt, ...);
 	void	(*sound) (const edict_t *ent, enum soundchan_t channel, int soundindex, float volume, float attenuation, float timeofs);
-	void	(*positioned_sound) (vec3_t origin, edict_t *ent, int channel, int soundindex, float volume, float attenuation, float timeofs);
+	void	(*positioned_sound) (vec3_t origin, edict_t *ent, enum soundchan_t channel, int soundindex, float volume, float attenuation, float timeofs);
 
 	// config strings hold all the index strings, the lightstyles,
 	// and misc data like the sky definition and cdtrack.
@@ -109,7 +109,7 @@ typedef struct
 	// they connect, and changes are sent to all connected clients.
 	void	(*configstring) (int num, const char *string);
 
-	void	(*error) (char *fmt, ...);
+	void	(*error) (const char *fmt, ...);
 
 	// new names can only be added during spawning
 	// existing names can be looked up at any time
@@ -120,8 +120,8 @@ typedef struct
 	void	(*setmodel) (edict_t *ent, const char *name);
 
 	// collision detection
-	trace_t	(*trace) (vec3_t start, const vec3_t mins, const vec3_t maxs, vec3_t end, const edict_t *passent, int contentmask);
-	int		(*pointcontents) (vec3_t point);
+	trace_t	(*trace) (const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, const edict_t *passent, enum contents_t contentmask);
+	enum contents_t		(*pointcontents) (vec3_t point);
 	qboolean	(*inPVS) (vec3_t p1, vec3_t p2);
 	qboolean	(*inPHS) (vec3_t p1, vec3_t p2);
 	void		(*SetAreaPortalState) (int portalnum, qboolean open);
@@ -132,7 +132,7 @@ typedef struct
 	// solidity changes, it must be relinked.
 	void	(*linkentity) (edict_t *ent);
 	void	(*unlinkentity) (edict_t *ent);		// call before removing an interactive edict
-	int		(*BoxEdicts) (vec3_t mins, vec3_t maxs, edict_t **list,	int maxcount, int areatype);
+	int		(*BoxEdicts) (vec3_t mins, vec3_t maxs, edict_t **list,	int32_t maxcount, enum solidity_area_t areatype);
 	void	(*Pmove) (pmove_t *pmove);		// player movement code common with client prediction
 
 	// network messaging

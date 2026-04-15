@@ -173,7 +173,7 @@ typedef struct repro_import_s
     void (*setmodel)(edict_t *ent, const char *name);
 
     // collision detection
-    trace_t (*trace)(vec3_t start, vec3_t* mins, vec3_t* maxs, vec3_t end, edict_t *passent, enum contents_t contentmask);
+    trace_t (*trace)(const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, const edict_t *passent, enum contents_t contentmask);
     // [Paril-KEX] clip the box against the specified entity
     trace_t (*clip)(edict_t *entity, vec3_t start, vec3_t* mins, vec3_t* maxs, vec3_t end, enum contents_t contentmask);
     enum contents_t (*pointcontents)(vec3_t point);
@@ -250,7 +250,7 @@ typedef struct repro_import_s
     bool (*GetPathToGoal)(PathRequest* request, PathInfo* info);
 
     // localization
-    void (*Loc_Print)(edict_t* ent, enum print_type_t level, char* base, char** args, size_t num_args);
+    void (*Loc_Print)(const edict_t* ent, enum print_type_t level, char* base, char** args, size_t num_args);
 
     // drawing
     void (*Draw_Line)(vec3_t start, vec3_t end, rgba_t* color, float lifeTime, bool depthTest);
@@ -374,7 +374,7 @@ typedef struct repro_export_s {
 
 extern repro_import_t gire;
 
-void vrx_repro_getgameapi(repro_import_t *pr, game_import_t *gi);
+void vrx_repro_getgameapi(const repro_import_t *pr, game_import_t *_gi);
 edict_t *repro_choose_client_slot(const char *userinfo, const char *social_id, bool isBot, edict_t **ignore, size_t num_ignore, bool cinematic);
 void *repro_get_extension(const char *name);
 void repro_prep_frame(void);
