@@ -629,8 +629,9 @@ void V_PrintSayPrefix (edict_t *speaker, edict_t *listener, char *text)
 	int groupnum;
 	char temp[2048];
 
-	if (!dedicated->value)
-		return;
+	// az: Whyyy is this here??
+	// if (!dedicated->value)
+	// 	return;
 
 	if (G_IsSpectator(speaker))
 	{

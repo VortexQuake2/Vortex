@@ -154,7 +154,7 @@ typedef struct
 	void	(*FreeTags) (int tag);
 
 	// console variable interaction
-	cvar_t	*(*cvar) (const char *var_name, const char *value, int flags);
+	cvar_t	*(*cvar) (const char *var_name, const char *value, enum cvar_flags_t flags);
 	cvar_t	*(*cvar_set) (const char *var_name, const char *value);
 	cvar_t	*(*cvar_forceset) (const char *var_name, const char *value);
 

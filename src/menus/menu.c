@@ -222,7 +222,12 @@ void menu_show(edict_t *ent)
 	}
 
 	// copy menu bg control strings to our final menu
+#ifndef VRX_REPRO
 	sprintf (finalmenu, "xv 32 yv 8 picn inventory ");
+#else
+	// force monospace font
+	sprintf (finalmenu, "mono xv 32 yv 8 picn inventory ");
+#endif
 	// get y coord of text based on the number of lines we want to create
 	// this keeps the text vertically centered on our screen
 	j = 24 + LINE_SPACING*(ceil((float)(20-ent->client->menustorage.num_of_lines) / 2));

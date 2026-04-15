@@ -191,7 +191,6 @@ DeathmatchScoreboardMessage *Improved!*
 void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 {
 	layout_t scoreboard = {0};
-	layout_pos_t cursor;
 	lva_result_t entry;
 	int i, j, k;
 	int sorted[MAX_CLIENTS];
@@ -262,10 +261,14 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 	if (time_left < 0)
 		time_left = 0;
 
-	cursor = layout_set_cursor_xy(
+	layout_pos_t cursor = layout_set_cursor_xy(
 		0, XM_CENTER,
 		16, YM_CENTER
 	);
+
+#ifdef VRX_REPRO
+	layout_add_raw_string(&scoreboard, "mono ");
+#endif
 
 	layout_apply_pos(&scoreboard, cursor);
 
@@ -625,9 +628,16 @@ void PlayerID_SetStats(edict_t *player, edict_t *target, qboolean chasecam)
 		strcat(buf, va("Chasing "));
 
 	// build the string
+#ifndef VRX_REPRO
 	strcat(buf, va("%s ", name));
 	if (team_status > 1)
 		V_SetColorText(buf);
+#else
+	if (team_status > 1)
+		strcat(buf, va("\x14%s\x15 ", name));
+	else
+		strcat(buf, va("%s ", name));
+#endif
 
 	strcat(buf, va("(%d) ", lvl));
 

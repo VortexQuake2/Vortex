@@ -3,6 +3,7 @@
 
 #ifndef TEST_RUNNER
 char *HiPrint(char *text) {
+#ifndef USE_HIGHCHARS
     int i;
     char *ReturnVal;
 
@@ -16,6 +17,18 @@ char *HiPrint(char *text) {
         if ((byte) ReturnVal[i] <= 127)
             ReturnVal[i] = (byte) ReturnVal[i] + 128;
     return ReturnVal;
+#else
+    size_t len = strlen(text);
+    char *ReturnVal = vrx_malloc(len + 3, TAG_LEVEL);
+    char *p = ReturnVal;
+    memset(ReturnVal, 0, len + 3);
+
+    // shift out
+    p = strcat(ReturnVal, "\x14");
+    p = strcat(p, text);
+    p = strcat(p, "\x15");
+    return ReturnVal;
+#endif
 }
 #else
 char* HiPrint(char* ch) {

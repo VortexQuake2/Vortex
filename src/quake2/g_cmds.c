@@ -1808,7 +1808,8 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 
 		//GHz START
 		// print to all players
-		if (dedicated->value)
+		// az: Why was this check here...?
+		//if (dedicated->value)
 		{
 			//if ((strcmp(ent->myskills.title, "") != 0) && (ent->solid != SOLID_NOT))
 				//safe_cprintf(other, PRINT_HIGH, "%s ", ent->myskills.title);

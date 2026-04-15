@@ -169,6 +169,75 @@ struct hud_data_t {
 
 };
 
+/*
+==============
+CG_DrawString
+==============
+*/
+static void CG_DrawString(int x, const int y, const int scale, const char *s, const bool alt /* false */,
+                          const bool shadow /*= true*/) {
+    while (*s) {
+        cgi.SCR_DrawChar(x, y, scale, *s ^ (alt ? 0x80 : 0), shadow);
+        x += 8 * scale;
+        s++;
+    }
+}
+
+// use the shift in/out characters to emulate the old high bit-set behavior from old cg_drawstring
+void CG_DrawString_Alt(const char* text, int x, int y, int scale, bool fontstring, bool shadow, enum text_align_t align, bool alt) {
+    const char* p = (char*)text;
+
+start:
+    if (!p || !*p) {
+        return;
+    }
+
+    const char* end;
+    if (!alt)
+        end = p + strcspn(p, "\x14");
+    else
+        end = p + strcspn(p, "\x15");
+
+    // draw the string up until the end
+    char s[end - p + 1];
+    strncpy(s, p, end - p);
+    s[end - p] = '\0';
+    if (fontstring) {
+        // breaking the string into several parts
+        cgi.SCR_DrawFontString(s, x, y, scale, alt ? &alt_color : &rgba_white, shadow, align);
+        x += cgi.SCR_MeasureFontString(s, scale).x;
+    } else {
+        char* _s = s;
+        while (*_s) {
+            // can happen sometimes!
+            if (*_s == '\x14' || * _s == '\x15') {
+                _s++;
+                continue;
+            }
+
+            // cgi.SCR_DrawChar(x, y, scale, *_s ^ (alt ? 0x80 : 0), shadow);
+            // x += 8 * scale;
+
+            // pretend-mono because it just is what it is.
+            char _s2[2] = { *_s, '\0' };
+            cgi.SCR_DrawFontString(_s2, x, y, scale, alt ? &alt_color : &rgba_white, shadow, align);
+            x += CONCHAR_WIDTH * scale; //cgi.SCR_MeasureFontString(__s, scale).x;
+            _s++;
+        }
+    }
+
+    if (*end == '\x14')
+        alt = true;
+    else if (*end == '\x15')
+        alt = false;
+
+    // if we reached
+    if (*end) {
+        p = end + 1;
+        goto start;
+    }
+}
+
 
 static struct hud_data_t hud_data[MAX_SPLIT_PLAYERS];
 
@@ -257,8 +326,11 @@ static void CG_DrawNotify(const int32_t isplit, const struct vrect_t hud_vrect, 
         if (!msg.is_active)
             break;
 
-        cgi.SCR_DrawFontString(msg.message, hud_vrect.x * scale + hud_safe.x, y, scale,
-                               msg.is_chat ? &alt_color : &rgba_white, true, LEFT);
+        // use drawstring in all cases
+        CG_DrawString(hud_vrect.x * scale + hud_safe.x, y, scale, msg.message, msg.is_chat, true);
+        // CG_DrawString_Alt(msg.message, hud_vrect.x * scale + hud_safe.x, y, scale, true, true, LEFT, false);
+        // cgi.SCR_DrawFontString(msg.message, hud_vrect.x * scale + hud_safe.x, y, scale,
+        //                        msg.is_chat ? &alt_color : &rgba_white, true, LEFT);
         y += 10 * scale;
     }
 
@@ -314,13 +386,16 @@ static int CG_DrawHUDString(const char *string, int x, int y, const int centerwi
             x = margin;
 
         if (!scr_usekfont->integer) {
-            for (int i = 0; i < width; i++) {
-                cgi.SCR_DrawChar(x, y, scale, line[i] ^ _xor, shadow);
-                x += CONCHAR_WIDTH * scale;
-            }
+            CG_DrawString_Alt(line, x, y, scale, false, true, LEFT, _xor);
+            x += width * CONCHAR_WIDTH * scale;
+            // for (int i = 0; i < width; i++) {
+            //     cgi.SCR_DrawChar(x, y, scale, line[i] ^ _xor, shadow);
+            //     x += CONCHAR_WIDTH * scale;
+            // }
         } else {
-            cgi.SCR_DrawFontString(line, x, y - font_y_offset * scale, scale, _xor ? &alt_color : &rgba_white, true,
-                                   LEFT);
+            CG_DrawString_Alt(line, x, y - font_y_offset * scale, scale, true, true, LEFT, _xor);
+            // cgi.SCR_DrawFontString(line, x, y - font_y_offset * scale, scale, _xor ? &alt_color : &rgba_white, true,
+            //                        LEFT);
             x += size.x;
         }
 
@@ -706,19 +781,6 @@ static void CG_CheckDrawCenterString(const struct player_state_t *ps, const stru
     CG_DrawCenterString(ps, hud_vrect, hud_safe, isplit, scale, &data->centers[data->center_index]);
 }
 
-/*
-==============
-CG_DrawString
-==============
-*/
-static void CG_DrawString(int x, const int y, const int scale, const char *s, const bool alt /* false */,
-                          const bool shadow /*= true*/) {
-    while (*s) {
-        cgi.SCR_DrawChar(x, y, scale, *s ^ (alt ? 0x80 : 0), shadow);
-        x += 8 * scale;
-        s++;
-    }
-}
 
 /*
 ==============
@@ -858,9 +920,20 @@ static void CG_ExecuteLayoutString(const char *s, struct vrect_t hud_vrect, stru
     int32_t if_depth = 0; // current if statement depth
     int32_t endif_depth = 0; // at this depth, toggle skip_depth
     bool skip_depth = false; // whether we're in a dead stmt or not
+    bool mono = scr_usekfont->integer;
 
     while (s) {
         token = COM_Parse(&s);
+        if (!strcmp(token, "kfont")) {
+            mono = false;
+            continue;
+        }
+
+        if (!strcmp(token, "mono")) {
+            mono = true;
+            continue;
+        }
+
         if (!strcmp(token, "xl")) {
             token = COM_Parse(&s);
             if (!skip_depth)
@@ -950,13 +1023,13 @@ static void CG_ExecuteLayoutString(const char *s, struct vrect_t hud_vrect, stru
                 int ping;
                 ping = atoi(token);
 
-                if (!scr_usekfont->integer)
+                if (mono)
                     CG_DrawString(x + 32 * scale, y, scale, cgi.CL_GetClientName(value), false, true);
                 else
                     cgi.SCR_DrawFontString(cgi.CL_GetClientName(value), x + 32 * scale, y - font_y_offset * scale,
                                            scale, &rgba_white, true, LEFT);
 
-                if (!scr_usekfont->integer)
+                if (mono)
                     CG_DrawString(x + 32 * scale, y + 10 * scale, scale, va("%d", score), true, true);
                 else
                     cgi.SCR_DrawFontString(va("%d", score), x + 32 * scale, y + (10 - font_y_offset) * scale, scale,
@@ -964,7 +1037,7 @@ static void CG_ExecuteLayoutString(const char *s, struct vrect_t hud_vrect, stru
 
                 cgi.SCR_DrawPic(x + 96 * scale, y + 10 * scale, 9 * scale, 9 * scale, "ping");
 
-                if (!scr_usekfont->integer)
+                if (mono)
                     CG_DrawString(x + 73 * scale + 32 * scale, y + 10 * scale, scale, va("%d", ping), false, true);
                 else
                     cgi.SCR_DrawFontString(va("%d", ping), x + 107 * scale, y + (10 - font_y_offset) * scale, scale,
@@ -1164,11 +1237,13 @@ static void CG_ExecuteLayoutString(const char *s, struct vrect_t hud_vrect, stru
 
                 if (index < 0 || index >= MAX_CONFIGSTRINGS)
                     cgi.Com_Error("Bad stat_string index");
-                if (!scr_usekfont->integer)
-                    CG_DrawString(x, y, scale, cgi.get_configstring(index), false, true);
+                if (mono)
+                    CG_DrawString_Alt(cgi.get_configstring(index), x, y, scale, false, true, LEFT, false);
+                    // CG_DrawString(x, y, scale, cgi.get_configstring(index), false, true);
                 else
-                    cgi.SCR_DrawFontString(cgi.get_configstring(index), x, y - font_y_offset * scale, scale,
-                                           &rgba_white, true, LEFT);
+                    CG_DrawString_Alt(cgi.get_configstring(index), x, y - font_y_offset * scale, scale, true, true, LEFT, false);
+                    // cgi.SCR_DrawFontString(cgi.get_configstring(index), x, y - font_y_offset * scale, scale,
+                    //                        &rgba_white, true, LEFT);
             }
             continue;
         }
@@ -1183,10 +1258,12 @@ static void CG_ExecuteLayoutString(const char *s, struct vrect_t hud_vrect, stru
         if (!strcmp(token, "string")) {
             token = COM_Parse(&s);
             if (!skip_depth) {
-                if (!scr_usekfont->integer)
-                    CG_DrawString(x, y, scale, token, false, true);
+                if (mono)
+                    CG_DrawString_Alt(token, x, y, scale, false, true, LEFT, false);
+                    // CG_DrawString(x, y, scale, token, false, true);
                 else
-                    cgi.SCR_DrawFontString(token, x, y - font_y_offset * scale, scale, &rgba_white, true, LEFT);
+                    CG_DrawString_Alt(token, x, y - font_y_offset * scale, scale, true, true, LEFT, false);
+                    // cgi.SCR_DrawFontString(token, x, y - font_y_offset * scale, scale, &rgba_white, true, LEFT);
             }
             continue;
         }
@@ -1201,10 +1278,12 @@ static void CG_ExecuteLayoutString(const char *s, struct vrect_t hud_vrect, stru
         if (!strcmp(token, "string2")) {
             token = COM_Parse(&s);
             if (!skip_depth) {
-                if (!scr_usekfont->integer)
-                    CG_DrawString(x, y, scale, token, true, true);
+                if (mono)
+                    CG_DrawString_Alt(token, x, y, scale, false, true, LEFT, true);
+                    // CG_DrawString(x, y, scale, token, true, true);
                 else
-                    cgi.SCR_DrawFontString(token, x, y - font_y_offset * scale, scale, &alt_color, true, LEFT);
+                    CG_DrawString_Alt(token, x, y - font_y_offset * scale, scale, true, true, LEFT, false);
+                    // cgi.SCR_DrawFontString(token, x, y - font_y_offset * scale, scale, &alt_color, true, LEFT);
             }
             continue;
         }
@@ -1284,11 +1363,13 @@ static void CG_ExecuteLayoutString(const char *s, struct vrect_t hud_vrect, stru
 
                 if (index < 0 || index >= MAX_CONFIGSTRINGS)
                     cgi.Com_Error("Bad stat_string index");
-                if (!scr_usekfont->integer)
-                    CG_DrawString(x, y, scale, cgi.Localize(cgi.get_configstring(index), nullptr, 0), false, true);
+                if (mono)
+                    CG_DrawString_Alt(cgi.Localize(cgi.get_configstring(index), nullptr, 0), x, y, scale, false, true, LEFT, false);
+                    // CG_DrawString(x, y, scale, cgi.Localize(cgi.get_configstring(index), nullptr, 0), false, true);
                 else
-                    cgi.SCR_DrawFontString(cgi.Localize(cgi.get_configstring(index), nullptr, 0), x,
-                                           y - font_y_offset * scale, scale, &rgba_white, true, LEFT);
+                    CG_DrawString_Alt(cgi.Localize(cgi.get_configstring(index), nullptr, 0), x, y - font_y_offset * scale, scale, true, true, LEFT, false);
+                    // cgi.SCR_DrawFontString(cgi.Localize(cgi.get_configstring(index), nullptr, 0), x,
+                    //                        y - font_y_offset * scale, scale, &rgba_white, true, LEFT);
             }
             continue;
         }
@@ -1308,11 +1389,13 @@ static void CG_ExecuteLayoutString(const char *s, struct vrect_t hud_vrect, stru
                 if (index < 0 || index >= MAX_CONFIGSTRINGS)
                     cgi.Com_Error("Bad stat_string index");
                 const char *s = cgi.Localize(cgi.get_configstring(index), nullptr, 0);
-                if (!scr_usekfont->integer)
-                    CG_DrawString(x - strlen(s) * CONCHAR_WIDTH * scale, y, scale, s, false, true);
+                if (mono)
+                    CG_DrawString_Alt(s, x - strlen(s) * CONCHAR_WIDTH * scale, y, scale, false, true, LEFT, false);
+                    // CG_DrawString(x - strlen(s) * CONCHAR_WIDTH * scale, y, scale, s, false, true);
                 else {
                     vec2_t size = cgi.SCR_MeasureFontString(s, scale);
-                    cgi.SCR_DrawFontString(s, x - size.x, y - font_y_offset * scale, scale, &rgba_white, true, LEFT);
+                    CG_DrawString_Alt(s, x - size.x, y - font_y_offset * scale, scale, true, true, LEFT, false);
+                    //cgi.SCR_DrawFontString(s, x - size.x, y - font_y_offset * scale, scale, &rgba_white, true, LEFT);
                 }
             }
             continue;
@@ -1402,11 +1485,13 @@ static void CG_ExecuteLayoutString(const char *s, struct vrect_t hud_vrect, stru
             }
 
             if (!skip_depth) {
-                if (!scr_usekfont->integer)
-                    CG_DrawString(x, y, scale, cgi.Localize(arg_tokens[0], arg_buffers, num_args), false, true);
+                if (mono)
+                    CG_DrawString_Alt(cgi.Localize(arg_tokens[0], arg_buffers, num_args), x, y, scale, false, true, LEFT, false);
+                    // CG_DrawString(x, y, scale, cgi.Localize(arg_tokens[0], arg_buffers, num_args), false, true);
                 else
-                    cgi.SCR_DrawFontString(cgi.Localize(arg_tokens[0], arg_buffers, num_args), x,
-                                           y - font_y_offset * scale, scale, &rgba_white, true, LEFT);
+                    CG_DrawString_Alt(cgi.Localize(arg_tokens[0], arg_buffers, num_args), x, y - font_y_offset * scale, scale, true, true, LEFT, false);
+                    // cgi.SCR_DrawFontString(cgi.Localize(arg_tokens[0], arg_buffers, num_args), x,
+                    //                        y - font_y_offset * scale, scale, &rgba_white, true, LEFT);
             }
             continue;
         }
@@ -1463,11 +1548,13 @@ static void CG_ExecuteLayoutString(const char *s, struct vrect_t hud_vrect, stru
                                 : strlen(locStr) * CONCHAR_WIDTH * scale;
                 }
 
-                if (!scr_usekfont->integer)
-                    CG_DrawString(x - xOffs, y, scale, locStr, green, true);
+                if (mono)
+                    CG_DrawString_Alt(locStr, x + xOffs, y, scale, false, true, rightAlign ? RIGHT : LEFT, green);
+                    // CG_DrawString(x - xOffs, y, scale, locStr, green, true);
                 else
-                    cgi.SCR_DrawFontString(locStr, x - xOffs, y - font_y_offset * scale, scale,
-                                           green ? &alt_color : &rgba_white, true, LEFT);
+                    CG_DrawString_Alt(locStr, x - xOffs, y - font_y_offset * scale, scale, true, true, LEFT, green);
+                    // cgi.SCR_DrawFontString(locStr, x - xOffs, y - font_y_offset * scale, scale,
+                    //                        green ? &alt_color : &rgba_white, true, LEFT);
             }
             continue;
         }
@@ -1492,7 +1579,7 @@ static void CG_ExecuteLayoutString(const char *s, struct vrect_t hud_vrect, stru
                 int xOffs = scr_usekfont->integer
                                 ? cgi.SCR_MeasureFontString(locStr, scale).x
                                 : strlen(locStr) * CONCHAR_WIDTH * scale;
-                if (!scr_usekfont->integer)
+                if (mono)
                     CG_DrawString(x - xOffs, y, scale, locStr, green, true);
                 else
                     cgi.SCR_DrawFontString(locStr, x - xOffs, y - font_y_offset * scale, scale,

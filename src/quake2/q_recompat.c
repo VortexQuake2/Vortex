@@ -32,7 +32,7 @@ void vrx_repro_getgameapi(repro_import_t *pr, game_import_t *gi) {
 
 void	shim_bprintf (int printlevel, const char *fmt, ...) {
     VA_PRELUDE(msg)
-    gire.Broadcast_Print(printlevel, _msg);
+    gire.Loc_Print(nullptr, printlevel | PRINT_BROADCAST, _msg, nullptr, 0);
 }
 
 void	shim_dprintf (const char *fmt, ...) {
@@ -41,11 +41,13 @@ void	shim_dprintf (const char *fmt, ...) {
 }
 void	shim_cprintf (const edict_t *ent, int printlevel, const char *fmt, ...) {
     VA_PRELUDE(msg)
-    gire.Client_Print(ent, printlevel, _msg);
+	gire.Loc_Print(ent, printlevel, _msg, nullptr, 0);
+    // gire.Client_Print(ent, printlevel, _msg);
 }
 void	shim_centerprintf (const edict_t *ent,  const char *fmt, ...) {
     VA_PRELUDE(msg)
-    gire.Center_Print(ent, _msg);
+	gire.Loc_Print(ent, PRINT_CENTER, _msg, nullptr, 0);
+    //gire.Center_Print(ent, _msg);
 }
 
 void shim_error(const char* fmt, ...) {
@@ -276,6 +278,14 @@ int shim_boxedicts(vec3_t mins, vec3_t maxs, edict_t **list, size_t maxcount, en
 	return gire.BoxEdicts(mins, maxs, list, maxcount, areatype, nullptr, nullptr);
 }
 
+qboolean shim_inPVS(vec3_t p1, vec3_t p2) {
+	return gire.inPVS(p1, p2, false);
+}
+
+qboolean shim_inPHS(vec3_t p1, vec3_t p2) {
+	return gire.inPHS(p1, p2, false);
+}
+
 void vrx_repro_shim(game_import_t *gi) {
     gi->bprintf = shim_bprintf;
     gi->dprintf = shim_dprintf;
@@ -296,8 +306,8 @@ void vrx_repro_shim(game_import_t *gi) {
 
     gi->trace = gire.trace;
     gi->pointcontents = gire.pointcontents;
-    gi->inPVS = gire.inPVS;
-    gi->inPHS = gire.inPHS;
+    gi->inPVS = shim_inPVS;
+    gi->inPHS = shim_inPHS;
     gi->SetAreaPortalState = gire.SetAreaPortalState;
     gi->AreasConnected = gire.AreasConnected;
 
