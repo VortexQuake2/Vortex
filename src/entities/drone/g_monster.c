@@ -461,7 +461,7 @@ void M_CheckGround (edict_t *ent)
 	point[1] = ent->s.origin[1];
 	point[2] = ent->s.origin[2] - 1;//0.25;
 
-	trace = gi.trace (ent->s.origin, ent->mins, ent->maxs, point, ent, MASK_MONSTERSOLID);
+	trace = gi.trace (ent->s.origin, ent->mins, ent->maxs, point, ent, MASK_BOTSOLIDX);
 
 	// check steepness
 	if ( trace.plane.normal[2] < 0.7 && !trace.startsolid)

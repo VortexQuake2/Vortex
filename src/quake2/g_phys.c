@@ -220,6 +220,7 @@ int SV_FlyMove (edict_t *ent, float time, int mask)
 		if (trace.allsolid)
 		{	// entity is trapped in another solid
 			VectorCopy (vec3_origin, ent->velocity);
+			gire.Draw_Bounds(ent->absmin, ent->absmax, &rgba_red, 0.1, true);
 			return 3;
 		}
 
@@ -230,8 +231,14 @@ int SV_FlyMove (edict_t *ent, float time, int mask)
 			numplanes = 0;
 		}
 
-		if (trace.fraction == 1)
-			 break;		// moved the entire distance
+		if (trace.fraction == 1) {
+			trace_t trx = gi.trace (ent->s.origin, ent->mins, ent->maxs, ent->s.origin, ent, mask);
+			if (trx.allsolid) {
+				gi.dprintf("What the fuck?");
+			}
+
+			break;		// moved the entire distance
+		}
 
 		hit = trace.ent;
 

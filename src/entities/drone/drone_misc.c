@@ -40,7 +40,7 @@ edict_t* vrx_inv_get_monster_spawn(edict_t* from);
 // Drone Lists -az
 
 /* The purpose of this is to decrease those silly G_Find calls for drones by chaining them together. */
-edict_t *DroneList[1024];
+edict_t *DroneList[MAX_EDICTS];
 int DroneCount = 0;
 
 void DroneList_Clear()

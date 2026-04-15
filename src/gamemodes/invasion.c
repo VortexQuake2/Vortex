@@ -56,6 +56,13 @@ static const int SET_TANKY_MONSTERS[] = {
 };
 const int SET_TANKY_MONSTERS_COUNT = sizeof(SET_TANKY_MONSTERS) / sizeof(int);
 
+// parasites!
+static const int SET_PARASITE_MONSTERS[] = {
+	M_PARASITE
+};
+
+const int SET_PARASITE_MONSTERS_COUNT = sizeof(SET_PARASITE_MONSTERS) / sizeof(int);
+
 qboolean vrx_inv_is_boss_wave(int wave) {
 	return wave % 5 == 0 && wave > 0;
 }
@@ -457,10 +464,11 @@ edict_t* vrx_inv_spawn_drone(edict_t* self, edict_t *spawn_point, int index)
 	VectorCopy(spawn_point->s.origin, start);
 	start[2] = spawn_point->absmax[2] + 1 + fabsf(monster->mins[2]);
 
-	const trace_t tr = gi.trace(start, monster->mins, monster->maxs, start, NULL, MASK_MONSTERSOLID);
+	const trace_t tr = gi.trace(start, monster->mins, monster->maxs, start, NULL, MASK_BOTSOLIDX);
+
 
 	// starting point is occupied
-	if (tr.fraction < 1)
+	if (tr.fraction < 1 || (tr.allsolid || tr.startsolid))
 	{
 		// is this an entity (monster) that we own?
 		if (tr.ent && tr.ent->inuse && tr.ent->activator && tr.ent->activator->inuse && (tr.ent->activator == self))
@@ -478,8 +486,8 @@ edict_t* vrx_inv_spawn_drone(edict_t* self, edict_t *spawn_point, int index)
 			{
 				//gi.dprintf("tried to make a boss and remove another ent\n");
 				// if we are trying to spawn a boss, remove the monster currently occupying this space
-				M_Remove(tr.ent, false, false);
-				G_FreeEdict(monster);
+				M_Remove(tr.ent, true, false);
+				G_FreeEdict(tr.ent);
 			}
 		}
 		else
@@ -766,7 +774,7 @@ void vrx_inv_select_monster_set(const edict_t* self, int const * * monster_set, 
 	{
 		if (random() <= 0.5)// chance to spawn special wave
 		{
-			switch (GetRandom(1, 4))
+			switch (GetRandom(1, 5))
 			{
 			case 1:
 				*default_monster_set = SET_FLYING_MONSTERS;
@@ -787,6 +795,11 @@ void vrx_inv_select_monster_set(const edict_t* self, int const * * monster_set, 
 				*default_monster_set = SET_TANKY_MONSTERS;
 				*default_monster_set_count = SET_TANKY_MONSTERS_COUNT;
 				gi.bprintf(PRINT_HIGH, "The heavyweights are coming for your base!\n");
+				break;
+			case 5:
+				*default_monster_set = SET_PARASITE_MONSTERS;
+				*default_monster_set_count = SET_PARASITE_MONSTERS_COUNT;
+				gi.bprintf(PRINT_HIGH, "Yay! The puppies are here!\n");
 				break;
 			}
 		}
@@ -1230,7 +1243,7 @@ bool validate_invasion_point(edict_t * self) {
 	VectorCopy(self->s.origin, start);
 	start[2] += mins[2] + 1;
 
-	trace_t tr = gi.trace(self->s.origin, mins, maxs, self->s.origin, nullptr, MASK_MONSTERSOLID);
+	trace_t tr = gi.trace(self->s.origin, mins, maxs, self->s.origin, nullptr, MASK_BOTSOLIDX);
 
 	if (tr.fraction == 1.0)
 		return true;

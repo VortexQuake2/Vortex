@@ -1,5 +1,7 @@
 // m_move.c -- monster movement
 
+#include <pthread.h>
+
 #include "g_local.h"
 
 
@@ -1368,6 +1370,12 @@ void M_MoveToPosition(edict_t* ent, vec3_t pos, float dist, qboolean stop_when_c
 
 		// record current position for comparison
 		VectorCopy(ent->s.origin, ent->monsterinfo.stuck_org);
+
+		// az: stuck for 10 seconds? begone, respawn!
+		if (ent->inuse && ent->monsterinfo.stuck_frames > qf2sf(100) && !G_GetClient(ent) && invasion->value) {
+			M_Remove(ent, true, true);
+			return;
+		}
 
 		// attempt a course-correction
 		// first, we attempt to find an angle perpendicular to wall to escape, and then we try a random direction
