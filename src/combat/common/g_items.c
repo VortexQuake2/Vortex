@@ -58,6 +58,15 @@ int railgun_index;
 int _20mmcannon_index;
 int bfg10k_index;
 
+int ionripper_index;
+int phalanx_index;
+int trap_index;
+int etfrifle_index;
+int plasmabeam_index;
+int proxlauncher_index;
+int chainfist_index;
+int tesla_index;
+
 
 static int power_screen_index;
 static int power_shield_index;
@@ -3152,6 +3161,13 @@ void SetItemNames(void) {
     railgun_index = ITEM_INDEX(FindItem("Railgun"));
     _20mmcannon_index = ITEM_INDEX(FindItem("20mm Cannon"));
     bfg10k_index = ITEM_INDEX(FindItem("BFG10K"));
+
+    ionripper_index = ITEM_INDEX(FindItem("Ionripper"));
+    phalanx_index = ITEM_INDEX(FindItem("Phalanx"));
+    etfrifle_index = ITEM_INDEX(FindItem("ETF Rifle"));
+    plasmabeam_index = ITEM_INDEX(FindItem("Plasma Beam"));
+    proxlauncher_index = ITEM_INDEX(FindItem("Prox Launcher"));
+    chainfist_index = ITEM_INDEX(FindItem("Chainfist"));
 }
 
 int GetWorldAmmoCount(char *pickupName) {
