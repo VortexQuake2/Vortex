@@ -820,7 +820,9 @@ void vrx_client_think(edict_t* ent) {
 
     if (ent->client->showGridDebug > 0) 
     {
+#ifndef VRX_REPRO
         if (ent->client->showGridDebug <= 2)
+#endif
             DrawNearbyGrid(ent);
         if (ent->client->showGridDebug >= 2)
             DrawChildLinks(ent);

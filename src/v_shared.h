@@ -310,7 +310,7 @@ void vrx_inv_spawn_players(void);
 qboolean vrx_inv_add_spawn_que(edict_t *ent);
 int vrx_inv_get_num_player_spawns(void);
 void vrx_inv_award_players(void);
-edict_t* vrx_inv_closest_navi(edict_t* self); // az: only spawn ones
+edict_t* vrx_inv_closest_start_navi(edict_t* self); // az: only spawn ones
 edict_t* vrx_inv_closest_navi_any(edict_t* self); // any navi
 edict_t* vrx_inv_give_closest_player_spawn(edict_t* self);
 //************ invasion.c ************

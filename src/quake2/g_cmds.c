@@ -2527,7 +2527,7 @@ void Cmd_AdminCmd (edict_t *ent)
 
 	if (!Q_stricmp(cmd1, "closestnavi"))
     {
-        edict_t *navi = vrx_inv_closest_navi(ent);
+        edict_t *navi = vrx_inv_closest_start_navi(ent);
         if (!navi) return;
         safe_cprintf(ent, PRINT_HIGH, "%s\n", vtos(navi->s.origin));
         gi.WriteByte (svc_temp_entity);

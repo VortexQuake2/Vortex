@@ -364,8 +364,20 @@ void PM_StepSlideMove_Generic(vec3_t origin, vec3_t velocity, float frametime, c
             numplanes = 0;
         }
 
-        if (trace.fraction == 1)
+        if (trace.fraction == 1) {
+            auto tr2 = trace_func(origin, mins, maxs, origin);
+            if (tr2.allsolid) {
+                // az: this is REALLY not supposed to happen, but it does happen with M_PARASITE.
+                G_FixStuckObject_Generic(origin, mins, maxs, trace_func);
+                // gi.dprintf("tr2.allsolid\n");
+                // origin[2] += 0.01f;
+                //
+                // PM_RecordTrace(touch, &trace);
+                break;
+            }
+
             break; // moved the entire distance
+        }
 
         // save entity for contact
         PM_RecordTrace(touch, &trace);

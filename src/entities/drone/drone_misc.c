@@ -754,7 +754,7 @@ void vrx_roll_to_make_champion(edict_t *drone, int *drone_type)
 	}
 }
 
-edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type, qboolean worldspawn, qboolean link_now, int bonus_level)
+edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn_t drone_type, qboolean worldspawn, qboolean link_now, int bonus_level)
 {
 	vec3_t		forward, right, start, end, offset;
 	trace_t		tr;
@@ -834,31 +834,32 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	switch(drone_type) // not to be confused with mtype!
 	{
 	// normal monsters
-	case 1: init_drone_gunner(drone);		break;
-	case 2: init_drone_parasite(drone);		break;
-	case 3: init_drone_bitch(drone);		break;
-	case 4: init_drone_brain(drone);		break;
-	case 5: init_drone_medic(drone);		break;
-	case 6: init_drone_tank(drone);			break;
-	case 7: init_drone_mutant(drone);		break;
-	case 8: init_drone_gladiator(drone);	break;
-	case 9: init_drone_berserk(drone);		break;
-	case 10: init_drone_soldier(drone);		break;
-	case 11: init_drone_infantry(drone);	break;
-	case 12: init_drone_flyer(drone);		break;
-	case 13: init_drone_floater(drone);		break;
-	case 14: init_drone_hover(drone);		break;
-	case 15: init_drone_shambler(drone);	break;
-	case 20: init_drone_decoy(drone);		break;
-	case 21: init_skeleton(drone);			break;
-	case 22: init_golem(drone);				break;
+	case DS_GUNNER: init_drone_gunner(drone);		break;
+	case DS_PARASITE: init_drone_parasite(drone);		break;
+	case DS_BITCH: init_drone_bitch(drone);		break;
+	case DS_BRAIN: init_drone_brain(drone);		break;
+	case DS_MEDIC: init_drone_medic(drone);		break;
+	case DS_TANK: init_drone_tank(drone);			break;
+	case DS_MUTANT: init_drone_mutant(drone);		break;
+	case DS_GLADIATOR: init_drone_gladiator(drone);	break;
+	case DS_BERSERK: init_drone_berserk(drone);		break;
+	case DS_SOLDIER: init_drone_soldier(drone);		break;
+	case DS_INFANTRY: init_drone_infantry(drone);	break;
+	case DS_FLYER: init_drone_flyer(drone);		break;
+	case DS_FLOATER: init_drone_floater(drone);		break;
+	case DS_HOVER: init_drone_hover(drone);		break;
+	case DS_SHAMBLER: init_drone_shambler(drone);	break;
+	case DS_DECOY: init_drone_decoy(drone);		break;
+	case DS_SKELETON: init_skeleton(drone);			break;
+	case DS_GOLEM: init_golem(drone);				break;
 
 	// bosses
-	case 30: init_drone_commander(drone);	break;
-	case 31: init_drone_makron(drone);		break;
-	case 32: init_baron_fire(drone);		break;
-	case 33: init_drone_supertank(drone);	break;
-	case 34: init_drone_jorg(drone);		break;
+	case DS_COMMANDER: init_drone_commander(drone);	break;
+	case DS_MAKRON: init_drone_makron(drone);		break;
+	case DS_BARON_FIRE: init_baron_fire(drone);		break;
+	case DS_SUPERTANK: init_drone_supertank(drone);	break;
+	case DS_JORG: init_drone_jorg(drone);		break;
+
 	// default
 	default: init_drone_gunner(drone);		break;
 	}
@@ -1038,7 +1039,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	return drone;
 }
 
-edict_t *vrx_create_new_drone(edict_t *ent, int drone_type, qboolean worldspawn, qboolean link_now, int bonus_level)
+edict_t *vrx_create_new_drone(edict_t *ent, enum dronespawn_t drone_type, qboolean worldspawn, qboolean link_now, int bonus_level)
 {
 	return vrx_create_drone_from_ent(G_Spawn(), ent, drone_type, worldspawn, link_now, bonus_level);
 }

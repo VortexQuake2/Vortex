@@ -228,6 +228,7 @@ typedef enum {
 //#define AI_PURSUE_LOWER_GOAL	0x00020000
 #define AI_PURSUE_PLAT_GOAL		0x00040000
 #define AI_DODGE				0x00080000
+#define AI_SNAP_TO_NAVI         0x00100000
 
 //monster attack state
 #define AS_STRAIGHT				1
@@ -646,6 +647,8 @@ typedef struct {
     float teleport_delay; // time before drone can teleport again
     float trail_time;
     vec3_t last_sighting; // last known position of enemy
+    bool last_sighting_is_navi; // is the last known position of enemy a navigation point
+
     //	int			attack_state;
     int lefty;
     float idle_delay; // how often idle func is called
@@ -1467,10 +1470,148 @@ void M_MoveFrame(edict_t *self);
 
 void M_WorldEffects(edict_t *ent);
 
-edict_t *vrx_create_new_drone(edict_t *ent, int drone_type, qboolean worldspawn, qboolean link_now, int bonus_level);
+//==========================================
+//========= TYPES OF MONSTERS ==============
+//==========================================
+
+// TYPE OF MONSTER ---- HEALTH
+enum mtype_t {
+    M_SOLDIERLT = 1, // 20
+    M_SOLDIER = 2, // 30
+    M_SOLDIERSS = 3, // 40
+    M_FLIPPER = 4, // 50
+    M_FLYER = 5, // 50
+    M_INFANTRY = 6, // 100
+    M_ENFORCER = 6, // 100
+    M_INSANE = 7, // 100 - Crazy Marine
+    M_GUNNER = 8, // 175
+    M_CHICK = 9, // 175
+    M_PARASITE = 10, // 175
+    M_FLOATER = 11, // 200
+    M_HOVER = 12, // 240
+    M_BERSERK = 13, // 240
+    M_MEDIC = 14, // 300
+    M_MUTANT = 15, // 300
+    M_BRAIN = 16, // 300
+    M_GLADIATOR = 17, // 400
+    M_TANK = 18, // 750
+    M_SUPERTANK = 19, // 1500
+    M_BOSS2 = 20, // 2000
+    M_JORG = 21, // 3000
+    M_MAKRON = 22, // 3000
+    M_COMMANDER = 23,
+    M_BARON_FIRE = 24,
+    M_SHAMBLER = 25,
+    M_SKELETON = 26,
+    M_GOLEM = 27,
+    M_MINISENTRY = 100,
+    M_SENTRY = 101,
+    M_BFG_SENTRY = 102,
+    M_MYPARASITE = 103,
+    M_FORCEWALL = 104,
+    M_DECOY = 105,
+    M_RETARD = 107, // teamplay
+    M_SKULL = 108,
+    M_YINSPIRIT = 109,
+    M_YANGSPIRIT = 110,
+    M_BALANCESPIRIT = 111,
+    M_AUTOCANNON = 112,
+    M_DETECTOR = 113,
+    M_MIRROR = 114,
+    M_SUPPLYSTATION = 115,
+    M_MIRV = 116, // need this to differentiate from normal grenade
+    M_HEALER = 117,
+    M_SPIKER = 118,
+    M_OBSTACLE = 119,
+    M_BOX = 350,
+    M_GASSER = 120,
+    M_SPIKEBALL = 121,
+    M_COCOON = 122,
+    M_LASERPLATFORM = 123,
+    M_ALARM = 124,
+    M_LASER = 125,
+    M_PROXY = 126,
+    M_MAGMINE = 127,
+    M_SPIKE_GRENADE = 128,
+    M_HOLYGROUND = 129,
+    M_WORLDSPAWN = 130,
+    M_BEAMSENTRY = 131,
+    M_BARREL = 132,
+    M_ARMOR = 133,
+    M_FIREWALL = 134,
+    P_TANK = 200,
+    MORPH_MUTANT = 400,
+    MORPH_CACODEMON = 401,
+    MORPH_TANK = 402,
+    MORPH_BRAIN = 403,
+    MORPH_FLYER = 404,
+    MORPH_MEDIC = 405,
+    MORPH_BERSERK = 406,
+    BOSS_TANK = 501,
+    BOSS_MAKRON = 502,
+    INVASION_PLAYERSPAWN = 700,
+    INVASION_NAVI = 701,
+    INVASION_MONSTERSPAWN = 702,
+    PLAYER_NAVI = 703,
+    INVASION_DEFENDERSPAWN = 704,
+    CTF_PLAYERSPAWN = 705,
+    TBI_PLAYERSPAWN = 706, // Team Based Invasion PlayerSpawn.
+    HW_FLAG = 707,
+    M_COMBAT_POINT = 800, // temporary entity for monster navigation
+    M_LIGHTNINGSTORM = 801, // used by bot AI to ID lightning storm for hazard avoidance
+    FUNC_DOOR = 900,
+    //4.1 Archer
+    TOTEM_FIRE = 605,
+    TOTEM_WATER = 606,
+    TOTEM_AIR = 607,
+    TOTEM_EARTH = 608,
+    TOTEM_NATURE = 609,
+    TOTEM_DARKNESS = 610,
+
+    AURA_HOLYFREEZE = 201,
+    AURA_SALVATION = 202,
+    AURA_HOLYSHOCK = 203,
+    AURA_MANASHIELD = 204,
+    AURA_THORNS = 205,
+    CURSE_FROZEN = 301,
+    CURSE_BURN = 302,
+    CURSE_BOMBS = 303,
+    CURSE_PLAGUE = 304,
+    BLEEDING = 305,
+    POISON = 306,
+};
+
+enum dronespawn_t {
+    DS_GUNNER = 1,
+    DS_PARASITE = 2,
+    DS_BITCH = 3,
+    DS_BRAIN = 4,
+    DS_MEDIC = 5,
+    DS_TANK = 6,
+    DS_MUTANT = 7,
+    DS_GLADIATOR = 8,
+    DS_BERSERK = 9,
+    DS_SOLDIER = 10,
+    DS_INFANTRY = 11,
+    DS_FLYER = 12,
+    DS_FLOATER = 13,
+    DS_HOVER = 14,
+    DS_SHAMBLER = 15,
+    DS_DECOY = 20,
+    DS_SKELETON = 21,
+    DS_GOLEM = 22,
+    DS_COMMANDER = 30,
+    DS_MAKRON = 31,
+    DS_BARON_FIRE = 32,
+    DS_SUPERTANK = 33,
+    DS_JORG = 34,
+
+};
+
+edict_t *vrx_create_new_drone(edict_t *ent, enum dronespawn_t drone_type, qboolean worldspawn, qboolean link_now, int bonus_level);
 
 edict_t *
-vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type, qboolean worldspawn, qboolean link_now,
+vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn_t drone_type, qboolean worldspawn, qboolean link_now,
                           int bonus_level);
 
 //
@@ -1731,116 +1872,7 @@ void DisableChaseCam(edict_t *ent); // az
 #define ANIM_REVERSE	6
 // ### Hentai ### END
 
-//==========================================
-//========= TYPES OF MONSTERS ==============
-//==========================================
 
-// TYPE OF MONSTER ---- HEALTH
-enum mtype_t {
-    M_SOLDIERLT = 1, // 20
-    M_SOLDIER = 2, // 30
-    M_SOLDIERSS = 3, // 40
-    M_FLIPPER = 4, // 50
-    M_FLYER = 5, // 50
-    M_INFANTRY = 6, // 100
-    M_ENFORCER = 6, // 100
-    M_INSANE = 7, // 100 - Crazy Marine
-    M_GUNNER = 8, // 175
-    M_CHICK = 9, // 175
-    M_PARASITE = 10, // 175
-    M_FLOATER = 11, // 200
-    M_HOVER = 12, // 240
-    M_BERSERK = 13, // 240
-    M_MEDIC = 14, // 300
-    M_MUTANT = 15, // 300
-    M_BRAIN = 16, // 300
-    M_GLADIATOR = 17, // 400
-    M_TANK = 18, // 750
-    M_SUPERTANK = 19, // 1500
-    M_BOSS2 = 20, // 2000
-    M_JORG = 21, // 3000
-    M_MAKRON = 22, // 3000
-    M_COMMANDER = 23,
-    M_BARON_FIRE = 24,
-    M_SHAMBLER = 25,
-    M_SKELETON = 26,
-    M_GOLEM = 27,
-    M_MINISENTRY = 100,
-    M_SENTRY = 101,
-    M_BFG_SENTRY = 102,
-    M_MYPARASITE = 103,
-    M_FORCEWALL = 104,
-    M_DECOY = 105,
-    M_RETARD = 107, // teamplay
-    M_SKULL = 108,
-    M_YINSPIRIT = 109,
-    M_YANGSPIRIT = 110,
-    M_BALANCESPIRIT = 111,
-    M_AUTOCANNON = 112,
-    M_DETECTOR = 113,
-    M_MIRROR = 114,
-    M_SUPPLYSTATION = 115,
-    M_MIRV = 116, // need this to differentiate from normal grenade
-    M_HEALER = 117,
-    M_SPIKER = 118,
-    M_OBSTACLE = 119,
-    M_BOX = 350,
-    M_GASSER = 120,
-    M_SPIKEBALL = 121,
-    M_COCOON = 122,
-    M_LASERPLATFORM = 123,
-    M_ALARM = 124,
-    M_LASER = 125,
-    M_PROXY = 126,
-    M_MAGMINE = 127,
-    M_SPIKE_GRENADE = 128,
-    M_HOLYGROUND = 129,
-    M_WORLDSPAWN = 130,
-    M_BEAMSENTRY = 131,
-    M_BARREL = 132,
-    M_ARMOR = 133,
-    M_FIREWALL = 134,
-    P_TANK = 200,
-    MORPH_MUTANT = 400,
-    MORPH_CACODEMON = 401,
-    MORPH_TANK = 402,
-    MORPH_BRAIN = 403,
-    MORPH_FLYER = 404,
-    MORPH_MEDIC = 405,
-    MORPH_BERSERK = 406,
-    BOSS_TANK = 501,
-    BOSS_MAKRON = 502,
-    INVASION_PLAYERSPAWN = 700,
-    INVASION_NAVI = 701,
-    INVASION_MONSTERSPAWN = 702,
-    PLAYER_NAVI = 703,
-    INVASION_DEFENDERSPAWN = 704,
-    CTF_PLAYERSPAWN = 705,
-    TBI_PLAYERSPAWN = 706, // Team Based Invasion PlayerSpawn.
-    HW_FLAG = 707,
-    M_COMBAT_POINT = 800, // temporary entity for monster navigation
-    M_LIGHTNINGSTORM = 801, // used by bot AI to ID lightning storm for hazard avoidance
-    FUNC_DOOR = 900,
-    //4.1 Archer
-    TOTEM_FIRE = 605,
-    TOTEM_WATER = 606,
-    TOTEM_AIR = 607,
-    TOTEM_EARTH = 608,
-    TOTEM_NATURE = 609,
-    TOTEM_DARKNESS = 610,
-
-    AURA_HOLYFREEZE = 201,
-    AURA_SALVATION = 202,
-    AURA_HOLYSHOCK = 203,
-    AURA_MANASHIELD = 204,
-    AURA_THORNS = 205,
-    CURSE_FROZEN = 301,
-    CURSE_BURN = 302,
-    CURSE_BOMBS = 303,
-    CURSE_PLAGUE = 304,
-    BLEEDING = 305,
-    POISON = 306,
-};
 
 // client data that stays across multiple level loads
 typedef struct {

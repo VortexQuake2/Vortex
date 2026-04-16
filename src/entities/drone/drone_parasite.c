@@ -628,7 +628,7 @@ void init_drone_parasite (edict_t *self)
 
 	self->s.modelindex = gi.modelindex ("models/monsters/parasite/tris.md2");
 	VectorSet (self->mins, -16, -16, -24);
-	VectorSet (self->maxs, 16, 16, 0);
+	VectorSet (self->maxs, 16, 16, 24);
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 
@@ -647,7 +647,7 @@ void init_drone_parasite (edict_t *self)
 	self->monsterinfo.stand = myparasite_stand;
 	self->monsterinfo.walk = parasite_start_walk;
 	self->monsterinfo.jumpdn = 512;
-	self->monsterinfo.jumpup = 64;
+	self->monsterinfo.jumpup = 32;
 	self->monsterinfo.run = myparasite_start_run;
 	self->monsterinfo.attack = myparasite_attack1;
 	self->monsterinfo.sight = myparasite_sight;
