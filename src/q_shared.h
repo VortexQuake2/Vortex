@@ -1492,8 +1492,13 @@ enum soundchan_t : uint8_t {
 ==========================================================
 */
 
+#ifndef VRX_REPRO
 #define	ANGLE2SHORT(x)	((int)((x)*65536/360) & 65535)
 #define	SHORT2ANGLE(x)	((x)*(360.0/65536))
+#else
+#define	ANGLE2SHORT(x)	(x)
+#define	SHORT2ANGLE(x)	(x)
+#endif
 
 
 //

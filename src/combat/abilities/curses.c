@@ -1363,7 +1363,7 @@ void CursedPlayer (edict_t *ent)
 	else if ((forward[ROLL] < 0) && (forward[ROLL] < -CURSE_MAX_ROLL))
 		forward[ROLL] = -CURSE_MAX_ROLL;
 
-	// set view angles 
+	// set view angles
 	for (i = 0 ; i < 3 ; i++)
 		ent->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(forward[i]-ent->client->resp.cmd_angles[i]);
 	VectorCopy(forward, ent->client->ps.viewangles);

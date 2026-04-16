@@ -2218,15 +2218,9 @@ void BOT_DMclass_RunFrame( edict_t *self )
 		BOT_DMclass_Wander( self, &ucmd );
 
 	//set up for pmove
-#ifndef VRX_REPRO
 	ucmd.angles[PITCH] = ANGLE2SHORT(self->s.angles[PITCH]);
 	ucmd.angles[YAW] = ANGLE2SHORT(self->s.angles[YAW]);
 	ucmd.angles[ROLL] = ANGLE2SHORT(self->s.angles[ROLL]);
-#else
-	ucmd.angles[PITCH] = (self->s.angles[PITCH]);
-	ucmd.angles[YAW] = (self->s.angles[YAW]);
-	ucmd.angles[ROLL] = (self->s.angles[ROLL]);
-#endif
 
 	// set approximate ping and show values
 	// ucmd.msec = 75 + floor (random () * 25) + 1;

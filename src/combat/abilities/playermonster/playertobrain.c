@@ -217,10 +217,6 @@ void tentacle_attack (edict_t *self)
 		&& (entdist(self, self->enemy) < BRAIN_ATTACK_RANGE))
 	{
 		//gi.dprintf("%d: trying to pull valid target\n", (int)(level.framenum));
-		tentacle_pull(self);
-	}
-	else
-	{
 		//gi.dprintf("%d: tentacle target no longer valid\n", (int)(level.framenum));
 		// reset target
 		self->enemy = NULL;

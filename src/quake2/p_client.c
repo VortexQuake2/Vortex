@@ -2610,15 +2610,9 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	pm_passent = ent;
 
 	if (ent->client->chase_target) {
-#ifndef	VRX_REPRO
 		client->resp.cmd_angles[0] = SHORT2ANGLE(ucmd->angles[0]);
 		client->resp.cmd_angles[1] = SHORT2ANGLE(ucmd->angles[1]);
 		client->resp.cmd_angles[2] = SHORT2ANGLE(ucmd->angles[2]);
-#else
-		client->resp.cmd_angles[0] = (ucmd->angles[0]);
-		client->resp.cmd_angles[1] = (ucmd->angles[1]);
-		client->resp.cmd_angles[2] = (ucmd->angles[2]);
-#endif
 	} else {
 
 		if (ent->lockon == 1 && ent->enemy)
