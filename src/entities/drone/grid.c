@@ -1248,6 +1248,8 @@ void DrawNearbyGrid(edict_t *ent) {
             // gi.dprintf("%f\n", fabs(pathnode[i][2]-start[2]));
 #ifndef VRX_REPRO
             G_Spawn_Trails(TE_BFG_LASER, pathnode[i], v);
+        }
+    }
 #else
             gire.Draw_Point(v, 2, &rgba_green, FRAMETIME, true);
         }

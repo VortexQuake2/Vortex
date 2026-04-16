@@ -1,6 +1,7 @@
 // Copyright (c) ZeniMax Media Inc.
 // Licensed under the GNU General Public License 2.0.
 
+#ifdef VRX_REPRO
 
 #include "q_shared.h"
 #include "cg_local.h"
@@ -122,3 +123,5 @@ q_export struct cgame_export_t *GetCGameAPI(struct cgame_import_t *import)
 
 	return &cglobals;
 }
+
+#endif //VRX_REPRO

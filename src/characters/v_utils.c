@@ -2510,7 +2510,9 @@ void V_NonShellEffects(edict_t *ent) {
         ent->s.effects |= EF_TAGTRAIL;
 
     if (ent->flags & FL_FLASHLIGHT) {
+#ifdef  VRX_REPRO
         ent->s.effects |= EF_FLASHLIGHT;
+#endif
     }
 
     // ********** CLIENT-SPECIFIC EFFECTS BELOW **********

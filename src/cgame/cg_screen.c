@@ -1,5 +1,8 @@
 // Copyright (c) ZeniMax Media Inc.
 // Licensed under the GNU General Public License 2.0.
+
+#ifdef VRX_REPRO
+
 #include <stddef.h>
 
 #include "cg_local.h"
@@ -1985,3 +1988,5 @@ void CG_InitScreen() {
     for (int i = 0; i < MAX_SPLIT_PLAYERS; i++)
         hud_data[i].center_index = -1;
 }
+
+#endif //VRX_REPRO

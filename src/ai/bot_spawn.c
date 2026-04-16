@@ -189,8 +189,11 @@ void BOT_SetName(edict_t *bot, char *name, char *skin, char *team)
 	Info_SetValueForKey (userinfo, "hand", "2"); // bot is center handed for now!
 	Info_SetValueForKey(userinfo, "ip", "127.0.0.1");
 
+#ifdef VRX_REPRO
 	ClientConnect (bot, userinfo, NULL, true);
-
+#else
+	ClientConnect (bot, userinfo);
+#endif
 //	ACESP_SaveBots(); // make sure to save the bots
 }
 
@@ -773,10 +776,15 @@ void BOT_SpawnBot (char *team, char *name, char *skin, char *userinfo, char *cla
 	bot->yaw_speed = 100;
 
 	// To allow bots to respawn
-	if(userinfo == NULL)
+	if(userinfo == NULL) {
 		BOT_SetName(bot, name, skin, team);
-	else
-			ClientConnect (bot, userinfo, NULL, true);
+	} else {
+		#ifdef VRX_REPRO
+		ClientConnect (bot, userinfo, NULL, true);
+		#else
+		ClientConnect (bot, userinfo);
+		#endif
+	}
 	bot->ai.is_bot = true;//GHz: because this gets set to 'false' in ClientConnect
 	G_InitEdict (bot);
 	InitClientResp (bot->client);

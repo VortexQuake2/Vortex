@@ -324,7 +324,7 @@ static void shambler_lightning_update(edict_t* self)
 	gi.WriteShort(self - g_edicts);
 	gi.WriteShort(0);
 #else
-	gi.WriteByte(TE_MONSTER_HEATBEAM)
+	gi.WriteByte(TE_MONSTER_HEATBEAM);
 	gi.WriteShort(self - g_edicts);
 #endif
 	gi.WritePosition(left_pos);

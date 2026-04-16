@@ -189,7 +189,11 @@ cvar_t *generalabmode;
 
 void SpawnEntities(const char *mapname, const char *entities, const char *spawnpoint);
 void ClientThink(edict_t *ent, usercmd_t *cmd);
+#ifdef VRX_REPRO
 bool ClientConnect(edict_t *ent, char *userinfo, const char *social_id, bool is_bot);
+#else
+qboolean ClientConnect(edict_t *ent, char *userinfo);
+#endif
 void ClientDisconnect(edict_t *ent);
 void ClientBegin(edict_t *ent);
 void ClientCommand(edict_t *ent);

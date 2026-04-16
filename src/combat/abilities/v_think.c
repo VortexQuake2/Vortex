@@ -344,6 +344,7 @@ float V_ModifyMovement(edict_t* ent, usercmd_t* ucmd, que_t* curse) {// assault 
 	}
 	//K03 End
 
+#ifdef	VRX_REPRO
 	if (ent->mtype == MORPH_CACODEMON)
 		ent->client->ps.pmove.pm_flags |= PMF_CACODEMON;
 	else
@@ -353,6 +354,7 @@ float V_ModifyMovement(edict_t* ent, usercmd_t* ucmd, que_t* curse) {// assault 
 		ent->client->ps.pmove.pm_flags |= PMF_NOCROUCH;
 	else
 		ent->client->ps.pmove.pm_flags &= ~PMF_NOCROUCH;
+#endif
 
 	return vel_modification;
 }
