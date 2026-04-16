@@ -463,7 +463,7 @@ Parses an edict out of the given string, returning the new position
 ed should be a properly initialized empty edict.
 ====================
 */
-char *ED_ParseEdict (char *data, edict_t *ent)
+const char *ED_ParseEdict (const char *data, edict_t *ent)
 {
 	qboolean	init;
 	char		keyname[256];
@@ -683,7 +683,7 @@ void DroneList_Clear();
 extern edict_t* g_freeEdictsH;
 extern edict_t* g_freeEdictsT;
 
-void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
+void SpawnEntities (char *mapname, const char *entities, char *spawnpoint)
 {
 	edict_t		*ent;
 	int			inhibit;

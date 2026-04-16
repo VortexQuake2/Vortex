@@ -380,7 +380,7 @@ char *va(const char *format, ...);
 
 #define MAX_WHEEL_ITEMS 32
 
-char *Info_ValueForKey(char *s, char *key);
+char *Info_ValueForKey(const char *s, char *key);
 
 void Info_RemoveKey(char *s, const char *key);
 
@@ -748,6 +748,14 @@ typedef struct usercmd_s {
 #endif
 } usercmd_t;
 
+enum water_level_t : uint8_t
+{
+    WATER_NONE,
+    WATER_FEET,
+    WATER_WAIST,
+    WATER_UNDER
+};
+
 bool cmd_jumping(usercmd_t *cmd);
 bool cmd_ducking(usercmd_t *cmd);
 bool cmd_standing(usercmd_t *cmd);
@@ -792,7 +800,7 @@ typedef struct {
 #endif
 
     enum contents_t watertype;
-    int waterlevel;
+    enum water_level_t waterlevel;
 
 #ifndef VRX_REPRO
     // callbacks to test the world
@@ -803,22 +811,22 @@ typedef struct {
 
     // clip against world & entities
     trace_t (*trace)(
-        vec3_t start,
-        const vec3_t *mins,
-        const vec3_t *maxs,
-        vec3_t end,
+        const vec3_t start,
+        const vec3_t mins,
+        const vec3_t maxs,
+        const vec3_t end,
         const struct edict_s *passent,
         enum contents_t contentmask);
 
     // [Paril-KEX] clip against world only
     trace_t (*clip)(
-        vec3_t start,
-        vec3_t *mins,
-        vec3_t *maxs,
-        vec3_t end,
+        const vec3_t start,
+        const vec3_t mins,
+        const vec3_t maxs,
+        const vec3_t end,
         enum contents_t contentmask);
 
-    int (*pointcontents)(vec3_t point);
+    enum contents_t (*pointcontents)(vec3_t point);
     vec3_t viewoffset;
 
     vec4_t screen_blend;

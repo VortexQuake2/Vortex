@@ -187,10 +187,9 @@ cvar_t* adminctrl;
 cvar_t *generalabmode;
 //K03 End
 
-void SpawnEntities(char *mapname, char *entities, char *spawnpoint);
+void SpawnEntities(const char *mapname, const char *entities, const char *spawnpoint);
 void ClientThink(edict_t *ent, usercmd_t *cmd);
 bool ClientConnect(edict_t *ent, char *userinfo, const char *social_id, bool is_bot);
-void ClientUserinfoChanged(edict_t *ent, char *userinfo);
 void ClientDisconnect(edict_t *ent);
 void ClientBegin(edict_t *ent);
 void ClientCommand(edict_t *ent);

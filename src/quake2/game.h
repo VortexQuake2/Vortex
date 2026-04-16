@@ -12,14 +12,6 @@
 
 #define q_countof(a) (sizeof(a) / sizeof((a)[0]))
 
-enum water_level_t : uint8_t
-{
-	WATER_NONE,
-	WATER_FEET,
-	WATER_WAIST,
-	WATER_UNDER
-};
-
 // edict->svflags
 enum svflags_t : uint32_t
 {

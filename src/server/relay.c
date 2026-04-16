@@ -21,8 +21,10 @@
 
 #else
 #include <winsock2.h>
-#include <WS2tcpip.h>
+#include <ws2tcpip.h>
+#ifndef MINGW
 #pragma comment(lib, "Ws2_32.lib")
+#endif
 #endif
 
 #include <msgpack.h>

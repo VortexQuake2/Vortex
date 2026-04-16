@@ -728,7 +728,7 @@ void drone_grow (edict_t *self)
 	self->nextthink = level.time + 0.1;
 }
 
-void vrx_roll_to_make_champion(edict_t *drone, int *drone_type)
+void vrx_roll_to_make_champion(edict_t *drone, enum dronespawn_t *drone_type)
 {
 	if ((ffa->value || invasion->value == 2 || (pvm->value && !invasion->value)) && drone->monsterinfo.level >= 10 && GetRandom(1, 100) <= 10)//10% chance for a champion to spawn
 	{

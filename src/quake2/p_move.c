@@ -1317,13 +1317,13 @@ void PM_SetDimensions() {
 static qboolean PM_AboveWater() {
     vec3_t below;
     VectorSet(below, pml.origin[0], pml.origin[1], pml.origin[2] - 8);
-    const qboolean solid_below = pm->trace((float *) pml.origin, (float *) pm->mins, (float *) pm->maxs, (float *) below,
+    const qboolean solid_below = pm->trace(pml.origin, pm->mins, pm->maxs, below,
                                       pm->player, MASK_SOLID).fraction < 1.0f;
 
     if (solid_below)
         return 0;
 
-    const qboolean water_below = pm->trace(pml.origin, &pm->mins, &pm->maxs, below, pm->player, MASK_WATER).fraction < 1.0f;
+    const qboolean water_below = pm->trace(pml.origin, pm->mins, pm->maxs, below, pm->player, MASK_WATER).fraction < 1.0f;
 
     if (water_below)
         return 1;

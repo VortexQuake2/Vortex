@@ -9,7 +9,6 @@
 #include "server/relay.h"
 
 //Function prototypes required for this .c file:
-void ClientUserinfoChanged (edict_t *ent, char *userinfo);
 void SP_misc_teleporter_dest (edict_t *ent);
 void EatCorpses (edict_t *ent);
 void RunCacodemonFrames (edict_t *ent, usercmd_t *ucmd);
@@ -2149,7 +2148,7 @@ The game can override any of the settings in place
 */
 
 void classmenu_handler (edict_t *ent, int option); // az
-void ClientUserinfoChanged (edict_t *ent, char *userinfo)
+void ClientUserinfoChanged (edict_t *ent, const char *userinfo)
 {
 	char	*s;
 	int		playernum;
@@ -2548,7 +2547,7 @@ void think_trade(edict_t *ent);
 void BlinkStrike_think(edict_t* ent);
 void V_PickUpEntity(edict_t* ent);
 
-trace_t SV_PM_Clip(const vec3_t start, const vec3_t *mins, const vec3_t *maxs, const vec3_t end, enum contents_t mask)
+trace_t SV_PM_Clip(const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, enum contents_t mask)
 {
 	return gire.clip(world, start, mins, maxs, end, mask);
 }

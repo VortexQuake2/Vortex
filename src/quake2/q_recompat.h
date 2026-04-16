@@ -175,7 +175,7 @@ typedef struct repro_import_s
     // collision detection
     trace_t (*trace)(const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, const edict_t *passent, enum contents_t contentmask);
     // [Paril-KEX] clip the box against the specified entity
-    trace_t (*clip)(edict_t *entity, vec3_t start, vec3_t* mins, vec3_t* maxs, vec3_t end, enum contents_t contentmask);
+    trace_t (*clip)(const edict_t *entity, const vec3_t start, const vec3_t mins, const vec3_t maxs, vec3_t end, enum contents_t contentmask);
     enum contents_t (*pointcontents)(vec3_t point);
 	bool (*inPVS)(vec3_t p1, vec3_t p2, bool portals);
 	bool (*inPHS)(vec3_t p1, vec3_t p2, bool portals);

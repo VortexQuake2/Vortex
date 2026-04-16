@@ -77,7 +77,7 @@ void doentityfilename(char* line, char* mapname, qboolean stuff)
 		line[i] = tolower(line[i]);
 }
 
-char *LoadEntities(char *mapname, char *entities)
+char *LoadEntities(char *mapname, const char *entities)
 {
 	char	entfilename[MAX_QPATH] = "";
 	char	*newentities;

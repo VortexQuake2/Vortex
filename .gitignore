@@ -30,3 +30,4 @@ util/settings.txt
 util/v_luasettings_*.c
 util/v_luasettings_*.h
 
+/winbuild/

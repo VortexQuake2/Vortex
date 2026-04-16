@@ -50,6 +50,11 @@ if (WIN32)
         set(CC_LIB_NAME ${GAME_NAME}x86)
     endif ()
 
+    if (MINGW)
+        # set(CC_LINK_LIBS ${CC_LINK_LIBS} ws2_32 wininet winmm)
+        add_definitions(-DMINGW)
+    endif()
+
     add_definitions(-DWIN32)
     #file (GLOB CC_PLATFORM_FILES source/Platform/windows/*)
 elseif (UNIX)
@@ -83,7 +88,7 @@ if (WIN32 AND CMAKE_C_COMPILER_ID STREQUAL "Clang")
 endif ()
 
 if (WIN32)
-    set(CC_LINK_LIBS ${CC_LINK_LIBS} Wininet Winmm Ws2_32)
+    set(CC_LINK_LIBS ${CC_LINK_LIBS} wininet winmm ws2_32)
 
     if (MSVC)
         FetchContent_Declare(
