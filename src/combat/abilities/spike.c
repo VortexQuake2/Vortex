@@ -151,5 +151,5 @@ void Cmd_Spike_f (edict_t *ent)
 		return;
 	if (ent->myskills.abilities[SPIKE].disable)
 		return;
-	SpikeAttack(ent);
+	player_fire_spike(ent);
 }

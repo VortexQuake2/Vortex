@@ -2181,6 +2181,8 @@ struct gclient_s {
 	edict_t		*blinkStrike_targ;	// used by Blink Strike - target entity for attack
 	edict_t		*pickup;			// entity we are holding/have picked up
 	edict_t		*pickup_prev;		// previously picked up entity
+
+    struct vrr_t vrr;
 };
 
 #ifdef VRX_REPRO
