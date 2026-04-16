@@ -2117,73 +2117,70 @@ struct gclient_s {
     float beamtime; //GHz
 	qboolean		fireacid;//GHz
 	float			acidtime;//GHz
-    edict_t *hook;
-    int chasecam_mode;
+	qboolean		firespike;//GHz
+	float			spiketime;//GHz
+    edict_t       *hook;
+	int				chasecam_mode;
 
-    int bfg_blend;
+	int  bfg_blend;
 
-    //K03 End
-    int weapon_mode; //GHz
-    int last_weapon_mode;
-    int refire_frames;
-    int idle_frames; // number of frames player has been standing still and not firing
-    int still_frames; // number of frames player has been standing still (used for idle kick)
-    bool lowlight;
-    float tball_delay;
-    float ability_delay;
-    float disconnect_time;
-    float rune_delay; // time when we can pick up runes again (to prevent hogging)
-    float snipertime;
-    float oldfov;
-    float oldspeed; // GHz: used for flyer for comparison (impact with object)
+	//K03 End
+	int			weapon_mode;//GHz
+	int			last_weapon_mode;
+	int			refire_frames;
+	int			idle_frames;		// number of frames player has been standing still and not firing
+	int			still_frames;		// number of frames player has been standing still (used for idle kick)
+	qboolean	lowlight;
+	float		tball_delay;
+	float		ability_delay;
+	float		disconnect_time;
+	float		rune_delay;			// time when we can pick up runes again (to prevent hogging)
+	float		snipertime;
+	float		oldfov;
+	float		oldspeed; // GHz: used for flyer for comparison (impact with object)
 
-    bool trading; // is player trading?
-    bool trade_off; // is the player blocking trades?
-    bool trade_accepted; // has player accepted trade?
-    bool trade_final; // is the player in the final trade menu?
-    edict_t *menutarget; // ent stats we are viewing with menu (ent->other is just for clients)
-    menusystem_t menustorage; // stores menu data
+	qboolean		trading;		// is player trading?
+	qboolean		trade_off;		// is the player blocking trades?
+	qboolean		trade_accepted;	// has player accepted trade?
+	qboolean		trade_final;	// is the player in the final trade menu?
+	edict_t			*menutarget;	// ent stats we are viewing with menu (ent->other is just for clients)
+	menusystem_t	menustorage;	// stores menu data
 
-    int vamp_counter; // used to track vamped health per second
-    int vamp_frames; // used for vamp delay
+	int			vamp_counter;		// used to track vamped health per second
+	int			vamp_frames;		// used for vamp delay
 
-    int lock_frames; // how many frames player's cursor has been on lock_target
-    edict_t *lock_target; // entity player has locked his cursor on
+	int			lock_frames;		// how many frames player's cursor has been on lock_target
+	edict_t		*lock_target;		// entity player has locked his cursor on
 
-    // v3.12 ally menu stuff
-    edict_t *allytarget; // player we are trying to ally with
-    bool ally_accept; // have we accepted the alliance?
-    bool allying; // is the player trying to ally with someone?
-    float ally_time; // when did we begin invitation?
+	// v3.12 ally menu stuff
+	edict_t		*allytarget;		// player we are trying to ally with
+	qboolean	ally_accept;		// have we accepted the alliance?
+	qboolean	allying;			// is the player trying to ally with someone?
+	float		ally_time;			// when did we begin invitation?
 
-    // 3.5 some abilties don't use power cubes, and instead rely on a charge
-    int charge_index; // index of ability charge we're showing
-    float charge_time; // level time the index is reset
-    float charge_regentime; // time when the ability can begin recharging
-    float menu_delay; // time before we can cycle thru next menu option (to prevent overflow!)
-    float ammo_regentime; // next ammo regen tick
-    float wormhole_time; // must exit wormhole by this time
+	// 3.5 some abilties don't use power cubes, and instead rely on a charge
+	int			charge_index;		// index of ability charge we're showing
+	float		charge_time;		// level time the index is reset
+	float		charge_regentime;	// time when the ability can begin recharging
+	float		menu_delay;			// time before we can cycle thru next menu option (to prevent overflow!)
+	float		ammo_regentime;		// next ammo regen tick
+	float		wormhole_time;		// must exit wormhole by this time
 
-    bool jump;
-    bool show_allyinfo; // displays ally info data (health/armor bars)
+	qboolean	jump;
+	qboolean	show_allyinfo;		// displays ally info data (health/armor bars)
 
-    bool waiting_to_join; // this player has indicated that they want to join the game (used for teamplay queues)
-    float waiting_time; // the exact time when the player indicated they wanted to join
-    int showGridDebug; // show grid debug information (0=off,1=grid,2=children)
-    float lastCommand; // 'double click' delay for monster commands
-    vec3_t lastPosition; // last selected position for monster command
-    edict_t *lastEnt; // last selected entity for monster command
-    bool update_chase;
-
-    struct vrr_t vrr; // variable refresh rate data
-
-
-    vec3_t oldpos; // used by Blink Strike to store position prior to teleportation
-    int tele_timeout;
-    // used by Blink Strike to store level.framenum when attack ends and player teleports (back) to oldpos
-    edict_t *blinkStrike_targ; // used by Blink Strike - target entity for attack
-    edict_t *pickup; // entity we are holding/have picked up
-    edict_t *pickup_prev; // previously picked up entity
+	qboolean	waiting_to_join;	// this player has indicated that they want to join the game (used for teamplay queues)
+	float		waiting_time;		// the exact time when the player indicated they wanted to join
+	int			showGridDebug;		// show grid debug information (0=off,1=grid,2=children)
+	float		lastCommand;		// 'double click' delay for monster commands
+	vec3_t		lastPosition;		// last selected position for monster command
+	edict_t		*lastEnt;			// last selected entity for monster command
+    qboolean update_chase;
+	vec3_t		oldpos;				// used by Blink Strike to store position prior to teleportation
+	int			tele_timeout;		// used by Blink Strike to store level.framenum when attack ends and player teleports (back) to oldpos
+	edict_t		*blinkStrike_targ;	// used by Blink Strike - target entity for attack
+	edict_t		*pickup;			// entity we are holding/have picked up
+	edict_t		*pickup_prev;		// previously picked up entity
 };
 
 #ifdef VRX_REPRO

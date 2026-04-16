@@ -899,7 +899,7 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		menu_add_line(ent, "damage and stun enemies they", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "touch. Receives synergy bonus", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "from spiker. Users power cubes.", MENU_WHITE_CENTERED);
-		menu_add_line(ent, "Command: spike", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "Command: +spike", MENU_WHITE_CENTERED);
 		return 5;
 	case ACID:
 		menu_add_line(ent, "Spits a volume of highly", MENU_WHITE_CENTERED);

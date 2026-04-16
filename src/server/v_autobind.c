@@ -12,6 +12,7 @@ const char* StuffList[] =
 	"alias +lockon lockon_on\nalias -lockon lockon_off\n",
 	"alias +beam beam_on\nalias -beam beam_off\n",
 	"alias +acid acid_on\nalias -acid acid_off\n",
+	"alias +spike spike_on\nalias -spike spike_off\n",
 	"alias +jetpack thrust on\nalias -jetpack thrust off\n",
 };
 
