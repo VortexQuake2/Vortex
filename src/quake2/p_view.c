@@ -1160,6 +1160,8 @@ void ClientEndServerFrame (edict_t *ent)
 	//
 	if (ent->client->v_angle[PITCH] > 180)
 		ent->s.angles[PITCH] = (-360 + ent->client->v_angle[PITCH])/3;
+	else if (ent->client->v_angle[PITCH] < -180)
+		ent->s.angles[PITCH] = (360 + ent->client->v_angle[PITCH])/3;
 	else
 		ent->s.angles[PITCH] = ent->client->v_angle[PITCH]/3;
 	//GHz START

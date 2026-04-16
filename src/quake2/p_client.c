@@ -2759,20 +2759,11 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		VectorCopy (pm.mins, ent->mins);
 		VectorCopy (pm.maxs, ent->maxs);
 
-		// TODO
-#ifndef VRX_REPRO
 		if (!(ent->lockon == 1 && ent->enemy)){
 			client->resp.cmd_angles[0] = SHORT2ANGLE(ucmd->angles[0]);
 			client->resp.cmd_angles[1] = SHORT2ANGLE(ucmd->angles[1]);
 			client->resp.cmd_angles[2] = SHORT2ANGLE(ucmd->angles[2]);
 		}
-#else
-		if (!(ent->lockon == 1 && ent->enemy)){
-			client->resp.cmd_angles[0] = (ucmd->angles[0]);
-			client->resp.cmd_angles[1] = (ucmd->angles[1]);
-			client->resp.cmd_angles[2] = (ucmd->angles[2]);
-		}
-#endif
 
 		//K03 Begin
 		//4.07 can't superspeed while being hurt
