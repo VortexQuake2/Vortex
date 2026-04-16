@@ -782,6 +782,16 @@ void vrx_get_monster_xp(
 ) {
     (*base_exp) = EXP_WORLD_MONSTER + getOwnLevelBaseBonus(attacker->myskills.level, EXP_PLAYER_BASE);
 
+    float pvm_mod = 1;
+
+    if (pvm->value) {
+        float bonusmod = max((level.pvm.level_bonus / 6.5f + 1), 1);
+        pvm_mod = 1.f + roundf(logf(bonusmod)*4.f) / 4.f;
+        // about 2.5x at level 20, 4x at level 100
+    }
+
+    (*base_exp) *= pvm_mod;
+
 //4.5 monster bonus flags
     if (targ->monsterinfo.bonus_flags & BF_UNIQUE_FIRE
         || targ->monsterinfo.bonus_flags & BF_UNIQUE_LIGHTNING) {
@@ -1010,7 +1020,6 @@ void vrx_process_exp(edict_t *attacker, edict_t *targ) {
 
 void vrx_death_cleanup(edict_t *attacker, edict_t *targ) {
     int lose_points = 0;
-    float level_diff;
 
     if (IsABoss(attacker)) {
         targ->myskills.streak = 0;
@@ -1078,7 +1087,7 @@ void vrx_death_cleanup(edict_t *attacker, edict_t *targ) {
     if (vrx_is_newbie_basher(targ))
         gi.bprintf(PRINT_HIGH, "%s wasted a mini-boss!\n", attacker->client->pers.netname);
 
-    level_diff = (float) (targ->myskills.level + 1) / (attacker->myskills.level + 1);
+    float level_diff = (float) (targ->myskills.level + 1) / (attacker->myskills.level + 1);
     // don't let 'em spree off players that offer no challenge!
     if (!(vrx_is_newbie_basher(attacker) && (level_diff <= 0.5))) {
         attacker->myskills.streak++;
