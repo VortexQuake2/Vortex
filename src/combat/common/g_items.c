@@ -43,6 +43,7 @@ int cell_index;
 int magslug_index;
 int trap_index;
 int tesla_index;
+int disruptor_index;
 
 //weapons
 int sword_index;
@@ -2262,6 +2263,25 @@ always owned, never in the world
                         AMMO_TESLA,
 /* precache */ "models/weapons/v_tesla2/tris.md2 weapons/teslaopen.wav weapons/hgrenb1a.wav weapons/hgrenb2a.wav models/weapons/g_tesla/tris.md2"
                 },
+                {
+                        "ammo_disruptor",
+                        Pickup_Ammo,
+                        NULL,
+                        Drop_Ammo,
+                        NULL,
+                        "misc/am_pkup.wav",
+                        "models/items/ammo/bullets/medium/tris.md2", 0,
+                        NULL,
+/* icon */        "a_bullets",
+/* pickup */    "Rounds",
+/* width */        3,
+                        3,
+                        NULL,
+                        IT_AMMO,
+                        NULL,
+                        AMMO_DISRUPTOR,
+/* precache */ ""
+                },
 
                 {
                         "ammo_slugs",
@@ -3021,6 +3041,27 @@ warehouse circuits
                         "ctf/tech3.wav"                                    // precache sound
                 },
 
+                {
+                        "weapon_disintegrator",
+                        Pickup_Weapon,
+                        Use_Weapon,
+                        Drop_Weapon,
+                        Weapon_Disruptor,
+                        "misc/w_pkup.wav",
+                        "models/weapons/g_dist/tris.md2", EF_ROTATE | EF_BOB,
+                        "models/weapons/v_dist/tris.md2",
+/* icon */        "w_disintegrator",
+/* pickup */    "Disruptor",
+                        0,
+                        1,
+                        "Rounds",
+                        IT_WEAPON,
+                        NULL,
+                        0,
+/* precache */ "models/weapons/g_dist/tris.md2 models/weapons/v_dist/tris.md2 models/proj/disintegrator/tris.md2 weapons/disrupt.wav weapons/disint2.wav weapons/disrupthit.wav a_bullets_hud",
+                        WEAP_BFG
+                },
+
                 // end of list marker
                 {NULL}
         };
@@ -3147,6 +3188,7 @@ void SetItemNames(void) {
     magslug_index = ITEM_INDEX(FindItem("Mag Slug"));
     trap_index = ITEM_INDEX(FindItem("Trap"));
     tesla_index = ITEM_INDEX(FindItem("Tesla Ammo"));
+    disruptor_index = ITEM_INDEX(FindItem("Rounds"));
 
     //weapons
     sword_index = ITEM_INDEX(FindItem("Sword"));

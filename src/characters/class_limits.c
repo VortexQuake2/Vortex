@@ -142,6 +142,12 @@ int MAX_BULLETS(const struct edict_s *ent) {
     return (100 * ent->myskills.abilities[MAX_AMMO].current_level);
 }
 
+int MAX_ROUNDS(const struct edict_s *ent) {
+    if (ent->myskills.abilities[MAX_AMMO].disable)
+        return 0;
+    return (3 * ent->myskills.abilities[MAX_AMMO].current_level);
+}
+
 int MAX_SHELLS(const struct edict_s *ent) {
     if (ent->myskills.abilities[MAX_AMMO].disable)
         return 0;
@@ -246,6 +252,7 @@ void vrx_update_all_character_maximums(edict_t *ent) {
     ent->client->pers.max_grenades = 50 + MAX_GRENADES(ent);
     ent->client->pers.max_cells = 200 + MAX_CELLS(ent);
     ent->client->pers.max_slugs = 50 + MAX_SLUGS(ent);
+    ent->client->pers.max_disruptor = 12 + MAX_ROUNDS(ent);
 
     ent->client->pers.max_powercubes = MAX_POWERCUBES(ent);
 }

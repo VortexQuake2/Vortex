@@ -348,6 +348,14 @@ void Check_full(edict_t *ent)
 		if (ent->client->pers.inventory[index] > ent->client->pers.max_slugs)
 			ent->client->pers.inventory[index] = ent->client->pers.max_slugs;
 	}
+
+	item = FindItem("Rounds");
+	if (item)
+	{
+		index = ITEM_INDEX(item);
+		if (ent->client->pers.inventory[index] > ent->client->pers.max_disruptor)
+			ent->client->pers.inventory[index] = ent->client->pers.max_disruptor;
+	}
 }
 
 float entdist(const edict_t *ent1, const edict_t *ent2)

@@ -348,6 +348,14 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 		name = lva("magmine");
 		data = lva("+%d/%dc", ent->health, ent->light_level);
 		break;
+	case M_TRAP:
+		name = lva("trap");
+		data = lva("%ds", (int)ceil(ent->timestamp - level.time));
+		break;
+	case M_TESLA:
+		name = lva("tesla");
+		data = lva("+%d %ds", ent->health, (int)ceil(ent->delay - level.time));
+		break;
 	case TOTEM_FIRE:
 	case TOTEM_WATER:
 	case TOTEM_AIR:

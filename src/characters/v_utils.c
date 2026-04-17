@@ -184,6 +184,8 @@ char *GetArmoryItemString(int purchase_number) {
             return "Chainfist";
         case 38:
             return "Tesla";
+        case 39:
+            return "Disruptor";
         default:
             return " ";
     }
@@ -1337,6 +1339,11 @@ qboolean V_GiveAmmoClip(edict_t *ent, float qty, int ammotype) {
             current = &ent->client->pers.inventory[tesla_index];
             max = &ent->client->pers.max_tesla;
             break;
+        case AMMO_DISRUPTOR:
+            amount = 3;
+            current = &ent->client->pers.inventory[disruptor_index];
+            max = &ent->client->pers.max_disruptor;
+            break;
         default:
             return false;
     }
@@ -1398,6 +1405,8 @@ int V_GetRespawnAmmoType(edict_t *ent) {
         case 14: //ionripper
         case 18: //plasma beam
             return AMMO_CELLS;
+        case 22: //disruptor
+            return AMMO_DISRUPTOR;
         default: //blaster/sword
             return 0; //nothing
     }

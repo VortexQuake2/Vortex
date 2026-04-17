@@ -749,6 +749,7 @@ extern int	cell_index;
 extern int	magslug_index;
 extern int	trap_index;
 extern int	tesla_index;
+extern int	disruptor_index;
 
 //weapons
 extern int sword_index;
@@ -906,6 +907,7 @@ extern int skullindex;
 #define MOD_SENTRY_BEAM		102
 #define MOD_EXPLODING_BARREL	103
 #define MOD_SHRAPNEL			104
+#define MOD_TRACKER			105
 //K03 End
 #define MOD_FRIENDLY_FIRE	0x8000000
 #define MOD_FMEDICPACK		150
@@ -1366,6 +1368,7 @@ void Weapon_Heatbeam (edict_t *ent);
 void Weapon_ProxLauncher (edict_t *ent);
 void Weapon_ChainFist (edict_t *ent);
 void Weapon_Tesla (edict_t *ent);
+void Weapon_Disruptor (edict_t *ent);
 
 //K03 Begin
 void Weapon_Sword(edict_t *ent);
@@ -1535,6 +1538,8 @@ enum mtype_t {
     M_BARREL = 132,
     M_ARMOR = 133,
     M_FIREWALL = 134,
+    M_TRAP = 135,
+    M_TESLA = 136,
     P_TANK = 200,
     MORPH_MUTANT = 400,
     MORPH_CACODEMON = 401,
@@ -1693,6 +1698,7 @@ qboolean vrx_is_in_target_list(edict_t *ent);
 void ThrowDebris(edict_t *self, char *modelname, float speed, vec3_t origin);
 
 qboolean fire_hit(edict_t *self, vec3_t aim, int damage, int kick);
+qboolean fire_player_melee(edict_t *self, vec3_t start, vec3_t dir, int range, int damage, int kick, int mod);
 
 void fire_bullet(edict_t *self, vec3_t start, vec3_t aimdir, float damage, int kick, int hspread, int vspread, int mod);
 
@@ -1714,6 +1720,7 @@ void fire_rocket(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed,
 void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick);
 
 void fire_bfg(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius);
+void fire_disruptor(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, edict_t *enemy);
 
 // RAFAEL
 void fire_ionripper (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int effect);
@@ -1724,6 +1731,7 @@ void fire_plasma (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed
 void fire_prox (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float damage_radius);
 void fire_tesla (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float damage_radius);
 void fire_trap (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float timer, float damage_radius, qboolean held);
+void RemoveOwnedDeployables(edict_t *owner);
 void fire_smartrocket (edict_t *self, edict_t *target, vec3_t start, vec3_t dir, int damage, int speed, int turn_speed, float damage_radius, int radius_damage);
 
 void fire_20mm(edict_t* self, vec3_t start, vec3_t aimdir, int damage, int kick, float range);
@@ -1893,6 +1901,7 @@ typedef struct {
 	int			max_magslug;
 	int			max_trap;
 	int			max_tesla;
+	int			max_disruptor;
 
     gitem_t *weapon;
     gitem_t *lastweapon;

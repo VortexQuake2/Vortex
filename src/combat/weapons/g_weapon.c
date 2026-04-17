@@ -175,6 +175,26 @@ qboolean fire_hit (edict_t *self, vec3_t aim, int damage, int kick)
 	return true;
 }
 
+qboolean fire_player_melee(edict_t *self, vec3_t start, vec3_t dir, int range, int damage, int kick, int mod)
+{
+	trace_t tr;
+	vec3_t end;
+
+	self->lastsound = level.framenum;
+
+	VectorNormalize(dir);
+	VectorMA(start, range, dir, end);
+	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
+
+	if (!G_EntExists(tr.ent))
+		return false;
+	if (OnSameTeam(self, tr.ent))
+		return false;
+
+	T_Damage(tr.ent, self, self, dir, tr.endpos, tr.plane.normal, damage, kick, 0, mod);
+	return true;
+}
+
 
 /*
 =================

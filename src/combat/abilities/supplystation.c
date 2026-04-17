@@ -179,6 +179,8 @@ int MaxAmmoType (edict_t *ent, int ammo_index)
 		return ent->client->pers.max_trap;
 	else if (ammo_index == tesla_index)
 		return ent->client->pers.max_tesla;
+	else if (ammo_index == disruptor_index)
+		return ent->client->pers.max_disruptor;
 	else return 0;
 }
 
@@ -282,6 +284,9 @@ int G_GetAmmoIndexByWeaponIndex (int weapon_index)
 	item = FindItem("Tesla");
 	if (item && weapon_index == ITEM_INDEX(item))
 		return tesla_index;
+	item = FindItem("Disruptor");
+	if (item && weapon_index == ITEM_INDEX(item))
+		return disruptor_index;
 	if (weapon_index == grenade_index)
 		return grenade_index;
 	return 0;

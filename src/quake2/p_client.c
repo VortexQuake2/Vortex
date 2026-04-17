@@ -556,6 +556,10 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 				message = "couldn't hide from";
 				message2 = "'s BFG";
 				break;
+			case MOD_TRACKER:
+				message = "was disrupted by";
+				message2 = "'s disruptor";
+				break;
 			case MOD_HANDGRENADE:
 				message = "tries to hatch";
 				message2 = "'s handgrenade";
@@ -1135,6 +1139,7 @@ void InitClientPersistant (gclient_t *client)
 	client->pers.max_magslug	= 50;
 	client->pers.max_trap		= 5;
 	client->pers.max_tesla		= 5;
+	client->pers.max_disruptor	= 12;
 
 	//K03 Begin
 	client->pers.max_powercubes = 200;
