@@ -157,7 +157,7 @@ void CreateDirIfNotExists(char *path)
 		}else
 			gi.dprintf("Created directory %s.\n", path);
 #else
-		mkdir(path, S_IWUSR);
+		mkdir(path, S_IRWXU);
 #endif
 	}
 }
