@@ -1146,6 +1146,7 @@ int Get_KindWeapon (gitem_t	*it)
 	else if(it->weaponthink == Weapon_HyperBlaster) return WEAP_HYPERBLASTER;
 	else if(it->weaponthink == Weapon_Railgun)		return WEAP_RAILGUN;
 	else if(it->weaponthink == Weapon_BFG)			return WEAP_BFG;
+	else if(it->weaponthink == Weapon_Disruptor)	return WEAP_BFG;
 	else if(it->weaponthink == Weapon_20mm)		return WEAP_20MM;
 	else if(it->weaponthink == Weapon_Sword)		return WEAP_SWORD;
 	else if(it->weaponthink == Weapon_Ionripper)	return WEAP_HYPERBLASTER;

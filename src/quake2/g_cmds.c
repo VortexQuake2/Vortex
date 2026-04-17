@@ -888,14 +888,75 @@ int GetSlot(gitem_t *it)
 	else if(it == FindItem("shotgun")) slot = 2;
 	else if(it == FindItem("super shotgun")) slot = 3;
 	else if(it == FindItem("Machinegun")) slot = 4;
+	else if(it == FindItem("ETF Rifle")) slot = 4;
 	else if(it == FindItem("chaingun"))	slot = 5;
 	else if(it == FindItem("grenade launcher")) slot = 6;
+	else if(it == FindItem("Prox Launcher")) slot = 6;
 	else if(it == FindItem("rocket launcher")) slot = 7;
 	else if(it == FindItem("hyperblaster")) slot = 8;
+	else if(it == FindItem("Ionripper")) slot = 8;
+	else if(it == FindItem("Plasma Beam")) slot = 8;
 	else if(it == FindItem("railgun")) slot = 9;
+	else if(it == FindItem("Phalanx")) slot = 9;
 	else if(it == FindItem("bfg10k")) slot = 10;
+	else if(it == FindItem("Disruptor")) slot = 10;
     else if(it == FindItem("flamethrower")) slot = 10;
 	return (slot);
+}
+
+static qboolean Cmd_PlayerHasWeapon(edict_t *ent, gitem_t *item)
+{
+	return item && ent->client->pers.inventory[ITEM_INDEX(item)];
+}
+
+static gitem_t *Cmd_CycleWeaponGroup(edict_t *ent, gitem_t *requested, const char **names, int count)
+{
+	gitem_t *current;
+	int requested_index = -1;
+	int current_index = -1;
+	int i;
+
+	if (!requested)
+		return NULL;
+
+	current = ent->client->pers.weapon;
+
+	for (i = 0; i < count; i++)
+	{
+		gitem_t *item = FindItem((char *) names[i]);
+
+		if (item == requested)
+			requested_index = i;
+		if (item == current)
+			current_index = i;
+	}
+
+	if (requested_index < 0)
+		return requested;
+
+	if (current_index >= 0)
+	{
+		for (i = 1; i <= count; i++)
+		{
+			gitem_t *item = FindItem((char *) names[(current_index + i) % count]);
+
+			if (Cmd_PlayerHasWeapon(ent, item))
+				return item;
+		}
+	}
+
+	if (Cmd_PlayerHasWeapon(ent, requested))
+		return requested;
+
+	for (i = 1; i < count; i++)
+	{
+		gitem_t *item = FindItem((char *) names[(requested_index + i) % count]);
+
+		if (Cmd_PlayerHasWeapon(ent, item))
+			return item;
+	}
+
+	return requested;
 }
 
 qboolean Cmd_UseMorphWeapons_f (edict_t *ent, char *s)
@@ -1000,6 +1061,13 @@ void Cmd_Use_f (edict_t *ent)
 	const int			weapMode=ent->client->weapon_mode;
 	gitem_t		*it;
 	char		*s;
+	static const char *blaster_cycle[] = {"Blaster", "Sword", "Chainfist"};
+	static const char *machinegun_cycle[] = {"Machinegun", "ETF Rifle"};
+	static const char *grenade_cycle[] = {"Grenade Launcher", "Prox Launcher"};
+	static const char *throwable_cycle[] = {"Grenades", "Tesla", "Trap"};
+	static const char *hyper_cycle[] = {"HyperBlaster", "Ionripper", "Plasma Beam"};
+	static const char *rail_cycle[] = {"Railgun", "Phalanx"};
+	static const char *bfg_cycle[] = {"BFG10K", "Disruptor"};
 
 	//K03 Begin
 	int		slot;
@@ -1055,10 +1123,13 @@ void Cmd_Use_f (edict_t *ent)
     if ((ent->myskills.class_num == CLASS_KNIGHT) && (slot > 0) && (slot < 11))
         return;
 
-    if (slot == 1 && ent->client->pers.weapon == FindItem("Blaster"))
-        it = FindItem("Sword");
-    else if (slot == 1 && ent->client->pers.weapon == FindItem("Sword"))
-        it = FindItem("Blaster");
+	it = Cmd_CycleWeaponGroup(ent, it, blaster_cycle, sizeof(blaster_cycle) / sizeof(blaster_cycle[0]));
+	it = Cmd_CycleWeaponGroup(ent, it, machinegun_cycle, sizeof(machinegun_cycle) / sizeof(machinegun_cycle[0]));
+	it = Cmd_CycleWeaponGroup(ent, it, grenade_cycle, sizeof(grenade_cycle) / sizeof(grenade_cycle[0]));
+	it = Cmd_CycleWeaponGroup(ent, it, throwable_cycle, sizeof(throwable_cycle) / sizeof(throwable_cycle[0]));
+	it = Cmd_CycleWeaponGroup(ent, it, hyper_cycle, sizeof(hyper_cycle) / sizeof(hyper_cycle[0]));
+	it = Cmd_CycleWeaponGroup(ent, it, rail_cycle, sizeof(rail_cycle) / sizeof(rail_cycle[0]));
+	it = Cmd_CycleWeaponGroup(ent, it, bfg_cycle, sizeof(bfg_cycle) / sizeof(bfg_cycle[0]));
     //K03 End
     index = ITEM_INDEX(it);
     if (!ent->client->pers.inventory[index] && (it != FindItem("tball self")))//K03 tball self exception
@@ -1506,6 +1577,7 @@ void Cmd_Kill_f (edict_t *ent)
 	ent->health = 0;
 	meansOfDeath = MOD_SUICIDE;
 	player_die (ent, ent, ent, 100000, vec3_origin);
+	RemoveOwnedDeployables(ent);
 	// don't even bother waiting for death frames
 	ent->deadflag = DEAD_DEAD;
 	respawn (ent);

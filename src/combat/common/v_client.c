@@ -205,6 +205,9 @@ int vrx_WeapIDtoWeapIndex(int weaponID)
     case 21:
         item = FindItem("Tesla");
         return item ? ITEM_INDEX(item) : blaster_index;
+    case 22:
+        item = FindItem("Disruptor");
+        return item ? ITEM_INDEX(item) : blaster_index;
     default: return blaster_index;
     }
 }

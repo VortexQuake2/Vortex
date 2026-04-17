@@ -214,7 +214,7 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 		return;
 
 	//What is the price/qty of the item?
-	if (((selection < 11) && (selection > 0)) || (selection >= 31 && selection <= 38))
+	if (((selection < 11) && (selection > 0)) || (selection >= 31 && selection <= 39))
     {
 		price = ARMORY_PRICE_WEAPON;
         is_weapon = true;
@@ -243,6 +243,7 @@ void Cmd_Armory_f(edict_t *ent, int selection)
         case 36:    item = FindItem("Prox Launcher");  break;
         case 37:    item = FindItem("Chainfist");      break;
         case 38:    item = FindItem("Tesla");          break;
+        case 39:    item = FindItem("Disruptor");      break;
 
 		//ammo
 		case 11:
@@ -381,7 +382,7 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 
 		// New missionpack weapons can require ammo types players may not be carrying.
 		// Grant the minimum needed ammo and auto-select the weapon for immediate use.
-		if (selection >= 31 && selection <= 38)
+		if (selection >= 31 && selection <= 39)
 		{
 			if (item->ammo)
 			{

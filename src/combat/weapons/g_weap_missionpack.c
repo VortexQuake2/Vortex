@@ -24,6 +24,7 @@ static void prox_open(edict_t *ent);
 static void prox_land(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf);
 
 static void tesla_remove(edict_t *self);
+static void tesla_remove_ownerdead(edict_t *self);
 static void tesla_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point);
 static void tesla_blow(edict_t *self);
 static void tesla_zap(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf);
@@ -31,6 +32,407 @@ static void tesla_think_active(edict_t *self);
 static void tesla_activate(edict_t *self);
 static void tesla_think(edict_t *ent);
 static void tesla_lava(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf);
+static void trap_touch(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf);
+static qboolean trap_owner_active(edict_t *ent);
+static void trap_blow(edict_t *ent);
+static void trap_remove(edict_t *ent);
+static qboolean trap_pull_target(edict_t *ent, edict_t *target, int pull);
+static void tracker_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf);
+static void tracker_fly(edict_t *self);
+static void tracker_pain_daemon_think(edict_t *self);
+
+#define TRACKER_DAMAGE_FLAGS (DAMAGE_ENERGY | DAMAGE_NO_KNOCKBACK)
+#define TRACKER_IMPACT_FLAGS DAMAGE_ENERGY
+#define TRACKER_DAMAGE_TIME 0.5f
+
+static qboolean deployable_stick(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
+{
+    vec3_t dir;
+    float half_width;
+    float depth_adjust;
+    float original_max_z;
+    qboolean tesla_mount;
+
+    if (surf && (surf->flags & SURF_SKY))
+    {
+        G_FreeEdict(ent);
+        return true;
+    }
+
+    if (!plane)
+        return false;
+
+    if (other && (((other->svflags & SVF_MONSTER) != 0) || other->client || other->takedamage))
+        return false;
+
+    if (plane->normal[2] < 0.7f)
+    {
+        original_max_z = ent->maxs[2];
+        half_width = fabs(ent->maxs[0]);
+        depth_adjust = original_max_z - half_width;
+        tesla_mount = ent->classname && !strcmp(ent->classname, "tesla");
+
+        if (tesla_mount && plane->normal[2] < -0.7f)
+            depth_adjust = original_max_z;
+        else if (tesla_mount)
+            depth_adjust = half_width;
+
+        if (depth_adjust > 0)
+            VectorMA(ent->s.origin, -depth_adjust, plane->normal, ent->s.origin);
+
+        ent->mins[2] = -half_width;
+        ent->maxs[2] = half_width;
+    }
+
+    VectorClear(ent->velocity);
+    VectorClear(ent->avelocity);
+    vectoangles(plane->normal, dir);
+    dir[PITCH] += 90;
+    VectorCopy(dir, ent->s.angles);
+    VectorCopy(plane->normal, ent->movedir);
+    ent->movetype = MOVETYPE_NONE;
+    ent->groundentity = other;
+    ent->touch = NULL;
+    gi.linkentity(ent);
+    return true;
+}
+
+static qboolean trap_owner_active(edict_t *ent)
+{
+    return G_EntExists(ent->owner) &&
+        (!ent->owner->client || (ent->owner->health > 0 && ent->owner->deadflag != DEAD_DEAD));
+}
+
+static void deployable_hud_remove(edict_t *ent)
+{
+    edict_t *owner = ent->activator;
+
+    if (!G_EntExists(owner))
+        owner = ent->owner;
+    if (owner && owner->client)
+        layout_remove_tracked_entity(&owner->client->layout, ent);
+}
+
+static void trap_blow(edict_t *ent)
+{
+    edict_t *owner = ent->owner;
+    vec3_t origin;
+
+    deployable_hud_remove(ent);
+
+    if (!G_EntExists(owner))
+        owner = ent;
+
+    ent->takedamage = DAMAGE_NO;
+    ent->solid = SOLID_NOT;
+    ent->touch = NULL;
+
+    if (owner->client && !(owner->svflags & SVF_DEADMONSTER))
+        PlayerNoise(owner, ent->s.origin, PNOISE_IMPACT);
+
+    T_RadiusDamage(ent, owner, ent->dmg, ent, ent->dmg_radius, MOD_TRAP);
+
+    VectorMA(ent->s.origin, -0.02, ent->velocity, origin);
+    gi.WriteByte(svc_temp_entity);
+    if (ent->waterlevel)
+    {
+        if (ent->groundentity)
+            gi.WriteByte(TE_GRENADE_EXPLOSION_WATER);
+        else
+            gi.WriteByte(TE_ROCKET_EXPLOSION_WATER);
+    }
+    else
+    {
+        if (ent->groundentity || ent->movetype == MOVETYPE_NONE)
+            gi.WriteByte(TE_GRENADE_EXPLOSION);
+        else
+            gi.WriteByte(TE_ROCKET_EXPLOSION);
+    }
+    gi.WritePosition(origin);
+    gi.multicast(ent->s.origin, MULTICAST_PHS);
+
+    G_FreeEdict(ent);
+}
+
+static void trap_remove(edict_t *ent)
+{
+    deployable_hud_remove(ent);
+    ent->takedamage = DAMAGE_NO;
+    ent->solid = SOLID_NOT;
+    ent->touch = NULL;
+    ent->nextthink = level.time + FRAMETIME;
+    ent->think = BecomeExplosion1;
+}
+
+void RemoveOwnedDeployables(edict_t *owner)
+{
+    edict_t *ent;
+
+    if (!G_EntExists(owner))
+        return;
+
+    for (ent = g_edicts; ent < &g_edicts[globals.num_edicts]; ent++)
+    {
+        if (!ent->inuse || !ent->classname)
+            continue;
+
+        if (!strcmp(ent->classname, "htrap"))
+        {
+            if (ent->owner == owner || ent->activator == owner)
+                trap_remove(ent);
+            continue;
+        }
+
+        if (!strcmp(ent->classname, "tesla"))
+        {
+            if (ent->teammaster == owner || ent->owner == owner)
+                tesla_remove_ownerdead(ent);
+        }
+    }
+}
+
+static qboolean trap_pull_target(edict_t *ent, edict_t *target, int pull)
+{
+    vec3_t start, end, dir;
+
+    G_EntMidPoint(target, end);
+    G_EntMidPoint(ent, start);
+    VectorSubtract(start, end, dir);
+    VectorNormalize(dir);
+
+    if (target->groundentity)
+        pull *= 2;
+
+    if (target->groundentity)
+    {
+        target->s.origin[2] += 1;
+        target->groundentity = NULL;
+    }
+
+    VectorMA(target->velocity, pull, dir, target->velocity);
+    return true;
+}
+
+static void tracker_explode(edict_t *self)
+{
+    gi.sound(self, CHAN_AUTO, gi.soundindex("weapons/disrupthit.wav"), 1, ATTN_NORM, 0);
+
+    gi.WriteByte(svc_temp_entity);
+    gi.WriteByte(TE_TRACKER_EXPLOSION);
+    gi.WritePosition(self->s.origin);
+    gi.multicast(self->s.origin, MULTICAST_PHS);
+
+    G_FreeEdict(self);
+}
+
+static void tracker_pain_daemon_think(edict_t *self)
+{
+    vec3_t pain_normal = {0, 0, 1};
+    vec3_t center;
+    int hurt;
+
+    if (!self->inuse)
+        return;
+
+    if (!self->enemy || !self->enemy->inuse)
+    {
+        G_FreeEdict(self);
+        return;
+    }
+
+    if ((level.time - self->timestamp) > TRACKER_DAMAGE_TIME)
+    {
+        if (!self->enemy->client)
+            self->enemy->s.effects &= ~EF_TRACKERTRAIL;
+        G_FreeEdict(self);
+        return;
+    }
+
+    if (self->enemy->health < 1)
+    {
+        if (!self->enemy->client)
+            self->enemy->s.effects &= ~EF_TRACKERTRAIL;
+        G_FreeEdict(self);
+        return;
+    }
+
+    G_EntMidPoint(self->enemy, center);
+    T_Damage(self->enemy, self, self->owner, vec3_origin, center, pain_normal,
+        self->dmg, 0, TRACKER_DAMAGE_FLAGS, MOD_TRACKER);
+
+    if (!self->inuse)
+        return;
+
+    if (self->enemy->health < 1)
+    {
+        hurt = self->enemy->gib_health ? -self->enemy->gib_health : 500;
+        T_Damage(self->enemy, self, self->owner, vec3_origin, center, pain_normal,
+            hurt, 0, TRACKER_DAMAGE_FLAGS, MOD_TRACKER);
+    }
+
+    self->nextthink = level.time + 0.1f;
+
+    if (!self->enemy->client)
+        self->enemy->s.effects |= EF_TRACKERTRAIL;
+}
+
+static void tracker_pain_daemon_spawn(edict_t *owner, edict_t *enemy, int damage)
+{
+    edict_t *daemon;
+
+    if (!enemy)
+        return;
+
+    daemon = G_Spawn();
+    daemon->classname = "pain daemon";
+    daemon->think = tracker_pain_daemon_think;
+    daemon->nextthink = level.time;
+    daemon->timestamp = level.time;
+    daemon->owner = owner;
+    daemon->enemy = enemy;
+    daemon->dmg = damage;
+}
+
+static void tracker_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
+{
+    vec3_t normal;
+    float damagetime;
+
+    if (other == self->owner)
+        return;
+
+    if (self->owner && G_EntExists(other) && OnSameTeam(self->owner, other))
+        return;
+
+    if (surf && (surf->flags & SURF_SKY))
+    {
+        G_FreeEdict(self);
+        return;
+    }
+
+    if (self->owner && self->owner->client)
+        PlayerNoise(self->owner, self->s.origin, PNOISE_IMPACT);
+
+    if (other->takedamage)
+    {
+        if (plane)
+            VectorCopy(plane->normal, normal);
+        else
+            VectorClear(normal);
+
+        if ((other->svflags & SVF_MONSTER) || other->client)
+        {
+            if (other->health > 0)
+            {
+                T_Damage(other, self, self->owner, self->velocity, self->s.origin, normal,
+                    0, self->dmg * 3, TRACKER_IMPACT_FLAGS, MOD_TRACKER);
+
+                if (!(other->flags & (FL_FLY | FL_SWIM)))
+                    other->velocity[2] += 140;
+
+                damagetime = (self->dmg * 0.1f) / TRACKER_DAMAGE_TIME;
+                tracker_pain_daemon_spawn(self->owner, other, (int)damagetime);
+
+                if (!other->client)
+                    other->s.effects |= EF_TRACKERTRAIL;
+            }
+            else
+            {
+                T_Damage(other, self, self->owner, self->velocity, self->s.origin, normal,
+                    self->dmg * 4, self->dmg * 3, TRACKER_IMPACT_FLAGS, MOD_TRACKER);
+            }
+        }
+        else
+        {
+            T_Damage(other, self, self->owner, self->velocity, self->s.origin, normal,
+                self->dmg, self->dmg * 3, TRACKER_IMPACT_FLAGS, MOD_TRACKER);
+        }
+    }
+
+    tracker_explode(self);
+}
+
+static void tracker_fly(edict_t *self)
+{
+    vec3_t dest, dir;
+
+    if (!G_ValidTarget(self->owner, self->enemy, false, true))
+    {
+        tracker_explode(self);
+        return;
+    }
+
+    if (self->enemy->client)
+    {
+        VectorCopy(self->enemy->s.origin, dest);
+        dest[2] += self->enemy->viewheight;
+    }
+    else
+    {
+        G_EntMidPoint(self->enemy, dest);
+    }
+
+    VectorSubtract(dest, self->s.origin, dir);
+    VectorNormalize(dir);
+    vectoangles(dir, self->s.angles);
+    VectorScale(dir, self->speed, self->velocity);
+
+    self->nextthink = level.time + 0.1f;
+}
+
+void fire_disruptor(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, edict_t *enemy)
+{
+    edict_t *bolt;
+    trace_t tr;
+
+    VectorNormalize(dir);
+
+    bolt = G_Spawn();
+    VectorCopy(start, bolt->s.origin);
+    VectorCopy(start, bolt->s.old_origin);
+    vectoangles(dir, bolt->s.angles);
+    VectorScale(dir, speed, bolt->velocity);
+
+    bolt->movetype = MOVETYPE_FLYMISSILE;
+    bolt->clipmask = MASK_SHOT;
+    bolt->solid = SOLID_BBOX;
+    bolt->svflags |= SVF_PROJECTILE;
+    bolt->s.effects = EF_TRACKER;
+
+    VectorClear(bolt->mins);
+    VectorClear(bolt->maxs);
+    bolt->s.modelindex = gi.modelindex("models/proj/disintegrator/tris.md2");
+    bolt->owner = self;
+    bolt->touch = tracker_touch;
+    bolt->enemy = enemy;
+    bolt->speed = speed;
+    bolt->dmg = damage;
+    bolt->classname = "tracker";
+    bolt->s.sound = gi.soundindex("weapons/disrupt.wav");
+
+    if (enemy)
+    {
+        bolt->nextthink = level.time + 0.1f;
+        bolt->think = tracker_fly;
+    }
+    else
+    {
+        bolt->nextthink = level.time + 7.0f;
+        bolt->think = G_FreeEdict;
+    }
+
+    gi.linkentity(bolt);
+
+    if (self->client)
+        check_dodge(self, bolt->s.origin, dir, speed, damage);
+
+    tr = gi.trace(self->s.origin, NULL, NULL, bolt->s.origin, bolt, MASK_SHOT);
+    if (tr.fraction < 1.0)
+    {
+        VectorMA(bolt->s.origin, 1.0f, tr.plane.normal, bolt->s.origin);
+        bolt->touch(bolt, tr.ent, &tr.plane, tr.surface);
+    }
+}
 
 // RAFAEL
 /*
@@ -539,17 +941,21 @@ static void Trap_Think (edict_t *ent)
     int		oldlen = 8000;
     vec3_t	forward, right, up;
 
+    if (!trap_owner_active(ent))
+    {
+        trap_remove(ent);
+        return;
+    }
+
     if (ent->timestamp < level.time)
     {
-        BecomeExplosion1(ent);
-        // note to self
-        // cause explosion damage???
+        trap_blow(ent);
         return;
     }
 
     ent->nextthink = level.time + 0.1;
 
-    if (!ent->groundentity)
+    if (!ent->groundentity && ent->movetype != MOVETYPE_NONE)
         return;
 
     // ok lets do the blood effect
@@ -639,9 +1045,10 @@ static void Trap_Think (edict_t *ent)
     }
 
     ent->s.effects &= ~EF_TRAP;
+    ent->s.effects &= ~EF_GRENADE;
     if (ent->s.frame >= 4)
     {
-        ent->s.effects |= EF_TRAP;
+        ent->s.effects |= EF_GRENADE;
         VectorClear (ent->mins);
         VectorClear (ent->maxs);
 
@@ -656,8 +1063,14 @@ static void Trap_Think (edict_t *ent)
             continue;
         if (!(target->svflags & SVF_MONSTER) && !target->client)
             continue;
-        // if (target == ent->owner)
-        //	continue;
+        if (target == ent->owner)
+        {
+            // Optional self-damage/self-pull:
+            // comment out this block if you want traps to affect their owner too.
+            continue;
+        }
+        if (OnSameTeam(ent, target))
+            continue;
         if (target->health <= 0)
             continue;
         if (!visible (ent, target))
@@ -679,27 +1092,9 @@ static void Trap_Think (edict_t *ent)
     // pull the enemy in
     if (best)
     {
-        vec3_t	forward;
-
-        if (best->groundentity)
-        {
-            best->s.origin[2] += 1;
-            best->groundentity = NULL;
-        }
         VectorSubtract (ent->s.origin, best->s.origin, vec);
         len = VectorLength (vec);
-        if (best->client)
-        {
-            VectorNormalize (vec);
-            VectorMA (best->velocity, 250, vec, best->velocity);
-        }
-        else
-        {
-            best->ideal_yaw = vectoyaw(vec);
-//			M_ChangeYaw (best);
-            AngleVectors (best->s.angles, forward, NULL, NULL);
-            VectorScale (forward, 256, best->velocity);
-        }
+        trap_pull_target(ent, best, 250);
 
         gi.sound(ent, CHAN_VOICE, gi.soundindex ("weapons/trapsuck.wav"), 1, ATTN_IDLE, 0);
 
@@ -721,14 +1116,17 @@ static void Trap_Think (edict_t *ent)
             }
             else
             {
-                BecomeExplosion1(ent);
-                // note to self
-                // cause explosion damage???
+                trap_blow(ent);
                 return;
             }
 
         }
     }
+}
+
+static void trap_touch(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
+{
+    deployable_stick(ent, other, plane, surf);
 }
 
 void fire_trap (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float timer, float damage_radius, qboolean held)
@@ -753,8 +1151,10 @@ void fire_trap (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int spee
     VectorSet(trap->maxs, 4, 4, 8);
     trap->s.modelindex = gi.modelindex("models/weapons/z_trap/tris.md2");
     trap->owner = self;
+    trap->activator = self;
     trap->nextthink = level.time + 1.0;
     trap->think = Trap_Think;
+    trap->touch = trap_touch;
     trap->dmg = damage;
     trap->dmg_radius = damage_radius;
     trap->classname = "htrap";
@@ -762,11 +1162,17 @@ void fire_trap (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int spee
     trap->spawnflags = held ? 3 : 1;
 
     if (timer <= 0.0)
+    {
         Grenade_Explode(trap);
-    else
-        gi.linkentity(trap);
+        return;
+    }
 
+    trap->mtype = M_TRAP;
     trap->timestamp = level.time + 30;
+    gi.linkentity(trap);
+
+    if (self->client)
+        layout_add_tracked_entity(&self->client->layout, trap);
 }
 
 static void Prox_Explode(edict_t *ent)
@@ -1016,6 +1422,7 @@ static void tesla_remove(edict_t *self)
     edict_t *owner = self->teammaster;
     vec3_t origin;
 
+    deployable_hud_remove(self);
     self->takedamage = DAMAGE_NO;
 
     cur = self->teamchain;
@@ -1057,6 +1464,28 @@ static void tesla_remove(edict_t *self)
     G_FreeEdict(self);
 }
 
+static void tesla_remove_ownerdead(edict_t *self)
+{
+    edict_t *cur, *next;
+
+    deployable_hud_remove(self);
+    self->takedamage = DAMAGE_NO;
+    self->solid = SOLID_NOT;
+    self->touch = NULL;
+
+    cur = self->teamchain;
+    while (cur)
+    {
+        next = cur->teamchain;
+        G_FreeEdict(cur);
+        cur = next;
+    }
+    self->teamchain = NULL;
+
+    self->nextthink = level.time + FRAMETIME;
+    self->think = BecomeExplosion1;
+}
+
 static void tesla_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
     tesla_remove(self);
@@ -1079,6 +1508,7 @@ static void tesla_think_active(edict_t *self)
     edict_t *touch[MAX_EDICTS], *hit;
     edict_t *attacker = self->teammaster;
     vec3_t dir, start, normal;
+    vec3_t offset;
     trace_t tr;
 
     if (!self->teamchain || !self->teamchain->inuse || level.time > self->air_finished)
@@ -1087,11 +1517,20 @@ static void tesla_think_active(edict_t *self)
         return;
     }
 
-    if (!G_EntExists(attacker))
-        attacker = self;
+    if (!G_EntExists(attacker) || (attacker->client && (attacker->health <= 0 || attacker->deadflag == DEAD_DEAD)))
+    {
+        tesla_remove_ownerdead(self);
+        return;
+    }
 
-    VectorCopy(self->s.origin, start);
-    start[2] += 16;
+    G_EntMidPoint(self, start);
+    if (VectorLength(self->movedir) > 0)
+    {
+        VectorScale(self->movedir, 16, offset);
+        VectorAdd(start, offset, start);
+    }
+    else
+        start[2] += 16;
 
     num = gi.BoxEdicts(self->teamchain->absmin, self->teamchain->absmax, touch, MAX_EDICTS, AREA_SOLID);
     for (i = 0; i < num; i++)
@@ -1106,12 +1545,15 @@ static void tesla_think_active(edict_t *self)
             continue;
         if (hit == attacker)
             continue;
+        if (OnSameTeam(self, hit))
+            continue;
 
-        tr = gi.trace(start, vec3_origin, vec3_origin, hit->s.origin, self, MASK_SHOT);
+        G_EntMidPoint(hit, dir);
+        tr = gi.trace(start, vec3_origin, vec3_origin, dir, self, MASK_SHOT);
         if (!(tr.fraction == 1.0f || tr.ent == hit))
             continue;
 
-        VectorSubtract(hit->s.origin, start, dir);
+        VectorSubtract(dir, start, dir);
         if (tr.fraction == 1.0f)
             VectorClear(normal);
         else
@@ -1140,6 +1582,12 @@ static void tesla_activate(edict_t *self)
     edict_t *trigger;
     float radius = self->dmg_radius;
 
+    if (!G_EntExists(self->teammaster) || (self->teammaster->client && (self->teammaster->health <= 0 || self->teammaster->deadflag == DEAD_DEAD)))
+    {
+        tesla_remove_ownerdead(self);
+        return;
+    }
+
     if (gi.pointcontents(self->s.origin) & (CONTENTS_SLIME | CONTENTS_LAVA | CONTENTS_WATER))
     {
         tesla_blow(self);
@@ -1151,7 +1599,7 @@ static void tesla_activate(edict_t *self)
 
     trigger = G_Spawn();
     VectorCopy(self->s.origin, trigger->s.origin);
-    VectorSet(trigger->mins, -radius, -radius, self->mins[2]);
+    VectorSet(trigger->mins, -radius, -radius, -radius);
     VectorSet(trigger->maxs, radius, radius, radius);
     trigger->movetype = MOVETYPE_NONE;
     trigger->solid = SOLID_TRIGGER;
@@ -1160,7 +1608,8 @@ static void tesla_activate(edict_t *self)
     trigger->classname = "tesla trigger";
     gi.linkentity(trigger);
 
-    VectorClear(self->s.angles);
+    if (self->movetype != MOVETYPE_NONE)
+        VectorClear(self->s.angles);
     if (deathmatch->value)
         self->owner = NULL;
     self->teamchain = trigger;
@@ -1171,13 +1620,20 @@ static void tesla_activate(edict_t *self)
 
 static void tesla_think(edict_t *ent)
 {
+    if (!G_EntExists(ent->teammaster) || (ent->teammaster->client && (ent->teammaster->health <= 0 || ent->teammaster->deadflag == DEAD_DEAD)))
+    {
+        tesla_remove_ownerdead(ent);
+        return;
+    }
+
     if (gi.pointcontents(ent->s.origin) & (CONTENTS_SLIME | CONTENTS_LAVA))
     {
         tesla_remove(ent);
         return;
     }
 
-    VectorClear(ent->s.angles);
+    if (ent->movetype != MOVETYPE_NONE)
+        VectorClear(ent->s.angles);
 
     if (!ent->count)
     {
@@ -1230,6 +1686,9 @@ static void tesla_lava(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t
         }
     }
 
+    if (deployable_stick(ent, other, plane, surf))
+        return;
+
     if (level.time < ent->timestamp)
         return;
     ent->timestamp = level.time + 0.25f;
@@ -1266,8 +1725,10 @@ void fire_tesla(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int spee
     VectorSet(tesla->maxs, 12, 12, 20);
     tesla->s.modelindex = gi.modelindex("models/weapons/g_tesla/tris.md2");
     tesla->owner = self;
+    tesla->activator = self;
     tesla->teammaster = self;
     tesla->wait = level.time + TESLA_TIME_TO_LIVE;
+    tesla->delay = level.time + TESLA_ACTIVATE_TIME + TESLA_TIME_TO_LIVE;
     tesla->think = tesla_think;
     tesla->nextthink = level.time + TESLA_ACTIVATE_TIME;
     tesla->touch = tesla_lava;
@@ -1279,6 +1740,10 @@ void fire_tesla(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int spee
     tesla->radius_dmg = 0;
     tesla->classname = "tesla";
     tesla->clipmask = MASK_SHOT | CONTENTS_SLIME | CONTENTS_LAVA;
+    tesla->mtype = M_TESLA;
 
     gi.linkentity(tesla);
+
+    if (self->client)
+        layout_add_tracked_entity(&self->client->layout, tesla);
 }

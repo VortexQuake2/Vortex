@@ -392,7 +392,7 @@ void respawnmenu_handler (edict_t *ent, int option)
 		return;
 	}
 
-	if (option < 1 || option > 21)
+	if (option < 1 || option > 22)
 		return;
 
 	ent->myskills.respawn_weapon = option;
@@ -424,6 +424,7 @@ char *GetRespawnString (edict_t *ent)
 	case 19: return "Prox Launcher";
 	case 20: return "Chainfist";
 	case 21: return "Tesla";
+	case 22: return "Disruptor";
 	default: return "Unknown";
 	}
 }
@@ -454,6 +455,7 @@ static const respawn_menu_item_t respawn_items[] = {
 	{"Prox Launcher", 19},
 	{"Chainfist", 20},
 	{"Tesla", 21},
+	{"Disruptor", 22},
 	{"Blaster", 13}
 };
 
