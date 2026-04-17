@@ -1823,7 +1823,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/rg_hum.wav weapons/rippfire.wav a_cells_hud",
-                        WEAP_HYPERBLASTER
+                        WEAP_BOOMER
                 },
 
                 {
@@ -1890,7 +1890,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/plasshot.wav a_slugs_hud",
-                        WEAP_20MM
+                        WEAP_PHALANX
                 },
 
 /*QUAKED weapon_bfg (.3 .3 1) (-16 -16 -16) (16 16 16)	15
@@ -1937,7 +1937,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/nail1.wav models/proj/flechette/tris.md2 a_bullets_hud",
-                        WEAP_MACHINEGUN
+                        WEAP_ETFRIFLE
                 },
                 {
                         "weapon_plasmabeam",

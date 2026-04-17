@@ -357,12 +357,7 @@ typedef struct {
 #define WEAP_20MM				11//GHz
 #define WEAP_GRENADES			12
 
-//#define WEAP_PHALANX			12
 
-//#define WEAP_BOOMER				13
-
-//#define WEAP_DISRUPTOR			12		// PGM
-//#define WEAP_ETFRIFLE			13		// PGM
 #define WEAP_PLASMA				14		// PGM
 #define WEAP_PROXLAUNCH			15		// PGM
 #define WEAP_CHAINFIST			16		// PGM
@@ -371,7 +366,12 @@ typedef struct {
 
 #define WEAP_GRAPPLE			20
 
-#define WEAP_TOTAL				21
+#define WEAP_PHALANX			21
+#define WEAP_BOOMER				22
+//#define WEAP_DISRUPTOR			23		// PGM
+#define WEAP_ETFRIFLE			24		// PGM
+
+#define WEAP_TOTAL				25
 
 #define MPI_QUAD				21
 #define	MPI_PENTA				22
