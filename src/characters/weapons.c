@@ -33,13 +33,6 @@ qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 		else return false;
 		break;
 	case WEAPON_SHOTGUN:
-		if(ModIndex == 0 || ModIndex == 2)
-		{
-			weapon->mods[ModIndex].soft_max = 20;
-			weapon->mods[ModIndex].hard_max = maxLevel;
-		}
-		else return false;
-		break;
 	case WEAPON_SUPERSHOTGUN:
 		if(ModIndex == 0 || ModIndex == 2)
 		{
@@ -57,45 +50,10 @@ qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 		else return false;
 		break;
 	case WEAPON_CHAINGUN:
-		if(ModIndex == 0 || ModIndex == 2)
-		{
-			weapon->mods[ModIndex].soft_max = 15;
-			weapon->mods[ModIndex].hard_max = maxLevel;
-		}
-		else return false;
-		break;
 	case WEAPON_GRENADELAUNCHER:
-		if(ModIndex == 0 || ModIndex == 2)
-		{
-			weapon->mods[ModIndex].soft_max = 20;
-			weapon->mods[ModIndex].hard_max = maxLevel;
-		}
-		else return false;
-		break;
 	case WEAPON_ROCKETLAUNCHER:
-		if(ModIndex == 0 || ModIndex == 2)
-		{
-			weapon->mods[ModIndex].soft_max = 20;
-			weapon->mods[ModIndex].hard_max = maxLevel;
-		}
-		else return false;
-		break;
 	case WEAPON_HYPERBLASTER:
-		if(ModIndex == 0 || ModIndex == 2)
-		{
-			weapon->mods[ModIndex].soft_max = 20;
-			weapon->mods[ModIndex].hard_max = maxLevel;
-		}
-		else return false;
-		break;
 	case WEAPON_RAILGUN:
-		if(ModIndex == 0 || ModIndex == 2)
-		{
-			weapon->mods[ModIndex].soft_max = 15;
-			weapon->mods[ModIndex].hard_max = maxLevel;
-		}
-		else return false;
-		break;
 	case WEAPON_BFG10K:
 		if(ModIndex == 0 || ModIndex == 2)
 		{
@@ -122,6 +80,35 @@ qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 		break;
 	case WEAPON_HANDGRENADE:	//(increased damage and radius)
 		if(ModIndex == 0 || ModIndex == 2)
+		{
+			weapon->mods[ModIndex].soft_max = 20;
+			weapon->mods[ModIndex].hard_max = maxLevel;
+		}
+		else return false;
+		break;
+	case WEAPON_IONRIPPER:
+	case WEAPON_PHALANX:
+	case WEAPON_TRAP:
+		if(ModIndex < 3)
+		{
+			weapon->mods[ModIndex].soft_max = 20;
+			weapon->mods[ModIndex].hard_max = maxLevel;
+		}
+		else return false;
+		break;
+	case WEAPON_ETFRIFLE:
+		if(ModIndex == 0 || ModIndex == 2)
+		{
+			weapon->mods[ModIndex].soft_max = 20;
+			weapon->mods[ModIndex].hard_max = maxLevel;
+		}
+		else return false;
+		break;
+	case WEAPON_PLASMABEAM:
+	case WEAPON_PROXLAUNCHER:
+	case WEAPON_CHAINFIST:
+	case WEAPON_TESLA:
+		if(ModIndex < 3)
 		{
 			weapon->mods[ModIndex].soft_max = 20;
 			weapon->mods[ModIndex].hard_max = maxLevel;
