@@ -754,8 +754,7 @@ void drone_newtarget(edict_t* self)
 	}
 }
 
-qboolean drone_ai_findgoal (edict_t *self)
-{
+qboolean drone_ai_findgoal (edict_t *self) {
 	// did we have a previous enemy?
 	if (self->oldenemy)
 	{
@@ -771,10 +770,13 @@ qboolean drone_ai_findgoal (edict_t *self)
 
 		// no longer valid, so forget about him
 		self->oldenemy = NULL;
-	}
-	// can we find a new target?
-	else if (drone_findtarget(self, false))
+	} else if (self->goalentity) {
+		// We have a goalentity, why are we here?
+		if (!(self->monsterinfo.aiflags & AI_STAND_GROUND))
+			self->monsterinfo.run(self);
+	}else if (drone_findtarget(self, false))
 	{
+		// can we find a new target?
 		//gi.dprintf("drone_ai_findgoal found new target\n");
 		drone_newtarget(self);
 		// go after him
