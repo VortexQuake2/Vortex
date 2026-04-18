@@ -119,7 +119,6 @@ void forcewall_regenerate (edict_t *self)
 
 void forcewall_think(edict_t *self)
 {
-	int		dmg;
 	vec3_t	zvec={0,0,0};
 	trace_t	tr;
 
@@ -131,7 +130,7 @@ void forcewall_think(edict_t *self)
 		if (self->activator && self->activator->inuse)
 			safe_cprintf(self->activator, PRINT_HIGH, "Your wall was removed from enemy territory.\n");
 		self->think = BecomeTE;
-		self->nextthink = level.time + FRAMETIME;
+		self->nextthink = level.time + 0.1;
 		return;
 	}
 
@@ -169,7 +168,8 @@ void forcewall_think(edict_t *self)
 				return;
 			}
 
-			dmg = 10 + 4*self->activator->myskills.abilities[FORCE_WALL].current_level;
+			// az: runs at 10 fps so no need to scale
+			int dmg = 10 + 4 * self->activator->myskills.abilities[FORCE_WALL].current_level;
 			burn_person(tr.ent, self->activator, dmg);
 			T_Damage (tr.ent, self, self->activator, zvec, tr.ent->s.origin, NULL, dmg, 1, DAMAGE_ENERGY, MOD_BURN);
 			
@@ -179,7 +179,7 @@ void forcewall_think(edict_t *self)
 			{
 				safe_cprintf(self->activator, PRINT_HIGH, "Your wall has expired.\n");
 				self->think = BecomeTE;
-				self->nextthink = level.time + FRAMETIME;
+				self->nextthink = level.time + 0.1;
 				return;
 			}
 			
@@ -190,7 +190,7 @@ void forcewall_think(edict_t *self)
 	if (self->delay-10 == level.time)
 		safe_cprintf(self->activator, PRINT_HIGH, "Your wall will time-out in 10 seconds.\n");
 
-	self->nextthink = level.time + FRAMETIME;
+	self->nextthink = level.time + 0.1;
 }
 
 void forcewall_knockback (edict_t *self, edict_t *other)
@@ -199,7 +199,7 @@ void forcewall_knockback (edict_t *self, edict_t *other)
 	vec3_t	forward, zvec={0,0,0};
 	trace_t	tr;
 
-	dmg = 20*self->activator->myskills.abilities[FORCE_WALL].current_level;
+	dmg = scale_fps(20*self->activator->myskills.abilities[FORCE_WALL].current_level);
 	tr = gi.trace (other->s.origin, NULL, NULL, self->s.origin, other, MASK_SHOT);
 	T_Damage (other, self, self->activator, zvec, other->s.origin, NULL, dmg, 1, DAMAGE_ENERGY, MOD_BURN);
 	vectoangles(tr.plane.normal, forward);
