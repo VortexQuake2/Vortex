@@ -547,9 +547,6 @@ edict_t *drone_get_enemy (edict_t *self, float range)
 		return target;
 	}
 
-	if (invasion->value && !G_GetClient(self))
-		return vrx_inv_give_closest_player_spawn(self);
-
 	// can't find a valid target
 	return NULL;
 }
