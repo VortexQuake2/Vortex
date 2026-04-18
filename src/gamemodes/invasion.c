@@ -522,7 +522,7 @@ edict_t *vrx_inv_spawn_drone(edict_t *self, edict_t *spawn_point, int index) {
     int default_inv_framenum = level.framenum + (int) (3 / FRAMETIME);
     if (index < 30) {
         if (spawn_point->count)
-            monster->monsterinfo.inv_framenum = level.framenum + spawn_point->count;
+            monster->monsterinfo.inv_framenum = level.framenum + qf2sf(spawn_point->count);
         else
             monster->monsterinfo.inv_framenum = default_inv_framenum;
         // cap invulnerability frames at 3 seconds
