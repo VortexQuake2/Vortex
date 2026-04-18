@@ -821,6 +821,9 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 				message2 = "'s burning shrapnel";
 				break;
 				//K03 End
+			case MOD_ETFRIFLE:
+				message = "was perforated by";
+				message2 = "'s ETF rifle";
 			}
 			if (message)
 			{

@@ -1040,6 +1040,10 @@ int vrx_apply_pierce(const edict_t *targ, const edict_t *attacker, const float d
                 // 10% chance at level 10 for AP round
                 pierceLevel = attacker->myskills.weapons[WEAPON_RAILGUN].mods[1].current_level;
                 pierceFactor = 0.0111f;
+            } else if (mod == MOD_ETFRIFLE) {
+                // 25% chance at level 10 for AP round
+                pierceLevel = attacker->myskills.weapons[WEAPON_ETFRIFLE].mods[1].current_level;
+                pierceFactor = 0.0333f;
             }
 
             if (pierceLevel > 0) {

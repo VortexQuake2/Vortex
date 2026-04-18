@@ -341,7 +341,7 @@ char *GetModString(int weapon_number, int mod_number) {
                 case WEAPON_TRAP:
                     return "Duration";
                 case WEAPON_ETFRIFLE:
-                    return "Spread";
+                    return "Pierce";
                 case WEAPON_PLASMABEAM:
                     return "Duration";
                 case WEAPON_PROXLAUNCHER:
@@ -439,7 +439,7 @@ char *GetModString(int weapon_number, int mod_number) {
                 case WEAPON_TRAP:
                     return "Pull";
                 case WEAPON_ETFRIFLE:
-                    return "Trails";
+                    return "Flechettes";
                 case WEAPON_PLASMABEAM:
                     return "Width";
                 case WEAPON_PROXLAUNCHER:

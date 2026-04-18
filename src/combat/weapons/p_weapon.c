@@ -3014,6 +3014,9 @@ static void weapon_etf_rifle_fire(edict_t *ent)
     int speed = 750 + 15 * ent->myskills.weapons[WEAPON_ETFRIFLE].mods[2].current_level;
     vec3_t kick_origin, kick_angles;
 
+	if (ent->myskills.weapons[WEAPON_ETFRIFLE].mods[4].current_level)
+		is_silenced = MZ_SILENCED;
+
     if (!(ent->client->buttons & BUTTON_ATTACK))
     {
         ent->client->ps.gunframe = 8;
@@ -3060,12 +3063,19 @@ static void weapon_etf_rifle_fire(edict_t *ent)
     P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
     fire_flechette(ent, start, forward, damage, speed, kick);
 
-    gi.WriteByte(svc_muzzleflash);
-    gi.WriteShort(ent - g_edicts);
-    gi.WriteByte(MZ_ETF_RIFLE | is_silenced);
-    gi.multicast(ent->s.origin, MULTICAST_PVS);
+	if (ent->myskills.weapons[WEAPON_ETFRIFLE].mods[3].current_level < 1) {
+			kick *= 2;
+	}
 
-    PlayerNoise(ent, start, PNOISE_WEAPON);
+	if (ent->myskills.weapons[WEAPON_ETFRIFLE].mods[4].current_level < 1) {
+		gi.WriteByte(svc_muzzleflash);
+		gi.WriteShort(ent - g_edicts);
+		gi.WriteByte(MZ_ETF_RIFLE | is_silenced);
+		gi.multicast(ent->s.origin, MULTICAST_PVS);
+
+		PlayerNoise(ent, start, PNOISE_WEAPON);
+	}
+
     ent->client->vrr.gun_fire_time = level.time + 0.1;
     if (ent->client->buttons & BUTTON_ATTACK)
     {

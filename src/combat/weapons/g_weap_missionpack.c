@@ -557,7 +557,7 @@ static void flechette_touch (edict_t *self, edict_t *other, cplane_t *plane, csu
     {
         T_Damage(other, self, self->owner, self->velocity, self->s.origin,
                  plane ? plane->normal : vec3_origin, self->dmg, self->dmg_radius,
-                 DAMAGE_BULLET, MOD_MACHINEGUN);
+                 DAMAGE_BULLET | DAMAGE_PIERCING, MOD_ETFRIFLE);
     }
     else
     {

@@ -908,6 +908,7 @@ extern int skullindex;
 #define MOD_EXPLODING_BARREL	103
 #define MOD_SHRAPNEL			104
 #define MOD_TRACKER			105
+#define MOD_ETFRIFLE        106
 //K03 End
 #define MOD_FRIENDLY_FIRE	0x8000000
 #define MOD_FMEDICPACK		150
