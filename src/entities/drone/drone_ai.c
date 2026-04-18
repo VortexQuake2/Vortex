@@ -1514,8 +1514,9 @@ void drone_ai_giveup (edict_t *self)
 	self->monsterinfo.aiflags &= ~AI_LOST_SIGHT;
 	self->monsterinfo.aiflags &= ~AI_PURSUIT_LAST_SEEN;
 
-	if (invasion->value)
-		self->monsterinfo.aiflags &= ~AI_SNAP_TO_NAVI;
+	if (invasion->value) {
+		self->monsterinfo.aiflags |= AI_SNAP_TO_NAVI;
+	}
 
 	// if we can walk, walk
 	if (self->monsterinfo.walk)
