@@ -84,12 +84,14 @@ qboolean vrx_inv_is_boss_wave(int wave) {
 
 void vrx_inv_init(void) {
     int i;
+
+    INVASION_OTHERSPAWNS_REMOVED = false;
+
     if (!pvm->value || !invasion->value)
         return;
 
     memset(&invasion_data, 0, sizeof(struct invdata_s));
     vrx_inv_init_spawn_que();
-    INVASION_OTHERSPAWNS_REMOVED = false;
     next_invasion_wave_level = 1;
     invasion_max_playerspawns = 0;
     invasion_spawncount = 0;
