@@ -1149,6 +1149,10 @@ void ClientEndServerFrame (edict_t *ent)
 		return;
 	}
 
+	// Rebuild delta/view state after any post-pmove server-side angle edits.
+	if (!ent->deadflag && !G_IsSpectator(ent))
+		vrx_sync_player_angle_state(ent, ent->client->v_angle);
+
 	AngleVectors (ent->client->v_angle, forward, right, up);
 
 	// burn from lava, etc

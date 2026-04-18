@@ -2067,13 +2067,8 @@ void PM_UseTeleporter(edict_t *self, edict_t *other, cplane_t *plane, csurface_t
 	other->s.event = EV_PLAYER_TELEPORT;
 
 	// set angles
-	for (i = 0; i<3; i++)
-		other->owner->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(dest->s.angles[i]
-		- other->owner->client->resp.cmd_angles[i]);
-
-	VectorClear(other->owner->s.angles);
-	VectorClear(other->owner->client->ps.viewangles);
-	VectorClear(other->owner->client->v_angle);
+	VectorCopy(dest->s.angles, other->owner->s.angles);
+	vrx_sync_player_angle_state(other->owner, dest->s.angles);
 
 	// kill anything at the destination
 	KillBox(other);
@@ -2084,7 +2079,6 @@ void PM_UseTeleporter(edict_t *self, edict_t *other, cplane_t *plane, csurface_t
 void teleporter_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
 	edict_t		*dest;
-	int			i;
 
 	// must be a live entity
 	if (!G_EntIsAlive(other))
@@ -2122,12 +2116,8 @@ void teleporter_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t
 	other->s.event = EV_PLAYER_TELEPORT;
 
 	// set angles
-	for (i = 0; i<3; i++)
-		other->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(dest->s.angles[i] - other->client->resp.cmd_angles[i]);
-
-	VectorClear(other->s.angles);
-	VectorClear(other->client->ps.viewangles);
-	VectorClear(other->client->v_angle);
+	VectorCopy(dest->s.angles, other->s.angles);
+	vrx_sync_player_angle_state(other, dest->s.angles);
 
 	// kill anything at the destination
 	KillBox(other);

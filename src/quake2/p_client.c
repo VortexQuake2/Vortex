@@ -13,6 +13,24 @@ void SP_misc_teleporter_dest (edict_t *ent);
 void EatCorpses (edict_t *ent);
 void RunCacodemonFrames (edict_t *ent, usercmd_t *ucmd);
 
+void vrx_sync_player_angle_state(edict_t *ent, const vec3_t angles)
+{
+	vec3_t synced_angles;
+	int i;
+
+	if (!ent || !ent->client)
+		return;
+
+	VectorCopy(angles, synced_angles);
+	ValidateAngles(synced_angles);
+
+	for (i = 0; i < 3; i++)
+		ent->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(synced_angles[i] - ent->client->resp.cmd_angles[i]);
+
+	VectorCopy(synced_angles, ent->client->ps.viewangles);
+	VectorCopy(synced_angles, ent->client->v_angle);
+}
+
 //
 // Gross, ugly, disgustuing hack section
 //

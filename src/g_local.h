@@ -1768,6 +1768,8 @@ void InitBodyQue(void);
 
 void ClientBeginServerFrame(edict_t *ent);
 
+void vrx_sync_player_angle_state(edict_t *ent, const vec3_t angles);
+
 //
 // v_think.c
 //
