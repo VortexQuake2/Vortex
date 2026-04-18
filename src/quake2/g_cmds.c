@@ -2563,7 +2563,8 @@ void Cmd_AdminCmd (edict_t *ent)
 
 		if (tr.ent)
 		{
-			safe_cprintf(ent, PRINT_HIGH, "Ent: 0x%p (classname: %s, monstername: %s)\n", tr.ent, tr.ent->classname, V_GetMonsterName(tr.ent));
+			safe_cprintf(ent, PRINT_HIGH, "Ent: 0x%p (classname: %s, monstername: %s, number: %i)\n",
+				tr.ent, tr.ent->classname, V_GetMonsterName(tr.ent), tr.ent->s.number);
 		}
 		
 		return;

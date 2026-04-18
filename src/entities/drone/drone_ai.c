@@ -667,7 +667,8 @@ qboolean drone_findtarget (edict_t *self, qboolean force)
 	} else if (self->monsterinfo.aiflags & AI_FIND_NAVI && self->goalentity && self->goalentity->mtype == INVASION_NAVI) {
 		// az: if we already have a navi and we're pretty close to it, try and get to the next one
 		if (entdist(self, self->goalentity) < 256) {
-			self->goalentity = self->goalentity->target_ent;
+			if (self->goalentity->mtype == INVASION_NAVI)
+				self->goalentity = self->goalentity->target_ent;
 
 			// az: if we're at the end of a navi chain, find a player spawn to attack
 			// this means we can stop looking for navis.
@@ -675,8 +676,6 @@ qboolean drone_findtarget (edict_t *self, qboolean force)
 				self->goalentity = vrx_inv_give_closest_player_spawn(self);
 
 				// also, allow the monsters to go back to being hyperaggressive dodgers.
-				self->monsterinfo.aiflags &= ~AI_FIND_NAVI;
-				self->monsterinfo.aiflags &= ~AI_COMBAT_POINT;
 				self->monsterinfo.aiflags &= ~AI_NO_CIRCLE_STRAFE;
 			}
 		}
@@ -770,11 +769,7 @@ qboolean drone_ai_findgoal (edict_t *self) {
 
 		// no longer valid, so forget about him
 		self->oldenemy = NULL;
-	} else if (self->goalentity) {
-		// We have a goalentity, why are we here?
-		if (!(self->monsterinfo.aiflags & AI_STAND_GROUND))
-			self->monsterinfo.run(self);
-	}else if (drone_findtarget(self, false))
+	} else if (drone_findtarget(self, invasion->value))
 	{
 		// can we find a new target?
 		//gi.dprintf("drone_ai_findgoal found new target\n");

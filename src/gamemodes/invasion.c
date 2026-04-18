@@ -263,7 +263,9 @@ edict_t *drone_findnavi(edict_t *self) {
             entdist(self->goalentity->target_ent, self) < entdist(self->goalentity, self))
             return self->goalentity->target_ent;
 
-        return vrx_inv_closest_navi_any(self);
+        edict_t* closest = vrx_inv_closest_navi_any(self);
+        if (closest)
+            return closest;
     }
 
     if (invasion_start_navicount > 0) {
