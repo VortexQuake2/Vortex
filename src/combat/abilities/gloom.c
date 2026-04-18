@@ -1538,14 +1538,14 @@ edict_t *CreateObstacle (edict_t *ent, int skill_level, int talent_level)
 	e->takedamage = DAMAGE_AIM;
 	e->max_health = OBSTACLE_INITIAL_HEALTH + OBSTACLE_ADDON_HEALTH * skill_level;
 	e->health = 0.5*e->max_health;
-	e->dmg = OBSTACLE_INITIAL_DAMAGE + OBSTACLE_ADDON_DAMAGE * skill_level;
+	e->dmg = scale_fps(OBSTACLE_INITIAL_DAMAGE + OBSTACLE_ADDON_DAMAGE * skill_level);
 	e->monsterinfo.nextattack = 100;// -9 * vrx_get_talent_level(ent, TALENT_PHANTOM_OBSTACLE);
 	e->monsterinfo.level = skill_level;
 	if (talent_level)
 	{
 		e->light_level = talent_level; // Talent: Magnetism
 		e->monsterinfo.sight_range = (0.2 * MAGMINE_RANGE) * talent_level; // range
-		e->count = MAGMINE_DEFAULT_PULL + (2 * MAGMINE_ADDON_PULL * talent_level); // pull
+		e->count = scale_fps(MAGMINE_DEFAULT_PULL + (2 * MAGMINE_ADDON_PULL * talent_level)); // pull
 		e->radius_dmg = e->dmg; // for bot AI hazard detection
 		e->dmg_radius = e->monsterinfo.sight_range; // for bot AI hazard detection
 		//gi.dprintf("magnetism: level: %d range: %.0f pull: %d\n", e->light_level, e->monsterinfo.sight_range, e->style);
