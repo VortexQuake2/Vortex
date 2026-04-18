@@ -1189,6 +1189,9 @@ void initialize_item_references(void) {
 	Fdi_HYPERBLASTER	= FindItem ("HyperBlaster");
 	Fdi_RAILGUN			= FindItem ("Railgun");
 	Fdi_BFG				= FindItem ("BFG10K");
+	Fdi_PHALANX			= FindItem ("Phalanx");
+	Fdi_BOOMER			= FindItem ("Ionripper");
+	Fdi_TRAP			= FindItem ("Trap");
 	Fdi_20MM			= FindItem ("20mm Cannon");
 
 	Fdi_SHELLS			= FindItem ("Shells");
@@ -1196,6 +1199,7 @@ void initialize_item_references(void) {
 	Fdi_CELLS			= FindItem ("Cells");
 	Fdi_ROCKETS			= FindItem ("Rockets");
 	Fdi_SLUGS			= FindItem ("Slugs");
+	Fdi_MAGSLUGS		= FindItem ("Mag Slug");
 
 	//K03 Begin
 	Fdi_POWERCUBE		= FindItem("Power Cube");
@@ -1643,5 +1647,3 @@ void SP_worldspawn (edict_t *ent)
 //GHz END
 	//}	
 }
-
-

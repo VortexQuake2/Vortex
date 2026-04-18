@@ -10,7 +10,7 @@ const char* Time();
 #define	CURRENT_DATE				s1 = Date()
 #define CURRENT_TIME				s2 = Time()
 
-#define VRX_VERSION "5.99.0"
+#define VRX_VERSION "5.99.1"
 
 // autosave interval
 #define AUTOSAVE_FRAMES (300)
@@ -74,7 +74,7 @@ enum vrx_player_class_t {
     CLASS_MAX // Number of classes to choose from + 1
 };
 
-#define ARMORY_ITEMS 29
+#define ARMORY_ITEMS 39
 
 #define PLAYTIME_MIN_MINUTES        999.0    // minutes played before penalty begins
 #define PLAYTIME_MAX_MINUTES        999.0    // minutes played before max penalty is reached

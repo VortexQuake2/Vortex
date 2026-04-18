@@ -11,6 +11,7 @@ void vrx_check_for_levelup(edict_t *ent, qboolean print_message);
 void Cmd_Armory_f(edict_t*ent, int selection);
 //Function prototypes required for this .c file:
 void OpenDOMJoinMenu (edict_t *ent);
+static int RespawnMenuPageForOption(int option);
 
 void ChaseCam(edict_t *ent)
 {
@@ -365,13 +366,37 @@ void OpenMyinfoMenu (edict_t *ent)
 
 void respawnmenu_handler (edict_t *ent, int option)
 {
+	int page_num = (option / 1000);
+	int page_choice = (option % 1000);
+
+	if (page_num > 0)
+	{
+		if (page_choice == 2) // next
+		{
+			OpenRespawnWeapMenu(ent, page_num + 1);
+			return;
+		}
+		else if (page_choice == 1) // back
+		{
+			if (page_num == 1)
+				OpenGeneralMenu(ent);
+			else
+				OpenRespawnWeapMenu(ent, page_num - 1);
+			return;
+		}
+	}
+
 	if (option == 99)
 	{
 		menu_close(ent, true);
 		return;
 	}
 
+	if (option < 1 || option > 22)
+		return;
+
 	ent->myskills.respawn_weapon = option;
+	OpenRespawnWeapMenu(ent, RespawnMenuPageForOption(option));
 }
 
 char *GetRespawnString (edict_t *ent)
@@ -391,13 +416,69 @@ char *GetRespawnString (edict_t *ent)
 	case 11: return "Hand Grenades";
 	case 12: return "20mm Cannon";
 	case 13: return "Blaster";
+	case 14: return "Ionripper";
+	case 15: return "Phalanx";
+	case 16: return "Trap";
+	case 17: return "ETF Rifle";
+	case 18: return "Plasma Beam";
+	case 19: return "Prox Launcher";
+	case 20: return "Chainfist";
+	case 21: return "Tesla";
+	case 22: return "Disruptor";
 	default: return "Unknown";
 	}
 }
 
-void OpenRespawnWeapMenu(edict_t *ent)
+typedef struct {
+	const char *name;
+	int option;
+} respawn_menu_item_t;
+
+static const respawn_menu_item_t respawn_items[] = {
+	{"Sword", 1},
+	{"Shotgun", 2},
+	{"Super Shotgun", 3},
+	{"Machinegun", 4},
+	{"Chaingun", 5},
+	{"Hand Grenades", 11},
+	{"Grenade Launcher", 6},
+	{"Rocket Launcher", 7},
+	{"Hyperblaster", 8},
+	{"Railgun", 9},
+	{"BFG10k", 10},
+	{"20mm Cannon", 12},
+	{"Ionripper", 14},
+	{"Phalanx", 15},
+	{"Trap", 16},
+	{"ETF Rifle", 17},
+	{"Plasma Beam", 18},
+	{"Prox Launcher", 19},
+	{"Chainfist", 20},
+	{"Tesla", 21},
+	{"Disruptor", 22},
+	{"Blaster", 13}
+};
+
+static int RespawnMenuPageForOption(int option)
 {
-    if (!menu_can_show(ent))
+	int i;
+	for (i = 0; i < (int)(sizeof(respawn_items) / sizeof(respawn_items[0])); i++)
+	{
+		if (respawn_items[i].option == option)
+			return (i / 10) + 1;
+	}
+	return 1;
+}
+
+void OpenRespawnWeapMenu(edict_t *ent, int page_num)
+{
+	int i;
+	int first;
+	int last;
+	int total;
+
+    // Allow internal page flips after selection even if transient menu state flags are set.
+    if ((page_num <= 1) && !menu_can_show(ent))
         return;
 
     if (ent->myskills.class_num == CLASS_KNIGHT) {
@@ -410,31 +491,36 @@ void OpenRespawnWeapMenu(edict_t *ent)
         return;
     }
 
+	if (page_num < 1)
+		page_num = 1;
+
+	total = sizeof(respawn_items) / sizeof(respawn_items[0]);
+	first = (page_num - 1) * 10;
+	if (first >= total)
+		first = 0;
+	last = first + 10;
+	if (last > total)
+		last = total;
+
 	menu_clear(ent);
 
 	//				xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
 	menu_add_line(ent, "Pick a respawn weapon.", MENU_GREEN_CENTERED);
 	menu_add_line(ent, " ", 0);
-	menu_add_line(ent, "Sword", 1);
-	menu_add_line(ent, "Shotgun", 2);
-	menu_add_line(ent, "Super Shotgun", 3);
-	menu_add_line(ent, "Machinegun", 4);
-	menu_add_line(ent, "Chaingun", 5);
-	menu_add_line(ent, "Hand Grenades", 11);
-	menu_add_line(ent, "Grenade Launcher", 6);
-	menu_add_line(ent, "Rocket Launcher", 7);
-	menu_add_line(ent, "Hyperblaster", 8);
-	menu_add_line(ent, "Railgun", 9);
-	menu_add_line(ent, "BFG10k", 10);
-	menu_add_line(ent, "20mm Cannon", 12);
-	menu_add_line(ent, "Blaster", 13);
+
+	for (i = first; i < last; i++)
+		menu_add_line(ent, respawn_items[i].name, respawn_items[i].option);
+
 	menu_add_line(ent, " ", 0);
 	menu_add_line(ent, va("Respawn: %s", GetRespawnString(ent)), 0);
 	menu_add_line(ent, " ", 0);
+	if (last < total)
+		menu_add_line(ent, "Next", (page_num * 1000) + 2);
+	menu_add_line(ent, "Back", (page_num * 1000) + 1);
 	menu_add_line(ent, "Exit", 99);
 
 	menu_set_handler(ent, respawnmenu_handler);
-		ent->client->menustorage.currentline = 3;
+	ent->client->menustorage.currentline = 3;
 	menu_show(ent);
 }
 
@@ -571,7 +657,7 @@ void generalmenu_handler (edict_t *ent, int option)
 	case 1: OpenUpgradeMenu(ent); break;
 	case 2: OpenWeaponUpgradeMenu(ent, 0); break;
 	case 3: OpenTalentUpgradeMenu(ent, 0); break;
-	case 4: OpenRespawnWeapMenu(ent); break;
+	case 4: OpenRespawnWeapMenu(ent, 1); break;
 	case 5: OpenMasterPasswordMenu(ent); break;
 	case 6: OpenMyinfoMenu(ent); break;
 	case 7: OpenArmoryMenu(ent); break;
@@ -580,7 +666,7 @@ void generalmenu_handler (edict_t *ent, int option)
 	case 10: ShowTradeMenu(ent); break;
 	case 11: ShowVoteModeMenu(ent); break;
 	case 12: ShowHelpMenu(ent, 0); break;
-	case 13: Cmd_Armory_f(ent, 31); break;
+	case 13: Cmd_Armory_f(ent, 30); break;
 	case 20: vrx_prestige_open_menu(ent); break;
 	default: menu_close(ent, true);
 	}

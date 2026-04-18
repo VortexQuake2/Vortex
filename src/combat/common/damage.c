@@ -105,6 +105,7 @@ int G_DamageType(int mod, int dflags) {
         case MOD_BFG_EFFECT:
         case MOD_HYPERBLASTER:
         case MOD_BLASTER:
+        case MOD_TRACKER:
         case MOD_SWORD:
             return (D_ENERGY | D_PHYSICAL);
         case MOD_LASER_DEFENSE:

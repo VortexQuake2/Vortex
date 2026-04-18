@@ -207,14 +207,18 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 	int			qty = 0;
 	item_t		*slot;
 	int			type = ITEM_NONE;
+    qboolean    is_weapon = false;
 	//int			talentLevel;
 
 	if (ent->deadflag == DEAD_DEAD)
 		return;
 
 	//What is the price/qty of the item?
-	if ((selection < 11) && (selection > 0))
+	if (((selection < 11) && (selection > 0)) || (selection >= 31 && selection <= 39))
+    {
 		price = ARMORY_PRICE_WEAPON;
+        is_weapon = true;
+    }
 	else if (selection < 17)
 		price = ARMORY_PRICE_AMMO;
 	
@@ -231,6 +235,15 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 		case 8:		item = FindItem("Railgun");			break;	//rg
 		case 9:		item = FindItem("bfg10k");			break;	//bfg
 		case 10:	item = FindItem("20mm Cannon");		break;	//20mm
+        case 31:    item = FindItem("Ionripper");      break;
+        case 32:    item = FindItem("Phalanx");        break;
+        case 33:    item = FindItem("Trap");           break;
+        case 34:    item = FindItem("ETF Rifle");      break;
+        case 35:    item = FindItem("Plasma Beam");    break;
+        case 36:    item = FindItem("Prox Launcher");  break;
+        case 37:    item = FindItem("Chainfist");      break;
+        case 38:    item = FindItem("Tesla");          break;
+        case 39:    item = FindItem("Disruptor");      break;
 
 		//ammo
 		case 11:
@@ -358,9 +371,33 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 	}
 
 	//If a weapon was purchased
-	if ((selection < 11) && (selection > 0))
+	if (is_weapon)
 	{
+        if (!item)
+        {
+            safe_cprintf(ent, PRINT_HIGH, "This weapon is not available on this build.\n");
+            return;
+        }
 		ent->client->pers.inventory[ITEM_INDEX(item)] = 1;
+
+		// New missionpack weapons can require ammo types players may not be carrying.
+		// Grant the minimum needed ammo and auto-select the weapon for immediate use.
+		if (selection >= 31 && selection <= 39)
+		{
+			if (item->ammo)
+			{
+				gitem_t *ammo = FindItem(item->ammo);
+				if (ammo)
+				{
+					int ammo_index = ITEM_INDEX(ammo);
+					if (ent->client->pers.inventory[ammo_index] < item->quantity)
+						ent->client->pers.inventory[ammo_index] = item->quantity;
+				}
+			}
+			if (item->use)
+				item->use(ent, item);
+		}
+
 		safe_cprintf(ent, PRINT_HIGH, "You bought a %s.\n", item->pickup_name);
 	}
 	//If ammo was purchased (or T-Balls)
@@ -529,6 +566,8 @@ void PurchaseMenu_handler (edict_t *ent, int option)
 void OpenPurchaseMenu (edict_t *ent, int page_num, int lastline)
 {
 	int i;
+	int purchase_number;
+	const char *item_name;
 
 	//Usual menu stuff
 	if (!menu_can_show(ent))
@@ -543,9 +582,30 @@ void OpenPurchaseMenu (edict_t *ent, int page_num, int lastline)
 	//Print this page's items
     for (i = (page_num-1)*10; i < page_num*10; ++i)
 	{
-		if (i < ARMORY_ITEMS)
-			menu_add_line(ent, va("%s", GetArmoryItemString(i+1)), i+1);
-		else menu_add_line(ent, " ", 0);
+		purchase_number = i + 1;
+		if (purchase_number > ARMORY_ITEMS)
+		{
+			menu_add_line(ent, " ", 0);
+			continue;
+		}
+
+#ifdef REMOVE_RESPAWNS
+		// Slot 30 is respawns; hide it if respawns are compiled out.
+		if (purchase_number == 30)
+		{
+			menu_add_line(ent, " ", 0);
+			continue;
+		}
+#endif
+
+		item_name = GetArmoryItemString(purchase_number);
+		if (!item_name || !item_name[0] || !Q_strcasecmp(item_name, "<BAD ITEM NUMBER>"))
+		{
+			menu_add_line(ent, " ", 0);
+			continue;
+		}
+
+		menu_add_line(ent, va("%s", item_name), purchase_number);
 	}
 
 	//Footer

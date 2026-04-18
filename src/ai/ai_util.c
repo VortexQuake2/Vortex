@@ -428,6 +428,22 @@ int AI_RespawnWeaponToWeapIndex(int respawn_weapon)
 		return WEAP_GRENADES;
 	else if (respawn_weapon == 13)
 		return WEAP_BLASTER;
+	else if (respawn_weapon == 14)
+		return WEAP_HYPERBLASTER; // Ionripper
+	else if (respawn_weapon == 15)
+		return WEAP_PLASMA; // Phalanx
+	else if (respawn_weapon == 16)
+		return WEAP_TRAP;
+	else if (respawn_weapon == 17)
+		return WEAP_MACHINEGUN; // ETF Rifle
+	else if (respawn_weapon == 18)
+		return WEAP_PLASMA; // Plasma Beam
+	else if (respawn_weapon == 19)
+		return WEAP_PROXLAUNCH;
+	else if (respawn_weapon == 20)
+		return WEAP_CHAINFIST;
+	else if (respawn_weapon == 21)
+		return WEAP_TRAP; // Tesla
 	else
 		return respawn_weapon - 1;
 }

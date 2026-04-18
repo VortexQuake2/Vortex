@@ -32,6 +32,15 @@ void think_ability_ammo_regen(edict_t* ent) {
 		V_GiveAmmoClip(ent,
 			regen_level * 0.2f * amount_mult,
 			AMMO_SLUGS);        //20% of a pack per point
+		V_GiveAmmoClip(ent,
+			regen_level * 0.1f * amount_mult,
+			AMMO_MAGSLUG);      //10% of a pack per point
+		V_GiveAmmoClip(ent,
+			regen_level * 0.1f * amount_mult,
+			AMMO_TRAP);         //10% of a pack per point
+		V_GiveAmmoClip(ent,
+			regen_level * 0.1f * amount_mult,
+			AMMO_TESLA);        //10% of a pack per point
 
 		ent->client->ammo_regentime = level.time + AMMO_REGEN_DELAY;
 	}
@@ -660,6 +669,12 @@ void think_talent_ammo_regen(edict_t* ent) {
 				V_GiveAmmoClip(ent, 1.0f, AMMO_SHELLS);
 			if (ent->client->ammo_index == slug_index)
 				V_GiveAmmoClip(ent, 1.0f, AMMO_SLUGS);
+			if (ent->client->ammo_index == magslug_index)
+				V_GiveAmmoClip(ent, 1.0f, AMMO_MAGSLUG);
+			if (ent->client->ammo_index == trap_index)
+				V_GiveAmmoClip(ent, 1.0f, AMMO_TRAP);
+			if (ent->client->ammo_index == tesla_index)
+				V_GiveAmmoClip(ent, 1.0f, AMMO_TESLA);
 
 			talent->delay = level.time + 15 - talent->upgradeLevel * 2;    //10 seconds - 1 seconds per upgrade
 		}

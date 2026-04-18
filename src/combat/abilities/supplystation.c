@@ -173,11 +173,21 @@ int MaxAmmoType (edict_t *ent, int ammo_index)
 		return ent->client->pers.max_cells;
 	else if (ammo_index == slug_index)//ITEM_INDEX(FindItemByClassname("ammo_slugs")))
 		return ent->client->pers.max_slugs;
+	else if (ammo_index == magslug_index)
+		return ent->client->pers.max_magslug;
+	else if (ammo_index == trap_index)
+		return ent->client->pers.max_trap;
+	else if (ammo_index == tesla_index)
+		return ent->client->pers.max_tesla;
+	else if (ammo_index == disruptor_index)
+		return ent->client->pers.max_disruptor;
 	else return 0;
 }
 
 int G_GetRespawnWeaponIndex (edict_t *ent)
 {
+	gitem_t *item = NULL;
+
 	switch (ent->myskills.respawn_weapon)
 	{
 	case 2:		return ITEM_INDEX(Fdi_SHOTGUN);
@@ -191,12 +201,38 @@ int G_GetRespawnWeaponIndex (edict_t *ent)
 	case 10:	return ITEM_INDEX(Fdi_BFG);
 	case 11:	return grenade_index;
 	case 12:	return ITEM_INDEX(Fdi_20MM);
+	case 14:
+		item = FindItem("Ionripper");
+		return item ? ITEM_INDEX(item) : 0;
+	case 15:
+		item = FindItem("Phalanx");
+		return item ? ITEM_INDEX(item) : 0;
+	case 16:
+		item = FindItem("Trap");
+		return item ? ITEM_INDEX(item) : 0;
+	case 17:
+		item = FindItem("ETF Rifle");
+		return item ? ITEM_INDEX(item) : 0;
+	case 18:
+		item = FindItem("Plasma Beam");
+		return item ? ITEM_INDEX(item) : 0;
+	case 19:
+		item = FindItem("Prox Launcher");
+		return item ? ITEM_INDEX(item) : 0;
+	case 20:
+		item = FindItem("Chainfist");
+		return item ? ITEM_INDEX(item) : 0;
+	case 21:
+		item = FindItem("Tesla");
+		return item ? ITEM_INDEX(item) : 0;
 	default:	return 0;
 	}
 }
 
 int G_GetAmmoIndexByWeaponIndex (int weapon_index)
 {
+	gitem_t *item = NULL;
+
 	//gi.dprintf("weapon_index=%d\n", weapon_index);
 
 	if (!weapon_index)
@@ -221,7 +257,37 @@ int G_GetAmmoIndexByWeaponIndex (int weapon_index)
 		return cell_index;
 	else if (weapon_index == ITEM_INDEX(Fdi_20MM))
 		return shell_index;
-	else if (weapon_index == grenade_index)
+	item = FindItem("Ionripper");
+	if (item && weapon_index == ITEM_INDEX(item))
+		return cell_index;
+	item = FindItem("Phalanx");
+	if (item && weapon_index == ITEM_INDEX(item))
+		return magslug_index;
+	item = FindItem("Trap");
+	if (item && weapon_index == ITEM_INDEX(item))
+		return trap_index;
+	item = FindItem("ETF Rifle");
+	if (item && weapon_index == ITEM_INDEX(item))
+	{
+		gitem_t *flechettes = FindItem("Flechettes");
+		return flechettes ? ITEM_INDEX(flechettes) : bullet_index;
+	}
+	item = FindItem("Plasma Beam");
+	if (item && weapon_index == ITEM_INDEX(item))
+		return cell_index;
+	item = FindItem("Prox Launcher");
+	if (item && weapon_index == ITEM_INDEX(item))
+		return grenade_index;
+	item = FindItem("Chainfist");
+	if (item && weapon_index == ITEM_INDEX(item))
+		return 0;
+	item = FindItem("Tesla");
+	if (item && weapon_index == ITEM_INDEX(item))
+		return tesla_index;
+	item = FindItem("Disruptor");
+	if (item && weapon_index == ITEM_INDEX(item))
+		return disruptor_index;
+	if (weapon_index == grenade_index)
 		return grenade_index;
 	return 0;
 }
