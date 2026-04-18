@@ -807,13 +807,14 @@ void Teleport_them(edict_t *ent) {
 
     SelectSpawnPoint(ent, spawn_origin, spawn_angles);
 
-    VectorCopy(spawn_origin, start);
-    start[2] += 9;
-    VectorCopy(start, ent->s.origin);
-    VectorCopy(spawn_angles, ent->s.angles);
+	VectorCopy(spawn_origin, start);
+	start[2] += 9;
+	VectorCopy(start, ent->s.origin);
+	VectorCopy(spawn_angles, ent->s.angles);
+	vrx_sync_player_angle_state(ent, spawn_angles);
 
-    //3.0 You get some invincibility when you spawn, but you can't shoot
-    ent->client->respawn_time = ent->client->ability_delay = level.time + (RESPAWN_INVIN_TIME / 10);
+	//3.0 You get some invincibility when you spawn, but you can't shoot
+	ent->client->respawn_time = ent->client->ability_delay = level.time + (RESPAWN_INVIN_TIME / 10);
     ent->client->invincible_framenum = level.framenum + qf2sf(RESPAWN_INVIN_TIME);
 
     // 3.68 don't allow morphs to immediately attack
