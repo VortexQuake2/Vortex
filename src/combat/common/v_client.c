@@ -208,6 +208,9 @@ int vrx_WeapIDtoWeapIndex(int weaponID)
     case WEAPON_DISRUPTOR:
         item = FindItem("Disruptor");
         return item ? ITEM_INDEX(item) : blaster_index;
+    case 23:
+        item = FindItem("Desert Eagle");
+        return item ? ITEM_INDEX(item) : blaster_index;
     default: return blaster_index;
     }
 }

@@ -354,6 +354,7 @@ typedef struct {
 #define IT_FLAG			128
 #define IT_HEALTH		256
 
+
 #define MPI_QUAD				21
 #define	MPI_PENTA				22
 #define MPI_QUADF				23
@@ -903,6 +904,13 @@ VRX_G_SAVE_IMPL int skullindex;
 #define MOD_SHRAPNEL			104
 #define MOD_TRACKER			105
 #define MOD_ETFRIFLE        106
+
+// awaken2 weapons
+#define MOD_DEAGLE          110
+#define MOD_JACKHAMMER      111
+#define MOD_MAC10           112
+
+
 //K03 End
 #define MOD_FRIENDLY_FIRE	0x8000000
 #define MOD_FMEDICPACK		150
@@ -1366,6 +1374,11 @@ void Weapon_ProxLauncher (edict_t *ent);
 void Weapon_ChainFist (edict_t *ent);
 void Weapon_Tesla (edict_t *ent);
 void Weapon_Disruptor (edict_t *ent);
+
+//awaken2
+void Weapon_DesertEagle(edict_t *self);
+void Weapon_Jackhammer(edict_t *self);
+void Weapon_Mac10(edict_t *self);
 
 //K03 Begin
 void Weapon_Sword(edict_t *ent);

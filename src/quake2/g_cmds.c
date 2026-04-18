@@ -886,9 +886,12 @@ int GetSlot(gitem_t *it)
 	slot = 0;
 	if(it == FindItem("blaster")) slot = 1;
 	else if(it == FindItem("shotgun")) slot = 2;
+	else if(it == FindItem("Desert Eagle")) slot = 2;
 	else if(it == FindItem("super shotgun")) slot = 3;
+	else if(it == FindItem("Jackhammer")) slot = 3;
 	else if(it == FindItem("Machinegun")) slot = 4;
 	else if(it == FindItem("ETF Rifle")) slot = 4;
+	else if(it == FindItem("MAC-20")) slot = 4;
 	else if(it == FindItem("chaingun"))	slot = 5;
 	else if(it == FindItem("grenade launcher")) slot = 6;
 	else if(it == FindItem("Prox Launcher")) slot = 6;
@@ -1062,7 +1065,9 @@ void Cmd_Use_f (edict_t *ent)
 	gitem_t		*it;
 	char		*s;
 	static const char *blaster_cycle[] = {"Blaster", "Sword", "Chainfist"};
-	static const char *machinegun_cycle[] = {"Machinegun", "ETF Rifle"};
+	static const char *shotgun_cycle[] = {"Shotgun", "Desert Eagle"};
+	static const char *supershotgun_cycle[] = {"Super Shotgun", "Jackhammer"};
+	static const char *machinegun_cycle[] = {"Machinegun", "ETF Rifle", "Mac-10"};
 	static const char *grenade_cycle[] = {"Grenade Launcher", "Prox Launcher"};
 	static const char *throwable_cycle[] = {"Grenades", "Tesla", "Trap"};
 	static const char *hyper_cycle[] = {"HyperBlaster", "Ionripper", "Plasma Beam"};
@@ -1124,6 +1129,8 @@ void Cmd_Use_f (edict_t *ent)
         return;
 
 	it = Cmd_CycleWeaponGroup(ent, it, blaster_cycle, sizeof(blaster_cycle) / sizeof(blaster_cycle[0]));
+	it = Cmd_CycleWeaponGroup(ent, it, shotgun_cycle, sizeof(shotgun_cycle) / sizeof(shotgun_cycle[0]));
+	it = Cmd_CycleWeaponGroup(ent, it, supershotgun_cycle, sizeof(supershotgun_cycle) / sizeof(supershotgun_cycle[0]));
 	it = Cmd_CycleWeaponGroup(ent, it, machinegun_cycle, sizeof(machinegun_cycle) / sizeof(machinegun_cycle[0]));
 	it = Cmd_CycleWeaponGroup(ent, it, grenade_cycle, sizeof(grenade_cycle) / sizeof(grenade_cycle[0]));
 	it = Cmd_CycleWeaponGroup(ent, it, throwable_cycle, sizeof(throwable_cycle) / sizeof(throwable_cycle[0]));

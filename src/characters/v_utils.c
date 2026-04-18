@@ -195,6 +195,13 @@ char *GetArmoryItemString(int purchase_number) {
         case 39:
             return "Disruptor";
 
+        case 43:
+            return "Desert Eagle";
+        case 44:
+            return "Jackhammer";
+        case 45:
+            return "Mac-10";
+
         default:
             return " ";
     }
@@ -251,6 +258,12 @@ char *GetShortWeaponString(int weapon_number) {
             return "Tesla";
         case WEAPON_DISRUPTOR:
             return "DR";
+        case WEAPON_DESERTEAGLE:
+            return "DE";
+        case WEAPON_JACKHAMMER:
+            return "JH";
+        case WEAPON_MAC10:
+            return "M10";
         default:
             return "<BAD WEAPON NUMBER>";
     }
@@ -304,6 +317,12 @@ char *GetWeaponString(int weapon_number) {
             return "Tesla";
         case WEAPON_DISRUPTOR:
             return "Disruptor";
+        case WEAPON_DESERTEAGLE:
+            return "Desert Eagle";
+        case WEAPON_JACKHAMMER:
+            return "Jackhammer";
+        case WEAPON_MAC10:
+            return "Mac-10";
         default:
             return "<BAD WEAPON NUMBER>";
     }
@@ -1405,9 +1424,12 @@ int V_GetRespawnAmmoType(edict_t *ent) {
         case WEAPON_SHOTGUN: //sg
         case WEAPON_SUPERSHOTGUN: //ssg
         case WEAPON_20MM: //20mm
+        case WEAPON_JACKHAMMER
             return AMMO_SHELLS;
         case WEAPON_MACHINEGUN: //mg
         case WEAPON_CHAINGUN: //cg
+        case WEAPON_DESERT_EAGLE:
+        case WEAPON_MAC10:
             return AMMO_BULLETS;
         case WEAPON_GRENADELAUNCHER: //gl
         case WEAPON_HANDGRENADE: //hg

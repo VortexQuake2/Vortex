@@ -2813,7 +2813,68 @@ warehouse circuits
 /* precache */ "models/weapons/g_dist/tris.md2 models/weapons/v_dist/tris.md2 models/proj/disintegrator/tris.md2 weapons/disrupt.wav weapons/disint2.wav weapons/disrupthit.wav a_bullets_hud",
                         WEAPON_DISRUPTOR
                 },
-
+/*QUAKED weapon_deserteagle (.3 .3 1) (-16 -16 -16) (16 16 16)
+                 */
+                {
+                    "weapon_deserteagle",
+                    Pickup_Weapon,
+                    Use_Weapon,
+                    Drop_Weapon,
+                    Weapon_DesertEagle,
+                    "misc/w_pkup.wav",
+                    "models/weapons/g_de/tris.md2", EF_ROTATE | EF_BOB,
+                    "models/weapons/v_de/tris.md2",
+                    /* icon */        "w_de",
+                    /* pickup */    "Desert Eagle",
+                    0,
+                    1,
+                    "Bullets",
+                    IT_WEAPON,
+                    NULL,
+                    0,
+                    /* precache */ "models/weapons/g_de/tris.md2 models/weapons/v_de/tris.md2",
+                    WEAP_DEAGLE
+                },
+                {
+                    "weapon_jackhammer",
+                    Pickup_Weapon,
+                    Use_Weapon,
+                    Drop_Weapon,
+                    Weapon_Jackhammer,
+                    "misc/w_pkup.wav",
+                    "models/weapons/g_pancor/tris.md2", EF_ROTATE | EF_BOB,
+                    "models/weapons/v_pancor/tris.md2",
+                    /* icon */        "w_pancor",
+                    /* pickup */    "Jackhammer",
+                    0,
+                    1,
+                    "Shells",
+                    IT_WEAPON,
+                    NULL,
+                    0,
+                    /* precache */ "weapons/sshotf1b.wav weapons/sshotr1b.wav",
+                    WEAP_JACKHAMMER
+                },
+                {
+                    "weapon_mac10",
+                    Pickup_Weapon,
+                    Use_Weapon,
+                    Drop_Weapon,
+                    Weapon_Mac10,
+                    "misc/w_pkup.wav",
+                    "models/weapons/g_macten/tris.md2", EF_ROTATE | EF_BOB,
+                    "models/weapons/v_macten/tris.md2",
+                    /* icon */        "w_macten",
+                    /* pickup */    "Mac-10",
+                    0,
+                    1,
+                    "Bullets",
+                    IT_WEAPON,
+                    NULL,
+                    0,
+                    /* precache */ "weapons/machgf1b.wav weapons/machgf2b.wav weapons/machgf3b.wav weapons/machgf4b.wav weapons/machgf5b.wav",
+                    WEAP_MAC10
+                },
                 // end of list marker
                 {NULL}
         };
@@ -2892,7 +2953,6 @@ void SP_item_foodcube(edict_t *self) {
     self->classname = "foodcube";
 }
 
-
 void InitItems(void) {
     game.num_items = sizeof(itemlist) / sizeof(itemlist[0]) - 1;
 }
@@ -2963,6 +3023,10 @@ void SetItemNames(void) {
     plasmabeam_index = ITEM_INDEX(FindItem("Plasma Beam"));
     proxlauncher_index = ITEM_INDEX(FindItem("Prox Launcher"));
     chainfist_index = ITEM_INDEX(FindItem("Chainfist"));
+
+    deserteagle_index = ITEM_INDEX(FindItem("Desert Eagle"));
+    jackhammer_index = ITEM_INDEX(FindItem("Jackhammer"));
+    mac10_index = ITEM_INDEX(FindItem("Mac-10"));
 }
 
 int GetWorldAmmoCount(char *pickupName) {

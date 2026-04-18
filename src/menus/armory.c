@@ -248,6 +248,7 @@ void Cmd_Armory_f(edict_t *ent, int selection)
         case 37:    item = FindItem("Chainfist");      break;
         case 38:    item = FindItem("Tesla");          break;
         case 39:    item = FindItem("Disruptor");      break;
+		case 40:	item = FindItem("Desert Eagle");   break;
 
 		//ammo
 		case 11:

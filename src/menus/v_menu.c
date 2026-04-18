@@ -392,7 +392,7 @@ void respawnmenu_handler (edict_t *ent, int option)
 		return;
 	}
 
-	if (option < 1 || option > 22)
+	if (option < 1 || option > 25)
 		return;
 
 	ent->myskills.respawn_weapon = option;
@@ -426,6 +426,9 @@ static const respawn_menu_item_t respawn_items[] = {
 	{"Chainfist", WEAPON_CHAINFIST},
 	{"Tesla", WEAPON_TESLA},
 	{"Disruptor", WEAPON_DISRUPTOR},
+	{"Desert Eagle", WEAPON_DESERTEAGLE},
+	{"Jackhammer", WEAPON_JACKHAMMER},
+	{"Mac-10", WEAPON_JACKHAMMER},
 	{"Blaster", WEAPON_BLASTER}
 };
 
