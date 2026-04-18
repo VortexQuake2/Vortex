@@ -1160,7 +1160,7 @@ void SP_info_player_invasion(edict_t *self) {
     self->nextthink = level.time + FRAMETIME;
     //self->touch = info_player_invasion_touch;
     self->solid = SOLID_BBOX;
-    VectorSet(self->mins, 32, -32, -24);
+    VectorSet(self->mins, -32, -32, -24);
     VectorSet(self->maxs, 32, 32, -16);
     gi.linkentity(self);
 
