@@ -692,7 +692,7 @@ void SV_Physics_Toss (edict_t *ent)
 			const float delta = 275 - ent->velocity[2];
 
 			// don't get stuck on the ceiling
-			if (trace.plane.normal[2] != -1.0)
+			if (trace.plane.normal[2] > -0.7)
 				ent->velocity[2] += delta;
 
 			// always bounce away from the wall
