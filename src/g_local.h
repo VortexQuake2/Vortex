@@ -368,7 +368,7 @@ typedef struct {
 
 #define WEAP_PHALANX			21
 #define WEAP_BOOMER				22
-//#define WEAP_DISRUPTOR			23		// PGM
+#define WEAP_DISRUPTOR			23		// PGM
 #define WEAP_ETFRIFLE			24		// PGM
 
 #define WEAP_TOTAL				25

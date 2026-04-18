@@ -1,4 +1,4 @@
-#define MAX_WEAPONS				21
+#define MAX_WEAPONS				22
 #define MAX_WEAPONMODS			5
 
 //New weapon defines	(doomie)
@@ -23,6 +23,7 @@
 #define WEAPON_PROXLAUNCHER		18
 #define WEAPON_CHAINFIST		19
 #define WEAPON_TESLA			20
+#define WEAPON_DISRUPTOR		21
 
 typedef struct
 {

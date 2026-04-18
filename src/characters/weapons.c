@@ -108,6 +108,7 @@ qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 	case WEAPON_PROXLAUNCHER:
 	case WEAPON_CHAINFIST:
 	case WEAPON_TESLA:
+	case WEAPON_DISRUPTOR:
 		if(ModIndex < 3)
 		{
 			weapon->mods[ModIndex].soft_max = 20;

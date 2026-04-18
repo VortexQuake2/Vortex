@@ -3059,7 +3059,7 @@ warehouse circuits
                         NULL,
                         0,
 /* precache */ "models/weapons/g_dist/tris.md2 models/weapons/v_dist/tris.md2 models/proj/disintegrator/tris.md2 weapons/disrupt.wav weapons/disint2.wav weapons/disrupthit.wav a_bullets_hud",
-                        WEAP_BFG
+                        WEAP_DISRUPTOR
                 },
 
                 // end of list marker

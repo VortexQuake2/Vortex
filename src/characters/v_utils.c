@@ -240,6 +240,8 @@ char *GetShortWeaponString(int weapon_number) {
             return "CF";
         case WEAPON_TESLA:
             return "Tesla";
+        case WEAPON_DISRUPTOR:
+            return "DR";
         default:
             return "<BAD WEAPON NUMBER>";
     }
@@ -291,6 +293,8 @@ char *GetWeaponString(int weapon_number) {
             return "Chainfist";
         case WEAPON_TESLA:
             return "Tesla";
+        case WEAPON_DISRUPTOR:
+            return "Disruptor";
         default:
             return "<BAD WEAPON NUMBER>";
     }
@@ -346,6 +350,8 @@ char *GetModString(int weapon_number, int mod_number) {
                     return "Refire";
                 case WEAPON_TESLA:
                     return "Duration";
+                case WEAPON_DISRUPTOR:
+                    return "PLACEHOLDER";
                 default:
                     return "<BAD WEAPON NUMBER>";
             }
@@ -393,6 +399,8 @@ char *GetModString(int weapon_number, int mod_number) {
                     return "Range";
                 case WEAPON_TESLA:
                     return "Radius";
+                case WEAPON_DISRUPTOR:
+                    return "PLACEHOLDER";
                 default:
                     return "<BAD WEAPON NUMBER>";
             }
@@ -440,6 +448,8 @@ char *GetModString(int weapon_number, int mod_number) {
                     return "Lifesteal";
                 case WEAPON_TESLA:
                     return "Chains";
+                case WEAPON_DISRUPTOR:
+                    return "PLACEHOLDER";
                 default:
                     return "<BAD WEAPON NUMBER>";
             }
