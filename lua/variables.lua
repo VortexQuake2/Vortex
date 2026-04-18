@@ -250,6 +250,12 @@ BFG10K_ADDON_DURATION                    = 0.05
 BFG10K_DEFAULT_DURATION                  = 1.5
 BFG10K_DEFAULT_SLIDE                     = 0
 
+-- ETF Rifle
+ETFRIFLE_INITIAL_DAMAGE                = 12
+ETFRIFLE_ADDON_DAMAGE                  = 0.85
+ETFRIFLE_INITIAL_SPEED                = 750
+ETFRIFLE_ADDON_SPEED                  = 25
+
 -- Totems
 TOTEM_MAX_RANGE                          = 512
 TOTEM_COST                               = 25

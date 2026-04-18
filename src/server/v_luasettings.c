@@ -491,6 +491,10 @@ double BFG10K_INITIAL_DURATION;
 double BFG10K_ADDON_DURATION;
 double BFG10K_DEFAULT_DURATION;
 double BFG10K_DEFAULT_SLIDE;
+double ETFRIFLE_INITIAL_DAMAGE;
+double ETFRIFLE_ADDON_DAMAGE;
+double ETFRIFLE_INITIAL_SPEED;
+double ETFRIFLE_ADDON_SPEED;
 double TOTEM_MAX_RANGE;
 double TOTEM_COST;
 double TOTEM_HEALTH_BASE;
@@ -1734,6 +1738,12 @@ void Lua_LoadVariables()
 	BFG10K_ADDON_DURATION = vrx_lua_get_variable("BFG10K_ADDON_DURATION", 0.1);
 	BFG10K_DEFAULT_DURATION = vrx_lua_get_variable("BFG10K_DEFAULT_DURATION", 1);
 	BFG10K_DEFAULT_SLIDE = vrx_lua_get_variable("BFG10K_DEFAULT_SLIDE", 0);
+#pragma endregion
+#pragma region ETFRIFLE
+	ETFRIFLE_INITIAL_DAMAGE = vrx_lua_get_variable("ETFRIFLE_INITIAL_DAMAGE", 12);
+	ETFRIFLE_ADDON_DAMAGE = vrx_lua_get_variable("ETFRIFLE_ADDON_DAMAGE", 1);
+	ETFRIFLE_INITIAL_SPEED = vrx_lua_get_variable("ETFRIFLE_INITIAL_SPEED", 750);
+	ETFRIFLE_ADDON_SPEED = vrx_lua_get_variable("ETFRIFLE_ADDON_SPEED", 25);
 #pragma endregion
 #pragma endregion /*Weapons Parameters*/
 
