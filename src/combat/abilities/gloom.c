@@ -3350,8 +3350,10 @@ void spikeball_think (edict_t *self)
                          V_GetMonsterName(self), self->removetime-level.time);
     }
 
-    if (!M_Upkeep(self, 1.3 / FRAMETIME, 1))
-        return;
+    if (!M_Upkeep(self, 1.3 / FRAMETIME, 1)) {
+    	self->owner->num_spikeball--;
+	    return;
+    }
 
 	
     spikeball_effects(self);
