@@ -324,8 +324,12 @@ static void tracker_touch(edict_t *self, edict_t *other, cplane_t *plane, csurfa
         {
             if (other->health > 0)
             {
-                T_Damage(other, self, self->owner, self->velocity, self->s.origin, normal,
-                    0, self->dmg * 3, TRACKER_IMPACT_FLAGS, MOD_TRACKER);
+                if ( T_Damage(other, self, self->owner, self->velocity, self->s.origin, normal,
+                    0, self->dmg * 3, TRACKER_IMPACT_FLAGS, MOD_TRACKER) )
+                    {
+                        if (self->myskills.weapons[WEAPON_DISRUPTOR].mods[2].current_level > 0)
+                            burn_person(other, self, (int)(RAILGUN_ADDON_HEATDAMAGE * self->myskills.weapons[WEAPON_DISRUPTOR].mods[2].current_level));
+                    }
 
                 if (!(other->flags & (FL_FLY | FL_SWIM)))
                     other->velocity[2] += 140;

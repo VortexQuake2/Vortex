@@ -351,7 +351,7 @@ char *GetModString(int weapon_number, int mod_number) {
                 case WEAPON_TESLA:
                     return "Duration";
                 case WEAPON_DISRUPTOR:
-                    return "PLACEHOLDER";
+                    return "Speed";
                 default:
                     return "<BAD WEAPON NUMBER>";
             }
@@ -400,7 +400,7 @@ char *GetModString(int weapon_number, int mod_number) {
                 case WEAPON_TESLA:
                     return "Radius";
                 case WEAPON_DISRUPTOR:
-                    return "PLACEHOLDER";
+                    return "Burn";
                 default:
                     return "<BAD WEAPON NUMBER>";
             }

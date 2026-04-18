@@ -2590,8 +2590,9 @@ static void weapon_disruptor_fire(edict_t *ent)
 	vec3_t mins, maxs, end;
 	trace_t tr;
 	edict_t *enemy = NULL;
-	int damage = 90 + 4 * ent->myskills.weapons[WEAPON_BFG10K].mods[0].current_level;
-	int speed = 1200 + 20 * ent->myskills.weapons[WEAPON_BFG10K].mods[2].current_level;
+
+	int damage = 90 + 4 * ent->myskills.weapons[WEAPON_DISRUPTOR].mods[0].current_level;
+	int speed = 1200 + 20 * ent->myskills.weapons[WEAPON_DISRUPTOR].mods[1].current_level;
 
 	if (is_quad)
 		damage *= 4;
