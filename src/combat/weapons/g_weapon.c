@@ -492,54 +492,6 @@ void homing_think (edict_t *ent)
 		return;
 	}
 	
-	/*if (ent->owner->bless > level.time)
-	{
-		while ((blip = findradius(blip, ent->s.origin, 2000)) != NULL)
-		{
-
-			if (blip == ent->owner || ent == blip)
-				continue;
-
-			if (!blip->takedamage)
-				continue;
-
-			if (!(blip->svflags & SVF_MONSTER) && (!blip->client) && (strcmp(blip->classname, "misc_explobox") != 0))
-				continue;
-
-			if (!visible(ent, blip))
-				continue;
-			VectorSubtract(blip->s.origin, ent->s.origin, blipdir);
-			blipdir[2] += 16;
-			if ((target == NULL) || (VectorLength(blipdir) < VectorLength(targetdir)))
-			{
-				target = blip;
-				VectorCopy(blipdir, targetdir);
-			}
-		}
-
-		if (target != NULL)
-		{
-			 // target acquired, nudge our direction toward it
-			VectorNormalize(targetdir);
-			VectorScale(targetdir, 0.15, targetdir);//was 0.135
-			VectorAdd(targetdir, ent->movedir, targetdir);
-			VectorNormalize(targetdir);
-			VectorCopy(targetdir, ent->movedir);
-			vectoangles(targetdir, ent->s.angles);
-			speed = VectorLength(ent->velocity);
-			VectorScale(targetdir, speed, ent->velocity);
-
-			//is this the first time we locked in? sound warning for the target
-			if (ent->homing_lock == 0)
-			{
-				if (target->client)
-					gi.sound (target, CHAN_AUTO, gi.soundindex ("homelock.wav"), 1, ATTN_NORM, 0);
-				ent->homing_lock = 1;
-			}
-		}
-
-		ent->nextthink = level.time + .1;
-	}*/
 }
 //K03 End
 

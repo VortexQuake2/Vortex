@@ -2848,8 +2848,6 @@ void CTF_SummonableCheck(edict_t *self);
 #define FLIP_SHELL                  1
 #define FLIP_WATER                  2
 
-void Use_Lasers(edict_t *ent, gitem_t *item);
-
 void Cmd_LaserSight_f(edict_t *ent);
 
 #define	FUNC_PLAT		1

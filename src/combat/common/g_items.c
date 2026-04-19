@@ -2036,25 +2036,6 @@ always owned, never in the world
 /*QUAKED ammo_shells (.3 .3 1) (-16 -16 -16) (16 16 16)	16
 */
                 {
-                        NULL, // ammo to spawn on map
-                        NULL, // ammo to pickup
-                        Use_Lasers, // ammo to use
-                        NULL, // drop ammo
-                        NULL, // weapon ammo
-                        "misc/am_pkup.wav",
-                        "models/items/ammo/grenades/medium/tris.md2", 0,
-                        NULL,
-/* icon */        "a_grenades",
-/* pickup */    "Lasers",
-/* width */        3,
-                        0, // func timer or something
-                        NULL,
-                        0,
-                        NULL,
-                        0,
-/* precache */ ""
-                },
-                {
                         "ammo_shells",
                         Pickup_Ammo,
                         NULL,

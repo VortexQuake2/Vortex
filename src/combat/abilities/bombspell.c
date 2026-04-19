@@ -101,60 +101,6 @@ void carpetbomb_think (edict_t *self)
 	gi.linkentity(self);
 }
 
-/*
-void carpetbomb_think (edict_t *self)
-{
-	vec3_t	forward, right, start, end;
-	trace_t tr;
-	
-	// trace up to ceiling
-	VectorCopy(self->s.origin, start);
-	start[2] += CARPETBOMB_MAX_HEIGHT+CARPETBOMB_ROOF_BUFFER;
-	tr = gi.trace(self->s.origin, NULL, NULL, start, self, MASK_SOLID);
-	VectorCopy(tr.endpos, start);
-	start[2] -= CARPETBOMB_ROOF_BUFFER;
-	// move position forward
-	AngleVectors(self->s.angles, forward, NULL, NULL);
-	VectorMA(start, GetRandom(CARPETBOMB_DAMAGE_RADIUS/2, CARPETBOMB_DAMAGE_RADIUS+1), forward, end);
-	tr = gi.trace(start, NULL, NULL, end, self, MASK_SOLID);
-	// check if we've run into a wall
-	if (tr.fraction < 1)
-	{
-		// FIXME: write code that ducks under wall openings!
-		G_FreeEdict(self);
-		return;
-	}
-	// move spell entity to the floor
-	VectorCopy(end, start);
-	end[2] -= 8192;
-	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
-	VectorCopy(tr.endpos, self->s.origin); // save starting position
-	VectorCopy(tr.endpos, start);
-	// spawn explosions on either side
-	AngleVectors(self->s.angles, NULL, right, NULL);
-	VectorMA(self->s.origin, (crandom()*GetRandom(CARPETBOMB_CARPET_WIDTH/4, CARPETBOMB_CARPET_WIDTH/2)), right, end);
-	// make sure path is wide enough
-	tr = gi.trace(self->s.origin, NULL, NULL, end, self, MASK_SHOT);
-	VectorCopy(tr.endpos, self->s.origin);
-	self->s.origin[2] += 32;
-	// make sure bombspell is in a valid location
-	if (gi.pointcontents(self->s.origin) & CONTENTS_SOLID)
-	{
-		G_FreeEdict(self);
-		return;
-	}
-	T_RadiusDamage(self, self->owner, self->dmg, NULL, self->dmg_radius, MOD_BOMBS);
-	// write explosion effects
-	gi.WriteByte (svc_temp_entity);
-	gi.WriteByte (TE_EXPLOSION1);
-	gi.WritePosition (self->s.origin);
-	gi.multicast (self->s.origin, MULTICAST_PVS);
-
-	VectorCopy(start, self->s.origin); // retrieve starting position
-	self->nextthink = level.time + FRAMETIME;
-}
-*/
-
 void CarpetBomb (edict_t *ent, float skill_mult, float cost_mult)
 {
 	vec3_t forward, right, start, end, offset;

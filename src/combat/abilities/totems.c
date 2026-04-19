@@ -381,52 +381,6 @@ void WaterTotem_think(edict_t* self, edict_t* caster)
 	}
 }
 
-/*
-void WaterTotem_think(edict_t *self, edict_t *caster)
-{
-	edict_t *target = NULL;
-
-	//Find players in radius and attack them.
-	while ((target = findclosestradius_targets(target, self, TOTEM_MAX_RANGE)) != NULL)
-	{
-		// (apple)
-		// Since ice talent and watertotem work concurrently now, 
-		// checking for chill_duration will throttle ice talent's refire.
-		if (G_ValidTarget_Lite(self, target, true))
-		{
-			vec3_t normal;
-			int talentLevel;
-			float duration = WATERTOTEM_DURATION_BASE + self->monsterinfo.level * WATERTOTEM_DURATION_MULT;
-
-			//Get a directional vector from the totem to the target.
-			VectorSubtract(self->s.origin, target->s.origin, normal);
-
-			//Talent: Ice. Damages players.
-            talentLevel = vrx_get_talent_level(caster, TALENT_ICE);
-			if(talentLevel > 0)
-			{
-				int damage = GetRandom(10, 20) * talentLevel;
-				vec3_t normal;
-				
-				//Damage the target
-				VectorSubtract(target->s.origin, self->s.origin, normal);				
-				T_Damage(target, self, self, vec3_origin, self->s.origin, 
-					normal, damage, 0, DAMAGE_NO_KNOCKBACK, MOD_WATERTOTEM);
-			}
-			
-			//Chill the target.
-			target->chill_level = self->monsterinfo.level;
-			target->chill_time = level.time + duration;
-			target->chill_owner = caster;
-			//gi.dprintf("chilled %s for %.1f seconds at level %d\n", target->classname, duration, self->monsterinfo.level);
-			
-		}
-	}
-	//Next think.
-	self->delay = level.time + WATERTOTEM_REFIRE_BASE + WATERTOTEM_REFIRE_MULT * self->monsterinfo.level;
-}
-*/
-
 void NatureTotem_think(edict_t *self, edict_t *caster)
 {
 	edict_t *target = NULL;

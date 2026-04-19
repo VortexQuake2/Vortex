@@ -340,12 +340,6 @@ void	PlaceLaser (edict_t *ent)
 
 	// Ok, lets stick one on then ...
 	safe_cprintf (ent, PRINT_HIGH, "Laser attached.\n");
-/*
-	if (! ( (int)dmflags->value & DF_INFINITE_AMMO ) )
-	{
-		ent->client->pers.inventory[power_cube_index] -= LASER_COST;
-		ent->client->pers.inventory[ITEM_INDEX(FindItem("Lasers"))]--;
-	}*/
 
     // get entities for both objects
 	grenade = G_Spawn();
@@ -468,25 +462,5 @@ void    pre_target_laser_think (edict_t *self)
 	target_laser_on (self);
 	self->think = target_laser_think;
 }
-
-void Use_Lasers (edict_t *ent, gitem_t *item) 
-{
-	safe_cprintf(ent, PRINT_HIGH, "Use the command \"laser\" instead.\n");
-	return;
-/*	if (ent->myskills.build_lasers < 1)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "You can't make lasers due to not training in it!\n");
-		return;
-	}
-	if (ent->client->pers.inventory[ITEM_INDEX(FindItem("Lasers"))] < 1)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "You are out of lasers to place.\n");
-		return;
-	}
-
-	PlaceLaser (ent);*/
-}
-
-
 
 

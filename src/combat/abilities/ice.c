@@ -260,57 +260,6 @@ void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float 
 	VectorScale(aimdir, speed, icebolt->velocity);
 }
 
-// note: there are only 5 talent levels, so addon values will be higher
-//Talent: Ice Bolt
-/*
-void Cmd_IceBolt_f(edict_t* ent, float skill_mult, float cost_mult)
-{
-	int slvl = vrx_get_talent_level(ent, TALENT_ICE_BOLT);
-	int		damage, fblvl, speed, cost = ICEBOLT_COST * cost_mult;
-	float	radius, chill_duration;
-	vec3_t	forward, right, start, offset;
-
-	// you need to have fireball upgraded to use icebolt
-	if (!V_CanUseAbilities(ent, FIREBALL, cost, true))
-		return;
-
-	// current fireball level
-	fblvl = ent->myskills.abilities[FIREBALL].current_level;
-
-	// talent isn't upgraded
-	if (slvl < 1)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "You must upgrade ice bolt before you can use it.\n");
-		return;
-	}
-
-	chill_duration = (ICEBOLT_INITIAL_CHILL_DURATION + ICEBOLT_ADDON_CHILL_DURATION * slvl) * skill_mult;
-	damage = (FIREBALL_INITIAL_DAMAGE + FIREBALL_ADDON_DAMAGE * fblvl) * skill_mult;
-	radius = FIREBALL_INITIAL_RADIUS + FIREBALL_ADDON_RADIUS * fblvl;
-	speed = FIREBALL_INITIAL_SPEED + FIREBALL_ADDON_SPEED * fblvl;
-
-
-	//gi.dprintf("dmg:%d slvl:%d skill_mult:%f chill_duration:%f\n",damage,slvl,skill_mult,chill_duration);
-
-	// get starting position and forward vector
-	AngleVectors(ent->client->v_angle, forward, right, NULL);
-	VectorSet(offset, 0, 8, ent->viewheight - 8);
-	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
-
-	fire_icebolt(ent, start, forward, damage, radius, speed, 2 * slvl, chill_duration, 0);
-
-	ent->client->ability_delay = level.time + ICEBOLT_DELAY
-	ent->client->pers.inventory[power_cube_index] -= cost;
-
-	// write a nice effect so everyone knows we've cast a spell
-	gi.WriteByte(svc_temp_entity);
-	gi.WriteByte(TE_TELEPORT_EFFECT);
-	gi.WritePosition(ent->s.origin);
-	gi.multicast(ent->s.origin, MULTICAST_PVS);
-
-	gi.sound(ent, CHAN_ITEM, gi.soundindex("abilities/coldcast.wav"), 1, ATTN_NORM, 0);
-}*/
-
 void Cmd_GlacialSpike_f(edict_t* ent, float skill_mult, float cost_mult)
 {
 	int		damage, speed, cost = GLACIAL_SPIKE_COST * cost_mult;

@@ -681,24 +681,6 @@ void think_talent_ammo_regen(edict_t* ent) {
 	}
 }
 
-/*
-void think_talent_life_regen(edict_t* ent) {
-	if (ent->client
-		&& vrx_get_talent_slot(ent, TALENT_LIFE_REG) != -1
-		&& G_EntIsAlive(ent) && (ent->health < ent->max_health)) {
-
-		const talent_t* talent = &ent->myskills.talents.talent[vrx_get_talent_slot(ent, TALENT_LIFE_REG)];
-		if (talent->upgradeLevel > 0) {
-			const int health_factor = 1;
-			ent->health += health_factor;
-			if (ent->health > ent->max_health)
-				ent->health = ent->max_health;
-			ent->client->healthregen_time = 950;
-		}
-	}
-}
-*/
-
 void think_talent_armor_regen(const edict_t* ent, int max_armor, int* armor) {
 	if (ent->client
 		&& vrx_get_talent_slot(ent, TALENT_ARMOR_REG) != -1
