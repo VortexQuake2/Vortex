@@ -1922,7 +1922,7 @@ void BOT_DMclass_WeightInventory(edict_t *self)
 	//or denny weight for it, if bot is packed up.
 	//------------------------------------------------------
 
-	AI_AdjustAmmoNeedFactor(self, Fdi_BULLETS, WEAP_CHAINGUN, WEAP_MACHINEGUN, 0);
+	AI_AdjustAmmoNeedFactor(self, Fdi_BULLETS, WEAP_CHAINGUN, WEAP_MACHINEGUN, WEAP_ETFRIFLE, 0);
 	AI_AdjustAmmoNeedFactor(self, Fdi_SHELLS, WEAP_SHOTGUN, WEAP_SUPERSHOTGUN, WEAP_20MM, 0);
 	AI_AdjustAmmoNeedFactor(self, Fdi_ROCKETS, WEAP_ROCKETLAUNCHER, 0);
 	AI_AdjustAmmoNeedFactor(self, Fdi_GRENADES, WEAP_GRENADELAUNCHER, 0);
@@ -2265,6 +2265,8 @@ void BOT_DMclass_InitPersistantWeights(edict_t* self)
 		self->ai.pers.inventoryWeights[hyperblaster_index] = 0.0;
 		self->ai.pers.inventoryWeights[railgun_index] = 0.0;
 		self->ai.pers.inventoryWeights[bfg10k_index] = 0.0;
+		self->ai.pers.inventoryWeights[etfrifle_index] = 0.0;
+
 
 		//ammo
 		self->ai.pers.inventoryWeights[shell_index] = 0.0;
@@ -2290,6 +2292,8 @@ void BOT_DMclass_InitPersistantWeights(edict_t* self)
 		self->ai.pers.inventoryWeights[hyperblaster_index] = 0.7;
 		self->ai.pers.inventoryWeights[railgun_index] = 0.8;
 		self->ai.pers.inventoryWeights[bfg10k_index] = 0.5;
+		self->ai.pers.inventoryWeights[etfrifle_index] = 0.7;
+
 
 		//ammo
 		self->ai.pers.inventoryWeights[shell_index] = 0.5;

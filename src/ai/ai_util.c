@@ -435,7 +435,7 @@ int AI_RespawnWeaponToWeapIndex(int respawn_weapon)
 	else if (respawn_weapon == 16)
 		return WEAP_TRAP;
 	else if (respawn_weapon == 17)
-		return WEAP_MACHINEGUN; // ETF Rifle
+		return WEAP_ETFRIFLE; // ETF Rifle
 	else if (respawn_weapon == 18)
 		return WEAP_PLASMA; // Plasma Beam
 	else if (respawn_weapon == 19)

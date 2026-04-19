@@ -59,6 +59,8 @@ int railgun_index;
 int _20mmcannon_index;
 int bfg10k_index;
 
+int etfrifle_index;
+
 int ionripper_index;
 int phalanx_index;
 int trap_index;

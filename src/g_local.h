@@ -764,7 +764,15 @@ extern int hyperblaster_index;
 extern int railgun_index;
 extern int _20mmcannon_index;
 extern int bfg10k_index;
-//TODO: add missionpack weapons here?
+
+extern int ionripper_index;
+extern int phalanx_index;
+extern int trap_index;
+extern int etfrifle_index;
+extern int plasmabeam_index;
+extern int proxlauncher_index;
+extern int chainfist_index;
+extern int tesla_index;
 
 //pre searched items
 extern gitem_t *Fdi_GRAPPLE;
