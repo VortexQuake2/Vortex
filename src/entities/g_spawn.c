@@ -219,9 +219,6 @@ spawn_t	spawns[] = {
 	{"target_crosslevel_target", SP_target_crosslevel_target},
 	{"target_laser", SP_target_laser},
 	{"target_help", SP_target_help},
-#if 0 // remove monster code
-	{"target_actor", SP_target_actor},
-#endif
 	{"target_lightramp", SP_target_lightramp},
 	{"target_earthquake", SP_target_earthquake},
 	{"target_character", SP_target_character},
@@ -245,16 +242,10 @@ spawn_t	spawns[] = {
 	{"misc_explobox", SP_misc_explobox},
 	{"misc_banner", SP_misc_banner},
 	{"misc_satellite_dish", SP_misc_satellite_dish},
-#if 0 // remove monster code
-	{"misc_actor", SP_misc_actor},
-#endif
 	{"misc_gib_arm", SP_misc_gib_arm},
 	{"misc_dummy", SP_misc_dummy},
 	{"misc_gib_leg", SP_misc_gib_leg},
 	{"misc_gib_head", SP_misc_gib_head},
-#if 0 // remove monster code
-	{"misc_insane", SP_misc_insane},
-#endif
 	{"misc_deadsoldier", SP_misc_deadsoldier},
 	{"misc_viper", SP_misc_viper},
 	{"misc_viper_bomb", SP_misc_viper_bomb},
@@ -291,21 +282,6 @@ spawn_t	spawns[] = {
 	{"monster_infantry", SP_monster_infantry},
 	// {"monster_soldier_light", SP_monster_soldier_light},
 
-#if 0 // remove monster code
-	{"monster_flyer", SP_monster_flyer},
-	{"monster_floater", SP_monster_floater},
-	{"monster_hover", SP_monster_hover},
-	{"monster_supertank", SP_monster_supertank},
-	{"monster_boss2", SP_monster_boss2},
-	{"monster_boss3_stand", SP_monster_boss3_stand},
-	{"monster_jorg", SP_monster_jorg},
-	{"monster_flipper", SP_monster_flipper},
-	{"monster_commander_body", SP_monster_commander_body},
-
-	{"turret_breach", SP_turret_breach},
-	{"turret_base", SP_turret_base},
-	{"turret_driver", SP_turret_driver},
-#endif
 //GHz START
 	{"info_player_invasion", SP_info_player_invasion},
 	{"info_monster_invasion", SP_info_monster_invasion},
@@ -832,28 +808,6 @@ void SpawnEntities (char *mapname, const char *entities, char *spawnpoint)
 
 //===================================================================
 
-#if 0
-	// cursor positioning
-	xl <value>
-	xr <value>
-	yb <value>
-	yt <value>
-	xv <value>
-	yv <value>
-
-	// drawing
-	statpic <name>
-	pic <stat>
-	num <fieldwidth> <stat>
-	string <stat>
-
-	// control
-	if <stat>
-	ifeq <stat> <value>
-	ifbit <stat> <value>
-	endif
-
-#endif
 /*
 GHz's NOTES:
 All characters have a width and height of 8. Numbers have a width of 15
