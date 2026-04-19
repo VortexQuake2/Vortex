@@ -1,3 +1,5 @@
+#define VRX_G_ITEMS_IMPL
+
 #include "g_local.h"
 #include "../../gamemodes/ctf.h"
 #include "../../entities/tech.h"
@@ -18,57 +20,6 @@ void drop_temp_touch(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *
 gitem_armor_t jacketarmor_info = {25, 200, .80, .60, ARMOR_BODY};//K03
 gitem_armor_t combatarmor_info = {50, 200, .80, .60, ARMOR_BODY};//K03
 gitem_armor_t bodyarmor_info = {100, 200, .80, .60, ARMOR_BODY};
-
-int jacket_armor_index;
-int combat_armor_index;
-int armor_shard_index;
-int resistance_index;
-int strength_index;
-int regeneration_index;
-int haste_index;
-int body_armor_index;
-int power_cube_index;
-int flag_index;
-int red_flag_index;
-int blue_flag_index;
-int halo_index;
-
-//ammo
-int bullet_index;
-int shell_index;
-int grenade_index;
-int rocket_index;
-int slug_index;
-int cell_index;
-int magslug_index;
-int trap_index;
-int tesla_index;
-int disruptor_index;
-int flechette_index;
-
-//weapons
-int sword_index;
-int blaster_index;
-int shotgun_index;
-int supershotgun_index;
-int machinegun_index;
-int chaingun_index;
-int grenadelauncher_index;
-int rocketlauncher_index;
-int hyperblaster_index;
-int railgun_index;
-int _20mmcannon_index;
-int bfg10k_index;
-
-int ionripper_index;
-int phalanx_index;
-int trap_index;
-int etfrifle_index;
-int plasmabeam_index;
-int proxlauncher_index;
-int chainfist_index;
-int tesla_index;
-
 
 static int power_screen_index;
 static int power_shield_index;

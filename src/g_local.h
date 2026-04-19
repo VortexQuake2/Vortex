@@ -2,6 +2,19 @@
 #ifndef G_LOCAL
 #define G_LOCAL
 
+// impl defines to avoid duplicating declaration and definition of variables
+#ifndef VRX_G_MAIN_IMPL
+#define VRX_G_MAIN_IMPL extern
+#endif
+
+#ifndef VRX_G_ITEMS_IMPL
+#define VRX_G_ITEMS_IMPL extern
+#endif
+
+#ifndef VRX_G_SAVE_IMPL
+#define VRX_G_SAVE_IMPL extern
+#endif
+
 //Uncomment this and recompile to get debug printouts.
 //The higher number, the more detailed printouts.
 //Using this , especially on higher levels, is very lag prone and may cause server overflow.
@@ -37,21 +50,21 @@ uint32_t randomMT(void);
 //#define MAX_NODES	1024
 //K03 Begin
 
-extern int total_monsters;
-extern edict_t *SPREE_DUDE;
-extern edict_t *red_base;
-extern edict_t *blue_base;
-extern int red_flag_caps;
-extern int blue_flag_caps;
-extern qboolean SPREE_WAR;
-extern qboolean INVASION_OTHERSPAWNS_REMOVED;
-extern int next_invasion_wave_level;
-extern float SPREE_TIME;
-extern int average_player_level;
-extern int pvm_average_level;
-extern int DEFENSE_TEAM;
-extern int PREV_DEFENSE_TEAM;
-extern long FLAG_FRAMES;
+VRX_G_MAIN_IMPL int total_monsters;
+VRX_G_MAIN_IMPL edict_t *SPREE_DUDE;
+VRX_G_MAIN_IMPL edict_t *red_base;
+VRX_G_MAIN_IMPL edict_t *blue_base;
+VRX_G_MAIN_IMPL int red_flag_caps;
+VRX_G_MAIN_IMPL int blue_flag_caps;
+VRX_G_MAIN_IMPL qboolean SPREE_WAR;
+VRX_G_MAIN_IMPL qboolean INVASION_OTHERSPAWNS_REMOVED;
+VRX_G_MAIN_IMPL int next_invasion_wave_level;
+VRX_G_MAIN_IMPL float SPREE_TIME;
+VRX_G_MAIN_IMPL int average_player_level;
+VRX_G_MAIN_IMPL int pvm_average_level;
+VRX_G_MAIN_IMPL int DEFENSE_TEAM;
+VRX_G_MAIN_IMPL int PREV_DEFENSE_TEAM;
+VRX_G_MAIN_IMPL long FLAG_FRAMES;
 //extern vec3_t nodes[MAX_NODES];//GHz
 #include "combat/abilities/p_hook.h"
 //K03 End
@@ -680,104 +693,108 @@ typedef struct {
     // az end
 } monsterinfo_t;
 
-extern game_locals_t game;
-extern level_locals_t level;
-extern game_import_t gi;
+VRX_G_MAIN_IMPL game_locals_t game;
+VRX_G_MAIN_IMPL level_locals_t level;
+VRX_G_MAIN_IMPL game_import_t gi;
 #ifndef VRX_REPRO
-extern game_export_t globals;
+VRX_G_MAIN_IMPL game_export_t globals;
 #else
-extern repro_export_t globals;
+VRX_G_MAIN_IMPL repro_export_t globals;
 #endif
-extern spawn_temp_t st;
+VRX_G_MAIN_IMPL spawn_temp_t st;
 
-extern int sm_meat_index;
-extern int snd_fry;
+VRX_G_MAIN_IMPL int sm_meat_index;
+VRX_G_MAIN_IMPL int snd_fry;
 
-extern int jacket_armor_index;
-extern int combat_armor_index;
-extern int body_armor_index;
-extern int armor_shard_index;
-extern int power_cube_index;
-extern int flag_index;
-extern int red_flag_index;
-extern int blue_flag_index;
-extern int halo_index;
-extern int resistance_index;
-extern int strength_index;
-extern int regeneration_index;
-extern int haste_index;
+#ifndef VRX_G_ITEMS_IMPL
+#define VRX_G_ITEMS_IMPL extern
+#endif
+
+VRX_G_ITEMS_IMPL int jacket_armor_index;
+VRX_G_ITEMS_IMPL int combat_armor_index;
+VRX_G_ITEMS_IMPL int body_armor_index;
+VRX_G_ITEMS_IMPL int armor_shard_index;
+VRX_G_ITEMS_IMPL int power_cube_index;
+VRX_G_ITEMS_IMPL int flag_index;
+VRX_G_ITEMS_IMPL int red_flag_index;
+VRX_G_ITEMS_IMPL int blue_flag_index;
+VRX_G_ITEMS_IMPL int halo_index;
+VRX_G_ITEMS_IMPL int resistance_index;
+VRX_G_ITEMS_IMPL int strength_index;
+VRX_G_ITEMS_IMPL int regeneration_index;
+VRX_G_ITEMS_IMPL int haste_index;
 
 //ammo
-extern int	bullet_index;
-extern int	shell_index;
-extern int	grenade_index;
-extern int	rocket_index;
-extern int	slug_index;
-extern int	cell_index;
-extern int	magslug_index;
-extern int	trap_index;
-extern int	tesla_index;
-extern int	disruptor_index;
-extern int flechette_index;
+VRX_G_ITEMS_IMPL int bullet_index;
+VRX_G_ITEMS_IMPL int shell_index;
+VRX_G_ITEMS_IMPL int grenade_index;
+VRX_G_ITEMS_IMPL int rocket_index;
+VRX_G_ITEMS_IMPL int slug_index;
+VRX_G_ITEMS_IMPL int cell_index;
+VRX_G_ITEMS_IMPL int magslug_index;
+VRX_G_ITEMS_IMPL int trap_index;
+VRX_G_ITEMS_IMPL int tesla_index;
+VRX_G_ITEMS_IMPL int disruptor_index;
+VRX_G_ITEMS_IMPL int flechette_index;
 
 //weapons
-extern int sword_index;
-extern int blaster_index;
-extern int shotgun_index;
-extern int supershotgun_index;
-extern int machinegun_index;
-extern int chaingun_index;
-extern int grenadelauncher_index;
-extern int rocketlauncher_index;
-extern int hyperblaster_index;
-extern int railgun_index;
-extern int _20mmcannon_index;
-extern int bfg10k_index;
+VRX_G_ITEMS_IMPL int sword_index;
+VRX_G_ITEMS_IMPL int blaster_index;
+VRX_G_ITEMS_IMPL int shotgun_index;
+VRX_G_ITEMS_IMPL int supershotgun_index;
+VRX_G_ITEMS_IMPL int machinegun_index;
+VRX_G_ITEMS_IMPL int chaingun_index;
+VRX_G_ITEMS_IMPL int grenadelauncher_index;
+VRX_G_ITEMS_IMPL int rocketlauncher_index;
+VRX_G_ITEMS_IMPL int hyperblaster_index;
+VRX_G_ITEMS_IMPL int railgun_index;
+VRX_G_ITEMS_IMPL int _20mmcannon_index;
+VRX_G_ITEMS_IMPL int bfg10k_index;
 
-extern int ionripper_index;
-extern int phalanx_index;
-extern int trap_index;
-extern int etfrifle_index;
-extern int plasmabeam_index;
-extern int proxlauncher_index;
-extern int chainfist_index;
-extern int tesla_index;
+VRX_G_ITEMS_IMPL int ionripper_index;
+VRX_G_ITEMS_IMPL int phalanx_index;
+VRX_G_ITEMS_IMPL int trap_index;
+VRX_G_ITEMS_IMPL int etfrifle_index;
+VRX_G_ITEMS_IMPL int plasmabeam_index;
+VRX_G_ITEMS_IMPL int proxlauncher_index;
+VRX_G_ITEMS_IMPL int chainfist_index;
+VRX_G_ITEMS_IMPL int tesla_index;
 
 //pre searched items
-extern gitem_t *Fdi_GRAPPLE;
-extern gitem_t *Fdi_SWORD;
-extern gitem_t *Fdi_BLASTER;
-extern gitem_t *Fdi_SHOTGUN;
-extern gitem_t *Fdi_SUPERSHOTGUN;
-extern gitem_t *Fdi_MACHINEGUN;
-extern gitem_t *Fdi_CHAINGUN;
-extern gitem_t *Fdi_GRENADES;
-extern gitem_t *Fdi_GRENADELAUNCHER;
-extern gitem_t *Fdi_ROCKETLAUNCHER;
-extern gitem_t *Fdi_HYPERBLASTER;
-extern gitem_t *Fdi_RAILGUN;
-extern gitem_t *Fdi_BFG;
-extern gitem_t *Fdi_PHALANX;
-extern gitem_t *Fdi_IONRIPPER;
-extern gitem_t *Fdi_ETFRIFLE;
-extern gitem_t *Fdi_TRAP;
-extern gitem_t *Fdi_20MM;
-extern gitem_t *Fdi_DISRUPTOR;
-extern gitem_t *Fdi_PLASMA;
+VRX_G_SAVE_IMPL gitem_t *Fdi_GRAPPLE;
+VRX_G_SAVE_IMPL gitem_t *Fdi_SWORD;
+VRX_G_SAVE_IMPL gitem_t *Fdi_BLASTER;
+VRX_G_SAVE_IMPL gitem_t *Fdi_SHOTGUN;
+VRX_G_SAVE_IMPL gitem_t *Fdi_SUPERSHOTGUN;
+VRX_G_SAVE_IMPL gitem_t *Fdi_MACHINEGUN;
+VRX_G_SAVE_IMPL gitem_t *Fdi_CHAINGUN;
+VRX_G_SAVE_IMPL gitem_t *Fdi_GRENADES;
+VRX_G_SAVE_IMPL gitem_t *Fdi_GRENADELAUNCHER;
+VRX_G_SAVE_IMPL gitem_t *Fdi_ROCKETLAUNCHER;
+VRX_G_SAVE_IMPL gitem_t *Fdi_HYPERBLASTER;
+VRX_G_SAVE_IMPL gitem_t *Fdi_RAILGUN;
+VRX_G_SAVE_IMPL gitem_t *Fdi_BFG;
+VRX_G_SAVE_IMPL gitem_t *Fdi_PHALANX;
+VRX_G_SAVE_IMPL gitem_t *Fdi_IONRIPPER;
+VRX_G_SAVE_IMPL gitem_t *Fdi_ETFRIFLE;
+VRX_G_SAVE_IMPL gitem_t *Fdi_TRAP;
+VRX_G_SAVE_IMPL gitem_t *Fdi_20MM;
+VRX_G_SAVE_IMPL gitem_t *Fdi_DISRUPTOR;
+VRX_G_SAVE_IMPL gitem_t *Fdi_PLASMA;
 
-extern gitem_t *Fdi_SHELLS;
-extern gitem_t *Fdi_BULLETS;
-extern gitem_t *Fdi_CELLS;
-extern gitem_t *Fdi_ROCKETS;
-extern gitem_t *Fdi_SLUGS;
-extern gitem_t *Fdi_MAGSLUG;
-extern gitem_t *Fdi_FLECHETTES;
-extern gitem_t *Fdi_ROUNDS;
-extern gitem_t *Fdi_TBALL;
-extern gitem_t *Fdi_POWERCUBE;
+VRX_G_SAVE_IMPL gitem_t *Fdi_SHELLS;
+VRX_G_SAVE_IMPL gitem_t *Fdi_BULLETS;
+VRX_G_SAVE_IMPL gitem_t *Fdi_CELLS;
+VRX_G_SAVE_IMPL gitem_t *Fdi_ROCKETS;
+VRX_G_SAVE_IMPL gitem_t *Fdi_SLUGS;
+VRX_G_SAVE_IMPL gitem_t *Fdi_MAGSLUG;
+VRX_G_SAVE_IMPL gitem_t *Fdi_FLECHETTES;
+VRX_G_SAVE_IMPL gitem_t *Fdi_ROUNDS;
+VRX_G_SAVE_IMPL gitem_t *Fdi_TBALL;
+VRX_G_SAVE_IMPL gitem_t *Fdi_POWERCUBE;
 
-extern int headindex;
-extern int skullindex;
+VRX_G_SAVE_IMPL int headindex;
+VRX_G_SAVE_IMPL int skullindex;
 
 // means of death
 #define MOD_UNKNOWN			0
@@ -895,10 +912,10 @@ extern int skullindex;
 #define MOD_FRIENDLY_FIRE	0x8000000
 #define MOD_FMEDICPACK		150
 
-extern int meansOfDeath;
+VRX_G_MAIN_IMPL int meansOfDeath;
 
 
-extern edict_t *g_edicts;
+VRX_G_MAIN_IMPL edict_t *g_edicts;
 
 #define	FOFS(x) (size_t)&(((edict_t *)0)->x)
 #define	STOFS(x) (size_t)&(((spawn_temp_t *)0)->x)
@@ -908,131 +925,131 @@ extern edict_t *g_edicts;
 #define random()	((double)randomMT() / (double)(0xffffffff))
 #define crandom()	(2.0 * (random() - 0.5))
 
-extern cvar_t *maxentities;
-extern cvar_t *deathmatch;
-extern cvar_t *coop;
-extern cvar_t *dmflags;
-extern cvar_t *skill;
-extern cvar_t *fraglimit;
-extern cvar_t *timelimit;
+VRX_G_MAIN_IMPL cvar_t *maxentities;
+
+VRX_G_MAIN_IMPL cvar_t *deathmatch;
+VRX_G_MAIN_IMPL cvar_t *coop;
+VRX_G_MAIN_IMPL cvar_t *dmflags;
+VRX_G_MAIN_IMPL cvar_t *skill;
+VRX_G_MAIN_IMPL cvar_t *fraglimit;
+VRX_G_MAIN_IMPL cvar_t *timelimit;
 //ZOID
-extern cvar_t *capturelimit;
+VRX_G_MAIN_IMPL cvar_t *capturelimit;
 //ZOID
-extern cvar_t *password;
-extern cvar_t *spectator_password;
-extern cvar_t *g_select_empty;
-extern cvar_t *dedicated;
+VRX_G_MAIN_IMPL cvar_t *password;
+VRX_G_MAIN_IMPL cvar_t *spectator_password;
+VRX_G_MAIN_IMPL cvar_t *g_select_empty;
+VRX_G_MAIN_IMPL cvar_t *dedicated;
 
-extern cvar_t *sv_gravity;
-extern cvar_t *sv_maxvelocity;
+VRX_G_MAIN_IMPL cvar_t *sv_gravity;
+VRX_G_MAIN_IMPL cvar_t *sv_maxvelocity;
 
-extern cvar_t *gun_x, *gun_y, *gun_z;
-extern cvar_t *sv_rollspeed;
-extern cvar_t *sv_rollangle;
+VRX_G_MAIN_IMPL cvar_t *gun_x, *gun_y, *gun_z;
+VRX_G_MAIN_IMPL cvar_t *sv_rollspeed;
+VRX_G_MAIN_IMPL cvar_t *sv_rollangle;
 
-extern cvar_t *run_pitch;
-extern cvar_t *run_roll;
-extern cvar_t *bob_up;
-extern cvar_t *bob_pitch;
-extern cvar_t *bob_roll;
+VRX_G_MAIN_IMPL cvar_t *run_pitch;
+VRX_G_MAIN_IMPL cvar_t *run_roll;
+VRX_G_MAIN_IMPL cvar_t *bob_up;
+VRX_G_MAIN_IMPL cvar_t *bob_pitch;
+VRX_G_MAIN_IMPL cvar_t *bob_roll;
 
-extern cvar_t *sv_cheats;
-extern cvar_t *maxclients;
-extern cvar_t *maxspectators;
+VRX_G_MAIN_IMPL cvar_t *sv_cheats;
+VRX_G_MAIN_IMPL cvar_t *maxclients;
+VRX_G_MAIN_IMPL cvar_t *maxspectators;
 
-extern cvar_t *filterban;
+VRX_G_MAIN_IMPL cvar_t *filterban;
 
 //ponpoko
-extern cvar_t *gamepath;
-extern cvar_t *chedit;
-extern cvar_t *vwep;
-extern float spawncycle;
+VRX_G_MAIN_IMPL cvar_t *gamepath;
+VRX_G_MAIN_IMPL cvar_t *vwep;
+VRX_G_MAIN_IMPL float spawncycle;
 //ponpoko
 
 //K03 Begin
 
-extern cvar_t *killboxspawn;
-extern cvar_t *save_path;
-extern cvar_t *particles;
+VRX_G_MAIN_IMPL cvar_t *killboxspawn;
+VRX_G_MAIN_IMPL cvar_t *save_path;
+VRX_G_MAIN_IMPL cvar_t *particles;
 
-extern cvar_t *start_level;
-extern cvar_t *vrx_creditmult;
-extern cvar_t *vrx_pointmult;
+VRX_G_MAIN_IMPL cvar_t *start_level;
+VRX_G_MAIN_IMPL cvar_t *vrx_creditmult;
+VRX_G_MAIN_IMPL cvar_t *vrx_pointmult;
 
+VRX_G_MAIN_IMPL cvar_t *flood_msgs;
+VRX_G_MAIN_IMPL cvar_t *flood_persecond;
+VRX_G_MAIN_IMPL cvar_t *flood_waitdelay;
 
-extern cvar_t *flood_msgs;
-extern cvar_t *flood_persecond;
-extern cvar_t *flood_waitdelay;
-extern cvar_t *gamedir;
-extern cvar_t *hostname;
-extern cvar_t *dm_monsters;
-extern cvar_t *reconnect_ip;
-extern cvar_t *invasion_enabled;
+VRX_G_MAIN_IMPL cvar_t *gamedir;
+VRX_G_MAIN_IMPL cvar_t *hostname;
+VRX_G_MAIN_IMPL cvar_t *dm_monsters;
+VRX_G_MAIN_IMPL cvar_t *reconnect_ip;
+VRX_G_MAIN_IMPL cvar_t *invasion_enabled;
 
-extern cvar_t *vrx_password;
-extern cvar_t *min_level;
-extern cvar_t *max_level;
-extern cvar_t *check_dupeip;
-extern cvar_t *check_dupename;
-extern cvar_t *newbie_protection;
-extern cvar_t *debuginfo;
-extern cvar_t *pvm;
-extern cvar_t *hw;
-extern cvar_t *trading;
-extern cvar_t *tradingmode_enabled;
-extern cvar_t *ptr;
-extern cvar_t *domination;
-extern cvar_t *ctf;
-extern cvar_t *ffa;
-extern cvar_t *invasion;
-extern cvar_t *nolag;
-extern cvar_t *pvm_respawntime;
-extern cvar_t *pvm_monstermult;
-extern cvar_t *ffa_respawntime;
-extern cvar_t *ffa_monstermult;
-extern cvar_t *server_email;
-extern cvar_t *adminpass;
-extern cvar_t *team1_skin;
-extern cvar_t *team2_skin;
-extern cvar_t *enforce_class_skins;
-extern cvar_t *class1_skin;
-extern cvar_t *class2_skin;
-extern cvar_t *class3_skin;
-extern cvar_t *class4_skin;
-extern cvar_t *class5_skin;
-extern cvar_t *class6_skin;
-extern cvar_t *class7_skin;
-extern cvar_t *class8_skin;
-extern cvar_t *class9_skin;
-extern cvar_t *class10_skin;
-extern cvar_t *class11_skin;
-extern cvar_t *class12_skin;
-extern cvar_t *class1_model;
-extern cvar_t *class2_model;
-extern cvar_t *class3_model;
-extern cvar_t *class4_model;
-extern cvar_t *class5_model;
-extern cvar_t *class6_model;
-extern cvar_t *class7_model;
-extern cvar_t *class8_model;
-extern cvar_t *class9_model;
-extern cvar_t *class10_model;
-extern cvar_t *class11_model;
-extern cvar_t *class12_model;
-extern cvar_t *ctf_enable_balanced_fc;
-extern cvar_t *voting;
-extern cvar_t *game_path;
-extern cvar_t *allies;
-extern cvar_t *pregame_time;
-extern cvar_t *world_min_bullets;
-extern cvar_t *world_min_cells;
-extern cvar_t *world_min_shells;
-extern cvar_t *world_min_grenades;
-extern cvar_t *world_min_rockets;
-extern cvar_t *world_min_slugs;
-extern cvar_t *world_min_magslug;
-extern cvar_t *world_min_flechettes;
-extern cvar_t *world_min_rounds;
+VRX_G_MAIN_IMPL cvar_t *vrx_password;
+VRX_G_MAIN_IMPL cvar_t *min_level;
+VRX_G_MAIN_IMPL cvar_t *max_level;
+VRX_G_MAIN_IMPL cvar_t *check_dupeip;
+VRX_G_MAIN_IMPL cvar_t *check_dupename;
+VRX_G_MAIN_IMPL cvar_t *newbie_protection;
+VRX_G_MAIN_IMPL cvar_t *debuginfo;
+VRX_G_MAIN_IMPL cvar_t *pvm;
+VRX_G_MAIN_IMPL cvar_t *hw;
+VRX_G_MAIN_IMPL cvar_t *trading;
+VRX_G_MAIN_IMPL cvar_t *tradingmode_enabled;
+VRX_G_MAIN_IMPL cvar_t *ptr;
+VRX_G_MAIN_IMPL cvar_t *domination;
+VRX_G_MAIN_IMPL cvar_t *ctf;
+VRX_G_MAIN_IMPL cvar_t *ffa;
+VRX_G_MAIN_IMPL cvar_t *invasion;
+VRX_G_MAIN_IMPL cvar_t *nolag;
+VRX_G_MAIN_IMPL cvar_t *pvm_respawntime;
+VRX_G_MAIN_IMPL cvar_t *pvm_monstermult;
+VRX_G_MAIN_IMPL cvar_t *ffa_respawntime;
+VRX_G_MAIN_IMPL cvar_t *ffa_monstermult;
+VRX_G_MAIN_IMPL cvar_t *server_email;
+VRX_G_MAIN_IMPL cvar_t *adminpass;
+VRX_G_MAIN_IMPL cvar_t *team1_skin;
+VRX_G_MAIN_IMPL cvar_t *team2_skin;
+VRX_G_MAIN_IMPL cvar_t *enforce_class_skins;
+VRX_G_MAIN_IMPL cvar_t *class1_skin;
+VRX_G_MAIN_IMPL cvar_t *class2_skin;
+VRX_G_MAIN_IMPL cvar_t *class3_skin;
+VRX_G_MAIN_IMPL cvar_t *class4_skin;
+VRX_G_MAIN_IMPL cvar_t *class5_skin;
+VRX_G_MAIN_IMPL cvar_t *class6_skin;
+VRX_G_MAIN_IMPL cvar_t *class7_skin;
+VRX_G_MAIN_IMPL cvar_t *class8_skin;
+VRX_G_MAIN_IMPL cvar_t *class9_skin;
+VRX_G_MAIN_IMPL cvar_t *class10_skin;
+VRX_G_MAIN_IMPL cvar_t *class11_skin;
+VRX_G_MAIN_IMPL cvar_t *class12_skin;
+VRX_G_MAIN_IMPL cvar_t *class1_model;
+VRX_G_MAIN_IMPL cvar_t *class2_model;
+VRX_G_MAIN_IMPL cvar_t *class3_model;
+VRX_G_MAIN_IMPL cvar_t *class4_model;
+VRX_G_MAIN_IMPL cvar_t *class5_model;
+VRX_G_MAIN_IMPL cvar_t *class6_model;
+VRX_G_MAIN_IMPL cvar_t *class7_model;
+VRX_G_MAIN_IMPL cvar_t *class8_model;
+VRX_G_MAIN_IMPL cvar_t *class9_model;
+VRX_G_MAIN_IMPL cvar_t *class10_model;
+VRX_G_MAIN_IMPL cvar_t *class11_model;
+VRX_G_MAIN_IMPL cvar_t *class12_model;
+VRX_G_MAIN_IMPL cvar_t *ctf_enable_balanced_fc;
+VRX_G_MAIN_IMPL cvar_t *voting;
+VRX_G_MAIN_IMPL cvar_t *game_path;
+VRX_G_MAIN_IMPL cvar_t *allies;
+VRX_G_MAIN_IMPL cvar_t *pregame_time;
+VRX_G_MAIN_IMPL cvar_t *world_min_bullets;
+VRX_G_MAIN_IMPL cvar_t *world_min_cells;
+VRX_G_MAIN_IMPL cvar_t *world_min_shells;
+VRX_G_MAIN_IMPL cvar_t *world_min_grenades;
+VRX_G_MAIN_IMPL cvar_t *world_min_rockets;
+VRX_G_MAIN_IMPL cvar_t *world_min_slugs;
+VRX_G_MAIN_IMPL cvar_t *world_min_magslug;
+VRX_G_MAIN_IMPL cvar_t *world_min_flechettes;
+VRX_G_MAIN_IMPL cvar_t *world_min_rounds;
 //K03 End
 
 //ZOID
@@ -1041,18 +1058,19 @@ extern qboolean is_quad;
 
 // az begin
 extern cvar_t *savemethod;
-extern cvar_t *tbi;
 
-extern cvar_t *sv_fps;
+VRX_G_MAIN_IMPL cvar_t *tbi;
 
-extern cvar_t *vrx_pvppointmult;
-extern cvar_t *vrx_pvmpointmult;
+VRX_G_MAIN_IMPL cvar_t *sv_fps;
 
-extern cvar_t *adminctrl;
-extern cvar_t *generalabmode;
+VRX_G_MAIN_IMPL cvar_t *vrx_pvppointmult;
+VRX_G_MAIN_IMPL cvar_t *vrx_pvmpointmult;
 
-extern cvar_t *vrx_pvpcreditmult;
-extern cvar_t *vrx_pvmcreditmult;
+VRX_G_MAIN_IMPL cvar_t *adminctrl;
+VRX_G_MAIN_IMPL cvar_t *generalabmode;
+
+VRX_G_MAIN_IMPL cvar_t *vrx_pvpcreditmult;
+VRX_G_MAIN_IMPL cvar_t *vrx_pvmcreditmult;
 // az end
 
 #define world	(&g_edicts[0])

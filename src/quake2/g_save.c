@@ -1,3 +1,5 @@
+#define VRX_G_SAVE_IMPL
+
 #include "g_local.h"
 #include "../characters/io/v_characterio.h"
 #include "../server/relay.h"
@@ -6,6 +8,7 @@
 const char *s1;
 const char *s2;
 
+/*
 // g_local.h
 gitem_t	*Fdi_GRAPPLE;
 gitem_t	*Fdi_SWORD;
@@ -41,6 +44,8 @@ gitem_t	*Fdi_POWERCUBE;
 
 int headindex;
 int	skullindex;
+
+*/
 
 cvar_t				*bot_enable;//GHz: Set to 1 to enable bots
 cvar_t				*bot_dropnodes;//GHz: Set to 1 to allow players to automatically drop nodes used for bot pathing
