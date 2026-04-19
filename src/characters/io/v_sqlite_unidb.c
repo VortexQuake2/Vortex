@@ -3,7 +3,7 @@
 #include <sys/stat.h>
 
 #include "v_characterio.h"
-#include "../../libraries/sqlite3.h"
+#include "../../../vendor/sqlite3.h"
 
 #include "../class_limits.h"
 

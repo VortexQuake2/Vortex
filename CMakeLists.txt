@@ -24,6 +24,7 @@ set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
 # Source files
 file(GLOB_RECURSE VRX_FILES CONFIGURE_DEPENDS ./src/*.c)
+file(GLOB_RECURSE VENDOR_FILES CONFIGURE_DEPENDS ./vendor/*.c)
 file(GLOB_RECURSE TEST_FILES CONFIGURE_DEPENDS ./tests/*.c)
 
 
@@ -71,7 +72,7 @@ endif ()
 include_directories(./src/)
 
 # Specify the source files for the game library
-add_library(${CC_LIB_NAME} SHARED ${VRX_FILES})
+add_library(${CC_LIB_NAME} SHARED ${VRX_FILES} ${VENDOR_FILES})
 set_target_properties(${CC_LIB_NAME} PROPERTIES PREFIX "")
 
 if (BUILD_TESTS)

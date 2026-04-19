@@ -1,9 +1,9 @@
 #define VRX_V_LUASETTINGS_IMPL
 
 #include "g_local.h"
-#include "../libraries/lua.h"
-#include "../libraries/lualib.h"
-#include "../libraries/lauxlib.h"
+#include "../.././vendor/lua.h"
+#include "../../vendor/lualib.h"
+#include "../../vendor/lauxlib.h"
 
 lua_State *State = NULL;
 int errload = 0;

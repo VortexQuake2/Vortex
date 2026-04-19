@@ -2,7 +2,7 @@
 
 #ifdef CMD_USEHASH
 
-#include "../libraries/fnv.h"
+#include "../../vendor/fnv.h"
 #endif
 
 void Cmd_IdentifyPlayer (edict_t *ent);
