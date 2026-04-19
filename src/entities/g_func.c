@@ -1242,10 +1242,10 @@ void SP_func_door (edict_t *ent)
 		ent->touch = door_touch;
 	}
 	
-	ent->moveinfo.speed = scale_fps(ent->speed);
-	ent->moveinfo.accel = scale_fps(ent->accel);
-	ent->moveinfo.decel = scale_fps(ent->decel);
-	ent->moveinfo.wait = scale_fps(ent->wait);
+	ent->moveinfo.speed = (ent->speed);
+	ent->moveinfo.accel = (ent->accel);
+	ent->moveinfo.decel = (ent->decel);
+	ent->moveinfo.wait = (ent->wait);
 	VectorCopy (ent->pos1, ent->moveinfo.start_origin);
 	VectorCopy (ent->s.angles, ent->moveinfo.start_angles);
 	VectorCopy (ent->pos2, ent->moveinfo.end_origin);
