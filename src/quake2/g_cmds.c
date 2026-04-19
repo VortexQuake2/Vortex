@@ -886,6 +886,7 @@ int GetSlot(gitem_t *it)
 	slot = 0;
 	if(it == FindItem("blaster")) slot = 1;
 	else if(it == FindItem("shotgun")) slot = 2;
+	else if(it == FindItem("Old Shotgun")) slot = 2;
 	else if(it == FindItem("super shotgun")) slot = 3;
 	else if(it == FindItem("Machinegun")) slot = 4;
 	else if(it == FindItem("ETF Rifle")) slot = 4;
@@ -1062,6 +1063,7 @@ void Cmd_Use_f (edict_t *ent)
 	gitem_t		*it;
 	char		*s;
 	static const char *blaster_cycle[] = {"Blaster", "Sword", "Chainfist"};
+	static const char *shotgun_cycle[] = {"Shotgun", "Old Shotgun"};
 	static const char *machinegun_cycle[] = {"Machinegun", "ETF Rifle"};
 	static const char *grenade_cycle[] = {"Grenade Launcher", "Prox Launcher"};
 	static const char *throwable_cycle[] = {"Grenades", "Tesla", "Trap"};
@@ -1124,6 +1126,7 @@ void Cmd_Use_f (edict_t *ent)
         return;
 
 	it = Cmd_CycleWeaponGroup(ent, it, blaster_cycle, sizeof(blaster_cycle) / sizeof(blaster_cycle[0]));
+	it = Cmd_CycleWeaponGroup(ent, it, shotgun_cycle, sizeof(shotgun_cycle) / sizeof(shotgun_cycle[0]));
 	it = Cmd_CycleWeaponGroup(ent, it, machinegun_cycle, sizeof(machinegun_cycle) / sizeof(machinegun_cycle[0]));
 	it = Cmd_CycleWeaponGroup(ent, it, grenade_cycle, sizeof(grenade_cycle) / sizeof(grenade_cycle[0]));
 	it = Cmd_CycleWeaponGroup(ent, it, throwable_cycle, sizeof(throwable_cycle) / sizeof(throwable_cycle[0]));

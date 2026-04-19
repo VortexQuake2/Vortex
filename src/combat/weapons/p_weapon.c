@@ -502,7 +502,7 @@ void Weapon_Generic2(edict_t* ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 	qboolean started_at_ready = false;
 
 	//K03 Begin
-	// can't use gun if we are just spawning, or we
+	// can't `use gun if we are just spawning, or we
 	// are a morphed player using anything other
 	// than a player model
 	if (ent->deadflag || (ent->s.modelindex != 255) || (vrx_is_morphing_polt(ent))

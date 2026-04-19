@@ -16,11 +16,16 @@ void weapon_shotgun_fire(edict_t* ent) {
     SHOTGUN_INITIAL_DAMAGE + SHOTGUN_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_SHOTGUN].mods[0].current_level;
     int vspread = 500;
     int hspread = 500;
-    const int bullets = SHOTGUN_INITIAL_BULLETS +
+    int bullets = SHOTGUN_INITIAL_BULLETS +
     SHOTGUN_ADDON_BULLETS * ent->myskills.weapons[WEAPON_SHOTGUN].mods[2].current_level;
     if (ent->myskills.weapons[WEAPON_SHOTGUN].mods[3].current_level >= 1) {
         vspread *= 0.75;
         hspread *= 0.75;
+    }
+
+    if (ent->client->pers.weapon->weaponthink == Weapon_OldShotgun) {
+        // old shotgun shoots a bit faster; lower bullets to compensate
+        bullets *= 0.75;
     }
 
     //K03 End

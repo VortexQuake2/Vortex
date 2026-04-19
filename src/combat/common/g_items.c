@@ -1342,6 +1342,16 @@ void SetBotFlag1(edict_t *ent);    //�`�[��1�̊�
 void SetBotFlag2(edict_t *ent);  //�`�[��2�̊�
 
 void SpawnItem(edict_t *ent, gitem_t *item) {
+    // occasional "Old" weapon replacement
+    if ( random() > 0.9 ) {
+        //printf("SpawnItem() old chance succeeded on a %s\n", item->pickup_name);
+        if ( item == FindItem("Shotgun") ) {
+            item = FindItem("Old Shotgun");
+        }
+    } else {
+        printf("SpawnItem() old chance failed\n");
+    }
+
     PrecacheItem(item);
 
     if (ent->spawnflags) {
@@ -1617,6 +1627,29 @@ always owned, never in the world
                         0,
 /* precache */ "weapons/shotgf1b.wav weapons/shotgr1b.wav a_shells_hud",
                         WEAPON_SHOTGUN
+                },
+
+/*QUAKED weapon_old_shotgun (.3 .3 1) (-16 -16 -16) (16 16 16)	7
+                 */
+                {
+                    "weapon_old_shotgun",
+                    Pickup_Weapon,
+                    Use_Weapon,
+                    Drop_Weapon,
+                    Weapon_OldShotgun,
+                    "misc/w_pkup.wav",
+                    "models/weapons/lq1/g_shot1.md2", EF_ROTATE,
+                    "models/weapons/lq1/v_shot.md2",
+                    /* icon */        "w_shotgun",
+                    /* pickup */    "Old Shotgun",
+                    0,
+                    1,
+                    "Shells",
+                    IT_WEAPON,
+                    NULL,
+                    0,
+                    /* precache */ "weapons/shotgf1b.wav weapons/shotgr1b.wav a_shells_hud",
+                    WEAPON_SHOTGUN
                 },
 
 /*QUAKED weapon_supershotgun (.3 .3 1) (-16 -16 -16) (16 16 16)	8
