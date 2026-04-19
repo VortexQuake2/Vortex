@@ -29,9 +29,9 @@ void WriteLevel(char *filename);
 void ReadLevel(char *filename);
 void InitGame(void);
 #ifndef VRX_REPRO
-void G_RunFrame(void);
+static void G_RunFrame(void);
 #else
-void G_RunFrame(bool main_loop);
+static void G_RunFrame(bool main_loop);
 #endif
 void dom_init(void);
 void dom_awardpoints(void);

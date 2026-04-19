@@ -706,10 +706,6 @@ VRX_G_MAIN_IMPL spawn_temp_t st;
 VRX_G_MAIN_IMPL int sm_meat_index;
 VRX_G_MAIN_IMPL int snd_fry;
 
-#ifndef VRX_G_ITEMS_IMPL
-#define VRX_G_ITEMS_IMPL extern
-#endif
-
 VRX_G_ITEMS_IMPL int jacket_armor_index;
 VRX_G_ITEMS_IMPL int combat_armor_index;
 VRX_G_ITEMS_IMPL int body_armor_index;
