@@ -957,12 +957,12 @@ void SentryGun_Touch(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *
 		gi.sound(ent, CHAN_ITEM, gi.soundindex("plats/pt1_strt.wav"), 1, ATTN_STATIC, 0);
 		safe_cprintf(other, PRINT_HIGH, "Sentry gun repaired/reloaded. ");
 	}
-	else	//Just print gun status to user
-	{
-		safe_cprintf(other, PRINT_HIGH, "SENTRY GUN STATUS: ");
-	}
-
-	statusUpdate(ent, other);
+	// else	//Just print gun status to user
+	// {
+	// 	safe_cprintf(other, PRINT_HIGH, "SENTRY GUN STATUS: ");
+	// }
+	//
+	// statusUpdate(ent, other);
 
 	ent->sentrydelay = level.time + SENTRY_RELOAD_DELAY;
 }
