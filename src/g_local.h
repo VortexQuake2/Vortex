@@ -2828,6 +2828,8 @@ void PrintNumEntities(qboolean list);
 #define Laser_GreenY 0xdad0dcd2 // inner = green, outer = yellow
 #define Laser_YellowG 0xd0dad2dc // inner = yellow, outer = green
 
+void NoAmmoWeaponChange(edict_t* ent);
+
 void Weapon_Generic(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST, int FRAME_IDLE_LAST,
                     int FRAME_DEACTIVATE_LAST, int *pause_frames, int *fire_frames, void (*fire)(edict_t *ent));
 
