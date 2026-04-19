@@ -221,6 +221,10 @@ void Cmd_Armory_f(edict_t *ent, int selection)
     }
 	else if (selection < 17)
 		price = ARMORY_PRICE_AMMO;
+
+	else if (selection > 39 && selection < 43) {
+		price = ARMORY_PRICE_AMMO;
+	}
 	
     switch(selection)
 	{
@@ -270,7 +274,18 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 			item = FindItem("Slugs");
 			qty = ent->client->pers.max_slugs;
 			break;
-
+		case 40:
+			item = FindItem("Flechettes");
+			qty = ent->client->pers.max_flechettes;
+			break;
+		case 41:
+			item = FindItem("Mag Slug");
+			qty = ent->client->pers.max_magslug;
+			break;
+		case 42:
+			item = FindItem("Rounds");
+			qty = ent->client->pers.max_disruptor;
+			break;
 		//others
 		case 17:	//tballs
 			price	= ARMORY_PRICE_TBALLS;
@@ -401,7 +416,7 @@ void Cmd_Armory_f(edict_t *ent, int selection)
 		safe_cprintf(ent, PRINT_HIGH, "You bought a %s.\n", item->pickup_name);
 	}
 	//If ammo was purchased (or T-Balls)
-	else if (selection < 18)
+	else if ((selection < 18) || ((selection > 39) && (selection < 43)) )
 	{
 		ent->client->pers.inventory[ITEM_INDEX(item)] = qty;
 		safe_cprintf(ent, PRINT_HIGH, "You bought %d %s.\n", qty, item->pickup_name);

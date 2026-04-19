@@ -1195,6 +1195,7 @@ void initialize_item_references(void) {
 	Fdi_BOOMER			= FindItem ("Ionripper");
 	Fdi_TRAP			= FindItem ("Trap");
 	Fdi_ETFRIFLE		= FindItem ("ETF Rifle");
+	Fdi_DISRUPTOR		= FindItem ("Disruptor");
 #endif //VRX_REPRO
 
 	Fdi_SHELLS			= FindItem ("Shells");
@@ -1203,8 +1204,9 @@ void initialize_item_references(void) {
 	Fdi_ROCKETS			= FindItem ("Rockets");
 	Fdi_SLUGS			= FindItem ("Slugs");
 #ifdef VRX_REPRO
-	Fdi_MAGSLUGS		= FindItem ("Mag Slug");
+	Fdi_MAGSLUG			= FindItem ("Mag Slug");
 	Fdi_FLECHETTES		= FindItem ("Flechettes");
+	Fdi_ROUNDS			= FindItem ("Rounds");
 #endif //VRX_REPRO
 
 	//K03 Begin
@@ -1295,6 +1297,7 @@ void SP_worldspawn (edict_t *ent)
 	gi.imageindex("a_cells_hud");
 	gi.imageindex("a_slugs_hud");
 #ifdef VRX_REPRO
+	gi.imageindex("a_magslug_hud");
 	gi.imageindex("a_flechettes_hud");
 #endif //VRX_REPRO
 

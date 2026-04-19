@@ -2799,10 +2799,10 @@ void Weapon_Ionripper(edict_t *ent)
 static void weapon_phalanx_fire(edict_t *ent)
 {
     vec3_t start, forward, right, up, offset, v;
-    int damage = 70 + (int)(random() * 10.0) + 2 * ent->myskills.weapons[WEAPON_PHALANX].mods[0].current_level;
-    int radius_damage = 120 + 2 * ent->myskills.weapons[WEAPON_PHALANX].mods[1].current_level;
-    float damage_radius = 120 + 2 * ent->myskills.weapons[WEAPON_PHALANX].mods[1].current_level;
-    int speed = 725 + 15 * ent->myskills.weapons[WEAPON_PHALANX].mods[2].current_level;
+    int damage = PHALANX_INITIAL_DAMAGE + (int)(random() * 10.0) + (PHALANX_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_PHALANX].mods[0].current_level);
+    int radius_damage = PHALANX_INITIAL_RADIUS + (PHALANX_ADDON_RADIUS * ent->myskills.weapons[WEAPON_PHALANX].mods[1].current_level);
+    float damage_radius = radius_damage = PHALANX_INITIAL_RADIUS + (PHALANX_ADDON_RADIUS * ent->myskills.weapons[WEAPON_PHALANX].mods[1].current_level);
+    int speed = PHALANX_INITIAL_SPEED + (PHALANX_ADDON_SPEED * ent->myskills.weapons[WEAPON_PHALANX].mods[2].current_level);
 
     if (is_quad)
     {

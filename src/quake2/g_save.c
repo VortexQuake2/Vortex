@@ -20,19 +20,22 @@ gitem_t *Fdi_ROCKETLAUNCHER;
 gitem_t *Fdi_HYPERBLASTER;
 gitem_t *Fdi_RAILGUN;
 gitem_t *Fdi_BFG;
+gitem_t *Fdi_IONRIPPER;
 gitem_t *Fdi_PHALANX;
 gitem_t *Fdi_BOOMER;
 gitem_t *Fdi_TRAP;
 gitem_t *Fdi_20MM;
 gitem_t *Fdi_ETFRIFLE;
+gitem_t *Fdi_DISRUPTOR;
 
 gitem_t *Fdi_SHELLS;
 gitem_t *Fdi_BULLETS;
 gitem_t *Fdi_CELLS;
 gitem_t *Fdi_ROCKETS;
 gitem_t *Fdi_SLUGS;
-gitem_t *Fdi_MAGSLUGS;
+gitem_t *Fdi_MAGSLUG;
 gitem_t *Fdi_FLECHETTES;
+gitem_t *Fdi_ROUNDS;
 gitem_t *Fdi_TBALL;
 gitem_t	*Fdi_POWERCUBE;
 
@@ -387,6 +390,9 @@ void InitGame(void)
 	world_min_cells = gi.cvar("world_min_cells", "1", 0);
 	world_min_slugs = gi.cvar("world_min_slugs", "1", 0);
 	world_min_flechettes = gi.cvar("world_min_flechettes", "1", 0);
+	world_min_magslug = gi.cvar("world_min_magslug", "1", 0);
+	world_min_rounds = gi.cvar("world_min_rounds", "1", 0);
+
 
 	// enable special rules for flag carrier in CTF mode
 	ctf_enable_balanced_fc = gi.cvar("ctf_enable_balanced_fc", "1", CVAR_LATCH);

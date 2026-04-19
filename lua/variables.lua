@@ -141,6 +141,10 @@ GRENADES_PICKUP                          = 8
 ROCKETS_PICKUP                           = 8
 CELLS_PICKUP                             = 50
 SLUGS_PICKUP                             = 8
+-- Missionpack Ammo
+FLECHETTES_PICKUP                        = 50
+MAGSLUG_PICKUP                           = 16
+ROUNDS_PICKUP                            = 8
 
 -- Experience Base
 EXP_PLAYER_BASE 						 = 100
@@ -255,6 +259,18 @@ ETFRIFLE_INITIAL_DAMAGE                = 12
 ETFRIFLE_ADDON_DAMAGE                  = 0.85
 ETFRIFLE_INITIAL_SPEED                = 750
 ETFRIFLE_ADDON_SPEED                  = 25
+
+-- Disruptor
+
+-- Ionripper
+
+-- Phalanx
+PHALANX_INITIAL_DAMAGE                  = 70
+PHALANX_ADDON_DAMAGE                    = 2
+PHALANX_INITIAL_RADIUS                  = 120
+PHALANX_ADDON_RADIUS                    = 2
+PHALANX_INITIAL_SPEED                   = 725
+PHALANX_ADDON_SPEED                     = 15
 
 -- Totems
 TOTEM_MAX_RANGE                          = 512

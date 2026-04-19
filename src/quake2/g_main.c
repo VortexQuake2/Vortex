@@ -179,6 +179,8 @@ cvar_t *world_min_grenades;
 cvar_t *world_min_rockets;
 cvar_t *world_min_slugs;
 cvar_t *world_min_flechettes;
+cvar_t *world_min_magslug;
+cvar_t *world_min_rounds;
 
 cvar_t *ctf_enable_balanced_fc;
 

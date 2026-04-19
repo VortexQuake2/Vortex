@@ -74,7 +74,7 @@ enum vrx_player_class_t {
     CLASS_MAX // Number of classes to choose from + 1
 };
 
-#define ARMORY_ITEMS 39
+#define ARMORY_ITEMS 42
 
 #define PLAYTIME_MIN_MINUTES        999.0    // minutes played before penalty begins
 #define PLAYTIME_MAX_MINUTES        999.0    // minutes played before max penalty is reached
@@ -212,7 +212,9 @@ extern double GRENADES_PICKUP;
 extern double ROCKETS_PICKUP;
 extern double CELLS_PICKUP;
 extern double SLUGS_PICKUP;
+extern double MAGSLUG_PICKUP;
 extern double FLECHETTES_PICKUP;
+extern double ROUNDS_PICKUP;
 extern double CTF_CAPTURE_BONUS;
 extern double CTF_TEAM_BONUS;
 extern double CTF_RETURN_FLAG_ASSIST_BONUS;
@@ -314,6 +316,16 @@ extern double ETFRIFLE_INITIAL_DAMAGE;
 extern double ETFRIFLE_ADDON_DAMAGE;
 extern double ETFRIFLE_INITIAL_SPEED;
 extern double ETFRIFLE_ADDON_SPEED;
+extern double IONRIPPER_INITIAL_DAMAGE;
+extern double IONRIPPER_ADDON_DAMAGE;
+extern double IONRIPPER_INITIAL_SPEED;
+extern double IONRIPPER_ADDON_SPEED;
+extern double PHALANX_INITIAL_DAMAGE;
+extern double PHALANX_ADDON_DAMAGE;
+extern double PHALANX_INITIAL_RADIUS;
+extern double PHALANX_ADDON_RADIUS;
+extern double PHALANX_INITIAL_SPEED;
+extern double PHALANX_ADDON_SPEED;
 extern double TOTEM_MAX_RANGE;
 extern double TOTEM_COST;
 extern double TOTEM_HEALTH_BASE;

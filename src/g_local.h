@@ -370,8 +370,9 @@ typedef struct {
 #define WEAP_BOOMER				22
 #define WEAP_DISRUPTOR			23		// PGM
 #define WEAP_ETFRIFLE			24		// PGM
+#define WEAP_IONRIPPER          25
 
-#define WEAP_TOTAL				25
+#define WEAP_TOTAL				26
 
 #define MPI_QUAD				21
 #define	MPI_PENTA				22
@@ -794,14 +795,17 @@ extern gitem_t *Fdi_BOOMER;
 extern gitem_t *Fdi_ETFRIFLE;
 extern gitem_t *Fdi_TRAP;
 extern gitem_t *Fdi_20MM;
+extern gitem_t *Fdi_IONRIPPER;
+extern gitem_t *Fdi_DISRUPTOR;
 
 extern gitem_t *Fdi_SHELLS;
 extern gitem_t *Fdi_BULLETS;
 extern gitem_t *Fdi_CELLS;
 extern gitem_t *Fdi_ROCKETS;
 extern gitem_t *Fdi_SLUGS;
-extern gitem_t *Fdi_MAGSLUGS;
+extern gitem_t *Fdi_MAGSLUG;
 extern gitem_t *Fdi_FLECHETTES;
+extern gitem_t *Fdi_ROUNDS;
 extern gitem_t *Fdi_TBALL;
 extern gitem_t *Fdi_POWERCUBE;
 
@@ -1059,7 +1063,9 @@ extern cvar_t *world_min_shells;
 extern cvar_t *world_min_grenades;
 extern cvar_t *world_min_rockets;
 extern cvar_t *world_min_slugs;
+extern cvar_t *world_min_magslug;
 extern cvar_t *world_min_flechettes;
+extern cvar_t *world_min_rounds;
 //K03 End
 
 //ZOID

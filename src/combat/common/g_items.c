@@ -314,7 +314,7 @@ qboolean Pickup_Pack(edict_t *ent, edict_t *other) {
     V_GiveAmmoClip(other, 2, AMMO_FLECHETTES);
 
     // RAFAEL
-    item = Fdi_MAGSLUGS;//FindItem ("Mag Slug");
+    item = Fdi_MAGSLUG;//FindItem ("Mag Slug");
     if (item) {
         index = ITEM_INDEX(item);
         other->client->pers.inventory[index] += item->quantity;
@@ -491,6 +491,8 @@ qboolean Pickup_Ammo(edict_t *ent, edict_t *other) {
             item->quantity = BULLETS_PICKUP;
         else if (item->tag == AMMO_GRENADES)
             item->quantity = GRENADES_PICKUP;
+        else if (item->tag == AMMO_MAGSLUG)
+            item->quantity = MAGSLUG_PICKUP;
         else if (item->tag == AMMO_FLECHETTES)
             item->quantity = FLECHETTES_PICKUP;
 
@@ -2219,7 +2221,7 @@ always owned, never in the world
                         Drop_Ammo,
                         NULL,
                         "misc/am_pkup.wav",
-                        "models/items/ammo/slugs/medium/tris.md2", 0,
+                        "models/objects/ammo/tris.md2", 0,
                         NULL,
 /* icon */        "a_slugs",
 /* pickup */    "Mag Slug",
@@ -2299,9 +2301,9 @@ always owned, never in the world
                         Drop_Ammo,
                         NULL,
                         "misc/am_pkup.wav",
-                        "models/items/ammo/bullets/medium/tris.md2", 0,
+                        "models/ammo/am_disr/tris.md2", 0,
                         NULL,
-/* icon */        "a_bullets",
+/* icon */        "a_disruptor",
 /* pickup */    "Rounds",
 /* width */        3,
                         3,
@@ -3306,5 +3308,15 @@ void SpawnWorldAmmo(void) {
         need = world_min_flechettes->value - count;
         SpawnWorldAmmoType("Flechettes", need);
         gi.dprintf("World spawned %d flechette packs\n", need);
+    }
+    if ((count = GetWorldAmmoCount("Mag Slug")) < world_min_magslug->value) {
+        need = world_min_magslug->value - count;
+        SpawnWorldAmmoType("Mag Slug", need);
+        gi.dprintf("World spawned %d magslug packs\n", need);
+    }
+    if ((count = GetWorldAmmoCount("Rounds")) < world_min_rounds->value) {
+        need = world_min_rounds->value - count;
+        SpawnWorldAmmoType("Rounds", need);
+        gi.dprintf("World spawned %d disruptor round packs\n", need);
     }
 }

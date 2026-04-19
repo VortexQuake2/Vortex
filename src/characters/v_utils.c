@@ -135,6 +135,14 @@ char *GetArmoryItemString(int purchase_number) {
             return "Rockets";
         case 16:
             return "Slugs";
+
+        case 40:
+            return "Flechettes";
+        case 41:
+            return "Mag Slug";
+        case 42:
+            return "Rounds";
+
         case 17:
             return "T-Balls";
         case 18:
@@ -186,6 +194,7 @@ char *GetArmoryItemString(int purchase_number) {
             return "Tesla";
         case 39:
             return "Disruptor";
+
         default:
             return " ";
     }
