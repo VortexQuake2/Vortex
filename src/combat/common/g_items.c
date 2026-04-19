@@ -685,7 +685,7 @@ qboolean Pickup_Armor(edict_t *ent, edict_t *other) {
     if (current_armor >= max_armor) {
         // let them pick up shards for power cubes even when full
         if (shard) {
-            other->client->pers.inventory[power_cube_index] += 5;
+            other->client->pers.inventory[power_cube_index] += 10;
             return true;
         }
         return false;
@@ -701,7 +701,7 @@ qboolean Pickup_Armor(edict_t *ent, edict_t *other) {
     other->client->pers.inventory[body_armor_index] += armor;
 
     if (shard)
-        other->client->pers.inventory[power_cube_index] += 5;
+        other->client->pers.inventory[power_cube_index] += 10;
 
     if (!(ent->spawnflags & DROPPED_ITEM) && (deathmatch->value))
         SetRespawn(ent, 20);
