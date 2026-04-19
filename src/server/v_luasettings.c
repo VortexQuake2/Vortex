@@ -1751,6 +1751,7 @@ void Lua_LoadVariables()
 
 #pragma endregion
 #pragma region BFG10K
+
 	BFG10K_INITIAL_DAMAGE = vrx_lua_get_variable("BFG10K_INITIAL_DAMAGE", 25);
 	BFG10K_ADDON_DAMAGE = vrx_lua_get_variable("BFG10K_ADDON_DAMAGE", 4.0);
 	BFG10K_INITIAL_SPEED = vrx_lua_get_variable("BFG10K_INITIAL_SPEED", 750);
@@ -1760,6 +1761,7 @@ void Lua_LoadVariables()
 	BFG10K_ADDON_DURATION = vrx_lua_get_variable("BFG10K_ADDON_DURATION", 0.1);
 	BFG10K_DEFAULT_DURATION = vrx_lua_get_variable("BFG10K_DEFAULT_DURATION", 1);
 	BFG10K_DEFAULT_SLIDE = vrx_lua_get_variable("BFG10K_DEFAULT_SLIDE", 0);
+
 #pragma endregion
 #pragma region ETFRIFLE
 
@@ -1768,15 +1770,24 @@ void Lua_LoadVariables()
 	ETFRIFLE_INITIAL_SPEED = vrx_lua_get_variable("ETFRIFLE_INITIAL_SPEED", 750);
 	ETFRIFLE_ADDON_SPEED = vrx_lua_get_variable("ETFRIFLE_ADDON_SPEED", 25);
 
+#pragma endregion
+#pragma region DISRUPTOR
+
 	DISRUPTOR_INITIAL_DAMAGE = vrx_lua_get_variable("DISRUPTOR_INITIAL_DAMAGE", 90);
 	DISRUPTOR_ADDON_DAMAGE = vrx_lua_get_variable("DISRUPTOR_ADDON_DAMAGE", 4);
 	DISRUPTOR_INITIAL_SPEED = vrx_lua_get_variable("DISRUPTOR_INITIAL_SPEED", 1200);
 	DISRUPTOR_ADDON_SPEED = vrx_lua_get_variable("DISRUPTOR_ADDON_SPEED", 20);
 
+#pragma endregion
+#pragma region IONRIPPER
+
 	IONRIPPER_INITIAL_DAMAGE = vrx_lua_get_variable("IONRIPPER_INITIAL_DAMAGE", 50);
 	IONRIPPER_ADDON_DAMAGE = vrx_lua_get_variable("IONRIPPER_ADDON_DAMAGE", 2);
 	IONRIPPER_INITIAL_SPEED = vrx_lua_get_variable("IONRIPPER_INITIAL_SPEED", 500);
 	IONRIPPER_ADDON_SPEED = vrx_lua_get_variable("IONRIPPER_ADDON_SPEED", 40);
+
+#pragma endregion
+#pragma region PHALANX
 
 	PHALANX_INITIAL_DAMAGE = vrx_lua_get_variable("PHALANX_INITIAL_DAMAGE", 70);
 	PHALANX_ADDON_DAMAGE = vrx_lua_get_variable("PHALANX_ADDON_DAMAGE", 2);
@@ -1785,8 +1796,12 @@ void Lua_LoadVariables()
 	PHALANX_INITIAL_SPEED = vrx_lua_get_variable("PHALANX_INITIAL_SPEED", 725);
 	PHALANX_ADDON_SPEED = vrx_lua_get_variable("PHALANX_ADDON_SPEED", 15);
 
+#pragma endregion
+#pragma region PLASMABEAM
+
 	PLASMABEAM_INITIAL_DAMAGE = vrx_lua_get_variable("PLASMABEAM_INITIAL_DAMAGE", 12);
 	PLASMABEAM_ADDON_DAMAGE = vrx_lua_get_variable("PLASMABEAM_ADDON_DAMAGE", 1);
+
 #pragma endregion
 #pragma endregion /*Weapons Parameters*/
 

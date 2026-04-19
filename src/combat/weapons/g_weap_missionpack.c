@@ -1,3 +1,5 @@
+#ifdef VRX_REPRO
+
 #include "g_local.h"
 
 // from g_weapon.c
@@ -1751,3 +1753,5 @@ void fire_tesla(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int spee
     if (self->client)
         layout_add_tracked_entity(&self->client->layout, tesla);
 }
+
+#endif //VRX_REPRO

@@ -3079,7 +3079,7 @@ warehouse circuits
                         Drop_Weapon,
                         Weapon_Disruptor,
                         "misc/w_pkup.wav",
-                        "models/weapons/g_dist/tris.md2", EF_ROTATE | EF_BOB,
+                        "models/weapons/g_dist/tris.md2", EF_ROTATE,
                         "models/weapons/v_dist/tris.md2",
 /* icon */        "w_disintegrator",
 /* pickup */    "Disruptor",

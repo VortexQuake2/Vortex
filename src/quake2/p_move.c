@@ -1,3 +1,4 @@
+
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
@@ -1548,7 +1549,12 @@ void Pmove(pmove_t *pmove) {
 
     PM_ClampAngles();
 
-    if (pm->s.pm_type == PM_SPECTATOR || pm->s.pm_type == PM_NOCLIP) {
+    if (pm->s.pm_type == PM_SPECTATOR
+#ifdef VRX_REPRO
+        || pm->s.pm_type == PM_NOCLIP) {
+#else
+        ) {
+#endif
         // funny vortex hack for chase not to retrigger lol
         if (pm->s.pm_flags & PMF_JUMP_HELD)
             pm->s.pm_flags = PMF_JUMP_HELD;

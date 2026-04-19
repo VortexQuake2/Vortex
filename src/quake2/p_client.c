@@ -1986,8 +1986,9 @@ void PutClientInServer (edict_t *ent)
 	if (client->pers.weapon)//K03
 		client->ps.gunindex = gi.modelindex(client->pers.weapon->view_model);
 
+#ifdef VRX_REPRO
 	client->ps.pmove.viewheight = ent->viewheight;
-
+#endif //VRX_REPRO
 	// clear entity state values
 	ent->s.effects = 0;
 	ent->s.skinnum = ent - g_edicts - 1;
@@ -2654,8 +2655,12 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		memset (&pm, 0, sizeof(pm));
 		
 		if (ent->movetype == MOVETYPE_NOCLIP)
+#ifdef VRX_REPRO
 			// TODO - PM_SPECTATOR works differently from baseline.
 			client->ps.pmove.pm_type = PM_NOCLIP;//PM_SPECTATOR;
+#else
+			client->ps.pmove.pm_type = PM_SPECTATOR;
+#endif //VRX_REPRO
 		else if (ent->deadflag)
 			client->ps.pmove.pm_type = PM_DEAD;
 		else if (ent->flags & FL_COCOONED)
@@ -2851,7 +2856,6 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 					break;
 			if (j != i)
 				continue;	// duplicated
-			other = pm.touches[i].ent;
 			if (!other->touch)
 				continue;
 			other->touch (other, ent, nullptr, nullptr);

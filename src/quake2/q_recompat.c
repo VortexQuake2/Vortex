@@ -32,7 +32,11 @@ void vrx_repro_getgameapi(const repro_import_t *pr, game_import_t *_gi) {
 
 void	shim_bprintf (const int printlevel, const char *fmt, ...) {
     VA_PRELUDE(msg)
+#ifdef VRX_REPRO
     gire.Loc_Print(nullptr, printlevel | PRINT_BROADCAST, _msg, nullptr, 0);
+#else
+    //TODO: ??
+#endif
 }
 
 void	shim_dprintf (const char *fmt, ...) {
@@ -44,10 +48,14 @@ void	shim_cprintf (const edict_t *ent, const int printlevel, const char *fmt, ..
 	gire.Loc_Print(ent, printlevel, _msg, nullptr, 0);
     // gire.Client_Print(ent, printlevel, _msg);
 }
+
 void	shim_centerprintf (const edict_t *ent,  const char *fmt, ...) {
     VA_PRELUDE(msg)
-	gire.Loc_Print(ent, PRINT_CENTER, _msg, nullptr, 0);
-    //gire.Center_Print(ent, _msg);
+#ifdef VRX_REPRO
+    gire.Loc_Print(ent, PRINT_CENTER, _msg, nullptr, 0);
+#else
+    gire.Center_Print(ent, _msg);
+#endif
 }
 
 void shim_error(const char* fmt, ...) {
@@ -332,7 +340,9 @@ void vrx_repro_shim(game_import_t *_gi) {
     _gi->unlinkentity = gire.unlinkentity;
     _gi->BoxEdicts = shim_boxedicts;
 
+#ifdef VRX_REPRO
     _gi->Pmove = Pmove;
+#endif
 
     _gi->multicast = shim_multicast;
     _gi->unicast = shim_unicast;

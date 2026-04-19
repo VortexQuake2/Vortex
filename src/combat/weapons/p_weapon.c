@@ -3140,7 +3140,9 @@ static void PlasmaBeam_Fire(edict_t *ent)
     {
         ent->client->ps.gunframe = 13;
         ent->client->weapon_sound = 0;
+#ifdef VRX_REPRO
         ent->client->ps.gunskin = 0;
+#endif
 
         if (firing && !has_ammo)
         {
@@ -3163,7 +3165,9 @@ static void PlasmaBeam_Fire(edict_t *ent)
         ent->client->ps.gunframe = 8;
 
     ent->client->weapon_sound = gi.soundindex("weapons/bfg__l1a.wav");
+#ifdef VRX_REPRO
     ent->client->ps.gunskin = 1;
+#endif //VRX_REPRO
 
     if (is_quad)
     {
@@ -3211,8 +3215,10 @@ void Weapon_Heatbeam(edict_t *ent)
     if (ent->client->weaponstate != WEAPON_FIRING)
     {
         ent->client->weapon_sound = 0;
+#ifdef VRX_REPRO
         ent->client->ps.gunskin = 0;
-    }
+#endif //VRX_REPRO
+	}
 
     Weapon_Generic(ent, 8, 12, 42, 47, pause_frames, fire_frames, PlasmaBeam_Fire);
 }
