@@ -44,6 +44,7 @@ int magslug_index;
 int trap_index;
 int tesla_index;
 int disruptor_index;
+int flechette_index;
 
 //weapons
 int sword_index;
@@ -58,8 +59,6 @@ int hyperblaster_index;
 int railgun_index;
 int _20mmcannon_index;
 int bfg10k_index;
-
-int etfrifle_index;
 
 int ionripper_index;
 int phalanx_index;
@@ -273,6 +272,8 @@ qboolean Pickup_Bandolier(edict_t *ent, edict_t *other) {
         other->client->pers.max_cells = 250;
     if (other->client->pers.max_slugs < 75)
         other->client->pers.max_slugs = 75;
+    if (other->client->pers.max_flechettes < 250)
+        other->client->pers.max_flechettes = 250;
     // RAFAEL
     if (other->client->pers.max_magslug < 75)
         other->client->pers.max_magslug = 75;
@@ -310,6 +311,7 @@ qboolean Pickup_Pack(edict_t *ent, edict_t *other) {
     V_GiveAmmoClip(other, 2, AMMO_ROCKETS);
     V_GiveAmmoClip(other, 2, AMMO_CELLS);
     V_GiveAmmoClip(other, 2, AMMO_SLUGS);
+    V_GiveAmmoClip(other, 2, AMMO_FLECHETTES);
 
     // RAFAEL
     item = Fdi_MAGSLUGS;//FindItem ("Mag Slug");
@@ -489,6 +491,8 @@ qboolean Pickup_Ammo(edict_t *ent, edict_t *other) {
             item->quantity = BULLETS_PICKUP;
         else if (item->tag == AMMO_GRENADES)
             item->quantity = GRENADES_PICKUP;
+        else if (item->tag == AMMO_FLECHETTES)
+            item->quantity = FLECHETTES_PICKUP;
 
         count = ent->item->quantity;
     }
@@ -1936,7 +1940,7 @@ always owned, never in the world
 /* pickup */    "ETF Rifle",
                         0,
                         1,
-                        "Bullets",
+                        "Flechettes",
                         IT_WEAPON,
                         NULL,
                         0,
@@ -2226,6 +2230,28 @@ always owned, never in the world
                         NULL,
                         AMMO_MAGSLUG,
 /* precache */ ""
+                },
+
+                /*QUAKED ammo_flechettes (.3 .3 1) (-16 -16 -16) (16 16 16)	17
+                 */
+                {
+                    "ammo_flechettes",
+                    Pickup_Ammo,
+                    NULL,
+                    Drop_Ammo,
+                    NULL,
+                    "misc/am_pkup.wav",
+                    "models/ammo/am_flechette/tris.md2", 0,
+                    NULL,
+                    /* icon */        "a_flechettes",
+                    /* pickup */    "Flechettes",
+                    /* width */        3,
+                    0,
+                    NULL,
+                    IT_AMMO,
+                    NULL,
+                    AMMO_FLECHETTES,
+                    /* precache */ ""
                 },
 
                 {
@@ -3192,6 +3218,7 @@ void SetItemNames(void) {
     trap_index = ITEM_INDEX(FindItem("Trap"));
     tesla_index = ITEM_INDEX(FindItem("Tesla Ammo"));
     disruptor_index = ITEM_INDEX(FindItem("Rounds"));
+    flechette_index = ITEM_INDEX(FindItem("Flechettes"));
 
     //weapons
     sword_index = ITEM_INDEX(FindItem("Sword"));
@@ -3274,5 +3301,10 @@ void SpawnWorldAmmo(void) {
         need = world_min_cells->value - count;
         SpawnWorldAmmoType("Cells", need);
         gi.dprintf("World spawned %d cell packs\n", need);
+    }
+    if ((count = GetWorldAmmoCount("Flechettes")) < world_min_flechettes->value) {
+        need = world_min_flechettes->value - count;
+        SpawnWorldAmmoType("Flechettes", need);
+        gi.dprintf("World spawned %d flechette packs\n", need);
     }
 }

@@ -416,6 +416,7 @@ double GRENADES_PICKUP;
 double ROCKETS_PICKUP;
 double CELLS_PICKUP;
 double SLUGS_PICKUP;
+double FLECHETTES_PICKUP;
 double EXP_PLAYER_BASE;
 double CREDITS_PLAYER_BASE;
 double CREDITS_OTHER_BASE;
@@ -1634,6 +1635,7 @@ void Lua_LoadVariables()
 	ROCKETS_PICKUP = vrx_lua_get_variable("ROCKETS_PICKUP", 20);
 	CELLS_PICKUP = vrx_lua_get_variable("CELLS_PICKUP", 70);
 	SLUGS_PICKUP = vrx_lua_get_variable("SLUGS_PICKUP", 15);
+	FLECHETTES_PICKUP = vrx_lua_get_variable("BULLETS_PICKUP", 50);
 
 	EXP_PLAYER_BASE = vrx_lua_get_variable("EXP_PLAYER_BASE", 50);
 

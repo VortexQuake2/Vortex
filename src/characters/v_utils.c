@@ -1339,6 +1339,11 @@ qboolean V_GiveAmmoClip(edict_t *ent, float qty, int ammotype) {
             current = &ent->client->pers.inventory[magslug_index];
             max = &ent->client->pers.max_magslug;
             break;
+        case AMMO_FLECHETTES:
+            amount = FLECHETTES_PICKUP;
+            current = &ent->client->pers.inventory[flechette_index];
+            max = &ent->client->pers.max_flechettes;
+            break;
         case AMMO_TRAP:
             amount = GRENADES_PICKUP;
             current = &ent->client->pers.inventory[trap_index];
@@ -1394,7 +1399,6 @@ int V_GetRespawnAmmoType(edict_t *ent) {
             return AMMO_SHELLS;
         case 4: //mg
         case 5: //cg
-        case 17: //etf
             return AMMO_BULLETS;
         case 6: //gl
         case 11: //hg
@@ -1410,6 +1414,8 @@ int V_GetRespawnAmmoType(edict_t *ent) {
             return AMMO_SLUGS;
         case 15: //phalanx
             return AMMO_MAGSLUG;
+        case 17: //etf
+            return AMMO_FLECHETTES;
         case 8: //hb
         case 10: //bfg
         case 14: //ionripper

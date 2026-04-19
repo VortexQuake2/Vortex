@@ -750,6 +750,7 @@ extern int	magslug_index;
 extern int	trap_index;
 extern int	tesla_index;
 extern int	disruptor_index;
+extern int flechette_index;
 
 //weapons
 extern int sword_index;
@@ -790,6 +791,7 @@ extern gitem_t *Fdi_RAILGUN;
 extern gitem_t *Fdi_BFG;
 extern gitem_t *Fdi_PHALANX;
 extern gitem_t *Fdi_BOOMER;
+extern gitem_t *Fdi_ETFRIFLE;
 extern gitem_t *Fdi_TRAP;
 extern gitem_t *Fdi_20MM;
 
@@ -799,6 +801,7 @@ extern gitem_t *Fdi_CELLS;
 extern gitem_t *Fdi_ROCKETS;
 extern gitem_t *Fdi_SLUGS;
 extern gitem_t *Fdi_MAGSLUGS;
+extern gitem_t *Fdi_FLECHETTES;
 extern gitem_t *Fdi_TBALL;
 extern gitem_t *Fdi_POWERCUBE;
 
@@ -1056,6 +1059,7 @@ extern cvar_t *world_min_shells;
 extern cvar_t *world_min_grenades;
 extern cvar_t *world_min_rockets;
 extern cvar_t *world_min_slugs;
+extern cvar_t *world_min_flechettes;
 //K03 End
 
 //ZOID
@@ -1913,6 +1917,7 @@ typedef struct {
 	int			max_trap;
 	int			max_tesla;
 	int			max_disruptor;
+    int         max_flechettes;
 
     gitem_t *weapon;
     gitem_t *lastweapon;

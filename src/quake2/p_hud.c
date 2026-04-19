@@ -852,6 +852,8 @@ void G_SetStats(edict_t *ent)
 			ent->client->ps.stats[STAT_AMMO_ICON] = gi.imageindex("a_cells_hud");
 		else if (ent->client->pers.weapon == Fdi_20MM)
 			ent->client->ps.stats[STAT_AMMO_ICON] = gi.imageindex("a_shells_hud");
+		else if (ent->client->pers.weapon == Fdi_ETFRIFLE)
+			ent->client->ps.stats[STAT_AMMO_ICON] = gi.imageindex("a_flechettes_hud");
 		else
 			ent->client->ps.stats[STAT_AMMO_ICON] = gi.imageindex("a_blaster_hud");
 		ent->client->ps.stats[STAT_AMMO] = ent->client->pers.inventory[ent->client->ammo_index];

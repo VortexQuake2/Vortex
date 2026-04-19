@@ -20,6 +20,8 @@ int MAX_CELLS(const struct edict_s *ent);
 
 int MAX_SLUGS(const struct edict_s *ent);
 
+int MAX_FLECHETTES(const struct edict_s *ent);
+
 int MAX_ROUNDS(const struct edict_s *ent);
 
 int MAX_POWERCUBES(const struct edict_s *ent);

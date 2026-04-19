@@ -374,6 +374,10 @@ void NoAmmoWeaponChange(edict_t* ent) {
 		&& ent->client->pers.inventory[ITEM_INDEX(Fdi_SHOTGUN)]) {
 		item = Fdi_SHOTGUN;
 	}
+	if (ent->client->pers.inventory[ITEM_INDEX(Fdi_FLECHETTES)]
+		&& ent->client->pers.inventory[ITEM_INDEX(Fdi_ETFRIFLE)]) {
+		item = Fdi_ETFRIFLE;
+		}
 	if (item == NULL) item = Fdi_BLASTER;
 
 	if (ent->svflags & SVF_MONSTER) item->use(ent, item);

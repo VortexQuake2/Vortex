@@ -1146,25 +1146,26 @@ void InitClientPersistant (gclient_t *client)
 
 	//K03 End
 
-	client->pers.health			= 100;
-	client->pers.max_health		= 100;
+	client->pers.health				= 100;
+	client->pers.max_health			= 100;
 
-	client->pers.max_bullets	= 200;
-	client->pers.max_shells		= 100;
-	client->pers.max_rockets	= 50;
-	client->pers.max_grenades	= 50;
-	client->pers.max_cells		= 200;
-	client->pers.max_slugs		= 50;
+	client->pers.max_bullets		= 200;
+	client->pers.max_shells			= 100;
+	client->pers.max_rockets		= 50;
+	client->pers.max_grenades		= 50;
+	client->pers.max_cells			= 200;
+	client->pers.max_slugs			= 50;
+	client->pers.max_flechettes		= 200;
 
 	// RAFAEL
-	client->pers.max_magslug	= 50;
-	client->pers.max_trap		= 5;
-	client->pers.max_tesla		= 5;
-	client->pers.max_disruptor	= 12;
+	client->pers.max_magslug		= 50;
+	client->pers.max_trap			= 5;
+	client->pers.max_tesla			= 5;
+	client->pers.max_disruptor		= 12;
 
 	//K03 Begin
-	client->pers.max_powercubes = 200;
-	client->pers.max_tballs = 20;
+	client->pers.max_powercubes 	= 200;
+	client->pers.max_tballs 		= 20;
 	//K03 End
 
 	client->pers.connected = true;

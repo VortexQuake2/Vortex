@@ -1189,17 +1189,23 @@ void initialize_item_references(void) {
 	Fdi_HYPERBLASTER	= FindItem ("HyperBlaster");
 	Fdi_RAILGUN			= FindItem ("Railgun");
 	Fdi_BFG				= FindItem ("BFG10K");
+	Fdi_20MM			= FindItem ("20mm Cannon");
+#ifdef VRX_REPRO
 	Fdi_PHALANX			= FindItem ("Phalanx");
 	Fdi_BOOMER			= FindItem ("Ionripper");
 	Fdi_TRAP			= FindItem ("Trap");
-	Fdi_20MM			= FindItem ("20mm Cannon");
+	Fdi_ETFRIFLE		= FindItem ("ETF Rifle");
+#endif //VRX_REPRO
 
 	Fdi_SHELLS			= FindItem ("Shells");
 	Fdi_BULLETS			= FindItem ("Bullets");
 	Fdi_CELLS			= FindItem ("Cells");
 	Fdi_ROCKETS			= FindItem ("Rockets");
 	Fdi_SLUGS			= FindItem ("Slugs");
+#ifdef VRX_REPRO
 	Fdi_MAGSLUGS		= FindItem ("Mag Slug");
+	Fdi_FLECHETTES		= FindItem ("Flechettes");
+#endif //VRX_REPRO
 
 	//K03 Begin
 	Fdi_POWERCUBE		= FindItem("Power Cube");
@@ -1288,6 +1294,9 @@ void SP_worldspawn (edict_t *ent)
 	gi.imageindex("a_rockets_hud");
 	gi.imageindex("a_cells_hud");
 	gi.imageindex("a_slugs_hud");
+#ifdef VRX_REPRO
+	gi.imageindex("a_flechettes_hud");
+#endif //VRX_REPRO
 
 	gi.soundindex ("world/klaxon2.wav");
 	gi.soundindex ("player/lava1.wav");
