@@ -281,9 +281,6 @@ int vrx_get_hard_max(int index, qboolean general, int class) {
             return 3;
 
             
-        case HASTE:
-            return 10;
-
         // Special cases for the non-general ability mode.
         // Falls through to the default case...
         case STRENGTH:
