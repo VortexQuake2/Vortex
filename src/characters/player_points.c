@@ -65,33 +65,6 @@ void vrx_add_levelup_boons(edict_t *ent) {
         ent->myskills.talents.talentPoints++;
 }
 
-gitem_t *GetWeaponForNumber(int i) {
-    switch (i) {
-        case 2:
-            return Fdi_SHOTGUN;
-        case 3:
-            return Fdi_SUPERSHOTGUN;
-        case 4:
-            return Fdi_MACHINEGUN;
-        case 5:
-            return Fdi_CHAINGUN;
-        case 6:
-            return Fdi_GRENADES;
-        case 7:
-            return Fdi_GRENADELAUNCHER;
-        case 8:
-            return Fdi_ROCKETLAUNCHER;
-        case 9:
-            return Fdi_HYPERBLASTER;
-        case 10:
-            return Fdi_RAILGUN;
-        case 11:
-            return Fdi_BFG;
-    }
-    return Fdi_ROCKETLAUNCHER;
-}
-
-
 double vrx_get_points_tnl (int level) 
 {
     long    tnl = 0;

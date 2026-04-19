@@ -399,64 +399,34 @@ void respawnmenu_handler (edict_t *ent, int option)
 	OpenRespawnWeapMenu(ent, RespawnMenuPageForOption(option));
 }
 
-char *GetRespawnString (edict_t *ent)
-{
-	switch (ent->myskills.respawn_weapon)
-	{
-	case 1: return "Sword";
-	case 2: return "Shotgun";
-	case 3: return "Super Shotgun";
-	case 4: return "Machinegun";
-	case 5: return "Chaingun";
-	case 6: return "Grenade Launcher";
-	case 7: return "Rocket Launcher";
-	case 8: return "Hyperblaster";
-	case 9: return "Railgun";
-	case 10: return "BFG10k";
-	case 11: return "Hand Grenades";
-	case 12: return "20mm Cannon";
-	case 13: return "Blaster";
-	case 14: return "Ionripper";
-	case 15: return "Phalanx";
-	case 16: return "Trap";
-	case 17: return "ETF Rifle";
-	case 18: return "Plasma Beam";
-	case 19: return "Prox Launcher";
-	case 20: return "Chainfist";
-	case 21: return "Tesla";
-	case 22: return "Disruptor";
-	default: return "Unknown";
-	}
-}
-
 typedef struct {
 	const char *name;
 	int option;
 } respawn_menu_item_t;
 
 static const respawn_menu_item_t respawn_items[] = {
-	{"Sword", 1},
-	{"Shotgun", 2},
-	{"Super Shotgun", 3},
-	{"Machinegun", 4},
-	{"Chaingun", 5},
-	{"Hand Grenades", 11},
-	{"Grenade Launcher", 6},
-	{"Rocket Launcher", 7},
-	{"Hyperblaster", 8},
-	{"Railgun", 9},
-	{"BFG10k", 10},
-	{"20mm Cannon", 12},
-	{"Ionripper", 14},
-	{"Phalanx", 15},
-	{"Trap", 16},
-	{"ETF Rifle", 17},
-	{"Plasma Beam", 18},
-	{"Prox Launcher", 19},
-	{"Chainfist", 20},
-	{"Tesla", 21},
-	{"Disruptor", 22},
-	{"Blaster", 13}
+	{"Sword", WEAP_SWORD},
+	{"Shotgun", WEAP_SHOTGUN},
+	{"Super Shotgun", WEAP_SUPERSHOTGUN},
+	{"Machinegun", WEAP_MACHINEGUN},
+	{"Chaingun", WEAP_CHAINGUN},
+	{"Hand Grenades", WEAP_GRENADES},
+	{"Grenade Launcher", WEAP_GRENADELAUNCHER},
+	{"Rocket Launcher", WEAP_ROCKETLAUNCHER},
+	{"Hyperblaster", WEAP_HYPERBLASTER},
+	{"Railgun", WEAP_RAILGUN},
+	{"BFG10k", WEAP_BFG},
+	{"20mm Cannon", WEAP_20MM},
+	{"Ionripper", WEAP_IONRIPPER},
+	{"Phalanx", WEAP_PHALANX},
+	{"Trap", WEAP_TRAP},
+	{"ETF Rifle", WEAP_ETFRIFLE},
+	{"Plasma Beam", WEAP_PLASMA},
+	{"Prox Launcher", WEAP_PROXLAUNCH},
+	{"Chainfist", WEAP_CHAINFIST},
+	{"Tesla", WEAP_TESLA},
+	{"Disruptor", WEAP_DISRUPTOR},
+	{"Blaster", WEAP_BLASTER}
 };
 
 static int RespawnMenuPageForOption(int option)
@@ -512,7 +482,7 @@ void OpenRespawnWeapMenu(edict_t *ent, int page_num)
 		menu_add_line(ent, respawn_items[i].name, respawn_items[i].option);
 
 	menu_add_line(ent, " ", 0);
-	menu_add_line(ent, va("Respawn: %s", GetRespawnString(ent)), 0);
+	menu_add_line(ent, va("Respawn: %s", GetWeaponString(ent->myskills.respawn_weapon)), 0);
 	menu_add_line(ent, " ", 0);
 	if (last < total)
 		menu_add_line(ent, "Next", (page_num * 1000) + 2);

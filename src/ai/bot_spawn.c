@@ -541,10 +541,14 @@ void BOT_UpgradeWeapons(edict_t* ent)
 // randomly selects a class-appropriate respawn weapon
 void BOT_SelectRespawnWeapon(edict_t* ent)
 {
-	int soldierWeapons[] = { 7, 9, 12 };//{ 2,3,4,5,7,8,12 };
-	int necroWeapons[] = { 7,8,9 };
-	int mageWeapons[] = { 2,4,5,9,12 }; // medium-long range hitscan preferred
-	int vampireWeapons[] = { 1,3,5 };// { 1, 2, 3, 4, 5 }; // short range preferred
+	int soldierWeapons[] = { WEAPON_ROCKETLAUNCHER, WEAPON_RAILGUN,
+		WEAPON_20MM };
+	int necroWeapons[] = { WEAPON_ROCKETLAUNCHER, WEAPON_HYPERBLASTER,
+		WEAPON_RAILGUN };
+	int mageWeapons[] = { WEAPON_SHOTGUN, WEAPON_MACHINEGUN, WEAPON_CHAINGUN,
+		WEAPON_RAILGUN, WEAPON_20MM }; // medium-long range hitscan preferred
+	int vampireWeapons[] = { WEAPON_SWORD, WEAPON_SUPERSHOTGUN,
+		WEAPON_CHAINGUN }; // short range preferred
 	int* weaponArray;
 	int weaponCount, randomIndex;
 
@@ -552,7 +556,7 @@ void BOT_SelectRespawnWeapon(edict_t* ent)
 	{
 	case CLASS_KNIGHT:
 		// knights can only use sword
-		ent->myskills.respawn_weapon = 1;
+		ent->myskills.respawn_weapon = WEAPON_SWORD;
 		return;
 	case CLASS_SOLDIER: 
 		weaponArray = soldierWeapons;
@@ -670,15 +674,7 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 		case 6: ent->myskills.class_num = CLASS_POLTERGEIST; break;
 		}
 	}
-	// for respawn_weapon index values, see vrx_WeapIDtoWeapIndex
-	//if (random() > 0.8)
-	//	ent->myskills.respawn_weapon = 9;//GetRandom(1, 11);
-	//else
-	//	ent->myskills.respawn_weapon = 1;//GetRandom(1, 11);
-	//if (ent->myskills.class_num == CLASS_KNIGHT)
-	//	ent->myskills.respawn_weapon = 1;
-	//else
-	//	ent->myskills.respawn_weapon = GetRandom(1, 13);
+
 	BOT_SelectRespawnWeapon(ent);//GHz
 	vrx_reset_weapon_maximums(ent);//GHz
 	BOT_UpgradeWeapons(ent);//GHz

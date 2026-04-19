@@ -374,10 +374,30 @@ void NoAmmoWeaponChange(edict_t* ent) {
 		&& ent->client->pers.inventory[ITEM_INDEX(Fdi_SHOTGUN)]) {
 		item = Fdi_SHOTGUN;
 	}
-	if (ent->client->pers.inventory[ITEM_INDEX(Fdi_FLECHETTES)]
+
+#ifdef VRX_REPRO
+	else if (ent->client->pers.inventory[ITEM_INDEX(Fdi_MAGSLUG)]
+		&& ent->client->pers.inventory[ITEM_INDEX(Fdi_PHALANX)]) {
+		item = Fdi_PHALANX;
+	}
+	else if (ent->client->pers.inventory[ITEM_INDEX(Fdi_FLECHETTES)]
 		&& ent->client->pers.inventory[ITEM_INDEX(Fdi_ETFRIFLE)]) {
 		item = Fdi_ETFRIFLE;
-		}
+	}
+	else if (ent->client->pers.inventory[ITEM_INDEX(Fdi_CELLS)]
+		&& ent->client->pers.inventory[ITEM_INDEX(Fdi_PLASMA)]) {
+		item = Fdi_PLASMA;
+	}
+	else if (ent->client->pers.inventory[ITEM_INDEX(Fdi_CELLS)]
+		&& ent->client->pers.inventory[ITEM_INDEX(Fdi_IONRIPPER)]) {
+		item = Fdi_IONRIPPER;
+	}
+	else if (ent->client->pers.inventory[ITEM_INDEX(Fdi_ROUNDS)]
+		&& ent->client->pers.inventory[ITEM_INDEX(Fdi_DISRUPTOR)]) {
+		item = Fdi_DISRUPTOR;
+	}
+#endif //VRX_REPRO
+
 	if (item == NULL) item = Fdi_BLASTER;
 
 	if (ent->svflags & SVF_MONSTER) item->use(ent, item);

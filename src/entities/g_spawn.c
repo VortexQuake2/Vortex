@@ -1192,7 +1192,7 @@ void initialize_item_references(void) {
 	Fdi_20MM			= FindItem ("20mm Cannon");
 #ifdef VRX_REPRO
 	Fdi_PHALANX			= FindItem ("Phalanx");
-	Fdi_BOOMER			= FindItem ("Ionripper");
+	Fdi_IONRIPPER		= FindItem ("Ionripper");
 	Fdi_TRAP			= FindItem ("Trap");
 	Fdi_ETFRIFLE		= FindItem ("ETF Rifle");
 	Fdi_DISRUPTOR		= FindItem ("Disruptor");

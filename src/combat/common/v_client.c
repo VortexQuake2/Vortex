@@ -168,44 +168,44 @@ int vrx_WeapIDtoWeapIndex(int weaponID)
 
     switch (weaponID)
     {
-    case 1: return sword_index;
-    case 2: return shotgun_index;
-    case 3: return supershotgun_index;
-    case 4: return machinegun_index;
-    case 5: return chaingun_index;
-    case 6: return grenadelauncher_index;
-    case 7: return rocketlauncher_index;
-    case 8: return hyperblaster_index;
-    case 9: return railgun_index;
-    case 10: return bfg10k_index;
-    case 11: return grenade_index;
-    case 12: return _20mmcannon_index;
-    case 13: return blaster_index;
-    case 14:
-        item = FindItem("Ionripper");
-        return item ? ITEM_INDEX(item) : blaster_index;
-    case 15:
+    case WEAPON_BLASTER: return blaster_index;
+    case WEAPON_SWORD: return sword_index;
+    case WEAPON_SHOTGUN: return shotgun_index;
+    case WEAPON_SUPERSHOTGUN: return supershotgun_index;
+    case WEAPON_MACHINEGUN: return machinegun_index;
+    case WEAPON_CHAINGUN: return chaingun_index;
+    case WEAPON_GRENADELAUNCHER: return grenadelauncher_index;
+    case WEAPON_ROCKETLAUNCHER: return rocketlauncher_index;
+    case WEAPON_HYPERBLASTER: return hyperblaster_index;
+    case WEAPON_RAILGUN: return railgun_index;
+    case WEAPON_BFG10K: return bfg10k_index;
+    case WEAPON_HANDGRENADE: return grenade_index;
+    case WEAPON_20MM: return _20mmcannon_index;
+    case WEAPON_PHALANX:
         item = FindItem("Phalanx");
         return item ? ITEM_INDEX(item) : blaster_index;
-    case 16:
+    case WEAPON_IONRIPPER:
+        item = FindItem("Ionripper");
+        return item ? ITEM_INDEX(item) : blaster_index;
+    case WEAPON_TRAP:
         item = FindItem("Trap");
         return item ? ITEM_INDEX(item) : blaster_index;
-    case 17:
+    case WEAPON_ETFRIFLE:
         item = FindItem("ETF Rifle");
         return item ? ITEM_INDEX(item) : blaster_index;
-    case 18:
+    case WEAPON_PLASMABEAM:
         item = FindItem("Plasma Beam");
         return item ? ITEM_INDEX(item) : blaster_index;
-    case 19:
+    case WEAPON_PROXLAUNCHER:
         item = FindItem("Prox Launcher");
         return item ? ITEM_INDEX(item) : blaster_index;
-    case 20:
+    case WEAPON_CHAINFIST:
         item = FindItem("Chainfist");
         return item ? ITEM_INDEX(item) : blaster_index;
-    case 21:
+    case WEAPON_TESLA:
         item = FindItem("Tesla");
         return item ? ITEM_INDEX(item) : blaster_index;
-    case 22:
+    case WEAPON_DISRUPTOR:
         item = FindItem("Disruptor");
         return item ? ITEM_INDEX(item) : blaster_index;
     default: return blaster_index;

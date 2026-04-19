@@ -342,36 +342,38 @@ typedef struct {
 #define IT_HEALTH		256
 
 // gitem_t->weapmodel for weapons indicates model index
-#define WEAP_BLASTER			0
-#define WEAP_SHOTGUN			1
-#define WEAP_SUPERSHOTGUN		2
-#define WEAP_MACHINEGUN			3
-#define WEAP_CHAINGUN			4
+#define WEAP_BLASTER			WEAPON_BLASTER
+#define WEAP_SHOTGUN			WEAPON_SHOTGUN
+#define WEAP_SUPERSHOTGUN		WEAPON_SUPERSHOTGUN
+#define WEAP_MACHINEGUN			WEAPON_MACHINEGUN
+#define WEAP_CHAINGUN			WEAPON_CHAINGUN
 
-#define WEAP_GRENADELAUNCHER	5
-#define WEAP_ROCKETLAUNCHER		6
-#define WEAP_HYPERBLASTER		7
-#define WEAP_RAILGUN			8
-#define WEAP_BFG				9
-#define WEAP_SWORD				10//K03
-#define WEAP_20MM				11//GHz
-#define WEAP_GRENADES			12
+#define WEAP_GRENADELAUNCHER	WEAPON_GRENADELAUNCHER
+#define WEAP_ROCKETLAUNCHER		WEAPON_ROCKETLAUNCHER
+#define WEAP_HYPERBLASTER		WEAPON_HYPERBLASTER
+#define WEAP_RAILGUN			WEAPON_RAILGUN
+#define WEAP_BFG				WEAPON_BFG10K
+#define WEAP_SWORD				WEAPON_SWORD//K03
+#define WEAP_20MM				WEAPON_20MM//GHz
+#define WEAP_GRENADES			WEAPON_HANDGRENADE
 
 
-#define WEAP_PLASMA				14		// PGM
-#define WEAP_PROXLAUNCH			15		// PGM
-#define WEAP_CHAINFIST			16		// PGM
+#define WEAP_PLASMA				WEAPON_PLASMABEAM		// PGM
+#define WEAP_PROXLAUNCH			WEAPON_PROXLAUNCHER		// PGM
+#define WEAP_CHAINFIST			WEAPON_CHAINFIST		// PGM
 
-#define WEAP_TRAP				17
+#define WEAP_TRAP				WEAPON_TRAP
+#define WEAP_TESLA              WEAPON_TESLA
 
-#define WEAP_GRAPPLE			20
+#define WEAP_GRAPPLE			WEAPON_GRAPPLE
 
-#define WEAP_PHALANX			21
-#define WEAP_BOOMER				22
-#define WEAP_DISRUPTOR			23		// PGM
-#define WEAP_ETFRIFLE			24		// PGM
+#define WEAP_PHALANX			WEAPON_PHALANX
+#define WEAP_BOOMER				WEAPON_IONRIPPER
+#define WEAP_IONRIPPER          WEAPON_IONRIPPER
+#define WEAP_DISRUPTOR			WEAPON_DISRUPTOR		// PGM
+#define WEAP_ETFRIFLE			WEAPON_ETFRIFLE		// PGM
 
-#define WEAP_TOTAL				25
+#define WEAP_TOTAL				WEAPON_TOTAL
 
 #define MPI_QUAD				21
 #define	MPI_PENTA				22
@@ -790,11 +792,10 @@ extern gitem_t *Fdi_HYPERBLASTER;
 extern gitem_t *Fdi_RAILGUN;
 extern gitem_t *Fdi_BFG;
 extern gitem_t *Fdi_PHALANX;
-extern gitem_t *Fdi_BOOMER;
+extern gitem_t *Fdi_IONRIPPER;
 extern gitem_t *Fdi_ETFRIFLE;
 extern gitem_t *Fdi_TRAP;
 extern gitem_t *Fdi_20MM;
-extern gitem_t *Fdi_IONRIPPER;
 extern gitem_t *Fdi_DISRUPTOR;
 extern gitem_t *Fdi_PLASMA;
 

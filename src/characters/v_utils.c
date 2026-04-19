@@ -1402,35 +1402,35 @@ qboolean V_GiveAmmoClip(edict_t *ent, float qty, int ammotype) {
 //Returns an ammo type based on the player's respawn weapon.
 int V_GetRespawnAmmoType(edict_t *ent) {
     switch (ent->myskills.respawn_weapon) {
-        case 2: //sg
-        case 3: //ssg
-        case 12: //20mm
+        case WEAPON_SHOTGUN: //sg
+        case WEAPON_SUPERSHOTGUN: //ssg
+        case WEAPON_20MM: //20mm
             return AMMO_SHELLS;
-        case 4: //mg
-        case 5: //cg
+        case WEAPON_MACHINEGUN: //mg
+        case WEAPON_CHAINGUN: //cg
             return AMMO_BULLETS;
-        case 6: //gl
-        case 11: //hg
-        case 19: //prox launcher
+        case WEAPON_GRENADELAUNCHER: //gl
+        case WEAPON_HANDGRENADE: //hg
+        case WEAPON_PROXLAUNCHER: //prox launcher
             return AMMO_GRENADES;
-        case 16: //trap
+        case WEAPON_TRAP: //trap
             return AMMO_TRAP;
-        case 21: //tesla
+        case WEAPON_TESLA: //tesla
             return AMMO_TESLA;
-        case 7: //rl
+        case WEAPON_ROCKETLAUNCHER: //rl
             return AMMO_ROCKETS;
-        case 9: //rg
+        case WEAPON_RAILGUN: //rg
             return AMMO_SLUGS;
-        case 15: //phalanx
+        case WEAPON_PHALANX: //phalanx
             return AMMO_MAGSLUG;
-        case 17: //etf
+        case WEAPON_ETFRIFLE: //etf
             return AMMO_FLECHETTES;
-        case 8: //hb
-        case 10: //bfg
-        case 14: //ionripper
-        case 18: //plasma beam
+        case WEAPON_HYPERBLASTER: //hb
+        case WEAPON_BFG10K: //bfg
+        case WEAPON_IONRIPPER: //ionripper
+        case WEAPON_PLASMABEAM: //plasma beam
             return AMMO_CELLS;
-        case 22: //disruptor
+        case WEAPON_DISRUPTOR: //disruptor
             return AMMO_DISRUPTOR;
         default: //blaster/sword
             return 0; //nothing
