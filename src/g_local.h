@@ -2829,6 +2829,10 @@ void PrintNumEntities(qboolean list);
 #define Laser_YellowG 0xd0dad2dc // inner = yellow, outer = green
 
 void NoAmmoWeaponChange(edict_t* ent);
+float calculate_haste_wait(edict_t *ent);
+int32_t is_haste_active(edict_t *ent);
+void lasersight_on(edict_t* ent);
+void lasersight_off(edict_t* ent);
 
 void Weapon_Generic(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST, int FRAME_IDLE_LAST,
                     int FRAME_DEACTIVATE_LAST, int *pause_frames, int *fire_frames, void (*fire)(edict_t *ent));
