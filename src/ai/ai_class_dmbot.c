@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //ACE
 ai_ability_t	AIAbilities[MAX_ABILITIES];//GHz
-ai_weapon_t		AIWeapons[WEAP_TOTAL];
+ai_weapon_t		AIWeapons[WEAPON_TOTAL];
 int	num_AIEnemies;
 edict_t *AIEnemies[MAX_EDICTS];		// pointers to all players in the game
 
@@ -1507,7 +1507,7 @@ void BOT_DMclass_ChooseWeapon(edict_t *self)
 	else 
 		weapon_range = AIWEAP_SNIPER_RANGE;
 
-	for(i=0; i<WEAP_TOTAL; i++)
+	for(i=0; i<WEAPON_TOTAL; i++)
 	{
 		if (!AIWeapons[i].weaponItem)
 			continue;
@@ -1593,7 +1593,7 @@ void BOT_DMclass_FireWeapon (edict_t *self, usercmd_t *ucmd)
 	if (weapon != -1)
 	{
 		//GHz: switch to lance if enemy is outside sword range
-		if (weapon == WEAP_SWORD && dist > AI_RANGE_SHORT)
+		if (weapon == WEAPON_SWORD && dist > AI_RANGE_SHORT)
 		{
 			self->client->weapon_mode = 1; //switch to lance mode--FIXME: shouldn't this be done @ chooseweapon?
 			//target[2] = self->enemy->absmin[2]-32;//aim at the feet
@@ -1922,76 +1922,76 @@ void BOT_DMclass_WeightInventory(edict_t *self)
 	//or denny weight for it, if bot is packed up.
 	//------------------------------------------------------
 
-	AI_AdjustAmmoNeedFactor(self, Fdi_BULLETS, WEAP_CHAINGUN, WEAP_MACHINEGUN, WEAP_ETFRIFLE, 0);
-	AI_AdjustAmmoNeedFactor(self, Fdi_SHELLS, WEAP_SHOTGUN, WEAP_SUPERSHOTGUN, WEAP_20MM, 0);
-	AI_AdjustAmmoNeedFactor(self, Fdi_ROCKETS, WEAP_ROCKETLAUNCHER, 0);
-	AI_AdjustAmmoNeedFactor(self, Fdi_GRENADES, WEAP_GRENADELAUNCHER, 0);
-	AI_AdjustAmmoNeedFactor(self, Fdi_CELLS, WEAP_HYPERBLASTER, WEAP_BFG, 0);
-	AI_AdjustAmmoNeedFactor(self, Fdi_SLUGS, WEAP_RAILGUN, 0);
+	AI_AdjustAmmoNeedFactor(self, Fdi_BULLETS, WEAPON_CHAINGUN, WEAPON_MACHINEGUN, WEAPON_ETFRIFLE, 0);
+	AI_AdjustAmmoNeedFactor(self, Fdi_SHELLS, WEAPON_SHOTGUN, WEAPON_SUPERSHOTGUN, WEAPON_20MM, 0);
+	AI_AdjustAmmoNeedFactor(self, Fdi_ROCKETS, WEAPON_ROCKETLAUNCHER, 0);
+	AI_AdjustAmmoNeedFactor(self, Fdi_GRENADES, WEAPON_GRENADELAUNCHER, 0);
+	AI_AdjustAmmoNeedFactor(self, Fdi_CELLS, WEAPON_HYPERBLASTER, WEAPON_BFG10K, 0);
+	AI_AdjustAmmoNeedFactor(self, Fdi_SLUGS, WEAPON_RAILGUN, 0);
 	//gi.dprintf("b:%.1f c:%.1f s:%.1f r:%.1f g:%.1f s:%.1f\n", self->ai.status.inventoryWeights[bullet_index], self->ai.status.inventoryWeights[cell_index], 
 	//	self->ai.status.inventoryWeights[shell_index], self->ai.status.inventoryWeights[rocket_index], self->ai.status.inventoryWeights[grenade_index], 
 	//	self->ai.status.inventoryWeights[slug_index]);
 	//AMMO_BULLETS
 	/*
-	if (!AI_CanPick_Ammo (self, AIWeapons[WEAP_MACHINEGUN].ammoItem) )
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_MACHINEGUN].ammoItem)] = 0.0;
+	if (!AI_CanPick_Ammo (self, AIWeapons[WEAPON_MACHINEGUN].ammoItem) )
+		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_MACHINEGUN].ammoItem)] = 0.0;
 	//find out if it has a weapon for this amno
-	else if (!client->pers.inventory[ITEM_INDEX(AIWeapons[WEAP_CHAINGUN].weaponItem)]
-		&& !client->pers.inventory[ITEM_INDEX(AIWeapons[WEAP_MACHINEGUN].weaponItem)] )
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_MACHINEGUN].ammoItem)] *= LowNeedFactor;
+	else if (!client->pers.inventory[ITEM_INDEX(AIWeapons[WEAPON_CHAINGUN].weaponItem)]
+		&& !client->pers.inventory[ITEM_INDEX(AIWeapons[WEAPON_MACHINEGUN].weaponItem)] )
+		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_MACHINEGUN].ammoItem)] *= LowNeedFactor;
 
 	//AMMO_SHELLS:
 
 	//find out if it's packed up
-	if (!AI_CanPick_Ammo (self, AIWeapons[WEAP_SHOTGUN].ammoItem) )
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_SHOTGUN].ammoItem)] = 0.0;
+	if (!AI_CanPick_Ammo (self, AIWeapons[WEAPON_SHOTGUN].ammoItem) )
+		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_SHOTGUN].ammoItem)] = 0.0;
 	//find out if it has a weapon for this amno
-	else if (!client->pers.inventory[ITEM_INDEX(AIWeapons[WEAP_SHOTGUN].weaponItem)]
-		&& !client->pers.inventory[ITEM_INDEX(AIWeapons[WEAP_SUPERSHOTGUN].weaponItem)] )
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_SHOTGUN].ammoItem)] *= LowNeedFactor;
+	else if (!client->pers.inventory[ITEM_INDEX(AIWeapons[WEAPON_SHOTGUN].weaponItem)]
+		&& !client->pers.inventory[ITEM_INDEX(AIWeapons[WEAPON_SUPERSHOTGUN].weaponItem)] )
+		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_SHOTGUN].ammoItem)] *= LowNeedFactor;
 
 	//AMMO_ROCKETS:
 
 	//find out if it's packed up
-	if (!AI_CanPick_Ammo (self, AIWeapons[WEAP_ROCKETLAUNCHER].ammoItem))
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_ROCKETLAUNCHER].ammoItem)] = 0.0;
+	if (!AI_CanPick_Ammo (self, AIWeapons[WEAPON_ROCKETLAUNCHER].ammoItem))
+		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_ROCKETLAUNCHER].ammoItem)] = 0.0;
 	//find out if it has a weapon for this amno
-	else if (!client->pers.inventory[ITEM_INDEX(AIWeapons[WEAP_ROCKETLAUNCHER].weaponItem)] )
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_ROCKETLAUNCHER].ammoItem)] *= LowNeedFactor;
+	else if (!client->pers.inventory[ITEM_INDEX(AIWeapons[WEAPON_ROCKETLAUNCHER].weaponItem)] )
+		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_ROCKETLAUNCHER].ammoItem)] *= LowNeedFactor;
 
 	//AMMO_GRENADES: 
 
 	//find if it's packed up
-	if (!AI_CanPick_Ammo (self, AIWeapons[WEAP_GRENADES].ammoItem))
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_GRENADES].ammoItem)] = 0.0;
+	if (!AI_CanPick_Ammo (self, AIWeapons[WEAPON_GRENADES].ammoItem))
+		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_GRENADES].ammoItem)] = 0.0;
 	//grenades are also weapons, and are weighted down by LowNeedFactor in weapons group
 	
 	//AMMO_CELLS:
 
 	//find out if it's packed up
-	if (!AI_CanPick_Ammo (self, AIWeapons[WEAP_HYPERBLASTER].ammoItem))
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_HYPERBLASTER].ammoItem)] = 0.0;
+	if (!AI_CanPick_Ammo (self, AIWeapons[WEAPON_HYPERBLASTER].ammoItem))
+		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_HYPERBLASTER].ammoItem)] = 0.0;
 	//find out if it has a weapon for this amno
-	else if (!client->pers.inventory[ITEM_INDEX(AIWeapons[WEAP_HYPERBLASTER].weaponItem)]
-		&& !client->pers.inventory[ITEM_INDEX(AIWeapons[WEAP_BFG].weaponItem)]
+	else if (!client->pers.inventory[ITEM_INDEX(AIWeapons[WEAPON_HYPERBLASTER].weaponItem)]
+		&& !client->pers.inventory[ITEM_INDEX(AIWeapons[WEAPON_BFG].weaponItem)]
 		&& !client->pers.inventory[ITEM_INDEX(FindItemByClassname("item_power_shield"))])
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_HYPERBLASTER].ammoItem)] *= LowNeedFactor;
+		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_HYPERBLASTER].ammoItem)] *= LowNeedFactor;
 
 	//AMMO_SLUGS:
 
 	//find out if it's packed up
-	if (!AI_CanPick_Ammo (self, AIWeapons[WEAP_RAILGUN].ammoItem))
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_RAILGUN].ammoItem)] = 0.0;
+	if (!AI_CanPick_Ammo (self, AIWeapons[WEAPON_RAILGUN].ammoItem))
+		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_RAILGUN].ammoItem)] = 0.0;
 	//find out if it has a weapon for this amno
-	else if (!client->pers.inventory[ITEM_INDEX(AIWeapons[WEAP_RAILGUN].weaponItem)] )
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_RAILGUN].ammoItem)] *= LowNeedFactor;
+	else if (!client->pers.inventory[ITEM_INDEX(AIWeapons[WEAPON_RAILGUN].weaponItem)] )
+		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_RAILGUN].ammoItem)] *= LowNeedFactor;
 	*/
 
 	//WEAPONS
 	//-----------------------------------------------------
 
 	
-	for (i=0; i<WEAP_TOTAL; i++) {
+	for (i=0; i<WEAPON_TOTAL; i++) {
 		gitem_t* it = AIWeapons[i].weaponItem;
 		// weapon doesn't exist in the AIWeapons list
 		if (!it)
@@ -2289,7 +2289,7 @@ void BOT_DMclass_InitPersistantWeights(edict_t* self)
 		self->ai.pers.inventoryWeights[supershotgun_index] = 0.7;
 		self->ai.pers.inventoryWeights[machinegun_index] = 0.5;
 		self->ai.pers.inventoryWeights[chaingun_index] = 0.7;
-		self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAP_GRENADES].weaponItem)] = 0.5;// isn't this redundant with grenade_index below?
+		self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_HANDGRENADE].weaponItem)] = 0.5;// isn't this redundant with grenade_index below?
 		self->ai.pers.inventoryWeights[grenadelauncher_index] = 0.6;
 		self->ai.pers.inventoryWeights[rocketlauncher_index] = 0.8;
 		self->ai.pers.inventoryWeights[hyperblaster_index] = 0.7;

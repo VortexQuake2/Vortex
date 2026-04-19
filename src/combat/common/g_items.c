@@ -1642,7 +1642,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/blastf1a.wav misc/lasfly.wav a_blaster_hud",
-                        WEAP_BLASTER
+                        WEAPON_BLASTER
                 },
 
 /*QUAKED weapon_shotgun (.3 .3 1) (-16 -16 -16) (16 16 16)	7
@@ -1665,7 +1665,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/shotgf1b.wav weapons/shotgr1b.wav a_shells_hud",
-                        WEAP_SHOTGUN
+                        WEAPON_SHOTGUN
                 },
 
 /*QUAKED weapon_supershotgun (.3 .3 1) (-16 -16 -16) (16 16 16)	8
@@ -1688,7 +1688,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/sshotf1b.wav a_shells_hud",
-                        WEAP_SUPERSHOTGUN
+                        WEAPON_SUPERSHOTGUN
                 },
 
 /*QUAKED weapon_machinegun (.3 .3 1) (-16 -16 -16) (16 16 16)	9
@@ -1712,7 +1712,7 @@ always owned, never in the world
                         0,
 /* precache */
                         "weapons/machgf1b.wav weapons/machgf2b.wav weapons/machgf3b.wav weapons/machgf4b.wav weapons/machgf5b.wav a_bullets_hud",
-                        WEAP_MACHINEGUN
+                        WEAPON_MACHINEGUN
                 },
 
 /*QUAKED weapon_chaingun (.3 .3 1) (-16 -16 -16) (16 16 16)	10
@@ -1735,7 +1735,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/chngnu1a.wav weapons/chngnl1a.wav weapons/machgf3b.wav` weapons/chngnd1a.wav a_bullets_hud",
-                        WEAP_CHAINGUN
+                        WEAPON_CHAINGUN
                 },
 
 /*QUAKED weapon_grenadelauncher (.3 .3 1) (-16 -16 -16) (16 16 16)	11
@@ -1759,7 +1759,7 @@ always owned, never in the world
                         0,
 /* precache */
                         "models/objects/grenade/tris.md2 weapons/grenlf1a.wav weapons/grenlr1b.wav weapons/grenlb1b.wav a_grenades_hud",
-                        WEAP_GRENADES
+                        WEAPON_GRENADELAUNCHER
                 },
 
 /*QUAKED weapon_rocketlauncher (.3 .3 1) (-16 -16 -16) (16 16 16)	12
@@ -1783,7 +1783,7 @@ always owned, never in the world
                         0,
 /* precache */
                         "models/objects/rocket/tris.md2 weapons/rockfly.wav weapons/rocklf1a.wav weapons/rocklr1b.wav models/objects/debris2/tris.md2 a_rockets_hud",
-                        WEAP_ROCKETLAUNCHER
+                        WEAPON_ROCKETLAUNCHER
                 },
 
 /*QUAKED weapon_hyperblaster (.3 .3 1) (-16 -16 -16) (16 16 16)	13
@@ -1809,7 +1809,7 @@ always owned, never in the world
                         0,
 /* precache */
                         "weapons/hyprbu1a.wav weapons/hyprbl1a.wav weapons/hyprbf1a.wav weapons/hyprbd1a.wav misc/lasfly.wav a_cells_hud",
-                        WEAP_HYPERBLASTER
+                        WEAPON_HYPERBLASTER
                 },
 // END 14-APR-98
 
@@ -1833,7 +1833,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/rg_hum.wav weapons/rippfire.wav a_cells_hud",
-                        WEAP_BOOMER
+                        WEAPON_IONRIPPER
                 },
 
                 {
@@ -1856,7 +1856,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/rg_hum.wav a_slugs_hud",
-                        WEAP_RAILGUN
+                        WEAPON_RAILGUN
                 },
 
                 {
@@ -1877,7 +1877,7 @@ always owned, never in the world
                         NULL,
                         0,
                         "weapons/sgun1.wav a_shells_hud",
-                        WEAP_20MM
+                        WEAPON_20MM
                 },
 
 /*QUAKED weapon_bfg (.3 .3 1) (-16 -16 -16) (16 16 16)	15
@@ -1900,7 +1900,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/plasshot.wav a_slugs_hud",
-                        WEAP_PHALANX
+                        WEAPON_PHALANX
                 },
 
 /*QUAKED weapon_bfg (.3 .3 1) (-16 -16 -16) (16 16 16)	15
@@ -1925,7 +1925,7 @@ always owned, never in the world
                         0,
 /* precache */
                         "sprites/s_bfg1.sp2 sprites/s_bfg2.sp2 sprites/s_bfg3.sp2 weapons/bfg__f1y.wav weapons/bfg__l1a.wav weapons/bfg__x1b.wav weapons/bfg_hum.wav a_cells_hud",
-                        WEAP_BFG
+                        WEAPON_BFG10K
                 },
                 /*QUAKED weapon_machinegun (.3 .3 1) (-16 -16 -16) (16 16 16)	9
 */
@@ -1947,7 +1947,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/nail1.wav models/proj/flechette/tris.md2 a_bullets_hud",
-                        WEAP_ETFRIFLE
+                        WEAPON_ETFRIFLE
                 },
                 {
                         "weapon_plasmabeam",
@@ -1967,7 +1967,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "models/weapons/v_beamer2/tris.md2 weapons/bfg__l1a.wav a_cells_hud",
-                        WEAP_PLASMA
+                        WEAPON_PLASMABEAM
                 },
                 {
                         "weapon_proxlauncher",
@@ -1987,7 +1987,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/grenlf1a.wav weapons/grenlr1b.wav weapons/grenlb1b.wav weapons/proxwarn.wav weapons/proxopen.wav a_grenades_hud",
-                        WEAP_PROXLAUNCH
+                        WEAPON_PROXLAUNCHER
                 },
                 {
                         "weapon_chainfist",
@@ -2007,7 +2007,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/sawidle.wav weapons/sawhit.wav",
-                        WEAP_CHAINFIST
+                        WEAPON_CHAINFIST
                 },
                 {
                         "weapon_tesla",
@@ -2027,7 +2027,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "models/weapons/v_tesla2/tris.md2 weapons/teslaopen.wav weapons/hgrenb1a.wav weapons/hgrenb2a.wav models/weapons/g_tesla/tris.md2",
-                        WEAP_TRAP
+                        WEAPON_TRAP
                 },
                 {
                         "weapon_flamethrower",
@@ -2048,7 +2048,7 @@ always owned, never in the world
                         0,
 /* precache */
                         "weapons/machgf1b.wav weapons/machgf2b.wav weapons/machgf3b.wav weapons/machgf4b.wav weapons/machgf5b.wav a_bullets_hud",
-                        WEAP_MACHINEGUN
+                        WEAPON_MACHINEGUN
                 },
 
                 //K03 Begin
@@ -2074,7 +2074,7 @@ always owned, never in the world
                         NULL,
                         0,
                         "misc/power1.wav misc/fhit3.wav", //The sound of the blaster
-                        WEAP_SWORD                         //This is precached
+                        WEAPON_SWORD                         //This is precached
                 },
                 //K03 End
 
@@ -3090,7 +3090,7 @@ warehouse circuits
                         NULL,
                         0,
 /* precache */ "models/weapons/g_dist/tris.md2 models/weapons/v_dist/tris.md2 models/proj/disintegrator/tris.md2 weapons/disrupt.wav weapons/disint2.wav weapons/disrupthit.wav a_bullets_hud",
-                        WEAP_DISRUPTOR
+                        WEAPON_DISRUPTOR
                 },
 
                 // end of list marker

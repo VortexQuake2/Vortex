@@ -371,21 +371,21 @@ void actor_attack(edict_t *self)
 
 	if (dist < SABRE_INITIAL_RANGE)
 	{
-		weap_index = WEAP_SWORD;
+		weap_index = WEAPON_SWORD;
 		self->s.skinnum = self->activator->s.skinnum | (weap_index << 8);
 		// sword attack
 		self->monsterinfo.currentmove = &actor_move_attack2;
 	}
 	else if (dist < 512)
 	{
-		weap_index = WEAP_ROCKETLAUNCHER;
+		weap_index = WEAPON_ROCKETLAUNCHER;
 		self->s.skinnum = self->activator->s.skinnum | (weap_index << 8);
 		// rocket attack
 		self->monsterinfo.currentmove = &actor_move_attack;
 	}
 	else
 	{
-		weap_index = WEAP_RAILGUN;
+		weap_index = WEAPON_RAILGUN;
 		self->s.skinnum = self->activator->s.skinnum | (weap_index << 8);
 		// rail attack
 		self->monsterinfo.currentmove = &actor_move_attack3;

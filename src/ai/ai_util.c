@@ -419,8 +419,8 @@ qboolean AI_ClearWalkingPath(edict_t* self, vec3_t start, vec3_t end)
 	return true;
 }
 
-// converts the respawn_weapon index value (set in v_menu.c) to WEAP_* index
-// now is a no-op, respawn_weapon changed to be WEAP_* values
+// converts the respawn_weapon index value (set in v_menu.c) to WEAPON_* index
+// now is a no-op, respawn_weapon changed to be WEAPON_* values
 int AI_RespawnWeaponToWeapIndex(int respawn_weapon)
 {
 		return respawn_weapon;

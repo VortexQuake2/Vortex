@@ -35,7 +35,7 @@ typedef struct
 	qboolean	jumpadReached;
 	qboolean	TeleportReached;
 
-	float		weaponWeights[WEAP_TOTAL];//GHz: dynamic, per-bot weights are based on weapon upgrades
+	float		weaponWeights[WEAPON_TOTAL];//GHz: dynamic, per-bot weights are based on weapon upgrades
 	float		inventoryWeights[MAX_ITEMS];
 	float		playersWeights[MAX_EDICTS];
 	float		broam_timeouts[MAX_BOT_ROAMS];	//revisit bot roams
