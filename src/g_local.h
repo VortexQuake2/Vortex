@@ -1697,6 +1697,9 @@ void ThrowDebris(edict_t *self, char *modelname, float speed, vec3_t origin);
 qboolean fire_hit(edict_t *self, vec3_t aim, int damage, int kick);
 qboolean fire_player_melee(edict_t *self, vec3_t start, vec3_t dir, int range, int damage, int kick, int mod);
 
+extern byte is_silenced;
+extern qboolean is_quadfire;
+
 void fire_bullet(edict_t *self, vec3_t start, vec3_t aimdir, float damage, int kick, int hspread, int vspread, int mod);
 
 void fire_shotgun(edict_t *self, vec3_t start, vec3_t aimdir, float damage, int kick, int hspread, int vspread,

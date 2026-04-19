@@ -28,6 +28,12 @@
 
 #define WEAPON_TOTAL 22
 
+#ifdef DEBUG_WEAPONS
+void print_wp_state(edict_t* ent, char* state);
+#else
+#define print_wp_state(...)
+#endif
+
 typedef struct
 {
 	int			level;			//Level before rune
@@ -42,7 +48,6 @@ typedef struct
 	qboolean		disable;					//disabled weapon? (future versions?)
 	weaponskill_t	mods[MAX_WEAPONMODS];		//Store weapon upgrades in an array
 }weapon_t;
-
 
 /* 
 
