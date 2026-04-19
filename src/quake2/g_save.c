@@ -710,14 +710,17 @@ void ReadGame(char *filename)
 	gi.FreeTags(TAG_GAME);
 
 	f = fopen(filename, "rb");
-	if (!f)
+	if (!f) {
 		gi.error("Couldn't open %s", filename);
+		return;
+	}
 
 	fread(str, sizeof(str), 1, f);
 	if (strcmp(str, __DATE__))
 	{
 		fclose(f);
 		gi.error("Savegame from an older version.\n");
+		return;
 	}
 
 	g_edicts = vrx_malloc(game.maxentities * sizeof(g_edicts[0]), TAG_GAME);
@@ -928,6 +931,7 @@ void ReadLevel(char *filename)
 	{
 		fclose(f);
 		gi.error("ReadLevel: mismatched edict size");
+		return;
 	}
 
 	// check function pointer base address
@@ -936,6 +940,7 @@ void ReadLevel(char *filename)
 	{
 		fclose(f);
 		gi.error("ReadLevel: function pointers have moved");
+		return;
 	}
 
 	// load the level locals
@@ -948,6 +953,7 @@ void ReadLevel(char *filename)
 		{
 			fclose(f);
 			gi.error("ReadLevel: failed to read entnum");
+			return;
 		}
 		if (entnum == -1)
 			break;
