@@ -238,6 +238,13 @@ qboolean AI_CanPick_Ammo (edict_t *ent, gitem_t *item)
 		max = ent->client->pers.max_cells;
 	else if (item->tag == AMMO_SLUGS)
 		max = ent->client->pers.max_slugs;
+	else if (item->tag == AMMO_FLECHETTES)
+		max = ent->client->pers.max_flechettes;
+	else if (item->tag == AMMO_MAGSLUG)
+		max = ent->client->pers.max_magslug;
+	else if (item->tag == AMMO_DISRUPTOR)
+		max = ent->client->pers.max_disruptor;
+
 	else
 		return false;
 

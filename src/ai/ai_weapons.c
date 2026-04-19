@@ -67,8 +67,10 @@ float AI_GetWeaponProjectileVelocity(edict_t *ent, int weapmodelIndex)
 		return ETFRIFLE_INITIAL_SPEED + (ETFRIFLE_ADDON_SPEED * ent->myskills.weapons[WEAPON_ETFRIFLE].mods[2].current_level);
 	case WEAP_PHALANX:
 		return PHALANX_INITIAL_SPEED + (PHALANX_ADDON_SPEED * ent->myskills.weapons[WEAPON_PHALANX].mods[2].current_level);
-/*	case WEAP_IONRIPPER:
-		return IONRIPPER_INITIAL_SPEED + (IONRIPPER_ADDON_SPEED * ent->myskills.weapons[WEAPON_IONRIPPER].mods[2].current_level);*/
+	case WEAP_BOOMER:
+		return IONRIPPER_INITIAL_SPEED + (IONRIPPER_ADDON_SPEED * ent->myskills.weapons[WEAPON_IONRIPPER].mods[2].current_level);
+	case WEAP_DISRUPTOR:
+		return DISRUPTOR_INITIAL_SPEED + (DISRUPTOR_ADDON_SPEED * ent->myskills.weapons[WEAPON_DISRUPTOR].mods[2].current_level);
 	}
 	return 0;
 }
@@ -304,17 +306,27 @@ void AI_InitAIWeapons (void)
 	AIWeapons[WEAP_DISRUPTOR].weaponItem = Fdi_DISRUPTOR;//FindItemByClassname("weapon_hyperblaster");
 	AIWeapons[WEAP_DISRUPTOR].ammoItem = Fdi_ROUNDS;//FindItemByClassname("ammo_flechettes");
 
-	//WEAP_IONRIPPER
-	AIWeapons[WEAP_IONRIPPER].aimType = AI_AIMSTYLE_PREDICTION;
-	AIWeapons[WEAP_IONRIPPER].idealRange = AI_RANGE_MEDIUM;//GHz
-	AIWeapons[WEAP_IONRIPPER].RangeWeight[AIWEAP_SNIPER_RANGE] = 0.1;
-	AIWeapons[WEAP_IONRIPPER].RangeWeight[AIWEAP_LONG_RANGE] = 0.3;
-	AIWeapons[WEAP_IONRIPPER].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0.8;
-	AIWeapons[WEAP_IONRIPPER].RangeWeight[AIWEAP_SHORT_RANGE] = 0.6;
-	AIWeapons[WEAP_IONRIPPER].RangeWeight[AIWEAP_MELEE_RANGE] = 0.4;
-	AIWeapons[WEAP_IONRIPPER].weaponItem = Fdi_IONRIPPER;//FindItemByClassname("weapon_ionripper");
-	AIWeapons[WEAP_IONRIPPER].ammoItem = Fdi_CELLS;//FindItemByClassname("ammo_cells");
+	//WEAP_BOOMER
+	AIWeapons[WEAP_BOOMER].aimType = AI_AIMSTYLE_PREDICTION;
+	AIWeapons[WEAP_BOOMER].idealRange = AI_RANGE_MEDIUM;//GHz
+	AIWeapons[WEAP_BOOMER].RangeWeight[AIWEAP_SNIPER_RANGE] = 0.1;
+	AIWeapons[WEAP_BOOMER].RangeWeight[AIWEAP_LONG_RANGE] = 0.3;
+	AIWeapons[WEAP_BOOMER].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0.8;
+	AIWeapons[WEAP_BOOMER].RangeWeight[AIWEAP_SHORT_RANGE] = 0.6;
+	AIWeapons[WEAP_BOOMER].RangeWeight[AIWEAP_MELEE_RANGE] = 0.4;
+	AIWeapons[WEAP_BOOMER].weaponItem = Fdi_IONRIPPER;//FindItemByClassname("weapon_ionripper");
+	AIWeapons[WEAP_BOOMER].ammoItem = Fdi_CELLS;//FindItemByClassname("ammo_cells");
 
+	// WEAP_PLASMA
+	AIWeapons[WEAP_PLASMA].aimType = AI_AIMSTYLE_INSTANTHIT;
+	AIWeapons[WEAP_PLASMA].idealRange = AI_RANGE_MEDIUM;//GHz
+	AIWeapons[WEAP_PLASMA].RangeWeight[AIWEAP_SNIPER_RANGE] = 0.1;
+	AIWeapons[WEAP_PLASMA].RangeWeight[AIWEAP_LONG_RANGE] = 0.6;
+	AIWeapons[WEAP_PLASMA].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0.7;
+	AIWeapons[WEAP_PLASMA].RangeWeight[AIWEAP_SHORT_RANGE] = 0.7;
+	AIWeapons[WEAP_PLASMA].RangeWeight[AIWEAP_MELEE_RANGE] = 0.4;
+	AIWeapons[WEAP_PLASMA].weaponItem = Fdi_PLASMA;//FindItemByClassname("weapon_chaingun");
+	AIWeapons[WEAP_PLASMA].ammoItem = Fdi_CELLS;//FindItemByClassname("ammo_bullets");
 
 #endif
 

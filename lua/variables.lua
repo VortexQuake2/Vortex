@@ -261,8 +261,16 @@ ETFRIFLE_INITIAL_SPEED                = 750
 ETFRIFLE_ADDON_SPEED                  = 25
 
 -- Disruptor
+DISRUPTOR_INITIAL_DAMAGE                = 90
+DISRUPTOR_ADDON_DAMAGE                  = 4
+DISRUPTOR_INITIAL_SPEED                = 1200
+DISRUPTOR_ADDON_SPEED                  = 20
 
 -- Ionripper
+IONRIPPER_INITIAL_DAMAGE                = 50
+IONRIPPER_ADDON_DAMAGE                  = 2
+IONRIPPER_INITIAL_SPEED                = 500
+IONRIPPER_ADDON_SPEED                  = 40
 
 -- Phalanx
 PHALANX_INITIAL_DAMAGE                  = 70
@@ -271,6 +279,10 @@ PHALANX_INITIAL_RADIUS                  = 120
 PHALANX_ADDON_RADIUS                    = 2
 PHALANX_INITIAL_SPEED                   = 725
 PHALANX_ADDON_SPEED                     = 15
+
+-- Plasma Beam
+PLASMABEAM_INITIAL_DAMAGE                = 15
+PLASMABEAM_ADDON_DAMAGE                  = 1
 
 -- Totems
 TOTEM_MAX_RANGE                          = 512

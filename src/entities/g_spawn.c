@@ -1196,6 +1196,7 @@ void initialize_item_references(void) {
 	Fdi_TRAP			= FindItem ("Trap");
 	Fdi_ETFRIFLE		= FindItem ("ETF Rifle");
 	Fdi_DISRUPTOR		= FindItem ("Disruptor");
+	Fdi_PLASMA			= FindItem ("Plasma Beam");
 #endif //VRX_REPRO
 
 	Fdi_SHELLS			= FindItem ("Shells");

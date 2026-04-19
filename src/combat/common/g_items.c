@@ -1894,7 +1894,7 @@ always owned, never in the world
 /* icon */        "w_phallanx",
 /* pickup */    "Phalanx",
                         0,
-                        1,
+                        2,
                         "Mag Slug",
                         IT_WEAPON,
                         NULL,

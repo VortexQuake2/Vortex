@@ -2266,7 +2266,10 @@ void BOT_DMclass_InitPersistantWeights(edict_t* self)
 		self->ai.pers.inventoryWeights[railgun_index] = 0.0;
 		self->ai.pers.inventoryWeights[bfg10k_index] = 0.0;
 		self->ai.pers.inventoryWeights[etfrifle_index] = 0.0;
-
+		self->ai.pers.inventoryWeights[phalanx_index] = 0.0;
+		self->ai.pers.inventoryWeights[ionripper_index] = 0.0;
+		self->ai.pers.inventoryWeights[disruptor_index] = 0.0;
+		self->ai.pers.inventoryWeights[plasmabeam_index] = 0.0;
 
 		//ammo
 		self->ai.pers.inventoryWeights[shell_index] = 0.0;
@@ -2293,7 +2296,10 @@ void BOT_DMclass_InitPersistantWeights(edict_t* self)
 		self->ai.pers.inventoryWeights[railgun_index] = 0.8;
 		self->ai.pers.inventoryWeights[bfg10k_index] = 0.5;
 		self->ai.pers.inventoryWeights[etfrifle_index] = 0.7;
-
+		self->ai.pers.inventoryWeights[phalanx_index] = 0.6;
+		self->ai.pers.inventoryWeights[ionripper_index] = 0.7;
+		self->ai.pers.inventoryWeights[disruptor_index] = 0.6;
+		self->ai.pers.inventoryWeights[plasmabeam_index] = 0.7;
 
 		//ammo
 		self->ai.pers.inventoryWeights[shell_index] = 0.5;

@@ -370,9 +370,8 @@ typedef struct {
 #define WEAP_BOOMER				22
 #define WEAP_DISRUPTOR			23		// PGM
 #define WEAP_ETFRIFLE			24		// PGM
-#define WEAP_IONRIPPER          25
 
-#define WEAP_TOTAL				26
+#define WEAP_TOTAL				25
 
 #define MPI_QUAD				21
 #define	MPI_PENTA				22
@@ -797,6 +796,7 @@ extern gitem_t *Fdi_TRAP;
 extern gitem_t *Fdi_20MM;
 extern gitem_t *Fdi_IONRIPPER;
 extern gitem_t *Fdi_DISRUPTOR;
+extern gitem_t *Fdi_PLASMA;
 
 extern gitem_t *Fdi_SHELLS;
 extern gitem_t *Fdi_BULLETS;

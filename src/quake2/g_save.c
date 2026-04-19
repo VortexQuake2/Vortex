@@ -27,6 +27,7 @@ gitem_t *Fdi_TRAP;
 gitem_t *Fdi_20MM;
 gitem_t *Fdi_ETFRIFLE;
 gitem_t *Fdi_DISRUPTOR;
+gitem_t *Fdi_PLASMA;
 
 gitem_t *Fdi_SHELLS;
 gitem_t *Fdi_BULLETS;
