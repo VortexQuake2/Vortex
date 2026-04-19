@@ -25,9 +25,8 @@
 #define WEAPON_CHAINFIST		19
 #define WEAPON_TESLA			20
 #define WEAPON_DISRUPTOR		21
-#define WEAPON_GRAPPLE  		22
 
-#define WEAPON_TOTAL 23
+#define WEAPON_TOTAL 22
 
 typedef struct
 {

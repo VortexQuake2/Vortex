@@ -1176,7 +1176,6 @@ void SP_monster_brain(edict_t *ent)
 
 void initialize_item_references(void) {
 	//pre searched items
-	Fdi_GRAPPLE			= FindItem ("Grapple");
 	Fdi_SWORD			= FindItem ("Sword");
 	Fdi_BLASTER			= FindItem ("Blaster");
 	Fdi_SHOTGUN			= FindItem ("Shotgun");

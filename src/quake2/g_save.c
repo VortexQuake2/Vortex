@@ -8,45 +8,6 @@
 const char *s1;
 const char *s2;
 
-/*
-// g_local.h
-gitem_t	*Fdi_GRAPPLE;
-gitem_t	*Fdi_SWORD;
-gitem_t	*Fdi_BLASTER;
-gitem_t *Fdi_SHOTGUN;
-gitem_t *Fdi_SUPERSHOTGUN;
-gitem_t *Fdi_MACHINEGUN;
-gitem_t *Fdi_CHAINGUN;
-gitem_t *Fdi_GRENADES;
-gitem_t *Fdi_GRENADELAUNCHER;
-gitem_t *Fdi_ROCKETLAUNCHER;
-gitem_t *Fdi_HYPERBLASTER;
-gitem_t *Fdi_RAILGUN;
-gitem_t *Fdi_BFG;
-gitem_t *Fdi_PHALANX;
-gitem_t *Fdi_IONRIPPER;
-gitem_t *Fdi_TRAP;
-gitem_t *Fdi_20MM;
-gitem_t *Fdi_ETFRIFLE;
-gitem_t *Fdi_DISRUPTOR;
-gitem_t *Fdi_PLASMA;
-
-gitem_t *Fdi_SHELLS;
-gitem_t *Fdi_BULLETS;
-gitem_t *Fdi_CELLS;
-gitem_t *Fdi_ROCKETS;
-gitem_t *Fdi_SLUGS;
-gitem_t *Fdi_MAGSLUG;
-gitem_t *Fdi_FLECHETTES;
-gitem_t *Fdi_ROUNDS;
-gitem_t *Fdi_TBALL;
-gitem_t	*Fdi_POWERCUBE;
-
-int headindex;
-int	skullindex;
-
-*/
-
 cvar_t				*bot_enable;//GHz: Set to 1 to enable bots
 cvar_t				*bot_dropnodes;//GHz: Set to 1 to allow players to automatically drop nodes used for bot pathing
 cvar_t				*bot_autospawn;//GHz: Set to # of bots to spawn when map loads

@@ -757,7 +757,6 @@ VRX_G_ITEMS_IMPL int chainfist_index;
 VRX_G_ITEMS_IMPL int tesla_index;
 
 //pre searched items
-VRX_G_SAVE_IMPL gitem_t *Fdi_GRAPPLE;
 VRX_G_SAVE_IMPL gitem_t *Fdi_SWORD;
 VRX_G_SAVE_IMPL gitem_t *Fdi_BLASTER;
 VRX_G_SAVE_IMPL gitem_t *Fdi_SHOTGUN;
@@ -1265,8 +1264,6 @@ float distance(const vec3_t p1, const vec3_t p2);
 void G_RunFrames(edict_t *ent, int start_frame, int end_frame, qboolean reverse, bool limit_rate);
 
 void AngleCheck(float *val);
-
-int Get_KindWeapon(gitem_t *it);
 
 edict_t *FindPlayerByName(char *name); //4.0 was (const char *name);
 edict_t *FindPlayer(char *s);

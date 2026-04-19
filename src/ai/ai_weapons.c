@@ -34,7 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //WEAPON_HYPERBLASTER
 //WEAPON_RAILGUN
 //WEAPON_BFG10K
-//WEAPON_GRAPPLE
 
 float get_weapon_grenade_speed(edict_t* ent);//GHz
 float AI_GetWeaponProjectileVelocity(edict_t *ent, int weapmodelIndex)
@@ -259,17 +258,6 @@ void AI_InitAIWeapons (void)
 	AIWeapons[WEAPON_BFG10K].RangeWeight[AIWEAP_MELEE_RANGE] = 0.1;
 	AIWeapons[WEAPON_BFG10K].weaponItem = Fdi_BFG;//FindItemByClassname("weapon_bfg");
 	AIWeapons[WEAPON_BFG10K].ammoItem = Fdi_CELLS;//FindItemByClassname("ammo_cells");
-
-	//WEAP_GRAPPLE
-	AIWeapons[WEAPON_GRAPPLE].aimType = AI_AIMSTYLE_INSTANTHIT;
-	AIWeapons[WEAPON_GRAPPLE].RangeWeight[AIWEAP_SNIPER_RANGE] = 0.0;
-	AIWeapons[WEAPON_GRAPPLE].RangeWeight[AIWEAP_LONG_RANGE] = 0.0; //grapple is not used for attacks
-	AIWeapons[WEAPON_GRAPPLE].RangeWeight[AIWEAP_MEDIUM_RANGE] = 0.0;
-	AIWeapons[WEAPON_GRAPPLE].RangeWeight[AIWEAP_SHORT_RANGE] = 0.0;
-	AIWeapons[WEAPON_GRAPPLE].RangeWeight[AIWEAP_MELEE_RANGE] = 0.0;
-	AIWeapons[WEAPON_GRAPPLE].weaponItem = Fdi_GRAPPLE;//FindItemByClassname("weapon_grapplinghook");
-	AIWeapons[WEAPON_GRAPPLE].ammoItem = NULL;		//doesn't use ammo
-
 
 #ifdef VRX_REPRO
 

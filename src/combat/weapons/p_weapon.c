@@ -265,9 +265,6 @@ void ShowGun(edict_t* ent) {
 		return;
 	}
 
-	j = Get_KindWeapon(ent->client->pers.weapon);
-	if (j == WEAPON_GRAPPLE) j = WEAPON_BLASTER;
-
 	ent->s.modelindex2 = 255;
 	if (ent->client->pers.weapon)
 		i = ((j & 0xff) << 8);

@@ -1132,34 +1132,6 @@ void ValidateAngles (vec3_t angles)
 		angles[2] -= 360;
 }
 
-int Get_KindWeapon (gitem_t	*it)
-{
-	if(it == NULL) return WEAPON_BLASTER;
-
-	if(it->weaponthink		== Weapon_Shotgun)			return WEAPON_SHOTGUN;
-	else if(it->weaponthink == Weapon_SuperShotgun) 	return WEAPON_SUPERSHOTGUN;
-	else if(it->weaponthink == Weapon_Machinegun)		return WEAPON_MACHINEGUN;
-	else if(it->weaponthink == Weapon_Chaingun)			return WEAPON_CHAINGUN;
-	else if(it->weaponthink == Weapon_Grenade)			return WEAPON_HANDGRENADE;
-	else if(it->weaponthink == Weapon_GrenadeLauncher)	return WEAPON_GRENADELAUNCHER;
-	else if(it->weaponthink == Weapon_RocketLauncher)	return WEAPON_ROCKETLAUNCHER;
-	else if(it->weaponthink == Weapon_HyperBlaster) 	return WEAPON_HYPERBLASTER;
-	else if(it->weaponthink == Weapon_Railgun)			return WEAPON_RAILGUN;
-	else if(it->weaponthink == Weapon_BFG)				return WEAPON_BFG10K;
-	else if(it->weaponthink == Weapon_Disruptor)		return WEAPON_DISRUPTOR;
-	else if(it->weaponthink == Weapon_20mm)				return WEAPON_20MM;
-	else if(it->weaponthink == Weapon_Sword)			return WEAPON_SWORD;
-	else if(it->weaponthink == Weapon_Ionripper)		return WEAPON_HYPERBLASTER;
-	else if(it->weaponthink == Weapon_Phalanx)			return WEAPON_PHALANX;
-	else if(it->weaponthink == Weapon_Trap)				return WEAPON_TRAP;
-	else if(it->weaponthink == Weapon_ETF_Rifle)		return WEAPON_MACHINEGUN;
-	else if(it->weaponthink == Weapon_Heatbeam)			return WEAPON_PLASMABEAM;
-	else if(it->weaponthink == Weapon_ProxLauncher) 	return WEAPON_PROXLAUNCHER;
-	else if(it->weaponthink == Weapon_ChainFist)		return WEAPON_CHAINFIST;
-	else if(it->weaponthink == Weapon_Tesla)			return WEAPON_TRAP;
-	else return WEAPON_BLASTER;
-}
-
 edict_t *G_GetClient(const edict_t *ent)
 {
     if (ent == NULL)
