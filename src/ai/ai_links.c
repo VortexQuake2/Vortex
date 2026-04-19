@@ -604,7 +604,7 @@ int	AI_FindFallOrigin( int n1, int n2, vec3_t fallorigin )
 	trace_t		trace;
 	vec3_t		boxmins, boxmaxs;
 	vec3_t		o1;
-	vec3_t		v1;
+	vec3_t		v1 = { 0, 0, 0 };
 	int			eternalcount = 0;
 
 

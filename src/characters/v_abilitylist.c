@@ -505,7 +505,7 @@ void vrx_init_ability_list() {
 }
 
 int vrx_get_last_enabled_skill_index(edict_t *ent, int mode) {
-    int return_index;
+    int return_index = 0;
     for (int i = 0; i < MAX_ABILITIES; i++) {
         if (!ent->myskills.abilities[i].disable) {
             if (ent->myskills.abilities[i].general_skill == mode)

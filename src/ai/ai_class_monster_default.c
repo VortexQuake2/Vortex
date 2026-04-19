@@ -537,7 +537,7 @@ droptofloor:
 qboolean M_default_movestep (edict_t *self, usercmd_t *ucmd)
 {
 	vec3_t	movedir;
-	vec3_t	neworigin;
+	vec3_t	neworigin = { 0, 0, 0 };
 	int		movetype;
 	float	speed = 0;
 
@@ -694,7 +694,7 @@ void M_default_Start( edict_t *self )
 void M_default_Spawn (void)
 {
 	edict_t	*ent;
-	vec3_t	spawn_origin, spawn_angles;//spawn at a spawnpoint
+	vec3_t	spawn_origin = { 0, 0, 0 }, spawn_angles = { 0, 0, 0 };//spawn at a spawnpoint
 	const vec3_t	mins = {-15, -15, -24};
 	const vec3_t	maxs = {15, 15, 32};
 

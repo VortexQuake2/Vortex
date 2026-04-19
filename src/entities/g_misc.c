@@ -117,7 +117,7 @@ void gib_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, v
 void ThrowGib(edict_t *self, char *gibname, int damage, int type)
 {
 	edict_t *gib;
-	vec3_t	vd;
+	vec3_t	vd = { 0, 0, 0 };
 	vec3_t	origin;
 	vec3_t	size;
 	float	vscale;
@@ -179,7 +179,7 @@ void ThrowHead(edict_t *self, char *gibname, int damage, int type)
 
 void ThrowHead2(edict_t *self, char *gibname, int damage, int type)
 {
-	vec3_t	vd;
+	vec3_t	vd = { 0, 0, 0 };
 	float	vscale;
 
 	self->s.skinnum = 0;
@@ -224,7 +224,7 @@ void ThrowHead2(edict_t *self, char *gibname, int damage, int type)
 
 void ThrowClientHead(edict_t *self, int damage)
 {
-	vec3_t	vd;
+	vec3_t	vd = { 0, 0, 0 };
 	char	*gibname;
 
 	//gi.dprintf("ThrowClientHead\n");

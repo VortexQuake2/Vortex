@@ -305,7 +305,7 @@ qboolean AI_PredictJumpadDestity( edict_t *ent, vec3_t out )
 int AI_AddNode_JumpPad( edict_t *ent )
 {
 	vec3_t	v1,v2;
-	vec3_t	out;
+	vec3_t	out = { 0, 0, 0 };
 
 	if (nav.num_nodes + 1 > MAX_NODES)
 		return INVALID;

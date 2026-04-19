@@ -1473,7 +1473,7 @@ void CTF_ShutDown (void)
 
 void CTF_Init (void)
 {
-	vec3_t	start;
+	vec3_t	start = {0, 0, 0};
 
 	CTF_ShutDown();
 

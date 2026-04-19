@@ -1918,7 +1918,7 @@ qboolean V_GetCorrectedOrigin(edict_t *self, vec3_t start, float dist, int mask,
 
 // attempts to push (move) away from nearby wall(s) by dist
 qboolean V_PushBackWalls(edict_t *self, vec3_t start, float dist, int mask, qboolean minimum_move) {
-    vec3_t end;
+    vec3_t end = { 0, 0, 0 };
 
     if (V_GetCorrectedOrigin(self, start, dist, mask, end, minimum_move))
     {

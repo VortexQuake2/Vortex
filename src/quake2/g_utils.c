@@ -1481,6 +1481,8 @@ qboolean visible1 (edict_t *ent1, edict_t *ent2)
 	edict_t *ignore;
 	trace_t	tr;
 
+	tr.fraction = 0.0;
+
 	// dont go thru BSP or forcewall
 	ignore = ent1;
 	VectorCopy(ent1->s.origin, from);

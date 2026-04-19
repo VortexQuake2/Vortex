@@ -546,7 +546,7 @@ void BOT_DMclass_UseSkeleton(edict_t* self)
 	if (self->num_skeletons >= SKELETON_MAX)
 		return;
 	// get view origin
-	vec3_t forward, right, start, offset, mins, maxs;
+	vec3_t forward, right, start, offset, mins = { 0, 0, 0 }, maxs = { 0, 0, 0 };
 	AngleVectors(self->client->v_angle, forward, right, NULL);
 	VectorSet(offset, 0, 8, self->viewheight - 8);
 	P_ProjectSource(self->client, self->s.origin, offset, forward, right, start);
@@ -568,7 +568,7 @@ void BOT_DMclass_UseGolem(edict_t* self)
 	if (self->num_golems >= GOLEM_MAX)
 		return;
 	// get view origin
-	vec3_t forward, right, start, offset, mins, maxs;
+	vec3_t forward, right, start, offset, mins = { 0, 0, 0 }, maxs = { 0, 0, 0 };
 	AngleVectors(self->client->v_angle, forward, right, NULL);
 	VectorSet(offset, 0, 8, self->viewheight - 8);
 	P_ProjectSource(self->client, self->s.origin, offset, forward, right, start);

@@ -80,7 +80,7 @@ void boss_punch (edict_t *self)
 void boss_tank_attack (edict_t *ent)
 {
 	int		damage, flash_number;
-	vec3_t	forward, start;
+	vec3_t	forward = {0, 0, 0}, start = {0, 0, 0};
 
 	if ((flash_number=p_tank_getFirePos(ent, start, forward))==-1)
 		return;

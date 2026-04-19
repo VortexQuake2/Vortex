@@ -194,7 +194,7 @@ trace_t _traces(const vec3_t start, const vec3_t mins, const vec3_t maxs, const 
 
 int SV_FlyMove (edict_t *ent, float time, int mask)
 {
-	int			blocked;
+	int			blocked = 0; //TODO: No-op?
 
 	ent->groundentity = nullptr;
 

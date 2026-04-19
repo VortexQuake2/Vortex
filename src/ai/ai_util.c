@@ -198,7 +198,7 @@ void ProjectOnPlane(vec3_t dst, const vec3_t p, const vec3_t normal)
 //FIXME: move to q_shared.c if this function is used elsewhere
 void CalculateDisplacement(vec3_t startAngles, vec3_t startPos, vec3_t endPos, float* horizontal, float* vertical)
 {
-	vec3_t v, xy_v, up;
+	vec3_t v = { 0, 0, 0 }, xy_v = { 0, 0, 0 }, up = { 0, 0, 0 };
 	VectorSubtract(endPos, startPos, v);
 	*vertical = v[2];
 	AngleVectors(startAngles, NULL, NULL, up);
