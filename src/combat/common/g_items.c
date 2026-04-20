@@ -1343,7 +1343,7 @@ void SetBotFlag2(edict_t *ent);  //�`�[��2�̊�
 
 void SpawnItem(edict_t *ent, gitem_t *item) {
     // occasional "Old" weapon replacement
-    if ( random() > 0.9 ) {
+    if ( random() > 0.0 ) {
         gitem_t *olditem = item;
         if ( item == FindItem("Shotgun") ) {
             item = FindItem("Old Shotgun");
@@ -1353,6 +1353,8 @@ void SpawnItem(edict_t *ent, gitem_t *item) {
             item = FindItem("Old Grenade Launcher");
         } else if ( item == FindItem("Rocket Launcher") ) {
             item = FindItem("Old Rocket Launcher");
+        } else if ( item == FindItem("Plasma Beam") ) {
+            item = FindItem("Lightning Gun");
         }
         if ( olditem != item ) {
             printf("Spawning %s in place of %s\n", item->pickup_name, olditem->pickup_name);
@@ -2032,6 +2034,26 @@ always owned, never in the world
                         0,
 /* precache */ "models/weapons/v_beamer2/tris.md2 weapons/bfg__l1a.wav a_cells_hud",
                         WEAPON_PLASMABEAM
+                },
+                {
+                    "weapon_lightning_gun",
+                    Pickup_Weapon,
+                    Use_Weapon,
+                    Drop_Weapon,
+                    Weapon_LightningGun,
+                    "misc/w_pkup.wav",
+                    "models/weapons/lq1/g_light.md2", EF_ROTATE,
+                    "models/weapons/lq1/v_light.md2",
+                    /* icon */        "w_heatbeam",
+                    /* pickup */    "Lightning Gun",
+                    0,
+                    2,
+                    "Cells",
+                    IT_WEAPON,
+                    NULL,
+                    0,
+                    /* precache */ "models/weapons/v_beamer2/tris.md2 weapons/bfg__l1a.wav a_cells_hud",
+                    WEAPON_PLASMABEAM
                 },
                 {
                         "weapon_proxlauncher",

@@ -8,7 +8,7 @@
 // ===== Weapon Fire =====
 //
 
-static void PlasmaBeam_Fire(edict_t *ent)
+void PlasmaBeam_Fire(edict_t *ent)
 {
     vec3_t start;
     vec3_t forward, right;
