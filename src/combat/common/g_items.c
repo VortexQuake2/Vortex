@@ -1344,13 +1344,18 @@ void SetBotFlag2(edict_t *ent);  //�`�[��2�̊�
 void SpawnItem(edict_t *ent, gitem_t *item) {
     // occasional "Old" weapon replacement
     if ( random() > 0.9 ) {
-        printf("SpawnItem() old chance succeeded on a %s\n", item->pickup_name);
+        gitem_t *olditem = item;
         if ( item == FindItem("Shotgun") ) {
             item = FindItem("Old Shotgun");
         } else if ( item == FindItem("Super Shotgun") ) {
             item = FindItem("Old Super Shotgun");
         } else if ( item == FindItem("Grenade Launcher") ) {
             item = FindItem("Old Grenade Launcher");
+        } else if ( item == FindItem("Rocket Launcher") ) {
+            item = FindItem("Old Rocket Launcher");
+        }
+        if ( olditem != item ) {
+            printf("Spawning %s in place of %s\n", item->pickup_name, olditem->pickup_name);
         }
     } else {
         //printf("SpawnItem() old chance failed\n");
@@ -1819,6 +1824,30 @@ always owned, never in the world
 /* precache */
                         "models/objects/rocket/tris.md2 weapons/rockfly.wav weapons/rocklf1a.wav weapons/rocklr1b.wav models/objects/debris2/tris.md2 a_rockets_hud",
                         WEAPON_ROCKETLAUNCHER
+                },
+
+/*QUAKED weapon_rocketlauncher (.3 .3 1) (-16 -16 -16) (16 16 16)	12
+                 */
+                {
+                    "weapon_old_rocketlauncher",
+                    Pickup_Weapon,
+                    Use_Weapon,
+                    Drop_Weapon,
+                    Weapon_OldRocketLauncher,
+                    "misc/w_pkup.wav",
+                    "models/weapons/lq1/g_rock2.md2", EF_ROTATE,
+                    "models/weapons/lq1/v_rock2.md2",
+                    /* icon */        "w_rlauncher",
+                    /* pickup */    "Old Rocket Launcher",
+                    0,
+                    1,
+                    "Rockets",
+                    IT_WEAPON,
+                    NULL,
+                    0,
+                    /* precache */
+                    "models/objects/rocket/tris.md2 weapons/rockfly.wav weapons/rocklf1a.wav weapons/rocklr1b.wav models/objects/debris2/tris.md2 a_rockets_hud",
+                    WEAPON_ROCKETLAUNCHER
                 },
 
 /*QUAKED weapon_hyperblaster (.3 .3 1) (-16 -16 -16) (16 16 16)	13
