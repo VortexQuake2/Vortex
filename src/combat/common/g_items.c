@@ -1355,6 +1355,8 @@ void SpawnItem(edict_t *ent, gitem_t *item) {
             item = FindItem("Old Rocket Launcher");
         } else if ( item == FindItem("Plasma Beam") ) {
             item = FindItem("Lightning Gun");
+        } else if ( item == FindItem("ETF Rifle") ) {
+            item = FindItem("Nailgun");
         }
         if ( olditem != item ) {
             printf("Spawning %s in place of %s\n", item->pickup_name, olditem->pickup_name);
@@ -2014,6 +2016,26 @@ always owned, never in the world
                         0,
 /* precache */ "weapons/nail1.wav models/proj/flechette/tris.md2 a_bullets_hud",
                         WEAPON_ETFRIFLE
+                },
+                {
+                    "weapon_nailgun",
+                    Pickup_Weapon,
+                    Use_Weapon,
+                    Drop_Weapon,
+                    Weapon_Nailgun,
+                    "misc/w_pkup.wav",
+                    "models/weapons/lq1/g_nail.md2", EF_ROTATE,
+                    "models/weapons/lq1/v_nail.md2",
+                    /* icon */        "w_etf_rifle",
+                    /* pickup */    "Nailgun",
+                    0,
+                    1,
+                    "Flechettes",
+                    IT_WEAPON,
+                    NULL,
+                    0,
+                    /* precache */ "weapons/nail1.wav models/proj/flechette/tris.md2 a_bullets_hud",
+                    WEAPON_ETFRIFLE
                 },
                 {
                         "weapon_plasmabeam",

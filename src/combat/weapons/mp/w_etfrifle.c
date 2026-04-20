@@ -4,7 +4,7 @@
 // ===== Weapon Fire =====
 //
 
-static void weapon_etf_rifle_fire(edict_t *ent)
+void weapon_etf_rifle_fire(edict_t *ent)
 {
     vec3_t forward, right, angles, start, offset;
     int i;

@@ -1377,6 +1377,7 @@ void Weapon_OldSuperShotgun (edict_t *ent);
 void Weapon_OldGrenadeLauncher (edict_t *ent);
 void Weapon_OldRocketLauncher (edict_t *ent);
 void Weapon_LightningGun (edict_t *ent);
+void Weapon_Nailgun (edict_t *ent);
 
 
 //
