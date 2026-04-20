@@ -2839,7 +2839,7 @@ void Weapon_Generic(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST, 
 
 void ClientUserinfoChanged(edict_t *ent, const char *userinfo);
 #ifndef VRX_REPRO
-qboolean ClientConnect(edict_t *ent, char *userinfo);
+qboolean ClientConnect(edict_t *ent, const char *userinfo);
 #else
 bool ClientConnect(edict_t *ent, char *userinfo, const char *social_id, bool is_bot);
 #endif

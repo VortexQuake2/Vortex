@@ -2134,7 +2134,11 @@ called when a client has finished connecting, and is ready
 to be placed into the game.  This will happen every level load.
 ============
 */
+#ifndef VRX_REPRO
+void ClientBegin (edict_t *ent, qboolean loadgame)
+#else
 void ClientBegin (edict_t *ent)
+#endif
 {
 	if (debuginfo->value > 1)
 		gi.dprintf("ClientBegin()\n");
@@ -2296,7 +2300,7 @@ loadgames will.
 ============
 */
 #ifndef VRX_REPRO
-qboolean ClientConnect (edict_t *ent, char *userinfo)
+qboolean ClientConnect (edict_t *ent, const char *userinfo)
 #else
 bool ClientConnect (edict_t *ent, char *userinfo, const char* social_id, bool is_bot)
 #endif

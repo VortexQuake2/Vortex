@@ -145,24 +145,33 @@ is loaded.
 ============
 */
 
-#ifdef VRX_REPRO
 void PreInit() {
 	maxclients = gi.cvar("maxclients", "4", CVAR_SERVERINFO | CVAR_LATCH);
+#ifdef VRX_REPRO
 	gi.cvar_forceset("sv_fps", va("%d", gire.tick_rate));
-
-	deathmatch = gire.cvar("deathmatch", "0", CVAR_LATCH);
-	coop = gire.cvar("coop", "0", CVAR_LATCH);
-
-	if (!deathmatch->integer && !coop->integer) {
-		gire.cvar_forceset("deathmatch", "1");
-	}
-}
 #endif
+	deathmatch = gi.cvar("deathmatch", "0", CVAR_LATCH);
+	coop = gi.cvar("coop", "0", CVAR_LATCH);
+
+#ifndef VRX_REPRO
+	if (!deathmatch->value) {
+		gi.cvar_forceset("deathmatch", "1");
+	}
+#else
+	if (!deathmatch->integer && !coop->integer) {
+		gi.cvar_forceset("deathmatch", "1");
+	}
+#endif
+}
 
 
 
 void InitGame(void)
 {
+#ifndef VRX_REPRO
+	PreInit();
+#endif
+
 	gi.dprintf("==== InitGame ====\n");
 
 	//K03 Begin

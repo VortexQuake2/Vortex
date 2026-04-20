@@ -130,7 +130,11 @@ typedef enum {
 } multicast_t;
 
 // player_state_t->refdef flags
+#ifdef VRX_REPRO
 enum refdef_flags_t : uint8_t {
+#else
+enum refdef_flags_t : uint32_t {
+#endif
     RDF_NONE = 0,
     RDF_UNDERWATER = 1, // warp the screen as apropriate
     RDF_NOWORLDMODEL = 2, // used for player configuration screen

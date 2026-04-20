@@ -16,11 +16,12 @@ void SpawnEntities(const char *mapname, const char *entities, const char *spawnp
 void ClientThink(edict_t *ent, usercmd_t *cmd);
 #ifdef VRX_REPRO
 bool ClientConnect(edict_t *ent, char *userinfo, const char *social_id, bool is_bot);
+void ClientBegin(edict_t *ent);
 #else
-qboolean ClientConnect(edict_t *ent, char *userinfo);
+qboolean ClientConnect(edict_t *ent, const char *userinfo);
+void ClientBegin(edict_t *ent, qboolean loadgame);
 #endif
 void ClientDisconnect(edict_t *ent);
-void ClientBegin(edict_t *ent);
 void ClientCommand(edict_t *ent);
 void RunEntity(edict_t *ent);
 void WriteGame(char *filename, qboolean autosave);

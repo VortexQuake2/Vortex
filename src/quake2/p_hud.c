@@ -1096,7 +1096,7 @@ void G_SetStats(edict_t *ent)
 	ent->client->ps.stats[STAT_STREAK] = ent->myskills.streak;
 #ifdef VRX_REPRO
 	ent->client->ps.stats[STAT_XP_PERCENT] = vrx_get_xp_percent(ent->myskills.experience, ent->myskills.level);
-#endif VRX_REPRO
+#endif // VRX_REPRO
 
 	/*if (timelimit->value)
 	time_left = (timelimit->value*60 - level.time);

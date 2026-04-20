@@ -221,6 +221,8 @@ float pm_laddermod = 0.5f;
 
 */
 
+#ifdef VRX_REPRO
+
 /*
 ==================
 PM_ClipVelocity
@@ -1656,3 +1658,5 @@ void Pmove(pmove_t *pmove) {
 
     PM_SnapPosition();
 }
+
+#endif

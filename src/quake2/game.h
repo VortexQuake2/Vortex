@@ -2,8 +2,12 @@
 #define GAMEHEAD
 // game.h -- game dll information visible to server
 
+#ifdef VRX_REPRO
 #define	GAME_API_VERSION 2023
 #define CGAME_API_VERSION 2022
+#else
+#define	GAME_API_VERSION	3
+#endif
 #include <stdint.h>
 
 #include "q_shared.h"
@@ -193,7 +197,7 @@ typedef struct
 
 	qboolean	(*ClientConnect) (edict_t *ent, char *userinfo/*, qboolean loadgame*/);
 	void		(*ClientBegin) (edict_t *ent, qboolean loadgame);
-	void		(*ClientUserinfoChanged) (edict_t *ent, char *userinfo);
+	void		(*ClientUserinfoChanged) (edict_t *ent, const char *userinfo);
 	void		(*ClientDisconnect) (edict_t *ent);
 	void		(*ClientCommand) (edict_t *ent);
 	void		(*ClientThink) (edict_t *ent, usercmd_t *cmd);
