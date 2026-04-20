@@ -893,6 +893,7 @@ int GetSlot(gitem_t *it)
 	else if(it == FindItem("ETF Rifle")) slot = 4;
 	else if(it == FindItem("chaingun"))	slot = 5;
 	else if(it == FindItem("grenade launcher")) slot = 6;
+	else if(it == FindItem("Old Grenade Launcher")) slot = 6;
 	else if(it == FindItem("Prox Launcher")) slot = 6;
 	else if(it == FindItem("rocket launcher")) slot = 7;
 	else if(it == FindItem("hyperblaster")) slot = 8;
@@ -1067,7 +1068,7 @@ void Cmd_Use_f (edict_t *ent)
 	static const char *shotgun_cycle[] = {"Shotgun", "Old Shotgun"};
 	static const char *supershotgun_cycle[] = {"Super Shotgun", "Old Super Shotgun"};
 	static const char *machinegun_cycle[] = {"Machinegun", "ETF Rifle"};
-	static const char *grenade_cycle[] = {"Grenade Launcher", "Prox Launcher"};
+	static const char *grenade_cycle[] = {"Grenade Launcher", "Prox Launcher", "Old Grenade Launcher"};
 	static const char *throwable_cycle[] = {"Grenades", "Tesla", "Trap"};
 	static const char *hyper_cycle[] = {"HyperBlaster", "Ionripper", "Plasma Beam"};
 	static const char *rail_cycle[] = {"Railgun", "Phalanx"};

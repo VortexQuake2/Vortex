@@ -1349,6 +1349,8 @@ void SpawnItem(edict_t *ent, gitem_t *item) {
             item = FindItem("Old Shotgun");
         } else if ( item == FindItem("Super Shotgun") ) {
             item = FindItem("Old Super Shotgun");
+        } else if ( item == FindItem("Grenade Launcher") ) {
+            item = FindItem("Old Grenade Launcher");
         }
     } else {
         //printf("SpawnItem() old chance failed\n");
@@ -1769,6 +1771,30 @@ always owned, never in the world
 /* precache */
                         "models/objects/grenade/tris.md2 weapons/grenlf1a.wav weapons/grenlr1b.wav weapons/grenlb1b.wav a_grenades_hud",
                         WEAPON_GRENADELAUNCHER
+                },
+
+/*QUAKED weapon_old_grenadelauncher (.3 .3 1) (-16 -16 -16) (16 16 16)	11
+                 */
+                {
+                    "weapon_old_grenadelauncher",
+                    Pickup_Weapon,
+                    Use_Weapon,
+                    Drop_Weapon,
+                    Weapon_OldGrenadeLauncher,
+                    "misc/w_pkup.wav",
+                    "models/weapons/lq1/g_rock.md2", EF_ROTATE,
+                    "models/weapons/lq1/v_rock.md2",
+                    /* icon */        "w_glauncher",
+                    /* pickup */    "Old Grenade Launcher",
+                    0,
+                    1,
+                    "Grenades",
+                    IT_WEAPON,
+                    NULL,
+                    0,
+                    /* precache */
+                    "models/objects/grenade/tris.md2 weapons/grenlf1a.wav weapons/grenlr1b.wav weapons/grenlb1b.wav a_grenades_hud",
+                    WEAPON_GRENADELAUNCHER
                 },
 
 /*QUAKED weapon_rocketlauncher (.3 .3 1) (-16 -16 -16) (16 16 16)	12
