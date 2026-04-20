@@ -13,6 +13,8 @@ static int	sound_pain1;
 static int	sound_pain2;
 static int	sound_die;
 static int	sound_gun;
+static int	sound_gunb;
+static int	sound_gunc;
 static int	sound_cleaver_swing;
 static int	sound_cleaver_hit;
 static int	sound_cleaver_miss;
@@ -105,7 +107,7 @@ mmove_t gladiator_move_pain = { FRAME_pain1, FRAME_pain6, gladiator_frames_pain,
 void gladiator_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
 	if (self->health < (self->max_health / 2))
-		self->s.skinnum = 1;
+		self->s.skinnum = (self->mtype == M_GLADB || self->mtype == M_GLADC) ? 3 : 1;
 
 	// we're already in a pain state
 	if (self->monsterinfo.currentmove == &gladiator_move_pain)
@@ -269,6 +271,42 @@ void GladiatorGun (edict_t *self)
 	monster_fire_railgun (self, start, forward, damage, 100, MZ2_GLADIATOR_RAILGUN_1);
 }
 
+static void GladiatorDisruptor(edict_t *self)
+{
+	int damage, speed;
+	vec3_t forward, start;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	damage = DISRUPTOR_INITIAL_DAMAGE + DISRUPTOR_ADDON_DAMAGE * drone_damagelevel(self);
+	speed = DISRUPTOR_INITIAL_SPEED + DISRUPTOR_ADDON_SPEED * drone_damagelevel(self);
+
+	MonsterAim(self, M_PROJECTILE_ACC, speed, false, MZ2_GLADIATOR_RAILGUN_1, forward, start);
+	fire_disruptor(self, start, forward, damage, speed, visible(self, self->enemy) ? self->enemy : NULL);
+}
+
+static void GladiatorPlasma(edict_t *self)
+{
+	int damage, speed, radius_damage;
+	vec3_t forward, start;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	damage = M_BLASTER_DMG_BASE + M_BLASTER_DMG_ADDON * drone_damagelevel(self);
+	if (M_BLASTER_DMG_MAX && damage > M_BLASTER_DMG_MAX)
+		damage = M_BLASTER_DMG_MAX;
+
+	speed = M_BLASTER_SPEED_BASE + M_BLASTER_SPEED_ADDON * drone_damagelevel(self);
+	if (M_BLASTER_SPEED_MAX && speed > M_BLASTER_SPEED_MAX)
+		speed = M_BLASTER_SPEED_MAX;
+
+	radius_damage = max(1, damage / 2);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, false, MZ2_GLADIATOR_RAILGUN_1, forward, start);
+	fire_plasma(self, start, forward, damage, speed, 40, radius_damage);
+}
+
 void gladiator_refire (edict_t *self)
 {
 	// if our enemy is still valid, then continue firing
@@ -276,6 +314,30 @@ void gladiator_refire (edict_t *self)
 	{
 		self->s.frame = 49;
 		GladiatorGun(self);
+		return;
+	}
+
+	self->monsterinfo.attack_finished = level.time + 1.0;
+}
+
+static void gladiator_refire_disruptor(edict_t *self)
+{
+	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.45))
+	{
+		self->s.frame = FRAME_attack4;
+		GladiatorDisruptor(self);
+		return;
+	}
+
+	self->monsterinfo.attack_finished = level.time + 1.0;
+}
+
+static void gladiator_refire_plasma(edict_t *self)
+{
+	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.6))
+	{
+		self->s.frame = FRAME_attack4;
+		GladiatorPlasma(self);
 		return;
 	}
 
@@ -291,6 +353,26 @@ mframe_t gladiator_frames_attack_gun [] =
 	ai_charge, 0, gladiator_refire,	//53
 };
 mmove_t gladiator_move_attack_gun = {FRAME_attack4, FRAME_attack8, gladiator_frames_attack_gun, gladiator_run};
+
+mframe_t gladb_frames_attack_gun[] =
+{
+	ai_charge, 0, GladiatorDisruptor,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, gladiator_refire_disruptor,
+};
+mmove_t gladb_move_attack_gun = { FRAME_attack4, FRAME_attack8, gladb_frames_attack_gun, gladiator_run };
+
+mframe_t gladc_frames_attack_gun[] =
+{
+	ai_charge, 0, NULL,
+	ai_charge, 0, GladiatorPlasma,
+	ai_charge, 0, NULL,
+	ai_charge, 0, GladiatorPlasma,
+	ai_charge, 0, gladiator_refire_plasma,
+};
+mmove_t gladc_move_attack_gun = { FRAME_attack4, FRAME_attack8, gladc_frames_attack_gun, gladiator_run };
 
 void gladiator_lightning_attack (edict_t *self)
 {
@@ -332,9 +414,22 @@ void gladiator_attack(edict_t *self)
 		return;
 	}
 
-	// charge up the railgun
-	gi.sound (self, CHAN_WEAPON, sound_gun, 1, ATTN_NORM, 0);
-	self->monsterinfo.currentmove = &gladiator_move_attack_gun;
+	if (self->mtype == M_GLADB)
+	{
+		gi.sound(self, CHAN_WEAPON, sound_gunb, 1, ATTN_NORM, 0);
+		self->monsterinfo.currentmove = &gladb_move_attack_gun;
+	}
+	else if (self->mtype == M_GLADC)
+	{
+		gi.sound(self, CHAN_WEAPON, sound_gunc, 1, ATTN_NORM, 0);
+		self->monsterinfo.currentmove = &gladc_move_attack_gun;
+	}
+	else
+	{
+		// charge up the railgun
+		gi.sound (self, CHAN_WEAPON, sound_gun, 1, ATTN_NORM, 0);
+		self->monsterinfo.currentmove = &gladiator_move_attack_gun;
+	}
 }
 
 void gladiator_sight (edict_t *self, edict_t *other)
@@ -442,6 +537,8 @@ void init_drone_gladiator (edict_t *self)
 {
 	sound_die = gi.soundindex ("gladiator/glddeth2.wav");	
 	sound_gun = gi.soundindex ("gladiator/railgun.wav");
+	sound_gunb = gi.soundindex("weapons/disrupt.wav");
+	sound_gunc = gi.soundindex("weapons/plasshot.wav");
 	sound_cleaver_swing = gi.soundindex ("gladiator/melee1.wav");
 	sound_cleaver_hit = gi.soundindex ("gladiator/melee2.wav");
 	sound_cleaver_miss = gi.soundindex ("gladiator/melee3.wav");
@@ -481,4 +578,23 @@ void init_drone_gladiator (edict_t *self)
 	gi.linkentity (self);
 	self->monsterinfo.currentmove = &gladiator_move_stand;
 	self->monsterinfo.scale = MODEL_SCALE;
+}
+
+void init_drone_gladb(edict_t *self)
+{
+	init_drone_gladiator(self);
+	self->mtype = M_GLADB;
+	self->s.skinnum = 2;
+	self->s.effects |= EF_TRACKER;
+	self->mass = 350;
+	self->item = FindItemByClassname("ammo_disruptor");
+}
+
+void init_drone_gladc(edict_t *self)
+{
+	init_drone_gladiator(self);
+	self->mtype = M_GLADC;
+	self->s.skinnum = 2;
+	self->mass = 350;
+	self->item = FindItemByClassname("ammo_cells");
 }

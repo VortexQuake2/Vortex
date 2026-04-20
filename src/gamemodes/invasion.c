@@ -37,25 +37,32 @@ static constexpr int SET_EASY_MODE_MONSTERS[] = {
     DS_FLYER,
     DS_FLOATER,
     DS_HOVER,
-    // DS_SHAMBLER,
+    DS_SHAMBLER,
+    DS_REDMUTANT,
+    DS_RUNNERTANK,
+    DS_GUNCMDR,
+    DS_DAEDALUS,
+    DS_STALKER,
+    DS_GEKK,
 };
 
 constexpr int SET_EASY_MODE_MONSTERS_COUNT = sizeof(SET_EASY_MODE_MONSTERS) / sizeof(int);
 
 // parasite, brain, medic, tank, mutant, gladiator, berserker, infantry, hover
 static constexpr int SET_HARD_MODE_MONSTERS[] = {
-    DS_PARASITE, DS_BRAIN, DS_MEDIC, DS_TANK, DS_MUTANT, DS_GLADIATOR, DS_BERSERK, DS_INFANTRY, DS_HOVER
+    DS_PARASITE, DS_BRAIN, DS_MEDIC, DS_TANK, DS_MUTANT, DS_GLADIATOR, DS_BERSERK, DS_INFANTRY, DS_HOVER,
+    DS_REDMUTANT, DS_RUNNERTANK, DS_GUNCMDR, DS_DAEDALUS, DS_GLADB, DS_GLADC, DS_STALKER, DS_GEKK
 };
 constexpr int SET_HARD_MODE_MONSTERS_COUNT = sizeof(SET_HARD_MODE_MONSTERS) / sizeof(int);
 
 static constexpr int SET_FLYING_MONSTERS[] = {
-    DS_FLYER, DS_HOVER, DS_FLOATER
+    DS_FLYER, DS_HOVER, DS_FLOATER, DS_DAEDALUS
 };
 constexpr int SET_FLYING_MONSTERS_COUNT = sizeof(SET_FLYING_MONSTERS) / sizeof(int);
 
 // parasite, brain, mutant, berserker
 static constexpr int SET_MELEE_MONSTERS[] = {
-    DS_PARASITE, DS_BRAIN, DS_MUTANT, DS_BERSERK,
+    DS_PARASITE, DS_BRAIN, DS_MUTANT, DS_BERSERK, DS_REDMUTANT, DS_STALKER, DS_GEKK,
 };
 constexpr int SET_MELEE_MONSTERS_COUNT = sizeof(SET_MELEE_MONSTERS) / sizeof(int);
 
@@ -67,7 +74,7 @@ constexpr int SET_RAGEQUIT_MONSTERS_COUNT = sizeof(SET_RAGEQUIT_MONSTERS) / size
 
 // tank, mutant, berserker, shambler!
 static constexpr int SET_TANKY_MONSTERS[] = {
-    DS_TANK, DS_MUTANT, DS_BERSERK, DS_SHAMBLER
+    DS_TANK, DS_MUTANT, DS_BERSERK, DS_SHAMBLER, DS_REDMUTANT, DS_RUNNERTANK, DS_GUNCMDR, DS_GLADB, DS_GLADC, DS_GEKK
 };
 constexpr int SET_TANKY_MONSTERS_COUNT = sizeof(SET_TANKY_MONSTERS) / sizeof(int);
 

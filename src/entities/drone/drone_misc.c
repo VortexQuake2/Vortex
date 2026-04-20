@@ -31,6 +31,14 @@ void init_drone_flyer (edict_t* self);
 void init_drone_floater(edict_t* self);
 void init_drone_hover(edict_t* self);
 void init_drone_shambler(edict_t* self);
+void init_drone_redmutant(edict_t* self);
+void init_drone_runnertank(edict_t* self);
+void init_drone_guncmdr(edict_t* self);
+void init_drone_daedalus(edict_t* self);
+void init_drone_gladb(edict_t* self);
+void init_drone_gladc(edict_t* self);
+void init_drone_stalker(edict_t* self);
+void init_drone_gekk(edict_t* self);
 void init_baron_fire(edict_t* self);
 void init_skeleton(edict_t* self);
 void init_golem(edict_t* self);
@@ -849,9 +857,17 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 	case DS_FLOATER: init_drone_floater(drone);		break;
 	case DS_HOVER: init_drone_hover(drone);		break;
 	case DS_SHAMBLER: init_drone_shambler(drone);	break;
+	case DS_REDMUTANT: init_drone_redmutant(drone);	break;
+	case DS_RUNNERTANK: init_drone_runnertank(drone);	break;
+	case DS_GUNCMDR: init_drone_guncmdr(drone);	break;
+	case DS_DAEDALUS: init_drone_daedalus(drone);	break;
 	case DS_DECOY: init_drone_decoy(drone);		break;
 	case DS_SKELETON: init_skeleton(drone);			break;
 	case DS_GOLEM: init_golem(drone);				break;
+	case DS_GLADB: init_drone_gladb(drone);		break;
+	case DS_GLADC: init_drone_gladc(drone);		break;
+	case DS_STALKER: init_drone_stalker(drone);	break;
+	case DS_GEKK: init_drone_gekk(drone);		break;
 
 	// bosses
 	case DS_COMMANDER: init_drone_commander(drone);	break;
@@ -1745,7 +1761,8 @@ qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, q
 			if (!self->client && (self->svflags & SVF_MONSTER) && vrx_has_pain_skin(self) && (self->health >= 0.5 * self->max_health))
 			{
 				self->s.skinnum &= ~1;
-				if (self->mtype != M_COMMANDER)
+				if (self->mtype != M_COMMANDER && self->mtype != M_GUNCMDR
+					&& self->mtype != M_DAEDALUS && self->mtype != M_GLADB && self->mtype != M_GLADC)
 					self->s.skinnum &= ~2;
 			}
 
@@ -2039,6 +2056,14 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	case M_FLOATER: init_drone_floater(monster); break;
 	case M_HOVER: init_drone_hover(monster); break;
 	case M_SHAMBLER: init_drone_shambler(monster); break;
+	case M_REDMUTANT: init_drone_redmutant(monster); break;
+	case M_RUNNERTANK: init_drone_runnertank(monster); break;
+	case M_GUNCMDR: init_drone_guncmdr(monster); break;
+	case M_DAEDALUS: init_drone_daedalus(monster); break;
+	case M_GLADB: init_drone_gladb(monster); break;
+	case M_GLADC: init_drone_gladc(monster); break;
+	case M_STALKER: init_drone_stalker(monster); break;
+	case M_GEKK: init_drone_gekk(monster); break;
 	case M_SKELETON: init_skeleton(monster); break;
 	case M_GOLEM: init_golem(monster); break;
 	default: return false;
@@ -2128,6 +2153,30 @@ qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax)
 		VectorSet(boxmin, -32, -32, -24);
 		VectorSet(boxmax, 32, 32, 64);
 		break;
+	case M_REDMUTANT:
+		VectorSet(boxmin, -18, -18, -24);
+		VectorSet(boxmax, 18, 18, 30);
+		break;
+	case M_RUNNERTANK:
+		VectorSet(boxmin, -28, -28, -14);
+		VectorSet(boxmax, 28, 28, 56);
+		break;
+	case M_GUNCMDR:
+		VectorSet(boxmin, -16, -16, -24);
+		VectorSet(boxmax, 16, 16, 36);
+		break;
+	case M_DAEDALUS:
+		VectorSet(boxmin, -24, -24, -24);
+		VectorSet(boxmax, 24, 24, 32);
+		break;
+	case M_STALKER:
+		VectorSet(boxmin, -28, -28, -18);
+		VectorSet(boxmax, 28, 28, 18);
+		break;
+	case M_GEKK:
+		VectorSet(boxmin, -18, -18, -24);
+		VectorSet(boxmax, 18, 18, 24);
+		break;
 	case M_MEDIC:
 	case M_MUTANT:
 		VectorSet (boxmin, -24, -24, -24);
@@ -2138,6 +2187,8 @@ qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax)
 		VectorSet(boxmax, 16, 16, -8);
 		break;
 	case M_GLADIATOR:
+	case M_GLADB:
+	case M_GLADC:
 		VectorSet(boxmin, -24, -24, -24);
 		VectorSet(boxmax, 24, 24, 48);
 		break;
@@ -2194,6 +2245,14 @@ char *GetMonsterKindString (int mtype)
 		case M_FLOATER: return "Floater";
 		case M_HOVER: return "Hover";
 		case M_SHAMBLER: return "Shambler";
+		case M_REDMUTANT: return "Red Mutant";
+		case M_RUNNERTANK: return "Runner Tank";
+		case M_GUNCMDR: return "Gun Commander";
+		case M_DAEDALUS: return "Daedalus";
+		case M_GLADB: return "Gladiator Disruptor";
+		case M_GLADC: return "Gladiator Plasma";
+		case M_STALKER: return "Stalker";
+		case M_GEKK: return "Gekk";
 		case M_SKELETON: return "Skeleton";
 		case M_GOLEM: return "Golem";
 		case M_BARON_FIRE: return "Fire Baron";
@@ -2778,7 +2837,7 @@ void Cmd_Drone_f (edict_t *ent)
 	if (!Q_strcasecmp(s, "help"))
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Monster summoning:\n");
-		safe_cprintf(ent, PRINT_HIGH, "monster [gunner|parasite|brain|praetor|medic|tank|mutant|gladiator|berserker|soldier|enforcer|flyer|floater|hover|shambler\n");
+		safe_cprintf(ent, PRINT_HIGH, "monster [gunner|parasite|brain|praetor|medic|tank|mutant|gladiator|gladb|gladc|berserker|soldier|enforcer|flyer|floater|hover|daedalus|stalker|gekk|shambler|redmutant|runnertank|guncmdr]\n");
 		safe_cprintf(ent, PRINT_HIGH, "Monster utility commands:\n");
 		safe_cprintf(ent, PRINT_HIGH, "monster [remove|command|follow me|count|attack]\n");
 		return;
@@ -2826,6 +2885,22 @@ void Cmd_Drone_f (edict_t *ent)
 		vrx_create_new_drone(ent, 14, false, true, 0);
 	else if (!Q_strcasecmp(s, "shambler"))
 		vrx_create_new_drone(ent, 15, false, true, 0);
+	else if (!Q_strcasecmp(s, "redmutant"))
+		vrx_create_new_drone(ent, 16, false, true, 0);
+	else if (!Q_strcasecmp(s, "runnertank"))
+		vrx_create_new_drone(ent, 17, false, true, 0);
+	else if (!Q_strcasecmp(s, "guncmdr"))
+		vrx_create_new_drone(ent, 18, false, true, 0);
+	else if (!Q_strcasecmp(s, "daedalus"))
+		vrx_create_new_drone(ent, 19, false, true, 0);
+	else if (!Q_strcasecmp(s, "gladb"))
+		vrx_create_new_drone(ent, 23, false, true, 0);
+	else if (!Q_strcasecmp(s, "gladc"))
+		vrx_create_new_drone(ent, 24, false, true, 0);
+	else if (!Q_strcasecmp(s, "stalker"))
+		vrx_create_new_drone(ent, 25, false, true, 0);
+	else if (!Q_strcasecmp(s, "gekk"))
+		vrx_create_new_drone(ent, 26, false, true, 0);
 	else if (!Q_strcasecmp(s, "golem") && ent->myskills.administrator)
 		vrx_create_new_drone(ent, 22, false, true, 0);
 	//else if (!Q_strcasecmp(s, "baron fire") && ent->myskills.administrator)

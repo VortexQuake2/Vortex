@@ -2079,6 +2079,22 @@ char *V_GetMonsterKind(int mtype) {
             return "supertank";
         case M_SHAMBLER:
             return "shambler";
+        case M_REDMUTANT:
+            return "red mutant";
+        case M_RUNNERTANK:
+            return "runner tank";
+        case M_GUNCMDR:
+            return "gun commander";
+        case M_DAEDALUS:
+            return "daedalus";
+        case M_GLADB:
+            return "gladiator disruptor";
+        case M_GLADC:
+            return "gladiator plasma";
+        case M_STALKER:
+            return "stalker";
+        case M_GEKK:
+            return "gekk";
         case M_SKELETON:
             return "skeleton";
         case M_GOLEM:

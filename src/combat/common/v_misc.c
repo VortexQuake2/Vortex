@@ -254,8 +254,8 @@ void vrx_pvm_spawn_monsters(edict_t* self, int max_monsters, int total_monsters)
 	while (total_monsters < max_monsters && max_spawn_this_cycle > 0) {
 		int rnd;
 		do {
-			rnd = GetRandom(1, 15); // az: don't spawn soldiers
-		} while (rnd == 10);
+			rnd = GetRandom(1, DS_GEKK); // az: don't spawn soldiers or helper summons
+		} while (rnd == DS_SOLDIER || rnd == DS_DECOY || rnd == DS_SKELETON || rnd == DS_GOLEM);
 
 		edict_t* scan;
 		if ((scan = vrx_create_new_drone(self, rnd, true, true, self->monsterinfo.scale)) != NULL) {
@@ -616,6 +616,28 @@ int vrx_GetMonsterCost(int mtype) {
         case M_SHAMBLER:
             cost = M_TANK_COST; //using tank atm
             break;
+        case M_REDMUTANT:
+            cost = M_MUTANT_COST;
+            break;
+        case M_RUNNERTANK:
+            cost = M_TANK_COST;
+            break;
+        case M_GUNCMDR:
+            cost = M_TANK_COST;
+            break;
+        case M_DAEDALUS:
+            cost = M_HOVER_COST;
+            break;
+        case M_GLADB:
+        case M_GLADC:
+            cost = M_DEFAULT_COST;
+            break;
+        case M_STALKER:
+            cost = M_DEFAULT_COST;
+            break;
+        case M_GEKK:
+            cost = M_MUTANT_COST;
+            break;
         case M_SUPERTANK:
             cost = M_SUPERTANK_COST;
             break;
@@ -668,6 +690,28 @@ int vrx_GetMonsterControlCost(int mtype) {
             break;
         case M_SHAMBLER:
             cost = M_TANK_CONTROL_COST; //using tank atm
+            break;
+        case M_REDMUTANT:
+            cost = M_MUTANT_CONTROL_COST;
+            break;
+        case M_RUNNERTANK:
+            cost = M_TANK_CONTROL_COST;
+            break;
+        case M_GUNCMDR:
+            cost = M_TANK_CONTROL_COST;
+            break;
+        case M_DAEDALUS:
+            cost = M_HOVER_CONTROL_COST;
+            break;
+        case M_GLADB:
+        case M_GLADC:
+            cost = M_GLADIATOR_CONTROL_COST;
+            break;
+        case M_STALKER:
+            cost = M_BERSERKER_CONTROL_COST;
+            break;
+        case M_GEKK:
+            cost = M_MUTANT_CONTROL_COST;
             break;
         case M_HOVER:
             cost = M_HOVER_CONTROL_COST;
