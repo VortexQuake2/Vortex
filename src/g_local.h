@@ -1373,6 +1373,7 @@ void Weapon_Sword(edict_t *ent);
 // WEAPON ALTERNATES
 // Q1
 void Weapon_OldShotgun (edict_t *ent);
+void Weapon_OldSuperShotgun (edict_t *ent);
 
 //
 // g_combat.c
