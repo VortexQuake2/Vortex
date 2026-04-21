@@ -216,7 +216,7 @@ void vrx_add_respawn_weapon(edict_t *ent, int weaponID) {
     //vrx_add_respawn_items(ent);
 
     if (ent->myskills.class_num == CLASS_KNIGHT) {
-        ent->myskills.respawn_weapon = 1;
+        ent->myskills.respawn_weapon = WEAPON_SWORD;
         vrx_pick_respawn_weapon(ent);
     }
 
