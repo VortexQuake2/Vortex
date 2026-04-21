@@ -332,6 +332,7 @@ static void heat_think(edict_t *self)
 qboolean monster_fire_heat(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int flashtype, float turn_fraction)
 {
 	float chance;
+	float radius;
 	edict_t *heat;
 
 	if (que_typeexists(self->curses, AURA_HOLYFREEZE) && random() <= 0.5)
@@ -343,6 +344,12 @@ qboolean monster_fire_heat(edict_t *self, vec3_t start, vec3_t dir, int damage, 
 		if (random() > chance)
 			return false;
 	}
+
+	radius = damage;
+	if (damage > 125)
+		radius = 125;
+	if (speed > 1000)
+		speed = 1000;
 
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	if (speed < 1)
@@ -372,7 +379,7 @@ qboolean monster_fire_heat(edict_t *self, vec3_t start, vec3_t dir, int damage, 
 	heat->think = heat_think;
 	heat->dmg = damage;
 	heat->radius_dmg = damage;
-	heat->dmg_radius = damage;
+	heat->dmg_radius = radius;
 	heat->s.sound = gi.soundindex("weapons/rockfly.wav");
 	heat->classname = "heat rocket";
 

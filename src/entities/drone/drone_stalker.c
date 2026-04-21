@@ -109,8 +109,12 @@ static void stalker_fire_ionripper(edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = IONRIPPER_INITIAL_DAMAGE + IONRIPPER_ADDON_DAMAGE * drone_damagelevel(self);
-	speed = IONRIPPER_INITIAL_SPEED + IONRIPPER_ADDON_SPEED * drone_damagelevel(self);
+	damage = M_BLASTER2_DMG_BASE + M_BLASTER2_DMG_ADDON * drone_damagelevel(self);
+	if (M_BLASTER2_DMG_MAX && damage > M_BLASTER2_DMG_MAX)
+		damage = M_BLASTER2_DMG_MAX;
+	speed = M_BLASTER2_SPEED_BASE + M_BLASTER2_SPEED_ADDON * drone_damagelevel(self);
+	if (M_BLASTER2_SPEED_MAX && speed > M_BLASTER2_SPEED_MAX)
+		speed = M_BLASTER2_SPEED_MAX;
 
 	AngleVectors(self->s.angles, forward, right, NULL);
 	VectorSet(offset, 16, 0, 6);
@@ -296,15 +300,15 @@ void init_drone_stalker(edict_t *self)
 	VectorSet(self->mins, -28, -28, -18);
 	VectorSet(self->maxs, 28, 28, 18);
 
-	self->health = M_PARASITE_INITIAL_HEALTH + M_PARASITE_ADDON_HEALTH * self->monsterinfo.level;
+	self->health = M_STALKER_INITIAL_HEALTH + M_STALKER_ADDON_HEALTH * self->monsterinfo.level;
 	self->max_health = self->health;
 	self->gib_health = -125;
 	self->mass = 250;
 	self->mtype = M_STALKER;
 
-	//self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
-	//self->monsterinfo.power_armor_power = M_BERSERKER_INITIAL_ARMOR + M_BERSERKER_ADDON_ARMOR * self->monsterinfo.level;
-	//self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
+	self->monsterinfo.power_armor_power = M_STALKER_INITIAL_ARMOR + M_STALKER_ADDON_ARMOR * self->monsterinfo.level;
+	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 	self->monsterinfo.control_cost = M_BERSERKER_CONTROL_COST;
 	self->monsterinfo.cost = M_DEFAULT_COST;
 

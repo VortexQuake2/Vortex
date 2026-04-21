@@ -704,7 +704,8 @@ void drone_ai_idle (edict_t *self)
 		self->s.skinnum &= ~1;
 		if (self->mtype != M_COMMANDER && self->mtype != M_GUNCMDR
 			&& self->mtype != M_DAEDALUS && self->mtype != M_GLADB && self->mtype != M_GLADC
-			&& self->mtype != M_CHICK_HEAT && self->mtype != M_SOLDIER && self->mtype != M_STALKER)
+			&& self->mtype != M_CHICK_HEAT && self->mtype != M_MEDIC_COMMANDER
+			&& self->mtype != M_SOLDIER && self->mtype != M_STALKER)
 			self->s.skinnum &= ~2;
 	}
 
@@ -1907,7 +1908,8 @@ void drone_ai_run1 (edict_t *self, float dist)
 		self->s.skinnum &= ~1;
 		if (self->mtype != M_COMMANDER && self->mtype != M_GUNCMDR
 			&& self->mtype != M_DAEDALUS && self->mtype != M_GLADB && self->mtype != M_GLADC
-			&& self->mtype != M_CHICK_HEAT && self->mtype != M_SOLDIER && self->mtype != M_STALKER)
+			&& self->mtype != M_CHICK_HEAT && self->mtype != M_MEDIC_COMMANDER
+			&& self->mtype != M_SOLDIER && self->mtype != M_STALKER)
 			self->s.skinnum &= ~2;
 	}
 

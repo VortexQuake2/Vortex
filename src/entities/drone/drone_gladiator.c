@@ -294,17 +294,17 @@ static void GladiatorPlasma(edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	damage = M_BLASTER_DMG_BASE + M_BLASTER_DMG_ADDON * drone_damagelevel(self);
-	if (M_BLASTER_DMG_MAX && damage > M_BLASTER_DMG_MAX)
-		damage = M_BLASTER_DMG_MAX;
+	damage = M_PLASMA_DMG_BASE + M_PLASMA_DMG_ADDON * drone_damagelevel(self);
+	if (M_PLASMA_DMG_MAX && damage > M_PLASMA_DMG_MAX)
+		damage = M_PLASMA_DMG_MAX;
 
-	speed = M_BLASTER_SPEED_BASE + M_BLASTER_SPEED_ADDON * drone_damagelevel(self);
-	if (M_BLASTER_SPEED_MAX && speed > M_BLASTER_SPEED_MAX)
-		speed = M_BLASTER_SPEED_MAX;
+	speed = M_PLASMA_SPEED_BASE + M_PLASMA_SPEED_ADDON * drone_damagelevel(self);
+	if (M_PLASMA_SPEED_MAX && speed > M_PLASMA_SPEED_MAX)
+		speed = M_PLASMA_SPEED_MAX;
 
 	radius_damage = max(1, damage / 2);
 	MonsterAim(self, M_PROJECTILE_ACC, speed, false, MZ2_GLADIATOR_RAILGUN_1, forward, start);
-	fire_plasma(self, start, forward, damage, speed, 40, radius_damage);
+	fire_plasma(self, start, forward, damage, speed, M_PLASMA_DAMAGE_RADIUS, radius_damage);
 }
 
 void gladiator_refire (edict_t *self)
@@ -583,9 +583,14 @@ void init_drone_gladiator (edict_t *self)
 void init_drone_gladb(edict_t *self)
 {
 	init_drone_gladiator(self);
+	// GLADB is the Gladiator Disruptor variant.
 	self->mtype = M_GLADB;
 	self->s.skinnum = 2;
 	self->s.effects |= EF_TRACKER;
+	self->health = M_GLADB_INITIAL_HEALTH + M_GLADB_ADDON_HEALTH * self->monsterinfo.level;
+	self->max_health = self->health;
+	self->monsterinfo.power_armor_power = M_GLADB_INITIAL_ARMOR + M_GLADB_ADDON_ARMOR * self->monsterinfo.level;
+	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 	self->mass = 350;
 	self->item = FindItemByClassname("ammo_disruptor");
 }
@@ -593,8 +598,13 @@ void init_drone_gladb(edict_t *self)
 void init_drone_gladc(edict_t *self)
 {
 	init_drone_gladiator(self);
+	// GLADC is the Gladiator Plasma variant.
 	self->mtype = M_GLADC;
 	self->s.skinnum = 2;
+	self->health = M_GLADC_INITIAL_HEALTH + M_GLADC_ADDON_HEALTH * self->monsterinfo.level;
+	self->max_health = self->health;
+	self->monsterinfo.power_armor_power = M_GLADC_INITIAL_ARMOR + M_GLADC_ADDON_ARMOR * self->monsterinfo.level;
+	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 	self->mass = 350;
 	self->item = FindItemByClassname("ammo_cells");
 }

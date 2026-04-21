@@ -285,7 +285,7 @@ static void redmutant_jump_takeoff(edict_t *self)
     AngleVectors(self->s.angles, forward, NULL, NULL);
     self->s.origin[2] += 1;
     
-    if (random() < 0.48)
+    if (random() < 0.28)
         high_jump = true;
         
     VectorScale(forward, 1125, self->velocity);
@@ -621,7 +621,7 @@ void init_drone_redmutant(edict_t *self)
 	VectorSet(self->mins, -18, -18, -24);
 	VectorSet(self->maxs, 18, 18, 30);
 
-	self->health = M_MUTANT_INITIAL_HEALTH + M_MUTANT_ADDON_HEALTH * self->monsterinfo.level;
+	self->health = M_REDMUTANT_INITIAL_HEALTH + M_REDMUTANT_ADDON_HEALTH * self->monsterinfo.level;
 	self->max_health = self->health;
 	self->gib_health = -BASE_GIB_HEALTH;
 	self->mass = 350;
@@ -642,7 +642,8 @@ void init_drone_redmutant(edict_t *self)
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
 
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = M_MUTANT_INITIAL_ARMOR + M_MUTANT_ADDON_ARMOR * self->monsterinfo.level;
+	self->monsterinfo.power_armor_power = M_REDMUTANT_INITIAL_ARMOR + M_REDMUTANT_ADDON_ARMOR * self->monsterinfo.level;
+	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 	self->monsterinfo.control_cost = M_MUTANT_CONTROL_COST;
 	self->monsterinfo.cost = M_MUTANT_COST;
 	self->mtype = M_REDMUTANT;

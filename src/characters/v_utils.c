@@ -2068,6 +2068,8 @@ char *V_GetMonsterKind(int mtype) {
             return "berserker";
         case M_MEDIC:
             return "medic";
+        case M_MEDIC_COMMANDER:
+            return "medic commander";
         case M_MUTANT:
             return "mutant";
         case M_BRAIN:
@@ -2086,7 +2088,7 @@ char *V_GetMonsterKind(int mtype) {
         case M_RUNNERTANK:
             return "runner tank";
         case M_GUNCMDR:
-            return "gun commander";
+            return "gunner commander";
         case M_DAEDALUS:
             return "daedalus";
         case M_GLADB:
@@ -2097,6 +2099,8 @@ char *V_GetMonsterKind(int mtype) {
             return "stalker";
         case M_GEKK:
             return "gekk";
+        case M_ARACHNID:
+            return "arachnid";
         case M_SKELETON:
             return "skeleton";
         case M_GOLEM:

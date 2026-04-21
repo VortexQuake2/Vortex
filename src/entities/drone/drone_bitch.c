@@ -963,4 +963,8 @@ void init_drone_bitch_heat (edict_t *self)
 	init_drone_bitch(self);
 	self->mtype = M_CHICK_HEAT;
 	self->s.skinnum = 2;
+	self->health = M_CHICK_HEAT_INITIAL_HEALTH + M_CHICK_HEAT_ADDON_HEALTH * self->monsterinfo.level;
+	self->max_health = self->health;
+	self->monsterinfo.power_armor_power = M_CHICK_HEAT_INITIAL_ARMOR + M_CHICK_HEAT_ADDON_ARMOR * self->monsterinfo.level;
+	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 }

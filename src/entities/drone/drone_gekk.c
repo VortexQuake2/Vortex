@@ -27,7 +27,15 @@ void drone_ai_run(edict_t *self, float dist);
 void drone_ai_walk(edict_t *self, float dist);
 
 static void gekk_stand(edict_t *self);
+static void gekk_walk(edict_t *self);
 static void gekk_run(edict_t *self);
+static void gekk_land_to_water(edict_t *self);
+static void gekk_water_to_land(edict_t *self);
+static void gekk_swim_loop(edict_t *self);
+
+extern mmove_t gekk_move_standunderwater;
+extern mmove_t gekk_move_swim_loop;
+extern mmove_t gekk_move_swim_start;
 
 extern void fire_acid(edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damage, float radius,
 	int speed, int acid_damage, float acid_duration, int gas_damage, float gas_radius, float gas_duration);
@@ -52,6 +60,31 @@ static void gekk_sight(edict_t *self, edict_t *other)
 static void gekk_search(edict_t *self)
 {
 	gi.sound(self, CHAN_VOICE, sound_search, 1, ATTN_IDLE, 0);
+}
+
+static qboolean gekk_should_swim(edict_t *self)
+{
+	return self->waterlevel >= WATER_WAIST;
+}
+
+static void gekk_set_water_bounds(edict_t *self)
+{
+	self->flags |= FL_SWIM;
+	self->yaw_speed = 10;
+	self->viewheight = 10;
+	VectorSet(self->mins, -18, -18, -24);
+	VectorSet(self->maxs, 18, 18, 16);
+	gi.linkentity(self);
+}
+
+static void gekk_set_land_bounds(edict_t *self)
+{
+	self->flags &= ~FL_SWIM;
+	self->yaw_speed = 20;
+	self->viewheight = 25;
+	VectorSet(self->mins, -18, -18, -24);
+	VectorSet(self->maxs, 18, 18, 24);
+	gi.linkentity(self);
 }
 
 mframe_t gekk_frames_stand[] =
@@ -96,26 +129,44 @@ mframe_t gekk_frames_stand[] =
 	drone_ai_stand, 0, NULL,
 	drone_ai_stand, 0, NULL
 };
-mmove_t gekk_move_stand = { FRAME_stand_01, FRAME_stand_39, gekk_frames_stand, NULL };
+mmove_t gekk_move_stand = { FRAME_stand_01, FRAME_stand_39, gekk_frames_stand, gekk_stand };
 
 static void gekk_stand(edict_t *self)
 {
-	self->monsterinfo.currentmove = &gekk_move_stand;
+	if (gekk_should_swim(self))
+	{
+		gekk_set_water_bounds(self);
+		self->monsterinfo.currentmove = &gekk_move_standunderwater;
+	}
+	else
+	{
+		if (self->flags & FL_SWIM)
+			gekk_set_land_bounds(self);
+		self->monsterinfo.currentmove = &gekk_move_stand;
+	}
 }
 
 mframe_t gekk_frames_walk[] =
 {
-	drone_ai_walk, 5, gekk_step,
-	drone_ai_walk, 6, NULL,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 7, gekk_step,
-	drone_ai_walk, 6, NULL,
-	drone_ai_walk, 5, NULL
+	drone_ai_walk, 8, gekk_step,
+	drone_ai_walk, 9, NULL,
+	drone_ai_walk, 12, NULL,
+	drone_ai_walk, 11, gekk_step,
+	drone_ai_walk, 9, NULL,
+	drone_ai_walk, 8, NULL
 };
-mmove_t gekk_move_walk = { FRAME_run_01, FRAME_run_06, gekk_frames_walk, NULL };
+mmove_t gekk_move_walk = { FRAME_run_01, FRAME_run_06, gekk_frames_walk, gekk_walk };
 
 static void gekk_walk(edict_t *self)
 {
+	if (gekk_should_swim(self))
+	{
+		gekk_land_to_water(self);
+		return;
+	}
+	if (self->flags & FL_SWIM)
+		gekk_set_land_bounds(self);
+
 	if (!self->goalentity)
 		self->goalentity = world;
 	self->monsterinfo.currentmove = &gekk_move_walk;
@@ -130,10 +181,18 @@ mframe_t gekk_frames_run[] =
 	drone_ai_run, 20, NULL,
 	drone_ai_run, 18, NULL
 };
-mmove_t gekk_move_run = { FRAME_run_01, FRAME_run_06, gekk_frames_run, NULL };
+mmove_t gekk_move_run = { FRAME_run_01, FRAME_run_06, gekk_frames_run, gekk_run };
 
 static void gekk_run(edict_t *self)
 {
+	if (gekk_should_swim(self))
+	{
+		gekk_land_to_water(self);
+		return;
+	}
+	if (self->flags & FL_SWIM)
+		gekk_set_land_bounds(self);
+
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 		self->monsterinfo.currentmove = &gekk_move_stand;
 	else
@@ -160,6 +219,150 @@ static void gekk_claw(edict_t *self)
 {
 	gi.sound(self, CHAN_WEAPON, (random() < 0.5) ? sound_hit : sound_hit2, 1, ATTN_NORM, 0);
 	M_MeleeAttack(self, self->enemy, 96, gekk_melee_damage(self), 180);
+}
+
+static void gekk_swim_check(edict_t *self)
+{
+	if (!gekk_should_swim(self) && (self->flags & FL_SWIM))
+		gekk_water_to_land(self);
+}
+
+static void gekk_swim_loop(edict_t *self)
+{
+	if (!gekk_should_swim(self))
+	{
+		gekk_water_to_land(self);
+		return;
+	}
+
+	gekk_set_water_bounds(self);
+	self->monsterinfo.currentmove = &gekk_move_swim_loop;
+}
+
+mframe_t gekk_frames_standunderwater[] =
+{
+	drone_ai_stand, 14, NULL,
+	drone_ai_stand, 14, NULL,
+	drone_ai_stand, 14, NULL,
+	drone_ai_stand, 14, NULL,
+	drone_ai_stand, 16, NULL,
+	drone_ai_stand, 16, NULL,
+	drone_ai_stand, 16, NULL,
+	drone_ai_stand, 18, NULL,
+	drone_ai_stand, 18, NULL,
+	drone_ai_stand, 18, NULL,
+	drone_ai_stand, 20, NULL,
+	drone_ai_stand, 20, NULL,
+	drone_ai_stand, 22, NULL,
+	drone_ai_stand, 22, NULL,
+	drone_ai_stand, 24, NULL,
+	drone_ai_stand, 24, NULL,
+	drone_ai_stand, 26, NULL,
+	drone_ai_stand, 26, NULL,
+	drone_ai_stand, 24, NULL,
+	drone_ai_stand, 24, NULL,
+	drone_ai_stand, 22, NULL,
+	drone_ai_stand, 22, NULL,
+	drone_ai_stand, 22, NULL,
+	drone_ai_stand, 22, NULL,
+	drone_ai_stand, 22, NULL,
+	drone_ai_stand, 22, NULL,
+	drone_ai_stand, 22, NULL,
+	drone_ai_stand, 22, NULL,
+	drone_ai_stand, 18, NULL,
+	drone_ai_stand, 18, NULL,
+	drone_ai_stand, 18, NULL,
+	drone_ai_stand, 18, gekk_swim_check
+};
+mmove_t gekk_move_standunderwater = { FRAME_swim_01, FRAME_swim_32, gekk_frames_standunderwater, gekk_stand };
+
+mframe_t gekk_frames_swim[] =
+{
+	drone_ai_run, 14, NULL,
+	drone_ai_run, 14, NULL,
+	drone_ai_run, 14, NULL,
+	drone_ai_run, 14, NULL,
+	drone_ai_run, 16, NULL,
+	drone_ai_run, 16, NULL,
+	drone_ai_run, 16, NULL,
+	drone_ai_run, 18, NULL,
+	drone_ai_run, 18, NULL,
+	drone_ai_run, 18, NULL,
+	drone_ai_run, 20, NULL,
+	drone_ai_run, 20, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 24, NULL,
+	drone_ai_run, 24, NULL,
+	drone_ai_run, 26, NULL,
+	drone_ai_run, 26, NULL,
+	drone_ai_run, 24, NULL,
+	drone_ai_run, 24, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 18, NULL,
+	drone_ai_run, 18, NULL,
+	drone_ai_run, 18, NULL,
+	drone_ai_run, 18, gekk_swim_check
+};
+mmove_t gekk_move_swim_loop = { FRAME_swim_01, FRAME_swim_32, gekk_frames_swim, gekk_swim_loop };
+
+mframe_t gekk_frames_swim_start[] =
+{
+	drone_ai_run, 14, NULL,
+	drone_ai_run, 14, NULL,
+	drone_ai_run, 14, NULL,
+	drone_ai_run, 14, NULL,
+	drone_ai_run, 16, NULL,
+	drone_ai_run, 16, NULL,
+	drone_ai_run, 16, NULL,
+	drone_ai_run, 18, NULL,
+	drone_ai_run, 18, gekk_claw,
+	drone_ai_run, 18, NULL,
+	drone_ai_run, 20, NULL,
+	drone_ai_run, 20, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 24, gekk_claw,
+	drone_ai_run, 24, NULL,
+	drone_ai_run, 26, NULL,
+	drone_ai_run, 26, NULL,
+	drone_ai_run, 24, NULL,
+	drone_ai_run, 24, NULL,
+	drone_ai_run, 22, gekk_bite,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 22, NULL,
+	drone_ai_run, 18, NULL,
+	drone_ai_run, 18, NULL,
+	drone_ai_run, 18, NULL,
+	drone_ai_run, 18, gekk_swim_check
+};
+mmove_t gekk_move_swim_start = { FRAME_swim_01, FRAME_swim_32, gekk_frames_swim_start, gekk_swim_loop };
+
+static void gekk_land_to_water(edict_t *self)
+{
+	gekk_set_water_bounds(self);
+	self->monsterinfo.currentmove = &gekk_move_swim_start;
+}
+
+static void gekk_water_to_land(edict_t *self)
+{
+	gekk_set_land_bounds(self);
+	if (self->enemy || self->goalentity)
+		self->monsterinfo.currentmove = &gekk_move_run;
+	else
+		self->monsterinfo.currentmove = &gekk_move_stand;
 }
 
 mframe_t gekk_frames_attack[] =
@@ -218,6 +421,15 @@ mmove_t gekk_move_attack2 = { FRAME_clawatk5_01, FRAME_clawatk5_09, gekk_frames_
 
 static void gekk_melee(edict_t *self)
 {
+	if (gekk_should_swim(self))
+	{
+		gekk_land_to_water(self);
+		self->monsterinfo.melee_finished = level.time + 1.0;
+		return;
+	}
+	if (self->flags & FL_SWIM)
+		gekk_set_land_bounds(self);
+
 	if (!G_ValidTarget(self, self->enemy, true, true) || entdist(self, self->enemy) > 120)
 	{
 		self->monsterinfo.melee_finished = level.time + 0.5;
@@ -314,6 +526,16 @@ mmove_t gekk_move_spit = { FRAME_spit_01, FRAME_spit_07, gekk_frames_spit, gekk_
 
 static void gekk_attack(edict_t *self)
 {
+	if (gekk_should_swim(self))
+	{
+		gekk_land_to_water(self);
+		self->monsterinfo.melee_finished = level.time + 1.0;
+		M_DelayNextAttack(self, 1.0 + random(), true);
+		return;
+	}
+	if (self->flags & FL_SWIM)
+		gekk_set_land_bounds(self);
+
 	if (G_EntExists(self->enemy) && entdist(self, self->enemy) < 180 && random() < 0.35)
 		self->monsterinfo.currentmove = &gekk_move_leapatk;
 	else
@@ -392,6 +614,7 @@ static void gekk_pain(edict_t *self, edict_t *other, float kick, int damage)
 
 static void gekk_dead(edict_t *self)
 {
+	self->flags &= ~FL_SWIM;
 	VectorSet(self->mins, -18, -18, -24);
 	VectorSet(self->maxs, 18, 18, -8);
 	self->movetype = MOVETYPE_TOSS;
@@ -480,6 +703,7 @@ void init_drone_gekk(edict_t *self)
 	self->s.modelindex = gi.modelindex("models/monsters/gekk/tris.md2");
 	VectorSet(self->mins, -18, -18, -24);
 	VectorSet(self->maxs, 18, 18, 24);
+	self->viewheight = 25;
 
 	gi.modelindex("models/objects/gekkgib/pelvis/tris.md2");
 	gi.modelindex("models/objects/gekkgib/arm/tris.md2");
@@ -488,13 +712,13 @@ void init_drone_gekk(edict_t *self)
 	gi.modelindex("models/objects/gekkgib/leg/tris.md2");
 	gi.modelindex("models/objects/gekkgib/head/tris.md2");
 
-	self->health = M_MUTANT_INITIAL_HEALTH + M_MUTANT_ADDON_HEALTH * self->monsterinfo.level;
+	self->health = M_GEKK_INITIAL_HEALTH + M_GEKK_ADDON_HEALTH * self->monsterinfo.level;
 	self->max_health = self->health;
 	self->gib_health = -30;
 	self->mass = 300;
 	self->mtype = M_GEKK;
 
-	self->monsterinfo.power_armor_power = M_MUTANT_INITIAL_ARMOR + M_MUTANT_ADDON_ARMOR * self->monsterinfo.level;
+	self->monsterinfo.power_armor_power = M_GEKK_INITIAL_ARMOR + M_GEKK_ADDON_ARMOR * self->monsterinfo.level;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 	self->monsterinfo.control_cost = M_MUTANT_CONTROL_COST;

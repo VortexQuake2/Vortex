@@ -211,14 +211,14 @@ void init_drone_daedalus(edict_t *self)
 	VectorSet(self->maxs, 24, 24, 32);
 	self->s.skinnum = 2;
 
-	self->health = M_FLOATER_INITIAL_HEALTH + M_FLOATER_ADDON_HEALTH * self->monsterinfo.level;
+	self->health = M_DAEDALUS_INITIAL_HEALTH + M_DAEDALUS_ADDON_HEALTH * self->monsterinfo.level;
 	self->max_health = self->health;
 	self->gib_health = -100;
 	self->mass = 225;
 
 	self->mtype = M_DAEDALUS;
 	self->flags |= FL_FLY;
-	self->monsterinfo.power_armor_power = M_FLOATER_INITIAL_ARMOR + M_FLOATER_ADDON_ARMOR * self->monsterinfo.level;
+	self->monsterinfo.power_armor_power = M_DAEDALUS_INITIAL_ARMOR + M_DAEDALUS_ADDON_ARMOR * self->monsterinfo.level;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 	self->monsterinfo.control_cost = M_HOVER_CONTROL_COST;

@@ -254,7 +254,7 @@ void vrx_pvm_spawn_monsters(edict_t* self, int max_monsters, int total_monsters)
 	while (total_monsters < max_monsters && max_spawn_this_cycle > 0) {
 		int rnd;
 		do {
-			rnd = GetRandom(1, DS_BITCH_HEAT); // az: don't spawn soldiers or helper summons
+			rnd = GetRandom(1, DS_MEDIC_COMMANDER); // az: don't spawn soldiers or helper summons
 		} while (rnd == DS_SOLDIER || rnd == DS_DECOY || rnd == DS_SKELETON || rnd == DS_GOLEM);
 
 		edict_t* scan;
@@ -605,6 +605,9 @@ int vrx_GetMonsterCost(int mtype) {
         case M_MEDIC:
             cost = M_MEDIC_COST;
             break;
+        case M_MEDIC_COMMANDER:
+            cost = M_TANK_COST;
+            break;
         case M_BRAIN:
             cost = M_BRAIN_COST;
             break;
@@ -638,6 +641,9 @@ int vrx_GetMonsterCost(int mtype) {
             break;
         case M_GEKK:
             cost = M_MUTANT_COST;
+            break;
+        case M_ARACHNID:
+            cost = M_DEFAULT_COST;
             break;
         case M_SUPERTANK:
             cost = M_SUPERTANK_COST;
@@ -684,6 +690,9 @@ int vrx_GetMonsterControlCost(int mtype) {
         case M_MEDIC:
             cost = M_MEDIC_CONTROL_COST;
             break;
+        case M_MEDIC_COMMANDER:
+            cost = M_TANK_CONTROL_COST;
+            break;
         case M_BRAIN:
             cost = M_BRAIN_CONTROL_COST;
             break;
@@ -714,6 +723,9 @@ int vrx_GetMonsterControlCost(int mtype) {
             break;
         case M_GEKK:
             cost = M_MUTANT_CONTROL_COST;
+            break;
+        case M_ARACHNID:
+            cost = M_GLADIATOR_CONTROL_COST;
             break;
         case M_HOVER:
             cost = M_HOVER_CONTROL_COST;

@@ -26,6 +26,8 @@ static int	sound_sight;
 static int	sound_search;
 static int	sound_idle;
 
+#define INFANTRY_RUN_ATTACK_MIN_DIST 256
+
 
 mframe_t infantry_frames_stand [] =
 {
@@ -214,12 +216,13 @@ void Infantry20mm(edict_t* self)
 	vec3_t	start, forward, right, vec;
 	int		damage, flash_number;
 	const float range = M_20MM_RANGE_BASE + M_20MM_RANGE_ADDON * drone_damagelevel(self);
+	qboolean run_attack = (self->s.frame >= FRAME_run201 && self->s.frame <= FRAME_run208);
 
 	damage = M_20MM_DMG_BASE + M_20MM_DMG_ADDON * drone_damagelevel(self);
 	if (M_20MM_DMG_MAX && damage > M_20MM_DMG_MAX)
 		damage = M_20MM_DMG_MAX;
 
-	if (self->s.frame == FRAME_attak111)
+	if (self->s.frame == FRAME_attak111 || run_attack)
 	{
 		flash_number = MZ2_INFANTRY_MACHINEGUN_1;
 		MonsterAim(self, M_HITSCAN_CONT_ACC, 0, false, flash_number, forward, start);
@@ -540,6 +543,70 @@ void infantry_fire(edict_t* self)
 	M_DelayNextAttack(self, 0, true);
 }
 
+static void infantry_run_attack_ai(edict_t* self, float dist)
+{
+	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+		return;
+	if (!G_ValidTarget(self, self->enemy, true, true))
+		return;
+
+	ai_charge(self, 0);
+	M_MoveToGoal(self, dist);
+}
+
+static void infantry_run_fire(edict_t* self)
+{
+	int range = M_20MM_RANGE_BASE + M_20MM_RANGE_ADDON * drone_damagelevel(self);
+
+	if (M_20MM_RANGE_MAX && range > M_20MM_RANGE_MAX)
+		range = M_20MM_RANGE_MAX;
+
+	if (!G_ValidTarget(self, self->enemy, true, true))
+		return;
+
+	if (entdist(self, self->enemy) > range)
+		return;
+
+	Infantry20mm(self);
+
+	M_DelayNextAttack(self, 0, true);
+}
+
+extern mmove_t infantry_move_attack1;
+
+void infantry_attack4_refire(edict_t* self)
+{
+	if (level.time >= self->monsterinfo.pausetime)
+	{
+		self->monsterinfo.currentmove = &infantry_move_attack1;
+		self->monsterinfo.nextframe = FRAME_attak114;
+	}
+	else if ((self->monsterinfo.aiflags & AI_STAND_GROUND)
+		|| !G_ValidTarget(self, self->enemy, true, true)
+		|| entdist(self, self->enemy) < INFANTRY_RUN_ATTACK_MIN_DIST)
+	{
+		self->monsterinfo.currentmove = &infantry_move_attack1;
+		self->monsterinfo.nextframe = FRAME_attak110;
+	}
+	else
+		self->monsterinfo.nextframe = FRAME_run201;
+
+	infantry_run_fire(self);
+}
+
+mframe_t infantry_frames_attack4[] =
+{
+	infantry_run_attack_ai, 16, infantry_run_fire,
+	infantry_run_attack_ai, 16, infantry_run_fire,
+	infantry_run_attack_ai, 13, infantry_run_fire,
+	infantry_run_attack_ai, 10, infantry_run_fire,
+	infantry_run_attack_ai, 16, infantry_run_fire,
+	infantry_run_attack_ai, 16, infantry_run_fire,
+	infantry_run_attack_ai, 16, infantry_run_fire,
+	infantry_run_attack_ai, 16, infantry_attack4_refire
+};
+mmove_t infantry_move_attack4 = { FRAME_run201, FRAME_run208, infantry_frames_attack4, infantry_run };
+
 mframe_t infantry_frames_attack1 [] =
 {
 	//ai_charge, 4,  NULL,
@@ -650,7 +717,11 @@ void infantry_attack(edict_t* self)
 			maxrange = M_20MM_RANGE_MAX;
 	}
 	else
-		maxrange = 512;
+	{
+		maxrange = M_20MM_RANGE_BASE + M_20MM_RANGE_ADDON * drone_damagelevel(self);
+		if (M_20MM_RANGE_MAX && maxrange > M_20MM_RANGE_MAX)
+			maxrange = M_20MM_RANGE_MAX;
+	}
 
 	if (range > maxrange)
 		return;
@@ -668,6 +739,14 @@ void infantry_attack(edict_t* self)
 	if (range > 256 && range <= maxrange && r <= 0.4)
 	{
 		self->monsterinfo.currentmove = &infantry_move_attack_grenade; // new grenade attack
+		return;
+	}
+
+	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND)
+		&& range >= INFANTRY_RUN_ATTACK_MIN_DIST && range <= maxrange)
+	{
+		self->monsterinfo.pausetime = level.time + 1.8 + random();
+		self->monsterinfo.currentmove = &infantry_move_attack4;
 		return;
 	}
 

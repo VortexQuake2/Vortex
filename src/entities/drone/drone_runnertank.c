@@ -246,16 +246,16 @@ static void runnertank_plasma(edict_t *self)
         return;
 
     flash_number = MZ2_TANK_MACHINEGUN_1 + (self->s.frame - FRAME_attak406);
-    damage = M_BLASTER_DMG_BASE + M_BLASTER_DMG_ADDON * drone_damagelevel(self);
-    if (M_BLASTER_DMG_MAX && damage > M_BLASTER_DMG_MAX)
-        damage = M_BLASTER_DMG_MAX;
-    speed = M_BLASTER_SPEED_BASE + M_BLASTER_SPEED_ADDON * drone_damagelevel(self);
-    if (M_BLASTER_SPEED_MAX && speed > M_BLASTER_SPEED_MAX)
-        speed = M_BLASTER_SPEED_MAX;
+    damage = M_PLASMA_DMG_BASE + M_PLASMA_DMG_ADDON * drone_damagelevel(self);
+    if (M_PLASMA_DMG_MAX && damage > M_PLASMA_DMG_MAX)
+        damage = M_PLASMA_DMG_MAX;
+    speed = M_PLASMA_SPEED_BASE + M_PLASMA_SPEED_ADDON * drone_damagelevel(self);
+    if (M_PLASMA_SPEED_MAX && speed > M_PLASMA_SPEED_MAX)
+        speed = M_PLASMA_SPEED_MAX;
     radius_damage = max(1, damage / 2);
 
     MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash_number, forward, start);
-    fire_plasma(self, start, forward, damage, speed, 40, radius_damage);
+    fire_plasma(self, start, forward, damage, speed, M_PLASMA_DAMAGE_RADIUS, radius_damage);
 }
 
 static void runnertank_strike_sound(edict_t *self)
@@ -831,7 +831,7 @@ void init_drone_runnertank(edict_t *self)
     gi.soundindex("tank/tnkatk2e.wav");
     gi.soundindex("tank/tnkatck3.wav");
 
-    self->health = M_TANK_INITIAL_HEALTH + M_TANK_ADDON_HEALTH * self->monsterinfo.level;
+    self->health = M_RUNNERTANK_INITIAL_HEALTH + M_RUNNERTANK_ADDON_HEALTH * self->monsterinfo.level;
     self->max_health = self->health;
     self->gib_health = -200;
     self->mass = 500;
@@ -851,7 +851,8 @@ void init_drone_runnertank(edict_t *self)
     self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
 
     self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-    self->monsterinfo.power_armor_power = M_TANK_INITIAL_ARMOR + M_TANK_ADDON_ARMOR * self->monsterinfo.level;
+    self->monsterinfo.power_armor_power = M_RUNNERTANK_INITIAL_ARMOR + M_RUNNERTANK_ADDON_ARMOR * self->monsterinfo.level;
+    self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
     self->monsterinfo.control_cost = M_TANK_CONTROL_COST;
     self->monsterinfo.cost = M_TANK_COST;
     self->mtype = M_RUNNERTANK;
