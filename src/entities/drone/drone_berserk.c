@@ -143,7 +143,7 @@ void berserk_attack_spike (edict_t *self)
 void berserk_swing (edict_t *self)
 {
 	//gi.dprintf("played sound at %d on frame %d\n", level.framenum, self->s.frame);
-	gi.sound (self, CHAN_WEAPON, sound_punch, 1, ATTN_STATIC, 0);
+	gi.sound (self, CHAN_WEAPON, sound_punch, 1, ATTN_NORM, 0); // doesn't make noises on static on repro - testing
 }
 
 mframe_t berserk_frames_attack_spike [] =
@@ -441,7 +441,22 @@ void berserk_attack (edict_t *self)
 
 void berserk_melee (edict_t *self)
 {
+	float dist;
 
+	if (!G_EntExists(self->enemy))
+		return;
+
+	dist = entdist(self, self->enemy);
+	if (dist > 128)
+		return;
+
+	if (random() <= 0.3 && dist <= 96)
+		self->monsterinfo.currentmove = &berserk_move_attack_club;
+	else
+		self->monsterinfo.currentmove = &berserk_move_attack_strike;
+
+	self->monsterinfo.melee_finished = level.time + 0.4;
+	self->monsterinfo.attack_finished = level.time + 0.6;
 }
 
 /*QUAKED monster_berserk (1 .5 0) (-16 -16 -24) (16 16 32) Ambush Trigger_Spawn Sight

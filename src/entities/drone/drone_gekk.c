@@ -116,6 +116,8 @@ mmove_t gekk_move_walk = { FRAME_run_01, FRAME_run_06, gekk_frames_walk, NULL };
 
 static void gekk_walk(edict_t *self)
 {
+	if (!self->goalentity)
+		self->goalentity = world;
 	self->monsterinfo.currentmove = &gekk_move_walk;
 }
 

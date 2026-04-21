@@ -308,6 +308,7 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	case M_INSANE:
 	case M_GUNNER:
 	case M_CHICK:
+	case M_CHICK_HEAT:
 	case M_PARASITE:
 	case M_FLOATER:
 	case M_HOVER:

@@ -426,14 +426,15 @@ int writeAbilityDescription(edict_t* ent, int abilityIndex)
 		menu_add_line(ent, "Uses power cubes.", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Summon commands:", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "monster [gunner|parasite", MENU_WHITE_CENTERED);
-		menu_add_line(ent, "brain|praetor|medic|tank", MENU_WHITE_CENTERED);
-		menu_add_line(ent, "mutant|gladiator|berserker", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "brain|praetor|praetor_heat", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "medic|tank|mutant", MENU_WHITE_CENTERED);
+		menu_add_line(ent, "gladiator|berserker", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "soldier|enforcer|flyer", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "floater|hover]", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "Utility commands:", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "monster [remove|command", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "follow me|count|attack]", MENU_WHITE_CENTERED);
-		return 12;
+		return 13;
 	case SKELETON:
 		menu_add_line(ent, "Raise skeletons to protect", MENU_WHITE_CENTERED);
 		menu_add_line(ent, "you and fight your enemies!", MENU_WHITE_CENTERED);

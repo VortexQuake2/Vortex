@@ -187,6 +187,211 @@ void monster_fire_blaster (edict_t *self, vec3_t start, vec3_t dir, int damage, 
 	gi.multicast (start, MULTICAST_PVS);
 }	
 
+void monster_fire_blaster2(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype)
+{
+	float chance;
+
+	if (que_typeexists(self->curses, AURA_HOLYFREEZE) && random() <= 0.5)
+		return;
+
+	if (self->chill_time > level.time)
+	{
+		chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
+		if (random() > chance)
+			return;
+	}
+
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
+	fire_blaster2(self, start, dir, damage, speed, effect, false);
+
+	gi.WriteByte(svc_muzzleflash2);
+	gi.WriteShort(self - g_edicts);
+	gi.WriteByte(flashtype);
+	gi.multicast(start, MULTICAST_PVS);
+}
+
+void monster_fire_blueblaster(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype)
+{
+	float chance;
+
+	if (que_typeexists(self->curses, AURA_HOLYFREEZE) && random() <= 0.5)
+		return;
+
+	if (self->chill_time > level.time)
+	{
+		chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
+		if (random() > chance)
+			return;
+	}
+
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
+	fire_blueblaster(self, start, dir, damage, speed, effect);
+
+	gi.WriteByte(svc_muzzleflash2);
+	gi.WriteShort(self - g_edicts);
+	gi.WriteByte(flashtype);
+	gi.multicast(start, MULTICAST_PVS);
+}
+
+void rocket_touch(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf);
+
+static qboolean heat_valid_target(edict_t *self, edict_t *target)
+{
+	if (target == self->owner)
+		return false;
+	if (!G_ValidTargetEnt(self->owner, target, true))
+		return false;
+	if (self->owner && OnSameTeam(self->owner, target))
+		return false;
+	if (!visible(self, target))
+		return false;
+	return true;
+}
+
+static void heat_think(edict_t *self)
+{
+	edict_t *target = NULL;
+	edict_t *acquire = NULL;
+	float best_dot = 1.0f;
+	float best_dist = 0.0f;
+	float turn_fraction;
+	float dot, dist;
+	vec3_t forward, dir;
+
+	if (!G_EntExists(self->owner) || level.time >= self->delay)
+	{
+		BecomeExplosion1(self);
+		return;
+	}
+
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+
+	if (heat_valid_target(self, self->enemy))
+		acquire = self->enemy;
+	else
+	{
+		self->enemy = NULL;
+	}
+
+	if (!acquire)
+	{
+		while ((target = findradius(target, self->s.origin, 1024)) != NULL)
+		{
+			if (!heat_valid_target(self, target))
+				continue;
+
+			VectorSubtract(self->s.origin, target->s.origin, dir);
+			dist = VectorNormalize(dir);
+			dot = DotProduct(dir, forward);
+
+			if (dot >= best_dot)
+				continue;
+			if (!acquire || dot < best_dot || dist < best_dist)
+			{
+				acquire = target;
+				best_dot = dot;
+				best_dist = dist;
+			}
+		}
+	}
+
+	if (acquire)
+	{
+		VectorSubtract(acquire->s.origin, self->s.origin, dir);
+		if (!VectorNormalize(dir))
+		{
+			self->nextthink = level.time + FRAMETIME;
+			return;
+		}
+
+		turn_fraction = self->accel;
+		if (turn_fraction < 0)
+			turn_fraction = 0;
+		else if (turn_fraction > 1)
+			turn_fraction = 1;
+
+		dot = DotProduct(self->movedir, dir);
+		if (dot < 0.45f && dot > -0.45f)
+			VectorNegate(dir, dir);
+
+		VectorScale(self->movedir, 1.0f - turn_fraction, self->movedir);
+		VectorMA(self->movedir, turn_fraction, dir, self->movedir);
+		VectorNormalize(self->movedir);
+		vectoangles(self->movedir, self->s.angles);
+		self->enemy = acquire;
+	}
+	else
+	{
+		self->enemy = NULL;
+	}
+
+	VectorScale(self->movedir, self->speed, self->velocity);
+	self->nextthink = level.time + FRAMETIME;
+}
+
+qboolean monster_fire_heat(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int flashtype, float turn_fraction)
+{
+	float chance;
+	edict_t *heat;
+
+	if (que_typeexists(self->curses, AURA_HOLYFREEZE) && random() <= 0.5)
+		return false;
+
+	if (self->chill_time > level.time)
+	{
+		chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
+		if (random() > chance)
+			return false;
+	}
+
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
+	if (speed < 1)
+		speed = 1;
+	self->lastsound = level.framenum;
+	VectorNormalize(dir);
+
+	heat = G_Spawn();
+	VectorCopy(start, heat->s.origin);
+	VectorCopy(start, heat->s.old_origin);
+	VectorCopy(dir, heat->movedir);
+	vectoangles(dir, heat->s.angles);
+	VectorScale(dir, speed, heat->velocity);
+	heat->movetype = MOVETYPE_FLYMISSILE;
+	heat->clipmask = MASK_SHOT;
+	heat->solid = SOLID_BBOX;
+	heat->s.effects |= EF_ROCKET;
+	VectorClear(heat->mins);
+	VectorClear(heat->maxs);
+	heat->s.modelindex = gi.modelindex("models/objects/rocket/tris.md2");
+	heat->owner = self;
+	heat->touch = rocket_touch;
+	heat->speed = speed;
+	heat->accel = turn_fraction;
+	heat->delay = level.time + 8000 * (sv_fps->value) / speed;
+	heat->nextthink = level.time + FRAMETIME;
+	heat->think = heat_think;
+	heat->dmg = damage;
+	heat->radius_dmg = damage;
+	heat->dmg_radius = damage;
+	heat->s.sound = gi.soundindex("weapons/rockfly.wav");
+	heat->classname = "heat rocket";
+
+	if (G_ValidTarget(self, self->enemy, true, true))
+		heat->enemy = self->enemy;
+
+	gi.linkentity(heat);
+
+	if (self->client)
+		check_dodge(self, heat->s.origin, dir, speed, damage);
+
+	gi.WriteByte(svc_muzzleflash2);
+	gi.WriteShort(self - g_edicts);
+	gi.WriteByte(flashtype);
+	gi.multicast(start, MULTICAST_PVS);
+
+	return true;
+}
+
 void monster_fire_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int flashtype)
 {
 	float	radius, chance;

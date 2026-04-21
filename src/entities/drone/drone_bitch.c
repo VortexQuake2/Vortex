@@ -15,6 +15,7 @@ void mychick_reslash(edict_t *self);
 void mychick_rerocket(edict_t *self);
 void mychick_attack1(edict_t *self);
 void mychick_continue (edict_t *self);
+extern mmove_t mychick_move_end_attack1;
 
 static int	sound_missile_prelaunch;
 static int	sound_missile_launch;
@@ -502,8 +503,10 @@ void myChickRocket (edict_t *self)
 		return;
 	}
 
-	if (!G_EntExists(self->enemy))
+	if (!G_EntExists(self->enemy) && self->mtype != M_CHICK_HEAT)
+	{
 		return;
+	}
 
 	damage = M_ROCKETLAUNCHER_DMG_BASE + M_ROCKETLAUNCHER_DMG_ADDON * drone_damagelevel(self); // dmg: myChickRocket
 	if (M_ROCKETLAUNCHER_DMG_MAX && damage > M_ROCKETLAUNCHER_DMG_MAX)
@@ -511,9 +514,14 @@ void myChickRocket (edict_t *self)
 	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * drone_damagelevel(self); // spd: myChickRocket
 	if (M_ROCKETLAUNCHER_SPEED_MAX && speed > M_ROCKETLAUNCHER_SPEED_MAX)
 		speed = M_ROCKETLAUNCHER_SPEED_MAX;
-	
+
 	MonsterAim(self, M_PROJECTILE_ACC, speed, true, MZ2_CHICK_ROCKET_1, forward, start);
-	monster_fire_rocket (self, start, forward, damage, speed, MZ2_CHICK_ROCKET_1);
+	if (self->mtype == M_CHICK_HEAT)
+	{
+		monster_fire_heat(self, start, forward, damage, speed, MZ2_CHICK_ROCKET_1, 0.095f);
+	}
+	else
+		monster_fire_rocket (self, start, forward, damage, speed, MZ2_CHICK_ROCKET_1);
 }
 
 void myChickRail (edict_t *self)
@@ -831,7 +839,7 @@ void mychick_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
 	const double rng = random();
 	if (self->health < (self->max_health / 2))
-		self->s.skinnum = 1;
+		self->s.skinnum |= 1;
 
 	// we're already in a pain state
 	if (self->monsterinfo.currentmove == &mychick_move_pain_long ||
@@ -948,4 +956,11 @@ void init_drone_bitch (edict_t *self)
 
 //	walkmonster_start (self);
 	self->nextthink = level.time + 0.1;
+}
+
+void init_drone_bitch_heat (edict_t *self)
+{
+	init_drone_bitch(self);
+	self->mtype = M_CHICK_HEAT;
+	self->s.skinnum = 2;
 }

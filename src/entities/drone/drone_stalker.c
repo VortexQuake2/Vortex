@@ -79,6 +79,8 @@ mmove_t stalker_move_walk = { FRAME_walk01, FRAME_walk08, stalker_frames_walk, s
 
 static void stalker_walk(edict_t *self)
 {
+	if (!self->goalentity)
+		self->goalentity = world;
 	self->monsterinfo.currentmove = &stalker_move_walk;
 }
 
@@ -119,12 +121,8 @@ static void stalker_fire_ionripper(edict_t *self)
 	VectorSubtract(target, start, dir);
 	VectorNormalize(dir);
 
-	fire_ionripper(self, start, dir, damage, speed, EF_IONRIPPER);
+		monster_fire_blaster2(self, start, dir, damage, speed, EF_BLASTER, MZ2_STALKER_BLASTER);
 
-	gi.WriteByte(svc_muzzleflash);
-	gi.WriteShort(self - g_edicts);
-	gi.WriteByte(MZ_IONRIPPER | MZ_SILENCED);
-	gi.multicast(start, MULTICAST_PVS);
 }
 
 mframe_t stalker_frames_shoot[] =
@@ -322,6 +320,8 @@ void init_drone_stalker(edict_t *self)
 	self->monsterinfo.sight = stalker_sight;
 	self->monsterinfo.idle = stalker_idle;
 	self->monsterinfo.pain_chance = 0.3f;
+	self->monsterinfo.jumpup = 64;
+	self->monsterinfo.jumpdn = 512;
 
 	gi.linkentity(self);
 

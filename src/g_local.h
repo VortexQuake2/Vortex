@@ -1418,6 +1418,12 @@ void monster_fire_shotgun(edict_t *self, vec3_t start, vec3_t aimdir, float dama
 void monster_fire_blaster(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int proj_type,
                           float duration, qboolean bounce, int flashtype);
 
+void monster_fire_blaster2(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype);
+
+void monster_fire_blueblaster(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype);
+
+qboolean monster_fire_heat(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int flashtype, float turn_fraction);
+
 void monster_fire_grenade(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int flashtype);
 
 void monster_fire_rocket(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int flashtype);
@@ -1508,6 +1514,7 @@ enum mtype_t {
     M_GLADC = 33,
     M_STALKER = 34,
     M_GEKK = 35,
+    M_CHICK_HEAT = 36,
     M_MINISENTRY = 100,
     M_SENTRY = 101,
     M_BFG_SENTRY = 102,
@@ -1614,6 +1621,7 @@ enum dronespawn_t {
     DS_GLADC = 24,
     DS_STALKER = 25,
     DS_GEKK = 26,
+    DS_BITCH_HEAT = 27,
     DS_COMMANDER = 30,
     DS_MAKRON = 31,
     DS_BARON_FIRE = 32,
@@ -1716,6 +1724,8 @@ qboolean fire_player_melee(edict_t *self, vec3_t start, vec3_t dir, int range, i
 extern byte is_silenced;
 extern qboolean is_quadfire;
 
+void check_dodge(edict_t *self, vec3_t start, vec3_t dir, int speed, int radius);
+
 void fire_bullet(edict_t *self, vec3_t start, vec3_t aimdir, float damage, int kick, int hspread, int vspread, int mod);
 
 void fire_shotgun(edict_t *self, vec3_t start, vec3_t aimdir, float damage, int kick, int hspread, int vspread,
@@ -1723,6 +1733,7 @@ void fire_shotgun(edict_t *self, vec3_t start, vec3_t aimdir, float damage, int 
 
 void fire_blaster(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int proj_type, int mod,
                   float duration, qboolean bounce);
+void fire_blaster2(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, qboolean hyper);
 
 void fire_grenade(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float timer, float damage_radius,
                   int radius_damage);

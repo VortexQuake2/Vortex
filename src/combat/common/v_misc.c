@@ -254,7 +254,7 @@ void vrx_pvm_spawn_monsters(edict_t* self, int max_monsters, int total_monsters)
 	while (total_monsters < max_monsters && max_spawn_this_cycle > 0) {
 		int rnd;
 		do {
-			rnd = GetRandom(1, DS_GEKK); // az: don't spawn soldiers or helper summons
+			rnd = GetRandom(1, DS_BITCH_HEAT); // az: don't spawn soldiers or helper summons
 		} while (rnd == DS_SOLDIER || rnd == DS_DECOY || rnd == DS_SKELETON || rnd == DS_GOLEM);
 
 		edict_t* scan;
@@ -596,6 +596,7 @@ int vrx_GetMonsterCost(int mtype) {
             cost = M_GUNNER_COST;
             break;
         case M_CHICK:
+        case M_CHICK_HEAT:
             cost = M_CHICK_COST;
             break;
         case M_PARASITE:
@@ -674,6 +675,7 @@ int vrx_GetMonsterControlCost(int mtype) {
             cost = M_GUNNER_CONTROL_COST;
             break;
         case M_CHICK:
+        case M_CHICK_HEAT:
             cost = M_CHICK_CONTROL_COST;
             break;
         case M_PARASITE:

@@ -276,6 +276,7 @@ spawn_t	spawns[] = {
 	{"monster_tank_commander", SP_monster_tank_commander},
 	{"monster_medic", SP_monster_medic},
 	{"monster_chick", SP_monster_chick},
+	{"monster_chick_heat", SP_monster_chick_heat},
 	{"monster_parasite", SP_monster_parasite},
 	{"monster_brain", SP_monster_brain},
 	{"monster_mutant", SP_monster_mutant},
@@ -1112,7 +1113,13 @@ void SP_monster_mutant(edict_t *ent)
 void SP_monster_chick(edict_t *ent) 
 {
 	if (coop->value)
-        vrx_create_drone_from_ent(ent, g_edicts, 3, true, true, 0);
+        vrx_create_drone_from_ent(ent, g_edicts, DS_BITCH, true, true, 0);
+}
+
+void SP_monster_chick_heat(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_BITCH_HEAT, true, true, 0);
 }
 
 void SP_monster_parasite(edict_t *ent) 
