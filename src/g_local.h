@@ -1517,6 +1517,7 @@ enum mtype_t {
     M_CHICK_HEAT = 36,
     M_ARACHNID = 37,
     M_MEDIC_COMMANDER = 38,
+    M_CARRIER = 39,
     M_MINISENTRY = 100,
     M_SENTRY = 101,
     M_BFG_SENTRY = 102,
@@ -1631,6 +1632,7 @@ enum dronespawn_t {
     DS_BARON_FIRE = 32,
     DS_SUPERTANK = 33,
     DS_JORG = 34,
+    DS_CARRIER = 35,
 
 };
 
@@ -1757,6 +1759,7 @@ void fire_disruptor(edict_t *self, vec3_t start, vec3_t dir, int damage, int spe
 void fire_ionripper (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int effect);
 void fire_flechette (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int kick);
 void fire_heat (edict_t *self, vec3_t start, vec3_t aimdir, vec3_t offset, int damage, int kick, qboolean monster);
+void SpawnGrow_Spawn(vec3_t startpos, float start_size, float end_size);
 void fire_blueblaster (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int effect);
 void fire_plasma (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius, int radius_damage);
 void fire_prox (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float damage_radius);

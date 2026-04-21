@@ -779,6 +779,10 @@ M_ARACHNID_INITIAL_HEALTH                = 100
 M_ARACHNID_ADDON_HEALTH                  = 55
 M_ARACHNID_INITIAL_ARMOR                 = 200
 M_ARACHNID_ADDON_ARMOR                   = 85
+M_CARRIER_INITIAL_HEALTH                 = 2200
+M_CARRIER_ADDON_HEALTH                   = 650
+M_CARRIER_INITIAL_ARMOR                  = 500
+M_CARRIER_ADDON_ARMOR                    = 350
 
 -- Monster Weapons --
 M_ENABLE_WORLDSPAWN_SOFTCAP		=	1

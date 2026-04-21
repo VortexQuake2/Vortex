@@ -1133,7 +1133,7 @@ static void spawngrow_beam_think(edict_t *self)
 	self->nextthink = level.time + FRAMETIME;
 }
 
-static void SpawnGrow_Spawn(vec3_t startpos, float start_size, float end_size)
+void SpawnGrow_Spawn(vec3_t startpos, float start_size, float end_size)
 {
 	edict_t *ent;
 	edict_t *beam;
@@ -1195,6 +1195,17 @@ static void medic_commander_cleanup_failed_spawn(edict_t *owner, edict_t *spawne
 	DroneList_Remove(spawned);
 	AI_EnemyRemoved(spawned);
 	G_FreeEdict(spawned);
+}
+
+static void medic_commander_setup_invasion_spawn(edict_t *spawned)
+{
+	if (!invasion->value)
+		return;
+
+	spawned->monsterinfo.aiflags &= ~AI_STAND_GROUND;
+	spawned->monsterinfo.aiflags |= AI_FIND_NAVI;
+	spawned->prev_navi = NULL;
+	spawned->goalentity = NULL;
 }
 
 static qboolean medic_commander_valid_spawn_spot(edict_t *self, vec3_t mins, vec3_t maxs, vec3_t spot)
@@ -1273,6 +1284,7 @@ static qboolean medic_commander_spawn_gunner(edict_t *self, float side)
 	VectorCopy(self->s.angles, gunner->s.angles);
 	gunner->nextthink = level.time + FRAMETIME;
 	gunner->monsterinfo.attack_finished = level.time + 1.0;
+	medic_commander_setup_invasion_spawn(gunner);
 
 	gi.linkentity(gunner);
 

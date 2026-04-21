@@ -1138,6 +1138,10 @@ void Lua_LoadVariables()
 	M_ARACHNID_ADDON_HEALTH = vrx_lua_get_variable("M_ARACHNID_ADDON_HEALTH", 10);
 	M_ARACHNID_INITIAL_ARMOR = vrx_lua_get_variable("M_ARACHNID_INITIAL_ARMOR", 100);
 	M_ARACHNID_ADDON_ARMOR = vrx_lua_get_variable("M_ARACHNID_ADDON_ARMOR", 20);
+	M_CARRIER_INITIAL_HEALTH = vrx_lua_get_variable("M_CARRIER_INITIAL_HEALTH", 2200);
+	M_CARRIER_ADDON_HEALTH = vrx_lua_get_variable("M_CARRIER_ADDON_HEALTH", 650);
+	M_CARRIER_INITIAL_ARMOR = vrx_lua_get_variable("M_CARRIER_INITIAL_ARMOR", 500);
+	M_CARRIER_ADDON_ARMOR = vrx_lua_get_variable("M_CARRIER_ADDON_ARMOR", 350);
 
 	M_BRAIN_INITIAL_PULL = vrx_lua_get_variable("M_BRAIN_INITIAL_PULL", -60);
 	M_BRAIN_ADDON_PULL = vrx_lua_get_variable("M_BRAIN_ADDON_PULL", -2);

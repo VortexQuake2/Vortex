@@ -1102,6 +1102,7 @@ void init_drone_guncmdr(edict_t *self)
 	self->mass = 255;
 	self->monsterinfo.jumpdn = 512;
 	self->monsterinfo.jumpup = 64;
+	self->s.scale = 1.2f;
 
 	if (random() > 0.5)
 		self->item = FindItemByClassname("ammo_bullets");

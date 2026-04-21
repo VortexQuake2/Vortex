@@ -42,6 +42,7 @@ void init_drone_gladc(edict_t* self);
 void init_drone_stalker(edict_t* self);
 void init_drone_gekk(edict_t* self);
 void init_drone_arachnid(edict_t* self);
+void init_drone_carrier(edict_t* self);
 void init_baron_fire(edict_t* self);
 void init_skeleton(edict_t* self);
 void init_golem(edict_t* self);
@@ -529,7 +530,7 @@ void drone_death (edict_t *self, edict_t *attacker)
 
 
 	//4.2 bosses can drop up to 4 runes
-	if (self->mtype == M_COMMANDER || self->mtype == M_SUPERTANK || self->mtype == M_MAKRON)
+	if (self->mtype == M_COMMANDER || self->mtype == M_SUPERTANK || self->mtype == M_MAKRON || self->mtype == M_CARRIER)
 	{
 		edict_t *e;
 		float drop_chance = 0.25;
@@ -881,6 +882,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 	case DS_BARON_FIRE: init_baron_fire(drone);		break;
 	case DS_SUPERTANK: init_drone_supertank(drone);	break;
 	case DS_JORG: init_drone_jorg(drone);		break;
+	case DS_CARRIER: init_drone_carrier(drone);	break;
 
 	// default
 	default: init_drone_gunner(drone);		break;
@@ -2075,10 +2077,21 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	case M_STALKER: init_drone_stalker(monster); break;
 	case M_GEKK: init_drone_gekk(monster); break;
 	case M_ARACHNID: init_drone_arachnid(monster); break;
+	case M_CARRIER: init_drone_carrier(monster); break;
 	case M_SKELETON: init_skeleton(monster); break;
 	case M_GOLEM: init_golem(monster); break;
 	default: return false;
 	}
+
+#ifdef VRX_REPRO
+	if (monster->s.scale)
+	{
+		monster->monsterinfo.scale *= monster->s.scale;
+		VectorScale(monster->mins, monster->s.scale, monster->mins);
+		VectorScale(monster->maxs, monster->s.scale, monster->maxs);
+		monster->mass *= monster->s.scale;
+	}
+#endif
 
 	if ( (ent && ent->inuse && ent->client) ||
 		(monster->activator && monster->activator->inuse && monster->activator->client) ) // player summons exception.
@@ -2193,6 +2206,10 @@ qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax)
 		VectorSet(boxmin, -48, -48, -20);
 		VectorSet(boxmax, 48, 48, 48);
 		break;
+	case M_CARRIER:
+		VectorSet(boxmin, -80, -80, -24);
+		VectorSet(boxmax, 80, 80, 104);
+		break;
 	case M_MEDIC:
 	case M_MEDIC_COMMANDER:
 	case M_MUTANT:
@@ -2273,6 +2290,7 @@ char *GetMonsterKindString (int mtype)
 		case M_STALKER: return "Stalker";
 		case M_GEKK: return "Gekk";
 		case M_ARACHNID: return "Arachnid";
+		case M_CARRIER: return "Carrier";
 		case M_SKELETON: return "Skeleton";
 		case M_GOLEM: return "Golem";
 		case M_BARON_FIRE: return "Fire Baron";

@@ -2101,6 +2101,8 @@ char *V_GetMonsterKind(int mtype) {
             return "gekk";
         case M_ARACHNID:
             return "arachnid";
+        case M_CARRIER:
+            return "carrier";
         case M_SKELETON:
             return "skeleton";
         case M_GOLEM:

@@ -20,6 +20,9 @@ cvar_t				*bot_debugmonster;
 field_t fields[] = {
 	{ "classname", FOFS(classname), F_LSTRING },
 	{ "origin", FOFS(s.origin), F_VECTOR },
+#ifdef VRX_REPRO
+	{ "scale", FOFS(s.scale), F_FLOAT },
+#endif
 	{ "model", FOFS(model), F_LSTRING },
 	{ "spawnflags", FOFS(spawnflags), F_INT },
 	{ "speed", FOFS(speed), F_FLOAT },

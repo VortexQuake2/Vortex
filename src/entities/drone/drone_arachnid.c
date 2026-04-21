@@ -356,7 +356,7 @@ void init_drone_arachnid(edict_t *self)
 	self->gib_health = -200;
 	self->mass = 450;
 	self->mtype = M_ARACHNID;
-
+	self->s.scale = 0.65f;
 	self->monsterinfo.control_cost = M_GLADIATOR_CONTROL_COST;
 	self->monsterinfo.cost = M_DEFAULT_COST;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;

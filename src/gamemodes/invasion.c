@@ -87,6 +87,11 @@ static constexpr int SET_PARASITE_MONSTERS[] = {
 
 constexpr int SET_PARASITE_MONSTERS_COUNT = sizeof(SET_PARASITE_MONSTERS) / sizeof(int);
 
+static constexpr int SET_BOSS_MONSTERS[] = {
+    DS_COMMANDER, DS_MAKRON, DS_BARON_FIRE, DS_CARRIER
+};
+constexpr int SET_BOSS_MONSTERS_COUNT = sizeof(SET_BOSS_MONSTERS) / sizeof(int);
+
 qboolean vrx_inv_is_boss_wave(int wave) {
     return wave % 5 == 0 && wave > 0;
 }
@@ -621,7 +626,7 @@ void vrx_inv_boss_check(edict_t *self) {
     while ((e = vrx_inv_get_monster_spawn(e)) != NULL) {
         if (invasion_data.boss) continue;
 
-        invasion_data.boss = vrx_inv_spawn_drone(self, e, GetRandom(30, 32));
+        invasion_data.boss = vrx_inv_spawn_drone(self, e, SET_BOSS_MONSTERS[GetRandom(0, SET_BOSS_MONSTERS_COUNT - 1)]);
         if (!invasion_data.boss) {
             iter++;
 

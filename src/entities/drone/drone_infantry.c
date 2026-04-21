@@ -791,6 +791,7 @@ void init_drone_infantry(edict_t* self)
 
 	self->mass = 400;
 
+	self->s.scale = 1.15f;
 	//don't override previous mtype
 	if (!self->mtype)
 		self->mtype = M_ENFORCER;

@@ -644,6 +644,13 @@ void SVCmd_SpawnBoss_f (void)
         else
             vrx_create_new_drone(m_worldspawn, 34, true, true, 0);
     }
+    else if (!strcmp(gi.argv(2), "carrier"))
+    {
+        if (invasion->value)
+            vrx_inv_spawn_boss(m_worldspawn, DS_CARRIER);
+        else
+            vrx_create_new_drone(m_worldspawn, DS_CARRIER, true, true, 0);
+    }
     else
         safe_cprintf(NULL, PRINT_HIGH, "Invalid boss type. Usage: sv spawnboss <type>\n");
 }

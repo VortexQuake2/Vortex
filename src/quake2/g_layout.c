@@ -331,6 +331,7 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	case M_STALKER:
 	case M_GEKK:
 	case M_ARACHNID:
+	case M_CARRIER:
 	case M_SKELETON:
 	case M_GOLEM:
 		name = lva("%s", V_GetMonsterName(ent));
