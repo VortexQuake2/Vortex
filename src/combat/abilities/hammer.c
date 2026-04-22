@@ -248,6 +248,8 @@ void SpawnBlessedHammer (edict_t *ent, int boomerang_level)
 	hammer->nextthink = level.time + FRAMETIME;
 	hammer->dmg = HAMMER_INITIAL_DAMAGE+HAMMER_ADDON_DAMAGE*ent->myskills.abilities[HAMMER].current_level;
 	hammer->classname = "hammer";	
+	if (ent->client)
+		hammer->svflags |= SVF_PROJECTILE;
 	gi.linkentity (hammer);
 
 	// write a nice effect so everyone knows we've cast a spell

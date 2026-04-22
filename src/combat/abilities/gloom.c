@@ -3691,6 +3691,8 @@ void fire_acid (edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damag
     grenade->dmg_radius = radius;
     grenade->delay = acid_duration;
     grenade->classname = "acid";
+	if (self->client)
+		grenade->svflags |= SVF_PROJECTILE;
 	// Talent: Spitting Gasser
 	if (gas_damage > 0 && gas_radius > 0 && gas_duration > 0)
 	{

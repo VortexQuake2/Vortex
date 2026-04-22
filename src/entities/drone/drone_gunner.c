@@ -19,11 +19,13 @@ static int	sound_sight;
 static int	sound_thud;
 
 void mygunner_continue (edict_t *self);
+void mygunnerrun (edict_t *self);
 void mygunner_refire_chain(edict_t *self);
 void mygunner_fire_chain(edict_t *self);
 void mygunner_delay (edict_t *self);
 void gunner_attack_grenade (edict_t *self);
 void gunner_refire_grenade (edict_t *self);
+void drone_ai_run_slide(edict_t *self, float dist);
 
 void mygunneridlesound (edict_t *self)
 {
@@ -183,6 +185,29 @@ mframe_t mygunnerframes_run [] =
 };
 
 mmove_t mygunnermove_run = {FRAME_run01, FRAME_run08, mygunnerframes_run, NULL};
+
+static void mygunner_ai_dodge_slide(edict_t *self, float dist)
+{
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(self->monsterinfo.attacker))
+		self->enemy = self->monsterinfo.attacker;
+	if (!G_EntIsAlive(self->enemy))
+		return;
+
+	drone_ai_run_slide(self, dist);
+}
+
+mframe_t mygunner_frames_dodge_slide[] =
+{
+	mygunner_ai_dodge_slide, 25, NULL,
+	mygunner_ai_dodge_slide, 25, NULL,
+	mygunner_ai_dodge_slide, 25, NULL,
+	mygunner_ai_dodge_slide, 25, NULL,
+	mygunner_ai_dodge_slide, 25, NULL,
+	mygunner_ai_dodge_slide, 25, NULL,
+	mygunner_ai_dodge_slide, 25, NULL,
+	mygunner_ai_dodge_slide, 25, NULL
+};
+mmove_t mygunner_move_dodge_slide = {FRAME_run01, FRAME_run08, mygunner_frames_dodge_slide, mygunnerrun};
 
 void mygunnerrun (edict_t *self)
 {
@@ -485,15 +510,24 @@ void mygunner_duck_up (edict_t *self)
 	gi.linkentity (self);
 }
 
+void mygunner_duck_hold (edict_t *self)
+{
+	if (self->monsterinfo.pausetime > level.time)
+		self->monsterinfo.nextframe = self->s.frame;
+}
+
 mframe_t mygunner_frames_duck [] =
 {
-	ai_move, 0,  mygunner_duck_down,
-	ai_move, 0,  NULL,
+	ai_move, 1, mygunner_duck_down,
+	ai_move, 1, NULL,
+	ai_move, 1, mygunner_duck_hold,
 	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0,  mygunner_duck_up,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, 0, mygunner_duck_up,
+	ai_move, -1, NULL
 };
-mmove_t	mygunner_move_duck = {FRAME_duck03, FRAME_duck07, mygunner_frames_duck, mygunnerrun};
+mmove_t	mygunner_move_duck = {FRAME_duck01, FRAME_duck08, mygunner_frames_duck, mygunnerrun};
 
 void mygunner_jump_takeoff (edict_t *self)
 {
@@ -551,22 +585,54 @@ void mygunner_leap (edict_t *self)
 		self->monsterinfo.currentmove = &mygunner_move_leap;
 }
 
+static qboolean mygunner_is_dodge_move(edict_t *self)
+{
+	return self->monsterinfo.currentmove == &mygunner_move_duck ||
+		self->monsterinfo.currentmove == &mygunner_move_leap ||
+		self->monsterinfo.currentmove == &mygunner_move_dodge_slide;
+}
+
+static qboolean mygunner_is_uninterruptible_attack(edict_t *self)
+{
+	return self->monsterinfo.currentmove == &mygunner_move_attack_chain ||
+		self->monsterinfo.currentmove == &mygunner_move_fire_chain ||
+		self->monsterinfo.currentmove == &mygunner_move_attack_grenade;
+}
+
+static qboolean mygunner_dodge_hit_low(edict_t *self, vec3_t dir)
+{
+	const float duck_height = self->absmax[2] - 33;
+
+	return dir[2] > self->absmin[2] && dir[2] <= duck_height;
+}
+
 void mygunner_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
 {
 	if (random() > 0.9)
-		return;
-	if (!G_GetClient(self))
 		return;
 	if (level.time < self->monsterinfo.dodge_time)
 		return;
 	if (OnSameTeam(self, attacker))
 		return;
+	if (mygunner_is_dodge_move(self) || mygunner_is_uninterruptible_attack(self))
+		return;
 
-	if (!self->enemy && G_EntIsAlive(attacker))
+	self->monsterinfo.attacker = attacker;
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(attacker))
 		self->enemy = attacker;
 	if (!radius)
 	{
-		self->monsterinfo.currentmove = &mygunner_move_duck;
+		if (mygunner_dodge_hit_low(self, dir) && !(self->monsterinfo.aiflags & AI_STAND_GROUND))
+		{
+			self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
+			self->monsterinfo.currentmove = &mygunner_move_dodge_slide;
+		}
+		else
+		{
+			self->monsterinfo.pausetime = level.time + 0.5;
+			self->monsterinfo.currentmove = &mygunner_move_duck;
+			mygunner_duck_down(self);
+		}
 		self->monsterinfo.dodge_time = level.time + 2.0;
 	}
 	else
@@ -635,7 +701,8 @@ void mygunner_pain(edict_t* self, edict_t* other, float kick, int damage)
 	// we're already in a pain state
 	if (self->monsterinfo.currentmove == &mygunnermove_pain_long1 ||
 		self->monsterinfo.currentmove == &mygunnermove_pain_long2 ||
-		self->monsterinfo.currentmove == &mygunnermove_pain_short)
+		self->monsterinfo.currentmove == &mygunnermove_pain_short ||
+		mygunner_is_dodge_move(self))
 		return;
 
 	// monster players don't get pain state induced

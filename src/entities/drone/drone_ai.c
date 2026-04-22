@@ -705,7 +705,9 @@ void drone_ai_idle (edict_t *self)
 		if (self->mtype != M_COMMANDER && self->mtype != M_GUNCMDR
 			&& self->mtype != M_DAEDALUS && self->mtype != M_GLADB && self->mtype != M_GLADC
 			&& self->mtype != M_CHICK_HEAT && self->mtype != M_MEDIC_COMMANDER
-			&& self->mtype != M_SOLDIER && self->mtype != M_STALKER)
+			&& self->mtype != M_SOLDIER && self->mtype != M_SOLDIER_RIPPER
+			&& self->mtype != M_SOLDIER_BLUEBLASTER && self->mtype != M_SOLDIER_LASER
+			&& self->mtype != M_STALKER)
 			self->s.skinnum &= ~2;
 	}
 
@@ -1909,7 +1911,9 @@ void drone_ai_run1 (edict_t *self, float dist)
 		if (self->mtype != M_COMMANDER && self->mtype != M_GUNCMDR
 			&& self->mtype != M_DAEDALUS && self->mtype != M_GLADB && self->mtype != M_GLADC
 			&& self->mtype != M_CHICK_HEAT && self->mtype != M_MEDIC_COMMANDER
-			&& self->mtype != M_SOLDIER && self->mtype != M_STALKER)
+			&& self->mtype != M_SOLDIER && self->mtype != M_SOLDIER_RIPPER
+			&& self->mtype != M_SOLDIER_BLUEBLASTER && self->mtype != M_SOLDIER_LASER
+			&& self->mtype != M_STALKER)
 			self->s.skinnum &= ~2;
 	}
 
@@ -2164,18 +2168,143 @@ void drone_togglelight (edict_t *self)
 	}
 }
 
+#define DRONE_PROJECTILE_DODGE_RANGE 512
+#define DRONE_PROJECTILE_DODGE_MAX 256
+#define DRONE_PROJECTILE_DODGE_MIN_ETA FRAMETIME
+#define DRONE_PROJECTILE_DODGE_MAX_ETA 2.5f
+#define DRONE_PROJECTILE_DODGE_DIRECT_LEAD 0.5f
+#define DRONE_PROJECTILE_DODGE_RADIUS_LEAD 0.45f
+
+static qboolean drone_projectile_infront(edict_t *self, edict_t *projectile)
+{
+	vec3_t forward, vec;
+
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+	VectorSubtract(projectile->s.origin, self->s.origin, vec);
+	VectorNormalize(vec);
+
+	return DotProduct(vec, forward) > 0.35f;
+}
+
+static qboolean drone_projectile_is_explosive(edict_t *projectile)
+{
+	if (!projectile->classname)
+		return projectile->dmg_radius > 0;
+
+	if (projectile->dmg_radius > 0)
+		return true;
+
+	return !Q_strcasecmp(projectile->classname, "rocket") ||
+		!Q_strcasecmp(projectile->classname, "smartrocket") ||
+		!Q_strcasecmp(projectile->classname, "lockon rocket") ||
+		!Q_strcasecmp(projectile->classname, "grenade") ||
+		!Q_strcasecmp(projectile->classname, "hgrenade") ||
+		!Q_strcasecmp(projectile->classname, "prox") ||
+		!Q_strcasecmp(projectile->classname, "htrap") ||
+		!Q_strcasecmp(projectile->classname, "tesla") ||
+		!Q_strcasecmp(projectile->classname, "bfg blast");
+}
+
+static edict_t *drone_projectile_attacker(edict_t *projectile)
+{
+	if (G_EntExists(projectile->owner))
+		return projectile->owner;
+	if (G_EntExists(projectile->creator))
+		return projectile->creator;
+	if (G_EntExists(projectile->activator))
+		return projectile->activator;
+	if (G_EntExists(projectile->teammaster))
+		return projectile->teammaster;
+
+	return NULL;
+}
+
+static void drone_check_active_projectile_dodge(edict_t *self)
+{
+	edict_t *touch[DRONE_PROJECTILE_DODGE_MAX];
+	vec3_t mins, maxs, end;
+	int area_pass, i, num;
+
+	if (level.time < self->monsterinfo.dodge_time)
+		return;
+
+	VectorSet(mins, self->absmin[0] - DRONE_PROJECTILE_DODGE_RANGE,
+		self->absmin[1] - DRONE_PROJECTILE_DODGE_RANGE,
+		self->absmin[2] - DRONE_PROJECTILE_DODGE_RANGE);
+	VectorSet(maxs, self->absmax[0] + DRONE_PROJECTILE_DODGE_RANGE,
+		self->absmax[1] + DRONE_PROJECTILE_DODGE_RANGE,
+		self->absmax[2] + DRONE_PROJECTILE_DODGE_RANGE);
+
+	for (area_pass = 0; area_pass < 2; ++area_pass)
+	{
+		num = gi.BoxEdicts(mins, maxs, touch, DRONE_PROJECTILE_DODGE_MAX, area_pass ? AREA_TRIGGERS : AREA_SOLID);
+		for (i = 0; i < num; ++i)
+		{
+			edict_t *projectile = touch[i];
+			edict_t *attacker;
+			trace_t tr;
+			float speed, eta;
+			int radius;
+
+			if (!projectile || !projectile->inuse)
+				continue;
+			if (!(projectile->svflags & SVF_PROJECTILE))
+				continue;
+			attacker = drone_projectile_attacker(projectile);
+			if (!G_EntExists(attacker) || !attacker->client)
+				continue;
+			if (OnSameTeam(self, attacker))
+				continue;
+			if (VectorLength(projectile->velocity) < 16)
+				continue;
+			if (!drone_projectile_infront(self, projectile))
+				continue;
+
+			VectorAdd(projectile->s.origin, projectile->velocity, end);
+			tr = gi.trace(projectile->s.origin, projectile->mins, projectile->maxs, end, projectile, projectile->clipmask ? projectile->clipmask : MASK_SHOT);
+			if (tr.ent != self)
+				continue;
+
+			speed = VectorLength(projectile->velocity);
+			if (speed < 1)
+				continue;
+
+			VectorSubtract(tr.endpos, projectile->s.origin, end);
+			eta = VectorLength(end) / speed;
+			if (eta < DRONE_PROJECTILE_DODGE_MIN_ETA || eta > DRONE_PROJECTILE_DODGE_MAX_ETA)
+				continue;
+
+			radius = drone_projectile_is_explosive(projectile) ? (int)projectile->dmg_radius : 0;
+			if ((self->monsterinfo.aiflags & AI_DODGE) && self->monsterinfo.eta <= level.time + eta)
+				continue;
+
+			self->monsterinfo.aiflags |= AI_DODGE;
+			self->monsterinfo.eta = level.time + eta;
+			self->monsterinfo.attacker = attacker;
+			VectorCopy(tr.endpos, self->monsterinfo.dir);
+			self->monsterinfo.radius = radius;
+			return;
+		}
+	}
+}
+
 void drone_dodgeprojectiles (edict_t *self) {
     const qboolean alive = self->health > 0;
-    const qboolean can_dodge = self->monsterinfo.dodge && (self->monsterinfo.aiflags & AI_DODGE);
     const qboolean stand_ground = (self->monsterinfo.aiflags & AI_STAND_GROUND);
 
     // dodge incoming projectiles
-    if (alive && can_dodge && !stand_ground) // don't dodge if we are holding position
+    if (alive && self->monsterinfo.dodge && !stand_ground)
     {
-        if (((self->monsterinfo.radius > 0) && ((level.time + 0.3) > self->monsterinfo.eta))
-            || (level.time + FRAMETIME) > self->monsterinfo.eta) {
-            self->monsterinfo.dodge(self, self->monsterinfo.attacker, self->monsterinfo.dir, self->monsterinfo.radius);
-            self->monsterinfo.aiflags &= ~AI_DODGE;
+        drone_check_active_projectile_dodge(self);
+
+        if (self->monsterinfo.aiflags & AI_DODGE) {
+			const float eta = self->monsterinfo.eta - level.time;
+			const float lead = (self->monsterinfo.radius > 0) ? DRONE_PROJECTILE_DODGE_RADIUS_LEAD : DRONE_PROJECTILE_DODGE_DIRECT_LEAD;
+
+			if (eta < 0 || eta <= lead) {
+				self->monsterinfo.dodge(self, self->monsterinfo.attacker, self->monsterinfo.dir, self->monsterinfo.radius);
+				self->monsterinfo.aiflags &= ~AI_DODGE;
+			}
         }
     }
 }

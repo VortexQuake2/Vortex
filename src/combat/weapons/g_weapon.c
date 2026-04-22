@@ -45,7 +45,6 @@ void check_dodge (edict_t *self, vec3_t start, vec3_t dir, int speed, int radius
 {
 	vec3_t	end;
 	vec3_t	v;
-	const vec3_t	zvec = {0,0,0};
 	trace_t	tr;
 	float	eta;
 	edict_t *blip = NULL;
@@ -62,7 +61,7 @@ void check_dodge (edict_t *self, vec3_t start, vec3_t dir, int speed, int radius
 		tr.ent->monsterinfo.eta = level.time + eta;
 		//gi.dprintf("ETA for impact is %.1f\n", tr.ent->monsterinfo.eta);
 		tr.ent->monsterinfo.attacker = self;
-		VectorCopy(zvec, self->monsterinfo.dir);
+		VectorCopy(start, tr.ent->monsterinfo.dir);
 		tr.ent->monsterinfo.radius = 0;
 		
 	}
@@ -610,6 +609,8 @@ void fire_blaster2(edict_t *self, vec3_t start, vec3_t dir, int damage, int spee
 	bolt->dmg = damage;
 	bolt->dmg_radius = hyper ? 64 : 128;
 	bolt->classname = "bolt";
+	if (self->client)
+		bolt->svflags |= SVF_PROJECTILE;
 	VectorClear(bolt->mins);
 	VectorClear(bolt->maxs);
 	gi.linkentity(bolt);
@@ -653,6 +654,8 @@ void fire_blueblaster(edict_t *self, vec3_t start, vec3_t dir, int damage, int s
 	bolt->think = G_FreeEdict;
 	bolt->dmg = damage;
 	bolt->classname = "bolt";
+	if (self->client)
+		bolt->svflags |= SVF_PROJECTILE;
 	VectorClear(bolt->mins);
 	VectorClear(bolt->maxs);
 	gi.linkentity(bolt);
@@ -730,6 +733,8 @@ void fire_blaster (edict_t *self, vec3_t start, vec3_t dir, int damage, int spee
 	bolt->think = G_FreeEdict;
 	bolt->dmg = damage;
 	bolt->classname = "bolt";
+	if (self->client)
+		bolt->svflags |= SVF_PROJECTILE;
 	gi.linkentity (bolt);
 
 	// call monster's dodge function
@@ -1030,6 +1035,8 @@ void fire_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int s
 	grenade->radius_dmg = radius_damage;
 	grenade->dmg_radius = damage_radius;
 	grenade->classname = "grenade";
+	if (self->client)
+		grenade->svflags |= SVF_PROJECTILE;
 	gi.linkentity (grenade);
 }
 
@@ -1072,6 +1079,8 @@ edict_t *fire_grenade2 (edict_t *self, vec3_t start, vec3_t aimdir, int damage, 
 	grenade->radius_dmg = radius_damage;
 	grenade->dmg_radius = damage_radius;
 	grenade->classname = "hgrenade";
+	if (self->client)
+		grenade->svflags |= SVF_PROJECTILE;
 	if (held)
 		grenade->spawnflags = 3;
 	else
@@ -1242,6 +1251,8 @@ void fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed
 	rocket->dmg_radius = damage_radius;
 	rocket->s.sound = gi.soundindex ("weapons/rockfly.wav");
 	rocket->classname = "rocket";
+	if (self->client)
+		rocket->svflags |= SVF_PROJECTILE;
 
 	if (self->client)
 		check_dodge (self, rocket->s.origin, dir, speed, damage_radius);
@@ -1352,6 +1363,8 @@ void fire_lockon_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, in
 	rocket->dmg_radius = damage_radius;
 	rocket->s.sound = gi.soundindex ("weapons/rockfly.wav");
 	rocket->classname = "lockon rocket";
+	if (self->client)
+		rocket->svflags |= SVF_PROJECTILE;
 
 	if (self->client)
 		check_dodge (self, rocket->s.origin, dir, speed, damage_radius);
@@ -1469,6 +1482,8 @@ void fire_smartrocket (edict_t *self, edict_t *target, vec3_t start, vec3_t dir,
 	rocket->dmg_radius = damage_radius;
 	rocket->s.sound = gi.soundindex ("weapons/rockfly.wav");
 	rocket->classname = "smartrocket";
+	if (self->client)
+		rocket->svflags |= SVF_PROJECTILE;
 	gi.linkentity (rocket);
 }
 
@@ -1949,6 +1964,8 @@ void fire_bfg (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, f
 	bfg->dmg = damage;
 	bfg->dmg_radius = damage_radius;
 	bfg->classname = "bfg blast";
+	if (self->client)
+		bfg->svflags |= SVF_PROJECTILE;
 	bfg->s.sound = gi.soundindex ("weapons/bfg__l1a.wav");
 	bfg->delay = level.time + 10.0; // initial time to expire
 
@@ -2000,6 +2017,8 @@ void spawn_grenades(edict_t *ent, vec3_t origin, float time, int damage, int num
 	grenade->dmg = damage;
     grenade->dmg_radius = 100;
 	grenade->radius_dmg = damage;
+	if (ent->client)
+		grenade->svflags |= SVF_PROJECTILE;
     VectorSet(grenade->mins,-8,-8,-8);
     VectorSet(grenade->maxs,8,8,8);
     grenade->touch = Grenade_Touch;

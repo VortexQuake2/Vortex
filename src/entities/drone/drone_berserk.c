@@ -17,6 +17,10 @@ static int sound_punch;
 static int sound_sight;
 static int sound_search;
 
+void drone_ai_run_slide(edict_t *self, float dist);
+static void berserk_ai_dodge_slide(edict_t *self, float dist);
+static void berserk_duck_up(edict_t *self);
+
 
 void berserk_sight (edict_t *self, edict_t *other)
 {
@@ -119,6 +123,8 @@ mmove_t berserk_move_run1 = {FRAME_run1, FRAME_run6, berserk_frames_run1, NULL};
 
 void berserk_run (edict_t *self)
 {
+	berserk_duck_up(self);
+
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 		self->monsterinfo.currentmove = &berserk_move_stand;
 	else
@@ -317,6 +323,179 @@ mframe_t berserk_frames_pain_long[] =
 };
 mmove_t berserk_move_pain_long = { FRAME_painb1, FRAME_painb20, berserk_frames_pain_long, berserk_run };
 
+#define BERSERK_SCALE(self)             ((self)->s.scale > 0 ? (self)->s.scale : 1.0f)
+#define BERSERK_STAND_MAX_Z_SCALED(self) (32.0f * BERSERK_SCALE(self))
+#define BERSERK_DUCK_MAX_Z_SCALED(self)  (0.0f  * BERSERK_SCALE(self))
+
+static void berserk_duck_down(edict_t *self)
+{
+	if (self->monsterinfo.aiflags & AI_DUCKED)
+		return;
+	if (!self->groundentity)
+		return;
+
+	self->monsterinfo.aiflags |= AI_DUCKED;
+	self->maxs[2] = BERSERK_DUCK_MAX_Z_SCALED(self);
+	self->takedamage = DAMAGE_YES;
+	gi.linkentity(self);
+}
+
+static void berserk_duck_hold(edict_t *self)
+{
+	if (self->monsterinfo.pausetime > level.time)
+		self->monsterinfo.nextframe = self->s.frame;
+}
+
+static void berserk_duck_up(edict_t *self)
+{
+	vec3_t oldmaxs;
+	trace_t tr;
+
+	if (!(self->monsterinfo.aiflags & AI_DUCKED) && self->maxs[2] == BERSERK_STAND_MAX_Z_SCALED(self))
+		return;
+
+	VectorCopy(self->maxs, oldmaxs);
+	self->maxs[2] = BERSERK_STAND_MAX_Z_SCALED(self);
+
+	tr = gi.trace(self->s.origin, self->mins, self->maxs, self->s.origin, self, MASK_MONSTERSOLID);
+
+	if (tr.startsolid || tr.allsolid)
+	{
+		VectorCopy(oldmaxs, self->maxs);
+		self->monsterinfo.aiflags |= AI_DUCKED;
+		return;
+	}
+
+	self->monsterinfo.aiflags &= ~AI_DUCKED;
+	self->takedamage = DAMAGE_AIM;
+	gi.linkentity(self);
+}
+
+mframe_t berserk_frames_dodge_slide[] =
+{
+	berserk_ai_dodge_slide, 21, NULL,
+	berserk_ai_dodge_slide, 11, NULL,
+	berserk_ai_dodge_slide, 21, NULL,
+	berserk_ai_dodge_slide, 25, NULL,
+	berserk_ai_dodge_slide, 18, NULL,
+	berserk_ai_dodge_slide, 19, NULL
+};
+mmove_t berserk_move_dodge_slide = { FRAME_run1, FRAME_run6, berserk_frames_dodge_slide, berserk_run };
+
+mframe_t berserk_frames_dodge_duck[] =
+{
+	ai_move, 21, berserk_duck_down,
+	ai_move, 28, NULL,
+	ai_move, 20, NULL,
+	ai_move, 12, NULL,
+	ai_move, 7, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, berserk_duck_hold,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, berserk_duck_up,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+mmove_t berserk_move_dodge_duck = { FRAME_fall2, FRAME_fall18, berserk_frames_dodge_duck, berserk_run };
+
+mframe_t berserk_frames_dodge_duck_short[] =
+{
+	ai_move, 0, berserk_duck_down,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, berserk_duck_hold,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, berserk_duck_up,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+mmove_t berserk_move_dodge_duck_short = { FRAME_duck1, FRAME_duck10, berserk_frames_dodge_duck_short, berserk_run };
+
+static qboolean berserk_is_dodge_move(edict_t *self)
+{
+	return self->monsterinfo.currentmove == &berserk_move_dodge_slide ||
+		self->monsterinfo.currentmove == &berserk_move_dodge_duck ||
+		self->monsterinfo.currentmove == &berserk_move_dodge_duck_short;
+}
+
+static void berserk_ai_dodge_slide(edict_t *self, float dist)
+{
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(self->monsterinfo.attacker))
+		self->enemy = self->monsterinfo.attacker;
+	if (!G_EntIsAlive(self->enemy))
+		return;
+
+	drone_ai_run_slide(self, dist);
+}
+
+void berserk_dodge(edict_t *self, edict_t *attacker, vec3_t dir, int radius)
+{
+	if (level.time < self->monsterinfo.dodge_time)
+		return;
+	if (!attacker)
+		return;
+	if (OnSameTeam(self, attacker))
+		return;
+	if (berserk_is_dodge_move(self) ||
+		self->monsterinfo.currentmove == &berserk_move_attack_strike ||
+		self->monsterinfo.currentmove == &berserk_move_pain_long)
+		return;
+	if (!self->groundentity)
+		return;
+
+	if (!G_EntIsAlive(self->enemy))
+	{
+		if (!G_EntIsAlive(attacker))
+			return;
+		self->enemy = attacker;
+	}
+	self->monsterinfo.attacker = attacker;
+
+	if (random() > 0.5f)
+		return;
+
+	if (radius || random() < 0.05f)
+	{
+		self->monsterinfo.pausetime = level.time + 0.5f;
+
+		if (radius && random() < 0.5f)
+		{
+			self->monsterinfo.currentmove = &berserk_move_dodge_duck_short;
+			berserk_duck_down(self);
+			self->monsterinfo.dodge_time = level.time + 1.0f;
+		}
+		else
+		{
+			self->monsterinfo.currentmove = &berserk_move_dodge_duck;
+			berserk_duck_down(self);
+			self->monsterinfo.dodge_time = level.time + 1.7f;
+		}
+
+		return;
+	}
+
+	if (random() < 0.25f)
+	{
+		self->monsterinfo.pausetime = level.time + 0.5f;
+		self->monsterinfo.currentmove = &berserk_move_dodge_duck_short;
+		berserk_duck_down(self);
+		self->monsterinfo.dodge_time = level.time + 1.0f;
+		return;
+	}
+
+	self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
+	self->monsterinfo.currentmove = &berserk_move_dodge_slide;
+	self->monsterinfo.dodge_time = level.time + 0.4f + random() * 1.6f;
+}
+
 void berserk_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
 	const double rng = random();
@@ -325,7 +504,8 @@ void berserk_pain(edict_t* self, edict_t* other, float kick, int damage)
 
 	// we're already in a pain state
 	if (self->monsterinfo.currentmove == &berserk_move_pain_long ||
-		self->monsterinfo.currentmove == &berserk_move_pain_short)
+		self->monsterinfo.currentmove == &berserk_move_pain_short ||
+		berserk_is_dodge_move(self))
 		return;
 
 	// monster players don't get pain state induced
@@ -497,7 +677,7 @@ void init_drone_berserk (edict_t *self)
 	self->monsterinfo.stand = berserk_stand;
 	self->monsterinfo.walk = berserk_walk;
 	self->monsterinfo.run = berserk_run;
-	//self->monsterinfo.dodge = NULL;
+	self->monsterinfo.dodge = berserk_dodge;
 	self->monsterinfo.attack = berserk_attack;
 	self->monsterinfo.melee = berserk_melee;
 	self->monsterinfo.sight = berserk_sight;

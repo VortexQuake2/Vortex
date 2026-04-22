@@ -27,6 +27,7 @@ static int	sound_thud;
 
 void mybrain_attack (edict_t *self);
 void mybrain_attack3 (edict_t *self);
+static qboolean mybrain_is_dodge_move(edict_t *self);
 
 void mybrain_sight (edict_t *self, edict_t *other)
 {
@@ -241,7 +242,8 @@ void mybrain_pain(edict_t* self, edict_t* other, float kick, int damage)
 	if (self->monsterinfo.currentmove == &mybrain_move_pain_long ||
 		self->monsterinfo.currentmove == &mybrain_move_pain_short1 ||
 		self->monsterinfo.currentmove == &mybrain_move_pain_short2 ||
-		self->monsterinfo.currentmove == &mybrain_move_defense)
+		self->monsterinfo.currentmove == &mybrain_move_defense ||
+		mybrain_is_dodge_move(self))
 		return;
 
 	// monster players don't get pain state induced
@@ -299,6 +301,12 @@ void mybrain_duck_up (edict_t *self)
 	gi.linkentity (self);
 }
 
+void mybrain_duck_hold (edict_t *self)
+{
+	if (self->monsterinfo.pausetime > level.time)
+		self->monsterinfo.nextframe = self->s.frame;
+}
+
 void mybrain_jump_takeoff (edict_t *self)
 {
 	vec3_t	v;
@@ -335,14 +343,14 @@ void mybrain_jump_hold (edict_t *self)
 
 mframe_t mybrain_frames_duck [] =
 {
-	ai_move,	0,	mybrain_duck_down,
-	ai_move,	0,	NULL,//mybrain_duck_down,
+	ai_move,	1,	mybrain_duck_down,
+	ai_move,	1,	NULL,
+	ai_move,	1,	mybrain_duck_hold,
 	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
+	ai_move,	-1,	NULL,
+	ai_move,	-1,	NULL,
 	ai_move,	0,	mybrain_duck_up,
-	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
-	ai_move,	0,	NULL
+	ai_move,	-1,	NULL
 };
 mmove_t mybrain_move_duck = {FRAME_duck01, FRAME_duck08, mybrain_frames_duck, mybrain_run};
 
@@ -457,22 +465,34 @@ void mybrain_jump (edict_t *self)
 		self->monsterinfo.currentmove = &mybrain_move_jump;
 }
 
+static qboolean mybrain_is_dodge_move(edict_t *self)
+{
+	return self->monsterinfo.currentmove == &mybrain_move_duck ||
+		self->monsterinfo.currentmove == &mybrain_move_jump ||
+		self->monsterinfo.currentmove == &mybrain_move_jumpattack;
+}
+
 void mybrain_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
 {
 	if (random() > 0.9)
 		return;
-	if (!G_GetClient(self))
-		return;
 	if (level.time < self->monsterinfo.dodge_time)
+		return;
+	if (!attacker)
 		return;
 	if (OnSameTeam(self, attacker))
 		return;
+	if (mybrain_is_dodge_move(self))
+		return;
 
-	if (!self->enemy && G_EntIsAlive(attacker))
+	self->monsterinfo.attacker = attacker;
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(attacker))
 		self->enemy = attacker;
 	if (!radius)
 	{
+		self->monsterinfo.pausetime = level.time + 0.5;
 		self->monsterinfo.currentmove = &mybrain_move_duck;
+		mybrain_duck_down(self);
 		self->monsterinfo.dodge_time = level.time + 2.0;
 	}
 	else
@@ -724,6 +744,7 @@ mmove_t mybrain_move_attack3 = {FRAME_attak205, FRAME_attak217, mybrain_frames_a
 
 void mybrain_attack3 (edict_t *self)
 {
+	gi.sound(self, CHAN_WEAPON, sound_tentacles_extend, 1, ATTN_NORM, 0);
 	self->monsterinfo.currentmove = &mybrain_move_attack3;
 }
 

@@ -30,6 +30,14 @@ static int	commander_sound_hook_heal;
 static int	commander_sound_hook_retract;
 static int	commander_sound_spawn;
 
+void drone_ai_run_slide(edict_t *self, float dist);
+void mymedic_run(edict_t *self);
+extern mmove_t mymedic_move_attackHyperBlaster;
+extern mmove_t mymedic_move_attackBlaster;
+extern mmove_t mymedic_move_attackCable;
+extern mmove_t medic_commander_move_callReinforcements;
+static qboolean mymedic_is_dodge_move(edict_t *self);
+
 #define MEDIC_COMMANDER_SUMMON_COUNT	2
 #define MEDIC_COMMANDER_SUMMON_COOLDOWN	8.0f
 #define SPAWNGROW_LIFESPAN				1.0f
@@ -235,6 +243,27 @@ mframe_t mymedic_frames_run [] =
 };
 mmove_t mymedic_move_run = {FRAME_run1, FRAME_run6, mymedic_frames_run, NULL};
 
+static void mymedic_ai_dodge_slide(edict_t *self, float dist)
+{
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(self->monsterinfo.attacker))
+		self->enemy = self->monsterinfo.attacker;
+	if (!G_EntIsAlive(self->enemy))
+		return;
+
+	drone_ai_run_slide(self, dist);
+}
+
+mframe_t mymedic_frames_dodge_slide[] =
+{
+	mymedic_ai_dodge_slide, 18, NULL,
+	mymedic_ai_dodge_slide, 22.5, NULL,
+	mymedic_ai_dodge_slide, 25.4, NULL,
+	mymedic_ai_dodge_slide, 23.4, NULL,
+	mymedic_ai_dodge_slide, 24, NULL,
+	mymedic_ai_dodge_slide, 35.6, NULL
+};
+mmove_t mymedic_move_dodge_slide = {FRAME_run1, FRAME_run6, mymedic_frames_dodge_slide, mymedic_run};
+
 void mymedic_run (edict_t *self)
 {
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
@@ -335,7 +364,8 @@ void medic_pain(edict_t* self, edict_t* other, float kick, int damage)
 
 	// we're already in a pain state
 	if (self->monsterinfo.currentmove == &medic_move_pain_short ||
-		self->monsterinfo.currentmove == &medic_move_pain_long)
+		self->monsterinfo.currentmove == &medic_move_pain_long ||
+		mymedic_is_dodge_move(self))
 		return;
 
 	// monster players don't get pain state induced
@@ -480,6 +510,12 @@ void mymedic_duck_up (edict_t *self)
 	gi.linkentity (self);
 }
 
+void mymedic_duck_hold (edict_t *self)
+{
+	if (self->monsterinfo.pausetime > level.time)
+		self->monsterinfo.nextframe = self->s.frame;
+}
+
 
 void mymedic_jump_takeoff (edict_t *self)
 {
@@ -520,26 +556,21 @@ void mymedic_jump_hold (edict_t *self)
 
 mframe_t mymedic_frames_duck [] =
 {
-	ai_move, 0,	mymedic_duck_down,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,//mymedic_duck_down,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	mymedic_duck_up
-	/*
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL
-	*/
+	ai_move, -1, NULL,
+	ai_move, -1, mymedic_duck_down,
+	ai_move, -1, mymedic_duck_hold,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, -1, mymedic_duck_up
 };
-mmove_t mymedic_move_duck = {FRAME_duck1, FRAME_duck7, mymedic_frames_duck, mymedic_run};
+mmove_t mymedic_move_duck = {FRAME_duck2, FRAME_duck14, mymedic_frames_duck, mymedic_run};
 
 mframe_t mymedic_frames_leap [] =
 {
@@ -570,22 +601,63 @@ void mymedic_leap (edict_t *self)
 		self->monsterinfo.currentmove = &mymedic_move_leap;
 }
 
+static qboolean mymedic_is_dodge_move(edict_t *self)
+{
+	return self->monsterinfo.currentmove == &mymedic_move_duck ||
+		self->monsterinfo.currentmove == &mymedic_move_leap ||
+		self->monsterinfo.currentmove == &mymedic_move_dodge_slide;
+}
+
+static qboolean mymedic_is_uninterruptible_attack(edict_t *self)
+{
+	return self->monsterinfo.currentmove == &mymedic_move_attackHyperBlaster ||
+		self->monsterinfo.currentmove == &mymedic_move_attackCable ||
+		self->monsterinfo.currentmove == &mymedic_move_attackBlaster ||
+		self->monsterinfo.currentmove == &medic_commander_move_callReinforcements;
+}
+
+static qboolean mymedic_dodge_hit_low(edict_t *self, vec3_t dir)
+{
+	const float duck_height = self->absmax[2] - 33;
+
+	return dir[2] > self->absmin[2] && dir[2] <= duck_height;
+}
+
 void mymedic_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
 {
 	if (random() > 0.9)
 		return;
-	if (!G_GetClient(self))
-		return;
 	if (level.time < self->monsterinfo.dodge_time)
+		return;
+	if (!attacker)
 		return;
 	if (OnSameTeam(self, attacker))
 		return;
+	if (mymedic_is_dodge_move(self) || mymedic_is_uninterruptible_attack(self))
+		return;
 
-	if (!self->enemy && G_EntIsAlive(attacker))
+	self->monsterinfo.attacker = attacker;
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(attacker))
 		self->enemy = attacker;
 	if (!radius)
 	{
-		self->monsterinfo.currentmove = &mymedic_move_duck;
+		if (!mymedic_dodge_hit_low(self, dir))
+		{
+			self->monsterinfo.pausetime = level.time + 0.5;
+			self->monsterinfo.currentmove = &mymedic_move_duck;
+			mymedic_duck_down(self);
+		}
+		else if (!(self->monsterinfo.aiflags & AI_STAND_GROUND))
+		{
+			self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
+			self->monsterinfo.currentmove = &mymedic_move_dodge_slide;
+		}
+		else
+		{
+			self->monsterinfo.pausetime = level.time + 0.5;
+			self->monsterinfo.currentmove = &mymedic_move_duck;
+			mymedic_duck_down(self);
+		}
 		self->monsterinfo.dodge_time = level.time + 2.0;
 	}
 	else
@@ -769,7 +841,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 	}
 	else if ((!strcmp(target->classname, "bodyque") || !strcmp(target->classname, "player")))
 	{
-		const int		random=GetRandom(1, 3);
+		const int		random=GetRandom(1, 6);
 		vec3_t	start;
 
 		// if the summoner is a player, check for sufficient monster slots
@@ -781,27 +853,43 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 		VectorCopy(target->s.origin, start);
 
 		// kill the corpse
-		T_Damage(target, target, target, vec3_origin, target->s.origin, 
+		T_Damage(target, target, target, vec3_origin, target->s.origin,
 			vec3_origin, 10000, 0, DAMAGE_NO_PROTECTION, 0);
 
-		//4.2 random soldier type with different weapons
-		if (random == 1)
+		// random soldier type with different weapons
+		switch (random)
 		{
+		case 1:
 			// blaster
 			e->mtype = M_SOLDIER;
 			e->s.skinnum = 0;
-		}
-		else if (random == 2)
-		{
+			break;
+		case 2:
 			// rocket
 			e->mtype = M_SOLDIERLT;
 			e->s.skinnum = 4;
-		}
-		else
-		{
+			break;
+		case 3:
 			// shotgun
 			e->mtype = M_SOLDIERSS;
 			e->s.skinnum = 2;
+			break;
+		case 4:
+			// ripper
+			e->mtype = M_SOLDIER_RIPPER;
+			e->s.skinnum = 6;
+			break;
+		case 5:
+			// blue blaster
+			e->mtype = M_SOLDIER_BLUEBLASTER;
+			e->s.skinnum = 8;
+			break;
+		case 6:
+		default:
+			// laser
+			e->mtype = M_SOLDIER_LASER;
+			e->s.skinnum = 10;
+			break;
 		}
 
 		e->activator = ent;
@@ -813,7 +901,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 		e->s.skinnum |= 1; // injured skin
 
 		e->monsterinfo.stand(e);
-		
+
 		if (!G_IsValidLocation(target, start, e->mins, e->maxs))
 		{
 			start[2] += 24;
@@ -1248,7 +1336,22 @@ static qboolean medic_commander_find_spawn_spot(edict_t *self, vec3_t mins, vec3
 	return medic_commander_valid_spawn_spot(self, mins, maxs, spot);
 }
 
-static qboolean medic_commander_spawn_laserguard(edict_t *self, float side)
+static int medic_commander_random_soldier_type(void)
+{
+	static const int soldier_types[] =
+	{
+		M_SOLDIER,
+		M_SOLDIERLT,
+		M_SOLDIERSS,
+		M_SOLDIER_RIPPER,
+		M_SOLDIER_BLUEBLASTER,
+		M_SOLDIER_LASER
+	};
+
+	return soldier_types[GetRandom(0, (int)(sizeof(soldier_types) / sizeof(soldier_types[0])) - 1)];
+}
+
+static qboolean medic_commander_spawn_soldier(edict_t *self, float side)
 {
 	edict_t *owner = self->activator;
 	edict_t *gunner;
@@ -1261,7 +1364,7 @@ static qboolean medic_commander_spawn_laserguard(edict_t *self, float side)
 		return false;
 
 	gunner = G_Spawn();
-	gunner->mtype = M_SOLDIER_LASER;
+	gunner->mtype = medic_commander_random_soldier_type();
 	gunner->activator = owner;
 	gunner->monsterinfo.level = self->monsterinfo.level;
 
@@ -1336,7 +1439,7 @@ static void medic_commander_finish_spawn(edict_t *self)
 	{
 		float side = (i & 1) ? 56 : -56;
 
-		if (medic_commander_spawn_laserguard(self, side))
+		if (medic_commander_spawn_soldier(self, side))
 			spawned++;
 	}
 

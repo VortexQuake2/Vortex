@@ -72,6 +72,8 @@ void fire_magicbolt (edict_t *ent, int damage, int radius_damage, float damage_r
 	bolt->dmg_radius = damage_radius;
 	bolt->radius_dmg = radius_damage;
 	bolt->classname = "magicbolt";	
+	if (ent->client)
+		bolt->svflags |= SVF_PROJECTILE;
 	gi.linkentity (bolt);
 
 	// write a nice effect so everyone knows we've cast a spell

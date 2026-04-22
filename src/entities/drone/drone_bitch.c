@@ -15,7 +15,10 @@ void mychick_reslash(edict_t *self);
 void mychick_rerocket(edict_t *self);
 void mychick_attack1(edict_t *self);
 void mychick_continue (edict_t *self);
+extern mmove_t mychick_move_start_attack1;
+extern mmove_t mychick_move_attack1;
 extern mmove_t mychick_move_end_attack1;
+void drone_ai_run_slide(edict_t *self, float dist);
 
 static int	sound_missile_prelaunch;
 static int	sound_missile_launch;
@@ -179,6 +182,31 @@ mframe_t mychick_frames_run [] =
 };
 mmove_t mychick_move_run = {FRAME_walk11, FRAME_walk20, mychick_frames_run, NULL};
 
+static void mychick_ai_dodge_slide(edict_t *self, float dist)
+{
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(self->monsterinfo.attacker))
+		self->enemy = self->monsterinfo.attacker;
+	if (!G_EntIsAlive(self->enemy))
+		return;
+
+	drone_ai_run_slide(self, dist);
+}
+
+mframe_t mychick_frames_dodge_slide[] =
+{
+	mychick_ai_dodge_slide, 16, NULL,
+	mychick_ai_dodge_slide, 16, NULL,
+	mychick_ai_dodge_slide, 14, NULL,
+	mychick_ai_dodge_slide, 13, NULL,
+	mychick_ai_dodge_slide, 15, NULL,
+	mychick_ai_dodge_slide, 12, NULL,
+	mychick_ai_dodge_slide, 11, NULL,
+	mychick_ai_dodge_slide, 10, NULL,
+	mychick_ai_dodge_slide, 8, NULL,
+	mychick_ai_dodge_slide, 6, NULL
+};
+mmove_t mychick_move_dodge_slide = {FRAME_walk11, FRAME_walk20, mychick_frames_dodge_slide, mychick_run};
+
 void mychick_run (edict_t *self)
 {
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
@@ -314,6 +342,10 @@ void mychick_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	}
 }
 
+#define MYCHICK_STAND_SCALE(self) ((self)->s.scale > 0 ? (self)->s.scale : 1.0f)
+#define MYCHICK_STAND_MAX_Z(self) (56 * MYCHICK_STAND_SCALE(self))
+#define MYCHICK_DUCK_MAX_Z 0
+
 void mychick_duck_down (edict_t *self)
 {
 	if (self->monsterinfo.aiflags & AI_DUCKED)
@@ -322,29 +354,54 @@ void mychick_duck_down (edict_t *self)
 		return;
 
 	self->monsterinfo.aiflags |= AI_DUCKED;
-	self->maxs[2] = 0;
+	self->maxs[2] = MYCHICK_DUCK_MAX_Z;
 	self->takedamage = DAMAGE_YES;
-	gi.linkentity (self);
+	gi.linkentity(self);
 }
 
 void mychick_duck_up (edict_t *self)
 {
+	vec3_t oldmaxs;
+	trace_t tr;
+
+	if (!(self->monsterinfo.aiflags & AI_DUCKED) &&
+		self->maxs[2] == MYCHICK_STAND_MAX_Z(self))
+		return;
+
+	VectorCopy(self->maxs, oldmaxs);
+	self->maxs[2] = MYCHICK_STAND_MAX_Z(self);
+
+	tr = gi.trace(self->s.origin, self->mins, self->maxs, self->s.origin, self, MASK_MONSTERSOLID);
+
+	if (tr.startsolid || tr.allsolid)
+	{
+		VectorCopy(oldmaxs, self->maxs);
+		self->monsterinfo.aiflags |= AI_DUCKED;
+		return;
+	}
+
 	self->monsterinfo.aiflags &= ~AI_DUCKED;
-	self->maxs[2] = 32;
 	self->takedamage = DAMAGE_AIM;
-	VectorClear(self->velocity);
-	gi.linkentity (self);
+	gi.linkentity(self);
+}
+
+void mychick_duck_hold (edict_t *self)
+{
+	if (self->monsterinfo.pausetime > level.time)
+		self->monsterinfo.nextframe = self->s.frame;
 }
 
 mframe_t mychick_frames_duck [] =
 {
 	ai_move, 0, mychick_duck_down,
-	ai_move, 0,  NULL,
-	ai_move, 0,  mychick_duck_up,
-	ai_move, 0, NULL,
-	ai_move, 0,  NULL
+	ai_move, 1, NULL,
+	ai_move, 4, mychick_duck_hold,
+	ai_move, -4, NULL,
+	ai_move, -5, mychick_duck_up,
+	ai_move, 3, NULL,
+	ai_move, 1, NULL
 };
-mmove_t mychick_move_duck = {FRAME_duck03, FRAME_duck07, mychick_frames_duck, mychick_run};
+mmove_t mychick_move_duck = {FRAME_duck01, FRAME_duck07, mychick_frames_duck, mychick_run};
 
 void mychick_jump_takeoff (edict_t *self)
 {
@@ -401,29 +458,74 @@ void mychick_leap (edict_t *self)
 		self->monsterinfo.currentmove = &mychick_move_leap;
 }
 
-void mychick_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
+static qboolean mychick_is_dodge_move(edict_t *self)
 {
-	if (random() > 0.9)
-		return;
-	if (!G_GetClient(self))
-		return;
+	return self->monsterinfo.currentmove == &mychick_move_duck ||
+		self->monsterinfo.currentmove == &mychick_move_leap ||
+		self->monsterinfo.currentmove == &mychick_move_dodge_slide;
+}
+
+static qboolean mychick_is_uninterruptible_attack(edict_t *self)
+{
+	return self->monsterinfo.currentmove == &mychick_move_start_attack1 ||
+		self->monsterinfo.currentmove == &mychick_move_attack1;
+}
+
+static qboolean mychick_dodge_hit_low(edict_t *self, vec3_t dir)
+{
+	const float duck_height = self->absmax[2] - 33;
+
+	return dir[2] > self->absmin[2] && dir[2] <= duck_height;
+}
+
+static void mychick_start_duck(edict_t *self)
+{
+	self->monsterinfo.pausetime = level.time + 0.5f;
+	self->monsterinfo.currentmove = &mychick_move_duck;
+	mychick_duck_down(self);
+	self->monsterinfo.dodge_time = level.time + 2.0f;
+}
+
+static void mychick_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
+{
 	if (level.time < self->monsterinfo.dodge_time)
+		return;
+	if (!attacker)
 		return;
 	if (OnSameTeam(self, attacker))
 		return;
+	if (mychick_is_dodge_move(self) || mychick_is_uninterruptible_attack(self))
+		return;
 
-	if (!self->enemy && G_EntIsAlive(attacker))
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(attacker))
 		self->enemy = attacker;
-	if (!radius)
-	{
-		self->monsterinfo.currentmove = &mychick_move_duck;
-		self->monsterinfo.dodge_time = level.time + 2.0;
-	}
-	else
+
+	if (random() > 0.9f)
+		return;
+
+	self->monsterinfo.attacker = attacker;
+	if (radius)
 	{
 		mychick_leap(self);
-		self->monsterinfo.dodge_time = level.time + 3.0;
+		self->monsterinfo.dodge_time = level.time + 3.0f;
+		return;
 	}
+
+	if (!mychick_dodge_hit_low(self, dir))
+	{
+		mychick_start_duck(self);
+		return;
+	}
+
+	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND))
+	{
+		self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
+		self->monsterinfo.currentmove = &mychick_move_dodge_slide;
+		self->monsterinfo.dodge_time = level.time + 1.0f;
+		return;
+	}
+
+	mychick_start_duck(self);
 }
 
 void fire_meteor (edict_t *self, vec3_t end, int damage, int radius, int speed);
@@ -844,7 +946,8 @@ void mychick_pain(edict_t* self, edict_t* other, float kick, int damage)
 	// we're already in a pain state
 	if (self->monsterinfo.currentmove == &mychick_move_pain_long ||
 		self->monsterinfo.currentmove == &mychick_move_pain_short1 || 
-		self->monsterinfo.currentmove == &mychick_move_pain_short2)
+		self->monsterinfo.currentmove == &mychick_move_pain_short2 ||
+		mychick_is_dodge_move(self))
 		return;
 
 	// monster players don't get pain state induced

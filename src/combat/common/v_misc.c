@@ -611,6 +611,7 @@ int vrx_GetMonsterCost(int mtype) {
         case M_BRAIN:
             cost = M_BRAIN_COST;
             break;
+		case M_RUNNERTANK:
         case M_TANK:
             cost = M_TANK_COST; 
             break;
@@ -623,11 +624,8 @@ int vrx_GetMonsterCost(int mtype) {
         case M_REDMUTANT:
             cost = M_MUTANT_COST;
             break;
-        case M_RUNNERTANK:
-            cost = M_TANK_COST;
-            break;
         case M_GUNCMDR:
-            cost = M_TANK_COST;
+            cost = M_GUNNER_COST;
             break;
         case M_DAEDALUS:
             cost = M_HOVER_COST;
@@ -648,6 +646,9 @@ int vrx_GetMonsterCost(int mtype) {
         case M_CARRIER:
             cost = M_COMMANDER_COST;
             break;
+		case M_JANITOR:
+			cost = M_TANK_COST;
+			break;
         case M_SUPERTANK:
             cost = M_SUPERTANK_COST;
             break;
@@ -714,9 +715,6 @@ int vrx_GetMonsterControlCost(int mtype) {
         case M_GUNCMDR:
             cost = M_TANK_CONTROL_COST;
             break;
-        case M_DAEDALUS:
-            cost = M_HOVER_CONTROL_COST;
-            break;
         case M_GLADB:
         case M_GLADC:
             cost = M_GLADIATOR_CONTROL_COST;
@@ -734,6 +732,7 @@ int vrx_GetMonsterControlCost(int mtype) {
             cost = M_JORG_CONTROL_COST;
             break;
         case M_HOVER:
+		case M_DAEDALUS:
             cost = M_HOVER_CONTROL_COST;
             break;
         case M_SUPERTANK:

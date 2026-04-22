@@ -25,6 +25,7 @@ static int sound_thud;
 void drone_ai_stand(edict_t *self, float dist);
 void drone_ai_run(edict_t *self, float dist);
 void drone_ai_walk(edict_t *self, float dist);
+void drone_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf);
 
 static void gekk_stand(edict_t *self);
 static void gekk_walk(edict_t *self);
@@ -42,6 +43,14 @@ extern mmove_t gekk_move_leapatk;
 
 extern void fire_acid(edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damage, float radius,
 	int speed, int acid_damage, float acid_duration, int gas_damage, float gas_radius, float gas_duration);
+
+static void gekk_set_leap_cooldown(edict_t *self, float base, float extra)
+{
+	float cooldown = level.time + base + random() * extra;
+
+	if (self->monsterinfo.dodge_time < cooldown)
+		self->monsterinfo.dodge_time = cooldown;
+}
 
 static void gekk_step(edict_t *self)
 {
@@ -465,10 +474,87 @@ static void gekk_melee(edict_t *self)
 		self->monsterinfo.currentmove = &gekk_move_attack2;
 }
 
+static qboolean gekk_can_leap(edict_t *self)
+{
+	vec3_t v;
+	float distance;
+
+	if (!G_ValidTarget(self, self->enemy, true, true))
+		return false;
+	if (!self->groundentity)
+		return false;
+	if (self->monsterinfo.melee_finished > level.time)
+		return false;
+	if (self->monsterinfo.dodge_time > level.time)
+		return false;
+	if (!visible(self, self->enemy))
+		return false;
+
+	VectorSubtract(self->s.origin, self->enemy->s.origin, v);
+	v[2] = 0;
+	distance = VectorLength(v);
+
+	if (distance < 100)
+	{
+		if (self->absmax[2] <= self->enemy->absmin[2])
+			return false;
+	}
+	else if (self->absmin[2] + 125 < self->enemy->absmin[2])
+		return false;
+
+	if (self->waterlevel > 1 && random() < 0.2f)
+		return false;
+
+	return true;
+}
+
+static qboolean gekk_use_high_leap(edict_t *self)
+{
+	vec3_t v;
+	float distance;
+
+	if (!G_EntExists(self->enemy))
+		return false;
+	if (self->absmin[2] + 125 < self->enemy->absmin[2])
+		return false;
+
+	VectorSubtract(self->s.origin, self->enemy->s.origin, v);
+	v[2] = 0;
+	distance = VectorLength(v);
+	if (distance < 100)
+		return false;
+
+	return random() >= (self->waterlevel > 1 ? 0.2f : 0.9f);
+}
+
+static void gekk_jump_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
+{
+	if (self->health <= 0)
+	{
+		self->touch = drone_touch;
+		return;
+	}
+
+	if (other && other->takedamage)
+		return;
+
+	if (!self->groundentity)
+	{
+		self->velocity[0] = 0;
+		self->velocity[1] = 0;
+		if (self->velocity[2] > -200)
+			self->velocity[2] = -200;
+		self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+		self->monsterinfo.nextframe = FRAME_leapatk_11;
+		gekk_set_leap_cooldown(self, 4.0, 2.0);
+	}
+
+	self->touch = drone_touch;
+}
+
 static void gekk_jump_takeoff(edict_t *self)
 {
-	vec3_t forward, start;
-	int speed = 700;
+	vec3_t forward;
 
 	if (!G_EntExists(self->enemy))
 		return;
@@ -477,11 +563,21 @@ static void gekk_jump_takeoff(edict_t *self)
 	self->lastsound = level.framenum;
 	self->s.origin[2] += 1;
 	self->groundentity = NULL;
-	MonsterAim(self, -1, speed, false, 0, forward, start);
-	VectorScale(forward, speed, self->velocity);
-	self->velocity[2] += 300;
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+	if (gekk_use_high_leap(self))
+	{
+		VectorScale(forward, 700, self->velocity);
+		self->velocity[2] = 250;
+	}
+	else
+	{
+		VectorScale(forward, 250, self->velocity);
+		self->velocity[2] = 400;
+	}
 	self->monsterinfo.pausetime = level.time + 2.0;
 	self->monsterinfo.aiflags |= AI_HOLD_FRAME;
+	self->touch = gekk_jump_touch;
+	gekk_set_leap_cooldown(self, 1.0, 0.5);
 }
 
 static void gekk_stop_skid(edict_t *self)
@@ -490,6 +586,7 @@ static void gekk_stop_skid(edict_t *self)
 	{
 		VectorClear(self->velocity);
 		self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+		self->touch = drone_touch;
 	}
 }
 
@@ -498,6 +595,13 @@ static void gekk_check_landing(edict_t *self)
 	if (self->groundentity || (self->waterlevel > 1) || (level.time > self->monsterinfo.pausetime))
 	{
 		self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+		self->monsterinfo.melee_finished = level.time + 1.5;
+		self->monsterinfo.attack_finished = level.time + 1.0;
+		self->monsterinfo.nextframe = FRAME_leapatk_11;
+		self->touch = drone_touch;
+		gekk_set_leap_cooldown(self, 1.5, 1.0);
+		if (!self->groundentity && self->velocity[2] > -200)
+			self->velocity[2] = -200;
 		if (self->waterlevel > 1)
 			gekk_land_to_water(self);
 		return;
@@ -574,8 +678,6 @@ mmove_t gekk_move_spit = { FRAME_spit_01, FRAME_spit_07, gekk_frames_spit, gekk_
 
 static void gekk_attack(edict_t *self)
 {
-	float dist;
-
 	if (gekk_should_swim(self))
 	{
 		if (G_EntExists(self->enemy) && self->enemy->waterlevel < WATER_WAIST)
@@ -592,13 +694,16 @@ static void gekk_attack(edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	dist = entdist(self, self->enemy);
-	if (visible(self, self->enemy) && dist <= 512)
+	if (gekk_can_leap(self) && random() >= 0.35f)
+	{
 		self->monsterinfo.currentmove = &gekk_move_leapatk;
+		self->monsterinfo.melee_finished = level.time + 3.0;
+	}
 	else
+	{
 		self->monsterinfo.currentmove = &gekk_move_spit;
-
-	self->monsterinfo.melee_finished = level.time + 1.0;
+		self->monsterinfo.melee_finished = level.time + 0.5;
+	}
 	M_DelayNextAttack(self, 1.0 + random(), true);
 }
 

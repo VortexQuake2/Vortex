@@ -368,6 +368,8 @@ void fire_lance (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int bur
 	lance->dmg = damage;
 	lance->radius_dmg = burn_damage;
 	lance->classname = "lance";
+	if (self->client)
+		lance->svflags |= SVF_PROJECTILE;
 	lance->delay = level.time + 10.0;
     //gi.setmodel(lance, "models/objects/javelin/tris.md2");
 	// lance->s.skinnum = 1;

@@ -167,6 +167,9 @@ mmove_t arachnid_move_attack_up1 = { FRAME_rails_up1, FRAME_rails_up13, arachnid
 
 static void arachnid_melee_charge(edict_t *self)
 {
+	if (!G_ValidTarget(self, self->enemy, true, true) || entdist(self, self->enemy) > 96)
+		return;
+
 	gi.sound(self, CHAN_WEAPON, sound_melee, 1, ATTN_NORM, 0);
 }
 
@@ -176,6 +179,11 @@ static void arachnid_melee_hit(edict_t *self)
 
 	if (!G_ValidTarget(self, self->enemy, true, true))
 		return;
+	if (entdist(self, self->enemy) > 96)
+	{
+		self->monsterinfo.melee_finished = level.time + 1.0;
+		return;
+	}
 
 	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * drone_damagelevel(self);
 	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
@@ -221,7 +229,10 @@ static void arachnid_attack(edict_t *self)
 
 static void arachnid_melee(edict_t *self)
 {
-	self->monsterinfo.currentmove = &arachnid_move_melee;
+	if (!G_ValidTarget(self, self->enemy, true, true) || entdist(self, self->enemy) > 96)
+		self->monsterinfo.currentmove = &arachnid_move_attack1;
+	else
+		self->monsterinfo.currentmove = &arachnid_move_melee;
 	M_DelayNextAttack(self, 0, true);
 }
 
@@ -348,15 +359,15 @@ void init_drone_arachnid(edict_t *self)
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex("models/monsters/arachnid/tris.md2");
-	VectorSet(self->mins, -48, -48, -20);
-	VectorSet(self->maxs, 48, 48, 48);
+	VectorSet(self->mins, -36, -36, -18);
+	VectorSet(self->maxs, 36, 36, 42);
 
 	self->health = M_ARACHNID_INITIAL_HEALTH + M_ARACHNID_ADDON_HEALTH * self->monsterinfo.level;
 	self->max_health = self->health;
 	self->gib_health = -200;
 	self->mass = 450;
 	self->mtype = M_ARACHNID;
-	self->s.scale = 0.65f;
+	self->s.scale = 0.75f;
 	self->monsterinfo.control_cost = M_GLADIATOR_CONTROL_COST;
 	self->monsterinfo.cost = M_DEFAULT_COST;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
@@ -380,6 +391,6 @@ void init_drone_arachnid(edict_t *self)
 	gi.linkentity(self);
 
 	self->monsterinfo.currentmove = &arachnid_move_stand;
-	self->monsterinfo.scale = MODEL_SCALE;
+	self->monsterinfo.scale = MODEL_SCALE * self->s.scale;
 	self->nextthink = level.time + FRAMETIME;
 }

@@ -299,6 +299,8 @@ void fire_emp_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int slevel, f
     grenade->monsterinfo.level = slevel;
     grenade->dmg_radius = radius;
     grenade->classname = "emp grenade";
+    if (self->client)
+        grenade->svflags |= SVF_PROJECTILE;
     gi.linkentity (grenade);
     grenade->nextthink = level.time + timer;
 

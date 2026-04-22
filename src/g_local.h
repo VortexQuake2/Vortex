@@ -1639,8 +1639,6 @@ enum dronespawn_t {
     DS_BITCH_HEAT = 27,
     DS_ARACHNID = 28,
     DS_MEDIC_COMMANDER = 29,
-
-    
     DS_COMMANDER = 30,
     DS_MAKRON = 31,
     DS_BARON_FIRE = 32,

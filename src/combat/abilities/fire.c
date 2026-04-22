@@ -241,6 +241,8 @@ void fire_fireball(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float
 	fireball->radius_dmg = flame_damage;
 	fireball->count = flames;
 	fireball->classname = "fireball";
+	if (self->client)
+		fireball->svflags |= SVF_PROJECTILE;
 	fireball->delay = level.time + 10.0;
 	gi.linkentity(fireball);
 	fireball->nextthink = level.time + FRAMETIME;

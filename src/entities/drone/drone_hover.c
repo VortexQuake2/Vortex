@@ -600,6 +600,11 @@ void hover_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 		gi.sound (self, CHAN_VOICE, sound_death2, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	self->flags &= ~FL_FLY;
+	self->movetype = MOVETYPE_TOSS;
+	self->gravity = 1.0;
+	if (self->velocity[2] > -120)
+		self->velocity[2] = -120;
 	self->monsterinfo.currentmove = &hover_move_death1;
 }
 

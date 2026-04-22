@@ -46,6 +46,8 @@ void fire_spike (edict_t *self, vec3_t start, vec3_t dir, int damage, float stun
 	bolt->dmg = damage;
 	bolt->dmg_radius = stun_length;
 	bolt->classname = "spike";
+	if (self->client)
+		bolt->svflags |= SVF_PROJECTILE;
 	gi.linkentity (bolt);
 
 	// cloak a player-owned spike in PvM if there are too many entities nearby

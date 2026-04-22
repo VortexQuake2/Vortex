@@ -1803,7 +1803,9 @@ qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, q
 				if (self->mtype != M_COMMANDER && self->mtype != M_GUNCMDR
 					&& self->mtype != M_DAEDALUS && self->mtype != M_GLADB && self->mtype != M_GLADC
 					&& self->mtype != M_CHICK_HEAT && self->mtype != M_MEDIC_COMMANDER
-					&& self->mtype != M_SOLDIER && self->mtype != M_STALKER)
+					&& self->mtype != M_SOLDIER && self->mtype != M_SOLDIER_RIPPER
+					&& self->mtype != M_SOLDIER_BLUEBLASTER && self->mtype != M_SOLDIER_LASER
+					&& self->mtype != M_STALKER)
 					self->s.skinnum &= ~2;
 			}
 

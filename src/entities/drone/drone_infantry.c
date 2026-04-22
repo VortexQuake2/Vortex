@@ -28,6 +28,11 @@ static int	sound_idle;
 
 #define INFANTRY_RUN_ATTACK_MIN_DIST 256
 
+void drone_ai_run_slide(edict_t *self, float dist);
+static void infantry_run_fire(edict_t *self);
+extern mmove_t infantry_move_attack4;
+
+
 
 mframe_t infantry_frames_stand [] =
 {
@@ -543,6 +548,138 @@ void infantry_fire(edict_t* self)
 	M_DelayNextAttack(self, 0, true);
 }
 
+static void infantry_ai_dodge_slide(edict_t *self, float dist);
+
+static void infantry_ai_dodge_slide(edict_t *self, float dist)
+{
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(self->monsterinfo.attacker))
+		self->enemy = self->monsterinfo.attacker;
+	if (!G_EntIsAlive(self->enemy))
+		return;
+
+	drone_ai_run_slide(self, dist);
+}
+
+mframe_t infantry_frames_dodge_slide[] =
+{
+	infantry_ai_dodge_slide, 12, NULL,
+	infantry_ai_dodge_slide, 10, NULL,
+	infantry_ai_dodge_slide, 12, NULL,
+	infantry_ai_dodge_slide, 10, NULL,
+	infantry_ai_dodge_slide, 12, NULL,
+	infantry_ai_dodge_slide, 10, NULL,
+	infantry_ai_dodge_slide, 8,  NULL,
+	infantry_ai_dodge_slide, 6,  NULL
+};
+mmove_t infantry_move_dodge_slide = { FRAME_run01, FRAME_run08, infantry_frames_dodge_slide, infantry_run };
+
+static void infantry_attack4_dodge_ai(edict_t *self, float dist)
+{
+	if (!G_EntIsAlive(self->enemy))
+		return;
+
+	drone_ai_run_slide(self, dist);
+}
+
+static void infantry_resume_attack4(edict_t *self)
+{
+	self->monsterinfo.currentmove = &infantry_move_attack4;
+	self->s.frame = self->count;
+}
+
+mframe_t infantry_frames_attack4_dodge[] =
+{
+	infantry_attack4_dodge_ai, 10, infantry_run_fire,
+	infantry_attack4_dodge_ai, 12, NULL,
+	infantry_attack4_dodge_ai, 10, infantry_run_fire,
+	infantry_attack4_dodge_ai, 9,  NULL,
+	infantry_attack4_dodge_ai, 8,  NULL
+};
+mmove_t infantry_move_attack4_dodge = { FRAME_run201, FRAME_run205, infantry_frames_attack4_dodge, infantry_resume_attack4 };
+
+static qboolean infantry_try_sidestep(edict_t *self)
+{
+	if (self->monsterinfo.currentmove == &infantry_move_attack4)
+	{
+		self->count = self->s.frame;
+		self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
+		self->monsterinfo.currentmove = &infantry_move_attack4_dodge;
+		return true;
+	}
+
+	if (self->monsterinfo.currentmove == &infantry_move_run)
+	{
+		self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
+		self->monsterinfo.currentmove = &infantry_move_dodge_slide;
+		return true;
+	}
+
+	return false;
+}
+
+static qboolean infantry_is_dodge_move(edict_t *self)
+{
+	return self->monsterinfo.currentmove == &infantry_move_dodge_slide ||
+		self->monsterinfo.currentmove == &infantry_move_attack4_dodge ||
+		self->monsterinfo.currentmove == &infantry_move_duck;
+}
+
+static qboolean infantry_dodge_hit_low(edict_t *self, vec3_t dir)
+{
+	const float duck_height = self->absmax[2] - 33;
+
+	return dir[2] > self->absmin[2] && dir[2] <= duck_height;
+}
+
+static void infantry_start_duck(edict_t *self)
+{
+	self->monsterinfo.currentmove = &infantry_move_duck;
+	infantry_duck_down(self);
+	self->monsterinfo.dodge_time = level.time + 1.2f;
+}
+
+static void infantry_dodge(edict_t *self, edict_t *attacker, vec3_t dir, int radius)
+{
+	if (level.time < self->monsterinfo.dodge_time)
+		return;
+	if (!attacker)
+		return;
+	if (OnSameTeam(self, attacker))
+		return;
+	if (infantry_is_dodge_move(self))
+		return;
+
+	self->monsterinfo.attacker = attacker;
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(attacker))
+		self->enemy = attacker;
+
+	if (random() > 0.75f)
+		return;
+
+	// Match remaster: sidestep low shots, duck high direct shots.
+	if (!radius && !infantry_dodge_hit_low(self, dir))
+	{
+		infantry_start_duck(self);
+		return;
+	}
+
+	if (infantry_try_sidestep(self))
+	{
+		self->monsterinfo.dodge_time = level.time + 1.0f;
+		return;
+	}
+
+	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND))
+	{
+		self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
+		self->monsterinfo.currentmove = &infantry_move_dodge_slide;
+		self->monsterinfo.dodge_time = level.time + 0.9f;
+		return;
+	}
+
+	infantry_start_duck(self);
+}
+
 static void infantry_run_attack_ai(edict_t* self, float dist)
 {
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
@@ -828,6 +965,7 @@ void init_drone_infantry(edict_t* self)
 	self->monsterinfo.sight = infantry_sight;
 	//self->monsterinfo.idle = infantry_fidget;
 	self->monsterinfo.melee = infantry_melee;
+	self->monsterinfo.dodge = infantry_dodge;
 
 	gi.linkentity(self);
 
