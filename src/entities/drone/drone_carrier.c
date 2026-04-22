@@ -42,6 +42,21 @@ static void carrier_sight(edict_t *self, edict_t *other)
 	gi.sound(self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
 }
 
+static void carrier_explode(edict_t *self)
+{
+	vec3_t org;
+
+	VectorCopy(self->s.origin, org);
+	org[0] += crandom() * self->maxs[0];
+	org[1] += crandom() * self->maxs[1];
+	org[2] += crandom() * self->maxs[2];
+
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_EXPLOSION1_BIG);
+	gi.WritePosition(org);
+	gi.multicast(self->s.origin, MULTICAST_PVS);
+}
+
 static void carrier_dead(edict_t *self)
 {
 	int n;
@@ -51,7 +66,12 @@ static void carrier_dead(edict_t *self)
 	for (n = 0; n < 6; n++)
 		ThrowGib(self, "models/objects/gibs/sm_metal/tris.md2", 500, GIB_METALLIC);
 
-	BecomeBigExplosion(self);
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_EXPLOSION1_BIG);
+	gi.WritePosition(self->s.origin);
+	gi.multicast(self->s.origin, MULTICAST_PVS);
+
+	M_Remove(self, false, false);
 }
 
 static void carrier_fire_rocket(edict_t *self)
@@ -433,22 +453,22 @@ static void carrier_pain(edict_t *self, edict_t *other, float kick, int damage)
 
 mframe_t carrier_frames_death[] =
 {
+	ai_move, 0, carrier_explode,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
+	ai_move, 0, carrier_explode,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
+	ai_move, 0, carrier_explode,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
+	ai_move, 0, carrier_explode,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL
+	ai_move, 0, carrier_explode
 };
 mmove_t carrier_move_death = { FRAME_death01, FRAME_death16, carrier_frames_death, carrier_dead };
 
@@ -464,9 +484,6 @@ static void carrier_die(edict_t *self, edict_t *inflictor, edict_t *attacker, in
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
 	self->monsterinfo.currentmove = &carrier_move_death;
-
-	if (self->activator && !self->activator->client)
-		self->activator->num_monsters_real--;
 }
 
 void init_drone_carrier(edict_t *self)

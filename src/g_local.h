@@ -1422,6 +1422,12 @@ void monster_fire_blaster2(edict_t *self, vec3_t start, vec3_t dir, int damage, 
 
 void monster_fire_blueblaster(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype);
 
+void monster_fire_ionripper(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype);
+#define DABEAM_SECONDARY 1
+#define DABEAM_SPAWNED 2
+void monster_fire_dabeam(edict_t *self, int damage, qboolean secondary, void (*update_func)(edict_t *self));
+void dabeam_update(edict_t *self, qboolean damage);
+
 qboolean monster_fire_heat(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int flashtype, float turn_fraction);
 
 void monster_fire_grenade(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int flashtype);
@@ -1518,6 +1524,12 @@ enum mtype_t {
     M_ARACHNID = 37,
     M_MEDIC_COMMANDER = 38,
     M_CARRIER = 39,
+    M_GUARDIAN = 40,
+    M_JANITOR = 41,
+    M_MINIGUARDIAN = 42,
+    M_SOLDIER_RIPPER = 43,
+    M_SOLDIER_BLUEBLASTER = 44,
+    M_SOLDIER_LASER = 45,
     M_MINISENTRY = 100,
     M_SENTRY = 101,
     M_BFG_SENTRY = 102,
@@ -1627,12 +1639,20 @@ enum dronespawn_t {
     DS_BITCH_HEAT = 27,
     DS_ARACHNID = 28,
     DS_MEDIC_COMMANDER = 29,
+
+    
     DS_COMMANDER = 30,
     DS_MAKRON = 31,
     DS_BARON_FIRE = 32,
     DS_SUPERTANK = 33,
     DS_JORG = 34,
     DS_CARRIER = 35,
+    DS_GUARDIAN = 36,
+    DS_JANITOR = 37,
+    DS_MiniGuardian = 38,
+    DS_SOLDIER_RIPPER = 39,
+    DS_SOLDIER_BLUEBLASTER = 40,
+    DS_SOLDIER_LASER = 41,
 
 };
 
@@ -2564,6 +2584,8 @@ struct edict_s {
 
     edict_t *selected[4]; // drone selection
     edict_t *other; // laser effect for hw/ctf
+    edict_t *beam; // dabeam primary laser
+    edict_t *beam2; // dabeam secondary laser
     edict_t *supplystation;
     //edict_t		*magmine;
     //GHz START

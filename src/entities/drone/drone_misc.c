@@ -26,6 +26,7 @@ void init_drone_supertank (edict_t *self);
 void init_drone_jorg (edict_t *self);
 void init_drone_makron (edict_t *self);
 void init_drone_soldier (edict_t *self);
+void init_drone_guardian (edict_t *self);
 void init_drone_gladiator (edict_t *self);
 void init_drone_berserk (edict_t *self);
 void init_drone_infantry (edict_t *self);
@@ -766,19 +767,38 @@ void vrx_roll_to_make_champion(edict_t *drone, enum dronespawn_t *drone_type)
 	}
 }
 
+static qboolean vrx_drone_spawn_is_boss(enum dronespawn_t drone_type)
+{
+	switch (drone_type)
+	{
+	case DS_COMMANDER:
+	case DS_MAKRON:
+	case DS_BARON_FIRE:
+	case DS_SUPERTANK:
+	case DS_JORG:
+	case DS_CARRIER:
+	case DS_GUARDIAN:
+		return true;
+	default:
+		return false;
+	}
+}
+
 edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn_t drone_type, qboolean worldspawn, qboolean link_now, int bonus_level)
 {
 	vec3_t		forward, right, start, end, offset;
 	trace_t		tr;
 	float		mult;
 	int			talentLevel;
+	qboolean	is_boss_spawn;
 
 	drone->classname = "drone";
+	is_boss_spawn = vrx_drone_spawn_is_boss(drone_type);
 
 	// set monster level
 	if (worldspawn)
 	{
-		if (drone_type >= 30)// tank commander, supertank
+		if (is_boss_spawn)
 			drone->monsterinfo.level = HighestLevelPlayer();
 		else if (INVASION_OTHERSPAWNS_REMOVED)
 		{
@@ -857,6 +877,9 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 	case DS_GLADIATOR: init_drone_gladiator(drone);	break;
 	case DS_BERSERK: init_drone_berserk(drone);		break;
 	case DS_SOLDIER: init_drone_soldier(drone);		break;
+	case DS_SOLDIER_RIPPER: drone->mtype = M_SOLDIER_RIPPER; init_drone_soldier(drone); break;
+	case DS_SOLDIER_BLUEBLASTER: drone->mtype = M_SOLDIER_BLUEBLASTER; init_drone_soldier(drone); break;
+	case DS_SOLDIER_LASER: drone->mtype = M_SOLDIER_LASER; init_drone_soldier(drone); break;
 	case DS_INFANTRY: init_drone_infantry(drone);	break;
 	case DS_FLYER: init_drone_flyer(drone);		break;
 	case DS_FLOATER: init_drone_floater(drone);		break;
@@ -883,6 +906,9 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 	case DS_SUPERTANK: init_drone_supertank(drone);	break;
 	case DS_JORG: init_drone_jorg(drone);		break;
 	case DS_CARRIER: init_drone_carrier(drone);	break;
+	case DS_GUARDIAN: init_drone_guardian(drone); break;
+	case DS_JANITOR: drone->mtype = M_JANITOR; init_drone_supertank(drone); break;
+	case DS_MiniGuardian: drone->mtype = M_MINIGUARDIAN; init_drone_guardian(drone); break;
 
 	// default
 	default: init_drone_gunner(drone);		break;
@@ -897,7 +923,12 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 	drone->pain = drone_pain;
 
 	//4.0 gib health based on monster control cost
-	if (drone_type < 30)
+	if (drone_type < 30 ||
+		drone_type == DS_JANITOR ||
+		drone_type == DS_MiniGuardian ||
+		drone_type == DS_SOLDIER_RIPPER ||
+		drone_type == DS_SOLDIER_BLUEBLASTER ||
+		drone_type == DS_SOLDIER_LASER)
 		drone->gib_health = -drone->monsterinfo.control_cost * BASE_GIB_HEALTH * M_CONTROL_COST_SCALE;
 	else
 		drone->gib_health = 0;//gib boss immediately
@@ -940,7 +971,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 	if (worldspawn)
 	{
 		// non-invasion mode monsters or bosses are spawned randomly throughout the map
-		if (!INVASION_OTHERSPAWNS_REMOVED || drone_type >= 30) // only use designated spawns in invasion mode
+		if (!INVASION_OTHERSPAWNS_REMOVED || is_boss_spawn) // only use designated spawns in invasion mode
 		{
 			if (link_now && drone->mtype != M_JORG && !vrx_find_random_spawn_point(drone, false))
 			{
@@ -957,7 +988,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 
 			// trigger spree war if a boss successfully spawns in PvP mode
 			if (deathmatch->value && !domination->value && !ctf->value && !invasion->value && !pvm->value
-				&& !ptr->value && !ffa->value && (drone_type >= 30))
+				&& !ptr->value && !ffa->value && is_boss_spawn)
 			{
 				SPREE_WAR = true;
 				SPREE_TIME = level.time;
@@ -2061,7 +2092,9 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	case M_PARASITE: init_drone_parasite(monster); break;
 	case M_TANK: init_drone_tank(monster); break;
 	case M_BERSERK: init_drone_berserk(monster); break;
-	case M_SOLDIER: case M_SOLDIERLT: case M_SOLDIERSS: init_drone_soldier(monster); break;
+	case M_SOLDIER: case M_SOLDIERLT: case M_SOLDIERSS:
+	case M_SOLDIER_RIPPER: case M_SOLDIER_BLUEBLASTER: case M_SOLDIER_LASER:
+		init_drone_soldier(monster); break;
 	case M_GLADIATOR: init_drone_gladiator(monster); break;
 	case M_INFANTRY: init_drone_infantry(monster); break;
 	case M_FLYER: init_drone_flyer(monster); break;
@@ -2078,6 +2111,8 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	case M_GEKK: init_drone_gekk(monster); break;
 	case M_ARACHNID: init_drone_arachnid(monster); break;
 	case M_CARRIER: init_drone_carrier(monster); break;
+	case M_GUARDIAN: case M_MINIGUARDIAN: init_drone_guardian(monster); break;
+	case M_JANITOR: init_drone_supertank(monster); break;
 	case M_SKELETON: init_skeleton(monster); break;
 	case M_GOLEM: init_golem(monster); break;
 	default: return false;
@@ -2156,6 +2191,9 @@ qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax)
 	case M_SOLDIER:
 	case M_SOLDIERLT:
 	case M_SOLDIERSS:
+	case M_SOLDIER_RIPPER:
+	case M_SOLDIER_BLUEBLASTER:
+	case M_SOLDIER_LASER:
 	case M_GUNNER:
 	case M_BRAIN:
 		VectorSet (boxmin, -16, -16, -24);
@@ -2210,6 +2248,18 @@ qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax)
 		VectorSet(boxmin, -80, -80, -24);
 		VectorSet(boxmax, 80, 80, 104);
 		break;
+	case M_GUARDIAN:
+		VectorSet(boxmin, -96, -96, -66);
+		VectorSet(boxmax, 96, 96, 62);
+		break;
+	case M_JANITOR:
+		VectorSet(boxmin, -38, -38, 0);
+		VectorSet(boxmax, 38, 38, 67);
+		break;
+	case M_MINIGUARDIAN:
+		VectorSet(boxmin, -38, -38, -26);
+		VectorSet(boxmax, 38, 38, 25);
+		break;
 	case M_MEDIC:
 	case M_MEDIC_COMMANDER:
 	case M_MUTANT:
@@ -2252,6 +2302,9 @@ char *GetMonsterKindString (int mtype)
         case M_PARASITE: return "Parasite";
 		case M_BERSERK: return "Berserker";
 		case M_SOLDIER: case M_SOLDIERLT: case M_SOLDIERSS: return "Soldier";
+		case M_SOLDIER_RIPPER: return "Ripper Guard";
+		case M_SOLDIER_BLUEBLASTER: return "Hyper Guard";
+		case M_SOLDIER_LASER: return "Laser Guard";
         case M_TANK: return "Tank";
         case M_GUNNER: return "Gunner";
 		case M_YANGSPIRIT: return "Yang Spirit";
@@ -2291,6 +2344,9 @@ char *GetMonsterKindString (int mtype)
 		case M_GEKK: return "Gekk";
 		case M_ARACHNID: return "Arachnid";
 		case M_CARRIER: return "Carrier";
+		case M_GUARDIAN: return "Guardian";
+		case M_JANITOR: return "Janitor";
+		case M_MINIGUARDIAN: return "Mini Guardian";
 		case M_SKELETON: return "Skeleton";
 		case M_GOLEM: return "Golem";
 		case M_BARON_FIRE: return "Fire Baron";
@@ -2875,7 +2931,7 @@ void Cmd_Drone_f (edict_t *ent)
 	if (!Q_strcasecmp(s, "help"))
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Monster summoning:\n");
-		safe_cprintf(ent, PRINT_HIGH, "monster [gunner|parasite|brain|praetor|praetor_heat|chick_heat|medic|tank|mutant|gladiator|gladb|gladc|berserker|soldier|enforcer|flyer|floater|hover|daedalus|stalker|gekk|arachnid|shambler|redmutant|runnertank|guncmdr]\n");
+		safe_cprintf(ent, PRINT_HIGH, "monster [gunner|parasite|brain|praetor|praetor_heat|medic|tank|mutant|gladiator|gladb|gladc|berserker|soldier|ripper|hyper|laser|janitor|janitor2|enforcer|flyer|floater|hover|daedalus|stalker|gekk|arachnid|shambler|redmutant|runnertank|guncmdr]\n");
 		safe_cprintf(ent, PRINT_HIGH, "Monster utility commands:\n");
 		safe_cprintf(ent, PRINT_HIGH, "monster [remove|command|follow me|count|attack]\n");
 		return;
@@ -2916,6 +2972,19 @@ void Cmd_Drone_f (edict_t *ent)
         vrx_create_new_drone(ent, DS_BERSERK, false, true, 0);
 	else if (!Q_strcasecmp(s, "soldier"))
         vrx_create_new_drone(ent, DS_SOLDIER, false, true, 0);
+	else if (!Q_strcasecmp(s, "soldier_ionripper") || !Q_strcasecmp(s, "soldierripper") || !Q_strcasecmp(s, "rippersoldier")
+	|| !Q_strcasecmp(s, "ripper_guard") || !Q_strcasecmp(s, "ripperguard"))
+        vrx_create_new_drone(ent, DS_SOLDIER_RIPPER, false, true, 0);
+	else if (!Q_strcasecmp(s, "soldierhyper") || !Q_strcasecmp(s, "hypersoldier") || !Q_strcasecmp(s, "hyperguard")
+		|| !Q_strcasecmp(s, "hyper") || !Q_strcasecmp(s, "hyper_guard") || !Q_strcasecmp(s, "hyper guard"))
+        vrx_create_new_drone(ent, DS_SOLDIER_BLUEBLASTER, false, true, 0);
+	else if (!Q_strcasecmp(s, "soldier_laser") || !Q_strcasecmp(s, "soldierlaser") || !Q_strcasecmp(s, "lasersoldier")
+		|| !Q_strcasecmp(s, "laser") || !Q_strcasecmp(s, "laserguard") || !Q_strcasecmp(s, "laserguard"))
+        vrx_create_new_drone(ent, DS_SOLDIER_LASER, false, true, 0);
+	else if (!Q_strcasecmp(s, "janitor"))
+        vrx_create_new_drone(ent, DS_JANITOR, false, true, 0);
+	else if (!Q_strcasecmp(s, "miniguardian") || !Q_strcasecmp(s, "mini guardian") || !Q_strcasecmp(s, "mini_guardian"))
+        vrx_create_new_drone(ent, DS_MiniGuardian, false, true, 0);
 	else if (!Q_strcasecmp(s, "enforcer"))
         vrx_create_new_drone(ent, DS_INFANTRY, false, true, 0);
 	else if (!Q_strcasecmp(s, "flyer"))
@@ -2934,9 +3003,9 @@ void Cmd_Drone_f (edict_t *ent)
 		vrx_create_new_drone(ent, DS_GUNCMDR, false, true, 0);
 	else if (!Q_strcasecmp(s, "daedalus"))
 		vrx_create_new_drone(ent, DS_DAEDALUS, false, true, 0);
-	else if (!Q_strcasecmp(s, "gladb"))
+	else if (!Q_strcasecmp(s, "gladb") || !Q_strcasecmp(s, "gladiatordisruptor"))
 		vrx_create_new_drone(ent, DS_GLADB, false, true, 0);
-	else if (!Q_strcasecmp(s, "gladc"))
+	else if (!Q_strcasecmp(s, "gladc") || !Q_strcasecmp(s, "gladiatorplasma"))
 		vrx_create_new_drone(ent, DS_GLADC, false, true, 0);
 	else if (!Q_strcasecmp(s, "stalker"))
 		vrx_create_new_drone(ent, DS_STALKER, false, true, 0);

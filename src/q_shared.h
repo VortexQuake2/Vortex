@@ -1338,7 +1338,7 @@ enum monster_muzzleflash_id_t : uint16_t {
     MZ2_LAST
 };
 
-extern vec3_t monster_flash_offset[212];
+extern vec3_t monster_flash_offset[MZ2_LAST + 1];
 
 
 // temp entity events

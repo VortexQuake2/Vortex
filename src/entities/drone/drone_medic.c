@@ -1248,7 +1248,7 @@ static qboolean medic_commander_find_spawn_spot(edict_t *self, vec3_t mins, vec3
 	return medic_commander_valid_spawn_spot(self, mins, maxs, spot);
 }
 
-static qboolean medic_commander_spawn_gunner(edict_t *self, float side)
+static qboolean medic_commander_spawn_laserguard(edict_t *self, float side)
 {
 	edict_t *owner = self->activator;
 	edict_t *gunner;
@@ -1261,7 +1261,7 @@ static qboolean medic_commander_spawn_gunner(edict_t *self, float side)
 		return false;
 
 	gunner = G_Spawn();
-	gunner->mtype = M_GUNNER;
+	gunner->mtype = M_SOLDIER_LASER;
 	gunner->activator = owner;
 	gunner->monsterinfo.level = self->monsterinfo.level;
 
@@ -1336,7 +1336,7 @@ static void medic_commander_finish_spawn(edict_t *self)
 	{
 		float side = (i & 1) ? 56 : -56;
 
-		if (medic_commander_spawn_gunner(self, side))
+		if (medic_commander_spawn_laserguard(self, side))
 			spawned++;
 	}
 

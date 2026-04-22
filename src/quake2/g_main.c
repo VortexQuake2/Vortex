@@ -836,7 +836,8 @@ void G_RunFrame(bool main_loop)
 
 		level.current_entity = ent;
 
-		VectorCopy(ent->s.origin, ent->s.old_origin);
+		if (!(ent->s.renderfx & RF_BEAM)) // this line allows guardian, soldier_lasergun to have visual on their laser attacks :)
+			VectorCopy(ent->s.origin, ent->s.old_origin);
 
 		// if the ground entity moved, make sure we are still on it
 		if ((ent->groundentity) && (ent->groundentity->linkcount != ent->groundentity_linkcount))

@@ -45,6 +45,24 @@ void mytank_windup (edict_t *self)
 	gi.sound (self, CHAN_WEAPON, sound_windup, 1, ATTN_NORM, 0);
 }
 
+static void mytank_slam_effect(edict_t *self)
+{
+	vec3_t	forward, right, start, offset, up;
+	trace_t	tr;
+
+	AngleVectors(self->s.angles, forward, right, NULL);
+	VectorSet(offset, 20, -14.3f, -21);
+	G_ProjectSource(self->s.origin, offset, forward, right, start);
+	tr = gi.trace(self->s.origin, NULL, NULL, start, self, MASK_SOLID);
+	VectorSet(up, 0, 0, 1);
+
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_BERSERK_SLAM);
+	gi.WritePosition(tr.endpos);
+	gi.WriteDir(up);
+	gi.multicast(tr.endpos, MULTICAST_PHS);
+}
+
 void mytank_idle (edict_t *self)
 {
 	int		range;
@@ -654,6 +672,7 @@ void mytank_meleeattack (edict_t *self)
 		damage = M_MELEE_DMG_MAX;
 
 	gi.sound (self, CHAN_AUTO, gi.soundindex ("tank/tnkatck5.wav"), 1, ATTN_NORM, 0);
+	mytank_slam_effect(self);
 	
 	while ((other = findradius(other, self->s.origin, 128)) != NULL)
 	{

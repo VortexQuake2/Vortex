@@ -580,6 +580,8 @@ void supertank_sight (edict_t *self, edict_t *other)
 
 void init_drone_supertank (edict_t *self)
 {
+	qboolean janitor = (self->mtype == M_JANITOR);
+
 	sound_death = gi.soundindex ("bosstank/btkdeth1.wav");
 	sound_search1 = gi.soundindex ("bosstank/btkunqv1.wav");
 	sound_search2 = gi.soundindex ("bosstank/btkunqv2.wav");
@@ -587,16 +589,36 @@ void init_drone_supertank (edict_t *self)
 
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
-	self->mtype = M_SUPERTANK;
-	self->monsterinfo.control_cost = M_SUPERTANK_CONTROL_COST;
-	self->monsterinfo.cost = 300;
+	if (!janitor)
+		self->mtype = M_SUPERTANK;
+	self->monsterinfo.control_cost = janitor ? M_TANK_CONTROL_COST : M_SUPERTANK_CONTROL_COST;
+	self->monsterinfo.cost = janitor ? 150 : 300;
 	self->s.modelindex = gi.modelindex ("models/monsters/boss1/tris.md2");
-	VectorSet (self->mins, -64, -64, 0);
-	VectorSet (self->maxs, 64, 64, 112);
-
-	self->health = self->max_health = 20000*self->monsterinfo.level;
+	if (janitor)
+	{
+		self->s.skinnum = 2;
+		self->s.scale = 0.6f;
+		self->monsterinfo.scale = MODEL_SCALE * 0.6f;
+		VectorSet (self->mins, -38, -38, 0);
+		VectorSet (self->maxs, 38, 38, 67);
+		self->health = self->max_health = M_JANITOR_INITIAL_HEALTH + M_JANITOR_ADDON_HEALTH * self->monsterinfo.level;
+	}
+	else
+	{
+		VectorSet (self->mins, -64, -64, 0);
+		VectorSet (self->maxs, 64, 64, 112);
+		self->health = self->max_health = 20000*self->monsterinfo.level;
+		self->monsterinfo.scale = MODEL_SCALE;
+	}
 	self->gib_health = -5 * BASE_GIB_HEALTH;
-	self->mass = 800;
+	self->mass = janitor ? 480 : 800;
+
+	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
+	if (janitor)
+		self->monsterinfo.power_armor_power = M_JANITOR_INITIAL_ARMOR + M_JANITOR_ADDON_ARMOR * self->monsterinfo.level;
+	else
+		self->monsterinfo.power_armor_power = 0;
+	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 
 	self->die = supertank_die;
 	self->monsterinfo.stand = supertank_stand;
@@ -607,11 +629,11 @@ void init_drone_supertank (edict_t *self)
 	self->monsterinfo.jumpdn = 512;
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
 	self->monsterinfo.currentmove = &supertank_move_stand;
-	self->monsterinfo.scale = MODEL_SCALE;
 	self->monsterinfo.sight = supertank_sight;
 
 	self->nextthink = level.time + FRAMETIME;
 	gi.linkentity (self);
 
-	G_PrintGreenText(va("A level %d super tank has spawned!", self->monsterinfo.level));
+	if (!janitor && (!self->activator || !self->activator->client))
+		G_PrintGreenText(va("A level %d super tank has spawned!", self->monsterinfo.level));
 }

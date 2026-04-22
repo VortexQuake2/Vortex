@@ -727,6 +727,118 @@ void mybrain_attack3 (edict_t *self)
 	self->monsterinfo.currentmove = &mybrain_move_attack3;
 }
 
+static const vec3_t brain_reye[] =
+{
+	{0.746700f, 0.238370f, 34.167690f},
+	{-1.076390f, 0.238370f, 33.386372f},
+	{-1.335500f, 5.334300f, 32.177170f},
+	{-0.175360f, 8.846370f, 30.635479f},
+	{-2.757590f, 7.804610f, 30.150860f},
+	{-5.575090f, 5.152840f, 30.056160f},
+	{-7.017550f, 3.262470f, 30.552521f},
+	{-7.915740f, 0.638800f, 33.176189f},
+	{-3.915390f, 8.285730f, 33.976349f},
+	{-0.913540f, 10.933030f, 34.141811f},
+	{-0.369900f, 8.923900f, 34.189079f}
+};
+
+static const vec3_t brain_leye[] =
+{
+	{-3.364710f, 0.327750f, 33.938381f},
+	{-5.140450f, 0.493480f, 32.659851f},
+	{-5.341980f, 5.646980f, 31.277901f},
+	{-4.134480f, 9.277440f, 29.925621f},
+	{-6.598340f, 6.815090f, 29.322620f},
+	{-8.610840f, 2.529650f, 29.251591f},
+	{-9.231360f, 0.093280f, 29.747959f},
+	{-11.004110f, 1.936930f, 32.395260f},
+	{-7.878310f, 7.648190f, 33.148151f},
+	{-4.947370f, 11.430050f, 33.313610f},
+	{-4.332820f, 9.444570f, 33.526340f}
+};
+
+static void mybrain_eye_laser_update(edict_t *laser, qboolean left_eye)
+{
+	edict_t *self;
+	vec3_t forward, right, up, start, aim, target;
+	int frame_index;
+	const vec3_t *eye_offsets;
+	qboolean do_damage;
+
+	self = laser->owner;
+	if (!self || !self->inuse || !G_EntExists(self->enemy))
+	{
+		laser->spawnflags |= DABEAM_SPAWNED;
+		return;
+	}
+
+	AngleVectors(self->s.angles, forward, right, up);
+	frame_index = self->s.frame - FRAME_walk101;
+	if (frame_index < 0 || frame_index >= 11)
+		frame_index = 0;
+
+	eye_offsets = left_eye ? brain_leye : brain_reye;
+	VectorCopy(self->s.origin, start);
+	VectorMA(start, eye_offsets[frame_index][0], right, start);
+	VectorMA(start, eye_offsets[frame_index][1], forward, start);
+	VectorMA(start, eye_offsets[frame_index][2], up, start);
+
+	G_EntMidPoint(self->enemy, target);
+	VectorSubtract(target, start, aim);
+	VectorNormalize(aim);
+
+	VectorCopy(start, laser->s.origin);
+	VectorCopy(aim, laser->movedir);
+
+	do_damage = !(laser->spawnflags & DABEAM_SPAWNED);
+	dabeam_update(laser, do_damage);
+	laser->spawnflags |= DABEAM_SPAWNED;
+}
+
+static void mybrain_right_eye_laser_update(edict_t *laser)
+{
+	mybrain_eye_laser_update(laser, false);
+}
+
+static void mybrain_left_eye_laser_update(edict_t *laser)
+{
+	mybrain_eye_laser_update(laser, true);
+}
+
+static void mybrain_laserbeam(edict_t *self)
+{
+	int damage;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	damage = M_DABEAM_DMG_BASE + M_DABEAM_DMG_ADDON * drone_damagelevel(self);
+	monster_fire_dabeam(self, damage, false, mybrain_right_eye_laser_update);
+	monster_fire_dabeam(self, damage, true, mybrain_left_eye_laser_update);
+}
+
+static void mybrain_laserbeam_reattack(edict_t *self)
+{
+	if (G_EntExists(self->enemy) && visible(self, self->enemy) && self->enemy->health > 0 && random() < 0.5)
+		self->monsterinfo.nextframe = FRAME_walk101;
+}
+
+mframe_t mybrain_frames_attack4[] =
+{
+	ai_charge, 0, mybrain_laserbeam,
+	ai_charge, 0, mybrain_laserbeam,
+	ai_charge, 0, mybrain_laserbeam,
+	ai_charge, 0, mybrain_laserbeam,
+	ai_charge, 0, mybrain_laserbeam,
+	ai_charge, 0, mybrain_laserbeam,
+	ai_charge, 0, mybrain_laserbeam,
+	ai_charge, 0, mybrain_laserbeam,
+	ai_charge, 0, mybrain_laserbeam,
+	ai_charge, 0, mybrain_laserbeam,
+	ai_charge, 0, mybrain_laserbeam_reattack
+};
+mmove_t mybrain_move_attack4 = {FRAME_walk101, FRAME_walk111, mybrain_frames_attack4, mybrain_run};
+
 void mybrain_melee (edict_t *self)
 {
 	if (entdist(self, self->enemy) < MELEE_DISTANCE)
@@ -741,11 +853,17 @@ void mybrain_melee (edict_t *self)
 void mybrain_attack (edict_t *self)
 {
 	float	dist;
+	qboolean has_los;
 
 	dist = entdist(self, self->enemy);
+	has_los = visible(self, self->enemy);
 
 	// jump to our enemy if he's close and on even ground
-	if ((dist > 256) && (self->enemy->absmin[2]+18 >= self->absmin[2]) 
+	if (has_los && dist > 512)
+		self->monsterinfo.currentmove = &mybrain_move_attack4;
+	else if (has_los && dist > MELEE_DISTANCE && random() < 0.4)
+		self->monsterinfo.currentmove = &mybrain_move_attack4;
+	else if ((dist > 256) && (self->enemy->absmin[2]+18 >= self->absmin[2])
 		&& (self->enemy->absmin[2]-18 <= self->absmin[2]) 
 		&& !(self->monsterinfo.aiflags & AI_STAND_GROUND))
 		self->monsterinfo.currentmove = &mybrain_move_jumpattack;

@@ -104,6 +104,8 @@ void SP_monster_infantry (edict_t *self);
 void SP_monster_soldier_light (edict_t *self);
 void SP_monster_soldier (edict_t *self);
 void SP_monster_soldier_ss (edict_t *self);
+void SP_monster_soldier_blueblaster (edict_t *self);
+void SP_monster_soldier_laser (edict_t *self);
 void SP_monster_tank (edict_t *self);
 void SP_monster_medic (edict_t *self);
 void SP_monster_flipper (edict_t *self);
@@ -131,6 +133,9 @@ void SP_turret_driver (edict_t *self);
 void SP_monster_soldier_hypergun (edict_t *self);
 void SP_monster_soldier_lasergun (edict_t *self);
 void SP_monster_soldier_ripper (edict_t *self);
+void SP_monster_guardian (edict_t *self);
+void SP_monster_janitor (edict_t *self);
+void SP_monster_MiniGuardian (edict_t *self);
 void SP_monster_fixbot (edict_t *self);
 void SP_monster_gekk (edict_t *self);
 void SP_monster_chick_heat (edict_t *self);
@@ -272,6 +277,13 @@ spawn_t	spawns[] = {
 	{"monster_gladiator", SP_monster_gladiator},
 	{"monster_gunner", SP_monster_gunner},
 	{"monster_soldier", SP_monster_soldier},
+	{"monster_soldier_ripper", SP_monster_soldier_ripper},
+	{"monster_soldier_blueblaster", SP_monster_soldier_blueblaster},
+	{"monster_soldier_hypergun", SP_monster_soldier_blueblaster},
+	{"monster_soldier_laser", SP_monster_soldier_laser},
+	{"monster_soldier_lasergun", SP_monster_soldier_laser},
+	{"monster_janitor", SP_monster_janitor},
+	{"monster_MiniGuardian", SP_monster_MiniGuardian},
 	{"monster_tank", SP_monster_tank},
 	{"monster_tank_commander", SP_monster_tank_commander},
 	{"monster_medic", SP_monster_medic},
@@ -1077,7 +1089,52 @@ void SP_monster_gunner(edict_t *ent)
 void SP_monster_soldier(edict_t *ent) 
 {
 	if (coop->value)
-        vrx_create_drone_from_ent(ent, g_edicts, 10, true, true, 0);
+        vrx_create_drone_from_ent(ent, g_edicts, DS_SOLDIER, true, true, 0);
+}
+
+void SP_monster_soldier_ripper(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_SOLDIER_RIPPER, true, true, 0);
+}
+
+void SP_monster_soldier_blueblaster(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_SOLDIER_BLUEBLASTER, true, true, 0);
+}
+
+void SP_monster_soldier_hypergun(edict_t *ent)
+{
+	SP_monster_soldier_blueblaster(ent);
+}
+
+void SP_monster_soldier_laser(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_SOLDIER_LASER, true, true, 0);
+}
+
+void SP_monster_soldier_lasergun(edict_t *ent)
+{
+	SP_monster_soldier_laser(ent);
+}
+
+void SP_monster_guardian(edict_t *ent)
+{
+	G_FreeEdict(ent);
+}
+
+void SP_monster_janitor(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_JANITOR, true, true, 0);
+}
+
+void SP_monster_MiniGuardian(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_MiniGuardian, true, true, 0);
 }
 
 void SP_monster_tank(edict_t *ent) 

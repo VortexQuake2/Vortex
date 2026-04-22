@@ -45,11 +45,14 @@ void monster_fire_bullet (edict_t *self, vec3_t start, vec3_t dir, int damage, i
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_bullet (self, start, dir, damage, kick, hspread, vspread, MOD_UNKNOWN);
 
-	gi.WriteByte (svc_muzzleflash2);
-	gi.WriteShort (self - g_edicts);
-	gi.WriteByte (flashtype);
-	gi.multicast (start, MULTICAST_PVS);
-}
+	if (flashtype >= 0)
+	{
+		gi.WriteByte (svc_muzzleflash2);
+		gi.WriteShort (self - g_edicts);
+		gi.WriteByte (flashtype);
+		gi.multicast (start, MULTICAST_PVS);
+	}
+}	
 
 static void debris_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point)
 {
@@ -146,11 +149,14 @@ void monster_fire_shotgun (edict_t *self, vec3_t start, vec3_t aimdir, float dam
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_shotgun (self, start, aimdir, damage, kick, hspread, vspread, count, MOD_UNKNOWN);
 
-	gi.WriteByte (svc_muzzleflash2);
-	gi.WriteShort (self - g_edicts);
-	gi.WriteByte (flashtype);
-	gi.multicast (start, MULTICAST_PVS);
-}
+	if (flashtype >= 0)
+	{
+		gi.WriteByte (svc_muzzleflash2);
+		gi.WriteShort (self - g_edicts);
+		gi.WriteByte (flashtype);
+		gi.multicast (start, MULTICAST_PVS);
+	}
+}	
 
 void monster_fire_blaster (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int proj_type, float duration, qboolean bounce, int flashtype)
 {
@@ -181,10 +187,13 @@ void monster_fire_blaster (edict_t *self, vec3_t start, vec3_t dir, int damage, 
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_blaster(self, start, dir, damage, speed, effect, proj_type, mod, duration, bounce);
 
-	gi.WriteByte (svc_muzzleflash2);
-	gi.WriteShort (self - g_edicts);
-	gi.WriteByte (flashtype);
-	gi.multicast (start, MULTICAST_PVS);
+	if (flashtype >= 0)
+	{
+		gi.WriteByte (svc_muzzleflash2);
+		gi.WriteShort (self - g_edicts);
+		gi.WriteByte (flashtype);
+		gi.multicast (start, MULTICAST_PVS);
+	}
 }	
 
 void monster_fire_blaster2(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype)
@@ -233,6 +242,198 @@ void monster_fire_blueblaster(edict_t *self, vec3_t start, vec3_t dir, int damag
 	gi.multicast(start, MULTICAST_PVS);
 }
 
+void monster_fire_ionripper(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype)
+{
+	float chance;
+
+	if (que_typeexists(self->curses, AURA_HOLYFREEZE) && random() <= 0.5)
+		return;
+
+	if (self->chill_time > level.time)
+	{
+		chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
+		if (random() > chance)
+			return;
+	}
+
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
+	fire_ionripper(self, start, dir, damage, speed, effect);
+
+	gi.WriteByte(svc_muzzleflash2);
+	gi.WriteShort(self - g_edicts);
+	gi.WriteByte(flashtype);
+	gi.multicast(start, MULTICAST_PVS);
+}
+
+static void dabeam_think(edict_t *self)
+{
+	if (self->owner && self->owner->inuse)
+	{
+		if ((self->spawnflags & DABEAM_SECONDARY) && self->owner->beam2 == self)
+			self->owner->beam2 = NULL;
+		else if (!(self->spawnflags & DABEAM_SECONDARY) && self->owner->beam == self)
+			self->owner->beam = NULL;
+	}
+
+	G_FreeEdict(self);
+}
+
+void dabeam_update(edict_t *self, qboolean damage)
+{
+	vec3_t start, end;
+	trace_t tr;
+
+	if (!self->owner || !self->owner->inuse || !G_EntExists(self->owner->enemy))
+		return;
+
+	VectorCopy(self->s.origin, start);
+	VectorMA(start, 8192, self->movedir, end);
+	tr = gi.trace(start, NULL, NULL, end, self->owner, MASK_SHOT);
+
+	if (damage && tr.ent && tr.ent->takedamage && !OnSameTeam(self->owner, tr.ent))
+		T_Damage(tr.ent, self->owner, self->owner, self->movedir, tr.endpos, tr.plane.normal, self->dmg, self->dmg,
+			DAMAGE_ENERGY, MOD_BFG_LASER);
+
+	VectorCopy(tr.endpos, self->s.old_origin);
+	VectorCopy(start, self->pos1);
+	VectorCopy(tr.endpos, self->pos2);
+	gi.linkentity(self);
+}
+
+void monster_fire_dabeam(edict_t *self, int damage, qboolean secondary, void (*update_func)(edict_t *self))
+{
+	vec3_t forward, right, start, end, offset;
+	trace_t tr;
+	edict_t **beam_slot;
+	edict_t *beam;
+	int flashtype;
+	float chance;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	if (que_typeexists(self->curses, AURA_HOLYFREEZE) && random() <= 0.5)
+		return;
+
+	if (self->chill_time > level.time)
+	{
+		chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
+		if (random() > chance)
+			return;
+	}
+
+	if (self->mtype == M_GUARDIAN)
+		flashtype = -1;
+	else if (self->mtype == M_MINIGUARDIAN)
+		flashtype = MZ2_SOLDIER_RIPPER_8;
+	else
+		flashtype = MZ2_SOLDIER_HYPERGUN_8;
+
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
+
+	if (update_func)
+	{
+		beam_slot = secondary ? &self->beam2 : &self->beam;
+		beam = *beam_slot;
+		if (!beam || !beam->inuse)
+		{
+			beam = G_Spawn();
+			if (!beam)
+				return;
+			*beam_slot = beam;
+			beam->movetype = MOVETYPE_NONE;
+			beam->solid = SOLID_NOT;
+			beam->s.renderfx = RF_BEAM | RF_TRANSLUCENT;
+			beam->s.modelindex = 1;
+			beam->s.frame = 2;
+			beam->s.skinnum = 0xf2f2f0f0; // red
+			beam->owner = self;
+			beam->classname = "monster_dabeam";
+			beam->think = dabeam_think;
+			beam->s.sound = gi.soundindex("misc/lasfly.wav");
+			beam->spawnflags = secondary ? DABEAM_SECONDARY : 0;
+		}
+
+		beam->dmg = damage;
+		beam->prethink = update_func;
+		beam->nextthink = level.time + 0.2;
+		beam->spawnflags &= ~DABEAM_SPAWNED;
+		update_func(beam);
+
+		beam = *beam_slot;
+		if (!beam || !beam->inuse)
+			return;
+
+		if (!(beam->spawnflags & DABEAM_SPAWNED))
+		{
+			dabeam_update(beam, true);
+			beam->spawnflags |= DABEAM_SPAWNED;
+		}
+
+		return;
+	}
+
+	if (self->mtype == M_GUARDIAN)
+	{
+		AngleVectors(self->s.angles, forward, right, NULL);
+		if (secondary)
+			VectorSet(offset, 112, -62, 60);
+		else
+			VectorSet(offset, 125, -70, 60);
+		G_ProjectSource(self->s.origin, offset, forward, right, start);
+		MonsterAim(self, M_HITSCAN_CONT_ACC, 0, false, -1, forward, start);
+	}
+	else
+	{
+		MonsterAim(self, M_HITSCAN_CONT_ACC, 0, false, flashtype, forward, start);
+	}
+
+	VectorMA(start, 8192, forward, end);
+	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
+
+	if (tr.ent && tr.ent->takedamage && !OnSameTeam(self, tr.ent))
+		T_Damage(tr.ent, self, self, forward, tr.endpos, tr.plane.normal, damage, damage, DAMAGE_ENERGY, MOD_BFG_LASER);
+
+	beam_slot = secondary ? &self->beam2 : &self->beam;
+	beam = *beam_slot;
+	if (!beam || !beam->inuse)
+	{
+		beam = G_Spawn();
+		if (!beam)
+			return;
+		*beam_slot = beam;
+		beam->movetype = MOVETYPE_NONE;
+		beam->solid = SOLID_NOT;
+		beam->s.renderfx = RF_BEAM | RF_TRANSLUCENT;
+		beam->s.modelindex = 1;
+		beam->s.frame = 2;
+		beam->s.skinnum = 0xf2f2f0f0; // red
+		beam->owner = self;
+		beam->classname = "monster_dabeam";
+		beam->think = dabeam_think;
+		beam->prethink = NULL;
+		beam->s.sound = gi.soundindex("misc/lasfly.wav");
+		beam->spawnflags = secondary ? DABEAM_SECONDARY : 0;
+	}
+
+	beam->dmg = damage;
+	beam->prethink = NULL;
+	beam->nextthink = level.time + 0.2;
+	VectorCopy(start, beam->s.origin);
+	VectorCopy(tr.endpos, beam->s.old_origin);
+	VectorCopy(start, beam->pos1);
+	VectorCopy(tr.endpos, beam->pos2);
+	gi.linkentity(beam);
+
+	if (flashtype >= 0)
+	{
+		gi.WriteByte(svc_muzzleflash2);
+		gi.WriteShort(self - g_edicts);
+		gi.WriteByte(flashtype);
+		gi.multicast(start, MULTICAST_PVS);
+	}
+}
+
 void rocket_touch(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf);
 
 static qboolean heat_valid_target(edict_t *self, edict_t *target)
@@ -252,7 +453,7 @@ static void heat_think(edict_t *self)
 {
 	edict_t *target = NULL;
 	edict_t *acquire = NULL;
-	float best_dot = 1.0f;
+	float best_dot = -1.0f;
 	float best_dist = 0.0f;
 	float turn_fraction;
 	float dot, dist;
@@ -280,13 +481,13 @@ static void heat_think(edict_t *self)
 			if (!heat_valid_target(self, target))
 				continue;
 
-			VectorSubtract(self->s.origin, target->s.origin, dir);
+			VectorSubtract(target->s.origin, self->s.origin, dir);
 			dist = VectorNormalize(dir);
 			dot = DotProduct(dir, forward);
 
-			if (dot >= best_dot)
+			if (dot <= best_dot)
 				continue;
-			if (!acquire || dot < best_dot || dist < best_dist)
+			if (!acquire || dot > best_dot || dist < best_dist)
 			{
 				acquire = target;
 				best_dot = dot;
@@ -309,10 +510,6 @@ static void heat_think(edict_t *self)
 			turn_fraction = 0;
 		else if (turn_fraction > 1)
 			turn_fraction = 1;
-
-		dot = DotProduct(self->movedir, dir);
-		if (dot < 0.45f && dot > -0.45f)
-			VectorNegate(dir, dir);
 
 		VectorScale(self->movedir, 1.0f - turn_fraction, self->movedir);
 		VectorMA(self->movedir, turn_fraction, dir, self->movedir);

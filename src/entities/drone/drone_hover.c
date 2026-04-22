@@ -41,6 +41,7 @@ void hover_search (edict_t *self)
 void hover_run (edict_t *self);
 void hover_stand (edict_t *self);
 void hover_dead (edict_t *self);
+void hover_deadthink (edict_t *self);
 void hover_attack (edict_t *self);
 void hover_reattack (edict_t *self);
 void hover_fire_blaster (edict_t *self);
@@ -333,18 +334,43 @@ mframe_t hover_frames_run [] =
 };
 mmove_t hover_move_run = {FRAME_forwrd01, FRAME_forwrd35, hover_frames_run, NULL};
 
+void hover_dying (edict_t *self)
+{
+	if (self->groundentity)
+	{
+		hover_deadthink(self);
+		return;
+	}
+
+	if (random() < 0.5)
+		return;
+
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_PLAIN_EXPLOSION);
+	gi.WritePosition(self->s.origin);
+	gi.multicast(self->s.origin, MULTICAST_PHS);
+
+	if (!vrx_spawn_nonessential_ent(self->s.origin))
+		return;
+
+	if (random() < 0.5)
+		ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", 120, GIB_ORGANIC);
+	else
+		ThrowGib(self, "models/objects/gibs/sm_metal/tris.md2", 120, GIB_METALLIC);
+}
+
 mframe_t hover_frames_death1 [] =
 {
 	ai_move,	0,	NULL,
+	ai_move,	0,	hover_dying,
 	ai_move,	0,	NULL,
+	ai_move,	0,	hover_dying,
 	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
-	ai_move,	-10,NULL,
+	ai_move,	0,	hover_dying,
+	ai_move,	-10,hover_dying,
 	ai_move,	3,	NULL,
-	ai_move,	5,	NULL,
-	ai_move,	4,	NULL,
+	ai_move,	5,	hover_dying,
+	ai_move,	4,	hover_dying,
 	ai_move,	7,	NULL
 };
 mmove_t hover_move_death1 = {FRAME_death101, FRAME_death111, hover_frames_death1, hover_dead};

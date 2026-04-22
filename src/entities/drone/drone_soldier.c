@@ -20,6 +20,32 @@ static int	sound_death;
 static int	sound_death_ss;
 static int	sound_cock;
 
+static const int soldier_ripper_flash[] =
+{
+	MZ2_SOLDIER_RIPPER_1,
+	MZ2_SOLDIER_RIPPER_2,
+	MZ2_SOLDIER_RIPPER_3,
+	MZ2_SOLDIER_RIPPER_4,
+	MZ2_SOLDIER_RIPPER_5,
+	MZ2_SOLDIER_RIPPER_6,
+	MZ2_SOLDIER_RIPPER_7,
+	MZ2_SOLDIER_RIPPER_8,
+	MZ2_SOLDIER_RIPPER_9
+};
+
+static const int soldier_hyper_flash[] =
+{
+	MZ2_SOLDIER_HYPERGUN_1,
+	MZ2_SOLDIER_HYPERGUN_2,
+	MZ2_SOLDIER_HYPERGUN_3,
+	MZ2_SOLDIER_HYPERGUN_4,
+	MZ2_SOLDIER_HYPERGUN_5,
+	MZ2_SOLDIER_HYPERGUN_6,
+	MZ2_SOLDIER_HYPERGUN_7,
+	MZ2_SOLDIER_HYPERGUN_8,
+	MZ2_SOLDIER_HYPERGUN_9
+};
+
 void m_soldier_stand (edict_t *self);
 void m_soldier_runandshoot_continue (edict_t *self);
 
@@ -202,6 +228,96 @@ void soldier_fireshotgun(edict_t* self)
 	monster_fire_shotgun(self, start, forward, damage, 15, 375, 375, 10, MZ2_SOLDIER_SHOTGUN_8);
 }
 
+void soldier_fireionripper(edict_t* self, int flash_number)
+{
+	int		damage, speed;
+	int		flash;
+	vec3_t	forward, start;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	if (flash_number < 0 || flash_number >= (int)(sizeof(soldier_ripper_flash) / sizeof(soldier_ripper_flash[0])))
+		flash_number = 7;
+	flash = soldier_ripper_flash[flash_number];
+	damage = IONRIPPER_INITIAL_DAMAGE + IONRIPPER_ADDON_DAMAGE * drone_damagelevel(self);
+	speed = IONRIPPER_INITIAL_SPEED + IONRIPPER_ADDON_SPEED * drone_damagelevel(self);
+
+	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash, forward, start);
+	monster_fire_ionripper(self, start, forward, damage, speed, EF_IONRIPPER, flash);
+}
+
+void soldier_fireblueblaster(edict_t* self, int flash_number)
+{
+	int		damage, speed;
+	int		flash;
+	vec3_t	forward, start;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	if (flash_number < 0 || flash_number >= (int)(sizeof(soldier_hyper_flash) / sizeof(soldier_hyper_flash[0])))
+		flash_number = 7;
+	flash = soldier_hyper_flash[flash_number];
+	damage = M_HYPERBLASTER_DMG_BASE + M_HYPERBLASTER_DMG_ADDON * drone_damagelevel(self);
+	if (M_HYPERBLASTER_DMG_MAX && damage > M_HYPERBLASTER_DMG_MAX)
+		damage = M_HYPERBLASTER_DMG_MAX;
+
+	speed = HYPERBLASTER_INITIAL_SPEED + HYPERBLASTER_ADDON_SPEED * drone_damagelevel(self);
+	if (speed < 400)
+		speed = 400;
+
+	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash, forward, start);
+	monster_fire_blueblaster(self, start, forward, damage, speed, EF_BLUEHYPERBLASTER, flash);
+}
+
+static void soldier_laser_update(edict_t *laser)
+{
+	edict_t *self;
+	vec3_t forward, right, up, start, offset, target;
+	qboolean do_damage;
+
+	self = laser->owner;
+	if (!self || !self->inuse || !G_EntExists(self->enemy))
+	{
+		laser->spawnflags |= DABEAM_SPAWNED;
+		return;
+	}
+
+	if (self->radius_dmg <= 0 || self->radius_dmg > MZ2_LAST)
+		self->radius_dmg = MZ2_SOLDIER_MACHINEGUN_4;
+
+	AngleVectors(self->s.angles, forward, right, up);
+	VectorCopy(self->s.origin, start);
+	VectorCopy(monster_flash_offset[self->radius_dmg], offset);
+	VectorMA(start, offset[0], forward, start);
+	VectorMA(start, offset[1], right, start);
+	VectorMA(start, offset[2] + 6, up, start);
+
+	G_EntMidPoint(self->enemy, target);
+	VectorSubtract(target, start, forward);
+	VectorNormalize(forward);
+
+	VectorCopy(start, laser->s.origin);
+	VectorCopy(forward, laser->movedir);
+
+	do_damage = !(laser->spawnflags & DABEAM_SPAWNED);
+	dabeam_update(laser, do_damage);
+	laser->spawnflags |= DABEAM_SPAWNED;
+}
+
+void soldier_firelaser(edict_t* self, int flash_number)
+{
+	int damage;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	self->radius_dmg = flash_number;
+	damage = M_DABEAM_DMG_BASE + M_DABEAM_DMG_ADDON * drone_damagelevel(self);
+	monster_fire_dabeam(self, damage, false, soldier_laser_update);
+}
+
 void m_soldier_fire (edict_t *self)
 {
 	if (!G_EntExists(self->enemy))
@@ -213,6 +329,20 @@ void m_soldier_fire (edict_t *self)
 		soldier_firerocket(self);
 	else if (self->mtype == M_SOLDIERSS)
 		soldier_fireshotgun(self);
+	else if (self->mtype == M_SOLDIER_RIPPER)
+		soldier_fireionripper(self, 7);
+	else if (self->mtype == M_SOLDIER_BLUEBLASTER)
+		soldier_fireblueblaster(self, 7);
+	else if (self->mtype == M_SOLDIER_LASER)
+		soldier_firelaser(self, MZ2_SOLDIER_MACHINEGUN_4);
+}
+
+void m_soldier_hyperripper_run_fire(edict_t *self)
+{
+	if (self->mtype == M_SOLDIER_RIPPER)
+		soldier_fireionripper(self, 7);
+	else if (self->mtype == M_SOLDIER_BLUEBLASTER)
+		soldier_fireblueblaster(self, 7);
 }
 
 mframe_t m_soldier_frames_runandshoot [] =
@@ -221,8 +351,8 @@ mframe_t m_soldier_frames_runandshoot [] =
 	drone_ai_run,  25, NULL,
 	drone_ai_run, 25, NULL,
 	drone_ai_run, 25, m_soldier_fire, //112
-	drone_ai_run, 25, NULL,
-	drone_ai_run, 25, NULL,
+	drone_ai_run, 25, m_soldier_hyperripper_run_fire,
+	drone_ai_run, 25, m_soldier_hyperripper_run_fire,
 	drone_ai_run, 25, NULL,
 	drone_ai_run, 25, NULL,
 	drone_ai_run, 25, m_soldier_fire,	//117
@@ -282,8 +412,73 @@ mframe_t m_soldier_frames_attack1 [] =
 };
 mmove_t m_soldier_move_attack1 = {FRAME_attak101, FRAME_attak112, m_soldier_frames_attack1, m_soldier_endattack1};
 
+void m_soldier_endattack_laser(edict_t* self)
+{
+	self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+	self->monsterinfo.pausetime = 0;
+	if (self->beam && self->beam->inuse)
+	{
+		self->beam->prethink = NULL;
+		self->beam->nextthink = level.time + FRAMETIME;
+	}
+	m_soldier_run(self);
+}
+
+void m_soldier_firelaser_frame(edict_t* self)
+{
+	if (!G_EntExists(self->enemy) || !visible(self, self->enemy))
+	{
+		self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+		return;
+	}
+
+	if (!(self->monsterinfo.aiflags & AI_HOLD_FRAME))
+		self->monsterinfo.pausetime = level.time + 0.3 + random() * 0.8;
+
+	soldier_firelaser(self, MZ2_SOLDIER_MACHINEGUN_4);
+
+	if (level.time < self->monsterinfo.pausetime)
+		self->monsterinfo.aiflags |= AI_HOLD_FRAME;
+	else
+	{
+		self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+		self->monsterinfo.pausetime = 0;
+		if (self->beam && self->beam->inuse)
+		{
+			self->beam->prethink = NULL;
+			self->beam->nextthink = level.time + FRAMETIME;
+		}
+	}
+}
+
+mframe_t m_soldier_frames_attack_laser[] =
+{
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, m_soldier_firelaser_frame,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL
+};
+mmove_t m_soldier_move_attack_laser = {FRAME_attak401, FRAME_attak406, m_soldier_frames_attack_laser, m_soldier_endattack_laser};
+
 void m_soldier_attack(edict_t* self)
 {
+	if (self->mtype == M_SOLDIER_LASER)
+	{
+		self->monsterinfo.currentmove = &m_soldier_move_attack_laser;
+		M_DelayNextAttack(self, 0, true);
+		return;
+	}
+
+	if ((self->mtype == M_SOLDIER_RIPPER || self->mtype == M_SOLDIER_BLUEBLASTER)
+		&& !(self->monsterinfo.aiflags & AI_STAND_GROUND))
+	{
+		self->monsterinfo.currentmove = &m_soldier_move_runandshoot;
+		M_DelayNextAttack(self, 0, true);
+		return;
+	}
+
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 	{
 		self->monsterinfo.currentmove = &m_soldier_move_attack1;
@@ -342,6 +537,28 @@ void m_soldier_jump_takeoff (edict_t *self)
 	self->monsterinfo.pausetime = level.time + 2.0; // maximum duration of jump
 }
 
+void m_soldier_jump_forward_takeoff(edict_t *self, float forward_velocity, float up_velocity)
+{
+	vec3_t forward;
+
+	gi.sound(self, CHAN_VOICE, sound_sight1, 1, ATTN_NORM, 0);
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+	VectorScale(forward, forward_velocity, self->velocity);
+	self->velocity[2] = up_velocity;
+	self->groundentity = NULL;
+	self->monsterinfo.pausetime = level.time + 2.0;
+}
+
+void m_soldier_jump_attack_takeoff(edict_t *self)
+{
+	m_soldier_jump_forward_takeoff(self, 250, 250);
+}
+
+void m_soldier_jump2_takeoff(edict_t *self)
+{
+	m_soldier_jump_forward_takeoff(self, 200, 350);
+}
+
 void m_soldier_jump_hold (edict_t *self)
 {
 	vec3_t	v;
@@ -368,7 +585,7 @@ void m_soldier_jump_hold (edict_t *self)
 
 mframe_t m_soldier_frames_jump [] =
 {
-	ai_move, 0, m_soldier_jump_takeoff,
+	ai_move, 0, m_soldier_jump2_takeoff,
 	ai_move, 0,	m_soldier_jump_hold,
 	ai_move, 0,  NULL,
 	ai_move, 0,  NULL,
@@ -376,10 +593,28 @@ mframe_t m_soldier_frames_jump [] =
 };
 mmove_t m_soldier_move_jump = {FRAME_duck01, FRAME_duck05, m_soldier_frames_jump, m_soldier_run};
 
+mframe_t m_soldier_frames_jump_attack [] =
+{
+	ai_move, 0, m_soldier_jump_attack_takeoff,
+	ai_move, 0, m_soldier_jump_hold,
+	ai_move, 0, m_soldier_jump_hold,
+	ai_move, 0, m_soldier_jump_hold,
+	ai_move, 0, m_soldier_jump_hold,
+	ai_move, 0, m_soldier_jump_hold,
+	ai_move, 0, m_soldier_jump_hold,
+	ai_move, 0, m_soldier_jump_hold
+};
+mmove_t m_soldier_move_jump_attack = {FRAME_attak501, FRAME_attak508, m_soldier_frames_jump_attack, m_soldier_run};
+
 void m_soldier_jump (edict_t *self)
 {
 	if (self->groundentity)
-		self->monsterinfo.currentmove = &m_soldier_move_jump;
+	{
+		if (random() < 0.5)
+			self->monsterinfo.currentmove = &m_soldier_move_jump_attack;
+		else
+			self->monsterinfo.currentmove = &m_soldier_move_jump;
+	}
 }
 
 void m_soldier_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
@@ -495,13 +730,17 @@ mmove_t soldier_move_pain_long2 = { FRAME_pain401, FRAME_pain417, soldier_frames
 void soldier_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
 	if (self->health < (self->max_health / 2))
-		self->s.skinnum = 1;
+		self->s.skinnum |= 1;
+	else
+		self->s.skinnum &= ~1;
 
 	// we're already in a pain state
 	if (self->monsterinfo.currentmove == &soldier_move_pain_long1 ||
 		self->monsterinfo.currentmove == &soldier_move_pain_long2 ||
 		self->monsterinfo.currentmove == &soldier_move_pain_short1 || 
-		self->monsterinfo.currentmove == &soldier_move_pain_short2)
+		self->monsterinfo.currentmove == &soldier_move_pain_short2 ||
+		self->monsterinfo.currentmove == &m_soldier_move_jump ||
+		self->monsterinfo.currentmove == &m_soldier_move_jump_attack)
 		return;
 
 	// monster players don't get pain state induced
@@ -879,14 +1118,44 @@ void init_drone_soldier (edict_t *self)
 	self->monsterinfo.cost = 50;
 
 	// set health
-	self->health = M_SOLDIER_INITIAL_HEALTH+M_SOLDIER_ADDON_HEALTH*self->monsterinfo.level; // hlt: soldier
+	if (self->mtype == M_SOLDIER_RIPPER)
+		self->health = M_SOLDIER_RIPPER_INITIAL_HEALTH + M_SOLDIER_RIPPER_ADDON_HEALTH * self->monsterinfo.level;
+	else if (self->mtype == M_SOLDIER_BLUEBLASTER)
+		self->health = M_SOLDIER_BLUEBLASTER_INITIAL_HEALTH + M_SOLDIER_BLUEBLASTER_ADDON_HEALTH * self->monsterinfo.level;
+	else if (self->mtype == M_SOLDIER_LASER)
+		self->health = M_SOLDIER_LASER_INITIAL_HEALTH + M_SOLDIER_LASER_ADDON_HEALTH * self->monsterinfo.level;
+	else
+		self->health = M_SOLDIER_INITIAL_HEALTH+M_SOLDIER_ADDON_HEALTH*self->monsterinfo.level; // hlt: soldier
 	self->max_health = self->health;
 	self->gib_health = -1.5 * BASE_GIB_HEALTH;
 
 	// set armor
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = M_SOLDIER_INITIAL_ARMOR+M_SOLDIER_ADDON_ARMOR*self->monsterinfo.level; // pow: soldier
+	if (self->mtype == M_SOLDIER_RIPPER)
+		self->monsterinfo.power_armor_power = M_SOLDIER_RIPPER_INITIAL_ARMOR + M_SOLDIER_RIPPER_ADDON_ARMOR * self->monsterinfo.level;
+	else if (self->mtype == M_SOLDIER_BLUEBLASTER)
+		self->monsterinfo.power_armor_power = M_SOLDIER_BLUEBLASTER_INITIAL_ARMOR + M_SOLDIER_BLUEBLASTER_ADDON_ARMOR * self->monsterinfo.level;
+	else if (self->mtype == M_SOLDIER_LASER)
+		self->monsterinfo.power_armor_power = M_SOLDIER_LASER_INITIAL_ARMOR + M_SOLDIER_LASER_ADDON_ARMOR * self->monsterinfo.level;
+	else
+		self->monsterinfo.power_armor_power = M_SOLDIER_INITIAL_ARMOR+M_SOLDIER_ADDON_ARMOR*self->monsterinfo.level; // pow: soldier
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+
+	if (self->mtype == M_SOLDIER_RIPPER)
+	{
+		self->s.skinnum = 6;
+		self->count = self->s.skinnum - 6;
+	}
+	else if (self->mtype == M_SOLDIER_BLUEBLASTER)
+	{
+		self->s.skinnum = 8;
+		self->count = self->s.skinnum - 6;
+	}
+	else if (self->mtype == M_SOLDIER_LASER)
+	{
+		self->s.skinnum = 10;
+		self->count = self->s.skinnum - 6;
+	}
 
 	// set AI jump parameters
 	self->monsterinfo.jumpdn = 512;

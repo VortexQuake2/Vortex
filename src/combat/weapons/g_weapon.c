@@ -512,7 +512,8 @@ void blaster_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *
 	if (other->takedamage)
 	{
 		WeaponStun(self->owner, other, self->style);
-		T_Damage (other, self, self->owner, self->velocity, self->s.origin, plane->normal, self->dmg, 0, DAMAGE_ENERGY, self->style);
+		T_Damage (other, self, self->owner, self->velocity, self->s.origin,
+			plane ? plane->normal : vec3_origin, self->dmg, 0, DAMAGE_ENERGY, self->style);
 	}
 	else
 	{
