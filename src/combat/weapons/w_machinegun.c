@@ -121,7 +121,6 @@ void Machinegun_Fire(edict_t* ent) {
         ent->client->anim_end = FRAME_attack8;
     }
     ent->client->weaponstate = WEAPON_READY;
-    ent->client->vrr.gun_fire_time = level.time + 0.1; // wait before next firing
 }
 
 //

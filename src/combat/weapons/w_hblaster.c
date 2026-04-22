@@ -86,7 +86,6 @@ void Weapon_HyperBlaster_Fire(edict_t* ent) {
             }
         }
 
-        ent->client->vrr.gun_fire_time = level.time + 0.1;
         ent->client->ps.gunframe++;
         if (ent->client->ps.gunframe == 12 && ent->client->pers.inventory[ent->client->ammo_index])
             ent->client->ps.gunframe = 6;

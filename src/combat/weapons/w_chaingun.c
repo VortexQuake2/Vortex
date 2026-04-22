@@ -95,8 +95,6 @@ void Chaingun_Fire(edict_t* ent) {
         fire_bullet(ent, start, forward, damage, 5, hspread, vspread, MOD_CHAINGUN);
     }
 
-    ent->client->vrr.gun_fire_time = level.time + 0.1;
-
     //K03 begin
     if (ent->myskills.weapons[WEAPON_CHAINGUN].mods[2].current_level >= 1)
         if (ent->lasthbshot <= level.time) {
@@ -169,14 +167,12 @@ void AssaultCannon_Fire(edict_t* ent) {
             gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/asscan_spinup.wav"), f, ATTN_NORM, 0);
 
         ent->client->ps.gunframe++; // we're done, so advance to next frame
-        ent->client->vrr.gun_fire_time = level.time + 0.1;
         return;
     }
     else if ((ent->client->ps.gunframe == 15) && !(ent->client->buttons & BUTTON_ATTACK)) {
         ent->client->ps.gunframe = 32;
         ent->client->weapon_sound = 0;
         ent->client->weaponstate = WEAPON_READY;
-        ent->client->vrr.gun_fire_time = level.time + 0.1;
         return;
     }
     // attack frames loop
@@ -187,8 +183,6 @@ void AssaultCannon_Fire(edict_t* ent) {
         else {
             ent->client->ps.gunframe++;
         }
-
-        ent->client->vrr.gun_fire_time = level.time + 0.1;
 
     if (ent->groundentity && (VectorLength(ent->velocity) < 1))
         canfire = true;

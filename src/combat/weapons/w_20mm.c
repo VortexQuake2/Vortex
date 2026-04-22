@@ -48,12 +48,15 @@ void weapon_20mm_fire(edict_t* ent) {
         // send muzzle flash
         gi.WriteByte(svc_muzzleflash);
         gi.WriteShort(ent - g_edicts);
+#ifndef VRX_REPRO
         gi.WriteByte(MZ_IONRIPPER | MZ_SILENCED);
+#else
+        gi.WriteByte(MZ_PHALANX2);
+#endif
         gi.multicast(ent->s.origin, MULTICAST_PVS);
     }
 
     ent->client->ps.gunframe++;
-    ent->client->vrr.gun_fire_time = level.time + 0.1;
 
     if (ent->myskills.weapons[WEAPON_20MM].mods[4].current_level < 1) {
         PlayerNoise(ent, start, PNOISE_WEAPON);
