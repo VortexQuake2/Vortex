@@ -326,6 +326,7 @@ void OpenWeaponUpgradeMenu(edict_t *ent, int lastline);					//upgrade your weapo
 void OpenUpgradeMenu(edict_t *ent);										//upgrade your abilities
 void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling);	//shows the full list of items in special inventory
 void OpenRespawnWeapMenu(edict_t *ent, int page_num);					//set respawn weapon
+void OpenRespawnWeapMenuFirstPage (edict_t *ent);
 void OpenArmoryMenu(edict_t *ent);										//Load the armory (buy/sell)
 void OpenClassMenu(edict_t *ent, int page_num);						//select class
 void OpenMyinfoMenu(edict_t *ent);										//vrxifo
