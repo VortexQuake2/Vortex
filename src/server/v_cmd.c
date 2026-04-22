@@ -140,7 +140,7 @@ const gameCommand_s commands[] =
 	{ "detpipes", 		Cmd_DetPipes_f  },
 	{ "vrxinfo", 		OpenMyinfoMenu },
 	{ "vrxarmory", 		OpenArmoryMenu },
-	{ "vrxrespawn", 	OpenRespawnWeapMenu },
+	{ "vrxrespawn", 	OpenRespawnWeapMenuFirstPage },
 	{ "thrust",         Cmd_Thrust_f  },
 	{ "vote", 			ShowVoteModeMenu },
 	{ "wormhole",	    Cmd_WormHole_f },

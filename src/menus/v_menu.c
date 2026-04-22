@@ -395,7 +395,7 @@ void respawnmenu_handler (edict_t *ent, int option)
 	if (option < 1 || option > 22)
 		return;
 
-	ent->myskills.respawn_weapon = option;
+	ent->myskills.respawn_weapon = option - 1;
 	OpenRespawnWeapMenu(ent, RespawnMenuPageForOption(option));
 }
 
@@ -434,10 +434,15 @@ static int RespawnMenuPageForOption(int option)
 	int i;
 	for (i = 0; i < (int)(sizeof(respawn_items) / sizeof(respawn_items[0])); i++)
 	{
-		if (respawn_items[i].option == option)
+		if (respawn_items[i].option + 1 == option)
 			return (i / 10) + 1;
 	}
 	return 1;
+}
+
+void OpenRespawnWeapMenuFirstPage(edict_t *ent)
+{
+	OpenRespawnWeapMenu(ent, 1);
 }
 
 void OpenRespawnWeapMenu(edict_t *ent, int page_num)
@@ -479,7 +484,7 @@ void OpenRespawnWeapMenu(edict_t *ent, int page_num)
 	menu_add_line(ent, " ", 0);
 
 	for (i = first; i < last; i++)
-		menu_add_line(ent, respawn_items[i].name, respawn_items[i].option);
+		menu_add_line(ent, respawn_items[i].name, respawn_items[i].option + 1);
 
 	menu_add_line(ent, " ", 0);
 	menu_add_line(ent, va("Respawn: %s", GetWeaponString(ent->myskills.respawn_weapon)), 0);
