@@ -672,9 +672,9 @@ void PM_AddCurrents(vec3_t wishvel) {
 
             if (pm->cmd.forwardmove > 0) {
                 if (pm->viewangles[PITCH] < 15)
-                    wishvel[2] = ladder_speed;
-                else
                     wishvel[2] = -ladder_speed;
+                else
+                    wishvel[2] = ladder_speed;
             }
             // [Paril-KEX] allow using "back" arrow to go down on ladder
             else if (pm->cmd.forwardmove < 0) {

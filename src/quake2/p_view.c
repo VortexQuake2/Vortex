@@ -862,8 +862,10 @@ void G_SetClientEvent (edict_t *ent)
 			&& level.framenum %	qf2sf(1) == 0 // don'd do the funny rapidfire burst of steps lol
 			&& (ent->client->pers.inventory[ITEM_INDEX(FindItem("Stealth Boots"))] < 1)	&& !ent->mtype)
 		{
-			if ((ent->myskills.abilities[CLOAK].disable) || (ent->myskills.abilities[CLOAK].current_level < 1))
-			ent->s.event = EV_FOOTSTEP;
+			bool nocloak = (ent->myskills.abilities[CLOAK].disable) || (ent->myskills.abilities[CLOAK].current_level < 1);
+			bool onladder = ent->client && ent->client->ps.pmove.pm_flags & PMF_ON_LADDER;
+			if (nocloak && !onladder)
+				ent->s.event = EV_FOOTSTEP;
 			PlayerNoise(ent, ent->s.origin, PNOISE_SELF); //ponko
 
 			// if the player is not crouched, then alert monsters of footsteps
