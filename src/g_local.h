@@ -1973,15 +1973,9 @@ struct vrr_t {
     // az note:
     // haste works by causing a weapon to fire more often according to a timer,
     // and it assumes the weapon works at 10hz.
-    // gun_fire_time makes it so fire state cannot change gunframes until
     // its time arrives, so that animations and weapon states don't advance ahead of schedule.
     // the statemachine time handles the activation, deactivation, ready states across all weapons
     // enforcing a steady 10 hz. the firing state always lets the gun run at whatever framerate,
-    // so gun_fire_time steadies that at-will.
-
-    // makes it so that during firing frames (call to Fire function)
-    // you have to wait until this level time to fire the next shot
-    float gun_fire_time;
 
     // weapon_generic2 handling of activate/ready/deactivate time
     float gun_statemachine_time; // weapon animations time

@@ -38,7 +38,6 @@ static void weapon_chainfist_fire(edict_t *ent)
 
     PlayerNoise(ent, ent->s.origin, PNOISE_WEAPON);
     ent->client->ps.gunframe++;
-    ent->client->vrr.gun_fire_time = level.time + 0.12;
     ent->client->weapon_sound = gi.soundindex("weapons/sawhit.wav");
 
     if (ent->client->buttons & BUTTON_ATTACK)

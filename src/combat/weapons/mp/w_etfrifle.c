@@ -78,7 +78,6 @@ static void weapon_etf_rifle_fire(edict_t *ent)
         PlayerNoise(ent, start, PNOISE_WEAPON);
     }
 
-    ent->client->vrr.gun_fire_time = level.time + 0.1;
     if (ent->client->buttons & BUTTON_ATTACK)
     {
         if (ent->client->ps.gunframe == 6)
