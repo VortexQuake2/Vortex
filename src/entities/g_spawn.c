@@ -135,7 +135,7 @@ void SP_monster_soldier_lasergun (edict_t *self);
 void SP_monster_soldier_ripper (edict_t *self);
 void SP_monster_guardian (edict_t *self);
 void SP_monster_janitor (edict_t *self);
-void SP_monster_MiniGuardian (edict_t *self);
+void SP_monster_miniguardian (edict_t *self);
 void SP_monster_fixbot (edict_t *self);
 void SP_monster_gekk (edict_t *self);
 void SP_monster_chick_heat (edict_t *self);
@@ -283,7 +283,7 @@ spawn_t	spawns[] = {
 	{"monster_soldier_laser", SP_monster_soldier_laser},
 	{"monster_soldier_lasergun", SP_monster_soldier_laser},
 	{"monster_janitor", SP_monster_janitor},
-	{"monster_MiniGuardian", SP_monster_MiniGuardian},
+	{"monster_miniguardian", SP_monster_miniguardian},
 	{"monster_tank", SP_monster_tank},
 	{"monster_tank_commander", SP_monster_tank_commander},
 	{"monster_medic", SP_monster_medic},
@@ -1131,10 +1131,10 @@ void SP_monster_janitor(edict_t *ent)
         vrx_create_drone_from_ent(ent, g_edicts, DS_JANITOR, true, true, 0);
 }
 
-void SP_monster_MiniGuardian(edict_t *ent)
+void SP_monster_miniguardian(edict_t *ent)
 {
 	if (coop->value)
-        vrx_create_drone_from_ent(ent, g_edicts, DS_MiniGuardian, true, true, 0);
+        vrx_create_drone_from_ent(ent, g_edicts, DS_MINIGUARDIAN, true, true, 0);
 }
 
 void SP_monster_tank(edict_t *ent) 

@@ -1647,7 +1647,7 @@ enum dronespawn_t {
     DS_CARRIER = 35,
     DS_GUARDIAN = 36,
     DS_JANITOR = 37,
-    DS_MiniGuardian = 38,
+    DS_MINIGUARDIAN = 38,
     DS_SOLDIER_RIPPER = 39,
     DS_SOLDIER_BLUEBLASTER = 40,
     DS_SOLDIER_LASER = 41,

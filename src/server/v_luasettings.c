@@ -1198,8 +1198,9 @@ void Lua_LoadVariables()
 	M_RAILGUN_DMG_ADDON = vrx_lua_get_variable("M_RAILGUN_DMG_ADDON", 15);
 	M_RAILGUN_DMG_MAX = vrx_lua_get_variable("M_RAILGUN_DMG_MAX", 0);
 
-	M_DABEAM_DMG_BASE = vrx_lua_get_variable("M_DABEAM_DMG_BASE", 5);
+	M_DABEAM_DMG_BASE = vrx_lua_get_variable("M_DABEAM_DMG_BASE", 2);
 	M_DABEAM_DMG_ADDON = vrx_lua_get_variable("M_DABEAM_DMG_ADDON", 1);
+	M_DABEAM_DMG_MAX = vrx_lua_get_variable("M_DABEAM_DMG_MAX", 0);
 
 	M_MELEE_DMG_BASE = vrx_lua_get_variable("M_MELEE_DMG_BASE", 50);
 	M_MELEE_DMG_ADDON = vrx_lua_get_variable("M_MELEE_DMG_ADDON", 25);
@@ -1227,10 +1228,11 @@ void Lua_LoadVariables()
 	M_BLASTER2_SPEED_BASE = vrx_lua_get_variable("M_BLASTER2_SPEED_BASE", 500);
 	M_BLASTER2_SPEED_ADDON = vrx_lua_get_variable("M_BLASTER2_SPEED_ADDON", 0);
 	M_BLASTER2_SPEED_MAX = vrx_lua_get_variable("M_BLASTER2_SPEED_MAX", 0);
-	M_PLASMA_DMG_BASE = vrx_lua_get_variable("M_PLASMA_DMG_BASE", 50);
-	M_PLASMA_DMG_ADDON = vrx_lua_get_variable("M_PLASMA_DMG_ADDON", 10);
+
+	M_PLASMA_DMG_BASE = vrx_lua_get_variable("M_PLASMA_DMG_BASE", 24);
+	M_PLASMA_DMG_ADDON = vrx_lua_get_variable("M_PLASMA_DMG_ADDON", 8);
 	M_PLASMA_DMG_MAX = vrx_lua_get_variable("M_PLASMA_DMG_MAX", 0);
-	M_PLASMA_SPEED_BASE = vrx_lua_get_variable("M_PLASMA_SPEED_BASE", 1000);
+	M_PLASMA_SPEED_BASE = vrx_lua_get_variable("M_PLASMA_SPEED_BASE", 850);
 	M_PLASMA_SPEED_ADDON = vrx_lua_get_variable("M_PLASMA_SPEED_ADDON", 50);
 	M_PLASMA_SPEED_MAX = vrx_lua_get_variable("M_PLASMA_SPEED_MAX", 1500);
 	M_PLASMA_DAMAGE_RADIUS = vrx_lua_get_variable("M_PLASMA_DAMAGE_RADIUS", 40);
@@ -1241,6 +1243,27 @@ void Lua_LoadVariables()
 	M_20MM_DMG_BASE = vrx_lua_get_variable("M_20MM_DMG_BASE", 70);
 	M_20MM_DMG_ADDON = vrx_lua_get_variable("M_20MM_DMG_ADDON", 3);
 	M_20MM_DMG_MAX = vrx_lua_get_variable("M_20MM_DMG_MAX", 0);
+
+	M_ETFRIFLE_DMG_BASE = vrx_lua_get_variable("M_ETFRIFLE_DMG_BASE", 10);
+	M_ETFRIFLE_DMG_ADDON = vrx_lua_get_variable("M_ETFRIFLE_DMG_ADDON", 3);
+	M_ETFRIFLE_DMG_MAX = vrx_lua_get_variable("M_ETFRIFLE_DMG_MAX", 0);
+	M_ETFRIFLE_SPEED_BASE = vrx_lua_get_variable("M_ETFRIFLE_SPEED_BASE", 1000);
+	M_ETFRIFLE_SPEED_ADDON = vrx_lua_get_variable("M_ETFRIFLE_SPEED_ADDON", 50);
+	M_ETFRIFLE_SPEED_MAX = vrx_lua_get_variable("M_ETFRIFLE_SPEED_MAX", 1500);
+
+	M_IONRIPPER_DMG_BASE = vrx_lua_get_variable("M_IONRIPPER_DMG_BASE", 20);
+	M_IONRIPPER_DMG_ADDON = vrx_lua_get_variable("M_IONRIPPER_DMG_ADDON", 3);
+	M_IONRIPPER_DMG_MAX = vrx_lua_get_variable("M_IONRIPPER_DMG_MAX", 0);
+	M_IONRIPPER_SPEED_BASE = vrx_lua_get_variable("M_IONRIPPER_SPEED_BASE", 1000);
+	M_IONRIPPER_SPEED_ADDON = vrx_lua_get_variable("M_IONRIPPER_SPEED_ADDON", 50);
+	M_IONRIPPER_SPEED_MAX = vrx_lua_get_variable("M_IONRIPPER_SPEED_MAX", 1500);
+
+	M_DISRUPTOR_DMG_BASE = vrx_lua_get_variable("M_DISRUPTOR_DMG_BASE", 40);
+	M_DISRUPTOR_DMG_ADDON = vrx_lua_get_variable("M_DISRUPTOR_DMG_ADDON", 3);
+	M_DISRUPTOR_DMG_MAX = vrx_lua_get_variable("M_DISRUPTOR_DMG_MAX", 0);
+	M_DISRUPTOR_SPEED_BASE = vrx_lua_get_variable("M_DISRUPTOR_SPEED_BASE", 1000);
+	M_DISRUPTOR_SPEED_ADDON = vrx_lua_get_variable("M_DISRUPTOR_SPEED_ADDON", 50);
+	M_DISRUPTOR_SPEED_MAX = vrx_lua_get_variable("M_DISRUPTOR_SPEED_MAX", 1500);
 
 	BERSERK_SLASH_INITIAL_DAMAGE = vrx_lua_get_variable("BERSERK_SLASH_INITIAL_DAMAGE", 100);
 	BERSERK_SLASH_ADDON_DAMAGE = vrx_lua_get_variable("BERSERK_SLASH_ADDON_DAMAGE", 20);

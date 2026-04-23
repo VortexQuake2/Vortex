@@ -280,7 +280,11 @@ static void GladiatorDisruptor(edict_t *self)
 		return;
 
 	damage = DISRUPTOR_INITIAL_DAMAGE + DISRUPTOR_ADDON_DAMAGE * drone_damagelevel(self);
+		if (M_DISRUPTOR_DMG_MAX && damage > M_DISRUPTOR_DMG_MAX)
+		damage = M_DISRUPTOR_DMG_MAX;
 	speed = DISRUPTOR_INITIAL_SPEED + DISRUPTOR_ADDON_SPEED * drone_damagelevel(self);
+			if (M_DISRUPTOR_SPEED_MAX && damage > M_DISRUPTOR_SPEED_MAX)
+		speed = M_DISRUPTOR_SPEED_MAX;
 
 	MonsterAim(self, M_PROJECTILE_ACC, speed, false, MZ2_GLADIATOR_RAILGUN_1, forward, start);
 	fire_disruptor(self, start, forward, damage, speed, visible(self, self->enemy) ? self->enemy : NULL);
@@ -606,5 +610,5 @@ void init_drone_gladc(edict_t *self)
 	self->monsterinfo.power_armor_power = M_GLADC_INITIAL_ARMOR + M_GLADC_ADDON_ARMOR * self->monsterinfo.level;
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 	self->mass = 350;
-	self->item = FindItemByClassname("ammo_cells");
+	self->item = FindItemByClassname("ammo_magslug");
 }

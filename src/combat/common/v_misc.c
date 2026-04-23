@@ -272,7 +272,7 @@ static enum dronespawn_t vrx_pvm_random_drone_type(void)
 		DS_ARACHNID,
 		DS_MEDIC_COMMANDER,
 		DS_JANITOR,
-		DS_MiniGuardian
+		DS_MINIGUARDIAN
 	};
 
 	const int count = (int)(sizeof(pvm_drone_types) / sizeof(pvm_drone_types[0]));

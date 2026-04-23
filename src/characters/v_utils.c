@@ -2098,9 +2098,9 @@ char *V_GetMonsterKind(int mtype) {
         case M_DAEDALUS:
             return "daedalus";
         case M_GLADB:
-            return "gladiator disruptor";
+            return "disruptor gladiator";
         case M_GLADC:
-            return "gladiator plasma";
+            return "plasma gladiator";
         case M_STALKER:
             return "stalker";
         case M_GEKK:
@@ -2112,9 +2112,9 @@ char *V_GetMonsterKind(int mtype) {
         case M_GUARDIAN:
             return "Guardian";
         case M_JANITOR:
-            return "Janitor";
+            return "janitor";
         case M_MINIGUARDIAN:
-            return "Mini Guardian";
+            return "mini guardian";
         case M_SKELETON:
             return "skeleton";
         case M_GOLEM:
@@ -2860,7 +2860,8 @@ qboolean vrx_is_morphing_polt(edict_t *ent) {
 // returns true if ent has a pain/damaged skin
 qboolean vrx_has_pain_skin(edict_t* ent)
 {
-    return (ent->mtype != M_DECOY && ent->mtype != M_SKELETON && ent->mtype != M_GOLEM);
+    return (ent->mtype != M_DECOY && ent->mtype != M_SKELETON && ent->mtype != M_GOLEM
+             && ent->mtype != M_RUNNERTANK && ent->mtype != M_REDMUTANT);
 }
 
 // returns a value >= 1 based on any synergy bonuses that apply for ability_index

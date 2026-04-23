@@ -834,6 +834,9 @@ static void mybrain_laserbeam(edict_t *self)
 		return;
 
 	damage = M_DABEAM_DMG_BASE + M_DABEAM_DMG_ADDON * drone_damagelevel(self);
+		if (M_DABEAM_DMG_MAX && damage > M_DABEAM_DMG_MAX)
+		damage = M_DABEAM_DMG_MAX;
+
 	monster_fire_dabeam(self, damage, false, mybrain_right_eye_laser_update);
 	monster_fire_dabeam(self, damage, true, mybrain_left_eye_laser_update);
 }
@@ -879,11 +882,10 @@ void mybrain_attack (edict_t *self)
 	dist = entdist(self, self->enemy);
 	has_los = visible(self, self->enemy);
 
+	// laser attack
+	if (has_los && dist >= 192 && dist <= 640 && random() < 0.15)
+		self->monsterinfo.currentmove = &mybrain_move_attack4;
 	// jump to our enemy if he's close and on even ground
-	if (has_los && dist > 512)
-		self->monsterinfo.currentmove = &mybrain_move_attack4;
-	else if (has_los && dist > MELEE_DISTANCE && random() < 0.4)
-		self->monsterinfo.currentmove = &mybrain_move_attack4;
 	else if ((dist > 256) && (self->enemy->absmin[2]+18 >= self->absmin[2])
 		&& (self->enemy->absmin[2]-18 <= self->absmin[2]) 
 		&& !(self->monsterinfo.aiflags & AI_STAND_GROUND))

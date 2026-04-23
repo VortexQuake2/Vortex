@@ -20,6 +20,8 @@ static int sound_idle;
 #define STALKER_CEILING_ON 1
 #define STALKER_CEILING_JUMPING 2
 #define STALKER_CEILING_TRACE_DIST 256
+#define STALKER_CEILING_JUMP_SPEED 550
+#define STALKER_CEILING_MIN_SPEED 360
 
 void drone_ai_stand(edict_t *self, float dist);
 void drone_ai_run(edict_t *self, float dist);
@@ -29,6 +31,7 @@ void drone_ai_walk(edict_t *self, float dist);
 static void stalker_stand(edict_t *self);
 static void stalker_run(edict_t *self);
 static void stalker_set_floor(edict_t *self);
+static void stalker_jump_wait_land(edict_t *self);
 extern mmove_t stalker_move_jump_straightup;
 static mmove_t stalker_move_dodge_run;
 
@@ -182,6 +185,12 @@ static void stalker_ceiling_prethink(edict_t *self)
 {
 	float ceiling_z;
 
+	if (self->style == STALKER_CEILING_JUMPING)
+	{
+		stalker_jump_wait_land(self);
+		return;
+	}
+
 	if (!stalker_on_ceiling(self))
 		return;
 
@@ -191,12 +200,12 @@ static void stalker_ceiling_prethink(edict_t *self)
 		return;
 	}
 
-	if (stalker_find_ceiling(self, 80, &ceiling_z))
+	if (stalker_find_ceiling(self, 96, &ceiling_z))
 		stalker_attach_ceiling(self, ceiling_z);
 	else
 	{
-		stalker_set_floor(self);
-		self->velocity[2] = -120;
+		// don't instantly detach on one failed trace
+		self->velocity[2] = 0;
 	}
 }
 
@@ -222,7 +231,7 @@ static void stalker_jump_straightup(edict_t *self)
 		self->pos1[2] = ceiling_z;
 		self->flags |= FL_FLY;
 		self->gravity = 0;
-		self->velocity[2] = 500;
+		self->velocity[2] = STALKER_CEILING_JUMP_SPEED;
 	}
 	else
 	{
@@ -266,8 +275,8 @@ static void stalker_jump_wait_land(edict_t *self)
 	{
 		self->flags |= FL_FLY;
 		self->gravity = 0;
-		if (self->velocity[2] < 300)
-			self->velocity[2] = 300;
+		if (self->velocity[2] < STALKER_CEILING_MIN_SPEED)
+			self->velocity[2] = STALKER_CEILING_MIN_SPEED;
 	}
 
 	if (self->groundentity || level.time > self->monsterinfo.pausetime)
@@ -282,7 +291,7 @@ static void stalker_jump_wait_land(edict_t *self)
 		return;
 	}
 
-	self->monsterinfo.aiflags |= AI_HOLD_FRAME;
+		self->monsterinfo.aiflags |= AI_HOLD_FRAME;
 }
 
 mframe_t stalker_frames_jump_straightup[] =
@@ -388,6 +397,24 @@ mmove_t stalker_move_shoot = { FRAME_run01, FRAME_run04, stalker_frames_shoot, s
 
 static void stalker_attack(edict_t *self)
 {
+	if (stalker_on_ceiling(self))
+	{
+		// sometimes come back down during combat
+		if (entdist(self, self->enemy) < 96 || random() < 0.25f)
+		{
+			stalker_set_floor(self);
+			self->velocity[2] = -300;
+			stalker_run(self);
+			M_DelayNextAttack(self, 0.6, true);
+			return;
+		}
+
+		// otherwise keep fighting from the ceiling
+		self->monsterinfo.currentmove = &stalker_move_shoot;
+		M_DelayNextAttack(self, 0.4, true);
+		return;
+	}
+
 	if (stalker_ceiling_allowed(self) && !stalker_on_ceiling(self) && self->groundentity &&
 		level.time > self->monsterinfo.melee_finished && random() < 0.33f)
 	{
@@ -476,9 +503,17 @@ static void stalker_melee(edict_t *self)
 {
 	if (stalker_on_ceiling(self))
 	{
-		stalker_set_floor(self);
-		self->velocity[2] = -300;
-		stalker_run(self);
+		if (!G_ValidTarget(self, self->enemy, true, true) || entdist(self, self->enemy) > 96)
+		{
+			self->monsterinfo.melee_finished = level.time + 0.5;
+			stalker_run(self);
+			return;
+		}
+
+		if (random() < 0.5)
+			self->monsterinfo.currentmove = &stalker_move_swing_l;
+		else
+			self->monsterinfo.currentmove = &stalker_move_swing_r;
 		return;
 	}
 

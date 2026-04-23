@@ -1,7 +1,7 @@
 /*
 ==============================================================================
 
-GUARDIAN / MiniGuardian
+GUARDIAN / miniguardian
 
 ==============================================================================
 */
@@ -125,6 +125,8 @@ mmove_t guardian_move_walk = {FRAME_walk1, FRAME_walk19, guardian_frames_walk, N
 
 void guardian_walk(edict_t *self)
 {
+	if (!self->goalentity)
+		self->goalentity = world;
 	self->monsterinfo.currentmove = &guardian_move_walk;
 }
 
@@ -226,8 +228,12 @@ void guardian_fire_blaster(edict_t *self)
 
 	if (self->mtype == M_MINIGUARDIAN)
 	{
-		damage = IONRIPPER_INITIAL_DAMAGE + IONRIPPER_ADDON_DAMAGE * drone_damagelevel(self);
-		speed = IONRIPPER_INITIAL_SPEED + IONRIPPER_ADDON_SPEED * drone_damagelevel(self);
+		damage = M_IONRIPPER_DMG_BASE + M_IONRIPPER_DMG_ADDON * drone_damagelevel(self);
+		if (M_IONRIPPER_DMG_MAX && damage > M_IONRIPPER_DMG_MAX)
+			damage = M_IONRIPPER_DMG_MAX;
+		speed = M_IONRIPPER_SPEED_BASE + M_IONRIPPER_SPEED_ADDON * drone_damagelevel(self);
+		if (M_IONRIPPER_SPEED_MAX && speed > M_IONRIPPER_SPEED_MAX)
+			speed = M_IONRIPPER_SPEED_MAX;
 		MonsterAim(self, M_PROJECTILE_ACC, speed, false, MZ2_SOLDIER_RIPPER_8, forward, start);
 		monster_fire_ionripper(self, start, forward, damage, speed, EF_IONRIPPER, MZ2_SOLDIER_RIPPER_8);
 	}
@@ -340,6 +346,8 @@ void guardian_laser_fire(edict_t *self)
 
 	gi.sound(self, CHAN_WEAPON, sound_laser, 1, ATTN_NORM, 0);
 	damage = M_DABEAM_DMG_BASE + M_DABEAM_DMG_ADDON * drone_damagelevel(self);
+	if (M_DABEAM_DMG_MAX && damage > M_DABEAM_DMG_MAX)
+		damage = M_DABEAM_DMG_MAX;
 	if (self->mtype == M_GUARDIAN)
 		damage += 10 + 2 * drone_damagelevel(self);
 	monster_fire_dabeam(self, damage, self->s.frame & 1, NULL);
@@ -631,7 +639,7 @@ void guardian_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 
 void init_drone_guardian(edict_t *self)
 {
-	qboolean MiniGuardian = (self->mtype == M_MINIGUARDIAN);
+	qboolean miniguardian = (self->mtype == M_MINIGUARDIAN);
 
 	sound_step = gi.soundindex("zortemp/step.wav");
 	sound_charge = gi.soundindex("weapons/hyprbu1a.wav");
@@ -645,10 +653,10 @@ void init_drone_guardian(edict_t *self)
 	self->s.modelindex = gi.modelindex("models/monsters/guardian/tris.md2");
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
-	self->monsterinfo.control_cost = MiniGuardian ? M_TANK_CONTROL_COST : M_JORG_CONTROL_COST;
-	self->monsterinfo.cost = MiniGuardian ? 175 : 500;
+	self->monsterinfo.control_cost = miniguardian ? M_TANK_CONTROL_COST : M_JORG_CONTROL_COST;
+	self->monsterinfo.cost = miniguardian ? 175 : 500;
 
-	if (MiniGuardian)
+	if (miniguardian)
 	{
 		self->s.skinnum = 2;
 		self->s.scale = 0.4f;
@@ -670,7 +678,7 @@ void init_drone_guardian(edict_t *self)
 	}
 
 	self->max_health = self->health;
-	self->gib_health = MiniGuardian ? -3 * BASE_GIB_HEALTH : -6 * BASE_GIB_HEALTH;
+	self->gib_health = miniguardian ? -3 * BASE_GIB_HEALTH : -6 * BASE_GIB_HEALTH;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 	self->monsterinfo.jumpup = 64;

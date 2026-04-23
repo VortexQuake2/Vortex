@@ -908,7 +908,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 	case DS_CARRIER: init_drone_carrier(drone);	break;
 	case DS_GUARDIAN: init_drone_guardian(drone); break;
 	case DS_JANITOR: drone->mtype = M_JANITOR; init_drone_supertank(drone); break;
-	case DS_MiniGuardian: drone->mtype = M_MINIGUARDIAN; init_drone_guardian(drone); break;
+	case DS_MINIGUARDIAN: drone->mtype = M_MINIGUARDIAN; init_drone_guardian(drone); break;
 
 	// default
 	default: init_drone_gunner(drone);		break;
@@ -925,7 +925,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 	//4.0 gib health based on monster control cost
 	if (drone_type < 30 ||
 		drone_type == DS_JANITOR ||
-		drone_type == DS_MiniGuardian ||
+		drone_type == DS_MINIGUARDIAN ||
 		drone_type == DS_SOLDIER_RIPPER ||
 		drone_type == DS_SOLDIER_BLUEBLASTER ||
 		drone_type == DS_SOLDIER_LASER)
@@ -2986,7 +2986,7 @@ void Cmd_Drone_f (edict_t *ent)
 	else if (!Q_strcasecmp(s, "janitor"))
         vrx_create_new_drone(ent, DS_JANITOR, false, true, 0);
 	else if (!Q_strcasecmp(s, "miniguardian") || !Q_strcasecmp(s, "mini guardian") || !Q_strcasecmp(s, "mini_guardian"))
-        vrx_create_new_drone(ent, DS_MiniGuardian, false, true, 0);
+        vrx_create_new_drone(ent, DS_MINIGUARDIAN, false, true, 0);
 	else if (!Q_strcasecmp(s, "enforcer"))
         vrx_create_new_drone(ent, DS_INFANTRY, false, true, 0);
 	else if (!Q_strcasecmp(s, "flyer"))

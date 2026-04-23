@@ -477,6 +477,8 @@ void soldier_firelaser(edict_t* self, int flash_number)
 
 	self->radius_dmg = flash_number;
 	damage = M_DABEAM_DMG_BASE + M_DABEAM_DMG_ADDON * drone_damagelevel(self);
+		if (M_DABEAM_DMG_MAX && damage > M_DABEAM_DMG_MAX)
+		damage = M_DABEAM_DMG_MAX;
 	monster_fire_dabeam(self, damage, false, soldier_laser_update);
 }
 
