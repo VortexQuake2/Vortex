@@ -32,7 +32,25 @@ void drone_ai_run_slide(edict_t *self, float dist);
 static void infantry_run_fire(edict_t *self);
 extern mmove_t infantry_move_attack4;
 
+static void infantry_project_flash(edict_t *self, int flash_number, vec3_t forward, vec3_t start)
+{
+	vec3_t right, offset;
 
+	AngleVectors(self->s.angles, forward, right, NULL);
+	VectorCopy(monster_flash_offset[flash_number], offset);
+	if (self->s.scale)
+		VectorScale(offset, self->s.scale, offset);
+	G_ProjectSource(self->s.origin, offset, forward, right, start);
+}
+
+static int infantry_20mm_flash_for_frame(edict_t *self)
+{
+	if (self->s.frame >= FRAME_run201 && self->s.frame <= FRAME_run208)
+		return MZ2_INFANTRY_MACHINEGUN_14 + (self->s.frame - FRAME_run201);
+	if (self->s.frame == FRAME_attak111)
+		return MZ2_INFANTRY_MACHINEGUN_1;
+	return MZ2_INFANTRY_MACHINEGUN_2 + (self->s.frame - FRAME_death211);
+}
 
 mframe_t infantry_frames_stand [] =
 {
@@ -199,14 +217,14 @@ void InfantryMachineGun (edict_t *self)
 	if (self->s.frame == FRAME_attak111)
 	{
 		flash_number = MZ2_INFANTRY_MACHINEGUN_1;
-		MonsterAim(self, 0.8, 0, false, flash_number, forward, start);
+		infantry_project_flash(self, flash_number, forward, start);
+		MonsterAim(self, 0.8, 0, false, -1, forward, start);
 	}
 	else
 	{
 		flash_number = MZ2_INFANTRY_MACHINEGUN_2 + (self->s.frame - FRAME_death211);
 
-		AngleVectors (self->s.angles, forward, right, NULL);
-		G_ProjectSource (self->s.origin, monster_flash_offset[flash_number], forward, right, start);
+		infantry_project_flash(self, flash_number, forward, start);
 
 		VectorSubtract (self->s.angles, aimangles[flash_number-MZ2_INFANTRY_MACHINEGUN_2], vec);
 		AngleVectors (vec, forward, NULL, NULL);
@@ -218,7 +236,7 @@ void InfantryMachineGun (edict_t *self)
 
 void Infantry20mm(edict_t* self)
 {
-	vec3_t	start, forward, right, vec;
+	vec3_t	start, forward, vec;
 	int		damage, flash_number;
 	const float range = M_20MM_RANGE_BASE + M_20MM_RANGE_ADDON * drone_damagelevel(self);
 	qboolean run_attack = (self->s.frame >= FRAME_run201 && self->s.frame <= FRAME_run208);
@@ -227,23 +245,22 @@ void Infantry20mm(edict_t* self)
 	if (M_20MM_DMG_MAX && damage > M_20MM_DMG_MAX)
 		damage = M_20MM_DMG_MAX;
 
+	flash_number = infantry_20mm_flash_for_frame(self);
+
 	if (self->s.frame == FRAME_attak111 || run_attack)
 	{
-		flash_number = MZ2_INFANTRY_MACHINEGUN_1;
-		MonsterAim(self, M_HITSCAN_CONT_ACC, 0, false, flash_number, forward, start);
+		infantry_project_flash(self, flash_number, forward, start);
+		MonsterAim(self, M_HITSCAN_CONT_ACC, 0, false, -1, forward, start);
 	}
 	else
 	{
-		flash_number = MZ2_INFANTRY_MACHINEGUN_2 + (self->s.frame - FRAME_death211);
-
-		AngleVectors(self->s.angles, forward, right, NULL);
-		G_ProjectSource(self->s.origin, monster_flash_offset[flash_number], forward, right, start);
+		infantry_project_flash(self, flash_number, forward, start);
 
 		VectorSubtract(self->s.angles, aimangles[flash_number - MZ2_INFANTRY_MACHINEGUN_2], vec);
 		AngleVectors(vec, forward, NULL, NULL);
 	}
 
-	monster_fire_20mm(self, start, forward, damage, damage, range, MZ_IONRIPPER | MZ_SILENCED);
+	monster_fire_20mm(self, start, forward, damage, damage, range, flash_number);
 }
 
 void infantry_sight (edict_t *self, edict_t *other)

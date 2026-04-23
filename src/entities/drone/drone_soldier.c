@@ -271,7 +271,15 @@ static int soldier_flash_from_table(const int *flashes, size_t count, int flash_
 	return flashes[flash_number];
 }
 
-static void soldier_fireblaster_flash(edict_t* self, int flash)
+static void soldier_project_raw_flash_origin(edict_t *self, int flash, vec3_t forward, vec3_t start)
+{
+	vec3_t right;
+
+	AngleVectors(self->s.angles, forward, right, NULL);
+	G_ProjectSource(self->s.origin, monster_flash_offset[flash], forward, right, start);
+}
+
+static void soldier_fireblaster_flash_ex(edict_t* self, int flash, qboolean raw_origin)
 {
 	int		damage, speed;
 	vec3_t	forward, start;
@@ -287,8 +295,19 @@ static void soldier_fireblaster_flash(edict_t* self, int flash)
 	if (M_BLASTER_SPEED_MAX && speed > M_BLASTER_SPEED_MAX)
 		speed = M_BLASTER_SPEED_MAX;
 
-	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash, forward, start);
+	if (raw_origin)
+	{
+		soldier_project_raw_flash_origin(self, flash, forward, start);
+		MonsterAim(self, M_PROJECTILE_ACC, speed, false, -1, forward, start);
+	}
+	else
+		MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash, forward, start);
 	monster_fire_blaster(self, start, forward, damage, speed, EF_BLASTER, BLASTER_PROJ_BOLT, 2.0, true, flash);
+}
+
+static void soldier_fireblaster_flash(edict_t* self, int flash)
+{
+	soldier_fireblaster_flash_ex(self, flash, false);
 }
 
 void soldier_fireblaster(edict_t* self)
@@ -296,7 +315,7 @@ void soldier_fireblaster(edict_t* self)
 	soldier_fireblaster_flash(self, MZ2_SOLDIER_BLASTER_8);
 }
 
-static void soldier_firerocket_flash(edict_t* self, int flash)
+static void soldier_firerocket_flash_ex(edict_t* self, int flash, qboolean raw_origin)
 {
 	int		damage, speed;
 	vec3_t	forward, start;
@@ -311,8 +330,19 @@ static void soldier_firerocket_flash(edict_t* self, int flash)
 	if (M_ROCKETLAUNCHER_SPEED_MAX && speed > M_ROCKETLAUNCHER_SPEED_MAX)
 		speed = M_ROCKETLAUNCHER_SPEED_MAX;
 
-	MonsterAim(self, M_PROJECTILE_ACC, speed, true, flash, forward, start);
+	if (raw_origin)
+	{
+		soldier_project_raw_flash_origin(self, flash, forward, start);
+		MonsterAim(self, M_PROJECTILE_ACC, speed, true, -1, forward, start);
+	}
+	else
+		MonsterAim(self, M_PROJECTILE_ACC, speed, true, flash, forward, start);
 	monster_fire_rocket(self, start, forward, damage, speed, flash);
+}
+
+static void soldier_firerocket_flash(edict_t* self, int flash)
+{
+	soldier_firerocket_flash_ex(self, flash, false);
 }
 
 void soldier_firerocket(edict_t* self)
@@ -340,7 +370,7 @@ void soldier_fireshotgun(edict_t* self)
 	soldier_fireshotgun_flash(self, MZ2_SOLDIER_SHOTGUN_8);
 }
 
-void soldier_fireionripper(edict_t* self, int flash_number)
+static void soldier_fireionripper_ex(edict_t* self, int flash_number, qboolean raw_origin)
 {
 	int		damage, speed;
 	int		flash;
@@ -354,11 +384,22 @@ void soldier_fireionripper(edict_t* self, int flash_number)
 	damage = IONRIPPER_INITIAL_DAMAGE + IONRIPPER_ADDON_DAMAGE * drone_damagelevel(self);
 	speed = IONRIPPER_INITIAL_SPEED + IONRIPPER_ADDON_SPEED * drone_damagelevel(self);
 
-	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash, forward, start);
+	if (raw_origin)
+	{
+		soldier_project_raw_flash_origin(self, flash, forward, start);
+		MonsterAim(self, M_PROJECTILE_ACC, speed, false, -1, forward, start);
+	}
+	else
+		MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash, forward, start);
 	monster_fire_ionripper(self, start, forward, damage, speed, EF_IONRIPPER, flash);
 }
 
-void soldier_fireblueblaster(edict_t* self, int flash_number)
+void soldier_fireionripper(edict_t* self, int flash_number)
+{
+	soldier_fireionripper_ex(self, flash_number, false);
+}
+
+static void soldier_fireblueblaster_ex(edict_t* self, int flash_number, qboolean raw_origin)
 {
 	int		damage, speed;
 	int		flash;
@@ -377,8 +418,19 @@ void soldier_fireblueblaster(edict_t* self, int flash_number)
 	if (speed < 400)
 		speed = 400;
 
-	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash, forward, start);
+	if (raw_origin)
+	{
+		soldier_project_raw_flash_origin(self, flash, forward, start);
+		MonsterAim(self, M_PROJECTILE_ACC, speed, false, -1, forward, start);
+	}
+	else
+		MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash, forward, start);
 	monster_fire_blueblaster(self, start, forward, damage, speed, EF_BLUEHYPERBLASTER, flash);
+}
+
+void soldier_fireblueblaster(edict_t* self, int flash_number)
+{
+	soldier_fireblueblaster_ex(self, flash_number, false);
 }
 
 static void soldier_laser_update(edict_t *laser)
@@ -763,18 +815,18 @@ static void m_soldier_fire_prone(edict_t *self)
 	const int prone_flash = 8;
 
 	if (self->mtype == M_SOLDIER)
-		soldier_fireblaster_flash(self, soldier_flash_from_table(soldier_blaster_flash,
-			sizeof(soldier_blaster_flash) / sizeof(soldier_blaster_flash[0]), prone_flash));
+		soldier_fireblaster_flash_ex(self, soldier_flash_from_table(soldier_blaster_flash,
+			sizeof(soldier_blaster_flash) / sizeof(soldier_blaster_flash[0]), prone_flash), true);
 	else if (self->mtype == M_SOLDIERLT)
-		soldier_firerocket_flash(self, soldier_flash_from_table(soldier_blaster_flash,
-			sizeof(soldier_blaster_flash) / sizeof(soldier_blaster_flash[0]), prone_flash));
+		soldier_firerocket_flash_ex(self, soldier_flash_from_table(soldier_blaster_flash,
+			sizeof(soldier_blaster_flash) / sizeof(soldier_blaster_flash[0]), prone_flash), true);
 	else if (self->mtype == M_SOLDIERSS)
 		soldier_fireshotgun_flash(self, soldier_flash_from_table(soldier_shotgun_flash,
 			sizeof(soldier_shotgun_flash) / sizeof(soldier_shotgun_flash[0]), prone_flash));
 	else if (self->mtype == M_SOLDIER_RIPPER)
-		soldier_fireionripper(self, prone_flash);
+		soldier_fireionripper_ex(self, prone_flash, true);
 	else if (self->mtype == M_SOLDIER_BLUEBLASTER)
-		soldier_fireblueblaster(self, prone_flash);
+		soldier_fireblueblaster_ex(self, prone_flash, true);
 	else if (self->mtype == M_SOLDIER_LASER)
 		soldier_firelaser(self, soldier_flash_from_table(soldier_machinegun_flash,
 			sizeof(soldier_machinegun_flash) / sizeof(soldier_machinegun_flash[0]), prone_flash));

@@ -80,7 +80,7 @@ mmove_t daedalus_move_end_attack = { FRAME_attak107, FRAME_attak108, daedalus_fr
 
 static void daedalus_fire_grenade(edict_t *self)
 {
-	int damage, speed;
+	int damage, speed, flash_number;
 	vec3_t forward, right, start, offset;
 
 	if (!G_EntExists(self->enemy))
@@ -101,8 +101,9 @@ static void daedalus_fire_grenade(edict_t *self)
 		VectorSet(offset, 1.7, -7.0, 11.3);
 	G_ProjectSource(self->s.origin, offset, forward, right, start);
 
+	flash_number = MZ2_GUNCMDR_GRENADE_MORTAR_1;
 	MonsterAim(self, M_PROJECTILE_ACC, speed, false, -1, forward, start);
-	monster_fire_grenade(self, start, forward, damage, speed, MZ2_HOVER_BLASTER_1);
+	monster_fire_grenade(self, start, forward, damage, speed, flash_number);
 }
 
 static void daedalus_reattack(edict_t *self)

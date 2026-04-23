@@ -98,6 +98,8 @@ void monster_fire_20mm(edict_t* self, vec3_t start, vec3_t dir, int damage, int 
 {
 	float chance;
 
+	(void)flashtype;
+
 	// holy freeze reduces firing rate by 50%
 	if (que_typeexists(self->curses, AURA_HOLYFREEZE))
 	{
@@ -116,12 +118,7 @@ void monster_fire_20mm(edict_t* self, vec3_t start, vec3_t dir, int damage, int 
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_20mm(self, start, dir, damage, kick, range);
 
-	gi.WriteByte(svc_muzzleflash);
-	gi.WriteShort(self - g_edicts);
-	gi.WriteByte(flashtype);
-	gi.multicast(start, MULTICAST_PVS);
-
-	gi.sound(self, CHAN_WEAPON, gi.soundindex("weapons/sgun1.wav"), 1, ATTN_NORM, 0);
+	gi.positioned_sound(start, self, CHAN_WEAPON, gi.soundindex("weapons/sgun1.wav"), 1, ATTN_NORM, 0);
 
 	if (vrx_spawn_nonessential_ent(self->s.origin))
 		ThrowShell(self, "models/objects/shell1/tris.md2", start);
@@ -628,10 +625,13 @@ void monster_fire_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int damag
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_grenade (self, start, aimdir, damage, speed, 2.5, radius, damage);
 
-	gi.WriteByte (svc_muzzleflash2);
-	gi.WriteShort (self - g_edicts);
-	gi.WriteByte (flashtype);
-	gi.multicast (start, MULTICAST_PVS);
+	if (flashtype >= 0)
+	{
+		gi.WriteByte (svc_muzzleflash2);
+		gi.WriteShort (self - g_edicts);
+		gi.WriteByte (flashtype);
+		gi.multicast (start, MULTICAST_PVS);
+	}
 }
 
 void monster_fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int flashtype)

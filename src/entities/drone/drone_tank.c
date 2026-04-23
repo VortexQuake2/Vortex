@@ -271,7 +271,7 @@ void myTankRail (edict_t *self)
 		damage = M_RAILGUN_DMG_MAX;
 
 	MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, flash_number, forward, start);
-	monster_fire_railgun(self, start, forward, damage, damage, MZ2_GLADIATOR_RAILGUN_1);
+	monster_fire_railgun(self, start, forward, damage, damage, flash_number);
 }
 
 void myTankBlaster(edict_t* self)
@@ -340,7 +340,7 @@ void myTankRocket(edict_t* self)
 
 void myTankMachineGun(edict_t* self)
 {
-	vec3_t	forward, start;
+	vec3_t	forward, right, start, dir, vec;
 	int		flash_number, damage;
 
 	// sanity check
@@ -354,7 +354,25 @@ void myTankMachineGun(edict_t* self)
 	if (M_MACHINEGUN_DMG_MAX && damage > 2 * M_MACHINEGUN_DMG_MAX)
 		damage = 2 * M_MACHINEGUN_DMG_MAX;
 
-	MonsterAim(self, M_HITSCAN_CONT_ACC, 0, false, flash_number, forward, start);
+	AngleVectors(self->s.angles, forward, right, NULL);
+	G_ProjectSource(self->s.origin, monster_flash_offset[flash_number], forward, right, start);
+
+	if (self->enemy)
+	{
+		VectorCopy(self->enemy->s.origin, vec);
+		vec[2] += self->enemy->viewheight;
+		VectorSubtract(vec, start, vec);
+		vectoangles(vec, dir);
+	}
+	else
+		dir[0] = 0;
+	if (self->s.frame <= FRAME_attak415)
+		dir[1] = self->s.angles[1] - 8 * (self->s.frame - FRAME_attak411);
+	else
+		dir[1] = self->s.angles[1] + 8 * (self->s.frame - FRAME_attak419);
+	dir[2] = 0;
+
+	AngleVectors(dir, forward, NULL, NULL);
 
 	monster_fire_bullet(self, start, forward, damage, 40,
 		DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, flash_number);

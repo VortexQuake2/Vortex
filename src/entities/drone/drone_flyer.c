@@ -349,7 +349,7 @@ mmove_t flyer_move_bankleft = {FRAME_bankl01, FRAME_bankl07, flyer_frames_bankle
 
 void flyer_fire (edict_t *self, int flash_number)
 {
-	vec3_t	start, forward;
+	vec3_t	start, forward, right, offset;
 	int		effect, damage;
 
 	if ((self->s.frame == FRAME_attak204) || (self->s.frame == FRAME_attak207) || (self->s.frame == FRAME_attak210))
@@ -361,7 +361,12 @@ void flyer_fire (edict_t *self, int flash_number)
 	if (M_HYPERBLASTER_DMG_MAX && damage > M_HYPERBLASTER_DMG_MAX)
 		damage = M_HYPERBLASTER_DMG_MAX;
 
-	MonsterAim(self, M_PROJECTILE_ACC, 2000, false, MZ2_FLOAT_BLASTER_1, forward, start);
+	AngleVectors(self->s.angles, forward, right, NULL);
+	VectorCopy(monster_flash_offset[flash_number], offset);
+	if (self->s.scale)
+		VectorScale(offset, self->s.scale, offset);
+	G_ProjectSource(self->s.origin, offset, forward, right, start);
+	MonsterAim(self, M_PROJECTILE_ACC, 2000, false, -1, forward, start);
 	monster_fire_blaster(self, start, forward, damage, 2000, effect, BLASTER_PROJ_BOLT, 2.0, false, flash_number);
 }
 

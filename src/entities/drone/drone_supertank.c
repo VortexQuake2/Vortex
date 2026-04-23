@@ -125,6 +125,29 @@ mframe_t supertank_frames_run [] =
 };
 mmove_t	supertank_move_run = {FRAME_forwrd_1, FRAME_forwrd_18, supertank_frames_run, NULL};
 
+mframe_t supertank_frames_run_janitor [] =
+{
+	drone_ai_run, 18,	TreadSound,
+	drone_ai_run, 18,	NULL,
+	drone_ai_run, 18,	NULL,
+	drone_ai_run, 18,	NULL,
+	drone_ai_run, 18,	NULL,
+	drone_ai_run, 18,	NULL,
+	drone_ai_run, 18,	NULL,
+	drone_ai_run, 18,	NULL,
+	drone_ai_run, 18,	NULL,
+	drone_ai_run, 18,	NULL,
+	drone_ai_run, 18,	NULL,
+	drone_ai_run, 18,	NULL,
+	drone_ai_run, 18,	NULL,
+	drone_ai_run, 18,	NULL,
+	drone_ai_run, 18,	NULL,
+	drone_ai_run, 18,	NULL,
+	drone_ai_run, 18,	NULL,
+	drone_ai_run, 18,	NULL
+};
+mmove_t	supertank_move_run_janitor = {FRAME_forwrd_1, FRAME_forwrd_18, supertank_frames_run_janitor, NULL};
+
 //
 // walk
 //
@@ -170,6 +193,8 @@ void supertank_run (edict_t *self)
 {
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 		self->monsterinfo.currentmove = &supertank_move_stand;
+	else if (self->mtype == M_JANITOR)
+		self->monsterinfo.currentmove = &supertank_move_run_janitor;
 	else
 		self->monsterinfo.currentmove = &supertank_move_run;
 }
@@ -421,7 +446,7 @@ void supertank_reattack1(edict_t *self)
 
 void supertankRocket (edict_t *self)
 {
-	vec3_t	forward, start;
+	vec3_t	forward, right, start, offset;
 	int		damage, speed, flash_number;
 
 	if (self->s.frame == FRAME_attak2_8)
@@ -434,7 +459,22 @@ void supertankRocket (edict_t *self)
 	damage = 50 + 10 * drone_damagelevel(self);
 	speed = 650 + 30 * drone_damagelevel(self);
 
-	MonsterAim(self, 0.5, speed, true, flash_number, forward, start);
+	if (self->mtype == M_JANITOR)
+	{
+		AngleVectors(self->s.angles, forward, right, NULL);
+		if (flash_number == MZ2_SUPERTANK_ROCKET_1)
+			VectorSet(offset, 16.0, -22.5, 108.7);
+		else if (flash_number == MZ2_SUPERTANK_ROCKET_2)
+			VectorSet(offset, 16.0, -33.4, 106.7);
+		else
+			VectorSet(offset, 16.0, -42.8, 104.7);
+		if (self->s.scale)
+			VectorScale(offset, self->s.scale, offset);
+		G_ProjectSource(self->s.origin, offset, forward, right, start);
+		MonsterAim(self, 0.5, speed, true, -1, forward, start);
+	}
+	else
+		MonsterAim(self, 0.5, speed, true, flash_number, forward, start);
 
 	monster_fire_rocket (self, start, forward, damage, speed, flash_number);
 }	

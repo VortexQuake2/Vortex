@@ -226,7 +226,7 @@ static void runnertank_rail(edict_t *self)
         damage = M_RAILGUN_DMG_MAX;
 
     MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, flash_number, forward, start);
-    monster_fire_railgun(self, start, forward, damage, damage, MZ2_GLADIATOR_RAILGUN_1);
+    monster_fire_railgun(self, start, forward, damage, damage, flash_number);
 }
 
 static void runnertank_rocket(edict_t *self)
@@ -237,9 +237,9 @@ static void runnertank_rocket(edict_t *self)
     if (!self->enemy || !self->enemy->inuse)
         return;
 
-    if (self->s.frame == FRAME_attak324)
+    if (self->s.frame == FRAME_attak313)
         flash_number = MZ2_TANK_ROCKET_1;
-    else if (self->s.frame == FRAME_attak325)
+    else if (self->s.frame == FRAME_attak316)
         flash_number = MZ2_TANK_ROCKET_2;
     else
         flash_number = MZ2_TANK_ROCKET_3;

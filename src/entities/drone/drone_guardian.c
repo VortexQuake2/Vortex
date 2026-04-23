@@ -17,6 +17,21 @@ static int sound_pew;
 
 void guardian_run(edict_t *self);
 
+static void guardian_project_laser_frame_origin(edict_t *self, vec3_t forward, vec3_t right, vec3_t start)
+{
+	vec3_t offset;
+
+	if (self->s.frame & 1)
+		VectorSet(offset, 125, -70, 60);
+	else
+		VectorSet(offset, 112, -62, 60);
+
+	if (self->s.scale)
+		VectorScale(offset, self->s.scale, offset);
+
+	G_ProjectSource(self->s.origin, offset, forward, right, start);
+}
+
 static void guardian_footstep(edict_t *self)
 {
 	gi.sound(self, CHAN_BODY, sound_step, 1, ATTN_NORM, 0);
@@ -292,7 +307,7 @@ static int guardian_grenade_flash(edict_t *self)
 
 void guardian_grenade(edict_t *self)
 {
-	vec3_t forward, start;
+	vec3_t forward, right, start;
 	int damage, speed, flash_number;
 
 	if (!G_EntExists(self->enemy))
@@ -306,6 +321,12 @@ void guardian_grenade(edict_t *self)
 		speed = M_GRENADELAUNCHER_SPEED_MAX;
 
 	flash_number = guardian_grenade_flash(self);
+	if (self->mtype == M_MINIGUARDIAN)
+	{
+		AngleVectors(self->s.angles, forward, right, NULL);
+		guardian_project_laser_frame_origin(self, forward, right, start);
+		flash_number = -1;
+	}
 	MonsterAim(self, M_PROJECTILE_ACC, speed, true, flash_number, forward, start);
 	monster_fire_grenade(self, start, forward, damage, speed, flash_number);
 }

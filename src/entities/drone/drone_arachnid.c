@@ -121,9 +121,29 @@ static void arachnid_rail(edict_t *self)
 	if (M_RAILGUN_DMG_MAX && damage > M_RAILGUN_DMG_MAX)
 		damage = M_RAILGUN_DMG_MAX;
 
-	flash_number = MZ2_GLADIATOR_RAILGUN_1;
+	switch (self->s.frame)
+	{
+	case FRAME_rails7:
+		flash_number = MZ2_ARACHNID_RAIL2;
+		break;
+	case FRAME_rails_up2:
+	case FRAME_rails_up9:
+		flash_number = MZ2_ARACHNID_RAIL_UP1;
+		break;
+	case FRAME_rails_up5:
+	case FRAME_rails_up11:
+		flash_number = MZ2_ARACHNID_RAIL_UP2;
+		break;
+	case FRAME_rails3:
+	default:
+		flash_number = MZ2_ARACHNID_RAIL1;
+		break;
+	}
+
 	AngleVectors(self->s.angles, forward, right, NULL);
-	VectorSet(offset, 48, (self->s.frame == FRAME_rails7 || self->s.frame == FRAME_rails_up5 || self->s.frame == FRAME_rails_up11) ? -16 : 16, 28);
+	VectorCopy(monster_flash_offset[flash_number], offset);
+	if (self->s.scale)
+		VectorScale(offset, self->s.scale, offset);
 	G_ProjectSource(self->s.origin, offset, forward, right, start);
 	VectorSubtract(self->pos1, start, dir);
 	VectorNormalize(dir);

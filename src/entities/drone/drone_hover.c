@@ -471,8 +471,8 @@ void hover_fire_blaster (edict_t *self)
 	if (M_HYPERBLASTER_DMG_MAX && damage > M_HYPERBLASTER_DMG_MAX)
 		damage = M_HYPERBLASTER_DMG_MAX;
 
-	MonsterAim(self, M_PROJECTILE_ACC, speed, true, MZ2_HOVER_BLASTER_1, forward, start);
-	monster_fire_rocket (self, start, forward, damage, speed, MZ2_HOVER_BLASTER_1);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, true, MZ2_BOSS2_ROCKET_3, forward, start);
+	monster_fire_rocket (self, start, forward, damage, speed, MZ2_BOSS2_ROCKET_3);
 }
 
 void hover_stand (edict_t *self)

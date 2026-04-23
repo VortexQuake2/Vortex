@@ -242,6 +242,43 @@ int vrx_remove_all_monsters(edict_t *monster_owner) {
 }
 
 
+static enum dronespawn_t vrx_pvm_random_drone_type(void)
+{
+	static const enum dronespawn_t pvm_drone_types[] =
+	{
+		DS_GUNNER,
+		DS_PARASITE,
+		DS_BITCH,
+		DS_BRAIN,
+		DS_MEDIC,
+		DS_TANK,
+		DS_MUTANT,
+		DS_GLADIATOR,
+		DS_BERSERK,
+		DS_INFANTRY,
+		DS_FLYER,
+		DS_FLOATER,
+		DS_HOVER,
+		DS_SHAMBLER,
+		DS_REDMUTANT,
+		DS_RUNNERTANK,
+		DS_GUNCMDR,
+		DS_DAEDALUS,
+		DS_GLADB,
+		DS_GLADC,
+		DS_STALKER,
+		DS_GEKK,
+		DS_BITCH_HEAT,
+		DS_ARACHNID,
+		DS_MEDIC_COMMANDER,
+		DS_JANITOR,
+		DS_MiniGuardian
+	};
+
+	const int count = (int)(sizeof(pvm_drone_types) / sizeof(pvm_drone_types[0]));
+	return pvm_drone_types[GetRandom(0, count - 1)];
+}
+
 void vrx_pvm_spawn_monsters(edict_t* self, int max_monsters, int total_monsters)
 {
 	int max_spawn_this_cycle = GetRandom(0, max_monsters - total_monsters);
@@ -252,10 +289,7 @@ void vrx_pvm_spawn_monsters(edict_t* self, int max_monsters, int total_monsters)
 		max_spawn_this_cycle = max(max_spawn_this_cycle, 3);
 
 	while (total_monsters < max_monsters && max_spawn_this_cycle > 0) {
-		int rnd;
-		do {
-			rnd = GetRandom(1, DS_MEDIC_COMMANDER); // az: don't spawn soldiers or helper summons
-		} while (rnd == DS_SOLDIER || rnd == DS_DECOY || rnd == DS_SKELETON || rnd == DS_GOLEM);
+		enum dronespawn_t rnd = vrx_pvm_random_drone_type();
 
 		edict_t* scan;
 		if ((scan = vrx_create_new_drone(self, rnd, true, true, self->monsterinfo.scale)) != NULL) {
