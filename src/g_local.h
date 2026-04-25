@@ -1532,6 +1532,9 @@ enum mtype_t {
     M_SOLDIER_LASER = 45,
     M_WIDOW = 46,
     M_WIDOW2 = 47,
+    M_FIXBOT = 48,
+    M_FIXBOT_BOSS = 49,
+    M_ROGUE_TURRET = 50,
     M_MINISENTRY = 100,
     M_SENTRY = 101,
     M_BFG_SENTRY = 102,
@@ -1655,6 +1658,9 @@ enum dronespawn_t {
     DS_SOLDIER_LASER = 41,
     DS_WIDOW = 42,
     DS_WIDOW2 = 43,
+    DS_FIXBOT = 44,
+    DS_FIXBOT_BOSS = 45,
+    DS_ROGUE_TURRET = 46,
 
 };
 

@@ -271,6 +271,7 @@ static enum dronespawn_t vrx_pvm_random_drone_type(void)
 		DS_BITCH_HEAT,
 		DS_ARACHNID,
 		DS_MEDIC_COMMANDER,
+		DS_FIXBOT,
 		DS_JANITOR,
 		DS_MINIGUARDIAN
 	};
@@ -680,8 +681,15 @@ int vrx_GetMonsterCost(int mtype) {
         case M_CARRIER:
         case M_WIDOW:
         case M_WIDOW2:
+        case M_FIXBOT_BOSS:
             cost = M_COMMANDER_COST;
             break;
+		case M_FIXBOT:
+			cost = M_HOVER_COST;
+			break;
+		case M_ROGUE_TURRET:
+			cost = M_DEFAULT_COST;
+			break;
 		case M_JANITOR:
 			cost = M_TANK_COST;
 			break;
@@ -767,7 +775,14 @@ int vrx_GetMonsterControlCost(int mtype) {
         case M_CARRIER:
         case M_WIDOW:
         case M_WIDOW2:
+        case M_FIXBOT_BOSS:
             cost = M_JORG_CONTROL_COST;
+            break;
+        case M_FIXBOT:
+            cost = M_HOVER_CONTROL_COST;
+            break;
+        case M_ROGUE_TURRET:
+            cost = M_DEFAULT_CONTROL_COST;
             break;
         case M_HOVER:
 		case M_DAEDALUS:

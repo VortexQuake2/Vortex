@@ -2113,6 +2113,12 @@ char *V_GetMonsterKind(int mtype) {
             return "widow";
         case M_WIDOW2:
             return "black widow";
+        case M_FIXBOT:
+            return "fixbot";
+        case M_FIXBOT_BOSS:
+            return "fixer";
+        case M_ROGUE_TURRET:
+            return "rocket turret";
         case M_GUARDIAN:
             return "Guardian";
         case M_JANITOR:
@@ -2865,7 +2871,8 @@ qboolean vrx_is_morphing_polt(edict_t *ent) {
 qboolean vrx_has_pain_skin(edict_t* ent)
 {
     return (ent->mtype != M_DECOY && ent->mtype != M_SKELETON && ent->mtype != M_GOLEM
-             && ent->mtype != M_RUNNERTANK && ent->mtype != M_REDMUTANT);
+             && ent->mtype != M_RUNNERTANK && ent->mtype != M_REDMUTANT
+             && ent->mtype != M_ROGUE_TURRET);
 }
 
 // returns a value >= 1 based on any synergy bonuses that apply for ability_index
