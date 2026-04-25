@@ -12,13 +12,13 @@
 // ===  CVARS  ===
 cvar_t *savemethod;
 
-int CountAbilities(edict_t *player)
+int CountAbilities(struct skills_s *player)
 {
 	int i;
 	int count = 0;
 	for (i = 0; i < MAX_ABILITIES; ++i)
 	{
-		if (!player->myskills.abilities[i].disable)
+		if (!player->abilities[i].disable)
 			++count;
 	}
 	return count;

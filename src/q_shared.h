@@ -1810,4 +1810,12 @@ bitset[index] |= bit;\
 #define BITSET_GET(bitset, n) \
 (bitset[n / 32] & ((1 << n) % 32))
 
+#ifndef WIN32
+#define q_popcnt __builtin_popcount
+#define q_popcnt16 __builtin_popcount
+#else
+#define q_popcnt __popcnt
+#define q_popcnt16 __popcnt16
+#endif
+
 #endif

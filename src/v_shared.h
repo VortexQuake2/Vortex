@@ -212,7 +212,9 @@ int ReadInteger(FILE *fptr);
 void WriteInteger(FILE *fptr, int Value);
 long ReadLong(FILE *fptr);
 void WriteLong(FILE *fptr, long Value);
-int CountAbilities(edict_t *player);
+
+struct skills_s;
+int CountAbilities(struct skills_s *player);
 int FindAbilityIndex(int index, edict_t *player);
 int CountWeapons(edict_t *player);
 int FindWeaponIndex(int index, edict_t *player);

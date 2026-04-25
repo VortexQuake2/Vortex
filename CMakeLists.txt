@@ -76,7 +76,7 @@ add_library(${CC_LIB_NAME} SHARED ${VRX_FILES} ${VENDOR_FILES})
 set_target_properties(${CC_LIB_NAME} PROPERTIES PREFIX "")
 
 if (BUILD_TESTS)
-    add_executable(vrxtestdriver ${VRX_FILES} ${TEST_FILES})
+    add_executable(vrxtestdriver ${VRX_FILES} ${TEST_FILES} ${VENDOR_FILES})
     add_test(NAME vrxtestdriver COMMAND vrxtestdriver)
     target_compile_definitions(vrxtestdriver PRIVATE TEST_RUNNER)
 endif()

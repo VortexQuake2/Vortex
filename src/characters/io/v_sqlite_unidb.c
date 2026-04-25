@@ -232,7 +232,7 @@ int cdb_make_id()
 qboolean cdb_save_player(edict_t* player)
 {
 	int i, id;
-	int numAbilities = CountAbilities(player);
+	int numAbilities = CountAbilities(&player->myskills);
 	int numWeapons = CountWeapons(player);
 	int numRunes = CountRunes(player);
 
@@ -511,7 +511,7 @@ qboolean cdb_load_player(edict_t* player)
 {
 	sqlite3_stmt* statement, * statement_mods;
 	char* format;
-	int numAbilities, numWeapons, numRunes;
+	int numWeapons, numRunes;
 	int i, r, id;
 
 	id = cdb_get_id(player->client->pers.netname);
@@ -573,7 +573,7 @@ qboolean cdb_load_player(edict_t* player)
 	r = sqlite3_step(statement);
 
 	//begin abilities
-	numAbilities = sqlite3_column_int(statement, 0);
+	int numAbilities = sqlite3_column_int(statement, 0);
 
 	sqlite3_finalize(statement);
 
