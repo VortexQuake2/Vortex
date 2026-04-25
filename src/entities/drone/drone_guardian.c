@@ -695,4 +695,6 @@ void init_drone_guardian(edict_t *self)
 
 	self->nextthink = level.time + FRAMETIME;
 	gi.linkentity(self);
+
+	G_PrintGreenText(va("A level %d guardian has spawned!", self->monsterinfo.level));
 }

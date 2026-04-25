@@ -538,4 +538,6 @@ void init_drone_carrier(edict_t *self)
 	self->monsterinfo.currentmove = &carrier_move_stand;
 	self->monsterinfo.scale = MODEL_SCALE;
 	self->nextthink = level.time + FRAMETIME;
+
+	G_PrintGreenText(va("A level %d carrier has spawned!", self->monsterinfo.level));
 }

@@ -25,10 +25,12 @@ static int sound_thud;
 #define GUNCMDR_GRENADE_SPEED       600
 #define GUNCMDR_WALK_SPEED_MULT     2.0f
 
-#define GUNCMDR_STAND_MAXZ_SCALED(self)   (36.0f * ((self)->s.scale > 0 ? (self)->s.scale : 1.0f))
-#define GUNCMDR_DUCK_MAXZ_SCALED(self)    (4.0f  * ((self)->s.scale > 0 ? (self)->s.scale : 1.0f))
-#define GUNCMDR_DEAD_MAXZ_SCALED(self)    (-8.0f * ((self)->s.scale > 0 ? (self)->s.scale : 1.0f))
-#define GUNCMDR_SHRINK_MAXZ_SCALED(self)  (-4.0f * ((self)->s.scale > 0 ? (self)->s.scale : 1.0f))
+#define GUNCMDR_SCALE(self)              (((self)->s.scale > 0) ? (self)->s.scale : 1.0f)
+
+#define GUNCMDR_STAND_MAXZ_SCALED(self)  (36.0f * GUNCMDR_SCALE(self))
+#define GUNCMDR_DUCK_MAXZ_SCALED(self)   (4.0f  * GUNCMDR_SCALE(self))
+#define GUNCMDR_DEAD_MAXZ_SCALED(self)   (-8.0f * GUNCMDR_SCALE(self))
+#define GUNCMDR_SHRINK_MAXZ_SCALED(self) (-4.0f * GUNCMDR_SCALE(self))
 
 static void guncmdr_stand(edict_t *self);
 static void guncmdr_run(edict_t *self);
@@ -1093,8 +1095,16 @@ static void guncmdr_pain(edict_t *self, edict_t *other, float kick, int damage)
 
 static void guncmdr_dead(edict_t *self)
 {
-	VectorSet(self->mins, -16 * self->s.scale, -16 * self->s.scale, -24 * self->s.scale);
-	VectorSet(self->maxs,  16 * self->s.scale,  16 * self->s.scale, GUNCMDR_DEAD_MAXZ_SCALED(self));
+	VectorSet(self->mins,
+		-16 * GUNCMDR_SCALE(self),
+		-16 * GUNCMDR_SCALE(self),
+		-24 * GUNCMDR_SCALE(self));
+
+	VectorSet(self->maxs,
+		 16 * GUNCMDR_SCALE(self),
+		 16 * GUNCMDR_SCALE(self),
+		 GUNCMDR_DEAD_MAXZ_SCALED(self));
+
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	gi.linkentity(self);
@@ -1498,8 +1508,8 @@ void init_drone_guncmdr(edict_t *self)
 	gi.modelindex("models/monsters/gunner/gibs/head.md2");
 
 	self->s.scale = 1.25f;
-	VectorSet(self->mins, -16, -16, -24);
-	VectorSet(self->maxs, 16, 16, GUNCMDR_STAND_MAXZ_SCALED(self));
+	VectorSet(self->mins, -20, -20, -30); 							 // default scale = -16, -16, -24
+	VectorSet(self->maxs, 20, 20, GUNCMDR_STAND_MAXZ_SCALED(self));  //  default scale = 16, 16, 36
 	self->s.skinnum = 2;
 
 	self->monsterinfo.control_cost = M_TANK_CONTROL_COST;
@@ -1510,7 +1520,6 @@ void init_drone_guncmdr(edict_t *self)
 	self->mass = 255;
 	self->monsterinfo.jumpdn = 512;
 	self->monsterinfo.jumpup = 64;
-	self->s.origin[2] += fabsf(self->mins[2]) * (self->s.scale - 1.0f);
 
 	if (random() > 0.5)
 		self->item = FindItemByClassname("ammo_bullets");

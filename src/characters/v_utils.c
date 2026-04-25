@@ -2044,11 +2044,11 @@ char *V_GetMonsterKind(int mtype) {
         case M_SOLDIERSS:
             return "soldier";
         case M_SOLDIER_RIPPER:
-            return "Ripper Guard";
+            return "ripper Guard";
         case M_SOLDIER_BLUEBLASTER:
-            return "Hyper Guard";
+            return "hyper Guard";
         case M_SOLDIER_LASER:
-            return "Laser Guard";
+            return "laser Guard";
         case M_FLIPPER:
             return "flipper";
         case M_FLYER:

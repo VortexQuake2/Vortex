@@ -531,7 +531,7 @@ void drone_death (edict_t *self, edict_t *attacker)
 
 
 	//4.2 bosses can drop up to 4 runes
-	if (self->mtype == M_COMMANDER || self->mtype == M_SUPERTANK || self->mtype == M_MAKRON || self->mtype == M_CARRIER)
+	if (self->mtype == M_COMMANDER || self->mtype == M_SUPERTANK || self->mtype == M_MAKRON || self->mtype == M_CARRIER || self->mtype == M_GUARDIAN)
 	{
 		edict_t *e;
 		float drop_chance = 0.25;
@@ -2228,7 +2228,7 @@ qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax)
 		break;
 	case M_GUNCMDR:
 		VectorSet(boxmin, -16, -16, -24);
-		VectorSet(boxmax, 16, 16, 36);
+		VectorSet(boxmax, 16, 16, 42);
 		break;
 	case M_DAEDALUS:
 		VectorSet(boxmin, -24, -24, -24);
