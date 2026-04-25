@@ -665,7 +665,7 @@ void SVCmd_SpawnBoss_f (void)
         else
             vrx_create_new_drone(m_worldspawn, DS_WIDOW2, true, true, 0);
     }
-    else if (!strcmp(gi.argv(2), "fixbot_boss") || !strcmp(gi.argv(2), "fixbotboss") || !strcmp(gi.argv(2), "fixbotkl"))
+    else if (!strcmp(gi.argv(2), "fixbot_boss") || !strcmp(gi.argv(2), "fixbotboss") || !strcmp(gi.argv(2), "fixer"))
     {
         if (invasion->value)
             vrx_inv_spawn_boss(m_worldspawn, DS_FIXBOT_BOSS);

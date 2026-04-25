@@ -1199,6 +1199,10 @@ static void init_drone_fixbot_common(edict_t *self, qboolean boss)
 
 	self->monsterinfo.currentmove = &fixbot_move_stand;
 	self->monsterinfo.scale = 1.0f;
+
+	qboolean isBoss = (self->mtype == M_FIXBOT_BOSS);
+	if (isBoss)
+	G_PrintGreenText(va("A level %d fixer has spawned!", self->monsterinfo.level));
 }
 
 void init_drone_fixbot(edict_t *self)
