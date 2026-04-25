@@ -644,6 +644,21 @@ void SVCmd_SpawnBoss_f (void)
         else
             vrx_create_new_drone(m_worldspawn, 34, true, true, 0);
     }
+    else if (!strcmp(gi.argv(2), "boss2") || !strcmp(gi.argv(2), "hornet") || !strcmp(gi.argv(2), "boss2mg"))
+    {
+        if (invasion->value)
+            vrx_inv_spawn_boss(m_worldspawn, DS_BOSS2);
+        else
+            vrx_create_new_drone(m_worldspawn, DS_BOSS2, true, true, 0);
+    }
+    else if (!strcmp(gi.argv(2), "boss2_hyper") || !strcmp(gi.argv(2), "boss2hyper") || !strcmp(gi.argv(2), "boss2_n64")
+         || !strcmp(gi.argv(2), "boss2n64") || !strcmp(gi.argv(2), "hornethb") || !strcmp(gi.argv(2), "hornet_hyper"))
+    {
+        if (invasion->value)
+            vrx_inv_spawn_boss(m_worldspawn, DS_BOSS2_HYPER);
+        else
+            vrx_create_new_drone(m_worldspawn, DS_BOSS2_HYPER, true, true, 0);
+    }
     else if (!strcmp(gi.argv(2), "carrier"))
     {
         if (invasion->value)
@@ -680,7 +695,7 @@ void SVCmd_SpawnBoss_f (void)
             vrx_create_new_drone(m_worldspawn, DS_GUARDIAN, true, true, 0);
     }
     else
-        safe_cprintf(NULL, PRINT_HIGH, "Invalid boss type. Usage: sv spawnboss <commander|makron|firebaron|supertank|jorg|carrier|widow|widow2|fixbot_boss|guardian>\n");
+        safe_cprintf(NULL, PRINT_HIGH, "Invalid boss type. Usage: sv spawnboss <commander|makron|firebaron|supertank|jorg|boss2|boss2_hyper|carrier|widow|widow2|fixbot_boss|guardian>\n");
 }
 
 void SVCmd_MakeBoss_f (void)

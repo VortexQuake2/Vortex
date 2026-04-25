@@ -2107,6 +2107,10 @@ char *V_GetMonsterKind(int mtype) {
             return "gekk";
         case M_ARACHNID:
             return "arachnid";
+        case M_BOSS2:
+            return "hornet";
+        case M_BOSS2_SMALL:
+            return "mini hornet";
         case M_CARRIER:
             return "carrier";
         case M_WIDOW:
@@ -2120,7 +2124,7 @@ char *V_GetMonsterKind(int mtype) {
         case M_ROGUE_TURRET:
             return "rocket turret";
         case M_GUARDIAN:
-            return "Guardian";
+            return "guardian";
         case M_JANITOR:
             return "janitor";
         case M_MINIGUARDIAN:
