@@ -1530,6 +1530,8 @@ enum mtype_t {
     M_SOLDIER_RIPPER = 43,
     M_SOLDIER_BLUEBLASTER = 44,
     M_SOLDIER_LASER = 45,
+    M_WIDOW = 46,
+    M_WIDOW2 = 47,
     M_MINISENTRY = 100,
     M_SENTRY = 101,
     M_BFG_SENTRY = 102,
@@ -1651,6 +1653,8 @@ enum dronespawn_t {
     DS_SOLDIER_RIPPER = 39,
     DS_SOLDIER_BLUEBLASTER = 40,
     DS_SOLDIER_LASER = 41,
+    DS_WIDOW = 42,
+    DS_WIDOW2 = 43,
 
 };
 

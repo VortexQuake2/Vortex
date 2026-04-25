@@ -44,6 +44,8 @@ void init_drone_stalker(edict_t* self);
 void init_drone_gekk(edict_t* self);
 void init_drone_arachnid(edict_t* self);
 void init_drone_carrier(edict_t* self);
+void init_drone_widow(edict_t* self);
+void init_drone_widow2(edict_t* self);
 void init_baron_fire(edict_t* self);
 void init_skeleton(edict_t* self);
 void init_golem(edict_t* self);
@@ -531,7 +533,7 @@ void drone_death (edict_t *self, edict_t *attacker)
 
 
 	//4.2 bosses can drop up to 4 runes
-	if (self->mtype == M_COMMANDER || self->mtype == M_SUPERTANK || self->mtype == M_MAKRON || self->mtype == M_CARRIER || self->mtype == M_GUARDIAN)
+	if (self->mtype == M_COMMANDER || self->mtype == M_SUPERTANK || self->mtype == M_MAKRON || self->mtype == M_CARRIER || self->mtype == M_WIDOW || self->mtype == M_WIDOW2 || self->mtype == M_GUARDIAN)
 	{
 		edict_t *e;
 		float drop_chance = 0.25;
@@ -777,6 +779,8 @@ static qboolean vrx_drone_spawn_is_boss(enum dronespawn_t drone_type)
 	case DS_SUPERTANK:
 	case DS_JORG:
 	case DS_CARRIER:
+	case DS_WIDOW:
+	case DS_WIDOW2:
 	case DS_GUARDIAN:
 		return true;
 	default:
@@ -906,6 +910,8 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 	case DS_SUPERTANK: init_drone_supertank(drone);	break;
 	case DS_JORG: init_drone_jorg(drone);		break;
 	case DS_CARRIER: init_drone_carrier(drone);	break;
+	case DS_WIDOW: init_drone_widow(drone);	break;
+	case DS_WIDOW2: init_drone_widow2(drone);	break;
 	case DS_GUARDIAN: init_drone_guardian(drone); break;
 	case DS_JANITOR: drone->mtype = M_JANITOR; init_drone_supertank(drone); break;
 	case DS_MINIGUARDIAN: drone->mtype = M_MINIGUARDIAN; init_drone_guardian(drone); break;
@@ -2113,6 +2119,8 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	case M_GEKK: init_drone_gekk(monster); break;
 	case M_ARACHNID: init_drone_arachnid(monster); break;
 	case M_CARRIER: init_drone_carrier(monster); break;
+	case M_WIDOW: init_drone_widow(monster); break;
+	case M_WIDOW2: init_drone_widow2(monster); break;
 	case M_GUARDIAN: case M_MINIGUARDIAN: init_drone_guardian(monster); break;
 	case M_JANITOR: init_drone_supertank(monster); break;
 	case M_SKELETON: init_skeleton(monster); break;
@@ -2250,6 +2258,14 @@ qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax)
 		VectorSet(boxmin, -80, -80, -24);
 		VectorSet(boxmax, 80, 80, 104);
 		break;
+	case M_WIDOW:
+		VectorSet(boxmin, -40, -40, 0);
+		VectorSet(boxmax, 40, 40, 144);
+		break;
+	case M_WIDOW2:
+		VectorSet(boxmin, -70, -70, 0);
+		VectorSet(boxmax, 70, 70, 144);
+		break;
 	case M_GUARDIAN:
 		VectorSet(boxmin, -96, -96, -66);
 		VectorSet(boxmax, 96, 96, 62);
@@ -2346,6 +2362,8 @@ char *GetMonsterKindString (int mtype)
 		case M_GEKK: return "Gekk";
 		case M_ARACHNID: return "Arachnid";
 		case M_CARRIER: return "Carrier";
+		case M_WIDOW: return "Widow";
+		case M_WIDOW2: return "Black Widow";
 		case M_GUARDIAN: return "Guardian";
 		case M_JANITOR: return "Janitor";
 		case M_MINIGUARDIAN: return "Mini Guardian";

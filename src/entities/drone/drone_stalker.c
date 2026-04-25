@@ -169,6 +169,27 @@ static void stalker_set_floor(edict_t *self)
 	self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
 }
 
+static void stalker_drop_from_ceiling(edict_t *self)
+{
+	stalker_set_floor(self);
+	self->groundentity = NULL;
+	self->velocity[2] = -300;
+	gi.linkentity(self);
+}
+
+static void stalker_abort_ceiling_jump(edict_t *self)
+{
+	stalker_set_floor(self);
+	self->gravity = 1.0;
+	self->flags &= ~FL_FLY;
+	self->monsterinfo.dodge_time = level.time + 2.0f;
+	if (self->groundentity)
+		VectorClear(self->velocity);
+	else if (self->velocity[2] > 0)
+		self->velocity[2] = 0;
+	stalker_run(self);
+}
+
 static qboolean stalker_is_jump_move(edict_t *self)
 {
 	return self->monsterinfo.currentmove == &stalker_move_jump_straightup ||
@@ -203,10 +224,7 @@ static void stalker_ceiling_prethink(edict_t *self)
 	if (stalker_find_ceiling(self, 96, &ceiling_z))
 		stalker_attach_ceiling(self, ceiling_z);
 	else
-	{
-		// don't instantly detach on one failed trace
-		self->velocity[2] = 0;
-	}
+		stalker_drop_from_ceiling(self);
 }
 
 static void stalker_jump_straightup(edict_t *self)
@@ -235,9 +253,8 @@ static void stalker_jump_straightup(edict_t *self)
 	}
 	else
 	{
-		self->pos1[2] = 0;
-		self->gravity = 1.0;
-		self->velocity[2] = 400;
+		stalker_abort_ceiling_jump(self);
+		return;
 	}
 
 	self->style = STALKER_CEILING_JUMPING;
@@ -281,13 +298,7 @@ static void stalker_jump_wait_land(edict_t *self)
 
 	if (self->groundentity || level.time > self->monsterinfo.pausetime)
 	{
-		if (self->pos1[2] && !self->groundentity)
-		{
-			stalker_attach_ceiling(self, self->pos1[2]);
-			return;
-		}
-		stalker_set_floor(self);
-		VectorClear(self->velocity);
+		stalker_abort_ceiling_jump(self);
 		return;
 	}
 
@@ -305,12 +316,20 @@ mmove_t stalker_move_jump_straightup = { FRAME_jump04, FRAME_jump07, stalker_fra
 
 static qboolean stalker_start_ceiling_jump(edict_t *self, float cooldown)
 {
+	float ceiling_z;
+
 	if (!stalker_ceiling_allowed(self) || stalker_on_ceiling(self) || !self->groundentity)
 		return false;
 	if (stalker_is_dodge_move(self) || level.time < self->monsterinfo.dodge_time)
 		return false;
+	if (!stalker_find_ceiling(self, STALKER_CEILING_TRACE_DIST, &ceiling_z))
+	{
+		self->monsterinfo.dodge_time = level.time + cooldown;
+		return false;
+	}
 
 	self->monsterinfo.dodge_time = level.time + cooldown;
+	self->pos1[2] = ceiling_z;
 	self->monsterinfo.currentmove = &stalker_move_jump_straightup;
 	stalker_jump_straightup(self);
 	return true;
@@ -552,6 +571,13 @@ static void stalker_pain(edict_t *self, edict_t *other, float kick, int damage)
 
 	if (skill->value == 3)
 		return;
+
+	if (self->style == STALKER_CEILING_JUMPING && damage > 10)
+	{
+		stalker_abort_ceiling_jump(self);
+		self->monsterinfo.currentmove = &stalker_move_pain;
+		return;
+	}
 
 	if (stalker_is_dodge_move(self))
 		return;

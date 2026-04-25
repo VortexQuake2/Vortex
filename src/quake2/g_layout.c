@@ -335,6 +335,8 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	case M_GEKK:
 	case M_ARACHNID:
 	case M_CARRIER:
+	case M_WIDOW:
+	case M_WIDOW2:
 	case M_GUARDIAN:
 	case M_JANITOR:
 	case M_MINIGUARDIAN:

@@ -155,6 +155,7 @@ qboolean IsMonster(const edict_t* ent) {
         || ent->mtype == M_DAEDALUS || ent->mtype == M_GLADB || ent->mtype == M_GLADC
         || ent->mtype == M_STALKER || ent->mtype == M_GEKK || ent->mtype == M_ARACHNID
         || ent->mtype == M_MEDIC_COMMANDER || ent->mtype == M_CARRIER
+        || ent->mtype == M_WIDOW || ent->mtype == M_WIDOW2
         || ent->mtype == M_CHICK_HEAT));
 }
 

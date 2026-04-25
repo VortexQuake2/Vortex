@@ -678,6 +678,8 @@ int vrx_GetMonsterCost(int mtype) {
             cost = M_DEFAULT_COST;
             break;
         case M_CARRIER:
+        case M_WIDOW:
+        case M_WIDOW2:
             cost = M_COMMANDER_COST;
             break;
 		case M_JANITOR:
@@ -763,6 +765,8 @@ int vrx_GetMonsterControlCost(int mtype) {
             cost = M_GLADIATOR_CONTROL_COST;
             break;
         case M_CARRIER:
+        case M_WIDOW:
+        case M_WIDOW2:
             cost = M_JORG_CONTROL_COST;
             break;
         case M_HOVER:

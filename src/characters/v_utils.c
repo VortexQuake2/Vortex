@@ -2109,6 +2109,10 @@ char *V_GetMonsterKind(int mtype) {
             return "arachnid";
         case M_CARRIER:
             return "carrier";
+        case M_WIDOW:
+            return "widow";
+        case M_WIDOW2:
+            return "black widow";
         case M_GUARDIAN:
             return "Guardian";
         case M_JANITOR:
