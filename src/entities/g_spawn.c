@@ -284,6 +284,7 @@ spawn_t	spawns[] = {
 	{"monster_soldier_lasergun", SP_monster_soldier_laser},
 	{"monster_janitor", SP_monster_janitor},
 	{"monster_miniguardian", SP_monster_miniguardian},
+	{"monster_boss5", SP_monster_boss5},
 	{"monster_tank", SP_monster_tank},
 	{"monster_tank_commander", SP_monster_tank_commander},
 	{"monster_medic", SP_monster_medic},
@@ -1135,6 +1136,12 @@ void SP_monster_miniguardian(edict_t *ent)
 {
 	if (coop->value)
         vrx_create_drone_from_ent(ent, g_edicts, DS_MINIGUARDIAN, true, true, 0);
+}
+
+void SP_monster_boss5(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_BOSS5, true, true, 0);
 }
 
 void SP_monster_tank(edict_t *ent) 

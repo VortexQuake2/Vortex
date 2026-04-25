@@ -23,6 +23,7 @@ void init_drone_mutant (edict_t *self);
 void init_drone_decoy (edict_t *self);
 void init_drone_commander (edict_t *self);
 void init_drone_supertank (edict_t *self);
+void init_drone_boss5 (edict_t *self);
 void init_drone_jorg (edict_t *self);
 void init_drone_makron (edict_t *self);
 void init_drone_soldier (edict_t *self);
@@ -539,7 +540,7 @@ void drone_death (edict_t *self, edict_t *attacker)
 
 
 	//4.2 bosses can drop up to 4 runes
-	if (self->mtype == M_COMMANDER || self->mtype == M_SUPERTANK || self->mtype == M_MAKRON || self->mtype == M_BOSS2 || self->mtype == M_CARRIER || self->mtype == M_WIDOW || self->mtype == M_WIDOW2 || self->mtype == M_FIXBOT_BOSS || self->mtype == M_GUARDIAN)
+	if (self->mtype == M_COMMANDER || self->mtype == M_SUPERTANK || self->mtype == M_BOSS5 || self->mtype == M_MAKRON || self->mtype == M_BOSS2 || self->mtype == M_CARRIER || self->mtype == M_WIDOW || self->mtype == M_WIDOW2 || self->mtype == M_FIXBOT_BOSS || self->mtype == M_GUARDIAN)
 	{
 		edict_t *e;
 		float drop_chance = 0.25;
@@ -783,6 +784,7 @@ static qboolean vrx_drone_spawn_is_boss(enum dronespawn_t drone_type)
 	case DS_MAKRON:
 	case DS_BARON_FIRE:
 	case DS_SUPERTANK:
+	case DS_BOSS5:
 	case DS_JORG:
 	case DS_CARRIER:
 	case DS_WIDOW:
@@ -920,6 +922,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 	case DS_MAKRON: init_drone_makron(drone);		break;
 	case DS_BARON_FIRE: init_baron_fire(drone);		break;
 	case DS_SUPERTANK: init_drone_supertank(drone);	break;
+	case DS_BOSS5: init_drone_boss5(drone); break;
 	case DS_JORG: init_drone_jorg(drone);		break;
 	case DS_CARRIER: init_drone_carrier(drone);	break;
 	case DS_WIDOW: init_drone_widow(drone);	break;
@@ -1829,7 +1832,7 @@ qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, q
 					&& self->mtype != M_CHICK_HEAT && self->mtype != M_MEDIC_COMMANDER
 					&& self->mtype != M_SOLDIER && self->mtype != M_SOLDIER_RIPPER
 					&& self->mtype != M_SOLDIER_BLUEBLASTER && self->mtype != M_SOLDIER_LASER
-					&& self->mtype != M_STALKER)
+					&& self->mtype != M_STALKER && self->mtype != M_BOSS5)
 					self->s.skinnum &= ~2;
 			}
 
@@ -2117,6 +2120,8 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	case M_MUTANT: init_drone_mutant(monster); break;
 	case M_PARASITE: init_drone_parasite(monster); break;
 	case M_TANK: init_drone_tank(monster); break;
+	case M_SUPERTANK: init_drone_supertank(monster); break;
+	case M_BOSS5: init_drone_boss5(monster); break;
 	case M_BERSERK: init_drone_berserk(monster); break;
 	case M_SOLDIER: case M_SOLDIERLT: case M_SOLDIERSS:
 	case M_SOLDIER_RIPPER: case M_SOLDIER_BLUEBLASTER: case M_SOLDIER_LASER:
@@ -2245,6 +2250,11 @@ qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax)
 		VectorSet (boxmin, -24, -24, -16);
 		VectorSet (boxmax, 24, 24, 64);
 		break;
+	case M_SUPERTANK:
+	case M_BOSS5:
+		VectorSet(boxmin, -64, -64, 0);
+		VectorSet(boxmax, 64, 64, 112);
+		break;
 	case M_SHAMBLER:
 		VectorSet(boxmin, -32, -32, -24);
 		VectorSet(boxmax, 32, 32, 64);
@@ -2367,6 +2377,8 @@ char *GetMonsterKindString (int mtype)
 		case M_SOLDIER_BLUEBLASTER: return "Hyper Guard";
 		case M_SOLDIER_LASER: return "Laser Guard";
         case M_TANK: return "Tank";
+        case M_SUPERTANK: return "Super Tank";
+        case M_BOSS5: return "Super Tank Heat";
         case M_GUNNER: return "Gunner";
 		case M_YANGSPIRIT: return "Yang Spirit";
 		case M_BALANCESPIRIT: return "Balance Spirit";

@@ -322,6 +322,8 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	case M_BRAIN:
 	case M_GLADIATOR:
 	case M_TANK:
+	case M_SUPERTANK:
+	case M_BOSS5:
 	case M_FORCEWALL:
 	case M_BARON_FIRE:
 	case M_SHAMBLER:

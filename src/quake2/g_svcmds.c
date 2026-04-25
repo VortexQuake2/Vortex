@@ -637,6 +637,13 @@ void SVCmd_SpawnBoss_f (void)
         else
             vrx_create_new_drone(m_worldspawn, 33, true, true, 0);
     }
+    else if (!strcmp(gi.argv(2), "boss5") || !strcmp(gi.argv(2), "supertank_heat"))
+    {
+        if (invasion->value)
+            vrx_inv_spawn_boss(m_worldspawn, DS_BOSS5);
+        else
+            vrx_create_new_drone(m_worldspawn, DS_BOSS5, true, true, 0);
+    }
     else if (!strcmp(gi.argv(2), "jorg"))
     {
         if (invasion->value)
@@ -695,7 +702,7 @@ void SVCmd_SpawnBoss_f (void)
             vrx_create_new_drone(m_worldspawn, DS_GUARDIAN, true, true, 0);
     }
     else
-        safe_cprintf(NULL, PRINT_HIGH, "Invalid boss type. Usage: sv spawnboss <commander|makron|firebaron|supertank|jorg|boss2|boss2_hyper|carrier|widow|widow2|fixbot_boss|guardian>\n");
+        safe_cprintf(NULL, PRINT_HIGH, "Invalid boss type. Usage: sv spawnboss <commander|makron|firebaron|supertank|boss5|jorg|boss2|boss2_hyper|carrier|widow|widow2|fixbot_boss|guardian>\n");
 }
 
 void SVCmd_MakeBoss_f (void)

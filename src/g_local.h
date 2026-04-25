@@ -1536,6 +1536,7 @@ enum mtype_t {
     M_FIXBOT_BOSS = 49,
     M_ROGUE_TURRET = 50,
     M_BOSS2_SMALL = 51,
+    M_BOSS5 = 52,
     M_MINISENTRY = 100,
     M_SENTRY = 101,
     M_BFG_SENTRY = 102,
@@ -1665,6 +1666,7 @@ enum dronespawn_t {
     DS_BOSS2 = 47,
     DS_BOSS2_HYPER = 48,
     DS_BOSS2_SMALL = 49,
+    DS_BOSS5 = 50,
 
 };
 

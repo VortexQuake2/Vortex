@@ -699,6 +699,7 @@ int vrx_GetMonsterCost(int mtype) {
 			cost = M_TANK_COST;
 			break;
         case M_SUPERTANK:
+        case M_BOSS5:
             cost = M_SUPERTANK_COST;
             break;
         case M_COMMANDER:
@@ -798,6 +799,7 @@ int vrx_GetMonsterControlCost(int mtype) {
             cost = M_HOVER_CONTROL_COST;
             break;
         case M_SUPERTANK:
+        case M_BOSS5:
             cost = M_SUPERTANK_CONTROL_COST;
             break;
         case M_COMMANDER:

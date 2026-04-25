@@ -150,7 +150,7 @@ qboolean IsMorphedPlayer(const edict_t *ent) {
 }
 
 qboolean IsMonster(const edict_t* ent) {
-    return (ent->mtype && (ent->mtype <= M_TANK || ent->mtype == M_SHAMBLER
+    return (ent->mtype && (ent->mtype <= M_TANK || ent->mtype == M_SUPERTANK || ent->mtype == M_BOSS5 || ent->mtype == M_SHAMBLER
         || ent->mtype == M_REDMUTANT || ent->mtype == M_RUNNERTANK || ent->mtype == M_GUNCMDR
         || ent->mtype == M_DAEDALUS || ent->mtype == M_GLADB || ent->mtype == M_GLADC
         || ent->mtype == M_STALKER || ent->mtype == M_GEKK || ent->mtype == M_ARACHNID

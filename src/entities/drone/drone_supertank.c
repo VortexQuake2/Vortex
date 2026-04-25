@@ -18,6 +18,11 @@ static	int	tread_sound;
 
 void BossExplode (edict_t *self);
 
+static qboolean supertank_is_boss5(const edict_t *self)
+{
+	return self->mtype == M_BOSS5;
+}
+
 void TreadSound (edict_t *self)
 {
 	gi.sound (self, CHAN_VOICE, tread_sound, 1, ATTN_NORM, 0);
@@ -459,6 +464,13 @@ void supertankRocket (edict_t *self)
 	damage = 50 + 10 * drone_damagelevel(self);
 	speed = 650 + 30 * drone_damagelevel(self);
 
+	if (supertank_is_boss5(self))
+	{
+		MonsterAim(self, 0.5, speed, true, flash_number, forward, start);
+		monster_fire_heat(self, start, forward, damage, speed, flash_number, 0.075f);
+		return;
+	}
+
 	if (self->mtype == M_JANITOR)
 	{
 		AngleVectors(self->s.angles, forward, right, NULL);
@@ -621,15 +633,18 @@ void supertank_sight (edict_t *self, edict_t *other)
 void init_drone_supertank (edict_t *self)
 {
 	qboolean janitor = (self->mtype == M_JANITOR);
+	qboolean boss5 = supertank_is_boss5(self);
 
 	sound_death = gi.soundindex ("bosstank/btkdeth1.wav");
 	sound_search1 = gi.soundindex ("bosstank/btkunqv1.wav");
 	sound_search2 = gi.soundindex ("bosstank/btkunqv2.wav");
 	tread_sound = gi.soundindex ("bosstank/btkengn1.wav");
+	if (boss5)
+		gi.soundindex("weapons/railgr1a.wav");
 
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
-	if (!janitor)
+	if (!janitor && !boss5)
 		self->mtype = M_SUPERTANK;
 	self->monsterinfo.control_cost = janitor ? M_TANK_CONTROL_COST : M_SUPERTANK_CONTROL_COST;
 	self->monsterinfo.cost = janitor ? 150 : 300;
@@ -645,6 +660,8 @@ void init_drone_supertank (edict_t *self)
 	}
 	else
 	{
+		if (boss5)
+			self->s.skinnum = 2;
 		VectorSet (self->mins, -64, -64, 0);
 		VectorSet (self->maxs, 64, 64, 112);
 		self->health = self->max_health = 20000*self->monsterinfo.level;
@@ -656,6 +673,8 @@ void init_drone_supertank (edict_t *self)
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	if (janitor)
 		self->monsterinfo.power_armor_power = M_JANITOR_INITIAL_ARMOR + M_JANITOR_ADDON_ARMOR * self->monsterinfo.level;
+	else if (boss5)
+		self->monsterinfo.power_armor_power = 400 * self->monsterinfo.level;
 	else
 		self->monsterinfo.power_armor_power = 0;
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
@@ -675,5 +694,11 @@ void init_drone_supertank (edict_t *self)
 	gi.linkentity (self);
 
 	if (!janitor && (!self->activator || !self->activator->client))
-		G_PrintGreenText(va("A level %d super tank has spawned!", self->monsterinfo.level));
+		G_PrintGreenText(va("A level %d %s has spawned!", self->monsterinfo.level, boss5 ? "super tank heat" : "super tank"));
+}
+
+void init_drone_boss5(edict_t *self)
+{
+	self->mtype = M_BOSS5;
+	init_drone_supertank(self);
 }
