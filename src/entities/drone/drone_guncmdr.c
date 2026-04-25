@@ -27,6 +27,11 @@ static int sound_thud;
 
 #define GUNCMDR_SCALE(self)              (((self)->s.scale > 0) ? (self)->s.scale : 1.0f)
 
+#define GUNCMDR_MINS_X_SCALED(self)      (-16.0f * GUNCMDR_SCALE(self))
+#define GUNCMDR_MINS_Y_SCALED(self)      (-16.0f * GUNCMDR_SCALE(self))
+#define GUNCMDR_MINS_Z_SCALED(self)      (-24.0f * GUNCMDR_SCALE(self))
+#define GUNCMDR_MAXS_X_SCALED(self)      (16.0f * GUNCMDR_SCALE(self))
+#define GUNCMDR_MAXS_Y_SCALED(self)      (16.0f * GUNCMDR_SCALE(self))
 #define GUNCMDR_STAND_MAXZ_SCALED(self)  (36.0f * GUNCMDR_SCALE(self))
 #define GUNCMDR_DUCK_MAXZ_SCALED(self)   (4.0f  * GUNCMDR_SCALE(self))
 #define GUNCMDR_DEAD_MAXZ_SCALED(self)   (-8.0f * GUNCMDR_SCALE(self))
@@ -51,6 +56,18 @@ extern mmove_t guncmdr_move_death6;
 void drone_ai_run_slide(edict_t *self, float dist);
 static void guncmdr_ai_dodge_slide(edict_t *self, float dist);
 extern mmove_t guncmdr_move_dodge_slide;
+
+static void guncmdr_set_stand_bbox(edict_t *self)
+{
+	VectorSet(self->mins,
+		GUNCMDR_MINS_X_SCALED(self),
+		GUNCMDR_MINS_Y_SCALED(self),
+		GUNCMDR_MINS_Z_SCALED(self));
+	VectorSet(self->maxs,
+		GUNCMDR_MAXS_X_SCALED(self),
+		GUNCMDR_MAXS_Y_SCALED(self),
+		GUNCMDR_STAND_MAXZ_SCALED(self));
+}
 
 static void guncmdr_idle_sound(edict_t *self)
 {
@@ -550,12 +567,25 @@ static void guncmdr_duck_down(edict_t *self)
 
 static void guncmdr_duck_up(edict_t *self)
 {
+	vec3_t oldmaxs;
+	trace_t tr;
+
 	if (!(self->monsterinfo.aiflags & AI_DUCKED) &&
 		self->maxs[2] == GUNCMDR_STAND_MAXZ_SCALED(self))
 		return;
 
-	self->monsterinfo.aiflags &= ~AI_DUCKED;
+	VectorCopy(self->maxs, oldmaxs);
 	self->maxs[2] = GUNCMDR_STAND_MAXZ_SCALED(self);
+
+	tr = gi.trace(self->s.origin, self->mins, self->maxs, self->s.origin, self, MASK_MONSTERSOLID);
+	if (tr.startsolid || tr.allsolid)
+	{
+		VectorCopy(oldmaxs, self->maxs);
+		self->monsterinfo.aiflags |= AI_DUCKED;
+		return;
+	}
+
+	self->monsterinfo.aiflags &= ~AI_DUCKED;
 	self->takedamage = DAMAGE_AIM;
 	gi.linkentity(self);
 }
@@ -1096,14 +1126,14 @@ static void guncmdr_pain(edict_t *self, edict_t *other, float kick, int damage)
 static void guncmdr_dead(edict_t *self)
 {
 	VectorSet(self->mins,
-		-16 * GUNCMDR_SCALE(self),
-		-16 * GUNCMDR_SCALE(self),
-		-24 * GUNCMDR_SCALE(self));
+		GUNCMDR_MINS_X_SCALED(self),
+		GUNCMDR_MINS_Y_SCALED(self),
+		GUNCMDR_MINS_Z_SCALED(self));
 
 	VectorSet(self->maxs,
-		 16 * GUNCMDR_SCALE(self),
-		 16 * GUNCMDR_SCALE(self),
-		 GUNCMDR_DEAD_MAXZ_SCALED(self));
+		GUNCMDR_MAXS_X_SCALED(self),
+		GUNCMDR_MAXS_Y_SCALED(self),
+		GUNCMDR_DEAD_MAXZ_SCALED(self));
 
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
@@ -1508,8 +1538,7 @@ void init_drone_guncmdr(edict_t *self)
 	gi.modelindex("models/monsters/gunner/gibs/head.md2");
 
 	self->s.scale = 1.25f;
-	VectorSet(self->mins, -20, -20, -30); 							 // default scale = -16, -16, -24
-	VectorSet(self->maxs, 20, 20, GUNCMDR_STAND_MAXZ_SCALED(self));  //  default scale = 16, 16, 36
+	guncmdr_set_stand_bbox(self); // base bbox is -16 -16 -24, 16 16 36 at scale 1.0
 	self->s.skinnum = 2;
 
 	self->monsterinfo.control_cost = M_TANK_CONTROL_COST;

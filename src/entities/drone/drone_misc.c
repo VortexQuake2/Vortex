@@ -2121,7 +2121,7 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	}
 
 #ifdef VRX_REPRO
-	if (monster->s.scale)
+	if (monster->s.scale && monster->mtype != M_GUNCMDR)
 	{
 		monster->monsterinfo.scale *= monster->s.scale;
 		VectorScale(monster->mins, monster->s.scale, monster->mins);
@@ -2227,8 +2227,8 @@ qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax)
 		VectorSet(boxmax, 28, 28, 56);
 		break;
 	case M_GUNCMDR:
-		VectorSet(boxmin, -16, -16, -24);
-		VectorSet(boxmax, 16, 16, 42);
+		VectorSet(boxmin, -20, -20, -30);
+		VectorSet(boxmax, 20, 20, 45);
 		break;
 	case M_DAEDALUS:
 		VectorSet(boxmin, -24, -24, -24);
