@@ -25,6 +25,9 @@ fixbot
 #define FIXBOT_BOSS_SPAWN_COOLDOWN	8.0f
 #define FIXBOT_BOSS_FAIL_COOLDOWN	2.0f
 #define FIXBOT_BLASTER_FLASH			MZ2_HOVER_BLASTER_1
+#define FIXBOT_BOSS_DEFAULT_SCALE		2.6f
+#define FIXBOT_BOSS_INVASION_SCALE		2.0f
+#define FIXBOT_BOSS_INVASION_MOVE_SCALE	1.5f
 
 static int sound_pain;
 static int sound_die;
@@ -46,6 +49,21 @@ static void fixbot_try_start_spawn(edict_t *self);
 static qboolean fixbot_is_boss(edict_t *self)
 {
 	return self->mtype == M_FIXBOT_BOSS;
+}
+
+static float fixbot_move_scale(edict_t *self)
+{
+	return (fixbot_is_boss(self) && invasion->value) ? FIXBOT_BOSS_INVASION_MOVE_SCALE : 1.0f;
+}
+
+static void fixbot_ai_run(edict_t *self, float dist)
+{
+	drone_ai_run(self, dist * fixbot_move_scale(self));
+}
+
+static void fixbot_ai_walk(edict_t *self, float dist)
+{
+	drone_ai_walk(self, dist * fixbot_move_scale(self));
 }
 
 static int fixbot_count_live_turrets(edict_t *self)
@@ -967,7 +985,7 @@ static void fixbot_stand(edict_t *self)
 
 static mframe_t fixbot_frames_run[] =
 {
-	drone_ai_run, 10, fixbot_try_start_spawn
+	fixbot_ai_run, 10, fixbot_try_start_spawn
 };
 static mmove_t fixbot_move_run = { FIXBOT_FRAME_freeze_01, FIXBOT_FRAME_freeze_01, fixbot_frames_run, NULL };
 
@@ -981,7 +999,7 @@ static void fixbot_run(edict_t *self)
 
 static mframe_t fixbot_frames_walk[] =
 {
-	drone_ai_walk, 5, NULL
+	fixbot_ai_walk, 5, NULL
 };
 static mmove_t fixbot_move_walk = { FIXBOT_FRAME_freeze_01, FIXBOT_FRAME_freeze_01, fixbot_frames_walk, NULL };
 
@@ -1155,12 +1173,21 @@ static void init_drone_fixbot_common(edict_t *self, qboolean boss)
 
 	if (boss)
 	{
-		VectorSet(self->mins, -36, -36, -28);
-		VectorSet(self->maxs, 36, 36, 28);
+		if (invasion->value)
+		{
+			VectorSet(self->mins, -30, -30, -24);
+			VectorSet(self->maxs, 30, 30, 24);
+			self->s.scale = FIXBOT_BOSS_INVASION_SCALE;
+		}
+		else
+		{
+			VectorSet(self->mins, -36, -36, -28);
+			VectorSet(self->maxs, 36, 36, 28);
+			self->s.scale = FIXBOT_BOSS_DEFAULT_SCALE;
+		}
 		self->health = M_FIXBOT_BOSS_INITIAL_HEALTH + M_FIXBOT_BOSS_ADDON_HEALTH * self->monsterinfo.level;
 		self->monsterinfo.power_armor_power = M_FIXBOT_BOSS_INITIAL_ARMOR + M_FIXBOT_BOSS_ADDON_ARMOR * self->monsterinfo.level;
 		self->mass = 400;
-		self->s.scale = 2.6f;
 		self->mtype = M_FIXBOT_BOSS;
 		self->monsterinfo.control_cost = M_JORG_CONTROL_COST;
 		self->monsterinfo.cost = M_COMMANDER_COST;
@@ -1201,8 +1228,8 @@ static void init_drone_fixbot_common(edict_t *self, qboolean boss)
 	self->monsterinfo.scale = 1.0f;
 
 	qboolean isBoss = (self->mtype == M_FIXBOT_BOSS);
-	if (isBoss)
-	G_PrintGreenText(va("A level %d fixer has spawned!", self->monsterinfo.level));
+	if (isBoss && !invasion->value)
+		G_PrintGreenText(va("A level %d fixer has spawned!", self->monsterinfo.level));
 }
 
 void init_drone_fixbot(edict_t *self)

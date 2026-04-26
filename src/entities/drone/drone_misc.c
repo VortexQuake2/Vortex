@@ -2157,7 +2157,13 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	}
 
 #ifdef VRX_REPRO
-	if (monster->s.scale && monster->mtype != M_GUNCMDR && monster->mtype != M_BOSS2_SMALL)
+	if (monster->s.scale && monster->mtype != M_GUNCMDR && monster->mtype != M_BOSS2_SMALL
+		&& monster->mtype != M_WIDOW && monster->mtype != M_WIDOW2
+		&& monster->mtype != M_GUARDIAN && monster->mtype != M_MINIGUARDIAN
+		&& !(invasion->value && (monster->mtype == M_CARRIER
+			|| monster->mtype == M_ARACHNID || monster->mtype == M_FIXBOT_BOSS
+			|| monster->mtype == M_SUPERTANK || monster->mtype == M_BOSS5
+			|| monster->mtype == M_BOSS2)))
 	{
 		monster->monsterinfo.scale *= monster->s.scale;
 		VectorScale(monster->mins, monster->s.scale, monster->mins);
@@ -2252,8 +2258,16 @@ qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax)
 		break;
 	case M_SUPERTANK:
 	case M_BOSS5:
-		VectorSet(boxmin, -64, -64, 0);
-		VectorSet(boxmax, 64, 64, 112);
+		if (invasion->value)
+		{
+			VectorSet(boxmin, -40, -40, 0);
+			VectorSet(boxmax, 40, 40, 72);
+		}
+		else
+		{
+			VectorSet(boxmin, -64, -64, 0);
+			VectorSet(boxmax, 64, 64, 112);
+		}
 		break;
 	case M_SHAMBLER:
 		VectorSet(boxmin, -32, -32, -24);
@@ -2284,44 +2298,100 @@ qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax)
 		VectorSet(boxmax, 18, 18, 24);
 		break;
 	case M_ARACHNID:
-		VectorSet(boxmin, -48, -48, -20);
-		VectorSet(boxmax, 48, 48, 48);
+		if (invasion->value)
+		{
+			VectorSet(boxmin, -28, -28, -18);
+			VectorSet(boxmax, 28, 28, 34);
+		}
+		else
+		{
+			VectorSet(boxmin, -48, -48, -20);
+			VectorSet(boxmax, 48, 48, 48);
+		}
 		break;
 	case M_BOSS2:
-		VectorSet(boxmin, -56, -56, 0);
-		VectorSet(boxmax, 56, 56, 80);
+		if (invasion->value)
+		{
+			VectorSet(boxmin, -42, -42, 0);
+			VectorSet(boxmax, 42, 42, 60);
+		}
+		else
+		{
+			VectorSet(boxmin, -56, -56, 0);
+			VectorSet(boxmax, 56, 56, 80);
+		}
 		break;
 	case M_BOSS2_SMALL:
 		VectorSet(boxmin, -34, -34, 0);
 		VectorSet(boxmax, 34, 34, 48);
 		break;
 	case M_CARRIER:
-		VectorSet(boxmin, -80, -80, -24);
-		VectorSet(boxmax, 80, 80, 104);
+		if (invasion->value)
+		{
+			VectorSet(boxmin, -40, -40, -24);
+			VectorSet(boxmax, 40, 40, 82);
+		}
+		else
+		{
+			VectorSet(boxmin, -80, -80, -24);
+			VectorSet(boxmax, 80, 80, 104);
+		}
 		break;
 	case M_WIDOW:
-		VectorSet(boxmin, -40, -40, 0);
-		VectorSet(boxmax, 40, 40, 144);
+		if (invasion->value)
+		{
+			VectorSet(boxmin, -30, -30, 0);
+			VectorSet(boxmax, 30, 30, 108);
+		}
+		else
+		{
+			VectorSet(boxmin, -40, -40, 0);
+			VectorSet(boxmax, 40, 40, 144);
+		}
 		break;
 	case M_WIDOW2:
-		VectorSet(boxmin, -70, -70, 0);
-		VectorSet(boxmax, 70, 70, 144);
+		if (invasion->value)
+		{
+			VectorSet(boxmin, -40, -40, 0);
+			VectorSet(boxmax, 40, 40, 82);
+		}
+		else
+		{
+			VectorSet(boxmin, -70, -70, 0);
+			VectorSet(boxmax, 70, 70, 144);
+		}
 		break;
 	case M_FIXBOT:
 		VectorSet(boxmin, -24, -24, -18);
 		VectorSet(boxmax, 24, 24, 24);
 		break;
 	case M_FIXBOT_BOSS:
-		VectorSet(boxmin, -36, -36, -28);
-		VectorSet(boxmax, 36, 36, 28);
+		if (invasion->value)
+		{
+			VectorSet(boxmin, -30, -30, -24);
+			VectorSet(boxmax, 30, 30, 24);
+		}
+		else
+		{
+			VectorSet(boxmin, -36, -36, -28);
+			VectorSet(boxmax, 36, 36, 28);
+		}
 		break;
 	case M_ROGUE_TURRET:
 		VectorSet(boxmin, -12, -12, -12);
 		VectorSet(boxmax, 12, 12, 12);
 		break;
 	case M_GUARDIAN:
-		VectorSet(boxmin, -96, -96, -66);
-		VectorSet(boxmax, 96, 96, 62);
+		if (invasion->value)
+		{
+			VectorSet(boxmin, -44, -44, -30);
+			VectorSet(boxmax, 44, 44, 45);
+		}
+		else
+		{
+			VectorSet(boxmin, -96, -96, -66);
+			VectorSet(boxmax, 96, 96, 62);
+		}
 		break;
 	case M_JANITOR:
 		VectorSet(boxmin, -38, -38, 0);

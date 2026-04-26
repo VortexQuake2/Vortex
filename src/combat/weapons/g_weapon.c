@@ -61,8 +61,8 @@ void check_dodge (edict_t *self, vec3_t start, vec3_t dir, int speed, int radius
 		tr.ent->monsterinfo.eta = level.time + eta;
 		//gi.dprintf("ETA for impact is %.1f\n", tr.ent->monsterinfo.eta);
 		tr.ent->monsterinfo.attacker = self;
-		VectorCopy(start, tr.ent->monsterinfo.dir);
-		tr.ent->monsterinfo.radius = 0;
+		VectorCopy(tr.endpos, tr.ent->monsterinfo.dir);
+		tr.ent->monsterinfo.radius = radius;
 		
 	}
 	else

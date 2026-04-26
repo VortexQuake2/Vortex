@@ -7,7 +7,7 @@ GUN COMMANDER
 */
 
 #include "g_local.h"
-#include "../../quake2/monsterframes/m_guncmdr.h"
+#include "../../quake2/monsterframes/m_gunner.h"
 
 static int sound_pain;
 static int sound_pain2;
@@ -24,6 +24,7 @@ static int sound_thud;
 #define GUNCMDR_MORTAR_SPEED        850
 #define GUNCMDR_GRENADE_SPEED       600
 #define GUNCMDR_WALK_SPEED_MULT     2.0f
+#define GUNCMDR_INVASION_RUN_SCALE  1.15f
 
 #define GUNCMDR_SCALE(self)              (((self)->s.scale > 0) ? (self)->s.scale : 1.0f)
 
@@ -56,6 +57,11 @@ extern mmove_t guncmdr_move_death6;
 void drone_ai_run_slide(edict_t *self, float dist);
 static void guncmdr_ai_dodge_slide(edict_t *self, float dist);
 extern mmove_t guncmdr_move_dodge_slide;
+
+static void guncmdr_ai_run(edict_t *self, float dist)
+{
+	drone_ai_run(self, invasion->value ? dist * GUNCMDR_INVASION_RUN_SCALE : dist);
+}
 
 static void guncmdr_set_stand_bbox(edict_t *self)
 {
@@ -256,12 +262,12 @@ static void guncmdr_walk(edict_t *self)
 
 mframe_t guncmdr_frames_run[] =
 {
-	drone_ai_run, 15, NULL,
-	drone_ai_run, 16, NULL,
-	drone_ai_run, 20, NULL,
-	drone_ai_run, 18, NULL,
-	drone_ai_run, 24, NULL,
-	drone_ai_run, 13.5, NULL
+	guncmdr_ai_run, 15, NULL,
+	guncmdr_ai_run, 16, NULL,
+	guncmdr_ai_run, 20, NULL,
+	guncmdr_ai_run, 18, NULL,
+	guncmdr_ai_run, 24, NULL,
+	guncmdr_ai_run, 13.5, NULL
 };
 mmove_t guncmdr_move_run = { FRAME_c_run101, FRAME_c_run106, guncmdr_frames_run, NULL };
 
@@ -336,12 +342,12 @@ mmove_t guncmdr_move_fire_chain = { FRAME_c_attack107, FRAME_c_attack112, guncmd
 
 mframe_t guncmdr_frames_fire_chain_run[] =
 {
-	drone_ai_run, 15, GunnerCmdrFire,
-	drone_ai_run, 16, GunnerCmdrFire,
-	drone_ai_run, 20, GunnerCmdrFire,
-	drone_ai_run, 18, GunnerCmdrFire,
-	drone_ai_run, 24, GunnerCmdrFire,
-	drone_ai_run, 13.5, GunnerCmdrFire
+	guncmdr_ai_run, 15, GunnerCmdrFire,
+	guncmdr_ai_run, 16, GunnerCmdrFire,
+	guncmdr_ai_run, 20, GunnerCmdrFire,
+	guncmdr_ai_run, 18, GunnerCmdrFire,
+	guncmdr_ai_run, 24, GunnerCmdrFire,
+	guncmdr_ai_run, 13.5, GunnerCmdrFire
 };
 mmove_t guncmdr_move_fire_chain_run = { FRAME_c_run201, FRAME_c_run206, guncmdr_frames_fire_chain_run, guncmdr_refire_chain };
 
@@ -655,6 +661,15 @@ static void guncmdr_jump_now(edict_t *self)
 	self->velocity[2] += 350;
 }
 
+static void guncmdr_jump2_now(edict_t *self)
+{
+	vec3_t forward;
+
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+	VectorMA(self->velocity, 150, forward, self->velocity);
+	self->velocity[2] += 400;
+}
+
 static void guncmdr_jump_wait_land(edict_t *self)
 {
 	if (!self->groundentity && level.time < self->monsterinfo.pausetime)
@@ -678,6 +693,21 @@ mframe_t guncmdr_frames_jump[] =
 };
 mmove_t guncmdr_move_jump = { FRAME_c_jump01, FRAME_c_jump10, guncmdr_frames_jump, guncmdr_run };
 
+mframe_t guncmdr_frames_jump2[] =
+{
+	ai_move, -8, NULL,
+	ai_move, -4, NULL,
+	ai_move, -4, NULL,
+	ai_move, 0, guncmdr_jump2_now,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, guncmdr_jump_wait_land,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+mmove_t guncmdr_move_jump2 = { FRAME_c_jump01, FRAME_c_jump10, guncmdr_frames_jump2, guncmdr_run };
+
 static qboolean guncmdr_try_sidestep(edict_t *self);
 
 static qboolean guncmdr_is_dodge_move(edict_t *self)
@@ -690,6 +720,7 @@ static qboolean guncmdr_is_dodge_move(edict_t *self)
 		self->monsterinfo.currentmove == &guncmdr_move_duckstep_dodge ||
 		self->monsterinfo.currentmove == &guncmdr_move_dodge_slide ||
 		self->monsterinfo.currentmove == &guncmdr_move_jump ||
+		self->monsterinfo.currentmove == &guncmdr_move_jump2 ||
 		self->monsterinfo.currentmove == &guncmdr_move_duck_attack;
 }
 

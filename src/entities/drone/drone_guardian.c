@@ -15,7 +15,35 @@ static int sound_spin_loop;
 static int sound_laser;
 static int sound_pew;
 
+#define GUARDIAN_INVASION_SCALE		0.45f
+#define GUARDIAN_INVASION_MOVE_SCALE	1.75f
+
 void guardian_run(edict_t *self);
+
+static float guardian_scale(edict_t *self)
+{
+	return (self->s.scale > 0.0f) ? self->s.scale : 1.0f;
+}
+
+static void guardian_ai_walk(edict_t *self, float dist)
+{
+	drone_ai_walk(self, invasion->value ? dist * GUARDIAN_INVASION_MOVE_SCALE : dist);
+}
+
+static void guardian_ai_run(edict_t *self, float dist)
+{
+	drone_ai_run(self, invasion->value ? dist * GUARDIAN_INVASION_MOVE_SCALE : dist);
+}
+
+static void guardian_project_flash(edict_t *self, int flash, vec3_t forward, vec3_t right, vec3_t start)
+{
+	vec3_t offset;
+
+	VectorCopy(monster_flash_offset[flash], offset);
+	if (guardian_scale(self) != 1.0f)
+		VectorScale(offset, guardian_scale(self), offset);
+	G_ProjectSource(self->s.origin, offset, forward, right, start);
+}
 
 static void guardian_project_laser_frame_origin(edict_t *self, vec3_t forward, vec3_t right, vec3_t start)
 {
@@ -26,8 +54,8 @@ static void guardian_project_laser_frame_origin(edict_t *self, vec3_t forward, v
 	else
 		VectorSet(offset, 112, -62, 60);
 
-	if (self->s.scale)
-		VectorScale(offset, self->s.scale, offset);
+	if (guardian_scale(self) != 1.0f)
+		VectorScale(offset, guardian_scale(self), offset);
 
 	G_ProjectSource(self->s.origin, offset, forward, right, start);
 }
@@ -101,25 +129,25 @@ void guardian_stand(edict_t *self)
 
 mframe_t guardian_frames_walk[] =
 {
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 8, guardian_footstep,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 8, guardian_footstep,
-	drone_ai_walk, 8, NULL
+	guardian_ai_walk, 8, NULL,
+	guardian_ai_walk, 8, NULL,
+	guardian_ai_walk, 8, NULL,
+	guardian_ai_walk, 8, NULL,
+	guardian_ai_walk, 8, NULL,
+	guardian_ai_walk, 8, NULL,
+	guardian_ai_walk, 8, NULL,
+	guardian_ai_walk, 8, guardian_footstep,
+	guardian_ai_walk, 8, NULL,
+	guardian_ai_walk, 8, NULL,
+	guardian_ai_walk, 8, NULL,
+	guardian_ai_walk, 8, NULL,
+	guardian_ai_walk, 8, NULL,
+	guardian_ai_walk, 8, NULL,
+	guardian_ai_walk, 8, NULL,
+	guardian_ai_walk, 8, NULL,
+	guardian_ai_walk, 8, NULL,
+	guardian_ai_walk, 8, guardian_footstep,
+	guardian_ai_walk, 8, NULL
 };
 mmove_t guardian_move_walk = {FRAME_walk1, FRAME_walk19, guardian_frames_walk, NULL};
 
@@ -132,25 +160,25 @@ void guardian_walk(edict_t *self)
 
 mframe_t guardian_frames_run[] =
 {
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 8, guardian_footstep,
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 8, guardian_footstep,
-	drone_ai_run, 8, NULL
+	guardian_ai_run, 8, NULL,
+	guardian_ai_run, 8, NULL,
+	guardian_ai_run, 8, NULL,
+	guardian_ai_run, 8, NULL,
+	guardian_ai_run, 8, NULL,
+	guardian_ai_run, 8, NULL,
+	guardian_ai_run, 8, NULL,
+	guardian_ai_run, 8, guardian_footstep,
+	guardian_ai_run, 8, NULL,
+	guardian_ai_run, 8, NULL,
+	guardian_ai_run, 8, NULL,
+	guardian_ai_run, 8, NULL,
+	guardian_ai_run, 8, NULL,
+	guardian_ai_run, 8, NULL,
+	guardian_ai_run, 8, NULL,
+	guardian_ai_run, 8, NULL,
+	guardian_ai_run, 8, NULL,
+	guardian_ai_run, 8, guardian_footstep,
+	guardian_ai_run, 8, NULL
 };
 mmove_t guardian_move_run = {FRAME_walk1, FRAME_walk19, guardian_frames_run, NULL};
 
@@ -246,9 +274,9 @@ void guardian_fire_blaster(edict_t *self)
 		speed = 1100;
 		effect = (self->s.frame % 4) ? 0 : EF_HYPERBLASTER;
 		AngleVectors(self->s.angles, forward, right, NULL);
-		G_ProjectSource(self->s.origin, monster_flash_offset[MZ2_GUARDIAN_BLASTER], forward, right, start);
+		guardian_project_flash(self, MZ2_GUARDIAN_BLASTER, forward, right, start);
 		MonsterAim(self, M_PROJECTILE_ACC, speed, false, -1, forward, start);
-		monster_fire_blaster(self, start, forward, damage, speed, effect, BLASTER_PROJ_BOLT, 2.0, true, -1);
+		monster_fire_blaster(self, start, forward, damage, speed, effect, BLASTER_PROJ_BOLT, 2.0, true, MZ2_GUARDIAN_BLASTER);
 	}
 
 	if (G_EntExists(self->enemy) && self->s.frame == FRAME_atk1_spin12 && self->timestamp > level.time && visible(self, self->enemy))
@@ -402,9 +430,9 @@ void guardian_fire_rocket(edict_t *self, float offset)
 
 	AngleVectors(self->s.angles, forward, right, up);
 	VectorCopy(self->s.origin, start);
-	VectorMA(start, -8, forward, start);
-	VectorMA(start, offset, right, start);
-	VectorMA(start, 50, up, start);
+	VectorMA(start, -8 * guardian_scale(self), forward, start);
+	VectorMA(start, offset * guardian_scale(self), right, start);
+	VectorMA(start, 50 * guardian_scale(self), up, start);
 
 	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * drone_damagelevel(self);
 	if (M_ROCKETLAUNCHER_SPEED_MAX && speed > M_ROCKETLAUNCHER_SPEED_MAX)
@@ -669,9 +697,19 @@ void init_drone_guardian(edict_t *self)
 	}
 	else
 	{
-		self->monsterinfo.scale = MODEL_SCALE;
-		VectorSet(self->mins, -96, -96, -66);
-		VectorSet(self->maxs, 96, 96, 62);
+		if (invasion->value)
+		{
+			self->s.scale = GUARDIAN_INVASION_SCALE;
+			self->monsterinfo.scale = MODEL_SCALE * GUARDIAN_INVASION_SCALE;
+			VectorSet(self->mins, -44, -44, -30);
+			VectorSet(self->maxs, 44, 44, 45);
+		}
+		else
+		{
+			self->monsterinfo.scale = MODEL_SCALE;
+			VectorSet(self->mins, -96, -96, -66);
+			VectorSet(self->maxs, 96, 96, 62);
+		}
 		self->health = M_GUARDIAN_INITIAL_HEALTH + M_GUARDIAN_ADDON_HEALTH * self->monsterinfo.level;
 		self->monsterinfo.power_armor_power = M_GUARDIAN_INITIAL_ARMOR + M_GUARDIAN_ADDON_ARMOR * self->monsterinfo.level;
 		self->mass = 850;
@@ -696,6 +734,6 @@ void init_drone_guardian(edict_t *self)
 	self->nextthink = level.time + FRAMETIME;
 	gi.linkentity(self);
 
-	if (!miniguardian)
-	G_PrintGreenText(va("A level %d guardian has spawned!", self->monsterinfo.level));
+	if (!miniguardian && !invasion->value)
+		G_PrintGreenText(va("A level %d guardian has spawned!", self->monsterinfo.level));
 }

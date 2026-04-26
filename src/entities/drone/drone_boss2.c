@@ -13,6 +13,8 @@ boss2
 #define BOSS2_VARIANT_HYPER		1
 #define BOSS2_VARIANT_SMALL		2
 #define BOSS2_ROCKET_SPEED		750
+#define BOSS2_INVASION_SCALE		0.75f
+#define BOSS2_INVASION_MOVE_SCALE	1.5f
 
 static int sound_pain1;
 static int sound_pain2;
@@ -36,6 +38,26 @@ static qboolean boss2_is_small(const edict_t *self)
 static qboolean boss2_is_hyper(const edict_t *self)
 {
 	return self->style == BOSS2_VARIANT_HYPER || boss2_is_small(self);
+}
+
+static float boss2_move_scale(const edict_t *self)
+{
+	return (invasion->value && !boss2_is_small(self)) ? BOSS2_INVASION_MOVE_SCALE : 1.0f;
+}
+
+static void boss2_ai_walk(edict_t *self, float dist)
+{
+	drone_ai_walk(self, dist * boss2_move_scale(self));
+}
+
+static void boss2_ai_run(edict_t *self, float dist)
+{
+	drone_ai_run(self, dist * boss2_move_scale(self));
+}
+
+static float boss2_voice_attenuation(const edict_t *self)
+{
+	return boss2_is_small(self) ? ATTN_NORM : ATTN_NONE;
 }
 
 static void boss2_project_flash(edict_t *self, int flash, vec3_t start)
@@ -81,7 +103,7 @@ static void boss2_predict_aim(edict_t *self, vec3_t start, int speed, float lead
 static void boss2_search(edict_t *self)
 {
 	if (random() < 0.5f)
-		gi.sound(self, CHAN_VOICE, sound_search1, 1, ATTN_NONE, 0);
+		gi.sound(self, CHAN_VOICE, sound_search1, 1, boss2_voice_attenuation(self), 0);
 }
 
 static void boss2_explode(edict_t *self)
@@ -279,51 +301,51 @@ static mmove_t boss2_move_stand = { FRAME_stand30, FRAME_stand50, boss2_frames_s
 
 static mframe_t boss2_frames_walk[] =
 {
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL,
-	drone_ai_walk, 10, NULL
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL,
+	boss2_ai_walk, 10, NULL
 };
 static mmove_t boss2_move_walk = { FRAME_walk1, FRAME_walk20, boss2_frames_walk, NULL };
 
 static mframe_t boss2_frames_run[] =
 {
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, NULL
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL,
+	boss2_ai_run, 10, NULL
 };
 static mmove_t boss2_move_run = { FRAME_walk1, FRAME_walk20, boss2_frames_run, NULL };
 
@@ -648,6 +670,11 @@ static void init_drone_boss2_common(edict_t *self, int variant)
 		VectorSet(self->mins, -34, -34, 0);
 		VectorSet(self->maxs, 34, 34, 48);
 	}
+	else if (invasion->value)
+	{
+		VectorSet(self->mins, -42, -42, 0);
+		VectorSet(self->maxs, 42, 42, 60);
+	}
 	else
 	{
 		VectorSet(self->mins, -56, -56, 0);
@@ -677,7 +704,7 @@ static void init_drone_boss2_common(edict_t *self, int variant)
 	self->yaw_speed = small ? 80 : 50;
 	self->flags |= FL_FLY | FL_IMMUNE_LASER;
 	self->s.sound = gi.soundindex("bosshovr/bhvengn1.wav");
-	self->s.scale = small ? 0.6f : 1.0f;
+	self->s.scale = small ? 0.6f : (invasion->value ? BOSS2_INVASION_SCALE : 1.0f);
 
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	if (small)
@@ -703,10 +730,10 @@ static void init_drone_boss2_common(edict_t *self, int variant)
 	gi.linkentity(self);
 
 	self->monsterinfo.currentmove = &boss2_move_stand;
-	self->monsterinfo.scale = small ? MODEL_SCALE * 0.6f : MODEL_SCALE;
+	self->monsterinfo.scale = MODEL_SCALE * self->s.scale;
 	self->nextthink = level.time + FRAMETIME;
 
-	if (!small)
+	if (!small && !invasion->value)
 		G_PrintGreenText(va("A level %d hornet%s has spawned!", self->monsterinfo.level, hyper ? " hyper" : ""));
 }
 

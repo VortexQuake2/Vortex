@@ -274,26 +274,43 @@ void mymedic_run (edict_t *self)
 
 void mymedic_fire_blaster (edict_t *self)
 {
-	int		effect, damage;
-	const float speed = 2000; // speed: medic_blaster
+	int		effect, damage, flash_number;
+	const int speed = 2000; // speed: medic_blaster
 	vec3_t	forward, start;
 	qboolean bounce = false;
+
+	if (!G_EntExists(self->enemy))
+		return;
 	
 	if ((self->s.frame == FRAME_attack9) || (self->s.frame == FRAME_attack12))
 	{
 		effect = EF_BLASTER;
 		bounce = true;
+		flash_number = medic_is_commander(self) ? MZ2_MEDIC_BLASTER_2 : MZ2_MEDIC_BLASTER_1;
 	}
 	else
-		effect = EF_HYPERBLASTER;
+	{
+		int frame_offset = self->s.frame - FRAME_attack19;
+
+		if (frame_offset < 0)
+			frame_offset = 0;
+		else if (frame_offset > 11)
+			frame_offset = 11;
+
+		effect = (self->s.frame % 4) ? 0 : EF_HYPERBLASTER;
+		flash_number = (medic_is_commander(self) ? MZ2_MEDIC_HYPERBLASTER2_1 : MZ2_MEDIC_HYPERBLASTER1_1) + frame_offset;
+	}
 
 	damage = M_HYPERBLASTER_DMG_BASE + M_HYPERBLASTER_DMG_ADDON * drone_damagelevel(self);
 	if (M_HYPERBLASTER_DMG_MAX && damage > M_HYPERBLASTER_DMG_MAX)
 		damage = M_HYPERBLASTER_DMG_MAX;
 
 
-	MonsterAim(self, M_PROJECTILE_ACC, speed, false, MZ2_MEDIC_BLASTER_1, forward, start);
-	monster_fire_blaster(self, start, forward, damage, speed, effect, BLASTER_PROJ_BOLT, 2.0, bounce, MZ2_MEDIC_BLASTER_1);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash_number, forward, start);
+	if (medic_is_commander(self))
+		monster_fire_blaster2(self, start, forward, damage, speed, effect, flash_number);
+	else
+		monster_fire_blaster(self, start, forward, damage, speed, effect, BLASTER_PROJ_BOLT, 2.0, bounce, flash_number);
 }
 
 void mymedic_fire_bolt (edict_t *self)
@@ -307,7 +324,9 @@ void mymedic_fire_bolt (edict_t *self)
 	damage = GetRandom(min, max);
 
 	MonsterAim(self, M_PROJECTILE_ACC, 1500, false, MZ2_MEDIC_BLASTER_1, forward, start);
-	monster_fire_blaster(self, start, forward, damage, 1500, EF_BLASTER, BLASTER_PROJ_BLAST, 2.0, true, MZ2_MEDIC_BLASTER_1);
+	// Keep the medic muzzle origin, but don't emit the muzzleflash packet here;
+	// it can override the secondary blaster sound that should play per bolt.
+	monster_fire_blaster(self, start, forward, damage, 1500, EF_BLASTER, BLASTER_PROJ_BLAST, 2.0, true, -1);
 
 	gi.sound (self, CHAN_WEAPON, gi.soundindex("weapons/photon.wav"), 1, ATTN_NORM, 0);
 }
@@ -679,24 +698,28 @@ void medic_checktarget (edict_t *self)
 
 mframe_t mymedic_frames_attackHyperBlaster [] =
 {
-	ai_charge, 0,	mymedic_fire_blaster,	//191
-	ai_charge, 0,	medic_checktarget,
+	ai_charge, 0,	NULL,					// attack15
+	ai_charge, 0,	NULL,
+	ai_charge, 0,	NULL,
+	ai_charge, 0,	NULL,
+	ai_charge, 0,	mymedic_fire_blaster,	// attack19
 	ai_charge, 0,	mymedic_fire_blaster,
-	ai_charge, 0,	medic_checktarget,
-	ai_charge, 0,	mymedic_fire_blaster,	//195
-	ai_charge, 0,	medic_checktarget,
 	ai_charge, 0,	mymedic_fire_blaster,
-	ai_charge, 0,	medic_checktarget,
 	ai_charge, 0,	mymedic_fire_blaster,
-	ai_charge, 0,	medic_checktarget,
 	ai_charge, 0,	mymedic_fire_blaster,
-	ai_charge, 0,	medic_checktarget,
 	ai_charge, 0,	mymedic_fire_blaster,
-	ai_charge, 0,	medic_checktarget,
 	ai_charge, 0,	mymedic_fire_blaster,
-	ai_charge, 0,	medic_checktarget			//206
+	ai_charge, 0,	mymedic_fire_blaster,
+	ai_charge, 0,	mymedic_fire_blaster,
+	ai_charge, 0,	mymedic_fire_blaster,
+	ai_charge, 0,	mymedic_fire_blaster,
+	ai_charge, 0,	mymedic_fire_blaster,	// attack30
+	ai_charge, 0,	medic_checktarget,
+	ai_charge, 0,	NULL,
+	ai_charge, 2,	NULL,
+	ai_charge, 3,	NULL
 };
-mmove_t mymedic_move_attackHyperBlaster = {FRAME_attack15, FRAME_attack30, mymedic_frames_attackHyperBlaster, mymedic_refire};
+mmove_t mymedic_move_attackHyperBlaster = {FRAME_attack15, FRAME_attack34, mymedic_frames_attackHyperBlaster, mymedic_refire};
 
 void mymedic_refire(edict_t* self)
 {

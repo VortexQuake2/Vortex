@@ -89,7 +89,16 @@ static constexpr int SET_PARASITE_MONSTERS[] = {
 constexpr int SET_PARASITE_MONSTERS_COUNT = sizeof(SET_PARASITE_MONSTERS) / sizeof(int);
 
 static constexpr int SET_BOSS_MONSTERS[] = {
-    DS_COMMANDER, DS_MAKRON, DS_BARON_FIRE, DS_CARRIER
+    DS_GUARDIAN,
+    DS_FIXBOT_BOSS,
+    DS_WIDOW2,
+    DS_WIDOW,
+    DS_CARRIER,
+    DS_BOSS2,
+    DS_BOSS5,
+    DS_BARON_FIRE,
+    DS_MAKRON,
+    DS_COMMANDER,
 };
 constexpr int SET_BOSS_MONSTERS_COUNT = sizeof(SET_BOSS_MONSTERS) / sizeof(int);
 

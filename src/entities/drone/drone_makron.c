@@ -9,6 +9,8 @@ Makron -- Final Boss
 #include "g_local.h"
 #include "../../quake2/monsterframes/m_boss32.h"
 
+#define MAKRON_INVASION_MOVE_SCALE	0.75f
+
 qboolean visible (const edict_t *self, const edict_t *other);
 
 void MakronRailgun (edict_t *self);
@@ -33,6 +35,16 @@ static int	sound_taunt1;
 static int	sound_taunt2;
 static int	sound_taunt3;
 static int	sound_hit;
+
+static void makron_ai_run(edict_t *self, float dist)
+{
+	drone_ai_run(self, invasion->value ? dist * MAKRON_INVASION_MOVE_SCALE : dist);
+}
+
+static void makron_ai_walk(edict_t *self, float dist)
+{
+	drone_ai_walk(self, invasion->value ? dist * MAKRON_INVASION_MOVE_SCALE : dist);
+}
 
 void makron_taunt (edict_t *self)
 {
@@ -123,16 +135,16 @@ void makron_stand (edict_t *self)
 
 mframe_t makron_frames_run [] =
 {
-	drone_ai_run, 20,	makron_step_left,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	makron_step_right,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL
+	makron_ai_run, 20,	makron_step_left,
+	makron_ai_run, 20,	NULL,
+	makron_ai_run, 20,	NULL,
+	makron_ai_run, 20,	NULL,
+	makron_ai_run, 20,	makron_step_right,
+	makron_ai_run, 20,	NULL,
+	makron_ai_run, 20,	NULL,
+	makron_ai_run, 20,	NULL,
+	makron_ai_run, 20,	NULL,
+	makron_ai_run, 20,	NULL
 };
 mmove_t	makron_move_run = {FRAME_walk204, FRAME_walk213, makron_frames_run, NULL};
 
@@ -169,16 +181,16 @@ void makron_prerailgun (edict_t *self)
 
 mframe_t makron_frames_walk [] =
 {
-	drone_ai_walk, 3,	makron_step_left,
-	drone_ai_walk, 12,	NULL,
-	drone_ai_walk, 8,	NULL,
-	drone_ai_walk, 8,	NULL,
-	drone_ai_walk, 8,	makron_step_right,
-	drone_ai_walk, 6,	NULL,
-	drone_ai_walk, 12,	NULL,
-	drone_ai_walk, 9,	NULL,
-	drone_ai_walk, 6,	NULL,
-	drone_ai_walk, 12,	NULL
+	makron_ai_walk, 3,	makron_step_left,
+	makron_ai_walk, 12,	NULL,
+	makron_ai_walk, 8,	NULL,
+	makron_ai_walk, 8,	NULL,
+	makron_ai_walk, 8,	makron_step_right,
+	makron_ai_walk, 6,	NULL,
+	makron_ai_walk, 12,	NULL,
+	makron_ai_walk, 9,	NULL,
+	makron_ai_walk, 6,	NULL,
+	makron_ai_walk, 12,	NULL
 };
 mmove_t	makron_move_walk = {FRAME_walk204, FRAME_walk213, makron_frames_walk, NULL};
 

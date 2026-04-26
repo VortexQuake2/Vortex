@@ -19,6 +19,27 @@ float vrx_increase_monster_damage_by_talent(edict_t *owner, float damage)
 // monster weapons
 //
 
+static void monster_muzzleflash(edict_t *self, vec3_t start, int flashtype)
+{
+	if (flashtype < 0)
+		return;
+
+	if (flashtype <= 255)
+	{
+		gi.WriteByte(svc_muzzleflash2);
+		gi.WriteShort(self - g_edicts);
+		gi.WriteByte(flashtype);
+	}
+	else
+	{
+		gi.WriteByte(svc_muzzleflash3);
+		gi.WriteShort(self - g_edicts);
+		gi.WriteShort(flashtype);
+	}
+
+	gi.multicast(start, MULTICAST_PVS);
+}
+
 //FIXME mosnters should call these with a totally accurate direction
 // and we can mess it up based on skill.  Spread should be for normal
 // and we can tighten or loosen based on skill.  We could muck with
@@ -45,13 +66,7 @@ void monster_fire_bullet (edict_t *self, vec3_t start, vec3_t dir, int damage, i
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_bullet (self, start, dir, damage, kick, hspread, vspread, MOD_UNKNOWN);
 
-	if (flashtype >= 0)
-	{
-		gi.WriteByte (svc_muzzleflash2);
-		gi.WriteShort (self - g_edicts);
-		gi.WriteByte (flashtype);
-		gi.multicast (start, MULTICAST_PVS);
-	}
+	monster_muzzleflash(self, start, flashtype);
 }	
 
 static void debris_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point)
@@ -146,13 +161,7 @@ void monster_fire_shotgun (edict_t *self, vec3_t start, vec3_t aimdir, float dam
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_shotgun (self, start, aimdir, damage, kick, hspread, vspread, count, MOD_UNKNOWN);
 
-	if (flashtype >= 0)
-	{
-		gi.WriteByte (svc_muzzleflash2);
-		gi.WriteShort (self - g_edicts);
-		gi.WriteByte (flashtype);
-		gi.multicast (start, MULTICAST_PVS);
-	}
+	monster_muzzleflash(self, start, flashtype);
 }	
 
 void monster_fire_blaster (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int proj_type, float duration, qboolean bounce, int flashtype)
@@ -184,13 +193,7 @@ void monster_fire_blaster (edict_t *self, vec3_t start, vec3_t dir, int damage, 
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_blaster(self, start, dir, damage, speed, effect, proj_type, mod, duration, bounce);
 
-	if (flashtype >= 0)
-	{
-		gi.WriteByte (svc_muzzleflash2);
-		gi.WriteShort (self - g_edicts);
-		gi.WriteByte (flashtype);
-		gi.multicast (start, MULTICAST_PVS);
-	}
+	monster_muzzleflash(self, start, flashtype);
 }	
 
 void monster_fire_blaster2(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype)
@@ -210,10 +213,7 @@ void monster_fire_blaster2(edict_t *self, vec3_t start, vec3_t dir, int damage, 
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_blaster2(self, start, dir, damage, speed, effect, false);
 
-	gi.WriteByte(svc_muzzleflash2);
-	gi.WriteShort(self - g_edicts);
-	gi.WriteByte(flashtype);
-	gi.multicast(start, MULTICAST_PVS);
+	monster_muzzleflash(self, start, flashtype);
 }
 
 void monster_fire_blueblaster(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype)
@@ -233,10 +233,7 @@ void monster_fire_blueblaster(edict_t *self, vec3_t start, vec3_t dir, int damag
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_blueblaster(self, start, dir, damage, speed, effect);
 
-	gi.WriteByte(svc_muzzleflash2);
-	gi.WriteShort(self - g_edicts);
-	gi.WriteByte(flashtype);
-	gi.multicast(start, MULTICAST_PVS);
+	monster_muzzleflash(self, start, flashtype);
 }
 
 void monster_fire_ionripper(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype)
@@ -256,10 +253,7 @@ void monster_fire_ionripper(edict_t *self, vec3_t start, vec3_t dir, int damage,
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_ionripper(self, start, dir, damage, speed, effect);
 
-	gi.WriteByte(svc_muzzleflash2);
-	gi.WriteShort(self - g_edicts);
-	gi.WriteByte(flashtype);
-	gi.multicast(start, MULTICAST_PVS);
+	monster_muzzleflash(self, start, flashtype);
 }
 
 static void dabeam_think(edict_t *self)
@@ -377,6 +371,8 @@ void monster_fire_dabeam(edict_t *self, int damage, qboolean secondary, void (*u
 			VectorSet(offset, 112, -62, 60);
 		else
 			VectorSet(offset, 125, -70, 60);
+		if (self->s.scale && self->s.scale != 1.0f)
+			VectorScale(offset, self->s.scale, offset);
 		G_ProjectSource(self->s.origin, offset, forward, right, start);
 		MonsterAim(self, M_HITSCAN_CONT_ACC, 0, false, -1, forward, start);
 	}
@@ -422,13 +418,7 @@ void monster_fire_dabeam(edict_t *self, int damage, qboolean secondary, void (*u
 	VectorCopy(tr.endpos, beam->pos2);
 	gi.linkentity(beam);
 
-	if (flashtype >= 0)
-	{
-		gi.WriteByte(svc_muzzleflash2);
-		gi.WriteShort(self - g_edicts);
-		gi.WriteByte(flashtype);
-		gi.multicast(start, MULTICAST_PVS);
-	}
+	monster_muzzleflash(self, start, flashtype);
 }
 
 void rocket_touch(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf);
@@ -585,10 +575,7 @@ qboolean monster_fire_heat(edict_t *self, vec3_t start, vec3_t dir, int damage, 
 	if (self->client)
 		check_dodge(self, heat->s.origin, dir, speed, damage);
 
-	gi.WriteByte(svc_muzzleflash2);
-	gi.WriteShort(self - g_edicts);
-	gi.WriteByte(flashtype);
-	gi.multicast(start, MULTICAST_PVS);
+	monster_muzzleflash(self, start, flashtype);
 
 	return true;
 }
@@ -625,13 +612,7 @@ void monster_fire_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int damag
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_grenade (self, start, aimdir, damage, speed, 2.5, radius, damage);
 
-	if (flashtype >= 0)
-	{
-		gi.WriteByte (svc_muzzleflash2);
-		gi.WriteShort (self - g_edicts);
-		gi.WriteByte (flashtype);
-		gi.multicast (start, MULTICAST_PVS);
-	}
+	monster_muzzleflash(self, start, flashtype);
 }
 
 void monster_fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int flashtype)
@@ -666,10 +647,7 @@ void monster_fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, i
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_rocket (self, start, dir, damage, speed, radius, damage);
 
-	gi.WriteByte (svc_muzzleflash2);
-	gi.WriteShort (self - g_edicts);
-	gi.WriteByte (flashtype);
-	gi.multicast (start, MULTICAST_PVS);
+	monster_muzzleflash(self, start, flashtype);
 }	
 
 void monster_fire_railgun (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype)
@@ -694,10 +672,7 @@ void monster_fire_railgun (edict_t *self, vec3_t start, vec3_t aimdir, int damag
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_rail (self, start, aimdir, damage, kick);
 
-	gi.WriteByte (svc_muzzleflash2);
-	gi.WriteShort (self - g_edicts);
-	gi.WriteByte (flashtype);
-	gi.multicast (start, MULTICAST_PVS);
+	monster_muzzleflash(self, start, flashtype);
 }
 
 void monster_fire_bfg (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int kick, float damage_radius, int flashtype)
@@ -722,10 +697,7 @@ void monster_fire_bfg (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_bfg (self, start, aimdir, damage, speed, damage_radius);
 
-	gi.WriteByte (svc_muzzleflash2);
-	gi.WriteShort (self - g_edicts);
-	gi.WriteByte (flashtype);
-	gi.multicast (start, MULTICAST_PVS);
+	monster_muzzleflash(self, start, flashtype);
 }
 
 void fire_sword ( edict_t *self, vec3_t start, vec3_t aimdir, int damage, int length, int color);
@@ -734,10 +706,7 @@ void monster_fire_sword (edict_t *self, vec3_t start, vec3_t aimdir, int damage,
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_sword (self, start, aimdir, damage, kick, 0xd2d3d2d3);
 
-	gi.WriteByte (svc_muzzleflash2);
-	gi.WriteShort (self - g_edicts);
-	gi.WriteByte (flashtype);
-	gi.multicast (start, MULTICAST_PVS);
+	monster_muzzleflash(self, start, flashtype);
 }
 
 void monster_fire_fireball(edict_t* self)

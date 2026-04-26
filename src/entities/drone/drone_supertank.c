@@ -10,6 +10,10 @@ SUPERTANK
 #include "../../quake2/monsterframes/m_supertank.h"
 qboolean visible (const edict_t *self, const edict_t *other);
 
+#define SUPERTANK_INVASION_SCALE			0.65f
+#define SUPERTANK_INVASION_BASE_HEALTH		5000
+#define SUPERTANK_INVASION_ADDON_HEALTH		1000
+
 static int	sound_death;
 static int	sound_search1;
 static int	sound_search2;
@@ -23,6 +27,17 @@ static qboolean supertank_is_boss5(const edict_t *self)
 	return self->mtype == M_BOSS5;
 }
 
+static void supertank_project_flash(edict_t *self, int flash_number, vec3_t forward, vec3_t start)
+{
+	vec3_t right, offset;
+
+	AngleVectors(self->s.angles, forward, right, NULL);
+	VectorCopy(monster_flash_offset[flash_number], offset);
+	if (self->s.scale && self->s.scale != 1.0f)
+		VectorScale(offset, self->s.scale, offset);
+	G_ProjectSource(self->s.origin, offset, forward, right, start);
+}
+
 void TreadSound (edict_t *self)
 {
 	gi.sound (self, CHAN_VOICE, tread_sound, 1, ATTN_NORM, 0);
@@ -30,6 +45,7 @@ void TreadSound (edict_t *self)
 
 void supertankRocket (edict_t *self);
 void supertankMachineGun (edict_t *self);
+void supertankGrenade (edict_t *self);
 void supertank_reattack1(edict_t *self);
 
 //
@@ -404,42 +420,49 @@ mframe_t supertank_frames_end_attack1[]=
 	ai_move,	0,	NULL
 };
 mmove_t supertank_move_end_attack1 = {FRAME_attak1_7, FRAME_attak1_20, supertank_frames_end_attack1, supertank_run};
-/*
-void fire_mirv_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int damage, float radius, int speed, float timer);
-
-void supertankMirv (edict_t *self)
+void supertankGrenade (edict_t *self)
 {
 	vec3_t	forward, start;
-	int		damage;
+	int		damage, speed, flash_number;
 
-	damage = 50 + 10*self->monsterinfo.level;
+	if (!G_EntExists(self->enemy))
+		return;
 
-	MonsterAim(self, 0.5, 400, true, 0, forward, start);
+	if (self->s.frame == FRAME_attak4_1)
+		flash_number = MZ2_SUPERTANK_GRENADE_1;
+	else
+		flash_number = MZ2_SUPERTANK_GRENADE_2;
 
-	fire_mirv_grenade(self, start, forward, damage, 150, 400, 3.0);
+	damage = M_GRENADELAUNCHER_DMG_BASE + M_GRENADELAUNCHER_DMG_ADDON * drone_damagelevel(self);
+	if (M_GRENADELAUNCHER_DMG_MAX && damage > M_GRENADELAUNCHER_DMG_MAX)
+		damage = M_GRENADELAUNCHER_DMG_MAX;
+
+	speed = M_GRENADELAUNCHER_SPEED_BASE + M_GRENADELAUNCHER_SPEED_ADDON * drone_damagelevel(self);
+	if (M_GRENADELAUNCHER_SPEED_MAX && speed > M_GRENADELAUNCHER_SPEED_MAX)
+		speed = M_GRENADELAUNCHER_SPEED_MAX;
+
+	if (self->s.scale && self->s.scale != 1.0f)
+	{
+		supertank_project_flash(self, flash_number, forward, start);
+		MonsterAim(self, M_PROJECTILE_ACC, speed, true, -1, forward, start);
+	}
+	else
+		MonsterAim(self, M_PROJECTILE_ACC, speed, true, flash_number, forward, start);
+
+	monster_fire_grenade(self, start, forward, damage, speed, flash_number);
 }
-
-void supertank_reattack4(edict_t *self);
 
 mframe_t supertank_frames_attack4[]=
 {
-	ai_charge,	0,	supertankMirv,//74
+	ai_charge,	0,	supertankGrenade,//74
 	ai_charge,	0,	NULL,
 	ai_charge,	0,	NULL,
-	ai_charge,	0,	supertankMirv,//79
+	ai_charge,	0,	supertankGrenade,//77
 	ai_charge,	0,	NULL,
 	ai_charge,	0,	NULL,
 
 };
-mmove_t supertank_move_attack4 = {FRAME_attak4_1, FRAME_attak4_6, supertank_frames_attack4, supertank_reattack4};
-
-void supertank_reattack4(edict_t *self)
-{
-	if (G_ValidTarget(self, self->enemy, true) && random() <= 0.5)
-		self->monsterinfo.currentmove = &supertank_move_attack4;
-	self->monsterinfo.attack_finished = level.time + 1.0;
-}
-*/
+mmove_t supertank_move_attack4 = {FRAME_attak4_1, FRAME_attak4_6, supertank_frames_attack4, supertank_run};
 void supertank_reattack1(edict_t *self)
 {
 	if (G_ValidTarget(self, self->enemy, true, true) && random() <= 0.9)
@@ -466,7 +489,13 @@ void supertankRocket (edict_t *self)
 
 	if (supertank_is_boss5(self))
 	{
-		MonsterAim(self, 0.5, speed, true, flash_number, forward, start);
+		if (self->s.scale && self->s.scale != 1.0f)
+		{
+			supertank_project_flash(self, flash_number, forward, start);
+			MonsterAim(self, 0.5, speed, true, -1, forward, start);
+		}
+		else
+			MonsterAim(self, 0.5, speed, true, flash_number, forward, start);
 		monster_fire_heat(self, start, forward, damage, speed, flash_number, 0.075f);
 		return;
 	}
@@ -486,7 +515,15 @@ void supertankRocket (edict_t *self)
 		MonsterAim(self, 0.5, speed, true, -1, forward, start);
 	}
 	else
-		MonsterAim(self, 0.5, speed, true, flash_number, forward, start);
+	{
+		if (self->s.scale && self->s.scale != 1.0f)
+		{
+			supertank_project_flash(self, flash_number, forward, start);
+			MonsterAim(self, 0.5, speed, true, -1, forward, start);
+		}
+		else
+			MonsterAim(self, 0.5, speed, true, flash_number, forward, start);
+	}
 
 	monster_fire_rocket (self, start, forward, damage, speed, flash_number);
 }	
@@ -500,7 +537,13 @@ void supertankMachineGun (edict_t *self)
 
 	damage = 20 + 2* drone_damagelevel(self);
 
-	MonsterAim(self, 0.8, 0, false, flash_number, forward, start);
+	if (self->s.scale && self->s.scale != 1.0f)
+	{
+		supertank_project_flash(self, flash_number, forward, start);
+		MonsterAim(self, 0.8, 0, false, -1, forward, start);
+	}
+	else
+		MonsterAim(self, 0.8, 0, false, flash_number, forward, start);
 
 	monster_fire_bullet (self, start, forward, damage, damage, 
 		DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, flash_number);
@@ -517,8 +560,8 @@ void supertank_attack(edict_t *self)
 	{
 		if (r <= 0.2)
 			self->monsterinfo.currentmove = &supertank_move_attack1;
-		//else if (r <= 0.4)
-		//	self->monsterinfo.currentmove = &supertank_move_attack4;
+		else if (r <= 0.4)
+			self->monsterinfo.currentmove = &supertank_move_attack4;
 		else
 			self->monsterinfo.currentmove = &supertank_move_attack2;
 	}
@@ -527,6 +570,8 @@ void supertank_attack(edict_t *self)
 	{
 		if (r <= 0.2)
 			self->monsterinfo.currentmove = &supertank_move_attack2;
+		else if (r <= 0.4)
+			self->monsterinfo.currentmove = &supertank_move_attack4;
 		else
 			self->monsterinfo.currentmove = &supertank_move_attack1;
 	}
@@ -662,10 +707,21 @@ void init_drone_supertank (edict_t *self)
 	{
 		if (boss5)
 			self->s.skinnum = 2;
-		VectorSet (self->mins, -64, -64, 0);
-		VectorSet (self->maxs, 64, 64, 112);
-		self->health = self->max_health = 20000*self->monsterinfo.level;
-		self->monsterinfo.scale = MODEL_SCALE;
+		if (invasion->value)
+		{
+			self->s.scale = SUPERTANK_INVASION_SCALE;
+			self->monsterinfo.scale = MODEL_SCALE * SUPERTANK_INVASION_SCALE;
+			VectorSet (self->mins, -40, -40, 0);
+			VectorSet (self->maxs, 40, 40, 72);
+			self->health = self->max_health = SUPERTANK_INVASION_BASE_HEALTH + SUPERTANK_INVASION_ADDON_HEALTH * self->monsterinfo.level;
+		}
+		else
+		{
+			VectorSet (self->mins, -64, -64, 0);
+			VectorSet (self->maxs, 64, 64, 112);
+			self->health = self->max_health = 20000*self->monsterinfo.level;
+			self->monsterinfo.scale = MODEL_SCALE;
+		}
 	}
 	self->gib_health = -5 * BASE_GIB_HEALTH;
 	self->mass = janitor ? 480 : 800;
@@ -693,7 +749,7 @@ void init_drone_supertank (edict_t *self)
 	self->nextthink = level.time + FRAMETIME;
 	gi.linkentity (self);
 
-	if (!janitor && (!self->activator || !self->activator->client))
+	if (!janitor && !invasion->value && (!self->activator || !self->activator->client))
 		G_PrintGreenText(va("A level %d %s has spawned!", self->monsterinfo.level, boss5 ? "super tank heat" : "super tank"));
 }
 

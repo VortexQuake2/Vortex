@@ -11,6 +11,8 @@ carrier
 
 #define CARRIER_SUMMON_COUNT		4
 #define CARRIER_SUMMON_COOLDOWN		8.0f
+#define CARRIER_DEFAULT_SCALE		0.75f
+#define CARRIER_INVASION_SCALE		0.60f
 
 static int sound_pain1;
 static int sound_pain2;
@@ -28,6 +30,17 @@ static void carrier_stand(edict_t *self);
 static void carrier_walk(edict_t *self);
 static void carrier_run(edict_t *self);
 static void carrier_attack(edict_t *self);
+
+static void carrier_project_flash(edict_t *self, int flash, vec3_t forward, vec3_t start)
+{
+	vec3_t right, offset;
+
+	AngleVectors(self->s.angles, forward, right, NULL);
+	VectorCopy(monster_flash_offset[flash], offset);
+	if (self->s.scale && self->s.scale != 1.0f)
+		VectorScale(offset, self->s.scale, offset);
+	G_ProjectSource(self->s.origin, offset, forward, right, start);
+}
 
 static const int carrier_summons[CARRIER_SUMMON_COUNT] =
 {
@@ -99,7 +112,8 @@ static void carrier_fire_rocket(edict_t *self)
 
 	for (int i = 0; i < 4; i++)
 	{
-		MonsterAim(self, M_PROJECTILE_ACC, speed, true, flashes[i], forward, start);
+		carrier_project_flash(self, flashes[i], forward, start);
+		MonsterAim(self, M_PROJECTILE_ACC, speed, true, -1, forward, start);
 		monster_fire_heat(self, start, forward, damage, speed, flashes[i], 0.06f);
 	}
 }
@@ -108,11 +122,12 @@ static void carrier_fire_bullets(edict_t *self)
 {
 	int damage;
 	vec3_t forward, start;
-	const int flashes[2] =
+	const int flashes[2][2] =
 	{
-		MZ2_CARRIER_MACHINEGUN_L1,
-		MZ2_CARRIER_MACHINEGUN_R1
+		{ MZ2_CARRIER_MACHINEGUN_L1, MZ2_CARRIER_MACHINEGUN_R1 },
+		{ MZ2_CARRIER_MACHINEGUN_L2, MZ2_CARRIER_MACHINEGUN_R2 }
 	};
+	const int flash_row = self->monsterinfo.lefty ? 1 : 0;
 
 	if (!G_EntExists(self->enemy))
 		return;
@@ -123,9 +138,45 @@ static void carrier_fire_bullets(edict_t *self)
 
 	for (int i = 0; i < 2; i++)
 	{
-		MonsterAim(self, M_PROJECTILE_ACC, 0, false, flashes[i], forward, start);
-		monster_fire_bullet(self, start, forward, damage, damage, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, flashes[i]);
+		carrier_project_flash(self, flashes[flash_row][i], forward, start);
+		MonsterAim(self, M_PROJECTILE_ACC, 0, false, -1, forward, start);
+		monster_fire_bullet(self, start, forward, damage, damage, DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, flashes[flash_row][i]);
 	}
+
+	self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
+}
+
+static void carrier_fire_grenade(edict_t *self)
+{
+	int damage;
+	int speed;
+	vec3_t forward, right, up, start, target, aim, offset;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	damage = M_GRENADELAUNCHER_DMG_BASE + M_GRENADELAUNCHER_DMG_ADDON * drone_damagelevel(self);
+	if (M_GRENADELAUNCHER_DMG_MAX && damage > M_GRENADELAUNCHER_DMG_MAX)
+		damage = M_GRENADELAUNCHER_DMG_MAX;
+	speed = M_GRENADELAUNCHER_SPEED_BASE + M_GRENADELAUNCHER_SPEED_ADDON * drone_damagelevel(self);
+	if (M_GRENADELAUNCHER_SPEED_MAX && speed > M_GRENADELAUNCHER_SPEED_MAX)
+		speed = M_GRENADELAUNCHER_SPEED_MAX;
+
+	AngleVectors(self->s.angles, forward, right, up);
+	VectorCopy(monster_flash_offset[MZ2_CARRIER_GRENADE], offset);
+	if (self->s.scale && self->s.scale != 1.0f)
+		VectorScale(offset, self->s.scale, offset);
+	G_ProjectSource(self->s.origin, offset, forward, right, start);
+
+	VectorCopy(self->enemy->s.origin, target);
+	target[2] += self->enemy->viewheight;
+	VectorSubtract(target, start, aim);
+	VectorNormalize(aim);
+	VectorMA(aim, crandom() * 0.15f, right, aim);
+	VectorMA(aim, 0.1f, up, aim);
+	VectorNormalize(aim);
+
+	monster_fire_grenade(self, start, aim, damage, speed, MZ2_CARRIER_GRENADE);
 }
 
 static void carrier_fire_rail(edict_t *self)
@@ -140,7 +191,8 @@ static void carrier_fire_rail(edict_t *self)
 	if (M_RAILGUN_DMG_MAX && damage > M_RAILGUN_DMG_MAX)
 		damage = M_RAILGUN_DMG_MAX;
 
-	MonsterAim(self, 0.25f, 0, false, MZ2_CARRIER_RAILGUN, forward, start);
+	carrier_project_flash(self, MZ2_CARRIER_RAILGUN, forward, start);
+	MonsterAim(self, 0.25f, 0, false, -1, forward, start);
 	gi.sound(self, CHAN_WEAPON, sound_rail, 1, ATTN_NORM, 0);
 	monster_fire_railgun(self, start, forward, damage, damage, MZ2_CARRIER_RAILGUN);
 }
@@ -362,6 +414,15 @@ mframe_t carrier_frames_attack_rocket[] =
 };
 mmove_t carrier_move_attack_rocket = { FRAME_fireb01, FRAME_fireb04, carrier_frames_attack_rocket, carrier_run };
 
+mframe_t carrier_frames_attack_grenade[] =
+{
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, -15, carrier_fire_grenade,
+	ai_charge, 0, NULL
+};
+mmove_t carrier_move_attack_grenade = { FRAME_fireb07, FRAME_fireb10, carrier_frames_attack_grenade, carrier_run };
+
 mframe_t carrier_frames_attack_rail[] =
 {
 	ai_charge, 0, NULL,
@@ -410,11 +471,13 @@ static void carrier_attack(edict_t *self)
 		return;
 
 	r = random();
-	if (level.time >= self->monsterinfo.melee_finished && r < 0.25f)
+	if (level.time >= self->monsterinfo.melee_finished && r < 0.20f)
 		carrier_start_spawn(self);
-	else if (r < 0.50f)
+	else if (r < 0.40f)
 		self->monsterinfo.currentmove = &carrier_move_attack_rocket;
-	else if (r < 0.75f)
+	else if (r < 0.60f)
+		self->monsterinfo.currentmove = &carrier_move_attack_grenade;
+	else if (r < 0.80f)
 		self->monsterinfo.currentmove = &carrier_move_attack_rail;
 	else
 		self->monsterinfo.currentmove = &carrier_move_attack_mg;
@@ -500,8 +563,18 @@ void init_drone_carrier(edict_t *self)
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex("models/monsters/carrier/tris.md2");
-	VectorSet(self->mins, -56, -56, -44);
-	VectorSet(self->maxs, 56, 56, 44);
+	if (invasion->value)
+	{
+		self->s.scale = CARRIER_INVASION_SCALE;
+		VectorSet(self->mins, -40, -40, -24);
+		VectorSet(self->maxs, 40, 40, 82);
+	}
+	else
+	{
+		self->s.scale = CARRIER_DEFAULT_SCALE;
+		VectorSet(self->mins, -56, -56, -44);
+		VectorSet(self->maxs, 56, 56, 44);
+	}
 
 	gi.modelindex("models/items/spawngro3/tris.md2");
 	gi.modelindex("models/monsters/flyer/tris.md2");
@@ -514,7 +587,6 @@ void init_drone_carrier(edict_t *self)
 	self->mass = 1000;
 	self->mtype = M_CARRIER;
 	self->flags |= FL_FLY;
-	self->s.scale = 0.75f;
 
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.power_armor_power = M_CARRIER_INITIAL_ARMOR + M_CARRIER_ADDON_ARMOR * self->monsterinfo.level;
@@ -539,5 +611,6 @@ void init_drone_carrier(edict_t *self)
 	self->monsterinfo.scale = MODEL_SCALE;
 	self->nextthink = level.time + FRAMETIME;
 
-	G_PrintGreenText(va("A level %d carrier has spawned!", self->monsterinfo.level));
+	if (!invasion->value)
+		G_PrintGreenText(va("A level %d carrier has spawned!", self->monsterinfo.level));
 }

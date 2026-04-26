@@ -17,6 +17,9 @@ static int sound_charge;
 static int sound_melee;
 static int sound_melee_hit;
 
+#define ARACHNID_DEFAULT_SCALE		0.75f
+#define ARACHNID_INVASION_SCALE		0.60f
+
 static void arachnid_stand(edict_t *self);
 static void arachnid_run(edict_t *self);
 
@@ -379,15 +382,24 @@ void init_drone_arachnid(edict_t *self)
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex("models/monsters/arachnid/tris.md2");
-	VectorSet(self->mins, -36, -36, -18);
-	VectorSet(self->maxs, 36, 36, 42);
+	if (invasion->value)
+	{
+		VectorSet(self->mins, -28, -28, -18);
+		VectorSet(self->maxs, 28, 28, 34);
+		self->s.scale = ARACHNID_INVASION_SCALE;
+	}
+	else
+	{
+		VectorSet(self->mins, -36, -36, -18);
+		VectorSet(self->maxs, 36, 36, 42);
+		self->s.scale = ARACHNID_DEFAULT_SCALE;
+	}
 
 	self->health = M_ARACHNID_INITIAL_HEALTH + M_ARACHNID_ADDON_HEALTH * self->monsterinfo.level;
 	self->max_health = self->health;
 	self->gib_health = -200;
 	self->mass = 450;
 	self->mtype = M_ARACHNID;
-	self->s.scale = 0.75f;
 	self->monsterinfo.control_cost = M_GLADIATOR_CONTROL_COST;
 	self->monsterinfo.cost = M_DEFAULT_COST;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;

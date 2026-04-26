@@ -35,6 +35,9 @@ black widow
 #define WIDOW_SUMMON_COUNT	2
 #define WIDOW_SUMMON_COOLDOWN	10.0f
 #define WIDOW_MELEE_RANGE	176.0f
+#define WIDOW_INVASION_SCALE	0.75f
+#define WIDOW_INVASION_HALF_WIDTH	30.0f
+#define WIDOW_INVASION_HEIGHT		108.0f
 
 static int sound_pain1;
 static int sound_pain2;
@@ -275,6 +278,17 @@ static qboolean widow_can_melee(edict_t *self)
 	return G_EntExists(self->enemy) && entdist(self, self->enemy) <= WIDOW_MELEE_RANGE;
 }
 
+static void widow_project_flash(edict_t *self, int flash, vec3_t forward, vec3_t start)
+{
+	vec3_t right, offset;
+
+	AngleVectors(self->s.angles, forward, right, NULL);
+	VectorCopy(monster_flash_offset[flash], offset);
+	if (self->s.scale && self->s.scale != 1.0f)
+		VectorScale(offset, self->s.scale, offset);
+	G_ProjectSource(self->s.origin, offset, forward, right, start);
+}
+
 static int widow_blaster_flash(edict_t *self)
 {
 	if (self->s.frame >= WIDOW_FRAME_spawn01 + 4 && self->s.frame <= WIDOW_FRAME_spawn01 + 12)
@@ -309,7 +323,8 @@ static void widow_fire_blaster(edict_t *self)
 	flash = widow_blaster_flash(self);
 	shotsfired++;
 	effect = (shotsfired % 4) ? 0 : EF_BLASTER;
-	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash, forward, start);
+	widow_project_flash(self, flash, forward, start);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, false, -1, forward, start);
 	monster_fire_blaster2(self, start, forward, damage, speed, effect, flash);
 }
 
@@ -332,7 +347,8 @@ static void widow_fire_rail(edict_t *self)
 		flash = MZ2_WIDOW_RAIL_RIGHT;
 	else
 		flash = MZ2_WIDOW_RAIL;
-	MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, flash, forward, start);
+	widow_project_flash(self, flash, forward, start);
+	MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, -1, forward, start);
 	gi.sound(self, CHAN_WEAPON, sound_rail, 1, ATTN_NORM, 0);
 	monster_fire_railgun(self, start, forward, damage, damage, flash);
 }
@@ -610,6 +626,12 @@ void init_drone_widow(edict_t *self)
 	self->s.modelindex = gi.modelindex("models/monsters/blackwidow/tris.md2");
 	VectorSet(self->mins, -40, -40, 0);
 	VectorSet(self->maxs, 40, 40, 144);
+	if (invasion->value)
+	{
+		self->s.scale = WIDOW_INVASION_SCALE;
+		VectorSet(self->mins, -WIDOW_INVASION_HALF_WIDTH, -WIDOW_INVASION_HALF_WIDTH, 0);
+		VectorSet(self->maxs, WIDOW_INVASION_HALF_WIDTH, WIDOW_INVASION_HALF_WIDTH, WIDOW_INVASION_HEIGHT);
+	}
 
 	gi.modelindex("models/items/spawngro3/tris.md2");
 	gi.modelindex("models/monsters/stalker/tris.md2");
@@ -650,5 +672,6 @@ void init_drone_widow(edict_t *self)
 	self->monsterinfo.scale = 2.0f;
 	self->nextthink = level.time + FRAMETIME;
 
-	G_PrintGreenText(va("A level %d widow has spawned!", self->monsterinfo.level));
+	if (!invasion->value)
+		G_PrintGreenText(va("A level %d widow has spawned!", self->monsterinfo.level));
 }

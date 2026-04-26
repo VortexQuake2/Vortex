@@ -236,10 +236,17 @@ void myGunnerGrenade (edict_t *self)
 	if (M_GRENADELAUNCHER_SPEED_MAX && speed > M_GRENADELAUNCHER_SPEED_MAX)
 		speed = M_GRENADELAUNCHER_SPEED_MAX;
 
-	if (self->s.frame == FRAME_attak105)
+	if (self->s.frame == FRAME_attak105 || self->s.frame == FRAME_attak309)
 		flash_number = MZ2_GUNNER_GRENADE_1;
+	else if (self->s.frame == FRAME_attak108 || self->s.frame == FRAME_attak312)
+		flash_number = MZ2_GUNNER_GRENADE_2;
+	else if (self->s.frame == FRAME_attak111 || self->s.frame == FRAME_attak315)
+		flash_number = MZ2_GUNNER_GRENADE_3;
 	else
 		flash_number = MZ2_GUNNER_GRENADE_4;
+
+	if (self->s.frame >= FRAME_attak301 && self->s.frame <= FRAME_attak324)
+		flash_number = MZ2_GUNNER_GRENADE2_1 + (MZ2_GUNNER_GRENADE_4 - flash_number);
 
 	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash_number, forward, start);
 	monster_fire_grenade(self, start, forward, damage, speed, flash_number);
@@ -281,12 +288,45 @@ mframe_t mygunner_frames_attack_grenade [] =
 };
 mmove_t mygunner_move_attack_grenade = {FRAME_attak105, FRAME_attak113, mygunner_frames_attack_grenade, gunner_refire_grenade};
 
+mframe_t mygunner_frames_attack_grenade2[] =
+{
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, myGunnerGrenade,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, myGunnerGrenade,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, myGunnerGrenade,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, myGunnerGrenade,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL
+};
+mmove_t mygunner_move_attack_grenade2 = {FRAME_attak305, FRAME_attak324, mygunner_frames_attack_grenade2, mygunnerrun};
+
+static void mygunner_start_grenade(edict_t *self)
+{
+	if (random() <= 0.5)
+		self->monsterinfo.currentmove = &mygunner_move_attack_grenade2;
+	else
+		self->monsterinfo.currentmove = &mygunner_move_attack_grenade;
+}
+
 void gunner_refire_grenade (edict_t *self)
 {
 	// continue firing unless enemy is no longer valid or out of range
 	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.8)
 		&& (entdist(self, self->enemy) <= 384))
-		self->monsterinfo.currentmove = &mygunner_move_attack_grenade;
+		mygunner_start_grenade(self);
 	else
 		self->monsterinfo.currentmove = &mygunner_move_attack_grenade_end;
 
@@ -298,7 +338,7 @@ void gunner_attack_grenade (edict_t *self)
 {
 	// continue attack sequence unless enemy is no longer valid
 	if (G_ValidTarget(self, self->enemy, true, true))
-		self->monsterinfo.currentmove = &mygunner_move_attack_grenade;
+		mygunner_start_grenade(self);
 	else
 		mygunnerrun(self);
 }
@@ -444,7 +484,7 @@ void mygunner_refire_chain(edict_t *self)
 void gunner_stand_attack (edict_t *self)
 {
 	if (entdist(self, self->enemy) <= 384 && random() <= 0.8)
-		self->monsterinfo.currentmove = &mygunner_move_attack_grenade;
+		mygunner_start_grenade(self);
 	else
 		self->monsterinfo.currentmove = &mygunner_move_attack_chain;
 }
@@ -458,7 +498,7 @@ void gunner_attack (edict_t *self)
 	if (dist <= 128)
 	{
 		if (r <= 0.2)
-			self->monsterinfo.currentmove = &mygunner_move_attack_grenade;
+			mygunner_start_grenade(self);
 		else
 			self->monsterinfo.currentmove = &mygunner_move_runandshoot;
 	}
@@ -529,7 +569,17 @@ mframe_t mygunner_frames_duck [] =
 };
 mmove_t	mygunner_move_duck = {FRAME_duck01, FRAME_duck08, mygunner_frames_duck, mygunnerrun};
 
-void mygunner_jump_takeoff (edict_t *self)
+void mygunner_jump_now (edict_t *self)
+{
+	vec3_t	forward;
+
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+	VectorMA(self->velocity, 100, forward, self->velocity);
+	self->velocity[2] += 300;
+	self->monsterinfo.pausetime = level.time + 2.0;
+}
+
+void mygunner_jump2_now (edict_t *self)
 {
 	vec3_t	v;
 
@@ -537,12 +587,12 @@ void mygunner_jump_takeoff (edict_t *self)
 	VectorSubtract(self->monsterinfo.dir, self->s.origin, v);
 	v[2] = 0;
 	VectorNormalize(v);
-	VectorScale(v, -200, self->velocity);
+	VectorScale(v, -150, self->velocity);
 	self->velocity[2] = 400;
 	self->monsterinfo.pausetime = level.time + 2.0; // maximum duration of jump
 }
 
-void mygunner_jump_hold (edict_t *self)
+void mygunner_jump_wait_land (edict_t *self)
 {
 	vec3_t	v;
 
@@ -556,39 +606,57 @@ void mygunner_jump_hold (edict_t *self)
 	// check for landing or jump timeout
 	if (self->groundentity || (level.time > self->monsterinfo.pausetime))
 	{
-		self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
 		VectorClear(self->velocity);
+		self->monsterinfo.nextframe = self->s.frame + 1;
 	}
 	else
 	{
 		// we're still in the air
-		self->monsterinfo.aiflags |= AI_HOLD_FRAME;
+		self->monsterinfo.nextframe = self->s.frame;
 	}
 }
 
-mframe_t mygunner_frames_leap [] =
+mframe_t mygunner_frames_jump [] =
 {
-	ai_move,	0,	mygunner_jump_takeoff,
-	ai_move,	0,	NULL,
-	ai_move,	0,	mygunner_jump_hold,
-	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
-	ai_move,	0,	NULL
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, mygunner_jump_now,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, mygunner_jump_wait_land,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
 };
-mmove_t mygunner_move_leap = {FRAME_duck01, FRAME_duck08, mygunner_frames_leap, mygunnerrun};
+mmove_t mygunner_move_jump = {FRAME_jump01, FRAME_jump10, mygunner_frames_jump, mygunnerrun};
+
+mframe_t mygunner_frames_jump2 [] =
+{
+	ai_move, -8, NULL,
+	ai_move, -4, NULL,
+	ai_move, -4, NULL,
+	ai_move, 0, mygunner_jump2_now,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, mygunner_jump_wait_land,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+mmove_t mygunner_move_jump2 = {FRAME_jump01, FRAME_jump10, mygunner_frames_jump2, mygunnerrun};
 
 void mygunner_leap (edict_t *self)
 {
 	if (self->groundentity)
-		self->monsterinfo.currentmove = &mygunner_move_leap;
+		self->monsterinfo.currentmove = &mygunner_move_jump2;
 }
 
 static qboolean mygunner_is_dodge_move(edict_t *self)
 {
 	return self->monsterinfo.currentmove == &mygunner_move_duck ||
-		self->monsterinfo.currentmove == &mygunner_move_leap ||
+		self->monsterinfo.currentmove == &mygunner_move_jump ||
+		self->monsterinfo.currentmove == &mygunner_move_jump2 ||
 		self->monsterinfo.currentmove == &mygunner_move_dodge_slide;
 }
 
@@ -596,7 +664,8 @@ static qboolean mygunner_is_uninterruptible_attack(edict_t *self)
 {
 	return self->monsterinfo.currentmove == &mygunner_move_attack_chain ||
 		self->monsterinfo.currentmove == &mygunner_move_fire_chain ||
-		self->monsterinfo.currentmove == &mygunner_move_attack_grenade;
+		self->monsterinfo.currentmove == &mygunner_move_attack_grenade ||
+		self->monsterinfo.currentmove == &mygunner_move_attack_grenade2;
 }
 
 static qboolean mygunner_dodge_hit_low(edict_t *self, vec3_t dir)

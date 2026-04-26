@@ -15,6 +15,7 @@ static int sound_strike;
 #define RUNNERTANK_JUMP_ATTACK_DROP_RADIUS 90.0f
 #define RUNNERTANK_JUMP_ATTACK_DROP_SPEED 900.0f
 #define RUNNERTANK_JUMP_ATTACK_DROP_GRAVITY 3.0f
+#define RUNNERTANK_INVASION_RUN_SCALE 1.15f
 
 static void runnertank_stand(edict_t *self);
 static void runnertank_walk(edict_t *self);
@@ -28,6 +29,11 @@ static void runnertank_refire_rocket(edict_t *self);
 static void runnertank_doattack_rocket(edict_t *self);
 static void runnertank_jump_attack_takeoff(edict_t *self);
 static void runnertank_jump_attack_hold(edict_t *self);
+
+static void runnertank_ai_run(edict_t *self, float dist)
+{
+    drone_ai_run(self, invasion->value ? dist * RUNNERTANK_INVASION_RUN_SCALE : dist);
+}
 
 static void runnertank_footstep(edict_t *self)
 {
@@ -177,16 +183,16 @@ static void runnertank_walk(edict_t *self)
 
 mframe_t runnertank_frames_run[] =
 {
-    drone_ai_run, 14, runnertank_footstep,
-    drone_ai_run, 18, NULL,
-    drone_ai_run, 15, NULL,
-    drone_ai_run, 15, NULL,
-    drone_ai_run, 15, NULL,
-    drone_ai_run, 19, runnertank_footstep,
-    drone_ai_run, 15, NULL,
-    drone_ai_run, 13, NULL,
-    drone_ai_run, 18, NULL,
-    drone_ai_run, 17, NULL
+    runnertank_ai_run, 14, runnertank_footstep,
+    runnertank_ai_run, 18, NULL,
+    runnertank_ai_run, 15, NULL,
+    runnertank_ai_run, 15, NULL,
+    runnertank_ai_run, 15, NULL,
+    runnertank_ai_run, 19, runnertank_footstep,
+    runnertank_ai_run, 15, NULL,
+    runnertank_ai_run, 13, NULL,
+    runnertank_ai_run, 18, NULL,
+    runnertank_ai_run, 17, NULL
 };
 mmove_t runnertank_move_run = { FRAME_run01, FRAME_run10, runnertank_frames_run, NULL };
 

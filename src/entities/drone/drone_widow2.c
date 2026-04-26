@@ -31,6 +31,8 @@ black widow 2
 #define WIDOW2_SUMMON_COUNT			2
 #define WIDOW2_SUMMON_COOLDOWN		10.0f
 #define WIDOW2_MELEE_RANGE			256.0f
+#define WIDOW2_INVASION_SCALE		0.60f
+#define WIDOW2_INVASION_MOVE_SCALE	1.75f
 
 static int sound_pain1;
 static int sound_pain2;
@@ -59,6 +61,16 @@ void drone_ai_stand(edict_t *self, float dist);
 void drone_ai_run(edict_t *self, float dist);
 void drone_ai_walk(edict_t *self, float dist);
 
+static void widow2_ai_walk(edict_t *self, float dist)
+{
+	drone_ai_walk(self, invasion->value ? dist * WIDOW2_INVASION_MOVE_SCALE : dist);
+}
+
+static void widow2_ai_run(edict_t *self, float dist)
+{
+	drone_ai_run(self, invasion->value ? dist * WIDOW2_INVASION_MOVE_SCALE : dist);
+}
+
 static void widow2_stand(edict_t *self);
 static void widow2_walk(edict_t *self);
 static void widow2_run(edict_t *self);
@@ -83,29 +95,29 @@ static mmove_t widow2_move_stand = { WIDOW2_FRAME_blackwidow3, WIDOW2_FRAME_blac
 
 static mframe_t widow2_frames_walk[] =
 {
-	drone_ai_walk, 9, widow2_step,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 7, NULL,
-	drone_ai_walk, 7, NULL,
-	drone_ai_walk, 6, NULL,
-	drone_ai_walk, 6, widow2_step,
-	drone_ai_walk, 7, NULL,
-	drone_ai_walk, 8, NULL,
-	drone_ai_walk, 10, NULL
+	widow2_ai_walk, 9, widow2_step,
+	widow2_ai_walk, 8, NULL,
+	widow2_ai_walk, 7, NULL,
+	widow2_ai_walk, 7, NULL,
+	widow2_ai_walk, 6, NULL,
+	widow2_ai_walk, 6, widow2_step,
+	widow2_ai_walk, 7, NULL,
+	widow2_ai_walk, 8, NULL,
+	widow2_ai_walk, 10, NULL
 };
 static mmove_t widow2_move_walk = { WIDOW2_FRAME_walk01, WIDOW2_FRAME_walk09, widow2_frames_walk, widow2_walk };
 
 static mframe_t widow2_frames_run[] =
 {
-	drone_ai_run, 9, widow2_step,
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 7, NULL,
-	drone_ai_run, 7, NULL,
-	drone_ai_run, 6, NULL,
-	drone_ai_run, 6, widow2_step,
-	drone_ai_run, 7, NULL,
-	drone_ai_run, 8, NULL,
-	drone_ai_run, 10, NULL
+	widow2_ai_run, 9, widow2_step,
+	widow2_ai_run, 8, NULL,
+	widow2_ai_run, 7, NULL,
+	widow2_ai_run, 7, NULL,
+	widow2_ai_run, 6, NULL,
+	widow2_ai_run, 6, widow2_step,
+	widow2_ai_run, 7, NULL,
+	widow2_ai_run, 8, NULL,
+	widow2_ai_run, 10, NULL
 };
 static mmove_t widow2_move_run = { WIDOW2_FRAME_walk01, WIDOW2_FRAME_walk09, widow2_frames_run, NULL };
 
@@ -270,6 +282,17 @@ static qboolean widow2_can_melee(edict_t *self)
 	return G_EntExists(self->enemy) && entdist(self, self->enemy) <= WIDOW2_MELEE_RANGE;
 }
 
+static void widow2_project_flash(edict_t *self, int flash, vec3_t forward, vec3_t start)
+{
+	vec3_t right, offset;
+
+	AngleVectors(self->s.angles, forward, right, NULL);
+	VectorCopy(monster_flash_offset[flash], offset);
+	if (self->s.scale && self->s.scale != 1.0f)
+		VectorScale(offset, self->s.scale, offset);
+	G_ProjectSource(self->s.origin, offset, forward, right, start);
+}
+
 static void widow2_fire_beam(edict_t *self)
 {
 	int damage;
@@ -290,7 +313,8 @@ static void widow2_fire_beam(edict_t *self)
 	else
 		flash = MZ2_WIDOW2_BEAM_SWEEP_1;
 
-	MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, flash, forward, start);
+	widow2_project_flash(self, flash, forward, start);
+	MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, -1, forward, start);
 	gi.sound(self, CHAN_WEAPON, sound_beam, 1, ATTN_NORM, 0);
 	monster_fire_railgun(self, start, forward, damage, damage, flash);
 }
@@ -311,7 +335,8 @@ static void widow2_fire_disruptor(edict_t *self)
 	if (M_DISRUPTOR_SPEED_MAX && speed > M_DISRUPTOR_SPEED_MAX)
 		speed = M_DISRUPTOR_SPEED_MAX;
 
-	MonsterAim(self, M_PROJECTILE_ACC, speed, true, MZ2_WIDOW_DISRUPTOR, forward, start);
+	widow2_project_flash(self, MZ2_WIDOW_DISRUPTOR, forward, start);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, true, -1, forward, start);
 	fire_disruptor(self, start, forward, damage, speed, visible(self, self->enemy) ? self->enemy : NULL);
 	gi.WriteByte(svc_muzzleflash2);
 	gi.WriteShort(self - g_edicts);
@@ -337,6 +362,8 @@ static void widow2_proboscis_start(edict_t *self, vec3_t start)
 		index = 7;
 
 	VectorCopy(widow2_tongue_offsets[index], offset);
+	if (self->s.scale && self->s.scale != 1.0f)
+		VectorScale(offset, self->s.scale, offset);
 	AngleVectors(self->s.angles, forward, right, NULL);
 	G_ProjectSource(self->s.origin, offset, forward, right, start);
 }
@@ -701,6 +728,12 @@ void init_drone_widow2(edict_t *self)
 	self->s.modelindex = gi.modelindex("models/monsters/blackwidow2/tris.md2");
 	VectorSet(self->mins, -70, -70, 0);
 	VectorSet(self->maxs, 70, 70, 144);
+	if (invasion->value)
+	{
+		self->s.scale = WIDOW2_INVASION_SCALE;
+		VectorSet(self->mins, -40, -40, 0);
+		VectorSet(self->maxs, 40, 40, 82);
+	}
 
 	gi.modelindex("models/items/spawngro3/tris.md2");
 	gi.modelindex("models/monsters/stalker/tris.md2");
@@ -741,5 +774,6 @@ void init_drone_widow2(edict_t *self)
 	self->monsterinfo.scale = 2.0f;
 	self->nextthink = level.time + FRAMETIME;
 
-	G_PrintGreenText(va("A level %d widow2 has spawned!", self->monsterinfo.level));
+	if (!invasion->value)
+		G_PrintGreenText(va("A level %d widow2 has spawned!", self->monsterinfo.level));
 }

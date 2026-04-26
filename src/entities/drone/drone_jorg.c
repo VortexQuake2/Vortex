@@ -613,5 +613,6 @@ void init_drone_jorg (edict_t *self)
 	self->nextthink = level.time + 0.1;
 	//walkmonster_start(self);
 
-	G_PrintGreenText(va("A level %d jorg has spawned!", self->monsterinfo.level));
+	if (!invasion->value)
+		G_PrintGreenText(va("A level %d jorg has spawned!", self->monsterinfo.level));
 }
