@@ -823,12 +823,19 @@ mmove_t shambler_move_pain = { FRAME_pain1, FRAME_pain6, shambler_frames_pain, s
 
 void shambler_dead(edict_t* self);
 
+static void shambler_shrink(edict_t *self)
+{
+	self->maxs[2] = 0;
+	self->svflags |= SVF_DEADMONSTER;
+	gi.linkentity(self);
+}
+
 
 mframe_t shambler_frames_death[] =
 {
 	{ai_move, 0, NULL},
 	{ai_move, 0, NULL},
-	{ai_move, 0, NULL},
+	{ai_move, 0, shambler_shrink},
 	{ai_move, 0, NULL},
 	{ai_move, 0, NULL},
 	{ai_move, 0, NULL},
@@ -928,7 +935,7 @@ void shambler_pain(edict_t* self, edict_t* other, float kick, int damage)
 void shambler_dead(edict_t* self)
 {
 	VectorSet(self->mins, -16, -16, -24);
-	VectorSet(self->maxs, 16, 16, -8);
+	VectorSet(self->maxs, 16, 16, 0);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	self->nextthink = 0;
@@ -986,6 +993,7 @@ void shambler_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int dama
 	gi.sound(self, CHAN_VOICE, sound_die, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 	self->monsterinfo.currentmove = &shambler_move_death;
 
 	if (self->activator && !self->activator->client)

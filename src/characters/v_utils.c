@@ -2881,6 +2881,23 @@ qboolean vrx_has_pain_skin(edict_t* ent)
              && ent->mtype != M_ROGUE_TURRET);
 }
 
+void vrx_update_drone_death_skin(edict_t* ent)
+{
+    if (!ent || !ent->inuse || !(ent->svflags & SVF_MONSTER))
+        return;
+    if (ent->s.modelindex == 255 || ent->max_health <= 0 || ent->health <= ent->gib_health)
+        return;
+    if (ent->health >= 0.5f * ent->max_health)
+        return;
+    if (!vrx_has_pain_skin(ent))
+        return;
+
+    if (ent->mtype == M_BARON_FIRE && ent->health < 0.2f * ent->max_health)
+        ent->s.skinnum = 2;
+    else
+        ent->s.skinnum |= 1;
+}
+
 // returns a value >= 1 based on any synergy bonuses that apply for ability_index
 // note: if no bonus applies, the value returned is 1.0
 float vrx_get_synergy_mult(const edict_t* ent, int ability_index)

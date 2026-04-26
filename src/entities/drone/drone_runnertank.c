@@ -9,6 +9,7 @@ static int sound_step;
 static int sound_sight;
 static int sound_windup;
 static int sound_strike;
+static int sound_plasma;
 
 #define RUNNERTANK_JUMP_ATTACK_DELAY 12.0f
 #define RUNNERTANK_JUMP_ATTACK_FOV 35
@@ -50,22 +51,29 @@ static void runnertank_windup(edict_t *self)
     gi.sound(self, CHAN_WEAPON, sound_windup, 1, ATTN_NORM, 0);
 }
 
-static void runnertank_slam_effect(edict_t *self)
+static void runnertank_slam_origin(edict_t *self, vec3_t origin)
 {
-    vec3_t forward, right, start, offset, up;
+    vec3_t forward, right, offset;
     trace_t tr;
 
     AngleVectors(self->s.angles, forward, right, NULL);
     VectorSet(offset, 20, -14.3f, -21);
-    G_ProjectSource(self->s.origin, offset, forward, right, start);
-    tr = gi.trace(self->s.origin, NULL, NULL, start, self, MASK_SOLID);
+    G_ProjectSource(self->s.origin, offset, forward, right, origin);
+    tr = gi.trace(self->s.origin, NULL, NULL, origin, self, MASK_SOLID);
+    VectorCopy(tr.endpos, origin);
+}
+
+static void runnertank_slam_effect(vec3_t origin)
+{
+    vec3_t up;
+
     VectorSet(up, 0, 0, 1);
 
     gi.WriteByte(svc_temp_entity);
     gi.WriteByte(TE_BERSERK_SLAM);
-    gi.WritePosition(tr.endpos);
+    gi.WritePosition(origin);
     gi.WriteDir(up);
-    gi.multicast(tr.endpos, MULTICAST_PHS);
+    gi.multicast(origin, MULTICAST_PHS);
 }
 
 static void runnertank_idle(edict_t *self)
@@ -280,6 +288,7 @@ static void runnertank_plasma(edict_t *self)
 
     MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash_number, forward, start);
     fire_plasma(self, start, forward, damage, speed, M_PLASMA_DAMAGE_RADIUS, radius_damage);
+    gi.positioned_sound(start, self, CHAN_WEAPON, sound_plasma, 1, ATTN_NORM, 0);
 }
 
 static void runnertank_strike_sound(edict_t *self)
@@ -292,7 +301,7 @@ static void runnertank_meleeattack(edict_t *self)
     int damage;
     trace_t tr;
     edict_t *other = NULL;
-    vec3_t v;
+    vec3_t v, damage_origin;
 
     if (!self->groundentity)
         return;
@@ -302,18 +311,19 @@ static void runnertank_meleeattack(edict_t *self)
         damage = M_MELEE_DMG_MAX;
 
     gi.sound(self, CHAN_AUTO, sound_strike, 1, ATTN_NORM, 0);
-    runnertank_slam_effect(self);
+    runnertank_slam_origin(self, damage_origin);
+    runnertank_slam_effect(damage_origin);
 
-    while ((other = findradius(other, self->s.origin, 128)) != NULL)
+    while ((other = findradius(other, damage_origin, 128)) != NULL)
     {
         if (!G_ValidTarget(self, other, true, true))
             continue;
         if (que_typeexists(self->curses, CURSE) && rand() > 0.2)
             continue;
 
-        VectorSubtract(other->s.origin, self->s.origin, v);
+        VectorSubtract(other->s.origin, damage_origin, v);
         VectorNormalize(v);
-        tr = gi.trace(self->s.origin, NULL, NULL, other->s.origin, self, (MASK_PLAYERSOLID | MASK_MONSTERSOLID));
+        tr = gi.trace(damage_origin, NULL, NULL, other->s.origin, self, (MASK_PLAYERSOLID | MASK_MONSTERSOLID));
         T_Damage(other, self, self, v, tr.endpos, tr.plane.normal, damage, 200, 0, MOD_TANK_PUNCH);
     }
 }
@@ -847,6 +857,7 @@ void init_drone_runnertank(edict_t *self)
     sound_strike = gi.soundindex("tank/tnkatck5.wav");
     sound_sight = gi.soundindex("tank/sight1.wav");
     sound_thud = gi.soundindex("tank/tnkdeth2.wav");
+    sound_plasma = gi.soundindex("weapons/plasshot.wav");
 
     gi.soundindex("tank/tnkatck1.wav");
     gi.soundindex("tank/tnkatk2a.wav");

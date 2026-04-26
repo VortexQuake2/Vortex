@@ -452,6 +452,7 @@ void jorg_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage,
 	gi.sound (self, CHAN_VOICE, sound_death, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_NO;
+	vrx_update_drone_death_skin(self);
 	self->s.sound = 0;
 	self->count = 0;
 	self->monsterinfo.currentmove = &jorg_move_death;

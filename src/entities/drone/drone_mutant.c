@@ -421,7 +421,7 @@ void mutant_attack (edict_t *self)
 void mutant_dead (edict_t *self)
 {
 	VectorSet (self->mins, -16, -16, -24);
-	VectorSet (self->maxs, 16, 16, -8);
+	VectorSet (self->maxs, 16, 16, 0);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	//self->nextthink = 0;
@@ -431,6 +431,13 @@ void mutant_dead (edict_t *self)
 //	M_FlyCheck (self);
 }
 
+static void mutant_shrink(edict_t *self)
+{
+	self->maxs[2] = 0;
+	self->svflags |= SVF_DEADMONSTER;
+	gi.linkentity(self);
+}
+
 mframe_t mutant_frames_death1 [] =
 {
 	ai_move,	0,	NULL,
@@ -438,7 +445,7 @@ mframe_t mutant_frames_death1 [] =
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
+	ai_move,	0,	mutant_shrink,
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL
@@ -451,7 +458,7 @@ mframe_t mutant_frames_death2 [] =
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
+	ai_move,	0,	mutant_shrink,
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
@@ -506,7 +513,7 @@ void mutant_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	gi.sound (self, CHAN_VOICE, sound_death, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
-	self->s.skinnum = 1;
+	vrx_update_drone_death_skin(self);
 
 	if (random() < 0.5)
 		self->monsterinfo.currentmove = &mutant_move_death1;

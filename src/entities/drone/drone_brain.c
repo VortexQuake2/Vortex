@@ -502,11 +502,18 @@ void mybrain_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
 	}
 }
 
+static void mybrain_shrink(edict_t *self)
+{
+	self->maxs[2] = 0;
+	self->svflags |= SVF_DEADMONSTER;
+	gi.linkentity(self);
+}
+
 mframe_t mybrain_frames_death2 [] =
 {
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
+	ai_move,	0,	mybrain_shrink,
 	ai_move,	9,	NULL,
 	ai_move,	0,	NULL
 };
@@ -517,7 +524,7 @@ mframe_t mybrain_frames_death1 [] =
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
 	ai_move,	-2,	NULL,
-	ai_move,	9,	NULL,
+	ai_move,	9,	mybrain_shrink,
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
@@ -1007,6 +1014,7 @@ void mybrain_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	gi.sound (self, CHAN_VOICE, sound_death, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 	if (random() <= 0.5)
 		self->monsterinfo.currentmove = &mybrain_move_death1;
 	else

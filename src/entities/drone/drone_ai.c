@@ -1352,6 +1352,42 @@ void drone_ai_run_slide (edict_t *self, float dist)
 	M_walkmove (self, self->ideal_yaw - ofs, dist);
 }
 
+void drone_set_dodge_side(edict_t *self, vec3_t impact)
+{
+	vec3_t right, diff;
+
+	if (!self)
+		return;
+
+	AngleVectors(self->s.angles, NULL, right, NULL);
+	VectorSubtract(impact, self->s.origin, diff);
+
+	if (DotProduct(right, diff) < 0)
+		self->monsterinfo.lefty = 0;
+	else
+		self->monsterinfo.lefty = 1;
+}
+
+void drone_ai_dodge_slide(edict_t *self, float dist)
+{
+	float ofs;
+	vec3_t v;
+
+	if (!G_EntIsAlive(self->enemy))
+		return;
+
+	VectorSubtract(self->enemy->s.origin, self->s.origin, v);
+	self->ideal_yaw = vectoyaw(v);
+	M_ChangeYaw(self);
+
+	ofs = self->monsterinfo.lefty ? 90 : -90;
+	if (M_walkmove(self, self->ideal_yaw + ofs, dist))
+		return;
+
+	self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
+	M_walkmove(self, self->ideal_yaw - ofs, dist);
+}
+
 void TeleportForward (edict_t *ent, vec3_t vec, float dist);
 
 void drone_cleargoal (edict_t *self)

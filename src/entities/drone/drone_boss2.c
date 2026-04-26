@@ -645,6 +645,7 @@ static void boss2_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int 
 	self->s.sound = 0;
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 	self->count = 0;
 	self->monsterinfo.currentmove = boss2_is_small(self) ? &boss2_move_death : &boss2_move_deathboss;
 }

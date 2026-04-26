@@ -12,7 +12,7 @@ carrier
 #define CARRIER_SUMMON_COUNT		4
 #define CARRIER_SUMMON_COOLDOWN		8.0f
 #define CARRIER_DEFAULT_SCALE		0.75f
-#define CARRIER_INVASION_SCALE		0.60f
+#define CARRIER_INVASION_SCALE		0.50f // 0.60 was too big for spambox
 
 static int sound_pain1;
 static int sound_pain2;
@@ -113,7 +113,7 @@ static void carrier_fire_rocket(edict_t *self)
 	for (int i = 0; i < 4; i++)
 	{
 		carrier_project_flash(self, flashes[i], forward, start);
-		MonsterAim(self, M_PROJECTILE_ACC, speed, true, -1, forward, start);
+		MonsterAim(self, M_PROJECTILE_ACC, speed, true, flashes[i], forward, start);
 		monster_fire_heat(self, start, forward, damage, speed, flashes[i], 0.06f);
 	}
 }
@@ -192,7 +192,7 @@ static void carrier_fire_rail(edict_t *self)
 		damage = M_RAILGUN_DMG_MAX;
 
 	carrier_project_flash(self, MZ2_CARRIER_RAILGUN, forward, start);
-	MonsterAim(self, 0.25f, 0, false, -1, forward, start);
+	MonsterAim(self, 0.25f, 0, false, MZ2_CARRIER_RAILGUN, forward, start);
 	gi.sound(self, CHAN_WEAPON, sound_rail, 1, ATTN_NORM, 0);
 	monster_fire_railgun(self, start, forward, damage, damage, MZ2_CARRIER_RAILGUN);
 }
@@ -546,6 +546,7 @@ static void carrier_die(edict_t *self, edict_t *inflictor, edict_t *attacker, in
 	gi.sound(self, CHAN_VOICE, sound_death, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 	self->monsterinfo.currentmove = &carrier_move_death;
 }
 
@@ -566,8 +567,8 @@ void init_drone_carrier(edict_t *self)
 	if (invasion->value)
 	{
 		self->s.scale = CARRIER_INVASION_SCALE;
-		VectorSet(self->mins, -40, -40, -24);
-		VectorSet(self->maxs, 40, 40, 82);
+		VectorSet(self->mins, -34, -34, -20);
+		VectorSet(self->maxs, 34, 34, 68);
 	}
 	else
 	{

@@ -186,6 +186,7 @@ static void daedalus_die(edict_t *self, edict_t *inflictor, edict_t *attacker, i
 
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 	self->flags &= ~FL_FLY;
 	self->movetype = MOVETYPE_TOSS;
 	self->gravity = 1.0;

@@ -23,6 +23,23 @@ static int sound_step2;
 static int sound_step3;
 static int sound_thud;
 
+#define REDMUTANT_STAND_MAX_Z 36
+#define REDMUTANT_IDLE_MAX_Z 56
+
+static void redmutant_set_bbox_height(edict_t *self, float max_z)
+{
+	if (self->maxs[2] == max_z)
+		return;
+
+	self->maxs[2] = max_z;
+	gi.linkentity(self);
+}
+
+static void redmutant_restore_bbox(edict_t *self)
+{
+	redmutant_set_bbox_height(self, REDMUTANT_STAND_MAX_Z);
+}
+
 static void redmutant_stand(edict_t *self);
 static void redmutant_walk(edict_t *self);
 static void redmutant_run(edict_t *self);
@@ -75,6 +92,7 @@ mmove_t redmutant_move_stand = { FRAME_stand101, FRAME_stand112, redmutant_frame
 
 static void redmutant_stand(edict_t *self)
 {
+	redmutant_set_bbox_height(self, REDMUTANT_IDLE_MAX_Z);
 	self->monsterinfo.currentmove = &redmutant_move_stand;
 }
 
@@ -118,6 +136,7 @@ mmove_t redmutant_move_idle = { FRAME_stand202, FRAME_stand228, redmutant_frames
 
 static void redmutant_idle(edict_t *self)
 {
+	redmutant_set_bbox_height(self, REDMUTANT_IDLE_MAX_Z);
 	self->monsterinfo.currentmove = &redmutant_move_idle;
 	gi.sound(self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
 }
@@ -141,6 +160,7 @@ mmove_t redmutant_move_walk = { FRAME_walk05, FRAME_walk16, redmutant_frames_wal
 
 static void redmutant_walk_loop(edict_t *self)
 {
+	redmutant_restore_bbox(self);
 	self->monsterinfo.currentmove = &redmutant_move_walk;
 }
 
@@ -155,6 +175,7 @@ mmove_t redmutant_move_start_walk = { FRAME_walk01, FRAME_walk04, redmutant_fram
 
 static void redmutant_walk(edict_t *self)
 {
+	redmutant_restore_bbox(self);
 	if (!self->goalentity)
 		self->goalentity = world;
 	self->monsterinfo.currentmove = &redmutant_move_start_walk;
@@ -173,6 +194,7 @@ mmove_t redmutant_move_run = { FRAME_run03, FRAME_run08, redmutant_frames_run, N
 
 static void redmutant_run(edict_t *self)
 {
+	redmutant_restore_bbox(self);
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 		self->monsterinfo.currentmove = &redmutant_move_stand;
 	else
@@ -338,6 +360,7 @@ mmove_t redmutant_move_jump_finish = { FRAME_attack104, FRAME_attack108, redmuta
 
 static void redmutant_jump(edict_t *self)
 {
+    redmutant_restore_bbox(self);
     self->monsterinfo.currentmove = &redmutant_move_jump_start;
 }
 
@@ -391,6 +414,7 @@ mmove_t redmutant_move_flip = { FRAME_attack101, FRAME_attack108, redmutant_fram
 
 static void redmutant_flip(edict_t *self)
 {
+    redmutant_restore_bbox(self);
     self->monsterinfo.currentmove = &redmutant_move_flip;
 }
 
@@ -409,6 +433,7 @@ static void redmutant_attack(edict_t *self)
 
     if (dist <= MELEE_DISTANCE)
     {
+        redmutant_restore_bbox(self);
         self->monsterinfo.currentmove = &redmutant_move_attack;
     }
     else if ((dist <= 384) && (height_diff > -64) && (height_diff < 96) && (random() < 0.8))
@@ -423,11 +448,18 @@ static void redmutant_attack(edict_t *self)
 static void redmutant_dead(edict_t *self)
 {
 	VectorSet(self->mins, -16, -16, -24);
-	VectorSet(self->maxs, 16, 16, -8);
+	VectorSet(self->maxs, 16, 16, 0);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	gi.linkentity(self);
 	M_PrepBodyRemoval(self);
+}
+
+static void redmutant_shrink(edict_t *self)
+{
+	self->maxs[2] = 0;
+	self->svflags |= SVF_DEADMONSTER;
+	gi.linkentity(self);
 }
 
 static void ai_move_slide_right(edict_t *self, float dist)
@@ -447,7 +479,7 @@ mframe_t redmutant_frames_death1[] =
 	ai_move_slide_right, 0, NULL,
 	ai_move_slide_right, 2, NULL,
 	ai_move_slide_right, 5, NULL,
-	ai_move_slide_right, 7, NULL,
+	ai_move_slide_right, 7, redmutant_shrink,
 	ai_move_slide_right, 6, NULL,
 	ai_move_slide_right, 2, NULL,
 	ai_move_slide_right, 0, NULL,
@@ -471,7 +503,7 @@ mframe_t redmutant_frames_death2[] =
 	ai_move_slide_left, 1, NULL,
 	ai_move_slide_left, 6, NULL,
 	ai_move_slide_left, 8, NULL,
-	ai_move_slide_left, 3, NULL,
+	ai_move_slide_left, 3, redmutant_shrink,
 	ai_move_slide_left, 2, NULL,
 	ai_move_slide_left, 0, NULL
 };
@@ -586,6 +618,8 @@ static void redmutant_pain(edict_t *self, edict_t *other, float kick, int damage
 	if (skill->value == 3)
 		return;
 
+	redmutant_restore_bbox(self);
+
 	if (r < 0.33)
 		self->monsterinfo.currentmove = &redmutant_move_pain1;
 	else if (r < 0.66)
@@ -619,7 +653,7 @@ void init_drone_redmutant(edict_t *self)
 	gi.modelindex("models/monsters/mutant/gibs/foot.md2");
 
 	VectorSet(self->mins, -18, -18, -24);
-	VectorSet(self->maxs, 18, 18, 30);
+	VectorSet(self->maxs, 18, 18, REDMUTANT_STAND_MAX_Z);
 
 	self->health = M_REDMUTANT_INITIAL_HEALTH + M_REDMUTANT_ADDON_HEALTH * self->monsterinfo.level;
 	self->max_health = self->health;

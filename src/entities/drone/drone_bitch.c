@@ -18,7 +18,6 @@ void mychick_continue (edict_t *self);
 extern mmove_t mychick_move_start_attack1;
 extern mmove_t mychick_move_attack1;
 extern mmove_t mychick_move_end_attack1;
-void drone_ai_run_slide(edict_t *self, float dist);
 
 static int	sound_missile_prelaunch;
 static int	sound_missile_launch;
@@ -189,7 +188,7 @@ static void mychick_ai_dodge_slide(edict_t *self, float dist)
 	if (!G_EntIsAlive(self->enemy))
 		return;
 
-	drone_ai_run_slide(self, dist);
+	drone_ai_dodge_slide(self, dist);
 }
 
 mframe_t mychick_frames_dodge_slide[] =
@@ -221,12 +220,19 @@ void mychick_dead (edict_t *self)
 {
 //	gi.dprintf("mychick_dead()\n");
 	VectorSet (self->mins, -16, -16, 0);
-	VectorSet (self->maxs, 16, 16, 16);
+	VectorSet (self->maxs, 16, 16, 8);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	//self->nextthink = 0;
 	gi.linkentity (self);
 	M_PrepBodyRemoval(self);
+}
+
+static void mychick_shrink(edict_t *self)
+{
+	self->maxs[2] = 12;
+	self->svflags |= SVF_DEADMONSTER;
+	gi.linkentity(self);
 }
 
 mframe_t mychick_frames_death2 [] =
@@ -251,7 +257,7 @@ mframe_t mychick_frames_death2 [] =
 	ai_move, -3,  NULL,
 	ai_move, -5, NULL,
 	ai_move, 4, NULL,
-	ai_move, 15, NULL,
+	ai_move, 15, mychick_shrink,
 	ai_move, 14, NULL,
 	ai_move, 1, NULL
 };
@@ -263,7 +269,7 @@ mframe_t mychick_frames_death1 [] =
 	ai_move, 0,  NULL,
 	ai_move, -7, NULL,
 	ai_move, 4,  NULL,
-	ai_move, 11, NULL,
+	ai_move, 11, mychick_shrink,
 	ai_move, 0,  NULL,
 	ai_move, 0,  NULL,
 	ai_move, 0,  NULL,
@@ -320,6 +326,7 @@ void mychick_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 // regular death
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 	//level.total_monsters--;
 
 	n = randomMT() % 2;
@@ -517,9 +524,10 @@ static void mychick_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int rad
 		return;
 	}
 
+	drone_set_dodge_side(self, dir);
+
 	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND))
 	{
-		self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
 		self->monsterinfo.currentmove = &mychick_move_dodge_slide;
 		self->monsterinfo.dodge_time = level.time + 1.0f;
 		return;

@@ -17,7 +17,6 @@ static int sound_punch;
 static int sound_sight;
 static int sound_search;
 
-void drone_ai_run_slide(edict_t *self, float dist);
 static void berserk_ai_dodge_slide(edict_t *self, float dist);
 static void berserk_duck_up(edict_t *self);
 
@@ -256,6 +255,13 @@ void berserk_dead (edict_t *self)
 	M_PrepBodyRemoval(self);
 }
 
+static void berserk_shrink(edict_t *self)
+{
+	self->maxs[2] = 0;
+	self->svflags |= SVF_DEADMONSTER;
+	gi.linkentity(self);
+}
+
 mframe_t berserk_frames_death1 [] =
 {
 	ai_move, 0, NULL,
@@ -264,7 +270,7 @@ mframe_t berserk_frames_death1 [] =
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
-	ai_move, 0, NULL,
+	ai_move, 0, berserk_shrink,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
@@ -281,7 +287,7 @@ mframe_t berserk_frames_death2 [] =
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
-	ai_move, 0, NULL,
+	ai_move, 0, berserk_shrink,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
@@ -433,7 +439,7 @@ static void berserk_ai_dodge_slide(edict_t *self, float dist)
 	if (!G_EntIsAlive(self->enemy))
 		return;
 
-	drone_ai_run_slide(self, dist);
+	drone_ai_dodge_slide(self, dist);
 }
 
 void berserk_dodge(edict_t *self, edict_t *attacker, vec3_t dir, int radius)
@@ -491,7 +497,7 @@ void berserk_dodge(edict_t *self, edict_t *attacker, vec3_t dir, int radius)
 		return;
 	}
 
-	self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
+	drone_set_dodge_side(self, dir);
 	self->monsterinfo.currentmove = &berserk_move_dodge_slide;
 	self->monsterinfo.dodge_time = level.time + 0.4f + random() * 1.6f;
 }
@@ -578,6 +584,7 @@ void berserk_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	gi.sound (self, CHAN_VOICE, sound_die, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 
 	if (damage >= 50)
 		self->monsterinfo.currentmove = &berserk_move_death1;

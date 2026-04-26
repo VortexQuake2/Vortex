@@ -547,7 +547,7 @@ void makron_torso (edict_t *ent)
 void makron_dead (edict_t *self)
 {
 	VectorSet (self->mins, -60, -60, 0);
-	VectorSet (self->maxs, 60, 60, 72);
+	VectorSet (self->maxs, 60, 60, 24);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	self->nextthink = 0;
@@ -586,12 +586,17 @@ void makron_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	gi.sound (self, CHAN_VOICE, sound_death, 1, ATTN_NONE, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	self->svflags |= SVF_DEADMONSTER;
+	vrx_update_drone_death_skin(self);
 
 	tempent = G_Spawn();
 	VectorCopy (self->s.origin, tempent->s.origin);
 	VectorCopy (self->s.angles, tempent->s.angles);
 	tempent->s.origin[1] -= 84;
 	makron_torso (tempent);
+	VectorSet (self->mins, -60, -60, 0);
+	VectorSet (self->maxs, 60, 60, 48);
+	gi.linkentity(self);
 
 	self->monsterinfo.currentmove = &makron_move_death2;
 	DroneList_Remove(self);

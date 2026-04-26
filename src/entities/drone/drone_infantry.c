@@ -28,7 +28,6 @@ static int	sound_idle;
 
 #define INFANTRY_RUN_ATTACK_MIN_DIST 256
 
-void drone_ai_run_slide(edict_t *self, float dist);
 static void infantry_run_fire(edict_t *self);
 extern mmove_t infantry_move_attack4;
 
@@ -278,6 +277,13 @@ void infantry_dead (edict_t *self)
 	M_PrepBodyRemoval(self);
 }
 
+static void infantry_shrink(edict_t *self)
+{
+	self->maxs[2] = 0;
+	self->svflags |= SVF_DEADMONSTER;
+	gi.linkentity(self);
+}
+
 mframe_t infantry_frames_pain1[] =
 {
 	ai_move, 0, NULL,
@@ -362,7 +368,7 @@ mframe_t infantry_frames_death1 [] =
 	ai_move, -2, NULL,
 	ai_move, 2,  NULL,
 	ai_move, 2,  NULL,
-	ai_move, 9,  NULL,
+	ai_move, 9,  infantry_shrink,
 	ai_move, 9,  NULL,
 	ai_move, 5,  NULL,
 	ai_move, -3, NULL,
@@ -395,7 +401,7 @@ mframe_t infantry_frames_death2 [] =
 	ai_move, -10, Infantry20mm,
 	ai_move, -7,  Infantry20mm,
 	ai_move, -8,  Infantry20mm,
-	ai_move, -6,  NULL,
+	ai_move, -6,  infantry_shrink,
 	ai_move, 4,   NULL,
 	ai_move, 0,   NULL
 };
@@ -405,7 +411,7 @@ mframe_t infantry_frames_death3 [] =
 {
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
-	ai_move, 0,   NULL,
+	ai_move, 0,   infantry_shrink,
 	ai_move, -6,  NULL,
 	ai_move, -11, NULL,
 	ai_move, -3,  NULL,
@@ -462,6 +468,7 @@ void infantry_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 // regular death
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 
 	n = randomMT() % 3;
 	if (n == 0)
@@ -574,7 +581,7 @@ static void infantry_ai_dodge_slide(edict_t *self, float dist)
 	if (!G_EntIsAlive(self->enemy))
 		return;
 
-	drone_ai_run_slide(self, dist);
+	drone_ai_dodge_slide(self, dist);
 }
 
 mframe_t infantry_frames_dodge_slide[] =
@@ -595,7 +602,7 @@ static void infantry_attack4_dodge_ai(edict_t *self, float dist)
 	if (!G_EntIsAlive(self->enemy))
 		return;
 
-	drone_ai_run_slide(self, dist);
+	drone_ai_dodge_slide(self, dist);
 }
 
 static void infantry_resume_attack4(edict_t *self)
@@ -619,14 +626,12 @@ static qboolean infantry_try_sidestep(edict_t *self)
 	if (self->monsterinfo.currentmove == &infantry_move_attack4)
 	{
 		self->count = self->s.frame;
-		self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
 		self->monsterinfo.currentmove = &infantry_move_attack4_dodge;
 		return true;
 	}
 
 	if (self->monsterinfo.currentmove == &infantry_move_run)
 	{
-		self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
 		self->monsterinfo.currentmove = &infantry_move_dodge_slide;
 		return true;
 	}
@@ -680,6 +685,8 @@ static void infantry_dodge(edict_t *self, edict_t *attacker, vec3_t dir, int rad
 		return;
 	}
 
+	drone_set_dodge_side(self, dir);
+
 	if (infantry_try_sidestep(self))
 	{
 		self->monsterinfo.dodge_time = level.time + 1.0f;
@@ -688,7 +695,6 @@ static void infantry_dodge(edict_t *self, edict_t *attacker, vec3_t dir, int rad
 
 	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND))
 	{
-		self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
 		self->monsterinfo.currentmove = &infantry_move_dodge_slide;
 		self->monsterinfo.dodge_time = level.time + 0.9f;
 		return;

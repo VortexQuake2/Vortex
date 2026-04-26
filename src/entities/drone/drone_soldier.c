@@ -983,6 +983,13 @@ void m_soldier_dead (edict_t *self)
 	M_PrepBodyRemoval(self);
 }
 
+static void m_soldier_death_shrink(edict_t *self)
+{
+	self->svflags |= SVF_DEADMONSTER;
+	self->maxs[2] = 0;
+	gi.linkentity(self);
+}
+
 
 mframe_t soldier_frames_pain_short1[] =
 {
@@ -1115,7 +1122,7 @@ mframe_t m_soldier_frames_death1 [] =
 	ai_move, 0,   NULL,
 	ai_move, -10, NULL,
 	ai_move, -10, NULL,
-	ai_move, -10, NULL,
+	ai_move, -10, m_soldier_death_shrink,
 	ai_move, -5,  NULL,
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
@@ -1159,7 +1166,7 @@ mframe_t m_soldier_frames_death2 [] =
 	ai_move, -5,  NULL,
 	ai_move, -5,  NULL,
 	ai_move, -5,  NULL,
-	ai_move, 0,   NULL,
+	ai_move, 0,   m_soldier_death_shrink,
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
@@ -1202,7 +1209,7 @@ mframe_t m_soldier_frames_death3 [] =
 	ai_move, -5,  NULL,
 	ai_move, -5,  NULL,
 	ai_move, -5,  NULL,
-	ai_move, 0,   NULL,
+	ai_move, 0,   m_soldier_death_shrink,
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
@@ -1267,7 +1274,7 @@ mframe_t m_soldier_frames_death4 [] =
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
-	ai_move, 0,   NULL,
+	ai_move, 0,   m_soldier_death_shrink,
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
@@ -1321,7 +1328,7 @@ mframe_t m_soldier_frames_death5 [] =
 	ai_move, -5,  NULL,
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
-	ai_move, 0,   NULL,
+	ai_move, 0,   m_soldier_death_shrink,
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
@@ -1352,7 +1359,7 @@ mframe_t m_soldier_frames_death6 [] =
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
-	ai_move, 0,   NULL,
+	ai_move, 0,   m_soldier_death_shrink,
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
@@ -1407,16 +1414,27 @@ void m_soldier_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int da
 	gi.sound (self, CHAN_VOICE, soldier_death_sound(self), 1, ATTN_NORM, 0);
 	self->takedamage = DAMAGE_YES;
 	self->deadflag = DEAD_DEAD;
+	vrx_update_drone_death_skin(self);
 
-	n = GetRandom(1, 6);
-	switch (n)
+	if (self->monsterinfo.currentmove == &m_soldier_move_trip ||
+		self->monsterinfo.currentmove == &m_soldier_move_attack5)
 	{
-	case 1: self->monsterinfo.currentmove = &m_soldier_move_death1; break;
-	case 2: self->monsterinfo.currentmove = &m_soldier_move_death2; break;
-	case 3: self->monsterinfo.currentmove = &m_soldier_move_death3; break;
-	case 4: self->monsterinfo.currentmove = &m_soldier_move_death4; break;
-	case 5: self->monsterinfo.currentmove = &m_soldier_move_death5; break;
-	case 6: self->monsterinfo.currentmove = &m_soldier_move_death6; break;
+		self->monsterinfo.currentmove = &m_soldier_move_death4;
+		self->monsterinfo.nextframe = FRAME_death413;
+		m_soldier_death_shrink(self);
+	}
+	else
+	{
+		n = GetRandom(1, 6);
+		switch (n)
+		{
+		case 1: self->monsterinfo.currentmove = &m_soldier_move_death1; break;
+		case 2: self->monsterinfo.currentmove = &m_soldier_move_death2; break;
+		case 3: self->monsterinfo.currentmove = &m_soldier_move_death3; break;
+		case 4: self->monsterinfo.currentmove = &m_soldier_move_death4; break;
+		case 5: self->monsterinfo.currentmove = &m_soldier_move_death5; break;
+		case 6: self->monsterinfo.currentmove = &m_soldier_move_death6; break;
+		}
 	}
 
 	DroneList_Remove(self);

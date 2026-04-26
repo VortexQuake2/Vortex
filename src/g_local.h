@@ -1740,6 +1740,12 @@ void drone_ai_run(edict_t *self, float dist);
 
 void drone_ai_run1(edict_t *self, float dist);
 
+void drone_ai_run_slide(edict_t *self, float dist);
+
+void drone_ai_dodge_slide(edict_t *self, float dist);
+
+void drone_set_dodge_side(edict_t *self, vec3_t impact);
+
 void drone_ai_walk(edict_t *self, float dist);
 
 // az begin

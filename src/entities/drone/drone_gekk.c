@@ -787,7 +787,7 @@ static void gekk_dead(edict_t *self)
 
 static void gekk_shrink(edict_t *self)
 {
-	self->maxs[2] = -8;
+	self->maxs[2] = 0;
 	self->svflags |= SVF_DEADMONSTER;
 	gi.linkentity(self);
 }
@@ -836,6 +836,7 @@ static void gekk_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int d
 	gi.sound(self, CHAN_VOICE, sound_death, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 	self->monsterinfo.currentmove = &gekk_move_death1;
 
 	if (self->activator && !self->activator->client)

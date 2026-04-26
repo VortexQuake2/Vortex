@@ -45,22 +45,29 @@ void mytank_windup (edict_t *self)
 	gi.sound (self, CHAN_WEAPON, sound_windup, 1, ATTN_NORM, 0);
 }
 
-static void mytank_slam_effect(edict_t *self)
+static void mytank_slam_origin(edict_t *self, vec3_t origin)
 {
-	vec3_t	forward, right, start, offset, up;
+	vec3_t	forward, right, offset;
 	trace_t	tr;
 
 	AngleVectors(self->s.angles, forward, right, NULL);
 	VectorSet(offset, 20, -14.3f, -21);
-	G_ProjectSource(self->s.origin, offset, forward, right, start);
-	tr = gi.trace(self->s.origin, NULL, NULL, start, self, MASK_SOLID);
+	G_ProjectSource(self->s.origin, offset, forward, right, origin);
+	tr = gi.trace(self->s.origin, NULL, NULL, origin, self, MASK_SOLID);
+	VectorCopy(tr.endpos, origin);
+}
+
+static void mytank_slam_effect(vec3_t origin)
+{
+	vec3_t	up;
+
 	VectorSet(up, 0, 0, 1);
 
 	gi.WriteByte(svc_temp_entity);
 	gi.WriteByte(TE_BERSERK_SLAM);
-	gi.WritePosition(tr.endpos);
+	gi.WritePosition(origin);
 	gi.WriteDir(up);
-	gi.multicast(tr.endpos, MULTICAST_PHS);
+	gi.multicast(origin, MULTICAST_PHS);
 }
 
 void mytank_idle (edict_t *self)
@@ -677,7 +684,7 @@ void mytank_meleeattack (edict_t *self)
 	int damage;
 	trace_t tr;
 	edict_t *other=NULL;
-	vec3_t	v;
+	vec3_t	v, damage_origin;
 
 	// tank must be on the ground to punch
 	if (!self->groundentity)
@@ -690,9 +697,10 @@ void mytank_meleeattack (edict_t *self)
 		damage = M_MELEE_DMG_MAX;
 
 	gi.sound (self, CHAN_AUTO, gi.soundindex ("tank/tnkatck5.wav"), 1, ATTN_NORM, 0);
-	mytank_slam_effect(self);
+	mytank_slam_origin(self, damage_origin);
+	mytank_slam_effect(damage_origin);
 	
-	while ((other = findradius(other, self->s.origin, 128)) != NULL)
+	while ((other = findradius(other, damage_origin, 128)) != NULL)
 	{
 		if (!G_ValidTarget(self, other, true, true))
 			continue;
@@ -703,9 +711,9 @@ void mytank_meleeattack (edict_t *self)
 		//if ((self->monsterinfo.control_cost < 3) && !nearfov(self, other, 0, 60))//!infront(self, other))
 		//	continue;
 
-		VectorSubtract(other->s.origin, self->s.origin, v);
+		VectorSubtract(other->s.origin, damage_origin, v);
 		VectorNormalize(v);
-		tr = gi.trace(self->s.origin, NULL, NULL, other->s.origin, self, (MASK_PLAYERSOLID | MASK_MONSTERSOLID));
+		tr = gi.trace(damage_origin, NULL, NULL, other->s.origin, self, (MASK_PLAYERSOLID | MASK_MONSTERSOLID));
 		T_Damage (other, self, self, v, tr.endpos, tr.plane.normal, damage, 200, 0, MOD_TANK_PUNCH);
 		//other->velocity[2] += 200;//damage / 2;
 	}
@@ -1025,6 +1033,13 @@ void mytank_dead(edict_t* self)
 	M_PrepBodyRemoval(self);
 }
 
+static void mytank_shrink(edict_t *self)
+{
+	self->maxs[2] = 0;
+	self->svflags |= SVF_DEADMONSTER;
+	gi.linkentity(self);
+}
+
 mframe_t mytank_frames_death1[] =
 {
 	ai_move, -7,  NULL,
@@ -1053,7 +1068,7 @@ mframe_t mytank_frames_death1[] =
 	ai_move, -6,  NULL,
 	ai_move, -4,  NULL,
 	ai_move, -5,  NULL,
-	ai_move, -7,  NULL,
+	ai_move, -7,  mytank_shrink,
 	ai_move, -15, mytank_thud,
 	ai_move, -5,  NULL,
 	ai_move, 0,   NULL,
@@ -1112,6 +1127,7 @@ void mytank_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	gi.sound (self, CHAN_VOICE, sound_die, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 	self->monsterinfo.currentmove = &mytank_move_death;
 	
 	if (self->activator && !self->activator->client)

@@ -605,6 +605,7 @@ static void widow_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int 
 	gi.sound(self, CHAN_VOICE, sound_death, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 	self->monsterinfo.currentmove = &widow_move_death;
 }
 

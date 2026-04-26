@@ -343,6 +343,13 @@ void mymedic_dead (edict_t *self)
 	M_PrepBodyRemoval(self);
 }
 
+static void mymedic_shrink(edict_t *self)
+{
+	self->maxs[2] = -2;
+	self->svflags |= SVF_DEADMONSTER;
+	gi.linkentity(self);
+}
+
 mframe_t medic_frames_pain_short[] =
 {
 	ai_move, 0, NULL,
@@ -420,7 +427,7 @@ mframe_t mymedic_frames_death [] =
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
-	ai_move, 0, NULL,
+	ai_move, 0, mymedic_shrink,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
@@ -497,6 +504,7 @@ void mymedic_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	gi.sound (self, CHAN_VOICE, medic_die_sound(self), 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 
 	self->monsterinfo.currentmove = &mymedic_move_death;
 

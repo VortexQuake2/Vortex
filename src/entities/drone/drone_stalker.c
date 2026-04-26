@@ -591,7 +591,7 @@ static void stalker_pain(edict_t *self, edict_t *other, float kick, int damage)
 static void stalker_dead(edict_t *self)
 {
 	VectorSet(self->mins, -28, -28, -18);
-	VectorSet(self->maxs, 28, 28, -8);
+	VectorSet(self->maxs, 28, 28, -4);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	gi.linkentity(self);
@@ -643,6 +643,7 @@ static void stalker_die(edict_t *self, edict_t *inflictor, edict_t *attacker, in
 	gi.sound(self, CHAN_VOICE, sound_die, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 	self->monsterinfo.currentmove = &stalker_move_death;
 
 	if (self->activator && !self->activator->client)

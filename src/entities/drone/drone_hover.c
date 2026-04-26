@@ -600,6 +600,7 @@ void hover_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 		gi.sound (self, CHAN_VOICE, sound_death2, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 	self->flags &= ~FL_FLY;
 	self->movetype = MOVETYPE_TOSS;
 	self->gravity = 1.0;

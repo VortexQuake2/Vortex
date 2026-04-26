@@ -54,7 +54,6 @@ extern mmove_t guncmdr_move_death1;
 extern mmove_t guncmdr_move_death2;
 extern mmove_t guncmdr_move_death6;
 
-void drone_ai_run_slide(edict_t *self, float dist);
 static void guncmdr_ai_dodge_slide(edict_t *self, float dist);
 extern mmove_t guncmdr_move_dodge_slide;
 
@@ -353,21 +352,21 @@ mmove_t guncmdr_move_fire_chain_run = { FRAME_c_run201, FRAME_c_run206, guncmdr_
 
 mframe_t guncmdr_frames_fire_chain_dodge_right[] =
 {
-	ai_charge, 10.2, GunnerCmdrFire,
-	ai_charge, 18.0, GunnerCmdrFire,
-	ai_charge, 7.0, GunnerCmdrFire,
-	ai_charge, 7.2, GunnerCmdrFire,
-	ai_charge, -2.0, GunnerCmdrFire
+	guncmdr_ai_dodge_slide, 10.2, GunnerCmdrFire,
+	guncmdr_ai_dodge_slide, 18.0, GunnerCmdrFire,
+	guncmdr_ai_dodge_slide, 7.0, GunnerCmdrFire,
+	guncmdr_ai_dodge_slide, 7.2, GunnerCmdrFire,
+	guncmdr_ai_dodge_slide, -2.0, GunnerCmdrFire
 };
 mmove_t guncmdr_move_fire_chain_dodge_right = { FRAME_c_attack401, FRAME_c_attack405, guncmdr_frames_fire_chain_dodge_right, guncmdr_refire_chain };
 
 mframe_t guncmdr_frames_fire_chain_dodge_left[] =
 {
-	ai_charge, 10.2, GunnerCmdrFire,
-	ai_charge, 18.0, GunnerCmdrFire,
-	ai_charge, 7.0, GunnerCmdrFire,
-	ai_charge, 7.2, GunnerCmdrFire,
-	ai_charge, -2.0, GunnerCmdrFire
+	guncmdr_ai_dodge_slide, 10.2, GunnerCmdrFire,
+	guncmdr_ai_dodge_slide, 18.0, GunnerCmdrFire,
+	guncmdr_ai_dodge_slide, 7.0, GunnerCmdrFire,
+	guncmdr_ai_dodge_slide, 7.2, GunnerCmdrFire,
+	guncmdr_ai_dodge_slide, -2.0, GunnerCmdrFire
 };
 mmove_t guncmdr_move_fire_chain_dodge_left = { FRAME_c_attack501, FRAME_c_attack505, guncmdr_frames_fire_chain_dodge_left, guncmdr_refire_chain };
 
@@ -425,7 +424,7 @@ static void guncmdr_ai_duckstep_slide(edict_t *self, float dist)
 		return;
 
 	guncmdr_duck_down(self);
-	drone_ai_run_slide(self, dist);
+	drone_ai_dodge_slide(self, dist);
 }
 
 mframe_t guncmdr_frames_attack_mortar[] =
@@ -506,21 +505,21 @@ static void guncmdr_resume_back_attack(edict_t *self)
 
 mframe_t guncmdr_frames_attack_grenade_back_dodge_right[] =
 {
-	ai_charge, 10.2, NULL,
-	ai_charge, 18.0, NULL,
-	ai_charge, 7.0, NULL,
-	ai_charge, 7.2, NULL,
-	ai_charge, -2.0, NULL
+	guncmdr_ai_dodge_slide, 10.2, NULL,
+	guncmdr_ai_dodge_slide, 18.0, NULL,
+	guncmdr_ai_dodge_slide, 7.0, NULL,
+	guncmdr_ai_dodge_slide, 7.2, NULL,
+	guncmdr_ai_dodge_slide, -2.0, NULL
 };
 mmove_t guncmdr_move_attack_grenade_back_dodge_right = { FRAME_c_attack601, FRAME_c_attack605, guncmdr_frames_attack_grenade_back_dodge_right, guncmdr_resume_back_attack };
 
 mframe_t guncmdr_frames_attack_grenade_back_dodge_left[] =
 {
-	ai_charge, 10.2, NULL,
-	ai_charge, 18.0, NULL,
-	ai_charge, 7.0, NULL,
-	ai_charge, 7.2, NULL,
-	ai_charge, -2.0, NULL
+	guncmdr_ai_dodge_slide, 10.2, NULL,
+	guncmdr_ai_dodge_slide, 18.0, NULL,
+	guncmdr_ai_dodge_slide, 7.0, NULL,
+	guncmdr_ai_dodge_slide, 7.2, NULL,
+	guncmdr_ai_dodge_slide, -2.0, NULL
 };
 mmove_t guncmdr_move_attack_grenade_back_dodge_left = { FRAME_c_attack701, FRAME_c_attack705, guncmdr_frames_attack_grenade_back_dodge_left, guncmdr_resume_back_attack };
 
@@ -787,12 +786,17 @@ static void guncmdr_dodge(edict_t *self, edict_t *attacker, vec3_t dir, int radi
 	{
 		if (self->monsterinfo.currentmove == &guncmdr_move_duck_attack &&
 			(radius || guncmdr_dodge_hit_low(self, dir)))
+		{
+			drone_set_dodge_side(self, dir);
 			guncmdr_start_duckstep_dodge(self);
+		}
 		return;
 	}
 
 	if (random() > 0.8)
 		return;
+
+	drone_set_dodge_side(self, dir);
 
 	if (guncmdr_try_sidestep(self))
 	{
@@ -827,7 +831,6 @@ static void guncmdr_dodge(edict_t *self, edict_t *attacker, vec3_t dir, int radi
 
 	if (self->groundentity)
 	{
-		self->monsterinfo.lefty = !self->monsterinfo.lefty;
 		self->monsterinfo.currentmove = &guncmdr_move_dodge_slide;
 		self->monsterinfo.dodge_time = level.time + 1.0;
 		return;
@@ -845,13 +848,13 @@ static qboolean guncmdr_can_proactive_dodge(edict_t *self, float dist)
 static void guncmdr_start_fire_chain_dodge(edict_t *self)
 {
 	guncmdr_duck_up(self);
+	self->monsterinfo.lefty = !self->monsterinfo.lefty;
 
 	if (self->monsterinfo.lefty)
 		self->monsterinfo.currentmove = &guncmdr_move_fire_chain_dodge_left;
 	else
 		self->monsterinfo.currentmove = &guncmdr_move_fire_chain_dodge_right;
 
-	self->monsterinfo.lefty = !self->monsterinfo.lefty;
 	self->monsterinfo.dodge_time = level.time + 1.0;
 }
 
@@ -1184,7 +1187,7 @@ static void guncmdr_ai_dodge_slide(edict_t *self, float dist)
 	if (!G_EntIsAlive(self->enemy))
 		return;
 
-	drone_ai_run_slide(self, dist);
+	drone_ai_dodge_slide(self, dist);
 }
 
 mframe_t guncmdr_frames_dodge_slide[] =
@@ -1208,7 +1211,6 @@ static qboolean guncmdr_try_sidestep(edict_t *self)
 		else
 			self->monsterinfo.currentmove = &guncmdr_move_fire_chain_dodge_right;
 
-		self->monsterinfo.lefty = !self->monsterinfo.lefty;
 		return true;
 	}
 
@@ -1221,7 +1223,6 @@ static qboolean guncmdr_try_sidestep(edict_t *self)
 		else
 			self->monsterinfo.currentmove = &guncmdr_move_attack_grenade_back_dodge_right;
 
-		self->monsterinfo.lefty = !self->monsterinfo.lefty;
 		return true;
 	}
 
@@ -1237,7 +1238,6 @@ static qboolean guncmdr_try_sidestep(edict_t *self)
 		if (random() < 0.45f)
 			return guncmdr_start_duckstep_dodge(self);
 
-		self->monsterinfo.lefty = !self->monsterinfo.lefty;
 		self->monsterinfo.currentmove = &guncmdr_move_dodge_slide;
 		return true;
 	}
@@ -1488,6 +1488,7 @@ static void guncmdr_die(edict_t *self, edict_t *inflictor, edict_t *attacker, in
 	gi.sound(self, CHAN_VOICE, sound_death, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 
 	if (self->monsterinfo.currentmove == &guncmdr_move_pain5 &&
 		self->s.frame < FRAME_c_pain508)

@@ -413,10 +413,10 @@ void drone_ai_checkattack (edict_t *self)
 	// if we see an easier target, go for it
 	if (!visible(self, self->enemy))
 	{
-		self->oldenemy = self->enemy;
-		if (!drone_findtarget(self, false))
-			return;
-		//gi.dprintf("%d going for an easier target\n", self->mtype);
+			self->oldenemy = self->enemy;
+			if (!drone_findtarget(self, false))
+				return;
+			//gi.dprintf("%d going for an easier target\n", self->mtype);
 	}
 
 	//if (!infront(self, self->enemy))
@@ -434,10 +434,10 @@ void drone_ai_checkattack (edict_t *self)
 	if (!tr.ent || tr.ent != self->enemy)
 	{
 		//gi.dprintf("blocked shot\n");
-		if (G_ValidTarget(self, tr.ent, false, true))
-			self->enemy = tr.ent;
-		else
-			return;
+			if (G_ValidTarget(self, tr.ent, false, true))
+				self->enemy = tr.ent;
+			else
+				return;
 	}
 	//AngleVectors(self->s.angles, forward, NULL, NULL);
 	//VectorMA(self->s.origin, self->maxs[1]+8, forward , start);
@@ -540,7 +540,8 @@ void drone_death (edict_t *self, edict_t *attacker)
 
 
 	//4.2 bosses can drop up to 4 runes
-	if (self->mtype == M_COMMANDER || self->mtype == M_SUPERTANK || self->mtype == M_BOSS5 || self->mtype == M_MAKRON || self->mtype == M_BOSS2 || self->mtype == M_CARRIER || self->mtype == M_WIDOW || self->mtype == M_WIDOW2 || self->mtype == M_FIXBOT_BOSS || self->mtype == M_GUARDIAN)
+		if (self->mtype == M_COMMANDER || self->mtype == M_SUPERTANK || self->mtype == M_BOSS5 || self->mtype == M_MAKRON || self->mtype == M_BOSS2 || self->mtype == M_CARRIER
+			|| self->mtype == M_WIDOW || self->mtype == M_WIDOW2 || self->mtype == M_FIXBOT_BOSS || self->mtype == M_GUARDIAN)
 	{
 		edict_t *e;
 		float drop_chance = 0.25;
@@ -913,24 +914,15 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 	case DS_GEKK: init_drone_gekk(drone);		break;
 	case DS_ARACHNID: init_drone_arachnid(drone);	break;
 	case DS_MEDIC_COMMANDER: init_drone_medic_commander(drone);	break;
-	case DS_FIXBOT: init_drone_fixbot(drone); break;
-	case DS_ROGUE_TURRET: init_drone_rogue_turret(drone); break;
-	case DS_BOSS2_SMALL: init_drone_boss2_small(drone); break;
 
 	// bosses
 	case DS_COMMANDER: init_drone_commander(drone);	break;
 	case DS_MAKRON: init_drone_makron(drone);		break;
 	case DS_BARON_FIRE: init_baron_fire(drone);		break;
 	case DS_SUPERTANK: init_drone_supertank(drone);	break;
-	case DS_BOSS5: init_drone_boss5(drone); break;
 	case DS_JORG: init_drone_jorg(drone);		break;
 	case DS_CARRIER: init_drone_carrier(drone);	break;
-	case DS_WIDOW: init_drone_widow(drone);	break;
-	case DS_WIDOW2: init_drone_widow2(drone);	break;
-	case DS_FIXBOT_BOSS: init_drone_fixbot_boss(drone); break;
 	case DS_GUARDIAN: init_drone_guardian(drone); break;
-	case DS_BOSS2: init_drone_boss2(drone); break;
-	case DS_BOSS2_HYPER: init_drone_boss2_hyper(drone); break;
 	case DS_JANITOR: drone->mtype = M_JANITOR; init_drone_supertank(drone); break;
 	case DS_MINIGUARDIAN: drone->mtype = M_MINIGUARDIAN; init_drone_guardian(drone); break;
 
@@ -950,9 +942,6 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 	if (drone_type < 30 ||
 		drone_type == DS_JANITOR ||
 		drone_type == DS_MINIGUARDIAN ||
-		drone_type == DS_FIXBOT ||
-		drone_type == DS_ROGUE_TURRET ||
-		drone_type == DS_BOSS2_SMALL ||
 		drone_type == DS_SOLDIER_RIPPER ||
 		drone_type == DS_SOLDIER_BLUEBLASTER ||
 		drone_type == DS_SOLDIER_LASER)
@@ -2409,7 +2398,7 @@ qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax)
 		break;
 	case M_BERSERK: // az: these were missing...
 		VectorSet(boxmin, -16, -16, -24);
-		VectorSet(boxmax, 16, 16, -8);
+		VectorSet(boxmax, 16, 16, 32);
 		break;
 	case M_GLADIATOR:
 	case M_GLADB:
@@ -2447,7 +2436,7 @@ char *GetMonsterKindString (int mtype)
 		case M_SOLDIER_BLUEBLASTER: return "Hyper Guard";
 		case M_SOLDIER_LASER: return "Laser Guard";
         case M_TANK: return "Tank";
-        case M_SUPERTANK: return "Super Tank";
+		case M_SUPERTANK: return "Super Tank";
         case M_BOSS5: return "Super Tank Heat";
         case M_GUNNER: return "Gunner";
 		case M_YANGSPIRIT: return "Yang Spirit";
@@ -3081,7 +3070,7 @@ void Cmd_Drone_f (edict_t *ent)
 	if (!Q_strcasecmp(s, "help"))
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Monster summoning:\n");
-		safe_cprintf(ent, PRINT_HIGH, "monster [gunner|parasite|brain|praetor|praetor_heat|medic|tank|mutant|gladiator|gladb|gladc|berserker|soldier|ripper|hyper|laser|janitor|janitor2|enforcer|flyer|floater|hover|fixbot|hornet|daedalus|stalker|gekk|arachnid|shambler|redmutant|runnertank|guncmdr]\n");
+		safe_cprintf(ent, PRINT_HIGH, "monster [gunner|parasite|brain|praetor|praetor_heat|medic|tank|mutant|gladiator|gladb|gladc|berserker|soldier|ripper|hyper|laser|janitor|janitor2|enforcer|flyer|floater|hover|daedalus|stalker|gekk|arachnid|shambler|redmutant|runnertank|guncmdr]\n");
 		safe_cprintf(ent, PRINT_HIGH, "Monster utility commands:\n");
 		safe_cprintf(ent, PRINT_HIGH, "monster [remove|command|follow me|count|attack]\n");
 		return;

@@ -25,7 +25,6 @@ void mygunner_fire_chain(edict_t *self);
 void mygunner_delay (edict_t *self);
 void gunner_attack_grenade (edict_t *self);
 void gunner_refire_grenade (edict_t *self);
-void drone_ai_run_slide(edict_t *self, float dist);
 
 void mygunneridlesound (edict_t *self)
 {
@@ -193,19 +192,19 @@ static void mygunner_ai_dodge_slide(edict_t *self, float dist)
 	if (!G_EntIsAlive(self->enemy))
 		return;
 
-	drone_ai_run_slide(self, dist);
+	drone_ai_dodge_slide(self, dist);
 }
 
 mframe_t mygunner_frames_dodge_slide[] =
 {
-	mygunner_ai_dodge_slide, 25, NULL,
-	mygunner_ai_dodge_slide, 25, NULL,
-	mygunner_ai_dodge_slide, 25, NULL,
-	mygunner_ai_dodge_slide, 25, NULL,
-	mygunner_ai_dodge_slide, 25, NULL,
-	mygunner_ai_dodge_slide, 25, NULL,
-	mygunner_ai_dodge_slide, 25, NULL,
-	mygunner_ai_dodge_slide, 25, NULL
+	mygunner_ai_dodge_slide, 26, NULL,
+	mygunner_ai_dodge_slide, 9,  NULL,
+	mygunner_ai_dodge_slide, 9,  NULL,
+	mygunner_ai_dodge_slide, 9,  NULL,
+	mygunner_ai_dodge_slide, 15, NULL,
+	mygunner_ai_dodge_slide, 10, NULL,
+	mygunner_ai_dodge_slide, 13, NULL,
+	mygunner_ai_dodge_slide, 6,  NULL
 };
 mmove_t mygunner_move_dodge_slide = {FRAME_run01, FRAME_run08, mygunner_frames_dodge_slide, mygunnerrun};
 
@@ -691,9 +690,10 @@ void mygunner_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
 		self->enemy = attacker;
 	if (!radius)
 	{
+		drone_set_dodge_side(self, dir);
+
 		if (mygunner_dodge_hit_low(self, dir) && !(self->monsterinfo.aiflags & AI_STAND_GROUND))
 		{
-			self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
 			self->monsterinfo.currentmove = &mygunner_move_dodge_slide;
 		}
 		else
@@ -816,12 +816,19 @@ void mygunnerdead (edict_t *self)
 	M_PrepBodyRemoval(self);
 }
 
+static void mygunner_shrink(edict_t *self)
+{
+	self->maxs[2] = -4;
+	self->svflags |= SVF_DEADMONSTER;
+	gi.linkentity(self);
+}
+
 mframe_t mygunnerframes_death [] =
 {
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
-	ai_move, -7, NULL,
+	ai_move, -7, mygunner_shrink,
 	ai_move, -3, NULL,
 	ai_move, -5, NULL,
 	ai_move, 8,	 NULL,
@@ -880,6 +887,7 @@ void mygunnerdie (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	gi.sound (self, CHAN_VOICE, sound_death, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 	self->monsterinfo.currentmove = &mygunnermove_death;
 
 	if (self->activator && !self->activator->client)
