@@ -15,7 +15,6 @@ option(VRX_REMOVERESPAWNS "Remove the usage of the respawns system." TRUE)
 option(VRX_USEHASH "Use hashing on commands instead of iterating through the list." TRUE)
 option(VRX_Q2PRO "Use map/gamemap differentiation (for q2pro)." TRUE)
 option(VRX_OLD_NOLAG "Use old NOLAG style. Not recommended." FALSE)
-option(VRX_OLD_VOTE "Use old vote system." FALSE)
 option(VRX_REPRO "Support q2repro (remaster, EXPERIMENTAL)" TRUE)
 option(BUILD_TESTS "Build test driver" FALSE)
 
@@ -137,9 +136,6 @@ if (VRX_OLD_NOLAG)
     add_definitions(-DOLD_NOLAG_STYLE)
 endif ()
 
-if (VRX_OLD_VOTE)
-    add_definitions(-DOLD_VOTE_SYSTEM)
-endif ()
 
 if (VRX_USEHASH)
     add_definitions(-DCMD_USEHASH)

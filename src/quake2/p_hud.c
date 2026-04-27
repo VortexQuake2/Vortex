@@ -1120,7 +1120,7 @@ void G_SetStats(edict_t *ent)
 	else
 		ent->client->ps.stats[STAT_INVASIONTIME] = 0;
 
-	if (V_VoteInProgress() && !G_IsSpectator(ent)) // show message only to non spectators
+	if (vrx_vote_is_in_progress() && !G_IsSpectator(ent)) // show message only to non spectators
 		ent->client->ps.stats[STAT_VOTESTRING] = CS_GENERAL + MAX_CLIENTS + 1;
 	else
 		ent->client->ps.stats[STAT_VOTESTRING] = 0;

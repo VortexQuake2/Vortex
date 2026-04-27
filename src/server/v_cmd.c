@@ -142,7 +142,7 @@ const gameCommand_s commands[] =
 	{ "vrxarmory", 		OpenArmoryMenu },
 	{ "vrxrespawn", 	OpenRespawnWeapMenuFirstPage },
 	{ "thrust",         Cmd_Thrust_f  },
-	{ "vote", 			ShowVoteModeMenu },
+	{ "vote", 			vrx_vote_cmd },
 	{ "wormhole",	    Cmd_WormHole_f },
 	{ "update",		    vrx_normalize_abilities},
 	{ "berserker",	    Cmd_PlayerToBerserk_f },

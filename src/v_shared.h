@@ -263,13 +263,7 @@ void vrx_player_death(edict_t *self, edict_t *attacker, edict_t *inflictor);
 void vrx_morph_think(edict_t* ent, usercmd_t* ucmd);
 void V_Player_Touchdown(edict_t* ent);
 //************ vote.c *************
-void CheckPlayerVotes(void);
-void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode);
-int FindBestMap(int mode);
-v_maplist_t *GetMapList(int mode);
-int V_AttemptModeChange(qboolean endlevel);
-void V_VoteReset(); // az: just for cleanliness
-//************ vote.c *************
+#include "server/vote.h"
 
 //*********** weapons.c ***********
 void vrx_reset_weapon_maximums(edict_t *ent);
@@ -333,7 +327,6 @@ void OpenArmoryMenu(edict_t *ent);										//Load the armory (buy/sell)
 void OpenClassMenu(edict_t *ent, int page_num);						//select class
 void OpenMyinfoMenu(edict_t *ent);										//vrxifo
 void ShowTradeMenu(edict_t *ent);										//trade with another player
-void ShowVoteModeMenu(edict_t *ent);									//vote for mode/map
 void StartShowInventoryMenu(edict_t *ent, item_t *item);				//used for trading, selling, deleting, and viewing items
 void ShowHelpMenu(edict_t *ent, int lastpick);							//help menu
 void OpenGeneralMenu(edict_t *ent);									//general vrx menu

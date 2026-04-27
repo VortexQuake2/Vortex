@@ -639,9 +639,10 @@ void generalmenu_handler (edict_t *ent, int option)
 	case 8: ShowInventoryMenu(ent, 0, false); break;
 	case 9: ShowAllyMenu(ent); break;
 	case 10: ShowTradeMenu(ent); break;
-	case 11: ShowVoteModeMenu(ent); break;
+	case 11: vrx_vote_map(ent); break;
 	case 12: ShowHelpMenu(ent, 0); break;
 	case 13: Cmd_Armory_f(ent, 30); break;
+	case 14: vrx_vote_bots(ent);
 	case 20: vrx_prestige_open_menu(ent); break;
 	default: menu_close(ent, true);
 	}
@@ -680,8 +681,10 @@ void OpenGeneralMenu (edict_t *ent)
 		menu_add_line(ent, va("Prestige %d (%d)", ent->myskills.prestige.total, prestigePotential), 20);
 	else
 		menu_add_line(ent, va("Prestige %d", ent->myskills.prestige.total), 20);
+	menu_add_line(ent, "Access your items", 8);
 
-    menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " ", 0);
+
     if (!vrx_is_morphing_polt(ent) &&
         ent->myskills.class_num != CLASS_KNIGHT)
         menu_add_line(ent, "Set respawn weapon", 4);
@@ -689,16 +692,16 @@ void OpenGeneralMenu (edict_t *ent)
 	if (ent->myskills.masterpw[0] == '\0')
 		menu_add_line(ent, "Set master password", 5);
 
-
     menu_add_line(ent, "Show character info", 6);
+    menu_add_line(ent, " ", 0);
     menu_add_line(ent, "Access the armory", 7);
-    menu_add_line(ent, "Access your items", 8);
 
     if (!invasion->value) // az: don't need this there.
         menu_add_line(ent, "Form alliance", 9);
 
     menu_add_line(ent, "Trade items", 10);
     menu_add_line(ent, "Vote for map/mode", 11);
+	menu_add_line(ent, "Vote for bots", 14);
     menu_add_line(ent, "Help", 12);
 
 #ifndef REMOVE_RESPAWNS

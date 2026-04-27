@@ -13,13 +13,13 @@ qboolean menu_active (edict_t *ent,int index, void (*optionselected)(edict_t *en
 	return (ent->client->menustorage.optionselected == optionselected);
 }
 
-void menu_add_line (edict_t *ent, const char *line,int option)
+int menu_add_line (edict_t *ent, const char *line,int option)
 {
 	if (ent->client->menustorage.menu_active) // checks to see if the menu is showing
-		return;
+		return 0;
 	// Menu lines are 1-based in storage; index 0 is unused.
 	if (ent->client->menustorage.num_of_lines >= (MAX_LINES - 1)) // checks to see if there is space
-		return;
+		return MAX_LINES;
 		
 	ent->client->menustorage.num_of_lines++; // adds to the number of lines that can be seen
 
@@ -27,6 +27,8 @@ void menu_add_line (edict_t *ent, const char *line,int option)
 	ent->client->menustorage.messages[ent->client->menustorage.num_of_lines].msg = vrx_malloc (size, TAG_GAME);
 	strcpy(ent->client->menustorage.messages[ent->client->menustorage.num_of_lines].msg, line);
 	ent->client->menustorage.messages[ent->client->menustorage.num_of_lines].option = option;
+
+	return ent->client->menustorage.num_of_lines;
 }
 
 void menu_clear(edict_t *ent)

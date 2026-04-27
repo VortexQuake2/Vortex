@@ -676,7 +676,7 @@ void SpawnEntities (char *mapname, const char *entities, char *spawnpoint)
 	memset (g_edicts, 0, game.maxentities * sizeof (g_edicts[0]));
 
 	// az begin
-	V_VoteReset();
+	vrx_vote_reset();
 	cs_reset();
 	seedMT(time(NULL));
 	if (!vrx_relay_is_connected())
@@ -875,6 +875,9 @@ char *single_statusbar =
 ;
 
 char *dm_statusbar =
+#ifdef VRX_REPRO
+"mono "
+#endif
 "yb	-72 "
 // health
 "xl	24 "

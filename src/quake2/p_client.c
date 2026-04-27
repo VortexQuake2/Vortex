@@ -2436,7 +2436,7 @@ Called when a player drops from the server.
 Will not be called between levels.
 ============
 */
-void KillMyVote (edict_t *ent);
+void vrx_vote_kill (edict_t *ent);
 void soldier_die(edict_t *ent);
 void turret_remove(edict_t *ent);
 void SaveCharacterQuit (edict_t *ent);
@@ -2451,7 +2451,7 @@ void ClientDisconnect (edict_t *ent)
 	if (!ent->client)
 		return;
 
-	KillMyVote (ent);
+	vrx_vote_kill (ent);
 
 	vrx_relay_notify_client_disconnected(ent->client->pers.netname);
     vrx_clean_damage_list(ent, true);
