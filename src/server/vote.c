@@ -59,7 +59,7 @@ void vrx_votes_run() {
 
             //Change the map
             // az note: internally, V_ChangeMap will reset the votes!
-            EndDMLevel();
+            currentVote.success(currentVote.udata);
         } else {
             gi.bprintf(PRINT_CHAT, "Vote failed.\n");
             vrx_vote_reset();
