@@ -447,11 +447,17 @@ void mychick_jump_hold (edict_t *self)
 	}
 }
 
+static void mychick_jump_hold_ai(edict_t *self, float dist)
+{
+	ai_move(self, dist);
+	mychick_jump_hold(self);
+}
+
 mframe_t mychick_frames_leap [] =
 {
 	ai_move, 0, mychick_jump_takeoff,
 	ai_move, 0, NULL,
-	ai_move, 0, mychick_jump_hold,
+	mychick_jump_hold_ai, 0, NULL,
 	ai_move, 0,  NULL,
 	ai_move, 0,  NULL,
 	ai_move, 0, NULL,
@@ -493,6 +499,17 @@ static void mychick_start_duck(edict_t *self)
 	self->monsterinfo.dodge_time = level.time + 2.0f;
 }
 
+static qboolean mychick_start_sidestep(edict_t *self, vec3_t dir)
+{
+	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+		return false;
+
+	drone_set_dodge_side(self, dir);
+	self->monsterinfo.currentmove = &mychick_move_dodge_slide;
+	self->monsterinfo.dodge_time = level.time + 1.0f;
+	return true;
+}
+
 static void mychick_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
 {
 	if (level.time < self->monsterinfo.dodge_time)
@@ -513,8 +530,7 @@ static void mychick_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int rad
 	self->monsterinfo.attacker = attacker;
 	if (radius)
 	{
-		mychick_leap(self);
-		self->monsterinfo.dodge_time = level.time + 3.0f;
+		mychick_start_sidestep(self, dir);
 		return;
 	}
 
@@ -524,14 +540,8 @@ static void mychick_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int rad
 		return;
 	}
 
-	drone_set_dodge_side(self, dir);
-
-	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND))
-	{
-		self->monsterinfo.currentmove = &mychick_move_dodge_slide;
-		self->monsterinfo.dodge_time = level.time + 1.0f;
+	if (mychick_start_sidestep(self, dir))
 		return;
-	}
 
 	mychick_start_duck(self);
 }
@@ -597,6 +607,9 @@ void myChickFireball (edict_t *self)
 	speed = 650 + 35 * slvl; // spd: myChickFireball
 
 	MonsterAim(self, M_PROJECTILE_ACC, speed, true, MZ2_CHICK_ROCKET_1, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	fire_fireball(self, start, forward, damage, 125.0, speed, 5, flame_damage);
 
     gi.sound(self, CHAN_ITEM, gi.soundindex("abilities/firecast.wav"), 1, ATTN_NORM, 0);
@@ -626,6 +639,9 @@ void myChickRocket (edict_t *self)
 		speed = M_ROCKETLAUNCHER_SPEED_MAX;
 
 	MonsterAim(self, M_PROJECTILE_ACC, speed, true, MZ2_CHICK_ROCKET_1, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	if (self->mtype == M_CHICK_HEAT)
 	{
 		monster_fire_heat(self, start, forward, damage, speed, MZ2_CHICK_ROCKET_1, 0.095f);
@@ -645,6 +661,9 @@ void myChickRail (edict_t *self)
 		damage = 50 + 10 * drone_damagelevel(self); // dmg: myChickRailWorld
 
 	MonsterAim(self, 0.33, 0, false, MZ2_CHICK_ROCKET_1, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	monster_fire_railgun (self, start, forward, damage, damage, MZ2_GLADIATOR_RAILGUN_1);
 }	
 
@@ -709,7 +728,7 @@ mmove_t mychick_move_end_attack1 = {FRAME_attak128, FRAME_attak132, mychick_fram
 
 void mychick_rerocket(edict_t *self)
 {
-	if (G_ValidTarget(self, self->enemy, true, true)) 
+	if (G_ValidTarget(self, self->enemy, true, true) && M_MonsterHasClearShotFromFlash(self, MZ2_CHICK_ROCKET_1))
 	{
 		if (random() <= 0.8 && (entdist(self, self->enemy) <= 512 || (self->monsterinfo.aiflags & AI_STAND_GROUND)))
 			self->monsterinfo.currentmove = &mychick_move_attack1;
@@ -744,7 +763,7 @@ void mychick_runandshoot (edict_t *self)
 void mychick_continue (edict_t *self)
 {
 	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.9)
-		&& (entdist(self, self->enemy) <= 512)) 
+		&& (entdist(self, self->enemy) <= 512) && M_MonsterHasClearShotFromFlash(self, MZ2_CHICK_ROCKET_1)) 
 	{
 		self->monsterinfo.currentmove = &mychick_move_runandshoot;
 		
@@ -842,7 +861,9 @@ void chick_fire_attack (edict_t *self)
 		}
 		else
 		{
-			if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+			if (!M_MonsterHasClearShotFromFlash(self, MZ2_CHICK_ROCKET_1))
+				self->monsterinfo.currentmove = &mychick_move_slash;
+			else if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 				self->monsterinfo.currentmove = &mychick_move_attack1;
 			else
 				mychick_runandshoot(self);
@@ -863,6 +884,9 @@ void mychick_attack(edict_t *self)
 		chick_fire_attack(self);
 		return;
 	}
+
+	if (!M_MonsterHasClearShotFromFlash(self, MZ2_CHICK_ROCKET_1))
+		return;
 
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 		self->monsterinfo.currentmove = &mychick_move_attack1;

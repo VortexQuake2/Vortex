@@ -303,6 +303,9 @@ static void GunnerCmdrFire(edict_t *self)
 		damage = M_SHOTGUN_DMG_MAX;
 
 	MonsterAim(self, M_PROJECTILE_ACC, 800, false, flash_number, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_flechette(self, start, forward, damage, 800, damage);
 
@@ -413,6 +416,9 @@ static void GunnerCmdrGrenade(edict_t *self)
 
 	flash_number = guncmdr_grenade_flash(self);
 	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash_number, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	monster_fire_grenade(self, start, forward, damage, speed, flash_number);
 }
 
@@ -677,6 +683,12 @@ static void guncmdr_jump_wait_land(edict_t *self)
 		self->monsterinfo.nextframe = self->s.frame + 1;
 }
 
+static void guncmdr_jump_wait_land_ai(edict_t *self, float dist)
+{
+	ai_move(self, dist);
+	guncmdr_jump_wait_land(self);
+}
+
 mframe_t guncmdr_frames_jump[] =
 {
 	ai_move, 0, NULL,
@@ -685,7 +697,7 @@ mframe_t guncmdr_frames_jump[] =
 	ai_move, 0, guncmdr_jump_now,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
-	ai_move, 0, guncmdr_jump_wait_land,
+	guncmdr_jump_wait_land_ai, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL
@@ -700,7 +712,7 @@ mframe_t guncmdr_frames_jump2[] =
 	ai_move, 0, guncmdr_jump2_now,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
-	ai_move, 0, guncmdr_jump_wait_land,
+	guncmdr_jump_wait_land_ai, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL
@@ -845,6 +857,21 @@ static qboolean guncmdr_can_proactive_dodge(edict_t *self, float dist)
 		&& level.time >= self->monsterinfo.dodge_time;
 }
 
+static qboolean guncmdr_can_chain(edict_t *self)
+{
+	return M_MonsterHasClearShotFromFlash(self, MZ2_GUNNER_MACHINEGUN_1);
+}
+
+static qboolean guncmdr_can_dodge_chain(edict_t *self)
+{
+	return M_MonsterHasClearShotFromFlash(self, MZ2_GUNNER_MACHINEGUN_2);
+}
+
+static qboolean guncmdr_can_grenade(edict_t *self)
+{
+	return M_MonsterHasClearShotFromFlash(self, MZ2_GUNNER_GRENADE_1);
+}
+
 static void guncmdr_start_fire_chain_dodge(edict_t *self)
 {
 	guncmdr_duck_up(self);
@@ -863,6 +890,8 @@ static void guncmdr_attack(edict_t *self)
 	float dist;
 	float zdiff;
 	float r;
+	qboolean can_chain;
+	qboolean can_grenade;
 
 	if (!G_ValidTarget(self, self->enemy, true, true))
 		return;
@@ -872,26 +901,35 @@ static void guncmdr_attack(edict_t *self)
 	dist = entdist(self, self->enemy);
 	zdiff = fabs(self->s.origin[2] - self->enemy->s.origin[2]);
 	r = random();
+	can_chain = guncmdr_can_chain(self);
+	can_grenade = guncmdr_can_grenade(self);
+
 	if (dist <= MELEE_DISTANCE && self->monsterinfo.melee_finished < level.time)
 		self->monsterinfo.currentmove = &guncmdr_move_attack_kick;
-	else if (guncmdr_can_proactive_dodge(self, dist) && r < 0.55)
+	else if (can_chain && guncmdr_can_proactive_dodge(self, dist) && r < 0.55)
 		guncmdr_start_fire_chain_dodge(self);
-	else if ((dist >= GUNCMDR_MORTAR_RANGE || zdiff > 96) && r < 0.75)
+	else if (can_grenade && (dist >= GUNCMDR_MORTAR_RANGE || zdiff > 96) && r < 0.75)
 	{
 		self->monsterinfo.currentmove = &guncmdr_move_attack_mortar;
 		guncmdr_duck_down(self);
 	}
-	else if (self->groundentity && dist > 96 && dist < GUNCMDR_CHAINGUN_RUN_RANGE && r < 0.05)
+	else if (can_grenade && self->groundentity && dist > 96 && dist < GUNCMDR_CHAINGUN_RUN_RANGE && r < 0.05)
 	{
 		self->monsterinfo.pausetime = level.time + 0.75f;
 		self->monsterinfo.currentmove = &guncmdr_move_duck_attack;
 		guncmdr_duck_down(self);
 		self->monsterinfo.dodge_time = level.time + 1.8f;
 	}
-	else if (!(self->monsterinfo.aiflags & AI_STAND_GROUND) && dist > GUNCMDR_GRENADE_RANGE && r < 0.90)
+	else if (can_grenade && !(self->monsterinfo.aiflags & AI_STAND_GROUND) && dist > GUNCMDR_GRENADE_RANGE && r < 0.90)
 		self->monsterinfo.currentmove = &guncmdr_move_attack_grenade_back;
-	else
+	else if (can_chain)
 		self->monsterinfo.currentmove = &guncmdr_move_attack_chain;
+	else if (can_grenade)
+	{
+		self->monsterinfo.currentmove = &guncmdr_move_attack_grenade_back;
+	}
+	else
+		return;
 
 	M_DelayNextAttack(self, 0, true);
 }
@@ -902,15 +940,19 @@ static void guncmdr_fire_chain(edict_t *self)
 	{
 		float dist = entdist(self, self->enemy);
 
-		if (guncmdr_can_proactive_dodge(self, dist))
+		if (guncmdr_can_dodge_chain(self) && guncmdr_can_proactive_dodge(self, dist))
 			guncmdr_start_fire_chain_dodge(self);
-		else if (dist > GUNCMDR_CHAINGUN_RUN_RANGE)
+		else if (guncmdr_can_chain(self) && dist > GUNCMDR_CHAINGUN_RUN_RANGE)
 			self->monsterinfo.currentmove = &guncmdr_move_fire_chain_run;
-		else
+		else if (guncmdr_can_chain(self))
 			self->monsterinfo.currentmove = &guncmdr_move_fire_chain;
+		else
+			self->monsterinfo.currentmove = &guncmdr_move_endfire_chain;
 	}
-	else
+	else if (guncmdr_can_chain(self))
 		self->monsterinfo.currentmove = &guncmdr_move_fire_chain;
+	else
+		self->monsterinfo.currentmove = &guncmdr_move_endfire_chain;
 }
 
 static void guncmdr_refire_chain(edict_t *self)
@@ -921,12 +963,14 @@ static void guncmdr_refire_chain(edict_t *self)
 	{
 		float dist = entdist(self, self->enemy);
 
-		if (guncmdr_can_proactive_dodge(self, dist) && random() < 0.65)
+		if (guncmdr_can_dodge_chain(self) && guncmdr_can_proactive_dodge(self, dist) && random() < 0.65)
 			guncmdr_start_fire_chain_dodge(self);
-		else if (!(self->monsterinfo.aiflags & AI_STAND_GROUND) && dist > GUNCMDR_CHAINGUN_RUN_RANGE)
+		else if (guncmdr_can_chain(self) && !(self->monsterinfo.aiflags & AI_STAND_GROUND) && dist > GUNCMDR_CHAINGUN_RUN_RANGE)
 			self->monsterinfo.currentmove = &guncmdr_move_fire_chain_run;
-		else
+		else if (guncmdr_can_chain(self))
 			self->monsterinfo.currentmove = &guncmdr_move_fire_chain;
+		else
+			self->monsterinfo.currentmove = &guncmdr_move_endfire_chain;
 	}
 	else
 		self->monsterinfo.currentmove = &guncmdr_move_endfire_chain;

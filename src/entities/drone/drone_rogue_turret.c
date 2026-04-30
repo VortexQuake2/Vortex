@@ -118,6 +118,24 @@ static void rogue_turret_aim(edict_t *self)
 	rogue_turret_update_laser(self);
 }
 
+static void rogue_turret_aim_stand_ai(edict_t *self, float dist)
+{
+	drone_ai_stand(self, dist);
+	rogue_turret_aim(self);
+}
+
+static void rogue_turret_aim_move_ai(edict_t *self, float dist)
+{
+	ai_move(self, dist);
+	rogue_turret_aim(self);
+}
+
+static void rogue_turret_aim_charge_ai(edict_t *self, float dist)
+{
+	ai_charge(self, dist);
+	rogue_turret_aim(self);
+}
+
 static void rogue_turret_fire(edict_t *self)
 {
 	vec3_t forward;
@@ -157,8 +175,8 @@ static void rogue_turret_fire(edict_t *self)
 
 static mframe_t rogue_turret_frames_stand[] =
 {
-	drone_ai_stand, 0, rogue_turret_aim,
-	drone_ai_stand, 0, rogue_turret_aim
+	rogue_turret_aim_stand_ai, 0, NULL,
+	rogue_turret_aim_stand_ai, 0, NULL
 };
 static mmove_t rogue_turret_move_stand = { TURRET_FRAME_stand01, TURRET_FRAME_stand02, rogue_turret_frames_stand, NULL };
 
@@ -171,13 +189,13 @@ static void rogue_turret_stand(edict_t *self)
 
 static mframe_t rogue_turret_frames_ready[] =
 {
-	ai_move, 0, rogue_turret_aim,
-	ai_move, 0, rogue_turret_aim,
-	ai_move, 0, rogue_turret_aim,
-	ai_move, 0, rogue_turret_aim,
-	ai_move, 0, rogue_turret_aim,
-	ai_move, 0, rogue_turret_aim,
-	ai_move, 0, rogue_turret_aim
+	rogue_turret_aim_move_ai, 0, NULL,
+	rogue_turret_aim_move_ai, 0, NULL,
+	rogue_turret_aim_move_ai, 0, NULL,
+	rogue_turret_aim_move_ai, 0, NULL,
+	rogue_turret_aim_move_ai, 0, NULL,
+	rogue_turret_aim_move_ai, 0, NULL,
+	rogue_turret_aim_move_ai, 0, NULL
 };
 static mmove_t rogue_turret_move_ready = { TURRET_FRAME_active01, TURRET_FRAME_run01, rogue_turret_frames_ready, rogue_turret_run };
 
@@ -193,8 +211,8 @@ static void rogue_turret_ready(edict_t *self)
 
 static mframe_t rogue_turret_frames_run[] =
 {
-	drone_ai_stand, 0, rogue_turret_active,
-	drone_ai_stand, 0, rogue_turret_active
+	rogue_turret_aim_stand_ai, 0, rogue_turret_active,
+	rogue_turret_aim_stand_ai, 0, rogue_turret_active
 };
 static mmove_t rogue_turret_move_run = { TURRET_FRAME_run01, TURRET_FRAME_run02, rogue_turret_frames_run, rogue_turret_run };
 
@@ -217,10 +235,10 @@ static void rogue_turret_run(edict_t *self)
 
 static mframe_t rogue_turret_frames_fire[] =
 {
-	ai_charge, 0, rogue_turret_aim,
-	ai_charge, 0, rogue_turret_fire,
-	ai_charge, 0, rogue_turret_aim,
-	ai_charge, 0, rogue_turret_aim
+	rogue_turret_aim_charge_ai, 0, NULL,
+	rogue_turret_aim_charge_ai, 0, rogue_turret_fire,
+	rogue_turret_aim_charge_ai, 0, NULL,
+	rogue_turret_aim_charge_ai, 0, NULL
 };
 static mmove_t rogue_turret_move_fire = { TURRET_FRAME_pow01, TURRET_FRAME_pow04, rogue_turret_frames_fire, rogue_turret_run };
 

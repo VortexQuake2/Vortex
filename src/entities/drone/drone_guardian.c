@@ -60,6 +60,63 @@ static void guardian_project_laser_frame_origin(edict_t *self, vec3_t forward, v
 	G_ProjectSource(self->s.origin, offset, forward, right, start);
 }
 
+static void guardian_project_laser_origin(edict_t *self, qboolean secondary, vec3_t forward, vec3_t right, vec3_t start)
+{
+	vec3_t offset;
+
+	if (secondary)
+		VectorSet(offset, 112, -62, 60);
+	else
+		VectorSet(offset, 125, -70, 60);
+
+	if (guardian_scale(self) != 1.0f)
+		VectorScale(offset, guardian_scale(self), offset);
+
+	G_ProjectSource(self->s.origin, offset, forward, right, start);
+}
+
+static qboolean guardian_has_origin_shot(edict_t *self, vec3_t start)
+{
+	return M_MonsterHasClearShotFrom(self, start);
+}
+
+static qboolean guardian_has_laser_shot(edict_t *self, qboolean secondary)
+{
+	vec3_t forward, right, start;
+
+	AngleVectors(self->s.angles, forward, right, NULL);
+	guardian_project_laser_origin(self, secondary, forward, right, start);
+	return guardian_has_origin_shot(self, start);
+}
+
+static qboolean guardian_has_blaster_shot(edict_t *self)
+{
+	if (self->mtype == M_MINIGUARDIAN)
+		return M_MonsterHasClearShotFromFlash(self, MZ2_SOLDIER_RIPPER_8);
+
+	return M_MonsterHasClearShotFromFlash(self, MZ2_GUARDIAN_BLASTER);
+}
+
+static qboolean guardian_has_grenade_or_laser_shot(edict_t *self)
+{
+	if (self->mtype == M_MINIGUARDIAN)
+		return guardian_has_laser_shot(self, false) || guardian_has_laser_shot(self, true);
+
+	return guardian_has_laser_shot(self, false) || guardian_has_laser_shot(self, true);
+}
+
+static qboolean guardian_has_rocket_shot(edict_t *self, float offset)
+{
+	vec3_t forward, right, up, start;
+
+	AngleVectors(self->s.angles, forward, right, up);
+	VectorCopy(self->s.origin, start);
+	VectorMA(start, -8 * guardian_scale(self), forward, start);
+	VectorMA(start, offset * guardian_scale(self), right, start);
+	VectorMA(start, 50 * guardian_scale(self), up, start);
+	return guardian_has_origin_shot(self, start);
+}
+
 static void guardian_footstep(edict_t *self)
 {
 	gi.sound(self, CHAN_BODY, sound_step, 1, ATTN_NORM, 0);
@@ -263,6 +320,9 @@ void guardian_fire_blaster(edict_t *self)
 		if (M_IONRIPPER_SPEED_MAX && speed > M_IONRIPPER_SPEED_MAX)
 			speed = M_IONRIPPER_SPEED_MAX;
 		MonsterAim(self, M_PROJECTILE_ACC, speed, false, MZ2_SOLDIER_RIPPER_8, forward, start);
+		if (!M_MonsterHasClearShotFrom(self, start))
+			return;
+
 		monster_fire_ionripper(self, start, forward, damage, speed, EF_IONRIPPER, MZ2_SOLDIER_RIPPER_8);
 	}
 	else
@@ -276,6 +336,9 @@ void guardian_fire_blaster(edict_t *self)
 		AngleVectors(self->s.angles, forward, right, NULL);
 		guardian_project_flash(self, MZ2_GUARDIAN_BLASTER, forward, right, start);
 		MonsterAim(self, M_PROJECTILE_ACC, speed, false, -1, forward, start);
+		if (!M_MonsterHasClearShotFrom(self, start))
+			return;
+
 		monster_fire_blaster(self, start, forward, damage, speed, effect, BLASTER_PROJ_BOLT, 2.0, true, MZ2_GUARDIAN_BLASTER);
 	}
 
@@ -362,6 +425,9 @@ void guardian_grenade(edict_t *self)
 		flash_number = -1;
 	}
 	MonsterAim(self, M_PROJECTILE_ACC, speed, true, flash_number, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	monster_fire_grenade(self, start, forward, damage, speed, flash_number);
 }
 
@@ -378,6 +444,9 @@ void guardian_laser_fire(edict_t *self)
 		damage = M_DABEAM_DMG_MAX;
 	if (self->mtype == M_GUARDIAN)
 		damage += 10 + 2 * drone_damagelevel(self);
+	if (!guardian_has_laser_shot(self, self->s.frame & 1))
+		return;
+
 	monster_fire_dabeam(self, damage, self->s.frame & 1, NULL);
 }
 
@@ -433,6 +502,8 @@ void guardian_fire_rocket(edict_t *self, float offset)
 	VectorMA(start, -8 * guardian_scale(self), forward, start);
 	VectorMA(start, offset * guardian_scale(self), right, start);
 	VectorMA(start, 50 * guardian_scale(self), up, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
 
 	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * drone_damagelevel(self);
 	if (M_ROCKETLAUNCHER_SPEED_MAX && speed > M_ROCKETLAUNCHER_SPEED_MAX)
@@ -527,25 +598,35 @@ mmove_t guardian_move_kick = {FRAME_kick_in1, FRAME_kick_in13, guardian_frames_k
 void guardian_attack(edict_t *self)
 {
 	float dist;
+	qboolean can_blaster;
+	qboolean can_atk2;
+	qboolean can_rocket;
 
 	if (!G_EntExists(self->enemy))
 		return;
 
 	dist = entdist(self, self->enemy);
+	can_blaster = guardian_has_blaster_shot(self);
+	can_atk2 = guardian_has_grenade_or_laser_shot(self);
+	can_rocket = guardian_has_rocket_shot(self, -14.0f) || guardian_has_rocket_shot(self, 14.0f);
 
 	if (self->mtype == M_GUARDIAN && self->monsterinfo.melee_finished < level.time && dist < 160)
 		self->monsterinfo.currentmove = &guardian_move_kick;
 	else if (self->mtype != M_GUARDIAN && self->monsterinfo.melee_finished < level.time && dist < 120)
 		self->monsterinfo.currentmove = &guardian_move_kick;
-	else if (self->mtype == M_GUARDIAN && dist > 300 && self->count <= 0 && random() < 0.25)
+	else if (can_rocket && self->mtype == M_GUARDIAN && dist > 300 && self->count <= 0 && random() < 0.25)
 	{
 		self->monsterinfo.currentmove = &guardian_move_rocket;
 		self->count = 6;
 	}
-	else if (dist > 512 || (self->mtype == M_GUARDIAN && dist > 300 && random() < 0.5))
+	else if (can_atk2 && (dist > 512 || (self->mtype == M_GUARDIAN && dist > 300 && random() < 0.5)))
+		self->monsterinfo.currentmove = &guardian_move_atk2_in;
+	else if (can_blaster)
+		self->monsterinfo.currentmove = &guardian_move_atk1_in;
+	else if (can_atk2)
 		self->monsterinfo.currentmove = &guardian_move_atk2_in;
 	else
-		self->monsterinfo.currentmove = &guardian_move_atk1_in;
+		return;
 
 	if (self->mtype == M_GUARDIAN && self->count > 0)
 		self->count--;

@@ -425,19 +425,9 @@ void ShamblerCastLightning(edict_t* self)
 	gi.WritePosition(tr.endpos);
 	gi.multicast(start, MULTICAST_PVS);
 
-
-	//apply dmg!
-
-
-
-	if (tr.fraction < 1.0 && tr.ent)
+	if (tr.fraction < 1.0f && tr.ent)
 	{
-		//int damage = M_SHAMBLER_LIGHTNING_BASE_DMG + M_SHAMBLER_ADDON_LIGHTNING_DMG; //* self->monsterinfo.level; ?
 		const int damage = 4 + 3 * drone_damagelevel(self);
-
-		//if (M_SHAMBLER_LIGHTNING_MAX_DMG && damage > M_SHAMBLER_LIGHTNING_MAX_DMG)
-		//	damage = M_SHAMBLER_LIGHTNING_MAX_DMG;
-
 		T_Damage(tr.ent, self, self, dir, tr.endpos, tr.plane.normal, damage, 0, DAMAGE_ENERGY, MOD_LIGHTNING);
 	}
 }
@@ -457,44 +447,6 @@ mframe_t shambler_frames_magic[] = {
 	{ai_move, 0, NULL},
 };
 mmove_t shambler_move_attack = { FRAME_magic1, FRAME_magic12, shambler_frames_magic, shambler_run };
-
-
-//fiery skull attack
-
-static void shambler_fieryskull_update(edict_t* self)
-{
-	const int frame_offset = self->s.frame - FRAME_magic1;
-	if (frame_offset >= MAX_LIGHTNING_FRAMES)
-	{
-		return;
-	}
-
-	vec3_t f, r;
-	AngleVectors(self->s.angles, f, r, NULL);
-
-	vec3_t left_pos, right_pos;
-	VectorMA(self->s.origin, lightning_left_hand[frame_offset][0], f, left_pos);
-	VectorMA(left_pos, lightning_left_hand[frame_offset][1], r, left_pos);
-	left_pos[2] += lightning_left_hand[frame_offset][2];
-
-	VectorMA(self->s.origin, lightning_right_hand[frame_offset][0], f, right_pos);
-	VectorMA(right_pos, lightning_right_hand[frame_offset][1], r, right_pos);
-	right_pos[2] += lightning_right_hand[frame_offset][2];
-
-	gi.WriteByte(svc_temp_entity);
-#ifndef VRX_REPRO
-	gi.WriteByte(TE_MONSTER_HEATBEAM);
-	gi.WriteShort(self - g_edicts);
-#else
-	gi.WriteByte(TE_LIGHTNING);
-	gi.WriteShort(self - g_edicts);
-	gi.WriteShort(0);
-#endif
-
-	gi.WritePosition(left_pos);
-	gi.WritePosition(right_pos);
-	gi.multicast(left_pos, MULTICAST_PVS);
-}
 
 // New function to calculate aim direction
 void CalculateAimDirection(edict_t* self, vec3_t start, vec3_t aim)
@@ -583,32 +535,29 @@ static void shambler_ice_update(edict_t* self)
 	VectorMA(right_pos, lightning_right_hand[frame_offset][1], r, right_pos);
 	right_pos[2] += lightning_right_hand[frame_offset][2];
 
-	// create fire models on both hands
-	edict_t* left_fire = G_Spawn();
-	edict_t* right_fire = G_Spawn();
+	// create cyan ice glow on both hands
+	edict_t* left_glow = G_Spawn();
+	edict_t* right_glow = G_Spawn();
 
-	VectorCopy(left_pos, left_fire->s.origin);
-	VectorCopy(right_pos, right_fire->s.origin);
+	VectorCopy(left_pos, left_glow->s.origin);
+	VectorCopy(right_pos, right_glow->s.origin);
 
-	left_fire->s.modelindex = gi.modelindex("models/fire/tris.md2");
-	right_fire->s.modelindex = gi.modelindex("models/fire/tris.md2");	
-	
-	//left_fire->s.modelindex = gi.modelindex("models/objects/flball/tris.md2"); // ugly
-	//right_fire->s.modelindex = gi.modelindex("models/objects/flball/tris.md2"); // ugly
-	left_fire->s.effects |= EF_QUAD | RF_SHELL_CYAN;
-	right_fire->s.effects |= EF_QUAD | RF_SHELL_CYAN;
+	left_glow->s.modelindex = gi.modelindex("models/fire/tris.md2");
+	right_glow->s.modelindex = gi.modelindex("models/fire/tris.md2");
+	left_glow->s.effects |= EF_QUAD | RF_SHELL_CYAN;
+	right_glow->s.effects |= EF_QUAD | RF_SHELL_CYAN;
 
-	left_fire->s.renderfx |= RF_FULLBRIGHT;
-	right_fire->s.renderfx |= RF_FULLBRIGHT;
+	left_glow->s.renderfx |= RF_FULLBRIGHT;
+	right_glow->s.renderfx |= RF_FULLBRIGHT;
 
-	left_fire->think = G_FreeEdict;
-	right_fire->think = G_FreeEdict;
+	left_glow->think = G_FreeEdict;
+	right_glow->think = G_FreeEdict;
 
-	left_fire->nextthink = level.time + 0.1;
-	right_fire->nextthink = level.time + 0.1;
+	left_glow->nextthink = level.time + 0.1;
+	right_glow->nextthink = level.time + 0.1;
 
-	gi.linkentity(left_fire);
-	gi.linkentity(right_fire);
+	gi.linkentity(left_glow);
+	gi.linkentity(right_glow);
 }
 
 void shambler_windupIce(edict_t* self) // lightning preparing
@@ -636,159 +585,6 @@ mframe_t shambler_frames_icebolt[] = {
 	{ai_charge, 0, NULL},
 };
 mmove_t shambler_move_icebolt = { FRAME_magic1, FRAME_magic12, shambler_frames_icebolt, shambler_run };
-
-
-// FIERY ROCKET SKULLS
-
-void shambler_windupFire(edict_t* self) // lightning preparing
-{
-	shambler_fieryskull_update(self);
-
-	gi.sound(self, CHAN_WEAPON, gi.soundindex("sound_attack"), 1, ATTN_NORM, 0);
-
-	self->nextthink = level.time + FRAMETIME;
-}
-
-
-//pre fire attack stuff
-static void shambler_fire_update(edict_t* self)
-{
-	const int frame_offset = self->s.frame - FRAME_magic1;
-	if (frame_offset >= MAX_LIGHTNING_FRAMES)
-	{
-		return;
-	}
-	vec3_t f, r;
-	AngleVectors(self->s.angles, f, r, NULL);
-
-	// Proyectar las posiciones de las manos
-	vec3_t left_pos, right_pos;
-	VectorMA(self->s.origin, lightning_left_hand[frame_offset][0], f, left_pos);
-	VectorMA(left_pos, lightning_left_hand[frame_offset][1], r, left_pos);
-	left_pos[2] += lightning_left_hand[frame_offset][2];
-
-	VectorMA(self->s.origin, lightning_right_hand[frame_offset][0], f, right_pos);
-	VectorMA(right_pos, lightning_right_hand[frame_offset][1], r, right_pos);
-	right_pos[2] += lightning_right_hand[frame_offset][2];
-
-	// Crear efectos de cr�neo en ambas manos
-	edict_t* left_fire = G_Spawn();
-	edict_t* right_fire = G_Spawn();
-
-	VectorCopy(left_pos, left_fire->s.origin);
-	VectorCopy(right_pos, right_fire->s.origin);
-
-	left_fire->s.modelindex = gi.modelindex("models/fire/tris.md2");
-	right_fire->s.modelindex = gi.modelindex("models/fire/tris.md2");
-
-	left_fire->s.effects |= EF_GIB | EF_ROCKET;
-	right_fire->s.effects |= EF_GIB | EF_ROCKET;
-
-	left_fire->s.renderfx |= RF_FULLBRIGHT;
-	right_fire->s.renderfx |= RF_FULLBRIGHT;
-
-	left_fire->think = G_FreeEdict;
-	right_fire->think = G_FreeEdict;
-
-	left_fire->nextthink = level.time + 0.1;
-	right_fire->nextthink = level.time + 0.1;
-
-	gi.linkentity(left_fire);
-	gi.linkentity(right_fire);
-}
-
-void bskull_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* surf);
-//void magicbolt_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* surf);
-void fire_shambler_skull(edict_t* self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius)
-{
-	edict_t* skull;
-	skull = G_Spawn();
-	VectorCopy(start, skull->s.origin);
-	VectorCopy(dir, skull->movedir);
-	vectoangles(dir, skull->s.angles);
-	VectorScale(dir, speed, skull->velocity);
-	skull->movetype = MOVETYPE_FLYMISSILE;
-	skull->clipmask = MASK_SHOT;
-	skull->solid = SOLID_BBOX;
-	VectorClear(skull->mins);
-	VectorClear(skull->maxs);
-	skull->s.modelindex = gi.modelindex("models/objects/gibs/skull/tris.md2");
-	skull->owner = self;
-	skull->touch = bskull_touch;
-	skull->dmg = damage;
-	skull->radius_dmg = 120;
-	skull->dmg_radius = damage_radius;
-	skull->s.effects = EF_GIB | EF_ROCKET;
-	skull->s.sound = gi.soundindex("weapons/rockfly.wav");
-	skull->classname = "shambler_skull";
-	skull->nextthink = level.time + 8000 / speed;
-	skull->think = G_FreeEdict;
-	gi.linkentity(skull);
-}
-
-void fire_skull(edict_t* self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius);
-
-void ShamblerCastSkull(edict_t* self)
-{
-	vec3_t forward, right;
-	vec3_t start_left, start_right;
-	const float accuracy = M_PROJECTILE_ACC;
-
-	if (!G_EntIsAlive(self->enemy))
-		return;
-
-	// Get the current frame offset
-	int frame_offset = self->s.frame - FRAME_magic1;
-	if (frame_offset >= MAX_LIGHTNING_FRAMES)
-	{
-		frame_offset = MAX_LIGHTNING_FRAMES - 1;
-	}
-
-	// Calculate hand positions using the same method as for lightning
-	AngleVectors(self->s.angles, forward, right, NULL);
-
-	// Left hand
-	VectorMA(self->s.origin, lightning_left_hand[frame_offset][0], forward, start_left);
-	VectorMA(start_left, lightning_left_hand[frame_offset][1], right, start_left);
-	start_left[2] = self->s.origin[2] + lightning_left_hand[frame_offset][2];
-
-	// Right hand
-	VectorMA(self->s.origin, lightning_right_hand[frame_offset][0], forward, start_right);
-	VectorMA(start_right, lightning_right_hand[frame_offset][1], right, start_right);
-	start_right[2] = self->s.origin[2] + lightning_right_hand[frame_offset][2];
-
-	// Calculate damage
-	const int damage = 30 + 15 * self->monsterinfo.level;
-
-	// Fire skull from left hand
-	MonsterAim(self, accuracy, 1200, false, -1, forward, start_left);
-	fire_shambler_skull(self, start_left, forward, damage, 1600, 50);
-
-	// Fire skull from right hand
-	MonsterAim(self, accuracy, 1600, false, -1, forward, start_right);
-	fire_shambler_skull(self, start_right, forward, damage, 1300, 50);
-
-	// Play sound effect
-	gi.sound(self, CHAN_WEAPON, gi.soundindex("spells/circle1.wav"), 1, ATTN_NORM, 0);
-}
-
-
-mframe_t shambler_frames_skull[] = {
-	{ai_charge, 0, shambler_windupFire},
-	{ai_charge, 0, shambler_fire_update},
-	{ai_charge, 0, shambler_fire_update},
-	{ai_move, 0, shambler_fire_update},
-	{ai_move, 0, shambler_fire_update},
-	{ai_move, 0, ShamblerSaveLoc},
-	{ai_move, 0, NULL},
-	{ai_move, 0, NULL},
-	{ai_move, 0, ShamblerCastSkull},
-	{ai_move, 0, ShamblerSaveLoc},
-	{ai_move, 0, ShamblerCastSkull},
-	{ai_charge, 0, NULL},
-};
-mmove_t shambler_move_skull = { FRAME_magic1, FRAME_magic12, shambler_frames_skull, shambler_run };
-
 
 void shambler_meleehit(edict_t* self);
 
@@ -901,7 +697,6 @@ void shambler_attack(edict_t* self)
 	}
 	else if (r < 0.3 && infront(self, self->enemy))  // 30% to use icebolt attack
 	{
-		// self->monsterinfo.currentmove = &shambler_move_skull;
 		self->monsterinfo.currentmove = &shambler_move_icebolt;
 	}
 	else
@@ -1019,13 +814,6 @@ void init_drone_shambler(edict_t* self)
 
 	//icebolt shambler
 	gi.soundindex("spells/coldcast.wav");
-
-	//fire shambler ( unused )
-	// 
-	//gi.modelindex("models/objects/gibs/skull/tris.md2");
-	//gi.modelindex("models/fire/tris.md2");
-	//gi.soundindex("weapons/rockfly.wav");
-	//gi.soundindex("spells/circle1.wav");
 
 	//shambler sounds
 	sound_pain = gi.soundindex("shambler/shurt2.wav");

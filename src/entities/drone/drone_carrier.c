@@ -10,7 +10,15 @@ carrier
 #include "../../quake2/monsterframes/m_rogue_carrier.h"
 
 #define CARRIER_SUMMON_COUNT		4
-#define CARRIER_SUMMON_COOLDOWN		8.0f
+#define CARRIER_SUMMON_COOLDOWN		6.0f
+#define CARRIER_HEAT_TURN_FRACTION	0.085f
+#define CARRIER_NO_SPAWN_Z			-99999.0f
+#define CARRIER_NO_SPAWN_YAW		-99999.0f
+#define CARRIER_YAW_SPEED			20.0f
+#define CARRIER_SPAWN_YAW_SPEED		30.0f
+#define CARRIER_AI_SPAWNING		0x00400000
+#define CARRIER_RAIL_REFIRE_CHANCE	0.65f
+#define CARRIER_RAIL_MAX_REFIRES	1
 #define CARRIER_DEFAULT_SCALE		0.75f
 #define CARRIER_INVASION_SCALE		0.50f // 0.60 was too big for spambox
 
@@ -25,11 +33,17 @@ static int sound_spawn;
 void drone_ai_stand(edict_t *self, float dist);
 void drone_ai_run(edict_t *self, float dist);
 void drone_ai_walk(edict_t *self, float dist);
+qboolean drone_findtarget(edict_t *self, qboolean force);
 
 static void carrier_stand(edict_t *self);
 static void carrier_walk(edict_t *self);
 static void carrier_run(edict_t *self);
 static void carrier_attack(edict_t *self);
+static void carrier_attack_grenade(edict_t *self);
+static void carrier_reattack_grenade(edict_t *self);
+static void carrier_attack_rail(edict_t *self);
+static void carrier_reattack_rail(edict_t *self);
+static void carrier_turn_to_spawn_yaw(edict_t *self);
 
 static void carrier_project_flash(edict_t *self, int flash, vec3_t forward, vec3_t start)
 {
@@ -40,6 +54,38 @@ static void carrier_project_flash(edict_t *self, int flash, vec3_t forward, vec3
 	if (self->s.scale && self->s.scale != 1.0f)
 		VectorScale(offset, self->s.scale, offset);
 	G_ProjectSource(self->s.origin, offset, forward, right, start);
+}
+
+static void carrier_spawn_ai(edict_t *self, float dist)
+{
+	if (!self || !self->inuse)
+		return;
+
+	if (que_typeexists(self->curses, CURSE_FROZEN))
+		return;
+
+	VectorClear(self->velocity);
+	VectorClear(self->avelocity);
+	if (self->monsterinfo.aiflags & CARRIER_AI_SPAWNING)
+		carrier_turn_to_spawn_yaw(self);
+	(void)dist;
+}
+
+static void carrier_restore_spawn_steering(edict_t *self)
+{
+	if (self->monsterinfo.aiflags & CARRIER_AI_SPAWNING)
+	{
+		if (self->delay > 0.0f)
+		{
+			self->yaw_speed = self->delay;
+			self->delay = 0.0f;
+		}
+		else
+			self->yaw_speed = CARRIER_YAW_SPEED;
+	}
+
+	self->monsterinfo.aiflags &= ~(AI_HOLD_FRAME | CARRIER_AI_SPAWNING);
+	VectorClear(self->avelocity);
 }
 
 static const int carrier_summons[CARRIER_SUMMON_COUNT] =
@@ -87,7 +133,7 @@ static void carrier_dead(edict_t *self)
 	M_Remove(self, false, false);
 }
 
-static void carrier_fire_rocket(edict_t *self)
+static void carrier_fire_heat(edict_t *self)
 {
 	int damage;
 	int speed;
@@ -114,7 +160,7 @@ static void carrier_fire_rocket(edict_t *self)
 	{
 		carrier_project_flash(self, flashes[i], forward, start);
 		MonsterAim(self, M_PROJECTILE_ACC, speed, true, flashes[i], forward, start);
-		monster_fire_heat(self, start, forward, damage, speed, flashes[i], 0.06f);
+		monster_fire_heat(self, start, forward, damage, speed, flashes[i], CARRIER_HEAT_TURN_FRACTION);
 	}
 }
 
@@ -151,6 +197,9 @@ static void carrier_fire_grenade(edict_t *self)
 	int damage;
 	int speed;
 	vec3_t forward, right, up, start, target, aim, offset;
+	float direction;
+	float spread_r, spread_u;
+	int mytime;
 
 	if (!G_EntExists(self->enemy))
 		return;
@@ -172,9 +221,40 @@ static void carrier_fire_grenade(edict_t *self)
 	target[2] += self->enemy->viewheight;
 	VectorSubtract(target, start, aim);
 	VectorNormalize(aim);
-	VectorMA(aim, crandom() * 0.15f, right, aim);
-	VectorMA(aim, 0.1f, up, aim);
+
+	direction = (random() < 0.5f) ? -1.0f : 1.0f;
+	mytime = (int)((level.time - self->timestamp) / 0.4f);
+	switch (mytime)
+	{
+	case 0:
+		spread_r = 0.15f * direction;
+		spread_u = 0.1f - 0.1f * direction;
+		break;
+	case 1:
+		spread_r = 0.0f;
+		spread_u = 0.1f;
+		break;
+	case 2:
+		spread_r = -0.15f * direction;
+		spread_u = 0.1f + 0.1f * direction;
+		break;
+	case 3:
+		spread_r = 0.0f;
+		spread_u = 0.1f;
+		break;
+	default:
+		spread_r = 0.0f;
+		spread_u = 0.0f;
+		break;
+	}
+
+	VectorMA(aim, spread_r, right, aim);
+	VectorMA(aim, spread_u, up, aim);
 	VectorNormalize(aim);
+	if (aim[2] > 0.15f)
+		aim[2] = 0.15f;
+	else if (aim[2] < -0.5f)
+		aim[2] = -0.5f;
 
 	monster_fire_grenade(self, start, aim, damage, speed, MZ2_CARRIER_GRENADE);
 }
@@ -192,9 +272,24 @@ static void carrier_fire_rail(edict_t *self)
 		damage = M_RAILGUN_DMG_MAX;
 
 	carrier_project_flash(self, MZ2_CARRIER_RAILGUN, forward, start);
-	MonsterAim(self, 0.25f, 0, false, MZ2_CARRIER_RAILGUN, forward, start);
+	if (self->pos2[2] > CARRIER_NO_SPAWN_Z + 1.0f)
+	{
+		VectorSubtract(self->pos2, start, forward);
+		VectorNormalize(forward);
+	}
+	else
+		MonsterAim(self, 0.25f, 0, false, MZ2_CARRIER_RAILGUN, forward, start);
 	gi.sound(self, CHAN_WEAPON, sound_rail, 1, ATTN_NORM, 0);
 	monster_fire_railgun(self, start, forward, damage, damage, MZ2_CARRIER_RAILGUN);
+}
+
+static void carrier_save_rail_target(edict_t *self)
+{
+	if (!G_EntExists(self->enemy))
+		return;
+
+	VectorCopy(self->enemy->s.origin, self->pos2);
+	self->pos2[2] += self->enemy->viewheight;
 }
 
 static qboolean carrier_valid_spawn_spot(edict_t *self, vec3_t mins, vec3_t maxs, vec3_t spot)
@@ -210,28 +305,105 @@ static qboolean carrier_valid_spawn_spot(edict_t *self, vec3_t mins, vec3_t maxs
 	return G_IsValidLocation(self, spot, mins, maxs);
 }
 
+static void carrier_spawn_basis(edict_t *self, vec3_t forward, vec3_t right)
+{
+	vec3_t angles;
+
+	VectorCopy(self->s.angles, angles);
+	if ((self->monsterinfo.aiflags & CARRIER_AI_SPAWNING)
+		&& self->angle > CARRIER_NO_SPAWN_YAW + 1.0f)
+		angles[YAW] = self->angle;
+
+	AngleVectors(angles, forward, right, NULL);
+}
+
+static int carrier_spawn_type(int index)
+{
+	return carrier_summons[index % CARRIER_SUMMON_COUNT];
+}
+
+static void carrier_spawn_bounds(int mtype, vec3_t mins, vec3_t maxs)
+{
+	switch (mtype)
+	{
+	case M_FLYER:
+		VectorSet(mins, -16, -16, -24);
+		VectorSet(maxs, 16, 16, 8);
+		break;
+	case M_FLOATER:
+		VectorSet(mins, -24, -24, -24);
+		VectorSet(maxs, 24, 24, 40);
+		break;
+	case M_DAEDALUS:
+	case M_HOVER:
+	default:
+		VectorSet(mins, -24, -24, -24);
+		VectorSet(maxs, 24, 24, 32);
+		break;
+	}
+}
+
 static qboolean carrier_find_spawn_spot(edict_t *self, vec3_t mins, vec3_t maxs, int index, vec3_t spot)
 {
 	vec3_t forward, right;
-	float side;
-	float dist;
+	static const vec3_t local_offsets[8] =
+	{
+		{ 105.0f,   0.0f, -58.0f },
+		{ 150.0f,   0.0f, -58.0f },
+		{ 200.0f,   0.0f, -58.0f },
+		{ 140.0f,  72.0f, -58.0f },
+		{ 140.0f, -72.0f, -58.0f },
+		{ 190.0f,  96.0f, -48.0f },
+		{ 190.0f, -96.0f, -48.0f },
+		{ 220.0f,   0.0f, -32.0f }
+	};
+	static const float ring_dirs[8][2] =
+	{
+		{  1.0f,   0.0f },
+		{  0.707f, 0.707f },
+		{  0.0f,   1.0f },
+		{ -0.707f, 0.707f },
+		{ -1.0f,   0.0f },
+		{ -0.707f,-0.707f },
+		{  0.0f,  -1.0f },
+		{  0.707f,-0.707f }
+	};
+	static const float radii[3] = { 160.0f, 240.0f, 320.0f };
+	static const float z_offsets[3] = { -58.0f, -32.0f, 8.0f };
 
-	AngleVectors(self->s.angles, forward, right, NULL);
-	side = (index & 1) ? 104.0f : -104.0f;
-	dist = 128.0f + 48.0f * (float)(index / 2);
+	carrier_spawn_basis(self, forward, right);
 
-	VectorCopy(self->s.origin, spot);
-	VectorMA(spot, dist, forward, spot);
-	VectorMA(spot, side, right, spot);
-	spot[2] -= 32;
-	if (carrier_valid_spawn_spot(self, mins, maxs, spot))
-		return true;
+	for (int i = 0; i < 8; i++)
+	{
+		const int offset_index = i;
 
-	VectorCopy(self->s.origin, spot);
-	VectorMA(spot, -96, forward, spot);
-	VectorMA(spot, side, right, spot);
-	spot[2] -= 16;
-	return carrier_valid_spawn_spot(self, mins, maxs, spot);
+		VectorCopy(self->s.origin, spot);
+		VectorMA(spot, local_offsets[offset_index][0], forward, spot);
+		VectorMA(spot, local_offsets[offset_index][1], right, spot);
+		spot[2] += local_offsets[offset_index][2];
+		if (carrier_valid_spawn_spot(self, mins, maxs, spot))
+			return true;
+	}
+
+	for (int radius_index = 0; radius_index < 3; radius_index++)
+	{
+		for (int z_index = 0; z_index < 3; z_index++)
+		{
+			for (int dir_index = 0; dir_index < 8; dir_index++)
+			{
+				const int rotated_index = dir_index;
+
+				VectorCopy(self->s.origin, spot);
+				VectorMA(spot, radii[radius_index] * ring_dirs[rotated_index][0], forward, spot);
+				VectorMA(spot, radii[radius_index] * ring_dirs[rotated_index][1], right, spot);
+				spot[2] += z_offsets[z_index];
+				if (carrier_valid_spawn_spot(self, mins, maxs, spot))
+					return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 static void carrier_cleanup_failed_spawn(edict_t *owner, edict_t *spawned)
@@ -255,15 +427,34 @@ static void carrier_setup_invasion_spawn(edict_t *spawned)
 	spawned->goalentity = NULL;
 }
 
+static void carrier_start_spawned_monster(edict_t *self, edict_t *spawned)
+{
+	const qboolean force_start = invasion->value || pvm->value;
+
+	if (G_ValidTarget(spawned, self->enemy, !force_start, true))
+	{
+		spawned->enemy = self->enemy;
+		VectorCopy(self->enemy->s.origin, spawned->monsterinfo.last_sighting);
+	}
+	else if (force_start)
+		drone_findtarget(spawned, true);
+
+	if ((spawned->enemy || spawned->goalentity) && spawned->monsterinfo.run)
+		spawned->monsterinfo.run(spawned);
+	else if (spawned->monsterinfo.stand)
+		spawned->monsterinfo.stand(spawned);
+}
+
 static qboolean carrier_spawn_monster(edict_t *self, int index)
 {
 	edict_t *owner;
 	edict_t *spawned;
+	vec3_t saved_spot;
 	vec3_t spot;
 
 	owner = (self->activator && self->activator->inuse) ? self->activator : self;
 	spawned = G_Spawn();
-	spawned->mtype = carrier_summons[index % CARRIER_SUMMON_COUNT];
+	spawned->mtype = carrier_spawn_type(index);
 	spawned->activator = owner;
 	spawned->monsterinfo.level = self->monsterinfo.level;
 
@@ -273,7 +464,10 @@ static qboolean carrier_spawn_monster(edict_t *self, int index)
 		return false;
 	}
 
-	if (!carrier_find_spawn_spot(self, spawned->mins, spawned->maxs, index, spot))
+	VectorCopy(self->pos1, saved_spot);
+	if (saved_spot[2] > CARRIER_NO_SPAWN_Z + 1.0f && G_IsValidLocation(self, saved_spot, spawned->mins, spawned->maxs))
+		VectorCopy(saved_spot, spot);
+	else if (!carrier_find_spawn_spot(self, spawned->mins, spawned->maxs, index, spot))
 	{
 		carrier_cleanup_failed_spawn(owner, spawned);
 		return false;
@@ -288,54 +482,149 @@ static qboolean carrier_spawn_monster(edict_t *self, int index)
 	spawned->monsterinfo.attack_finished = level.time + 1.0;
 	carrier_setup_invasion_spawn(spawned);
 
-	if (G_ValidTarget(spawned, self->enemy, true, true))
-		spawned->enemy = self->enemy;
-
 	gi.linkentity(spawned);
 	owner->num_monsters += spawned->monsterinfo.control_cost;
 	owner->num_monsters_real++;
 
-	if (spawned->enemy && spawned->monsterinfo.run)
-		spawned->monsterinfo.run(spawned);
-	else if (spawned->monsterinfo.stand)
-		spawned->monsterinfo.stand(spawned);
+	if (sound_spawn)
+		gi.sound(self, CHAN_BODY, sound_spawn, 1, ATTN_NORM, 0);
+	carrier_start_spawned_monster(self, spawned);
 
 	return true;
 }
 
-static void carrier_spawngrows(edict_t *self)
+static qboolean carrier_spawngrow(edict_t *self, int index)
 {
-	vec3_t mins, maxs, size, spot, effect_origin;
+	vec3_t mins, maxs, size, spot;
 	float radius;
 
-	VectorSet(mins, -24, -24, -24);
-	VectorSet(maxs, 24, 24, 32);
+	carrier_spawn_bounds(carrier_spawn_type(index), mins, maxs);
 	VectorSubtract(maxs, mins, size);
 	radius = VectorLength(size) * 0.5f;
 
-	for (int i = 0; i < CARRIER_SUMMON_COUNT; i++)
-	{
-		if (!carrier_find_spawn_spot(self, mins, maxs, i, spot))
-			continue;
+	VectorSet(self->pos1, 0, 0, CARRIER_NO_SPAWN_Z);
+	if (!carrier_find_spawn_spot(self, mins, maxs, index, spot))
+		return false;
 
-		VectorAdd(mins, maxs, effect_origin);
-		VectorAdd(spot, effect_origin, effect_origin);
-		SpawnGrow_Spawn(effect_origin, radius, radius * 2.0f);
-	}
+	VectorCopy(spot, self->pos1);
+	SpawnGrow_Spawn(spot, radius, radius * 2.0f);
+	return true;
 }
 
-static void carrier_finish_spawn(edict_t *self)
+static float carrier_yaw_delta(float a, float b)
 {
-	int spawned = 0;
+	float delta = anglemod(a - b);
 
-	for (int i = 0; i < CARRIER_SUMMON_COUNT; i++)
+	if (delta > 180.0f)
+		delta = 360.0f - delta;
+	return delta;
+}
+
+static qboolean carrier_set_spawn_base_yaw(edict_t *self)
+{
+	vec3_t to_enemy;
+
+	if (!G_EntExists(self->enemy))
+		return false;
+
+	VectorSubtract(self->enemy->s.origin, self->s.origin, to_enemy);
+	self->move_angles[YAW] = vectoyaw(to_enemy);
+	return true;
+}
+
+static void carrier_set_spawn_yaw(edict_t *self)
+{
+	static const float yaw_offsets[CARRIER_SUMMON_COUNT] = { -30.0f, 0.0f, 30.0f, 0.0f };
+
+	self->angle = anglemod(self->move_angles[YAW] + yaw_offsets[self->count % CARRIER_SUMMON_COUNT]);
+	self->ideal_yaw = self->angle;
+	self->teleport_time = level.time + 1.0f;
+}
+
+static void carrier_turn_to_spawn_yaw(edict_t *self)
+{
+	if (self->angle <= CARRIER_NO_SPAWN_YAW + 1.0f)
+		return;
+
+	VectorClear(self->velocity);
+	VectorClear(self->avelocity);
+	self->ideal_yaw = self->angle;
+	M_ChangeYaw(self);
+}
+
+static void carrier_prep_spawn(edict_t *self)
+{
+	self->count = 0;
+	self->timestamp = level.time;
+	self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+	if (!(self->monsterinfo.aiflags & CARRIER_AI_SPAWNING))
+		self->delay = self->yaw_speed > 0.0f ? self->yaw_speed : CARRIER_YAW_SPEED;
+	self->monsterinfo.aiflags |= CARRIER_AI_SPAWNING;
+	self->yaw_speed = CARRIER_SPAWN_YAW_SPEED;
+	self->angle = CARRIER_NO_SPAWN_YAW;
+	VectorClear(self->velocity);
+	VectorClear(self->avelocity);
+	VectorSet(self->pos1, 0, 0, CARRIER_NO_SPAWN_Z);
+	if (carrier_set_spawn_base_yaw(self))
+		carrier_set_spawn_yaw(self);
+}
+
+static void carrier_start_spawn(edict_t *self)
+{
+	if (self->angle <= CARRIER_NO_SPAWN_YAW + 1.0f
+		&& carrier_set_spawn_base_yaw(self))
+		carrier_set_spawn_yaw(self);
+}
+
+static void carrier_ready_spawn(edict_t *self)
+{
+	if (self->angle <= CARRIER_NO_SPAWN_YAW + 1.0f)
 	{
-		if (carrier_spawn_monster(self, i))
-			spawned++;
+		if (!carrier_set_spawn_base_yaw(self))
+		{
+			self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+			return;
+		}
+		carrier_set_spawn_yaw(self);
 	}
 
-	if (spawned)
+	if (carrier_yaw_delta(self->s.angles[YAW], self->angle) > 0.5f
+		&& level.time < self->teleport_time)
+	{
+		self->monsterinfo.aiflags |= AI_HOLD_FRAME;
+		return;
+	}
+
+	self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+	carrier_spawngrow(self, self->count);
+}
+
+static void carrier_spawn_check(edict_t *self)
+{
+	self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+	if (self->count < CARRIER_SUMMON_COUNT)
+	{
+		carrier_spawn_monster(self, self->count);
+		self->count++;
+	}
+
+	if (self->count < CARRIER_SUMMON_COUNT)
+	{
+		self->angle = CARRIER_NO_SPAWN_YAW;
+		VectorSet(self->pos1, 0, 0, CARRIER_NO_SPAWN_Z);
+		carrier_set_spawn_yaw(self);
+		self->monsterinfo.nextframe = FRAME_spawn08;
+	}
+	else
 		self->monsterinfo.melee_finished = level.time + CARRIER_SUMMON_COOLDOWN;
+}
+
+static void carrier_done_spawn(edict_t *self)
+{
+	self->count = 0;
+	carrier_restore_spawn_steering(self);
+	self->angle = CARRIER_NO_SPAWN_YAW;
+	VectorSet(self->pos1, 0, 0, CARRIER_NO_SPAWN_Z);
 }
 
 mframe_t carrier_frames_stand[] =
@@ -381,6 +670,8 @@ mmove_t carrier_move_run = { FRAME_search01, FRAME_search13, carrier_frames_run,
 
 static void carrier_run(edict_t *self)
 {
+	carrier_restore_spawn_steering(self);
+
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 		self->monsterinfo.currentmove = &carrier_move_stand;
 	else
@@ -405,62 +696,131 @@ mframe_t carrier_frames_attack_mg[] =
 };
 mmove_t carrier_move_attack_mg = { FRAME_firea06, FRAME_firea11, carrier_frames_attack_mg, carrier_run };
 
-mframe_t carrier_frames_attack_rocket[] =
+mframe_t carrier_frames_attack_heat[] =
 {
 	ai_charge, 0, NULL,
-	ai_charge, 0, carrier_fire_rocket,
+	ai_charge, 0, carrier_fire_heat,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL
 };
-mmove_t carrier_move_attack_rocket = { FRAME_fireb01, FRAME_fireb04, carrier_frames_attack_rocket, carrier_run };
+mmove_t carrier_move_attack_heat = { FRAME_fireb01, FRAME_fireb04, carrier_frames_attack_heat, carrier_run };
+
+mframe_t carrier_frames_attack_pre_grenade[] =
+{
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, carrier_attack_grenade
+};
+mmove_t carrier_move_attack_pre_grenade = { FRAME_fireb01, FRAME_fireb06, carrier_frames_attack_pre_grenade, NULL };
 
 mframe_t carrier_frames_attack_grenade[] =
 {
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
 	ai_charge, -15, carrier_fire_grenade,
+	ai_charge, 4, NULL,
+	ai_charge, 4, NULL,
+	ai_charge, 4, carrier_reattack_grenade
+};
+mmove_t carrier_move_attack_grenade = { FRAME_fireb07, FRAME_fireb10, carrier_frames_attack_grenade, NULL };
+
+mframe_t carrier_frames_attack_post_grenade[] =
+{
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
 	ai_charge, 0, NULL
 };
-mmove_t carrier_move_attack_grenade = { FRAME_fireb07, FRAME_fireb10, carrier_frames_attack_grenade, carrier_run };
+mmove_t carrier_move_attack_post_grenade = { FRAME_fireb11, FRAME_fireb16, carrier_frames_attack_post_grenade, carrier_run };
 
 mframe_t carrier_frames_attack_rail[] =
 {
-	ai_charge, 0, NULL,
-	ai_charge, -10, NULL,
+	ai_charge, 2, NULL,
+	ai_charge, 2, carrier_save_rail_target,
+	ai_charge, 2, NULL,
 	ai_charge, -20, carrier_fire_rail,
-	ai_charge, -10, NULL,
-	ai_charge, 0, NULL
+	ai_charge, 2, NULL,
+	ai_charge, 2, NULL,
+	ai_charge, 2, NULL,
+	ai_charge, 2, NULL,
+	ai_charge, 2, carrier_reattack_rail
 };
-mmove_t carrier_move_attack_rail = { FRAME_search01, FRAME_search05, carrier_frames_attack_rail, carrier_run };
+mmove_t carrier_move_attack_rail = { FRAME_search01, FRAME_search09, carrier_frames_attack_rail, carrier_run };
 
 mframe_t carrier_frames_spawn[] =
 {
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, carrier_spawngrows,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, -2, carrier_finish_spawn,
-	ai_charge, -6, NULL,
-	ai_charge, -10, NULL,
-	ai_charge, -6, NULL,
-	ai_charge, -2, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL
+	carrier_spawn_ai, -2, NULL,
+	carrier_spawn_ai, -2, NULL,
+	carrier_spawn_ai, -2, NULL,
+	carrier_spawn_ai, -2, NULL,
+	carrier_spawn_ai, -2, NULL,
+	carrier_spawn_ai, -2, NULL,
+	carrier_spawn_ai, -2, carrier_prep_spawn,
+	carrier_spawn_ai, -2, carrier_start_spawn,
+	carrier_spawn_ai, -2, carrier_ready_spawn,
+	carrier_spawn_ai, -2, NULL,
+	carrier_spawn_ai, -2, NULL,
+	carrier_spawn_ai, -10, carrier_spawn_check,
+	carrier_spawn_ai, -2, NULL,
+	carrier_spawn_ai, -2, NULL,
+	carrier_spawn_ai, -2, NULL,
+	carrier_spawn_ai, -2, NULL,
+	carrier_spawn_ai, -2, NULL,
+	carrier_spawn_ai, -2, carrier_done_spawn
 };
 mmove_t carrier_move_spawn = { FRAME_spawn01, FRAME_spawn18, carrier_frames_spawn, carrier_run };
 
-static void carrier_start_spawn(edict_t *self)
+static void carrier_attack_grenade(edict_t *self)
 {
-	if (sound_spawn)
-		gi.sound(self, CHAN_WEAPON, sound_spawn, 1, ATTN_NORM, 0);
+	self->timestamp = level.time;
+	self->monsterinfo.currentmove = &carrier_move_attack_grenade;
+}
+
+static void carrier_reattack_grenade(edict_t *self)
+{
+	if (G_EntExists(self->enemy) && infront(self, self->enemy)
+		&& self->timestamp + 1.3f > level.time)
+	{
+		self->monsterinfo.currentmove = &carrier_move_attack_grenade;
+		return;
+	}
+
+	self->monsterinfo.currentmove = &carrier_move_attack_post_grenade;
+}
+
+static void carrier_begin_spawn(edict_t *self)
+{
 	self->monsterinfo.currentmove = &carrier_move_spawn;
+}
+
+static void carrier_attack_rail(edict_t *self)
+{
+	self->count = 0;
+	self->timestamp = level.time;
+	VectorSet(self->pos2, 0, 0, CARRIER_NO_SPAWN_Z);
+	self->monsterinfo.currentmove = &carrier_move_attack_rail;
+}
+
+static void carrier_reattack_rail(edict_t *self)
+{
+	if (self->count < CARRIER_RAIL_MAX_REFIRES
+		&& G_ValidTarget(self, self->enemy, true, true)
+		&& infront(self, self->enemy)
+		&& random() < CARRIER_RAIL_REFIRE_CHANCE)
+	{
+		self->count++;
+		VectorSet(self->pos2, 0, 0, CARRIER_NO_SPAWN_Z);
+		self->monsterinfo.currentmove = &carrier_move_attack_rail;
+		self->monsterinfo.nextframe = FRAME_search01;
+		M_DelayNextAttack(self, 0.0f, true);
+		return;
+	}
+
+	self->count = 0;
+	self->monsterinfo.attack_finished = level.time + 1.0f;
 }
 
 static void carrier_attack(edict_t *self)
@@ -471,14 +831,14 @@ static void carrier_attack(edict_t *self)
 		return;
 
 	r = random();
-	if (level.time >= self->monsterinfo.melee_finished && r < 0.20f)
-		carrier_start_spawn(self);
-	else if (r < 0.40f)
-		self->monsterinfo.currentmove = &carrier_move_attack_rocket;
-	else if (r < 0.60f)
-		self->monsterinfo.currentmove = &carrier_move_attack_grenade;
+	if (level.time >= self->monsterinfo.melee_finished && r < 0.25f)
+		carrier_begin_spawn(self);
+	else if (r < 0.50f)
+		self->monsterinfo.currentmove = &carrier_move_attack_heat;
 	else if (r < 0.80f)
-		self->monsterinfo.currentmove = &carrier_move_attack_rail;
+		carrier_attack_rail(self);
+	else if (r < 0.92f)
+		self->monsterinfo.currentmove = &carrier_move_attack_pre_grenade;
 	else
 		self->monsterinfo.currentmove = &carrier_move_attack_mg;
 
@@ -496,6 +856,8 @@ mmove_t carrier_move_pain = { FRAME_spawn01, FRAME_spawn04, carrier_frames_pain,
 
 static void carrier_pain(edict_t *self, edict_t *other, float kick, int damage)
 {
+	carrier_restore_spawn_steering(self);
+
 	if (self->health < (self->max_health / 2))
 		self->s.skinnum = 1;
 
@@ -538,6 +900,7 @@ mmove_t carrier_move_death = { FRAME_death01, FRAME_death16, carrier_frames_deat
 static void carrier_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
 	M_Notify(self);
+	carrier_restore_spawn_steering(self);
 
 	if (self->deadflag == DEAD_DEAD)
 		return;
@@ -588,6 +951,7 @@ void init_drone_carrier(edict_t *self)
 	self->mass = 1000;
 	self->mtype = M_CARRIER;
 	self->flags |= FL_FLY;
+	self->yaw_speed = CARRIER_YAW_SPEED;
 
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.power_armor_power = M_CARRIER_INITIAL_ARMOR + M_CARRIER_ADDON_ARMOR * self->monsterinfo.level;

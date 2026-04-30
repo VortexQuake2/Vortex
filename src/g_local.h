@@ -629,7 +629,7 @@ typedef struct {
     vec3_t last_sighting; // last known position of enemy
     bool last_sighting_is_navi; // is the last known position of enemy a navigation point
 
-    //	int			attack_state;
+    int attack_state;
     int lefty;
     float idle_delay; // how often idle func is called
     int idle_frames; // number of frames monster has been idle
@@ -1664,13 +1664,14 @@ enum dronespawn_t {
     DS_FIXBOT_BOSS = 45,
     DS_ROGUE_TURRET = 46,
     DS_BOSS2 = 47,
-    DS_BOSS2_HYPER = 48,
-    DS_BOSS2_SMALL = 49,
+    DS_BOSS2_HYPER = 48, // unused boss,  same attacks than small hornet
+    DS_BOSS2_SMALL = 49, // not a boss, small hornet
     DS_BOSS5 = 50,
 
 };
 
 edict_t *vrx_create_new_drone(edict_t *ent, enum dronespawn_t drone_type, qboolean worldspawn, qboolean link_now, int bonus_level);
+qboolean vrx_drone_spawn_is_boss(enum dronespawn_t drone_type);
 
 edict_t *
 vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn_t drone_type, qboolean worldspawn, qboolean link_now,
@@ -2823,6 +2824,11 @@ void Check_full(edict_t *ent);
 
 void MonsterAim(edict_t *self, float accuracy, int projectile_speed, qboolean rocket, int flash_number, vec3_t forward,
                 vec3_t start);
+qboolean M_MonsterHasCombatSight(edict_t *self, edict_t *other);
+qboolean M_MonsterFindClearShot(edict_t *self, vec3_t start, vec3_t point);
+qboolean M_MonsterHasClearShotFrom(edict_t *self, vec3_t start);
+qboolean M_MonsterHasClearShotFromFlash(edict_t *self, int flash_number);
+void M_MonsterBlockedShot(edict_t *self, float delay);
 
 float entdist(const edict_t *ent1, const edict_t *ent2);
 

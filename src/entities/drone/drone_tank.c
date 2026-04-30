@@ -70,6 +70,21 @@ static void mytank_slam_effect(vec3_t origin)
 	gi.multicast(origin, MULTICAST_PHS);
 }
 
+static qboolean mytank_can_blaster(edict_t *self)
+{
+	return M_MonsterHasClearShotFromFlash(self, MZ2_TANK_BLASTER_1);
+}
+
+static qboolean mytank_can_rocket(edict_t *self)
+{
+	return M_MonsterHasClearShotFromFlash(self, MZ2_TANK_ROCKET_1);
+}
+
+static qboolean mytank_can_chain(edict_t *self)
+{
+	return M_MonsterHasClearShotFromFlash(self, MZ2_TANK_MACHINEGUN_5);
+}
+
 void mytank_idle (edict_t *self)
 {
 	int		range;
@@ -278,6 +293,9 @@ void myTankRail (edict_t *self)
 		damage = M_RAILGUN_DMG_MAX;
 
 	MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, flash_number, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	monster_fire_railgun(self, start, forward, damage, damage, flash_number);
 }
 
@@ -309,6 +327,9 @@ void myTankBlaster(edict_t* self)
 		speed = M_BLASTER_SPEED_MAX;
 
 	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash_number, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	monster_fire_blaster(self, start, forward, damage, speed, EF_BLASTER, BLASTER_PROJ_BOLT, 2.0, true, flash_number);
 }
 
@@ -341,6 +362,8 @@ void myTankRocket(edict_t* self)
 		speed = M_ROCKETLAUNCHER_SPEED_MAX;
 
 	MonsterAim(self, M_PROJECTILE_ACC, speed, true, flash_number, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
 
 	monster_fire_rocket(self, start, forward, damage, speed, flash_number);
 }
@@ -380,6 +403,9 @@ void myTankMachineGun(edict_t* self)
 	dir[2] = 0;
 
 	AngleVectors(dir, forward, NULL, NULL);
+
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
 
 	monster_fire_bullet(self, start, forward, damage, 40,
 		DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, flash_number);
@@ -821,6 +847,8 @@ void commander_attack (edict_t *self)
 {
 	const float r = random();
 	float range = entdist(self, self->enemy);
+	qboolean can_blast;
+	qboolean can_rocket;
 
 	// short range attack
 	if (range <= 128 && r <= 0.6)
@@ -846,18 +874,30 @@ void commander_attack (edict_t *self)
 			}
 		}
 
+		can_blast = mytank_can_blaster(self);
+		can_rocket = mytank_can_rocket(self);
+
 		// medium range attack
 		if (range <= 512)
 		{
-			if (r <= 0.2)
+			if (r <= 0.2 && can_blast)
+				self->monsterinfo.currentmove = &mytank_move_attack_blast;
+			else if (can_rocket)
+				self->monsterinfo.currentmove = &mytank_move_attack_fire_rocket;
+			else if (can_blast)
 				self->monsterinfo.currentmove = &mytank_move_attack_blast;
 			else
-				self->monsterinfo.currentmove = &mytank_move_attack_fire_rocket;
+				return;
 		}
 		// long range attack
 		else
 		{
-			self->monsterinfo.currentmove = &mytank_move_attack_blast;
+			if (can_blast)
+				self->monsterinfo.currentmove = &mytank_move_attack_blast;
+			else if (can_rocket)
+				self->monsterinfo.currentmove = &mytank_move_attack_fire_rocket;
+			else
+				return;
 		}
 	}
 
@@ -869,6 +909,9 @@ void tank_attack(edict_t* self)
 {
 	const float r = random();
 	const float range = entdist(self, self->enemy);
+	const qboolean can_blast = mytank_can_blaster(self);
+	const qboolean can_rocket = mytank_can_rocket(self);
+	const qboolean can_chain = mytank_can_chain(self);
 
 	//gi.dprintf("%d tank_attack()\n", level.framenum);
 
@@ -881,29 +924,45 @@ void tank_attack(edict_t* self)
 		}
 		else
 		{
-			if (r <= 0.2)
+			if (r <= 0.2 && can_blast)
 				self->monsterinfo.currentmove = &mytank_move_attack_blast;
-			else
+			else if (can_rocket)
 				self->monsterinfo.currentmove = &mytank_move_attack_fire_rocket;
+			else if (can_blast)
+				self->monsterinfo.currentmove = &mytank_move_attack_blast;
+			else if (can_chain)
+				self->monsterinfo.currentmove = &mytank_move_attack_chain;
+			else
+				return;
 		}
 	}
 	// medium range attack (20% chain, 40% blaster, 40% rocket)
 	else if (range <= 512)
 	{
-		if (r <= 0.2)
+		if (r <= 0.2 && can_chain)
 			self->monsterinfo.currentmove = &mytank_move_attack_chain;
-		else if (r <= 0.6)
+		else if (r <= 0.6 && can_blast)
 			self->monsterinfo.currentmove = &mytank_move_attack_blast;
-		else
+		else if (can_rocket)
 			self->monsterinfo.currentmove = &mytank_move_attack_fire_rocket;
+		else if (can_blast)
+			self->monsterinfo.currentmove = &mytank_move_attack_blast;
+		else if (can_chain)
+			self->monsterinfo.currentmove = &mytank_move_attack_chain;
+		else
+			return;
 	}
 	// long range attack (20% blaster, 80% chain)
 	else
 	{
-		if (r <= 0.2)
+		if (r <= 0.2 && can_blast)
+			self->monsterinfo.currentmove = &mytank_move_attack_blast;
+		else if (can_chain)
+			self->monsterinfo.currentmove = &mytank_move_attack_chain;
+		else if (can_blast)
 			self->monsterinfo.currentmove = &mytank_move_attack_blast;
 		else
-			self->monsterinfo.currentmove = &mytank_move_attack_chain;
+			return;
 	}
 
 	M_DelayNextAttack(self, 0, true);

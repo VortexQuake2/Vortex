@@ -245,6 +245,9 @@ void ai_charge (edict_t *self, float dist)
 	VectorSubtract (self->enemy->s.origin, self->s.origin, v);
 	self->ideal_yaw = vectoyaw(v);
 	M_ChangeYaw (self);
+
+	if (entdist(self, self->enemy) <= MELEE_DISTANCE * 2.5f)
+		M_ChangeYaw(self);
 }
 
 /*
@@ -257,11 +260,13 @@ Strafe sideways, but stay at aproximately the same range
 void ai_run_slide(edict_t *self, float distance)
 {
 	float	ofs;
+	vec3_t	v;
 
 	if (!self->enemy)
 		return;
 
-	self->ideal_yaw = self->enemy->s.angles[YAW];
+	VectorSubtract (self->enemy->s.origin, self->s.origin, v);
+	self->ideal_yaw = vectoyaw(v);
 	M_ChangeYaw (self);
 
 	if (self->monsterinfo.lefty)
@@ -2287,7 +2292,7 @@ static void drone_check_active_projectile_dodge(edict_t *self)
 			if (!(projectile->svflags & SVF_PROJECTILE))
 				continue;
 			attacker = drone_projectile_attacker(projectile);
-			if (!G_EntExists(attacker) || !attacker->client)
+			if (!G_EntExists(attacker) || attacker == self)
 				continue;
 			if (OnSameTeam(self, attacker))
 				continue;

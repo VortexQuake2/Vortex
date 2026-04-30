@@ -54,6 +54,7 @@ static int shotsfired;
 void drone_ai_stand(edict_t *self, float dist);
 void drone_ai_run(edict_t *self, float dist);
 void drone_ai_walk(edict_t *self, float dist);
+qboolean drone_findtarget(edict_t *self, qboolean force);
 
 static void widow_stand(edict_t *self);
 static void widow_walk(edict_t *self);
@@ -413,6 +414,35 @@ static void widow_cleanup_failed_spawn(edict_t *owner, edict_t *spawned)
 	G_FreeEdict(spawned);
 }
 
+static void widow_setup_invasion_spawn(edict_t *spawned)
+{
+	if (!invasion->value)
+		return;
+
+	spawned->monsterinfo.aiflags &= ~AI_STAND_GROUND;
+	spawned->monsterinfo.aiflags |= AI_FIND_NAVI;
+	spawned->prev_navi = NULL;
+	spawned->goalentity = NULL;
+}
+
+static void widow_start_spawned_monster(edict_t *self, edict_t *spawned)
+{
+	const qboolean force_start = invasion->value || pvm->value;
+
+	if (G_ValidTarget(spawned, self->enemy, !force_start, true))
+	{
+		spawned->enemy = self->enemy;
+		VectorCopy(self->enemy->s.origin, spawned->monsterinfo.last_sighting);
+	}
+	else if (force_start)
+		drone_findtarget(spawned, true);
+
+	if ((spawned->enemy || spawned->goalentity) && spawned->monsterinfo.run)
+		spawned->monsterinfo.run(spawned);
+	else if (spawned->monsterinfo.stand)
+		spawned->monsterinfo.stand(spawned);
+}
+
 static qboolean widow_spawn_stalker(edict_t *self, int index)
 {
 	edict_t *owner;
@@ -444,26 +474,13 @@ static qboolean widow_spawn_stalker(edict_t *self, int index)
 	VectorCopy(self->s.angles, spawned->s.angles);
 	spawned->nextthink = level.time + FRAMETIME;
 	spawned->monsterinfo.attack_finished = level.time + 1.0f;
-
-	if (invasion->value)
-	{
-		spawned->monsterinfo.aiflags &= ~AI_STAND_GROUND;
-		spawned->monsterinfo.aiflags |= AI_FIND_NAVI;
-		spawned->prev_navi = NULL;
-		spawned->goalentity = NULL;
-	}
-
-	if (G_ValidTarget(spawned, self->enemy, true, true))
-		spawned->enemy = self->enemy;
+	widow_setup_invasion_spawn(spawned);
 
 	gi.linkentity(spawned);
 	owner->num_monsters += spawned->monsterinfo.control_cost;
 	owner->num_monsters_real++;
 
-	if (spawned->enemy && spawned->monsterinfo.run)
-		spawned->monsterinfo.run(spawned);
-	else if (spawned->monsterinfo.stand)
-		spawned->monsterinfo.stand(spawned);
+	widow_start_spawned_monster(self, spawned);
 
 	return true;
 }
@@ -503,6 +520,19 @@ static void widow_finish_spawn(edict_t *self)
 		self->monsterinfo.melee_finished = level.time + WIDOW_SUMMON_COOLDOWN;
 }
 
+static qboolean widow_can_spawn_stalker(edict_t *self)
+{
+	vec3_t spot;
+
+	for (int i = 0; i < WIDOW_SUMMON_COUNT; i++)
+	{
+		if (widow_find_spawn_spot(self, i, spot))
+			return true;
+	}
+
+	return false;
+}
+
 static void widow_start_spawn(edict_t *self)
 {
 	gi.sound(self, CHAN_WEAPON, sound_spawn, 1, ATTN_NORM, 0);
@@ -530,10 +560,10 @@ static void widow_attack(edict_t *self)
 		return;
 
 	r = random();
-	if (widow_can_melee(self) && r < 0.40f)
-		widow_melee(self);
-	else if (level.time >= self->monsterinfo.melee_finished && r < 0.65f)
+	if (level.time >= self->monsterinfo.melee_finished && widow_can_spawn_stalker(self))
 		widow_start_spawn(self);
+	else if (widow_can_melee(self) && r < 0.40f)
+		widow_melee(self);
 	else if (r < 0.82f)
 	{
 		if (random() < 0.33f)
@@ -605,7 +635,7 @@ static void widow_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int 
 	gi.sound(self, CHAN_VOICE, sound_death, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
-	vrx_update_drone_death_skin(self);
+		vrx_update_drone_death_skin(self);
 	self->monsterinfo.currentmove = &widow_move_death;
 }
 

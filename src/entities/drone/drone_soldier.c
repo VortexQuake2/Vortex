@@ -20,9 +20,13 @@ static int	sound_death;
 static int	sound_death_ss;
 static int	sound_cock;
 
+static mmove_t m_soldier_move_attack3;
 static mmove_t m_soldier_move_attack5;
 static mmove_t m_soldier_move_trip;
 static mmove_t m_soldier_move_duck;
+
+void m_soldier_duck_down(edict_t *self);
+void m_soldier_duck_up(edict_t *self);
 
 static const int soldier_blaster_flash[] =
 {
@@ -218,7 +222,7 @@ mmove_t m_soldier_move_stand3 = {FRAME_stand301, FRAME_stand339, m_soldier_frame
 
 void m_soldier_stand (edict_t *self)
 {
-	if (random() > 0.5)
+	if (self->monsterinfo.currentmove != &m_soldier_move_stand1 || random() < 0.8)
 		self->monsterinfo.currentmove = &m_soldier_move_stand1;
 	else
 		self->monsterinfo.currentmove = &m_soldier_move_stand3;
@@ -279,6 +283,60 @@ static void soldier_project_raw_flash_origin(edict_t *self, int flash, vec3_t fo
 	G_ProjectSource(self->s.origin, monster_flash_offset[flash], forward, right, start);
 }
 
+static qboolean soldier_has_raw_flash_shot(edict_t *self, int flash)
+{
+	vec3_t forward, start;
+
+	soldier_project_raw_flash_origin(self, flash, forward, start);
+	return M_MonsterHasClearShotFrom(self, start);
+}
+
+static qboolean soldier_has_flash_shot(edict_t *self, int flash, qboolean raw_origin)
+{
+	if (raw_origin)
+		return soldier_has_raw_flash_shot(self, flash);
+
+	return M_MonsterHasClearShotFromFlash(self, flash);
+}
+
+static void soldier_project_laser_origin(edict_t *self, int flash, vec3_t start)
+{
+	vec3_t forward, right, up, offset;
+
+	AngleVectors(self->s.angles, forward, right, up);
+	VectorCopy(self->s.origin, start);
+	VectorCopy(monster_flash_offset[flash], offset);
+	VectorMA(start, offset[0], forward, start);
+	VectorMA(start, offset[1], right, start);
+	VectorMA(start, offset[2] + 6, up, start);
+}
+
+static qboolean soldier_has_laser_shot(edict_t *self, int flash)
+{
+	vec3_t start;
+
+	soldier_project_laser_origin(self, flash, start);
+	return M_MonsterHasClearShotFrom(self, start);
+}
+
+static qboolean m_soldier_can_primary_shot(edict_t *self)
+{
+	if (self->mtype == M_SOLDIER)
+		return M_MonsterHasClearShotFromFlash(self, MZ2_SOLDIER_BLASTER_8);
+	if (self->mtype == M_SOLDIERLT)
+		return M_MonsterHasClearShotFromFlash(self, MZ2_SOLDIER_BLASTER_8);
+	if (self->mtype == M_SOLDIERSS)
+		return M_MonsterHasClearShotFromFlash(self, MZ2_SOLDIER_SHOTGUN_8);
+	if (self->mtype == M_SOLDIER_RIPPER)
+		return M_MonsterHasClearShotFromFlash(self, MZ2_SOLDIER_RIPPER_8);
+	if (self->mtype == M_SOLDIER_BLUEBLASTER)
+		return M_MonsterHasClearShotFromFlash(self, MZ2_SOLDIER_HYPERGUN_8);
+	if (self->mtype == M_SOLDIER_LASER)
+		return soldier_has_laser_shot(self, MZ2_SOLDIER_MACHINEGUN_4);
+
+	return false;
+}
+
 static void soldier_fireblaster_flash_ex(edict_t* self, int flash, qboolean raw_origin)
 {
 	int		damage, speed;
@@ -302,6 +360,9 @@ static void soldier_fireblaster_flash_ex(edict_t* self, int flash, qboolean raw_
 	}
 	else
 		MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	monster_fire_blaster(self, start, forward, damage, speed, EF_BLASTER, BLASTER_PROJ_BOLT, 2.0, true, flash);
 }
 
@@ -337,6 +398,9 @@ static void soldier_firerocket_flash_ex(edict_t* self, int flash, qboolean raw_o
 	}
 	else
 		MonsterAim(self, M_PROJECTILE_ACC, speed, true, flash, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	monster_fire_rocket(self, start, forward, damage, speed, flash);
 }
 
@@ -362,6 +426,9 @@ static void soldier_fireshotgun_flash(edict_t* self, int flash)
 	if (M_SHOTGUN_DMG_MAX && damage > M_SHOTGUN_DMG_MAX)
 		damage = M_SHOTGUN_DMG_MAX;
 	MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, flash, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	monster_fire_shotgun(self, start, forward, damage, 15, 375, 375, 10, flash);
 }
 
@@ -391,6 +458,9 @@ static void soldier_fireionripper_ex(edict_t* self, int flash_number, qboolean r
 	}
 	else
 		MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	monster_fire_ionripper(self, start, forward, damage, speed, EF_IONRIPPER, flash);
 }
 
@@ -425,6 +495,9 @@ static void soldier_fireblueblaster_ex(edict_t* self, int flash_number, qboolean
 	}
 	else
 		MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	monster_fire_blueblaster(self, start, forward, damage, speed, EF_BLUEHYPERBLASTER, flash);
 }
 
@@ -474,6 +547,8 @@ void soldier_firelaser(edict_t* self, int flash_number)
 
 	if (!G_EntExists(self->enemy))
 		return;
+	if (!soldier_has_laser_shot(self, flash_number))
+		return;
 
 	self->radius_dmg = flash_number;
 	damage = M_DABEAM_DMG_BASE + M_DABEAM_DMG_ADDON * drone_damagelevel(self);
@@ -509,6 +584,77 @@ void m_soldier_hyperripper_run_fire(edict_t *self)
 		soldier_fireblueblaster(self, 7);
 }
 
+static qboolean m_soldier_can_duck_shot(edict_t *self)
+{
+	const int duck_flash = 2;
+
+	if (self->mtype == M_SOLDIER)
+		return soldier_has_flash_shot(self, soldier_flash_from_table(soldier_blaster_flash,
+			sizeof(soldier_blaster_flash) / sizeof(soldier_blaster_flash[0]), duck_flash), false);
+	if (self->mtype == M_SOLDIERLT)
+		return soldier_has_flash_shot(self, soldier_flash_from_table(soldier_blaster_flash,
+			sizeof(soldier_blaster_flash) / sizeof(soldier_blaster_flash[0]), duck_flash), false);
+	if (self->mtype == M_SOLDIERSS)
+		return soldier_has_flash_shot(self, soldier_flash_from_table(soldier_shotgun_flash,
+			sizeof(soldier_shotgun_flash) / sizeof(soldier_shotgun_flash[0]), duck_flash), false);
+	if (self->mtype == M_SOLDIER_RIPPER)
+		return soldier_has_flash_shot(self, soldier_flash_from_table(soldier_ripper_flash,
+			sizeof(soldier_ripper_flash) / sizeof(soldier_ripper_flash[0]), duck_flash), false);
+	if (self->mtype == M_SOLDIER_BLUEBLASTER)
+		return soldier_has_flash_shot(self, soldier_flash_from_table(soldier_hyper_flash,
+			sizeof(soldier_hyper_flash) / sizeof(soldier_hyper_flash[0]), duck_flash), false);
+	if (self->mtype == M_SOLDIER_LASER)
+		return soldier_has_laser_shot(self, soldier_flash_from_table(soldier_machinegun_flash,
+			sizeof(soldier_machinegun_flash) / sizeof(soldier_machinegun_flash[0]), duck_flash));
+
+	return false;
+}
+
+static void m_soldier_fire_duck(edict_t *self)
+{
+	const int duck_flash = 2;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	if (self->mtype == M_SOLDIER)
+		soldier_fireblaster_flash(self, soldier_flash_from_table(soldier_blaster_flash,
+			sizeof(soldier_blaster_flash) / sizeof(soldier_blaster_flash[0]), duck_flash));
+	else if (self->mtype == M_SOLDIERLT)
+		soldier_firerocket_flash(self, soldier_flash_from_table(soldier_blaster_flash,
+			sizeof(soldier_blaster_flash) / sizeof(soldier_blaster_flash[0]), duck_flash));
+	else if (self->mtype == M_SOLDIERSS)
+		soldier_fireshotgun_flash(self, soldier_flash_from_table(soldier_shotgun_flash,
+			sizeof(soldier_shotgun_flash) / sizeof(soldier_shotgun_flash[0]), duck_flash));
+	else if (self->mtype == M_SOLDIER_RIPPER)
+		soldier_fireionripper(self, duck_flash);
+	else if (self->mtype == M_SOLDIER_BLUEBLASTER)
+		soldier_fireblueblaster(self, duck_flash);
+	else if (self->mtype == M_SOLDIER_LASER)
+		soldier_firelaser(self, soldier_flash_from_table(soldier_machinegun_flash,
+			sizeof(soldier_machinegun_flash) / sizeof(soldier_machinegun_flash[0]), duck_flash));
+}
+
+static void m_soldier_attack3_refire(edict_t *self)
+{
+	if (level.time + 0.4f < self->monsterinfo.pausetime && m_soldier_can_duck_shot(self))
+		self->monsterinfo.nextframe = FRAME_attak303;
+}
+
+mframe_t m_soldier_frames_attack3 [] =
+{
+	ai_charge, 0, m_soldier_duck_down,
+	ai_charge, 0, NULL,
+	ai_charge, 0, m_soldier_fire_duck,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, m_soldier_attack3_refire,
+	ai_charge, 0, m_soldier_duck_up,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL
+};
+static mmove_t m_soldier_move_attack3 = {FRAME_attak301, FRAME_attak309, m_soldier_frames_attack3, m_soldier_run};
+
 mframe_t m_soldier_frames_runandshoot [] =
 {
 	drone_ai_run, 25, NULL,	//109
@@ -530,7 +676,7 @@ mmove_t m_soldier_move_runandshoot = {FRAME_runs01, FRAME_runs14, m_soldier_fram
 
 void m_soldier_runandshoot_continue (edict_t* self)
 {
-	if (M_ContinueAttack(self, &m_soldier_move_runandshoot, NULL, 0, 512, 0.9))
+	if (m_soldier_can_primary_shot(self) && M_ContinueAttack(self, &m_soldier_move_runandshoot, NULL, 0, 512, 0.9))
 		return;
 
 	// end attack
@@ -546,7 +692,8 @@ void m_soldier_attack1_refire1 (edict_t* self)
 {
 	// continue firing if the enemy is still close, or we are standing ground
 	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.9)
-		&& ((entdist(self, self->enemy) <= 512) || (self->monsterinfo.aiflags & AI_STAND_GROUND)))
+		&& ((entdist(self, self->enemy) <= 512) || (self->monsterinfo.aiflags & AI_STAND_GROUND))
+		&& m_soldier_can_primary_shot(self))
 		self->s.frame = FRAME_attak102;
 
 	M_DelayNextAttack(self, 0, true);
@@ -590,9 +737,16 @@ void m_soldier_endattack_laser(edict_t* self)
 
 void m_soldier_firelaser_frame(edict_t* self)
 {
-	if (!G_EntExists(self->enemy) || !visible(self, self->enemy))
+	if (!G_EntExists(self->enemy) || !visible(self, self->enemy)
+		|| !soldier_has_laser_shot(self, MZ2_SOLDIER_MACHINEGUN_4))
 	{
 		self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+		self->monsterinfo.pausetime = 0;
+		if (self->beam && self->beam->inuse)
+		{
+			self->beam->prethink = NULL;
+			self->beam->nextthink = level.time + FRAMETIME;
+		}
 		return;
 	}
 
@@ -628,6 +782,9 @@ mmove_t m_soldier_move_attack_laser = {FRAME_attak401, FRAME_attak406, m_soldier
 
 void m_soldier_attack(edict_t* self)
 {
+	if (!m_soldier_can_primary_shot(self))
+		return;
+
 	if (self->mtype == M_SOLDIER_LASER)
 	{
 		self->monsterinfo.currentmove = &m_soldier_move_attack_laser;
@@ -763,10 +920,16 @@ void m_soldier_jump_hold (edict_t *self)
 	}
 }
 
+static void m_soldier_jump_hold_ai(edict_t *self, float dist)
+{
+	ai_move(self, dist);
+	m_soldier_jump_hold(self);
+}
+
 mframe_t m_soldier_frames_jump [] =
 {
 	ai_move, 0, m_soldier_jump2_takeoff,
-	ai_move, 0,	m_soldier_jump_hold,
+	m_soldier_jump_hold_ai, 0,	NULL,
 	ai_move, 0,  NULL,
 	ai_move, 0,  NULL,
 	ai_move, 0,  NULL
@@ -776,6 +939,7 @@ mmove_t m_soldier_move_jump = {FRAME_duck01, FRAME_duck05, m_soldier_frames_jump
 static qboolean m_soldier_prone_shoot_ok(edict_t *self)
 {
 	vec3_t forward, diff;
+	const int prone_flash = 8;
 
 	if (!G_EntIsAlive(self->enemy))
 		return false;
@@ -785,8 +949,29 @@ static qboolean m_soldier_prone_shoot_ok(edict_t *self)
 	diff[2] = 0;
 	if (VectorNormalize(diff) == 0)
 		return false;
+	if (DotProduct(forward, diff) < 0.80f)
+		return false;
 
-	return DotProduct(forward, diff) >= 0.80f;
+	if (self->mtype == M_SOLDIER)
+		return soldier_has_flash_shot(self, soldier_flash_from_table(soldier_blaster_flash,
+			sizeof(soldier_blaster_flash) / sizeof(soldier_blaster_flash[0]), prone_flash), true);
+	if (self->mtype == M_SOLDIERLT)
+		return soldier_has_flash_shot(self, soldier_flash_from_table(soldier_blaster_flash,
+			sizeof(soldier_blaster_flash) / sizeof(soldier_blaster_flash[0]), prone_flash), true);
+	if (self->mtype == M_SOLDIERSS)
+		return soldier_has_flash_shot(self, soldier_flash_from_table(soldier_shotgun_flash,
+			sizeof(soldier_shotgun_flash) / sizeof(soldier_shotgun_flash[0]), prone_flash), false);
+	if (self->mtype == M_SOLDIER_RIPPER)
+		return soldier_has_flash_shot(self, soldier_flash_from_table(soldier_ripper_flash,
+			sizeof(soldier_ripper_flash) / sizeof(soldier_ripper_flash[0]), prone_flash), true);
+	if (self->mtype == M_SOLDIER_BLUEBLASTER)
+		return soldier_has_flash_shot(self, soldier_flash_from_table(soldier_hyper_flash,
+			sizeof(soldier_hyper_flash) / sizeof(soldier_hyper_flash[0]), prone_flash), true);
+	if (self->mtype == M_SOLDIER_LASER)
+		return soldier_has_laser_shot(self, soldier_flash_from_table(soldier_machinegun_flash,
+			sizeof(soldier_machinegun_flash) / sizeof(soldier_machinegun_flash[0]), prone_flash));
+
+	return false;
 }
 
 static void m_soldier_stand_up(edict_t *self)
@@ -949,7 +1134,16 @@ void m_soldier_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
 			}
 			else
 			{
-				m_soldier_start_duck_dodge(self, 1.10f);
+				if (m_soldier_can_duck_shot(self) && random() < 0.5f)
+				{
+					self->monsterinfo.nextattack = 0;
+					self->monsterinfo.pausetime = level.time + 1.10f;
+					self->monsterinfo.currentmove = &m_soldier_move_attack3;
+					m_soldier_duck_down(self);
+					self->monsterinfo.dodge_time = level.time + 1.25f;
+				}
+				else
+					m_soldier_start_duck_dodge(self, 1.10f);
 			}
 			return;
 		}
@@ -989,7 +1183,6 @@ static void m_soldier_death_shrink(edict_t *self)
 	self->maxs[2] = 0;
 	gi.linkentity(self);
 }
-
 
 mframe_t soldier_frames_pain_short1[] =
 {
@@ -1274,7 +1467,7 @@ mframe_t m_soldier_frames_death4 [] =
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
-	ai_move, 0,   m_soldier_death_shrink,
+		ai_move, 0,   m_soldier_death_shrink,
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,
 	ai_move, 0,   NULL,

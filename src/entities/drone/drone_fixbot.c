@@ -28,10 +28,16 @@ fixbot
 #define FIXBOT_BOSS_DEFAULT_SCALE		2.6f
 #define FIXBOT_BOSS_INVASION_SCALE		2.0f
 #define FIXBOT_BOSS_INVASION_MOVE_SCALE	1.5f
+#define FIXBOT_SPAWN_YAW_SPEED			12.0f
+#define FIXBOT_SPAWN_PITCH_SPEED		12.0f
+#define FIXBOT_SPAWN_AIM_TIMEOUT		2.0f
+#define FIXBOT_SPAWN_AIM_EPSILON		5.0f
+#define FIXBOT_NO_SPAWN_YAW			-99999.0f
 
 static int sound_pain;
 static int sound_die;
 static int sound_pew;
+static int sound_ionripper;
 static int sound_weld;
 static int sound_spawn;
 
@@ -45,6 +51,7 @@ static void fixbot_walk(edict_t *self);
 static void fixbot_run(edict_t *self);
 static void fixbot_attack(edict_t *self);
 static void fixbot_try_start_spawn(edict_t *self);
+static mmove_t fixbot_move_spawn;
 
 static qboolean fixbot_is_boss(edict_t *self)
 {
@@ -90,7 +97,12 @@ static void fixbot_remove_turrets(edict_t *self)
 		edict_t *next = DroneList_Next(ent);
 
 		if (G_EntExists(ent) && ent->owner == self && ent->mtype == M_ROGUE_TURRET)
-			M_Remove(ent, false, true);
+		{
+			if (ent->die)
+				ent->die(ent, self, self, ent->health + 100, ent->s.origin);
+			else
+				M_Remove(ent, false, true);
+		}
 
 		ent = next;
 	}
@@ -118,9 +130,58 @@ static qboolean fixbot_turret_position_clear(edict_t *self, vec3_t position)
 	return true;
 }
 
+static float fixbot_angle_delta(float a, float b)
+{
+	float delta = anglemod(a - b);
+
+	if (delta > 180.0f)
+		delta = 360.0f - delta;
+	return delta;
+}
+
+static qboolean fixbot_set_spawn_base_yaw(edict_t *self)
+{
+	vec3_t to_enemy;
+
+	if (!G_EntExists(self->enemy))
+		return false;
+
+	VectorSubtract(self->enemy->s.origin, self->s.origin, to_enemy);
+	self->move_angles[YAW] = vectoyaw(to_enemy);
+	return true;
+}
+
+static void fixbot_set_spawn_yaw(edict_t *self)
+{
+	static const float yaw_offsets[] = { -35.0f, 35.0f, 0.0f, -70.0f, 70.0f, -110.0f, 110.0f, 180.0f };
+	int index;
+
+	index = fixbot_count_live_turrets(self) % (int)(sizeof(yaw_offsets) / sizeof(yaw_offsets[0]));
+	self->angle = anglemod(self->move_angles[YAW] + yaw_offsets[index]);
+	self->ideal_yaw = self->angle;
+	self->teleport_time = level.time + FIXBOT_SPAWN_AIM_TIMEOUT;
+}
+
+static void fixbot_turn_to_spawn_yaw(edict_t *self)
+{
+	float old_yaw_speed;
+
+	if (self->angle <= FIXBOT_NO_SPAWN_YAW + 1.0f)
+		return;
+
+	VectorClear(self->velocity);
+	VectorClear(self->avelocity);
+	self->ideal_yaw = self->angle;
+	old_yaw_speed = self->yaw_speed;
+	self->yaw_speed = FIXBOT_SPAWN_YAW_SPEED;
+	M_ChangeYaw(self);
+	self->yaw_speed = old_yaw_speed;
+}
+
 static qboolean fixbot_find_turret_spawn_position(edict_t *self, vec3_t position, vec3_t direction)
 {
 	vec3_t start;
+	vec3_t base_angles;
 	vec3_t initial_forward;
 	vec3_t best_pos;
 	vec3_t best_dir;
@@ -133,7 +194,11 @@ static qboolean fixbot_find_turret_spawn_position(edict_t *self, vec3_t position
 
 	VectorCopy(self->s.origin, start);
 	start[2] += 16;
-	AngleVectors(self->s.angles, initial_forward, NULL, NULL);
+	VectorCopy(self->s.angles, base_angles);
+	if (self->angle > FIXBOT_NO_SPAWN_YAW + 1.0f)
+		base_angles[YAW] = self->angle;
+	base_angles[PITCH] = 0.0f;
+	AngleVectors(base_angles, initial_forward, NULL, NULL);
 	VectorClear(best_pos);
 	VectorClear(best_dir);
 
@@ -150,7 +215,7 @@ static qboolean fixbot_find_turret_spawn_position(edict_t *self, vec3_t position
 		qboolean in_front;
 		qboolean better = false;
 
-		VectorCopy(self->s.angles, angles);
+		VectorCopy(base_angles, angles);
 		if (attempt == 0)
 		{
 			VectorCopy(initial_forward, forward);
@@ -238,7 +303,7 @@ static qboolean fixbot_find_turret_spawn_position(edict_t *self, vec3_t position
 				vec3_t to_pos;
 				trace_t tr;
 
-				VectorCopy(self->s.angles, angles);
+				VectorCopy(base_angles, angles);
 				angles[YAW] += yaws[y];
 				while (angles[YAW] < 0)
 					angles[YAW] += 360;
@@ -384,6 +449,14 @@ static void fixbot_plasma_think(edict_t *self)
 		VectorNormalize(self->movedir);
 		vectoangles(self->movedir, self->s.angles);
 		VectorScale(self->movedir, self->speed, self->velocity);
+		if (random() > 0.5f)
+		{
+			gi.WriteByte(svc_temp_entity);
+			gi.WriteByte(TE_BLASTER);
+			gi.WritePosition(self->s.origin);
+			gi.WriteDir(vec3_origin);
+			gi.multicast(self->s.origin, MULTICAST_PVS);
+		}
 		self->nextthink = level.time + FRAMETIME;
 		return;
 	}
@@ -551,11 +624,11 @@ static void fixbot_fire_ionripper_spread(edict_t *self, vec3_t start, vec3_t for
 		VectorMA(dir5, -0.16f, right, dir5);
 		VectorNormalize(dir5);
 
-		monster_fire_ionripper(self, start, dir1, damage, speed, EF_IONRIPPER, MZ2_HOVER_BLASTER_1);
-		monster_fire_ionripper(self, start, dir2, damage, speed, EF_IONRIPPER, MZ2_HOVER_BLASTER_1);
-		monster_fire_ionripper(self, start, dir3, damage, speed, EF_IONRIPPER, MZ2_HOVER_BLASTER_1);
-		monster_fire_ionripper(self, start, dir4, damage, speed, EF_IONRIPPER, MZ2_HOVER_BLASTER_1);
-		monster_fire_ionripper(self, start, dir5, damage, speed, EF_IONRIPPER, MZ2_HOVER_BLASTER_1);
+		monster_fire_ionripper(self, start, dir1, damage, speed, EF_IONRIPPER, -1);
+		monster_fire_ionripper(self, start, dir2, damage, speed, EF_IONRIPPER, -1);
+		monster_fire_ionripper(self, start, dir3, damage, speed, EF_IONRIPPER, -1);
+		monster_fire_ionripper(self, start, dir4, damage, speed, EF_IONRIPPER, -1);
+		monster_fire_ionripper(self, start, dir5, damage, speed, EF_IONRIPPER, -1);
 	}
 	else
 	{
@@ -569,12 +642,12 @@ static void fixbot_fire_ionripper_spread(edict_t *self, vec3_t start, vec3_t for
 		VectorMA(dir3, -0.12f, right, dir3);
 		VectorNormalize(dir3);
 
-		monster_fire_ionripper(self, start, dir1, damage, speed, EF_IONRIPPER, MZ2_HOVER_BLASTER_1);
-		monster_fire_ionripper(self, start, dir2, damage, speed, EF_IONRIPPER, MZ2_HOVER_BLASTER_1);
-		monster_fire_ionripper(self, start, dir3, damage, speed, EF_IONRIPPER, MZ2_HOVER_BLASTER_1);
+		monster_fire_ionripper(self, start, dir1, damage, speed, EF_IONRIPPER, -1);
+		monster_fire_ionripper(self, start, dir2, damage, speed, EF_IONRIPPER, -1);
+		monster_fire_ionripper(self, start, dir3, damage, speed, EF_IONRIPPER, -1);
 	}
 
-	gi.sound(self, CHAN_WEAPON, sound_pew, 1, ATTN_NORM, 0);
+	gi.sound(self, CHAN_WEAPON, sound_ionripper ? sound_ionripper : sound_pew, 1, ATTN_NORM, 0);
 }
 
 static void fixbot_fire_plasma(edict_t *self, float offset)
@@ -730,6 +803,8 @@ static void fixbot_update_spawn_probe(edict_t *self)
 		index = 0;
 
 	VectorCopy(self->s.angles, angles);
+	if (self->angle > FIXBOT_NO_SPAWN_YAW + 1.0f)
+		angles[YAW] = self->angle;
 	angles[YAW] += scan_yaws[index];
 	angles[PITCH] = -10.0f;
 	while (angles[YAW] < 0)
@@ -757,10 +832,101 @@ static qboolean fixbot_try_select_turret_position(edict_t *self)
 	return false;
 }
 
+static qboolean fixbot_get_spawn_target(edict_t *self, vec3_t target)
+{
+	if (VectorLength(self->pos1) >= 1)
+		VectorCopy(self->pos1, target);
+	else
+		VectorCopy(self->pos2, target);
+
+	return VectorLength(target) >= 1;
+}
+
+static float fixbot_turn_angle(float current, float ideal, float speed)
+{
+	float move;
+	float step;
+
+	current = anglemod(current);
+	ideal = anglemod(ideal);
+	if (current == ideal)
+		return current;
+
+	move = ideal - current;
+	if (ideal > current)
+	{
+		if (move >= 180.0f)
+			move -= 360.0f;
+	}
+	else
+	{
+		if (move <= -180.0f)
+			move += 360.0f;
+	}
+
+	step = speed * FRAMETIME * 10.0f;
+	if (move > step)
+		move = step;
+	else if (move < -step)
+		move = -step;
+
+	return anglemod(current + move);
+}
+
+static qboolean fixbot_facing_spawn_target(edict_t *self)
+{
+	vec3_t dir;
+	vec3_t angles;
+	vec3_t target;
+
+	if (!fixbot_get_spawn_target(self, target))
+		return false;
+
+	VectorSubtract(target, self->s.origin, dir);
+	if (VectorLength(dir) <= 1)
+		return false;
+
+	vectoangles(dir, angles);
+	return fixbot_angle_delta(self->s.angles[YAW], angles[YAW]) <= FIXBOT_SPAWN_AIM_EPSILON;
+}
+
+static qboolean fixbot_aim_at_spawn_target(edict_t *self)
+{
+	vec3_t dir;
+	vec3_t angles;
+	vec3_t target;
+	float old_yaw_speed;
+	qboolean building;
+
+	if (!fixbot_get_spawn_target(self, target))
+		return false;
+
+	VectorSubtract(target, self->s.origin, dir);
+	if (VectorLength(dir) <= 1)
+		return false;
+
+	vectoangles(dir, angles);
+	building = self->monsterinfo.currentmove == &fixbot_move_spawn;
+	self->ideal_yaw = angles[YAW];
+	if (building)
+		self->s.angles[PITCH] = fixbot_turn_angle(self->s.angles[PITCH], angles[PITCH], FIXBOT_SPAWN_PITCH_SPEED);
+	else
+		self->s.angles[PITCH] = angles[PITCH];
+	old_yaw_speed = self->yaw_speed;
+	if (building)
+		self->yaw_speed = FIXBOT_SPAWN_YAW_SPEED;
+	M_ChangeYaw(self);
+	self->yaw_speed = old_yaw_speed;
+	return true;
+}
+
 static void fixbot_prep_spawn(edict_t *self)
 {
 	VectorClear(self->pos1);
 	VectorClear(self->pos2);
+	self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+	self->angle = FIXBOT_NO_SPAWN_YAW;
+	self->teleport_time = level.time;
 
 	if (!fixbot_is_boss(self) || level.time < self->monsterinfo.melee_finished)
 	{
@@ -777,7 +943,10 @@ static void fixbot_prep_spawn(edict_t *self)
 		return;
 	}
 
+	if (fixbot_set_spawn_base_yaw(self))
+		fixbot_set_spawn_yaw(self);
 	fixbot_try_select_turret_position(self);
+	fixbot_aim_at_spawn_target(self);
 	self->s.effects |= EF_HYPERBLASTER | EF_PLASMA;
 	gi.sound(self, CHAN_WEAPON, sound_weld, 1, ATTN_NORM, 0);
 }
@@ -796,12 +965,7 @@ static void fixbot_fire_spawn_laser(edict_t *self)
 	vec3_t start;
 	vec3_t target;
 
-	if (VectorLength(self->pos1) >= 1)
-		VectorCopy(self->pos1, target);
-	else
-		VectorCopy(self->pos2, target);
-
-	if (VectorLength(target) < 1)
+	if (!fixbot_get_spawn_target(self, target))
 		return;
 
 	laser = self->beam;
@@ -835,7 +999,6 @@ static void fixbot_fire_spawn_laser(edict_t *self)
 
 static void fixbot_spawn_effect(edict_t *self)
 {
-	vec3_t dir;
 	vec3_t target;
 	qboolean has_position;
 
@@ -843,20 +1006,8 @@ static void fixbot_spawn_effect(edict_t *self)
 	if (!has_position)
 		has_position = fixbot_try_select_turret_position(self);
 
-	if (has_position)
-		VectorCopy(self->pos1, target);
-	else
-		VectorCopy(self->pos2, target);
-
-	if (VectorLength(target) < 1)
+	if (!fixbot_get_spawn_target(self, target))
 		return;
-
-	VectorSubtract(target, self->s.origin, dir);
-	if (VectorLength(dir) > 1)
-	{
-		self->ideal_yaw = vectoyaw(dir);
-		M_ChangeYaw(self);
-	}
 
 	fixbot_fire_spawn_laser(self);
 
@@ -867,6 +1018,16 @@ static void fixbot_spawn_effect(edict_t *self)
 	gi.WriteDir(vec3_origin);
 	gi.WriteByte(has_position ? (fixbot_is_boss(self) ? 0xf0 : 0xe0) : 0xd0);
 	gi.multicast(target, MULTICAST_PVS);
+}
+
+static void fixbot_spawn_aim_ai(edict_t *self, float dist)
+{
+	ai_move(self, dist);
+	if (VectorLength(self->pos1) < 1)
+		fixbot_try_select_turret_position(self);
+	if (!fixbot_aim_at_spawn_target(self))
+		fixbot_turn_to_spawn_yaw(self);
+	fixbot_fire_spawn_laser(self);
 }
 
 static qboolean fixbot_spawn_turret(edict_t *self)
@@ -943,6 +1104,15 @@ static void fixbot_finish_spawn(edict_t *self)
 	if (VectorLength(self->pos1) < 1)
 		fixbot_try_select_turret_position(self);
 
+	fixbot_aim_at_spawn_target(self);
+	fixbot_fire_spawn_laser(self);
+	if (!fixbot_facing_spawn_target(self) && level.time < self->teleport_time)
+	{
+		self->monsterinfo.aiflags |= AI_HOLD_FRAME;
+		return;
+	}
+
+	self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
 	if (fixbot_spawn_turret(self))
 		self->monsterinfo.melee_finished = level.time + FIXBOT_BOSS_SPAWN_COOLDOWN;
 	else
@@ -950,6 +1120,7 @@ static void fixbot_finish_spawn(edict_t *self)
 
 	VectorClear(self->pos1);
 	VectorClear(self->pos2);
+	self->angle = FIXBOT_NO_SPAWN_YAW;
 	fixbot_spawn_laser_off(self);
 	self->s.effects &= ~(EF_HYPERBLASTER | EF_PLASMA);
 }
@@ -1046,13 +1217,13 @@ static mmove_t fixbot_move_attack = { FIXBOT_FRAME_charging_01, FIXBOT_FRAME_cha
 
 static mframe_t fixbot_frames_spawn[] =
 {
-	ai_charge, 0, fixbot_prep_spawn,
-	ai_charge, 0, fixbot_spawn_effect,
-	ai_charge, 0, fixbot_spawn_effect,
-	ai_charge, 0, fixbot_spawn_effect,
-	ai_charge, 0, fixbot_spawn_effect,
-	ai_charge, 0, fixbot_finish_spawn,
-	ai_charge, 0, NULL
+	ai_move, 0, fixbot_prep_spawn,
+	fixbot_spawn_aim_ai, 0, fixbot_spawn_effect,
+	fixbot_spawn_aim_ai, 0, fixbot_spawn_effect,
+	fixbot_spawn_aim_ai, 0, fixbot_spawn_effect,
+	fixbot_spawn_aim_ai, 0, fixbot_spawn_effect,
+	ai_move, 0, fixbot_finish_spawn,
+	ai_move, 0, NULL
 };
 static mmove_t fixbot_move_spawn = { FIXBOT_FRAME_weldstart_01, FIXBOT_FRAME_weldstart_07, fixbot_frames_spawn, fixbot_run };
 
@@ -1139,8 +1310,7 @@ static void fixbot_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int
 {
 	int n;
 
-	if (fixbot_is_boss(self))
-		fixbot_remove_turrets(self);
+	fixbot_remove_turrets(self);
 	fixbot_spawn_laser_off(self);
 
 	gi.sound(self, CHAN_VOICE, sound_die, 1, ATTN_NORM, 0);
@@ -1162,8 +1332,9 @@ static void init_drone_fixbot_common(edict_t *self, qboolean boss)
 	sound_pain = gi.soundindex("daedalus/daedpain1.wav");
 	sound_die = gi.soundindex("daedalus/daeddeth1.wav");
 	sound_pew = gi.soundindex("makron/blaster.wav");
+	sound_ionripper = gi.soundindex("weapons/rippfire.wav");
 	sound_weld = gi.soundindex("misc/welder1.wav");
-	sound_spawn = gi.soundindex("infantry/inflies1.wav");
+	sound_spawn = gi.soundindex("makron/popup.wav");
 	gi.soundindex("misc/welder2.wav");
 	gi.soundindex("misc/welder3.wav");
 

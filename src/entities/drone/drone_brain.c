@@ -341,6 +341,12 @@ void mybrain_jump_hold (edict_t *self)
 		self->monsterinfo.aiflags |= AI_HOLD_FRAME;
 }
 
+static void mybrain_jump_hold_ai(edict_t *self, float dist)
+{
+	ai_move(self, dist);
+	mybrain_jump_hold(self);
+}
+
 mframe_t mybrain_frames_duck [] =
 {
 	ai_move,	1,	mybrain_duck_down,
@@ -358,7 +364,7 @@ mframe_t mybrain_frames_jump [] =
 {
 	ai_move,	0,	NULL,
 	ai_move,	0,	mybrain_jump_takeoff,
-	ai_move,	0,	mybrain_jump_hold,
+	mybrain_jump_hold_ai,	0,	NULL,
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
@@ -445,12 +451,18 @@ void mybrain_jumpattack_hold (edict_t *self)
 	}
 }
 
+static void mybrain_jumpattack_hold_ai(edict_t *self, float dist)
+{
+	ai_move(self, dist);
+	mybrain_jumpattack_hold(self);
+}
+
 
 mframe_t mybrain_frames_jumpattack [] =
 {
 	ai_move,	0,	NULL,
 	ai_move,	0,	mybrain_jumpattack_takeoff,
-	ai_move,	0,	mybrain_jumpattack_hold,
+	mybrain_jumpattack_hold_ai,	0,	NULL,
 	ai_move,	0,	NULL,
 	ai_move,	0,	mybrain_jumpattack_landing,
 	ai_move,	0,	NULL,
@@ -785,12 +797,78 @@ static const vec3_t brain_leye[] =
 	{-4.332820f, 9.444570f, 33.526340f}
 };
 
+static int mybrain_eye_frame_index(edict_t *self)
+{
+	int frame_index = self->s.frame - FRAME_walk101;
+
+	if (frame_index < 0 || frame_index >= 11)
+		frame_index = 0;
+
+	return frame_index;
+}
+
+static void mybrain_project_eye_origin(edict_t *self, qboolean left_eye, vec3_t start)
+{
+	vec3_t forward, right, up;
+	const vec3_t *eye_offsets = left_eye ? brain_leye : brain_reye;
+	int frame_index = mybrain_eye_frame_index(self);
+
+	AngleVectors(self->s.angles, forward, right, up);
+	VectorCopy(self->s.origin, start);
+	VectorMA(start, eye_offsets[frame_index][0], right, start);
+	VectorMA(start, eye_offsets[frame_index][1], forward, start);
+	VectorMA(start, eye_offsets[frame_index][2], up, start);
+}
+
+static qboolean mybrain_trace_eye_target(edict_t *self, vec3_t start, vec3_t target)
+{
+	trace_t tr;
+
+	tr = gi.trace(start, NULL, NULL, target, self, MASK_SHOT);
+	return tr.ent && tr.ent == self->enemy;
+}
+
+static void mybrain_aim_eye_laser(edict_t *self, vec3_t start, vec3_t aim)
+{
+	vec3_t target, predicted;
+	float offset;
+	trace_t tr;
+
+	VectorCopy(self->enemy->s.origin, target);
+	if (!mybrain_trace_eye_target(self, start, target))
+	{
+		G_EntViewPoint(self->enemy, target);
+		if (!mybrain_trace_eye_target(self, start, target))
+			G_EntMidPoint(self->enemy, target);
+	}
+
+	offset = 0.10f + random() * 0.10f;
+	VectorMA(target, -offset, self->enemy->velocity, predicted);
+	tr = gi.trace(start, NULL, NULL, predicted, self, MASK_SOLID);
+	if (tr.fraction < 0.9f)
+		VectorCopy(target, predicted);
+
+	VectorSubtract(predicted, start, aim);
+	VectorNormalize(aim);
+}
+
+static qboolean mybrain_has_eye_laser_shot(edict_t *self, qboolean left_eye)
+{
+	vec3_t start;
+
+	mybrain_project_eye_origin(self, left_eye, start);
+	return M_MonsterHasClearShotFrom(self, start);
+}
+
+static qboolean mybrain_has_laser_shot(edict_t *self)
+{
+	return mybrain_has_eye_laser_shot(self, false) || mybrain_has_eye_laser_shot(self, true);
+}
+
 static void mybrain_eye_laser_update(edict_t *laser, qboolean left_eye)
 {
 	edict_t *self;
-	vec3_t forward, right, up, start, aim, target;
-	int frame_index;
-	const vec3_t *eye_offsets;
+	vec3_t start, aim;
 	qboolean do_damage;
 
 	self = laser->owner;
@@ -800,20 +878,14 @@ static void mybrain_eye_laser_update(edict_t *laser, qboolean left_eye)
 		return;
 	}
 
-	AngleVectors(self->s.angles, forward, right, up);
-	frame_index = self->s.frame - FRAME_walk101;
-	if (frame_index < 0 || frame_index >= 11)
-		frame_index = 0;
+	mybrain_project_eye_origin(self, left_eye, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+	{
+		laser->spawnflags |= DABEAM_SPAWNED;
+		return;
+	}
 
-	eye_offsets = left_eye ? brain_leye : brain_reye;
-	VectorCopy(self->s.origin, start);
-	VectorMA(start, eye_offsets[frame_index][0], right, start);
-	VectorMA(start, eye_offsets[frame_index][1], forward, start);
-	VectorMA(start, eye_offsets[frame_index][2], up, start);
-
-	G_EntMidPoint(self->enemy, target);
-	VectorSubtract(target, start, aim);
-	VectorNormalize(aim);
+	mybrain_aim_eye_laser(self, start, aim);
 
 	VectorCopy(start, laser->s.origin);
 	VectorCopy(aim, laser->movedir);
@@ -841,32 +913,35 @@ static void mybrain_laserbeam(edict_t *self)
 		return;
 
 	damage = M_DABEAM_DMG_BASE + M_DABEAM_DMG_ADDON * drone_damagelevel(self);
-		if (M_DABEAM_DMG_MAX && damage > M_DABEAM_DMG_MAX)
+	if (M_DABEAM_DMG_MAX && damage > M_DABEAM_DMG_MAX)
 		damage = M_DABEAM_DMG_MAX;
 
-	monster_fire_dabeam(self, damage, false, mybrain_right_eye_laser_update);
-	monster_fire_dabeam(self, damage, true, mybrain_left_eye_laser_update);
+	if (mybrain_has_eye_laser_shot(self, false))
+		monster_fire_dabeam(self, damage, false, mybrain_right_eye_laser_update);
+	if (mybrain_has_eye_laser_shot(self, true))
+		monster_fire_dabeam(self, damage, true, mybrain_left_eye_laser_update);
 }
 
 static void mybrain_laserbeam_reattack(edict_t *self)
 {
-	if (G_EntExists(self->enemy) && visible(self, self->enemy) && self->enemy->health > 0 && random() < 0.5)
+	if (G_EntExists(self->enemy) && visible(self, self->enemy) && self->enemy->health > 0
+		&& mybrain_has_laser_shot(self) && random() < 0.5)
 		self->monsterinfo.nextframe = FRAME_walk101;
 }
 
 mframe_t mybrain_frames_attack4[] =
 {
+	ai_charge, 9, mybrain_laserbeam,
+	ai_charge, 2, mybrain_laserbeam,
+	ai_charge, 3, mybrain_laserbeam,
+	ai_charge, 3, mybrain_laserbeam,
+	ai_charge, 1, mybrain_laserbeam,
 	ai_charge, 0, mybrain_laserbeam,
 	ai_charge, 0, mybrain_laserbeam,
-	ai_charge, 0, mybrain_laserbeam,
-	ai_charge, 0, mybrain_laserbeam,
-	ai_charge, 0, mybrain_laserbeam,
-	ai_charge, 0, mybrain_laserbeam,
-	ai_charge, 0, mybrain_laserbeam,
-	ai_charge, 0, mybrain_laserbeam,
-	ai_charge, 0, mybrain_laserbeam,
-	ai_charge, 0, mybrain_laserbeam,
-	ai_charge, 0, mybrain_laserbeam_reattack
+	ai_charge, 10, mybrain_laserbeam,
+	ai_charge, -4, mybrain_laserbeam,
+	ai_charge, -1, mybrain_laserbeam,
+	ai_charge, 2, mybrain_laserbeam_reattack
 };
 mmove_t mybrain_move_attack4 = {FRAME_walk101, FRAME_walk111, mybrain_frames_attack4, mybrain_run};
 
@@ -890,7 +965,7 @@ void mybrain_attack (edict_t *self)
 	has_los = visible(self, self->enemy);
 
 	// laser attack
-	if (has_los && dist >= 192 && dist <= 640 && random() < 0.15)
+	if (has_los && dist >= 192 && dist <= 640 && mybrain_has_laser_shot(self) && random() < 0.15)
 		self->monsterinfo.currentmove = &mybrain_move_attack4;
 	// jump to our enemy if he's close and on even ground
 	else if ((dist > 256) && (self->enemy->absmin[2]+18 >= self->absmin[2])

@@ -31,6 +31,7 @@ static int	commander_sound_hook_retract;
 static int	commander_sound_spawn;
 
 void drone_ai_run_slide(edict_t *self, float dist);
+qboolean drone_findtarget(edict_t *self, qboolean force);
 void mymedic_run(edict_t *self);
 extern mmove_t mymedic_move_attackHyperBlaster;
 extern mmove_t mymedic_move_attackBlaster;
@@ -49,6 +50,26 @@ void medic_commander_attack(edict_t *self);
 static qboolean medic_is_commander(edict_t *self)
 {
 	return self && self->mtype == M_MEDIC_COMMANDER;
+}
+
+static int medic_blaster_flash(edict_t *self)
+{
+	return medic_is_commander(self) ? MZ2_MEDIC_BLASTER_2 : MZ2_MEDIC_BLASTER_1;
+}
+
+static int medic_hyperblaster_flash(edict_t *self)
+{
+	return medic_is_commander(self) ? MZ2_MEDIC_HYPERBLASTER2_1 : MZ2_MEDIC_HYPERBLASTER1_1;
+}
+
+static qboolean medic_can_blaster(edict_t *self)
+{
+	return M_MonsterHasClearShotFromFlash(self, medic_blaster_flash(self));
+}
+
+static qboolean medic_can_hyperblaster(edict_t *self)
+{
+	return M_MonsterHasClearShotFromFlash(self, medic_hyperblaster_flash(self));
 }
 
 static int medic_idle_sound(edict_t *self)
@@ -286,7 +307,7 @@ void mymedic_fire_blaster (edict_t *self)
 	{
 		effect = EF_BLASTER;
 		bounce = true;
-		flash_number = medic_is_commander(self) ? MZ2_MEDIC_BLASTER_2 : MZ2_MEDIC_BLASTER_1;
+		flash_number = medic_blaster_flash(self);
 	}
 	else
 	{
@@ -298,7 +319,7 @@ void mymedic_fire_blaster (edict_t *self)
 			frame_offset = 11;
 
 		effect = (self->s.frame % 4) ? 0 : EF_HYPERBLASTER;
-		flash_number = (medic_is_commander(self) ? MZ2_MEDIC_HYPERBLASTER2_1 : MZ2_MEDIC_HYPERBLASTER1_1) + frame_offset;
+		flash_number = medic_hyperblaster_flash(self) + frame_offset;
 	}
 
 	damage = M_HYPERBLASTER_DMG_BASE + M_HYPERBLASTER_DMG_ADDON * drone_damagelevel(self);
@@ -307,6 +328,9 @@ void mymedic_fire_blaster (edict_t *self)
 
 
 	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash_number, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	if (medic_is_commander(self))
 		monster_fire_blaster2(self, start, forward, damage, speed, effect, flash_number);
 	else
@@ -315,15 +339,26 @@ void mymedic_fire_blaster (edict_t *self)
 
 void mymedic_fire_bolt (edict_t *self)
 {
-	int		min, max, damage;
+	int		min, max, damage, flash_number;
 	vec3_t	forward, start;
 
 	min = 4 * drone_damagelevel(self); // dmg.min: medic_fire_bolt
 	max = 50 + 25 * drone_damagelevel(self); // dmg.max: medic_fire_bolt
 
 	damage = GetRandom(min, max);
+	flash_number = medic_blaster_flash(self);
 
-	MonsterAim(self, M_PROJECTILE_ACC, 1500, false, MZ2_MEDIC_BLASTER_1, forward, start);
+	MonsterAim(self, M_PROJECTILE_ACC, 1500, false, flash_number, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
+	if (medic_is_commander(self))
+	{
+		monster_fire_blaster2(self, start, forward, damage, 1500, EF_BLASTER, -1);
+		gi.sound (self, CHAN_WEAPON, gi.soundindex("weapons/photon.wav"), 1, ATTN_NORM, 0);
+		return;
+	}
+
 	// Keep the medic muzzle origin, but don't emit the muzzleflash packet here;
 	// it can override the secondary blaster sound that should play per bolt.
 	monster_fire_blaster(self, start, forward, damage, 1500, EF_BLASTER, BLASTER_PROJ_BLAST, 2.0, true, -1);
@@ -581,6 +616,12 @@ void mymedic_jump_hold (edict_t *self)
 	}
 }
 
+static void mymedic_jump_hold_ai(edict_t *self, float dist)
+{
+	ai_move(self, dist);
+	mymedic_jump_hold(self);
+}
+
 mframe_t mymedic_frames_duck [] =
 {
 	ai_move, -1, NULL,
@@ -607,7 +648,7 @@ mframe_t mymedic_frames_leap [] =
 	ai_move, 0,	NULL,
 	ai_move, 0,	NULL,
 	ai_move, 0,	NULL,
-	ai_move, 0,	mymedic_jump_hold,		//137
+	mymedic_jump_hold_ai, 0,	NULL,		//137
 	/*
 	ai_move, 0,	NULL,
 	ai_move, 0,	NULL,
@@ -737,7 +778,7 @@ void mymedic_refire(edict_t* self)
 	{
 		dist = entdist(self, self->enemy);
 
-		if (random() <= 0.8 && dist <= 512)
+		if (random() <= 0.8 && dist <= 512 && medic_can_hyperblaster(self))
 		{
 			// continue attack
 			self->s.frame = FRAME_attack19;
@@ -759,7 +800,7 @@ void mymedic_refire(edict_t* self)
 
 void mymedic_continue(edict_t* self)
 {
-	if (M_ContinueAttack(self, &mymedic_move_attackHyperBlaster, NULL, 0, 512, 0.8))
+	if (medic_can_hyperblaster(self) && M_ContinueAttack(self, &mymedic_move_attackHyperBlaster, NULL, 0, 512, 0.8))
 		return;
 
 	// end attack
@@ -1384,12 +1425,10 @@ static int medic_commander_random_soldier_type(void)
 
 static qboolean medic_commander_spawn_soldier(edict_t *self, float side)
 {
-	edict_t *owner = self->activator;
+	edict_t *owner = (self->activator && self->activator->inuse) ? self->activator : self;
 	edict_t *gunner;
 	vec3_t spot;
-
-	if (!owner || !owner->inuse)
-		return false;
+	const qboolean force_start = invasion->value || pvm->value;
 
 	if (owner->client && owner->num_monsters + M_GUNNER_CONTROL_COST > MAX_MONSTERS)
 		return false;
@@ -1425,12 +1464,15 @@ static qboolean medic_commander_spawn_soldier(edict_t *self, float side)
 	owner->num_monsters += gunner->monsterinfo.control_cost;
 	owner->num_monsters_real++;
 
-	if (G_ValidTarget(gunner, self->enemy, true, true))
+	if (G_ValidTarget(gunner, self->enemy, !force_start, true))
 	{
 		gunner->enemy = self->enemy;
+		VectorCopy(self->enemy->s.origin, gunner->monsterinfo.last_sighting);
 		if (gunner->monsterinfo.run)
 			gunner->monsterinfo.run(gunner);
 	}
+	else if (force_start && drone_findtarget(gunner, true) && gunner->monsterinfo.run)
+		gunner->monsterinfo.run(gunner);
 	else if (gunner->monsterinfo.stand)
 		gunner->monsterinfo.stand(gunner);
 
@@ -1550,6 +1592,8 @@ void mymedic_heal (edict_t *self)
 void mymedic_attack(edict_t *self)
 {
 	float	dist, r;
+	qboolean can_blaster;
+	qboolean can_hyperblaster;
 
 	if (!self->enemy)
 		return;
@@ -1558,6 +1602,8 @@ void mymedic_attack(edict_t *self)
 
 	dist = entdist(self, self->enemy);
 	r = random();
+	can_blaster = medic_can_blaster(self);
+	can_hyperblaster = medic_can_hyperblaster(self);
 
 	if ((self->monsterinfo.aiflags & AI_MEDIC)
 		&& ((self->enemy->health < 1 || OnSameTeam(self, self->enemy))))
@@ -1569,17 +1615,21 @@ void mymedic_attack(edict_t *self)
 
 	if (dist <= 256)
 	{
-		if (r <= 0.2)
+		if (can_hyperblaster && (r <= 0.2 || !can_blaster))
 			self->monsterinfo.currentmove = &mymedic_move_attackHyperBlaster;
-		else
+		else if (can_blaster)
 			self->monsterinfo.currentmove = &mymedic_move_attackBlaster;
+		else
+			return;
 	}
 	else
 	{
-		if (r <= 0.3)
+		if (can_blaster && (r <= 0.3 || !can_hyperblaster))
 			self->monsterinfo.currentmove = &mymedic_move_attackBlaster;
-		else
+		else if (can_hyperblaster)
 			self->monsterinfo.currentmove = &mymedic_move_attackHyperBlaster;
+		else
+			return;
 	}
 
 	M_DelayNextAttack(self, 0, true);
@@ -1587,16 +1637,21 @@ void mymedic_attack(edict_t *self)
 
 void medic_commander_attack(edict_t *self)
 {
-	edict_t *owner = self->activator;
+	edict_t *owner = (self->activator && self->activator->inuse) ? self->activator : self;
 	float dist;
 
 	if (!self->enemy || !self->enemy->inuse)
 		return;
 
+	if (!G_ValidTarget(self, self->enemy, false, true))
+	{
+		mymedic_attack(self);
+		return;
+	}
+
 	dist = entdist(self, self->enemy);
 
 	if (dist > 150
-		&& owner && owner->inuse
 		&& (!owner->client || owner->num_monsters + M_GUNNER_CONTROL_COST <= MAX_MONSTERS)
 		&& level.time >= self->monsterinfo.melee_finished
 		&& random() < 0.6)

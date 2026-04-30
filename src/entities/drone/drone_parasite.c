@@ -33,6 +33,14 @@ void myparasite_checkattack (edict_t *self);
 void myparasite_attack1 (edict_t *self);
 void myparasite_continue (edict_t *self);
 
+static void ParasiteProjectDrainSource(edict_t *self, vec3_t start)
+{
+	vec3_t forward, right, offset;
+
+	AngleVectors(self->s.angles, forward, right, NULL);
+	VectorSet(offset, 24, 0, 6);
+	G_ProjectSource(self->s.origin, offset, forward, right, start);
+}
 
 void myparasite_launch (edict_t *self)
 {
@@ -245,8 +253,6 @@ void myparasite_run (edict_t *self)
 
 static qboolean ParasiteCanAttack (edict_t *self, vec3_t start, vec3_t end)
 {
-	vec3_t f, r, offset;
-
 	if (!self->enemy)
 		return false;
 	if (entdist(self, self->enemy) > 128)
@@ -265,16 +271,11 @@ static qboolean ParasiteCanAttack (edict_t *self, vec3_t start, vec3_t end)
 		return false;
 
 	// get starting point
-	AngleVectors (self->s.angles, f, r, NULL);
-	VectorSet (offset, 24, 0, 6);
-	G_ProjectSource (self->s.origin, offset, f, r, start);
-
-	// target the midpoint of enemy
-	G_EntMidPoint(self->enemy, end);
+	ParasiteProjectDrainSource(self, start);
 
 	// make sure there is a clear shot
 	//if (!G_IsClearPath(self->enemy, MASK_SHOT, start, end))
-	if (!G_ClearShot(self, start, self->enemy))
+	if (!M_MonsterFindClearShot(self, start, end))
 	{
 		//gi.dprintf("no clear path\n");
 		return false;
@@ -377,7 +378,9 @@ mmove_t myparasite_move_runandattack = {FRAME_run03, FRAME_run09, myparasite_fra
 
 void myparasite_continue (edict_t *self)
 {
-	if (G_ValidTarget(self, self->enemy, true, true) && (entdist(self, self->enemy) <= 128))
+	vec3_t start, end;
+
+	if (G_ValidTarget(self, self->enemy, true, true) && ParasiteCanAttack(self, start, end))
 		self->monsterinfo.currentmove = &myparasite_move_runandattack;
 }
 
@@ -472,13 +475,12 @@ static void myparasite_shrink(edict_t *self)
 	self->svflags |= SVF_DEADMONSTER;
 	gi.linkentity(self);
 }
-
 mframe_t myparasite_frames_death [] =
 {
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
-	ai_move, 0,	 myparasite_shrink,
+	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL
@@ -534,7 +536,6 @@ void myparasite_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int d
 	gi.sound (self, CHAN_VOICE, sound_die, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
-	vrx_update_drone_death_skin(self);
 	self->monsterinfo.currentmove = &myparasite_move_death;
 
 	DroneList_Remove(self);

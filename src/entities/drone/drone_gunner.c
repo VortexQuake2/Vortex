@@ -248,6 +248,9 @@ void myGunnerGrenade (edict_t *self)
 		flash_number = MZ2_GUNNER_GRENADE2_1 + (MZ2_GUNNER_GRENADE_4 - flash_number);
 
 	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash_number, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	monster_fire_grenade(self, start, forward, damage, speed, flash_number);
 }
 
@@ -312,21 +315,42 @@ mframe_t mygunner_frames_attack_grenade2[] =
 };
 mmove_t mygunner_move_attack_grenade2 = {FRAME_attak305, FRAME_attak324, mygunner_frames_attack_grenade2, mygunnerrun};
 
-static void mygunner_start_grenade(edict_t *self)
+static qboolean mygunner_can_grenade(edict_t *self, qboolean second_set)
 {
-	if (random() <= 0.5)
+	return M_MonsterHasClearShotFromFlash(self, second_set ? MZ2_GUNNER_GRENADE2_4 : MZ2_GUNNER_GRENADE_1);
+}
+
+static qboolean mygunner_can_run_grenade(edict_t *self)
+{
+	return M_MonsterHasClearShotFromFlash(self, MZ2_GUNNER_GRENADE_4);
+}
+
+static qboolean mygunner_can_chain(edict_t *self)
+{
+	return M_MonsterHasClearShotFromFlash(self, MZ2_GUNNER_MACHINEGUN_1);
+}
+
+static qboolean mygunner_start_grenade(edict_t *self)
+{
+	qboolean can_first = mygunner_can_grenade(self, false);
+	qboolean can_second = mygunner_can_grenade(self, true);
+
+	if (!can_first && !can_second)
+		return false;
+
+	if (can_second && (!can_first || random() <= 0.5))
 		self->monsterinfo.currentmove = &mygunner_move_attack_grenade2;
 	else
 		self->monsterinfo.currentmove = &mygunner_move_attack_grenade;
+
+	return true;
 }
 
 void gunner_refire_grenade (edict_t *self)
 {
 	// continue firing unless enemy is no longer valid or out of range
-	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.8)
-		&& (entdist(self, self->enemy) <= 384))
-		mygunner_start_grenade(self);
-	else
+	if (!(G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.8)
+		&& (entdist(self, self->enemy) <= 384) && mygunner_start_grenade(self)))
 		self->monsterinfo.currentmove = &mygunner_move_attack_grenade_end;
 
 	// don't call the attack function again for awhile!
@@ -336,8 +360,8 @@ void gunner_refire_grenade (edict_t *self)
 void gunner_attack_grenade (edict_t *self)
 {
 	// continue attack sequence unless enemy is no longer valid
-	if (G_ValidTarget(self, self->enemy, true, true))
-		mygunner_start_grenade(self);
+	if (G_ValidTarget(self, self->enemy, true, true) && mygunner_start_grenade(self))
+		return;
 	else
 		mygunnerrun(self);
 }
@@ -372,7 +396,7 @@ mmove_t mygunner_move_runandshoot = {FRAME_runs01, FRAME_runs06, mygunner_frames
 void mygunner_continue (edict_t *self)
 {
 	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.9)
-		&& (entdist(self, self->enemy) <= 512))
+		&& (entdist(self, self->enemy) <= 512) && mygunner_can_run_grenade(self))
 		self->monsterinfo.currentmove = &mygunner_move_runandshoot;
 	else
 		self->monsterinfo.currentmove = &mygunnermove_run;
@@ -402,6 +426,8 @@ void myGunnerFire (edict_t *self)
 		damage = M_MACHINEGUN_DMG_MAX;
 
 	MonsterAim(self, M_HITSCAN_CONT_ACC, 0, false, flash_number, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
 
 	monster_fire_bullet (self, start, forward, damage, damage, 
 		DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, flash_number);
@@ -469,7 +495,7 @@ void mygunner_refire_chain(edict_t *self)
 {
 	// keep firing
 	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.8)
-		&& entdist(self, self->enemy) > 128)
+		&& entdist(self, self->enemy) > 128 && mygunner_can_chain(self))
 		self->monsterinfo.currentmove = &mygunner_move_fire_chain;
 	else
 		self->monsterinfo.currentmove = &mygunner_move_endfire_chain;
@@ -482,9 +508,10 @@ void mygunner_refire_chain(edict_t *self)
 
 void gunner_stand_attack (edict_t *self)
 {
-	if (entdist(self, self->enemy) <= 384 && random() <= 0.8)
-		mygunner_start_grenade(self);
-	else
+	if (entdist(self, self->enemy) <= 384 && random() <= 0.8 && mygunner_start_grenade(self))
+		return;
+
+	if (mygunner_can_chain(self))
 		self->monsterinfo.currentmove = &mygunner_move_attack_chain;
 }
 
@@ -496,20 +523,26 @@ void gunner_attack (edict_t *self)
 	// short range (20% chance grenade, 80% chance run and shoot)
 	if (dist <= 128)
 	{
-		if (r <= 0.2)
-			mygunner_start_grenade(self);
-		else
+		if (r <= 0.2 && mygunner_start_grenade(self))
+			return;
+
+		if (mygunner_can_run_grenade(self))
 			self->monsterinfo.currentmove = &mygunner_move_runandshoot;
+		else if (mygunner_can_chain(self))
+			self->monsterinfo.currentmove = &mygunner_move_attack_chain;
 	}
 	// medium range (100% run and shoot)
 	else if (dist <= 512)
 	{
-		self->monsterinfo.currentmove = &mygunner_move_runandshoot;
+		if (mygunner_can_run_grenade(self))
+			self->monsterinfo.currentmove = &mygunner_move_runandshoot;
+		else if (mygunner_can_chain(self))
+			self->monsterinfo.currentmove = &mygunner_move_attack_chain;
 	}
 	// long range (50% chance chaingun)
 	else
 	{
-		if (r <= 0.5)
+		if (r <= 0.5 && mygunner_can_chain(self))
 			self->monsterinfo.currentmove = &mygunner_move_attack_chain;
 		else
 			self->monsterinfo.attack_finished = level.time + 2.0;// don't attack, try to get closer
@@ -615,6 +648,12 @@ void mygunner_jump_wait_land (edict_t *self)
 	}
 }
 
+static void mygunner_jump_wait_land_ai(edict_t *self, float dist)
+{
+	ai_move(self, dist);
+	mygunner_jump_wait_land(self);
+}
+
 mframe_t mygunner_frames_jump [] =
 {
 	ai_move, 0, NULL,
@@ -623,7 +662,7 @@ mframe_t mygunner_frames_jump [] =
 	ai_move, 0, mygunner_jump_now,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
-	ai_move, 0, mygunner_jump_wait_land,
+	mygunner_jump_wait_land_ai, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL
@@ -638,7 +677,7 @@ mframe_t mygunner_frames_jump2 [] =
 	ai_move, 0, mygunner_jump2_now,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
-	ai_move, 0, mygunner_jump_wait_land,
+	mygunner_jump_wait_land_ai, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL

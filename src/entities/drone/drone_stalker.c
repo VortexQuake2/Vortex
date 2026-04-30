@@ -305,10 +305,16 @@ static void stalker_jump_wait_land(edict_t *self)
 		self->monsterinfo.aiflags |= AI_HOLD_FRAME;
 }
 
+static void stalker_jump_wait_land_ai(edict_t *self, float dist)
+{
+	ai_move(self, dist);
+	stalker_jump_wait_land(self);
+}
+
 mframe_t stalker_frames_jump_straightup[] =
 {
 	ai_move, 1, stalker_jump_straightup,
-	ai_move, 1, stalker_jump_wait_land,
+	stalker_jump_wait_land_ai, 1, NULL,
 	ai_move, -1, NULL,
 	ai_move, -1, NULL
 };
@@ -377,7 +383,7 @@ static qboolean stalker_start_dodge_slide(edict_t *self, edict_t *attacker, vec3
 	return true;
 }
 
-static void stalker_fire_ionripper(edict_t *self)
+static void stalker_fire(edict_t *self)
 {
 	int damage, speed;
 	vec3_t forward, right, start, target, dir, offset;
@@ -393,24 +399,25 @@ static void stalker_fire_ionripper(edict_t *self)
 		speed = M_BLASTER2_SPEED_MAX;
 
 	AngleVectors(self->s.angles, forward, right, NULL);
-	VectorSet(offset, 16, 0, 6);
+	VectorCopy(monster_flash_offset[MZ2_STALKER_BLASTER], offset);
 	G_ProjectSource(self->s.origin, offset, forward, right, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
 
 	VectorCopy(self->enemy->s.origin, target);
 	target[2] += self->enemy->viewheight;
 	VectorSubtract(target, start, dir);
 	VectorNormalize(dir);
 
-		monster_fire_blaster2(self, start, dir, damage, speed, EF_BLASTER, MZ2_STALKER_BLASTER);
-
+	monster_fire_blaster2(self, start, dir, damage, speed, EF_BLASTER, MZ2_STALKER_BLASTER);
 }
 
 mframe_t stalker_frames_shoot[] =
 {
 	drone_ai_run, 10, NULL,
-	drone_ai_run, 10, stalker_fire_ionripper,
-	drone_ai_run, 12, stalker_fire_ionripper,
-	drone_ai_run, 12, stalker_fire_ionripper
+	drone_ai_run, 10, stalker_fire,
+	drone_ai_run, 12, stalker_fire,
+	drone_ai_run, 12, stalker_fire
 };
 mmove_t stalker_move_shoot = { FRAME_run01, FRAME_run04, stalker_frames_shoot, stalker_run };
 

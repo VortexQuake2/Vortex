@@ -607,7 +607,7 @@ void vrx_inv_spawn_boss(edict_t *self, int index) {
 
     if (invasion_data.boss)
         return;
-    if (index < 30)
+    if (!vrx_drone_spawn_is_boss((enum dronespawn_t)index))
         return;
 
     while ((spawn = vrx_inv_get_monster_spawn(spawn))) {

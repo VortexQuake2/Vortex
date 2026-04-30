@@ -413,10 +413,10 @@ void drone_ai_checkattack (edict_t *self)
 	// if we see an easier target, go for it
 	if (!visible(self, self->enemy))
 	{
-			self->oldenemy = self->enemy;
-			if (!drone_findtarget(self, false))
-				return;
-			//gi.dprintf("%d going for an easier target\n", self->mtype);
+		self->oldenemy = self->enemy;
+		if (!drone_findtarget(self, false))
+			return;
+		//gi.dprintf("%d going for an easier target\n", self->mtype);
 	}
 
 	//if (!infront(self, self->enemy))
@@ -434,10 +434,10 @@ void drone_ai_checkattack (edict_t *self)
 	if (!tr.ent || tr.ent != self->enemy)
 	{
 		//gi.dprintf("blocked shot\n");
-			if (G_ValidTarget(self, tr.ent, false, true))
-				self->enemy = tr.ent;
-			else
-				return;
+		if (G_ValidTarget(self, tr.ent, false, true))
+			self->enemy = tr.ent;
+		else
+			return;
 	}
 	//AngleVectors(self->s.angles, forward, NULL, NULL);
 	//VectorMA(self->s.origin, self->maxs[1]+8, forward , start);
@@ -540,8 +540,7 @@ void drone_death (edict_t *self, edict_t *attacker)
 
 
 	//4.2 bosses can drop up to 4 runes
-		if (self->mtype == M_COMMANDER || self->mtype == M_SUPERTANK || self->mtype == M_BOSS5 || self->mtype == M_MAKRON || self->mtype == M_BOSS2 || self->mtype == M_CARRIER
-			|| self->mtype == M_WIDOW || self->mtype == M_WIDOW2 || self->mtype == M_FIXBOT_BOSS || self->mtype == M_GUARDIAN)
+	if (self->mtype == M_COMMANDER || self->mtype == M_SUPERTANK || self->mtype == M_MAKRON || self->mtype == M_CARRIER)
 	{
 		edict_t *e;
 		float drop_chance = 0.25;
@@ -777,7 +776,7 @@ void vrx_roll_to_make_champion(edict_t *drone, enum dronespawn_t *drone_type)
 	}
 }
 
-static qboolean vrx_drone_spawn_is_boss(enum dronespawn_t drone_type)
+qboolean vrx_drone_spawn_is_boss(enum dronespawn_t drone_type)
 {
 	switch (drone_type)
 	{
@@ -785,15 +784,15 @@ static qboolean vrx_drone_spawn_is_boss(enum dronespawn_t drone_type)
 	case DS_MAKRON:
 	case DS_BARON_FIRE:
 	case DS_SUPERTANK:
-	case DS_BOSS5:
 	case DS_JORG:
 	case DS_CARRIER:
+	case DS_GUARDIAN:
 	case DS_WIDOW:
 	case DS_WIDOW2:
 	case DS_FIXBOT_BOSS:
-	case DS_GUARDIAN:
 	case DS_BOSS2:
-	case DS_BOSS2_HYPER:
+	//case DS_BOSS2_HYPER:
+	case DS_BOSS5:
 		return true;
 	default:
 		return false;
@@ -923,11 +922,24 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 	case DS_JORG: init_drone_jorg(drone);		break;
 	case DS_CARRIER: init_drone_carrier(drone);	break;
 	case DS_GUARDIAN: init_drone_guardian(drone); break;
+	case DS_WIDOW: init_drone_widow(drone); break;
+	case DS_WIDOW2: init_drone_widow2(drone); break;
+	case DS_FIXBOT_BOSS: init_drone_fixbot_boss(drone); break;
+	case DS_BOSS2: init_drone_boss2(drone); break;
+	case DS_BOSS2_HYPER: init_drone_boss2_hyper(drone); break;
+	case DS_BOSS5: init_drone_boss5(drone); break;
+
+	// special/miniboss-sized normal monsters
 	case DS_JANITOR: drone->mtype = M_JANITOR; init_drone_supertank(drone); break;
 	case DS_MINIGUARDIAN: drone->mtype = M_MINIGUARDIAN; init_drone_guardian(drone); break;
+	case DS_FIXBOT: init_drone_fixbot(drone); break;
+	case DS_ROGUE_TURRET: init_drone_rogue_turret(drone); break;
+	case DS_BOSS2_SMALL: init_drone_boss2_small(drone); break;
 
-	// default
-	default: init_drone_gunner(drone);		break;
+	default:
+		gi.dprintf("WARNING: unknown drone spawn type %d\n", drone_type);
+		G_FreeEdict(drone);
+		return NULL;
 	}
 
 	/* az: init functions might have set up a pain function -- address that here */
@@ -939,12 +951,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 	drone->pain = drone_pain;
 
 	//4.0 gib health based on monster control cost
-	if (drone_type < 30 ||
-		drone_type == DS_JANITOR ||
-		drone_type == DS_MINIGUARDIAN ||
-		drone_type == DS_SOLDIER_RIPPER ||
-		drone_type == DS_SOLDIER_BLUEBLASTER ||
-		drone_type == DS_SOLDIER_LASER)
+	if (!is_boss_spawn)
 		drone->gib_health = -drone->monsterinfo.control_cost * BASE_GIB_HEALTH * M_CONTROL_COST_SCALE;
 	else
 		drone->gib_health = 0;//gib boss immediately
@@ -1086,7 +1093,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 	}
 
 	//4.4 FIXME: should we be doing this if ent is world?
-	if (!ent->client && (drone_type == 30 || drone_type == 31)) // boss
+	if (!ent->client && is_boss_spawn)
 		ent->num_sentries++;
 	else
 	{
@@ -1525,47 +1532,151 @@ double randfrac(void) {
 
 // note: flash_number is used by monsters to determine muzzle location; use -1 if muzzle location is already known, or 0 for non-monsters to estimate muzzle location
 // aiming vector will be copied to 'forward' and can be used for firing functions
+static qboolean M_MonsterTraceCombatSight(edict_t *self, vec3_t start, vec3_t end)
+{
+	if (!gi.inPVS(start, end))
+		return false;
+
+	return gi.trace(start, NULL, NULL, end, self, MASK_SOLID).fraction == 1.0f;
+}
+
+static void M_MonsterProjectMuzzleSource(edict_t *self, int flash_number, vec3_t forward, vec3_t right, vec3_t start)
+{
+	vec3_t offset;
+
+	if (self->client && !flash_number)
+	{
+		VectorSet(offset, 0, 8, self->viewheight - 8);
+		P_ProjectSource(self->client, self->s.origin, offset, forward, right, start);
+	}
+	else if (flash_number > 0)
+	{
+		G_ProjectSource(self->s.origin, monster_flash_offset[flash_number], forward, right, start);
+		if ((self->svflags & SVF_MONSTER) && (start[2] < self->absmin[2] + 32))
+			start[2] += 32;
+	}
+	else if (self->viewheight)
+	{
+		VectorCopy(self->s.origin, start);
+		start[2] += self->viewheight;
+		VectorMA(start, self->maxs[1] + 8, forward, start);
+	}
+	else
+	{
+		G_EntMidPoint(self, start);
+		VectorMA(start, self->maxs[1] + 8, forward, start);
+	}
+}
+
+static qboolean M_MonsterTraceShotToTarget(edict_t *self, vec3_t start, edict_t *target, vec3_t end)
+{
+	trace_t tr;
+
+	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
+	return tr.ent && tr.ent == target;
+}
+
+static qboolean M_MonsterFindClearTargetPoint(edict_t *self, vec3_t start, edict_t *target, vec3_t point)
+{
+	vec3_t test;
+
+	if (!G_EntExists(target))
+		return false;
+
+	G_EntMidPoint(target, test);
+	if (M_MonsterTraceShotToTarget(self, start, target, test))
+	{
+		VectorCopy(test, point);
+		return true;
+	}
+
+	G_EntViewPoint(target, test);
+	if (M_MonsterTraceShotToTarget(self, start, target, test))
+	{
+		VectorCopy(test, point);
+		return true;
+	}
+
+	VectorCopy(target->s.origin, test);
+	if (M_MonsterTraceShotToTarget(self, start, target, test))
+	{
+		VectorCopy(test, point);
+		return true;
+	}
+
+	return false;
+}
+
+qboolean M_MonsterHasCombatSight(edict_t *self, edict_t *other)
+{
+	vec3_t start, end;
+
+	if (!G_EntExists(other))
+		return false;
+
+	if (visible(self, other))
+		return true;
+
+	G_EntViewPoint(self, start);
+	G_EntViewPoint(other, end);
+	if (M_MonsterTraceCombatSight(self, start, end))
+		return true;
+
+	G_EntMidPoint(other, end);
+	if (M_MonsterTraceCombatSight(self, start, end))
+		return true;
+
+	G_EntMidPoint(self, start);
+	if (M_MonsterTraceCombatSight(self, start, end))
+		return true;
+
+	return false;
+}
+
+qboolean M_MonsterHasClearShotFrom(edict_t *self, vec3_t start)
+{
+	vec3_t end;
+
+	return M_MonsterFindClearShot(self, start, end);
+}
+
+qboolean M_MonsterFindClearShot(edict_t *self, vec3_t start, vec3_t point)
+{
+	if (!G_EntExists(self->enemy))
+		return false;
+
+	return M_MonsterFindClearTargetPoint(self, start, self->enemy, point);
+}
+
+qboolean M_MonsterHasClearShotFromFlash(edict_t *self, int flash_number)
+{
+	vec3_t forward, right, start;
+
+	AngleVectors(self->s.angles, forward, right, NULL);
+	M_MonsterProjectMuzzleSource(self, flash_number, forward, right, start);
+	return M_MonsterHasClearShotFrom(self, start);
+}
+
+void M_MonsterBlockedShot(edict_t *self, float delay)
+{
+	if (!self || !self->inuse)
+		return;
+
+	self->monsterinfo.attack_finished = max(self->monsterinfo.attack_finished, level.time + delay);
+}
+
 void MonsterAim (edict_t *self, float accuracy, int projectile_speed, qboolean rocket,
 				 int flash_number, vec3_t forward, vec3_t start)
 {
 	float	velocity, dist, rnd, crnd;//, base_acc = accuracy;
 	vec3_t	target, end;
-	vec3_t	right, offset;
+	vec3_t	right;
 	trace_t	tr;
 
 	// determine muzzle origin
 	AngleVectors (self->s.angles, forward, right, NULL);
-	if (self->client && !flash_number)
-	{
-		VectorSet(offset, 0, 8, self->viewheight-8);
-		P_ProjectSource (self->client, self->s.origin, offset, forward, right, start);
-	}
-	else if (flash_number)
-	{
-		// -1 flash number indicates we've already calculated our muzzle location as 'start'
-		// otherwise proceed using flash offset
-		if (flash_number != -1)
-		{
-			// monsters have special offsets that determine their exact firing origin
-			G_ProjectSource(self->s.origin, monster_flash_offset[flash_number], forward, right, start);
-			// fix for retarded chick muzzle location
-			if ((self->svflags & SVF_MONSTER) && (start[2] < self->absmin[2] + 32))
-				start[2] += 32;
-		}
-	}
-	else // can't determine the muzzle origin
-	{
-		// is viewheight set? if so, use that as a starting point
-		if (self->viewheight)
-		{
-			VectorCopy(self->s.origin, start);
-			start[2] += self->viewheight;
-		}
-		else // otherwise, use the mid-point of the bounding box
-			G_EntMidPoint(self, start);
-		// move starting point forward
-		VectorMA(start, self->maxs[1]+8, forward, start);
-	}
+	if (flash_number != -1)
+		M_MonsterProjectMuzzleSource(self, flash_number, forward, right, start);
 
 	// fire ahead if our enemy is invalid or out of our FOV
 	if (!G_EntExists(self->enemy) || !nearfov(self, self->enemy, 0, 60))
@@ -1645,6 +1756,7 @@ void MonsterAim (edict_t *self, float accuracy, int projectile_speed, qboolean r
 		accuracy *= 0.2;
 
 	G_EntMidPoint(self->enemy, target); // 3.58 aim at the ent's actual mid point
+	M_MonsterFindClearTargetPoint(self, start, self->enemy, target);
 	//VectorCopy(self->enemy->s.origin, target);
 
 	// miss the shot
@@ -2398,7 +2510,7 @@ qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax)
 		break;
 	case M_BERSERK: // az: these were missing...
 		VectorSet(boxmin, -16, -16, -24);
-		VectorSet(boxmax, 16, 16, 32);
+		VectorSet(boxmax, 16, 16, -8);
 		break;
 	case M_GLADIATOR:
 	case M_GLADB:

@@ -92,7 +92,6 @@ mmove_t redmutant_move_stand = { FRAME_stand101, FRAME_stand112, redmutant_frame
 
 static void redmutant_stand(edict_t *self)
 {
-	redmutant_set_bbox_height(self, REDMUTANT_IDLE_MAX_Z);
 	self->monsterinfo.currentmove = &redmutant_move_stand;
 }
 
@@ -136,7 +135,6 @@ mmove_t redmutant_move_idle = { FRAME_stand202, FRAME_stand228, redmutant_frames
 
 static void redmutant_idle(edict_t *self)
 {
-	redmutant_set_bbox_height(self, REDMUTANT_IDLE_MAX_Z);
 	self->monsterinfo.currentmove = &redmutant_move_idle;
 	gi.sound(self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
 }
@@ -160,7 +158,6 @@ mmove_t redmutant_move_walk = { FRAME_walk05, FRAME_walk16, redmutant_frames_wal
 
 static void redmutant_walk_loop(edict_t *self)
 {
-	redmutant_restore_bbox(self);
 	self->monsterinfo.currentmove = &redmutant_move_walk;
 }
 
@@ -175,7 +172,6 @@ mmove_t redmutant_move_start_walk = { FRAME_walk01, FRAME_walk04, redmutant_fram
 
 static void redmutant_walk(edict_t *self)
 {
-	redmutant_restore_bbox(self);
 	if (!self->goalentity)
 		self->goalentity = world;
 	self->monsterinfo.currentmove = &redmutant_move_start_walk;
@@ -194,7 +190,6 @@ mmove_t redmutant_move_run = { FRAME_run03, FRAME_run08, redmutant_frames_run, N
 
 static void redmutant_run(edict_t *self)
 {
-	redmutant_restore_bbox(self);
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 		self->monsterinfo.currentmove = &redmutant_move_stand;
 	else
@@ -337,8 +332,15 @@ static void redmutant_check_landing(edict_t *self)
 
     self->monsterinfo.aiflags |= AI_HOLD_FRAME;
 }
+
+static void redmutant_check_landing_ai(edict_t *self, float dist)
+{
+    ai_charge(self, dist);
+    redmutant_check_landing(self);
+}
+
 mframe_t redmutant_frames_jump_air[] = {
-    ai_charge, 0, redmutant_check_landing
+    redmutant_check_landing_ai, 0, NULL
 };
 mmove_t redmutant_move_jump_air = { FRAME_attack103, FRAME_attack103, redmutant_frames_jump_air, NULL };
 
@@ -360,7 +362,6 @@ mmove_t redmutant_move_jump_finish = { FRAME_attack104, FRAME_attack108, redmuta
 
 static void redmutant_jump(edict_t *self)
 {
-    redmutant_restore_bbox(self);
     self->monsterinfo.currentmove = &redmutant_move_jump_start;
 }
 
@@ -400,6 +401,12 @@ static void redmutant_flip_check_landing(edict_t *self)
     self->monsterinfo.aiflags |= AI_HOLD_FRAME;
 }
 
+static void redmutant_flip_check_landing_ai(edict_t *self, float dist)
+{
+    ai_charge(self, dist);
+    redmutant_flip_check_landing(self);
+}
+
 mframe_t redmutant_frames_flip[] = {
     ai_charge, 0,  NULL,
     ai_charge, 17, NULL,
@@ -408,13 +415,12 @@ mframe_t redmutant_frames_flip[] = {
     ai_charge, 15, NULL,
     ai_charge, 0,  NULL,
     ai_charge, 3,  NULL,
-    ai_charge, 0,  redmutant_flip_check_landing
+    redmutant_flip_check_landing_ai, 0, NULL
 };
 mmove_t redmutant_move_flip = { FRAME_attack101, FRAME_attack108, redmutant_frames_flip, redmutant_post_jump };
 
 static void redmutant_flip(edict_t *self)
 {
-    redmutant_restore_bbox(self);
     self->monsterinfo.currentmove = &redmutant_move_flip;
 }
 

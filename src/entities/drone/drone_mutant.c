@@ -376,13 +376,19 @@ void mutant_check_landing (edict_t *self)
 
 }
 
+static void mutant_check_landing_ai(edict_t *self, float dist)
+{
+	ai_charge(self, dist);
+	mutant_check_landing(self);
+}
+
 mframe_t mutant_frames_jump [] =
 {
 	ai_charge,	 0,	NULL,
 	ai_charge,	0,	NULL,
 	ai_charge,	0,	mutant_jump_takeoff,
 	ai_charge,	0,	NULL,
-	ai_charge,	0,	mutant_check_landing,
+	mutant_check_landing_ai,	0,	NULL,
 	ai_charge,	 0,	NULL,
 //	ai_charge,	 0,	NULL,
 //	ai_charge,	 0,	NULL

@@ -10,6 +10,8 @@ static int sound_sight;
 static int sound_windup;
 static int sound_strike;
 static int sound_plasma;
+static int skin_normal;
+static int skin_pain;
 
 #define RUNNERTANK_JUMP_ATTACK_DELAY 12.0f
 #define RUNNERTANK_JUMP_ATTACK_FOV 35
@@ -17,6 +19,8 @@ static int sound_plasma;
 #define RUNNERTANK_JUMP_ATTACK_DROP_SPEED 900.0f
 #define RUNNERTANK_JUMP_ATTACK_DROP_GRAVITY 3.0f
 #define RUNNERTANK_INVASION_RUN_SCALE 1.15f
+#define RUNNERTANK_NORMAL_SKIN "models/vault/monsters/tank/skin.pcx"
+#define RUNNERTANK_PAIN_SKIN "models/monsters/tank/pain.pcx"
 
 static void runnertank_stand(edict_t *self);
 static void runnertank_walk(edict_t *self);
@@ -31,8 +35,28 @@ static void runnertank_doattack_rocket(edict_t *self);
 static void runnertank_jump_attack_takeoff(edict_t *self);
 static void runnertank_jump_attack_hold(edict_t *self);
 
+static void runnertank_update_skin(edict_t *self)
+{
+    int desired_skin;
+
+    if (self->max_health <= 0)
+        return;
+
+    if (!skin_normal)
+        skin_normal = gi.imageindex(RUNNERTANK_NORMAL_SKIN);
+    if (!skin_pain)
+        skin_pain = gi.imageindex(RUNNERTANK_PAIN_SKIN);
+
+    self->s.renderfx |= RF_CUSTOMSKIN;
+    desired_skin = self->health < (self->max_health / 2) ? skin_pain : skin_normal;
+
+    if (desired_skin)
+        self->s.skinnum = desired_skin;
+}
+
 static void runnertank_ai_run(edict_t *self, float dist)
 {
+    runnertank_update_skin(self);
     drone_ai_run(self, invasion->value ? dist * RUNNERTANK_INVASION_RUN_SCALE : dist);
 }
 
@@ -74,6 +98,21 @@ static void runnertank_slam_effect(vec3_t origin)
     gi.WritePosition(origin);
     gi.WriteDir(up);
     gi.multicast(origin, MULTICAST_PHS);
+}
+
+static qboolean runnertank_can_rail(edict_t *self)
+{
+    return M_MonsterHasClearShotFromFlash(self, MZ2_TANK_BLASTER_1);
+}
+
+static qboolean runnertank_can_rocket(edict_t *self)
+{
+    return M_MonsterHasClearShotFromFlash(self, MZ2_TANK_ROCKET_1);
+}
+
+static qboolean runnertank_can_chain(edict_t *self)
+{
+    return M_MonsterHasClearShotFromFlash(self, MZ2_TANK_MACHINEGUN_1);
 }
 
 static void runnertank_idle(edict_t *self)
@@ -126,6 +165,7 @@ mmove_t runnertank_move_stand = { FRAME_stand01, FRAME_stand30, runnertank_frame
 
 static void runnertank_stand(edict_t *self)
 {
+    runnertank_update_skin(self);
     self->monsterinfo.currentmove = &runnertank_move_stand;
 }
 
@@ -173,6 +213,7 @@ mmove_t runnertank_move_walk = { FRAME_walk22, FRAME_walk38, runnertank_frames_w
 
 static void runnertank_walk_loop(edict_t *self)
 {
+    runnertank_update_skin(self);
     if (!self->goalentity)
         self->goalentity = world;
     self->monsterinfo.currentmove = &runnertank_move_walk;
@@ -180,6 +221,7 @@ static void runnertank_walk_loop(edict_t *self)
 
 static void runnertank_walk(edict_t *self)
 {
+    runnertank_update_skin(self);
     if (!self->goalentity)
         self->goalentity = world;
         
@@ -208,6 +250,8 @@ static void runnertank_run(edict_t *self)
 {
     if (self->deadflag == DEAD_DEAD)
         return;
+
+    runnertank_update_skin(self);
 
     if (self->enemy && self->enemy->client)
         self->monsterinfo.aiflags |= AI_BRUTAL;
@@ -240,6 +284,9 @@ static void runnertank_rail(edict_t *self)
         damage = M_RAILGUN_DMG_MAX;
 
     MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, flash_number, forward, start);
+    if (!M_MonsterHasClearShotFrom(self, start))
+        return;
+
     monster_fire_railgun(self, start, forward, damage, damage, flash_number);
 }
 
@@ -266,6 +313,9 @@ static void runnertank_rocket(edict_t *self)
         speed = M_ROCKETLAUNCHER_SPEED_MAX;
 
     MonsterAim(self, M_PROJECTILE_ACC, speed, true, flash_number, forward, start);
+    if (!M_MonsterHasClearShotFrom(self, start))
+        return;
+
     monster_fire_rocket(self, start, forward, damage, speed, flash_number);
 }
 
@@ -287,6 +337,9 @@ static void runnertank_plasma(edict_t *self)
     radius_damage = max(1, damage / 2);
 
     MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash_number, forward, start);
+    if (!M_MonsterHasClearShotFrom(self, start))
+        return;
+
     fire_plasma(self, start, forward, damage, speed, M_PLASMA_DAMAGE_RADIUS, radius_damage);
     gi.positioned_sound(start, self, CHAN_WEAPON, sound_plasma, 1, ATTN_NORM, 0);
 }
@@ -330,6 +383,7 @@ static void runnertank_meleeattack(edict_t *self)
 
 static void runnertank_attack_finished(edict_t *self)
 {
+    runnertank_update_skin(self);
     M_DelayNextAttack(self, 0.5, false);
     runnertank_run(self);
 }
@@ -379,7 +433,7 @@ mmove_t runnertank_move_attack_post_blast = { FRAME_attak117, FRAME_attak122, ru
 
 static void runnertank_reattack_blast(edict_t *self)
 {
-    if (!G_ValidTarget(self, self->enemy, true, true) || !visible(self, self->enemy))
+    if (!G_ValidTarget(self, self->enemy, true, true) || !visible(self, self->enemy) || !runnertank_can_rail(self))
     {
         self->monsterinfo.currentmove = &runnertank_move_attack_post_blast;
         M_DelayNextAttack(self, 0, true);
@@ -472,7 +526,7 @@ mmove_t runnertank_move_attack_post_rocket = { FRAME_attak322, FRAME_attak335, r
 
 static void runnertank_refire_rocket(edict_t *self)
 {
-    if (!G_ValidTarget(self, self->enemy, true, true) || !visible(self, self->enemy))
+    if (!G_ValidTarget(self, self->enemy, true, true) || !visible(self, self->enemy) || !runnertank_can_rocket(self))
     {
         self->monsterinfo.currentmove = &runnertank_move_attack_post_rocket;
         M_DelayNextAttack(self, 0, true);
@@ -570,13 +624,19 @@ static void runnertank_jump_attack_hold(edict_t *self)
     }
 }
 
+static void runnertank_jump_attack_hold_ai(edict_t *self, float dist)
+{
+    ai_move(self, dist);
+    runnertank_jump_attack_hold(self);
+}
+
 mframe_t runnertank_frames_jump_attack[] =
 {
     ai_charge, 15, NULL,
     ai_move, 0, runnertank_jump_attack_takeoff,
-    ai_move, 0, runnertank_jump_attack_hold,
-    ai_move, 0, runnertank_jump_attack_hold,
-    ai_move, 0, runnertank_jump_attack_hold
+    runnertank_jump_attack_hold_ai, 0, NULL,
+    runnertank_jump_attack_hold_ai, 0, NULL,
+    runnertank_jump_attack_hold_ai, 0, NULL
 };
 mmove_t runnertank_move_jump_attack = { FRAME_run01, FRAME_run05, runnertank_frames_jump_attack, runnertank_attack_finished };
 
@@ -624,12 +684,18 @@ static void runnertank_attack(edict_t *self)
 {
     float r, range;
     qboolean attack_started = false;
+    qboolean can_rail;
+    qboolean can_rocket;
+    qboolean can_chain;
 
     if (!G_ValidTarget(self, self->enemy, true, true))
         return;
 
     r = random();
     range = entdist(self, self->enemy);
+    can_rail = runnertank_can_rail(self);
+    can_rocket = runnertank_can_rocket(self);
+    can_chain = runnertank_can_chain(self);
 
     if ((range <= 128) && self->groundentity)
     {
@@ -645,44 +711,135 @@ static void runnertank_attack(edict_t *self)
     {
         if (r <= 0.35)
         {
-            self->monsterinfo.currentmove = &runnertank_move_attack_chain;
-            attack_started = true;
+            if (can_chain)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_chain;
+                attack_started = true;
+            }
+            else if (can_rocket)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_pre_rocket;
+                attack_started = true;
+            }
+            else if (can_rail)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_blast;
+                attack_started = true;
+            }
         }
         else if (r <= 0.5)
         {
-            self->monsterinfo.currentmove = &runnertank_move_attack_pre_rocket;
-            attack_started = true;
+            if (can_rocket)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_pre_rocket;
+                attack_started = true;
+            }
+            else if (can_chain)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_chain;
+                attack_started = true;
+            }
+            else if (can_rail)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_blast;
+                attack_started = true;
+            }
         }
     }
     else if (range <= 640)
     {
         if (r <= 0.25)
         {
-            self->monsterinfo.currentmove = &runnertank_move_attack_chain;
-            attack_started = true;
+            if (can_chain)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_chain;
+                attack_started = true;
+            }
+            else if (can_rail)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_blast;
+                attack_started = true;
+            }
+            else if (can_rocket)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_pre_rocket;
+                attack_started = true;
+            }
         }
         else if (r <= 0.55)
         {
-            self->monsterinfo.currentmove = &runnertank_move_attack_blast;
-            attack_started = true;
+            if (can_rail)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_blast;
+                attack_started = true;
+            }
+            else if (can_rocket)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_pre_rocket;
+                attack_started = true;
+            }
+            else if (can_chain)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_chain;
+                attack_started = true;
+            }
         }
         else if (r <= 0.7)
         {
-            self->monsterinfo.currentmove = &runnertank_move_attack_pre_rocket;
-            attack_started = true;
+            if (can_rocket)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_pre_rocket;
+                attack_started = true;
+            }
+            else if (can_rail)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_blast;
+                attack_started = true;
+            }
+            else if (can_chain)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_chain;
+                attack_started = true;
+            }
         }
     }
     else
     {
         if (r <= 0.35)
         {
-            self->monsterinfo.currentmove = &runnertank_move_attack_blast;
-            attack_started = true;
+            if (can_rail)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_blast;
+                attack_started = true;
+            }
+            else if (can_rocket)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_pre_rocket;
+                attack_started = true;
+            }
+            else if (can_chain)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_chain;
+                attack_started = true;
+            }
         }
         else if (r <= 0.55)
         {
-            self->monsterinfo.currentmove = &runnertank_move_attack_pre_rocket;
-            attack_started = true;
+            if (can_rocket)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_pre_rocket;
+                attack_started = true;
+            }
+            else if (can_rail)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_blast;
+                attack_started = true;
+            }
+            else if (can_chain)
+            {
+                self->monsterinfo.currentmove = &runnertank_move_attack_chain;
+                attack_started = true;
+            }
         }
     }
 
@@ -722,6 +879,8 @@ mmove_t runnertank_move_pain3 = { FRAME_pain301, FRAME_pain316, runnertank_frame
 
 static void runnertank_pain(edict_t *self, edict_t *other, float kick, int damage)
 {
+    runnertank_update_skin(self);
+
     if (level.time < self->pain_debounce_time)
         return;
 
@@ -835,6 +994,7 @@ static void runnertank_die(edict_t *self, edict_t *inflictor, edict_t *attacker,
     gi.sound(self, CHAN_VOICE, sound_die, 1, ATTN_NORM, 0);
     self->deadflag = DEAD_DEAD;
     self->takedamage = DAMAGE_YES;
+    runnertank_update_skin(self);
     self->monsterinfo.currentmove = &runnertank_move_death;
 
     if (self->activator && !self->activator->client)
@@ -892,8 +1052,9 @@ void init_drone_runnertank(edict_t *self)
     self->monsterinfo.control_cost = M_TANK_CONTROL_COST;
     self->monsterinfo.cost = M_TANK_COST;
     self->mtype = M_RUNNERTANK;
-    self->s.renderfx |= RF_CUSTOMSKIN;
-    self->s.skinnum = gi.imageindex("models/vault/monsters/tank/skin.pcx");
+    skin_normal = gi.imageindex(RUNNERTANK_NORMAL_SKIN);
+    skin_pain = gi.imageindex(RUNNERTANK_PAIN_SKIN);
+    runnertank_update_skin(self);
 
     gi.linkentity(self);
 

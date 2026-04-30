@@ -57,6 +57,11 @@ void floater_fire_blaster (edict_t *self)
 		damage = M_HYPERBLASTER_DMG_MAX;
 
 	MonsterAim(self, M_PROJECTILE_ACC, speed, false, MZ2_FLOAT_BLASTER_1, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+	{
+		M_MonsterBlockedShot(self, 0.35f);
+		return;
+	}
 	monster_fire_blaster(self, start, forward, damage, speed, EF_BLASTER, BLASTER_PROJ_BOLT, 2.0, true, MZ2_FLOAT_BLASTER_1);
 }
 
@@ -219,22 +224,41 @@ mmove_t floater_move_activate = {FRAME_actvat01, FRAME_actvat31, floater_frames_
 
 mframe_t floater_frames_attack1 [] =
 {
-	drone_ai_run,	15,	NULL,			// Blaster attack
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	floater_fire_blaster,			// BOOM (0, -25.8, 32.5)	-- LOOP Starts
-	drone_ai_run,	15,	floater_fire_blaster,
-	drone_ai_run,	15,	floater_fire_blaster,
-	drone_ai_run,	15,	floater_fire_blaster,
-	drone_ai_run,	15,	floater_fire_blaster,
-	drone_ai_run,	15,	floater_fire_blaster,
-	drone_ai_run,	15,	floater_fire_blaster,
-	drone_ai_run,	15,	floater_continue_attack,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL			//							-- LOOP Ends
+	ai_charge,	0,	NULL,			// Blaster attack
+	ai_charge,	0,	NULL,
+	ai_charge,	0,	NULL,
+	ai_charge,	0,	floater_fire_blaster,			// BOOM (0, -25.8, 32.5)	-- LOOP Starts
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_continue_attack,
+	ai_charge,	0,	NULL,
+	ai_charge,	0,	NULL,
+	ai_charge,	0,	NULL			//							-- LOOP Ends
 };
 mmove_t floater_move_attack1 = {FRAME_attak101, FRAME_attak114, floater_frames_attack1, floater_run};
+
+mframe_t floater_frames_attack1a [] =
+{
+	ai_charge,	10,	NULL,			// Blaster attack
+	ai_charge,	10,	NULL,
+	ai_charge,	10,	NULL,
+	ai_charge,	10,	floater_fire_blaster,			// BOOM (0, -25.8, 32.5)	-- LOOP Starts
+	ai_charge,	10,	floater_fire_blaster,
+	ai_charge,	10,	floater_fire_blaster,
+	ai_charge,	10,	floater_fire_blaster,
+	ai_charge,	10,	floater_fire_blaster,
+	ai_charge,	10,	floater_fire_blaster,
+	ai_charge,	10,	floater_fire_blaster,
+	ai_charge,	10,	floater_continue_attack,
+	ai_charge,	10,	NULL,
+	ai_charge,	10,	NULL,
+	ai_charge,	10,	NULL			//							-- LOOP Ends
+};
+mmove_t floater_move_attack1a = {FRAME_attak101, FRAME_attak114, floater_frames_attack1a, floater_run};
 
 
 
@@ -263,6 +287,8 @@ void floater_continue_attack(edict_t* self)
 
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 		move = &floater_move_attack4;
+	else if (self->monsterinfo.attack_state == AS_SLIDING)
+		move = &floater_move_attack1a;
 	else
 		move = &floater_move_attack1;
 
@@ -273,7 +299,7 @@ void floater_continue_attack(edict_t* self)
 		return;
 	}
 
-	M_DelayNextAttack(self, 0, true);
+		M_DelayNextAttack(self, 0, true);
 }
 
 mframe_t floater_frames_attack2 [] =
@@ -571,9 +597,22 @@ void floater_zap (edict_t *self)
 void floater_attack(edict_t *self)
 {
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+	{
+		self->monsterinfo.attack_state = AS_STRAIGHT;
 		self->monsterinfo.currentmove = &floater_move_attack4;
-	else
+	}
+	else if (random() < 0.5f)
+	{
+		self->monsterinfo.attack_state = AS_STRAIGHT;
 		self->monsterinfo.currentmove = &floater_move_attack1;
+	}
+	else
+	{
+		if (random() <= 0.5f)
+			self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
+		self->monsterinfo.attack_state = AS_SLIDING;
+		self->monsterinfo.currentmove = &floater_move_attack1a;
+	}
 }
 
 
@@ -684,7 +723,9 @@ void init_drone_floater (edict_t *self)
 	self->monsterinfo.run = floater_run;
 //	self->monsterinfo.dodge = floater_dodge;
 	self->monsterinfo.attack = floater_attack;
-	self->monsterinfo.melee = floater_melee;
+	// Future melee addon:
+	// self->monsterinfo.melee = floater_melee;
+	self->monsterinfo.melee = NULL;
 	self->monsterinfo.sight = floater_sight;
 	self->monsterinfo.idle = floater_idle;
 

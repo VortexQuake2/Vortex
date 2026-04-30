@@ -1035,8 +1035,7 @@ void fire_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int s
 	grenade->radius_dmg = radius_damage;
 	grenade->dmg_radius = damage_radius;
 	grenade->classname = "grenade";
-	if (self->client)
-		grenade->svflags |= SVF_PROJECTILE;
+	grenade->svflags |= SVF_PROJECTILE;
 	gi.linkentity (grenade);
 }
 
@@ -1079,8 +1078,7 @@ edict_t *fire_grenade2 (edict_t *self, vec3_t start, vec3_t aimdir, int damage, 
 	grenade->radius_dmg = radius_damage;
 	grenade->dmg_radius = damage_radius;
 	grenade->classname = "hgrenade";
-	if (self->client)
-		grenade->svflags |= SVF_PROJECTILE;
+	grenade->svflags |= SVF_PROJECTILE;
 	if (held)
 		grenade->spawnflags = 3;
 	else

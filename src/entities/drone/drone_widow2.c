@@ -60,6 +60,7 @@ static vec3_t widow2_tongue_offsets[] =
 void drone_ai_stand(edict_t *self, float dist);
 void drone_ai_run(edict_t *self, float dist);
 void drone_ai_walk(edict_t *self, float dist);
+qboolean drone_findtarget(edict_t *self, qboolean force);
 
 static void widow2_ai_walk(edict_t *self, float dist)
 {
@@ -422,10 +423,8 @@ static qboolean widow2_draw_proboscis(edict_t *self, vec3_t start, vec3_t end)
 	return true;
 }
 
-static void widow2_pull_enemy(edict_t *self)
+static void widow2_prepare_pulled_enemy(edict_t *self)
 {
-	vec3_t pull;
-
 	if (!G_EntExists(self->enemy))
 		return;
 
@@ -434,10 +433,62 @@ static void widow2_pull_enemy(edict_t *self)
 		self->enemy->s.origin[2] += 1;
 		self->enemy->groundentity = NULL;
 	}
+}
 
-	VectorSubtract(self->s.origin, self->enemy->s.origin, pull);
-	VectorNormalize(pull);
-	VectorMA(self->enemy->velocity, 700, pull, self->enemy->velocity);
+static int widow2_proboscis_damage(edict_t *self)
+{
+	int damage;
+
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * drone_damagelevel(self);
+	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
+		damage = M_MELEE_DMG_MAX;
+
+	damage = max(1, damage / 4);
+	return vrx_increase_monster_damage_by_talent(self->activator, damage);
+}
+
+static int widow2_proboscis_pull(edict_t *self)
+{
+	int pull;
+
+	pull = PARASITE_INITIAL_KNOCKBACK + PARASITE_ADDON_KNOCKBACK * drone_damagelevel(self);
+	if (PARASITE_MAX_KNOCKBACK && pull < PARASITE_MAX_KNOCKBACK)
+		pull = PARASITE_MAX_KNOCKBACK;
+	if (G_EntExists(self->enemy) && self->enemy->groundentity)
+		pull *= 2;
+
+	return pull;
+}
+
+static void widow2_heal_from_proboscis(edict_t *self, int damage)
+{
+	if (self->health >= self->max_health)
+		return;
+
+	self->health += damage;
+	if (self->health > self->max_health)
+		self->health = self->max_health;
+}
+
+static void widow2_drain_proboscis(edict_t *self)
+{
+	int damage;
+	int pull;
+	vec3_t start, end, dir;
+
+	if (!widow2_draw_proboscis(self, start, end))
+		return;
+
+	damage = widow2_proboscis_damage(self);
+	pull = widow2_proboscis_pull(self);
+	widow2_prepare_pulled_enemy(self);
+	widow2_heal_from_proboscis(self, damage);
+
+	if (self->s.frame == WIDOW2_FRAME_tongs01 + 3)
+		gi.sound(self->enemy, CHAN_AUTO, sound_hit, 1, ATTN_NORM, 0);
+
+	VectorSubtract(end, start, dir);
+	T_Damage(self->enemy, self, self, dir, self->enemy->s.origin, end, damage, pull, DAMAGE_NO_ABILITIES, MOD_UNKNOWN);
 }
 
 static void widow2_show_proboscis(edict_t *self)
@@ -449,25 +500,12 @@ static void widow2_show_proboscis(edict_t *self)
 
 static void widow2_pull_proboscis(edict_t *self)
 {
-	vec3_t start, end;
-
-	if (widow2_draw_proboscis(self, start, end))
-		widow2_pull_enemy(self);
+	widow2_drain_proboscis(self);
 }
 
 static void widow2_melee_hit(edict_t *self)
 {
-	int damage;
-	vec3_t start, end;
-
-	if (!widow2_draw_proboscis(self, start, end))
-		return;
-
-	widow2_pull_enemy(self);
-
-	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * drone_damagelevel(self);
-	if (M_MeleeAttack(self, self->enemy, WIDOW2_MELEE_RANGE, damage, 500))
-		gi.sound(self, CHAN_WEAPON, sound_hit, 1, ATTN_NORM, 0);
+	widow2_drain_proboscis(self);
 }
 
 static qboolean widow2_valid_spawn_spot(edict_t *self, vec3_t mins, vec3_t maxs, vec3_t spot)
@@ -521,6 +559,35 @@ static void widow2_cleanup_failed_spawn(edict_t *owner, edict_t *spawned)
 	G_FreeEdict(spawned);
 }
 
+static void widow2_setup_invasion_spawn(edict_t *spawned)
+{
+	if (!invasion->value)
+		return;
+
+	spawned->monsterinfo.aiflags &= ~AI_STAND_GROUND;
+	spawned->monsterinfo.aiflags |= AI_FIND_NAVI;
+	spawned->prev_navi = NULL;
+	spawned->goalentity = NULL;
+}
+
+static void widow2_start_spawned_monster(edict_t *self, edict_t *spawned)
+{
+	const qboolean force_start = invasion->value || pvm->value;
+
+	if (G_ValidTarget(spawned, self->enemy, !force_start, true))
+	{
+		spawned->enemy = self->enemy;
+		VectorCopy(self->enemy->s.origin, spawned->monsterinfo.last_sighting);
+	}
+	else if (force_start)
+		drone_findtarget(spawned, true);
+
+	if ((spawned->enemy || spawned->goalentity) && spawned->monsterinfo.run)
+		spawned->monsterinfo.run(spawned);
+	else if (spawned->monsterinfo.stand)
+		spawned->monsterinfo.stand(spawned);
+}
+
 static qboolean widow2_spawn_stalker(edict_t *self, int index)
 {
 	edict_t *owner;
@@ -552,26 +619,13 @@ static qboolean widow2_spawn_stalker(edict_t *self, int index)
 	VectorCopy(self->s.angles, spawned->s.angles);
 	spawned->nextthink = level.time + FRAMETIME;
 	spawned->monsterinfo.attack_finished = level.time + 1.0f;
-
-	if (invasion->value)
-	{
-		spawned->monsterinfo.aiflags &= ~AI_STAND_GROUND;
-		spawned->monsterinfo.aiflags |= AI_FIND_NAVI;
-		spawned->prev_navi = NULL;
-		spawned->goalentity = NULL;
-	}
-
-	if (G_ValidTarget(spawned, self->enemy, true, true))
-		spawned->enemy = self->enemy;
+	widow2_setup_invasion_spawn(spawned);
 
 	gi.linkentity(spawned);
 	owner->num_monsters += spawned->monsterinfo.control_cost;
 	owner->num_monsters_real++;
 
-	if (spawned->enemy && spawned->monsterinfo.run)
-		spawned->monsterinfo.run(spawned);
-	else if (spawned->monsterinfo.stand)
-		spawned->monsterinfo.stand(spawned);
+	widow2_start_spawned_monster(self, spawned);
 
 	return true;
 }
@@ -611,6 +665,19 @@ static void widow2_finish_spawn(edict_t *self)
 		self->monsterinfo.melee_finished = level.time + WIDOW2_SUMMON_COOLDOWN;
 }
 
+static qboolean widow2_can_spawn_stalker(edict_t *self)
+{
+	vec3_t spot;
+
+	for (int i = 0; i < WIDOW2_SUMMON_COUNT; i++)
+	{
+		if (widow2_find_spawn_spot(self, i, spot))
+			return true;
+	}
+
+	return false;
+}
+
 static void widow2_start_spawn(edict_t *self)
 {
 	gi.sound(self, CHAN_WEAPON, sound_spawn, 1, ATTN_NORM, 0);
@@ -638,10 +705,10 @@ static void widow2_attack(edict_t *self)
 		return;
 
 	r = random();
-	if (widow2_can_melee(self) && r < 0.35f)
-		widow2_melee(self);
-	else if (level.time >= self->monsterinfo.melee_finished && r < 0.60f)
+	if (level.time >= self->monsterinfo.melee_finished && widow2_can_spawn_stalker(self))
 		widow2_start_spawn(self);
+	else if (widow2_can_melee(self) && r < 0.35f)
+		widow2_melee(self);
 	else if (r < 0.80f)
 		self->monsterinfo.currentmove = &widow2_move_disruptor;
 	else

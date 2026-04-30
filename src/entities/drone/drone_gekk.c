@@ -40,6 +40,7 @@ extern mmove_t gekk_move_standunderwater;
 extern mmove_t gekk_move_swim_loop;
 extern mmove_t gekk_move_swim_start;
 extern mmove_t gekk_move_leapatk;
+extern mmove_t gekk_move_leapatk2;
 
 extern void fire_acid(edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damage, float radius,
 	int speed, int acid_damage, float acid_duration, int gas_damage, float gas_radius, float gas_duration);
@@ -81,6 +82,8 @@ static qboolean gekk_should_swim(edict_t *self)
 
 static void gekk_set_water_bounds(edict_t *self)
 {
+	if (!self->goalentity)
+		self->goalentity = world;
 	self->flags |= FL_SWIM;
 	self->yaw_speed = 10;
 	self->viewheight = 10;
@@ -376,19 +379,11 @@ static void gekk_land_to_water(edict_t *self)
 
 static void gekk_water_to_land(edict_t *self)
 {
-	vec3_t dir;
-
 	gekk_set_land_bounds(self);
 	if (G_EntExists(self->enemy))
 	{
-		VectorSubtract(self->enemy->s.origin, self->s.origin, dir);
-		dir[2] = 0;
-		VectorNormalize(dir);
-		VectorScale(dir, 450, self->velocity);
-		self->velocity[2] = 320;
-		self->groundentity = NULL;
 		self->monsterinfo.attack_finished = level.time + 1.5;
-		self->monsterinfo.currentmove = &gekk_move_leapatk;
+		self->monsterinfo.currentmove = &gekk_move_leapatk2;
 		return;
 	}
 
@@ -468,7 +463,10 @@ static void gekk_melee(edict_t *self)
 	}
 
 	gi.sound(self, CHAN_WEAPON, sound_swing, 1, ATTN_NORM, 0);
-	if (random() < 0.5)
+	float attack_roll = random();
+	if (attack_roll < 0.34f)
+		self->monsterinfo.currentmove = &gekk_move_attack;
+	else if (attack_roll < 0.67f)
 		self->monsterinfo.currentmove = &gekk_move_attack1;
 	else
 		self->monsterinfo.currentmove = &gekk_move_attack2;
@@ -580,6 +578,34 @@ static void gekk_jump_takeoff(edict_t *self)
 	gekk_set_leap_cooldown(self, 1.0, 0.5);
 }
 
+static void gekk_jump_takeoff2(edict_t *self)
+{
+	vec3_t forward;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	gi.sound(self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
+	self->lastsound = level.framenum;
+	self->s.origin[2] = self->enemy->s.origin[2];
+	self->groundentity = NULL;
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+	if (gekk_use_high_leap(self))
+	{
+		VectorScale(forward, 300, self->velocity);
+		self->velocity[2] = 250;
+	}
+	else
+	{
+		VectorScale(forward, 150, self->velocity);
+		self->velocity[2] = 300;
+	}
+	self->monsterinfo.pausetime = level.time + 2.0;
+	self->monsterinfo.aiflags |= AI_HOLD_FRAME;
+	self->touch = gekk_jump_touch;
+	gekk_set_leap_cooldown(self, 1.0, 0.5);
+}
+
 static void gekk_stop_skid(edict_t *self)
 {
 	if (self->groundentity)
@@ -608,6 +634,12 @@ static void gekk_check_landing(edict_t *self)
 	}
 
 	self->monsterinfo.aiflags |= AI_HOLD_FRAME;
+}
+
+static void gekk_check_landing_ai(edict_t *self, float dist)
+{
+	ai_charge(self, dist);
+	gekk_check_landing(self);
 }
 
 static void gekk_spit(edict_t *self)
@@ -640,6 +672,17 @@ static void gekk_spit(edict_t *self)
 	fire_acid(self, start, dir, damage, radius, speed, (int)(0.1 * damage), ACID_DURATION, 0, 0, 0);
 }
 
+static qboolean gekk_should_use_acid(float distance)
+{
+	if (distance >= 768.0f)
+		return true;
+	if (distance >= 384.0f)
+		return random() < 0.65f;
+	if (distance >= 160.0f)
+		return random() < 0.30f;
+	return false;
+}
+
 mframe_t gekk_frames_leapatk[] =
 {
 	ai_charge, 0, NULL,
@@ -651,7 +694,7 @@ mframe_t gekk_frames_leapatk[] =
 	ai_charge, 28, NULL,
 	ai_charge, 24, NULL,
 	ai_charge, 32, NULL,
-	ai_charge, 36, gekk_check_landing,
+	gekk_check_landing_ai, 36, NULL,
 	ai_charge, 12, gekk_stop_skid,
 	ai_charge, 20, gekk_stop_skid,
 	ai_charge, -1, gekk_stop_skid,
@@ -663,6 +706,30 @@ mframe_t gekk_frames_leapatk[] =
 	ai_charge, 0, NULL
 };
 mmove_t gekk_move_leapatk = { FRAME_leapatk_01, FRAME_leapatk_19, gekk_frames_leapatk, gekk_run };
+
+mframe_t gekk_frames_leapatk2[] =
+{
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 6, gekk_jump_takeoff2,
+	ai_charge, 6, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 28, NULL,
+	ai_charge, 24, NULL,
+	ai_charge, 32, NULL,
+	gekk_check_landing_ai, 36, NULL,
+	ai_charge, 12, gekk_stop_skid,
+	ai_charge, 20, gekk_stop_skid,
+	ai_charge, -1, gekk_stop_skid,
+	ai_charge, 3, gekk_stop_skid,
+	ai_charge, 1, gekk_stop_skid,
+	ai_charge, 2, gekk_stop_skid,
+	ai_charge, 1, gekk_stop_skid,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL
+};
+mmove_t gekk_move_leapatk2 = { FRAME_leapatk_01, FRAME_leapatk_19, gekk_frames_leapatk2, gekk_run };
 
 mframe_t gekk_frames_spit[] =
 {
@@ -694,7 +761,13 @@ static void gekk_attack(edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	if (gekk_can_leap(self) && random() >= 0.35f)
+	float distance = entdist(self, self->enemy);
+	if (gekk_should_use_acid(distance))
+	{
+		self->monsterinfo.currentmove = &gekk_move_spit;
+		self->monsterinfo.melee_finished = level.time + 0.5;
+	}
+	else if (gekk_can_leap(self) && random() >= 0.35f)
 	{
 		self->monsterinfo.currentmove = &gekk_move_leapatk;
 		self->monsterinfo.melee_finished = level.time + 3.0;

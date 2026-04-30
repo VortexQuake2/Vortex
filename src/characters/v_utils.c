@@ -2804,7 +2804,9 @@ void V_NonShellEffects(edict_t *ent) {
 }
 
 void V_SetEffects(edict_t *ent) {
-    int effects, r_effects;
+    int effects, r_effects, preserved_renderfx;
+
+    preserved_renderfx = ent->s.renderfx & RF_CUSTOMSKIN;
 
     // clear all effects
     ent->s.effects = ent->s.renderfx = 0;
@@ -2813,8 +2815,10 @@ void V_SetEffects(edict_t *ent) {
     if (que_typeexists(ent->curses, CURSE_PLAGUE))
         ent->s.effects |= EF_FLIES;
 
-    if (ent->mtype != M_MAGMINE && ent->health < 1)
+    if (ent->mtype != M_MAGMINE && ent->health < 1) {
+        ent->s.renderfx |= preserved_renderfx;
         return;
+    }
 
     // apply non-ability shell effects
     V_ShellNonAbilityEffects(ent);
@@ -2843,6 +2847,8 @@ void V_SetEffects(edict_t *ent) {
 
     // apply non-shell effects
     V_NonShellEffects(ent);
+
+    ent->s.renderfx |= preserved_renderfx;
 }
 
 /*
