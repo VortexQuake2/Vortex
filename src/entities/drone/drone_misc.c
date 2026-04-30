@@ -413,15 +413,26 @@ void drone_ai_checkattack (edict_t *self)
 	// if we see an easier target, go for it
 	if (!visible(self, self->enemy))
 	{
-		self->oldenemy = self->enemy;
-		if (!drone_findtarget(self, false))
-			return;
-		//gi.dprintf("%d going for an easier target\n", self->mtype);
+		if (!(self->monsterinfo.aiflags & AI_ALTERNATE_FLY) || !M_MonsterHasCombatSight(self, self->enemy))
+		{
+			self->oldenemy = self->enemy;
+			if (!drone_findtarget(self, false))
+				return;
+			//gi.dprintf("%d going for an easier target\n", self->mtype);
+		}
 	}
 
 	//if (!infront(self, self->enemy))
 	if (!nearfov(self, self->enemy, 0, 60))
 	{
+		if ((self->monsterinfo.aiflags & AI_ALTERNATE_FLY) && M_MonsterHasCombatSight(self, self->enemy))
+		{
+			vec3_t dir;
+			VectorSubtract(self->enemy->s.origin, self->s.origin, dir);
+			self->ideal_yaw = vectoyaw(dir);
+			M_ChangeYaw(self);
+			M_ChangeYaw(self);
+		}
 		//gi.dprintf("target is not in front\n");
 		return;
 	}
@@ -434,10 +445,13 @@ void drone_ai_checkattack (edict_t *self)
 	if (!tr.ent || tr.ent != self->enemy)
 	{
 		//gi.dprintf("blocked shot\n");
-		if (G_ValidTarget(self, tr.ent, false, true))
-			self->enemy = tr.ent;
-		else
-			return;
+		if (!(self->monsterinfo.aiflags & AI_ALTERNATE_FLY) || !M_MonsterHasCombatSight(self, self->enemy))
+		{
+			if (G_ValidTarget(self, tr.ent, false, true))
+				self->enemy = tr.ent;
+			else
+				return;
+		}
 	}
 	//AngleVectors(self->s.angles, forward, NULL, NULL);
 	//VectorMA(self->s.origin, self->maxs[1]+8, forward , start);
@@ -644,12 +658,91 @@ void PassThruEntity (edict_t *self, edict_t *other)
 	gi.linkentity(other);
 }
 
+#define DRONE_FLYER_SEPARATION_SPEED	650.0f
+#define DRONE_ALT_FLY_SEPARATION_SPEED	420.0f
+#define DRONE_FLYER_SEPARATION_DELAY	0.75f
+
+static qboolean drone_alt_fly_can_separate(edict_t *ent)
+{
+	if (!ent || !G_EntIsAlive(ent))
+		return false;
+	if (ent->mtype != M_FLYER)
+		return false;
+	if (!(ent->flags & FL_FLY))
+		return false;
+	if (!(ent->monsterinfo.aiflags & AI_ALTERNATE_FLY))
+		return false;
+	return true;
+}
+
+static qboolean drone_alt_fly_touch_obstacle(edict_t *ent)
+{
+	if (!ent || !G_EntIsAlive(ent))
+		return false;
+	if (!(ent->svflags & SVF_MONSTER) || ent->solid == SOLID_NOT)
+		return false;
+	return true;
+}
+
+static qboolean drone_alt_fly_apply_separation(edict_t *ent, vec3_t dir)
+{
+	float speed;
+
+	if (ent->monsterinfo.fly_separation_time > level.time)
+		return false;
+
+	ent->monsterinfo.fly_separation_time = level.time + DRONE_FLYER_SEPARATION_DELAY;
+	ent->monsterinfo.fly_thrusters = false;
+	ent->monsterinfo.fly_position_time = 0.0f;
+	ent->monsterinfo.fly_pinned = false;
+	speed = (ent->mtype == M_FLYER) ? DRONE_FLYER_SEPARATION_SPEED : DRONE_ALT_FLY_SEPARATION_SPEED;
+	VectorScale(dir, speed, ent->velocity);
+	return true;
+}
+
+static qboolean drone_alt_fly_separation_touch(edict_t *self, edict_t *other)
+{
+	vec3_t dir;
+	qboolean pushed_self;
+
+	if (!self || !other || self == other)
+		return false;
+	if (!drone_alt_fly_can_separate(self) || !drone_alt_fly_touch_obstacle(other))
+		return false;
+
+	VectorSubtract(self->s.origin, other->s.origin, dir);
+	if (VectorNormalize(dir) <= 0.1f)
+	{
+		VectorSet(dir, crandom(), crandom(), 0.2f);
+		if (VectorNormalize(dir) <= 0.1f)
+			VectorSet(dir, 1.0f, 0.0f, 0.0f);
+	}
+
+	pushed_self = drone_alt_fly_apply_separation(self, dir);
+
+	if (pushed_self)
+	{
+		gi.WriteByte(svc_temp_entity);
+		gi.WriteByte(TE_SPLASH);
+		gi.WriteByte(32);
+		gi.WritePosition(self->s.origin);
+		gi.WriteDir(dir);
+		gi.WriteByte(SPLASH_SPARKS);
+		gi.multicast(self->s.origin, MULTICAST_PVS);
+	}
+
+	return pushed_self;
+}
+
 void drone_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
 	vec3_t	forward, right, start, offset;
 
 	//gi.dprintf("drone_touch\n");
 	V_Touch(self, other, plane, surf);
+
+	if (drone_alt_fly_separation_touch(self, other))
+		return;
 
 	// the monster's owner or allies can push him around
 	//if (G_EntIsAlive(other) && self->activator
@@ -1659,9 +1752,11 @@ qboolean M_MonsterHasClearShotFromFlash(edict_t *self, int flash_number)
 
 void M_MonsterBlockedShot(edict_t *self, float delay)
 {
-	if (!self || !self->inuse)
+	if (!(self->monsterinfo.aiflags & AI_ALTERNATE_FLY))
 		return;
 
+	self->monsterinfo.fly_position_time = 0.0f;
+	self->monsterinfo.fly_pinned = false;
 	self->monsterinfo.attack_finished = max(self->monsterinfo.attack_finished, level.time + delay);
 }
 

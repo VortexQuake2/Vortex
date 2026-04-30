@@ -29,6 +29,15 @@ static void daedalus_run(edict_t *self);
 static void daedalus_reattack(edict_t *self);
 static void daedalus_fire_grenade(edict_t *self);
 
+static void daedalus_set_fly_parameters(edict_t *self)
+{
+	self->monsterinfo.fly_thrusters = false;
+	self->monsterinfo.fly_acceleration = 20.0f;
+	self->monsterinfo.fly_speed = 120.0f;
+	self->monsterinfo.fly_min_distance = 270.0f;
+	self->monsterinfo.fly_max_distance = 390.0f;
+}
+
 static void daedalus_sight(edict_t *self, edict_t *other)
 {
 	gi.sound(self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
@@ -237,6 +246,8 @@ void init_drone_daedalus(edict_t *self)
 
 	self->mtype = M_DAEDALUS;
 	self->flags |= FL_FLY;
+	self->monsterinfo.aiflags |= AI_ALTERNATE_FLY;
+	daedalus_set_fly_parameters(self);
 	self->monsterinfo.power_armor_power = M_DAEDALUS_INITIAL_ARMOR + M_DAEDALUS_ADDON_ARMOR * self->monsterinfo.level;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;

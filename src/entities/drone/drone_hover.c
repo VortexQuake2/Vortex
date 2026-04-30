@@ -47,6 +47,15 @@ void hover_reattack (edict_t *self);
 void hover_fire_blaster (edict_t *self);
 void hover_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point);
 
+static void hover_set_fly_parameters(edict_t *self)
+{
+	self->monsterinfo.fly_thrusters = false;
+	self->monsterinfo.fly_acceleration = 20.0f;
+	self->monsterinfo.fly_speed = 120.0f;
+	self->monsterinfo.fly_min_distance = 275.0f; //250.0f default value
+	self->monsterinfo.fly_max_distance = 550.0f; //450.0f default value
+}
+
 mframe_t hover_frames_stand [] =
 {
 	drone_ai_stand, 0, NULL,
@@ -644,6 +653,8 @@ void init_drone_hover (edict_t *self)
 
 	self->mtype = M_HOVER;
 	self->flags |= FL_FLY;
+	self->monsterinfo.aiflags |= AI_ALTERNATE_FLY;
+	hover_set_fly_parameters(self);
 	self->max_health = self->health;
 	self->monsterinfo.power_armor_power = M_FLOATER_INITIAL_ARMOR + M_FLOATER_ADDON_ARMOR*self->monsterinfo.level;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;

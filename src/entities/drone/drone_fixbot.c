@@ -73,6 +73,25 @@ static void fixbot_ai_walk(edict_t *self, float dist)
 	drone_ai_walk(self, dist * fixbot_move_scale(self));
 }
 
+static void fixbot_set_fly_parameters(edict_t *self)
+{
+	float speed_scale = fixbot_move_scale(self);
+
+	self->monsterinfo.fly_thrusters = false;
+	self->monsterinfo.fly_acceleration = 20.0f * speed_scale;
+	self->monsterinfo.fly_speed = 120.0f * speed_scale;
+	if (fixbot_is_boss(self))
+	{
+		self->monsterinfo.fly_min_distance = 220.0f;
+		self->monsterinfo.fly_max_distance = 650.0f;
+	}
+	else
+	{
+		self->monsterinfo.fly_min_distance = 250.0f;
+		self->monsterinfo.fly_max_distance = 450.0f;
+	}
+}
+
 static int fixbot_count_live_turrets(edict_t *self)
 {
 	int count = 0;
@@ -1379,6 +1398,8 @@ static void init_drone_fixbot_common(edict_t *self, qboolean boss)
 	self->gib_health = -100;
 	self->max_health = self->health;
 	self->flags |= FL_FLY | FL_NO_KNOCKBACK;
+	self->monsterinfo.aiflags |= AI_ALTERNATE_FLY;
+	fixbot_set_fly_parameters(self);
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 	self->monsterinfo.sight_range = boss ? 1400 : 1024;

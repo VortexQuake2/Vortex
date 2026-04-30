@@ -35,6 +35,11 @@ static qboolean boss2_is_small(const edict_t *self)
 	return self->style == BOSS2_VARIANT_SMALL;
 }
 
+static qboolean boss2_is_boss(const edict_t *self)
+{
+	return self->mtype == M_BOSS2 && !boss2_is_small(self);
+}
+
 static qboolean boss2_is_hyper(const edict_t *self)
 {
 	return self->style == BOSS2_VARIANT_HYPER || boss2_is_small(self);
@@ -53,6 +58,25 @@ static void boss2_ai_walk(edict_t *self, float dist)
 static void boss2_ai_run(edict_t *self, float dist)
 {
 	drone_ai_run(self, dist * boss2_move_scale(self));
+}
+
+static void boss2_set_fly_parameters(edict_t *self)
+{
+	float speed_scale = boss2_move_scale(self);
+
+	self->monsterinfo.fly_thrusters = false;
+	self->monsterinfo.fly_acceleration = 20.0f * speed_scale;
+	self->monsterinfo.fly_speed = 120.0f * speed_scale;
+	if (boss2_is_boss(self))
+	{
+		self->monsterinfo.fly_min_distance = 220.0f;
+		self->monsterinfo.fly_max_distance = 750.0f;
+	}
+	else
+	{
+		self->monsterinfo.fly_min_distance = 250.0f;
+		self->monsterinfo.fly_max_distance = 450.0f;
+	}
 }
 
 static float boss2_voice_attenuation(const edict_t *self)
@@ -704,6 +728,8 @@ static void init_drone_boss2_common(edict_t *self, int variant)
 	self->style = variant;
 	self->yaw_speed = small ? 80 : 50;
 	self->flags |= FL_FLY | FL_IMMUNE_LASER;
+	self->monsterinfo.aiflags |= AI_ALTERNATE_FLY;
+	boss2_set_fly_parameters(self);
 	self->s.sound = gi.soundindex("bosshovr/bhvengn1.wav");
 	self->s.scale = small ? 0.6f : (invasion->value ? BOSS2_INVASION_SCALE : 1.0f);
 

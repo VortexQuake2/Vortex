@@ -42,6 +42,16 @@ void floater_wham (edict_t *self);
 void floater_zap (edict_t *self);
 void floater_continue_attack(edict_t* self);
 
+static void floater_set_fly_parameters(edict_t *self)
+{
+	// Using ranged-only attacks like hover does, so for now flyer and float do not have melee attacks
+	self->monsterinfo.fly_thrusters = false;
+	self->monsterinfo.fly_acceleration = 20.0f;
+	self->monsterinfo.fly_speed = 120.0f;
+	self->monsterinfo.fly_min_distance = 250.0f;
+	self->monsterinfo.fly_max_distance = 450.0f;
+}
+
 void floater_fire_blaster (edict_t *self)
 {
 	int		damage, speed=2000, effect;
@@ -704,6 +714,8 @@ void init_drone_floater (edict_t *self)
 	self->gib_health = -0.6 * BASE_GIB_HEALTH;
 	self->mass = 150;
 	self->mtype = M_FLOATER;
+	self->monsterinfo.aiflags |= AI_ALTERNATE_FLY;
+	floater_set_fly_parameters(self);
 
 	self->monsterinfo.power_armor_power = M_FLOATER_INITIAL_ARMOR + M_FLOATER_ADDON_ARMOR*self->monsterinfo.level;
 

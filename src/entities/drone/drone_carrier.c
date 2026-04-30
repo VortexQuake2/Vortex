@@ -56,6 +56,16 @@ static void carrier_project_flash(edict_t *self, int flash, vec3_t forward, vec3
 	G_ProjectSource(self->s.origin, offset, forward, right, start);
 }
 
+static void carrier_set_fly_parameters(edict_t *self)
+{
+	self->monsterinfo.fly_thrusters = false;
+	self->monsterinfo.fly_acceleration = 20.0f;
+	self->monsterinfo.fly_speed = 120.0f;
+	self->monsterinfo.fly_above = false;
+	self->monsterinfo.fly_min_distance = 375.0f;
+	self->monsterinfo.fly_max_distance = 650.0f;
+}
+
 static void carrier_spawn_ai(edict_t *self, float dist)
 {
 	if (!self || !self->inuse)
@@ -952,6 +962,8 @@ void init_drone_carrier(edict_t *self)
 	self->mtype = M_CARRIER;
 	self->flags |= FL_FLY;
 	self->yaw_speed = CARRIER_YAW_SPEED;
+	self->monsterinfo.aiflags |= AI_ALTERNATE_FLY;
+	carrier_set_fly_parameters(self);
 
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.power_armor_power = M_CARRIER_INITIAL_ARMOR + M_CARRIER_ADDON_ARMOR * self->monsterinfo.level;

@@ -30,6 +30,17 @@ void flyer_stand (edict_t *self);
 void flyer_nextmove (edict_t *self);
 static void flyer_attack_finished(edict_t *self);
 
+static void flyer_set_fly_parameters(edict_t *self)
+{
+	// Using ranged-only attacks like hover does, so for now flyer and float do not have melee attacks
+	self->monsterinfo.fly_thrusters = false;
+	self->monsterinfo.fly_acceleration = 15.0f;
+	self->monsterinfo.fly_speed = 165.0f;
+	self->monsterinfo.fly_min_distance = 250.0f;
+	self->monsterinfo.fly_max_distance = 450.0f;
+}
+
+
 void flyer_sight (edict_t *self, edict_t *other)
 {
 	gi.sound (self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
@@ -507,12 +518,21 @@ void flyer_check_melee(edict_t *self)
 	if (entdist (self, self->enemy) == RANGE_MELEE)
 	{
 		if (random() <= 0.8)
+		{
+			flyer_set_fly_parameters(self);
 			self->monsterinfo.currentmove = &flyer_move_loop_melee;
+		}
 		else
+		{
+			flyer_set_fly_parameters(self);
 			self->monsterinfo.currentmove = &flyer_move_end_melee;
+		}
 	}
 	else
+	{
+		flyer_set_fly_parameters(self);
 		self->monsterinfo.currentmove = &flyer_move_end_melee;
+	}
 }
 
 void flyer_loop_melee (edict_t *self)
@@ -527,6 +547,8 @@ void flyer_loop_melee (edict_t *self)
 
 void flyer_attack (edict_t *self)
 {
+	flyer_set_fly_parameters(self);
+
 /*	if (random() <= 0.5)	
 		self->monsterinfo.currentmove = &flyer_move_attack1;
 	else */
@@ -570,6 +592,7 @@ void flyer_melee (edict_t *self)
 //	flyer.nextmove = ACTION_attack1;
 //	self->monsterinfo.currentmove = &flyer_move_stop;
 	//self->monsterinfo.currentmove = &flyer_move_start_melee;
+	flyer_set_fly_parameters(self);
 }
 
 void flyer_pain (edict_t *self, edict_t *other, float kick, int damage)
@@ -646,6 +669,9 @@ void init_drone_flyer (edict_t *self)
 
 	self->mtype = M_FLYER;
 	self->flags |= FL_FLY;
+	self->monsterinfo.aiflags |= AI_ALTERNATE_FLY;
+	self->monsterinfo.fly_buzzard = true;
+	flyer_set_fly_parameters(self);
 	self->max_health = self->health;
 	self->monsterinfo.power_armor_power = M_FLYER_INITIAL_ARMOR + M_FLYER_ADDON_ARMOR*self->monsterinfo.level;
 	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;

@@ -839,7 +839,8 @@ void SV_Physics_Step (edict_t *ent)
 			}
 
 	// friction for flying monsters that have been given vertical velocity
-	if ((ent->flags & FL_FLY) && (ent->velocity[2] != 0))
+	if ((ent->flags & FL_FLY) && (ent->velocity[2] != 0)
+		&& !(ent->monsterinfo.aiflags & AI_ALTERNATE_FLY))
 	{
 //gi.bprintf(PRINT_HIGH,"FLY!\n");
 		speed = fabs(ent->velocity[2]);
@@ -880,7 +881,8 @@ void SV_Physics_Step (edict_t *ent)
 		//gi.dprintf("velocity is nonzero\n");
 		// apply friction
 		// let dead monsters who aren't completely onground slide
-		if ((wasonground) || (ent->flags & (FL_SWIM|FL_FLY)))
+		if (((wasonground) || (ent->flags & (FL_SWIM|FL_FLY)))
+			&& !(ent->monsterinfo.aiflags & AI_ALTERNATE_FLY))
 			if (!(ent->health <= 0.0 && !M_CheckBottom(ent)))
 			{
 				//K03 Begin

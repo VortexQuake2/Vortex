@@ -241,6 +241,7 @@ typedef enum {
 #define AI_PURSUE_PLAT_GOAL		0x00040000
 #define AI_DODGE				0x00080000
 #define AI_SNAP_TO_NAVI         0x00100000
+#define AI_ALTERNATE_FLY		0x00200000
 
 //monster attack state
 #define AS_STRAIGHT				1
@@ -677,6 +678,22 @@ typedef struct {
     //	qboolean	melee;				// whether or not the monster should circle strafe
     dmglist_t dmglist[MAX_CLIENTS]; // keep track of damage by players
     qboolean slots_freed; // true if player slots have been refunded prior to removal
+
+    // Remaster-style alternate flying mechanics.
+    float fly_max_distance;
+    float fly_min_distance;
+    float fly_acceleration;
+    float fly_speed;
+    vec3_t fly_ideal_position;
+    float fly_position_time;
+    qboolean fly_buzzard;
+    qboolean fly_above;
+    qboolean fly_pinned;
+    qboolean fly_thrusters;
+    float fly_recovery_time;
+    vec3_t fly_recovery_dir;
+    float fly_wall_stuck_time;
+    float fly_separation_time;
 
     // az begin
 
