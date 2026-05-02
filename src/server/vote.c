@@ -136,13 +136,9 @@ void vrx_vote_no(edict_t *ent) {
         ent->client->resp.HasVoted = true;
         gi.bprintf(PRINT_CHAT, "%s voted No.\n", ent->client->pers.netname);
     }
-    return;
 }
 
 bool vrx_can_vote(edict_t *ent) {
-    if (!voting->value)
-        return false;
-
     //Voting enabled?
     if (!voting->value)
         return false;

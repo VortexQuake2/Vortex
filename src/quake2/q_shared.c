@@ -1189,7 +1189,7 @@ FIXME: make this buffer size safe someday
 char	*va(const char *format, ...)
 {
 	va_list		argptr;
-	static char		string[2048];
+	thread_local static char		string[2048];
 	
 	va_start (argptr, format);
 	vsnprintf (string, 2048, format,argptr);

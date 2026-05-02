@@ -635,7 +635,7 @@ void generalmenu_handler (edict_t *ent, int option)
 	case 4: OpenRespawnWeapMenu(ent, 1); break;
 	case 5: OpenMasterPasswordMenu(ent); break;
 	case 6: OpenMyinfoMenu(ent); break;
-	case 7: OpenArmoryMenu(ent); break;
+	case 7: vrx_armory_open_menu(ent); break;
 	case 8: ShowInventoryMenu(ent, 0, false); break;
 	case 9: ShowAllyMenu(ent); break;
 	case 10: ShowTradeMenu(ent); break;

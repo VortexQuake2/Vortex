@@ -30,8 +30,6 @@ void vrx_start_bot_vote(edict_t *ent, bool enable, int num_bots) {
 
     //check for valid choice
     auto currentVote = vrx_vote_get_current();
-    const int players = vrx_get_joined_players(false);
-
 
     //Add the vote
     _vrx_start_vote(ent, VT_BOTS, vrx_bot_vote_success, nullptr);
@@ -138,8 +136,6 @@ void vrx_show_bot_vote_menu(edict_t* self) {
 }
 
 void vrx_vote_bots(edict_t *ent) {
-    int players, min_players;
-
     if (!vrx_can_vote(ent))
         return;
 
