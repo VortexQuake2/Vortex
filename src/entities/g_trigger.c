@@ -704,3 +704,234 @@ void SP_trigger_monsterjump (edict_t *self)
 	self->movedir[2] = st.height;
 }
 
+#ifdef VRX_REPRO
+
+/*
+==============================================================================
+
+trigger_fog
+
+==============================================================================
+*/
+
+/*QUAKED trigger_fog (.5 .5 .5) ? AFFECT_FOG AFFECT_HEIGHTFOG INSTANTANEOUS FORCE BLEND
+Players moving against this trigger will have their fog settings changed.
+Fog/heightfog will be adjusted if the spawnflags are set. Instantaneous
+ignores any delays. Force causes it to ignore movement dir and always use
+the "on" values. Blend causes it to change towards how far you are into the trigger
+with respect to angles.
+"target" can target an info_notnull to pull the keys below from.
+"delay" default to 0.5; time in seconds a change in fog will occur over
+"wait" default to 0.0; time in seconds before a re-trigger can be executed
+
+"fog_density"; density value of fog, 0-1
+"fog_color"; color value of fog, 3d vector with values between 0-1 (r g b)
+"fog_density_off"; transition density value of fog, 0-1
+"fog_color_off"; transition color value of fog, 3d vector with values between 0-1 (r g b)
+"fog_sky_factor"; sky factor value of fog, 0-1
+"fog_sky_factor_off"; transition sky factor value of fog, 0-1
+
+"heightfog_falloff"; falloff value of heightfog, 0-1
+"heightfog_density"; density value of heightfog, 0-1
+"heightfog_start_color"; the start color for the fog (r g b, 0-1)
+"heightfog_start_dist"; the start distance for the fog (units)
+"heightfog_end_color"; the start color for the fog (r g b, 0-1)
+"heightfog_end_dist"; the end distance for the fog (units)
+
+"heightfog_falloff_off"; transition falloff value of heightfog, 0-1
+"heightfog_density_off"; transition density value of heightfog, 0-1
+"heightfog_start_color_off"; transition the start color for the fog (r g b, 0-1)
+"heightfog_start_dist_off"; transition the start distance for the fog (units)
+"heightfog_end_color_off"; transition the start color for the fog (r g b, 0-1)
+"heightfog_end_dist_off"; transition the end distance for the fog (units)
+*/
+
+#define SPAWNFLAG_FOG_AFFECT_FOG        1
+#define SPAWNFLAG_FOG_AFFECT_HEIGHTFOG  2
+#define SPAWNFLAG_FOG_INSTANTANEOUS     4
+#define SPAWNFLAG_FOG_FORCE             8
+#define SPAWNFLAG_FOG_BLEND             16
+
+static float fog_lerp(float from, float to, float fraction)
+{
+	return from + (to - from) * fraction;
+}
+
+static float fog_clamp01(float value)
+{
+	if (value < 0.0f)
+		return 0.0f;
+	if (value > 1.0f)
+		return 1.0f;
+	return value;
+}
+
+static void trigger_fog_set_global(edict_t *player, const edict_t *fog_value_storage, qboolean use_on)
+{
+	player->client->pers.wanted_fog[0] = use_on ? fog_value_storage->fog.density : fog_value_storage->fog.density_off;
+	player->client->pers.wanted_fog[1] = use_on ? fog_value_storage->fog.color[0] : fog_value_storage->fog.color_off[0];
+	player->client->pers.wanted_fog[2] = use_on ? fog_value_storage->fog.color[1] : fog_value_storage->fog.color_off[1];
+	player->client->pers.wanted_fog[3] = use_on ? fog_value_storage->fog.color[2] : fog_value_storage->fog.color_off[2];
+	player->client->pers.wanted_fog[4] = use_on ? fog_value_storage->fog.sky_factor : fog_value_storage->fog.sky_factor_off;
+}
+
+static void trigger_fog_set_height(edict_t *player, const edict_t *fog_value_storage, qboolean use_on)
+{
+	height_fog_t *wanted = &player->client->pers.wanted_heightfog;
+
+	wanted->start[0] = use_on ? fog_value_storage->heightfog.start_color[0] : fog_value_storage->heightfog.start_color_off[0];
+	wanted->start[1] = use_on ? fog_value_storage->heightfog.start_color[1] : fog_value_storage->heightfog.start_color_off[1];
+	wanted->start[2] = use_on ? fog_value_storage->heightfog.start_color[2] : fog_value_storage->heightfog.start_color_off[2];
+	wanted->start[3] = use_on ? fog_value_storage->heightfog.start_dist : fog_value_storage->heightfog.start_dist_off;
+
+	wanted->end[0] = use_on ? fog_value_storage->heightfog.end_color[0] : fog_value_storage->heightfog.end_color_off[0];
+	wanted->end[1] = use_on ? fog_value_storage->heightfog.end_color[1] : fog_value_storage->heightfog.end_color_off[1];
+	wanted->end[2] = use_on ? fog_value_storage->heightfog.end_color[2] : fog_value_storage->heightfog.end_color_off[2];
+	wanted->end[3] = use_on ? fog_value_storage->heightfog.end_dist : fog_value_storage->heightfog.end_dist_off;
+
+	wanted->falloff = use_on ? fog_value_storage->heightfog.falloff : fog_value_storage->heightfog.falloff_off;
+	wanted->density = use_on ? fog_value_storage->heightfog.density : fog_value_storage->heightfog.density_off;
+}
+
+static void trigger_fog_blend_global(edict_t *player, const edict_t *fog_value_storage, float fraction)
+{
+	player->client->pers.wanted_fog[0] = fog_lerp(fog_value_storage->fog.density_off, fog_value_storage->fog.density, fraction);
+	player->client->pers.wanted_fog[1] = fog_lerp(fog_value_storage->fog.color_off[0], fog_value_storage->fog.color[0], fraction);
+	player->client->pers.wanted_fog[2] = fog_lerp(fog_value_storage->fog.color_off[1], fog_value_storage->fog.color[1], fraction);
+	player->client->pers.wanted_fog[3] = fog_lerp(fog_value_storage->fog.color_off[2], fog_value_storage->fog.color[2], fraction);
+	player->client->pers.wanted_fog[4] = fog_lerp(fog_value_storage->fog.sky_factor_off, fog_value_storage->fog.sky_factor, fraction);
+}
+
+static void trigger_fog_blend_height(edict_t *player, const edict_t *fog_value_storage, float fraction)
+{
+	height_fog_t *wanted = &player->client->pers.wanted_heightfog;
+
+	wanted->start[0] = fog_lerp(fog_value_storage->heightfog.start_color_off[0], fog_value_storage->heightfog.start_color[0], fraction);
+	wanted->start[1] = fog_lerp(fog_value_storage->heightfog.start_color_off[1], fog_value_storage->heightfog.start_color[1], fraction);
+	wanted->start[2] = fog_lerp(fog_value_storage->heightfog.start_color_off[2], fog_value_storage->heightfog.start_color[2], fraction);
+	wanted->start[3] = fog_lerp(fog_value_storage->heightfog.start_dist_off, fog_value_storage->heightfog.start_dist, fraction);
+
+	wanted->end[0] = fog_lerp(fog_value_storage->heightfog.end_color_off[0], fog_value_storage->heightfog.end_color[0], fraction);
+	wanted->end[1] = fog_lerp(fog_value_storage->heightfog.end_color_off[1], fog_value_storage->heightfog.end_color[1], fraction);
+	wanted->end[2] = fog_lerp(fog_value_storage->heightfog.end_color_off[2], fog_value_storage->heightfog.end_color[2], fraction);
+	wanted->end[3] = fog_lerp(fog_value_storage->heightfog.end_dist_off, fog_value_storage->heightfog.end_dist, fraction);
+
+	wanted->falloff = fog_lerp(fog_value_storage->heightfog.falloff_off, fog_value_storage->heightfog.falloff, fraction);
+	wanted->density = fog_lerp(fog_value_storage->heightfog.density_off, fog_value_storage->heightfog.density, fraction);
+}
+
+void trigger_fog_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
+{
+	edict_t *fog_value_storage;
+
+	if (!other->client)
+		return;
+
+	if (self->timestamp > level.time)
+		return;
+
+	self->timestamp = level.time + self->wait;
+
+	fog_value_storage = self;
+
+	if (self->movetarget)
+		fog_value_storage = self->movetarget;
+
+	if (self->spawnflags & SPAWNFLAG_FOG_INSTANTANEOUS)
+		other->client->pers.fog_transition_time = 0.0f;
+	else
+		other->client->pers.fog_transition_time = fog_value_storage->delay;
+
+	if (self->spawnflags & SPAWNFLAG_FOG_BLEND)
+	{
+		vec3_t center;
+		vec3_t half_size;
+		vec3_t start;
+		vec3_t end;
+		vec3_t player_dist;
+		vec3_t delta;
+		float dist;
+		float full_dist;
+
+		VectorScale(self->size, 0.5f, half_size);
+		VectorMA(half_size, 0.5f, other->size, half_size);
+		VectorMA(self->absmin, 0.5f, self->size, center);
+
+		for (int i = 0; i < 3; i++)
+		{
+			start[i] = -self->movedir[i] * half_size[i];
+			end[i] = self->movedir[i] * half_size[i];
+			player_dist[i] = (other->s.origin[i] - center[i]) * fabsf(self->movedir[i]);
+		}
+
+		VectorSubtract(player_dist, start, delta);
+		dist = VectorLength(delta);
+		VectorSubtract(start, end, delta);
+		full_dist = VectorLength(delta);
+
+		if (full_dist > 0.0f)
+			dist /= full_dist;
+		else
+			dist = 0.0f;
+
+		dist = fog_clamp01(dist);
+
+		if (self->spawnflags & SPAWNFLAG_FOG_AFFECT_FOG)
+			trigger_fog_blend_global(other, fog_value_storage, dist);
+
+		if (self->spawnflags & SPAWNFLAG_FOG_AFFECT_HEIGHTFOG)
+			trigger_fog_blend_height(other, fog_value_storage, dist);
+
+		return;
+	}
+
+	qboolean use_on = true;
+
+	if (!(self->spawnflags & SPAWNFLAG_FOG_FORCE))
+	{
+		float len;
+		vec3_t forward;
+
+		VectorCopy(other->velocity, forward);
+		len = VectorNormalize(forward);
+
+		// Not moving enough to trip; this avoids tripping the wrong direction.
+		if (len <= 0.0001f)
+			return;
+
+		use_on = DotProduct(forward, self->movedir) > 0.0f;
+	}
+
+	if (self->spawnflags & SPAWNFLAG_FOG_AFFECT_FOG)
+		trigger_fog_set_global(other, fog_value_storage, use_on);
+
+	if (self->spawnflags & SPAWNFLAG_FOG_AFFECT_HEIGHTFOG)
+		trigger_fog_set_height(other, fog_value_storage, use_on);
+}
+
+void SP_trigger_fog(edict_t *self)
+{
+	if (self->s.angles[YAW] == 0)
+		self->s.angles[YAW] = 360;
+
+	InitTrigger(self);
+
+	if (!(self->spawnflags & (SPAWNFLAG_FOG_AFFECT_FOG | SPAWNFLAG_FOG_AFFECT_HEIGHTFOG)))
+		gi.dprintf("WARNING: trigger_fog at %s with no fog spawnflags set\n", vtos(self->s.origin));
+
+	if (self->target)
+	{
+		self->movetarget = G_PickTarget(self->target);
+
+		if (self->movetarget && !self->movetarget->delay)
+			self->movetarget->delay = 0.5f;
+	}
+
+	if (!self->delay)
+		self->delay = 0.5f;
+
+	self->touch = trigger_fog_touch;
+}
+
+#endif
+

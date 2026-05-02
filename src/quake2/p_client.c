@@ -2017,6 +2017,27 @@ void PutClientInServer (edict_t *ent)
 	VectorCopy (ent->s.angles, client->ps.viewangles);
 	VectorCopy (ent->s.angles, client->v_angle);
 
+#ifdef VRX_REPRO
+	// [Paril-KEX] set up world fog and send it instantly.
+	client->pers.wanted_fog[0] = world->fog.density;
+	client->pers.wanted_fog[1] = world->fog.color[0];
+	client->pers.wanted_fog[2] = world->fog.color[1];
+	client->pers.wanted_fog[3] = world->fog.color[2];
+	client->pers.wanted_fog[4] = world->fog.sky_factor;
+
+	client->pers.wanted_heightfog.start[0] = world->heightfog.start_color[0];
+	client->pers.wanted_heightfog.start[1] = world->heightfog.start_color[1];
+	client->pers.wanted_heightfog.start[2] = world->heightfog.start_color[2];
+	client->pers.wanted_heightfog.start[3] = world->heightfog.start_dist;
+	client->pers.wanted_heightfog.end[0] = world->heightfog.end_color[0];
+	client->pers.wanted_heightfog.end[1] = world->heightfog.end_color[1];
+	client->pers.wanted_heightfog.end[2] = world->heightfog.end_color[2];
+	client->pers.wanted_heightfog.end[3] = world->heightfog.end_dist;
+	client->pers.wanted_heightfog.falloff = world->heightfog.falloff;
+	client->pers.wanted_heightfog.density = world->heightfog.density;
+	P_ForceFogTransition(ent, true);
+#endif
+
 	//JABot[start]
 	if( ent->ai.is_bot == true )
 		return;

@@ -50,6 +50,29 @@ field_t fields[] = {
 	{ "volume", FOFS(volume), F_FLOAT },
 	{ "attenuation", FOFS(attenuation), F_FLOAT },
 	{ "map", FOFS(map), F_LSTRING },
+#ifdef VRX_REPRO
+	// [Paril-KEX] fog keys
+	{ "fog_color", FOFS(fog.color), F_VECTOR },
+	{ "fog_color_off", FOFS(fog.color_off), F_VECTOR },
+	{ "fog_density", FOFS(fog.density), F_FLOAT },
+	{ "fog_density_off", FOFS(fog.density_off), F_FLOAT },
+	{ "fog_sky_factor", FOFS(fog.sky_factor), F_FLOAT },
+	{ "fog_sky_factor_off", FOFS(fog.sky_factor_off), F_FLOAT },
+
+	{ "heightfog_falloff", FOFS(heightfog.falloff), F_FLOAT },
+	{ "heightfog_density", FOFS(heightfog.density), F_FLOAT },
+	{ "heightfog_start_color", FOFS(heightfog.start_color), F_VECTOR },
+	{ "heightfog_start_dist", FOFS(heightfog.start_dist), F_FLOAT },
+	{ "heightfog_end_color", FOFS(heightfog.end_color), F_VECTOR },
+	{ "heightfog_end_dist", FOFS(heightfog.end_dist), F_FLOAT },
+
+	{ "heightfog_falloff_off", FOFS(heightfog.falloff_off), F_FLOAT },
+	{ "heightfog_density_off", FOFS(heightfog.density_off), F_FLOAT },
+	{ "heightfog_start_color_off", FOFS(heightfog.start_color_off), F_VECTOR },
+	{ "heightfog_start_dist_off", FOFS(heightfog.start_dist_off), F_FLOAT },
+	{ "heightfog_end_color_off", FOFS(heightfog.end_color_off), F_VECTOR },
+	{ "heightfog_end_dist_off", FOFS(heightfog.end_dist_off), F_FLOAT },
+#endif
 	{"wf_team", FOFS(teamnum), F_INT },
 
 	// temp spawn vars -- only valid when the spawn function is called

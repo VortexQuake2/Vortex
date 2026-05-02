@@ -1116,6 +1116,11 @@ void ClientEndServerFrame (edict_t *ent)
 	current_player = ent;
 	current_client = ent->client;
 
+#ifdef VRX_REPRO
+	// Check remaster fog changes.
+	P_ForceFogTransition(ent, false);
+#endif
+
 	//
 	// If the origin or velocity have changed since ClientThink(),
 	// update the pmove values.  This will happen when the client

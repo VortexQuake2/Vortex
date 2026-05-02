@@ -1806,6 +1806,10 @@ void M_ChangeYaw(edict_t *ent);
 //
 void ClientEndServerFrame(edict_t *ent);
 
+#ifdef VRX_REPRO
+void P_ForceFogTransition(edict_t *ent, qboolean instant);
+#endif
+
 //
 // p_hud.c
 //
@@ -1874,6 +1878,17 @@ void DisableChaseCam(edict_t *ent); // az
 // ### Hentai ### END
 
 
+#ifdef VRX_REPRO
+// [Paril-KEX] height fog data values
+typedef struct height_fog_s {
+    // r g b dist
+    float start[4];
+    float end[4];
+    float falloff;
+    float density;
+} height_fog_t;
+#endif
+
 
 // client data that stays across multiple level loads
 typedef struct {
@@ -1926,6 +1941,13 @@ typedef struct {
     float ctf_assist_frag; // used to give the player a "kill the flag carrier" assist
     float ctf_assist_return; // used to give the player a "return the flag" assist
     int scanner_active;
+#ifdef VRX_REPRO
+    // [Paril-KEX] fog that we want to achieve; density rgb skyfogfactor
+    float wanted_fog[5];
+    height_fog_t wanted_heightfog;
+    // relative time value in seconds, copied from last touched trigger
+    float fog_transition_time;
+#endif
     //K03 End
 } client_persistant_t;
 
@@ -2121,6 +2143,11 @@ struct gclient_s {
 	int				chasecam_mode;
 
 	int  bfg_blend;
+#ifdef VRX_REPRO
+    // [Paril-KEX] current active fog values; density rgb skyfogfactor
+    float fog[5];
+    height_fog_t heightfog;
+#endif
 
 	//K03 End
 	int			weapon_mode;//GHz
@@ -2414,6 +2441,35 @@ struct edict_s {
     float wait;
     float delay; // before firing targets
     float random;
+
+#ifdef VRX_REPRO
+    // [Paril-KEX] remaster fog map keys
+    struct {
+        vec3_t color;
+        float density;
+        float sky_factor;
+
+        vec3_t color_off;
+        float density_off;
+        float sky_factor_off;
+    } fog;
+
+    struct {
+        float falloff;
+        float density;
+        vec3_t start_color;
+        float start_dist;
+        vec3_t end_color;
+        float end_dist;
+
+        float falloff_off;
+        float density_off;
+        vec3_t start_color_off;
+        float start_dist_off;
+        vec3_t end_color_off;
+        float end_dist_off;
+    } heightfog;
+#endif
 
     float teleport_time;
 
