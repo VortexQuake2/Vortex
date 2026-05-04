@@ -434,9 +434,9 @@ void vrx_armory_open_category_menu(edict_t *ent, const int option) {
 
     //Footer
     menu_add_line(ent, " ", 0);
-    if (page_num < pagecount - 1)
+    if (page_end < armory->numcategories)
         menu_add_line(ent, "Next", ((page_num + 1) << 8) + CATMENU_ACTION_PAGE);
-    if (page_num)
+    if (page_start > 0)
         menu_add_line(ent, "Back", ((page_num - 1) << 8) + CATMENU_ACTION_PAGE);
 
     menu_add_line(ent, "Exit", CATMENU_ACTION_EXIT);
