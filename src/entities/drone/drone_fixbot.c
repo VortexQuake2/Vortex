@@ -1306,6 +1306,14 @@ static mframe_t fixbot_frames_pain3[] =
 };
 static mmove_t fixbot_move_pain3 = { FIXBOT_FRAME_freeze_01, FIXBOT_FRAME_freeze_01, fixbot_frames_pain3, fixbot_run };
 
+static void fixbot_dead(edict_t *self);
+
+static mframe_t fixbot_frames_death1[] =
+{
+	ai_move, 0, NULL
+};
+static mmove_t fixbot_move_death1 = { FIXBOT_FRAME_freeze_01, FIXBOT_FRAME_freeze_01, fixbot_frames_death1, fixbot_dead };
+
 static void fixbot_pain(edict_t *self, edict_t *other, float kick, int damage)
 {
 	if (level.time < self->pain_debounce_time)
@@ -1325,18 +1333,12 @@ static void fixbot_pain(edict_t *self, edict_t *other, float kick, int damage)
 		self->monsterinfo.currentmove = &fixbot_move_paina;
 }
 
-static void fixbot_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
+static void fixbot_dead(edict_t *self)
 {
-	int n;
-
 	fixbot_remove_turrets(self);
 	fixbot_spawn_laser_off(self);
 
-	gi.sound(self, CHAN_VOICE, sound_die, 1, ATTN_NORM, 0);
-	for (n = 0; n < 3; n++)
-		ThrowGib(self, "models/objects/gibs/sm_metal/tris.md2", damage, GIB_METALLIC);
-	for (n = 0; n < 2; n++)
-		ThrowGib(self, "models/objects/gibs/gear/tris.md2", damage, GIB_METALLIC);
+	vrx_throw_drone_gibs(self, self->dmg ? self->dmg : 120);
 
 	gi.WriteByte(svc_temp_entity);
 	gi.WriteByte(TE_EXPLOSION1);
@@ -1344,6 +1346,21 @@ static void fixbot_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int
 	gi.multicast(self->s.origin, MULTICAST_PVS);
 
 	M_Remove(self, false, false);
+}
+
+static void fixbot_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
+{
+	M_Notify(self);
+
+	if (self->deadflag == DEAD_DEAD)
+		return;
+
+	gi.sound(self, CHAN_VOICE, sound_die, 1, ATTN_NORM, 0);
+	self->deadflag = DEAD_DEAD;
+	self->takedamage = DAMAGE_NO;
+	self->s.sound = 0;
+	self->dmg = damage;
+	self->monsterinfo.currentmove = &fixbot_move_death1;
 }
 
 static void init_drone_fixbot_common(edict_t *self, qboolean boss)

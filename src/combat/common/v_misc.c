@@ -913,7 +913,7 @@ void ThrowDeadlyGib(edict_t* self, char* modelname, vec3_t origin, vec3_t dir, i
 		gib->creator = self;
 	gib->die = deadly_gib_die;
 	gib->touch = shrapnel_touch;
-	if (type == GIB_ORGANIC)
+	if (!(type & GIB_METALLIC))
 		gib->movetype = MOVETYPE_TOSS;
 	else
 		gib->movetype = MOVETYPE_BOUNCE;

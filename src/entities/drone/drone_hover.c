@@ -549,6 +549,11 @@ void hover_pain (edict_t *self, edict_t *other, float kick, int damage)
 	if (G_GetClient(self))
 		return;
 
+	if (level.time < self->pain_debounce_time)
+		return;
+
+	self->pain_debounce_time = level.time + 3.0f;
+
 	// stand animation always gets pain state
 	if (random() <= (1.0f - self->monsterinfo.pain_chance) &&
 		self->monsterinfo.currentmove == &hover_move_stand)
@@ -570,17 +575,34 @@ void hover_pain (edict_t *self, edict_t *other, float kick, int damage)
 	else
 	{
 		gi.sound (self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
-		self->monsterinfo.currentmove = &hover_move_pain1;
+		if (random() < 0.3f)
+			self->monsterinfo.currentmove = &hover_move_pain1;
+		else
+			self->monsterinfo.currentmove = &hover_move_pain2;
 	}
 }
 
 void hover_deadthink (edict_t *self)
 {
-	if (!self->groundentity && level.time < self->timestamp)
+	vec3_t	end;
+	trace_t	tr;
+	qboolean on_floor;
+
+	on_floor = self->groundentity != NULL;
+	if (!on_floor)
+	{
+		VectorCopy(self->s.origin, end);
+		end[2] -= 24;
+		tr = gi.trace(self->s.origin, self->mins, self->maxs, end, self, MASK_SOLID);
+		on_floor = tr.fraction < 1.0f && tr.plane.normal[2] > 0.7f;
+	}
+
+	if (!on_floor && level.time < self->timestamp)
 	{
 		self->nextthink = level.time + FRAMETIME;
 		return;
 	}
+	vrx_throw_drone_gibs(self, 150);
 	BecomeExplosion1(self);
 }
 

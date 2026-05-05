@@ -606,8 +606,8 @@ void flyer_pain (edict_t *self, edict_t *other, float kick, int damage)
 		return;
 
 	self->pain_debounce_time = level.time + 3;
-	if (skill->value == 3)
-		return;		// no pain anims in nightmare
+	if (invasion->value == 2)
+		return;
 
 	n = rand() % 3;
 	if (n == 0)
@@ -637,6 +637,7 @@ void flyer_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage,
 	gi.multicast (self->s.origin, MULTICAST_PVS);
 
 	M_Notify(self);
+	vrx_throw_drone_gibs(self, 55);
 	M_Remove(self, false, false);
 }
 	

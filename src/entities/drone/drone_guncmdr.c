@@ -76,7 +76,10 @@ static void guncmdr_set_stand_bbox(edict_t *self)
 
 static void guncmdr_idle_sound(edict_t *self)
 {
-	gi.sound(self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
+	if (random() < 0.5)
+		gi.sound(self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
+	else
+		gi.sound(self, CHAN_VOICE, sound_search, 1, ATTN_NORM, 0);
 }
 
 static void guncmdr_sight(edict_t *self, edict_t *other)
@@ -1159,7 +1162,7 @@ static void guncmdr_pain(edict_t *self, edict_t *other, float kick, int damage)
 	self->pain_debounce_time = level.time + 3.0;
 	gi.sound(self, CHAN_VOICE, (random() < 0.5) ? sound_pain : sound_pain2, 1, ATTN_NORM, 0);
 
-	if (skill->value == 3)
+	if (invasion->value == 2)
 		return;
 
 	guncmdr_duck_up(self);
@@ -1491,6 +1494,7 @@ static void guncmdr_die(edict_t *self, edict_t *inflictor, edict_t *attacker, in
 	int n;
 	vec3_t forward, dir;
 	float dot = 0;
+	edict_t *head;
 
 	M_Notify(self);
 
@@ -1505,14 +1509,7 @@ static void guncmdr_die(edict_t *self, edict_t *inflictor, edict_t *attacker, in
 	if (self->health <= self->gib_health)
 	{
 		gi.sound(self, CHAN_VOICE, gi.soundindex("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (vrx_spawn_nonessential_ent(self->s.origin))
-		{
-			for (n = 0; n < 2; n++)
-				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-			for (n = 0; n < 4; n++)
-				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-			ThrowHead(self, "models/monsters/gunner/gibs/head.md2", damage, GIB_ORGANIC);
-		}
+		vrx_throw_drone_gibs(self, damage);
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);
 #else
@@ -1561,7 +1558,12 @@ static void guncmdr_die(edict_t *self, edict_t *inflictor, edict_t *attacker, in
 	if (point[2] >= self->s.origin[2] + self->maxs[2] - 8 && self->velocity[2] < 65)
 	{
 		if (vrx_spawn_nonessential_ent(self->s.origin))
-			ThrowGib(self, "models/monsters/gunner/gibs/head.md2", damage, GIB_ORGANIC);
+		{
+			head = ThrowGibEx(self, "models/monsters/gunner/gibs/head.md2", damage, GIB_SKINNED | GIB_HEAD,
+				self->s.scale ? self->s.scale : 1.0f);
+			if (head)
+				head->s.skinnum /= 2;
+		}
 		self->monsterinfo.currentmove = &guncmdr_move_death5;
 	}
 	else if (dot < -0.40)

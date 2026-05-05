@@ -172,7 +172,7 @@ static void daedalus_pain(edict_t *self, edict_t *other, float kick, int damage)
 	else
 		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
 
-	if (skill->value == 3)
+	if (invasion->value == 2)
 		return;
 
 	if (damage <= 25)
@@ -183,7 +183,12 @@ static void daedalus_pain(edict_t *self, edict_t *other, float kick, int damage)
 			self->monsterinfo.currentmove = &hover_move_pain2;
 	}
 	else
-		self->monsterinfo.currentmove = &hover_move_pain1;
+	{
+		if (random() < 0.3f)
+			self->monsterinfo.currentmove = &hover_move_pain1;
+		else
+			self->monsterinfo.currentmove = &hover_move_pain2;
+	}
 }
 
 static void daedalus_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)

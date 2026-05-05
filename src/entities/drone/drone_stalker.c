@@ -96,6 +96,83 @@ static void stalker_walk(edict_t *self)
 	self->monsterinfo.currentmove = &stalker_move_walk;
 }
 
+static void stalker_reactivate(edict_t *self);
+static void stalker_false_death(edict_t *self);
+
+static mframe_t stalker_frames_reactivate[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+static mmove_t stalker_move_false_death_end = { FRAME_reactive01, FRAME_reactive04, stalker_frames_reactivate, stalker_run };
+
+static void stalker_reactivate(edict_t *self)
+{
+	self->monsterinfo.aiflags &= ~AI_STAND_GROUND;
+	self->monsterinfo.currentmove = &stalker_move_false_death_end;
+}
+
+static void stalker_heal(edict_t *self)
+{
+	if (skill->value >= 3)
+		self->health += 3;
+	else if (skill->value >= 2)
+		self->health += 2;
+	else
+		self->health++;
+
+	self->s.skinnum = self->health < (self->max_health / 2);
+
+	if (self->health >= self->max_health)
+	{
+		self->health = self->max_health;
+		stalker_reactivate(self);
+	}
+}
+
+static mframe_t stalker_frames_false_death[] =
+{
+	ai_move, 0, stalker_heal,
+	ai_move, 0, stalker_heal,
+	ai_move, 0, stalker_heal,
+	ai_move, 0, stalker_heal,
+	ai_move, 0, stalker_heal,
+	ai_move, 0, stalker_heal,
+	ai_move, 0, stalker_heal,
+	ai_move, 0, stalker_heal,
+	ai_move, 0, stalker_heal,
+	ai_move, 0, stalker_heal
+};
+static mmove_t stalker_move_false_death = { FRAME_twitch01, FRAME_twitch10, stalker_frames_false_death, stalker_false_death };
+
+static void stalker_false_death(edict_t *self)
+{
+	self->monsterinfo.currentmove = &stalker_move_false_death;
+}
+
+static mframe_t stalker_frames_false_death_start[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+static mmove_t stalker_move_false_death_start = { FRAME_death01, FRAME_death09, stalker_frames_false_death_start, stalker_false_death };
+
+static void stalker_false_death_start(edict_t *self)
+{
+	stalker_set_floor(self);
+	self->monsterinfo.aiflags |= AI_STAND_GROUND;
+	self->monsterinfo.currentmove = &stalker_move_false_death_start;
+}
+
 mframe_t stalker_frames_run[] =
 {
 	drone_ai_run, 24, NULL,
@@ -570,13 +647,30 @@ static void stalker_pain(edict_t *self, edict_t *other, float kick, int damage)
 	if (self->health < (self->max_health / 2))
 		self->s.skinnum |= 1;
 
+	if (self->monsterinfo.currentmove == &stalker_move_false_death_end ||
+		self->monsterinfo.currentmove == &stalker_move_false_death_start)
+		return;
+
+	if (self->monsterinfo.currentmove == &stalker_move_false_death)
+	{
+		stalker_reactivate(self);
+		return;
+	}
+
+	if (self->health > 0 && self->health < (self->max_health / 4) &&
+		self->groundentity && !stalker_on_ceiling(self) && random() < 0.30f)
+	{
+		stalker_false_death_start(self);
+		return;
+	}
+
 	if (level.time < self->pain_debounce_time)
 		return;
 
 	self->pain_debounce_time = level.time + 3.0;
 	gi.sound(self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
 
-	if (skill->value == 3)
+	if (invasion->value == 2)
 		return;
 
 	if (self->style == STALKER_CEILING_JUMPING && damage > 10)
@@ -621,8 +715,6 @@ mmove_t stalker_move_death = { FRAME_death01, FRAME_death09, stalker_frames_deat
 
 static void stalker_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int n;
-
 	M_Notify(self);
 	stalker_set_floor(self);
 	self->prethink = NULL;
@@ -631,14 +723,7 @@ static void stalker_die(edict_t *self, edict_t *inflictor, edict_t *attacker, in
 	if (self->health <= self->gib_health)
 	{
 		gi.sound(self, CHAN_VOICE, gi.soundindex("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (vrx_spawn_nonessential_ent(self->s.origin))
-		{
-			ThrowGib(self, "models/monsters/stalker/gibs/bodya.md2", damage, GIB_ORGANIC);
-			ThrowGib(self, "models/monsters/stalker/gibs/bodyb.md2", damage, GIB_ORGANIC);
-			for (n = 0; n < 2; n++)
-				ThrowGib(self, "models/monsters/stalker/gibs/claw.md2", damage, GIB_ORGANIC);
-			ThrowHead(self, "models/monsters/stalker/gibs/head.md2", damage, GIB_ORGANIC);
-		}
+		vrx_throw_drone_gibs(self, damage);
 		M_Remove(self, false, false);
 		return;
 	}

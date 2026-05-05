@@ -15,6 +15,8 @@ boss2
 #define BOSS2_ROCKET_SPEED		750
 #define BOSS2_INVASION_SCALE		0.75f
 #define BOSS2_INVASION_MOVE_SCALE	1.5f
+#define BOSS2_SMALL_DEATH_GRAVITY	0.30f
+#define BOSS2_SMALL_DEATH_FALL_SPEED	-40.0f
 
 static int sound_pain1;
 static int sound_pain2;
@@ -130,42 +132,71 @@ static void boss2_search(edict_t *self)
 		gi.sound(self, CHAN_VOICE, sound_search1, 1, boss2_voice_attenuation(self), 0);
 }
 
-static void boss2_explode(edict_t *self)
+static void boss2_emit_random_explosion(edict_t *self, int effect)
 {
 	vec3_t org;
 
-	VectorCopy(self->s.origin, org);
-	org[0] += crandom() * self->maxs[0];
-	org[1] += crandom() * self->maxs[1];
-	org[2] += crandom() * self->maxs[2];
+	VectorAdd(self->s.origin, self->mins, org);
+	org[0] += random() * self->size[0];
+	org[1] += random() * self->size[1];
+	org[2] += random() * self->size[2];
 
 	gi.WriteByte(svc_temp_entity);
-	gi.WriteByte(TE_EXPLOSION1_BIG);
+	gi.WriteByte(effect);
 	gi.WritePosition(org);
-	gi.multicast(self->s.origin, MULTICAST_PVS);
+	gi.multicast(org, MULTICAST_PVS);
+}
+
+static void boss2_explosion_sequence_think(edict_t *self)
+{
+	edict_t *owner = self->owner;
+	int effect;
+
+	if (level.time > self->timestamp || !owner || !owner->inuse
+		|| owner->deadflag != DEAD_DEAD || owner->s.modelindex != self->style)
+	{
+		G_FreeEdict(self);
+		return;
+	}
+	if (self->count >= self->dmg)
+	{
+		G_FreeEdict(self);
+		return;
+	}
+
+	effect = (self->count++ % 4) ? TE_EXPLOSION1_NL : TE_EXPLOSION1;
+	boss2_emit_random_explosion(owner, effect);
+	self->nextthink = level.time + 0.2f + random() * 0.25f;
+}
+
+static void boss2_start_explosion_sequence(edict_t *self)
+{
+	edict_t *exploder;
+
+	if (self->count)
+		return;
+	self->count = 1;
+
+	boss2_emit_random_explosion(self, TE_EXPLOSION1_BIG);
+
+	exploder = G_Spawn();
+	exploder->classname = "boss2_exploder";
+	exploder->svflags |= SVF_NOCLIENT;
+	exploder->solid = SOLID_NOT;
+	exploder->owner = self;
+	exploder->style = self->s.modelindex;
+	exploder->count = 1;
+	exploder->dmg = boss2_is_small(self) ? 4 : 13;
+	exploder->think = boss2_explosion_sequence_think;
+	exploder->nextthink = level.time + 0.2f + random() * 0.25f;
+	exploder->timestamp = level.time + (boss2_is_small(self) ? 1.5f : 5.0f);
 }
 
 static void boss2_dead(edict_t *self)
 {
-	int n;
+	vrx_throw_drone_gibs(self, 500);
 
-	for (n = 0; n < 3; n++)
-		ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", 500, GIB_ORGANIC);
-	for (n = 0; n < 5; n++)
-		ThrowGib(self, "models/objects/gibs/sm_metal/tris.md2", 500, GIB_METALLIC);
-
-	ThrowGib(self, "models/monsters/boss2/gibs/chest.md2", 500, GIB_METALLIC);
-	ThrowGib(self, "models/monsters/boss2/gibs/chaingun.md2", 500, GIB_METALLIC);
-	ThrowGib(self, "models/monsters/boss2/gibs/cpu.md2", 500, GIB_METALLIC);
-	ThrowGib(self, "models/monsters/boss2/gibs/engine.md2", 500, GIB_METALLIC);
-	ThrowGib(self, "models/monsters/boss2/gibs/rocket.md2", 500, GIB_METALLIC);
-	ThrowGib(self, "models/monsters/boss2/gibs/spine.md2", 500, GIB_METALLIC);
-	ThrowGib(self, "models/monsters/boss2/gibs/wing.md2", 500, GIB_METALLIC);
-	ThrowGib(self, "models/monsters/boss2/gibs/larm.md2", 500, GIB_METALLIC);
-	ThrowGib(self, "models/monsters/boss2/gibs/rarm.md2", 500, GIB_METALLIC);
-	ThrowHead(self, "models/monsters/boss2/gibs/head.md2", 500, GIB_METALLIC);
-
-	boss2_explode(self);
+	boss2_emit_random_explosion(self, TE_EXPLOSION1_BIG);
 	M_Remove(self, false, false);
 }
 
@@ -509,7 +540,7 @@ static void boss2_shrink(edict_t *self)
 
 static mframe_t boss2_frames_death[] =
 {
-	ai_move, 0, boss2_explode,
+	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
@@ -523,7 +554,7 @@ static mmove_t boss2_move_death = { FRAME_death2, FRAME_death10, boss2_frames_de
 
 static mframe_t boss2_frames_deathboss[] =
 {
-	ai_move, 0, boss2_explode,
+	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
@@ -644,7 +675,7 @@ static void boss2_pain(edict_t *self, edict_t *other, float kick, int damage)
 	else
 		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
 
-	if (skill->value == 3)
+	if (invasion->value == 2)
 		return;
 	if (damage < 30)
 		self->monsterinfo.currentmove = &boss2_move_pain_light;
@@ -668,9 +699,24 @@ static void boss2_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int 
 	gi.sound(self, CHAN_VOICE, sound_death, 1, ATTN_NORM, 0);
 	self->s.sound = 0;
 	self->deadflag = DEAD_DEAD;
-	self->takedamage = DAMAGE_YES;
+	self->takedamage = DAMAGE_NO;
 	vrx_update_drone_death_skin(self);
 	self->count = 0;
+	self->monsterinfo.aiflags &= ~AI_ALTERNATE_FLY;
+	self->monsterinfo.attack_state = AS_STRAIGHT;
+	VectorClear(self->velocity);
+	VectorClear(self->avelocity);
+	self->ideal_yaw = self->s.angles[YAW];
+
+	if (boss2_is_small(self))
+	{
+		self->flags &= ~FL_FLY;
+		self->movetype = MOVETYPE_TOSS;
+		self->gravity = BOSS2_SMALL_DEATH_GRAVITY;
+		self->velocity[2] = BOSS2_SMALL_DEATH_FALL_SPEED;
+	}
+
+	boss2_start_explosion_sequence(self);
 	self->monsterinfo.currentmove = boss2_is_small(self) ? &boss2_move_death : &boss2_move_deathboss;
 }
 

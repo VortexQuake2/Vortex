@@ -1407,6 +1407,7 @@ void SP_worldspawn (edict_t *ent)
 	gi.modelindex ("models/objects/gibs/chest/tris.md2");
 	skullindex = gi.modelindex ("models/objects/gibs/skull/tris.md2");
 	headindex = gi.modelindex ("models/objects/gibs/head2/tris.md2");
+	vrx_precache_drone_gibs();
 
 	gi.modelindex("models/proj/beam/tris.md2"); // 3.7 heatbeam model
 	//gi.modelindex("models/proj/lightning/tris.md2"); //3.9 lightning model used by hellspawn/holyshock

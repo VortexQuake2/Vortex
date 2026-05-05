@@ -24,6 +24,7 @@ static int	commander_sound_pain1;
 static int	commander_sound_pain2;
 static int	commander_sound_die;
 static int	commander_sound_sight;
+static int	commander_sound_search;
 static int	commander_sound_hook_launch;
 static int	commander_sound_hook_hit;
 static int	commander_sound_hook_heal;
@@ -97,6 +98,11 @@ static int medic_sight_sound(edict_t *self)
 	return (medic_is_commander(self) && commander_sound_sight) ? commander_sound_sight : sound_sight;
 }
 
+static int medic_search_sound(edict_t *self)
+{
+	return (medic_is_commander(self) && commander_sound_search) ? commander_sound_search : sound_search;
+}
+
 static int medic_hook_launch_sound(edict_t *self)
 {
 	return (medic_is_commander(self) && commander_sound_hook_launch) ? commander_sound_hook_launch : sound_hook_launch;
@@ -125,6 +131,11 @@ void mymedic_idle (edict_t *self)
 {
 	gi.sound (self, CHAN_VOICE, medic_idle_sound(self), 1, ATTN_IDLE, 0);
 
+}
+
+void mymedic_search (edict_t *self)
+{
+	gi.sound (self, CHAN_VOICE, medic_search_sound(self), 1, ATTN_IDLE, 0);
 }
 
 mframe_t mymedic_frames_stand [] =
@@ -493,8 +504,6 @@ mmove_t mymedic_move_death = {FRAME_death1, FRAME_death30, mymedic_frames_death,
 
 void mymedic_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int		n;
-
 	M_Notify(self);
 
 #ifdef OLD_NOLAG_STYLE
@@ -510,14 +519,7 @@ void mymedic_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (vrx_spawn_nonessential_ent(self->s.origin))
-		{
-			for (n = 0; n < 2; n++)
-				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-			for (n = 0; n < 4; n++)
-				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-			//ThrowHead (self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
-		}
+		vrx_throw_drone_gibs(self, damage);
 		//self->deadflag = DEAD_DEAD;
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);
@@ -1726,8 +1728,7 @@ void init_drone_medic (edict_t *self)
 	self->monsterinfo.sight = mymedic_sight;
 	self->monsterinfo.jumpup = 64;
 	self->monsterinfo.jumpdn = 512;
-//	self->monsterinfo.idle = mymedic_idle;
-//	self->monsterinfo.search = mymedic_search;
+	self->monsterinfo.idle = mymedic_search;
 //	self->monsterinfo.checkattack = mymedic_checkattack;
 //	self->monsterinfo.control_cost = 1;
 //	self->monsterinfo.cost = 150;
@@ -1761,6 +1762,7 @@ void init_drone_medic_commander(edict_t *self)
 	commander_sound_pain2 = gi.soundindex("medic_commander/medpain2.wav");
 	commander_sound_die = gi.soundindex("medic_commander/meddeth.wav");
 	commander_sound_sight = gi.soundindex("medic_commander/medsght.wav");
+	commander_sound_search = gi.soundindex("medic_commander/medsrch.wav");
 	commander_sound_hook_launch = gi.soundindex("medic_commander/medatck2c.wav");
 	commander_sound_hook_hit = gi.soundindex("medic_commander/medatck3a.wav");
 	commander_sound_hook_heal = gi.soundindex("medic_commander/medatck4a.wav");

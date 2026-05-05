@@ -23,7 +23,12 @@ static int	sound_step2;
 static int	sound_step3;
 static int	sound_thud;
 
+#define MUTANT_SEARCH_SOUND_MIN_DELAY	15.0f
+#define MUTANT_SEARCH_SOUND_RANDOM_DELAY	15.0f
+
 void mutant_jump (edict_t *self);
+extern mmove_t mutant_move_pain_short1;
+extern mmove_t mutant_move_pain_short2;
 //
 // SOUNDS
 //
@@ -43,6 +48,15 @@ void mutant_step (edict_t *self)
 void mutant_sight (edict_t *self, edict_t *other)
 {
 	gi.sound (self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
+}
+
+void mutant_search (edict_t *self)
+{
+	if (level.time < self->wait)
+		return;
+
+	gi.sound (self, CHAN_VOICE, sound_search, 1, ATTN_NORM, 0);
+	self->wait = level.time + MUTANT_SEARCH_SOUND_MIN_DELAY + (float)random() * MUTANT_SEARCH_SOUND_RANDOM_DELAY;
 }
 
 void mutant_swing (edict_t *self)
@@ -366,7 +380,7 @@ void mutant_check_landing (edict_t *self)
 		|| (level.time > self->monsterinfo.pausetime))
 	{
 		self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
-		//VectorClear(self->velocity);
+		self->monsterinfo.nextattack = 0;
 	}
 	else
 	{
@@ -475,8 +489,6 @@ mmove_t mutant_move_death2 = {FRAME_death201, FRAME_death210, mutant_frames_deat
 
 void mutant_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int		n;
-
 	M_Notify(self);
 
 #ifdef OLD_NOLAG_STYLE
@@ -492,14 +504,7 @@ void mutant_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (vrx_spawn_nonessential_ent(self->s.origin))
-		{
-			for (n = 0; n < 2; n++)
-				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-			for (n = 0; n < 4; n++)
-				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-			//ThrowHead (self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
-		}
+		vrx_throw_drone_gibs(self, damage);
 		//self->deadflag = DEAD_DEAD;
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);
@@ -578,6 +583,18 @@ mframe_t mutant_frames_pain_short2[] =
 };
 mmove_t mutant_move_pain_short2 = { FRAME_pain101, FRAME_pain105, mutant_frames_pain_short2, mutant_run };
 
+static float mutant_air_pain_velocity_scale(edict_t *self, int damage)
+{
+	float heavy_damage = self->max_health * 0.12f;
+	float medium_damage = self->max_health * 0.06f;
+
+	if (damage >= heavy_damage)
+		return 0.70f;
+	if (damage >= medium_damage)
+		return 0.85f;
+	return 0.90f;
+}
+
 void mutant_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
 	const double rng = random();
@@ -598,6 +615,25 @@ void mutant_pain(edict_t* self, edict_t* other, float kick, int damage)
 	if (invasion->value == 2)
 		return;
 
+	if (self->monsterinfo.currentmove == &mutant_move_jump && !self->groundentity)
+	{
+		float air_scale = mutant_air_pain_velocity_scale(self, damage);
+
+		if (level.time >= self->pain_debounce_time)
+		{
+			if (random() < 0.5)
+				gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
+			else
+				gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
+			self->pain_debounce_time = level.time + 0.5;
+		}
+
+		self->velocity[0] *= air_scale;
+		self->velocity[1] *= air_scale;
+		self->velocity[2] *= air_scale;
+		return;
+	}
+
 	// if we're fidgeting, always go into pain state.
 	if (rng <= (1.0f - self->monsterinfo.pain_chance) &&
 		self->monsterinfo.currentmove != &mutant_move_idle &&
@@ -605,18 +641,13 @@ void mutant_pain(edict_t* self, edict_t* other, float kick, int damage)
 		self->monsterinfo.currentmove != &mutant_move_walk)
 		return;
 
-	if (self->monsterinfo.currentmove == &mutant_move_jump)
-		gi.sound(self, CHAN_VOICE, sound_thud, 1, ATTN_NORM, 0);
+	if (random() < 0.5)
+		gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
 	else
-	{
-		if (random() < 0.5)
-			gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
-		else
-			gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
-	}
+		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
+	self->monsterinfo.nextattack = 0;
 
 	if (self->monsterinfo.currentmove == &mutant_move_idle ||
-		self->monsterinfo.currentmove == &mutant_move_jump ||
 		self->monsterinfo.currentmove == &mutant_move_walk) {
 			self->monsterinfo.currentmove = &mutant_move_pain_long1;
 	}
@@ -644,7 +675,7 @@ void init_drone_mutant (edict_t *self)
 	sound_pain1 = gi.soundindex ("mutant/mutpain1.wav");
 	sound_pain2 = gi.soundindex ("mutant/mutpain2.wav");
 	sound_sight = gi.soundindex ("mutant/mutsght1.wav");
-	//sound_search = gi.soundindex ("mutant/mutsrch1.wav");
+	sound_search = gi.soundindex ("mutant/mutsrch1.wav");
 	sound_step1 = gi.soundindex ("mutant/step1.wav");
 	sound_step2 = gi.soundindex ("mutant/step2.wav");
 	sound_step3 = gi.soundindex ("mutant/step3.wav");
@@ -678,8 +709,8 @@ void init_drone_mutant (edict_t *self)
 	self->monsterinfo.attack = mutant_attack;
 	self->monsterinfo.melee = mutant_melee;
 	self->monsterinfo.sight = mutant_sight;
-//	self->monsterinfo.search = mutant_search;
-	//self->monsterinfo.idle = mutant_idle;
+	self->monsterinfo.idle = mutant_search;
+	self->wait = level.time + MUTANT_SEARCH_SOUND_MIN_DELAY + (float)random() * MUTANT_SEARCH_SOUND_RANDOM_DELAY;
 //	self->monsterinfo.checkattack = mutant_checkattack;
 	self->monsterinfo.jumpup = 64;
 	self->monsterinfo.jumpdn = 512;

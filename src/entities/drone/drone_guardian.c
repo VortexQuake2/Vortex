@@ -14,9 +14,11 @@ static int sound_charge;
 static int sound_spin_loop;
 static int sound_laser;
 static int sound_pew;
+static int sound_pain;
 
 #define GUARDIAN_INVASION_SCALE		0.45f
 #define GUARDIAN_INVASION_MOVE_SCALE	1.75f
+#define GUARDIAN_SIGHT_ACK_CHANCE	0.30f
 
 void guardian_run(edict_t *self);
 
@@ -120,6 +122,14 @@ static qboolean guardian_has_rocket_shot(edict_t *self, float offset)
 static void guardian_footstep(edict_t *self)
 {
 	gi.sound(self, CHAN_BODY, sound_step, 1, ATTN_NORM, 0);
+}
+
+static void guardian_sight(edict_t *self, edict_t *other)
+{
+	(void)other;
+
+	if (random() < GUARDIAN_SIGHT_ACK_CHANCE)
+		gi.sound(self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
 }
 
 mframe_t guardian_frames_stand[] =
@@ -277,6 +287,7 @@ void guardian_pain(edict_t *self, edict_t *other, float kick, int damage)
 		return;
 
 	self->pain_debounce_time = level.time + 3.0;
+	gi.sound(self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
 	self->monsterinfo.currentmove = &guardian_move_pain1;
 	self->s.sound = 0;
 }
@@ -653,16 +664,9 @@ void guardian_dead(edict_t *self)
 {
 	int n;
 
-	if (vrx_spawn_nonessential_ent(self->s.origin))
-	{
-		for (n = 0; n < 3; n++)
-			guardian_explode(self);
-		for (n = 0; n < 4; n++)
-			ThrowGib(self, "models/objects/gibs/sm_metal/tris.md2", 500, GIB_METALLIC);
-		for (n = 0; n < 2; n++)
-			ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", 500, GIB_ORGANIC);
-		ThrowHead(self, "models/objects/gibs/gear/tris.md2", 500, GIB_METALLIC);
-	}
+	for (n = 0; n < 3; n++)
+		guardian_explode(self);
+	vrx_throw_drone_gibs(self, 125);
 
 	gi.WriteByte(svc_temp_entity);
 	gi.WriteByte(TE_EXPLOSION1);
@@ -755,6 +759,7 @@ void init_drone_guardian(edict_t *self)
 	sound_spin_loop = gi.soundindex("weapons/hyprbl1a.wav");
 	sound_laser = gi.soundindex("weapons/laser2.wav");
 	sound_pew = gi.soundindex("weapons/rocklf1a.wav");
+	sound_pain = gi.soundindex("zortemp/ack.wav");
 
 	if (!self->mtype)
 		self->mtype = M_GUARDIAN;
@@ -810,6 +815,7 @@ void init_drone_guardian(edict_t *self)
 	self->monsterinfo.walk = guardian_walk;
 	self->monsterinfo.run = guardian_run;
 	self->monsterinfo.attack = guardian_attack;
+	self->monsterinfo.sight = guardian_sight;
 	self->monsterinfo.currentmove = &guardian_move_stand;
 
 	self->nextthink = level.time + FRAMETIME;

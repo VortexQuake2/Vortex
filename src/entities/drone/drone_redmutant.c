@@ -517,8 +517,6 @@ mmove_t redmutant_move_death2 = { FRAME_death201, FRAME_death207, redmutant_fram
 
 static void redmutant_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int n;
-
 	M_Notify(self);
 
 #ifdef OLD_NOLAG_STYLE
@@ -532,15 +530,7 @@ static void redmutant_die(edict_t *self, edict_t *inflictor, edict_t *attacker, 
 	if (self->health <= self->gib_health)
 	{
 		gi.sound(self, CHAN_VOICE, gi.soundindex("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (vrx_spawn_nonessential_ent(self->s.origin))
-		{
-			for (n = 0; n < 2; n++)
-				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-			for (n = 0; n < 4; n++)
-				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-			ThrowGib(self, "models/monsters/mutant/gibs/chest.md2", damage, GIB_ORGANIC);
-			ThrowHead(self, "models/monsters/mutant/gibs/head.md2", damage, GIB_ORGANIC);
-		}
+		vrx_throw_drone_gibs(self, damage);
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);
 #else
@@ -621,7 +611,7 @@ static void redmutant_pain(edict_t *self, edict_t *other, float kick, int damage
 	else
 		gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
 
-	if (skill->value == 3)
+	if (invasion->value == 2)
 		return;
 
 	redmutant_restore_bbox(self);

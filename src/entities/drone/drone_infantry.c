@@ -264,7 +264,10 @@ void Infantry20mm(edict_t* self)
 
 void infantry_sight (edict_t *self, edict_t *other)
 {
-	gi.sound (self, CHAN_BODY, sound_sight, 1, ATTN_NORM, 0);
+	if (random() < 0.5)
+		gi.sound (self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
+	else
+		gi.sound (self, CHAN_VOICE, sound_search, 1, ATTN_NORM, 0);
 }
 
 void infantry_dead (edict_t *self)
@@ -425,6 +428,8 @@ mmove_t infantry_move_death3 = {FRAME_death301, FRAME_death309, infantry_frames_
 void infantry_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
 	int		n;
+	edict_t *head;
+	vec3_t	head_dir;
 
 	M_Notify(self);
 
@@ -440,14 +445,7 @@ void infantry_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (vrx_spawn_nonessential_ent(self->s.origin))
-		{
-			for (n = 0; n < 2; n++)
-				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-			for (n = 0; n < 4; n++)
-				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-			ThrowHead(self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
-		}
+		vrx_throw_drone_gibs(self, damage);
 
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);
@@ -485,6 +483,29 @@ void infantry_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dam
 	{
 		self->monsterinfo.currentmove = &infantry_move_death3;
 		gi.sound (self, CHAN_VOICE, sound_die2, 1, ATTN_NORM, 0);
+	}
+
+	if (n != 2 && random() <= 0.25f && vrx_spawn_nonessential_ent(self->s.origin))
+	{
+		head = ThrowGibEx(self, "models/monsters/infantry/gibs/head.md2", damage, GIB_ORGANIC,
+			self->s.scale ? self->s.scale : 1.0f);
+		if (head)
+		{
+			VectorCopy(self->s.angles, head->s.angles);
+			VectorCopy(self->s.origin, head->s.origin);
+			head->s.origin[2] += 32;
+			if (inflictor)
+				VectorSubtract(self->s.origin, inflictor->s.origin, head_dir);
+			else
+				VectorSet(head_dir, crandom(), crandom(), 0.5f);
+			if (VectorNormalize(head_dir) == 0)
+				VectorSet(head_dir, 0, 0, 1);
+			VectorScale(head_dir, 100, head->velocity);
+			head->velocity[2] = 200;
+			VectorScale(head->avelocity, 0.15f, head->avelocity);
+			head->s.skinnum = 0;
+			gi.linkentity(head);
+		}
 	}
 
 	if (self->activator && !self->activator->client)

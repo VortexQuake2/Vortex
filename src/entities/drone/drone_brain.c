@@ -1042,8 +1042,6 @@ void mybrain_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *s
 
 void mybrain_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int		n;
-
 	M_Notify(self);
 
 	// reduce lag by removing the entity right away
@@ -1063,14 +1061,7 @@ void mybrain_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (vrx_spawn_nonessential_ent(self->s.origin))
-		{
-			for (n = 0; n < 2; n++)
-				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-			for (n = 0; n < 4; n++)
-				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-			//ThrowHead (self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
-		}
+		vrx_throw_drone_gibs(self, damage);
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);
 #else
@@ -1160,8 +1151,7 @@ void init_drone_brain (edict_t *self)
 	self->monsterinfo.attack = mybrain_attack;
 	self->monsterinfo.melee = mybrain_melee;
 	self->monsterinfo.sight = mybrain_sight;
-//	self->monsterinfo.search = mybrain_search;
-	//self->monsterinfo.idle = mybrain_idle;
+	self->monsterinfo.idle = mybrain_search;
 	self->monsterinfo.jumpup = 64;
 	self->monsterinfo.jumpdn = 512;
 

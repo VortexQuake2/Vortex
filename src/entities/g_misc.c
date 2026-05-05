@@ -70,6 +70,8 @@ void ClipGibVelocity(edict_t *ent)
 gibs
 =================
 */
+#define GIB_SPAWNFLAG_MONSTER	1
+
 void gib_think(edict_t *self)
 {
 	if ( ( level.framenum % qf2sf(1) ) == 0 ) 
@@ -85,20 +87,12 @@ void gib_think(edict_t *self)
 
 void gib_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
-	vec3_t	normal_angles, right;
-
-	if (!self->groundentity)
-		return;
-
-	self->touch = NULL;
-
-	if (plane)
+	if (plane && plane->normal[2] > 0.7f)
 	{
-		gi.sound(self, CHAN_VOICE, gi.soundindex("misc/fhit3.wav"), 1, ATTN_NORM, 0);
-
-		vectoangles(plane->normal, normal_angles);
-		AngleVectors(normal_angles, NULL, right, NULL);
-		vectoangles(right, self->s.angles);
+		if (!(self->spawnflags & GIB_SPAWNFLAG_MONSTER) && !(self->svflags & SVF_MONSTER))
+			gi.sound(self, CHAN_VOICE, gi.soundindex("misc/fhit3.wav"), 1, ATTN_NORM, 0);
+		self->s.angles[0] = max(-5.0f, min(self->s.angles[0], 5.0f));
+		self->s.angles[2] = max(-5.0f, min(self->s.angles[2], 5.0f));
 
 		if (self->s.modelindex == sm_meat_index)
 		{
@@ -114,7 +108,7 @@ void gib_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, v
 	G_FreeEdict(self);
 }
 
-void ThrowGib(edict_t *self, char *gibname, int damage, int type)
+edict_t *ThrowGibEx(edict_t *self, char *gibname, int damage, int type, float scale)
 {
 	edict_t *gib;
 	vec3_t	vd = { 0, 0, 0 };
@@ -122,10 +116,8 @@ void ThrowGib(edict_t *self, char *gibname, int damage, int type)
 	vec3_t	size;
 	float	vscale;
 
-#ifndef OLD_NOLAG_STYLE
 	if (nolag->value)
-		return;
-#endif
+		return NULL;
 
 	gib = G_Spawn();
 
@@ -136,35 +128,74 @@ void ThrowGib(edict_t *self, char *gibname, int damage, int type)
 	gib->s.origin[2] = origin[2] + crandom() * size[2];
 
 	gi.setmodel(gib, gibname);
+	gib->s.modelindex2 = 0;
+	if (scale != 1.0f)
+		gib->s.scale = scale;
+	VectorClear(gib->mins);
+	VectorClear(gib->maxs);
 	gib->solid = SOLID_NOT;
-	gib->s.effects |= EF_GIB;
+	if (type & GIB_ACID)
+		gib->s.effects |= EF_GREENGIB;
+	else if (!(type & GIB_DEBRIS))
+		gib->s.effects |= EF_GIB;
 	gib->flags |= FL_NO_KNOCKBACK;
+	gib->classname = "gib";
+	if (self->svflags & SVF_MONSTER)
+		gib->spawnflags |= GIB_SPAWNFLAG_MONSTER;
 	gib->takedamage = DAMAGE_YES;
 	gib->die = gib_die;
+	gib->s.frame = 0;
+	gib->s.sound = 0;
+	if (type & GIB_SKINNED)
+		gib->s.skinnum = self->s.skinnum;
 
-	if (type == GIB_ORGANIC)
+	if (!(type & GIB_METALLIC))
 	{
 		gib->movetype = MOVETYPE_TOSS;
-		gib->touch = gib_touch;
-		vscale = 0.5;
+		vscale = (type & GIB_ACID) ? 3.0 : 0.5;
 	}
 	else
 	{
 		gib->movetype = MOVETYPE_BOUNCE;
 		vscale = 1.0;
 	}
+	if (type & GIB_UPRIGHT)
+	{
+		gib->touch = gib_touch;
+		gib->flags |= FL_ALWAYS_TOUCH;
+	}
 
-	VelocityForDamage(damage, vd);
-	VectorMA(self->velocity, vscale, vd, gib->velocity);
-	ClipGibVelocity(gib);
+	if (type & GIB_DEBRIS)
+	{
+		vd[0] = 100 * crandom();
+		vd[1] = 100 * crandom();
+		vd[2] = 100 + 100 * crandom();
+		VectorMA(self->velocity, damage, vd, gib->velocity);
+	}
+	else
+	{
+		VelocityForDamage(damage, vd);
+		VectorMA(self->velocity, vscale, vd, gib->velocity);
+		ClipGibVelocity(gib);
+	}
 	gib->avelocity[0] = random() * 600;
 	gib->avelocity[1] = random() * 600;
 	gib->avelocity[2] = random() * 600;
+	gib->s.angles[0] = random() * 359;
+	gib->s.angles[1] = random() * 359;
+	gib->s.angles[2] = random() * 359;
 
 	gib->think = G_FreeEdict;
 	gib->nextthink = level.time + GetRandom(2, 10);
 
 	gi.linkentity(gib);
+
+	return gib;
+}
+
+void ThrowGib(edict_t *self, char *gibname, int damage, int type)
+{
+	ThrowGibEx(self, gibname, damage, type, 1.0f);
 }
 
 void ThrowHead(edict_t *self, char *gibname, int damage, int type)
@@ -194,11 +225,13 @@ void ThrowHead2(edict_t *self, char *gibname, int damage, int type)
 	self->s.effects &= ~EF_FLIES;
 	self->s.sound = 0;
 	self->flags |= FL_NO_KNOCKBACK;
+	if (self->svflags & SVF_MONSTER)
+		self->spawnflags |= GIB_SPAWNFLAG_MONSTER;
 	//	self->svflags &= ~SVF_MONSTER;
 	self->takedamage = DAMAGE_YES;
 	self->die = gib_die;
 
-	if (type == GIB_ORGANIC)
+	if (!(type & GIB_METALLIC))
 	{
 		self->movetype = MOVETYPE_TOSS;
 		self->touch = gib_touch;

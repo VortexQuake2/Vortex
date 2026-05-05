@@ -24,7 +24,10 @@ static int	sound_sight;
 
 void gladiator_idle (edict_t *self)
 {
-	gi.sound (self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
+	if (random() < 0.5)
+		gi.sound (self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
+	else
+		gi.sound (self, CHAN_VOICE, sound_search, 1, ATTN_NORM, 0);
 }
 
 void gladiator_search (edict_t *self)
@@ -99,10 +102,18 @@ mframe_t gladiator_frames_pain[] =
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
+};
+mmove_t gladiator_move_pain = { FRAME_pain2, FRAME_pain5, gladiator_frames_pain, gladiator_walk };
+
+mframe_t gladiator_frames_pain_air[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 };
-mmove_t gladiator_move_pain = { FRAME_pain1, FRAME_pain6, gladiator_frames_pain, gladiator_walk };
+mmove_t gladiator_move_pain_air = { FRAME_painup2, FRAME_painup6, gladiator_frames_pain_air, gladiator_walk };
 
 void gladiator_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
@@ -110,8 +121,13 @@ void gladiator_pain(edict_t* self, edict_t* other, float kick, int damage)
 		self->s.skinnum = (self->mtype == M_GLADB || self->mtype == M_GLADC) ? 3 : 1;
 
 	// we're already in a pain state
-	if (self->monsterinfo.currentmove == &gladiator_move_pain)
+	if (self->monsterinfo.currentmove == &gladiator_move_pain ||
+		self->monsterinfo.currentmove == &gladiator_move_pain_air)
+	{
+		if (self->velocity[2] > 100 && self->monsterinfo.currentmove == &gladiator_move_pain)
+			self->monsterinfo.currentmove = &gladiator_move_pain_air;
 		return;
+	}
 
 	// monster players don't get pain state induced
 	if (G_GetClient(self))
@@ -133,7 +149,10 @@ void gladiator_pain(edict_t* self, edict_t* other, float kick, int damage)
 		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
 	}
 
-	self->monsterinfo.currentmove = &gladiator_move_pain;
+	if (self->velocity[2] > 100)
+		self->monsterinfo.currentmove = &gladiator_move_pain_air;
+	else
+		self->monsterinfo.currentmove = &gladiator_move_pain;
 }
 
 void gladiator_run (edict_t *self)
@@ -489,8 +508,6 @@ mmove_t gladiator_move_death = {FRAME_death1, FRAME_death22, gladiator_frames_de
 
 void gladiator_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int		n;
-
 	M_Notify(self);
 
 	// reduce lag by removing the entity right away
@@ -506,13 +523,7 @@ void gladiator_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int da
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (vrx_spawn_nonessential_ent(self->s.origin))
-		{
-			for (n = 0; n < 2; n++)
-				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-			for (n = 0; n < 4; n++)
-				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-		}
+		vrx_throw_drone_gibs(self, damage);
 
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);

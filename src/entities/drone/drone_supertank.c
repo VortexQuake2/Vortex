@@ -14,6 +14,9 @@ qboolean visible (const edict_t *self, const edict_t *other);
 #define SUPERTANK_INVASION_BASE_HEALTH		5000
 #define SUPERTANK_INVASION_ADDON_HEALTH		1000
 
+static int	sound_pain1;
+static int	sound_pain2;
+static int	sound_pain3;
 static int	sound_death;
 static int	sound_search1;
 static int	sound_search2;
@@ -41,6 +44,14 @@ static void supertank_project_flash(edict_t *self, int flash_number, vec3_t forw
 void TreadSound (edict_t *self)
 {
 	gi.sound (self, CHAN_VOICE, tread_sound, 1, ATTN_NORM, 0);
+}
+
+void supertank_search (edict_t *self)
+{
+	if (random() > 0.5)
+		gi.sound (self, CHAN_VOICE, sound_search1, 1, ATTN_NORM, 0);
+	else
+		gi.sound (self, CHAN_VOICE, sound_search2, 1, ATTN_NORM, 0);
 }
 
 void supertankRocket (edict_t *self);
@@ -218,6 +229,67 @@ void supertank_run (edict_t *self)
 		self->monsterinfo.currentmove = &supertank_move_run_janitor;
 	else
 		self->monsterinfo.currentmove = &supertank_move_run;
+}
+
+mframe_t supertank_frames_pain3[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+mmove_t supertank_move_pain3 = { FRAME_pain3_9, FRAME_pain3_12, supertank_frames_pain3, supertank_run };
+
+mframe_t supertank_frames_pain2[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+mmove_t supertank_move_pain2 = { FRAME_pain2_5, FRAME_pain2_8, supertank_frames_pain2, supertank_run };
+
+mframe_t supertank_frames_pain1[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+mmove_t supertank_move_pain1 = { FRAME_pain1_1, FRAME_pain1_4, supertank_frames_pain1, supertank_run };
+
+void supertank_pain(edict_t *self, edict_t *other, float kick, int damage)
+{
+	(void)other;
+	(void)kick;
+
+	if (level.time < self->pain_debounce_time)
+		return;
+
+	if (damage <= 25 && random() < 0.2f)
+		return;
+
+	if (self->s.frame >= FRAME_attak2_1 && self->s.frame <= FRAME_attak2_14)
+		return;
+
+	if (damage <= 10)
+		gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
+	else if (damage <= 25)
+		gi.sound(self, CHAN_VOICE, sound_pain3, 1, ATTN_NORM, 0);
+	else
+		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
+
+	self->pain_debounce_time = level.time + 3.0f;
+
+	if (invasion->value == 2)
+		return;
+
+	if (damage <= 10)
+		self->monsterinfo.currentmove = &supertank_move_pain1;
+	else if (damage <= 25)
+		self->monsterinfo.currentmove = &supertank_move_pain2;
+	else
+		self->monsterinfo.currentmove = &supertank_move_pain3;
 }
 
 mframe_t supertank_frames_turn_right [] =
@@ -587,7 +659,6 @@ void supertank_attack(edict_t *self)
 void BossExplode (edict_t *self)
 {
 	vec3_t	org;
-	int		n;
 
 	self->think = BossExplode;
 	VectorCopy (self->s.origin, org);
@@ -628,12 +699,7 @@ void BossExplode (edict_t *self)
 		break;
 	case 8:
 		self->s.sound = 0;
-		for (n= 0; n < 4; n++)
-			ThrowGib (self, "models/objects/gibs/sm_meat/tris.md2", 500, GIB_ORGANIC);
-		for (n= 0; n < 8; n++)
-			ThrowGib (self, "models/objects/gibs/sm_metal/tris.md2", 500, GIB_METALLIC);
-		ThrowGib (self, "models/objects/gibs/chest/tris.md2", 500, GIB_ORGANIC);
-		ThrowHead (self, "models/objects/gibs/gear/tris.md2", 500, GIB_METALLIC);
+		vrx_throw_drone_gibs(self, 500);
 		self->deadflag = DEAD_DEAD;
 		M_Remove(self, false, false);
 		return;
@@ -669,10 +735,7 @@ void supertank_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int da
 
 void supertank_sight (edict_t *self, edict_t *other)
 {
-	if (random() > 0.5)
-		gi.sound (self, CHAN_VOICE, sound_search1, 1, ATTN_NORM, 0);
-	else
-		gi.sound (self, CHAN_VOICE, sound_search2, 1, ATTN_NORM, 0);
+	supertank_search(self);
 }
 
 void init_drone_supertank (edict_t *self)
@@ -681,6 +744,9 @@ void init_drone_supertank (edict_t *self)
 	qboolean boss5 = supertank_is_boss5(self);
 
 	sound_death = gi.soundindex ("bosstank/btkdeth1.wav");
+	sound_pain1 = gi.soundindex ("bosstank/btkpain1.wav");
+	sound_pain2 = gi.soundindex ("bosstank/btkpain2.wav");
+	sound_pain3 = gi.soundindex ("bosstank/btkpain3.wav");
 	sound_search1 = gi.soundindex ("bosstank/btkunqv1.wav");
 	sound_search2 = gi.soundindex ("bosstank/btkunqv2.wav");
 	tread_sound = gi.soundindex ("bosstank/btkengn1.wav");
@@ -736,6 +802,10 @@ void init_drone_supertank (edict_t *self)
 	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 
 	self->die = supertank_die;
+	// vortex bosses have pain animations disabled.
+	if (janitor)
+		self->pain = supertank_pain;
+
 	self->monsterinfo.stand = supertank_stand;
 	self->monsterinfo.walk = supertank_walk;
 	self->monsterinfo.run = supertank_run;
@@ -745,6 +815,7 @@ void init_drone_supertank (edict_t *self)
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
 	self->monsterinfo.currentmove = &supertank_move_stand;
 	self->monsterinfo.sight = supertank_sight;
+	self->monsterinfo.idle = supertank_search;
 
 	self->nextthink = level.time + FRAMETIME;
 	gi.linkentity (self);

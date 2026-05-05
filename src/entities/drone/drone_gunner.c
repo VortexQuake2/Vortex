@@ -880,8 +880,6 @@ mmove_t mygunnermove_death = {FRAME_death01, FRAME_death11, mygunnerframes_death
 
 void mygunnerdie (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int		n;
-
 	M_Notify(self);
 
 #ifdef OLD_NOLAG_STYLE
@@ -897,14 +895,7 @@ void mygunnerdie (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (vrx_spawn_nonessential_ent(self->s.origin))
-		{
-			for (n = 0; n < 2; n++)
-				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-			for (n = 0; n < 4; n++)
-				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-			//ThrowHead (self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
-		}
+		vrx_throw_drone_gibs(self, damage);
 		//self->deadflag = DEAD_DEAD;
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);
@@ -978,6 +969,7 @@ void init_drone_gunner (edict_t *self)
 	self->monsterinfo.dodge = mygunner_dodge;
 	self->monsterinfo.attack = mygunner_attack;
 	self->monsterinfo.walk = gunner_walk;
+	self->monsterinfo.idle = mygunnersearch;
 	self->monsterinfo.pain_chance = 0.3f;
 
 	self->pain = mygunner_pain;

@@ -128,12 +128,7 @@ static void carrier_explode(edict_t *self)
 
 static void carrier_dead(edict_t *self)
 {
-	int n;
-
-	for (n = 0; n < 4; n++)
-		ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", 500, GIB_ORGANIC);
-	for (n = 0; n < 6; n++)
-		ThrowGib(self, "models/objects/gibs/sm_metal/tris.md2", 500, GIB_METALLIC);
+	vrx_throw_drone_gibs(self, 500);
 
 	gi.WriteByte(svc_temp_entity);
 	gi.WriteByte(TE_EXPLOSION1_BIG);
@@ -855,14 +850,29 @@ static void carrier_attack(edict_t *self)
 	M_DelayNextAttack(self, 1.0f + random(), true);
 }
 
-mframe_t carrier_frames_pain[] =
+mframe_t carrier_frames_pain_heavy[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+mmove_t carrier_move_pain_heavy = { FRAME_death01, FRAME_death10, carrier_frames_pain_heavy, carrier_run };
+
+mframe_t carrier_frames_pain_light[] =
 {
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL
 };
-mmove_t carrier_move_pain = { FRAME_spawn01, FRAME_spawn04, carrier_frames_pain, carrier_run };
+mmove_t carrier_move_pain_light = { FRAME_spawn01, FRAME_spawn04, carrier_frames_pain_light, carrier_run };
 
 static void carrier_pain(edict_t *self, edict_t *other, float kick, int damage)
 {
@@ -874,16 +884,21 @@ static void carrier_pain(edict_t *self, edict_t *other, float kick, int damage)
 	if (level.time < self->pain_debounce_time)
 		return;
 
-	self->pain_debounce_time = level.time + 3.0;
-	if (random() < 0.33f)
-		gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
-	else if (random() < 0.5f)
-		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
-	else
+	self->pain_debounce_time = level.time + 5.0;
+	if (damage < 10)
 		gi.sound(self, CHAN_VOICE, sound_pain3, 1, ATTN_NORM, 0);
+	else if (damage < 30)
+		gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
+	else
+		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
 
-	if (skill->value != 3)
-		self->monsterinfo.currentmove = &carrier_move_pain;
+	if (invasion->value == 2)
+		return;
+
+	if (damage >= 30)
+		self->monsterinfo.currentmove = &carrier_move_pain_heavy;
+	else if (damage >= 10 && random() < 0.5f)
+		self->monsterinfo.currentmove = &carrier_move_pain_light;
 }
 
 mframe_t carrier_frames_death[] =

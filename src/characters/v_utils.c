@@ -2898,6 +2898,12 @@ void vrx_update_drone_death_skin(edict_t* ent)
     if (!vrx_has_pain_skin(ent))
         return;
 
+    if (ent->mtype == M_GEKK)
+    {
+        ent->s.skinnum = (ent->health < 0.25f * ent->max_health) ? 2 : 1;
+        return;
+    }
+
     if (ent->mtype == M_BARON_FIRE && ent->health < 0.2f * ent->max_health)
         ent->s.skinnum = 2;
     else

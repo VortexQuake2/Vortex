@@ -165,7 +165,8 @@ enum flags_t {
     FL_UNDEAD = 1 << 23, // entity cannot die (temporary death until resurrection)
     FL_PACKANIMAL = 1 << 24, // pack animal: use num_packanimals to track active quantity
     FL_RESPAWN = 1 << 25, // used for item respawning
-    FL_FLASHLIGHT = 1 << 26
+    FL_FLASHLIGHT = 1 << 26,
+    FL_ALWAYS_TOUCH = 1 << 27
 };
 
 
@@ -218,6 +219,11 @@ typedef enum {
 //gib types
 #define GIB_ORGANIC				0
 #define GIB_METALLIC			1
+#define GIB_SKINNED				2
+#define GIB_UPRIGHT				4
+#define GIB_HEAD				8
+#define GIB_ACID				16
+#define GIB_DEBRIS				32
 
 //monster ai flags
 #define AI_STAND_GROUND			0x00000001
@@ -1701,6 +1707,8 @@ void ThrowHead(edict_t *self, char *gibname, int damage, int type);
 
 void ThrowClientHead(edict_t *self, int damage);
 
+edict_t *ThrowGibEx(edict_t *self, char *gibname, int damage, int type, float scale);
+
 void ThrowGib(edict_t *self, char *gibname, int damage, int type);
 
 void BecomeExplosion1(edict_t *self);
@@ -1719,6 +1727,9 @@ int vrx_get_alive_players(void); //Apple
 int vrx_GetMonsterCost(int mtype); //GHz
 int vrx_GetMonsterControlCost(int mtype); //GHz
 void vrx_remove_player_summonables(edict_t *self); //GHz
+void vrx_precache_drone_gibs(void);
+qboolean vrx_throw_drone_gibs(edict_t *self, int damage);
+void vrx_drop_tank_death_arm(edict_t *self, int damage);
 
 //
 // g_ai.c

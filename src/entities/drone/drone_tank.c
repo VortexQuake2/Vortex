@@ -19,6 +19,7 @@ void mytank_attack_chain (edict_t *self);
 
 static int	sound_thud;
 static int	sound_pain;
+static int	sound_pain2;
 static int	sound_idle;
 static int	sound_die;
 static int	sound_step;
@@ -700,6 +701,11 @@ void mytank_doattack_rocket (edict_t *self)
 	self->monsterinfo.currentmove = &mytank_move_attack_fire_rocket;
 }
 
+static qboolean mytank_should_melee(edict_t *self, float range)
+{
+	return self->groundentity && range <= 144.0f;
+}
+
 void mytank_melee (edict_t *self)
 {
 	
@@ -850,6 +856,13 @@ void commander_attack (edict_t *self)
 	qboolean can_blast;
 	qboolean can_rocket;
 
+	if (mytank_should_melee(self, range))
+	{
+		self->monsterinfo.currentmove = &mytank_move_strike;
+		self->monsterinfo.attack_finished = level.time + 2.0;
+		return;
+	}
+
 	// short range attack
 	if (range <= 128 && r <= 0.6)
 	{
@@ -862,15 +875,13 @@ void commander_attack (edict_t *self)
 		{
 			if (TeleportNearTarget(self, self->enemy, 16.0, true))
 			{
-				if (r <= 0.5)
+				range = entdist(self, self->enemy);
+				if (mytank_should_melee(self, range))
 				{
 					self->monsterinfo.currentmove = &mytank_move_strike;
 					self->monsterinfo.attack_finished = level.time + 0.5;
 					return;
 				}
-
-				// recalculate enemy distance
-				range = entdist(self, self->enemy);
 			}
 		}
 
@@ -909,11 +920,22 @@ void tank_attack(edict_t* self)
 {
 	const float r = random();
 	const float range = entdist(self, self->enemy);
-	const qboolean can_blast = mytank_can_blaster(self);
-	const qboolean can_rocket = mytank_can_rocket(self);
-	const qboolean can_chain = mytank_can_chain(self);
+	qboolean can_blast;
+	qboolean can_rocket;
+	qboolean can_chain;
 
 	//gi.dprintf("%d tank_attack()\n", level.framenum);
+
+	if (mytank_should_melee(self, range))
+	{
+		self->monsterinfo.currentmove = &mytank_move_strike;
+		M_DelayNextAttack(self, 0, true);
+		return;
+	}
+
+	can_blast = mytank_can_blaster(self);
+	can_rocket = mytank_can_rocket(self);
+	can_chain = mytank_can_chain(self);
 
 	// short range attack (60% strike, then 20% blaster, 80% rocket)
 	if (range <= 128)
@@ -1065,7 +1087,7 @@ void tank_pain(edict_t* self, edict_t* other, float kick, int damage)
 		!(is_idling || moving_without_enemy))
 		return;
 
-	gi.sound(self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
+	gi.sound(self, CHAN_VOICE, self->mtype == M_COMMANDER ? sound_pain2 : sound_pain, 1, ATTN_NORM, 0);
 
 	if (is_idling || moving_without_enemy) 
 		self->monsterinfo.currentmove = &tank_move_pain_long;
@@ -1138,8 +1160,6 @@ mmove_t	mytank_move_death = { FRAME_death101, FRAME_death132, mytank_frames_deat
 
 void mytank_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int		n;
-
 	//gi.dprintf("mytank_die called at %.1f\n", level.time);//DEBUG
 	M_Notify(self);
 
@@ -1156,15 +1176,7 @@ void mytank_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (vrx_spawn_nonessential_ent(self->s.origin))
-		{
-			for (n = 0; n < 1; n++)
-				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-			for (n = 0; n < 4; n++)
-				ThrowGib(self, "models/objects/gibs/sm_metal/tris.md2", damage, GIB_METALLIC);
-			ThrowGib(self, "models/objects/gibs/chest/tris.md2", damage, GIB_ORGANIC);
-			//ThrowHead (self, "models/objects/gibs/gear/tris.md2", damage, GIB_METALLIC);
-		}
+		vrx_throw_drone_gibs(self, damage);
 		//self->deadflag = DEAD_DEAD;
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);
@@ -1179,6 +1191,8 @@ void mytank_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 
 	if (self->deadflag == DEAD_DEAD)
 		return;
+
+	vrx_drop_tank_death_arm(self, damage);
 
 	DroneList_Remove(self);
 
@@ -1219,6 +1233,7 @@ void init_drone_tank (edict_t *self)
 	self->solid = SOLID_BBOX;
 
 	sound_pain = gi.soundindex ("tank/tnkpain2.wav");
+	sound_pain2 = gi.soundindex ("tank/pain.wav");
 	sound_thud = gi.soundindex ("tank/tnkdeth2.wav");
 	sound_idle = gi.soundindex ("tank/tnkidle1.wav");
 	sound_die = gi.soundindex ("tank/death.wav");

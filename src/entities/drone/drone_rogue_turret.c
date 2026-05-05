@@ -297,12 +297,9 @@ void rogue_turret_force_ready(edict_t *self)
 
 static void rogue_turret_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int n;
-
 	rogue_turret_laser_off(self);
 
-	for (n = 0; n < 3; n++)
-		ThrowGib(self, "models/objects/debris1/tris.md2", 150, GIB_METALLIC);
+	vrx_throw_drone_gibs(self, damage ? damage : 150);
 
 	gi.WriteByte(svc_temp_entity);
 	gi.WriteByte(TE_EXPLOSION1);

@@ -27,6 +27,9 @@ black widow
 #define WIDOW_FRAME_spawn18	99
 #define WIDOW_FRAME_pain01	100
 #define WIDOW_FRAME_pain05	104
+#define WIDOW_FRAME_pain13	112
+#define WIDOW_FRAME_pain201	113
+#define WIDOW_FRAME_pain203	115
 #define WIDOW_FRAME_death01	130
 #define WIDOW_FRAME_death31	160
 #define WIDOW_FRAME_kick01	161
@@ -38,6 +41,9 @@ black widow
 #define WIDOW_INVASION_SCALE	0.75f
 #define WIDOW_INVASION_HALF_WIDTH	30.0f
 #define WIDOW_INVASION_HEIGHT		108.0f
+#define WIDOW_LEGS_MAX_FRAME	23
+#define WIDOW_LEGS_FRAME_TIME	0.1f
+#define WIDOW_LEGS_WAIT_TIME	1.0f
 
 static int sound_pain1;
 static int sound_pain2;
@@ -66,9 +72,15 @@ static void widow_melee_hit(edict_t *self);
 static void widow_spawn_effects(edict_t *self);
 static void widow_finish_spawn(edict_t *self);
 static void widow_explode(edict_t *self);
-static void widow_dead(edict_t *self);
+static void widow_spawn_out_start(edict_t *self);
+static void widow_spawn_out_do(edict_t *self);
 static void widow_step1(edict_t *self);
 static void widow_step2(edict_t *self);
+
+static vec3_t widow_beam_effects[] = {
+	{ 12.58f, -43.71f, 68.88f },
+	{ 3.43f, 58.72f, 68.41f }
+};
 
 static mframe_t widow_frames_stand[] =
 {
@@ -180,15 +192,31 @@ static mframe_t widow_frames_spawn[] =
 };
 static mmove_t widow_move_spawn = { WIDOW_FRAME_spawn01, WIDOW_FRAME_spawn18, widow_frames_spawn, widow_run };
 
-static mframe_t widow_frames_pain[] =
+static mframe_t widow_frames_pain_heavy[] =
 {
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL
 };
-static mmove_t widow_move_pain = { WIDOW_FRAME_pain01, WIDOW_FRAME_pain05, widow_frames_pain, widow_run };
+static mmove_t widow_move_pain_heavy = { WIDOW_FRAME_pain01, WIDOW_FRAME_pain13, widow_frames_pain_heavy, widow_run };
+
+static mframe_t widow_frames_pain_light[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+static mmove_t widow_move_pain_light = { WIDOW_FRAME_pain201, WIDOW_FRAME_pain203, widow_frames_pain_light, widow_run };
 
 static mframe_t widow_frames_death[] =
 {
@@ -201,12 +229,7 @@ static mframe_t widow_frames_death[] =
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, widow_explode,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0, widow_explode,
-	ai_move, 0, NULL,
+	ai_move, 0, widow_spawn_out_start,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
@@ -220,9 +243,14 @@ static mframe_t widow_frames_death[] =
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
+	ai_move, 0, widow_explode,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, widow_explode,
-	ai_move, 0, widow_dead
+	ai_move, 0, widow_spawn_out_do
 };
 static mmove_t widow_move_death = { WIDOW_FRAME_death01, WIDOW_FRAME_death31, widow_frames_death, NULL };
 
@@ -587,16 +615,27 @@ static void widow_pain(edict_t *self, edict_t *other, float kick, int damage)
 	if (level.time < self->pain_debounce_time)
 		return;
 
-	self->pain_debounce_time = level.time + 3.0f;
-	if (random() < 0.33f)
+	self->pain_debounce_time = level.time + 5.0f;
+	if (damage < 15)
 		gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
-	else if (random() < 0.5f)
+	else if (damage < 75)
 		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
 	else
 		gi.sound(self, CHAN_VOICE, sound_pain3, 1, ATTN_NORM, 0);
 
-	if (skill->value != 3)
-		self->monsterinfo.currentmove = &widow_move_pain;
+	if (skill->value == 3)
+		return;
+
+	if (damage >= 40 && damage < 200)
+	{
+		if (random() < (0.6f - (0.2f * skill->value)))
+			self->monsterinfo.currentmove = &widow_move_pain_light;
+	}
+	else if (damage >= 200)
+	{
+		if (random() < (0.75f - (0.1f * skill->value)))
+			self->monsterinfo.currentmove = &widow_move_pain_heavy;
+	}
 }
 
 static void widow_explode(edict_t *self)
@@ -614,12 +653,178 @@ static void widow_explode(edict_t *self)
 	gi.multicast(self->s.origin, MULTICAST_PVS);
 }
 
-static void widow_dead(edict_t *self)
+static void widow_project_source2(vec3_t origin, vec3_t offset, vec3_t forward, vec3_t right, vec3_t up, vec3_t result)
 {
-	for (int n = 0; n < 4; n++)
-		ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", 500, GIB_ORGANIC);
-	for (int n = 0; n < 6; n++)
-		ThrowGib(self, "models/objects/gibs/sm_metal/tris.md2", 500, GIB_METALLIC);
+	result[0] = origin[0] + forward[0] * offset[0] + right[0] * offset[1] + up[0] * offset[2];
+	result[1] = origin[1] + forward[1] * offset[0] + right[1] * offset[1] + up[1] * offset[2];
+	result[2] = origin[2] + forward[2] * offset[0] + right[2] * offset[1] + up[2] * offset[2];
+}
+
+static void widow_temp_explosion(vec3_t point)
+{
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_EXPLOSION1);
+	gi.WritePosition(point);
+	gi.multicast(point, MULTICAST_ALL);
+}
+
+static void widowlegs_throw_gib_at(edict_t *self, char *gibname, int damage, int type, vec3_t point)
+{
+	edict_t *gib;
+	float scale;
+
+	if (nolag->value)
+		return;
+
+	scale = self->s.scale ? self->s.scale : 1.0f;
+	gib = ThrowGibEx(self, gibname, damage, type, scale);
+	if (!gib)
+		return;
+
+	VectorCopy(point, gib->s.origin);
+	VectorCopy(point, gib->s.old_origin);
+	gi.linkentity(gib);
+}
+
+static void widowlegs_project(edict_t *self, vec3_t offset, vec3_t point)
+{
+	vec3_t forward, right, up;
+
+	AngleVectors(self->s.angles, forward, right, up);
+	widow_project_source2(self->s.origin, offset, forward, right, up, point);
+}
+
+static void widowlegs_think(edict_t *self)
+{
+	vec3_t offset;
+	vec3_t point;
+
+	if (self->s.frame == 17)
+	{
+		VectorSet(offset, 11.77f, -7.24f, 23.31f);
+		widowlegs_project(self, offset, point);
+		widow_temp_explosion(point);
+	}
+
+	if (self->s.frame < WIDOW_LEGS_MAX_FRAME)
+	{
+		self->s.frame++;
+		self->nextthink = level.time + WIDOW_LEGS_FRAME_TIME;
+		return;
+	}
+
+	if (!self->wait)
+		self->wait = level.time + WIDOW_LEGS_WAIT_TIME;
+
+	if ((level.time > self->wait - 0.5f) && !self->count)
+	{
+		self->count = 1;
+
+		VectorSet(offset, 31.0f, -88.7f, 10.96f);
+		widowlegs_project(self, offset, point);
+		widow_temp_explosion(point);
+
+		VectorSet(offset, -12.67f, -4.39f, 15.68f);
+		widowlegs_project(self, offset, point);
+		widow_temp_explosion(point);
+	}
+
+	if (level.time > self->wait)
+	{
+		VectorSet(offset, -65.6f, -8.44f, 28.59f);
+		widowlegs_project(self, offset, point);
+		widow_temp_explosion(point);
+		widowlegs_throw_gib_at(self, "models/monsters/blackwidow/gib1/tris.md2", 90, GIB_METALLIC | GIB_UPRIGHT, point);
+		widowlegs_throw_gib_at(self, "models/monsters/blackwidow/gib2/tris.md2", 90, GIB_METALLIC | GIB_UPRIGHT, point);
+
+		VectorSet(offset, -1.04f, -51.18f, 7.04f);
+		widowlegs_project(self, offset, point);
+		widow_temp_explosion(point);
+		widowlegs_throw_gib_at(self, "models/monsters/blackwidow/gib1/tris.md2", 90, GIB_METALLIC | GIB_UPRIGHT, point);
+		widowlegs_throw_gib_at(self, "models/monsters/blackwidow/gib2/tris.md2", 90, GIB_METALLIC | GIB_UPRIGHT, point);
+		widowlegs_throw_gib_at(self, "models/monsters/blackwidow/gib3/tris.md2", 90, GIB_METALLIC | GIB_UPRIGHT, point);
+
+		G_FreeEdict(self);
+		return;
+	}
+
+	self->nextthink = level.time + WIDOW_LEGS_FRAME_TIME;
+}
+
+static void widowlegs_spawn(vec3_t startpos, vec3_t angles, float scale)
+{
+	edict_t *ent;
+
+	if (nolag->value)
+		return;
+
+	ent = G_Spawn();
+	VectorCopy(startpos, ent->s.origin);
+	VectorCopy(angles, ent->s.angles);
+	ent->solid = SOLID_NOT;
+	ent->s.renderfx = RF_IR_VISIBLE;
+	ent->movetype = MOVETYPE_NONE;
+	ent->classname = "widowlegs";
+	ent->s.modelindex = gi.modelindex("models/monsters/legs/tris.md2");
+	if (scale)
+		ent->s.scale = scale;
+	ent->think = widowlegs_think;
+	ent->nextthink = level.time + WIDOW_LEGS_FRAME_TIME;
+	gi.linkentity(ent);
+}
+
+static void widow_spawn_out_start(edict_t *self)
+{
+	vec3_t startpoint;
+	vec3_t forward, right, up;
+
+	AngleVectors(self->s.angles, forward, right, up);
+
+	widow_project_source2(self->s.origin, widow_beam_effects[0], forward, right, up, startpoint);
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_WIDOWBEAMOUT);
+	gi.WriteShort(20001);
+	gi.WritePosition(startpoint);
+	gi.multicast(startpoint, MULTICAST_ALL);
+
+	widow_project_source2(self->s.origin, widow_beam_effects[1], forward, right, up, startpoint);
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_WIDOWBEAMOUT);
+	gi.WriteShort(20002);
+	gi.WritePosition(startpoint);
+	gi.multicast(startpoint, MULTICAST_ALL);
+
+	gi.sound(self, CHAN_VOICE, gi.soundindex("misc/bwidowbeamout.wav"), 1, ATTN_NORM, 0);
+}
+
+static void widow_spawn_out_do(edict_t *self)
+{
+	vec3_t startpoint;
+	vec3_t forward, right, up;
+
+	AngleVectors(self->s.angles, forward, right, up);
+
+	widow_project_source2(self->s.origin, widow_beam_effects[0], forward, right, up, startpoint);
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_WIDOWSPLASH);
+	gi.WritePosition(startpoint);
+	gi.multicast(startpoint, MULTICAST_ALL);
+
+	widow_project_source2(self->s.origin, widow_beam_effects[1], forward, right, up, startpoint);
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_WIDOWSPLASH);
+	gi.WritePosition(startpoint);
+	gi.multicast(startpoint, MULTICAST_ALL);
+
+	VectorCopy(self->s.origin, startpoint);
+	startpoint[2] += 36;
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_BOSSTPORT);
+	gi.WritePosition(startpoint);
+	gi.multicast(startpoint, MULTICAST_PHS);
+
+	widowlegs_spawn(self->s.origin, self->s.angles, self->s.scale);
+	vrx_throw_drone_gibs(self, 500);
 
 	M_Remove(self, false, false);
 }
@@ -635,7 +840,7 @@ static void widow_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int 
 	gi.sound(self, CHAN_VOICE, sound_death, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
-		vrx_update_drone_death_skin(self);
+	vrx_update_drone_death_skin(self);
 	self->monsterinfo.currentmove = &widow_move_death;
 }
 
@@ -651,6 +856,7 @@ void init_drone_widow(edict_t *self)
 	sound_step2 = gi.soundindex("widow/bwstep2.wav");
 	sound_hit = gi.soundindex("tank/tnkatck3.wav");
 	sound_spawn = gi.soundindex("medic_commander/monsterspawn1.wav");
+	gi.soundindex("misc/bwidowbeamout.wav");
 
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
@@ -666,6 +872,7 @@ void init_drone_widow(edict_t *self)
 
 	gi.modelindex("models/items/spawngro3/tris.md2");
 	gi.modelindex("models/monsters/stalker/tris.md2");
+	gi.modelindex("models/monsters/legs/tris.md2");
 	gi.modelindex("models/monsters/blackwidow/gib1/tris.md2");
 	gi.modelindex("models/monsters/blackwidow/gib2/tris.md2");
 	gi.modelindex("models/monsters/blackwidow/gib3/tris.md2");

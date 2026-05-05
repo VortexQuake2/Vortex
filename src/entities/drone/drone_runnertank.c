@@ -18,6 +18,7 @@ static int skin_pain;
 #define RUNNERTANK_JUMP_ATTACK_DROP_RADIUS 90.0f
 #define RUNNERTANK_JUMP_ATTACK_DROP_SPEED 900.0f
 #define RUNNERTANK_JUMP_ATTACK_DROP_GRAVITY 3.0f
+#define RUNNERTANK_MELEE_RANGE 144.0f
 #define RUNNERTANK_INVASION_RUN_SCALE 1.15f
 #define RUNNERTANK_NORMAL_SKIN "models/vault/monsters/tank/skin.pcx"
 #define RUNNERTANK_PAIN_SKIN "models/monsters/tank/pain.pcx"
@@ -649,7 +650,7 @@ static void runnertank_start_jump_attack(edict_t *self)
 
 static qboolean runnertank_can_jump_attack(edict_t *self, float range)
 {
-    float height_diff;
+	float height_diff;
 
     if (level.time < self->monsterinfo.melee_finished)
         return false;
@@ -657,33 +658,38 @@ static qboolean runnertank_can_jump_attack(edict_t *self, float range)
         return false;
     if (self->monsterinfo.aiflags & AI_STAND_GROUND)
         return false;
-    if ((range <= 128) || (range > 512))
-        return false;
-    if (!nearfov(self, self->enemy, 0, RUNNERTANK_JUMP_ATTACK_FOV))
-        return false;
+	if ((range <= RUNNERTANK_MELEE_RANGE) || (range > 512))
+		return false;
+	if (!nearfov(self, self->enemy, 0, RUNNERTANK_JUMP_ATTACK_FOV))
+		return false;
 
     height_diff = self->enemy->absmin[2] - self->absmin[2];
-    return (height_diff > -64) && (height_diff < 128);
+	return (height_diff > -64) && (height_diff < 128);
+}
+
+static qboolean runnertank_should_melee(edict_t *self, float range)
+{
+	return self->groundentity && range <= RUNNERTANK_MELEE_RANGE;
 }
 
 static void runnertank_melee(edict_t *self)
 {
-    float range;
+	float range;
 
     if (!G_ValidTarget(self, self->enemy, true, true))
         return;
 
-    range = entdist(self, self->enemy);
-    if ((range <= 128) && self->groundentity)
-        self->monsterinfo.currentmove = &runnertank_move_strike;
-    else if (runnertank_can_jump_attack(self, range))
-        runnertank_start_jump_attack(self);
+	range = entdist(self, self->enemy);
+	if (runnertank_should_melee(self, range))
+		self->monsterinfo.currentmove = &runnertank_move_strike;
+	else if (runnertank_can_jump_attack(self, range))
+		runnertank_start_jump_attack(self);
 }
 
 static void runnertank_attack(edict_t *self)
 {
-    float r, range;
-    qboolean attack_started = false;
+	float r, range;
+	qboolean attack_started = false;
     qboolean can_rail;
     qboolean can_rocket;
     qboolean can_chain;
@@ -691,25 +697,30 @@ static void runnertank_attack(edict_t *self)
     if (!G_ValidTarget(self, self->enemy, true, true))
         return;
 
-    r = random();
-    range = entdist(self, self->enemy);
-    can_rail = runnertank_can_rail(self);
-    can_rocket = runnertank_can_rocket(self);
-    can_chain = runnertank_can_chain(self);
+	r = random();
+	range = entdist(self, self->enemy);
 
-    if ((range <= 128) && self->groundentity)
-    {
-        self->monsterinfo.currentmove = &runnertank_move_strike;
-        attack_started = true;
-    }
-    else if (runnertank_can_jump_attack(self, range))
-    {
-        runnertank_start_jump_attack(self);
-        attack_started = true;
-    }
-    else if (range <= 256)
-    {
-        if (r <= 0.35)
+	if (runnertank_should_melee(self, range))
+	{
+		self->monsterinfo.currentmove = &runnertank_move_strike;
+		M_DelayNextAttack(self, 0, true);
+		return;
+	}
+
+	if (runnertank_can_jump_attack(self, range))
+	{
+		runnertank_start_jump_attack(self);
+		M_DelayNextAttack(self, 0, true);
+		return;
+	}
+
+	can_rail = runnertank_can_rail(self);
+	can_rocket = runnertank_can_rocket(self);
+	can_chain = runnertank_can_chain(self);
+
+	if (range <= 256)
+	{
+		if (r <= 0.35)
         {
             if (can_chain)
             {
@@ -887,7 +898,7 @@ static void runnertank_pain(edict_t *self, edict_t *other, float kick, int damag
     self->pain_debounce_time = level.time + 3.0;
     gi.sound(self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
 
-    if (skill->value == 3)
+    if (invasion->value == 2)
         return;
 
     if (damage <= 30 || random() < 0.5)
@@ -952,8 +963,6 @@ mmove_t runnertank_move_death = { FRAME_death01, FRAME_death32, runnertank_frame
 
 static void runnertank_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-    int n;
-
     M_Notify(self);
 
 #ifdef OLD_NOLAG_STYLE
@@ -967,14 +976,7 @@ static void runnertank_die(edict_t *self, edict_t *inflictor, edict_t *attacker,
     if (self->health <= self->gib_health)
     {
         gi.sound(self, CHAN_VOICE, gi.soundindex("misc/udeath.wav"), 1, ATTN_NORM, 0);
-        if (vrx_spawn_nonessential_ent(self->s.origin))
-        {
-            for (n = 0; n < 1; n++)
-                ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-            for (n = 0; n < 4; n++)
-                ThrowGib(self, "models/objects/gibs/sm_metal/tris.md2", damage, GIB_METALLIC);
-            ThrowGib(self, "models/objects/gibs/chest/tris.md2", damage, GIB_ORGANIC);
-        }
+        vrx_throw_drone_gibs(self, damage);
 #ifdef OLD_NOLAG_STYLE
         M_Remove(self, false, false);
 #else
@@ -988,6 +990,8 @@ static void runnertank_die(edict_t *self, edict_t *inflictor, edict_t *attacker,
 
     if (self->deadflag == DEAD_DEAD)
         return;
+
+    vrx_drop_tank_death_arm(self, damage);
 
     DroneList_Remove(self);
 
