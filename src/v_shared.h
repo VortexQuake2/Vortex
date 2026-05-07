@@ -262,6 +262,8 @@ void vrx_player_death(edict_t *self, edict_t *attacker, edict_t *inflictor);
 
 void vrx_morph_think(edict_t* ent, usercmd_t* ucmd);
 void V_Player_Touchdown(edict_t* ent);
+void vrx_match_inventory_restore(edict_t* self);
+// void vrx_match_inventory_store(edict_t* self);
 //************ vote.c *************
 #include "server/vote.h"
 

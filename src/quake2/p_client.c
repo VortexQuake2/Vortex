@@ -1922,6 +1922,7 @@ void PutClientInServer (edict_t *ent)
 		int talentLevel;
 
 		vrx_update_all_character_maximums(ent);
+		vrx_match_inventory_restore(ent);
 		vrx_add_respawn_weapon(ent, ent->myskills.respawn_weapon);
 		vrx_add_respawn_items(ent);
 
@@ -1929,12 +1930,10 @@ void PutClientInServer (edict_t *ent)
 		talentLevel = vrx_get_talent_level(ent, TALENT_SIDEARMS);
 		if (talentLevel > 0)
 		{
-			int i;
-
 			//Give the player one additional respawn weapon for every point in the talent.
 			//This does not give them ammo.
-			for (i = 0; i < talentLevel + 1; ++i)
-				vrx_give_additional_respawn_weapons(ent, i + 1);
+			for (int j = 0; j < talentLevel + 1; ++j)
+				vrx_give_additional_respawn_weapons(ent, j + 1);
 		}
 
 		// az: restore blaster ammo on death

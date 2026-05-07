@@ -424,7 +424,6 @@ void vrx_armory_open_category_menu(edict_t *ent, const int option) {
     menu_add_line(ent, " ", 0);
 
     const auto armory = vrx_armory_get();
-    const auto pagecount = armory->numcategories / 10;
     const auto page_start = page_num * 10;
     const auto page_end = min(page_start + 10, armory->numcategories);
     for (size_t n = page_start; n < page_end; n++) {
