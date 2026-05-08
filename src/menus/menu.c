@@ -29,6 +29,26 @@ int menu_add_line(const edict_t *ent, const char *line, int option) {
     return ent->client->menustorage.num_of_lines;
 }
 
+int menu_add_line_nl (const edict_t *ent, const char *line,int option) {
+    const char* start = line;
+    const char* end = line + strcspn(line, "\n");
+
+    while (start < end) {
+        const char _line[end - start + 1] = {};
+        memcpy(_line, start, end - start);
+
+        menu_add_line(ent, _line, option);
+
+        if (*end == 0)
+            break;
+
+        start = end + 1;
+        end = start + strcspn(start, "\n");
+    }
+
+    return ent->client->menustorage.num_of_lines;
+}
+
 void menu_clear(const edict_t *ent) {
     int i = 0;
 

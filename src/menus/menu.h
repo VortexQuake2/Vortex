@@ -17,6 +17,8 @@
 #define MENU_COMBAT_PREFERENCES	4
 
 int menu_add_line (const edict_t *ent, const char *line,int option);
+// same as above, but will force text after newline characters to be on a different line
+int menu_add_line_nl (const edict_t *ent, const char *line,int option);
 void menu_clear (const edict_t *ent);
 void menu_set_handler (const edict_t *ent,void (*optionselected)(edict_t *ent,int option));
 void menu_set_close_handler(const edict_t* ent, void (*onclose)(edict_t* ent));
