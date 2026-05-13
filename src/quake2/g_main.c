@@ -49,6 +49,8 @@ Returns a pointer to the structure with all entry points
 and global variables
 =================
 */
+void ShutdownPathfinding() ; // grid.c
+
 void ShutdownGame(void)
 {
 	//K03 Begin
@@ -67,6 +69,7 @@ void ShutdownGame(void)
     vrx_close_char_io();
 	defer_global_close();
 	vrx_relay_disconnect();
+	ShutdownPathfinding();
 
 	gi.FreeTags(TAG_LEVEL);
 	gi.FreeTags(TAG_GAME);
