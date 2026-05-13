@@ -653,7 +653,7 @@ void InitScanEntity (void);
 void SpawnWorldAmmo (void);
 void InitSunEntity(void);
 qboolean vrx_CheckForFlag (void);
-void CreateGrid(qboolean force);
+void InitPathfinding();
 void DroneList_Clear();
 
 extern edict_t* g_freeEdictsH;
@@ -783,7 +783,7 @@ void SpawnEntities (char *mapname, const char *entities, char *spawnpoint)
 	SpawnWorldAmmo();
 
 	// if (level.pathfinding)
-	CreateGrid(false);
+	InitPathfinding();
 
 	vrx_inv_init_post_entities(); // az
 	vrx_relay_notify_spawn_entities(mapname);
