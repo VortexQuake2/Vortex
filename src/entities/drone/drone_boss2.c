@@ -621,6 +621,8 @@ static void boss2_run(edict_t *self)
 
 static void boss2_walk(edict_t *self)
 {
+	if (!self->goalentity)
+		self->goalentity = world;
 	self->monsterinfo.currentmove = &boss2_move_walk;
 }
 

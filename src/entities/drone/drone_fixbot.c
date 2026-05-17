@@ -1195,6 +1195,8 @@ static mmove_t fixbot_move_walk = { FIXBOT_FRAME_freeze_01, FIXBOT_FRAME_freeze_
 
 static void fixbot_walk(edict_t *self)
 {
+	if (!self->goalentity)
+		self->goalentity = world;
 	self->monsterinfo.currentmove = &fixbot_move_walk;
 }
 

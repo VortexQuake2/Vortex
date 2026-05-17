@@ -336,11 +336,27 @@ qboolean M_Move (edict_t *ent, vec3_t move, qboolean relink)
 	return true;
 }
 
+static float M_FlyFloorClearance(const edict_t *ent)
+{
+	switch (ent->mtype)
+	{
+	case M_CARRIER:
+		return 104.0f;
+	case M_FIXBOT:
+	case M_FIXBOT_BOSS:
+	case M_BOSS2_SMALL:
+		return 40.0f;
+	default:
+		return 16.0f;
+	}
+}
+
 qboolean M_MoveVertical(edict_t* ent, vec3_t dest, vec3_t neworg)
 {
 	float        dz;                        // delta Z
 	float        idealZ;                // ideal Z position, either a destination waypoint/node or a goal entity
 	const float        zSpeed = 8;        // Z movement speed
+	const float        floorClearance = M_FlyFloorClearance(ent);
 	vec3_t        end, goalpos;
 	trace_t        trace;
 	//qboolean stopOnCollision=false;
@@ -354,13 +370,26 @@ qboolean M_MoveVertical(edict_t* ent, vec3_t dest, vec3_t neworg)
 	}
 	else if (ent->goalentity)
 	{
-		if (ent->goalentity == world)
+		if (ent->goalentity == world && floorClearance <= 16.0f)
 			return true;
-		idealZ = ent->goalentity->s.origin[2] + 16;
-		VectorCopy(ent->goalentity->s.origin, goalpos);
+		if (ent->goalentity == world)
+		{
+			idealZ = ent->s.origin[2];
+			VectorCopy(ent->s.origin, goalpos);
+		}
+		else
+		{
+			idealZ = ent->goalentity->s.origin[2] + 16;
+			VectorCopy(ent->goalentity->s.origin, goalpos);
+		}
 	}
-	else
+	else if (floorClearance <= 16.0f)
 		return true; // no goal, no destination - probably idle
+	else
+	{
+		idealZ = ent->s.origin[2];
+		VectorCopy(ent->s.origin, goalpos);
+	}
 	// if we can see our enemy, stay above him
 	if (ent->enemy && visible(ent, ent->enemy) && entdist(ent, ent->enemy) <= 256)
 		idealZ = ent->enemy->absmax[2] + 48;
@@ -373,8 +402,8 @@ qboolean M_MoveVertical(edict_t* ent, vec3_t dest, vec3_t neworg)
 	end[2] -= 8192;
 	trace = gi.trace(ent->s.origin, ent->mins, ent->maxs, end, ent, MASK_MONSTERSOLID);
 	// always stay above the floor, regardless of goal/destination
-	if (idealZ < trace.endpos[2] + 16)
-		idealZ = trace.endpos[2] + 16;
+	if (idealZ < trace.endpos[2] + floorClearance)
+		idealZ = trace.endpos[2] + floorClearance;
 	//gi.dprintf("floor @ %.0f position @ %.0f\n", trace.endpos[2], ent->s.origin[2]);
 	dz = ent->s.origin[2] - idealZ;
 	VectorCopy(ent->s.origin, end);
@@ -2628,6 +2657,41 @@ void SV_MoveRandom(edict_t* actor, vec3_t dest, float dist)
 	}
 }
 
+static qboolean SV_FlyIdleWallDodge(edict_t *actor, float dist)
+{
+	vec3_t start, end, forward, wall_angles;
+	trace_t tr;
+	float yaw1, yaw2;
+
+	if (!(actor->flags & FL_FLY))
+		return false;
+
+	AngleVectors(actor->s.angles, forward, NULL, NULL);
+	G_EntMidPoint(actor, start);
+	VectorMA(start, max(64.0f, fabsf(dist) * 4.0f), forward, end);
+	tr = gi.trace(start, NULL, NULL, end, actor, MASK_MONSTERSOLID);
+	if (tr.fraction == 1.0f || tr.startsolid || tr.allsolid)
+		return false;
+
+	vectoangles(tr.plane.normal, wall_angles);
+	yaw1 = wall_angles[YAW] + 90.0f;
+	yaw2 = wall_angles[YAW] - 90.0f;
+	AngleCheck(&yaw1);
+	AngleCheck(&yaw2);
+
+	actor->monsterinfo.lefty = 1 - actor->monsterinfo.lefty;
+	if (actor->monsterinfo.lefty)
+	{
+		if (SV_StepDirection(actor, NULL, yaw1, dist, true))
+			return true;
+		return SV_StepDirection(actor, NULL, yaw2, dist, true);
+	}
+
+	if (SV_StepDirection(actor, NULL, yaw2, dist, true))
+		return true;
+	return SV_StepDirection(actor, NULL, yaw1, dist, true);
+}
+
 void SV_NewChaseDir2 (edict_t *self, vec3_t dest, float dist)
 {
 	float	minyaw, maxyaw, bestyaw, temp;
@@ -2999,7 +3063,15 @@ void M_MoveToGoal (edict_t *ent, float dist)
 		if (ent->inuse && (level.time > ent->monsterinfo.bump_delay))
 		{
 			//gi.dprintf("tried course correction %s\n", ent->goalentity?"true":"false");
-			SV_NewChaseDir (ent, goal, dist);
+			if ((ent->flags & FL_FLY) && (!goal || goal == world))
+			{
+				if (!SV_FlyIdleWallDodge(ent, dist))
+					SV_MoveRandom(ent, NULL, dist);
+			}
+			else
+			{
+				SV_NewChaseDir(ent, goal, dist);
+			}
 			ent->monsterinfo.bump_delay = level.time + FRAMETIME*GetRandom(2, 5);
 			return;
 		}

@@ -40,7 +40,7 @@ static void stalker_sight(edict_t *self, edict_t *other)
 	gi.sound(self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
 }
 
-static void stalker_idle(edict_t *self)
+static void stalker_idle_noise(edict_t *self)
 {
 	gi.sound(self, CHAN_VOICE, sound_idle, 0.5, ATTN_IDLE, 0);
 }
@@ -53,7 +53,7 @@ mframe_t stalker_frames_stand[] =
 	drone_ai_stand, 0, NULL,
 	drone_ai_stand, 0, NULL,
 	drone_ai_stand, 0, NULL,
-	drone_ai_stand, 0, stalker_idle,
+	drone_ai_stand, 0, stalker_idle_noise,
 	drone_ai_stand, 0, NULL,
 	drone_ai_stand, 0, NULL,
 	drone_ai_stand, 0, NULL,
@@ -69,11 +69,40 @@ mframe_t stalker_frames_stand[] =
 	drone_ai_stand, 0, NULL,
 	drone_ai_stand, 0, NULL
 };
-mmove_t stalker_move_stand = { FRAME_idle01, FRAME_idle21, stalker_frames_stand, NULL };
+mmove_t stalker_move_stand = { FRAME_idle01, FRAME_idle21, stalker_frames_stand, stalker_stand };
+
+mframe_t stalker_frames_idle2[] =
+{
+	drone_ai_stand, 0, NULL,
+	drone_ai_stand, 0, NULL,
+	drone_ai_stand, 0, NULL,
+	drone_ai_stand, 0, NULL,
+	drone_ai_stand, 0, NULL,
+	drone_ai_stand, 0, NULL,
+	drone_ai_stand, 0, NULL,
+	drone_ai_stand, 0, NULL,
+	drone_ai_stand, 0, NULL,
+	drone_ai_stand, 0, NULL,
+	drone_ai_stand, 0, NULL,
+	drone_ai_stand, 0, NULL,
+	drone_ai_stand, 0, NULL
+};
+mmove_t stalker_move_idle2 = { FRAME_idle201, FRAME_idle213, stalker_frames_idle2, stalker_stand };
+
+static void stalker_idle(edict_t *self)
+{
+	if (random() < 0.35f)
+		self->monsterinfo.currentmove = &stalker_move_stand;
+	else
+		self->monsterinfo.currentmove = &stalker_move_idle2;
+}
 
 static void stalker_stand(edict_t *self)
 {
-	self->monsterinfo.currentmove = &stalker_move_stand;
+	if (random() < 0.25f)
+		self->monsterinfo.currentmove = &stalker_move_stand;
+	else
+		self->monsterinfo.currentmove = &stalker_move_idle2;
 }
 
 mframe_t stalker_frames_walk[] =
