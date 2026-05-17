@@ -217,3 +217,6 @@ qboolean AI_ClearWalkingPath(edict_t* self, vec3_t start, vec3_t end);
 float BOT_DMclass_ThrowingPitch1(edict_t* self, float v);
 int AI_RespawnWeaponToWeapIndex(int respawn_weapon);
 int AI_NumSummons(edict_t* self);
+
+// common
+void BOT_AutoSpawn(void);

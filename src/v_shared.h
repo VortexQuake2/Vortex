@@ -212,7 +212,9 @@ int ReadInteger(FILE *fptr);
 void WriteInteger(FILE *fptr, int Value);
 long ReadLong(FILE *fptr);
 void WriteLong(FILE *fptr, long Value);
-int CountAbilities(edict_t *player);
+
+struct skills_s;
+int CountAbilities(struct skills_s *player);
 int FindAbilityIndex(int index, edict_t *player);
 int CountWeapons(edict_t *player);
 int FindWeaponIndex(int index, edict_t *player);
@@ -260,14 +262,10 @@ void vrx_player_death(edict_t *self, edict_t *attacker, edict_t *inflictor);
 
 void vrx_morph_think(edict_t* ent, usercmd_t* ucmd);
 void V_Player_Touchdown(edict_t* ent);
+void vrx_match_inventory_restore(edict_t* self);
+// void vrx_match_inventory_store(edict_t* self);
 //************ vote.c *************
-void CheckPlayerVotes(void);
-void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode);
-int FindBestMap(int mode);
-v_maplist_t *GetMapList(int mode);
-int V_AttemptModeChange(qboolean endlevel);
-void V_VoteReset(); // az: just for cleanliness
-//************ vote.c *************
+#include "server/vote.h"
 
 //*********** weapons.c ***********
 void vrx_reset_weapon_maximums(edict_t *ent);
@@ -327,11 +325,10 @@ void OpenUpgradeMenu(edict_t *ent);										//upgrade your abilities
 void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling);	//shows the full list of items in special inventory
 void OpenRespawnWeapMenu(edict_t *ent, int page_num);					//set respawn weapon
 void OpenRespawnWeapMenuFirstPage (edict_t *ent);
-void OpenArmoryMenu(edict_t *ent);										//Load the armory (buy/sell)
+void vrx_armory_open_menu(edict_t *ent);										//Load the armory (buy/sell)
 void OpenClassMenu(edict_t *ent, int page_num);						//select class
 void OpenMyinfoMenu(edict_t *ent);										//vrxifo
 void ShowTradeMenu(edict_t *ent);										//trade with another player
-void ShowVoteModeMenu(edict_t *ent);									//vote for mode/map
 void StartShowInventoryMenu(edict_t *ent, item_t *item);				//used for trading, selling, deleting, and viewing items
 void ShowHelpMenu(edict_t *ent, int lastpick);							//help menu
 void OpenGeneralMenu(edict_t *ent);									//general vrx menu

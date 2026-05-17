@@ -34,6 +34,24 @@ void V_GibSound(edict_t *self, int index) {
     }
 }
 
+void vrx_match_inventory_store(edict_t* self) {
+    self->myskills.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = self->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)];
+    self->myskills.inventory[ITEM_INDEX(Fdi_TBALL)] = self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)];
+
+    if (pvm->value || ffa->value) {
+        memcpy(self->myskills.inventory, self->client->pers.inventory, sizeof(self->client->pers.inventory));
+    }
+}
+
+void vrx_match_inventory_restore(edict_t* self) {
+    self->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = self->myskills.inventory[ITEM_INDEX(Fdi_POWERCUBE)];
+    self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)] = self->myskills.inventory[ITEM_INDEX(Fdi_TBALL)];
+
+    if (pvm->value || ffa->value) {
+        memcpy(self->client->pers.inventory, self->myskills.inventory, sizeof(self->myskills.inventory));
+    }
+}
+
 void vrx_player_death(edict_t *self, edict_t *attacker, edict_t *inflictor) {
     if (debuginfo->value > 1)
         gi.dprintf("VortexPlayerDeath()\n");
@@ -45,8 +63,7 @@ void vrx_player_death(edict_t *self, edict_t *attacker, edict_t *inflictor) {
     self->gib_health = -BASE_GIB_HEALTH;
 
     // don't drop powercubes or tballs
-    self->myskills.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = self->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)];
-    self->myskills.inventory[ITEM_INDEX(Fdi_TBALL)] = self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)];
+    vrx_match_inventory_store(self);
 
     vrx_process_exp(attacker, self); // modify experience
     vrx_reset_player_state(self);
@@ -72,11 +89,7 @@ void vrx_add_basic_weapons(gclient_t *client, gitem_t *item, int spectator) {
 
 void vrx_add_respawn_items(edict_t *ent) {
 	//gi.dprintf("vrx_add_respawn_items()\n");
-
-    ent->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = ent->myskills.inventory[ITEM_INDEX(Fdi_POWERCUBE)];
-    ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)] = ent->myskills.inventory[ITEM_INDEX(Fdi_TBALL)];
-    ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)] = ent->myskills.inventory[ITEM_INDEX(
-            Fdi_TBALL)] += TBALLS_RESPAWN;
+    ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)] += TBALLS_RESPAWN;
 
     // poltergeist always spawns with at least 50 power cubes (for morphing) and cells (for power screen)
     if (ent->myskills.class_num == CLASS_POLTERGEIST)

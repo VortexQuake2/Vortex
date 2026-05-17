@@ -49,6 +49,7 @@ typedef struct item_s
 
 // 1 every 500 monsters
 #define RUNE_SPAWN_MONSTER		0.01	// (0.01 = 1% per frag) base chance of a rune spawning, before level modifiers
+#define ARMORY_MAX_CONSUMABLES	50
 
 // 1 every 50 frags
 #define RUNE_SPAWN_BASE			0.05	// (0.05 = 5% per frag) base chance of a rune spawning, before level modifiers
@@ -61,5 +62,12 @@ typedef struct item_s
 #define CHANCE_COMBO			140		// 14%
 #define CHANCE_CLASS			15		// .8%
 #define CHANCE_UNIQUE			5		// 1.0%
+
+int V_ItemCount(edict_t *ent, int itemType);
+void vrx_spawn_normal_rune(edict_t *rune, int targ_level, int type);
+void vrx_spawn_combo_rune(edict_t *rune, int targ_level);
+void vrx_spawn_class_rune(edict_t *rune, int targ_level);
+qboolean vrx_spawn_unique_rune(edict_t *rune, int index);
+
 
 #endif

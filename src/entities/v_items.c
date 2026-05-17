@@ -5,10 +5,6 @@
 #include "characters/io/v_characterio.h"
 
 
-void vrx_spawn_normal_rune(edict_t *rune, int targ_level, int type);
-void vrx_spawn_combo_rune(edict_t *rune, int targ_level);
-void vrx_spawn_class_rune(edict_t *rune, int targ_level);
-qboolean vrx_spawn_unique_rune(edict_t *rune, int index);
 
 //************************************************************************************************
 //************************************************************************************************
@@ -792,85 +788,6 @@ void vrx_spawn_combo_rune(edict_t *rune, int targ_level)
 //************************************************************************************************
 //************************************************************************************************
 
-void PurchaseRandomRune(edict_t *ent, int runetype)
-{
-	int	cost;
-	edict_t *rune;
-	item_t *slot;
-	char buf[64];
-
-	cost = RUNE_COST_BASE + RUNE_COST_ADDON * ent->myskills.level;
-	if (ent->myskills.credits < cost)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "You need %d credits to purchase a rune.\n", cost);
-		return;
-	}
-
-	slot = V_FindFreeItemSlot(ent);
-	if (!slot)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Not enough inventory space!\n");
-		return;
-	}
-
-	// rune pick-up delay
-	if (ent->client->rune_delay > level.time)
-		return;
-
-	rune = G_Spawn();				// create a rune
-	ent->myskills.credits -= cost;
-
-    qboolean reroll = true;
-
-    while (reroll) {
-        V_ItemClear(&rune->vrxitem);	// initialize the rune
-
-        if (runetype == ITEM_COMBO) {
-            vrx_spawn_combo_rune(rune, ent->myskills.level);
-        } else if (runetype) {
-            vrx_spawn_normal_rune(rune, ent->myskills.level, runetype);
-        } else if (random() > 0.5) {
-            vrx_spawn_normal_rune(rune, ent->myskills.level, ITEM_WEAPON);
-        } else {
-            vrx_spawn_normal_rune(rune, ent->myskills.level, ITEM_ABILITY);
-        }
-
-        if (rune->vrxitem.itemLevel != 0)
-            reroll = false;
-    }
-    
-	if (Pickup_Rune(rune, ent) == false)
-	{
-		G_FreeEdict(rune);
-		//gi.dprintf("WARNING: PurchaseRandomRune() was unable to spawn a rune\n");
-		return;
-	}
-	G_FreeEdict(rune);
-
-	//Find out what the player bought
-	strcpy(buf, GetRuneValString(slot));
-	switch(slot->itemtype)
-	{
-	case ITEM_WEAPON:	strcat(buf, va(" weapon rune (%d mods)", slot->numMods));	break;
-	case ITEM_ABILITY:	strcat(buf, va(" ability rune (%d mods)", slot->numMods));	break;
-	case ITEM_COMBO:	strcat(buf, va(" combo rune (%d mods)", slot->numMods));	break;
-	}
-
-	//send the message to the player
-	safe_cprintf(ent, PRINT_HIGH, "You bought a %s.\n", buf);
-	safe_cprintf(ent, PRINT_HIGH, "You now have %d credits left. \n", ent->myskills.credits);
-	gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/gold.wav"), 1, ATTN_NORM, 0);
-
-	//Save the player
-	vrx_char_io.save_player_runes(ent);
-
-	//write to the log
-	gi.dprintf("INFO: %s purchased a level %d rune (%s).\n", 
-		ent->client->pers.netname, slot->itemLevel, slot->id);
-    vrx_write_to_logfile(ent, va("Purchased a level %d rune (%s) for %d credits. Player has %d credits left.\n",
-                                 slot->itemLevel, slot->id, cost, ent->myskills.credits));
-}
-
 //************************************************************************************************
 //************************************************************************************************
 
@@ -1389,5 +1306,20 @@ item_menu_t vrx_menu_item_display(item_t* item)
 		}
 	}
 }
+
+int V_ItemCount(edict_t *ent, int itemType) {
+	int i = 0;
+	int count = 0;
+
+	if (!ent || !ent->client)
+		return 0;
+
+	for (i = 0; i < MAX_VRXITEMS; ++i)
+		if (ent->myskills.items[i].itemtype == itemType)
+			count++;
+
+	return count;
+}
+
 
 //************************************************************************************************

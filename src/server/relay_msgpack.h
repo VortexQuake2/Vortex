@@ -7,7 +7,7 @@
 // Serialization
 void msgpack_pack_imodifier(msgpack_packer* pk, const imodifier_t* mod);
 void msgpack_pack_item(msgpack_packer* pk, const item_t* item);
-void msgpack_pack_upgrade(msgpack_packer* pk, const upgrade_t* upg);
+void msgpack_pack_upgrade(msgpack_packer* pk, const upgrade_t* upg, int index);
 void msgpack_pack_talent(msgpack_packer* pk, const talent_t* tal);
 void msgpack_pack_talentlist(msgpack_packer* pk, const talentlist_t* list);
 void msgpack_pack_weaponskill(msgpack_packer* pk, const weaponskill_t* ws);

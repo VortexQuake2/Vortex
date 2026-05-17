@@ -1922,6 +1922,7 @@ void PutClientInServer (edict_t *ent)
 		int talentLevel;
 
 		vrx_update_all_character_maximums(ent);
+		vrx_match_inventory_restore(ent);
 		vrx_add_respawn_weapon(ent, ent->myskills.respawn_weapon);
 		vrx_add_respawn_items(ent);
 
@@ -1929,12 +1930,10 @@ void PutClientInServer (edict_t *ent)
 		talentLevel = vrx_get_talent_level(ent, TALENT_SIDEARMS);
 		if (talentLevel > 0)
 		{
-			int i;
-
 			//Give the player one additional respawn weapon for every point in the talent.
 			//This does not give them ammo.
-			for (i = 0; i < talentLevel + 1; ++i)
-				vrx_give_additional_respawn_weapons(ent, i + 1);
+			for (int j = 0; j < talentLevel + 1; ++j)
+				vrx_give_additional_respawn_weapons(ent, j + 1);
 		}
 
 		// az: restore blaster ammo on death
@@ -2436,7 +2435,7 @@ Called when a player drops from the server.
 Will not be called between levels.
 ============
 */
-void KillMyVote (edict_t *ent);
+void vrx_vote_kill (edict_t *ent);
 void soldier_die(edict_t *ent);
 void turret_remove(edict_t *ent);
 void SaveCharacterQuit (edict_t *ent);
@@ -2451,7 +2450,7 @@ void ClientDisconnect (edict_t *ent)
 	if (!ent->client)
 		return;
 
-	KillMyVote (ent);
+	vrx_vote_kill (ent);
 
 	vrx_relay_notify_client_disconnected(ent->client->pers.netname);
     vrx_clean_damage_list(ent, true);

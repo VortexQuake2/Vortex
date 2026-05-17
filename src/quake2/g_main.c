@@ -49,6 +49,8 @@ Returns a pointer to the structure with all entry points
 and global variables
 =================
 */
+void ShutdownPathfinding() ; // grid.c
+
 void ShutdownGame(void)
 {
 	//K03 Begin
@@ -67,6 +69,7 @@ void ShutdownGame(void)
     vrx_close_char_io();
 	defer_global_close();
 	vrx_relay_disconnect();
+	ShutdownPathfinding();
 
 	gi.FreeTags(TAG_LEVEL);
 	gi.FreeTags(TAG_GAME);
@@ -285,7 +288,7 @@ void EndDMLevel(void)
 	//3.0 Begin new voting/mapchange code
 	if (voting->value)
 	{
-		int mode = V_AttemptModeChange(true);
+		int mode = vrx_vote_attempt_mode_change(true);
 		v_maplist_t *maplist;
 		int mapnum;
 		qboolean changing = false; // vrc 2.32: A small technical thing and q2pro server.
@@ -366,12 +369,12 @@ void EndDMLevel(void)
 			//gi.dprintf("changing to mode %d\n", mode);
 
 			//Select the map with the most votes
-			mapnum = FindBestMap(mode);
+			mapnum = vrx_vote_find_best_map(mode);
 
 			//gi.dprintf("mapnum=%d\n",mapnum);
 
 			//Point to the correct map list
-			maplist = GetMapList(mode);
+			maplist = vrx_get_map_list(mode);
 
 			if (mapnum == -1)
 			{
@@ -380,7 +383,7 @@ void EndDMLevel(void)
 			}
 
 			//Change the map/mode
-			V_ChangeMap(maplist, mapnum, mode);
+			vrx_change_map(maplist, mapnum, mode);
 		}
 		else
 		{
@@ -414,10 +417,10 @@ void EndDMLevel(void)
 			}
 
 			//Point to the correct map list
-			maplist = GetMapList(mode);
+			maplist = vrx_get_map_list(mode);
 
 			//Try to find a map that was voted for
-			mapnum = FindBestMap(mode);
+			mapnum = vrx_vote_find_best_map(mode);
 
 			if (mapnum == -1)
 			{
@@ -449,7 +452,7 @@ void EndDMLevel(void)
 			//gi.dprintf("picking best map\n");
 
 			//Change the map/mode
-			V_ChangeMap(maplist, mapnum, mode);
+			vrx_change_map(maplist, mapnum, mode);
 		}
 	}
 
@@ -785,7 +788,7 @@ Advances the world by
 */
 
 
-void RunVotes();
+void vrx_votes_run();
 #ifndef VRX_REPRO
 void G_RunFrame(void)
 #else
@@ -817,7 +820,7 @@ void G_RunFrame(bool main_loop)
 		SV_SaveAllCharacters();
 	}
 
-	RunVotes();
+	vrx_votes_run();
 
 	ai_eval_targets(); // az
 
@@ -874,14 +877,6 @@ void G_RunFrame(bool main_loop)
 	//JABot[start]
 	AITools_Frame();
 	//[end]
-
-	//3.0 Remove votes by players who left the server
-	//Every 5 minutes
-#ifdef OLD_VOTE_SYSTEM // Paril
-	if (!(level.framenum % 3000))
-		CheckPlayerVotes();
-#endif
-	//3.0 END 
 
 	G_RunPregame();
 

@@ -16,22 +16,24 @@
 #define MENU_MULTI_UPGRADE		3
 #define MENU_COMBAT_PREFERENCES	4
 
-void menu_add_line (edict_t *ent, const char *line,int option);
-void menu_clear (edict_t *ent);
-void menu_set_handler (edict_t *ent,void (*optionselected)(edict_t *ent,int option));
-void menu_set_close_handler(edict_t* ent, void (*onclose)(edict_t* ent));
+int menu_add_line (const edict_t *ent, const char *line,int option);
+// same as above, but will force text after newline characters to be on a different line
+int menu_add_line_nl (const edict_t *ent, const char *line,int option);
+void menu_clear (const edict_t *ent);
+void menu_set_handler (const edict_t *ent,void (*optionselected)(edict_t *ent,int option));
+void menu_set_close_handler(const edict_t* ent, void (*onclose)(edict_t* ent));
 void menu_close_all (void);
 
 void menu_up (edict_t *ent);
 void menu_down (edict_t *ent);
 void menu_select (edict_t *ent);
 
-void menu_init (edict_t *ent);
+void menu_init (const edict_t *ent);
 void menu_show (edict_t *ent);
 void menu_close (edict_t *ent, qboolean do_close_event);
 
-qboolean menu_can_show (edict_t *ent);
-qboolean menu_active (edict_t *ent,int index, void (*optionselected)(edict_t *ent,int option));
+qboolean menu_can_show (const edict_t *ent);
+qboolean menu_active (const edict_t *ent,int index, void (*optionselected)(edict_t *ent,int option));
 
 typedef struct menumsg_s
 {
@@ -53,4 +55,6 @@ typedef struct menusystem_s
 	int 		currentline;
 	int			num_of_lines;
 	int			menu_index;
+
+	void*		usercontext;
 } menusystem_t;

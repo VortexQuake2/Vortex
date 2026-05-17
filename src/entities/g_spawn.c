@@ -667,7 +667,7 @@ void InitScanEntity (void);
 void SpawnWorldAmmo (void);
 void InitSunEntity(void);
 qboolean vrx_CheckForFlag (void);
-void CreateGrid(qboolean force);
+void InitPathfinding();
 void DroneList_Clear();
 
 extern edict_t* g_freeEdictsH;
@@ -690,7 +690,7 @@ void SpawnEntities (char *mapname, const char *entities, char *spawnpoint)
 	memset (g_edicts, 0, game.maxentities * sizeof (g_edicts[0]));
 
 	// az begin
-	V_VoteReset();
+	vrx_vote_reset();
 	cs_reset();
 	seedMT(time(NULL));
 	if (!vrx_relay_is_connected())
@@ -797,7 +797,7 @@ void SpawnEntities (char *mapname, const char *entities, char *spawnpoint)
 	SpawnWorldAmmo();
 
 	// if (level.pathfinding)
-	CreateGrid(false);
+	InitPathfinding();
 
 	vrx_inv_init_post_entities(); // az
 	vrx_relay_notify_spawn_entities(mapname);
@@ -889,6 +889,9 @@ char *single_statusbar =
 ;
 
 char *dm_statusbar =
+#ifdef VRX_REPRO
+"mono "
+#endif
 "yb	-72 "
 // health
 "xl	24 "

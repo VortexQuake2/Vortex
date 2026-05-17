@@ -285,7 +285,8 @@ edict_t *drone_findnavi(edict_t *self) {
 
     // if we come from attacking an enemy, find the closest navi rather than the - yeah.
     if (self->monsterinfo.aiflags & AI_LOST_SIGHT || self->goalentity) {
-        if (self->goalentity->target_ent &&
+        if (self->goalentity &&
+            self->goalentity->target_ent &&
             entdist(self->goalentity->target_ent, self) < entdist(self->goalentity, self))
             return self->goalentity->target_ent;
 

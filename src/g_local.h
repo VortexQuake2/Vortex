@@ -2570,7 +2570,6 @@ struct edict_s {
     float lasthurt; // last time we took non-world damage
     uint64_t lastsound; // last frame we made a sound
     int32_t dmg_counter;
-    int flipping; // flipping data
     edict_t *creator;
     //sentry stuff
     edict_t *sentry;
@@ -3046,7 +3045,7 @@ void V_AutoStuff(edict_t *ent);
 // new command system
 #include "server/v_cmd.h"
 
-qboolean V_VoteInProgress();
+qboolean vrx_vote_is_in_progress();
 
 /* active drones linked list */
 

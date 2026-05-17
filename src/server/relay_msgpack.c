@@ -32,8 +32,9 @@ void msgpack_pack_item(msgpack_packer* pk, const item_t* item) {
     msgpack_pack_int(pk, (int)item->isUnique);
 }
 
-void msgpack_pack_upgrade(msgpack_packer* pk, const upgrade_t* upg) {
-    msgpack_pack_array(pk, 6);
+void msgpack_pack_upgrade(msgpack_packer* pk, const upgrade_t* upg, int index) {
+    msgpack_pack_array(pk, 7);
+    msgpack_pack_int(pk, index);
     msgpack_pack_int(pk, upg->level);
     msgpack_pack_int(pk, upg->soft_max);
     msgpack_pack_int(pk, upg->hard_max);
@@ -80,18 +81,42 @@ void msgpack_pack_prestigelist(msgpack_packer* pk, const prestigelist_t* pre) {
     msgpack_pack_array(pk, 7);
     msgpack_pack_uint32(pk, pre->points);
     msgpack_pack_uint32(pk, pre->total);
-    msgpack_pack_array(pk, MAX_ABILITIES);
+
+    int bumpAbilityCount = 0;
     for (int i = 0; i < MAX_ABILITIES; i++) {
-        msgpack_pack_uint8(pk, pre->softmaxBump[i]);
+        if (pre->softmaxBump[i] > 0) {
+            bumpAbilityCount++;
+        }
     }
+
+    msgpack_pack_array(pk, bumpAbilityCount);
+    for (int i = 0; i < MAX_ABILITIES; i++) {
+        if (pre->softmaxBump[i] > 0) {
+            msgpack_pack_array(pk, 2);
+            msgpack_pack_uint16(pk, i);
+            msgpack_pack_uint8(pk, pre->softmaxBump[i]);
+        }
+    }
+
     msgpack_pack_uint32(pk, pre->creditLevel);
     msgpack_pack_uint32(pk, pre->abilityPoints);
     msgpack_pack_uint32(pk, pre->weaponPoints);
-    
+
+
+
+    int classAbilityCount = 0;
+    for (int i = 0; i < MAX_ABILITIES; i++) {
+        if (vrx_prestige_has_ability(pre, i)) {
+            classAbilityCount++;
+        }
+    }
+
     // abilitybitmap_t classSkill
-    msgpack_pack_array(pk, MAX_ABILITIES / 32 + 1);
-    for (size_t i = 0; i < MAX_ABILITIES / 32 + 1; i++) {
-        msgpack_pack_uint32(pk, pre->classSkill[i]);
+    msgpack_pack_array(pk, classAbilityCount);
+    for (size_t i = 0; i < MAX_ABILITIES; i++) {
+        if (vrx_prestige_has_ability(pre, i)) {
+            msgpack_pack_uint16(pk, i);
+        }
     }
 }
 
@@ -175,9 +200,13 @@ void msgpack_pack_skills(msgpack_packer* pk, const skills_t* skills, int connect
         msgpack_pack_weapon(pk, &skills->weapons[i]);
     }
 
-    msgpack_pack_array(pk, MAX_ABILITIES);
-    for (size_t i = 0; i < MAX_ABILITIES; i++) {
-        msgpack_pack_upgrade(pk, &skills->abilities[i]);
+    int numAbilities = CountAbilities(skills);
+    msgpack_pack_array(pk, numAbilities);
+    for (size_t i = 0; i < numAbilities; i++) {
+        int index = FindAbilityIndex(i + 1, skills);
+        if (index == -1)
+            continue;
+        msgpack_pack_upgrade(pk, &skills->abilities[i], index);
     }
 
     msgpack_pack_talentlist(pk, &skills->talents);
@@ -250,16 +279,25 @@ qboolean msgpack_unpack_item(msgpack_object* obj, item_t* item) {
 }
 
 qboolean msgpack_unpack_upgrade(msgpack_object* obj, upgrade_t* upg) {
-    UNPACK_ARRAY(obj, 6);
+    UNPACK_ARRAY(obj, 7);
     const msgpack_object* p = obj->via.array.ptr;
-    UNPACK_INT((&p[0]), upg->level);
-    UNPACK_INT((&p[1]), upg->soft_max);
-    UNPACK_INT((&p[2]), upg->hard_max);
-    UNPACK_INT((&p[3]), upg->modifier);
+    int index;
+
+    UNPACK_INT((&p[0]), index);
+
+    if (index < 0 || index >= MAX_ABILITIES)
+        return false;
+
+    upgrade_t *_upg = &upg[index];
+
+    UNPACK_INT((&p[1]), _upg->level);
+    UNPACK_INT((&p[2]), _upg->soft_max);
+    UNPACK_INT((&p[3]), _upg->hard_max);
+    UNPACK_INT((&p[4]), _upg->modifier);
     int disable;
-    UNPACK_INT((&p[4]), disable);
-    UNPACK_INT((&p[5]), upg->general_skill);
-    upg->disable = disable;
+    UNPACK_INT((&p[5]), disable);
+    UNPACK_INT((&p[6]), _upg->general_skill);
+    _upg->disable = disable;
     return true;
 }
 
@@ -312,17 +350,33 @@ qboolean msgpack_unpack_prestigelist(msgpack_object* obj, prestigelist_t* pre) {
     const msgpack_object* p = obj->via.array.ptr;
     UNPACK_UINT((&p[0]), pre->points);
     UNPACK_UINT((&p[1]), pre->total);
-    UNPACK_ARRAY((&p[2]), MAX_ABILITIES);
-    for (int i = 0; i < MAX_ABILITIES; i++) {
-        if (p[2].via.array.ptr[i].type != MSGPACK_OBJECT_POSITIVE_INTEGER) return false;
-        pre->softmaxBump[i] = (uint8_t)p[2].via.array.ptr[i].via.u64;
+    if (p[2].type != MSGPACK_OBJECT_ARRAY) return false;
+    for (int i = 0; i < p[2].via.array.size; i++) {
+        const auto inner_ = &p[2].via.array.ptr[i];
+        if (inner_->type != MSGPACK_OBJECT_ARRAY) return false;
+
+        if (inner_->via.array.size != 2) return false;
+        if (inner_->via.array.ptr[0].type != MSGPACK_OBJECT_POSITIVE_INTEGER) return false;
+        if (inner_->via.array.ptr[1].type != MSGPACK_OBJECT_POSITIVE_INTEGER) return false;
+
+        auto ab = inner_->via.array.ptr[0].via.u64;
+        auto val = inner_->via.array.ptr[1].via.u64;
+        pre->softmaxBump[ab] = val;
     }
     UNPACK_UINT((&p[3]), pre->creditLevel);
     UNPACK_UINT((&p[4]), pre->abilityPoints);
     UNPACK_UINT((&p[5]), pre->weaponPoints);
-    UNPACK_ARRAY((&p[6]), (MAX_ABILITIES / 32 + 1));
-    for (int i = 0; i < MAX_ABILITIES / 32 + 1; i++) {
-        UNPACK_UINT((&p[6].via.array.ptr[i]), pre->classSkill[i]);
+
+    if (p[6].type != MSGPACK_OBJECT_ARRAY)
+        return false;
+    for (int i = 0; i < p[6].via.array.size; i++) {
+        uint16_t index;
+        UNPACK_UINT((&p[6].via.array.ptr[i]), index);
+
+        if (index > MAX_ABILITIES)
+            return false;
+
+        pre->classSkill[index / 32] |= 1 << (index % 32);
     }
     return true;
 }
@@ -410,14 +464,28 @@ qboolean msgpack_unpack_skills(msgpack_object* obj, skills_t* skills) {
         if (!msgpack_unpack_item(&p[12].via.array.ptr[i], &skills->items[i])) return false;
     }
 
-    UNPACK_ARRAY((&p[13]), MAX_WEAPONS);
+    if (p[13].type != MSGPACK_OBJECT_ARRAY) return false;
+
+    // don't lose data if we can help it. we have to be very intentional and
+    // remove the excess weapons from the database.
+    if (p[13].via.array.size > MAX_WEAPONS) return false;
+
     for (int i = 0; i < MAX_WEAPONS; i++) {
+        // we added a weapon?
+        if (i >= p[13].via.array.size) {
+            memset(&skills->weapons[i], 0, sizeof(skills->weapons[i]));
+            continue;
+        }
         if (!msgpack_unpack_weapon(&p[13].via.array.ptr[i], &skills->weapons[i])) return false;
     }
 
-    UNPACK_ARRAY((&p[14]), MAX_ABILITIES);
-    for (int i = 0; i < MAX_ABILITIES; i++) {
-        if (!msgpack_unpack_upgrade(&p[14].via.array.ptr[i], &skills->abilities[i])) return false;
+    if (p[14].type != MSGPACK_OBJECT_ARRAY)
+        return false;
+
+    int abilCount = p[14].via.array.size;
+    for (int i = 0; i < abilCount; i++) {
+        if (!msgpack_unpack_upgrade(&p[14].via.array.ptr[i], &skills->abilities))
+            return false;
     }
 
     if (!msgpack_unpack_talentlist(&p[15], &skills->talents)) return false;

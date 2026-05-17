@@ -135,7 +135,15 @@ void BOT_AutoSpawn(void)
 	// game modes currently unsupported
 	if (ctf->value || domination->value || tbi->value || hw->value)
 		return;
-	for (int i = 0; i < num_bots; i++)
+
+	int current_bots = 0;
+	for (int i = 1; i < maxclients->value; i++)
+	{
+		if (g_edicts[i].inuse && g_edicts[i].client && g_edicts[i].ai.is_bot)
+			current_bots++;
+	}
+
+	for (int i = 0; i < num_bots - current_bots; i++)
 	{
 		const bot_selection_t e = get_random_unique_entry();
 		//name = bot_names[GetRandom(0, sizeof(bot_names - 1))];
