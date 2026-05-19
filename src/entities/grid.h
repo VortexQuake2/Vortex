@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "q_shared.h"
+
 
 typedef struct node_s node_t;
 
@@ -59,6 +61,20 @@ enum griddebug_state_t {
     GD_MAX
 };
 
+struct kdtree_node_s {
+    size_t nodenum;
+    struct kdtree_node_s* left;
+    struct kdtree_node_s* right;
+};
+
+struct gridkdtree_s {
+    size_t nodecount;
+    size_t capacity;
+    vec3_t* srcdata;
+    struct kdtree_node_s* root;
+    struct kdtree_node_s nodes[];
+};
+
 struct gstack_s* gstack_create(size_t capacity);
 void* gstack_top(struct gstack_s* stack);
 void* gstack_pop(struct gstack_s* stack);
@@ -70,3 +86,7 @@ void nodearena_free(struct nodearena_s** arena);
 struct nodearena_s* nodearena_create(size_t capacity);
 node_t* nodearena_alloc(struct nodearena_s* arena);
 void nodearena_reset(struct nodearena_s* arena);
+
+void gridkdtree_free(struct gridkdtree_s** tree);
+struct gridkdtree_s* gridkdtree_create(vec3_t* srcdata, size_t count);
+size_t gridkdtree_query(struct gridkdtree_s* tree, vec3_t querypos);
