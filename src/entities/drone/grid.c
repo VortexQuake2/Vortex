@@ -14,6 +14,8 @@ struct mapgrid_s {
     int gridlist[MAX_GRID_SIZE];
 } mapgrid = {};
 
+struct gridkdtree_s* gridtree = nullptr;
+
 struct pfctx_s {
     struct gstack_s* stack;
     struct nodearena_s* arena;
@@ -34,6 +36,8 @@ struct pfctx_s* pfctx_create(size_t nodecapacity) {
 }
 
 void pfctx_free(struct pfctx_s** ptr) {
+    if (!*ptr) return;
+
     nodearena_free(&(*ptr)->arena);
     gstack_free(&(*ptr)->stack);
     free(*ptr);
@@ -253,21 +257,21 @@ int NearestNodeNumber(vec3_t start, const float range, const qboolean vis) {
         return -1;
 
     // get the nodenum for the closest node
-    for (; i < mapgrid.numnodes; i++) {
-        VectorCopy(mapgrid.pathnode[i], v);
-        // ignore nodes we can't see
-        if (vis && !G_IsClearPath(nullptr, MASK_SOLID, v, start))
-            continue;
-        const float dist = distance(v, start);
-        if (range && dist > range)
-            continue;
-        if (dist < best) {
-            best = dist;
-            bestNodeNum = i;
-        }
-    }
+    // for (; i < mapgrid.numnodes; i++) {
+    //     VectorCopy(mapgrid.pathnode[i], v);
+    //     // ignore nodes we can't see
+    //     if (vis && !G_IsClearPath(nullptr, MASK_SOLID, v, start))
+    //         continue;
+    //     const float dist = distance(v, start);
+    //     if (range && dist > range)
+    //         continue;
+    //     if (dist < best) {
+    //         best = dist;
+    //         bestNodeNum = i;
+    //     }
+    // }
 
-    return bestNodeNum;
+    return gridkdtree_query(gridtree, start);
 }
 
 qboolean NearestNodeLocation(vec3_t start, vec3_t node_loc, const float range, const qboolean vis) {
@@ -279,21 +283,27 @@ qboolean NearestNodeLocation(vec3_t start, vec3_t node_loc, const float range, c
         return false;
 
     // get the nodenum for the closest node
-    for (; i < mapgrid.numnodes; i++) {
-        VectorCopy(mapgrid.pathnode[i], v);
-        // ignore nodes we can't see
-        if (vis && !G_IsClearPath(nullptr, MASK_SOLID, v, start))
-            continue;
-        const float dist = distance(v, start);
-        if (range && dist > range)
-            continue;
-        if (dist < best) {
-            best = dist;
-            bestNodeNum = i;
-        }
-    }
+    // for (; i < mapgrid.numnodes; i++) {
+    //     VectorCopy(mapgrid.pathnode[i], v);
+    //     const float dist = distance(v, start);
+    //     if (range && dist > range)
+    //         continue;
+    //
+    //     // ignore nodes we can't see
+    //     if (vis && !G_IsClearPath(nullptr, MASK_SOLID, v, start))
+    //         continue;
+    //     if (dist < best) {
+    //         best = dist;
+    //         bestNodeNum = i;
+    //     }
+    // }
+    //
+    // if (bestNodeNum == -1)
+    //     return false;
 
-    if (bestNodeNum == -1)
+
+    bestNodeNum = gridkdtree_query(gridtree, start);
+    if (bestNodeNum == SIZE_MAX)
         return false;
 
     VectorCopy(mapgrid.pathnode[bestNodeNum], node_loc);
@@ -916,17 +926,28 @@ void DrawPathToAimSpot(edict_t *ent) {
     tr = gi.trace(start, nullptr, nullptr, end, ent, MASK_SHOT);
     // find path to the spot we are aiming at
     // get node location nearest to us and our goal
-    if (!(NearestNodeLocation(ent->s.origin, start, 0, true))
-        || !(NearestNodeLocation(tr.endpos, end, 0, true))) {
+    size_t snode = gridkdtree_query(gridtree, start);
+    size_t enode = gridkdtree_query(gridtree, tr.endpos);
+    if (snode == SIZE_MAX
+        || enode == SIZE_MAX) {
         // can't find nearby nodes
         //gi.dprintf("couldn't find nearby nodes");
+        gire.Draw_Circle(tr.endpos, 10, &rgba_red, 0.1, false);
         return;
     }
+    VectorCopy(mapgrid.pathnode[snode], start);
+    VectorCopy(mapgrid.pathnode[enode], end);
+
     if (FindPath(SEARCHTYPE_WALK, start, end)) {
         // draw it
         DrawPath1();
         //safe_centerprintf(ent, "success!");
     }
+#ifdef VRX_REPRO
+    gire.Draw_Circle(start, 10, &rgba_green, 0.1, false);
+    gire.Draw_Circle(end, 10, &rgba_blue, 0.1, false);
+    gire.Draw_Circle(tr.endpos, 10, &rgba_red, 0.1, false);
+#endif
 }
 
 //========================================================
@@ -948,7 +969,8 @@ void DrawChildLinks(edict_t *ent) {
         return;
     }
 
-    const int parentNode = NearestNodeNumber(ent->s.origin, 255, true);
+    // const int parentNode = NearestNodeNumber(ent->s.origin, 255, true);
+    const int parentNode = gridkdtree_query(gridtree, ent->s.origin);
     VectorCopy(mapgrid.pathnode[parentNode], start);
 
     for (int i = count = maxDist = 0; i < mapgrid.numnodes; i++) {
@@ -1080,6 +1102,9 @@ void Cmd_DeleteNode_f(edict_t *ent) {
 
     InvalidateGridCache();
 
+    gridkdtree_free(&gridtree);
+    gridtree = gridkdtree_create(mapgrid.pathnode, mapgrid.numnodes);
+
     safe_cprintf(ent, PRINT_HIGH, "**Closest node deleted (%d nodes total).**\n", mapgrid.numnodes);
 }
 
@@ -1096,6 +1121,9 @@ void Cmd_AddNode_f(edict_t *ent) {
     start[2] += 32;
     VectorCopy(start, mapgrid.pathnode[mapgrid.numnodes]);
     mapgrid.numnodes++;
+
+    gridkdtree_free(&gridtree);
+    gridtree = gridkdtree_create(mapgrid.pathnode, mapgrid.numnodes);
 
     InvalidateGridCache();
 
@@ -1368,9 +1396,18 @@ void CreateGrid(qboolean force) {
         SaveGrid();
 }
 
+// #define _kddbg
 
 void InitPathfinding() {
     CreateGrid(false);
+
+    gridkdtree_free(&gridtree);
+    gridtree = gridkdtree_create(mapgrid.pathnode, mapgrid.numnodes);
+
+#ifdef _kddbg
+    for (int i = 0; i < gridtree->capacity; i++)
+        gi.dprintf("%-3d => %3d\n", i, gridtree->data[i]);
+#endif
 
     // az: reconstructed every map load depending on the # of map nodes
     if (pfctx)
@@ -1380,8 +1417,8 @@ void InitPathfinding() {
 }
 
 void ShutdownPathfinding() {
-    if (pfctx)
-        pfctx_free(&pfctx);
+    pfctx_free(&pfctx);
+    gridkdtree_free(&gridtree);
 
     mapgrid = (struct mapgrid_s){};
 }

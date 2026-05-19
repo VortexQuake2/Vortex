@@ -1108,6 +1108,14 @@ float distance (const vec3_t p1, const vec3_t p2)
 	return VectorLength(v);
 }
 
+float distanceSqr (const vec3_t p1, const vec3_t p2)
+{
+	vec3_t v;
+
+	VectorSubtract(p1, p2, v);
+	return VectorLengthSqr(v);
+}
+
 void AngleCheck (float *val)
 {
 	if (*val < 0)

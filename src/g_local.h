@@ -1283,6 +1283,7 @@ void G_EntViewPoint(const edict_t *ent, vec3_t point); //4.55
 qboolean G_ClearShot(const edict_t *shooter, vec3_t start, const edict_t *target);
 
 float distance(const vec3_t p1, const vec3_t p2);
+float distanceSqr(const vec3_t p1, const vec3_t p2);
 
 void G_RunFrames(edict_t *ent, int start_frame, int end_frame, qboolean reverse, bool limit_rate);
 
