@@ -2677,7 +2677,7 @@ char *GetMonsterKindString (int mtype)
 		case M_RUNNERTANK: return "Runner Tank";
 		case M_GUNCMDR: return "Gunner Commander";
 		case M_DAEDALUS: return "Daedalus";
-		case M_GLADB: return "Gladiator Disruptor";
+		case M_GLADB: return "darkmatter gladiator";
 		case M_GLADC: return "Gladiator Plasma";
 		case M_STALKER: return "Stalker";
 		case M_GEKK: return "Gekk";
@@ -3277,7 +3277,7 @@ void Cmd_Drone_f (edict_t *ent)
 	if (!Q_strcasecmp(s, "help"))
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Monster summoning:\n");
-		safe_cprintf(ent, PRINT_HIGH, "monster [gunner|parasite|brain|praetor|praetor_heat|medic|tank|mutant|gladiator|gladb|gladc|berserker|soldier|ripper|hyper|laser|janitor|janitor2|enforcer|flyer|floater|hover|daedalus|stalker|gekk|arachnid|shambler|redmutant|runnertank|guncmdr]\n");
+		safe_cprintf(ent, PRINT_HIGH, "monster [gunner|parasite|brain|praetor|praetor_heat|medic|tank|mutant|gladiator|gladb|darkmattergladiator|gladc|berserker|soldier|ripper|hyper|laser|janitor|janitor2|enforcer|flyer|floater|hover|daedalus|stalker|gekk|arachnid|shambler|redmutant|runnertank|guncmdr]\n");
 		safe_cprintf(ent, PRINT_HIGH, "Monster utility commands:\n");
 		safe_cprintf(ent, PRINT_HIGH, "monster [remove|command|follow me|count|attack]\n");
 		return;
@@ -3354,7 +3354,12 @@ void Cmd_Drone_f (edict_t *ent)
 		vrx_create_new_drone(ent, DS_GUNCMDR, false, true, 0);
 	else if (!Q_strcasecmp(s, "daedalus"))
 		vrx_create_new_drone(ent, DS_DAEDALUS, false, true, 0);
-	else if (!Q_strcasecmp(s, "gladb") || !Q_strcasecmp(s, "gladiatordisruptor"))
+	else if (!Q_strcasecmp(s, "gladb")
+		|| !Q_strcasecmp(s, "darkmattergladiator") || !Q_strcasecmp(s, "darkmatter_gladiator")
+		|| !Q_strcasecmp(s, "darkmatter gladiator")
+		|| !Q_strcasecmp(s, "gladiatordisruptor") || !Q_strcasecmp(s, "gladiator_disruptor")
+		|| !Q_strcasecmp(s, "gladiator disruptor") || !Q_strcasecmp(s, "disruptorgladiator")
+		|| !Q_strcasecmp(s, "disruptor_gladiator") || !Q_strcasecmp(s, "disruptor gladiator"))
 		vrx_create_new_drone(ent, DS_GLADB, false, true, 0);
 	else if (!Q_strcasecmp(s, "gladc") || !Q_strcasecmp(s, "gladiatorplasma"))
 		vrx_create_new_drone(ent, DS_GLADC, false, true, 0);

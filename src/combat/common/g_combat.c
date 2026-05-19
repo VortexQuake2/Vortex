@@ -337,6 +337,14 @@ void SpawnDamage(int type, vec3_t origin, vec3_t normal)
 	gi.multicast (origin, MULTICAST_PVS);
 }
 
+static int G_BloodDamageTempEntity(const edict_t *targ)
+{
+	if (targ && (targ->svflags & SVF_MONSTER) && targ->mtype == M_GEKK)
+		return TE_GREENBLOOD;
+
+	return TE_BLOOD;
+}
+
 
 /*
 ============
@@ -1339,7 +1347,7 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 			return 0;
 
 		if ((targ->svflags & SVF_MONSTER) || (targ->client))
-			SpawnDamage(TE_BLOOD, point, normal);
+			SpawnDamage(G_BloodDamageTempEntity(targ), point, normal);
 		else
 			SpawnDamage(te_sparks, point, normal);
 

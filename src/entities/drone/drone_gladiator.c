@@ -606,7 +606,7 @@ void init_drone_gladiator (edict_t *self)
 void init_drone_gladb(edict_t *self)
 {
 	init_drone_gladiator(self);
-	// GLADB is the Gladiator Disruptor variant.
+	// GLADB is the darkmatter gladiator variant.
 	self->mtype = M_GLADB;
 	self->s.skinnum = 2;
 	self->s.effects |= EF_TRACKER;

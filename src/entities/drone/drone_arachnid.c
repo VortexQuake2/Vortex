@@ -19,9 +19,15 @@ static int sound_melee_hit;
 
 #define ARACHNID_DEFAULT_SCALE		0.75f
 #define ARACHNID_INVASION_SCALE		0.60f
+#define ARACHNID_DODGE_SIDE_SPEED	280.0f
+#define ARACHNID_DODGE_UP_SPEED		250.0f
+#define ARACHNID_DODGE_SIDE_PROBE	64.0f
+#define ARACHNID_DODGE_COOLDOWN		1.5f
+#define ARACHNID_DODGE_TIMEOUT		1.2f
 
 static void arachnid_stand(edict_t *self);
 static void arachnid_run(edict_t *self);
+extern mmove_t arachnid_move_melee;
 
 static void arachnid_footstep(edict_t *self)
 {
@@ -101,7 +107,7 @@ static void arachnid_run(edict_t *self)
 		self->monsterinfo.currentmove = &arachnid_move_run;
 }
 
-static void arachnid_charge_rail(edict_t *self)
+static void arachnid_charge_plasma(edict_t *self)
 {
 	if (!G_ValidTarget(self, self->enemy, true, true))
 		return;
@@ -111,37 +117,40 @@ static void arachnid_charge_rail(edict_t *self)
 	self->pos1[2] += self->enemy->viewheight;
 }
 
-static void arachnid_rail(edict_t *self)
+static int arachnid_plasma_flash(edict_t *self)
 {
-	int damage;
-	int flash_number;
+	switch (self->s.frame)
+	{
+	case FRAME_rails7:
+		return MZ2_ARACHNID_RAIL2;
+	case FRAME_rails_up2:
+	case FRAME_rails_up9:
+		return MZ2_ARACHNID_RAIL_UP1;
+	case FRAME_rails_up5:
+	case FRAME_rails_up11:
+		return MZ2_ARACHNID_RAIL_UP2;
+	case FRAME_rails3:
+	default:
+		return MZ2_ARACHNID_RAIL1;
+	}
+}
+
+static void arachnid_plasma(edict_t *self)
+{
+	int damage, speed, flash_number;
 	vec3_t start, forward, right, offset, dir;
 
 	if (!G_ValidTarget(self, self->enemy, true, true))
 		return;
 
-	damage = M_RAILGUN_DMG_BASE + M_RAILGUN_DMG_ADDON * drone_damagelevel(self);
-	if (M_RAILGUN_DMG_MAX && damage > M_RAILGUN_DMG_MAX)
-		damage = M_RAILGUN_DMG_MAX;
+	damage = M_PLASMA_DMG_BASE + M_PLASMA_DMG_ADDON * drone_damagelevel(self);
+	if (M_PLASMA_DMG_MAX && damage > M_PLASMA_DMG_MAX)
+		damage = M_PLASMA_DMG_MAX;
+	speed = M_PLASMA_SPEED_BASE + M_PLASMA_SPEED_ADDON * drone_damagelevel(self);
+	if (M_PLASMA_SPEED_MAX && speed > M_PLASMA_SPEED_MAX)
+		speed = M_PLASMA_SPEED_MAX;
 
-	switch (self->s.frame)
-	{
-	case FRAME_rails7:
-		flash_number = MZ2_ARACHNID_RAIL2;
-		break;
-	case FRAME_rails_up2:
-	case FRAME_rails_up9:
-		flash_number = MZ2_ARACHNID_RAIL_UP1;
-		break;
-	case FRAME_rails_up5:
-	case FRAME_rails_up11:
-		flash_number = MZ2_ARACHNID_RAIL_UP2;
-		break;
-	case FRAME_rails3:
-	default:
-		flash_number = MZ2_ARACHNID_RAIL1;
-		break;
-	}
+	flash_number = arachnid_plasma_flash(self);
 
 	AngleVectors(self->s.angles, forward, right, NULL);
 	VectorCopy(monster_flash_offset[flash_number], offset);
@@ -151,42 +160,161 @@ static void arachnid_rail(edict_t *self)
 	VectorSubtract(self->pos1, start, dir);
 	VectorNormalize(dir);
 
-	monster_fire_railgun(self, start, dir, damage, 100, flash_number);
+	gi.sound(self, CHAN_WEAPON, sound_charge, 1, ATTN_NORM, 0);
+	fire_plasma(self, start, dir, damage, speed, M_PLASMA_DAMAGE_RADIUS, damage);
 	M_DelayNextAttack(self, 0, true);
 }
 
 mframe_t arachnid_frames_attack1[] =
 {
-	ai_charge, 0, arachnid_charge_rail,
-	ai_charge, 0, arachnid_rail,
+	ai_charge, 0, arachnid_charge_plasma,
+	ai_charge, 0, arachnid_plasma,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
-	ai_charge, 0, arachnid_charge_rail,
-	ai_charge, 0, arachnid_rail,
+	ai_charge, 0, arachnid_charge_plasma,
+	ai_charge, 0, arachnid_plasma,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
-	ai_charge, 0, arachnid_charge_rail,
+	ai_charge, 0, arachnid_charge_plasma,
 	ai_charge, 0, NULL
 };
 mmove_t arachnid_move_attack1 = { FRAME_rails2, FRAME_rails11, arachnid_frames_attack1, arachnid_run };
 
 mframe_t arachnid_frames_attack_up1[] =
 {
-	ai_charge, 0, arachnid_charge_rail,
-	ai_charge, 0, arachnid_rail,
+	ai_charge, 0, arachnid_charge_plasma,
+	ai_charge, 0, arachnid_plasma,
 	ai_charge, 0, NULL,
-	ai_charge, 0, arachnid_charge_rail,
-	ai_charge, 0, arachnid_rail,
+	ai_charge, 0, arachnid_charge_plasma,
+	ai_charge, 0, arachnid_plasma,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
-	ai_charge, 0, arachnid_charge_rail,
-	ai_charge, 0, arachnid_rail,
-	ai_charge, 0, arachnid_charge_rail,
+	ai_charge, 0, arachnid_charge_plasma,
+	ai_charge, 0, arachnid_plasma,
+	ai_charge, 0, arachnid_charge_plasma,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL
 };
 mmove_t arachnid_move_attack_up1 = { FRAME_rails_up1, FRAME_rails_up13, arachnid_frames_attack_up1, arachnid_run };
+
+static void arachnid_jump_wait_land(edict_t *self)
+{
+	if (self->groundentity || self->waterlevel > 1)
+	{
+		self->gravity = 1.0f;
+		self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+		VectorClear(self->velocity);
+		self->monsterinfo.nextframe = self->s.frame + 1;
+		return;
+	}
+
+	if (level.time > self->monsterinfo.pausetime)
+	{
+		self->gravity = 1.0f;
+		self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+		self->velocity[0] = 0;
+		self->velocity[1] = 0;
+		self->monsterinfo.nextframe = self->s.frame + 1;
+		return;
+	}
+
+	self->gravity = 1.3f;
+	self->monsterinfo.aiflags |= AI_HOLD_FRAME;
+}
+
+static void arachnid_jump_wait_land_ai(edict_t *self, float dist)
+{
+	ai_move(self, dist);
+	arachnid_jump_wait_land(self);
+}
+
+mframe_t arachnid_frames_dodge_jump[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	arachnid_jump_wait_land_ai, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+mmove_t arachnid_move_dodge_jump = { FRAME_walk1, FRAME_walk7, arachnid_frames_dodge_jump, arachnid_run };
+
+static qboolean arachnid_is_dodge_move(edict_t *self)
+{
+	return self->monsterinfo.currentmove == &arachnid_move_dodge_jump;
+}
+
+static float arachnid_dodge_side_sign(edict_t *self)
+{
+	return self->monsterinfo.lefty ? -1.0f : 1.0f;
+}
+
+static qboolean arachnid_dodge_side_clear(edict_t *self, vec3_t right, float side_sign)
+{
+	vec3_t end;
+	trace_t tr;
+
+	VectorMA(self->s.origin, side_sign * ARACHNID_DODGE_SIDE_PROBE, right, end);
+	tr = gi.trace(self->s.origin, self->mins, self->maxs, end, self, MASK_MONSTERSOLID);
+	return !tr.startsolid && !tr.allsolid && tr.fraction > 0.65f;
+}
+
+static qboolean arachnid_start_dodge_jump(edict_t *self, vec3_t dir)
+{
+	vec3_t right;
+	float side_sign;
+
+	AngleVectors(self->s.angles, NULL, right, NULL);
+	drone_set_dodge_side(self, dir);
+	side_sign = arachnid_dodge_side_sign(self);
+
+	if (!arachnid_dodge_side_clear(self, right, side_sign))
+	{
+		if (!arachnid_dodge_side_clear(self, right, -side_sign))
+			return false;
+
+		self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
+		side_sign = -side_sign;
+	}
+
+	VectorClear(self->velocity);
+	VectorMA(self->velocity, side_sign * ARACHNID_DODGE_SIDE_SPEED, right, self->velocity);
+	self->velocity[2] = ARACHNID_DODGE_UP_SPEED;
+	self->s.origin[2] += 1;
+	self->groundentity = NULL;
+	self->gravity = 1.0f;
+	self->monsterinfo.pausetime = level.time + ARACHNID_DODGE_TIMEOUT;
+	self->monsterinfo.dodge_time = level.time + ARACHNID_DODGE_COOLDOWN;
+	self->monsterinfo.currentmove = &arachnid_move_dodge_jump;
+	gi.linkentity(self);
+	return true;
+}
+
+static void arachnid_dodge(edict_t *self, edict_t *attacker, vec3_t dir, int radius)
+{
+	if (level.time < self->monsterinfo.dodge_time)
+		return;
+	if (!attacker || OnSameTeam(self, attacker))
+		return;
+	if (!self->groundentity || self->health <= 0 || arachnid_is_dodge_move(self))
+		return;
+	if (self->monsterinfo.currentmove == &arachnid_move_melee ||
+		self->monsterinfo.currentmove == &arachnid_move_attack1 ||
+		self->monsterinfo.currentmove == &arachnid_move_attack_up1)
+		return;
+
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(attacker))
+		self->enemy = attacker;
+	self->monsterinfo.attacker = attacker;
+
+	if (!radius && random() > 0.75f)
+		return;
+
+	if (!arachnid_start_dodge_jump(self, dir))
+		self->monsterinfo.dodge_time = level.time + 0.3f;
+}
 
 static void arachnid_melee_charge(edict_t *self)
 {
@@ -285,6 +413,9 @@ static void arachnid_pain(edict_t *self, edict_t *other, float kick, int damage)
 	if (self->health < (self->max_health / 2))
 		self->s.skinnum = 1;
 
+	if (arachnid_is_dodge_move(self))
+		return;
+
 	if (level.time < self->pain_debounce_time)
 		return;
 
@@ -364,7 +495,7 @@ static void arachnid_die(edict_t *self, edict_t *inflictor, edict_t *attacker, i
 void init_drone_arachnid(edict_t *self)
 {
 	sound_step = gi.soundindex("insane/insane11.wav");
-	sound_charge = gi.soundindex("gladiator/railgun.wav");
+	sound_charge = gi.soundindex("weapons/plasshot.wav");
 	sound_melee = gi.soundindex("gladiator/melee3.wav");
 	sound_melee_hit = gi.soundindex("gladiator/melee2.wav");
 	sound_pain = gi.soundindex("arachnid/pain.wav");
@@ -410,6 +541,7 @@ void init_drone_arachnid(edict_t *self)
 	self->monsterinfo.run = arachnid_run;
 	self->monsterinfo.attack = arachnid_attack;
 	self->monsterinfo.melee = arachnid_melee;
+	self->monsterinfo.dodge = arachnid_dodge;
 	self->monsterinfo.sight = arachnid_sight;
 
 	gi.linkentity(self);

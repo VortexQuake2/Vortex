@@ -2100,7 +2100,7 @@ char *V_GetMonsterKind(int mtype) {
         case M_DAEDALUS:
             return "daedalus";
         case M_GLADB:
-            return "disruptor gladiator";
+            return "darkmatter gladiator";
         case M_GLADC:
             return "plasma gladiator";
         case M_STALKER:
