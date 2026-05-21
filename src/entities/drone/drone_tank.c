@@ -399,6 +399,9 @@ static qboolean mytank_spawn_allowed_by_bonus(edict_t *self)
 	if (self->monsterinfo.bonus_flags)
 		return true;
 
+	if ((self->flags & FL_CONVERTED) || (self->activator && self->activator->client))
+		return false;
+
 	return mytank_is_n64(self) && random() < 0.08f;
 }
 
