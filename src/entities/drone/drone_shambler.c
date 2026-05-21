@@ -20,6 +20,11 @@
 
 
 #define MAX_LIGHTNING_FRAMES 4
+#define SHAMBLER_ICE_CHARGE_MIN_SCALE 0.1f
+#define SHAMBLER_ICE_CHARGE_MAX_SCALE 1.0f
+#define SHAMBLER_ICE_CHARGE_GROW_TIME (7.0f * FRAMETIME)
+#define SHAMBLER_ICE_CHARGE_TIMEOUT 0.3f
+#define SHAMBLER_ICE_CHARGE_NAME "shambler_ice_charge"
 
 static int sound_pain;
 static int sound_idle;
@@ -41,6 +46,7 @@ void shambler_pain(edict_t* self, edict_t* other, float kick, int damage);
 void shambler_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point);
 
 static void FindShamblerOffset(edict_t* self, vec3_t offset);
+static void shambler_free_ice_charges(edict_t* self);
 
 void sham_swingl9(edict_t* self);
 void sham_swingr9(edict_t* self);
@@ -514,14 +520,181 @@ void ShamblerCastIcebolt(edict_t* self)
 	gi.sound(self, CHAN_WEAPON, gi.soundindex("spells/coldcast.wav"), 1, ATTN_NORM, 0);
 }
 
+static float shambler_clampf(float value, float min_value, float max_value)
+{
+	if (value < min_value)
+		return min_value;
+	if (value > max_value)
+		return max_value;
+	return value;
+}
+
+static float shambler_ice_charge_scale(int frame_offset)
+{
+	const float progress = shambler_clampf((float)frame_offset / 7.0f, 0.0f, 1.0f);
+
+	return shambler_clampf(SHAMBLER_ICE_CHARGE_MIN_SCALE +
+		(SHAMBLER_ICE_CHARGE_MAX_SCALE - SHAMBLER_ICE_CHARGE_MIN_SCALE) * progress,
+		SHAMBLER_ICE_CHARGE_MIN_SCALE, SHAMBLER_ICE_CHARGE_MAX_SCALE);
+}
+
+static qboolean shambler_is_ice_charge(edict_t *charge)
+{
+	return charge && charge->inuse && charge->classname && !strcmp(charge->classname, SHAMBLER_ICE_CHARGE_NAME);
+}
+
+static void shambler_clear_ice_charge_owner(edict_t *charge)
+{
+	if (!charge || !charge->owner || !charge->owner->inuse)
+		return;
+
+	if (charge->owner->beam == charge)
+		charge->owner->beam = NULL;
+	if (charge->owner->beam2 == charge)
+		charge->owner->beam2 = NULL;
+}
+
+static void shambler_ice_charge_think(edict_t *self)
+{
+	float progress;
+	int i;
+
+	if (!self->owner || !self->owner->inuse || self->owner->deadflag || level.time >= self->timestamp)
+	{
+		shambler_clear_ice_charge_owner(self);
+		G_FreeEdict(self);
+		return;
+	}
+
+	for (i = 0; i < 3; i++)
+		self->s.angles[i] += self->avelocity[i] * FRAMETIME;
+
+	progress = shambler_clampf((level.time - self->teleport_time) / self->wait, 0.0f, 1.0f);
+	self->s.scale = shambler_clampf(self->accel + (self->decel - self->accel) * progress,
+		SHAMBLER_ICE_CHARGE_MIN_SCALE, SHAMBLER_ICE_CHARGE_MAX_SCALE);
+
+	gi.linkentity(self);
+	self->nextthink = level.time + FRAMETIME;
+}
+
+static edict_t *shambler_get_ice_charge(edict_t *self, qboolean right_hand)
+{
+	edict_t **slot = right_hand ? &self->beam2 : &self->beam;
+	edict_t *charge = *slot;
+
+	if (shambler_is_ice_charge(charge))
+		return charge;
+
+	if (charge && !charge->inuse)
+		*slot = NULL;
+	else if (charge)
+		return NULL;
+
+	charge = G_Spawn();
+
+	if (!charge)
+		return NULL;
+
+	VectorCopy(self->s.angles, charge->s.angles);
+	charge->s.modelindex = gi.modelindex("models/proj/proj_drole/tris.md2");
+	charge->s.skinnum = 1;
+	charge->s.frame = 4;
+	charge->s.effects |= EF_HALF_DAMAGE | EF_FLAG2;
+	VectorSet(charge->avelocity, GetRandom(300, 1000), 0, 0);
+	charge->solid = SOLID_NOT;
+	charge->movetype = MOVETYPE_NONE;
+	charge->classname = SHAMBLER_ICE_CHARGE_NAME;
+	charge->owner = self;
+	charge->think = shambler_ice_charge_think;
+	charge->accel = SHAMBLER_ICE_CHARGE_MIN_SCALE;
+	charge->decel = SHAMBLER_ICE_CHARGE_MAX_SCALE;
+	charge->s.scale = SHAMBLER_ICE_CHARGE_MIN_SCALE;
+	charge->teleport_time = level.time;
+	charge->wait = SHAMBLER_ICE_CHARGE_GROW_TIME;
+	charge->timestamp = level.time + SHAMBLER_ICE_CHARGE_TIMEOUT;
+	charge->nextthink = level.time + FRAMETIME;
+	*slot = charge;
+
+	return charge;
+}
+
+static void shambler_update_ice_charge(edict_t *self, vec3_t origin, float scale, qboolean right_hand)
+{
+	edict_t *charge = shambler_get_ice_charge(self, right_hand);
+
+	if (!charge)
+		return;
+
+	if (VectorLength(charge->s.origin))
+		VectorCopy(charge->s.origin, charge->s.old_origin);
+	else
+		VectorCopy(origin, charge->s.old_origin);
+	VectorCopy(origin, charge->s.origin);
+	charge->timestamp = level.time + SHAMBLER_ICE_CHARGE_TIMEOUT;
+	if (charge->s.scale < scale)
+		charge->s.scale = scale;
+	gi.linkentity(charge);
+}
+
+static void shambler_free_ice_charge(edict_t **slot)
+{
+	edict_t *charge = *slot;
+
+	if (charge && !charge->inuse)
+	{
+		*slot = NULL;
+		return;
+	}
+
+	if (!shambler_is_ice_charge(charge))
+		return;
+
+	*slot = NULL;
+	G_FreeEdict(charge);
+}
+
+static void shambler_free_ice_charges(edict_t* self)
+{
+	shambler_free_ice_charge(&self->beam);
+	shambler_free_ice_charge(&self->beam2);
+}
+
+static void shambler_ice_charge_particles(vec3_t origin, float scale)
+{
+	const int blue_count = (int)shambler_clampf(8.0f + scale * 6.0f, 8.0f, 12.0f);
+	vec3_t down = { 0, 0, -1 };
+
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_WELDING_SPARKS);
+	gi.WriteByte(blue_count);
+	gi.WritePosition(origin);
+	gi.WriteDir(down);
+	gi.WriteByte(113);
+	gi.multicast(origin, MULTICAST_PVS);
+
+	if (random() <= 0.33f)
+	{
+		gi.WriteByte(svc_temp_entity);
+		gi.WriteByte(TE_WELDING_SPARKS);
+		gi.WriteByte(1);
+		gi.WritePosition(origin);
+		gi.WriteDir(down);
+		gi.WriteByte(217);
+		gi.multicast(origin, MULTICAST_PVS);
+	}
+}
 
 static void shambler_ice_update(edict_t* self)
 {
-	const int frame_offset = self->s.frame - FRAME_magic1;
-	if (frame_offset >= MAX_LIGHTNING_FRAMES)
-	{
+	const int raw_frame_offset = self->s.frame - FRAME_magic1;
+	int frame_offset = raw_frame_offset;
+	const float scale = shambler_ice_charge_scale(raw_frame_offset);
+
+	if (frame_offset < 0)
 		return;
-	}
+	if (frame_offset >= MAX_LIGHTNING_FRAMES)
+		frame_offset = MAX_LIGHTNING_FRAMES - 1;
+
 	vec3_t f, r;
 	AngleVectors(self->s.angles, f, r, NULL);
 
@@ -535,29 +708,10 @@ static void shambler_ice_update(edict_t* self)
 	VectorMA(right_pos, lightning_right_hand[frame_offset][1], r, right_pos);
 	right_pos[2] += lightning_right_hand[frame_offset][2];
 
-	// create cyan ice glow on both hands
-	edict_t* left_glow = G_Spawn();
-	edict_t* right_glow = G_Spawn();
-
-	VectorCopy(left_pos, left_glow->s.origin);
-	VectorCopy(right_pos, right_glow->s.origin);
-
-	left_glow->s.modelindex = gi.modelindex("models/fire/tris.md2");
-	right_glow->s.modelindex = gi.modelindex("models/fire/tris.md2");
-	left_glow->s.effects |= EF_QUAD | RF_SHELL_CYAN;
-	right_glow->s.effects |= EF_QUAD | RF_SHELL_CYAN;
-
-	left_glow->s.renderfx |= RF_FULLBRIGHT;
-	right_glow->s.renderfx |= RF_FULLBRIGHT;
-
-	left_glow->think = G_FreeEdict;
-	right_glow->think = G_FreeEdict;
-
-	left_glow->nextthink = level.time + 0.1;
-	right_glow->nextthink = level.time + 0.1;
-
-	gi.linkentity(left_glow);
-	gi.linkentity(right_glow);
+	shambler_update_ice_charge(self, left_pos, scale, false);
+	shambler_update_ice_charge(self, right_pos, scale, true);
+	shambler_ice_charge_particles(left_pos, scale);
+	shambler_ice_charge_particles(right_pos, scale);
 }
 
 void shambler_windupIce(edict_t* self) // lightning preparing
@@ -569,22 +723,40 @@ void shambler_windupIce(edict_t* self) // lightning preparing
 	self->nextthink = level.time + FRAMETIME;
 }
 
+static void ShamblerSaveLocAndIceUpdate(edict_t* self)
+{
+	ShamblerSaveLoc(self);
+	shambler_ice_update(self);
+}
+
+static void ShamblerSaveLocIceUpdateAndCast(edict_t* self)
+{
+	ShamblerSaveLocAndIceUpdate(self);
+	ShamblerCastIcebolt(self);
+}
+
+static void shambler_finish_icebolt(edict_t* self)
+{
+	shambler_free_ice_charges(self);
+	shambler_run(self);
+}
+
 
 mframe_t shambler_frames_icebolt[] = {
 	{ai_charge, 0, shambler_windupIce},
-	{ai_charge, 0, ShamblerSaveLoc},
+	{ai_charge, 0, ShamblerSaveLocAndIceUpdate},
 	{ai_charge, 0, shambler_ice_update},
-	{ai_move, 0, ShamblerSaveLoc},
+	{ai_move, 0, ShamblerSaveLocAndIceUpdate},
 	{ai_move, 0, shambler_ice_update},
-	{ai_move, 0, ShamblerSaveLoc},
+	{ai_move, 0, ShamblerSaveLocAndIceUpdate},
+	{ai_move, 0, shambler_ice_update},
+	{ai_move, 0, ShamblerSaveLocIceUpdateAndCast},
+	{ai_move, 0, ShamblerCastIcebolt},
 	{ai_move, 0, NULL},
-	{ai_move, 0, ShamblerSaveLoc},
-	{ai_move, 0, ShamblerCastIcebolt},
-	{ai_move, 0, ShamblerSaveLoc},
-	{ai_move, 0, ShamblerCastIcebolt},
+	{ai_move, 0, NULL},
 	{ai_charge, 0, NULL},
 };
-mmove_t shambler_move_icebolt = { FRAME_magic1, FRAME_magic12, shambler_frames_icebolt, shambler_run };
+mmove_t shambler_move_icebolt = { FRAME_magic1, FRAME_magic12, shambler_frames_icebolt, shambler_finish_icebolt };
 
 void shambler_meleehit(edict_t* self);
 
@@ -724,6 +896,7 @@ void shambler_pain(edict_t* self, edict_t* other, float kick, int damage)
 
 	self->pain_debounce_time = level.time + 3;
 	gi.sound(self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
+	shambler_free_ice_charges(self);
 	self->monsterinfo.currentmove = &shambler_move_pain;
 }
 
@@ -740,6 +913,8 @@ void shambler_dead(edict_t* self)
 
 void shambler_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point)
 {
+	shambler_free_ice_charges(self);
+
 	// notify the owner that the monster is dead
 	M_Notify(self);
 
@@ -804,6 +979,7 @@ void init_drone_shambler(edict_t* self)
 	gi.soundindex("abilities/blue1.wav");
 
 	//icebolt shambler
+	gi.modelindex("models/proj/proj_drole/tris.md2");
 	gi.soundindex("spells/coldcast.wav");
 
 	//shambler sounds

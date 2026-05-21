@@ -1512,6 +1512,56 @@ static qboolean fly_try_recover_combat_sight(edict_t *ent, vec3_t target_origin,
 	return true;
 }
 
+static qboolean fly_try_water_recovery(edict_t *ent, vec3_t wanted_dir)
+{
+	int i;
+	vec3_t dir, end, test, angles, forward;
+	trace_t tr;
+
+	if (!(ent->flags & FL_FLY) || !ent->waterlevel)
+		return false;
+
+	ent->monsterinfo.fly_pinned = false;
+	ent->monsterinfo.fly_position_time = 0.0f;
+
+	VectorSet(dir, 0.0f, 0.0f, 1.0f);
+	for (i = -1; i < 8; i++)
+	{
+		if (i >= 0)
+		{
+			if (i == 0 && VectorLength(wanted_dir) > 0.1f)
+			{
+				VectorCopy(wanted_dir, dir);
+				dir[2] += 1.0f;
+			}
+			else
+			{
+				VectorSet(angles, 0.0f, ent->s.angles[YAW] + 45.0f * (float)i, 0.0f);
+				AngleVectors(angles, forward, NULL, NULL);
+				VectorCopy(forward, dir);
+				dir[2] = 0.75f;
+			}
+			if (VectorNormalize(dir) <= 0.1f)
+				VectorSet(dir, 0.0f, 0.0f, 1.0f);
+		}
+
+		VectorMA(ent->s.origin, 128.0f, dir, end);
+		tr = gi.trace(ent->s.origin, ent->mins, ent->maxs, end, ent, MASK_SOLID | CONTENTS_MONSTERCLIP);
+		if (tr.allsolid || tr.startsolid)
+			continue;
+
+		VectorCopy(tr.endpos, test);
+		test[2] += ent->mins[2] + 1.0f;
+		if (!(gi.pointcontents(test) & MASK_WATER))
+			break;
+	}
+
+	VectorCopy(dir, ent->monsterinfo.fly_recovery_dir);
+	ent->monsterinfo.fly_recovery_time = level.time + 0.6f;
+	VectorCopy(dir, wanted_dir);
+	return true;
+}
+
 qboolean SV_alternate_flystep(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
 {
 	vec3_t dir, towards_origin, towards_velocity, wanted_pos, dest_diff, wanted_dir, final_dir;
@@ -1519,7 +1569,7 @@ qboolean SV_alternate_flystep(edict_t* ent, vec3_t dest, vec3_t move, qboolean r
 	vec3_t box_mins, box_maxs;
 	trace_t tr;
 	float current_speed, dist_to_wanted, turn_factor, base_fly_speed, accel, speed_factor, wanted_speed;
-	qboolean following_paths, have_target, bad_movement_direction, visible_combat_enemy, recent_combat_memory, catchup_goal, combat_attack_drive, los_preserve_drive, los_recover_drive, los_pressure_drive;
+	qboolean following_paths, have_target, bad_movement_direction, water_recovery_drive, visible_combat_enemy, recent_combat_memory, catchup_goal, combat_attack_drive, los_preserve_drive, los_recover_drive, los_pressure_drive;
 
 	(void)move;
 	(void)relink;
@@ -1792,8 +1842,9 @@ qboolean SV_alternate_flystep(edict_t* ent, vec3_t dest, vec3_t move, qboolean r
 		ent->monsterinfo.fly_wall_stuck_time = 0.0f;
 	}
 
+	water_recovery_drive = fly_try_water_recovery(ent, wanted_dir);
 	bad_movement_direction = false;
-	if (dist_to_wanted > 0.1f)
+	if (!water_recovery_drive && dist_to_wanted > 0.1f)
 	{
 		vec3_t contents_test;
 		VectorMA(ent->s.origin, max(current_speed, ent->monsterinfo.fly_speed) * FRAMETIME, wanted_dir, contents_test);
@@ -1842,7 +1893,7 @@ qboolean SV_alternate_flystep(edict_t* ent, vec3_t dest, vec3_t move, qboolean r
 			if (VectorNormalize(final_dir) < 0.1f)
 				VectorCopy(wanted_dir, final_dir);
 		}
-		else if (((ent->monsterinfo.fly_thrusters && !ent->monsterinfo.fly_pinned) || following_paths) &&
+		else if (((ent->monsterinfo.fly_thrusters && !ent->monsterinfo.fly_pinned) || following_paths || water_recovery_drive) &&
 			DotProduct(dir, wanted_dir) > 0.0f)
 		{
 			turn_factor = FLY_TURN_FACTOR_FAST;
@@ -1879,7 +1930,7 @@ qboolean SV_alternate_flystep(edict_t* ent, vec3_t dest, vec3_t move, qboolean r
 		accel *= FLY_LOS_PRESERVE_ACCEL_SCALE;
 	}
 
-	if (!ent->enemy || (ent->monsterinfo.fly_thrusters && !ent->monsterinfo.fly_pinned) || following_paths || catchup_goal)
+	if (!ent->enemy || water_recovery_drive || (ent->monsterinfo.fly_thrusters && !ent->monsterinfo.fly_pinned) || following_paths || catchup_goal)
 	{
 		if (following_paths && (dir[0] || dir[1] || dir[2]) && DotProduct(wanted_dir, dir) < -0.25f)
 			speed_factor = 0.0f;

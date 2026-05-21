@@ -1514,7 +1514,6 @@ enum mtype_t {
     M_FLIPPER = 4, // 50
     M_FLYER = 5, // 50
     M_INFANTRY = 6, // 100
-    M_ENFORCER = 6, // 100
     M_INSANE = 7, // 100 - Crazy Marine
     M_GUNNER = 8, // 175
     M_CHICK = 9, // 175
@@ -1561,6 +1560,9 @@ enum mtype_t {
     M_ROGUE_TURRET = 50,
     M_BOSS2_SMALL = 51,
     M_BOSS5 = 52,
+    M_TANK_N64 = 53,
+    M_ARACHNID_HEAT = 54,
+    M_ENFORCER = 55,
     M_MINISENTRY = 100,
     M_SENTRY = 101,
     M_BFG_SENTRY = 102,
@@ -1691,6 +1693,9 @@ enum dronespawn_t {
     DS_BOSS2_HYPER = 48, // unused boss,  same attacks than small hornet
     DS_BOSS2_SMALL = 49, // not a boss, small hornet
     DS_BOSS5 = 50,
+    DS_TANK_N64 = 51,
+    DS_ARACHNID_HEAT = 52,
+    DS_ENFORCER = 53,
 
 };
 
@@ -2651,6 +2656,7 @@ struct edict_s {
     // parasite
     int parasite_frames;
     edict_t *parasite_target;
+    edict_t *proboscis;
 
     // 3.03+ spirit
     edict_t *spirit;
@@ -2853,6 +2859,7 @@ void Check_full(edict_t *ent);
 void MonsterAim(edict_t *self, float accuracy, int projectile_speed, qboolean rocket, int flash_number, vec3_t forward,
                 vec3_t start);
 qboolean M_MonsterHasCombatSight(edict_t *self, edict_t *other);
+qboolean M_MonsterMeleeReady(edict_t *self);
 qboolean M_MonsterFindClearShot(edict_t *self, vec3_t start, vec3_t point);
 qboolean M_MonsterHasClearShotFrom(edict_t *self, vec3_t start);
 qboolean M_MonsterHasClearShotFromFlash(edict_t *self, int flash_number);

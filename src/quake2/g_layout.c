@@ -308,6 +308,7 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	case M_FLIPPER:
 	case M_FLYER:
 	case M_INFANTRY:
+	case M_ENFORCER:
 	case M_INSANE:
 	case M_GUNNER:
 	case M_CHICK:
@@ -322,6 +323,7 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	case M_BRAIN:
 	case M_GLADIATOR:
 	case M_TANK:
+	case M_TANK_N64:
 	case M_SUPERTANK:
 	case M_BOSS5:
 	case M_FORCEWALL:
@@ -336,6 +338,7 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	case M_STALKER:
 	case M_GEKK:
 	case M_ARACHNID:
+	case M_ARACHNID_HEAT:
 	case M_BOSS2:
 	case M_BOSS2_SMALL:
 	case M_CARRIER:

@@ -16,13 +16,23 @@ static int sound_idle;
 static int sound_punch;
 static int sound_sight;
 static int sound_search;
+static int sound_thud;
+static int sound_explod;
+static int sound_jump;
 
 static void berserk_ai_dodge_slide(edict_t *self, float dist);
 static void berserk_duck_up(edict_t *self);
+static void berserk_slam_touchdown(edict_t *self);
+void berserk_melee(edict_t *self);
+extern mmove_t berserk_move_attack_strike;
 
-#define BERSERK_CLOSE_MELEE_RANGE	96
-#define BERSERK_SLAM_MELEE_RANGE	128
-#define BERSERK_SLAM_COOLDOWN		3.0f
+#define BERSERK_CLOSE_MELEE_RANGE	MELEE_DISTANCE
+#define BERSERK_RUN_ATTACK_RANGE	500.0f
+#define BERSERK_SLAM_MIN_RANGE		150.0f
+#define BERSERK_SLAM_COOLDOWN		5.0f
+#define BERSERK_SLAM_TIMEOUT		3.0f
+#define BERSERK_SLAM_RADIUS			165.0f
+#define BERSERK_SLAM_KICK			300.0f
 
 
 void berserk_sight (edict_t *self, edict_t *other)
@@ -157,10 +167,10 @@ void berserk_swing (edict_t *self)
 
 mframe_t berserk_frames_attack_spike [] =
 {
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
 	ai_charge, 0, berserk_swing,
 	ai_charge, 0, berserk_attack_spike,
+	ai_charge, 0, berserk_attack_spike,
+	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
@@ -186,13 +196,13 @@ mframe_t berserk_frames_attack_club [] =
 {	
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
 	ai_charge, 0, berserk_swing,
 	ai_charge, 0, NULL,
 	ai_charge, 0, berserk_attack_club,
 	ai_charge, 0, berserk_attack_club,
-	ai_charge, 0, berserk_attack_club,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL
@@ -201,7 +211,13 @@ mmove_t berserk_move_attack_club = {FRAME_att_c9, FRAME_att_c20, berserk_frames_
 
 static void berserk_run_attack_speed(edict_t *self)
 {
-	if (G_EntExists(self->enemy) && entdist(self, self->enemy) <= BERSERK_CLOSE_MELEE_RANGE)
+	if (!G_EntExists(self->enemy))
+	{
+		berserk_run(self);
+		return;
+	}
+
+	if (entdist(self, self->enemy) <= BERSERK_CLOSE_MELEE_RANGE)
 		self->monsterinfo.nextframe = self->s.frame + 6;
 }
 
@@ -227,69 +243,247 @@ mframe_t berserk_frames_runattack1 [] =
 	drone_ai_run, 19, NULL,
 	drone_ai_run, 21, berserk_run_swing,
 	drone_ai_run, 11, NULL,
-	drone_ai_run, 21, berserk_attack_club,
-	drone_ai_run, 25, berserk_attack_club,
-	drone_ai_run, 18, berserk_attack_club,
-	drone_ai_run, 19, NULL
+	drone_ai_run, 21, NULL,
+	drone_ai_run, 25, NULL,
+	drone_ai_run, 18, NULL,
+	drone_ai_run, 19, berserk_attack_club
 };
 mmove_t berserk_move_runattack1 = {FRAME_r_att1, FRAME_r_att18, berserk_frames_runattack1, berserk_run};
 
 
-void berserk_attack_strike (edict_t *self)
+static int berserk_slam_damage_value(edict_t *self)
 {
 	int damage;
-	trace_t tr;
-	edict_t *other=NULL;
-	vec3_t	v;
-
-	// tank must be on the ground to punch
-	if (!self->groundentity)
-		return;
-
-	self->lastsound = level.framenum;
 
 	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * drone_damagelevel(self); // dmg: berserker_attack_strike
 	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
 		damage = M_MELEE_DMG_MAX;
 
-	gi.sound (self, CHAN_AUTO, gi.soundindex ("tank/tnkatck5.wav"), 1, ATTN_NORM, 0);
-	
-	while ((other = findradius(other, self->s.origin, 128)) != NULL)
+	return damage;
+}
+
+static float berserk_clamp_float(float value, float min_value, float max_value)
+{
+	if (value < min_value)
+		return min_value;
+	if (value > max_value)
+		return max_value;
+	return value;
+}
+
+static void berserk_closest_point_to_box(vec3_t point, edict_t *ent, vec3_t out)
+{
+	out[0] = berserk_clamp_float(point[0], ent->absmin[0], ent->absmax[0]);
+	out[1] = berserk_clamp_float(point[1], ent->absmin[1], ent->absmax[1]);
+	out[2] = berserk_clamp_float(point[2], ent->absmin[2], ent->absmax[2]);
+}
+
+static void berserk_slam_origin(edict_t *self, vec3_t origin)
+{
+	vec3_t forward, right, offset;
+	trace_t tr;
+
+	AngleVectors(self->s.angles, forward, right, NULL);
+	VectorSet(offset, 20, -14.3f, -21);
+	G_ProjectSource(self->s.origin, offset, forward, right, origin);
+	tr = gi.trace(self->s.origin, NULL, NULL, origin, self, MASK_SOLID);
+	VectorCopy(tr.endpos, origin);
+}
+
+static void berserk_slam_effect(vec3_t origin)
+{
+	vec3_t up;
+
+	VectorSet(up, 0, 0, 1);
+
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_BERSERK_SLAM);
+	gi.WritePosition(origin);
+	gi.WriteDir(up);
+	gi.multicast(origin, MULTICAST_PHS);
+}
+
+static void berserk_attack_strike(edict_t *self)
+{
+	int damage;
+	trace_t tr;
+	edict_t *other = NULL;
+	vec3_t closest, damage_origin, dir, v;
+
+	if (self->monsterinfo.lefty)
+		return;
+	self->monsterinfo.lefty = 1;
+
+	damage = berserk_slam_damage_value(self);
+
+	gi.sound(self, CHAN_WEAPON, sound_thud, 1, ATTN_NORM, 0);
+	gi.sound(self, CHAN_AUTO, sound_explod, 0.75f, ATTN_NORM, 0);
+	berserk_slam_origin(self, damage_origin);
+	berserk_slam_effect(damage_origin);
+
+	while ((other = findradius(other, damage_origin, BERSERK_SLAM_RADIUS * 2.0f)) != NULL)
 	{
+		float amount, distance, points;
+		vec3_t point;
+
 		if (!G_ValidTarget(self, other, true, true))
+			continue;
+		if (!CanDamage(other, self))
 			continue;
 		// miss the attack if we are cursed/confused
 		if (que_typeexists(self->curses, CURSE) && rand() > 0.2)
 			continue;
 
-		VectorSubtract(other->s.origin, self->s.origin, v);
-		VectorNormalize(v);
-		tr = gi.trace(self->s.origin, NULL, NULL, other->s.origin, self, (MASK_PLAYERSOLID | MASK_MONSTERSOLID));
-		T_Damage(other, self, self, v, tr.endpos, tr.plane.normal, damage, 200, 0, MOD_TANK_PUNCH);
+		berserk_closest_point_to_box(damage_origin, other, closest);
+		VectorSubtract(closest, damage_origin, v);
+		distance = VectorLength(v);
+		amount = 1.0f - (distance / BERSERK_SLAM_RADIUS);
+		if (amount <= 0)
+			continue;
+		amount *= amount;
+		points = damage * amount;
+		if (points < 1)
+			points = 1;
+
+		VectorSubtract(other->s.origin, damage_origin, dir);
+		if (VectorNormalize(dir) == 0)
+			VectorSet(dir, 0, 0, 1);
+		VectorCopy(damage_origin, point);
+		point[2] = other->absmin[2];
+
+		tr = gi.trace(damage_origin, NULL, NULL, other->s.origin, self, (MASK_PLAYERSOLID | MASK_MONSTERSOLID));
+		T_Damage(other, self, self, dir, point, tr.plane.normal, (int)points,
+			(int)(BERSERK_SLAM_KICK * amount), 0, MOD_TANK_PUNCH);
+		if (other->inuse && other->client && other->velocity[2] < 270)
+			other->velocity[2] = 270;
 	}
+}
+
+static void berserk_high_gravity(edict_t *self)
+{
+	self->gravity = self->velocity[2] < 0 ? 2.25f : 5.25f;
+}
+
+static qboolean berserk_can_slam(edict_t *self, float dist)
+{
+	return G_ValidTarget(self, self->enemy, true, true) &&
+		self->groundentity && level.time >= self->timestamp &&
+		dist > BERSERK_SLAM_MIN_RANGE;
+}
+
+static void berserk_finish_slam(edict_t *self, qboolean damage)
+{
+	self->monsterinfo.aiflags &= ~(AI_HOLD_FRAME | AI_DUCKED);
+	self->monsterinfo.touchdown = NULL;
+	self->gravity = 1.0f;
+	VectorClear(self->velocity);
+	self->monsterinfo.attack_finished = level.time + 0.6f;
+	self->monsterinfo.melee_finished = level.time + 0.6f;
+	if (damage)
+		berserk_attack_strike(self);
+	self->s.frame = FRAME_slam18;
+	gi.linkentity(self);
+}
+
+static void berserk_slam_touchdown(edict_t *self)
+{
+	if (self->health <= 0)
+	{
+		self->monsterinfo.touchdown = NULL;
+		return;
+	}
+	if (self->monsterinfo.currentmove == &berserk_move_attack_strike)
+		berserk_finish_slam(self, true);
+}
+
+static void berserk_jump_takeoff(edict_t *self)
+{
+	float dist, speed;
+	vec3_t dir, forward;
+
+	if (!G_ValidTarget(self, self->enemy, true, true))
+		return;
+
+	VectorSubtract(self->enemy->s.origin, self->s.origin, dir);
+	dist = VectorLength(dir);
+	if (dist < 1)
+		dist = 1;
+	self->s.angles[YAW] = vectoyaw(dir);
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+
+	speed = dist * 1.95f;
+	if (speed < 350)
+		speed = 350;
+	else if (speed > 1200)
+		speed = 1200;
+
+	self->s.origin[2] += 1;
+	VectorScale(forward, speed, self->velocity);
+	self->velocity[2] = 400;
+	self->groundentity = NULL;
+	self->monsterinfo.aiflags |= AI_DUCKED;
+	self->monsterinfo.attack_finished = level.time + BERSERK_SLAM_TIMEOUT;
+	self->monsterinfo.touchdown = berserk_slam_touchdown;
+	self->monsterinfo.lefty = 0;
+	berserk_high_gravity(self);
+	gi.linkentity(self);
+}
+
+static void berserk_check_landing(edict_t *self)
+{
+	berserk_high_gravity(self);
+
+	if (self->groundentity)
+	{
+		berserk_finish_slam(self, true);
+		return;
+	}
+
+	if (level.time > self->monsterinfo.attack_finished)
+	{
+		berserk_finish_slam(self, false);
+		return;
+	}
+
+	self->monsterinfo.aiflags |= AI_HOLD_FRAME;
 }
 
 mframe_t berserk_frames_attack_strike [] =
 {
-	ai_move, 0, berserk_swing,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_move, 0, berserk_jump_takeoff,
+	ai_move, 0, berserk_high_gravity,
+	ai_move, 0, berserk_check_landing,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
-	ai_move, 0, berserk_attack_strike
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
 };
 	
-mmove_t berserk_move_attack_strike = {FRAME_slam5, FRAME_slam10, berserk_frames_attack_strike, berserk_run};
-
-static qboolean berserk_can_slam(edict_t *self, float dist)
-{
-	return self->groundentity && level.time >= self->timestamp &&
-		dist > BERSERK_CLOSE_MELEE_RANGE && dist <= BERSERK_SLAM_MELEE_RANGE;
-}
+mmove_t berserk_move_attack_strike = {FRAME_slam1, FRAME_slam23, berserk_frames_attack_strike, berserk_run};
 
 static void berserk_start_slam(edict_t *self)
 {
 	self->timestamp = level.time + BERSERK_SLAM_COOLDOWN;
+	self->monsterinfo.lefty = 0;
+	self->monsterinfo.attack_finished = level.time + BERSERK_SLAM_TIMEOUT;
+	self->monsterinfo.melee_finished = level.time + 0.6f;
+	gi.sound(self, CHAN_WEAPON, sound_jump, 1, ATTN_NORM, 0);
 	self->monsterinfo.currentmove = &berserk_move_attack_strike;
 }
 
@@ -623,6 +817,10 @@ void berserk_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	gi.sound (self, CHAN_VOICE, sound_die, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	self->monsterinfo.touchdown = NULL;
+	self->touch = NULL;
+	self->gravity = 1.0f;
+	self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
 	vrx_update_drone_death_skin(self);
 
 	if (damage >= 50)
@@ -639,38 +837,43 @@ void berserk_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 
 void berserk_attack (edict_t *self)
 {
-	float	r = random();
 	const float	dist = entdist(self, self->enemy);
 
-	if (dist > 160)
+	if (!G_EntExists(self->enemy))
 		return;
 
-	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+	if (self->monsterinfo.melee_finished <= level.time && dist <= MELEE_DISTANCE)
 	{
-		if (dist <= BERSERK_CLOSE_MELEE_RANGE && r <= 0.45f)
-			self->monsterinfo.currentmove = &berserk_move_attack_spike;
-		else if (dist <= BERSERK_CLOSE_MELEE_RANGE)
-			self->monsterinfo.currentmove = &berserk_move_attack_club;
-		else if (berserk_can_slam(self, dist))
-			berserk_start_slam(self);
-		else
-			return;
+		berserk_melee(self);
+		return;
 	}
-	else if (dist <= BERSERK_CLOSE_MELEE_RANGE)
+
+	if (berserk_can_slam(self, dist) && random() <= 0.5f)
 	{
-		if (r <= 0.45f)
-			self->monsterinfo.currentmove = &berserk_move_attack_spike;
-		else
-			self->monsterinfo.currentmove = &berserk_move_runattack1;
-	}
-	else if (berserk_can_slam(self, dist))
 		berserk_start_slam(self);
-	else if (self->monsterinfo.currentmove == &berserk_move_run1)
-		self->monsterinfo.currentmove = &berserk_move_runattack1;
-	else
 		return;
+	}
 
-	self->monsterinfo.attack_finished = level.time + 0.6;
+	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND) &&
+		self->monsterinfo.currentmove == &berserk_move_run1 &&
+		dist <= BERSERK_RUN_ATTACK_RANGE)
+	{
+		self->monsterinfo.currentmove = &berserk_move_runattack1;
+		if (self->s.frame >= FRAME_run1 && self->s.frame <= FRAME_run6)
+			self->monsterinfo.nextframe = FRAME_r_att1 + (self->s.frame - FRAME_run1);
+		self->monsterinfo.attack_finished = level.time + 0.6f;
+	}
+}
+
+static void berserk_choose_melee_attack(edict_t *self)
+{
+	if (random() <= 0.5f)
+		self->monsterinfo.currentmove = &berserk_move_attack_spike;
+	else
+		self->monsterinfo.currentmove = &berserk_move_attack_club;
+
+	self->monsterinfo.melee_finished = level.time + 0.6f;
+	self->monsterinfo.attack_finished = level.time + 0.6f;
 }
 
 void berserk_melee (edict_t *self)
@@ -681,20 +884,15 @@ void berserk_melee (edict_t *self)
 		return;
 
 	dist = entdist(self, self->enemy);
-	if (dist > BERSERK_SLAM_MELEE_RANGE)
+	if (self->monsterinfo.melee_finished > level.time)
 		return;
 
-	if (dist <= BERSERK_CLOSE_MELEE_RANGE && random() <= 0.45f)
-		self->monsterinfo.currentmove = &berserk_move_attack_spike;
-	else if (dist <= BERSERK_CLOSE_MELEE_RANGE)
-		self->monsterinfo.currentmove = &berserk_move_attack_club;
-	else if (berserk_can_slam(self, dist))
+	if (dist <= MELEE_DISTANCE)
+		berserk_choose_melee_attack(self);
+	else if (berserk_can_slam(self, dist) && random() <= 0.5f)
 		berserk_start_slam(self);
 	else
 		return;
-
-	self->monsterinfo.melee_finished = level.time + 0.4;
-	self->monsterinfo.attack_finished = level.time + 0.6;
 }
 
 /*QUAKED monster_berserk (1 .5 0) (-16 -16 -24) (16 16 32) Ambush Trigger_Spawn Sight
@@ -707,6 +905,9 @@ void init_drone_berserk (edict_t *self)
 	sound_punch = gi.soundindex ("berserk/attack.wav");
 	sound_search = gi.soundindex ("berserk/bersrch1.wav");
 	sound_sight = gi.soundindex ("berserk/sight.wav");
+	sound_thud = gi.soundindex("mutant/thud1.wav");
+	sound_explod = gi.soundindex("world/explod2.wav");
+	sound_jump = gi.soundindex("berserk/jump.wav");
 
 	self->s.modelindex = gi.modelindex("models/monsters/berserk/tris.md2");
 
@@ -724,6 +925,9 @@ void init_drone_berserk (edict_t *self)
 	self->monsterinfo.cost = M_DEFAULT_COST;//FIXME
 	self->monsterinfo.jumpup = 64;
 	self->monsterinfo.jumpdn = 512;
+	self->monsterinfo.touchdown = NULL;
+	self->monsterinfo.lefty = 0;
+	self->gravity = 1.0f;
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
 	self->mtype = M_BERSERK;
 

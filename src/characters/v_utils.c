@@ -2054,6 +2054,8 @@ char *V_GetMonsterKind(int mtype) {
         case M_FLYER:
             return "flyer";
         case M_INFANTRY:
+            return "infantry";
+        case M_ENFORCER:
             return "enforcer";
         case M_INSANE:
         case M_RETARD:
@@ -2085,6 +2087,8 @@ char *V_GetMonsterKind(int mtype) {
         case M_TANK:
         case P_TANK:
             return "tank";
+        case M_TANK_N64:
+            return "n64 tank";
         case M_SUPERTANK:
             return "supertank";
         case M_BOSS5:
@@ -2109,6 +2113,8 @@ char *V_GetMonsterKind(int mtype) {
             return "gekk";
         case M_ARACHNID:
             return "arachnid";
+        case M_ARACHNID_HEAT:
+            return "arachnid heat";
         case M_BOSS2:
             return "hornet";
         case M_BOSS2_SMALL:

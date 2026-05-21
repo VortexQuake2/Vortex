@@ -764,6 +764,11 @@ static void fixbot_fire_blaster(edict_t *self)
 	AngleVectors(self->s.angles, forward, right, NULL);
 	G_ProjectSource(self->s.origin, monster_flash_offset[FIXBOT_BLASTER_FLASH], forward, right, start);
 	MonsterAim(self, M_PROJECTILE_ACC, speed, false, -1, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+	{
+		M_MonsterBlockedShot(self, 0.35f);
+		return;
+	}
 	VectorCopy(forward, base_forward);
 	monster_fire_blaster(self, start, forward, damage, speed, effect, BLASTER_PROJ_BOLT, 2.0f, false, FIXBOT_BLASTER_FLASH);
 

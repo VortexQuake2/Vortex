@@ -19,6 +19,10 @@ static int sound_melee_hit;
 
 #define ARACHNID_DEFAULT_SCALE		0.75f
 #define ARACHNID_INVASION_SCALE		0.60f
+#define ARACHNID_HEAT_DEFAULT_SCALE	0.85f
+#define ARACHNID_HEAT_INVASION_SCALE	0.68f
+#define ARACHNID_ATTACK_RECOVERY_TIME	0.5f
+#define ARACHNID_HEAT_TURN_FRACTION	0.095f
 #define ARACHNID_DODGE_SIDE_SPEED	280.0f
 #define ARACHNID_DODGE_UP_SPEED		250.0f
 #define ARACHNID_DODGE_SIDE_PROBE	64.0f
@@ -107,14 +111,18 @@ static void arachnid_run(edict_t *self)
 		self->monsterinfo.currentmove = &arachnid_move_run;
 }
 
+static void arachnid_finish_ranged_attack(edict_t *self)
+{
+	M_DelayNextAttack(self, ARACHNID_ATTACK_RECOVERY_TIME, false);
+	arachnid_run(self);
+}
+
 static void arachnid_charge_plasma(edict_t *self)
 {
 	if (!G_ValidTarget(self, self->enemy, true, true))
 		return;
 
 	gi.sound(self, CHAN_WEAPON, sound_charge, 1, ATTN_NORM, 0);
-	VectorCopy(self->enemy->s.origin, self->pos1);
-	self->pos1[2] += self->enemy->viewheight;
 }
 
 static int arachnid_plasma_flash(edict_t *self)
@@ -138,7 +146,7 @@ static int arachnid_plasma_flash(edict_t *self)
 static void arachnid_plasma(edict_t *self)
 {
 	int damage, speed, flash_number;
-	vec3_t start, forward, right, offset, dir;
+	vec3_t start, forward;
 
 	if (!G_ValidTarget(self, self->enemy, true, true))
 		return;
@@ -151,18 +159,12 @@ static void arachnid_plasma(edict_t *self)
 		speed = M_PLASMA_SPEED_MAX;
 
 	flash_number = arachnid_plasma_flash(self);
-
-	AngleVectors(self->s.angles, forward, right, NULL);
-	VectorCopy(monster_flash_offset[flash_number], offset);
-	if (self->s.scale)
-		VectorScale(offset, self->s.scale, offset);
-	G_ProjectSource(self->s.origin, offset, forward, right, start);
-	VectorSubtract(self->pos1, start, dir);
-	VectorNormalize(dir);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash_number, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
 
 	gi.sound(self, CHAN_WEAPON, sound_charge, 1, ATTN_NORM, 0);
-	fire_plasma(self, start, dir, damage, speed, M_PLASMA_DAMAGE_RADIUS, damage);
-	M_DelayNextAttack(self, 0, true);
+	fire_plasma(self, start, forward, damage, speed, M_PLASMA_DAMAGE_RADIUS, damage);
 }
 
 mframe_t arachnid_frames_attack1[] =
@@ -178,7 +180,7 @@ mframe_t arachnid_frames_attack1[] =
 	ai_charge, 0, arachnid_charge_plasma,
 	ai_charge, 0, NULL
 };
-mmove_t arachnid_move_attack1 = { FRAME_rails2, FRAME_rails11, arachnid_frames_attack1, arachnid_run };
+mmove_t arachnid_move_attack1 = { FRAME_rails2, FRAME_rails11, arachnid_frames_attack1, arachnid_finish_ranged_attack };
 
 mframe_t arachnid_frames_attack_up1[] =
 {
@@ -196,7 +198,86 @@ mframe_t arachnid_frames_attack_up1[] =
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL
 };
-mmove_t arachnid_move_attack_up1 = { FRAME_rails_up1, FRAME_rails_up13, arachnid_frames_attack_up1, arachnid_run };
+mmove_t arachnid_move_attack_up1 = { FRAME_rails_up1, FRAME_rails_up13, arachnid_frames_attack_up1, arachnid_finish_ranged_attack };
+
+static int arachnid_heat_flash(edict_t *self)
+{
+	switch (self->s.frame)
+	{
+	case FRAME_rails8:
+		return MZ2_ARACHNID_RAIL2;
+	case FRAME_rails_up4:
+	case FRAME_rails_up10:
+		return MZ2_ARACHNID_RAIL_UP1;
+	case FRAME_rails_up6:
+	case FRAME_rails_up12:
+		return MZ2_ARACHNID_RAIL_UP2;
+	case FRAME_rails6:
+	case FRAME_rails10:
+	default:
+		return MZ2_ARACHNID_RAIL1;
+	}
+}
+
+static void arachnid_heat_mark(edict_t *self)
+{
+	if (!G_ValidTarget(self, self->enemy, true, true))
+		return;
+}
+
+static void arachnid_heat(edict_t *self)
+{
+	int damage, speed, flash_number;
+	vec3_t start, forward;
+
+	if (!G_ValidTarget(self, self->enemy, true, true))
+		return;
+
+	damage = M_ROCKETLAUNCHER_DMG_BASE + M_ROCKETLAUNCHER_DMG_ADDON * drone_damagelevel(self);
+	if (M_ROCKETLAUNCHER_DMG_MAX && damage > M_ROCKETLAUNCHER_DMG_MAX)
+		damage = M_ROCKETLAUNCHER_DMG_MAX;
+	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * drone_damagelevel(self);
+	if (M_ROCKETLAUNCHER_SPEED_MAX && speed > M_ROCKETLAUNCHER_SPEED_MAX)
+		speed = M_ROCKETLAUNCHER_SPEED_MAX;
+
+	flash_number = arachnid_heat_flash(self);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, true, flash_number, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
+	monster_fire_heat(self, start, forward, damage, speed, flash_number, ARACHNID_HEAT_TURN_FRACTION);
+}
+
+mframe_t arachnid_heat_frames_attack1[] =
+{
+	ai_charge, 0, arachnid_heat_mark,
+	ai_charge, 0, arachnid_heat,
+	ai_charge, 0, NULL,
+	ai_charge, 0, arachnid_heat,
+	ai_charge, 0, NULL,
+	ai_charge, 0, arachnid_heat,
+	ai_charge, 0, NULL
+};
+mmove_t arachnid_heat_move_attack1 = { FRAME_rails5, FRAME_rails11, arachnid_heat_frames_attack1, arachnid_finish_ranged_attack };
+
+mframe_t arachnid_heat_frames_attack_up1[] =
+{
+	ai_charge, 0, arachnid_heat_mark,
+	ai_charge, 0, arachnid_heat,
+	ai_charge, 0, NULL,
+	ai_charge, 0, arachnid_heat,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, arachnid_heat,
+	ai_charge, 0, NULL,
+	ai_charge, 0, arachnid_heat,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL
+};
+mmove_t arachnid_heat_move_attack_up1 = { FRAME_rails_up3, FRAME_rails_up16, arachnid_heat_frames_attack_up1, arachnid_finish_ranged_attack };
 
 static void arachnid_jump_wait_land(edict_t *self)
 {
@@ -261,13 +342,29 @@ static qboolean arachnid_dodge_side_clear(edict_t *self, vec3_t right, float sid
 	return !tr.startsolid && !tr.allsolid && tr.fraction > 0.65f;
 }
 
-static qboolean arachnid_start_dodge_jump(edict_t *self, vec3_t dir)
+static qboolean arachnid_start_dodge_jump(edict_t *self, edict_t *attacker, vec3_t impact)
 {
-	vec3_t right;
+	vec3_t right, aim, diff;
 	float side_sign;
+	float side_dot;
+
+	if (G_EntIsAlive(attacker))
+		VectorSubtract(attacker->s.origin, self->s.origin, aim);
+	else
+		VectorSubtract(impact, self->s.origin, aim);
+	if (VectorLength(aim) > 1.0f)
+	{
+		self->ideal_yaw = vectoyaw(aim);
+		M_ChangeYaw(self);
+	}
 
 	AngleVectors(self->s.angles, NULL, right, NULL);
-	drone_set_dodge_side(self, dir);
+	VectorSubtract(impact, self->s.origin, diff);
+	side_dot = DotProduct(right, diff);
+	if (fabsf(side_dot) < 8.0f)
+		self->monsterinfo.lefty = random() < 0.5f;
+	else
+		drone_set_dodge_side(self, impact);
 	side_sign = arachnid_dodge_side_sign(self);
 
 	if (!arachnid_dodge_side_clear(self, right, side_sign))
@@ -302,7 +399,9 @@ static void arachnid_dodge(edict_t *self, edict_t *attacker, vec3_t dir, int rad
 		return;
 	if (self->monsterinfo.currentmove == &arachnid_move_melee ||
 		self->monsterinfo.currentmove == &arachnid_move_attack1 ||
-		self->monsterinfo.currentmove == &arachnid_move_attack_up1)
+		self->monsterinfo.currentmove == &arachnid_move_attack_up1 ||
+		self->monsterinfo.currentmove == &arachnid_heat_move_attack1 ||
+		self->monsterinfo.currentmove == &arachnid_heat_move_attack_up1)
 		return;
 
 	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(attacker))
@@ -312,7 +411,7 @@ static void arachnid_dodge(edict_t *self, edict_t *attacker, vec3_t dir, int rad
 	if (!radius && random() > 0.75f)
 		return;
 
-	if (!arachnid_start_dodge_jump(self, dir))
+	if (!arachnid_start_dodge_jump(self, attacker, dir))
 		self->monsterinfo.dodge_time = level.time + 0.3f;
 }
 
@@ -363,6 +462,20 @@ mframe_t arachnid_frames_melee[] =
 };
 mmove_t arachnid_move_melee = { FRAME_melee_atk1, FRAME_melee_atk12, arachnid_frames_melee, arachnid_run };
 
+static void arachnid_set_ranged_attack(edict_t *self)
+{
+	qboolean high_target;
+
+	if (!G_ValidTarget(self, self->enemy, true, true))
+		return;
+
+	high_target = (self->enemy->s.origin[2] - self->s.origin[2]) > 150;
+	if (self->mtype == M_ARACHNID_HEAT)
+		self->monsterinfo.currentmove = high_target ? &arachnid_heat_move_attack_up1 : &arachnid_heat_move_attack1;
+	else
+		self->monsterinfo.currentmove = high_target ? &arachnid_move_attack_up1 : &arachnid_move_attack1;
+}
+
 static void arachnid_attack(edict_t *self)
 {
 	if (!G_ValidTarget(self, self->enemy, true, true))
@@ -370,18 +483,23 @@ static void arachnid_attack(edict_t *self)
 
 	if (self->monsterinfo.melee_finished < level.time && entdist(self, self->enemy) < MELEE_DISTANCE)
 		self->monsterinfo.currentmove = &arachnid_move_melee;
-	else if ((self->enemy->s.origin[2] - self->s.origin[2]) > 150)
-		self->monsterinfo.currentmove = &arachnid_move_attack_up1;
 	else
-		self->monsterinfo.currentmove = &arachnid_move_attack1;
+		arachnid_set_ranged_attack(self);
 
 	M_DelayNextAttack(self, 0, true);
 }
 
+static void arachnid_heat_attack(edict_t *self)
+{
+	arachnid_attack(self);
+}
+
 static void arachnid_melee(edict_t *self)
 {
-	if (!G_ValidTarget(self, self->enemy, true, true) || entdist(self, self->enemy) > 96)
-		self->monsterinfo.currentmove = &arachnid_move_attack1;
+	if (!G_ValidTarget(self, self->enemy, true, true))
+		return;
+	if (entdist(self, self->enemy) > 96)
+		arachnid_set_ranged_attack(self);
 	else
 		self->monsterinfo.currentmove = &arachnid_move_melee;
 	M_DelayNextAttack(self, 0, true);
@@ -549,4 +667,16 @@ void init_drone_arachnid(edict_t *self)
 	self->monsterinfo.currentmove = &arachnid_move_stand;
 	self->monsterinfo.scale = MODEL_SCALE * self->s.scale;
 	self->nextthink = level.time + FRAMETIME;
+}
+
+void init_drone_arachnid_heat(edict_t *self)
+{
+	init_drone_arachnid(self);
+
+	self->mtype = M_ARACHNID_HEAT;
+	self->s.scale = invasion->value ? ARACHNID_HEAT_INVASION_SCALE : ARACHNID_HEAT_DEFAULT_SCALE;
+	self->monsterinfo.attack = arachnid_heat_attack;
+	self->monsterinfo.currentmove = &arachnid_move_stand;
+	self->monsterinfo.scale = MODEL_SCALE * self->s.scale;
+	gi.linkentity(self);
 }

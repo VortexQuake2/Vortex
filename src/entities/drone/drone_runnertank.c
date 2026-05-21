@@ -43,16 +43,8 @@ static void runnertank_update_skin(edict_t *self)
     if (self->max_health <= 0)
         return;
 
-    if (!skin_normal)
-        skin_normal = gi.imageindex(RUNNERTANK_NORMAL_SKIN);
-    if (!skin_pain)
-        skin_pain = gi.imageindex(RUNNERTANK_PAIN_SKIN);
-
-    self->s.renderfx |= RF_CUSTOMSKIN;
-    desired_skin = self->health < (self->max_health / 2) ? skin_pain : skin_normal;
-
-    if (desired_skin)
-        self->s.skinnum = desired_skin;
+	if (self->health < (self->max_health / 2))
+		self->s.skinnum = 1;
 }
 
 static void runnertank_ai_run(edict_t *self, float dist)

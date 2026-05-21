@@ -413,8 +413,10 @@ static const drone_gib_list_t *vrx_get_drone_gibs(edict_t *self)
 	case M_GLADC:
 		return &list_gladiator;
 	case M_INFANTRY:
+	case M_ENFORCER:
 		return &list_infantry;
 	case M_TANK:
+	case M_TANK_N64:
 	case M_COMMANDER:
 	case M_RUNNERTANK:
 		return &list_tank;
@@ -428,6 +430,7 @@ static const drone_gib_list_t *vrx_get_drone_gibs(edict_t *self)
 	case M_SHAMBLER:
 		return &list_shambler;
 	case M_ARACHNID:
+	case M_ARACHNID_HEAT:
 		return &list_arachnid;
 	case M_GEKK:
 		return &list_gekk;
@@ -479,7 +482,7 @@ static int vrx_get_drone_gib_skinnum(edict_t *self)
 
 static const char *vrx_get_drone_gib_model(edict_t *self, const drone_gib_t *gib)
 {
-	if (self->mtype == M_INFANTRY && (gib->type & GIB_HEAD) &&
+	if ((self->mtype == M_INFANTRY || self->mtype == M_ENFORCER) && (gib->type & GIB_HEAD) &&
 		!strcmp(gib->model, "models/monsters/infantry/gibs/head.md2") &&
 		self->monsterinfo.currentmove != &infantry_move_death3)
 		return "models/objects/gibs/sm_meat/tris.md2";
@@ -543,7 +546,7 @@ qboolean vrx_throw_drone_gibs(edict_t *self, int damage)
 
 	vrx_throw_drone_gib_list(self, damage, list);
 
-	if ((self->mtype == M_TANK || self->mtype == M_COMMANDER || self->mtype == M_RUNNERTANK) && !self->style)
+	if ((self->mtype == M_TANK || self->mtype == M_TANK_N64 || self->mtype == M_COMMANDER || self->mtype == M_RUNNERTANK) && !self->style)
 	{
 		edict_t *arm = ThrowGibEx(self, "models/monsters/tank/gibs/barm.md2", damage, GIB_SKINNED | GIB_UPRIGHT,
 			self->s.scale ? self->s.scale : 1.0f);

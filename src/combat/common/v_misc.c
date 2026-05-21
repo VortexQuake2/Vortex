@@ -252,10 +252,12 @@ static enum dronespawn_t vrx_pvm_random_drone_type(void)
 		DS_BRAIN,
 		DS_MEDIC,
 		DS_TANK,
+		DS_TANK_N64,
 		DS_MUTANT,
 		DS_GLADIATOR,
 		DS_BERSERK,
 		DS_INFANTRY,
+		DS_ENFORCER,
 		DS_FLYER,
 		DS_FLOATER,
 		DS_HOVER,
@@ -270,6 +272,7 @@ static enum dronespawn_t vrx_pvm_random_drone_type(void)
 		DS_GEKK,
 		DS_BITCH_HEAT,
 		DS_ARACHNID,
+		DS_ARACHNID_HEAT,
 		DS_MEDIC_COMMANDER,
 		DS_FIXBOT,
 		DS_BOSS2_SMALL,
@@ -626,6 +629,7 @@ int vrx_GetMonsterCost(int mtype) {
             cost = M_SOLDIER_COST;
             break;
         case M_INFANTRY:
+        case M_ENFORCER:
             cost = M_ENFORCER_COST;
             break;
         case M_GUNNER:
@@ -649,6 +653,7 @@ int vrx_GetMonsterCost(int mtype) {
             break;
 		case M_RUNNERTANK:
         case M_TANK:
+		case M_TANK_N64:
             cost = M_TANK_COST; 
             break;
         case M_HOVER:
@@ -677,6 +682,7 @@ int vrx_GetMonsterCost(int mtype) {
             cost = M_MUTANT_COST;
             break;
         case M_ARACHNID:
+        case M_ARACHNID_HEAT:
             cost = M_DEFAULT_COST;
             break;
         case M_CARRIER:
@@ -729,6 +735,7 @@ int vrx_GetMonsterControlCost(int mtype) {
             cost = M_SOLDIER_CONTROL_COST;
             break;
         case M_INFANTRY:
+        case M_ENFORCER:
             cost = M_ENFORCER_CONTROL_COST;
             break;
         case M_GUNNER:
@@ -751,6 +758,7 @@ int vrx_GetMonsterControlCost(int mtype) {
             cost = M_BRAIN_CONTROL_COST;
             break;
         case M_TANK:
+		case M_TANK_N64:
             cost = M_TANK_CONTROL_COST;
             break;
         case M_SHAMBLER:
@@ -776,6 +784,7 @@ int vrx_GetMonsterControlCost(int mtype) {
             cost = M_MUTANT_CONTROL_COST;
             break;
         case M_ARACHNID:
+        case M_ARACHNID_HEAT:
             cost = M_GLADIATOR_CONTROL_COST;
             break;
         case M_CARRIER:

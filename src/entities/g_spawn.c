@@ -101,6 +101,7 @@ void SP_monster_berserk (edict_t *self);
 void SP_monster_gladiator (edict_t *self);
 void SP_monster_gunner (edict_t *self);
 void SP_monster_infantry (edict_t *self);
+void SP_monster_enforcer(edict_t *self);
 void SP_monster_soldier_light (edict_t *self);
 void SP_monster_soldier (edict_t *self);
 void SP_monster_soldier_ss (edict_t *self);
@@ -294,6 +295,7 @@ spawn_t	spawns[] = {
 	{"monster_brain", SP_monster_brain},
 	{"monster_mutant", SP_monster_mutant},
 	{"monster_infantry", SP_monster_infantry},
+	{"monster_enforcer", SP_monster_enforcer},
 	// {"monster_soldier_light", SP_monster_soldier_light},
 
 //GHz START
@@ -1162,7 +1164,13 @@ void SP_monster_tank_commander(edict_t *ent)
 void SP_monster_infantry(edict_t *ent) 
 {
 	if (coop->value)
-        vrx_create_drone_from_ent(ent, g_edicts, 11, true, true, 0);
+        vrx_create_drone_from_ent(ent, g_edicts, DS_INFANTRY, true, true, 0);
+}
+
+void SP_monster_enforcer(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_ENFORCER, true, true, 0);
 }
 
 void SP_monster_medic(edict_t *ent) 

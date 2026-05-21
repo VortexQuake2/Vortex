@@ -596,6 +596,10 @@ mmove_t redmutant_move_pain3 = { FRAME_pain301, FRAME_pain311, redmutant_frames_
 
 static void redmutant_pain(edict_t *self, edict_t *other, float kick, int damage)
 {
+
+	if (self->health < (self->max_health / 2))
+	self->s.skinnum = 1;
+
 	float r;
 
 	if (level.time < self->pain_debounce_time)

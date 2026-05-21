@@ -112,6 +112,7 @@ field_t		savefields[] =
 	// {"", FOFS(mynoise2), F_EDICT},
 	{ "", FOFS(target_ent), F_EDICT },
 	{ "", FOFS(chain), F_EDICT },
+	{ "", FOFS(proboscis), F_EDICT },
 
 	{ NULL, 0, F_INT }
 };

@@ -26,6 +26,7 @@ extern mmove_t hover_move_pain3;
 extern mmove_t hover_move_death1;
 
 static void daedalus_run(edict_t *self);
+static void daedalus_select_attack(edict_t *self);
 static void daedalus_reattack(edict_t *self);
 static void daedalus_fire_grenade(edict_t *self);
 
@@ -71,6 +72,14 @@ static void daedalus_run(edict_t *self)
 	else
 		self->monsterinfo.currentmove = &hover_move_run;
 }
+
+mframe_t daedalus_frames_start_attack[] =
+{
+	ai_charge, 1, NULL,
+	ai_charge, 1, NULL,
+	ai_charge, 1, NULL
+};
+mmove_t daedalus_move_start_attack = { FRAME_attak101, FRAME_attak103, daedalus_frames_start_attack, daedalus_select_attack };
 
 mframe_t daedalus_frames_attack[] =
 {
@@ -141,7 +150,7 @@ static void daedalus_reattack(edict_t *self)
 		self->monsterinfo.currentmove = &daedalus_move_end_attack;
 }
 
-static void daedalus_attack(edict_t *self)
+static void daedalus_select_attack(edict_t *self)
 {
 	if (random() < 0.65f)
 	{
@@ -155,6 +164,11 @@ static void daedalus_attack(edict_t *self)
 		self->monsterinfo.attack_state = AS_SLIDING;
 		self->monsterinfo.currentmove = &daedalus_move_attack_slide;
 	}
+}
+
+static void daedalus_attack(edict_t *self)
+{
+	self->monsterinfo.currentmove = &daedalus_move_start_attack;
 }
 
 static void daedalus_pain(edict_t *self, edict_t *other, float kick, int damage)
