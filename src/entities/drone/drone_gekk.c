@@ -1092,11 +1092,26 @@ static void gekk_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int d
 
 	M_Notify(self);
 
+#ifdef OLD_NOLAG_STYLE
+	if (nolag->value)
+	{
+		M_Remove(self, false, true);
+		return;
+	}
+#endif
+
 	if (self->health <= self->gib_health)
 	{
 		gi.sound(self, CHAN_VOICE, gi.soundindex("misc/udeath.wav"), 1, ATTN_NORM, 0);
 		vrx_throw_drone_gibs(self, damage);
+#ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);
+#else
+		if (nolag->value)
+			M_Remove(self, false, true);
+		else
+			M_Remove(self, false, false);
+#endif
 		return;
 	}
 
