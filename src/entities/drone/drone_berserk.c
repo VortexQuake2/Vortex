@@ -27,12 +27,12 @@ void berserk_melee(edict_t *self);
 extern mmove_t berserk_move_attack_strike;
 
 #define BERSERK_CLOSE_MELEE_RANGE	MELEE_DISTANCE
-#define BERSERK_RUN_ATTACK_RANGE	500.0f
-#define BERSERK_SLAM_MIN_RANGE		150.0f
-#define BERSERK_SLAM_COOLDOWN		5.0f
-#define BERSERK_SLAM_TIMEOUT		3.0f
-#define BERSERK_SLAM_RADIUS			165.0f
-#define BERSERK_SLAM_KICK			300.0f
+static constexpr float BERSERK_RUN_ATTACK_RANGE = 500.0f;
+static constexpr float BERSERK_SLAM_MIN_RANGE = 150.0f;
+static constexpr float BERSERK_SLAM_COOLDOWN = 5.0f;
+static constexpr float BERSERK_SLAM_TIMEOUT = 3.0f;
+static constexpr float BERSERK_SLAM_RADIUS = 165.0f;
+static constexpr float BERSERK_SLAM_KICK = 300.0f;
 
 
 void berserk_sight (edict_t *self, edict_t *other)

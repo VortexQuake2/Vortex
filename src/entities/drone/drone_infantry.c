@@ -28,22 +28,22 @@ static int	sound_search;
 static int	sound_idle;
 static int	sound_grenade_pin;
 
-#define INFANTRY_RUN_ATTACK_MIN_DIST 256
-#define INFANTRY_MELEE_RANGE 64
-#define INFANTRY_GRENADE_TIMER 2.5f
-#define INFANTRY_GRENADE_DAMAGE_RADIUS 150.0f
-#define INFANTRY_GRENADE_RADIUS_DAMAGE 100
-#define INFANTRY_DEATH_GRENADE_FUSE 1.0f
-#define INFANTRY_DEATH_GRENADE_MIN_FUSE 0.2f
-#define INFANTRY_DEATH_GRENADE_DROP_CHANCE 0.45f
-#define ENFORCER_SCALE 1.15f
+static constexpr int INFANTRY_RUN_ATTACK_MIN_DIST = 256;
+static constexpr int INFANTRY_MELEE_RANGE = 64;
+static constexpr float INFANTRY_GRENADE_TIMER = 2.5f;
+static constexpr float INFANTRY_GRENADE_DAMAGE_RADIUS = 150.0f;
+static constexpr int INFANTRY_GRENADE_RADIUS_DAMAGE = 100;
+static constexpr float INFANTRY_DEATH_GRENADE_FUSE = 1.0f;
+static constexpr float INFANTRY_DEATH_GRENADE_MIN_FUSE = 0.2f;
+static constexpr float INFANTRY_DEATH_GRENADE_DROP_CHANCE = 0.45f;
+static constexpr float ENFORCER_SCALE = 1.15f;
 #define ENFORCER_BLASTER_FLASH MZ2_MEDIC_HYPERBLASTER1_5
-#define INFANTRY_MINS_X -16.0f
-#define INFANTRY_MINS_Y -16.0f
-#define INFANTRY_MINS_Z -24.0f
-#define INFANTRY_MAXS_X 16.0f
-#define INFANTRY_MAXS_Y 16.0f
-#define INFANTRY_MAXS_Z 32.0f
+static constexpr float INFANTRY_MINS_X = -16.0f;
+static constexpr float INFANTRY_MINS_Y = -16.0f;
+static constexpr float INFANTRY_MINS_Z = -24.0f;
+static constexpr float INFANTRY_MAXS_X = 16.0f;
+static constexpr float INFANTRY_MAXS_Y = 16.0f;
+static constexpr float INFANTRY_MAXS_Z = 32.0f;
 
 static void infantry_fire(edict_t *self);
 static void infantry_run_fire(edict_t *self);

@@ -8,31 +8,31 @@ fixbot
 
 #include "g_local.h"
 
-#define FIXBOT_FRAME_charging_01	0
-#define FIXBOT_FRAME_charging_27	26
-#define FIXBOT_FRAME_charging_31	30
-#define FIXBOT_FRAME_ambient_01		121
-#define FIXBOT_FRAME_ambient_19		139
-#define FIXBOT_FRAME_paina_01		140
-#define FIXBOT_FRAME_paina_06		145
-#define FIXBOT_FRAME_painb_01		146
-#define FIXBOT_FRAME_painb_08		153
-#define FIXBOT_FRAME_freeze_01		181
-#define FIXBOT_FRAME_weldstart_01	188
-#define FIXBOT_FRAME_weldstart_07	194
+static constexpr int FIXBOT_FRAME_charging_01 = 0;
+static constexpr int FIXBOT_FRAME_charging_27 = 26;
+static constexpr int FIXBOT_FRAME_charging_31 = 30;
+static constexpr int FIXBOT_FRAME_ambient_01 = 121;
+static constexpr int FIXBOT_FRAME_ambient_19 = 139;
+static constexpr int FIXBOT_FRAME_paina_01 = 140;
+static constexpr int FIXBOT_FRAME_paina_06 = 145;
+static constexpr int FIXBOT_FRAME_painb_01 = 146;
+static constexpr int FIXBOT_FRAME_painb_08 = 153;
+static constexpr int FIXBOT_FRAME_freeze_01 = 181;
+static constexpr int FIXBOT_FRAME_weldstart_01 = 188;
+static constexpr int FIXBOT_FRAME_weldstart_07 = 194;
 
-#define FIXBOT_BOSS_TURRET_MAX		6
-#define FIXBOT_BOSS_SPAWN_COOLDOWN	8.0f
-#define FIXBOT_BOSS_FAIL_COOLDOWN	2.0f
+static constexpr int FIXBOT_BOSS_TURRET_MAX = 6;
+static constexpr float FIXBOT_BOSS_SPAWN_COOLDOWN = 8.0f;
+static constexpr float FIXBOT_BOSS_FAIL_COOLDOWN = 2.0f;
 #define FIXBOT_BLASTER_FLASH			MZ2_HOVER_BLASTER_1
-#define FIXBOT_BOSS_DEFAULT_SCALE		2.6f
-#define FIXBOT_BOSS_INVASION_SCALE		2.0f
-#define FIXBOT_BOSS_INVASION_MOVE_SCALE	1.5f
-#define FIXBOT_SPAWN_YAW_SPEED			12.0f
-#define FIXBOT_SPAWN_PITCH_SPEED		12.0f
-#define FIXBOT_SPAWN_AIM_TIMEOUT		2.0f
-#define FIXBOT_SPAWN_AIM_EPSILON		5.0f
-#define FIXBOT_NO_SPAWN_YAW			-99999.0f
+static constexpr float FIXBOT_BOSS_DEFAULT_SCALE = 2.6f;
+static constexpr float FIXBOT_BOSS_INVASION_SCALE = 2.0f;
+static constexpr float FIXBOT_BOSS_INVASION_MOVE_SCALE = 1.5f;
+static constexpr float FIXBOT_SPAWN_YAW_SPEED = 12.0f;
+static constexpr float FIXBOT_SPAWN_PITCH_SPEED = 12.0f;
+static constexpr float FIXBOT_SPAWN_AIM_TIMEOUT = 2.0f;
+static constexpr float FIXBOT_SPAWN_AIM_EPSILON = 5.0f;
+static constexpr float FIXBOT_NO_SPAWN_YAW = -99999.0f;
 
 static int sound_pain;
 static int sound_die;

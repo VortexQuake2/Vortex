@@ -8,35 +8,35 @@ black widow 2
 
 #include "g_local.h"
 
-#define WIDOW2_FRAME_blackwidow3	0
-#define WIDOW2_FRAME_walk01			1
-#define WIDOW2_FRAME_walk09			9
-#define WIDOW2_FRAME_spawn01		10
-#define WIDOW2_FRAME_spawn04		13
-#define WIDOW2_FRAME_spawn14		23
-#define WIDOW2_FRAME_spawn18		27
-#define WIDOW2_FRAME_firea01		28
-#define WIDOW2_FRAME_firea07		34
-#define WIDOW2_FRAME_fireb01		35
-#define WIDOW2_FRAME_fireb04		38
-#define WIDOW2_FRAME_fireb05		39
-#define WIDOW2_FRAME_fireb09		43
-#define WIDOW2_FRAME_tongs01		47
-#define WIDOW2_FRAME_tongs08		54
-#define WIDOW2_FRAME_pain01			55
-#define WIDOW2_FRAME_pain05			59
-#define WIDOW2_FRAME_death01		60
-#define WIDOW2_FRAME_death44		103
-#define WIDOW2_FRAME_dthsrh01		104
-#define WIDOW2_FRAME_dthsrh15		118
-#define WIDOW2_FRAME_dthsrh16		119
-#define WIDOW2_FRAME_dthsrh22		125
+static constexpr int WIDOW2_FRAME_blackwidow3 = 0;
+static constexpr int WIDOW2_FRAME_walk01 = 1;
+static constexpr int WIDOW2_FRAME_walk09 = 9;
+static constexpr int WIDOW2_FRAME_spawn01 = 10;
+static constexpr int WIDOW2_FRAME_spawn04 = 13;
+static constexpr int WIDOW2_FRAME_spawn14 = 23;
+static constexpr int WIDOW2_FRAME_spawn18 = 27;
+static constexpr int WIDOW2_FRAME_firea01 = 28;
+static constexpr int WIDOW2_FRAME_firea07 = 34;
+static constexpr int WIDOW2_FRAME_fireb01 = 35;
+static constexpr int WIDOW2_FRAME_fireb04 = 38;
+static constexpr int WIDOW2_FRAME_fireb05 = 39;
+static constexpr int WIDOW2_FRAME_fireb09 = 43;
+static constexpr int WIDOW2_FRAME_tongs01 = 47;
+static constexpr int WIDOW2_FRAME_tongs08 = 54;
+static constexpr int WIDOW2_FRAME_pain01 = 55;
+static constexpr int WIDOW2_FRAME_pain05 = 59;
+static constexpr int WIDOW2_FRAME_death01 = 60;
+static constexpr int WIDOW2_FRAME_death44 = 103;
+static constexpr int WIDOW2_FRAME_dthsrh01 = 104;
+static constexpr int WIDOW2_FRAME_dthsrh15 = 118;
+static constexpr int WIDOW2_FRAME_dthsrh16 = 119;
+static constexpr int WIDOW2_FRAME_dthsrh22 = 125;
 
-#define WIDOW2_SUMMON_COUNT			2
-#define WIDOW2_SUMMON_COOLDOWN		10.0f
-#define WIDOW2_MELEE_RANGE			256.0f
-#define WIDOW2_INVASION_SCALE		0.60f
-#define WIDOW2_INVASION_MOVE_SCALE	1.75f
+static constexpr int WIDOW2_SUMMON_COUNT = 2;
+static constexpr float WIDOW2_SUMMON_COOLDOWN = 10.0f;
+static constexpr float WIDOW2_MELEE_RANGE = 256.0f;
+static constexpr float WIDOW2_INVASION_SCALE = 0.60f;
+static constexpr float WIDOW2_INVASION_MOVE_SCALE = 1.75f;
 
 static int sound_pain1;
 static int sound_pain2;

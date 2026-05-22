@@ -22,24 +22,24 @@ static int	sound_sproing;
 static int	sound_die;
 static int	sound_laser;
 
-#define FLYER_ROCKET_MIN_SPEED			850
-#define FLYER_ROCKET_ATTACK_CHANCE		0.25f
-#define FLYER_ROCKET_BONUS_ATTACK_CHANCE	0.55f
-#define FLYER_ROCKET_REFIRE_CHANCE		0.07f
-#define FLYER_ROCKET_STRAFE_RANGE		768.0f
-#define FLYER_ROCKET_STRAFE_PROBE		192.0f
-#define FLYER_ROCKET_STRAFE_PIN_TIME	0.35f
-#define FLYER_LASER_ATTACK_CHANCE		0.10f
-#define FLYER_LASER_SIGHT_SCAN			10.0f
-#define FLYER_LASER_PIN_TIME			0.45f
-#define FLYER_LASER_AIM_BLEND			0.30f
-#define FLYER_LASER_FAST_AIM_BLEND		0.18f
-#define FLYER_LASER_FAST_TARGET_SPEED	180.0f
-#define FLYER_LASER_AIM_RESET_TIME		0.45f
-#define FLYER_RANGED_MIN_DISTANCE		180.0f
-#define FLYER_RANGED_MAX_DISTANCE		360.0f
-#define FLYER_MELEE_APPROACH_RANGE		225.0f
-#define FLYER_MELEE_Z_TOLERANCE			72.0f
+static constexpr int FLYER_ROCKET_MIN_SPEED = 850;
+static constexpr float FLYER_ROCKET_ATTACK_CHANCE = 0.25f;
+static constexpr float FLYER_ROCKET_BONUS_ATTACK_CHANCE = 0.55f;
+static constexpr float FLYER_ROCKET_REFIRE_CHANCE = 0.07f;
+static constexpr float FLYER_ROCKET_STRAFE_RANGE = 768.0f;
+static constexpr float FLYER_ROCKET_STRAFE_PROBE = 192.0f;
+static constexpr float FLYER_ROCKET_STRAFE_PIN_TIME = 0.35f;
+static constexpr float FLYER_LASER_ATTACK_CHANCE = 0.10f;
+static constexpr float FLYER_LASER_SIGHT_SCAN = 10.0f;
+static constexpr float FLYER_LASER_PIN_TIME = 0.45f;
+static constexpr float FLYER_LASER_AIM_BLEND = 0.30f;
+static constexpr float FLYER_LASER_FAST_AIM_BLEND = 0.18f;
+static constexpr float FLYER_LASER_FAST_TARGET_SPEED = 180.0f;
+static constexpr float FLYER_LASER_AIM_RESET_TIME = 0.45f;
+static constexpr float FLYER_RANGED_MIN_DISTANCE = 180.0f;
+static constexpr float FLYER_RANGED_MAX_DISTANCE = 360.0f;
+static constexpr float FLYER_MELEE_APPROACH_RANGE = 225.0f;
+static constexpr float FLYER_MELEE_Z_TOLERANCE = 72.0f;
 
 
 void flyer_check_melee(edict_t *self);

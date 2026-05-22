@@ -18,10 +18,10 @@ static int	sound_pain1;
 static int	sound_pain2;
 static int	sound_sight;
 
-#define FLOATER_RANGED_MIN_DISTANCE		180.0f
-#define FLOATER_RANGED_MAX_DISTANCE		360.0f
-#define FLOATER_MELEE_SPEED			210.0f
-#define FLOATER_MELEE_ACCELERATION		20.0f
+static constexpr float FLOATER_RANGED_MIN_DISTANCE = 180.0f;
+static constexpr float FLOATER_RANGED_MAX_DISTANCE = 360.0f;
+static constexpr float FLOATER_MELEE_SPEED = 210.0f;
+static constexpr float FLOATER_MELEE_ACCELERATION = 20.0f;
 
 void drone_ai_stand (edict_t *self, float dist);
 void drone_ai_run (edict_t *self, float dist);

@@ -16,12 +16,12 @@ static int sound_punch_hit1;
 static int sound_punch_hit2;
 static int sound_idle;
 
-#define STALKER_CEILING_NONE 0
-#define STALKER_CEILING_ON 1
-#define STALKER_CEILING_JUMPING 2
-#define STALKER_CEILING_TRACE_DIST 256
-#define STALKER_CEILING_JUMP_SPEED 550
-#define STALKER_CEILING_MIN_SPEED 360
+static constexpr int STALKER_CEILING_NONE = 0;
+static constexpr int STALKER_CEILING_ON = 1;
+static constexpr int STALKER_CEILING_JUMPING = 2;
+static constexpr int STALKER_CEILING_TRACE_DIST = 256;
+static constexpr int STALKER_CEILING_JUMP_SPEED = 550;
+static constexpr int STALKER_CEILING_MIN_SPEED = 360;
 
 void drone_ai_stand(edict_t *self, float dist);
 void drone_ai_run(edict_t *self, float dist);

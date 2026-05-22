@@ -23,8 +23,8 @@ static int	sound_step2;
 static int	sound_step3;
 static int	sound_thud;
 
-#define MUTANT_SEARCH_SOUND_MIN_DELAY	15.0f
-#define MUTANT_SEARCH_SOUND_RANDOM_DELAY	15.0f
+static constexpr float MUTANT_SEARCH_SOUND_MIN_DELAY = 15.0f;
+static constexpr float MUTANT_SEARCH_SOUND_RANDOM_DELAY = 15.0f;
 
 void mutant_jump (edict_t *self);
 extern mmove_t mutant_move_pain_short1;

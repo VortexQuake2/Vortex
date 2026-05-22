@@ -36,16 +36,16 @@ void myparasite_continue (edict_t *self);
 extern mmove_t myparasite_move_break;
 extern mmove_t myparasite_move_fire_proboscis;
 
-#define PARASITE_PROBOSCIS_SPEED 1250
-#define PARASITE_PROBOSCIS_RETRACT_MODIFIER 2.0f
-#define PARASITE_PROBOSCIS_DRAIN_INTERVAL 0.1f
-#define PARASITE_PROBOSCIS_RANGE 128.0f
-#define PARASITE_PROBOSCIS_IMPACT_DAMAGE 5
+static constexpr int PARASITE_PROBOSCIS_SPEED = 1250;
+static constexpr float PARASITE_PROBOSCIS_RETRACT_MODIFIER = 2.0f;
+static constexpr float PARASITE_PROBOSCIS_DRAIN_INTERVAL = 0.1f;
+static constexpr float PARASITE_PROBOSCIS_RANGE = 128.0f;
+static constexpr int PARASITE_PROBOSCIS_IMPACT_DAMAGE = 5;
 
-#define PROBOSCIS_FLYING 0
-#define PROBOSCIS_LATCHED 1
-#define PROBOSCIS_RETRACTING 2
-#define PROBOSCIS_DONE 3
+static constexpr int PROBOSCIS_FLYING = 0;
+static constexpr int PROBOSCIS_LATCHED = 1;
+static constexpr int PROBOSCIS_RETRACTING = 2;
+static constexpr int PROBOSCIS_DONE = 3;
 
 static const vec3_t parasite_break_offsets[] = {
 	{ 7.0f, 0, 7.0f },

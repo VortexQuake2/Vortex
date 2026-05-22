@@ -23,8 +23,8 @@ static int sound_step2;
 static int sound_step3;
 static int sound_thud;
 
-#define REDMUTANT_STAND_MAX_Z 36
-#define REDMUTANT_IDLE_MAX_Z 56
+static constexpr int REDMUTANT_STAND_MAX_Z = 36;
+static constexpr int REDMUTANT_IDLE_MAX_Z = 56;
 
 static void redmutant_set_bbox_height(edict_t *self, float max_z)
 {

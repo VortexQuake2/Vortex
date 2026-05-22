@@ -436,77 +436,77 @@ qboolean M_MoveVertical(edict_t* ent, vec3_t dest, vec3_t neworg)
 	return false;
 }
 
-#define FLY_POSITION_UPDATE_MIN			3.0f
-#define FLY_POSITION_UPDATE_MAX			10.0f
-#define FLY_TURN_FACTOR_FAST			0.45f
-#define FLY_TURN_FACTOR_BASE			0.84f
-#define FLY_TURN_FACTOR_SPEED_SCALE		0.08f
-#define FLY_PITCH_LERP_SPEED			4.0f
-#define FLY_WALL_STUCK_THRESHOLD		1.5f
-#define FLY_DESCENT_SPEED_MULTIPLIER	0.6f
-#define FLY_TARGET_LEAD_TIME			0.45f
-#define FLY_CATCHUP_MARGIN				32.0f
-#define FLY_CATCHUP_DISTANCE_SCALE		0.85f
-#define FLY_ATTACK_DISTANCE_FRACTION	0.2f
-#define FLY_ATTACK_SPEED_SCALE			1.35f
-#define FLY_ATTACK_ACCEL_SCALE			1.6f
-#define FLY_LOS_PRESERVE_SPEED_SCALE	1.12f
-#define FLY_LOS_PRESERVE_ACCEL_SCALE	1.30f
-#define FLY_LOS_PRESERVE_TURN_FACTOR	0.32f
-#define FLY_LOS_PRESSURE_SNAP_DOT		0.0f
-#define FLY_LOS_FULL_SIGHT_FRACTION		0.98f
-#define FLY_LOS_SIDE_SWITCH_SPEED		64.0f
-#define FLY_LOS_PRESERVE_PROBE			72.0f
-#define FLY_LOS_PRESERVE_MIN_FRACTION	0.25f
-#define FLY_LOS_PRESERVE_SIDE_WEIGHT	1.05f
-#define FLY_LOS_PRESERVE_FWD_WEIGHT		0.75f
-#define FLY_LOS_PRESERVE_WALL_WEIGHT	0.35f
-#define FLY_LOS_PRESERVE_DOWN_WEIGHT	0.55f
-#define FLY_LOS_PREVENT_LEAD_TIME		0.45f
-#define FLY_LOS_PREVENT_THRESHOLD		0.86f
-#define FLY_LOS_PREVENT_MIN_GAIN		0.10f
-#define FLY_LOS_PREVENT_ALLOWED_DROP	0.06f
-#define FLY_LOS_PREVENT_PROBE			96.0f
-#define FLY_LOS_PREVENT_SIDE_WEIGHT		1.15f
-#define FLY_LOS_PREVENT_FWD_WEIGHT		0.85f
-#define FLY_LOS_PREVENT_DOWN_WEIGHT		0.35f
-#define FLY_LOS_RECOVER_MEMORY_TIME		1.6f
-#define FLY_LOS_RECOVER_LAST_SEEN_RANGE	512.0f
-#define FLY_LOS_RECOVER_MAX_RANGE		1200.0f
-#define FLY_LOS_RECOVER_PROBE			96.0f
-#define FLY_LOS_RECOVER_MIN_GAIN		0.08f
-#define FLY_LOS_RECOVER_SIDE_WEIGHT		1.20f
-#define FLY_LOS_RECOVER_FWD_WEIGHT		0.80f
-#define FLY_LOS_RECOVER_DOWN_WEIGHT		0.45f
-#define FLY_ATTACK_STRAFE_SPEED_SCALE	0.6f
-#define FLY_ATTACK_DRIFT_SPEED_SCALE	0.3f
-#define FLY_ATTACK_STRAFE_MIN			32.0f
-#define FLY_ATTACK_STRAFE_MAX			128.0f
-#define FLY_ATTACK_ORBIT_DISTANCE		48.0f
-#define FLY_ATTACK_HEIGHT_VARIANCE		56.0f
-#define FLY_TARGET_STRAFE_MIN_SPEED		20.0f
-#define FLY_TARGET_STRAFE_DISTANCE_SCALE	0.45f
-#define FLY_COMBAT_MIN_HEIGHT			48.0f
-#define FLY_COMBAT_HEIGHT_ABOVE_VIEW	24.0f
-#define FLY_LOWER_TARGET_DESCENT_HEIGHT	96.0f
-#define FLY_LOWER_TARGET_MIN_HEIGHT		16.0f
-#define FLY_BLOCKED_DESCENT_HEIGHT		32.0f
-#define FLY_BLOCKED_DESCENT_XY_SCALE	0.45f
-#define FLY_COMBAT_WALL_STUCK_THRESHOLD	0.35f
-#define FLY_STAIR_CLIMB_MIN_HEIGHT		24.0f
-#define FLY_STAIR_CLIMB_MAX_HEIGHT		320.0f
-#define FLY_STAIR_CLIMB_MAX_RANGE		420.0f
-#define FLY_STAIR_CLIMB_PROBE			64.0f
-#define FLY_STAIR_CLIMB_MIN_FRACTION	0.60f
-#define FLY_STAIR_CLIMB_MIN_GAIN		4.0f
-#define FLY_STAIR_CLIMB_FWD_WEIGHT		0.90f
-#define FLY_STAIR_CLIMB_UP_WEIGHT		0.75f
-#define FLY_CEILING_LOOKAHEAD			256.0f
-#define FLY_CEILING_CLEARANCE			8.0f
-#define FLY_SEPARATION_RADIUS			112.0f
-#define FLY_SEPARATION_MAX_PUSH			96.0f
-#define FLY_SEPARATION_Z_SCALE			0.45f
-#define FLY_SEPARATION_MAX_NEIGHBORS	24
+static constexpr float FLY_POSITION_UPDATE_MIN = 3.0f;
+static constexpr float FLY_POSITION_UPDATE_MAX = 10.0f;
+static constexpr float FLY_TURN_FACTOR_FAST = 0.45f;
+static constexpr float FLY_TURN_FACTOR_BASE = 0.84f;
+static constexpr float FLY_TURN_FACTOR_SPEED_SCALE = 0.08f;
+static constexpr float FLY_PITCH_LERP_SPEED = 4.0f;
+static constexpr float FLY_WALL_STUCK_THRESHOLD = 1.5f;
+static constexpr float FLY_DESCENT_SPEED_MULTIPLIER = 0.6f;
+static constexpr float FLY_TARGET_LEAD_TIME = 0.45f;
+static constexpr float FLY_CATCHUP_MARGIN = 32.0f;
+static constexpr float FLY_CATCHUP_DISTANCE_SCALE = 0.85f;
+static constexpr float FLY_ATTACK_DISTANCE_FRACTION = 0.2f;
+static constexpr float FLY_ATTACK_SPEED_SCALE = 1.35f;
+static constexpr float FLY_ATTACK_ACCEL_SCALE = 1.6f;
+static constexpr float FLY_LOS_PRESERVE_SPEED_SCALE = 1.12f;
+static constexpr float FLY_LOS_PRESERVE_ACCEL_SCALE = 1.30f;
+static constexpr float FLY_LOS_PRESERVE_TURN_FACTOR = 0.32f;
+static constexpr float FLY_LOS_PRESSURE_SNAP_DOT = 0.0f;
+static constexpr float FLY_LOS_FULL_SIGHT_FRACTION = 0.98f;
+static constexpr float FLY_LOS_SIDE_SWITCH_SPEED = 64.0f;
+static constexpr float FLY_LOS_PRESERVE_PROBE = 72.0f;
+static constexpr float FLY_LOS_PRESERVE_MIN_FRACTION = 0.25f;
+static constexpr float FLY_LOS_PRESERVE_SIDE_WEIGHT = 1.05f;
+static constexpr float FLY_LOS_PRESERVE_FWD_WEIGHT = 0.75f;
+static constexpr float FLY_LOS_PRESERVE_WALL_WEIGHT = 0.35f;
+static constexpr float FLY_LOS_PRESERVE_DOWN_WEIGHT = 0.55f;
+static constexpr float FLY_LOS_PREVENT_LEAD_TIME = 0.45f;
+static constexpr float FLY_LOS_PREVENT_THRESHOLD = 0.86f;
+static constexpr float FLY_LOS_PREVENT_MIN_GAIN = 0.10f;
+static constexpr float FLY_LOS_PREVENT_ALLOWED_DROP = 0.06f;
+static constexpr float FLY_LOS_PREVENT_PROBE = 96.0f;
+static constexpr float FLY_LOS_PREVENT_SIDE_WEIGHT = 1.15f;
+static constexpr float FLY_LOS_PREVENT_FWD_WEIGHT = 0.85f;
+static constexpr float FLY_LOS_PREVENT_DOWN_WEIGHT = 0.35f;
+static constexpr float FLY_LOS_RECOVER_MEMORY_TIME = 1.6f;
+static constexpr float FLY_LOS_RECOVER_LAST_SEEN_RANGE = 512.0f;
+static constexpr float FLY_LOS_RECOVER_MAX_RANGE = 1200.0f;
+static constexpr float FLY_LOS_RECOVER_PROBE = 96.0f;
+static constexpr float FLY_LOS_RECOVER_MIN_GAIN = 0.08f;
+static constexpr float FLY_LOS_RECOVER_SIDE_WEIGHT = 1.20f;
+static constexpr float FLY_LOS_RECOVER_FWD_WEIGHT = 0.80f;
+static constexpr float FLY_LOS_RECOVER_DOWN_WEIGHT = 0.45f;
+static constexpr float FLY_ATTACK_STRAFE_SPEED_SCALE = 0.6f;
+static constexpr float FLY_ATTACK_DRIFT_SPEED_SCALE = 0.3f;
+static constexpr float FLY_ATTACK_STRAFE_MIN = 32.0f;
+static constexpr float FLY_ATTACK_STRAFE_MAX = 128.0f;
+static constexpr float FLY_ATTACK_ORBIT_DISTANCE = 48.0f;
+static constexpr float FLY_ATTACK_HEIGHT_VARIANCE = 56.0f;
+static constexpr float FLY_TARGET_STRAFE_MIN_SPEED = 20.0f;
+static constexpr float FLY_TARGET_STRAFE_DISTANCE_SCALE = 0.45f;
+static constexpr float FLY_COMBAT_MIN_HEIGHT = 48.0f;
+static constexpr float FLY_COMBAT_HEIGHT_ABOVE_VIEW = 24.0f;
+static constexpr float FLY_LOWER_TARGET_DESCENT_HEIGHT = 96.0f;
+static constexpr float FLY_LOWER_TARGET_MIN_HEIGHT = 16.0f;
+static constexpr float FLY_BLOCKED_DESCENT_HEIGHT = 32.0f;
+static constexpr float FLY_BLOCKED_DESCENT_XY_SCALE = 0.45f;
+static constexpr float FLY_COMBAT_WALL_STUCK_THRESHOLD = 0.35f;
+static constexpr float FLY_STAIR_CLIMB_MIN_HEIGHT = 24.0f;
+static constexpr float FLY_STAIR_CLIMB_MAX_HEIGHT = 320.0f;
+static constexpr float FLY_STAIR_CLIMB_MAX_RANGE = 420.0f;
+static constexpr float FLY_STAIR_CLIMB_PROBE = 64.0f;
+static constexpr float FLY_STAIR_CLIMB_MIN_FRACTION = 0.60f;
+static constexpr float FLY_STAIR_CLIMB_MIN_GAIN = 4.0f;
+static constexpr float FLY_STAIR_CLIMB_FWD_WEIGHT = 0.90f;
+static constexpr float FLY_STAIR_CLIMB_UP_WEIGHT = 0.75f;
+static constexpr float FLY_CEILING_LOOKAHEAD = 256.0f;
+static constexpr float FLY_CEILING_CLEARANCE = 8.0f;
+static constexpr float FLY_SEPARATION_RADIUS = 112.0f;
+static constexpr float FLY_SEPARATION_MAX_PUSH = 96.0f;
+static constexpr float FLY_SEPARATION_Z_SCALE = 0.45f;
+static constexpr int FLY_SEPARATION_MAX_NEIGHBORS = 24;
 
 static float fly_frand_range(float min_value, float max_value)
 {

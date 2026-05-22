@@ -16,9 +16,9 @@ static int sound_laser;
 static int sound_pew;
 static int sound_pain;
 
-#define GUARDIAN_INVASION_SCALE		0.45f
-#define GUARDIAN_INVASION_MOVE_SCALE	1.75f
-#define GUARDIAN_SIGHT_ACK_CHANCE	0.30f
+static constexpr float GUARDIAN_INVASION_SCALE = 0.45f;
+static constexpr float GUARDIAN_INVASION_MOVE_SCALE = 1.75f;
+static constexpr float GUARDIAN_SIGHT_ACK_CHANCE = 0.30f;
 
 void guardian_run(edict_t *self);
 

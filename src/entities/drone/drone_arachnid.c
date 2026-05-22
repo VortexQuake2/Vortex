@@ -18,17 +18,17 @@ static int sound_heat_fire;
 static int sound_melee;
 static int sound_melee_hit;
 
-#define ARACHNID_DEFAULT_SCALE		0.75f
-#define ARACHNID_INVASION_SCALE		0.60f
-#define ARACHNID_HEAT_DEFAULT_SCALE	0.85f
-#define ARACHNID_HEAT_INVASION_SCALE	0.68f
-#define ARACHNID_ATTACK_RECOVERY_TIME	0.5f
-#define ARACHNID_HEAT_TURN_FRACTION	0.095f
-#define ARACHNID_DODGE_SIDE_SPEED	280.0f
-#define ARACHNID_DODGE_UP_SPEED		250.0f
-#define ARACHNID_DODGE_SIDE_PROBE	64.0f
-#define ARACHNID_DODGE_COOLDOWN		1.5f
-#define ARACHNID_DODGE_TIMEOUT		1.2f
+static constexpr float ARACHNID_DEFAULT_SCALE = 0.75f;
+static constexpr float ARACHNID_INVASION_SCALE = 0.60f;
+static constexpr float ARACHNID_HEAT_DEFAULT_SCALE = 0.85f;
+static constexpr float ARACHNID_HEAT_INVASION_SCALE = 0.68f;
+static constexpr float ARACHNID_ATTACK_RECOVERY_TIME = 0.5f;
+static constexpr float ARACHNID_HEAT_TURN_FRACTION = 0.095f;
+static constexpr float ARACHNID_DODGE_SIDE_SPEED = 280.0f;
+static constexpr float ARACHNID_DODGE_UP_SPEED = 250.0f;
+static constexpr float ARACHNID_DODGE_SIDE_PROBE = 64.0f;
+static constexpr float ARACHNID_DODGE_COOLDOWN = 1.5f;
+static constexpr float ARACHNID_DODGE_TIMEOUT = 1.2f;
 
 static void arachnid_stand(edict_t *self);
 static void arachnid_run(edict_t *self);

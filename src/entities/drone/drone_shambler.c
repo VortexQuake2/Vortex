@@ -19,11 +19,11 @@
 // Lightning only shines on one hand ( shambler_lightning_update(edict_t* self) ) // FIXED using other effects
 
 
-#define MAX_LIGHTNING_FRAMES 4
-#define SHAMBLER_ICE_CHARGE_MIN_SCALE 0.1f
-#define SHAMBLER_ICE_CHARGE_MAX_SCALE 1.0f
+static constexpr int MAX_LIGHTNING_FRAMES = 4;
+static constexpr float SHAMBLER_ICE_CHARGE_MIN_SCALE = 0.1f;
+static constexpr float SHAMBLER_ICE_CHARGE_MAX_SCALE = 1.0f;
 #define SHAMBLER_ICE_CHARGE_GROW_TIME (7.0f * FRAMETIME)
-#define SHAMBLER_ICE_CHARGE_TIMEOUT 0.3f
+static constexpr float SHAMBLER_ICE_CHARGE_TIMEOUT = 0.3f;
 #define SHAMBLER_ICE_CHARGE_NAME "shambler_ice_charge"
 
 static int sound_pain;
@@ -53,11 +53,11 @@ void sham_swingr9(edict_t* self);
 
 //FROST NOVA Attack 
 
-#define NOVA_RADIUS				150
-#define NOVA_DEFAULT_DAMAGE		50
-#define NOVA_ADDON_DAMAGE		30
-#define NOVA_DELAY				0.3
-#define FROSTNOVA_RADIUS		150
+static constexpr int NOVA_RADIUS = 150;
+static constexpr int NOVA_DEFAULT_DAMAGE = 50;
+static constexpr int NOVA_ADDON_DAMAGE = 30;
+static constexpr double NOVA_DELAY = 0.3;
+static constexpr int FROSTNOVA_RADIUS = 150;
 void NovaExplosionEffect(vec3_t org);
 
 void shambler_frostnova(edict_t* self)

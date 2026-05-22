@@ -344,7 +344,7 @@ void mychick_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 
 #define MYCHICK_STAND_SCALE(self) ((self)->s.scale > 0 ? (self)->s.scale : 1.0f)
 #define MYCHICK_STAND_MAX_Z(self) (56 * MYCHICK_STAND_SCALE(self))
-#define MYCHICK_DUCK_MAX_Z 0
+static constexpr int MYCHICK_DUCK_MAX_Z = 0;
 
 void mychick_duck_down (edict_t *self)
 {

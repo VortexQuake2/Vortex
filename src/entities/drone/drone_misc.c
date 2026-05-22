@@ -675,9 +675,9 @@ void PassThruEntity (edict_t *self, edict_t *other)
 	gi.linkentity(other);
 }
 
-#define DRONE_FLYER_SEPARATION_SPEED	650.0f
-#define DRONE_ALT_FLY_SEPARATION_SPEED	420.0f
-#define DRONE_FLYER_SEPARATION_DELAY	0.75f
+static constexpr float DRONE_FLYER_SEPARATION_SPEED = 650.0f;
+static constexpr float DRONE_ALT_FLY_SEPARATION_SPEED = 420.0f;
+static constexpr float DRONE_FLYER_SEPARATION_DELAY = 0.75f;
 
 static qboolean drone_alt_fly_can_separate(edict_t *ent)
 {
@@ -2438,7 +2438,11 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	monster->enemy = NULL;
 	monster->oldenemy = NULL;
 	monster->goalentity = NULL;
-	monster->monsterinfo.aiflags &= ~AI_COMBAT_POINT;
+	monster->monsterinfo.aiflags &= ~(AI_COMBAT_POINT | AI_RESURRECTING);
+	monster->monsterinfo.medic_tries = 0;
+	monster->monsterinfo.bad_medic1 = NULL;
+	monster->monsterinfo.bad_medic2 = NULL;
+	monster->monsterinfo.medic_healer = NULL;
 	monster->monsterinfo.bonus_flags = 0;//4.5 reset monster bonus flags
 
 	// set shared monster functions
@@ -2541,8 +2545,8 @@ qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax)
 		}
 		else
 		{
-			VectorSet(boxmin, -48, -48, -20);
-			VectorSet(boxmax, 48, 48, 48);
+			VectorSet(boxmin, -36, -36, -18);
+			VectorSet(boxmax, 36, 36, 42);
 		}
 		break;
 	case M_BOSS2:

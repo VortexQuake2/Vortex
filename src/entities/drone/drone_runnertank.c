@@ -13,13 +13,13 @@ static int sound_plasma;
 static int skin_normal;
 static int skin_pain;
 
-#define RUNNERTANK_JUMP_ATTACK_DELAY 12.0f
-#define RUNNERTANK_JUMP_ATTACK_FOV 35
-#define RUNNERTANK_JUMP_ATTACK_DROP_RADIUS 90.0f
-#define RUNNERTANK_JUMP_ATTACK_DROP_SPEED 900.0f
-#define RUNNERTANK_JUMP_ATTACK_DROP_GRAVITY 3.0f
-#define RUNNERTANK_MELEE_RANGE 144.0f
-#define RUNNERTANK_INVASION_RUN_SCALE 1.15f
+static constexpr float RUNNERTANK_JUMP_ATTACK_DELAY = 12.0f;
+static constexpr int RUNNERTANK_JUMP_ATTACK_FOV = 35;
+static constexpr float RUNNERTANK_JUMP_ATTACK_DROP_RADIUS = 90.0f;
+static constexpr float RUNNERTANK_JUMP_ATTACK_DROP_SPEED = 900.0f;
+static constexpr float RUNNERTANK_JUMP_ATTACK_DROP_GRAVITY = 3.0f;
+static constexpr float RUNNERTANK_MELEE_RANGE = 144.0f;
+static constexpr float RUNNERTANK_INVASION_RUN_SCALE = 1.15f;
 #define RUNNERTANK_NORMAL_SKIN "models/vault/monsters/tank/skin.pcx"
 #define RUNNERTANK_PAIN_SKIN "models/monsters/tank/pain.pcx"
 

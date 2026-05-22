@@ -113,6 +113,9 @@ field_t		savefields[] =
 	{ "", FOFS(target_ent), F_EDICT },
 	{ "", FOFS(chain), F_EDICT },
 	{ "", FOFS(proboscis), F_EDICT },
+	{ "", FOFS(monsterinfo.bad_medic1), F_EDICT },
+	{ "", FOFS(monsterinfo.bad_medic2), F_EDICT },
+	{ "", FOFS(monsterinfo.medic_healer), F_EDICT },
 
 	{ NULL, 0, F_INT }
 };

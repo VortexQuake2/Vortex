@@ -9,7 +9,7 @@ Makron -- Final Boss
 #include "g_local.h"
 #include "../../quake2/monsterframes/m_boss32.h"
 
-#define MAKRON_INVASION_MOVE_SCALE	0.75f
+static constexpr float MAKRON_INVASION_MOVE_SCALE = 0.75f;
 
 qboolean visible (const edict_t *self, const edict_t *other);
 

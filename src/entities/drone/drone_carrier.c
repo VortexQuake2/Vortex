@@ -9,18 +9,18 @@ carrier
 #include "g_local.h"
 #include "../../quake2/monsterframes/m_rogue_carrier.h"
 
-#define CARRIER_SUMMON_COUNT		4
-#define CARRIER_SUMMON_COOLDOWN		6.0f
-#define CARRIER_HEAT_TURN_FRACTION	0.085f
-#define CARRIER_NO_SPAWN_Z			-99999.0f
-#define CARRIER_NO_SPAWN_YAW		-99999.0f
-#define CARRIER_YAW_SPEED			20.0f
-#define CARRIER_SPAWN_YAW_SPEED		30.0f
-#define CARRIER_AI_SPAWNING		0x00400000
-#define CARRIER_RAIL_REFIRE_CHANCE	0.65f
-#define CARRIER_RAIL_MAX_REFIRES	1
-#define CARRIER_DEFAULT_SCALE		0.75f
-#define CARRIER_INVASION_SCALE		0.50f // 0.60 was too big for spambox
+static constexpr int CARRIER_SUMMON_COUNT = 4;
+static constexpr float CARRIER_SUMMON_COOLDOWN = 6.0f;
+static constexpr float CARRIER_HEAT_TURN_FRACTION = 0.085f;
+static constexpr float CARRIER_NO_SPAWN_Z = -99999.0f;
+static constexpr float CARRIER_NO_SPAWN_YAW = -99999.0f;
+static constexpr float CARRIER_YAW_SPEED = 20.0f;
+static constexpr float CARRIER_SPAWN_YAW_SPEED = 30.0f;
+static constexpr int CARRIER_AI_SPAWNING = 0x00400000;
+static constexpr float CARRIER_RAIL_REFIRE_CHANCE = 0.65f;
+static constexpr int CARRIER_RAIL_MAX_REFIRES = 1;
+static constexpr float CARRIER_DEFAULT_SCALE = 0.75f;
+static constexpr float CARRIER_INVASION_SCALE = 0.50f; // 0.60 was too big for spambox
 
 static int sound_pain1;
 static int sound_pain2;

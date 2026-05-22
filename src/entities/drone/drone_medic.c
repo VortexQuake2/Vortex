@@ -40,13 +40,21 @@ extern mmove_t mymedic_move_attackCable;
 extern mmove_t medic_commander_move_callReinforcements;
 static qboolean mymedic_is_dodge_move(edict_t *self);
 
-#define MEDIC_COMMANDER_SUMMON_COUNT	2
-#define MEDIC_COMMANDER_SUMMON_COOLDOWN	8.0f
-#define SPAWNGROW_LIFESPAN				1.0f
+static constexpr int MEDIC_COMMANDER_SUMMON_COUNT = 2;
+static constexpr float MEDIC_COMMANDER_SUMMON_COOLDOWN = 8.0f;
+static constexpr float SPAWNGROW_LIFESPAN = 1.0f;
+// Monster medic revive tuning only. Player morph medic uses the Lua MEDIC_CABLE_RANGE setting.
+static constexpr float MONSTER_MEDIC_CABLE_RANGE = 290.0f;
+static constexpr float MONSTER_MEDIC_MIN_REVIVE_DISTANCE = 32.0f;
+static constexpr float MONSTER_MEDIC_REVIVE_TRY_TIME = 5.0f;
+static constexpr float MONSTER_MEDIC_REVIVE_FAIL_COOLDOWN = 0.4f;
 
 void mymedic_refire (edict_t *self);
 void mymedic_heal (edict_t *self);
 void medic_commander_attack(edict_t *self);
+static qboolean mymedic_is_reviving(edict_t *self);
+static void mymedic_cleanup_heal_target(edict_t *self, edict_t *target);
+static void mymedic_abort_heal(edict_t *self, qboolean mark);
 
 static qboolean medic_is_commander(edict_t *self)
 {
@@ -434,6 +442,9 @@ void medic_pain(edict_t* self, edict_t* other, float kick, int damage)
 	if (self->health < (self->max_health / 2))
 		self->s.skinnum |= 1;
 
+	if (mymedic_is_reviving(self))
+		mymedic_abort_heal(self, false);
+
 	// we're already in a pain state
 	if (self->monsterinfo.currentmove == &medic_move_pain_short ||
 		self->monsterinfo.currentmove == &medic_move_pain_long ||
@@ -504,6 +515,9 @@ mmove_t mymedic_move_death = {FRAME_death1, FRAME_death30, mymedic_frames_death,
 
 void mymedic_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
+	if (mymedic_is_reviving(self))
+		mymedic_abort_heal(self, false);
+
 	M_Notify(self);
 
 #ifdef OLD_NOLAG_STYLE
@@ -830,6 +844,9 @@ mmove_t mymedic_move_attackBlaster = {FRAME_attack1, FRAME_attack14, mymedic_fra
 
 void mymedic_hook_launch (edict_t *self)
 {
+	if (mymedic_is_reviving(self) && (self->enemy->monsterinfo.aiflags & AI_RESURRECTING))
+		return;
+
 	gi.sound (self, CHAN_WEAPON, medic_hook_launch_sound(self), 1, ATTN_NORM, 0);
 }
 
@@ -839,8 +856,8 @@ void mymedic_hook_retract (edict_t *self)
 
 	if (!self->enemy)
 		return;
-	//if ((self->svflags & SVF_MONSTER) && !(self->client))
-	//	self->enemy->monsterinfo.aiflags &= ~AI_RESURRECTING;
+	if (mymedic_is_reviving(self))
+		mymedic_cleanup_heal_target(self, self->enemy);
 }
 
 void ED_CallSpawn (edict_t *ent);
@@ -862,6 +879,145 @@ static vec3_t	mymedic_cable_offsets[] =
 edict_t *CreateSpiker (edict_t *ent, int skill_level);
 edict_t* CreateObstacle(edict_t* ent, int skill_level, int talent_level);
 edict_t* CreateGasser(edict_t* ent, int skill_level, int talent_level);
+void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, qboolean printMsg);
+
+static qboolean mymedic_is_corpse(const edict_t *target)
+{
+	return target && target->inuse && ((target->health < 1) || (target->deadflag == DEAD_DEAD));
+}
+
+static qboolean mymedic_is_reviving(edict_t *self)
+{
+	return self && mymedic_is_corpse(self->enemy);
+}
+
+static void mymedic_cleanup_heal_target(edict_t *self, edict_t *target)
+{
+	if (!target || !target->inuse)
+		return;
+
+	if (target->monsterinfo.medic_healer == self)
+		target->monsterinfo.medic_healer = NULL;
+
+	target->monsterinfo.aiflags &= ~AI_RESURRECTING;
+
+	if (mymedic_is_corpse(target))
+		target->takedamage = DAMAGE_YES;
+}
+
+static void mymedic_mark_bad_corpse(edict_t *self, edict_t *target)
+{
+	edict_t *bad;
+
+	if (!self || !target || !target->inuse)
+		return;
+	if (target->monsterinfo.bad_medic1 == self || target->monsterinfo.bad_medic2 == self)
+		return;
+
+	bad = target->monsterinfo.bad_medic1;
+	if (bad && bad->inuse && (bad->monsterinfo.aiflags & AI_MEDIC))
+		target->monsterinfo.bad_medic2 = self;
+	else
+		target->monsterinfo.bad_medic1 = self;
+}
+
+static void mymedic_abort_heal(edict_t *self, qboolean mark)
+{
+	edict_t *target;
+
+	if (!self)
+		return;
+
+	target = self->enemy;
+	if (mymedic_is_corpse(target))
+	{
+		if (mark)
+			mymedic_mark_bad_corpse(self, target);
+
+		mymedic_cleanup_heal_target(self, target);
+
+		if (!target->inuse || mymedic_is_corpse(target))
+			self->enemy = NULL;
+	}
+
+	self->monsterinfo.medic_tries = 0;
+	self->timestamp = 0;
+	M_DelayNextAttack(self, MONSTER_MEDIC_REVIVE_FAIL_COOLDOWN, false);
+}
+
+static void mymedic_fail_revive_attempt(edict_t *self)
+{
+	if (!mymedic_is_reviving(self))
+	{
+		mymedic_abort_heal(self, false);
+		return;
+	}
+
+	//  //just in case, a gib on fail revive.
+	//   T_Damage(target, self, self, vec3_origin, target->s.origin,
+	//        vec3_origin, hurt, 0, DAMAGE_NO_PROTECTION, MOD_UNKNOWN);
+	
+	self->monsterinfo.nextframe = FRAME_attack53;
+	mymedic_hook_retract(self);
+
+	if (self->monsterinfo.medic_tries > 0)
+	{
+		mymedic_mark_bad_corpse(self, self->enemy);
+		self->enemy = NULL;
+		self->monsterinfo.medic_tries = 0;
+		self->timestamp = 0;
+	}
+	else
+	{
+		self->monsterinfo.medic_tries++;
+		self->timestamp = level.time + MONSTER_MEDIC_REVIVE_TRY_TIME;
+	}
+
+	M_DelayNextAttack(self, MONSTER_MEDIC_REVIVE_FAIL_COOLDOWN, false);
+}
+
+static qboolean mymedic_revive_space_blocked(edict_t *target)
+{
+	vec3_t bmin, bmax;
+
+	if (!mymedic_is_corpse(target))
+		return false;
+	if (strcmp(target->classname, "drone"))
+		return false;
+
+	M_SetBoundingBox(target->mtype, bmin, bmax);
+	return !G_IsValidLocation(target, target->s.origin, bmin, bmax);
+}
+
+static qboolean mymedic_try_reanimate(edict_t *self)
+{
+	edict_t *owner;
+	edict_t *target;
+	int old_monsters;
+	int old_spikers;
+	int old_obstacles;
+	int old_gassers;
+
+	if (!self || !self->inuse || !self->activator || !self->activator->inuse || !mymedic_is_corpse(self->enemy))
+		return false;
+
+	owner = self->activator;
+	target = self->enemy;
+	old_monsters = owner->num_monsters;
+	old_spikers = owner->num_spikers;
+	old_obstacles = owner->num_obstacle;
+	old_gassers = owner->num_gasser;
+
+	M_Reanimate(owner, target, self->monsterinfo.level, 0.33, false);
+
+	if (target->inuse && target->health > 0 && target->deadflag == DEAD_NO)
+		return true;
+	if (owner->num_monsters > old_monsters || owner->num_spikers > old_spikers
+		|| owner->num_obstacle > old_obstacles || owner->num_gasser > old_gassers)
+		return true;
+
+	return false;
+}
 
 void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, qboolean printMsg)
 {
@@ -1105,15 +1261,36 @@ void mymedic_cable_attack (edict_t *self)
 {
 	vec3_t	forward, right, start, offset, end;
 	trace_t	tr;
+	qboolean resurrecting;
 
 	// need a valid target and activator
 	if (!self || !self->inuse || !self->activator || !self->activator->inuse 
 		|| !self->enemy || !self->enemy->inuse)
 		return;
 
+	resurrecting = mymedic_is_reviving(self);
+
 	// make sure target is still in range
-	if (entdist(self, self->enemy) > 256)
+	if (entdist(self, self->enemy) > MONSTER_MEDIC_CABLE_RANGE)
 		return;
+
+	if (resurrecting)
+	{
+		self->enemy->monsterinfo.medic_healer = self;
+
+		if (entdist(self, self->enemy) <= MONSTER_MEDIC_MIN_REVIVE_DISTANCE)
+		{
+			mymedic_fail_revive_attempt(self);
+			return;
+		}
+
+		if (self->timestamp && level.time > self->timestamp)
+		{
+			self->monsterinfo.nextframe = FRAME_attack53;
+			mymedic_abort_heal(self, true);
+			return;
+		}
+	}
 
 	// get muzzle location
 	AngleVectors(self->s.angles, forward, right, NULL);
@@ -1127,19 +1304,15 @@ void mymedic_cable_attack (edict_t *self)
 	tr = gi.trace (start, NULL, NULL, end, self, MASK_SHOT);
 	if (tr.ent != self->enemy)
 	{
-		if (self->s.frame == 226)
+		if (resurrecting && self->s.frame == FRAME_attack50)
 		{
-			// give up for awhile
-			self->s.frame = 229;
+			mymedic_fail_revive_attempt(self);
+		}
+		else if (!resurrecting && self->s.frame == FRAME_attack50)
+		{
+			self->monsterinfo.nextframe = FRAME_attack53;
 			M_DelayNextAttack(self, (GetRandom(10, 20)*FRAMETIME), true);
 			mymedic_hook_retract(self);
-			
-			// if our enemy is a corpse, destroy it
-			if (self->enemy->health < 1)
-			{
-				T_Damage(self->enemy, self->enemy, self->enemy, vec3_origin, 
-					self->enemy->s.origin, vec3_origin, 10000, 0, DAMAGE_NO_PROTECTION, 0);
-			}
 		}
 		return; // cable is blocked
 	}
@@ -1151,6 +1324,53 @@ void mymedic_cable_attack (edict_t *self)
 	gi.WritePosition (start);
 	gi.WritePosition (tr.endpos);
 	gi.multicast (self->s.origin, MULTICAST_PVS);
+
+	if (resurrecting)
+	{
+		if (self->s.frame == FRAME_attack43)
+		{
+			if (!(self->enemy->monsterinfo.aiflags & AI_RESURRECTING))
+			{
+				gi.sound (self->enemy, CHAN_AUTO,
+					(medic_is_commander(self) && commander_sound_hook_hit) ? commander_sound_hook_hit : sound_hook_hit,
+					1, ATTN_NORM, 0);
+			}
+			self->enemy->takedamage = DAMAGE_NO;
+		}
+		else if (self->s.frame == FRAME_attack44)
+		{
+			if (!(self->enemy->monsterinfo.aiflags & AI_RESURRECTING))
+			{
+				gi.sound (self, CHAN_WEAPON,
+					(medic_is_commander(self) && commander_sound_hook_heal) ? commander_sound_hook_heal : sound_hook_heal,
+					1, ATTN_NORM, 0);
+				self->enemy->monsterinfo.aiflags |= AI_RESURRECTING;
+			}
+			self->enemy->takedamage = DAMAGE_NO;
+		}
+		else if (self->s.frame == FRAME_attack50)
+		{
+			if (mymedic_revive_space_blocked(self->enemy))
+			{
+				mymedic_fail_revive_attempt(self);
+				return;
+			}
+
+			if (mymedic_try_reanimate(self))
+			{
+				mymedic_cleanup_heal_target(self, self->enemy);
+				self->monsterinfo.medic_tries = 0;
+				self->timestamp = 0;
+				if (!G_EntIsAlive(self->enemy))
+					self->enemy = NULL;
+			}
+			else
+			{
+				mymedic_fail_revive_attempt(self);
+			}
+		}
+		return;
+	}
 
 	// the target needs healing
 	if (M_NeedRegen(self->enemy))
@@ -1177,7 +1397,7 @@ void mymedic_cable_attack (edict_t *self)
 	// the target is a dead monster and needs resurrection
 	else if (self->enemy->health < 1)
 	{
-		M_Reanimate(self->activator, self->enemy, self->monsterinfo.level, 0.33, false);
+		mymedic_try_reanimate(self);
 	}
 }
 
@@ -1189,9 +1409,9 @@ void mymedic_delay (edict_t *self)
 void mymedic_cable_continue (edict_t *self)
 {
 	// if target still needs healing, loop heal frames
-	if (M_ValidMedicTarget(self, self->enemy) && (entdist(self, self->enemy) <= 256))
+	if (M_ValidMedicTarget(self, self->enemy) && (entdist(self, self->enemy) <= MONSTER_MEDIC_CABLE_RANGE))
 	{
-		self->s.frame = 218;
+		self->s.frame = FRAME_attack42;
 		mymedic_cable_attack(self);
 	}
 }
@@ -1571,11 +1791,43 @@ qboolean mymedic_findenemy (edict_t *self)
 
 void mymedic_heal (edict_t *self)
 {
+	if (mymedic_is_reviving(self))
+	{
+		if (!M_ValidMedicTarget(self, self->enemy))
+		{
+			mymedic_abort_heal(self, false);
+			mymedic_stand(self);
+			return;
+		}
+
+		if (self->timestamp && level.time > self->timestamp)
+		{
+			mymedic_abort_heal(self, true);
+			mymedic_stand(self);
+			return;
+		}
+
+		if ((self->monsterinfo.aiflags & AI_STAND_GROUND) && entdist(self, self->enemy) > MONSTER_MEDIC_CABLE_RANGE)
+		{
+			mymedic_abort_heal(self, false);
+			mymedic_stand(self);
+			return;
+		}
+
+		if (level.time < self->monsterinfo.attack_finished)
+			mymedic_run(self);
+		else if (entdist(self, self->enemy) <= MONSTER_MEDIC_CABLE_RANGE)
+			self->monsterinfo.currentmove = &mymedic_move_attackCable;
+		else
+			mymedic_run(self);
+		return;
+	}
+
 	// stop healing our target died, if they are fully healed, or
 	// they have gone out of range while we are standing ground (can't reach them)
 	if (!G_EntIsAlive(self->enemy) || !M_NeedRegen(self->enemy)
 		|| ((self->monsterinfo.aiflags & AI_STAND_GROUND) 
-		&& (entdist(self, self->enemy) > 256)))
+		&& (entdist(self, self->enemy) > MONSTER_MEDIC_CABLE_RANGE)))
 	{
 		self->enemy = NULL;
 		mymedic_stand(self);
@@ -1584,7 +1836,7 @@ void mymedic_heal (edict_t *self)
 
 	// continue healing if our target is still in range and
 	// there are no enemies around
-	if (OnSameTeam(self, self->enemy) && (entdist(self, self->enemy) <= 256)
+	if (OnSameTeam(self, self->enemy) && (entdist(self, self->enemy) <= MONSTER_MEDIC_CABLE_RANGE)
 		&& !mymedic_findenemy(self))
 		self->monsterinfo.currentmove = &mymedic_move_attackCable;
 	else
@@ -1610,12 +1862,36 @@ void mymedic_attack(edict_t *self)
 	if ((self->monsterinfo.aiflags & AI_MEDIC)
 		&& ((self->enemy->health < 1 || OnSameTeam(self, self->enemy))))
 	{
-		if (dist <= 256)
+		if (mymedic_is_reviving(self))
+		{
+			if (!M_ValidMedicTarget(self, self->enemy))
+			{
+				mymedic_abort_heal(self, false);
+				return;
+			}
+
+			if (self->enemy->monsterinfo.medic_healer != self)
+			{
+				self->enemy->monsterinfo.medic_healer = self;
+				self->timestamp = level.time + MONSTER_MEDIC_REVIVE_TRY_TIME;
+			}
+
+			if (self->timestamp && level.time > self->timestamp)
+			{
+				mymedic_abort_heal(self, true);
+				return;
+			}
+
+			if (level.time < self->monsterinfo.attack_finished)
+				return;
+		}
+
+		if (dist <= MONSTER_MEDIC_CABLE_RANGE)
 			self->monsterinfo.currentmove = &mymedic_move_attackCable;
 		return;
 	}
 
-	if (dist <= 256)
+	if (dist <= MONSTER_MEDIC_CABLE_RANGE)
 	{
 		if (can_hyperblaster && (r <= 0.2 || !can_blaster))
 			self->monsterinfo.currentmove = &mymedic_move_attackHyperBlaster;

@@ -9,14 +9,14 @@ boss2
 #include "g_local.h"
 #include "../../quake2/monsterframes/m_boss2.h"
 
-#define BOSS2_VARIANT_MG		0
-#define BOSS2_VARIANT_HYPER		1
-#define BOSS2_VARIANT_SMALL		2
-#define BOSS2_ROCKET_SPEED		750
-#define BOSS2_INVASION_SCALE		0.75f
-#define BOSS2_INVASION_MOVE_SCALE	1.5f
-#define BOSS2_SMALL_DEATH_GRAVITY	0.30f
-#define BOSS2_SMALL_DEATH_FALL_SPEED	-40.0f
+static constexpr int BOSS2_VARIANT_MG = 0;
+static constexpr int BOSS2_VARIANT_HYPER = 1;
+static constexpr int BOSS2_VARIANT_SMALL = 2;
+static constexpr int BOSS2_ROCKET_SPEED = 750;
+static constexpr float BOSS2_INVASION_SCALE = 0.75f;
+static constexpr float BOSS2_INVASION_MOVE_SCALE = 1.5f;
+static constexpr float BOSS2_SMALL_DEATH_GRAVITY = 0.30f;
+static constexpr float BOSS2_SMALL_DEATH_FALL_SPEED = -40.0f;
 
 static int sound_pain1;
 static int sound_pain2;

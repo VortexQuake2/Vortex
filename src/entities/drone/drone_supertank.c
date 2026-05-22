@@ -10,9 +10,9 @@ SUPERTANK
 #include "../../quake2/monsterframes/m_supertank.h"
 qboolean visible (const edict_t *self, const edict_t *other);
 
-#define SUPERTANK_INVASION_SCALE			0.65f
-#define SUPERTANK_INVASION_BASE_HEALTH		5000
-#define SUPERTANK_INVASION_ADDON_HEALTH		1000
+static constexpr float SUPERTANK_INVASION_SCALE = 0.65f;
+static constexpr int SUPERTANK_INVASION_BASE_HEALTH = 5000;
+static constexpr int SUPERTANK_INVASION_ADDON_HEALTH = 1000;
 
 static int	sound_pain1;
 static int	sound_pain2;

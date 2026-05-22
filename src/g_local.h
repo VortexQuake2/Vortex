@@ -248,6 +248,7 @@ typedef enum {
 #define AI_DODGE				0x00080000
 #define AI_SNAP_TO_NAVI         0x00100000
 #define AI_ALTERNATE_FLY		0x00200000
+#define AI_RESURRECTING			0x00400000
 
 //monster attack state
 #define AS_STRAIGHT				1
@@ -678,6 +679,10 @@ typedef struct {
     float resurrected_time; // time when resurrection from a medic is complete
     int resurrected_level; // used to store the original level of the monster before resurrection bonus is applied
     float resurrected_timeout; // time when the resurrected monster will expire
+    int medic_tries; // Remaster-style failed revive cable attempts against the current corpse
+    edict_t *bad_medic1; // medics that should stop retrying this corpse
+    edict_t *bad_medic2;
+    edict_t *medic_healer; // medic currently claiming this corpse for revive
     float backtrack_delay; // delay until we can backtrack to a closer waypoint (to prevent getting stuck)
     float path_time; // time when monster can compute a path
     vec3_t prevGoalPos; // last goal position, used for deciding when to re-compute paths

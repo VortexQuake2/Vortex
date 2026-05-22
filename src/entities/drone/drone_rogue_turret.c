@@ -8,16 +8,16 @@ rogue rocket turret
 
 #include "g_local.h"
 
-#define TURRET_FRAME_stand01	0
-#define TURRET_FRAME_stand02	1
-#define TURRET_FRAME_active01	2
-#define TURRET_FRAME_run01	8
-#define TURRET_FRAME_run02	9
-#define TURRET_FRAME_pow01	10
-#define TURRET_FRAME_pow04	13
+static constexpr int TURRET_FRAME_stand01 = 0;
+static constexpr int TURRET_FRAME_stand02 = 1;
+static constexpr int TURRET_FRAME_active01 = 2;
+static constexpr int TURRET_FRAME_run01 = 8;
+static constexpr int TURRET_FRAME_run02 = 9;
+static constexpr int TURRET_FRAME_pow01 = 10;
+static constexpr int TURRET_FRAME_pow04 = 13;
 
-#define TURRET_ROCKET_DAMAGE	40
-#define TURRET_ROCKET_SPEED		650
+static constexpr int TURRET_ROCKET_DAMAGE = 40;
+static constexpr int TURRET_ROCKET_SPEED = 650;
 
 static int sound_moved;
 static int sound_moving;

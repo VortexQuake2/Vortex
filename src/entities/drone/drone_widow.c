@@ -8,42 +8,42 @@ black widow
 
 #include "g_local.h"
 
-#define WIDOW_FRAME_idle01	0
-#define WIDOW_FRAME_idle11	10
-#define WIDOW_FRAME_walk01	11
-#define WIDOW_FRAME_walk13	23
-#define WIDOW_FRAME_run01	24
-#define WIDOW_FRAME_run08	31
-#define WIDOW_FRAME_firea01	32
-#define WIDOW_FRAME_firea09	40
-#define WIDOW_FRAME_fireb01	41
-#define WIDOW_FRAME_fireb09	49
-#define WIDOW_FRAME_firec01	50
-#define WIDOW_FRAME_firec09	58
-#define WIDOW_FRAME_fired02a	61
-#define WIDOW_FRAME_fired03	62
-#define WIDOW_FRAME_fired20	79
-#define WIDOW_FRAME_spawn01	82
-#define WIDOW_FRAME_spawn18	99
-#define WIDOW_FRAME_pain01	100
-#define WIDOW_FRAME_pain05	104
-#define WIDOW_FRAME_pain13	112
-#define WIDOW_FRAME_pain201	113
-#define WIDOW_FRAME_pain203	115
-#define WIDOW_FRAME_death01	130
-#define WIDOW_FRAME_death31	160
-#define WIDOW_FRAME_kick01	161
-#define WIDOW_FRAME_kick08	168
+static constexpr int WIDOW_FRAME_idle01 = 0;
+static constexpr int WIDOW_FRAME_idle11 = 10;
+static constexpr int WIDOW_FRAME_walk01 = 11;
+static constexpr int WIDOW_FRAME_walk13 = 23;
+static constexpr int WIDOW_FRAME_run01 = 24;
+static constexpr int WIDOW_FRAME_run08 = 31;
+static constexpr int WIDOW_FRAME_firea01 = 32;
+static constexpr int WIDOW_FRAME_firea09 = 40;
+static constexpr int WIDOW_FRAME_fireb01 = 41;
+static constexpr int WIDOW_FRAME_fireb09 = 49;
+static constexpr int WIDOW_FRAME_firec01 = 50;
+static constexpr int WIDOW_FRAME_firec09 = 58;
+static constexpr int WIDOW_FRAME_fired02a = 61;
+static constexpr int WIDOW_FRAME_fired03 = 62;
+static constexpr int WIDOW_FRAME_fired20 = 79;
+static constexpr int WIDOW_FRAME_spawn01 = 82;
+static constexpr int WIDOW_FRAME_spawn18 = 99;
+static constexpr int WIDOW_FRAME_pain01 = 100;
+static constexpr int WIDOW_FRAME_pain05 = 104;
+static constexpr int WIDOW_FRAME_pain13 = 112;
+static constexpr int WIDOW_FRAME_pain201 = 113;
+static constexpr int WIDOW_FRAME_pain203 = 115;
+static constexpr int WIDOW_FRAME_death01 = 130;
+static constexpr int WIDOW_FRAME_death31 = 160;
+static constexpr int WIDOW_FRAME_kick01 = 161;
+static constexpr int WIDOW_FRAME_kick08 = 168;
 
-#define WIDOW_SUMMON_COUNT	2
-#define WIDOW_SUMMON_COOLDOWN	10.0f
-#define WIDOW_MELEE_RANGE	176.0f
-#define WIDOW_INVASION_SCALE	0.75f
-#define WIDOW_INVASION_HALF_WIDTH	30.0f
-#define WIDOW_INVASION_HEIGHT		108.0f
-#define WIDOW_LEGS_MAX_FRAME	23
-#define WIDOW_LEGS_FRAME_TIME	0.1f
-#define WIDOW_LEGS_WAIT_TIME	1.0f
+static constexpr int WIDOW_SUMMON_COUNT = 2;
+static constexpr float WIDOW_SUMMON_COOLDOWN = 10.0f;
+static constexpr float WIDOW_MELEE_RANGE = 176.0f;
+static constexpr float WIDOW_INVASION_SCALE = 0.75f;
+static constexpr float WIDOW_INVASION_HALF_WIDTH = 30.0f;
+static constexpr float WIDOW_INVASION_HEIGHT = 108.0f;
+static constexpr int WIDOW_LEGS_MAX_FRAME = 23;
+static constexpr float WIDOW_LEGS_FRAME_TIME = 0.1f;
+static constexpr float WIDOW_LEGS_WAIT_TIME = 1.0f;
 
 static int sound_pain1;
 static int sound_pain2;

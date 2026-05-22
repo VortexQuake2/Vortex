@@ -35,33 +35,33 @@ static int	sound_strike;
 static int	sound_grenade;
 static int	sound_spawn;
 
-#define TANK_N64_SCALE					1.1f
-#define TANK_N64_BLASTER2_DAMAGE		26
-#define TANK_N64_BLASTER2_ADDON			4
-#define TANK_N64_BLASTER2_SPEED			950
-#define TANK_N64_GRENADE_DAMAGE			50
-#define TANK_N64_GRENADE_ADDON			8
-#define TANK_N64_GRENADE_SPEED			1500
-#define TANK_N64_HEAT_DAMAGE			45
-#define TANK_N64_HEAT_ADDON				7
-#define TANK_N64_HEAT_SPEED				480
-#define TANK_N64_HEAT_TURN_FRACTION		0.075f
-#define TANK_N64_FLECHETTE_DAMAGE		6
-#define TANK_N64_FLECHETTE_ADDON		1
-#define TANK_N64_FLECHETTE_SPEED		700
-#define TANK_N64_FLECHETTE_SPEED_MAX	1150
-#define TANK_N64_LIGHTNING_DAMAGE		15
-#define TANK_N64_LIGHTNING_ADDON		3
-#define TANK_N64_ATTACK_BLASTER2		1
-#define TANK_N64_ATTACK_GRENADE			2
-#define TANK_N64_ATTACK_LIGHTNING		3
-#define TANK_SPAWN_NORMAL_COUNT			3
-#define TANK_SPAWN_N64_COUNT			2
-#define TANK_SPAWN_MAX_COUNT			3
-#define TANK_SPAWN_RETRY_MIN			2.0f
-#define TANK_SPAWN_RETRY_MAX			8.0f
-#define TANK_SPAWN_FAIL_COOLDOWN		1.5f
-#define TANK_SPAWN_MIN_SEPARATION		56.0f
+static constexpr float TANK_N64_SCALE = 1.1f;
+static constexpr int TANK_N64_BLASTER2_DAMAGE = 26;
+static constexpr int TANK_N64_BLASTER2_ADDON = 4;
+static constexpr int TANK_N64_BLASTER2_SPEED = 950;
+static constexpr int TANK_N64_GRENADE_DAMAGE = 50;
+static constexpr int TANK_N64_GRENADE_ADDON = 8;
+static constexpr int TANK_N64_GRENADE_SPEED = 1500;
+static constexpr int TANK_N64_HEAT_DAMAGE = 45;
+static constexpr int TANK_N64_HEAT_ADDON = 7;
+static constexpr int TANK_N64_HEAT_SPEED = 480;
+static constexpr float TANK_N64_HEAT_TURN_FRACTION = 0.075f;
+static constexpr int TANK_N64_FLECHETTE_DAMAGE = 6;
+static constexpr int TANK_N64_FLECHETTE_ADDON = 1;
+static constexpr int TANK_N64_FLECHETTE_SPEED = 700;
+static constexpr int TANK_N64_FLECHETTE_SPEED_MAX = 1150;
+static constexpr int TANK_N64_LIGHTNING_DAMAGE = 15;
+static constexpr int TANK_N64_LIGHTNING_ADDON = 3;
+static constexpr int TANK_N64_ATTACK_BLASTER2 = 1;
+static constexpr int TANK_N64_ATTACK_GRENADE = 2;
+static constexpr int TANK_N64_ATTACK_LIGHTNING = 3;
+static constexpr int TANK_SPAWN_NORMAL_COUNT = 3;
+static constexpr int TANK_SPAWN_N64_COUNT = 2;
+static constexpr int TANK_SPAWN_MAX_COUNT = 3;
+static constexpr float TANK_SPAWN_RETRY_MIN = 2.0f;
+static constexpr float TANK_SPAWN_RETRY_MAX = 8.0f;
+static constexpr float TANK_SPAWN_FAIL_COOLDOWN = 1.5f;
+static constexpr float TANK_SPAWN_MIN_SEPARATION = 56.0f;
 
 //
 // misc

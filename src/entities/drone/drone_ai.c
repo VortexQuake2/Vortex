@@ -157,7 +157,7 @@ qboolean G_ValidTarget_Lite(const edict_t *self, const edict_t *target, qboolean
 		return false;
 
 	// check for targets that require medic healing
-	if (self && self->mtype == M_MEDIC)
+	if (self && (self->monsterinfo.aiflags & AI_MEDIC))
 	{
 		if (M_ValidMedicTarget(self, target))
 			return true;
@@ -342,6 +342,41 @@ void drone_wakeallies (edict_t *self)
 	}
 }
 
+static qboolean M_MedicTargetIsCorpse(const edict_t *target)
+{
+	return target && ((target->health < 1) || (target->deadflag == DEAD_DEAD));
+}
+
+static qboolean M_MedicTargetClaimedByOther(const edict_t *self, const edict_t *target)
+{
+	edict_t *healer;
+
+	if (!M_MedicTargetIsCorpse(target))
+		return false;
+
+	healer = target->monsterinfo.medic_healer;
+	if (!healer || healer == self)
+		return false;
+	if (!healer->inuse || healer->health <= 0)
+		return false;
+	if (!(healer->svflags & SVF_MONSTER) || !(healer->monsterinfo.aiflags & AI_MEDIC))
+		return false;
+	if (healer->enemy != target)
+		return false;
+
+	return true;
+}
+
+static void M_MedicClaimTarget(edict_t *self, edict_t *target)
+{
+	if (!M_MedicTargetIsCorpse(target))
+		return;
+
+	target->monsterinfo.medic_healer = self;
+	if (self->enemy != target)
+		self->monsterinfo.medic_tries = 0;
+}
+
 qboolean M_ValidMedicTarget(const edict_t *self, const edict_t *target) {
     if (target == self)
         return false;
@@ -376,6 +411,14 @@ qboolean M_ValidMedicTarget(const edict_t *self, const edict_t *target) {
 	// target must be visible
 	if (!visible(self, target))
 		return false;
+
+	if (M_MedicTargetIsCorpse(target))
+	{
+		if (target->monsterinfo.bad_medic1 == self || target->monsterinfo.bad_medic2 == self)
+			return false;
+		if (M_MedicTargetClaimedByOther(self, target))
+			return false;
+	}
 
 	// is medic standing ground?
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
@@ -541,6 +584,7 @@ edict_t *drone_get_medic_target (edict_t *self)
 		{
 			if (!M_ValidMedicTarget(self, target))
 				continue;
+			M_MedicClaimTarget(self, target);
 			return target;
 		}
 	}
@@ -2264,12 +2308,12 @@ void drone_togglelight (edict_t *self)
 	}
 }
 
-#define DRONE_PROJECTILE_DODGE_RANGE 512
-#define DRONE_PROJECTILE_DODGE_MAX 256
+static constexpr int DRONE_PROJECTILE_DODGE_RANGE = 512;
+static constexpr int DRONE_PROJECTILE_DODGE_MAX = 256;
 #define DRONE_PROJECTILE_DODGE_MIN_ETA FRAMETIME
-#define DRONE_PROJECTILE_DODGE_MAX_ETA 2.5f
-#define DRONE_PROJECTILE_DODGE_DIRECT_LEAD 0.5f
-#define DRONE_PROJECTILE_DODGE_RADIUS_LEAD 0.45f
+static constexpr float DRONE_PROJECTILE_DODGE_MAX_ETA = 2.5f;
+static constexpr float DRONE_PROJECTILE_DODGE_DIRECT_LEAD = 0.5f;
+static constexpr float DRONE_PROJECTILE_DODGE_RADIUS_LEAD = 0.45f;
 
 static qboolean drone_projectile_infront(edict_t *self, edict_t *projectile)
 {

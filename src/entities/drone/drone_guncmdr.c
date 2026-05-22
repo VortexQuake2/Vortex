@@ -18,13 +18,13 @@ static int sound_search;
 static int sound_sight;
 static int sound_thud;
 
-#define GUNCMDR_GRENADE_RANGE       100.0f
-#define GUNCMDR_MORTAR_RANGE        525.0f
-#define GUNCMDR_CHAINGUN_RUN_RANGE  400.0f
-#define GUNCMDR_MORTAR_SPEED        850
-#define GUNCMDR_GRENADE_SPEED       600
-#define GUNCMDR_WALK_SPEED_MULT     2.0f
-#define GUNCMDR_INVASION_RUN_SCALE  1.15f
+static constexpr float GUNCMDR_GRENADE_RANGE = 100.0f;
+static constexpr float GUNCMDR_MORTAR_RANGE = 525.0f;
+static constexpr float GUNCMDR_CHAINGUN_RUN_RANGE = 400.0f;
+static constexpr int GUNCMDR_MORTAR_SPEED = 850;
+static constexpr int GUNCMDR_GRENADE_SPEED = 600;
+static constexpr float GUNCMDR_WALK_SPEED_MULT = 2.0f;
+static constexpr float GUNCMDR_INVASION_RUN_SCALE = 1.15f;
 
 #define GUNCMDR_SCALE(self)              (((self)->s.scale > 0) ? (self)->s.scale : 1.0f)
 
