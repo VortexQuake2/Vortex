@@ -1057,13 +1057,9 @@ void init_drone_bitch (edict_t *self)
 	else
 		self->item = FindItemByClassname("ammo_rockets");
 	
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-
 	//if (self->activator && self->activator->client)
-		self->monsterinfo.power_armor_power = M_CHICK_INITIAL_ARMOR + M_CHICK_ADDON_ARMOR *self->monsterinfo.level; // pow: chick
-	//else self->monsterinfo.power_armor_power = 20*self->monsterinfo.level;
-
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+		M_SetMonsterArmor(self, M_CHICK_INITIAL_ARMOR + M_CHICK_ADDON_ARMOR *self->monsterinfo.level); // pow: chick
+	//else M_SetMonsterArmor(self, 20*self->monsterinfo.level);
 
 	self->pain = mychick_pain;
 	self->die = mychick_die;
@@ -1096,6 +1092,5 @@ void init_drone_bitch_heat (edict_t *self)
 	self->s.skinnum = 2;
 	self->health = M_CHICK_HEAT_INITIAL_HEALTH + M_CHICK_HEAT_ADDON_HEALTH * self->monsterinfo.level;
 	self->max_health = self->health;
-	self->monsterinfo.power_armor_power = M_CHICK_HEAT_INITIAL_ARMOR + M_CHICK_HEAT_ADDON_ARMOR * self->monsterinfo.level;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, M_CHICK_HEAT_INITIAL_ARMOR + M_CHICK_HEAT_ADDON_ARMOR * self->monsterinfo.level);
 }

@@ -678,9 +678,7 @@ void init_drone_hover (edict_t *self)
 	self->monsterinfo.aiflags |= AI_ALTERNATE_FLY;
 	hover_set_fly_parameters(self);
 	self->max_health = self->health;
-	self->monsterinfo.power_armor_power = M_FLOATER_INITIAL_ARMOR + M_FLOATER_ADDON_ARMOR*self->monsterinfo.level;
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, M_FLOATER_INITIAL_ARMOR + M_FLOATER_ADDON_ARMOR*self->monsterinfo.level);
 	self->monsterinfo.control_cost = M_HOVER_CONTROL_COST;
 	self->monsterinfo.cost = M_HOVER_COST;
 	self->item = FindItemByClassname("ammo_rockets");

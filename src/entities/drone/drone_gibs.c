@@ -390,6 +390,7 @@ static const drone_gib_list_t *vrx_get_drone_gibs(edict_t *self)
 	case M_SOLDIER_LASER:
 		return &list_soldier;
 	case M_GUNNER:
+	case M_HEAVY_GUNNER:
 		return &list_gunner;
 	case M_GUNCMDR:
 		return &list_guncmdr;

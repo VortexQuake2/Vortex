@@ -268,9 +268,7 @@ void boss_makron_spawn (edict_t *ent)
 	boss->monsterinfo.level = average_player_level;
 	boss->health = MAKRON_INITIAL_HEALTH+MAKRON_ADDON_HEALTH*boss->monsterinfo.level + 15000;
 	boss->max_health = boss->health;
-	boss->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	boss->monsterinfo.power_armor_power = MAKRON_INITIAL_ARMOR+MAKRON_ADDON_ARMOR*boss->monsterinfo.level;
-	boss->monsterinfo.max_armor = boss->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(boss, MAKRON_INITIAL_ARMOR+MAKRON_ADDON_ARMOR*boss->monsterinfo.level);
 	boss->svflags |= SVF_MONSTER; // needed for armor
 
 	// okay maybe someone WOULD be interested in a boss.

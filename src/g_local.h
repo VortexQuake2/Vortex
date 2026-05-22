@@ -645,6 +645,8 @@ typedef struct {
 
     int power_armor_type;
     int power_armor_power;
+    int armor_type;
+    int armor_power;
     int max_armor;
     int control_cost;
     int cost;
@@ -1175,6 +1177,20 @@ int ArmorIndex(edict_t *ent);
 
 int PowerArmorType(edict_t *ent);
 
+void M_SetMonsterArmor(edict_t *self, int amount);
+
+void M_SetMonsterPowerArmor(edict_t *self, int type, int amount);
+
+int M_MonsterArmorCurrent(const edict_t *self);
+
+int M_MonsterArmorMax(const edict_t *self);
+
+void M_SetMonsterArmorCurrent(edict_t *self, int amount);
+
+void M_AddMonsterArmor(edict_t *self, int amount);
+
+qboolean M_MonsterHasPowerArmor(const edict_t *self);
+
 gitem_t *GetItemByIndex(int index);
 
 qboolean Add_Ammo(edict_t *ent, gitem_t *item, float count);
@@ -1563,6 +1579,7 @@ enum mtype_t {
     M_TANK_N64 = 53,
     M_ARACHNID_HEAT = 54,
     M_ENFORCER = 55,
+    M_HEAVY_GUNNER = 56,
     M_MINISENTRY = 100,
     M_SENTRY = 101,
     M_BFG_SENTRY = 102,
@@ -1696,6 +1713,7 @@ enum dronespawn_t {
     DS_TANK_N64 = 51,
     DS_ARACHNID_HEAT = 52,
     DS_ENFORCER = 53,
+    DS_HEAVY_GUNNER = 54,
 
 };
 
@@ -1782,6 +1800,8 @@ void drone_ai_dodge_slide(edict_t *self, float dist);
 void drone_set_dodge_side(edict_t *self, vec3_t impact);
 
 void drone_ai_walk(edict_t *self, float dist);
+
+void drone_react_to_damage(edict_t *self, edict_t *attacker, edict_t *inflictor);
 
 // az begin
 void ai_eval_targets();

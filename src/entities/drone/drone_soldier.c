@@ -1919,16 +1919,14 @@ void init_drone_soldier (edict_t *self)
 	self->gib_health = -1.5 * BASE_GIB_HEALTH;
 
 	// set armor
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	if (self->mtype == M_SOLDIER_RIPPER)
-		self->monsterinfo.power_armor_power = M_SOLDIER_RIPPER_INITIAL_ARMOR + M_SOLDIER_RIPPER_ADDON_ARMOR * self->monsterinfo.level;
+		M_SetMonsterArmor(self, M_SOLDIER_RIPPER_INITIAL_ARMOR + M_SOLDIER_RIPPER_ADDON_ARMOR * self->monsterinfo.level);
 	else if (self->mtype == M_SOLDIER_BLUEBLASTER)
-		self->monsterinfo.power_armor_power = M_SOLDIER_BLUEBLASTER_INITIAL_ARMOR + M_SOLDIER_BLUEBLASTER_ADDON_ARMOR * self->monsterinfo.level;
+		M_SetMonsterArmor(self, M_SOLDIER_BLUEBLASTER_INITIAL_ARMOR + M_SOLDIER_BLUEBLASTER_ADDON_ARMOR * self->monsterinfo.level);
 	else if (self->mtype == M_SOLDIER_LASER)
-		self->monsterinfo.power_armor_power = M_SOLDIER_LASER_INITIAL_ARMOR + M_SOLDIER_LASER_ADDON_ARMOR * self->monsterinfo.level;
+		M_SetMonsterArmor(self, M_SOLDIER_LASER_INITIAL_ARMOR + M_SOLDIER_LASER_ADDON_ARMOR * self->monsterinfo.level);
 	else
-		self->monsterinfo.power_armor_power = M_SOLDIER_INITIAL_ARMOR+M_SOLDIER_ADDON_ARMOR*self->monsterinfo.level; // pow: soldier
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+		M_SetMonsterArmor(self, M_SOLDIER_INITIAL_ARMOR+M_SOLDIER_ADDON_ARMOR*self->monsterinfo.level); // pow: soldier
 
 	if (self->mtype == M_SOLDIER_RIPPER)
 	{

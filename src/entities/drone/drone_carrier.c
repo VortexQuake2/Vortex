@@ -980,9 +980,7 @@ void init_drone_carrier(edict_t *self)
 	self->monsterinfo.aiflags |= AI_ALTERNATE_FLY;
 	carrier_set_fly_parameters(self);
 
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = M_CARRIER_INITIAL_ARMOR + M_CARRIER_ADDON_ARMOR * self->monsterinfo.level;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, M_CARRIER_INITIAL_ARMOR + M_CARRIER_ADDON_ARMOR * self->monsterinfo.level);
 	self->monsterinfo.control_cost = M_JORG_CONTROL_COST;
 	self->monsterinfo.cost = M_COMMANDER_COST;
 	self->monsterinfo.jumpup = 64;

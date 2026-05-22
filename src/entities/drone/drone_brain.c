@@ -1155,13 +1155,9 @@ void init_drone_brain (edict_t *self)
 	self->monsterinfo.jumpup = 64;
 	self->monsterinfo.jumpdn = 512;
 
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
-
 	//if (self->activator && self->activator->client)
-	self->monsterinfo.power_armor_power = M_BRAIN_INITIAL_ARMOR + M_BRAIN_ADDON_ARMOR * self->monsterinfo.level;
-	//else self->monsterinfo.power_armor_power = 300 + 120*self->monsterinfo.level;
-
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterPowerArmor(self, POWER_ARMOR_SCREEN, M_BRAIN_INITIAL_ARMOR + M_BRAIN_ADDON_ARMOR * self->monsterinfo.level);
+	//else M_SetMonsterPowerArmor(self, POWER_ARMOR_SCREEN, 300 + 120*self->monsterinfo.level);
 	self->mtype = M_BRAIN;
 
 	gi.linkentity (self);

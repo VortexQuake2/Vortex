@@ -792,14 +792,12 @@ void init_drone_supertank (edict_t *self)
 	self->gib_health = -5 * BASE_GIB_HEALTH;
 	self->mass = janitor ? 480 : 800;
 
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	if (janitor)
-		self->monsterinfo.power_armor_power = M_JANITOR_INITIAL_ARMOR + M_JANITOR_ADDON_ARMOR * self->monsterinfo.level;
+		M_SetMonsterArmor(self, M_JANITOR_INITIAL_ARMOR + M_JANITOR_ADDON_ARMOR * self->monsterinfo.level);
 	else if (boss5)
-		self->monsterinfo.power_armor_power = 400 * self->monsterinfo.level;
+		M_SetMonsterArmor(self, 400 * self->monsterinfo.level);
 	else
-		self->monsterinfo.power_armor_power = 0;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+		M_SetMonsterArmor(self, 0);
 
 	self->die = supertank_die;
 	// vortex bosses have pain animations disabled.

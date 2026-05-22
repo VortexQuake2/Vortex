@@ -785,6 +785,38 @@ void drone_newtarget(edict_t* self)
 	}
 }
 
+void drone_react_to_damage(edict_t *self, edict_t *attacker, edict_t *inflictor)
+{
+	if (!self || !self->inuse || !(self->svflags & SVF_MONSTER))
+		return;
+	if (self->health <= 0 || self->deadflag == DEAD_DEAD)
+		return;
+	if (!G_EntIsAlive(attacker) || attacker == self)
+		return;
+	if (OnSameTeam(self, attacker))
+		return;
+	if (G_ValidTarget(self, self->enemy, false, true))
+		return;
+	if (!G_ValidTarget(self, attacker, false, true))
+		return;
+
+	self->enemy = attacker;
+	self->oldenemy = NULL;
+	self->goalentity = NULL;
+	self->monsterinfo.aiflags &= ~(AI_LOST_SIGHT | AI_COMBAT_POINT);
+	VectorCopy(attacker->s.origin, self->monsterinfo.last_sighting);
+	self->monsterinfo.last_sighting_is_navi = false;
+
+	if (self->monsterinfo.sight)
+		self->monsterinfo.sight(self, attacker);
+
+	drone_wakeallies(self);
+	drone_newtarget(self);
+
+	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND) && self->monsterinfo.run)
+		self->monsterinfo.run(self);
+}
+
 qboolean drone_ai_findgoal (edict_t *self) {
 	// did we have a previous enemy?
 	if (self->oldenemy)
@@ -2580,7 +2612,7 @@ void drone_think (edict_t *self)
 
 	M_UpdateLastSight(self);
 	V_HealthCache(self, (int)(0.2 * self->max_health), 1);
-	V_ArmorCache(self, (int)(0.2 * self->monsterinfo.max_armor), 1);
+	V_ArmorCache(self, (int)(0.2 * M_MonsterArmorMax(self)), 1);
 
 	// draw waypoint path for debugging if enabled
 	DrawPath(self);

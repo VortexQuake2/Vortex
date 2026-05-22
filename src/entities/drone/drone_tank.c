@@ -36,8 +36,6 @@ static int	sound_grenade;
 static int	sound_spawn;
 
 #define TANK_N64_SCALE					1.1f
-#define TANK_N64_STAT_NUMERATOR			6
-#define TANK_N64_STAT_DENOMINATOR		5
 #define TANK_N64_BLASTER2_DAMAGE		26
 #define TANK_N64_BLASTER2_ADDON			4
 #define TANK_N64_BLASTER2_SPEED			950
@@ -2152,11 +2150,8 @@ void init_drone_tank (edict_t *self)
 	self->gib_health = -2 * BASE_GIB_HEALTH;
 
 	//if (self->activator && self->activator->client)
-	self->monsterinfo.power_armor_power = M_TANK_INITIAL_ARMOR + M_TANK_ADDON_ARMOR*self->monsterinfo.level; // pow: tank
-	//else self->monsterinfo.power_armor_power = 200 + 105*self->monsterinfo.level;
-
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, M_TANK_INITIAL_ARMOR + M_TANK_ADDON_ARMOR*self->monsterinfo.level); // pow: tank
+	//else M_SetMonsterArmor(self, 200 + 105*self->monsterinfo.level);
 
 	self->monsterinfo.control_cost = M_TANK_CONTROL_COST;
 	self->monsterinfo.cost = M_TANK_COST;
@@ -2207,10 +2202,9 @@ void init_drone_tank_n64(edict_t *self)
 	VectorSet(self->mins, -32.0f * TANK_N64_SCALE, -32.0f * TANK_N64_SCALE, -16.0f * TANK_N64_SCALE);
 	VectorSet(self->maxs, 32.0f * TANK_N64_SCALE, 32.0f * TANK_N64_SCALE, 64.0f * TANK_N64_SCALE);
 
-	self->health = (self->health * TANK_N64_STAT_NUMERATOR) / TANK_N64_STAT_DENOMINATOR;
+	self->health = M_TANK_N64_INITIAL_HEALTH + M_TANK_N64_ADDON_HEALTH * self->monsterinfo.level;
 	self->max_health = self->health;
-	self->monsterinfo.power_armor_power = (self->monsterinfo.power_armor_power * TANK_N64_STAT_NUMERATOR) / TANK_N64_STAT_DENOMINATOR;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, M_TANK_N64_INITIAL_ARMOR + M_TANK_N64_ADDON_ARMOR * self->monsterinfo.level);
 	self->monsterinfo.scale = MODEL_SCALE * TANK_N64_SCALE;
 	self->accel = TANK_N64_HEAT_TURN_FRACTION;
 	self->count = random() < 0.5f;
@@ -2230,8 +2224,7 @@ void init_drone_commander (edict_t *self)
 		self->health = 5000 + 750*self->monsterinfo.level; // hlt: commander_invasion_hard
 
 	self->max_health = self->health;
-	self->monsterinfo.power_armor_power = 675*self->monsterinfo.level; // pow: commander_normal_and_invasion,commander_invasion_hard
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, 675*self->monsterinfo.level); // pow: commander_normal_and_invasion,commander_invasion_hard
 
 	self->monsterinfo.control_cost = M_COMMANDER_CONTROL_COST;
 	self->monsterinfo.cost = M_COMMANDER_COST;

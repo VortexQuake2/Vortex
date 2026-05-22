@@ -675,9 +675,7 @@ void init_drone_jorg (edict_t *self)
 	VectorSet (self->maxs, 80, 80, 140);
 
 	self->health = self->max_health = 10000 * self->monsterinfo.level;
-	self->monsterinfo.power_armor_power = 10000 * self->monsterinfo.level;
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, 10000 * self->monsterinfo.level);
 	self->mtype = M_JORG;
 	self->monsterinfo.control_cost = M_JORG_CONTROL_COST;
 	self->monsterinfo.cost = 300;

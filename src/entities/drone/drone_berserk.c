@@ -917,8 +917,7 @@ void init_drone_berserk (edict_t *self)
 	self->solid = SOLID_BBOX;
 
 	self->health = self->max_health = M_BERSERKER_INITIAL_HEALTH + M_BERSERKER_ADDON_HEALTH * self->monsterinfo.level; // hlt: berserker
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = self->monsterinfo.max_armor = M_BERSERKER_INITIAL_ARMOR + M_BERSERKER_ADDON_ARMOR * self->monsterinfo.level; // pow: berserker
+	M_SetMonsterArmor(self, M_BERSERKER_INITIAL_ARMOR + M_BERSERKER_ADDON_ARMOR * self->monsterinfo.level); // pow: berserker
 	self->gib_health = -0.6 * BASE_GIB_HEALTH;
 	self->mass = 250;
 	self->monsterinfo.control_cost = M_BERSERKER_CONTROL_COST;

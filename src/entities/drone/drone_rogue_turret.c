@@ -331,9 +331,7 @@ void init_drone_rogue_turret(edict_t *self)
 	self->mtype = M_ROGUE_TURRET;
 	self->flags |= FL_NO_KNOCKBACK;
 	self->max_health = self->health;
-	self->monsterinfo.power_armor_power = M_ROGUE_TURRET_INITIAL_ARMOR + M_ROGUE_TURRET_ADDON_ARMOR * self->monsterinfo.level;
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, M_ROGUE_TURRET_INITIAL_ARMOR + M_ROGUE_TURRET_ADDON_ARMOR * self->monsterinfo.level);
 	self->monsterinfo.control_cost = M_DEFAULT_CONTROL_COST;
 	self->monsterinfo.cost = M_DEFAULT_COST;
 	self->monsterinfo.sight_range = 1024;

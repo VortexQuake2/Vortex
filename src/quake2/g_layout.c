@@ -311,6 +311,7 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	case M_ENFORCER:
 	case M_INSANE:
 	case M_GUNNER:
+	case M_HEAVY_GUNNER:
 	case M_CHICK:
 	case M_CHICK_HEAT:
 	case M_PARASITE:
@@ -356,10 +357,10 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 		if (ent->monsterinfo.resurrected_timeout)
 		{
 			float time_remaining = ent->monsterinfo.resurrected_timeout - level.time;
-			data = lva("(%d) +%d/%d %.0f", ent->monsterinfo.level, ent->health, ent->monsterinfo.power_armor_power, time_remaining);
+			data = lva("(%d) +%d/%d %.0f", ent->monsterinfo.level, ent->health, M_MonsterArmorCurrent(ent), time_remaining);
 		}
 		else
-			data = lva("(%d) +%d/%d", ent->monsterinfo.level, ent->health, ent->monsterinfo.power_armor_power);
+			data = lva("(%d) +%d/%d", ent->monsterinfo.level, ent->health, M_MonsterArmorCurrent(ent));
 		break;
 	case M_SENTRY:
 		name = lva("sentry");

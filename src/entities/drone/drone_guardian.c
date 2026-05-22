@@ -778,7 +778,7 @@ void init_drone_guardian(edict_t *self)
 		VectorSet(self->mins, -38, -38, -26);
 		VectorSet(self->maxs, 38, 38, 25);
 		self->health = M_MINIGUARDIAN_INITIAL_HEALTH + M_MINIGUARDIAN_ADDON_HEALTH * self->monsterinfo.level;
-		self->monsterinfo.power_armor_power = M_MINIGUARDIAN_INITIAL_ARMOR + M_MINIGUARDIAN_ADDON_ARMOR * self->monsterinfo.level;
+		M_SetMonsterArmor(self, M_MINIGUARDIAN_INITIAL_ARMOR + M_MINIGUARDIAN_ADDON_ARMOR * self->monsterinfo.level);
 		self->mass = 340;
 	}
 	else
@@ -797,14 +797,12 @@ void init_drone_guardian(edict_t *self)
 			VectorSet(self->maxs, 96, 96, 62);
 		}
 		self->health = M_GUARDIAN_INITIAL_HEALTH + M_GUARDIAN_ADDON_HEALTH * self->monsterinfo.level;
-		self->monsterinfo.power_armor_power = M_GUARDIAN_INITIAL_ARMOR + M_GUARDIAN_ADDON_ARMOR * self->monsterinfo.level;
+		M_SetMonsterArmor(self, M_GUARDIAN_INITIAL_ARMOR + M_GUARDIAN_ADDON_ARMOR * self->monsterinfo.level);
 		self->mass = 850;
 	}
 
 	self->max_health = self->health;
 	self->gib_health = miniguardian ? -3 * BASE_GIB_HEALTH : -6 * BASE_GIB_HEALTH;
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 	self->monsterinfo.jumpup = 64;
 	self->monsterinfo.jumpdn = 512;
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;

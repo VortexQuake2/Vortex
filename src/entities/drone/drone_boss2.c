@@ -781,12 +781,10 @@ static void init_drone_boss2_common(edict_t *self, int variant)
 	self->s.sound = gi.soundindex("bosshovr/bhvengn1.wav");
 	self->s.scale = small ? 0.6f : (invasion->value ? BOSS2_INVASION_SCALE : 1.0f);
 
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	if (small)
-		self->monsterinfo.power_armor_power = M_BOSS2_SMALL_INITIAL_ARMOR + M_BOSS2_SMALL_ADDON_ARMOR * self->monsterinfo.level;
+		M_SetMonsterArmor(self, M_BOSS2_SMALL_INITIAL_ARMOR + M_BOSS2_SMALL_ADDON_ARMOR * self->monsterinfo.level);
 	else
-		self->monsterinfo.power_armor_power = M_BOSS2_INITIAL_ARMOR + M_BOSS2_ADDON_ARMOR * self->monsterinfo.level;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+		M_SetMonsterArmor(self, M_BOSS2_INITIAL_ARMOR + M_BOSS2_ADDON_ARMOR * self->monsterinfo.level);
 	self->monsterinfo.control_cost = small ? M_HOVER_CONTROL_COST : M_JORG_CONTROL_COST;
 	self->monsterinfo.cost = small ? M_HOVER_COST : M_COMMANDER_COST;
 	self->monsterinfo.jumpup = 64;

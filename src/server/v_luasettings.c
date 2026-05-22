@@ -558,10 +558,10 @@ void Lua_LoadVariables()
 #pragma endregion
 #pragma region DISRUPTOR
 
-	DISRUPTOR_INITIAL_DAMAGE = vrx_lua_get_variable("DISRUPTOR_INITIAL_DAMAGE", 90);
-	DISRUPTOR_ADDON_DAMAGE = vrx_lua_get_variable("DISRUPTOR_ADDON_DAMAGE", 4);
-	DISRUPTOR_INITIAL_SPEED = vrx_lua_get_variable("DISRUPTOR_INITIAL_SPEED", 1200);
-	DISRUPTOR_ADDON_SPEED = vrx_lua_get_variable("DISRUPTOR_ADDON_SPEED", 20);
+	DISRUPTOR_INITIAL_DAMAGE = vrx_lua_get_variable("DISRUPTOR_INITIAL_DAMAGE", 30);
+	DISRUPTOR_ADDON_DAMAGE = vrx_lua_get_variable("DISRUPTOR_ADDON_DAMAGE", 2);
+	DISRUPTOR_INITIAL_SPEED = vrx_lua_get_variable("DISRUPTOR_INITIAL_SPEED", 500);
+	DISRUPTOR_ADDON_SPEED = vrx_lua_get_variable("DISRUPTOR_ADDON_SPEED", 10);
 
 #pragma endregion
 #pragma region IONRIPPER
@@ -705,6 +705,7 @@ void Lua_LoadVariables()
 	M_SOLDIER_COST = vrx_lua_get_variable("M_SOLDIER_COST", 25);
 	M_ENFORCER_COST = vrx_lua_get_variable("M_ENFORCER_COST", 25);
 	M_GUNNER_COST = vrx_lua_get_variable("M_GUNNER_COST", 25);
+	M_HEAVY_GUNNER_COST = vrx_lua_get_variable("M_HEAVY_GUNNER_COST", 35);
 	M_CHICK_COST = vrx_lua_get_variable("M_CHICK_COST", 25);
 	M_PARASITE_COST = vrx_lua_get_variable("M_PARASITE_COST", 25);
 	M_MEDIC_COST = vrx_lua_get_variable("M_MEDIC_COST", 25);
@@ -723,6 +724,7 @@ void Lua_LoadVariables()
 	M_SOLDIER_CONTROL_COST = vrx_lua_get_variable("M_SOLDIER_CONTROL_COST", 1);
 	M_ENFORCER_CONTROL_COST = vrx_lua_get_variable("M_ENFORCER_CONTROL_COST", 1);
 	M_GUNNER_CONTROL_COST = vrx_lua_get_variable("M_GUNNER_CONTROL_COST", 1);
+	M_HEAVY_GUNNER_CONTROL_COST = vrx_lua_get_variable("M_HEAVY_GUNNER_CONTROL_COST", 1);
 	M_CHICK_CONTROL_COST = vrx_lua_get_variable("M_CHICK_CONTROL_COST", 1);
 	M_PARASITE_CONTROL_COST = vrx_lua_get_variable("M_PARASITE_CONTROL_COST", 1);
 	M_MEDIC_CONTROL_COST = vrx_lua_get_variable("M_MEDIC_CONTROL_COST", 1);
@@ -1021,8 +1023,13 @@ void Lua_LoadVariables()
 	M_SOLDIER_INITIAL_ARMOR = vrx_lua_get_variable("M_SOLDIER_INITIAL_ARMOR", 25);
 	M_SOLDIER_ADDON_ARMOR = vrx_lua_get_variable("M_SOLDIER_ADDON_ARMOR", 15);
 
+	M_INFANTRY_INITIAL_HEALTH = vrx_lua_get_variable("M_INFANTRY_INITIAL_HEALTH", 50);
+	M_INFANTRY_ADDON_HEALTH = vrx_lua_get_variable("M_INFANTRY_ADDON_HEALTH", 45);
+	M_INFANTRY_INITIAL_ARMOR = vrx_lua_get_variable("M_INFANTRY_INITIAL_ARMOR", 0);
+	M_INFANTRY_ADDON_ARMOR = vrx_lua_get_variable("M_INFANTRY_ADDON_ARMOR", 0);
+
 	M_ENFORCER_INITIAL_HEALTH = vrx_lua_get_variable("M_ENFORCER_INITIAL_HEALTH", 50);
-	M_ENFORCER_ADDON_HEALTH = vrx_lua_get_variable("M_ENFORCER_ADDON_HEALTH", 15);
+	M_ENFORCER_ADDON_HEALTH = vrx_lua_get_variable("M_ENFORCER_ADDON_HEALTH", 45);
 	M_ENFORCER_INITIAL_ARMOR = vrx_lua_get_variable("M_ENFORCER_INITIAL_ARMOR", 30);
 	M_ENFORCER_ADDON_ARMOR = vrx_lua_get_variable("M_ENFORCER_ADDON_ARMOR", 20);
 
@@ -1060,6 +1067,10 @@ void Lua_LoadVariables()
 	M_GUNNER_ADDON_HEALTH = vrx_lua_get_variable("M_GUNNER_ADDON_HEALTH", 25);
 	M_GUNNER_INITIAL_ARMOR = vrx_lua_get_variable("M_GUNNER_INITIAL_ARMOR", 50);
 	M_GUNNER_ADDON_ARMOR = vrx_lua_get_variable("M_GUNNER_ADDON_ARMOR", 15);
+	M_HEAVY_GUNNER_INITIAL_HEALTH = vrx_lua_get_variable("M_HEAVY_GUNNER_INITIAL_HEALTH", 75);
+	M_HEAVY_GUNNER_ADDON_HEALTH = vrx_lua_get_variable("M_HEAVY_GUNNER_ADDON_HEALTH", 35);
+	M_HEAVY_GUNNER_INITIAL_ARMOR = vrx_lua_get_variable("M_HEAVY_GUNNER_INITIAL_ARMOR", 85);
+	M_HEAVY_GUNNER_ADDON_ARMOR = vrx_lua_get_variable("M_HEAVY_GUNNER_ADDON_ARMOR", 35);
 
 	M_HOVER_INITIAL_HEALTH = vrx_lua_get_variable("M_HOVER_INITIAL_HEALTH", 50);
 	M_HOVER_ADDON_HEALTH = vrx_lua_get_variable("M_HOVER_ADDON_HEALTH", 10);
@@ -1089,6 +1100,10 @@ void Lua_LoadVariables()
 	M_TANK_ADDON_HEALTH = vrx_lua_get_variable("M_TANK_ADDON_HEALTH", 65);
 	M_TANK_INITIAL_ARMOR = vrx_lua_get_variable("M_TANK_INITIAL_ARMOR", 200);
 	M_TANK_ADDON_ARMOR = vrx_lua_get_variable("M_TANK_ADDON_ARMOR", 105);
+	M_TANK_N64_INITIAL_HEALTH = vrx_lua_get_variable("M_TANK_N64_INITIAL_HEALTH", 120);
+	M_TANK_N64_ADDON_HEALTH = vrx_lua_get_variable("M_TANK_N64_ADDON_HEALTH", 78);
+	M_TANK_N64_INITIAL_ARMOR = vrx_lua_get_variable("M_TANK_N64_INITIAL_ARMOR", 240);
+	M_TANK_N64_ADDON_ARMOR = vrx_lua_get_variable("M_TANK_N64_ADDON_ARMOR", 126);
 
 	M_BARON_FIRE_INITIAL_HEALTH = vrx_lua_get_variable("M_BARON_FIRE_INITIAL_HEALTH", 0);
 	M_BARON_FIRE_ADDON_HEALTH = vrx_lua_get_variable("M_BARON_FIRE_ADDON_HEALTH", 2500);
@@ -1135,9 +1150,13 @@ void Lua_LoadVariables()
 	M_GLADC_INITIAL_ARMOR = vrx_lua_get_variable("M_GLADC_INITIAL_ARMOR", 100);
 	M_GLADC_ADDON_ARMOR = vrx_lua_get_variable("M_GLADC_ADDON_ARMOR", 20);
 	M_ARACHNID_INITIAL_HEALTH = vrx_lua_get_variable("M_ARACHNID_INITIAL_HEALTH", 100);
-	M_ARACHNID_ADDON_HEALTH = vrx_lua_get_variable("M_ARACHNID_ADDON_HEALTH", 10);
-	M_ARACHNID_INITIAL_ARMOR = vrx_lua_get_variable("M_ARACHNID_INITIAL_ARMOR", 100);
-	M_ARACHNID_ADDON_ARMOR = vrx_lua_get_variable("M_ARACHNID_ADDON_ARMOR", 20);
+	M_ARACHNID_ADDON_HEALTH = vrx_lua_get_variable("M_ARACHNID_ADDON_HEALTH", 55);
+	M_ARACHNID_INITIAL_ARMOR = vrx_lua_get_variable("M_ARACHNID_INITIAL_ARMOR", 200);
+	M_ARACHNID_ADDON_ARMOR = vrx_lua_get_variable("M_ARACHNID_ADDON_ARMOR", 85);
+	M_ARACHNID_HEAT_INITIAL_HEALTH = vrx_lua_get_variable("M_ARACHNID_HEAT_INITIAL_HEALTH", 115);
+	M_ARACHNID_HEAT_ADDON_HEALTH = vrx_lua_get_variable("M_ARACHNID_HEAT_ADDON_HEALTH", 63.25);
+	M_ARACHNID_HEAT_INITIAL_ARMOR = vrx_lua_get_variable("M_ARACHNID_HEAT_INITIAL_ARMOR", 230);
+	M_ARACHNID_HEAT_ADDON_ARMOR = vrx_lua_get_variable("M_ARACHNID_HEAT_ADDON_ARMOR", 97.75);
 	M_CARRIER_INITIAL_HEALTH = vrx_lua_get_variable("M_CARRIER_INITIAL_HEALTH", 2200);
 	M_CARRIER_ADDON_HEALTH = vrx_lua_get_variable("M_CARRIER_ADDON_HEALTH", 650);
 	M_CARRIER_INITIAL_ARMOR = vrx_lua_get_variable("M_CARRIER_INITIAL_ARMOR", 500);
@@ -1250,8 +1269,8 @@ void Lua_LoadVariables()
 	M_BLASTER_SPEED_ADDON = vrx_lua_get_variable("M_BLASTER_SPEED_ADDON", 50);
 	M_BLASTER_SPEED_MAX = vrx_lua_get_variable("M_BLASTER_SPEED_MAX", 1500);
 
-	M_BLASTER2_DMG_BASE = vrx_lua_get_variable("M_BLASTER2_DMG_BASE", 50);
-	M_BLASTER2_DMG_ADDON = vrx_lua_get_variable("M_BLASTER2_DMG_ADDON", 2);
+	M_BLASTER2_DMG_BASE = vrx_lua_get_variable("M_BLASTER2_DMG_BASE", 20);
+	M_BLASTER2_DMG_ADDON = vrx_lua_get_variable("M_BLASTER2_DMG_ADDON", 1);
 	M_BLASTER2_DMG_MAX = vrx_lua_get_variable("M_BLASTER2_DMG_MAX", 0);
 	M_BLASTER2_SPEED_BASE = vrx_lua_get_variable("M_BLASTER2_SPEED_BASE", 500);
 	M_BLASTER2_SPEED_ADDON = vrx_lua_get_variable("M_BLASTER2_SPEED_ADDON", 0);

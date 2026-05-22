@@ -14,6 +14,7 @@ static int sound_death;
 static int sound_sight;
 static int sound_step;
 static int sound_charge;
+static int sound_heat_fire;
 static int sound_melee;
 static int sound_melee_hit;
 
@@ -245,7 +246,8 @@ static void arachnid_heat(edict_t *self)
 	if (!M_MonsterHasClearShotFrom(self, start))
 		return;
 
-	monster_fire_heat(self, start, forward, damage, speed, flash_number, ARACHNID_HEAT_TURN_FRACTION);
+	if (monster_fire_heat(self, start, forward, damage, speed, flash_number, ARACHNID_HEAT_TURN_FRACTION))
+		gi.positioned_sound(start, self, CHAN_WEAPON, sound_heat_fire, 1, ATTN_NORM, 0);
 }
 
 mframe_t arachnid_heat_frames_attack1[] =
@@ -253,7 +255,7 @@ mframe_t arachnid_heat_frames_attack1[] =
 	ai_charge, 0, arachnid_heat_mark,
 	ai_charge, 0, arachnid_heat,
 	ai_charge, 0, NULL,
-	ai_charge, 0, arachnid_heat,
+	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
 	ai_charge, 0, arachnid_heat,
 	ai_charge, 0, NULL
@@ -265,13 +267,13 @@ mframe_t arachnid_heat_frames_attack_up1[] =
 	ai_charge, 0, arachnid_heat_mark,
 	ai_charge, 0, arachnid_heat,
 	ai_charge, 0, NULL,
-	ai_charge, 0, arachnid_heat,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
-	ai_charge, 0, arachnid_heat,
 	ai_charge, 0, NULL,
 	ai_charge, 0, arachnid_heat,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
@@ -629,6 +631,7 @@ void init_drone_arachnid(edict_t *self)
 {
 	sound_step = gi.soundindex("insane/insane11.wav");
 	sound_charge = gi.soundindex("weapons/plasshot.wav");
+	sound_heat_fire = gi.soundindex("weapons/railgr1a.wav");
 	sound_melee = gi.soundindex("gladiator/melee3.wav");
 	sound_melee_hit = gi.soundindex("gladiator/melee2.wav");
 	sound_pain = gi.soundindex("arachnid/pain.wav");
@@ -658,9 +661,7 @@ void init_drone_arachnid(edict_t *self)
 	self->mtype = M_ARACHNID;
 	self->monsterinfo.control_cost = M_GLADIATOR_CONTROL_COST;
 	self->monsterinfo.cost = M_DEFAULT_COST;
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = M_ARACHNID_INITIAL_ARMOR + M_ARACHNID_ADDON_ARMOR * self->monsterinfo.level;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, M_ARACHNID_INITIAL_ARMOR + M_ARACHNID_ADDON_ARMOR * self->monsterinfo.level);
 	self->monsterinfo.jumpup = 64;
 	self->monsterinfo.jumpdn = 512;
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
@@ -690,6 +691,9 @@ void init_drone_arachnid_heat(edict_t *self)
 
 	self->mtype = M_ARACHNID_HEAT;
 	self->s.scale = invasion->value ? ARACHNID_HEAT_INVASION_SCALE : ARACHNID_HEAT_DEFAULT_SCALE;
+	self->health = M_ARACHNID_HEAT_INITIAL_HEALTH + M_ARACHNID_HEAT_ADDON_HEALTH * self->monsterinfo.level;
+	self->max_health = self->health;
+	M_SetMonsterArmor(self, M_ARACHNID_HEAT_INITIAL_ARMOR + M_ARACHNID_HEAT_ADDON_ARMOR * self->monsterinfo.level);
 	self->monsterinfo.attack = arachnid_heat_attack;
 	self->monsterinfo.currentmove = &arachnid_move_stand;
 	self->monsterinfo.scale = MODEL_SCALE * self->s.scale;

@@ -814,9 +814,7 @@ void init_drone_stalker(edict_t *self)
 	self->mass = 250;
 	self->mtype = M_STALKER;
 
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
-	self->monsterinfo.power_armor_power = M_STALKER_INITIAL_ARMOR + M_STALKER_ADDON_ARMOR * self->monsterinfo.level;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterPowerArmor(self, POWER_ARMOR_SCREEN, M_STALKER_INITIAL_ARMOR + M_STALKER_ADDON_ARMOR * self->monsterinfo.level);
 	self->monsterinfo.control_cost = M_BERSERKER_CONTROL_COST;
 	self->monsterinfo.cost = M_DEFAULT_COST;
 

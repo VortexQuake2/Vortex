@@ -267,9 +267,7 @@ void init_drone_daedalus(edict_t *self)
 	self->flags |= FL_FLY;
 	self->monsterinfo.aiflags |= AI_ALTERNATE_FLY;
 	daedalus_set_fly_parameters(self);
-	self->monsterinfo.power_armor_power = M_DAEDALUS_INITIAL_ARMOR + M_DAEDALUS_ADDON_ARMOR * self->monsterinfo.level;
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterPowerArmor(self, POWER_ARMOR_SHIELD, M_DAEDALUS_INITIAL_ARMOR + M_DAEDALUS_ADDON_ARMOR * self->monsterinfo.level);
 	self->monsterinfo.control_cost = M_HOVER_CONTROL_COST;
 	self->monsterinfo.cost = M_HOVER_COST;
 	self->item = FindItemByClassname("ammo_grenades");

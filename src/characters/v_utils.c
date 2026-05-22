@@ -2062,6 +2062,8 @@ char *V_GetMonsterKind(int mtype) {
             return "lost marine";
         case M_GUNNER:
             return "gunner";
+        case M_HEAVY_GUNNER:
+            return "heavy gunner";
         case M_CHICK:
             return "iron praetor";
         case M_CHICK_HEAT:
@@ -2315,7 +2317,8 @@ qboolean V_HealthCache(edict_t *ent, int max_per_second, int update_frequency_sv
 
 qboolean V_ArmorCache(edict_t *ent, int max_per_second, int update_frequency) {
     int heal, delta, max, max_armor;
-    int *armor;
+    int *armor = NULL;
+    int current_armor;
 
     if (ent->armor_cache_nextframe > level.framenum)
         return false;
@@ -2323,14 +2326,19 @@ qboolean V_ArmorCache(edict_t *ent, int max_per_second, int update_frequency) {
     if (ent->client) {
         armor = &ent->client->pers.inventory[body_armor_index];
         max_armor = MAX_ARMOR(ent);
+        current_armor = *armor;
+    } else if (ent->svflags & SVF_MONSTER) {
+        max_armor = M_MonsterArmorMax(ent);
+        current_armor = M_MonsterArmorCurrent(ent);
     } else {
         armor = &ent->monsterinfo.power_armor_power;
         max_armor = ent->monsterinfo.max_armor;
+        current_armor = *armor;
     }
 
     ent->armor_cache_nextframe = level.framenum + update_frequency;
 
-    if (ent->armor_cache > 0 && *armor < max_armor) {
+    if (ent->armor_cache > 0 && current_armor < max_armor) {
         if (update_frequency <= sv_fps->value)
             max = max_per_second / (sv_fps->value / update_frequency);
         else
@@ -2338,14 +2346,17 @@ qboolean V_ArmorCache(edict_t *ent, int max_per_second, int update_frequency) {
         if (max > ent->armor_cache)
             max = ent->armor_cache;
 
-        delta = max_armor - *armor;
+        delta = max_armor - current_armor;
 
         if (delta > max)
             heal = max;
         else
             heal = delta;
 
-        *armor += heal;
+        if (armor)
+            *armor += heal;
+        else
+            M_AddMonsterArmor(ent, heal);
         ent->armor_cache -= heal;
 
         return true;
@@ -2716,9 +2727,14 @@ void V_NonShellEffects(edict_t *ent) {
         else
             pa_type = ent->monsterinfo.power_armor_type;
 
-        // only non-shell effects are added here, so power shield is intentionally omitted
         if (pa_type == POWER_ARMOR_SCREEN)
             ent->s.effects |= EF_POWERSCREEN;
+        else if (!ent->client && (ent->svflags & SVF_MONSTER) && pa_type == POWER_ARMOR_SHIELD
+                 && !(ent->s.effects & EF_COLOR_SHELL)
+                 && !(ent->s.renderfx & (RF_SHELL_RED | RF_SHELL_GREEN | RF_SHELL_BLUE | RF_SHELL_YELLOW))) {
+            ent->s.effects |= EF_COLOR_SHELL;
+            ent->s.renderfx |= RF_SHELL_GREEN;
+        }
     }
 
     // super speed effect

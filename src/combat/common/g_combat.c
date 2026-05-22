@@ -428,6 +428,115 @@ static int CheckShield (edict_t *ent, vec3_t point, vec3_t normal, int damage, i
 	return save;
 }
 
+static int M_MonsterCombatArmorIndex(void)
+{
+    gitem_t *combat_armor;
+
+    if (combat_armor_index)
+        return combat_armor_index;
+
+    combat_armor = FindItem((char *)"Combat Armor");
+    if (combat_armor)
+        return ITEM_INDEX(combat_armor);
+
+    return 0;
+}
+
+void M_SetMonsterArmor(edict_t *self, int amount)
+{
+    if (!self)
+        return;
+
+    if (amount < 0)
+        amount = 0;
+
+    self->monsterinfo.power_armor_type = POWER_ARMOR_NONE;
+    self->monsterinfo.power_armor_power = 0;
+    self->monsterinfo.armor_type = amount ? M_MonsterCombatArmorIndex() : 0;
+    self->monsterinfo.armor_power = amount;
+    self->monsterinfo.max_armor = amount;
+}
+
+void M_SetMonsterPowerArmor(edict_t *self, int type, int amount)
+{
+    if (!self)
+        return;
+
+    if (amount < 0)
+        amount = 0;
+
+    if (type != POWER_ARMOR_SCREEN && type != POWER_ARMOR_SHIELD)
+        type = POWER_ARMOR_NONE;
+
+    self->monsterinfo.armor_type = 0;
+    self->monsterinfo.armor_power = 0;
+    self->monsterinfo.power_armor_type = type;
+    self->monsterinfo.power_armor_power = amount;
+    self->monsterinfo.max_armor = amount;
+}
+
+int M_MonsterArmorCurrent(const edict_t *self)
+{
+    if (!self || !(self->svflags & SVF_MONSTER))
+        return 0;
+
+    if (self->monsterinfo.armor_type)
+        return self->monsterinfo.armor_power;
+
+    if (self->monsterinfo.power_armor_type != POWER_ARMOR_NONE)
+        return self->monsterinfo.power_armor_power;
+
+    return 0;
+}
+
+int M_MonsterArmorMax(const edict_t *self)
+{
+    if (!self || !(self->svflags & SVF_MONSTER))
+        return 0;
+
+    if (self->monsterinfo.armor_type || self->monsterinfo.power_armor_type != POWER_ARMOR_NONE)
+        return self->monsterinfo.max_armor;
+
+    return 0;
+}
+
+void M_SetMonsterArmorCurrent(edict_t *self, int amount)
+{
+    int max_armor;
+
+    if (!self || !(self->svflags & SVF_MONSTER))
+        return;
+
+    max_armor = M_MonsterArmorMax(self);
+    if (!max_armor)
+        return;
+
+    if (amount < 0)
+        amount = 0;
+    if (amount > max_armor)
+        amount = max_armor;
+
+    if (self->monsterinfo.armor_type)
+        self->monsterinfo.armor_power = amount;
+    else if (self->monsterinfo.power_armor_type != POWER_ARMOR_NONE)
+        self->monsterinfo.power_armor_power = amount;
+}
+
+void M_AddMonsterArmor(edict_t *self, int amount)
+{
+    M_SetMonsterArmorCurrent(self, M_MonsterArmorCurrent(self) + amount);
+}
+
+qboolean M_MonsterHasPowerArmor(const edict_t *self)
+{
+    if (!self || !(self->svflags & SVF_MONSTER))
+        return false;
+
+    return (self->monsterinfo.power_armor_power > 0
+        && (self->monsterinfo.power_armor_type == POWER_ARMOR_SCREEN
+            || self->monsterinfo.power_armor_type == POWER_ARMOR_SHIELD));
+}
+
 static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damage, int dflags)
 {
 	gclient_t	*client;
@@ -438,6 +547,9 @@ static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damag
 	int			pa_te_type;
 	int			power = 0; // cells
 	int			power_used; // cells used
+	int			old_monster_power = 0;
+	qboolean	monster_power_armor = false;
+	qboolean	VORTEX_POWERSHIELD_FOR_PLAYERS = false;
 	edict_t		*cl_ent=NULL;
 
 	//4.2 if shield absorbed all the damage, we're done
@@ -477,6 +589,8 @@ static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damag
 	{
 		power_armor_type = ent->monsterinfo.power_armor_type;
 		power = ent->monsterinfo.power_armor_power;
+		old_monster_power = power;
+		monster_power_armor = true;
 	}
 	else if (ent->creator && ent->creator->client)
 	{
@@ -488,8 +602,12 @@ static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damag
 
 	if (power_armor_type == POWER_ARMOR_NONE)
 		return save;
+	if (power_armor_type != POWER_ARMOR_SCREEN && power_armor_type != POWER_ARMOR_SHIELD)
+		return save;
 	if (!power)
 		return save;
+	if (cl_ent && power_armor_type == POWER_ARMOR_SHIELD)
+		VORTEX_POWERSHIELD_FOR_PLAYERS = true;
 
 	if (power_armor_type == POWER_ARMOR_SCREEN)
 	{
@@ -525,17 +643,36 @@ static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damag
 
 		pa_te_type = TE_SCREEN_SPARKS;
 	}
-	else
+	else if (power_armor_type == POWER_ARMOR_SHIELD)
 	{
-		damagePerCell = 1.0;
 		pa_te_type = TE_SHIELD_SPARKS;
-		damage *= 0.8;
+		if (VORTEX_POWERSHIELD_FOR_PLAYERS)
+		{
+			damagePerCell = 1.0;
+			damage *= 0.8;
+		}
+		else
+		{
+			damagePerCell = ctf->value ? 1.0f : 2.0f;
+			damage = (2 * damage) / 3;
+			if (damage < 1)
+				damage = 1;
+		}
 	}
+	else
+		return save;
 
 	save += power * damagePerCell;
 
 	if (!save)
 		return 0;
+
+	if (power_armor_type == POWER_ARMOR_SHIELD && !VORTEX_POWERSHIELD_FOR_PLAYERS && (dflags & DAMAGE_ENERGY))
+	{
+		save /= 2;
+		if (save < 1)
+			save = 1;
+	}
 
 	if (save > damage)
 		save = damage;
@@ -543,7 +680,16 @@ static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damag
 	SpawnDamage(pa_te_type, point, normal);
 	ent->powerarmor_time = level.time + 0.2;
 
-	power_used = ceilf((float) save / damagePerCell) + 1;
+	if (power_armor_type == POWER_ARMOR_SHIELD && !VORTEX_POWERSHIELD_FOR_PLAYERS)
+	{
+		power_used = (int)((float) save / damagePerCell);
+		if (dflags & DAMAGE_ENERGY)
+			power_used *= 2;
+		if (power_used < (int)damagePerCell)
+			power_used = (int)damagePerCell;
+	}
+	else
+		power_used = ceilf((float) save / damagePerCell) + 1;
 
 	if (cl_ent)
 	{
@@ -558,9 +704,70 @@ static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damag
 			power_used = ent->monsterinfo.power_armor_power;
 
 		ent->monsterinfo.power_armor_power -= power_used;
+
+		if (monster_power_armor && old_monster_power > 0 && ent->monsterinfo.power_armor_power <= 0)
+		{
+			ent->monsterinfo.power_armor_power = 0;
+			gi.sound(ent, CHAN_AUTO, gi.soundindex("misc/mon_power2.wav"), 1, ATTN_NORM, 0);
+
+			gi.WriteByte(svc_temp_entity);
+			gi.WriteByte(TE_POWER_SPLASH);
+			gi.WriteShort(ent - g_edicts);
+			gi.WriteByte((power_armor_type == POWER_ARMOR_SCREEN) ? 1 : 0);
+			gi.multicast(ent->s.origin, MULTICAST_PHS);
+		}
 	}
 
 	return save;
+}
+
+static int CheckMonsterArmor(edict_t *ent, vec3_t point, vec3_t normal, int damage, int te_sparks, int dflags)
+{
+    int index;
+    int save;
+    const gitem_t *item;
+    const gitem_armor_t *armor;
+    float armor_protection;
+
+    if (!(ent->svflags & SVF_MONSTER))
+        return 0;
+    if (PM_MonsterHasPilot(ent))
+        return 0;
+    if (dflags & DAMAGE_NO_ARMOR)
+        return 0;
+    if (dflags & DAMAGE_NO_ABILITIES)
+        return 0;
+
+    index = ArmorIndex(ent);
+    if (!index || ent->monsterinfo.armor_power <= 0)
+        return 0;
+
+    item = GetItemByIndex(index);
+    if (!item || !item->info)
+        return 0;
+
+    armor = (const gitem_armor_t *)item->info;
+    if (dflags & DAMAGE_ENERGY)
+        armor_protection = armor->energy_protection;
+    else
+        armor_protection = armor->normal_protection;
+
+    save = ceilf(damage * armor_protection);
+    if (save > ent->monsterinfo.armor_power)
+        save = ent->monsterinfo.armor_power;
+
+    if (!save)
+        return 0;
+
+    ent->monsterinfo.armor_power -= save;
+    if (ent->monsterinfo.armor_power < 0)
+        ent->monsterinfo.armor_power = 0;
+    if (!ent->monsterinfo.armor_power)
+        ent->monsterinfo.armor_type = 0;
+
+    SpawnDamage(te_sparks, point, normal);
+
+    return save;
 }
 
 static int CheckArmor(edict_t *ent, vec3_t point, vec3_t normal, int damage, int te_sparks, int dflags)
@@ -577,6 +784,9 @@ static int CheckArmor(edict_t *ent, vec3_t point, vec3_t normal, int damage, int
         return 0;
 
     client = ent->client;
+
+    if ((ent->svflags & SVF_MONSTER) && !client)
+        return CheckMonsterArmor(ent, point, normal, damage, te_sparks, dflags);
 
     if (!client)
         return 0;
@@ -1153,7 +1363,9 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	float		take;
 	float		save;
 	int			asave;
+	int			armor_save;
 	int			psave;
+	qboolean	monster_react_hit;
 	//int			thorns_dmg;//GHz
     float before_add,before_sub;//GHz
 	const int			dtype = G_DamageType(mod, dflags);
@@ -1337,6 +1549,9 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		take = 0;
 	asave = CheckArmor (targ, point, normal, take, te_sparks, dflags);
 	take -= asave;
+	armor_save = asave;
+	monster_react_hit = !target_has_pilot && (targ->svflags & SVF_MONSTER)
+		&& damage > 0 && (take > 0 || psave > 0 || armor_save > 0);
 	//treat cheat/powerup savings the same as armor
 	asave += save;
 
@@ -1385,6 +1600,9 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 			return take;
 		}
 	}
+
+	if (monster_react_hit)
+		drone_react_to_damage(targ, attacker, inflictor);
 	
 	// if the attacker is a player, add them to this entity's damage list
 	if (player)

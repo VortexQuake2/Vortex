@@ -100,6 +100,7 @@ void SP_misc_easterchick2 (edict_t *self);
 void SP_monster_berserk (edict_t *self);
 void SP_monster_gladiator (edict_t *self);
 void SP_monster_gunner (edict_t *self);
+void SP_monster_heavy_gunner(edict_t *self);
 void SP_monster_infantry (edict_t *self);
 void SP_monster_enforcer(edict_t *self);
 void SP_monster_soldier_light (edict_t *self);
@@ -277,6 +278,8 @@ spawn_t	spawns[] = {
 	{"monster_berserk", SP_monster_berserk},
 	{"monster_gladiator", SP_monster_gladiator},
 	{"monster_gunner", SP_monster_gunner},
+	{"monster_heavy_gunner", SP_monster_heavy_gunner},
+	{"monster_gunner_heavy", SP_monster_heavy_gunner},
 	{"monster_soldier", SP_monster_soldier},
 	{"monster_soldier_ripper", SP_monster_soldier_ripper},
 	{"monster_soldier_blueblaster", SP_monster_soldier_blueblaster},
@@ -1092,6 +1095,12 @@ void SP_monster_gunner(edict_t *ent)
         vrx_create_drone_from_ent(ent, g_edicts, 1, true, true, 0);
 }
 
+void SP_monster_heavy_gunner(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_HEAVY_GUNNER, true, true, 0);
+}
+
 void SP_monster_soldier(edict_t *ent) 
 {
 	if (coop->value)
@@ -1343,6 +1352,7 @@ void SP_worldspawn (edict_t *ent)
 
 	gi.soundindex ("misc/pc_up.wav");
 	gi.soundindex ("misc/talk1.wav");
+	gi.soundindex ("misc/mon_power2.wav");
 
 	gi.soundindex ("misc/udeath.wav");
 

@@ -732,9 +732,7 @@ void init_drone_makron (edict_t *self)
 	else
 		self->health = 1500 * self->monsterinfo.level;
 	self->max_health = self->health;
-	self->monsterinfo.power_armor_power = 1000 * self->monsterinfo.level;
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, 1000 * self->monsterinfo.level);
 	self->gib_health = -2000;
 	self->mass = 500;
 	self->mtype = M_MAKRON;

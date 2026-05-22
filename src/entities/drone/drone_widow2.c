@@ -992,9 +992,7 @@ void init_drone_widow2(edict_t *self)
 	self->yaw_speed = 30;
 	self->flags |= FL_IMMUNE_LASER;
 
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = M_WIDOW2_INITIAL_ARMOR + M_WIDOW2_ADDON_ARMOR * self->monsterinfo.level;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, M_WIDOW2_INITIAL_ARMOR + M_WIDOW2_ADDON_ARMOR * self->monsterinfo.level);
 	self->monsterinfo.control_cost = M_JORG_CONTROL_COST;
 	self->monsterinfo.cost = M_COMMANDER_COST;
 	self->monsterinfo.jumpup = 64;

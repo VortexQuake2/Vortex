@@ -1091,7 +1091,7 @@ static qboolean fixbot_spawn_turret(edict_t *self)
 	spawned->movetype = MOVETYPE_NONE;
 	spawned->gravity = 0;
 	spawned->health = spawned->max_health;
-	spawned->monsterinfo.power_armor_power = spawned->monsterinfo.max_armor;
+	M_SetMonsterArmorCurrent(spawned, M_MonsterArmorMax(spawned));
 	spawned->monsterinfo.pausetime = 0;
 	spawned->monsterinfo.attack_finished = level.time;
 	spawned->monsterinfo.melee_finished = level.time;
@@ -1400,7 +1400,7 @@ static void init_drone_fixbot_common(edict_t *self, qboolean boss)
 			self->s.scale = FIXBOT_BOSS_DEFAULT_SCALE;
 		}
 		self->health = M_FIXBOT_BOSS_INITIAL_HEALTH + M_FIXBOT_BOSS_ADDON_HEALTH * self->monsterinfo.level;
-		self->monsterinfo.power_armor_power = M_FIXBOT_BOSS_INITIAL_ARMOR + M_FIXBOT_BOSS_ADDON_ARMOR * self->monsterinfo.level;
+		M_SetMonsterArmor(self, M_FIXBOT_BOSS_INITIAL_ARMOR + M_FIXBOT_BOSS_ADDON_ARMOR * self->monsterinfo.level);
 		self->mass = 400;
 		self->mtype = M_FIXBOT_BOSS;
 		self->monsterinfo.control_cost = M_JORG_CONTROL_COST;
@@ -1411,7 +1411,7 @@ static void init_drone_fixbot_common(edict_t *self, qboolean boss)
 		VectorSet(self->mins, -24, -24, -18);
 		VectorSet(self->maxs, 24, 24, 24);
 		self->health = M_FIXBOT_INITIAL_HEALTH + M_FIXBOT_ADDON_HEALTH * self->monsterinfo.level;
-		self->monsterinfo.power_armor_power = M_FIXBOT_INITIAL_ARMOR + M_FIXBOT_ADDON_ARMOR * self->monsterinfo.level;
+		M_SetMonsterArmor(self, M_FIXBOT_INITIAL_ARMOR + M_FIXBOT_ADDON_ARMOR * self->monsterinfo.level);
 		self->mass = 150;
 		self->s.scale = 1.55f;
 		self->mtype = M_FIXBOT;
@@ -1424,8 +1424,6 @@ static void init_drone_fixbot_common(edict_t *self, qboolean boss)
 	self->flags |= FL_FLY | FL_NO_KNOCKBACK;
 	self->monsterinfo.aiflags |= AI_ALTERNATE_FLY;
 	fixbot_set_fly_parameters(self);
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
 	self->monsterinfo.sight_range = boss ? 1400 : 1024;
 	self->monsterinfo.pain_chance = boss ? 0.08f : 0.18f;
 	self->yaw_speed = boss ? 25 : 30;

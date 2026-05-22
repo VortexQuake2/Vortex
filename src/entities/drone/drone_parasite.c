@@ -1167,8 +1167,7 @@ void init_drone_parasite (edict_t *self)
 	//self->monsterinfo.idle = myparasite_idle;
 
 	//K03 Begin
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = M_PARASITE_INITIAL_ARMOR + M_PARASITE_ADDON_ARMOR*self->monsterinfo.level;
+	M_SetMonsterArmor(self, M_PARASITE_INITIAL_ARMOR + M_PARASITE_ADDON_ARMOR*self->monsterinfo.level);
 	self->monsterinfo.control_cost = M_PARASITE_CONTROL_COST;
 	self->monsterinfo.cost = M_PARASITE_COST;
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;

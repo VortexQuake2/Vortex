@@ -1325,14 +1325,18 @@ static void init_drone_infantry_common(edict_t* self, qboolean enforcer)
 	self->monsterinfo.cost = M_ENFORCER_COST;
 
 	// set health
-	self->health = M_ENFORCER_INITIAL_HEALTH + M_ENFORCER_ADDON_HEALTH * self->monsterinfo.level;
+	if (enforcer)
+		self->health = M_ENFORCER_INITIAL_HEALTH + M_ENFORCER_ADDON_HEALTH * self->monsterinfo.level;
+	else
+		self->health = M_INFANTRY_INITIAL_HEALTH + M_INFANTRY_ADDON_HEALTH * self->monsterinfo.level;
 	self->max_health = self->health;
 	self->gib_health = -1.5 * BASE_GIB_HEALTH;
 
 	// set armor
-	self->monsterinfo.power_armor_type = enforcer ? POWER_ARMOR_SCREEN : POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = M_ENFORCER_INITIAL_ARMOR + M_ENFORCER_ADDON_ARMOR * self->monsterinfo.level;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	if (enforcer)
+		M_SetMonsterPowerArmor(self, POWER_ARMOR_SHIELD, M_ENFORCER_INITIAL_ARMOR + M_ENFORCER_ADDON_ARMOR * self->monsterinfo.level);
+	else
+		M_SetMonsterArmor(self, M_INFANTRY_INITIAL_ARMOR + M_INFANTRY_ADDON_ARMOR * self->monsterinfo.level);
 
 	// jump and movement
 	self->monsterinfo.jumpup = 64;

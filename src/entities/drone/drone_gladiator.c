@@ -576,9 +576,7 @@ void init_drone_gladiator (edict_t *self)
 	self->max_health = self->health;
 	self->gib_health = -BASE_GIB_HEALTH;
 	self->mass = 400;
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = M_GLADIATOR_INITIAL_ARMOR + M_GLADIATOR_ADDON_ARMOR*self->monsterinfo.level; // pow: gladiator
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, M_GLADIATOR_INITIAL_ARMOR + M_GLADIATOR_ADDON_ARMOR*self->monsterinfo.level); // pow: gladiator
 	self->mtype = M_GLADIATOR;
 	self->item = FindItemByClassname("ammo_slugs");
 	self->monsterinfo.jumpup = 64;
@@ -612,8 +610,7 @@ void init_drone_gladb(edict_t *self)
 	self->s.effects |= EF_TRACKER;
 	self->health = M_GLADB_INITIAL_HEALTH + M_GLADB_ADDON_HEALTH * self->monsterinfo.level;
 	self->max_health = self->health;
-	self->monsterinfo.power_armor_power = M_GLADB_INITIAL_ARMOR + M_GLADB_ADDON_ARMOR * self->monsterinfo.level;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterPowerArmor(self, POWER_ARMOR_SHIELD, M_GLADB_INITIAL_ARMOR + M_GLADB_ADDON_ARMOR * self->monsterinfo.level);
 	self->mass = 350;
 	self->item = FindItemByClassname("ammo_disruptor");
 }
@@ -626,8 +623,7 @@ void init_drone_gladc(edict_t *self)
 	self->s.skinnum = 2;
 	self->health = M_GLADC_INITIAL_HEALTH + M_GLADC_ADDON_HEALTH * self->monsterinfo.level;
 	self->max_health = self->health;
-	self->monsterinfo.power_armor_power = M_GLADC_INITIAL_ARMOR + M_GLADC_ADDON_ARMOR * self->monsterinfo.level;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterPowerArmor(self, POWER_ARMOR_SHIELD, M_GLADC_INITIAL_ARMOR + M_GLADC_ADDON_ARMOR * self->monsterinfo.level);
 	self->mass = 350;
 	self->item = FindItemByClassname("ammo_magslug");
 }

@@ -124,17 +124,15 @@ void Healing_think(edict_t *self)
 		if (self->enemy->health > self->enemy->max_health)
 			self->enemy->health = self->enemy->max_health;
 
-		if (self->enemy->monsterinfo.power_armor_type)
+		if (M_MonsterArmorMax(self->enemy))
 		{
-			heal_amount = self->enemy->monsterinfo.power_armor_power * (0.01 * self->owner->myskills.abilities[HEALING].current_level); // 1% healed per level
+			heal_amount = M_MonsterArmorCurrent(self->enemy) * (0.01 * self->owner->myskills.abilities[HEALING].current_level); // 1% healed per level
 			
 			if (heal_amount > 100)
 				heal_amount = 100;
 
 			//Heal the monster's armor
-			self->enemy->monsterinfo.power_armor_power += heal_amount;
-			if (self->enemy->monsterinfo.power_armor_power > self->enemy->monsterinfo.max_armor)
-				self->enemy->monsterinfo.power_armor_power = self->enemy->monsterinfo.max_armor;
+			M_AddMonsterArmor(self->enemy, heal_amount);
 		}
 	}
 	else

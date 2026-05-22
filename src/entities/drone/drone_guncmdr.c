@@ -1646,9 +1646,7 @@ void init_drone_guncmdr(edict_t *self)
 	self->monsterinfo.pain_chance = 0.2f;
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
 
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = M_GUNCMDR_INITIAL_ARMOR + M_GUNCMDR_ADDON_ARMOR * self->monsterinfo.level;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, M_GUNCMDR_INITIAL_ARMOR + M_GUNCMDR_ADDON_ARMOR * self->monsterinfo.level);
 	self->mtype = M_GUNCMDR;
 
 	gi.linkentity(self);

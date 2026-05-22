@@ -412,7 +412,7 @@ void mygunner_runandshoot (edict_t *self)
 
 void myGunnerFire (edict_t *self)
 {
-	int		damage, flash_number;
+	int		damage, speed, flash_number, ripper_flash;
 	vec3_t	forward, start;
 
 	// sanity check
@@ -420,6 +420,24 @@ void myGunnerFire (edict_t *self)
 		return;
 
 	flash_number = MZ2_GUNNER_MACHINEGUN_1 + (self->s.frame - FRAME_attak216);
+
+	if (self->mtype == M_HEAVY_GUNNER)
+	{
+		ripper_flash = MZ2_SOLDIER_RIPPER_1 + (self->s.frame - FRAME_attak216);
+		damage = M_IONRIPPER_DMG_BASE + M_IONRIPPER_DMG_ADDON * drone_damagelevel(self);
+		if (M_IONRIPPER_DMG_MAX && damage > M_IONRIPPER_DMG_MAX)
+			damage = M_IONRIPPER_DMG_MAX;
+		speed = M_IONRIPPER_SPEED_BASE + M_IONRIPPER_SPEED_ADDON * drone_damagelevel(self);
+		if (M_IONRIPPER_SPEED_MAX && speed > M_IONRIPPER_SPEED_MAX)
+			speed = M_IONRIPPER_SPEED_MAX;
+
+		MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash_number, forward, start);
+		if (!M_MonsterHasClearShotFrom(self, start))
+			return;
+
+		monster_fire_ionripper(self, start, forward, damage, speed, EF_IONRIPPER, ripper_flash);
+		return;
+	}
  
 	damage = M_MACHINEGUN_DMG_BASE + M_MACHINEGUN_DMG_ADDON * drone_damagelevel(self);
 	if (M_MACHINEGUN_DMG_MAX && damage > M_MACHINEGUN_DMG_MAX)
@@ -975,13 +993,9 @@ void init_drone_gunner (edict_t *self)
 	self->pain = mygunner_pain;
 
 	//K03 Begin
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-
 	//if (self->activator && self->activator->client)
-		self->monsterinfo.power_armor_power = M_GUNNER_INITIAL_ARMOR + M_GUNNER_ADDON_ARMOR*self->monsterinfo.level; // pow: gunner
-	//else self->monsterinfo.power_armor_power = 100 + 50*self->monsterinfo.level;
-
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+		M_SetMonsterArmor(self, M_GUNNER_INITIAL_ARMOR + M_GUNNER_ADDON_ARMOR*self->monsterinfo.level); // pow: gunner
+	//else M_SetMonsterArmor(self, 100 + 50*self->monsterinfo.level);
 	self->mtype = M_GUNNER;
 	//K03 End
 
@@ -992,4 +1006,17 @@ void init_drone_gunner (edict_t *self)
 
 //	walkmonster_start (self);
 	self->nextthink = level.time + 0.1;
+}
+
+void init_drone_heavy_gunner(edict_t *self)
+{
+	init_drone_gunner(self);
+
+	self->monsterinfo.control_cost = M_HEAVY_GUNNER_CONTROL_COST;
+	self->monsterinfo.cost = M_HEAVY_GUNNER_COST;
+	self->health = M_HEAVY_GUNNER_INITIAL_HEALTH + M_HEAVY_GUNNER_ADDON_HEALTH * self->monsterinfo.level;
+	self->max_health = self->health;
+	M_SetMonsterPowerArmor(self, POWER_ARMOR_SHIELD,
+		M_HEAVY_GUNNER_INITIAL_ARMOR + M_HEAVY_GUNNER_ADDON_ARMOR * self->monsterinfo.level);
+	self->mtype = M_HEAVY_GUNNER;
 }

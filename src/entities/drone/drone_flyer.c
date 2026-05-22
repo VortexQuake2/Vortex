@@ -1287,9 +1287,7 @@ void init_drone_flyer (edict_t *self)
 	self->monsterinfo.fly_buzzard = true;
 	flyer_set_fly_parameters(self, false);
 	self->max_health = self->health;
-	self->monsterinfo.power_armor_power = M_FLYER_INITIAL_ARMOR + M_FLYER_ADDON_ARMOR*self->monsterinfo.level;
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, M_FLYER_INITIAL_ARMOR + M_FLYER_ADDON_ARMOR*self->monsterinfo.level);
 	self->monsterinfo.control_cost = M_FLYER_CONTROL_COST;
 	self->monsterinfo.cost = M_FLYER_COST;
 	self->item = FindItemByClassname("ammo_cells");

@@ -888,7 +888,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 			// restore this drone
 			target->monsterinfo.slots_freed = false; // reset freed flag
 			target->health = r_modifier*target->max_health;
-			target->monsterinfo.power_armor_power = r_modifier*target->monsterinfo.max_armor;
+			M_SetMonsterArmorCurrent(target, r_modifier*M_MonsterArmorMax(target));
 			target->monsterinfo.resurrected_time = level.time + 10.0;
 			target->activator = ent; // transfer ownership!
 			target->nextthink = level.time + FRAMETIME;//1.0; note: don't delay think--this may cause undesired behavior (monster sliding)
@@ -970,7 +970,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 		e->monsterinfo.level = r_level;
 		M_Initialize(ent, e, 0.0f);
 		e->health = r_modifier*e->max_health;
-		e->monsterinfo.power_armor_power = r_modifier*e->monsterinfo.max_armor;
+		M_SetMonsterArmorCurrent(e, r_modifier*M_MonsterArmorMax(e));
 		e->monsterinfo.resurrected_time = level.time + 10.0;
 		e->s.skinnum |= 1; // injured skin
 
@@ -1733,15 +1733,12 @@ void init_drone_medic (edict_t *self)
 //	self->monsterinfo.control_cost = 1;
 //	self->monsterinfo.cost = 150;
 
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
 	//self->monsterinfo.melee = 1;
 
 	//if (self->activator && self->activator->client)
-		self->monsterinfo.power_armor_power = M_MEDIC_INITIAL_ARMOR + M_MEDIC_ADDON_ARMOR*self->monsterinfo.level; // pow: medic
-	//else self->monsterinfo.power_armor_power = 200 + 40*self->monsterinfo.level;
-
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+		M_SetMonsterArmor(self, M_MEDIC_INITIAL_ARMOR + M_MEDIC_ADDON_ARMOR*self->monsterinfo.level); // pow: medic
+	//else M_SetMonsterArmor(self, 200 + 40*self->monsterinfo.level);
 
 	gi.linkentity (self);
 
@@ -1777,8 +1774,7 @@ void init_drone_medic_commander(edict_t *self)
 	self->yaw_speed = 40;
 	self->health = M_MEDIC_COMMANDER_INITIAL_HEALTH + M_MEDIC_COMMANDER_ADDON_HEALTH * self->monsterinfo.level;
 	self->max_health = self->health;
-	self->monsterinfo.power_armor_power = M_MEDIC_COMMANDER_INITIAL_ARMOR + M_MEDIC_COMMANDER_ADDON_ARMOR * self->monsterinfo.level;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterPowerArmor(self, POWER_ARMOR_SHIELD, M_MEDIC_COMMANDER_INITIAL_ARMOR + M_MEDIC_COMMANDER_ADDON_ARMOR * self->monsterinfo.level);
 	self->monsterinfo.control_cost = M_TANK_CONTROL_COST;
 	self->monsterinfo.cost = M_TANK_COST;
 	self->monsterinfo.attack = medic_commander_attack;

@@ -1042,9 +1042,7 @@ void init_drone_runnertank(edict_t *self)
     self->monsterinfo.jumpdn = 512;
     self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
 
-    self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-    self->monsterinfo.power_armor_power = M_RUNNERTANK_INITIAL_ARMOR + M_RUNNERTANK_ADDON_ARMOR * self->monsterinfo.level;
-    self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+    M_SetMonsterArmor(self, M_RUNNERTANK_INITIAL_ARMOR + M_RUNNERTANK_ADDON_ARMOR * self->monsterinfo.level);
     self->monsterinfo.control_cost = M_TANK_CONTROL_COST;
     self->monsterinfo.cost = M_TANK_COST;
     self->mtype = M_RUNNERTANK;

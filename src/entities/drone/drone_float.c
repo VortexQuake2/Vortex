@@ -811,10 +811,7 @@ void init_drone_floater (edict_t *self)
 	self->monsterinfo.aiflags |= AI_ALTERNATE_FLY;
 	floater_set_fly_parameters(self, false);
 
-	self->monsterinfo.power_armor_power = M_FLOATER_INITIAL_ARMOR + M_FLOATER_ADDON_ARMOR*self->monsterinfo.level;
-
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterPowerArmor(self, POWER_ARMOR_SCREEN, M_FLOATER_INITIAL_ARMOR + M_FLOATER_ADDON_ARMOR*self->monsterinfo.level);
 
 	self->monsterinfo.control_cost = M_FLOATER_CONTROL_COST;
 	self->monsterinfo.cost = M_FLOATER_COST;

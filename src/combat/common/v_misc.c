@@ -247,6 +247,7 @@ static enum dronespawn_t vrx_pvm_random_drone_type(void)
 	static const enum dronespawn_t pvm_drone_types[] =
 	{
 		DS_GUNNER,
+		DS_HEAVY_GUNNER,
 		DS_PARASITE,
 		DS_BITCH,
 		DS_BRAIN,
@@ -635,6 +636,9 @@ int vrx_GetMonsterCost(int mtype) {
         case M_GUNNER:
             cost = M_GUNNER_COST;
             break;
+        case M_HEAVY_GUNNER:
+            cost = M_HEAVY_GUNNER_COST;
+            break;
         case M_CHICK:
         case M_CHICK_HEAT:
             cost = M_CHICK_COST;
@@ -740,6 +744,9 @@ int vrx_GetMonsterControlCost(int mtype) {
             break;
         case M_GUNNER:
             cost = M_GUNNER_CONTROL_COST;
+            break;
+        case M_HEAVY_GUNNER:
+            cost = M_HEAVY_GUNNER_CONTROL_COST;
             break;
         case M_CHICK:
         case M_CHICK_HEAT:

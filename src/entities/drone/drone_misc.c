@@ -12,6 +12,7 @@ void drone_think (edict_t *self);
 void drone_wakeallies (edict_t *self);
 qboolean drone_findtarget (edict_t *self, qboolean force);
 void init_drone_gunner (edict_t *self);
+void init_drone_heavy_gunner(edict_t *self);
 void init_drone_parasite (edict_t *self);
 void init_drone_bitch (edict_t *self);
 void init_drone_bitch_heat (edict_t *self);
@@ -623,10 +624,10 @@ void drone_heal (edict_t *self, edict_t *other, qboolean heal_while_being_damage
 			}
 
 			// check armor
-			if (self->monsterinfo.power_armor_power < self->monsterinfo.max_armor
+			if (M_MonsterArmorCurrent(self) < M_MonsterArmorMax(self)
 				&& other->client->pers.inventory[power_cube_index] >= 5)
 			{
-				self->armor_cache += (int)(0.50 * self->monsterinfo.max_armor) + 1;
+				self->armor_cache += (int)(0.50 * M_MonsterArmorMax(self)) + 1;
 				self->monsterinfo.regen_delay1 = level.framenum + (int)(1 / FRAMETIME);
 				other->client->pers.inventory[power_cube_index] -= 5;
 			}
@@ -825,7 +826,7 @@ void drone_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *su
 void drone_grow (edict_t *self)
 {
 	V_HealthCache(self, (int)(0.2 * self->max_health), 1);
-	V_ArmorCache(self, (int)(0.2 * self->monsterinfo.max_armor), 1);
+	V_ArmorCache(self, (int)(0.2 * M_MonsterArmorMax(self)), 1);
 
 	// done growing
 	if (self->health >= self->max_health)
@@ -991,6 +992,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 	{
 	// normal monsters
 	case DS_GUNNER: init_drone_gunner(drone);		break;
+	case DS_HEAVY_GUNNER: init_drone_heavy_gunner(drone); break;
 	case DS_PARASITE: init_drone_parasite(drone);		break;
 	case DS_BITCH: init_drone_bitch(drone);		break;
 	case DS_BITCH_HEAT: init_drone_bitch_heat(drone);	break;
@@ -1100,7 +1102,10 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 
 	drone->health *= mult;
 	drone->max_health *= mult;
-	drone->monsterinfo.power_armor_power *= mult;
+	if (drone->monsterinfo.armor_type)
+		drone->monsterinfo.armor_power *= mult;
+	else if (drone->monsterinfo.power_armor_type != POWER_ARMOR_NONE)
+		drone->monsterinfo.power_armor_power *= mult;
 	drone->monsterinfo.max_armor *= mult;
 
 	if (worldspawn)
@@ -1191,7 +1196,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 		//ent->holdtime = level.time + 2*drone->monsterinfo.control_cost;
 		ent->client->pers.inventory[power_cube_index] -= drone->monsterinfo.cost;
 		drone->health = 0.5*drone->max_health;
-		drone->monsterinfo.power_armor_power = 0.5*drone->monsterinfo.max_armor;
+		M_SetMonsterArmorCurrent(drone, 0.5*M_MonsterArmorMax(drone));
 		drone->nextthink = level.time + 0.1;//2*drone->monsterinfo.control_cost;
 		//drone->monsterinfo.upkeep_delay = drone->nextthink*10 + 10; // 3.2 upkeep begins 1 second after monster spawn
 
@@ -1995,7 +2000,7 @@ qboolean M_NeedRegen (const edict_t *ent)
 	else
 	{
 		// non-client check
-		if (ent->monsterinfo.max_armor && (ent->monsterinfo.power_armor_power < ent->monsterinfo.max_armor))
+		if (M_MonsterArmorMax(ent) && (M_MonsterArmorCurrent(ent) < M_MonsterArmorMax(ent)))
 			return true;
 	}
 
@@ -2085,15 +2090,15 @@ qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, q
 			}
 		}
 
-		if (self->monsterinfo.power_armor_type && self->monsterinfo.max_armor)
-			max_armor = self->monsterinfo.max_armor * mult;
+		if (M_MonsterArmorMax(self))
+			max_armor = M_MonsterArmorMax(self) * mult;
 		else
 			max_armor = 0;
 
 		//gi.dprintf("type:%d amt:%d max:%d absmax:%d mult:%.1f\n", self->monsterinfo.power_armor_type,
-		//	self->monsterinfo.power_armor_power, self->monsterinfo.max_armor, max_armor, mult);
+		//	M_MonsterArmorCurrent(self), M_MonsterArmorMax(self), max_armor, mult);
 
-		if (max_armor && self->monsterinfo.power_armor_power < max_armor)
+		if (max_armor && M_MonsterArmorCurrent(self) < max_armor)
 		{
 			int calc = 1;
 
@@ -2107,9 +2112,9 @@ qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, q
 			if (armor < 1)
 				armor = 1;
 
-			self->monsterinfo.power_armor_power += armor;
-			if (self->monsterinfo.power_armor_power > max_armor)
-				self->monsterinfo.power_armor_power = max_armor;
+			M_AddMonsterArmor(self, armor);
+			if (M_MonsterArmorCurrent(self) > max_armor)
+				M_SetMonsterArmorCurrent(self, max_armor);
 
 			regenerate = true;
 		}
@@ -2328,6 +2333,7 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	switch (monster->mtype)
 	{
 	case M_GUNNER: init_drone_gunner(monster); break;
+	case M_HEAVY_GUNNER: init_drone_heavy_gunner(monster); break;
 	case M_CHICK: init_drone_bitch(monster); break;
 	case M_CHICK_HEAT: init_drone_bitch_heat(monster); break;
 	case M_BRAIN: init_drone_brain(monster); break;
@@ -2409,7 +2415,10 @@ qboolean M_Initialize (edict_t *ent, edict_t *monster, float dur_bonus)
 	//gi.dprintf("talentLevel: %d multiplier: %.1f durability bonus = %.1f\n", talentLevel, mult, dur_bonus);
 	monster->health *= mult;
 	monster->max_health *= mult;
-	monster->monsterinfo.power_armor_power *= mult;
+	if (monster->monsterinfo.armor_type)
+		monster->monsterinfo.armor_power *= mult;
+	else if (monster->monsterinfo.power_armor_type != POWER_ARMOR_NONE)
+		monster->monsterinfo.power_armor_power *= mult;
 	monster->monsterinfo.max_armor *= mult;
 
 	// set shared monster properties
@@ -2460,6 +2469,7 @@ qboolean M_SetBoundingBox (int mtype, vec3_t boxmin, vec3_t boxmax)
 	case M_SOLDIER_BLUEBLASTER:
 	case M_SOLDIER_LASER:
 	case M_GUNNER:
+	case M_HEAVY_GUNNER:
 	case M_BRAIN:
 		VectorSet (boxmin, -16, -16, -24);
 		VectorSet (boxmax, 16, 16, 32);
@@ -2681,6 +2691,7 @@ char *GetMonsterKindString (int mtype)
 		case M_SUPERTANK: return "Super Tank";
         case M_BOSS5: return "Super Tank Heat";
         case M_GUNNER: return "Gunner";
+        case M_HEAVY_GUNNER: return "Heavy Gunner";
 		case M_YANGSPIRIT: return "Yang Spirit";
 		case M_BALANCESPIRIT: return "Balance Spirit";
 		case BOSS_TANK:
@@ -3314,7 +3325,7 @@ void Cmd_Drone_f (edict_t *ent)
 	if (!Q_strcasecmp(s, "help"))
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Monster summoning:\n");
-		safe_cprintf(ent, PRINT_HIGH, "monster [gunner|parasite|brain|praetor|praetor_heat|medic|tank|tank64|mutant|gladiator|gladb|darkmattergladiator|gladc|berserker|soldier|ripper|hyper|laser|janitor|janitor2|infantry|enforcer|flyer|floater|hover|daedalus|stalker|gekk|arachnid|arachnid_heat|shambler|redmutant|runnertank|guncmdr]\n");
+		safe_cprintf(ent, PRINT_HIGH, "monster [gunner|heavy_gunner|parasite|brain|praetor|praetor_heat|medic|tank|tank64|mutant|gladiator|gladb|darkmattergladiator|gladc|berserker|soldier|ripper|hyper|laser|janitor|janitor2|infantry|enforcer|flyer|floater|hover|daedalus|stalker|gekk|arachnid|arachnid_heat|shambler|redmutant|runnertank|guncmdr]\n");
 		safe_cprintf(ent, PRINT_HIGH, "Monster utility commands:\n");
 		safe_cprintf(ent, PRINT_HIGH, "monster [remove|command|follow me|count|attack]\n");
 		return;
@@ -3334,6 +3345,9 @@ void Cmd_Drone_f (edict_t *ent)
 
 	if (!Q_strcasecmp(s, "gunner"))
         vrx_create_new_drone(ent, DS_GUNNER, false, true, 0);
+	else if (!Q_strcasecmp(s, "heavy_gunner") || !Q_strcasecmp(s, "heavygunner")
+		|| !Q_strcasecmp(s, "drone_heavy_gunner"))
+        vrx_create_new_drone(ent, DS_HEAVY_GUNNER, false, true, 0);
 	else if (!Q_strcasecmp(s, "parasite"))
         vrx_create_new_drone(ent, DS_PARASITE, false, true, 0);
 	else if (!Q_strcasecmp(s, "brain"))

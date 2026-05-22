@@ -953,6 +953,23 @@ static void gekk_gibfest(edict_t *self)
 {
 	if (vrx_throw_drone_gibs(self, 20))
 		gi.sound(self, CHAN_VOICE, gi.soundindex("misc/udeath.wav"), 1, ATTN_NORM, 0);
+
+#ifdef OLD_NOLAG_STYLE
+	if (nolag->value)
+	{
+		self->activator = NULL;
+		M_Remove(self, false, false);
+		return;
+	}
+#else
+	if (nolag->value)
+	{
+		self->activator = NULL;
+		M_Remove(self, false, true);
+		return;
+	}
+#endif
+
 	self->takedamage = DAMAGE_NO;
 	self->solid = SOLID_NOT;
 	self->svflags |= SVF_NOCLIENT;
@@ -1185,9 +1202,7 @@ void init_drone_gekk(edict_t *self)
 	self->mass = 300;
 	self->mtype = M_GEKK;
 
-	self->monsterinfo.power_armor_power = M_GEKK_INITIAL_ARMOR + M_GEKK_ADDON_ARMOR * self->monsterinfo.level;
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterPowerArmor(self, POWER_ARMOR_SCREEN, M_GEKK_INITIAL_ARMOR + M_GEKK_ADDON_ARMOR * self->monsterinfo.level);
 	self->monsterinfo.control_cost = M_MUTANT_CONTROL_COST;
 	self->monsterinfo.cost = M_MUTANT_COST;
 	self->monsterinfo.jumpdn = 256;

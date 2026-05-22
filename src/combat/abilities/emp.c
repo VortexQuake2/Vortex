@@ -55,14 +55,14 @@ void EmpEffects (edict_t *ent)
 
 
     // make powered armor flash on and off
-    if (!ctf->value && !domination->value && ent->monsterinfo.power_armor_power)
+    if (!ctf->value && !domination->value && M_MonsterHasPowerArmor(ent))
     {
         if (ent->monsterinfo.power_armor_type == POWER_ARMOR_SHIELD)
         {
             ent->s.effects ^= EF_COLOR_SHELL;
             ent->s.renderfx ^= RF_SHELL_GREEN;
         }
-        else
+        else if (ent->monsterinfo.power_armor_type == POWER_ARMOR_SCREEN)
         {
             ent->s.effects ^= EF_POWERSCREEN;
         }
