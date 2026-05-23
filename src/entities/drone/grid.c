@@ -1413,7 +1413,7 @@ void InitPathfinding() {
     if (pfctx)
         pfctx_free(&pfctx);
 
-    pfctx = pfctx_create(mapgrid.numnodes);
+    pfctx = pfctx_create(mapgrid.numnodes + 2);
 }
 
 void ShutdownPathfinding() {
