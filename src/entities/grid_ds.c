@@ -242,3 +242,113 @@ size_t gridkdtree_query(struct gridkdtree_s* tree, vec3_t querypos) {
     kdtree_query(tree, querypos, tree->root, 0, &best, &bestdist);
     return best;
 }
+
+struct gheap_s* gheap_create(const size_t capacity) {
+    struct gheap_s *ret = malloc(sizeof (struct gheap_s) + sizeof (struct gheap_entry_s) * capacity);
+    if (ret == nullptr) {
+        return nullptr;
+    }
+
+    for (size_t i = 0; i < capacity; i++) {
+        ret->entries[i].cost = INT32_MAX;
+        ret->entries[i].data = nullptr;
+    }
+
+    ret->capacity = capacity;
+    ret->count = 0;
+    return ret;
+}
+
+void gheap_free(struct gheap_s** heap) {
+    if (!*heap)
+        return;
+
+    free(*heap);
+    *heap = nullptr;
+}
+
+static void hswap(struct gheap_entry_s *a, struct gheap_entry_s *b) {
+    struct gheap_entry_s tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
+bool gheap_push(struct gheap_s* heap, const int32_t cost, void* data) {
+    assert (data != nullptr);
+    if (heap->count >= heap->capacity)
+        return false;
+
+    heap->count++;
+    size_t i = heap->count - 1;
+    heap->entries[i].cost = cost;
+    heap->entries[i].data = data;
+
+    if (i == 0)
+        return true;
+
+    while (i != 0) {
+        const size_t _parent = (i - 1) / 2;
+        struct gheap_entry_s *parent = &heap->entries[_parent];
+        if (heap->entries[i].cost < parent->cost) {
+            hswap(&heap->entries[i], parent);
+            i = _parent;
+        } else {
+            break;
+        }
+    }
+
+    return true;
+}
+
+int32_t gheap_peek_cost(const struct gheap_s* heap, const size_t node) {
+    if (node >= heap->count)
+        return INT32_MAX;
+
+    const auto entry = &heap->entries[node];
+    return entry->cost;
+}
+
+
+struct gheap_entry_s gheap_pop_inner(struct gheap_s* heap) {
+    if (heap->count == 0)
+        return (struct gheap_entry_s){INT32_MAX, nullptr};
+
+    const auto ret = heap->entries[0];
+    heap->count--;
+    heap->entries[0] = heap->entries[heap->count];
+
+    size_t node = 0;
+    for (;;) {
+        const auto ln = node * 2 + 1;
+        const auto rn = node * 2 + 2;
+        if (node >= heap->count)
+            break;
+
+        const auto cur = &heap->entries[node];
+        size_t smallest = node;
+        if (ln < heap->count && gheap_peek_cost(heap, ln) < cur->cost) {
+            smallest = ln;
+        }
+
+        if (rn < heap->count && gheap_peek_cost(heap, rn) < heap->entries[smallest].cost) {
+            smallest = rn;
+        }
+
+        if (smallest == node)
+            break;
+
+        hswap (cur, &heap->entries[smallest]);
+        node = smallest;
+    }
+
+    return ret;
+}
+
+void gheap_reset(struct gheap_s* heap) {
+    heap->count = 0;
+}
+
+void* gheap_pop(struct gheap_s* heap) {
+    auto ret = gheap_pop_inner(heap).data;
+    return ret;
+}

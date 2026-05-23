@@ -1,6 +1,7 @@
 
 #include "g_local.h"
 #include "ai_local.h"
+#include "entities/grid.h"
 
 //==========================================
 // Related data:
@@ -33,6 +34,8 @@ astarnode_t	astarnodes[MAX_NODES]; //working list of nodes being processed by A*
 static int Apath[MAX_NODES]; //array of node#s (node indexes) from start to end
 static int Apath_numNodes; //number of nodes in path
 
+struct gheap_s* openheap = nullptr;
+
 //==========================================
 // 
 // 
@@ -48,6 +51,11 @@ int ValidLinksMask;
 // 
 // 
 //==========================================
+
+void AStar_Init() {
+	if (openheap == nullptr)
+		openheap = gheap_create(MAX_NODES);
+}
 
 int	AStar_nodeIsInPath( int node )
 {
@@ -90,19 +98,28 @@ static void AStar_InitLists (void)
 {
 	int i;
 
-	for ( i=0; i<MAX_NODES; i++ )
-	{
-		Apath[i] = 0;
+	// for ( i=0; i<MAX_NODES; i++ )
+	// {
+	// 	Apath[i] = 0;
+	//
+	// 	astarnodes[i].G = 0;
+	// 	astarnodes[i].H = 0;
+	// 	astarnodes[i].parent = 0;
+	// 	astarnodes[i].list = NOLIST;
+	// }
 
-		astarnodes[i].G = 0;
-		astarnodes[i].H = 0;
-		astarnodes[i].parent = 0;
-		astarnodes[i].list = NOLIST;
-	}
+	// az: these memsets are generally unnecessary, since the code is
+	// generally respectful of counts here.
+
+	// memset(Apath, 0, sizeof Apath);
 	Apath_numNodes = 0;
 
+	// memset( alist, -1, sizeof alist);//jabot092
 	alist_numNodes = 0;
-	memset( alist, -1, sizeof(alist));//jabot092
+
+	memset(astarnodes, 0, sizeof astarnodes);
+
+	gheap_reset(openheap);//az
 }
 
 static int AStar_PLinkDistance(int n1, int n2)
@@ -210,30 +227,38 @@ static void AStar_PutAdjacentsInOpen(int node)
 			astarnodes[addnode].G = astarnodes[node].G + plinkDist;
 			astarnodes[addnode].H = Astar_HDist_ManhatanGuess( addnode );
 			astarnodes[addnode].list = OPENLIST;
+
+			gheap_push(openheap, astarnodes[addnode].G + astarnodes[addnode].H, &astarnodes[addnode]);
 		}
 	}
 }
 
 static int AStar_FindInOpen_BestF ( void )
 {
-	int	i;
-	int	bestF = -1;
-	int best = -1;
+	// int	i;
+	// int	bestF = -1;
+	// int best = -1;
+	//
+	// for ( i=0; i<alist_numNodes; i++ )
+	// {
+	// 	const int node = alist[i];
+	//
+	// 	if( astarnodes[node].list != OPENLIST )
+	// 		continue;
+	//
+	// 	if ( bestF == -1 || bestF > (astarnodes[node].G + astarnodes[node].H) ) {
+	// 		bestF = astarnodes[node].G + astarnodes[node].H;
+	// 		best = node;
+	// 	}
+	// }
 
-	for ( i=0; i<alist_numNodes; i++ )
-	{
-		const int node = alist[i];
-
-		if( astarnodes[node].list != OPENLIST )
-			continue;
-
-		if ( bestF == -1 || bestF > (astarnodes[node].G + astarnodes[node].H) ) {
-			bestF = astarnodes[node].G + astarnodes[node].H;
-			best = node;
-		}
-	}
 	//gi.dprintf("BEST:%i\n", best);
-	return best;
+	const astarnode_t* ptr = gheap_pop(openheap);
+	ptr = gheap_pop(openheap);
+	if (!ptr)
+		return -1;
+
+	return ptr - &astarnodes[0];
 }
 
 //==========================================
@@ -245,7 +270,6 @@ static void AStar_ListsToPath ( void )
 {
 	int count = 0;
 	int cur = goalNode;
-	qboolean Spath_added = false;//GHz
 
 	while ( cur != originNode ) 
 	{
@@ -258,92 +282,12 @@ static void AStar_ListsToPath ( void )
 	{
 		Apath[count] = cur;
 		Apath_numNodes++;
-		//GHz
-		// save to list to speed up future searches
-		if (Spath_numNodes < MAX_SPATH)
-		{
-			Spath[Spath_numNodes].path[count] = cur;
-			Spath[Spath_numNodes].numNodes++;
-			Spath_added = true;
-		}
-		//GHz
 		count--;
 		cur = astarnodes[cur].parent;
 	}
-	//GHz
-	if (Spath_added)
-		Spath_numNodes++;
-	//GHz
 }
 
-// copies saved path (Spath.path) data to Apath
-// Spath_index is the index in Spath with the data you want copied to Apath
-// path_index_start is the starting index in Spath.path with the data you want copied
-// path_index_end is the ending index in Spath.path
-// path_index_start and path_index_end tell the function which subset of the path you want copied
-static void AStar_UseSavedPath(int Spath_index, int path_index_start, int path_index_end)
-{
-	int i, cur = 0, len = abs(path_index_end - path_index_start) + 1;
 
-	if (path_index_start > path_index_end)
-	{
-		// starting index is higher than ending index, so copy backwards from this index
-		cur = path_index_start;
-		for (i = 0;i < len;i++)
-		{
-			Apath[i] = Spath[Spath_index].path[cur];
-			Apath_numNodes++;
-			cur--;
-		}
-	}
-	else
-	{
-		cur = path_index_start;
-		for (i = 0;i < len;i++)
-		{
-			Apath[i] = Spath[Spath_index].path[cur];
-			Apath_numNodes++;
-			cur++;
-		}
-	}
-	//gi.dprintf("AStar_UseSavedPath\n");
-}
-
-// searches saved path array for a path that contains start and end nodes
-// if found, it copies the indexes to Apath and returns true
-static qboolean AStar_FindSavedPath(int start_node, int end_node)
-{
-	int i, j;
-
-	for (i = 0;i < Spath_numNodes;i++)
-	{
-		int start_index = 0, end_index = 0;
-		qboolean found_start = false, found_end = false;
-		for (j = 0;j < Spath[i].numNodes;j++)
-		{
-			if (Spath[i].path[j] == start_node)
-			{
-				start_index = j;
-				found_start = true;
-			}
-			else if (Spath[i].path[j] == end_node)
-			{
-				end_index = j;
-				found_end = true;
-			}
-			if (found_start && found_end 
-				&& end_index > start_index) //GHz: reverse order is disabled for now because jump links would be impossible to do backwards!
-			{
-				//if (start_index != 0)
-				//	gi.dprintf("saved path found in subset of data!\n");
-				//gi.dprintf("saved path found! index: %d, start: %d end: %d %d->%d\n", i, start_index, end_index, start_node, end_node);
-					AStar_UseSavedPath(i, start_index, end_index);
-				return true;
-			}
-		}
-	}
-	return false;
-}
 
 static int	AStar_FillLists ( void )
 {
@@ -369,8 +313,8 @@ int	AStar_ResolvePath ( int n1, int n2, int movetypes )
 
 	AStar_InitLists();
 
-	if (AStar_FindSavedPath(n1, n2))//GHz
-		return 1;
+	// if (AStar_FindSavedPath(n1, n2))//GHz
+	// 	return 1;
 
 	originNode = n1;
 	goalNode = n2;

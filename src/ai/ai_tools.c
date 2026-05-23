@@ -214,7 +214,11 @@ void AITools_ShowPlinks( void )
 		//gi.dprintf("no links");
 		safe_centerprintf(AIDevel.plinkguy, "node %d has 0 links", current_node);
 		VectorCopy(nodes[current_node].origin, start);
+#ifndef VRX_REPRO
 		G_Spawn_Splash(TE_LASER_SPARKS, 5, 200, start, vec3_origin, start);//GHz
+#else
+		gire.Draw_Circle(start, 8, &rgba_green, 0.1, true);
+#endif
 		return;
 	}
 
@@ -236,8 +240,13 @@ void AITools_ShowPlinks( void )
 		VectorCopy(nodes[plink_node].origin, end);
 		//AITools_DrawLine(nodes[current_node].origin, nodes[plink_node].origin);
 		//G_DrawDebugTrail(nodes[current_node].origin, nodes[plink_node].origin);//GHz
+#ifndef VRX_REPRO
 		G_Spawn_Trails(TE_BFG_LASER, start, end);//GHz
 		G_Spawn_Splash(TE_LASER_SPARKS, 5, 200, start, vec3_origin, start);//GHz
+#else
+		gire.Draw_Point(start, 8, &rgba_green, 0.1, true);
+		gire.Draw_Arrow(start, end, 8, &rgba_blue, &rgba_blue,  0.1, true);
+#endif
 	}
 	if (!(level.framenum % 20))
 		safe_centerprintf(AIDevel.plinkguy, "node %d (%s %d) @ %.0f has %d links", current_node, AI_NodeString(nodes[current_node].flags),

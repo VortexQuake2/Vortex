@@ -60,6 +60,7 @@ void AI_NewMap(void)
 		return;
 	}
 	//Load nodes
+	AStar_Init();//az
 	AI_InitNavigationData();
 	AI_InitAIWeapons();
 	AI_InitEnemiesList();//GHz

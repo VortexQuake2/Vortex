@@ -1513,7 +1513,6 @@ void drone_cleargoal (edict_t *self)
 }
 
 
-int NextWaypointLocation (vec3_t start, vec3_t loc, int *wp);
 qboolean NearestNodeLocation (vec3_t start, vec3_t node_loc, float range, qboolean vis);
 int FindPath(int searchType, vec3_t start, vec3_t destination);
 void M_MoveToPosition(edict_t* ent, vec3_t pos, float dist, qboolean stop_when_close);

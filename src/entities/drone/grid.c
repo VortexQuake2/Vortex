@@ -642,7 +642,7 @@ int NearestWaypointNum(vec3_t start, int *wp) {
         if (wp[i] == 0)
             break;
 
-        const float dist = distance(mapgrid.pathnode[wp[i]], start);
+        const float dist = distanceSqr(mapgrid.pathnode[wp[i]], start);
 
         if (!best || dist < best) {
             best = dist;
@@ -654,28 +654,6 @@ int NearestWaypointNum(vec3_t start, int *wp) {
     return bestNodeNum;
 }
 
-// copies the location of the next waypoint nearest to start
-// returns -1 if we are at the end of the waypoint path
-//FIXME: numpts is not a reliable indicator--use approach similar to NearestWaypointNum()
-int NextWaypointLocation(vec3_t start, vec3_t loc, int *wp) {
-    int nearestWaypoint;
-
-    // get the waypoint index closest to start
-    if ((nearestWaypoint = NearestWaypointNum(start, wp)) != -1) {
-        // we are at the end of the path
-        if (nearestWaypoint == numpts - 1)
-            return -1;
-
-        //gi.dprintf("current node = %d, next node = %d\n",
-        //	wp[nearestWaypoint], wp[nearestWaypoint+1]);
-
-        VectorCopy(mapgrid.pathnode[wp[nearestWaypoint+1]], loc);
-        return 1; // success!
-    }
-
-    // couldn't find the closest waypoint index
-    return -1;
-}
 
 void RemoveDuplicates(node_t *BestList, node_t *OtherList) {
     node_t *tNodePrev = nullptr;
