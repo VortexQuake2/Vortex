@@ -34,6 +34,10 @@ static int	sound_windup;
 static int	sound_strike;
 static int	sound_grenade;
 static int	sound_spawn;
+static int	sound_n64_lightning_windup;
+static int	sound_n64_lightning_damage1;
+static int	sound_n64_lightning_damage2;
+static int	sound_n64_lightning_damage4;
 
 static constexpr float TANK_N64_SCALE = 1.1f;
 static constexpr int TANK_N64_BLASTER2_DAMAGE = 26;
@@ -872,6 +876,23 @@ void myTankN64FireGrenade(edict_t* self)
 	gi.sound(self, CHAN_WEAPON, sound_grenade, 1, ATTN_NORM, 0);
 }
 
+static void myTankN64LightningWindup(edict_t *self)
+{
+	gi.sound(self, CHAN_WEAPON, sound_n64_lightning_windup, 1, ATTN_NORM, 0);
+}
+
+static void myTankN64LightningDamageSound(edict_t *self)
+{
+	float r = random();
+
+	if (r > 0.66f)
+		gi.sound(self, CHAN_ITEM, sound_n64_lightning_damage1, 1, ATTN_NORM, 0);
+	else if (r > 0.33f)
+		gi.sound(self, CHAN_ITEM, sound_n64_lightning_damage2, 1, ATTN_NORM, 0);
+	else
+		gi.sound(self, CHAN_ITEM, sound_n64_lightning_damage4, 1, ATTN_NORM, 0);
+}
+
 void myTankN64FireLightning(edict_t* self)
 {
 	int flash_number;
@@ -882,11 +903,12 @@ void myTankN64FireLightning(edict_t* self)
 		return;
 
 	flash_number = mytank_blaster_flash(self);
-	MonsterAim(self, M_HITSCAN_INSTANT_ACC, 0, false, flash_number, forward, start);
+	MonsterAim(self, -1, 0, false, flash_number, forward, start);
 	if (!M_MonsterHasClearShotFrom(self, start))
 		return;
 
 	damage = mytank_n64_damage(self, TANK_N64_LIGHTNING_DAMAGE, TANK_N64_LIGHTNING_ADDON);
+	myTankN64LightningDamageSound(self);
 	mytank_n64_lightning_effect(self, start, forward);
 	damage = (int)vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_bullet(self, start, forward, damage, 18, 0, 0, MOD_LIGHTNING);
@@ -1157,7 +1179,7 @@ mmove_t mytank_move_n64_reattack_grenade = {FRAME_attak111, FRAME_attak116, myta
 
 mframe_t mytank_n64_frames_attack_lightning [] =
 {
-	ai_charge, 0,	NULL,
+	ai_charge, 0,	myTankN64LightningWindup,
 	ai_charge, 0,	NULL,
 	ai_charge, 0,	NULL,
 	ai_charge, 0,	NULL,
@@ -1167,22 +1189,22 @@ mframe_t mytank_n64_frames_attack_lightning [] =
 	ai_charge, 0,	NULL,
 	ai_charge, 0,	NULL,
 	ai_charge, 0,	myTankN64FireLightning,
+	ai_charge, 0,	NULL,
+	ai_charge, 0,	NULL,
 	ai_charge, 0,	myTankN64FireLightning,
-	ai_charge, 0,	myTankN64FireLightning,
-	ai_charge, 0,	myTankN64FireLightning,
-	ai_charge, 0,	myTankN64FireLightning,
-	ai_charge, 0,	myTankN64FireLightning,
+	ai_charge, 0,	NULL,
+	ai_charge, 0,	NULL,
 	ai_charge, 0,	myTankN64FireLightning
 };
 mmove_t mytank_move_n64_attack_lightning = {FRAME_attak101, FRAME_attak116, mytank_n64_frames_attack_lightning, mytank_reattack_n64_lightning};
 
 mframe_t mytank_n64_frames_reattack_lightning [] =
 {
+	ai_charge, 0,	myTankN64LightningWindup,
+	ai_charge, 0,	NULL,
 	ai_charge, 0,	myTankN64FireLightning,
-	ai_charge, 0,	myTankN64FireLightning,
-	ai_charge, 0,	myTankN64FireLightning,
-	ai_charge, 0,	myTankN64FireLightning,
-	ai_charge, 0,	myTankN64FireLightning,
+	ai_charge, 0,	NULL,
+	ai_charge, 0,	NULL,
 	ai_charge, 0,	myTankN64FireLightning
 };
 mmove_t mytank_move_n64_reattack_lightning = {FRAME_attak111, FRAME_attak116, mytank_n64_frames_reattack_lightning, mytank_reattack_n64_lightning};
@@ -2132,6 +2154,10 @@ void init_drone_tank (edict_t *self)
 	sound_grenade = gi.soundindex ("guncmdr/gcdratck3.wav");
 	sound_sight = gi.soundindex ("tank/sight1.wav");
 	sound_spawn = gi.soundindex("medic_commander/monsterspawn1.wav");
+	sound_n64_lightning_windup = gi.soundindex("shambler/sattck1.wav");
+	sound_n64_lightning_damage1 = gi.soundindex("abilities/chargedbolt1.wav");
+	sound_n64_lightning_damage2 = gi.soundindex("abilities/chargedbolt2.wav");
+	sound_n64_lightning_damage4 = gi.soundindex("abilities/chargedbolt4.wav");
 
 	gi.soundindex ("tank/tnkatck1.wav");
 	gi.soundindex ("tank/tnkatk2a.wav");

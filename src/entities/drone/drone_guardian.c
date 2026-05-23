@@ -673,6 +673,7 @@ void guardian_dead(edict_t *self)
 	gi.WritePosition(self->s.origin);
 	gi.multicast(self->s.origin, MULTICAST_PVS);
 
+	self->svflags |= SVF_DEADMONSTER;
 	M_Remove(self, false, false);
 }
 

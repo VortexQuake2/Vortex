@@ -236,24 +236,25 @@ void monster_fire_blueblaster(edict_t *self, vec3_t start, vec3_t dir, int damag
 	monster_muzzleflash(self, start, flashtype);
 }
 
-void monster_fire_ionripper(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype)
+qboolean monster_fire_ionripper(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype)
 {
 	float chance;
 
 	if (que_typeexists(self->curses, AURA_HOLYFREEZE) && random() <= 0.5)
-		return;
+		return false;
 
 	if (self->chill_time > level.time)
 	{
 		chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
 		if (random() > chance)
-			return;
+			return false;
 	}
 
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_ionripper(self, start, dir, damage, speed, effect);
 
 	monster_muzzleflash(self, start, flashtype);
+	return true;
 }
 
 static void dabeam_think(edict_t *self)

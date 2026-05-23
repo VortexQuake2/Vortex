@@ -1467,7 +1467,7 @@ void monster_fire_blaster2(edict_t *self, vec3_t start, vec3_t dir, int damage, 
 
 void monster_fire_blueblaster(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype);
 
-void monster_fire_ionripper(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype);
+qboolean monster_fire_ionripper(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype);
 #define DABEAM_SECONDARY 1
 #define DABEAM_SPAWNED 2
 void monster_fire_dabeam(edict_t *self, int damage, qboolean secondary, void (*update_func)(edict_t *self));

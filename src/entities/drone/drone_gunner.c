@@ -17,6 +17,7 @@ static int	sound_open;
 static int	sound_search;
 static int	sound_sight;
 static int	sound_thud;
+static int	sound_ionripper;
 
 void mygunner_continue (edict_t *self);
 void mygunnerrun (edict_t *self);
@@ -435,7 +436,8 @@ void myGunnerFire (edict_t *self)
 		if (!M_MonsterHasClearShotFrom(self, start))
 			return;
 
-		monster_fire_ionripper(self, start, forward, damage, speed, EF_IONRIPPER, ripper_flash);
+		if (monster_fire_ionripper(self, start, forward, damage, speed, EF_IONRIPPER, ripper_flash))
+			gi.sound(self, CHAN_WEAPON, sound_ionripper, 1, ATTN_NORM, 0);
 		return;
 	}
  
@@ -955,6 +957,7 @@ void init_drone_gunner (edict_t *self)
 	sound_search = gi.soundindex ("gunner/gunsrch1.wav");	
 	sound_sight = gi.soundindex ("gunner/sight1.wav");
 	sound_thud = gi.soundindex ("player/land1.wav");
+	sound_ionripper = gi.soundindex("weapons/rippfire.wav");
 
 	gi.soundindex ("gunner/gunatck2.wav");
 	gi.soundindex ("gunner/gunatck3.wav");

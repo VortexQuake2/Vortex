@@ -30,6 +30,9 @@ static int	sound_grenade_pin;
 
 static constexpr int INFANTRY_RUN_ATTACK_MIN_DIST = 256;
 static constexpr int INFANTRY_MELEE_RANGE = 64;
+static constexpr int INFANTRY_GRENADE_ATTACK_MAX_DIST = 900;
+static constexpr float INFANTRY_GRENADE_ATTACK_CHANCE = 0.35f;
+static constexpr float INFANTRY_RUN_ATTACK_CHANCE = 0.65f;
 static constexpr float INFANTRY_GRENADE_TIMER = 2.5f;
 static constexpr float INFANTRY_GRENADE_DAMAGE_RADIUS = 150.0f;
 static constexpr int INFANTRY_GRENADE_RADIUS_DAMAGE = 100;
@@ -48,6 +51,8 @@ static constexpr float INFANTRY_MAXS_Z = 32.0f;
 static void infantry_fire(edict_t *self);
 static void infantry_run_fire(edict_t *self);
 static void infantry_grenade(edict_t *self);
+static qboolean infantry_grenade_animation_active(edict_t *self);
+static qboolean infantry_prethrow_grenade_active(edict_t *self);
 extern mmove_t infantry_move_attack1;
 extern mmove_t infantry_move_attack3;
 extern mmove_t infantry_move_attack5;
@@ -503,6 +508,10 @@ void infantry_pain(edict_t* self, edict_t* other, float kick, int damage)
 	if (invasion->value == 2)
 		return;
 
+	// Don't let pain interrupt grenade prep/throw; death logic depends on these frames.
+	if (infantry_grenade_animation_active(self))
+		return;
+
 	// if we're fidgeting, always go into pain state.
 	if (rng <= (1.0f - self->monsterinfo.pain_chance) &&
 		self->monsterinfo.currentmove != &infantry_move_stand &&
@@ -613,11 +622,25 @@ static int infantry_grenade_speed(edict_t *self)
 
 static qboolean infantry_prethrow_grenade_active(edict_t *self)
 {
+	if (!self)
+		return false;
+
 	if (self->monsterinfo.currentmove == &infantry_move_grenade_prep)
 		return true;
 
-	return self->monsterinfo.currentmove == &infantry_move_grenade_throw &&
-		self->s.frame < FRAME_attak206;
+	if (self->monsterinfo.currentmove != &infantry_move_grenade_throw)
+		return false;
+
+	return self->timestamp > 0 || self->s.frame < FRAME_attak206;
+}
+
+static qboolean infantry_grenade_animation_active(edict_t *self)
+{
+	if (!self)
+		return false;
+
+	return self->monsterinfo.currentmove == &infantry_move_grenade_prep ||
+		self->monsterinfo.currentmove == &infantry_move_grenade_throw;
 }
 
 static float infantry_remaining_grenade_fuse(edict_t *self)
@@ -643,6 +666,7 @@ static float infantry_remaining_grenade_fuse(edict_t *self)
 
 static void infantry_death_grenade(edict_t *self, float fuse)
 {
+	edict_t *grenade;
 	vec3_t forward, right, up;
 	vec3_t start, aimdir;
 
@@ -656,8 +680,15 @@ static void infantry_death_grenade(edict_t *self, float fuse)
 	if (VectorNormalize(aimdir) == 0)
 		VectorSet(aimdir, 0, 0, -1);
 
-	fire_grenade2(self, start, aimdir, infantry_grenade_damage(self), 95, fuse,
+	grenade = fire_grenade2(self, start, aimdir, infantry_grenade_damage(self), 95, fuse,
 		INFANTRY_GRENADE_DAMAGE_RADIUS, INFANTRY_GRENADE_RADIUS_DAMAGE, true);
+	if (grenade)
+	{
+		VectorScale(forward, 20 + random() * 20, grenade->velocity);
+		VectorMA(grenade->velocity, crandom() * 25, right, grenade->velocity);
+		VectorMA(grenade->velocity, -(80 + random() * 40), up, grenade->velocity);
+		gi.linkentity(grenade);
+	}
 }
 
 static void infantry_delayed_grenade_explode(edict_t *timer)
@@ -1239,9 +1270,6 @@ void infantry_attack(edict_t* self)
 	const int range = entdist(self, self->enemy);
 	const int maxrange = infantry_20mm_range(self);
 
-	if (range > maxrange)
-		return;
-
 	M_DelayNextAttack(self, 0, true);
 
 	if (range <= INFANTRY_MELEE_RANGE)
@@ -1250,17 +1278,20 @@ void infantry_attack(edict_t* self)
 		return;
 	}
 
-	if (random() <= 0.2f)
+	if (range <= INFANTRY_GRENADE_ATTACK_MAX_DIST && random() <= INFANTRY_GRENADE_ATTACK_CHANCE)
 	{
 		self->monsterinfo.currentmove = &infantry_move_grenade_prep;
 		return;
 	}
 
+	if (range > maxrange)
+		return;
+
 	if (!infantry_has_clear_ranged_shot(self))
 		return;
 
 	if (self->count && !(self->monsterinfo.aiflags & AI_STAND_GROUND) &&
-		range >= INFANTRY_RUN_ATTACK_MIN_DIST)
+		range >= INFANTRY_RUN_ATTACK_MIN_DIST && random() <= INFANTRY_RUN_ATTACK_CHANCE)
 	{
 		self->monsterinfo.pausetime = level.time + 1.8 + random();
 		self->monsterinfo.currentmove = &infantry_move_attack4;
