@@ -21,3 +21,4 @@ int	AStar_nodeIsInPath( int node );
 int	AStar_ResolvePath ( int origin, int goal, int movetypes );
 //===========================================
 int AStar_GetPath( int origin, int goal, int movetypes, struct astarpath_s *path );
+void AStar_Init();

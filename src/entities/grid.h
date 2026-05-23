@@ -24,7 +24,6 @@ struct node_s {
 struct gheap_entry_s {
     int32_t cost;
     void* data;
-    bool occupied;
 };
 
 struct gheap_s {
@@ -90,3 +89,9 @@ void nodearena_reset(struct nodearena_s* arena);
 void gridkdtree_free(struct gridkdtree_s** tree);
 struct gridkdtree_s* gridkdtree_create(vec3_t* srcdata, size_t count);
 size_t gridkdtree_query(struct gridkdtree_s* tree, vec3_t querypos);
+
+struct gheap_s* gheap_create(size_t capacity);
+void gheap_free(struct gheap_s** heap);
+bool gheap_push(struct gheap_s* heap, int32_t cost, void* data);
+void* gheap_pop(struct gheap_s* heap);
+void gheap_reset(struct gheap_s* heap);
