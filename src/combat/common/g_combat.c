@@ -547,8 +547,8 @@ static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damag
 	int			pa_te_type;
 	int			power = 0; // cells
 	int			power_used; // cells used
-	int			old_monster_power = 0;
-	qboolean	monster_power_armor = false;
+	int			old_nonplayer_power = 0;
+	qboolean	nonplayer_power_armor = false;
 	qboolean	VORTEX_POWERSHIELD_FOR_PLAYERS = false;
 	edict_t		*cl_ent=NULL;
 
@@ -589,16 +589,17 @@ static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damag
 	{
 		power_armor_type = ent->monsterinfo.power_armor_type;
 		power = ent->monsterinfo.power_armor_power;
-		old_monster_power = power;
-		monster_power_armor = true;
 	}
-	else if (ent->creator && ent->creator->client)
+	else
 	{
 		power_armor_type = ent->monsterinfo.power_armor_type;
 		power = ent->monsterinfo.power_armor_power;
 	}
-	else
-		return 0;
+	if (!cl_ent)
+	{
+		old_nonplayer_power = power;
+		nonplayer_power_armor = true;
+	}
 
 	if (power_armor_type == POWER_ARMOR_NONE)
 		return save;
@@ -652,22 +653,34 @@ static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damag
 			damage *= 0.8;
 		}
 		else
-		{
 			damagePerCell = ctf->value ? 1.0f : 2.0f;
-			damage = (2 * damage) / 3;
-			if (damage < 1)
-				damage = 1;
-		}
 	}
 	else
 		return save;
+
+	if (nonplayer_power_armor)
+	{
+		if (dflags & DAMAGE_BULLET)
+		{
+			// Remaster power armor absorbs bullet damage at full value.
+		}
+		else if (dflags & DAMAGE_ENERGY)
+			damage = (2 * damage) / 3;
+		else if (power_armor_type == POWER_ARMOR_SCREEN)
+			damage /= 3;
+		else
+			damage = (2 * damage) / 3;
+
+		if (damage < 1)
+			damage = 1;
+	}
 
 	save += power * damagePerCell;
 
 	if (!save)
 		return 0;
 
-	if (power_armor_type == POWER_ARMOR_SHIELD && !VORTEX_POWERSHIELD_FOR_PLAYERS && (dflags & DAMAGE_ENERGY))
+	if (nonplayer_power_armor && (dflags & DAMAGE_ENERGY))
 	{
 		save /= 2;
 		if (save < 1)
@@ -680,7 +693,7 @@ static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damag
 	SpawnDamage(pa_te_type, point, normal);
 	ent->powerarmor_time = level.time + 0.2;
 
-	if (power_armor_type == POWER_ARMOR_SHIELD && !VORTEX_POWERSHIELD_FOR_PLAYERS)
+	if (nonplayer_power_armor)
 	{
 		power_used = (int)((float) save / damagePerCell);
 		if (dflags & DAMAGE_ENERGY)
@@ -705,7 +718,7 @@ static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damag
 
 		ent->monsterinfo.power_armor_power -= power_used;
 
-		if (monster_power_armor && old_monster_power > 0 && ent->monsterinfo.power_armor_power <= 0)
+		if (nonplayer_power_armor && old_nonplayer_power > 0 && ent->monsterinfo.power_armor_power <= 0)
 		{
 			ent->monsterinfo.power_armor_power = 0;
 			gi.sound(ent, CHAN_AUTO, gi.soundindex("misc/mon_power2.wav"), 1, ATTN_NORM, 0);
@@ -1540,7 +1553,14 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 	}
 
 	if (take > 0)
-		psave = CheckPowerArmor (targ, point, normal, before_add, dflags);
+	{
+		int power_armor_damage = before_add;
+
+		if (!target_has_pilot && !targ->client)
+			power_armor_damage = take;
+
+		psave = CheckPowerArmor (targ, point, normal, power_armor_damage, dflags);
+	}
 	else
 		psave = CheckPowerArmor (targ, point, normal, 0, dflags);
 	take -= psave;
