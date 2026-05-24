@@ -87,8 +87,6 @@ void Cmd_LifeTap(edict_t* ent);
 void Cmd_ShowPlinks_f(edict_t* ent);
 void Cmd_AI_AddNode_f(edict_t* ent);
 void Cmd_AI_RemoveNode_f(edict_t* ent);
-void Cmd_Immortal_f(edict_t* ent);
-void Cmd_Spawn_f(edict_t* ent);
 
 #define CommandTotal sizeof(commands) / sizeof(gameCommand_s)
 
@@ -111,6 +109,9 @@ static qboolean Cmd_ParseInteger(const char *token, int *value)
 void Cmd_Immortal_f(edict_t* ent)
 {
 	const char *msg;
+
+	if (!ent || !ent->client || !ent->myskills.administrator)
+		return;
 
 	ent->flags ^= FL_IMMORTAL;
 	if (!(ent->flags & FL_IMMORTAL))
@@ -209,7 +210,7 @@ void Cmd_Spawn_f(edict_t* ent)
 	edict_t *drone;
 	vec3_t spawn_origin, to_player;
 
-	if (!ent || !ent->client || ent->deadflag == DEAD_DEAD)
+	if (!ent || !ent->client || !ent->myskills.administrator || ent->deadflag == DEAD_DEAD)
 		return;
 
 	if (gi.argc() < 2 || !Cmd_SpawnParseDroneType(&drone_type))
