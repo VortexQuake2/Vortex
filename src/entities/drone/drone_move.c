@@ -446,8 +446,6 @@ static constexpr float FLY_WALL_STUCK_THRESHOLD = 1.5f;
 static constexpr float FLY_DESCENT_SPEED_MULTIPLIER = 0.6f;
 static constexpr float FLY_TARGET_LEAD_TIME = 0.45f;
 static constexpr float FLY_CATCHUP_MARGIN = 32.0f;
-static constexpr float FLY_CATCHUP_DISTANCE_SCALE = 0.85f;
-static constexpr float FLY_ATTACK_DISTANCE_FRACTION = 0.2f;
 static constexpr float FLY_ATTACK_SPEED_SCALE = 1.35f;
 static constexpr float FLY_ATTACK_ACCEL_SCALE = 1.6f;
 static constexpr float FLY_LOS_PRESERVE_SPEED_SCALE = 1.12f;
@@ -456,57 +454,53 @@ static constexpr float FLY_LOS_PRESERVE_TURN_FACTOR = 0.32f;
 static constexpr float FLY_LOS_PRESSURE_SNAP_DOT = 0.0f;
 static constexpr float FLY_LOS_FULL_SIGHT_FRACTION = 0.98f;
 static constexpr float FLY_LOS_SIDE_SWITCH_SPEED = 64.0f;
-static constexpr float FLY_LOS_PRESERVE_PROBE = 72.0f;
 static constexpr float FLY_LOS_PRESERVE_MIN_FRACTION = 0.25f;
-static constexpr float FLY_LOS_PRESERVE_SIDE_WEIGHT = 1.05f;
-static constexpr float FLY_LOS_PRESERVE_FWD_WEIGHT = 0.75f;
-static constexpr float FLY_LOS_PRESERVE_WALL_WEIGHT = 0.35f;
-static constexpr float FLY_LOS_PRESERVE_DOWN_WEIGHT = 0.55f;
-static constexpr float FLY_LOS_PREVENT_LEAD_TIME = 0.45f;
 static constexpr float FLY_LOS_PREVENT_THRESHOLD = 0.86f;
 static constexpr float FLY_LOS_PREVENT_MIN_GAIN = 0.10f;
 static constexpr float FLY_LOS_PREVENT_ALLOWED_DROP = 0.06f;
-static constexpr float FLY_LOS_PREVENT_PROBE = 96.0f;
-static constexpr float FLY_LOS_PREVENT_SIDE_WEIGHT = 1.15f;
-static constexpr float FLY_LOS_PREVENT_FWD_WEIGHT = 0.85f;
-static constexpr float FLY_LOS_PREVENT_DOWN_WEIGHT = 0.35f;
 static constexpr float FLY_LOS_RECOVER_MEMORY_TIME = 1.6f;
 static constexpr float FLY_LOS_RECOVER_LAST_SEEN_RANGE = 512.0f;
 static constexpr float FLY_LOS_RECOVER_MAX_RANGE = 1200.0f;
-static constexpr float FLY_LOS_RECOVER_PROBE = 96.0f;
 static constexpr float FLY_LOS_RECOVER_MIN_GAIN = 0.08f;
-static constexpr float FLY_LOS_RECOVER_SIDE_WEIGHT = 1.20f;
-static constexpr float FLY_LOS_RECOVER_FWD_WEIGHT = 0.80f;
-static constexpr float FLY_LOS_RECOVER_DOWN_WEIGHT = 0.45f;
-static constexpr float FLY_ATTACK_STRAFE_SPEED_SCALE = 0.6f;
-static constexpr float FLY_ATTACK_DRIFT_SPEED_SCALE = 0.3f;
-static constexpr float FLY_ATTACK_STRAFE_MIN = 32.0f;
-static constexpr float FLY_ATTACK_STRAFE_MAX = 128.0f;
-static constexpr float FLY_ATTACK_ORBIT_DISTANCE = 48.0f;
-static constexpr float FLY_ATTACK_HEIGHT_VARIANCE = 56.0f;
-static constexpr float FLY_TARGET_STRAFE_MIN_SPEED = 20.0f;
-static constexpr float FLY_TARGET_STRAFE_DISTANCE_SCALE = 0.45f;
-static constexpr float FLY_COMBAT_MIN_HEIGHT = 48.0f;
-static constexpr float FLY_COMBAT_HEIGHT_ABOVE_VIEW = 24.0f;
-static constexpr float FLY_LOWER_TARGET_DESCENT_HEIGHT = 96.0f;
-static constexpr float FLY_LOWER_TARGET_MIN_HEIGHT = 16.0f;
 static constexpr float FLY_BLOCKED_DESCENT_HEIGHT = 32.0f;
 static constexpr float FLY_BLOCKED_DESCENT_XY_SCALE = 0.45f;
 static constexpr float FLY_COMBAT_WALL_STUCK_THRESHOLD = 0.35f;
-static constexpr float FLY_STAIR_CLIMB_MIN_HEIGHT = 24.0f;
-static constexpr float FLY_STAIR_CLIMB_MAX_HEIGHT = 320.0f;
-static constexpr float FLY_STAIR_CLIMB_MAX_RANGE = 420.0f;
-static constexpr float FLY_STAIR_CLIMB_PROBE = 64.0f;
-static constexpr float FLY_STAIR_CLIMB_MIN_FRACTION = 0.60f;
-static constexpr float FLY_STAIR_CLIMB_MIN_GAIN = 4.0f;
-static constexpr float FLY_STAIR_CLIMB_FWD_WEIGHT = 0.90f;
-static constexpr float FLY_STAIR_CLIMB_UP_WEIGHT = 0.75f;
-static constexpr float FLY_CEILING_LOOKAHEAD = 256.0f;
-static constexpr float FLY_CEILING_CLEARANCE = 8.0f;
-static constexpr float FLY_SEPARATION_RADIUS = 112.0f;
-static constexpr float FLY_SEPARATION_MAX_PUSH = 96.0f;
-static constexpr float FLY_SEPARATION_Z_SCALE = 0.45f;
 static constexpr int FLY_SEPARATION_MAX_NEIGHBORS = 24;
+
+typedef enum fly_los_mode_e
+{
+	FLY_LOS_MODE_PRESERVE,
+	FLY_LOS_MODE_PREVENT,
+	FLY_LOS_MODE_RECOVER
+} fly_los_mode_t;
+
+typedef struct flystep_intent_s
+{
+	qboolean visible_combat_enemy;
+	qboolean recent_combat_memory;
+	qboolean lost_combat_goal;
+	qboolean path_context;
+	qboolean use_dest;
+} flystep_intent_t;
+
+typedef struct flystep_ctx_s
+{
+	flystep_intent_t intent;
+	vec3_t dir;
+	vec3_t final_dir;
+	vec3_t towards_origin;
+	vec3_t towards_velocity;
+	vec3_t wanted_pos;
+	vec3_t wanted_dir;
+	float current_speed;
+	float dist_to_wanted;
+	qboolean following_paths;
+	qboolean catchup_goal;
+	qboolean los_preserve_drive;
+	qboolean los_recover_drive;
+	qboolean water_recovery_drive;
+	qboolean bad_movement_direction;
+} flystep_ctx_t;
 
 static float fly_frand_range(float min_value, float max_value)
 {
@@ -593,14 +587,6 @@ static qboolean fly_has_visible_combat_enemy(edict_t *ent)
 
 static qboolean fly_has_recent_combat_memory(edict_t *ent);
 
-static qboolean fly_has_recent_combat_enemy(edict_t *ent)
-{
-	if (fly_has_visible_combat_enemy(ent))
-		return true;
-
-	return fly_has_recent_combat_memory(ent);
-}
-
 static qboolean fly_has_recent_combat_memory(edict_t *ent)
 {
 	if (!ent->enemy || !ent->enemy->inuse)
@@ -635,6 +621,38 @@ static qboolean fly_has_lost_combat_goal(edict_t *ent, vec3_t dest)
 	return ent->goalentity && ent->goalentity->inuse && ent->goalentity == ent->enemy;
 }
 
+static qboolean fly_get_alternate_intent(edict_t *ent, vec3_t dest, flystep_intent_t *intent)
+{
+	flystep_intent_t local_intent;
+
+	if (!intent)
+		intent = &local_intent;
+
+	intent->visible_combat_enemy = false;
+	intent->recent_combat_memory = false;
+	intent->lost_combat_goal = false;
+	intent->path_context = false;
+	intent->use_dest = false;
+
+	if (!(ent->monsterinfo.aiflags & AI_ALTERNATE_FLY))
+		return false;
+
+	intent->visible_combat_enemy = fly_has_visible_combat_enemy(ent);
+	intent->recent_combat_memory = intent->visible_combat_enemy || fly_has_recent_combat_memory(ent);
+	intent->lost_combat_goal = fly_has_lost_combat_goal(ent, dest);
+	intent->path_context = fly_following_path(ent) && !intent->visible_combat_enemy;
+	intent->use_dest = dest && !intent->visible_combat_enemy;
+
+	if (!intent->recent_combat_memory && !intent->lost_combat_goal)
+		return false;
+
+	// Invasion destination movement is used by navis/base pathing and expects an immediate origin step.
+	if (dest && invasion->value && !intent->lost_combat_goal)
+		return false;
+
+	return true;
+}
+
 static qboolean fly_can_separate_from(edict_t *ent, edict_t *other)
 {
 	if (!other || other == ent || !G_EntIsAlive(other))
@@ -650,19 +668,22 @@ static qboolean fly_can_separate_from(edict_t *ent, edict_t *other)
 
 static qboolean fly_apply_neighbor_separation(edict_t *ent, vec3_t wanted_pos)
 {
+	const float separation_radius = 112.0f;
+	const float max_push = 96.0f;
+	const float z_scale = 0.45f;
 	edict_t *touch[FLY_SEPARATION_MAX_NEIGHBORS];
 	vec3_t mins, maxs, away, separation;
 	float dist, weight, push;
 	int i, num;
 
 	VectorSet(mins,
-		ent->s.origin[0] - FLY_SEPARATION_RADIUS,
-		ent->s.origin[1] - FLY_SEPARATION_RADIUS,
-		ent->s.origin[2] - FLY_SEPARATION_RADIUS);
+		ent->s.origin[0] - separation_radius,
+		ent->s.origin[1] - separation_radius,
+		ent->s.origin[2] - separation_radius);
 	VectorSet(maxs,
-		ent->s.origin[0] + FLY_SEPARATION_RADIUS,
-		ent->s.origin[1] + FLY_SEPARATION_RADIUS,
-		ent->s.origin[2] + FLY_SEPARATION_RADIUS);
+		ent->s.origin[0] + separation_radius,
+		ent->s.origin[1] + separation_radius,
+		ent->s.origin[2] + separation_radius);
 
 	num = gi.BoxEdicts(mins, maxs, touch, FLY_SEPARATION_MAX_NEIGHBORS, AREA_SOLID);
 	VectorClear(separation);
@@ -675,9 +696,9 @@ static qboolean fly_apply_neighbor_separation(edict_t *ent, vec3_t wanted_pos)
 			continue;
 
 		VectorSubtract(ent->s.origin, other->s.origin, away);
-		away[2] *= FLY_SEPARATION_Z_SCALE;
+		away[2] *= z_scale;
 		dist = VectorNormalize(away);
-		if (dist > FLY_SEPARATION_RADIUS)
+		if (dist > separation_radius)
 			continue;
 		if (dist <= 0.1f)
 		{
@@ -685,7 +706,7 @@ static qboolean fly_apply_neighbor_separation(edict_t *ent, vec3_t wanted_pos)
 			dist = 1.0f;
 		}
 
-		weight = (FLY_SEPARATION_RADIUS - dist) / FLY_SEPARATION_RADIUS;
+		weight = (separation_radius - dist) / separation_radius;
 		if (ent->enemy && other->enemy == ent->enemy)
 			weight *= 1.35f;
 		VectorMA(separation, weight, away, separation);
@@ -695,24 +716,14 @@ static qboolean fly_apply_neighbor_separation(edict_t *ent, vec3_t wanted_pos)
 	if (push <= 0.1f)
 		return false;
 
-	push = fly_clampf(push * FLY_SEPARATION_MAX_PUSH, 0.0f, FLY_SEPARATION_MAX_PUSH);
+	push = fly_clampf(push * max_push, 0.0f, max_push);
 	VectorMA(wanted_pos, push, separation, wanted_pos);
 	return true;
 }
 
 static qboolean fly_use_alternate_step(edict_t *ent, vec3_t dest)
 {
-	if (!(ent->monsterinfo.aiflags & AI_ALTERNATE_FLY))
-		return false;
-
-	if (!fly_has_recent_combat_enemy(ent) && !fly_has_lost_combat_goal(ent, dest))
-		return false;
-
-	// Invasion destination movement is used by navis/base pathing and expects an immediate origin step.
-	if (dest && invasion->value && !fly_has_lost_combat_goal(ent, dest))
-		return false;
-
-	return true;
+	return fly_get_alternate_intent(ent, dest, NULL);
 }
 
 static void fly_reset_alternate_step(edict_t *ent)
@@ -720,14 +731,6 @@ static void fly_reset_alternate_step(edict_t *ent)
 	VectorClear(ent->velocity);
 	ent->monsterinfo.fly_pinned = false;
 	ent->monsterinfo.fly_wall_stuck_time = 0.0f;
-}
-
-static vec_t *fly_alternate_path_dest(edict_t *ent, vec3_t dest)
-{
-	// Once a flyer has visible combat contact, let alternate fly steer by enemy/hover offset instead of parking on path nodes.
-	if (dest && !fly_has_visible_combat_enemy(ent))
-		return dest;
-	return NULL;
 }
 
 static qboolean fly_has_last_sighting(edict_t *ent)
@@ -749,6 +752,8 @@ static void fly_face_target(edict_t *ent, vec3_t target_origin)
 
 static qboolean fly_clamp_to_ceiling(edict_t *ent, vec3_t wanted_pos)
 {
+	const float lookahead = 256.0f;
+	const float clearance = 8.0f;
 	vec3_t ceiling_check;
 	trace_t tr;
 	float desired_up;
@@ -760,14 +765,14 @@ static qboolean fly_clamp_to_ceiling(edict_t *ent, vec3_t wanted_pos)
 		return false;
 
 	VectorCopy(ent->s.origin, ceiling_check);
-	trace_height = max(FLY_CEILING_LOOKAHEAD, desired_up + FLY_CEILING_CLEARANCE);
+	trace_height = max(lookahead, desired_up + clearance);
 	ceiling_check[2] += trace_height;
 
 	tr = gi.trace(ent->s.origin, ent->mins, ent->maxs, ceiling_check, ent, MASK_SOLID | CONTENTS_MONSTERCLIP);
 	if (tr.fraction == 1.0f || tr.startsolid || tr.allsolid)
 		return false;
 
-	highest_origin = tr.endpos[2] - FLY_CEILING_CLEARANCE;
+	highest_origin = tr.endpos[2] - clearance;
 	if (wanted_pos[2] <= highest_origin)
 		return false;
 
@@ -820,6 +825,9 @@ static qboolean fly_should_descend_for_lower_path(edict_t *ent, qboolean followi
 static qboolean fly_consider_stair_climb_dir(edict_t *ent, vec3_t candidate, vec3_t target_dir,
 	float *best_score, vec3_t best_dir)
 {
+	const float probe_min = 64.0f;
+	const float min_trace_fraction = 0.60f;
+	const float min_z_gain = 4.0f;
 	vec3_t dir, end;
 	trace_t tr;
 	float probe_dist, z_gain, score;
@@ -828,14 +836,14 @@ static qboolean fly_consider_stair_climb_dir(edict_t *ent, vec3_t candidate, vec
 	if (VectorNormalize(dir) <= 0.1f)
 		return false;
 
-	probe_dist = max(FLY_STAIR_CLIMB_PROBE, ent->monsterinfo.fly_acceleration * 2.5f);
+	probe_dist = max(probe_min, ent->monsterinfo.fly_acceleration * 2.5f);
 	VectorMA(ent->s.origin, probe_dist, dir, end);
 	tr = gi.trace(ent->s.origin, ent->mins, ent->maxs, end, ent, MASK_SOLID | CONTENTS_MONSTERCLIP);
-	if (tr.startsolid || tr.allsolid || tr.fraction < FLY_STAIR_CLIMB_MIN_FRACTION)
+	if (tr.startsolid || tr.allsolid || tr.fraction < min_trace_fraction)
 		return false;
 
 	z_gain = tr.endpos[2] - ent->s.origin[2];
-	if (z_gain < FLY_STAIR_CLIMB_MIN_GAIN)
+	if (z_gain < min_z_gain)
 		return false;
 
 	score = tr.fraction * 36.0f + z_gain * 0.25f + DotProduct(dir, target_dir) * 8.0f;
@@ -849,19 +857,24 @@ static qboolean fly_consider_stair_climb_dir(edict_t *ent, vec3_t candidate, vec
 
 static qboolean fly_try_climb_for_higher_target(edict_t *ent, vec3_t target_origin, vec3_t wanted_dir)
 {
+	const float min_height = 24.0f;
+	const float max_height = 320.0f;
+	const float max_range = 420.0f;
+	const float forward_weight = 0.90f;
+	const float up_weight = 0.75f;
 	vec3_t to_target, target_dir, candidate, best_dir;
 	float height_delta, horizontal_dist, best_score;
 	qboolean found;
 
 	VectorSubtract(target_origin, ent->s.origin, to_target);
 	height_delta = to_target[2];
-	if (height_delta < FLY_STAIR_CLIMB_MIN_HEIGHT || height_delta > FLY_STAIR_CLIMB_MAX_HEIGHT)
+	if (height_delta < min_height || height_delta > max_height)
 		return false;
 
 	VectorCopy(to_target, target_dir);
 	target_dir[2] = 0.0f;
 	horizontal_dist = VectorNormalize(target_dir);
-	if (horizontal_dist > FLY_STAIR_CLIMB_MAX_RANGE)
+	if (horizontal_dist > max_range)
 		return false;
 	if (horizontal_dist <= 0.1f)
 	{
@@ -875,16 +888,16 @@ static qboolean fly_try_climb_for_higher_target(edict_t *ent, vec3_t target_orig
 	VectorClear(best_dir);
 	found = false;
 
-	VectorScale(target_dir, FLY_STAIR_CLIMB_FWD_WEIGHT, candidate);
-	candidate[2] = FLY_STAIR_CLIMB_UP_WEIGHT;
+	VectorScale(target_dir, forward_weight, candidate);
+	candidate[2] = up_weight;
 	found |= fly_consider_stair_climb_dir(ent, candidate, target_dir, &best_score, best_dir);
 
-	VectorScale(target_dir, FLY_STAIR_CLIMB_FWD_WEIGHT * 0.45f, candidate);
-	candidate[2] = FLY_STAIR_CLIMB_UP_WEIGHT * 1.25f;
+	VectorScale(target_dir, forward_weight * 0.45f, candidate);
+	candidate[2] = up_weight * 1.25f;
 	found |= fly_consider_stair_climb_dir(ent, candidate, target_dir, &best_score, best_dir);
 
 	VectorCopy(wanted_dir, candidate);
-	candidate[2] += FLY_STAIR_CLIMB_UP_WEIGHT;
+	candidate[2] += up_weight;
 	found |= fly_consider_stair_climb_dir(ent, candidate, target_dir, &best_score, best_dir);
 
 	if (!found)
@@ -896,7 +909,7 @@ static qboolean fly_try_climb_for_higher_target(edict_t *ent, vec3_t target_orig
 	return true;
 }
 
-static void G_IdealHoverPosition(edict_t *ent, vec3_t out)
+static void G_IdealHoverPosition(edict_t *ent, qboolean path_context, vec3_t out)
 {
 	float theta, phi, distance_scale;
 	vec3_t direction;
@@ -904,7 +917,7 @@ static void G_IdealHoverPosition(edict_t *ent, vec3_t out)
 	VectorClear(out);
 
 	if ((!ent->enemy && !(ent->monsterinfo.aiflags & AI_MEDIC)) ||
-		(fly_following_path(ent) && !fly_has_visible_combat_enemy(ent)))
+		path_context)
 		return;
 
 	theta = random() * M_PI * 2.0f;
@@ -923,6 +936,20 @@ static void G_IdealHoverPosition(edict_t *ent, vec3_t out)
 
 static qboolean fly_adjust_visible_combat_goal(edict_t *ent, vec3_t target_origin, vec3_t target_velocity, vec3_t wanted_pos, qboolean visible_combat_enemy)
 {
+	const float catchup_distance_scale = 0.85f;
+	const float attack_distance_fraction = 0.2f;
+	const float attack_strafe_speed_scale = 0.6f;
+	const float attack_drift_speed_scale = 0.3f;
+	const float attack_strafe_min = 32.0f;
+	const float attack_strafe_max = 128.0f;
+	const float attack_orbit_distance = 48.0f;
+	const float attack_height_variance = 56.0f;
+	const float target_strafe_min_speed = 20.0f;
+	const float target_strafe_distance_scale = 0.45f;
+	const float combat_min_height = 48.0f;
+	const float combat_height_above_view = 24.0f;
+	const float lower_target_descent_height = 96.0f;
+	const float lower_target_min_height = 16.0f;
 	float current_dist, min_dist, max_dist, desired_dist, attack_dist, radial_speed, catchup_step, strafe_dist, min_height;
 	float attack_fraction, strafe_variance, orbit_phase, orbit;
 	float target_lateral_speed, target_lateral_speed_abs;
@@ -943,11 +970,11 @@ static qboolean fly_adjust_visible_combat_goal(edict_t *ent, vec3_t target_origi
 	orbit_phase = level.time * (0.55f + fly_entity_unit(ent, 0x70u) * 0.65f) +
 		fly_entity_unit(ent, 0x71u) * M_PI * 2.0f;
 	orbit = sinf(orbit_phase);
-	attack_fraction = FLY_ATTACK_DISTANCE_FRACTION + ((fly_entity_unit(ent, 0x61u) - 0.5f) * 0.22f) + orbit * 0.08f;
+	attack_fraction = attack_distance_fraction + ((fly_entity_unit(ent, 0x61u) - 0.5f) * 0.22f) + orbit * 0.08f;
 	attack_dist = fly_clampf(min_dist + ((max_dist - min_dist) * attack_fraction), min_dist, max_dist);
 	attack_drive = (ent->monsterinfo.attack_state == AS_STRAIGHT || ent->monsterinfo.attack_state == AS_SLIDING);
 	sliding_attack = (ent->monsterinfo.attack_state == AS_SLIDING);
-	lower_target = ent->s.origin[2] > target_origin[2] + FLY_LOWER_TARGET_DESCENT_HEIGHT;
+	lower_target = ent->s.origin[2] > target_origin[2] + lower_target_descent_height;
 	force_drive = false;
 
 	if (current_dist > max_dist + FLY_CATCHUP_MARGIN)
@@ -955,7 +982,7 @@ static qboolean fly_adjust_visible_combat_goal(edict_t *ent, vec3_t target_origi
 		if (attack_drive)
 			desired_dist = attack_dist;
 		else
-			desired_dist = max(min_dist, max_dist * FLY_CATCHUP_DISTANCE_SCALE);
+			desired_dist = max(min_dist, max_dist * catchup_distance_scale);
 		force_drive = true;
 	}
 	else
@@ -985,17 +1012,17 @@ static qboolean fly_adjust_visible_combat_goal(edict_t *ent, vec3_t target_origi
 
 	if (attack_drive && !(ent->flags & FL_SWIM))
 	{
-		min_height = FLY_COMBAT_MIN_HEIGHT;
+		min_height = combat_min_height;
 		if (ent->enemy && ent->enemy->viewheight > 0)
-			min_height = max(min_height, ent->enemy->viewheight + FLY_COMBAT_HEIGHT_ABOVE_VIEW);
-		min_height += fly_entity_unit(ent, 0x62u) * FLY_ATTACK_HEIGHT_VARIANCE;
+			min_height = max(min_height, ent->enemy->viewheight + combat_height_above_view);
+		min_height += fly_entity_unit(ent, 0x62u) * attack_height_variance;
 		if (ideal_offset[2] < min_height)
 			ideal_offset[2] = min_height;
 	}
 	if (attack_drive && lower_target && !(ent->flags & FL_SWIM))
 	{
-		if (ideal_offset[2] > FLY_LOWER_TARGET_MIN_HEIGHT)
-			ideal_offset[2] = FLY_LOWER_TARGET_MIN_HEIGHT;
+		if (ideal_offset[2] > lower_target_min_height)
+			ideal_offset[2] = lower_target_min_height;
 		force_drive = true;
 	}
 
@@ -1007,12 +1034,12 @@ static qboolean fly_adjust_visible_combat_goal(edict_t *ent, vec3_t target_origi
 			target_lateral_speed = DotProduct(target_velocity, lateral);
 			target_lateral_speed_abs = fabs(target_lateral_speed);
 
-			if (target_lateral_speed_abs > FLY_TARGET_STRAFE_MIN_SPEED)
+			if (target_lateral_speed_abs > target_strafe_min_speed)
 			{
 				if (target_lateral_speed < 0.0f)
 					VectorNegate(lateral, lateral);
-				strafe_dist = fly_clampf(target_lateral_speed_abs * FLY_TARGET_STRAFE_DISTANCE_SCALE,
-					FLY_ATTACK_STRAFE_MIN, FLY_ATTACK_STRAFE_MAX);
+				strafe_dist = fly_clampf(target_lateral_speed_abs * target_strafe_distance_scale,
+					attack_strafe_min, attack_strafe_max);
 			}
 			else
 			{
@@ -1022,14 +1049,14 @@ static qboolean fly_adjust_visible_combat_goal(edict_t *ent, vec3_t target_origi
 				if (!strafe_left)
 					VectorNegate(lateral, lateral);
 				strafe_dist = fly_clampf(ent->monsterinfo.fly_speed *
-					(sliding_attack ? FLY_ATTACK_STRAFE_SPEED_SCALE : FLY_ATTACK_DRIFT_SPEED_SCALE),
-					FLY_ATTACK_STRAFE_MIN, FLY_ATTACK_STRAFE_MAX);
+					(sliding_attack ? attack_strafe_speed_scale : attack_drift_speed_scale),
+					attack_strafe_min, attack_strafe_max);
 			}
 
 			strafe_variance = 0.60f + fly_entity_unit(ent, 0x64u) * 0.65f + fabsf(orbit) * 0.35f;
-			strafe_dist = fly_clampf(strafe_dist * strafe_variance, FLY_ATTACK_STRAFE_MIN, FLY_ATTACK_STRAFE_MAX);
-			strafe_dist = fly_clampf(strafe_dist + orbit * FLY_ATTACK_ORBIT_DISTANCE,
-				FLY_ATTACK_STRAFE_MIN, FLY_ATTACK_STRAFE_MAX);
+			strafe_dist = fly_clampf(strafe_dist * strafe_variance, attack_strafe_min, attack_strafe_max);
+			strafe_dist = fly_clampf(strafe_dist + orbit * attack_orbit_distance,
+				attack_strafe_min, attack_strafe_max);
 			VectorMA(ideal_offset, strafe_dist, lateral, ideal_offset);
 		}
 	}
@@ -1121,18 +1148,18 @@ static float fly_predicted_combat_sight_fraction_from(edict_t *ent, vec3_t origi
 	best = 0.0f;
 
 	G_EntViewPoint(target, point);
-	VectorMA(point, FLY_LOS_PREVENT_LEAD_TIME, target_velocity, point);
+	VectorMA(point, FLY_TARGET_LEAD_TIME, target_velocity, point);
 	fraction = fly_sight_fraction_to_point_from(ent, origin, point);
 	if (fraction > best)
 		best = fraction;
 
 	G_EntMidPoint(target, point);
-	VectorMA(point, FLY_LOS_PREVENT_LEAD_TIME, target_velocity, point);
+	VectorMA(point, FLY_TARGET_LEAD_TIME, target_velocity, point);
 	fraction = fly_sight_fraction_to_point_from(ent, origin, point);
 	if (fraction > best)
 		best = fraction;
 
-	VectorMA(target->s.origin, FLY_LOS_PREVENT_LEAD_TIME, target_velocity, point);
+	VectorMA(target->s.origin, FLY_TARGET_LEAD_TIME, target_velocity, point);
 	fraction = fly_sight_fraction_to_point_from(ent, origin, point);
 	if (fraction > best)
 		best = fraction;
@@ -1183,29 +1210,80 @@ static qboolean fly_los_side_vectors(edict_t *ent, vec3_t target_dir, vec3_t tar
 	return true;
 }
 
-static qboolean fly_consider_los_preserve_dir(edict_t *ent, edict_t *target, vec3_t candidate,
-	vec3_t wanted_dir, float *best_score, vec3_t best_dir)
+static qboolean fly_consider_los_dir(edict_t *ent, edict_t *target, vec3_t target_velocity,
+	vec3_t candidate, vec3_t wanted_dir, fly_los_mode_t mode, float baseline_sight,
+	float preference, float *best_score, vec3_t best_dir)
 {
 	vec3_t dir, end;
 	trace_t tr;
-	float probe_dist, sight, score;
+	float probe_base, accel_scale, trace_weight, dot_weight, down_bonus;
+	float probe_dist, sight, future_sight, actual_sight, score;
 
 	VectorCopy(candidate, dir);
 	if (VectorNormalize(dir) <= 0.1f)
 		return false;
 
-	probe_dist = max(FLY_LOS_PRESERVE_PROBE, ent->monsterinfo.fly_acceleration * 2.5f);
+	switch (mode)
+	{
+	case FLY_LOS_MODE_PRESERVE:
+		probe_base = 72.0f;
+		accel_scale = 2.5f;
+		trace_weight = 28.0f;
+		dot_weight = 4.0f;
+		down_bonus = 2.0f;
+		break;
+	case FLY_LOS_MODE_PREVENT:
+		probe_base = 72.0f;
+		accel_scale = 3.0f;
+		trace_weight = 24.0f;
+		dot_weight = 4.0f;
+		down_bonus = 1.5f;
+		break;
+	default:
+		probe_base = 96.0f;
+		accel_scale = 3.0f;
+		trace_weight = 24.0f;
+		dot_weight = 5.0f;
+		down_bonus = 2.0f;
+		break;
+	}
+
+	probe_dist = max(probe_base, ent->monsterinfo.fly_acceleration * accel_scale);
 	VectorMA(ent->s.origin, probe_dist, dir, end);
 	tr = gi.trace(ent->s.origin, ent->mins, ent->maxs, end, ent, MASK_SOLID | CONTENTS_MONSTERCLIP);
 	if (tr.startsolid || tr.allsolid || tr.fraction < FLY_LOS_PRESERVE_MIN_FRACTION)
 		return false;
-	sight = fly_combat_sight_fraction_from(ent, tr.endpos, target);
-	if (sight < FLY_LOS_FULL_SIGHT_FRACTION)
-		return false;
 
-	score = sight * 100.0f + tr.fraction * 28.0f + DotProduct(dir, wanted_dir) * 4.0f;
+	switch (mode)
+	{
+	case FLY_LOS_MODE_PRESERVE:
+		sight = fly_combat_sight_fraction_from(ent, tr.endpos, target);
+		if (sight < FLY_LOS_FULL_SIGHT_FRACTION)
+			return false;
+		score = sight * 100.0f;
+		break;
+	case FLY_LOS_MODE_PREVENT:
+		future_sight = fly_predicted_combat_sight_fraction_from(ent, tr.endpos, target, target_velocity);
+		actual_sight = fly_combat_sight_fraction_from(ent, tr.endpos, target);
+		if (actual_sight < FLY_LOS_FULL_SIGHT_FRACTION &&
+			future_sight < baseline_sight + FLY_LOS_PREVENT_MIN_GAIN)
+			return false;
+		if (future_sight < baseline_sight + FLY_LOS_PREVENT_MIN_GAIN &&
+			future_sight < FLY_LOS_FULL_SIGHT_FRACTION)
+			return false;
+		score = future_sight * 100.0f + actual_sight * 30.0f;
+		break;
+	default:
+		sight = fly_combat_sight_fraction_from(ent, tr.endpos, target);
+		if (sight < FLY_LOS_FULL_SIGHT_FRACTION && sight < baseline_sight + FLY_LOS_RECOVER_MIN_GAIN)
+			return false;
+		score = sight * 100.0f;
+		break;
+	}
+
+	score += tr.fraction * trace_weight + DotProduct(dir, wanted_dir) * dot_weight + preference;
 	if (dir[2] < -0.1f)
-		score += 2.0f;
+		score += down_bonus;
 
 	if (score <= *best_score)
 		return true;
@@ -1215,10 +1293,25 @@ static qboolean fly_consider_los_preserve_dir(edict_t *ent, edict_t *target, vec
 	return true;
 }
 
+static qboolean fly_consider_weighted_los_dir(edict_t *ent, edict_t *target, vec3_t target_velocity,
+	vec3_t side, float side_weight, vec3_t forward, float forward_weight, vec3_t down,
+	float down_weight, vec3_t wall, float wall_weight, vec3_t wanted_dir, fly_los_mode_t mode,
+	float baseline_sight, float preference, float *best_score, vec3_t best_dir)
+{
+	vec3_t candidate;
+
+	VectorScale(side, side_weight, candidate);
+	VectorMA(candidate, forward_weight, forward, candidate);
+	VectorMA(candidate, down_weight, down, candidate);
+	VectorMA(candidate, wall_weight, wall, candidate);
+	return fly_consider_los_dir(ent, target, target_velocity, candidate, wanted_dir,
+		mode, baseline_sight, preference, best_score, best_dir);
+}
+
 static qboolean fly_try_preserve_combat_sight(edict_t *ent, vec3_t towards_origin, vec3_t target_velocity,
 	vec3_t wanted_dir, vec3_t obstacle_normal, vec3_t out_dir)
 {
-	vec3_t to_target, side, other_side, down, wall_push, candidate, best_dir;
+	vec3_t to_target, side, other_side, down, wall_push, best_dir;
 	float best_score;
 	qboolean found;
 
@@ -1243,34 +1336,24 @@ static qboolean fly_try_preserve_combat_sight(edict_t *ent, vec3_t towards_origi
 	VectorClear(best_dir);
 	found = false;
 
-	VectorScale(side, FLY_LOS_PRESERVE_SIDE_WEIGHT, candidate);
-	VectorMA(candidate, FLY_LOS_PRESERVE_FWD_WEIGHT, to_target, candidate);
-	VectorMA(candidate, FLY_LOS_PRESERVE_WALL_WEIGHT, wall_push, candidate);
-	found |= fly_consider_los_preserve_dir(ent, ent->enemy, candidate, wanted_dir, &best_score, best_dir);
-
-	VectorScale(side, FLY_LOS_PRESERVE_SIDE_WEIGHT, candidate);
-	VectorMA(candidate, FLY_LOS_PRESERVE_DOWN_WEIGHT, down, candidate);
-	VectorMA(candidate, FLY_LOS_PRESERVE_WALL_WEIGHT, wall_push, candidate);
-	found |= fly_consider_los_preserve_dir(ent, ent->enemy, candidate, wanted_dir, &best_score, best_dir);
-
-	VectorScale(side, FLY_LOS_PRESERVE_SIDE_WEIGHT, candidate);
-	VectorMA(candidate, FLY_LOS_PRESERVE_WALL_WEIGHT, wall_push, candidate);
-	found |= fly_consider_los_preserve_dir(ent, ent->enemy, candidate, wanted_dir, &best_score, best_dir);
-
-	VectorScale(other_side, FLY_LOS_PRESERVE_SIDE_WEIGHT, candidate);
-	VectorMA(candidate, FLY_LOS_PRESERVE_FWD_WEIGHT, to_target, candidate);
-	VectorMA(candidate, FLY_LOS_PRESERVE_WALL_WEIGHT, wall_push, candidate);
-	found |= fly_consider_los_preserve_dir(ent, ent->enemy, candidate, wanted_dir, &best_score, best_dir);
-
-	VectorScale(other_side, FLY_LOS_PRESERVE_SIDE_WEIGHT, candidate);
-	VectorMA(candidate, FLY_LOS_PRESERVE_DOWN_WEIGHT, down, candidate);
-	VectorMA(candidate, FLY_LOS_PRESERVE_WALL_WEIGHT, wall_push, candidate);
-	found |= fly_consider_los_preserve_dir(ent, ent->enemy, candidate, wanted_dir, &best_score, best_dir);
-
-	VectorScale(to_target, FLY_LOS_PRESERVE_FWD_WEIGHT, candidate);
-	VectorMA(candidate, FLY_LOS_PRESERVE_DOWN_WEIGHT, down, candidate);
-	VectorMA(candidate, FLY_LOS_PRESERVE_WALL_WEIGHT, wall_push, candidate);
-	found |= fly_consider_los_preserve_dir(ent, ent->enemy, candidate, wanted_dir, &best_score, best_dir);
+	found |= fly_consider_weighted_los_dir(ent, ent->enemy, target_velocity, side, 1.05f,
+		to_target, 0.75f, down, 0.0f, wall_push, 0.35f, wanted_dir, FLY_LOS_MODE_PRESERVE,
+		0.0f, 0.0f, &best_score, best_dir);
+	found |= fly_consider_weighted_los_dir(ent, ent->enemy, target_velocity, side, 1.05f,
+		to_target, 0.0f, down, 0.55f, wall_push, 0.35f, wanted_dir, FLY_LOS_MODE_PRESERVE,
+		0.0f, 0.0f, &best_score, best_dir);
+	found |= fly_consider_weighted_los_dir(ent, ent->enemy, target_velocity, side, 1.05f,
+		to_target, 0.0f, down, 0.0f, wall_push, 0.35f, wanted_dir, FLY_LOS_MODE_PRESERVE,
+		0.0f, 0.0f, &best_score, best_dir);
+	found |= fly_consider_weighted_los_dir(ent, ent->enemy, target_velocity, other_side, 1.05f,
+		to_target, 0.75f, down, 0.0f, wall_push, 0.35f, wanted_dir, FLY_LOS_MODE_PRESERVE,
+		0.0f, 0.0f, &best_score, best_dir);
+	found |= fly_consider_weighted_los_dir(ent, ent->enemy, target_velocity, other_side, 1.05f,
+		to_target, 0.0f, down, 0.55f, wall_push, 0.35f, wanted_dir, FLY_LOS_MODE_PRESERVE,
+		0.0f, 0.0f, &best_score, best_dir);
+	found |= fly_consider_weighted_los_dir(ent, ent->enemy, target_velocity, vec3_origin, 0.0f,
+		to_target, 0.75f, down, 0.55f, wall_push, 0.35f, wanted_dir, FLY_LOS_MODE_PRESERVE,
+		0.0f, 0.0f, &best_score, best_dir);
 
 	if (!found)
 		return false;
@@ -1279,50 +1362,11 @@ static qboolean fly_try_preserve_combat_sight(edict_t *ent, vec3_t towards_origi
 	return true;
 }
 
-static qboolean fly_consider_los_prevent_dir(edict_t *ent, edict_t *target, vec3_t target_velocity,
-	vec3_t candidate, vec3_t wanted_dir, float current_future_sight, float preference,
-	float *best_score, vec3_t best_dir)
-{
-	vec3_t dir, end;
-	trace_t tr;
-	float probe_dist, future_sight, actual_sight, score;
-
-	VectorCopy(candidate, dir);
-	if (VectorNormalize(dir) <= 0.1f)
-		return false;
-
-	probe_dist = max(FLY_LOS_PRESERVE_PROBE, ent->monsterinfo.fly_acceleration * 3.0f);
-	VectorMA(ent->s.origin, probe_dist, dir, end);
-	tr = gi.trace(ent->s.origin, ent->mins, ent->maxs, end, ent, MASK_SOLID | CONTENTS_MONSTERCLIP);
-	if (tr.startsolid || tr.allsolid || tr.fraction < FLY_LOS_PRESERVE_MIN_FRACTION)
-		return false;
-
-	future_sight = fly_predicted_combat_sight_fraction_from(ent, tr.endpos, target, target_velocity);
-	actual_sight = fly_combat_sight_fraction_from(ent, tr.endpos, target);
-	if (actual_sight < FLY_LOS_FULL_SIGHT_FRACTION &&
-		future_sight < current_future_sight + FLY_LOS_PREVENT_MIN_GAIN)
-		return false;
-	if (future_sight < current_future_sight + FLY_LOS_PREVENT_MIN_GAIN &&
-		future_sight < FLY_LOS_FULL_SIGHT_FRACTION)
-		return false;
-
-	score = future_sight * 100.0f + actual_sight * 30.0f + tr.fraction * 24.0f +
-		DotProduct(dir, wanted_dir) * 4.0f + preference;
-	if (dir[2] < -0.1f)
-		score += 1.5f;
-
-	if (score <= *best_score)
-		return true;
-
-	*best_score = score;
-	VectorCopy(dir, best_dir);
-	return true;
-}
-
 static qboolean fly_try_prevent_combat_sight_loss(edict_t *ent, vec3_t target_origin, vec3_t target_velocity,
 	vec3_t wanted_dir, vec3_t out_dir)
 {
-	vec3_t to_target, side, other_side, down, candidate, best_dir, intended_end;
+	const float probe_min = 96.0f;
+	vec3_t to_target, side, other_side, down, best_dir, intended_end;
 	trace_t tr;
 	float current_future_sight, intended_future_sight, best_score, side_preference, other_preference, probe_dist;
 	qboolean found;
@@ -1332,7 +1376,7 @@ static qboolean fly_try_prevent_combat_sight_loss(edict_t *ent, vec3_t target_or
 
 	current_future_sight = fly_predicted_combat_sight_fraction_from(ent, ent->s.origin, ent->enemy, target_velocity);
 	intended_future_sight = current_future_sight;
-	probe_dist = max(FLY_LOS_PREVENT_PROBE, ent->monsterinfo.fly_acceleration * 3.0f);
+	probe_dist = max(probe_min, ent->monsterinfo.fly_acceleration * 3.0f);
 	VectorMA(ent->s.origin, probe_dist, wanted_dir, intended_end);
 	tr = gi.trace(ent->s.origin, ent->mins, ent->maxs, intended_end, ent, MASK_SOLID | CONTENTS_MONSTERCLIP);
 	if (!tr.startsolid && !tr.allsolid && tr.fraction >= FLY_LOS_PRESERVE_MIN_FRACTION)
@@ -1358,26 +1402,17 @@ static qboolean fly_try_prevent_combat_sight_loss(edict_t *ent, vec3_t target_or
 	other_preference = fly_entity_unit(ent, 0x95u);
 	found = false;
 
-	VectorScale(side, FLY_LOS_PREVENT_SIDE_WEIGHT, candidate);
-	VectorMA(candidate, FLY_LOS_PREVENT_FWD_WEIGHT, to_target, candidate);
-	found |= fly_consider_los_prevent_dir(ent, ent->enemy, target_velocity, candidate, to_target,
+	found |= fly_consider_weighted_los_dir(ent, ent->enemy, target_velocity, side, 1.15f,
+		to_target, 0.85f, down, 0.0f, vec3_origin, 0.0f, to_target, FLY_LOS_MODE_PREVENT,
 		current_future_sight, side_preference, &best_score, best_dir);
-
-	VectorScale(side, FLY_LOS_PREVENT_SIDE_WEIGHT, candidate);
-	VectorMA(candidate, FLY_LOS_PREVENT_FWD_WEIGHT * 0.45f, to_target, candidate);
-	VectorMA(candidate, FLY_LOS_PREVENT_DOWN_WEIGHT, down, candidate);
-	found |= fly_consider_los_prevent_dir(ent, ent->enemy, target_velocity, candidate, to_target,
+	found |= fly_consider_weighted_los_dir(ent, ent->enemy, target_velocity, side, 1.15f,
+		to_target, 0.85f * 0.45f, down, 0.35f, vec3_origin, 0.0f, to_target, FLY_LOS_MODE_PREVENT,
 		current_future_sight, side_preference * 0.75f, &best_score, best_dir);
-
-	VectorScale(other_side, FLY_LOS_PREVENT_SIDE_WEIGHT, candidate);
-	VectorMA(candidate, FLY_LOS_PREVENT_FWD_WEIGHT, to_target, candidate);
-	found |= fly_consider_los_prevent_dir(ent, ent->enemy, target_velocity, candidate, to_target,
+	found |= fly_consider_weighted_los_dir(ent, ent->enemy, target_velocity, other_side, 1.15f,
+		to_target, 0.85f, down, 0.0f, vec3_origin, 0.0f, to_target, FLY_LOS_MODE_PREVENT,
 		current_future_sight, other_preference, &best_score, best_dir);
-
-	VectorScale(other_side, FLY_LOS_PREVENT_SIDE_WEIGHT, candidate);
-	VectorMA(candidate, FLY_LOS_PREVENT_FWD_WEIGHT * 0.45f, to_target, candidate);
-	VectorMA(candidate, FLY_LOS_PREVENT_DOWN_WEIGHT, down, candidate);
-	found |= fly_consider_los_prevent_dir(ent, ent->enemy, target_velocity, candidate, to_target,
+	found |= fly_consider_weighted_los_dir(ent, ent->enemy, target_velocity, other_side, 1.15f,
+		to_target, 0.85f * 0.45f, down, 0.35f, vec3_origin, 0.0f, to_target, FLY_LOS_MODE_PREVENT,
 		current_future_sight, other_preference * 0.75f, &best_score, best_dir);
 
 	if (!found)
@@ -1387,42 +1422,10 @@ static qboolean fly_try_prevent_combat_sight_loss(edict_t *ent, vec3_t target_or
 	return true;
 }
 
-static qboolean fly_consider_los_recover_dir(edict_t *ent, edict_t *target, vec3_t candidate,
-	vec3_t wanted_dir, float current_sight, float preference, float *best_score, vec3_t best_dir)
-{
-	vec3_t dir, end;
-	trace_t tr;
-	float probe_dist, sight, score;
-
-	VectorCopy(candidate, dir);
-	if (VectorNormalize(dir) <= 0.1f)
-		return false;
-
-	probe_dist = max(FLY_LOS_RECOVER_PROBE, ent->monsterinfo.fly_acceleration * 3.0f);
-	VectorMA(ent->s.origin, probe_dist, dir, end);
-	tr = gi.trace(ent->s.origin, ent->mins, ent->maxs, end, ent, MASK_SOLID | CONTENTS_MONSTERCLIP);
-	if (tr.startsolid || tr.allsolid || tr.fraction < FLY_LOS_PRESERVE_MIN_FRACTION)
-		return false;
-
-	sight = fly_combat_sight_fraction_from(ent, tr.endpos, target);
-	if (sight < FLY_LOS_FULL_SIGHT_FRACTION && sight < current_sight + FLY_LOS_RECOVER_MIN_GAIN)
-		return false;
-
-	score = sight * 100.0f + tr.fraction * 24.0f + DotProduct(dir, wanted_dir) * 5.0f + preference;
-	if (dir[2] < -0.1f)
-		score += 2.0f;
-
-	if (score <= *best_score)
-		return true;
-
-	*best_score = score;
-	VectorCopy(dir, best_dir);
-	return true;
-}
-
 static qboolean fly_try_recover_combat_sight(edict_t *ent, vec3_t target_origin, vec3_t target_velocity,
 	vec3_t wanted_dir, vec3_t out_dir)
 {
+	const float probe_min = 96.0f;
 	vec3_t to_target, target_dir, side, other_side, down, candidate, point, best_dir;
 	trace_t tr;
 	float target_dist, current_sight, side_preference, other_preference;
@@ -1469,48 +1472,37 @@ static qboolean fly_try_recover_combat_sight(edict_t *ent, vec3_t target_origin,
 		{
 			block_fraction = fly_clampf(tr.fraction, 0.0f, 1.0f);
 			temp_dist = target_dist * ((block_fraction + 1.0f) * 0.5f);
-			temp_dist = fly_clampf(temp_dist, FLY_LOS_RECOVER_PROBE, target_dist);
+			temp_dist = fly_clampf(temp_dist, probe_min, target_dist);
 			side_offset = max(max(fabsf(ent->maxs[0]), fabsf(ent->maxs[1])) + 24.0f, 32.0f);
 
 			VectorMA(ent->s.origin, temp_dist, target_dir, point);
 			VectorMA(point, side_offset, side, point);
 			VectorSubtract(point, ent->s.origin, candidate);
-			found |= fly_consider_los_recover_dir(ent, ent->enemy, candidate, target_dir, current_sight,
-				side_preference + 2.0f, &best_score, best_dir);
+			found |= fly_consider_los_dir(ent, ent->enemy, target_velocity, candidate, target_dir,
+				FLY_LOS_MODE_RECOVER, current_sight, side_preference + 2.0f, &best_score, best_dir);
 
 			VectorMA(ent->s.origin, temp_dist, target_dir, point);
 			VectorMA(point, side_offset, other_side, point);
 			VectorSubtract(point, ent->s.origin, candidate);
-			found |= fly_consider_los_recover_dir(ent, ent->enemy, candidate, target_dir, current_sight,
-				other_preference + 2.0f, &best_score, best_dir);
+			found |= fly_consider_los_dir(ent, ent->enemy, target_velocity, candidate, target_dir,
+				FLY_LOS_MODE_RECOVER, current_sight, other_preference + 2.0f, &best_score, best_dir);
 		}
 
-		VectorScale(side, FLY_LOS_RECOVER_SIDE_WEIGHT, candidate);
-		VectorMA(candidate, FLY_LOS_RECOVER_FWD_WEIGHT, target_dir, candidate);
-		found |= fly_consider_los_recover_dir(ent, ent->enemy, candidate, target_dir, current_sight,
-			side_preference, &best_score, best_dir);
-
-		VectorScale(side, FLY_LOS_RECOVER_SIDE_WEIGHT, candidate);
-		VectorMA(candidate, FLY_LOS_RECOVER_FWD_WEIGHT * 0.45f, target_dir, candidate);
-		VectorMA(candidate, FLY_LOS_RECOVER_DOWN_WEIGHT, down, candidate);
-		found |= fly_consider_los_recover_dir(ent, ent->enemy, candidate, target_dir, current_sight,
-			side_preference * 0.75f, &best_score, best_dir);
-
-		VectorScale(other_side, FLY_LOS_RECOVER_SIDE_WEIGHT, candidate);
-		VectorMA(candidate, FLY_LOS_RECOVER_FWD_WEIGHT, target_dir, candidate);
-		found |= fly_consider_los_recover_dir(ent, ent->enemy, candidate, target_dir, current_sight,
-			other_preference, &best_score, best_dir);
-
-		VectorScale(other_side, FLY_LOS_RECOVER_SIDE_WEIGHT, candidate);
-		VectorMA(candidate, FLY_LOS_RECOVER_FWD_WEIGHT * 0.45f, target_dir, candidate);
-		VectorMA(candidate, FLY_LOS_RECOVER_DOWN_WEIGHT, down, candidate);
-		found |= fly_consider_los_recover_dir(ent, ent->enemy, candidate, target_dir, current_sight,
-			other_preference * 0.75f, &best_score, best_dir);
-
-		VectorScale(target_dir, FLY_LOS_RECOVER_FWD_WEIGHT, candidate);
-		VectorMA(candidate, FLY_LOS_RECOVER_DOWN_WEIGHT, down, candidate);
-		found |= fly_consider_los_recover_dir(ent, ent->enemy, candidate, target_dir, current_sight,
-			0.0f, &best_score, best_dir);
+		found |= fly_consider_weighted_los_dir(ent, ent->enemy, target_velocity, side, 1.20f,
+			target_dir, 0.80f, down, 0.0f, vec3_origin, 0.0f, target_dir, FLY_LOS_MODE_RECOVER,
+			current_sight, side_preference, &best_score, best_dir);
+		found |= fly_consider_weighted_los_dir(ent, ent->enemy, target_velocity, side, 1.20f,
+			target_dir, 0.80f * 0.45f, down, 0.45f, vec3_origin, 0.0f, target_dir,
+			FLY_LOS_MODE_RECOVER, current_sight, side_preference * 0.75f, &best_score, best_dir);
+		found |= fly_consider_weighted_los_dir(ent, ent->enemy, target_velocity, other_side, 1.20f,
+			target_dir, 0.80f, down, 0.0f, vec3_origin, 0.0f, target_dir, FLY_LOS_MODE_RECOVER,
+			current_sight, other_preference, &best_score, best_dir);
+		found |= fly_consider_weighted_los_dir(ent, ent->enemy, target_velocity, other_side, 1.20f,
+			target_dir, 0.80f * 0.45f, down, 0.45f, vec3_origin, 0.0f, target_dir,
+			FLY_LOS_MODE_RECOVER, current_sight, other_preference * 0.75f, &best_score, best_dir);
+		found |= fly_consider_weighted_los_dir(ent, ent->enemy, target_velocity, vec3_origin, 0.0f,
+			target_dir, 0.80f, down, 0.45f, vec3_origin, 0.0f, target_dir, FLY_LOS_MODE_RECOVER,
+			current_sight, 0.0f, &best_score, best_dir);
 	}
 
 	if (!found)
@@ -1570,180 +1562,196 @@ static qboolean fly_try_water_recovery(edict_t *ent, vec3_t wanted_dir)
 	return true;
 }
 
-qboolean SV_alternate_flystep(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
+static void flystep_unpin(edict_t *ent)
 {
-	vec3_t dir, towards_origin, towards_velocity, wanted_pos, dest_diff, wanted_dir, final_dir;
-	vec3_t trace_end, aim_fwd, aim_rgt, aim_up, yaw_angles;
-	vec3_t box_mins, box_maxs;
-	trace_t tr;
-	float current_speed, dist_to_wanted, turn_factor, base_fly_speed, accel, speed_factor, wanted_speed;
-	qboolean following_paths, have_target, bad_movement_direction, water_recovery_drive, visible_combat_enemy, recent_combat_memory, catchup_goal, combat_attack_drive, los_preserve_drive, los_recover_drive, los_pressure_drive;
+	ent->monsterinfo.fly_position_time = 0.0f;
+	ent->monsterinfo.fly_pinned = false;
+}
 
-	(void)move;
-	(void)relink;
-
-	if ((ent->flags & FL_SWIM) && ent->waterlevel < WATER_WAIST)
-		return true;
-
-	if (ent->monsterinfo.fly_speed <= 0.0f || ent->monsterinfo.fly_acceleration <= 0.0f)
-		return false;
-
-	if (ent->monsterinfo.fly_max_distance < ent->monsterinfo.fly_min_distance)
-		ent->monsterinfo.fly_max_distance = ent->monsterinfo.fly_min_distance;
-
+static void flystep_refresh_hover(edict_t *ent, flystep_ctx_t *ctx)
+{
 	if (ent->monsterinfo.fly_position_time <= level.time ||
 		(ent->enemy && ent->monsterinfo.fly_pinned && !visible(ent, ent->enemy)) ||
 		(ent->enemy && VectorCompare(ent->monsterinfo.fly_ideal_position, vec3_origin)))
 	{
 		ent->monsterinfo.fly_pinned = false;
 		ent->monsterinfo.fly_position_time = level.time + fly_frand_range(FLY_POSITION_UPDATE_MIN, FLY_POSITION_UPDATE_MAX);
-		G_IdealHoverPosition(ent, ent->monsterinfo.fly_ideal_position);
+		G_IdealHoverPosition(ent, ctx->intent.path_context, ent->monsterinfo.fly_ideal_position);
 	}
+}
 
-	VectorCopy(ent->velocity, dir);
-	current_speed = VectorNormalize(dir);
-	if (current_speed < 0.1f)
-		VectorClear(dir);
+static void flystep_read_velocity(edict_t *ent, flystep_ctx_t *ctx)
+{
+	VectorCopy(ent->velocity, ctx->dir);
+	ctx->current_speed = VectorNormalize(ctx->dir);
+	if (ctx->current_speed < 0.1f)
+		VectorClear(ctx->dir);
+}
 
-	VectorClear(towards_origin);
-	VectorClear(towards_velocity);
-	visible_combat_enemy = fly_has_visible_combat_enemy(ent);
-	recent_combat_memory = visible_combat_enemy || fly_has_recent_combat_memory(ent);
-	following_paths = fly_following_path(ent) && !visible_combat_enemy;
-	have_target = false;
-	los_preserve_drive = false;
-	los_recover_drive = false;
+static void flystep_decelerate_without_target(edict_t *ent, flystep_ctx_t *ctx)
+{
+	float accel = ent->monsterinfo.fly_acceleration;
 
-	if (dest)
-	{
-		VectorCopy(dest, towards_origin);
-		following_paths = true;
-		have_target = true;
-	}
-	else if (following_paths)
-	{
-		if (ent->goalentity && ent->goalentity->inuse)
-		{
-			VectorCopy(ent->goalentity->s.origin, towards_origin);
-			have_target = true;
-		}
-		else if (fly_has_last_sighting(ent))
-		{
-			VectorCopy(ent->monsterinfo.last_sighting, towards_origin);
-			have_target = true;
-		}
-	}
-	else if (!visible_combat_enemy && recent_combat_memory && fly_has_last_sighting(ent))
-	{
-		VectorCopy(ent->monsterinfo.last_sighting, towards_origin);
-		following_paths = true;
-		have_target = true;
-	}
-	else if (ent->enemy && ent->enemy->inuse)
-	{
-		VectorCopy(ent->enemy->s.origin, towards_origin);
-		VectorCopy(ent->enemy->velocity, towards_velocity);
-		have_target = true;
-	}
-	else if (ent->goalentity && ent->goalentity->inuse && ent->goalentity != world)
-	{
-		VectorCopy(ent->goalentity->s.origin, towards_origin);
-		have_target = true;
-	}
-	if (!have_target)
-	{
-		accel = ent->monsterinfo.fly_acceleration;
-		if (current_speed > 0.0f)
-			current_speed = max(0.0f, current_speed - accel);
+	if (ctx->current_speed > 0.0f)
+		ctx->current_speed = max(0.0f, ctx->current_speed - accel);
 
-		if (current_speed > 0.0f)
-			VectorScale(dir, current_speed, ent->velocity);
-		else
-			VectorClear(ent->velocity);
+	if (ctx->current_speed > 0.0f)
+		VectorScale(ctx->dir, ctx->current_speed, ent->velocity);
+	else
+		VectorClear(ent->velocity);
+}
+
+static qboolean flystep_pick_target(edict_t *ent, vec3_t dest, flystep_ctx_t *ctx)
+{
+	ctx->following_paths = ctx->intent.path_context;
+	VectorClear(ctx->towards_origin);
+	VectorClear(ctx->towards_velocity);
+
+	if (ctx->intent.use_dest)
+	{
+		VectorCopy(dest, ctx->towards_origin);
+		ctx->following_paths = true;
 		return true;
 	}
 
+	if (ctx->following_paths)
+	{
+		if (ent->goalentity && ent->goalentity->inuse)
+		{
+			VectorCopy(ent->goalentity->s.origin, ctx->towards_origin);
+			return true;
+		}
+		if (fly_has_last_sighting(ent))
+		{
+			VectorCopy(ent->monsterinfo.last_sighting, ctx->towards_origin);
+			return true;
+		}
+	}
+	else if (!ctx->intent.visible_combat_enemy && ctx->intent.recent_combat_memory && fly_has_last_sighting(ent))
+	{
+		VectorCopy(ent->monsterinfo.last_sighting, ctx->towards_origin);
+		ctx->following_paths = true;
+		return true;
+	}
+	else if (ent->enemy && ent->enemy->inuse)
+	{
+		VectorCopy(ent->enemy->s.origin, ctx->towards_origin);
+		VectorCopy(ent->enemy->velocity, ctx->towards_velocity);
+		return true;
+	}
+	else if (ent->goalentity && ent->goalentity->inuse && ent->goalentity != world)
+	{
+		VectorCopy(ent->goalentity->s.origin, ctx->towards_origin);
+		return true;
+	}
+
+	return false;
+}
+
+static void flystep_build_wanted_position(edict_t *ent, flystep_ctx_t *ctx)
+{
+	vec3_t box_mins, box_maxs, dest_diff;
+	trace_t tr;
+
 	if (ent->monsterinfo.fly_pinned)
-		VectorCopy(ent->monsterinfo.fly_ideal_position, wanted_pos);
-	else if (following_paths)
-		VectorCopy(towards_origin, wanted_pos);
+		VectorCopy(ent->monsterinfo.fly_ideal_position, ctx->wanted_pos);
+	else if (ctx->following_paths)
+		VectorCopy(ctx->towards_origin, ctx->wanted_pos);
 	else
 	{
-		VectorMA(towards_origin, FLY_TARGET_LEAD_TIME, towards_velocity, wanted_pos);
-		VectorAdd(wanted_pos, ent->monsterinfo.fly_ideal_position, wanted_pos);
+		VectorMA(ctx->towards_origin, FLY_TARGET_LEAD_TIME, ctx->towards_velocity, ctx->wanted_pos);
+		VectorAdd(ctx->wanted_pos, ent->monsterinfo.fly_ideal_position, ctx->wanted_pos);
 	}
-	if (following_paths)
-		catchup_goal = false;
-	else
-		catchup_goal = fly_adjust_visible_combat_goal(ent, towards_origin, towards_velocity, wanted_pos, visible_combat_enemy);
-	if (visible_combat_enemy && !following_paths)
-		fly_apply_neighbor_separation(ent, wanted_pos);
+
+	if (!ctx->following_paths)
+		ctx->catchup_goal = fly_adjust_visible_combat_goal(ent, ctx->towards_origin, ctx->towards_velocity,
+			ctx->wanted_pos, ctx->intent.visible_combat_enemy);
+
+	if (ctx->intent.visible_combat_enemy && !ctx->following_paths)
+		fly_apply_neighbor_separation(ent, ctx->wanted_pos);
 
 	VectorSet(box_mins, -8.0f, -8.0f, -8.0f);
 	VectorSet(box_maxs, 8.0f, 8.0f, 8.0f);
-	tr = gi.trace(towards_origin, box_mins, box_maxs, wanted_pos, ent, MASK_SOLID | CONTENTS_MONSTERCLIP);
+	tr = gi.trace(ctx->towards_origin, box_mins, box_maxs, ctx->wanted_pos, ent, MASK_SOLID | CONTENTS_MONSTERCLIP);
 	if (!tr.allsolid)
-		VectorCopy(tr.endpos, wanted_pos);
-	fly_clamp_to_ceiling(ent, wanted_pos);
-	VectorSubtract(wanted_pos, ent->s.origin, dest_diff);
+		VectorCopy(tr.endpos, ctx->wanted_pos);
+
+	fly_clamp_to_ceiling(ent, ctx->wanted_pos);
+
+	VectorSubtract(ctx->wanted_pos, ent->s.origin, dest_diff);
 	if (dest_diff[2] > ent->mins[2] && dest_diff[2] < ent->maxs[2])
 		dest_diff[2] = 0.0f;
 
-	VectorCopy(dest_diff, wanted_dir);
-	dist_to_wanted = VectorNormalize(wanted_dir);
-	if (dist_to_wanted > 0.1f &&
-		fly_should_descend_for_lower_path(ent, following_paths, towards_origin, wanted_pos))
-		fly_force_descent(ent, wanted_dir, FLY_BLOCKED_DESCENT_XY_SCALE);
+	VectorCopy(dest_diff, ctx->wanted_dir);
+	ctx->dist_to_wanted = VectorNormalize(ctx->wanted_dir);
+}
 
-	if (dist_to_wanted > 0.1f && (visible_combat_enemy || following_paths || recent_combat_memory))
+static void flystep_apply_goal_pressure(edict_t *ent, flystep_ctx_t *ctx)
+{
+	if (ctx->dist_to_wanted > 0.1f &&
+		fly_should_descend_for_lower_path(ent, ctx->following_paths, ctx->towards_origin, ctx->wanted_pos))
+		fly_force_descent(ent, ctx->wanted_dir, FLY_BLOCKED_DESCENT_XY_SCALE);
+
+	if (ctx->dist_to_wanted > 0.1f &&
+		(ctx->intent.visible_combat_enemy || ctx->following_paths || ctx->intent.recent_combat_memory))
 	{
 		vec3_t climb_target;
 
-		if (visible_combat_enemy && ent->enemy && ent->enemy->inuse)
+		if (ctx->intent.visible_combat_enemy && ent->enemy && ent->enemy->inuse)
 			VectorCopy(ent->enemy->s.origin, climb_target);
 		else
-			VectorCopy(towards_origin, climb_target);
+			VectorCopy(ctx->towards_origin, climb_target);
 
-		if (fly_try_climb_for_higher_target(ent, climb_target, wanted_dir))
-			catchup_goal = true;
+		if (fly_try_climb_for_higher_target(ent, climb_target, ctx->wanted_dir))
+			ctx->catchup_goal = true;
 	}
 
-	if (visible_combat_enemy && dist_to_wanted > 0.1f &&
+	if (ctx->intent.visible_combat_enemy && ctx->dist_to_wanted > 0.1f &&
 		ent->enemy && ent->enemy->inuse &&
-		fly_try_prevent_combat_sight_loss(ent, ent->enemy->s.origin, ent->enemy->velocity, wanted_dir, wanted_dir))
+		fly_try_prevent_combat_sight_loss(ent, ent->enemy->s.origin, ent->enemy->velocity,
+			ctx->wanted_dir, ctx->wanted_dir))
 	{
-		los_preserve_drive = true;
-		ent->monsterinfo.fly_position_time = 0.0f;
-		ent->monsterinfo.fly_pinned = false;
+		ctx->los_preserve_drive = true;
+		flystep_unpin(ent);
 	}
-	else if (!visible_combat_enemy && recent_combat_memory && dist_to_wanted > 0.1f &&
+	else if (!ctx->intent.visible_combat_enemy && ctx->intent.recent_combat_memory && ctx->dist_to_wanted > 0.1f &&
 		ent->enemy && ent->enemy->inuse &&
-		fly_try_recover_combat_sight(ent, ent->enemy->s.origin, ent->enemy->velocity, wanted_dir, wanted_dir))
+		fly_try_recover_combat_sight(ent, ent->enemy->s.origin, ent->enemy->velocity,
+			ctx->wanted_dir, ctx->wanted_dir))
 	{
-		los_recover_drive = true;
-		ent->monsterinfo.fly_position_time = 0.0f;
-		ent->monsterinfo.fly_pinned = false;
+		ctx->los_recover_drive = true;
+		flystep_unpin(ent);
 	}
+}
 
-	if (visible_combat_enemy)
+static void flystep_face_move_target(edict_t *ent, flystep_ctx_t *ctx)
+{
+	if (ctx->intent.visible_combat_enemy)
 	{
 		fly_face_target(ent, ent->enemy->s.origin);
 		M_ChangeYaw(ent);
+		return;
 	}
-	else if (los_recover_drive && ent->enemy && ent->enemy->inuse)
+
+	if (ctx->los_recover_drive && ent->enemy && ent->enemy->inuse)
 	{
 		fly_face_target(ent, ent->enemy->s.origin);
 		M_ChangeYaw(ent);
-	}
-	else
-	{
-		fly_face_target(ent, towards_origin);
-		M_ChangeYaw(ent);
+		return;
 	}
 
-	if (dist_to_wanted > 0.1f)
+	fly_face_target(ent, ctx->towards_origin);
+	M_ChangeYaw(ent);
+}
+
+static void flystep_avoid_blocked_move(edict_t *ent, flystep_ctx_t *ctx)
+{
+	vec3_t trace_end, aim_fwd, aim_rgt, aim_up, yaw_angles;
+	trace_t tr;
+
+	if (ctx->dist_to_wanted > 0.1f)
 	{
-		VectorMA(ent->s.origin, ent->monsterinfo.fly_acceleration, wanted_dir, trace_end);
+		VectorMA(ent->s.origin, ent->monsterinfo.fly_acceleration, ctx->wanted_dir, trace_end);
 		tr = gi.trace(ent->s.origin, ent->mins, ent->maxs, trace_end, ent, MASK_SOLID | CONTENTS_MONSTERCLIP);
 	}
 	else
@@ -1754,7 +1762,7 @@ qboolean SV_alternate_flystep(edict_t* ent, vec3_t dest, vec3_t move, qboolean r
 	VectorSet(yaw_angles, 0.0f, ent->s.angles[YAW], 0.0f);
 	AngleVectors(yaw_angles, aim_fwd, aim_rgt, aim_up);
 
-	if (tr.fraction < 0.25f && dist_to_wanted > 0.1f)
+	if (tr.fraction < 0.25f && ctx->dist_to_wanted > 0.1f)
 	{
 		vec3_t bottom_pos, top_pos, startb, floor_check, side_offset, lateral_offset, left_start, right_start, obstacle_normal;
 		qboolean bottom_visible, top_visible, left_visible, right_visible, force_descent;
@@ -1771,39 +1779,39 @@ qboolean SV_alternate_flystep(edict_t* ent, vec3_t dest, vec3_t move, qboolean r
 
 		VectorCopy(ent->s.origin, startb);
 		startb[2] += ent->mins[2] - ent->monsterinfo.fly_acceleration;
-		bottom_visible = SV_flystep_testvisposition(bottom_pos, wanted_pos, ent->s.origin, startb, ent);
+		bottom_visible = SV_flystep_testvisposition(bottom_pos, ctx->wanted_pos, ent->s.origin, startb, ent);
 
 		VectorCopy(top_pos, startb);
 		startb[2] += ent->monsterinfo.fly_acceleration;
-		top_visible = SV_flystep_testvisposition(top_pos, wanted_pos, ent->s.origin, startb, ent);
+		top_visible = SV_flystep_testvisposition(top_pos, ctx->wanted_pos, ent->s.origin, startb, ent);
 
 		force_descent = false;
-		if (visible_combat_enemy &&
-			fly_try_preserve_combat_sight(ent, towards_origin, towards_velocity, wanted_dir, obstacle_normal, wanted_dir))
+		if (ctx->intent.visible_combat_enemy &&
+			fly_try_preserve_combat_sight(ent, ctx->towards_origin, ctx->towards_velocity,
+				ctx->wanted_dir, obstacle_normal, ctx->wanted_dir))
 		{
-			los_preserve_drive = true;
-			ent->monsterinfo.fly_position_time = 0.0f;
-			ent->monsterinfo.fly_pinned = false;
+			ctx->los_preserve_drive = true;
+			flystep_unpin(ent);
 		}
-		else if ((following_paths || visible_combat_enemy) &&
-			ent->s.origin[2] > towards_origin[2] + FLY_BLOCKED_DESCENT_HEIGHT &&
-			fly_force_descent(ent, wanted_dir, FLY_BLOCKED_DESCENT_XY_SCALE))
+		else if ((ctx->following_paths || ctx->intent.visible_combat_enemy) &&
+			ent->s.origin[2] > ctx->towards_origin[2] + FLY_BLOCKED_DESCENT_HEIGHT &&
+			fly_force_descent(ent, ctx->wanted_dir, FLY_BLOCKED_DESCENT_XY_SCALE))
 		{
 			force_descent = true;
 		}
 		else if (level.time > ent->monsterinfo.fly_wall_stuck_time +
-			(visible_combat_enemy ? FLY_COMBAT_WALL_STUCK_THRESHOLD : FLY_WALL_STUCK_THRESHOLD))
+			(ctx->intent.visible_combat_enemy ? FLY_COMBAT_WALL_STUCK_THRESHOLD : FLY_WALL_STUCK_THRESHOLD))
 		{
 			VectorCopy(ent->s.origin, floor_check);
 			floor_check[2] -= 512.0f;
 			tr = gi.trace(ent->s.origin, ent->mins, ent->maxs, floor_check, ent, MASK_SOLID | CONTENTS_MONSTERCLIP);
-			if (tr.fraction < 1.0f && fly_force_descent(ent, wanted_dir, 0.3f))
+			if (tr.fraction < 1.0f && fly_force_descent(ent, ctx->wanted_dir, 0.3f))
 			{
 				force_descent = true;
 			}
 		}
 
-		if (!los_preserve_drive && !force_descent)
+		if (!ctx->los_preserve_drive && !force_descent)
 		{
 			if (bottom_visible == top_visible)
 			{
@@ -1819,30 +1827,30 @@ qboolean SV_alternate_flystep(edict_t* ent, vec3_t dest, vec3_t move, qboolean r
 				VectorAdd(ent->s.origin, side_offset, right_start);
 				VectorAdd(right_start, lateral_offset, right_start);
 
-				left_visible = gi.trace(left_start, NULL, NULL, wanted_pos, ent, MASK_SOLID | CONTENTS_MONSTERCLIP).fraction == 1.0f;
-				right_visible = gi.trace(right_start, NULL, NULL, wanted_pos, ent, MASK_SOLID | CONTENTS_MONSTERCLIP).fraction == 1.0f;
+				left_visible = gi.trace(left_start, NULL, NULL, ctx->wanted_pos, ent, MASK_SOLID | CONTENTS_MONSTERCLIP).fraction == 1.0f;
+				right_visible = gi.trace(right_start, NULL, NULL, ctx->wanted_pos, ent, MASK_SOLID | CONTENTS_MONSTERCLIP).fraction == 1.0f;
 
 				if (left_visible != right_visible)
 				{
 					if (right_visible)
-						VectorAdd(wanted_dir, aim_rgt, wanted_dir);
+						VectorAdd(ctx->wanted_dir, aim_rgt, ctx->wanted_dir);
 					else
-						VectorSubtract(wanted_dir, aim_rgt, wanted_dir);
+						VectorSubtract(ctx->wanted_dir, aim_rgt, ctx->wanted_dir);
 				}
 				else
 				{
-					VectorCopy(obstacle_normal, wanted_dir);
-					wanted_dir[2] -= 0.2f;
+					VectorCopy(obstacle_normal, ctx->wanted_dir);
+					ctx->wanted_dir[2] -= 0.2f;
 				}
 			}
 			else
 			{
 				if (top_visible)
-					VectorAdd(wanted_dir, aim_up, wanted_dir);
+					VectorAdd(ctx->wanted_dir, aim_up, ctx->wanted_dir);
 				else
-					VectorSubtract(wanted_dir, aim_up, wanted_dir);
+					VectorSubtract(ctx->wanted_dir, aim_up, ctx->wanted_dir);
 			}
-			VectorNormalize(wanted_dir);
+			VectorNormalize(ctx->wanted_dir);
 		}
 	}
 	else
@@ -1850,19 +1858,23 @@ qboolean SV_alternate_flystep(edict_t* ent, vec3_t dest, vec3_t move, qboolean r
 		ent->monsterinfo.fly_wall_stuck_time = 0.0f;
 	}
 
-	water_recovery_drive = fly_try_water_recovery(ent, wanted_dir);
-	bad_movement_direction = false;
-	if (!water_recovery_drive && dist_to_wanted > 0.1f)
+}
+
+static void flystep_resolve_medium(edict_t *ent, flystep_ctx_t *ctx)
+{
+	ctx->water_recovery_drive = fly_try_water_recovery(ent, ctx->wanted_dir);
+	ctx->bad_movement_direction = false;
+	if (!ctx->water_recovery_drive && ctx->dist_to_wanted > 0.1f)
 	{
 		vec3_t contents_test;
-		VectorMA(ent->s.origin, max(current_speed, ent->monsterinfo.fly_speed) * FRAMETIME, wanted_dir, contents_test);
+		VectorMA(ent->s.origin, max(ctx->current_speed, ent->monsterinfo.fly_speed) * FRAMETIME, ctx->wanted_dir, contents_test);
 		if ((ent->flags & FL_FLY) && ent->waterlevel < 3)
-			bad_movement_direction = (gi.pointcontents(contents_test) & MASK_WATER) != 0;
+			ctx->bad_movement_direction = (gi.pointcontents(contents_test) & MASK_WATER) != 0;
 		else if (ent->flags & FL_SWIM)
-			bad_movement_direction = (gi.pointcontents(contents_test) & MASK_WATER) == 0;
+			ctx->bad_movement_direction = (gi.pointcontents(contents_test) & MASK_WATER) == 0;
 	}
 
-	if (bad_movement_direction)
+	if (ctx->bad_movement_direction)
 	{
 		if (ent->monsterinfo.fly_recovery_time < level.time)
 		{
@@ -1871,62 +1883,73 @@ qboolean SV_alternate_flystep(edict_t* ent, vec3_t dest, vec3_t move, qboolean r
 				VectorSet(ent->monsterinfo.fly_recovery_dir, 0.0f, 0.0f, 1.0f);
 			ent->monsterinfo.fly_recovery_time = level.time + 1.0f;
 		}
-		VectorCopy(ent->monsterinfo.fly_recovery_dir, wanted_dir);
+		VectorCopy(ent->monsterinfo.fly_recovery_dir, ctx->wanted_dir);
 	}
+}
 
-	los_pressure_drive = los_preserve_drive || los_recover_drive;
-	if (dir[0] || dir[1] || dir[2])
+static void flystep_blend_direction(edict_t *ent, flystep_ctx_t *ctx)
+{
+	qboolean los_pressure_drive = ctx->los_preserve_drive || ctx->los_recover_drive;
+	float turn_factor;
+
+	if (ctx->dir[0] || ctx->dir[1] || ctx->dir[2])
 	{
-		float dir_dot = DotProduct(dir, wanted_dir);
+		float dir_dot = DotProduct(ctx->dir, ctx->wanted_dir);
 
 		if (los_pressure_drive && dir_dot < FLY_LOS_PRESSURE_SNAP_DOT)
 		{
-			VectorCopy(wanted_dir, final_dir);
+			VectorCopy(ctx->wanted_dir, ctx->final_dir);
 		}
 		else if (los_pressure_drive)
 		{
 			turn_factor = FLY_LOS_PRESERVE_TURN_FACTOR;
-			fly_scale_add(final_dir, dir, turn_factor, wanted_dir, 1.0f - turn_factor);
-			if (VectorNormalize(final_dir) < 0.1f)
-				VectorCopy(wanted_dir, final_dir);
+			fly_scale_add(ctx->final_dir, ctx->dir, turn_factor, ctx->wanted_dir, 1.0f - turn_factor);
+			if (VectorNormalize(ctx->final_dir) < 0.1f)
+				VectorCopy(ctx->wanted_dir, ctx->final_dir);
 		}
-		else if (catchup_goal && dir_dot < 0.0f)
+		else if (ctx->catchup_goal && dir_dot < 0.0f)
 		{
-			VectorCopy(wanted_dir, final_dir);
+			VectorCopy(ctx->wanted_dir, ctx->final_dir);
 		}
-		else if (catchup_goal && dir_dot < 0.7f)
+		else if (ctx->catchup_goal && dir_dot < 0.7f)
 		{
 			turn_factor = 0.2f;
-			fly_scale_add(final_dir, dir, turn_factor, wanted_dir, 1.0f - turn_factor);
-			if (VectorNormalize(final_dir) < 0.1f)
-				VectorCopy(wanted_dir, final_dir);
+			fly_scale_add(ctx->final_dir, ctx->dir, turn_factor, ctx->wanted_dir, 1.0f - turn_factor);
+			if (VectorNormalize(ctx->final_dir) < 0.1f)
+				VectorCopy(ctx->wanted_dir, ctx->final_dir);
 		}
-		else if (((ent->monsterinfo.fly_thrusters && !ent->monsterinfo.fly_pinned) || following_paths || water_recovery_drive) &&
-			DotProduct(dir, wanted_dir) > 0.0f)
+		else if (((ent->monsterinfo.fly_thrusters && !ent->monsterinfo.fly_pinned) ||
+			ctx->following_paths || ctx->water_recovery_drive) && DotProduct(ctx->dir, ctx->wanted_dir) > 0.0f)
 		{
 			turn_factor = FLY_TURN_FACTOR_FAST;
-			fly_scale_add(final_dir, dir, turn_factor, wanted_dir, 1.0f - turn_factor);
-			if (VectorNormalize(final_dir) < 0.1f)
-				VectorCopy(wanted_dir, final_dir);
+			fly_scale_add(ctx->final_dir, ctx->dir, turn_factor, ctx->wanted_dir, 1.0f - turn_factor);
+			if (VectorNormalize(ctx->final_dir) < 0.1f)
+				VectorCopy(ctx->wanted_dir, ctx->final_dir);
 		}
 		else
 		{
 			turn_factor = min(1.0f, FLY_TURN_FACTOR_BASE +
-				(FLY_TURN_FACTOR_SPEED_SCALE * (current_speed / ent->monsterinfo.fly_speed)));
-			fly_scale_add(final_dir, dir, turn_factor, wanted_dir, 1.0f - turn_factor);
-			if (VectorNormalize(final_dir) < 0.1f)
-				VectorCopy(wanted_dir, final_dir);
+				(FLY_TURN_FACTOR_SPEED_SCALE * (ctx->current_speed / ent->monsterinfo.fly_speed)));
+			fly_scale_add(ctx->final_dir, ctx->dir, turn_factor, ctx->wanted_dir, 1.0f - turn_factor);
+			if (VectorNormalize(ctx->final_dir) < 0.1f)
+				VectorCopy(ctx->wanted_dir, ctx->final_dir);
 		}
 	}
 	else
 	{
-		VectorCopy(wanted_dir, final_dir);
+		VectorCopy(ctx->wanted_dir, ctx->final_dir);
 	}
+}
 
-	base_fly_speed = ent->monsterinfo.fly_speed;
-	accel = ent->monsterinfo.fly_acceleration;
-	combat_attack_drive = visible_combat_enemy &&
+static qboolean flystep_commit_velocity(edict_t *ent, flystep_ctx_t *ctx)
+{
+	float base_fly_speed = ent->monsterinfo.fly_speed;
+	float accel = ent->monsterinfo.fly_acceleration;
+	float speed_factor, wanted_speed;
+	qboolean los_pressure_drive = ctx->los_preserve_drive || ctx->los_recover_drive;
+	qboolean combat_attack_drive = ctx->intent.visible_combat_enemy &&
 		(ent->monsterinfo.attack_state == AS_STRAIGHT || ent->monsterinfo.attack_state == AS_SLIDING);
+
 	if (combat_attack_drive)
 	{
 		base_fly_speed *= FLY_ATTACK_SPEED_SCALE;
@@ -1938,42 +1961,49 @@ qboolean SV_alternate_flystep(edict_t* ent, vec3_t dest, vec3_t move, qboolean r
 		accel *= FLY_LOS_PRESERVE_ACCEL_SCALE;
 	}
 
-	if (!ent->enemy || water_recovery_drive || (ent->monsterinfo.fly_thrusters && !ent->monsterinfo.fly_pinned) || following_paths || catchup_goal)
+	if (!ent->enemy || ctx->water_recovery_drive ||
+		(ent->monsterinfo.fly_thrusters && !ent->monsterinfo.fly_pinned) ||
+		ctx->following_paths || ctx->catchup_goal)
 	{
-		if (following_paths && (dir[0] || dir[1] || dir[2]) && DotProduct(wanted_dir, dir) < -0.25f)
+		if (ctx->following_paths && (ctx->dir[0] || ctx->dir[1] || ctx->dir[2]) &&
+			DotProduct(ctx->wanted_dir, ctx->dir) < -0.25f)
 			speed_factor = 0.0f;
 		else
 			speed_factor = 1.0f;
 	}
 	else
 	{
-		speed_factor = min(1.0f, dist_to_wanted / base_fly_speed);
+		speed_factor = min(1.0f, ctx->dist_to_wanted / base_fly_speed);
 	}
 
-	if (bad_movement_direction)
+	if (ctx->bad_movement_direction)
 		speed_factor = -speed_factor;
 
-	if (DotProduct(final_dir, wanted_dir) < 0.25f)
+	if (DotProduct(ctx->final_dir, ctx->wanted_dir) < 0.25f)
 		accel *= 2.0f;
 
 	wanted_speed = base_fly_speed * speed_factor;
-	if (current_speed > wanted_speed)
-		current_speed = max(wanted_speed, current_speed - accel);
-	else if (current_speed < wanted_speed)
-		current_speed = min(wanted_speed, current_speed + accel);
+	if (ctx->current_speed > wanted_speed)
+		ctx->current_speed = max(wanted_speed, ctx->current_speed - accel);
+	else if (ctx->current_speed < wanted_speed)
+		ctx->current_speed = min(wanted_speed, ctx->current_speed + accel);
 
-	if (!fly_vector_valid(final_dir) || !isfinite(current_speed))
+	if (!fly_vector_valid(ctx->final_dir) || !isfinite(ctx->current_speed))
 		return false;
 
-	VectorScale(final_dir, current_speed, ent->velocity);
+	VectorScale(ctx->final_dir, ctx->current_speed, ent->velocity);
+	return true;
+}
 
+static void flystep_update_pitch(edict_t *ent, flystep_ctx_t *ctx)
+{
 	if (ent->enemy && (ent->monsterinfo.fly_buzzard || (ent->monsterinfo.aiflags & AI_MEDIC)))
 	{
 		vec3_t pitch_dir, pitch_angles, pitch_target;
-		if (visible_combat_enemy)
+		if (ctx->intent.visible_combat_enemy)
 			VectorCopy(ent->enemy->s.origin, pitch_target);
 		else
-			VectorCopy(towards_origin, pitch_target);
+			VectorCopy(ctx->towards_origin, pitch_target);
 
 		VectorSubtract(ent->s.origin, pitch_target, pitch_dir);
 		if (VectorNormalize(pitch_dir) > 0.1f)
@@ -1986,6 +2016,47 @@ qboolean SV_alternate_flystep(edict_t* ent, vec3_t dest, vec3_t move, qboolean r
 	{
 		ent->s.angles[PITCH] = 0.0f;
 	}
+}
+
+qboolean SV_alternate_flystep(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
+{
+	flystep_ctx_t ctx = { 0 };
+
+	(void)move;
+	(void)relink;
+
+	if (!fly_get_alternate_intent(ent, dest, &ctx.intent))
+		return false;
+
+	if ((ent->flags & FL_SWIM) && ent->waterlevel < WATER_WAIST)
+		return true;
+
+	if (ent->monsterinfo.fly_speed <= 0.0f || ent->monsterinfo.fly_acceleration <= 0.0f)
+		return false;
+
+	if (ent->monsterinfo.fly_max_distance < ent->monsterinfo.fly_min_distance)
+		ent->monsterinfo.fly_max_distance = ent->monsterinfo.fly_min_distance;
+
+	flystep_refresh_hover(ent, &ctx);
+	flystep_read_velocity(ent, &ctx);
+
+	if (!flystep_pick_target(ent, dest, &ctx))
+	{
+		flystep_decelerate_without_target(ent, &ctx);
+		return true;
+	}
+
+	flystep_build_wanted_position(ent, &ctx);
+	flystep_apply_goal_pressure(ent, &ctx);
+	flystep_face_move_target(ent, &ctx);
+	flystep_avoid_blocked_move(ent, &ctx);
+	flystep_resolve_medium(ent, &ctx);
+	flystep_blend_direction(ent, &ctx);
+
+	if (!flystep_commit_velocity(ent, &ctx))
+		return false;
+
+	flystep_update_pitch(ent, &ctx);
 
 	return true;
 }
@@ -2000,11 +2071,8 @@ qboolean M_FlyMove(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
 
 	if (ent->monsterinfo.aiflags & AI_ALTERNATE_FLY)
 	{
-		if (fly_use_alternate_step(ent, dest))
-		{
-			if (SV_alternate_flystep(ent, fly_alternate_path_dest(ent, dest), move, relink))
-				return true;
-		}
+		if (SV_alternate_flystep(ent, dest, move, relink))
+			return true;
 
 		fly_reset_alternate_step(ent);
 	}
@@ -2082,15 +2150,11 @@ qboolean SV_movestep(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
 		if (ent->flags & FL_FLY)
 			return M_FlyMove(ent, dest, move, relink);
 
-		if (fly_use_alternate_step(ent, dest))
+		if (ent->monsterinfo.aiflags & AI_ALTERNATE_FLY)
 		{
-			if (SV_alternate_flystep(ent, fly_alternate_path_dest(ent, dest), move, relink))
+			if (SV_alternate_flystep(ent, dest, move, relink))
 				return true;
 
-			fly_reset_alternate_step(ent);
-		}
-		else if (ent->monsterinfo.aiflags & AI_ALTERNATE_FLY)
-		{
 			fly_reset_alternate_step(ent);
 		}
 
