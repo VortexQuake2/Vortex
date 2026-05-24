@@ -23,21 +23,25 @@ static int	sound_die;
 static int	sound_laser;
 
 static constexpr int FLYER_ROCKET_MIN_SPEED = 850;
-static constexpr float FLYER_ROCKET_ATTACK_CHANCE = 0.25f;
-static constexpr float FLYER_ROCKET_BONUS_ATTACK_CHANCE = 0.55f;
-static constexpr float FLYER_ROCKET_REFIRE_CHANCE = 0.07f;
+static constexpr float FLYER_ROCKET_ATTACK_CHANCE = 0.24f;
+static constexpr float FLYER_ROCKET_BONUS_ATTACK_CHANCE = 0.30f;
+static constexpr float FLYER_ROCKET_REFIRE_CHANCE = 0.06f;
 static constexpr float FLYER_ROCKET_STRAFE_RANGE = 768.0f;
-static constexpr float FLYER_ROCKET_STRAFE_PROBE = 192.0f;
-static constexpr float FLYER_ROCKET_STRAFE_PIN_TIME = 0.35f;
-static constexpr float FLYER_LASER_ATTACK_CHANCE = 0.10f;
-static constexpr float FLYER_LASER_SIGHT_SCAN = 10.0f;
-static constexpr float FLYER_LASER_PIN_TIME = 0.45f;
+static constexpr float FLYER_ROCKET_STRAFE_PROBE = 320.0f;
+static constexpr float FLYER_ROCKET_STRAFE_PIN_TIME = 0.75f;
+static constexpr float FLYER_ROCKET_AIM_ACCURACY = 0.98f;
+static constexpr float FLYER_LASER_ATTACK_CHANCE = 0.28f;
+static constexpr float FLYER_LASER_MIN_RANGE = 150.0f;
+static constexpr float FLYER_LASER_MAX_RANGE = 400.0f;
+static constexpr float FLYER_LASER_SWEEP_SIDE = 42.0f;
+static constexpr float FLYER_LASER_SWEEP_UP = 18.0f;
+static constexpr float FLYER_LASER_SWEEP_SPEED = 8.0f;
 static constexpr float FLYER_LASER_AIM_BLEND = 0.30f;
 static constexpr float FLYER_LASER_FAST_AIM_BLEND = 0.18f;
 static constexpr float FLYER_LASER_FAST_TARGET_SPEED = 180.0f;
 static constexpr float FLYER_LASER_AIM_RESET_TIME = 0.45f;
-static constexpr float FLYER_RANGED_MIN_DISTANCE = 180.0f;
-static constexpr float FLYER_RANGED_MAX_DISTANCE = 360.0f;
+static constexpr float FLYER_RANGED_MIN_DISTANCE = 45.0f;
+static constexpr float FLYER_RANGED_MAX_DISTANCE = 200.0f;
 static constexpr float FLYER_MELEE_APPROACH_RANGE = 225.0f;
 static constexpr float FLYER_MELEE_Z_TOLERANCE = 72.0f;
 
@@ -95,6 +99,49 @@ static void flyer_restore_ranged_hover(edict_t *self, float range)
 		self->monsterinfo.fly_position_time = 0.0f;
 }
 
+static qboolean flyer_drive_side_strafe(edict_t *self, float probe, float side_speed, float forward_speed,
+	float pin_time, float flip_chance)
+{
+	vec3_t	forward, right, check_end;
+	trace_t	tr;
+	float	strafe_direction;
+	float	vertical_velocity;
+	qboolean choose_new_side;
+
+	if (!G_ValidTarget(self, self->enemy, true, true) || !visible(self, self->enemy))
+		return false;
+
+	AngleVectors(self->s.angles, forward, right, NULL);
+	choose_new_side = !self->monsterinfo.fly_pinned || self->monsterinfo.fly_position_time <= level.time;
+	if (choose_new_side && flip_chance > 0.0f && random() < flip_chance)
+		self->monsterinfo.lefty = !self->monsterinfo.lefty;
+	strafe_direction = self->monsterinfo.lefty ? -1.0f : 1.0f;
+
+	VectorMA(self->s.origin, probe * strafe_direction, right, check_end);
+	tr = gi.trace(self->s.origin, NULL, NULL, check_end, self, MASK_MONSTERSOLID);
+	if (tr.fraction < 1.0f)
+	{
+		strafe_direction *= -1.0f;
+		VectorMA(self->s.origin, probe * strafe_direction, right, check_end);
+		tr = gi.trace(self->s.origin, NULL, NULL, check_end, self, MASK_MONSTERSOLID);
+		if (tr.fraction < 1.0f)
+			return false;
+	}
+
+	vertical_velocity = self->velocity[2];
+	VectorScale(forward, forward_speed, self->velocity);
+	VectorMA(self->velocity, strafe_direction * side_speed, right, self->velocity);
+	self->velocity[2] = vertical_velocity;
+	self->monsterinfo.lefty = (strafe_direction < 0.0f);
+	self->monsterinfo.attack_state = AS_SLIDING;
+	self->monsterinfo.fly_pinned = true;
+	VectorCopy(check_end, self->monsterinfo.fly_ideal_position);
+	if (forward_speed)
+		VectorMA(self->monsterinfo.fly_ideal_position, forward_speed * 0.45f, forward, self->monsterinfo.fly_ideal_position);
+	self->monsterinfo.fly_position_time = level.time + pin_time;
+	return true;
+}
+
 static qboolean flyer_melee_z_ok(edict_t *self)
 {
 	vec3_t self_mid, enemy_mid;
@@ -142,6 +189,58 @@ static qboolean flyer_melee_approach_ready(edict_t *self, float range)
 		return false;
 	if (!flyer_melee_clear_path(self))
 		return false;
+	return true;
+}
+
+static qboolean flyer_predict_rocket_aim(edict_t *self, vec3_t start, int speed, vec3_t aim)
+{
+	vec3_t forward, target, direct, predicted, predicted_dir;
+	trace_t tr;
+	float dist, time, skill_error, miss_time;
+
+	if (!G_EntExists(self->enemy))
+		return false;
+
+	VectorCopy(self->enemy->s.origin, target);
+	if (self->enemy->client)
+		target[2] += self->enemy->viewheight;
+	else
+		target[2] += 22.0f;
+
+	VectorSubtract(target, start, direct);
+	dist = VectorNormalize(direct);
+	if (dist <= 1.0f)
+		return false;
+
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+	if (DotProduct(direct, forward) < FLYER_ROCKET_AIM_ACCURACY)
+		return false;
+
+	time = (speed > 0) ? dist / speed : 0.0f;
+	skill_error = skill ? 3.0f - skill->value : 2.0f;
+	if (skill_error < 0.0f)
+		skill_error = 0.0f;
+	miss_time = random() * (skill_error / 3.0f) - random() * (0.05f * skill_error);
+
+	VectorMA(self->enemy->s.origin, time - miss_time, self->enemy->velocity, predicted);
+	if (self->enemy->client)
+		predicted[2] += self->enemy->viewheight;
+	else
+		predicted[2] += 22.0f;
+
+	VectorSubtract(predicted, start, predicted_dir);
+	if (!VectorNormalize(predicted_dir) || DotProduct(direct, predicted_dir) < 0.0f)
+		VectorCopy(target, predicted);
+	else
+	{
+		tr = gi.trace(start, NULL, NULL, predicted, self, MASK_SOLID);
+		if (tr.fraction < 0.9f && tr.ent != self->enemy)
+			VectorCopy(target, predicted);
+	}
+
+	VectorSubtract(predicted, start, aim);
+	if (!VectorNormalize(aim))
+		VectorCopy(direct, aim);
 	return true;
 }
 
@@ -369,51 +468,32 @@ void flyer_start (edict_t *self)
 
 static void flyer_checkstrafe(edict_t *self)
 {
-	vec3_t	forward, right, check_end;
-	trace_t	tr;
-	float	strafe_direction;
 	float	strafe_speed;
 	float	forward_speed;
-	float	vertical_velocity;
 	float	range;
 
 	if (!G_ValidTarget(self, self->enemy, true, true) || !visible(self, self->enemy))
 		return;
 
 	range = entdist(self, self->enemy);
-	if (range > FLYER_ROCKET_STRAFE_RANGE)
-		return;
 
-	AngleVectors(self->s.angles, forward, right, NULL);
-	if (random() < 0.25f)
-		self->monsterinfo.lefty = !self->monsterinfo.lefty;
-	strafe_direction = self->monsterinfo.lefty ? -1.0f : 1.0f;
-
-	VectorMA(self->s.origin, FLYER_ROCKET_STRAFE_PROBE * strafe_direction, right, check_end);
-	tr = gi.trace(self->s.origin, NULL, NULL, check_end, self, MASK_MONSTERSOLID);
-	if (tr.fraction < 1.0f)
-	{
-		strafe_direction *= -1.0f;
-		VectorMA(self->s.origin, FLYER_ROCKET_STRAFE_PROBE * strafe_direction, right, check_end);
-		tr = gi.trace(self->s.origin, NULL, NULL, check_end, self, MASK_MONSTERSOLID);
-		if (tr.fraction < 1.0f)
-			return;
-	}
-
-	strafe_speed = 360.0f + random() * 180.0f;
-	forward_speed = (range < 260.0f) ? -180.0f : 160.0f;
-	vertical_velocity = self->velocity[2];
-	VectorScale(forward, forward_speed, self->velocity);
-	VectorMA(self->velocity, strafe_direction * strafe_speed, right, self->velocity);
-	self->velocity[2] = vertical_velocity;
-	self->monsterinfo.lefty = (strafe_direction < 0.0f);
-	self->monsterinfo.attack_state = AS_SLIDING;
-	self->monsterinfo.fly_pinned = true;
-	VectorMA(self->s.origin, FLYER_ROCKET_STRAFE_PROBE * strafe_direction, right, self->monsterinfo.fly_ideal_position);
+	strafe_speed = 520.0f + random() * 220.0f;
 	if (range < 260.0f)
-		VectorMA(self->monsterinfo.fly_ideal_position, -96.0f, forward, self->monsterinfo.fly_ideal_position);
-	self->monsterinfo.fly_position_time = level.time + FLYER_ROCKET_STRAFE_PIN_TIME;
-	self->monsterinfo.pausetime = level.time + 0.45f + random() * 0.25f;
+		forward_speed = -220.0f;
+	else if (range > FLYER_ROCKET_STRAFE_RANGE)
+		forward_speed = 240.0f;
+	else
+		forward_speed = 190.0f;
+	if (!flyer_drive_side_strafe(self, FLYER_ROCKET_STRAFE_PROBE, strafe_speed,
+		forward_speed, FLYER_ROCKET_STRAFE_PIN_TIME, 0.25f))
+		return;
+	self->monsterinfo.pausetime = level.time + 0.75f + random() * 0.55f;
+}
+
+static void flyer_ai_rocket_strafe(edict_t *self, float dist)
+{
+	flyer_checkstrafe(self);
+	ai_charge(self, dist);
 }
 
 void flyer_rocket(edict_t *self)
@@ -438,7 +518,8 @@ void flyer_rocket(edict_t *self)
 		speed = FLYER_ROCKET_MIN_SPEED;
 
 	VectorCopy(self->s.origin, start);
-	MonsterAim(self, M_PROJECTILE_ACC, speed, true, -1, forward, start);
+	if (!flyer_predict_rocket_aim(self, start, speed, forward))
+		return;
 	if (!M_MonsterHasClearShotFrom(self, start))
 	{
 		M_MonsterBlockedShot(self, 0.35f);
@@ -454,6 +535,7 @@ void flyer_reattack_rocket(edict_t *self)
 	if (G_ValidTarget(self, self->enemy, true, true) && self->delay <= level.time
 		&& random() < FLYER_ROCKET_REFIRE_CHANCE)
 	{
+		flyer_checkstrafe(self);
 		flyer_rocket(self);
 		self->monsterinfo.nextframe = FRAME_rollr03;
 		return;
@@ -464,15 +546,15 @@ void flyer_reattack_rocket(edict_t *self)
 
 mframe_t flyer_frames_rollright [] =
 {
-		ai_charge, 3, flyer_checkstrafe,
-		ai_charge, 3, flyer_checkstrafe,
-		ai_charge, 3, flyer_checkstrafe,
-		ai_charge, 0, flyer_rocket,
+		flyer_ai_rocket_strafe, 3, NULL,
+		flyer_ai_rocket_strafe, 3, NULL,
+		flyer_ai_rocket_strafe, 3, NULL,
+		flyer_ai_rocket_strafe, 3, flyer_rocket,
 		ai_charge, 0, NULL,
 		ai_charge, 0, NULL,
 		ai_charge, 0, NULL,
 		ai_charge, 0, NULL,
-		ai_charge, 3, flyer_reattack_rocket
+		flyer_ai_rocket_strafe, 3, flyer_reattack_rocket
 };
 mmove_t flyer_move_rollright = {FRAME_rollr01, FRAME_rollr09, flyer_frames_rollright, flyer_run};
 
@@ -664,9 +746,11 @@ mframe_t flyer_frames_attack2 [] =
 mmove_t flyer_move_attack2 = {FRAME_attak201, FRAME_attak217, flyer_frames_attack2, flyer_attack_finished};
 
 
-void flyer_slash_left (edict_t *self)
+static void flyer_slash(edict_t *self, float side)
 {
 	vec3_t	aim;
+
+	gi.sound (self, CHAN_WEAPON, sound_slash, 1, ATTN_NORM, 0);
 
 	if (!G_ValidTarget(self, self->enemy, true, true)
 		|| entdist(self, self->enemy) > MELEE_DISTANCE
@@ -676,28 +760,19 @@ void flyer_slash_left (edict_t *self)
 		return;
 	}
 
-	VectorSet (aim, MELEE_DISTANCE, self->mins[0], 0);
+	VectorSet (aim, MELEE_DISTANCE, side, 0);
 	if (!fire_hit(self, aim, flyer_melee_damage(self), 0))
 		self->monsterinfo.melee_finished = level.time + 1.5f;
-	gi.sound (self, CHAN_WEAPON, sound_slash, 1, ATTN_NORM, 0);
+}
+
+void flyer_slash_left (edict_t *self)
+{
+	flyer_slash(self, self->mins[0]);
 }
 
 void flyer_slash_right (edict_t *self)
 {
-	vec3_t	aim;
-
-	if (!G_ValidTarget(self, self->enemy, true, true)
-		|| entdist(self, self->enemy) > MELEE_DISTANCE
-		|| !flyer_melee_z_ok(self))
-	{
-		self->monsterinfo.melee_finished = level.time + 1.5f;
-		return;
-	}
-
-	VectorSet (aim, MELEE_DISTANCE, self->maxs[0], 0);
-	if (!fire_hit(self, aim, flyer_melee_damage(self), 0))
-		self->monsterinfo.melee_finished = level.time + 1.5f;
-	gi.sound (self, CHAN_WEAPON, sound_slash, 1, ATTN_NORM, 0);
+	flyer_slash(self, self->maxs[0]);
 }
 
 mframe_t flyer_frames_start_melee [] =
@@ -862,62 +937,7 @@ static qboolean flyer_laser_aim(edict_t *self)
 		self->s.angles[PITCH] = angles[PITCH];
 	}
 
-	self->monsterinfo.fly_pinned = true;
-	VectorCopy(self->s.origin, self->monsterinfo.fly_ideal_position);
-	self->monsterinfo.fly_position_time = level.time + FLYER_LASER_PIN_TIME;
 	return true;
-}
-
-static void flyer_update_laser_sight(edict_t *self)
-{
-	vec3_t	forward, end;
-	trace_t	tr;
-	edict_t	*laser;
-	float	phase;
-
-	if (!G_ValidTarget(self, self->enemy, true, true))
-		return;
-
-	laser = self->target_ent;
-	if (!laser || !laser->inuse || laser->owner != self)
-	{
-		laser = G_Spawn();
-		if (!laser)
-			return;
-		self->target_ent = laser;
-		laser->movetype = MOVETYPE_NONE;
-		laser->solid = SOLID_NOT;
-		laser->s.renderfx = RF_BEAM | RF_TRANSLUCENT;
-		laser->s.modelindex = 1;
-		laser->s.frame = 1;
-		laser->s.skinnum = 0xf2f2f0f0;
-		laser->classname = "flyer_lasersight";
-		laser->owner = self;
-	}
-
-	AngleVectors(self->s.angles, forward, NULL, NULL);
-	VectorMA(self->s.origin, 8192.0f, forward, end);
-	tr = gi.trace(self->s.origin, NULL, NULL, end, self, MASK_SOLID);
-
-	phase = level.time + (float)(self - g_edicts);
-	tr.endpos[0] += sinf(phase) * FLYER_LASER_SIGHT_SCAN;
-	tr.endpos[1] += cosf(phase * 2.0f) * FLYER_LASER_SIGHT_SCAN;
-	tr.endpos[2] += sinf(phase * 1.5f) * (FLYER_LASER_SIGHT_SCAN * 0.5f);
-
-	VectorSubtract(tr.endpos, self->s.origin, forward);
-	if (VectorNormalize(forward))
-	{
-		VectorMA(self->s.origin, 8192.0f, forward, end);
-		tr = gi.trace(self->s.origin, NULL, NULL, end, self, MASK_SOLID);
-	}
-
-	VectorCopy(self->s.origin, laser->s.origin);
-	VectorCopy(tr.endpos, laser->s.old_origin);
-	VectorCopy(self->s.origin, laser->pos1);
-	VectorCopy(tr.endpos, laser->pos2);
-	laser->think = G_FreeEdict;
-	laser->nextthink = level.time + 0.3f;
-	gi.linkentity(laser);
 }
 
 void flyer_laser_warn(edict_t *self)
@@ -927,8 +947,6 @@ void flyer_laser_warn(edict_t *self)
 		flyer_laser_off(self);
 		return;
 	}
-
-	flyer_update_laser_sight(self);
 
 	// Vortex does not have misc_flare or the Remaster mynoise/mynoise2
 	// flare controller fields yet. Restore this telegraph block after those
@@ -967,11 +985,11 @@ static void flyer_project_laser_start(edict_t *self, vec3_t offset, vec3_t forwa
 	VectorMA(start, offset[2], up, start);
 }
 
-static void flyer_laser_update(edict_t *laser, vec3_t offset)
+static void flyer_laser_update(edict_t *laser, vec3_t offset, float phase_offset)
 {
 	edict_t *self = laser->owner;
 	vec3_t	start, forward, right, up, dir, target;
-	float	target_dist;
+	float	phase;
 
 	if (!self || !self->inuse || !G_ValidTarget(self, self->enemy, true, true))
 	{
@@ -979,18 +997,11 @@ static void flyer_laser_update(edict_t *laser, vec3_t offset)
 		return;
 	}
 
-	if (!flyer_laser_aim(self))
-	{
-		laser->spawnflags |= DABEAM_SPAWNED;
-		return;
-	}
-
 	flyer_project_laser_start(self, offset, forward, right, up, start);
 	G_EntMidPoint(self->enemy, target);
-	target_dist = distance(self->s.origin, target);
-	if (target_dist < 64.0f)
-		target_dist = 64.0f;
-	VectorMA(self->s.origin, target_dist, forward, target);
+	phase = level.time * FLYER_LASER_SWEEP_SPEED + phase_offset + (float)(self - g_edicts) * 0.17f;
+	VectorMA(target, sinf(phase) * FLYER_LASER_SWEEP_SIDE, right, target);
+	VectorMA(target, cosf(phase * 0.7f) * FLYER_LASER_SWEEP_UP, up, target);
 	VectorSubtract(target, start, dir);
 	if (!VectorNormalize(dir))
 		VectorCopy(forward, dir);
@@ -1003,17 +1014,18 @@ static void flyer_laser_update(edict_t *laser, vec3_t offset)
 
 void flyer_left_laser_update(edict_t *laser)
 {
-	flyer_laser_update(laser, flyer_left_laser_offset);
+	flyer_laser_update(laser, flyer_left_laser_offset, 0.0f);
 }
 
 void flyer_right_laser_update(edict_t *laser)
 {
-	flyer_laser_update(laser, flyer_right_laser_offset);
+	flyer_laser_update(laser, flyer_right_laser_offset, M_PI);
 }
 
 void flyer_laser_on(edict_t *self)
 {
 	int damage;
+	qboolean starting_beams;
 
 	if (!flyer_laser_aim(self))
 	{
@@ -1025,10 +1037,11 @@ void flyer_laser_on(edict_t *self)
 	if (M_DABEAM_DMG_MAX && damage > M_DABEAM_DMG_MAX)
 		damage = M_DABEAM_DMG_MAX;
 
+	starting_beams = (!self->beam || !self->beam->inuse || !self->beam2 || !self->beam2->inuse);
 	if ((!self->beam || !self->beam->inuse) && (!self->beam2 || !self->beam2->inuse))
 		gi.sound(self, CHAN_WEAPON, sound_laser, 1, ATTN_NORM, 0);
-	monster_fire_dabeam(self, damage, false, flyer_left_laser_update);
-	monster_fire_dabeam(self, damage, true, flyer_right_laser_update);
+	monster_fire_dabeam(self, starting_beams ? 0 : damage, false, flyer_left_laser_update);
+	monster_fire_dabeam(self, starting_beams ? 0 : damage, true, flyer_right_laser_update);
 }
 
 void flyer_laser_off(edict_t *self)
@@ -1054,13 +1067,13 @@ void flyer_laser_off(edict_t *self)
 mframe_t flyer_frames_laser_right [] =
 {
 		ai_charge, 0, flyer_laser_warn,
-		ai_charge, 0, flyer_laser_warn,
-		ai_charge, 0, flyer_laser_warn,
-		ai_charge, 0, flyer_laser_warn,
-		ai_charge, 0, flyer_laser_warn,
-		ai_charge, 0, flyer_laser_warn,
-		ai_charge, 0, flyer_laser_warn,
-		ai_charge, 0, flyer_laser_warn,
+		ai_charge, 0, NULL,
+		ai_charge, 0, NULL,
+		ai_charge, 0, NULL,
+		ai_charge, 0, NULL,
+		ai_charge, 0, flyer_laser_on,
+		ai_charge, 0, flyer_laser_on,
+		ai_charge, 0, flyer_laser_on,
 		ai_charge, 0, flyer_laser_on,
 		ai_charge, 0, flyer_laser_on,
 		ai_charge, 0, flyer_laser_on,
@@ -1120,12 +1133,9 @@ void flyer_attack (edict_t *self)
 
 	flyer_restore_ranged_hover(self, range);
 
-	if (range > 180.0f && range < 420.0f && random() < FLYER_LASER_ATTACK_CHANCE)
+	if (range > FLYER_LASER_MIN_RANGE && range < FLYER_LASER_MAX_RANGE && random() < FLYER_LASER_ATTACK_CHANCE)
 	{
 		self->monsterinfo.attack_state = AS_STRAIGHT;
-		self->monsterinfo.fly_pinned = true;
-		VectorCopy(self->s.origin, self->monsterinfo.fly_ideal_position);
-		self->monsterinfo.fly_position_time = level.time + FLYER_LASER_PIN_TIME;
 		self->monsterinfo.currentmove = &flyer_move_laser_right;
 		return;
 	}
@@ -1146,6 +1156,8 @@ void flyer_attack (edict_t *self)
 		if (use_rocket_attack && self->delay <= level.time)
 		{
 			self->monsterinfo.attack_state = AS_SLIDING;
+			self->monsterinfo.lefty = random() < 0.5f;
+			flyer_checkstrafe(self);
 			self->monsterinfo.currentmove = &flyer_move_rollright;
 		}
 		else if (random() < 0.5f)
@@ -1170,7 +1182,10 @@ void flyer_attack (edict_t *self)
 		self->monsterinfo.fly_pinned = true;
 		if (self->monsterinfo.fly_position_time < level.time + 1.7f)
 			self->monsterinfo.fly_position_time = level.time + 1.7f;
-		VectorCopy(self->s.origin, self->monsterinfo.fly_ideal_position);
+		if (random() < 0.5f)
+			VectorMA(self->s.origin, random(), self->velocity, self->monsterinfo.fly_ideal_position);
+		else
+			VectorAdd(self->monsterinfo.fly_ideal_position, self->enemy->s.origin, self->monsterinfo.fly_ideal_position);
 	}
 }
 

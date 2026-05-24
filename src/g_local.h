@@ -166,7 +166,8 @@ enum flags_t {
     FL_PACKANIMAL = 1 << 24, // pack animal: use num_packanimals to track active quantity
     FL_RESPAWN = 1 << 25, // used for item respawning
     FL_FLASHLIGHT = 1 << 26,
-    FL_ALWAYS_TOUCH = 1 << 27
+    FL_ALWAYS_TOUCH = 1 << 27,
+    FL_IMMORTAL = 1 << 28 // take damage but never drop below 1 hp
 };
 
 
@@ -1724,6 +1725,8 @@ enum dronespawn_t {
 
 edict_t *vrx_create_new_drone(edict_t *ent, enum dronespawn_t drone_type, qboolean worldspawn, qboolean link_now, int bonus_level);
 qboolean vrx_drone_spawn_is_boss(enum dronespawn_t drone_type);
+qboolean vrx_drone_spawn_type_from_mtype(int mtype, enum dronespawn_t *drone_type);
+qboolean vrx_parse_drone_spawn_type(const char *name, enum dronespawn_t *drone_type);
 
 edict_t *
 vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn_t drone_type, qboolean worldspawn, qboolean link_now,

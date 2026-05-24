@@ -722,6 +722,14 @@ static void fly_reset_alternate_step(edict_t *ent)
 	ent->monsterinfo.fly_wall_stuck_time = 0.0f;
 }
 
+static vec_t *fly_alternate_path_dest(edict_t *ent, vec3_t dest)
+{
+	// Once a flyer has visible combat contact, let alternate fly steer by enemy/hover offset instead of parking on path nodes.
+	if (dest && !fly_has_visible_combat_enemy(ent))
+		return dest;
+	return NULL;
+}
+
 static qboolean fly_has_last_sighting(edict_t *ent)
 {
 	return !VectorCompare(ent->monsterinfo.last_sighting, vec3_origin);
@@ -1994,11 +2002,7 @@ qboolean M_FlyMove(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
 	{
 		if (fly_use_alternate_step(ent, dest))
 		{
-			qboolean use_path_dest = dest && !fly_has_visible_combat_enemy(ent);
-
-			// Once a flyer has visible combat contact, let the alternate
-			// fly logic steer by enemy/hover offset instead of parking on path nodes.
-			if (SV_alternate_flystep(ent, use_path_dest ? dest : NULL, move, relink))
+			if (SV_alternate_flystep(ent, fly_alternate_path_dest(ent, dest), move, relink))
 				return true;
 		}
 
@@ -2080,7 +2084,7 @@ qboolean SV_movestep(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
 
 		if (fly_use_alternate_step(ent, dest))
 		{
-			if (SV_alternate_flystep(ent, NULL, move, relink))
+			if (SV_alternate_flystep(ent, fly_alternate_path_dest(ent, dest), move, relink))
 				return true;
 
 			fly_reset_alternate_step(ent);

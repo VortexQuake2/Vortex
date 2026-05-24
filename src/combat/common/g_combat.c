@@ -1594,6 +1594,9 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
 		targ->health -= take;
 
+		if ((targ->flags & FL_IMMORTAL) && targ->health <= 0)
+			targ->health = 1;
+
 		//4.1 Darkness totem gives players a seperate vampire effect.
 		vrx_apply_darkness_totem(attacker, take, player, attacker_has_pilot);
 		vrx_apply_vampire_abilities(targ, attacker, dflags, mod, take, slot);

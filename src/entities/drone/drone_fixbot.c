@@ -28,10 +28,11 @@ static constexpr float FIXBOT_BOSS_FAIL_COOLDOWN = 2.0f;
 static constexpr float FIXBOT_BOSS_DEFAULT_SCALE = 2.6f;
 static constexpr float FIXBOT_BOSS_INVASION_SCALE = 2.0f;
 static constexpr float FIXBOT_BOSS_INVASION_MOVE_SCALE = 1.5f;
-static constexpr float FIXBOT_SPAWN_YAW_SPEED = 12.0f;
+static constexpr float FIXBOT_SPAWN_YAW_SPEED = 16.0f;
 static constexpr float FIXBOT_SPAWN_PITCH_SPEED = 12.0f;
-static constexpr float FIXBOT_SPAWN_AIM_TIMEOUT = 2.0f;
-static constexpr float FIXBOT_SPAWN_AIM_EPSILON = 5.0f;
+static constexpr float FIXBOT_SPAWN_MIN_AIM_TIME = 0.55f;
+static constexpr float FIXBOT_SPAWN_MAX_AIM_TIME = 1.35f;
+static constexpr float FIXBOT_SPAWN_AIM_EPSILON = 18.0f;
 static constexpr float FIXBOT_NO_SPAWN_YAW = -99999.0f;
 
 static int sound_pain;
@@ -51,6 +52,8 @@ static void fixbot_walk(edict_t *self);
 static void fixbot_run(edict_t *self);
 static void fixbot_attack(edict_t *self);
 static void fixbot_try_start_spawn(edict_t *self);
+static void fixbot_clear_spawn_state(edict_t *self);
+static void fixbot_abort_spawn(edict_t *self, float cooldown);
 static mmove_t fixbot_move_spawn;
 
 static qboolean fixbot_is_boss(edict_t *self)
@@ -178,23 +181,33 @@ static void fixbot_set_spawn_yaw(edict_t *self)
 	index = fixbot_count_live_turrets(self) % (int)(sizeof(yaw_offsets) / sizeof(yaw_offsets[0]));
 	self->angle = anglemod(self->move_angles[YAW] + yaw_offsets[index]);
 	self->ideal_yaw = self->angle;
-	self->teleport_time = level.time + FIXBOT_SPAWN_AIM_TIMEOUT;
 }
 
-static void fixbot_turn_to_spawn_yaw(edict_t *self)
+static void fixbot_hold_spawn_motion(edict_t *self)
 {
-	float old_yaw_speed;
-
-	if (self->angle <= FIXBOT_NO_SPAWN_YAW + 1.0f)
-		return;
-
 	VectorClear(self->velocity);
 	VectorClear(self->avelocity);
-	self->ideal_yaw = self->angle;
-	old_yaw_speed = self->yaw_speed;
-	self->yaw_speed = FIXBOT_SPAWN_YAW_SPEED;
-	M_ChangeYaw(self);
-	self->yaw_speed = old_yaw_speed;
+	self->monsterinfo.fly_thrusters = false;
+	self->monsterinfo.fly_pinned = true;
+	VectorCopy(self->s.origin, self->monsterinfo.fly_ideal_position);
+	self->monsterinfo.fly_position_time = level.time + 0.2f;
+}
+
+static qboolean fixbot_turret_visible_to_enemy(edict_t *self, vec3_t position)
+{
+	vec3_t start;
+	vec3_t target;
+
+	if (!G_ValidTarget(self, self->enemy, false, true))
+		return true;
+
+	G_EntViewPoint(self->enemy, start);
+	VectorCopy(position, target);
+	target[2] += 8.0f;
+
+	if (!gi.inPVS(start, target))
+		return false;
+	return G_IsClearPath(self, MASK_SOLID, start, target);
 }
 
 static qboolean fixbot_find_turret_spawn_position(edict_t *self, vec3_t position, vec3_t direction)
@@ -280,6 +293,8 @@ static qboolean fixbot_find_turret_spawn_position(edict_t *self, vec3_t position
 			continue;
 		if (!G_IsClearPath(self, MASK_SOLID, start, candidate))
 			continue;
+		if (!fixbot_turret_visible_to_enemy(self, candidate))
+			continue;
 
 		VectorSubtract(candidate, self->s.origin, to_pos);
 		dist = VectorLength(to_pos);
@@ -350,6 +365,8 @@ static qboolean fixbot_find_turret_spawn_position(edict_t *self, vec3_t position
 				if (!fixbot_turret_position_clear(self, candidate))
 					continue;
 				if (!G_IsClearPath(self, MASK_SOLID, start, candidate))
+					continue;
+				if (!fixbot_turret_visible_to_enemy(self, candidate))
 					continue;
 
 				VectorSubtract(candidate, self->s.origin, to_pos);
@@ -933,14 +950,18 @@ static qboolean fixbot_aim_at_spawn_target(edict_t *self)
 	building = self->monsterinfo.currentmove == &fixbot_move_spawn;
 	self->ideal_yaw = angles[YAW];
 	if (building)
+	{
+		fixbot_hold_spawn_motion(self);
+		self->s.angles[YAW] = fixbot_turn_angle(self->s.angles[YAW], angles[YAW], FIXBOT_SPAWN_YAW_SPEED);
 		self->s.angles[PITCH] = fixbot_turn_angle(self->s.angles[PITCH], angles[PITCH], FIXBOT_SPAWN_PITCH_SPEED);
+	}
 	else
+	{
 		self->s.angles[PITCH] = angles[PITCH];
-	old_yaw_speed = self->yaw_speed;
-	if (building)
-		self->yaw_speed = FIXBOT_SPAWN_YAW_SPEED;
-	M_ChangeYaw(self);
-	self->yaw_speed = old_yaw_speed;
+		old_yaw_speed = self->yaw_speed;
+		M_ChangeYaw(self);
+		self->yaw_speed = old_yaw_speed;
+	}
 	return true;
 }
 
@@ -950,7 +971,8 @@ static void fixbot_prep_spawn(edict_t *self)
 	VectorClear(self->pos2);
 	self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
 	self->angle = FIXBOT_NO_SPAWN_YAW;
-	self->teleport_time = level.time;
+	self->wait = level.time + FIXBOT_SPAWN_MIN_AIM_TIME;
+	self->teleport_time = level.time + FIXBOT_SPAWN_MAX_AIM_TIME;
 
 	if (!fixbot_is_boss(self) || level.time < self->monsterinfo.melee_finished)
 	{
@@ -961,15 +983,17 @@ static void fixbot_prep_spawn(edict_t *self)
 
 	if (fixbot_count_live_turrets(self) >= FIXBOT_BOSS_TURRET_MAX)
 	{
-		self->monsterinfo.melee_finished = level.time + FIXBOT_BOSS_FAIL_COOLDOWN;
-		self->monsterinfo.currentmove = NULL;
-		fixbot_run(self);
+		fixbot_abort_spawn(self, FIXBOT_BOSS_FAIL_COOLDOWN);
 		return;
 	}
 
 	if (fixbot_set_spawn_base_yaw(self))
 		fixbot_set_spawn_yaw(self);
-	fixbot_try_select_turret_position(self);
+	if (!fixbot_try_select_turret_position(self))
+	{
+		fixbot_abort_spawn(self, FIXBOT_BOSS_FAIL_COOLDOWN);
+		return;
+	}
 	fixbot_aim_at_spawn_target(self);
 	self->s.effects |= EF_HYPERBLASTER | EF_PLASMA;
 	gi.sound(self, CHAN_WEAPON, sound_weld, 1, ATTN_NORM, 0);
@@ -982,6 +1006,28 @@ static void fixbot_spawn_laser_off(edict_t *self)
 	self->beam = NULL;
 }
 
+static void fixbot_clear_spawn_state(edict_t *self)
+{
+	self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+	VectorClear(self->pos1);
+	VectorClear(self->pos2);
+	self->angle = FIXBOT_NO_SPAWN_YAW;
+	self->wait = 0.0f;
+	self->teleport_time = 0.0f;
+	self->monsterinfo.fly_pinned = false;
+	self->monsterinfo.fly_position_time = 0.0f;
+	fixbot_spawn_laser_off(self);
+	self->s.effects &= ~(EF_HYPERBLASTER | EF_PLASMA);
+}
+
+static void fixbot_abort_spawn(edict_t *self, float cooldown)
+{
+	self->monsterinfo.melee_finished = level.time + cooldown;
+	fixbot_clear_spawn_state(self);
+	self->monsterinfo.currentmove = NULL;
+	fixbot_run(self);
+}
+
 static void fixbot_fire_spawn_laser(edict_t *self)
 {
 	edict_t *laser;
@@ -991,6 +1037,7 @@ static void fixbot_fire_spawn_laser(edict_t *self)
 
 	if (!fixbot_get_spawn_target(self, target))
 		return;
+	fixbot_aim_at_spawn_target(self);
 
 	laser = self->beam;
 	if (!laser || !laser->inuse)
@@ -1044,20 +1091,11 @@ static void fixbot_spawn_effect(edict_t *self)
 	gi.multicast(target, MULTICAST_PVS);
 }
 
-static void fixbot_spawn_aim_ai(edict_t *self, float dist)
-{
-	ai_move(self, dist);
-	if (VectorLength(self->pos1) < 1)
-		fixbot_try_select_turret_position(self);
-	if (!fixbot_aim_at_spawn_target(self))
-		fixbot_turn_to_spawn_yaw(self);
-	fixbot_fire_spawn_laser(self);
-}
-
 static qboolean fixbot_spawn_turret(edict_t *self)
 {
 	edict_t *spawned;
 	edict_t *summoner;
+	edict_t *target;
 	vec3_t dir;
 	vec3_t angles;
 
@@ -1098,8 +1136,9 @@ static qboolean fixbot_spawn_turret(edict_t *self)
 	VectorCopy(self->pos1, spawned->s.origin);
 	VectorCopy(self->pos1, spawned->s.old_origin);
 
-	if (G_ValidTarget(self, self->enemy, false, true))
-		VectorSubtract(self->enemy->s.origin, self->pos1, dir);
+	target = G_ValidTarget(self, self->enemy, false, true) ? self->enemy : NULL;
+	if (target)
+		VectorSubtract(target->s.origin, self->pos1, dir);
 	else
 		VectorSubtract(self->s.origin, self->pos1, dir);
 	if (VectorLength(dir) < 1)
@@ -1107,8 +1146,8 @@ static qboolean fixbot_spawn_turret(edict_t *self)
 	vectoangles(dir, angles);
 	VectorCopy(angles, spawned->s.angles);
 
-	if (G_ValidTarget(spawned, self->enemy, false, true))
-		spawned->enemy = self->enemy;
+	if (target && G_ValidTarget(spawned, target, false, true))
+		spawned->enemy = target;
 
 	gi.linkentity(spawned);
 	rogue_turret_force_ready(spawned);
@@ -1125,12 +1164,22 @@ static qboolean fixbot_spawn_turret(edict_t *self)
 
 static void fixbot_finish_spawn(edict_t *self)
 {
-	if (VectorLength(self->pos1) < 1)
-		fixbot_try_select_turret_position(self);
+	qboolean keep_aiming;
+	qboolean facing_target;
 
-	fixbot_aim_at_spawn_target(self);
-	fixbot_fire_spawn_laser(self);
-	if (!fixbot_facing_spawn_target(self) && level.time < self->teleport_time)
+	if (VectorLength(self->pos1) < 1)
+	{
+		if (!fixbot_try_select_turret_position(self))
+		{
+			fixbot_abort_spawn(self, FIXBOT_BOSS_FAIL_COOLDOWN);
+			return;
+		}
+	}
+
+	fixbot_spawn_effect(self);
+	facing_target = fixbot_facing_spawn_target(self);
+	keep_aiming = level.time < self->wait || (!facing_target && level.time < self->teleport_time);
+	if (keep_aiming)
 	{
 		self->monsterinfo.aiflags |= AI_HOLD_FRAME;
 		return;
@@ -1142,11 +1191,24 @@ static void fixbot_finish_spawn(edict_t *self)
 	else
 		self->monsterinfo.melee_finished = level.time + FIXBOT_BOSS_FAIL_COOLDOWN;
 
-	VectorClear(self->pos1);
-	VectorClear(self->pos2);
-	self->angle = FIXBOT_NO_SPAWN_YAW;
-	fixbot_spawn_laser_off(self);
-	self->s.effects &= ~(EF_HYPERBLASTER | EF_PLASMA);
+	fixbot_clear_spawn_state(self);
+}
+
+static void fixbot_spawn_ai(edict_t *self, float dist)
+{
+	(void)dist;
+
+	fixbot_hold_spawn_motion(self);
+	if (VectorLength(self->pos1) < 1)
+		fixbot_try_select_turret_position(self);
+	fixbot_aim_at_spawn_target(self);
+}
+
+static void fixbot_start_spawn_sequence(edict_t *self)
+{
+	self->monsterinfo.currentmove = &fixbot_move_spawn;
+	self->s.frame = FIXBOT_FRAME_weldstart_01;
+	fixbot_prep_spawn(self);
 }
 
 static mframe_t fixbot_frames_stand[] =
@@ -1243,13 +1305,13 @@ static mmove_t fixbot_move_attack = { FIXBOT_FRAME_charging_01, FIXBOT_FRAME_cha
 
 static mframe_t fixbot_frames_spawn[] =
 {
-	ai_move, 0, fixbot_prep_spawn,
-	fixbot_spawn_aim_ai, 0, fixbot_spawn_effect,
-	fixbot_spawn_aim_ai, 0, fixbot_spawn_effect,
-	fixbot_spawn_aim_ai, 0, fixbot_spawn_effect,
-	fixbot_spawn_aim_ai, 0, fixbot_spawn_effect,
-	ai_move, 0, fixbot_finish_spawn,
-	ai_move, 0, NULL
+	fixbot_spawn_ai, 0, fixbot_prep_spawn,
+	fixbot_spawn_ai, 0, fixbot_spawn_effect,
+	fixbot_spawn_ai, 0, fixbot_spawn_effect,
+	fixbot_spawn_ai, 0, fixbot_spawn_effect,
+	fixbot_spawn_ai, 0, fixbot_spawn_effect,
+	fixbot_spawn_ai, 0, fixbot_finish_spawn,
+	fixbot_spawn_ai, 0, NULL
 };
 static mmove_t fixbot_move_spawn = { FIXBOT_FRAME_weldstart_01, FIXBOT_FRAME_weldstart_07, fixbot_frames_spawn, fixbot_run };
 
@@ -1264,7 +1326,7 @@ static void fixbot_try_start_spawn(edict_t *self)
 	if (!G_ValidTarget(self, self->enemy, false, true))
 		return;
 
-	self->monsterinfo.currentmove = &fixbot_move_spawn;
+	fixbot_start_spawn_sequence(self);
 }
 
 static void fixbot_attack(edict_t *self)
@@ -1275,7 +1337,7 @@ static void fixbot_attack(edict_t *self)
 	if (fixbot_is_boss(self) && level.time >= self->monsterinfo.melee_finished
 		&& fixbot_count_live_turrets(self) < FIXBOT_BOSS_TURRET_MAX)
 	{
-		self->monsterinfo.currentmove = &fixbot_move_spawn;
+		fixbot_start_spawn_sequence(self);
 		return;
 	}
 

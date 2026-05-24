@@ -886,6 +886,230 @@ void vrx_roll_to_make_champion(edict_t *drone, enum dronespawn_t *drone_type)
 	}
 }
 
+typedef struct drone_spawn_alias_s {
+	const char *name;
+	enum dronespawn_t type;
+} drone_spawn_alias_t;
+
+static const drone_spawn_alias_t drone_spawn_aliases[] = {
+	{ "gunner", DS_GUNNER },
+	{ "heavy_gunner", DS_HEAVY_GUNNER },
+	{ "heavygunner", DS_HEAVY_GUNNER },
+	{ "parasite", DS_PARASITE },
+	{ "brain", DS_BRAIN },
+	{ "praetor", DS_BITCH },
+	{ "bitch", DS_BITCH },
+	{ "chick", DS_BITCH },
+	{ "praetor_heat", DS_BITCH_HEAT },
+	{ "praetorheat", DS_BITCH_HEAT },
+	{ "chick_heat", DS_BITCH_HEAT },
+	{ "chickheat", DS_BITCH_HEAT },
+	{ "medic", DS_MEDIC },
+	{ "tank", DS_TANK },
+	{ "tank64", DS_TANK_N64 },
+	{ "tank_64", DS_TANK_N64 },
+	{ "tank_n64", DS_TANK_N64 },
+	{ "n64tank", DS_TANK_N64 },
+	{ "n64_tank", DS_TANK_N64 },
+	{ "mutant", DS_MUTANT },
+	{ "gladiator", DS_GLADIATOR },
+	{ "berserker", DS_BERSERK },
+	{ "berserk", DS_BERSERK },
+	{ "soldier", DS_SOLDIER },
+	{ "soldier_ripper", DS_SOLDIER_RIPPER },
+	{ "soldier_ionripper", DS_SOLDIER_RIPPER },
+	{ "soldierripper", DS_SOLDIER_RIPPER },
+	{ "rippersoldier", DS_SOLDIER_RIPPER },
+	{ "ripper_guard", DS_SOLDIER_RIPPER },
+	{ "ripperguard", DS_SOLDIER_RIPPER },
+	{ "soldier_blueblaster", DS_SOLDIER_BLUEBLASTER },
+	{ "soldierhyper", DS_SOLDIER_BLUEBLASTER },
+	{ "hypersoldier", DS_SOLDIER_BLUEBLASTER },
+	{ "hyperguard", DS_SOLDIER_BLUEBLASTER },
+	{ "hyper", DS_SOLDIER_BLUEBLASTER },
+	{ "hyper_guard", DS_SOLDIER_BLUEBLASTER },
+	{ "soldier_laser", DS_SOLDIER_LASER },
+	{ "soldierlaser", DS_SOLDIER_LASER },
+	{ "lasersoldier", DS_SOLDIER_LASER },
+	{ "laser", DS_SOLDIER_LASER },
+	{ "laserguard", DS_SOLDIER_LASER },
+	{ "laser_guard", DS_SOLDIER_LASER },
+	{ "janitor", DS_JANITOR },
+	{ "miniguardian", DS_MINIGUARDIAN },
+	{ "mini_guardian", DS_MINIGUARDIAN },
+	{ "infantry", DS_INFANTRY },
+	{ "enforcer", DS_ENFORCER },
+	{ "flyer", DS_FLYER },
+	{ "floater", DS_FLOATER },
+	{ "hover", DS_HOVER },
+	{ "fixbot", DS_FIXBOT },
+	{ "hornet", DS_BOSS2_SMALL },
+	{ "mini_hornet", DS_BOSS2_SMALL },
+	{ "minihornet", DS_BOSS2_SMALL },
+	{ "boss2_small", DS_BOSS2_SMALL },
+	{ "shambler", DS_SHAMBLER },
+	{ "redmutant", DS_REDMUTANT },
+	{ "red_mutant", DS_REDMUTANT },
+	{ "runnertank", DS_RUNNERTANK },
+	{ "runner_tank", DS_RUNNERTANK },
+	{ "guncmdr", DS_GUNCMDR },
+	{ "guncommander", DS_GUNCMDR },
+	{ "gun_commander", DS_GUNCMDR },
+	{ "daedalus", DS_DAEDALUS },
+	{ "gladb", DS_GLADB },
+	{ "darkmattergladiator", DS_GLADB },
+	{ "darkmatter_gladiator", DS_GLADB },
+	{ "gladiatordisruptor", DS_GLADB },
+	{ "gladiator_disruptor", DS_GLADB },
+	{ "disruptorgladiator", DS_GLADB },
+	{ "disruptor_gladiator", DS_GLADB },
+	{ "gladc", DS_GLADC },
+	{ "gladiatorplasma", DS_GLADC },
+	{ "gladiator_plasma", DS_GLADC },
+	{ "stalker", DS_STALKER },
+	{ "gekk", DS_GEKK },
+	{ "arachnid", DS_ARACHNID },
+	{ "arachnid_heat", DS_ARACHNID_HEAT },
+	{ "arachnidheat", DS_ARACHNID_HEAT },
+	{ "skeleton", DS_SKELETON },
+	{ "golem", DS_GOLEM },
+	{ "medic_commander", DS_MEDIC_COMMANDER },
+	{ "mediccommander", DS_MEDIC_COMMANDER },
+	{ "commander", DS_COMMANDER },
+	{ "makron", DS_MAKRON },
+	{ "baron_fire", DS_BARON_FIRE },
+	{ "firebaron", DS_BARON_FIRE },
+	{ "supertank", DS_SUPERTANK },
+	{ "jorg", DS_JORG },
+	{ "carrier", DS_CARRIER },
+	{ "guardian", DS_GUARDIAN },
+	{ "widow", DS_WIDOW },
+	{ "widow2", DS_WIDOW2 },
+	{ "fixbot_boss", DS_FIXBOT_BOSS },
+	{ "fixbotboss", DS_FIXBOT_BOSS },
+	{ "boss2", DS_BOSS2 },
+	{ "boss2_hyper", DS_BOSS2_HYPER },
+	{ "boss2hyper", DS_BOSS2_HYPER },
+	{ "boss5", DS_BOSS5 },
+	{ "rogue_turret", DS_ROGUE_TURRET },
+	{ "rogueturret", DS_ROGUE_TURRET },
+	{ "turret", DS_ROGUE_TURRET },
+	{ "decoy", DS_DECOY }
+};
+
+static qboolean vrx_parse_int_token(const char *token, int *value)
+{
+	char *end;
+	long parsed;
+
+	if (!token || !*token)
+		return false;
+
+	parsed = strtol(token, &end, 10);
+	if (!end || *end)
+		return false;
+
+	*value = (int)parsed;
+	return true;
+}
+
+qboolean vrx_drone_spawn_type_from_mtype(int mtype, enum dronespawn_t *drone_type)
+{
+	if (!drone_type)
+		return false;
+
+	switch ((enum mtype_t)mtype)
+	{
+	case M_GUNNER: *drone_type = DS_GUNNER; return true;
+	case M_HEAVY_GUNNER: *drone_type = DS_HEAVY_GUNNER; return true;
+	case M_PARASITE: *drone_type = DS_PARASITE; return true;
+	case M_CHICK: *drone_type = DS_BITCH; return true;
+	case M_BRAIN: *drone_type = DS_BRAIN; return true;
+	case M_MEDIC: *drone_type = DS_MEDIC; return true;
+	case M_TANK: *drone_type = DS_TANK; return true;
+	case M_TANK_N64: *drone_type = DS_TANK_N64; return true;
+	case M_MUTANT: *drone_type = DS_MUTANT; return true;
+	case M_GLADIATOR: *drone_type = DS_GLADIATOR; return true;
+	case M_BERSERK: *drone_type = DS_BERSERK; return true;
+	case M_SOLDIER: *drone_type = DS_SOLDIER; return true;
+	case M_SOLDIER_RIPPER: *drone_type = DS_SOLDIER_RIPPER; return true;
+	case M_SOLDIER_BLUEBLASTER: *drone_type = DS_SOLDIER_BLUEBLASTER; return true;
+	case M_SOLDIER_LASER: *drone_type = DS_SOLDIER_LASER; return true;
+	case M_INFANTRY: *drone_type = DS_INFANTRY; return true;
+	case M_ENFORCER: *drone_type = DS_ENFORCER; return true;
+	case M_FLYER: *drone_type = DS_FLYER; return true;
+	case M_FLOATER: *drone_type = DS_FLOATER; return true;
+	case M_HOVER: *drone_type = DS_HOVER; return true;
+	case M_SHAMBLER: *drone_type = DS_SHAMBLER; return true;
+	case M_REDMUTANT: *drone_type = DS_REDMUTANT; return true;
+	case M_RUNNERTANK: *drone_type = DS_RUNNERTANK; return true;
+	case M_GUNCMDR: *drone_type = DS_GUNCMDR; return true;
+	case M_DAEDALUS: *drone_type = DS_DAEDALUS; return true;
+	case M_DECOY: *drone_type = DS_DECOY; return true;
+	case M_SKELETON: *drone_type = DS_SKELETON; return true;
+	case M_GOLEM: *drone_type = DS_GOLEM; return true;
+	case M_GLADB: *drone_type = DS_GLADB; return true;
+	case M_GLADC: *drone_type = DS_GLADC; return true;
+	case M_STALKER: *drone_type = DS_STALKER; return true;
+	case M_GEKK: *drone_type = DS_GEKK; return true;
+	case M_CHICK_HEAT: *drone_type = DS_BITCH_HEAT; return true;
+	case M_ARACHNID: *drone_type = DS_ARACHNID; return true;
+	case M_ARACHNID_HEAT: *drone_type = DS_ARACHNID_HEAT; return true;
+	case M_MEDIC_COMMANDER: *drone_type = DS_MEDIC_COMMANDER; return true;
+	case M_COMMANDER: *drone_type = DS_COMMANDER; return true;
+	case M_MAKRON: *drone_type = DS_MAKRON; return true;
+	case M_BARON_FIRE: *drone_type = DS_BARON_FIRE; return true;
+	case M_SUPERTANK: *drone_type = DS_SUPERTANK; return true;
+	case M_JORG: *drone_type = DS_JORG; return true;
+	case M_CARRIER: *drone_type = DS_CARRIER; return true;
+	case M_GUARDIAN: *drone_type = DS_GUARDIAN; return true;
+	case M_JANITOR: *drone_type = DS_JANITOR; return true;
+	case M_MINIGUARDIAN: *drone_type = DS_MINIGUARDIAN; return true;
+	case M_WIDOW: *drone_type = DS_WIDOW; return true;
+	case M_WIDOW2: *drone_type = DS_WIDOW2; return true;
+	case M_FIXBOT: *drone_type = DS_FIXBOT; return true;
+	case M_FIXBOT_BOSS: *drone_type = DS_FIXBOT_BOSS; return true;
+	case M_ROGUE_TURRET: *drone_type = DS_ROGUE_TURRET; return true;
+	case M_BOSS2: *drone_type = DS_BOSS2; return true;
+	case M_BOSS2_SMALL: *drone_type = DS_BOSS2_SMALL; return true;
+	case M_BOSS5: *drone_type = DS_BOSS5; return true;
+	default: return false;
+	}
+}
+
+qboolean vrx_parse_drone_spawn_type(const char *name, enum dronespawn_t *drone_type)
+{
+	int i;
+	int numeric;
+	const char *token = name;
+
+	if (!token || !*token || !drone_type)
+		return false;
+
+	if (!Q_strncasecmp(token, "monster_", 8))
+		token += 8;
+	else if (!Q_strncasecmp(token, "drone_", 6))
+		token += 6;
+	else if (!Q_strncasecmp(token, "m_", 2))
+		token += 2;
+	else if (!Q_strncasecmp(token, "ds_", 3))
+		token += 3;
+
+	if (vrx_parse_int_token(token, &numeric))
+		return vrx_drone_spawn_type_from_mtype(numeric, drone_type);
+
+	for (i = 0; i < (int)(sizeof(drone_spawn_aliases) / sizeof(drone_spawn_aliases[0])); i++)
+	{
+		if (!Q_strcasecmp(token, drone_spawn_aliases[i].name))
+		{
+			*drone_type = drone_spawn_aliases[i].type;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 qboolean vrx_drone_spawn_is_boss(enum dronespawn_t drone_type)
 {
 	switch (drone_type)
