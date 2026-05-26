@@ -628,7 +628,7 @@ void GetNodePosition(const int nodenum, vec3_t pos) {
 }
 
 // returns the waypoint index closest to start along the path leading to our final destination (or -1 if list is empty)
-int NearestWaypointNum(vec3_t start, int *wp) {
+int NearestWaypointNum(vec3_t start, int *wp, size_t wpcount) {
     int bestNodeNum = -1;
     float best = 0;
 
@@ -637,10 +637,11 @@ int NearestWaypointNum(vec3_t start, int *wp) {
 
     // get the nodenum for the closest node
     //for (i = 0; i < numpts; i++)
-    for (int i = 0; i < MAX_GRID_SIZE; i++) {
+    for (int i = 0; i < wpcount; i++) {
         // we've reached the end of the list
-        if (wp[i] == 0)
-            break;
+        // az: 0 is, in fact, a valid index.
+        // if (wp[i] == 0)
+        //     break;
 
         const float dist = distanceSqr(mapgrid.pathnode[wp[i]], start);
 

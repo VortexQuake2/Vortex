@@ -120,7 +120,7 @@ qboolean CheckHazards (edict_t *self, vec3_t landing_pos)
 }
 
 void GetNodePosition (int nodenum, vec3_t pos);
-int NearestWaypointNum(vec3_t start, int* wp);
+int NearestWaypointNum(vec3_t start, int* wp, size_t wpcount);
 qboolean CanJumpDown (edict_t *self, vec3_t neworg)
 {
 	vec3_t	start;

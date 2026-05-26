@@ -1373,7 +1373,7 @@ qboolean NearestNodeLocation (vec3_t start, vec3_t node_loc, float range, qboole
 int FindPath(int searchType, vec3_t start, vec3_t destination);
 void M_MoveToPosition(edict_t* ent, vec3_t pos, float dist, qboolean stop_when_close);
 int CopyWaypoints (int *wp, int max);
-int NearestWaypointNum (vec3_t start, int *wp);
+int NearestWaypointNum (vec3_t start, int *wp, size_t wpcount);
 void GetNodePosition (int nodenum, vec3_t pos);
 void DrawPath (edict_t *ent);
 
@@ -1508,7 +1508,7 @@ void M_FindPath (edict_t *self, vec3_t goalpos, qboolean compute_path_now)
 			self->monsterinfo.numWaypoints =
 				CopyWaypoints(self->monsterinfo.waypoint, 1000);
 			// get index of next waypoint
-			self->monsterinfo.nextWaypoint = NearestWaypointNum(self->s.origin, self->monsterinfo.waypoint) + 1;
+			self->monsterinfo.nextWaypoint = NearestWaypointNum(self->s.origin, self->monsterinfo.waypoint, self->monsterinfo.numWaypoints) + 1;
 			// brief delay before we can re-compute path to goal
 			self->monsterinfo.path_time = level.time + (GetRandom(1, 20) * FRAMETIME);
 			self->monsterinfo.updatePath = false;
@@ -1660,7 +1660,7 @@ bool vrx_follow_waypoint_navigation(edict_t *self, float dist, edict_t *goal, ve
 		vec3_t	org;
 
 		// if we can't see the nearest waypoint, or it's too far away, then give up
-		int nearestWaypoint = NearestWaypointNum(self->s.origin, self->monsterinfo.waypoint);
+		int nearestWaypoint = NearestWaypointNum(self->s.origin, self->monsterinfo.waypoint, self->monsterinfo.numWaypoints);
 		GetNodePosition(self->monsterinfo.waypoint[nearestWaypoint], dest);
 		G_EntViewPoint(self, org);
 		float wpDist = Get2dDistance(org, dest);
@@ -1721,14 +1721,15 @@ bool vrx_follow_waypoint_navigation(edict_t *self, float dist, edict_t *goal, ve
 
 		// debug stuff below
 		int closestWaypointNode = self->monsterinfo.waypoint[
-			NearestWaypointNum(self->s.origin, self->monsterinfo.waypoint)];//FIXME: this sometimes returns an incorrect value that doesn't agree with NearestNodeNumber()!
+			NearestWaypointNum(self->s.origin, self->monsterinfo.waypoint, self->monsterinfo.numWaypoints)];//FIXME: this sometimes returns an incorrect value that doesn't agree with NearestNodeNumber()!
 		int closesterWaypointNode = NearestNodeNumber(self->s.origin, 255, true);
 		int next = self->monsterinfo.waypoint[self->monsterinfo.nextWaypoint];
 		int nexter = self->monsterinfo.waypoint[self->monsterinfo.nextWaypoint + 1];
 		//nexter = self->monsterinfo.waypoint[NearestWaypointNum(self->s.origin, self->monsterinfo.waypoint)+1];
 		if (DRONE_DEBUG)
 			gi.dprintf("next waypoint = %d %d (%d/%d), closest = %d %d (%d/%d)\n", next, nexter, self->monsterinfo.nextWaypoint, self->monsterinfo.numWaypoints,
-			           closestWaypointNode, closesterWaypointNode, NearestWaypointNum(self->s.origin, self->monsterinfo.waypoint), self->monsterinfo.numWaypoints);
+			           closestWaypointNode, closesterWaypointNode,
+			           NearestWaypointNum(self->s.origin, self->monsterinfo.waypoint, self->monsterinfo.numWaypoints), self->monsterinfo.numWaypoints);
 		if (DRONE_DEBUG && closestWaypointNode != closesterWaypointNode)
 		{
 			qboolean foundWp = false;
