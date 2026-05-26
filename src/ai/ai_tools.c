@@ -156,19 +156,25 @@ void AITools_DrawPath(edict_t *self, int node_from, int node_to)
 		//event = G_SpawnEvent ( EV_BFG_LASER, 0, nodes[self->ai.path->nodes[pos]].origin );
 		//event->svflags = SVF_FORCEOLDORIGIN;
 		//VectorCopy ( nodes[self->ai.path->nodes[pos+1]].origin, event->s.origin2 );
+#ifndef VRX_REPRO
 		G_DrawDebugTrail(nodes[self->ai.path.nodes[pos + 1]].origin, nodes[self->ai.path.nodes[pos]].origin);//GHz
+#else
+		gire.Draw_Arrow(nodes[self->ai.path.nodes[pos]].origin, nodes[self->ai.path.nodes[pos+1]].origin, 8, &rgba_orange, &rgba_orange, 0.1, true);
+#endif
 		//G_Spawn_Splash(TE_LASER_SPARKS, 20, 200, nodes[self->ai.path.nodes[pos]].origin, vec3_origin, nodes[self->ai.path.nodes[pos]].origin);//GHz
 		pos++;
 		count++;
 	}
 	//G_Spawn_Splash(TE_LASER_SPARKS, 5, 200, nodes[self->ai.path.nodes[node_to]].origin, vec3_origin, nodes[self->ai.path.nodes[node_to]].origin);//GHz
 
-
+#ifndef VRX_REPRO
 	gi.WriteByte(svc_temp_entity);
 	gi.WriteByte(TE_BFG_EXPLOSION);
 	gi.WritePosition(nodes[self->ai.path.nodes[pos]].origin);
 	gi.multicast(nodes[self->ai.path.nodes[pos]].origin, MULTICAST_PVS);
-
+#else
+	gire.Draw_Sphere(nodes[self->ai.path.nodes[pos]].origin, 16, &rgba_green, 0.1, true);
+#endif
 
 }
 
