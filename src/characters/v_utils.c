@@ -2219,28 +2219,30 @@ qboolean V_IsPVP(void) {
 }
 
 qboolean V_HealthCache(edict_t *ent, int max_per_second, int update_frequency_svframes) {
-    int heal, delta, max;
+    float max;
 
     if (ent->health_cache_nextframe > level.framenum)
         return false;
 
-    ent->health_cache_nextframe = level.framenum + update_frequency_svframes;
+    if (update_frequency_svframes <= sv_fps->value)
+        max = (float)max_per_second * (float)update_frequency_svframes / sv_fps->value;
+    else
+        max = max_per_second;
+
+    int next_update = update_frequency_svframes;
+
+    if (max < 1) {
+        next_update = 1.0f / max;
+        max = 1;
+    }
+
+    ent->health_cache_nextframe = level.framenum + next_update;
 
     if (ent->health_cache > 0 && ent->health < ent->max_health) {
-        if (update_frequency_svframes <= sv_fps->value)
-            max = max_per_second / (sv_fps->value / update_frequency_svframes);
-        else
-            max = max_per_second;
-
         if (max > ent->health_cache)
             max = ent->health_cache;
 
-        delta = ent->max_health - ent->health;
-
-        if (delta > max)
-            heal = max;
-        else
-            heal = delta;
+        const int heal = min(ent->max_health - ent->health, max);
 
         ent->health += heal;
         ent->health_cache -= heal;
