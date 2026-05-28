@@ -876,7 +876,7 @@ char *single_statusbar =
 
 char *dm_statusbar =
 #ifdef VRX_REPRO
-"mono "
+"mono story "
 #endif
 "yb	-72 "
 // health

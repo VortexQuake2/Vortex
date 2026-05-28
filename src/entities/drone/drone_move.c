@@ -119,8 +119,8 @@ qboolean CheckHazards (edict_t *self, vec3_t landing_pos)
 	return true;
 }
 
-void GetNodePosition (int nodenum, vec3_t pos);
-int NearestWaypointNum(vec3_t start, int* wp, size_t wpcount);
+void vrx_pf_get_node_position (int nodenum, vec3_t pos);
+int vrx_pf_nearest_waypoint_index_along_path(vec3_t start, int* wp, size_t wpcount);
 qboolean CanJumpDown (edict_t *self, vec3_t neworg)
 {
 	vec3_t	start;
@@ -176,11 +176,11 @@ qboolean CanJumpDown (edict_t *self, vec3_t neworg)
 		if (nearestWpNum < self->monsterinfo.nextWaypoint)
 			return false;*/
 		
-		GetNodePosition(self->monsterinfo.waypoint[self->monsterinfo.nextWaypoint], v);
+		vrx_pf_get_node_position(self->monsterinfo.waypoint[self->monsterinfo.nextWaypoint], v);
 		if (!LandCloserToGoal(self, v, tr.endpos))
 		{
 			// is the landing position closer to the final waypoint?
-			GetNodePosition(self->monsterinfo.waypoint[self->monsterinfo.numWaypoints-1], v);
+			vrx_pf_get_node_position(self->monsterinfo.waypoint[self->monsterinfo.numWaypoints-1], v);
 			if (!LandCloserToGoal(self, v, tr.endpos))
 			{
 				//gi.dprintf("can't jump down, landing position farther than current position\n");

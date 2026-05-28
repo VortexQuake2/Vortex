@@ -56,7 +56,9 @@ enum griddebug_state_t {
     GD_OFF,
     GD_NEARBY,
     GD_CHILD,
+    GD_CHILD_FLY,
     GD_AIMSPOT,
+    GD_AIMSPOT_FLY,
     GD_MAX
 };
 

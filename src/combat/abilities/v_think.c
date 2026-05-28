@@ -788,9 +788,9 @@ void think_ability_vampire(edict_t* self) {
 
 
 // grid.c
-void DrawNearbyGrid(edict_t* ent);
+void vrx_pf_draw_nearby_grid(edict_t* ent);
 
-void DrawChildLinks(edict_t* ent);
+void vrx_pf_draw_child_links(edict_t* ent);
 
 // magic.c
 void DeflectProjectiles(edict_t* self, float chance, qboolean in_front);
@@ -820,15 +820,9 @@ void vrx_client_think(edict_t* ent) {
 	int* armor;        // 3.5 pointer to client armor
 
 
-    if (ent->client->showGridDebug > 0) 
-    {
-#ifndef VRX_REPRO
-        if (ent->client->showGridDebug <= 2)
-#endif
-            DrawNearbyGrid(ent);
-        if (ent->client->showGridDebug >= 2)
-            DrawChildLinks(ent);
-    }
+    vrx_pf_draw_nearby_grid(ent);
+    vrx_pf_draw_child_links(ent);
+
     //DrawNavi(ent);
     //DrawPath();
 

@@ -2,16 +2,18 @@
 
 #include "g_local.h"
 
-// NOTE: This size of the mapgrid.pathnode array may have to change if a larger array is needed for your individual maps..
-
 #define MAX_GRID_SIZE	10000
 
 struct mapgrid_s {
     int numnodes;
     vec3_t pathnode[MAX_GRID_SIZE];
-    int *cached_gridlist[MAX_GRID_SIZE];
-    int cached_gridlist_count[MAX_GRID_SIZE];
-    int gridlist[MAX_GRID_SIZE];
+
+    // adjacency list
+    int *adjacent_nodes[MAX_GRID_SIZE];
+    int adjacent_node_count[MAX_GRID_SIZE];
+
+    int *adjacent_nodes_fly[MAX_GRID_SIZE];
+    int adjacent_node_count_fly[MAX_GRID_SIZE];
 } mapgrid = {};
 
 struct gridkdtree_s* gridtree = nullptr;
@@ -21,7 +23,24 @@ struct pfctx_s {
     struct nodearena_s* arena;
     node_t *OPEN; // Start of OPEN List
     node_t *CLOSED; // Start of CLOSED List
+
+    // results
+    int *waypoints; // Integer array of nodenum's along the path
+    int numpts; // Number of nodes in the path..
 }* pfctx = nullptr;
+
+void pfctx_free(struct pfctx_s** ptr) {
+    if (!*ptr) return;
+
+    nodearena_free(&(*ptr)->arena);
+    gstack_free(&(*ptr)->stack);
+    if ((*ptr)->waypoints) {
+        free((*ptr)->waypoints);
+    }
+
+    free(*ptr);
+    *ptr = nullptr;
+}
 
 struct pfctx_s* pfctx_create(size_t nodecapacity) {
     struct pfctx_s* ctx = malloc(sizeof(struct pfctx_s));
@@ -29,29 +48,36 @@ struct pfctx_s* pfctx_create(size_t nodecapacity) {
         return nullptr;
     }
     ctx->stack = gstack_create(nodecapacity);
+
+    if (!ctx->stack)
+        goto error;
+
     ctx->arena = nodearena_create(nodecapacity);
+
+    if (!ctx->arena)
+        goto error;
+
     ctx->OPEN = nullptr;
     ctx->CLOSED = nullptr;
+    ctx->waypoints = malloc(nodecapacity * sizeof(int));
+    if (!ctx->waypoints) {
+        goto error;
+    }
+    ctx->numpts = 0;
     return ctx;
-}
 
-void pfctx_free(struct pfctx_s** ptr) {
-    if (!*ptr) return;
-
-    nodearena_free(&(*ptr)->arena);
-    gstack_free(&(*ptr)->stack);
-    free(*ptr);
-    *ptr = nullptr;
+    error:
+    pfctx_free(&ctx);
+    return nullptr;
 }
 
 void pfctx_reset(struct pfctx_s* ctx) {
     gstack_reset(ctx->stack);
     nodearena_reset(ctx->arena);
+    ctx->numpts = 0;
     ctx->OPEN = nullptr;
     ctx->CLOSED = nullptr;
 }
-
-
 
 #define maxx 512 // 32 units/node x=[0..255]
 #define maxy 512
@@ -66,15 +92,8 @@ void pfctx_reset(struct pfctx_s* ctx) {
 #define g2v1(y)  (float)min(max((y)*yevery-4096+(yevery*0.5),-4096),4096)
 #define g2v2(z)  (float)min(max((z)*zevery-4096+(zevery*0.5),-4096),4096)
 
-//=====================================================
 //================== pathfinding stuff ================
-//=====================================================;
-
-int NodeCount = 0; //GHz: for debugging
-
-//=====================================================
 // Check the desired OPEN/CLOSED LIST for NodeNum..
-//=====================================================
 node_t *CheckLIST(node_t *LIST, const int NodeNum) {
     node_t *tNode = LIST->NextNode; // Start of OPEN or CLOSED
 
@@ -105,9 +124,7 @@ void PrintNodes(node_t *Node, const qboolean reverse) {
     gi.dprintf("(null)\n");
 }
 
-//===============================================
 // Propagate Old node's values to Nodes on Stack
-//===============================================
 void PropagateDown(struct gstack_s* stack, node_t *Old) {
     int g, c;
 
@@ -139,17 +156,13 @@ void PropagateDown(struct gstack_s* stack, node_t *Old) {
 
 #define vDiff(b,a) sqrt((a[0]*a[0]-b[0]*b[0])+(a[1]*a[1]-b[1]*b[1])+(a[2]*a[2]-b[2]*b[2]))
 
-//===========================================
 // Successor Nodes all pushed onto OPEN list
-//===========================================
-void GetSuccessorNodes(struct pfctx_s* ctx, node_t *StartNode, const int NodeNumS, const int NodeNumD) {
+void vrx_pf_push_successors(struct pfctx_s* ctx, node_t *StartNode, const int NodeNumS, const int NodeNumD) {
     int g, c;
     float h;
 
     // NOTE: NodeNumS is the index of a node that was found by the node searching routine
-    //================================
     // Has NodeNumS been Searched yet?
-    //================================
     // see if this node is already on the OPEN list
     node_t *Old = CheckLIST(ctx->OPEN, NodeNumS);
     if (Old) {
@@ -174,9 +187,7 @@ void GetSuccessorNodes(struct pfctx_s* ctx, node_t *StartNode, const int NodeNum
         return;
     }
 
-    //==================================
     // Has NodeNumS been searched yet?
-    //==================================
     Old = CheckLIST(ctx->CLOSED, NodeNumS);
     if (Old != nullptr) {
         // node has been searched before
@@ -192,26 +203,17 @@ void GetSuccessorNodes(struct pfctx_s* ctx, node_t *StartNode, const int NodeNum
         return;
     }
 
-    //=======================================
     // It is NOT on the OPEN or CLOSED List!!
-    //=======================================
     // Make Successor a Child of StartNode
-    //=======================================
-    //Successor=(node_t *)malloc(sizeof(node_t));
     node_t *Successor = nodearena_alloc(ctx->arena);
     Successor->nodenum = NodeNumS;
     Successor->dist = g = StartNode->dist + 1;
-
-    //GHz - track node memory use so we can free this later
-    //	NodeList[NodeCount++] = Successor;
-    NodeCount++;
 
     // NOTE: the heuristic estimate of the remaining path from this node
     // to the destination node is given by the difference between the 2
     // vectors.  You can come up with your own estimate..
 
-    Successor->distestimation = h = distance(mapgrid.pathnode[NodeNumS], mapgrid.pathnode[NodeNumD]);
-    //fabs(vDiff(node[NodeNumS].origin,node[NodeNumD].origin));//GHz - changed to fabs()
+    Successor->distestimation = h = distanceSqr(mapgrid.pathnode[NodeNumS], mapgrid.pathnode[NodeNumD]);
     Successor->totaldistestimation = g + h;
     Successor->PrevNode = StartNode; // reverse link to StartNode
     Successor->NextNode = nullptr;
@@ -223,9 +225,7 @@ void GetSuccessorNodes(struct pfctx_s* ctx, node_t *StartNode, const int NodeNum
         if (StartNode->Child[c] == nullptr) break; // Find first empty Child[] of StartNode
     StartNode->Child[((c < NUMCHILDS) ? c : (NUMCHILDS - 1))] = Successor; // make Successor a child of StartNode
 
-    //=================================
     // Insert Successor into OPEN List
-    //=================================
     node_t *listcurrent = ctx->OPEN;
     node_t *listsuccessor = ctx->OPEN->NextNode;
     // find node in OPEN list with f-cost greater than Successor node
@@ -248,61 +248,22 @@ vec_t VectorLengthSqr(vec3_t v) {
 }
 
 // returns node index of node closest to start
-int NearestNodeNumber(vec3_t start, const float range, const qboolean vis) {
-    int i = 0, bestNodeNum = -1;
-    float best = 9999;
-    vec3_t v;
-
+int vrx_pf_nearest_node_index(vec3_t start, const float range, const qboolean vis) {
     if (!mapgrid.numnodes)
         return -1;
 
-    // get the nodenum for the closest node
-    // for (; i < mapgrid.numnodes; i++) {
-    //     VectorCopy(mapgrid.pathnode[i], v);
-    //     // ignore nodes we can't see
-    //     if (vis && !G_IsClearPath(nullptr, MASK_SOLID, v, start))
-    //         continue;
-    //     const float dist = distance(v, start);
-    //     if (range && dist > range)
-    //         continue;
-    //     if (dist < best) {
-    //         best = dist;
-    //         bestNodeNum = i;
-    //     }
-    // }
+    auto idx = gridkdtree_query(gridtree, start);
+    if (idx == SIZE_MAX)
+        return -1;
 
-    return gridkdtree_query(gridtree, start);
+    return idx;
 }
 
-qboolean NearestNodeLocation(vec3_t start, vec3_t node_loc, const float range, const qboolean vis) {
-    int i = 0, bestNodeNum = -1;
-    float best = 9999;
-    vec3_t v;
-
+qboolean vrx_pf_nearest_node_location(vec3_t start, vec3_t node_loc, const float range, const qboolean vis) {
     if (!mapgrid.numnodes)
         return false;
 
-    // get the nodenum for the closest node
-    // for (; i < mapgrid.numnodes; i++) {
-    //     VectorCopy(mapgrid.pathnode[i], v);
-    //     const float dist = distance(v, start);
-    //     if (range && dist > range)
-    //         continue;
-    //
-    //     // ignore nodes we can't see
-    //     if (vis && !G_IsClearPath(nullptr, MASK_SOLID, v, start))
-    //         continue;
-    //     if (dist < best) {
-    //         best = dist;
-    //         bestNodeNum = i;
-    //     }
-    // }
-    //
-    // if (bestNodeNum == -1)
-    //     return false;
-
-
-    bestNodeNum = gridkdtree_query(gridtree, start);
+    const auto bestNodeNum = gridkdtree_query(gridtree, start);
     if (bestNodeNum == SIZE_MAX)
         return false;
 
@@ -310,42 +271,8 @@ qboolean NearestNodeLocation(vec3_t start, vec3_t node_loc, const float range, c
     return true;
 }
 
-//=========================================
-// What is nodenum of this origin, if any?
-//=========================================
-int GetNodeNum(vec3_t origin) {
-    vec3_t vtmp;
-    //float best=99999, bestd=99999, d;//GHz
-
-    //gi.dprintf("GetNodeNum() is checking %d nodes\n", mapgrid.numnodes);
-
-    // Search all of my node[i]'s
-    for (int i = 0; i < mapgrid.numnodes; i++) {
-        VectorSubtract(mapgrid.pathnode[i], origin, vtmp);
-        const float dist = VectorLengthSqr(vtmp);
-
-        /*if (dist < best)//GHz: added next 4 lines for debugging only
-            best = dist;
-        d=distance(mapgrid.pathnode[i], origin);
-        if (d < bestd)
-            bestd=d;
-        */
-        if (dist < 1.0F) //FIXME: wtf does this mean?
-        {
-            // we are close enough to our goal
-            //gi.dprintf("best result=%f, need=%f, actual=%f\n", best, 1.0F, bestd);
-            return i;
-        }
-    }
-
-    // gi.dprintf("best result=%f, need=%f, actual=%f\n", best, 1.0F, bestd);
-    return -1;
-}
-
-//=========================================
 // Pull FIRST node from OPEN, put on CLOSED
-//=========================================
-node_t *NextBestNode(struct pfctx_s *ctx) {
+node_t *vrx_pf_pop_next_open_node(struct pfctx_s *ctx) {
     node_t *Node = ctx->OPEN->NextNode; // Pull from FRONT of OPEN list
 
     if (!Node) {
@@ -369,66 +296,6 @@ node_t *NextBestNode(struct pfctx_s *ctx) {
     return Node; // Return Next Best Node
 }
 
-int GetVerticalNodeNum(vec3_t start, const float x, const float y, const float max_z_range, const int nodes) {
-    vec3_t v;
-
-    // copy to temp vector
-    VectorCopy(start, v);
-
-    // modify 2-d coordinates of temp vector
-    v[0] += x;
-    v[1] += y;
-
-    // search for nodes
-    for (int i = 0; i < nodes; i++) {
-        // put temp node and mapgrid.pathnode on the same vertical plane
-        //v[2] = mapgrid.pathnode[i][2];
-        // is there a match on the x and y coordinates?
-        //if (distance(v, mapgrid.pathnode[i]) > 1.0F)
-        //	continue;
-        if (Get2dDistance(v, mapgrid.pathnode[i]) > 1)
-            continue;
-        // is it within our specified z range?
-        if (abs((int) mapgrid.pathnode[i][2] - (int) start[2]) > max_z_range)
-            continue;
-        return i;
-    }
-
-    return -1;
-}
-
-int CheckVertical(vec3_t start, const float x, const float y, const float z, const int max_steps_up, const int max_steps_down) {
-    int n;
-    vec3_t v;
-
-    VectorCopy(start, v);
-
-    const int max_steps = max_steps_up + max_steps_down;
-
-    v[0] += x; // left-right
-    v[1] += y; // forward-backward
-
-    // step up from this location until we find a node
-    for (int i = 0; i <= max_steps; i++) {
-        if ((n = GetNodeNum(v)) != -1)
-            return n;
-        if (i <= max_steps_up)
-            v[2] += z;
-        else
-            v[2] -= z;
-    }
-
-    return -1;
-}
-
-
-
-// sets all gridlist values to -1
-void ClearGridList(void) {
-    for (int i = 0; i < mapgrid.numnodes; i++) //FIXME: should we initialize up to MAX_GRID_SIZE?
-        mapgrid.gridlist[i] = -1;
-}
-
 qboolean CheckPath1(vec3_t start, vec3_t end) {
     vec3_t from;
     const edict_t *ignore = nullptr;
@@ -436,7 +303,7 @@ qboolean CheckPath1(vec3_t start, vec3_t end) {
 
     VectorCopy(start, from);
 
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < 32; i++) {
         tr = gi.trace(from, tv(-16, -16, 0), tv(16, 16, 0), end, ignore, MASK_SOLID);
         // ignore doors
         if (tr.ent && tr.ent->inuse && tr.ent->mtype == FUNC_DOOR) {
@@ -457,40 +324,73 @@ qboolean CheckPath(vec3_t start, vec3_t end) {
     return CheckPath1(start, end);
 }
 
-qboolean isValidChildNode(vec3_t start, vec3_t v, const int max_distance, const int max_z_delta) {
+qboolean CheckPathFly(vec3_t start, vec3_t end) {
+    const edict_t *ignore = nullptr;
+
+    // check in an L shape, first going up, then horizontally
+    // check vertically, first
+    vec3_t top;
+    VectorSet(top, start[0], start[1], end[2]);
+    trace_t tr = gi.trace(start, tv(-16, -16, 0), tv(16, 16, 0), top, ignore, MASK_SOLID);
+    if (tr.fraction != 1.0 || tr.startsolid || tr.allsolid || tr.contents & MASK_SOLID)
+        return false;
+
+    // now the second part of the L, on the xy plane
+    tr = gi.trace(top, tv(-16, -16, 0), tv(16, 16, 0), end, ignore, MASK_SOLID);
+    if (tr.fraction != 1.0 || tr.startsolid || tr.allsolid || tr.contents & MASK_SOLID)
+        return false;
+
+
+    return true;
+}
+
+qboolean vrx_pf_is_valid_child_node(vec3_t start, vec3_t v, const int max_2d_distance, const int max_z_delta, enum searchtype_t searchtype) {
     // node should be within +/- 32 units of start on the Z axis
     if (fabs(v[2] - start[2]) > max_z_delta)
         return false;
     // distance check, next node could be anywhere between 128 - 255 units away
-    if (Get2dDistance(start, v) >= max_distance)
+    if (Get2dDistance(start, v) >= max_2d_distance)
         return false;
     // basic visibility check
     if (!gi.inPVS(start, v))
         return false;
     // advanced visibility check, make sure the path is wide enough to walk to
-    if (!CheckPath(start, v))
-        return false;
-    return true;
+    const bool validWalkPath = CheckPath(start, v);
+    const bool validFlyPath = searchtype == SEARCHTYPE_FLY && CheckPathFly(start, v);
+
+    return validWalkPath || validFlyPath;
+}
+
+
+int** vrx_pf_adjacency_list(enum searchtype_t searchType) {
+    if (searchType == SEARCHTYPE_FLY)
+        return mapgrid.adjacent_nodes_fly;
+    else
+        return mapgrid.adjacent_nodes;
+}
+
+int* vrx_pf_adjacency_count(enum searchtype_t searchType) {
+    if (searchType == SEARCHTYPE_FLY)
+        return mapgrid.adjacent_node_count_fly;
+    else
+        return mapgrid.adjacent_node_count;
 }
 
 // fills gridlist with visible nodes within +/- 32 of start on the Z axis
 // returns the number of found nodes
-int FillGridList(const int searchType, const int NodeNumStart) {
+int vrx_pf_compute_adjacent_nodes(const enum searchtype_t searchType, const int NodeNumStart) {
     int i, j, maxZdelta;
     vec3_t start;
 
-    if (mapgrid.cached_gridlist[NodeNumStart] != nullptr) // az: don't recompute this
-    {
-        //gi.dprintf("FillGridList() exited: don't recompute\n");
+    int** adjacency_list = vrx_pf_adjacency_list(searchType);
+    int* adjacency_list_count = vrx_pf_adjacency_count(searchType);
 
-        return mapgrid.cached_gridlist_count[NodeNumStart];
-    }
-    //else
-    //	gi.dprintf("FillGridList()");
+    if (adjacency_list[NodeNumStart] != nullptr) // az: don't recompute this
+        return adjacency_list_count[NodeNumStart];
 
     // clear previous gridlist values
-    ClearGridList();
-
+    static int adjacencytmp[NUMCHILDS];
+    memset(adjacencytmp, -1, sizeof(adjacencytmp));
     VectorCopy(mapgrid.pathnode[NodeNumStart], start);
 
     if (searchType == SEARCHTYPE_FLY)
@@ -499,35 +399,35 @@ int FillGridList(const int searchType, const int NodeNumStart) {
         maxZdelta = 32;
 
     // fill gridlist with node indices
-    for (i = 0, j = 0; i < mapgrid.numnodes; i++) {
+    for (i = 0, j = 0; i < mapgrid.numnodes && j < NUMCHILDS; i++) {
         // we don't want the start node pointing to itself!
         if (i == NodeNumStart)
             continue;
-        if (!isValidChildNode(start, mapgrid.pathnode[i], 256, maxZdelta))
+        if (!vrx_pf_is_valid_child_node(start, mapgrid.pathnode[i], 256, maxZdelta, searchType))
             continue;
 
         // copy mapgrid.pathnode index to gridlist array and increment the gridlist index/nodes found
-        mapgrid.gridlist[j++] = i;
+        adjacencytmp[j++] = i;
     }
 
-    mapgrid.cached_gridlist[NodeNumStart] = vrx_malloc(sizeof(int) * j, TAG_LEVEL);
-    for (int k = 0; k < j; k++) // az: copy to cache
-    {
-        mapgrid.cached_gridlist[NodeNumStart][k] = mapgrid.gridlist[k];
-    }
+    // az: copy to cache
+    adjacency_list[NodeNumStart] = vrx_malloc(sizeof(int) * j, TAG_LEVEL);
+    memcpy(adjacency_list[NodeNumStart], adjacencytmp, sizeof(int) * j);
+    adjacency_list_count[NodeNumStart] = j;
 
-    mapgrid.cached_gridlist_count[NodeNumStart] = j;
     return j;
 }
 
+
 //TODO: limit search pattern on X and Y axis?
-int SortGridList(const int searchType, const int NodeNumStart) {
-    int childs = NUMCHILDS;
+int vrx_pf_sort_adjacent_nodes(const enum searchtype_t searchType, const int NodeNumStart) {
     vec3_t start;
 
     VectorCopy(mapgrid.pathnode[NodeNumStart], start);
 
-    const int list_size = FillGridList(searchType, NodeNumStart);
+    const int list_size = vrx_pf_compute_adjacent_nodes(searchType, NodeNumStart);
+
+    int **adjacency_list = vrx_pf_adjacency_list(searchType);
 
     // nothing to sort!
     if (list_size < 2) {
@@ -535,27 +435,16 @@ int SortGridList(const int searchType, const int NodeNumStart) {
         return list_size;
     }
 
-    // we only need to sort nodes equal to the number of child nodes we want
-    //if (list_size > NUMCHILDS)
-    //	list_size = NUMCHILDS;
-
-    if (list_size < childs) {
-        //gi.dprintf("list < childs\n");
-        childs = list_size;
-    }
-
     // fill gridlist with node indices closest to start
-    //for (i=0; i<list_size; i++)
-    //
-    for (int i = 0; i < childs; i++) {
+    for (int i = 0; i < list_size; i++) {
         int GLindex = i;
-        int index = mapgrid.cached_gridlist[NodeNumStart][i]; //i;
-        float best = Get2dDistance(mapgrid.pathnode[mapgrid.cached_gridlist[NodeNumStart][i]], start);
+        int index = adjacency_list[NodeNumStart][i]; //i;
+        float best = Get2dDistance(mapgrid.pathnode[adjacency_list[NodeNumStart][i]], start);
 
         for (int j = i + 1; j < list_size; j++) {
-            const float dist = Get2dDistance(mapgrid.pathnode[mapgrid.cached_gridlist[NodeNumStart][j]], start);
+            const float dist = Get2dDistance(mapgrid.pathnode[adjacency_list[NodeNumStart][j]], start);
             if (dist < best) {
-                index = mapgrid.cached_gridlist[NodeNumStart][j]; //j; // stored value
+                index = adjacency_list[NodeNumStart][j]; //j; // stored value
                 GLindex = j; // list position of best value
                 best = dist;
             }
@@ -563,89 +452,60 @@ int SortGridList(const int searchType, const int NodeNumStart) {
 
         // swap node index of current position with node index of closest node
         // this procedure sorts the list and keeps us from finding the same value twice
-        const int temp = mapgrid.cached_gridlist[NodeNumStart][i];
-        mapgrid.cached_gridlist[NodeNumStart][i] = index;
-        mapgrid.cached_gridlist[NodeNumStart][GLindex] = temp;
-        //gridlist[index] = temp;
+        const int temp = adjacency_list[NodeNumStart][i];
+        adjacency_list[NodeNumStart][i] = index;
+        adjacency_list[NodeNumStart][GLindex] = temp;
     }
 
-    //return CullGridList(start, childs);
-    return childs; // return maximum number of valid child nodes found
+    return list_size; // return maximum number of valid child nodes found
 }
 
-int NextNode(const int i, vec3_t start) {
-    switch (i) {
-        case 0: return GetVerticalNodeNum(start, 32, 0, 32, mapgrid.numnodes); // right
-        case 1: return GetVerticalNodeNum(start, -32, 0, 32, mapgrid.numnodes); // left
-        case 2: return GetVerticalNodeNum(start, 0, 32, 32, mapgrid.numnodes); // forward
-        case 3: return GetVerticalNodeNum(start, 0, -32, 32, mapgrid.numnodes); // backward
-    }
-    return -1;
-}
 
-//==========================================================
-
-void ComputeSuccessors(struct pfctx_s* ctx, const int searchType, node_t *PresentNode, const int NodeNumD) {
-    int NextNodeNum;
-
+void vrx_pf_compute_successors(struct pfctx_s* ctx, const enum searchtype_t searchType, node_t *PresentNode, const int NodeNumD) {
     // create a sorted list of the closest node indices
-    const int maxChilds = SortGridList(searchType, PresentNode->nodenum);
+    const int maxChilds = vrx_pf_sort_adjacent_nodes(searchType, PresentNode->nodenum);
 
     for (int i = 0; i < maxChilds; i++) {
         // GHz FIX - added if clause to use the cached gridlist if available
         // this is necessary because SortGridList() is only sorting the cached list, not gridList
         //GHz START
-        if (mapgrid.cached_gridlist[PresentNode->nodenum] == nullptr)
-            NextNodeNum = mapgrid.gridlist[i];
-        else
-            NextNodeNum = mapgrid.cached_gridlist[PresentNode->nodenum][i];
+        int** adjacency = vrx_pf_adjacency_list(searchType);
+        const int nextNodeIndex = adjacency[PresentNode->nodenum][i];
         //GHz END
-        //if (NextNodeNum == PresentNode->nodenum)
-        //	gi.dprintf("%d = %d\n", PresentNode->nodenum, NextNodeNum);
-        if (NextNodeNum == -1)
+
+        if (nextNodeIndex == -1)
             continue;
-        GetSuccessorNodes(ctx, PresentNode, NextNodeNum, NodeNumD);
+
+        vrx_pf_push_successors(ctx, PresentNode, nextNodeIndex, NodeNumD);
     }
 }
 
-int *Waypoint = nullptr; // Integer array of nodenum's along the path
-int numpts = 0; // Number of nodes in the path..
-
-int CopyWaypoints(int *wp, const int max) {
+int vrx_copy_path_waypoints(int *wp, const int max) {
     int j = max;
 
-    if (j > numpts)
-        j = numpts;
+    if (j > pfctx->numpts)
+        j = pfctx->numpts;
 
     for (int i = 0; i < j; i++)
-        wp[i] = Waypoint[i];
+        wp[i] = pfctx->waypoints[i];
 
     return j;
 }
 
-void GetNodePosition(const int nodenum, vec3_t pos) {
+void vrx_pf_get_node_position(const int nodenum, vec3_t pos) {
     VectorCopy(mapgrid.pathnode[nodenum], pos);
 }
 
 // returns the waypoint index closest to start along the path leading to our final destination (or -1 if list is empty)
-int NearestWaypointNum(vec3_t start, int *wp, size_t wpcount) {
+int vrx_pf_nearest_waypoint_index_along_path(vec3_t start, int *wp, size_t wpcount) {
     int bestNodeNum = -1;
-    float best = 0;
-
-    //if (!numpts)
-    //	return -1;
+    float best = INFINITY;
 
     // get the nodenum for the closest node
-    //for (i = 0; i < numpts; i++)
     for (int i = 0; i < wpcount; i++) {
-        // we've reached the end of the list
-        // az: 0 is, in fact, a valid index.
-        // if (wp[i] == 0)
-        //     break;
-
         const float dist = distanceSqr(mapgrid.pathnode[wp[i]], start);
 
-        if (!best || dist < best) {
+        if (dist < best) {
             best = dist;
             bestNodeNum = i;
         }
@@ -655,43 +515,11 @@ int NearestWaypointNum(vec3_t start, int *wp, size_t wpcount) {
     return bestNodeNum;
 }
 
-
-void RemoveDuplicates(node_t *BestList, node_t *OtherList) {
-    node_t *tNodePrev = nullptr;
-
-    const node_t *bestNode = BestList;
-
-    while (bestNode) {
-        node_t *tNode = OtherList;
-
-        // search OtherList for a node that also exists in BestList
-        while (tNode) {
-            // is this nodenum on the BestList?
-            if (tNode == bestNode)
-                break;
-
-            // save the previous node
-            tNodePrev = tNode;
-            // move to the next node in OtherList
-            tNode = tNode->NextNode;
-        }
-
-        // we found a duplicate, so pop it out of OtherList
-        if (tNode)
-            tNodePrev->NextNode = tNode->NextNode;
-
-        // move to the next node in BestList
-        bestNode = bestNode->PrevNode;
-    }
-}
-
-//=========================================
-int FindPath(const int searchType, vec3_t start, vec3_t destination) {
+int FindPath(const enum searchtype_t searchType, vec3_t start, vec3_t destination) {
     node_t *BestNode;
     int g;
     float h;
     vec3_t tstart, tdest;
-    // sorry msvc i'm lazyyyyyyyyyyyy
     auto ctx = pfctx;
     pfctx_reset(ctx);
 
@@ -699,20 +527,18 @@ int FindPath(const int searchType, vec3_t start, vec3_t destination) {
     VectorCopy(destination, tdest);
 
     // Get NodeNum of start vector
-    const int startnodenum = GetNodeNum(tstart);
+    const int startnodenum = vrx_pf_nearest_node_index(tstart, INFINITY, false);
     if (startnodenum == -1) {
         //gi.dprintf("bad nodenum at start\n");
         return 0; // ERROR
     }
 
     // Get NodeNum of destination vector
-    const int endnodenum = GetNodeNum(tdest);
+    const int endnodenum = vrx_pf_nearest_node_index(tdest, INFINITY, false);
     if (endnodenum == -1) {
         //gi.dprintf("bad nondenum at end\n");
         return 0; // ERROR
     }
-
-    //gi.dprintf("starting node = %d, end = %d\n", NodeNumS, NodeNumD);
 
     // Allocate OPEN/CLOSED list pointers..
     ctx->OPEN = nodearena_alloc(ctx->arena);
@@ -721,9 +547,7 @@ int FindPath(const int searchType, vec3_t start, vec3_t destination) {
     ctx->CLOSED = nodearena_alloc(ctx->arena);
     ctx->CLOSED->NextNode = nullptr;
 
-    //================================================
     // This is our very first NODE!  Our start vector
-    //================================================
     node_t *StartNode = nodearena_alloc(ctx->arena);
     StartNode->nodenum = startnodenum; // starting position nodenum
     StartNode->dist = g = 0; // we haven't gone anywhere yet
@@ -734,46 +558,26 @@ int FindPath(const int searchType, vec3_t start, vec3_t destination) {
         StartNode->Child[c] = nullptr; // no children for search pattern yet
     StartNode->NextNode = nullptr;
     StartNode->PrevNode = nullptr;
-    //================================================
 
     // next node in open list points to our starting node
     ctx->OPEN->NextNode = BestNode = StartNode; // First node on OPEN list..
 
-    //GHz - need to free these nodes too!
-    NodeCount += 2;
-
     for (;;) {
-        BestNode = NextBestNode(ctx); // Get next node from OPEN list
+        BestNode = vrx_pf_pop_next_open_node(ctx); // Get next node from OPEN list
         if (!BestNode) {
             //gi.dprintf("ran out of nodes to search\n");
             return 0; //GHz
         }
 
         if (BestNode->nodenum == endnodenum) break; // we there yet?
-        //gi.dprintf("searching node %d\n", BestNode->nodenum);
-        ComputeSuccessors(ctx, searchType, BestNode, endnodenum);
+        vrx_pf_compute_successors(ctx, searchType, BestNode, endnodenum);
     } // Search from here..
 
-    //================================================
-
-    RemoveDuplicates(BestNode, ctx->CLOSED); //FIXME: move this up before the start==end crash check
-
-    //gi.dprintf("%d: processed %d nodes\n", level.framenum,NodeCount);
     if (BestNode == StartNode) {
         return 0;
     }
 
-    //debugging information - shows Best, OPEN, and CLOSED node lists
-    //gi.dprintf("Start = %d End = %d\n", NodeNumS, NodeNumD);
-    //gi.dprintf("Printing tNode (in reverse):\n");
-    //PrintNodes(BestNode, true);
-    //gi.dprintf("Printing OPEN list:\n");
-    //PrintNodes(OPEN, false);
-    //gi.dprintf("Printing CLOSED list:\n");
-    //PrintNodes(CLOSED, false);
-
     BestNode->NextNode = nullptr; // Must tie this off!
-
 
     // How many nodes we got?
     node_t *tNode = BestNode;
@@ -790,9 +594,7 @@ int FindPath(const int searchType, vec3_t start, vec3_t destination) {
     }
 
     // Let's allocate our own stuff...
-    numpts = i;
-
-    Waypoint = (int *) vrx_malloc(numpts * sizeof(int), TAG_LEVEL);
+    pfctx->numpts = i;
 
     // Now, we have to assign the nodenum's along
     // this path in reverse order because that is
@@ -801,7 +603,7 @@ int FindPath(const int searchType, vec3_t start, vec3_t destination) {
     // So, we copy them over in reverse.. No biggy..
 
     while (BestNode) {
-        Waypoint[--i] = BestNode->nodenum; //GHz: how/when is this freed?
+        pfctx->waypoints[--i] = BestNode->nodenum; //GHz: how/when is this freed?
         BestNode = BestNode->PrevNode;
     }
 
@@ -811,20 +613,9 @@ int FindPath(const int searchType, vec3_t start, vec3_t destination) {
     // because Waypoint array is filled with indexes into
     // our node[i] array of valid vectors in the map..
     // We did it!!  Now free the stack and exit..
-    NodeCount = 0;
-
-    //TODO: performance... cpu usage is still very high
-    //TODO: grid editor, save grid to disk
-    //TODO: need some way of handling manually edited grid
-    // because NextNode() only searches within a specific 32x32 pattern
-
-
-    //gi.dprintf("%d: found %d\n",level.framenum, numpts);
-
-    return (numpts);
+    return (pfctx->numpts);
 }
 
-//======================================================
 void G_Spawn_Splash(const int type, const int count, const int color, vec3_t start, vec3_t movdir, vec3_t origin) {
     gi.WriteByte(svc_temp_entity);
     gi.WriteByte(type);
@@ -835,11 +626,8 @@ void G_Spawn_Splash(const int type, const int count, const int color, vec3_t sta
     gi.multicast(origin, MULTICAST_PVS);
 }
 
-//==================================================
 
-//=====================================================
 // NOTE: you may already have this function someplace
-//=====================================================
 void G_Spawn_Trails(const int type, vec3_t start, vec3_t endpos) {
     gi.WriteByte(svc_temp_entity);
     gi.WriteByte(type);
@@ -857,38 +645,39 @@ void DrawPath(edict_t *ent) {
 
     for (int i = 0; i < ent->monsterinfo.numWaypoints; i++) {
         const int j = ent->monsterinfo.waypoint[i];
+#ifndef VRX_REPRO
         G_Spawn_Splash(TE_LASER_SPARKS, 4, 0xdcdddedf, mapgrid.pathnode[j], vec3_origin, mapgrid.pathnode[j]);
+#else
+        int wpPrev = ent->monsterinfo.waypoint[i-1];
+        gire.Draw_Arrow(mapgrid.pathnode[wpPrev], mapgrid.pathnode[j], 1, &rgba_blue, &rgba_blue, FRAMETIME, true);
+#endif
     }
 }
 
 void DrawPath1(void) {
-
-    if (numpts < 0)
+    if (pfctx->numpts < 0)
         return;
 
-    for (int i = 0; i < numpts; i++) {
-        int wp = Waypoint[i];
+    for (int i = 0; i < pfctx->numpts; i++) {
+        int wp = pfctx->waypoints[i];
 #ifndef VRX_REPRO
         G_Spawn_Splash(TE_LASER_SPARKS, 4, 0xdcdddedf, mapgrid.pathnode[wp], vec3_origin, mapgrid.pathnode[wp]);
 #else
         if (i == 0)
             continue;
 
-        int wpPrev = Waypoint[i-1];
+        int wpPrev = pfctx->waypoints[i-1];
         gire.Draw_Arrow(mapgrid.pathnode[wpPrev], mapgrid.pathnode[wp], 1, &rgba_blue, &rgba_blue, FRAMETIME, true);
 #endif
-        //G_Spawn_Trails(TE_BFG_LASER, mapgrid.pathnode[j], mapgrid.pathnode[j+1]);
     }
 }
 
 
-//=====================================================
 //================== pathfinding stuff ================
-//=====================================================
 
 
 // draws the path to the spot the player is aiming at
-void DrawPathToAimSpot(edict_t *ent) {
+void DrawPathToAimSpot(edict_t *ent, enum searchtype_t st) {
     vec3_t forward, right, start, offset, end;
     trace_t tr;
 
@@ -917,7 +706,7 @@ void DrawPathToAimSpot(edict_t *ent) {
     VectorCopy(mapgrid.pathnode[snode], start);
     VectorCopy(mapgrid.pathnode[enode], end);
 
-    if (FindPath(SEARCHTYPE_WALK, start, end)) {
+    if (FindPath(st, start, end)) {
         // draw it
         DrawPath1();
         //safe_centerprintf(ent, "success!");
@@ -929,26 +718,32 @@ void DrawPathToAimSpot(edict_t *ent) {
 #endif
 }
 
-//========================================================
 // Put this at very top of ClientThink() so you can see
 // the nodes created by CreateGrid as you walk around!
 // Also, prototype this function above ClientThink()...
-//========================================================
 
 // NOTE: max search distance for child links should be set to
 // gap specified in nearbyGridNode + x/yevery + min1/max1 (e.g. 128+32+3=163)
-void DrawChildLinks(edict_t *ent) {
+void vrx_pf_draw_child_links(edict_t *ent) {
     int count;
     float maxDist;
     vec3_t start, end;
     //	trace_t	tr;
 
-    if (ent->client->showGridDebug == GD_AIMSPOT) {
-        DrawPathToAimSpot(ent);
+    if (ent->client->showGridDebug == GD_OFF)
+        return;
+
+    auto searchType = (ent->client->showGridDebug == GD_CHILD || ent->client->showGridDebug == GD_AIMSPOT) ?
+        SEARCHTYPE_WALK : SEARCHTYPE_FLY;
+
+    if (ent->client->showGridDebug == GD_AIMSPOT || ent->client->showGridDebug == GD_AIMSPOT_FLY) {
+        DrawPathToAimSpot(ent, searchType);
         return;
     }
 
-    // const int parentNode = NearestNodeNumber(ent->s.origin, 255, true);
+    if (ent->client->showGridDebug != GD_CHILD && ent->client->showGridDebug != GD_CHILD_FLY)
+        return;
+
     const int parentNode = gridkdtree_query(gridtree, ent->s.origin);
     VectorCopy(mapgrid.pathnode[parentNode], start);
 
@@ -956,7 +751,12 @@ void DrawChildLinks(edict_t *ent) {
         // don't link parent node to itself!
         if (parentNode && i == parentNode)
             continue;
-        if (!isValidChildNode(start, mapgrid.pathnode[i], 256, 32))
+
+        int zdelta = 32;
+        if (searchType == SEARCHTYPE_FLY)
+            zdelta = 8192;
+
+        if (!vrx_pf_is_valid_child_node(start, mapgrid.pathnode[i], 256, zdelta, searchType))
             continue;
 
         // copy node position
@@ -982,7 +782,7 @@ void DrawChildLinks(edict_t *ent) {
 
     if (!(level.framenum % 20)) {
         const auto s = va("Node %d has %d child links @ %.0f.\n",
-                          NearestNodeNumber(ent->s.origin, 255, true), count, maxDist);
+                          vrx_pf_nearest_node_index(ent->s.origin, 255, true), count, maxDist);
 #ifndef VRX_REPRO
         safe_centerprintf(ent, "%s", s);
 #else
@@ -993,10 +793,16 @@ void DrawChildLinks(edict_t *ent) {
 
 void InvalidateGridCache() {
     for (int i = 0; i < mapgrid.numnodes; i++) {
-        if (mapgrid.cached_gridlist[i]) {
-            vrx_free(mapgrid.cached_gridlist[i]);
-            mapgrid.cached_gridlist[i] = nullptr;
-            mapgrid.cached_gridlist_count[i] = 0;
+        if (mapgrid.adjacent_nodes[i]) {
+            vrx_free(mapgrid.adjacent_nodes[i]);
+            mapgrid.adjacent_nodes[i] = nullptr;
+            mapgrid.adjacent_node_count[i] = 0;
+        }
+
+        if (mapgrid.adjacent_nodes_fly[i]) {
+            vrx_free(mapgrid.adjacent_nodes_fly[i]);
+            mapgrid.adjacent_nodes_fly[i] = nullptr;
+            mapgrid.adjacent_node_count_fly[i] = 0;
         }
     }
 }
@@ -1005,7 +811,7 @@ int GetGridNodes() {
     return mapgrid.numnodes;
 }
 
-qboolean GetRandomGridPosition(vec3_t pos) {
+qboolean vrx_pf_get_random_grid_position(vec3_t pos) {
     if (mapgrid.numnodes < 1)
         return false;
 
@@ -1015,7 +821,7 @@ qboolean GetRandomGridPosition(vec3_t pos) {
     return true;
 }
 
-qboolean GetGridPosition(vec3_t pos, int index) {
+qboolean vrx_pf_get_grid_position(vec3_t pos, int index) {
     if (!index)
         index = 0;
 
@@ -1031,41 +837,46 @@ void Cmd_GetGridPosition() {
     vec3_t v;
 
     for (int i = 0; i < 5; i++) {
-        if (GetGridPosition(v, i))
+        if (vrx_pf_get_grid_position(v, i))
             gi.dprintf("%d: %.1f %.1f %.1f\n", i, v[0], v[1], v[2]);
     }
 }
 
-void DrawNearbyGrid(edict_t *ent) {
+void vrx_pf_draw_nearby_grid(edict_t *ent) {
     vec3_t v, forward;
+
+    if (ent->client->showGridDebug == GD_OFF)
+        return;
 
     AngleVectors(ent->s.angles, forward,nullptr,nullptr);
 
     for (int i = 0; i < mapgrid.numnodes; i++) {
         VectorSubtract(mapgrid.pathnode[i], ent->s.origin, v);
+#ifndef VRX_REPRO
         if (VectorLength(v) >= 256) continue; // limit view distance to eliminate overflows
+#endif
         if (DotProduct(v, forward) > 0.3) {
             // infront?
             VectorCopy(mapgrid.pathnode[i], v);
-            v[2] -= 4; // node height
-            // NearestNodeLocation(ent->s.origin, start);
-            // gi.dprintf("%f\n", fabs(mapgrid.pathnode[i][2]-start[2]));
 #ifndef VRX_REPRO
+            v[2] -= 4; // node height
             G_Spawn_Trails(TE_BFG_LASER, mapgrid.pathnode[i], v);
 #else
-            gire.Draw_Point(v, 2, &rgba_green, FRAMETIME, true);
+            gire.Draw_Point(v, 4, &rgba_green, FRAMETIME, true);
 #endif
         }
     }
 }
 
-void DeleteNode(const int nodenum) {
+void vrx_pf_delete_node(const int nodenum) {
     // if this isn't the last node on the list, then copy the
     // vector stored at the end of the array to current position
     if (nodenum != mapgrid.numnodes - 1)
         VectorCopy(mapgrid.pathnode[mapgrid.numnodes-1], mapgrid.pathnode[nodenum]);
+
     // clear the value stored at the end of the list
     VectorClear(mapgrid.pathnode[mapgrid.numnodes-1]);
+
     // reduce the size of the list
     mapgrid.numnodes--;
 }
@@ -1076,8 +887,8 @@ void Cmd_DeleteNode_f(edict_t *ent) {
     if (!ent->myskills.administrator)
         return;
 
-    if ((nearestNode = NearestNodeNumber(ent->s.origin, 255, true)) != -1)
-        DeleteNode(nearestNode);
+    if ((nearestNode = vrx_pf_nearest_node_index(ent->s.origin, 255, true)) != -1)
+        vrx_pf_delete_node(nearestNode);
 
     InvalidateGridCache();
 
@@ -1178,7 +989,6 @@ void Cmd_LoadNodes_f(edict_t *ent) {
     safe_cprintf(ent, PRINT_HIGH, "Loading nodes...\n", mapgrid.numnodes);
 }
 
-//========================================================
 int AdjustDownward(const edict_t *ignore, vec3_t start) {
     vec3_t endpt;
     VectorSet(endpt, start[0], start[1], -8192);
@@ -1188,27 +998,16 @@ int AdjustDownward(const edict_t *ignore, vec3_t start) {
 }
 
 
-//========================================================
 
-int GetNumChildren(const int parent_nodenum, const int nodes) {
-    int j;
-
-    for (int i = j = 0; i < nodes; i++) {
-        if (i == parent_nodenum)
-            continue;
-        if (!isValidChildNode(mapgrid.pathnode[parent_nodenum], mapgrid.pathnode[i], 256, 32))
-            continue;
-        j++;
-    }
-
-    return j;
+int vrx_pf_get_all_children_count(const int parent_nodenum) {
+    return vrx_pf_adjacency_count(SEARCHTYPE_FLY)[parent_nodenum];
 }
 
 // NOTE: max search distance for child links should be set to
 // gap specified in nearbyGridNode + x/yevery + min1/max1 (e.g. 128+32+3=163)
 qboolean NearbyGridNode(vec3_t start, const int nodes) {
     for (int i = 0; i < nodes; i++) {
-        if (!isValidChildNode(start, mapgrid.pathnode[i], 129, 18))
+        if (!vrx_pf_is_valid_child_node(start, mapgrid.pathnode[i], 129, 18, SEARCHTYPE_WALK))
             continue;
         return true;
     }
@@ -1272,8 +1071,8 @@ realcheck:
 void CullGrid(void) {
     for (int i = 0; i < mapgrid.numnodes; i++) {
         // delete nodes that have no children
-        if (GetNumChildren(i, mapgrid.numnodes) < 1)
-            DeleteNode(i);
+        if (vrx_pf_get_all_children_count(i) < 1)
+            vrx_pf_delete_node(i);
     }
 }
 
@@ -1291,10 +1090,14 @@ void CreateGrid(qboolean force) {
     vec3_t max2 = {+16, +16, 0};
 
     mapgrid.numnodes = 0;
-    for (int i = 0; i < MAX_GRID_SIZE; i++) // az don't recompute grid all the damn time
-    {
-        mapgrid.cached_gridlist[i] = nullptr;
+    for (int i = 0; i < MAX_GRID_SIZE; i++) {
+        // az don't recompute grid all the damn time
+        mapgrid.adjacent_nodes[i] = nullptr;
+        mapgrid.adjacent_nodes_fly[i] = nullptr;
+        mapgrid.adjacent_node_count[i] = 0;
+        mapgrid.adjacent_node_count_fly[i] = 0;
     }
+
 
     if (!force && LoadGrid())
         return;
@@ -1367,9 +1170,7 @@ void CreateGrid(qboolean force) {
 
     gi.dprintf("%d Nodes Created\n", mapgrid.numnodes);
 
-    //=====================================================
     //================== pathfinding stuff ================
-    //=====================================================
 
     if (!force)
         SaveGrid();
@@ -1420,10 +1221,10 @@ void Cmd_ToggleShowGrid(edict_t *ent) {
     } else {
         if (ent->client->showGridDebug == GD_NEARBY)
             safe_centerprintf(ent, "Show nearby nodes\n");
-        else if (ent->client->showGridDebug == GD_CHILD)
-            safe_centerprintf(ent, "Show child links\n");
+        else if (ent->client->showGridDebug == GD_CHILD || ent->client->showGridDebug == GD_CHILD_FLY)
+            safe_centerprintf(ent, "Show child links (Fly: %d)\n", ent->client->showGridDebug == GD_CHILD_FLY);
         else if (ent->client->showGridDebug == GD_AIMSPOT)
-            safe_centerprintf(ent, "Show path to aim spot\n");
+            safe_centerprintf(ent, "Show path to aim spot (Fly: %d)\n", ent->client->showGridDebug == GD_AIMSPOT_FLY);
         //else
         //	safe_centerprintf(ent, "Create child links\n");
     }
