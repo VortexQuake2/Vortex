@@ -444,6 +444,8 @@ static constexpr float FLY_TURN_FACTOR_SPEED_SCALE = 0.08f;
 static constexpr float FLY_PITCH_LERP_SPEED = 4.0f;
 static constexpr float FLY_WALL_STUCK_THRESHOLD = 1.5f;
 static constexpr float FLY_DESCENT_SPEED_MULTIPLIER = 0.6f;
+// Fraction of fly_speed allowed as downward velocity while we can't see our enemy
+static constexpr float FLY_SEARCH_DESCENT_SPEED_SCALE = 0.35f;
 static constexpr float FLY_TARGET_LEAD_TIME = 0.45f;
 static constexpr float FLY_CATCHUP_MARGIN = 32.0f;
 static constexpr float FLY_ATTACK_SPEED_SCALE = 1.35f;
@@ -516,11 +518,52 @@ static float fly_clampf(float value, float min_value, float max_value)
 	return value;
 }
 
-static void fly_scale_add(vec3_t out, vec3_t a, float ascale, vec3_t b, float bscale)
+static void fly_lerp(vec3_t out, vec3_t a, vec3_t b, float t)
 {
-	out[0] = a[0] * ascale + b[0] * bscale;
-	out[1] = a[1] * ascale + b[1] * bscale;
-	out[2] = a[2] * ascale + b[2] * bscale;
+	out[0] = a[0] + (b[0] - a[0]) * t;
+	out[1] = a[1] + (b[1] - a[1]) * t;
+	out[2] = a[2] + (b[2] - a[2]) * t;
+}
+
+// Spherical interpolation, a direct port of RemasterQ2's slerp() (q_vec3.h).
+// Returns 'from' at t=0 and 'to' at t=1; assumes both inputs are unit vectors.
+// Remaster steers fliers with slerp rather than a normalized lerp so the turn
+// arc stays at a constant angular rate regardless of how far apart the headings
+// are - it tracks moving targets more cleanly than nlerp near large angles.
+static void fly_slerp(vec3_t out, vec3_t from, vec3_t to, float t)
+{
+	float dot = DotProduct(from, to);
+	float a_factor, b_factor, ang, sin_omega;
+
+	// nearly parallel - lerp is stable and avoids the sin(0) blowup
+	if (dot >= 0.9995f)
+	{
+		fly_lerp(out, from, to, t);
+		return;
+	}
+
+	// nearly opposite - route through a perpendicular axis (matches remaster)
+	if (dot <= -0.9995f)
+	{
+		vec3_t axis = { 1.0f, 0.0f, 0.0f };
+		vec3_t c;
+
+		CrossProduct(axis, to, c);
+		if (t <= 0.5f)
+			fly_lerp(out, from, c, t * 2.0f);
+		else
+			fly_lerp(out, c, to, (t - 0.5f) * 2.0f);
+		return;
+	}
+
+	ang = acosf(dot);
+	sin_omega = sinf(ang);
+	a_factor = sinf((1.0f - t) * ang) / sin_omega;
+	b_factor = sinf(t * ang) / sin_omega;
+
+	out[0] = from[0] * a_factor + to[0] * b_factor;
+	out[1] = from[1] * a_factor + to[1] * b_factor;
+	out[2] = from[2] * a_factor + to[2] * b_factor;
 }
 
 static qboolean fly_vector_valid(vec3_t v)
@@ -1726,22 +1769,9 @@ static void flystep_apply_goal_pressure(edict_t *ent, flystep_ctx_t *ctx)
 
 static void flystep_face_move_target(edict_t *ent, flystep_ctx_t *ctx)
 {
-	if (ctx->intent.visible_combat_enemy)
-	{
+	if (ctx->intent.visible_combat_enemy ||
+		(ctx->los_recover_drive && ent->enemy && ent->enemy->inuse))
 		fly_face_target(ent, ent->enemy->s.origin);
-		M_ChangeYaw(ent);
-		return;
-	}
-
-	if (ctx->los_recover_drive && ent->enemy && ent->enemy->inuse)
-	{
-		fly_face_target(ent, ent->enemy->s.origin);
-		M_ChangeYaw(ent);
-		return;
-	}
-
-	fly_face_target(ent, ctx->towards_origin);
-	M_ChangeYaw(ent);
 }
 
 static void flystep_avoid_blocked_move(edict_t *ent, flystep_ctx_t *ctx)
@@ -1903,7 +1933,7 @@ static void flystep_blend_direction(edict_t *ent, flystep_ctx_t *ctx)
 		else if (los_pressure_drive)
 		{
 			turn_factor = FLY_LOS_PRESERVE_TURN_FACTOR;
-			fly_scale_add(ctx->final_dir, ctx->dir, turn_factor, ctx->wanted_dir, 1.0f - turn_factor);
+			fly_slerp(ctx->final_dir, ctx->dir, ctx->wanted_dir, 1.0f - turn_factor);
 			if (VectorNormalize(ctx->final_dir) < 0.1f)
 				VectorCopy(ctx->wanted_dir, ctx->final_dir);
 		}
@@ -1914,7 +1944,7 @@ static void flystep_blend_direction(edict_t *ent, flystep_ctx_t *ctx)
 		else if (ctx->catchup_goal && dir_dot < 0.7f)
 		{
 			turn_factor = 0.2f;
-			fly_scale_add(ctx->final_dir, ctx->dir, turn_factor, ctx->wanted_dir, 1.0f - turn_factor);
+			fly_slerp(ctx->final_dir, ctx->dir, ctx->wanted_dir, 1.0f - turn_factor);
 			if (VectorNormalize(ctx->final_dir) < 0.1f)
 				VectorCopy(ctx->wanted_dir, ctx->final_dir);
 		}
@@ -1922,7 +1952,7 @@ static void flystep_blend_direction(edict_t *ent, flystep_ctx_t *ctx)
 			ctx->following_paths || ctx->water_recovery_drive) && DotProduct(ctx->dir, ctx->wanted_dir) > 0.0f)
 		{
 			turn_factor = FLY_TURN_FACTOR_FAST;
-			fly_scale_add(ctx->final_dir, ctx->dir, turn_factor, ctx->wanted_dir, 1.0f - turn_factor);
+			fly_slerp(ctx->final_dir, ctx->dir, ctx->wanted_dir, 1.0f - turn_factor);
 			if (VectorNormalize(ctx->final_dir) < 0.1f)
 				VectorCopy(ctx->wanted_dir, ctx->final_dir);
 		}
@@ -1930,7 +1960,7 @@ static void flystep_blend_direction(edict_t *ent, flystep_ctx_t *ctx)
 		{
 			turn_factor = min(1.0f, FLY_TURN_FACTOR_BASE +
 				(FLY_TURN_FACTOR_SPEED_SCALE * (ctx->current_speed / ent->monsterinfo.fly_speed)));
-			fly_scale_add(ctx->final_dir, ctx->dir, turn_factor, ctx->wanted_dir, 1.0f - turn_factor);
+			fly_slerp(ctx->final_dir, ctx->dir, ctx->wanted_dir, 1.0f - turn_factor);
 			if (VectorNormalize(ctx->final_dir) < 0.1f)
 				VectorCopy(ctx->wanted_dir, ctx->final_dir);
 		}
@@ -1992,6 +2022,15 @@ static qboolean flystep_commit_velocity(edict_t *ent, flystep_ctx_t *ctx)
 		return false;
 
 	VectorScale(ctx->final_dir, ctx->current_speed, ent->velocity);
+
+	if (!ctx->intent.visible_combat_enemy && ent->velocity[2] < 0.0f)
+	{
+		float max_descent = ent->monsterinfo.fly_speed * FLY_SEARCH_DESCENT_SPEED_SCALE;
+
+		if (ent->velocity[2] < -max_descent)
+			ent->velocity[2] = -max_descent;
+	}
+
 	return true;
 }
 

@@ -698,6 +698,9 @@ static qboolean drone_alt_fly_touch_obstacle(edict_t *ent)
 		return false;
 	if (!(ent->svflags & SVF_MONSTER) || ent->solid == SOLID_NOT)
 		return false;
+	// Only bounce off other alternate-fly fliers, like Remaster flyer_touch
+	if (!(ent->flags & FL_FLY) || !(ent->monsterinfo.aiflags & AI_ALTERNATE_FLY))
+		return false;
 	return true;
 }
 

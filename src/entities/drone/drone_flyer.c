@@ -471,8 +471,20 @@ static void flyer_checkstrafe(edict_t *self)
 	float	strafe_speed;
 	float	forward_speed;
 	float	range;
+	vec3_t	start, aim;
+	int		speed;
 
 	if (!G_ValidTarget(self, self->enemy, true, true) || !visible(self, self->enemy))
+		return;
+
+	// Only strafe when we actually have a rocket shot lined up.
+	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * drone_damagelevel(self);
+	if (M_ROCKETLAUNCHER_SPEED_MAX && speed > M_ROCKETLAUNCHER_SPEED_MAX)
+		speed = M_ROCKETLAUNCHER_SPEED_MAX;
+	if (speed < FLYER_ROCKET_MIN_SPEED)
+		speed = FLYER_ROCKET_MIN_SPEED;
+	VectorCopy(self->s.origin, start);
+	if (!flyer_predict_rocket_aim(self, start, speed, aim) || !M_MonsterHasClearShotFrom(self, start))
 		return;
 
 	range = entdist(self, self->enemy);

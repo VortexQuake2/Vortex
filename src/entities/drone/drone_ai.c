@@ -2127,6 +2127,18 @@ void drone_ai_run1 (edict_t *self, float dist)
 
 				// don't let a search time-out as long as we can see the enemy
 				self->monsterinfo.search_frames = 0;
+
+				// If we are in ALTERNATE_FLYSTEP, let's prevent the "Look away, then re-aim" during combat
+				if ((self->monsterinfo.aiflags & AI_ALTERNATE_FLY)
+					&& !(invasion->value && self->enemy->mtype == INVASION_PLAYERSPAWN))
+				{
+					VectorCopy(self->enemy->s.origin, self->monsterinfo.last_sighting);
+					VectorSubtract(self->enemy->s.origin, self->s.origin, v);
+					self->ideal_yaw = vectoyaw(v);
+					M_ChangeYaw(self);
+					M_MoveToPosition(self, self->enemy->s.origin, dist, false);
+					return;
+				}
 			}
 			else if (self->monsterinfo.leader && goal == self->monsterinfo.leader && self->monsterinfo.leader->mtype != M_COMBAT_POINT)
 			{
