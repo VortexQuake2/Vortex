@@ -136,8 +136,8 @@ csurface_t* FindSky()
 }
 
 //FIXME: this should try to use grd coordinates first
-qboolean GetGridPosition(vec3_t pos, int index);
-qboolean GetRandomGridPosition(vec3_t pos);
+qboolean vrx_pf_get_grid_position(vec3_t pos, int index);
+qboolean vrx_pf_get_random_grid_position(vec3_t pos);
 int GetGridNodes();
 qboolean vrx_find_random_spawn_point (edict_t *ent, qboolean air)
 {
@@ -155,7 +155,7 @@ qboolean vrx_find_random_spawn_point (edict_t *ent, qboolean air)
 	for (j=0;j<max_tries;j++)
 	{
 		// try to use a random grid position first, then fall back to random coordinates
-		if (j > 100 || !GetRandomGridPosition(start))
+		if (j > 100 || !vrx_pf_get_random_grid_position(start))
 		{
 			//gi.dprintf("couldn't get a random grid position\n");
 			// get a random position within a map

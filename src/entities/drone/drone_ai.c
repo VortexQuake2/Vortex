@@ -22,7 +22,7 @@ qboolean drone_findtarget (edict_t *self, qboolean force);
 edict_t *drone_get_target (edict_t *self, qboolean get_medic_target, qboolean get_enemy, qboolean get_navi);
 void drone_wakeallies (edict_t *self);
 qboolean SV_CloseEnough1(edict_t* ent, vec3_t goalpos, float dist);
-int NearestNodeNumber(vec3_t start, float range, qboolean vis);
+int vrx_pf_nearest_node_index(vec3_t start, float range, qboolean vis);
 
 edict_t *potential_targets[MAX_EDICTS];
 float potential_target_distances[MAX_EDICTS][MAX_EDICTS];
@@ -1513,13 +1513,13 @@ void drone_cleargoal (edict_t *self)
 }
 
 
-qboolean NearestNodeLocation (vec3_t start, vec3_t node_loc, float range, qboolean vis);
+qboolean vrx_pf_nearest_node_location (vec3_t start, vec3_t node_loc, float range, qboolean vis);
 int FindPath(int searchType, vec3_t start, vec3_t destination);
 void M_MoveToPosition(edict_t* ent, vec3_t pos, float dist, qboolean stop_when_close);
-int CopyWaypoints (int *wp, int max);
-int NearestWaypointNum (vec3_t start, int *wp);
-void GetNodePosition (int nodenum, vec3_t pos);
-void DrawPath (edict_t *ent);
+int vrx_copy_path_waypoints (int *wp, int max);
+int vrx_pf_nearest_waypoint_index_along_path (vec3_t start, const int *wp, size_t wpcount);
+void vrx_pf_get_node_position (int nodenum, vec3_t pos);
+void DrawPath (const edict_t *ent);
 
 void drone_ai_giveup (edict_t *self)
 {
@@ -1628,8 +1628,8 @@ void M_FindPath (edict_t *self, vec3_t goalpos, qboolean compute_path_now)
 			gi.dprintf("M_FindPath() trying to recalc path\n");
 		//
 		// get node location nearest to us and our goal
-		if (!(NearestNodeLocation(self->s.origin, v1, 0, true))
-			||!(NearestNodeLocation(goalpos, v2, 0, true)))
+		if (!(vrx_pf_nearest_node_location(self->s.origin, v1, 0, true))
+			||!(vrx_pf_nearest_node_location(goalpos, v2, 0, true)))
 		{
 			// can't find nearby nodes
 			M_ClearPath(self);
@@ -1650,9 +1650,9 @@ void M_FindPath (edict_t *self, vec3_t goalpos, qboolean compute_path_now)
 
 			// copy waypoints to monster
 			self->monsterinfo.numWaypoints =
-				CopyWaypoints(self->monsterinfo.waypoint, 1000);
+				vrx_copy_path_waypoints(self->monsterinfo.waypoint, 1000);
 			// get index of next waypoint
-			self->monsterinfo.nextWaypoint = NearestWaypointNum(self->s.origin, self->monsterinfo.waypoint) + 1;
+			self->monsterinfo.nextWaypoint = vrx_pf_nearest_waypoint_index_along_path(self->s.origin, self->monsterinfo.waypoint, self->monsterinfo.numWaypoints) + 1;
 			// brief delay before we can re-compute path to goal
 			self->monsterinfo.path_time = level.time + (GetRandom(1, 20) * FRAMETIME);
 			self->monsterinfo.updatePath = false;
@@ -1804,8 +1804,8 @@ bool vrx_follow_waypoint_navigation(edict_t *self, float dist, edict_t *goal, ve
 		vec3_t	org;
 
 		// if we can't see the nearest waypoint, or it's too far away, then give up
-		int nearestWaypoint = NearestWaypointNum(self->s.origin, self->monsterinfo.waypoint);
-		GetNodePosition(self->monsterinfo.waypoint[nearestWaypoint], dest);
+		int nearestWaypoint = vrx_pf_nearest_waypoint_index_along_path(self->s.origin, self->monsterinfo.waypoint, self->monsterinfo.numWaypoints);
+		vrx_pf_get_node_position(self->monsterinfo.waypoint[nearestWaypoint], dest);
 		G_EntViewPoint(self, org);
 		float wpDist = Get2dDistance(org, dest);
 		if (!G_IsClearPath(self, MASK_SOLID, org, dest) || wpDist > 256)
@@ -1832,7 +1832,7 @@ bool vrx_follow_waypoint_navigation(edict_t *self, float dist, edict_t *goal, ve
 		// we change the code below to find the nearest waypoint, and then find the next waypoint from that one
 
 		// get the position of the next waypoint
-		GetNodePosition(self->monsterinfo.waypoint[self->monsterinfo.nextWaypoint], dest);
+		vrx_pf_get_node_position(self->monsterinfo.waypoint[self->monsterinfo.nextWaypoint], dest);
 
 		// if we can't see the next waypoint, or it's too far away, then choose a closer waypoint
 		if ((self->monsterinfo.nextWaypoint != (nearestWaypoint + 1)) // monster isn't already moving towards the ideal waypoint
@@ -1849,7 +1849,7 @@ bool vrx_follow_waypoint_navigation(edict_t *self, float dist, edict_t *goal, ve
 		// we are standing on a platform
 		if (self->groundentity && (self->groundentity->style == FUNC_PLAT))
 		{
-			//GetNodePosition(self->monsterinfo.waypoint[self->monsterinfo.nextWaypoint], dest);
+			//vrx_pf_get_node_position(self->monsterinfo.waypoint[self->monsterinfo.nextWaypoint], dest);
 			// destination node is above us and the platform is not moving
 			if (dest[2] - self->s.origin[2] > 32 && self->groundentity->velocity[2] < 1)
 			{
@@ -1865,14 +1865,14 @@ bool vrx_follow_waypoint_navigation(edict_t *self, float dist, edict_t *goal, ve
 
 		// debug stuff below
 		int closestWaypointNode = self->monsterinfo.waypoint[
-			NearestWaypointNum(self->s.origin, self->monsterinfo.waypoint)];//FIXME: this sometimes returns an incorrect value that doesn't agree with NearestNodeNumber()!
-		int closesterWaypointNode = NearestNodeNumber(self->s.origin, 255, true);
+			vrx_pf_nearest_waypoint_index_along_path(self->s.origin, self->monsterinfo.waypoint, self->monsterinfo.numWaypoints)];//FIXME: this sometimes returns an incorrect value that doesn't agree with vrx_pf_nearest_node_index()!
+		int closesterWaypointNode = vrx_pf_nearest_node_index(self->s.origin, 255, true);
 		int next = self->monsterinfo.waypoint[self->monsterinfo.nextWaypoint];
 		int nexter = self->monsterinfo.waypoint[self->monsterinfo.nextWaypoint + 1];
-		//nexter = self->monsterinfo.waypoint[NearestWaypointNum(self->s.origin, self->monsterinfo.waypoint)+1];
+		//nexter = self->monsterinfo.waypoint[vrx_pf_nearest_waypoint_index_along_path(self->s.origin, self->monsterinfo.waypoint, self->monsterinfo.numWaypoints)+1];
 		if (DRONE_DEBUG)
 			gi.dprintf("next waypoint = %d %d (%d/%d), closest = %d %d (%d/%d)\n", next, nexter, self->monsterinfo.nextWaypoint, self->monsterinfo.numWaypoints,
-			           closestWaypointNode, closesterWaypointNode, NearestWaypointNum(self->s.origin, self->monsterinfo.waypoint), self->monsterinfo.numWaypoints);
+			           closestWaypointNode, closesterWaypointNode, vrx_pf_nearest_waypoint_index_along_path(self->s.origin, self->monsterinfo.waypoint, self->monsterinfo.numWaypoints), self->monsterinfo.numWaypoints);
 		if (DRONE_DEBUG && closestWaypointNode != closesterWaypointNode)
 		{
 			qboolean foundWp = false;
@@ -1902,7 +1902,7 @@ bool vrx_follow_waypoint_navigation(edict_t *self, float dist, edict_t *goal, ve
 		//wpDist = Get2dDistance(org, dest);
 
 		// have we reached the next waypoint in our path?
-		//if (NearestWaypointNum(self->s.origin, self->monsterinfo.waypoint) == self->monsterinfo.nextWaypoint && wpDist <= 32)//FIXME: should we use SV_CloseEnough() instead of distance check for fast/big monsters?
+		//if (vrx_pf_nearest_waypoint_index_along_path(self->s.origin, self->monsterinfo.waypoint, self->monsterinfo.numWaypoints) == self->monsterinfo.nextWaypoint && wpDist <= 32)//FIXME: should we use SV_CloseEnough() instead of distance check for fast/big monsters?
 		// increment the next waypoint counter so we keep moving closer to our goal
 		//	self->monsterinfo.nextWaypoint++;
 

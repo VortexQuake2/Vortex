@@ -228,37 +228,25 @@ static void AStar_PutAdjacentsInOpen(int node)
 			astarnodes[addnode].H = Astar_HDist_ManhatanGuess( addnode );
 			astarnodes[addnode].list = OPENLIST;
 
-			gheap_push(openheap, astarnodes[addnode].G + astarnodes[addnode].H, &astarnodes[addnode]);
+			bool ok = gheap_push(
+				openheap,
+				astarnodes[addnode].G + astarnodes[addnode].H,
+				&astarnodes[addnode]
+			);
+
+			if (!ok)
+				gi.error("AStar_PutAdjacentsInOpen - gheap_push failed\n");
 		}
 	}
 }
 
 static int AStar_FindInOpen_BestF ( void )
 {
-	// int	i;
-	// int	bestF = -1;
-	// int best = -1;
-	//
-	// for ( i=0; i<alist_numNodes; i++ )
-	// {
-	// 	const int node = alist[i];
-	//
-	// 	if( astarnodes[node].list != OPENLIST )
-	// 		continue;
-	//
-	// 	if ( bestF == -1 || bestF > (astarnodes[node].G + astarnodes[node].H) ) {
-	// 		bestF = astarnodes[node].G + astarnodes[node].H;
-	// 		best = node;
-	// 	}
-	// }
-
-	//gi.dprintf("BEST:%i\n", best);
-	const astarnode_t* ptr = gheap_pop(openheap);
-	ptr = gheap_pop(openheap);
-	if (!ptr)
+	const astarnode_t* next = gheap_pop(openheap);
+	if (!next)
 		return -1;
 
-	return ptr - &astarnodes[0];
+	return next - &astarnodes[0];
 }
 
 //==========================================

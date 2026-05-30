@@ -145,7 +145,7 @@ float AI_FindLinkDistance(int n1, int n2)
 	if (nodes[n1].flags & NODEFLAGS_TELEPORTER_IN && nodes[n2].flags & NODEFLAGS_TELEPORTER_OUT )
 		return NODE_DENSITY; //not 0, just because teleporting has a strategical cost
 
-	return AI_Distance( nodes[n1].origin, nodes[2].origin );
+	return AI_Distance( nodes[n1].origin, nodes[n2].origin );
 }
 
 
@@ -174,7 +174,7 @@ qboolean AI_AddLink( int n1, int n2, int linkType )
 		return false;
 
 	//add the link
-	if (pLinks[n1].numLinks > NODES_MAX_PLINKS) 
+	if (pLinks[n1].numLinks >= NODES_MAX_PLINKS)
 	{
 //		G_Printf("MaxPlinks Reached! node:%i numPlinks:%i\n", n1, pLinks[n1].numLinks);
 		return false;

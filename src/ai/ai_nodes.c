@@ -698,7 +698,10 @@ void AI_CreateNodesForEntities ( void )
 		if( !ent->classname )		
 			continue;
 
-		if(!strcmp( ent->classname,"item_botroam") || !strcmp(ent->classname, "info_player_deathmatch"))//GHz
+		if(!strcmp( ent->classname,"item_botroam") ||
+			!strcmp(ent->classname, "info_player_deathmatch") || //GHz
+			strstr(ent->classname, "weapon_") // az
+			)
 		{
 			//gi.dprintf("AI: added  node for %s\n", ent->classname);
 			AI_AddNode_BotRoam(ent, false);

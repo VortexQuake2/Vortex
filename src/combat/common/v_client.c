@@ -62,11 +62,14 @@ void vrx_player_death(edict_t *self, edict_t *attacker, edict_t *inflictor) {
 
     self->gib_health = -BASE_GIB_HEALTH;
 
-    // don't drop powercubes or tballs
-    vrx_match_inventory_store(self);
-
     vrx_process_exp(attacker, self); // modify experience
     vrx_reset_player_state(self);
+
+    // potentially store some items to persist across death
+    // needs to happen after reset_player_state to not duplicate techs
+    // since reset_player_state handles tech dropping.
+    vrx_match_inventory_store(self);
+
     vrx_death_cleanup(attacker, self);
 
     vrx_toss_backpack(self, attacker); // toss a backpack

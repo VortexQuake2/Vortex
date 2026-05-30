@@ -179,7 +179,7 @@ qboolean BOT_ServerCommand (void)
 
 	if (!name || strlen(name) < 5)
 	{
-		name = bot_names[GetRandom(0, sizeof(bot_names) - 1)];
+		name = bot_names[GetRandom(0, sizeof(bot_names) / sizeof(bot_names[0]) - 1)];
 	}
 
 	if (!Q_stricmp(cmd, "addbot"))
