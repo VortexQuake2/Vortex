@@ -8,16 +8,24 @@
 typedef struct node_s node_t;
 
 // numchilds should be set based on the maximum number of expected child nodes in search pattern
-#define NUMCHILDS 12
+#define NUMCHILDS 16
+
+// kinda lifted straight from jabot
+enum listtype_t {
+    LIST_NONE,
+    LIST_OPEN,
+    LIST_CLOSED
+};
 
 struct node_s {
     int dist; // g-cost how far we've already gone from start to here
     float distestimation; // h-cost heuristic estimate of how far is left
     float totaldistestimation; // f-cost is total cost (estimated) from start to finish
     int nodenum; // index number of this node
-    node_t *Child[NUMCHILDS];
-    node_t *PrevNode;
-    node_t *NextNode;
+    enum listtype_t list;
+    node_t *child[NUMCHILDS];
+    node_t *prev;
+    node_t *next;
 };
 
 // min heap for open list
@@ -56,9 +64,7 @@ enum griddebug_state_t {
     GD_OFF,
     GD_NEARBY,
     GD_CHILD,
-    GD_CHILD_FLY,
     GD_AIMSPOT,
-    GD_AIMSPOT_FLY,
     GD_MAX
 };
 

@@ -1526,6 +1526,16 @@ int ReadInteger(FILE *fptr) {
     return Value;
 }
 
+float ReadFloat(FILE *fptr) {
+    float Value;
+    fread(&Value, sizeof(float), 1, fptr);
+    return Value;
+}
+
+void WriteFloat(FILE *fptr, float Value) {
+    fwrite(&Value, sizeof(float), 1, fptr);
+}
+
 //************************************************************************************************
 
 void WriteInteger(FILE *fptr, int Value) {

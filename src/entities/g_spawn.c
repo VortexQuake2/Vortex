@@ -780,10 +780,9 @@ void SpawnEntities (char *mapname, const char *entities, char *spawnpoint)
 		InitMonsterEntity(false);
 
 	PrintNumEntities(false);
-	SpawnWorldAmmo();
 
-	// if (level.pathfinding)
 	InitPathfinding();
+	SpawnWorldAmmo();
 
 	vrx_inv_init_post_entities(); // az
 	vrx_relay_notify_spawn_entities(mapname);

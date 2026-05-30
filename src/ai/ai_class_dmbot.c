@@ -1242,8 +1242,8 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 	//FIXME: it's probably worth recalculating every frame, but maybe we need an aggro timer so the bot doesn't change targets too often
 	// especially when the bot is hurt by an enemy (even if they are further away)
 	// we already set up an enemy this frame (reacting to attacks)
-	//if (self->enemy && self->enemy->inuse && visible(self, self->enemy))//GHz: don't bother finding a new enemy if the last one is still visible
-	//	return true;
+	if (self->enemy && self->enemy->inuse && visible(self, self->enemy))//GHz: don't bother finding a new enemy if the last one is still visible
+		return true;
 
 	// save last enemy to detect target changes
 	if (self->enemy && self->enemy->inuse)
@@ -1283,9 +1283,10 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 		if (self->ai.status.playersWeights[i] == 0)
 			continue;
 
-		if (!visible(self, AIEnemies[i]))
-			continue;
+		// put infront first because visible is a significantly more expensive check
 		if (!infront(self, AIEnemies[i]))
+			continue;
+		if (!visible(self, AIEnemies[i]))
 			continue;
 
 		//(weight enemies from fusionbot) Is enemy visible, or is it too close to ignore 

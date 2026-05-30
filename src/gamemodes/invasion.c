@@ -203,7 +203,7 @@ edict_t *vrx_inv_closest_navi_any(edict_t *self) {
     vec3_t eorg;
     float best = 8192 * 8192;
     edict_t *ret = NULL;
-    for (int i = 0; i < invasion_navicount; i++) {
+    for (size_t i = 0; i < invasion_navicount; i++) {
         float len;
         VectorSubtract(self->s.origin, INV_Navi[i]->s.origin, eorg);
         len = VectorLengthSqr(eorg);
@@ -214,6 +214,16 @@ edict_t *vrx_inv_closest_navi_any(edict_t *self) {
     }
 
     return ret;
+}
+
+edict_t* vrx_inv_get_navi(size_t index) {
+    if (index >= invasion_navicount)
+        return nullptr;
+    return INV_Navi[index];
+}
+
+size_t vrx_inv_get_navi_count(void) {
+    return invasion_navicount;
 }
 
 void DrawNavi(edict_t *ent) {
@@ -266,9 +276,19 @@ edict_t *drone_findnavi(edict_t *self) {
             entdist(self->goalentity->target_ent, self) < entdist(self->goalentity, self))
             return self->goalentity->target_ent;
 
-        edict_t* closest = vrx_inv_closest_navi_any(self);
-        if (closest)
-            return closest;
+        edict_t* navi = vrx_inv_closest_navi_any(self);
+        edict_t* pspawn = vrx_inv_give_closest_player_spawn(self);
+        if (navi && pspawn) {
+            if (entdist(navi, self) < entdist(pspawn, self))
+                return navi;
+
+            return pspawn;
+        }
+
+        if (navi)
+            return navi;
+
+        return pspawn;
     }
 
     if (invasion_start_navicount > 0) {

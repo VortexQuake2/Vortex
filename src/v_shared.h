@@ -212,6 +212,8 @@ int ReadInteger(FILE *fptr);
 void WriteInteger(FILE *fptr, int Value);
 long ReadLong(FILE *fptr);
 void WriteLong(FILE *fptr, long Value);
+float ReadFloat(FILE *fptr);
+void WriteFloat(FILE *fptr, float Value);
 
 struct skills_s;
 int CountAbilities(struct skills_s *player);
@@ -311,6 +313,8 @@ void vrx_inv_award_players(void);
 edict_t* vrx_inv_closest_start_navi(edict_t* self); // az: only spawn ones
 edict_t* vrx_inv_closest_navi_any(edict_t* self); // any navi
 edict_t* vrx_inv_give_closest_player_spawn(edict_t* self);
+edict_t* vrx_inv_get_navi(size_t index);
+size_t vrx_inv_get_navi_count(void);
 //************ invasion.c ************
 
 //************ totems.c ************
