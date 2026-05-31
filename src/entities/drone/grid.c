@@ -436,6 +436,16 @@ linkvalidity_t vrx_pf_is_valid_child_node(
     return vrx_pf_is_valid_child_position(max_2d_distance, start, v);
 }
 
+static struct mapgrid_link_s link_from_validity(size_t nodenum, struct linkvalidity_s validity) {
+    struct mapgrid_link_s ret = {};
+    ret.nodenum = nodenum;
+    ret.linkflags |= validity.fly ? LF_FLY : LF_NONE;
+    ret.linkflags |= validity.walk ? LF_WALK : LF_NONE;
+    ret.linkflags |= validity.fall ? LF_FALL : LF_NONE;
+
+    return ret;
+}
+
 // fills gridlist with visible nodes within +/- 32 of start on the Z axis
 // returns the number of found nodes
 int vrx_pf_compute_adjacent_nodes(const int NodeNumStart, bool store) {
@@ -450,8 +460,7 @@ int vrx_pf_compute_adjacent_nodes(const int NodeNumStart, bool store) {
 
     // 0 == not computed at all
     int i, j;
-    struct mapgrid_link_s adjacencytmp[32];
-    memset(adjacencytmp, 0, sizeof(adjacencytmp));
+    struct mapgrid_link_s adjacencytmp[32] = {0};
 
     // fill gridlist with node indices
     const auto maxadj = sizeof adjacencytmp / sizeof adjacencytmp[0];
@@ -470,10 +479,7 @@ int vrx_pf_compute_adjacent_nodes(const int NodeNumStart, bool store) {
             continue;
 
         // copy mapgrid->pathnode index to gridlist array and increment the gridlist index/nodes found
-        adjacencytmp[j].nodenum = i;
-        adjacencytmp[j].linkflags |= validity.fly ? LF_FLY : LF_NONE;
-        adjacencytmp[j].linkflags |= validity.walk ? LF_WALK : LF_NONE;
-        adjacencytmp[j].linkflags |= validity.fall ? LF_FALL : LF_NONE;
+        adjacencytmp[j] = link_from_validity(i, validity);
         j++;
     }
 
@@ -955,14 +961,65 @@ void gridtree_regenerate(void) {
     gridtree = gridkdtree_create(mapgrid->pathnode, mapgrid->numnodes);
 }
 
+
+void vrx_pf_remove_link(int child, int parent) {
+    // guard against the SIZE_MAX sentinel and against missing buffer
+    if (mapgrid->adjacent_node_count[parent] == SIZE_MAX)
+        return;
+    if (!mapgrid->adjacent_nodes[parent])
+        return;
+    for (size_t i = 0; i < mapgrid->adjacent_node_count[parent]; i++) {
+        if (mapgrid->adjacent_nodes[parent][i].nodenum == (size_t)child) {
+            mapgrid->adjacent_nodes[parent][i] = mapgrid->adjacent_nodes[parent][mapgrid->adjacent_node_count[parent] - 1];
+
+            mapgrid->adjacent_nodes[parent][mapgrid->adjacent_node_count[parent] - 1] = (struct mapgrid_link_s){};
+            mapgrid->adjacent_node_count[parent]--;
+            // continue scanning in case of duplicate entries
+            if (i > 0) i--;
+            else if (mapgrid->adjacent_node_count[parent] == 0) return;
+        }
+    }
+}
+
+void vrx_pf_remove_links(const int child) {
+    for (int i = 0; i < mapgrid->numnodes; i++) {
+        vrx_pf_remove_link(child, i);
+    }
+}
+
+void vrx_pf_move_node_references(const int newindex, const int lastindex) {
+    for (int p = 0; p < mapgrid->numnodes; p++) {
+        if (mapgrid->adjacent_node_count[p] == SIZE_MAX) continue;
+        if (!mapgrid->adjacent_nodes[p]) continue;
+        for (size_t k = 0; k < mapgrid->adjacent_node_count[p]; k++) {
+            if (mapgrid->adjacent_nodes[p][k].nodenum == (size_t)lastindex)
+                mapgrid->adjacent_nodes[p][k].nodenum = (size_t)newindex;
+        }
+    }
+}
+
 void vrx_pf_delete_node(const int nodenum) {
+    vrx_pf_remove_links(nodenum);
+
+    const int last_idx = mapgrid->numnodes - 1;
+
     // if this isn't the last node on the list, then copy the
     // vector stored at the end of the array to current position
-    if (nodenum != mapgrid->numnodes - 1) {
-        VectorCopy(mapgrid->pathnode[mapgrid->numnodes-1], mapgrid->pathnode[nodenum]);
-        mapgrid->nodeflags[nodenum] = mapgrid->nodeflags[mapgrid->numnodes - 1];
-        mapgrid->nodeent[nodenum] = mapgrid->nodeent[mapgrid->numnodes - 1];
-        mapgrid->adjacent_nodes[nodenum] = mapgrid->adjacent_nodes[mapgrid->numnodes - 1];
+    if (nodenum != last_idx) {
+        VectorCopy(mapgrid->pathnode[last_idx], mapgrid->pathnode[nodenum]);
+        mapgrid->nodeflags[nodenum] = mapgrid->nodeflags[last_idx];
+        mapgrid->nodeent[nodenum] = mapgrid->nodeent[last_idx];
+
+        if (mapgrid->adjacent_nodes[nodenum])
+            free(mapgrid->adjacent_nodes[nodenum]);
+
+        mapgrid->adjacent_nodes[nodenum] = mapgrid->adjacent_nodes[last_idx];
+        mapgrid->adjacent_node_count[nodenum] = mapgrid->adjacent_node_count[last_idx];
+
+        // rewrite all references from old index (last_idx) to new index (nodenum)
+        // across every node's adjacency list. without this, links silently retarget
+        // to whatever node was just swapped in.
+        vrx_pf_move_node_references(nodenum, last_idx);
     }
 
     // clear the value stored at the end of the list
@@ -970,10 +1027,6 @@ void vrx_pf_delete_node(const int nodenum) {
     mapgrid->nodeflags[mapgrid->numnodes - 1] = NF_NONE;
     mapgrid->nodeent[mapgrid->numnodes - 1] = nullptr;
 
-    if (mapgrid->adjacent_nodes[mapgrid->numnodes - 1]) {
-        free(mapgrid->adjacent_nodes[mapgrid->numnodes - 1]);
-        mapgrid->adjacent_nodes[mapgrid->numnodes - 1] = nullptr;
-    }
     mapgrid->adjacent_nodes[mapgrid->numnodes - 1] = nullptr;
     mapgrid->adjacent_node_count[mapgrid->numnodes - 1] = 0;
 
@@ -1129,19 +1182,83 @@ static bool try_add_node(int *cnt, vec3_t v, int *z, enum nodeflag_t flags) {
     // copy to mapgrid->pathnode[] array
     VectorCopy(endpt, mapgrid->pathnode[*cnt]);
     mapgrid->nodeflags[*cnt] = flags;
+
+    // initialize the rest of the slot to avoid inheriting stale state
+    // (e.g. from a previously deleted node that was swapped into this slot)
+    mapgrid->nodeent[*cnt] = nullptr;
+    if (mapgrid->adjacent_nodes[*cnt]) {
+        free(mapgrid->adjacent_nodes[*cnt]);
+        mapgrid->adjacent_nodes[*cnt] = nullptr;
+    }
+    mapgrid->adjacent_node_count[*cnt] = 0;
+
     (*cnt)++;
     return false;
 }
 
 static void force_add_node(vec3_t pos) {
     vec3_t start;
+    VectorCopy(pos, start);  // start was uninitialized before this fix
     start[2] -= 8192;
     const trace_t tr = gi.trace(pos, nullptr, nullptr, start, nullptr, MASK_SOLID);
     VectorCopy(tr.endpos, start);
     start[2] += 32;
-    VectorCopy(start, mapgrid->pathnode[mapgrid->numnodes]);
+
+    const int slot = mapgrid->numnodes;
+    VectorCopy(start, mapgrid->pathnode[slot]);
+
+    // initialize the slot fully so we don't inherit stale state from prior deletes
+    mapgrid->nodeflags[slot] = NF_USER;
+    mapgrid->nodeent[slot] = nullptr;
+    if (mapgrid->adjacent_nodes[slot]) {
+        free(mapgrid->adjacent_nodes[slot]);
+        mapgrid->adjacent_nodes[slot] = nullptr;
+    }
+    mapgrid->adjacent_node_count[slot] = 0;
+
     mapgrid->numnodes++;
 }
+
+void vrx_pf_add_missing_reciprocals(int child) {
+    vrx_pf_compute_adjacent_nodes(child, true);
+    if (mapgrid->adjacent_node_count[child] == SIZE_MAX)
+        return;
+    for (size_t i = 0; i < mapgrid->adjacent_node_count[child]; i++) {
+        const auto potentialParent = mapgrid->adjacent_nodes[child][i];
+
+        // normalize the SIZE_MAX sentinel on the parent so we can safely append
+        if (mapgrid->adjacent_node_count[potentialParent.nodenum] == SIZE_MAX)
+            mapgrid->adjacent_node_count[potentialParent.nodenum] = 0;
+
+        // check if we are missing from their list (compare against `child`, not loop index `i`)
+        bool found = false;
+        for (size_t j = 0; j < mapgrid->adjacent_node_count[potentialParent.nodenum]; j++) {
+            if (mapgrid->adjacent_nodes[potentialParent.nodenum][j].nodenum == (size_t)child) {
+                found = true;
+                break;
+            }
+        }
+
+        if (found)
+            continue;
+
+        const auto validity = vrx_pf_is_valid_child_node(potentialParent.nodenum, child, mapgrid->gap + 8);
+        const bool canAdd = validity.fall || validity.fly || validity.walk;
+        if (!canAdd)
+            continue;
+
+        const auto newSize = sizeof mapgrid->adjacent_nodes[potentialParent.nodenum][0] *
+            (mapgrid->adjacent_node_count[potentialParent.nodenum] + 1);
+        struct mapgrid_link_s* ptr = realloc(mapgrid->adjacent_nodes[potentialParent.nodenum], newSize);
+
+        if (ptr) {
+            mapgrid->adjacent_nodes[potentialParent.nodenum] = ptr;
+            ptr[mapgrid->adjacent_node_count[potentialParent.nodenum]] = link_from_validity(child, validity);
+            mapgrid->adjacent_node_count[potentialParent.nodenum]++;
+        }
+    }
+}
+
 
 void Cmd_AddNode_f(edict_t *ent) {
     vec3_t start;
@@ -1153,15 +1270,15 @@ void Cmd_AddNode_f(edict_t *ent) {
 
     if (force) {
         force_add_node(ent->s.origin);
-        vrx_free_adjacency_lists();
         gridtree_regenerate();
+        vrx_pf_add_missing_reciprocals(mapgrid->numnodes - 1);
         return;
     }
 
     VectorCopy(ent->s.origin, start);
     int z;
     if (!try_add_node(&mapgrid->numnodes, start, &z, NF_USER)) {
-        vrx_free_adjacency_lists();
+        vrx_pf_add_missing_reciprocals(mapgrid->numnodes - 1);
         gridtree_regenerate();
         safe_cprintf(ent, PRINT_HIGH, "**Node added at current position (%d nodes total).\n**", mapgrid->numnodes);
     } else
@@ -1172,10 +1289,15 @@ void Cmd_DeleteAllNodes_f(edict_t *ent) {
     if (!ent->myskills.administrator)
         return;
 
+    // free adjacency lists FIRST, while numnodes still reflects valid entries
+    vrx_free_adjacency_lists();
+
     memset(&mapgrid->pathnode, 0, mapgrid->numnodes * sizeof(vec3_t));
+    memset(&mapgrid->nodeflags, 0, mapgrid->numnodes * sizeof(mapgrid->nodeflags[0]));
+    memset(&mapgrid->nodeent, 0, mapgrid->numnodes * sizeof(mapgrid->nodeent[0]));
+    memset(&mapgrid->adjacent_node_count, 0, mapgrid->numnodes * sizeof(mapgrid->adjacent_node_count[0]));
     mapgrid->numnodes = 0;
 
-    vrx_free_adjacency_lists();
     gridtree_regenerate();
 
     safe_cprintf(ent, PRINT_HIGH, "All nodes deleted.\n");
@@ -1200,13 +1322,16 @@ void vrx_pf_save_grid_new(void) {
     WriteInteger(fptr, GRID_MAGIC);
     WriteInteger(fptr, VERSION);
 
-    size_t num_nodes_to_save = 0;
-
-    for (size_t i = 0; i < mapgrid->numnodes; i++) {
+    int remap[mapgrid->numnodes];
+    int next_idx = 0;
+    for (int i = 0; i < mapgrid->numnodes; i++) {
         if (mapgrid->nodeflags[i] & NF_NOSAVE)
-            continue;
-        num_nodes_to_save++;
+            remap[i] = -1;
+        else
+            remap[i] = next_idx++;
     }
+
+    int num_nodes_to_save = next_idx;
 
     WriteInteger(fptr, num_nodes_to_save);
     WriteFloat(fptr, mapgrid->gap);
@@ -1218,20 +1343,34 @@ void vrx_pf_save_grid_new(void) {
         fwrite(&mapgrid->pathnode[i], sizeof(vec3_t), 1, fptr);
         fwrite(&mapgrid->nodeflags[i], sizeof(enum nodeflag_t), 1, fptr);
 
-        // okay let's be real it will never have uint64_t adjacent nodes
-        // it's just convenient if size_t is basically uint64_t
-        uint64_t cnt = mapgrid->adjacent_node_count[i];
+        // it's a valid count, so let's exclude the nodes that are NOSAVE.
+        uint64_t cnt = 0;
         if (mapgrid->adjacent_node_count[i] == SIZE_MAX)
             cnt = UINT64_MAX;
+        else {
+            for (int j = 0; j < mapgrid->adjacent_node_count[i]; j++) {
+                // remove from the count the links that are NOSAVE.
+                if (!(mapgrid->nodeflags[mapgrid->adjacent_nodes[i][j].nodenum] & NF_NOSAVE))
+                    cnt++;
+            }
+        }
 
-        fwrite(&cnt, sizeof(uint64_t), 1, fptr);
+        fwrite(&cnt, sizeof cnt, 1, fptr);
 
-        if (mapgrid->adjacent_node_count[i] && cnt != UINT64_MAX)
-            fwrite(
-                &mapgrid->adjacent_nodes[i],
-                sizeof(mapgrid->adjacent_nodes[0]),
-                mapgrid->adjacent_node_count[i],
-               fptr);
+        if (cnt > 0 && cnt != UINT64_MAX) {
+            // we have to traverse all of the adjacent nodes to exclude the NOSAVE links
+            for (int j = 0; j < mapgrid->adjacent_node_count[i]; j++) {
+                size_t target_idx = mapgrid->adjacent_nodes[i][j].nodenum;
+                if (mapgrid->nodeflags[target_idx] & NF_NOSAVE)
+                    continue;
+
+                const auto remapped_nodenum = remap[target_idx];
+                const auto linkflags = mapgrid->adjacent_nodes[i][j].linkflags;
+
+                fwrite(&remapped_nodenum, sizeof(remapped_nodenum), 1, fptr);
+                fwrite(&linkflags, sizeof linkflags, 1, fptr);
+            }
+        }
     }
 
     fclose(fptr);
@@ -1278,7 +1417,7 @@ void vrx_grd_create_ent_nodes() {
 // also calculates adjacency!
 void vrx_pf_cull_unlinked_nodes(void) {
     for (int i = 0; i < mapgrid->numnodes; i++) {
-        const int children = vrx_pf_compute_adjacent_nodes(i, false);
+        const int children = vrx_pf_compute_adjacent_nodes(i, true);
 
         // delete nodes that have no children
         if (children < 1) {
@@ -1353,15 +1492,23 @@ qboolean vrx_pf_load_grid_new(void) {
         fread(&mapgrid->pathnode[i], sizeof(vec3_t), 1, fptr);
         fread(&mapgrid->nodeflags[i], sizeof(enum nodeflag_t), 1, fptr);
         uint64_t cnt;
-        fread(&cnt, sizeof(uint64_t), 1, fptr);
+        fread(&cnt, sizeof cnt, 1, fptr);
 
-        if (cnt == UINT64_MAX)
+        if (cnt == UINT64_MAX || !cnt)
             // don't read in this, there's nothing at all.
             mapgrid->adjacent_node_count[i] = SIZE_MAX;
         else {
             mapgrid->adjacent_node_count[i] = cnt;
-            mapgrid->adjacent_nodes[i] = malloc(sizeof(mapgrid->adjacent_nodes[0]) * cnt);
-            fread(&mapgrid->adjacent_nodes[i], sizeof(mapgrid->adjacent_nodes[0]), cnt, fptr);
+            mapgrid->adjacent_nodes[i] = malloc(sizeof(struct mapgrid_link_s) * cnt);
+
+            for (uint64_t j = 0; j < cnt; j++) {
+                int32_t nodenum;
+                uint32_t flags;
+                fread(&nodenum, sizeof nodenum, 1, fptr);
+                fread(&flags, sizeof flags, 1, fptr);
+                mapgrid->adjacent_nodes[i][j].nodenum = (size_t)nodenum;
+                mapgrid->adjacent_nodes[i][j].linkflags = (enum linkflag_t)flags;
+            }
         }
     }
 

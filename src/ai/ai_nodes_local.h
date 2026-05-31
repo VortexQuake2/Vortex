@@ -81,6 +81,8 @@ typedef struct
 	int			num_broams;
 	nav_broam_t	broams[MAX_BOT_ROAMS];	//list of nodes wich are botroams
 
+	int			costs[MAX_NODES][MAX_NODES];
+
 } ai_navigation_t;
 
 extern ai_navigation_t	nav;

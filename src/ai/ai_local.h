@@ -170,6 +170,7 @@ qboolean	AI_VisibleOrigins (vec3_t spot1, vec3_t spot2);
 int			AI_LinkCloseNodes(void);
 int			AI_FindLinkType(int n1, int n2);
 qboolean	AI_AddLink( int n1, int n2, int linkType );
+qboolean	AI_RemoveLink( int n1, int n2 );
 qboolean	AI_PlinkExists(int n1, int n2);
 int			AI_PlinkMoveType(int n1, int n2);
 int			AI_findNodeInRadius (int from, vec3_t org, float rad, qboolean ignoreHeight);

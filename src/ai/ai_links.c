@@ -191,6 +191,30 @@ qboolean AI_AddLink( int n1, int n2, int linkType )
 	return true;
 }
 
+// az: ugh. I hate this.
+qboolean AI_RemoveLink( int n1, int n2 ) {
+	// must be already referenced
+	if( !AI_PlinkExists(n1, n2) )
+		return false;
+
+	for (int linkIdx = 0; linkIdx < pLinks[n1].numLinks; linkIdx++) {
+		if (pLinks[n1].nodes[linkIdx] == n2) {
+
+			pLinks[n1].nodes[linkIdx] = pLinks[n1].nodes[pLinks[n1].numLinks - 1];
+			pLinks[n1].dist[linkIdx] = pLinks[n1].dist[pLinks[n1].numLinks - 1];
+			pLinks[n1].moveType[linkIdx] = pLinks[n1].moveType[pLinks[n1].numLinks - 1];
+
+			// az: conventionally it's all set to zero it seems
+			pLinks[n1].nodes[pLinks[n1].numLinks - 1] = 0;
+			pLinks[n1].dist[pLinks[n1].numLinks - 1] = 0;
+			pLinks[n1].moveType[pLinks[n1].numLinks - 1] = 0;
+
+			pLinks[n1].numLinks--;
+			return true;
+		}
+	}
+	return false;
+}
 
 //==========================================
 // AI_PlinkExists
