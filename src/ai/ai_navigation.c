@@ -162,11 +162,24 @@ int AI_FindClosestHiddenNode(edict_t *ent, int range, int flagsmask)
 //==========================================
 int AI_FindCost(int from, int to, int movetypes)
 {
+	// az: computed? skip this whole business
+	if (nav.costs[from][to] != -1) {
+		return nav.costs[from][to];
+	}
+
+	if (nav.costs[from][to] == INT_MAX) {
+		return -1;
+	}
+
 	astarpath_t	path;
 
-	if (!AStar_GetPath(from, to, movetypes, &path))
+	if (!AStar_GetPath(from, to, movetypes, &path)) {
+		nav.costs[from][to] = INT_MAX;
 		return -1;
+	}
 
+	// relationship ended with recalculation cache is my new best friend
+	nav.costs[from][to] = path.numNodes;
 	return path.numNodes;
 }
 
@@ -296,7 +309,7 @@ qboolean AI_FollowPath(edict_t *self)
 		return false;
 
 	// Try again?
-	if (self->ai.node_timeout++ > 30) // frames we've tried to reach next node
+	if (self->ai.node_timeout++ > qf2sf(30)) // frames we've tried to reach next node
 	{
 		AI_DebugPrintf("AI_FollowPath: couldn't follow path, %d tries\n", self->ai.tries);
 		if (self->ai.tries++ > 3) // number of attempts we've tried to grab a new start node

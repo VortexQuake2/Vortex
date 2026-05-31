@@ -1024,6 +1024,7 @@ void AI_InitNavigationData(void)
 
 	//Init nodes arrays
 	nav.num_nodes = 0;
+	memset( nav.costs, -1, sizeof nav.costs );
 	memset( nodes, 0, sizeof(nav_node_t) * MAX_NODES );
 	memset( pLinks, 0, sizeof(nav_plink_t) * MAX_NODES );//GHz: FIXME: is 2048 pLinks enough?
 	memset( Spath, 0, sizeof(spath_t) * MAX_SPATH );//GHz

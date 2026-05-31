@@ -533,6 +533,8 @@ void AITools_EraseNodes( void )
 	nav.num_items = 0;
 	memset( nav.items, 0, sizeof(nav_item_t) * MAX_EDICTS );
 
+	memset( nav.costs, -1, sizeof nav.costs );
+
 	nav.loaded = false;
 }
 
@@ -552,6 +554,8 @@ void AITools_InitEditnodes( void )
 		
 		nav.num_items = 0;
 		memset( nav.items, 0, sizeof(nav_item_t) * MAX_EDICTS );
+
+		memset( nav.costs, -1, sizeof nav.costs );
 		nav.loaded = false;
 	}
 	
