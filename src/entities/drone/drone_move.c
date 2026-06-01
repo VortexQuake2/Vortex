@@ -87,17 +87,19 @@ realcheck:
 	return true;
 }
 
+bool CheckPathFall(vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs);
 qboolean LandCloserToGoal (edict_t *self, vec3_t goal_pos, vec3_t landing_pos)
 {
-	// goal position path is obstructed by a wall
-	landing_pos[2] += 8; // raise slightly off floor (navis are usually placed 8 units above floor height)
-	if (!G_IsClearPath(self, MASK_SOLID, landing_pos, goal_pos))
-		return false;
-	// landing position places us farther from our goal
-	//FIXME: subtracting 16 from landing position is a "cheap fix" for monsters with large hitboxes (i.e. bosses) who fail M_CheckBottom
-	if (distance(landing_pos, goal_pos) > distance(self->s.origin, goal_pos))
-		return false;
-	return true;
+	// az: greatly simplifying this. the question is whether we get closer,
+	// nothing more - we should've already decided on the path by now.
+	float stepsize = STEPSIZE;
+	if (self->monsterinfo.aiflags & AI_NOSTEP)
+		stepsize = 1;
+
+	// sure. fall. it's closer. or it's really just a step away.
+	float dz = fabs(landing_pos[2] - goal_pos[2]);
+	float cdz = fabs(self->s.origin[2] - goal_pos[2]);
+	return dz < cdz || dz < stepsize;
 }
 
 qboolean CheckHazards (edict_t *self, vec3_t landing_pos)
@@ -140,6 +142,10 @@ qboolean CanJumpDown (edict_t *self, vec3_t neworg)
 	else
 		return false;
 
+	// az: let's just not jump at random off ledges
+	if (goal == world)
+		return false;
+
 	// trace down
 	VectorCopy(neworg, start);
 	start[2] -= 8192;
@@ -175,7 +181,7 @@ qboolean CanJumpDown (edict_t *self, vec3_t neworg)
 		// is the landing position closer to the next waypoint?
 		if (nearestWpNum < self->monsterinfo.nextWaypoint)
 			return false;*/
-		
+
 		vrx_pf_get_node_position(self->monsterinfo.waypoint[self->monsterinfo.nextWaypoint], v);
 		if (!LandCloserToGoal(self, v, tr.endpos))
 		{
@@ -708,14 +714,7 @@ qboolean SV_movestep(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
 	}
 	else if (jump == -1)
 		jump = 0;
-/*
-	if (jump)
-	{
-		VectorCopy(oldorg, ent->s.origin);
-		CanJumpDown(ent, trace.endpos, true);
-		VectorCopy(trace.endpos, ent->s.origin);
-	}
-*/
+
 	
 	if ( ent->flags & FL_PARTIALGROUND )
 	{
@@ -737,7 +736,7 @@ qboolean SV_movestep(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
 		*/
 
 		//VectorScale(move, 10, ent->velocity);
-		//ent->velocity[2] = 200;
+		// ent->velocity[2] = 200;
 	}
 	else if (jump == 1)
 	{
