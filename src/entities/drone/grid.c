@@ -1222,7 +1222,9 @@ static bool try_add_node(int *cnt, vec3_t v, int *z, enum nodeflag_t flags) {
     static constexpr vec3_t max2 = {+16, +16, 0};
 
     // Skip world locations in solid/lava/slime/window/ladder
-    if (gi.pointcontents(v) & MASK_OPAQUE_PATH) {
+    if (gi.pointcontents(v) & MASK_OPAQUE_PATH && !(flags & NF_PLAT)) {
+        // az: can happen if we're adding a plat in what is probably
+        // a valid location, the plat is BSP.
         (*z)--;
         return true;
     }
@@ -1456,6 +1458,13 @@ void vrx_pf_save_grid_new(void) {
     gi.dprintf("Grid successfully saved.\n");
 }
 
+void make_doodad(vec3_t pos) {
+    edict_t* doodad = G_Spawn();
+    VectorCopy(pos, doodad->s.origin);
+    gi.setmodel(doodad, "models/objects/gibs/bone/tris.md2");
+    gi.linkentity(doodad);
+}
+
 
 void vrx_grd_create_ent_nodes(bool isGenerating) {
     const auto navi_count = vrx_inv_get_navi_count();
@@ -1494,21 +1503,27 @@ void vrx_grd_create_ent_nodes(bool isGenerating) {
 
     edict_t* plats = nullptr;
     while ((plats = G_Find(plats, FOFS(classname), "func_plat"))) {
-        // adapted from AI_AddNode_Platform
+        vec3_t topcenter;
         vec3_t top, bottom;
-        vec3_t upper, lower;
-        int z;
 
         // Upper node
-        VectorCopy( plats->maxs, top );
-        VectorCopy( plats->mins, bottom );
-        VectorSet(upper,
-            (top[0] - bottom[0]) / 2 + bottom[0],
-            (top[1] - bottom[1]) / 2 + bottom[1] ,
-            top[2] + 32
+        VectorSet(topcenter,
+            (plats->maxs[0] - plats->mins[0]) * 0.5 + plats->mins[0],
+            (plats->maxs[1] - plats->mins[1]) * 0.5 + plats->mins[1],
+            plats->maxs[2]
         );
 
-        if (!try_add_node_with_links(upper, NF_PLATUPPER | NF_ENTREF, true)) {
+        VectorSet( top, topcenter[0], topcenter[1], topcenter[2] + 32 );
+
+        const float height = plats->pos1[2] - plats->pos2[2];
+        VectorSet(bottom,
+            topcenter[0],
+            topcenter[1],
+            topcenter[2] - height + 32
+        );
+
+        // Upper node
+        if (!try_add_node_with_links(top, NF_PLATUPPER | NF_ENTREF, true)) {
             mapgrid->nodeent[mapgrid->numnodes - 1] = plats;
             // if we're generating this link generation process will be done in bulk later
             // otherwise we can do it now, it is fine.
@@ -1516,22 +1531,17 @@ void vrx_grd_create_ent_nodes(bool isGenerating) {
                 vrx_pf_add_missing_reciprocals(mapgrid->numnodes - 1);
         } else {
             gi.dprintf("grid: Could not add upper node for plat %d\n", plats->s.number);
+            // make_doodad(top);
             continue;
         }
 
         // Lower node
-
-        VectorSet(lower,
-            upper[0],
-            upper[1],
-            plats->mins[2] + 48
-       );
-
-        if (!try_add_node_with_links(lower, NF_PLATLOWER | NF_ENTREF, true)) {
+        if (!try_add_node_with_links(bottom, NF_PLATLOWER | NF_ENTREF, true)) {
             mapgrid->nodeent[mapgrid->numnodes - 1] = plats;
             if (!isGenerating)
                 vrx_pf_add_missing_reciprocals(mapgrid->numnodes - 1);
         } else {
+            make_doodad(bottom);
             gi.dprintf("grid: Could not add lower node for plat %d\n", plats->s.number);
         }
     }

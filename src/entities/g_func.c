@@ -483,6 +483,31 @@ edict_t *plat_spawn_inside_trigger (edict_t *ent)
 	return trigger;
 }
 
+// void show_bounds(edict_t* ent) {
+// 	gire.Draw_Bounds(ent->absmin, ent->absmax, &rgba_white, FRAMETIME, true);
+//
+// 	vec3_t topcenter;
+// 	vec3_t top, bottom;
+//
+// 	// Upper node
+// 	VectorSet(topcenter,
+// 		(ent->maxs[0] - ent->mins[0]) * 0.5 + ent->mins[0],
+// 		(ent->maxs[1] - ent->mins[1]) * 0.5 + ent->mins[1],
+// 		ent->maxs[2]
+// 	);
+//
+// 	VectorSet( top, topcenter[0], topcenter[1], topcenter[2] + 32 );
+//
+// 	float height = ent->pos1[2] - ent->pos2[2];
+// 	VectorSet(bottom,
+// 		topcenter[0],
+// 		topcenter[1],
+// 		topcenter[2] - height + 32
+// 	);
+//
+// 	gire.Draw_Sphere(top, 8, &rgba_blue, FRAMETIME, true);
+// 	gire.Draw_Sphere(bottom, 8, &rgba_red, FRAMETIME, true);
+// }
 
 /*QUAKED func_plat (0 .5 .8) ? PLAT_LOW_TRIGGER
 speed	default 150
@@ -542,6 +567,7 @@ void SP_func_plat (edict_t *ent)
 		ent->pos2[2] -= (ent->maxs[2] - ent->mins[2]) - st.lip;
 
 	ent->use = Use_Plat;
+	// ent->prethink = show_bounds;
 
 	plat_spawn_inside_trigger (ent);	// the "start moving" trigger	
 
