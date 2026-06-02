@@ -415,18 +415,31 @@ int AI_AddNode_Door( edict_t *ent )
 //==========================================
 int AI_AddNode_Platform( edict_t *ent )
 {
-	vec3_t		v1,v2;
-
 	if (nav.num_nodes + 1 > MAX_NODES)//GHz: FIXME: shouldn't this be nav.num_nodes + 2 since we have to add a lower and upper node?
 		return INVALID;
 
+	vec3_t topcenter;
+	vec3_t top, bottom;
+
+	// Upper node
+	VectorSet(topcenter,
+		(ent->maxs[0] - ent->mins[0]) * 0.5 + ent->mins[0],
+		(ent->maxs[1] - ent->mins[1]) * 0.5 + ent->mins[1],
+		ent->maxs[2]
+	);
+
+	VectorSet( top, topcenter[0], topcenter[1], topcenter[2] + 32 );
+
+	const float height = ent->pos1[2] - ent->pos2[2];
+	VectorSet(bottom,
+		topcenter[0],
+		topcenter[1],
+		topcenter[2] - height + 32
+	);
+
 	// Upper node 
 	nodes[nav.num_nodes].flags = (NODEFLAGS_PLATFORM|NODEFLAGS_SERVERLINK|NODEFLAGS_FLOAT);
-	VectorCopy( ent->maxs, v1 );
-	VectorCopy( ent->mins, v2 );
-	nodes[nav.num_nodes].origin[0] = (v1[0] - v2[0]) / 2 + v2[0];
-	nodes[nav.num_nodes].origin[1] = (v1[1] - v2[1]) / 2 + v2[1];
-	nodes[nav.num_nodes].origin[2] = ent->maxs[2] + 8;
+	VectorCopy(top, nodes[nav.num_nodes].origin);
 
 	//gi.dprintf("%s: platform node origin: %.0f %.0f %.0f\n", __func__, nodes[nav.num_nodes].origin[0], nodes[nav.num_nodes].origin[1], nodes[nav.num_nodes].origin[2]);
 	//gi.dprintf("%s: platform actual origin: %.0f %.0f %.0f\n", __func__, ent->s.origin[0], ent->s.origin[1], ent->s.origin[2]);
@@ -443,9 +456,7 @@ int AI_AddNode_Platform( edict_t *ent )
 	
 	// Lower node
 	nodes[nav.num_nodes].flags = (NODEFLAGS_PLATFORM|NODEFLAGS_SERVERLINK|NODEFLAGS_FLOAT);
-	nodes[nav.num_nodes].origin[0] = nodes[nav.num_nodes-1].origin[0];
-	nodes[nav.num_nodes].origin[1] = nodes[nav.num_nodes-1].origin[1];
-	nodes[nav.num_nodes].origin[2] = ent->mins[2] + (AI_JUMPABLE_HEIGHT - 1);
+	VectorCopy(bottom, nodes[nav.num_nodes].origin);
 
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
 
