@@ -107,9 +107,6 @@ edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t *self, float rad) {
     rad *= rad; // az: square it
 
     if (prev_ed) {
-        /*for (int j = 0; j < 3; j++)
-            eorg[j] = self->s.origin[j] - (prev_ed->s.origin[j] + (prev_ed->mins[j] + prev_ed->maxs[j])*0.5);
-        prev_rad = VectorLengthSqr(eorg);*/
         prev_rad = potential_target_distances[self->monsterinfo.target_index][prev_ed->monsterinfo.target_index];
     } else {
         prev_rad = rad + 1;
@@ -119,10 +116,6 @@ edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t *self, float rad) {
     for (int i = 0; i < potential_target_count; i++) {
         edict_t *from = potential_targets[i];
         const float vlen = potential_target_distances[self->monsterinfo.target_index][i];
-
-        /*for (int j = 0; j < 3; j++)
-            eorg[j] = self->s.origin[j] - (from->s.origin[j] + (from->mins[j] + from->maxs[j])*0.5);
-        vlen = VectorLengthSqr(eorg);*/
 
         if (level.time > from->detected_time && vlen > rad) // found edict is outside scanning radius
             continue;
@@ -508,14 +501,15 @@ edict_t *drone_get_enemy(edict_t *self, float range) {
     while ((target = findclosestradius_targets(target, self, range)) != NULL) {
         // screen out invalid targets
         // az: Replaced G_ValidTarget for lighter check.
-        //if (!G_ValidTarget(self, target, true))
-        if (!G_ValidTarget_Lite(self, target, true))
+        // vis check not necessary, nearfov runs it again.
+        if (!G_ValidTarget_Lite(self, target, false))
             continue;
         // ignore low-level players
         if (M_IgnoreInferiorTarget(self, target))
             continue;
         // limit drone/monster FOV, but check for recent sounds
-        if (!nearfov(self, target, 0, DRONE_FOV) && !drone_heartarget(target))
+        if (!nearfov(self, target, 0, DRONE_FOV)
+            && !drone_heartarget(target))
             continue;
         return target;
     }

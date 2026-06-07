@@ -8,24 +8,29 @@
 typedef struct node_s node_t;
 
 // numchilds should be set based on the maximum number of expected child nodes in search pattern
-#define NUMCHILDS 16
+#define NUMCHILDS 12
+
+#define MAX_GRID_SIZE	10000
+
+typedef uint16_t nodeid_t;
+#define NODEID_MAX UINT16_MAX
+
+static_assert(MAX_GRID_SIZE < NODEID_MAX, "max grid size overflows nodeid_t!");
 
 // kinda lifted straight from jabot
-enum listtype_t {
+enum listtype_t : uint8_t {
     LIST_NONE,
     LIST_OPEN,
     LIST_CLOSED
 };
 
 struct node_s {
-    int dist; // g-cost how far we've already gone from start to here
-    float distestimation; // h-cost heuristic estimate of how far is left
-    float totaldistestimation; // f-cost is total cost (estimated) from start to finish
-    int nodenum; // index number of this node
-    enum listtype_t list;
     node_t *child[NUMCHILDS];
     node_t *prev;
     node_t *next;
+    int dist; // g-cost how far we've already gone from start to here
+    nodeid_t nodenum; // index number of this node
+    enum listtype_t list;
 };
 
 // min heap for open list
@@ -38,12 +43,6 @@ struct gheap_s {
     size_t count;
     size_t capacity;
     struct gheap_entry_s entries[];
-};
-
-// bitmap for closed list
-struct gbitmap_s {
-    size_t capacity;
-    uint8_t data[];
 };
 
 // single-allocation node stack (for breadth-first search)
@@ -69,16 +68,16 @@ enum griddebug_state_t {
 };
 
 struct kdtree_node_s {
-    size_t nodenum;
-    struct kdtree_node_s* left;
-    struct kdtree_node_s* right;
+    nodeid_t nodenum;
+    // it's uint16_t, but it should match nodeid_t.
+    uint16_t left;
+    uint16_t right;
 };
 
 struct gridkdtree_s {
     size_t nodecount;
     size_t capacity;
     vec3_t* srcdata;
-    struct kdtree_node_s* root;
     struct kdtree_node_s nodes[];
 };
 

@@ -77,6 +77,7 @@ typedef bool _rebool;
 
 #define MAX_SHADOW_LIGHTS 256
 
+#define U8BIT(x) ((uint8_t)1 << (uint8_t)x)
 #define U32BIT(x) ((uint32_t)1 << (uint32_t)x)
 #define U64BIT(x) ((uint64_t)1 << (uint64_t)x)
 
@@ -270,7 +271,7 @@ __inline vec_t VectorLength(vec3_t v) {
 vec_t VectorLength(vec3_t v);
 #endif
 
-vec_t VectorLengthSqr(vec3_t v);
+vec_t VectorLengthSqr(const vec3_t v);
 
 void CrossProduct(vec3_t v1, vec3_t v2, vec3_t cross);
 

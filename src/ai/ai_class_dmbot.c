@@ -1239,14 +1239,35 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 	if (self->ai.attack_delay > level.time)
 		return false;
 
+	bool hasEnemy = self->enemy && self->enemy->inuse;
+
+	// az: rate-limit this a little bit, latch the previous enemy
+	if (self->ai.findenemy_framedelay > level.framenum ) {
+		if (hasEnemy) {
+			// only latch if this is still a valid enemy
+			if (G_ValidTargetEnt(self, self->enemy, true))
+				return true;
+		} else {
+			return false;
+		}
+	}
+
+	// az: add a little variance
+	self->ai.findenemy_framedelay = level.framenum +
+		qf2sf(1) +
+			(randomMT() % 3 - 1)
+			;
+
 	//FIXME: it's probably worth recalculating every frame, but maybe we need an aggro timer so the bot doesn't change targets too often
 	// especially when the bot is hurt by an enemy (even if they are further away)
 	// we already set up an enemy this frame (reacting to attacks)
-	if (self->enemy && self->enemy->inuse && visible(self, self->enemy))//GHz: don't bother finding a new enemy if the last one is still visible
-		return true;
+	// az: this is commented out to avoid bots having blinders
+	// if (hasEnemy && visible(self, self->enemy))//GHz: don't bother finding a new enemy if the last one is still visible
+	// 	return true;
 
+	// no enemy, or not visible enemy
 	// save last enemy to detect target changes
-	if (self->enemy && self->enemy->inuse)
+	if (hasEnemy)
 		self->oldenemy = self->enemy;
 
 	if (level.time < pregame_time->value) // No enemies in pregame lol

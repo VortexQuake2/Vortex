@@ -118,9 +118,9 @@ struct kdtree_node_s* gkdt_alloc_node(struct gridkdtree_s* tree) {
     return nullptr;
 }
 
-struct kdtree_node_s* kdtree_build(struct kdtbuildctx_s *ctx, const size_t dim) {
+uint16_t kdtree_build(struct kdtbuildctx_s *ctx, const size_t dim) {
     if (ctx->slicesize == 0)
-        return nullptr;
+        return UINT16_MAX;
 
     cmpstr.srcdata = ctx->tree->srcdata;
     cmpstr.dim = dim;
@@ -143,7 +143,7 @@ struct kdtree_node_s* kdtree_build(struct kdtbuildctx_s *ctx, const size_t dim) 
         ctx->slicesize - mid - 1
     }, _dim);
 
-    return _node;
+    return _node - ctx->tree->nodes;
 }
 
 size_t nextPowerOfTwo(size_t n) {
@@ -177,16 +177,16 @@ struct gridkdtree_s* gridkdtree_create(vec3_t* srcdata, const size_t count) {
         sortedx[i] = i;
 
     for (size_t i = 0; i < capacity; i++) {
-        tree->nodes[i].nodenum = SIZE_MAX;
-        tree->nodes[i].left = nullptr;
-        tree->nodes[i].right = nullptr;
+        tree->nodes[i].nodenum = NODEID_MAX;
+        tree->nodes[i].left = UINT16_MAX;
+        tree->nodes[i].right = UINT16_MAX;
     }
 
     tree->srcdata = srcdata;
     tree->nodecount = 0;
     tree->capacity = capacity;
 
-    tree->root = kdtree_build(&(struct kdtbuildctx_s){
+    kdtree_build(&(struct kdtbuildctx_s){
         tree, sortedx, count
     }, 0);
 
@@ -207,7 +207,7 @@ void kdtree_query(
     if (node == nullptr)
         return;
 
-    if (node->nodenum == SIZE_MAX)
+    if (node->nodenum == NODEID_MAX)
         return;
 
     const double dist = distanceSqr(querypos, tree->srcdata[node->nodenum]);
@@ -223,23 +223,25 @@ void kdtree_query(
     const auto near = sdist < 0 ? node->left : node->right;
     const auto far = sdist < 0 ? node->right : node->left;
     const size_t ndim = (dim + 1) % 3;
+    const auto pnear = near != UINT16_MAX ? &tree->nodes[near] : nullptr;
+    const auto pfar = far != UINT16_MAX ? &tree->nodes[far] : nullptr;
 
     kdtree_query(
         tree, querypos,
-        near, ndim, best, bestdist);
+        pnear, ndim, best, bestdist);
 
     if (sdist * sdist < *bestdist) {
         // check other subtree
         kdtree_query(
             tree, querypos,
-            far, ndim, best, bestdist);
+            pfar, ndim, best, bestdist);
     }
 };
 
 size_t gridkdtree_query(struct gridkdtree_s* tree, vec3_t querypos) {
     size_t best = SIZE_MAX;
     double bestdist = INFINITY;
-    kdtree_query(tree, querypos, tree->root, 0, &best, &bestdist);
+    kdtree_query(tree, querypos, &tree->nodes[0], 0, &best, &bestdist);
     return best;
 }
 
