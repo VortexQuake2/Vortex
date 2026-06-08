@@ -25,6 +25,7 @@ in NO WAY supported by Steve Yeager.
 
 #include "g_local.h"
 #include "ai_local.h"
+#include "entities/grid.h"
 
 
 //ACE
@@ -1019,6 +1020,59 @@ int AI_LinkServerNodes( int start )
 	return count;
 }
 
+// az: if we don't find bot nodes, consider using our grid data as a starting point.
+int AI_AddNode( vec3_t origin, int flagsmask );
+bool AI_SeedFromDroneAI(void) {
+	// add nodes
+	const auto nodecount = vrx_pf_get_node_count();
+	nodeid_t *remap = calloc(nodecount, sizeof(nodeid_t));
+
+	for (size_t node = 0; node < nodecount; node++) {
+		if (vrx_pf_get_nodeflags(node) & NF_NOSAVE) {
+			remap[node] = NODEID_MAX;
+			continue;
+		}
+
+		vec3_t nodepos;
+		vrx_pf_get_node_position(node, nodepos);
+
+		int flags = 0;
+		if (gi.pointcontents(nodepos) & CONTENTS_WATER) {
+			flags = NODEFLAGS_WATER;
+		}
+
+		remap[node] = AI_AddNode(nodepos, flags);
+	}
+
+	// add links
+	for (size_t node = 0; node < nodecount; node++) {
+		const auto links = vrx_pf_get_links(node);
+		const auto linkcount = vrx_pf_get_link_count(node);
+
+		if (remap[node] == NODEID_MAX)
+			continue;
+
+		for (auto linkidx = 0; linkidx < linkcount; linkidx++) {
+			const auto link = links[linkidx];
+			if (remap[link.nodenum] == NODEID_MAX)
+				continue;
+
+			if (link.linkflags & LF_WALK)
+				AI_AddLink(remap[node], remap[link.nodenum], LINK_MOVE);
+			if (link.linkflags & LF_FALL)
+				AI_AddLink(remap[node], remap[link.nodenum], LINK_FALL);
+
+			if (nodes[remap[node]].flags & NODEFLAGS_WATER && nodes[remap[link.nodenum]].flags & NODEFLAGS_WATER) {
+				if (link.linkflags & LF_FLY || link.linkflags & LF_FALL) {
+					AI_AddLink(remap[node], remap[link.nodenum], LINK_WATER);
+				}
+			}
+		}
+	}
+
+	free(remap);
+	return nodecount > 0;
+}
 
 int AI_LinkCloseNodes_JumpPass( int start );
 //==========================================
@@ -1046,7 +1100,12 @@ void AI_InitNavigationData(void)
 	nav.loaded = AI_LoadPLKFile( level.mapname );
 	if( !nav.loaded ) {
 		Com_Printf( "AI: FAILED to load nodes file.\n");
-		return;
+		Com_Printf("AI: Attempting to seed from drone AI\n");
+		nav.loaded = AI_SeedFromDroneAI();
+		if( !nav.loaded ) {
+			Com_Printf("AI: FAILED to seed from drone AI\n");
+			return;
+		}
 	}
 
 	servernodesstart = nav.num_nodes;
@@ -1066,3 +1125,4 @@ void AI_InitNavigationData(void)
 	Com_Printf("-------------------------------------\n");
 	// note: loaded = nodes loaded from .nav file, added = nodes generated at map load (for map ents, items, etc.)
 }
+

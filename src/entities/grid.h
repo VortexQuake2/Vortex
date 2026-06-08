@@ -102,3 +102,91 @@ void gheap_free(struct gheap_s** heap);
 bool gheap_push(struct gheap_s* heap, int32_t cost, void* data);
 void* gheap_pop(struct gheap_s* heap);
 void gheap_reset(struct gheap_s* heap);
+
+enum nodeflag_t : uint8_t {
+    NF_NONE,
+
+    // node cannot be walked on
+    NF_NOWALK = U8BIT(1),
+
+    // node is lower end of plat
+    NF_PLATLOWER = U8BIT(2),
+
+    // node is upper end of plat
+    NF_PLATUPPER = U8BIT(3),
+
+    // node was created referencing entity data
+    NF_ENTREF = U8BIT(4),
+
+    // the user added this thing
+    NF_USER = U8BIT(5),
+
+    // node is plat
+    NF_PLAT = NF_PLATLOWER | NF_PLATUPPER,
+
+    // do not save this node to disk if...
+    NF_NOSAVE = NF_PLAT | NF_ENTREF
+};
+
+enum linkflag_t : uint8_t {
+    LF_NONE,
+    LF_FLY = U8BIT(1),
+    LF_WALK = U8BIT(2),
+    LF_FALL = U8BIT(3),
+    LF_PLATFORM = U8BIT(4),
+};
+
+struct mapgrid_link_s {
+    nodeid_t nodenum;
+    enum linkflag_t linkflags;
+};
+
+typedef struct linkvalidity_s {
+    // valid for walk
+    bool walk;
+
+    // valid for fly
+    bool fly;
+
+    // valid for fall
+    bool fall;
+
+    // valid because it's a platform
+    bool platform;
+} linkvalidity_t;
+
+#define validity_empty(v) (v.walk == false && v.fly == false && v.fall == false && v.platform == false)
+
+enum searchtype_t {
+    SEARCHTYPE_WALK = 1,	// find nodes on horizontal plane with limited Z delta
+    SEARCHTYPE_FLY = 2     // find nodes regardless of Z delta between start end ending positions
+   };
+
+// pathfinding
+bool vrx_pf_nearest_node_location(vec3_t start, vec3_t node_loc, float range, qboolean vis);
+int vrx_pf_find_path(enum searchtype_t searchType, vec3_t start, vec3_t destination);
+int vrx_copy_path_waypoints(int *wp, int max);
+int vrx_pf_nearest_waypoint_index_along_path(vec3_t start, const int *wp, size_t wpcount);
+void vrx_pf_get_node_position(int nodenum, vec3_t pos);
+enum nodeflag_t vrx_pf_get_nodeflags(const nodeid_t node);
+
+// subsystem
+void InitPathfinding(); // every map load
+void ShutdownPathfinding(); // shutdowngame time
+
+// debug
+void vrx_pf_draw_path(const edict_t *ent);
+
+// randomness
+qboolean vrx_pf_get_grid_position(vec3_t pos, int index);
+qboolean vrx_pf_get_random_grid_position(vec3_t pos);
+int vrx_pf_get_node_count();
+
+// grid manipulation
+void vrx_pf_remove_link(const nodeid_t child, const nodeid_t parent);
+void vrx_pf_delete_node(const nodeid_t nodenum);
+bool vrx_pf_add_link(const nodeid_t child, const nodeid_t potentialParent, const linkvalidity_t valid);
+struct mapgrid_link_s* vrx_pf_is_linked(const nodeid_t child, const nodeid_t parent);
+struct mapgrid_link_s* vrx_pf_get_links(const nodeid_t nodenum);
+void vrx_pf_add_missing_reciprocals(const nodeid_t child);
+uint8_t vrx_pf_get_link_count(const nodeid_t parent);

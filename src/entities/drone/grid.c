@@ -11,44 +11,6 @@ cvar_t *vrx_gridgen_density;
 #define LINK_GAP (mapgrid->gap * 1.5 + 8)
 
 
-enum nodeflag_t : uint8_t {
-    NF_NONE,
-
-    // node cannot be walked on
-    NF_NOWALK = U8BIT(1),
-
-    // node is lower end of plat
-    NF_PLATLOWER = U8BIT(2),
-
-    // node is upper end of plat
-    NF_PLATUPPER = U8BIT(3),
-
-    // node was created referencing entity data
-    NF_ENTREF = U8BIT(4),
-
-    // the user added this thing
-    NF_USER = U8BIT(5),
-
-    // node is plat
-    NF_PLAT = NF_PLATLOWER | NF_PLATUPPER,
-
-    // do not save this node to disk if...
-    NF_NOSAVE = NF_PLAT | NF_ENTREF
-};
-
-enum linkflag_t : uint8_t {
-    LF_NONE,
-    LF_FLY = U8BIT(1),
-    LF_WALK = U8BIT(2),
-    LF_FALL = U8BIT(3),
-    LF_PLATFORM = U8BIT(4)
-};
-
-struct mapgrid_link_s {
-    nodeid_t nodenum;
-    enum linkflag_t linkflags;
-};
-
 
 struct mapgrid_s {
     float gap;
@@ -283,7 +245,7 @@ int vrx_pf_nearest_node_index(vec3_t start, const float range, const qboolean vi
     return idx;
 }
 
-qboolean vrx_pf_nearest_node_location(vec3_t start, vec3_t node_loc, const float range, const qboolean vis) {
+bool vrx_pf_nearest_node_location(vec3_t start, vec3_t node_loc, const float range, const qboolean vis) {
     if (!mapgrid->numnodes)
         return false;
 
@@ -381,23 +343,6 @@ bool CheckPathFall(vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs) {
 
     return true;
 }
-
-
-typedef struct linkvalidity_s {
-    // valid for walk
-    bool walk;
-
-    // valid for fly
-    bool fly;
-
-    // valid for fall
-    bool fall;
-
-    // valid because it's a platform
-    bool platform;
-} linkvalidity_t;
-
-#define validity_empty(v) (v.walk == false && v.fly == false && v.fall == false && v.platform == false)
 
 // should only be reserved for spatial checks
 linkvalidity_t vrx_pf_is_valid_child_position(const int max_2d_distance,
@@ -659,7 +604,7 @@ int vrx_pf_nearest_waypoint_index_along_path(vec3_t start, const int *wp, const 
     return bestNodeNum;
 }
 
-int FindPath(const enum searchtype_t searchType, vec3_t start, vec3_t destination) {
+int vrx_pf_find_path(const enum searchtype_t searchType, vec3_t start, vec3_t destination) {
     node_t *BestNode;
     int g;
     vec3_t tstart, tdest;
@@ -774,7 +719,7 @@ void G_Spawn_Trails(const int type, vec3_t start, vec3_t endpos) {
     gi.multicast(start, MULTICAST_PVS);
 }
 
-void DrawPath(const edict_t *ent) {
+void vrx_pf_draw_path(const edict_t *ent) {
     if (!ent->showPathDebug)
         return;
 
@@ -858,7 +803,7 @@ void DrawPathToAimSpot(edict_t *ent, const enum searchtype_t st) {
     }
 
 
-    if (FindPath(st, start, end)) {
+    if (vrx_pf_find_path(st, start, end)) {
         // draw it
         DrawPath1();
         //safe_centerprintf(ent, "success!");
@@ -943,7 +888,7 @@ void vrx_free_adjacency_lists() {
     }
 }
 
-int GetGridNodes() {
+int vrx_pf_get_node_count() {
     if (!mapgrid)
         return 0;
     return mapgrid->numnodes;
@@ -1028,14 +973,14 @@ void gridtree_regenerate(void) {
 }
 
 
-void vrx_pf_remove_link(const int child, const int parent) {
+void vrx_pf_remove_link(const nodeid_t child, const nodeid_t parent) {
     // guard against the SIZE_MAX sentinel and against missing buffer
     if (mapgrid->adjacent_node_count[parent] == UINT8_MAX)
         return;
     if (!mapgrid->adjacent_nodes[parent])
         return;
     for (size_t i = 0; i < mapgrid->adjacent_node_count[parent]; i++) {
-        if (mapgrid->adjacent_nodes[parent][i].nodenum == (size_t)child) {
+        if (mapgrid->adjacent_nodes[parent][i].nodenum == child) {
             mapgrid->adjacent_nodes[parent][i] = mapgrid->adjacent_nodes[parent][mapgrid->adjacent_node_count[parent] - 1];
 
             mapgrid->adjacent_nodes[parent][mapgrid->adjacent_node_count[parent] - 1] = (struct mapgrid_link_s){};
@@ -1048,7 +993,7 @@ void vrx_pf_remove_link(const int child, const int parent) {
 }
 
 // remove all references to this child node
-void vrx_pf_remove_references(const int child) {
+void vrx_pf_remove_references(const nodeid_t child) {
     for (int i = 0; i < mapgrid->numnodes; i++) {
         vrx_pf_remove_link(child, i);
     }
@@ -1065,7 +1010,7 @@ void vrx_pf_move_node_references(const int newindex, const int lastindex) {
     }
 }
 
-void vrx_pf_delete_node(const int nodenum) {
+void vrx_pf_delete_node(const nodeid_t nodenum) {
     vrx_pf_remove_references(nodenum);
 
     const int last_idx = mapgrid->numnodes - 1;
@@ -1189,7 +1134,7 @@ qboolean vrx_node_has_siblings(vec3_t start) {
 }
 
 
-bool vrx_pf_add_link(const int child, const nodeid_t potentialParent, const linkvalidity_t valid) {
+bool vrx_pf_add_link(const nodeid_t child, const nodeid_t potentialParent, const linkvalidity_t valid) {
     const auto newSize = sizeof mapgrid->adjacent_nodes[potentialParent][0] *
                          (mapgrid->adjacent_node_count[potentialParent] + 1);
     struct mapgrid_link_s* newAdjacency = realloc(mapgrid->adjacent_nodes[potentialParent], newSize);
@@ -1216,7 +1161,28 @@ struct mapgrid_link_s* vrx_pf_is_linked(const nodeid_t child, const nodeid_t par
     return nullptr;
 }
 
-void vrx_pf_add_missing_reciprocals(const int child) {
+enum nodeflag_t vrx_pf_get_nodeflags(const nodeid_t node) {
+    if (node >= mapgrid->numnodes)
+        return NF_NONE;
+
+    return mapgrid->nodeflags[node];
+}
+
+uint8_t vrx_pf_get_link_count(const nodeid_t parent) {
+    if (mapgrid->adjacent_node_count[parent] == UINT8_MAX)
+        return 0;
+
+    return mapgrid->adjacent_node_count[parent];
+}
+
+struct mapgrid_link_s* vrx_pf_get_links(const nodeid_t parent) {
+    if (mapgrid->adjacent_node_count[parent] == UINT8_MAX)
+        return nullptr;
+
+    return mapgrid->adjacent_nodes[parent];
+}
+
+void vrx_pf_add_missing_reciprocals(const nodeid_t child) {
     vrx_pf_compute_adjacent_nodes(child, true);
     if (mapgrid->adjacent_node_count[child] == UINT8_MAX)
         return;

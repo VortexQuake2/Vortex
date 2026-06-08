@@ -1,4 +1,5 @@
 #include "g_local.h"
+#include "entities/grid.h"
 #include "gamemodes/invasion.h"
 
 #define DRONE_TARGET_RANGE		1024	// maximum range for finding targets
@@ -1278,19 +1279,9 @@ void drone_cleargoal(edict_t *self) {
 }
 
 
-qboolean vrx_pf_nearest_node_location(vec3_t start, vec3_t node_loc, float range, qboolean vis);
-
-int FindPath(int searchType, vec3_t start, vec3_t destination);
 
 void M_MoveToPosition(edict_t *ent, vec3_t pos, float dist, qboolean stop_when_close);
 
-int vrx_copy_path_waypoints(int *wp, int max);
-
-int vrx_pf_nearest_waypoint_index_along_path(vec3_t start, const int *wp, size_t wpcount);
-
-void vrx_pf_get_node_position(int nodenum, vec3_t pos);
-
-void DrawPath(const edict_t *ent);
 
 void drone_ai_giveup(edict_t *self) {
     // reset enemy/goal pointers
@@ -1405,7 +1396,7 @@ void M_FindPath(edict_t *self, vec3_t goalpos, qboolean compute_path_now) {
         else
             searchType = SEARCHTYPE_WALK;
 
-        if (FindPath(searchType, v1, v2)) {
+        if (vrx_pf_find_path(searchType, v1, v2)) {
             if (DRONE_DEBUG)
                 gi.dprintf("%s (%d) is recalculating path at %d\n",
                            GetMonsterKindString(self->mtype), G_GetEntityIndex(self), level.framenum);
@@ -2229,19 +2220,7 @@ void drone_think(edict_t *self) {
     V_ArmorCache(self, (int) (0.2 * self->monsterinfo.max_armor), 1);
 
     // draw waypoint path for debugging if enabled
-    DrawPath(self);
-
-    //Talent: Life Tap
-    // if (self->activator && self->activator->inuse && self->activator->client && !(level.framenum % 10))
-    // {
-    // 	if (vrx_get_talent_level(self->activator, TALENT_LIFE_TAP) > 0)
-    // 	{
-    // 		int damage = 0.01 * self->max_health;
-    // 		if (damage < 1)
-    // 			damage = 1;
-    // 		T_Damage(self, world, world, vec3_origin, self->s.origin, vec3_origin, damage, 0, DAMAGE_NO_ABILITIES, 0);
-    // 	}
-    // }
+    vrx_pf_draw_path(self);
 
     if (self->linkcount != self->monsterinfo.linkcount) {
         self->monsterinfo.linkcount = self->linkcount;
