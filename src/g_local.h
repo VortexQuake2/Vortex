@@ -2407,6 +2407,14 @@ typedef struct sv_entity_s {
 
 #endif
 
+// func_plat2 movement state (ent->plat2flags)
+typedef enum {
+    PLAT2_NONE    = 0,
+    PLAT2_CALLED  = 1,
+    PLAT2_MOVING  = 2,
+    PLAT2_WAITING = 4
+} plat2flags_t;
+
 struct edict_s {
     entity_state_t s;
     struct gclient_s *client; // NULL if not a player
@@ -2514,6 +2522,7 @@ struct edict_s {
     float fly_sound_debounce_time; //move to clientinfo
     float knockweapon_debounce_time; // time when knockweapon code can be run again
     float last_move_time;
+    plat2flags_t plat2flags; // func_plat2 state
 
     long health;
     long max_health;
