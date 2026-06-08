@@ -128,7 +128,7 @@ uint16_t kdtree_build(struct kdtbuildctx_s *ctx, const size_t dim) {
 
     // size 10 -> 5 (0-5, 6-10)
     // size 9 -> 4 (0-4, 5-9)
-    auto _node = gkdt_alloc_node(ctx->tree);
+    const auto _node = gkdt_alloc_node(ctx->tree);
     const size_t mid = (ctx->slicesize - 1) / 2;
     _node->nodenum = ctx->sortedx[mid] ;
 
@@ -196,8 +196,8 @@ struct gridkdtree_s* gridkdtree_create(vec3_t* srcdata, const size_t count) {
 
 
 void kdtree_query(
-    struct gridkdtree_s* tree,
-    vec3_t querypos,
+    const struct gridkdtree_s* tree,
+    const vec3_t querypos,
     const struct kdtree_node_s* node,
     const size_t dim,
     size_t *best,
@@ -238,7 +238,7 @@ void kdtree_query(
     }
 };
 
-size_t gridkdtree_query(struct gridkdtree_s* tree, vec3_t querypos) {
+size_t gridkdtree_query(const struct gridkdtree_s* tree, const vec3_t querypos) {
     size_t best = SIZE_MAX;
     double bestdist = INFINITY;
     kdtree_query(tree, querypos, &tree->nodes[0], 0, &best, &bestdist);
@@ -270,7 +270,7 @@ void gheap_free(struct gheap_s** heap) {
 }
 
 static void hswap(struct gheap_entry_s *a, struct gheap_entry_s *b) {
-    struct gheap_entry_s tmp = *a;
+    const struct gheap_entry_s tmp = *a;
     *a = *b;
     *b = tmp;
 }
@@ -351,6 +351,6 @@ void gheap_reset(struct gheap_s* heap) {
 }
 
 void* gheap_pop(struct gheap_s* heap) {
-    auto ret = gheap_pop_inner(heap).data;
+    const auto ret = gheap_pop_inner(heap).data;
     return ret;
 }

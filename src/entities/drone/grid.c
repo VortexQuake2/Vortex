@@ -8,6 +8,7 @@ cvar_t *vrx_gridgen_density;
 #define MASK_PATH (MASK_SOLID|CONTENTS_MONSTERCLIP)
 #define MASK_OPAQUE_PATH (MASK_OPAQUE|CONTENTS_MONSTERCLIP)
 #define PF_DENSITY ((int)vrx_gridgen_density->value)
+#define LINK_GAP (mapgrid->gap * 1.5 + 8)
 
 
 enum nodeflag_t : uint8_t {
@@ -433,7 +434,7 @@ linkvalidity_t vrx_pf_is_valid_child_node(
     vec3_t start, v;
     // Why 1.5? Because it's close to a hypothenuse length.
     // Why +8? It's half an every(xyz) (in other words, half the minimum gap between nodes)
-    int max_2d_dist = mapgrid->gap * 1.5 + 8;
+    int max_2d_dist = LINK_GAP;
 
     if (parent == child)
         // no
@@ -480,9 +481,9 @@ linkvalidity_t vrx_pf_is_valid_child_node(
     return validity;
 }
 
-static struct mapgrid_link_s link_from_validity(const size_t nodenum, const struct linkvalidity_s validity) {
+static struct mapgrid_link_s link_from_validity(const size_t child, const struct linkvalidity_s validity) {
     struct mapgrid_link_s ret = {};
-    ret.nodenum = nodenum;
+    ret.nodenum = child;
     ret.linkflags |= validity.fly ? LF_FLY : LF_NONE;
     ret.linkflags |= validity.walk ? LF_WALK : LF_NONE;
     ret.linkflags |= validity.fall ? LF_FALL : LF_NONE;
@@ -840,22 +841,28 @@ void DrawPathToAimSpot(edict_t *ent, const enum searchtype_t st) {
         || enode == SIZE_MAX) {
         // can't find nearby nodes
         //gi.dprintf("couldn't find nearby nodes");
-        gire.Draw_Circle(tr.endpos, 10, &rgba_red, 0.1, false);
+        gire.Draw_Circle(tr.endpos, 10, &rgba_red, FRAMETIME, false);
         return;
     }
     VectorCopy(mapgrid->pathnode[snode], start);
     VectorCopy(mapgrid->pathnode[enode], end);
+
+#ifdef VRX_REPRO
+    gire.Draw_Circle(start, 16, &rgba_green, FRAMETIME, false);
+    gire.Draw_Circle(end, 16, &rgba_blue, FRAMETIME, false);
+    gire.Draw_Circle(tr.endpos, 16, &rgba_red, FRAMETIME, false);
+#endif
+
+    if (ent->client->showGridDebug != GD_AIMSPOT) {
+        return;
+    }
+
 
     if (FindPath(st, start, end)) {
         // draw it
         DrawPath1();
         //safe_centerprintf(ent, "success!");
     }
-#ifdef VRX_REPRO
-    gire.Draw_Circle(start, 10, &rgba_green, 0.1, false);
-    gire.Draw_Circle(end, 10, &rgba_blue, 0.1, false);
-    gire.Draw_Circle(tr.endpos, 10, &rgba_red, 0.1, false);
-#endif
 }
 
 // Put this at very top of ClientThink() so you can see
@@ -876,10 +883,7 @@ void vrx_pf_draw_child_links(edict_t *ent) {
                                 ? SEARCHTYPE_WALK
                                 : SEARCHTYPE_FLY;
 
-    if (ent->client->showGridDebug == GD_AIMSPOT) {
-        DrawPathToAimSpot(ent, searchType);
-        return;
-    }
+    DrawPathToAimSpot(ent, searchType);
 
     if (ent->client->showGridDebug != GD_CHILD)
         return;
@@ -977,7 +981,7 @@ void Cmd_GetGridPosition() {
 }
 
 void vrx_pf_draw_nearby_grid(edict_t *ent) {
-    vec3_t v, forward;
+    vec3_t v, forward, pToNode;
 
     if (ent->client->showGridDebug == GD_OFF)
         return;
@@ -985,11 +989,11 @@ void vrx_pf_draw_nearby_grid(edict_t *ent) {
     AngleVectors(ent->s.angles, forward, nullptr, nullptr);
 
     for (int i = 0; i < mapgrid->numnodes; i++) {
-        VectorSubtract(mapgrid->pathnode[i], ent->s.origin, v);
+        VectorSubtract(mapgrid->pathnode[i], ent->s.origin, pToNode);
 #ifndef VRX_REPRO
         if (VectorLength(v) >= 256) continue; // limit view distance to eliminate overflows
 #endif
-        if (DotProduct(v, forward) > 0.3) {
+        if (DotProduct(pToNode, forward) > 0.3) {
             // infront?
             VectorCopy(mapgrid->pathnode[i], v);
 #ifndef VRX_REPRO
@@ -997,6 +1001,18 @@ void vrx_pf_draw_nearby_grid(edict_t *ent) {
             G_Spawn_Trails(TE_BFG_LASER, mapgrid->pathnode[i], v);
 #else
             gire.Draw_Point(v, 4, &rgba_green, FRAMETIME, true);
+
+            constexpr float dst = 128 + 64;
+            constexpr float dstSqr = dst * dst;
+            if (distanceSqr(v, ent->s.origin) < dstSqr) {
+                pToNode[2] = 0;
+                VectorNormalize(pToNode);
+
+                vec3_t angles;
+                vectoangles(pToNode, angles);
+                v[2] += 12;
+                gire.Draw_StaticWorldText(v, angles, va("%d", (int) i), &rgba_white, 0.2, FRAMETIME, true);
+            }
             // gire.Draw_Bounds(
             //     tv(-16 + v[0], -16 + v[1], -32 + v[2]),
             //     tv(16 + v[0], 16 + v[1], 0 + v[2]),
@@ -1173,6 +1189,32 @@ qboolean vrx_node_has_siblings(vec3_t start) {
 }
 
 
+bool vrx_pf_add_link(const int child, const nodeid_t potentialParent, const linkvalidity_t valid) {
+    const auto newSize = sizeof mapgrid->adjacent_nodes[potentialParent][0] *
+                         (mapgrid->adjacent_node_count[potentialParent] + 1);
+    struct mapgrid_link_s* newAdjacency = realloc(mapgrid->adjacent_nodes[potentialParent], newSize);
+
+    if (newAdjacency) {
+        mapgrid->adjacent_nodes[potentialParent] = newAdjacency;
+        newAdjacency[mapgrid->adjacent_node_count[potentialParent]] = link_from_validity(child, valid);
+        mapgrid->adjacent_node_count[potentialParent]++;
+        return true;
+    }
+
+    return false;
+}
+
+struct mapgrid_link_s* vrx_pf_is_linked(const nodeid_t child, const nodeid_t parent) {
+    if (mapgrid->adjacent_node_count[parent] == UINT8_MAX)
+        return nullptr;
+
+    for (uint8_t j = 0; j < mapgrid->adjacent_node_count[parent]; j++) {
+        if (mapgrid->adjacent_nodes[parent][j].nodenum == child) {
+            return &mapgrid->adjacent_nodes[parent][j];
+        }
+    }
+    return nullptr;
+}
 
 void vrx_pf_add_missing_reciprocals(const int child) {
     vrx_pf_compute_adjacent_nodes(child, true);
@@ -1186,13 +1228,7 @@ void vrx_pf_add_missing_reciprocals(const int child) {
             mapgrid->adjacent_node_count[potentialParent.nodenum] = 0;
 
         // check if we are missing from their list (compare against `child`, not loop index `i`)
-        bool found = false;
-        for (size_t j = 0; j < mapgrid->adjacent_node_count[potentialParent.nodenum]; j++) {
-            if (mapgrid->adjacent_nodes[potentialParent.nodenum][j].nodenum == (size_t)child) {
-                found = true;
-                break;
-            }
-        }
+        bool found = vrx_pf_is_linked(child, potentialParent.nodenum);
 
         if (found)
             continue;
@@ -1201,15 +1237,7 @@ void vrx_pf_add_missing_reciprocals(const int child) {
         if (validity_empty(valid))
             continue;
 
-        const auto newSize = sizeof mapgrid->adjacent_nodes[potentialParent.nodenum][0] *
-            (mapgrid->adjacent_node_count[potentialParent.nodenum] + 1);
-        struct mapgrid_link_s* ptr = realloc(mapgrid->adjacent_nodes[potentialParent.nodenum], newSize);
-
-        if (ptr) {
-            mapgrid->adjacent_nodes[potentialParent.nodenum] = ptr;
-            ptr[mapgrid->adjacent_node_count[potentialParent.nodenum]] = link_from_validity(child, valid);
-            mapgrid->adjacent_node_count[potentialParent.nodenum]++;
-        }
+        vrx_pf_add_link(child, potentialParent.nodenum, valid);
     }
 }
 
@@ -1773,8 +1801,8 @@ void Cmd_ComputeNodes_f(edict_t *ent) {
 
     vrx_free_adjacency_lists();
     *mapgrid = (struct mapgrid_s){};
-    vrx_pf_create_grid(true);
     safe_cprintf(ent, PRINT_HIGH, "Computing nodes...\n");
+    vrx_pf_create_grid(true);
 }
 
 void Cmd_ToggleShowGrid(edict_t *ent) {
@@ -1798,4 +1826,164 @@ void Cmd_ToggleShowGrid(edict_t *ent) {
 #ifdef VRX_REPRO
     gire.configstring(CONFIG_STORY, "");
 #endif
+}
+
+void Cmd_AddLink_f(edict_t* ent) {
+    if (!ent->myskills.administrator)
+        return;
+
+    if (gi.argc() < 2) {
+        safe_centerprintf(ent, "Usage: addlink <parent node ID> <child node ID> [walk|fly|fall]\n");
+        return;
+    }
+
+    char* endptr;
+    nodeid_t parent = NODEID_MAX;
+    nodeid_t child = NODEID_MAX;
+
+    bool reciprocal = true;
+    linkvalidity_t validity = {};
+
+    for (int i = 1; i < gi.argc(); i++) {
+        const char* arg = gi.argv(i);
+        if (strcmp(arg, "walk") == 0)
+            validity.walk = true;
+        else if (strcmp(arg, "fly") == 0)
+            validity.fly = true;
+        else if (strcmp(arg, "fall") == 0)
+            validity.fall = true;
+        else if (strcmp(arg, "nonreciprocal") == 0) {
+            reciprocal = false;
+        }
+        else {
+            if (parent == NODEID_MAX) {
+                parent = strtol(gi.argv(1), &endptr, 10);
+                if (endptr == gi.argv(1)) {
+                    safe_centerprintf(ent, "Invalid parent node ID\n");
+                    return;
+                }
+            } else if (child == NODEID_MAX) {
+                child = strtol(gi.argv(2), &endptr, 10);
+                if (endptr == gi.argv(2)) {
+                    safe_centerprintf(ent, "Invalid child node ID\n");
+                    return;
+                }
+            }
+
+            safe_centerprintf(ent, "Invalid link validity. values are 'walk' 'fly' and 'fall'\n");
+            return;
+        }
+    }
+
+    if (validity_empty(validity)) {
+        safe_centerprintf(ent, "No links specified. Valid values are 'walk' 'fly' and 'fall'\n");
+        return;
+    }
+
+    vec3_t forward, right, start, offset, end;
+    trace_t tr;
+
+    // calculate starting position for trace
+    AngleVectors(ent->client->v_angle, forward, right, nullptr);
+    VectorSet(offset, 0, 7, ent->viewheight - 8);
+    P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+    // run trace
+
+    if (parent == NODEID_MAX) {
+        // find closest node, use as parent
+        const size_t snode = gridkdtree_query(gridtree, start);
+        if (snode == SIZE_MAX) {
+            safe_cprintf(ent, PRINT_HIGH, "Can't find start node, try specifying it.\n");
+            return;
+        }
+
+        parent = snode;
+    }
+
+    if (child == NODEID_MAX) {
+        // calculate end position
+        VectorMA(start, 8192, forward, end);
+        // find closest node to aim spot, use as child
+        tr = gi.trace(start, nullptr, nullptr, end, ent, MASK_SHOT);
+        // find path to the spot we are aiming at
+        // get node location nearest to us and our goal
+        const size_t enode = gridkdtree_query(gridtree, tr.endpos);
+
+        if (enode == SIZE_MAX) {
+            safe_cprintf(ent, PRINT_HIGH, "Can't find end node. Try specifying both nodes.");
+            return;
+        }
+
+        child = enode;
+    }
+
+    assert (parent < mapgrid->numnodes);
+    assert (child < mapgrid->numnodes);
+
+    if (parent == child) {
+        safe_cprintf(ent, PRINT_HIGH, "Parent and child nodes are the same. No link created.\n");
+        return;
+    }
+
+    safe_cprintf(
+        ent,
+        PRINT_HIGH,
+        "Linking %d to %d (reciprocal: %s)\n",
+        parent, child, reciprocal ? "true" : "false"
+        );
+    const auto link = vrx_pf_is_linked(child, parent);
+    if (link) {
+        safe_centerprintf(ent, "Link already exists. Modified.\n");
+        *link = link_from_validity(child, validity);
+    } else {
+        vrx_pf_add_link(child, parent, validity);
+    }
+
+    if (reciprocal) {
+        const auto link2 = vrx_pf_is_linked(parent, child);
+        if (link2) {
+            if (validity.walk)
+                link2->linkflags |= LF_WALK;
+        } else {
+            linkvalidity_t reciprocalValidity = {};
+
+            // fly doesn't imply fall, and viceversa.
+            // only walk is usually reciprocal.
+            if (validity.walk)
+                reciprocalValidity.walk = true;
+
+            if (!validity_empty(reciprocalValidity))
+                vrx_pf_add_link(parent, child, reciprocalValidity);
+        }
+    }
+}
+
+void Cmd_DeleteLink_f(edict_t* ent) {
+    if (!ent->myskills.administrator)
+        return;
+
+
+    if (gi.argc() < 3) {
+        safe_centerprintf(ent, "Usage: dellink <parent node ID> <child node ID> \n");
+        return;
+    }
+
+    char* endptr;
+    nodeid_t parent = strtol(gi.argv(1), &endptr, 10);
+    if (endptr == gi.argv(1)) {
+        safe_centerprintf(ent, "Invalid parent node ID\n");
+        return;
+    }
+
+    nodeid_t child = strtol(gi.argv(2), &endptr, 10);
+    if (endptr == gi.argv(2)) {
+        safe_centerprintf(ent, "Invalid child node ID\n");
+        return;
+    }
+
+    if (!vrx_pf_is_linked(child, parent))
+        safe_centerprintf(ent, "Link not found\n");
+    else {
+        vrx_pf_remove_link(child, parent);
+    }
 }

@@ -95,7 +95,7 @@ void nodearena_reset(struct nodearena_s* arena);
 
 void gridkdtree_free(struct gridkdtree_s** tree);
 struct gridkdtree_s* gridkdtree_create(vec3_t* srcdata, size_t count);
-size_t gridkdtree_query(struct gridkdtree_s* tree, vec3_t querypos);
+size_t gridkdtree_query(const struct gridkdtree_s* tree, const vec3_t querypos);
 
 struct gheap_s* gheap_create(size_t capacity);
 void gheap_free(struct gheap_s** heap);
