@@ -632,14 +632,19 @@ qboolean drone_findtarget(edict_t *self, qboolean force) {
                 self->monsterinfo.aiflags &= ~AI_NO_CIRCLE_STRAFE;
                 self->monsterinfo.aiflags &= ~AI_FIND_NAVI;
                 self->monsterinfo.aiflags |= AI_ASSAULT;
+            } else {
+                // az: advancing the chain over here means we have to update this, lol.
+                VectorCopy(self->goalentity->s.origin, self->monsterinfo.last_sighting);
             }
         }
     }
 
     if (self->monsterinfo.aiflags & AI_ASSAULT) {
         self->goalentity = vrx_inv_give_closest_player_spawn(self);
-        if (self->goalentity)
+        if (self->goalentity) {
+            VectorCopy(self->goalentity->s.origin, self->monsterinfo.last_sighting);
             return true;
+        }
     }
 
     return false;
