@@ -10,20 +10,19 @@ cvar_t *vrx_gridgen_density;
 #define PF_DENSITY ((int)vrx_gridgen_density->value)
 #define LINK_GAP (mapgrid->gap * 1.5 + 8)
 
-
-
 struct mapgrid_s {
     float gap;
     int numnodes;
     vec3_t pathnode[MAX_GRID_SIZE];
     enum nodeflag_t nodeflags[MAX_GRID_SIZE];
-    edict_t *nodeent[MAX_GRID_SIZE];
+    uint16_t nodeent[MAX_GRID_SIZE]; // index 0 is just world/g_edicts, so w/e
 
     // adjacency list
     struct mapgrid_link_s *adjacent_nodes[MAX_GRID_SIZE];
     uint8_t adjacent_node_count[MAX_GRID_SIZE];
 } *mapgrid;
 
+static_assert(MAX_EDICTS < UINT16_MAX, "yo, that's a lot of ents. MAX_EDICTS >= UINT16_MAX! change nodeent type to be larger");
 struct gridkdtree_s *gridtree = nullptr;
 
 struct pfctx_s {
@@ -31,11 +30,13 @@ struct pfctx_s {
     struct nodearena_s *arena;
     struct gheap_s *openheap;
 
-    node_t **nodelist;
+    // map nodenum (index of mapgrid->pathnode)
+    // to nodeid_t (index of arena->nodes)
+    nodeid_t *nodelist;
 
     // results
     nodeid_t *waypoints; // Integer array of nodenum's along the path
-    size_t capacity;
+    size_t capacity; // should be numnodes or a little larger
     size_t numpts; // Number of nodes in the path..
 
 } *pfctx = nullptr;
@@ -101,7 +102,7 @@ void pfctx_reset(struct pfctx_s *ctx) {
     nodearena_reset(ctx->arena);
     gheap_reset(ctx->openheap);
     ctx->numpts = 0;
-    memset(ctx->nodelist, 0, ctx->capacity * sizeof(ctx->nodelist[0]));
+    memset(ctx->nodelist, -1, ctx->capacity * sizeof(ctx->nodelist[0]));
 }
 
 #define maxx 512 // 32 units/node x=[0..255]
@@ -118,45 +119,48 @@ void pfctx_reset(struct pfctx_s *ctx) {
 #define g2v2(z)  (float)min(max((z)*zevery-4096+(zevery*0.5),-4096),4096)
 
 //================== pathfinding stuff ================
-void PrintNodes(const node_t *Node, const qboolean reverse) {
-    const node_t *tNode = Node;
-
-    while (tNode) {
-        int nodeNumber = tNode->nodenum;
-        if (nodeNumber < 0 || nodeNumber > mapgrid->numnodes)
-            nodeNumber = 9999;
-        gi.dprintf("%d->", nodeNumber);
-        if (reverse)
-            tNode = tNode->prev;
-        else
-            tNode = tNode->next;
-    }
-    gi.dprintf("(null)\n");
-}
+// void PrintNodes(const node_t *Node, const qboolean reverse) {
+//     const node_t *tNode = Node;
+//
+//     while (tNode) {
+//         int nodeNumber = tNode->nodenum;
+//         if (nodeNumber < 0 || nodeNumber > mapgrid->numnodes)
+//             nodeNumber = 9999;
+//         gi.dprintf("%d->", nodeNumber);
+//         if (reverse)
+//             tNode = tNode->prev;
+//         else
+//             tNode = tNode->next;
+//     }
+//     gi.dprintf("(null)\n");
+// }
 
 // Propagate Old node's values to Nodes on Stack
-void PropagateDown(struct gstack_s *stack, node_t *Old) {
+void PropagateDown(const struct pfctx_s* ctx, struct gstack_s *stack, node_t *Old) {
     int c;
 
     for (c = 0; c < NUMCHILDS; c++) // parse through Old node children
-        if (Old->child[c])
-            if (Old->dist + 1 < Old->child[c]->dist) {
-                Old->child[c]->dist = Old->dist + 1;
-                Old->child[c]->prev = Old;
-                gstack_push(stack, Old->child[c]);
+        if (Old->child[c] != NODEID_MAX) {
+            const auto child = nodearena_get(ctx->arena, Old->child[c]);
+            if (Old->dist + 1 < child->dist) {
+                child->dist = Old->dist + 1;
+                child->prev = nodearena_indexof(ctx->arena, Old);
+                gstack_push(stack, child);
             } // Push onto Stack
+        }
 
     while (gstack_top(stack)) {
         // is the stack in use?
         node_t *POPNode = gstack_pop(stack); // grab node from stack
         for (c = 0; c < NUMCHILDS; c++) {
             // parse through all existing POPNOde children
-            if (!POPNode->child[c]) break; // No more valid Child nodes!
-            if (POPNode->dist + 1 < POPNode->child[c]->dist) {
+            if (POPNode->child[c] == NODEID_MAX) break; // No more valid Child nodes!
+            const auto child = nodearena_get(ctx->arena, POPNode->child[c]);
+            if (POPNode->dist + 1 < child->dist) {
                 // update g and f values
-                POPNode->child[c]->dist = POPNode->dist + 1;
-                POPNode->child[c]->prev = POPNode;
-                gstack_push(stack, POPNode->child[c]);
+                child->dist = POPNode->dist + 1;
+                child->prev = nodearena_indexof(ctx->arena, POPNode);
+                gstack_push(stack, child);
             }
         }
     } // Push onto Stack
@@ -171,27 +175,27 @@ void vrx_pf_push_successors(const struct pfctx_s *ctx, node_t *current, const in
     // NOTE: NodeNumS is the index of a node that was found by the node searching routine
     // Has NodeNumS been Searched yet?
     // see if this node is already on the OPEN list
-    node_t *old = ctx->nodelist[NodeNumS];
+    node_t *old = nodearena_get(ctx->arena, ctx->nodelist[NodeNumS]);
     if (old && old->list != LIST_NONE) {
         // node was found on the OPEN list
         // this means the node was found before (as a child of another node)
         // but not yet searched (as a parent node)
         for (c = 0; c < NUMCHILDS; c++) {
             // break on the first available child slot of StartNode
-            if (!current->child[c])
+            if (current->child[c] == NODEID_MAX)
                 break;
         }
 
         // if we found an empty child slot, use it, otherwise use the last one
-        current->child[((c < NUMCHILDS) ? c : (NUMCHILDS - 1))] = old;
+        current->child[((c < NUMCHILDS) ? c : (NUMCHILDS - 1))] = nodearena_indexof(ctx->arena, old);
 
         // have we gone farther with this node than StartNode?
         if (current->dist + 1 < old->dist) {
             old->dist = current->dist + 1; // make node one step beyond StartNode
-            old->prev = current; // reverse link to StartNode
+            old->prev = nodearena_indexof(ctx->arena, current); // reverse link to StartNode
 
             if (old->list == LIST_CLOSED)
-                PropagateDown(ctx->stack, old);
+                PropagateDown(ctx, ctx->stack, old);
         }
         return;
     }
@@ -207,20 +211,19 @@ void vrx_pf_push_successors(const struct pfctx_s *ctx, node_t *current, const in
     // vectors.  You can come up with your own estimate..
 
     const float est = distanceSqr(mapgrid->pathnode[NodeNumS], mapgrid->pathnode[NodeNumD]);
-    successor->prev = current; // reverse link to StartNode
-    successor->next = nullptr;
+    successor->prev = nodearena_indexof(ctx->arena, current); // reverse link to StartNode
     // make all child links of new Successor node nullptr
     for (c = 0; c < NUMCHILDS; c++)
-        successor->child[c] = nullptr;
+        successor->child[c] = NODEID_MAX;
 
     for (c = 0; c < NUMCHILDS; c++)
-        if (current->child[c] == nullptr) break; // Find first empty Child[] of StartNode
-    current->child[((c < NUMCHILDS) ? c : (NUMCHILDS - 1))] = successor; // make Successor a child of StartNode
+        if (current->child[c] == NODEID_MAX) break; // Find first empty Child[] of StartNode
+    current->child[((c < NUMCHILDS) ? c : (NUMCHILDS - 1))] = nodearena_indexof(ctx->arena, successor); // make Successor a child of StartNode
 
     // Insert Successor into OPEN List
     gheap_push(ctx->openheap, successor->dist + est, successor);
     successor->list = LIST_OPEN;
-    ctx->nodelist[successor->nodenum] = successor;
+    ctx->nodelist[successor->nodenum] = nodearena_indexof(ctx->arena, successor);
     //gi.dprintf("added node %d to the OPEN list\n", Successor->nodenum);
 }
 
@@ -350,10 +353,10 @@ linkvalidity_t vrx_pf_is_valid_child_position(const int max_2d_distance,
     const bool validWalkZdist = fabs(v[2] - start[2]) <= 32;
 
     // distance check, next node could be anywhere between 128 - 255 units away
-    float dist2d = Get2dDistance(start, v);
-    bool walkDistCheck = dist2d <= max_2d_distance;
-    bool fallDistCheck = dist2d <= (max_2d_distance * 1.5);
-    bool flyDistCheck = dist2d <= (max_2d_distance * 1.5);
+    const float dist2d = Get2dDistance(start, v);
+    const bool walkDistCheck = dist2d <= max_2d_distance;
+    const bool fallDistCheck = dist2d <= (max_2d_distance * 1.5);
+    const bool flyDistCheck = dist2d <= (max_2d_distance * 1.5);
 
     // basic visibility check
     if (!gi.inPVS(start, v))
@@ -387,7 +390,7 @@ linkvalidity_t vrx_pf_is_valid_child_node(
 
     bool validPlat = false;
     if (mapgrid->nodeflags[parent] & NF_PLAT && mapgrid->nodeflags[child] & NF_PLAT) {
-        if (mapgrid->nodeent[parent] == mapgrid->nodeent[child]) {
+        if (mapgrid->nodeent[parent] == mapgrid->nodeent[child] && mapgrid->nodeent[parent]) {
             validPlat = true;
         }
     }
@@ -398,9 +401,9 @@ linkvalidity_t vrx_pf_is_valid_child_node(
         // we need a mildly expanded range here that covers the entire plat
         const edict_t* plat = nullptr;
         if (mapgrid->nodeent[parent])
-            plat = mapgrid->nodeent[parent];
+            plat = &g_edicts[mapgrid->nodeent[parent]];
         if (mapgrid->nodeent[child])
-            plat = mapgrid->nodeent[child];
+            plat = &g_edicts[mapgrid->nodeent[child]];
 
         // draw a circle around the bbox
         vec3_t ur;
@@ -632,13 +635,12 @@ int vrx_pf_find_path(const enum searchtype_t searchType, vec3_t start, vec3_t de
     node_t *start_node = nodearena_alloc(ctx->arena);
     start_node->nodenum = startnodenum; // starting position nodenum
     start_node->dist = g = 0; // we haven't gone anywhere yet
-    float h = distanceSqr(start, destination);
+    const float h = distanceSqr(start, destination);
     for (int c = 0; c < NUMCHILDS; c++)
-        start_node->child[c] = nullptr; // no children for search pattern yet
-    start_node->next = nullptr;
-    start_node->prev = nullptr;
+        start_node->child[c] = NODEID_MAX; // no children for search pattern yet
+    start_node->prev = NODEID_MAX;
     start_node->list = LIST_OPEN;
-    ctx->nodelist[startnodenum] = start_node;
+    ctx->nodelist[startnodenum] = nodearena_indexof(ctx->arena, start_node);
 
 
     // next node in open list points to our starting node
@@ -660,14 +662,12 @@ int vrx_pf_find_path(const enum searchtype_t searchType, vec3_t start, vec3_t de
         return 0;
     }
 
-    BestNode->next = nullptr; // Must tie this off!
-
     // How many nodes we got?
     const node_t *tNode = BestNode;
     int i = 0;
     while (tNode) {
         i++; // How many nodes?
-        tNode = tNode->prev;
+        tNode = nodearena_get(ctx->arena, tNode->prev);
     }
 
     if (i <= 2) {
@@ -687,7 +687,7 @@ int vrx_pf_find_path(const enum searchtype_t searchType, vec3_t start, vec3_t de
 
     while (BestNode) {
         pfctx->waypoints[--i] = BestNode->nodenum; //GHz: how/when is this freed?
-        BestNode = BestNode->prev;
+        BestNode = nodearena_get(ctx->arena, BestNode->prev);
     }
 
     // NOTE: At this point, if our numpts returned is not
@@ -1037,7 +1037,7 @@ void vrx_pf_delete_node(const nodeid_t nodenum) {
     // clear the value stored at the end of the list
     VectorClear(mapgrid->pathnode[mapgrid->numnodes-1]);
     mapgrid->nodeflags[mapgrid->numnodes - 1] = NF_NONE;
-    mapgrid->nodeent[mapgrid->numnodes - 1] = nullptr;
+    mapgrid->nodeent[mapgrid->numnodes - 1] = 0;
 
     mapgrid->adjacent_nodes[mapgrid->numnodes - 1] = nullptr;
     mapgrid->adjacent_node_count[mapgrid->numnodes - 1] = 0;
@@ -1293,7 +1293,7 @@ static bool try_add_node(int *cnt, vec3_t v, int *z, const enum nodeflag_t flags
 
     // initialize the rest of the slot to avoid inheriting stale state
     // (e.g. from a previously deleted node that was swapped into this slot)
-    mapgrid->nodeent[*cnt] = nullptr;
+    mapgrid->nodeent[*cnt] = 0;
     if (mapgrid->adjacent_nodes[*cnt]) {
         free(mapgrid->adjacent_nodes[*cnt]);
         mapgrid->adjacent_nodes[*cnt] = nullptr;
@@ -1317,7 +1317,7 @@ static void force_add_node(vec3_t pos) {
 
     // initialize the slot fully so we don't inherit stale state from prior deletes
     mapgrid->nodeflags[slot] = NF_USER;
-    mapgrid->nodeent[slot] = nullptr;
+    mapgrid->nodeent[slot] = 0;
     if (mapgrid->adjacent_nodes[slot]) {
         free(mapgrid->adjacent_nodes[slot]);
         mapgrid->adjacent_nodes[slot] = nullptr;
@@ -1496,21 +1496,21 @@ void vrx_grd_create_ent_nodes(const bool isGenerating) {
         }
     }
 
-    edict_t* plats = nullptr;
-    while ((plats = G_Find(plats, FOFS(classname), "func_plat"))) {
+    edict_t* plat = nullptr;
+    while ((plat = G_Find(plat, FOFS(classname), "func_plat"))) {
         vec3_t topcenter;
         vec3_t top, bottom;
 
         // Upper node
         VectorSet(topcenter,
-            (plats->maxs[0] - plats->mins[0]) * 0.5 + plats->mins[0],
-            (plats->maxs[1] - plats->mins[1]) * 0.5 + plats->mins[1],
-            plats->maxs[2]
+            (plat->maxs[0] - plat->mins[0]) * 0.5 + plat->mins[0],
+            (plat->maxs[1] - plat->mins[1]) * 0.5 + plat->mins[1],
+            plat->maxs[2]
         );
 
         VectorSet( top, topcenter[0], topcenter[1], topcenter[2] + 32 );
 
-        const float height = plats->pos1[2] - plats->pos2[2];
+        const float height = plat->pos1[2] - plat->pos2[2];
         VectorSet(bottom,
             topcenter[0],
             topcenter[1],
@@ -1519,25 +1519,25 @@ void vrx_grd_create_ent_nodes(const bool isGenerating) {
 
         // Upper node
         if (!try_add_node_with_links(top, NF_PLATUPPER | NF_ENTREF, true)) {
-            mapgrid->nodeent[mapgrid->numnodes - 1] = plats;
+            mapgrid->nodeent[mapgrid->numnodes - 1] = plat - world;
             // if we're generating this link generation process will be done in bulk later
             // otherwise we can do it now, it is fine.
             if (!isGenerating)
                 vrx_pf_add_missing_reciprocals(mapgrid->numnodes - 1);
         } else {
-            gi.dprintf("grid: Could not add upper node for plat %d\n", plats->s.number);
+            gi.dprintf("grid: Could not add upper node for plat %d\n", plat->s.number);
             // make_doodad(top);
             continue;
         }
 
         // Lower node
         if (!try_add_node_with_links(bottom, NF_PLATLOWER | NF_ENTREF, true)) {
-            mapgrid->nodeent[mapgrid->numnodes - 1] = plats;
+            mapgrid->nodeent[mapgrid->numnodes - 1] = plat - world;
             if (!isGenerating)
                 vrx_pf_add_missing_reciprocals(mapgrid->numnodes - 1);
         } else {
             make_doodad(bottom);
-            gi.dprintf("grid: Could not add lower node for plat %d\n", plats->s.number);
+            gi.dprintf("grid: Could not add lower node for plat %d\n", plat->s.number);
         }
     }
 }

@@ -25,10 +25,9 @@ enum listtype_t : uint8_t {
 };
 
 struct node_s {
-    node_t *child[NUMCHILDS];
-    node_t *prev;
-    node_t *next;
     int dist; // g-cost how far we've already gone from start to here
+    nodeid_t child[NUMCHILDS];
+    nodeid_t prev;
     nodeid_t nodenum; // index number of this node
     enum listtype_t list;
 };
@@ -92,6 +91,8 @@ void nodearena_free(struct nodearena_s** arena);
 struct nodearena_s* nodearena_create(size_t capacity);
 node_t* nodearena_alloc(struct nodearena_s* arena);
 void nodearena_reset(struct nodearena_s* arena);
+node_t* nodearena_get(struct nodearena_s* arena, nodeid_t id);
+nodeid_t nodearena_indexof(struct nodearena_s* arena, node_t* node);
 
 void gridkdtree_free(struct gridkdtree_s** tree);
 struct gridkdtree_s* gridkdtree_create(vec3_t* srcdata, size_t count);
@@ -187,6 +188,6 @@ void vrx_pf_remove_link(const nodeid_t child, const nodeid_t parent);
 void vrx_pf_delete_node(const nodeid_t nodenum);
 bool vrx_pf_add_link(const nodeid_t child, const nodeid_t potentialParent, const linkvalidity_t valid);
 struct mapgrid_link_s* vrx_pf_is_linked(const nodeid_t child, const nodeid_t parent);
-struct mapgrid_link_s* vrx_pf_get_links(const nodeid_t nodenum);
+struct mapgrid_link_s* vrx_pf_get_links(const nodeid_t parent);
 void vrx_pf_add_missing_reciprocals(const nodeid_t child);
 uint8_t vrx_pf_get_link_count(const nodeid_t parent);

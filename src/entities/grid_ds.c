@@ -82,6 +82,26 @@ void nodearena_reset(struct nodearena_s* arena) {
     arena->count = 0;
 }
 
+node_t* nodearena_get(struct nodearena_s* arena, nodeid_t node) {
+    if (arena->count <= node) {
+        return nullptr;
+    }
+
+    return arena->nodes + node;
+}
+
+nodeid_t nodearena_indexof(struct nodearena_s* arena, node_t* node) {
+    if (!node)
+        return NODEID_MAX;
+
+    const auto id = node - arena->nodes;
+    if (id > arena->capacity || node < arena->nodes)
+        return NODEID_MAX;
+
+    return id;
+}
+
+
 void gridkdtree_free(struct gridkdtree_s** tree) {
     if (!*tree) return;
     free(*tree);
