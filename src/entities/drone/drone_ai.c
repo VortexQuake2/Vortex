@@ -616,15 +616,8 @@ qboolean drone_findtarget(edict_t *self, qboolean force) {
 
             self->goalentity = target;
             VectorCopy(target->s.origin, self->monsterinfo.last_sighting);
-            self->monsterinfo.aiflags |= AI_FIND_NAVI;
             return true;
         }
-        // else
-        // {
-        // 	if (DRONE_DEBUG)
-        // 		gi.dprintf("couldn't find navi");//FIXME: take off the AI_FIND_NAVI aiflag so that monsters can search for player spawns instead?
-        //	// az: drone_getnavi resolves this trying to find a pspawn if finding navis fails.
-        // }
     } else if (self->monsterinfo.aiflags & AI_FIND_NAVI && self->goalentity && self->goalentity->mtype ==
                INVASION_NAVI) {
         // az: if we already have a navi and we're pretty close to it, try and get to the next one
@@ -635,13 +628,20 @@ qboolean drone_findtarget(edict_t *self, qboolean force) {
             // az: if we're at the end of a navi chain, find a player spawn to attack
             // this means we can stop looking for navis.
             if (!self->goalentity) {
-                self->goalentity = vrx_inv_give_closest_player_spawn(self);
-
                 // also, allow the monsters to go back to being hyperaggressive dodgers.
                 self->monsterinfo.aiflags &= ~AI_NO_CIRCLE_STRAFE;
+                self->monsterinfo.aiflags &= ~AI_FIND_NAVI;
+                self->monsterinfo.aiflags |= AI_ASSAULT;
             }
         }
     }
+
+    if (self->monsterinfo.aiflags & AI_ASSAULT) {
+        self->goalentity = vrx_inv_give_closest_player_spawn(self);
+        if (self->goalentity)
+            return true;
+    }
+
     return false;
 }
 
@@ -1373,10 +1373,9 @@ void M_ClearPath(edict_t *self) {
 }
 
 void M_FindPath(edict_t *self, vec3_t goalpos, qboolean compute_path_now) {
-    int searchType;
-
     // update the path now or after a brief delay
     if (compute_path_now || (self->monsterinfo.updatePath && level.time > self->monsterinfo.path_time)) {
+        enum searchtype_t searchType;
         vec3_t v1, v2;
 
         if (DRONE_DEBUG)
@@ -1529,7 +1528,7 @@ bool vrx_follow_navigation_chain(edict_t *self, edict_t *goal) {
                     gi.dprintf("reached the end of navi chain\n");
                 // monster is currently chasing a navi but we have reached the end
                 self->monsterinfo.aiflags &= ~(AI_FIND_NAVI | AI_COMBAT_POINT);
-                drone_ai_giveup(self);
+                self->monsterinfo.aiflags |= AI_ASSAULT;
                 return true;
             }
         }
@@ -1831,7 +1830,9 @@ void drone_ai_run1(edict_t *self, float dist) {
 
     /* az note 1: chase after killable enemy */
     // goal entity is visible, or navi. navis are always considered visible.
-    if (visible(self, goal) || goal->mtype == INVASION_NAVI) {
+    // this is so that we don't AI_LOST_SIGHT our fucking navigation points.
+    bool alwaysVisible = goal->mtype == INVASION_NAVI || goal->mtype == INVASION_PLAYERSPAWN;
+    if (alwaysVisible || visible(self, goal)) {
         goalVisible = true;
 
         // is the goal our enemy?

@@ -1022,7 +1022,10 @@ int AI_LinkServerNodes( int start )
 
 // az: if we don't find bot nodes, consider using our grid data as a starting point.
 int AI_AddNode( vec3_t origin, int flagsmask );
+void AI_ClearDropNodePlayer(void);
 bool AI_SeedFromDroneAI(void) {
+	AI_ClearDropNodePlayer();
+
 	// add nodes
 	const auto nodecount = vrx_pf_get_node_count();
 	nodeid_t *remap = calloc(nodecount, sizeof(nodeid_t));

@@ -69,6 +69,10 @@ edict_t *AI_PlayerDroppingNodesPassent(void)
 // Not valid to add nodes from entities nor items
 // Note: Nodes are not linked until AITools_SaveNodes is called
 //==========================================
+void AI_ClearDropNodePlayer(void) {
+	// az: sigh
+	player = (player_dropping_nodes_t){};
+}
 int AI_AddNode( vec3_t origin, int flagsmask )
 {
 	if (nav.num_nodes + 1 > MAX_NODES)

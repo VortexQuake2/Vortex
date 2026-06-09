@@ -241,6 +241,8 @@ typedef enum {
 #define AI_PURSUE_PLAT_GOAL		0x00040000
 #define AI_DODGE				0x00080000
 #define AI_SNAP_TO_NAVI         0x00100000
+// in invasion, seek out player spawns.
+#define AI_ASSAULT              0x00200000
 
 //monster attack state
 #define AS_STRAIGHT				1
