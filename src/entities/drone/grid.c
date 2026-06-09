@@ -1929,22 +1929,68 @@ void Cmd_DeleteLink_f(edict_t* ent) {
         return;
 
 
-    if (gi.argc() < 3) {
-        safe_centerprintf(ent, "Usage: dellink <parent node ID> <child node ID> \n");
-        return;
-    }
+    //if (gi.argc() < 3) {
+    //    safe_centerprintf(ent, "Usage: dellink <parent node ID> <child node ID> \n");
+     //   return;
+    //}char
 
     char* endptr;
-    nodeid_t parent = strtol(gi.argv(1), &endptr, 10);
-    if (endptr == gi.argv(1)) {
-        safe_centerprintf(ent, "Invalid parent node ID\n");
-        return;
+    nodeid_t parent = NODEID_MAX;
+
+    if (gi.argc() > 1) {
+        parent = strtol(gi.argv(1), &endptr, 10);
+        if (endptr == gi.argv(1)) {
+            safe_centerprintf(ent, "Invalid parent node ID\n");
+            return;
+        }
     }
 
-    nodeid_t child = strtol(gi.argv(2), &endptr, 10);
-    if (endptr == gi.argv(2)) {
-        safe_centerprintf(ent, "Invalid child node ID\n");
-        return;
+    nodeid_t child = NODEID_MAX;
+
+    if (gi.argc() > 2) {
+        child = strtol(gi.argv(2), &endptr, 10);
+        if (endptr == gi.argv(2)) {
+            safe_centerprintf(ent, "Invalid child node ID\n");
+            return;
+        }
+    }
+
+
+    vec3_t forward, right, start, offset, end;
+    trace_t tr;
+
+    // calculate starting position for trace
+    AngleVectors(ent->client->v_angle, forward, right, nullptr);
+    VectorSet(offset, 0, 7, ent->viewheight - 8);
+    P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
+    // run trace
+
+    if (parent == NODEID_MAX) {
+        // find closest node, use as parent
+        const size_t snode = gridkdtree_query(gridtree, start);
+        if (snode == SIZE_MAX) {
+            safe_cprintf(ent, PRINT_HIGH, "Can't find start node, try specifying it.\n");
+            return;
+        }
+
+        parent = snode;
+    }
+
+    if (child == NODEID_MAX) {
+        // calculate end position
+        VectorMA(start, 8192, forward, end);
+        // find closest node to aim spot, use as child
+        tr = gi.trace(start, nullptr, nullptr, end, ent, MASK_SHOT);
+        // find path to the spot we are aiming at
+        // get node location nearest to us and our goal
+        const size_t enode = gridkdtree_query(gridtree, tr.endpos);
+
+        if (enode == SIZE_MAX) {
+            safe_cprintf(ent, PRINT_HIGH, "Can't find end node. Try specifying both nodes.");
+            return;
+        }
+
+        child = enode;
     }
 
     if (!vrx_pf_is_linked(child, parent))
