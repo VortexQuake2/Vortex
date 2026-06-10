@@ -572,7 +572,7 @@ void vrx_pf_compute_successors(const struct pfctx_s *ctx, const enum searchtype_
     }
 }
 
-int vrx_copy_path_waypoints(int *wp, const int max) {
+int vrx_copy_path_waypoints(nodeid_t *wp, const int max) {
     int j = max;
 
     if (j > pfctx->numpts)
@@ -589,7 +589,7 @@ void vrx_pf_get_node_position(const int nodenum, vec3_t pos) {
 }
 
 // returns the waypoint index closest to start along the path leading to our final destination (or -1 if list is empty)
-int vrx_pf_nearest_waypoint_index_along_path(vec3_t start, const int *wp, const size_t wpcount) {
+int vrx_pf_nearest_waypoint_index_along_path(vec3_t start, const nodeid_t *wp, const size_t wpcount) {
     int bestNodeNum = -1;
     float best = INFINITY;
 

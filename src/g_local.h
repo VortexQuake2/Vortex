@@ -2,6 +2,8 @@
 #ifndef G_LOCAL
 #define G_LOCAL
 
+#include "entities/grid.h"
+
 // impl defines to avoid duplicating declaration and definition of variables
 #ifndef VRX_G_MAIN_IMPL
 #define VRX_G_MAIN_IMPL extern
@@ -537,6 +539,8 @@ typedef struct {
 
 
 typedef struct {
+    void (*endfunc)(edict_t *);
+
     // fixed data
     vec3_t start_origin;
     vec3_t start_angles;
@@ -558,12 +562,11 @@ typedef struct {
     int state; //CTF�X�e�[�^�X�ɕs���g�p
     vec3_t dir;
     float current_speed;
+
     float move_speed;
     float next_speed;
     float remaining_distance;
     float decel_distance;
-
-    void (*endfunc)(edict_t *);
 } moveinfo_t;
 
 
@@ -585,8 +588,8 @@ typedef struct {
 
 //GHz START
 typedef struct dmglist_s {
-    edict_t *player; // attacker who hurt us
     float damage; // total damage done
+    uint32_t player; // attacker who hurt us
 } dmglist_t;
 
 //GHz END
@@ -629,7 +632,6 @@ typedef struct {
     float teleport_delay; // time before drone can teleport again
     float trail_time;
     vec3_t last_sighting; // last known position of enemy
-    bool last_sighting_is_navi; // is the last known position of enemy a navigation point
 
     //	int			attack_state;
     int lefty;
@@ -649,14 +651,13 @@ typedef struct {
     int radius; // radius (if any) if projectile explosion
     int regen_delay1; // level.framenum when we can regenerate again
     int regen_delay2; // secondary regen level.framenum when we can regenerate again
-    int regen_delay3; // secondary regen level.framenum when we can regenerate again
     int upkeep_delay; // frames before upkeep is checked again
     int inv_framenum; // frame when quad+invuln wears out, used to prevent spawn camping in invasion mode
     int nextattack; // used for mutant to check for next attack frame
     int bonus_flags; //4.5 used for special bonus flags (e.g. champion, unique monster bonuses)
-    int waypoint[1000]; // pathfinding node indices leading to final destination
-    int nextWaypoint; // next waypoint index to follow
-    int numWaypoints; // total number of waypoints
+    nodeid_t waypoint[256]; // pathfinding node indices leading to final destination
+    nodeid_t nextWaypoint; // next waypoint index to follow
+    nodeid_t numWaypoints; // total number of waypoints
     edict_t *attacker; // edict that triggered our dodge routines
     edict_t *leader; // edict that we have been commanded to follow
     vec3_t spot1; // position we have been commanded to move to/defend
@@ -667,24 +668,20 @@ typedef struct {
     float sight_range; // 3.56 how far the drone can see to acquire targets
     float bump_delay; // delay before we can make another course-correction
     float Zchange_delay; // delay before we can adjust Z position again (to prevent bouncing)
-    qboolean Zchanged; // has our Z position changed recently?
     float resurrected_time; // time when resurrection from a medic is complete
     int resurrected_level; // used to store the original level of the monster before resurrection bonus is applied
     float resurrected_timeout; // time when the resurrected monster will expire
     float backtrack_delay; // delay until we can backtrack to a closer waypoint (to prevent getting stuck)
     float path_time; // time when monster can compute a path
     vec3_t prevGoalPos; // last goal position, used for deciding when to re-compute paths
-    qboolean updatePath; // if true, update path to goal when level.time > path_time
     edict_t *lastGoal; // last goal we were chasing, used for deciding when to re-compute paths
-    //	qboolean	melee;				// whether or not the monster should circle strafe
     dmglist_t dmglist[MAX_CLIENTS]; // keep track of damage by players
-    qboolean slots_freed; // true if player slots have been refunded prior to removal
 
     // az begin
 
     // targeting
-    int target_index; // for ai
     edict_t *last_target_scanner;
+    int target_index; // for ai
 
     // drone list
     int dronelist_index;
@@ -693,6 +690,9 @@ typedef struct {
     float pain_chance;
 
     // az end
+    bool Zchanged; // has our Z position changed recently?
+    bool updatePath; // if true, update path to goal when level.time > path_time
+    bool slots_freed; // true if player slots have been refunded prior to removal
 } monsterinfo_t;
 
 VRX_G_MAIN_IMPL game_locals_t game;
@@ -2321,11 +2321,12 @@ struct edict_s {
     // EXPECTS THE FIELDS IN THAT ORDER!
 
     //================================
+    char *model;
+
     int movetype;
     enum flags_t flags;
     int v_flags; //3.0 New flag variable (so nothing else previously coded is screwed up)
 
-    char *model;
     float freetime; // sv.time when the object was freed
 
     //
@@ -2333,13 +2334,17 @@ struct edict_s {
     //
     char *message;
     char *classname;
+    char *target;
+    char *targetname;
+
     int spawnflags;
 
     float timestamp;
 
     float angle; // set in qe3, -1 = up, -2 = down
-    char *target;
-    char *targetname;
+    //ponko
+    float speed, accel, decel;
+
     char *killtarget;
     char *team;
     char *pathtarget;
@@ -2347,8 +2352,9 @@ struct edict_s {
     //ponko
     edict_t *union_ent; //union item
     edict_t *trainteam; //train team
-    //ponko
-    float speed, accel, decel;
+    edict_t *goalentity;
+    edict_t *movetarget;
+
     vec3_t movedir;
     vec3_t pos1, pos2;
 
@@ -2356,15 +2362,16 @@ struct edict_s {
     vec3_t avelocity;
     int mass;
     float air_finished;
+
     float gravity; // per entity gravity multiplier (1.0 is normal)
     // use for lowgrav artifact, flares
 
-    edict_t *goalentity;
-    edict_t *movetarget;
+
     float yaw_speed;
     float ideal_yaw;
 
     float nextthink;
+    plat2flags_t plat2flags; // func_plat2 state
 
     void (*prethink)(edict_t *ent);
 
@@ -2388,11 +2395,10 @@ struct edict_s {
     float fly_sound_debounce_time; //move to clientinfo
     float knockweapon_debounce_time; // time when knockweapon code can be run again
     float last_move_time;
-    plat2flags_t plat2flags; // func_plat2 state
 
+    int gib_health;
     long health;
     long max_health;
-    int gib_health;
     int deadflag;
 
     float powerarmor_time;
@@ -2407,6 +2413,8 @@ struct edict_s {
     int sounds; //make this a spawntemp var?
     int count;
 
+    int groundentity_linkcount;
+
     edict_t *chain;
     edict_t *prev_chain;
     edict_t *memchain;
@@ -2414,9 +2422,10 @@ struct edict_s {
     edict_t *oldenemy;
     edict_t *activator;
     edict_t *groundentity;
-    int groundentity_linkcount;
+
     edict_t *teamchain;
     edict_t *teammaster;
+    gitem_t *item; // for bonus items
 
     int noise_index;
     float volume;
@@ -2427,8 +2436,6 @@ struct edict_s {
     float delay; // before firing targets
     float random;
 
-    float teleport_time;
-
     int watertype;
     int waterlevel;
 
@@ -2437,10 +2444,10 @@ struct edict_s {
 
     // move this to clientinfo?
     int light_level;
-
     int style; // also used as areaportal number
-
-    gitem_t *item; // for bonus items
+    // RAFAEL
+    int orders;
+    float holdtime;
 
     // common data blocks
     moveinfo_t moveinfo;
@@ -2449,46 +2456,64 @@ struct edict_s {
     // jabot (vrxcl/newvrx)
     ai_handle_t ai;
 
-    // RAFAEL
-    int orders;
-
     //K03 Begin
     int packitems[MAX_ITEMS];
     float PlasmaDelay;
-    float holdtime;
-    bool slow;
     bool superspeed;
     bool sucking; //GHz
     bool antigrav;
     bool automag; // az: magmining self?
     bool manacharging; // az: charging mana?
+    bool exploded; // az: don't explode more than once at death. lol
+    //4.0 "manashield"
+    bool manashield;
+
     int lockon;
 
     int FrameShot;
-    int Slower;
-    skills_t myskills;
     float haste_time;
+
+    skills_t myskills;
+    uint64_t lastsound; // last frame we made a sound
+    double lastdmg;
+
     int rocket_shots;
 
     int shots_hit;
     int shots;
 
+    int32_t dmg_counter;
     float lastkill;
     int nfer;
-    double lastdmg;
     float lasthurt; // last time we took non-world damage
-    uint64_t lastsound; // last frame we made a sound
-    int32_t dmg_counter;
-    edict_t *creator;
+    float lasthbshot;
+
+    // az begin
+    int list_index; // invasion queue position
+    // az end
+
     //sentry stuff
+    float sentrydelay;
     edict_t *sentry;
     edict_t *selectedsentry;
     edict_t *standowner;
-    float sentrydelay;
+
+    edict_t *creator;
+
     edict_t *lasersight;
-    float lasthbshot;
     edict_t *decoy;
     edict_t *flashlight;
+
+    edict_t *selected[4]; // drone selection
+    edict_t *other; // laser effect for hw/ctf
+    edict_t *supplystation;
+    //GHz START
+
+    // trade
+    edict_t *trade_with;
+    item_t *trade_item[3];
+    float msg_time;
+
     enum mtype_t mtype; // Type of Monstersee M_* defines.. (M_HOVER, etc)
     int atype; //3.0 used for new curses
     int num_sentries;
@@ -2528,22 +2553,6 @@ struct edict_s {
     int movetype_frame; // server frame to restore old movetype
     //K03 End
 
-    // az begin
-    bool exploded; // az: don't explode more than once at death. lol
-    int list_index; // invasion queue position
-    // az end
-
-    edict_t *selected[4]; // drone selection
-    edict_t *other; // laser effect for hw/ctf
-    edict_t *supplystation;
-    //edict_t		*magmine;
-    //GHz START
-
-    // trade
-    edict_t *trade_with;
-    item_t *trade_item[3];
-    float msg_time;
-
     //3.0 rune stuff
     item_t vrxitem;
 
@@ -2570,13 +2579,13 @@ struct edict_s {
     float chill_time;
     edict_t *chill_owner; // for assist exp tracking
 
-    //4.0 "manashield"
-    bool manashield;
+
 
     //4.0
     edict_t *megahealth;
     edict_t *spawn; // available invasion-mode spawn point
     float holywaterProtection; //holy water gives a few seconds of curse immunity
+    int autocurse_delay; //Talent: Autocurse - next server frame that chance trigger is rolled
 
     //4.1
     edict_t *totem1;
@@ -2587,7 +2596,7 @@ struct edict_s {
 
     edict_t *holyground; //Talent: Holy/Unholy Ground
     int mirroredPosition;
-    int autocurse_delay; //Talent: Autocurse - next server frame that chance trigger is rolled
+
     float fury_time;
 
     // caltrops
@@ -2603,15 +2612,16 @@ struct edict_s {
 
     // cocoon
     edict_t *cocoon;
+
+    // healer
+    edict_t *healer;
+
     float cocoon_time;
     float cocoon_factor;
-    edict_t *cocoon_owner; // for assist exp tracking
-
-    edict_t *healer;
     float heal_exp_time;
-    edict_t *heal_exp_owner; // for assist exp tracking
-
     float supply_exp_time;
+    edict_t *cocoon_owner; // for assist exp tracking
+    edict_t *heal_exp_owner; // for assist exp tracking
     edict_t *supply_exp_owner; // for assist exp tracking
 
     int showPathDebug; // show path debug information (0=off,1=on)

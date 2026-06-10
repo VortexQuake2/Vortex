@@ -83,7 +83,7 @@ void chainlightning_think(edict_t* self)
 
 		//gi.dprintf("%d: CL is attacking, ammo: %d\n", (int)level.framenum, self->light_level);
 		// add enemy to the list so we don't attack the same target twice
-		self->monsterinfo.dmglist[self->monsterinfo.target_index++].player = enemy;
+		self->monsterinfo.dmglist[self->monsterinfo.target_index++].player = enemy - world;
 
 		CL_attack(self, enemy, self->dmg);
 		// move
@@ -201,7 +201,7 @@ void fire_chainlightning(edict_t* self, vec3_t start, vec3_t aimdir, int damage,
 	gi.linkentity(lightning);
 
 	// add enemy to the list so we don't attack again
-	lightning->monsterinfo.dmglist[lightning->monsterinfo.target_index++].player = enemy;
+	lightning->monsterinfo.dmglist[lightning->monsterinfo.target_index++].player = enemy - world;
 }
 
 void Cmd_ChainLightning_f (edict_t *ent, float skill_mult, float cost_mult)

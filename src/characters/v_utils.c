@@ -2382,7 +2382,6 @@ void vrx_reset_player_state(edict_t *ent) {
     AuraRemove(ent, 0);
 
     // remove movement penalty
-    ent->Slower = 0;
     ent->slowed_factor = 1.0;
     ent->slowed_time = 0;
     ent->chill_level = 0;

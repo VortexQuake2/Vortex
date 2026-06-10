@@ -1407,7 +1407,7 @@ void M_FindPath(edict_t *self, vec3_t goalpos, qboolean compute_path_now) {
 
             // copy waypoints to monster
             self->monsterinfo.numWaypoints =
-                    vrx_copy_path_waypoints(self->monsterinfo.waypoint, 1000);
+                    vrx_copy_path_waypoints(self->monsterinfo.waypoint, sizeof(self->monsterinfo.waypoint) / sizeof (nodeid_t));
             // get index of next waypoint
             self->monsterinfo.nextWaypoint = vrx_pf_nearest_waypoint_index_along_path(
                                                  self->s.origin, self->monsterinfo.waypoint,
