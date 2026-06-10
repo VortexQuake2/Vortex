@@ -251,7 +251,7 @@ void vrx_award_boss_kill (edict_t *boss)
 		credits = levelmod*dmgmod*PVB_BOSS_CREDITS;
 
 		// award extra points for the player that did the most damage
-		if (slot && (player == (world + slot->player)))
+		if (slot && player == world + slot->player)
 		{
 			dmgmod = 100*(slot->damage/GetTotalBossDamage(boss));
 			G_PrintGreenText(va("%s got a hi-damage bonus! %d damage (%.1f%c)", 

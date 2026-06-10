@@ -52,7 +52,7 @@ qboolean CL_targetinlist(edict_t* self, edict_t *target)
 {
 	for (int i = 0; i < self->monsterinfo.target_index; i++)
 	{
-		if (target == self->monsterinfo.dmglist[i].player)
+		if (target == world + self->monsterinfo.dmglist[i].player)
 			return true;
 	}
 	return false;

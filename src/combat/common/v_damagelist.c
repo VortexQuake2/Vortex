@@ -57,7 +57,7 @@ float GetPlayerBossDamage(edict_t *player, edict_t *boss) {
     int i;
 
     for (i = 0; i < MAX_CLIENTS; i++) {
-        if (boss->monsterinfo.dmglist[i].player == player)
+        if (boss->monsterinfo.dmglist[i].player == player - world)
             return boss->monsterinfo.dmglist[i].damage;
     }
     return 0;
