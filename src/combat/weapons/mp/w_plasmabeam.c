@@ -14,7 +14,7 @@ static void PlasmaBeam_Fire(edict_t *ent)
     vec3_t forward, right;
     vec3_t offset;
     int damage = PLASMABEAM_INITIAL_DAMAGE +
-    ( PLASMABEAM_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_PLASMABEAM].mods[0].current_level );
+    ( PLASMABEAM_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_PLASMABEAM].mods[0].current_level );
     int kick = 75;
     qboolean firing;
     qboolean has_ammo;

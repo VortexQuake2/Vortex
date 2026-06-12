@@ -16,12 +16,12 @@ void Chaingun_Fire(edict_t* ent) {
 
     //K03 Begin
     float damage = CHAINGUN_INITIAL_DAMAGE +
-    CHAINGUN_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_CHAINGUN].mods[0].current_level;
+    CHAINGUN_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[0].current_level;
 
     int vspread = DEFAULT_BULLET_VSPREAD;
     int hspread = DEFAULT_BULLET_HSPREAD;
 
-    if (ent->myskills.weapons[WEAPON_CHAINGUN].mods[3].current_level >= 1) {
+    if (ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[3].current_level >= 1) {
         vspread *= 0.75;
         hspread *= 0.75;
     }
@@ -96,21 +96,21 @@ void Chaingun_Fire(edict_t* ent) {
     }
 
     //K03 begin
-    if (ent->myskills.weapons[WEAPON_CHAINGUN].mods[2].current_level >= 1)
+    if (ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[2].current_level >= 1)
         if (ent->lasthbshot <= level.time) {
-            damage = CHAINGUN_ADDON_TRACERDAMAGE * ent->myskills.weapons[WEAPON_CHAINGUN].mods[2].current_level;
+            damage = CHAINGUN_ADDON_TRACERDAMAGE * ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[2].current_level;
             fire_blaster(ent, start, forward, damage, 2000, EF_BLUEHYPERBLASTER, BLASTER_PROJ_BOLT, MOD_HYPERBLASTER,
                          2.0, false);
             ent->lasthbshot = level.time + 0.5;
         }
-        if (ent->myskills.weapons[WEAPON_CHAINGUN].mods[4].current_level < 1) {
+        if (ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[4].current_level < 1) {
             // send muzzle flash
             gi.WriteByte(svc_muzzleflash);
             gi.WriteShort(ent - g_edicts);
             gi.WriteByte((MZ_CHAINGUN1 + shots - 1) | is_silenced);
             gi.multicast(ent->s.origin, MULTICAST_PVS);
         }
-        if (ent->myskills.weapons[WEAPON_CHAINGUN].mods[4].current_level < 1)
+        if (ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[4].current_level < 1)
             PlayerNoise(ent, start, PNOISE_WEAPON);
     //K03 End
 
@@ -142,7 +142,7 @@ void AssaultCannon_Fire(edict_t* ent) {
     vec3_t forward, right, start, up, offset;
 
     damage = kick = 2 * (CHAINGUN_INITIAL_DAMAGE +
-    CHAINGUN_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_CHAINGUN].mods[0].current_level);
+    CHAINGUN_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[0].current_level);
     vspread = DEFAULT_BULLET_VSPREAD;
     hspread = DEFAULT_BULLET_HSPREAD;
 
@@ -151,12 +151,12 @@ void AssaultCannon_Fire(edict_t* ent) {
         kick *= 4;
     }
 
-    if (ent->myskills.weapons[WEAPON_CHAINGUN].mods[3].current_level > 0) {
+    if (ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[3].current_level > 0) {
         vspread *= 0.75;
         hspread *= 0.75;
     }
 
-    if (ent->myskills.weapons[WEAPON_CHAINGUN].mods[4].current_level > 0)
+    if (ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[4].current_level > 0)
         f = 0.3;
     else
         f = 1;
@@ -222,7 +222,7 @@ void AssaultCannon_Fire(edict_t* ent) {
         ent->client->kick_angles[i] = crandom() * 3;
     }
 
-    if (ent->myskills.weapons[WEAPON_CHAINGUN].mods[4].current_level < 1) {
+    if (ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[4].current_level < 1) {
         // send muzzle flash
         gi.WriteByte(svc_muzzleflash);
         gi.WriteShort(ent - g_edicts);
@@ -242,8 +242,8 @@ void AssaultCannon_Fire(edict_t* ent) {
         fire_bullet(ent, start, forward, damage, kick, hspread, vspread, MOD_CHAINGUN);
     }
 
-    if ((ent->myskills.weapons[WEAPON_CHAINGUN].mods[2].current_level > 0) && (level.time >= ent->lasthbshot)) {
-        damage = CHAINGUN_ADDON_TRACERDAMAGE * ent->myskills.weapons[WEAPON_CHAINGUN].mods[2].current_level;
+    if ((ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[2].current_level > 0) && (level.time >= ent->lasthbshot)) {
+        damage = CHAINGUN_ADDON_TRACERDAMAGE * ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[2].current_level;
         fire_blaster(ent, start, forward, damage, 2000, 0, BLASTER_PROJ_BOLT, MOD_HYPERBLASTER, 2.0, false);
         ent->lasthbshot = level.time + 0.3;
     }
@@ -265,14 +265,14 @@ void Weapon_Chaingun(edict_t* ent) {
     int fire_last = 31;
 
     // spin-up delay
-    if (ent->myskills.weapons[WEAPON_CHAINGUN].mods[1].current_level > 0) {
-        if (ent->myskills.weapons[WEAPON_CHAINGUN].mods[1].current_level > 9)
+    if (ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[1].current_level > 0) {
+        if (ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[1].current_level > 9)
             fire_last = 21;
-        else if (ent->myskills.weapons[WEAPON_CHAINGUN].mods[1].current_level > 7)
+        else if (ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[1].current_level > 7)
             fire_last = 23;
-        else if (ent->myskills.weapons[WEAPON_CHAINGUN].mods[1].current_level > 5)
+        else if (ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[1].current_level > 5)
             fire_last = 25;
-        else if (ent->myskills.weapons[WEAPON_CHAINGUN].mods[1].current_level > 2)
+        else if (ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[1].current_level > 2)
             fire_last = 27;
         else fire_last = 29;
     }

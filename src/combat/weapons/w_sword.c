@@ -115,7 +115,7 @@ void fire_sword_old ( edict_t *self, vec3_t start, vec3_t aimdir, int damage, in
     self->lastsound = level.framenum;
 
     const float swordrange = SABRE_INITIAL_RANGE * sword_bonus +
-                 (SABRE_ADDON_RANGE * self->myskills.weapons[WEAPON_SWORD].mods[2].current_level);
+                 (SABRE_ADDON_RANGE * self->client->resp.pstats.weapons[WEAPON_SWORD].mods[2].current_level);
 
     VectorSet(begin_offset, 0, 0, self->viewheight - 8);
     VectorAdd(self->s.origin, begin_offset, begin);
@@ -141,20 +141,20 @@ void fire_sword_old ( edict_t *self, vec3_t start, vec3_t aimdir, int damage, in
         {            
             if (tr.ent->takedamage)            
             {
-				if (self->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1)
+				if (self->client->resp.pstats.weapons[WEAPON_SWORD].mods[4].current_level < 1)
 					gi.sound (self, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav") , 1, ATTN_NORM, 0); 
 
 				if (T_Damage (tr.ent, self, self, aimdir, tr.endpos, tr.plane.normal, damage, kick, 0, MOD_SWORD))
 				{
-					if (self->myskills.weapons[WEAPON_SWORD].mods[3].current_level >= 1)
-						burn_person(tr.ent, self, (int)(SABRE_ADDON_HEATDAMAGE * self->myskills.weapons[WEAPON_SWORD].mods[3].current_level * sword_bonus));
+					if (self->client->resp.pstats.weapons[WEAPON_SWORD].mods[3].current_level >= 1)
+						burn_person(tr.ent, self, (int)(SABRE_ADDON_HEATDAMAGE * self->client->resp.pstats.weapons[WEAPON_SWORD].mods[3].current_level * sword_bonus));
 				}
 
             }        
             //else gi.multicast(begin,MULTICAST_PHS);
         }
 
-		if (self->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1)
+		if (self->client->resp.pstats.weapons[WEAPON_SWORD].mods[4].current_level < 1)
 		{
 			gi.WriteByte (svc_muzzleflash);
 			gi.WriteShort (self-g_edicts);
@@ -183,11 +183,11 @@ void fire_sword (edict_t *self, vec3_t start, vec3_t dir, int damage, int length
 	// calling entity made a sound, used to alert monsters
 	self->lastsound = level.framenum;
 
-	//swordrange = SABRE_INITIAL_RANGE + (SABRE_ADDON_RANGE * self->myskills.weapons[WEAPON_SWORD].mods[2].current_level);
+	//swordrange = SABRE_INITIAL_RANGE + (SABRE_ADDON_RANGE * self->client->resp.pstats.weapons[WEAPON_SWORD].mods[2].current_level);
 
 	//decino: special for decoys
 	//if (self->mtype == M_DECOY)
-    //swordrange = SABRE_INITIAL_RANGE + (SABRE_ADDON_RANGE * self->activator->myskills.weapons[WEAPON_SWORD].mods[2].current_level);
+    //swordrange = SABRE_INITIAL_RANGE + (SABRE_ADDON_RANGE * self->activator->client->resp.pstats.weapons[WEAPON_SWORD].mods[2].current_level);
 
 	//create starting and ending positions for trace
 	VectorCopy(start, from);
@@ -212,13 +212,13 @@ void fire_sword (edict_t *self, vec3_t start, vec3_t dir, int damage, int length
 
 		if ((tr.ent != self) && (tr.ent->takedamage))
 		{
-				if (self->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1)
+				if (self->client->resp.pstats.weapons[WEAPON_SWORD].mods[4].current_level < 1)
 					gi.sound (self, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav") , 1, ATTN_NORM, 0); 
 
 				if (T_Damage (tr.ent, self, self, dir, tr.endpos, tr.plane.normal, damage, kick, 0, MOD_SWORD))
 				{
-					if (self->myskills.weapons[WEAPON_SWORD].mods[3].current_level >= 1)
-						burn_person(tr.ent, self, (int)(SABRE_ADDON_HEATDAMAGE * self->myskills.weapons[WEAPON_SWORD].mods[3].current_level));
+					if (self->client->resp.pstats.weapons[WEAPON_SWORD].mods[3].current_level >= 1)
+						burn_person(tr.ent, self, (int)(SABRE_ADDON_HEATDAMAGE * self->client->resp.pstats.weapons[WEAPON_SWORD].mods[3].current_level));
 				}
 		}
 
@@ -278,7 +278,7 @@ void lance_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *sur
 	if (other->takedamage){
 		T_Damage (other, ent, ent->owner, ent->velocity, ent->s.origin, plane->normal, ent->dmg, ent->dmg, DAMAGE_ENERGY, MOD_SWORD);
 
-		if (ent->owner->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1)
+		if (ent->owner->client->resp.pstats.weapons[WEAPON_SWORD].mods[4].current_level < 1)
 			gi.sound (other, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav") , 1, ATTN_NORM, 0);
 	}
 	else
@@ -319,7 +319,7 @@ void lance_think (edict_t *self)
 	
 	// if we hit something, damage it and burn if it's upgraded
 	if (tr.ent && tr.ent->takedamage && T_Damage(tr.ent, self, self->owner, forward, tr.endpos, tr.plane.normal, self->dmg, self->dmg, DAMAGE_ENERGY, MOD_SWORD)
-		&& self->owner->myskills.weapons[WEAPON_SWORD].mods[3].current_level >= 1)
+		&& self->owner->client->resp.pstats.weapons[WEAPON_SWORD].mods[3].current_level >= 1)
 	{
 		
 		gi.sound (self, CHAN_WEAPON, gi.soundindex("misc/fhit3.wav") , 1, ATTN_NORM, 0); 
@@ -378,7 +378,7 @@ void fire_lance (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int bur
 
 	// adjust velocity
 	VectorScale (aimdir, speed, lance->velocity);
-	if (!self->ai.is_bot && !self->lockon)//GHz: don't boost vertical velocity for bots as it will affect ballistic calculations (i.e. finding the right pitch to hit the target)
+	if (!self->ai && !self->lockon)//GHz: don't boost vertical velocity for bots as it will affect ballistic calculations (i.e. finding the right pitch to hit the target)
 		lance->velocity[2] += 300;
 	//gi.dprintf("lance speed: %f\n", (float)VectorLength(lance->velocity));
 }
@@ -391,7 +391,7 @@ void sword_attack (edict_t *ent, vec3_t g_offset, int damage)
 	int swordrange;
 	
 	if (ent->client)
-		swordrange = SABRE_INITIAL_RANGE + SABRE_ADDON_RANGE * ent->myskills.weapons[WEAPON_SWORD].mods[2].current_level;
+		swordrange = SABRE_INITIAL_RANGE + SABRE_ADDON_RANGE * ent->client->resp.pstats.weapons[WEAPON_SWORD].mods[2].current_level;
 	else
 		swordrange = SABRE_INITIAL_RANGE + SABRE_ADDON_RANGE * ent->monsterinfo.level;
 
@@ -419,7 +419,7 @@ void sword_attack (edict_t *ent, vec3_t g_offset, int damage)
 		start, 
 		forward, 
 		damage, 
-		swordrange,//SABRE_INITIAL_KICK + SABRE_ADDON_KICK * ent->myskills.weapons[WEAPON_SWORD].mods[0].current_level,
+		swordrange,//SABRE_INITIAL_KICK + SABRE_ADDON_KICK * ent->client->resp.pstats.weapons[WEAPON_SWORD].mods[0].current_level,
 		0xd3d3d3d3 /* scolor */
 	); 
 }
@@ -436,17 +436,17 @@ void Weapon_Sword_Fire (edict_t *ent) {
     if (ent->myskills.class_num == CLASS_KNIGHT)
         sword_bonus = 1.5;
     damage = SABRE_INITIAL_DAMAGE +
-             (SABRE_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_SWORD].mods[0].current_level * sword_bonus);
+             (SABRE_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_SWORD].mods[0].current_level * sword_bonus);
 
     // sword forging reduces the per-frame damage penalty
-    temp = 0.8 + 0.007 * ent->myskills.weapons[WEAPON_SWORD].mods[1].current_level;
+    temp = 0.8 + 0.007 * ent->client->resp.pstats.weapons[WEAPON_SWORD].mods[1].current_level;
 
     if ((temp < 1.0) && (ent->client->ps.gunframe - 5 > 0))
         damage *= pow(temp, ent->client->ps.gunframe - 5);
 
     //gi.dprintf("damage=%d\n", damage);
 
-	 if ((ent->client->ps.gunframe == 5) && (ent->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1))
+	 if ((ent->client->ps.gunframe == 5) && (ent->client->resp.pstats.weapons[WEAPON_SWORD].mods[4].current_level < 1))
 		gi.sound (ent, CHAN_WEAPON, gi.soundindex("misc/power1.wav") , 1, ATTN_NORM, 0);
 
 	 const int frames_per_frame = sv_fps->value / 10.0;
@@ -474,14 +474,14 @@ void Weapon_Lance_Fire (edict_t *ent) {
         sword_bonus = 1.5;
 
     int damage = SABRE_INITIAL_DAMAGE +
-                 (SABRE_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_SWORD].mods[0].current_level * sword_bonus);
-    const int burn_damage = SABRE_ADDON_HEATDAMAGE * ent->myskills.weapons[WEAPON_SWORD].mods[3].current_level * sword_bonus;
-    const float speed = 850 + (15 * ent->myskills.weapons[WEAPON_SWORD].mods[2].current_level * sword_bonus);
+                 (SABRE_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_SWORD].mods[0].current_level * sword_bonus);
+    const int burn_damage = SABRE_ADDON_HEATDAMAGE * ent->client->resp.pstats.weapons[WEAPON_SWORD].mods[3].current_level * sword_bonus;
+    const float speed = 850 + (15 * ent->client->resp.pstats.weapons[WEAPON_SWORD].mods[2].current_level * sword_bonus);
 
     // lance modifier
     damage *= 2;
 
-    if (ent->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1) 
+    if (ent->client->resp.pstats.weapons[WEAPON_SWORD].mods[4].current_level < 1)
 		gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/lancethrow.wav"), 1, ATTN_NORM, 0);
 
 	VectorSet(offset, 8, 8, ent->viewheight - 8);
@@ -496,7 +496,7 @@ void Weapon_Lance_Fire (edict_t *ent) {
 	fire_lance(ent, start, forward, damage, burn_damage, speed, 64);
 
 	// show muzzle flare
-	if (ent->myskills.weapons[WEAPON_SWORD].mods[4].current_level < 1)
+	if (ent->client->resp.pstats.weapons[WEAPON_SWORD].mods[4].current_level < 1)
 	{
 		gi.WriteByte(svc_muzzleflash);
 		gi.WriteShort(ent-g_edicts);

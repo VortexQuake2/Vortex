@@ -13,7 +13,7 @@ void msgpack_pack_talentlist(msgpack_packer* pk, const talentlist_t* list);
 void msgpack_pack_weaponskill(msgpack_packer* pk, const weaponskill_t* ws);
 void msgpack_pack_weapon(msgpack_packer* pk, const weapon_t* wp);
 void msgpack_pack_prestigelist(msgpack_packer* pk, const prestigelist_t* pre);
-void msgpack_pack_skills(msgpack_packer* pk, const skills_t* skills, int connection_id);
+void msgpack_pack_skills(msgpack_packer* pk, const playertransfer_t* transfer, int connection_id);
 
 // Deserialization
 qboolean msgpack_unpack_imodifier(msgpack_object* obj, imodifier_t* mod);
@@ -24,6 +24,6 @@ qboolean msgpack_unpack_talentlist(msgpack_object* obj, talentlist_t* list);
 qboolean msgpack_unpack_weaponskill(msgpack_object* obj, weaponskill_t* ws);
 qboolean msgpack_unpack_weapon(msgpack_object* obj, weapon_t* wp);
 qboolean msgpack_unpack_prestigelist(msgpack_object* obj, prestigelist_t* pre);
-qboolean msgpack_unpack_skills(msgpack_object* obj, skills_t* skills);
+qboolean msgpack_unpack_skills(msgpack_object* obj, playertransfer_t* transfer);
 
 #endif

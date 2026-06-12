@@ -279,7 +279,7 @@ int CTF_ReturnFlag (edict_t *ent, edict_t *flag)
 		ent->client->pers.ctf_assist_return = level.time + CTF_ASSIST_DURATION;
 
 		//Give them credit
-		ent->myskills.flag_returns++;
+		ent->client->resp.pstats.flag_returns++;
 
 		gi.sound(ent, CHAN_ITEM, gi.soundindex("ctf/flagret.wav"), 1, ATTN_NORM, 0);
 
@@ -418,7 +418,7 @@ qboolean CTF_PickupFlag (edict_t *ent, edict_t *other)
 		other->client->pers.inventory[index] = 1;
 
 		//Give them credit
-		other->myskills.flag_pickups++;
+		other->client->resp.pstats.flag_pickups++;
 
         /*
         other->myskills.experience += CTF_FLAG_TAKE_EXP;
@@ -944,7 +944,7 @@ void CTF_AwardFrag (edict_t *attacker, edict_t *target)
 			attacker_cl->client->pers.netname, CTF_GetTeamString(attacker_cl->teamnum));
 
 		//Give them credit
-		attacker_cl->myskills.defense_kills++;
+		attacker_cl->client->resp.pstats.defense_kills++;
 
 		points = CTF_BASE_DEFEND_EXP;
 		credits = CTF_BASE_DEFEND_CREDITS;
@@ -966,7 +966,7 @@ void CTF_AwardFrag (edict_t *attacker, edict_t *target)
 			attacker_cl->client->pers.netname, CTF_GetTeamString(enemy_teamnum));
 
 		//Give them credit
-		attacker_cl->myskills.flag_kills++;
+		attacker_cl->client->resp.pstats.flag_kills++;
 
 		//Set up the player for an assist.
 		attacker_cl->client->pers.ctf_assist_frag = level.time + CTF_ASSIST_DURATION;
@@ -983,7 +983,7 @@ void CTF_AwardFrag (edict_t *attacker, edict_t *target)
 			attacker->client->pers.netname, CTF_GetTeamString(enemy_teamnum));
 
 		//Give them credit
-		attacker->myskills.offense_kills++;
+		attacker->client->resp.pstats.offense_kills++;
 
 		points = CTF_BASE_KILL_EXP;
 		credits = CTF_BASE_KILL_CREDITS;
@@ -1141,7 +1141,7 @@ void flagbase_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t 
 		gi.sound(other, CHAN_ITEM, gi.soundindex("ctf/flagcap.wav"), 1, ATTN_NORM, 0);
 
 		//Give them a capture credit
-		other->myskills.flag_captures++;
+		other->client->resp.pstats.flag_captures++;
 
 		//Check for assists
 		for_each_player(p, i)
@@ -1155,7 +1155,7 @@ void flagbase_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t 
 			{
 				//Notify everyone
 				G_PrintGreenText(va("%s gains an assist for killing the flag carrier!", 
-					p->myskills.player_name));
+					p->client->resp.pstats.player_name));
 
                 //Give them an assist credit
 				assist = true;
@@ -1168,7 +1168,7 @@ void flagbase_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t 
 			{
 				//Notify everyone
 				G_PrintGreenText(va("%s gains an assist for returning the flag!", 
-					p->myskills.player_name));
+					p->client->resp.pstats.player_name));
 
                 //Give them an assist credit
 				assist = true;
@@ -1177,7 +1177,7 @@ void flagbase_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t 
 				//Give them some bonus points
 				CTF_AwardPlayer(p, CTF_FLAG_ASSIST_EXP, 0);
 			}
-			if(assist)	p->myskills.assists++;
+			if(assist)	p->client->resp.pstats.assists++;
 		}		
 
 		other->client->pers.inventory[enemy_flag_index] = 0;

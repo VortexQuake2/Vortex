@@ -263,7 +263,6 @@ void ChaseNext(edict_t *ent) //GHz
 	} while (e != ent->client->chase_target);
 
 	ent->client->chase_target = e;
-	ent->client->update_chase = true;
 }
 
 void ChasePrev(edict_t *ent) //GHz
@@ -286,7 +285,6 @@ void ChasePrev(edict_t *ent) //GHz
 	} while (e != ent->client->chase_target);
 	
 	ent->client->chase_target = e;
-	ent->client->update_chase = true;
 }
 
 void GetChaseTarget (edict_t *ent)//GHz
@@ -301,7 +299,6 @@ void GetChaseTarget (edict_t *ent)//GHz
 		if (!IsValidChaseTarget(other))
 			continue;
 		ent->client->chase_target = other;
-		ent->client->update_chase = true;
 		UpdateChaseCam(ent);
 		return;
 	}

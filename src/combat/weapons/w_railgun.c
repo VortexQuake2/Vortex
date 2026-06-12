@@ -13,7 +13,7 @@ void weapon_railgun_fire(edict_t* ent) {
 
     //K03 Begin
     int damage =
-    RAILGUN_INITIAL_DAMAGE + RAILGUN_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_RAILGUN].mods[0].current_level;
+    RAILGUN_INITIAL_DAMAGE + RAILGUN_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_RAILGUN].mods[0].current_level;
     //K03 End
 
     if (is_quad) {
@@ -38,7 +38,7 @@ void weapon_railgun_fire(edict_t* ent) {
 
     fire_rail(ent, start, forward, damage, kick);
 
-    if (ent->myskills.weapons[WEAPON_RAILGUN].mods[4].current_level < 1) {
+    if (ent->client->resp.pstats.weapons[WEAPON_RAILGUN].mods[4].current_level < 1) {
         // send muzzle flash
         gi.WriteByte(svc_muzzleflash);
         gi.WriteShort(ent - g_edicts);
@@ -49,7 +49,7 @@ void weapon_railgun_fire(edict_t* ent) {
 
     ent->client->ps.gunframe++;
     //K03 Begin
-    if (ent->myskills.weapons[WEAPON_RAILGUN].mods[4].current_level < 1)
+    if (ent->client->resp.pstats.weapons[WEAPON_RAILGUN].mods[4].current_level < 1)
         PlayerNoise(ent, start, PNOISE_WEAPON);
     //K03 End
 

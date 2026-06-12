@@ -1201,7 +1201,7 @@ qboolean G_ValidTargetEnt(const edict_t *self, const edict_t *target, qboolean a
 	if (!ptr->value && (target->flags & FL_CHATPROTECT))
 		return false;
 	// non-bots don't target entities with FL_NOTARGET set
-	if (target->flags & FL_NOTARGET && (!self || !self->ai.is_bot))
+	if (target->flags & FL_NOTARGET && (!self || !self->ai))
 		return false;
 	// don't target spawning world monsters
 	if (target->activator && !target->activator->client && (target->svflags & SVF_MONSTER) 
@@ -1497,7 +1497,7 @@ qboolean visible1 (edict_t *ent1, edict_t *ent2)
 void stuffcmd(edict_t *ent, char *s) 	
 {
 	//gi.dprintf("running stuffcmd on %s\n", ent->classname);
-	if(ent->svflags & SVF_MONSTER || ent->ai.is_bot) return;
+	if(ent->svflags & SVF_MONSTER || ent->ai) return;
 
    	gi.WriteByte (svc_stufftext);
 	gi.WriteString (s);

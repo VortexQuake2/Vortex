@@ -10,9 +10,9 @@ void weapon_bfg_fire(edict_t* ent) {
     int dmg, speed;
     float range;
 
-    speed = BFG10K_INITIAL_SPEED + BFG10K_ADDON_SPEED * ent->myskills.weapons[WEAPON_BFG10K].mods[2].current_level;
+    speed = BFG10K_INITIAL_SPEED + BFG10K_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_BFG10K].mods[2].current_level;
     range = BFG10K_RADIUS;
-    dmg = BFG10K_INITIAL_DAMAGE + BFG10K_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_BFG10K].mods[0].current_level;
+    dmg = BFG10K_INITIAL_DAMAGE + BFG10K_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_BFG10K].mods[0].current_level;
 
     if (is_quad)
         dmg *= 4;
@@ -20,7 +20,7 @@ void weapon_bfg_fire(edict_t* ent) {
     if (ent->client->ps.gunframe == 9) {
         //	gi.dprintf("fired bfg at %.1f\n", level.time);
         // send muzzle flash
-        if (ent->myskills.weapons[WEAPON_BFG10K].mods[4].current_level < 1) {
+        if (ent->client->resp.pstats.weapons[WEAPON_BFG10K].mods[4].current_level < 1) {
             gi.WriteByte(svc_muzzleflash);
             gi.WriteShort(ent - g_edicts);
             gi.WriteByte(MZ_BFG | is_silenced);
@@ -41,7 +41,7 @@ void weapon_bfg_fire(edict_t* ent) {
             VectorSet(offset, 8, 8, ent->viewheight - 8);
             P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
 
-            if (ent->myskills.weapons[WEAPON_BFG10K].mods[4].current_level < 1)
+            if (ent->client->resp.pstats.weapons[WEAPON_BFG10K].mods[4].current_level < 1)
                 PlayerNoise(ent, start, PNOISE_WEAPON);
             fire_bfg(ent, start, forward, dmg, speed, range);
 
@@ -73,7 +73,7 @@ void weapon_bfg_fire(edict_t* ent) {
 
     ent->client->ps.gunframe++;
 
-    /*if (ent->myskills.weapons[WEAPON_BFG10K].mods[4].current_level < 1)
+    /*if (ent->client->resp.pstats.weapons[WEAPON_BFG10K].mods[4].current_level < 1)
      *	PlayerNoise(ent, start, PNOISE_WEAPON);
      *
      * if (! ( (int)dmflags->value & DF_INFINITE_AMMO ) )

@@ -319,25 +319,25 @@ float AI_ItemWeight(edict_t *self, edict_t *it)
 	//IT_WEAPON
 	if (it->item->flags & IT_WEAPON)
 	{
-		return self->ai.status.inventoryWeights[ITEM_INDEX(it->item)];
+		return self->ai->status.inventoryWeights[ITEM_INDEX(it->item)];
 	}
 
 	//IT_AMMO
 	if (it->item->flags & IT_AMMO)
 	{
-		return self->ai.status.inventoryWeights[ITEM_INDEX(it->item)];
+		return self->ai->status.inventoryWeights[ITEM_INDEX(it->item)];
 	}
 
 	//IT_ARMOR
 	if (it->item->flags & IT_ARMOR)
 	{
-		return self->ai.status.inventoryWeights[ITEM_INDEX(it->item)];
+		return self->ai->status.inventoryWeights[ITEM_INDEX(it->item)];
 	}
 
 	//IT_FLAG
 	if (it->item->flags & IT_FLAG)
 	{
-		return self->ai.status.inventoryWeights[ITEM_INDEX(it->item)];
+		return self->ai->status.inventoryWeights[ITEM_INDEX(it->item)];
 	}
 
 	//IT_HEALTH
@@ -378,12 +378,12 @@ float AI_ItemWeight(edict_t *self, edict_t *it)
 
 	//IT_POWERUP
 	if (it->item->flags & IT_POWERUP)
-		return self->ai.status.inventoryWeights[ITEM_INDEX(it->item)];
+		return self->ai->status.inventoryWeights[ITEM_INDEX(it->item)];
 
 	//IT_TECH
 	if (it->item->flags & IT_TECH)
 	{
-		return self->ai.status.inventoryWeights[ITEM_INDEX(it->item)];
+		return self->ai->status.inventoryWeights[ITEM_INDEX(it->item)];
 	}
 
 	//IT_STAY_COOP

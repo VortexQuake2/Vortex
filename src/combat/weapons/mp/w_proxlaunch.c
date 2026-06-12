@@ -7,9 +7,9 @@
 static void weapon_proxlauncher_fire(edict_t *ent)
 {
     vec3_t offset, start, forward, right;
-    int damage = 90 + 4 * ent->myskills.weapons[WEAPON_PROXLAUNCHER].mods[0].current_level;
-    float radius = damage + 30 + 2 * ent->myskills.weapons[WEAPON_PROXLAUNCHER].mods[1].current_level;
-    int speed = 600 + 15 * ent->myskills.weapons[WEAPON_PROXLAUNCHER].mods[2].current_level;
+    int damage = 90 + 4 * ent->client->resp.pstats.weapons[WEAPON_PROXLAUNCHER].mods[0].current_level;
+    float radius = damage + 30 + 2 * ent->client->resp.pstats.weapons[WEAPON_PROXLAUNCHER].mods[1].current_level;
+    int speed = 600 + 15 * ent->client->resp.pstats.weapons[WEAPON_PROXLAUNCHER].mods[2].current_level;
 
     if (is_quad)
         damage *= 4;

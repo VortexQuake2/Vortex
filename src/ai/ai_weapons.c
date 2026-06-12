@@ -47,29 +47,29 @@ float AI_GetWeaponProjectileVelocity(edict_t *ent, int weapmodelIndex)
 			// calculate knight bonus
 			if (ent->myskills.class_num == CLASS_KNIGHT)
 				sword_bonus = 1.5;
-			return 850 + (15 * ent->myskills.weapons[WEAPON_SWORD].mods[2].current_level * sword_bonus);
+			return 850 + (15 * ent->client->resp.pstats.weapons[WEAPON_SWORD].mods[2].current_level * sword_bonus);
 		}
 		return 0;
 	case WEAPON_BLASTER:
-		return BLASTER_INITIAL_SPEED + BLASTER_ADDON_SPEED * ent->myskills.weapons[WEAPON_BLASTER].mods[2].current_level;
+		return BLASTER_INITIAL_SPEED + BLASTER_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_BLASTER].mods[2].current_level;
 	case WEAPON_HYPERBLASTER:
-		return HYPERBLASTER_INITIAL_SPEED + HYPERBLASTER_ADDON_SPEED * ent->myskills.weapons[WEAPON_HYPERBLASTER].mods[2].current_level;
+		return HYPERBLASTER_INITIAL_SPEED + HYPERBLASTER_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_HYPERBLASTER].mods[2].current_level;
 	case WEAPON_ROCKETLAUNCHER:
-		return ROCKETLAUNCHER_INITIAL_SPEED + ROCKETLAUNCHER_ADDON_SPEED * ent->myskills.weapons[WEAPON_ROCKETLAUNCHER].mods[2].current_level;
+		return ROCKETLAUNCHER_INITIAL_SPEED + ROCKETLAUNCHER_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_ROCKETLAUNCHER].mods[2].current_level;
 	case WEAPON_GRENADELAUNCHER:
-		return GRENADELAUNCHER_INITIAL_SPEED + GRENADELAUNCHER_ADDON_SPEED * ent->myskills.weapons[WEAPON_GRENADELAUNCHER].mods[2].current_level;
+		return GRENADELAUNCHER_INITIAL_SPEED + GRENADELAUNCHER_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_GRENADELAUNCHER].mods[2].current_level;
 	case WEAPON_BFG10K:
-		return BFG10K_INITIAL_SPEED + BFG10K_ADDON_SPEED * ent->myskills.weapons[WEAPON_BFG10K].mods[2].current_level;
+		return BFG10K_INITIAL_SPEED + BFG10K_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_BFG10K].mods[2].current_level;
 	case WEAPON_HANDGRENADE:
 		return get_weapon_grenade_speed(ent);
 	case WEAPON_ETFRIFLE:
-		return ETFRIFLE_INITIAL_SPEED + (ETFRIFLE_ADDON_SPEED * ent->myskills.weapons[WEAPON_ETFRIFLE].mods[2].current_level);
+		return ETFRIFLE_INITIAL_SPEED + (ETFRIFLE_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_ETFRIFLE].mods[2].current_level);
 	case WEAPON_PHALANX:
-		return PHALANX_INITIAL_SPEED + (PHALANX_ADDON_SPEED * ent->myskills.weapons[WEAPON_PHALANX].mods[2].current_level);
+		return PHALANX_INITIAL_SPEED + (PHALANX_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_PHALANX].mods[2].current_level);
 	case WEAPON_IONRIPPER:
-		return IONRIPPER_INITIAL_SPEED + (IONRIPPER_ADDON_SPEED * ent->myskills.weapons[WEAPON_IONRIPPER].mods[2].current_level);
+		return IONRIPPER_INITIAL_SPEED + (IONRIPPER_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_IONRIPPER].mods[2].current_level);
 	case WEAPON_DISRUPTOR:
-		return DISRUPTOR_INITIAL_SPEED + (DISRUPTOR_ADDON_SPEED * ent->myskills.weapons[WEAPON_DISRUPTOR].mods[2].current_level);
+		return DISRUPTOR_INITIAL_SPEED + (DISRUPTOR_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_DISRUPTOR].mods[2].current_level);
 	}
 	return 0;
 }

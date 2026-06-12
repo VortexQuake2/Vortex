@@ -9,17 +9,17 @@ void weapon_20mm_fire(edict_t* ent) {
     vec3_t forward, right;
     vec3_t offset;
 
-    int damage;//25 + (int) floor(2.5 * ent->myskills.weapons[WEAPON_20MM].mods[0].current_level);
-    int kick;//= 150 - (100 * ent->myskills.weapons[WEAPON_20MM].mods[3].current_level);
+    int damage;//25 + (int) floor(2.5 * ent->client->resp.pstats.weapons[WEAPON_20MM].mods[0].current_level);
+    int kick;//= 150 - (100 * ent->client->resp.pstats.weapons[WEAPON_20MM].mods[3].current_level);
 
-    //min = WEAPON_20MM_INITIAL_DMG_MIN + WEAPON_20MM_ADDON_DMG_MIN*ent->myskills.weapons[WEAPON_20MM].mods[0].current_level;
-    //max = WEAPON_20MM_INITIAL_DMG_MAX + WEAPON_20MM_ADDON_DMG_MAX*ent->myskills.weapons[WEAPON_20MM].mods[0].current_level;
+    //min = WEAPON_20MM_INITIAL_DMG_MIN + WEAPON_20MM_ADDON_DMG_MIN*ent->client->resp.pstats.weapons[WEAPON_20MM].mods[0].current_level;
+    //max = WEAPON_20MM_INITIAL_DMG_MAX + WEAPON_20MM_ADDON_DMG_MAX*ent->client->resp.pstats.weapons[WEAPON_20MM].mods[0].current_level;
     //damage = GetRandom(min, max);
 
     //4.57
-    damage = WEAPON_20MM_INITIAL_DMG + WEAPON_20MM_ADDON_DMG * ent->myskills.weapons[WEAPON_20MM].mods[0].current_level;
+    damage = WEAPON_20MM_INITIAL_DMG + WEAPON_20MM_ADDON_DMG * ent->client->resp.pstats.weapons[WEAPON_20MM].mods[0].current_level;
     kick = damage;
-    if (ent->myskills.weapons[WEAPON_20MM].mods[3].current_level)
+    if (ent->client->resp.pstats.weapons[WEAPON_20MM].mods[3].current_level)
         kick *= 0.5;
     //if (kick < 0)
     //	kick = 0;
@@ -40,11 +40,11 @@ void weapon_20mm_fire(edict_t* ent) {
     VectorSet(offset, 0, 7, ent->viewheight - 8);
     P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
 
-    const int range = WEAPON_20MM_INITIAL_RANGE + (WEAPON_20MM_ADDON_RANGE * ent->myskills.weapons[WEAPON_20MM].mods[1].current_level);
+    const int range = WEAPON_20MM_INITIAL_RANGE + (WEAPON_20MM_ADDON_RANGE * ent->client->resp.pstats.weapons[WEAPON_20MM].mods[1].current_level);
     //gi.dprintf("called fire_20mm() at %f for %d damage\n", level.time, damage);
     fire_20mm(ent, start, forward, damage, kick, range);
 
-    if (ent->myskills.weapons[WEAPON_20MM].mods[4].current_level < 1) {
+    if (ent->client->resp.pstats.weapons[WEAPON_20MM].mods[4].current_level < 1) {
         // send muzzle flash
         gi.WriteByte(svc_muzzleflash);
         gi.WriteShort(ent - g_edicts);
@@ -58,7 +58,7 @@ void weapon_20mm_fire(edict_t* ent) {
 
     ent->client->ps.gunframe++;
 
-    if (ent->myskills.weapons[WEAPON_20MM].mods[4].current_level < 1) {
+    if (ent->client->resp.pstats.weapons[WEAPON_20MM].mods[4].current_level < 1) {
         PlayerNoise(ent, start, PNOISE_WEAPON);
         gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/sgun1.wav"), 1, ATTN_NORM, 0);
     }

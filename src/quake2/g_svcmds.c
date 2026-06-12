@@ -993,7 +993,7 @@ int LowestLevelPlayer(void) {
             continue;
 
         //decino: don't check for bot levels because this also calculates theirs!
-        if (player->ai.is_bot)
+        if (player->ai)
             continue;
 
         if (G_IsSpectator(player))

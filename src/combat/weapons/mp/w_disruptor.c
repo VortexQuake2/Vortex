@@ -13,9 +13,9 @@ static void weapon_disruptor_fire(edict_t *ent)
     edict_t *enemy = NULL;
 
     int damage = DISRUPTOR_INITIAL_DAMAGE +
-    ( DISRUPTOR_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_DISRUPTOR].mods[0].current_level );
+    ( DISRUPTOR_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_DISRUPTOR].mods[0].current_level );
     int speed = DISRUPTOR_INITIAL_SPEED +
-    ( DISRUPTOR_ADDON_SPEED * ent->myskills.weapons[WEAPON_DISRUPTOR].mods[1].current_level );
+    ( DISRUPTOR_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_DISRUPTOR].mods[1].current_level );
 
     if (is_quad)
         damage *= 4;
@@ -44,7 +44,7 @@ static void weapon_disruptor_fire(edict_t *ent)
 
     gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/disint2.wav"), 1, ATTN_NORM, 0);
 
-    if (ent->myskills.weapons[WEAPON_DISRUPTOR].mods[4].current_level < 1)
+    if (ent->client->resp.pstats.weapons[WEAPON_DISRUPTOR].mods[4].current_level < 1)
     {
         gi.WriteByte(svc_muzzleflash);
         gi.WriteShort(ent - g_edicts);

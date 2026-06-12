@@ -22,7 +22,8 @@ void fire_think (edict_t *self)
 	{
 		for (i = 3; i < MAX_VRXITEMS; ++i)
 		{
-			if (self->enemy->myskills.items[i].itemtype & ITEM_FIRE_RESIST)
+			if (self->enemy->client &&
+				self->enemy->client->resp.pstats.items[i].itemtype & ITEM_FIRE_RESIST)
 			{
 				quench = true;
 				break;
@@ -36,17 +37,17 @@ void fire_think (edict_t *self)
 		if (quench)
 		{
 			//Consume an item charge
-			if (!(self->enemy->myskills.items[i].itemtype & ITEM_UNIQUE))
-				self->enemy->myskills.items[i].quantity -= 1;
-			if(self->enemy->myskills.items[i].quantity == 0)
+			if (!(self->enemy->client->resp.pstats.items[i].itemtype & ITEM_UNIQUE))
+				self->enemy->client->resp.pstats.items[i].quantity -= 1;
+			if(self->enemy->client->resp.pstats.items[i].quantity == 0)
 			{
 				int count = 0;
 				safe_cprintf(self->enemy, PRINT_HIGH, "Your burn resistant clothing has been destroyed!\n");
 				//erase the item
-				V_ItemClear(&self->enemy->myskills.items[i]);
+				V_ItemClear(&self->enemy->client->resp.pstats.items[i]);
 				//Tell the user if they have any left
 				for (i = 3; i < MAX_VRXITEMS; ++i)
-					if (self->enemy->myskills.items[i].itemtype & ITEM_FIRE_RESIST)
+					if (self->enemy->client->resp.pstats.items[i].itemtype & ITEM_FIRE_RESIST)
 						count++;
 				if (count) safe_cprintf(self->enemy, PRINT_HIGH, "You have %d left.\n", count);
 			}

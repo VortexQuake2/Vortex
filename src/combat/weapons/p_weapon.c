@@ -668,7 +668,7 @@ void Weapon_Generic2(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
                 if (can_run_frame) {
                     //K03 Begin
                     ent->shots++;
-                    ent->myskills.shots++;
+                    ent->client->resp.pstats.shots++;
                     if (ent->movetype != MOVETYPE_NOCLIP || (ent->myskills.abilities[CLOAK].current_level == 10 &&
                                                              vrx_get_talent_level(ent, TALENT_IMP_CLOAK) ==
                                                              4))

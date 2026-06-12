@@ -808,6 +808,11 @@ qboolean AI_LoadPLKFile( char *mapname )
 
 	fclose(pIn);
 
+	// az: applying this cleanup on older files
+	// will give us a more workable ai file
+	// order is important because AI_RemoveEntNodes clears empty nodes.
+	AI_RemoveMapNodes();
+	AI_RemoveEntNodes();
 	return true;
 }
 
@@ -1095,8 +1100,6 @@ void AI_InitNavigationData(void)
 	memset( nav.costs, -1, sizeof nav.costs );
 	memset( nodes, 0, sizeof(nav_node_t) * MAX_NODES );
 	memset( pLinks, 0, sizeof(nav_plink_t) * MAX_NODES );//GHz: FIXME: is 2048 pLinks enough?
-	memset( Spath, 0, sizeof(spath_t) * MAX_SPATH );//GHz
-	Spath_numNodes = 0;//GHz
 	dropNodeTime = 0;//GHz
 
 	//Load nodes from file

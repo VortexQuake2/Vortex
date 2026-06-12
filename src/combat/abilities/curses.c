@@ -433,7 +433,7 @@ void CurseMessage (edict_t *caster, edict_t *target, int type, int curseLevel, f
 	{
 		safe_cprintf(target, PRINT_HIGH, "**You have been %s with %s (%d) for %0.1f second(s)**\n", typeName, curseName, curseLevel, duration);
 		if (caster && caster->client)
-			safe_cprintf(caster, PRINT_HIGH, "%s %s with %s (%d) for %0.1f second(s)\n", typeName, target->myskills.player_name, curseName, curseLevel, duration);
+			safe_cprintf(caster, PRINT_HIGH, "%s %s with %s (%d) for %0.1f second(s)\n", typeName, target->client->resp.pstats.player_name, curseName, curseLevel, duration);
 	}
 	else if (target->mtype)
 	{
@@ -965,7 +965,7 @@ void Cmd_Amnesia(edict_t *ent)
 		if ((target->client) && !(target->svflags & SVF_MONSTER))
 		{
 			safe_cprintf(target, PRINT_HIGH, "YOU HAVE BEEN CURSED WITH AMNESIA!! (%0.1f seconds)\n", duration);
-			safe_cprintf(ent, PRINT_HIGH, "Cursed %s with amnesia for %0.1f seconds.\n", target->myskills.player_name, duration);
+			safe_cprintf(ent, PRINT_HIGH, "Cursed %s with amnesia for %0.1f seconds.\n", target->client->resp.pstats.player_name, duration);
 		}
 		else
 		{
@@ -1037,7 +1037,7 @@ void Cmd_Healing(edict_t *ent)
 		else if ((target->client) && !(target->svflags & SVF_MONSTER))
 		{
 			safe_cprintf(target, PRINT_HIGH, "YOU HAVE BEEN BLESSED WITH %0.1f seconds OF HEALING!!\n", duration);
-			safe_cprintf(ent, PRINT_HIGH, "Blessed %s with healing for %0.1f seconds.\n", target->myskills.player_name, duration);
+			safe_cprintf(ent, PRINT_HIGH, "Blessed %s with healing for %0.1f seconds.\n", target->client->resp.pstats.player_name, duration);
 		}
 		else
 		{
@@ -1121,7 +1121,7 @@ void Cmd_Bless(edict_t *ent)
 		else if ((target->client) && !(target->svflags & SVF_MONSTER))
 		{
 			safe_cprintf(target, PRINT_HIGH, "YOU HAVE BEEN BLESSED FOR %0.1f seconds!!\n", duration);
-			safe_cprintf(ent, PRINT_HIGH, "Blessed %s for %0.1f seconds.\n", target->myskills.player_name, duration);
+			safe_cprintf(ent, PRINT_HIGH, "Blessed %s for %0.1f seconds.\n", target->client->resp.pstats.player_name, duration);
 		}
 		else
 		{
@@ -1227,7 +1227,7 @@ void Cmd_Deflect_f(edict_t *ent)
 		else if ((target->client) && !(target->svflags & SVF_MONSTER))
 		{
 			safe_cprintf(target, PRINT_HIGH, "You have been blessed with deflect for %0.1f seconds!\n\n", duration);
-			safe_cprintf(ent, PRINT_HIGH, "Blessed %s with deflect for %0.1f seconds.\n", target->myskills.player_name, duration);
+			safe_cprintf(ent, PRINT_HIGH, "Blessed %s with deflect for %0.1f seconds.\n", target->client->resp.pstats.player_name, duration);
 		}
 		else
 		{

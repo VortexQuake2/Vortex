@@ -104,6 +104,4 @@ typedef struct spath_s
 	int path[MAX_NODES];
 } spath_t;
 
-extern spath_t Spath[MAX_SPATH];	//GHz: searchable list of previously computed paths, used to speed up pathfinding
-extern int Spath_numNodes;		//GHz: number of saved paths
 extern float dropNodeTime;		//GHz: time when AI_PathMap can be called for adding nodes/links to maps

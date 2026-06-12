@@ -14,7 +14,7 @@
 float get_weapon_grenade_speed(edict_t* ent)
 {
     int speed, min_speed;
-    const int max_speed = GRENADE_INITIAL_SPEED + GRENADE_ADDON_SPEED * ent->myskills.weapons[WEAPON_HANDGRENADE].mods[1].current_level;
+    const int max_speed = GRENADE_INITIAL_SPEED + GRENADE_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_HANDGRENADE].mods[1].current_level;
     float timer;
 
     timer = ent->client->grenade_time - level.time;
@@ -32,14 +32,14 @@ void weapon_grenade_fire(edict_t* ent, qboolean held) {
     vec3_t forward, right;
     vec3_t start;
     int damage = GRENADE_INITIAL_DAMAGE +
-    GRENADE_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_HANDGRENADE].mods[0].current_level;//K03
+    GRENADE_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_HANDGRENADE].mods[0].current_level;//K03
     const int radius_damage = GRENADE_INITIAL_RADIUS_DAMAGE +
-    GRENADE_ADDON_RADIUS_DAMAGE * ent->myskills.weapons[WEAPON_HANDGRENADE].mods[0].current_level;
+    GRENADE_ADDON_RADIUS_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_HANDGRENADE].mods[0].current_level;
     float timer;
     float speed;
     // int speed, min_speed;
     // int max_speed = GRENADE_INITIAL_SPEED +
-    //                GRENADE_ADDON_SPEED * ent->myskills.weapons[WEAPON_HANDGRENADE].mods[1].current_level;
+    //                GRENADE_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_HANDGRENADE].mods[1].current_level;
     float radius;
 
     //3.0 disable chat protect (somehow throwing a hg does not reset a client's idle frames)
@@ -55,7 +55,7 @@ void weapon_grenade_fire(edict_t* ent, qboolean held) {
     }
 
     radius = GRENADE_INITIAL_RADIUS +
-    GRENADE_ADDON_RADIUS * ent->myskills.weapons[WEAPON_HANDGRENADE].mods[2].current_level;//K03
+    GRENADE_ADDON_RADIUS * ent->client->resp.pstats.weapons[WEAPON_HANDGRENADE].mods[2].current_level;//K03
     if (is_quad)
         damage *= 4;
 
@@ -80,7 +80,7 @@ void weapon_grenade_fire(edict_t* ent, qboolean held) {
 
     //K03 Begin
     ent->shots++;
-    ent->myskills.shots++;
+    ent->client->resp.pstats.shots++;
     ent->svflags &= ~SVF_NOCLIENT;
     if (ent->myskills.abilities[CLOAK].current_level < 10 || vrx_get_talent_level(ent, TALENT_IMP_CLOAK) < 4) {
         ent->client->cloaking = false;
@@ -110,7 +110,7 @@ ent->client->anim_end = FRAME_wave01;
     ent->client->grenade_time = level.time + 1.0;
 
     //K03 Begin
-    if (ent->myskills.weapons[WEAPON_HANDGRENADE].mods[4].current_level < 1) {
+    if (ent->client->resp.pstats.weapons[WEAPON_HANDGRENADE].mods[4].current_level < 1) {
         gi.WriteByte(svc_muzzleflash);
         gi.WriteShort(ent - g_edicts);
         gi.WriteByte(MZ_BLASTER | is_silenced);
@@ -176,7 +176,7 @@ void Weapon_Grenade2(edict_t* ent) {
             }
             else {
                 if (level.time >= ent->pain_debounce_time) {
-                    if (ent->myskills.weapons[WEAPON_HANDGRENADE].mods[4].current_level < 1)//K03
+                    if (ent->client->resp.pstats.weapons[WEAPON_HANDGRENADE].mods[4].current_level < 1)//K03
                         gi.sound(ent, CHAN_VOICE, gi.soundindex("weapons/noammo.wav"), 1, ATTN_NORM, 0);
                     ent->pain_debounce_time = level.time + 1;
                 }
@@ -208,7 +208,7 @@ void Weapon_Grenade2(edict_t* ent) {
     }
 
     if (ent->client->weaponstate == WEAPON_FIRING) {
-        if (ent->client->ps.gunframe == 5 && ent->myskills.weapons[WEAPON_HANDGRENADE].mods[4].current_level < 1) {//K03
+        if (ent->client->ps.gunframe == 5 && ent->client->resp.pstats.weapons[WEAPON_HANDGRENADE].mods[4].current_level < 1) {//K03
             if (can_run_frame)
                 gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/hgrena1b.wav"), 1, ATTN_NORM, 0);
         }
@@ -216,7 +216,7 @@ void Weapon_Grenade2(edict_t* ent) {
         if (ent->client->ps.gunframe == 11) {
             if (!ent->client->grenade_time) {
                 ent->client->grenade_time = level.time + GRENADE_TIMER + 0.2;
-                if (ent->myskills.weapons[WEAPON_HANDGRENADE].mods[4].current_level < 1)//K03
+                if (ent->client->resp.pstats.weapons[WEAPON_HANDGRENADE].mods[4].current_level < 1)//K03
                     ent->client->weapon_sound = gi.soundindex("weapons/hgrenc1b.wav");
             }
 
@@ -314,9 +314,9 @@ void Weapon_Grenade(edict_t* ent) {
 
     Weapon_Grenade2(ent);
 
-    //	if (ent->myskills.weapons[WEAPON_HANDGRENADE].mods[1].current_level > 9)
+    //	if (ent->client->resp.pstats.weapons[WEAPON_HANDGRENADE].mods[1].current_level > 9)
     //		Weapon_Grenade2(ent);
-    //	if (ent->myskills.weapons[WEAPON_HANDGRENADE].mods[1].current_level > 4)
+    //	if (ent->client->resp.pstats.weapons[WEAPON_HANDGRENADE].mods[1].current_level > 4)
     //		Weapon_Grenade2(ent);
 
 }

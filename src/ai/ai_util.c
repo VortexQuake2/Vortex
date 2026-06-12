@@ -83,30 +83,30 @@ qboolean AI_StraightPath(edict_t* self, float dist, float min_dp_value)
 	vec3_t v1, v2;
 
 	// distance to next node
-	len = total = distance(self->s.origin, nodes[self->ai.next_node].origin);
+	len = total = distance(self->s.origin, nodes[self->ai->next_node].origin);
 
 	// current leg of path is long enough, and the line between two points is always straight
 	if (len >= dist)
 		return true;
 
 	// find the next node position in the path
-	while (self->ai.path.nodes[pos] != self->ai.next_node)
+	while (self->ai->path.nodes[pos] != self->ai->next_node)
 	{
 		pos++;
-		if (self->ai.path.goalNode == self->ai.path.nodes[pos])
+		if (self->ai->path.goalNode == self->ai->path.nodes[pos])
 			return false;	// reached the end of the path
 	}
 
 	// vector from current node to next node
-	VectorSubtract(nodes[self->ai.next_node].origin, nodes[self->ai.current_node].origin, v1);
+	VectorSubtract(nodes[self->ai->next_node].origin, nodes[self->ai->current_node].origin, v1);
 	VectorNormalize(v1);
 
-	//gi.dprintf("AI_StraightPath: %d (#%d) --> %d (#%d) [len:%.0f]", self->ai.current_node, pos-1, self->ai.next_node, pos, len);
+	//gi.dprintf("AI_StraightPath: %d (#%d) --> %d (#%d) [len:%.0f]", self->ai->current_node, pos-1, self->ai->next_node, pos, len);
 
 	// check the remaining nodes in our path to see if they are (mostly) parallel/straight
-	while (self->ai.path.nodes[pos] != self->ai.goal_node && count < 32)
+	while (self->ai->path.nodes[pos] != self->ai->goal_node && count < 32)
 	{
-		VectorSubtract(nodes[self->ai.path.nodes[pos + 1]].origin, nodes[self->ai.path.nodes[pos]].origin, v2);
+		VectorSubtract(nodes[self->ai->path.nodes[pos + 1]].origin, nodes[self->ai->path.nodes[pos]].origin, v2);
 		len = VectorLength(v2);
 		VectorNormalize(v2);
 		dot = DotProduct(v2, v1);
@@ -116,7 +116,7 @@ qboolean AI_StraightPath(edict_t* self, float dist, float min_dp_value)
 		//if (delta > 180.0f)
 		//	delta = 360.0f - delta;
 
-		//gi.dprintf("--> %d (#%d) [len:%.0f dot:%.2f delta:%.1f]",  self->ai.path.nodes[pos+1], pos+1, len, dot, delta);
+		//gi.dprintf("--> %d (#%d) [len:%.0f dot:%.2f delta:%.1f]",  self->ai->path.nodes[pos+1], pos+1, len, dot, delta);
 		if (dot < 0.8)
 		{
 			//gi.dprintf("\n");
@@ -355,7 +355,7 @@ qboolean AI_ClearWalkingPath(edict_t* self, vec3_t start, vec3_t end)
 	// did the bot fall out of the map or are we using noclip?!
 	if (self->solid == SOLID_NOT || gi.pointcontents(self->s.origin) & MASK_SOLID)
 	{
-		//gi.dprintf("**WARNING: %s called %s within a solid or while nonsolid\n", self->ai.pers.netname, __func__);
+		//gi.dprintf("**WARNING: %s called %s within a solid or while nonsolid\n", self->ai->pers.netname, __func__);
 		return true;
 	}
 
@@ -414,7 +414,7 @@ qboolean AI_ClearWalkingPath(edict_t* self, vec3_t start, vec3_t end)
 		//gi.dprintf("remaining distance: %f\n", distance(tr_pos, path_end));
 		i++;
 		//if (i == 9999)
-		//	gi.dprintf("**WARNING: %s aborted infinite loop in %s\n", self->ai.pers.netname, __func__);
+		//	gi.dprintf("**WARNING: %s aborted infinite loop in %s\n", self->ai->pers.netname, __func__);
 	}
 	return true;
 }

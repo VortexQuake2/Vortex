@@ -198,9 +198,9 @@ qboolean BOT_DMclass_UseTball(edict_t* self, qboolean forget_enemy)
 		if (forget_enemy)
 			self->enemy = NULL;
 		// change state so that AI_Think finds a new goal and path since we teleported away from our previous one
-		//self->ai.state = BOT_STATE_WANDER;
+		//self->ai->state = BOT_STATE_WANDER;
 		AI_ResetNavigation(self);
-		self->ai.bloqued_timeout = level.time + 15.0;
+		self->ai->bloqued_timeout = level.time + 15.0;
 		return true;
 	}
 	return false;
@@ -480,7 +480,7 @@ void BOT_DMclass_UseBlinkStrike(edict_t* self)
 	// can't use blinkstrike
 	if (!V_CanUseAbilities(self, BLINKSTRIKE, cost, false))
 		return;
-	//gi.dprintf("%s: %s\n", self->ai.pers.netname, __func__);
+	//gi.dprintf("%s: %s\n", self->ai->pers.netname, __func__);
 	// range check
 	const float dist = entdist(self, self->enemy);
 	if (dist > AI_RANGE_SNIPER || dist < AI_RANGE_SHORT)
@@ -489,9 +489,9 @@ void BOT_DMclass_UseBlinkStrike(edict_t* self)
 	if (self->enemy->flags & FL_FLY)
 		return;
 	// bot should be attacking and using CombatMovement
-	//if (self->ai.state != BOT_STATE_ATTACK)
+	//if (self->ai->state != BOT_STATE_ATTACK)
 	//	return;
-	//gi.dprintf("%s attempted to call %s\n", self->ai.pers.netname, __func__);
+	//gi.dprintf("%s attempted to call %s\n", self->ai->pers.netname, __func__);
 	Cmd_BlinkStrike_f(self);
 }
 
@@ -507,7 +507,7 @@ void BOT_DMclass_UseBoost(edict_t* self)
 	if (!V_CanUseAbilities(self, BOOST_SPELL, COST_FOR_BOOST, false))
 		return;
 	// bot should be attacking and using CombatMovement
-	if (self->ai.state != BOT_STATE_ATTACK)
+	if (self->ai->state != BOT_STATE_ATTACK)
 		return;
 	// range check
 	const float dist = entdist(self, self->enemy);
@@ -640,7 +640,7 @@ qboolean BOT_DMclass_TargetBarrel(edict_t* self)
 		self->enemy = bestTarget;
 
 		if (AIDevel.debugChased && bot_showcombat->value)
-			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: targetting %s because of nearby enemies!\n", self->ai.pers.netname, bestTarget->classname);
+			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: targetting %s because of nearby enemies!\n", self->ai->pers.netname, bestTarget->classname);
 		return true;
 	}
 
@@ -659,7 +659,7 @@ void BOT_DMclass_MorphPlayer(edict_t* self)
 	// upgraded
 	if (self->myskills.abilities[BERSERK].current_level > 0)
 	{
-		//gi.dprintf("%s: morphing to berserk\n", self->ai.pers.netname);
+		//gi.dprintf("%s: morphing to berserk\n", self->ai->pers.netname);
 		Cmd_PlayerToBerserk_f(self);
 	}
 }

@@ -1234,8 +1234,8 @@ gi.dprintf("%s just called Cmd_Drop_f()\n", ent->client->pers.netname);
 		int i;
 		for (i = 3; i < MAX_VRXITEMS; ++i)
 		{
-			if (ent->myskills.items[i].itemtype == ITEM_POTION)
-				memset(&ent->myskills.items[i], 0, sizeof(item_t));
+			if (ent->client->resp.pstats.items[i].itemtype == ITEM_POTION)
+				memset(&ent->client->resp.pstats.items[i], 0, sizeof(item_t));
 		}
 		safe_cprintf(ent, PRINT_HIGH, "You have discarded all of your potions.\n");
 		return;
@@ -1246,8 +1246,8 @@ gi.dprintf("%s just called Cmd_Drop_f()\n", ent->client->pers.netname);
 		int i;
 		for (i = 3; i < MAX_VRXITEMS; ++i)
 		{
-			if (ent->myskills.items[i].itemtype == ITEM_ANTIDOTE)
-				memset(&ent->myskills.items[i], 0, sizeof(item_t));
+			if (ent->client->resp.pstats.items[i].itemtype == ITEM_ANTIDOTE)
+				memset(&ent->client->resp.pstats.items[i], 0, sizeof(item_t));
 		}
 		safe_cprintf(ent, PRINT_HIGH, "You have discarded all of your holy water.\n");
 		return;
@@ -1593,10 +1593,7 @@ void Cmd_PutAway_f (edict_t *ent)
 	ent->client->showscores = false;
 	ent->client->showhelp = false;
 	ent->client->showinventory = false;
-//GHz START
-	//ItemMenuClose(ent);	//3.0 removed for now
-	ent->client->update_chase = true;
-//GHz END
+	//GHz END
 }
 
 int PlayerSort (void const *a, void const *b)
@@ -1786,7 +1783,7 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 	}
 	
 	// master password prompt
-	if (menu_active(ent, MENU_MASTER_PASSWORD, masterpw_handler) && !strcmp(ent->myskills.masterpw, ""))
+	if (menu_active(ent, MENU_MASTER_PASSWORD, masterpw_handler) && !strcmp(ent->client->resp.pstats.masterpw, ""))
 	{
 		const int	len=strlen(p);
 
@@ -1798,8 +1795,8 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 			return;
 		}
 
-		strcpy(ent->myskills.masterpw, p);
-		safe_cprintf(ent, PRINT_HIGH, "Master password has been set to %s.\n", ent->myskills.masterpw);
+		strcpy(ent->client->resp.pstats.masterpw, p);
+		safe_cprintf(ent, PRINT_HIGH, "Master password has been set to %s.\n", ent->client->resp.pstats.masterpw);
 		menu_close(ent, true);
 		return;
 	}
@@ -1862,9 +1859,9 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 		//Archer (PlayerMute start)
 		for (k = 0; k < game.maxclients; k++)
 		{
-			if(!other->myskills.mutelist[k].player)
+			if(!other->client->mutelist[k].player)
 				continue;
-			if(ent == other->myskills.mutelist[k].player)
+			if(ent == other->client->mutelist[k].player)
 			{
 				ThisPlayerMuted = true;
 				break;
@@ -1968,9 +1965,9 @@ void Cmd_Speech (edict_t *ent, int soundnum)
 void ResetPlayer (edict_t *ent)
 {
 	memset(&ent->myskills,0,sizeof(skills_t));
+	memset(&ent->client->resp.pstats,0,sizeof(pstats_t));
 	stuffcmd(ent, "disconnect\n");
 	gi.bprintf (PRINT_HIGH, "%s was kicked\n", ent->client->pers.netname);
-	return;
 }
 
 char *LoPrint(char *text);
@@ -2163,16 +2160,16 @@ void cmd_PlayerMute(edict_t *ent, char *playername, int time)
 				return;
 			}
 			//Toggle if player is muted or not
-			if (ent->myskills.mutelist[i].player != other)
+			if (ent->client->mutelist[i].player != other)
 			{
-				ent->myskills.mutelist[i].player = other;
-				ent->myskills.mutelist[i].time = time;
+				ent->client->mutelist[i].player = other;
+				ent->client->mutelist[i].time = time;
 				safe_cprintf(ent, PRINT_HIGH, "%s has been muted.\n",other->client->pers.netname);
 			}
 			else 
 			{
-				ent->myskills.mutelist[i].player = NULL;
-				ent->myskills.mutelist[i].time = 0;
+				ent->client->mutelist[i].player = NULL;
+				ent->client->mutelist[i].time = 0;
 				safe_cprintf(ent, PRINT_HIGH, "%s is no longer muted.\n",other->client->pers.netname);
 			}
 			return;
@@ -2345,22 +2342,22 @@ void Cmd_SetOwner_f (edict_t *ent)
 	char* mpw = gi.argv(2);
 
 	// az: nice, lee! :)
-	if (strcmp(ent->myskills.owner, ent->myskills.player_name) == 0)
+	if (strcmp(ent->client->resp.pstats.owner, ent->client->resp.pstats.player_name) == 0)
 	{
 		// Reset owner...
 		vrx_char_io.set_owner(ent, "", "", true);
 		safe_cprintf(ent, PRINT_HIGH, "Owner has been reset.\n");
 	}
 
-	if (strcmp(charname, ent->myskills.player_name) == 0)
+	if (strcmp(charname, ent->client->resp.pstats.player_name) == 0)
 	{
 		safe_cprintf(ent, PRINT_HIGH, "You can't claim yourself as your own character.\n");
 		return;
 	}
 
-	if (strlen(ent->myskills.owner) > 0 && strcmp(ent->myskills.owner, ent->myskills.player_name) != 0)
+	if (strlen(ent->client->resp.pstats.owner) > 0 && strcmp(ent->client->resp.pstats.owner, ent->client->resp.pstats.player_name) != 0)
 	{
-		safe_cprintf(ent, PRINT_HIGH, "%s has already been claimed by %s.\n", ent->myskills.player_name, ent->myskills.owner);
+		safe_cprintf(ent, PRINT_HIGH, "%s has already been claimed by %s.\n", ent->client->resp.pstats.player_name, ent->client->resp.pstats.owner);
 		return;
 	}
 
@@ -2372,7 +2369,7 @@ void Cmd_SetOwner_f (edict_t *ent)
 
 	if (strlen(charname) < 1)
 	{
-		safe_cprintf(ent, PRINT_HIGH, "%s has not yet been claimed.\nCommand: owner <name> <master password>\n", ent->myskills.player_name);
+		safe_cprintf(ent, PRINT_HIGH, "%s has not yet been claimed.\nCommand: owner <name> <master password>\n", ent->client->resp.pstats.player_name);
 		return;
 	}
 
@@ -2406,9 +2403,9 @@ void cmd_whois(edict_t *ent, char *playername)
 	{
 		temp = g_edicts + i;
 		if (!temp || !temp->inuse || !temp->client) continue;
-		if(Q_strcasecmp(temp->myskills.player_name, playername) == 0)
+		if(Q_strcasecmp(temp->client->resp.pstats.player_name, playername) == 0)
 		{
-			safe_cprintf(ent, PRINT_HIGH, "%s belongs to %s.\n", playername, temp->myskills.owner);
+			safe_cprintf(ent, PRINT_HIGH, "%s belongs to %s.\n", playername, temp->client->resp.pstats.owner);
 			return;
 		}
 	}
@@ -2753,7 +2750,7 @@ void Cmd_AdminCmd (edict_t *ent)
 			if (!strcmp(cmd3, ""))
 			{
 				safe_cprintf(ent, PRINT_HIGH, "%s's title was reset\n", player->client->pers.netname);
-				player->myskills.title[0] = 0;
+				player->client->resp.pstats.title[0] = 0;
 			}
 			else
 			{
@@ -2764,7 +2761,7 @@ void Cmd_AdminCmd (edict_t *ent)
 				else
 				{
 					safe_cprintf(ent, PRINT_HIGH, "%s's title is now %s\n", player->client->pers.netname, cmd3);
-					strcpy(player->myskills.title, cmd3);
+					strcpy(player->client->resp.pstats.title, cmd3);
 				}
 			}
 		}
@@ -2829,13 +2826,13 @@ void Cmd_TransCredits(edict_t *ent)
 		{
 			player->myskills.credits += creditval;
 			ent->myskills.credits -= creditval;
-			safe_cprintf(player, PRINT_MEDIUM, "%s transfered %d credits to you.\n", ent->myskills.player_name, creditval);
-			safe_cprintf(ent, PRINT_MEDIUM, "You transfer %d credits to %s. (%d left)\n", creditval, player->myskills.player_name, ent->myskills.credits);
+			safe_cprintf(player, PRINT_MEDIUM, "%s transfered %d credits to you.\n", ent->client->resp.pstats.player_name, creditval);
+			safe_cprintf(ent, PRINT_MEDIUM, "You transfer %d credits to %s. (%d left)\n", creditval, player->client->resp.pstats.player_name, ent->myskills.credits);
 
-			WriteToLogFile(ent->myskills.player_name, va("Transfers %d credits to %s. %d left\n", 
-				creditval, player->myskills.player_name, ent->myskills.credits));
-			WriteToLogFile(player->myskills.player_name, va("Got %d credits from %s. (%d after transfer)\n",
-				creditval, ent->myskills.player_name, player->myskills.credits));
+			WriteToLogFile(ent->client->resp.pstats.player_name, va("Transfers %d credits to %s. %d left\n",
+				creditval, player->client->resp.pstats.player_name, ent->myskills.credits));
+			WriteToLogFile(player->client->resp.pstats.player_name, va("Got %d credits from %s. (%d after transfer)\n",
+				creditval, ent->client->resp.pstats.player_name, player->myskills.credits));
 		}else
 			safe_cprintf(ent, PRINT_HIGH, "Not enough credits. (Got %d, need %d, you need %d more.\n)", 
 			ent->myskills.credits, creditval,  creditval - ent->myskills.credits);
@@ -3212,7 +3209,7 @@ void Cmd_Rune_f(edict_t *ent)
 
 					if (moveto > 0 && moveto < MAX_VRXITEMS) // moveto in bounds
 					{
-						V_ItemSwap(&ent->myskills.items[index], &ent->myskills.items[moveto]);
+						V_ItemSwap(&ent->client->resp.pstats.items[index], &ent->client->resp.pstats.items[moveto]);
 						safe_cprintf(ent, PRINT_LOW, "Items swapped successfully.\n");
 						return;
 					}else
@@ -3471,7 +3468,7 @@ void ClientCommand (edict_t *ent)
 				continue;
 			if (e->client->resp.spectator || e->client->pers.spectator || (e->teamnum != ent->teamnum))
 				continue;
-            safe_cprintf(ent, PRINT_HIGH, "      %s", e->myskills.player_name);
+            safe_cprintf(ent, PRINT_HIGH, "      %s", e->client->resp.pstats.player_name);
 		}
 		safe_cprintf(ent, PRINT_HIGH, "\n");
 	}

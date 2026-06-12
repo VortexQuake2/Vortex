@@ -9,7 +9,7 @@ static void weapon_chainfist_fire(edict_t *ent)
     vec3_t start, dir;
     vec3_t forward, right;
     int frame = ent->client->ps.gunframe;
-    int damage = 30 + 2 * ent->myskills.weapons[WEAPON_CHAINFIST].mods[0].current_level;
+    int damage = 30 + 2 * ent->client->resp.pstats.weapons[WEAPON_CHAINFIST].mods[0].current_level;
     int kick = 80;
 
     if (!(ent->client->buttons & BUTTON_ATTACK))

@@ -63,7 +63,7 @@ void vrx_notify_owner_nonexistent(void* args);
 void vrx_notify_owner_bad_password(void* args);
 void vrx_notify_owner_success(void* args);
 
-void vrx_notify_character_load_completion(edict_t *ent, skills_t *sk);
+void vrx_notify_character_load_completion(edict_t *ent, playertransfer_t *sk);
 
 #endif //VORTEXQUAKE2_V_CHARACTERIO_H
 

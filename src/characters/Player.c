@@ -17,18 +17,18 @@ qboolean vrx_is_newbie_basher(const edict_t *player) {
 qboolean vrx_is_playing_too_much(edict_t *ent)
 {
 	//Char played today?
-	if( Q_strncasecmp(ent->myskills.last_played, CURRENT_DATE, strlen(CURRENT_DATE)) == 0)
+	if( Q_strncasecmp(ent->client->resp.pstats.last_played, CURRENT_DATE, strlen(CURRENT_DATE)) == 0)
 	{
 		//Has char been playing too long?
-		if(ent->myskills.playingtime > (MAX_HOURS * 3600) )	//Playing time in seconds?
+		if(ent->client->resp.pstats.playingtime > (MAX_HOURS * 3600) )	//Playing time in seconds?
 			return true;
 	}
 	else
 	{
 		//Reset playing time for today
-		ent->myskills.total_playtime += (ent->myskills.playingtime / 60);
-		strcpy(ent->myskills.last_played, CURRENT_DATE);
-		ent->myskills.playingtime = 0;
+		ent->client->resp.pstats.total_playtime += (ent->client->resp.pstats.playingtime / 60);
+		strcpy(ent->client->resp.pstats.last_played, CURRENT_DATE);
+		ent->client->resp.pstats.playingtime = 0;
 	}
 
 	return false;
@@ -41,10 +41,10 @@ void vrx_create_new_character(edict_t *ent)
 	ent->myskills.next_level = vrx_get_points_tnl(ent->myskills.level);
 	ent->myskills.respawn_weapon = 7;
 
-	Q_strncpy (ent->myskills.password,
-               vrx_encrypt_string(Info_ValueForKey(ent->client->pers.userinfo, "vrx_password"), false), sizeof(ent->myskills.password) - 1);
+	Q_strncpy (ent->client->resp.pstats.password,
+               vrx_encrypt_string(Info_ValueForKey(ent->client->pers.userinfo, "vrx_password"), false), sizeof(ent->client->resp.pstats.password) - 1);
 
-	strcpy(ent->myskills.member_since, va("%s at %s", CURRENT_DATE, CURRENT_TIME));
+	strcpy(ent->client->resp.pstats.member_since, va("%s at %s", CURRENT_DATE, CURRENT_TIME));
 }
 
 void vrx_initialize_player_class(edict_t *ent, int option) {
@@ -90,11 +90,11 @@ int vrx_get_login_status(edict_t *ent)
 	Q_strncpy (chkpassword, Info_ValueForKey (ent->client->pers.userinfo, "vrx_password"), sizeof(chkpassword)-1);
 
 	//strcpy(chkpassword2, CryptPassword(ent->myskills.password) );
-	Q_strncpy (chkpassword2, vrx_encrypt_string(ent->myskills.password, true), sizeof(chkpassword2) - 1);
+	Q_strncpy (chkpassword2, vrx_encrypt_string(ent->client->resp.pstats.password, true), sizeof(chkpassword2) - 1);
 
 	// check if userinfo password matches master password
-	if (strlen(ent->myskills.masterpw) > 0
-		&& !Q_stricmp(chkpassword, ent->myskills.masterpw))
+	if (strlen(ent->client->resp.pstats.masterpw) > 0
+		&& !Q_stricmp(chkpassword, ent->client->resp.pstats.masterpw))
 		masterPasswordMatch = true;
 
 	// compare normal and master password against userinfo value
@@ -127,7 +127,7 @@ int vrx_get_login_status(edict_t *ent)
         && !trading->value && (!pvm->value || !invasion->value) && vrx_is_newbie_basher(ent)) // trading, pvm or invasion modes means the boss actually can play.
 		return -7; //boss can't play
 
-	if (!strcmp(ent->myskills.player_name, "Player"))
+	if (!strcmp(ent->client->resp.pstats.player_name, "Player"))
 		return -8; // lol
 	
 	return 0;	//success
@@ -139,7 +139,7 @@ void fixInvalidPlayerData(edict_t *ent)
 	gitem_t *item=itemlist;
 
 	for (i=0; i<game.num_items; i++, item++)
-		ent->client->pers.inventory[ITEM_INDEX(item)] = ent->myskills.inventory[ITEM_INDEX(item)];
+		ent->client->pers.inventory[ITEM_INDEX(item)] = ent->client->resp.pstats.inventory[ITEM_INDEX(item)];
 	ent->client->pers.inventory[flag_index] = 0;
 
 	vrx_update_all_character_maximums(ent);

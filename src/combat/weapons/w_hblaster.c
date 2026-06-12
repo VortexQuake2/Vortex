@@ -26,11 +26,11 @@ void Weapon_HyperBlaster_Fire(edict_t* ent) {
     //}
     // get weapon properties
     damage = HYPERBLASTER_INITIAL_DAMAGE +
-    HYPERBLASTER_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_HYPERBLASTER].mods[0].current_level;
+    HYPERBLASTER_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_HYPERBLASTER].mods[0].current_level;
     speed = (HYPERBLASTER_INITIAL_SPEED +
-    HYPERBLASTER_ADDON_SPEED * ent->myskills.weapons[WEAPON_HYPERBLASTER].mods[2].current_level);
+    HYPERBLASTER_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_HYPERBLASTER].mods[2].current_level);
 
-    if (ent->myskills.weapons[WEAPON_HYPERBLASTER].mods[4].current_level)
+    if (ent->client->resp.pstats.weapons[WEAPON_HYPERBLASTER].mods[4].current_level)
         is_silenced = MZ_SILENCED;
     //GHz END
 

@@ -458,7 +458,7 @@ void ShowItemMenu_handler(edict_t *ent, int option); // item_menu.c
 void vrx_reapply_items(edict_t *ent) {
     vrx_runes_unapply(ent);
     for (int i = 0; i < 3; ++i)
-        vrx_runes_apply(ent, &ent->myskills.items[i]);
+        vrx_runes_apply(ent, &ent->client->resp.pstats.items[i]);
 }
 
 int vrx_sell_item(edict_t *ent, item_t *slot) {
@@ -482,7 +482,7 @@ int vrx_sell_item(edict_t *ent, item_t *slot) {
 
 void SellConfirmMenu_handler(edict_t *ent, const int option) {
     if (option - 777 > 0) {
-        item_t *slot = &ent->myskills.items[option - 778];
+        item_t *slot = &ent->client->resp.pstats.items[option - 778];
 
         //log the sale
         const int value = vrx_sell_item(ent, slot);
@@ -513,7 +513,7 @@ void SellConfirmMenu_handler(edict_t *ent, const int option) {
 //************************************************************************************************
 
 void OpenSellConfirmMenu(edict_t *ent, const int itemindex) {
-    item_t *item = &ent->myskills.items[itemindex];
+    item_t *item = &ent->client->resp.pstats.items[itemindex];
 
     //Process the header
     StartShowInventoryMenu(ent, item);
@@ -554,7 +554,7 @@ void SellMenu_handler(edict_t *ent, const int option) {
         return;
     }
 
-    if (ent->myskills.items[option - 1].itemtype == ITEM_NONE) {
+    if (ent->client->resp.pstats.items[option - 1].itemtype == ITEM_NONE) {
         //refresh the menu
         OpenSellMenu(ent, option);
         return;
@@ -836,7 +836,7 @@ void SellAllMenu_handler(edict_t *ent, int option) {
     int totalValue = 0;
 
     for (int i = 3; i < MAX_VRXITEMS; ++i)
-        totalValue += vrx_sell_item(ent, &ent->myskills.items[i]);
+        totalValue += vrx_sell_item(ent, &ent->client->resp.pstats.items[i]);
 
     //refund some credits
     ent->myskills.credits += totalValue;

@@ -1,5 +1,6 @@
 #include "g_local.h"
 #include "../gamemodes/ctf.h"
+#include "characters/class_limits.h"
 #include "characters/io/v_characterio.h"
 
 #define VOTE_MAP	1
@@ -47,7 +48,7 @@ void vrx_start_reign(edict_t *ent)
 	PutClientInServer (ent);
 
 	average_player_level = AveragePlayerLevel();
-	ent->health = ent->myskills.current_health;
+	ent->health = MAX_HEALTH(ent);
 
 //	if(savemethod->value == 1) // binary .vrx style saving
 //		for (i=0; i<game.num_items; i++, item++) // reload inventory.
@@ -93,7 +94,7 @@ void vrx_start_reign(edict_t *ent)
     V_UpdatePlayerTalents(ent);
 
 	//Set the player's name
-	strcpy(ent->myskills.player_name, ent->client->pers.netname);
+	strcpy(ent->client->resp.pstats.player_name, ent->client->pers.netname);
 
 	if (level.time < pregame_time->value && !trading->value) {
 		safe_centerprintf(ent, "This map is currently in pre-game\nPlease warm up, upgrade and\naccess the Armory now\n");
@@ -342,17 +343,17 @@ void OpenMyinfoMenu (edict_t *ent)
 	menu_add_line(ent, va("Experience:   %d", ent->myskills.experience), 0);
 	menu_add_line(ent, va("Next Level:   %d", (ent->myskills.next_level-ent->myskills.experience)+ent->myskills.nerfme), 0);
 	menu_add_line(ent, va("Credits:      %d", ent->myskills.credits), 0);
-	if (ent->myskills.shots > 0)
-		menu_add_line(ent, va("Hit Percent:  %d%c", (int)(100*((float)ent->myskills.shots_hit/ent->myskills.shots)), '%'), 0);
+	if (ent->client->resp.pstats.shots > 0)
+		menu_add_line(ent, va("Hit Percent:  %d%c", (int)(100*((float)ent->client->resp.pstats.shots_hit/ent->client->resp.pstats.shots)), '%'), 0);
 	else
 		menu_add_line(ent, "Hit Percent:  --", 0);
-	menu_add_line(ent, va("Frags:        %d", ent->myskills.frags), 0);
-	menu_add_line(ent, va("Fragged:      %d", ent->myskills.fragged), 0);
-	if (ent->myskills.fragged > 0)
-		menu_add_line(ent, va("Frag Percent: %d%c", (int)(100*((float)ent->myskills.frags/ent->myskills.fragged)), '%'), 0);
+	menu_add_line(ent, va("Frags:        %d", ent->client->resp.pstats.frags), 0);
+	menu_add_line(ent, va("Fragged:      %d", ent->client->resp.pstats.fragged), 0);
+	if (ent->client->resp.pstats.fragged > 0)
+		menu_add_line(ent, va("Frag Percent: %d%c", (int)(100*((float)ent->client->resp.pstats.frags/ent->client->resp.pstats.fragged)), '%'), 0);
 	else
 		menu_add_line(ent, "Frag Percent: --", 0);
-	menu_add_line(ent, va("Played Hrs:   %.1f", (float)ent->myskills.playingtime/3600), 0);
+	menu_add_line(ent, va("Played Hrs:   %.1f", (float)ent->client->resp.pstats.playingtime/3600), 0);
 #ifndef REMOVE_RESPAWNS
 	menu_add_line(ent, va("Respawns: %d", ent->myskills.weapon_respawns), 0);
 #endif
@@ -594,7 +595,7 @@ void OpenMasterPasswordMenu (edict_t *ent)
 	menu_add_line(ent, "Master Password", MENU_GREEN_CENTERED);
 	menu_add_line(ent, " ", 0);
 
-	if (strcmp(ent->myskills.masterpw, ""))
+	if (strcmp(ent->client->resp.pstats.masterpw, ""))
 	{
 		menu_add_line(ent, "A master password has", 0);
 		menu_add_line(ent, "already been set and can't", 0);
@@ -689,7 +690,7 @@ void OpenGeneralMenu (edict_t *ent)
         ent->myskills.class_num != CLASS_KNIGHT)
         menu_add_line(ent, "Set respawn weapon", 4);
 
-	if (ent->myskills.masterpw[0] == '\0')
+	if (ent->client->resp.pstats.masterpw[0] == '\0')
 		menu_add_line(ent, "Set master password", 5);
 
     menu_add_line(ent, "Show character info", 6);
@@ -774,14 +775,14 @@ void OpenWhoisMenu (edict_t *ent)
 	menu_add_line(ent, "", 0);
 
 	menu_add_line(ent, va("Admin:        %s", player->myskills.administrator?"Yes":"No"), 0);
-	menu_add_line(ent, va("Owner:        %s", player->myskills.owner), 0);
+	menu_add_line(ent, va("Owner:        %s", player->client->resp.pstats.owner), 0);
 	menu_add_line(ent, va("Status:       %s", GetStatusString(player)), 0);
 	menu_add_line(ent, va("Team:         %s", GetTeamString(player)), 0);
 	menu_add_line(ent, va("Level:        %d", player->myskills.level), 0);
 	menu_add_line(ent, va("Experience:   %d", player->myskills.experience), 0);
-	menu_add_line(ent, va("Hit Percent:  %d%c", (int)(100*((float)player->myskills.shots_hit/player->myskills.shots)), '%'), 0);
-	menu_add_line(ent, va("Frag Percent: %d%c", (int)(100*((float)player->myskills.frags/player->myskills.fragged)), '%'), 0);
-	menu_add_line(ent, va("Played Hours: %.1f", (float)player->myskills.playingtime/3600), 0);
+	menu_add_line(ent, va("Hit Percent:  %d%c", (int)(100*((float)player->client->resp.pstats.shots_hit/player->client->resp.pstats.shots)), '%'), 0);
+	menu_add_line(ent, va("Frag Percent: %d%c", (int)(100*((float)player->client->resp.pstats.frags/player->client->resp.pstats.fragged)), '%'), 0);
+	menu_add_line(ent, va("Played Hours: %.1f", (float)player->client->resp.pstats.playingtime/3600), 0);
 
 
 	menu_add_line(ent, " ", 0);

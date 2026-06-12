@@ -8,10 +8,10 @@ static void weapon_ionripper_fire(edict_t *ent)
 {
     vec3_t start, forward, right, offset, tempang;
     int damage = IONRIPPER_INITIAL_DAMAGE +
-    ( IONRIPPER_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_IONRIPPER].mods[0].current_level );
+    ( IONRIPPER_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_IONRIPPER].mods[0].current_level );
     int kick = 60;
     int speed = IONRIPPER_INITIAL_SPEED +
-    ( IONRIPPER_ADDON_SPEED * ent->myskills.weapons[WEAPON_IONRIPPER].mods[2].current_level );
+    ( IONRIPPER_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_IONRIPPER].mods[2].current_level );
 
     if (is_quad)
     {

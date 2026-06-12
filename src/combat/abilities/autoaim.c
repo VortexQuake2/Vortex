@@ -52,30 +52,30 @@ void autoaim_getfiringparameters (edict_t *ent, int *speed, qboolean *rocket)
 			// calculate knight bonus
 			if (ent->myskills.class_num == CLASS_KNIGHT)
 				sword_bonus = 1.5;
-			*speed = 850 + (15 * ent->myskills.weapons[WEAPON_SWORD].mods[2].current_level * sword_bonus);
+			*speed = 850 + (15 * ent->client->resp.pstats.weapons[WEAPON_SWORD].mods[2].current_level * sword_bonus);
 		}
 		if (ent->client->pers.weapon->weaponthink == Weapon_Blaster)
 		{
-			*speed = BLASTER_INITIAL_SPEED + BLASTER_ADDON_SPEED * ent->myskills.weapons[WEAPON_BLASTER].mods[2].current_level;
+			*speed = BLASTER_INITIAL_SPEED + BLASTER_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_BLASTER].mods[2].current_level;
 		}
 		else if (ent->client->pers.weapon->weaponthink == Weapon_GrenadeLauncher)
 		{
-			*speed = GRENADELAUNCHER_INITIAL_SPEED + GRENADELAUNCHER_ADDON_SPEED * ent->myskills.weapons[WEAPON_GRENADELAUNCHER].mods[2].current_level;
+			*speed = GRENADELAUNCHER_INITIAL_SPEED + GRENADELAUNCHER_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_GRENADELAUNCHER].mods[2].current_level;
 			if (ent->enemy->groundentity)
 				*rocket = true;
 		}
 		else if (ent->client->pers.weapon->weaponthink == Weapon_RocketLauncher)
 		{
-			*speed = ROCKETLAUNCHER_INITIAL_SPEED + ROCKETLAUNCHER_ADDON_SPEED * ent->myskills.weapons[WEAPON_ROCKETLAUNCHER].mods[2].current_level;
+			*speed = ROCKETLAUNCHER_INITIAL_SPEED + ROCKETLAUNCHER_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_ROCKETLAUNCHER].mods[2].current_level;
 			*rocket = true;
 		}
 		else if (ent->client->pers.weapon->weaponthink == Weapon_HyperBlaster)
 		{
-			*speed = HYPERBLASTER_INITIAL_SPEED + HYPERBLASTER_ADDON_SPEED * ent->myskills.weapons[WEAPON_HYPERBLASTER].mods[2].current_level;
+			*speed = HYPERBLASTER_INITIAL_SPEED + HYPERBLASTER_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_HYPERBLASTER].mods[2].current_level;
 		}
 		else if (ent->client->pers.weapon->weaponthink == Weapon_BFG)
 		{
-			*speed = BFG10K_INITIAL_SPEED + BFG10K_ADDON_SPEED * ent->myskills.weapons[WEAPON_BFG10K].mods[2].current_level;
+			*speed = BFG10K_INITIAL_SPEED + BFG10K_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_BFG10K].mods[2].current_level;
 			*rocket = true;
 		}
 	}

@@ -13,13 +13,13 @@ void Weapon_RocketLauncher_Fire(edict_t* ent) {
 
     //K03 Begin
     const int speed = ROCKETLAUNCHER_INITIAL_SPEED +
-    ROCKETLAUNCHER_ADDON_SPEED * ent->myskills.weapons[WEAPON_ROCKETLAUNCHER].mods[2].current_level;
+    ROCKETLAUNCHER_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_ROCKETLAUNCHER].mods[2].current_level;
     damage = ROCKETLAUNCHER_INITIAL_DAMAGE +
-    ROCKETLAUNCHER_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_ROCKETLAUNCHER].mods[0].current_level;
+    ROCKETLAUNCHER_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_ROCKETLAUNCHER].mods[0].current_level;
     radius_damage = ROCKETLAUNCHER_INITIAL_RADIUS_DAMAGE + ROCKETLAUNCHER_ADDON_RADIUS_DAMAGE *
-    ent->myskills.weapons[WEAPON_ROCKETLAUNCHER].mods[0].current_level;
+    ent->client->resp.pstats.weapons[WEAPON_ROCKETLAUNCHER].mods[0].current_level;
     damage_radius = ROCKETLAUNCHER_INITIAL_DAMAGE_RADIUS + ROCKETLAUNCHER_ADDON_DAMAGE_RADIUS *
-    ent->myskills.weapons[WEAPON_ROCKETLAUNCHER].mods[1].current_level;
+    ent->client->resp.pstats.weapons[WEAPON_ROCKETLAUNCHER].mods[1].current_level;
     //K03 End
     if (is_quad) {
         damage *= 4;
@@ -37,7 +37,7 @@ void Weapon_RocketLauncher_Fire(edict_t* ent) {
     //gi.dprintf("called rocketlauncher_fire at %d (%d)\n", level.framenum, ent->client->ps.gunframe);
     fire_rocket(ent, start, forward, damage, speed, damage_radius, radius_damage);
 
-    if (ent->myskills.weapons[WEAPON_ROCKETLAUNCHER].mods[4].current_level < 1) {
+    if (ent->client->resp.pstats.weapons[WEAPON_ROCKETLAUNCHER].mods[4].current_level < 1) {
         // send muzzle flash
         gi.WriteByte(svc_muzzleflash);
         gi.WriteShort(ent - g_edicts);
@@ -48,7 +48,7 @@ void Weapon_RocketLauncher_Fire(edict_t* ent) {
 
     ent->client->ps.gunframe++;
 
-    if (ent->myskills.weapons[WEAPON_ROCKETLAUNCHER].mods[4].current_level < 1)//K03
+    if (ent->client->resp.pstats.weapons[WEAPON_ROCKETLAUNCHER].mods[4].current_level < 1)//K03
         PlayerNoise(ent, start, PNOISE_WEAPON);
 
     if (!((int)dmflags->value & DF_INFINITE_AMMO))

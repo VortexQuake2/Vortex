@@ -34,7 +34,8 @@ int eqSetItems(edict_t *ent, item_t *rune)
 
 	for (i=0; i < 3; ++i)	//loop through only the equip slots
 	{
-		if ((ent->myskills.items[i].itemtype != TYPE_NONE) && (ent->myskills.items[i].setCode == rune->setCode))
+		if ((ent->client->resp.pstats.items[i].itemtype != TYPE_NONE) &&
+			(ent->client->resp.pstats.items[i].setCode == rune->setCode))
 			count++;
 	}
 	//Return number of matching items
@@ -124,7 +125,7 @@ void vrx_runes_apply(edict_t *ent, item_t *rune)
 			if ((mod < MAX_WEAPONMODS) && (weapon < MAX_WEAPONS))
 			{
 				//Increase the player's current level
-				weaponskill_t *wepmod = &(ent->myskills.weapons[weapon].mods[mod]);
+				weaponskill_t *wepmod = &(ent->client->resp.pstats.weapons[weapon].mods[mod]);
 				wepmod->current_level += rune->modifiers[i].value;
 
 				//Cap current_level to the hard maximum
@@ -796,7 +797,7 @@ qboolean Pickup_Rune (edict_t *ent, edict_t *other)
 	item_t *slot;
 
 	// bots and other non-clients can't pick up runes
-	if (!other->client || other->ai.is_bot)
+	if (!other->client || other->ai)
 		return false;
 
 	//Show the user what kind of rune it is
@@ -857,9 +858,9 @@ item_t *V_FindFreeItemSlot (edict_t *ent)
     //Fill items backwards from the bottom of the stash
 	for (i = MAX_VRXITEMS-1; i > 2; --i)
 	{
-		if (ent->myskills.items[i].itemtype)
+		if (ent->client->resp.pstats.items[i].itemtype)
 			continue;
-		return &ent->myskills.items[i];
+		return &ent->client->resp.pstats.items[i];
 	}
 	return NULL;
 }
@@ -874,11 +875,11 @@ item_t *V_FindFreeTradeSlot(edict_t *ent, int index)
     //Check items backwards from the bottom of the stash
 	for (i = MAX_VRXITEMS-1; i > 2; --i)
 	{
-		if (ent->myskills.items[i].itemtype)
+		if (ent->client->resp.pstats.items[i].itemtype)
 			continue;
 		++count;
 		if (count == index)
-			return &ent->myskills.items[i];
+			return &ent->client->resp.pstats.items[i];
 	}
 	return NULL;
 }
@@ -900,7 +901,7 @@ qboolean V_CanPickUpItem (edict_t *ent)
 	// Skip hand, neck, and belt slots
 	for (i=3; i < MAX_VRXITEMS; ++i)
 	{
-		if (!ent->myskills.items[i].itemtype)
+		if (!ent->client->resp.pstats.items[i].itemtype)
 			return true;
 	}
 	return false;
@@ -1005,8 +1006,8 @@ void V_EquipItem(edict_t *ent, int index)
 	int i, wpts, apts, total_pts, clvl = ent->myskills.level;
 
 	// calculate number of weapon and ability points separately
-	wpts = V_GetRuneWeaponPts(ent, &ent->myskills.items[index]);
-	apts = V_GetRuneAbilityPts(ent, &ent->myskills.items[index]);
+	wpts = V_GetRuneWeaponPts(ent, &ent->client->resp.pstats.items[index]);
+	apts = V_GetRuneAbilityPts(ent, &ent->client->resp.pstats.items[index]);
 	// calculate weighted total
 	total_pts = ceil(0.5*wpts + 0.75*apts);//was 0.66,2.0
 	//gi.dprintf("wpts = %d, apts = %d, total = %d\n", wpts, apts, total_pts);
@@ -1020,7 +1021,7 @@ void V_EquipItem(edict_t *ent, int index)
 			safe_cprintf(ent, PRINT_HIGH, "Not enough room in your stash.\n");
 			return;
 		}
-		V_ItemSwap(&ent->myskills.items[index], slot);
+		V_ItemSwap(&ent->client->resp.pstats.items[index], slot);
 		gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/boots.wav"), 1, ATTN_NORM, 0);
 		safe_cprintf(ent, PRINT_HIGH, "Item successfully placed in your stash.\n");
 	}
@@ -1033,7 +1034,7 @@ void V_EquipItem(edict_t *ent, int index)
 	}
 	else if (index < MAX_VRXITEMS)
 	{
-		int type = ent->myskills.items[index].itemtype;
+		int type = ent->client->resp.pstats.items[index].itemtype;
 
 		if (type & ITEM_UNIQUE)
 			type ^= ITEM_UNIQUE;
@@ -1042,26 +1043,26 @@ void V_EquipItem(edict_t *ent, int index)
 		switch(type)
 		{
 		case ITEM_WEAPON:
-			V_ItemSwap(&ent->myskills.items[index], &ent->myskills.items[0]); //put on hand slot
-			if (eqSetItems(ent, &ent->myskills.items[0]) == 3)
+			V_ItemSwap(&ent->client->resp.pstats.items[index], &ent->client->resp.pstats.items[0]); //put on hand slot
+			if (eqSetItems(ent, &ent->client->resp.pstats.items[0]) == 3)
 				gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/blessedaim.wav"), 1, ATTN_NORM, 0);
 			else gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/glovesmetal.wav"), 1, ATTN_NORM, 0);
 			break;
 		case ITEM_ABILITY:
-			V_ItemSwap(&ent->myskills.items[index], &ent->myskills.items[1]); //put on neck slot
-			if (eqSetItems(ent, &ent->myskills.items[0]) == 3)
+			V_ItemSwap(&ent->client->resp.pstats.items[index], &ent->client->resp.pstats.items[1]); //put on neck slot
+			if (eqSetItems(ent, &ent->client->resp.pstats.items[0]) == 3)
 				gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/blessedaim.wav"), 1, ATTN_NORM, 0);
 			else gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/amulet.wav"), 1, ATTN_NORM, 0);
 			break;
 		case ITEM_COMBO:
-			V_ItemSwap(&ent->myskills.items[index], &ent->myskills.items[2]); //put on belt slot
-			if (eqSetItems(ent, &ent->myskills.items[0]) == 3)
+			V_ItemSwap(&ent->client->resp.pstats.items[index], &ent->client->resp.pstats.items[2]); //put on belt slot
+			if (eqSetItems(ent, &ent->client->resp.pstats.items[0]) == 3)
 				gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/blessedaim.wav"), 1, ATTN_NORM, 0);
 			else gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/belt.wav"), 1, ATTN_NORM, 0);
 			break;
 		case ITEM_CLASSRUNE:
-			V_ItemSwap(&ent->myskills.items[index], &ent->myskills.items[1]); //put on neck slot
-			if (eqSetItems(ent, &ent->myskills.items[0]) == 3)
+			V_ItemSwap(&ent->client->resp.pstats.items[index], &ent->client->resp.pstats.items[1]); //put on neck slot
+			if (eqSetItems(ent, &ent->client->resp.pstats.items[0]) == 3)
 				gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/blessedaim.wav"), 1, ATTN_NORM, 0);
 			else gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/amulet.wav"), 1, ATTN_NORM, 0);
 			break;
@@ -1073,8 +1074,8 @@ void V_EquipItem(edict_t *ent, int index)
 	vrx_runes_unapply(ent);
 	for (i = 0; i < 3; ++i)
 	{
-		if (ent->myskills.items[i].itemtype != TYPE_NONE)
-			vrx_runes_apply(ent, &ent->myskills.items[i]);
+		if (ent->client->resp.pstats.items[i].itemtype != TYPE_NONE)
+			vrx_runes_apply(ent, &ent->client->resp.pstats.items[i]);
 	}
 }
 
@@ -1093,15 +1094,15 @@ void cmd_Drink(edict_t *ent, int itemtype, int index) {
         return;
 
     if (index) {
-        slot = &ent->myskills.items[index - 1];
+        slot = &ent->client->resp.pstats.items[index - 1];
         found = true;
     } else {
         //Find item in inventory
 		for (i = 3; i < MAX_VRXITEMS; ++i)
 		{
-			if (ent->myskills.items[i].itemtype == itemtype)
+			if (ent->client->resp.pstats.items[i].itemtype == itemtype)
 			{
-				slot = &ent->myskills.items[i];
+				slot = &ent->client->resp.pstats.items[i];
 				found = true;
 				break;
 			}
@@ -1315,7 +1316,7 @@ int V_ItemCount(edict_t *ent, int itemType) {
 		return 0;
 
 	for (i = 0; i < MAX_VRXITEMS; ++i)
-		if (ent->myskills.items[i].itemtype == itemType)
+		if (ent->client->resp.pstats.items[i].itemtype == itemType)
 			count++;
 
 	return count;

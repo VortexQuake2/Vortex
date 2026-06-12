@@ -40,8 +40,8 @@ void Blaster_Fire(edict_t* ent, vec3_t g_offset, int damage, qboolean hyperblast
     else
         fire_blaster(ent, start, forward, damage, speed, effect, BLASTER_PROJ_BOLT, MOD_BLASTER, 2.0, true);
 
-    if (hyperblaster && ent->myskills.weapons[WEAPON_HYPERBLASTER].mods[4].current_level < 1) {
-        if (ent->myskills.weapons[WEAPON_HYPERBLASTER].mods[4].current_level)
+    if (hyperblaster && ent->client->resp.pstats.weapons[WEAPON_HYPERBLASTER].mods[4].current_level < 1) {
+        if (ent->client->resp.pstats.weapons[WEAPON_HYPERBLASTER].mods[4].current_level)
             is_silenced = MZ_SILENCED;
         // send muzzle flash
         gi.WriteByte(svc_muzzleflash);
@@ -56,13 +56,13 @@ void Blaster_Fire(edict_t* ent, vec3_t g_offset, int damage, qboolean hyperblast
             gi.WriteShort(ent - g_edicts);
             gi.WriteByte(MZ_IONRIPPER | MZ_SILENCED);
             gi.multicast(ent->s.origin, MULTICAST_PVS);
-            if (ent->myskills.weapons[WEAPON_BLASTER].mods[4].current_level < 1)
+            if (ent->client->resp.pstats.weapons[WEAPON_BLASTER].mods[4].current_level < 1)
                 gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/photon.wav"), 1, ATTN_NORM, 0);
             //else
             //gi.sound (ent, CHAN_WEAPON, gi.soundindex("weapons/photon.wav"), 0.3, ATTN_NORM, 0);
         }
         else {
-            if (ent->myskills.weapons[WEAPON_BLASTER].mods[4].current_level > 0)
+            if (ent->client->resp.pstats.weapons[WEAPON_BLASTER].mods[4].current_level > 0)
                 is_silenced = MZ_SILENCED;
 
             gi.WriteByte(svc_muzzleflash);
@@ -72,9 +72,9 @@ void Blaster_Fire(edict_t* ent, vec3_t g_offset, int damage, qboolean hyperblast
         }
     }
 
-    if (hyperblaster && ent->myskills.weapons[WEAPON_HYPERBLASTER].mods[4].current_level < 1)
+    if (hyperblaster && ent->client->resp.pstats.weapons[WEAPON_HYPERBLASTER].mods[4].current_level < 1)
         PlayerNoise(ent, start, PNOISE_WEAPON);
-    else if (!hyperblaster && ent->myskills.weapons[WEAPON_BLASTER].mods[4].current_level < 1)
+    else if (!hyperblaster && ent->client->resp.pstats.weapons[WEAPON_BLASTER].mods[4].current_level < 1)
         PlayerNoise(ent, start, PNOISE_WEAPON);
     //K03 End
 }
@@ -82,18 +82,18 @@ void Blaster_Fire(edict_t* ent, vec3_t g_offset, int damage, qboolean hyperblast
 void Weapon_Blaster_Fire(edict_t* ent) {
     int min, max, damage, effect, ammo;
     const int speed =
-    BLASTER_INITIAL_SPEED + BLASTER_ADDON_SPEED * ent->myskills.weapons[WEAPON_BLASTER].mods[2].current_level;
+    BLASTER_INITIAL_SPEED + BLASTER_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_BLASTER].mods[2].current_level;
     float temp;
 
-    if (ent->myskills.weapons[WEAPON_BLASTER].mods[3].current_level < 1)
+    if (ent->client->resp.pstats.weapons[WEAPON_BLASTER].mods[3].current_level < 1)
         effect = EF_BLASTER;
     else
         effect = EF_HYPERBLASTER;
 
     min = BLASTER_INITIAL_DAMAGE_MIN +
-    (BLASTER_ADDON_DAMAGE_MIN * ent->myskills.weapons[WEAPON_BLASTER].mods[0].current_level);
+    (BLASTER_ADDON_DAMAGE_MIN * ent->client->resp.pstats.weapons[WEAPON_BLASTER].mods[0].current_level);
     max = BLASTER_INITIAL_DAMAGE_MAX +
-    (BLASTER_ADDON_DAMAGE_MAX * ent->myskills.weapons[WEAPON_BLASTER].mods[0].current_level);
+    (BLASTER_ADDON_DAMAGE_MAX * ent->client->resp.pstats.weapons[WEAPON_BLASTER].mods[0].current_level);
     damage = GetRandom(min, max);
 
 

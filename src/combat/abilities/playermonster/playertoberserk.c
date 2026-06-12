@@ -50,7 +50,7 @@ int p_berserk_melee (edict_t *self, vec3_t forward, vec3_t dir, int damage, int 
 	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
 
 	// bfg laser effect
-	if (!self->ai.is_bot)
+	if (!self->ai)
 	{
 		gi.WriteByte(svc_temp_entity);
 		gi.WriteByte(TE_BFG_LASER);

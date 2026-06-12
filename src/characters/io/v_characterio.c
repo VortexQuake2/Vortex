@@ -77,8 +77,8 @@ void vrx_notify_owner_success(void* args)
         return;
     }
 
-    assert(sizeof evt->ent->myskills.owner == sizeof evt->owner_name);
-    strcpy(evt->ent->myskills.owner, evt->owner_name);
+    assert(sizeof evt->ent->client->resp.pstats.owner == sizeof evt->owner_name);
+    strcpy(evt->ent->client->resp.pstats.owner, evt->owner_name);
 
     gi.cprintf(evt->ent, PRINT_HIGH, "Owner set successfully.\n");
 }
@@ -110,7 +110,7 @@ void vrx_setup_sqlite_io() {
 }
 
 // for async character loading
-void vrx_notify_character_load_completion(edict_t *ent, skills_t *sk) {
+void vrx_notify_character_load_completion(edict_t *ent, playertransfer_t *sk) {
     // Notify character system that loading is done
     ent->gds.connection_load_id = 0;
 
@@ -120,20 +120,14 @@ void vrx_notify_character_load_completion(edict_t *ent, skills_t *sk) {
         return;
     }
 
-    ent->myskills = *sk;
+    ent->myskills = *sk->skills;
+    ent->client->resp.pstats = *sk->stats;
 
     vrx_runes_unapply(ent);
     for (int i = 0; i < 4; ++i)
-        vrx_runes_apply(ent, &sk->items[i]);
+        vrx_runes_apply(ent, &sk->stats->items[i]);
 
-    //Apply health
-    if (sk->current_health > MAX_HEALTH(ent))
-        sk->current_health = MAX_HEALTH(ent);
-
-    //Apply armor
-    if (sk->current_armor > MAX_ARMOR(ent))
-        sk->current_armor = MAX_ARMOR(ent);
-    sk->inventory[body_armor_index] = sk->current_armor;
+    // ent->client->resp.pstats.inventory[body_armor_index] = sk->skills->current_armor;
 
     //done
     vrx_open_mode_menu(ent);

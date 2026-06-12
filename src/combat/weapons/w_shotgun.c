@@ -13,12 +13,12 @@ void weapon_shotgun_fire(edict_t* ent) {
 
     //K03 Begin
     float damage =
-    SHOTGUN_INITIAL_DAMAGE + SHOTGUN_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_SHOTGUN].mods[0].current_level;
+    SHOTGUN_INITIAL_DAMAGE + SHOTGUN_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_SHOTGUN].mods[0].current_level;
     int vspread = 500;
     int hspread = 500;
     const int bullets = SHOTGUN_INITIAL_BULLETS +
-    SHOTGUN_ADDON_BULLETS * ent->myskills.weapons[WEAPON_SHOTGUN].mods[2].current_level;
-    if (ent->myskills.weapons[WEAPON_SHOTGUN].mods[3].current_level >= 1) {
+    SHOTGUN_ADDON_BULLETS * ent->client->resp.pstats.weapons[WEAPON_SHOTGUN].mods[2].current_level;
+    if (ent->client->resp.pstats.weapons[WEAPON_SHOTGUN].mods[3].current_level >= 1) {
         vspread *= 0.75;
         hspread *= 0.75;
     }
@@ -47,7 +47,7 @@ void weapon_shotgun_fire(edict_t* ent) {
 
     // shotgun strike upgrade
     // 20% chance to deal double damage at level 10
-    temp = 1.0 / (1.0 + 0.025 * ent->myskills.weapons[WEAPON_SHOTGUN].mods[1].current_level);
+    temp = 1.0 / (1.0 + 0.025 * ent->client->resp.pstats.weapons[WEAPON_SHOTGUN].mods[1].current_level);
 
     if (random() > temp) {
         damage *= 1.5;
@@ -56,7 +56,7 @@ void weapon_shotgun_fire(edict_t* ent) {
 
     fire_shotgun(ent, start, forward, damage, kick, vspread, hspread, bullets, MOD_SHOTGUN);
     // send muzzle flash
-    if (ent->myskills.weapons[WEAPON_SHOTGUN].mods[4].current_level < 1) {
+    if (ent->client->resp.pstats.weapons[WEAPON_SHOTGUN].mods[4].current_level < 1) {
         gi.WriteByte(svc_muzzleflash);
         gi.WriteShort(ent - g_edicts);
         gi.WriteByte(MZ_SHOTGUN | is_silenced);
@@ -66,7 +66,7 @@ void weapon_shotgun_fire(edict_t* ent) {
 
     ent->client->ps.gunframe++;
     //K03 Begin
-    if (ent->myskills.weapons[WEAPON_SHOTGUN].mods[4].current_level < 1)
+    if (ent->client->resp.pstats.weapons[WEAPON_SHOTGUN].mods[4].current_level < 1)
         PlayerNoise(ent, start, PNOISE_WEAPON);
     //K03 End
 
@@ -85,13 +85,13 @@ void Weapon_Shotgun(edict_t* ent) {
     //K03 Begin
     const int fire_last = 16;
     /*
-     * if (ent->myskills.weapons[WEAPON_SHOTGUN].mods[1].current_level > 0)
+     * if (ent->client->resp.pstats.weapons[WEAPON_SHOTGUN].mods[1].current_level > 0)
      * {
-     *	if (ent->myskills.weapons[WEAPON_SHOTGUN].mods[1].current_level > 9)
+     *	if (ent->client->resp.pstats.weapons[WEAPON_SHOTGUN].mods[1].current_level > 9)
      *		fire_last = 14;
-     *	else if (ent->myskills.weapons[WEAPON_SHOTGUN].mods[1].current_level > 6)
+     *	else if (ent->client->resp.pstats.weapons[WEAPON_SHOTGUN].mods[1].current_level > 6)
      *		fire_last = 15;
-     *	else if (ent->myskills.weapons[WEAPON_SHOTGUN].mods[1].current_level > 3)
+     *	else if (ent->client->resp.pstats.weapons[WEAPON_SHOTGUN].mods[1].current_level > 3)
      *		fire_last = 16;
      *	else fire_last = 17;
 }*/

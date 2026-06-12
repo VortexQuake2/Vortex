@@ -743,7 +743,7 @@ qboolean drone_ai_findgoal(edict_t *self) {
             //gi.dprintf("leader is still valid\n");
             // the leader is too far away
             int follow_distance = 512;
-            if (self->monsterinfo.leader->ai.is_bot) // stay closer to bots
+            if (self->monsterinfo.leader->ai) // stay closer to bots
                 follow_distance = 256;
             if (entdist(self, self->monsterinfo.leader) > follow_distance) {
                 //gi.dprintf("pursue the leader!\n");

@@ -165,7 +165,7 @@ void PreInit() {
 }
 
 
-
+void vrx_backpack_init();
 void InitGame(void)
 {
 #ifndef VRX_REPRO
@@ -192,6 +192,7 @@ void InitGame(void)
 	gi.cvar_forceset("sv_allow_map", "2");
 #endif
 
+	vrx_backpack_init();
 	defer_global_init();
 	vrx_init_lua();
     CreateDirIfNotExists(va("%s/settings", gamedir->string));

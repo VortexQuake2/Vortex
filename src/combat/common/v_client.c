@@ -35,20 +35,26 @@ void V_GibSound(edict_t *self, int index) {
 }
 
 void vrx_match_inventory_store(edict_t* self) {
-    self->myskills.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = self->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)];
-    self->myskills.inventory[ITEM_INDEX(Fdi_TBALL)] = self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)];
+    if (!self->client)
+        return;
+
+    self->client->resp.pstats.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = self->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)];
+    self->client->resp.pstats.inventory[ITEM_INDEX(Fdi_TBALL)] = self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)];
 
     if (pvm->value || ffa->value) {
-        memcpy(self->myskills.inventory, self->client->pers.inventory, sizeof(self->client->pers.inventory));
+        memcpy(self->client->resp.pstats.inventory, self->client->pers.inventory, sizeof(self->client->pers.inventory));
     }
 }
 
 void vrx_match_inventory_restore(edict_t* self) {
-    self->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = self->myskills.inventory[ITEM_INDEX(Fdi_POWERCUBE)];
-    self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)] = self->myskills.inventory[ITEM_INDEX(Fdi_TBALL)];
+    if (!self->client)
+        return;
+
+    self->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = self->client->resp.pstats.inventory[ITEM_INDEX(Fdi_POWERCUBE)];
+    self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)] = self->client->resp.pstats.inventory[ITEM_INDEX(Fdi_TBALL)];
 
     if (pvm->value || ffa->value) {
-        memcpy(self->client->pers.inventory, self->myskills.inventory, sizeof(self->myskills.inventory));
+        memcpy(self->client->pers.inventory, self->client->resp.pstats.inventory, sizeof(self->client->resp.pstats.inventory));
     }
 }
 
@@ -103,7 +109,7 @@ void vrx_add_respawn_items(edict_t *ent) {
             ent->client->pers.inventory[cell_index] = 50;
     }
     else
-        ent->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = ent->myskills.inventory[ITEM_INDEX(
+        ent->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = ent->client->resp.pstats.inventory[ITEM_INDEX(
                 Fdi_POWERCUBE)] += POWERCUBES_RESPAWN;
 
     if (ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)] > 20)
@@ -309,7 +315,7 @@ void V_Player_Touchdown(edict_t* ent)
     if (ent->monsterinfo.jumpup)
         mutant_stunattack(ent);
     // bots should call touchdown function if they have one
-    if (ent->ai.is_bot && ent->monsterinfo.touchdown)
+    if (ent->ai && ent->monsterinfo.touchdown)
         ent->monsterinfo.touchdown(ent);
 }
 

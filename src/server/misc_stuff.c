@@ -663,8 +663,8 @@ void V_PrintSayPrefix (edict_t *speaker, edict_t *listener, char *text)
 
 	temp[0] = 0;
 	// if they have a title, print it
-	if (strcmp(speaker->myskills.title, ""))
-		Com_sprintf (temp, sizeof(temp), "%s ", speaker->myskills.title);
+	if (strcmp(speaker->client->resp.pstats.title, ""))
+		Com_sprintf (temp, sizeof(temp), "%s ", speaker->client->resp.pstats.title);
 		//safe_cprintf(listener, PRINT_HIGH, "%s ", speaker->myskills.title);
 
 	if (ctf->value && speaker->teamnum)

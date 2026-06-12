@@ -85,7 +85,7 @@ int CountRunes(edict_t *player)
 
 	for (i = 0; i < MAX_VRXITEMS; ++i)
 	{
-		if (player->myskills.items[i].itemtype != ITEM_NONE)
+		if (player->client->resp.pstats.items[i].itemtype != ITEM_NONE)
 			++count;
 	}
 	return count;
@@ -100,7 +100,7 @@ int FindRuneIndex(int index, edict_t *player)
 
 	for (i = 0; i < MAX_VRXITEMS; ++i)
 	{
-		if (player->myskills.items[i].itemtype != ITEM_NONE)
+		if (player->client->resp.pstats.items[i].itemtype != ITEM_NONE)
 		{
 			++count;
 			if (count == index)

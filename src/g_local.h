@@ -1932,6 +1932,8 @@ typedef struct {
     //K03 End
 } client_persistant_t;
 
+#include "combat/abilities/g_abilities.h"
+
 // client data that stays across deathmatch respawns
 typedef struct {
     client_persistant_t coop_respawn; // what to set client->pers to on a respawn
@@ -1966,9 +1968,10 @@ typedef struct {
     int wave_shared_credits;
     int wave_assist_exp;
     int wave_assist_credits;
+
+    pstats_t pstats;
 } client_respawn_t;
 
-#include "combat/abilities/g_abilities.h"
 #include "menus/menu.h"
 
 /* az: variable refresh rate stuff */
@@ -2008,6 +2011,10 @@ struct gclient_s {
     client_persistant_t pers;
     client_respawn_t resp;
     pmove_state_t old_pmove; // for detecting out-of-pmove changes
+
+    // trade
+    edict_t *trade_with;
+    item_t *trade_item[3];
 
     bool showscores; // set layout stat
 
@@ -2144,7 +2151,6 @@ struct gclient_s {
 	qboolean		trade_off;		// is the player blocking trades?
 	qboolean		trade_accepted;	// has player accepted trade?
 	qboolean		trade_final;	// is the player in the final trade menu?
-	edict_t			*menutarget;	// ent stats we are viewing with menu (ent->other is just for clients)
 	menusystem_t	menustorage;	// stores menu data
 
 	int			vamp_counter;		// used to track vamped health per second
@@ -2176,12 +2182,13 @@ struct gclient_s {
 	float		lastCommand;		// 'double click' delay for monster commands
 	vec3_t		lastPosition;		// last selected position for monster command
 	edict_t		*lastEnt;			// last selected entity for monster command
-    qboolean update_chase;
-	vec3_t		oldpos;				// used by Blink Strike to store position prior to teleportation
+    vec3_t		oldpos;				// used by Blink Strike to store position prior to teleportation
 	int			tele_timeout;		// used by Blink Strike to store level.framenum when attack ends and player teleports (back) to oldpos
 	edict_t		*blinkStrike_targ;	// used by Blink Strike - target entity for attack
 	edict_t		*pickup;			// entity we are holding/have picked up
 	edict_t		*pickup_prev;		// previously picked up entity
+
+    muted_t		mutelist[MAX_CLIENTS];	//mute certain players
 
     struct vrr_t vrr;
 };
@@ -2416,7 +2423,6 @@ struct edict_s {
     int groundentity_linkcount;
 
     edict_t *chain;
-    edict_t *prev_chain;
     edict_t *memchain;
     edict_t *enemy;
     edict_t *oldenemy;
@@ -2426,6 +2432,8 @@ struct edict_s {
     edict_t *teamchain;
     edict_t *teammaster;
     gitem_t *item; // for bonus items
+
+    skills_t myskills;
 
     int noise_index;
     float volume;
@@ -2454,10 +2462,10 @@ struct edict_s {
     monsterinfo_t monsterinfo;
 
     // jabot (vrxcl/newvrx)
-    ai_handle_t ai;
+    ai_handle_t* ai;
 
     //K03 Begin
-    int packitems[MAX_ITEMS];
+    int* packitems;
     float PlasmaDelay;
     bool superspeed;
     bool sucking; //GHz
@@ -2473,7 +2481,6 @@ struct edict_s {
     int FrameShot;
     float haste_time;
 
-    skills_t myskills;
     uint64_t lastsound; // last frame we made a sound
     double lastdmg;
 
@@ -2487,6 +2494,7 @@ struct edict_s {
     int nfer;
     float lasthurt; // last time we took non-world damage
     float lasthbshot;
+
 
     // az begin
     int list_index; // invasion queue position
@@ -2509,9 +2517,6 @@ struct edict_s {
     edict_t *supplystation;
     //GHz START
 
-    // trade
-    edict_t *trade_with;
-    item_t *trade_item[3];
     float msg_time;
 
     enum mtype_t mtype; // Type of Monstersee M_* defines.. (M_HOVER, etc)

@@ -56,7 +56,7 @@ void MoveClientToIntermission(edict_t *ent)
 
 	// add the layout
 
-	if (deathmatch->value && !(ent->svflags & SVF_MONSTER) && !ent->ai.is_bot)
+	if (deathmatch->value && !(ent->svflags & SVF_MONSTER) && !ent->ai)
 	{
 		DeathmatchScoreboardMessage(ent, NULL);
 		gi.unicast(ent, true);
@@ -310,9 +310,9 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 	if (pvm->value)
 		entry = lva("Name            Lv Cl         Score Png");
 	else if (ctf->value)
-		entry = lva("Name            Lv Cl Score Frg Tm  Png");
+		entry = lva("Name            Lv Cl   Score Frg Tm  Png");
 	else
-		entry = lva("Name            Lv Cl Score Frg Spr Png");
+		entry = lva("Name            Lv Cl   Score Frg Spr Png");
 	layout_add_highlight_string(&scoreboard, entry.str);
 	
 
@@ -581,7 +581,7 @@ void PlayerID_SetStats(edict_t *player, edict_t *target, qboolean chasecam)
 	char	name[24], buf[100];
 	int		team_status = 0;
 
-	if (player->ai.is_bot)
+	if (player->ai)
 		return;
 
 	dist = entdist(player, target);

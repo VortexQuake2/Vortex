@@ -59,13 +59,13 @@ return;
      * else
      *	gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/mg_unsilenced.wav"), 1, ATTN_NORM, 0);*/
 
-    //if (ent->myskills.weapons[WEAPON_MACHINEGUN].mods[4].current_level < 1) {
+    //if (ent->client->resp.pstats.weapons[WEAPON_MACHINEGUN].mods[4].current_level < 1) {
     gi.WriteByte(svc_muzzleflash);
     gi.WriteShort(ent - g_edicts);
     gi.WriteByte(MZ_PHALANX | MZ_SILENCED);
     gi.multicast(ent->s.origin, MULTICAST_PVS);
     //}
-    //if (ent->myskills.weapons[WEAPON_MACHINEGUN].mods[4].current_level < 1)
+    //if (ent->client->resp.pstats.weapons[WEAPON_MACHINEGUN].mods[4].current_level < 1)
     PlayerNoise(ent, start, PNOISE_WEAPON);
 
     /*

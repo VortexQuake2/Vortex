@@ -15,7 +15,7 @@ qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 	    return false;
 
 	//Point to the correct weapon
-	weapon = &ent->myskills.weapons[WeaponIndex];
+	weapon = &ent->client->resp.pstats.weapons[WeaponIndex];
 
 	//Don't crash
 	if (ModIndex < 0 || ModIndex >= MAX_WEAPONMODS)
@@ -130,7 +130,7 @@ qboolean GiveKnightUpgrade(edict_t *ent, int WeaponIndex, int ModIndex) {
     const int maxLevel = 40;		// Sword hard maximums for the knight are set to this number.
 
     //Point to the correct weapon
-    weapon = &ent->myskills.weapons[WeaponIndex];
+    weapon = &ent->client->resp.pstats.weapons[WeaponIndex];
 
     //Don't crash
     if (ModIndex < 0 || ModIndex >= MAX_WEAPONMODS)
@@ -160,27 +160,27 @@ void vrx_reset_weapon_maximums(edict_t *ent)
 		for (j = 0; j < MAX_WEAPONMODS; ++j)
 		{
 			//Reset the current level (make it equal to the user's hard upgrade level)
-			ent->myskills.weapons[i].mods[j].current_level = ent->myskills.weapons[i].mods[j].level;
+			ent->client->resp.pstats.weapons[i].mods[j].current_level = ent->client->resp.pstats.weapons[i].mods[j].level;
 
 			//Update the player's max levels ONLY IF they need it (ex: not loading a weapon from their player file)
-			if(ent->myskills.weapons[i].mods[j].soft_max == 0 || ent->myskills.weapons[i].mods[j].hard_max == 0)
+			if(ent->client->resp.pstats.weapons[i].mods[j].soft_max == 0 || ent->client->resp.pstats.weapons[i].mods[j].hard_max == 0)
 			{
 				//Weapon masters and knights get a bonus to some upgrades
 				if (ent->myskills.class_num != CLASS_WEAPONMASTER || !GiveWeaponMasterUpgrade(ent, i, j)) {
                     if (ent->myskills.class_num != CLASS_KNIGHT || !GiveKnightUpgrade(ent, i, j)) {
                         if (j < 3) {
-                            ent->myskills.weapons[i].mods[j].soft_max = 10;
-                            ent->myskills.weapons[i].mods[j].hard_max = 30;
+                            ent->client->resp.pstats.weapons[i].mods[j].soft_max = 10;
+                            ent->client->resp.pstats.weapons[i].mods[j].hard_max = 30;
                         } else {
                             //Sword gets an extra bonus
                             if (j == 3 && i == WEAPON_SWORD) { // az note: this is sword burn
-                                ent->myskills.weapons[i].mods[j].soft_max = 10;
-                                ent->myskills.weapons[i].mods[j].hard_max = 30;
+                                ent->client->resp.pstats.weapons[i].mods[j].soft_max = 10;
+                                ent->client->resp.pstats.weapons[i].mods[j].hard_max = 30;
                                 continue;
                             }
 
-                            ent->myskills.weapons[i].mods[j].soft_max = 1;
-                            ent->myskills.weapons[i].mods[j].hard_max = 1;
+                            ent->client->resp.pstats.weapons[i].mods[j].soft_max = 1;
+                            ent->client->resp.pstats.weapons[i].mods[j].hard_max = 1;
                         }
                     }
                 }
