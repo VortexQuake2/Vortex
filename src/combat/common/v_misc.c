@@ -545,16 +545,16 @@ void vrx_remove_player_summonables(edict_t* self) {
 		}
 	}
 	// remove everything else
-	if (self->lasersight) {
-		G_FreeEdict(self->lasersight);
-		self->lasersight = NULL;
+	if (self->client && self->client->lasersight) {
+		G_FreeEdict(self->client->lasersight);
+		self->client->lasersight = NULL;
 	}
 	if (FL_exists(self)) {
 		FL_toggle(self);
 	}
 
-	if (self->supplystation) {
-		depot_remove(self->supplystation, self, true);
+	if (self->client && self->client->supplystation) {
+		depot_remove(self->client->supplystation, self, true);
 	}
 	if (self->skull && !RestorePreviousOwner(self->skull)) {
 		//BecomeExplosion1(self->skull);

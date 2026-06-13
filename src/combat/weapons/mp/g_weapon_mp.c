@@ -1393,7 +1393,7 @@ static void tesla_think_active(edict_t *self)
     vec3_t offset;
     trace_t tr;
 
-    if (!self->teamchain || !self->teamchain->inuse || level.time > self->air_finished)
+    if (!self->teamchain || !self->teamchain->inuse || level.time > self->monsterinfo.attack_finished)
     {
         tesla_remove(self);
         return;
@@ -1497,7 +1497,7 @@ static void tesla_activate(edict_t *self)
     self->teamchain = trigger;
     self->think = tesla_think_active;
     self->nextthink = level.time + FRAMETIME;
-    self->air_finished = level.time + TESLA_TIME_TO_LIVE;
+    self->monsterinfo.attack_finished = level.time + TESLA_TIME_TO_LIVE;
 }
 
 static void tesla_think(edict_t *ent)

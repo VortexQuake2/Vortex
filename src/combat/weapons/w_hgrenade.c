@@ -79,12 +79,10 @@ void weapon_grenade_fire(edict_t* ent, qboolean held) {
     //gi.dprintf("fired grenade at %.1f\n", timer);
 
     //K03 Begin
-    ent->shots++;
     ent->client->resp.pstats.shots++;
     ent->svflags &= ~SVF_NOCLIENT;
     if (ent->myskills.abilities[CLOAK].current_level < 10 || vrx_get_talent_level(ent, TALENT_IMP_CLOAK) < 4) {
         ent->client->cloaking = false;
-        ent->client->cloakable = 0;
     }
     //K03 End
 
@@ -172,7 +170,7 @@ void Weapon_Grenade2(edict_t* ent) {
                 ent->client->grenade_delay = 0;
 
                 ent->client->vrr.gun_statemachine_time = 0.0;
-                ent->haste_time = 0;
+                ent->client->haste_time = 0;
             }
             else {
                 if (level.time >= ent->pain_debounce_time) {
@@ -291,12 +289,12 @@ void Weapon_Grenade2(edict_t* ent) {
         bool is_haste_frame = ent->client->ps.gunframe < 11 ||
         (ent->client->ps.gunframe > 11 && ent->client->grenade_delay > 0);
         if (is_haste_frame && is_haste_active(ent)) {
-            if (haste_wait != -1 && ent->haste_time > haste_wait) {
+            if (haste_wait != -1 && ent->client->haste_time > haste_wait) {
                 ent->client->vrr.gun_statemachine_time += 0.1;
-                ent->haste_time -= haste_wait;
+                ent->client->haste_time -= haste_wait;
                 goto start;
             }
-            ent->haste_time += FRAMETIME;
+            ent->client->haste_time += FRAMETIME;
         }
     }
 }

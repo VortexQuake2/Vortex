@@ -232,15 +232,15 @@ void hw_flagthink (edict_t *self)
 	VectorCopy(tr.endpos, end);
 
 	// update laser entity
-	if (!self->other && !VectorLength(self->velocity))
+	if (!self->flaglaser && !VectorLength(self->velocity))
 	{
-		self->other = hw_spawnlaser(self, self->s.origin, end);
-	} else if (self->other)
+		self->flaglaser = hw_spawnlaser(self, self->s.origin, end);
+	} else if (self->flaglaser)
 	{
-		VectorCopy(self->s.origin, self->other->pos1);
-		VectorCopy(self->s.origin, self->other->s.old_origin);
-		VectorCopy(end, self->other->pos2);
-		VectorCopy(end, self->other->s.origin);
+		VectorCopy(self->s.origin, self->flaglaser->pos1);
+		VectorCopy(self->s.origin, self->flaglaser->s.old_origin);
+		VectorCopy(end, self->flaglaser->pos2);
+		VectorCopy(end, self->flaglaser->s.origin);
 	}
 
 	self->s.effects = 0;

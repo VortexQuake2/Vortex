@@ -244,9 +244,9 @@ void FlyerAttack (edict_t *ent)
 			radius = FLYER_ROCKET_INITIAL_RADIUS+FLYER_ROCKET_ADDON_RADIUS*ent->myskills.abilities[FLYER].current_level;
 
 			// check for adequate ammo
-			if (ent->myskills.abilities[FLYER].ammo < FLYER_ROCKET_AMMO)
+			if (ent->client->pers.morphinventory.flyer.ammo < FLYER_ROCKET_AMMO)
 				return;
-			ent->myskills.abilities[FLYER].ammo -= FLYER_ROCKET_AMMO;
+			ent->client->pers.morphinventory.flyer.ammo -= FLYER_ROCKET_AMMO;
 
 
 			AngleVectors(ent->client->v_angle, forward, NULL, NULL);
@@ -281,10 +281,10 @@ void FlyerAttack (edict_t *ent)
 		&& level.framenum >= ent->monsterinfo.stuck_frames) // used to avoid rounding errors
 	{
 		// check for adequate ammo
-		if (ent->myskills.abilities[FLYER].ammo < FLYER_HB_AMMO)
+		if (ent->client->pers.morphinventory.flyer.ammo < FLYER_HB_AMMO)
 			return;
 
-		ent->myskills.abilities[FLYER].ammo -= FLYER_HB_AMMO;
+		ent->client->pers.morphinventory.flyer.ammo -= FLYER_HB_AMMO;
 
 		damage = FLYER_HB_INITIAL_DMG+FLYER_HB_ADDON_DMG*ent->myskills.abilities[FLYER].current_level;
 		speed = FLYER_HB_SPEED;
@@ -308,9 +308,9 @@ void MorphRegenerate (edict_t *ent, int regen_delay, int regen_frames)
 	int	amt, frames;
 
 	if (ent->mtype == MORPH_FLYER)
-		V_RegenAbilityAmmo(ent, FLYER, qf2sf(FLYER_HB_REGEN_FRAMES), qf2sf(FLYER_HB_REGEN_DELAY));
+		V_RegenAbilityAmmo(ent, &ent->client->pers.morphinventory.flyer, qf2sf(FLYER_HB_REGEN_FRAMES), qf2sf(FLYER_HB_REGEN_DELAY));
 	else if (ent->mtype == MORPH_CACODEMON)
-		V_RegenAbilityAmmo(ent, CACODEMON, qf2sf(CACODEMON_SKULL_REGEN_FRAMES), qf2sf(CACODEMON_SKULL_REGEN_DELAY));
+		V_RegenAbilityAmmo(ent, &ent->client->pers.morphinventory.cacodemon, qf2sf(CACODEMON_SKULL_REGEN_FRAMES), qf2sf(CACODEMON_SKULL_REGEN_DELAY));
 
 	if ((level.framenum >= ent->monsterinfo.control_cost)
 		&& (ent->health < ent->max_health))
@@ -435,15 +435,15 @@ void Cmd_PlayerToFlyer_f (edict_t *ent)
 	ent->viewheight = 0;
 
 	// set maximum hyperblaster ammo
-	ent->myskills.abilities[FLYER].max_ammo = FLYER_HB_INITIAL_AMMO+FLYER_HB_ADDON_AMMO
+	ent->client->pers.morphinventory.flyer.max_ammo = FLYER_HB_INITIAL_AMMO+FLYER_HB_ADDON_AMMO
 		*ent->myskills.abilities[FLYER].current_level;
 
 	// Talent: More Ammo
 	// increases ammo 10% per talent level
-	if(talentLevel > 0) ent->myskills.abilities[FLYER].max_ammo *= 1.0 + 0.1*talentLevel;
+	if(talentLevel > 0) ent->client->pers.morphinventory.flyer.max_ammo *= 1.0 + 0.1*talentLevel;
 
 	// give them some starting ammo
-	ent->myskills.abilities[FLYER].ammo = FLYER_HB_START_AMMO;
+	ent->client->pers.morphinventory.flyer.ammo = FLYER_HB_START_AMMO;
 
 	ent->client->refire_frames = 0; // reset charged weapon
 	ent->client->weapon_mode = 0; // reset weapon mode

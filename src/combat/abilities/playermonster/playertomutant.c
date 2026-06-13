@@ -79,9 +79,9 @@ qboolean mutant_boost (edict_t *ent)
 	vec3_t forward, right, start, offset;
 
 	if (ent->mtype == MORPH_MUTANT)
-		next_frame = &ent->myskills.abilities[MUTANT].ammo_regenframe;
+		next_frame = &ent->monsterinfo.nextframe;
 	else if (ent->mtype == MORPH_BRAIN)
-		next_frame = &ent->myskills.abilities[BRAIN].ammo_regenframe;
+		next_frame = &ent->monsterinfo.nextframe;
 	else
 		gi.error ("invalid ent->mtype");
 

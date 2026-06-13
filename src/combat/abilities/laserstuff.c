@@ -446,7 +446,6 @@ void	PlaceLaser (edict_t *ent)
 	//If you use this spell, you uncloak!
 	ent->svflags &= ~SVF_NOCLIENT;
 	ent->client->cloaking = false;
-	ent->client->cloakable = 0;
 
 	ent->client->pers.inventory[power_cube_index] -= LASER_COST;
 	//gi.dprintf("DEBUG: %s successfully created a laser.\n", ent->client->pers.netname);

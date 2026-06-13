@@ -718,7 +718,7 @@ void M_default_Spawn (void)
 	ent->mass = 200;
 	ent->solid = SOLID_BBOX;
 	ent->deadflag = DEAD_NO;
-	ent->air_finished = level.time + 12;
+	// ent->client->air_finished = level.time + 12;
 	ent->clipmask = MASK_MONSTERSOLID;
 	//ent->model = "models/monsters/infantry/tris.md2";//jalfixme
 	ent->waterlevel = 0;

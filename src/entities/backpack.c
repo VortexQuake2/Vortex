@@ -19,7 +19,7 @@ static size_t backpack_index(int32_t* idx) {
     if (nr >= PACK_COUNT)
         return SIZE_MAX;
 
-    return nr;
+    return nr / MAX_ITEMS;
 }
 
 static int32_t* backpack_alloc() {
@@ -28,7 +28,9 @@ static int32_t* backpack_alloc() {
            continue;
 
        packInUse[i] = true;
-       return &packItems[i * MAX_ITEMS];
+       const auto ret = &packItems[i * MAX_ITEMS];
+       memset(ret, 0, sizeof(int32_t) * MAX_ITEMS);
+       return ret;
    }
 
    return nullptr;
@@ -134,7 +136,6 @@ void vrx_toss_backpack(edict_t *player, edict_t *attacker) {
             continue;
         // Does player have any of this item in their inventory?
         quantity = player->client->pers.inventory[ITEM_INDEX(item)];
-        if (!quantity) continue;
         // Then.. add this item to the backpack
         pack->packitems[ITEM_INDEX(item)] = quantity;
     }

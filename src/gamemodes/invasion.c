@@ -1078,7 +1078,7 @@ void vrx_inv_spawn_players(void) {
             //if (cl_ent->ai)
             //	gi.dprintf("%d: %s: spawn %d clear for %s\n", (int)level.framenum, __func__, e->s.number, cl_ent->ai->pers.netname);
             e->wait = level.time + 2.0; // delay before other players can use this spawn
-            cl_ent->spawn = e; // player may use this spawn
+            cl_ent->client->spawn = e; // player may use this spawn
             respawn(cl_ent);
 
             // get another waiting player
@@ -1096,8 +1096,8 @@ edict_t *vrx_inv_select_player_spawn_point(edict_t *ent) {
     if (G_IsSpectator(ent))
         return vrx_inv_give_random_p_spawn();
 
-    if (ent->spawn && ent->spawn->inuse)
-        return ent->spawn;
+    if (ent->client->spawn && ent->client->spawn->inuse)
+        return ent->client->spawn;
     else // We requested a spawn point, but we don't have one. What now?
     {
         // Try to find one. But only if the spawn que is empty.

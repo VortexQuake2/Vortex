@@ -1481,7 +1481,7 @@ qboolean SelectSpawnPoint (edict_t *ent, vec3_t origin, vec3_t angles)
 		if ((spot = vrx_inv_select_player_spawn_point(ent)) != NULL)
 		{
 			vrx_inv_remove_spawn_que(ent); // remove from waiting list
-			ent->spawn = NULL; // player is no longer assigned this spawn
+			ent->client->spawn = NULL; // player is no longer assigned this spawn
 
             VectorCopy (spot->s.angles, angles);
 			VectorCopy (spot->s.origin, origin);
@@ -1638,16 +1638,16 @@ void CopyToBodyQue (edict_t *ent)
 	if ((slot = que_findtype(ent->curses, slot, CURSE_PLAGUE)) != NULL)
 	{
 		// try to add it to the body's curse list
-		if (!que_addent(body->curses, slot->ent, 999.0))
+		if (!que_addent(body->curses, h2en(slot->ent), 999.0))
 		{
 			// failed, remove the curse entity
-			G_FreeEdict(slot->ent);
+			G_FreeEdict(h2en(slot->ent));
 		}
 		else
-			slot->ent->enemy = body; // make the plague entity target the body
+			h2e(slot->ent)->enemy = body; // make the plague entity target the body
 		
 		// remove plague from the player's curses
-		slot->ent = NULL;
+		slot->ent = ENTHANDLE_EMPTY;
 		slot->time = 0;
 	}
 	// FIXME: send an effect on the removed body
@@ -1696,7 +1696,7 @@ void respawn (edict_t *self)
 		// don't let them respawn unless they've been assigned a spawn
 		if (INVASION_OTHERSPAWNS_REMOVED)
 		{
-			if (!self->spawn)
+			if (!self->client->spawn)
 			{
 				vrx_inv_add_spawn_que(self);
 				return;
@@ -1898,7 +1898,7 @@ void PutClientInServer (edict_t *ent)
 	ent->solid = SOLID_BBOX;
 	ent->deadflag = DEAD_NO;
 	ent->owner = NULL; //GHz
-	ent->air_finished = level.time + 12;
+	ent->client->air_finished = level.time + 12;
 	ent->clipmask = MASK_PLAYERSOLID;
 	ent->model = "players/male/tris.md2";
 	ent->pain = player_pain;
@@ -1909,8 +1909,8 @@ void PutClientInServer (edict_t *ent)
 	ent->flags &= ~FL_CHATPROTECT;//GHz
 	ent->svflags &= ~SVF_DEADMONSTER;
 	ent->svflags &= ~SVF_MONSTER;
-	ent->lastkill = 0;//GHz
-	ent->nfer = 0;
+	ent->client->lastkill = 0;//GHz
+	ent->client->nfer = 0;
 	ent->exploded = false;
 	VectorCopy (mins, ent->mins);
 	VectorCopy (maxs, ent->maxs);
@@ -2017,7 +2017,7 @@ void PutClientInServer (edict_t *ent)
 	VectorCopy (ent->s.angles, client->v_angle);
 
 	//JABot[start]
-	if( ent->ai == true )
+	if( ent->ai  )
 		return;
 	//JABot[end]
 
@@ -3072,10 +3072,10 @@ void ClientBeginServerFrame (edict_t *ent)
 
 	client = ent->client;
 
-	if (ent->lastkill < level.time && ent->nfer) // we're out of nfer time!
+	if (ent->client->lastkill < level.time && ent->client->nfer) // we're out of nfer time!
 	{
-		G_PrintGreenText(va("%s got a %dfer.", ent->client->pers.netname, ent->nfer));
-		ent->nfer = 0;
+		G_PrintGreenText(va("%s got a %dfer.", ent->client->pers.netname, ent->client->nfer));
+		ent->client->nfer = 0;
 	}
 		
 

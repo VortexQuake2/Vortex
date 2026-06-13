@@ -696,12 +696,12 @@ void ApplyThorns(edict_t* targ, edict_t* inflictor, edict_t* attacker, vec3_t po
 		return;
 
 	// 4x damage returned by level 10, 8x by 20
-	float mult = 0.4 * slot->ent->monsterinfo.level;
+	float mult = 0.4 * h2e(slot->ent)->monsterinfo.level;
 	// players take less damage from thorns since they have far less health than monsters!
 	if (attacker->client)
 		mult *= 0.1;
 
-	//gi.dprintf("%s: attacker damage: %.0f thorns (%d %.1f): %.0f\n", __func__, damage, slot->ent->monsterinfo.level, mult, (damage * mult));
+	//gi.dprintf("%s: attacker damage: %.0f thorns (%d %.1f): %.0f\n", __func__, damage, h2e(slot->ent)->monsterinfo.level, mult, (damage * mult));
 	// try to hurt them
 	T_Damage(attacker, targ, targ, vec3_origin, attacker->s.origin, vec3_origin, (damage * mult), 0, dflags, mod);
 }
@@ -726,8 +726,8 @@ void DeflectHitscan(edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t
 	if (inflictor && inflictor != attacker)
 		return;
 
-	modifier = DEFLECT_HITSCAN_ABSORB_BASE+DEFLECT_HITSCAN_ABSORB_ADDON*slot->ent->owner->myskills.abilities[DEFLECT].current_level;
-	chance = DEFLECT_INITIAL_HITSCAN_CHANCE+DEFLECT_ADDON_HITSCAN_CHANCE*slot->ent->owner->myskills.abilities[DEFLECT].current_level;
+	modifier = DEFLECT_HITSCAN_ABSORB_BASE+DEFLECT_HITSCAN_ABSORB_ADDON*h2e(slot->ent)->owner->myskills.abilities[DEFLECT].current_level;
+	chance = DEFLECT_INITIAL_HITSCAN_CHANCE+DEFLECT_ADDON_HITSCAN_CHANCE*h2e(slot->ent)->owner->myskills.abilities[DEFLECT].current_level;
 
 	// cap chance
 	if (chance > DEFLECT_MAX_HITSCAN_CHANCE)
@@ -961,8 +961,8 @@ void vrx_apply_vampire_abilities(edict_t *targ, edict_t *attacker, int dflags, i
 	// life tap vampire effect
 	if ((slot = que_findtype(targ->curses, NULL, LIFE_TAP)) != NULL && mod != MOD_CRIPPLE)
 	{
-		const float lifeTapFactor = LIFE_TAP_INITIAL_FACTOR + LIFE_TAP_ADDON_FACTOR * slot->ent->monsterinfo.level;
-		//slot->ent->owner->myskills.abilities[LIFE_TAP].current_level;
+		const float lifeTapFactor = LIFE_TAP_INITIAL_FACTOR + LIFE_TAP_ADDON_FACTOR * h2e(slot->ent)->monsterinfo.level;
+		//h2e(slot->ent)->owner->myskills.abilities[LIFE_TAP].current_level;
 		//gi.dprintf("%s: take: %.0f lifeTapFactor: %.1f\n", __func__, take, lifeTapFactor);
 		V_ApplyVampire(attacker, take, lifeTapFactor, 1.0, true);
 	}
@@ -1132,9 +1132,9 @@ void vrx_do_dmg_counter(float damage, edict_t *player) {
 
 		player->client->ps.stats[STAT_ID_DAMAGE] = player->dmg_counter;
 #else
-		player->dmg_counter += damage;
+		player->client->dmg_counter += damage;
 #endif
-		player->lastdmg = level.time;
+		player->client->lastdmg = level.time;
 		player->client->idle_frames = 0; // player is no longer idle! (uncloak em!)
 	}
 }
@@ -1260,7 +1260,8 @@ int T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker,
 		if (attacker->mtype == M_OBSTACLE)
 			attacker->svflags &= ~SVF_NOCLIENT;
 
-		attacker->lastdmg = level.time; // last time damage was dealt
+		if (attacker->client)
+			attacker->client->lastdmg = level.time; // last time damage was dealt
 	}
 //GHz END
 

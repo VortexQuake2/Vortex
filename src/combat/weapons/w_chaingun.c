@@ -5,7 +5,7 @@
 // ===== Weapon Fire =====
 //
 
-void Chaingun_Fire(edict_t* ent) {
+void Chaingun_Fire(edict_t *ent) {
     int i;
     int shots;
     vec3_t start;
@@ -16,7 +16,7 @@ void Chaingun_Fire(edict_t* ent) {
 
     //K03 Begin
     float damage = CHAINGUN_INITIAL_DAMAGE +
-    CHAINGUN_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[0].current_level;
+                   CHAINGUN_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[0].current_level;
 
     int vspread = DEFAULT_BULLET_VSPREAD;
     int hspread = DEFAULT_BULLET_HSPREAD;
@@ -35,33 +35,29 @@ void Chaingun_Fire(edict_t* ent) {
         ent->client->weapon_sound = 0;
         ent->client->weaponstate = WEAPON_READY;
         return;
-    }
-    else if ((ent->client->ps.gunframe == 21) && (ent->client->buttons & BUTTON_ATTACK)
-        && ent->client->pers.inventory[ent->client->ammo_index]) {
+    } else if ((ent->client->ps.gunframe == 21) && (ent->client->buttons & BUTTON_ATTACK)
+               && ent->client->pers.inventory[ent->client->ammo_index]) {
         ent->client->ps.gunframe = 15;
-        }
-        else {
-            if (ent->client->ps.gunframe < 64)//K03
-                ent->client->ps.gunframe++;
-        }
+    } else {
+        if (ent->client->ps.gunframe < 64) //K03
+            ent->client->ps.gunframe++;
+    }
 
-        if (ent->client->ps.gunframe == 22) {
-            ent->client->weapon_sound = 0;
-            gi.sound(ent, CHAN_AUTO, gi.soundindex("weapons/chngnd1a.wav"), 1, ATTN_IDLE, 0);
-        }
-        else {
-            ent->client->weapon_sound = gi.soundindex("weapons/chngnl1a.wav");
-        }
+    if (ent->client->ps.gunframe == 22) {
+        ent->client->weapon_sound = 0;
+        gi.sound(ent, CHAN_AUTO, gi.soundindex("weapons/chngnd1a.wav"), 1, ATTN_IDLE, 0);
+    } else {
+        ent->client->weapon_sound = gi.soundindex("weapons/chngnl1a.wav");
+    }
 
-        if (ent->client->ps.gunframe <= 9)
-            shots = 2;
+    if (ent->client->ps.gunframe <= 9)
+        shots = 2;
     else if (ent->client->ps.gunframe <= 14) {
         if (ent->client->buttons & BUTTON_ATTACK)
             shots = 3;
         else
             shots = 2;
-    }
-    else
+    } else
         shots = 4;
 
     if (ent->client->pers.inventory[ent->client->ammo_index] < shots)
@@ -97,21 +93,22 @@ void Chaingun_Fire(edict_t* ent) {
 
     //K03 begin
     if (ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[2].current_level >= 1)
-        if (ent->lasthbshot <= level.time) {
-            damage = CHAINGUN_ADDON_TRACERDAMAGE * ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[2].current_level;
+        if (ent->client->lasthbshot <= level.time) {
+            damage = CHAINGUN_ADDON_TRACERDAMAGE * ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[2].
+                     current_level;
             fire_blaster(ent, start, forward, damage, 2000, EF_BLUEHYPERBLASTER, BLASTER_PROJ_BOLT, MOD_HYPERBLASTER,
                          2.0, false);
-            ent->lasthbshot = level.time + 0.5;
+            ent->client->lasthbshot = level.time + 0.5;
         }
-        if (ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[4].current_level < 1) {
-            // send muzzle flash
-            gi.WriteByte(svc_muzzleflash);
-            gi.WriteShort(ent - g_edicts);
-            gi.WriteByte((MZ_CHAINGUN1 + shots - 1) | is_silenced);
-            gi.multicast(ent->s.origin, MULTICAST_PVS);
-        }
-        if (ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[4].current_level < 1)
-            PlayerNoise(ent, start, PNOISE_WEAPON);
+    if (ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[4].current_level < 1) {
+        // send muzzle flash
+        gi.WriteByte(svc_muzzleflash);
+        gi.WriteShort(ent - g_edicts);
+        gi.WriteByte((MZ_CHAINGUN1 + shots - 1) | is_silenced);
+        gi.multicast(ent->s.origin, MULTICAST_PVS);
+    }
+    if (ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[4].current_level < 1)
+        PlayerNoise(ent, start, PNOISE_WEAPON);
     //K03 End
 
     // ### Hentai ### BEGIN
@@ -120,8 +117,7 @@ void Chaingun_Fire(edict_t* ent) {
     if (ent->client->ps.pmove.pm_flags & PMF_DUCKED) {
         ent->s.frame = FRAME_crattak1 - 1 + (ent->client->ps.gunframe % 3);
         ent->client->anim_end = FRAME_crattak9;
-    }
-    else {
+    } else {
         ent->s.frame = FRAME_attack1 - 1 + (ent->client->ps.gunframe % 3);
         ent->client->anim_end = FRAME_attack8;
     }
@@ -129,12 +125,12 @@ void Chaingun_Fire(edict_t* ent) {
 
     // ### Hentai ### END
 
-    if (!((int)dmflags->value & DF_INFINITE_AMMO))
+    if (!((int) dmflags->value & DF_INFINITE_AMMO))
         ent->client->pers.inventory[ent->client->ammo_index] -= shots;
 }
 
 
-void AssaultCannon_Fire(edict_t* ent) {
+void AssaultCannon_Fire(edict_t *ent) {
     int shots, i;
     int damage, kick, vspread, hspread;
     float f, r, u;
@@ -142,7 +138,8 @@ void AssaultCannon_Fire(edict_t* ent) {
     vec3_t forward, right, start, up, offset;
 
     damage = kick = 2 * (CHAINGUN_INITIAL_DAMAGE +
-    CHAINGUN_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[0].current_level);
+                         CHAINGUN_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[0].
+                         current_level);
     vspread = DEFAULT_BULLET_VSPREAD;
     hspread = DEFAULT_BULLET_HSPREAD;
 
@@ -168,8 +165,7 @@ void AssaultCannon_Fire(edict_t* ent) {
 
         ent->client->ps.gunframe++; // we're done, so advance to next frame
         return;
-    }
-    else if ((ent->client->ps.gunframe == 15) && !(ent->client->buttons & BUTTON_ATTACK)) {
+    } else if ((ent->client->ps.gunframe == 15) && !(ent->client->buttons & BUTTON_ATTACK)) {
         ent->client->ps.gunframe = 32;
         ent->client->weapon_sound = 0;
         ent->client->weaponstate = WEAPON_READY;
@@ -177,12 +173,11 @@ void AssaultCannon_Fire(edict_t* ent) {
     }
     // attack frames loop
     else if ((ent->client->ps.gunframe == 21) && (ent->client->buttons & BUTTON_ATTACK)
-        && ent->client->pers.inventory[ent->client->ammo_index]) {
+             && ent->client->pers.inventory[ent->client->ammo_index]) {
         ent->client->ps.gunframe = 15; // go to beginning of fire frames
-        }
-        else {
-            ent->client->ps.gunframe++;
-        }
+    } else {
+        ent->client->ps.gunframe++;
+    }
 
     if (ent->groundentity && (VectorLength(ent->velocity) < 1))
         canfire = true;
@@ -242,13 +237,14 @@ void AssaultCannon_Fire(edict_t* ent) {
         fire_bullet(ent, start, forward, damage, kick, hspread, vspread, MOD_CHAINGUN);
     }
 
-    if ((ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[2].current_level > 0) && (level.time >= ent->lasthbshot)) {
+    if ((ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[2].current_level > 0) && (
+            level.time >= ent->client->lasthbshot)) {
         damage = CHAINGUN_ADDON_TRACERDAMAGE * ent->client->resp.pstats.weapons[WEAPON_CHAINGUN].mods[2].current_level;
         fire_blaster(ent, start, forward, damage, 2000, 0, BLASTER_PROJ_BOLT, MOD_HYPERBLASTER, 2.0, false);
-        ent->lasthbshot = level.time + 0.3;
+        ent->client->lasthbshot = level.time + 0.3;
     }
 
-    if (!((int)dmflags->value & DF_INFINITE_AMMO))
+    if (!((int) dmflags->value & DF_INFINITE_AMMO))
         ent->client->pers.inventory[ent->client->ammo_index] -= shots;
 }
 
@@ -256,9 +252,9 @@ void AssaultCannon_Fire(edict_t* ent) {
 // ===== Weapon Think =====
 //
 
-void Weapon_Chaingun(edict_t* ent) {
-    static int pause_frames[] = { 38, 43, 51, 61, 0 };
-    static int fire_frames[] = { 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 0 };
+void Weapon_Chaingun(edict_t *ent) {
+    static int pause_frames[] = {38, 43, 51, 61, 0};
+    static int fire_frames[] = {5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 0};
 
 
     //K03 Begin

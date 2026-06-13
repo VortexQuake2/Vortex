@@ -8,14 +8,15 @@ void vrx_curse_heal_all(edict_t* target) {
     for (i = 0; i < QUE_MAXSIZE; ++i)
     {
         que_t *curse = &target->curses[i];
-        if ((curse->ent && curse->ent->inuse) && (curse->ent->atype != HEALING && curse->ent->atype != BLESS))
+    	auto cent = h2en(curse->ent);
+        if ((cent && cent->inuse) && (cent->atype != HEALING && cent->atype != BLESS))
         {
             //destroy the curse
-            if (curse->ent->enemy && (curse->ent->enemy == target))
-                G_FreeEdict(curse->ent);
+            if (cent->enemy && (cent->enemy == target))
+                G_FreeEdict(cent);
             // remove entry from the queue
             curse->time = 0;
-            curse->ent = NULL;
+            curse->ent = ENTHANDLE_EMPTY;
         }
     }
 }
@@ -241,14 +242,14 @@ qboolean curse_add(edict_t *target, edict_t *caster, int type, int curse_level, 
 	if(slot != NULL)
 	{
 		//If the current curse in effect has a level greater than the caster's curse level
-		//if (slot->ent->owner->myskills.abilities[type].current_level > caster->myskills.abilities[type].current_level)
-		if (slot->ent->monsterinfo.level > curse_level)//4.4
+		//if (h2e(slot->ent)->owner->myskills.abilities[type].current_level > caster->myskills.abilities[type].current_level)
+		if (h2e(slot->ent)->monsterinfo.level > curse_level)//4.4
 			//Can't re-curse this player
 			return false;
 		else
 		{
             //Refresh the curse with the new level/ent/duration
-			return que_addent(target->curses, slot->ent, duration);
+			return que_addent(target->curses, h2e(slot->ent), duration);
 		}
 	}
 
@@ -1024,9 +1025,10 @@ void Cmd_Healing(edict_t *ent)
 		slot = que_findtype(target->curses, NULL, HEALING);
 		if (slot)
 		{
-			slot->ent->think = Healing_think;
-			slot->ent->nextthink = level.time + FRAMETIME;
-			slot->ent->delay = level.time + FRAMETIME; // az act immediately
+			auto aura = h2e(slot->ent);
+			aura->think = Healing_think;
+			aura->nextthink = level.time + FRAMETIME;
+			aura->delay = level.time + FRAMETIME; // az act immediately
 		}
 
 		//Notify the target
@@ -1109,8 +1111,9 @@ void Cmd_Bless(edict_t *ent)
 		slot = que_findtype(target->curses, NULL, BLESS);
 		if (slot)
 		{
-			slot->ent->think = Bless_think;
-			slot->ent->nextthink = level.time + FRAMETIME;
+			auto aura = h2e(slot->ent);
+			aura->think = Bless_think;
+			aura->nextthink = level.time + FRAMETIME;
 		}
 
 		//Notify the target
@@ -1212,11 +1215,12 @@ void Cmd_Deflect_f(edict_t *ent)
 		slot = que_findtype(target->curses, NULL, DEFLECT);
 		if (slot)
 		{
-			slot->ent->think = deflect_think;
-			slot->ent->nextthink = level.time + FRAMETIME;
-			slot->ent->random = DEFLECT_INITIAL_PROJECTILE_CHANCE+DEFLECT_ADDON_HITSCAN_CHANCE*ent->myskills.abilities[DEFLECT].current_level;
-			if (slot->ent->random > DEFLECT_MAX_PROJECTILE_CHANCE)
-				slot->ent->random = DEFLECT_MAX_PROJECTILE_CHANCE;
+			auto aura = h2e(slot->ent);
+			aura->think = deflect_think;
+			aura->nextthink = level.time + FRAMETIME;
+			aura->random = DEFLECT_INITIAL_PROJECTILE_CHANCE+DEFLECT_ADDON_HITSCAN_CHANCE*ent->myskills.abilities[DEFLECT].current_level;
+			if (aura->random > DEFLECT_MAX_PROJECTILE_CHANCE)
+				aura->random = DEFLECT_MAX_PROJECTILE_CHANCE;
 		}
 
 		//Notify the target

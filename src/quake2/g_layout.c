@@ -452,7 +452,7 @@ sidebar_entry_t layout_add_curse_info(sidebar_t* sidebar, que_t* curse)
 	sidebar_entry_t res = {0};
 
 	res.pos = sidebar_get_next_line_pos(sidebar);
-	res.name = lva("%s", GetCurseName(curse->ent->atype));
+	res.name = lva("%s", GetCurseName(h2e(curse->ent)->atype));
 	res.data = lva("%.1fs", curse->time - level.time);
 
 	return res;
@@ -477,7 +477,7 @@ sidebar_entry_t layout_add_aura_info(sidebar_t* sidebar, que_t* que)
 
 	res.pos = sidebar_get_next_line_pos(sidebar);
 
-	switch (que->ent->mtype)
+	switch (h2e(que->ent)->mtype)
 	{
 	case AURA_SALVATION:
 		res.name = lva("salvation");
@@ -495,15 +495,15 @@ sidebar_entry_t layout_add_aura_info(sidebar_t* sidebar, que_t* que)
 		res.name = lva("manashield");
 		break;
 	default:
-		res.name = lva("%s", que->ent->classname);
+		res.name = lva("%s", h2e(que->ent)->classname);
 		break;
 	}
 
-	if (que->ent->owner && que->ent->owner->client)
+	if (h2e(que->ent)->owner && h2e(que->ent)->owner->client)
 		res.data = lva(
 			"%.1fs (%s)", 
 			que->time - level.time, 
-			que->ent->owner->client->pers.netname
+			h2e(que->ent)->owner->client->pers.netname
 		);
 	else
 		res.data = lva("%.1fs", que->time - level.time);

@@ -7,183 +7,156 @@ CheckAuraOwner
 Returns true if the owner is allowed to maintain an aura
 =============
 */
-qboolean CheckAuraOwner (edict_t *self, int aura_cost)
-{
-	return (G_EntIsAlive(self->owner) && self->owner->client 
-		&& (self->owner->client->pers.inventory[power_cube_index] >= aura_cost)
-		&& !self->owner->client->cloaking);
+qboolean CheckAuraOwner(edict_t *self, int aura_cost) {
+    return (G_EntIsAlive(self->owner) && self->owner->client
+            && (self->owner->client->pers.inventory[power_cube_index] >= aura_cost)
+            && !self->owner->client->cloaking);
 }
 
-qboolean que_valident (que_t *que)
-{
-	// 3.5 aura/curse is no longer valid if the owner dies
-	const qboolean owner_valid = (que->ent && que->ent->inuse && que->time > level.time);
+qboolean que_valident(que_t *que) {
+    // 3.5 aura/curse is no longer valid if the owner dies
+    const qboolean owner_valid = (eh_valid(que->ent) && h2e(que->ent)->inuse && que->time > level.time);
 
-	if (owner_valid) {
-		if (pvm->value) return G_EntExists(que->ent->owner);
-		else return G_EntIsAlive(que->ent->owner);
+    if (owner_valid) {
+        if (pvm->value) return G_EntExists(h2e(que->ent)->owner);
+        else return G_EntIsAlive(h2e(que->ent)->owner);
     }
 
-	return false;
+    return false;
 }
 
-void que_empty (que_t *que)
-{
-	int i;
-
-	for (i=0; i<QUE_MAXSIZE; i++) {
-		// reset que variables
-		que[i].ent = NULL;
-		que[i].time = 0;
-
-	}
-}
-
-void que_removeent (que_t *que, edict_t *other, qboolean free)
-{
-	int i;
-
-	if (other->deadflag == DEAD_DEAD)
-		return;
-
-	for (i=0; i<QUE_MAXSIZE; i++) {
-		// if the entity matches, then remove it from the que
-		if (que[i].ent && que[i].ent->inuse && (que[i].ent == other))
-		{
-			//if (free)
-			//	G_FreeEdict(que[i].ent);
-			que[i].ent = NULL;
-			que[i].time = 0;
-		}
-	}
-
-	// 3.5 sometimes the que owner is invalid
-	// so make sure the entity is removed
-	if (free)
-	{
-		// mark this entity for removal
-		other->think = G_FreeEdict;
-		other->nextthink = level.time + FRAMETIME;
-		other->deadflag = DEAD_DEAD;
-		//G_FreeEdict(other);
-	}
-}
-
-que_t *que_emptyslot (que_t *que)
-{
-	int i;
-
-	for (i=0; i<QUE_MAXSIZE; i++) {
-		// que slot is in-use as long as the entity still exists
-		// and the time has not expired
-		if (que_valident(&que[i]))
-			continue;
-		return &que[i];
-	}
-	return NULL;
-}
-
-qboolean que_entexists (que_t *que, edict_t *other)
-{
-	int i;
-
-	for (i=0; i<QUE_MAXSIZE; i++) {
-		// return true if a valid entity is in que and hasn't timed out
-		if (!que_valident(&que[i]))
-			continue;
-		if (que[i].ent != other)
-			continue;
-		return true;
-	}
-	return false;
-}
-
-void que_list (que_t *que)
-{
-	int i;
-
-	for (i=0; i<QUE_MAXSIZE; i++)
-	{
-		if (que[i].ent && que[i].ent->inuse)
-			gi.dprintf("slot %d: classname: %s owner: %s validtime: %s\n", i, que[i].ent->classname, que[i].ent->owner?"true":"false", que[i].time>level.time?"true":"false");
-		else
-			gi.dprintf("slot %d: %s\n", i, que[i].ent?"invalid":"empty");
-	}
-}
-
-qboolean que_typeexists(const que_t *que, int type) {
+void que_empty(que_t *que) {
     int i;
 
     for (i = 0; i < QUE_MAXSIZE; i++) {
-        if (que[i].ent && que[i].ent->inuse && que[i].ent->owner && (que[i].time > level.time)) {
-            //Searching for ANY curse?
-            if (type == 0) {
-				//3.0 blessings don't count as a curse, so skip them whenever they are found
-				if (que[i].ent->atype)
-				{
-					switch(que[i].ent->atype)
-					{
-					case LIFE_DRAIN:
-					case AMP_DAMAGE:
-					case CURSE:
-					case WEAKEN:
-					case AMNESIA:
-					case BLEEDING:
-					case CURSE_BURN:
-					case CURSE_FROZEN:
-						return true;
-					}
-					switch(que[i].ent->mtype)
-					{
-					case LIFE_DRAIN:
-					case AMP_DAMAGE:
-					case CURSE:
-					case WEAKEN:
-					case AMNESIA:
-					case BLEEDING:
-					case CURSE_BURN:
-					case CURSE_FROZEN:
-						return true;
-					}
-				}
-				//We were looking for any curse, and we found an old one
-				else 
-				{
-					//gi.dprintf("%d %.1f %.1f\n", que[i].ent->atype, level.time, que[i].time);
-					return true;
-				}
-			}
-			// search for any curse (good or bad, we don't care)
-			else if (type == -1)
-				return true;
-			//Check for a matching curse type
-			else if (que[i].ent->mtype == type || que[i].ent->atype == type)
-				return true;
-		}
-	}
-	return false;
+        // reset que variables
+        que[i].ent = ENTHANDLE_EMPTY;
+        que[i].time = 0;
+    }
 }
 
-que_t *que_findent (que_t *src, que_t *dst, edict_t *other)
-{
-	que_t *last;
+void que_removeent(que_t *que, edict_t *other, qboolean free) {
+    if (other->deadflag == DEAD_DEAD)
+        return;
 
-	if (!dst)
-		dst = src;
-	else
-		dst++;
+    for (int i = 0; i < QUE_MAXSIZE; i++) {
+        // if the entity matches, then remove it from the que
+        if (eh_valid(que[i].ent) && h2e(que[i].ent)->inuse && (h2e(que[i].ent) == other)) {
+            //if (free)
+            //	G_FreeEdict(que[i].ent);
+            que[i].ent = ENTHANDLE_EMPTY;
+            que[i].time = 0;
+        }
+    }
 
-	last = &src[QUE_MAXSIZE-1];
+    // 3.5 sometimes the que owner is invalid
+    // so make sure the entity is removed
+    if (free) {
+        // mark this entity for removal
+        other->think = G_FreeEdict;
+        other->nextthink = level.time + FRAMETIME;
+        other->deadflag = DEAD_DEAD;
+        //G_FreeEdict(other);
+    }
+}
 
-	for ( ; dst < last; dst++)
-	{
-		if (!que_valident(dst))
-			continue;
-		if (dst->ent != other)
-			continue;
-		return dst;
-	}
-	return NULL;
+que_t *que_emptyslot(que_t *que) {
+    for (int i = 0; i < QUE_MAXSIZE; i++) {
+        // que slot is in-use as long as the entity still exists
+        // and the time has not expired
+        if (que_valident(&que[i]))
+            continue;
+        return &que[i];
+    }
+    return nullptr;
+}
+
+qboolean que_entexists(que_t *que, edict_t *other) {
+    for (int i = 0; i < QUE_MAXSIZE; i++) {
+        // return true if a valid entity is in que and hasn't timed out
+        if (!que_valident(&que[i]))
+            continue;
+        if (h2e(que[i].ent) != other)
+            continue;
+        return true;
+    }
+    return false;
+}
+
+void que_list(que_t *que) {
+    for (int i = 0; i < QUE_MAXSIZE; i++) {
+        if (eh_valid(que[i].ent) && h2e(que[i].ent)->inuse)
+            gi.dprintf("slot %d: classname: %s owner: %s validtime: %s\n", i, h2e(que[i].ent)->classname,
+                       h2e(que[i].ent)->owner ? "true" : "false", que[i].time > level.time ? "true" : "false");
+        else
+            gi.dprintf("slot %d: %s\n", i, eh_valid(que[i].ent) ? "invalid" : "empty");
+    }
+}
+
+qboolean que_typeexists(const que_t *que, int type) {
+    for (int i = 0; i < QUE_MAXSIZE; i++) {
+        auto aura = h2en(que[i].ent);
+        if (aura &&
+            aura->inuse && aura->owner &&
+            (que[i].time > level.time)) {
+            //Searching for ANY curse?
+            if (type == 0) {
+                //3.0 blessings don't count as a curse, so skip them whenever they are found
+                if (aura->atype) {
+                    switch (aura->atype) {
+                        case LIFE_DRAIN:
+                        case AMP_DAMAGE:
+                        case CURSE:
+                        case WEAKEN:
+                        case AMNESIA:
+                        case BLEEDING:
+                        case CURSE_BURN:
+                        case CURSE_FROZEN:
+                            return true;
+                    }
+                    switch (aura->mtype) {
+                        case LIFE_DRAIN:
+                        case AMP_DAMAGE:
+                        case CURSE:
+                        case WEAKEN:
+                        case AMNESIA:
+                        case BLEEDING:
+                        case CURSE_BURN:
+                        case CURSE_FROZEN:
+                            return true;
+                    }
+                }
+                //We were looking for any curse, and we found an old one
+                else {
+                    //gi.dprintf("%d %.1f %.1f\n", aura->atype, level.time, que[i].time);
+                    return true;
+                }
+            }
+            // search for any curse (good or bad, we don't care)
+            else if (type == -1)
+                return true;
+                //Check for a matching curse type
+            else if (aura->mtype == type || aura->atype == type)
+                return true;
+        }
+    }
+    return false;
+}
+
+que_t *que_findent(que_t *src, que_t *dst, edict_t *other) {
+    if (!dst)
+        dst = src;
+    else
+        dst++;
+
+    for (const que_t *last = &src[QUE_MAXSIZE - 1]; dst < last; dst++) {
+        if (!que_valident(dst))
+            continue;
+        if (h2en(dst->ent) != other)
+            continue;
+        return dst;
+    }
+    return NULL;
 }
 
 que_t *que_findtype(const que_t *src, que_t *dst, int type) {
@@ -192,408 +165,373 @@ que_t *que_findtype(const que_t *src, que_t *dst, int type) {
     else
         dst++;
 
-    const que_t *last = &src[QUE_MAXSIZE - 1];
-
-	for ( ; dst < last; dst++)
-	{
-		if (!que_valident(dst))
-			continue;
-		if ((dst->ent->mtype != type) && (dst->ent->atype != type))
-			continue;
-		return dst;
-	}
-	return NULL;
+    for (const que_t *last = &src[QUE_MAXSIZE - 1]; dst < last; dst++) {
+        if (!que_valident(dst))
+            continue;
+        if (h2e(dst->ent)->mtype != type &&
+            h2e(dst->ent)->atype != type)
+            continue;
+        return dst;
+    }
+    return NULL;
 }
 
-void que_removetype (que_t *que, int type, qboolean free)
-{
-	int i;
+void que_removetype(que_t *que, int type, qboolean free) {
+    int i;
 
-	for (i=0; i<QUE_MAXSIZE; i++) {
-		// remove all instances of this type from the queue
-		if (que[i].ent && que[i].ent->inuse && 
-			((que[i].ent->mtype == type) || (que[i].ent->atype == type)))
-		{
-			if (free)
-				G_FreeEdict(que[i].ent);
-			que[i].ent = NULL;
-			que[i].time = 0;
-		}
-	}
+    for (i = 0; i < QUE_MAXSIZE; i++) {
+        // remove all instances of this type from the queue
+        auto qent = h2en(que[i].ent);
+        if (qent && qent->inuse &&
+            ((qent->mtype == type) || (qent->atype == type))) {
+            if (free)
+                G_FreeEdict(qent);
+            que[i].ent = ENTHANDLE_EMPTY;
+            que[i].time = 0;
+        }
+    }
 }
 
-void que_cleanup (que_t *que)
-{
-	int i;
+void que_cleanup(que_t *que) {
+    int i;
 
-	// remove invalid entries in queue
-	for (i=0; i<QUE_MAXSIZE; i++) {
-		if (que_valident(&que[i]))
-			continue;
-		que->ent = NULL;
-		que->time = 0;
-	}
+    // remove invalid entries in queue
+    for (i = 0; i < QUE_MAXSIZE; i++) {
+        if (que_valident(&que[i]))
+            continue;
+        que->ent = ENTHANDLE_EMPTY;
+        que->time = 0;
+    }
 }
 
-qboolean que_addent (que_t *que, edict_t *other, float duration)
-{
-	que_t		*slot = NULL;
+qboolean que_addent(que_t *que, edict_t *other, float duration) {
+    que_t *slot = NULL;
 
-	// if it already exists in the que, update its time/duration
-	while ((slot = que_findent(que, slot, other)) != NULL)
-	{
-		//if ((other->mtype == AURA_HOLYFREEZE) || (other->mtype == AURA_SALVATION))
-			slot->time = level.time + duration;
-		//else
-			// add to it
-			//slot->time += duration;
-		return true;
-	}
+    // if it already exists in the que, update its time/duration
+    while ((slot = que_findent(que, slot, other)) != NULL) {
+        //if ((other->mtype == AURA_HOLYFREEZE) || (other->mtype == AURA_SALVATION))
+        slot->time = level.time + duration;
+        //else
+        // add to it
+        //slot->time += duration;
+        return true;
+    }
 
-	// otherwise try to find an available slot
-	if ((slot = que_emptyslot(que)) != NULL)
-	{
-		slot->ent = other;
-		slot->time = level.time + duration;
-		return true;
-	}
-	return false;
+    // otherwise try to find an available slot
+    if ((slot = que_emptyslot(que)) != NULL) {
+        slot->ent = e2h(other);
+        slot->time = level.time + duration;
+        return true;
+    }
+    return false;
 }
 
-void CurseRemove (edict_t *ent, int type, int ignore)
-{
-	int			i;
-	que_t		*slot;
+void CurseRemove(edict_t *ent, int type, int ignore) {
+    int i;
 
-	for (i=0; i<QUE_MAXSIZE; i++) 
-	{
-		slot = &ent->curses[i];
+    for (i = 0; i < QUE_MAXSIZE; i++) {
+        que_t *slot = &ent->curses[i];
 
-		// the slot is already empty
-		if (!slot->ent)
-			continue;
+        // the slot is already empty
+        if (eh_empty(slot->ent))
+            continue;
 
-		// the type doesn't match
-		if (type && slot->ent->inuse && slot->ent->mtype != type && slot->ent->atype != type)
-			continue;
+        auto aura = h2e(slot->ent);
 
-		// ignore this type
-		if (ignore && slot->ent->inuse && (slot->ent->mtype == ignore || slot->ent->atype == ignore))
-			continue;
+        // the type doesn't match
+        if (type && aura->inuse && aura->mtype != type && aura->atype != type)
+            continue;
 
-		// this curse is specifically targetting us, so destroy it
-		if (!slot->ent->takedamage // make sure that the curse is really a curse!
-			&& slot->ent->enemy && slot->ent->enemy->inuse && (slot->ent->enemy == ent))
-		{
-			//gi.dprintf("removed curse with mtype %d\n", slot->ent->mtype);
-			G_FreeEdict(slot->ent);
-		}
+        // ignore this type
+        if (ignore && aura->inuse && (aura->mtype == ignore || aura->atype == ignore))
+            continue;
 
-		// remove entry from the queue
-		slot->ent = NULL;
-		slot->time = 0;
-		
-	}
+        // this curse is specifically targetting us, so destroy it
+        if (!aura->takedamage // make sure that the curse is really a curse!
+            && aura->enemy && aura->enemy->inuse && (aura->enemy == ent)) {
+            //gi.dprintf("removed curse with mtype %d\n", aura->mtype);
+            G_FreeEdict(aura);
+        }
+
+        // remove entry from the queue
+        slot->ent = ENTHANDLE_EMPTY;
+        slot->time = 0;
+    }
 }
 
-void AuraRemove (edict_t *ent, int type)
-{
-	int		i;
-	que_t	*slot;
+void AuraRemove(edict_t *ent, int type) {
+    int i;
 
-	for (i=0; i<QUE_MAXSIZE; i++) {
-		slot = &ent->auras[i];
-		if (slot->ent && slot->ent->inuse 
-			&& (!type || slot->ent->mtype == type || slot->ent->atype == type))
-		{
-			// if we own this aura, then destroy it
-			if (slot->ent->owner && (slot->ent->owner == ent))
-				G_FreeEdict(slot->ent);
-			// remove entry from the queue
-			slot->ent = NULL;
-			slot->time = 0;
-		}
-	}
+    for (i = 0; i < QUE_MAXSIZE; i++) {
+        que_t *slot = &ent->auras[i];
+        const auto aura = h2en(slot->ent);
+        if (aura && aura->inuse
+            && (!type || aura->mtype == type || aura->atype == type)) {
+            // if we own this aura, then destroy it
+            if (aura->owner && (aura->owner == ent))
+                G_FreeEdict(aura);
+            // remove entry from the queue
+            slot->ent = ENTHANDLE_EMPTY;
+            slot->time = 0;
+        }
+    }
 }
 
-void holyfreeze_think (edict_t *self)
-{
-	//int		radius;
-	edict_t *target=NULL, *curse=NULL;
-	que_t	*slot;
+void holyfreeze_think(edict_t *self) {
+    //int		radius;
+    edict_t *target = NULL, *curse = NULL;
 
-	// check status of owner
-	if (!CheckAuraOwner(self, DEFAULT_AURA_COST))
-	{
-	//gi.dprintf("aura removed itself\n");
+    // check status of owner
+    if (!CheckAuraOwner(self, DEFAULT_AURA_COST)) {
+        //gi.dprintf("aura removed itself\n");
 
-		que_removeent(self->owner->auras, self, true);
-		return;
-	}
-	
-	// owner has an active aura
-	que_addent(self->owner->auras, self, DEFAULT_AURA_DURATION);
+        que_removeent(self->owner->auras, self, true);
+        return;
+    }
 
-	// use cubes
-	if (!(sf2qf(level.framenum) % DEFAULT_AURA_FRAMES))
-	{
-		const int cube_cost = DEFAULT_AURA_COST;
+    // owner has an active aura
+    que_addent(self->owner->auras, self, DEFAULT_AURA_DURATION);
 
-		self->owner->client->pers.inventory[power_cube_index] -= cube_cost;
-	}
+    // use cubes
+    if (!(sf2qf(level.framenum) % DEFAULT_AURA_FRAMES)) {
+        const int cube_cost = DEFAULT_AURA_COST;
 
-	// move aura with owner
-	VectorCopy(self->owner->s.origin,self->s.origin);
-	self->nextthink = level.time + FRAMETIME;
-	if (sf2qf(level.framenum) % DEFAULT_AURA_SCAN_FRAMES)
-		return;
+        self->owner->client->pers.inventory[power_cube_index] -= cube_cost;
+    }
 
-	// scan for targets
-	//radius = DEFAULT_AURA_MIN_RADIUS+self->owner->myskills.abilities[HOLY_FREEZE].current_level*DEFAULT_AURA_ADDON_RADIUS;
-	//if (radius > DEFAULT_AURA_MAX_RADIUS)
-	//	radius = DEFAULT_AURA_MAX_RADIUS;
+    // move aura with owner
+    VectorCopy(self->owner->s.origin, self->s.origin);
+    self->nextthink = level.time + FRAMETIME;
+    if (sf2qf(level.framenum) % DEFAULT_AURA_SCAN_FRAMES)
+        return;
 
-	while ((target = findradius (target, self->s.origin, self->monsterinfo.sight_range)) != NULL)
-	{
-		slot = NULL;
-		if (target == self->owner)
-			continue;
-		if (!G_ValidTarget(self->owner, target, true, true))
-			continue;
-		// FIXME: make this into a loop search if we plan to allow
-		// more than one curse of the same type
-		slot = que_findtype(target->curses, slot, AURA_HOLYFREEZE);
-		if (slot && (slot->ent->owner != self->owner))
-		{
-		//	gi.dprintf("already slowed by someone else\n");
-			continue; // already slowed by someone else
-		}
-		if (!slot) // aura doesn't exist in que or timed out
-		{
-			if (random() > 0.5)
-				gi.sound(target, CHAN_ITEM, gi.soundindex("abilities/blue1.wav"), 1, ATTN_NORM, 0);
-			else
-				gi.sound(target, CHAN_ITEM, gi.soundindex("abilities/blue3.wav"), 1, ATTN_NORM, 0);
-		}
-		que_addent(target->curses, self, DEFAULT_AURA_DURATION);
-	}
+    // scan for targets
+    //radius = DEFAULT_AURA_MIN_RADIUS+self->owner->myskills.abilities[HOLY_FREEZE].current_level*DEFAULT_AURA_ADDON_RADIUS;
+    //if (radius > DEFAULT_AURA_MAX_RADIUS)
+    //	radius = DEFAULT_AURA_MAX_RADIUS;
+
+    while ((target = findradius(target, self->s.origin, self->monsterinfo.sight_range)) != NULL) {
+        if (target == self->owner)
+            continue;
+        if (!G_ValidTarget(self->owner, target, true, true))
+            continue;
+        // FIXME: make this into a loop search if we plan to allow
+        // more than one curse of the same type
+        que_t *slot;
+        slot = que_findtype(target->curses, slot, AURA_HOLYFREEZE);
+        if (slot && h2e(slot->ent)->owner != self->owner) {
+            //	gi.dprintf("already slowed by someone else\n");
+            continue; // already slowed by someone else
+        }
+        if (!slot) // aura doesn't exist in que or timed out
+        {
+            if (random() > 0.5)
+                gi.sound(target, CHAN_ITEM, gi.soundindex("abilities/blue1.wav"), 1, ATTN_NORM, 0);
+            else
+                gi.sound(target, CHAN_ITEM, gi.soundindex("abilities/blue3.wav"), 1, ATTN_NORM, 0);
+        }
+        que_addent(target->curses, self, DEFAULT_AURA_DURATION);
+    }
 }
 
-typedef void (*thinkfunc)(edict_t* self);
+typedef void (*thinkfunc)(edict_t *self);
 
 // generic function for auras
-void aura_create(edict_t* ent, int aura_type, int aura_level, float duration, float radius, thinkfunc aura_think)
-{
-	edict_t* aura;
+void aura_create(edict_t *ent, int aura_type, int aura_level, float duration, float radius, thinkfunc aura_think) {
+    edict_t *aura = G_Spawn();
+    aura->movetype = MOVETYPE_NOCLIP;
+    aura->svflags |= SVF_NOCLIENT;
+    aura->solid = SOLID_NOT;
+    VectorClear(aura->mins);
+    VectorClear(aura->maxs);
+    aura->owner = ent;
+    aura->nextthink = level.time + FRAMETIME;
+    aura->think = aura_think;
+    aura->classname = "Aura";
+    aura->mtype = aura_type;
+    aura->monsterinfo.sight_range = radius;
+    aura->monsterinfo.level = aura_level;
+    VectorCopy(ent->s.origin, aura->s.origin);
 
-	aura = G_Spawn();
-	aura->movetype = MOVETYPE_NOCLIP;
-	aura->svflags |= SVF_NOCLIENT;
-	aura->solid = SOLID_NOT;
-	VectorClear(aura->mins);
-	VectorClear(aura->maxs);
-	aura->owner = ent;
-	aura->nextthink = level.time + FRAMETIME;
-	aura->think = aura_think;
-	aura->classname = "Aura";
-	aura->mtype = aura_type;
-	aura->monsterinfo.sight_range = radius;
-	aura->monsterinfo.level = aura_level;
-	VectorCopy(ent->s.origin, aura->s.origin);
-
-	if (!que_addent(ent->auras, aura, duration))
-		G_FreeEdict(aura); // too many auras
+    if (!que_addent(ent->auras, aura, duration))
+        G_FreeEdict(aura); // too many auras
 }
 
-void Cmd_HolyFreeze(edict_t *ent)
-{
-	qboolean sameaura=false;
+void Cmd_HolyFreeze(edict_t *ent) {
+    qboolean sameaura = false;
 
-	if (debuginfo->value)
-		gi.dprintf("DEBUG: %s just called Cmd_HolyFreeze()\n", ent->client->pers.netname);
+    if (debuginfo->value)
+        gi.dprintf("DEBUG: %s just called Cmd_HolyFreeze()\n", ent->client->pers.netname);
 
-	if(ent->myskills.abilities[HOLY_FREEZE].disable)
-		return;
+    if (ent->myskills.abilities[HOLY_FREEZE].disable)
+        return;
 
-	const int aura_level = ent->myskills.abilities[HOLY_FREEZE].current_level;
+    const int aura_level = ent->myskills.abilities[HOLY_FREEZE].current_level;
 
-	if (!G_CanUseAbilities(ent, aura_level, 0))
-		return;
-	// if we already had an aura on, remove it
-	if (que_typeexists(ent->auras, AURA_HOLYFREEZE))
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Holy freeze removed.\n");
-		AuraRemove(ent, AURA_HOLYFREEZE);
-		return;
-	}
-	
-	ent->client->ability_delay = level.time + DEFAULT_AURA_DELAY;
-	// do we have enough power cubes?
-	if (ent->client->pers.inventory[power_cube_index] < DEFAULT_AURA_INIT_COST)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "You need more %d power cubes to use this ability.\n", 
-			DEFAULT_AURA_INIT_COST-ent->client->pers.inventory[power_cube_index]);
-		return;
-	}
-	ent->client->pers.inventory[power_cube_index] -= DEFAULT_AURA_INIT_COST;
-	gi.sound(ent, CHAN_ITEM, gi.soundindex("auras/holywind.wav"), 1, ATTN_NORM, 0);
-	safe_cprintf(ent, PRINT_HIGH, "Now using holy freeze aura.\n");
-	//aura_holyfreeze(ent);
+    if (!G_CanUseAbilities(ent, aura_level, 0))
+        return;
+    // if we already had an aura on, remove it
+    if (que_typeexists(ent->auras, AURA_HOLYFREEZE)) {
+        safe_cprintf(ent, PRINT_HIGH, "Holy freeze removed.\n");
+        AuraRemove(ent, AURA_HOLYFREEZE);
+        return;
+    }
 
-	float radius = DEFAULT_AURA_MIN_RADIUS + aura_level * DEFAULT_AURA_ADDON_RADIUS;
-	if (radius > DEFAULT_AURA_MAX_RADIUS)
-		radius = DEFAULT_AURA_MAX_RADIUS;
+    ent->client->ability_delay = level.time + DEFAULT_AURA_DELAY;
+    // do we have enough power cubes?
+    if (ent->client->pers.inventory[power_cube_index] < DEFAULT_AURA_INIT_COST) {
+        safe_cprintf(ent, PRINT_HIGH, "You need more %d power cubes to use this ability.\n",
+                     DEFAULT_AURA_INIT_COST - ent->client->pers.inventory[power_cube_index]);
+        return;
+    }
+    ent->client->pers.inventory[power_cube_index] -= DEFAULT_AURA_INIT_COST;
+    gi.sound(ent, CHAN_ITEM, gi.soundindex("auras/holywind.wav"), 1, ATTN_NORM, 0);
+    safe_cprintf(ent, PRINT_HIGH, "Now using holy freeze aura.\n");
+    //aura_holyfreeze(ent);
 
-	aura_create(ent, AURA_HOLYFREEZE, aura_level, DEFAULT_AURA_DURATION, radius, holyfreeze_think);
+    float radius = DEFAULT_AURA_MIN_RADIUS + aura_level * DEFAULT_AURA_ADDON_RADIUS;
+    if (radius > DEFAULT_AURA_MAX_RADIUS)
+        radius = DEFAULT_AURA_MAX_RADIUS;
+
+    aura_create(ent, AURA_HOLYFREEZE, aura_level, DEFAULT_AURA_DURATION, radius, holyfreeze_think);
 }
 
-void salvation_think (edict_t *self)
-{
-	//int		radius;
-	edict_t *other=NULL;
-	que_t	*slot=NULL;
+void salvation_think(edict_t *self) {
+    //int		radius;
+    edict_t *other = NULL;
+    que_t *slot = NULL;
 
-	// check status of owner
-	if (!CheckAuraOwner(self, COST_FOR_SALVATION))
-	{
-		que_removeent(self->owner->auras, self, true);
-		return;
-	}
+    // check status of owner
+    if (!CheckAuraOwner(self, COST_FOR_SALVATION)) {
+        que_removeent(self->owner->auras, self, true);
+        return;
+    }
 
-	// use cubes
-	if (!(sf2qf(level.framenum) % DEFAULT_AURA_FRAMES))
-	{
-		const int cube_cost = DEFAULT_AURA_COST;
+    // use cubes
+    if (!(sf2qf(level.framenum) % DEFAULT_AURA_FRAMES)) {
+        const int cube_cost = DEFAULT_AURA_COST;
 
-		self->owner->client->pers.inventory[power_cube_index] -= cube_cost;
-	}
-	que_addent(self->owner->auras, self, DEFAULT_AURA_DURATION);
-	// move aura with owner
-	VectorCopy(self->owner->s.origin,self->s.origin);
-	self->nextthink = level.time + FRAMETIME;
-	if (sf2qf(level.framenum) % DEFAULT_AURA_SCAN_FRAMES)
-		return;
+        self->owner->client->pers.inventory[power_cube_index] -= cube_cost;
+    }
+    que_addent(self->owner->auras, self, DEFAULT_AURA_DURATION);
+    // move aura with owner
+    VectorCopy(self->owner->s.origin, self->s.origin);
+    self->nextthink = level.time + FRAMETIME;
+    if (sf2qf(level.framenum) % DEFAULT_AURA_SCAN_FRAMES)
+        return;
 
-	//radius = 256;
+    //radius = 256;
 
-	// scan for targets
-	while ((other = findradius (other, self->s.origin, self->monsterinfo.sight_range)) != NULL)
-	{
-		slot = NULL;
-		if (other == self->owner)
-			continue;
-		if (!G_EntExists(other))
-			continue;
-		if (other->health < 1)
-			continue;
-		if (OnSameTeam(self->owner, other) < 2)
-			continue;
-		if (!visible(self->owner, other))
-			continue;
-		slot = que_findtype(other->auras, slot, AURA_SALVATION);
-		if (slot && (slot->ent->owner != self->owner))
-			continue;
-		que_addent(other->auras, self, DEFAULT_AURA_DURATION);
-	}
+    // scan for targets
+    while ((other = findradius(other, self->s.origin, self->monsterinfo.sight_range)) != NULL) {
+        slot = NULL;
+        if (other == self->owner)
+            continue;
+        if (!G_EntExists(other))
+            continue;
+        if (other->health < 1)
+            continue;
+        if (OnSameTeam(self->owner, other) < 2)
+            continue;
+        if (!visible(self->owner, other))
+            continue;
+        slot = que_findtype(other->auras, slot, AURA_SALVATION);
+        if (slot && (h2e(slot->ent)->owner != self->owner))
+            continue;
+        que_addent(other->auras, self, DEFAULT_AURA_DURATION);
+    }
 }
 
-void Cmd_Salvation(edict_t *ent)
-{
-	que_t		*slot=NULL;
-	qboolean	sameaura=false;
+void Cmd_Salvation(edict_t *ent) {
+    que_t *slot = NULL;
 
-	if (debuginfo->value)
-		gi.dprintf("DEBUG: %s just called Cmd_Salvation()\n", ent->client->pers.netname);
+    if (debuginfo->value)
+        gi.dprintf("DEBUG: %s just called Cmd_Salvation()\n", ent->client->pers.netname);
 
-	if(ent->myskills.abilities[SALVATION].disable)
-		return;
+    if (ent->myskills.abilities[SALVATION].disable)
+        return;
 
-	const int aura_level = ent->myskills.abilities[SALVATION].current_level;
-	if (!G_CanUseAbilities(ent, aura_level, 0))
-		return;
+    const int aura_level = ent->myskills.abilities[SALVATION].current_level;
+    if (!G_CanUseAbilities(ent, aura_level, 0))
+        return;
 
-	// if we already had an aura on, remove it
-	if ((slot = que_findtype(ent->auras, slot, AURA_SALVATION)) != NULL)
-	{
-		// owner is turning off his own aura
-		if (slot->ent && slot->ent->owner 
-			&& slot->ent->owner->inuse && slot->ent->owner == ent)
-		{
-			AuraRemove(ent, AURA_SALVATION);
-			safe_cprintf(ent, PRINT_HIGH, "Salvation removed.\n");
-			return;
-		}
+    // if we already had an aura on, remove it
+    if ((slot = que_findtype(ent->auras, slot, AURA_SALVATION)) != NULL) {
+        // owner is turning off his own aura
+        auto aura = h2en(slot->ent);
+        if (aura && aura->owner
+            && aura->owner->inuse && aura->owner == ent) {
+            AuraRemove(ent, AURA_SALVATION);
+            safe_cprintf(ent, PRINT_HIGH, "Salvation removed.\n");
+            return;
+        }
 
-		AuraRemove(ent, AURA_SALVATION);
-	}
+        AuraRemove(ent, AURA_SALVATION);
+    }
 
-	ent->client->ability_delay = level.time + DEFAULT_AURA_DELAY;
-	// do we have enough power cubes?
-	if (ent->client->pers.inventory[power_cube_index] < DEFAULT_AURA_INIT_COST)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "You need more %d power cubes to use this ability.\n", 
-			DEFAULT_AURA_INIT_COST-ent->client->pers.inventory[power_cube_index]);
-		return;
-	}
-	ent->client->pers.inventory[power_cube_index] -= DEFAULT_AURA_INIT_COST;
-	gi.sound(ent, CHAN_ITEM, gi.soundindex("auras/salvation.wav"), 1, ATTN_NORM, 0);
-	safe_cprintf(ent, PRINT_HIGH, "Now using salvation aura.\n");
-	//aura_salvation(ent);
-	aura_create(ent, AURA_SALVATION, aura_level, DEFAULT_AURA_DURATION, 256, salvation_think);
+    ent->client->ability_delay = level.time + DEFAULT_AURA_DELAY;
+    // do we have enough power cubes?
+    if (ent->client->pers.inventory[power_cube_index] < DEFAULT_AURA_INIT_COST) {
+        safe_cprintf(ent, PRINT_HIGH, "You need more %d power cubes to use this ability.\n",
+                     DEFAULT_AURA_INIT_COST - ent->client->pers.inventory[power_cube_index]);
+        return;
+    }
+    ent->client->pers.inventory[power_cube_index] -= DEFAULT_AURA_INIT_COST;
+    gi.sound(ent, CHAN_ITEM, gi.soundindex("auras/salvation.wav"), 1, ATTN_NORM, 0);
+    safe_cprintf(ent, PRINT_HIGH, "Now using salvation aura.\n");
+    //aura_salvation(ent);
+    aura_create(ent, AURA_SALVATION, aura_level, DEFAULT_AURA_DURATION, 256, salvation_think);
 }
 
-void thorns_think(edict_t* self)
-{
-	//int		radius;
-	edict_t* other = NULL;
-	que_t* slot = NULL;
+void thorns_think(edict_t *self) {
+    //int		radius;
+    edict_t *other = NULL;
+    que_t *slot = NULL;
 
-	// check status of owner
-	// remove if dead or insufficient power cubes for aura
-	if (!G_EntIsAlive(self->owner) || (self->owner->client && self->owner->client->pers.inventory[power_cube_index] < COST_FOR_SALVATION))//FIXME
-	{
-		que_removeent(self->owner->auras, self, true);
-		return;
-	}
+    // check status of owner
+    // remove if dead or insufficient power cubes for aura
+    if (!G_EntIsAlive(self->owner) || (self->owner->client && self->owner->client->pers.inventory[power_cube_index] <
+                                       COST_FOR_SALVATION)) //FIXME
+    {
+        que_removeent(self->owner->auras, self, true);
+        return;
+    }
 
-	// use cubes
-	if (!(sf2qf(level.framenum) % DEFAULT_AURA_FRAMES))
-	{
-		const int cube_cost = DEFAULT_AURA_COST;
+    // use cubes
+    if (!(sf2qf(level.framenum) % DEFAULT_AURA_FRAMES)) {
+        const int cube_cost = DEFAULT_AURA_COST;
 
-		if (self->owner->client)
-			self->owner->client->pers.inventory[power_cube_index] -= cube_cost;
-	}
-	que_addent(self->owner->auras, self, DEFAULT_AURA_DURATION);
-	// move aura with owner
-	VectorCopy(self->owner->s.origin, self->s.origin);
-	self->nextthink = level.time + FRAMETIME;
-	if (sf2qf(level.framenum) % DEFAULT_AURA_SCAN_FRAMES)
-		return;
+        if (self->owner->client)
+            self->owner->client->pers.inventory[power_cube_index] -= cube_cost;
+    }
+    que_addent(self->owner->auras, self, DEFAULT_AURA_DURATION);
+    // move aura with owner
+    VectorCopy(self->owner->s.origin, self->s.origin);
+    self->nextthink = level.time + FRAMETIME;
+    if (sf2qf(level.framenum) % DEFAULT_AURA_SCAN_FRAMES)
+        return;
 
-	//radius = 256;
+    //radius = 256;
 
-	// scan for targets
-	while ((other = findradius(other, self->s.origin, self->monsterinfo.sight_range)) != NULL)
-	{
-		slot = NULL;
-		if (other == self->owner)
-			continue;
-		if (!G_EntExists(other))
-			continue;
-		if (other->health < 1)
-			continue;
-		if (OnSameTeam(self->owner, other) < 2)
-			continue;
-		if (!visible(self->owner, other))
-			continue;
-		//  does the target already have thorns?
-		slot = que_findtype(other->auras, slot, AURA_THORNS);
-		if (slot && (slot->ent->owner != self->owner))
-			continue; // not ours--don't touch it
-		que_addent(other->auras, self, DEFAULT_AURA_DURATION);
-		if (!slot) // target didn't have thorns before, so play a sound
-			gi.sound(other, CHAN_ITEM, gi.soundindex("auras/thorns.wav"), 1, ATTN_IDLE, 0);
-	}
+    // scan for targets
+    while ((other = findradius(other, self->s.origin, self->monsterinfo.sight_range)) != NULL) {
+        slot = NULL;
+        if (other == self->owner)
+            continue;
+        if (!G_EntExists(other))
+            continue;
+        if (other->health < 1)
+            continue;
+        if (OnSameTeam(self->owner, other) < 2)
+            continue;
+        if (!visible(self->owner, other))
+            continue;
+        //  does the target already have thorns?
+        slot = que_findtype(other->auras, slot, AURA_THORNS);
+        if (slot && (h2e(slot->ent)->owner != self->owner))
+            continue; // not ours--don't touch it
+        que_addent(other->auras, self, DEFAULT_AURA_DURATION);
+        if (!slot) // target didn't have thorns before, so play a sound
+            gi.sound(other, CHAN_ITEM, gi.soundindex("auras/thorns.wav"), 1, ATTN_IDLE, 0);
+    }
 }
-

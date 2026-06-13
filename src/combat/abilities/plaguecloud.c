@@ -28,7 +28,7 @@ void InfectedCorpseTouch(edict_t* self, edict_t* other)
 
     if ((q = que_findtype(self->curses, NULL, CURSE_PLAGUE)) != NULL) // corpse is infected with plague
     {
-        if (vrx_get_talent_level(q->ent->owner, TALENT_BLACK_DEATH)) // plague owner has upgraded black death talent
+        if (vrx_get_talent_level(h2e(q->ent)->owner, TALENT_BLACK_DEATH)) // plague owner has upgraded black death talent
         {
             //gi.dprintf("touched infected corpse\n");
             // flag entity with black death so that they take extra damage from plague

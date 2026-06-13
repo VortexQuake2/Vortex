@@ -173,10 +173,10 @@ qboolean BOT_DMclass_Ucmd_Move(edict_t* self, float movespeed, usercmd_t* ucmd, 
 	return moved;
 }
 
-void BOT_DMclass_AvoidDrowning(edict_t* self, usercmd_t *ucmd)
+void BOT_DMclass_AvoidDrowning(const edict_t* self, usercmd_t *ucmd)
 {
 	// we're 3 seconds away from drowning--move up!
-	if (level.time + 3.0 > self->air_finished)
+	if (level.time + 3.0 > self->client->air_finished)
 		cmd_jump(ucmd);
 }
 
@@ -2377,7 +2377,7 @@ void BOT_DMclass_InitPersistant(edict_t *self)
 	self->classname = "dmbot";
 
 	//copy name
-	if (self->client->pers.netname)
+	if (self->client->pers.netname[0])
 		self->ai->pers.netname = self->client->pers.netname;
 	else
 		self->ai->pers.netname = "dmBot";

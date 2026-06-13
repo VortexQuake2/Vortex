@@ -84,13 +84,13 @@ void Machinegun_Fire(edict_t* ent) {
         fire_bullet(ent, start, forward, damage, kick, hspread, vspread, MOD_MACHINEGUN);
     }
     // fire tracers
-    if (ent->lasthbshot <= level.time) {
+    if (ent->client->lasthbshot <= level.time) {
         if (ent->client->resp.pstats.weapons[WEAPON_MACHINEGUN].mods[2].current_level >= 1) {
             damage = MACHINEGUN_ADDON_TRACERDAMAGE * ent->client->resp.pstats.weapons[WEAPON_MACHINEGUN].mods[2].current_level;
             fire_blaster(ent, start, forward, damage, 2000, EF_BLUEHYPERBLASTER, BLASTER_PROJ_BOLT, MOD_HYPERBLASTER,
                          2.0, false);
         }
-        ent->lasthbshot = level.time + 0.5;
+        ent->client->lasthbshot = level.time + 0.5;
     }
 
     if (is_silenced)

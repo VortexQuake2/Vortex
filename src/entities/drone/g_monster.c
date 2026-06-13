@@ -625,7 +625,7 @@ void vrx_adjust_moveframe_scale(edict_t* self)
 	slot = que_findtype(self->curses, slot, AURA_HOLYFREEZE);
 	if (slot)
 	{
-		temp = 1 / (1 + 0.1 * slot->ent->owner->myskills.abilities[HOLY_FREEZE].current_level);
+		temp = 1 / (1 + 0.1 * h2e(slot->ent)->owner->myskills.abilities[HOLY_FREEZE].current_level);
 		if (temp < 0.25) temp = 0.25;
 		self->monsterinfo.scale *= temp;
 	}
@@ -638,7 +638,7 @@ void vrx_adjust_moveframe_scale(edict_t* self)
 	if ((slot = que_findtype(self->curses, NULL, WEAKEN)) != NULL)
 	{
 		temp = 1 / (1 + WEAKEN_SLOW_BASE + WEAKEN_SLOW_BONUS
-			* slot->ent->owner->myskills.abilities[WEAKEN].current_level);
+			* h2e(slot->ent)->owner->myskills.abilities[WEAKEN].current_level);
 		self->monsterinfo.scale *= temp;
 	}
 

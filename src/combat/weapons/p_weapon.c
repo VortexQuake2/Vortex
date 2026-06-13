@@ -667,7 +667,6 @@ void Weapon_Generic2(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
 
                 if (can_run_frame) {
                     //K03 Begin
-                    ent->shots++;
                     ent->client->resp.pstats.shots++;
                     if (ent->movetype != MOVETYPE_NOCLIP || (ent->myskills.abilities[CLOAK].current_level == 10 &&
                                                              vrx_get_talent_level(ent, TALENT_IMP_CLOAK) ==
@@ -675,7 +674,6 @@ void Weapon_Generic2(edict_t *ent, int FRAME_ACTIVATE_LAST, int FRAME_FIRE_LAST,
                         // don't uncloak if they are in noclip, or permacloaked due to upgrade levels
                         ent->svflags &= ~SVF_NOCLIENT;
                     ent->client->cloaking = false;
-                    ent->client->cloakable = 0;
                     //K03 End
 
                     print_wp_state(ent, "FIRE");
@@ -743,7 +741,7 @@ void Weapon_Generic(
 
     // pick the highest level freeze
     if ((curse = que_findtype(ent->curses, NULL, AURA_HOLYFREEZE)) != NULL)
-        freezeLevel = curse->ent->owner->myskills.abilities[HOLY_FREEZE].current_level;
+        freezeLevel = h2e(curse->ent)->owner->myskills.abilities[HOLY_FREEZE].current_level;
     if (ent->chill_time > level.time && ent->chill_level > freezeLevel)
         freezeLevel = ent->chill_level;
 
@@ -778,9 +776,9 @@ void Weapon_Generic(
         //If Continue == 2, every second frame is skipped (50% slower firing rate)
         //If Continue == 6, every sixth frame is skipped (17% slower firing rate)
 
-        ent->FrameShot++;
-        if (ent->FrameShot >= Continue) {
-            ent->FrameShot = 0;
+        ent->client->FrameShot++;
+        if (ent->client->FrameShot >= Continue) {
+            ent->client->FrameShot = 0;
             return;
         }
     }
@@ -798,13 +796,13 @@ void Weapon_Generic(
         // if enough frames have passed by, then call the weapon func
         // an additional time
         {
-            while (ent->haste_time >= haste_wait) {
+            while (ent->client->haste_time >= haste_wait) {
                 ent->client->vrr.gun_statemachine_time += 0.1;
                 Weapon_Generic2(ent, FRAME_ACTIVATE_LAST, FRAME_FIRE_LAST,
                                 FRAME_IDLE_LAST, FRAME_DEACTIVATE_LAST, pause_frames, fire_frames, fire);
-                ent->haste_time -= haste_wait;
+                ent->client->haste_time -= haste_wait;
             }
-            ent->haste_time += FRAMETIME;
+            ent->client->haste_time += FRAMETIME;
         }
     }
 

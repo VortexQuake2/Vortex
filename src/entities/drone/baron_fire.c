@@ -455,7 +455,7 @@ mmove_t baron_fire_move_backhand = { FRAME_backhand01, FRAME_backhand11, baron_f
 void baron_fire_attack_sound(edict_t* self)
 {
 	// prevent attack sound from conflicting with sight sound
-	if (self->haste_time > level.time)
+	if (self->msg_time > level.time)
 		return;
 
 	if (random() > 0.5)
@@ -530,7 +530,7 @@ void baron_fire_sight(edict_t* self, edict_t* other)
 		gi.sound(self, CHAN_VOICE, sound_sight1, 1, ATTN_IDLE, 0);
 	else
 		gi.sound(self, CHAN_VOICE, sound_sight2, 1, ATTN_IDLE, 0);
-	self->haste_time = level.time + 1.0;// timer to delay attack sounds
+	self->msg_time = level.time + 1.0;// timer to delay attack sounds
 	//baron_fire_attack(self);
 }
 

@@ -251,7 +251,7 @@ float V_ModifyMovement(edict_t* ent, usercmd_t* ucmd, que_t* curse) {// assault 
 	curse = que_findtype(ent->curses, curse, AURA_HOLYFREEZE);
 	// are we affected by the holy freeze aura?
 	if (curse) {
-		float modifier = 1 / (1 + 0.1 * curse->ent->owner->myskills.abilities[HOLY_FREEZE].current_level);
+		float modifier = 1 / (1 + 0.1 * h2e(curse->ent)->owner->myskills.abilities[HOLY_FREEZE].current_level);
 		if (modifier < 0.25) modifier = 0.25;
 
 		//gi.dprintf("holyfreeze modifier = %.2f\n", modifier);
@@ -276,7 +276,7 @@ float V_ModifyMovement(edict_t* ent, usercmd_t* ucmd, que_t* curse) {// assault 
 	// 3.5 weaken slows down target
 	if ((curse = que_findtype(ent->curses, NULL, WEAKEN)) != NULL) {
 		const float modifier = 1 / (1 + WEAKEN_SLOW_BASE + WEAKEN_SLOW_BONUS
-			* curse->ent->owner->myskills.abilities[WEAKEN].current_level);
+			* h2e(curse->ent)->owner->myskills.abilities[WEAKEN].current_level);
 		vel_modification *= modifier;
 	}
 
@@ -652,8 +652,9 @@ void think_ability_mind_absorb(edict_t* ent) {
 void think_talent_ammo_regen(edict_t* ent) {
 	if (ent->client && vrx_get_talent_slot(ent, TALENT_BASIC_AMMO_REGEN) != -1) {
 		talent_t* talent = &ent->myskills.talents.talent[vrx_get_talent_slot(ent, TALENT_BASIC_AMMO_REGEN)];
+		auto sdelay = &ent->myskills.talents.delay;
 
-		if (talent->upgradeLevel > 0 && (talent->delay < level.time)
+		if (talent->upgradeLevel > 0 && (sdelay->ammoregen < level.time)
 			&& !(ent->client->buttons & BUTTON_ATTACK)) // don't regen ammo while firing
 		{
 			//Give them some ammo
@@ -676,7 +677,7 @@ void think_talent_ammo_regen(edict_t* ent) {
 			if (ent->client->ammo_index == tesla_index)
 				V_GiveAmmoClip(ent, 1.0f, AMMO_TESLA);
 
-			talent->delay = level.time + 15 - talent->upgradeLevel * 2;    //10 seconds - 1 seconds per upgrade
+			sdelay->ammoregen = level.time + 15 - talent->upgradeLevel * 2;    //10 seconds - 1 seconds per upgrade
 		}
 	}
 }

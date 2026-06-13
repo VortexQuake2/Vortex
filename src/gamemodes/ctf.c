@@ -496,13 +496,13 @@ void CTF_flagthink (edict_t *self)
 	//3.0 allow anyone to pick up the flag
 	if (self->owner) self->owner = NULL;
 
-	if (!self->other && !VectorLength(self->velocity))
+	if (!self->flaglaser && !VectorLength(self->velocity))
 	{
 		VectorCopy(self->s.origin, end);
 		end[2] += 8192;
 		tr = gi.trace (self->s.origin, NULL, NULL, end, self, MASK_SOLID);
 		VectorCopy(tr.endpos, end);
-		self->other = CTF_spawnlaser(self, self->s.origin, end);
+		self->flaglaser = CTF_spawnlaser(self, self->s.origin, end);
 	}
 	self->s.effects = 0;
 	self->s.effects |= (EF_ROTATE|EF_COLOR_SHELL);

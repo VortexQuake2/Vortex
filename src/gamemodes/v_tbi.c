@@ -82,7 +82,7 @@ void TBI_SpawnPlayers()
 			{
 				if (tbi_game.EntRedSpawns[CurrentRedSpawn] != NULL) // we got a valid spawn point
 				{
-					cl_ent->spawn = tbi_game.EntRedSpawns[CurrentRedSpawn];
+					cl_ent->client->spawn = tbi_game.EntRedSpawns[CurrentRedSpawn];
 					CurrentRedSpawn++;
 
 					if (CurrentRedSpawn == tbi_game.TotalRedSpawns) // we're out of spawns then huh
@@ -92,7 +92,7 @@ void TBI_SpawnPlayers()
 			{
 				if (tbi_game.EntBlueSpawns[CurrentBlueSpawn] != NULL)
 				{
-					cl_ent->spawn = tbi_game.EntBlueSpawns[CurrentBlueSpawn];
+					cl_ent->client->spawn = tbi_game.EntBlueSpawns[CurrentBlueSpawn];
 					CurrentBlueSpawn++;
 
 					if (CurrentBlueSpawn == tbi_game.TotalBlueSpawns)
@@ -144,10 +144,10 @@ edict_t* TBI_FindSpawn(edict_t *ent)
 		TBI_AssignTeam(ent);
 	}
 
-	if (ent->spawn)
+	if (ent->client->spawn)
 	{
-		edict_t* spawn = ent->spawn;
-		ent->spawn = NULL;
+		edict_t* spawn = ent->client->spawn;
+		ent->client->spawn = NULL;
 		return spawn;
 	}
 	

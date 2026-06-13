@@ -58,7 +58,6 @@ void ai_eval_targets() {
             continue;
         from->monsterinfo.target_index = potential_target_count;
         potential_targets[potential_target_count++] = from;
-        from->monsterinfo.last_target_scanner = NULL; // forget who last looked at this ent
     }
 
     /*
@@ -113,37 +112,31 @@ edict_t *findclosestradius_targets(edict_t *prev_ed, edict_t *self, float rad) {
         prev_rad = rad + 1;
     }
     float found_rad = 0;
+    const auto start = prev_ed ? prev_ed->monsterinfo.target_index : -1;
 
-    for (int i = 0; i < potential_target_count; i++) {
+    for (int i = start + 1; i < potential_target_count; i++) {
         edict_t *from = potential_targets[i];
         const float vlen = potential_target_distances[self->monsterinfo.target_index][i];
 
         if (level.time > from->detected_time && vlen > rad) // found edict is outside scanning radius
             continue;
-        if ((vlen < prev_rad) && (prev_ed)) // found edict is closer than the previously returned edict
+        if (vlen < prev_rad && prev_ed) // found edict is closer than the previously returned edict
             continue; // thus this edict must have been returned in an earlier call
-        if ((vlen == prev_rad) && (!prev_found)) // several edicts may be at the same range
+        if (vlen == prev_rad && !prev_found) // several edicts may be at the same range
             continue; // from the center of scan, so if the current edict is "in front of"
         if (from == prev_ed) // the previously returned one, it must have been returned
             prev_found = true; // in an earlier call
-
-        // az: we already looked at this ent (not sure why this could end in an infinite loop without this check...)
-        if (from->monsterinfo.last_target_scanner == self)
-            continue;
 
         // az: lol
         if (from == self)
             continue;
 
-        if ((!found) || (vlen <= found_rad)) {
+        if (!found || vlen < found_rad) {
             //gi.dprintf("findclosestradius() found %s %s @ %.0f\n", from->classname, V_GetMonsterName(from), vlen);
             found = from;
             found_rad = vlen;
         }
     }
-
-    if (found)
-        found->monsterinfo.last_target_scanner = self;
 
     return found;
 }
