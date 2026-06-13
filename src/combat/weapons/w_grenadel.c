@@ -11,16 +11,16 @@ void weapon_grenadelauncher_fire(edict_t* ent) {
 
     int damage = (int)(GRENADELAUNCHER_INITIAL_DAMAGE +
     GRENADELAUNCHER_ADDON_DAMAGE *
-    ent->myskills.weapons[WEAPON_GRENADELAUNCHER].mods[0].current_level);
+    ent->client->resp.pstats.weapons[WEAPON_GRENADELAUNCHER].mods[0].current_level);
     const float radius = (float)(GRENADELAUNCHER_INITIAL_RADIUS +
     GRENADELAUNCHER_ADDON_RADIUS *
-    ent->myskills.weapons[WEAPON_GRENADELAUNCHER].mods[1].current_level);
+    ent->client->resp.pstats.weapons[WEAPON_GRENADELAUNCHER].mods[1].current_level);
     const int speed = (int)(GRENADELAUNCHER_INITIAL_SPEED +
     (GRENADELAUNCHER_ADDON_SPEED *
-    ent->myskills.weapons[WEAPON_GRENADELAUNCHER].mods[2].current_level));
+    ent->client->resp.pstats.weapons[WEAPON_GRENADELAUNCHER].mods[2].current_level));
     const int radius_damage = (int)(GRENADELAUNCHER_INITIAL_RADIUS_DAMAGE +
     GRENADELAUNCHER_ADDON_RADIUS_DAMAGE *
-    ent->myskills.weapons[WEAPON_GRENADELAUNCHER].mods[0].current_level);
+    ent->client->resp.pstats.weapons[WEAPON_GRENADELAUNCHER].mods[0].current_level);
 
     if (is_quad)
         damage *= 4;
@@ -49,7 +49,7 @@ void weapon_grenadelauncher_fire(edict_t* ent) {
             ent->max_pipes++;
     }
 
-    if (ent->myskills.weapons[WEAPON_GRENADELAUNCHER].mods[4].current_level < 1) {
+    if (ent->client->resp.pstats.weapons[WEAPON_GRENADELAUNCHER].mods[4].current_level < 1) {
         gi.WriteByte(svc_muzzleflash);
         gi.WriteShort(ent - g_edicts);
         gi.WriteByte(MZ_GRENADE | is_silenced);
@@ -60,7 +60,7 @@ void weapon_grenadelauncher_fire(edict_t* ent) {
     ent->client->ps.gunframe++;
 
     //K03 Begin
-    if (ent->myskills.weapons[WEAPON_GRENADELAUNCHER].mods[4].current_level < 1)
+    if (ent->client->resp.pstats.weapons[WEAPON_GRENADELAUNCHER].mods[4].current_level < 1)
         PlayerNoise(ent, start, PNOISE_WEAPON);
     //K03 End
 }

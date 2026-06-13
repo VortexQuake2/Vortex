@@ -82,6 +82,26 @@ void nodearena_reset(struct nodearena_s* arena) {
     arena->count = 0;
 }
 
+node_t* nodearena_get(struct nodearena_s* arena, nodeid_t node) {
+    if (arena->count <= node) {
+        return nullptr;
+    }
+
+    return arena->nodes + node;
+}
+
+nodeid_t nodearena_indexof(struct nodearena_s* arena, node_t* node) {
+    if (!node)
+        return NODEID_MAX;
+
+    const auto id = node - arena->nodes;
+    if (id > arena->capacity || node < arena->nodes)
+        return NODEID_MAX;
+
+    return id;
+}
+
+
 void gridkdtree_free(struct gridkdtree_s** tree) {
     if (!*tree) return;
     free(*tree);
@@ -118,9 +138,9 @@ struct kdtree_node_s* gkdt_alloc_node(struct gridkdtree_s* tree) {
     return nullptr;
 }
 
-struct kdtree_node_s* kdtree_build(struct kdtbuildctx_s *ctx, const size_t dim) {
+uint16_t kdtree_build(struct kdtbuildctx_s *ctx, const size_t dim) {
     if (ctx->slicesize == 0)
-        return nullptr;
+        return UINT16_MAX;
 
     cmpstr.srcdata = ctx->tree->srcdata;
     cmpstr.dim = dim;
@@ -128,7 +148,7 @@ struct kdtree_node_s* kdtree_build(struct kdtbuildctx_s *ctx, const size_t dim) 
 
     // size 10 -> 5 (0-5, 6-10)
     // size 9 -> 4 (0-4, 5-9)
-    auto _node = gkdt_alloc_node(ctx->tree);
+    const auto _node = gkdt_alloc_node(ctx->tree);
     const size_t mid = (ctx->slicesize - 1) / 2;
     _node->nodenum = ctx->sortedx[mid] ;
 
@@ -143,7 +163,7 @@ struct kdtree_node_s* kdtree_build(struct kdtbuildctx_s *ctx, const size_t dim) 
         ctx->slicesize - mid - 1
     }, _dim);
 
-    return _node;
+    return _node - ctx->tree->nodes;
 }
 
 size_t nextPowerOfTwo(size_t n) {
@@ -177,16 +197,16 @@ struct gridkdtree_s* gridkdtree_create(vec3_t* srcdata, const size_t count) {
         sortedx[i] = i;
 
     for (size_t i = 0; i < capacity; i++) {
-        tree->nodes[i].nodenum = SIZE_MAX;
-        tree->nodes[i].left = nullptr;
-        tree->nodes[i].right = nullptr;
+        tree->nodes[i].nodenum = NODEID_MAX;
+        tree->nodes[i].left = UINT16_MAX;
+        tree->nodes[i].right = UINT16_MAX;
     }
 
     tree->srcdata = srcdata;
     tree->nodecount = 0;
     tree->capacity = capacity;
 
-    tree->root = kdtree_build(&(struct kdtbuildctx_s){
+    kdtree_build(&(struct kdtbuildctx_s){
         tree, sortedx, count
     }, 0);
 
@@ -196,8 +216,8 @@ struct gridkdtree_s* gridkdtree_create(vec3_t* srcdata, const size_t count) {
 
 
 void kdtree_query(
-    struct gridkdtree_s* tree,
-    vec3_t querypos,
+    const struct gridkdtree_s* tree,
+    const vec3_t querypos,
     const struct kdtree_node_s* node,
     const size_t dim,
     size_t *best,
@@ -207,7 +227,7 @@ void kdtree_query(
     if (node == nullptr)
         return;
 
-    if (node->nodenum == SIZE_MAX)
+    if (node->nodenum == NODEID_MAX)
         return;
 
     const double dist = distanceSqr(querypos, tree->srcdata[node->nodenum]);
@@ -223,23 +243,25 @@ void kdtree_query(
     const auto near = sdist < 0 ? node->left : node->right;
     const auto far = sdist < 0 ? node->right : node->left;
     const size_t ndim = (dim + 1) % 3;
+    const auto pnear = near != UINT16_MAX ? &tree->nodes[near] : nullptr;
+    const auto pfar = far != UINT16_MAX ? &tree->nodes[far] : nullptr;
 
     kdtree_query(
         tree, querypos,
-        near, ndim, best, bestdist);
+        pnear, ndim, best, bestdist);
 
     if (sdist * sdist < *bestdist) {
         // check other subtree
         kdtree_query(
             tree, querypos,
-            far, ndim, best, bestdist);
+            pfar, ndim, best, bestdist);
     }
 };
 
-size_t gridkdtree_query(struct gridkdtree_s* tree, vec3_t querypos) {
+size_t gridkdtree_query(const struct gridkdtree_s* tree, const vec3_t querypos) {
     size_t best = SIZE_MAX;
     double bestdist = INFINITY;
-    kdtree_query(tree, querypos, tree->root, 0, &best, &bestdist);
+    kdtree_query(tree, querypos, &tree->nodes[0], 0, &best, &bestdist);
     return best;
 }
 
@@ -268,7 +290,7 @@ void gheap_free(struct gheap_s** heap) {
 }
 
 static void hswap(struct gheap_entry_s *a, struct gheap_entry_s *b) {
-    struct gheap_entry_s tmp = *a;
+    const struct gheap_entry_s tmp = *a;
     *a = *b;
     *b = tmp;
 }
@@ -349,6 +371,6 @@ void gheap_reset(struct gheap_s* heap) {
 }
 
 void* gheap_pop(struct gheap_s* heap) {
-    auto ret = gheap_pop_inner(heap).data;
+    const auto ret = gheap_pop_inner(heap).data;
     return ret;
 }

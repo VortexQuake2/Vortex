@@ -11,12 +11,12 @@
 void weapon_trap_fire(edict_t *ent, qboolean held)
 {
     vec3_t offset, forward, right, start, angles;
-    int damage = 125 + 4 * ent->myskills.weapons[WEAPON_TRAP].mods[0].current_level;
+    int damage = 125 + 4 * ent->client->resp.pstats.weapons[WEAPON_TRAP].mods[0].current_level;
     float timer;
     int speed;
     int min_speed;
     int max_speed;
-    float radius = damage + 40 + 2 * ent->myskills.weapons[WEAPON_TRAP].mods[1].current_level;
+    float radius = damage + 40 + 2 * ent->client->resp.pstats.weapons[WEAPON_TRAP].mods[1].current_level;
 
     if (is_quad)
         damage *= 4;
@@ -33,8 +33,8 @@ void weapon_trap_fire(edict_t *ent, qboolean held)
     if (timer < 0)
         timer = 0;
 
-    min_speed = TRAP_MINSPEED + 10 * ent->myskills.weapons[WEAPON_TRAP].mods[2].current_level;
-    max_speed = TRAP_MAXSPEED + 10 * ent->myskills.weapons[WEAPON_TRAP].mods[2].current_level;
+    min_speed = TRAP_MINSPEED + 10 * ent->client->resp.pstats.weapons[WEAPON_TRAP].mods[2].current_level;
+    max_speed = TRAP_MAXSPEED + 10 * ent->client->resp.pstats.weapons[WEAPON_TRAP].mods[2].current_level;
 
     if (ent->health <= 0)
         speed = min_speed;

@@ -331,7 +331,7 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 	qboolean	ff;
 
 	//JABot [start]
-	//	if (self->ai.is_bot){
+	//	if (self->ai){
 	//		AI_BotObituary (self, inflictor, attacker);
 	//		return;
 	//	} //[end]
@@ -1011,7 +1011,7 @@ void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 		self->client->ps.pmove.pm_type = PM_DEAD;
 		ClientObituary (self, inflictor, attacker);
 		//TossClientWeapon (self);
-		if (deathmatch->value && !self->ai.is_bot) // GHz: don't send unicast packets to bots!
+		if (deathmatch->value && !self->ai) // GHz: don't send unicast packets to bots!
 			Cmd_Help_f (self);		// show scores
 		// clear inventory
 		memset(self->client->pers.inventory, 0, sizeof(self->client->pers.inventory));
@@ -1704,7 +1704,7 @@ void respawn (edict_t *self)
 		}
 
 		//JABot[start]
-		if (self->ai.is_bot) {
+		if (self->ai) {
 			BOT_Respawn(self);
 			return;
 		}
@@ -2017,7 +2017,7 @@ void PutClientInServer (edict_t *ent)
 	VectorCopy (ent->s.angles, client->v_angle);
 
 	//JABot[start]
-	if( ent->ai.is_bot == true )
+	if( ent->ai == true )
 		return;
 	//JABot[end]
 
@@ -2144,7 +2144,7 @@ void ClientBegin (edict_t *ent)
 
 	ent->client = game.clients + (ent - g_edicts - 1);
 
-	// if (!ent->ai.is_bot)
+	// if (!ent->ai)
 	// {
 	// 	//[QBS]
 	// 	// set msg mode fully on so zbot would receive text & crash :)
@@ -2412,7 +2412,6 @@ bool ClientConnect (edict_t *ent, char *userinfo, const char* social_id, bool is
 
 	ent->svflags = 0;// make sure we start with known default
 	ent->client->pers.connected = true;
-	ent->ai.is_bot = false;
 
 	ent->gds.connection_id = lastID;
 	ent->gds.connection_load_id = 0;
@@ -2534,6 +2533,11 @@ void ClientDisconnect (edict_t *ent)
 
 	playernum = ent-g_edicts-1;
 	gi.configstring (CS_PLAYERSKINS+playernum, "");
+
+	if (ent->ai) {
+		vrx_free(ent->ai);
+		ent->ai = nullptr;
+	}
 
 	//JABot[start]
 	AI_EnemyRemoved (ent);
@@ -3039,15 +3043,15 @@ void ClientBeginServerFrame (edict_t *ent)
 		int i;
         for(i = 0; i < MAX_CLIENTS; ++i)
 		{
-			if (!ent->myskills.mutelist[i].player || ent->myskills.mutelist[i].time < 1)
+			if (!ent->client->mutelist[i].player || ent->client->mutelist[i].time < 1)
 				continue;
-			ent->myskills.mutelist[i].time -= 1;
-			if (ent->myskills.mutelist[i].time < 1)
-				ent->myskills.mutelist[i].player = NULL;
+			ent->client->mutelist[i].time -= 1;
+			if (ent->client->mutelist[i].time < 1)
+				ent->client->mutelist[i].player = NULL;
 
 		}
 		//3.0 end
-		ent->myskills.playingtime++;		
+		ent->client->resp.pstats.playingtime++;
 	}
 
 	// idle frame counter

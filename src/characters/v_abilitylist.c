@@ -578,7 +578,7 @@ void vrx_normalize_abilities(edict_t *ent) {
     // re-apply equipment
     vrx_runes_unapply(ent);
     for (i = 0; i < 3; ++i)
-        vrx_runes_apply(ent, &ent->myskills.items[i]);
+        vrx_runes_apply(ent, &ent->client->resp.pstats.items[i]);
 
     /*safe_cprintf(ent, PRINT_HIGH, "Your abilities have been updated.\n");	*/
 

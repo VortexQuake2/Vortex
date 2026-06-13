@@ -9,13 +9,12 @@
 #define TYPE_ABILITY		2
 #define TYPE_HIDDEN			4
 
-typedef struct imodifier_s
-{
-	int type;		//see above
-	int index;		//Tells us which weapon or ability it is..
-	int value;
-	int set;		//how many set items needed to see this modifier
-}imodifier_t;
+typedef struct imodifier_s {
+    int32_t index; //Tells us which weapon or ability it is..
+    uint8_t type; //see above
+    int8_t value;
+    uint8_t set; //how many set items needed to see this modifier
+} imodifier_t;
 
 #define ITEM_NONE			0
 #define ITEM_WEAPON			1
@@ -32,20 +31,20 @@ typedef struct imodifier_s
 
 #define RUNE_POINTS_PER_LEVEL	1.5	//A player can equip the item its itemLevel / this value is less than their level. ex: A lvl 10 player can equip a 25 pt rune.
 
-typedef struct item_s
-{
-	int				itemtype;		//See defined item types
-	int				itemLevel;		//lvl required to equip the item
-	int				quantity;		//1 for runes, > 1 for other items
-	int				untradeable;	//Can this item be traded to someone else?
-    char			id[16];			//item's id string
-	char			name[24];		//custom name for the item
-	int				numMods;		//number of modifiers
-	int				setCode;		//Used for set items
-	int				classNum;		//Used for class-specific runes
-	imodifier_t		modifiers[MAX_VRXITEMMODS];	//Up to 6 seperate mods
-	qboolean        isUnique;
-}item_t;
+
+typedef struct item_s {
+    char id[16]; //item's id string
+    char name[24]; //custom name for the item
+    uint16_t setCode; //Used for set items
+    uint16_t itemtype; //See defined item types
+    uint16_t itemLevel; //lvl required to equip the item
+    uint16_t quantity; //1 for runes, > 1 for other items
+    imodifier_t modifiers[MAX_VRXITEMMODS]; //Up to 6 seperate mods
+    uint8_t numMods; //number of modifiers
+    uint8_t classNum; //Used for class-specific runes
+    bool isUnique;
+    bool untradeable; //Can this item be traded to someone else?
+} item_t;
 
 // 1 every 500 monsters
 #define RUNE_SPAWN_MONSTER		0.01	// (0.01 = 1% per frag) base chance of a rune spawning, before level modifiers
@@ -64,9 +63,13 @@ typedef struct item_s
 #define CHANCE_UNIQUE			5		// 1.0%
 
 int V_ItemCount(edict_t *ent, int itemType);
+
 void vrx_spawn_normal_rune(edict_t *rune, int targ_level, int type);
+
 void vrx_spawn_combo_rune(edict_t *rune, int targ_level);
+
 void vrx_spawn_class_rune(edict_t *rune, int targ_level);
+
 qboolean vrx_spawn_unique_rune(edict_t *rune, int index);
 
 

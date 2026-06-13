@@ -261,7 +261,8 @@ void layout_clean_tracked_entity_list(layout_t* layout)
 	qboolean cleaned = false;
 	for (int i = 0; i < layout->tracked_count; i++)
 	{
-		if (!layout->tracked_list[i]->inuse || (layout->tracked_list[i]->deadflag != DEAD_NO && !(layout->tracked_list[i]->flags & FL_UNDEAD)))
+		if (!layout->tracked_list[i]->inuse ||
+			(layout->tracked_list[i]->deadflag != DEAD_NO && !(layout->tracked_list[i]->flags & FL_UNDEAD)))
 		{
 			layout->tracked_list[i] = layout->tracked_list[--layout->tracked_count];
 			i--; // continue with this entity
@@ -493,6 +494,9 @@ void layout_generate_entities(const layout_t* layout, sidebar_t* sidebar)
 	for (int i = 0; i < layout->tracked_count; i++)
 	{
 		//gi.dprintf("DEBUG: Generating layout for tracked entity %s (mtype %d)\n", layout->tracked_list[i]->classname, layout->tracked_list[i]->mtype);
+		if (!layout->tracked_list[i]->inuse)
+			continue;
+
 		const sidebar_entry_t res = layout_add_entity_info(sidebar, layout->tracked_list[i]);
 		sidebar_add_entry(sidebar, res);
 	}
@@ -786,7 +790,7 @@ void layout_send(edict_t* ent)
 	if (!ent->client)
 		return;
 
-	if (ent->ai.is_bot)
+	if (ent->ai)
 		return;
 
 #ifndef VRX_REPRO

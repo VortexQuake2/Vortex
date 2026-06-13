@@ -52,9 +52,9 @@ void Cmd_Stash_f(edict_t* ent)
 void vrx_stash_store(edict_t* ent, int itemindex)
 {
 	if (itemindex < 0 || itemindex >= MAX_VRXITEMS) return;
-	if (ent->myskills.items[itemindex].itemtype == ITEM_NONE) return;
+	if (ent->client->resp.pstats.items[itemindex].itemtype == ITEM_NONE) return;
 
-	item_t* item = &ent->myskills.items[itemindex];
+	item_t* item = &ent->client->resp.pstats.items[itemindex];
 	if (vrx_stash_io.store(ent, item)) {
 		memset(item, 0, sizeof(item_t));
 	}
@@ -213,8 +213,8 @@ void vrx_stash_open_page(edict_t* ent, item_t* page, int item_count, int page_in
 
     auto name = ent->client->pers.netname;
 
-    if (strlen(ent->myskills.owner)) {
-	    name = ent->myskills.owner;
+    if (strlen(ent->client->resp.pstats.owner)) {
+	    name = ent->client->resp.pstats.owner;
     }
 	menu_add_line(ent, va("%s's stash (Page %d)", name, page_index + 1), MENU_GREEN_CENTERED);
 	menu_add_line(ent, "", 0);

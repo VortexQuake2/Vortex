@@ -120,97 +120,104 @@ void msgpack_pack_prestigelist(msgpack_packer* pk, const prestigelist_t* pre) {
     }
 }
 
-void msgpack_pack_skills(msgpack_packer* pk, const skills_t* skills, int connection_id) {
+void msgpack_pack_skills(msgpack_packer* pk, const playertransfer_t* transfer, int connection_id) {
+    auto sk = transfer->skills;
+    auto pst = transfer->stats;
+
     msgpack_pack_array(pk, 17);
 
     // Progression
     msgpack_pack_array(pk, 15);
     {
-        msgpack_pack_long(pk, skills->experience);
-        msgpack_pack_long(pk, skills->next_level);
-        msgpack_pack_int(pk, skills->administrator);
-        msgpack_pack_int(pk, skills->level);
-        msgpack_pack_int(pk, skills->speciality_points);
-        msgpack_pack_int(pk, skills->weapon_points);
-        msgpack_pack_int(pk, skills->respawn_weapon);
-        msgpack_pack_int(pk, skills->class_num);
-        msgpack_pack_int(pk, skills->boss);
-        msgpack_pack_int(pk, skills->current_health);
-        msgpack_pack_int(pk, skills->max_health);
-        msgpack_pack_int(pk, skills->current_armor);
-        msgpack_pack_int(pk, skills->max_armor);
-        msgpack_pack_uint64(pk, skills->credits);
-        msgpack_pack_uint64(pk, skills->weapon_respawns);
+        msgpack_pack_long(pk, sk->experience);
+        msgpack_pack_long(pk, sk->next_level);
+        msgpack_pack_int(pk, sk->administrator);
+        msgpack_pack_int(pk, sk->level);
+        msgpack_pack_int(pk, sk->speciality_points);
+        msgpack_pack_int(pk, sk->weapon_points);
+        msgpack_pack_int(pk, sk->respawn_weapon);
+        msgpack_pack_int(pk, sk->class_num);
+        msgpack_pack_int(pk, sk->boss);
+        // msgpack_pack_int(pk, skills->current_health);
+        // msgpack_pack_int(pk, skills->max_health);
+        // msgpack_pack_int(pk, skills->current_armor);
+        // msgpack_pack_int(pk, skills->max_armor);
+         msgpack_pack_int(pk, 0);
+         msgpack_pack_int(pk, 0);
+         msgpack_pack_int(pk, 0);
+         msgpack_pack_int(pk, 0);
+        msgpack_pack_uint64(pk, sk->credits);
+        msgpack_pack_uint64(pk, sk->weapon_respawns);
     }
 
     // Stats
     msgpack_pack_array(pk, 21);
     {
-        msgpack_pack_int(pk, skills->max_streak);
-        msgpack_pack_uint64(pk, skills->frags);
-        msgpack_pack_uint64(pk, skills->fragged);
-        msgpack_pack_uint64(pk, skills->shots);
-        msgpack_pack_uint64(pk, skills->shots_hit);
-        msgpack_pack_uint64(pk, skills->num_sprees);
-        msgpack_pack_uint32(pk, skills->suicides);
-        msgpack_pack_uint32(pk, skills->teleports);
-        msgpack_pack_uint32(pk, skills->spree_wars);
-        msgpack_pack_uint32(pk, skills->break_sprees);
-        msgpack_pack_uint32(pk, skills->break_spree_wars);
-        msgpack_pack_uint32(pk, skills->num_2fers);
-        msgpack_pack_uint32(pk, skills->flag_pickups); // ctf
-        msgpack_pack_uint32(pk, skills->flag_captures);
-        msgpack_pack_uint32(pk, skills->flag_returns);
-        msgpack_pack_uint32(pk, skills->flag_kills);
-        msgpack_pack_uint32(pk, skills->offense_kills);
-        msgpack_pack_uint32(pk, skills->defense_kills);
-        msgpack_pack_uint32(pk, skills->assists);
-        msgpack_pack_uint32(pk, skills->playingtime);
-        msgpack_pack_uint32(pk, skills->total_playtime);
+        msgpack_pack_int(pk, pst->max_streak);
+        msgpack_pack_uint64(pk, pst->frags);
+        msgpack_pack_uint64(pk, pst->fragged);
+        msgpack_pack_uint64(pk, pst->shots);
+        msgpack_pack_uint64(pk, pst->shots_hit);
+        msgpack_pack_uint64(pk, pst->num_sprees);
+        msgpack_pack_uint32(pk, pst->suicides);
+        msgpack_pack_uint32(pk, pst->teleports);
+        msgpack_pack_uint32(pk, pst->spree_wars);
+        msgpack_pack_uint32(pk, pst->break_sprees);
+        msgpack_pack_uint32(pk, pst->break_spree_wars);
+        msgpack_pack_uint32(pk, pst->num_2fers);
+        msgpack_pack_uint32(pk, pst->flag_pickups); // ctf
+        msgpack_pack_uint32(pk, pst->flag_captures);
+        msgpack_pack_uint32(pk, pst->flag_returns);
+        msgpack_pack_uint32(pk, pst->flag_kills);
+        msgpack_pack_uint32(pk, pst->offense_kills);
+        msgpack_pack_uint32(pk, pst->defense_kills);
+        msgpack_pack_uint32(pk, pst->assists);
+        msgpack_pack_uint32(pk, pst->playingtime);
+        msgpack_pack_uint32(pk, pst->total_playtime);
     }
 
     msgpack_pack_array(pk, MAX_ITEMS);
     for (int i = 0; i < MAX_ITEMS; i++) {
-        msgpack_pack_int(pk, skills->inventory[i]);
+        msgpack_pack_int(pk, pst->inventory[i]);
     }
 
-    PACK_STR(pk, skills->password);
-    PACK_STR(pk, skills->member_since);
-    PACK_STR(pk, skills->last_played);
-    PACK_STR(pk, skills->player_name);
+    PACK_STR(pk, pst->password);
+    PACK_STR(pk, pst->member_since);
+    PACK_STR(pk, pst->last_played);
+    PACK_STR(pk, pst->player_name);
     // empty owners must be passed as nil
-    if (strlen(skills->owner) > 0) {
-        PACK_STR(pk, skills->owner);
+    if (strlen(pst->owner) > 0) {
+        PACK_STR(pk, pst->owner);
     } else {
         msgpack_pack_nil(pk);
     }
-    PACK_STR(pk, skills->masterpw);
-    PACK_STR(pk, skills->title);
+    PACK_STR(pk, pst->masterpw);
+    PACK_STR(pk, pst->title);
 
-    msgpack_pack_int(pk, skills->nerfme);
+    msgpack_pack_int(pk, sk->nerfme);
     msgpack_pack_int(pk, connection_id);
 
     msgpack_pack_array(pk, MAX_VRXITEMS);
     for (size_t i = 0; i < MAX_VRXITEMS; i++) {
-        msgpack_pack_item(pk, &skills->items[i]);
+        msgpack_pack_item(pk, &pst->items[i]);
     }
 
     msgpack_pack_array(pk, MAX_WEAPONS);
     for (size_t i = 0; i < MAX_WEAPONS; i++) {
-        msgpack_pack_weapon(pk, &skills->weapons[i]);
+        msgpack_pack_weapon(pk, &pst->weapons[i]);
     }
 
-    int numAbilities = CountAbilities(skills);
+    int numAbilities = CountAbilities(sk);
     msgpack_pack_array(pk, numAbilities);
     for (size_t i = 0; i < numAbilities; i++) {
-        int index = FindAbilityIndex(i + 1, skills);
+        int index = FindAbilityIndex(i + 1, sk);
         if (index == -1)
             continue;
-        msgpack_pack_upgrade(pk, &skills->abilities[i], index);
+        msgpack_pack_upgrade(pk, &sk->abilities[i], index);
     }
 
-    msgpack_pack_talentlist(pk, &skills->talents);
-    msgpack_pack_prestigelist(pk, &skills->prestige);
+    msgpack_pack_talentlist(pk, &sk->talents);
+    msgpack_pack_prestigelist(pk, &sk->prestige);
 }
 
 // Deserialization helpers
@@ -381,7 +388,9 @@ qboolean msgpack_unpack_prestigelist(msgpack_object* obj, prestigelist_t* pre) {
     return true;
 }
 
-qboolean msgpack_unpack_skills(msgpack_object* obj, skills_t* skills) {
+qboolean msgpack_unpack_skills(msgpack_object* obj, playertransfer_t* transfer) {
+    auto skills = transfer->skills;
+    auto pst = transfer->stats;
     UNPACK_ARRAY(obj, 17);
     msgpack_object* p = obj->via.array.ptr;
 
@@ -398,10 +407,10 @@ qboolean msgpack_unpack_skills(msgpack_object* obj, skills_t* skills) {
         UNPACK_INT((&prog[6]), skills->respawn_weapon);
         UNPACK_INT((&prog[7]), skills->class_num);
         UNPACK_INT((&prog[8]), skills->boss);
-        UNPACK_INT((&prog[9]), skills->current_health);
-        UNPACK_INT((&prog[10]), skills->max_health);
-        UNPACK_INT((&prog[11]), skills->current_armor);
-        UNPACK_INT((&prog[12]), skills->max_armor);
+        // UNPACK_INT((&prog[9]), skills->current_health);
+        // UNPACK_INT((&prog[10]), skills->max_health);
+        // UNPACK_INT((&prog[11]), skills->current_armor);
+        // UNPACK_INT((&prog[12]), skills->max_armor);
         UNPACK_UINT((&prog[13]), skills->credits);
         UNPACK_UINT((&prog[14]), skills->weapon_respawns);
     }
@@ -410,49 +419,49 @@ qboolean msgpack_unpack_skills(msgpack_object* obj, skills_t* skills) {
     UNPACK_ARRAY((&p[1]), 21);
     {
         const msgpack_object* stats = p[1].via.array.ptr;
-        UNPACK_INT((&stats[0]), skills->max_streak);
-        UNPACK_UINT((&stats[1]), skills->frags);
-        UNPACK_UINT((&stats[2]), skills->fragged);
-        UNPACK_ULONG((&stats[3]), skills->shots);
-        UNPACK_ULONG((&stats[4]), skills->shots_hit);
-        UNPACK_UINT((&stats[5]), skills->num_sprees);
-        UNPACK_UINT((&stats[6]), skills->suicides);
-        UNPACK_UINT((&stats[7]), skills->teleports);
-        UNPACK_UINT((&stats[8]), skills->spree_wars);
-        UNPACK_UINT((&stats[9]), skills->break_sprees);
-        UNPACK_UINT((&stats[10]), skills->break_spree_wars);
-        UNPACK_UINT((&stats[11]), skills->num_2fers);
-        UNPACK_UINT((&stats[12]), skills->flag_pickups);
-        UNPACK_UINT((&stats[13]), skills->flag_captures);
-        UNPACK_UINT((&stats[14]), skills->flag_returns);
-        UNPACK_UINT((&stats[15]), skills->flag_kills);
-        UNPACK_UINT((&stats[16]), skills->offense_kills);
-        UNPACK_UINT((&stats[17]), skills->defense_kills);
-        UNPACK_UINT((&stats[18]), skills->assists);
-        UNPACK_UINT((&stats[19]), skills->playingtime);
-        UNPACK_UINT((&stats[20]), skills->total_playtime);
+        UNPACK_INT((&stats[0]), pst->max_streak);
+        UNPACK_UINT((&stats[1]), pst->frags);
+        UNPACK_UINT((&stats[2]), pst->fragged);
+        UNPACK_ULONG((&stats[3]), pst->shots);
+        UNPACK_ULONG((&stats[4]), pst->shots_hit);
+        UNPACK_UINT((&stats[5]), pst->num_sprees);
+        UNPACK_UINT((&stats[6]), pst->suicides);
+        UNPACK_UINT((&stats[7]), pst->teleports);
+        UNPACK_UINT((&stats[8]), pst->spree_wars);
+        UNPACK_UINT((&stats[9]), pst->break_sprees);
+        UNPACK_UINT((&stats[10]), pst->break_spree_wars);
+        UNPACK_UINT((&stats[11]), pst->num_2fers);
+        UNPACK_UINT((&stats[12]), pst->flag_pickups);
+        UNPACK_UINT((&stats[13]), pst->flag_captures);
+        UNPACK_UINT((&stats[14]), pst->flag_returns);
+        UNPACK_UINT((&stats[15]), pst->flag_kills);
+        UNPACK_UINT((&stats[16]), pst->offense_kills);
+        UNPACK_UINT((&stats[17]), pst->defense_kills);
+        UNPACK_UINT((&stats[18]), pst->assists);
+        UNPACK_UINT((&stats[19]), pst->playingtime);
+        UNPACK_UINT((&stats[20]), pst->total_playtime);
     }
 
     UNPACK_ARRAY((&p[2]), MAX_ITEMS);
     for (int i = 0; i < MAX_ITEMS; i++) {
-        UNPACK_INT((&p[2].via.array.ptr[i]), skills->inventory[i]);
+        UNPACK_INT((&p[2].via.array.ptr[i]), pst->inventory[i]);
     }
 
-    UNPACK_STR((&p[3]), skills->password, sizeof skills->password);
-    UNPACK_STR((&p[4]), skills->member_since, sizeof skills->member_since);
-    UNPACK_STR((&p[5]), skills->last_played, sizeof skills->last_played);
-    UNPACK_STR((&p[6]), skills->player_name, sizeof skills->player_name);
+    UNPACK_STR((&p[3]), pst->password, sizeof pst->password);
+    UNPACK_STR((&p[4]), pst->member_since, sizeof pst->member_since);
+    UNPACK_STR((&p[5]), pst->last_played, sizeof pst->last_played);
+    UNPACK_STR((&p[6]), pst->player_name, sizeof pst->player_name);
     if (p[7].type == MSGPACK_OBJECT_NIL) {
-        memset(skills->owner, 0, sizeof skills->owner);
+        memset(pst->owner, 0, sizeof pst->owner);
     } else {
-        UNPACK_STR((&p[7]), skills->owner, sizeof skills->owner);
+        UNPACK_STR((&p[7]), pst->owner, sizeof pst->owner);
     }
     if (p[8].type == MSGPACK_OBJECT_NIL) {
-        memset(skills->masterpw, 0, sizeof skills->masterpw);
+        memset(pst->masterpw, 0, sizeof pst->masterpw);
     } else {
-        UNPACK_STR((&p[8]), skills->masterpw, sizeof skills->masterpw);
+        UNPACK_STR((&p[8]), pst->masterpw, sizeof pst->masterpw);
     }
-    UNPACK_STR((&p[9]), skills->title, sizeof skills->title);
+    UNPACK_STR((&p[9]), pst->title, sizeof pst->title);
 
     UNPACK_INT((&p[10]), skills->nerfme);
 
@@ -461,7 +470,7 @@ qboolean msgpack_unpack_skills(msgpack_object* obj, skills_t* skills) {
 
     UNPACK_ARRAY((&p[12]), MAX_VRXITEMS);
     for (int i = 0; i < MAX_VRXITEMS; i++) {
-        if (!msgpack_unpack_item(&p[12].via.array.ptr[i], &skills->items[i])) return false;
+        if (!msgpack_unpack_item(&p[12].via.array.ptr[i], &pst->items[i])) return false;
     }
 
     if (p[13].type != MSGPACK_OBJECT_ARRAY) return false;
@@ -473,10 +482,10 @@ qboolean msgpack_unpack_skills(msgpack_object* obj, skills_t* skills) {
     for (int i = 0; i < MAX_WEAPONS; i++) {
         // we added a weapon?
         if (i >= p[13].via.array.size) {
-            memset(&skills->weapons[i], 0, sizeof(skills->weapons[i]));
+            memset(&pst->weapons[i], 0, sizeof(pst->weapons[i]));
             continue;
         }
-        if (!msgpack_unpack_weapon(&p[13].via.array.ptr[i], &skills->weapons[i])) return false;
+        if (!msgpack_unpack_weapon(&p[13].via.array.ptr[i], &pst->weapons[i])) return false;
     }
 
     if (p[14].type != MSGPACK_OBJECT_ARRAY)
@@ -484,7 +493,7 @@ qboolean msgpack_unpack_skills(msgpack_object* obj, skills_t* skills) {
 
     int abilCount = p[14].via.array.size;
     for (int i = 0; i < abilCount; i++) {
-        if (!msgpack_unpack_upgrade(&p[14].via.array.ptr[i], &skills->abilities))
+        if (!msgpack_unpack_upgrade(&p[14].via.array.ptr[i], skills->abilities))
             return false;
     }
 

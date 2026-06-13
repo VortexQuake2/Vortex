@@ -39,7 +39,7 @@ typedef struct
 	float		inventoryWeights[MAX_ITEMS];
 	float		playersWeights[MAX_EDICTS];
 	float		broam_timeouts[MAX_BOT_ROAMS];	//revisit bot roams
-	
+
 } ai_status_t;
 
 typedef struct
@@ -65,20 +65,21 @@ typedef struct
 	ai_pers_t		pers;			//persistant definition (class?)
 	ai_status_t		status;			//player (bot, NPC) status for AI frame
 
-	qboolean		is_bot;			//used for fakeclient classname determination
 
 	//NPC state
 	int				state;			// Bot State (WANDER, MOVE, etc)
 	float			state_combat_timeout;
 	float			attack_delay;//GHz
 	float			evade_delay;//GHz
+	int				findenemy_framedelay;//az: run enemy checks at 10hz ish
 
-	qboolean		is_swim;
-	qboolean		is_step;
-	qboolean		is_ladder;
-	qboolean		is_bunnyhop;//GHz
-	qboolean		was_swim;
-	qboolean		was_step;
+	bool		is_bot;			//used for fakeclient classname determination
+	bool		is_swim;
+	bool		is_step;
+	bool		is_ladder;
+	bool		is_bunnyhop;//GHz
+	bool		was_swim;
+	bool		was_step;
 
 	// movement
 	vec3_t			move_vector;

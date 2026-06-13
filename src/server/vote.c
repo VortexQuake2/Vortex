@@ -98,7 +98,7 @@ void _vrx_start_vote(edict_t *ent, enum votetype_t vt, void (*success)(void *), 
     currentVote.numVoteNo = 0;
     ent->client->resp.HasVoted = true;
     strcpy(currentVote.ip, ent->client->pers.current_ip);
-    strcpy(currentVote.name, ent->myskills.player_name);
+    strcpy(currentVote.name, ent->client->resp.pstats.player_name);
     currentVote.endframe = level.framenum + qf2sf(900);
     currentVote.running = true;
 
@@ -193,7 +193,7 @@ void vrx_vote_announce(edict_t *ent, const char *msg) {
     char hudText[1024];
     char announceText[1024];
 
-    Com_sprintf(announceText, 1024, "%s started a vote for %s", ent->myskills.player_name, msg);
+    Com_sprintf(announceText, 1024, "%s started a vote for %s", ent->client->resp.pstats.player_name, msg);
     Com_sprintf(hudText, 1024, "vote in progress: %s\n", msg);
 
     gi.configstring(CS_GENERAL + MAX_CLIENTS + 1, hudText);

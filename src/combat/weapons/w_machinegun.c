@@ -13,12 +13,12 @@ void Machinegun_Fire(edict_t* ent) {
     int kick = 2;
     vec3_t offset;
     float damage = MACHINEGUN_INITIAL_DAMAGE +
-    MACHINEGUN_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_MACHINEGUN].mods[0].current_level;
+    MACHINEGUN_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_MACHINEGUN].mods[0].current_level;
     int vspread = DEFAULT_BULLET_VSPREAD;
     int hspread = DEFAULT_BULLET_HSPREAD;
     int shots = 1;
 
-    if (ent->myskills.weapons[WEAPON_MACHINEGUN].mods[4].current_level)
+    if (ent->client->resp.pstats.weapons[WEAPON_MACHINEGUN].mods[4].current_level)
         is_silenced = MZ_SILENCED;
 
     // bullet spread is reduced while in burst mode
@@ -27,7 +27,7 @@ void Machinegun_Fire(edict_t* ent) {
         hspread *= 0.5;
     }
     // bullet spread is reduced when mg is upgraded
-    if (ent->myskills.weapons[WEAPON_MACHINEGUN].mods[3].current_level >= 1) {
+    if (ent->client->resp.pstats.weapons[WEAPON_MACHINEGUN].mods[3].current_level >= 1) {
         vspread *= 0.75;
         hspread *= 0.75;
     }
@@ -85,8 +85,8 @@ void Machinegun_Fire(edict_t* ent) {
     }
     // fire tracers
     if (ent->lasthbshot <= level.time) {
-        if (ent->myskills.weapons[WEAPON_MACHINEGUN].mods[2].current_level >= 1) {
-            damage = MACHINEGUN_ADDON_TRACERDAMAGE * ent->myskills.weapons[WEAPON_MACHINEGUN].mods[2].current_level;
+        if (ent->client->resp.pstats.weapons[WEAPON_MACHINEGUN].mods[2].current_level >= 1) {
+            damage = MACHINEGUN_ADDON_TRACERDAMAGE * ent->client->resp.pstats.weapons[WEAPON_MACHINEGUN].mods[2].current_level;
             fire_blaster(ent, start, forward, damage, 2000, EF_BLUEHYPERBLASTER, BLASTER_PROJ_BOLT, MOD_HYPERBLASTER,
                          2.0, false);
         }
@@ -98,13 +98,13 @@ void Machinegun_Fire(edict_t* ent) {
     else
         gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/mg_unsilenced.wav"), 1, ATTN_NORM, 0);
 
-    if (ent->myskills.weapons[WEAPON_MACHINEGUN].mods[4].current_level < 1) {
+    if (ent->client->resp.pstats.weapons[WEAPON_MACHINEGUN].mods[4].current_level < 1) {
         gi.WriteByte(svc_muzzleflash);
         gi.WriteShort(ent - g_edicts);
         gi.WriteByte(MZ_IONRIPPER | MZ_SILENCED);
         gi.multicast(ent->s.origin, MULTICAST_PVS);
     }
-    if (ent->myskills.weapons[WEAPON_MACHINEGUN].mods[4].current_level < 1)
+    if (ent->client->resp.pstats.weapons[WEAPON_MACHINEGUN].mods[4].current_level < 1)
         PlayerNoise(ent, start, PNOISE_WEAPON);
     //K03 End
 

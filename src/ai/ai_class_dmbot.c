@@ -43,7 +43,7 @@ void BOT_DMClass_TurnAway(edict_t* self)
 	VectorCopy(self->s.angles, angles);
 	angles[YAW] += random() * 180 - 90;
 	AngleVectors(angles, forward, NULL, NULL);
-	VectorCopy(forward, self->ai.move_vector);
+	VectorCopy(forward, self->ai->move_vector);
 	AI_ChangeAngle(self);
 	self->monsterinfo.bump_delay = level.time + GetRandom(2, 5) * FRAMETIME;
 }
@@ -93,7 +93,7 @@ qboolean AI_MoveForward(edict_t* self)
 	vec3_t	forward;
 
 	AngleVectors(self->s.angles, forward, NULL, NULL);
-	VectorCopy(self->ai.move_vector, vec);
+	VectorCopy(self->ai->move_vector, vec);
 	VectorNormalize(vec);
 	dot = DotProduct(forward, vec);
 	if (dot >= 0)
@@ -109,7 +109,7 @@ qboolean AI_MoveUp(edict_t* self)
 	vec3_t	up;
 
 	AngleVectors(self->s.angles, NULL, NULL, up);
-	VectorCopy(self->ai.move_vector, vec);
+	VectorCopy(self->ai->move_vector, vec);
 	VectorNormalize(vec);
 	dot = DotProduct(up, vec);
 	if (dot >= 0)
@@ -124,10 +124,10 @@ qboolean BOT_DMclass_Ucmd_Move(edict_t* self, float movespeed, usercmd_t* ucmd, 
 	qboolean moved = false;
 	vec3_t	move_vec;
 
-	//if (VectorEmpty(self->ai.link_vector))
-		VectorCopy(self->ai.move_vector, move_vec);
+	//if (VectorEmpty(self->ai->link_vector))
+		VectorCopy(self->ai->move_vector, move_vec);
 	//else
-	//	VectorCopy(self->ai.link_vector, move_vec);
+	//	VectorCopy(self->ai->link_vector, move_vec);
 
 	if (move_vertical)
 	{
@@ -186,7 +186,7 @@ void BOT_DMclass_AvoidObstacles(edict_t* self, usercmd_t* ucmd, int current_node
 		return;
 	if (random() > 0.6 && current_node_flags & NODEFLAGS_PLATFORM) //GHz: standing on a platform--if we can't move, maybe it's for a reason?
 	{
-		self->ai.next_move_time = level.time + (GetRandom(2, 5) * FRAMETIME);
+		self->ai->next_move_time = level.time + (GetRandom(2, 5) * FRAMETIME);
 		return;
 	}
 	BOT_DMClass_TurnAway(self);
@@ -208,43 +208,43 @@ void BOT_DMclass_MoveAttack(edict_t* self, usercmd_t* ucmd)
 
 	//AI_DebugPrintf("BOT_DMclass_MoveAttack()\n");
 
-	if (self->ai.next_move_time > level.time)
+	if (self->ai->next_move_time > level.time)
 		return;//GHz
 
-	current_node_flags = nodes[self->ai.current_node].flags;
-	next_node_flags = nodes[self->ai.next_node].flags;
+	current_node_flags = nodes[self->ai->current_node].flags;
+	next_node_flags = nodes[self->ai->next_node].flags;
 
 	//GHz: bot was stuck, so give it time to turn and move away from the obstruction
 	if (self->monsterinfo.bump_delay > level.time)
 	{
-		//current_link_type = AI_PlinkMoveType(self->ai.current_node, self->ai.next_node);
+		//current_link_type = AI_PlinkMoveType(self->ai->current_node, self->ai->next_node);
 		//AI_DebugPrintf("BUMP AROUND : % d(% s) -> % s -> % d(% s)\n",
-		//	self->ai.current_node, AI_NodeString(current_node_flags),
-		//	AI_LinkString(current_link_type), self->ai.next_node, AI_NodeString(next_node_flags));//GHz
+		//	self->ai->current_node, AI_NodeString(current_node_flags),
+		//	AI_LinkString(current_link_type), self->ai->next_node, AI_NodeString(next_node_flags));//GHz
 		//if (!(current_node_flags & NODEFLAGS_PLATFORM))
 		ucmd->forwardmove = 400;
 		return;
 	}
 
 	// is there a path link between the current node we're on to the next one in the chain?
-	if (AI_PlinkExists(self->ai.current_node, self->ai.next_node))
+	if (AI_PlinkExists(self->ai->current_node, self->ai->next_node))
 	{
-		current_link_type = AI_PlinkMoveType(self->ai.current_node, self->ai.next_node);
+		current_link_type = AI_PlinkMoveType(self->ai->current_node, self->ai->next_node);
 
-		if (AIDevel.debugChased && current_link_type != self->ai.linktype)//GHz
+		if (AIDevel.debugChased && current_link_type != self->ai->linktype)//GHz
 			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: CURRENT MOVE: %d (%s) -> %s -> %d (%s)\n",
-				self->ai.pers.netname, self->ai.current_node, AI_NodeString(current_node_flags),
-				AI_LinkString(current_link_type), self->ai.next_node, AI_NodeString(next_node_flags));//GHz
+				self->ai->pers.netname, self->ai->current_node, AI_NodeString(current_node_flags),
+				AI_LinkString(current_link_type), self->ai->next_node, AI_NodeString(next_node_flags));//GHz
 		//if (current_link_type && current_link_type != LINK_INVALID)//GHz
-		self->ai.linktype = current_link_type;//GHz
+		self->ai->linktype = current_link_type;//GHz
 	}
 
 	// Platforms
 	if (current_link_type == LINK_PLATFORM) // currently riding a platform
 	{
 		// Move to the center
-		self->ai.move_vector[2] = 0; // kill z movement
-		if (VectorLength(self->ai.move_vector) > 10)
+		self->ai->move_vector[2] = 0; // kill z movement
+		if (VectorLength(self->ai->move_vector) > 10)
 			BOT_DMclass_Ucmd_Move(self, 200, ucmd, false, false);
 			//ucmd->forwardmove = 200; // walk to center
 
@@ -257,7 +257,7 @@ void BOT_DMclass_MoveAttack(edict_t* self, usercmd_t* ucmd)
 		//gi.dprintf("next node is a platform\n");
 		// is lift down?
 		for (i = 0;i < nav.num_ents;i++) {
-			if (nav.ents[i].node == self->ai.next_node)
+			if (nav.ents[i].node == self->ai->next_node)
 			{
 				//gi.dprintf("found next node entity %s\n", nav.ents[i].ent->classname);
 				//testing line
@@ -289,7 +289,7 @@ void BOT_DMclass_MoveAttack(edict_t* self, usercmd_t* ucmd)
 	}
 
 	// Ladder movement
-	if (self->ai.is_ladder) // climbing ladder
+	if (self->ai->is_ladder) // climbing ladder
 	{
 		ucmd->forwardmove = 70;
 		cmd_jump(ucmd);
@@ -298,7 +298,7 @@ void BOT_DMclass_MoveAttack(edict_t* self, usercmd_t* ucmd)
 	}
 
 	// Falling off ledge
-	if (!self->groundentity && !self->ai.is_step && !self->ai.is_swim)
+	if (!self->groundentity && !self->ai->is_step && !self->ai->is_swim)
 	{
 		//gi.dprintf("falling off a ledge...\n");
 		AI_ChangeAngle(self);
@@ -308,13 +308,13 @@ void BOT_DMclass_MoveAttack(edict_t* self, usercmd_t* ucmd)
 			//ucmd->forwardmove = 100; // move forward slowly
 		}
 		else if (current_link_type == LINK_JUMP) {
-			self->velocity[0] = self->ai.move_vector[0] * 280; // adjust x/y velocity to push us (rapidly) towards our move vector
-			self->velocity[1] = self->ai.move_vector[1] * 280;
+			self->velocity[0] = self->ai->move_vector[0] * 280; // adjust x/y velocity to push us (rapidly) towards our move vector
+			self->velocity[1] = self->ai->move_vector[1] * 280;
 			//gi.dprintf("jump forward?\n");
 		}
 		else {
-			self->velocity[0] = self->ai.move_vector[0] * 160; // same as above, but slower
-			self->velocity[1] = self->ai.move_vector[1] * 160;
+			self->velocity[0] = self->ai->move_vector[0] * 160; // same as above, but slower
+			self->velocity[1] = self->ai->move_vector[1] * 160;
 			//gi.dprintf("jump back?\n");
 		}
 		return;
@@ -328,7 +328,7 @@ void BOT_DMclass_MoveAttack(edict_t* self, usercmd_t* ucmd)
 		//gi.dprintf("jump over...\n");
 		//check floor in front, if there's none... Jump!
 		VectorCopy(self->s.origin, v1);
-		VectorCopy(self->ai.move_vector, v2);
+		VectorCopy(self->ai->move_vector, v2);
 		VectorNormalize(v2);
 		VectorMA(v1, 12, v2, v1);
 		v1[2] += self->mins[2];
@@ -359,12 +359,12 @@ void BOT_DMclass_MoveAttack(edict_t* self, usercmd_t* ucmd)
 	}
 
 	// swimming
-	if (self->ai.is_swim)
+	if (self->ai->is_swim)
 	{
 		// We need to be pointed up/down
 		//AI_ChangeAngle(self);
 		
-		if (!(gi.pointcontents(nodes[self->ai.next_node].origin) & MASK_WATER)) // Exit water
+		if (!(gi.pointcontents(nodes[self->ai->next_node].origin) & MASK_WATER)) // Exit water
 			cmd_jump(ucmd);
 		else
 			BOT_DMclass_AvoidDrowning(self, ucmd);//GHz: exit water if we're running out of air
@@ -378,8 +378,8 @@ void BOT_DMclass_MoveAttack(edict_t* self, usercmd_t* ucmd)
 	if (VectorLength(self->velocity) < 37)
 	{
 		//AI_DebugPrintf("STUCK : % d(% s) -> % s -> % d(% s)\n",
-		//	self->ai.current_node, AI_NodeString(current_node_flags),
-		//	AI_LinkString(current_link_type), self->ai.next_node, AI_NodeString(next_node_flags));//GHz
+		//	self->ai->current_node, AI_NodeString(current_node_flags),
+		//	AI_LinkString(current_link_type), self->ai->next_node, AI_NodeString(next_node_flags));//GHz
 		BOT_DMclass_AvoidObstacles(self, ucmd, current_node_flags);
 		return;
 	}
@@ -407,35 +407,35 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 
 	//AI_DebugPrintf("BOT_DMclass_Move()\n");
 
-	if (self->ai.next_move_time > level.time)
+	if (self->ai->next_move_time > level.time)
 		return;//GHz
 
-	current_node_flags = nodes[self->ai.current_node].flags;
-	next_node_flags = nodes[self->ai.next_node].flags;
+	current_node_flags = nodes[self->ai->current_node].flags;
+	next_node_flags = nodes[self->ai->next_node].flags;
 
 	//GHz: bot was stuck, so give it time to turn and move away from the obstruction
 	if (self->monsterinfo.bump_delay > level.time)
 	{
-		//current_link_type = AI_PlinkMoveType(self->ai.current_node, self->ai.next_node);
+		//current_link_type = AI_PlinkMoveType(self->ai->current_node, self->ai->next_node);
 		//AI_DebugPrintf("BUMP AROUND : % d(% s) -> % s -> % d(% s)\n",
-		//	self->ai.current_node, AI_NodeString(current_node_flags),
-		//	AI_LinkString(current_link_type), self->ai.next_node, AI_NodeString(next_node_flags));//GHz
+		//	self->ai->current_node, AI_NodeString(current_node_flags),
+		//	AI_LinkString(current_link_type), self->ai->next_node, AI_NodeString(next_node_flags));//GHz
 		//if (!(current_node_flags & NODEFLAGS_PLATFORM))
 			ucmd->forwardmove = 400;
 		return;
 	}
 
 	// is there a path link between the current node we're on to the next one in the chain?
-	if( AI_PlinkExists( self->ai.current_node, self->ai.next_node ))
+	if( AI_PlinkExists( self->ai->current_node, self->ai->next_node ))
 	{
-		current_link_type = AI_PlinkMoveType( self->ai.current_node, self->ai.next_node );
+		current_link_type = AI_PlinkMoveType( self->ai->current_node, self->ai->next_node );
 
-		if (AIDevel.debugChased && current_link_type != self->ai.linktype)//GHz
+		if (AIDevel.debugChased && current_link_type != self->ai->linktype)//GHz
 			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: CURRENT MOVE: %d (%s) -> %s -> %d (%s)\n", 
-				self->ai.pers.netname, self->ai.current_node, AI_NodeString(current_node_flags), 
-				AI_LinkString(current_link_type), self->ai.next_node, AI_NodeString(next_node_flags));//GHz
+				self->ai->pers.netname, self->ai->current_node, AI_NodeString(current_node_flags),
+				AI_LinkString(current_link_type), self->ai->next_node, AI_NodeString(next_node_flags));//GHz
 		//if (current_link_type && current_link_type != LINK_INVALID)//GHz
-		self->ai.linktype = current_link_type;//GHz
+		self->ai->linktype = current_link_type;//GHz
 	}
 
 	// Platforms
@@ -443,8 +443,8 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	{
 		//gi.dprintf("currently riding a platform...\n");
 		// Move to the center
-		self->ai.move_vector[2] = 0; // kill z movement
-		if(VectorLength(self->ai.move_vector) > 10)
+		self->ai->move_vector[2] = 0; // kill z movement
+		if(VectorLength(self->ai->move_vector) > 10)
 			ucmd->forwardmove = 200; // walk to center
 
 		AI_ChangeAngle(self);
@@ -456,7 +456,7 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 		//gi.dprintf("next node is a platform\n");
 		// is lift down?
 		for(i=0;i<nav.num_ents;i++){
-			if( nav.ents[i].node == self->ai.next_node )
+			if( nav.ents[i].node == self->ai->next_node )
 			{
 				//gi.dprintf("found next node entity %s\n", nav.ents[i].ent->classname);
 				//testing line
@@ -488,7 +488,7 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	}
 
 	// Ladder movement
-	if( self->ai.is_ladder )
+	if( self->ai->is_ladder )
 	{
 		ucmd->forwardmove = 70;
 		cmd_jump(ucmd);
@@ -497,7 +497,7 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	}
 
 	// Falling off ledge
-	if(!self->groundentity && !self->ai.is_step && !self->ai.is_swim && !self->ai.is_bunnyhop)//GHz: don't adjust velocity if we're bunnyhopping!
+	if(!self->groundentity && !self->ai->is_step && !self->ai->is_swim && !self->ai->is_bunnyhop)//GHz: don't adjust velocity if we're bunnyhopping!
 	{
 		//gi.dprintf("%d falling off a ledge...\n", level.framenum);
 		AI_ChangeAngle(self);
@@ -505,12 +505,12 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 			//gi.dprintf("walk forward\n");
 			ucmd->forwardmove = 100; // move forward slowly
 		} else if( current_link_type == LINK_JUMP ) {
-			self->velocity[0] = self->ai.move_vector[0] * 280; // adjust x/y velocity to push us (rapidly) towards our move vector
-			self->velocity[1] = self->ai.move_vector[1] * 280;
+			self->velocity[0] = self->ai->move_vector[0] * 280; // adjust x/y velocity to push us (rapidly) towards our move vector
+			self->velocity[1] = self->ai->move_vector[1] * 280;
 			//gi.dprintf("jump forward?\n");
 		} else {
-			self->velocity[0] = self->ai.move_vector[0] * 160; // same as above, but slower
-			self->velocity[1] = self->ai.move_vector[1] * 160;
+			self->velocity[0] = self->ai->move_vector[0] * 160; // same as above, but slower
+			self->velocity[1] = self->ai->move_vector[1] * 160;
 			//gi.dprintf("jump back?\n");
 		}
 		return;
@@ -524,7 +524,7 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 		//gi.dprintf("jump over...\n");
 		//check floor in front, if there's none... Jump!
 		VectorCopy( self->s.origin, v1 );
-		VectorCopy( self->ai.move_vector, v2 );
+		VectorCopy( self->ai->move_vector, v2 );
 		VectorNormalize( v2 );
 		VectorMA( v1, 12, v2, v1 );
 		v1[2] += self->mins[2];
@@ -554,12 +554,12 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	}
 
 	// swimming
-	if( self->ai.is_swim )
+	if( self->ai->is_swim )
 	{
 		// We need to be pointed up/down
 		AI_ChangeAngle(self);
 
-		if( !(gi.pointcontents(nodes[self->ai.next_node].origin) & MASK_WATER) ) // Exit water
+		if( !(gi.pointcontents(nodes[self->ai->next_node].origin) & MASK_WATER) ) // Exit water
 			cmd_jump(ucmd);
 
 		ucmd->forwardmove = 300;
@@ -570,8 +570,8 @@ void BOT_DMclass_Move(edict_t *self, usercmd_t *ucmd)
 	if (VectorLength(self->velocity) < 37)
 	{
 		//AI_DebugPrintf("STUCK : % d(% s) -> % s -> % d(% s)\n",
-		//	self->ai.current_node, AI_NodeString(current_node_flags),
-		//	AI_LinkString(current_link_type), self->ai.next_node, AI_NodeString(next_node_flags));//GHz
+		//	self->ai->current_node, AI_NodeString(current_node_flags),
+		//	AI_LinkString(current_link_type), self->ai->next_node, AI_NodeString(next_node_flags));//GHz
 		BOT_DMclass_AvoidObstacles(self, ucmd, current_node_flags);
 		return;
 	}
@@ -593,7 +593,7 @@ void BOT_DMclass_Wander(edict_t *self, usercmd_t *ucmd)
 	vec3_t  temp;
 
 	// Do not move
-	if(self->ai.next_move_time > level.time)
+	if(self->ai->next_move_time > level.time)
 		return;
 
 	if (self->deadflag)
@@ -617,7 +617,7 @@ void BOT_DMclass_Wander(edict_t *self, usercmd_t *ucmd)
 			self->velocity[0] = 0;
 			self->velocity[1] = 0;
 			self->velocity[2] = 0;
-			self->ai.next_move_time = level.time + 0.5;
+			self->ai->next_move_time = level.time + 0.5;
 			return;
 		}
 	}
@@ -671,7 +671,7 @@ void BOT_DMclass_Wander(edict_t *self, usercmd_t *ucmd)
 		BOT_DMClass_TurnAway(self);
 		//self->s.angles[YAW] += random() * 180 - 90;
 
-		if (!self->ai.is_step)// if there is ground continue otherwise wait for next move
+		if (!self->ai->is_step)// if there is ground continue otherwise wait for next move
 			AI_ResetNavigation(self);
 		else if( AI_CanMove( self, BOT_MOVE_FORWARD))
 			ucmd->forwardmove = 400;
@@ -701,13 +701,13 @@ qboolean BOT_DMclass_RunAway(edict_t* self, qboolean moveattack, usercmd_t *ucmd
 {
 	int current_node, goal_node;
 
-	if (self->ai.attack_delay > level.time)// || self->ai.evade_delay > level.time)
+	if (self->ai->attack_delay > level.time)// || self->ai->evade_delay > level.time)
 	{
 		//gi.dprintf("already running away\n");
 		return true;
 	}
 
-	if (self->ai.evade_delay > level.time)
+	if (self->ai->evade_delay > level.time)
 	{
 		//gi.dprintf("already evading\n");
 		return false;
@@ -717,7 +717,7 @@ qboolean BOT_DMclass_RunAway(edict_t* self, qboolean moveattack, usercmd_t *ucmd
 		//gi.dprintf("random fail to evade\n");
 		return false;
 	}
-	//if ((self->ai.state == BOT_STATE_MOVEATTACK || self->ai.state == BOT_STATE_MOVE) && self->ai.goal_node)
+	//if ((self->ai->state == BOT_STATE_MOVEATTACK || self->ai->state == BOT_STATE_MOVE) && self->ai->goal_node)
 	//	return true;
 
 	// attempt to find starting node
@@ -727,7 +727,7 @@ qboolean BOT_DMclass_RunAway(edict_t* self, qboolean moveattack, usercmd_t *ucmd
 		return false;
 	}
 
-	self->ai.current_node = current_node;
+	self->ai->current_node = current_node;
 
 	// attempt to find ending node nearby that the enemy can't see
 	if ((goal_node = AI_FindFarthestHiddenNode(self, 1024, NODE_ALL)) == -1)
@@ -739,24 +739,24 @@ qboolean BOT_DMclass_RunAway(edict_t* self, qboolean moveattack, usercmd_t *ucmd
 	//set up the goal
 	if (moveattack)
 	{
-		self->ai.state = BOT_STATE_MOVEATTACK;
+		self->ai->state = BOT_STATE_MOVEATTACK;
 		//BOT_DMclass_ChooseWeapon(self); // chose the best weapon for the job
 		//BOT_DMclass_FireWeapon(self, ucmd); // fire!
-		self->ai.evade_delay = level.time + 15.0;// don't try to evade again for awhile
+		self->ai->evade_delay = level.time + 15.0;// don't try to evade again for awhile
 		//gi.dprintf("SUCCESS! bot will evade the enemy!\n");
 	}
 	else
 	{
-		self->ai.state = BOT_STATE_MOVE;
-		self->ai.attack_delay = level.time + 5.0;// we're trying to run away, so don't try to attack for a bit
+		self->ai->state = BOT_STATE_MOVE;
+		self->ai->attack_delay = level.time + 5.0;// we're trying to run away, so don't try to attack for a bit
 	}
-	self->ai.tries = 0;	// Reset the count of how many times we tried this goal
+	self->ai->tries = 0;	// Reset the count of how many times we tried this goal
 
 	if (AIDevel.debugChased && bot_showlrgoal->value)
-		safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: is trying to evade towards node %d!\n", self->ai.pers.netname, goal_node);
+		safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: is trying to evade towards node %d!\n", self->ai->pers.netname, goal_node);
 
 	AI_SetGoal(self, goal_node, true);
-	//self->ai.state_combat_timeout = level.time + 1.0;//GHz: timeout for moveattack after it loses sight of enemy
+	//self->ai->state_combat_timeout = level.time + 1.0;//GHz: timeout for moveattack after it loses sight of enemy
 	
 	if (moveattack)
 		return false;
@@ -772,13 +772,13 @@ qboolean BOT_DMclass_FindSummons(edict_t* self, qboolean moveattack, usercmd_t* 
 	//gi.dprintf("BOT_DMclass_FindSummons()\n");
 
 	// already evading, don't try to attack for awhile
-	if (self->ai.attack_delay > level.time)
+	if (self->ai->attack_delay > level.time)
 	{
 		//gi.dprintf("already evading\n");
 		return true;
 	}
 	// already evading, but continue attacking anyway
-	if (self->ai.evade_delay > level.time)
+	if (self->ai->evade_delay > level.time)
 	{
 		//gi.dprintf("already moving to summons\n");
 		return false;
@@ -791,7 +791,7 @@ qboolean BOT_DMclass_FindSummons(edict_t* self, qboolean moveattack, usercmd_t* 
 	if ((current_node = AI_FindClosestReachableNode(self->s.origin, self, 2 * NODE_DENSITY, NODE_ALL)) == -1)
 		return false;
 	//gi.dprintf("trying to find summons\n");
-	self->ai.current_node = current_node;
+	self->ai->current_node = current_node;
 
 	// find a summons that places us farthest away from danger
 	float farthest_dist = entdist(self, self->enemy);
@@ -836,23 +836,23 @@ qboolean BOT_DMclass_FindSummons(edict_t* self, qboolean moveattack, usercmd_t* 
 	if (moveattack)
 	{
 		// continue to fight the enemy while moving toward our summons
-		self->ai.state = BOT_STATE_MOVEATTACK;
-		self->ai.evade_delay = level.time + 15.0;// don't try to evade again for awhile
+		self->ai->state = BOT_STATE_MOVEATTACK;
+		self->ai->evade_delay = level.time + 15.0;// don't try to evade again for awhile
 		//gi.dprintf("%d: ** %s: bot is evading toward summons! **\n", (int)level.framenum, __func__);
 	}
 	else
 	{
-		self->ai.state = BOT_STATE_MOVE;
-		self->ai.attack_delay = level.time + 5.0;// we're trying to run away, so don't try to attack for a bit
+		self->ai->state = BOT_STATE_MOVE;
+		self->ai->attack_delay = level.time + 5.0;// we're trying to run away, so don't try to attack for a bit
 	}
-	self->ai.tries = 0;	// Reset the count of how many times we tried this goal
+	self->ai->tries = 0;	// Reset the count of how many times we tried this goal
 
 	if (AIDevel.debugChased && bot_showlrgoal->value)
-		safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: is evading to find summons at node %d!\n", self->ai.pers.netname, goal_node);
+		safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: is evading to find summons at node %d!\n", self->ai->pers.netname, goal_node);
 
 	AI_SetGoal(self, goal_node, true);
 	self->goalentity = farthest_ent; // used in BOT_DMclassEvadeEnemy
-	//self->ai.state_combat_timeout = level.time + 1.0;//GHz: timeout for moveattack after it loses sight of enemy
+	//self->ai->state_combat_timeout = level.time + 1.0;//GHz: timeout for moveattack after it loses sight of enemy
 
 	if (moveattack)
 		return false;
@@ -916,14 +916,14 @@ void BOT_DMclass_BunnyHop(edict_t* self, usercmd_t* ucmd, qboolean forwardmove)
 	qboolean straight_path;
 
 	if (self->groundentity)// on the ground? reset state--we haven't decided yet if the bot should bunnyhop again
-		self->ai.is_bunnyhop = false;
+		self->ai->is_bunnyhop = false;
 
 	// don't bunnyhop with the 20mm if we have an enemy
 	if (self->client->pers.weapon == Fdi_20MM && self->enemy)
 		return;
 
 	// vector pointing in the direction we should be moving
-	VectorCopy(self->ai.move_vector, move_vec);
+	VectorCopy(self->ai->move_vector, move_vec);
 	move_vec[2] = 0;
 	VectorNormalize(move_vec);
 
@@ -933,7 +933,7 @@ void BOT_DMclass_BunnyHop(edict_t* self, usercmd_t* ucmd, qboolean forwardmove)
 	VectorNormalize(vel);
 
 	// not following a path?
-	if (VectorEmpty(self->ai.link_vector))
+	if (VectorEmpty(self->ai->link_vector))
 	{
 		// airborne? randomly strafe left/right to build momentum
 		if (!self->groundentity)
@@ -951,18 +951,18 @@ void BOT_DMclass_BunnyHop(edict_t* self, usercmd_t* ucmd, qboolean forwardmove)
 		if (dot > 0.9 && mv_spd > 280)
 		{
 			cmd_jump(ucmd);
-			self->ai.is_bunnyhop = true;
+			self->ai->is_bunnyhop = true;
 		}
 		return;
 	}
 	else
-		VectorCopy(self->ai.link_vector, link_vec); // vector from current node to next node
+		VectorCopy(self->ai->link_vector, link_vec); // vector from current node to next node
 	link_vec[2] = 0;
 	VectorNormalize(link_vec);
 	
 
 	//if (self->groundentity) 
-	//	self->ai.is_bunnyhop = false;
+	//	self->ai->is_bunnyhop = false;
 	if (!self->groundentity) // steer the bot towards move_vector to stay on-course
 	{
 		if (forwardmove)
@@ -975,8 +975,8 @@ void BOT_DMclass_BunnyHop(edict_t* self, usercmd_t* ucmd, qboolean forwardmove)
 			//vec3_t cross;
 			//CrossProduct(move_vec, vel, cross);
 			//gi.dprintf("cross: [0]%f [1]%f [2]%f\n", cross[0], cross[1], cross[2]);
-			//gi.dprintf("angle diff:%f\n", vectoanglediff2(self->ai.move_vector, move_vec));
-			//if (toright(self, nodes[self->ai.current_node].origin))
+			//gi.dprintf("angle diff:%f\n", vectoanglediff2(self->ai->move_vector, move_vec));
+			//if (toright(self, nodes[self->ai->current_node].origin))
 			//	gi.dprintf("current node is to the RIGHT");
 			//else
 			//	gi.dprintf("current node is to the LEFT");
@@ -1000,7 +1000,7 @@ void BOT_DMclass_BunnyHop(edict_t* self, usercmd_t* ucmd, qboolean forwardmove)
 		return;
 
 	//gi.dprintf("trying to bunnyhop while following a path...\n");
-	//VectorCopy(self->ai.move_vector, move_vec);//FIXME: testing--this should become a parameter
+	//VectorCopy(self->ai->move_vector, move_vec);//FIXME: testing--this should become a parameter
 	//move_vec[2] = 0;// we only care about x-y values
 	fwd_spd = AI_ForwardVelocity(self); // speed in the direction we are facing
 	
@@ -1026,7 +1026,7 @@ void BOT_DMclass_BunnyHop(edict_t* self, usercmd_t* ucmd, qboolean forwardmove)
 	//gi.dprintf("%d: ", level.framenum);
 	//gi.dprintf("bunnyhop fwd_spd: %f mv_spd: %f dot: %f", fwd_spd, mv_spd, dot);
 
-	//if (self->ai.is_step)
+	//if (self->ai->is_step)
 	//	gi.dprintf("[step:true]");
 	//else
 	//	gi.dprintf("[step:false]");
@@ -1045,7 +1045,7 @@ void BOT_DMclass_BunnyHop(edict_t* self, usercmd_t* ucmd, qboolean forwardmove)
 	//else
 	//	gi.dprintf("[straight:FALSE]\n");
 
-	self->ai.is_bunnyhop = true;
+	self->ai->is_bunnyhop = true;
 
 	//if (self->groundentity)
 	//{
@@ -1158,7 +1158,7 @@ void BOT_DMclass_CombatMovement( edict_t *self, usercmd_t *ucmd )
 	if (fabsf(dist - ideal) > AI_JUMPABLE_DISTANCE)
 	{
 		BOT_DMclass_BunnyHop(self, ucmd, false);
-		if (self->ai.is_bunnyhop) // note: is_bunnyhop is set/reset by preceding function--don't rely on an accurate value without calling it beforehand!
+		if (self->ai->is_bunnyhop) // note: is_bunnyhop is set/reset by preceding function--don't rely on an accurate value without calling it beforehand!
 			strafe = false;
 	}
 
@@ -1200,20 +1200,20 @@ qboolean BOT_DMclass_CheckShot(edict_t *ent, vec3_t	point, qboolean ignore_self_
 
 	if (tr.ent && tr.ent->inuse && OnSameTeam(ent, tr.ent) && tr.ent->mtype != M_BARREL)
 	{
-		//gi.dprintf("%s: can't attack %s (blocked by ally)\n", ent->ai.pers.netname, ent->enemy->classname);
+		//gi.dprintf("%s: can't attack %s (blocked by ally)\n", ent->ai->pers.netname, ent->enemy->classname);
 		return false; //GHz: bots tend to suicide by trying to shoot past allies
 	}
 
 //	trap_Trace( &tr, self->s.origin, vec3_origin, vec3_origin, point, self, MASK_AISOLID);
 	if (!ignore_self_dmg && tr.fraction < 0.3) //just enough to prevent self damage (by now)
 	{
-		//gi.dprintf("%s: can't attack %s (partially obstructed %.1f)\n", ent->ai.pers.netname, ent->enemy->classname, tr.fraction);
+		//gi.dprintf("%s: can't attack %s (partially obstructed %.1f)\n", ent->ai->pers.netname, ent->enemy->classname, tr.fraction);
 		return false;
 	}
 
 	if (tr.surface && !tr.ent) // we hit solid. we're blocked
 	{
-		//gi.dprintf("%s: can't attack %s (fully blocked)\n", ent->ai.pers.netname, ent->enemy->classname);
+		//gi.dprintf("%s: can't attack %s (fully blocked)\n", ent->ai->pers.netname, ent->enemy->classname);
 		return false;
 	}
 
@@ -1236,17 +1236,38 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 	float		dist, weight;
 	//vec3_t		dist;
 
-	if (self->ai.attack_delay > level.time)
+	if (self->ai->attack_delay > level.time)
 		return false;
+
+	bool hasEnemy = self->enemy && self->enemy->inuse;
+
+	// az: rate-limit this a little bit, latch the previous enemy
+	if (self->ai->findenemy_framedelay > level.framenum ) {
+		if (hasEnemy) {
+			// only latch if this is still a valid enemy
+			if (G_ValidTargetEnt(self, self->enemy, true))
+				return true;
+		} else {
+			return false;
+		}
+	}
+
+	// az: add a little variance
+	self->ai->findenemy_framedelay = level.framenum +
+		qf2sf(1) +
+			(randomMT() % 3 - 1)
+			;
 
 	//FIXME: it's probably worth recalculating every frame, but maybe we need an aggro timer so the bot doesn't change targets too often
 	// especially when the bot is hurt by an enemy (even if they are further away)
 	// we already set up an enemy this frame (reacting to attacks)
-	if (self->enemy && self->enemy->inuse && visible(self, self->enemy))//GHz: don't bother finding a new enemy if the last one is still visible
-		return true;
+	// az: this is commented out to avoid bots having blinders
+	// if (hasEnemy && visible(self, self->enemy))//GHz: don't bother finding a new enemy if the last one is still visible
+	// 	return true;
 
+	// no enemy, or not visible enemy
 	// save last enemy to detect target changes
-	if (self->enemy && self->enemy->inuse)
+	if (hasEnemy)
 		self->oldenemy = self->enemy;
 
 	if (level.time < pregame_time->value) // No enemies in pregame lol
@@ -1280,7 +1301,7 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 		}
 
 		//Ignore players with 0 weight (was set at botstatus)
-		if (self->ai.status.playersWeights[i] == 0)
+		if (self->ai->status.playersWeights[i] == 0)
 			continue;
 
 		// put infront first because visible is a significantly more expensive check
@@ -1294,7 +1315,7 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 		weight = dist;//VectorLength(dist);
 
 		//modify weight based on precomputed player weights
-		weight *= (1.0 - self->ai.status.playersWeights[i]);
+		weight *= (1.0 - self->ai->status.playersWeights[i]);
 
 		if (weight < 500)
 		{
@@ -1310,23 +1331,23 @@ qboolean BOT_DMclass_FindEnemy(edict_t* self)
 	// If best enemy, set up
 	if (bestenemy)
 	{
-		//if (bestenemy->ai.is_bot)
-		//	gi.dprintf("%s: is angry at %s\n", self->ai.pers.netname, bestenemy->ai.pers.netname);
+		//if (bestenemy->ai)
+		//	gi.dprintf("%s: is angry at %s\n", self->ai->pers.netname, bestenemy->ai->pers.netname);
 		//else if (bestenemy->mtype)
-		//	gi.dprintf("%s: is angry at %s\n", self->ai.pers.netname, V_GetMonsterName(bestenemy));
+		//	gi.dprintf("%s: is angry at %s\n", self->ai->pers.netname, V_GetMonsterName(bestenemy));
 		//else
-		//	gi.dprintf("%s: is angry at %s\n", self->ai.pers.netname, bestenemy->classname);
+		//	gi.dprintf("%s: is angry at %s\n", self->ai->pers.netname, bestenemy->classname);
 		if (AIDevel.debugChased && bot_showcombat->value)
 		{
-			if (bestenemy->ai.is_bot)
+			if (bestenemy->ai)
 				safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: selected %s as enemy.\n",
-					self->ai.pers.netname, bestenemy->ai.pers.netname);
+					self->ai->pers.netname, bestenemy->ai->pers.netname);
 			else if (bestenemy->client)
 				safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: selected %s as enemy.\n",
-					self->ai.pers.netname, bestenemy->client->pers.netname);
+					self->ai->pers.netname, bestenemy->client->pers.netname);
 			else
 				safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: selected %s as enemy.\n",
-					self->ai.pers.netname, bestenemy->classname);
+					self->ai->pers.netname, bestenemy->classname);
 		}
 
 		//if (bestenemy->takedamage != DAMAGE_NO //GHz: enemy can take damage
@@ -1364,7 +1385,7 @@ qboolean BOT_DMclass_FindEnemy(edict_t *self)
 			continue;
 
 		//Ignore players with 0 weight (was set at botstatus)
-		if(self->ai.status.playersWeights[i] == 0)
+		if(self->ai->status.playersWeights[i] == 0)
 			continue;
 
 		if (OnSameTeam(AIEnemies[i], self)) // vortex chile 3.0
@@ -1377,7 +1398,7 @@ qboolean BOT_DMclass_FindEnemy(edict_t *self)
 			weight = VectorLength( dist );
 
 			//modify weight based on precomputed player weights
-			weight *= (1.0 - self->ai.status.playersWeights[i]);
+			weight *= (1.0 - self->ai->status.playersWeights[i]);
 
 			// wall between me and my potential enemy?
 			if (!visible1(self, AIEnemies[i]))
@@ -1402,15 +1423,15 @@ qboolean BOT_DMclass_FindEnemy(edict_t *self)
 	{
 		if (AIDevel.debugChased && bot_showcombat->value)
 		{
-			if (bestenemy->ai.is_bot)
+			if (bestenemy->ai)
 				safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: selected %s as enemy.\n", 
-					self->ai.pers.netname, bestenemy->ai.pers.netname);
+					self->ai->pers.netname, bestenemy->ai->pers.netname);
 			else if (bestenemy->client)
 				safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: selected %s as enemy.\n",
-					self->ai.pers.netname, bestenemy->client->pers.netname);
+					self->ai->pers.netname, bestenemy->client->pers.netname);
 			else
 				safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: selected %s as enemy.\n",
-					self->ai.pers.netname, bestenemy->classname);
+					self->ai->pers.netname, bestenemy->classname);
 		}
 
 		if (bestenemy->takedamage != DAMAGE_NO //GHz: enemy can take damage
@@ -1455,7 +1476,7 @@ qboolean BOT_DMClass_ChangeWeapon (edict_t *ent, gitem_t *item)
 
 	// Change to this weapon
 	ent->client->newweapon = item;
-	ent->ai.changeweapon_timeout = level.time + 6.0;
+	ent->ai->changeweapon_timeout = level.time + 6.0;
 
 	return true;
 }
@@ -1478,7 +1499,7 @@ void BOT_DMclass_ChooseWeapon(edict_t *self)
 	if(!self->enemy)
 		return;
 
-	if( self->ai.changeweapon_timeout > level.time )
+	if( self->ai->changeweapon_timeout > level.time )
 		return;
 
 	if (self->myskills.class_num == CLASS_KNIGHT || self->mtype)
@@ -1524,7 +1545,7 @@ void BOT_DMclass_ChooseWeapon(edict_t *self)
 			continue;
 		
 		//compare range weights
-		const float weight = AIWeapons[i].RangeWeight[weapon_range] + self->ai.status.weaponWeights[i];//GHz
+		const float weight = AIWeapons[i].RangeWeight[weapon_range] + self->ai->status.weaponWeights[i];//GHz
 		//gi.dprintf("%f\n", weight);
 		if (weight > best_weight) {
 			best_weight = weight;
@@ -1636,19 +1657,19 @@ void BOT_DMclass_FireWeapon (edict_t *self, usercmd_t *ucmd)
 	}
 
 	// modify attack angles based on accuracy (mess this up to make the bot's aim not so deadly)
-	target[0] += (random()-0.5) * ((MAX_BOT_SKILL - self->ai.pers.skillLevel) *2);
-	target[1] += (random()-0.5) * ((MAX_BOT_SKILL - self->ai.pers.skillLevel) *2);
+	target[0] += (random()-0.5) * ((MAX_BOT_SKILL - self->ai->pers.skillLevel) *2);
+	target[1] += (random()-0.5) * ((MAX_BOT_SKILL - self->ai->pers.skillLevel) *2);
 
 	// Set direction
-	if (self->ai.state == BOT_STATE_MOVEATTACK)//GHz: don't set/modify move_vector in this state
+	if (self->ai->state == BOT_STATE_MOVEATTACK)//GHz: don't set/modify move_vector in this state
 	{
 		VectorSubtract(target, self->s.origin, angles);
 		vectoangles(angles, angles);
 	}
 	else
 	{
-		VectorSubtract(target, self->s.origin, self->ai.move_vector);
-		vectoangles(self->ai.move_vector, angles);
+		VectorSubtract(target, self->s.origin, self->ai->move_vector);
+		vectoangles(self->ai->move_vector, angles);
 	}
 	VectorCopy(angles,self->s.angles); // set aiming/viewing angles
 	VectorCopy(angles, self->client->v_angle);
@@ -1673,19 +1694,19 @@ void BOT_DMclass_FireWeapon (edict_t *self, usercmd_t *ucmd)
 		else // target has changed--attack may be delayed until next frame (or longer)
 		{
 			firedelay = random() * (MAX_BOT_SKILL * 1.8);
-			if (firedelay > (MAX_BOT_SKILL - self->ai.pers.skillLevel))
+			if (firedelay > (MAX_BOT_SKILL - self->ai->pers.skillLevel))
 				ucmd->buttons = BUTTON_ATTACK;
 			//else
-			//	gi.dprintf("%s: can't attack %s (delayed)\n", self->ai.pers.netname, self->enemy->classname);
+			//	gi.dprintf("%s: can't attack %s (delayed)\n", self->ai->pers.netname, self->enemy->classname);
 		}
 	}
 	//else
-		//gi.dprintf("%s: can't attack %s (blocked)\n", self->ai.pers.netname, self->enemy->classname);
+		//gi.dprintf("%s: can't attack %s (blocked)\n", self->ai->pers.netname, self->enemy->classname);
 
 	//gi.dprintf("%d: %s: buttons: %d\n", (int)level.framenum, __func__, ucmd->buttons);
 
 	//if(AIDevel.debugChased && bot_showcombat->value)
-	//	safe_cprintf (AIDevel.chaseguy, PRINT_HIGH, "%s: attacking %s\n",self->ai.pers.netname ,self->enemy->classname);
+	//	safe_cprintf (AIDevel.chaseguy, PRINT_HIGH, "%s: attacking %s\n",self->ai->pers.netname ,self->enemy->classname);
 }
 
 //==========================================
@@ -1699,7 +1720,7 @@ void BOT_DMclass_WeightPlayers(edict_t *self)
 	//AI_DebugPrintf("BOT_DMclass_WeightPlayers()\n");
 
 	//clear
-	memset(self->ai.status.playersWeights, 0, sizeof (self->ai.status.playersWeights));
+	memset(self->ai->status.playersWeights, 0, sizeof (self->ai->status.playersWeights));
 
 	for( i=0; i<num_AIEnemies; i++ )
 	{
@@ -1711,7 +1732,7 @@ void BOT_DMclass_WeightPlayers(edict_t *self)
 
 		//ignore spectators and dead players
 		if( AIEnemies[i]->svflags & SVF_NOCLIENT || AIEnemies[i]->deadflag ) {
-			self->ai.status.playersWeights[i] = 0.0f;
+			self->ai->status.playersWeights[i] = 0.0f;
 			continue;
 		}
 
@@ -1720,7 +1741,7 @@ void BOT_DMclass_WeightPlayers(edict_t *self)
 			if( AIEnemies[i]->teamnum != self->teamnum )
 			{
 				//being at enemy team gives a small weight, but weight afterall
-				self->ai.status.playersWeights[i] = 0.2;
+				self->ai->status.playersWeights[i] = 0.2;
 
 				if (!AIEnemies[i]->client)
 					continue;
@@ -1730,7 +1751,7 @@ void BOT_DMclass_WeightPlayers(edict_t *self)
 					&& (self->teamnum == CTF_TEAM1) )
 				{
 					if( !self->client->pers.inventory[ITEM_INDEX(blueflag)] ) //don't hunt if you have the other flag, let others do
-						self->ai.status.playersWeights[i] = 0.9;
+						self->ai->status.playersWeights[i] = 0.9;
 				}
 				
 				//enemy has blueflag
@@ -1738,7 +1759,7 @@ void BOT_DMclass_WeightPlayers(edict_t *self)
 					&& (self->teamnum == CTF_TEAM2) )
 				{
 					if( !self->client->pers.inventory[ITEM_INDEX(redflag)] ) //don't hunt if you have the other flag, let others do
-						self->ai.status.playersWeights[i] = 0.9;
+						self->ai->status.playersWeights[i] = 0.9;
 				}
 			} 
 		}
@@ -1748,27 +1769,27 @@ void BOT_DMclass_WeightPlayers(edict_t *self)
 			if (AI_NumSummons(self) > 0)
 			{
 				if (AI_IsOwnedSummons(self, AIEnemies[i]))
-					self->ai.status.playersWeights[i] = 0.4;
+					self->ai->status.playersWeights[i] = 0.4;
 				else if (IsAlly(self, AIEnemies[i]))
-					self->ai.status.playersWeights[i] = 0.3;
+					self->ai->status.playersWeights[i] = 0.3;
 				else
-					self->ai.status.playersWeights[i] = 0.2;
+					self->ai->status.playersWeights[i] = 0.2;
 			}
 			else
 			{
 				// GHz: chase enemies!
 				if (self->enemy && self->enemy->inuse && AIEnemies[i] == self->enemy)
-					self->ai.status.playersWeights[i] = 0.9; // active enemy always has the highest priority/weight
+					self->ai->status.playersWeights[i] = 0.9; // active enemy always has the highest priority/weight
 				else if (AIEnemies[i]->client)
 				{
 					if (AIEnemies[i]->myskills.streak >= SPREE_START)
-						self->ai.status.playersWeights[i] = 0.6; // spreeing players are weighed much higher
+						self->ai->status.playersWeights[i] = 0.6; // spreeing players are weighed much higher
 					else
-						self->ai.status.playersWeights[i] = 0.3; // players have more weight than non-clients (e.g. monsters)
+						self->ai->status.playersWeights[i] = 0.3; // players have more weight than non-clients (e.g. monsters)
 				}
 				else
 					//if not at ctf every player has some value
-					self->ai.status.playersWeights[i] = 0.2;
+					self->ai->status.playersWeights[i] = 0.2;
 			}
 		}
 	
@@ -1844,14 +1865,14 @@ void AI_AdjustAmmoNeedFactor(edict_t *self, gitem_t *ammoItem, ...)
 	// if we can't pick it up, reduce the weight to 0
 	if (!AI_CanPick_Ammo(self, ammoItem))
 	{
-		self->ai.status.inventoryWeights[ammo_index] = 0.0;
+		self->ai->status.inventoryWeights[ammo_index] = 0.0;
 		return;
 	}
 
 	// does the bot need cells for power screen/shield?
 	if (ammo_index == cell_index && AI_GetPSlevel(self) && self->client->pers.inventory[cell_index] < self->client->pers.max_cells)
 	{
-		self->ai.status.inventoryWeights[ammo_index] = 0.5;
+		self->ai->status.inventoryWeights[ammo_index] = 0.5;
 		return; // don't reduce cells weight
 	}
 
@@ -1859,12 +1880,12 @@ void AI_AdjustAmmoNeedFactor(edict_t *self, gitem_t *ammoItem, ...)
 	// note: this adjustment may be redundant if the bot is a poltergeist, since the weight should already be 0 in ai.pers.inventoryWeights
 	if (self->mtype || PM_PlayerHasMonster(self))
 	{
-		self->ai.status.inventoryWeights[ammo_index] = 0.0;
+		self->ai->status.inventoryWeights[ammo_index] = 0.0;
 		return;
 	}
 
 	// are we fighting?
-	if (self->ai.state == BOT_STATE_ATTACK || self->ai.state == BOT_STATE_MOVEATTACK)
+	if (self->ai->state == BOT_STATE_ATTACK || self->ai->state == BOT_STATE_MOVEATTACK)
 		is_fighting = true;
 
 	// if we don't have the weapon, reduce the weight
@@ -1894,9 +1915,9 @@ void AI_AdjustAmmoNeedFactor(edict_t *self, gitem_t *ammoItem, ...)
 	{
 		// if the bot is fighting, only our respawn weapon's ammo matters
 		if (is_fighting)
-			self->ai.status.inventoryWeights[ammo_index] = 0.0;
+			self->ai->status.inventoryWeights[ammo_index] = 0.0;
 		else
-			self->ai.status.inventoryWeights[ammo_index] *= 0.5;
+			self->ai->status.inventoryWeights[ammo_index] *= 0.5;
 	}
 
 }
@@ -1916,7 +1937,7 @@ void BOT_DMclass_WeightInventory(edict_t *self)
 	client = self->client;
 
 	//reset with persistant values
-	memcpy(self->ai.status.inventoryWeights, self->ai.pers.inventoryWeights, sizeof(self->ai.pers.inventoryWeights));
+	memcpy(self->ai->status.inventoryWeights, self->ai->pers.inventoryWeights, sizeof(self->ai->pers.inventoryWeights));
 	
 
 	//weight ammo down if bot doesn't have the weapon for it,
@@ -1929,63 +1950,63 @@ void BOT_DMclass_WeightInventory(edict_t *self)
 	AI_AdjustAmmoNeedFactor(self, Fdi_GRENADES, WEAPON_GRENADELAUNCHER, 0);
 	AI_AdjustAmmoNeedFactor(self, Fdi_CELLS, WEAPON_HYPERBLASTER, WEAPON_BFG10K, 0);
 	AI_AdjustAmmoNeedFactor(self, Fdi_SLUGS, WEAPON_RAILGUN, 0);
-	//gi.dprintf("b:%.1f c:%.1f s:%.1f r:%.1f g:%.1f s:%.1f\n", self->ai.status.inventoryWeights[bullet_index], self->ai.status.inventoryWeights[cell_index], 
-	//	self->ai.status.inventoryWeights[shell_index], self->ai.status.inventoryWeights[rocket_index], self->ai.status.inventoryWeights[grenade_index], 
-	//	self->ai.status.inventoryWeights[slug_index]);
+	//gi.dprintf("b:%.1f c:%.1f s:%.1f r:%.1f g:%.1f s:%.1f\n", self->ai->status.inventoryWeights[bullet_index], self->ai->status.inventoryWeights[cell_index],
+	//	self->ai->status.inventoryWeights[shell_index], self->ai->status.inventoryWeights[rocket_index], self->ai->status.inventoryWeights[grenade_index],
+	//	self->ai->status.inventoryWeights[slug_index]);
 	//AMMO_BULLETS
 	/*
 	if (!AI_CanPick_Ammo (self, AIWeapons[WEAPON_MACHINEGUN].ammoItem) )
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_MACHINEGUN].ammoItem)] = 0.0;
+		self->ai->status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_MACHINEGUN].ammoItem)] = 0.0;
 	//find out if it has a weapon for this amno
 	else if (!client->pers.inventory[ITEM_INDEX(AIWeapons[WEAPON_CHAINGUN].weaponItem)]
 		&& !client->pers.inventory[ITEM_INDEX(AIWeapons[WEAPON_MACHINEGUN].weaponItem)] )
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_MACHINEGUN].ammoItem)] *= LowNeedFactor;
+		self->ai->status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_MACHINEGUN].ammoItem)] *= LowNeedFactor;
 
 	//AMMO_SHELLS:
 
 	//find out if it's packed up
 	if (!AI_CanPick_Ammo (self, AIWeapons[WEAPON_SHOTGUN].ammoItem) )
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_SHOTGUN].ammoItem)] = 0.0;
+		self->ai->status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_SHOTGUN].ammoItem)] = 0.0;
 	//find out if it has a weapon for this amno
 	else if (!client->pers.inventory[ITEM_INDEX(AIWeapons[WEAPON_SHOTGUN].weaponItem)]
 		&& !client->pers.inventory[ITEM_INDEX(AIWeapons[WEAPON_SUPERSHOTGUN].weaponItem)] )
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_SHOTGUN].ammoItem)] *= LowNeedFactor;
+		self->ai->status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_SHOTGUN].ammoItem)] *= LowNeedFactor;
 
 	//AMMO_ROCKETS:
 
 	//find out if it's packed up
 	if (!AI_CanPick_Ammo (self, AIWeapons[WEAPON_ROCKETLAUNCHER].ammoItem))
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_ROCKETLAUNCHER].ammoItem)] = 0.0;
+		self->ai->status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_ROCKETLAUNCHER].ammoItem)] = 0.0;
 	//find out if it has a weapon for this amno
 	else if (!client->pers.inventory[ITEM_INDEX(AIWeapons[WEAPON_ROCKETLAUNCHER].weaponItem)] )
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_ROCKETLAUNCHER].ammoItem)] *= LowNeedFactor;
+		self->ai->status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_ROCKETLAUNCHER].ammoItem)] *= LowNeedFactor;
 
 	//AMMO_GRENADES: 
 
 	//find if it's packed up
 	if (!AI_CanPick_Ammo (self, AIWeapons[WEAPON_GRENADES].ammoItem))
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_GRENADES].ammoItem)] = 0.0;
+		self->ai->status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_GRENADES].ammoItem)] = 0.0;
 	//grenades are also weapons, and are weighted down by LowNeedFactor in weapons group
 	
 	//AMMO_CELLS:
 
 	//find out if it's packed up
 	if (!AI_CanPick_Ammo (self, AIWeapons[WEAPON_HYPERBLASTER].ammoItem))
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_HYPERBLASTER].ammoItem)] = 0.0;
+		self->ai->status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_HYPERBLASTER].ammoItem)] = 0.0;
 	//find out if it has a weapon for this amno
 	else if (!client->pers.inventory[ITEM_INDEX(AIWeapons[WEAPON_HYPERBLASTER].weaponItem)]
 		&& !client->pers.inventory[ITEM_INDEX(AIWeapons[WEAPON_BFG].weaponItem)]
 		&& !client->pers.inventory[ITEM_INDEX(FindItemByClassname("item_power_shield"))])
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_HYPERBLASTER].ammoItem)] *= LowNeedFactor;
+		self->ai->status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_HYPERBLASTER].ammoItem)] *= LowNeedFactor;
 
 	//AMMO_SLUGS:
 
 	//find out if it's packed up
 	if (!AI_CanPick_Ammo (self, AIWeapons[WEAPON_RAILGUN].ammoItem))
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_RAILGUN].ammoItem)] = 0.0;
+		self->ai->status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_RAILGUN].ammoItem)] = 0.0;
 	//find out if it has a weapon for this amno
 	else if (!client->pers.inventory[ITEM_INDEX(AIWeapons[WEAPON_RAILGUN].weaponItem)] )
-		self->ai.status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_RAILGUN].ammoItem)] *= LowNeedFactor;
+		self->ai->status.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_RAILGUN].ammoItem)] *= LowNeedFactor;
 	*/
 
 	//WEAPONS
@@ -2000,30 +2021,30 @@ void BOT_DMclass_WeightInventory(edict_t *self)
 		const int weap_index = ITEM_INDEX(AIWeapons[i].weaponItem);
 		// morphed players have no use for weapons
 		if (self->mtype || PM_PlayerHasMonster(self))
-			self->ai.status.inventoryWeights[weap_index] = 0.0;
+			self->ai->status.inventoryWeights[weap_index] = 0.0;
 		// already have this weapon
 		else if (client->pers.inventory[weap_index])
-			self->ai.status.inventoryWeights[weap_index] = 0.0;
+			self->ai->status.inventoryWeights[weap_index] = 0.0;
 	}
 
 	//ARMOR
 	//-----------------------------------------------------
 	//shards are ALWAYS accepted but still...
 	if (!AI_CanUseArmor ( FindItemByClassname("item_armor_shard"), self ))
-		self->ai.status.inventoryWeights[armor_shard_index] = 0.0;
+		self->ai->status.inventoryWeights[armor_shard_index] = 0.0;
 	else if (self->client->pers.inventory[power_cube_index] < 50) // low on power cubes?
-		self->ai.status.inventoryWeights[armor_shard_index] *= 2.0; // increase weight of armor shards
+		self->ai->status.inventoryWeights[armor_shard_index] *= 2.0; // increase weight of armor shards
 
 	if (!AI_CanUseArmor ( FindItemByClassname("item_armor_jacket"), self ))
-		self->ai.status.inventoryWeights[jacket_armor_index] = 0.0;
+		self->ai->status.inventoryWeights[jacket_armor_index] = 0.0;
 
 	if (!AI_CanUseArmor ( FindItemByClassname("item_armor_combat"), self ))
-		self->ai.status.inventoryWeights[combat_armor_index] = 0.0;
+		self->ai->status.inventoryWeights[combat_armor_index] = 0.0;
 
 	if (!AI_CanUseArmor ( FindItemByClassname("item_armor_body"), self ))
-		self->ai.status.inventoryWeights[body_armor_index] = 0.0;
-	//gi.dprintf("sh:%.1f ja:%.1f co:%.1f bo:%.1f\n", self->ai.status.inventoryWeights[armor_shard_index], self->ai.status.inventoryWeights[jacket_armor_index],
-	//	self->ai.status.inventoryWeights[combat_armor_index], self->ai.status.inventoryWeights[body_armor_index]);
+		self->ai->status.inventoryWeights[body_armor_index] = 0.0;
+	//gi.dprintf("sh:%.1f ja:%.1f co:%.1f bo:%.1f\n", self->ai->status.inventoryWeights[armor_shard_index], self->ai->status.inventoryWeights[jacket_armor_index],
+	//	self->ai->status.inventoryWeights[combat_armor_index], self->ai->status.inventoryWeights[body_armor_index]);
 	
 	//TECH :
 	//-----------------------------------------------------
@@ -2033,10 +2054,10 @@ void BOT_DMclass_WeightInventory(edict_t *self)
 		|| self->client->pers.inventory[ITEM_INDEX( FindItemByClassname("tech_regeneration"))] 
 		|| self->client->pers.inventory[ITEM_INDEX( FindItemByClassname("tech_haste"))] )
 	{
-		self->ai.status.inventoryWeights[ITEM_INDEX( FindItemByClassname("tech_resistance"))] = 0.0; 
-		self->ai.status.inventoryWeights[ITEM_INDEX( FindItemByClassname("tech_strength"))] = 0.0; 
-		self->ai.status.inventoryWeights[ITEM_INDEX( FindItemByClassname("tech_regeneration"))] = 0.0;
-		self->ai.status.inventoryWeights[ITEM_INDEX( FindItemByClassname("tech_haste"))] = 0.0;
+		self->ai->status.inventoryWeights[ITEM_INDEX( FindItemByClassname("tech_resistance"))] = 0.0;
+		self->ai->status.inventoryWeights[ITEM_INDEX( FindItemByClassname("tech_strength"))] = 0.0;
+		self->ai->status.inventoryWeights[ITEM_INDEX( FindItemByClassname("tech_regeneration"))] = 0.0;
+		self->ai->status.inventoryWeights[ITEM_INDEX( FindItemByClassname("tech_haste"))] = 0.0;
 	}
 
 	//CTF: 
@@ -2049,9 +2070,9 @@ void BOT_DMclass_WeightInventory(edict_t *self)
 		
 		//flags have weights defined inside persistant inventory. Remove weight from the unwanted one/s.
 		if (blueflag && blueflag != wantedFlag)
-			self->ai.status.inventoryWeights[ITEM_INDEX(blueflag)] = 0.0;
+			self->ai->status.inventoryWeights[ITEM_INDEX(blueflag)] = 0.0;
 		if (redflag && redflag != wantedFlag)
-			self->ai.status.inventoryWeights[ITEM_INDEX(redflag)] = 0.0;
+			self->ai->status.inventoryWeights[ITEM_INDEX(redflag)] = 0.0;
 	}
 }
 
@@ -2068,7 +2089,7 @@ void BOT_DMclass_UpdateStatus( edict_t *self )
 	if (!G_EntIsAlive(self->enemy))//GHz: stay angry at this entity--used for LR goal setting
 		self->enemy = NULL;
 
-	if (self->ai.state != BOT_STATE_ATTACK)
+	if (self->ai->state != BOT_STATE_ATTACK)
 		self->superspeed = false;//GHz: only use sprint/superspeed in CombatMovement
 	//if (self->movetarget && (!self->movetarget->inuse || self->movetarget->solid == SOLID_NOT))//GHz: need to clear picked up items
 	//	self->movetarget = NULL;
@@ -2080,14 +2101,14 @@ void BOT_DMclass_UpdateStatus( edict_t *self )
 	//JALFIXMEQ2
 /*
 	if (self->client->jumppad_time)
-		self->ai.status.jumpadReached = true;	//jumpad time from client to botStatus
+		self->ai->status.jumpadReached = true;	//jumpad time from client to botStatus
 	else
-		self->ai.status.jumpadReached = false;
+		self->ai->status.jumpadReached = false;
 */
 	if (self->client->ps.pmove.pm_flags & PMF_TIME_TELEPORT)
-		self->ai.status.TeleportReached = true;
+		self->ai->status.TeleportReached = true;
 	else
-		self->ai.status.TeleportReached = false;
+		self->ai->status.TeleportReached = false;
 
 	//set up AI status for the upcoming AI_frame
 	BOT_DMclass_WeightInventory( self );	//weight items
@@ -2107,7 +2128,7 @@ void BOT_DMClass_BloquedTimeout( edict_t *self )
 	{
 		AI_DebugPrintf("bot suicide!\n");
 		self->health = 0;
-		self->ai.bloqued_timeout = level.time + 15.0;
+		self->ai->bloqued_timeout = level.time + 15.0;
 		self->die(self, self, self, 100000, vec3_origin);
 	}
 	self->nextthink = level.time + 0.1;
@@ -2175,29 +2196,29 @@ void BOT_DMclass_RunFrame( edict_t *self )
 			const int attack_ability = BOT_DMclass_ChooseAbility(self); // chose the best ability to attack with
 			BOT_DMclass_FireAbility(self, attack_ability); // fire!
 
-			if (level.time > self->ai.evade_delay) // not a tactical retreat (aka run away while attacking)
+			if (level.time > self->ai->evade_delay) // not a tactical retreat (aka run away while attacking)
 			{
 				if (BOT_DMclass_ChooseMoveAttack(self)) // do we need pathfinding to get to the enemy?
 					AI_SetupMoveAttack(self);
 				else
 					AI_SetUpCombatMovement(self); // nope, use simple combat movement instead
 			}
-			self->ai.state_combat_timeout = level.time + 1.0;
+			self->ai->state_combat_timeout = level.time + 1.0;
 		}
 	
-	} else if( (self->ai.state == BOT_STATE_ATTACK || self->ai.state == BOT_STATE_MOVEATTACK) &&
-		level.time > self->ai.state_combat_timeout)
+	} else if( (self->ai->state == BOT_STATE_ATTACK || self->ai->state == BOT_STATE_MOVEATTACK) &&
+		level.time > self->ai->state_combat_timeout)
 	{
-		if (self->ai.state == BOT_STATE_MOVEATTACK && self->ai.evade_delay > level.time)//bot was evading
+		if (self->ai->state == BOT_STATE_MOVEATTACK && self->ai->evade_delay > level.time)//bot was evading
 		{
 			//gi.dprintf("ENEMY CLEARED!\n");
 			self->enemy = NULL;//GHz:  clear enemy so that the bot looks for a different goal
 		}
 		//Jalfixme: change to: AI_SetUpStateMove(self);
-		self->ai.state = BOT_STATE_MOVE;
+		self->ai->state = BOT_STATE_MOVE;
 		//GHz: is the bot evading?
 
-		self->ai.evade_delay = 0;
+		self->ai->evade_delay = 0;
 	}
 	else
 	{
@@ -2206,16 +2227,16 @@ void BOT_DMclass_RunFrame( edict_t *self )
 	}
 
 	// Execute the move, or wander
-	if (self->ai.state == BOT_STATE_MOVE)
+	if (self->ai->state == BOT_STATE_MOVE)
 		BOT_DMclass_Move(self, &ucmd); // use pathfinding to reach a goal
 
-	else if (self->ai.state == BOT_STATE_ATTACK)
+	else if (self->ai->state == BOT_STATE_ATTACK)
 		BOT_DMclass_CombatMovement(self, &ucmd);
 
-	else if (self->ai.state == BOT_STATE_MOVEATTACK)
+	else if (self->ai->state == BOT_STATE_MOVEATTACK)
 		BOT_DMclass_MoveAttack(self, &ucmd);//GHz
 
-	else if ( self->ai.state == BOT_STATE_WANDER ) // bot wanders when it has no goal or path to it
+	else if ( self->ai->state == BOT_STATE_WANDER ) // bot wanders when it has no goal or path to it
 		BOT_DMclass_Wander( self, &ucmd );
 
 	//set up for pmove
@@ -2239,110 +2260,110 @@ void BOT_DMclass_RunFrame( edict_t *self )
 
 void BOT_PrintItemWeights(edict_t* self)
 {
-	gi.dprintf("sh:%.1f bu:%.1f ce:%.1f ro:%.1f sl:%.1f gr:%.1f\n", self->ai.pers.inventoryWeights[shell_index], self->ai.pers.inventoryWeights[bullet_index],
-		self->ai.pers.inventoryWeights[cell_index], self->ai.pers.inventoryWeights[rocket_index], self->ai.pers.inventoryWeights[slug_index],
-		self->ai.pers.inventoryWeights[grenade_index]);
+	gi.dprintf("sh:%.1f bu:%.1f ce:%.1f ro:%.1f sl:%.1f gr:%.1f\n", self->ai->pers.inventoryWeights[shell_index], self->ai->pers.inventoryWeights[bullet_index],
+		self->ai->pers.inventoryWeights[cell_index], self->ai->pers.inventoryWeights[rocket_index], self->ai->pers.inventoryWeights[slug_index],
+		self->ai->pers.inventoryWeights[grenade_index]);
 }
 
 void BOT_DMclass_InitPersistantWeights(edict_t* self)
 {
 	//Persistant Inventory Weights (0 = can not pick)
-	memset(self->ai.pers.inventoryWeights, 0, sizeof(self->ai.pers.inventoryWeights));
+	memset(self->ai->pers.inventoryWeights, 0, sizeof(self->ai->pers.inventoryWeights));
 
 	// note: the weights below are baseline and will later be adjusted based on bot status/need by BOT_DMclass_WeightInventory
 
 	if (self->myskills.class_num == CLASS_KNIGHT || self->myskills.class_num == CLASS_POLTERGEIST) // knights and poltergeists don't use weapons and ammo
 	{
 		//weapons
-		self->ai.pers.inventoryWeights[blaster_index] = 0.0;
-		self->ai.pers.inventoryWeights[sword_index] = 0.0;
-		self->ai.pers.inventoryWeights[_20mmcannon_index] = 0.0;
-		self->ai.pers.inventoryWeights[shotgun_index] = 0.0;
-		self->ai.pers.inventoryWeights[supershotgun_index] = 0.0;
-		self->ai.pers.inventoryWeights[machinegun_index] = 0.0;
-		self->ai.pers.inventoryWeights[chaingun_index] = 0.0;
-		self->ai.pers.inventoryWeights[grenadelauncher_index] = 0.0;
-		self->ai.pers.inventoryWeights[rocketlauncher_index] = 0.0;
-		self->ai.pers.inventoryWeights[hyperblaster_index] = 0.0;
-		self->ai.pers.inventoryWeights[railgun_index] = 0.0;
-		self->ai.pers.inventoryWeights[bfg10k_index] = 0.0;
-		self->ai.pers.inventoryWeights[etfrifle_index] = 0.0;
-		self->ai.pers.inventoryWeights[phalanx_index] = 0.0;
-		self->ai.pers.inventoryWeights[ionripper_index] = 0.0;
-		self->ai.pers.inventoryWeights[disruptor_index] = 0.0;
-		self->ai.pers.inventoryWeights[plasmabeam_index] = 0.0;
+		self->ai->pers.inventoryWeights[blaster_index] = 0.0;
+		self->ai->pers.inventoryWeights[sword_index] = 0.0;
+		self->ai->pers.inventoryWeights[_20mmcannon_index] = 0.0;
+		self->ai->pers.inventoryWeights[shotgun_index] = 0.0;
+		self->ai->pers.inventoryWeights[supershotgun_index] = 0.0;
+		self->ai->pers.inventoryWeights[machinegun_index] = 0.0;
+		self->ai->pers.inventoryWeights[chaingun_index] = 0.0;
+		self->ai->pers.inventoryWeights[grenadelauncher_index] = 0.0;
+		self->ai->pers.inventoryWeights[rocketlauncher_index] = 0.0;
+		self->ai->pers.inventoryWeights[hyperblaster_index] = 0.0;
+		self->ai->pers.inventoryWeights[railgun_index] = 0.0;
+		self->ai->pers.inventoryWeights[bfg10k_index] = 0.0;
+		self->ai->pers.inventoryWeights[etfrifle_index] = 0.0;
+		self->ai->pers.inventoryWeights[phalanx_index] = 0.0;
+		self->ai->pers.inventoryWeights[ionripper_index] = 0.0;
+		self->ai->pers.inventoryWeights[disruptor_index] = 0.0;
+		self->ai->pers.inventoryWeights[plasmabeam_index] = 0.0;
 
 		//ammo
-		self->ai.pers.inventoryWeights[shell_index] = 0.0;
-		self->ai.pers.inventoryWeights[bullet_index] = 0.0;
-		self->ai.pers.inventoryWeights[cell_index] = 0.0;
-		self->ai.pers.inventoryWeights[rocket_index] = 0.0;
-		self->ai.pers.inventoryWeights[slug_index] = 0.0;
-		self->ai.pers.inventoryWeights[grenade_index] = 0.0;
+		self->ai->pers.inventoryWeights[shell_index] = 0.0;
+		self->ai->pers.inventoryWeights[bullet_index] = 0.0;
+		self->ai->pers.inventoryWeights[cell_index] = 0.0;
+		self->ai->pers.inventoryWeights[rocket_index] = 0.0;
+		self->ai->pers.inventoryWeights[slug_index] = 0.0;
+		self->ai->pers.inventoryWeights[grenade_index] = 0.0;
 	}
 	else
 	{
 		//weapons
-		self->ai.pers.inventoryWeights[blaster_index] = 0.0;
-		self->ai.pers.inventoryWeights[sword_index] = 0.0;
-		self->ai.pers.inventoryWeights[_20mmcannon_index] = 0.0;
-		self->ai.pers.inventoryWeights[shotgun_index] = 0.5;
-		self->ai.pers.inventoryWeights[supershotgun_index] = 0.7;
-		self->ai.pers.inventoryWeights[machinegun_index] = 0.5;
-		self->ai.pers.inventoryWeights[chaingun_index] = 0.7;
-		self->ai.pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_HANDGRENADE].weaponItem)] = 0.5;// isn't this redundant with grenade_index below?
-		self->ai.pers.inventoryWeights[grenadelauncher_index] = 0.6;
-		self->ai.pers.inventoryWeights[rocketlauncher_index] = 0.8;
-		self->ai.pers.inventoryWeights[hyperblaster_index] = 0.7;
-		self->ai.pers.inventoryWeights[railgun_index] = 0.8;
-		self->ai.pers.inventoryWeights[bfg10k_index] = 0.5;
-		self->ai.pers.inventoryWeights[etfrifle_index] = 0.7;
-		self->ai.pers.inventoryWeights[phalanx_index] = 0.6;
-		self->ai.pers.inventoryWeights[ionripper_index] = 0.7;
-		self->ai.pers.inventoryWeights[disruptor_index] = 0.6;
-		self->ai.pers.inventoryWeights[plasmabeam_index] = 0.7;
+		self->ai->pers.inventoryWeights[blaster_index] = 0.0;
+		self->ai->pers.inventoryWeights[sword_index] = 0.0;
+		self->ai->pers.inventoryWeights[_20mmcannon_index] = 0.0;
+		self->ai->pers.inventoryWeights[shotgun_index] = 0.5;
+		self->ai->pers.inventoryWeights[supershotgun_index] = 0.7;
+		self->ai->pers.inventoryWeights[machinegun_index] = 0.5;
+		self->ai->pers.inventoryWeights[chaingun_index] = 0.7;
+		self->ai->pers.inventoryWeights[ITEM_INDEX(AIWeapons[WEAPON_HANDGRENADE].weaponItem)] = 0.5;// isn't this redundant with grenade_index below?
+		self->ai->pers.inventoryWeights[grenadelauncher_index] = 0.6;
+		self->ai->pers.inventoryWeights[rocketlauncher_index] = 0.8;
+		self->ai->pers.inventoryWeights[hyperblaster_index] = 0.7;
+		self->ai->pers.inventoryWeights[railgun_index] = 0.8;
+		self->ai->pers.inventoryWeights[bfg10k_index] = 0.5;
+		self->ai->pers.inventoryWeights[etfrifle_index] = 0.7;
+		self->ai->pers.inventoryWeights[phalanx_index] = 0.6;
+		self->ai->pers.inventoryWeights[ionripper_index] = 0.7;
+		self->ai->pers.inventoryWeights[disruptor_index] = 0.6;
+		self->ai->pers.inventoryWeights[plasmabeam_index] = 0.7;
 
 		//ammo
-		self->ai.pers.inventoryWeights[shell_index] = 0.5;
-		self->ai.pers.inventoryWeights[bullet_index] = 0.5;
-		self->ai.pers.inventoryWeights[cell_index] = 0.5;
-		self->ai.pers.inventoryWeights[rocket_index] = 0.5;
-		self->ai.pers.inventoryWeights[slug_index] = 0.5;
-		self->ai.pers.inventoryWeights[grenade_index] = 0.5;
+		self->ai->pers.inventoryWeights[shell_index] = 0.5;
+		self->ai->pers.inventoryWeights[bullet_index] = 0.5;
+		self->ai->pers.inventoryWeights[cell_index] = 0.5;
+		self->ai->pers.inventoryWeights[rocket_index] = 0.5;
+		self->ai->pers.inventoryWeights[slug_index] = 0.5;
+		self->ai->pers.inventoryWeights[grenade_index] = 0.5;
 	}
 
 	//armor
 	if (self->myskills.class_num == CLASS_POLTERGEIST) // poltergeists don't use body armor
 	{
-		self->ai.pers.inventoryWeights[body_armor_index] = 0.0;
-		self->ai.pers.inventoryWeights[combat_armor_index] = 0.0;
-		self->ai.pers.inventoryWeights[jacket_armor_index] = 0.0;
-		self->ai.pers.inventoryWeights[armor_shard_index] = 0.2; // for powercubes
+		self->ai->pers.inventoryWeights[body_armor_index] = 0.0;
+		self->ai->pers.inventoryWeights[combat_armor_index] = 0.0;
+		self->ai->pers.inventoryWeights[jacket_armor_index] = 0.0;
+		self->ai->pers.inventoryWeights[armor_shard_index] = 0.2; // for powercubes
 	}
 	else
 	{
-		self->ai.pers.inventoryWeights[body_armor_index] = 0.9;
-		self->ai.pers.inventoryWeights[combat_armor_index] = 0.8;
-		self->ai.pers.inventoryWeights[jacket_armor_index] = 0.5;
-		self->ai.pers.inventoryWeights[armor_shard_index] = 0.2;
+		self->ai->pers.inventoryWeights[body_armor_index] = 0.9;
+		self->ai->pers.inventoryWeights[combat_armor_index] = 0.8;
+		self->ai->pers.inventoryWeights[jacket_armor_index] = 0.5;
+		self->ai->pers.inventoryWeights[armor_shard_index] = 0.2;
 	}
 
 	//techs
-	self->ai.pers.inventoryWeights[resistance_index] = 0.5;
-	self->ai.pers.inventoryWeights[strength_index] = 0.5;
-	self->ai.pers.inventoryWeights[regeneration_index] = 0.5;
-	self->ai.pers.inventoryWeights[haste_index] = 0.5;
+	self->ai->pers.inventoryWeights[resistance_index] = 0.5;
+	self->ai->pers.inventoryWeights[strength_index] = 0.5;
+	self->ai->pers.inventoryWeights[regeneration_index] = 0.5;
+	self->ai->pers.inventoryWeights[haste_index] = 0.5;
 
 	//GHz: misc items and powerups
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_pack"))] = 0.6;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_quad"))] = 2.0;
-	self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_invulnerability"))] = 2.0;
+	self->ai->pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_pack"))] = 0.6;
+	self->ai->pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_quad"))] = 2.0;
+	self->ai->pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_invulnerability"))] = 2.0;
 
 	if (ctf->value) {
 		redflag = FindItemByClassname("item_flag_team1");	// store pointers to flags gitem_t, for 
 		blueflag = FindItemByClassname("item_flag_team2");// simpler comparisons inside this archive
-		self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_flag_team1"))] = 3.0;
-		self->ai.pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_flag_team2"))] = 3.0;
+		self->ai->pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_flag_team1"))] = 3.0;
+		self->ai->pers.inventoryWeights[ITEM_INDEX(FindItemByClassname("item_flag_team2"))] = 3.0;
 	}
 	//BOT_PrintItemWeights(self);//TESTING!!!!!!!!!!!!!!!
 }
@@ -2357,18 +2378,18 @@ void BOT_DMclass_InitPersistant(edict_t *self)
 
 	//copy name
 	if (self->client->pers.netname)
-		self->ai.pers.netname = self->client->pers.netname;
+		self->ai->pers.netname = self->client->pers.netname;
 	else
-		self->ai.pers.netname = "dmBot";
+		self->ai->pers.netname = "dmBot";
 
 	//set 'class' functions
-	self->ai.pers.RunFrame = BOT_DMclass_RunFrame;
-	self->ai.pers.UpdateStatus = BOT_DMclass_UpdateStatus;
-	self->ai.pers.bloquedTimeout = BOT_DMClass_BloquedTimeout;
-	self->ai.pers.deadFrame = BOT_DMclass_DeadFrame;
+	self->ai->pers.RunFrame = BOT_DMclass_RunFrame;
+	self->ai->pers.UpdateStatus = BOT_DMclass_UpdateStatus;
+	self->ai->pers.bloquedTimeout = BOT_DMClass_BloquedTimeout;
+	self->ai->pers.deadFrame = BOT_DMclass_DeadFrame;
 
 	//available moveTypes for this class
-	self->ai.pers.moveTypesMask = (LINK_MOVE|LINK_STAIRS|LINK_FALL|LINK_WATER|LINK_WATERJUMP|LINK_JUMPPAD|LINK_PLATFORM|LINK_TELEPORT|LINK_LADDER|LINK_JUMP|LINK_CROUCH);
+	self->ai->pers.moveTypesMask = (LINK_MOVE|LINK_STAIRS|LINK_FALL|LINK_WATER|LINK_WATERJUMP|LINK_JUMPPAD|LINK_PLATFORM|LINK_TELEPORT|LINK_LADDER|LINK_JUMP|LINK_CROUCH);
 
 	//BOT_DMclass_InitPersistantWeights(self);
 }
@@ -2378,7 +2399,7 @@ void BOT_DMclass_InitPersistant(edict_t *self)
 //==========================================
 void BOT_DMclass_Pain(edict_t* self, edict_t* other, float kick, int damage)
 {
-	if (!self->ai.is_bot)
+	if (!self->ai)
 		return;
 	if (!G_EntIsAlive(other))
 		return;
@@ -2406,14 +2427,14 @@ void BOT_DMclass_Pain(edict_t* self, edict_t* other, float kick, int damage)
 
 	if (AIDevel.debugChased && bot_showcombat->value)
 	{
-		if (other->ai.is_bot)
+		if (other->ai)
 			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: is angry at %s!\n",
-				self->ai.pers.netname, other->ai.pers.netname);
+				self->ai->pers.netname, other->ai->pers.netname);
 		else if (other->client)
 			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: is angry at %s!\n",
-				self->ai.pers.netname, other->client->pers.netname);
+				self->ai->pers.netname, other->client->pers.netname);
 		else
 			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: is angry at %s!\n",
-				self->ai.pers.netname, other->classname);
+				self->ai->pers.netname, other->classname);
 	}
 }

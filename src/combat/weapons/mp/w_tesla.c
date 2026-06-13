@@ -11,8 +11,8 @@
 static void weapon_tesla_fire(edict_t *ent, qboolean held)
 {
     vec3_t offset, start, forward, right, angles;
-    int damage = 3 + ent->myskills.weapons[WEAPON_TESLA].mods[0].current_level;
-    float radius = 128 + 4 * ent->myskills.weapons[WEAPON_TESLA].mods[1].current_level;
+    int damage = 3 + ent->client->resp.pstats.weapons[WEAPON_TESLA].mods[0].current_level;
+    float radius = 128 + 4 * ent->client->resp.pstats.weapons[WEAPON_TESLA].mods[1].current_level;
     float timer;
     int speed;
     int min_speed;
@@ -35,8 +35,8 @@ static void weapon_tesla_fire(edict_t *ent, qboolean held)
     if (timer < 0)
         timer = 0;
 
-    min_speed = TESLA_MINSPEED + 15 * ent->myskills.weapons[WEAPON_TESLA].mods[2].current_level;
-    max_speed = TESLA_MAXSPEED + 15 * ent->myskills.weapons[WEAPON_TESLA].mods[2].current_level;
+    min_speed = TESLA_MINSPEED + 15 * ent->client->resp.pstats.weapons[WEAPON_TESLA].mods[2].current_level;
+    max_speed = TESLA_MAXSPEED + 15 * ent->client->resp.pstats.weapons[WEAPON_TESLA].mods[2].current_level;
 
     if (ent->health <= 0)
         speed = min_speed;

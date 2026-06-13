@@ -137,43 +137,43 @@ void AITools_DrawPath(edict_t *self, int node_from, int node_to)
 	if (level.time < drawnpath_timeout)
 		return;
 	drawnpath_timeout = level.time + 4*FRAMETIME;
-	if( self->ai.path.goalNode != node_to )
+	if( self->ai->path.goalNode != node_to )
 		return;
 
 	//find position in stored path
-	while( self->ai.path.nodes[pos] != node_from )
+	while( self->ai->path.nodes[pos] != node_from )
 	{
 		pos++;
-		if( self->ai.path.goalNode == self->ai.path.nodes[pos] )
+		if( self->ai->path.goalNode == self->ai->path.nodes[pos] )
 			return;	//failed
 	}
 	//gi.dprintf("AITools_DrawPath\n");
 	// Now set up and display the path
-	while( self->ai.path.nodes[pos] != node_to && count < 32)
+	while( self->ai->path.nodes[pos] != node_to && count < 32)
 	{
 		//edict_t		*event;
 		
-		//event = G_SpawnEvent ( EV_BFG_LASER, 0, nodes[self->ai.path->nodes[pos]].origin );
+		//event = G_SpawnEvent ( EV_BFG_LASER, 0, nodes[self->ai->path->nodes[pos]].origin );
 		//event->svflags = SVF_FORCEOLDORIGIN;
-		//VectorCopy ( nodes[self->ai.path->nodes[pos+1]].origin, event->s.origin2 );
+		//VectorCopy ( nodes[self->ai->path->nodes[pos+1]].origin, event->s.origin2 );
 #ifndef VRX_REPRO
-		G_DrawDebugTrail(nodes[self->ai.path.nodes[pos + 1]].origin, nodes[self->ai.path.nodes[pos]].origin);//GHz
+		G_DrawDebugTrail(nodes[self->ai->path.nodes[pos + 1]].origin, nodes[self->ai->path.nodes[pos]].origin);//GHz
 #else
-		gire.Draw_Arrow(nodes[self->ai.path.nodes[pos]].origin, nodes[self->ai.path.nodes[pos+1]].origin, 8, &rgba_orange, &rgba_orange, 0.1, true);
+		gire.Draw_Arrow(nodes[self->ai->path.nodes[pos]].origin, nodes[self->ai->path.nodes[pos+1]].origin, 8, &rgba_orange, &rgba_orange, 0.1, true);
 #endif
-		//G_Spawn_Splash(TE_LASER_SPARKS, 20, 200, nodes[self->ai.path.nodes[pos]].origin, vec3_origin, nodes[self->ai.path.nodes[pos]].origin);//GHz
+		//G_Spawn_Splash(TE_LASER_SPARKS, 20, 200, nodes[self->ai->path.nodes[pos]].origin, vec3_origin, nodes[self->ai->path.nodes[pos]].origin);//GHz
 		pos++;
 		count++;
 	}
-	//G_Spawn_Splash(TE_LASER_SPARKS, 5, 200, nodes[self->ai.path.nodes[node_to]].origin, vec3_origin, nodes[self->ai.path.nodes[node_to]].origin);//GHz
+	//G_Spawn_Splash(TE_LASER_SPARKS, 5, 200, nodes[self->ai->path.nodes[node_to]].origin, vec3_origin, nodes[self->ai->path.nodes[node_to]].origin);//GHz
 
 #ifndef VRX_REPRO
 	gi.WriteByte(svc_temp_entity);
 	gi.WriteByte(TE_BFG_EXPLOSION);
-	gi.WritePosition(nodes[self->ai.path.nodes[pos]].origin);
-	gi.multicast(nodes[self->ai.path.nodes[pos]].origin, MULTICAST_PVS);
+	gi.WritePosition(nodes[self->ai->path.nodes[pos]].origin);
+	gi.multicast(nodes[self->ai->path.nodes[pos]].origin, MULTICAST_PVS);
 #else
-	gire.Draw_Sphere(nodes[self->ai.path.nodes[pos]].origin, 16, &rgba_green, 0.1, true);
+	gire.Draw_Sphere(nodes[self->ai->path.nodes[pos]].origin, 16, &rgba_green, 0.1, true);
 #endif
 
 }
@@ -314,7 +314,7 @@ void AI_RemoveNodeLinksReferences(int node) {
 			removed++;
 	}
 
-	gi.dprintf("%s: Removed %d references to node %d\n", __func__, removed, node);
+	// gi.dprintf("%s: Removed %d references to node %d\n", __func__, removed, node);
 }
 
 void AI_ClearNode(int node_index)
@@ -519,7 +519,7 @@ void AITools_ShowArrowMarker(edict_t* self)
 		}
 
 		// place a yellow arrow over our head pointing in the direction of our intended path
-		if (!VectorEmpty(self->ai.move_vector))
+		if (!VectorEmpty(self->ai->move_vector))
 		{
 			vec3_t forward;
 			// calculate start position over our head
@@ -527,7 +527,7 @@ void AITools_ShowArrowMarker(edict_t* self)
 			start[2] = self->absmin[2] + 32;
 			
 			// remove pitch
-			VectorCopy(self->ai.move_vector, forward);
+			VectorCopy(self->ai->move_vector, forward);
 			VectorNormalize(forward);
 			forward[2] = 0;
 

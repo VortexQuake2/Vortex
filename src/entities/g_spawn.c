@@ -775,6 +775,8 @@ void SpawnEntities (char *mapname, const char *entities, char *spawnpoint)
 
 //	gi.dprintf ("%i entities inhibited\n", inhibit);
 
+	// az: init before jabot in case we need to seed it
+	InitPathfinding();
 	AI_NewMap();//JABot
 
 	vrx_lua_run_map_settings(mapname);
@@ -802,7 +804,6 @@ void SpawnEntities (char *mapname, const char *entities, char *spawnpoint)
 
 	PrintNumEntities(false);
 
-	InitPathfinding();
 	SpawnWorldAmmo();
 
 	vrx_inv_init_post_entities(); // az

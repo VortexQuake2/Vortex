@@ -9,18 +9,18 @@ static void weapon_etf_rifle_fire(edict_t *ent)
     vec3_t forward, right, angles, start, offset;
     int i;
     int damage = ETFRIFLE_INITIAL_DAMAGE +
-    ( RAILGUN_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_ETFRIFLE].mods[0].current_level );
+    ( RAILGUN_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_ETFRIFLE].mods[0].current_level );
     int speed = ETFRIFLE_INITIAL_SPEED +
-    ( ETFRIFLE_ADDON_SPEED * ent->myskills.weapons[WEAPON_ETFRIFLE].mods[2].current_level );
+    ( ETFRIFLE_ADDON_SPEED * ent->client->resp.pstats.weapons[WEAPON_ETFRIFLE].mods[2].current_level );
     int kick = 3;
 
-    if (ent->myskills.weapons[WEAPON_ETFRIFLE].mods[3].current_level < 1) {
+    if (ent->client->resp.pstats.weapons[WEAPON_ETFRIFLE].mods[3].current_level < 1) {
         kick *= 2;
     }
 
     vec3_t kick_origin, kick_angles;
 
-    if (ent->myskills.weapons[WEAPON_ETFRIFLE].mods[4].current_level)
+    if (ent->client->resp.pstats.weapons[WEAPON_ETFRIFLE].mods[4].current_level)
         is_silenced = MZ_SILENCED;
 
     if (!(ent->client->buttons & BUTTON_ATTACK))
@@ -69,7 +69,7 @@ static void weapon_etf_rifle_fire(edict_t *ent)
     P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
     fire_flechette(ent, start, forward, damage, speed, kick);
 
-    if (ent->myskills.weapons[WEAPON_ETFRIFLE].mods[4].current_level < 1) {
+    if (ent->client->resp.pstats.weapons[WEAPON_ETFRIFLE].mods[4].current_level < 1) {
         gi.WriteByte(svc_muzzleflash);
         gi.WriteShort(ent - g_edicts);
         gi.WriteByte(MZ_ETF_RIFLE | is_silenced);

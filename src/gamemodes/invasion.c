@@ -1102,8 +1102,8 @@ void vrx_inv_spawn_players(void) {
                 e->wait = level.time + 1.0;
                 continue;
             }
-            //if (cl_ent->ai.is_bot)
-            //	gi.dprintf("%d: %s: spawn %d clear for %s\n", (int)level.framenum, __func__, e->s.number, cl_ent->ai.pers.netname);
+            //if (cl_ent->ai)
+            //	gi.dprintf("%d: %s: spawn %d clear for %s\n", (int)level.framenum, __func__, e->s.number, cl_ent->ai->pers.netname);
             e->wait = level.time + 2.0; // delay before other players can use this spawn
             cl_ent->spawn = e; // player may use this spawn
             respawn(cl_ent);

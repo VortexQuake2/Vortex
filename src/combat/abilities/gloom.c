@@ -2641,7 +2641,7 @@ void cocoon_apply_bonus (edict_t *self, edict_t *other)
 		if (self->creator && self->creator->client)
 			self->creator->client->layout.dirty = true;
 
-		if (other->client && !other->ai.is_bot)
+		if (other->client && !other->ai)
 			gi.cprintf(other, PRINT_HIGH, "You have gained a damage/defense bonus of +%.0f%c for %.0f seconds\n",
 				(factor * 100) - 100, '%', duration); 
 		

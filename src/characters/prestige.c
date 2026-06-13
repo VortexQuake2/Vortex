@@ -147,7 +147,7 @@ void vrx_prestige_ascend(edict_t *self) {
     self->myskills.prestige.points += upgradePoints;
 
     // reset them to start level
-    vrx_change_class(self->myskills.player_name, self->myskills.class_num, 3);
+    vrx_change_class(self->client->resp.pstats.player_name, self->myskills.class_num, 3);
 }
 
 void vrx_prestige_menu_handler(edict_t *self, int option) {

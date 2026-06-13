@@ -107,13 +107,18 @@ qboolean vrx_relay_try_character_loaded(msgpack_object_str *type, msgpack_object
         return true;
     }
 
+    pstats_t pst = {0};
     skills_t sk = {0};
+    playertransfer_t pt = {
+        &pst,
+        &sk
+    };
     if (!msgpack_streq(status, "Ok")) {
         if (msgpack_streq(status, "WrongPassword")) {
             gi.cprintf(ent, PRINT_HIGH, "The password is incorrect.\n");
         } else if (msgpack_streq(status, "CharacterNotFound")) {
             gi.cprintf(ent, PRINT_HIGH, "Creating a new character!\n");
-            vrx_notify_character_load_completion(ent, &sk);
+            vrx_notify_character_load_completion(ent, &pt);
         } else if (msgpack_streq(status, "CharacterLocked")) {
             gi.cprintf(ent, PRINT_HIGH, "Character is locked because it is being used elsewhere. If this is incorrect, contact an admin.\n");
         }

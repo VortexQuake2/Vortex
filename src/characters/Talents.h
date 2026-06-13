@@ -92,10 +92,10 @@
 #define TALENT_INSTANTPROXYS		123
 
 typedef struct talent_s {
-	int		id;
-	int		upgradeLevel;
-	int		maxLevel;
 	float	delay;
+	uint8_t		id;
+	uint8_t		upgradeLevel;
+	uint8_t		maxLevel;
 }
 talent_t;
 

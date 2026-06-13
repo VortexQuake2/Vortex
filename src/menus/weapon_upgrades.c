@@ -20,8 +20,8 @@ int V_WeaponUpgradeVal(edict_t *ent, int weapnum)
 
 	for (i=0; i<MAX_WEAPONMODS;++i)
 	{
-		iCount += ent->myskills.weapons[weapnum].mods[i].current_level;
-		iMax += ent->myskills.weapons[weapnum].mods[i].soft_max;
+		iCount += ent->client->resp.pstats.weapons[weapnum].mods[i].current_level;
+		iMax += ent->client->resp.pstats.weapons[weapnum].mods[i].soft_max;
 	}
 
 	if (iMax == 0)
@@ -90,11 +90,11 @@ void generalWeaponMenu_handler(edict_t *ent, int option)
 		return;
 	}
 
-    if (!(ent->myskills.weapons[WeaponIndex].mods[ModIndex].level < ent->myskills.weapons[WeaponIndex].mods[ModIndex].soft_max))
+    if (!(ent->client->resp.pstats.weapons[WeaponIndex].mods[ModIndex].level < ent->client->resp.pstats.weapons[WeaponIndex].mods[ModIndex].soft_max))
 	{
 		safe_cprintf(ent, PRINT_HIGH, "You have reached the maximum upgrade level in %s %s (%d).\n",
 			GetWeaponString(WeaponIndex), GetModString(WeaponIndex,ModIndex), 
-			ent->myskills.weapons[WeaponIndex].mods[ModIndex].soft_max);
+			ent->client->resp.pstats.weapons[WeaponIndex].mods[ModIndex].soft_max);
 		OpenGeneralWeaponMenu(ent, option);
 		return;
 	}
@@ -106,12 +106,12 @@ void generalWeaponMenu_handler(edict_t *ent, int option)
 		return;
 	}
 
-	ent->myskills.weapons[WeaponIndex].mods[ModIndex].current_level++;
-	ent->myskills.weapons[WeaponIndex].mods[ModIndex].level++;
+	ent->client->resp.pstats.weapons[WeaponIndex].mods[ModIndex].current_level++;
+	ent->client->resp.pstats.weapons[WeaponIndex].mods[ModIndex].level++;
 	ent->myskills.weapon_points--;
 
 	safe_cprintf(ent, PRINT_HIGH, "%s %s upgraded to level %d.\n",	GetWeaponString(WeaponIndex),GetModString(WeaponIndex,ModIndex), 
-		ent->myskills.weapons[WeaponIndex].mods[ModIndex].current_level);
+		ent->client->resp.pstats.weapons[WeaponIndex].mods[ModIndex].current_level);
     
     //Refresh the menu
 	OpenGeneralWeaponMenu(ent, option);
@@ -141,8 +141,8 @@ void OpenGeneralWeaponMenu (edict_t *ent, int lastline)
 	{
 		char sMod[30];
 		int level, cur;
-		level = ent->myskills.weapons[WeaponIndex].mods[i].level;
-		cur = ent->myskills.weapons[WeaponIndex].mods[i].current_level;
+		level = ent->client->resp.pstats.weapons[WeaponIndex].mods[i].level;
+		cur = ent->client->resp.pstats.weapons[WeaponIndex].mods[i].current_level;
 		strcpy(sMod, GetModString(WeaponIndex, i));
 		padRight(sMod, 15);
 		strcat(sMod, va("%d", level));

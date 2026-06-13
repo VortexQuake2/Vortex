@@ -1455,10 +1455,10 @@ int GetClientNumber(edict_t *ent)
             continue;
 
         //More checking
-        if (strlen(temp->myskills.player_name) < 1)
+        if (strlen(temp->client->resp.pstats.player_name) < 1)
             continue;
 
-        if (Q_stricmp(ent->myskills.player_name, temp->myskills.player_name) == 0) //same name
+        if (Q_stricmp(ent->client->resp.pstats.player_name, temp->client->resp.pstats.player_name) == 0) //same name
             return i + 1;
     }
     return 0;
@@ -1675,7 +1675,7 @@ void vrx_change_class(char *playername, int newclass, int msgtype) {
         player = &g_edicts[i];
         if (!player->inuse)
             continue;
-        if (Q_strcasecmp(playername, player->myskills.player_name) != 0)
+        if (Q_strcasecmp(playername, player->client->resp.pstats.player_name) != 0)
             continue;
         // Archon respawn only sword
         if (newclass == CLASS_KNIGHT)
@@ -1683,7 +1683,7 @@ void vrx_change_class(char *playername, int newclass, int msgtype) {
 
         //Reset player's skills and change their class
         memset(player->myskills.abilities, 0, sizeof(upgrade_t) * MAX_ABILITIES);
-        memset(player->myskills.weapons, 0, sizeof(weapon_t) * MAX_WEAPONS);
+        memset(player->client->resp.pstats.weapons, 0, sizeof(weapon_t) * MAX_WEAPONS);
         vrx_clear_talents(player);
         player->myskills.class_num = newclass;
 
@@ -1696,7 +1696,7 @@ void vrx_change_class(char *playername, int newclass, int msgtype) {
         //Re-apply equipment
         vrx_runes_unapply(player);
         for (i = 0; i < 3; ++i)
-            vrx_runes_apply(player, &player->myskills.items[i]);
+            vrx_runes_apply(player, &player->client->resp.pstats.items[i]);
 
         if (msgtype == CHANGECLASS_MSG_CHANGE) {
             //Notify everyone
@@ -2451,7 +2451,6 @@ void vrx_reset_player_state(edict_t *ent) {
     AuraRemove(ent, 0);
 
     // remove movement penalty
-    ent->Slower = 0;
     ent->slowed_factor = 1.0;
     ent->slowed_time = 0;
     ent->chill_level = 0;

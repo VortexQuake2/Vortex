@@ -76,7 +76,7 @@ qboolean AI_CanMove(edict_t* self, int direction)
 	if (tr.fraction == 1.0 || tr.contents & (CONTENTS_LAVA | CONTENTS_SLIME))
 	{
 		if (AIDevel.debugChased)	//jal: is too spammy. Temporary disabled
-			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: move blocked\n", self->ai.pers.netname);
+			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: move blocked\n", self->ai->pers.netname);
 		return false;
 	}
 
@@ -120,7 +120,7 @@ qboolean AI_CanMove1(edict_t *self, int direction)
 	if(tr.fraction == 1.0 || tr.contents & (CONTENTS_LAVA|CONTENTS_SLIME))
 	{
 		if(AIDevel.debugChased)	//jal: is too spammy. Temporary disabled
-			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: move blocked\n", self->ai.pers.netname);
+			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: move blocked\n", self->ai->pers.netname);
 		return false;
 	}
 
@@ -279,10 +279,10 @@ qboolean AI_SpecialMove(edict_t *self, usercmd_t *ucmd)
 	//AI_DebugPrintf("AI_SpecialMove()\n");
 
 	// Get current direction
-	if (self->ai.state == BOT_STATE_MOVEATTACK)//GHz: use move_vec instead when using MOVEATTACK state, since we're moving independent of view angles
+	if (self->ai->state == BOT_STATE_MOVEATTACK)//GHz: use move_vec instead when using MOVEATTACK state, since we're moving independent of view angles
 	{
 		moveattack = true;
-		VectorCopy(self->ai.move_vector, forward);
+		VectorCopy(self->ai->move_vector, forward);
 		forward[2] = 0;
 		VectorNormalize(forward);
 	}
@@ -299,7 +299,7 @@ qboolean AI_SpecialMove(edict_t *self, usercmd_t *ucmd)
 		return false;
 	}
 
-	if( self->ai.pers.moveTypesMask & LINK_CROUCH || self->ai.is_swim )
+	if( self->ai->pers.moveTypesMask & LINK_CROUCH || self->ai->is_swim )
 	{
 		//crouch box
 		VectorCopy( self->s.origin, boxorigin );
@@ -320,7 +320,7 @@ qboolean AI_SpecialMove(edict_t *self, usercmd_t *ucmd)
 		}
 	}
 
-	if( self->ai.pers.moveTypesMask & LINK_JUMP && self->groundentity )
+	if( self->ai->pers.moveTypesMask & LINK_JUMP && self->groundentity )
 	{
 		//jump box
 		VectorCopy( self->s.origin, boxorigin );
@@ -374,12 +374,12 @@ void AI_ChangeAngle (edict_t *ent)
 	vec3_t  ideal_angle;
 
 	// Normalize the move angle first
-	VectorNormalize(ent->ai.move_vector);
+	VectorNormalize(ent->ai->move_vector);
 
 	current_yaw = anglemod(ent->s.angles[YAW]);
 	current_pitch = anglemod(ent->s.angles[PITCH]);
 
-	vectoangles (ent->ai.move_vector, ideal_angle);
+	vectoangles (ent->ai->move_vector, ideal_angle);
 
 	ideal_yaw = anglemod(ideal_angle[YAW]);
 	ideal_pitch = anglemod(ideal_angle[PITCH]);
@@ -456,11 +456,11 @@ qboolean AI_DodgeProjectiles(edict_t* self, usercmd_t* ucmd)
 	float speed, eta, mv_spd;
 
 	// bot is locked in an escape vector for a period of time
-	if (self->ai.locked_movetime > level.time)
+	if (self->ai->locked_movetime > level.time)
 	{
 		//gi.dprintf("%d: %s: continuing to dodge...\n", (int)level.framenum, __func__);
-		ucmd->forwardmove = self->ai.locked_forwardmove;
-		ucmd->sidemove = self->ai.locked_sidemove;
+		ucmd->forwardmove = self->ai->locked_forwardmove;
+		ucmd->sidemove = self->ai->locked_sidemove;
 		return true;
 	}
 
@@ -506,11 +506,11 @@ qboolean AI_DodgeProjectiles(edict_t* self, usercmd_t* ucmd)
 				v[1] = tr.plane.normal[0];
 				v[2] = tr.plane.normal[2];
 				// copy escape vector to bot's move_vector
-				VectorCopy(v, self->ai.move_vector);
+				VectorCopy(v, self->ai->move_vector);
 				// GTFO! move!
 				BOT_DMclass_Ucmd_Move(self, 400, ucmd, false, false);
 				// calculate speed in the direction of the escape vector
-				mv_spd = fabsf(DotProduct(self->ai.move_vector, self->velocity));
+				mv_spd = fabsf(DotProduct(self->ai->move_vector, self->velocity));
 				// if we're going fast enough in that direction, jump to gain additional speed and distance
 				if (mv_spd > 250 && self->groundentity)
 					cmd_jump(ucmd);
@@ -521,9 +521,9 @@ qboolean AI_DodgeProjectiles(edict_t* self, usercmd_t* ucmd)
 				gi.WritePosition(self->s.origin);
 				gi.multicast(self->s.origin, MULTICAST_PVS);
 				// hold this direction for awhile
-				self->ai.locked_movetime = level.time + 0.5;
-				self->ai.locked_forwardmove = ucmd->forwardmove;
-				self->ai.locked_sidemove = ucmd->sidemove;
+				self->ai->locked_movetime = level.time + 0.5;
+				self->ai->locked_forwardmove = ucmd->forwardmove;
+				self->ai->locked_sidemove = ucmd->sidemove;
 				return true;
 			}
 			//gi.dprintf("AI_DodgeProjectiles: %s incoming (speed: %.0f) will hit in %.2f seconds\n", self->movetarget->classname, speed, eta);
@@ -564,9 +564,9 @@ qboolean AI_DodgeProjectiles(edict_t* self, usercmd_t* ucmd)
 		//GTFO!
 		VectorNormalize(v);
 		//VectorInverse(v); // reverse the direction of the vector to point away from the point of impact
-		VectorCopy(v, self->ai.move_vector);
+		VectorCopy(v, self->ai->move_vector);
 		BOT_DMclass_Ucmd_Move(self, 400, ucmd, false, false);//move!
-		mv_spd = fabsf(DotProduct(self->ai.move_vector, self->velocity));// speed in the direction of escape vector
+		mv_spd = fabsf(DotProduct(self->ai->move_vector, self->velocity));// speed in the direction of escape vector
 		if (mv_spd > 250 && self->groundentity)
 			cmd_jump(ucmd);
 		//gi.dprintf("%d: %s: *** EXPLOSIVE %s NEARBY! GET OUTTA THE WAY! ***\n", (int)level.framenum, __func__, self->movetarget->classname);
@@ -575,9 +575,9 @@ qboolean AI_DodgeProjectiles(edict_t* self, usercmd_t* ucmd)
 		gi.WriteByte(TE_TELEPORT_EFFECT);
 		gi.WritePosition(self->s.origin);
 		gi.multicast(self->s.origin, MULTICAST_PVS);
-		self->ai.locked_forwardmove = ucmd->forwardmove;
-		self->ai.locked_sidemove = ucmd->sidemove;
-		self->ai.locked_movetime = level.time + 0.5;
+		self->ai->locked_forwardmove = ucmd->forwardmove;
+		self->ai->locked_sidemove = ucmd->sidemove;
+		self->ai->locked_movetime = level.time + 0.5;
 		return true;
 	}
 	// no danger
@@ -608,10 +608,10 @@ qboolean AI_MoveToGoalEntity(edict_t *self, usercmd_t *ucmd)
 	   !Q_stricmp(self->movetarget->classname,"grenade") ||
 	   !Q_stricmp(self->movetarget->classname,"hgrenade"))
 	{
-		VectorSubtract (self->movetarget->s.origin, self->s.origin, self->ai.move_vector);
+		VectorSubtract (self->movetarget->s.origin, self->s.origin, self->ai->move_vector);
 		AI_ChangeAngle(self);
 		if(AIDevel.debugChased && bot_showcombat->value)
-			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: Oh crap a rocket!\n",self->ai.pers.netname);
+			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: Oh crap a rocket!\n",self->ai->pers.netname);
 
 		// strafe left/right
 		if(randomMT()%1 && AI_CanMove(self, BOT_MOVE_LEFT))
@@ -663,13 +663,13 @@ qboolean AI_MoveToGoalEntity(edict_t *self, usercmd_t *ucmd)
 // 
 		// set movement direction toward hiding spot
 		// this places the summons safely between the bot and our enemy
-		VectorSubtract(dest, self->s.origin, self->ai.move_vector);
+		VectorSubtract(dest, self->s.origin, self->ai->move_vector);
 	}
 	else
 		// Set bot's movement direction
-		VectorSubtract (self->movetarget->s.origin, self->s.origin, self->ai.move_vector);
+		VectorSubtract (self->movetarget->s.origin, self->s.origin, self->ai->move_vector);
 
-	if (self->ai.state == BOT_STATE_MOVEATTACK || self->ai.state == BOT_STATE_ATTACK)//GHz
+	if (self->ai->state == BOT_STATE_MOVEATTACK || self->ai->state == BOT_STATE_ATTACK)//GHz
 	{
 		if (!BOT_DMclass_Ucmd_Move(self, 400, ucmd, false, true))
 		{
@@ -691,11 +691,11 @@ qboolean AI_MoveToGoalEntity(edict_t *self, usercmd_t *ucmd)
 	}
 
 	// Check to see if stuck, and if so try to free us
-	if (VectorLength(self->velocity) < 37 && self->ai.bloqued_timeout < level.time + 9.0)
+	if (VectorLength(self->velocity) < 37 && self->ai->bloqued_timeout < level.time + 9.0)
 	{
 		//AI_DebugPrintf("STUCK : % d(% s) -> % s -> % d(% s)\n",
-		//	self->ai.current_node, AI_NodeString(current_node_flags),
-		//	AI_LinkString(current_link_type), self->ai.next_node, AI_NodeString(next_node_flags));//GHz
+		//	self->ai->current_node, AI_NodeString(current_node_flags),
+		//	AI_LinkString(current_link_type), self->ai->next_node, AI_NodeString(next_node_flags));//GHz
 		//gi.dprintf("bot can't move forward\n");
 		BOT_DMclass_AvoidObstacles(self, ucmd, 0);
 		self->movetarget = NULL;

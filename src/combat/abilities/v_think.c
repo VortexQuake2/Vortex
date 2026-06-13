@@ -78,28 +78,28 @@ void think_ability_power_regen(edict_t* ent) {
 
 void think_trade(edict_t* ent) {//3.0 new trading
 	//If this player isn't showing a menu any more, cancel the trade
-	if (ent->trade_with && !ent->client->menustorage.menu_active) {
+	if (ent->client->trade_with && !ent->client->menustorage.menu_active) {
 		int i;
 
 		//alert both players
-		safe_cprintf(ent, PRINT_HIGH, "%s has stopped the trade.\n", ent->myskills.player_name);
-		safe_cprintf(ent->trade_with, PRINT_HIGH, "%s has stopped the trade.\n", ent->myskills.player_name);
+		safe_cprintf(ent, PRINT_HIGH, "%s has stopped the trade.\n", ent->client->resp.pstats.player_name);
+		safe_cprintf(ent->client->trade_with, PRINT_HIGH, "%s has stopped the trade.\n", ent->client->resp.pstats.player_name);
 
 		//Clear the trade pointers
 		for (i = 0; i < 3; ++i) {
-			ent->trade_item[i] = NULL;
-			ent->trade_with->trade_item[i] = NULL;
+			ent->client->trade_item[i] = NULL;
+			ent->client->trade_with->client->trade_item[i] = NULL;
 		}
 
 		//cancel the trade (trade_with)
-		menu_close(ent->trade_with, true);
-		ent->trade_with->client->trade_accepted = false;
-		ent->trade_with->client->trade_final = false;
-		ent->trade_with->client->trading = false;
-		ent->trade_with->trade_with = NULL;
+		menu_close(ent->client->trade_with, true);
+		ent->client->trade_with->client->trade_accepted = false;
+		ent->client->trade_with->client->trade_final = false;
+		ent->client->trade_with->client->trading = false;
+		ent->client->trade_with->client->trade_with = NULL;
 
 		//cancel the trade (ent)
-		ent->trade_with = NULL;
+		ent->client->trade_with = NULL;
 		ent->client->trade_accepted = false;
 		ent->client->trade_final = false;
 		ent->client->trading = false;

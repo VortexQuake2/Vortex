@@ -636,7 +636,7 @@ void ShowAddAllyMenu (edict_t *ent)
 		if (CanAlly(ent, temp, ALLY_RANGE))
 		{
 			//Add player to the list
-            menu_add_line(ent, va(" %s (%s)", temp->myskills.player_name,
+            menu_add_line(ent, va(" %s (%s)", temp->client->resp.pstats.player_name,
                                   vrx_get_class_string(temp->myskills.class_num)), GetClientNumber(temp));
 			++j;
 
@@ -706,7 +706,7 @@ void ShowRemoveAllyMenu (edict_t *ent)
 		if (IsAlly(ent, temp))
 		{
 			//Add player to the list
-			menu_add_line(ent, va(" %s", temp->myskills.player_name), GetClientNumber(temp));
+			menu_add_line(ent, va(" %s", temp->client->resp.pstats.player_name), GetClientNumber(temp));
 			++j;
 		}
 		
@@ -768,7 +768,7 @@ void ShowAllyMenu (edict_t *ent)
 		if (IsAlly(ent, temp))
 		{
 			//Add player to the list
-			menu_add_line(ent, va(" %s", temp->myskills.player_name), 0);
+			menu_add_line(ent, va(" %s", temp->client->resp.pstats.player_name), 0);
 			++j;
 		}
 	}

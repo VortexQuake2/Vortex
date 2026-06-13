@@ -603,7 +603,7 @@ edict_t *drone_get_enemy (edict_t *self, float range)
 		// screen out invalid targets
 		// az: Replaced G_ValidTarget for lighter check.
 		//if (!G_ValidTarget(self, target, true))
-		if (!G_ValidTarget_Lite(self, target, true))
+		if (!G_ValidTarget_Lite(self, target, false))
 			continue;
 		// ignore low-level players
 		if (M_IgnoreInferiorTarget(self, target))
@@ -722,15 +722,8 @@ qboolean drone_findtarget (edict_t *self, qboolean force)
 
 			self->goalentity = target;
 			VectorCopy(target->s.origin, self->monsterinfo.last_sighting);
-			self->monsterinfo.aiflags |= AI_FIND_NAVI;
 			return true;
 		}
-		// else
-		// {
-		// 	if (DRONE_DEBUG)
-		// 		gi.dprintf("couldn't find navi");//FIXME: take off the AI_FIND_NAVI aiflag so that monsters can search for player spawns instead?
-		//	// az: drone_getnavi resolves this trying to find a pspawn if finding navis fails.
-		// }
 	} else if (self->monsterinfo.aiflags & AI_FIND_NAVI && self->goalentity && self->goalentity->mtype == INVASION_NAVI) {
 		// az: if we already have a navi and we're pretty close to it, try and get to the next one
 		if (entdist(self, self->goalentity) < 256) {
@@ -740,13 +733,24 @@ qboolean drone_findtarget (edict_t *self, qboolean force)
 			// az: if we're at the end of a navi chain, find a player spawn to attack
 			// this means we can stop looking for navis.
 			if (!self->goalentity) {
-				self->goalentity = vrx_inv_give_closest_player_spawn(self);
-
 				// also, allow the monsters to go back to being hyperaggressive dodgers.
 				self->monsterinfo.aiflags &= ~AI_NO_CIRCLE_STRAFE;
+				self->monsterinfo.aiflags &= ~AI_FIND_NAVI;
+				self->monsterinfo.aiflags |= AI_ASSAULT;
+			} else {
+				// az: advancing the chain over here means we have to update this, lol.
+				VectorCopy(self->goalentity->s.origin, self->monsterinfo.last_sighting);
 			}
 		}
 	}
+	if (self->monsterinfo.aiflags & AI_ASSAULT) {
+		self->goalentity = vrx_inv_give_closest_player_spawn(self);
+		if (self->goalentity) {
+			VectorCopy(self->goalentity->s.origin, self->monsterinfo.last_sighting);
+			return true;
+		}
+	}
+
 	return false;
 }
 
@@ -897,7 +901,7 @@ qboolean drone_ai_findgoal (edict_t *self) {
 			//gi.dprintf("leader is still valid\n");
 			// the leader is too far away
 			int follow_distance = 512;
-			if (self->monsterinfo.leader->ai.is_bot) // stay closer to bots
+			if (self->monsterinfo.leader->ai) // stay closer to bots
 				follow_distance = 256;
 			if (entdist(self, self->monsterinfo.leader) > follow_distance)
 			{
@@ -1513,13 +1517,7 @@ void drone_cleargoal (edict_t *self)
 }
 
 
-qboolean vrx_pf_nearest_node_location (vec3_t start, vec3_t node_loc, float range, qboolean vis);
-int FindPath(int searchType, vec3_t start, vec3_t destination);
 void M_MoveToPosition(edict_t* ent, vec3_t pos, float dist, qboolean stop_when_close);
-int vrx_copy_path_waypoints (int *wp, int max);
-int vrx_pf_nearest_waypoint_index_along_path (vec3_t start, const int *wp, size_t wpcount);
-void vrx_pf_get_node_position (int nodenum, vec3_t pos);
-void DrawPath (const edict_t *ent);
 
 void drone_ai_giveup (edict_t *self)
 {
@@ -1617,7 +1615,7 @@ void M_ClearPath (edict_t *self)
 
 void M_FindPath (edict_t *self, vec3_t goalpos, qboolean compute_path_now)
 {
-	int searchType;
+	enum searchtype_t searchType;
 
 	// update the path now or after a brief delay
 	if (compute_path_now || (self->monsterinfo.updatePath && level.time > self->monsterinfo.path_time))
@@ -1642,7 +1640,7 @@ void M_FindPath (edict_t *self, vec3_t goalpos, qboolean compute_path_now)
 		else
 			searchType = SEARCHTYPE_WALK;
 
-		if (FindPath(searchType, v1, v2))
+		if (vrx_pf_find_path(searchType, v1, v2))
 		{
 			if (DRONE_DEBUG)
 				gi.dprintf("%s (%d) is recalculating path at %d\n",
@@ -1650,7 +1648,7 @@ void M_FindPath (edict_t *self, vec3_t goalpos, qboolean compute_path_now)
 
 			// copy waypoints to monster
 			self->monsterinfo.numWaypoints =
-				vrx_copy_path_waypoints(self->monsterinfo.waypoint, 1000);
+				vrx_copy_path_waypoints(self->monsterinfo.waypoint, sizeof(self->monsterinfo.waypoint) / sizeof(nodeid_t));
 			// get index of next waypoint
 			self->monsterinfo.nextWaypoint = vrx_pf_nearest_waypoint_index_along_path(self->s.origin, self->monsterinfo.waypoint, self->monsterinfo.numWaypoints) + 1;
 			// brief delay before we can re-compute path to goal
@@ -1787,7 +1785,7 @@ bool vrx_follow_navigation_chain(edict_t *self, edict_t *goal) {
 					gi.dprintf("reached the end of navi chain\n");
 				// monster is currently chasing a navi but we have reached the end
 				self->monsterinfo.aiflags &= ~(AI_FIND_NAVI | AI_COMBAT_POINT);
-				drone_ai_giveup(self);
+				self->monsterinfo.aiflags |= AI_ASSAULT;
 				return true;
 			}
 		}
@@ -2107,7 +2105,8 @@ void drone_ai_run1 (edict_t *self, float dist)
 	{
 		/* az note 1: chase after killable enemy */
 		// goal entity is visible, or navi. navis are always considered visible.
-		if (visible(self, goal) || goal->mtype == INVASION_NAVI)
+		bool alwaysVisible = goal->mtype == INVASION_NAVI || goal->mtype == INVASION_PLAYERSPAWN;
+		if (alwaysVisible || visible(self, goal))
 		{
 			goalVisible = true;
 
@@ -2670,19 +2669,8 @@ void drone_think (edict_t *self)
 	V_ArmorCache(self, (int)(0.2 * M_MonsterArmorMax(self)), 1);
 
 	// draw waypoint path for debugging if enabled
-	DrawPath(self);
+	vrx_pf_draw_path(self);
 
-	//Talent: Life Tap
-	// if (self->activator && self->activator->inuse && self->activator->client && !(level.framenum % 10))
-	// {
-    // 	if (vrx_get_talent_level(self->activator, TALENT_LIFE_TAP) > 0)
-	// 	{
-	// 		int damage = 0.01 * self->max_health;
-	// 		if (damage < 1)
-	// 			damage = 1;
-	// 		T_Damage(self, world, world, vec3_origin, self->s.origin, vec3_origin, damage, 0, DAMAGE_NO_ABILITIES, 0);
-	// 	}
-	// }
 
 	if (self->linkcount != self->monsterinfo.linkcount)
 	{

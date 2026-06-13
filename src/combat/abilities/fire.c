@@ -251,7 +251,7 @@ void fire_fireball(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float
 	// adjust velocity
 	VectorScale(aimdir, speed, fireball->velocity);
 	// push up
-	if (!self->ai.is_bot && !self->lockon)//GHz: don't boost vertical velocity for bots as it will affect ballistic calculations (i.e. finding the right pitch to hit the target)
+	if (!self->ai && !self->lockon)//GHz: don't boost vertical velocity for bots as it will affect ballistic calculations (i.e. finding the right pitch to hit the target)
 		fireball->velocity[2] += 150;
 	// make it spin/roll
 	VectorSet(fireball->avelocity, 0, 0, 600);

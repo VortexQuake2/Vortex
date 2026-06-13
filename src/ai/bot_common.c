@@ -139,7 +139,7 @@ void BOT_AutoSpawn(void)
 	int current_bots = 0;
 	for (int i = 1; i < maxclients->value; i++)
 	{
-		if (g_edicts[i].inuse && g_edicts[i].client && g_edicts[i].ai.is_bot)
+		if (g_edicts[i].inuse && g_edicts[i].client && g_edicts[i].ai)
 			current_bots++;
 	}
 
@@ -340,7 +340,7 @@ void debug_printf(char *fmt, ...)
 	for (i=0 ; i<maxclients->value ; i++)
 	{
 		cl_ent = g_edicts + 1 + i;
-		if (!cl_ent->inuse || cl_ent->ai.is_bot)
+		if (!cl_ent->inuse || cl_ent->ai)
 			continue;
 
 		safe_cprintf(cl_ent,  PRINT_MEDIUM, bigbuffer);
@@ -357,7 +357,7 @@ void safe_cprintf (edict_t *ent, int printlevel, char *fmt, ...)
 	va_list		argptr;
 	int len;
 
-	if (ent && (!ent->inuse || ent->ai.is_bot))
+	if (ent && (!ent->inuse || ent->ai))
 	{
 		/*
 		va_start(argptr, fmt);
@@ -390,7 +390,7 @@ void safe_centerprintf (edict_t *ent, char *fmt, ...)
 	if (!ent)
 	    return;
 
-	if (!ent->inuse || ent->ai.is_bot)
+	if (!ent->inuse || ent->ai)
 		return;
 
 	if (!ent->client)
@@ -425,7 +425,7 @@ void safe_bprintf (int printlevel, char *fmt, ...)
 	for (i=0 ; i<maxclients->value ; i++)
 	{
 		cl_ent = g_edicts + 1 + i;
-		if (!cl_ent->inuse || cl_ent->ai.is_bot)
+		if (!cl_ent->inuse || cl_ent->ai)
 			continue;
 
 		safe_cprintf(cl_ent, printlevel, bigbuffer);

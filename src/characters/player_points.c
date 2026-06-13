@@ -109,7 +109,7 @@ int16_t vrx_get_xp_percent(long xp, int level) {
 void vrx_check_for_levelup(edict_t *ent, qboolean print_message) {
 	qboolean levelup = false;
 
-    if (ent->ai.is_bot) // bots don't level up -az
+    if (ent->ai) // bots don't level up -az
         return;
 
     while (ent->myskills.experience >= ent->myskills.next_level) {
@@ -128,7 +128,7 @@ void vrx_check_for_levelup(edict_t *ent, qboolean print_message) {
 
         ent->myskills.next_level += points_needed;
 
-        if (ent->myskills.level <= 10 || ent->ai.is_bot) // bots and players under level 10 get 2 ability points per level
+        if (ent->myskills.level <= 10 || ent->ai) // bots and players under level 10 get 2 ability points per level
             ent->myskills.speciality_points += 2;
         else
             ent->myskills.speciality_points += 1;
@@ -263,7 +263,7 @@ void vrx_trigger_spree_abilities(edict_t *attacker) {
 
 int vrx_apply_experience(edict_t *player, int exp) {
     // reduce experience as play time increases
-    float playtime_minutes = player->myskills.playingtime / 60.0;
+    float playtime_minutes = player->client->resp.pstats.playingtime / 60.0;
     if (playtime_minutes > PLAYTIME_MIN_MINUTES) {
         float mod = 1.0 + playtime_minutes / PLAYTIME_MAX_MINUTES;
         if (mod >= PLAYTIME_MAX_PENALTY)
@@ -283,7 +283,7 @@ int vrx_apply_experience(edict_t *player, int exp) {
 
     if (player->myskills.level <= MAX_LEVEL) // hasn't reached the cap
     {
-        if (!player->ai.is_bot) // not a bot? have exp
+        if (!player->ai) // not a bot? have exp
         {
             player->myskills.experience += exp;
             player->myskills.experience = min(player->myskills.experience, vrx_get_prestige_max_xp());
@@ -454,7 +454,7 @@ int vrx_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient, int b
 
     vrx_add_credits(attacker, credits);
 
-    if (!attacker->ai.is_bot && (exp_points > 0 || credits > 0) && attacker->client) {
+    if (!attacker->ai && (exp_points > 0 || credits > 0) && attacker->client) {
 	    int clevel = 0;
 	    if (targ->client) {
             strcat(name, targetclient->client->pers.netname);
@@ -818,7 +818,7 @@ float vrx_get_nfer_bonus(edict_t *attacker, const edict_t *target, float bonus) 
             attacker->nfer++;
 
         bonus += sqrtf(attacker->nfer / 2.f);
-        attacker->myskills.num_2fers++;
+        attacker->client->resp.pstats.num_2fers++;
 
         vrx_do_nfer_effects(attacker, target);
     }
@@ -966,7 +966,7 @@ void vrx_death_cleanup(edict_t *attacker, edict_t *targ) {
     //GHz: Handle suicides
     if (targ == attacker) {
         targ->myskills.streak = 0;
-        targ->myskills.suicides++;
+        targ->client->resp.pstats.suicides++;
 
         // players don't lose points in PvM mode since it is easy to kill yourself
         if (!pvm->value) {
@@ -989,9 +989,9 @@ void vrx_death_cleanup(edict_t *attacker, edict_t *targ) {
     }
 
     if (invasion->value < 2) {
-        targ->myskills.fragged++;
+        targ->client->resp.pstats.fragged++;
 
-        attacker->myskills.frags++;
+        attacker->client->resp.pstats.frags++;
         attacker->client->resp.frags++;
         attacker->lastkill = level.time + 2;
     }
@@ -1002,9 +1002,9 @@ void vrx_death_cleanup(edict_t *attacker, edict_t *targ) {
         if (SPREE_WAR == true && targ == SPREE_DUDE) {
             SPREE_WAR = false;
             SPREE_DUDE = NULL;
-            attacker->myskills.break_spree_wars++;
+            attacker->client->resp.pstats.break_spree_wars++;
         }
-        attacker->myskills.break_sprees++;
+        attacker->client->resp.pstats.break_sprees++;
         gi.bprintf(PRINT_HIGH, "%s broke %s's %d frag killing spree!\n", attacker->client->pers.netname,
                    targ->client->pers.netname, targ->myskills.streak);
     }
@@ -1037,13 +1037,13 @@ void vrx_death_cleanup(edict_t *attacker, edict_t *targ) {
         return;
 
     if (attacker->myskills.streak >= SPREE_START) {
-        if (attacker->myskills.streak > attacker->myskills.max_streak)
-            attacker->myskills.max_streak = attacker->myskills.streak;
+        if (attacker->myskills.streak > attacker->client->resp.pstats.max_streak)
+            attacker->client->resp.pstats.max_streak = attacker->myskills.streak;
         if (attacker->myskills.streak == SPREE_START)
-            attacker->myskills.num_sprees++;
+            attacker->client->resp.pstats.num_sprees++;
 
         if (attacker->myskills.streak == SPREE_WARS_START && SPREE_WARS > 0)
-            attacker->myskills.spree_wars++;
+            attacker->client->resp.pstats.spree_wars++;
 
         if ((attacker->myskills.streak >= SPREE_WARS_START) && SPREE_WARS && (!V_GetNumAllies(attacker))
             && !attacker->myskills.boss && !vrx_is_newbie_basher(attacker)) {

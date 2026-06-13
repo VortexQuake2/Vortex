@@ -1,5 +1,39 @@
 #include "g_local.h"
 
+constexpr size_t MAX_BACKPACKS = 32;
+constexpr size_t PACK_COUNT = MAX_ITEMS * MAX_BACKPACKS;
+constexpr size_t PACKMEM_SIZE = sizeof(int32_t) * PACK_COUNT;
+int32_t* packItems;
+bool packInUse[MAX_BACKPACKS];
+
+void vrx_backpack_init() {
+    packItems = gi.TagMalloc(PACKMEM_SIZE, TAG_GAME);
+    memset(packInUse, 0, sizeof packInUse);
+}
+
+static size_t backpack_index(int32_t* idx) {
+    if (idx < packItems)
+        return SIZE_MAX;
+    auto nr = idx - packItems;
+
+    if (nr >= PACK_COUNT)
+        return SIZE_MAX;
+
+    return nr;
+}
+
+static int32_t* backpack_alloc() {
+   for (size_t i = 0; i < MAX_BACKPACKS; i++) {
+       if (packInUse[i])
+           continue;
+
+       packInUse[i] = true;
+       return &packItems[i * MAX_ITEMS];
+   }
+
+   return nullptr;
+}
+
 void Backpack_Touch(edict_t *pack, edict_t *other, cplane_t *plane, csurface_t *surf) {
     int i, quantity;
     gitem_t *item = itemlist;
@@ -14,6 +48,12 @@ void Backpack_Touch(edict_t *pack, edict_t *other, cplane_t *plane, csurface_t *
 
     if (!other || !other->inuse || !other->client || G_IsSpectator(other))
         return;
+
+    if (!pack->packitems) {
+        G_FreeEdict(pack);
+        return;
+    }
+
 
     //Add_credits(other,pack->style);
     // Play standard item pickup sound...
@@ -37,6 +77,7 @@ void Backpack_Touch(edict_t *pack, edict_t *other, cplane_t *plane, csurface_t *
             other->client->pers.inventory[ITEM_INDEX(item)] += quantity;
     }
     //gi.unlinkentity(pack);  // Make pack disappear..
+    packInUse[backpack_index(pack->packitems)] = false;
     Check_full(other);
     G_FreeEdict(pack);
 }
@@ -76,11 +117,14 @@ void vrx_toss_backpack(edict_t *player, edict_t *attacker) {
         }
     }
 
+    auto packitems = backpack_alloc();
+    if (!packitems)
+        return;
+
     // Create backpack entity
     pack = G_Spawn();
-    // ----------------------------
+    pack->packitems = packitems;
     // Now.. Fill up the Backpack
-    // ----------------------------
     // Look thru list of all possible items..
     for (i = 0; i < game.num_items; i++, item++) {
         if (!item->classname) continue;

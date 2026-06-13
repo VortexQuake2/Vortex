@@ -754,7 +754,6 @@ void G_RunPregame()
 				//RemoveAllAuras(ent);
 				AuraRemove(ent, 0);
 				CurseRemove(ent, 0, 0);
-				ent->Slower = (int)(level.time - 1);
 			}
 		}
 	}
@@ -858,7 +857,7 @@ void G_RunFrame(bool main_loop)
 			ClientBeginServerFrame(ent);
 
 			// JABot[start]
-			if (ent->ai.is_bot)
+			if (ent->ai)
 				G_RunEntity(ent);
 			//[end]
 

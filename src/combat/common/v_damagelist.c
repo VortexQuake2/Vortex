@@ -9,11 +9,11 @@ void vrx_clean_damage_list(edict_t *self, qboolean clear_all) {
 
     for (i = 0; i < MAX_CLIENTS; i++) {
         // is this a valid player?
-        if (!clear_all && validDmgPlayer(self->monsterinfo.dmglist[i].player))
+        if (!clear_all && validDmgPlayer(g_edicts + self->monsterinfo.dmglist[i].player))
             continue;
 
         // clear this entry
-        self->monsterinfo.dmglist[i].player = NULL;
+        self->monsterinfo.dmglist[i].player = 0;
         self->monsterinfo.dmglist[i].damage = 0;
     }
 }
@@ -22,7 +22,7 @@ dmglist_t *findDmgSlot(edict_t *self, edict_t *other) {
     int i;
 
     for (i = 0; i < MAX_CLIENTS; i++) {
-        if (self->monsterinfo.dmglist[i].player == other)
+        if (self->monsterinfo.dmglist[i].player == other - world)
             return &self->monsterinfo.dmglist[i];
     }
     return NULL;
@@ -32,7 +32,7 @@ dmglist_t *findEmptyDmgSlot(edict_t *self) {
     int i;
 
     for (i = 0; i < MAX_CLIENTS; i++) {
-        if (!validDmgPlayer(self->monsterinfo.dmglist[i].player))
+        if (!validDmgPlayer(world + self->monsterinfo.dmglist[i].player))
             return &self->monsterinfo.dmglist[i];
     }
     return NULL;
@@ -43,7 +43,7 @@ float GetTotalBossDamage(edict_t *self) {
     float dmg = 0;
 
     for (i = 0; i < MAX_CLIENTS; i++) {
-        if (validDmgPlayer(self->monsterinfo.dmglist[i].player))
+        if (validDmgPlayer(world + self->monsterinfo.dmglist[i].player))
             dmg += self->monsterinfo.dmglist[i].damage;
     }
 
@@ -57,7 +57,7 @@ float GetPlayerBossDamage(edict_t *player, edict_t *boss) {
     int i;
 
     for (i = 0; i < MAX_CLIENTS; i++) {
-        if (boss->monsterinfo.dmglist[i].player == player)
+        if (boss->monsterinfo.dmglist[i].player == player - world)
             return boss->monsterinfo.dmglist[i].damage;
     }
     return 0;
@@ -68,7 +68,7 @@ dmglist_t *findHighestDmgPlayer(edict_t *self) {
     dmglist_t *slot = NULL;
 
     for (i = 0; i < MAX_CLIENTS; i++) {
-        if (!validDmgPlayer(self->monsterinfo.dmglist[i].player))
+        if (!validDmgPlayer(world + self->monsterinfo.dmglist[i].player))
             continue;
 
         if (!self->monsterinfo.dmglist[i].damage)
@@ -84,31 +84,27 @@ dmglist_t *findHighestDmgPlayer(edict_t *self) {
 }
 
 void printDmgList(edict_t *self) {
-    int i;
-    float percent;
-    dmglist_t *slot;
-
-    for (i = 0; i < MAX_CLIENTS; i++) {
-        slot = &self->monsterinfo.dmglist[i];
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        dmglist_t *slot = &self->monsterinfo.dmglist[i];
         if (self->monsterinfo.dmglist[i].player) {
-            percent = 100 * (slot->damage / GetTotalBossDamage(self));
+            float percent = 100 * (slot->damage / GetTotalBossDamage(self));
+            auto player = world + self->monsterinfo.dmglist[i].player;
 
             if (self->client)
                 gi.dprintf("(%s) slot %d: %s, %.0f damage (%.1f%c)\n",
-                           self->client->pers.netname, i, slot->player->client->pers.netname, slot->damage, percent,
+                           self->client->pers.netname, i, player->client->pers.netname, slot->damage, percent,
                            '%');
             else if (self->mtype)
                 gi.dprintf("(%s) slot %d: %s, %.0f damage (%.1f%c)\n",
-                           V_GetMonsterName(self), i, slot->player->client->pers.netname, slot->damage, percent, '%');
+                           V_GetMonsterName(self), i, player->client->pers.netname, slot->damage, percent, '%');
             else
                 gi.dprintf("(%s) slot %d: %s, %.0f damage (%.1f%c)\n",
-                           self->classname, i, slot->player->client->pers.netname, slot->damage, percent, '%');
+                           self->classname, i, player->client->pers.netname, slot->damage, percent, '%');
         }
     }
 }
 
 void AddDmgList(edict_t *self, edict_t *other, int damage) {
-    edict_t *cl_ent;
     dmglist_t *slot;
 
     if (damage < 1)
@@ -125,7 +121,7 @@ void AddDmgList(edict_t *self, edict_t *other, int damage) {
         return;
 
     // we're only adding non-spectator clients to this list
-    cl_ent = G_GetClient(other);
+    edict_t *cl_ent = G_GetClient(other);
     if (!validDmgPlayer(cl_ent))
         return;
 
@@ -138,7 +134,7 @@ void AddDmgList(edict_t *self, edict_t *other, int damage) {
     }
     // add attacker to the queue
     else if ((slot = findEmptyDmgSlot(self)) != NULL) {
-        slot->player = cl_ent;
+        slot->player = cl_ent - world;
         slot->damage += damage;
     }
 

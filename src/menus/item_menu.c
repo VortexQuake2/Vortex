@@ -14,12 +14,12 @@ void DeleteMenu_handler(edict_t *ent, int option) {
         int i;
 
         //Delete item
-        memset(&ent->myskills.items[option - 778], 0, sizeof(item_t));
+        memset(&ent->client->resp.pstats.items[option - 778], 0, sizeof(item_t));
 
         //Re-apply equipment
         vrx_runes_unapply(ent);
         for (i = 0; i < 3; ++i)
-            vrx_runes_apply(ent, &ent->myskills.items[i]);
+            vrx_runes_apply(ent, &ent->client->resp.pstats.items[i]);
 
         safe_cprintf(ent, PRINT_HIGH, "Item deleted.\n");
     } else if (option - 666 > 0) {
@@ -36,7 +36,7 @@ void DeleteMenu_handler(edict_t *ent, int option) {
 //************************************************************************************************
 
 void ItemDeleteMenu(edict_t *ent, int itemindex) {
-    item_t *item = &ent->myskills.items[itemindex];
+    item_t *item = &ent->client->resp.pstats.items[itemindex];
 
     //Process the header
     StartShowInventoryMenu(ent, item);
@@ -229,7 +229,7 @@ void ShowItemMenu_handler(edict_t *ent, int option) {
 //************************************************************************************************
 
 void ShowItemMenu(edict_t *ent, int itemindex) {
-    item_t *item = &ent->myskills.items[itemindex];
+    item_t *item = &ent->client->resp.pstats.items[itemindex];
 
     //Load the item
     StartShowInventoryMenu(ent, item);
@@ -247,7 +247,7 @@ void ShowItemMenu(edict_t *ent, int itemindex) {
     menu_add_line(ent, "Exit", 666);
     menu_add_line(ent, " ", 0);
 
-    const qboolean hasStash = strlen(ent->myskills.owner) > 0 || strlen(ent->myskills.masterpw) > 0;
+    const qboolean hasStash = strlen(ent->client->resp.pstats.owner) > 0 || strlen(ent->client->resp.pstats.masterpw) > 0;
     if (hasStash && itemindex >= 3)
 		menu_add_line(ent, "Stash this item", 10000 + itemindex);
     menu_add_line(ent, "Sell this item", 15000 + itemindex);
@@ -263,11 +263,11 @@ void ShowItemMenu(edict_t *ent, int itemindex) {
 //************************************************************************************************
 
 void ShowInventoryMenu_handler(edict_t *ent, int option) {
-    if ((option > 0) && (option - 1 < MAX_VRXITEMS) && (ent->myskills.items[option - 1].itemtype != ITEM_NONE)) {
+    if ((option > 0) && (option - 1 < MAX_VRXITEMS) && (ent->client->resp.pstats.items[option - 1].itemtype != ITEM_NONE)) {
         //Use the consumable items (health potions, holy water)
-        if ((ent->myskills.items[option - 1].itemtype == ITEM_POTION) ||
-            (ent->myskills.items[option - 1].itemtype == ITEM_ANTIDOTE)) {
-            cmd_Drink(ent, ent->myskills.items[option - 1].itemtype, option);
+        if ((ent->client->resp.pstats.items[option - 1].itemtype == ITEM_POTION) ||
+            (ent->client->resp.pstats.items[option - 1].itemtype == ITEM_ANTIDOTE)) {
+            cmd_Drink(ent, ent->client->resp.pstats.items[option - 1].itemtype, option);
             return;
         }
 
@@ -318,7 +318,7 @@ void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling) {
     //Print each item
     for (i = 0; i < MAX_VRXITEMS; ++i) {
         item_t *item;
-        item = &ent->myskills.items[i];
+        item = &ent->client->resp.pstats.items[i];
 
         //Print equip slot (if required)
         switch (i) {

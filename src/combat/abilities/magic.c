@@ -21,9 +21,9 @@ void cmd_mjump(edict_t *ent)
 		//Find item in inventory
 		for (i = 3; i < MAX_VRXITEMS; ++i)
 		{
-			if (ent->myskills.items[i].itemtype & ITEM_GRAVBOOTS)
+			if (ent->client->resp.pstats.items[i].itemtype & ITEM_GRAVBOOTS)
 			{
-				slot = &ent->myskills.items[i];
+				slot = &ent->client->resp.pstats.items[i];
 				found = true;
 				break;
 			}
@@ -36,21 +36,21 @@ void cmd_mjump(edict_t *ent)
 		ent->velocity[2] += MJUMP_VELOCITY;
 
 		//Consume a charge
-		if (!(ent->myskills.items[i].itemtype & ITEM_UNIQUE))
-			ent->myskills.items[i].quantity -= 1;
+		if (!(ent->client->resp.pstats.items[i].itemtype & ITEM_UNIQUE))
+			ent->client->resp.pstats.items[i].quantity -= 1;
 
 		//if out of charges, erase the item
-		if (ent->myskills.items[i].quantity == 0)
+		if (ent->client->resp.pstats.items[i].quantity == 0)
 		{
 			int count = 0;
-			V_ItemClear(&ent->myskills.items[i]);
+			V_ItemClear(&ent->client->resp.pstats.items[i]);
 			//Alert the player
             safe_cprintf(ent, PRINT_HIGH, "Your anti-gravity boots have broken!\n");
 			gi.sound(ent, CHAN_AUTO, gi.soundindex("misc/itembreak.wav"), 1, ATTN_NORM, 0);
 
 			//Check for more boots (backup items)
 			for (i = 3; i < MAX_VRXITEMS; ++i)
-				if (ent->myskills.items[i].itemtype & ITEM_GRAVBOOTS)
+				if (ent->client->resp.pstats.items[i].itemtype & ITEM_GRAVBOOTS)
 					++count;
 			safe_cprintf(ent, PRINT_HIGH, "Boots left: %d.\n", count);
 
@@ -904,7 +904,7 @@ void TeleportBehindTarget(edict_t* self, edict_t* target, float dist)
 		self->s.angles[YAW] = forward[YAW];
 
 		// set view angles to target
-		if (self->ai.is_bot)
+		if (self->ai)
 			VectorCopy(forward, self->client->v_angle);
 		else if (self->client)
 		{

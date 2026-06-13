@@ -9,7 +9,7 @@ int vrx_get_player_count() {
 
 		if (!player->inuse)
 			continue;
-		if (player->ai.is_bot)
+		if (player->ai)
 			continue;
 
 		clients++;
@@ -32,7 +32,7 @@ int vrx_get_joined_players(qboolean include_bots) {
 			continue;
 		if (G_IsSpectator(player))
 			continue;
-		if (!include_bots && player->ai.is_bot)
+		if (!include_bots && player->ai)
 			continue;
 
 		clients++;
@@ -59,7 +59,7 @@ int vrx_get_alive_players(void) {
 			continue;
 		if (!G_EntIsAlive(player))
 			continue;
-		if (player->ai.is_bot)
+		if (player->ai)
 			continue;
 
 		clients++;
@@ -118,7 +118,7 @@ int AveragePlayerLevel(void) {
 		if (player->myskills.boss)
 			continue;
 
-		//if (player->ai.is_bot) // az: heheh
+		//if (player->ai) // az: heheh
 		//	continue;
 
 		players++;
@@ -934,7 +934,7 @@ void ThrowDeadlyGib(edict_t* self, char* modelname, vec3_t origin, vec3_t dir, i
 	else
 		gib->movetype = MOVETYPE_BOUNCE;
 	VectorScale(dir, speed, gib->velocity);
-	if (!self->ai.is_bot && !self->lockon)//GHz: don't boost vertical velocity for bots as it will affect ballistic calculations (i.e. finding the right pitch to hit the target)
+	if (!self->ai && !self->lockon)//GHz: don't boost vertical velocity for bots as it will affect ballistic calculations (i.e. finding the right pitch to hit the target)
 		gib->velocity[2] += 150;
 	gib->avelocity[0] = random() * 600;
 	gib->avelocity[1] = random() * 600;
@@ -1190,7 +1190,7 @@ qboolean vrx_toggle_pickup(edict_t* ent, int mtype, float dist)
 	//gi.dprintf("no pickup\n");
 
 	// bots can't pick up entities--they can only drop them
-	if (ent->ai.is_bot)
+	if (ent->ai)
 		return false;
 
 	// find an entity close to the player's aiming reticle

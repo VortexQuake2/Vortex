@@ -1064,7 +1064,7 @@ int G_AutoTBall(edict_t *targ, float take)
         int i;
         //try to find an auto-tball
         for (i = 3; i < MAX_VRXITEMS; ++i) {
-            if (targ->myskills.items[i].itemtype & ITEM_AUTO_TBALL) {
+            if (targ->client->resp.pstats.items[i].itemtype & ITEM_AUTO_TBALL) {
                 found = true;
                 break;
 			}
@@ -1075,14 +1075,14 @@ int G_AutoTBall(edict_t *targ, float take)
 			Teleport_them(targ);
 
 			//notify everyone
-			gi.bprintf(PRINT_MEDIUM, "%s was teleported away by an Auto-Tball!\n", targ->myskills.player_name);
+			gi.bprintf(PRINT_MEDIUM, "%s was teleported away by an Auto-Tball!\n", targ->client->resp.pstats.player_name);
 
 			targ->v_flags ^= SFLG_AUTO_TBALLED;
 			//consume an item
-			if (!(targ->myskills.items[i].itemtype & ITEM_UNIQUE))
-				targ->myskills.items[i].quantity -= 1;
-			if (targ->myskills.items[i].quantity == 0)
-				V_ItemClear(&targ->myskills.items[i]);
+			if (!(targ->client->resp.pstats.items[i].itemtype & ITEM_UNIQUE))
+				targ->client->resp.pstats.items[i].quantity -= 1;
+			if (targ->client->resp.pstats.items[i].quantity == 0)
+				V_ItemClear(&targ->client->resp.pstats.items[i]);
 			return 1;
 		}
 	}

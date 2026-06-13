@@ -1,5 +1,6 @@
 #include "g_local.h"
 #include "../gamemodes/ctf.h"
+#include "entities/grid.h"
 
 
 void KickPlayerBack(edict_t *ent)
@@ -136,12 +137,9 @@ csurface_t* FindSky()
 }
 
 //FIXME: this should try to use grd coordinates first
-qboolean vrx_pf_get_grid_position(vec3_t pos, int index);
-qboolean vrx_pf_get_random_grid_position(vec3_t pos);
-int GetGridNodes();
 qboolean vrx_find_random_spawn_point (edict_t *ent, qboolean air)
 {
-	int		max_tries=1000,grd_nodes = GetGridNodes(),i, j = 0, mask;
+	int		max_tries=1000,grd_nodes = vrx_pf_get_node_count(),i, j = 0, mask;
 	vec3_t	start, end, forward, right;
 	trace_t	tr;
 
@@ -665,8 +663,8 @@ void V_PrintSayPrefix (edict_t *speaker, edict_t *listener, char *text)
 
 	temp[0] = 0;
 	// if they have a title, print it
-	if (strcmp(speaker->myskills.title, ""))
-		Com_sprintf (temp, sizeof(temp), "%s ", speaker->myskills.title);
+	if (strcmp(speaker->client->resp.pstats.title, ""))
+		Com_sprintf (temp, sizeof(temp), "%s ", speaker->client->resp.pstats.title);
 		//safe_cprintf(listener, PRINT_HIGH, "%s ", speaker->myskills.title);
 
 	if (ctf->value && speaker->teamnum)

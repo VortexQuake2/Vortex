@@ -3,20 +3,21 @@
 
 typedef struct upgrade_s
 {
-	int32_t			level;
-	int32_t			current_level;
-	int32_t			soft_max;
-	int32_t			hard_max;
-	int32_t			modifier;
 	float		delay;
-	int32_t			charge; // 3.5 percent ability is charged up
-	int32_t			ammo; // ability-specific ammo
-	int32_t			max_ammo; // maximum ability-specific ammo
 	int32_t			ammo_regenframe; // frame ability ammo should regenerate
-	qboolean	disable;
-	int32_t     	general_skill; // vrxchile 2.7 allow mobility menu
-	qboolean	hidden;
-	qboolean	runed;
+	int16_t			ammo; // ability-specific ammo
+	int16_t			max_ammo; // maximum ability-specific ammo
+	int16_t			charge; // 3.5 percent ability is charged up
+	bool	disable;
+	bool    general_skill; // vrxchile 2.7 allow mobility menu
+	bool	hidden;
+	bool	runed;
+
+	int8_t			level;
+	int8_t			current_level;
+	int8_t			soft_max;
+	int8_t			hard_max;
+	int8_t			modifier;
 }upgrade_t;
 
 typedef struct muted_s
@@ -25,34 +26,9 @@ typedef struct muted_s
 	int			time;
 }muted_t;
 
-typedef struct skills_s
-{
-	muted_t		mutelist[MAX_CLIENTS];	//mute certain players
-
-	uint64_t experience;
-	uint64_t next_level;
-	int32_t administrator;
-	int32_t level;
-	int32_t speciality_points;
-	int32_t weapon_points;
-	int32_t respawn_weapon;
-
+typedef struct pstats_s {
 	uint64_t frags;
 	uint64_t fragged;
-	uint64_t credits;
-	uint64_t weapon_respawns;
-
-	int class_num;
-	int boss;
-	int streak;
-
-	int current_health;
-	int max_health;
-	int current_armor;
-	int max_armor;
-
-	uint64_t shots;
-	uint64_t shots_hit;
 
 	uint64_t num_sprees;
 	uint32_t max_streak;
@@ -73,27 +49,59 @@ typedef struct skills_s
 	uint32_t assists;		//number of times player gains an assist (flag_kill or flag_return just before a flag_cap)
 	//end ctf
 
+	uint64_t shots;
+	uint64_t shots_hit;
+
 	uint32_t playingtime;			//Playing time today (in seconds)
 	uint32_t total_playtime;			//Total playing time in minutes
 
 	int32_t	inventory[MAX_ITEMS];
+
+	item_t			items[MAX_VRXITEMS];
+	weapon_t		weapons[MAX_WEAPONS];
+
 	char password[24];
 	char member_since[30];
 	char last_played[30];
+
+	// unlike netname, once the player is logged in
+	// this remains stable.
 	char player_name[24];
 	char owner[24];
 	char masterpw[64];
 	char title[24];
+} pstats_t;
+
+typedef struct skills_s
+{
+	uint64_t experience;
+	uint64_t next_level;
+	int32_t administrator;
+	int32_t level;
+	int32_t speciality_points;
+	int32_t weapon_points;
+	int32_t respawn_weapon;
+
+	uint64_t credits;
+	uint64_t weapon_respawns;
+
+	int class_num;
+	int boss;
+	int streak;
+
+
 
 	int nerfme;
 	int inuse;
 
-	item_t			items[MAX_VRXITEMS];
-	weapon_t		weapons[MAX_WEAPONS];
 	upgrade_t		abilities[MAX_ABILITIES];
 
 	talentlist_t	talents;
 	prestigelist_t  prestige;
 }skills_t;
 
+typedef struct playertransfer_s {
+	pstats_t* stats;
+	skills_t* skills;
+} playertransfer_t;
 #endif

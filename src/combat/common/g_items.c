@@ -277,13 +277,13 @@ qboolean Pickup_Pack(edict_t *ent, edict_t *other) {
     if (item) {
         index = ITEM_INDEX(item);
         other->client->pers.inventory[index] += item->quantity * 4;
-        other->myskills.inventory[index] = other->client->pers.inventory[index];
+        other->client->resp.pstats.inventory[index] = other->client->pers.inventory[index];
     }
     item = Fdi_TBALL;
     if (item) {
         index = ITEM_INDEX(item);
         other->client->pers.inventory[index] += item->quantity;
-        other->myskills.inventory[index] = other->client->pers.inventory[index];
+        other->client->resp.pstats.inventory[index] = other->client->pers.inventory[index];
     }
     Check_full(other);
     //K03 End
@@ -760,7 +760,7 @@ void Teleport_them(edict_t *ent) {
 
     //They just got teleported, increment their counter. :)
     if (ent->client) {
-        ent->myskills.teleports++;
+        ent->client->resp.pstats.teleports++;
         hook_reset(ent->client->hook);
         V_RestoreMorphed(ent, 50);
     }
@@ -962,7 +962,7 @@ void Use_Tball_Self(edict_t *ent, gitem_t *item) {
 
 
     ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)]--;
-    ent->myskills.inventory[ITEM_INDEX(Fdi_TBALL)] = ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)];
+    ent->client->resp.pstats.inventory[ITEM_INDEX(Fdi_TBALL)] = ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)];
 
     if (!(ent->svflags & SVF_MONSTER))
         safe_cprintf(ent, PRINT_HIGH, "You have %d tballs left.\n", ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)]);
@@ -986,7 +986,7 @@ void Use_Tball(edict_t *ent, gitem_t *item) {
     }
 
     ent->client->pers.inventory[ITEM_INDEX(item)]--;
-    ent->myskills.inventory[ITEM_INDEX(Fdi_TBALL)] = ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)];
+    ent->client->resp.pstats.inventory[ITEM_INDEX(Fdi_TBALL)] = ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)];
 
     safe_cprintf(ent, PRINT_HIGH, "You have %d tballs left.\n", ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)]);
 
@@ -1025,7 +1025,7 @@ void Touch_Item(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
     if (other->health < 1)
         return;        // dead people can't pickup
 
-    if (other->ai.is_bot && other->movetarget && other->movetarget == ent)
+    if (other->ai && other->movetarget && other->movetarget == ent)
         other->movetarget = NULL;//GHz: clear the item as a SR goal, even if we can't pick it up
 
     if (!ent->item->pickup)

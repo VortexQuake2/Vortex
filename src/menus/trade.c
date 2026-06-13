@@ -24,16 +24,16 @@ void TradeItems(edict_t *player1, edict_t *player2)
 	for (i = 0; i < 3; ++i)
 	{
 		//Both players have an item to trade?
-		if ((player1->trade_item[i] != NULL) && (player2->trade_item[i] != NULL))
+		if ((player1->client->trade_item[i] != NULL) && (player2->client->trade_item[i] != NULL))
 		{
-            pSlots1[j] = player1->trade_item[i];
-			pSlots2[j++] = player2->trade_item[i];
+            pSlots1[j] = player1->client->trade_item[i];
+			pSlots2[j++] = player2->client->trade_item[i];
 		}
 		//Is someone giving away an item instead of trading it?
-		else if ((player1->trade_item[i] != NULL) || (player2->trade_item[i] != NULL))
+		else if ((player1->client->trade_item[i] != NULL) || (player2->client->trade_item[i] != NULL))
 		{
 			//Player 1 giving an item?
-			if (player1->trade_item[i] != NULL)
+			if (player1->client->trade_item[i] != NULL)
 			{
 				item_t *freeslot = V_FindFreeTradeSlot(player2, y++);
 				if (freeslot == NULL)
@@ -41,11 +41,11 @@ void TradeItems(edict_t *player1, edict_t *player2)
 					cantrade = false;
 					break;
 				}
-                pSlots1[j] = player1->trade_item[i];
+                pSlots1[j] = player1->client->trade_item[i];
 				pSlots2[j++] = freeslot;
 			}
 			//Player 2 giving an item?
-			else if (player2->trade_item[i] != NULL)
+			else if (player2->client->trade_item[i] != NULL)
 			{
 				item_t *freeslot = V_FindFreeTradeSlot(player1, x++);
 				if (freeslot == NULL)
@@ -53,7 +53,7 @@ void TradeItems(edict_t *player1, edict_t *player2)
 					cantrade = false;
 					break;
 				}
-                pSlots2[j] = player2->trade_item[i];
+                pSlots2[j] = player2->client->trade_item[i];
 				pSlots1[j++] = freeslot;
 			}
 		}
@@ -86,9 +86,9 @@ void TradeItems(edict_t *player1, edict_t *player2)
 		else strcpy(id2, pSlots2[i]->id);
 
         vrx_write_to_logfile(player1,
-                             va("Traded rune %s with %s for rune %s\n", id1, player2->myskills.player_name, id2));
+                             va("Traded rune %s with %s for rune %s\n", id1, player2->client->resp.pstats.player_name, id2));
         vrx_write_to_logfile(player2,
-                             va("Traded rune %s with %s for rune %s\n", id2, player1->myskills.player_name, id1));
+                             va("Traded rune %s with %s for rune %s\n", id2, player1->client->resp.pstats.player_name, id1));
 	}
 
 	//Alert players involved of a successful trade
@@ -102,11 +102,11 @@ void TradeItems(edict_t *player1, edict_t *player2)
 	//Clear trade info
 	for (i = 0; i < 3; ++i)
 	{
-		player1->trade_item[i] = NULL;
-		player2->trade_item[i] = NULL;
+		player1->client->trade_item[i] = NULL;
+		player2->client->trade_item[i] = NULL;
 	}
-	player1->trade_with = NULL;
-	player2->trade_with = NULL;
+	player1->client->trade_with = NULL;
+	player2->client->trade_with = NULL;
 	player1->client->trade_final = false;
 	player2->client->trade_final = false;
 	player1->client->trade_accepted = false;
@@ -145,7 +145,7 @@ void OpenTradeViewOtherMenu(edict_t *ent, int option)
 	menu_clear(ent);
 
 	//Load the item
-	StartShowInventoryMenu(ent, ent->trade_with->trade_item[option]);
+	StartShowInventoryMenu(ent, ent->client->trade_with->client->trade_item[option]);
 
 	//Append a footer to the menu
 	menu_add_line(ent, "Previous menu", 777);
@@ -181,16 +181,16 @@ void TradeFinalMenu_handler(edict_t *ent, int option)
 	else if (option == 888) //ent toggled accept/reject
 	{
 		// trade no longer valid
-		if (!ent->trade_with || !ent->trade_with->inuse || !ent->trade_with->client)
+		if (!ent->client->trade_with || !ent->client->trade_with->inuse || !ent->client->trade_with->client)
 			return;
 
 		//toggle accepted
 		ent->client->trade_accepted = !ent->client->trade_accepted;
 
 		//If both people accept, start trading! 
-		if (ent->client->trade_accepted && ent->trade_with->client->trade_accepted)
+		if (ent->client->trade_accepted && ent->client->trade_with->client->trade_accepted)
 		{
-			TradeItems(ent, ent->trade_with);
+			TradeItems(ent, ent->client->trade_with);
 			return;
 		}
 	}
@@ -202,14 +202,14 @@ void TradeFinalMenu_handler(edict_t *ent, int option)
 // GHz START
 		// 3.7 make sure this item is still valid
 		// it is possible the other player somehow unselected it
-		if (!ent->trade_with->trade_item[itemnumber])
+		if (!ent->client->trade_with->client->trade_item[itemnumber])
 		{
 			WriteServerMsg("TradeFinalMenu_handler() couldn't find item.", "ERROR", true, false);
 			return;
 		}
-		type = ent->trade_with->trade_item[itemnumber]->itemtype;
+		type = ent->client->trade_with->client->trade_item[itemnumber]->itemtype;
 // GHz END
-		//int type = ent->trade_with->trade_item[itemnumber]->itemtype;
+		//int type = ent->client->trade_with->trade_item[itemnumber]->itemtype;
 
 		if ((type != ITEM_POTION) && (type != ITEM_ANTIDOTE))
 		{
@@ -235,23 +235,23 @@ void TradeFinalMenu(edict_t *ent)
         return;
 	menu_clear(ent);
 
-	if (ent->trade_with == NULL)
+	if (ent->client->trade_with == NULL)
 	{
-		gi.dprintf("ERROR: TradeFinalMenu() found a NULL ent->trade_with!\n");
+		gi.dprintf("ERROR: TradeFinalMenu() found a NULL ent->client->trade_with!\n");
 		ent->client->trading = false;
 		menu_close(ent, true);
 		return;
 	}
 
 	//Print header
-	menu_add_line(ent, va("%s's items", ent->myskills.player_name), MENU_GREEN_CENTERED);
+	menu_add_line(ent, va("%s's items", ent->client->resp.pstats.player_name), MENU_GREEN_CENTERED);
 	menu_add_line(ent, " ", 0);
 
 	//Print each item (this player)
 	for (i = 0; i < 3; ++i)
 	{
 		item_t *item;
-		item = ent->trade_item[i];
+		item = ent->client->trade_item[i];
 		if (item != NULL)
 		{
 			lva_result_t s = vrx_get_item_menu_line(item);
@@ -262,14 +262,14 @@ void TradeFinalMenu(edict_t *ent)
 	}
 
 	menu_add_line(ent, " ", 0);
-	menu_add_line(ent, va("%s's items", ent->trade_with->myskills.player_name), MENU_GREEN_CENTERED);
+	menu_add_line(ent, va("%s's items", ent->client->trade_with->client->resp.pstats.player_name), MENU_GREEN_CENTERED);
 	menu_add_line(ent, " ", 0);
 
 	//Print each item (trade_with)
 	for (i = 0; i < 3; ++i)
 	{
 		item_t *item;
-		item = ent->trade_with->trade_item[i];
+		item = ent->client->trade_with->client->trade_item[i];
 		if (item != NULL)
 		{
 			const lva_result_t s = vrx_get_item_menu_line(item);
@@ -310,25 +310,25 @@ void TradeFinalMenu(edict_t *ent)
 
 void TradeInventoryMenu_handler(edict_t *ent, int option)
 {
-	if (ent->trade_with == NULL)
+	if (ent->client->trade_with == NULL)
 	{
-		gi.dprintf("ERROR: TradeInventoryMenu_handler() found a NULL ent->trade_with!\n");
+		gi.dprintf("ERROR: TradeInventoryMenu_handler() found a NULL ent->client->trade_with!\n");
 		ent->client->trading = false;
 		menu_close(ent, true);
 		return;
 	}
 
-	if ((option > 0) && (option-1 < MAX_VRXITEMS) && (ent->myskills.items[option-1].itemtype != ITEM_NONE))
+	if ((option > 0) && (option-1 < MAX_VRXITEMS) && (ent->client->resp.pstats.items[option-1].itemtype != ITEM_NONE))
 	{
 		int i;
-		item_t *item = &ent->myskills.items[option-1];
+		item_t *item = &ent->client->resp.pstats.items[option-1];
 
 		//Was this item selected?
 		for (i = 0; i < 3; ++i)
 		{
-            if (item == ent->trade_item[i])
+            if (item == ent->client->trade_item[i])
 			{
-				ent->trade_item[i] = NULL;
+				ent->client->trade_item[i] = NULL;
 				TradeInventoryMenu(ent, option);
 				return;
 			}
@@ -337,7 +337,7 @@ void TradeInventoryMenu_handler(edict_t *ent, int option)
 		//Find a free trade slot
 		for (i = 0; i < 3; ++i)
 		{
-            if (ent->trade_item[i] == NULL)
+            if (ent->client->trade_item[i] == NULL)
 			{
 				// don't allow trade of 1-up (it's broken)
 				if (item->itemtype == 1032)
@@ -346,7 +346,7 @@ void TradeInventoryMenu_handler(edict_t *ent, int option)
 					return;
 				}
 
-				ent->trade_item[i] = item;
+				ent->client->trade_item[i] = item;
 				TradeInventoryMenu(ent, option);
 				return;
 			}
@@ -361,13 +361,13 @@ void TradeInventoryMenu_handler(edict_t *ent, int option)
 	{
 		//We haven't accepted yet
 		ent->client->trade_accepted = false;
-		ent->trade_with->client->trade_accepted = false;
+		ent->client->trade_with->client->trade_accepted = false;
 
 		//Refresh the other player's menu if they were waiting
-		if (ent->trade_with->client->trade_final)
+		if (ent->client->trade_with->client->trade_final)
 		{			
-			menu_close(ent->trade_with, true);
-			TradeFinalMenu(ent->trade_with);
+			menu_close(ent->client->trade_with, true);
+			TradeFinalMenu(ent->client->trade_with);
 		}
 
 		//Show the next menu
@@ -395,11 +395,11 @@ void TradeInventoryMenu(edict_t *ent, int lastline)
 	//Print each item
 	for (int i = 3; i < MAX_VRXITEMS; ++i)
 	{
-		item_t* item = &ent->myskills.items[i];
+		item_t* item = &ent->client->resp.pstats.items[i];
 			
 		//Is this item selected for trading?
 		qboolean selected = false;
-		if ((item == ent->trade_item[0]) || (item == ent->trade_item[1]) || (item == ent->trade_item[2]))
+		if ((item == ent->client->trade_item[0]) || (item == ent->client->trade_item[1]) || (item == ent->client->trade_item[2]))
 			selected = true;
 
 		lva_result_t str = vrx_get_item_menu_line(item);
@@ -439,7 +439,7 @@ void ShowTradeMenu_handler(edict_t *ent, int option)
 		edict_t *trade_with = V_getClientByNumber(option-1);
 
 		//Make sure this player isn't already trading
-		if(trade_with->trade_with != NULL)
+		if(trade_with->client->trade_with != NULL)
 		{
 			safe_cprintf(ent, PRINT_HIGH, "This player is trading with someone else.\n");
 			menu_close(ent, true);
@@ -447,14 +447,14 @@ void ShowTradeMenu_handler(edict_t *ent, int option)
 		}
 
 		//Set the person to trade with (I hope this is REAL confusing :)
-		ent->trade_with = trade_with;
-		trade_with->trade_with = ent;
+		ent->client->trade_with = trade_with;
+		trade_with->client->trade_with = ent;
 		ent->client->trade_accepted = false;
 		trade_with->client->trade_accepted = false;
 
 		//Reset the trade items (both players)
-		memset(&ent->trade_item, 0, sizeof(item_t *) * 3);
-		memset(&ent->trade_with->trade_item, 0, sizeof(item_t *) * 3);
+		memset(&ent->client->trade_item, 0, sizeof(item_t *) * 3);
+		memset(&ent->client->trade_with->client->trade_item, 0, sizeof(item_t *) * 3);
 
 		//Ask them to trade with you
 		ShowTradeAskMenu(trade_with, ent);
@@ -495,7 +495,7 @@ void ShowTradeMenu(edict_t *ent)
 			&& (!temp->client->trading) && (!temp->client->trade_off) && (temp != ent))
 		{
 			//Add player to the list
-			menu_add_line(ent, va(" %s", temp->myskills.player_name), GetClientNumber(temp));
+			menu_add_line(ent, va(" %s", temp->client->resp.pstats.player_name), GetClientNumber(temp));
 			++j;
 		}
 	}
@@ -532,9 +532,9 @@ void ShowTradeMenu(edict_t *ent)
 
 void ShowTradeAskMenu_handler(edict_t *ent, int option)
 {
-	if (ent->trade_with == NULL)
+	if (ent->client->trade_with == NULL)
 	{
-		gi.dprintf("ERROR: ShowTradeAskMenu_handler() found a NULL ent->trade_with!\n");
+		gi.dprintf("ERROR: ShowTradeAskMenu_handler() found a NULL ent->client->trade_with!\n");
 		ent->client->trading = false;
 		menu_close(ent, true);
 		return;
@@ -577,7 +577,7 @@ void ShowTradeAskMenu(edict_t *tradee, edict_t *trader)
 	//Print header
 	menu_add_line(tradee, " ", 0);
 	menu_add_line(tradee, " ", 0);
-	menu_add_line(tradee, va("%s is trying", trader->myskills.player_name), MENU_GREEN_CENTERED);
+	menu_add_line(tradee, va("%s is trying", trader->client->resp.pstats.player_name), MENU_GREEN_CENTERED);
 	menu_add_line(tradee, "to trade with you.", MENU_GREEN_CENTERED);
 	menu_add_line(tradee, " ", 0);
 	menu_add_line(tradee, " ", 0);
@@ -603,25 +603,25 @@ void EndTrade (edict_t *ent)
 {
 	int i;
 
-	if (!ent->trade_with || !ent->trade_with->inuse)
+	if (!ent->client->trade_with || !ent->client->trade_with->inuse)
 		return;
 
 	//Clear the trade pointers
 	for (i = 0; i < 3; ++i)
 	{
-		ent->trade_item[i] = NULL;
-		ent->trade_with->trade_item[i] = NULL;
+		ent->client->trade_item[i] = NULL;
+		ent->client->trade_with->client->trade_item[i] = NULL;
 	}
 
 	//cancel the trade (trade_with)
-	menu_close(ent->trade_with, true);
-	ent->trade_with->client->trade_accepted = false;
-	ent->trade_with->client->trade_final = false;
-	ent->trade_with->client->trading = false;
-	ent->trade_with->trade_with = NULL;
+	menu_close(ent->client->trade_with, true);
+	ent->client->trade_with->client->trade_accepted = false;
+	ent->client->trade_with->client->trade_final = false;
+	ent->client->trade_with->client->trading = false;
+	ent->client->trade_with->client->trade_with = NULL;
 
 	//cancel the trade (ent)
-	ent->trade_with = NULL;
+	ent->client->trade_with = NULL;
 	ent->client->trade_accepted = false;
 	ent->client->trade_final = false;
 	ent->client->trading = false;

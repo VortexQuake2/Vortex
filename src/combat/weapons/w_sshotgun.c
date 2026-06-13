@@ -12,14 +12,14 @@ void weapon_supershotgun_fire(edict_t* ent) {
     int kick = 12;
     //K03 Begin
     float damage = SUPERSHOTGUN_INITIAL_DAMAGE +
-    SUPERSHOTGUN_ADDON_DAMAGE * ent->myskills.weapons[WEAPON_SUPERSHOTGUN].mods[0].current_level;
+    SUPERSHOTGUN_ADDON_DAMAGE * ent->client->resp.pstats.weapons[WEAPON_SUPERSHOTGUN].mods[0].current_level;
     int vspread = DEFAULT_SHOTGUN_VSPREAD;
     int hspread = DEFAULT_SHOTGUN_HSPREAD;
     int bullets = SUPERSHOTGUN_INITIAL_BULLETS +
-    SUPERSHOTGUN_ADDON_BULLETS * ent->myskills.weapons[WEAPON_SUPERSHOTGUN].mods[2].current_level;
+    SUPERSHOTGUN_ADDON_BULLETS * ent->client->resp.pstats.weapons[WEAPON_SUPERSHOTGUN].mods[2].current_level;
     //	float		temp;
 
-    if (ent->myskills.weapons[WEAPON_SUPERSHOTGUN].mods[3].current_level >= 1) {
+    if (ent->client->resp.pstats.weapons[WEAPON_SUPERSHOTGUN].mods[3].current_level >= 1) {
         vspread *= 0.75;
         hspread *= 0.75;
     }
@@ -58,7 +58,7 @@ void weapon_supershotgun_fire(edict_t* ent) {
     fire_shotgun(ent, start, forward, damage, kick, hspread, vspread, bullets, MOD_SSHOTGUN);//K03
 
     //K03 Begin
-    if (ent->myskills.weapons[WEAPON_SUPERSHOTGUN].mods[4].current_level < 1) {
+    if (ent->client->resp.pstats.weapons[WEAPON_SUPERSHOTGUN].mods[4].current_level < 1) {
         // send muzzle flash
         gi.WriteByte(svc_muzzleflash);
         gi.WriteShort(ent - g_edicts);
@@ -69,7 +69,7 @@ void weapon_supershotgun_fire(edict_t* ent) {
 
     ent->client->ps.gunframe++;
     //K03 Begin
-    if (ent->myskills.weapons[WEAPON_SUPERSHOTGUN].mods[4].current_level < 1)
+    if (ent->client->resp.pstats.weapons[WEAPON_SUPERSHOTGUN].mods[4].current_level < 1)
         PlayerNoise(ent, start, PNOISE_WEAPON);
     //K03 End
 

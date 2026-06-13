@@ -222,7 +222,7 @@ void vrx_apply_player_damage_bonus(edict_t *targ, edict_t *attacker, float *dama
         // handle accuracy
         if (mod != MOD_BFG_LASER) {
             attacker->shots_hit++;
-            attacker->myskills.shots_hit++;
+            attacker->client->resp.pstats.shots_hit++;
         }
 
         // strength effect
@@ -1041,15 +1041,15 @@ int vrx_apply_pierce(const edict_t *targ, const edict_t *attacker, const float d
             // these weapons have armor-piercing capabilities
             if (mod == MOD_MACHINEGUN) {
                 // 25% chance at level 10 for AP round
-                pierceLevel = attacker->myskills.weapons[WEAPON_MACHINEGUN].mods[1].current_level;
+                pierceLevel = attacker->client->resp.pstats.weapons[WEAPON_MACHINEGUN].mods[1].current_level;
                 pierceFactor = 0.0333f;
             } else if (mod == MOD_RAILGUN) {
                 // 10% chance at level 10 for AP round
-                pierceLevel = attacker->myskills.weapons[WEAPON_RAILGUN].mods[1].current_level;
+                pierceLevel = attacker->client->resp.pstats.weapons[WEAPON_RAILGUN].mods[1].current_level;
                 pierceFactor = 0.0111f;
             } else if (mod == MOD_ETFRIFLE) {
                 // 25% chance at level 10 for AP round
-                pierceLevel = attacker->myskills.weapons[WEAPON_ETFRIFLE].mods[1].current_level;
+                pierceLevel = attacker->client->resp.pstats.weapons[WEAPON_ETFRIFLE].mods[1].current_level;
                 pierceFactor = 0.0333f;
             }
 

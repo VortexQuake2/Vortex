@@ -229,6 +229,6 @@ void Cmd_ExplodingBarrel_f(edict_t* ent)
 	//}
 
 	SpawnExplodingBarrel(ent);
-	if (ent->ai.is_bot)
+	if (ent->ai)
 		vrx_toggle_pickup(ent, M_BARREL, 128); // toss the barrel
 }

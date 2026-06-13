@@ -30,8 +30,6 @@ in NO WAY supported by Steve Yeager.
 nav_plink_t pLinks[MAX_NODES];		// pLinks array - links or connections between nodes; used for pathfinding (determining distance/cost between nodes)
 nav_node_t nodes[MAX_NODES];		// nodes array
 ai_navigation_t	nav;
-spath_t Spath[MAX_SPATH];	//GHz: searchable list of previously computed paths, used to speed up pathfinding
-int Spath_numNodes;		//GHz: number of saved paths
 float dropNodeTime;//GHz
 
 //ACE
@@ -69,6 +67,10 @@ edict_t *AI_PlayerDroppingNodesPassent(void)
 // Not valid to add nodes from entities nor items
 // Note: Nodes are not linked until AITools_SaveNodes is called
 //==========================================
+void AI_ClearDropNodePlayer(void) {
+	// az: sigh
+	player = (player_dropping_nodes_t){};
+}
 int AI_AddNode( vec3_t origin, int flagsmask )
 {
 	if (nav.num_nodes + 1 > MAX_NODES)
@@ -370,8 +372,8 @@ void AI_PathMap( void )
 	//AI_DebugPrintf("AI_PathMap\n");
 
 	//DROP WATER JUMP NODE (not limited by delayed updates)
-	if ( !player.ent->ai.is_swim && player.last_node != -1 
-		&& player.ent->ai.is_swim != player.ent->ai.was_swim) 
+	if ( !player.ent->ai->is_swim && player.last_node != -1
+		&& player.ent->ai->is_swim != player.ent->ai->was_swim)
 	{
 		//gi.dprintf("drop water jump node\n");
 		AI_WaterJumpNode();
@@ -409,14 +411,14 @@ void AI_PathMap( void )
 	}
 
 	// Not on ground, and not in the water, so bail (deeper check by using a splitmodels function)
-	if (!player.ent->ai.is_step )
+	if (!player.ent->ai->is_step )
 	{
 		//gi.dprintf("not on ground and not in water\n");
-		if ( !player.ent->ai.is_swim ){
+		if ( !player.ent->ai->is_swim ){
 			player.was_falling = true;
 			return;
 		}
-		else if ( player.ent->ai.is_swim )
+		else if ( player.ent->ai->is_swim )
 			player.was_falling = false;
 	}
 
@@ -460,7 +462,7 @@ void AI_PathMap( void )
 	{
 		//gi.dprintf("couldn't find nearby node, so add one\n");
 		// Add nodes in the water as needed
-		if( player.ent->ai.is_swim )
+		if( player.ent->ai->is_swim )
 			closest_node = AI_AddNode( player.ent->s.origin, (NODEFLAGS_WATER|NODEFLAGS_FLOAT) );
 		else
 			closest_node = AI_AddNode( player.ent->s.origin, 0 );
