@@ -159,8 +159,8 @@ float AmmoLevel (edict_t *ent, int ammo_index)
 }
 
 
-int* packItems ;
-bool depot_used[MAX_CLIENTS];
+static int* packItems ;
+static bool depot_used[MAX_CLIENTS];
 
 void vrx_depot_init()
 {

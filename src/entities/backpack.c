@@ -3,8 +3,8 @@
 constexpr size_t MAX_BACKPACKS = 32;
 constexpr size_t PACK_COUNT = MAX_ITEMS * MAX_BACKPACKS;
 constexpr size_t PACKMEM_SIZE = sizeof(int32_t) * PACK_COUNT;
-int32_t* packItems;
-bool packInUse[MAX_BACKPACKS];
+static int32_t* packItems;
+static bool packInUse[MAX_BACKPACKS];
 
 void vrx_backpack_init() {
     packItems = gi.TagMalloc(PACKMEM_SIZE, TAG_GAME);
