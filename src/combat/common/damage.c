@@ -19,7 +19,7 @@ float vrx_apply_strength_tech(const edict_t *attacker, float damage);
 
 float vrx_apply_morph_talent_damage(const edict_t *targ, const edict_t *attacker, float damage);
 
-float vrx_apply_berserk_synergy(const edict_t* attacker, int mod, float damage);
+float vrx_apply_berserk_synergy(const edict_t *attacker, int mod, float damage);
 
 int G_DamageType(int mod, int dflags) {
     switch (mod) {
@@ -47,7 +47,7 @@ int G_DamageType(int mod, int dflags) {
         case MOD_TANK_PUNCH:
         case MOD_TANK_BULLET:
             return (D_PHYSICAL | D_MAGICAL);
-            // magic attacks
+        // magic attacks
         case MOD_SENTRY:
             return (D_MAGICAL | D_BULLET);
         case MOD_BOMBS:
@@ -59,7 +59,7 @@ int G_DamageType(int mod, int dflags) {
         case MOD_FIREBALL:
         case MOD_MIRV:
             return (D_MAGICAL | D_EXPLOSIVE);
-            //case MOD_HOLYSHOCK:
+        //case MOD_HOLYSHOCK:
         case MOD_LIGHTNING:
         case MOD_MAGICBOLT:
         case MOD_SKULL:
@@ -84,7 +84,7 @@ int G_DamageType(int mod, int dflags) {
         case MOD_SPORE:
         case MOD_ACID:
             return D_MAGICAL;
-            // explosive attacks
+        // explosive attacks
         case MOD_ROCKET:
         case MOD_R_SPLASH:
         case MOD_GRENADE:
@@ -99,7 +99,7 @@ int G_DamageType(int mod, int dflags) {
         case MOD_BOMB:
         case MOD_SUPPLYSTATION:
             return D_EXPLOSIVE;
-            // energy attacks
+        // energy attacks
         case MOD_BFG_BLAST:
         case MOD_BFG_LASER:
         case MOD_BFG_EFFECT:
@@ -110,16 +110,16 @@ int G_DamageType(int mod, int dflags) {
             return (D_ENERGY | D_PHYSICAL);
         case MOD_LASER_DEFENSE:
             return D_ENERGY;
-            // shell weapons
+        // shell weapons
         case MOD_SSHOTGUN:
         case MOD_SHOTGUN:
             return (D_SHELL | D_PHYSICAL);
-            // pierce weapons
+        // pierce weapons
         case MOD_RAILGUN:
         case MOD_SNIPER:
         case MOD_CANNON:
             return (D_PIERCING | D_PHYSICAL);
-            // bullet weapons
+        // bullet weapons
         case MOD_MACHINEGUN:
         case MOD_CHAINGUN:
             return (D_BULLET | D_PHYSICAL);
@@ -195,13 +195,14 @@ float vrx_get_pack_modifier(const edict_t *ent) {
     return 1.0;
 }
 
-void vrx_apply_player_damage_bonus(edict_t *targ, edict_t *attacker, float *damage, int mod, int dtype, qboolean physicalDamage) {
-
+void vrx_apply_player_damage_bonus(edict_t *targ, edict_t *attacker, float *damage, int mod, int dtype,
+                                   qboolean physicalDamage) {
     // Blink Strike damage bonus applies before attacker has to teleport back, targ is our Blink Strike target, and attacker is not in-front of target
-    if (attacker->client->tele_timeout > level.framenum && attacker->client->blinkStrike_targ && attacker->client->blinkStrike_targ == targ && !infront(targ, attacker))
-    {
-        const float temp = 1 + BLINKSTRIKE_INITIAL_BONUS + BLINKSTRIKE_ADDON_BONUS * attacker->myskills.abilities[BLINKSTRIKE].current_level;
-		//gi.dprintf("Blink Strike damage bonus: %.1fx\n", temp);
+    if (attacker->client->tele_timeout > level.framenum && attacker->client->blinkStrike_targ && attacker->client->
+        blinkStrike_targ == targ && !infront(targ, attacker)) {
+        const float temp = 1 + BLINKSTRIKE_INITIAL_BONUS + BLINKSTRIKE_ADDON_BONUS * attacker->myskills.abilities[
+                               BLINKSTRIKE].current_level;
+        //gi.dprintf("Blink Strike damage bonus: %.1fx\n", temp);
         *damage *= temp;
     }
 
@@ -210,8 +211,7 @@ void vrx_apply_player_damage_bonus(edict_t *targ, edict_t *attacker, float *dama
         // strength tech effect
         *damage = vrx_apply_strength_tech(attacker, *damage);
 
-        if (attacker->mtype)
-        {
+        if (attacker->mtype) {
             *damage = vrx_apply_berserk_synergy(attacker, mod, *damage);
             *damage = vrx_apply_morph_talent_damage(targ, attacker, *damage);
         }
@@ -221,7 +221,6 @@ void vrx_apply_player_damage_bonus(edict_t *targ, edict_t *attacker, float *dama
     if (physicalDamage) {
         // handle accuracy
         if (mod != MOD_BFG_LASER) {
-            attacker->shots_hit++;
             attacker->client->resp.pstats.shots_hit++;
         }
 
@@ -237,7 +236,7 @@ void vrx_apply_player_damage_bonus(edict_t *targ, edict_t *attacker, float *dama
 
 
             talentLevel = vrx_get_talent_level(attacker, TALENT_IMP_RESIST);
-            if(talentLevel > 0)
+            if (talentLevel > 0)
                 temp -= 0.1 * talentLevel;
 
             //don't allow damage under 100%
@@ -249,7 +248,7 @@ void vrx_apply_player_damage_bonus(edict_t *targ, edict_t *attacker, float *dama
 
         //Talent: Combat Experience
         if (vrx_get_talent_slot(attacker, TALENT_COMBAT_EXP) != -1)
-            *damage *= 1.0 + 0.05 * vrx_get_talent_level(attacker, TALENT_COMBAT_EXP);    //+5% per upgrade
+            *damage *= 1.0 + 0.05 * vrx_get_talent_level(attacker, TALENT_COMBAT_EXP); //+5% per upgrade
 
         // ******TALENT BLOOD OF ARES START {****** //
         if (vrx_get_talent_slot(attacker, TALENT_BLOOD_OF_ARES) != -1) {
@@ -365,9 +364,9 @@ float vrx_increase_damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
             damage = vrx_apply_berserk_synergy(attacker, mod, damage);
             damage = vrx_apply_morph_talent_damage(targ, attacker, damage);
 
-            // az: apply cocoon bonus acquired unmorphed. 
+            // az: apply cocoon bonus acquired unmorphed.
             const edict_t *dclient = PM_GetPlayer(attacker);
-            if (dclient->cocoon_time > level.time && 
+            if (dclient->cocoon_time > level.time &&
                 attacker->cocoon_time < level.time /* don't let it stack */)
                 damage *= dclient->cocoon_factor;
         }
@@ -388,14 +387,14 @@ float vrx_increase_damage(edict_t *targ, edict_t *inflictor, edict_t *attacker,
 
     // targets "chilled" deal less damage.
     if (attacker->chill_time > level.time)
-        damage /= 1.0 + 0.0333 * (float)attacker->chill_level; //chill level 10 = 25% less damage
+        damage /= 1.0 + 0.0333 * (float) attacker->chill_level; //chill level 10 = 25% less damage
 
     // targets cursed with "weaken" deal less damage
     //temp = damage;//DEBUG: save value
-    if ((slot = que_findtype(attacker->curses, NULL, WEAKEN)) != NULL)
-    {
+    if ((slot = que_findtype(attacker->curses, NULL, WEAKEN)) != NULL) {
         damage /=
-            WEAKEN_MULT_BASE + (slot->ent->owner->myskills.abilities[WEAKEN].current_level * WEAKEN_MULT_BONUS);
+                WEAKEN_MULT_BASE + (
+                    h2e(slot->ent)->owner->myskills.abilities[WEAKEN].current_level * WEAKEN_MULT_BONUS);
         //gi.dprintf("damage before: %0.0f after %0.0f\n", temp, damage);
     }
 
@@ -439,7 +438,7 @@ float vrx_apply_morph_talent_damage(const edict_t *targ, const edict_t *attacker
     // increases damage/resistance of morphed players against monsters
     const int talentLevel = vrx_get_talent_level(attacker, TALENT_SUPERIORITY);
     if (talentLevel > 0 && targ->activator && targ->mtype != P_TANK && targ->svflags & SVF_MONSTER)
-        damage *= 1.0f + 0.2f * (float)talentLevel;
+        damage *= 1.0f + 0.2f * (float) talentLevel;
 
     // Talent: Pack Animal
     damage *= vrx_get_pack_modifier(attacker);
@@ -462,11 +461,11 @@ float vrx_apply_talent_retaliation_damage(const edict_t *attacker, float damage)
 }
 */
 
-float vrx_apply_berserk_synergy(const edict_t* attacker, int mod, float damage) {
+float vrx_apply_berserk_synergy(const edict_t *attacker, int mod, float damage) {
     // bonus only applies to these melee attacks
     if (mod != MOD_TENTACLE && mod != MOD_MUTANT && mod != MOD_PARASITE && mod != MOD_TANK_PUNCH)
         return damage;
-    const edict_t* dclient = PM_GetPlayer(attacker); // get a pointer to the player, even if they're a player-tank
+    const edict_t *dclient = PM_GetPlayer(attacker); // get a pointer to the player, even if they're a player-tank
     if (dclient)
         attacker = dclient;
     // synergy bonus applies to all morphs except berserker
@@ -474,11 +473,11 @@ float vrx_apply_berserk_synergy(const edict_t* attacker, int mod, float damage) 
         return damage;
     if (attacker->myskills.abilities[BERSERK].current_level <= 1)
         return damage;
-    return damage *= 1.0 + 0.05 * attacker->myskills.abilities[BERSERK].current_level; 
+    return damage *= 1.0 + 0.05 * attacker->myskills.abilities[BERSERK].current_level;
 }
 
 float vrx_apply_strength_tech(const edict_t *attacker, float damage) {
-    const edict_t* dclient = PM_GetPlayer(attacker);
+    const edict_t *dclient = PM_GetPlayer(attacker);
 
     if (dclient)
         attacker = dclient;
@@ -511,8 +510,8 @@ float vrx_apply_bless_damage_bonus(const edict_t *attacker, float damage, int dt
 float vrx_apply_weaken(const edict_t *targ, float damage) {
     const que_t *slot = que_findtype(targ->curses, NULL, WEAKEN);
     if (slot != NULL) {
-        const float temp = WEAKEN_MULT_BASE + (slot->ent->monsterinfo.level * WEAKEN_MULT_BONUS);
-            //(slot->ent->owner->myskills.abilities[WEAKEN].current_level * WEAKEN_MULT_BONUS);
+        const float temp = WEAKEN_MULT_BASE + (h2e(slot->ent)->monsterinfo.level * WEAKEN_MULT_BONUS);
+        //(h2e(slot->ent)->owner->myskills.abilities[WEAKEN].current_level * WEAKEN_MULT_BONUS);
         damage *= temp;
     }
     return damage;
@@ -520,14 +519,14 @@ float vrx_apply_weaken(const edict_t *targ, float damage) {
 
 float vrx_apply_amp_damage(const edict_t *targ, float damage) {
     const que_t *slot = que_findtype(targ->curses, NULL, AMP_DAMAGE);
-    if (slot  != NULL) {
-        float temp = AMP_DAMAGE_MULT_BASE + (slot->ent->monsterinfo.level * AMP_DAMAGE_MULT_BONUS);
-               //(slot->ent->owner->myskills.abilities[AMP_DAMAGE].current_level * AMP_DAMAGE_MULT_BONUS);
+    if (slot != NULL) {
+        float temp = AMP_DAMAGE_MULT_BASE + (h2e(slot->ent)->monsterinfo.level * AMP_DAMAGE_MULT_BONUS);
+        //(h2e(slot->ent)->owner->myskills.abilities[AMP_DAMAGE].current_level * AMP_DAMAGE_MULT_BONUS);
         // cap amp damage at 3x damage
         if (temp > 3)
             temp = 3;
-        //gi.dprintf("amp damage (%d) multiplier: %.1fx\n", slot->ent->monsterinfo.level, temp);
-       // gi.dprintf("amp damage: before: %.0f after: %.0f\n", damage, (damage * temp));
+        //gi.dprintf("amp damage (%d) multiplier: %.1fx\n", h2e(slot->ent)->monsterinfo.level, temp);
+        // gi.dprintf("amp damage: before: %.0f after: %.0f\n", damage, (damage * temp));
         damage *= temp;
     }
     return damage;
@@ -582,8 +581,7 @@ float vrx_apply_fury(const edict_t *targ, const edict_t *attacker, float temp, f
     return Resistance;
 }
 
-float vrx_apply_blast_resist(const edict_t *targ, int dflags, int mod, float temp, float Resistance) {
-    {
+float vrx_apply_blast_resist(const edict_t *targ, int dflags, int mod, float temp, float Resistance) { {
         const int talentLevel = vrx_get_talent_level(targ, TALENT_BLAST_RESIST);
 
         if (talentLevel && ((dflags & DAMAGE_RADIUS) || mod == MOD_SELFDESTRUCT)) {
@@ -597,7 +595,7 @@ float vrx_apply_blast_resist(const edict_t *targ, int dflags, int mod, float tem
 float vrx_apply_combat_experience_damage_increase(const edict_t *targ, float damage) {
     const int talentLevel = vrx_get_talent_level(targ, TALENT_COMBAT_EXP);
     if (talentLevel > 0)
-        damage *= 1.0 + 0.05 * talentLevel;    //-5% per upgrade
+        damage *= 1.0 + 0.05 * talentLevel; //-5% per upgrade
 
     return damage;
 }
@@ -618,8 +616,8 @@ void vrx_apply_resistance(const edict_t *targ, float *Resistance) {
             temp = 1.0f + 0.1f * targ->myskills.abilities[RESISTANCE].current_level;
 
         //Talent: Improved Resist
-        int talentLevel  = vrx_get_talent_level(targ, TALENT_IMP_RESIST);
-        if(talentLevel > 0)
+        int talentLevel = vrx_get_talent_level(targ, TALENT_IMP_RESIST);
+        if (talentLevel > 0)
             temp += talentLevel * 0.1;
 
         //Talent: Improved Strength
@@ -642,7 +640,7 @@ float vrx_apply_blood_of_ares(const edict_t *targ, const edict_t *attacker, floa
 
         // BoA is more effective in PvM
         if (pvm->value || invasion->value)
-            temp = level * 0.02 * targ->myskills.streak;  //  from 0.01 to 0.02
+            temp = level * 0.02 * targ->myskills.streak; //  from 0.01 to 0.02
         else
             temp = level * 0.01 * targ->myskills.streak;
 
@@ -661,9 +659,9 @@ float vrx_apply_salvation(const edict_t *targ, const edict_t *attacker, int dtyp
         // salvation gives heavy resistance against all magics and summonables
         // 60% magic resistance, 40% against other attacks
         if ((dtype & D_MAGICAL) || attacker->activator || attacker->creator)
-            temp = 1 + 0.15 * aura->ent->owner->myskills.abilities[SALVATION].current_level;
+            temp = 1 + 0.15 * h2e(aura->ent)->owner->myskills.abilities[SALVATION].current_level;
         else // it's a player doing the damage
-            temp = 1 + 0.066 * aura->ent->owner->myskills.abilities[SALVATION].current_level;
+            temp = 1 + 0.066 * h2e(aura->ent)->owner->myskills.abilities[SALVATION].current_level;
 
         Resistance = min(Resistance, 1 / temp);
     }
@@ -714,7 +712,7 @@ void vrx_apply_pack_animal(const edict_t *targ, float temp, float *Resistance) {
 float vrx_apply_cocoon_defense_bonus(const edict_t *targ, float Resistance) {
     float cocoon_time = targ->cocoon_time;
     float cocoon_factor = targ->cocoon_factor;
-    const edict_t* dclient = PM_GetPlayer(targ);
+    const edict_t *dclient = PM_GetPlayer(targ);
 
     // az: apply cocoon to player tank if owner has it
     if (dclient) {
@@ -785,49 +783,53 @@ float vrx_apply_bombardier(const edict_t *targ, const edict_t *attacker, int mod
             Resistance = fminf(Resistance, 1.0f - 0.16f * talentLevel);
         else
             Resistance = fminf(Resistance, 1.0f - 0.12f *
-                                                  talentLevel); // damage reduced to 20% at talent level 5 (explosive damage already reduced 50% in t_radiusdamage)
+                                           talentLevel);
+        // damage reduced to 20% at talent level 5 (explosive damage already reduced 50% in t_radiusdamage)
     }
     return Resistance;
 }
 
 qboolean vrx_should_apply_ghost(edict_t *targ) {
-    if (!targ->myskills.abilities[GHOST].disable) {
-        const int talentSlot = vrx_get_talent_slot(targ, TALENT_SECOND_CHANCE);
-        float temp = 1 + 0.05f * targ->myskills.abilities[GHOST].current_level;
-        const edict_t* dclient = G_GetClient(targ);
+    if (targ->myskills.abilities[GHOST].disable) {
+        return false;
+    }
 
-        temp = 1.0f / temp;
+    const int talentSlot = vrx_get_talent_slot(targ, TALENT_SECOND_CHANCE);
+    float temp = 1 + 0.05f * targ->myskills.abilities[GHOST].current_level;
+    const edict_t *dclient = G_GetClient(targ);
 
-        // cap ghost resistance to 75%
-        if (vrx_is_morphing_polt(targ))
-            temp = 0.25f;
+    temp = 1.0f / temp;
 
-        if (temp < 0.4 && !vrx_is_morphing_polt(targ)) {
-            if (!pvm->value && !invasion->value) // PVP mode? cap it to 60%.
-                temp = 0.4f;
-        }
+    // cap ghost resistance to 75%
+    if (vrx_is_morphing_polt(targ))
+        temp = 0.25f;
 
-        if (!hw->value) {
+    if (temp < 0.4 && !vrx_is_morphing_polt(targ)) {
+        if (!pvm->value && !invasion->value) // PVP mode? cap it to 60%.
+            temp = 0.4f;
+    }
+
+    if (!hw->value) {
+        if (random() >= temp)
+            return true;
+    } else {
+        // Doesn't have the halo? Have ghost. (az remainder: this is if you do have ghost)
+        if (dclient && !dclient->client->pers.inventory[halo_index])
             if (random() >= temp)
                 return true;
-        } else {
-            // Doesn't have the halo? Have ghost. (az remainder: this is if you do have ghost)
-            if (dclient && !dclient->client->pers.inventory[halo_index])
-                if (random() >= temp)
-                    return true;
-        }
+    }
 
-        //Talent: Second Chance
-        if (talentSlot != -1) {
-            talent_t *talent = &targ->myskills.talents.talent[talentSlot];
+    //Talent: Second Chance
+    if (talentSlot != -1) {
+        talent_t *talent = &targ->myskills.talents.talent[talentSlot];
+        auto sdelay = &targ->myskills.talents.delay;
 
-            //Make sure the talent is not on cooldown
-            if (talent->upgradeLevel > 0 && talent->delay < level.time) {
-                //Cooldown should be 3 minutes - 0.5min per upgrade level
-                const float cooldown = 180.f - 30.f * vrx_get_talent_level(targ, TALENT_SECOND_CHANCE);
-                talent->delay = level.time + cooldown;
-                return true;
-            }
+        //Make sure the talent is not on cooldown
+        if (talent->upgradeLevel > 0 && sdelay->secondchance < level.time) {
+            //Cooldown should be 3 minutes - 0.5min per upgrade level
+            const float cooldown = 180.f - 30.f * vrx_get_talent_level(targ, TALENT_SECOND_CHANCE);
+            sdelay->secondchance = level.time + cooldown;
+            return true;
         }
     }
 
@@ -838,7 +840,7 @@ float vrx_resist_damage(edict_t *targ, edict_t *inflictor, edict_t *attacker, fl
     int dtype;
     const float temp = 0;
     que_t *aura = NULL;
-   // int talentLevel;
+    // int talentLevel;
     qboolean invasion_friendlyfire = false;
     float Resistance = 1.0; // We find the highest resist value and only use THAT.
     const qboolean is_target_morphed_player = IsMorphedPlayer(targ);
@@ -857,7 +859,7 @@ float vrx_resist_damage(edict_t *targ, edict_t *inflictor, edict_t *attacker, fl
 
     if (level.time < pregame_time->value && !trading->value)
         return 0; // no damage in pre-game
-    
+
     if (trading->value && !(targ->flags & FL_NO_TRADING_PROTECT))
         return 0; // az 2.5 vrxchile: no damage in trading mode
 
@@ -868,13 +870,13 @@ float vrx_resist_damage(edict_t *targ, edict_t *inflictor, edict_t *attacker, fl
                 return 0; // then friendly fire is off.
             invasion_friendlyfire = true;
         } else if (targ->mtype != M_BARREL)
-            return 0;  // can't damage teammates
+            return 0; // can't damage teammates
     }
     //if (que_typeexists(targ->curses, CURSE_FROZEN))
     //    return 0; // can't damage frozen entities
     if (targ->flags & FL_CHATPROTECT)
         return 0; // can't kill someone in chat-protect
-    if (!targ->client && (attacker == targ) && !PM_MonsterHasPilot(targ))//4.03 added player-monster exception
+    if (!targ->client && (attacker == targ) && !PM_MonsterHasPilot(targ)) //4.03 added player-monster exception
         return 0; // non-clients can't hurt themselves
     if (!targ->client && (targ->monsterinfo.inv_framenum > level.framenum))
         return 0; // monsters get invincibility and quad in invasion mode
@@ -953,7 +955,8 @@ float vrx_resist_damage(edict_t *targ, edict_t *inflictor, edict_t *attacker, fl
     //Check for salvation
     Resistance = vrx_apply_salvation(targ, attacker, dtype, aura, Resistance);
 
-    if (G_GetClient(targ)) { // az: player-only effects
+    if (G_GetClient(targ)) {
+        // az: player-only effects
         targ = G_GetClient(targ); // az:
 
         if (ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(targ))
@@ -961,12 +964,12 @@ float vrx_resist_damage(edict_t *targ, edict_t *inflictor, edict_t *attacker, fl
 
         if (dtype & D_WORLD) {
             if (SPREE_WAR && SPREE_DUDE && (targ != SPREE_DUDE))
-                return 0;    // no world damage if someone is warring
+                return 0; // no world damage if someone is warring
             else if ((targ->myskills.abilities[WORLD_RESIST].current_level > 0) &&
                      (!targ->myskills.abilities[WORLD_RESIST].disable))
-                return 0;    // no world damage if you have world resist
+                return 0; // no world damage if you have world resist
             else if (vrx_is_morphing_polt(targ) && !is_target_morphed_player)
-                return 0;    //Poltergeists can not take world damage in human form
+                return 0; //Poltergeists can not take world damage in human form
         }
 
         if ((targ == attacker) && (mod == MOD_BOMBS))
@@ -976,7 +979,7 @@ float vrx_resist_damage(edict_t *targ, edict_t *inflictor, edict_t *attacker, fl
 
         // summonables players can't use abilities
         if (targ->mtype && !is_target_morphed_player)
-            return damage; 
+            return damage;
 
 
         //Talent: Blood of Ares
@@ -1054,8 +1057,8 @@ int vrx_apply_pierce(const edict_t *targ, const edict_t *attacker, const float d
             }
 
             if (pierceLevel > 0) {
-	            const float temp = 1.0f / (1.0f + pierceFactor * pierceLevel);
-	            const double rnd = random();
+                const float temp = 1.0f / (1.0f + pierceFactor * pierceLevel);
+                const double rnd = random();
 
                 if (rnd >= temp)
                     dflags |= DAMAGE_NO_ARMOR;

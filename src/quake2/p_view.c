@@ -633,14 +633,14 @@ void P_WorldEffects (void)
 
 	if (current_player->movetype == MOVETYPE_NOCLIP)
 	{
-		current_player->air_finished = level.time + 12;	// don't need air
+		current_player->client->air_finished = level.time + 12;	// don't need air
 		return;
 	}
 
 	//K03 Begin
 	//if (HasActiveCurse(current_player, CURSE_FROZEN))
 	if (que_typeexists(current_player->curses, CURSE_FROZEN))
-		current_player->air_finished = level.time + 6;
+		current_player->client->air_finished = level.time + 6;
 	//K03 End
 
 	waterlevel = current_player->waterlevel;
@@ -706,7 +706,7 @@ void P_WorldEffects (void)
 	//
 	if (old_waterlevel == 3 && waterlevel != 3)
 	{
-		if (current_player->air_finished < level.time)
+		if (current_player->client->air_finished < level.time)
 		{	// gasp for air
 			if (current_player->client)//K03
 			{
@@ -714,7 +714,7 @@ void P_WorldEffects (void)
 			PlayerNoise(current_player, current_player->s.origin, PNOISE_SELF);
 			}
 		}
-		else  if (current_player->air_finished < level.time + 11)
+		else  if (current_player->client->air_finished < level.time + 11)
 		{	// just break surface
 			if (current_player->client)//K03
 				gi.sound (current_player, CHAN_VOICE, gi.soundindex("player/gasp2.wav"), 1, ATTN_NORM, 0);
@@ -734,7 +734,7 @@ void P_WorldEffects (void)
 		// breather or envirosuit give air
 		if (breather || envirosuit)
 		{
-			current_player->air_finished = level.time + 10;
+			current_player->client->air_finished = level.time + 10;
 
 			if (((int)(current_client->breather_framenum - level.framenum) % 25) == 0)
 			{
@@ -752,7 +752,7 @@ void P_WorldEffects (void)
 		}
 
 		// if out of air, start drowning
-		const qboolean out_of_air = current_player->air_finished < level.time;
+		const qboolean out_of_air = current_player->client->air_finished < level.time;
 		if (out_of_air && 
 			!is_unmorphed_poltergeist && 
 			!has_world_resist && 
@@ -788,7 +788,7 @@ void P_WorldEffects (void)
 	}
 	else
 	{
-		current_player->air_finished = level.time + 12;
+		current_player->client->air_finished = level.time + 12;
 		current_player->dmg = 2;
 	}
 

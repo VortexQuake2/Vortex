@@ -624,7 +624,7 @@ void minisentry_think (edict_t *self)
 	slot = que_findtype(self->curses, slot, AURA_HOLYFREEZE);
 	if (slot)
 	{
-		modifier = 1 / (1 + 0.1 * slot->ent->owner->myskills.abilities[HOLY_FREEZE].current_level);
+		modifier = 1 / (1 + 0.1 * h2e(slot->ent)->owner->myskills.abilities[HOLY_FREEZE].current_level);
 		if (modifier < 0.25) modifier = 0.25;
 		self->yaw_speed *= modifier;
 	}

@@ -85,7 +85,7 @@ void cacodemon_attack(edict_t *ent) {
     vec3_t forward, right, start, offset;
 
     // check for sufficient ammo
-    if (!ent->myskills.abilities[CACODEMON].ammo)
+    if (!ent->client->pers.morphinventory.cacodemon.ammo)
         return;
 
     if (level.time > ent->monsterinfo.attack_finished) {
@@ -107,7 +107,7 @@ void cacodemon_attack(edict_t *ent) {
         ent->monsterinfo.attack_finished = level.time + CACODEMON_REFIRE;
 
         // use ammo
-        ent->myskills.abilities[CACODEMON].ammo--;
+        ent->client->pers.morphinventory.cacodemon.ammo--;
     }
 }
 
@@ -221,16 +221,17 @@ void Cmd_PlayerToCacodemon_f(edict_t *ent) {
     ent->monsterinfo.attack_finished = level.time + 0.5; // can't attack immediately
 
     // set maximum skull ammo
-    ent->myskills.abilities[CACODEMON].max_ammo = CACODEMON_SKULL_INITIAL_AMMO + CACODEMON_SKULL_ADDON_AMMO
+    ent->client->pers.morphinventory.cacodemon.max_ammo =
+        CACODEMON_SKULL_INITIAL_AMMO + CACODEMON_SKULL_ADDON_AMMO
                                                   *
                                                   ent->myskills.abilities[CACODEMON].current_level;
 
     // Talent: More Ammo
     // increases ammo 10% per talent level
-    if (talentLevel > 0) ent->myskills.abilities[CACODEMON].max_ammo *= 1.0 + 0.1 * talentLevel;
+    if (talentLevel > 0) ent->client->pers.morphinventory.cacodemon.max_ammo *= 1.0 + 0.1 * talentLevel;
 
     // give them some starting ammo
-    ent->myskills.abilities[CACODEMON].ammo = CACODEMON_SKULL_START_AMMO;
+    ent->client->pers.morphinventory.cacodemon.ammo = CACODEMON_SKULL_START_AMMO;
 
     ent->client->refire_frames = 0; // reset charged weapon
     ent->client->weapon_mode = 0; // reset weapon mode

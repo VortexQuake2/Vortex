@@ -431,28 +431,6 @@ Fires a single blaster bolt.  Used by the blaster and hyper blaster.
 */
 
 
-//K03 Begin
-void homing_think(edict_t *ent) {
-    edict_t *target = NULL;
-    edict_t *blip = NULL;
-    //vec3_t  targetdir, blipdir;
-    //vec_t   speed;
-
-    //gi.dprintf("%.1f\n", VectorLength(ent->velocity));
-
-    if (ent->delay < level.time) {
-        G_FreeEdict(ent);
-        //K03 Begin
-        if (ent->owner && ent->owner->rocket_shots &&
-            ent->s.effects & EF_ROCKET)
-            ent->owner->rocket_shots--;
-        //K03 End
-        return;
-    }
-}
-
-//K03 End
-
 void blaster_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf) {
     if (other == self->owner)
         return;

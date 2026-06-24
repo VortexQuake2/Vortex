@@ -81,6 +81,24 @@ typedef bool _rebool;
 #define U32BIT(x) ((uint32_t)1 << (uint32_t)x)
 #define U64BIT(x) ((uint64_t)1 << (uint64_t)x)
 
+// az: 8192 ought to be enough! (wah wah)
+typedef uint16_t enthandle_t;
+static_assert(UINT16_MAX >= MAX_EDICTS, "enthandle_t too small for MAX_EDICTS");
+
+// in some cases, an enthandle can be WORLD.
+// in those cases, it's better to use these macros.
+// otherwise, checking "x > 0" is good enough.
+#define ENTHANDLE_EMPTY (UINT16_MAX)
+#define eh_empty(x) (x >= MAX_EDICTS)
+#define eh_valid(x) (x < MAX_EDICTS)
+// handle to edict
+#define h2e(x) (&g_edicts[0] + x)
+#define h2en(x) (eh_valid(x) ? h2e(x) : nullptr)
+// edict to handle
+#define e2h(x) (x ? (x - &g_edicts[0]) : ENTHANDLE_EMPTY)
+
+
+
 // game print flags
 enum print_type_t {
     PRINT_LOW = 0, // pickup messages

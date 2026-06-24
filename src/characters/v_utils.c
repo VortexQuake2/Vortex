@@ -1132,8 +1132,7 @@ void V_ResetAbilityDelays(edict_t *ent)
         ent->myskills.abilities[i].delay = 0.0f;
 
     //Reset talent cooldowns as well.
-    for (i = 0; i < ent->myskills.talents.count; ++i)
-        ent->myskills.talents.talent[i].delay = 0.0f;
+    memset(&ent->myskills.talents.delay, 0, sizeof ent->myskills.talents.delay);
 }
 
 //************************************************************************************************
@@ -1144,10 +1143,6 @@ qboolean V_CanUseAbility(edict_t* ent, int ability_index, int ability_cost, qboo
     // ability is disabled
     if (ent->myskills.abilities[ability_index].disable)
         return false;
-
-    if (ent->myskills.abilities[ability_index].general_skill == 2 &&
-        pregame_time->value > level.time) // mobility in pregame
-        return true;
 
     // poltergeist cannot use abilities in human form
     if (vrx_is_morphing_polt(ent) && !ent->mtype) 
@@ -1210,10 +1205,6 @@ qboolean V_CanUseAbilities(edict_t *ent, int ability_index, int ability_cost, qb
 
     if (!G_EntIsAlive(ent))
         return false;
-
-    if (ability_index != -1 && ent->myskills.abilities[ability_index].general_skill == 2 &&
-        pregame_time->value > level.time) // mobility in pregame
-        return true;
 
     //if (ent->myskills.abilities[ability_index].disable)
     //    return false;
@@ -1756,11 +1747,10 @@ char *V_TruncateString(char *string, int newStringLength) {
     return &buf[0];
 }
 
-void V_RegenAbilityAmmo(edict_t *ent, int ability_index, int regen_frames, int regen_delay) {
-    int ammo;
-    const int max = ent->myskills.abilities[ability_index].max_ammo;
-    int *current = &ent->myskills.abilities[ability_index].ammo;
-    int *delay = &ent->myskills.abilities[ability_index].ammo_regenframe;
+void V_RegenAbilityAmmo(edict_t *ent, morphammo_t* minv, int regen_frames, int regen_delay) {
+    const int max = minv->max_ammo;
+    const auto current = &minv->ammo;
+    const auto delay = &minv->ammo_regenframe;
 
     if (*current > max)
         return;
@@ -1777,7 +1767,7 @@ void V_RegenAbilityAmmo(edict_t *ent, int ability_index, int regen_frames, int r
     } else
         regen_delay = 1;
 
-    ammo = floattoint((float) max / ((float) regen_frames / regen_delay));
+    int ammo = floattoint((float) max / ((float) regen_frames / regen_delay));
 
     //gi.dprintf("ammo=%d, max=%d, frames=%d, delay=%d\n", ammo, max, regen_frames, regen_delay);
 

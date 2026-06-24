@@ -4,9 +4,6 @@
 typedef struct upgrade_s
 {
 	float		delay;
-	int32_t			ammo_regenframe; // frame ability ammo should regenerate
-	int16_t			ammo; // ability-specific ammo
-	int16_t			max_ammo; // maximum ability-specific ammo
 	int16_t			charge; // 3.5 percent ability is charged up
 	bool	disable;
 	bool    general_skill; // vrxchile 2.7 allow mobility menu
@@ -19,6 +16,18 @@ typedef struct upgrade_s
 	int8_t			hard_max;
 	int8_t			modifier;
 }upgrade_t;
+
+typedef struct morphammo_s {
+	int32_t			ammo_regenframe; // frame ability ammo should regenerate
+	int16_t			ammo; // ability-specific ammo
+	int16_t			max_ammo; // maximum ability-specific ammo
+} morphammo_t;
+
+typedef struct morphinven_s {
+	morphammo_t cacodemon;
+	morphammo_t flyer;
+	morphammo_t medic;
+} morphinven_t;
 
 typedef struct muted_s
 {

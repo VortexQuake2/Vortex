@@ -542,7 +542,8 @@ void p_tank_pain(edict_t *self, edict_t *other, float kick, int damage) {
 void p_tank_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point) {
     // kill the player
     if (self->activator && self->activator->inuse) {
-        attacker->lastkill = 0; // prevent 2fer
+        if (attacker->client)
+            attacker->client->lastkill = 0; // prevent 2fer
         PM_RestorePlayer(self->activator);
         player_die(self->activator, inflictor, attacker, 0, vec3_origin);
         self->activator->health = 0;

@@ -87,7 +87,7 @@ void Weapon_Railgun(edict_t* ent) {
             if (ent->client->refire_frames == 2 * (fire_last - 2))
                 gi.sound(ent, CHAN_WEAPON, gi.soundindex("weapons/noammo.wav"), 1, ATTN_NORM, 0);
             // make sure laser sight is on to alert enemies
-            if ((ent->client->refire_frames >= 2 * (fire_last - 2)) && !ent->lasersight)
+            if ((ent->client->refire_frames >= 2 * (fire_last - 2)) && !ent->client->lasersight)
                 lasersight_on(ent);
             // dont fire yet
             ent->client->buttons &= ~BUTTON_ATTACK;

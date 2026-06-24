@@ -556,10 +556,6 @@ typedef struct {
     vec3_t end_origin; //BFG�̃^�[�Q�b�g�|�C���g�ɕs���g�p
     vec3_t end_angles;
 
-    int sound_start; //�X�i�C�p�[�̃A�N�e�B�x�[�g�t���O
-    int sound_middle;
-    int sound_end; //hokuto�̃N���X
-
     float accel;
     float speed; //bot �������̈ړ��ʂɕs���g�p
     float decel; //���ʑ؍ݎ��Ԃɕs���g�p
@@ -568,7 +564,6 @@ typedef struct {
     float wait;
 
     // state data
-    int state; //CTF�X�e�[�^�X�ɕs���g�p
     vec3_t dir;
     float current_speed;
 
@@ -576,6 +571,11 @@ typedef struct {
     float next_speed;
     float remaining_distance;
     float decel_distance;
+    // az: max_sounds goes crazy
+    int16_t sound_start; //�X�i�C�p�[�̃A�N�e�B�x�[�g�t���O
+    int16_t sound_middle;
+    int16_t sound_end; //hokuto�̃N���X
+    int8_t state; //CTF�X�e�[�^�X�ɕs���g�p
 } moveinfo_t;
 
 
@@ -598,7 +598,7 @@ typedef struct {
 //GHz START
 typedef struct dmglist_s {
     float damage; // total damage done
-    uint32_t player; // attacker who hurt us
+    enthandle_t player; // attacker who hurt us
 } dmglist_t;
 
 //GHz END
@@ -650,16 +650,10 @@ typedef struct {
     int air_frames; // how many frames monster has been off the ground
     int linkcount;
 
-    int power_armor_type;
     int power_armor_power;
     int armor_type;
     int armor_power;
     int max_armor;
-    int control_cost;
-    int cost;
-    int level; // used to determine monster toughness
-    int jumpup; // max height we can jump up
-    int jumpdn; // max height we can jump down
     int radius; // radius (if any) if projectile explosion
     int regen_delay1; // level.framenum when we can regenerate again
     int regen_delay2; // secondary regen level.framenum when we can regenerate again
@@ -712,19 +706,24 @@ typedef struct {
     // az begin
 
     // targeting
-    edict_t *last_target_scanner;
-    int target_index; // for ai
-
-    // drone list
-    int dronelist_index;
-
     // odds that a hit will induce a pain state
     float pain_chance;
 
+    int16_t control_cost;
+    int16_t cost;
+    int16_t level; // used to determine monster toughness
+    int16_t jumpup; // max height we can jump up
+    int16_t jumpdn; // max height we can jump down
+
+    enthandle_t target_index; // for ai
+
+    // drone list
+    enthandle_t dronelist_index;
     // az end
     bool Zchanged; // has our Z position changed recently?
     bool updatePath; // if true, update path to goal when level.time > path_time
     bool slots_freed; // true if player slots have been refunded prior to removal
+    int8_t power_armor_type;
 } monsterinfo_t;
 
 VRX_G_MAIN_IMPL game_locals_t game;
@@ -1532,7 +1531,7 @@ void M_WorldEffects(edict_t *ent);
 //==========================================
 
 // TYPE OF MONSTER ---- HEALTH
-enum mtype_t {
+enum mtype_t : int16_t {
     M_SOLDIERLT = 1, // 20
     M_SOLDIER = 2, // 30
     M_SOLDIERSS = 3, // 40
@@ -1896,8 +1895,6 @@ edict_t *PlayerTrail_LastSpot(void);
 //
 void respawn(edict_t *ent);
 
-void BeginIntermission(edict_t *targ);
-
 void PutClientInServer(edict_t *ent);
 
 void InitClientPersistant(gclient_t *client);
@@ -2014,20 +2011,16 @@ void DisableChaseCam(edict_t *ent); // az
 // ### Hentai ### END
 
 
+#include "combat/abilities/g_abilities.h"
 
 // client data that stays across multiple level loads
 typedef struct {
     char userinfo[MAX_INFO_STRING];
     char netname[16];
-    int hand;
-
-    bool connected; // a loadgame will leave valid entities that
-    // just don't have a connection yet
 
     // values saved and restored from edicts when changing levels
     int health;
     int max_health;
-    bool powerArmorActive;
 
     int selected_item;
     int inventory[MAX_ITEMS];
@@ -2046,30 +2039,32 @@ typedef struct {
 	int			max_disruptor;
     int         max_flechettes;
 
-    gitem_t *weapon;
-    gitem_t *lastweapon;
-
     int power_cubes; // used for tracking the cubes in coop games
     int score; // for calculating total unit score in coop games
 
-    int game_helpchanged;
-    int helpchanged;
-
-    bool spectator; // client is a spectator
+    gitem_t *weapon;
+    gitem_t *lastweapon;
 
     //K03 Begin
     int max_powercubes;
     int max_tballs;
-    char orginal_netname[16];
     char current_ip[16];
     //4.0 ctf stuff
     float ctf_assist_frag; // used to give the player a "kill the flag carrier" assist
     float ctf_assist_return; // used to give the player a "return the flag" assist
-    int scanner_active;
     //K03 End
+
+    morphinven_t morphinventory;
+    int16_t scanner_active;
+
+    uint8_t hand;
+    bool powerArmorActive;
+    bool spectator; // client is a spectator
+    bool connected; // a loadgame will leave valid entities that
+    // just don't have a connection yet
+
 } client_persistant_t;
 
-#include "combat/abilities/g_abilities.h"
 
 // client data that stays across deathmatch respawns
 typedef struct {
@@ -2083,12 +2078,10 @@ typedef struct {
     int game_helpchanged;
     int helpchanged;
 
-    bool spectator; // client is a spectator
 
     //K03 Begin
     int frags;
     //K03 End
-    bool HasVoted; //GHz
     int voteType; // 1 yes, 2 no, 0 neither
     float VoteTimeout;
 
@@ -2107,6 +2100,9 @@ typedef struct {
     int wave_assist_credits;
 
     pstats_t pstats;
+
+    bool spectator; // client is a spectator
+    bool HasVoted; //GHz
 } client_respawn_t;
 
 #include "menus/menu.h"
@@ -2138,7 +2134,7 @@ struct gds_state_t {
 };
 
 // this structure is cleared on each PutClientInServer(),
-// except for 'client->pers' and gds
+// except for 'client->pers'
 struct gclient_s {
     // known to server
     struct player_state_t ps; // communicated by server to clients
@@ -2153,8 +2149,6 @@ struct gclient_s {
     edict_t *trade_with;
     item_t *trade_item[3];
 
-    bool showscores; // set layout stat
-
     // az begin
     // for the dynamic hud
     layout_t layout;
@@ -2165,16 +2159,12 @@ struct gclient_s {
     stash_state_t stash;
     // az end
 
-    bool showinventory; // set layout stat
-    bool showhelp;
 
     int ammo_index;
 
     int buttons;
     int oldbuttons;
     int latched_buttons;
-
-    bool weapon_thunk;
 
     gitem_t *newweapon;
 
@@ -2243,27 +2233,27 @@ struct gclient_s {
     float flood_locktill; // locked from talking
     float flood_when[10]; // when messages were said
     int flood_whenhead; // head pointer for when said
-    bool thrusting;
     int thrustdrain;
     float next_thrust_sound;
-
-    bool cloakable;
-    bool cloaking;
-    float cloaktime;
-    int cloakdrain;
-
-    bool boosted; //Talent: Leap Attack - true if player used boost and is still airbourne
-
     float healthregen_time;
     float armorregen_time;
 
+    float cloaktime;
+    int cloakdrain;
+
+
     int hook_state;
-    bool firebeam; //GHz
     float beamtime; //GHz
-	qboolean		fireacid;//GHz
 	float			acidtime;//GHz
-	qboolean		firespike;//GHz
 	float			spiketime;//GHz
+    bool firebeam; //GHz
+	bool		fireacid;//GHz
+	bool		firespike;//GHz
+
+    bool thrusting;
+
+    bool cloaking;
+
     edict_t       *hook;
 	int				chasecam_mode;
 
@@ -2275,7 +2265,6 @@ struct gclient_s {
 	int			refire_frames;
 	int			idle_frames;		// number of frames player has been standing still and not firing
 	int			still_frames;		// number of frames player has been standing still (used for idle kick)
-	qboolean	lowlight;
 	float		tball_delay;
 	float		ability_delay;
 	float		disconnect_time;
@@ -2284,11 +2273,12 @@ struct gclient_s {
 	float		oldfov;
 	float		oldspeed; // GHz: used for flyer for comparison (impact with object)
 
-	qboolean		trading;		// is player trading?
-	qboolean		trade_off;		// is the player blocking trades?
-	qboolean		trade_accepted;	// has player accepted trade?
-	qboolean		trade_final;	// is the player in the final trade menu?
 	menusystem_t	menustorage;	// stores menu data
+    bool		trading;		// is player trading?
+    bool		trade_off;		// is the player blocking trades?
+    bool		trade_accepted;	// has player accepted trade?
+    bool		trade_final;	// is the player in the final trade menu?
+    bool    	lowlight;
 
 	int			vamp_counter;		// used to track vamped health per second
 	int			vamp_frames;		// used for vamp delay
@@ -2298,9 +2288,9 @@ struct gclient_s {
 
 	// v3.12 ally menu stuff
 	edict_t		*allytarget;		// player we are trying to ally with
-	qboolean	ally_accept;		// have we accepted the alliance?
-	qboolean	allying;			// is the player trying to ally with someone?
 	float		ally_time;			// when did we begin invitation?
+    bool	ally_accept;		// have we accepted the alliance?
+    bool	allying;			// is the player trying to ally with someone?
 
 	// 3.5 some abilties don't use power cubes, and instead rely on a charge
 	int			charge_index;		// index of ability charge we're showing
@@ -2310,10 +2300,20 @@ struct gclient_s {
 	float		ammo_regentime;		// next ammo regen tick
 	float		wormhole_time;		// must exit wormhole by this time
 
-	qboolean	jump;
-	qboolean	show_allyinfo;		// displays ally info data (health/armor bars)
 
-	qboolean	waiting_to_join;	// this player has indicated that they want to join the game (used for teamplay queues)
+    double lastdmg;
+    edict_t *selected[4]; // drone selection
+    edict_t *lasersight;
+    edict_t *supplystation;
+    edict_t *spawn; // available invasion-mode spawn point
+    int nfer;
+    float lastkill;
+    int32_t dmg_counter;
+    float haste_time;
+    float lasthbshot;
+    int FrameShot;
+    float air_finished;
+
 	float		waiting_time;		// the exact time when the player indicated they wanted to join
 	int			showGridDebug;		// show grid debug information (0=off,1=grid,2=children)
 	float		lastCommand;		// 'double click' delay for monster commands
@@ -2326,8 +2326,19 @@ struct gclient_s {
 	edict_t		*pickup_prev;		// previously picked up entity
 
     muted_t		mutelist[MAX_CLIENTS];	//mute certain players
-
     struct vrr_t vrr;
+
+    bool	jump;
+    bool	show_allyinfo;		// displays ally info data (health/armor bars)
+
+    bool	waiting_to_join;	// this player has indicated that they want to join the game (used for teamplay queues)
+
+    bool boosted; //Talent: Leap Attack - true if player used boost and is still airbourne
+
+    bool showscores; // set layout stat
+    bool showinventory; // set layout stat
+    bool showhelp;
+    bool weapon_thunk;
 };
 
 #ifdef VRX_REPRO
@@ -2470,8 +2481,7 @@ struct edict_s {
     int movetype;
     enum flags_t flags;
     int v_flags; //3.0 New flag variable (so nothing else previously coded is screwed up)
-
-    float freetime; // sv.time when the object was freed
+    int spawnflags;
 
     //
     // only used locally in game, not by server
@@ -2481,13 +2491,14 @@ struct edict_s {
     char *target;
     char *targetname;
 
-    int spawnflags;
 
     float timestamp;
 
     float angle; // set in qe3, -1 = up, -2 = down
     //ponko
     float speed, accel, decel;
+
+    int mass;
 
     char *killtarget;
     char *team;
@@ -2504,8 +2515,6 @@ struct edict_s {
 
     vec3_t velocity;
     vec3_t avelocity;
-    int mass;
-    float air_finished;
 
     float gravity; // per entity gravity multiplier (1.0 is normal)
     // use for lowgrav artifact, flares
@@ -2546,8 +2555,6 @@ struct edict_s {
     int deadflag;
 
     float powerarmor_time;
-
-    char *map; // target_changelevel
 
     int viewheight; // height above origin where eyesight is determined
     int takedamage;
@@ -2592,8 +2599,9 @@ struct edict_s {
     int light_level;
     int style; // also used as areaportal number
     // RAFAEL
-    int orders;
     float holdtime;
+
+    float PlasmaDelay;
 
     // common data blocks
     moveinfo_t moveinfo;
@@ -2603,8 +2611,115 @@ struct edict_s {
     ai_handle_t* ai;
 
     //K03 Begin
-    int* packitems;
-    float PlasmaDelay;
+
+
+    uint64_t lastsound; // last frame we made a sound
+
+    //sentry stuff
+
+    edict_t *skull; // hellspawn
+    edict_t *creator;
+
+    edict_t *flashlight;
+
+    float lasthurt; // last time we took non-world damage
+    int lockon;
+
+    // az: as much as per-entity tagged unions are tempting
+    // it's a lot of effort.
+    // union {
+        // player-exclusive
+        // struct {
+        // };
+
+        // freed
+        // struct {
+            float freetime; // sv.time when the object was freed
+        // };
+
+        // navi-only
+        // struct {
+        int list_index; // invasion spawn index
+        // };
+
+        // flag-exclusive
+        // struct {
+            edict_t *flaglaser; // laser effect for hw/ctf
+        // };
+        // only sentries use this
+        // struct {
+            edict_t *sentry;
+            edict_t *standowner;
+            // sentry, detector, autocannon
+            float sentrydelay;
+            int rocket_shots;
+            int orders; // also invspawn state
+        // };
+        // drone-exclusive
+        // struct {
+            int showPathDebug; // show path debug information (0=off,1=on)
+            edict_t *selectedsentry;
+        // };
+
+        // navi only
+        edict_t *prev_navi;
+        // for hook only
+        edict_t *laser;
+
+        // backpack-only
+        // struct {
+            int* packitems;
+        // };
+        // target_changelevel
+        // struct {
+            char *map;
+        // };
+
+
+        // rune only
+        //3.0 rune stuff
+        item_t vrxitem;
+    // };
+
+    edict_t *prev_owner; // for conversion
+
+    //GHz START
+
+    float msg_time;
+
+    int atype; //3.0 used for new curses
+    // control cost totals
+    int16_t num_monsters;
+    int16_t num_packanimals;
+
+    // actual count, int16 because invasion may have higher counts.
+    int16_t num_monsters_real;
+    enum mtype_t mtype; // Type of Monstersee M_* defines.. (M_HOVER, etc)
+
+    int8_t num_spikegrenades; // number of spike greandes out
+    int8_t max_pipes;
+    int8_t num_proxy; // 3.6 keep track of proxy grenades out
+    int8_t num_sentries;
+    int8_t num_lasers;
+    int8_t num_armor; // 3.5 keep track of armor bombs out
+    int8_t num_autocannon; //4.1 keep track of live autocannons
+    int8_t num_caltrops; //4.2 keep track of live caltrops
+    int8_t num_detectors; // number of live detectors
+    int8_t num_spikers;
+    int8_t num_gasser;
+    int8_t num_obstacle;
+    int8_t num_magmine;
+    int8_t num_barrels;
+    int8_t num_skeletons;
+    int8_t num_golems;
+    int8_t num_spikeball;
+    int8_t num_laserplatforms; //4.4 Talent: Laser Platform
+    int8_t num_napalm; // 3.6 keep track of napalm grenades out
+    int8_t num_firewalls;
+
+    bool spikeball_follow;
+    bool spikeball_recall;
+
     bool superspeed;
     bool sucking; //GHz
     bool antigrav;
@@ -2614,103 +2729,29 @@ struct edict_s {
     //4.0 "manashield"
     bool manashield;
 
-    int lockon;
-
-    int FrameShot;
-    float haste_time;
-
-    uint64_t lastsound; // last frame we made a sound
-    double lastdmg;
-
-    int rocket_shots;
-
-    int shots_hit;
-    int shots;
-
-    int32_t dmg_counter;
-    float lastkill;
-    int nfer;
-    float lasthurt; // last time we took non-world damage
-    float lasthbshot;
-
-
-    // az begin
-    int list_index; // invasion queue position
-    // az end
-
-    //sentry stuff
-    float sentrydelay;
-    edict_t *sentry;
-    edict_t *selectedsentry;
-    edict_t *standowner;
-
-    edict_t *creator;
-
-    edict_t *lasersight;
-    edict_t *decoy;
-    edict_t *flashlight;
-
-    edict_t *selected[4]; // drone selection
-    edict_t *other; // laser effect for hw/ctf
-    edict_t *supplystation;
-    //GHz START
-
-    float msg_time;
-
-    enum mtype_t mtype; // Type of Monstersee M_* defines.. (M_HOVER, etc)
-    int atype; //3.0 used for new curses
-    int num_sentries;
-    int num_monsters;
-    int num_monsters_real;
-    int num_lasers;
-    int max_pipes;
-    int num_armor; // 3.5 keep track of armor bombs out
-    int num_proxy; // 3.6 keep track of proxy grenades out
-    int num_napalm; // 3.6 keep track of napalm grenades out
-    int num_spikegrenades; // number of spike greandes out
-    int num_autocannon; //4.1 keep track of live autocannons
-    int num_caltrops; //4.2 keep track of live caltrops
-    int num_detectors; // number of live detectors
-    int num_spikers;
-    int num_gasser;
-    int num_obstacle;
-    int num_magmine;
-    int num_barrels;
-    int num_skeletons;
-    int num_golems;
-    int num_packanimals;
-    int num_firewalls;
-    int num_spikeball;
-    int num_laserplatforms; //4.4 Talent: Laser Platform
     int num_hammers; //4.4 Talent: Boomerang
     int health_cache; // accumulated health that entity will recover
     int health_cache_nextframe;
     // the next server frame we will attempt to transfer from health_cache to entity's health
     int armor_cache;
     int armor_cache_nextframe;
-    bool spikeball_follow;
-    bool spikeball_recall;
     int shield; //4.2 shielding value, 0=no shield, 1=front, 2=whole body
     float shield_activate_time; // when shield will activate
     int movetype_prev; // previous movetype, used by V_Push()
     int movetype_frame; // server frame to restore old movetype
     //K03 End
-
+    
     edict_t *beam; // dabeam primary laser
     edict_t *beam2; // dabeam secondary laser
 
-    //3.0 rune stuff
-    item_t vrxitem;
-
     int teamnum; // teamplay, team we belong to
-    edict_t *skull; // hellspawn
 
     que_t auras[QUE_MAXSIZE];
     que_t curses[QUE_MAXSIZE];
-    float corpseeater_time;
 
     // parasite
     int parasite_frames;
+    int shots;
     edict_t *parasite_target;
     edict_t *proboscis;
 
@@ -2726,11 +2767,8 @@ struct edict_s {
     float chill_time;
     edict_t *chill_owner; // for assist exp tracking
 
-
-
     //4.0
     edict_t *megahealth;
-    edict_t *spawn; // available invasion-mode spawn point
     float holywaterProtection; //holy water gives a few seconds of curse immunity
     int autocurse_delay; //Talent: Autocurse - next server frame that chance trigger is rolled
 
@@ -2771,7 +2809,6 @@ struct edict_s {
     edict_t *heal_exp_owner; // for assist exp tracking
     edict_t *supply_exp_owner; // for assist exp tracking
 
-    int showPathDebug; // show path debug information (0=off,1=on)
 
 
     // time elapsed since last power cube regen
@@ -2779,10 +2816,8 @@ struct edict_s {
     float detected_factor; // how much extra damage we take from being detected
 
     float removetime; //4.07 time to auto-remove
-    edict_t *prev_owner; // for conversion
+    float corpseeater_time;
     //GHz END
-    edict_t *prev_navi;
-    edict_t *laser; // for hook
 
     struct gds_state_t gds; // gds data
 };

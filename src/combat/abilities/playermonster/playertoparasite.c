@@ -389,7 +389,6 @@ void Cmd_PlayerToParasite_f (edict_t *ent)
 	// decloak
 	ent->svflags &= ~SVF_NOCLIENT;
 	ent->client->cloaking = false;
-	ent->client->cloakable = 0;
 
 	ent->maxs[2] = 8;
 	ent->viewheight = 0;

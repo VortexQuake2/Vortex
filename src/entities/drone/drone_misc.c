@@ -1592,10 +1592,12 @@ edict_t *SpawnCombatPoint (edict_t *ent, vec3_t org)
 void DroneBlink (edict_t *ent)
 {
 	int	i;
+	if (!ent->client)
+		return;
 
 	for (i=0; i<4; i++) {
-		if (G_EntIsAlive(ent->selected[i]))
-			ent->selected[i]->monsterinfo.selected_time = level.time + MONSTER_BLINK_DURATION;
+		if (G_EntIsAlive(ent->client->selected[i]))
+			ent->client->selected[i]->monsterinfo.selected_time = level.time + MONSTER_BLINK_DURATION;
 	}
 }
 
@@ -1637,12 +1639,12 @@ void DroneRemoveSelected (edict_t *ent, edict_t *drone)
 		if (drone)
 		{
 			// if this monster was previously selected, remove it from the list
-			if (drone == ent->selected[i])
-				ent->selected[i] = NULL;
+			if (drone == ent->client->selected[i])
+				ent->client->selected[i] = NULL;
 		}
 		else
 			// remove all monsters from the list
-			ent->selected[i] = NULL;
+			ent->client->selected[i] = NULL;
 	}
 
 }
@@ -1661,8 +1663,8 @@ edict_t **DroneAlreadySelected (edict_t *ent, edict_t *drone)
 	for (i=0; i<4; i++)
 	{
 		// is this drone already selected?
-		if (drone == ent->selected[i])
-			return &ent->selected[i];
+		if (drone == ent->client->selected[i])
+			return &ent->client->selected[i];
 	}
 
 	return NULL;
@@ -1675,50 +1677,14 @@ edict_t **GetFreeSelectSlot (edict_t *ent)
 	for (i=0; i<4; i++)
 	{
 		// is this slot available?
-		if (!G_EntIsAlive(ent->selected[i]) // freed or not alive
-			|| !ValidCommandMonster(ent, ent->selected[i])) // not a monster that we own!
-			return &ent->selected[i];
+		if (!G_EntIsAlive(ent->client->selected[i]) // freed or not alive
+			|| !ValidCommandMonster(ent, ent->client->selected[i])) // not a monster that we own!
+			return &ent->client->selected[i];
 	}
 
 	return NULL;
 }
 
-void DroneSelect (edict_t *ent)
-{
-	edict_t *drone;
-	edict_t **slot;
-
-	// are we pointing at a drone of ours?
-	if ((drone = SelectDrone(ent)) != NULL)
-	{
-		if ((slot = DroneAlreadySelected(ent, drone)) != NULL)
-		{
-			safe_centerprintf(ent, "Drone standing down.\n");
-			*slot = NULL;
-			drone->monsterinfo.selected_time = 0;
-			DroneBlink(ent); // all selected monsters blink
-			return;
-		}
-
-		if ((slot = GetFreeSelectSlot(ent)) != NULL)
-		{
-			safe_centerprintf(ent, "Drone awaiting orders.\n");
-			*slot = drone;
-			DroneBlink(ent); // all selected monsters blink
-			return;
-		}
-
-		// the queue is full, so bump one of our already selected monsters
-		safe_centerprintf(ent, "Drone awaiting orders.\n");
-		ent->selected[0] = drone;
-		DroneBlink(ent);
-	}
-	else
-	{
-		safe_cprintf(ent, PRINT_HIGH, "You must be looking at a monster to select it.\n");
-		safe_cprintf(ent, PRINT_HIGH, "Once selected, you can give a monster orders.\n");
-	}
-}
 
 static edict_t *FindMoveTarget (edict_t *ent)
 {
@@ -1738,7 +1704,7 @@ static edict_t *FindMoveTarget (edict_t *ent)
 		for (i=0; i<4; i++)
 		{
 			// is this a selected drone?
-			if (e == ent->selected[i])
+			if (e == ent->client->selected[i])
 			{
 				q = true;
 				break;
@@ -1759,74 +1725,6 @@ static edict_t *FindMoveTarget (edict_t *ent)
 	return NULL;
 }
 
-void DroneMove (edict_t *ent)
-{
-	int		i;
-	vec3_t	forward, right, start, end, offset;
-	trace_t	tr;
-	edict_t *e, *target;
-
-	// are we pointing at someone?
-	if ((target = FindMoveTarget(ent)) != NULL)
-	{
-		if (OnSameTeam(target, ent))
-		{
-			if (target->client)
-				safe_centerprintf(ent, "Drones will follow %s.\n", target->client->pers.netname);
-			else
-				safe_centerprintf(ent, "Drones will follow target.\n");
-			for (i=0; i<4; i++) {
-				if (G_EntIsAlive(ent->selected[i])
-					&& !(ent->selected[i]->spawnflags & AI_STAND_GROUND))
-				{
-					ent->selected[i]->enemy = target;
-					ent->selected[i]->monsterinfo.aiflags |= (AI_NO_CIRCLE_STRAFE|AI_COMBAT_POINT);
-				}
-			}
-		}
-		else
-		{
-			if (target->client)
-				safe_centerprintf(ent, "Drones will attack %s.\n", target->client->pers.netname);
-			else
-				safe_centerprintf(ent, "Drones will attack target.\n");
-			for (i=0; i<4; i++) {
-				if (G_EntIsAlive(ent->selected[i])
-					&& !(ent->selected[i]->spawnflags & AI_STAND_GROUND))
-					ent->selected[i]->enemy = target;
-			}
-		}
-		ent->selectedsentry = NULL; // we no longer need any combat point
-		return;
-	}
-
-	// get muzzle origin
-	AngleVectors (ent->client->v_angle, forward, right, NULL);
-	VectorSet(offset, 0, 7,  ent->viewheight-8);
-	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
-
-	// trace
-	VectorMA(start, 8192, forward, end);
-	tr = gi.trace(start, NULL, NULL, end, ent, MASK_SHOT);
-
-	// we're pointing at a spot
-	if (ent->selectedsentry)
-	{
-		ent->selectedsentry = NULL; // reset the combat point
-		return;
-	}
-
-	safe_centerprintf(ent, "Drones changing position.\n");
-	e = SpawnCombatPoint(ent, tr.endpos);
-	ent->selectedsentry = e;
-	for (i=0; i<4; i++) {
-		if (G_EntIsAlive(ent->selected[i]))
-		{
-			ent->selected[i]->monsterinfo.aiflags |= (AI_NO_CIRCLE_STRAFE|AI_COMBAT_POINT);
-			ent->selected[i]->enemy = e;
-		}
-	}
-}
 
 /*
 =============
@@ -3042,7 +2940,7 @@ void DroneAttack (edict_t *ent, edict_t *other)
 
 	for (i = 0; i < 4; i++)
 	{
-		e = ent->selected[i];
+		e = ent->client->selected[i];
 		if (G_EntIsAlive(e) && ValidCommandMonster(ent, e) && visible(ent, e))
 		{
 			e->enemy = other;
@@ -3063,7 +2961,7 @@ void DroneFollow (edict_t *ent, edict_t *other)
 
 	for (i = 0; i < 4; i++)
 	{
-		e = ent->selected[i];
+		e = ent->client->selected[i];
 		if (G_EntIsAlive(e) && ValidCommandMonster(ent, e) && visible(ent, e))
 		{
 			e->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
@@ -3087,7 +2985,7 @@ int numDroneLinks (edict_t *self)
 	for (i = numLinks = 0; i < 4; i++)
 	{
 		// we iterate through each monster/drone that the client has selected
-		e = self->activator->selected[i];
+		e = self->activator->client->selected[i];
 		// monster/drone must be alive
 		if (!G_EntIsAlive(e))
 			continue;
@@ -3176,7 +3074,7 @@ void DroneMovePosition (edict_t *ent, vec3_t pos)
 	// search selected monsters
 	for (i = 0; i < 4; i++)
 	{
-		e = ent->selected[i];
+		e = ent->client->selected[i];
 
 		// is this a valid monster in visible range?
 		if (G_EntIsAlive(e) && ValidCommandMonster(ent, e) && visible(ent, e))
@@ -3382,7 +3280,7 @@ void MonsterFollowMe (edict_t *ent)
 	// search selected monsters
 	for (i = 0; i < 3; i++)
 	{
-		e = ent->selected[i];
+		e = ent->client->selected[i];
 
 		// is this a valid monster in visible range?
 		if (G_EntIsAlive(e) && ValidCommandMonster(ent, e) && visible(ent, e))
@@ -3431,7 +3329,7 @@ void MonsterAttack (edict_t *ent)
 	// search queue for drones
 	for (i=0; i<3; i++)
 	{
-		e = ent->selected[i];
+		e = ent->client->selected[i];
 		// is this a live, visible monster that we own?
 		if (G_EntIsAlive(e) && ValidCommandMonster(ent, e) && visible(ent, e))
 		{

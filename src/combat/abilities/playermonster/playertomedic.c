@@ -479,9 +479,9 @@ void p_medic_heal (edict_t *ent)
 void p_medic_hb_regen (edict_t *ent, int regen_frames, int regen_delay)
 {
 	int ammo;
-	const int max = ent->myskills.abilities[MEDIC].max_ammo;
-	int *current = &ent->myskills.abilities[MEDIC].ammo;
-	int *delay = &ent->myskills.abilities[MEDIC].ammo_regenframe;
+	const int max = ent->client->pers.morphinventory.medic.max_ammo;
+	int *current = &ent->client->pers.morphinventory.medic.ammo;
+	int *delay = &ent->client->pers.morphinventory.medic.ammo_regenframe;
 
 	if (*current > max)
 		return;
@@ -540,9 +540,9 @@ void p_medic_firehb (edict_t *ent)
 	const int		speed = MEDIC_HB_INITIAL_SPEED+MEDIC_HB_ADDON_SPEED*ent->myskills.abilities[MEDIC].current_level;
 	vec3_t	forward, right, start;
 
-	if (!ent->myskills.abilities[MEDIC].ammo)
+	if (!ent->client->pers.morphinventory.medic.ammo)
 		return;
-	ent->myskills.abilities[MEDIC].ammo--;
+	ent->client->pers.morphinventory.medic.ammo--;
 
 	AngleVectors(ent->client->v_angle, forward, right, NULL);
 	G_ProjectSource(ent->s.origin, monster_flash_offset[MZ2_MEDIC_BLASTER_1], forward, right, start);
@@ -566,9 +566,9 @@ void p_medic_firebolt (edict_t *ent)
 		return;
 
 	// check for adequate ammo
-	if (ent->myskills.abilities[MEDIC].ammo < MEDIC_BOLT_AMMO)
+	if (ent->client->pers.morphinventory.medic.ammo < MEDIC_BOLT_AMMO)
 		return;
-	ent->myskills.abilities[MEDIC].ammo -= MEDIC_BOLT_AMMO;
+	ent->client->pers.morphinventory.medic.ammo -= MEDIC_BOLT_AMMO;
 
 	AngleVectors(ent->client->v_angle, forward, right, NULL);
 	G_ProjectSource(ent->s.origin, monster_flash_offset[MZ2_MEDIC_BLASTER_1], forward, right, start);
@@ -722,15 +722,15 @@ void Cmd_PlayerToMedic_f (edict_t *ent)
 		ent->s.skinnum = 2; // commander
 
 	// set maximum hyperblaster ammo
-	ent->myskills.abilities[MEDIC].max_ammo = MEDIC_HB_INITIAL_AMMO+MEDIC_HB_ADDON_AMMO
+	ent->client->pers.morphinventory.medic.max_ammo = MEDIC_HB_INITIAL_AMMO+MEDIC_HB_ADDON_AMMO
 		*ent->myskills.abilities[MEDIC].current_level;
 
 	// Talent: More Ammo
 	// increases ammo 10% per talent level
-	if(talentLevel > 0) ent->myskills.abilities[MEDIC].max_ammo *= 1.0 + 0.1*talentLevel;
+	if(talentLevel > 0) ent->client->pers.morphinventory.medic.max_ammo *= 1.0 + 0.1*talentLevel;
 
 	// give them some starting ammo
-	ent->myskills.abilities[MEDIC].ammo = MEDIC_HB_START_AMMO;
+	ent->client->pers.morphinventory.medic.ammo = MEDIC_HB_START_AMMO;
 
 	ent->client->refire_frames = 0; // reset charged weapon
 	ent->client->weapon_mode = 0; // reset weapon mode

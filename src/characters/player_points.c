@@ -487,23 +487,24 @@ void vrx_inv_award_curse_exp( edict_t *attacker, edict_t *targ, edict_t *targetc
     edict_t *assister = NULL;
 
     if ((slot = que_findtype(que, NULL, type)) != NULL) {
-        //gi.dprintf("vrx_inv_award_exp: found curse/aura %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
+        //gi.dprintf("vrx_inv_award_exp: found curse/aura %s, owner is a %s ", h2e(slot->ent)->classname, h2e(slot->ent)->owner->classname );
         /*
-        if ( slot->ent->owner->client ) {
-            gi.dprintf("named %s\n", slot->ent->owner->client->pers.netname);
+        if ( h2e(slot->ent)->owner->client ) {
+            gi.dprintf("named %s\n", h2e(slot->ent)->owner->client->pers.netname);
         } else {
             gi.dprintf("\n");
         }*/
 
-        if ( slot->ent->owner->client && slot->ent->owner != attacker ) {
-            leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
+        auto aura = h2e(slot->ent);
+        if ( aura->owner->client && aura->owner != attacker ) {
+            leveldiff = vrx_get_level_difference_multiplier(aura->owner, targ, targetclient);
             exp = vrx_get_kill_base_experience(
-                slot->ent->owner, targ, targetclient, 
+                aura->owner, targ, targetclient,
                 leveldiff, (1 - INVASION_EXP_SPLIT) * INVASION_ASSIST_EXP_PERCENT * mult, NULL, &credits);
-            vrx_apply_experience(slot->ent->owner, exp);
-            vrx_add_credits(slot->ent->owner, credits);
-            slot->ent->owner->client->resp.wave_assist_exp += exp;
-            slot->ent->owner->client->resp.wave_assist_credits += credits;
+            vrx_apply_experience(aura->owner, exp);
+            vrx_add_credits(aura->owner, credits);
+            aura->owner->client->resp.wave_assist_exp += exp;
+            aura->owner->client->resp.wave_assist_credits += credits;
             //gi.dprintf("  add %dxp, %dcr\n", exp, credits);
         }
     }
@@ -810,14 +811,17 @@ float vrx_get_level_difference_multiplier(
 }
 
 float vrx_get_nfer_bonus(edict_t *attacker, const edict_t *target, float bonus) {
-    if (attacker->lastkill >= level.time) {
+    if (!attacker->client)
+        return bonus;
 
-        if (attacker->nfer < 2)
-            attacker->nfer = 2;
+    if (attacker->client->lastkill >= level.time) {
+
+        if (attacker->client->nfer < 2)
+            attacker->client->nfer = 2;
         else
-            attacker->nfer++;
+            attacker->client->nfer++;
 
-        bonus += sqrtf(attacker->nfer / 2.f);
+        bonus += sqrtf(attacker->client->nfer / 2.f);
         attacker->client->resp.pstats.num_2fers++;
 
         vrx_do_nfer_effects(attacker, target);
@@ -826,13 +830,15 @@ float vrx_get_nfer_bonus(edict_t *attacker, const edict_t *target, float bonus) 
 }
 
 void vrx_do_nfer_effects(const edict_t *attacker, const edict_t *target) {
-    if (attacker->nfer == 4) {
+    if (!attacker->client)
+        return;
+    if (attacker->client->nfer == 4) {
         gi.sound(attacker, CHAN_VOICE, gi.soundindex("misc/assasin.wav"), 1, ATTN_NORM, 0);
-    } else if (attacker->nfer == 5) {
+    } else if (attacker->client->nfer == 5) {
         gi.sound(attacker, CHAN_VOICE, gi.soundindex("speech/hey.wav"), 1, ATTN_NORM, 0);  
-    } else if (attacker->nfer >= 3 && attacker->nfer <= 4) {
+    } else if (attacker->client->nfer >= 3 && attacker->client->nfer <= 4) {
         gi.sound(target, CHAN_VOICE, gi.soundindex("speech/excellent.wav"), 1, ATTN_NORM, 0);
-    } else if (attacker->nfer == 10) {
+    } else if (attacker->client->nfer == 10) {
         gi.sound(attacker, CHAN_VOICE, gi.soundindex("misc/10fer.wav"), 1, ATTN_NORM, 0);
     }
 }
@@ -852,9 +858,11 @@ void vrx_add_team_exp(edict_t *ent, int points) {
             continue;
         if (player->health <= 0)
             continue;
+        if (!player->client)
+            continue;
         // players must help the team in order to get shared points!
-        if ((!pvm->value && (player->lastkill + 30 < level.time))
-            || (player->lastkill + 60 < level.time))
+        if ((!pvm->value && (player->client->lastkill + 30 < level.time))
+            || (player->client->lastkill + 60 < level.time))
             continue;
 
         if (OnSameTeam(ent, player)) {
@@ -993,7 +1001,7 @@ void vrx_death_cleanup(edict_t *attacker, edict_t *targ) {
 
         attacker->client->resp.pstats.frags++;
         attacker->client->resp.frags++;
-        attacker->lastkill = level.time + 2;
+        attacker->client->lastkill = level.time + 2;
     }
 
     if (!ptr->value && !domination->value && !pvm->value && !ctf->value

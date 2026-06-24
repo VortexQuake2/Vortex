@@ -676,6 +676,7 @@ void InitSunEntity(void);
 qboolean vrx_CheckForFlag (void);
 void InitPathfinding();
 void DroneList_Clear();
+void vrx_depot_init();
 
 extern edict_t* g_freeEdictsH;
 extern edict_t* g_freeEdictsT;
@@ -697,6 +698,7 @@ void SpawnEntities (char *mapname, const char *entities, char *spawnpoint)
 	memset (g_edicts, 0, game.maxentities * sizeof (g_edicts[0]));
 
 	// az begin
+	vrx_depot_init();
 	vrx_vote_reset();
 	cs_reset();
 	seedMT(time(NULL));

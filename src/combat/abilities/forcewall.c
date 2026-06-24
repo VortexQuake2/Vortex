@@ -478,5 +478,4 @@ void Cmd_Forcewall(edict_t *ent)
 	// if you use this spell, you uncloak!
 	ent->svflags &= ~SVF_NOCLIENT;
 	ent->client->cloaking = false;
-	ent->client->cloakable = 0;
 }

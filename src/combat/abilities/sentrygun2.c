@@ -820,7 +820,7 @@ void sentrygun_think(edict_t *self)
 	slot = que_findtype(self->curses, slot, AURA_HOLYFREEZE);
 	if (slot)
 	{
-		modifier = 1 - 0.05*slot->ent->owner->myskills.abilities[HOLY_FREEZE].current_level;
+		modifier = 1 - 0.05*h2e(slot->ent)->owner->myskills.abilities[HOLY_FREEZE].current_level;
 		self->yaw_speed *= modifier;
 	}
 
@@ -1182,7 +1182,6 @@ void SpawnSentry1(edict_t *ent, int sentryType, int cost, float skill_mult, floa
 	//If you use this ability, you uncloak!
 	ent->svflags &= ~SVF_NOCLIENT;
 	ent->client->cloaking = false;
-	ent->client->cloakable = 0;
 }
 
 /**********

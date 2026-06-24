@@ -3,7 +3,7 @@
 
 void LaserSightThink (edict_t *self);
 
-#define lss ent->lasersight
+#define lss ent->client->lasersight
 
 void lasersight_on (edict_t *ent)
 {

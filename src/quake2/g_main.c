@@ -205,27 +205,6 @@ void ClientEndServerFrames(void)
 	}
 
 }
-//K03 Begin
-/*
-=================
-CreateTargetChangeLevel
-
-Returns the created target changelevel
-=================
-*/
-edict_t *CreateTargetChangeLevel(char *map)
-{
-	edict_t *ent;
-
-	ent = G_Spawn();
-	ent->classname = "target_changelevel";
-	Com_sprintf(level.nextmap, sizeof(level.nextmap), "%s", map);
-	ent->map = level.nextmap;
-	gi.dprintf("Next map is %s.\n", ent->map);
-	return ent;
-}
-//K03 End
-
 
 /*
 =================
@@ -463,18 +442,6 @@ void EndDMLevel(void)
 	{	// go to a specific map
 		//BeginIntermission (CreateTargetChangeLevel (level.nextmap) );
 		VortexBeginIntermission(level.nextmap);
-	}
-	else
-	{
-		// search for a changelevel
-		ent = G_Find(NULL, FOFS(classname), "target_changelevel");
-		if (!ent)
-		{	// the map designer didn't include a changelevel,
-			// so create a fake ent that goes back to the same level
-			VortexBeginIntermission(level.nextmap);
-			return;
-		}
-		BeginIntermission(ent);
 	}
 }
 

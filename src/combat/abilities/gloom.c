@@ -1771,9 +1771,9 @@ void poison_target(edict_t* ent, edict_t* target, int damage, float duration, in
 	{
 		if (!stack) // stacking of poison curses is not allowed, so refresh the curse instead
 		{
-			slot->ent->random = 1; // initial refire delay for next attack
-				slot->ent->monsterinfo.nextattack = level.framenum + qf2sf(1);
-			slot->ent->delay = level.time + duration;
+			h2e(slot->ent)->random = 1; // initial refire delay for next attack
+				h2e(slot->ent)->monsterinfo.nextattack = level.framenum + qf2sf(1);
+			h2e(slot->ent)->delay = level.time + duration;
 			slot->time = level.time + duration;
 			return;
 		}

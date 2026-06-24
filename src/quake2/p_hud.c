@@ -109,59 +109,6 @@ void VortexBeginIntermission(char *nextmap)
 }
 
 //old intermission code. Should be obsolete, but left in just in case
-void BeginIntermission(edict_t *targ)
-{
-	int		i;
-	edict_t	*ent, *client;
-
-	if (level.intermissiontime)
-		return;		// allready activated
-
-	gi.dprintf("WARNING: BeginIntermission() was called when we should be calling VortexBeginIntermission()!\n");
-
-	level.intermissiontime = level.time;
-	level.changemap = targ->map;
-
-	// if on same unit, return immediately
-	if (!deathmatch->value && (targ->map && targ->map[0] != '*'))
-	{	// go immediately to the next level
-		level.exitintermission = 1;
-		return;
-	}
-	level.exitintermission = 0;
-
-	// find an intermission spot
-	ent = G_Find(NULL, FOFS(classname), "info_player_intermission");
-	if (!ent)
-	{	// the map creator forgot to put in an intermission point...
-		ent = G_Find(NULL, FOFS(classname), "info_player_start");
-		if (!ent)
-			ent = G_Find(NULL, FOFS(classname), "info_player_deathmatch");
-	}
-	else
-	{	// chose one of four spots
-		i = randomMT() & 3;
-		while (i--)
-		{
-			ent = G_Find(ent, FOFS(classname), "info_player_intermission");
-			if (!ent)	// wrap around the list
-				ent = G_Find(ent, FOFS(classname), "info_player_intermission");
-		}
-	}
-
-	VectorCopy(ent->s.origin, level.intermission_origin);
-	VectorCopy(ent->s.angles, level.intermission_angle);
-
-	// move all clients to the intermission point
-	for (i = 0; i<maxclients->value; i++)
-	{
-		client = g_edicts + 1 + i;
-		if (!client->inuse)
-			continue;
-		MoveClientToIntermission(client);
-	}
-}
-
 int V_HighestFragScore(void)
 {
 	int i, highScore = 0;
@@ -727,11 +674,11 @@ void G_SetStats(edict_t *ent)
 	else
 		ent->client->ps.stats[STAT_CHARGE_LEVEL] = 0;
 
-	if (G_EntExists(ent->supplystation) /*&& (ent->supplystation->wait >= level.time)*/)
+	if (G_EntExists(ent->client->supplystation) /*&& (ent->supplystation->wait >= level.time)*/)
 	{
 		ent->client->ps.stats[STAT_STATION_ICON] = gi.imageindex("i_tele");
 		//if (ent->supplystation->wait < 100)
-		ent->client->ps.stats[STAT_STATION_TIME] = (int)ceil(ent->supplystation->wait);//-level.time;
+		ent->client->ps.stats[STAT_STATION_TIME] = (int)ceil(ent->client->supplystation->wait);//-level.time;
 		//else
 		//	ent->client->ps.stats[STAT_STATION_TIME] = 0;
 	}
@@ -908,17 +855,17 @@ void G_SetStats(edict_t *ent)
 		if ((ent->mtype == MORPH_MEDIC) && (ent->client->weapon_mode == 0 || ent->client->weapon_mode == 2))
 		{
 			ent->client->ps.stats[STAT_AMMO_ICON] = gi.imageindex("a_cells_hud");
-			ent->client->ps.stats[STAT_AMMO] = ent->myskills.abilities[MEDIC].ammo;
+			ent->client->ps.stats[STAT_AMMO] = ent->client->pers.morphinventory.medic.ammo;
 		}
 		else if (ent->mtype == MORPH_FLYER)
 		{
 			ent->client->ps.stats[STAT_AMMO_ICON] = gi.imageindex("a_cells_hud");
-			ent->client->ps.stats[STAT_AMMO] = ent->myskills.abilities[FLYER].ammo;
+			ent->client->ps.stats[STAT_AMMO] = ent->client->pers.morphinventory.flyer.ammo;
 		}
 		else if (ent->mtype == MORPH_CACODEMON)
 		{
 			ent->client->ps.stats[STAT_AMMO_ICON] = gi.imageindex("a_rockets_hud");
-			ent->client->ps.stats[STAT_AMMO] = ent->myskills.abilities[CACODEMON].ammo;
+			ent->client->ps.stats[STAT_AMMO] = ent->client->pers.morphinventory.cacodemon.ammo;
 		}
 		else
 		{
@@ -1013,7 +960,6 @@ void G_SetStats(edict_t *ent)
 	}
 	//K03 Begin
 	else if (ent->client->thrusting == 1 ||
-		ent->client->cloakable ||
 		ent->client->hook_state)
 	{
 		ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex("k_powercube");
@@ -1138,12 +1084,12 @@ void G_SetStats(edict_t *ent)
 #ifdef VRX_REPRO
 	// immediately clear the damage since we don't accumulate it.
 	// repro does the accumulating
-	ent->client->ps.stats[STAT_ID_DAMAGE] = ent->dmg_counter;
-	ent->client->ps.stats[STAT_ID_DAMAGE2] = ent->dmg_counter >> 16;
+	ent->client->ps.stats[STAT_ID_DAMAGE] = ent->client->dmg_counter;
+	ent->client->ps.stats[STAT_ID_DAMAGE2] = ent->client->dmg_counter >> 16;
 	// debouncer stat
 	ent->client->ps.stats[STAT_DMG_INSTANCE]++;
 
-	ent->dmg_counter = 0;
+	ent->client->dmg_counter = 0;
 
 #else
 	if (level.time > ent->lastdmg + 3) {
