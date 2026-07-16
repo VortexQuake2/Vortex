@@ -802,6 +802,33 @@ Marks the edict as free
 =================
 */
 
+static void G_ClearMedicReferences(edict_t *ed)
+{
+	edict_t *other;
+
+	if (!ed)
+		return;
+
+	for (other = g_edicts; other < &g_edicts[globals.num_edicts]; other++)
+	{
+		if (!other->inuse)
+			continue;
+
+		if (other->monsterinfo.bad_medic1 == ed)
+			other->monsterinfo.bad_medic1 = NULL;
+		if (other->monsterinfo.bad_medic2 == ed)
+			other->monsterinfo.bad_medic2 = NULL;
+
+		if (other->monsterinfo.medic_healer == ed)
+		{
+			other->monsterinfo.medic_healer = NULL;
+			other->monsterinfo.aiflags &= ~AI_RESURRECTING;
+			if ((other->health < 1) || (other->deadflag == DEAD_DEAD))
+				other->takedamage = DAMAGE_YES;
+		}
+	}
+}
+
 void G_FreeEdict (edict_t *ed)
 {
 	gi.unlinkentity (ed); // unlink from world|
@@ -812,6 +839,7 @@ void G_FreeEdict (edict_t *ed)
 	dom_checkforflag(ed);
 	//CTF_RecoverFlag(ed);
 //GHz END
+	G_ClearMedicReferences(ed);
 	memset (ed, 0, sizeof(*ed));
 	ed->classname = "freed";
 	ed->freetime = level.time;
@@ -832,6 +860,7 @@ void G_FreeAnyEdict (edict_t *ed)
 	gi.unlinkentity (ed);		// unlink from world
 
 	dom_checkforflag(ed);
+	G_ClearMedicReferences(ed);
 
 	ed->think = NULL;//GHz
 	memset (ed, 0, sizeof(*ed));
@@ -1238,7 +1267,7 @@ qboolean G_ValidTarget(const edict_t *self, const edict_t *target, qboolean vis,
 		return false;
 
 	// check for targets that require medic healing
-	if (self && self->mtype == M_MEDIC)
+	if (self && (self->monsterinfo.aiflags & AI_MEDIC))
 	{
 		if (M_ValidMedicTarget(self, target))
 			return true;

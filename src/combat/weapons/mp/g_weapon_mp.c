@@ -520,6 +520,8 @@ void fire_ionripper (edict_t *self, vec3_t start, vec3_t dir, int damage, int sp
     ion->think = ionripper_sparks;
     ion->dmg = damage;
     ion->dmg_radius = 100;
+    if (self->client)
+        ion->svflags |= SVF_PROJECTILE;
     gi.linkentity (ion);
 
     if (self->client)
@@ -602,6 +604,8 @@ void fire_flechette (edict_t *self, vec3_t start, vec3_t dir, int damage, int sp
     flechette->think = G_FreeEdict;
     flechette->dmg = damage;
     flechette->dmg_radius = kick;
+    if (self->client)
+        flechette->svflags |= SVF_PROJECTILE;
     gi.linkentity(flechette);
 
     if (self->client)
@@ -795,6 +799,8 @@ void fire_plasma (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed
 
     plasma->s.modelindex = gi.modelindex ("sprites/s_photon.sp2");
     plasma->s.effects |= EF_PLASMA | EF_ANIM_ALLFAST;
+    if (self->client)
+        plasma->svflags |= SVF_PROJECTILE;
 
     if (self->client)
         check_dodge (self, plasma->s.origin, dir, speed, damage_radius);
@@ -1040,6 +1046,8 @@ void fire_trap (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int spee
     trap->dmg = damage;
     trap->dmg_radius = damage_radius;
     trap->classname = "htrap";
+    if (self->client)
+        trap->svflags |= SVF_PROJECTILE;
     trap->s.sound = gi.soundindex("weapons/traploop.wav");
     trap->spawnflags = held ? 3 : 1;
 
@@ -1294,6 +1302,8 @@ void fire_prox(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed
     prox->dmg = damage;
     prox->dmg_radius = damage_radius;
     prox->classname = "prox";
+    if (self->client)
+        prox->svflags |= SVF_PROJECTILE;
 
     gi.linkentity(prox);
 }
@@ -1623,6 +1633,8 @@ void fire_tesla(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int spee
     tesla->classname = "tesla";
     tesla->clipmask = MASK_SHOT | CONTENTS_SLIME | CONTENTS_LAVA;
     tesla->mtype = M_TESLA;
+    if (self->client)
+        tesla->svflags |= SVF_PROJECTILE;
 
     gi.linkentity(tesla);
 

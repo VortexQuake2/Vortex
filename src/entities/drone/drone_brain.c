@@ -27,6 +27,7 @@ static int	sound_thud;
 
 void mybrain_attack (edict_t *self);
 void mybrain_attack3 (edict_t *self);
+static qboolean mybrain_is_dodge_move(edict_t *self);
 
 void mybrain_sight (edict_t *self, edict_t *other)
 {
@@ -241,7 +242,8 @@ void mybrain_pain(edict_t* self, edict_t* other, float kick, int damage)
 	if (self->monsterinfo.currentmove == &mybrain_move_pain_long ||
 		self->monsterinfo.currentmove == &mybrain_move_pain_short1 ||
 		self->monsterinfo.currentmove == &mybrain_move_pain_short2 ||
-		self->monsterinfo.currentmove == &mybrain_move_defense)
+		self->monsterinfo.currentmove == &mybrain_move_defense ||
+		mybrain_is_dodge_move(self))
 		return;
 
 	// monster players don't get pain state induced
@@ -299,6 +301,12 @@ void mybrain_duck_up (edict_t *self)
 	gi.linkentity (self);
 }
 
+void mybrain_duck_hold (edict_t *self)
+{
+	if (self->monsterinfo.pausetime > level.time)
+		self->monsterinfo.nextframe = self->s.frame;
+}
+
 void mybrain_jump_takeoff (edict_t *self)
 {
 	vec3_t	v;
@@ -333,16 +341,22 @@ void mybrain_jump_hold (edict_t *self)
 		self->monsterinfo.aiflags |= AI_HOLD_FRAME;
 }
 
+static void mybrain_jump_hold_ai(edict_t *self, float dist)
+{
+	ai_move(self, dist);
+	mybrain_jump_hold(self);
+}
+
 mframe_t mybrain_frames_duck [] =
 {
-	ai_move,	0,	mybrain_duck_down,
-	ai_move,	0,	NULL,//mybrain_duck_down,
+	ai_move,	1,	mybrain_duck_down,
+	ai_move,	1,	NULL,
+	ai_move,	1,	mybrain_duck_hold,
 	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
+	ai_move,	-1,	NULL,
+	ai_move,	-1,	NULL,
 	ai_move,	0,	mybrain_duck_up,
-	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
-	ai_move,	0,	NULL
+	ai_move,	-1,	NULL
 };
 mmove_t mybrain_move_duck = {FRAME_duck01, FRAME_duck08, mybrain_frames_duck, mybrain_run};
 
@@ -350,7 +364,7 @@ mframe_t mybrain_frames_jump [] =
 {
 	ai_move,	0,	NULL,
 	ai_move,	0,	mybrain_jump_takeoff,
-	ai_move,	0,	mybrain_jump_hold,
+	mybrain_jump_hold_ai,	0,	NULL,
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
@@ -437,12 +451,18 @@ void mybrain_jumpattack_hold (edict_t *self)
 	}
 }
 
+static void mybrain_jumpattack_hold_ai(edict_t *self, float dist)
+{
+	ai_move(self, dist);
+	mybrain_jumpattack_hold(self);
+}
+
 
 mframe_t mybrain_frames_jumpattack [] =
 {
 	ai_move,	0,	NULL,
 	ai_move,	0,	mybrain_jumpattack_takeoff,
-	ai_move,	0,	mybrain_jumpattack_hold,
+	mybrain_jumpattack_hold_ai,	0,	NULL,
 	ai_move,	0,	NULL,
 	ai_move,	0,	mybrain_jumpattack_landing,
 	ai_move,	0,	NULL,
@@ -457,22 +477,34 @@ void mybrain_jump (edict_t *self)
 		self->monsterinfo.currentmove = &mybrain_move_jump;
 }
 
+static qboolean mybrain_is_dodge_move(edict_t *self)
+{
+	return self->monsterinfo.currentmove == &mybrain_move_duck ||
+		self->monsterinfo.currentmove == &mybrain_move_jump ||
+		self->monsterinfo.currentmove == &mybrain_move_jumpattack;
+}
+
 void mybrain_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
 {
 	if (random() > 0.9)
 		return;
-	if (!G_GetClient(self))
-		return;
 	if (level.time < self->monsterinfo.dodge_time)
+		return;
+	if (!attacker)
 		return;
 	if (OnSameTeam(self, attacker))
 		return;
+	if (mybrain_is_dodge_move(self))
+		return;
 
-	if (!self->enemy && G_EntIsAlive(attacker))
+	self->monsterinfo.attacker = attacker;
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(attacker))
 		self->enemy = attacker;
 	if (!radius)
 	{
+		self->monsterinfo.pausetime = level.time + 0.5;
 		self->monsterinfo.currentmove = &mybrain_move_duck;
+		mybrain_duck_down(self);
 		self->monsterinfo.dodge_time = level.time + 2.0;
 	}
 	else
@@ -482,11 +514,18 @@ void mybrain_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
 	}
 }
 
+static void mybrain_shrink(edict_t *self)
+{
+	self->maxs[2] = 0;
+	self->svflags |= SVF_DEADMONSTER;
+	gi.linkentity(self);
+}
+
 mframe_t mybrain_frames_death2 [] =
 {
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
+	ai_move,	0,	mybrain_shrink,
 	ai_move,	9,	NULL,
 	ai_move,	0,	NULL
 };
@@ -497,7 +536,7 @@ mframe_t mybrain_frames_death1 [] =
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
 	ai_move,	-2,	NULL,
-	ai_move,	9,	NULL,
+	ai_move,	9,	mybrain_shrink,
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
 	ai_move,	0,	NULL,
@@ -724,8 +763,187 @@ mmove_t mybrain_move_attack3 = {FRAME_attak205, FRAME_attak217, mybrain_frames_a
 
 void mybrain_attack3 (edict_t *self)
 {
+	gi.sound(self, CHAN_WEAPON, sound_tentacles_extend, 1, ATTN_NORM, 0);
 	self->monsterinfo.currentmove = &mybrain_move_attack3;
 }
+
+static const vec3_t brain_reye[] =
+{
+	{0.746700f, 0.238370f, 34.167690f},
+	{-1.076390f, 0.238370f, 33.386372f},
+	{-1.335500f, 5.334300f, 32.177170f},
+	{-0.175360f, 8.846370f, 30.635479f},
+	{-2.757590f, 7.804610f, 30.150860f},
+	{-5.575090f, 5.152840f, 30.056160f},
+	{-7.017550f, 3.262470f, 30.552521f},
+	{-7.915740f, 0.638800f, 33.176189f},
+	{-3.915390f, 8.285730f, 33.976349f},
+	{-0.913540f, 10.933030f, 34.141811f},
+	{-0.369900f, 8.923900f, 34.189079f}
+};
+
+static const vec3_t brain_leye[] =
+{
+	{-3.364710f, 0.327750f, 33.938381f},
+	{-5.140450f, 0.493480f, 32.659851f},
+	{-5.341980f, 5.646980f, 31.277901f},
+	{-4.134480f, 9.277440f, 29.925621f},
+	{-6.598340f, 6.815090f, 29.322620f},
+	{-8.610840f, 2.529650f, 29.251591f},
+	{-9.231360f, 0.093280f, 29.747959f},
+	{-11.004110f, 1.936930f, 32.395260f},
+	{-7.878310f, 7.648190f, 33.148151f},
+	{-4.947370f, 11.430050f, 33.313610f},
+	{-4.332820f, 9.444570f, 33.526340f}
+};
+
+static int mybrain_eye_frame_index(edict_t *self)
+{
+	int frame_index = self->s.frame - FRAME_walk101;
+
+	if (frame_index < 0 || frame_index >= 11)
+		frame_index = 0;
+
+	return frame_index;
+}
+
+static void mybrain_project_eye_origin(edict_t *self, qboolean left_eye, vec3_t start)
+{
+	vec3_t forward, right, up;
+	const vec3_t *eye_offsets = left_eye ? brain_leye : brain_reye;
+	int frame_index = mybrain_eye_frame_index(self);
+
+	AngleVectors(self->s.angles, forward, right, up);
+	VectorCopy(self->s.origin, start);
+	VectorMA(start, eye_offsets[frame_index][0], right, start);
+	VectorMA(start, eye_offsets[frame_index][1], forward, start);
+	VectorMA(start, eye_offsets[frame_index][2], up, start);
+}
+
+static qboolean mybrain_trace_eye_target(edict_t *self, vec3_t start, vec3_t target)
+{
+	trace_t tr;
+
+	tr = gi.trace(start, NULL, NULL, target, self, MASK_SHOT);
+	return tr.ent && tr.ent == self->enemy;
+}
+
+static void mybrain_aim_eye_laser(edict_t *self, vec3_t start, vec3_t aim)
+{
+	vec3_t target, predicted;
+	float offset;
+	trace_t tr;
+
+	VectorCopy(self->enemy->s.origin, target);
+	if (!mybrain_trace_eye_target(self, start, target))
+	{
+		G_EntViewPoint(self->enemy, target);
+		if (!mybrain_trace_eye_target(self, start, target))
+			G_EntMidPoint(self->enemy, target);
+	}
+
+	offset = 0.10f + random() * 0.10f;
+	VectorMA(target, -offset, self->enemy->velocity, predicted);
+	tr = gi.trace(start, NULL, NULL, predicted, self, MASK_SOLID);
+	if (tr.fraction < 0.9f)
+		VectorCopy(target, predicted);
+
+	VectorSubtract(predicted, start, aim);
+	VectorNormalize(aim);
+}
+
+static qboolean mybrain_has_eye_laser_shot(edict_t *self, qboolean left_eye)
+{
+	vec3_t start;
+
+	mybrain_project_eye_origin(self, left_eye, start);
+	return M_MonsterHasClearShotFrom(self, start);
+}
+
+static qboolean mybrain_has_laser_shot(edict_t *self)
+{
+	return mybrain_has_eye_laser_shot(self, false) || mybrain_has_eye_laser_shot(self, true);
+}
+
+static void mybrain_eye_laser_update(edict_t *laser, qboolean left_eye)
+{
+	edict_t *self;
+	vec3_t start, aim;
+	qboolean do_damage;
+
+	self = laser->owner;
+	if (!self || !self->inuse || !G_EntExists(self->enemy))
+	{
+		laser->spawnflags |= DABEAM_SPAWNED;
+		return;
+	}
+
+	mybrain_project_eye_origin(self, left_eye, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+	{
+		laser->spawnflags |= DABEAM_SPAWNED;
+		return;
+	}
+
+	mybrain_aim_eye_laser(self, start, aim);
+
+	VectorCopy(start, laser->s.origin);
+	VectorCopy(aim, laser->movedir);
+
+	do_damage = !(laser->spawnflags & DABEAM_SPAWNED);
+	dabeam_update(laser, do_damage);
+	laser->spawnflags |= DABEAM_SPAWNED;
+}
+
+static void mybrain_right_eye_laser_update(edict_t *laser)
+{
+	mybrain_eye_laser_update(laser, false);
+}
+
+static void mybrain_left_eye_laser_update(edict_t *laser)
+{
+	mybrain_eye_laser_update(laser, true);
+}
+
+static void mybrain_laserbeam(edict_t *self)
+{
+	int damage;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	damage = M_DABEAM_DMG_BASE + M_DABEAM_DMG_ADDON * drone_damagelevel(self);
+	if (M_DABEAM_DMG_MAX && damage > M_DABEAM_DMG_MAX)
+		damage = M_DABEAM_DMG_MAX;
+
+	if (mybrain_has_eye_laser_shot(self, false))
+		monster_fire_dabeam(self, damage, false, mybrain_right_eye_laser_update);
+	if (mybrain_has_eye_laser_shot(self, true))
+		monster_fire_dabeam(self, damage, true, mybrain_left_eye_laser_update);
+}
+
+static void mybrain_laserbeam_reattack(edict_t *self)
+{
+	if (G_EntExists(self->enemy) && visible(self, self->enemy) && self->enemy->health > 0
+		&& mybrain_has_laser_shot(self) && random() < 0.5)
+		self->monsterinfo.nextframe = FRAME_walk101;
+}
+
+mframe_t mybrain_frames_attack4[] =
+{
+	ai_charge, 9, mybrain_laserbeam,
+	ai_charge, 2, mybrain_laserbeam,
+	ai_charge, 3, mybrain_laserbeam,
+	ai_charge, 3, mybrain_laserbeam,
+	ai_charge, 1, mybrain_laserbeam,
+	ai_charge, 0, mybrain_laserbeam,
+	ai_charge, 0, mybrain_laserbeam,
+	ai_charge, 10, mybrain_laserbeam,
+	ai_charge, -4, mybrain_laserbeam,
+	ai_charge, -1, mybrain_laserbeam,
+	ai_charge, 2, mybrain_laserbeam_reattack
+};
+mmove_t mybrain_move_attack4 = {FRAME_walk101, FRAME_walk111, mybrain_frames_attack4, mybrain_run};
 
 void mybrain_melee (edict_t *self)
 {
@@ -741,11 +959,16 @@ void mybrain_melee (edict_t *self)
 void mybrain_attack (edict_t *self)
 {
 	float	dist;
+	qboolean has_los;
 
 	dist = entdist(self, self->enemy);
+	has_los = visible(self, self->enemy);
 
+	// laser attack
+	if (has_los && dist >= 192 && dist <= 640 && mybrain_has_laser_shot(self) && random() < 0.15)
+		self->monsterinfo.currentmove = &mybrain_move_attack4;
 	// jump to our enemy if he's close and on even ground
-	if ((dist > 256) && (self->enemy->absmin[2]+18 >= self->absmin[2]) 
+	else if ((dist > 256) && (self->enemy->absmin[2]+18 >= self->absmin[2])
 		&& (self->enemy->absmin[2]-18 <= self->absmin[2]) 
 		&& !(self->monsterinfo.aiflags & AI_STAND_GROUND))
 		self->monsterinfo.currentmove = &mybrain_move_jumpattack;
@@ -819,8 +1042,6 @@ void mybrain_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *s
 
 void mybrain_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int		n;
-
 	M_Notify(self);
 
 	// reduce lag by removing the entity right away
@@ -840,14 +1061,7 @@ void mybrain_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (vrx_spawn_nonessential_ent(self->s.origin))
-		{
-			for (n = 0; n < 2; n++)
-				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-			for (n = 0; n < 4; n++)
-				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-			//ThrowHead (self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
-		}
+		vrx_throw_drone_gibs(self, damage);
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);
 #else
@@ -866,6 +1080,7 @@ void mybrain_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	gi.sound (self, CHAN_VOICE, sound_death, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 	if (random() <= 0.5)
 		self->monsterinfo.currentmove = &mybrain_move_death1;
 	else
@@ -936,18 +1151,13 @@ void init_drone_brain (edict_t *self)
 	self->monsterinfo.attack = mybrain_attack;
 	self->monsterinfo.melee = mybrain_melee;
 	self->monsterinfo.sight = mybrain_sight;
-//	self->monsterinfo.search = mybrain_search;
-	//self->monsterinfo.idle = mybrain_idle;
+	self->monsterinfo.idle = mybrain_search;
 	self->monsterinfo.jumpup = 64;
 	self->monsterinfo.jumpdn = 512;
 
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
-
 	//if (self->activator && self->activator->client)
-	self->monsterinfo.power_armor_power = M_BRAIN_INITIAL_ARMOR + M_BRAIN_ADDON_ARMOR * self->monsterinfo.level;
-	//else self->monsterinfo.power_armor_power = 300 + 120*self->monsterinfo.level;
-
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterPowerArmor(self, POWER_ARMOR_SCREEN, M_BRAIN_INITIAL_ARMOR + M_BRAIN_ADDON_ARMOR * self->monsterinfo.level);
+	//else M_SetMonsterPowerArmor(self, POWER_ARMOR_SCREEN, 300 + 120*self->monsterinfo.level);
 	self->mtype = M_BRAIN;
 
 	gi.linkentity (self);

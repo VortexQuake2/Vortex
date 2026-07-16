@@ -74,7 +74,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 			target->monsterinfo.slots_freed = false; // reset freed flag
 			target->monsterinfo.aiflags &= ~AI_FIND_NAVI;
 			target->health = 0.33*target->max_health;
-			target->monsterinfo.power_armor_power = 0.33*target->monsterinfo.max_armor;
+			M_SetMonsterArmorCurrent(target, 0.33*M_MonsterArmorMax(target));
 			target->monsterinfo.resurrected_time = level.time + 2.0;
 			target->activator = ent; // transfer ownership!
 			target->nextthink = level.time + MEDIC_RESURRECT_DELAY;
@@ -128,7 +128,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 		e->monsterinfo.resurrected_level = res_level;
 		M_Initialize(ent, e, 0.0f);
 		e->health = 0.2f*e->max_health;
-		e->monsterinfo.power_armor_power = 0.2f*e->monsterinfo.max_armor;
+		M_SetMonsterArmorCurrent(e, 0.2f*M_MonsterArmorMax(e));
 		e->s.skinnum |= 1; // injured skin
 
 		e->monsterinfo.stand(e);

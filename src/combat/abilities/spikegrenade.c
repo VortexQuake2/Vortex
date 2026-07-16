@@ -68,6 +68,9 @@ void fire_spikey (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed
 	bolt->think = G_FreeEdict;
 	bolt->dmg = damage;
 	bolt->classname = "spikey";
+	bolt->owner = self;
+	if (self->client)
+		bolt->svflags |= SVF_PROJECTILE;
 	gi.linkentity (bolt);
 }
 

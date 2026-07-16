@@ -101,10 +101,14 @@ void SP_misc_easterchick2 (edict_t *self);
 void SP_monster_berserk (edict_t *self);
 void SP_monster_gladiator (edict_t *self);
 void SP_monster_gunner (edict_t *self);
+void SP_monster_heavy_gunner(edict_t *self);
 void SP_monster_infantry (edict_t *self);
+void SP_monster_enforcer(edict_t *self);
 void SP_monster_soldier_light (edict_t *self);
 void SP_monster_soldier (edict_t *self);
 void SP_monster_soldier_ss (edict_t *self);
+void SP_monster_soldier_blueblaster (edict_t *self);
+void SP_monster_soldier_laser (edict_t *self);
 void SP_monster_tank (edict_t *self);
 void SP_monster_medic (edict_t *self);
 void SP_monster_flipper (edict_t *self);
@@ -132,6 +136,9 @@ void SP_turret_driver (edict_t *self);
 void SP_monster_soldier_hypergun (edict_t *self);
 void SP_monster_soldier_lasergun (edict_t *self);
 void SP_monster_soldier_ripper (edict_t *self);
+void SP_monster_guardian (edict_t *self);
+void SP_monster_janitor (edict_t *self);
+void SP_monster_miniguardian (edict_t *self);
 void SP_monster_fixbot (edict_t *self);
 void SP_monster_gekk (edict_t *self);
 void SP_monster_chick_heat (edict_t *self);
@@ -273,15 +280,27 @@ spawn_t	spawns[] = {
 	{"monster_berserk", SP_monster_berserk},
 	{"monster_gladiator", SP_monster_gladiator},
 	{"monster_gunner", SP_monster_gunner},
+	{"monster_heavy_gunner", SP_monster_heavy_gunner},
+	{"monster_gunner_heavy", SP_monster_heavy_gunner},
 	{"monster_soldier", SP_monster_soldier},
+	{"monster_soldier_ripper", SP_monster_soldier_ripper},
+	{"monster_soldier_blueblaster", SP_monster_soldier_blueblaster},
+	{"monster_soldier_hypergun", SP_monster_soldier_blueblaster},
+	{"monster_soldier_laser", SP_monster_soldier_laser},
+	{"monster_soldier_lasergun", SP_monster_soldier_laser},
+	{"monster_janitor", SP_monster_janitor},
+	{"monster_miniguardian", SP_monster_miniguardian},
+	{"monster_boss5", SP_monster_boss5},
 	{"monster_tank", SP_monster_tank},
 	{"monster_tank_commander", SP_monster_tank_commander},
 	{"monster_medic", SP_monster_medic},
 	{"monster_chick", SP_monster_chick},
+	{"monster_chick_heat", SP_monster_chick_heat},
 	{"monster_parasite", SP_monster_parasite},
 	{"monster_brain", SP_monster_brain},
 	{"monster_mutant", SP_monster_mutant},
 	{"monster_infantry", SP_monster_infantry},
+	{"monster_enforcer", SP_monster_enforcer},
 	// {"monster_soldier_light", SP_monster_soldier_light},
 
 //GHz START
@@ -1080,10 +1099,67 @@ void SP_monster_gunner(edict_t *ent)
         vrx_create_drone_from_ent(ent, g_edicts, 1, true, true, 0);
 }
 
+void SP_monster_heavy_gunner(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_HEAVY_GUNNER, true, true, 0);
+}
+
 void SP_monster_soldier(edict_t *ent) 
 {
 	if (coop->value)
-        vrx_create_drone_from_ent(ent, g_edicts, 10, true, true, 0);
+        vrx_create_drone_from_ent(ent, g_edicts, DS_SOLDIER, true, true, 0);
+}
+
+void SP_monster_soldier_ripper(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_SOLDIER_RIPPER, true, true, 0);
+}
+
+void SP_monster_soldier_blueblaster(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_SOLDIER_BLUEBLASTER, true, true, 0);
+}
+
+void SP_monster_soldier_hypergun(edict_t *ent)
+{
+	SP_monster_soldier_blueblaster(ent);
+}
+
+void SP_monster_soldier_laser(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_SOLDIER_LASER, true, true, 0);
+}
+
+void SP_monster_soldier_lasergun(edict_t *ent)
+{
+	SP_monster_soldier_laser(ent);
+}
+
+void SP_monster_guardian(edict_t *ent)
+{
+	G_FreeEdict(ent);
+}
+
+void SP_monster_janitor(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_JANITOR, true, true, 0);
+}
+
+void SP_monster_miniguardian(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_MINIGUARDIAN, true, true, 0);
+}
+
+void SP_monster_boss5(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_BOSS5, true, true, 0);
 }
 
 void SP_monster_tank(edict_t *ent) 
@@ -1101,7 +1177,13 @@ void SP_monster_tank_commander(edict_t *ent)
 void SP_monster_infantry(edict_t *ent) 
 {
 	if (coop->value)
-        vrx_create_drone_from_ent(ent, g_edicts, 11, true, true, 0);
+        vrx_create_drone_from_ent(ent, g_edicts, DS_INFANTRY, true, true, 0);
+}
+
+void SP_monster_enforcer(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_ENFORCER, true, true, 0);
 }
 
 void SP_monster_medic(edict_t *ent) 
@@ -1119,7 +1201,13 @@ void SP_monster_mutant(edict_t *ent)
 void SP_monster_chick(edict_t *ent) 
 {
 	if (coop->value)
-        vrx_create_drone_from_ent(ent, g_edicts, 3, true, true, 0);
+        vrx_create_drone_from_ent(ent, g_edicts, DS_BITCH, true, true, 0);
+}
+
+void SP_monster_chick_heat(edict_t *ent)
+{
+	if (coop->value)
+        vrx_create_drone_from_ent(ent, g_edicts, DS_BITCH_HEAT, true, true, 0);
 }
 
 void SP_monster_parasite(edict_t *ent) 
@@ -1268,6 +1356,7 @@ void SP_worldspawn (edict_t *ent)
 
 	gi.soundindex ("misc/pc_up.wav");
 	gi.soundindex ("misc/talk1.wav");
+	gi.soundindex ("misc/mon_power2.wav");
 
 	gi.soundindex ("misc/udeath.wav");
 
@@ -1343,6 +1432,7 @@ void SP_worldspawn (edict_t *ent)
 	gi.modelindex ("models/objects/gibs/chest/tris.md2");
 	skullindex = gi.modelindex ("models/objects/gibs/skull/tris.md2");
 	headindex = gi.modelindex ("models/objects/gibs/head2/tris.md2");
+	vrx_precache_drone_gibs();
 
 	gi.modelindex("models/proj/beam/tris.md2"); // 3.7 heatbeam model
 	//gi.modelindex("models/proj/lightning/tris.md2"); //3.9 lightning model used by hellspawn/holyshock

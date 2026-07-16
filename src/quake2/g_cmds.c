@@ -9,6 +9,8 @@ void Grenade_Explode (edict_t *ent);
 void Cmd_CorpseExplode(edict_t *ent);
 void Cmd_HellSpawn_f (edict_t *ent);
 void Cmd_Caltrops_f (edict_t *ent);
+void Cmd_Immortal_f(edict_t *ent);
+void Cmd_Spawn_f(edict_t *ent);
 //End prototypes
 
 void Cmd_DetPipes_f (edict_t *ent)
@@ -3239,6 +3241,17 @@ void ClientCommand (edict_t *ent)
 
 	if (VortexCommand(cmd, ent)) // Handle it from here. (3.2b command system overhaul)
 		return;
+
+	if (Q_stricmp(cmd, "immortal") == 0)
+	{
+		Cmd_Immortal_f(ent);
+		return;
+	}
+	if (Q_stricmp(cmd, "spawn") == 0)
+	{
+		Cmd_Spawn_f(ent);
+		return;
+	}
 
 	if (Q_stricmp (cmd, "players") == 0)
 	{

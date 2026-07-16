@@ -19,6 +19,27 @@ float vrx_increase_monster_damage_by_talent(edict_t *owner, float damage)
 // monster weapons
 //
 
+static void monster_muzzleflash(edict_t *self, vec3_t start, int flashtype)
+{
+	if (flashtype < 0)
+		return;
+
+	if (flashtype <= 255)
+	{
+		gi.WriteByte(svc_muzzleflash2);
+		gi.WriteShort(self - g_edicts);
+		gi.WriteByte(flashtype);
+	}
+	else
+	{
+		gi.WriteByte(svc_muzzleflash3);
+		gi.WriteShort(self - g_edicts);
+		gi.WriteShort(flashtype);
+	}
+
+	gi.multicast(start, MULTICAST_PVS);
+}
+
 //FIXME mosnters should call these with a totally accurate direction
 // and we can mess it up based on skill.  Spread should be for normal
 // and we can tighten or loosen based on skill.  We could muck with
@@ -45,11 +66,8 @@ void monster_fire_bullet (edict_t *self, vec3_t start, vec3_t dir, int damage, i
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_bullet (self, start, dir, damage, kick, hspread, vspread, MOD_UNKNOWN);
 
-	gi.WriteByte (svc_muzzleflash2);
-	gi.WriteShort (self - g_edicts);
-	gi.WriteByte (flashtype);
-	gi.multicast (start, MULTICAST_PVS);
-}
+	monster_muzzleflash(self, start, flashtype);
+}	
 
 static void debris_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point)
 {
@@ -95,6 +113,8 @@ void monster_fire_20mm(edict_t* self, vec3_t start, vec3_t dir, int damage, int 
 {
 	float chance;
 
+	(void)flashtype;
+
 	// holy freeze reduces firing rate by 50%
 	if (que_typeexists(self->curses, AURA_HOLYFREEZE))
 	{
@@ -113,12 +133,7 @@ void monster_fire_20mm(edict_t* self, vec3_t start, vec3_t dir, int damage, int 
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_20mm(self, start, dir, damage, kick, range);
 
-	gi.WriteByte(svc_muzzleflash);
-	gi.WriteShort(self - g_edicts);
-	gi.WriteByte(flashtype);
-	gi.multicast(start, MULTICAST_PVS);
-
-	gi.sound(self, CHAN_WEAPON, gi.soundindex("weapons/sgun1.wav"), 1, ATTN_NORM, 0);
+	gi.positioned_sound(start, self, CHAN_WEAPON, gi.soundindex("weapons/sgun1.wav"), 1, ATTN_NORM, 0);
 
 	if (vrx_spawn_nonessential_ent(self->s.origin))
 		ThrowShell(self, "models/objects/shell1/tris.md2", start);
@@ -146,11 +161,8 @@ void monster_fire_shotgun (edict_t *self, vec3_t start, vec3_t aimdir, float dam
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_shotgun (self, start, aimdir, damage, kick, hspread, vspread, count, MOD_UNKNOWN);
 
-	gi.WriteByte (svc_muzzleflash2);
-	gi.WriteShort (self - g_edicts);
-	gi.WriteByte (flashtype);
-	gi.multicast (start, MULTICAST_PVS);
-}
+	monster_muzzleflash(self, start, flashtype);
+}	
 
 void monster_fire_blaster (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int proj_type, float duration, qboolean bounce, int flashtype)
 {
@@ -181,11 +193,393 @@ void monster_fire_blaster (edict_t *self, vec3_t start, vec3_t dir, int damage, 
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_blaster(self, start, dir, damage, speed, effect, proj_type, mod, duration, bounce);
 
-	gi.WriteByte (svc_muzzleflash2);
-	gi.WriteShort (self - g_edicts);
-	gi.WriteByte (flashtype);
-	gi.multicast (start, MULTICAST_PVS);
+	monster_muzzleflash(self, start, flashtype);
 }	
+
+void monster_fire_blaster2(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype)
+{
+	float chance;
+
+	if (que_typeexists(self->curses, AURA_HOLYFREEZE) && random() <= 0.5)
+		return;
+
+	if (self->chill_time > level.time)
+	{
+		chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
+		if (random() > chance)
+			return;
+	}
+
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
+	fire_blaster2(self, start, dir, damage, speed, effect, false);
+
+	monster_muzzleflash(self, start, flashtype);
+}
+
+void monster_fire_blueblaster(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype)
+{
+	float chance;
+
+	if (que_typeexists(self->curses, AURA_HOLYFREEZE) && random() <= 0.5)
+		return;
+
+	if (self->chill_time > level.time)
+	{
+		chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
+		if (random() > chance)
+			return;
+	}
+
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
+	fire_blueblaster(self, start, dir, damage, speed, effect);
+
+	monster_muzzleflash(self, start, flashtype);
+}
+
+qboolean monster_fire_ionripper(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype)
+{
+	float chance;
+
+	if (que_typeexists(self->curses, AURA_HOLYFREEZE) && random() <= 0.5)
+		return false;
+
+	if (self->chill_time > level.time)
+	{
+		chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
+		if (random() > chance)
+			return false;
+	}
+
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
+	fire_ionripper(self, start, dir, damage, speed, effect);
+
+	monster_muzzleflash(self, start, flashtype);
+	return true;
+}
+
+static void dabeam_think(edict_t *self)
+{
+	if (self->owner && self->owner->inuse)
+	{
+		if ((self->spawnflags & DABEAM_SECONDARY) && self->owner->beam2 == self)
+			self->owner->beam2 = NULL;
+		else if (!(self->spawnflags & DABEAM_SECONDARY) && self->owner->beam == self)
+			self->owner->beam = NULL;
+	}
+
+	G_FreeEdict(self);
+}
+
+void dabeam_update(edict_t *self, qboolean damage)
+{
+	vec3_t start, end;
+	trace_t tr;
+
+	if (!self->owner || !self->owner->inuse || !G_EntExists(self->owner->enemy))
+		return;
+
+	VectorCopy(self->s.origin, start);
+	VectorMA(start, 8192, self->movedir, end);
+	tr = gi.trace(start, NULL, NULL, end, self->owner, MASK_SHOT);
+
+	if (damage && tr.ent && tr.ent->takedamage && !OnSameTeam(self->owner, tr.ent))
+		T_Damage(tr.ent, self->owner, self->owner, self->movedir, tr.endpos, tr.plane.normal, self->dmg, self->dmg,
+			DAMAGE_ENERGY, MOD_BFG_LASER);
+
+	VectorCopy(tr.endpos, self->s.old_origin);
+	VectorCopy(start, self->pos1);
+	VectorCopy(tr.endpos, self->pos2);
+	gi.linkentity(self);
+}
+
+void monster_fire_dabeam(edict_t *self, int damage, qboolean secondary, void (*update_func)(edict_t *self))
+{
+	vec3_t forward, right, start, end, offset;
+	trace_t tr;
+	edict_t **beam_slot;
+	edict_t *beam;
+	int flashtype;
+	float chance;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	if (que_typeexists(self->curses, AURA_HOLYFREEZE) && random() <= 0.5)
+		return;
+
+	if (self->chill_time > level.time)
+	{
+		chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
+		if (random() > chance)
+			return;
+	}
+
+	if (self->mtype == M_GUARDIAN)
+		flashtype = -1;
+	else if (self->mtype == M_MINIGUARDIAN)
+		flashtype = MZ2_SOLDIER_RIPPER_8;
+	else
+		flashtype = MZ2_SOLDIER_HYPERGUN_8;
+
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
+
+	if (update_func)
+	{
+		beam_slot = secondary ? &self->beam2 : &self->beam;
+		beam = *beam_slot;
+		if (!beam || !beam->inuse)
+		{
+			beam = G_Spawn();
+			if (!beam)
+				return;
+			*beam_slot = beam;
+			beam->movetype = MOVETYPE_NONE;
+			beam->solid = SOLID_NOT;
+			beam->s.renderfx = RF_BEAM | RF_TRANSLUCENT;
+			beam->s.modelindex = 1;
+			beam->s.frame = 2;
+			beam->s.skinnum = 0xf2f2f0f0; // red
+			beam->owner = self;
+			beam->classname = "monster_dabeam";
+			beam->think = dabeam_think;
+			beam->s.sound = gi.soundindex("misc/lasfly.wav");
+			beam->spawnflags = secondary ? DABEAM_SECONDARY : 0;
+		}
+
+		beam->dmg = damage;
+		beam->prethink = update_func;
+		beam->nextthink = level.time + 0.2;
+		beam->spawnflags &= ~DABEAM_SPAWNED;
+		update_func(beam);
+
+		beam = *beam_slot;
+		if (!beam || !beam->inuse)
+			return;
+
+		if (!(beam->spawnflags & DABEAM_SPAWNED))
+		{
+			dabeam_update(beam, true);
+			beam->spawnflags |= DABEAM_SPAWNED;
+		}
+
+		return;
+	}
+
+	if (self->mtype == M_GUARDIAN)
+	{
+		AngleVectors(self->s.angles, forward, right, NULL);
+		if (secondary)
+			VectorSet(offset, 112, -62, 60);
+		else
+			VectorSet(offset, 125, -70, 60);
+		if (self->s.scale && self->s.scale != 1.0f)
+			VectorScale(offset, self->s.scale, offset);
+		G_ProjectSource(self->s.origin, offset, forward, right, start);
+		MonsterAim(self, M_HITSCAN_CONT_ACC, 0, false, -1, forward, start);
+	}
+	else
+	{
+		MonsterAim(self, M_HITSCAN_CONT_ACC, 0, false, flashtype, forward, start);
+	}
+
+	VectorMA(start, 8192, forward, end);
+	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
+
+	if (tr.ent && tr.ent->takedamage && !OnSameTeam(self, tr.ent))
+		T_Damage(tr.ent, self, self, forward, tr.endpos, tr.plane.normal, damage, damage, DAMAGE_ENERGY, MOD_BFG_LASER);
+
+	beam_slot = secondary ? &self->beam2 : &self->beam;
+	beam = *beam_slot;
+	if (!beam || !beam->inuse)
+	{
+		beam = G_Spawn();
+		if (!beam)
+			return;
+		*beam_slot = beam;
+		beam->movetype = MOVETYPE_NONE;
+		beam->solid = SOLID_NOT;
+		beam->s.renderfx = RF_BEAM | RF_TRANSLUCENT;
+		beam->s.modelindex = 1;
+		beam->s.frame = 2;
+		beam->s.skinnum = 0xf2f2f0f0; // red
+		beam->owner = self;
+		beam->classname = "monster_dabeam";
+		beam->think = dabeam_think;
+		beam->prethink = NULL;
+		beam->s.sound = gi.soundindex("misc/lasfly.wav");
+		beam->spawnflags = secondary ? DABEAM_SECONDARY : 0;
+	}
+
+	beam->dmg = damage;
+	beam->prethink = NULL;
+	beam->nextthink = level.time + 0.2;
+	VectorCopy(start, beam->s.origin);
+	VectorCopy(tr.endpos, beam->s.old_origin);
+	VectorCopy(start, beam->pos1);
+	VectorCopy(tr.endpos, beam->pos2);
+	gi.linkentity(beam);
+
+	monster_muzzleflash(self, start, flashtype);
+}
+
+void rocket_touch(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf);
+
+static qboolean heat_valid_target(edict_t *self, edict_t *target)
+{
+	if (target == self->owner)
+		return false;
+	if (!G_ValidTargetEnt(self->owner, target, true))
+		return false;
+	if (self->owner && OnSameTeam(self->owner, target))
+		return false;
+	if (!visible(self, target))
+		return false;
+	return true;
+}
+
+static void heat_think(edict_t *self)
+{
+	edict_t *target = NULL;
+	edict_t *acquire = NULL;
+	float best_dot = -1.0f;
+	float best_dist = 0.0f;
+	float turn_fraction;
+	float dot, dist;
+	vec3_t forward, dir;
+
+	if (!G_EntExists(self->owner) || level.time >= self->delay)
+	{
+		BecomeExplosion1(self);
+		return;
+	}
+
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+
+	if (heat_valid_target(self, self->enemy))
+		acquire = self->enemy;
+	else
+	{
+		self->enemy = NULL;
+	}
+
+	if (!acquire)
+	{
+		while ((target = findradius(target, self->s.origin, 1024)) != NULL)
+		{
+			if (!heat_valid_target(self, target))
+				continue;
+
+			VectorSubtract(target->s.origin, self->s.origin, dir);
+			dist = VectorNormalize(dir);
+			dot = DotProduct(dir, forward);
+
+			if (dot <= best_dot)
+				continue;
+			if (!acquire || dot > best_dot || dist < best_dist)
+			{
+				acquire = target;
+				best_dot = dot;
+				best_dist = dist;
+			}
+		}
+	}
+
+	if (acquire)
+	{
+		VectorSubtract(acquire->s.origin, self->s.origin, dir);
+		if (!VectorNormalize(dir))
+		{
+			self->nextthink = level.time + FRAMETIME;
+			return;
+		}
+
+		turn_fraction = self->accel;
+		if (turn_fraction < 0)
+			turn_fraction = 0;
+		else if (turn_fraction > 1)
+			turn_fraction = 1;
+
+		VectorScale(self->movedir, 1.0f - turn_fraction, self->movedir);
+		VectorMA(self->movedir, turn_fraction, dir, self->movedir);
+		VectorNormalize(self->movedir);
+		vectoangles(self->movedir, self->s.angles);
+		self->enemy = acquire;
+	}
+	else
+	{
+		self->enemy = NULL;
+	}
+
+	VectorScale(self->movedir, self->speed, self->velocity);
+	self->nextthink = level.time + FRAMETIME;
+}
+
+qboolean monster_fire_heat(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int flashtype, float turn_fraction)
+{
+	float chance;
+	float radius;
+	edict_t *heat;
+
+	if (que_typeexists(self->curses, AURA_HOLYFREEZE) && random() <= 0.5)
+		return false;
+
+	if (self->chill_time > level.time)
+	{
+		chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
+		if (random() > chance)
+			return false;
+	}
+
+	radius = damage;
+	if (damage > 125)
+		radius = 125;
+	if (speed > 1000)
+		speed = 1000;
+
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
+	if (speed < 1)
+		speed = 1;
+	self->lastsound = level.framenum;
+	VectorNormalize(dir);
+
+	heat = G_Spawn();
+	VectorCopy(start, heat->s.origin);
+	VectorCopy(start, heat->s.old_origin);
+	VectorCopy(dir, heat->movedir);
+	vectoangles(dir, heat->s.angles);
+	VectorScale(dir, speed, heat->velocity);
+	heat->movetype = MOVETYPE_FLYMISSILE;
+	heat->clipmask = MASK_SHOT;
+	heat->solid = SOLID_BBOX;
+	heat->s.effects |= EF_ROCKET;
+	VectorClear(heat->mins);
+	VectorClear(heat->maxs);
+	heat->s.modelindex = gi.modelindex("models/objects/rocket/tris.md2");
+	heat->owner = self;
+	heat->touch = rocket_touch;
+	heat->speed = speed;
+	heat->accel = turn_fraction;
+	heat->delay = level.time + 8000 * (sv_fps->value) / speed;
+	heat->nextthink = level.time + FRAMETIME;
+	heat->think = heat_think;
+	heat->dmg = damage;
+	heat->radius_dmg = damage;
+	heat->dmg_radius = radius;
+	heat->s.sound = gi.soundindex("weapons/rockfly.wav");
+	heat->classname = "heat rocket";
+
+	if (G_ValidTarget(self, self->enemy, true, true))
+		heat->enemy = self->enemy;
+
+	gi.linkentity(heat);
+
+	if (self->client)
+		check_dodge(self, heat->s.origin, dir, speed, damage);
+
+	monster_muzzleflash(self, start, flashtype);
+
+	return true;
+}
 
 void monster_fire_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int flashtype)
 {
@@ -219,10 +613,7 @@ void monster_fire_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int damag
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_grenade (self, start, aimdir, damage, speed, 2.5, radius, damage);
 
-	gi.WriteByte (svc_muzzleflash2);
-	gi.WriteShort (self - g_edicts);
-	gi.WriteByte (flashtype);
-	gi.multicast (start, MULTICAST_PVS);
+	monster_muzzleflash(self, start, flashtype);
 }
 
 void monster_fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int flashtype)
@@ -257,21 +648,19 @@ void monster_fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, i
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_rocket (self, start, dir, damage, speed, radius, damage);
 
-	gi.WriteByte (svc_muzzleflash2);
-	gi.WriteShort (self - g_edicts);
-	gi.WriteByte (flashtype);
-	gi.multicast (start, MULTICAST_PVS);
+	monster_muzzleflash(self, start, flashtype);
 }	
 
-void monster_fire_railgun (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype)
+qboolean monster_fire_railgun (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype)
 {
 	float chance;
+	qboolean hit;
 
 	// holy freeze reduces firing rate by 50%
 	if (que_typeexists(self->curses, AURA_HOLYFREEZE))
 	{
 		if (random() <= 0.5)
-			return;
+			return false;
 	}
 
 	// chill effect reduces attack rate/refire
@@ -279,16 +668,14 @@ void monster_fire_railgun (edict_t *self, vec3_t start, vec3_t aimdir, int damag
 	{
 		chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
 		if (random() > chance)
-			return;
+			return false;
 	}
 
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
-	fire_rail (self, start, aimdir, damage, kick);
+	hit = fire_rail (self, start, aimdir, damage, kick);
 
-	gi.WriteByte (svc_muzzleflash2);
-	gi.WriteShort (self - g_edicts);
-	gi.WriteByte (flashtype);
-	gi.multicast (start, MULTICAST_PVS);
+	monster_muzzleflash(self, start, flashtype);
+	return hit;
 }
 
 void monster_fire_bfg (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int kick, float damage_radius, int flashtype)
@@ -313,10 +700,7 @@ void monster_fire_bfg (edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_bfg (self, start, aimdir, damage, speed, damage_radius);
 
-	gi.WriteByte (svc_muzzleflash2);
-	gi.WriteShort (self - g_edicts);
-	gi.WriteByte (flashtype);
-	gi.multicast (start, MULTICAST_PVS);
+	monster_muzzleflash(self, start, flashtype);
 }
 
 void fire_sword ( edict_t *self, vec3_t start, vec3_t aimdir, int damage, int length, int color);
@@ -325,10 +709,7 @@ void monster_fire_sword (edict_t *self, vec3_t start, vec3_t aimdir, int damage,
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
 	fire_sword (self, start, aimdir, damage, kick, 0xd2d3d2d3);
 
-	gi.WriteByte (svc_muzzleflash2);
-	gi.WriteShort (self - g_edicts);
-	gi.WriteByte (flashtype);
-	gi.multicast (start, MULTICAST_PVS);
+	monster_muzzleflash(self, start, flashtype);
 }
 
 void monster_fire_fireball(edict_t* self)
@@ -404,6 +785,34 @@ void monster_fire_icebolt(edict_t* self)
 	fire_icebolt(self, start, forward, damage, radius, speed, (int)(2 * slvl), duration, 0);
 	// Play sound effect
 	gi.sound(self, CHAN_WEAPON, gi.soundindex("spells/coldcast.wav"), 1, ATTN_NORM, 0);
+}
+
+// Magic bolt fired by a monster/drone. Behaves like the player MAGICBOLT
+// ability (single-target direct hit, no splash) but scales its damage like the
+// shambler ice bolt via drone_damagelevel().
+void monster_fire_magicbolt(edict_t* self)
+{
+	int damage;
+	float slvl;
+	vec3_t forward, start;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	slvl = drone_damagelevel(self);
+
+	damage = ICEBOLT_INITIAL_DAMAGE + ICEBOLT_ADDON_DAMAGE * slvl;
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
+
+	MonsterAim(self, M_PROJECTILE_ACC, (int)BOLT_SPEED, false, 0, forward, start);
+	magicbolt_spawn(self, start, forward, damage, 0, 0, 1.0f);
+
+	// cast effect + sound, matching the ability
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_TELEPORT_EFFECT);
+	gi.WritePosition(start);
+	gi.multicast(start, MULTICAST_PVS);
+	gi.sound(self, CHAN_WEAPON, gi.soundindex("abilities/holybolt2.wav"), 1, ATTN_NORM, 0);
 }
 
 //

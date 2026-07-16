@@ -623,6 +623,7 @@ void baron_fire_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int da
 		gi.sound(self, CHAN_VOICE, sound_death2, 1, ATTN_IDLE, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 	self->monsterinfo.currentmove = &baron_fire_move_death;
 }
 

@@ -18,6 +18,15 @@ static int	sound_pain1;
 static int	sound_pain2;
 static int	sound_sight;
 
+static constexpr float FLOATER_RANGED_MIN_DISTANCE = 180.0f;
+static constexpr float FLOATER_RANGED_MAX_DISTANCE = 360.0f;
+static constexpr float FLOATER_MELEE_APPROACH_RANGE = 225.0f;
+static constexpr float FLOATER_MELEE_SPEED = 300.0f;
+static constexpr float FLOATER_MELEE_ACCELERATION = 36.0f;
+static constexpr float FLOATER_MELEE_MISS_COOLDOWN = 0.8f;
+static constexpr float FLOATER_MELEE_COOLDOWN_MIN = 2.0f;
+static constexpr float FLOATER_MELEE_COOLDOWN_MAX = 5.0f;
+
 void drone_ai_stand (edict_t *self, float dist);
 void drone_ai_run (edict_t *self, float dist);
 void drone_ai_walk (edict_t *self, float dist);
@@ -40,7 +49,93 @@ void floater_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 void floater_run (edict_t *self);
 void floater_wham (edict_t *self);
 void floater_zap (edict_t *self);
+void floater_melee(edict_t *self);
 void floater_continue_attack(edict_t* self);
+static void floater_melee_finished(edict_t *self);
+static void floater_start_melee(edict_t *self);
+
+static void floater_set_melee_cooldown(edict_t *self)
+{
+	self->monsterinfo.melee_finished = level.time + FLOATER_MELEE_COOLDOWN_MIN +
+		random() * (FLOATER_MELEE_COOLDOWN_MAX - FLOATER_MELEE_COOLDOWN_MIN);
+}
+
+static void floater_set_fly_parameters(edict_t *self, qboolean melee)
+{
+	if (melee)
+	{
+		self->monsterinfo.fly_pinned = false;
+		self->monsterinfo.fly_thrusters = true;
+		self->monsterinfo.fly_position_time = 0.0f;
+		self->monsterinfo.fly_acceleration = FLOATER_MELEE_ACCELERATION;
+		self->monsterinfo.fly_speed = FLOATER_MELEE_SPEED;
+		self->monsterinfo.fly_min_distance = 0.0f;
+		self->monsterinfo.fly_max_distance = 10.0f;
+		return;
+	}
+
+	self->monsterinfo.fly_thrusters = false;
+	self->monsterinfo.fly_acceleration = 12.0f;
+	self->monsterinfo.fly_speed = 200.0f;
+	self->monsterinfo.fly_min_distance = FLOATER_RANGED_MIN_DISTANCE;
+	self->monsterinfo.fly_max_distance = FLOATER_RANGED_MAX_DISTANCE;
+}
+
+static int floater_melee_damage(edict_t *self)
+{
+	int damage;
+
+	damage = M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * drone_damagelevel(self);
+	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
+		damage = M_MELEE_DMG_MAX;
+	return damage;
+}
+
+static qboolean floater_melee_clear_path(edict_t *self)
+{
+	vec3_t start, end;
+
+	if (!G_EntExists(self->enemy))
+		return false;
+
+	G_EntMidPoint(self, start);
+	G_EntMidPoint(self->enemy, end);
+	return G_ClearPath(self, self->enemy, MASK_MONSTERSOLID, start, end);
+}
+
+static qboolean floater_melee_approach_ready(edict_t *self, float range)
+{
+	if (self->monsterinfo.melee_finished > level.time)
+		return false;
+	if (!G_ValidTarget(self, self->enemy, true, true))
+		return false;
+	if (range > FLOATER_MELEE_APPROACH_RANGE)
+		return false;
+	if (!visible(self, self->enemy) && !M_MonsterHasCombatSight(self, self->enemy))
+		return false;
+	if (!floater_melee_clear_path(self))
+		return false;
+	return true;
+}
+
+static void floater_restore_ranged_hover(edict_t *self)
+{
+	floater_set_fly_parameters(self, false);
+	if (!G_EntExists(self->enemy))
+		return;
+	if (entdist(self, self->enemy) >= self->monsterinfo.fly_min_distance)
+		return;
+
+	self->monsterinfo.fly_pinned = false;
+	self->monsterinfo.fly_position_time = 0.0f;
+}
+
+static void floater_abort_melee(edict_t *self)
+{
+	floater_restore_ranged_hover(self);
+	self->monsterinfo.attack_state = AS_STRAIGHT;
+	floater_run(self);
+}
 
 void floater_fire_blaster (edict_t *self)
 {
@@ -57,6 +152,11 @@ void floater_fire_blaster (edict_t *self)
 		damage = M_HYPERBLASTER_DMG_MAX;
 
 	MonsterAim(self, M_PROJECTILE_ACC, speed, false, MZ2_FLOAT_BLASTER_1, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+	{
+		M_MonsterBlockedShot(self, 0.35f);
+		return;
+	}
 	monster_fire_blaster(self, start, forward, damage, speed, EF_BLASTER, BLASTER_PROJ_BOLT, 2.0, true, MZ2_FLOAT_BLASTER_1);
 }
 
@@ -219,22 +319,41 @@ mmove_t floater_move_activate = {FRAME_actvat01, FRAME_actvat31, floater_frames_
 
 mframe_t floater_frames_attack1 [] =
 {
-	drone_ai_run,	15,	NULL,			// Blaster attack
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	floater_fire_blaster,			// BOOM (0, -25.8, 32.5)	-- LOOP Starts
-	drone_ai_run,	15,	floater_fire_blaster,
-	drone_ai_run,	15,	floater_fire_blaster,
-	drone_ai_run,	15,	floater_fire_blaster,
-	drone_ai_run,	15,	floater_fire_blaster,
-	drone_ai_run,	15,	floater_fire_blaster,
-	drone_ai_run,	15,	floater_fire_blaster,
-	drone_ai_run,	15,	floater_continue_attack,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL			//							-- LOOP Ends
+	ai_charge,	0,	NULL,			// Blaster attack
+	ai_charge,	0,	NULL,
+	ai_charge,	0,	NULL,
+	ai_charge,	0,	floater_fire_blaster,			// BOOM (0, -25.8, 32.5)	-- LOOP Starts
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_fire_blaster,
+	ai_charge,	0,	floater_continue_attack,
+	ai_charge,	0,	NULL,
+	ai_charge,	0,	NULL,
+	ai_charge,	0,	NULL			//							-- LOOP Ends
 };
 mmove_t floater_move_attack1 = {FRAME_attak101, FRAME_attak114, floater_frames_attack1, floater_run};
+
+mframe_t floater_frames_attack1a [] =
+{
+	ai_charge,	10,	NULL,			// Blaster attack
+	ai_charge,	10,	NULL,
+	ai_charge,	10,	NULL,
+	ai_charge,	10,	floater_fire_blaster,			// BOOM (0, -25.8, 32.5)	-- LOOP Starts
+	ai_charge,	10,	floater_fire_blaster,
+	ai_charge,	10,	floater_fire_blaster,
+	ai_charge,	10,	floater_fire_blaster,
+	ai_charge,	10,	floater_fire_blaster,
+	ai_charge,	10,	floater_fire_blaster,
+	ai_charge,	10,	floater_fire_blaster,
+	ai_charge,	10,	floater_continue_attack,
+	ai_charge,	10,	NULL,
+	ai_charge,	10,	NULL,
+	ai_charge,	10,	NULL			//							-- LOOP Ends
+};
+mmove_t floater_move_attack1a = {FRAME_attak101, FRAME_attak114, floater_frames_attack1a, floater_run};
 
 
 
@@ -260,9 +379,31 @@ mmove_t floater_move_attack4 = { FRAME_attak101, FRAME_attak114, floater_frames_
 void floater_continue_attack(edict_t* self)
 {
 	mmove_t* move;
+	float range;
+
+	if (M_MonsterMeleeReady(self))
+	{
+		self->monsterinfo.nextattack = 0;
+		floater_start_melee(self);
+		return;
+	}
+
+	if (G_EntExists(self->enemy))
+	{
+		range = entdist(self, self->enemy);
+		if (floater_melee_approach_ready(self, range) &&
+			random() > (range / FLOATER_MELEE_APPROACH_RANGE) * 0.35f)
+		{
+			self->monsterinfo.nextattack = 0;
+			floater_start_melee(self);
+			return;
+		}
+	}
 
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 		move = &floater_move_attack4;
+	else if (self->monsterinfo.attack_state == AS_SLIDING)
+		move = &floater_move_attack1a;
 	else
 		move = &floater_move_attack1;
 
@@ -273,7 +414,7 @@ void floater_continue_attack(edict_t* self)
 		return;
 	}
 
-	M_DelayNextAttack(self, 0, true);
+		M_DelayNextAttack(self, 0, true);
 }
 
 mframe_t floater_frames_attack2 [] =
@@ -304,7 +445,7 @@ mframe_t floater_frames_attack2 [] =
 	ai_charge,	0,	NULL,
 	ai_charge,	0,	NULL
 };
-mmove_t floater_move_attack2 = {FRAME_attak201, FRAME_attak225, floater_frames_attack2, floater_run};
+mmove_t floater_move_attack2 = {FRAME_attak201, FRAME_attak225, floater_frames_attack2, floater_melee_finished};
 
 mframe_t floater_frames_attack3 [] =
 {
@@ -343,7 +484,17 @@ mframe_t floater_frames_attack3 [] =
 	ai_charge,	0,	NULL,
 	ai_charge,	0,	NULL
 };
-mmove_t floater_move_attack3 = {FRAME_attak301, FRAME_attak334, floater_frames_attack3, floater_run};
+mmove_t floater_move_attack3 = {FRAME_attak301, FRAME_attak334, floater_frames_attack3, floater_melee_finished};
+
+static void floater_start_melee(edict_t *self)
+{
+	self->monsterinfo.attack_state = AS_MELEE;
+	floater_set_fly_parameters(self, true);
+	if (random() < 0.5f)
+		self->monsterinfo.currentmove = &floater_move_attack3;
+	else
+		self->monsterinfo.currentmove = &floater_move_attack2;
+}
 
 mframe_t floater_frames_death [] =
 {
@@ -532,19 +683,84 @@ void floater_walk (edict_t *self)
 	self->monsterinfo.currentmove = &floater_move_walk;
 }
 
+static void floater_melee_finished(edict_t *self)
+{
+	float range;
+
+	if (G_EntExists(self->enemy))
+	{
+		range = entdist(self, self->enemy);
+		if (self->monsterinfo.nextattack < 1 &&
+			floater_melee_approach_ready(self, range) &&
+			random() <= 0.75f)
+		{
+			self->monsterinfo.nextattack++;
+			floater_start_melee(self);
+			return;
+		}
+	}
+
+	floater_restore_ranged_hover(self);
+	self->monsterinfo.nextattack = 0;
+	self->monsterinfo.attack_state = AS_STRAIGHT;
+	floater_set_melee_cooldown(self);
+	floater_run(self);
+}
+
 void floater_wham (edict_t *self)
 {
 	static	vec3_t	aim = {MELEE_DISTANCE, 0, 0};
+	int		damage;
+
+	if (!G_ValidTarget(self, self->enemy, true, true))
+	{
+		self->monsterinfo.melee_finished = level.time + FLOATER_MELEE_MISS_COOLDOWN;
+		floater_abort_melee(self);
+		return;
+	}
+
+	if (entdist(self, self->enemy) > MELEE_DISTANCE)
+	{
+		if (floater_melee_approach_ready(self, entdist(self, self->enemy)))
+			return;
+
+		self->monsterinfo.melee_finished = level.time + FLOATER_MELEE_MISS_COOLDOWN;
+		floater_abort_melee(self);
+		return;
+	}
+
 	gi.sound (self, CHAN_WEAPON, sound_attack3, 1, ATTN_NORM, 0);
-	fire_hit (self, aim, 5 + rand() % 6, -50);
+	damage = floater_melee_damage(self);
+	if (!fire_hit(self, aim, damage, -50))
+		self->monsterinfo.melee_finished = level.time + FLOATER_MELEE_MISS_COOLDOWN;
+	else
+		floater_set_melee_cooldown(self);
 }
 
 void floater_zap (edict_t *self)
 {
+	int		damage;
 	vec3_t	forward, right;
 	vec3_t	origin;
 	vec3_t	dir;
 	vec3_t	offset;
+
+	if (!G_ValidTarget(self, self->enemy, true, true))
+	{
+		self->monsterinfo.melee_finished = level.time + FLOATER_MELEE_MISS_COOLDOWN;
+		floater_abort_melee(self);
+		return;
+	}
+
+	if (entdist(self, self->enemy) > MELEE_DISTANCE)
+	{
+		if (floater_melee_approach_ready(self, entdist(self, self->enemy)))
+			return;
+
+		self->monsterinfo.melee_finished = level.time + FLOATER_MELEE_MISS_COOLDOWN;
+		floater_abort_melee(self);
+		return;
+	}
 
 	VectorSubtract (self->enemy->s.origin, self->s.origin, dir);
 
@@ -565,26 +781,63 @@ void floater_zap (edict_t *self)
 	gi.WriteByte (1);	//sparks
 	gi.multicast (origin, MULTICAST_PVS);
 
-	T_Damage (self->enemy, self, self, dir, self->enemy->s.origin, vec3_origin, 5 + rand() % 6, -10, DAMAGE_ENERGY, MOD_UNKNOWN);
+	damage = floater_melee_damage(self);
+	T_Damage (self->enemy, self, self, dir, self->enemy->s.origin, vec3_origin, damage, -10, DAMAGE_ENERGY, MOD_UNKNOWN);
+	floater_set_melee_cooldown(self);
 }
 
 void floater_attack(edict_t *self)
 {
+	float range;
+
+	floater_set_fly_parameters(self, false);
+	if (!G_ValidTarget(self, self->enemy, true, true))
+		return;
+
+	range = entdist(self, self->enemy);
+	if (floater_melee_approach_ready(self, range) &&
+		(range <= MELEE_DISTANCE ||
+		random() > (range / FLOATER_MELEE_APPROACH_RANGE) * 0.35f))
+	{
+		self->monsterinfo.nextattack = 0;
+		floater_start_melee(self);
+		return;
+	}
+	floater_restore_ranged_hover(self);
+
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+	{
+		self->monsterinfo.attack_state = AS_STRAIGHT;
 		self->monsterinfo.currentmove = &floater_move_attack4;
-	else
+	}
+	else if (random() < 0.5f)
+	{
+		self->monsterinfo.attack_state = AS_STRAIGHT;
 		self->monsterinfo.currentmove = &floater_move_attack1;
+	}
+	else
+	{
+		if (random() <= 0.5f)
+			self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
+		self->monsterinfo.attack_state = AS_SLIDING;
+		self->monsterinfo.currentmove = &floater_move_attack1a;
+	}
 }
 
 
 void floater_melee(edict_t *self)
 {
-	/*
-	if (random() < 0.5)		
-		self->monsterinfo.currentmove = &floater_move_attack3;
-	else
-		self->monsterinfo.currentmove = &floater_move_attack2;
-		*/
+	float range;
+
+	if (!G_ValidTarget(self, self->enemy, true, true))
+		return;
+
+	range = entdist(self, self->enemy);
+	if (!M_MonsterMeleeReady(self) && !floater_melee_approach_ready(self, range))
+		return;
+
+	self->monsterinfo.nextattack = 0;
+	floater_start_melee(self);
 }
 
 
@@ -599,8 +852,14 @@ void floater_pain (edict_t *self, edict_t *other, float kick, int damage)
 		return;
 
 	self->pain_debounce_time = level.time + 3;
-	if (skill->value == 3)
-		return;		// no pain anims in nightmare
+	if (invasion->value == 2)
+		return;
+
+	if (self->monsterinfo.attack_state == AS_MELEE || self->monsterinfo.fly_thrusters)
+	{
+		floater_restore_ranged_hover(self);
+		self->monsterinfo.attack_state = AS_STRAIGHT;
+	}
 
 	n = (rand() + 1) % 3;
 	if (n == 0)
@@ -634,6 +893,7 @@ void floater_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	gi.multicast (self->s.origin, MULTICAST_PVS);
 
 	M_Notify(self);
+	vrx_throw_drone_gibs(self, 55);
 	M_Remove(self, false, false);
 }
 
@@ -665,11 +925,10 @@ void init_drone_floater (edict_t *self)
 	self->gib_health = -0.6 * BASE_GIB_HEALTH;
 	self->mass = 150;
 	self->mtype = M_FLOATER;
+	self->monsterinfo.aiflags |= AI_ALTERNATE_FLY;
+	floater_set_fly_parameters(self, false);
 
-	self->monsterinfo.power_armor_power = M_FLOATER_INITIAL_ARMOR + M_FLOATER_ADDON_ARMOR*self->monsterinfo.level;
-
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SCREEN;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterPowerArmor(self, POWER_ARMOR_SCREEN, M_FLOATER_INITIAL_ARMOR + M_FLOATER_ADDON_ARMOR*self->monsterinfo.level);
 
 	self->monsterinfo.control_cost = M_FLOATER_CONTROL_COST;
 	self->monsterinfo.cost = M_FLOATER_COST;

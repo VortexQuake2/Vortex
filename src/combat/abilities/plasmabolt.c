@@ -75,6 +75,8 @@ void fire_plasmabolt (edict_t *self, vec3_t start, vec3_t aimdir, int damage, fl
 	bolt->dmg_radius = damage_radius;
 	bolt->dmg = damage;
 	bolt->classname = "plasma bolt";
+	if (self->client)
+		bolt->svflags |= SVF_PROJECTILE;
 	bolt->random = duration;
 	bolt->delay = level.time + 10.0;
 	gi.linkentity(bolt);

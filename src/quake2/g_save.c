@@ -20,6 +20,9 @@ cvar_t				*bot_debugmonster;
 field_t fields[] = {
 	{ "classname", FOFS(classname), F_LSTRING },
 	{ "origin", FOFS(s.origin), F_VECTOR },
+#ifdef VRX_REPRO
+	{ "scale", FOFS(s.scale), F_FLOAT },
+#endif
 	{ "model", FOFS(model), F_LSTRING },
 	{ "spawnflags", FOFS(spawnflags), F_INT },
 	{ "speed", FOFS(speed), F_FLOAT },
@@ -109,6 +112,10 @@ field_t		savefields[] =
 	// {"", FOFS(mynoise2), F_EDICT},
 	{ "", FOFS(target_ent), F_EDICT },
 	{ "", FOFS(chain), F_EDICT },
+	{ "", FOFS(proboscis), F_EDICT },
+	{ "", FOFS(monsterinfo.bad_medic1), F_EDICT },
+	{ "", FOFS(monsterinfo.bad_medic2), F_EDICT },
+	{ "", FOFS(monsterinfo.medic_healer), F_EDICT },
 
 	{ NULL, 0, F_INT }
 };

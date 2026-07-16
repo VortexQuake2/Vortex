@@ -2043,19 +2043,31 @@ char *V_GetMonsterKind(int mtype) {
         case M_SOLDIERLT:
         case M_SOLDIERSS:
             return "soldier";
+        case M_SOLDIER_RIPPER:
+            return "ripper Guard";
+        case M_SOLDIER_BLUEBLASTER:
+            return "hyper Guard";
+        case M_SOLDIER_LASER:
+            return "laser Guard";
         case M_FLIPPER:
             return "flipper";
         case M_FLYER:
             return "flyer";
         case M_INFANTRY:
+            return "infantry";
+        case M_ENFORCER:
             return "enforcer";
         case M_INSANE:
         case M_RETARD:
             return "lost marine";
         case M_GUNNER:
             return "gunner";
+        case M_HEAVY_GUNNER:
+            return "heavy gunner";
         case M_CHICK:
             return "iron praetor";
+        case M_CHICK_HEAT:
+            return "heat praetor";
         case M_PARASITE:
             return "parasite";
         case M_FLOATER:
@@ -2066,6 +2078,8 @@ char *V_GetMonsterKind(int mtype) {
             return "berserker";
         case M_MEDIC:
             return "medic";
+        case M_MEDIC_COMMANDER:
+            return "medic commander";
         case M_MUTANT:
             return "mutant";
         case M_BRAIN:
@@ -2075,10 +2089,58 @@ char *V_GetMonsterKind(int mtype) {
         case M_TANK:
         case P_TANK:
             return "tank";
+        case M_TANK_N64:
+            return "n64 tank";
         case M_SUPERTANK:
             return "supertank";
+        case M_BOSS5:
+            return "supertank heat";
         case M_SHAMBLER:
             return "shambler";
+        case M_REDMUTANT:
+            return "red mutant";
+        case M_RUNNERTANK:
+            return "runner tank";
+        case M_GUNCMDR:
+            return "gunner commander";
+        case M_DAEDALUS:
+            return "daedalus";
+        case M_GLADB:
+            return "darkmatter gladiator";
+        case M_GLADC:
+            return "plasma gladiator";
+        case M_STALKER:
+            return "stalker";
+        case M_GEKK:
+            return "gekk";
+        case M_ARACHNID:
+            return "arachnid";
+        case M_ARACHNID_PLASMA:
+            return "arachnid plasma";
+        case M_ARACHNID_HEAT:
+            return "arachnid heat";
+        case M_BOSS2:
+            return "hornet";
+        case M_BOSS2_SMALL:
+            return "mini hornet";
+        case M_CARRIER:
+            return "carrier";
+        case M_WIDOW:
+            return "widow";
+        case M_WIDOW2:
+            return "black widow";
+        case M_FIXBOT:
+            return "fixbot";
+        case M_FIXBOT_BOSS:
+            return "fixer";
+        case M_ROGUE_TURRET:
+            return "rocket turret";
+        case M_GUARDIAN:
+            return "guardian";
+        case M_JANITOR:
+            return "janitor";
+        case M_MINIGUARDIAN:
+            return "mini guardian";
         case M_SKELETON:
             return "skeleton";
         case M_GOLEM:
@@ -2259,7 +2321,8 @@ qboolean V_HealthCache(edict_t *ent, int max_per_second, int update_frequency_sv
 
 qboolean V_ArmorCache(edict_t *ent, int max_per_second, int update_frequency) {
     int heal, delta, max, max_armor;
-    int *armor;
+    int *armor = NULL;
+    int current_armor;
 
     if (ent->armor_cache_nextframe > level.framenum)
         return false;
@@ -2267,14 +2330,19 @@ qboolean V_ArmorCache(edict_t *ent, int max_per_second, int update_frequency) {
     if (ent->client) {
         armor = &ent->client->pers.inventory[body_armor_index];
         max_armor = MAX_ARMOR(ent);
+        current_armor = *armor;
+    } else if (ent->svflags & SVF_MONSTER) {
+        max_armor = M_MonsterArmorMax(ent);
+        current_armor = M_MonsterArmorCurrent(ent);
     } else {
         armor = &ent->monsterinfo.power_armor_power;
         max_armor = ent->monsterinfo.max_armor;
+        current_armor = *armor;
     }
 
     ent->armor_cache_nextframe = level.framenum + update_frequency;
 
-    if (ent->armor_cache > 0 && *armor < max_armor) {
+    if (ent->armor_cache > 0 && current_armor < max_armor) {
         if (update_frequency <= sv_fps->value)
             max = max_per_second / (sv_fps->value / update_frequency);
         else
@@ -2282,14 +2350,17 @@ qboolean V_ArmorCache(edict_t *ent, int max_per_second, int update_frequency) {
         if (max > ent->armor_cache)
             max = ent->armor_cache;
 
-        delta = max_armor - *armor;
+        delta = max_armor - current_armor;
 
         if (delta > max)
             heal = max;
         else
             heal = delta;
 
-        *armor += heal;
+        if (armor)
+            *armor += heal;
+        else
+            M_AddMonsterArmor(ent, heal);
         ent->armor_cache -= heal;
 
         return true;
@@ -2659,9 +2730,14 @@ void V_NonShellEffects(edict_t *ent) {
         else
             pa_type = ent->monsterinfo.power_armor_type;
 
-        // only non-shell effects are added here, so power shield is intentionally omitted
         if (pa_type == POWER_ARMOR_SCREEN)
             ent->s.effects |= EF_POWERSCREEN;
+        else if (!ent->client && (ent->svflags & SVF_MONSTER) && pa_type == POWER_ARMOR_SHIELD
+                 && !(ent->s.effects & EF_COLOR_SHELL)
+                 && !(ent->s.renderfx & (RF_SHELL_RED | RF_SHELL_GREEN | RF_SHELL_BLUE | RF_SHELL_YELLOW))) {
+            ent->s.effects |= EF_COLOR_SHELL;
+            ent->s.renderfx |= RF_SHELL_GREEN;
+        }
     }
 
     // super speed effect
@@ -2753,7 +2829,9 @@ void V_NonShellEffects(edict_t *ent) {
 }
 
 void V_SetEffects(edict_t *ent) {
-    int effects, r_effects;
+    int effects, r_effects, preserved_renderfx;
+
+    preserved_renderfx = ent->s.renderfx & RF_CUSTOMSKIN;
 
     // clear all effects
     ent->s.effects = ent->s.renderfx = 0;
@@ -2762,8 +2840,10 @@ void V_SetEffects(edict_t *ent) {
     if (que_typeexists(ent->curses, CURSE_PLAGUE))
         ent->s.effects |= EF_FLIES;
 
-    if (ent->mtype != M_MAGMINE && ent->health < 1)
+    if (ent->mtype != M_MAGMINE && ent->health < 1) {
+        ent->s.renderfx |= preserved_renderfx;
         return;
+    }
 
     // apply non-ability shell effects
     V_ShellNonAbilityEffects(ent);
@@ -2792,6 +2872,8 @@ void V_SetEffects(edict_t *ent) {
 
     // apply non-shell effects
     V_NonShellEffects(ent);
+
+    ent->s.renderfx |= preserved_renderfx;
 }
 
 /*
@@ -2825,7 +2907,32 @@ qboolean vrx_is_morphing_polt(edict_t *ent) {
 // returns true if ent has a pain/damaged skin
 qboolean vrx_has_pain_skin(edict_t* ent)
 {
-    return (ent->mtype != M_DECOY && ent->mtype != M_SKELETON && ent->mtype != M_GOLEM);
+    return (ent->mtype != M_DECOY && ent->mtype != M_SKELETON && ent->mtype != M_GOLEM
+             && ent->mtype != M_RUNNERTANK && ent->mtype != M_REDMUTANT
+             && ent->mtype != M_ROGUE_TURRET);
+}
+
+void vrx_update_drone_death_skin(edict_t* ent)
+{
+    if (!ent || !ent->inuse || !(ent->svflags & SVF_MONSTER))
+        return;
+    if (ent->s.modelindex == 255 || ent->max_health <= 0 || ent->health <= ent->gib_health)
+        return;
+    if (ent->health >= 0.5f * ent->max_health)
+        return;
+    if (!vrx_has_pain_skin(ent))
+        return;
+
+    if (ent->mtype == M_GEKK)
+    {
+        ent->s.skinnum = (ent->health < 0.25f * ent->max_health) ? 2 : 1;
+        return;
+    }
+
+    if (ent->mtype == M_BARON_FIRE && ent->health < 0.2f * ent->max_health)
+        ent->s.skinnum = 2;
+    else
+        ent->s.skinnum |= 1;
 }
 
 // returns a value >= 1 based on any synergy bonuses that apply for ability_index

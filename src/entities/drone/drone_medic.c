@@ -19,14 +19,131 @@ static int	sound_hook_launch;
 static int	sound_hook_hit;
 static int	sound_hook_heal;
 static int	sound_hook_retract;
+static int	commander_sound_idle1;
+static int	commander_sound_pain1;
+static int	commander_sound_pain2;
+static int	commander_sound_die;
+static int	commander_sound_sight;
+static int	commander_sound_search;
+static int	commander_sound_hook_launch;
+static int	commander_sound_hook_hit;
+static int	commander_sound_hook_heal;
+static int	commander_sound_hook_retract;
+static int	commander_sound_spawn;
+
+void drone_ai_run_slide(edict_t *self, float dist);
+qboolean drone_findtarget(edict_t *self, qboolean force);
+void mymedic_run(edict_t *self);
+extern mmove_t mymedic_move_attackHyperBlaster;
+extern mmove_t mymedic_move_attackBlaster;
+extern mmove_t mymedic_move_attackCable;
+extern mmove_t medic_commander_move_callReinforcements;
+static qboolean mymedic_is_dodge_move(edict_t *self);
+
+static constexpr int MEDIC_COMMANDER_SUMMON_COUNT = 2;
+static constexpr float MEDIC_COMMANDER_SUMMON_COOLDOWN = 8.0f;
+static constexpr float SPAWNGROW_LIFESPAN = 1.0f;
+// Monster medic revive tuning only. Player morph medic uses the Lua MEDIC_CABLE_RANGE setting.
+static constexpr float MONSTER_MEDIC_CABLE_RANGE = 290.0f;
+static constexpr float MONSTER_MEDIC_MIN_REVIVE_DISTANCE = 32.0f;
+static constexpr float MONSTER_MEDIC_REVIVE_TRY_TIME = 5.0f;
+static constexpr float MONSTER_MEDIC_REVIVE_FAIL_COOLDOWN = 0.4f;
 
 void mymedic_refire (edict_t *self);
 void mymedic_heal (edict_t *self);
+void medic_commander_attack(edict_t *self);
+static qboolean mymedic_is_reviving(edict_t *self);
+static void mymedic_cleanup_heal_target(edict_t *self, edict_t *target);
+static void mymedic_abort_heal(edict_t *self, qboolean mark);
+
+static qboolean medic_is_commander(edict_t *self)
+{
+	return self && self->mtype == M_MEDIC_COMMANDER;
+}
+
+static int medic_blaster_flash(edict_t *self)
+{
+	return medic_is_commander(self) ? MZ2_MEDIC_BLASTER_2 : MZ2_MEDIC_BLASTER_1;
+}
+
+static int medic_hyperblaster_flash(edict_t *self)
+{
+	return medic_is_commander(self) ? MZ2_MEDIC_HYPERBLASTER2_1 : MZ2_MEDIC_HYPERBLASTER1_1;
+}
+
+static qboolean medic_can_blaster(edict_t *self)
+{
+	return M_MonsterHasClearShotFromFlash(self, medic_blaster_flash(self));
+}
+
+static qboolean medic_can_hyperblaster(edict_t *self)
+{
+	return M_MonsterHasClearShotFromFlash(self, medic_hyperblaster_flash(self));
+}
+
+static int medic_idle_sound(edict_t *self)
+{
+	return (medic_is_commander(self) && commander_sound_idle1) ? commander_sound_idle1 : sound_idle1;
+}
+
+static int medic_pain_sound1(edict_t *self)
+{
+	return (medic_is_commander(self) && commander_sound_pain1) ? commander_sound_pain1 : sound_pain1;
+}
+
+static int medic_pain_sound2(edict_t *self)
+{
+	return (medic_is_commander(self) && commander_sound_pain2) ? commander_sound_pain2 : sound_pain2;
+}
+
+static int medic_die_sound(edict_t *self)
+{
+	return (medic_is_commander(self) && commander_sound_die) ? commander_sound_die : sound_die;
+}
+
+static int medic_sight_sound(edict_t *self)
+{
+	return (medic_is_commander(self) && commander_sound_sight) ? commander_sound_sight : sound_sight;
+}
+
+static int medic_search_sound(edict_t *self)
+{
+	return (medic_is_commander(self) && commander_sound_search) ? commander_sound_search : sound_search;
+}
+
+static int medic_hook_launch_sound(edict_t *self)
+{
+	return (medic_is_commander(self) && commander_sound_hook_launch) ? commander_sound_hook_launch : sound_hook_launch;
+}
+
+static int medic_hook_retract_sound(edict_t *self)
+{
+	return (medic_is_commander(self) && commander_sound_hook_retract) ? commander_sound_hook_retract : sound_hook_retract;
+}
+
+static float medic_clampf(float value, float min_value, float max_value)
+{
+	if (value < min_value)
+		return min_value;
+	if (value > max_value)
+		return max_value;
+	return value;
+}
+
+static float medic_lerpf(float a, float b, float t)
+{
+	return a + (b - a) * t;
+}
 
 void mymedic_idle (edict_t *self)
 {
-	gi.sound (self, CHAN_VOICE, sound_idle1, 1, ATTN_IDLE, 0);
+	gi.sound (self, CHAN_VOICE, medic_idle_sound(self), 1, ATTN_IDLE, 0);
 
+}
+
+void mymedic_search (edict_t *self)
+{
+	gi.sound (self, CHAN_VOICE, medic_search_sound(self), 1, ATTN_IDLE, 0);
 }
 
 mframe_t mymedic_frames_stand [] =
@@ -166,6 +283,27 @@ mframe_t mymedic_frames_run [] =
 };
 mmove_t mymedic_move_run = {FRAME_run1, FRAME_run6, mymedic_frames_run, NULL};
 
+static void mymedic_ai_dodge_slide(edict_t *self, float dist)
+{
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(self->monsterinfo.attacker))
+		self->enemy = self->monsterinfo.attacker;
+	if (!G_EntIsAlive(self->enemy))
+		return;
+
+	drone_ai_run_slide(self, dist);
+}
+
+mframe_t mymedic_frames_dodge_slide[] =
+{
+	mymedic_ai_dodge_slide, 18, NULL,
+	mymedic_ai_dodge_slide, 22.5, NULL,
+	mymedic_ai_dodge_slide, 25.4, NULL,
+	mymedic_ai_dodge_slide, 23.4, NULL,
+	mymedic_ai_dodge_slide, 24, NULL,
+	mymedic_ai_dodge_slide, 35.6, NULL
+};
+mmove_t mymedic_move_dodge_slide = {FRAME_run1, FRAME_run6, mymedic_frames_dodge_slide, mymedic_run};
+
 void mymedic_run (edict_t *self)
 {
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
@@ -176,40 +314,73 @@ void mymedic_run (edict_t *self)
 
 void mymedic_fire_blaster (edict_t *self)
 {
-	int		effect, damage;
-	const float speed = 2000; // speed: medic_blaster
+	int		effect, damage, flash_number;
+	const int speed = 2000; // speed: medic_blaster
 	vec3_t	forward, start;
 	qboolean bounce = false;
+
+	if (!G_EntExists(self->enemy))
+		return;
 	
 	if ((self->s.frame == FRAME_attack9) || (self->s.frame == FRAME_attack12))
 	{
 		effect = EF_BLASTER;
 		bounce = true;
+		flash_number = medic_blaster_flash(self);
 	}
 	else
-		effect = EF_HYPERBLASTER;
+	{
+		int frame_offset = self->s.frame - FRAME_attack19;
+
+		if (frame_offset < 0)
+			frame_offset = 0;
+		else if (frame_offset > 11)
+			frame_offset = 11;
+
+		effect = (self->s.frame % 4) ? 0 : EF_HYPERBLASTER;
+		flash_number = medic_hyperblaster_flash(self) + frame_offset;
+	}
 
 	damage = M_HYPERBLASTER_DMG_BASE + M_HYPERBLASTER_DMG_ADDON * drone_damagelevel(self);
 	if (M_HYPERBLASTER_DMG_MAX && damage > M_HYPERBLASTER_DMG_MAX)
 		damage = M_HYPERBLASTER_DMG_MAX;
 
 
-	MonsterAim(self, M_PROJECTILE_ACC, speed, false, MZ2_MEDIC_BLASTER_1, forward, start);
-	monster_fire_blaster(self, start, forward, damage, speed, effect, BLASTER_PROJ_BOLT, 2.0, bounce, MZ2_MEDIC_BLASTER_1);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash_number, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
+	if (medic_is_commander(self))
+		monster_fire_blaster2(self, start, forward, damage, speed, effect, flash_number);
+	else
+		monster_fire_blaster(self, start, forward, damage, speed, effect, BLASTER_PROJ_BOLT, 2.0, bounce, flash_number);
 }
 
 void mymedic_fire_bolt (edict_t *self)
 {
-	int		min, max, damage;
+	int		min, max, damage, flash_number;
 	vec3_t	forward, start;
 
 	min = 4 * drone_damagelevel(self); // dmg.min: medic_fire_bolt
 	max = 50 + 25 * drone_damagelevel(self); // dmg.max: medic_fire_bolt
 
 	damage = GetRandom(min, max);
+	flash_number = medic_blaster_flash(self);
 
-	MonsterAim(self, M_PROJECTILE_ACC, 1500, false, MZ2_MEDIC_BLASTER_1, forward, start);
-	monster_fire_blaster(self, start, forward, damage, 1500, EF_BLASTER, BLASTER_PROJ_BLAST, 2.0, true, MZ2_MEDIC_BLASTER_1);
+	MonsterAim(self, M_PROJECTILE_ACC, 1500, false, flash_number, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
+	if (medic_is_commander(self))
+	{
+		monster_fire_blaster2(self, start, forward, damage, 1500, EF_BLASTER, -1);
+		gi.sound (self, CHAN_WEAPON, gi.soundindex("weapons/photon.wav"), 1, ATTN_NORM, 0);
+		return;
+	}
+
+	// Keep the medic muzzle origin, but don't emit the muzzleflash packet here;
+	// it can override the secondary blaster sound that should play per bolt.
+	monster_fire_blaster(self, start, forward, damage, 1500, EF_BLASTER, BLASTER_PROJ_BLAST, 2.0, true, -1);
 
 	gi.sound (self, CHAN_WEAPON, gi.soundindex("weapons/photon.wav"), 1, ATTN_NORM, 0);
 }
@@ -224,6 +395,13 @@ void mymedic_dead (edict_t *self)
 	//self->nextthink = 0;
 	gi.linkentity (self);
 	M_PrepBodyRemoval(self);
+}
+
+static void mymedic_shrink(edict_t *self)
+{
+	self->maxs[2] = -2;
+	self->svflags |= SVF_DEADMONSTER;
+	gi.linkentity(self);
 }
 
 mframe_t medic_frames_pain_short[] =
@@ -262,11 +440,15 @@ mmove_t medic_move_pain_long = { FRAME_painb1, FRAME_painb15, medic_frames_pain_
 void medic_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
 	if (self->health < (self->max_health / 2))
-		self->s.skinnum = 1;
+		self->s.skinnum |= 1;
+
+	if (mymedic_is_reviving(self))
+		mymedic_abort_heal(self, false);
 
 	// we're already in a pain state
 	if (self->monsterinfo.currentmove == &medic_move_pain_short ||
-		self->monsterinfo.currentmove == &medic_move_pain_long)
+		self->monsterinfo.currentmove == &medic_move_pain_long ||
+		mymedic_is_dodge_move(self))
 		return;
 
 	// monster players don't get pain state induced
@@ -284,9 +466,9 @@ void medic_pain(edict_t* self, edict_t* other, float kick, int damage)
 		return;
 
 	if (random() < 0.5)
-		gi.sound(self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
+		gi.sound(self, CHAN_VOICE, medic_pain_sound1(self), 1, ATTN_NORM, 0);
 	else {
-		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
+		gi.sound(self, CHAN_VOICE, medic_pain_sound2(self), 1, ATTN_NORM, 0);
 	}
 
 	if (self->monsterinfo.currentmove == &medic_move_walk ||
@@ -302,7 +484,7 @@ mframe_t mymedic_frames_death [] =
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
-	ai_move, 0, NULL,
+	ai_move, 0, mymedic_shrink,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
@@ -333,7 +515,8 @@ mmove_t mymedic_move_death = {FRAME_death1, FRAME_death30, mymedic_frames_death,
 
 void mymedic_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int		n;
+	if (mymedic_is_reviving(self))
+		mymedic_abort_heal(self, false);
 
 	M_Notify(self);
 
@@ -350,14 +533,7 @@ void mymedic_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (vrx_spawn_nonessential_ent(self->s.origin))
-		{
-			for (n = 0; n < 2; n++)
-				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-			for (n = 0; n < 4; n++)
-				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-			//ThrowHead (self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
-		}
+		vrx_throw_drone_gibs(self, damage);
 		//self->deadflag = DEAD_DEAD;
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);
@@ -376,9 +552,10 @@ void mymedic_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	DroneList_Remove(self);
 
 // regular death
-	gi.sound (self, CHAN_VOICE, sound_die, 1, ATTN_NORM, 0);
+	gi.sound (self, CHAN_VOICE, medic_die_sound(self), 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 
 	self->monsterinfo.currentmove = &mymedic_move_death;
 
@@ -411,12 +588,18 @@ void mymedic_duck_up (edict_t *self)
 	gi.linkentity (self);
 }
 
+void mymedic_duck_hold (edict_t *self)
+{
+	if (self->monsterinfo.pausetime > level.time)
+		self->monsterinfo.nextframe = self->s.frame;
+}
+
 
 void mymedic_jump_takeoff (edict_t *self)
 {
 	vec3_t	v;
 
-	gi.sound (self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
+	gi.sound (self, CHAN_VOICE, medic_sight_sound(self), 1, ATTN_NORM, 0);
 	VectorSubtract(self->monsterinfo.dir, self->s.origin, v);
 	v[2] = 0;
 	VectorNormalize(v);
@@ -449,28 +632,29 @@ void mymedic_jump_hold (edict_t *self)
 	}
 }
 
+static void mymedic_jump_hold_ai(edict_t *self, float dist)
+{
+	ai_move(self, dist);
+	mymedic_jump_hold(self);
+}
+
 mframe_t mymedic_frames_duck [] =
 {
-	ai_move, 0,	mymedic_duck_down,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,//mymedic_duck_down,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	mymedic_duck_up
-	/*
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL,
-	ai_move, 0,	NULL
-	*/
+	ai_move, -1, NULL,
+	ai_move, -1, mymedic_duck_down,
+	ai_move, -1, mymedic_duck_hold,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, -1, mymedic_duck_up
 };
-mmove_t mymedic_move_duck = {FRAME_duck1, FRAME_duck7, mymedic_frames_duck, mymedic_run};
+mmove_t mymedic_move_duck = {FRAME_duck2, FRAME_duck14, mymedic_frames_duck, mymedic_run};
 
 mframe_t mymedic_frames_leap [] =
 {
@@ -480,7 +664,7 @@ mframe_t mymedic_frames_leap [] =
 	ai_move, 0,	NULL,
 	ai_move, 0,	NULL,
 	ai_move, 0,	NULL,
-	ai_move, 0,	mymedic_jump_hold,		//137
+	mymedic_jump_hold_ai, 0,	NULL,		//137
 	/*
 	ai_move, 0,	NULL,
 	ai_move, 0,	NULL,
@@ -501,22 +685,63 @@ void mymedic_leap (edict_t *self)
 		self->monsterinfo.currentmove = &mymedic_move_leap;
 }
 
+static qboolean mymedic_is_dodge_move(edict_t *self)
+{
+	return self->monsterinfo.currentmove == &mymedic_move_duck ||
+		self->monsterinfo.currentmove == &mymedic_move_leap ||
+		self->monsterinfo.currentmove == &mymedic_move_dodge_slide;
+}
+
+static qboolean mymedic_is_uninterruptible_attack(edict_t *self)
+{
+	return self->monsterinfo.currentmove == &mymedic_move_attackHyperBlaster ||
+		self->monsterinfo.currentmove == &mymedic_move_attackCable ||
+		self->monsterinfo.currentmove == &mymedic_move_attackBlaster ||
+		self->monsterinfo.currentmove == &medic_commander_move_callReinforcements;
+}
+
+static qboolean mymedic_dodge_hit_low(edict_t *self, vec3_t dir)
+{
+	const float duck_height = self->absmax[2] - 33;
+
+	return dir[2] > self->absmin[2] && dir[2] <= duck_height;
+}
+
 void mymedic_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
 {
 	if (random() > 0.9)
 		return;
-	if (!G_GetClient(self))
-		return;
 	if (level.time < self->monsterinfo.dodge_time)
+		return;
+	if (!attacker)
 		return;
 	if (OnSameTeam(self, attacker))
 		return;
+	if (mymedic_is_dodge_move(self) || mymedic_is_uninterruptible_attack(self))
+		return;
 
-	if (!self->enemy && G_EntIsAlive(attacker))
+	self->monsterinfo.attacker = attacker;
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(attacker))
 		self->enemy = attacker;
 	if (!radius)
 	{
-		self->monsterinfo.currentmove = &mymedic_move_duck;
+		if (!mymedic_dodge_hit_low(self, dir))
+		{
+			self->monsterinfo.pausetime = level.time + 0.5;
+			self->monsterinfo.currentmove = &mymedic_move_duck;
+			mymedic_duck_down(self);
+		}
+		else if (!(self->monsterinfo.aiflags & AI_STAND_GROUND))
+		{
+			self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
+			self->monsterinfo.currentmove = &mymedic_move_dodge_slide;
+		}
+		else
+		{
+			self->monsterinfo.pausetime = level.time + 0.5;
+			self->monsterinfo.currentmove = &mymedic_move_duck;
+			mymedic_duck_down(self);
+		}
 		self->monsterinfo.dodge_time = level.time + 2.0;
 	}
 	else
@@ -538,24 +763,28 @@ void medic_checktarget (edict_t *self)
 
 mframe_t mymedic_frames_attackHyperBlaster [] =
 {
-	ai_charge, 0,	mymedic_fire_blaster,	//191
-	ai_charge, 0,	medic_checktarget,
+	ai_charge, 0,	NULL,					// attack15
+	ai_charge, 0,	NULL,
+	ai_charge, 0,	NULL,
+	ai_charge, 0,	NULL,
+	ai_charge, 0,	mymedic_fire_blaster,	// attack19
 	ai_charge, 0,	mymedic_fire_blaster,
-	ai_charge, 0,	medic_checktarget,
-	ai_charge, 0,	mymedic_fire_blaster,	//195
-	ai_charge, 0,	medic_checktarget,
 	ai_charge, 0,	mymedic_fire_blaster,
-	ai_charge, 0,	medic_checktarget,
 	ai_charge, 0,	mymedic_fire_blaster,
-	ai_charge, 0,	medic_checktarget,
 	ai_charge, 0,	mymedic_fire_blaster,
-	ai_charge, 0,	medic_checktarget,
 	ai_charge, 0,	mymedic_fire_blaster,
-	ai_charge, 0,	medic_checktarget,
 	ai_charge, 0,	mymedic_fire_blaster,
-	ai_charge, 0,	medic_checktarget			//206
+	ai_charge, 0,	mymedic_fire_blaster,
+	ai_charge, 0,	mymedic_fire_blaster,
+	ai_charge, 0,	mymedic_fire_blaster,
+	ai_charge, 0,	mymedic_fire_blaster,
+	ai_charge, 0,	mymedic_fire_blaster,	// attack30
+	ai_charge, 0,	medic_checktarget,
+	ai_charge, 0,	NULL,
+	ai_charge, 2,	NULL,
+	ai_charge, 3,	NULL
 };
-mmove_t mymedic_move_attackHyperBlaster = {FRAME_attack15, FRAME_attack30, mymedic_frames_attackHyperBlaster, mymedic_refire};
+mmove_t mymedic_move_attackHyperBlaster = {FRAME_attack15, FRAME_attack34, mymedic_frames_attackHyperBlaster, mymedic_refire};
 
 void mymedic_refire(edict_t* self)
 {
@@ -565,7 +794,7 @@ void mymedic_refire(edict_t* self)
 	{
 		dist = entdist(self, self->enemy);
 
-		if (random() <= 0.8 && dist <= 512)
+		if (random() <= 0.8 && dist <= 512 && medic_can_hyperblaster(self))
 		{
 			// continue attack
 			self->s.frame = FRAME_attack19;
@@ -587,7 +816,7 @@ void mymedic_refire(edict_t* self)
 
 void mymedic_continue(edict_t* self)
 {
-	if (M_ContinueAttack(self, &mymedic_move_attackHyperBlaster, NULL, 0, 512, 0.8))
+	if (medic_can_hyperblaster(self) && M_ContinueAttack(self, &mymedic_move_attackHyperBlaster, NULL, 0, 512, 0.8))
 		return;
 
 	// end attack
@@ -615,17 +844,20 @@ mmove_t mymedic_move_attackBlaster = {FRAME_attack1, FRAME_attack14, mymedic_fra
 
 void mymedic_hook_launch (edict_t *self)
 {
-	gi.sound (self, CHAN_WEAPON, sound_hook_launch, 1, ATTN_NORM, 0);
+	if (mymedic_is_reviving(self) && (self->enemy->monsterinfo.aiflags & AI_RESURRECTING))
+		return;
+
+	gi.sound (self, CHAN_WEAPON, medic_hook_launch_sound(self), 1, ATTN_NORM, 0);
 }
 
 void mymedic_hook_retract (edict_t *self)
 {
-	gi.sound (self, CHAN_WEAPON, sound_hook_retract, 1, ATTN_NORM, 0);
+	gi.sound (self, CHAN_WEAPON, medic_hook_retract_sound(self), 1, ATTN_NORM, 0);
 
 	if (!self->enemy)
 		return;
-	//if ((self->svflags & SVF_MONSTER) && !(self->client))
-	//	self->enemy->monsterinfo.aiflags &= ~AI_RESURRECTING;
+	if (mymedic_is_reviving(self))
+		mymedic_cleanup_heal_target(self, self->enemy);
 }
 
 void ED_CallSpawn (edict_t *ent);
@@ -647,6 +879,145 @@ static vec3_t	mymedic_cable_offsets[] =
 edict_t *CreateSpiker (edict_t *ent, int skill_level);
 edict_t* CreateObstacle(edict_t* ent, int skill_level, int talent_level);
 edict_t* CreateGasser(edict_t* ent, int skill_level, int talent_level);
+void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, qboolean printMsg);
+
+static qboolean mymedic_is_corpse(const edict_t *target)
+{
+	return target && target->inuse && ((target->health < 1) || (target->deadflag == DEAD_DEAD));
+}
+
+static qboolean mymedic_is_reviving(edict_t *self)
+{
+	return self && mymedic_is_corpse(self->enemy);
+}
+
+static void mymedic_cleanup_heal_target(edict_t *self, edict_t *target)
+{
+	if (!target || !target->inuse)
+		return;
+
+	if (target->monsterinfo.medic_healer == self)
+		target->monsterinfo.medic_healer = NULL;
+
+	target->monsterinfo.aiflags &= ~AI_RESURRECTING;
+
+	if (mymedic_is_corpse(target))
+		target->takedamage = DAMAGE_YES;
+}
+
+static void mymedic_mark_bad_corpse(edict_t *self, edict_t *target)
+{
+	edict_t *bad;
+
+	if (!self || !target || !target->inuse)
+		return;
+	if (target->monsterinfo.bad_medic1 == self || target->monsterinfo.bad_medic2 == self)
+		return;
+
+	bad = target->monsterinfo.bad_medic1;
+	if (bad && bad->inuse && (bad->monsterinfo.aiflags & AI_MEDIC))
+		target->monsterinfo.bad_medic2 = self;
+	else
+		target->monsterinfo.bad_medic1 = self;
+}
+
+static void mymedic_abort_heal(edict_t *self, qboolean mark)
+{
+	edict_t *target;
+
+	if (!self)
+		return;
+
+	target = self->enemy;
+	if (mymedic_is_corpse(target))
+	{
+		if (mark)
+			mymedic_mark_bad_corpse(self, target);
+
+		mymedic_cleanup_heal_target(self, target);
+
+		if (!target->inuse || mymedic_is_corpse(target))
+			self->enemy = NULL;
+	}
+
+	self->monsterinfo.medic_tries = 0;
+	self->timestamp = 0;
+	M_DelayNextAttack(self, MONSTER_MEDIC_REVIVE_FAIL_COOLDOWN, false);
+}
+
+static void mymedic_fail_revive_attempt(edict_t *self)
+{
+	if (!mymedic_is_reviving(self))
+	{
+		mymedic_abort_heal(self, false);
+		return;
+	}
+
+	//  //just in case, a gib on fail revive.
+	//   T_Damage(target, self, self, vec3_origin, target->s.origin,
+	//        vec3_origin, hurt, 0, DAMAGE_NO_PROTECTION, MOD_UNKNOWN);
+	
+	self->monsterinfo.nextframe = FRAME_attack53;
+	mymedic_hook_retract(self);
+
+	if (self->monsterinfo.medic_tries > 0)
+	{
+		mymedic_mark_bad_corpse(self, self->enemy);
+		self->enemy = NULL;
+		self->monsterinfo.medic_tries = 0;
+		self->timestamp = 0;
+	}
+	else
+	{
+		self->monsterinfo.medic_tries++;
+		self->timestamp = level.time + MONSTER_MEDIC_REVIVE_TRY_TIME;
+	}
+
+	M_DelayNextAttack(self, MONSTER_MEDIC_REVIVE_FAIL_COOLDOWN, false);
+}
+
+static qboolean mymedic_revive_space_blocked(edict_t *target)
+{
+	vec3_t bmin, bmax;
+
+	if (!mymedic_is_corpse(target))
+		return false;
+	if (strcmp(target->classname, "drone"))
+		return false;
+
+	M_SetBoundingBox(target->mtype, bmin, bmax);
+	return !G_IsValidLocation(target, target->s.origin, bmin, bmax);
+}
+
+static qboolean mymedic_try_reanimate(edict_t *self)
+{
+	edict_t *owner;
+	edict_t *target;
+	int old_monsters;
+	int old_spikers;
+	int old_obstacles;
+	int old_gassers;
+
+	if (!self || !self->inuse || !self->activator || !self->activator->inuse || !mymedic_is_corpse(self->enemy))
+		return false;
+
+	owner = self->activator;
+	target = self->enemy;
+	old_monsters = owner->num_monsters;
+	old_spikers = owner->num_spikers;
+	old_obstacles = owner->num_obstacle;
+	old_gassers = owner->num_gasser;
+
+	M_Reanimate(owner, target, self->monsterinfo.level, 0.33, false);
+
+	if (target->inuse && target->health > 0 && target->deadflag == DEAD_NO)
+		return true;
+	if (owner->num_monsters > old_monsters || owner->num_spikers > old_spikers
+		|| owner->num_obstacle > old_obstacles || owner->num_gasser > old_gassers)
+		return true;
+
+	return false;
+}
 
 void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, qboolean printMsg)
 {
@@ -673,7 +1044,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 			// restore this drone
 			target->monsterinfo.slots_freed = false; // reset freed flag
 			target->health = r_modifier*target->max_health;
-			target->monsterinfo.power_armor_power = r_modifier*target->monsterinfo.max_armor;
+			M_SetMonsterArmorCurrent(target, r_modifier*M_MonsterArmorMax(target));
 			target->monsterinfo.resurrected_time = level.time + 10.0;
 			target->activator = ent; // transfer ownership!
 			target->nextthink = level.time + FRAMETIME;//1.0; note: don't delay think--this may cause undesired behavior (monster sliding)
@@ -700,7 +1071,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 	}
 	else if ((!strcmp(target->classname, "bodyque") || !strcmp(target->classname, "player")))
 	{
-		const int		random=GetRandom(1, 3);
+		const int		random=GetRandom(1, 6);
 		vec3_t	start;
 
 		// if the summoner is a player, check for sufficient monster slots
@@ -712,39 +1083,55 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 		VectorCopy(target->s.origin, start);
 
 		// kill the corpse
-		T_Damage(target, target, target, vec3_origin, target->s.origin, 
+		T_Damage(target, target, target, vec3_origin, target->s.origin,
 			vec3_origin, 10000, 0, DAMAGE_NO_PROTECTION, 0);
 
-		//4.2 random soldier type with different weapons
-		if (random == 1)
+		// random soldier type with different weapons
+		switch (random)
 		{
+		case 1:
 			// blaster
 			e->mtype = M_SOLDIER;
 			e->s.skinnum = 0;
-		}
-		else if (random == 2)
-		{
+			break;
+		case 2:
 			// rocket
 			e->mtype = M_SOLDIERLT;
 			e->s.skinnum = 4;
-		}
-		else
-		{
+			break;
+		case 3:
 			// shotgun
 			e->mtype = M_SOLDIERSS;
 			e->s.skinnum = 2;
+			break;
+		case 4:
+			// ripper
+			e->mtype = M_SOLDIER_RIPPER;
+			e->s.skinnum = 6;
+			break;
+		case 5:
+			// blue blaster
+			e->mtype = M_SOLDIER_BLUEBLASTER;
+			e->s.skinnum = 8;
+			break;
+		case 6:
+		default:
+			// laser
+			e->mtype = M_SOLDIER_LASER;
+			e->s.skinnum = 10;
+			break;
 		}
 
 		e->activator = ent;
 		e->monsterinfo.level = r_level;
 		M_Initialize(ent, e, 0.0f);
 		e->health = r_modifier*e->max_health;
-		e->monsterinfo.power_armor_power = r_modifier*e->monsterinfo.max_armor;
+		M_SetMonsterArmorCurrent(e, r_modifier*M_MonsterArmorMax(e));
 		e->monsterinfo.resurrected_time = level.time + 10.0;
 		e->s.skinnum |= 1; // injured skin
 
 		e->monsterinfo.stand(e);
-		
+
 		if (!G_IsValidLocation(target, start, e->mins, e->maxs))
 		{
 			start[2] += 24;
@@ -874,15 +1261,36 @@ void mymedic_cable_attack (edict_t *self)
 {
 	vec3_t	forward, right, start, offset, end;
 	trace_t	tr;
+	qboolean resurrecting;
 
 	// need a valid target and activator
 	if (!self || !self->inuse || !self->activator || !self->activator->inuse 
 		|| !self->enemy || !self->enemy->inuse)
 		return;
 
+	resurrecting = mymedic_is_reviving(self);
+
 	// make sure target is still in range
-	if (entdist(self, self->enemy) > 256)
+	if (entdist(self, self->enemy) > MONSTER_MEDIC_CABLE_RANGE)
 		return;
+
+	if (resurrecting)
+	{
+		self->enemy->monsterinfo.medic_healer = self;
+
+		if (entdist(self, self->enemy) <= MONSTER_MEDIC_MIN_REVIVE_DISTANCE)
+		{
+			mymedic_fail_revive_attempt(self);
+			return;
+		}
+
+		if (self->timestamp && level.time > self->timestamp)
+		{
+			self->monsterinfo.nextframe = FRAME_attack53;
+			mymedic_abort_heal(self, true);
+			return;
+		}
+	}
 
 	// get muzzle location
 	AngleVectors(self->s.angles, forward, right, NULL);
@@ -896,19 +1304,15 @@ void mymedic_cable_attack (edict_t *self)
 	tr = gi.trace (start, NULL, NULL, end, self, MASK_SHOT);
 	if (tr.ent != self->enemy)
 	{
-		if (self->s.frame == 226)
+		if (resurrecting && self->s.frame == FRAME_attack50)
 		{
-			// give up for awhile
-			self->s.frame = 229;
+			mymedic_fail_revive_attempt(self);
+		}
+		else if (!resurrecting && self->s.frame == FRAME_attack50)
+		{
+			self->monsterinfo.nextframe = FRAME_attack53;
 			M_DelayNextAttack(self, (GetRandom(10, 20)*FRAMETIME), true);
 			mymedic_hook_retract(self);
-			
-			// if our enemy is a corpse, destroy it
-			if (self->enemy->health < 1)
-			{
-				T_Damage(self->enemy, self->enemy, self->enemy, vec3_origin, 
-					self->enemy->s.origin, vec3_origin, 10000, 0, DAMAGE_NO_PROTECTION, 0);
-			}
 		}
 		return; // cable is blocked
 	}
@@ -920,6 +1324,53 @@ void mymedic_cable_attack (edict_t *self)
 	gi.WritePosition (start);
 	gi.WritePosition (tr.endpos);
 	gi.multicast (self->s.origin, MULTICAST_PVS);
+
+	if (resurrecting)
+	{
+		if (self->s.frame == FRAME_attack43)
+		{
+			if (!(self->enemy->monsterinfo.aiflags & AI_RESURRECTING))
+			{
+				gi.sound (self->enemy, CHAN_AUTO,
+					(medic_is_commander(self) && commander_sound_hook_hit) ? commander_sound_hook_hit : sound_hook_hit,
+					1, ATTN_NORM, 0);
+			}
+			self->enemy->takedamage = DAMAGE_NO;
+		}
+		else if (self->s.frame == FRAME_attack44)
+		{
+			if (!(self->enemy->monsterinfo.aiflags & AI_RESURRECTING))
+			{
+				gi.sound (self, CHAN_WEAPON,
+					(medic_is_commander(self) && commander_sound_hook_heal) ? commander_sound_hook_heal : sound_hook_heal,
+					1, ATTN_NORM, 0);
+				self->enemy->monsterinfo.aiflags |= AI_RESURRECTING;
+			}
+			self->enemy->takedamage = DAMAGE_NO;
+		}
+		else if (self->s.frame == FRAME_attack50)
+		{
+			if (mymedic_revive_space_blocked(self->enemy))
+			{
+				mymedic_fail_revive_attempt(self);
+				return;
+			}
+
+			if (mymedic_try_reanimate(self))
+			{
+				mymedic_cleanup_heal_target(self, self->enemy);
+				self->monsterinfo.medic_tries = 0;
+				self->timestamp = 0;
+				if (!G_EntIsAlive(self->enemy))
+					self->enemy = NULL;
+			}
+			else
+			{
+				mymedic_fail_revive_attempt(self);
+			}
+		}
+		return;
+	}
 
 	// the target needs healing
 	if (M_NeedRegen(self->enemy))
@@ -946,7 +1397,7 @@ void mymedic_cable_attack (edict_t *self)
 	// the target is a dead monster and needs resurrection
 	else if (self->enemy->health < 1)
 	{
-		M_Reanimate(self->activator, self->enemy, self->monsterinfo.level, 0.33, false);
+		mymedic_try_reanimate(self);
 	}
 }
 
@@ -958,9 +1409,9 @@ void mymedic_delay (edict_t *self)
 void mymedic_cable_continue (edict_t *self)
 {
 	// if target still needs healing, loop heal frames
-	if (M_ValidMedicTarget(self, self->enemy) && (entdist(self, self->enemy) <= 256))
+	if (M_ValidMedicTarget(self, self->enemy) && (entdist(self, self->enemy) <= MONSTER_MEDIC_CABLE_RANGE))
 	{
-		self->s.frame = 218;
+		self->s.frame = FRAME_attack42;
 		mymedic_cable_attack(self);
 	}
 }
@@ -998,6 +1449,327 @@ mframe_t mymedic_frames_attackCable [] =
 };
 mmove_t mymedic_move_attackCable = {FRAME_attack33, FRAME_attack60, mymedic_frames_attackCable, mymedic_heal};
 
+static void spawngrow_beam_think(edict_t *self);
+
+static void spawngrow_beam_pos(edict_t *self, vec3_t pos)
+{
+	float theta;
+	float phi;
+	float radius;
+	vec3_t dir;
+
+	if (!self->owner || !self->owner->inuse)
+	{
+		VectorCopy(self->s.origin, pos);
+		return;
+	}
+
+	theta = random() * 2.0f * (float)M_PI;
+	phi = acosf(crandom());
+	dir[0] = sinf(phi) * cosf(theta);
+	dir[1] = sinf(phi) * sinf(theta);
+	dir[2] = cosf(phi);
+
+	radius = self->owner->s.scale;
+	if (radius <= 0.0f)
+		radius = 1.0f;
+	radius *= 9.0f;
+
+	VectorMA(self->owner->s.origin, radius, dir, pos);
+}
+
+static void spawngrow_think(edict_t *self)
+{
+	float t;
+	int i;
+
+	if (level.time >= self->timestamp)
+	{
+		if (self->target_ent && self->target_ent->inuse)
+			G_FreeEdict(self->target_ent);
+		G_FreeEdict(self);
+		return;
+	}
+
+	for (i = 0; i < 3; i++)
+		self->s.angles[i] += self->avelocity[i] * FRAMETIME;
+
+	t = 1.0f - ((level.time - self->teleport_time) / self->wait);
+	t = medic_clampf(t, 0.0f, 1.0f);
+	self->s.scale = medic_clampf(medic_lerpf(self->decel, self->accel, t) / 16.0f, 0.001f, 16.0f);
+	self->s.alpha = t * t;
+
+	self->nextthink = level.time + FRAMETIME;
+}
+
+static void spawngrow_beam_think(edict_t *self)
+{
+	if (!self->owner || !self->owner->inuse)
+	{
+		G_FreeEdict(self);
+		return;
+	}
+
+	spawngrow_beam_pos(self, self->s.old_origin);
+	gi.linkentity(self);
+	self->nextthink = level.time + FRAMETIME;
+}
+
+void SpawnGrow_Spawn(vec3_t startpos, float start_size, float end_size)
+{
+	edict_t *ent;
+	edict_t *beam;
+
+	ent = G_Spawn();
+	VectorCopy(startpos, ent->s.origin);
+	VectorSet(ent->s.angles, GetRandom(0, 359), GetRandom(0, 359), GetRandom(0, 359));
+	VectorSet(ent->avelocity,
+		(280.0f + random() * 80.0f) * 2.0f,
+		(280.0f + random() * 80.0f) * 2.0f,
+		(280.0f + random() * 80.0f) * 2.0f);
+
+	ent->solid = SOLID_NOT;
+	ent->movetype = MOVETYPE_NONE;
+	ent->classname = "spawngro";
+	ent->s.modelindex = gi.modelindex("models/items/spawngro3/tris.md2");
+	ent->s.skinnum = 1;
+	ent->s.renderfx |= RF_IR_VISIBLE | RF_TRANSLUCENT;
+	ent->accel = start_size;
+	ent->decel = end_size;
+	ent->think = spawngrow_think;
+	ent->s.scale = medic_clampf(start_size / 16.0f, 0.001f, 8.0f);
+	ent->s.alpha = 1.0f;
+	ent->teleport_time = level.time;
+	ent->wait = SPAWNGROW_LIFESPAN;
+	ent->timestamp = level.time + SPAWNGROW_LIFESPAN;
+	ent->nextthink = level.time + FRAMETIME;
+	gi.linkentity(ent);
+
+	beam = ent->target_ent = G_Spawn();
+	beam->solid = SOLID_NOT;
+	beam->movetype = MOVETYPE_NONE;
+	beam->s.modelindex = 1;
+	beam->s.renderfx = RF_BEAM_LIGHTNING | RF_TRANSLUCENT;
+	beam->s.frame = 1;
+	beam->s.skinnum = 0x30303030;
+	beam->classname = "spawngro_beam";
+	beam->owner = ent;
+	VectorCopy(ent->s.origin, beam->s.origin);
+	spawngrow_beam_pos(beam, beam->s.old_origin);
+	beam->think = spawngrow_beam_think;
+	beam->nextthink = level.time + FRAMETIME;
+	gi.linkentity(beam);
+}
+
+static void medic_commander_start_spawn(edict_t *self)
+{
+	if (commander_sound_spawn)
+		gi.sound(self, CHAN_WEAPON, commander_sound_spawn, 1, ATTN_NORM, 0);
+
+	self->monsterinfo.nextframe = FRAME_attack48;
+}
+
+static void medic_commander_cleanup_failed_spawn(edict_t *owner, edict_t *spawned)
+{
+	if (owner && owner->client)
+		layout_remove_tracked_entity(&owner->client->layout, spawned);
+
+	DroneList_Remove(spawned);
+	AI_EnemyRemoved(spawned);
+	G_FreeEdict(spawned);
+}
+
+static void medic_commander_setup_invasion_spawn(edict_t *spawned)
+{
+	if (!invasion->value)
+		return;
+
+	spawned->monsterinfo.aiflags &= ~AI_STAND_GROUND;
+	spawned->monsterinfo.aiflags |= AI_FIND_NAVI;
+	spawned->prev_navi = NULL;
+	spawned->goalentity = NULL;
+}
+
+static qboolean medic_commander_valid_spawn_spot(edict_t *self, vec3_t mins, vec3_t maxs, vec3_t spot)
+{
+	if (G_IsValidLocation(self, spot, mins, maxs))
+		return true;
+
+	spot[2] += 24;
+	if (G_IsValidLocation(self, spot, mins, maxs))
+		return true;
+
+	spot[2] -= 48;
+	return G_IsValidLocation(self, spot, mins, maxs);
+}
+
+static qboolean medic_commander_find_spawn_spot(edict_t *self, vec3_t mins, vec3_t maxs, float side, vec3_t spot)
+{
+	vec3_t forward, right;
+
+	AngleVectors(self->s.angles, forward, right, NULL);
+
+	VectorCopy(self->s.origin, spot);
+	VectorMA(spot, 96, forward, spot);
+	VectorMA(spot, side, right, spot);
+	spot[2] += 8;
+	if (medic_commander_valid_spawn_spot(self, mins, maxs, spot))
+		return true;
+
+	VectorCopy(self->s.origin, spot);
+	VectorMA(spot, -72, forward, spot);
+	VectorMA(spot, side, right, spot);
+	spot[2] += 8;
+	if (medic_commander_valid_spawn_spot(self, mins, maxs, spot))
+		return true;
+
+	VectorCopy(self->s.origin, spot);
+	VectorMA(spot, 64, forward, spot);
+	VectorMA(spot, -side, right, spot);
+	spot[2] += 8;
+	return medic_commander_valid_spawn_spot(self, mins, maxs, spot);
+}
+
+static int medic_commander_random_soldier_type(void)
+{
+	static const int soldier_types[] =
+	{
+		M_SOLDIER,
+		M_SOLDIERLT,
+		M_SOLDIERSS,
+		M_SOLDIER_RIPPER,
+		M_SOLDIER_BLUEBLASTER,
+		M_SOLDIER_LASER
+	};
+
+	return soldier_types[GetRandom(0, (int)(sizeof(soldier_types) / sizeof(soldier_types[0])) - 1)];
+}
+
+static qboolean medic_commander_spawn_soldier(edict_t *self, float side)
+{
+	edict_t *owner = (self->activator && self->activator->inuse) ? self->activator : self;
+	edict_t *gunner;
+	vec3_t spot;
+	const qboolean force_start = invasion->value || pvm->value;
+
+	if (owner->client && owner->num_monsters + M_GUNNER_CONTROL_COST > MAX_MONSTERS)
+		return false;
+
+	gunner = G_Spawn();
+	gunner->mtype = medic_commander_random_soldier_type();
+	gunner->activator = owner;
+	gunner->monsterinfo.level = self->monsterinfo.level;
+
+	if (!M_Initialize(owner, gunner, 0.0f))
+	{
+		G_FreeEdict(gunner);
+		return false;
+	}
+
+	if (!medic_commander_find_spawn_spot(self, gunner->mins, gunner->maxs, side, spot))
+	{
+		medic_commander_cleanup_failed_spawn(owner, gunner);
+		return false;
+	}
+
+	gunner->monsterinfo.cost = 0;
+	gunner->s.effects |= EF_PLASMA;
+	VectorCopy(spot, gunner->s.origin);
+	VectorCopy(spot, gunner->s.old_origin);
+	VectorCopy(self->s.angles, gunner->s.angles);
+	gunner->nextthink = level.time + FRAMETIME;
+	gunner->monsterinfo.attack_finished = level.time + 1.0;
+	medic_commander_setup_invasion_spawn(gunner);
+
+	gi.linkentity(gunner);
+
+	owner->num_monsters += gunner->monsterinfo.control_cost;
+	owner->num_monsters_real++;
+
+	if (G_ValidTarget(gunner, self->enemy, !force_start, true))
+	{
+		gunner->enemy = self->enemy;
+		VectorCopy(self->enemy->s.origin, gunner->monsterinfo.last_sighting);
+		if (gunner->monsterinfo.run)
+			gunner->monsterinfo.run(gunner);
+	}
+	else if (force_start && drone_findtarget(gunner, true) && gunner->monsterinfo.run)
+		gunner->monsterinfo.run(gunner);
+	else if (gunner->monsterinfo.stand)
+		gunner->monsterinfo.stand(gunner);
+
+	return true;
+}
+
+static void medic_commander_spawngrows(edict_t *self)
+{
+	vec3_t mins, maxs, size, spot, effect_origin;
+	float radius;
+	int i;
+
+	VectorSet(mins, -16, -16, -24);
+	VectorSet(maxs, 16, 16, 32);
+	VectorSubtract(maxs, mins, size);
+	radius = VectorLength(size) * 0.5f;
+
+	for (i = 0; i < MEDIC_COMMANDER_SUMMON_COUNT; i++)
+	{
+		float side = (i & 1) ? 56 : -56;
+
+		if (!medic_commander_find_spawn_spot(self, mins, maxs, side, spot))
+			continue;
+
+		VectorAdd(mins, maxs, effect_origin);
+		VectorAdd(spot, effect_origin, effect_origin);
+		SpawnGrow_Spawn(effect_origin, radius, radius * 2.0f);
+	}
+}
+
+static void medic_commander_finish_spawn(edict_t *self)
+{
+	int spawned = 0;
+	int i;
+
+	for (i = 0; i < MEDIC_COMMANDER_SUMMON_COUNT; i++)
+	{
+		float side = (i & 1) ? 56 : -56;
+
+		if (medic_commander_spawn_soldier(self, side))
+			spawned++;
+	}
+
+	if (spawned)
+		self->monsterinfo.melee_finished = level.time + MEDIC_COMMANDER_SUMMON_COOLDOWN;
+}
+
+mframe_t medic_commander_frames_callReinforcements[] =
+{
+	ai_charge, 2,		NULL,							//209
+	ai_charge, 3,		NULL,
+	ai_charge, 5,		NULL,
+	ai_charge, 4,		NULL,
+	ai_charge, 5,		NULL,
+	ai_charge, 5,		NULL,
+	ai_charge, 6,		NULL,
+	ai_charge, 4,		NULL,
+	ai_charge, 0,		NULL,							//217
+	ai_move, 0,			medic_commander_start_spawn,	//218
+	ai_move, 0,			NULL,
+	ai_move, 0,			NULL,
+	ai_move, 0,			NULL,
+	ai_move, 0,			NULL,
+	ai_move, 0,			NULL,
+	ai_move, 0,			NULL,							//224
+	ai_charge, 0,		medic_commander_spawngrows,		//225
+	ai_move, 0,			NULL,
+	ai_move, 0,			NULL,
+	ai_move, -15,		medic_commander_finish_spawn,	//228
+	ai_move, -1.5,		NULL,
+	ai_move, -1.2,		NULL,
+	ai_move, -3,		NULL
+};
+mmove_t medic_commander_move_callReinforcements = {FRAME_attack33, FRAME_attack55, medic_commander_frames_callReinforcements, mymedic_run};
+
 void drone_wakeallies (edict_t *self);
 // search for nearby enemies, return true if one is found
 // this is to make the medic stop healing if there is a higher priority target
@@ -1019,11 +1791,43 @@ qboolean mymedic_findenemy (edict_t *self)
 
 void mymedic_heal (edict_t *self)
 {
+	if (mymedic_is_reviving(self))
+	{
+		if (!M_ValidMedicTarget(self, self->enemy))
+		{
+			mymedic_abort_heal(self, false);
+			mymedic_stand(self);
+			return;
+		}
+
+		if (self->timestamp && level.time > self->timestamp)
+		{
+			mymedic_abort_heal(self, true);
+			mymedic_stand(self);
+			return;
+		}
+
+		if ((self->monsterinfo.aiflags & AI_STAND_GROUND) && entdist(self, self->enemy) > MONSTER_MEDIC_CABLE_RANGE)
+		{
+			mymedic_abort_heal(self, false);
+			mymedic_stand(self);
+			return;
+		}
+
+		if (level.time < self->monsterinfo.attack_finished)
+			mymedic_run(self);
+		else if (entdist(self, self->enemy) <= MONSTER_MEDIC_CABLE_RANGE)
+			self->monsterinfo.currentmove = &mymedic_move_attackCable;
+		else
+			mymedic_run(self);
+		return;
+	}
+
 	// stop healing our target died, if they are fully healed, or
 	// they have gone out of range while we are standing ground (can't reach them)
 	if (!G_EntIsAlive(self->enemy) || !M_NeedRegen(self->enemy)
 		|| ((self->monsterinfo.aiflags & AI_STAND_GROUND) 
-		&& (entdist(self, self->enemy) > 256)))
+		&& (entdist(self, self->enemy) > MONSTER_MEDIC_CABLE_RANGE)))
 	{
 		self->enemy = NULL;
 		mymedic_stand(self);
@@ -1032,7 +1836,7 @@ void mymedic_heal (edict_t *self)
 
 	// continue healing if our target is still in range and
 	// there are no enemies around
-	if (OnSameTeam(self, self->enemy) && (entdist(self, self->enemy) <= 256)
+	if (OnSameTeam(self, self->enemy) && (entdist(self, self->enemy) <= MONSTER_MEDIC_CABLE_RANGE)
 		&& !mymedic_findenemy(self))
 		self->monsterinfo.currentmove = &mymedic_move_attackCable;
 	else
@@ -1042,6 +1846,8 @@ void mymedic_heal (edict_t *self)
 void mymedic_attack(edict_t *self)
 {
 	float	dist, r;
+	qboolean can_blaster;
+	qboolean can_hyperblaster;
 
 	if (!self->enemy)
 		return;
@@ -1050,31 +1856,90 @@ void mymedic_attack(edict_t *self)
 
 	dist = entdist(self, self->enemy);
 	r = random();
+	can_blaster = medic_can_blaster(self);
+	can_hyperblaster = medic_can_hyperblaster(self);
 
 	if ((self->monsterinfo.aiflags & AI_MEDIC)
 		&& ((self->enemy->health < 1 || OnSameTeam(self, self->enemy))))
 	{
-		if (dist <= 256)
+		if (mymedic_is_reviving(self))
+		{
+			if (!M_ValidMedicTarget(self, self->enemy))
+			{
+				mymedic_abort_heal(self, false);
+				return;
+			}
+
+			if (self->enemy->monsterinfo.medic_healer != self)
+			{
+				self->enemy->monsterinfo.medic_healer = self;
+				self->timestamp = level.time + MONSTER_MEDIC_REVIVE_TRY_TIME;
+			}
+
+			if (self->timestamp && level.time > self->timestamp)
+			{
+				mymedic_abort_heal(self, true);
+				return;
+			}
+
+			if (level.time < self->monsterinfo.attack_finished)
+				return;
+		}
+
+		if (dist <= MONSTER_MEDIC_CABLE_RANGE)
 			self->monsterinfo.currentmove = &mymedic_move_attackCable;
 		return;
 	}
 
-	if (dist <= 256)
+	if (dist <= MONSTER_MEDIC_CABLE_RANGE)
 	{
-		if (r <= 0.2)
+		if (can_hyperblaster && (r <= 0.2 || !can_blaster))
 			self->monsterinfo.currentmove = &mymedic_move_attackHyperBlaster;
-		else
+		else if (can_blaster)
 			self->monsterinfo.currentmove = &mymedic_move_attackBlaster;
+		else
+			return;
 	}
 	else
 	{
-		if (r <= 0.3)
+		if (can_blaster && (r <= 0.3 || !can_hyperblaster))
 			self->monsterinfo.currentmove = &mymedic_move_attackBlaster;
-		else
+		else if (can_hyperblaster)
 			self->monsterinfo.currentmove = &mymedic_move_attackHyperBlaster;
+		else
+			return;
 	}
 
 	M_DelayNextAttack(self, 0, true);
+}
+
+void medic_commander_attack(edict_t *self)
+{
+	edict_t *owner = (self->activator && self->activator->inuse) ? self->activator : self;
+	float dist;
+
+	if (!self->enemy || !self->enemy->inuse)
+		return;
+
+	if (!G_ValidTarget(self, self->enemy, false, true))
+	{
+		mymedic_attack(self);
+		return;
+	}
+
+	dist = entdist(self, self->enemy);
+
+	if (dist > 150
+		&& (!owner->client || owner->num_monsters + M_GUNNER_CONTROL_COST <= MAX_MONSTERS)
+		&& level.time >= self->monsterinfo.melee_finished
+		&& random() < 0.6)
+	{
+		self->monsterinfo.currentmove = &medic_commander_move_callReinforcements;
+		M_DelayNextAttack(self, 0, true);
+		return;
+	}
+
+	mymedic_attack(self);
 }
 
 void mymedic_melee (edict_t *self)
@@ -1084,7 +1949,7 @@ void mymedic_melee (edict_t *self)
 
 void mymedic_sight (edict_t *self, edict_t *other)
 {
-	gi.sound (self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
+	gi.sound (self, CHAN_VOICE, medic_sight_sound(self), 1, ATTN_NORM, 0);
 }
 
 /*QUAKED monster_medic (1 .5 0) (-16 -16 -24) (16 16 32) Ambush Trigger_Spawn Sight
@@ -1139,21 +2004,17 @@ void init_drone_medic (edict_t *self)
 	self->monsterinfo.sight = mymedic_sight;
 	self->monsterinfo.jumpup = 64;
 	self->monsterinfo.jumpdn = 512;
-//	self->monsterinfo.idle = mymedic_idle;
-//	self->monsterinfo.search = mymedic_search;
+	self->monsterinfo.idle = mymedic_search;
 //	self->monsterinfo.checkattack = mymedic_checkattack;
 //	self->monsterinfo.control_cost = 1;
 //	self->monsterinfo.cost = 150;
 
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
 	//self->monsterinfo.melee = 1;
 
 	//if (self->activator && self->activator->client)
-		self->monsterinfo.power_armor_power = M_MEDIC_INITIAL_ARMOR + M_MEDIC_ADDON_ARMOR*self->monsterinfo.level; // pow: medic
-	//else self->monsterinfo.power_armor_power = 200 + 40*self->monsterinfo.level;
-
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+		M_SetMonsterArmor(self, M_MEDIC_INITIAL_ARMOR + M_MEDIC_ADDON_ARMOR*self->monsterinfo.level); // pow: medic
+	//else M_SetMonsterArmor(self, 200 + 40*self->monsterinfo.level);
 
 	gi.linkentity (self);
 
@@ -1163,4 +2024,35 @@ void init_drone_medic (edict_t *self)
 //	walkmonster_start (self);
 	self->nextthink = level.time + 0.1;
 	//self->activator->num_monsters += self->monsterinfo.control_cost;
+}
+
+void init_drone_medic_commander(edict_t *self)
+{
+	init_drone_medic(self);
+
+	commander_sound_idle1 = gi.soundindex("medic_commander/medidle.wav");
+	commander_sound_pain1 = gi.soundindex("medic_commander/medpain1.wav");
+	commander_sound_pain2 = gi.soundindex("medic_commander/medpain2.wav");
+	commander_sound_die = gi.soundindex("medic_commander/meddeth.wav");
+	commander_sound_sight = gi.soundindex("medic_commander/medsght.wav");
+	commander_sound_search = gi.soundindex("medic_commander/medsrch.wav");
+	commander_sound_hook_launch = gi.soundindex("medic_commander/medatck2c.wav");
+	commander_sound_hook_hit = gi.soundindex("medic_commander/medatck3a.wav");
+	commander_sound_hook_heal = gi.soundindex("medic_commander/medatck4a.wav");
+	commander_sound_hook_retract = gi.soundindex("medic_commander/medatck5a.wav");
+	commander_sound_spawn = gi.soundindex("medic_commander/monsterspawn1.wav");
+	gi.soundindex("tank/tnkatck3.wav");
+	gi.modelindex("models/items/spawngro3/tris.md2");
+
+	self->mtype = M_MEDIC_COMMANDER;
+	self->s.skinnum = 2;
+	self->mass = 600;
+	self->yaw_speed = 40;
+	self->health = M_MEDIC_COMMANDER_INITIAL_HEALTH + M_MEDIC_COMMANDER_ADDON_HEALTH * self->monsterinfo.level;
+	self->max_health = self->health;
+	M_SetMonsterPowerArmor(self, POWER_ARMOR_SHIELD, M_MEDIC_COMMANDER_INITIAL_ARMOR + M_MEDIC_COMMANDER_ADDON_ARMOR * self->monsterinfo.level);
+	self->monsterinfo.control_cost = M_TANK_CONTROL_COST;
+	self->monsterinfo.cost = M_TANK_COST;
+	self->monsterinfo.attack = medic_commander_attack;
+	self->monsterinfo.melee_finished = level.time + 1.0;
 }

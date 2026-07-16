@@ -251,6 +251,8 @@ void fire_icebolt(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float 
 	icebolt->chill_level = chillLevel;
 	icebolt->chill_time = chillDuration;
 	icebolt->classname = "icebolt";
+	if (self->client)
+		icebolt->svflags |= SVF_PROJECTILE;
 	icebolt->delay = level.time + 10.0; // timeout
 	gi.linkentity(icebolt);
 	icebolt->nextthink = level.time + FRAMETIME;
@@ -359,6 +361,8 @@ void fire_iceshard(edict_t* self, vec3_t start, vec3_t dir, float speed, int dam
 	bolt->chill_level = chillLevel;
 	bolt->chill_time = chillDuration;
 	bolt->classname = "ice shard";
+	if (G_GetClient(self))
+		bolt->svflags |= SVF_PROJECTILE;
 	gi.linkentity(bolt);
 
 	// cloak a player-owned ice shard in PvM if there are too many entities nearby
@@ -489,6 +493,8 @@ void fire_frozenorb(edict_t* self, vec3_t start, vec3_t aimdir, int damage, int 
 	orb->chill_level = chillLevel;
 	orb->chill_time = chillDuration;
 	orb->classname = "frozen orb";
+	if (self->client)
+		orb->svflags |= SVF_PROJECTILE;
 	orb->delay = level.time + FROZEN_ORB_DURATION; // timeout
 	gi.linkentity(orb);
 	orb->nextthink = level.time + FRAMETIME;

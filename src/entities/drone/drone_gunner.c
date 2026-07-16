@@ -17,8 +17,10 @@ static int	sound_open;
 static int	sound_search;
 static int	sound_sight;
 static int	sound_thud;
+static int	sound_ionripper;
 
 void mygunner_continue (edict_t *self);
+void mygunnerrun (edict_t *self);
 void mygunner_refire_chain(edict_t *self);
 void mygunner_fire_chain(edict_t *self);
 void mygunner_delay (edict_t *self);
@@ -184,6 +186,29 @@ mframe_t mygunnerframes_run [] =
 
 mmove_t mygunnermove_run = {FRAME_run01, FRAME_run08, mygunnerframes_run, NULL};
 
+static void mygunner_ai_dodge_slide(edict_t *self, float dist)
+{
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(self->monsterinfo.attacker))
+		self->enemy = self->monsterinfo.attacker;
+	if (!G_EntIsAlive(self->enemy))
+		return;
+
+	drone_ai_dodge_slide(self, dist);
+}
+
+mframe_t mygunner_frames_dodge_slide[] =
+{
+	mygunner_ai_dodge_slide, 26, NULL,
+	mygunner_ai_dodge_slide, 9,  NULL,
+	mygunner_ai_dodge_slide, 9,  NULL,
+	mygunner_ai_dodge_slide, 9,  NULL,
+	mygunner_ai_dodge_slide, 15, NULL,
+	mygunner_ai_dodge_slide, 10, NULL,
+	mygunner_ai_dodge_slide, 13, NULL,
+	mygunner_ai_dodge_slide, 6,  NULL
+};
+mmove_t mygunner_move_dodge_slide = {FRAME_run01, FRAME_run08, mygunner_frames_dodge_slide, mygunnerrun};
+
 void mygunnerrun (edict_t *self)
 {
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
@@ -211,12 +236,22 @@ void myGunnerGrenade (edict_t *self)
 	if (M_GRENADELAUNCHER_SPEED_MAX && speed > M_GRENADELAUNCHER_SPEED_MAX)
 		speed = M_GRENADELAUNCHER_SPEED_MAX;
 
-	if (self->s.frame == FRAME_attak105)
+	if (self->s.frame == FRAME_attak105 || self->s.frame == FRAME_attak309)
 		flash_number = MZ2_GUNNER_GRENADE_1;
+	else if (self->s.frame == FRAME_attak108 || self->s.frame == FRAME_attak312)
+		flash_number = MZ2_GUNNER_GRENADE_2;
+	else if (self->s.frame == FRAME_attak111 || self->s.frame == FRAME_attak315)
+		flash_number = MZ2_GUNNER_GRENADE_3;
 	else
 		flash_number = MZ2_GUNNER_GRENADE_4;
 
+	if (self->s.frame >= FRAME_attak301 && self->s.frame <= FRAME_attak324)
+		flash_number = MZ2_GUNNER_GRENADE2_1 + (MZ2_GUNNER_GRENADE_4 - flash_number);
+
 	MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash_number, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	monster_fire_grenade(self, start, forward, damage, speed, flash_number);
 }
 
@@ -256,13 +291,67 @@ mframe_t mygunner_frames_attack_grenade [] =
 };
 mmove_t mygunner_move_attack_grenade = {FRAME_attak105, FRAME_attak113, mygunner_frames_attack_grenade, gunner_refire_grenade};
 
+mframe_t mygunner_frames_attack_grenade2[] =
+{
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, myGunnerGrenade,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, myGunnerGrenade,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, myGunnerGrenade,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, myGunnerGrenade,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL
+};
+mmove_t mygunner_move_attack_grenade2 = {FRAME_attak305, FRAME_attak324, mygunner_frames_attack_grenade2, mygunnerrun};
+
+static qboolean mygunner_can_grenade(edict_t *self, qboolean second_set)
+{
+	return M_MonsterHasClearShotFromFlash(self, second_set ? MZ2_GUNNER_GRENADE2_4 : MZ2_GUNNER_GRENADE_1);
+}
+
+static qboolean mygunner_can_run_grenade(edict_t *self)
+{
+	return M_MonsterHasClearShotFromFlash(self, MZ2_GUNNER_GRENADE_4);
+}
+
+static qboolean mygunner_can_chain(edict_t *self)
+{
+	return M_MonsterHasClearShotFromFlash(self, MZ2_GUNNER_MACHINEGUN_1);
+}
+
+static qboolean mygunner_start_grenade(edict_t *self)
+{
+	qboolean can_first = mygunner_can_grenade(self, false);
+	qboolean can_second = mygunner_can_grenade(self, true);
+
+	if (!can_first && !can_second)
+		return false;
+
+	if (can_second && (!can_first || random() <= 0.5))
+		self->monsterinfo.currentmove = &mygunner_move_attack_grenade2;
+	else
+		self->monsterinfo.currentmove = &mygunner_move_attack_grenade;
+
+	return true;
+}
+
 void gunner_refire_grenade (edict_t *self)
 {
 	// continue firing unless enemy is no longer valid or out of range
-	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.8)
-		&& (entdist(self, self->enemy) <= 384))
-		self->monsterinfo.currentmove = &mygunner_move_attack_grenade;
-	else
+	if (!(G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.8)
+		&& (entdist(self, self->enemy) <= 384) && mygunner_start_grenade(self)))
 		self->monsterinfo.currentmove = &mygunner_move_attack_grenade_end;
 
 	// don't call the attack function again for awhile!
@@ -272,8 +361,8 @@ void gunner_refire_grenade (edict_t *self)
 void gunner_attack_grenade (edict_t *self)
 {
 	// continue attack sequence unless enemy is no longer valid
-	if (G_ValidTarget(self, self->enemy, true, true))
-		self->monsterinfo.currentmove = &mygunner_move_attack_grenade;
+	if (G_ValidTarget(self, self->enemy, true, true) && mygunner_start_grenade(self))
+		return;
 	else
 		mygunnerrun(self);
 }
@@ -308,7 +397,7 @@ mmove_t mygunner_move_runandshoot = {FRAME_runs01, FRAME_runs06, mygunner_frames
 void mygunner_continue (edict_t *self)
 {
 	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.9)
-		&& (entdist(self, self->enemy) <= 512))
+		&& (entdist(self, self->enemy) <= 512) && mygunner_can_run_grenade(self))
 		self->monsterinfo.currentmove = &mygunner_move_runandshoot;
 	else
 		self->monsterinfo.currentmove = &mygunnermove_run;
@@ -324,7 +413,7 @@ void mygunner_runandshoot (edict_t *self)
 
 void myGunnerFire (edict_t *self)
 {
-	int		damage, flash_number;
+	int		damage, speed, flash_number, ripper_flash;
 	vec3_t	forward, start;
 
 	// sanity check
@@ -332,12 +421,33 @@ void myGunnerFire (edict_t *self)
 		return;
 
 	flash_number = MZ2_GUNNER_MACHINEGUN_1 + (self->s.frame - FRAME_attak216);
+
+	if (self->mtype == M_HEAVY_GUNNER)
+	{
+		ripper_flash = MZ2_SOLDIER_RIPPER_1 + (self->s.frame - FRAME_attak216);
+		damage = M_IONRIPPER_DMG_BASE + M_IONRIPPER_DMG_ADDON * drone_damagelevel(self);
+		if (M_IONRIPPER_DMG_MAX && damage > M_IONRIPPER_DMG_MAX)
+			damage = M_IONRIPPER_DMG_MAX;
+		speed = M_IONRIPPER_SPEED_BASE + M_IONRIPPER_SPEED_ADDON * drone_damagelevel(self);
+		if (M_IONRIPPER_SPEED_MAX && speed > M_IONRIPPER_SPEED_MAX)
+			speed = M_IONRIPPER_SPEED_MAX;
+
+		MonsterAim(self, M_PROJECTILE_ACC, speed, false, flash_number, forward, start);
+		if (!M_MonsterHasClearShotFrom(self, start))
+			return;
+
+		if (monster_fire_ionripper(self, start, forward, damage, speed, EF_IONRIPPER, ripper_flash))
+			gi.sound(self, CHAN_WEAPON, sound_ionripper, 1, ATTN_NORM, 0);
+		return;
+	}
  
 	damage = M_MACHINEGUN_DMG_BASE + M_MACHINEGUN_DMG_ADDON * drone_damagelevel(self);
 	if (M_MACHINEGUN_DMG_MAX && damage > M_MACHINEGUN_DMG_MAX)
 		damage = M_MACHINEGUN_DMG_MAX;
 
 	MonsterAim(self, M_HITSCAN_CONT_ACC, 0, false, flash_number, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
 
 	monster_fire_bullet (self, start, forward, damage, damage, 
 		DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD, flash_number);
@@ -405,7 +515,7 @@ void mygunner_refire_chain(edict_t *self)
 {
 	// keep firing
 	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.8)
-		&& entdist(self, self->enemy) > 128)
+		&& entdist(self, self->enemy) > 128 && mygunner_can_chain(self))
 		self->monsterinfo.currentmove = &mygunner_move_fire_chain;
 	else
 		self->monsterinfo.currentmove = &mygunner_move_endfire_chain;
@@ -418,9 +528,10 @@ void mygunner_refire_chain(edict_t *self)
 
 void gunner_stand_attack (edict_t *self)
 {
-	if (entdist(self, self->enemy) <= 384 && random() <= 0.8)
-		self->monsterinfo.currentmove = &mygunner_move_attack_grenade;
-	else
+	if (entdist(self, self->enemy) <= 384 && random() <= 0.8 && mygunner_start_grenade(self))
+		return;
+
+	if (mygunner_can_chain(self))
 		self->monsterinfo.currentmove = &mygunner_move_attack_chain;
 }
 
@@ -432,20 +543,26 @@ void gunner_attack (edict_t *self)
 	// short range (20% chance grenade, 80% chance run and shoot)
 	if (dist <= 128)
 	{
-		if (r <= 0.2)
-			self->monsterinfo.currentmove = &mygunner_move_attack_grenade;
-		else
+		if (r <= 0.2 && mygunner_start_grenade(self))
+			return;
+
+		if (mygunner_can_run_grenade(self))
 			self->monsterinfo.currentmove = &mygunner_move_runandshoot;
+		else if (mygunner_can_chain(self))
+			self->monsterinfo.currentmove = &mygunner_move_attack_chain;
 	}
 	// medium range (100% run and shoot)
 	else if (dist <= 512)
 	{
-		self->monsterinfo.currentmove = &mygunner_move_runandshoot;
+		if (mygunner_can_run_grenade(self))
+			self->monsterinfo.currentmove = &mygunner_move_runandshoot;
+		else if (mygunner_can_chain(self))
+			self->monsterinfo.currentmove = &mygunner_move_attack_chain;
 	}
 	// long range (50% chance chaingun)
 	else
 	{
-		if (r <= 0.5)
+		if (r <= 0.5 && mygunner_can_chain(self))
 			self->monsterinfo.currentmove = &mygunner_move_attack_chain;
 		else
 			self->monsterinfo.attack_finished = level.time + 2.0;// don't attack, try to get closer
@@ -485,17 +602,36 @@ void mygunner_duck_up (edict_t *self)
 	gi.linkentity (self);
 }
 
+void mygunner_duck_hold (edict_t *self)
+{
+	if (self->monsterinfo.pausetime > level.time)
+		self->monsterinfo.nextframe = self->s.frame;
+}
+
 mframe_t mygunner_frames_duck [] =
 {
-	ai_move, 0,  mygunner_duck_down,
-	ai_move, 0,  NULL,
+	ai_move, 1, mygunner_duck_down,
+	ai_move, 1, NULL,
+	ai_move, 1, mygunner_duck_hold,
 	ai_move, 0, NULL,
-	ai_move, 0, NULL,
-	ai_move, 0,  mygunner_duck_up,
+	ai_move, -1, NULL,
+	ai_move, -1, NULL,
+	ai_move, 0, mygunner_duck_up,
+	ai_move, -1, NULL
 };
-mmove_t	mygunner_move_duck = {FRAME_duck03, FRAME_duck07, mygunner_frames_duck, mygunnerrun};
+mmove_t	mygunner_move_duck = {FRAME_duck01, FRAME_duck08, mygunner_frames_duck, mygunnerrun};
 
-void mygunner_jump_takeoff (edict_t *self)
+void mygunner_jump_now (edict_t *self)
+{
+	vec3_t	forward;
+
+	AngleVectors(self->s.angles, forward, NULL, NULL);
+	VectorMA(self->velocity, 100, forward, self->velocity);
+	self->velocity[2] += 300;
+	self->monsterinfo.pausetime = level.time + 2.0;
+}
+
+void mygunner_jump2_now (edict_t *self)
 {
 	vec3_t	v;
 
@@ -503,12 +639,12 @@ void mygunner_jump_takeoff (edict_t *self)
 	VectorSubtract(self->monsterinfo.dir, self->s.origin, v);
 	v[2] = 0;
 	VectorNormalize(v);
-	VectorScale(v, -200, self->velocity);
+	VectorScale(v, -150, self->velocity);
 	self->velocity[2] = 400;
 	self->monsterinfo.pausetime = level.time + 2.0; // maximum duration of jump
 }
 
-void mygunner_jump_hold (edict_t *self)
+void mygunner_jump_wait_land (edict_t *self)
 {
 	vec3_t	v;
 
@@ -522,51 +658,109 @@ void mygunner_jump_hold (edict_t *self)
 	// check for landing or jump timeout
 	if (self->groundentity || (level.time > self->monsterinfo.pausetime))
 	{
-		self->monsterinfo.aiflags &= ~AI_HOLD_FRAME;
 		VectorClear(self->velocity);
+		self->monsterinfo.nextframe = self->s.frame + 1;
 	}
 	else
 	{
 		// we're still in the air
-		self->monsterinfo.aiflags |= AI_HOLD_FRAME;
+		self->monsterinfo.nextframe = self->s.frame;
 	}
 }
 
-mframe_t mygunner_frames_leap [] =
+static void mygunner_jump_wait_land_ai(edict_t *self, float dist)
 {
-	ai_move,	0,	mygunner_jump_takeoff,
-	ai_move,	0,	NULL,
-	ai_move,	0,	mygunner_jump_hold,
-	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
-	ai_move,	0,	NULL
+	ai_move(self, dist);
+	mygunner_jump_wait_land(self);
+}
+
+mframe_t mygunner_frames_jump [] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, mygunner_jump_now,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	mygunner_jump_wait_land_ai, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
 };
-mmove_t mygunner_move_leap = {FRAME_duck01, FRAME_duck08, mygunner_frames_leap, mygunnerrun};
+mmove_t mygunner_move_jump = {FRAME_jump01, FRAME_jump10, mygunner_frames_jump, mygunnerrun};
+
+mframe_t mygunner_frames_jump2 [] =
+{
+	ai_move, -8, NULL,
+	ai_move, -4, NULL,
+	ai_move, -4, NULL,
+	ai_move, 0, mygunner_jump2_now,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	mygunner_jump_wait_land_ai, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+mmove_t mygunner_move_jump2 = {FRAME_jump01, FRAME_jump10, mygunner_frames_jump2, mygunnerrun};
 
 void mygunner_leap (edict_t *self)
 {
 	if (self->groundentity)
-		self->monsterinfo.currentmove = &mygunner_move_leap;
+		self->monsterinfo.currentmove = &mygunner_move_jump2;
+}
+
+static qboolean mygunner_is_dodge_move(edict_t *self)
+{
+	return self->monsterinfo.currentmove == &mygunner_move_duck ||
+		self->monsterinfo.currentmove == &mygunner_move_jump ||
+		self->monsterinfo.currentmove == &mygunner_move_jump2 ||
+		self->monsterinfo.currentmove == &mygunner_move_dodge_slide;
+}
+
+static qboolean mygunner_is_uninterruptible_attack(edict_t *self)
+{
+	return self->monsterinfo.currentmove == &mygunner_move_attack_chain ||
+		self->monsterinfo.currentmove == &mygunner_move_fire_chain ||
+		self->monsterinfo.currentmove == &mygunner_move_attack_grenade ||
+		self->monsterinfo.currentmove == &mygunner_move_attack_grenade2;
+}
+
+static qboolean mygunner_dodge_hit_low(edict_t *self, vec3_t dir)
+{
+	const float duck_height = self->absmax[2] - 33;
+
+	return dir[2] > self->absmin[2] && dir[2] <= duck_height;
 }
 
 void mygunner_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
 {
 	if (random() > 0.9)
 		return;
-	if (!G_GetClient(self))
-		return;
 	if (level.time < self->monsterinfo.dodge_time)
 		return;
 	if (OnSameTeam(self, attacker))
 		return;
+	if (mygunner_is_dodge_move(self) || mygunner_is_uninterruptible_attack(self))
+		return;
 
-	if (!self->enemy && G_EntIsAlive(attacker))
+	self->monsterinfo.attacker = attacker;
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(attacker))
 		self->enemy = attacker;
 	if (!radius)
 	{
-		self->monsterinfo.currentmove = &mygunner_move_duck;
+		drone_set_dodge_side(self, dir);
+
+		if (mygunner_dodge_hit_low(self, dir) && !(self->monsterinfo.aiflags & AI_STAND_GROUND))
+		{
+			self->monsterinfo.currentmove = &mygunner_move_dodge_slide;
+		}
+		else
+		{
+			self->monsterinfo.pausetime = level.time + 0.5;
+			self->monsterinfo.currentmove = &mygunner_move_duck;
+			mygunner_duck_down(self);
+		}
 		self->monsterinfo.dodge_time = level.time + 2.0;
 	}
 	else
@@ -635,7 +829,8 @@ void mygunner_pain(edict_t* self, edict_t* other, float kick, int damage)
 	// we're already in a pain state
 	if (self->monsterinfo.currentmove == &mygunnermove_pain_long1 ||
 		self->monsterinfo.currentmove == &mygunnermove_pain_long2 ||
-		self->monsterinfo.currentmove == &mygunnermove_pain_short)
+		self->monsterinfo.currentmove == &mygunnermove_pain_short ||
+		mygunner_is_dodge_move(self))
 		return;
 
 	// monster players don't get pain state induced
@@ -680,12 +875,19 @@ void mygunnerdead (edict_t *self)
 	M_PrepBodyRemoval(self);
 }
 
+static void mygunner_shrink(edict_t *self)
+{
+	self->maxs[2] = -4;
+	self->svflags |= SVF_DEADMONSTER;
+	gi.linkentity(self);
+}
+
 mframe_t mygunnerframes_death [] =
 {
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
 	ai_move, 0,	 NULL,
-	ai_move, -7, NULL,
+	ai_move, -7, mygunner_shrink,
 	ai_move, -3, NULL,
 	ai_move, -5, NULL,
 	ai_move, 8,	 NULL,
@@ -698,8 +900,6 @@ mmove_t mygunnermove_death = {FRAME_death01, FRAME_death11, mygunnerframes_death
 
 void mygunnerdie (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int		n;
-
 	M_Notify(self);
 
 #ifdef OLD_NOLAG_STYLE
@@ -715,14 +915,7 @@ void mygunnerdie (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (vrx_spawn_nonessential_ent(self->s.origin))
-		{
-			for (n = 0; n < 2; n++)
-				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-			for (n = 0; n < 4; n++)
-				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-			//ThrowHead (self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
-		}
+		vrx_throw_drone_gibs(self, damage);
 		//self->deadflag = DEAD_DEAD;
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);
@@ -744,6 +937,7 @@ void mygunnerdie (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	gi.sound (self, CHAN_VOICE, sound_death, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 	self->monsterinfo.currentmove = &mygunnermove_death;
 
 	if (self->activator && !self->activator->client)
@@ -763,6 +957,7 @@ void init_drone_gunner (edict_t *self)
 	sound_search = gi.soundindex ("gunner/gunsrch1.wav");	
 	sound_sight = gi.soundindex ("gunner/sight1.wav");
 	sound_thud = gi.soundindex ("player/land1.wav");
+	sound_ionripper = gi.soundindex("weapons/rippfire.wav");
 
 	gi.soundindex ("gunner/gunatck2.wav");
 	gi.soundindex ("gunner/gunatck3.wav");
@@ -795,18 +990,15 @@ void init_drone_gunner (edict_t *self)
 	self->monsterinfo.dodge = mygunner_dodge;
 	self->monsterinfo.attack = mygunner_attack;
 	self->monsterinfo.walk = gunner_walk;
+	self->monsterinfo.idle = mygunnersearch;
 	self->monsterinfo.pain_chance = 0.3f;
 
 	self->pain = mygunner_pain;
 
 	//K03 Begin
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-
 	//if (self->activator && self->activator->client)
-		self->monsterinfo.power_armor_power = M_GUNNER_INITIAL_ARMOR + M_GUNNER_ADDON_ARMOR*self->monsterinfo.level; // pow: gunner
-	//else self->monsterinfo.power_armor_power = 100 + 50*self->monsterinfo.level;
-
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+		M_SetMonsterArmor(self, M_GUNNER_INITIAL_ARMOR + M_GUNNER_ADDON_ARMOR*self->monsterinfo.level); // pow: gunner
+	//else M_SetMonsterArmor(self, 100 + 50*self->monsterinfo.level);
 	self->mtype = M_GUNNER;
 	//K03 End
 
@@ -817,4 +1009,17 @@ void init_drone_gunner (edict_t *self)
 
 //	walkmonster_start (self);
 	self->nextthink = level.time + 0.1;
+}
+
+void init_drone_heavy_gunner(edict_t *self)
+{
+	init_drone_gunner(self);
+
+	self->monsterinfo.control_cost = M_HEAVY_GUNNER_CONTROL_COST;
+	self->monsterinfo.cost = M_HEAVY_GUNNER_COST;
+	self->health = M_HEAVY_GUNNER_INITIAL_HEALTH + M_HEAVY_GUNNER_ADDON_HEALTH * self->monsterinfo.level;
+	self->max_health = self->health;
+	M_SetMonsterPowerArmor(self, POWER_ARMOR_SHIELD,
+		M_HEAVY_GUNNER_INITIAL_ARMOR + M_HEAVY_GUNNER_ADDON_ARMOR * self->monsterinfo.level);
+	self->mtype = M_HEAVY_GUNNER;
 }

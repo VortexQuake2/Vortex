@@ -9,6 +9,8 @@ Makron -- Final Boss
 #include "g_local.h"
 #include "../../quake2/monsterframes/m_boss32.h"
 
+static constexpr float MAKRON_INVASION_MOVE_SCALE = 0.75f;
+
 qboolean visible (const edict_t *self, const edict_t *other);
 
 void MakronRailgun (edict_t *self);
@@ -33,6 +35,16 @@ static int	sound_taunt1;
 static int	sound_taunt2;
 static int	sound_taunt3;
 static int	sound_hit;
+
+static void makron_ai_run(edict_t *self, float dist)
+{
+	drone_ai_run(self, invasion->value ? dist * MAKRON_INVASION_MOVE_SCALE : dist);
+}
+
+static void makron_ai_walk(edict_t *self, float dist)
+{
+	drone_ai_walk(self, invasion->value ? dist * MAKRON_INVASION_MOVE_SCALE : dist);
+}
 
 void makron_taunt (edict_t *self)
 {
@@ -123,16 +135,16 @@ void makron_stand (edict_t *self)
 
 mframe_t makron_frames_run [] =
 {
-	drone_ai_run, 20,	makron_step_left,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	makron_step_right,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL
+	makron_ai_run, 20,	makron_step_left,
+	makron_ai_run, 20,	NULL,
+	makron_ai_run, 20,	NULL,
+	makron_ai_run, 20,	NULL,
+	makron_ai_run, 20,	makron_step_right,
+	makron_ai_run, 20,	NULL,
+	makron_ai_run, 20,	NULL,
+	makron_ai_run, 20,	NULL,
+	makron_ai_run, 20,	NULL,
+	makron_ai_run, 20,	NULL
 };
 mmove_t	makron_move_run = {FRAME_walk204, FRAME_walk213, makron_frames_run, NULL};
 
@@ -169,16 +181,16 @@ void makron_prerailgun (edict_t *self)
 
 mframe_t makron_frames_walk [] =
 {
-	drone_ai_walk, 3,	makron_step_left,
-	drone_ai_walk, 12,	NULL,
-	drone_ai_walk, 8,	NULL,
-	drone_ai_walk, 8,	NULL,
-	drone_ai_walk, 8,	makron_step_right,
-	drone_ai_walk, 6,	NULL,
-	drone_ai_walk, 12,	NULL,
-	drone_ai_walk, 9,	NULL,
-	drone_ai_walk, 6,	NULL,
-	drone_ai_walk, 12,	NULL
+	makron_ai_walk, 3,	makron_step_left,
+	makron_ai_walk, 12,	NULL,
+	makron_ai_walk, 8,	NULL,
+	makron_ai_walk, 8,	NULL,
+	makron_ai_walk, 8,	makron_step_right,
+	makron_ai_walk, 6,	NULL,
+	makron_ai_walk, 12,	NULL,
+	makron_ai_walk, 9,	NULL,
+	makron_ai_walk, 6,	NULL,
+	makron_ai_walk, 12,	NULL
 };
 mmove_t	makron_move_walk = {FRAME_walk204, FRAME_walk213, makron_frames_walk, NULL};
 
@@ -340,6 +352,103 @@ mframe_t makron_frames_sight [] =
 	ai_move,	0,	NULL
 };
 mmove_t makron_move_sight= {FRAME_active01, FRAME_active13, makron_frames_sight, makron_run};
+
+mframe_t makron_frames_pain6[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, makron_popup,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, makron_taunt,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+mmove_t makron_move_pain6 = { FRAME_pain601, FRAME_pain627, makron_frames_pain6, makron_run };
+
+mframe_t makron_frames_pain5[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+mmove_t makron_move_pain5 = { FRAME_pain501, FRAME_pain504, makron_frames_pain5, makron_run };
+
+mframe_t makron_frames_pain4[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+mmove_t makron_move_pain4 = { FRAME_pain401, FRAME_pain404, makron_frames_pain4, makron_run };
+
+void makron_pain(edict_t *self, edict_t *other, float kick, int damage)
+{
+	qboolean do_pain6 = false;
+
+	(void)other;
+	(void)kick;
+
+	if (self->monsterinfo.currentmove == &makron_move_sight)
+		return;
+
+	if (level.time < self->pain_debounce_time)
+		return;
+
+	if (damage <= 25 && random() < 0.2f)
+		return;
+
+	self->pain_debounce_time = level.time + 3.0f;
+
+	if (damage <= 40)
+		gi.sound(self, CHAN_VOICE, sound_pain4, 1, ATTN_NORM, 0);
+	else if (damage <= 110)
+		gi.sound(self, CHAN_VOICE, sound_pain5, 1, ATTN_NORM, 0);
+	else if (damage <= 150)
+	{
+		if (random() <= 0.45f)
+		{
+			do_pain6 = true;
+			gi.sound(self, CHAN_VOICE, sound_pain6, 1, ATTN_NORM, 0);
+		}
+	}
+	else if (random() <= 0.35f)
+	{
+		do_pain6 = true;
+		gi.sound(self, CHAN_VOICE, sound_pain6, 1, ATTN_NORM, 0);
+	}
+
+	if (invasion->value == 2)
+		return;
+
+	if (damage <= 40)
+		self->monsterinfo.currentmove = &makron_move_pain4;
+	else if (damage <= 110)
+		self->monsterinfo.currentmove = &makron_move_pain5;
+	else if (do_pain6)
+		self->monsterinfo.currentmove = &makron_move_pain6;
+}
 
 void makronBFG (edict_t *self)
 {
@@ -535,7 +644,7 @@ void makron_torso (edict_t *ent)
 void makron_dead (edict_t *self)
 {
 	VectorSet (self->mins, -60, -60, 0);
-	VectorSet (self->maxs, 60, 60, 72);
+	VectorSet (self->maxs, 60, 60, 24);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	self->nextthink = 0;
@@ -547,21 +656,12 @@ void makron_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 {
 	edict_t *tempent;
 
-	int		n;
-
 	self->s.sound = 0;
 	// check for gib
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (vrx_spawn_nonessential_ent(self->s.origin))
-		{
-			for (n = 0; n < 1 /*4*/; n++)
-				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-			for (n = 0; n < 4; n++)
-				ThrowGib(self, "models/objects/gibs/sm_metal/tris.md2", damage, GIB_METALLIC);
-			ThrowHead(self, "models/objects/gibs/gear/tris.md2", damage, GIB_METALLIC);
-		}
+		vrx_throw_drone_gibs(self, damage);
 		//self->deadflag = DEAD_DEAD;
 		M_Remove(self, false, false);
 		return;
@@ -574,12 +674,17 @@ void makron_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	gi.sound (self, CHAN_VOICE, sound_death, 1, ATTN_NONE, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	self->svflags |= SVF_DEADMONSTER;
+	vrx_update_drone_death_skin(self);
 
 	tempent = G_Spawn();
 	VectorCopy (self->s.origin, tempent->s.origin);
 	VectorCopy (self->s.angles, tempent->s.angles);
 	tempent->s.origin[1] -= 84;
 	makron_torso (tempent);
+	VectorSet (self->mins, -60, -60, 0);
+	VectorSet (self->maxs, 60, 60, 48);
+	gi.linkentity(self);
 
 	self->monsterinfo.currentmove = &makron_move_death2;
 	DroneList_Remove(self);
@@ -627,9 +732,7 @@ void init_drone_makron (edict_t *self)
 	else
 		self->health = 1500 * self->monsterinfo.level;
 	self->max_health = self->health;
-	self->monsterinfo.power_armor_power = 1000 * self->monsterinfo.level;
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, 1000 * self->monsterinfo.level);
 	self->gib_health = -2000;
 	self->mass = 500;
 	self->mtype = M_MAKRON;
@@ -638,6 +741,7 @@ void init_drone_makron (edict_t *self)
 	self->monsterinfo.jumpup = 64;
 	self->monsterinfo.jumpdn = 512;
 
+	// vortex bosses have pain animations disabled.
 	//self->pain = makron_pain;
 	self->die = makron_die;
 	self->monsterinfo.stand = makron_stand;

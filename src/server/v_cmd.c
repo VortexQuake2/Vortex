@@ -92,6 +92,161 @@ void Cmd_AI_RemoveNode_f(edict_t* ent);
 
 #define CommandTotal sizeof(commands) / sizeof(gameCommand_s)
 
+static qboolean Cmd_ParseInteger(const char *token, int *value)
+{
+	char *end;
+	long parsed;
+
+	if (!token || !*token)
+		return false;
+
+	parsed = strtol(token, &end, 10);
+	if (!end || *end)
+		return false;
+
+	*value = (int)parsed;
+	return true;
+}
+
+void Cmd_Immortal_f(edict_t* ent)
+{
+	const char *msg;
+
+	if (!ent || !ent->client || !ent->myskills.administrator)
+		return;
+
+	ent->flags ^= FL_IMMORTAL;
+	if (!(ent->flags & FL_IMMORTAL))
+		msg = "immortal OFF\n";
+	else
+		msg = "immortal ON\n";
+
+	safe_cprintf(ent, PRINT_HIGH, msg);
+}
+
+static qboolean Cmd_SpawnParseDroneType(enum dronespawn_t *drone_type)
+{
+	const char *arg;
+	int value;
+
+	if (gi.argc() < 2)
+		return false;
+
+	arg = gi.argv(1);
+
+	if (!Q_strcasecmp(arg, "drone_mtype") || !Q_strcasecmp(arg, "mtype"))
+	{
+		if (gi.argc() < 3 || !Cmd_ParseInteger(gi.argv(2), &value))
+			return false;
+
+		return vrx_drone_spawn_type_from_mtype(value, drone_type);
+	}
+
+	if (!Q_strcasecmp(arg, "drone_type") || !Q_strcasecmp(arg, "dronespawn") || !Q_strcasecmp(arg, "ds"))
+	{
+		if (gi.argc() < 3 || !Cmd_ParseInteger(gi.argv(2), &value))
+			return false;
+		if (value < DS_GUNNER || value > DS_HEAVY_GUNNER)
+			return false;
+
+		*drone_type = (enum dronespawn_t)value;
+		return true;
+	}
+
+	return vrx_parse_drone_spawn_type(arg, drone_type);
+}
+
+static qboolean Cmd_FindDroneSpawnPoint(edict_t *ent, edict_t *drone, vec3_t spawn_origin)
+{
+	trace_t tr;
+	vec3_t forward, start, end, origin, from_player;
+	float radius;
+	int i;
+
+	AngleVectors(ent->client->v_angle, forward, NULL, NULL);
+	VectorCopy(ent->s.origin, start);
+	start[2] += ent->viewheight;
+	VectorMA(start, 8192, forward, end);
+
+	tr = gi.trace(start, NULL, NULL, end, ent, MASK_SHOT | CONTENTS_MONSTERCLIP);
+	if (tr.fraction == 1.0f)
+	{
+		VectorMA(start, 160, forward, origin);
+	}
+	else
+	{
+		VectorCopy(tr.endpos, origin);
+		for (i = 0; i < 3; i++)
+		{
+			if (tr.plane.normal[i] > 0)
+				origin[i] -= drone->mins[i] * tr.plane.normal[i];
+			else
+				origin[i] += drone->maxs[i] * -tr.plane.normal[i];
+		}
+	}
+
+	radius = sqrtf((drone->maxs[0] - drone->mins[0]) * (drone->maxs[0] - drone->mins[0])
+		+ (drone->maxs[1] - drone->mins[1]) * (drone->maxs[1] - drone->mins[1])) + 8.0f;
+
+	for (i = 0; i < 10; i++)
+	{
+		tr = gi.trace(origin, drone->mins, drone->maxs, origin, drone, MASK_MONSTERSOLID);
+		if (!tr.allsolid && !tr.startsolid && !(tr.contents & MASK_MONSTERSOLID))
+		{
+			VectorCopy(origin, spawn_origin);
+			return true;
+		}
+
+		VectorMA(origin, -radius, forward, origin);
+		VectorSubtract(origin, start, from_player);
+		if (DotProduct(from_player, forward) < 0)
+			break;
+	}
+
+	return false;
+}
+
+void Cmd_Spawn_f(edict_t* ent)
+{
+	enum dronespawn_t drone_type;
+	edict_t *drone;
+	vec3_t spawn_origin, to_player;
+
+	if (!ent || !ent->client || !ent->myskills.administrator || ent->deadflag == DEAD_DEAD)
+		return;
+
+	if (gi.argc() < 2 || !Cmd_SpawnParseDroneType(&drone_type))
+	{
+		safe_cprintf(ent, PRINT_HIGH, "Usage: spawn <drone_name|drone_mtype> | spawn drone_mtype <mtype> | spawn drone_type <type>\n");
+		safe_cprintf(ent, PRINT_HIGH, "Examples: spawn tank64, spawn heavy_gunner, spawn drone_mtype 53\n");
+		return;
+	}
+
+	drone = vrx_create_drone_from_ent(G_Spawn(), world, drone_type, true, false, 0);
+	if (!drone)
+	{
+		safe_cprintf(ent, PRINT_HIGH, "Failed to spawn drone.\n");
+		return;
+	}
+
+	if (!Cmd_FindDroneSpawnPoint(ent, drone, spawn_origin))
+	{
+		safe_cprintf(ent, PRINT_HIGH, "Couldn't find a suitable spawn location.\n");
+		M_Remove(drone, false, false);
+		return;
+	}
+
+	VectorCopy(spawn_origin, drone->s.origin);
+	VectorCopy(spawn_origin, drone->s.old_origin);
+	VectorSubtract(ent->s.origin, spawn_origin, to_player);
+	drone->s.angles[YAW] = vectoyaw(to_player);
+	drone->ideal_yaw = drone->s.angles[YAW];
+	drone->enemy = ent;
+	gi.linkentity(drone);
+
+	safe_cprintf(ent, PRINT_HIGH, "Spawned drone mtype %d.\n", drone->mtype);
+}
+
 const gameCommand_s commands[] =
 {
 	{ "medic", 			Cmd_PlayerToMedic_f },

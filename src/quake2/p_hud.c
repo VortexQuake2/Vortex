@@ -556,8 +556,7 @@ void PlayerID_SetStats(edict_t *player, edict_t *target, qboolean chasecam)
 			strcat(name, target->classname);
 
 		// armor
-		if (target->monsterinfo.power_armor_type)
-			armor = target->monsterinfo.power_armor_power;
+		armor = M_MonsterArmorCurrent(target);
 
 		// ammo
 		if (target->mtype && (target->mtype == M_SENTRY || target->mtype == M_AUTOCANNON))
@@ -1138,9 +1137,9 @@ void G_CheckChaseStats(edict_t *ent)
 			else
 				ent->client->ps.stats[STAT_HEALTH] = 666;
 
-			if (ent->client->chase_target->monsterinfo.power_armor_power)
+			if (M_MonsterArmorCurrent(ent->client->chase_target))
 			{
-				ent->client->ps.stats[STAT_ARMOR] = ent->client->chase_target->monsterinfo.power_armor_power;
+				ent->client->ps.stats[STAT_ARMOR] = M_MonsterArmorCurrent(ent->client->chase_target);
 			}
 			else
 			{

@@ -13,6 +13,8 @@ static int	sound_pain1;
 static int	sound_pain2;
 static int	sound_die;
 static int	sound_gun;
+static int	sound_gunb;
+static int	sound_gunc;
 static int	sound_cleaver_swing;
 static int	sound_cleaver_hit;
 static int	sound_cleaver_miss;
@@ -22,7 +24,10 @@ static int	sound_sight;
 
 void gladiator_idle (edict_t *self)
 {
-	gi.sound (self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
+	if (random() < 0.5)
+		gi.sound (self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
+	else
+		gi.sound (self, CHAN_VOICE, sound_search, 1, ATTN_NORM, 0);
 }
 
 void gladiator_search (edict_t *self)
@@ -97,19 +102,32 @@ mframe_t gladiator_frames_pain[] =
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
+};
+mmove_t gladiator_move_pain = { FRAME_pain2, FRAME_pain5, gladiator_frames_pain, gladiator_walk };
+
+mframe_t gladiator_frames_pain_air[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 };
-mmove_t gladiator_move_pain = { FRAME_pain1, FRAME_pain6, gladiator_frames_pain, gladiator_walk };
+mmove_t gladiator_move_pain_air = { FRAME_painup2, FRAME_painup6, gladiator_frames_pain_air, gladiator_walk };
 
 void gladiator_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
 	if (self->health < (self->max_health / 2))
-		self->s.skinnum = 1;
+		self->s.skinnum = (self->mtype == M_GLADB || self->mtype == M_GLADC) ? 3 : 1;
 
 	// we're already in a pain state
-	if (self->monsterinfo.currentmove == &gladiator_move_pain)
+	if (self->monsterinfo.currentmove == &gladiator_move_pain ||
+		self->monsterinfo.currentmove == &gladiator_move_pain_air)
+	{
+		if (self->velocity[2] > 100 && self->monsterinfo.currentmove == &gladiator_move_pain)
+			self->monsterinfo.currentmove = &gladiator_move_pain_air;
 		return;
+	}
 
 	// monster players don't get pain state induced
 	if (G_GetClient(self))
@@ -131,7 +149,10 @@ void gladiator_pain(edict_t* self, edict_t* other, float kick, int damage)
 		gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
 	}
 
-	self->monsterinfo.currentmove = &gladiator_move_pain;
+	if (self->velocity[2] > 100)
+		self->monsterinfo.currentmove = &gladiator_move_pain_air;
+	else
+		self->monsterinfo.currentmove = &gladiator_move_pain;
 }
 
 void gladiator_run (edict_t *self)
@@ -269,6 +290,46 @@ void GladiatorGun (edict_t *self)
 	monster_fire_railgun (self, start, forward, damage, 100, MZ2_GLADIATOR_RAILGUN_1);
 }
 
+static void GladiatorDisruptor(edict_t *self)
+{
+	int damage, speed;
+	vec3_t forward, start;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	damage = DISRUPTOR_INITIAL_DAMAGE + DISRUPTOR_ADDON_DAMAGE * drone_damagelevel(self);
+		if (M_DISRUPTOR_DMG_MAX && damage > M_DISRUPTOR_DMG_MAX)
+		damage = M_DISRUPTOR_DMG_MAX;
+	speed = DISRUPTOR_INITIAL_SPEED + DISRUPTOR_ADDON_SPEED * drone_damagelevel(self);
+			if (M_DISRUPTOR_SPEED_MAX && damage > M_DISRUPTOR_SPEED_MAX)
+		speed = M_DISRUPTOR_SPEED_MAX;
+
+	MonsterAim(self, M_PROJECTILE_ACC, speed, false, MZ2_GLADIATOR_RAILGUN_1, forward, start);
+	fire_disruptor(self, start, forward, damage, speed, visible(self, self->enemy) ? self->enemy : NULL);
+}
+
+static void GladiatorPlasma(edict_t *self)
+{
+	int damage, speed, radius_damage;
+	vec3_t forward, start;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	damage = M_PLASMA_DMG_BASE + M_PLASMA_DMG_ADDON * drone_damagelevel(self);
+	if (M_PLASMA_DMG_MAX && damage > M_PLASMA_DMG_MAX)
+		damage = M_PLASMA_DMG_MAX;
+
+	speed = M_PLASMA_SPEED_BASE + M_PLASMA_SPEED_ADDON * drone_damagelevel(self);
+	if (M_PLASMA_SPEED_MAX && speed > M_PLASMA_SPEED_MAX)
+		speed = M_PLASMA_SPEED_MAX;
+
+	radius_damage = max(1, damage / 2);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, false, MZ2_GLADIATOR_RAILGUN_1, forward, start);
+	fire_plasma(self, start, forward, damage, speed, M_PLASMA_DAMAGE_RADIUS, radius_damage);
+}
+
 void gladiator_refire (edict_t *self)
 {
 	// if our enemy is still valid, then continue firing
@@ -276,6 +337,30 @@ void gladiator_refire (edict_t *self)
 	{
 		self->s.frame = 49;
 		GladiatorGun(self);
+		return;
+	}
+
+	self->monsterinfo.attack_finished = level.time + 1.0;
+}
+
+static void gladiator_refire_disruptor(edict_t *self)
+{
+	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.45))
+	{
+		self->s.frame = FRAME_attack4;
+		GladiatorDisruptor(self);
+		return;
+	}
+
+	self->monsterinfo.attack_finished = level.time + 1.0;
+}
+
+static void gladiator_refire_plasma(edict_t *self)
+{
+	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.6))
+	{
+		self->s.frame = FRAME_attack4;
+		GladiatorPlasma(self);
 		return;
 	}
 
@@ -291,6 +376,26 @@ mframe_t gladiator_frames_attack_gun [] =
 	ai_charge, 0, gladiator_refire,	//53
 };
 mmove_t gladiator_move_attack_gun = {FRAME_attack4, FRAME_attack8, gladiator_frames_attack_gun, gladiator_run};
+
+mframe_t gladb_frames_attack_gun[] =
+{
+	ai_charge, 0, GladiatorDisruptor,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, gladiator_refire_disruptor,
+};
+mmove_t gladb_move_attack_gun = { FRAME_attack4, FRAME_attack8, gladb_frames_attack_gun, gladiator_run };
+
+mframe_t gladc_frames_attack_gun[] =
+{
+	ai_charge, 0, NULL,
+	ai_charge, 0, GladiatorPlasma,
+	ai_charge, 0, NULL,
+	ai_charge, 0, GladiatorPlasma,
+	ai_charge, 0, gladiator_refire_plasma,
+};
+mmove_t gladc_move_attack_gun = { FRAME_attack4, FRAME_attack8, gladc_frames_attack_gun, gladiator_run };
 
 void gladiator_lightning_attack (edict_t *self)
 {
@@ -332,9 +437,22 @@ void gladiator_attack(edict_t *self)
 		return;
 	}
 
-	// charge up the railgun
-	gi.sound (self, CHAN_WEAPON, sound_gun, 1, ATTN_NORM, 0);
-	self->monsterinfo.currentmove = &gladiator_move_attack_gun;
+	if (self->mtype == M_GLADB)
+	{
+		gi.sound(self, CHAN_WEAPON, sound_gunb, 1, ATTN_NORM, 0);
+		self->monsterinfo.currentmove = &gladb_move_attack_gun;
+	}
+	else if (self->mtype == M_GLADC)
+	{
+		gi.sound(self, CHAN_WEAPON, sound_gunc, 1, ATTN_NORM, 0);
+		self->monsterinfo.currentmove = &gladc_move_attack_gun;
+	}
+	else
+	{
+		// charge up the railgun
+		gi.sound (self, CHAN_WEAPON, sound_gun, 1, ATTN_NORM, 0);
+		self->monsterinfo.currentmove = &gladiator_move_attack_gun;
+	}
 }
 
 void gladiator_sight (edict_t *self, edict_t *other)
@@ -354,11 +472,18 @@ void gladiator_dead (edict_t *self)
 	M_PrepBodyRemoval(self);
 }
 
+static void gladiator_shrink(edict_t *self)
+{
+	self->maxs[2] = 0;
+	self->svflags |= SVF_DEADMONSTER;
+	gi.linkentity(self);
+}
+
 mframe_t gladiator_frames_death [] =
 {
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
-	ai_move, 0, NULL,
+	ai_move, 0, gladiator_shrink,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
@@ -383,8 +508,6 @@ mmove_t gladiator_move_death = {FRAME_death1, FRAME_death22, gladiator_frames_de
 
 void gladiator_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int		n;
-
 	M_Notify(self);
 
 	// reduce lag by removing the entity right away
@@ -400,13 +523,7 @@ void gladiator_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int da
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (vrx_spawn_nonessential_ent(self->s.origin))
-		{
-			for (n = 0; n < 2; n++)
-				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-			for (n = 0; n < 4; n++)
-				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-		}
+		vrx_throw_drone_gibs(self, damage);
 
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);
@@ -426,6 +543,7 @@ void gladiator_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int da
 	gi.sound (self, CHAN_VOICE, sound_die, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 
 	self->monsterinfo.currentmove = &gladiator_move_death;
 
@@ -442,6 +560,8 @@ void init_drone_gladiator (edict_t *self)
 {
 	sound_die = gi.soundindex ("gladiator/glddeth2.wav");	
 	sound_gun = gi.soundindex ("gladiator/railgun.wav");
+	sound_gunb = gi.soundindex("weapons/disrupt.wav");
+	sound_gunc = gi.soundindex("weapons/plasshot.wav");
 	sound_cleaver_swing = gi.soundindex ("gladiator/melee1.wav");
 	sound_cleaver_hit = gi.soundindex ("gladiator/melee2.wav");
 	sound_cleaver_miss = gi.soundindex ("gladiator/melee3.wav");
@@ -456,9 +576,7 @@ void init_drone_gladiator (edict_t *self)
 	self->max_health = self->health;
 	self->gib_health = -BASE_GIB_HEALTH;
 	self->mass = 400;
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.power_armor_power = M_GLADIATOR_INITIAL_ARMOR + M_GLADIATOR_ADDON_ARMOR*self->monsterinfo.level; // pow: gladiator
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, M_GLADIATOR_INITIAL_ARMOR + M_GLADIATOR_ADDON_ARMOR*self->monsterinfo.level); // pow: gladiator
 	self->mtype = M_GLADIATOR;
 	self->item = FindItemByClassname("ammo_slugs");
 	self->monsterinfo.jumpup = 64;
@@ -481,4 +599,31 @@ void init_drone_gladiator (edict_t *self)
 	gi.linkentity (self);
 	self->monsterinfo.currentmove = &gladiator_move_stand;
 	self->monsterinfo.scale = MODEL_SCALE;
+}
+
+void init_drone_gladb(edict_t *self)
+{
+	init_drone_gladiator(self);
+	// GLADB is the darkmatter gladiator variant.
+	self->mtype = M_GLADB;
+	self->s.skinnum = 2;
+	self->s.effects |= EF_TRACKER;
+	self->health = M_GLADB_INITIAL_HEALTH + M_GLADB_ADDON_HEALTH * self->monsterinfo.level;
+	self->max_health = self->health;
+	M_SetMonsterPowerArmor(self, POWER_ARMOR_SHIELD, M_GLADB_INITIAL_ARMOR + M_GLADB_ADDON_ARMOR * self->monsterinfo.level);
+	self->mass = 350;
+	self->item = FindItemByClassname("ammo_disruptor");
+}
+
+void init_drone_gladc(edict_t *self)
+{
+	init_drone_gladiator(self);
+	// GLADC is the Gladiator Plasma variant.
+	self->mtype = M_GLADC;
+	self->s.skinnum = 2;
+	self->health = M_GLADC_INITIAL_HEALTH + M_GLADC_ADDON_HEALTH * self->monsterinfo.level;
+	self->max_health = self->health;
+	M_SetMonsterPowerArmor(self, POWER_ARMOR_SHIELD, M_GLADC_INITIAL_ARMOR + M_GLADC_ADDON_ARMOR * self->monsterinfo.level);
+	self->mass = 350;
+	self->item = FindItemByClassname("ammo_magslug");
 }

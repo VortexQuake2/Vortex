@@ -15,6 +15,9 @@ void mychick_reslash(edict_t *self);
 void mychick_rerocket(edict_t *self);
 void mychick_attack1(edict_t *self);
 void mychick_continue (edict_t *self);
+extern mmove_t mychick_move_start_attack1;
+extern mmove_t mychick_move_attack1;
+extern mmove_t mychick_move_end_attack1;
 
 static int	sound_missile_prelaunch;
 static int	sound_missile_launch;
@@ -178,6 +181,31 @@ mframe_t mychick_frames_run [] =
 };
 mmove_t mychick_move_run = {FRAME_walk11, FRAME_walk20, mychick_frames_run, NULL};
 
+static void mychick_ai_dodge_slide(edict_t *self, float dist)
+{
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(self->monsterinfo.attacker))
+		self->enemy = self->monsterinfo.attacker;
+	if (!G_EntIsAlive(self->enemy))
+		return;
+
+	drone_ai_dodge_slide(self, dist);
+}
+
+mframe_t mychick_frames_dodge_slide[] =
+{
+	mychick_ai_dodge_slide, 16, NULL,
+	mychick_ai_dodge_slide, 16, NULL,
+	mychick_ai_dodge_slide, 14, NULL,
+	mychick_ai_dodge_slide, 13, NULL,
+	mychick_ai_dodge_slide, 15, NULL,
+	mychick_ai_dodge_slide, 12, NULL,
+	mychick_ai_dodge_slide, 11, NULL,
+	mychick_ai_dodge_slide, 10, NULL,
+	mychick_ai_dodge_slide, 8, NULL,
+	mychick_ai_dodge_slide, 6, NULL
+};
+mmove_t mychick_move_dodge_slide = {FRAME_walk11, FRAME_walk20, mychick_frames_dodge_slide, mychick_run};
+
 void mychick_run (edict_t *self)
 {
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
@@ -192,12 +220,19 @@ void mychick_dead (edict_t *self)
 {
 //	gi.dprintf("mychick_dead()\n");
 	VectorSet (self->mins, -16, -16, 0);
-	VectorSet (self->maxs, 16, 16, 16);
+	VectorSet (self->maxs, 16, 16, 8);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	//self->nextthink = 0;
 	gi.linkentity (self);
 	M_PrepBodyRemoval(self);
+}
+
+static void mychick_shrink(edict_t *self)
+{
+	self->maxs[2] = 12;
+	self->svflags |= SVF_DEADMONSTER;
+	gi.linkentity(self);
 }
 
 mframe_t mychick_frames_death2 [] =
@@ -222,7 +257,7 @@ mframe_t mychick_frames_death2 [] =
 	ai_move, -3,  NULL,
 	ai_move, -5, NULL,
 	ai_move, 4, NULL,
-	ai_move, 15, NULL,
+	ai_move, 15, mychick_shrink,
 	ai_move, 14, NULL,
 	ai_move, 1, NULL
 };
@@ -234,7 +269,7 @@ mframe_t mychick_frames_death1 [] =
 	ai_move, 0,  NULL,
 	ai_move, -7, NULL,
 	ai_move, 4,  NULL,
-	ai_move, 11, NULL,
+	ai_move, 11, mychick_shrink,
 	ai_move, 0,  NULL,
 	ai_move, 0,  NULL,
 	ai_move, 0,  NULL,
@@ -265,14 +300,7 @@ void mychick_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	if (self->health <= self->gib_health)
 	{
 		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (vrx_spawn_nonessential_ent(self->s.origin))
-		{
-			for (n = 0; n < 2; n++)
-				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-			for (n = 0; n < 4; n++)
-				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-			//ThrowHead (self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
-		}
+		vrx_throw_drone_gibs(self, damage);
 		//self->deadflag = DEAD_DEAD;
 #ifdef OLD_NOLAG_STYLE
 		M_Remove(self, false, false);
@@ -291,6 +319,7 @@ void mychick_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 // regular death
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 	//level.total_monsters--;
 
 	n = randomMT() % 2;
@@ -313,6 +342,10 @@ void mychick_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int dama
 	}
 }
 
+#define MYCHICK_STAND_SCALE(self) ((self)->s.scale > 0 ? (self)->s.scale : 1.0f)
+#define MYCHICK_STAND_MAX_Z(self) (56 * MYCHICK_STAND_SCALE(self))
+static constexpr int MYCHICK_DUCK_MAX_Z = 0;
+
 void mychick_duck_down (edict_t *self)
 {
 	if (self->monsterinfo.aiflags & AI_DUCKED)
@@ -321,29 +354,54 @@ void mychick_duck_down (edict_t *self)
 		return;
 
 	self->monsterinfo.aiflags |= AI_DUCKED;
-	self->maxs[2] = 0;
+	self->maxs[2] = MYCHICK_DUCK_MAX_Z;
 	self->takedamage = DAMAGE_YES;
-	gi.linkentity (self);
+	gi.linkentity(self);
 }
 
 void mychick_duck_up (edict_t *self)
 {
+	vec3_t oldmaxs;
+	trace_t tr;
+
+	if (!(self->monsterinfo.aiflags & AI_DUCKED) &&
+		self->maxs[2] == MYCHICK_STAND_MAX_Z(self))
+		return;
+
+	VectorCopy(self->maxs, oldmaxs);
+	self->maxs[2] = MYCHICK_STAND_MAX_Z(self);
+
+	tr = gi.trace(self->s.origin, self->mins, self->maxs, self->s.origin, self, MASK_MONSTERSOLID);
+
+	if (tr.startsolid || tr.allsolid)
+	{
+		VectorCopy(oldmaxs, self->maxs);
+		self->monsterinfo.aiflags |= AI_DUCKED;
+		return;
+	}
+
 	self->monsterinfo.aiflags &= ~AI_DUCKED;
-	self->maxs[2] = 32;
 	self->takedamage = DAMAGE_AIM;
-	VectorClear(self->velocity);
-	gi.linkentity (self);
+	gi.linkentity(self);
+}
+
+void mychick_duck_hold (edict_t *self)
+{
+	if (self->monsterinfo.pausetime > level.time)
+		self->monsterinfo.nextframe = self->s.frame;
 }
 
 mframe_t mychick_frames_duck [] =
 {
 	ai_move, 0, mychick_duck_down,
-	ai_move, 0,  NULL,
-	ai_move, 0,  mychick_duck_up,
-	ai_move, 0, NULL,
-	ai_move, 0,  NULL
+	ai_move, 1, NULL,
+	ai_move, 4, mychick_duck_hold,
+	ai_move, -4, NULL,
+	ai_move, -5, mychick_duck_up,
+	ai_move, 3, NULL,
+	ai_move, 1, NULL
 };
-mmove_t mychick_move_duck = {FRAME_duck03, FRAME_duck07, mychick_frames_duck, mychick_run};
+mmove_t mychick_move_duck = {FRAME_duck01, FRAME_duck07, mychick_frames_duck, mychick_run};
 
 void mychick_jump_takeoff (edict_t *self)
 {
@@ -382,11 +440,17 @@ void mychick_jump_hold (edict_t *self)
 	}
 }
 
+static void mychick_jump_hold_ai(edict_t *self, float dist)
+{
+	ai_move(self, dist);
+	mychick_jump_hold(self);
+}
+
 mframe_t mychick_frames_leap [] =
 {
 	ai_move, 0, mychick_jump_takeoff,
 	ai_move, 0, NULL,
-	ai_move, 0, mychick_jump_hold,
+	mychick_jump_hold_ai, 0, NULL,
 	ai_move, 0,  NULL,
 	ai_move, 0,  NULL,
 	ai_move, 0, NULL,
@@ -400,29 +464,79 @@ void mychick_leap (edict_t *self)
 		self->monsterinfo.currentmove = &mychick_move_leap;
 }
 
-void mychick_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
+static qboolean mychick_is_dodge_move(edict_t *self)
 {
-	if (random() > 0.9)
-		return;
-	if (!G_GetClient(self))
-		return;
+	return self->monsterinfo.currentmove == &mychick_move_duck ||
+		self->monsterinfo.currentmove == &mychick_move_leap ||
+		self->monsterinfo.currentmove == &mychick_move_dodge_slide;
+}
+
+static qboolean mychick_is_uninterruptible_attack(edict_t *self)
+{
+	return self->monsterinfo.currentmove == &mychick_move_start_attack1 ||
+		self->monsterinfo.currentmove == &mychick_move_attack1;
+}
+
+static qboolean mychick_dodge_hit_low(edict_t *self, vec3_t dir)
+{
+	const float duck_height = self->absmax[2] - 33;
+
+	return dir[2] > self->absmin[2] && dir[2] <= duck_height;
+}
+
+static void mychick_start_duck(edict_t *self)
+{
+	self->monsterinfo.pausetime = level.time + 0.5f;
+	self->monsterinfo.currentmove = &mychick_move_duck;
+	mychick_duck_down(self);
+	self->monsterinfo.dodge_time = level.time + 2.0f;
+}
+
+static qboolean mychick_start_sidestep(edict_t *self, vec3_t dir)
+{
+	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+		return false;
+
+	drone_set_dodge_side(self, dir);
+	self->monsterinfo.currentmove = &mychick_move_dodge_slide;
+	self->monsterinfo.dodge_time = level.time + 1.0f;
+	return true;
+}
+
+static void mychick_dodge (edict_t *self, edict_t *attacker, vec3_t dir, int radius)
+{
 	if (level.time < self->monsterinfo.dodge_time)
+		return;
+	if (!attacker)
 		return;
 	if (OnSameTeam(self, attacker))
 		return;
+	if (mychick_is_dodge_move(self) || mychick_is_uninterruptible_attack(self))
+		return;
 
-	if (!self->enemy && G_EntIsAlive(attacker))
+	if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(attacker))
 		self->enemy = attacker;
-	if (!radius)
+
+	if (random() > 0.9f)
+		return;
+
+	self->monsterinfo.attacker = attacker;
+	if (radius)
 	{
-		self->monsterinfo.currentmove = &mychick_move_duck;
-		self->monsterinfo.dodge_time = level.time + 2.0;
+		mychick_start_sidestep(self, dir);
+		return;
 	}
-	else
+
+	if (!mychick_dodge_hit_low(self, dir))
 	{
-		mychick_leap(self);
-		self->monsterinfo.dodge_time = level.time + 3.0;
+		mychick_start_duck(self);
+		return;
 	}
+
+	if (mychick_start_sidestep(self, dir))
+		return;
+
+	mychick_start_duck(self);
 }
 
 void fire_meteor (edict_t *self, vec3_t end, int damage, int radius, int speed);
@@ -486,6 +600,9 @@ void myChickFireball (edict_t *self)
 	speed = 650 + 35 * slvl; // spd: myChickFireball
 
 	MonsterAim(self, M_PROJECTILE_ACC, speed, true, MZ2_CHICK_ROCKET_1, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	fire_fireball(self, start, forward, damage, 125.0, speed, 5, flame_damage);
 
     gi.sound(self, CHAN_ITEM, gi.soundindex("abilities/firecast.wav"), 1, ATTN_NORM, 0);
@@ -502,8 +619,10 @@ void myChickRocket (edict_t *self)
 		return;
 	}
 
-	if (!G_EntExists(self->enemy))
+	if (!G_EntExists(self->enemy) && self->mtype != M_CHICK_HEAT)
+	{
 		return;
+	}
 
 	damage = M_ROCKETLAUNCHER_DMG_BASE + M_ROCKETLAUNCHER_DMG_ADDON * drone_damagelevel(self); // dmg: myChickRocket
 	if (M_ROCKETLAUNCHER_DMG_MAX && damage > M_ROCKETLAUNCHER_DMG_MAX)
@@ -511,9 +630,17 @@ void myChickRocket (edict_t *self)
 	speed = M_ROCKETLAUNCHER_SPEED_BASE + M_ROCKETLAUNCHER_SPEED_ADDON * drone_damagelevel(self); // spd: myChickRocket
 	if (M_ROCKETLAUNCHER_SPEED_MAX && speed > M_ROCKETLAUNCHER_SPEED_MAX)
 		speed = M_ROCKETLAUNCHER_SPEED_MAX;
-	
+
 	MonsterAim(self, M_PROJECTILE_ACC, speed, true, MZ2_CHICK_ROCKET_1, forward, start);
-	monster_fire_rocket (self, start, forward, damage, speed, MZ2_CHICK_ROCKET_1);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
+	if (self->mtype == M_CHICK_HEAT)
+	{
+		monster_fire_heat(self, start, forward, damage, speed, MZ2_CHICK_ROCKET_1, 0.095f);
+	}
+	else
+		monster_fire_rocket (self, start, forward, damage, speed, MZ2_CHICK_ROCKET_1);
 }
 
 void myChickRail (edict_t *self)
@@ -527,12 +654,22 @@ void myChickRail (edict_t *self)
 		damage = 50 + 10 * drone_damagelevel(self); // dmg: myChickRailWorld
 
 	MonsterAim(self, 0.33, 0, false, MZ2_CHICK_ROCKET_1, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+		return;
+
 	monster_fire_railgun (self, start, forward, damage, damage, MZ2_GLADIATOR_RAILGUN_1);
 }	
 
 void mychick_PreAttack1 (edict_t *self)
 {
 	gi.sound (self, CHAN_VOICE, sound_missile_prelaunch, 1, ATTN_NORM, 0);
+	self->yaw_speed = 60; // turn faster so we line up the enemy before firing (reference CHICK_ATTACK_YAW_SPEED)
+}
+
+void mychick_EndAttack (edict_t *self)
+{
+	// restore the default turn rate (40 while holding ground, 20 otherwise)
+	self->yaw_speed = (self->monsterinfo.aiflags & AI_STAND_GROUND) ? 40 : 20;
 }
 
 void myChickReload (edict_t *self)
@@ -540,49 +677,64 @@ void myChickReload (edict_t *self)
 	gi.sound (self, CHAN_VOICE, sound_missile_reload, 1, ATTN_NORM, 0);
 }
 
+// remade this animation since m_moveframe could have added a 1 frame delay for drone_chick_heat's rockets firing,
+// while keeping drone_chick same attacks
 mframe_t mychick_frames_start_attack1 [] =
 {
-	ai_charge, 0,	mychick_PreAttack1,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 4,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, -3,  NULL,
-	ai_charge, 3,	NULL,
-	ai_charge, 5,	NULL,
-	ai_charge, 7,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	mychick_attack1
+	ai_charge, 0,	NULL,				// attak101 (entered here via snap - a thinkfunc here would be skipped)
+	ai_charge, 0,	mychick_PreAttack1,	// attak102 (prelaunch sound + yaw boost)
+	ai_charge, 0,	NULL,				// attak103
+	ai_charge, 4,	NULL,				// attak104
+	ai_charge, 0,	NULL,				// attak105
+	ai_charge, -3,  NULL,				// attak106
+	ai_charge, 3,	NULL,				// attak107
+	ai_charge, 5,	NULL,				// attak108
+	ai_charge, 13,	NULL,				// attak109
+	ai_charge, 0,	NULL,				// attak110
+	ai_charge, 0,	NULL,				// attak111
+	ai_charge, 0,	NULL,				// attak112
+	ai_charge, 0,	NULL,				// attak113
+	ai_charge, 0,	myChickRocket,		// attak114 (rocket 1)
+	ai_charge, 0,	NULL,				// attak115
+	ai_charge, 0,	NULL,				// attak116
+	ai_charge, 0,	myChickRocket,		// attak117 (rocket 2)
+	ai_charge, 0,	NULL,				// attak118
+	ai_charge, 0,	NULL,				// attak119
+	ai_charge, 0,	NULL,				// attak120
+	ai_charge, 0,	myChickReload,		// attak121
+	ai_charge, 0,	NULL,				// attak122
+	ai_charge, 0,	NULL,				// attak123
+	ai_charge, 0,	NULL,				// attak124
+	ai_charge, 0,	NULL,				// attak125
+	ai_charge, 0,	NULL,				// attak126
+	ai_charge, 0,	NULL				// attak127
 };
-mmove_t mychick_move_start_attack1 = {FRAME_attak101, FRAME_attak113, mychick_frames_start_attack1, NULL};
+mmove_t mychick_move_start_attack1 = {FRAME_attak101, FRAME_attak127, mychick_frames_start_attack1, mychick_rerocket};
 
 
 mframe_t mychick_frames_attack1 [] =
 {
-	ai_charge, 0,	myChickRocket,//myChickRail,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	myChickReload,
-	//ai_charge, 0,	NULL,
-	//ai_charge, 0,	NULL,
-	//ai_charge, 0,	NULL,
-	//ai_charge, 0,	NULL,
-	//ai_charge, 0,	NULL,
-	//ai_charge, 0,	mychick_rerocket
-
+	ai_charge, 0,	myChickRocket,	// attak114 (rocket 1)
+	ai_charge, 0,	NULL,			// attak115
+	ai_charge, 0,	NULL,			// attak116
+	ai_charge, 0,	myChickRocket,	// attak117 (rocket 2)
+	ai_charge, 0,	NULL,			// attak118
+	ai_charge, 0,	NULL,			// attak119
+	ai_charge, 0,	NULL,			// attak120
+	ai_charge, 0,	myChickReload,	// attak121
+	ai_charge, 0,	NULL,			// attak122
+	ai_charge, 0,	NULL,			// attak123
+	ai_charge, 0,	NULL,			// attak124
+	ai_charge, 0,	NULL,			// attak125
+	ai_charge, 0,	NULL,			// attak126
+	ai_charge, 0,	NULL			// attak127
 };
-mmove_t mychick_move_attack1 = {FRAME_attak114, FRAME_attak121, mychick_frames_attack1, mychick_rerocket};
+mmove_t mychick_move_attack1 = {FRAME_attak114, FRAME_attak127, mychick_frames_attack1, mychick_rerocket};
 
 mframe_t mychick_frames_end_attack1 [] =
 {
-	ai_charge, -3,	NULL,
-	ai_charge, 0,	NULL,
+	ai_charge, -3,	NULL,				// attak128 (entered via snap - thinkfunc here would be skipped)
+	ai_charge, 0,	mychick_EndAttack,	// attak129 (restore default yaw_speed)
 	ai_charge, -6,	NULL,
 	ai_charge, -4,	NULL,
 	ai_charge, -2,  NULL
@@ -591,7 +743,7 @@ mmove_t mychick_move_end_attack1 = {FRAME_attak128, FRAME_attak132, mychick_fram
 
 void mychick_rerocket(edict_t *self)
 {
-	if (G_ValidTarget(self, self->enemy, true, true)) 
+	if (G_ValidTarget(self, self->enemy, true, true) && M_MonsterHasClearShotFromFlash(self, MZ2_CHICK_ROCKET_1))
 	{
 		if (random() <= 0.8 && (entdist(self, self->enemy) <= 512 || (self->monsterinfo.aiflags & AI_STAND_GROUND)))
 			self->monsterinfo.currentmove = &mychick_move_attack1;
@@ -608,13 +760,13 @@ void mychick_rerocket(edict_t *self)
 //GHz START
 mframe_t mychick_frames_runandshoot [] =
 {
-	drone_ai_run, 20,	myChickRocket,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL
+	drone_ai_run, 20,	NULL,			// attak120 (entered here via snap - a thinkfunc here would be skipped)
+	drone_ai_run, 20,	myChickRocket,	// attak121 (fire; reached by increment so the first pass shoots too)
+	drone_ai_run, 20,	NULL,			// attak122
+	drone_ai_run, 20,	NULL,			// attak123
+	drone_ai_run, 20,	NULL,			// attak124
+	drone_ai_run, 20,	NULL,			// attak125
+	drone_ai_run, 20,	NULL			// attak126
 };
 mmove_t mychick_move_runandshoot = {FRAME_attak120, FRAME_attak126, mychick_frames_runandshoot, mychick_continue};
 
@@ -626,7 +778,7 @@ void mychick_runandshoot (edict_t *self)
 void mychick_continue (edict_t *self)
 {
 	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.9)
-		&& (entdist(self, self->enemy) <= 512)) 
+		&& (entdist(self, self->enemy) <= 512) && M_MonsterHasClearShotFromFlash(self, MZ2_CHICK_ROCKET_1)) 
 	{
 		self->monsterinfo.currentmove = &mychick_move_runandshoot;
 		
@@ -724,7 +876,11 @@ void chick_fire_attack (edict_t *self)
 		}
 		else
 		{
-			if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+			if (!M_MonsterHasClearShotFromFlash(self, MZ2_CHICK_ROCKET_1))
+				self->monsterinfo.currentmove = &mychick_move_slash;
+			else if (self->mtype == M_CHICK_HEAT)
+				self->monsterinfo.currentmove = &mychick_move_start_attack1; // stand, prepare, fire
+			else if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 				self->monsterinfo.currentmove = &mychick_move_attack1;
 			else
 				mychick_runandshoot(self);
@@ -746,7 +902,12 @@ void mychick_attack(edict_t *self)
 		return;
 	}
 
-	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+	if (!M_MonsterHasClearShotFromFlash(self, MZ2_CHICK_ROCKET_1))
+		return;
+
+	if (self->mtype == M_CHICK_HEAT)
+		self->monsterinfo.currentmove = &mychick_move_start_attack1; // stand, prepare, fire
+	else if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 		self->monsterinfo.currentmove = &mychick_move_attack1;
 	else
 		mychick_runandshoot(self);
@@ -757,7 +918,10 @@ void mychick_attack(edict_t *self)
 
 void mychick_sight(edict_t *self, edict_t *other)
 {
-	gi.sound (self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
+	if (random() < 0.5)
+		gi.sound (self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
+	else
+		gi.sound (self, CHAN_VOICE, sound_search, 1, ATTN_NORM, 0);
 }
 
 mframe_t mychick_frames_jump [] =
@@ -831,12 +995,13 @@ void mychick_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
 	const double rng = random();
 	if (self->health < (self->max_health / 2))
-		self->s.skinnum = 1;
+		self->s.skinnum |= 1;
 
 	// we're already in a pain state
 	if (self->monsterinfo.currentmove == &mychick_move_pain_long ||
 		self->monsterinfo.currentmove == &mychick_move_pain_short1 || 
-		self->monsterinfo.currentmove == &mychick_move_pain_short2)
+		self->monsterinfo.currentmove == &mychick_move_pain_short2 ||
+		mychick_is_dodge_move(self))
 		return;
 
 	// monster players don't get pain state induced
@@ -918,13 +1083,9 @@ void init_drone_bitch (edict_t *self)
 	else
 		self->item = FindItemByClassname("ammo_rockets");
 	
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-
 	//if (self->activator && self->activator->client)
-		self->monsterinfo.power_armor_power = M_CHICK_INITIAL_ARMOR + M_CHICK_ADDON_ARMOR *self->monsterinfo.level; // pow: chick
-	//else self->monsterinfo.power_armor_power = 20*self->monsterinfo.level;
-
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+		M_SetMonsterArmor(self, M_CHICK_INITIAL_ARMOR + M_CHICK_ADDON_ARMOR *self->monsterinfo.level); // pow: chick
+	//else M_SetMonsterArmor(self, 20*self->monsterinfo.level);
 
 	self->pain = mychick_pain;
 	self->die = mychick_die;
@@ -948,4 +1109,14 @@ void init_drone_bitch (edict_t *self)
 
 //	walkmonster_start (self);
 	self->nextthink = level.time + 0.1;
+}
+
+void init_drone_bitch_heat (edict_t *self)
+{
+	init_drone_bitch(self);
+	self->mtype = M_CHICK_HEAT;
+	self->s.skinnum = 2;
+	self->health = M_CHICK_HEAT_INITIAL_HEALTH + M_CHICK_HEAT_ADDON_HEALTH * self->monsterinfo.level;
+	self->max_health = self->health;
+	M_SetMonsterArmor(self, M_CHICK_HEAT_INITIAL_ARMOR + M_CHICK_HEAT_ADDON_ARMOR * self->monsterinfo.level);
 }

@@ -32,7 +32,6 @@ static int	sound_death_hit;
 void BossExplode (edict_t *self);
 void MakronToss (edict_t *self);
 
-/*
 void jorg_search (edict_t *self)
 {
 	float r;
@@ -46,7 +45,6 @@ void jorg_search (edict_t *self)
 	else
 		gi.sound (self, CHAN_VOICE, sound_search3, 1, ATTN_NORM, 0);
 }
-*/
 
 
 void jorgBFG (edict_t *self);
@@ -222,6 +220,100 @@ void jorg_run (edict_t *self)
 		self->monsterinfo.currentmove = &jorg_move_stand;
 	else
 		self->monsterinfo.currentmove = &jorg_move_run;
+}
+
+mframe_t jorg_frames_pain3[] =
+{
+	ai_move, -28, NULL,
+	ai_move, -6, NULL,
+	ai_move, -3, jorg_step_left,
+	ai_move, -9, NULL,
+	ai_move, 0, jorg_step_right,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, -7, NULL,
+	ai_move, 1, NULL,
+	ai_move, -11, NULL,
+	ai_move, -4, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 10, NULL,
+	ai_move, 11, NULL,
+	ai_move, 0, NULL,
+	ai_move, 10, NULL,
+	ai_move, 3, NULL,
+	ai_move, 10, NULL,
+	ai_move, 7, jorg_step_left,
+	ai_move, 17, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, jorg_step_right
+};
+mmove_t jorg_move_pain3 = { FRAME_pain301, FRAME_pain325, jorg_frames_pain3, jorg_run };
+
+mframe_t jorg_frames_pain2[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+mmove_t jorg_move_pain2 = { FRAME_pain201, FRAME_pain203, jorg_frames_pain2, jorg_run };
+
+mframe_t jorg_frames_pain1[] =
+{
+	ai_move, 0, NULL,
+	ai_move, 0, NULL,
+	ai_move, 0, NULL
+};
+mmove_t jorg_move_pain1 = { FRAME_pain101, FRAME_pain103, jorg_frames_pain1, jorg_run };
+
+void jorg_pain(edict_t *self, edict_t *other, float kick, int damage)
+{
+	qboolean do_pain3 = false;
+
+	(void)other;
+	(void)kick;
+
+	if (level.time < self->pain_debounce_time)
+		return;
+
+	if (damage <= 40 && random() <= 0.6f)
+		return;
+
+	if (self->s.frame >= FRAME_attak101 && self->s.frame <= FRAME_attak108 && random() <= 0.005f)
+		return;
+
+	if (self->s.frame >= FRAME_attak109 && self->s.frame <= FRAME_attak114 && random() <= 0.00005f)
+		return;
+
+	if (self->s.frame >= FRAME_attak201 && self->s.frame <= FRAME_attak208 && random() <= 0.005f)
+		return;
+
+	self->pain_debounce_time = level.time + 3.0f;
+
+	if (damage > 50)
+	{
+		if (damage <= 100)
+			gi.sound(self, CHAN_VOICE, sound_pain2, 1, ATTN_NORM, 0);
+		else if (random() <= 0.3f)
+		{
+			do_pain3 = true;
+			gi.sound(self, CHAN_VOICE, sound_pain3, 1, ATTN_NORM, 0);
+		}
+	}
+
+	if (invasion->value == 2)
+		return;
+
+	self->s.sound = 0;
+
+	if (damage <= 50)
+		self->monsterinfo.currentmove = &jorg_move_pain1;
+	else if (damage <= 100)
+		self->monsterinfo.currentmove = &jorg_move_pain2;
+	else if (do_pain3)
+		self->monsterinfo.currentmove = &jorg_move_pain3;
 }
 
 void jorgBFG_refire (edict_t *self)
@@ -452,6 +544,7 @@ void jorg_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage,
 	gi.sound (self, CHAN_VOICE, sound_death, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_NO;
+	vrx_update_drone_death_skin(self);
 	self->s.sound = 0;
 	self->count = 0;
 	self->monsterinfo.currentmove = &jorg_move_death;
@@ -582,9 +675,7 @@ void init_drone_jorg (edict_t *self)
 	VectorSet (self->maxs, 80, 80, 140);
 
 	self->health = self->max_health = 10000 * self->monsterinfo.level;
-	self->monsterinfo.power_armor_power = 10000 * self->monsterinfo.level;
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, 10000 * self->monsterinfo.level);
 	self->mtype = M_JORG;
 	self->monsterinfo.control_cost = M_JORG_CONTROL_COST;
 	self->monsterinfo.cost = 300;
@@ -593,6 +684,7 @@ void init_drone_jorg (edict_t *self)
 	self->monsterinfo.jumpup = 64;
 	self->monsterinfo.jumpdn = 512;
 
+	// vortex bosses have pain animations disabled.
 	//self->pain = jorg_pain;
 	self->die = jorg_die;
 	self->monsterinfo.stand = jorg_stand;
@@ -601,7 +693,7 @@ void init_drone_jorg (edict_t *self)
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
 	//self->monsterinfo.dodge = NULL;
 	self->monsterinfo.attack = jorg_attack;
-	//self->monsterinfo.search = jorg_search;
+	self->monsterinfo.idle = jorg_search;
 	//self->monsterinfo.melee = NULL;
 	//self->monsterinfo.sight = NULL;
 	//self->monsterinfo.checkattack = Jorg_CheckAttack;
@@ -613,5 +705,6 @@ void init_drone_jorg (edict_t *self)
 	self->nextthink = level.time + 0.1;
 	//walkmonster_start(self);
 
-	G_PrintGreenText(va("A level %d jorg has spawned!", self->monsterinfo.level));
+	if (!invasion->value)
+		G_PrintGreenText(va("A level %d jorg has spawned!", self->monsterinfo.level));
 }

@@ -41,10 +41,20 @@ void hover_search (edict_t *self)
 void hover_run (edict_t *self);
 void hover_stand (edict_t *self);
 void hover_dead (edict_t *self);
+void hover_deadthink (edict_t *self);
 void hover_attack (edict_t *self);
 void hover_reattack (edict_t *self);
 void hover_fire_blaster (edict_t *self);
 void hover_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point);
+
+static void hover_set_fly_parameters(edict_t *self)
+{
+	self->monsterinfo.fly_thrusters = false;
+	self->monsterinfo.fly_acceleration = 20.0f;
+	self->monsterinfo.fly_speed = 120.0f;
+	self->monsterinfo.fly_min_distance = 275.0f; //250.0f default value
+	self->monsterinfo.fly_max_distance = 550.0f; //450.0f default value
+}
 
 mframe_t hover_frames_stand [] =
 {
@@ -295,56 +305,81 @@ mmove_t hover_move_walk = {FRAME_forwrd01, FRAME_forwrd35, hover_frames_walk, NU
 
 mframe_t hover_frames_run [] =
 {
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL,
+	drone_ai_run,	10,	NULL
 };
 mmove_t hover_move_run = {FRAME_forwrd01, FRAME_forwrd35, hover_frames_run, NULL};
+
+void hover_dying (edict_t *self)
+{
+	if (self->groundentity)
+	{
+		hover_deadthink(self);
+		return;
+	}
+
+	if (random() < 0.5)
+		return;
+
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_PLAIN_EXPLOSION);
+	gi.WritePosition(self->s.origin);
+	gi.multicast(self->s.origin, MULTICAST_PHS);
+
+	if (!vrx_spawn_nonessential_ent(self->s.origin))
+		return;
+
+	if (random() < 0.5)
+		ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", 120, GIB_ORGANIC);
+	else
+		ThrowGib(self, "models/objects/gibs/sm_metal/tris.md2", 120, GIB_METALLIC);
+}
 
 mframe_t hover_frames_death1 [] =
 {
 	ai_move,	0,	NULL,
+	ai_move,	0,	hover_dying,
 	ai_move,	0,	NULL,
+	ai_move,	0,	hover_dying,
 	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
-	ai_move,	0,	NULL,
-	ai_move,	-10,NULL,
+	ai_move,	0,	hover_dying,
+	ai_move,	-10,hover_dying,
 	ai_move,	3,	NULL,
-	ai_move,	5,	NULL,
-	ai_move,	4,	NULL,
+	ai_move,	5,	hover_dying,
+	ai_move,	4,	hover_dying,
 	ai_move,	7,	NULL
 };
 mmove_t hover_move_death1 = {FRAME_death101, FRAME_death111, hover_frames_death1, hover_dead};
@@ -388,32 +423,32 @@ mmove_t hover_move_start_attack = {FRAME_attak101, FRAME_attak103, hover_frames_
 
 mframe_t hover_frames_attack2[] =
 {
-	ai_charge,	15,	hover_fire_blaster,
-	ai_charge,	15,	hover_fire_blaster,
-	ai_charge,	15,	hover_reattack
+	ai_charge,	10,	hover_fire_blaster,
+	ai_charge,	10,	hover_fire_blaster,
+	ai_charge,	10,	hover_reattack
 };
 mmove_t hover_move_attack2 = { FRAME_attak104, FRAME_attak106, hover_frames_attack2, hover_run };
 
 mframe_t hover_frames_attack1 [] =
 {
-	drone_ai_run,	15,	hover_fire_blaster,
-	drone_ai_run,	15,	hover_fire_blaster,
-	drone_ai_run,	15,	hover_reattack
+	ai_charge,	-10,	hover_fire_blaster,
+	ai_charge,	-10,	hover_fire_blaster,
+	ai_charge,	0,	hover_reattack
 };
 mmove_t hover_move_attack1 = {FRAME_attak104, FRAME_attak106, hover_frames_attack1, hover_run };
 
 
 mframe_t hover_frames_end_attack [] =
 {
-	drone_ai_run,	15,	NULL,
-	drone_ai_run,	15,	NULL
+	ai_charge,	1,	NULL,
+	ai_charge,	1,	NULL
 };
 mmove_t hover_move_end_attack = {FRAME_attak107, FRAME_attak108, hover_frames_end_attack, hover_run};
 
 void hover_reattack (edict_t *self)
 {
 	// if our enemy is still valid, then continue firing
-	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.9))
+	if (G_ValidTarget(self, self->enemy, true, true) && (random() <= 0.6))
 	{
 		self->s.frame = FRAME_attak104;
 		//hover_fire_blaster(self);
@@ -445,8 +480,13 @@ void hover_fire_blaster (edict_t *self)
 	if (M_HYPERBLASTER_DMG_MAX && damage > M_HYPERBLASTER_DMG_MAX)
 		damage = M_HYPERBLASTER_DMG_MAX;
 
-	MonsterAim(self, M_PROJECTILE_ACC, speed, true, MZ2_HOVER_BLASTER_1, forward, start);
-	monster_fire_rocket (self, start, forward, damage, speed, MZ2_HOVER_BLASTER_1);
+	MonsterAim(self, M_PROJECTILE_ACC, speed, true, MZ2_BOSS2_ROCKET_3, forward, start);
+	if (!M_MonsterHasClearShotFrom(self, start))
+	{
+		M_MonsterBlockedShot(self, 0.4f);
+		return;
+	}
+	monster_fire_rocket (self, start, forward, damage, speed, MZ2_BOSS2_ROCKET_3);
 }
 
 void hover_stand (edict_t *self)
@@ -475,9 +515,22 @@ void hover_start_attack (edict_t *self)
 void hover_attack(edict_t *self)
 {
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+	{
+		self->monsterinfo.attack_state = AS_STRAIGHT;
 		self->monsterinfo.currentmove = &hover_move_attack2;
-	else
+	}
+	else if (random() < 0.5f)
+	{
+		self->monsterinfo.attack_state = AS_STRAIGHT;
 		self->monsterinfo.currentmove = &hover_move_attack1;
+	}
+	else
+	{
+		if (random() <= 0.5f)
+			self->monsterinfo.lefty = 1 - self->monsterinfo.lefty;
+		self->monsterinfo.attack_state = AS_SLIDING;
+		self->monsterinfo.currentmove = &hover_move_attack2;
+	}
 }
 
 
@@ -495,6 +548,11 @@ void hover_pain (edict_t *self, edict_t *other, float kick, int damage)
 	// monster players don't get pain state induced
 	if (G_GetClient(self))
 		return;
+
+	if (level.time < self->pain_debounce_time)
+		return;
+
+	self->pain_debounce_time = level.time + 3.0f;
 
 	// stand animation always gets pain state
 	if (random() <= (1.0f - self->monsterinfo.pain_chance) &&
@@ -517,17 +575,34 @@ void hover_pain (edict_t *self, edict_t *other, float kick, int damage)
 	else
 	{
 		gi.sound (self, CHAN_VOICE, sound_pain1, 1, ATTN_NORM, 0);
-		self->monsterinfo.currentmove = &hover_move_pain1;
+		if (random() < 0.3f)
+			self->monsterinfo.currentmove = &hover_move_pain1;
+		else
+			self->monsterinfo.currentmove = &hover_move_pain2;
 	}
 }
 
 void hover_deadthink (edict_t *self)
 {
-	if (!self->groundentity && level.time < self->timestamp)
+	vec3_t	end;
+	trace_t	tr;
+	qboolean on_floor;
+
+	on_floor = self->groundentity != NULL;
+	if (!on_floor)
+	{
+		VectorCopy(self->s.origin, end);
+		end[2] -= 24;
+		tr = gi.trace(self->s.origin, self->mins, self->maxs, end, self, MASK_SOLID);
+		on_floor = tr.fraction < 1.0f && tr.plane.normal[2] > 0.7f;
+	}
+
+	if (!on_floor && level.time < self->timestamp)
 	{
 		self->nextthink = level.time + FRAMETIME;
 		return;
 	}
+	vrx_throw_drone_gibs(self, 150);
 	BecomeExplosion1(self);
 }
 
@@ -544,23 +619,10 @@ void hover_dead (edict_t *self)
 
 void hover_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int		n;
+	qboolean overkill;
 
 	M_Notify(self);
-
-// check for gib
-	if (self->health <= self->gib_health)
-	{
-		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		for (n= 0; n < 2; n++)
-			ThrowGib (self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-		for (n= 0; n < 2; n++)
-			ThrowGib (self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-		ThrowHead (self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-		self->deadflag = DEAD_DEAD;
-		M_Remove(self, false, false);
-		return;
-	}
+	overkill = self->health <= self->gib_health;
 
 	if (self->deadflag == DEAD_DEAD)
 		return;
@@ -568,12 +630,20 @@ void hover_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
 	DroneList_Remove(self);
 
 // regular death
-	if (random() < 0.5)
+	if (overkill)
+		gi.sound (self, CHAN_VOICE, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
+	else if (random() < 0.5)
 		gi.sound (self, CHAN_VOICE, sound_death1, 1, ATTN_NORM, 0);
 	else
 		gi.sound (self, CHAN_VOICE, sound_death2, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
+	self->flags &= ~FL_FLY;
+	self->movetype = MOVETYPE_TOSS;
+	self->gravity = 1.0;
+	if (self->velocity[2] > -120)
+		self->velocity[2] = -120;
 	self->monsterinfo.currentmove = &hover_move_death1;
 }
 
@@ -605,10 +675,10 @@ void init_drone_hover (edict_t *self)
 
 	self->mtype = M_HOVER;
 	self->flags |= FL_FLY;
+	self->monsterinfo.aiflags |= AI_ALTERNATE_FLY;
+	hover_set_fly_parameters(self);
 	self->max_health = self->health;
-	self->monsterinfo.power_armor_power = M_FLOATER_INITIAL_ARMOR + M_FLOATER_ADDON_ARMOR*self->monsterinfo.level;
-	self->monsterinfo.power_armor_type = POWER_ARMOR_SHIELD;
-	self->monsterinfo.max_armor = self->monsterinfo.power_armor_power;
+	M_SetMonsterArmor(self, M_FLOATER_INITIAL_ARMOR + M_FLOATER_ADDON_ARMOR*self->monsterinfo.level);
 	self->monsterinfo.control_cost = M_HOVER_CONTROL_COST;
 	self->monsterinfo.cost = M_HOVER_COST;
 	self->item = FindItemByClassname("ammo_rockets");

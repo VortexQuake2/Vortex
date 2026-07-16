@@ -102,6 +102,8 @@ void fire_napalm (edict_t *self, vec3_t start, vec3_t aimdir,
 	grenade->radius_dmg = burn_damage;
 
 	grenade->classname = "napalm";
+	if (self->client)
+		grenade->svflags |= SVF_PROJECTILE;
 	gi.linkentity (grenade);
 
 	VectorScale (aimdir, speed, grenade->velocity);

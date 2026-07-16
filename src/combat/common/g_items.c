@@ -18,7 +18,7 @@ void drop_temp_touch(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *
 
 //K03 End
 gitem_armor_t jacketarmor_info = {25, 200, .80, .60, ARMOR_BODY};//K03
-gitem_armor_t combatarmor_info = {50, 200, .80, .60, ARMOR_BODY};//K03
+gitem_armor_t combatarmor_info = {50, 200, .60, .30, ARMOR_BODY};//K03
 gitem_armor_t bodyarmor_info = {100, 200, .80, .60, ARMOR_BODY};
 
 static int power_screen_index;
@@ -576,6 +576,9 @@ qboolean Pickup_Health(edict_t *ent, edict_t *other) {
 //======================================================================
 
 int ArmorIndex(edict_t *ent) {
+    if (ent && (ent->svflags & SVF_MONSTER))
+        return ent->monsterinfo.armor_type;
+
     if (!ent->client)
         return 0;
 

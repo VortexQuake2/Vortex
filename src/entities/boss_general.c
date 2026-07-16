@@ -327,13 +327,11 @@ void boss_regenerate(edict_t *self) {
     if (self->health >= 0.3 * self->max_health)
         self->s.skinnum &= ~1; // use normal skin
 
-    if (!self->monsterinfo.power_armor_type)
+    if (!M_MonsterArmorMax(self))
         return;
-    armor = self->monsterinfo.max_armor / regen_frames;
-    if (self->monsterinfo.power_armor_power < self->monsterinfo.max_armor)
-        self->monsterinfo.power_armor_power += armor;
-    if (self->monsterinfo.power_armor_power > self->monsterinfo.max_armor)
-        self->monsterinfo.power_armor_power = self->monsterinfo.max_armor;
+    armor = M_MonsterArmorMax(self) / regen_frames;
+    if (M_MonsterArmorCurrent(self) < M_MonsterArmorMax(self))
+        M_AddMonsterArmor(self, armor);
 }
 
 qboolean SkipFrame(int frame, int *skip_frames) {

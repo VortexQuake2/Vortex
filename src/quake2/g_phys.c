@@ -126,10 +126,10 @@ void SV_Impact (edict_t *e1, trace_t *trace)
 {
 	edict_t *e2 = trace->ent;
 
-	if (e1->touch && e1->solid != SOLID_NOT)
+	if (e1->touch && (e1->solid != SOLID_NOT || (e1->flags & FL_ALWAYS_TOUCH)))
 		e1->touch (e1, e2, &trace->plane, trace->surface);
 	
-	if (e2->touch && e2->solid != SOLID_NOT)
+	if (e2->touch && (e2->solid != SOLID_NOT || (e2->flags & FL_ALWAYS_TOUCH)))
 		e2->touch (e2, e1, NULL, NULL);
 }
 
@@ -613,11 +613,15 @@ void SV_Physics_Toss (edict_t *ent)
 	qboolean	wasinwater;
 	qboolean	isinwater;
 	vec3_t		old_origin;
+	qboolean	is_gib;
+	qboolean	stop_on_ground;
+	float		impact_speed;
 
 	const qboolean	forcethrough = false;
 
 // regular thinking
 	SV_RunThink (ent);
+	is_gib = ent->classname && !strcmp(ent->classname, "gib");
 
 	// if not a team captain, so movement will be handled elsewhere
 	if ( ent->flags & FL_TEAMSLAVE)
@@ -675,6 +679,8 @@ void SV_Physics_Toss (edict_t *ent)
 
 	if (trace.fraction < 1 && !forcethrough)
 	{
+		impact_speed = fabs(DotProduct(ent->velocity, trace.plane.normal));
+
 		// RAFAEL
 		if (ent->movetype == MOVETYPE_WALLBOUNCE)
 			backoff = 2.0;
@@ -703,12 +709,32 @@ void SV_Physics_Toss (edict_t *ent)
 		if (ent->movetype == MOVETYPE_WALLBOUNCE)
 			vectoangles (ent->velocity, ent->s.angles);
 
+		if (is_gib && trace.plane.normal[2] <= 0.7f)
+		{
+			VectorScale(ent->avelocity, 0.75f, ent->avelocity);
+			if (impact_speed < 45.0f && VectorLength(ent->velocity) < 120.0f)
+				VectorCopy(vec3_origin, ent->avelocity);
+		}
+
 	// stop if on ground
 		// RAFAEL
 		//K03 Begin
-		if (trace.plane.normal[2] > 0.95 && ent->movetype != MOVETYPE_WALLBOUNCE && ent->movetype != MOVETYPE_SLIDE)//was 0.7
+		if (trace.plane.normal[2] > (is_gib ? 0.7f : 0.95f) && ent->movetype != MOVETYPE_WALLBOUNCE && ent->movetype != MOVETYPE_SLIDE)//was 0.7
 		{
-			if (ent->velocity[2] < 30/*60*/ || ent->movetype != MOVETYPE_BOUNCE )
+			if (is_gib)
+				VectorCopy(vec3_origin, ent->avelocity);
+
+			if (is_gib)
+			{
+				if (ent->movetype == MOVETYPE_TOSS)
+					stop_on_ground = VectorLength(ent->velocity) < 60.0f;
+				else
+					stop_on_ground = fabs(DotProduct(ent->velocity, trace.plane.normal)) < 60.0f;
+			}
+			else
+				stop_on_ground = ent->velocity[2] < 30/*60*/ || ent->movetype != MOVETYPE_BOUNCE;
+
+			if (stop_on_ground)
 		//K03 End
 			{
 				//	gi.dprintf("SV_Physics_Toss() stopped the entity\n");	
@@ -716,6 +742,10 @@ void SV_Physics_Toss (edict_t *ent)
 				ent->groundentity_linkcount = trace.ent->linkcount;
 				VectorCopy (vec3_origin, ent->velocity);
 				VectorCopy (vec3_origin, ent->avelocity);
+			}
+			else if (is_gib && ent->movetype == MOVETYPE_TOSS)
+			{
+				VectorScale(ent->velocity, 0.75f, ent->velocity);
 			}
 		}
 
@@ -839,7 +869,8 @@ void SV_Physics_Step (edict_t *ent)
 			}
 
 	// friction for flying monsters that have been given vertical velocity
-	if ((ent->flags & FL_FLY) && (ent->velocity[2] != 0))
+	if ((ent->flags & FL_FLY) && (ent->velocity[2] != 0)
+		&& !(ent->monsterinfo.aiflags & AI_ALTERNATE_FLY))
 	{
 //gi.bprintf(PRINT_HIGH,"FLY!\n");
 		speed = fabs(ent->velocity[2]);
@@ -880,7 +911,8 @@ void SV_Physics_Step (edict_t *ent)
 		//gi.dprintf("velocity is nonzero\n");
 		// apply friction
 		// let dead monsters who aren't completely onground slide
-		if ((wasonground) || (ent->flags & (FL_SWIM|FL_FLY)))
+		if (((wasonground) || (ent->flags & (FL_SWIM|FL_FLY)))
+			&& !(ent->monsterinfo.aiflags & AI_ALTERNATE_FLY))
 			if (!(ent->health <= 0.0 && !M_CheckBottom(ent)))
 			{
 				//K03 Begin

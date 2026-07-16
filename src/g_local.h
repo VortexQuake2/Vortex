@@ -167,7 +167,9 @@ enum flags_t {
     FL_UNDEAD = 1 << 23, // entity cannot die (temporary death until resurrection)
     FL_PACKANIMAL = 1 << 24, // pack animal: use num_packanimals to track active quantity
     FL_RESPAWN = 1 << 25, // used for item respawning
-    FL_FLASHLIGHT = 1 << 26
+    FL_FLASHLIGHT = 1 << 26,
+    FL_ALWAYS_TOUCH = 1 << 27,
+    FL_IMMORTAL = 1 << 28 // take damage but never drop below 1 hp
 };
 
 
@@ -220,6 +222,11 @@ typedef enum {
 //gib types
 #define GIB_ORGANIC				0
 #define GIB_METALLIC			1
+#define GIB_SKINNED				2
+#define GIB_UPRIGHT				4
+#define GIB_HEAD				8
+#define GIB_ACID				16
+#define GIB_DEBRIS				32
 
 //monster ai flags
 #define AI_STAND_GROUND			0x00000001
@@ -243,8 +250,10 @@ typedef enum {
 #define AI_PURSUE_PLAT_GOAL		0x00040000
 #define AI_DODGE				0x00080000
 #define AI_SNAP_TO_NAVI         0x00100000
+#define AI_ALTERNATE_FLY		0x00200000
+#define AI_RESURRECTING			0x00400000
 // in invasion, seek out player spawns.
-#define AI_ASSAULT              0x00200000
+#define AI_ASSAULT              0x00800000
 
 //monster attack state
 #define AS_STRAIGHT				1
@@ -632,8 +641,9 @@ typedef struct {
     float teleport_delay; // time before drone can teleport again
     float trail_time;
     vec3_t last_sighting; // last known position of enemy
+    bool last_sighting_is_navi; // is the last known position of enemy a navigation point
 
-    //	int			attack_state;
+    int attack_state;
     int lefty;
     float idle_delay; // how often idle func is called
     int idle_frames; // number of frames monster has been idle
@@ -641,6 +651,8 @@ typedef struct {
     int linkcount;
 
     int power_armor_power;
+    int armor_type;
+    int armor_power;
     int max_armor;
     int radius; // radius (if any) if projectile explosion
     int regen_delay1; // level.framenum when we can regenerate again
@@ -665,11 +677,31 @@ typedef struct {
     float resurrected_time; // time when resurrection from a medic is complete
     int resurrected_level; // used to store the original level of the monster before resurrection bonus is applied
     float resurrected_timeout; // time when the resurrected monster will expire
+    int medic_tries; // Remaster-style failed revive cable attempts against the current corpse
+    edict_t *bad_medic1; // medics that should stop retrying this corpse
+    edict_t *bad_medic2;
+    edict_t *medic_healer; // medic currently claiming this corpse for revive
     float backtrack_delay; // delay until we can backtrack to a closer waypoint (to prevent getting stuck)
     float path_time; // time when monster can compute a path
     vec3_t prevGoalPos; // last goal position, used for deciding when to re-compute paths
     edict_t *lastGoal; // last goal we were chasing, used for deciding when to re-compute paths
     dmglist_t dmglist[MAX_CLIENTS]; // keep track of damage by players
+
+    // Remaster-style alternate flying mechanics.
+    float fly_max_distance;
+    float fly_min_distance;
+    float fly_acceleration;
+    float fly_speed;
+    vec3_t fly_ideal_position;
+    float fly_position_time;
+    qboolean fly_buzzard;
+    qboolean fly_above;
+    qboolean fly_pinned;
+    qboolean fly_thrusters;
+    float fly_recovery_time;
+    vec3_t fly_recovery_dir;
+    float fly_wall_stuck_time;
+    float fly_separation_time;
 
     // az begin
 
@@ -1153,6 +1185,20 @@ int ArmorIndex(edict_t *ent);
 
 int PowerArmorType(edict_t *ent);
 
+void M_SetMonsterArmor(edict_t *self, int amount);
+
+void M_SetMonsterPowerArmor(edict_t *self, int type, int amount);
+
+int M_MonsterArmorCurrent(const edict_t *self);
+
+int M_MonsterArmorMax(const edict_t *self);
+
+void M_SetMonsterArmorCurrent(edict_t *self, int amount);
+
+void M_AddMonsterArmor(edict_t *self, int amount);
+
+qboolean M_MonsterHasPowerArmor(const edict_t *self);
+
 gitem_t *GetItemByIndex(int index);
 
 qboolean Add_Ammo(edict_t *ent, gitem_t *item, float count);
@@ -1420,11 +1466,23 @@ void monster_fire_shotgun(edict_t *self, vec3_t start, vec3_t aimdir, float dama
 void monster_fire_blaster(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int proj_type,
                           float duration, qboolean bounce, int flashtype);
 
+void monster_fire_blaster2(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype);
+
+void monster_fire_blueblaster(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype);
+
+qboolean monster_fire_ionripper(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int flashtype);
+#define DABEAM_SECONDARY 1
+#define DABEAM_SPAWNED 2
+void monster_fire_dabeam(edict_t *self, int damage, qboolean secondary, void (*update_func)(edict_t *self));
+void dabeam_update(edict_t *self, qboolean damage);
+
+qboolean monster_fire_heat(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int flashtype, float turn_fraction);
+
 void monster_fire_grenade(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int flashtype);
 
 void monster_fire_rocket(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int flashtype);
 
-void monster_fire_railgun(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype);
+qboolean monster_fire_railgun(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype);
 
 void monster_fire_bfg(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int kick, float damage_radius,
                       int flashtype);
@@ -1437,6 +1495,9 @@ void monster_fire_fireball(edict_t *self);
 void monster_fire_poison(edict_t *self);
 
 void monster_fire_icebolt(edict_t *self);
+
+void monster_fire_magicbolt(edict_t *self);
+edict_t *magicbolt_spawn(edict_t *owner, vec3_t start, vec3_t dir, int damage, int radius_damage, float damage_radius, float cost_mult);
 
 void monster_fire_rocks(edict_t *self);
 
@@ -1480,7 +1541,6 @@ enum mtype_t : int16_t {
     M_FLIPPER = 4, // 50
     M_FLYER = 5, // 50
     M_INFANTRY = 6, // 100
-    M_ENFORCER = 6, // 100
     M_INSANE = 7, // 100 - Crazy Marine
     M_GUNNER = 8, // 175
     M_CHICK = 9, // 175
@@ -1502,6 +1562,36 @@ enum mtype_t : int16_t {
     M_SHAMBLER = 25,
     M_SKELETON = 26,
     M_GOLEM = 27,
+    M_REDMUTANT = 28,
+    M_RUNNERTANK = 29,
+    M_GUNCMDR = 30,
+    M_DAEDALUS = 31,
+    M_GLADB = 32,
+    M_GLADC = 33,
+    M_STALKER = 34,
+    M_GEKK = 35,
+    M_CHICK_HEAT = 36,
+    M_ARACHNID_PLASMA = 37,
+    M_MEDIC_COMMANDER = 38,
+    M_CARRIER = 39,
+    M_GUARDIAN = 40,
+    M_JANITOR = 41,
+    M_MINIGUARDIAN = 42,
+    M_SOLDIER_RIPPER = 43,
+    M_SOLDIER_BLUEBLASTER = 44,
+    M_SOLDIER_LASER = 45,
+    M_WIDOW = 46,
+    M_WIDOW2 = 47,
+    M_FIXBOT = 48,
+    M_FIXBOT_BOSS = 49,
+    M_ROGUE_TURRET = 50,
+    M_BOSS2_SMALL = 51,
+    M_BOSS5 = 52,
+    M_TANK_N64 = 53,
+    M_ARACHNID_HEAT = 54,
+    M_ENFORCER = 55,
+    M_HEAVY_GUNNER = 56,
+    M_ARACHNID = 57,
     M_MINISENTRY = 100,
     M_SENTRY = 101,
     M_BFG_SENTRY = 102,
@@ -1597,18 +1687,53 @@ enum dronespawn_t {
     DS_FLOATER = 13,
     DS_HOVER = 14,
     DS_SHAMBLER = 15,
+    DS_REDMUTANT = 16,
+    DS_RUNNERTANK = 17,
+    DS_GUNCMDR = 18,
+    DS_DAEDALUS = 19,
     DS_DECOY = 20,
     DS_SKELETON = 21,
     DS_GOLEM = 22,
+    DS_GLADB = 23,
+    DS_GLADC = 24,
+    DS_STALKER = 25,
+    DS_GEKK = 26,
+    DS_BITCH_HEAT = 27,
+    DS_ARACHNID_PLASMA = 28,
+    DS_MEDIC_COMMANDER = 29,
     DS_COMMANDER = 30,
     DS_MAKRON = 31,
     DS_BARON_FIRE = 32,
     DS_SUPERTANK = 33,
     DS_JORG = 34,
+    DS_CARRIER = 35,
+    DS_GUARDIAN = 36,
+    DS_JANITOR = 37,
+    DS_MINIGUARDIAN = 38,
+    DS_SOLDIER_RIPPER = 39,
+    DS_SOLDIER_BLUEBLASTER = 40,
+    DS_SOLDIER_LASER = 41,
+    DS_WIDOW = 42,
+    DS_WIDOW2 = 43,
+    DS_FIXBOT = 44,
+    DS_FIXBOT_BOSS = 45,
+    DS_ROGUE_TURRET = 46,
+    DS_BOSS2 = 47,
+    DS_BOSS2_HYPER = 48, // unused boss,  same attacks than small hornet
+    DS_BOSS2_SMALL = 49, // not a boss, small hornet
+    DS_BOSS5 = 50,
+    DS_TANK_N64 = 51,
+    DS_ARACHNID_HEAT = 52,
+    DS_ENFORCER = 53,
+    DS_HEAVY_GUNNER = 54,
+    DS_ARACHNID = 55,
 
 };
 
 edict_t *vrx_create_new_drone(edict_t *ent, enum dronespawn_t drone_type, qboolean worldspawn, qboolean link_now, int bonus_level);
+qboolean vrx_drone_spawn_is_boss(enum dronespawn_t drone_type);
+qboolean vrx_drone_spawn_type_from_mtype(int mtype, enum dronespawn_t *drone_type);
+qboolean vrx_parse_drone_spawn_type(const char *name, enum dronespawn_t *drone_type);
 
 edict_t *
 vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn_t drone_type, qboolean worldspawn, qboolean link_now,
@@ -1620,6 +1745,8 @@ vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn_t drone_
 void ThrowHead(edict_t *self, char *gibname, int damage, int type);
 
 void ThrowClientHead(edict_t *self, int damage);
+
+edict_t *ThrowGibEx(edict_t *self, char *gibname, int damage, int type, float scale);
 
 void ThrowGib(edict_t *self, char *gibname, int damage, int type);
 
@@ -1639,6 +1766,9 @@ int vrx_get_alive_players(void); //Apple
 int vrx_GetMonsterCost(int mtype); //GHz
 int vrx_GetMonsterControlCost(int mtype); //GHz
 void vrx_remove_player_summonables(edict_t *self); //GHz
+void vrx_precache_drone_gibs(void);
+qboolean vrx_throw_drone_gibs(edict_t *self, int damage);
+void vrx_drop_tank_death_arm(edict_t *self, int damage);
 
 //
 // g_ai.c
@@ -1678,7 +1808,15 @@ void drone_ai_run(edict_t *self, float dist);
 
 void drone_ai_run1(edict_t *self, float dist);
 
+void drone_ai_run_slide(edict_t *self, float dist);
+
+void drone_ai_dodge_slide(edict_t *self, float dist);
+
+void drone_set_dodge_side(edict_t *self, vec3_t impact);
+
 void drone_ai_walk(edict_t *self, float dist);
+
+void drone_react_to_damage(edict_t *self, edict_t *attacker, edict_t *inflictor);
 
 // az begin
 void ai_eval_targets();
@@ -1702,6 +1840,8 @@ qboolean fire_player_melee(edict_t *self, vec3_t start, vec3_t dir, int range, i
 extern byte is_silenced;
 extern qboolean is_quadfire;
 
+void check_dodge(edict_t *self, vec3_t start, vec3_t dir, int speed, int radius);
+
 void fire_bullet(edict_t *self, vec3_t start, vec3_t aimdir, float damage, int kick, int hspread, int vspread, int mod);
 
 void fire_shotgun(edict_t *self, vec3_t start, vec3_t aimdir, float damage, int kick, int hspread, int vspread,
@@ -1709,6 +1849,7 @@ void fire_shotgun(edict_t *self, vec3_t start, vec3_t aimdir, float damage, int 
 
 void fire_blaster(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int proj_type, int mod,
                   float duration, qboolean bounce);
+void fire_blaster2(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, qboolean hyper);
 
 void fire_grenade(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float timer, float damage_radius,
                   int radius_damage);
@@ -1719,7 +1860,7 @@ edict_t *fire_grenade2(edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 void fire_rocket(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius,
                  int radius_damage);
 
-void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick);
+qboolean fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick);
 
 void fire_bfg(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius);
 void fire_disruptor(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, edict_t *enemy);
@@ -1728,6 +1869,7 @@ void fire_disruptor(edict_t *self, vec3_t start, vec3_t dir, int damage, int spe
 void fire_ionripper (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int effect);
 void fire_flechette (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int kick);
 void fire_heat (edict_t *self, vec3_t start, vec3_t aimdir, vec3_t offset, int damage, int kick, qboolean monster);
+void SpawnGrow_Spawn(vec3_t startpos, float start_size, float end_size);
 void fire_blueblaster (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int effect);
 void fire_plasma (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius, int radius_damage);
 void fire_prox (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float damage_radius);
@@ -2451,6 +2593,7 @@ struct edict_s {
     float delay; // before firing targets
     float random;
 
+    float teleport_time;
     int watertype;
     int waterlevel;
 
@@ -2602,6 +2745,9 @@ struct edict_s {
     int movetype_prev; // previous movetype, used by V_Push()
     int movetype_frame; // server frame to restore old movetype
     //K03 End
+    
+    edict_t *beam; // dabeam primary laser
+    edict_t *beam2; // dabeam secondary laser
 
     int teamnum; // teamplay, team we belong to
 
@@ -2612,6 +2758,7 @@ struct edict_s {
     int parasite_frames;
     int shots;
     edict_t *parasite_target;
+    edict_t *proboscis;
 
     // 3.03+ spirit
     edict_t *spirit;
@@ -2808,6 +2955,12 @@ void Check_full(edict_t *ent);
 
 void MonsterAim(edict_t *self, float accuracy, int projectile_speed, qboolean rocket, int flash_number, vec3_t forward,
                 vec3_t start);
+qboolean M_MonsterHasCombatSight(edict_t *self, edict_t *other);
+qboolean M_MonsterMeleeReady(edict_t *self);
+qboolean M_MonsterFindClearShot(edict_t *self, vec3_t start, vec3_t point);
+qboolean M_MonsterHasClearShotFrom(edict_t *self, vec3_t start);
+qboolean M_MonsterHasClearShotFromFlash(edict_t *self, int flash_number);
+void M_MonsterBlockedShot(edict_t *self, float delay);
 
 float entdist(const edict_t *ent1, const edict_t *ent2);
 

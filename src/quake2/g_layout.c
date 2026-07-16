@@ -303,34 +303,66 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	case M_SOLDIERLT:
 	case M_SOLDIER:
 	case M_SOLDIERSS:
+	case M_SOLDIER_RIPPER:
+	case M_SOLDIER_BLUEBLASTER:
+	case M_SOLDIER_LASER:
 	case M_FLIPPER:
 	case M_FLYER:
 	case M_INFANTRY:
+	case M_ENFORCER:
 	case M_INSANE:
 	case M_GUNNER:
+	case M_HEAVY_GUNNER:
 	case M_CHICK:
+	case M_CHICK_HEAT:
 	case M_PARASITE:
 	case M_FLOATER:
 	case M_HOVER:
 	case M_BERSERK:
 	case M_MEDIC:
+	case M_MEDIC_COMMANDER:
 	case M_MUTANT:
 	case M_BRAIN:
 	case M_GLADIATOR:
 	case M_TANK:
+	case M_TANK_N64:
+	case M_SUPERTANK:
+	case M_BOSS5:
 	case M_FORCEWALL:
 	case M_BARON_FIRE:
 	case M_SHAMBLER:
+	case M_REDMUTANT:
+	case M_RUNNERTANK:
+	case M_GUNCMDR:
+	case M_DAEDALUS:
+	case M_GLADB:
+	case M_GLADC:
+	case M_STALKER:
+	case M_GEKK:
+	case M_ARACHNID_PLASMA:
+	case M_ARACHNID_HEAT:
+	case M_ARACHNID:
+	case M_BOSS2:
+	case M_BOSS2_SMALL:
+	case M_CARRIER:
+	case M_WIDOW:
+	case M_WIDOW2:
+	case M_FIXBOT:
+	case M_FIXBOT_BOSS:
+	case M_ROGUE_TURRET:
+	case M_GUARDIAN:
+	case M_JANITOR:
+	case M_MINIGUARDIAN:
 	case M_SKELETON:
 	case M_GOLEM:
 		name = lva("%s", V_GetMonsterName(ent));
 		if (ent->monsterinfo.resurrected_timeout)
 		{
 			float time_remaining = ent->monsterinfo.resurrected_timeout - level.time;
-			data = lva("(%d) +%d/%d %.0f", ent->monsterinfo.level, ent->health, ent->monsterinfo.power_armor_power, time_remaining);
+			data = lva("(%d) +%d/%d %.0f", ent->monsterinfo.level, ent->health, M_MonsterArmorCurrent(ent), time_remaining);
 		}
 		else
-			data = lva("(%d) +%d/%d", ent->monsterinfo.level, ent->health, ent->monsterinfo.power_armor_power);
+			data = lva("(%d) +%d/%d", ent->monsterinfo.level, ent->health, M_MonsterArmorCurrent(ent));
 		break;
 	case M_SENTRY:
 		name = lva("sentry");

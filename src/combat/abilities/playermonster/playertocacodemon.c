@@ -69,6 +69,8 @@ void fire_skull(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, 
     skull->radius_dmg = damage;
     skull->dmg_radius = damage_radius;
     skull->classname = "skull";
+    if (self->client)
+        skull->svflags |= SVF_PROJECTILE;
     skull->s.sound = gi.soundindex("weapons/bfg__l1a.wav");
     skull->delay = level.time + 10;
     skull->think = bskull_think;

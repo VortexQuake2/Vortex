@@ -43,7 +43,6 @@ monster's dodge function should be called.
 void check_dodge(edict_t *self, vec3_t start, vec3_t dir, int speed, int radius) {
     vec3_t end;
     vec3_t v;
-    const vec3_t zvec = {0, 0, 0};
     trace_t tr;
     float eta;
     edict_t *blip = NULL;
@@ -59,8 +58,8 @@ void check_dodge(edict_t *self, vec3_t start, vec3_t dir, int speed, int radius)
         tr.ent->monsterinfo.eta = level.time + eta;
         //gi.dprintf("ETA for impact is %.1f\n", tr.ent->monsterinfo.eta);
         tr.ent->monsterinfo.attacker = self;
-        VectorCopy(zvec, self->monsterinfo.dir);
-        tr.ent->monsterinfo.radius = 0;
+        VectorCopy(tr.endpos, tr.ent->monsterinfo.dir);
+        tr.ent->monsterinfo.radius = radius;
     } else {
         // search for a monster within the radius of the explosion
         while ((blip = findradius(blip, tr.endpos, radius)) != NULL) {
@@ -446,7 +445,7 @@ void blaster_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *s
 
     if (other->takedamage) {
         WeaponStun(self->owner, other, self->style);
-        T_Damage(other, self, self->owner, self->velocity, self->s.origin, plane->normal, self->dmg, 0, DAMAGE_ENERGY,
+        T_Damage(other, self, self->owner, self->velocity, self->s.origin, plane ? plane->normal : vec3_origin, self->dmg, 0, DAMAGE_ENERGY,
                  self->style);
     } else {
         if (self->movetype == MOVETYPE_WALLBOUNCE) {
@@ -472,6 +471,135 @@ void blaster_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *s
         gi.multicast(self->s.origin, MULTICAST_PVS);
     }
     G_FreeEdict(self);
+}
+
+static void blaster2_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
+{
+	if (other == self->owner)
+		return;
+
+	if (surf && (surf->flags & SURF_SKY))
+	{
+		G_FreeEdict(self);
+		return;
+	}
+
+	if (self->owner && self->owner->client)
+		PlayerNoise(self->owner, self->s.origin, PNOISE_IMPACT);
+
+	if (other->takedamage)
+	{
+		if (self->dmg >= 5)
+			T_RadiusDamage(self, self->owner, 2 * self->dmg, other, self->dmg_radius, MOD_BLASTER);
+
+		T_Damage(other, self, self->owner, self->velocity, self->s.origin,
+			plane ? plane->normal : vec3_origin, self->dmg, 1, DAMAGE_ENERGY, MOD_BLASTER);
+	}
+	else
+	{
+		if (self->dmg >= 5)
+			T_RadiusDamage(self, self->owner, 2 * self->dmg, NULL, self->dmg_radius, MOD_BLASTER);
+
+		gi.WriteByte(svc_temp_entity);
+		gi.WriteByte(TE_BLASTER2);
+		gi.WritePosition(self->s.origin);
+		gi.WriteDir(plane ? plane->normal : vec3_origin);
+		gi.multicast(self->s.origin, MULTICAST_PHS);
+	}
+
+	G_FreeEdict(self);
+}
+
+void fire_blaster2(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, qboolean hyper)
+{
+	edict_t *bolt;
+	trace_t tr;
+
+	self->lastsound = level.framenum;
+
+	VectorNormalize(dir);
+
+	bolt = G_Spawn();
+	VectorCopy(start, bolt->s.origin);
+	VectorCopy(start, bolt->s.old_origin);
+	vectoangles(dir, bolt->s.angles);
+	VectorScale(dir, speed, bolt->velocity);
+	bolt->movetype = MOVETYPE_FLYMISSILE;
+	bolt->clipmask = MASK_SHOT;
+	bolt->solid = SOLID_BBOX;
+	bolt->s.effects |= effect;
+	if (effect)
+		bolt->s.effects |= EF_TRACKER;
+	bolt->s.modelindex = gi.modelindex("models/objects/laser/tris.md2");
+	bolt->s.skinnum = 2;
+	bolt->s.sound = gi.soundindex("misc/lasfly.wav");
+	bolt->owner = self;
+	bolt->touch = blaster2_touch;
+	bolt->nextthink = level.time + 2.0;
+	bolt->think = G_FreeEdict;
+	bolt->dmg = damage;
+	bolt->dmg_radius = hyper ? 64 : 128;
+	bolt->classname = "bolt";
+	if (self->client)
+		bolt->svflags |= SVF_PROJECTILE;
+	VectorClear(bolt->mins);
+	VectorClear(bolt->maxs);
+	gi.linkentity(bolt);
+
+	if (self->client)
+		check_dodge(self, bolt->s.origin, dir, speed, 0);
+
+	tr = gi.trace(self->s.origin, NULL, NULL, bolt->s.origin, bolt, MASK_SHOT);
+	if (tr.fraction < 1.0)
+	{
+		VectorMA(bolt->s.origin, -10, dir, bolt->s.origin);
+		bolt->touch(bolt, tr.ent, NULL, NULL);
+	}
+}
+
+void fire_blueblaster(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect)
+{
+	edict_t *bolt;
+	trace_t tr;
+
+	self->lastsound = level.framenum;
+
+	VectorNormalize(dir);
+
+	bolt = G_Spawn();
+	VectorCopy(start, bolt->s.origin);
+	VectorCopy(start, bolt->s.old_origin);
+	vectoangles(dir, bolt->s.angles);
+	VectorScale(dir, speed, bolt->velocity);
+	bolt->movetype = MOVETYPE_FLYMISSILE;
+	bolt->clipmask = MASK_SHOT;
+	bolt->solid = SOLID_BBOX;
+	bolt->s.effects |= effect;
+	bolt->s.modelindex = gi.modelindex("models/objects/laser/tris.md2");
+	bolt->s.skinnum = 1;
+	bolt->s.sound = gi.soundindex("misc/lasfly.wav");
+	bolt->owner = self;
+	bolt->style = MOD_HYPERBLASTER;
+	bolt->touch = blaster_touch;
+	bolt->nextthink = level.time + 2.0;
+	bolt->think = G_FreeEdict;
+	bolt->dmg = damage;
+	bolt->classname = "bolt";
+	if (self->client)
+		bolt->svflags |= SVF_PROJECTILE;
+	VectorClear(bolt->mins);
+	VectorClear(bolt->maxs);
+	gi.linkentity(bolt);
+
+	if (self->client)
+		check_dodge(self, bolt->s.origin, dir, speed, 0);
+
+	tr = gi.trace(self->s.origin, NULL, NULL, bolt->s.origin, bolt, MASK_SHOT);
+	if (tr.fraction < 1.0)
+	{
+		VectorMA(bolt->s.origin, -10, dir, bolt->s.origin);
+		bolt->touch(bolt, tr.ent, NULL, NULL);
+	}
 }
 
 void fire_blaster(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int effect, int proj_type, int mod,
@@ -531,6 +659,8 @@ void fire_blaster(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed
     bolt->think = G_FreeEdict;
     bolt->dmg = damage;
     bolt->classname = "bolt";
+    if (self->client)
+        bolt->svflags |= SVF_PROJECTILE;
     gi.linkentity(bolt);
 
     // call monster's dodge function
@@ -758,21 +888,109 @@ static void Grenade_Touch(edict_t *ent, edict_t *other, cplane_t *plane, csurfac
     //Cluster_Explode(ent);
 }
 
+#define GRENADE_VERTICAL_BOOST 200.0f
+
+static float grenade_throwing_pitch(vec3_t start, vec3_t end, float speed, float vertical_boost)
+{
+	const float gravity = sv_gravity->value;
+	const float dist = Get2dDistance(start, end);
+	const float height = end[2] - start[2];
+	const float effective_speed = sqrtf(speed * speed + vertical_boost * vertical_boost);
+	const double speed_sq = (double)effective_speed * effective_speed;
+	const double discriminant = speed_sq * speed_sq - (double)gravity *
+		((double)gravity * dist * dist + 2.0 * height * speed_sq);
+	float pitch, boost_angle;
+
+	if (speed <= 0 || gravity <= 0 || dist < 1.0f || discriminant < 0)
+		return -999;
+
+	pitch = (float)(-atan((speed_sq - sqrt(discriminant)) / ((double)gravity * dist)) * (180.0 / M_PI));
+	boost_angle = (float)(atan2(vertical_boost, speed) * (180.0 / M_PI));
+	return pitch + boost_angle;
+}
+
+// Solve a ballistic arc for monster grenades and, when needed, scale the launch speed up to
+// the target's range so the grenade actually reaches it (cf. BOT_DMclass_ThrowingPitch1 and
+// grenade_throwing_pitch below). The caller's speed is treated as the minimum; we only scale
+// up, capped at M_GRENADELAUNCHER_SPEED_MAX, so close shots keep their tuned speed/arc while
+// far targets are reachable. The chosen launch speed is written back through *speed.
+static qboolean monster_adjust_grenade_aim(edict_t *self, vec3_t start, int *speed, vec3_t aimdir)
+{
+	float dist, flat_len, pitch, height, reach, eff_min, needed_sq, needed;
+	int launch_speed, cap;
+	vec3_t angles, flat, target;
+
+	if (!(self->svflags & SVF_MONSTER) || !G_EntExists(self->enemy) || *speed <= 100)
+		return false;
+
+	if (!M_MonsterFindClearShot(self, start, target))
+	{
+		// no clear shot (enemy hid / broke LOS): solve the arc for its last known position so the
+		// grenade still lobs to where it was seen, matching the blind-fire aim from MonsterAim.
+		if (!VectorCompare(self->monsterinfo.last_sighting, vec3_origin))
+			VectorCopy(self->monsterinfo.last_sighting, target);
+		else
+			G_EntMidPoint(self->enemy, target);
+	}
+
+	dist = Get2dDistance(start, target);
+	VectorCopy(aimdir, flat);
+	flat[2] = 0;
+	flat_len = VectorNormalize(flat);
+	if (dist < 1.0f || flat_len < 0.01f)
+		return false;
+
+	target[0] = start[0] + flat[0] * dist;
+	target[1] = start[1] + flat[1] * dist;
+	target[2] = start[2] + aimdir[2] / flat_len * dist;
+
+	// minimum horizontal launch speed that can reach the target on an arc, accounting for the
+	// fixed +GRENADE_VERTICAL_BOOST that fire_grenade/fire_grenade2 add. 1.06 margin keeps the
+	// throwing-pitch discriminant strictly positive so a solution exists.
+	height = target[2] - start[2];
+	reach = height + sqrtf(dist * dist + height * height);
+	eff_min = (reach > 0.0f) ? sqrtf(sv_gravity->value * reach) * 1.06f : 0.0f;
+	needed_sq = eff_min * eff_min - GRENADE_VERTICAL_BOOST * GRENADE_VERTICAL_BOOST;
+	needed = (needed_sq > 0.0f) ? sqrtf(needed_sq) : 0.0f;
+
+	launch_speed = *speed;
+	if (needed > (float)launch_speed) // scale up only, to reach far targets
+		launch_speed = (int)ceilf(needed);
+
+	cap = (M_GRENADELAUNCHER_SPEED_MAX > *speed) ? (int)M_GRENADELAUNCHER_SPEED_MAX : *speed;
+	if (launch_speed > cap)
+		launch_speed = cap;
+
+	pitch = grenade_throwing_pitch(start, target, launch_speed, GRENADE_VERTICAL_BOOST);
+	if (pitch < -90)
+		return false; // out of ballistic range even at max speed
+
+	*speed = launch_speed;
+	vectoangles(aimdir, angles);
+	angles[PITCH] = pitch;
+	AngleVectors(angles, aimdir, NULL, NULL);
+	VectorNormalize(aimdir);
+	return true;
+}
+
 void fire_grenade(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, float timer, float damage_radius,
                   int radius_damage) {
     edict_t *grenade;
     vec3_t dir;
     vec3_t forward, right, up;
+    vec3_t adjusted_aim;
 
     // calling entity made a sound, used to alert monsters
     self->lastsound = level.framenum;
 
-    vectoangles(aimdir, dir);
+    VectorCopy(aimdir, adjusted_aim);
+    monster_adjust_grenade_aim(self, start, &speed, adjusted_aim);
+    vectoangles(adjusted_aim, dir);
     AngleVectors(dir, forward, right, up);
 
     grenade = G_Spawn();
     VectorCopy(start, grenade->s.origin);
-    VectorScale(aimdir, speed, grenade->velocity);
+    VectorScale(adjusted_aim, speed, grenade->velocity);
     VectorMA(grenade->velocity, 200 + crandom() * 10.0, up, grenade->velocity);
     VectorMA(grenade->velocity, crandom() * 10.0, right, grenade->velocity);
     VectorSet(grenade->avelocity, 300, 300, 300);
@@ -809,6 +1027,7 @@ void fire_grenade(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int sp
     grenade->radius_dmg = radius_damage;
     grenade->dmg_radius = damage_radius;
     grenade->classname = "grenade";
+    grenade->svflags |= SVF_PROJECTILE;
     gi.linkentity(grenade);
 }
 
@@ -817,16 +1036,19 @@ edict_t *fire_grenade2(edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
     edict_t *grenade;
     vec3_t dir;
     vec3_t forward, right, up;
+    vec3_t adjusted_aim;
 
     // calling entity made a sound, used to alert monsters
     self->lastsound = level.framenum;
 
-    vectoangles(aimdir, dir);
+    VectorCopy(aimdir, adjusted_aim);
+    monster_adjust_grenade_aim(self, start, &speed, adjusted_aim);
+    vectoangles(adjusted_aim, dir);
     AngleVectors(dir, forward, right, up);
 
     grenade = G_Spawn();
     VectorCopy(start, grenade->s.origin);
-    VectorScale(aimdir, speed, grenade->velocity);
+    VectorScale(adjusted_aim, speed, grenade->velocity);
     VectorMA(grenade->velocity, 200 + crandom() * 10.0, up, grenade->velocity);
     VectorMA(grenade->velocity, crandom() * 10.0, right, grenade->velocity);
     VectorSet(grenade->avelocity, 300, 300, 300);
@@ -852,6 +1074,7 @@ edict_t *fire_grenade2(edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
     grenade->radius_dmg = radius_damage;
     grenade->dmg_radius = damage_radius;
     grenade->classname = "hgrenade";
+    grenade->svflags |= SVF_PROJECTILE;
     if (held)
         grenade->spawnflags = 3;
     else
@@ -1010,6 +1233,8 @@ void fire_rocket(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed,
     rocket->dmg_radius = damage_radius;
     rocket->s.sound = gi.soundindex("weapons/rockfly.wav");
     rocket->classname = "rocket";
+    if (self->client)
+        rocket->svflags |= SVF_PROJECTILE;
 
     if (self->client)
         check_dodge(self, rocket->s.origin, dir, speed, damage_radius);
@@ -1112,6 +1337,8 @@ void fire_lockon_rocket(edict_t *self, vec3_t start, vec3_t dir, int damage, int
     rocket->dmg_radius = damage_radius;
     rocket->s.sound = gi.soundindex("weapons/rockfly.wav");
     rocket->classname = "lockon rocket";
+    if (self->client)
+        rocket->svflags |= SVF_PROJECTILE;
 
     if (self->client)
         check_dodge(self, rocket->s.origin, dir, speed, damage_radius);
@@ -1221,6 +1448,8 @@ void fire_smartrocket(edict_t *self, edict_t *target, vec3_t start, vec3_t dir, 
     rocket->dmg_radius = damage_radius;
     rocket->s.sound = gi.soundindex("weapons/rockfly.wav");
     rocket->classname = "smartrocket";
+    if (self->client)
+        rocket->svflags |= SVF_PROJECTILE;
     gi.linkentity(rocket);
 }
 
@@ -1228,14 +1457,15 @@ void fire_smartrocket(edict_t *self, edict_t *target, vec3_t start, vec3_t dir, 
 =================
 fire_rail
 =================
-*/
-void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick) {
+*/ 
+qboolean fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick) {
     vec3_t from;
     vec3_t end;
     trace_t tr;
     edict_t *ignore;
     int mask;
     qboolean water;
+    qboolean hit = false;
     int mod;
     int iters = 0;
 
@@ -1260,6 +1490,7 @@ void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick)
                 ignore = NULL;
 
             if ((tr.ent != self) && (tr.ent->takedamage)) {
+                hit = true;
                 // special MOD for sniper shot
                 if (self->client && self->client->weapon_mode)
                     mod = MOD_SNIPER;
@@ -1315,6 +1546,8 @@ void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick)
 
     if (self->client && self->client->resp.pstats.weapons[WEAPON_RAILGUN].mods[4].current_level < 1)
         PlayerNoise(self, tr.endpos, PNOISE_IMPACT);
+
+    return hit;
 }
 
 /*
@@ -1670,6 +1903,8 @@ void fire_bfg(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, fl
     bfg->dmg = damage;
     bfg->dmg_radius = damage_radius;
     bfg->classname = "bfg blast";
+    if (self->client)
+        bfg->svflags |= SVF_PROJECTILE;
     bfg->s.sound = gi.soundindex("weapons/bfg__l1a.wav");
     bfg->delay = level.time + 10.0; // initial time to expire
 
@@ -1716,6 +1951,8 @@ void spawn_grenades(edict_t *ent, vec3_t origin, float time, int damage, int num
         grenade->dmg = damage;
         grenade->dmg_radius = 100;
         grenade->radius_dmg = damage;
+    if (ent->client)
+        grenade->svflags |= SVF_PROJECTILE;
         VectorSet(grenade->mins, -8, -8, -8);
         VectorSet(grenade->maxs, 8, 8, 8);
         grenade->touch = Grenade_Touch;

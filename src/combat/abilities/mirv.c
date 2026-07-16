@@ -131,6 +131,8 @@ void fire_mirv_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int damage, 
     grenade->radius_dmg = damage;
     grenade->dmg_radius = radius;
     grenade->classname = "mirv grenade";
+    if (self->client)
+        grenade->svflags |= SVF_PROJECTILE;
     gi.linkentity (grenade);
     grenade->nextthink = level.time + timer;
 

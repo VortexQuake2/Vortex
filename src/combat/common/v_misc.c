@@ -242,6 +242,49 @@ int vrx_remove_all_monsters(edict_t *monster_owner) {
 }
 
 
+static enum dronespawn_t vrx_pvm_random_drone_type(void)
+{
+	static const enum dronespawn_t pvm_drone_types[] =
+	{
+		DS_GUNNER,
+		DS_HEAVY_GUNNER,
+		DS_PARASITE,
+		DS_BITCH,
+		DS_BRAIN,
+		DS_MEDIC,
+		DS_TANK,
+		DS_TANK_N64,
+		DS_MUTANT,
+		DS_GLADIATOR,
+		DS_BERSERK,
+		DS_INFANTRY,
+		DS_ENFORCER,
+		DS_FLYER,
+		DS_FLOATER,
+		DS_HOVER,
+		DS_SHAMBLER,
+		DS_REDMUTANT,
+		DS_RUNNERTANK,
+		DS_GUNCMDR,
+		DS_DAEDALUS,
+		DS_GLADB,
+		DS_GLADC,
+		DS_STALKER,
+		DS_GEKK,
+		DS_BITCH_HEAT,
+		DS_ARACHNID_PLASMA,
+		DS_ARACHNID_HEAT,
+		DS_MEDIC_COMMANDER,
+		DS_FIXBOT,
+		DS_BOSS2_SMALL,
+		DS_JANITOR,
+		DS_MINIGUARDIAN
+	};
+
+	const int count = (int)(sizeof(pvm_drone_types) / sizeof(pvm_drone_types[0]));
+	return pvm_drone_types[GetRandom(0, count - 1)];
+}
+
 void vrx_pvm_spawn_monsters(edict_t* self, int max_monsters, int total_monsters)
 {
 	int max_spawn_this_cycle = GetRandom(0, max_monsters - total_monsters);
@@ -252,10 +295,7 @@ void vrx_pvm_spawn_monsters(edict_t* self, int max_monsters, int total_monsters)
 		max_spawn_this_cycle = max(max_spawn_this_cycle, 3);
 
 	while (total_monsters < max_monsters && max_spawn_this_cycle > 0) {
-		int rnd;
-		do {
-			rnd = GetRandom(1, 15); // az: don't spawn soldiers
-		} while (rnd == 10);
+		enum dronespawn_t rnd = vrx_pvm_random_drone_type();
 
 		edict_t* scan;
 		if ((scan = vrx_create_new_drone(self, rnd, true, true, self->monsterinfo.scale)) != NULL) {
@@ -590,12 +630,17 @@ int vrx_GetMonsterCost(int mtype) {
             cost = M_SOLDIER_COST;
             break;
         case M_INFANTRY:
+        case M_ENFORCER:
             cost = M_ENFORCER_COST;
             break;
         case M_GUNNER:
             cost = M_GUNNER_COST;
             break;
+        case M_HEAVY_GUNNER:
+            cost = M_HEAVY_GUNNER_COST;
+            break;
         case M_CHICK:
+        case M_CHICK_HEAT:
             cost = M_CHICK_COST;
             break;
         case M_PARASITE:
@@ -604,10 +649,15 @@ int vrx_GetMonsterCost(int mtype) {
         case M_MEDIC:
             cost = M_MEDIC_COST;
             break;
+        case M_MEDIC_COMMANDER:
+            cost = M_TANK_COST;
+            break;
         case M_BRAIN:
             cost = M_BRAIN_COST;
             break;
+		case M_RUNNERTANK:
         case M_TANK:
+		case M_TANK_N64:
             cost = M_TANK_COST; 
             break;
         case M_HOVER:
@@ -616,7 +666,51 @@ int vrx_GetMonsterCost(int mtype) {
         case M_SHAMBLER:
             cost = M_TANK_COST; //using tank atm
             break;
+        case M_REDMUTANT:
+            cost = M_MUTANT_COST;
+            break;
+        case M_GUNCMDR:
+            cost = M_GUNNER_COST;
+            break;
+        case M_DAEDALUS:
+            cost = M_HOVER_COST;
+            break;
+        case M_GLADB:
+        case M_GLADC:
+            cost = M_DEFAULT_COST;
+            break;
+        case M_STALKER:
+            cost = M_DEFAULT_COST;
+            break;
+        case M_GEKK:
+            cost = M_MUTANT_COST;
+            break;
+        case M_ARACHNID_PLASMA:
+        case M_ARACHNID_HEAT:
+        case M_ARACHNID:
+            cost = M_DEFAULT_COST;
+            break;
+        case M_CARRIER:
+        case M_WIDOW:
+        case M_WIDOW2:
+        case M_FIXBOT_BOSS:
+        case M_BOSS2:
+            cost = M_COMMANDER_COST;
+            break;
+		case M_BOSS2_SMALL:
+			cost = M_HOVER_COST;
+			break;
+		case M_FIXBOT:
+			cost = M_HOVER_COST;
+			break;
+		case M_ROGUE_TURRET:
+			cost = M_DEFAULT_COST;
+			break;
+		case M_JANITOR:
+			cost = M_TANK_COST;
+			break;
         case M_SUPERTANK:
+        case M_BOSS5:
             cost = M_SUPERTANK_COST;
             break;
         case M_COMMANDER:
@@ -646,12 +740,17 @@ int vrx_GetMonsterControlCost(int mtype) {
             cost = M_SOLDIER_CONTROL_COST;
             break;
         case M_INFANTRY:
+        case M_ENFORCER:
             cost = M_ENFORCER_CONTROL_COST;
             break;
         case M_GUNNER:
             cost = M_GUNNER_CONTROL_COST;
             break;
+        case M_HEAVY_GUNNER:
+            cost = M_HEAVY_GUNNER_CONTROL_COST;
+            break;
         case M_CHICK:
+        case M_CHICK_HEAT:
             cost = M_CHICK_CONTROL_COST;
             break;
         case M_PARASITE:
@@ -660,19 +759,65 @@ int vrx_GetMonsterControlCost(int mtype) {
         case M_MEDIC:
             cost = M_MEDIC_CONTROL_COST;
             break;
+        case M_MEDIC_COMMANDER:
+            cost = M_TANK_CONTROL_COST;
+            break;
         case M_BRAIN:
             cost = M_BRAIN_CONTROL_COST;
             break;
         case M_TANK:
+		case M_TANK_N64:
             cost = M_TANK_CONTROL_COST;
             break;
         case M_SHAMBLER:
             cost = M_TANK_CONTROL_COST; //using tank atm
             break;
+        case M_REDMUTANT:
+            cost = M_MUTANT_CONTROL_COST;
+            break;
+        case M_RUNNERTANK:
+            cost = M_TANK_CONTROL_COST;
+            break;
+        case M_GUNCMDR:
+            cost = M_TANK_CONTROL_COST;
+            break;
+        case M_GLADB:
+        case M_GLADC:
+            cost = M_GLADIATOR_CONTROL_COST;
+            break;
+        case M_STALKER:
+            cost = M_BERSERKER_CONTROL_COST;
+            break;
+        case M_GEKK:
+            cost = M_MUTANT_CONTROL_COST;
+            break;
+        case M_ARACHNID_PLASMA:
+        case M_ARACHNID_HEAT:
+        case M_ARACHNID:
+            cost = M_GLADIATOR_CONTROL_COST;
+            break;
+        case M_CARRIER:
+        case M_WIDOW:
+        case M_WIDOW2:
+        case M_FIXBOT_BOSS:
+        case M_BOSS2:
+            cost = M_JORG_CONTROL_COST;
+            break;
+		case M_BOSS2_SMALL:
+			cost = M_HOVER_CONTROL_COST;
+			break;
+        case M_FIXBOT:
+            cost = M_HOVER_CONTROL_COST;
+            break;
+        case M_ROGUE_TURRET:
+            cost = M_DEFAULT_CONTROL_COST;
+            break;
         case M_HOVER:
+		case M_DAEDALUS:
             cost = M_HOVER_CONTROL_COST;
             break;
         case M_SUPERTANK:
+        case M_BOSS5:
             cost = M_SUPERTANK_CONTROL_COST;
             break;
         case M_COMMANDER:
@@ -786,7 +931,7 @@ void ThrowDeadlyGib(edict_t* self, char* modelname, vec3_t origin, vec3_t dir, i
 		gib->creator = self;
 	gib->die = deadly_gib_die;
 	gib->touch = shrapnel_touch;
-	if (type == GIB_ORGANIC)
+	if (!(type & GIB_METALLIC))
 		gib->movetype = MOVETYPE_TOSS;
 	else
 		gib->movetype = MOVETYPE_BOUNCE;

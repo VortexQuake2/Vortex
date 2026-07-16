@@ -34,21 +34,16 @@ void magicbolt_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t
 	G_FreeEdict(self);
 }
 
-void fire_magicbolt (edict_t *ent, int damage, int radius_damage, float damage_radius, float cost_mult)
+// Low-level spawner shared by the player ability and monster casters. The
+// caller supplies an already-computed muzzle origin and a firing direction.
+edict_t *magicbolt_spawn (edict_t *owner, vec3_t start, vec3_t dir, int damage, int radius_damage, float damage_radius, float cost_mult)
 {
 	edict_t	*bolt;
-	vec3_t	offset, forward, right, start;
-    
-	// calling entity made a sound, used to alert monsters
-	ent->lastsound = level.framenum;
+	vec3_t	forward;
 
-	// set-up firing parameters
-	AngleVectors (ent->client->v_angle, forward, right, NULL);
-	VectorScale (forward, -3, ent->client->kick_origin);
-	VectorSet(offset, 0, 7,  ent->viewheight-8);
-	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
+	VectorCopy (dir, forward);
+	VectorNormalize (forward);
 
-	// create bolt
 	bolt = G_Spawn();
 	VectorSet (bolt->mins, -10, -10, 10);
 	VectorSet (bolt->maxs, 10, 10, 10);
@@ -63,7 +58,7 @@ void fire_magicbolt (edict_t *ent, int damage, int radius_damage, float damage_r
 	bolt->s.effects |= EF_COLOR_SHELL;
 	bolt->s.renderfx |= (RF_SHELL_RED|RF_SHELL_GREEN|RF_SHELL_BLUE);
 	bolt->s.sound = gi.soundindex ("misc/lasfly.wav");
-	bolt->owner = ent;
+	bolt->owner = owner;
 	bolt->think = G_FreeEdict;
 	bolt->touch = magicbolt_touch;
 	bolt->nextthink = level.time + BOLT_DURATION;
@@ -71,8 +66,27 @@ void fire_magicbolt (edict_t *ent, int damage, int radius_damage, float damage_r
 	bolt->dmg = damage;
 	bolt->dmg_radius = damage_radius;
 	bolt->radius_dmg = radius_damage;
-	bolt->classname = "magicbolt";	
+	bolt->classname = "magicbolt";
+	bolt->svflags |= SVF_PROJECTILE; // allow other monsters to dodge it
 	gi.linkentity (bolt);
+
+	return bolt;
+}
+
+void fire_magicbolt (edict_t *ent, int damage, int radius_damage, float damage_radius, float cost_mult)
+{
+	vec3_t	offset, forward, right, start;
+
+	// calling entity made a sound, used to alert monsters
+	ent->lastsound = level.framenum;
+
+	// set-up firing parameters
+	AngleVectors (ent->client->v_angle, forward, right, NULL);
+	VectorScale (forward, -3, ent->client->kick_origin);
+	VectorSet(offset, 0, 7,  ent->viewheight-8);
+	P_ProjectSource (ent->client, ent->s.origin, offset, forward, right, start);
+
+	magicbolt_spawn (ent, start, forward, damage, radius_damage, damage_radius, cost_mult);
 
 	// write a nice effect so everyone knows we've cast a spell
 	gi.WriteByte (svc_temp_entity);

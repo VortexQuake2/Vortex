@@ -3660,18 +3660,76 @@ void acid_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf
     acid_explode(ent);
 }
 
+#define ACID_VERTICAL_BOOST 200.0f
+
+static float acid_throwing_pitch(vec3_t start, vec3_t end, float speed, float vertical_boost)
+{
+	const float gravity = sv_gravity->value;
+	const float dist = Get2dDistance(start, end);
+	const float height = end[2] - start[2];
+	const float effective_speed = sqrtf(speed * speed + vertical_boost * vertical_boost);
+	const double speed_sq = (double)effective_speed * effective_speed;
+	const double discriminant = speed_sq * speed_sq - (double)gravity *
+		((double)gravity * dist * dist + 2.0 * height * speed_sq);
+	float pitch, boost_angle;
+
+	if (speed <= 0 || gravity <= 0 || dist < 1.0f || discriminant < 0)
+		return -999;
+
+	pitch = (float)(-atan((speed_sq - sqrt(discriminant)) / ((double)gravity * dist)) * (180.0 / M_PI));
+	boost_angle = (float)(atan2(vertical_boost, speed) * (180.0 / M_PI));
+	return pitch + boost_angle;
+}
+
+static qboolean monster_adjust_acid_aim(edict_t *self, vec3_t start, int speed, vec3_t aimdir)
+{
+	float dist, flat_len, pitch;
+	vec3_t angles, flat, target;
+
+	if (!(self->svflags & SVF_MONSTER) || !G_EntExists(self->enemy) || speed <= 100)
+		return false;
+
+	if (!M_MonsterFindClearShot(self, start, target))
+		G_EntMidPoint(self->enemy, target);
+
+	dist = Get2dDistance(start, target);
+	VectorCopy(aimdir, flat);
+	flat[2] = 0;
+	flat_len = VectorNormalize(flat);
+	if (dist < 1.0f || flat_len < 0.01f)
+		return false;
+
+	target[0] = start[0] + flat[0] * dist;
+	target[1] = start[1] + flat[1] * dist;
+	target[2] = start[2] + aimdir[2] / flat_len * dist;
+
+	pitch = acid_throwing_pitch(start, target, speed, ACID_VERTICAL_BOOST);
+	if (pitch < -90)
+		return false;
+
+	vectoangles(aimdir, angles);
+	angles[PITCH] = pitch;
+	AngleVectors(angles, aimdir, NULL, NULL);
+	VectorNormalize(aimdir);
+	return true;
+}
+
 void fire_acid (edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damage, float radius,
                 int speed, int acid_damage, float acid_duration, int gas_damage, float gas_radius, float gas_duration)
 {
     edict_t	*grenade;
     vec3_t	dir;
     vec3_t	forward, right, up;
+	vec3_t	adjusted_aim;
 
     // calling entity made a sound, used to alert monsters
     self->lastsound = level.framenum;
 
+	VectorCopy(aimdir, adjusted_aim);
+	monster_adjust_acid_aim(self, start, speed, adjusted_aim);
+
     // get aiming angles
-    vectoangles(aimdir, dir);
+    vectoangles(adjusted_aim, dir);
     // get directional vectors
     AngleVectors(dir, forward, right, up);
 
@@ -3691,6 +3749,8 @@ void fire_acid (edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damag
     grenade->dmg_radius = radius;
     grenade->delay = acid_duration;
     grenade->classname = "acid";
+	if (self->client)
+		grenade->svflags |= SVF_PROJECTILE;
 	// Talent: Spitting Gasser
 	if (gas_damage > 0 && gas_radius > 0 && gas_duration > 0)
 	{
@@ -3702,7 +3762,7 @@ void fire_acid (edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damag
     grenade->nextthink = level.time + 10.0;
 
     // adjust velocity
-    VectorScale (aimdir, speed, grenade->velocity);
+    VectorScale (adjusted_aim, speed, grenade->velocity);
     VectorMA (grenade->velocity, 200 + crandom() * 10.0, up, grenade->velocity);
     VectorMA (grenade->velocity, crandom() * 10.0, right, grenade->velocity);
     VectorSet (grenade->avelocity, 300, 300, 300);

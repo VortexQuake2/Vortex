@@ -19,7 +19,12 @@
 // Lightning only shines on one hand ( shambler_lightning_update(edict_t* self) ) // FIXED using other effects
 
 
-#define MAX_LIGHTNING_FRAMES 4
+static constexpr int MAX_LIGHTNING_FRAMES = 4;
+static constexpr float SHAMBLER_ICE_CHARGE_MIN_SCALE = 0.1f;
+static constexpr float SHAMBLER_ICE_CHARGE_MAX_SCALE = 1.0f;
+#define SHAMBLER_ICE_CHARGE_GROW_TIME (7.0f * FRAMETIME)
+static constexpr float SHAMBLER_ICE_CHARGE_TIMEOUT = 0.3f;
+#define SHAMBLER_ICE_CHARGE_NAME "shambler_ice_charge"
 
 static int sound_pain;
 static int sound_idle;
@@ -41,17 +46,18 @@ void shambler_pain(edict_t* self, edict_t* other, float kick, int damage);
 void shambler_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point);
 
 static void FindShamblerOffset(edict_t* self, vec3_t offset);
+static void shambler_free_ice_charges(edict_t* self);
 
 void sham_swingl9(edict_t* self);
 void sham_swingr9(edict_t* self);
 
 //FROST NOVA Attack 
 
-#define NOVA_RADIUS				150
-#define NOVA_DEFAULT_DAMAGE		50
-#define NOVA_ADDON_DAMAGE		30
-#define NOVA_DELAY				0.3
-#define FROSTNOVA_RADIUS		150
+static constexpr int NOVA_RADIUS = 150;
+static constexpr int NOVA_DEFAULT_DAMAGE = 50;
+static constexpr int NOVA_ADDON_DAMAGE = 30;
+static constexpr double NOVA_DELAY = 0.3;
+static constexpr int FROSTNOVA_RADIUS = 150;
 void NovaExplosionEffect(vec3_t org);
 
 void shambler_frostnova(edict_t* self)
@@ -425,19 +431,9 @@ void ShamblerCastLightning(edict_t* self)
 	gi.WritePosition(tr.endpos);
 	gi.multicast(start, MULTICAST_PVS);
 
-
-	//apply dmg!
-
-
-
-	if (tr.fraction < 1.0 && tr.ent)
+	if (tr.fraction < 1.0f && tr.ent)
 	{
-		//int damage = M_SHAMBLER_LIGHTNING_BASE_DMG + M_SHAMBLER_ADDON_LIGHTNING_DMG; //* self->monsterinfo.level; ?
 		const int damage = 4 + 3 * drone_damagelevel(self);
-
-		//if (M_SHAMBLER_LIGHTNING_MAX_DMG && damage > M_SHAMBLER_LIGHTNING_MAX_DMG)
-		//	damage = M_SHAMBLER_LIGHTNING_MAX_DMG;
-
 		T_Damage(tr.ent, self, self, dir, tr.endpos, tr.plane.normal, damage, 0, DAMAGE_ENERGY, MOD_LIGHTNING);
 	}
 }
@@ -457,44 +453,6 @@ mframe_t shambler_frames_magic[] = {
 	{ai_move, 0, NULL},
 };
 mmove_t shambler_move_attack = { FRAME_magic1, FRAME_magic12, shambler_frames_magic, shambler_run };
-
-
-//fiery skull attack
-
-static void shambler_fieryskull_update(edict_t* self)
-{
-	const int frame_offset = self->s.frame - FRAME_magic1;
-	if (frame_offset >= MAX_LIGHTNING_FRAMES)
-	{
-		return;
-	}
-
-	vec3_t f, r;
-	AngleVectors(self->s.angles, f, r, NULL);
-
-	vec3_t left_pos, right_pos;
-	VectorMA(self->s.origin, lightning_left_hand[frame_offset][0], f, left_pos);
-	VectorMA(left_pos, lightning_left_hand[frame_offset][1], r, left_pos);
-	left_pos[2] += lightning_left_hand[frame_offset][2];
-
-	VectorMA(self->s.origin, lightning_right_hand[frame_offset][0], f, right_pos);
-	VectorMA(right_pos, lightning_right_hand[frame_offset][1], r, right_pos);
-	right_pos[2] += lightning_right_hand[frame_offset][2];
-
-	gi.WriteByte(svc_temp_entity);
-#ifndef VRX_REPRO
-	gi.WriteByte(TE_MONSTER_HEATBEAM);
-	gi.WriteShort(self - g_edicts);
-#else
-	gi.WriteByte(TE_LIGHTNING);
-	gi.WriteShort(self - g_edicts);
-	gi.WriteShort(0);
-#endif
-
-	gi.WritePosition(left_pos);
-	gi.WritePosition(right_pos);
-	gi.multicast(left_pos, MULTICAST_PVS);
-}
 
 // New function to calculate aim direction
 void CalculateAimDirection(edict_t* self, vec3_t start, vec3_t aim)
@@ -562,14 +520,181 @@ void ShamblerCastIcebolt(edict_t* self)
 	gi.sound(self, CHAN_WEAPON, gi.soundindex("spells/coldcast.wav"), 1, ATTN_NORM, 0);
 }
 
+static float shambler_clampf(float value, float min_value, float max_value)
+{
+	if (value < min_value)
+		return min_value;
+	if (value > max_value)
+		return max_value;
+	return value;
+}
+
+static float shambler_ice_charge_scale(int frame_offset)
+{
+	const float progress = shambler_clampf((float)frame_offset / 7.0f, 0.0f, 1.0f);
+
+	return shambler_clampf(SHAMBLER_ICE_CHARGE_MIN_SCALE +
+		(SHAMBLER_ICE_CHARGE_MAX_SCALE - SHAMBLER_ICE_CHARGE_MIN_SCALE) * progress,
+		SHAMBLER_ICE_CHARGE_MIN_SCALE, SHAMBLER_ICE_CHARGE_MAX_SCALE);
+}
+
+static qboolean shambler_is_ice_charge(edict_t *charge)
+{
+	return charge && charge->inuse && charge->classname && !strcmp(charge->classname, SHAMBLER_ICE_CHARGE_NAME);
+}
+
+static void shambler_clear_ice_charge_owner(edict_t *charge)
+{
+	if (!charge || !charge->owner || !charge->owner->inuse)
+		return;
+
+	if (charge->owner->beam == charge)
+		charge->owner->beam = NULL;
+	if (charge->owner->beam2 == charge)
+		charge->owner->beam2 = NULL;
+}
+
+static void shambler_ice_charge_think(edict_t *self)
+{
+	float progress;
+	int i;
+
+	if (!self->owner || !self->owner->inuse || self->owner->deadflag || level.time >= self->timestamp)
+	{
+		shambler_clear_ice_charge_owner(self);
+		G_FreeEdict(self);
+		return;
+	}
+
+	for (i = 0; i < 3; i++)
+		self->s.angles[i] += self->avelocity[i] * FRAMETIME;
+
+	progress = shambler_clampf((level.time - self->teleport_time) / self->wait, 0.0f, 1.0f);
+	self->s.scale = shambler_clampf(self->accel + (self->decel - self->accel) * progress,
+		SHAMBLER_ICE_CHARGE_MIN_SCALE, SHAMBLER_ICE_CHARGE_MAX_SCALE);
+
+	gi.linkentity(self);
+	self->nextthink = level.time + FRAMETIME;
+}
+
+static edict_t *shambler_get_ice_charge(edict_t *self, qboolean right_hand)
+{
+	edict_t **slot = right_hand ? &self->beam2 : &self->beam;
+	edict_t *charge = *slot;
+
+	if (shambler_is_ice_charge(charge))
+		return charge;
+
+	if (charge && !charge->inuse)
+		*slot = NULL;
+	else if (charge)
+		return NULL;
+
+	charge = G_Spawn();
+
+	if (!charge)
+		return NULL;
+
+	VectorCopy(self->s.angles, charge->s.angles);
+	charge->s.modelindex = gi.modelindex("models/proj/proj_drole/tris.md2");
+	charge->s.skinnum = 1;
+	charge->s.frame = 4;
+	charge->s.effects |= EF_HALF_DAMAGE | EF_FLAG2;
+	VectorSet(charge->avelocity, GetRandom(300, 1000), 0, 0);
+	charge->solid = SOLID_NOT;
+	charge->movetype = MOVETYPE_NONE;
+	charge->classname = SHAMBLER_ICE_CHARGE_NAME;
+	charge->owner = self;
+	charge->think = shambler_ice_charge_think;
+	charge->accel = SHAMBLER_ICE_CHARGE_MIN_SCALE;
+	charge->decel = SHAMBLER_ICE_CHARGE_MAX_SCALE;
+	charge->s.scale = SHAMBLER_ICE_CHARGE_MIN_SCALE;
+	charge->teleport_time = level.time;
+	charge->wait = SHAMBLER_ICE_CHARGE_GROW_TIME;
+	charge->timestamp = level.time + SHAMBLER_ICE_CHARGE_TIMEOUT;
+	charge->nextthink = level.time + FRAMETIME;
+	*slot = charge;
+
+	return charge;
+}
+
+static void shambler_update_ice_charge(edict_t *self, vec3_t origin, float scale, qboolean right_hand)
+{
+	edict_t *charge = shambler_get_ice_charge(self, right_hand);
+
+	if (!charge)
+		return;
+
+	if (VectorLength(charge->s.origin))
+		VectorCopy(charge->s.origin, charge->s.old_origin);
+	else
+		VectorCopy(origin, charge->s.old_origin);
+	VectorCopy(origin, charge->s.origin);
+	charge->timestamp = level.time + SHAMBLER_ICE_CHARGE_TIMEOUT;
+	if (charge->s.scale < scale)
+		charge->s.scale = scale;
+	gi.linkentity(charge);
+}
+
+static void shambler_free_ice_charge(edict_t **slot)
+{
+	edict_t *charge = *slot;
+
+	if (charge && !charge->inuse)
+	{
+		*slot = NULL;
+		return;
+	}
+
+	if (!shambler_is_ice_charge(charge))
+		return;
+
+	*slot = NULL;
+	G_FreeEdict(charge);
+}
+
+static void shambler_free_ice_charges(edict_t* self)
+{
+	shambler_free_ice_charge(&self->beam);
+	shambler_free_ice_charge(&self->beam2);
+}
+
+static void shambler_ice_charge_particles(vec3_t origin, float scale)
+{
+	const int blue_count = (int)shambler_clampf(8.0f + scale * 6.0f, 8.0f, 12.0f);
+	vec3_t down = { 0, 0, -1 };
+
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_WELDING_SPARKS);
+	gi.WriteByte(blue_count);
+	gi.WritePosition(origin);
+	gi.WriteDir(down);
+	gi.WriteByte(113);
+	gi.multicast(origin, MULTICAST_PVS);
+
+	if (random() <= 0.33f)
+	{
+		gi.WriteByte(svc_temp_entity);
+		gi.WriteByte(TE_WELDING_SPARKS);
+		gi.WriteByte(1);
+		gi.WritePosition(origin);
+		gi.WriteDir(down);
+		gi.WriteByte(217);
+		gi.multicast(origin, MULTICAST_PVS);
+	}
+}
 
 static void shambler_ice_update(edict_t* self)
 {
-	const int frame_offset = self->s.frame - FRAME_magic1;
-	if (frame_offset >= MAX_LIGHTNING_FRAMES)
-	{
+	const int raw_frame_offset = self->s.frame - FRAME_magic1;
+	int frame_offset = raw_frame_offset;
+	const float scale = shambler_ice_charge_scale(raw_frame_offset);
+
+	if (frame_offset < 0)
 		return;
-	}
+	if (frame_offset >= MAX_LIGHTNING_FRAMES)
+		frame_offset = MAX_LIGHTNING_FRAMES - 1;
+
 	vec3_t f, r;
 	AngleVectors(self->s.angles, f, r, NULL);
 
@@ -583,32 +708,10 @@ static void shambler_ice_update(edict_t* self)
 	VectorMA(right_pos, lightning_right_hand[frame_offset][1], r, right_pos);
 	right_pos[2] += lightning_right_hand[frame_offset][2];
 
-	// create fire models on both hands
-	edict_t* left_fire = G_Spawn();
-	edict_t* right_fire = G_Spawn();
-
-	VectorCopy(left_pos, left_fire->s.origin);
-	VectorCopy(right_pos, right_fire->s.origin);
-
-	left_fire->s.modelindex = gi.modelindex("models/fire/tris.md2");
-	right_fire->s.modelindex = gi.modelindex("models/fire/tris.md2");	
-	
-	//left_fire->s.modelindex = gi.modelindex("models/objects/flball/tris.md2"); // ugly
-	//right_fire->s.modelindex = gi.modelindex("models/objects/flball/tris.md2"); // ugly
-	left_fire->s.effects |= EF_QUAD | RF_SHELL_CYAN;
-	right_fire->s.effects |= EF_QUAD | RF_SHELL_CYAN;
-
-	left_fire->s.renderfx |= RF_FULLBRIGHT;
-	right_fire->s.renderfx |= RF_FULLBRIGHT;
-
-	left_fire->think = G_FreeEdict;
-	right_fire->think = G_FreeEdict;
-
-	left_fire->nextthink = level.time + 0.1;
-	right_fire->nextthink = level.time + 0.1;
-
-	gi.linkentity(left_fire);
-	gi.linkentity(right_fire);
+	shambler_update_ice_charge(self, left_pos, scale, false);
+	shambler_update_ice_charge(self, right_pos, scale, true);
+	shambler_ice_charge_particles(left_pos, scale);
+	shambler_ice_charge_particles(right_pos, scale);
 }
 
 void shambler_windupIce(edict_t* self) // lightning preparing
@@ -620,175 +723,40 @@ void shambler_windupIce(edict_t* self) // lightning preparing
 	self->nextthink = level.time + FRAMETIME;
 }
 
+static void ShamblerSaveLocAndIceUpdate(edict_t* self)
+{
+	ShamblerSaveLoc(self);
+	shambler_ice_update(self);
+}
+
+static void ShamblerSaveLocIceUpdateAndCast(edict_t* self)
+{
+	ShamblerSaveLocAndIceUpdate(self);
+	ShamblerCastIcebolt(self);
+}
+
+static void shambler_finish_icebolt(edict_t* self)
+{
+	shambler_free_ice_charges(self);
+	shambler_run(self);
+}
+
 
 mframe_t shambler_frames_icebolt[] = {
 	{ai_charge, 0, shambler_windupIce},
-	{ai_charge, 0, ShamblerSaveLoc},
+	{ai_charge, 0, ShamblerSaveLocAndIceUpdate},
 	{ai_charge, 0, shambler_ice_update},
-	{ai_move, 0, ShamblerSaveLoc},
+	{ai_move, 0, ShamblerSaveLocAndIceUpdate},
 	{ai_move, 0, shambler_ice_update},
-	{ai_move, 0, ShamblerSaveLoc},
+	{ai_move, 0, ShamblerSaveLocAndIceUpdate},
+	{ai_move, 0, shambler_ice_update},
+	{ai_move, 0, ShamblerSaveLocIceUpdateAndCast},
+	{ai_move, 0, ShamblerCastIcebolt},
 	{ai_move, 0, NULL},
-	{ai_move, 0, ShamblerSaveLoc},
-	{ai_move, 0, ShamblerCastIcebolt},
-	{ai_move, 0, ShamblerSaveLoc},
-	{ai_move, 0, ShamblerCastIcebolt},
+	{ai_move, 0, NULL},
 	{ai_charge, 0, NULL},
 };
-mmove_t shambler_move_icebolt = { FRAME_magic1, FRAME_magic12, shambler_frames_icebolt, shambler_run };
-
-
-// FIERY ROCKET SKULLS
-
-void shambler_windupFire(edict_t* self) // lightning preparing
-{
-	shambler_fieryskull_update(self);
-
-	gi.sound(self, CHAN_WEAPON, gi.soundindex("sound_attack"), 1, ATTN_NORM, 0);
-
-	self->nextthink = level.time + FRAMETIME;
-}
-
-
-//pre fire attack stuff
-static void shambler_fire_update(edict_t* self)
-{
-	const int frame_offset = self->s.frame - FRAME_magic1;
-	if (frame_offset >= MAX_LIGHTNING_FRAMES)
-	{
-		return;
-	}
-	vec3_t f, r;
-	AngleVectors(self->s.angles, f, r, NULL);
-
-	// Proyectar las posiciones de las manos
-	vec3_t left_pos, right_pos;
-	VectorMA(self->s.origin, lightning_left_hand[frame_offset][0], f, left_pos);
-	VectorMA(left_pos, lightning_left_hand[frame_offset][1], r, left_pos);
-	left_pos[2] += lightning_left_hand[frame_offset][2];
-
-	VectorMA(self->s.origin, lightning_right_hand[frame_offset][0], f, right_pos);
-	VectorMA(right_pos, lightning_right_hand[frame_offset][1], r, right_pos);
-	right_pos[2] += lightning_right_hand[frame_offset][2];
-
-	// Crear efectos de cr�neo en ambas manos
-	edict_t* left_fire = G_Spawn();
-	edict_t* right_fire = G_Spawn();
-
-	VectorCopy(left_pos, left_fire->s.origin);
-	VectorCopy(right_pos, right_fire->s.origin);
-
-	left_fire->s.modelindex = gi.modelindex("models/fire/tris.md2");
-	right_fire->s.modelindex = gi.modelindex("models/fire/tris.md2");
-
-	left_fire->s.effects |= EF_GIB | EF_ROCKET;
-	right_fire->s.effects |= EF_GIB | EF_ROCKET;
-
-	left_fire->s.renderfx |= RF_FULLBRIGHT;
-	right_fire->s.renderfx |= RF_FULLBRIGHT;
-
-	left_fire->think = G_FreeEdict;
-	right_fire->think = G_FreeEdict;
-
-	left_fire->nextthink = level.time + 0.1;
-	right_fire->nextthink = level.time + 0.1;
-
-	gi.linkentity(left_fire);
-	gi.linkentity(right_fire);
-}
-
-void bskull_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* surf);
-//void magicbolt_touch(edict_t* self, edict_t* other, cplane_t* plane, csurface_t* surf);
-void fire_shambler_skull(edict_t* self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius)
-{
-	edict_t* skull;
-	skull = G_Spawn();
-	VectorCopy(start, skull->s.origin);
-	VectorCopy(dir, skull->movedir);
-	vectoangles(dir, skull->s.angles);
-	VectorScale(dir, speed, skull->velocity);
-	skull->movetype = MOVETYPE_FLYMISSILE;
-	skull->clipmask = MASK_SHOT;
-	skull->solid = SOLID_BBOX;
-	VectorClear(skull->mins);
-	VectorClear(skull->maxs);
-	skull->s.modelindex = gi.modelindex("models/objects/gibs/skull/tris.md2");
-	skull->owner = self;
-	skull->touch = bskull_touch;
-	skull->dmg = damage;
-	skull->radius_dmg = 120;
-	skull->dmg_radius = damage_radius;
-	skull->s.effects = EF_GIB | EF_ROCKET;
-	skull->s.sound = gi.soundindex("weapons/rockfly.wav");
-	skull->classname = "shambler_skull";
-	skull->nextthink = level.time + 8000 / speed;
-	skull->think = G_FreeEdict;
-	gi.linkentity(skull);
-}
-
-void fire_skull(edict_t* self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius);
-
-void ShamblerCastSkull(edict_t* self)
-{
-	vec3_t forward, right;
-	vec3_t start_left, start_right;
-	const float accuracy = M_PROJECTILE_ACC;
-
-	if (!G_EntIsAlive(self->enemy))
-		return;
-
-	// Get the current frame offset
-	int frame_offset = self->s.frame - FRAME_magic1;
-	if (frame_offset >= MAX_LIGHTNING_FRAMES)
-	{
-		frame_offset = MAX_LIGHTNING_FRAMES - 1;
-	}
-
-	// Calculate hand positions using the same method as for lightning
-	AngleVectors(self->s.angles, forward, right, NULL);
-
-	// Left hand
-	VectorMA(self->s.origin, lightning_left_hand[frame_offset][0], forward, start_left);
-	VectorMA(start_left, lightning_left_hand[frame_offset][1], right, start_left);
-	start_left[2] = self->s.origin[2] + lightning_left_hand[frame_offset][2];
-
-	// Right hand
-	VectorMA(self->s.origin, lightning_right_hand[frame_offset][0], forward, start_right);
-	VectorMA(start_right, lightning_right_hand[frame_offset][1], right, start_right);
-	start_right[2] = self->s.origin[2] + lightning_right_hand[frame_offset][2];
-
-	// Calculate damage
-	const int damage = 30 + 15 * self->monsterinfo.level;
-
-	// Fire skull from left hand
-	MonsterAim(self, accuracy, 1200, false, -1, forward, start_left);
-	fire_shambler_skull(self, start_left, forward, damage, 1600, 50);
-
-	// Fire skull from right hand
-	MonsterAim(self, accuracy, 1600, false, -1, forward, start_right);
-	fire_shambler_skull(self, start_right, forward, damage, 1300, 50);
-
-	// Play sound effect
-	gi.sound(self, CHAN_WEAPON, gi.soundindex("spells/circle1.wav"), 1, ATTN_NORM, 0);
-}
-
-
-mframe_t shambler_frames_skull[] = {
-	{ai_charge, 0, shambler_windupFire},
-	{ai_charge, 0, shambler_fire_update},
-	{ai_charge, 0, shambler_fire_update},
-	{ai_move, 0, shambler_fire_update},
-	{ai_move, 0, shambler_fire_update},
-	{ai_move, 0, ShamblerSaveLoc},
-	{ai_move, 0, NULL},
-	{ai_move, 0, NULL},
-	{ai_move, 0, ShamblerCastSkull},
-	{ai_move, 0, ShamblerSaveLoc},
-	{ai_move, 0, ShamblerCastSkull},
-	{ai_charge, 0, NULL},
-};
-mmove_t shambler_move_skull = { FRAME_magic1, FRAME_magic12, shambler_frames_skull, shambler_run };
-
+mmove_t shambler_move_icebolt = { FRAME_magic1, FRAME_magic12, shambler_frames_icebolt, shambler_finish_icebolt };
 
 void shambler_meleehit(edict_t* self);
 
@@ -823,12 +791,19 @@ mmove_t shambler_move_pain = { FRAME_pain1, FRAME_pain6, shambler_frames_pain, s
 
 void shambler_dead(edict_t* self);
 
+static void shambler_shrink(edict_t *self)
+{
+	self->maxs[2] = 0;
+	self->svflags |= SVF_DEADMONSTER;
+	gi.linkentity(self);
+}
+
 
 mframe_t shambler_frames_death[] =
 {
 	{ai_move, 0, NULL},
 	{ai_move, 0, NULL},
-	{ai_move, 0, NULL},
+	{ai_move, 0, shambler_shrink},
 	{ai_move, 0, NULL},
 	{ai_move, 0, NULL},
 	{ai_move, 0, NULL},
@@ -894,7 +869,6 @@ void shambler_attack(edict_t* self)
 	}
 	else if (r < 0.3 && infront(self, self->enemy))  // 30% to use icebolt attack
 	{
-		// self->monsterinfo.currentmove = &shambler_move_skull;
 		self->monsterinfo.currentmove = &shambler_move_icebolt;
 	}
 	else
@@ -922,13 +896,14 @@ void shambler_pain(edict_t* self, edict_t* other, float kick, int damage)
 
 	self->pain_debounce_time = level.time + 3;
 	gi.sound(self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
+	shambler_free_ice_charges(self);
 	self->monsterinfo.currentmove = &shambler_move_pain;
 }
 
 void shambler_dead(edict_t* self)
 {
 	VectorSet(self->mins, -16, -16, -24);
-	VectorSet(self->maxs, 16, 16, -8);
+	VectorSet(self->maxs, 16, 16, 0);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	self->nextthink = 0;
@@ -938,7 +913,7 @@ void shambler_dead(edict_t* self)
 
 void shambler_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point)
 {
-	int     n;
+	shambler_free_ice_charges(self);
 
 	// notify the owner that the monster is dead
 	M_Notify(self);
@@ -955,14 +930,7 @@ void shambler_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int dama
 	if (self->health <= self->gib_health)
 	{
 		gi.sound(self, CHAN_VOICE, gi.soundindex("misc/udeath.wav"), 1, ATTN_NORM, 0);
-		if (vrx_spawn_nonessential_ent(self->s.origin))
-		{
-			for (n = 0; n < 2; n++)
-				ThrowGib(self, "models/objects/gibs/bone/tris.md2", damage, GIB_ORGANIC);
-			for (n = 0; n < 4; n++)
-				ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
-			ThrowHead(self, "models/objects/gibs/head2/tris.md2", damage, GIB_ORGANIC);
-		}
+		vrx_throw_drone_gibs(self, damage);
 		//self->deadflag = DEAD_DEAD;
 		//return;//FIXME: this will cause DroneList_Next to enter an infinite loop
 
@@ -986,6 +954,7 @@ void shambler_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int dama
 	gi.sound(self, CHAN_VOICE, sound_die, 1, ATTN_NORM, 0);
 	self->deadflag = DEAD_DEAD;
 	self->takedamage = DAMAGE_YES;
+	vrx_update_drone_death_skin(self);
 	self->monsterinfo.currentmove = &shambler_move_death;
 
 	if (self->activator && !self->activator->client)
@@ -1010,14 +979,8 @@ void init_drone_shambler(edict_t* self)
 	gi.soundindex("abilities/blue1.wav");
 
 	//icebolt shambler
+	gi.modelindex("models/proj/proj_drole/tris.md2");
 	gi.soundindex("spells/coldcast.wav");
-
-	//fire shambler ( unused )
-	// 
-	//gi.modelindex("models/objects/gibs/skull/tris.md2");
-	//gi.modelindex("models/fire/tris.md2");
-	//gi.soundindex("weapons/rockfly.wav");
-	//gi.soundindex("spells/circle1.wav");
 
 	//shambler sounds
 	sound_pain = gi.soundindex("shambler/shurt2.wav");

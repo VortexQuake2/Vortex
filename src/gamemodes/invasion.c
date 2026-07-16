@@ -24,38 +24,51 @@ struct invdata_s invasion_data;
 // all monsters except medic
 static constexpr int SET_EASY_MODE_MONSTERS[] = {
     DS_GUNNER,
+    DS_HEAVY_GUNNER,
     DS_PARASITE,
     DS_BITCH,
     DS_BRAIN,
     // DS_MEDIC,
     DS_TANK,
+    DS_TANK_N64,
     DS_MUTANT,
     // DS_GLADIATOR,
     DS_BERSERK,
     DS_SOLDIER,
     DS_INFANTRY,
+    DS_ENFORCER,
     DS_FLYER,
     DS_FLOATER,
     DS_HOVER,
-    // DS_SHAMBLER,
+    DS_SHAMBLER,
+    DS_REDMUTANT,
+    DS_RUNNERTANK,
+    DS_GUNCMDR,
+    DS_DAEDALUS,
+    DS_BOSS2_SMALL,
+    DS_STALKER,
+    DS_GEKK,
+    DS_ARACHNID_PLASMA,
+    DS_BITCH_HEAT,
 };
 
 constexpr int SET_EASY_MODE_MONSTERS_COUNT = sizeof(SET_EASY_MODE_MONSTERS) / sizeof(int);
 
 // parasite, brain, medic, tank, mutant, gladiator, berserker, infantry, hover
 static constexpr int SET_HARD_MODE_MONSTERS[] = {
-    DS_PARASITE, DS_BRAIN, DS_MEDIC, DS_TANK, DS_MUTANT, DS_GLADIATOR, DS_BERSERK, DS_INFANTRY, DS_HOVER
+    DS_PARASITE, DS_BRAIN, DS_MEDIC, DS_TANK, DS_TANK_N64, DS_MUTANT, DS_GLADIATOR, DS_BERSERK, DS_INFANTRY, DS_ENFORCER, DS_HEAVY_GUNNER, DS_HOVER,
+    DS_REDMUTANT, DS_RUNNERTANK, DS_GUNCMDR, DS_DAEDALUS, DS_BOSS2_SMALL, DS_GLADB, DS_GLADC, DS_STALKER, DS_GEKK, DS_ARACHNID_PLASMA, DS_BITCH_HEAT
 };
 constexpr int SET_HARD_MODE_MONSTERS_COUNT = sizeof(SET_HARD_MODE_MONSTERS) / sizeof(int);
 
 static constexpr int SET_FLYING_MONSTERS[] = {
-    DS_FLYER, DS_HOVER, DS_FLOATER
+    DS_FLYER, DS_HOVER, DS_FLOATER, DS_DAEDALUS, DS_BOSS2_SMALL
 };
 constexpr int SET_FLYING_MONSTERS_COUNT = sizeof(SET_FLYING_MONSTERS) / sizeof(int);
 
 // parasite, brain, mutant, berserker
 static constexpr int SET_MELEE_MONSTERS[] = {
-    DS_PARASITE, DS_BRAIN, DS_MUTANT, DS_BERSERK,
+    DS_PARASITE, DS_BRAIN, DS_MUTANT, DS_BERSERK, DS_REDMUTANT, DS_STALKER, DS_GEKK, DS_ARACHNID_PLASMA,
 };
 constexpr int SET_MELEE_MONSTERS_COUNT = sizeof(SET_MELEE_MONSTERS) / sizeof(int);
 
@@ -67,7 +80,7 @@ constexpr int SET_RAGEQUIT_MONSTERS_COUNT = sizeof(SET_RAGEQUIT_MONSTERS) / size
 
 // tank, mutant, berserker, shambler!
 static constexpr int SET_TANKY_MONSTERS[] = {
-    DS_TANK, DS_MUTANT, DS_BERSERK, DS_SHAMBLER
+    DS_TANK, DS_TANK_N64, DS_MUTANT, DS_BERSERK, DS_SHAMBLER, DS_REDMUTANT, DS_RUNNERTANK, DS_GUNCMDR, DS_GLADB, DS_GLADC, DS_GEKK, DS_ARACHNID_PLASMA, DS_ENFORCER
 };
 constexpr int SET_TANKY_MONSTERS_COUNT = sizeof(SET_TANKY_MONSTERS) / sizeof(int);
 
@@ -77,6 +90,20 @@ static constexpr int SET_PARASITE_MONSTERS[] = {
 };
 
 constexpr int SET_PARASITE_MONSTERS_COUNT = sizeof(SET_PARASITE_MONSTERS) / sizeof(int);
+
+static constexpr int SET_BOSS_MONSTERS[] = {
+    DS_GUARDIAN,
+    DS_FIXBOT_BOSS,
+    DS_WIDOW2,
+    DS_WIDOW,
+    DS_CARRIER,
+    DS_BOSS2,
+    DS_BOSS5,
+    DS_BARON_FIRE,
+    DS_MAKRON,
+    DS_COMMANDER,
+};
+constexpr int SET_BOSS_MONSTERS_COUNT = sizeof(SET_BOSS_MONSTERS) / sizeof(int);
 
 qboolean vrx_inv_is_boss_wave(int wave) {
     return wave % 5 == 0 && wave > 0;
@@ -604,7 +631,7 @@ void vrx_inv_spawn_boss(edict_t *self, int index) {
 
     if (invasion_data.boss)
         return;
-    if (index < 30)
+    if (!vrx_drone_spawn_is_boss((enum dronespawn_t)index))
         return;
 
     while ((spawn = vrx_inv_get_monster_spawn(spawn))) {
@@ -633,7 +660,7 @@ void vrx_inv_boss_check(edict_t *self) {
     while ((e = vrx_inv_get_monster_spawn(e)) != NULL) {
         if (invasion_data.boss) continue;
 
-        invasion_data.boss = vrx_inv_spawn_drone(self, e, GetRandom(30, 32));
+        invasion_data.boss = vrx_inv_spawn_drone(self, e, SET_BOSS_MONSTERS[GetRandom(0, SET_BOSS_MONSTERS_COUNT - 1)]);
         if (!invasion_data.boss) {
             iter++;
 
