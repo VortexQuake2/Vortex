@@ -663,6 +663,13 @@ void myChickRail (edict_t *self)
 void mychick_PreAttack1 (edict_t *self)
 {
 	gi.sound (self, CHAN_VOICE, sound_missile_prelaunch, 1, ATTN_NORM, 0);
+	self->yaw_speed = 60; // turn faster so we line up the enemy before firing (reference CHICK_ATTACK_YAW_SPEED)
+}
+
+void mychick_EndAttack (edict_t *self)
+{
+	// restore the default turn rate (40 while holding ground, 20 otherwise)
+	self->yaw_speed = (self->monsterinfo.aiflags & AI_STAND_GROUND) ? 40 : 20;
 }
 
 void myChickReload (edict_t *self)
@@ -670,49 +677,64 @@ void myChickReload (edict_t *self)
 	gi.sound (self, CHAN_VOICE, sound_missile_reload, 1, ATTN_NORM, 0);
 }
 
+// remade this animation since m_moveframe could have added a 1 frame delay for drone_chick_heat's rockets firing,
+// while keeping drone_chick same attacks
 mframe_t mychick_frames_start_attack1 [] =
 {
-	ai_charge, 0,	mychick_PreAttack1,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 4,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, -3,  NULL,
-	ai_charge, 3,	NULL,
-	ai_charge, 5,	NULL,
-	ai_charge, 7,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	mychick_attack1
+	ai_charge, 0,	NULL,				// attak101 (entered here via snap - a thinkfunc here would be skipped)
+	ai_charge, 0,	mychick_PreAttack1,	// attak102 (prelaunch sound + yaw boost)
+	ai_charge, 0,	NULL,				// attak103
+	ai_charge, 4,	NULL,				// attak104
+	ai_charge, 0,	NULL,				// attak105
+	ai_charge, -3,  NULL,				// attak106
+	ai_charge, 3,	NULL,				// attak107
+	ai_charge, 5,	NULL,				// attak108
+	ai_charge, 13,	NULL,				// attak109
+	ai_charge, 0,	NULL,				// attak110
+	ai_charge, 0,	NULL,				// attak111
+	ai_charge, 0,	NULL,				// attak112
+	ai_charge, 0,	NULL,				// attak113
+	ai_charge, 0,	myChickRocket,		// attak114 (rocket 1)
+	ai_charge, 0,	NULL,				// attak115
+	ai_charge, 0,	NULL,				// attak116
+	ai_charge, 0,	myChickRocket,		// attak117 (rocket 2)
+	ai_charge, 0,	NULL,				// attak118
+	ai_charge, 0,	NULL,				// attak119
+	ai_charge, 0,	NULL,				// attak120
+	ai_charge, 0,	myChickReload,		// attak121
+	ai_charge, 0,	NULL,				// attak122
+	ai_charge, 0,	NULL,				// attak123
+	ai_charge, 0,	NULL,				// attak124
+	ai_charge, 0,	NULL,				// attak125
+	ai_charge, 0,	NULL,				// attak126
+	ai_charge, 0,	NULL				// attak127
 };
-mmove_t mychick_move_start_attack1 = {FRAME_attak101, FRAME_attak113, mychick_frames_start_attack1, NULL};
+mmove_t mychick_move_start_attack1 = {FRAME_attak101, FRAME_attak127, mychick_frames_start_attack1, mychick_rerocket};
 
 
 mframe_t mychick_frames_attack1 [] =
 {
-	ai_charge, 0,	myChickRocket,//myChickRail,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	NULL,
-	ai_charge, 0,	myChickReload,
-	//ai_charge, 0,	NULL,
-	//ai_charge, 0,	NULL,
-	//ai_charge, 0,	NULL,
-	//ai_charge, 0,	NULL,
-	//ai_charge, 0,	NULL,
-	//ai_charge, 0,	mychick_rerocket
-
+	ai_charge, 0,	myChickRocket,	// attak114 (rocket 1)
+	ai_charge, 0,	NULL,			// attak115
+	ai_charge, 0,	NULL,			// attak116
+	ai_charge, 0,	myChickRocket,	// attak117 (rocket 2)
+	ai_charge, 0,	NULL,			// attak118
+	ai_charge, 0,	NULL,			// attak119
+	ai_charge, 0,	NULL,			// attak120
+	ai_charge, 0,	myChickReload,	// attak121
+	ai_charge, 0,	NULL,			// attak122
+	ai_charge, 0,	NULL,			// attak123
+	ai_charge, 0,	NULL,			// attak124
+	ai_charge, 0,	NULL,			// attak125
+	ai_charge, 0,	NULL,			// attak126
+	ai_charge, 0,	NULL			// attak127
 };
-mmove_t mychick_move_attack1 = {FRAME_attak114, FRAME_attak121, mychick_frames_attack1, mychick_rerocket};
+mmove_t mychick_move_attack1 = {FRAME_attak114, FRAME_attak127, mychick_frames_attack1, mychick_rerocket};
 
 mframe_t mychick_frames_end_attack1 [] =
 {
-	ai_charge, -3,	NULL,
-	ai_charge, 0,	NULL,
+	ai_charge, -3,	NULL,				// attak128 (entered via snap - thinkfunc here would be skipped)
+	ai_charge, 0,	mychick_EndAttack,	// attak129 (restore default yaw_speed)
 	ai_charge, -6,	NULL,
 	ai_charge, -4,	NULL,
 	ai_charge, -2,  NULL
@@ -738,13 +760,13 @@ void mychick_rerocket(edict_t *self)
 //GHz START
 mframe_t mychick_frames_runandshoot [] =
 {
-	drone_ai_run, 20,	myChickRocket,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL,
-	drone_ai_run, 20,	NULL
+	drone_ai_run, 20,	NULL,			// attak120 (entered here via snap - a thinkfunc here would be skipped)
+	drone_ai_run, 20,	myChickRocket,	// attak121 (fire; reached by increment so the first pass shoots too)
+	drone_ai_run, 20,	NULL,			// attak122
+	drone_ai_run, 20,	NULL,			// attak123
+	drone_ai_run, 20,	NULL,			// attak124
+	drone_ai_run, 20,	NULL,			// attak125
+	drone_ai_run, 20,	NULL			// attak126
 };
 mmove_t mychick_move_runandshoot = {FRAME_attak120, FRAME_attak126, mychick_frames_runandshoot, mychick_continue};
 
@@ -856,6 +878,8 @@ void chick_fire_attack (edict_t *self)
 		{
 			if (!M_MonsterHasClearShotFromFlash(self, MZ2_CHICK_ROCKET_1))
 				self->monsterinfo.currentmove = &mychick_move_slash;
+			else if (self->mtype == M_CHICK_HEAT)
+				self->monsterinfo.currentmove = &mychick_move_start_attack1; // stand, prepare, fire
 			else if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 				self->monsterinfo.currentmove = &mychick_move_attack1;
 			else
@@ -881,7 +905,9 @@ void mychick_attack(edict_t *self)
 	if (!M_MonsterHasClearShotFromFlash(self, MZ2_CHICK_ROCKET_1))
 		return;
 
-	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+	if (self->mtype == M_CHICK_HEAT)
+		self->monsterinfo.currentmove = &mychick_move_start_attack1; // stand, prepare, fire
+	else if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 		self->monsterinfo.currentmove = &mychick_move_attack1;
 	else
 		mychick_runandshoot(self);

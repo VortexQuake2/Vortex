@@ -430,8 +430,9 @@ static const drone_gib_list_t *vrx_get_drone_gibs(edict_t *self)
 		return &list_hover;
 	case M_SHAMBLER:
 		return &list_shambler;
-	case M_ARACHNID:
+	case M_ARACHNID_PLASMA:
 	case M_ARACHNID_HEAT:
+	case M_ARACHNID:
 		return &list_arachnid;
 	case M_GEKK:
 		return &list_gekk;

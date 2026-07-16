@@ -272,7 +272,7 @@ static enum dronespawn_t vrx_pvm_random_drone_type(void)
 		DS_STALKER,
 		DS_GEKK,
 		DS_BITCH_HEAT,
-		DS_ARACHNID,
+		DS_ARACHNID_PLASMA,
 		DS_ARACHNID_HEAT,
 		DS_MEDIC_COMMANDER,
 		DS_FIXBOT,
@@ -685,8 +685,9 @@ int vrx_GetMonsterCost(int mtype) {
         case M_GEKK:
             cost = M_MUTANT_COST;
             break;
-        case M_ARACHNID:
+        case M_ARACHNID_PLASMA:
         case M_ARACHNID_HEAT:
+        case M_ARACHNID:
             cost = M_DEFAULT_COST;
             break;
         case M_CARRIER:
@@ -790,8 +791,9 @@ int vrx_GetMonsterControlCost(int mtype) {
         case M_GEKK:
             cost = M_MUTANT_CONTROL_COST;
             break;
-        case M_ARACHNID:
+        case M_ARACHNID_PLASMA:
         case M_ARACHNID_HEAT:
+        case M_ARACHNID:
             cost = M_GLADIATOR_CONTROL_COST;
             break;
         case M_CARRIER:

@@ -145,7 +145,9 @@ static void daedalus_reattack(edict_t *self)
 		return;
 	}
 
-	self->monsterinfo.attack_finished = level.time + 1.0;
+	// no inter-burst cooldown so the AI can re-enter the
+	// attack as soon as end_attack -> run finishes (was level.time + 1.0)
+	self->monsterinfo.attack_finished = level.time;
 	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND))
 		self->monsterinfo.currentmove = &daedalus_move_end_attack;
 }

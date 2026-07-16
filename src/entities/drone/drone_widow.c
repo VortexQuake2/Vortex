@@ -7,33 +7,7 @@ black widow
 */
 
 #include "g_local.h"
-
-static constexpr int WIDOW_FRAME_idle01 = 0;
-static constexpr int WIDOW_FRAME_idle11 = 10;
-static constexpr int WIDOW_FRAME_walk01 = 11;
-static constexpr int WIDOW_FRAME_walk13 = 23;
-static constexpr int WIDOW_FRAME_run01 = 24;
-static constexpr int WIDOW_FRAME_run08 = 31;
-static constexpr int WIDOW_FRAME_firea01 = 32;
-static constexpr int WIDOW_FRAME_firea09 = 40;
-static constexpr int WIDOW_FRAME_fireb01 = 41;
-static constexpr int WIDOW_FRAME_fireb09 = 49;
-static constexpr int WIDOW_FRAME_firec01 = 50;
-static constexpr int WIDOW_FRAME_firec09 = 58;
-static constexpr int WIDOW_FRAME_fired02a = 61;
-static constexpr int WIDOW_FRAME_fired03 = 62;
-static constexpr int WIDOW_FRAME_fired20 = 79;
-static constexpr int WIDOW_FRAME_spawn01 = 82;
-static constexpr int WIDOW_FRAME_spawn18 = 99;
-static constexpr int WIDOW_FRAME_pain01 = 100;
-static constexpr int WIDOW_FRAME_pain05 = 104;
-static constexpr int WIDOW_FRAME_pain13 = 112;
-static constexpr int WIDOW_FRAME_pain201 = 113;
-static constexpr int WIDOW_FRAME_pain203 = 115;
-static constexpr int WIDOW_FRAME_death01 = 130;
-static constexpr int WIDOW_FRAME_death31 = 160;
-static constexpr int WIDOW_FRAME_kick01 = 161;
-static constexpr int WIDOW_FRAME_kick08 = 168;
+#include "../../quake2/monsterframes/m_rogue_widow.h"
 
 static constexpr int WIDOW_SUMMON_COUNT = 2;
 static constexpr float WIDOW_SUMMON_COOLDOWN = 10.0f;
@@ -96,7 +70,7 @@ static mframe_t widow_frames_stand[] =
 	drone_ai_stand, 0, NULL,
 	drone_ai_stand, 0, NULL
 };
-static mmove_t widow_move_stand = { WIDOW_FRAME_idle01, WIDOW_FRAME_idle11, widow_frames_stand, widow_stand };
+static mmove_t widow_move_stand = { FRAME_idle01, FRAME_idle11, widow_frames_stand, widow_stand };
 
 static mframe_t widow_frames_walk[] =
 {
@@ -114,7 +88,7 @@ static mframe_t widow_frames_walk[] =
 	drone_ai_walk, 8, NULL,
 	drone_ai_walk, 7, widow_step2
 };
-static mmove_t widow_move_walk = { WIDOW_FRAME_walk01, WIDOW_FRAME_walk13, widow_frames_walk, widow_walk };
+static mmove_t widow_move_walk = { FRAME_walk01, FRAME_walk13, widow_frames_walk, widow_walk };
 
 static mframe_t widow_frames_run[] =
 {
@@ -127,7 +101,7 @@ static mframe_t widow_frames_run[] =
 	drone_ai_run, 14, NULL,
 	drone_ai_run, 12, widow_step1
 };
-static mmove_t widow_move_run = { WIDOW_FRAME_run01, WIDOW_FRAME_run08, widow_frames_run, NULL };
+static mmove_t widow_move_run = { FRAME_run01, FRAME_run08, widow_frames_run, NULL };
 
 static mframe_t widow_frames_blaster[] =
 {
@@ -151,7 +125,7 @@ static mframe_t widow_frames_blaster[] =
 	ai_charge, 0, widow_fire_blaster,
 	ai_charge, 0, widow_fire_blaster
 };
-static mmove_t widow_move_blaster = { WIDOW_FRAME_fired02a, WIDOW_FRAME_fired20, widow_frames_blaster, widow_run };
+static mmove_t widow_move_blaster = { FRAME_fired02a, FRAME_fired20, widow_frames_blaster, widow_run };
 
 static mframe_t widow_frames_rail[] =
 {
@@ -165,9 +139,9 @@ static mframe_t widow_frames_rail[] =
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL
 };
-static mmove_t widow_move_rail = { WIDOW_FRAME_firea01, WIDOW_FRAME_firea09, widow_frames_rail, widow_run };
-static mmove_t widow_move_rail_right = { WIDOW_FRAME_fireb01, WIDOW_FRAME_fireb09, widow_frames_rail, widow_run };
-static mmove_t widow_move_rail_left = { WIDOW_FRAME_firec01, WIDOW_FRAME_firec09, widow_frames_rail, widow_run };
+static mmove_t widow_move_rail = { FRAME_firea01, FRAME_firea09, widow_frames_rail, widow_run };
+static mmove_t widow_move_rail_right = { FRAME_fireb01, FRAME_fireb09, widow_frames_rail, widow_run };
+static mmove_t widow_move_rail_left = { FRAME_firec01, FRAME_firec09, widow_frames_rail, widow_run };
 
 static mframe_t widow_frames_spawn[] =
 {
@@ -190,7 +164,7 @@ static mframe_t widow_frames_spawn[] =
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL
 };
-static mmove_t widow_move_spawn = { WIDOW_FRAME_spawn01, WIDOW_FRAME_spawn18, widow_frames_spawn, widow_run };
+static mmove_t widow_move_spawn = { FRAME_spawn01, FRAME_spawn18, widow_frames_spawn, widow_run };
 
 static mframe_t widow_frames_pain_heavy[] =
 {
@@ -208,7 +182,7 @@ static mframe_t widow_frames_pain_heavy[] =
 	ai_move, 0, NULL,
 	ai_move, 0, NULL
 };
-static mmove_t widow_move_pain_heavy = { WIDOW_FRAME_pain01, WIDOW_FRAME_pain13, widow_frames_pain_heavy, widow_run };
+static mmove_t widow_move_pain_heavy = { FRAME_pain01, FRAME_pain13, widow_frames_pain_heavy, widow_run };
 
 static mframe_t widow_frames_pain_light[] =
 {
@@ -216,7 +190,7 @@ static mframe_t widow_frames_pain_light[] =
 	ai_move, 0, NULL,
 	ai_move, 0, NULL
 };
-static mmove_t widow_move_pain_light = { WIDOW_FRAME_pain201, WIDOW_FRAME_pain203, widow_frames_pain_light, widow_run };
+static mmove_t widow_move_pain_light = { FRAME_pain201, FRAME_pain203, widow_frames_pain_light, widow_run };
 
 static mframe_t widow_frames_death[] =
 {
@@ -252,7 +226,7 @@ static mframe_t widow_frames_death[] =
 	ai_move, 0, widow_explode,
 	ai_move, 0, widow_spawn_out_do
 };
-static mmove_t widow_move_death = { WIDOW_FRAME_death01, WIDOW_FRAME_death31, widow_frames_death, NULL };
+static mmove_t widow_move_death = { FRAME_death01, FRAME_death31, widow_frames_death, NULL };
 
 static mframe_t widow_frames_kick[] =
 {
@@ -265,7 +239,7 @@ static mframe_t widow_frames_kick[] =
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL
 };
-static mmove_t widow_move_kick = { WIDOW_FRAME_kick01, WIDOW_FRAME_kick08, widow_frames_kick, widow_run };
+static mmove_t widow_move_kick = { FRAME_kick01, FRAME_kick08, widow_frames_kick, widow_run };
 
 static void widow_step1(edict_t *self)
 {
@@ -320,14 +294,14 @@ static void widow_project_flash(edict_t *self, int flash, vec3_t forward, vec3_t
 
 static int widow_blaster_flash(edict_t *self)
 {
-	if (self->s.frame >= WIDOW_FRAME_spawn01 + 4 && self->s.frame <= WIDOW_FRAME_spawn01 + 12)
-		return MZ2_WIDOW_BLASTER_SWEEP1 + self->s.frame - (WIDOW_FRAME_spawn01 + 4);
-	if (self->s.frame == WIDOW_FRAME_fired02a)
+	if (self->s.frame >= FRAME_spawn01 + 4 && self->s.frame <= FRAME_spawn01 + 12)
+		return MZ2_WIDOW_BLASTER_SWEEP1 + self->s.frame - (FRAME_spawn01 + 4);
+	if (self->s.frame == FRAME_fired02a)
 		return MZ2_WIDOW_BLASTER_0;
-	if (self->s.frame >= WIDOW_FRAME_fired03 && self->s.frame <= WIDOW_FRAME_fired20)
-		return MZ2_WIDOW_BLASTER_100 + self->s.frame - WIDOW_FRAME_fired03;
-	if (self->s.frame >= WIDOW_FRAME_run01 && self->s.frame <= WIDOW_FRAME_run08)
-		return MZ2_WIDOW_RUN_1 + self->s.frame - WIDOW_FRAME_run01;
+	if (self->s.frame >= FRAME_fired03 && self->s.frame <= FRAME_fired20)
+		return MZ2_WIDOW_BLASTER_100 + self->s.frame - FRAME_fired03;
+	if (self->s.frame >= FRAME_run01 && self->s.frame <= FRAME_run08)
+		return MZ2_WIDOW_RUN_1 + self->s.frame - FRAME_run01;
 	return MZ2_WIDOW_BLASTER;
 }
 

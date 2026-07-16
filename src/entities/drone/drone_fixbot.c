@@ -7,19 +7,7 @@ fixbot
 */
 
 #include "g_local.h"
-
-static constexpr int FIXBOT_FRAME_charging_01 = 0;
-static constexpr int FIXBOT_FRAME_charging_27 = 26;
-static constexpr int FIXBOT_FRAME_charging_31 = 30;
-static constexpr int FIXBOT_FRAME_ambient_01 = 121;
-static constexpr int FIXBOT_FRAME_ambient_19 = 139;
-static constexpr int FIXBOT_FRAME_paina_01 = 140;
-static constexpr int FIXBOT_FRAME_paina_06 = 145;
-static constexpr int FIXBOT_FRAME_painb_01 = 146;
-static constexpr int FIXBOT_FRAME_painb_08 = 153;
-static constexpr int FIXBOT_FRAME_freeze_01 = 181;
-static constexpr int FIXBOT_FRAME_weldstart_01 = 188;
-static constexpr int FIXBOT_FRAME_weldstart_07 = 194;
+#include "../../quake2/monsterframes/m_xatrix_fixbot.h"
 
 static constexpr int FIXBOT_BOSS_TURRET_MAX = 6;
 static constexpr float FIXBOT_BOSS_SPAWN_COOLDOWN = 8.0f;
@@ -812,13 +800,13 @@ static void fixbot_reattack(edict_t *self)
 		if (random() < (fixbot_is_boss(self) ? 0.16f : 0.12f))
 		{
 			fixbot_fire_plasma(self, 0.0f);
-			self->monsterinfo.nextframe = FIXBOT_FRAME_charging_27;
+			self->monsterinfo.nextframe = FRAME_charging_27;
 			return;
 		}
 
 		if (random() < (fixbot_is_boss(self) ? 0.80f : 0.55f))
 		{
-			self->monsterinfo.nextframe = FIXBOT_FRAME_charging_27;
+			self->monsterinfo.nextframe = FRAME_charging_27;
 			return;
 		}
 	}
@@ -839,7 +827,7 @@ static void fixbot_update_spawn_probe(edict_t *self)
 	VectorCopy(self->s.origin, start);
 	start[2] += 16.0f;
 
-	index = (self->s.frame - FIXBOT_FRAME_weldstart_01) % (int)(sizeof(scan_yaws) / sizeof(scan_yaws[0]));
+	index = (self->s.frame - FRAME_weldstart_01) % (int)(sizeof(scan_yaws) / sizeof(scan_yaws[0]));
 	if (index < 0)
 		index = 0;
 
@@ -1207,7 +1195,7 @@ static void fixbot_spawn_ai(edict_t *self, float dist)
 static void fixbot_start_spawn_sequence(edict_t *self)
 {
 	self->monsterinfo.currentmove = &fixbot_move_spawn;
-	self->s.frame = FIXBOT_FRAME_weldstart_01;
+	self->s.frame = FRAME_weldstart_01;
 	fixbot_prep_spawn(self);
 }
 
@@ -1233,7 +1221,7 @@ static mframe_t fixbot_frames_stand[] =
 	drone_ai_stand, 0, NULL,
 	drone_ai_stand, 0, NULL
 };
-static mmove_t fixbot_move_stand = { FIXBOT_FRAME_ambient_01, FIXBOT_FRAME_ambient_19, fixbot_frames_stand, fixbot_run };
+static mmove_t fixbot_move_stand = { FRAME_ambient_01, FRAME_ambient_19, fixbot_frames_stand, fixbot_run };
 
 static void fixbot_stand(edict_t *self)
 {
@@ -1244,7 +1232,7 @@ static mframe_t fixbot_frames_run[] =
 {
 	fixbot_ai_run, 10, fixbot_try_start_spawn
 };
-static mmove_t fixbot_move_run = { FIXBOT_FRAME_freeze_01, FIXBOT_FRAME_freeze_01, fixbot_frames_run, NULL };
+static mmove_t fixbot_move_run = { FRAME_freeze_01, FRAME_freeze_01, fixbot_frames_run, NULL };
 
 static void fixbot_run(edict_t *self)
 {
@@ -1258,7 +1246,7 @@ static mframe_t fixbot_frames_walk[] =
 {
 	fixbot_ai_walk, 5, NULL
 };
-static mmove_t fixbot_move_walk = { FIXBOT_FRAME_freeze_01, FIXBOT_FRAME_freeze_01, fixbot_frames_walk, NULL };
+static mmove_t fixbot_move_walk = { FRAME_freeze_01, FRAME_freeze_01, fixbot_frames_walk, NULL };
 
 static void fixbot_walk(edict_t *self)
 {
@@ -1301,7 +1289,7 @@ static mframe_t fixbot_frames_attack[] =
 	ai_charge, 0, NULL,
 	ai_charge, 0, fixbot_reattack
 };
-static mmove_t fixbot_move_attack = { FIXBOT_FRAME_charging_01, FIXBOT_FRAME_charging_31, fixbot_frames_attack, fixbot_run };
+static mmove_t fixbot_move_attack = { FRAME_charging_01, FRAME_charging_31, fixbot_frames_attack, fixbot_run };
 
 static mframe_t fixbot_frames_spawn[] =
 {
@@ -1313,7 +1301,7 @@ static mframe_t fixbot_frames_spawn[] =
 	fixbot_spawn_ai, 0, fixbot_finish_spawn,
 	fixbot_spawn_ai, 0, NULL
 };
-static mmove_t fixbot_move_spawn = { FIXBOT_FRAME_weldstart_01, FIXBOT_FRAME_weldstart_07, fixbot_frames_spawn, fixbot_run };
+static mmove_t fixbot_move_spawn = { FRAME_weldstart_01, FRAME_weldstart_07, fixbot_frames_spawn, fixbot_run };
 
 static void fixbot_try_start_spawn(edict_t *self)
 {
@@ -1354,7 +1342,7 @@ static mframe_t fixbot_frames_paina[] =
 	ai_move, 0, NULL,
 	ai_move, 0, NULL
 };
-static mmove_t fixbot_move_paina = { FIXBOT_FRAME_paina_01, FIXBOT_FRAME_paina_06, fixbot_frames_paina, fixbot_run };
+static mmove_t fixbot_move_paina = { FRAME_paina_01, FRAME_paina_06, fixbot_frames_paina, fixbot_run };
 
 static mframe_t fixbot_frames_painb[] =
 {
@@ -1367,13 +1355,13 @@ static mframe_t fixbot_frames_painb[] =
 	ai_move, 0, NULL,
 	ai_move, 0, NULL
 };
-static mmove_t fixbot_move_painb = { FIXBOT_FRAME_painb_01, FIXBOT_FRAME_painb_08, fixbot_frames_painb, fixbot_run };
+static mmove_t fixbot_move_painb = { FRAME_painb_01, FRAME_painb_08, fixbot_frames_painb, fixbot_run };
 
 static mframe_t fixbot_frames_pain3[] =
 {
 	ai_move, -1, NULL
 };
-static mmove_t fixbot_move_pain3 = { FIXBOT_FRAME_freeze_01, FIXBOT_FRAME_freeze_01, fixbot_frames_pain3, fixbot_run };
+static mmove_t fixbot_move_pain3 = { FRAME_freeze_01, FRAME_freeze_01, fixbot_frames_pain3, fixbot_run };
 
 static void fixbot_dead(edict_t *self);
 
@@ -1381,7 +1369,7 @@ static mframe_t fixbot_frames_death1[] =
 {
 	ai_move, 0, NULL
 };
-static mmove_t fixbot_move_death1 = { FIXBOT_FRAME_freeze_01, FIXBOT_FRAME_freeze_01, fixbot_frames_death1, fixbot_dead };
+static mmove_t fixbot_move_death1 = { FRAME_freeze_01, FRAME_freeze_01, fixbot_frames_death1, fixbot_dead };
 
 static void fixbot_pain(edict_t *self, edict_t *other, float kick, int damage)
 {

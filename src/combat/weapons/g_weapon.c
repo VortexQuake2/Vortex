@@ -909,16 +909,29 @@ static float grenade_throwing_pitch(vec3_t start, vec3_t end, float speed, float
 	return pitch + boost_angle;
 }
 
-static qboolean monster_adjust_grenade_aim(edict_t *self, vec3_t start, int speed, vec3_t aimdir)
+// Solve a ballistic arc for monster grenades and, when needed, scale the launch speed up to
+// the target's range so the grenade actually reaches it (cf. BOT_DMclass_ThrowingPitch1 and
+// grenade_throwing_pitch below). The caller's speed is treated as the minimum; we only scale
+// up, capped at M_GRENADELAUNCHER_SPEED_MAX, so close shots keep their tuned speed/arc while
+// far targets are reachable. The chosen launch speed is written back through *speed.
+static qboolean monster_adjust_grenade_aim(edict_t *self, vec3_t start, int *speed, vec3_t aimdir)
 {
-	float dist, flat_len, pitch;
+	float dist, flat_len, pitch, height, reach, eff_min, needed_sq, needed;
+	int launch_speed, cap;
 	vec3_t angles, flat, target;
 
-	if (!(self->svflags & SVF_MONSTER) || !G_EntExists(self->enemy) || speed <= 100)
+	if (!(self->svflags & SVF_MONSTER) || !G_EntExists(self->enemy) || *speed <= 100)
 		return false;
 
 	if (!M_MonsterFindClearShot(self, start, target))
-		G_EntMidPoint(self->enemy, target);
+	{
+		// no clear shot (enemy hid / broke LOS): solve the arc for its last known position so the
+		// grenade still lobs to where it was seen, matching the blind-fire aim from MonsterAim.
+		if (!VectorCompare(self->monsterinfo.last_sighting, vec3_origin))
+			VectorCopy(self->monsterinfo.last_sighting, target);
+		else
+			G_EntMidPoint(self->enemy, target);
+	}
 
 	dist = Get2dDistance(start, target);
 	VectorCopy(aimdir, flat);
@@ -931,10 +944,28 @@ static qboolean monster_adjust_grenade_aim(edict_t *self, vec3_t start, int spee
 	target[1] = start[1] + flat[1] * dist;
 	target[2] = start[2] + aimdir[2] / flat_len * dist;
 
-	pitch = grenade_throwing_pitch(start, target, speed, GRENADE_VERTICAL_BOOST);
-	if (pitch < -90)
-		return false;
+	// minimum horizontal launch speed that can reach the target on an arc, accounting for the
+	// fixed +GRENADE_VERTICAL_BOOST that fire_grenade/fire_grenade2 add. 1.06 margin keeps the
+	// throwing-pitch discriminant strictly positive so a solution exists.
+	height = target[2] - start[2];
+	reach = height + sqrtf(dist * dist + height * height);
+	eff_min = (reach > 0.0f) ? sqrtf(sv_gravity->value * reach) * 1.06f : 0.0f;
+	needed_sq = eff_min * eff_min - GRENADE_VERTICAL_BOOST * GRENADE_VERTICAL_BOOST;
+	needed = (needed_sq > 0.0f) ? sqrtf(needed_sq) : 0.0f;
 
+	launch_speed = *speed;
+	if (needed > (float)launch_speed) // scale up only, to reach far targets
+		launch_speed = (int)ceilf(needed);
+
+	cap = (M_GRENADELAUNCHER_SPEED_MAX > *speed) ? (int)M_GRENADELAUNCHER_SPEED_MAX : *speed;
+	if (launch_speed > cap)
+		launch_speed = cap;
+
+	pitch = grenade_throwing_pitch(start, target, launch_speed, GRENADE_VERTICAL_BOOST);
+	if (pitch < -90)
+		return false; // out of ballistic range even at max speed
+
+	*speed = launch_speed;
 	vectoangles(aimdir, angles);
 	angles[PITCH] = pitch;
 	AngleVectors(angles, aimdir, NULL, NULL);
@@ -953,7 +984,7 @@ void fire_grenade(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int sp
     self->lastsound = level.framenum;
 
     VectorCopy(aimdir, adjusted_aim);
-    monster_adjust_grenade_aim(self, start, speed, adjusted_aim);
+    monster_adjust_grenade_aim(self, start, &speed, adjusted_aim);
     vectoangles(adjusted_aim, dir);
     AngleVectors(dir, forward, right, up);
 
@@ -1011,7 +1042,7 @@ edict_t *fire_grenade2(edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
     self->lastsound = level.framenum;
 
     VectorCopy(aimdir, adjusted_aim);
-    monster_adjust_grenade_aim(self, start, speed, adjusted_aim);
+    monster_adjust_grenade_aim(self, start, &speed, adjusted_aim);
     vectoangles(adjusted_aim, dir);
     AngleVectors(dir, forward, right, up);
 
@@ -1426,14 +1457,15 @@ void fire_smartrocket(edict_t *self, edict_t *target, vec3_t start, vec3_t dir, 
 =================
 fire_rail
 =================
-*/
-void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick) {
+*/ 
+qboolean fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick) {
     vec3_t from;
     vec3_t end;
     trace_t tr;
     edict_t *ignore;
     int mask;
     qboolean water;
+    qboolean hit = false;
     int mod;
     int iters = 0;
 
@@ -1458,6 +1490,7 @@ void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick)
                 ignore = NULL;
 
             if ((tr.ent != self) && (tr.ent->takedamage)) {
+                hit = true;
                 // special MOD for sniper shot
                 if (self->client && self->client->weapon_mode)
                     mod = MOD_SNIPER;
@@ -1513,6 +1546,8 @@ void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick)
 
     if (self->client && self->client->resp.pstats.weapons[WEAPON_RAILGUN].mods[4].current_level < 1)
         PlayerNoise(self, tr.endpos, PNOISE_IMPACT);
+
+    return hit;
 }
 
 /*

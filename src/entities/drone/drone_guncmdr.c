@@ -22,7 +22,6 @@ static constexpr float GUNCMDR_GRENADE_RANGE = 100.0f;
 static constexpr float GUNCMDR_MORTAR_RANGE = 525.0f;
 static constexpr float GUNCMDR_CHAINGUN_RUN_RANGE = 400.0f;
 static constexpr int GUNCMDR_MORTAR_SPEED = 850;
-static constexpr int GUNCMDR_GRENADE_SPEED = 600;
 static constexpr float GUNCMDR_WALK_SPEED_MULT = 2.0f;
 static constexpr float GUNCMDR_INVASION_RUN_SCALE = 1.15f;
 
@@ -43,12 +42,17 @@ static void guncmdr_run(edict_t *self);
 static void guncmdr_attack(edict_t *self);
 static void guncmdr_fire_chain(edict_t *self);
 static void guncmdr_refire_chain(edict_t *self);
+static void guncmdr_finish_chain_dodge(edict_t *self);
 static void guncmdr_grenade_finished(edict_t *self);
 static void guncmdr_grenade_mortar_resume(edict_t *self);
 static void guncmdr_resume_back_attack(edict_t *self);
 static void guncmdr_duck_down(edict_t *self);
 static void guncmdr_duck_up(edict_t *self);
+static qboolean guncmdr_can_grenade(edict_t *self);
 static mmove_t guncmdr_move_duckstep_dodge;
+static mmove_t guncmdr_move_duckstep_grenade;
+static mmove_t guncmdr_move_duckstep_hold;
+static qboolean guncmdr_can_dodge_chain(edict_t *self);
 extern mmove_t guncmdr_move_fidget;
 extern mmove_t guncmdr_move_death1;
 extern mmove_t guncmdr_move_death2;
@@ -364,7 +368,7 @@ mframe_t guncmdr_frames_fire_chain_dodge_right[] =
 	guncmdr_ai_dodge_slide, 7.2, GunnerCmdrFire,
 	guncmdr_ai_dodge_slide, -2.0, GunnerCmdrFire
 };
-mmove_t guncmdr_move_fire_chain_dodge_right = { FRAME_c_attack401, FRAME_c_attack405, guncmdr_frames_fire_chain_dodge_right, guncmdr_refire_chain };
+mmove_t guncmdr_move_fire_chain_dodge_right = { FRAME_c_attack401, FRAME_c_attack405, guncmdr_frames_fire_chain_dodge_right, guncmdr_finish_chain_dodge };
 
 mframe_t guncmdr_frames_fire_chain_dodge_left[] =
 {
@@ -374,7 +378,7 @@ mframe_t guncmdr_frames_fire_chain_dodge_left[] =
 	guncmdr_ai_dodge_slide, 7.2, GunnerCmdrFire,
 	guncmdr_ai_dodge_slide, -2.0, GunnerCmdrFire
 };
-mmove_t guncmdr_move_fire_chain_dodge_left = { FRAME_c_attack501, FRAME_c_attack505, guncmdr_frames_fire_chain_dodge_left, guncmdr_refire_chain };
+mmove_t guncmdr_move_fire_chain_dodge_left = { FRAME_c_attack501, FRAME_c_attack505, guncmdr_frames_fire_chain_dodge_left, guncmdr_finish_chain_dodge };
 
 mframe_t guncmdr_frames_endfire_chain[] =
 {
@@ -410,9 +414,9 @@ static void GunnerCmdrGrenade(edict_t *self)
 		damage = M_GRENADELAUNCHER_DMG_MAX;
 
 	if (self->s.frame >= FRAME_c_attack201 && self->s.frame <= FRAME_c_attack221)
-		speed = GUNCMDR_MORTAR_SPEED;
+		speed = GUNCMDR_MORTAR_SPEED; // mortar keeps its tuned steep-lob floor speed
 	else
-		speed = GUNCMDR_GRENADE_SPEED + M_GRENADELAUNCHER_SPEED_ADDON * drone_damagelevel(self);
+		speed = M_GRENADELAUNCHER_SPEED_BASE + M_GRENADELAUNCHER_SPEED_ADDON * drone_damagelevel(self);
 
 	if (M_GRENADELAUNCHER_SPEED_MAX && speed > M_GRENADELAUNCHER_SPEED_MAX)
 		speed = M_GRENADELAUNCHER_SPEED_MAX;
@@ -451,9 +455,9 @@ mframe_t guncmdr_frames_attack_mortar[] =
 
 	ai_charge, 0, GunnerCmdrGrenade,
 	ai_charge, 0, NULL,
+	ai_charge, 0, GunnerCmdrGrenade,
 	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
+	ai_charge, 0, GunnerCmdrGrenade,
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
 	ai_charge, 0, guncmdr_duck_up,
@@ -463,9 +467,39 @@ mframe_t guncmdr_frames_attack_mortar[] =
 };
 mmove_t guncmdr_move_attack_mortar = { FRAME_c_attack201, FRAME_c_attack221, guncmdr_frames_attack_mortar, guncmdr_grenade_finished };
 
+// NORMAL-style mortar: three lobs instead of the grenadier volley. This guncmdr is an
+// all-rounder (chaingun/flechettes too), so this is the default and the volley above is rare.
+mframe_t guncmdr_frames_attack_mortar_normal[] =
+{
+	ai_charge, 0, guncmdr_duck_down,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, GunnerCmdrGrenade,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, GunnerCmdrGrenade,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+
+	ai_charge, 0, GunnerCmdrGrenade,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, guncmdr_duck_up,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL
+};
+mmove_t guncmdr_move_attack_mortar_normal = { FRAME_c_attack201, FRAME_c_attack221, guncmdr_frames_attack_mortar_normal, guncmdr_grenade_finished };
+
 static void guncmdr_grenade_mortar_resume(edict_t *self)
 {
-	self->monsterinfo.currentmove = &guncmdr_move_attack_mortar;
+	// resume as the normal-style volley regardless of which variant was interrupted
+	self->monsterinfo.currentmove = &guncmdr_move_attack_mortar_normal;
 	self->s.frame = self->count;
 }
 
@@ -494,6 +528,33 @@ mframe_t guncmdr_frames_attack_back[] =
 
 	ai_charge, -4.6, NULL,
 	ai_charge, 1.9, NULL,
+	ai_charge, 1.0, GunnerCmdrGrenade,
+	ai_charge, -4.5, NULL,
+	ai_charge, 3.2, GunnerCmdrGrenade,
+	ai_charge, 4.4, NULL,
+	ai_charge, -6.5, NULL,
+	ai_charge, -6.1, NULL,
+	ai_charge, 3.0, NULL,
+	ai_charge, -0.7, NULL,
+	ai_charge, -1.0, NULL
+};
+mmove_t guncmdr_move_attack_grenade_back = { FRAME_c_attack302, FRAME_c_attack321, guncmdr_frames_attack_back, guncmdr_grenade_finished };
+
+// NORMAL-style back-pedal grenades: three lobs, then it relies on its guns again
+mframe_t guncmdr_frames_attack_back_normal[] =
+{
+	ai_charge, -2, NULL,
+	ai_charge, -1.5, NULL,
+	ai_charge, -0.5, GunnerCmdrGrenade,
+	ai_charge, -6.0, NULL,
+	ai_charge, -4, NULL,
+	ai_charge, -2.5, GunnerCmdrGrenade,
+	ai_charge, -7.0, NULL,
+	ai_charge, -3.5, NULL,
+	ai_charge, -1.1, GunnerCmdrGrenade,
+
+	ai_charge, -4.6, NULL,
+	ai_charge, 1.9, NULL,
 	ai_charge, 1.0, NULL,
 	ai_charge, -4.5, NULL,
 	ai_charge, 3.2, NULL,
@@ -504,11 +565,12 @@ mframe_t guncmdr_frames_attack_back[] =
 	ai_charge, -0.7, NULL,
 	ai_charge, -1.0, NULL
 };
-mmove_t guncmdr_move_attack_grenade_back = { FRAME_c_attack302, FRAME_c_attack321, guncmdr_frames_attack_back, guncmdr_grenade_finished };
+mmove_t guncmdr_move_attack_grenade_back_normal = { FRAME_c_attack302, FRAME_c_attack321, guncmdr_frames_attack_back_normal, guncmdr_grenade_finished };
 
 static void guncmdr_resume_back_attack(edict_t *self)
 {
-	self->monsterinfo.currentmove = &guncmdr_move_attack_grenade_back;
+	// resume as the normal-style volley regardless of which variant was interrupted
+	self->monsterinfo.currentmove = &guncmdr_move_attack_grenade_back_normal;
 	self->s.frame = self->count;
 }
 
@@ -633,18 +695,37 @@ mframe_t guncmdr_frames_duck_attack[] =
 	ai_charge, 2.0, NULL,
 	ai_charge, 5.6, NULL
 };
-mmove_t guncmdr_move_duck_attack = { FRAME_c_attack901, FRAME_c_attack919, guncmdr_frames_duck_attack, guncmdr_run };
+// linger a moment after the counter-slam instead of standing straight into the next attack
+static void guncmdr_duck_attack_finished(edict_t *self)
+{
+	self->monsterinfo.attack_finished = level.time + 0.5f + random() * 0.7f;
+	guncmdr_run(self);
+}
+
+mmove_t guncmdr_move_duck_attack = { FRAME_c_attack901, FRAME_c_attack919, guncmdr_frames_duck_attack, guncmdr_duck_attack_finished };
 
 static void guncmdr_finish_duckstep_dodge(edict_t *self)
 {
 	if (self->monsterinfo.nextattack > 0 && G_ValidTarget(self, self->enemy, true, true))
 	{
+		float r = random();
+
 		self->monsterinfo.nextattack--;
-		self->monsterinfo.currentmove = &guncmdr_move_duckstep_dodge;
+		// keep ducked + circling : mix grenade lobs, flechette bursts and
+		// quiet "choosing the next attack" cycles into the strafe
+		if (guncmdr_can_grenade(self) && r < 0.3f)
+			self->monsterinfo.currentmove = &guncmdr_move_duckstep_grenade;
+		else if (r < 0.55f || !guncmdr_can_dodge_chain(self))
+			self->monsterinfo.currentmove = &guncmdr_move_duckstep_hold;
+		else
+			self->monsterinfo.currentmove = &guncmdr_move_duckstep_dodge;
 		return;
 	}
 
 	self->monsterinfo.nextattack = 0;
+	self->monsterinfo.dodge_time = level.time + 0.7f + random() * 0.8f;
+	// don't snap straight into another attack after standing up
+	self->monsterinfo.attack_finished = level.time + 0.4f + random() * 0.8f;
 	guncmdr_duck_up(self);
 	guncmdr_run(self);
 }
@@ -659,6 +740,31 @@ mframe_t guncmdr_frames_duckstep_dodge[] =
 	guncmdr_ai_duckstep_slide, 11, GunnerCmdrFire
 };
 static mmove_t guncmdr_move_duckstep_dodge = { FRAME_c_duckstep01, FRAME_c_duckstep06, guncmdr_frames_duckstep_dodge, guncmdr_finish_duckstep_dodge };
+
+// same ducked circle-slide, but lobs a grenade instead of spraying flechettes; chains back
+// through guncmdr_finish_duckstep_dodge so the strafe stays sustained
+mframe_t guncmdr_frames_duckstep_grenade[] =
+{
+	guncmdr_ai_duckstep_slide, 11, NULL,
+	guncmdr_ai_duckstep_slide, 12, NULL,
+	guncmdr_ai_duckstep_slide, 16, GunnerCmdrGrenade,
+	guncmdr_ai_duckstep_slide, 16, NULL,
+	guncmdr_ai_duckstep_slide, 12, NULL,
+	guncmdr_ai_duckstep_slide, 11, NULL
+};
+static mmove_t guncmdr_move_duckstep_grenade = { FRAME_c_duckstep01, FRAME_c_duckstep06, guncmdr_frames_duckstep_grenade, guncmdr_finish_duckstep_dodge };
+
+// ducked circle-slide without firing: strafing around the target while picking the next attack
+mframe_t guncmdr_frames_duckstep_hold[] =
+{
+	guncmdr_ai_duckstep_slide, 11, NULL,
+	guncmdr_ai_duckstep_slide, 12, NULL,
+	guncmdr_ai_duckstep_slide, 16, NULL,
+	guncmdr_ai_duckstep_slide, 16, NULL,
+	guncmdr_ai_duckstep_slide, 12, NULL,
+	guncmdr_ai_duckstep_slide, 11, NULL
+};
+static mmove_t guncmdr_move_duckstep_hold = { FRAME_c_duckstep01, FRAME_c_duckstep06, guncmdr_frames_duckstep_hold, guncmdr_finish_duckstep_dodge };
 
 static void guncmdr_jump_now(edict_t *self)
 {
@@ -732,6 +838,8 @@ static qboolean guncmdr_is_dodge_move(edict_t *self)
 		self->monsterinfo.currentmove == &guncmdr_move_attack_grenade_back_dodge_right ||
 		self->monsterinfo.currentmove == &guncmdr_move_attack_mortar_dodge ||
 		self->monsterinfo.currentmove == &guncmdr_move_duckstep_dodge ||
+		self->monsterinfo.currentmove == &guncmdr_move_duckstep_grenade ||
+		self->monsterinfo.currentmove == &guncmdr_move_duckstep_hold ||
 		self->monsterinfo.currentmove == &guncmdr_move_dodge_slide ||
 		self->monsterinfo.currentmove == &guncmdr_move_jump ||
 		self->monsterinfo.currentmove == &guncmdr_move_jump2 ||
@@ -762,8 +870,12 @@ static qboolean guncmdr_start_duckstep_dodge(edict_t *self)
 	if (!self->groundentity)
 		return false;
 
-	self->monsterinfo.nextattack = random() < 0.55f ? 1 : 0;
-	self->monsterinfo.currentmove = &guncmdr_move_duckstep_dodge;
+	self->monsterinfo.nextattack = 1 + (int)(random() * 2.0f); // ~1.2-1.8s of ducked slide
+	// sometimes open with a quiet ducked strafe before firing
+	if (random() < 0.4f)
+		self->monsterinfo.currentmove = &guncmdr_move_duckstep_hold;
+	else
+		self->monsterinfo.currentmove = &guncmdr_move_duckstep_dodge;
 	guncmdr_duck_down(self);
 	self->monsterinfo.dodge_time = level.time + 1.6f;
 	return true;
@@ -778,7 +890,7 @@ static qboolean guncmdr_start_mortar_dodge(edict_t *self)
 		return false;
 
 	self->monsterinfo.nextattack = 0;
-	self->monsterinfo.currentmove = &guncmdr_move_attack_mortar;
+	self->monsterinfo.currentmove = &guncmdr_move_attack_mortar_normal;
 	guncmdr_duck_down(self);
 	self->monsterinfo.dodge_time = level.time + 2.0f;
 	return true;
@@ -808,7 +920,8 @@ static void guncmdr_dodge(edict_t *self, edict_t *attacker, vec3_t dir, int radi
 		return;
 	}
 
-	if (random() > 0.8)
+	// react to ~half of incoming projectiles like remaster's M_MonsterDodge skill roll
+	if (random() > 0.5)
 		return;
 
 	drone_set_dodge_side(self, dir);
@@ -847,6 +960,7 @@ static void guncmdr_dodge(edict_t *self, edict_t *attacker, vec3_t dir, int radi
 	if (self->groundentity)
 	{
 		self->monsterinfo.currentmove = &guncmdr_move_dodge_slide;
+		self->monsterinfo.nextattack = (int)(random() * 3.0f); // ~0.6-1.8s of run slide
 		self->monsterinfo.dodge_time = level.time + 1.0;
 		return;
 	}
@@ -885,7 +999,40 @@ static void guncmdr_start_fire_chain_dodge(edict_t *self)
 	else
 		self->monsterinfo.currentmove = &guncmdr_move_fire_chain_dodge_right;
 
+	self->monsterinfo.nextattack = 1 + (int)(random() * 3.0f); // ~1.0-2.0s of firing slide
 	self->monsterinfo.dodge_time = level.time + 1.0;
+}
+
+// Vortex has no engine sidestep system (unlike the remastered q2), so the guncmdr
+// never naturally performs its signature duck-and-slide-while-firing. Trigger it proactively:
+// chaingun duckstep at mid/close range, ducked grenade strafe (mortar dodge) at long range.
+static void guncmdr_start_proactive_duckstep(edict_t *self, float dist, qboolean can_chain, qboolean can_grenade)
+{
+	self->monsterinfo.lefty = (random() < 0.5f);
+
+	if (can_grenade && dist >= GUNCMDR_MORTAR_RANGE)
+	{
+		self->count = FRAME_c_attack201; // resume a fresh mortar volley when the strafe ends
+		guncmdr_duck_down(self);
+		self->monsterinfo.currentmove = &guncmdr_move_attack_mortar_dodge;
+		self->monsterinfo.dodge_time = level.time + 1.6f;
+	}
+	else if (can_chain && guncmdr_start_duckstep_dodge(self))
+	{
+		// sustain the crouch-strafe like remaster does: chain several ducked slide cycles instead of a
+		// single hop. guncmdr_finish_duckstep_dodge re-enters the move (keeping AI_DUCKED the
+		// whole time) until this counter runs out or the enemy is lost.
+		self->monsterinfo.nextattack = 4 + (int)(random() * 4.0f); // ~4-7 cycles of duck-and-slide fire
+	}
+	else if (can_grenade)
+	{
+		self->count = FRAME_c_attack201;
+		guncmdr_duck_down(self);
+		self->monsterinfo.currentmove = &guncmdr_move_attack_mortar_dodge;
+		self->monsterinfo.dodge_time = level.time + 1.6f;
+	}
+	else
+		self->monsterinfo.currentmove = &guncmdr_move_attack_chain;
 }
 
 static void guncmdr_attack(edict_t *self)
@@ -907,13 +1054,24 @@ static void guncmdr_attack(edict_t *self)
 	can_chain = guncmdr_can_chain(self);
 	can_grenade = guncmdr_can_grenade(self);
 
+	// don't commit to a grenade the launcher can't reach at top speed (max ballistic range);
+	// fall back to the chaingun for far targets instead of lobbing one that falls short.
+	if (can_grenade && dist > (M_GRENADELAUNCHER_SPEED_MAX * M_GRENADELAUNCHER_SPEED_MAX) / sv_gravity->value)
+		can_grenade = false;
+
 	if (dist <= MELEE_DISTANCE && self->monsterinfo.melee_finished < level.time)
 		self->monsterinfo.currentmove = &guncmdr_move_attack_kick;
+	else if ((can_chain || can_grenade) && self->groundentity && guncmdr_can_proactive_dodge(self, dist) && random() < 0.35f)
+		guncmdr_start_proactive_duckstep(self, dist, can_chain, can_grenade);
 	else if (can_chain && guncmdr_can_proactive_dodge(self, dist) && r < 0.55)
 		guncmdr_start_fire_chain_dodge(self);
 	else if (can_grenade && (dist >= GUNCMDR_MORTAR_RANGE || zdiff > 96) && r < 0.75)
 	{
-		self->monsterinfo.currentmove = &guncmdr_move_attack_mortar;
+		// mostly the normal three-lob mortar; the heavy grenadier volley only occasionally
+		if (random() < 0.3f)
+			self->monsterinfo.currentmove = &guncmdr_move_attack_mortar;
+		else
+			self->monsterinfo.currentmove = &guncmdr_move_attack_mortar_normal;
 		guncmdr_duck_down(self);
 	}
 	else if (can_grenade && self->groundentity && dist > 96 && dist < GUNCMDR_CHAINGUN_RUN_RANGE && r < 0.05)
@@ -924,12 +1082,14 @@ static void guncmdr_attack(edict_t *self)
 		self->monsterinfo.dodge_time = level.time + 1.8f;
 	}
 	else if (can_grenade && !(self->monsterinfo.aiflags & AI_STAND_GROUND) && dist > GUNCMDR_GRENADE_RANGE && r < 0.90)
-		self->monsterinfo.currentmove = &guncmdr_move_attack_grenade_back;
+		self->monsterinfo.currentmove = (random() < 0.25f) ?
+			&guncmdr_move_attack_grenade_back : &guncmdr_move_attack_grenade_back_normal;
 	else if (can_chain)
 		self->monsterinfo.currentmove = &guncmdr_move_attack_chain;
 	else if (can_grenade)
 	{
-		self->monsterinfo.currentmove = &guncmdr_move_attack_grenade_back;
+		self->monsterinfo.currentmove = (random() < 0.25f) ?
+			&guncmdr_move_attack_grenade_back : &guncmdr_move_attack_grenade_back_normal;
 	}
 	else
 		return;
@@ -967,7 +1127,17 @@ static void guncmdr_refire_chain(edict_t *self)
 		float dist = entdist(self, self->enemy);
 
 		if (guncmdr_can_dodge_chain(self) && guncmdr_can_proactive_dodge(self, dist) && random() < 0.65)
-			guncmdr_start_fire_chain_dodge(self);
+		{
+			// mix in the ducked duckstep so it keeps crouching and sliding between bursts
+			if (self->groundentity && random() < 0.4f)
+			{
+				self->monsterinfo.lefty = (random() < 0.5f);
+				if (!guncmdr_start_duckstep_dodge(self))
+					guncmdr_start_fire_chain_dodge(self);
+			}
+			else
+				guncmdr_start_fire_chain_dodge(self);
+		}
 		else if (guncmdr_can_chain(self) && !(self->monsterinfo.aiflags & AI_STAND_GROUND) && dist > GUNCMDR_CHAINGUN_RUN_RANGE)
 			self->monsterinfo.currentmove = &guncmdr_move_fire_chain_run;
 		else if (guncmdr_can_chain(self))
@@ -979,6 +1149,26 @@ static void guncmdr_refire_chain(edict_t *self)
 		self->monsterinfo.currentmove = &guncmdr_move_endfire_chain;
 
 	self->monsterinfo.attack_finished = level.time + 0.5;
+}
+
+// sustain the firing slide like Remaster's AI_DODGING window: chain several slide cycles in the
+// same direction (drone_ai_dodge_slide flips lefty only when blocked) before refiring normally
+static void guncmdr_finish_chain_dodge(edict_t *self)
+{
+	if (self->monsterinfo.nextattack > 0 && G_ValidTarget(self, self->enemy, true, true) &&
+		visible(self, self->enemy) && guncmdr_can_dodge_chain(self))
+	{
+		self->monsterinfo.nextattack--;
+		if (self->monsterinfo.lefty)
+			self->monsterinfo.currentmove = &guncmdr_move_fire_chain_dodge_left;
+		else
+			self->monsterinfo.currentmove = &guncmdr_move_fire_chain_dodge_right;
+		return;
+	}
+
+	self->monsterinfo.nextattack = 0;
+	self->monsterinfo.dodge_time = level.time + 0.7f + random() * 0.8f;
+	guncmdr_refire_chain(self);
 }
 
 static void guncmdr_grenade_finished(edict_t *self)
@@ -1237,6 +1427,21 @@ static void guncmdr_ai_dodge_slide(edict_t *self, float dist)
 	drone_ai_dodge_slide(self, dist);
 }
 
+static void guncmdr_finish_dodge_slide(edict_t *self)
+{
+	if (self->monsterinfo.nextattack > 0 && G_ValidTarget(self, self->enemy, true, true))
+	{
+		self->monsterinfo.nextattack--;
+		self->monsterinfo.currentmove = &guncmdr_move_dodge_slide;
+		return;
+	}
+
+	self->monsterinfo.nextattack = 0;
+	self->monsterinfo.dodge_time = level.time + 0.7f + random() * 0.8f;
+	self->monsterinfo.attack_finished = level.time + 0.4f + random() * 0.8f;
+	guncmdr_run(self);
+}
+
 mframe_t guncmdr_frames_dodge_slide[] =
 {
 	guncmdr_ai_dodge_slide, 12, NULL,
@@ -1246,7 +1451,7 @@ mframe_t guncmdr_frames_dodge_slide[] =
 	guncmdr_ai_dodge_slide, 14, NULL,
 	guncmdr_ai_dodge_slide, 10, NULL
 };
-mmove_t guncmdr_move_dodge_slide = { FRAME_c_run101, FRAME_c_run106, guncmdr_frames_dodge_slide, guncmdr_run };
+mmove_t guncmdr_move_dodge_slide = { FRAME_c_run101, FRAME_c_run106, guncmdr_frames_dodge_slide, guncmdr_finish_dodge_slide };
 
 static qboolean guncmdr_try_sidestep(edict_t *self)
 {
@@ -1258,10 +1463,12 @@ static qboolean guncmdr_try_sidestep(edict_t *self)
 		else
 			self->monsterinfo.currentmove = &guncmdr_move_fire_chain_dodge_right;
 
+		self->monsterinfo.nextattack = 1 + (int)(random() * 3.0f); // ~1.0-2.0s of firing slide
 		return true;
 	}
 
-	if (self->monsterinfo.currentmove == &guncmdr_move_attack_grenade_back)
+	if (self->monsterinfo.currentmove == &guncmdr_move_attack_grenade_back ||
+		self->monsterinfo.currentmove == &guncmdr_move_attack_grenade_back_normal)
 	{
 		self->count = self->s.frame;
 
@@ -1273,7 +1480,8 @@ static qboolean guncmdr_try_sidestep(edict_t *self)
 		return true;
 	}
 
-	if (self->monsterinfo.currentmove == &guncmdr_move_attack_mortar)
+	if (self->monsterinfo.currentmove == &guncmdr_move_attack_mortar ||
+		self->monsterinfo.currentmove == &guncmdr_move_attack_mortar_normal)
 	{
 		self->count = self->s.frame;
 		self->monsterinfo.currentmove = &guncmdr_move_attack_mortar_dodge;
@@ -1286,6 +1494,7 @@ static qboolean guncmdr_try_sidestep(edict_t *self)
 			return guncmdr_start_duckstep_dodge(self);
 
 		self->monsterinfo.currentmove = &guncmdr_move_dodge_slide;
+		self->monsterinfo.nextattack = (int)(random() * 3.0f); // ~0.6-1.8s of run slide
 		return true;
 	}
 
@@ -1646,7 +1855,9 @@ void init_drone_guncmdr(edict_t *self)
 	self->monsterinfo.pain_chance = 0.2f;
 	self->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
 
-	M_SetMonsterArmor(self, M_GUNCMDR_INITIAL_ARMOR + M_GUNCMDR_ADDON_ARMOR * self->monsterinfo.level);
+	// the gun commander is a grenadier: armor it with a power shield instead of plain armor
+	M_SetMonsterPowerArmor(self, POWER_ARMOR_SHIELD,
+		M_GUNCMDR_INITIAL_ARMOR + M_GUNCMDR_ADDON_ARMOR * self->monsterinfo.level);
 	self->mtype = M_GUNCMDR;
 
 	gi.linkentity(self);

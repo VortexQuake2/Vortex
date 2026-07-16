@@ -7,14 +7,7 @@ rogue rocket turret
 */
 
 #include "g_local.h"
-
-static constexpr int TURRET_FRAME_stand01 = 0;
-static constexpr int TURRET_FRAME_stand02 = 1;
-static constexpr int TURRET_FRAME_active01 = 2;
-static constexpr int TURRET_FRAME_run01 = 8;
-static constexpr int TURRET_FRAME_run02 = 9;
-static constexpr int TURRET_FRAME_pow01 = 10;
-static constexpr int TURRET_FRAME_pow04 = 13;
+#include "../../quake2/monsterframes/m_rogue_turret.h"
 
 static constexpr int TURRET_ROCKET_DAMAGE = 40;
 static constexpr int TURRET_ROCKET_SPEED = 650;
@@ -178,7 +171,7 @@ static mframe_t rogue_turret_frames_stand[] =
 	rogue_turret_aim_stand_ai, 0, NULL,
 	rogue_turret_aim_stand_ai, 0, NULL
 };
-static mmove_t rogue_turret_move_stand = { TURRET_FRAME_stand01, TURRET_FRAME_stand02, rogue_turret_frames_stand, NULL };
+static mmove_t rogue_turret_move_stand = { FRAME_stand01, FRAME_stand02, rogue_turret_frames_stand, NULL };
 
 static void rogue_turret_stand(edict_t *self)
 {
@@ -197,7 +190,7 @@ static mframe_t rogue_turret_frames_ready[] =
 	rogue_turret_aim_move_ai, 0, NULL,
 	rogue_turret_aim_move_ai, 0, NULL
 };
-static mmove_t rogue_turret_move_ready = { TURRET_FRAME_active01, TURRET_FRAME_run01, rogue_turret_frames_ready, rogue_turret_run };
+static mmove_t rogue_turret_move_ready = { FRAME_active01, FRAME_run01, rogue_turret_frames_ready, rogue_turret_run };
 
 static void rogue_turret_ready(edict_t *self)
 {
@@ -214,11 +207,11 @@ static mframe_t rogue_turret_frames_run[] =
 	rogue_turret_aim_stand_ai, 0, rogue_turret_active,
 	rogue_turret_aim_stand_ai, 0, rogue_turret_active
 };
-static mmove_t rogue_turret_move_run = { TURRET_FRAME_run01, TURRET_FRAME_run02, rogue_turret_frames_run, rogue_turret_run };
+static mmove_t rogue_turret_move_run = { FRAME_run01, FRAME_run02, rogue_turret_frames_run, rogue_turret_run };
 
 static void rogue_turret_run(edict_t *self)
 {
-	if (self->s.frame < TURRET_FRAME_run01)
+	if (self->s.frame < FRAME_run01)
 	{
 		rogue_turret_ready(self);
 		return;
@@ -240,7 +233,7 @@ static mframe_t rogue_turret_frames_fire[] =
 	rogue_turret_aim_charge_ai, 0, NULL,
 	rogue_turret_aim_charge_ai, 0, NULL
 };
-static mmove_t rogue_turret_move_fire = { TURRET_FRAME_pow01, TURRET_FRAME_pow04, rogue_turret_frames_fire, rogue_turret_run };
+static mmove_t rogue_turret_move_fire = { FRAME_pow01, FRAME_pow04, rogue_turret_frames_fire, rogue_turret_run };
 
 static void rogue_turret_active(edict_t *self)
 {
@@ -269,7 +262,7 @@ static void rogue_turret_attack(edict_t *self)
 	}
 
 	rogue_turret_aim(self);
-	if (self->s.frame < TURRET_FRAME_run01)
+	if (self->s.frame < FRAME_run01)
 		rogue_turret_ready(self);
 	else
 		self->monsterinfo.currentmove = &rogue_turret_move_fire;
@@ -283,7 +276,7 @@ static void rogue_turret_pain(edict_t *self, edict_t *other, float kick, int dam
 
 void rogue_turret_force_ready(edict_t *self)
 {
-	self->s.frame = TURRET_FRAME_run01;
+	self->s.frame = FRAME_run01;
 	self->monsterinfo.currentmove = &rogue_turret_move_run;
 	self->monsterinfo.attack_finished = level.time;
 	self->monsterinfo.pausetime = 0;

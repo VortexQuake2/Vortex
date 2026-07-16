@@ -1,3 +1,11 @@
+/*
+==============================================================================
+
+runner tank - fast, jumping tank variant
+
+==============================================================================
+*/
+
 #include "g_local.h"
 #include "../../quake2/monsterframes/m_runnertank.h"
 
@@ -850,6 +858,78 @@ static void runnertank_attack(edict_t *self)
         M_DelayNextAttack(self, 0, true);
 }
 
+static mmove_t runnertank_move_dodge_slide;
+
+static void runnertank_ai_dodge_slide(edict_t *self, float dist)
+{
+    vec3_t v;
+    float ofs;
+
+    if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(self->monsterinfo.attacker))
+        self->enemy = self->monsterinfo.attacker;
+    if (!G_EntIsAlive(self->enemy))
+        return;
+
+    VectorSubtract(self->enemy->s.origin, self->s.origin, v);
+    self->ideal_yaw = vectoyaw(v);
+    M_ChangeYaw(self);
+
+    // unlike drone_ai_dodge_slide, never reverse into a retrace when blocked;
+    // drift toward the enemy instead so the juke always ends where it went
+    ofs = self->monsterinfo.lefty ? 90 : -90;
+    if (!M_walkmove(self, self->ideal_yaw + ofs, dist))
+        M_walkmove(self, self->ideal_yaw, dist * 0.5f);
+}
+
+static void runnertank_finish_dodge_slide(edict_t *self)
+{
+    self->monsterinfo.dodge_time = level.time + 0.8f + random() * 0.7f;
+    runnertank_run(self);
+}
+
+mframe_t runnertank_frames_dodge_slide[] =
+{
+    runnertank_ai_dodge_slide, 24, runnertank_footstep,
+    runnertank_ai_dodge_slide, 30, NULL,
+    runnertank_ai_dodge_slide, 26, NULL,
+    runnertank_ai_dodge_slide, 26, NULL,
+    runnertank_ai_dodge_slide, 26, NULL
+};
+static mmove_t runnertank_move_dodge_slide = { FRAME_run01, FRAME_run05, runnertank_frames_dodge_slide, runnertank_finish_dodge_slide };
+
+// ported from Horde's runnertank_dodge/runnertank_sidestep: one short committed juke to the
+// side (Horde uses a ~0.3-0.7s velocity burst), then straight back to chasing from there
+static void runnertank_dodge(edict_t *self, edict_t *attacker, vec3_t dir, int radius)
+{
+    if (level.time < self->monsterinfo.dodge_time)
+        return;
+    if (!attacker || OnSameTeam(self, attacker))
+        return;
+    if (!self->groundentity || self->health <= 0)
+        return;
+
+    self->monsterinfo.attacker = attacker;
+    if (!G_EntIsAlive(self->enemy) && G_EntIsAlive(attacker))
+        self->enemy = attacker;
+
+    // don't bail out of attacks or the jump to dodge
+    if (self->monsterinfo.currentmove == &runnertank_move_dodge_slide ||
+        self->monsterinfo.currentmove == &runnertank_move_strike ||
+        self->monsterinfo.currentmove == &runnertank_move_jump_attack ||
+        self->monsterinfo.currentmove == &runnertank_move_attack_blast ||
+        self->monsterinfo.currentmove == &runnertank_move_attack_pre_rocket ||
+        self->monsterinfo.currentmove == &runnertank_move_attack_fire_rocket ||
+        self->monsterinfo.currentmove == &runnertank_move_attack_chain)
+        return;
+
+    if (random() > 0.5)
+        return;
+
+    drone_set_dodge_side(self, dir);
+    self->monsterinfo.currentmove = &runnertank_move_dodge_slide;
+    self->monsterinfo.dodge_time = level.time + 1.0f;
+}
+
 mframe_t runnertank_frames_pain1[] =
 {
     ai_move, 0, NULL,
@@ -1036,6 +1116,7 @@ void init_drone_runnertank(edict_t *self)
     self->monsterinfo.run = runnertank_run;
     self->monsterinfo.attack = runnertank_attack;
     self->monsterinfo.melee = runnertank_melee;
+    self->monsterinfo.dodge = runnertank_dodge;
     self->monsterinfo.sight = runnertank_sight;
     self->monsterinfo.idle = runnertank_idle;
     self->monsterinfo.jumpup = 64;

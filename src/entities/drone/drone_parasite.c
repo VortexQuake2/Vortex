@@ -39,7 +39,9 @@ extern mmove_t myparasite_move_fire_proboscis;
 static constexpr int PARASITE_PROBOSCIS_SPEED = 1250;
 static constexpr float PARASITE_PROBOSCIS_RETRACT_MODIFIER = 2.0f;
 static constexpr float PARASITE_PROBOSCIS_DRAIN_INTERVAL = 0.1f;
-static constexpr float PARASITE_PROBOSCIS_RANGE = 128.0f;
+// Attack-initiation reach. Keep under the proboscis flight cap of (PARASITE_PROBOSCIS_SPEED*2)/15
+// (~166 at speed 1250, see myparasite_proboscis_think) so the tip doesn't retract before arrival.
+static constexpr float PARASITE_PROBOSCIS_RANGE = 160.0f;
 static constexpr int PARASITE_PROBOSCIS_IMPACT_DAMAGE = 5;
 
 static constexpr int PROBOSCIS_FLYING = 0;

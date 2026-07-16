@@ -2115,6 +2115,8 @@ char *V_GetMonsterKind(int mtype) {
             return "gekk";
         case M_ARACHNID:
             return "arachnid";
+        case M_ARACHNID_PLASMA:
+            return "arachnid plasma";
         case M_ARACHNID_HEAT:
             return "arachnid heat";
         case M_BOSS2:

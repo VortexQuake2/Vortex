@@ -651,15 +651,16 @@ void monster_fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, i
 	monster_muzzleflash(self, start, flashtype);
 }	
 
-void monster_fire_railgun (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype)
+qboolean monster_fire_railgun (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype)
 {
 	float chance;
+	qboolean hit;
 
 	// holy freeze reduces firing rate by 50%
 	if (que_typeexists(self->curses, AURA_HOLYFREEZE))
 	{
 		if (random() <= 0.5)
-			return;
+			return false;
 	}
 
 	// chill effect reduces attack rate/refire
@@ -667,13 +668,14 @@ void monster_fire_railgun (edict_t *self, vec3_t start, vec3_t aimdir, int damag
 	{
 		chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
 		if (random() > chance)
-			return;
+			return false;
 	}
 
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
-	fire_rail (self, start, aimdir, damage, kick);
+	hit = fire_rail (self, start, aimdir, damage, kick);
 
 	monster_muzzleflash(self, start, flashtype);
+	return hit;
 }
 
 void monster_fire_bfg (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int kick, float damage_radius, int flashtype)
@@ -783,6 +785,34 @@ void monster_fire_icebolt(edict_t* self)
 	fire_icebolt(self, start, forward, damage, radius, speed, (int)(2 * slvl), duration, 0);
 	// Play sound effect
 	gi.sound(self, CHAN_WEAPON, gi.soundindex("spells/coldcast.wav"), 1, ATTN_NORM, 0);
+}
+
+// Magic bolt fired by a monster/drone. Behaves like the player MAGICBOLT
+// ability (single-target direct hit, no splash) but scales its damage like the
+// shambler ice bolt via drone_damagelevel().
+void monster_fire_magicbolt(edict_t* self)
+{
+	int damage;
+	float slvl;
+	vec3_t forward, start;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	slvl = drone_damagelevel(self);
+
+	damage = ICEBOLT_INITIAL_DAMAGE + ICEBOLT_ADDON_DAMAGE * slvl;
+	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
+
+	MonsterAim(self, M_PROJECTILE_ACC, (int)BOLT_SPEED, false, 0, forward, start);
+	magicbolt_spawn(self, start, forward, damage, 0, 0, 1.0f);
+
+	// cast effect + sound, matching the ability
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_TELEPORT_EFFECT);
+	gi.WritePosition(start);
+	gi.multicast(start, MULTICAST_PVS);
+	gi.sound(self, CHAN_WEAPON, gi.soundindex("abilities/holybolt2.wav"), 1, ATTN_NORM, 0);
 }
 
 //

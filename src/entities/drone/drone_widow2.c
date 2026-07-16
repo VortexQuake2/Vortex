@@ -7,30 +7,7 @@ black widow 2
 */
 
 #include "g_local.h"
-
-static constexpr int WIDOW2_FRAME_blackwidow3 = 0;
-static constexpr int WIDOW2_FRAME_walk01 = 1;
-static constexpr int WIDOW2_FRAME_walk09 = 9;
-static constexpr int WIDOW2_FRAME_spawn01 = 10;
-static constexpr int WIDOW2_FRAME_spawn04 = 13;
-static constexpr int WIDOW2_FRAME_spawn14 = 23;
-static constexpr int WIDOW2_FRAME_spawn18 = 27;
-static constexpr int WIDOW2_FRAME_firea01 = 28;
-static constexpr int WIDOW2_FRAME_firea07 = 34;
-static constexpr int WIDOW2_FRAME_fireb01 = 35;
-static constexpr int WIDOW2_FRAME_fireb04 = 38;
-static constexpr int WIDOW2_FRAME_fireb05 = 39;
-static constexpr int WIDOW2_FRAME_fireb09 = 43;
-static constexpr int WIDOW2_FRAME_tongs01 = 47;
-static constexpr int WIDOW2_FRAME_tongs08 = 54;
-static constexpr int WIDOW2_FRAME_pain01 = 55;
-static constexpr int WIDOW2_FRAME_pain05 = 59;
-static constexpr int WIDOW2_FRAME_death01 = 60;
-static constexpr int WIDOW2_FRAME_death44 = 103;
-static constexpr int WIDOW2_FRAME_dthsrh01 = 104;
-static constexpr int WIDOW2_FRAME_dthsrh15 = 118;
-static constexpr int WIDOW2_FRAME_dthsrh16 = 119;
-static constexpr int WIDOW2_FRAME_dthsrh22 = 125;
+#include "../../quake2/monsterframes/m_rogue_widow2.h"
 
 static constexpr int WIDOW2_SUMMON_COUNT = 2;
 static constexpr float WIDOW2_SUMMON_COOLDOWN = 10.0f;
@@ -106,7 +83,7 @@ static mframe_t widow2_frames_stand[] =
 {
 	drone_ai_stand, 0, NULL
 };
-static mmove_t widow2_move_stand = { WIDOW2_FRAME_blackwidow3, WIDOW2_FRAME_blackwidow3, widow2_frames_stand, widow2_stand };
+static mmove_t widow2_move_stand = { FRAME_blackwidow3, FRAME_blackwidow3, widow2_frames_stand, widow2_stand };
 
 static mframe_t widow2_frames_walk[] =
 {
@@ -120,7 +97,7 @@ static mframe_t widow2_frames_walk[] =
 	widow2_ai_walk, 8, NULL,
 	widow2_ai_walk, 10, NULL
 };
-static mmove_t widow2_move_walk = { WIDOW2_FRAME_walk01, WIDOW2_FRAME_walk09, widow2_frames_walk, widow2_walk };
+static mmove_t widow2_move_walk = { FRAME_walk01, FRAME_walk09, widow2_frames_walk, widow2_walk };
 
 static mframe_t widow2_frames_run[] =
 {
@@ -134,7 +111,7 @@ static mframe_t widow2_frames_run[] =
 	widow2_ai_run, 8, NULL,
 	widow2_ai_run, 10, NULL
 };
-static mmove_t widow2_move_run = { WIDOW2_FRAME_walk01, WIDOW2_FRAME_walk09, widow2_frames_run, NULL };
+static mmove_t widow2_move_run = { FRAME_walk01, FRAME_walk09, widow2_frames_run, NULL };
 
 static mframe_t widow2_frames_pre_beam[] =
 {
@@ -143,7 +120,7 @@ static mframe_t widow2_frames_pre_beam[] =
 	ai_charge, 4, NULL,
 	ai_charge, 4, widow2_attack_beam
 };
-static mmove_t widow2_move_pre_beam = { WIDOW2_FRAME_fireb01, WIDOW2_FRAME_fireb04, widow2_frames_pre_beam, NULL };
+static mmove_t widow2_move_pre_beam = { FRAME_fireb01, FRAME_fireb04, widow2_frames_pre_beam, NULL };
 
 static mframe_t widow2_frames_beam[] =
 {
@@ -153,7 +130,7 @@ static mframe_t widow2_frames_beam[] =
 	ai_charge, 0, widow2_fire_beam,
 	ai_charge, 0, widow2_fire_beam
 };
-static mmove_t widow2_move_beam = { WIDOW2_FRAME_fireb05, WIDOW2_FRAME_fireb09, widow2_frames_beam, widow2_run };
+static mmove_t widow2_move_beam = { FRAME_fireb05, FRAME_fireb09, widow2_frames_beam, widow2_run };
 
 static mframe_t widow2_frames_disruptor[] =
 {
@@ -165,7 +142,7 @@ static mframe_t widow2_frames_disruptor[] =
 	ai_charge, 2, NULL,
 	ai_charge, 2, NULL
 };
-static mmove_t widow2_move_disruptor = { WIDOW2_FRAME_firea01, WIDOW2_FRAME_firea07, widow2_frames_disruptor, widow2_run };
+static mmove_t widow2_move_disruptor = { FRAME_firea01, FRAME_firea07, widow2_frames_disruptor, widow2_run };
 
 static mframe_t widow2_frames_spawn[] =
 {
@@ -188,7 +165,7 @@ static mframe_t widow2_frames_spawn[] =
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL
 };
-static mmove_t widow2_move_spawn = { WIDOW2_FRAME_spawn01, WIDOW2_FRAME_spawn18, widow2_frames_spawn, widow2_run };
+static mmove_t widow2_move_spawn = { FRAME_spawn01, FRAME_spawn18, widow2_frames_spawn, widow2_run };
 
 static mframe_t widow2_frames_tongs[] =
 {
@@ -201,7 +178,7 @@ static mframe_t widow2_frames_tongs[] =
 	ai_charge, 0, widow2_melee_hit,
 	ai_charge, 0, NULL
 };
-static mmove_t widow2_move_tongs = { WIDOW2_FRAME_tongs01, WIDOW2_FRAME_tongs08, widow2_frames_tongs, widow2_run };
+static mmove_t widow2_move_tongs = { FRAME_tongs01, FRAME_tongs08, widow2_frames_tongs, widow2_run };
 
 static mframe_t widow2_frames_pain[] =
 {
@@ -211,7 +188,7 @@ static mframe_t widow2_frames_pain[] =
 	ai_move, 0, NULL,
 	ai_move, 0, NULL
 };
-static mmove_t widow2_move_pain = { WIDOW2_FRAME_pain01, WIDOW2_FRAME_pain05, widow2_frames_pain, widow2_run };
+static mmove_t widow2_move_pain = { FRAME_pain01, FRAME_pain05, widow2_frames_pain, widow2_run };
 
 static mframe_t widow2_frames_death[] =
 {
@@ -260,7 +237,7 @@ static mframe_t widow2_frames_death[] =
 	ai_move, 0, NULL,
 	ai_move, 0, widow2_dead
 };
-static mmove_t widow2_move_death = { WIDOW2_FRAME_death01, WIDOW2_FRAME_death44, widow2_frames_death, NULL };
+static mmove_t widow2_move_death = { FRAME_death01, FRAME_death44, widow2_frames_death, NULL };
 
 static mframe_t widow2_frames_dead[] =
 {
@@ -280,7 +257,7 @@ static mframe_t widow2_frames_dead[] =
 	ai_move, 0, NULL,
 	ai_move, 0, widow2_keep_searching
 };
-static mmove_t widow2_move_dead = { WIDOW2_FRAME_dthsrh01, WIDOW2_FRAME_dthsrh15, widow2_frames_dead, NULL };
+static mmove_t widow2_move_dead = { FRAME_dthsrh01, FRAME_dthsrh15, widow2_frames_dead, NULL };
 
 static mframe_t widow2_frames_really_dead[] =
 {
@@ -292,7 +269,7 @@ static mframe_t widow2_frames_really_dead[] =
 	ai_move, 0, NULL,
 	ai_move, 0, widow2_finaldeath
 };
-static mmove_t widow2_move_really_dead = { WIDOW2_FRAME_dthsrh16, WIDOW2_FRAME_dthsrh22, widow2_frames_really_dead, NULL };
+static mmove_t widow2_move_really_dead = { FRAME_dthsrh16, FRAME_dthsrh22, widow2_frames_really_dead, NULL };
 
 static void widow2_start_searching(edict_t *self)
 {
@@ -304,7 +281,7 @@ static void widow2_keep_searching(edict_t *self)
 	if (self->count <= 2)
 	{
 		self->monsterinfo.currentmove = &widow2_move_dead;
-		self->s.frame = WIDOW2_FRAME_dthsrh01;
+		self->s.frame = FRAME_dthsrh01;
 		self->count++;
 		return;
 	}
@@ -385,10 +362,10 @@ static void widow2_fire_beam(edict_t *self)
 	if (M_RAILGUN_DMG_MAX && damage > M_RAILGUN_DMG_MAX)
 		damage = M_RAILGUN_DMG_MAX;
 
-	if (self->s.frame >= WIDOW2_FRAME_fireb05 && self->s.frame <= WIDOW2_FRAME_fireb09)
-		flash = MZ2_WIDOW2_BEAMER_1 + self->s.frame - WIDOW2_FRAME_fireb05;
-	else if (self->s.frame >= WIDOW2_FRAME_spawn04 && self->s.frame <= WIDOW2_FRAME_spawn14)
-		flash = MZ2_WIDOW2_BEAM_SWEEP_1 + self->s.frame - WIDOW2_FRAME_spawn04;
+	if (self->s.frame >= FRAME_fireb05 && self->s.frame <= FRAME_fireb09)
+		flash = MZ2_WIDOW2_BEAMER_1 + self->s.frame - FRAME_fireb05;
+	else if (self->s.frame >= FRAME_spawn04 && self->s.frame <= FRAME_spawn14)
+		flash = MZ2_WIDOW2_BEAM_SWEEP_1 + self->s.frame - FRAME_spawn04;
 	else
 		flash = MZ2_WIDOW2_BEAM_SWEEP_1;
 
@@ -432,7 +409,7 @@ static void widow2_attack_beam(edict_t *self)
 
 static void widow2_proboscis_start(edict_t *self, vec3_t start)
 {
-	int index = self->s.frame - WIDOW2_FRAME_tongs01;
+	int index = self->s.frame - FRAME_tongs01;
 	vec3_t forward, right, offset;
 
 	if (index < 0)
@@ -562,7 +539,7 @@ static void widow2_drain_proboscis(edict_t *self)
 	widow2_prepare_pulled_enemy(self);
 	widow2_heal_from_proboscis(self, damage);
 
-	if (self->s.frame == WIDOW2_FRAME_tongs01 + 3)
+	if (self->s.frame == FRAME_tongs01 + 3)
 		gi.sound(self->enemy, CHAN_AUTO, sound_hit, 1, ATTN_NORM, 0);
 
 	VectorSubtract(end, start, dir);

@@ -621,6 +621,12 @@ void guardian_attack(edict_t *self)
 	can_atk2 = guardian_has_grenade_or_laser_shot(self);
 	can_rocket = guardian_has_rocket_shot(self, -14.0f) || guardian_has_rocket_shot(self, 14.0f);
 
+	// the mini-guardian's atk2 lobs grenades; don't commit to a throw the grenade can't reach
+	// (max ballistic range at the launcher's top speed) -- fall back to its ionripper instead.
+	if (self->mtype == M_MINIGUARDIAN && can_atk2 &&
+		dist > (M_GRENADELAUNCHER_SPEED_MAX * M_GRENADELAUNCHER_SPEED_MAX) / sv_gravity->value)
+		can_atk2 = false;
+
 	if (self->mtype == M_GUARDIAN && self->monsterinfo.melee_finished < level.time && dist < 160)
 		self->monsterinfo.currentmove = &guardian_move_kick;
 	else if (self->mtype != M_GUARDIAN && self->monsterinfo.melee_finished < level.time && dist < 120)

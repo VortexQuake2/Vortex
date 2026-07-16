@@ -1135,8 +1135,7 @@ qboolean SV_flystep_testvisposition(vec3_t start, vec3_t end, vec3_t starta, vec
 	return false;
 }
 
-// Alternate flyers steer directly, so they need local side probes instead of
-// Horde's temporary ai_run pursuit goals when LOS is about to be blocked.
+// Alternate flyers steer directly, so they need local side probes on losing sight
 static float fly_sight_fraction_to_point_from(edict_t *ent, vec3_t origin, vec3_t point)
 {
 	vec3_t start;

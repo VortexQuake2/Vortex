@@ -23,6 +23,7 @@ static int sound_jump;
 static void berserk_ai_dodge_slide(edict_t *self, float dist);
 static void berserk_duck_up(edict_t *self);
 static void berserk_slam_touchdown(edict_t *self);
+static void berserk_check_zap(edict_t *self);
 void berserk_melee(edict_t *self);
 extern mmove_t berserk_move_attack_strike;
 
@@ -33,6 +34,19 @@ static constexpr float BERSERK_SLAM_COOLDOWN = 5.0f;
 static constexpr float BERSERK_SLAM_TIMEOUT = 3.0f;
 static constexpr float BERSERK_SLAM_RADIUS = 165.0f;
 static constexpr float BERSERK_SLAM_KICK = 300.0f;
+
+// Lightning "zap": a constant, tesla-like chain that streams while running.
+// Evaluated every run frame and gated only by a short cooldown (no random),
+// so the lightning is continuous rather than an occasional pulse.
+static constexpr float BERSERK_ZAP_RADIUS = 256.0f;
+static constexpr float BERSERK_ZAP_COOLDOWN = 0.1f;     // stream fire rate (stored in self->wait)
+static constexpr int   BERSERK_ZAP_MAX_TARGETS = 3;     // primary + chains
+static constexpr float BERSERK_ZAP_CHAIN_MULT = 0.5f;   // chained targets take less
+
+// Ranged magic-bolt attack (scales like the shambler ice bolt).
+static constexpr float BERSERK_MAGICBOLT_MIN_RANGE = 300.0f;
+static constexpr float BERSERK_MAGICBOLT_CHANCE = 0.35f;
+static constexpr float BERSERK_MAGICBOLT_COOLDOWN = 3.0f;	// covers the longer 21-frame cast + recovery
 
 
 void berserk_sight (edict_t *self, edict_t *other)
@@ -134,14 +148,147 @@ mframe_t berserk_frames_run1 [] =
 };
 mmove_t berserk_move_run1 = {FRAME_run1, FRAME_run6, berserk_frames_run1, NULL};
 
+// "Hand-up" lightning run: a separate looping animation (the r_att frames) that
+// streams the tesla zap on every frame. The berserk only zaps while in THIS
+// run - the normal run above never does. The two are like the reference mod's
+// two running animations; berserk_run re-rolls which to use after each
+// pain/attack/jump, so a berserk doesn't flicker between them mid-run.
+static void berserk_start_lightning_run(edict_t *self);
+
+mframe_t berserk_frames_run_lightning [] =
+{
+	drone_ai_run, 21, berserk_check_zap,
+	drone_ai_run, 11, berserk_check_zap,
+	drone_ai_run, 21, berserk_check_zap,
+	drone_ai_run, 25, berserk_check_zap,
+	drone_ai_run, 18, berserk_check_zap,
+	drone_ai_run, 19, berserk_check_zap
+};
+mmove_t berserk_move_run_lightning = {FRAME_r_att7, FRAME_r_att12, berserk_frames_run_lightning, berserk_start_lightning_run};
+
+static void berserk_start_lightning_run(edict_t *self)
+{
+	self->monsterinfo.currentmove = &berserk_move_run_lightning;
+}
+
+static qboolean berserk_wants_lightning_run(edict_t *self)
+{
+	if (!G_EntExists(self->enemy))
+		return false;
+	if (entdist(self, self->enemy) > BERSERK_ZAP_RADIUS * 1.25f)
+		return false; // don't raise the arm if the target is out of zap reach
+	return random() < 0.5f;
+}
+
 void berserk_run (edict_t *self)
 {
 	berserk_duck_up(self);
 
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 		self->monsterinfo.currentmove = &berserk_move_stand;
+	else if (berserk_wants_lightning_run(self))
+		self->monsterinfo.currentmove = &berserk_move_run_lightning;
 	else
 		self->monsterinfo.currentmove = &berserk_move_run1;
+}
+
+// Fire a single lightning bolt from 'start' to 'target', drawing the beam from
+// 'beam_origin'. Returns true if the target was hit.
+static qboolean berserk_fire_bolt(edict_t *self, edict_t *target, vec3_t start, vec3_t beam_origin, int damage)
+{
+	vec3_t dir, end, normal;
+	trace_t tr;
+
+	if (!G_ValidTarget(self, target, true, true))
+		return false;
+
+	G_EntMidPoint(target, end);
+	tr = gi.trace(start, vec3_origin, vec3_origin, end, self, MASK_SHOT);
+	if (!(tr.fraction == 1.0f || tr.ent == target))
+		return false;
+
+	VectorSubtract(end, start, dir);
+	if (tr.fraction == 1.0f)
+		VectorClear(normal);
+	else
+		VectorCopy(tr.plane.normal, normal);
+
+	T_Damage(target, self, self, dir, tr.endpos, normal, damage, 0, DAMAGE_ENERGY, MOD_LIGHTNING);
+
+	gi.WriteByte(svc_temp_entity);
+	gi.WriteByte(TE_LIGHTNING);
+	gi.WriteShort(target - g_edicts);
+	gi.WriteShort(self - g_edicts);
+	gi.WritePosition(tr.endpos);
+	gi.WritePosition(beam_origin);
+	gi.multicast(beam_origin, MULTICAST_PVS);
+	return true;
+}
+
+// Tesla-like chain: zap the enemy, then hop to nearby foes within radius.
+static void berserk_zap(edict_t *self)
+{
+	vec3_t forward, right, hand, offset, beam_origin;
+	int base_damage, chain_damage, hits = 0;
+	edict_t *primary = NULL, *target = NULL;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	AngleVectors(self->s.angles, forward, right, NULL);
+	VectorSet(offset, 25, -20, 40);
+	G_ProjectSource(self->s.origin, offset, forward, right, hand);
+
+	// per-tick damage is low: the stream fires ~every think, so the damage
+	// comes from sustained contact rather than a single big pulse
+	base_damage = (int)((M_MELEE_DMG_BASE + M_MELEE_DMG_ADDON * drone_damagelevel(self)) * 0.12f);
+	if (base_damage < 1)
+		base_damage = 1;
+	chain_damage = (int)(base_damage * BERSERK_ZAP_CHAIN_MULT);
+	if (chain_damage < 1)
+		chain_damage = 1;
+
+	// primary bolt: hand -> current enemy
+	if (entdist(self, self->enemy) <= BERSERK_ZAP_RADIUS &&
+		berserk_fire_bolt(self, self->enemy, hand, hand, base_damage))
+	{
+		primary = self->enemy;
+		hits = 1;
+	}
+
+	// chains hop from the primary target (or the hand) to nearby non-teammates
+	if (primary)
+		G_EntMidPoint(primary, beam_origin);
+	else
+		VectorCopy(hand, beam_origin);
+
+	while (hits < BERSERK_ZAP_MAX_TARGETS &&
+		(target = findradius(target, self->s.origin, BERSERK_ZAP_RADIUS)) != NULL)
+	{
+		if (target == self || target == self->enemy)
+			continue;
+		if (OnSameTeam(self, target))
+			continue;
+		if (berserk_fire_bolt(self, target, hand, beam_origin, chain_damage))
+			hits++;
+	}
+}
+
+static void berserk_check_zap(edict_t *self)
+{
+	if (!G_EntExists(self->enemy))
+		return;
+	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
+		return;
+	if (level.time < self->wait) // short cooldown gates the stream's fire rate
+		return;
+	if (entdist(self, self->enemy) > BERSERK_ZAP_RADIUS)
+		return;
+	if (!visible(self, self->enemy))
+		return;
+
+	berserk_zap(self);
+	self->wait = level.time + BERSERK_ZAP_COOLDOWN;
 }
 
 void berserk_attack_spike (edict_t *self)
@@ -155,7 +302,9 @@ void berserk_attack_spike (edict_t *self)
 	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
 		damage = M_MELEE_DMG_MAX;
 
-	M_MeleeAttack(self, self->enemy, 96, damage, 400);
+	// a missed swing leaves the berserk recovering longer (mirrors reference)
+	if (!M_MeleeAttack(self, self->enemy, 96, damage, 400))
+		self->monsterinfo.melee_finished = level.time + 1.2f;
 	//FIXME: add bleed curse
 }
 
@@ -189,7 +338,9 @@ void berserk_attack_club (edict_t *self)
 	if (M_MELEE_DMG_MAX && damage > M_MELEE_DMG_MAX)
 		damage = M_MELEE_DMG_MAX;
 
-	M_MeleeAttack(self, self->enemy, 96, damage, 400);
+	// a missed club swing has a longer recovery than the spike (mirrors reference)
+	if (!M_MeleeAttack(self, self->enemy, 96, damage, 400))
+		self->monsterinfo.melee_finished = level.time + 2.5f;
 }
 
 mframe_t berserk_frames_attack_club [] =
@@ -208,6 +359,43 @@ mframe_t berserk_frames_attack_club [] =
 	ai_charge, 0, NULL
 };
 mmove_t berserk_move_attack_club = {FRAME_att_c9, FRAME_att_c20, berserk_frames_attack_club, berserk_run};
+
+void berserk_cast_magicbolt (edict_t *self)
+{
+	if (!G_EntExists(self->enemy))
+		return;
+
+	monster_fire_magicbolt(self);
+}
+
+// Ranged cast: a longer spell-cast gesture (att_b, 21 frames) that matches the
+// reference berserker's fireball windup. Three magic bolts leave the hand in
+// quick succession on the release frames, each with its own aim spread.
+mframe_t berserk_frames_attack_magicbolt [] =
+{
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, berserk_cast_magicbolt,	// bolt 1
+	ai_charge, 0, NULL,
+	ai_charge, 0, berserk_cast_magicbolt,	// bolt 2
+	ai_charge, 0, NULL,
+	ai_charge, 0, berserk_cast_magicbolt,	// bolt 3
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL,
+	ai_charge, 0, NULL
+};
+mmove_t berserk_move_attack_magicbolt = {FRAME_att_b1, FRAME_att_b21, berserk_frames_attack_magicbolt, berserk_run};
 
 static void berserk_run_attack_speed(edict_t *self)
 {
@@ -359,11 +547,6 @@ static void berserk_attack_strike(edict_t *self)
 	}
 }
 
-static void berserk_high_gravity(edict_t *self)
-{
-	self->gravity = self->velocity[2] < 0 ? 2.25f : 5.25f;
-}
-
 static qboolean berserk_can_slam(edict_t *self, float dist)
 {
 	return G_ValidTarget(self, self->enemy, true, true) &&
@@ -398,41 +581,52 @@ static void berserk_slam_touchdown(edict_t *self)
 
 static void berserk_jump_takeoff(edict_t *self)
 {
-	float dist, speed;
-	vec3_t dir, forward;
+	float dist, speed, up_kick;
+	vec3_t dir, forward, start;
 
 	if (!G_ValidTarget(self, self->enemy, true, true))
 		return;
 
 	VectorSubtract(self->enemy->s.origin, self->s.origin, dir);
 	dist = VectorLength(dir);
-	if (dist < 1)
-		dist = 1;
 	self->s.angles[YAW] = vectoyaw(dir);
-	AngleVectors(self->s.angles, forward, NULL, NULL);
 
-	speed = dist * 1.95f;
-	if (speed < 350)
-		speed = 350;
-	else if (speed > 1200)
-		speed = 1200;
+	// Fast forward pounce toward the enemy (mutant-style): MonsterAim leads the
+	// target and we launch hard with an upward kick so it arcs in quickly.
+	// Heavier gravity the farther it has to leap, so a long jump drops down onto
+	// the target in a steep, deliberate arc instead of floating in a lazy lob.
+	// The launch speed is scaled to the distance (and to that gravity) so the
+	// leap still lands ON the enemy rather than over/undershooting like a fixed
+	// hop would - the gravity term cancels out of the range, so it just controls
+	// how floaty vs. steep the arc looks.
+	self->gravity = 1.0f;
+	if (dist > 300.0f)
+	{
+		self->gravity = 1.0f + (dist - 300.0f) / 500.0f;
+		if (self->gravity > 2.0f)
+			self->gravity = 2.0f;
+	}
+	up_kick = 300.0f;
+	speed = dist * 1.4f * self->gravity;
+	if (speed < 450.0f)
+		speed = 450.0f;
+	else if (speed > 1400.0f)
+		speed = 1400.0f;
 
 	self->s.origin[2] += 1;
-	VectorScale(forward, speed, self->velocity);
-	self->velocity[2] = 400;
 	self->groundentity = NULL;
+	MonsterAim(self, -1, (float)speed, false, 0, forward, start);
+	VectorScale(forward, speed, self->velocity);
+	self->velocity[2] += up_kick;
 	self->monsterinfo.aiflags |= AI_DUCKED;
 	self->monsterinfo.attack_finished = level.time + BERSERK_SLAM_TIMEOUT;
 	self->monsterinfo.touchdown = berserk_slam_touchdown;
 	self->monsterinfo.lefty = 0;
-	berserk_high_gravity(self);
 	gi.linkentity(self);
 }
 
 static void berserk_check_landing(edict_t *self)
 {
-	berserk_high_gravity(self);
-
 	if (self->groundentity)
 	{
 		berserk_finish_slam(self, true);
@@ -453,7 +647,7 @@ mframe_t berserk_frames_attack_strike [] =
 	ai_charge, 0, NULL,
 	ai_charge, 0, NULL,
 	ai_move, 0, berserk_jump_takeoff,
-	ai_move, 0, berserk_high_gravity,
+	ai_move, 0, NULL,
 	ai_move, 0, berserk_check_landing,
 	ai_move, 0, NULL,
 	ai_move, 0, NULL,
@@ -854,6 +1048,17 @@ void berserk_attack (edict_t *self)
 		return;
 	}
 
+	// ranged magic bolt at distance (low chance, so it still prefers to close in)
+	if (dist > BERSERK_MAGICBOLT_MIN_RANGE &&
+		self->monsterinfo.attack_finished <= level.time &&
+		random() <= BERSERK_MAGICBOLT_CHANCE &&
+		visible(self, self->enemy))
+	{
+		self->monsterinfo.currentmove = &berserk_move_attack_magicbolt;
+		self->monsterinfo.attack_finished = level.time + BERSERK_MAGICBOLT_COOLDOWN;
+		return;
+	}
+
 	if (!(self->monsterinfo.aiflags & AI_STAND_GROUND) &&
 		self->monsterinfo.currentmove == &berserk_move_run1 &&
 		dist <= BERSERK_RUN_ATTACK_RANGE)
@@ -867,13 +1072,24 @@ void berserk_attack (edict_t *self)
 
 static void berserk_choose_melee_attack(edict_t *self)
 {
-	if (random() <= 0.5f)
-		self->monsterinfo.currentmove = &berserk_move_attack_spike;
-	else
-		self->monsterinfo.currentmove = &berserk_move_attack_club;
+	float anim_time;
 
-	self->monsterinfo.melee_finished = level.time + 0.6f;
-	self->monsterinfo.attack_finished = level.time + 0.6f;
+	if (random() <= 0.5f)
+	{
+		self->monsterinfo.currentmove = &berserk_move_attack_spike;
+		anim_time = 0.8f; // spike: 8 frames @ 0.1s
+	}
+	else
+	{
+		self->monsterinfo.currentmove = &berserk_move_attack_club;
+		anim_time = 1.2f; // club: 12 frames @ 0.1s
+	}
+
+	// Gate the next swing until this animation has played out, so the berserk
+	// no longer appears to attack instantly without an animation. A missed hit
+	// extends melee_finished further inside the per-frame damage callbacks.
+	self->monsterinfo.melee_finished = level.time + anim_time;
+	self->monsterinfo.attack_finished = level.time + anim_time;
 }
 
 void berserk_melee (edict_t *self)

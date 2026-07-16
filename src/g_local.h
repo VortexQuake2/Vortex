@@ -1482,7 +1482,7 @@ void monster_fire_grenade(edict_t *self, vec3_t start, vec3_t aimdir, int damage
 
 void monster_fire_rocket(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int flashtype);
 
-void monster_fire_railgun(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype);
+qboolean monster_fire_railgun(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype);
 
 void monster_fire_bfg(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int kick, float damage_radius,
                       int flashtype);
@@ -1495,6 +1495,9 @@ void monster_fire_fireball(edict_t *self);
 void monster_fire_poison(edict_t *self);
 
 void monster_fire_icebolt(edict_t *self);
+
+void monster_fire_magicbolt(edict_t *self);
+edict_t *magicbolt_spawn(edict_t *owner, vec3_t start, vec3_t dir, int damage, int radius_damage, float damage_radius, float cost_mult);
 
 void monster_fire_rocks(edict_t *self);
 
@@ -1568,7 +1571,7 @@ enum mtype_t : int16_t {
     M_STALKER = 34,
     M_GEKK = 35,
     M_CHICK_HEAT = 36,
-    M_ARACHNID = 37,
+    M_ARACHNID_PLASMA = 37,
     M_MEDIC_COMMANDER = 38,
     M_CARRIER = 39,
     M_GUARDIAN = 40,
@@ -1588,6 +1591,7 @@ enum mtype_t : int16_t {
     M_ARACHNID_HEAT = 54,
     M_ENFORCER = 55,
     M_HEAVY_GUNNER = 56,
+    M_ARACHNID = 57,
     M_MINISENTRY = 100,
     M_SENTRY = 101,
     M_BFG_SENTRY = 102,
@@ -1695,7 +1699,7 @@ enum dronespawn_t {
     DS_STALKER = 25,
     DS_GEKK = 26,
     DS_BITCH_HEAT = 27,
-    DS_ARACHNID = 28,
+    DS_ARACHNID_PLASMA = 28,
     DS_MEDIC_COMMANDER = 29,
     DS_COMMANDER = 30,
     DS_MAKRON = 31,
@@ -1722,6 +1726,7 @@ enum dronespawn_t {
     DS_ARACHNID_HEAT = 52,
     DS_ENFORCER = 53,
     DS_HEAVY_GUNNER = 54,
+    DS_ARACHNID = 55,
 
 };
 
@@ -1855,7 +1860,7 @@ edict_t *fire_grenade2(edict_t *self, vec3_t start, vec3_t aimdir, int damage, i
 void fire_rocket(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius,
                  int radius_damage);
 
-void fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick);
+qboolean fire_rail(edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick);
 
 void fire_bfg(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, float damage_radius);
 void fire_disruptor(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, edict_t *enemy);

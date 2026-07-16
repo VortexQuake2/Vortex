@@ -398,6 +398,10 @@ mmove_t m_soldier_move_dodge_slide = {FRAME_run03, FRAME_run08, m_soldier_frames
 
 void m_soldier_run (edict_t *self)
 {
+
+	if (self->monsterinfo.aiflags & AI_DUCKED)
+		m_soldier_duck_up(self);
+
 	if (self->monsterinfo.aiflags & AI_STAND_GROUND)
 		m_soldier_stand(self);
 	else if (self->monsterinfo.currentmove == &m_soldier_move_walk1 ||

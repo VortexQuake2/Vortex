@@ -50,12 +50,50 @@ extern mmove_t gekk_move_attack2;
 extern void fire_acid(edict_t *self, vec3_t start, vec3_t aimdir, int projectile_damage, float radius,
 	int speed, int acid_damage, float acid_duration, int gas_damage, float gas_radius, float gas_duration);
 
+// How long after a leap the gekk may bounce off a wall to re-pounce at its enemy.
+static constexpr float GEKK_WALL_BOUNCE_WINDOW = 1.5f;
+
 static void gekk_set_leap_cooldown(edict_t *self, float base, float extra)
 {
 	float cooldown = level.time + base + random() * extra;
 
 	if (self->monsterinfo.dodge_time < cooldown)
 		self->monsterinfo.dodge_time = cooldown;
+}
+
+// How close in height (Z) the gekk and its target must be for a leap to add a
+// sideways juke -- steep vertical jumps shouldn't also slide sideways.
+static constexpr float GEKK_STRAFE_HEIGHT_WINDOW = 48.0f;
+
+// Add lateral velocity to a leap so the gekk zig-zags toward its target instead
+// of arcing in a straight, predictable line. Only jukes when roughly level with
+// the enemy and in front of their aim, alternating side each leap (remaster's horde style).
+static void gekk_apply_jump_strafe(edict_t *self, float height_diff, float strafe_speed)
+{
+	vec3_t right, enemy_forward, enemy_to_self;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	// no juke on steep vertical leaps
+	if (height_diff < -GEKK_STRAFE_HEIGHT_WINDOW || height_diff > GEKK_STRAFE_HEIGHT_WINDOW)
+		return;
+
+	// only juke when the gekk is in front of the enemy, i.e. dodging their aim
+	AngleVectors(self->enemy->s.angles, enemy_forward, NULL, NULL);
+	enemy_forward[2] = 0;
+	if (VectorNormalize(enemy_forward) <= 0)
+		return;
+	VectorSubtract(self->s.origin, self->enemy->s.origin, enemy_to_self);
+	enemy_to_self[2] = 0;
+	if (VectorNormalize(enemy_to_self) <= 0)
+		return;
+	if (DotProduct(enemy_forward, enemy_to_self) < 0.5f)
+		return;
+
+	AngleVectors(self->s.angles, NULL, right, NULL);
+	self->monsterinfo.lefty = !self->monsterinfo.lefty;
+	VectorMA(self->velocity, self->monsterinfo.lefty ? -strafe_speed : strafe_speed, right, self->velocity);
 }
 
 static void gekk_step(edict_t *self)
@@ -608,6 +646,73 @@ static void gekk_jump_touch(edict_t *self, edict_t *other, cplane_t *plane, csur
 	if (other && other->takedamage)
 		return;
 
+	// Wall bounce: if we slammed into level geometry mid-leap (and we're still
+	// inside the bounce window), kick back off toward the enemy for another
+	// pounce aimed into melee range instead of just dropping. Re-aiming at the
+	// enemy each bounce keeps it from looping against the same wall, and the
+	// window caps the chain.
+	if (!self->groundentity && other && other->solid == SOLID_BSP &&
+		level.time < self->teleport_time && G_EntIsAlive(self->enemy))
+	{
+		vec3_t dir, forward;
+		float enemy_height, height_diff, up_velocity, forward_velocity;
+
+		enemy_height = self->enemy->s.origin[2] + self->enemy->viewheight;
+		height_diff = enemy_height - self->s.origin[2];
+
+		// already above the enemy and can see them: drop onto them rather than
+		// bouncing back up over their head
+		if (visible(self, self->enemy) && self->s.origin[2] > enemy_height + 24.0f)
+		{
+			gekk_set_leap_cooldown(self, 0.3, 0.2);
+			return;
+		}
+
+		VectorSubtract(self->enemy->s.origin, self->s.origin, dir);
+		dir[2] = 0;
+		if (VectorNormalize(dir) > 0)
+		{
+			self->s.angles[YAW] = vectoyaw(dir);
+			AngleVectors(self->s.angles, forward, NULL, NULL);
+
+			// shape the arc so the re-pounce actually reaches the enemy's height
+			if (height_diff > 64.0f)
+			{
+				up_velocity = 400.0f + height_diff * 0.4f;
+				forward_velocity = 400.0f;
+			}
+			else if (height_diff < -64.0f)
+			{
+				up_velocity = 100.0f;
+				forward_velocity = 400.0f;
+			}
+			else if (random() < 0.5f)
+			{
+				up_velocity = 120.0f;	// flat, fast horizontal pounce
+				forward_velocity = 600.0f;
+			}
+			else
+			{
+				up_velocity = 250.0f;
+				forward_velocity = 400.0f;
+			}
+
+			if (up_velocity < 50.0f)
+				up_velocity = 50.0f;
+			else if (up_velocity > 500.0f)
+				up_velocity = 500.0f;
+			if (forward_velocity < 300.0f)
+				forward_velocity = 300.0f;
+			else if (forward_velocity > 700.0f)
+				forward_velocity = 700.0f;
+
+			VectorScale(forward, forward_velocity, self->velocity);
+			self->velocity[2] = up_velocity;
+			gekk_apply_jump_strafe(self, height_diff, 260.0f);
+			return;
+		}
+	}
+
 	if (!M_CheckBottom(self))
 	{
 		if (self->groundentity)
@@ -628,26 +733,36 @@ static void gekk_jump_takeoff(edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	gi.sound(self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
+	if (random() < 0.3f) // don't screech on every single leap
+		gi.sound(self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
 	self->lastsound = level.framenum;
 	self->s.origin[2] += 1;
 	self->groundentity = NULL;
+
+	// aim the leap straight at the enemy (mutant-like) rather than wherever we
+	// happen to be facing, so it pounces horizontally instead of popping up
+	VectorSubtract(self->enemy->s.origin, self->s.origin, forward);
+	forward[2] = 0;
+	if (VectorNormalize(forward) > 0)
+		self->s.angles[YAW] = vectoyaw(forward);
 	AngleVectors(self->s.angles, forward, NULL, NULL);
 	if (gekk_use_high_leap(self))
 	{
-		VectorScale(forward, 700, self->velocity);
+		VectorScale(forward, 950, self->velocity);
 		self->velocity[2] = 250;
 	}
 	else
 	{
-		VectorScale(forward, 250, self->velocity);
+		VectorScale(forward, 450, self->velocity);
 		self->velocity[2] = 400;
 	}
+	gekk_apply_jump_strafe(self, (self->enemy->s.origin[2] + self->enemy->viewheight) - self->s.origin[2], 220.0f);
 	self->monsterinfo.aiflags |= AI_DUCKED;
-	self->monsterinfo.attack_finished = level.time + 3.0;
+	self->monsterinfo.attack_finished = level.time + 0.8;	// short, so leaps chain into a fast zig-zag
 	self->style = 1;
 	self->touch = gekk_jump_touch;
-	gekk_set_leap_cooldown(self, 1.0, 0.5);
+	self->teleport_time = level.time + GEKK_WALL_BOUNCE_WINDOW; // allow wall-bounce re-pounces
+	gekk_set_leap_cooldown(self, 0.3, 0.2);
 }
 
 static void gekk_jump_takeoff2(edict_t *self)
@@ -657,10 +772,17 @@ static void gekk_jump_takeoff2(edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	gi.sound(self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
+	if (random() < 0.3f) // don't screech on every single leap
+		gi.sound(self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
 	self->lastsound = level.framenum;
 	self->s.origin[2] = self->enemy->s.origin[2];
 	self->groundentity = NULL;
+
+	// aim the (lower, water-exit) leap at the enemy too
+	VectorSubtract(self->enemy->s.origin, self->s.origin, forward);
+	forward[2] = 0;
+	if (VectorNormalize(forward) > 0)
+		self->s.angles[YAW] = vectoyaw(forward);
 	AngleVectors(self->s.angles, forward, NULL, NULL);
 	if (gekk_use_high_leap(self))
 	{
@@ -672,11 +794,13 @@ static void gekk_jump_takeoff2(edict_t *self)
 		VectorScale(forward, 150, self->velocity);
 		self->velocity[2] = 300;
 	}
+	gekk_apply_jump_strafe(self, (self->enemy->s.origin[2] + self->enemy->viewheight) - self->s.origin[2], 150.0f);
 	self->monsterinfo.aiflags |= AI_DUCKED;
-	self->monsterinfo.attack_finished = level.time + 3.0;
+	self->monsterinfo.attack_finished = level.time + 0.8;	// short, so leaps chain into a fast zig-zag
 	self->style = 1;
 	self->touch = gekk_jump_touch;
-	gekk_set_leap_cooldown(self, 1.0, 0.5);
+	self->teleport_time = level.time + GEKK_WALL_BOUNCE_WINDOW; // allow wall-bounce re-pounces
+	gekk_set_leap_cooldown(self, 0.3, 0.2);
 }
 
 static void gekk_stop_skid(edict_t *self)
@@ -699,6 +823,11 @@ static void gekk_check_landing(edict_t *self)
 		self->touch = drone_touch;
 		VectorClear(self->velocity);
 		gekk_set_leap_cooldown(self, 1.5, 1.0);
+
+		// landed right on the enemy -> bite immediately (like the mutant) instead
+		// of playing out the recovery skid and re-deciding
+		if (G_EntIsAlive(self->enemy) && entdist(self, self->enemy) <= 100.0f)
+			gekk_melee(self);
 		return;
 	}
 
@@ -722,7 +851,80 @@ static void gekk_check_landing(edict_t *self)
 		self->monsterinfo.nextframe = FRAME_leapatk_12;
 }
 
-static void gekk_spit(edict_t *self)
+// --- loogie: the gekk's normal spit, a small acid blob projectile ----------
+
+static void gekk_loogie_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
+{
+	if (other == self->owner)
+		return;
+	if (surf && (surf->flags & SURF_SKY))
+	{
+		G_FreeEdict(self);
+		return;
+	}
+	if (other->takedamage)
+		T_Damage(other, self, self->owner, self->velocity, self->s.origin,
+			plane ? plane->normal : vec3_origin, self->dmg, 1, DAMAGE_ENERGY, MOD_GEKK);
+
+	gi.sound(self, CHAN_AUTO, gi.soundindex("gek/loogie_hit.wav"), 1, ATTN_NORM, 0);
+	G_FreeEdict(self);
+}
+
+static void gekk_fire_loogie(edict_t *self, vec3_t start, vec3_t dir, int damage, int speed)
+{
+	edict_t *loogie;
+
+	loogie = G_Spawn();
+	VectorCopy(start, loogie->s.origin);
+	VectorCopy(start, loogie->s.old_origin);
+	vectoangles(dir, loogie->s.angles);
+	VectorScale(dir, speed, loogie->velocity);
+	loogie->movetype = MOVETYPE_FLYMISSILE;
+	loogie->clipmask = MASK_SHOT;
+	loogie->solid = SOLID_BBOX;
+	loogie->s.effects |= EF_BLASTER;
+	loogie->s.renderfx |= RF_FULLBRIGHT;
+	loogie->s.modelindex = gi.modelindex("models/objects/loogy/tris.md2");
+	loogie->owner = self;
+	loogie->touch = gekk_loogie_touch;
+	loogie->nextthink = level.time + 2.0;
+	loogie->think = G_FreeEdict;
+	loogie->dmg = damage;
+	loogie->classname = "gekk_loogie";
+	loogie->svflags |= SVF_PROJECTILE; // let players/monsters react to it
+	gi.linkentity(loogie);
+}
+
+static void gekk_loogie(edict_t *self)
+{
+	int dl, damage, speed;
+	vec3_t forward, right, start, target, dir, offset;
+
+	if (!G_EntExists(self->enemy))
+		return;
+
+	dl = drone_damagelevel(self);
+	if (dl > 15)
+		dl = 15;
+	damage = 6 + 2 * dl;
+	speed = 850;
+
+	AngleVectors(self->s.angles, forward, right, NULL);
+	VectorSet(offset, -18, -1, 24);
+	G_ProjectSource(self->s.origin, offset, forward, right, start);
+
+	VectorCopy(self->enemy->s.origin, target);
+	target[2] += self->enemy->viewheight;
+	VectorSubtract(target, start, dir);
+	VectorNormalize(dir);
+
+	gi.sound(self, CHAN_WEAPON, sound_speet, 1, ATTN_NORM, 0);
+	gekk_fire_loogie(self, start, dir, damage, speed);
+}
+
+// --- acid: a heavier blob, used only occasionally (the rare alternative) -----
+
+static void gekk_acid(edict_t *self)
 {
 	int acid_level, damage, speed;
 	float radius;
@@ -750,6 +952,19 @@ static void gekk_spit(edict_t *self)
 
 	gi.sound(self, CHAN_WEAPON, sound_speet, 1, ATTN_NORM, 0);
 	fire_acid(self, start, dir, damage, radius, speed, (int)(0.1 * damage), ACID_DURATION, 0, 0, 0);
+}
+
+// Spit dispatcher: the loogie is the normal attack; only a low chance hocks the
+// heavier acid blob in between.
+static void gekk_spit(edict_t *self)
+{
+	if (!G_EntExists(self->enemy))
+		return;
+
+	if (random() < 0.15f)
+		gekk_acid(self);
+	else
+		gekk_loogie(self);
 }
 
 mframe_t gekk_frames_leapatk[] =
@@ -800,6 +1015,35 @@ mframe_t gekk_frames_leapatk2[] =
 };
 mmove_t gekk_move_leapatk2 = { FRAME_leapatk_01, FRAME_leapatk_19, gekk_frames_leapatk2, gekk_run_start };
 
+// Reactive dodge: like the reference gekks, this one never sidesteps - it
+// evades by leaping, which also keeps it pressing toward its target. Direct
+// shots it can't out-jump are simply ridden out.
+static void gekk_dodge(edict_t *self, edict_t *attacker, vec3_t dir, int radius)
+{
+	(void)dir;
+	(void)radius;
+
+	if (level.time < self->monsterinfo.dodge_time)
+		return;
+	if (!attacker || OnSameTeam(self, attacker))
+		return;
+	if (!self->groundentity || (self->flags & FL_SWIM))
+		return;
+	if (!gekk_can_leap(self))
+		return;
+
+	if (!G_EntIsAlive(self->enemy))
+	{
+		if (!G_EntIsAlive(attacker))
+			return;
+		self->enemy = attacker;
+	}
+	self->monsterinfo.attacker = attacker;
+
+	self->monsterinfo.currentmove = &gekk_move_leapatk;
+	self->monsterinfo.melee_finished = level.time + 3.0;
+}
+
 mframe_t gekk_frames_spit[] =
 {
 	ai_charge, 0, NULL,
@@ -831,6 +1075,16 @@ static void gekk_attack(edict_t *self)
 		return;
 
 	float enemy_distance = entdist(self, self->enemy);
+
+	// in melee range: commit to a bite instead of leaping over the enemy
+	if (self->groundentity && enemy_distance <= 100.0f &&
+		self->monsterinfo.melee_finished <= level.time)
+	{
+		gekk_melee(self);
+		M_DelayNextAttack(self, 0.3, true);
+		return;
+	}
+
 	if (enemy_distance >= 500.0f)
 	{
 		if (random() > 0.5f)
@@ -841,7 +1095,7 @@ static void gekk_attack(edict_t *self)
 		else
 		{
 			self->monsterinfo.currentmove = &gekk_move_run_start;
-			self->monsterinfo.attack_finished = level.time + 2.0;
+			self->monsterinfo.attack_finished = level.time + 0.8;
 		}
 	}
 	else if (random() > 0.7f)
@@ -851,18 +1105,21 @@ static void gekk_attack(edict_t *self)
 	}
 	else
 	{
-		if (!gekk_can_leap(self) || random() > 0.7f)
+		if (gekk_can_leap(self) && random() <= 0.7f)
 		{
-			self->monsterinfo.currentmove = &gekk_move_run_start;
-			self->monsterinfo.attack_finished = level.time + 1.4;
+			// leap (with its alternating side-strafe) is the zig-zag pounce
+			self->monsterinfo.currentmove = &gekk_move_leapatk;
+			self->monsterinfo.melee_finished = level.time + 0.5f;
 		}
 		else
 		{
-			self->monsterinfo.currentmove = &gekk_move_leapatk;
-			self->monsterinfo.melee_finished = level.time + 3.0;
+			// charge straight in (no sidestep) - press toward the enemy
+			self->monsterinfo.currentmove = &gekk_move_run_start;
+			self->monsterinfo.attack_finished = level.time + 0.6;
 		}
 	}
-	M_DelayNextAttack(self, 1.0 + random(), true);
+	// keep the gekk's decisions snappy so it leaps/charges in quick succession
+	M_DelayNextAttack(self, 0.4 + random() * 0.3, true);
 }
 
 mframe_t gekk_frames_pain[] =
@@ -1218,6 +1475,7 @@ void init_drone_gekk(edict_t *self)
 	self->monsterinfo.run = gekk_run;
 	self->monsterinfo.attack = gekk_attack;
 	self->monsterinfo.melee = gekk_melee;
+	self->monsterinfo.dodge = gekk_dodge;
 	self->monsterinfo.sight = gekk_sight;
 	self->monsterinfo.idle = gekk_search;
 	self->monsterinfo.pain_chance = 0.2f;
