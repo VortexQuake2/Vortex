@@ -373,6 +373,9 @@ void drone_ai_checkattack (edict_t *self)
 	if (!G_EntExists(self->enemy))
 		return; // enemy is invalid or a combat point
 
+	if (level.time < self->monsterinfo.pausetime)
+		return; // az: let them not attack riiiiiiiight away
+
 	//if (self->monsterinfo.aiflags & AI_COMBAT_POINT)
 	//	return; // we're busy reaching a combat point
 
@@ -754,6 +757,255 @@ void vrx_roll_to_make_champion(edict_t *drone, enum dronespawn_t *drone_type)
 	}
 }
 
+static double random_normal(const double mean, const double stddev)
+{
+	const double u1 = random();
+	const double u2 = random();
+
+	const double z =
+		sqrt(-2.0 * log(u1)) *
+		cos(2.0 * M_PI * u2);
+
+	return mean + z * stddev;
+}
+
+void ring_sample(vec3_t center, const vec_t radius, const float thickness, vec3_t out) {
+	const float angle = random() * 2.0f * M_PI;
+	vec3_t offset;
+
+	offset[0] = cosf(angle) * radius + random_normal(0.0f, thickness);
+	offset[1] = sinf(angle) * radius + random_normal(0.0f, thickness);
+	offset[2] = 0.0f;
+
+	const vec3_t new_pos = {
+		center[0] + offset[0],
+		center[1] + offset[1],
+		center[2] + offset[2]
+	};
+
+	VectorCopy(new_pos, out);
+}
+
+constexpr float AGGRESSION = 0.8f;
+// constexpr float
+
+struct ring_params_t {
+	vec3_t ring_center;
+	float ring_radius;
+	float ring_thickness;
+
+	vec3_t inner_circle_center;
+	float inner_circle_radius;
+	float inner_circle_chance;
+};
+
+// 0 => left, 1 => right
+float mix(float val, float left, float right) {
+	return left * (1.0f - val) + right * val;
+}
+
+struct ring_params_t weigh_ring_center() {
+	float total_score = 0.0f;
+	edict_t* pl;
+	int i;
+	float pl_count = (float)vrx_get_joined_players(false);
+
+	for_each_player(pl, i) {
+		if (pl->ai) // no bots
+			continue;
+
+		if (G_IsSpectator(pl))
+			continue;
+
+		total_score += pl->client->pers.score;
+	}
+
+	const float average_score = max(total_score / pl_count, 1.0f);
+	float variance = 0;
+
+	for_each_player(pl, i) {
+		if (pl->ai) // no bots
+			continue;
+
+		if (G_IsSpectator(pl))
+			continue;
+
+		variance += powf(pl->client->pers.score - average_score, 2);
+	}
+
+	variance /= pl_count;
+
+	const float stdev = sqrtf(variance);
+	const float relative_dispersion =
+		stdev / max(fabsf(average_score), 1.0f);
+	const float centrality = 1.0f - expf(-relative_dispersion);
+
+
+	vec3_t pl_center = {};
+	for_each_player(pl, i) {
+		if (pl->ai) continue;
+		if (G_IsSpectator(pl)) continue;
+
+		VectorAdd(pl_center, pl->s.origin, pl_center);
+	}
+	VectorScale(pl_center, 1.0f / pl_count, pl_center);
+
+	// now we weight each player by how little score they have
+	vec3_t weighed_center = {};
+	float total_weight = 0;
+	for_each_player(pl, i) {
+		if (pl->ai) continue;
+		if (G_IsSpectator(pl)) continue;
+
+		const float strength = pl->client->pers.score - average_score;
+		const float lin_weight = (strength / average_score);
+		const float pl_score_weight = expf(-AGGRESSION * lin_weight);
+
+		VectorMA(weighed_center, pl_score_weight, pl->s.origin, weighed_center);
+		total_weight += pl_score_weight;
+	}
+	VectorScale(weighed_center, 1.0f / total_weight, weighed_center);
+
+	// now weighed_center has our center of mass
+	// but depending on our centrality, we want a thicker, closer circle
+	// if a player is too dominant, and a wider circle if it is more random.
+	float avg_distance_to_center_of_mass = 0;
+	for_each_player(pl, i) {
+		if (pl->ai) continue;
+		if (G_IsSpectator(pl)) continue;
+
+		const float distance_to_center_of_mass = distance(pl->s.origin, weighed_center);
+		avg_distance_to_center_of_mass += distance_to_center_of_mass;
+		break;
+	}
+	avg_distance_to_center_of_mass /= pl_count;
+
+	// we want the inner ring to grow up to 256 units from the players.
+	// we know for a fact that all players are equidistant to pl_center so
+	// just find the distance to pl_center from any player.
+	float distance_to_pl_center = -256;
+	for_each_player(pl, i) {
+		if (pl->ai) continue;
+		if (G_IsSpectator(pl)) continue;
+
+		distance_to_pl_center += distance(pl->s.origin, pl_center);
+	}
+
+	// the inner circle only gains probability as
+	 auto par = (struct ring_params_t) {
+	 	// spread it out if we're well distributed
+		.ring_radius = mix(centrality, 1024, avg_distance_to_center_of_mass) + 384.0f,
+
+	 	// don't grow too much maybe
+		.ring_thickness = mix(centrality, 256.0f, avg_distance_to_center_of_mass * 0.5f),
+
+	 	// if negative, clamp
+	 	.inner_circle_radius = max(distance_to_pl_center, 0),
+
+	 	// now if things are well distributed, we want to grow the inner circle
+	 	// otherwise we keep it to the ring around the player
+	 	.inner_circle_chance = distance_to_pl_center > 0 ? centrality : 0
+	};
+
+	VectorCopy(weighed_center, par.ring_center);
+	VectorCopy(pl_center, par.inner_circle_center);
+
+	return par;
+}
+
+void circle_area_sample(vec3_t center, float radius, vec3_t out) {
+	const float sampler = random();
+	const float angle = sampler * 2 * M_PI;
+	const float x = cosf(angle);
+	const float y = sinf(angle);
+	vec3_t offset = {
+		x,	y, 0
+	};
+
+	VectorScale(offset, radius * sqrt(random()), offset);
+
+	VectorCopy(center, out);
+	VectorAdd(out, offset, out);
+}
+
+void sample_spawn_area(struct ring_params_t par, vec3_t out) {
+	const float sampler = random();
+	const float vunits = 256.0f * (random() - 0.5f) * 2;
+
+	if (par.inner_circle_chance > sampler)
+	{
+		circle_area_sample(par.inner_circle_center, par.inner_circle_radius, out);
+
+		// 512 units around the weighed ring center
+		out[2] = vunits + par.inner_circle_center[2];
+		return;
+	}
+
+	ring_sample(par.ring_center, par.ring_radius, par.ring_thickness, out);
+
+	// 512 units around the weighed ring center
+	out[2] = vunits + par.ring_center[2];
+}
+
+qboolean vrx_find_monster_spawn_point (edict_t *ent, qboolean air)
+{
+	const int max_tries=1000;
+	int grd_nodes = vrx_pf_get_node_count();
+	vec3_t	start, sample;
+
+	//gi.dprintf("vrx_find_random_spawn_point()\n");
+
+	if (grd_nodes > 0.5*max_tries)
+		grd_nodes = 0.5*max_tries;
+
+	constexpr int mask = (MASK_MONSTERSOLID|MASK_PLAYERSOLID|MASK_SOLID);
+
+	const auto par = weigh_ring_center();
+
+	for (int j=0;j<max_tries;j++)
+	{
+		sample_spawn_area(par, sample);
+
+		if (!vrx_pf_nearest_node_location(sample, start, -1, false))
+			continue;
+
+		start[2] += 0.25f;
+
+		// check our final position. node points are allegedly always valid
+		const trace_t tr = gi.trace(start, ent->mins, ent->maxs, start, NULL, mask);
+
+		if (tr.startsolid || tr.allsolid || tr.fraction != 1.0)
+			continue;
+		if (tr.contents & mask)
+			continue;
+
+		// az: Hey cool, the position is good to go. Let's check that it's not behind any players.
+		edict_t* cl;
+		int i;
+		for_each_player(cl, i)
+		{
+			vec3_t cl_forward;
+			vec3_t r_vec;
+
+			AngleVectors(cl->client->ps.viewangles, cl_forward, NULL, NULL);
+			VectorSubtract(cl->s.origin, start, r_vec);
+			VectorNormalize(r_vec);
+			if (DotProduct(r_vec, cl_forward) >= 0 && visible(ent, cl))
+				goto retry;
+		}
+
+
+		VectorCopy(start, ent->s.origin);
+		VectorCopy(start, ent->s.old_origin);
+		gi.linkentity(ent);
+		return true;
+
+		retry:
+	}
+
+	return false;
+}
+
 edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn_t drone_type, qboolean worldspawn, qboolean link_now, int bonus_level)
 {
 	vec3_t		forward, right, start, end, offset;
@@ -918,7 +1170,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 		// non-invasion mode monsters or bosses are spawned randomly throughout the map
 		if (!INVASION_OTHERSPAWNS_REMOVED || drone_type >= 30) // only use designated spawns in invasion mode
 		{
-			if (link_now && drone->mtype != M_JORG && !vrx_find_random_spawn_point(drone, false))
+			if (link_now && drone->mtype != M_JORG && !vrx_find_monster_spawn_point(drone, false))
 			{
 				//gi.dprintf("vrx_create_drone_from_ent couldn't find a valid spawn point\n");
 				G_FreeEdict(drone);
@@ -927,7 +1179,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn
 
 			// gives players some time to react to newly spawned monsters
 			//drone->nextthink = level.time + 1 + random();
-			drone->monsterinfo.pausetime = level.time + 1.0;
+			drone->monsterinfo.pausetime = level.time + 2.0;
 			// az: remove invuln. in non-invasion
 			// drone->monsterinfo.inv_framenum = level.framenum + (int)(1 / FRAMETIME);
 

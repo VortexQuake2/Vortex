@@ -165,6 +165,7 @@ enum searchtype_t {
 
 // pathfinding
 bool vrx_pf_nearest_node_location(vec3_t start, vec3_t node_loc, float range, qboolean vis);
+int vrx_pf_nearest_node_index(vec3_t start, float range, qboolean vis);
 int vrx_pf_find_path(enum searchtype_t searchType, vec3_t start, vec3_t destination);
 int vrx_copy_path_waypoints(nodeid_t *wp, int max);
 int vrx_pf_nearest_waypoint_index_along_path(vec3_t start, const nodeid_t *wp, size_t wpcount);
