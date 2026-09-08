@@ -876,7 +876,6 @@ struct ring_params_t weigh_ring_center() {
 
 		const float distance_to_center_of_mass = distance(pl->s.origin, weighed_center);
 		avg_distance_to_center_of_mass += distance_to_center_of_mass;
-		break;
 	}
 	avg_distance_to_center_of_mass /= pl_count;
 
@@ -889,6 +888,7 @@ struct ring_params_t weigh_ring_center() {
 		if (G_IsSpectator(pl)) continue;
 
 		distance_to_pl_center += distance(pl->s.origin, pl_center);
+		break;
 	}
 
 	// the inner circle only gains probability as
@@ -897,7 +897,7 @@ struct ring_params_t weigh_ring_center() {
 		.ring_radius = mix(centrality, 1024, avg_distance_to_center_of_mass) + 384.0f,
 
 	 	// don't grow too much maybe
-		.ring_thickness = mix(centrality, 256.0f, avg_distance_to_center_of_mass * 0.5f),
+		.ring_thickness = mix(centrality, 128.0f, min(avg_distance_to_center_of_mass * 0.2f, 256.0f)),
 
 	 	// if negative, clamp
 	 	.inner_circle_radius = max(distance_to_pl_center, 0),
