@@ -1,4 +1,4 @@
-#define MAX_WEAPONS				13
+#define MAX_WEAPONS				22
 #define MAX_WEAPONMODS			5
 
 //New weapon defines	(doomie)
@@ -7,6 +7,7 @@
 #define WEAPON_SUPERSHOTGUN		2
 #define WEAPON_MACHINEGUN		3
 #define WEAPON_CHAINGUN			4
+
 #define WEAPON_GRENADELAUNCHER	5
 #define WEAPON_ROCKETLAUNCHER	6
 #define WEAPON_HYPERBLASTER		7
@@ -15,6 +16,23 @@
 #define WEAPON_SWORD			10
 #define WEAPON_20MM				11
 #define WEAPON_HANDGRENADE		12
+#define WEAPON_IONRIPPER		13
+#define WEAPON_PHALANX			14
+#define WEAPON_TRAP				15
+#define WEAPON_ETFRIFLE			16
+#define WEAPON_PLASMABEAM		17
+#define WEAPON_PROXLAUNCHER		18
+#define WEAPON_CHAINFIST		19
+#define WEAPON_TESLA			20
+#define WEAPON_DISRUPTOR		21
+
+#define WEAPON_TOTAL 22
+
+#ifdef DEBUG_WEAPONS
+void print_wp_state(edict_t* ent, char* state);
+#else
+#define print_wp_state(...)
+#endif
 
 typedef struct
 {
@@ -30,7 +48,6 @@ typedef struct
 	qboolean		disable;					//disabled weapon? (future versions?)
 	weaponskill_t	mods[MAX_WEAPONMODS];		//Store weapon upgrades in an array
 }weapon_t;
-
 
 /* 
 

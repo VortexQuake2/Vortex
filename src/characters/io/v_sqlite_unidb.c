@@ -3,7 +3,7 @@
 #include <sys/stat.h>
 
 #include "v_characterio.h"
-#include "../../libraries/sqlite3.h"
+#include "../../../vendor/sqlite3.h"
 
 #include "../class_limits.h"
 
@@ -92,22 +92,35 @@ const char* VSFU_UPDATEPDATA = "UPDATE point_data SET exp=%d, exptnl=%d, level=%
 
 const char* VSFU_UPDATECTFSTATS = "UPDATE ctf_stats SET flag_pickups=%d, flag_captures=%d, flag_returns=%d, flag_kills=%d, offense_kills=%d, defense_kills=%d, assists=%d WHERE char_idx=%d;";
 
-#define CHECK_ERR_RETURN() if(r!=SQLITE_OK){ if(r != SQLITE_ROW && r != SQLITE_OK && r != SQLITE_DONE){gi.dprintf("sqlite error %d: %s\n", r, sqlite3_errmsg(db));return false;}}
-#define CHECK_ERR() if(r!=SQLITE_OK){ if(r != SQLITE_ROW && r != SQLITE_OK && r != SQLITE_DONE){gi.dprintf("sqlite error %d: %s\n", r, sqlite3_errmsg(db));}}
+#define SQLITE_ERR_OK(r) ((r) == SQLITE_OK || (r) == SQLITE_ROW || (r) == SQLITE_DONE)
+#define CHECK_ERR_RETURN_FALSE() { if (!SQLITE_ERR_OK(r)) { gi.dprintf("sqlite error %d: %s\n", r, sqlite3_errmsg(db)); return false; } }
+#define CHECK_ERR_RETURN() { if (!SQLITE_ERR_OK(r)) { gi.dprintf("sqlite error %d: %s\n", r, sqlite3_errmsg(db)); return; } }
+#define CHECK_ERR() { if (!SQLITE_ERR_OK(r)) { gi.dprintf("sqlite error %d: %s\n", r, sqlite3_errmsg(db)); } }
 
-#define QUERY(x) { char* format=x;\
+#define QUERY(x) { const char* format = (x); \
 	sqlite3_stmt* statement; \
 	int r = sqlite3_prepare_v2(db, format, strlen(format), &statement, NULL); \
-	CHECK_ERR_RETURN()\
+	CHECK_ERR_RETURN_FALSE(); \
 	r = sqlite3_step(statement); \
-	CHECK_ERR_RETURN()\
-	sqlite3_finalize(statement); }
+	CHECK_ERR_RETURN_FALSE(); \
+	sqlite3_finalize(statement); \
+}
 
-#define QUERY_RESULT(x) { char* format=x;\
-	r=sqlite3_prepare_v2(db, format, strlen(format), &statement, NULL);\
-	CHECK_ERR()\
-	r=sqlite3_step(statement);\
-	CHECK_ERR()}
+#define QUERY_VOID(x) { const char* format = (x); \
+	sqlite3_stmt* statement; \
+	int r = sqlite3_prepare_v2(db, format, strlen(format), &statement, NULL); \
+	CHECK_ERR_RETURN(); \
+	r = sqlite3_step(statement); \
+	CHECK_ERR_RETURN(); \
+	sqlite3_finalize(statement); \
+}
+
+#define QUERY_RESULT(x) { const char* format = (x); \
+	r = sqlite3_prepare_v2(db, format, strlen(format), &statement, NULL); \
+	CHECK_ERR(); \
+	r = sqlite3_step(statement); \
+	CHECK_ERR(); \
+}
 
 #define DEFAULT_PATH va("%s/settings/characters.db", game_path->string)
 sqlite3* db = NULL;
@@ -115,12 +128,12 @@ sqlite3* db = NULL;
 
 void cdb_begin_tran(sqlite3* db)
 {
-	QUERY("BEGIN TRANSACTION;");
+	QUERY_VOID("BEGIN TRANSACTION;");
 }
 
 void cdb_commit_tran(sqlite3* db)
 {
-	QUERY("COMMIT;")
+	QUERY_VOID("COMMIT;");
 }
 
 int cdb_get_id(char* playername)
@@ -128,7 +141,7 @@ int cdb_get_id(char* playername)
 	sqlite3_stmt* stmt;
 	int r, id;
 
-	char sql[] = "SELECT char_idx FROM userdata WHERE playername=?";
+	const char sql[] = "SELECT char_idx FROM userdata WHERE playername=?";
 	sqlite3_prepare_v2(db, sql, sizeof sql, &stmt, NULL);
 	sqlite3_bind_text(stmt, 1, playername, strlen(playername), SQLITE_STATIC);
 	r = sqlite3_step(stmt);
@@ -145,10 +158,10 @@ int cdb_get_id(char* playername)
 }
 
 // az begin
-void cdb_save_runes(edict_t* player)
+qboolean cdb_save_runes(edict_t* player)
 {
-	int numRunes = CountRunes(player);
-	int id = cdb_get_id(player->client->pers.netname);
+	const int numRunes = CountRunes(player);
+	const int id = cdb_get_id(player->client->pers.netname);
 
 	cdb_begin_tran(db);
 
@@ -158,21 +171,21 @@ void cdb_save_runes(edict_t* player)
 	//begin runes
 	for (int i = 0; i < numRunes; ++i)
 	{
-		int index = FindRuneIndex(i + 1, player);
+		const int index = FindRuneIndex(i + 1, player);
 		if (index != -1)
 		{
 			QUERY(va(VSFU_INSERTRMETA,
 				id,
 				index,
-				player->myskills.items[index].itemtype,
-				player->myskills.items[index].itemLevel,
-				player->myskills.items[index].quantity,
-				player->myskills.items[index].untradeable,
-				player->myskills.items[index].id,
-				player->myskills.items[index].name,
-				player->myskills.items[index].numMods,
-				player->myskills.items[index].setCode,
-				player->myskills.items[index].classNum));
+				player->client->resp.pstats.items[index].itemtype,
+				player->client->resp.pstats.items[index].itemLevel,
+				player->client->resp.pstats.items[index].quantity,
+				player->client->resp.pstats.items[index].untradeable,
+				player->client->resp.pstats.items[index].id,
+				player->client->resp.pstats.items[index].name,
+				player->client->resp.pstats.items[index].numMods,
+				player->client->resp.pstats.items[index].setCode,
+				player->client->resp.pstats.items[index].classNum));
 
 
 			for (int j = 0; j < MAX_VRXITEMMODS; ++j)
@@ -188,16 +201,17 @@ void cdb_save_runes(edict_t* player)
 				QUERY(va(query,
 					id,
 					index,
-					player->myskills.items[index].modifiers[j].type,
-					player->myskills.items[index].modifiers[j].index,
-					player->myskills.items[index].modifiers[j].value,
-					player->myskills.items[index].modifiers[j].set));
+					player->client->resp.pstats.items[index].modifiers[j].type,
+					player->client->resp.pstats.items[index].modifiers[j].index,
+					player->client->resp.pstats.items[index].modifiers[j].value,
+					player->client->resp.pstats.items[index].modifiers[j].set));
 			}
 		}
 	}
 	//end runes
 
 	cdb_commit_tran(db);
+	return true;
 }
 
 int cdb_make_id()
@@ -218,12 +232,12 @@ int cdb_make_id()
 qboolean cdb_save_player(edict_t* player)
 {
 	int i, id;
-	int numAbilities = CountAbilities(player);
+	int numAbilities = CountAbilities(&player->myskills);
 	int numWeapons = CountWeapons(player);
 	int numRunes = CountRunes(player);
 
 
-	id = cdb_get_id(player->client->pers.netname);
+	id = cdb_get_id(player->client->resp.pstats.player_name);
 
 	cdb_begin_tran(db);
 
@@ -272,15 +286,15 @@ qboolean cdb_save_player(edict_t* player)
 			sqlite3_prepare_v2(db, sql, sizeof sql, &stmt, NULL);
 
 
-			sqlite3_bind_text(stmt, 1, player->myskills.title, strlen(player->myskills.title), SQLITE_STATIC);
+			sqlite3_bind_text(stmt, 1, player->client->resp.pstats.title, strlen(player->client->resp.pstats.title), SQLITE_STATIC);
 			sqlite3_bind_text(stmt, 2, player->client->pers.netname, strlen(player->client->pers.netname), SQLITE_STATIC);
-			sqlite3_bind_text(stmt, 3, player->myskills.password, strlen(player->myskills.password), SQLITE_STATIC);
-			sqlite3_bind_text(stmt, 4, player->myskills.email, strlen(player->myskills.email), SQLITE_STATIC);
-			sqlite3_bind_text(stmt, 5, player->myskills.owner, strlen(player->myskills.owner), SQLITE_STATIC);
-			sqlite3_bind_text(stmt, 6, player->myskills.member_since, strlen(player->myskills.member_since), SQLITE_STATIC);
-			sqlite3_bind_text(stmt, 7, player->myskills.last_played, strlen(player->myskills.last_played), SQLITE_STATIC);
-			sqlite3_bind_int(stmt, 8, player->myskills.total_playtime);
-			sqlite3_bind_int(stmt, 9, player->myskills.playingtime);
+			sqlite3_bind_text(stmt, 3, player->client->resp.pstats.password, strlen(player->client->resp.pstats.password), SQLITE_STATIC);
+			sqlite3_bind_text(stmt, 4, player->client->resp.pstats.masterpw, strlen(player->client->resp.pstats.masterpw), SQLITE_STATIC);
+			sqlite3_bind_text(stmt, 5, player->client->resp.pstats.owner, strlen(player->client->resp.pstats.owner), SQLITE_STATIC);
+			sqlite3_bind_text(stmt, 6, player->client->resp.pstats.member_since, strlen(player->client->resp.pstats.member_since), SQLITE_STATIC);
+			sqlite3_bind_text(stmt, 7, player->client->resp.pstats.last_played, strlen(player->client->resp.pstats.last_played), SQLITE_STATIC);
+			sqlite3_bind_int(stmt, 8, player->client->resp.pstats.total_playtime);
+			sqlite3_bind_int(stmt, 9, player->client->resp.pstats.playingtime);
 			sqlite3_bind_int(stmt, 10, id);
 
 			int r = sqlite3_step(stmt);
@@ -305,7 +319,7 @@ qboolean cdb_save_player(edict_t* player)
 			{
 				char* format = va(VSFU_INSERTABILITY, id, index,
 					player->myskills.abilities[index].level,
-					player->myskills.abilities[index].max_level,
+					player->myskills.abilities[index].soft_max,
 					player->myskills.abilities[index].hard_max,
 					player->myskills.abilities[index].modifier,
 					(int)player->myskills.abilities[index].disable,
@@ -324,7 +338,7 @@ qboolean cdb_save_player(edict_t* player)
 
 		QUERY(va(VSFU_UPDATECDATA,
 			player->myskills.weapon_respawns,
-			player->myskills.current_health,
+			0,
 			MAX_HEALTH(player),
 			player->client->pers.inventory[body_armor_index],
 			MAX_ARMOR(player),
@@ -341,18 +355,18 @@ qboolean cdb_save_player(edict_t* player)
 		//*****************************
 
 		QUERY(va(VSFU_UPDATESTATS,
-			player->myskills.shots,
-			player->myskills.shots_hit,
-			player->myskills.frags,
-			player->myskills.fragged,
-			player->myskills.num_sprees,
-			player->myskills.max_streak,
-			player->myskills.spree_wars,
-			player->myskills.break_sprees,
-			player->myskills.break_spree_wars,
-			player->myskills.suicides,
-			player->myskills.teleports,
-			player->myskills.num_2fers, id));
+			player->client->resp.pstats.shots,
+			player->client->resp.pstats.shots_hit,
+			player->client->resp.pstats.frags,
+			player->client->resp.pstats.fragged,
+			player->client->resp.pstats.num_sprees,
+			player->client->resp.pstats.max_streak,
+			player->client->resp.pstats.spree_wars,
+			player->client->resp.pstats.break_sprees,
+			player->client->resp.pstats.break_spree_wars,
+			player->client->resp.pstats.suicides,
+			player->client->resp.pstats.teleports,
+			player->client->resp.pstats.num_2fers, id));
 		
 		//*****************************
 		//standard stats
@@ -378,16 +392,16 @@ qboolean cdb_save_player(edict_t* player)
 				int j;
 				QUERY(va(VSFU_INSERTWMETA, id,
 					index,
-					player->myskills.weapons[index].disable));
+					player->client->resp.pstats.weapons[index].disable));
 
 				for (j = 0; j < MAX_WEAPONMODS; ++j)
 				{
 					QUERY(va(VSFU_INSERTWMOD, id,
 						index,
 						j,
-						player->myskills.weapons[index].mods[j].level,
-						player->myskills.weapons[index].mods[j].soft_max,
-						player->myskills.weapons[index].mods[j].hard_max));
+						player->client->resp.pstats.weapons[index].mods[j].level,
+						player->client->resp.pstats.weapons[index].mods[j].soft_max,
+						player->client->resp.pstats.weapons[index].mods[j].hard_max));
 				}
 			}
 		}
@@ -403,15 +417,15 @@ qboolean cdb_save_player(edict_t* player)
 
 				QUERY(va(VSFU_INSERTRMETA, id,
 					index,
-					player->myskills.items[index].itemtype,
-					player->myskills.items[index].itemLevel,
-					player->myskills.items[index].quantity,
-					player->myskills.items[index].untradeable,
-					player->myskills.items[index].id,
-					player->myskills.items[index].name,
-					player->myskills.items[index].numMods,
-					player->myskills.items[index].setCode,
-					player->myskills.items[index].classNum));
+					player->client->resp.pstats.items[index].itemtype,
+					player->client->resp.pstats.items[index].itemLevel,
+					player->client->resp.pstats.items[index].quantity,
+					player->client->resp.pstats.items[index].untradeable,
+					player->client->resp.pstats.items[index].id,
+					player->client->resp.pstats.items[index].name,
+					player->client->resp.pstats.items[index].numMods,
+					player->client->resp.pstats.items[index].setCode,
+					player->client->resp.pstats.items[index].classNum));
 
 				for (j = 0; j < MAX_VRXITEMMODS; ++j)
 				{
@@ -426,23 +440,23 @@ qboolean cdb_save_player(edict_t* player)
 					QUERY(va(query,
 						id,
 						index,
-						player->myskills.items[index].modifiers[j].type,
-						player->myskills.items[index].modifiers[j].index,
-						player->myskills.items[index].modifiers[j].value,
-						player->myskills.items[index].modifiers[j].set));
+						player->client->resp.pstats.items[index].modifiers[j].type,
+						player->client->resp.pstats.items[index].modifiers[j].index,
+						player->client->resp.pstats.items[index].modifiers[j].value,
+						player->client->resp.pstats.items[index].modifiers[j].set));
 				}
 			}
 		}
 		//end runes
 
 		QUERY(va(VSFU_UPDATECTFSTATS,
-			player->myskills.flag_pickups,
-			player->myskills.flag_captures,
-			player->myskills.flag_returns,
-			player->myskills.flag_kills,
-			player->myskills.offense_kills,
-			player->myskills.defense_kills,
-			player->myskills.assists, id));
+			player->client->resp.pstats.flag_pickups,
+			player->client->resp.pstats.flag_captures,
+			player->client->resp.pstats.flag_returns,
+			player->client->resp.pstats.flag_kills,
+			player->client->resp.pstats.offense_kills,
+			player->client->resp.pstats.defense_kills,
+			player->client->resp.pstats.assists, id));
 
 		// prestige
 		QUERY(va("INSERT INTO prestige(char_idx, pindex, param, level) VALUES (%d, %d, %d, %d);",
@@ -485,7 +499,7 @@ qboolean cdb_save_player(edict_t* player)
 
 qboolean cdb_saveclose_player(edict_t* player)
 {
-	int id = cdb_get_id(player->client->pers.netname);
+	const int id = cdb_get_id(player->client->pers.netname);
 	cdb_save_player(player);
 
 	QUERY(va("update stash set lock_char_id = NULL where lock_char_id=%d", id));
@@ -497,7 +511,7 @@ qboolean cdb_load_player(edict_t* player)
 {
 	sqlite3_stmt* statement, * statement_mods;
 	char* format;
-	int numAbilities, numWeapons, numRunes;
+	int numWeapons, numRunes;
 	int i, r, id;
 
 	id = cdb_get_id(player->client->pers.netname);
@@ -507,16 +521,16 @@ qboolean cdb_load_player(edict_t* player)
 
 	QUERY_RESULT(va("SELECT * FROM userdata WHERE char_idx=%d", id));
 
-	strcpy(player->myskills.title, sqlite3_column_text(statement, 1));
-	strcpy(player->myskills.player_name, sqlite3_column_text(statement, 2));
-	strcpy(player->myskills.password, sqlite3_column_text(statement, 3));
-	strcpy(player->myskills.email, sqlite3_column_text(statement, 4));
-	strcpy(player->myskills.owner, sqlite3_column_text(statement, 5));
-	strcpy(player->myskills.member_since, sqlite3_column_text(statement, 6));
-	strcpy(player->myskills.last_played, sqlite3_column_text(statement, 7));
-	player->myskills.total_playtime = sqlite3_column_int(statement, 8);
+	strcpy(player->client->resp.pstats.title, sqlite3_column_text(statement, 1));
+	strcpy(player->client->resp.pstats.player_name, sqlite3_column_text(statement, 2));
+	strcpy(player->client->resp.pstats.password, sqlite3_column_text(statement, 3));
+	strcpy(player->client->resp.pstats.masterpw, sqlite3_column_text(statement, 4));
+	strcpy(player->client->resp.pstats.owner, sqlite3_column_text(statement, 5));
+	strcpy(player->client->resp.pstats.member_since, sqlite3_column_text(statement, 6));
+	strcpy(player->client->resp.pstats.last_played, sqlite3_column_text(statement, 7));
+	player->client->resp.pstats.total_playtime = sqlite3_column_int(statement, 8);
 
-	player->myskills.playingtime = sqlite3_column_int(statement, 9);
+	player->client->resp.pstats.playingtime = sqlite3_column_int(statement, 9);
 
 	sqlite3_finalize(statement);
 
@@ -559,7 +573,7 @@ qboolean cdb_load_player(edict_t* player)
 	r = sqlite3_step(statement);
 
 	//begin abilities
-	numAbilities = sqlite3_column_int(statement, 0);
+	int numAbilities = sqlite3_column_int(statement, 0);
 
 	sqlite3_finalize(statement);
 
@@ -576,7 +590,7 @@ qboolean cdb_load_player(edict_t* player)
 		if ((index >= 0) && (index < MAX_ABILITIES))
 		{
 			player->myskills.abilities[index].level = sqlite3_column_int(statement, 2);
-			player->myskills.abilities[index].max_level = sqlite3_column_int(statement, 3);
+			player->myskills.abilities[index].soft_max = sqlite3_column_int(statement, 3);
 			player->myskills.abilities[index].hard_max = sqlite3_column_int(statement, 4);
 			player->myskills.abilities[index].modifier = sqlite3_column_int(statement, 5);
 			player->myskills.abilities[index].disable = sqlite3_column_int(statement, 6);
@@ -619,7 +633,7 @@ qboolean cdb_load_player(edict_t* player)
 		if ((index >= 0) && (index < MAX_WEAPONS))
 		{
 			int j;
-			player->myskills.weapons[index].disable = sqlite3_column_int(statement, 2);
+			player->client->resp.pstats.weapons[index].disable = sqlite3_column_int(statement, 2);
 
 			format = va("SELECT * FROM weapon_mods WHERE weapon_index=%d AND char_idx=%d", index, id);
 
@@ -629,9 +643,9 @@ qboolean cdb_load_player(edict_t* player)
 			for (j = 0; j < MAX_WEAPONMODS; ++j)
 			{
 
-				player->myskills.weapons[index].mods[j].level = sqlite3_column_int(statement_mods, 3);
-				player->myskills.weapons[index].mods[j].soft_max = sqlite3_column_int(statement_mods, 4);
-				player->myskills.weapons[index].mods[j].hard_max = sqlite3_column_int(statement_mods, 5);
+				player->client->resp.pstats.weapons[index].mods[j].level = sqlite3_column_int(statement_mods, 3);
+				player->client->resp.pstats.weapons[index].mods[j].soft_max = sqlite3_column_int(statement_mods, 4);
+				player->client->resp.pstats.weapons[index].mods[j].hard_max = sqlite3_column_int(statement_mods, 5);
 
 				if ((r = sqlite3_step(statement_mods)) == SQLITE_DONE)
 					break;
@@ -641,7 +655,7 @@ qboolean cdb_load_player(edict_t* player)
 		}
 		else
 		{
-			gi.dprintf("Error loading player: %s. Weapon index not loaded correctly!\n", player->myskills.player_name);
+			gi.dprintf("Error loading player: %s. Weapon index not loaded correctly!\n", player->client->resp.pstats.player_name);
 			vrx_write_to_logfile(player, "ERROR during loading: Weapon index not loaded correctly!");
 			return false;
 		}
@@ -677,15 +691,15 @@ qboolean cdb_load_player(edict_t* player)
 		if ((index >= 0) && (index < MAX_VRXITEMS))
 		{
 			int j;
-			player->myskills.items[index].itemtype = sqlite3_column_int(statement, 2);
-			player->myskills.items[index].itemLevel = sqlite3_column_int(statement, 3);
-			player->myskills.items[index].quantity = sqlite3_column_int(statement, 4);
-			player->myskills.items[index].untradeable = sqlite3_column_int(statement, 5);
-			strcpy(player->myskills.items[index].id, sqlite3_column_text(statement, 6));
-			strcpy(player->myskills.items[index].name, sqlite3_column_text(statement, 7));
-			player->myskills.items[index].numMods = sqlite3_column_int(statement, 8);
-			player->myskills.items[index].setCode = sqlite3_column_int(statement, 9);
-			player->myskills.items[index].classNum = sqlite3_column_int(statement, 10);
+			player->client->resp.pstats.items[index].itemtype = sqlite3_column_int(statement, 2);
+			player->client->resp.pstats.items[index].itemLevel = sqlite3_column_int(statement, 3);
+			player->client->resp.pstats.items[index].quantity = sqlite3_column_int(statement, 4);
+			player->client->resp.pstats.items[index].untradeable = sqlite3_column_int(statement, 5);
+			strcpy(player->client->resp.pstats.items[index].id, sqlite3_column_text(statement, 6));
+			strcpy(player->client->resp.pstats.items[index].name, sqlite3_column_text(statement, 7));
+			player->client->resp.pstats.items[index].numMods = sqlite3_column_int(statement, 8);
+			player->client->resp.pstats.items[index].setCode = sqlite3_column_int(statement, 9);
+			player->client->resp.pstats.items[index].classNum = sqlite3_column_int(statement, 10);
 
 			format = va("SELECT * FROM runes_mods WHERE rune_index=%d AND char_idx=%d", index, id);
 
@@ -696,17 +710,17 @@ qboolean cdb_load_player(edict_t* player)
 			{
 				if (vrx_lua_get_int("useMysqlTablesOnSQLite", 0))
 				{
-					player->myskills.items[index].modifiers[j].type = sqlite3_column_int(statement_mods, 3);
-					player->myskills.items[index].modifiers[j].index = sqlite3_column_int(statement_mods, 4);
-					player->myskills.items[index].modifiers[j].value = sqlite3_column_int(statement_mods, 5);
-					player->myskills.items[index].modifiers[j].set = sqlite3_column_int(statement_mods, 6);
+					player->client->resp.pstats.items[index].modifiers[j].type = sqlite3_column_int(statement_mods, 3);
+					player->client->resp.pstats.items[index].modifiers[j].index = sqlite3_column_int(statement_mods, 4);
+					player->client->resp.pstats.items[index].modifiers[j].value = sqlite3_column_int(statement_mods, 5);
+					player->client->resp.pstats.items[index].modifiers[j].set = sqlite3_column_int(statement_mods, 6);
 				}
 				else
 				{
-					player->myskills.items[index].modifiers[j].type = sqlite3_column_int(statement_mods, 2);
-					player->myskills.items[index].modifiers[j].index = sqlite3_column_int(statement_mods, 3);
-					player->myskills.items[index].modifiers[j].value = sqlite3_column_int(statement_mods, 4);
-					player->myskills.items[index].modifiers[j].set = sqlite3_column_int(statement_mods, 5);
+					player->client->resp.pstats.items[index].modifiers[j].type = sqlite3_column_int(statement_mods, 2);
+					player->client->resp.pstats.items[index].modifiers[j].index = sqlite3_column_int(statement_mods, 3);
+					player->client->resp.pstats.items[index].modifiers[j].value = sqlite3_column_int(statement_mods, 4);
+					player->client->resp.pstats.items[index].modifiers[j].set = sqlite3_column_int(statement_mods, 5);
 				}
 
 				if ((r = sqlite3_step(statement_mods)) == SQLITE_DONE)
@@ -766,13 +780,13 @@ qboolean cdb_load_player(edict_t* player)
 	//respawns
 	player->myskills.weapon_respawns = sqlite3_column_int(statement, 1);
 	//health
-	player->myskills.current_health = sqlite3_column_int(statement, 2);
-	//max health
-	player->myskills.max_health = sqlite3_column_int(statement, 3);
-	//armour
-	player->myskills.current_armor = sqlite3_column_int(statement, 4);
-	//max armour
-	player->myskills.max_armor = sqlite3_column_int(statement, 5);
+	// player->client->resp.pstats.current_health = sqlite3_column_int(statement, 2);
+	// //max health
+	// player->client->resp.pstats.max_health = sqlite3_column_int(statement, 3);
+	// //armour
+	// player->client->resp.pstats.current_armor = sqlite3_column_int(statement, 4);
+	// //max armour
+	// player->client->resp.pstats.max_armor = sqlite3_column_int(statement, 5);
 	//nerfme			(cursing a player maybe?)
 	player->myskills.nerfme = sqlite3_column_int(statement, 6);
 
@@ -800,29 +814,29 @@ qboolean cdb_load_player(edict_t* player)
 	r = sqlite3_step(statement);
 
 	//shots fired
-	player->myskills.shots = sqlite3_column_int(statement, 1);
+	player->client->resp.pstats.shots = sqlite3_column_int(statement, 1);
 	//shots hit
-	player->myskills.shots_hit = sqlite3_column_int(statement, 2);
+	player->client->resp.pstats.shots_hit = sqlite3_column_int(statement, 2);
 	//frags
-	player->myskills.frags = sqlite3_column_int(statement, 3);
+	player->client->resp.pstats.frags = sqlite3_column_int(statement, 3);
 	//deaths
-	player->myskills.fragged = sqlite3_column_int(statement, 4);
+	player->client->resp.pstats.fragged = sqlite3_column_int(statement, 4);
 	//number of sprees
-	player->myskills.num_sprees = sqlite3_column_int(statement, 5);
+	player->client->resp.pstats.num_sprees = sqlite3_column_int(statement, 5);
 	//max spree
-	player->myskills.max_streak = sqlite3_column_int(statement, 6);
+	player->client->resp.pstats.max_streak = sqlite3_column_int(statement, 6);
 	//number of wars
-	player->myskills.spree_wars = sqlite3_column_int(statement, 7);
+	player->client->resp.pstats.spree_wars = sqlite3_column_int(statement, 7);
 	//number of sprees broken
-	player->myskills.break_sprees = sqlite3_column_int(statement, 8);
+	player->client->resp.pstats.break_sprees = sqlite3_column_int(statement, 8);
 	//number of wars broken
-	player->myskills.break_spree_wars = sqlite3_column_int(statement, 9);
+	player->client->resp.pstats.break_spree_wars = sqlite3_column_int(statement, 9);
 	//suicides
-	player->myskills.suicides = sqlite3_column_int(statement, 10);
+	player->client->resp.pstats.suicides = sqlite3_column_int(statement, 10);
 	//teleports			(link this to "use tballself" maybe?)
-	player->myskills.teleports = sqlite3_column_int(statement, 11);
+	player->client->resp.pstats.teleports = sqlite3_column_int(statement, 11);
 	//number of 2fers
-	player->myskills.num_2fers = sqlite3_column_int(statement, 12);
+	player->client->resp.pstats.num_2fers = sqlite3_column_int(statement, 12);
 
 	sqlite3_finalize(statement);
 
@@ -832,13 +846,13 @@ qboolean cdb_load_player(edict_t* player)
 	r = sqlite3_step(statement);
 
 	//CTF statistics
-	player->myskills.flag_pickups = sqlite3_column_int(statement, 1);
-	player->myskills.flag_captures = sqlite3_column_int(statement, 2);
-	player->myskills.flag_returns = sqlite3_column_int(statement, 3);
-	player->myskills.flag_kills = sqlite3_column_int(statement, 4);
-	player->myskills.offense_kills = sqlite3_column_int(statement, 5);
-	player->myskills.defense_kills = sqlite3_column_int(statement, 6);
-	player->myskills.assists = sqlite3_column_int(statement, 7);
+	player->client->resp.pstats.flag_pickups = sqlite3_column_int(statement, 1);
+	player->client->resp.pstats.flag_captures = sqlite3_column_int(statement, 2);
+	player->client->resp.pstats.flag_returns = sqlite3_column_int(statement, 3);
+	player->client->resp.pstats.flag_kills = sqlite3_column_int(statement, 4);
+	player->client->resp.pstats.offense_kills = sqlite3_column_int(statement, 5);
+	player->client->resp.pstats.defense_kills = sqlite3_column_int(statement, 6);
+	player->client->resp.pstats.assists = sqlite3_column_int(statement, 7);
 	//End CTF
 
 	sqlite3_finalize(statement);
@@ -848,9 +862,9 @@ qboolean cdb_load_player(edict_t* player)
 
 	r = sqlite3_prepare_v2(db, format, strlen(format), &statement, NULL);
 	while(sqlite3_step(statement) == SQLITE_ROW) {
-		int pindex = sqlite3_column_int(statement, 1);
-		int param = sqlite3_column_int(statement, 2);
-		int level = sqlite3_column_int(statement, 3);
+		const int pindex = sqlite3_column_int(statement, 1);
+		const int param = sqlite3_column_int(statement, 2);
+		const int level = sqlite3_column_int(statement, 3);
 
 		switch (pindex)
 		{
@@ -873,27 +887,16 @@ qboolean cdb_load_player(edict_t* player)
 		}
 	}
 
-
-
 	//Apply runes
 	vrx_runes_unapply(player);
 	for (i = 0; i < 4; ++i)
-		vrx_runes_apply(player, &player->myskills.items[i]);
-
-	//Apply health
-	if (player->myskills.current_health > MAX_HEALTH(player))
-		player->myskills.current_health = MAX_HEALTH(player);
-
-	//Apply armor
-	if (player->myskills.current_armor > MAX_ARMOR(player))
-		player->myskills.current_armor = MAX_ARMOR(player);
-	player->myskills.inventory[body_armor_index] = player->myskills.current_armor;
+		vrx_runes_apply(player, &player->client->resp.pstats.items[i]);
 
 	return true;
 }
 
 int cdb_get_owner_id (edict_t* ent) {
-	char sql[] =
+	const char sql[] =
 		"select char_idx from userdata "
 		"where playername = (select owner from userdata where playername = :1) "
 		"or (playername = :1 and email is not null and LENGTH(email) > 0)";
@@ -914,23 +917,19 @@ int cdb_get_owner_id (edict_t* ent) {
 	return id;
 }
 
-qboolean cdb_stash_store(edict_t* ent, int itemindex)
+qboolean cdb_stash_store(edict_t* ent, item_t* item)
 {
-	int owner_id = cdb_get_owner_id(ent);
+	const int owner_id = cdb_get_owner_id(ent);
 	if (owner_id == -1)
 	{
 		stash_event_t* notif = vrx_malloc(sizeof(stash_event_t), TAG_GAME);
 		notif->ent = ent;
-		notif->gds_connection_id = ent->gds_connection_id;
+		notif->gds_connection_id = ent->gds.connection_id;
 
 		vrx_notify_stash_no_owner(notif);
 		vrx_free(notif);
 		return false;
 	}
-
-	item_t item;
-	V_ItemClear(&item);
-	V_ItemSwap(&item, &ent->myskills.items[itemindex]);
 
 	int index = 0;
 	{
@@ -942,7 +941,7 @@ qboolean cdb_stash_store(edict_t* ent, int itemindex)
 
 		while (r == SQLITE_ROW)
 		{
-			int index_result = sqlite3_column_int(statement, 0);
+			const int index_result = sqlite3_column_int(statement, 0);
 
 			// we found a free slot
 			if (index < index_result)
@@ -960,30 +959,30 @@ qboolean cdb_stash_store(edict_t* ent, int itemindex)
 		"VALUES (%d,%d,%d,%d,%d,%d,\"%s\",\"%s\",%d,%d,%d)",
 		owner_id,
 		index,
-		item.itemtype,
-		item.itemLevel,
-		item.quantity,
-		item.untradeable,
-		item.id,
-		item.name,
-		item.numMods,
-		item.setCode,
-		item.classNum))
+		item->itemtype,
+		item->itemLevel,
+		item->quantity,
+		item->untradeable,
+		item->id,
+		item->name,
+		item->numMods,
+		item->setCode,
+		item->classNum))
 
 		for (int j = 0; j < MAX_VRXITEMMODS; ++j)
 		{
 			// TYPE_NONE, so skip it
-			if (item.modifiers[j].type == 0 ||
-				item.modifiers[j].value == 0)
+			if (item->modifiers[j].type == 0 ||
+				item->modifiers[j].value == 0)
 				continue;
 
 			QUERY(va("INSERT INTO stash_runes_mods "
 				"VALUES (%d,%d,%d,%d,%d,%d,%d)",
 				owner_id, index, j,
-				item.modifiers[j].type,
-				item.modifiers[j].index,
-				item.modifiers[j].value,
-				item.modifiers[j].set))
+				item->modifiers[j].type,
+				item->modifiers[j].index,
+				item->modifiers[j].value,
+				item->modifiers[j].set))
 		}
 
 	return true;
@@ -991,9 +990,9 @@ qboolean cdb_stash_store(edict_t* ent, int itemindex)
 
 qboolean cdb_stash_get_page(edict_t* ent, int page_index, int items_per_page)
 {
-	int owner_id = cdb_get_owner_id(ent);
+	const int owner_id = cdb_get_owner_id(ent);
 	stash_page_event_t* evt = vrx_malloc(sizeof(stash_page_event_t), TAG_GAME);
-	evt->gds_connection_id = ent->gds_connection_id;
+	evt->gds_connection_id = ent->gds.connection_id;
 	evt->gds_owner_id = owner_id;
 	evt->ent = ent;
 	evt->pagenum = page_index;
@@ -1090,12 +1089,12 @@ qboolean cdb_stash_get_page(edict_t* ent, int page_index, int items_per_page)
 
 qboolean cdb_stash_open(edict_t* ent)
 {
-	int owner_id = cdb_get_owner_id(ent);
+	const int owner_id = cdb_get_owner_id(ent);
 	if (owner_id == -1)
 	{
 		stash_event_t* notif = vrx_malloc(sizeof(stash_event_t), TAG_GAME);
 		notif->ent = ent;
-		notif->gds_connection_id = ent->gds_connection_id;
+		notif->gds_connection_id = ent->gds.connection_id;
 
 		vrx_notify_stash_no_owner(notif);
 		vrx_free(notif);
@@ -1114,7 +1113,7 @@ qboolean cdb_stash_open(edict_t* ent)
 			{
 				stash_event_t* notif = vrx_malloc(sizeof(stash_event_t), TAG_GAME);
 				notif->ent = ent;
-				notif->gds_connection_id = ent->gds_connection_id;
+				notif->gds_connection_id = ent->gds.connection_id;
 
 				vrx_notify_stash_locked(notif);
 				vrx_free(notif);
@@ -1126,7 +1125,7 @@ qboolean cdb_stash_open(edict_t* ent)
 		sqlite3_finalize(statement);
 	}
 
-	int id = cdb_get_id(ent->client->pers.netname);
+	const int id = cdb_get_id(ent->client->pers.netname);
 	QUERY(va("update stash set lock_char_id=%d where char_idx=%d", id, owner_id));
 
 	cdb_stash_get_page(ent, 0, sizeof ent->client->stash.page / sizeof(item_t));
@@ -1141,27 +1140,27 @@ qboolean cdb_stash_close_id(int owner_id)
 
 qboolean cdb_stash_close(edict_t* ent)
 {
-	int owner_id = cdb_get_owner_id(ent);
+	const int owner_id = cdb_get_owner_id(ent);
 	cdb_stash_close_id(owner_id);
 	return true;
 }
 
 void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean reset)
 {
-	int new_owner_id = cdb_get_id(owner_name);
+	const int new_owner_id = cdb_get_id(owner_name);
 
 	event_owner_error_t* evt = vrx_malloc(sizeof(event_owner_error_t), TAG_GAME);
 	strcpy(evt->owner_name, owner_name);
 	evt->ent = ent;
-	evt->connection_id = ent->gds_connection_id;
+	evt->connection_id = ent->gds.connection_id;
 
 	// if reset is true, make a sqlite query that resets the owner to null
 	if (reset) {
-		int id = cdb_get_id(ent->client->pers.netname);
+		const int id = cdb_get_id(ent->client->pers.netname);
 
 		sqlite3_stmt* statement;
 		int r;
-		char sql[] = "update userdata "
+		const char sql[] = "update userdata "
 			"set owner = '' "
 			"where char_idx = ?";
 
@@ -1172,7 +1171,7 @@ void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean rese
 		sqlite3_step(statement);
 		sqlite3_finalize(statement);
 		memset(evt->owner_name, 0, sizeof evt->owner_name);
-		memset(ent->myskills.owner, 0, sizeof ent->myskills.owner);
+		memset(ent->client->resp.pstats.owner, 0, sizeof ent->client->resp.pstats.owner);
 		return;
 	}
 
@@ -1184,11 +1183,11 @@ void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean rese
 		return;
 	}
 
-	int id = cdb_get_id(ent->client->pers.netname);
+	const int id = cdb_get_id(ent->client->pers.netname);
 
 	sqlite3_stmt* statement;
 	int r;
-	char sql[] = "update userdata "
+	const char sql[] = "update userdata "
 		"set owner = ? "
 		"from (select 1 as e from userdata o "
 		"       where "
@@ -1208,7 +1207,7 @@ void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean rese
 	sqlite3_step(statement);
 	sqlite3_finalize(statement);
 
-	int rows = sqlite3_changes(db);
+	const int rows = sqlite3_changes(db);
 	if (rows == 0) {
 		vrx_notify_owner_bad_password(evt);
 		vrx_free(evt);
@@ -1221,8 +1220,8 @@ void cdb_set_owner(edict_t* ent, char* owner_name, char* masterpw, qboolean rese
 
 qboolean cdb_stash_take(edict_t* ent, int stash_index)
 {
-	int owner_id = cdb_get_owner_id(ent);
-	int id = cdb_get_id(ent->client->pers.netname);
+	const int owner_id = cdb_get_owner_id(ent);
+	const int id = cdb_get_id(ent->client->pers.netname);
 
 	// check if we're the owners of the stash before taking
 	{
@@ -1230,7 +1229,7 @@ qboolean cdb_stash_take(edict_t* ent, int stash_index)
 		int r;
 		QUERY_RESULT(va("select char_idx from stash where lock_char_id=%d", id));
 
-		qboolean got_result = r == SQLITE_ROW;
+		const qboolean got_result = r == SQLITE_ROW;
 		qboolean someone_else_locked_it = false;
 
 		if (got_result)
@@ -1240,7 +1239,7 @@ qboolean cdb_stash_take(edict_t* ent, int stash_index)
 		{
 			stash_event_t* notif = vrx_malloc(sizeof(stash_event_t), TAG_GAME);
 			notif->ent = ent;
-			notif->gds_connection_id = ent->gds_connection_id;
+			notif->gds_connection_id = ent->gds.connection_id;
 
 			vrx_notify_stash_locked(notif);
 			sqlite3_finalize(statement);
@@ -1308,7 +1307,7 @@ qboolean cdb_stash_take(edict_t* ent, int stash_index)
 
 	stash_taken_event_t* evt = vrx_malloc(sizeof(stash_taken_event_t), TAG_GAME);
 	evt->ent = ent;
-	evt->gds_connection_id = ent->gds_connection_id;
+	evt->gds_connection_id = ent->gds.connection_id;
 	vrx_item_copy(&item, &evt->taken);
 	strcpy(evt->requester, ent->client->pers.netname);
 
@@ -1348,7 +1347,7 @@ void cdb_start_connection()
 	{
 		for (i = 0; i < TOTAL_TABLES; i++)
 		{
-			QUERY(va(VSFU_CREATEDBQUERY[i]))
+			QUERY_VOID(va(VSFU_CREATEDBQUERY[i]));
 		}
 	}
 

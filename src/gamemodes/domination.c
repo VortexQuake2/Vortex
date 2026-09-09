@@ -260,13 +260,13 @@ void dom_flagthink (edict_t *self)
 	}
 	self->count++;
 
-	if (!self->other && !VectorLength(self->velocity))
+	if (!self->flaglaser && !VectorLength(self->velocity))
 	{
 		VectorCopy(self->s.origin, end);
 		end[2] += 8192;
 		tr = gi.trace (self->s.origin, NULL, NULL, end, self, MASK_SOLID);
 		VectorCopy(tr.endpos, end);
-		self->other = dom_spawnlaser(self, self->s.origin, end);
+		self->flaglaser = dom_spawnlaser(self, self->s.origin, end);
 	}
 	self->s.effects = 0;
 	if (self->style)

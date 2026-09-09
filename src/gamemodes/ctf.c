@@ -279,7 +279,7 @@ int CTF_ReturnFlag (edict_t *ent, edict_t *flag)
 		ent->client->pers.ctf_assist_return = level.time + CTF_ASSIST_DURATION;
 
 		//Give them credit
-		ent->myskills.flag_returns++;
+		ent->client->resp.pstats.flag_returns++;
 
 		gi.sound(ent, CHAN_ITEM, gi.soundindex("ctf/flagret.wav"), 1, ATTN_NORM, 0);
 
@@ -418,7 +418,7 @@ qboolean CTF_PickupFlag (edict_t *ent, edict_t *other)
 		other->client->pers.inventory[index] = 1;
 
 		//Give them credit
-		other->myskills.flag_pickups++;
+		other->client->resp.pstats.flag_pickups++;
 
         /*
         other->myskills.experience += CTF_FLAG_TAKE_EXP;
@@ -496,13 +496,13 @@ void CTF_flagthink (edict_t *self)
 	//3.0 allow anyone to pick up the flag
 	if (self->owner) self->owner = NULL;
 
-	if (!self->other && !VectorLength(self->velocity))
+	if (!self->flaglaser && !VectorLength(self->velocity))
 	{
 		VectorCopy(self->s.origin, end);
 		end[2] += 8192;
 		tr = gi.trace (self->s.origin, NULL, NULL, end, self, MASK_SOLID);
 		VectorCopy(tr.endpos, end);
-		self->other = CTF_spawnlaser(self, self->s.origin, end);
+		self->flaglaser = CTF_spawnlaser(self, self->s.origin, end);
 	}
 	self->s.effects = 0;
 	self->s.effects |= (EF_ROTATE|EF_COLOR_SHELL);
@@ -753,9 +753,9 @@ int CTF_NumPlayerSpawns (int type, int teamnum)
 
 void CTF_PlayerRespawnTime (edict_t *ent)
 {
-	int team_spawns = CTF_NumPlayerSpawns(0, ent->teamnum) + 1;
-	int total_spawns = CTF_NumPlayerSpawns(0, 0) + 1;
-	float ratio = team_spawns / total_spawns;
+	const int team_spawns = CTF_NumPlayerSpawns(0, ent->teamnum) + 1;
+	const int total_spawns = CTF_NumPlayerSpawns(0, 0) + 1;
+	const float ratio = team_spawns / total_spawns;
 	float time = CTF_PLAYERSPAWN_TIME;
 	
 	// don't apply ratio unless all spawns have been captured
@@ -796,8 +796,8 @@ edict_t *CTF_NearestPlayerSpawn (edict_t *ent, int teamnum, float range, qboolea
 
 void ctf_playerspawn_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int		points = CTF_PLAYERSPAWN_CAPTURE_EXPERIENCE;
-	int		credits = CTF_PLAYERSPAWN_CAPTURE_CREDITS;
+	const int		points = CTF_PLAYERSPAWN_CAPTURE_EXPERIENCE;
+	const int		credits = CTF_PLAYERSPAWN_CAPTURE_CREDITS;
 	edict_t *cl;
 
 	if (attacker && attacker->inuse && ((cl = G_GetClient(attacker)) != NULL))
@@ -944,7 +944,7 @@ void CTF_AwardFrag (edict_t *attacker, edict_t *target)
 			attacker_cl->client->pers.netname, CTF_GetTeamString(attacker_cl->teamnum));
 
 		//Give them credit
-		attacker_cl->myskills.defense_kills++;
+		attacker_cl->client->resp.pstats.defense_kills++;
 
 		points = CTF_BASE_DEFEND_EXP;
 		credits = CTF_BASE_DEFEND_CREDITS;
@@ -966,7 +966,7 @@ void CTF_AwardFrag (edict_t *attacker, edict_t *target)
 			attacker_cl->client->pers.netname, CTF_GetTeamString(enemy_teamnum));
 
 		//Give them credit
-		attacker_cl->myskills.flag_kills++;
+		attacker_cl->client->resp.pstats.flag_kills++;
 
 		//Set up the player for an assist.
 		attacker_cl->client->pers.ctf_assist_frag = level.time + CTF_ASSIST_DURATION;
@@ -983,7 +983,7 @@ void CTF_AwardFrag (edict_t *attacker, edict_t *target)
 			attacker->client->pers.netname, CTF_GetTeamString(enemy_teamnum));
 
 		//Give them credit
-		attacker->myskills.offense_kills++;
+		attacker->client->resp.pstats.offense_kills++;
 
 		points = CTF_BASE_KILL_EXP;
 		credits = CTF_BASE_KILL_CREDITS;
@@ -1141,7 +1141,7 @@ void flagbase_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t 
 		gi.sound(other, CHAN_ITEM, gi.soundindex("ctf/flagcap.wav"), 1, ATTN_NORM, 0);
 
 		//Give them a capture credit
-		other->myskills.flag_captures++;
+		other->client->resp.pstats.flag_captures++;
 
 		//Check for assists
 		for_each_player(p, i)
@@ -1155,7 +1155,7 @@ void flagbase_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t 
 			{
 				//Notify everyone
 				G_PrintGreenText(va("%s gains an assist for killing the flag carrier!", 
-					p->myskills.player_name));
+					p->client->resp.pstats.player_name));
 
                 //Give them an assist credit
 				assist = true;
@@ -1168,7 +1168,7 @@ void flagbase_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t 
 			{
 				//Notify everyone
 				G_PrintGreenText(va("%s gains an assist for returning the flag!", 
-					p->myskills.player_name));
+					p->client->resp.pstats.player_name));
 
                 //Give them an assist credit
 				assist = true;
@@ -1177,7 +1177,7 @@ void flagbase_touch (edict_t *self, edict_t *other, cplane_t *plane, csurface_t 
 				//Give them some bonus points
 				CTF_AwardPlayer(p, CTF_FLAG_ASSIST_EXP, 0);
 			}
-			if(assist)	p->myskills.assists++;
+			if(assist)	p->client->resp.pstats.assists++;
 		}		
 
 		other->client->pers.inventory[enemy_flag_index] = 0;
@@ -1333,7 +1333,7 @@ qboolean CTF_GetFlagPosition (int teamnum, vec3_t pos)
 		const vec3_t up = { 0, 0, 24 };
 		VectorAdd(pos, down, down);
 
-		trace_t tr = gi.trace(pos, vec3_origin, vec3_origin, down, NULL, MASK_SOLID);
+		const trace_t tr = gi.trace(pos, vec3_origin, vec3_origin, down, NULL, MASK_SOLID);
 
 		VectorCopy(tr.endpos, pos);
 		VectorAdd(up, pos, pos);
@@ -1473,7 +1473,7 @@ void CTF_ShutDown (void)
 
 void CTF_Init (void)
 {
-	vec3_t	start;
+	vec3_t	start = {0, 0, 0};
 
 	CTF_ShutDown();
 
@@ -1821,7 +1821,7 @@ qboolean CTF_CorrectSpawnPosition(edict_t* self)
 			const vec3_t down = { 0, 0, -8192 };
 			vec3_t end;
 			VectorAdd(self->s.origin, down, end);
-			trace_t tr = gi.trace(self->s.origin, mins, maxs, end, self, MASK_PLAYERSOLID);
+			const trace_t tr = gi.trace(self->s.origin, mins, maxs, end, self, MASK_PLAYERSOLID);
 
 			if (tr.ent == g_edicts) 
 			{
@@ -1854,7 +1854,7 @@ void SP_info_player_team1(edict_t* self)
 		return;
 	}
 
-	qboolean success = CTF_CorrectSpawnPosition(self);
+	const qboolean success = CTF_CorrectSpawnPosition(self);
 
 	if (ctf->value && debuginfo->value > 0 && success)
 	{
@@ -1873,8 +1873,8 @@ void SP_info_player_team2(edict_t* self)
 		G_FreeEdict(self);
 		return;
 	}
-	
-	qboolean success = CTF_CorrectSpawnPosition(self);
+
+	const qboolean success = CTF_CorrectSpawnPosition(self);
 
 	if (ctf->value && debuginfo->value > 0 && success)
 	{

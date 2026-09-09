@@ -1,4 +1,6 @@
 
+#pragma once
+
 // we later use this to generate a hash.
 typedef void (*PlayerCommand)(edict_t* ent);
 

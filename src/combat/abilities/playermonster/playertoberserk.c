@@ -50,7 +50,7 @@ int p_berserk_melee (edict_t *self, vec3_t forward, vec3_t dir, int damage, int 
 	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
 
 	// bfg laser effect
-	if (!self->ai.is_bot)
+	if (!self->ai)
 	{
 		gi.WriteByte(svc_temp_entity);
 		gi.WriteByte(TE_BFG_LASER);
@@ -97,7 +97,7 @@ void p_berserk_crush (edict_t *self, int damage, float range, int mod)
 		return;
 
 	// Talent: Melee Mastery
-	int talentLevel = vrx_get_talent_level(self, TALENT_MELEE_MASTERY);
+	const int talentLevel = vrx_get_talent_level(self, TALENT_MELEE_MASTERY);
 
 	self->lastsound = level.framenum;
 
@@ -140,7 +140,7 @@ void p_berserk_jump (edict_t *ent)
 {
 	// run jump animation forward until last frame, then hold it
 	if (ent->s.frame != BERSERK_FRAMES_JUMP_END)
-		G_RunFrames(ent, BERSERK_FRAMES_DUCK_START, BERSERK_FRAMES_DUCK_END, false);
+		G_RunFrames(ent, BERSERK_FRAMES_DUCK_START, BERSERK_FRAMES_DUCK_END, false, false);
 }
 
 void p_berserk_swing (edict_t *ent)
@@ -166,9 +166,9 @@ int berserk_translate_attack_frame(int input_frame)
 
 void p_berserk_attack (edict_t *ent, int move_state)
 {
-	int		punch_dmg = BERSERK_PUNCH_INITIAL_DAMAGE + BERSERK_PUNCH_ADDON_DAMAGE * ent->myskills.abilities[BERSERK].current_level;
-	int		slash_dmg = BERSERK_SLASH_INITIAL_DAMAGE + BERSERK_SLASH_ADDON_DAMAGE * ent->myskills.abilities[BERSERK].current_level;
-	int		crush_dmg = BERSERK_CRUSH_INITIAL_DAMAGE + BERSERK_CRUSH_ADDON_DAMAGE * ent->myskills.abilities[BERSERK].current_level;
+	const int		punch_dmg = BERSERK_PUNCH_INITIAL_DAMAGE + BERSERK_PUNCH_ADDON_DAMAGE * ent->myskills.abilities[BERSERK].current_level;
+	const int		slash_dmg = BERSERK_SLASH_INITIAL_DAMAGE + BERSERK_SLASH_ADDON_DAMAGE * ent->myskills.abilities[BERSERK].current_level;
+	const int		crush_dmg = BERSERK_CRUSH_INITIAL_DAMAGE + BERSERK_CRUSH_ADDON_DAMAGE * ent->myskills.abilities[BERSERK].current_level;
 	vec3_t	forward, right, up, angles;
 
 	//gi.dprintf("%d: %s: frame: %d state: %d\n", (int)level.framenum, __func__, ent->s.frame, move_state);
@@ -184,7 +184,7 @@ void p_berserk_attack (edict_t *ent, int move_state)
 		if (berserk_frames_in_range(ent->s.frame, BERSERK_FRAMES_PUNCH_START, BERSERK_FRAMES_PUNCH_END))
 			ent->s.frame = berserk_translate_attack_frame(ent->s.frame);
 
-		G_RunFrames(ent, BERSERK_FRAMES_RUNATTACK1_START, BERSERK_FRAMES_RUNATTACK1_END, false);
+		G_RunFrames(ent, BERSERK_FRAMES_RUNATTACK1_START, BERSERK_FRAMES_RUNATTACK1_END, false, false);
 
 		// swing left-right
 		if (ent->s.frame == 124)
@@ -214,7 +214,7 @@ void p_berserk_attack (edict_t *ent, int move_state)
 		if (berserk_frames_in_range(ent->s.frame, BERSERK_FRAMES_PUNCH_START, BERSERK_FRAMES_PUNCH_END))
 			ent->s.frame = berserk_translate_attack_frame(ent->s.frame);
 
-		G_RunFrames(ent, BERSERK_FRAMES_RUNATTACK1_START, BERSERK_FRAMES_RUNATTACK1_END, true);
+		G_RunFrames(ent, BERSERK_FRAMES_RUNATTACK1_START, BERSERK_FRAMES_RUNATTACK1_END, true, false);
 
 		// swing left-right
 		if (ent->s.frame == 124)
@@ -240,14 +240,14 @@ void p_berserk_attack (edict_t *ent, int move_state)
 	}
 	else if (ent->client->weapon_mode == 1)	// slash
 	{
-		G_RunFrames(ent, BERSERK_FRAMES_SLASH_START, BERSERK_FRAMES_SLASH_END, false);
+		G_RunFrames(ent, BERSERK_FRAMES_SLASH_START, BERSERK_FRAMES_SLASH_END, false, false);
 
 		if ((ent->s.frame == 79) || (ent->s.frame == 80))
 			p_berserk_melee(ent, forward, up, slash_dmg, BERSERK_SLASH_KNOCKBACK, BERSERK_SLASH_RANGE, MOD_BERSERK_SLASH);
 	}
 	else if (ent->client->weapon_mode == 2)	// crush
 	{
-		G_RunFrames(ent, BERSERK_FRAMES_SLAM_START, BERSERK_FRAMES_SLAM_END, false);
+		G_RunFrames(ent, BERSERK_FRAMES_SLAM_START, BERSERK_FRAMES_SLAM_END, false, false);
 
 		if (ent->s.frame == 154)
 			p_berserk_crush(ent, crush_dmg, BERSERK_CRUSH_RANGE, MOD_BERSERK_CRUSH);
@@ -258,7 +258,7 @@ void p_berserk_attack (edict_t *ent, int move_state)
 		if (berserk_frames_in_range(ent->s.frame, BERSERK_FRAMES_RUNATTACK1_START, BERSERK_FRAMES_RUNATTACK1_END))
 			ent->s.frame = berserk_translate_attack_frame(ent->s.frame);
 
-		G_RunFrames(ent, BERSERK_FRAMES_PUNCH_START, BERSERK_FRAMES_PUNCH_END, false);
+		G_RunFrames(ent, BERSERK_FRAMES_PUNCH_START, BERSERK_FRAMES_PUNCH_END, false, false);
 		
 		// swing left-right
 		if (ent->s.frame == 66)
@@ -316,7 +316,7 @@ void RunBerserkFrames (edict_t *ent, usercmd_t *ucmd)
 			if ((ent->client->buttons & BUTTON_ATTACK) && (level.time > ent->monsterinfo.attack_finished))
 				p_berserk_attack(ent, BERSERK_RUN_FORWARD);
 			else
-				G_RunFrames(ent, BERSERK_FRAMES_RUN_START, BERSERK_FRAMES_RUN_END, false);
+				G_RunFrames(ent, BERSERK_FRAMES_RUN_START, BERSERK_FRAMES_RUN_END, false, false);
 		}
 		// play animation in reverse if we are going backwards
 		else if (ucmd->forwardmove < 0)
@@ -324,7 +324,7 @@ void RunBerserkFrames (edict_t *ent, usercmd_t *ucmd)
 			if ((ent->client->buttons & BUTTON_ATTACK) && (level.time > ent->monsterinfo.attack_finished))
 				p_berserk_attack(ent, BERSERK_RUN_BACKWARD);
 			else
-				G_RunFrames(ent, BERSERK_FRAMES_RUN_START, BERSERK_FRAMES_RUN_END, true);
+				G_RunFrames(ent, BERSERK_FRAMES_RUN_START, BERSERK_FRAMES_RUN_END, true, false);
 		}
 		// standing attack
 		else if ((ent->client->buttons & BUTTON_ATTACK) && (level.time > ent->monsterinfo.attack_finished))
@@ -333,7 +333,7 @@ void RunBerserkFrames (edict_t *ent, usercmd_t *ucmd)
 		else if (!ent->groundentity && (ent->waterlevel < 2))
 			p_berserk_jump(ent);
 		else
-			G_RunFrames(ent, BERSERK_FRAMES_IDLE1_START, BERSERK_FRAMES_IDLE1_END, false); // run idle frames
+			G_RunFrames(ent, BERSERK_FRAMES_IDLE1_START, BERSERK_FRAMES_IDLE1_END, false, false); // run idle frames
 
 		ent->count = level.framenum + qf2sf(1);
 	}
@@ -341,7 +341,7 @@ void RunBerserkFrames (edict_t *ent, usercmd_t *ucmd)
 
 void Cmd_PlayerToBerserk_f (edict_t *ent)
 {
-	int cost = BERSERK_COST;
+	const int cost = BERSERK_COST;
 
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: %s just called Cmd_PlayerToBerserk_f()\n", ent->client->pers.netname);

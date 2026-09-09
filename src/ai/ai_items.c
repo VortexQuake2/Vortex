@@ -25,6 +25,7 @@ in NO WAY supported by Steve Yeager.
 
 #include "g_local.h"
 #include "ai_local.h"
+#include "characters/class_limits.h"
 
 //ACE
 
@@ -237,6 +238,13 @@ qboolean AI_CanPick_Ammo (edict_t *ent, gitem_t *item)
 		max = ent->client->pers.max_cells;
 	else if (item->tag == AMMO_SLUGS)
 		max = ent->client->pers.max_slugs;
+	else if (item->tag == AMMO_FLECHETTES)
+		max = ent->client->pers.max_flechettes;
+	else if (item->tag == AMMO_MAGSLUG)
+		max = ent->client->pers.max_magslug;
+	else if (item->tag == AMMO_DISRUPTOR)
+		max = ent->client->pers.max_disruptor;
+
 	else
 		return false;
 
@@ -311,25 +319,25 @@ float AI_ItemWeight(edict_t *self, edict_t *it)
 	//IT_WEAPON
 	if (it->item->flags & IT_WEAPON)
 	{
-		return self->ai.status.inventoryWeights[ITEM_INDEX(it->item)];
+		return self->ai->status.inventoryWeights[ITEM_INDEX(it->item)];
 	}
 
 	//IT_AMMO
 	if (it->item->flags & IT_AMMO)
 	{
-		return self->ai.status.inventoryWeights[ITEM_INDEX(it->item)];
+		return self->ai->status.inventoryWeights[ITEM_INDEX(it->item)];
 	}
 
 	//IT_ARMOR
 	if (it->item->flags & IT_ARMOR)
 	{
-		return self->ai.status.inventoryWeights[ITEM_INDEX(it->item)];
+		return self->ai->status.inventoryWeights[ITEM_INDEX(it->item)];
 	}
 
 	//IT_FLAG
 	if (it->item->flags & IT_FLAG)
 	{
-		return self->ai.status.inventoryWeights[ITEM_INDEX(it->item)];
+		return self->ai->status.inventoryWeights[ITEM_INDEX(it->item)];
 	}
 
 	//IT_HEALTH
@@ -343,7 +351,7 @@ float AI_ItemWeight(edict_t *self, edict_t *it)
 
 		if (!Q_stricmp(it->classname, "item_adrenaline"))
 		{
-			float health_f = self->health / self->max_health;
+			const float health_f = self->health / self->max_health;
 			weight = 1.0 - health_f;
 			if (weight < 0)
 				weight = 0;
@@ -370,12 +378,12 @@ float AI_ItemWeight(edict_t *self, edict_t *it)
 
 	//IT_POWERUP
 	if (it->item->flags & IT_POWERUP)
-		return self->ai.status.inventoryWeights[ITEM_INDEX(it->item)];
+		return self->ai->status.inventoryWeights[ITEM_INDEX(it->item)];
 
 	//IT_TECH
 	if (it->item->flags & IT_TECH)
 	{
-		return self->ai.status.inventoryWeights[ITEM_INDEX(it->item)];
+		return self->ai->status.inventoryWeights[ITEM_INDEX(it->item)];
 	}
 
 	//IT_STAY_COOP

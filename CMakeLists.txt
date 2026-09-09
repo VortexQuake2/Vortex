@@ -9,28 +9,51 @@ include(FetchContent)
 project(VortexQuake2)
 
 include(CMakeDependentOption)
-option(VRX_USE_MYSQL "Use MySQL/MariaDB based GDS" FALSE)
 option(VRX_ALLOW_ADMIN "Allow usage of admin commands via rcon/sv commands." TRUE)
 option(VRX_LOCKDEFAULTS "Disallow changing exp/credits rates via cvar." FALSE)
 option(VRX_REMOVERESPAWNS "Remove the usage of the respawns system." TRUE)
 option(VRX_USEHASH "Use hashing on commands instead of iterating through the list." TRUE)
 option(VRX_Q2PRO "Use map/gamemap differentiation (for q2pro)." TRUE)
 option(VRX_OLD_NOLAG "Use old NOLAG style. Not recommended." FALSE)
-option(VRX_OLD_VOTE "Use old vote system." FALSE)
+option(VRX_REPRO "Support q2repro (remaster, EXPERIMENTAL)" TRUE)
+option(BUILD_TESTS "Build test driver" FALSE)
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
 # Source files
-file(GLOB_RECURSE VRX_FILES ./src/*.c)
+file(GLOB_RECURSE VRX_FILES CONFIGURE_DEPENDS ./src/*.c)
+file(GLOB_RECURSE VENDOR_FILES CONFIGURE_DEPENDS ./vendor/*.c)
+file(GLOB_RECURSE TEST_FILES CONFIGURE_DEPENDS ./tests/*.c)
+
+
+if (NOT VRX_USE_MYSQL)
+    list(FILTER VRX_FILES EXCLUDE REGEX ".*/src/characters/io/v_mysql_gds\\.c$")
+endif ()
+
+if (NOT VRX_REPRO)
+    set(GAME_NAME game)
+else ()
+    # serraboof comments: game_ is the remaster's convention for game dlls
+    set(GAME_NAME game_)
+endif ()
 
 # Set the platform-specific library name and use platform-specific files.
 if (WIN32)
-    if (CMAKE_CL_64)
-        set(CC_LIB_NAME gamex86_64)
+    if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+        if (VRX_REPRO)
+            set(CC_LIB_NAME ${GAME_NAME}x64)
+        else ()
+            set(CC_LIB_NAME ${GAME_NAME}x86_64)
+        endif ()
     else ()
-        set(CC_LIB_NAME gamex86)
+        set(CC_LIB_NAME ${GAME_NAME}x86)
     endif ()
+
+    if (MINGW)
+        # set(CC_LINK_LIBS ${CC_LINK_LIBS} ws2_32 wininet winmm)
+        add_definitions(-DMINGW)
+    endif()
 
     add_definitions(-DWIN32)
     #file (GLOB CC_PLATFORM_FILES source/Platform/windows/*)
@@ -38,9 +61,13 @@ elseif (UNIX)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-return-mismatch -Wno-incompatible-pointer-types -Wno-implicit-function-declaration")
     # Get machine hardware name (arch), force 386 (if applicable), strip newlines, and store in ARCH
     execute_process(COMMAND uname -m COMMAND sed s/i.86/i386/ COMMAND tr -d \n OUTPUT_VARIABLE ARCH)
-    set(CC_LIB_NAME game${ARCH})
+    set(CC_LIB_NAME ${GAME_NAME}${ARCH})
     #file (GLOB CC_PLATFORM_FILES source/Platform/unix/*)
     link_libraries(dl m)
+
+    # if (SANITIZE_ADDRESS)
+    #    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fPIC")
+    # endif ()
 else ()
     message(FATAL "Unknown platform")
 endif ()
@@ -48,34 +75,24 @@ endif ()
 include_directories(./src/)
 
 # Specify the source files for the game library
-add_library(${CC_LIB_NAME} SHARED ${VRX_FILES})
+add_library(${CC_LIB_NAME} SHARED ${VRX_FILES} ${VENDOR_FILES})
+set_target_properties(${CC_LIB_NAME} PROPERTIES PREFIX "")
 
-if (VRX_USE_MYSQL)
-    find_library(MYSQL_LIBRARY_CLIENT
-            NAMES libmysqlclient mysqlclient
-            PATHS
-            $ENV{ProgramFiles}/MySQL/*/lib
-            /usr/lib/mysql
-            )
+if (BUILD_TESTS)
+    add_executable(vrxtestdriver ${VRX_FILES} ${TEST_FILES} ${VENDOR_FILES})
+    add_test(NAME vrxtestdriver COMMAND vrxtestdriver)
+    target_compile_definitions(vrxtestdriver PRIVATE TEST_RUNNER)
+endif()
 
-    find_path(
-            MYSQL_INCLUDE_DIR
-            NAMES mysql.h
-            PATHS
-            $ENV{ProgramFiles}/MySQL/*/include
-            /usr/include/mysql
+if (WIN32 AND CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    target_compile_options(${CC_LIB_NAME} PRIVATE
+        -Wno-incompatible-function-pointer-types
+        -Wno-incompatible-pointer-types
     )
-
-    target_include_directories(${CC_LIB_NAME} PRIVATE ${MYSQL_INCLUDE_DIR})
-
-    message(NOTICE "MYSQL at ${MYSQL_LIBRARY_CLIENT} + ${MYSQL_INCLUDE_DIR}")
-
-    set(CC_LINK_LIBS ${CC_LINK_LIBS} ${MYSQL_LIBRARY_CLIENT})
 endif ()
 
 if (WIN32)
-    set(CC_LINK_LIBS ${CC_LINK_LIBS} Wininet Winmm Ws2_32)
-
+    set(CC_LINK_LIBS ${CC_LINK_LIBS} wininet winmm ws2_32)
 
     if (MSVC)
         FetchContent_Declare(
@@ -85,10 +102,24 @@ if (WIN32)
         )
         FetchContent_MakeAvailable(pthreads)
         target_include_directories(${CC_LIB_NAME} PRIVATE ${pthreads_SOURCE_DIR})
-        target_link_libraries(${CC_LIB_NAME} pthreadVC3)
-    else()
-        target_link_libraries(${CC_LIB_NAME} pthread)
-    endif()
+        set(CC_LINK_LIBS ${CC_LINK_LIBS} pthreadVC3)
+    else ()
+        if (CMAKE_C_COMPILER_ID STREQUAL "Clang" AND CMAKE_C_COMPILER_FRONTEND_VARIANT STREQUAL "GNU")
+            execute_process(
+                COMMAND ${CMAKE_C_COMPILER} --print-file-name=libwinpthread.a
+                OUTPUT_VARIABLE WINPTHREAD_STATIC
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+            )
+
+            if (EXISTS "${WINPTHREAD_STATIC}")
+                set(CC_LINK_LIBS ${CC_LINK_LIBS} "${WINPTHREAD_STATIC}")
+            else ()
+                set(CC_LINK_LIBS ${CC_LINK_LIBS} pthread)
+            endif ()
+        else ()
+            set(CC_LINK_LIBS ${CC_LINK_LIBS} pthread)
+        endif ()
+    endif ()
 
     # add /fsanitize=address to the compiler flags
     # if (SANITIZE_ADDRESS)
@@ -105,17 +136,10 @@ if (VRX_REMOVERESPAWNS)
     add_definitions(-DREMOVE_RESPAWNS)
 endif ()
 
-if (NOT VRX_USE_MYSQL)
-    add_definitions(-DNO_GDS)
-endif ()
-
 if (VRX_OLD_NOLAG)
     add_definitions(-DOLD_NOLAG_STYLE)
 endif ()
 
-if (VRX_OLD_VOTE)
-    add_definitions(-DOLD_VOTE_SYSTEM)
-endif ()
 
 if (VRX_USEHASH)
     add_definitions(-DCMD_USEHASH)
@@ -133,29 +157,55 @@ if (VRX_LOCKDEFAULTS)
     add_definitions(-DLOCK_DEFAULTS)
 endif ()
 
+if (VRX_REPRO)
+    add_definitions(-DVRX_REPRO)
+endif ()
+
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(MSGPACK_ENABLE_SHARED OFF CACHE BOOL "" FORCE)
+set(MSGPACK_ENABLE_STATIC ON CACHE BOOL "" FORCE)
+set(MSGPACK_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(MSGPACK_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+
 FetchContent_Declare(
-    MsgPack
-    GIT_REPOSITORY https://github.com/msgpack/msgpack-c/
-    GIT_TAG c_master
+        MsgPack
+        GIT_REPOSITORY https://github.com/msgpack/msgpack-c/
+        GIT_TAG c_master
 )
 
 FetchContent_MakeAvailable(MsgPack)
 
 set(CC_LINK_LIBS ${CC_LINK_LIBS} msgpack-c)
-target_include_directories(${CC_LIB_NAME} PRIVATE ${msgpack_SOURCE_DIR}/include ${msgpack_BINARY_DIR}/include/msgpack ${msgpack_BINARY_DIR}/include )
+target_include_directories(${CC_LIB_NAME} PRIVATE
+    ${msgpack_SOURCE_DIR}/include
+    ${msgpack_BINARY_DIR}/include/msgpack
+    ${msgpack_BINARY_DIR}/include
+)
+
 target_link_libraries(${CC_LIB_NAME} ${CC_LINK_LIBS})
 
-include (TestBigEndian)
-TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
-if(IS_BIG_ENDIAN)
-    target_compile_definitions(${CC_LIB_NAME} PRIVATE BIG_ENDIAN)
-else()
-    target_compile_definitions(${CC_LIB_NAME} PRIVATE LITTLE_ENDIAN)
+if (BUILD_TESTS)
+    target_include_directories(vrxtestdriver PRIVATE
+            ${msgpack_SOURCE_DIR}/include
+            ${msgpack_BINARY_DIR}/include/msgpack
+            ${msgpack_BINARY_DIR}/include
+    )
+
+    target_link_libraries(vrxtestdriver ${CC_LINK_LIBS})
 endif()
 
-# If host is Unix-like, remove "lib" prefix from the library's file name
-if (UNIX)
-    add_custom_command(TARGET ${CC_LIB_NAME} POST_BUILD COMMAND mv lib${CC_LIB_NAME}.so ${CC_LIB_NAME}.so)
+include(TestBigEndian)
+TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
+if (IS_BIG_ENDIAN)
+    target_compile_definitions(${CC_LIB_NAME} PRIVATE BIG_ENDIAN)
 else ()
-    # add_custom_command (TARGET ${CC_LIB_NAME} POST_BUILD COMMAND copy lib${CC_LIB_NAME}.dll ${CC_LIB_NAME}.dll)
+    target_compile_definitions(${CC_LIB_NAME} PRIVATE LITTLE_ENDIAN)
+endif ()
+
+if (BUILD_TESTS)
+    if (IS_BIG_ENDIAN)
+        target_compile_definitions(vrxtestdriver PRIVATE BIG_ENDIAN)
+    else ()
+        target_compile_definitions(vrxtestdriver PRIVATE LITTLE_ENDIAN)
+    endif()
 endif ()

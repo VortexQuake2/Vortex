@@ -12,13 +12,13 @@
 // ===  CVARS  ===
 cvar_t *savemethod;
 
-int CountAbilities(edict_t *player)
+int CountAbilities(struct skills_s *player)
 {
 	int i;
 	int count = 0;
 	for (i = 0; i < MAX_ABILITIES; ++i)
 	{
-		if (!player->myskills.abilities[i].disable)
+		if (!player->abilities[i].disable)
 			++count;
 	}
 	return count;
@@ -85,7 +85,7 @@ int CountRunes(edict_t *player)
 
 	for (i = 0; i < MAX_VRXITEMS; ++i)
 	{
-		if (player->myskills.items[i].itemtype != ITEM_NONE)
+		if (player->client->resp.pstats.items[i].itemtype != ITEM_NONE)
 			++count;
 	}
 	return count;
@@ -100,7 +100,7 @@ int FindRuneIndex(int index, edict_t *player)
 
 	for (i = 0; i < MAX_VRXITEMS; ++i)
 	{
-		if (player->myskills.items[i].itemtype != ITEM_NONE)
+		if (player->client->resp.pstats.items[i].itemtype != ITEM_NONE)
 		{
 			++count;
 			if (count == index)
@@ -157,7 +157,7 @@ void CreateDirIfNotExists(char *path)
 		}else
 			gi.dprintf("Created directory %s.\n", path);
 #else
-		mkdir(path, S_IWUSR);
+		mkdir(path, S_IRWXU);
 #endif
 	}
 }

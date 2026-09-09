@@ -40,7 +40,7 @@ edict_t* vrx_inv_get_monster_spawn(edict_t* from);
 // Drone Lists -az
 
 /* The purpose of this is to decrease those silly G_Find calls for drones by chaining them together. */
-edict_t *DroneList[1024];
+edict_t *DroneList[MAX_EDICTS];
 int DroneCount = 0;
 
 void DroneList_Clear()
@@ -94,7 +94,7 @@ void DroneList_Remove(edict_t *ent)
 {
 	// is monster index within valid range of list?
 	if (ent->monsterinfo.dronelist_index >= 0 && ent->monsterinfo.dronelist_index < DroneCount) {
-        int index = ent->monsterinfo.dronelist_index;
+        const int index = ent->monsterinfo.dronelist_index;
 		// have we found this monster within the drone list?
 	    if (DroneList[index] == ent) { // follows the same logic as player spawn list
 	        DroneCount--; // reduce the count, and hence, the length of the list, by 1
@@ -174,7 +174,7 @@ void DroneList_Print(edict_t* ent, edict_t *owner)
 
 float drone_damagelevel(const edict_t* ent)
 {
-	int level = ent->monsterinfo.level;
+	const int level = ent->monsterinfo.level;
 
 	// player monsters don't get softcapped
 	if (G_GetClient(ent)) 
@@ -372,6 +372,9 @@ void drone_ai_checkattack (edict_t *self)
 		return;
 	if (!G_EntExists(self->enemy))
 		return; // enemy is invalid or a combat point
+
+	if (level.time < self->monsterinfo.pausetime)
+		return; // az: let them not attack riiiiiiiight away
 
 	//if (self->monsterinfo.aiflags & AI_COMBAT_POINT)
 	//	return; // we're busy reaching a combat point
@@ -728,7 +731,7 @@ void drone_grow (edict_t *self)
 	self->nextthink = level.time + 0.1;
 }
 
-void vrx_roll_to_make_champion(edict_t *drone, int *drone_type)
+void vrx_roll_to_make_champion(edict_t *drone, enum dronespawn_t *drone_type)
 {
 	if ((ffa->value || invasion->value == 2 || (pvm->value && !invasion->value)) && drone->monsterinfo.level >= 10 && GetRandom(1, 100) <= 10)//10% chance for a champion to spawn
 	{
@@ -737,7 +740,7 @@ void vrx_roll_to_make_champion(edict_t *drone, int *drone_type)
 		if ( (!invasion->value && GetRandom(1, 100) <= 33) // 33% chance to spawn a special champion
 			|| (invasion->value == 2 && GetRandom(1, 100) <= 5) )  // 5% chance in invasion.
 		{
-			int r = GetRandom(1, 7);
+			const int r = GetRandom(1, 7);
 
 			switch (r)
 			{
@@ -754,7 +757,256 @@ void vrx_roll_to_make_champion(edict_t *drone, int *drone_type)
 	}
 }
 
-edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type, qboolean worldspawn, qboolean link_now, int bonus_level)
+static double random_normal(const double mean, const double stddev)
+{
+	const double u1 = random();
+	const double u2 = random();
+
+	const double z =
+		sqrt(-2.0 * log(u1)) *
+		cos(2.0 * M_PI * u2);
+
+	return mean + z * stddev;
+}
+
+void ring_sample(vec3_t center, const vec_t radius, const float thickness, vec3_t out) {
+	const float angle = random() * 2.0f * M_PI;
+	vec3_t offset;
+
+	offset[0] = cosf(angle) * radius + random_normal(0.0f, thickness);
+	offset[1] = sinf(angle) * radius + random_normal(0.0f, thickness);
+	offset[2] = 0.0f;
+
+	const vec3_t new_pos = {
+		center[0] + offset[0],
+		center[1] + offset[1],
+		center[2] + offset[2]
+	};
+
+	VectorCopy(new_pos, out);
+}
+
+constexpr float AGGRESSION = 0.8f;
+// constexpr float
+
+struct ring_params_t {
+	vec3_t ring_center;
+	float ring_radius;
+	float ring_thickness;
+
+	vec3_t inner_circle_center;
+	float inner_circle_radius;
+	float inner_circle_chance;
+};
+
+// 0 => left, 1 => right
+float mix(float val, float left, float right) {
+	return left * (1.0f - val) + right * val;
+}
+
+struct ring_params_t weigh_ring_center() {
+	float total_score = 0.0f;
+	edict_t* pl;
+	int i;
+	float pl_count = (float)vrx_get_joined_players(false);
+
+	for_each_player(pl, i) {
+		if (pl->ai) // no bots
+			continue;
+
+		if (G_IsSpectator(pl))
+			continue;
+
+		total_score += pl->client->pers.score;
+	}
+
+	const float average_score = max(total_score / pl_count, 1.0f);
+	float variance = 0;
+
+	for_each_player(pl, i) {
+		if (pl->ai) // no bots
+			continue;
+
+		if (G_IsSpectator(pl))
+			continue;
+
+		variance += powf(pl->client->pers.score - average_score, 2);
+	}
+
+	variance /= pl_count;
+
+	const float stdev = sqrtf(variance);
+	const float relative_dispersion =
+		stdev / max(fabsf(average_score), 1.0f);
+	const float centrality = 1.0f - expf(-relative_dispersion);
+
+
+	vec3_t pl_center = {};
+	for_each_player(pl, i) {
+		if (pl->ai) continue;
+		if (G_IsSpectator(pl)) continue;
+
+		VectorAdd(pl_center, pl->s.origin, pl_center);
+	}
+	VectorScale(pl_center, 1.0f / pl_count, pl_center);
+
+	// now we weight each player by how little score they have
+	vec3_t weighed_center = {};
+	float total_weight = 0;
+	for_each_player(pl, i) {
+		if (pl->ai) continue;
+		if (G_IsSpectator(pl)) continue;
+
+		const float strength = pl->client->pers.score - average_score;
+		const float lin_weight = (strength / average_score);
+		const float pl_score_weight = expf(-AGGRESSION * lin_weight);
+
+		VectorMA(weighed_center, pl_score_weight, pl->s.origin, weighed_center);
+		total_weight += pl_score_weight;
+	}
+	VectorScale(weighed_center, 1.0f / total_weight, weighed_center);
+
+	// now weighed_center has our center of mass
+	// but depending on our centrality, we want a thicker, closer circle
+	// if a player is too dominant, and a wider circle if it is more random.
+	float avg_distance_to_center_of_mass = 0;
+	for_each_player(pl, i) {
+		if (pl->ai) continue;
+		if (G_IsSpectator(pl)) continue;
+
+		const float distance_to_center_of_mass = distance(pl->s.origin, weighed_center);
+		avg_distance_to_center_of_mass += distance_to_center_of_mass;
+	}
+	avg_distance_to_center_of_mass /= pl_count;
+
+	// we want the inner ring to grow up to 256 units from the players.
+	// we know for a fact that all players are equidistant to pl_center so
+	// just find the distance to pl_center from any player.
+	float distance_to_pl_center = -256;
+	for_each_player(pl, i) {
+		if (pl->ai) continue;
+		if (G_IsSpectator(pl)) continue;
+
+		distance_to_pl_center += distance(pl->s.origin, pl_center);
+		break;
+	}
+
+	// the inner circle only gains probability as
+	 auto par = (struct ring_params_t) {
+	 	// spread it out if we're well distributed
+		.ring_radius = mix(centrality, 1024, avg_distance_to_center_of_mass) + 384.0f,
+
+	 	// don't grow too much maybe
+		.ring_thickness = mix(centrality, 128.0f, min(avg_distance_to_center_of_mass * 0.2f, 256.0f)),
+
+	 	// if negative, clamp
+	 	.inner_circle_radius = max(distance_to_pl_center, 0),
+
+	 	// now if things are well distributed, we want to grow the inner circle
+	 	// otherwise we keep it to the ring around the player
+	 	.inner_circle_chance = distance_to_pl_center > 0 ? centrality : 0
+	};
+
+	VectorCopy(weighed_center, par.ring_center);
+	VectorCopy(pl_center, par.inner_circle_center);
+
+	return par;
+}
+
+void circle_area_sample(vec3_t center, float radius, vec3_t out) {
+	const float sampler = random();
+	const float angle = sampler * 2 * M_PI;
+	const float x = cosf(angle);
+	const float y = sinf(angle);
+	vec3_t offset = {
+		x,	y, 0
+	};
+
+	VectorScale(offset, radius * sqrt(random()), offset);
+
+	VectorCopy(center, out);
+	VectorAdd(out, offset, out);
+}
+
+void sample_spawn_area(struct ring_params_t par, vec3_t out) {
+	const float sampler = random();
+	const float vunits = 256.0f * (random() - 0.5f) * 2;
+
+	if (par.inner_circle_chance > sampler)
+	{
+		circle_area_sample(par.inner_circle_center, par.inner_circle_radius, out);
+
+		// 512 units around the weighed ring center
+		out[2] = vunits + par.inner_circle_center[2];
+		return;
+	}
+
+	ring_sample(par.ring_center, par.ring_radius, par.ring_thickness, out);
+
+	// 512 units around the weighed ring center
+	out[2] = vunits + par.ring_center[2];
+}
+
+qboolean vrx_find_monster_spawn_point (edict_t *ent, qboolean air)
+{
+	const int max_tries=1000;
+	int grd_nodes = vrx_pf_get_node_count();
+	vec3_t	start, sample;
+
+	//gi.dprintf("vrx_find_random_spawn_point()\n");
+
+	if (grd_nodes > 0.5*max_tries)
+		grd_nodes = 0.5*max_tries;
+
+	constexpr int mask = (MASK_MONSTERSOLID|MASK_PLAYERSOLID|MASK_SOLID);
+
+	const auto par = weigh_ring_center();
+
+	for (int j=0;j<max_tries;j++)
+	{
+		sample_spawn_area(par, sample);
+
+		if (!vrx_pf_nearest_node_location(sample, start, -1, false))
+			continue;
+
+		start[2] += 0.25f;
+
+		// check our final position. node points are allegedly always valid
+		const trace_t tr = gi.trace(start, ent->mins, ent->maxs, start, NULL, mask);
+
+		if (tr.startsolid || tr.allsolid || tr.fraction != 1.0)
+			continue;
+		if (tr.contents & mask)
+			continue;
+
+		// az: Hey cool, the position is good to go. Let's check that it's not behind any players.
+		edict_t* cl;
+		int i;
+		for_each_player(cl, i)
+		{
+			vec3_t cl_forward;
+			vec3_t r_vec;
+
+			AngleVectors(cl->client->ps.viewangles, cl_forward, NULL, NULL);
+			VectorSubtract(cl->s.origin, start, r_vec);
+			VectorNormalize(r_vec);
+			if (DotProduct(r_vec, cl_forward) >= 0 && visible(ent, cl))
+				goto retry;
+		}
+
+
+		VectorCopy(start, ent->s.origin);
+		VectorCopy(start, ent->s.old_origin);
+		gi.linkentity(ent);
+		return true;
+
+		retry:
+	}
+
+	return false;
+}
+
+edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, enum dronespawn_t drone_type, qboolean worldspawn, qboolean link_now, int bonus_level)
 {
 	vec3_t		forward, right, start, end, offset;
 	trace_t		tr;
@@ -828,36 +1080,38 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	drone->monsterinfo.control_cost = M_DEFAULT_CONTROL_COST;
 	drone->monsterinfo.cost = M_DEFAULT_COST;
 	drone->monsterinfo.sight_range = 1024; // 3.56 default sight range for finding targets
+	drone->monsterinfo.frametimer = level.framenum;
 	drone->inuse = true;
 
 	switch(drone_type) // not to be confused with mtype!
 	{
 	// normal monsters
-	case 1: init_drone_gunner(drone);		break;
-	case 2: init_drone_parasite(drone);		break;
-	case 3: init_drone_bitch(drone);		break;
-	case 4: init_drone_brain(drone);		break;
-	case 5: init_drone_medic(drone);		break;
-	case 6: init_drone_tank(drone);			break;
-	case 7: init_drone_mutant(drone);		break;
-	case 8: init_drone_gladiator(drone);	break;
-	case 9: init_drone_berserk(drone);		break;
-	case 10: init_drone_soldier(drone);		break;
-	case 11: init_drone_infantry(drone);	break;
-	case 12: init_drone_flyer(drone);		break;
-	case 13: init_drone_floater(drone);		break;
-	case 14: init_drone_hover(drone);		break;
-	case 15: init_drone_shambler(drone);	break;
-	case 20: init_drone_decoy(drone);		break;
-	case 21: init_skeleton(drone);			break;
-	case 22: init_golem(drone);				break;
+	case DS_GUNNER: init_drone_gunner(drone);		break;
+	case DS_PARASITE: init_drone_parasite(drone);		break;
+	case DS_BITCH: init_drone_bitch(drone);		break;
+	case DS_BRAIN: init_drone_brain(drone);		break;
+	case DS_MEDIC: init_drone_medic(drone);		break;
+	case DS_TANK: init_drone_tank(drone);			break;
+	case DS_MUTANT: init_drone_mutant(drone);		break;
+	case DS_GLADIATOR: init_drone_gladiator(drone);	break;
+	case DS_BERSERK: init_drone_berserk(drone);		break;
+	case DS_SOLDIER: init_drone_soldier(drone);		break;
+	case DS_INFANTRY: init_drone_infantry(drone);	break;
+	case DS_FLYER: init_drone_flyer(drone);		break;
+	case DS_FLOATER: init_drone_floater(drone);		break;
+	case DS_HOVER: init_drone_hover(drone);		break;
+	case DS_SHAMBLER: init_drone_shambler(drone);	break;
+	case DS_DECOY: init_drone_decoy(drone);		break;
+	case DS_SKELETON: init_skeleton(drone);			break;
+	case DS_GOLEM: init_golem(drone);				break;
 
 	// bosses
-	case 30: init_drone_commander(drone);	break;
-	case 31: init_drone_makron(drone);		break;
-	case 32: init_baron_fire(drone);		break;
-	case 33: init_drone_supertank(drone);	break;
-	case 34: init_drone_jorg(drone);		break;
+	case DS_COMMANDER: init_drone_commander(drone);	break;
+	case DS_MAKRON: init_drone_makron(drone);		break;
+	case DS_BARON_FIRE: init_baron_fire(drone);		break;
+	case DS_SUPERTANK: init_drone_supertank(drone);	break;
+	case DS_JORG: init_drone_jorg(drone);		break;
+
 	// default
 	default: init_drone_gunner(drone);		break;
 	}
@@ -916,7 +1170,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 		// non-invasion mode monsters or bosses are spawned randomly throughout the map
 		if (!INVASION_OTHERSPAWNS_REMOVED || drone_type >= 30) // only use designated spawns in invasion mode
 		{
-			if (link_now && drone->mtype != M_JORG && !vrx_find_random_spawn_point(drone, false))
+			if (link_now && drone->mtype != M_JORG && !vrx_find_monster_spawn_point(drone, false))
 			{
 				//gi.dprintf("vrx_create_drone_from_ent couldn't find a valid spawn point\n");
 				G_FreeEdict(drone);
@@ -925,7 +1179,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 
 			// gives players some time to react to newly spawned monsters
 			//drone->nextthink = level.time + 1 + random();
-			drone->monsterinfo.pausetime = level.time + 1.0;
+			drone->monsterinfo.pausetime = level.time + 2.0;
 			// az: remove invuln. in non-invasion
 			// drone->monsterinfo.inv_framenum = level.framenum + (int)(1 / FRAMETIME);
 
@@ -1037,7 +1291,7 @@ edict_t *vrx_create_drone_from_ent(edict_t *drone, edict_t *ent, int drone_type,
 	return drone;
 }
 
-edict_t *vrx_create_new_drone(edict_t *ent, int drone_type, qboolean worldspawn, qboolean link_now, int bonus_level)
+edict_t *vrx_create_new_drone(edict_t *ent, enum dronespawn_t drone_type, qboolean worldspawn, qboolean link_now, int bonus_level)
 {
 	return vrx_create_drone_from_ent(G_Spawn(), ent, drone_type, worldspawn, link_now, bonus_level);
 }
@@ -1168,10 +1422,12 @@ edict_t *SpawnCombatPoint (edict_t *ent, vec3_t org)
 void DroneBlink (edict_t *ent)
 {
 	int	i;
+	if (!ent->client)
+		return;
 
 	for (i=0; i<4; i++) {
-		if (G_EntIsAlive(ent->selected[i]))
-			ent->selected[i]->monsterinfo.selected_time = level.time + MONSTER_BLINK_DURATION;
+		if (G_EntIsAlive(ent->client->selected[i]))
+			ent->client->selected[i]->monsterinfo.selected_time = level.time + MONSTER_BLINK_DURATION;
 	}
 }
 
@@ -1213,12 +1469,12 @@ void DroneRemoveSelected (edict_t *ent, edict_t *drone)
 		if (drone)
 		{
 			// if this monster was previously selected, remove it from the list
-			if (drone == ent->selected[i])
-				ent->selected[i] = NULL;
+			if (drone == ent->client->selected[i])
+				ent->client->selected[i] = NULL;
 		}
 		else
 			// remove all monsters from the list
-			ent->selected[i] = NULL;
+			ent->client->selected[i] = NULL;
 	}
 
 }
@@ -1237,8 +1493,8 @@ edict_t **DroneAlreadySelected (edict_t *ent, edict_t *drone)
 	for (i=0; i<4; i++)
 	{
 		// is this drone already selected?
-		if (drone == ent->selected[i])
-			return &ent->selected[i];
+		if (drone == ent->client->selected[i])
+			return &ent->client->selected[i];
 	}
 
 	return NULL;
@@ -1251,50 +1507,14 @@ edict_t **GetFreeSelectSlot (edict_t *ent)
 	for (i=0; i<4; i++)
 	{
 		// is this slot available?
-		if (!G_EntIsAlive(ent->selected[i]) // freed or not alive
-			|| !ValidCommandMonster(ent, ent->selected[i])) // not a monster that we own!
-			return &ent->selected[i];
+		if (!G_EntIsAlive(ent->client->selected[i]) // freed or not alive
+			|| !ValidCommandMonster(ent, ent->client->selected[i])) // not a monster that we own!
+			return &ent->client->selected[i];
 	}
 
 	return NULL;
 }
 
-void DroneSelect (edict_t *ent)
-{
-	edict_t *drone;
-	edict_t **slot;
-
-	// are we pointing at a drone of ours?
-	if ((drone = SelectDrone(ent)) != NULL)
-	{
-		if ((slot = DroneAlreadySelected(ent, drone)) != NULL)
-		{
-			safe_centerprintf(ent, "Drone standing down.\n");
-			*slot = NULL;
-			drone->monsterinfo.selected_time = 0;
-			DroneBlink(ent); // all selected monsters blink
-			return;
-		}
-
-		if ((slot = GetFreeSelectSlot(ent)) != NULL)
-		{
-			safe_centerprintf(ent, "Drone awaiting orders.\n");
-			*slot = drone;
-			DroneBlink(ent); // all selected monsters blink
-			return;
-		}
-
-		// the queue is full, so bump one of our already selected monsters
-		safe_centerprintf(ent, "Drone awaiting orders.\n");
-		ent->selected[0] = drone;
-		DroneBlink(ent);
-	}
-	else
-	{
-		safe_cprintf(ent, PRINT_HIGH, "You must be looking at a monster to select it.\n");
-		safe_cprintf(ent, PRINT_HIGH, "Once selected, you can give a monster orders.\n");
-	}
-}
 
 static edict_t *FindMoveTarget (edict_t *ent)
 {
@@ -1314,7 +1534,7 @@ static edict_t *FindMoveTarget (edict_t *ent)
 		for (i=0; i<4; i++)
 		{
 			// is this a selected drone?
-			if (e == ent->selected[i])
+			if (e == ent->client->selected[i])
 			{
 				q = true;
 				break;
@@ -1335,74 +1555,6 @@ static edict_t *FindMoveTarget (edict_t *ent)
 	return NULL;
 }
 
-void DroneMove (edict_t *ent)
-{
-	int		i;
-	vec3_t	forward, right, start, end, offset;
-	trace_t	tr;
-	edict_t *e, *target;
-
-	// are we pointing at someone?
-	if ((target = FindMoveTarget(ent)) != NULL)
-	{
-		if (OnSameTeam(target, ent))
-		{
-			if (target->client)
-				safe_centerprintf(ent, "Drones will follow %s.\n", target->client->pers.netname);
-			else
-				safe_centerprintf(ent, "Drones will follow target.\n");
-			for (i=0; i<4; i++) {
-				if (G_EntIsAlive(ent->selected[i])
-					&& !(ent->selected[i]->spawnflags & AI_STAND_GROUND))
-				{
-					ent->selected[i]->enemy = target;
-					ent->selected[i]->monsterinfo.aiflags |= (AI_NO_CIRCLE_STRAFE|AI_COMBAT_POINT);
-				}
-			}
-		}
-		else
-		{
-			if (target->client)
-				safe_centerprintf(ent, "Drones will attack %s.\n", target->client->pers.netname);
-			else
-				safe_centerprintf(ent, "Drones will attack target.\n");
-			for (i=0; i<4; i++) {
-				if (G_EntIsAlive(ent->selected[i])
-					&& !(ent->selected[i]->spawnflags & AI_STAND_GROUND))
-					ent->selected[i]->enemy = target;
-			}
-		}
-		ent->selectedsentry = NULL; // we no longer need any combat point
-		return;
-	}
-
-	// get muzzle origin
-	AngleVectors (ent->client->v_angle, forward, right, NULL);
-	VectorSet(offset, 0, 7,  ent->viewheight-8);
-	P_ProjectSource(ent->client, ent->s.origin, offset, forward, right, start);
-
-	// trace
-	VectorMA(start, 8192, forward, end);
-	tr = gi.trace(start, NULL, NULL, end, ent, MASK_SHOT);
-
-	// we're pointing at a spot
-	if (ent->selectedsentry)
-	{
-		ent->selectedsentry = NULL; // reset the combat point
-		return;
-	}
-
-	safe_centerprintf(ent, "Drones changing position.\n");
-	e = SpawnCombatPoint(ent, tr.endpos);
-	ent->selectedsentry = e;
-	for (i=0; i<4; i++) {
-		if (G_EntIsAlive(ent->selected[i]))
-		{
-			ent->selected[i]->monsterinfo.aiflags |= (AI_NO_CIRCLE_STRAFE|AI_COMBAT_POINT);
-			ent->selected[i]->enemy = e;
-		}
-	}
-}
 
 /*
 =============
@@ -1446,7 +1598,7 @@ qboolean infov (edict_t *self, edict_t *other, int degrees)
 
 // return a random double in [0.0, 1.0)
 double randfrac(void) {
-	double res = (rand() % RAND_MAX) / (double)RAND_MAX;
+	const double res = (rand() % RAND_MAX) / (double)RAND_MAX;
 	return res;
 }
 
@@ -1732,7 +1884,7 @@ qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, q
 		// heal them if they are weakened
 		if (self->health < max_health)
 		{
-			int health_needed = max_health - self->health;
+			const int health_needed = max_health - self->health;
 			if (health > health_needed)
 				health = health_needed;
 			self->health += health;
@@ -1814,8 +1966,8 @@ qboolean M_Regenerate (edict_t *self, int regen_frames, int delay, float mult, q
 	{
 		if (self->client)
 		{
-			int ammoIndex = G_GetAmmoIndexByWeaponIndex(G_GetRespawnWeaponIndex(self));
-			int maxAmmo = MaxAmmoType(self, ammoIndex) * mult;
+			const int ammoIndex = G_GetAmmoIndexByWeaponIndex(G_GetRespawnWeaponIndex(self));
+			const int maxAmmo = MaxAmmoType(self, ammoIndex) * mult;
 
 			if (AmmoLevel(self, ammoIndex) < mult)
 			{
@@ -1905,6 +2057,9 @@ void M_Remove (edict_t *self, qboolean refund, qboolean effect)
 
 		if (self->activator->num_monsters_real < 0)
 			self->activator->num_monsters_real = 0;
+
+		if (refund)
+			vrx_inv_monster_refund(self->mtype);
 
 		// mark the player slots as being refunded, so it can't happen again
 		self->monsterinfo.slots_freed = true;
@@ -2259,7 +2414,7 @@ void DroneAttack (edict_t *ent, edict_t *other)
 
 	for (i = 0; i < 4; i++)
 	{
-		e = ent->selected[i];
+		e = ent->client->selected[i];
 		if (G_EntIsAlive(e) && ValidCommandMonster(ent, e) && visible(ent, e))
 		{
 			e->enemy = other;
@@ -2280,7 +2435,7 @@ void DroneFollow (edict_t *ent, edict_t *other)
 
 	for (i = 0; i < 4; i++)
 	{
-		e = ent->selected[i];
+		e = ent->client->selected[i];
 		if (G_EntIsAlive(e) && ValidCommandMonster(ent, e) && visible(ent, e))
 		{
 			e->monsterinfo.aiflags |= AI_NO_CIRCLE_STRAFE;
@@ -2304,7 +2459,7 @@ int numDroneLinks (edict_t *self)
 	for (i = numLinks = 0; i < 4; i++)
 	{
 		// we iterate through each monster/drone that the client has selected
-		e = self->activator->selected[i];
+		e = self->activator->client->selected[i];
 		// monster/drone must be alive
 		if (!G_EntIsAlive(e))
 			continue;
@@ -2393,7 +2548,7 @@ void DroneMovePosition (edict_t *ent, vec3_t pos)
 	// search selected monsters
 	for (i = 0; i < 4; i++)
 	{
-		e = ent->selected[i];
+		e = ent->client->selected[i];
 
 		// is this a valid monster in visible range?
 		if (G_EntIsAlive(e) && ValidCommandMonster(ent, e) && visible(ent, e))
@@ -2599,7 +2754,7 @@ void MonsterFollowMe (edict_t *ent)
 	// search selected monsters
 	for (i = 0; i < 3; i++)
 	{
-		e = ent->selected[i];
+		e = ent->client->selected[i];
 
 		// is this a valid monster in visible range?
 		if (G_EntIsAlive(e) && ValidCommandMonster(ent, e) && visible(ent, e))
@@ -2648,7 +2803,7 @@ void MonsterAttack (edict_t *ent)
 	// search queue for drones
 	for (i=0; i<3; i++)
 	{
-		e = ent->selected[i];
+		e = ent->client->selected[i];
 		// is this a live, visible monster that we own?
 		if (G_EntIsAlive(e) && ValidCommandMonster(ent, e) && visible(ent, e))
 		{
@@ -2863,7 +3018,7 @@ void M_DelayNextAttack(edict_t* self, float delay, qboolean add_attack_frames)
 	if (add_attack_frames)
 	{
 		int startframe;
-		mmove_t* move = self->monsterinfo.currentmove;
+		const mmove_t* move = self->monsterinfo.currentmove;
 
 		// if we haven't begun this move yet or we are at the tail-end of
 		// an attack (re-attack) then start at the first frame

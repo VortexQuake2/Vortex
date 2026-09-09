@@ -9,7 +9,7 @@ int vrx_get_player_count() {
 
 		if (!player->inuse)
 			continue;
-		if (player->ai.is_bot)
+		if (player->ai)
 			continue;
 
 		clients++;
@@ -32,7 +32,7 @@ int vrx_get_joined_players(qboolean include_bots) {
 			continue;
 		if (G_IsSpectator(player))
 			continue;
-		if (!include_bots && player->ai.is_bot)
+		if (!include_bots && player->ai)
 			continue;
 
 		clients++;
@@ -59,7 +59,7 @@ int vrx_get_alive_players(void) {
 			continue;
 		if (!G_EntIsAlive(player))
 			continue;
-		if (player->ai.is_bot)
+		if (player->ai)
 			continue;
 
 		clients++;
@@ -118,7 +118,7 @@ int AveragePlayerLevel(void) {
 		if (player->myskills.boss)
 			continue;
 
-		//if (player->ai.is_bot) // az: heheh
+		//if (player->ai) // az: heheh
 		//	continue;
 
 		players++;
@@ -283,7 +283,7 @@ void vrx_pvm_try_spawn_boss(edict_t* self, int players)
 
 //qboolean SpawnWorldMonster(edict_t *ent, int mtype);
 void vrx_pvm_spawn_world_monsters(edict_t* self) {
-	int players = vrx_get_joined_players(true);
+	const int players = vrx_get_joined_players(true);
 	total_monsters = vrx_pvm_update_total_owned_monsters(self, false);
 
 	// dm_monsters cvar sets the default number of monsters in a given map
@@ -291,13 +291,13 @@ void vrx_pvm_spawn_world_monsters(edict_t* self) {
 	if (level.r_monsters <= 0)
 		max_monsters = dm_monsters->value;
 
-	int threshold = 0.66f * max_monsters;
-	int levelup_threshold = 0.4f * max_monsters;
+	const int threshold = 0.66f * max_monsters;
+	const int levelup_threshold = 0.4f * max_monsters;
 
 
 
 	if (level.time > self->delay) {
-		int total_monsters = vrx_pvm_update_total_owned_monsters(self, true);
+		const int total_monsters = vrx_pvm_update_total_owned_monsters(self, true);
 		// adjust spawning delay based on efficiency of player monster kills
 		if (total_monsters < max_monsters) {
 			// if a minimum of monsters has been killed consider scaling monsters up
@@ -359,7 +359,7 @@ void vrx_pvm_spawn_world_monsters(edict_t* self) {
 void SpawnRandomBoss(edict_t* self) {
 	// 3% chance for a boss to spawn a boss if there isn't already one spawned
 	if (!SPREE_WAR && vrx_get_alive_players() >= 8 && self->num_sentries < 1) {
-		int chance = GetRandom(1, 100);
+		const int chance = GetRandom(1, 100);
 
 		if ((chance >= 97) && vrx_create_new_drone(self, GetRandom(30, 31), true, true, 0)) {
 			//gi.dprintf("Spawning a boss monster (chance = %d) at %.1f. Waiting 300 seconds to try again.\n",
@@ -545,17 +545,16 @@ void vrx_remove_player_summonables(edict_t* self) {
 		}
 	}
 	// remove everything else
-	if (self->lasersight) {
-		G_FreeEdict(self->lasersight);
-		self->lasersight = NULL;
+	if (self->client && self->client->lasersight) {
+		G_FreeEdict(self->client->lasersight);
+		self->client->lasersight = NULL;
 	}
-	if (self->flashlight) {
-		G_FreeEdict(self->flashlight);
-		self->flashlight = NULL;
+	if (FL_exists(self)) {
+		FL_toggle(self);
 	}
 
-	if (self->supplystation) {
-		depot_remove(self->supplystation, self, true);
+	if (self->client && self->client->supplystation) {
+		depot_remove(self->client->supplystation, self, true);
 	}
 	if (self->skull && !RestorePreviousOwner(self->skull)) {
 		//BecomeExplosion1(self->skull);
@@ -745,7 +744,7 @@ void ThrowShrapnel(edict_t* self, char* modelname, float speed, vec3_t origin, i
 	chunk->die = shrapnel_die;
 	chunk->touch = shrapnel_touch;
 	chunk->style = mod; // means-of-death
-	if (cl = G_GetClient(self))
+	if ((cl = G_GetClient(self)))
 		chunk->creator = cl; // owner-creator of shrapnel
 	else
 		chunk->creator = self;
@@ -781,7 +780,7 @@ void ThrowDeadlyGib(edict_t* self, char* modelname, vec3_t origin, vec3_t dir, i
 	gib->takedamage = DAMAGE_YES;
 	gib->dmg = dmg;
 	gib->style = mod;
-	if (cl = G_GetClient(self))
+	if ((cl = G_GetClient(self)))
 		gib->creator = cl; // owner-creator of shrapnel
 	else
 		gib->creator = self;
@@ -792,7 +791,7 @@ void ThrowDeadlyGib(edict_t* self, char* modelname, vec3_t origin, vec3_t dir, i
 	else
 		gib->movetype = MOVETYPE_BOUNCE;
 	VectorScale(dir, speed, gib->velocity);
-	if (!self->ai.is_bot && !self->lockon)//GHz: don't boost vertical velocity for bots as it will affect ballistic calculations (i.e. finding the right pitch to hit the target)
+	if (!self->ai && !self->lockon)//GHz: don't boost vertical velocity for bots as it will affect ballistic calculations (i.e. finding the right pitch to hit the target)
 		gib->velocity[2] += 150;
 	gib->avelocity[0] = random() * 600;
 	gib->avelocity[1] = random() * 600;
@@ -806,7 +805,7 @@ void ThrowDeadlyGib(edict_t* self, char* modelname, vec3_t origin, vec3_t dir, i
 void projectOntoWall(vec3_t lookDir, vec3_t wallNormal, vec3_t parallelVector) {
 	vec3_t projectionOntoNormal;
 	// Calculate dot product L � N
-	float dot = DotProduct(lookDir, wallNormal);
+	const float dot = DotProduct(lookDir, wallNormal);
 
 	// Project L onto N: (L � N) * N
 	VectorScale(wallNormal, dot, projectionOntoNormal);
@@ -940,7 +939,7 @@ qboolean vrx_position_player_summonable(edict_t* ent, edict_t* other, float dist
 // return true if there isn't a previously dropped entity that would prevent us from dropping another
 qboolean CanDropPickupEnt(edict_t* ent)
 {
-	edict_t* pickup_prev = ent->client->pickup_prev;
+	const edict_t* pickup_prev = ent->client->pickup_prev;
 	// don't have a pickup entity to drop
 	if (!ent->client->pickup || !ent->client->pickup->inuse)
 		return false;
@@ -992,7 +991,7 @@ void vrx_set_pickup_owner(edict_t* self)
 		// need to make this null first so that the trace works
 		self->owner = NULL;
 		// barrel isn't being held, so make it solid again to player if it's clear of obstructions
-		trace_t tr = gi.trace(self->s.origin, self->mins, self->maxs, self->s.origin, self, MASK_PLAYERSOLID);
+		const trace_t tr = gi.trace(self->s.origin, self->mins, self->maxs, self->s.origin, self, MASK_PLAYERSOLID);
 		//FIXME: the owner won't be cleared if the player managed to stick the barrel in a bad spot
 		if (tr.allsolid || tr.startsolid || tr.fraction < 1)
 		{
@@ -1048,7 +1047,7 @@ qboolean vrx_toggle_pickup(edict_t* ent, int mtype, float dist)
 	//gi.dprintf("no pickup\n");
 
 	// bots can't pick up entities--they can only drop them
-	if (ent->ai.is_bot)
+	if (ent->ai)
 		return false;
 
 	// find an entity close to the player's aiming reticle

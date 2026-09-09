@@ -50,7 +50,7 @@ void P_DamageFeedback (edict_t *player)
 {
 	gclient_t	*client;
 	float	side;
-	float	realcount, count, kick;
+	float	realcount, count;
 	vec3_t	v;
 	int		r, l;
 	static	vec3_t	power_color = {0.0, 1.0, 0.0};
@@ -151,7 +151,7 @@ void P_DamageFeedback (edict_t *player)
 	//
 	// calculate view angle kicks
 	//
-	kick = fabsf(client->damage_knockback);
+	float kick = abs(client->damage_knockback);
 	if (kick && player->health > 0)	// kick of 0 means no view adjust at all
 	{
 		kick = kick * 100 / player->health;
@@ -258,7 +258,7 @@ void SV_CalcViewOffset (edict_t *ent)
 
 		// add angles based on bob
 
-		if (!(ent->v_flags & SFLG_NO_BOB))
+		if (!(ent->v_flags & SFLG_NO_BOB) && !G_IsSpectator(ent))
 		{
 			// pitch
 			delta = bobfracsin * bob_pitch->value * xyspeed;
@@ -287,8 +287,10 @@ void SV_CalcViewOffset (edict_t *ent)
 
 	// add view height
 
+	// az: the viewheight as part of pm.s makes this unnecessary now
+#ifndef VRX_REPRO
 	v[2] += ent->viewheight;
-
+#endif
 	// add fall height
 
 	ratio = (ent->client->fall_time - level.time) / FALL_TIME;
@@ -342,7 +344,6 @@ SV_CalcGunOffset
 void SV_CalcGunOffset (edict_t *ent)
 {
 	int		i;
-	float	delta;
 
 	// gun angles from bobbing
 	ent->client->ps.gunangles[ROLL] = xyspeed * bobfracsin * 0.005;
@@ -358,7 +359,7 @@ void SV_CalcGunOffset (edict_t *ent)
 	// gun angles from delta movement
 	for (i=0 ; i<3 ; i++)
 	{
-		delta = ent->client->oldviewangles[i] - ent->client->ps.viewangles[i];
+		float delta = ent->client->oldviewangles[i] - ent->client->ps.viewangles[i];
 		if (delta > 180)
 			delta -= 360;
 		if (delta < -180)
@@ -367,9 +368,10 @@ void SV_CalcGunOffset (edict_t *ent)
 			delta = 45;
 		if (delta < -45)
 			delta = -45;
+
 		if (i == YAW)
-			ent->client->ps.gunangles[ROLL] += 0.1*delta;
-		ent->client->ps.gunangles[i] += 0.2 * delta;
+			ent->client->ps.gunangles[ROLL] += scale_fps(0.1)*delta;
+		ent->client->ps.gunangles[i] += scale_fps(0.2) * delta;
 	}
 
 	// gun height
@@ -418,11 +420,15 @@ void SV_CalcBlend (edict_t *ent)
 	vec3_t	vieworg;
 	int		remaining;
 
-	ent->client->ps.blend[0] = ent->client->ps.blend[1] = 
-		ent->client->ps.blend[2] = ent->client->ps.blend[3] = 0;
+	ent->client->ps.screen_blend[0] = ent->client->ps.screen_blend[1] =
+		ent->client->ps.screen_blend[2] = ent->client->ps.screen_blend[3] = 0;
 
 	// add for contents
 	VectorAdd (ent->s.origin, ent->client->ps.viewoffset, vieworg);
+#ifdef VRX_REPRO
+	// viewheight no longer part of offset
+	vieworg[2] += ent->viewheight;
+#endif
 	contents = gi.pointcontents (vieworg);
 	if (contents & (CONTENTS_LAVA|CONTENTS_SLIME|CONTENTS_WATER) )
 		ent->client->ps.rdflags |= RDF_UNDERWATER;
@@ -430,19 +436,19 @@ void SV_CalcBlend (edict_t *ent)
 		ent->client->ps.rdflags &= ~RDF_UNDERWATER;
 
 	if (contents & (CONTENTS_SOLID|CONTENTS_LAVA))
-		SV_AddBlend (1.0, 0.3, 0.0, 0.6, ent->client->ps.blend);
+		SV_AddBlend (1.0, 0.3, 0.0, 0.6, ent->client->ps.screen_blend);
 	else if (contents & CONTENTS_SLIME)
-		SV_AddBlend (0.0, 0.1, 0.05, 0.6, ent->client->ps.blend);
+		SV_AddBlend (0.0, 0.1, 0.05, 0.6, ent->client->ps.screen_blend);
 	else if (contents & CONTENTS_WATER)
-		SV_AddBlend (0.5, 0.3, 0.2, 0.4, ent->client->ps.blend);
+		SV_AddBlend (0.5, 0.3, 0.2, 0.4, ent->client->ps.screen_blend);
 	//GHz: lowlight vision effect
 	if (ent->client->ps.rdflags & RDF_IRGOGGLES)
-		SV_AddBlend (1, 0, 0, 0.2, ent->client->ps.blend);
+		SV_AddBlend (1, 0, 0, 0.2, ent->client->ps.screen_blend);
 	//K03 Begin
 	if (ent->client->cloaking && (ent->svflags & SVF_NOCLIENT))
-		SV_AddBlend (-1, -1, -1, 0.3, ent->client->ps.blend);
+		SV_AddBlend (-1, -1, -1, 0.3, ent->client->ps.screen_blend);
 	if(ent->client->bfg_blend)
-		SV_AddBlend (0, 1, 0, 0.3, ent->client->ps.blend);
+		SV_AddBlend (0, 1, 0, 0.3, ent->client->ps.screen_blend);
 	//K03 End
 
 	// add for powerups
@@ -452,7 +458,7 @@ void SV_CalcBlend (edict_t *ent)
 		if (remaining == 30)	// beginning to fade
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("items/damage2.wav"), 1, ATTN_NORM, 0);
 		if (remaining > 30 || (remaining & 4) )
-			SV_AddBlend (0, 0, 1, 0.08, ent->client->ps.blend);
+			SV_AddBlend (0, 0, 1, 0.08, ent->client->ps.screen_blend);
 	}
 	// RAFAEL
 	else if (ent->client->quadfire_framenum > level.framenum)
@@ -461,7 +467,7 @@ void SV_CalcBlend (edict_t *ent)
 		if (remaining == 30)	// beginning to fade
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("items/quadfire2.wav"), 1, ATTN_NORM, 0);
 		if (remaining > 30 || (remaining & 4) )
-			SV_AddBlend (1, 0.2, 0.5, 0.08, ent->client->ps.blend);
+			SV_AddBlend (1, 0.2, 0.5, 0.08, ent->client->ps.screen_blend);
 	}
 	else if (ent->client->invincible_framenum > level.framenum)
 	{
@@ -469,7 +475,7 @@ void SV_CalcBlend (edict_t *ent)
 		if (remaining == 30)	// beginning to fade
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("items/protect2.wav"), 1, ATTN_NORM, 0);
 		if (remaining > 30 || (remaining & 4) )
-			SV_AddBlend (1, 1, 0, 0.08, ent->client->ps.blend);
+			SV_AddBlend (1, 1, 0, 0.08, ent->client->ps.screen_blend);
 	}
 	else if (ent->client->enviro_framenum > level.framenum)
 	{
@@ -477,7 +483,7 @@ void SV_CalcBlend (edict_t *ent)
 		if (remaining == 30)	// beginning to fade
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("items/airout.wav"), 1, ATTN_NORM, 0);
 		if (remaining > 30 || (remaining & 4) )
-			SV_AddBlend (0, 1, 0, 0.08, ent->client->ps.blend);
+			SV_AddBlend (0, 1, 0, 0.08, ent->client->ps.screen_blend);
 	}
 	else if (ent->client->breather_framenum > level.framenum)
 	{
@@ -485,24 +491,24 @@ void SV_CalcBlend (edict_t *ent)
 		if (remaining == 30)	// beginning to fade
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("items/airout.wav"), 1, ATTN_NORM, 0);
 		if (remaining > 30 || (remaining & 4) )
-			SV_AddBlend (0.4, 1, 0.4, 0.04, ent->client->ps.blend);
+			SV_AddBlend (0.4, 1, 0.4, 0.04, ent->client->ps.screen_blend);
 	}
 
 	// add for damage
 	if (ent->client->damage_alpha > 0)
 		SV_AddBlend (ent->client->damage_blend[0],ent->client->damage_blend[1]
-		,ent->client->damage_blend[2], ent->client->damage_alpha, ent->client->ps.blend);
+		,ent->client->damage_blend[2], ent->client->damage_alpha, ent->client->ps.screen_blend);
 
 	if (ent->client->bonus_alpha > 0)
-		SV_AddBlend (0.85, 0.7, 0.3, ent->client->bonus_alpha, ent->client->ps.blend);
+		SV_AddBlend (0.85, 0.7, 0.3, ent->client->bonus_alpha, ent->client->ps.screen_blend);
 
 	// drop the damage value
-	ent->client->damage_alpha -= 0.06;
+	ent->client->damage_alpha -= 0.06 * 10.0 / sv_fps->value;
 	if (ent->client->damage_alpha < 0)
 		ent->client->damage_alpha = 0;
 
 	// drop the bonus value
-	ent->client->bonus_alpha -= 0.1;
+	ent->client->bonus_alpha -= 0.1 * 10.0 / sv_fps->value;
 	if (ent->client->bonus_alpha < 0)
 		ent->client->bonus_alpha = 0;
 }
@@ -627,14 +633,14 @@ void P_WorldEffects (void)
 
 	if (current_player->movetype == MOVETYPE_NOCLIP)
 	{
-		current_player->air_finished = level.time + 12;	// don't need air
+		current_player->client->air_finished = level.time + 12;	// don't need air
 		return;
 	}
 
 	//K03 Begin
 	//if (HasActiveCurse(current_player, CURSE_FROZEN))
 	if (que_typeexists(current_player->curses, CURSE_FROZEN))
-		current_player->air_finished = level.time + 6;
+		current_player->client->air_finished = level.time + 6;
 	//K03 End
 
 	waterlevel = current_player->waterlevel;
@@ -700,7 +706,7 @@ void P_WorldEffects (void)
 	//
 	if (old_waterlevel == 3 && waterlevel != 3)
 	{
-		if (current_player->air_finished < level.time)
+		if (current_player->client->air_finished < level.time)
 		{	// gasp for air
 			if (current_player->client)//K03
 			{
@@ -708,7 +714,7 @@ void P_WorldEffects (void)
 			PlayerNoise(current_player, current_player->s.origin, PNOISE_SELF);
 			}
 		}
-		else  if (current_player->air_finished < level.time + 11)
+		else  if (current_player->client->air_finished < level.time + 11)
 		{	// just break surface
 			if (current_player->client)//K03
 				gi.sound (current_player, CHAN_VOICE, gi.soundindex("player/gasp2.wav"), 1, ATTN_NORM, 0);
@@ -728,7 +734,7 @@ void P_WorldEffects (void)
 		// breather or envirosuit give air
 		if (breather || envirosuit)
 		{
-			current_player->air_finished = level.time + 10;
+			current_player->client->air_finished = level.time + 10;
 
 			if (((int)(current_client->breather_framenum - level.framenum) % 25) == 0)
 			{
@@ -746,7 +752,7 @@ void P_WorldEffects (void)
 		}
 
 		// if out of air, start drowning
-		const qboolean out_of_air = current_player->air_finished < level.time;
+		const qboolean out_of_air = current_player->client->air_finished < level.time;
 		if (out_of_air && 
 			!is_unmorphed_poltergeist && 
 			!has_world_resist && 
@@ -782,7 +788,7 @@ void P_WorldEffects (void)
 	}
 	else
 	{
-		current_player->air_finished = level.time + 12;
+		current_player->client->air_finished = level.time + 12;
 		current_player->dmg = 2;
 	}
 
@@ -852,11 +858,14 @@ void G_SetClientEvent (edict_t *ent)
 	if ( ent->groundentity && xyspeed > 225)
 	{
 		// called with each player step
-		if ( (int)(current_client->bobtime+bobmove) != bobcycle 
+		if ( (int)(current_client->bobtime+bobmove) != bobcycle
+			&& level.framenum %	qf2sf(1) == 0 // don'd do the funny rapidfire burst of steps lol
 			&& (ent->client->pers.inventory[ITEM_INDEX(FindItem("Stealth Boots"))] < 1)	&& !ent->mtype)
 		{
-			if ((ent->myskills.abilities[CLOAK].disable) || (ent->myskills.abilities[CLOAK].current_level < 1))
-			ent->s.event = EV_FOOTSTEP;
+			bool nocloak = (ent->myskills.abilities[CLOAK].disable) || (ent->myskills.abilities[CLOAK].current_level < 1);
+			bool onladder = ent->client && ent->client->ps.pmove.pm_flags & PMF_ON_LADDER;
+			if (nocloak && !onladder)
+				ent->s.event = EV_FOOTSTEP;
 			PlayerNoise(ent, ent->s.origin, PNOISE_SELF); //ponko
 
 			// if the player is not crouched, then alert monsters of footsteps
@@ -918,6 +927,10 @@ void G_SetClientFrame (edict_t *ent)
 
 	if (ent->s.modelindex != 255)
 		return; // not in the player model
+
+	// run at 10 fps.
+	if (level.framenum % qf2sf(1) != 0)
+		return;
 
 	client = ent->client;
 
@@ -1111,11 +1124,19 @@ void ClientEndServerFrame (edict_t *ent)
 	// If it wasn't updated here, the view position would lag a frame
 	// behind the body position when pushed -- "sinking into plats"
 	//
+#ifndef VRX_REPRO
 	for (i=0 ; i<3 ; i++)
 	{
 		current_client->ps.pmove.origin[i] = ent->s.origin[i]*8.0;
 		current_client->ps.pmove.velocity[i] = ent->velocity[i]*8.0;
 	}
+#else
+	for (i=0 ; i<3 ; i++)
+	{
+		current_client->ps.pmove.origin[i] = ent->s.origin[i];
+		current_client->ps.pmove.velocity[i] = ent->velocity[i];
+	}
+#endif
 
 	//
 	// If the end of unit layout is displayed, don't give
@@ -1124,11 +1145,15 @@ void ClientEndServerFrame (edict_t *ent)
 	if (level.intermissiontime)
 	{
 		// FIXME: add view drifting here?
-		current_client->ps.blend[3] = 0;
+		current_client->ps.screen_blend[3] = 0;
 		current_client->ps.fov = 90;
 		G_SetStats (ent);
 		return;
 	}
+
+	// Rebuild delta/view state after any post-pmove server-side angle edits.
+	if (!ent->deadflag && !G_IsSpectator(ent))
+		vrx_sync_player_angle_state(ent, ent->client->v_angle);
 
 	AngleVectors (ent->client->v_angle, forward, right, up);
 
@@ -1141,6 +1166,8 @@ void ClientEndServerFrame (edict_t *ent)
 	//
 	if (ent->client->v_angle[PITCH] > 180)
 		ent->s.angles[PITCH] = (-360 + ent->client->v_angle[PITCH])/3;
+	else if (ent->client->v_angle[PITCH] < -180)
+		ent->s.angles[PITCH] = (360 + ent->client->v_angle[PITCH])/3;
 	else
 		ent->s.angles[PITCH] = ent->client->v_angle[PITCH]/3;
 	//GHz START
@@ -1176,7 +1203,7 @@ void ClientEndServerFrame (edict_t *ent)
 	bobtime = (current_client->bobtime += scale_fps(bobmove));
 
 	if (current_client->ps.pmove.pm_flags & PMF_DUCKED)
-		bobtime *= 4;
+		bobtime *= scale_fps(4);
 
 	bobcycle = (int)bobtime;
 	bobfracsin = fabs(sin(bobtime*M_PI));
@@ -1250,8 +1277,8 @@ void ClientEndServerFrame (edict_t *ent)
 	else if (!ent->client->showscores && !ent->client->pers.scanner_active && !ent->client->menustorage.menu_active)
 	{
 		// once a sec
-		qboolean this_tick = !(level.framenum % (int)sv_fps->value);
-		qboolean has_cooldown = (ent->client->ability_delay - level.time) > -0.001;
+		const qboolean this_tick = !(level.framenum % (int)sv_fps->value);
+		const qboolean has_cooldown = (ent->client->ability_delay - level.time) > -0.001;
 		if (this_tick || ent->client->layout.dirty || has_cooldown)
 		{
 			layout_generate_all(ent);

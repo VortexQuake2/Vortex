@@ -15,7 +15,7 @@
 #include "quake2/g_layout.h"
 
 /**************** v_abilitylist.c ***************/
-void vrx_enable_ability(edict_t *ent, int abil, int level, int max_level, int general);
+void vrx_enable_ability(edict_t *ent, int abil, int level, int soft_max, int general);
 void vrx_update_free_abilities(edict_t* ent);
 
 int vrx_get_last_enabled_skill_index(edict_t *ent, int mode);
@@ -32,12 +32,24 @@ int vrx_get_ability_class(int ability);
 
 #define DEFAULT_SOFTMAX 10
 #define GENERAL_SOFTMAX 5
+#define MAX_LEVEL 50
+void vrx_fill_xp_accum_table();
+int16_t vrx_get_xp_percent(long xp, int level);
 
 typedef struct {
     int index;
     int start;
     int softmax;
-    int general;
+    bool general;
+    // if true, allows prestige to use this skill as a class upgrade
+    bool allow_class_upgrade;
+
+    // if true, overrides the softmax for this ability when used as a class ability
+    // this can cause unintended effects if you accidentally make it more than 10
+    // like a hardmax < softmax because of prestige
+    // abilities that are allow_class_upgrade with a softmax != 10 to
+    // be either softmax bumped or, if allow_class_upgrade, added as a class skill.
+    int class_softmax_override;
 } abilitydef_t;
 
 typedef const abilitydef_t *abilitylist_t;
@@ -200,7 +212,11 @@ int ReadInteger(FILE *fptr);
 void WriteInteger(FILE *fptr, int Value);
 long ReadLong(FILE *fptr);
 void WriteLong(FILE *fptr, long Value);
-int CountAbilities(edict_t *player);
+float ReadFloat(FILE *fptr);
+void WriteFloat(FILE *fptr, float Value);
+
+struct skills_s;
+int CountAbilities(struct skills_s *player);
 int FindAbilityIndex(int index, edict_t *player);
 int CountWeapons(edict_t *player);
 int FindWeaponIndex(int index, edict_t *player);
@@ -248,14 +264,10 @@ void vrx_player_death(edict_t *self, edict_t *attacker, edict_t *inflictor);
 
 void vrx_morph_think(edict_t* ent, usercmd_t* ucmd);
 void V_Player_Touchdown(edict_t* ent);
+void vrx_match_inventory_restore(edict_t* self);
+// void vrx_match_inventory_store(edict_t* self);
 //************ vote.c *************
-void CheckPlayerVotes(void);
-void V_ChangeMap(v_maplist_t *maplist, int mapindex, int gamemode);
-int FindBestMap(int mode);
-v_maplist_t *GetMapList(int mode);
-int V_AttemptModeChange(qboolean endlevel);
-void V_VoteReset(); // az: just for cleanliness
-//************ vote.c *************
+#include "server/vote.h"
 
 //*********** weapons.c ***********
 void vrx_reset_weapon_maximums(edict_t *ent);
@@ -283,6 +295,8 @@ int vrx_get_talent_level(const edict_t *ent, int talentID);
 
 //************ player.c ************
 void vrx_create_new_character(edict_t *ent);
+// includes creating new character
+void vrx_initialize_player_class(edict_t *ent, int option);
 int vrx_get_login_status(edict_t *ent);
 //************ player.c ************
 
@@ -296,9 +310,11 @@ void vrx_inv_spawn_players(void);
 qboolean vrx_inv_add_spawn_que(edict_t *ent);
 int vrx_inv_get_num_player_spawns(void);
 void vrx_inv_award_players(void);
-edict_t* vrx_inv_closest_navi(edict_t* self); // az: only spawn ones
+edict_t* vrx_inv_closest_start_navi(edict_t* self); // az: only spawn ones
 edict_t* vrx_inv_closest_navi_any(edict_t* self); // any navi
 edict_t* vrx_inv_give_closest_player_spawn(edict_t* self);
+edict_t* vrx_inv_get_navi(size_t index);
+size_t vrx_inv_get_navi_count(void);
 //************ invasion.c ************
 
 //************ totems.c ************
@@ -311,12 +327,12 @@ edict_t *NextNearestTotem(edict_t *ent, int totemType, edict_t *lastTotem, qbool
 void OpenWeaponUpgradeMenu(edict_t *ent, int lastline);					//upgrade your weapon
 void OpenUpgradeMenu(edict_t *ent);										//upgrade your abilities
 void ShowInventoryMenu(edict_t *ent, int lastline, qboolean selling);	//shows the full list of items in special inventory
-void OpenRespawnWeapMenu(edict_t *ent);									//set respawn weapon
-void OpenArmoryMenu(edict_t *ent);										//Load the armory (buy/sell)
+void OpenRespawnWeapMenu(edict_t *ent, int page_num);					//set respawn weapon
+void OpenRespawnWeapMenuFirstPage (edict_t *ent);
+void vrx_armory_open_menu(edict_t *ent);										//Load the armory (buy/sell)
 void OpenClassMenu(edict_t *ent, int page_num);						//select class
 void OpenMyinfoMenu(edict_t *ent);										//vrxifo
 void ShowTradeMenu(edict_t *ent);										//trade with another player
-void ShowVoteModeMenu(edict_t *ent);									//vote for mode/map
 void StartShowInventoryMenu(edict_t *ent, item_t *item);				//used for trading, selling, deleting, and viewing items
 void ShowHelpMenu(edict_t *ent, int lastpick);							//help menu
 void OpenGeneralMenu(edict_t *ent);									//general vrx menu
@@ -358,9 +374,7 @@ float GetPlayerBossDamage(edict_t *player, edict_t *boss);
 
 qboolean SpawnWaitingPlayers(void);
 
-// drone/monster pathfinding/grid stuff
-#define SEARCHTYPE_WALK 1	// find nodes on horizontal plane with limited Z delta
-#define SEARCHTYPE_FLY	2	// find nodes regardless of Z delta between start end ending positions
+
 void G_Spawn_Trails(int type, vec3_t start, vec3_t endpos);
 void G_Spawn_Splash(int type, int count, int color, vec3_t start, vec3_t movdir, vec3_t origin);
 

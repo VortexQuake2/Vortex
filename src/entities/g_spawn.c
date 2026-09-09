@@ -19,6 +19,7 @@ void SP_info_player_coop (edict_t *ent);
 void SP_info_player_intermission (edict_t *ent);
 
 void SP_func_plat (edict_t *ent);
+void SP_func_plat2 (edict_t *ent);
 void SP_func_rotating (edict_t *ent);
 void SP_func_button (edict_t *ent);
 void SP_func_door (edict_t *ent);
@@ -170,6 +171,7 @@ spawn_t	spawns[] = {
 	{"info_player_coop", SP_info_player_coop},
 	{"info_player_intermission", SP_info_player_intermission},
 	{"func_plat", SP_func_plat},
+	{"func_plat2", SP_func_plat2},
 	{"func_button", SP_func_button},
 	{"func_door", SP_func_door},
 	{"func_door_secret", SP_func_door_secret},
@@ -219,9 +221,6 @@ spawn_t	spawns[] = {
 	{"target_crosslevel_target", SP_target_crosslevel_target},
 	{"target_laser", SP_target_laser},
 	{"target_help", SP_target_help},
-#if 0 // remove monster code
-	{"target_actor", SP_target_actor},
-#endif
 	{"target_lightramp", SP_target_lightramp},
 	{"target_earthquake", SP_target_earthquake},
 	{"target_character", SP_target_character},
@@ -245,16 +244,10 @@ spawn_t	spawns[] = {
 	{"misc_explobox", SP_misc_explobox},
 	{"misc_banner", SP_misc_banner},
 	{"misc_satellite_dish", SP_misc_satellite_dish},
-#if 0 // remove monster code
-	{"misc_actor", SP_misc_actor},
-#endif
 	{"misc_gib_arm", SP_misc_gib_arm},
 	{"misc_dummy", SP_misc_dummy},
 	{"misc_gib_leg", SP_misc_gib_leg},
 	{"misc_gib_head", SP_misc_gib_head},
-#if 0 // remove monster code
-	{"misc_insane", SP_misc_insane},
-#endif
 	{"misc_deadsoldier", SP_misc_deadsoldier},
 	{"misc_viper", SP_misc_viper},
 	{"misc_viper_bomb", SP_misc_viper_bomb},
@@ -291,21 +284,6 @@ spawn_t	spawns[] = {
 	{"monster_infantry", SP_monster_infantry},
 	// {"monster_soldier_light", SP_monster_soldier_light},
 
-#if 0 // remove monster code
-	{"monster_flyer", SP_monster_flyer},
-	{"monster_floater", SP_monster_floater},
-	{"monster_hover", SP_monster_hover},
-	{"monster_supertank", SP_monster_supertank},
-	{"monster_boss2", SP_monster_boss2},
-	{"monster_boss3_stand", SP_monster_boss3_stand},
-	{"monster_jorg", SP_monster_jorg},
-	{"monster_flipper", SP_monster_flipper},
-	{"monster_commander_body", SP_monster_commander_body},
-
-	{"turret_breach", SP_turret_breach},
-	{"turret_base", SP_turret_base},
-	{"turret_driver", SP_turret_driver},
-#endif
 //GHz START
 	{"info_player_invasion", SP_info_player_invasion},
 	{"info_monster_invasion", SP_info_monster_invasion},
@@ -463,7 +441,7 @@ Parses an edict out of the given string, returning the new position
 ed should be a properly initialized empty edict.
 ====================
 */
-char *ED_ParseEdict (char *data, edict_t *ent)
+const char *ED_ParseEdict (const char *data, edict_t *ent)
 {
 	qboolean	init;
 	char		keyname[256];
@@ -677,13 +655,14 @@ void InitScanEntity (void);
 void SpawnWorldAmmo (void);
 void InitSunEntity(void);
 qboolean vrx_CheckForFlag (void);
-void CreateGrid(qboolean force);
+void InitPathfinding();
 void DroneList_Clear();
+void vrx_depot_init();
 
 extern edict_t* g_freeEdictsH;
 extern edict_t* g_freeEdictsT;
 
-void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
+void SpawnEntities (char *mapname, const char *entities, char *spawnpoint)
 {
 	edict_t		*ent;
 	int			inhibit;
@@ -700,7 +679,8 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	memset (g_edicts, 0, game.maxentities * sizeof (g_edicts[0]));
 
 	// az begin
-	V_VoteReset();
+	vrx_depot_init();
+	vrx_vote_reset();
 	cs_reset();
 	seedMT(time(NULL));
 	if (!vrx_relay_is_connected())
@@ -778,6 +758,8 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 
 //	gi.dprintf ("%i entities inhibited\n", inhibit);
 
+	// az: init before jabot in case we need to seed it
+	InitPathfinding();
 	AI_NewMap();//JABot
 
 	vrx_lua_run_map_settings(mapname);
@@ -804,10 +786,8 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 		InitMonsterEntity(false);
 
 	PrintNumEntities(false);
-	SpawnWorldAmmo();
 
-	// if (level.pathfinding)
-	CreateGrid(false);
+	SpawnWorldAmmo();
 
 	vrx_inv_init_post_entities(); // az
 	vrx_relay_notify_spawn_entities(mapname);
@@ -832,28 +812,6 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 
 //===================================================================
 
-#if 0
-	// cursor positioning
-	xl <value>
-	xr <value>
-	yb <value>
-	yt <value>
-	xv <value>
-	yv <value>
-
-	// drawing
-	statpic <name>
-	pic <stat>
-	num <fieldwidth> <stat>
-	string <stat>
-
-	// control
-	if <stat>
-	ifeq <stat> <value>
-	ifbit <stat> <value>
-	endif
-
-#endif
 /*
 GHz's NOTES:
 All characters have a width and height of 8. Numbers have a width of 15
@@ -921,10 +879,18 @@ char *single_statusbar =
 ;
 
 char *dm_statusbar =
+#ifdef VRX_REPRO
+"mono story "
+#endif
 "yb	-72 "
 // health
 "xl	24 "
+#ifndef VRX_REPRO
 "num 4 1 "
+#else
+// we can go back to hnum because we can set the width with cgame
+"hnum "
+#endif
 
 // armor
 "yb -24 "
@@ -985,9 +951,14 @@ char *dm_statusbar =
 "yb -116 "
 "string \"Game\" "
 
-"xr	-81 "
 "yb -108 "
+#ifdef VRX_REPRO
+"xr	-113 "
+"num 7 14 "
+#else
+"xr	-81 "
 "num 5 14 "
+#endif
 //K03 End
 // spectator
 "if 29 "
@@ -1038,6 +1009,8 @@ char *dm_statusbar =
 
 //GHz START
 // show damage done to target
+#ifndef VRX_REPRO
+
 "if 24 "
 	"xv	136 "
 	"yv	150 "
@@ -1046,6 +1019,11 @@ char *dm_statusbar =
 	"yv	159 "
 	"num	5 24 "
 "endif "
+#else // az: repro-enhanced dmg num
+"xv	130 "
+"yv	159 "
+"dmgnum "
+#endif
 //GHz END
 //Show the Streak
 "xr -42 "
@@ -1067,16 +1045,10 @@ char *dm_statusbar =
 "num 4 28 "
 //GHz START
 
-"if 24 "
-	"xv 136 "
-	"yv  150 "
-	"string2 \"DMG-ID\" "
-	"xv 130 "
-	"yv 159  "
-	"num 5 24 "
-"endif "
 
 // 3.5 show ability charge percent
+// az: manually shown in cgame
+#ifndef VRX_REPRO
 "if 20 "
 	"xr -50 "
 	"yt  133 "
@@ -1084,6 +1056,7 @@ char *dm_statusbar =
 	"yt 142 "
 	"num 3 20 "
 "endif "
+#endif
 //GHz END
 ;
 
@@ -1162,6 +1135,47 @@ void SP_monster_brain(edict_t *ent)
 }
 
 
+void initialize_item_references(void) {
+	//pre searched items
+	Fdi_SWORD			= FindItem ("Sword");
+	Fdi_BLASTER			= FindItem ("Blaster");
+	Fdi_SHOTGUN			= FindItem ("Shotgun");
+	Fdi_SUPERSHOTGUN	= FindItem ("Super Shotgun");
+	Fdi_MACHINEGUN		= FindItem ("Machinegun");
+	Fdi_CHAINGUN		= FindItem ("Chaingun");
+	Fdi_GRENADES		= FindItem ("Grenades");
+	Fdi_GRENADELAUNCHER	= FindItem ("Grenade Launcher");
+	Fdi_ROCKETLAUNCHER	= FindItem ("Rocket Launcher");
+	Fdi_HYPERBLASTER	= FindItem ("HyperBlaster");
+	Fdi_RAILGUN			= FindItem ("Railgun");
+	Fdi_BFG				= FindItem ("BFG10K");
+	Fdi_20MM			= FindItem ("20mm Cannon");
+#ifdef VRX_REPRO
+	Fdi_PHALANX			= FindItem ("Phalanx");
+	Fdi_IONRIPPER		= FindItem ("Ionripper");
+	Fdi_TRAP			= FindItem ("Trap");
+	Fdi_ETFRIFLE		= FindItem ("ETF Rifle");
+	Fdi_DISRUPTOR		= FindItem ("Disruptor");
+	Fdi_PLASMA			= FindItem ("Plasma Beam");
+#endif //VRX_REPRO
+
+	Fdi_SHELLS			= FindItem ("Shells");
+	Fdi_BULLETS			= FindItem ("Bullets");
+	Fdi_CELLS			= FindItem ("Cells");
+	Fdi_ROCKETS			= FindItem ("Rockets");
+	Fdi_SLUGS			= FindItem ("Slugs");
+#ifdef VRX_REPRO
+	Fdi_MAGSLUG			= FindItem ("Mag Slug");
+	Fdi_FLECHETTES		= FindItem ("Flechettes");
+	Fdi_ROUNDS			= FindItem ("Rounds");
+#endif //VRX_REPRO
+
+	//K03 Begin
+	Fdi_POWERCUBE		= FindItem("Power Cube");
+	Fdi_TBALL			= FindItem("tballs");
+	//K03 End
+}
+
 /*QUAKED worldspawn (0 0 0) ?
 
 Only used for the world.
@@ -1206,7 +1220,7 @@ void SP_worldspawn (edict_t *ent)
 	else
 		gi.configstring (CS_SKY, "unit1_");
 
-	gi.configstring (CS_SKYROTATE, va("%f", st.skyrotate) );
+	gi.configstring (CS_SKYROTATE, va("%f", scale_fps(st.skyrotate)) );
 
 	gi.configstring (CS_SKYAXIS, va("%f %f %f",
 		st.skyaxis[0], st.skyaxis[1], st.skyaxis[2]) );
@@ -1216,10 +1230,7 @@ void SP_worldspawn (edict_t *ent)
 	gi.configstring (CS_MAXCLIENTS, va("%i", (int)(maxclients->value) ) );
 
 	// status bar program
-	if (deathmatch->value)
-		gi.configstring (CS_STATUSBAR, dm_statusbar);
-	else
-		gi.configstring (CS_STATUSBAR, single_statusbar);
+	gi.configstring (CS_STATUSBAR, dm_statusbar);
 
 	//---------------
 
@@ -1246,6 +1257,10 @@ void SP_worldspawn (edict_t *ent)
 	gi.imageindex("a_rockets_hud");
 	gi.imageindex("a_cells_hud");
 	gi.imageindex("a_slugs_hud");
+#ifdef VRX_REPRO
+	gi.imageindex("a_magslug_hud");
+	gi.imageindex("a_flechettes_hud");
+#endif //VRX_REPRO
 
 	gi.soundindex ("world/klaxon2.wav");
 	gi.soundindex ("player/lava1.wav");
@@ -1380,31 +1395,7 @@ void SP_worldspawn (edict_t *ent)
 //----------------------------------------------
 
 
-	//pre searched items
-	Fdi_GRAPPLE			= FindItem ("Grapple");
-	Fdi_BLASTER			= FindItem ("Blaster");
-	Fdi_SHOTGUN			= FindItem ("Shotgun");
-	Fdi_SUPERSHOTGUN	= FindItem ("Super Shotgun");
-	Fdi_MACHINEGUN		= FindItem ("Machinegun");
-	Fdi_CHAINGUN		= FindItem ("Chaingun");
-	Fdi_GRENADES		= FindItem ("Grenades");
-	Fdi_GRENADELAUNCHER	= FindItem ("Grenade Launcher");
-	Fdi_ROCKETLAUNCHER	= FindItem ("Rocket Launcher");
-	Fdi_HYPERBLASTER	= FindItem ("HyperBlaster");
-	Fdi_RAILGUN			= FindItem ("Railgun");
-	Fdi_BFG				= FindItem ("BFG10K");
-	Fdi_20MM			= FindItem ("20mm Cannon");
-
-	Fdi_SHELLS			= FindItem ("Shells");
-	Fdi_BULLETS			= FindItem ("Bullets");
-	Fdi_CELLS			= FindItem ("Cells");
-	Fdi_ROCKETS			= FindItem ("Rockets");
-	Fdi_SLUGS			= FindItem ("Slugs");
-
-	//K03 Begin
-	Fdi_POWERCUBE		= FindItem("Power Cube");
-	Fdi_TBALL			= FindItem("tballs");
-	//K03 End
+	initialize_item_references();
 
 	//if (invasion->value || pvm->value || ffa->value)
 	//{
@@ -1629,5 +1620,3 @@ void SP_worldspawn (edict_t *ent)
 //GHz END
 	//}	
 }
-
-

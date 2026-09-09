@@ -33,39 +33,6 @@ void G_SpawnParticleTrail (vec3_t start, vec3_t end, int particles, int color)
 	}
 }
 
-/*
-#define CL_CHECK_AND_ATTACK			1		// check if target is valid, then attack
-#define CL_CHECK					2		// check if the target is valid
-#define CL_ATTACK					3		// attack only
-
-qboolean ChainLightning_Attack (edict_t *ent, edict_t *target, int damage, int mode)
-{
-	qboolean result=false;
-
-
-	if (mode != CL_ATTACK)
-	{
-		if (G_ValidTargetEnt(ent, target, false) && !OnSameTeam(ent, target))
-			result = true;
-	}
-	else
-		result = true;
-
-	if (result && mode != CL_CHECK)
-	{
-		// do less damage to corpses
-		if (target->health < 1 && damage > 100)
-			damage = 100;
-		//gi.dprintf("CL did %d damage at %d\n", damage, level.framenum);
-		// deal damage
-		T_Damage(target, ent, ent, vec3_origin, target->s.origin, vec3_origin, 
-			damage, damage, DAMAGE_ENERGY, MOD_LIGHTNING);
-	}
-
-	return result;
-}
-*/
-
 void CL_attack(edict_t* self, edict_t *target, int damage)
 {
 	//if (G_ValidTarget(self, target, true, false))
@@ -85,7 +52,7 @@ qboolean CL_targetinlist(edict_t* self, edict_t *target)
 {
 	for (int i = 0; i < self->monsterinfo.target_index; i++)
 	{
-		if (target == self->monsterinfo.dmglist[i].player)
+		if (target == world + self->monsterinfo.dmglist[i].player)
 			return true;
 	}
 	return false;
@@ -116,7 +83,7 @@ void chainlightning_think(edict_t* self)
 
 		//gi.dprintf("%d: CL is attacking, ammo: %d\n", (int)level.framenum, self->light_level);
 		// add enemy to the list so we don't attack the same target twice
-		self->monsterinfo.dmglist[self->monsterinfo.target_index++].player = enemy;
+		self->monsterinfo.dmglist[self->monsterinfo.target_index++].player = enemy - world;
 
 		CL_attack(self, enemy, self->dmg);
 		// move
@@ -126,8 +93,15 @@ void chainlightning_think(edict_t* self)
 
 		// lightning graphical effect
 		gi.WriteByte(svc_temp_entity);
+#ifndef VRX_REPRO
 		gi.WriteByte(TE_HEATBEAM);
 		gi.WriteShort(self - g_edicts);
+#else
+		gi.WriteByte(TE_LIGHTNING);
+		gi.WriteShort(self - g_edicts);
+		gi.WriteShort(0);
+#endif
+
 		gi.WritePosition(self->s.old_origin);
 		gi.WritePosition(self->s.origin);
 		gi.multicast(self->s.origin, MULTICAST_PVS);
@@ -181,7 +155,7 @@ void fire_chainlightning(edict_t* self, vec3_t start, vec3_t aimdir, int damage,
 			end[0] = end[0] + GetRandom(0, (int)targ->maxs[0]) * crandom();
 			end[1] = end[1] + GetRandom(0, (int)targ->maxs[1]) * crandom();
 			// recalculate starting position directly above endpoint
-			trace_t tr = gi.trace(end, NULL, NULL, tv(end[0], end[1], 8192), self, MASK_SOLID);
+			const trace_t tr = gi.trace(end, NULL, NULL, tv(end[0], end[1], 8192), self, MASK_SOLID);
 			VectorCopy(tr.endpos, start);
 		}
 		else
@@ -227,133 +201,15 @@ void fire_chainlightning(edict_t* self, vec3_t start, vec3_t aimdir, int damage,
 	gi.linkentity(lightning);
 
 	// add enemy to the list so we don't attack again
-	lightning->monsterinfo.dmglist[lightning->monsterinfo.target_index++].player = enemy;
+	lightning->monsterinfo.dmglist[lightning->monsterinfo.target_index++].player = enemy - world;
 }
-
-/*
-void ChainLightning (edict_t *ent, vec3_t start, vec3_t aimdir, int damage, int attack_range, int hop_range)
-{
-	int		i=0, hops=CLIGHTNING_MAX_HOPS;
-	vec3_t	end;
-	trace_t	tr;
-	edict_t	*target=NULL;
-	edict_t	*prev_ed[CLIGHTNING_MAX_HOPS]; // list of entities we've previously hit
-	qboolean	found=false;
-
-	//gi.dprintf("ChainLightning damage: %d range: %d hop: %d\n", damage, attack_range, hop_range);
-	memset(prev_ed, 0, CLIGHTNING_MAX_HOPS*sizeof(prev_ed[0]));
-
-	// write a nice effect so everyone knows we've cast a spell
-	gi.WriteByte (svc_temp_entity);
-	gi.WriteByte (TE_TELEPORT_EFFECT);
-	gi.WritePosition (ent->s.origin);
-	gi.multicast (ent->s.origin, MULTICAST_PVS);
-
-	// calling entity made a sound, used to alert monsters
-	ent->lastsound = level.framenum;
-
-	// play sound
-    gi.sound(ent, CHAN_ITEM, gi.soundindex("abilities/thunderbolt.wav"), 1, ATTN_NORM, 0);
-
-	// randomize damage
-	//damage = GetRandom((int)(0.5*damage), damage);
-
-	// get ending position
-	VectorMA(start, attack_range, aimdir, end);
-
-	// trace from attacker to ending position
-	tr = gi.trace(start, NULL, NULL, end, ent, MASK_SHOT);
-
-	// is this a non-world entity?
-	if (tr.ent && tr.ent != world)
-	{
-		// try to attack it
-		if (ChainLightning_Attack(ent, tr.ent, damage, CL_CHECK_AND_ATTACK))
-		{
-			// damage is modified with each hop
-			damage *= CLIGHTNING_DMG_MOD; 
-
-			prev_ed[0] = tr.ent;
-		}
-		else
-			return; // give up
-	}
-	
-	
-	// spawn particle trail
-	G_SpawnParticleTrail(start, tr.endpos, CLIGHTNING_PARTICLES, CLIGHTNING_COLOR);
-
-	// we didn't find an entity to jump from
-	while (!prev_ed[0] && hops > 0)
-	{
-		hops--;
-
-		VectorCopy(tr.endpos, start);
-
-		// bounce away from the wall
-		VectorMA(aimdir, (-2 * DotProduct(aimdir, tr.plane.normal)), tr.plane.normal, aimdir);
-		VectorMA(start, attack_range, aimdir, end);
-			
-		// trace
-		tr = gi.trace(start, NULL, NULL, end, NULL, MASK_SHOT);
-
-		// spawn particle trail
-		G_SpawnParticleTrail(start, tr.endpos, CLIGHTNING_PARTICLES, CLIGHTNING_COLOR);
-
-		// we hit nothing, give up
-		if (tr.fraction == 1.0)
-			return;
-
-		// we hit an entity
-		if (tr.ent && tr.ent != world)
-		{
-			// try to attack
-			if (ChainLightning_Attack(ent, tr.ent, damage, CL_CHECK_AND_ATTACK))
-			{
-				// damage is modified with each hop
-				damage *= CLIGHTNING_DMG_MOD; 
-
-				prev_ed[0] = tr.ent;
-				break;
-			}
-			else
-				return;// give up
-		}
-		//FIXME: if we didn't hit an entity, shouldn't we modify damage again?
-	}
-	
-	// we never hit a valid target, so give up
-	if (!prev_ed[0])
-		return;
-
-	// find nearby targets and bounce between them
-	while ((i<CLIGHTNING_MAX_HOPS-1) && ((target = findradius(target, prev_ed[i]->s.origin, hop_range)) != NULL))
-	{
-		if (target == prev_ed[0])
-			continue;
-
-		// try to attack, if successful then add entity to list
-		if (ChainLightning_Attack(ent, target, 0, CL_CHECK) && visible(prev_ed[i], target))
-		{
-			ChainLightning_Attack(ent, target, damage, CL_ATTACK);
-
-			// damage is modified with each hop
-			damage *= CLIGHTNING_DMG_MOD; 
-
-			G_SpawnParticleTrail(prev_ed[i]->s.origin, target->s.origin, CLIGHTNING_PARTICLES, CLIGHTNING_COLOR);
-
-			prev_ed[++i] = target;
-		}
-	}
-}
-*/
 
 void Cmd_ChainLightning_f (edict_t *ent, float skill_mult, float cost_mult)
 {
 	int damage=CLIGHTNING_INITIAL_DMG+CLIGHTNING_ADDON_DMG*ent->myskills.abilities[LIGHTNING].current_level;
-	int attack_range=CLIGHTNING_INITIAL_AR+CLIGHTNING_ADDON_AR*ent->myskills.abilities[LIGHTNING].current_level;
-	int hop_range=CLIGHTNING_INITIAL_HR+CLIGHTNING_ADDON_HR*ent->myskills.abilities[LIGHTNING].current_level;
-	int cost=CLIGHTNING_COST*cost_mult;
+	const int attack_range=CLIGHTNING_INITIAL_AR+CLIGHTNING_ADDON_AR*ent->myskills.abilities[LIGHTNING].current_level;
+	const int hop_range=CLIGHTNING_INITIAL_HR+CLIGHTNING_ADDON_HR*ent->myskills.abilities[LIGHTNING].current_level;
+	const int cost=CLIGHTNING_COST*cost_mult;
 	vec3_t start, forward, right, offset;
 
 	if (!G_CanUseAbilities(ent, ent->myskills.abilities[LIGHTNING].current_level, cost))
@@ -372,7 +228,7 @@ void Cmd_ChainLightning_f (edict_t *ent, float skill_mult, float cost_mult)
 	fire_chainlightning(ent, start, forward, damage, 0, attack_range, hop_range, 4);
 
 	//Talent: Wizardry - makes spell timer ability-specific instead of global
-	int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
+	const int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
 	if (talentLevel > 0)
 	{
 		ent->myskills.abilities[LIGHTNING].delay = level.time + CLIGHTNING_DELAY;

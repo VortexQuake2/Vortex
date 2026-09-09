@@ -34,21 +34,21 @@ void baron_fire_idle(edict_t* self)
 
 mframe_t baron_fire_frames_stand[] =
 {
-	drone_ai_stand, 0, NULL, //FRAME_stand01
-	drone_ai_stand, 0, NULL,
-	drone_ai_stand, 0, NULL,
-	drone_ai_stand, 0, NULL,
-	drone_ai_stand, 0, NULL,
-	drone_ai_stand, 0, NULL,
-	drone_ai_stand, 0, NULL,
-	drone_ai_stand, 0, NULL,
-	drone_ai_stand, 0, NULL,
-	drone_ai_stand, 0, NULL,
-	drone_ai_stand, 0, NULL,
-	drone_ai_stand, 0, NULL,
-	drone_ai_stand, 0, NULL,
-	drone_ai_stand, 0, NULL,
-	drone_ai_stand, 0, NULL //FRAME_stand15
+	{drone_ai_stand, 0, NULL}, //FRAME_stand01
+	{drone_ai_stand, 0, NULL},
+	{drone_ai_stand, 0, NULL},
+	{drone_ai_stand, 0, NULL},
+	{drone_ai_stand, 0, NULL},
+	{drone_ai_stand, 0, NULL},
+	{drone_ai_stand, 0, NULL},
+	{drone_ai_stand, 0, NULL},
+	{drone_ai_stand, 0, NULL},
+	{drone_ai_stand, 0, NULL},
+	{drone_ai_stand, 0, NULL},
+	{drone_ai_stand, 0, NULL},
+	{drone_ai_stand, 0, NULL},
+	{drone_ai_stand, 0, NULL},
+	{drone_ai_stand, 0, NULL} //FRAME_stand15
 };
 mmove_t	baron_fire_move_stand = { FRAME_stand01, FRAME_stand15, baron_fire_frames_stand, NULL };
 
@@ -69,21 +69,21 @@ void baron_fire_step2(edict_t* self)
 
 mframe_t baron_fire_frames_walk[] =
 {
-	drone_ai_walk, 5, NULL,//FRAME_walk01
-	drone_ai_walk, 5, NULL,
-	drone_ai_walk, 5, NULL,
-	drone_ai_walk, 5, baron_fire_step2,
-	drone_ai_walk, 5, NULL,
-	drone_ai_walk, 5, NULL,
-	drone_ai_walk, 5, NULL,
-	drone_ai_walk, 5, NULL,
-	drone_ai_walk, 5, NULL,
-	drone_ai_walk, 5, NULL,
-	drone_ai_walk, 5, baron_fire_step1,
-	drone_ai_walk, 5, NULL,
-	drone_ai_walk, 5, NULL,
-	drone_ai_walk, 5, NULL,
-	drone_ai_walk, 5, NULL//FRAME_walk15
+	{drone_ai_walk, 5, NULL},//FRAME_walk01
+	{drone_ai_walk, 5, NULL},
+	{drone_ai_walk, 5, NULL},
+	{drone_ai_walk, 5, baron_fire_step2},
+	{drone_ai_walk, 5, NULL},
+	{drone_ai_walk, 5, NULL},
+	{drone_ai_walk, 5, NULL},
+	{drone_ai_walk, 5, NULL},
+	{drone_ai_walk, 5, NULL},
+	{drone_ai_walk, 5, NULL},
+	{drone_ai_walk, 5, baron_fire_step1},
+	{drone_ai_walk, 5, NULL},
+	{drone_ai_walk, 5, NULL},
+	{drone_ai_walk, 5, NULL},
+	{drone_ai_walk, 5, NULL}//FRAME_walk15
 };
 mmove_t baron_fire_move_walk = { FRAME_walk01, FRAME_walk15, baron_fire_frames_walk, NULL };
 
@@ -96,13 +96,13 @@ void baron_fire_walk(edict_t* self)
 
 mframe_t baron_fire_frames_run[] =
 {
-	drone_ai_run, 25, baron_fire_step2,
-	drone_ai_run, 25, NULL,
-	drone_ai_run, 25, NULL,
-	drone_ai_run, 25, NULL,//34
-	drone_ai_run, 25, baron_fire_step1,//35
-	drone_ai_run, 25, NULL,
-	drone_ai_run, 25, NULL
+	{drone_ai_run, 25, baron_fire_step2},
+	{drone_ai_run, 25, NULL},
+	{drone_ai_run, 25, NULL},
+	{drone_ai_run, 25, NULL},//34
+	{drone_ai_run, 25, baron_fire_step1},//35
+	{drone_ai_run, 25, NULL},
+	{drone_ai_run, 25, NULL}
 };
 
 mmove_t baron_fire_move_run = { FRAME_run01, FRAME_run07, baron_fire_frames_run, NULL };
@@ -125,18 +125,18 @@ void baron_fire_nextmove(edict_t* self)
 
 mframe_t baron_fire_frames_pain[] =
 {
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,  NULL,
-	ai_move, 0,  NULL,
-	ai_move, 0,  NULL
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,  NULL},
+	{ai_move, 0,  NULL},
+	{ai_move, 0,  NULL}
 };
 mmove_t baron_fire_move_pain = { FRAME_pain101, FRAME_pain106, baron_fire_frames_pain, baron_fire_nextmove };
 
 void baron_fire_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
-	double rng = random();
+	const double rng = random();
 	//if (self->health < (self->max_health / 2))
 	//	self->s.skinnum = 1;
 
@@ -188,7 +188,7 @@ void baron_fire_check_landing(edict_t* self)
 
 void baron_fire_jump(edict_t* self)
 {
-	int	speed = 1000;
+	const int	speed = 1000;
 	vec3_t	forward, start;
 
 	//gi.dprintf("%d: baron_fire_jump %d\n", (int)(level.framenum), self->s.frame);
@@ -213,29 +213,29 @@ void baron_fire_jump(edict_t* self)
 
 mframe_t baron_fire_frames_jump[] =
 {
-	ai_charge, 0, baron_fire_jump,//43
-	ai_charge, 0, baron_fire_check_landing,
-	ai_charge, 0, baron_fire_check_landing,
-	ai_charge, 0, baron_fire_check_landing,//46
-	ai_charge, 0, baron_fire_check_landing,//47
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL//58
+	{ai_charge, 0, baron_fire_jump},//43
+	{ai_charge, 0, baron_fire_check_landing},
+	{ai_charge, 0, baron_fire_check_landing},
+	{ai_charge, 0, baron_fire_check_landing},//46
+	{ai_charge, 0, baron_fire_check_landing},//47
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL}//58
 };
 mmove_t baron_fire_move_jump = { FRAME_jump01, FRAME_jump16, baron_fire_frames_jump, baron_fire_run };
 
 void baron_fire_meteor(edict_t* self)
 {
 	int damage, radius, speed;
-	float slvl = drone_damagelevel(self);
+	const float slvl = drone_damagelevel(self);
 
 	if (!G_EntExists(self->enemy))
 		return;
@@ -259,36 +259,36 @@ void baron_fire_meteor(edict_t* self)
 
 mframe_t baron_fire_frames_crush[] =
 {
-	ai_charge, 0, baron_fire_meteor,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,//97
-	ai_charge, 0, NULL,//98
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL //107
+	{ai_charge, 0, baron_fire_meteor},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},//97
+	{ai_charge, 0, NULL},//98
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL} //107
 };
 mmove_t baron_fire_move_crush = { FRAME_crush01, FRAME_crush23, baron_fire_frames_crush, baron_fire_run };
 
 void flame_think(edict_t* self)
 {
 	if (self->style != 1 && self->s.frame > 20)
-		G_RunFrames(self, 21, 32, false); // burning frames
+		G_RunFrames(self, 21, 32, false, true); // burning frames
 	else
 		self->s.frame++; // ignite frames
 
@@ -386,7 +386,7 @@ void circle_of_flames(edict_t* self, int count, int damage, int burn_damage, flo
 void fire_baron_cof_attack(edict_t* self)
 {
 	int damage, burn;
-	float slvl = drone_damagelevel(self);
+	const float slvl = drone_damagelevel(self);
 
 	damage = METEOR_INITIAL_DMG + METEOR_ADDON_DMG * slvl;
 	burn = 0.1 * damage;
@@ -396,21 +396,21 @@ void fire_baron_cof_attack(edict_t* self)
 
 mframe_t baron_fire_frames_swipe[] =
 {
-	ai_charge, 0, fire_baron_cof_attack,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL
+	{ai_charge, 0, fire_baron_cof_attack},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL}
 };
 mmove_t baron_fire_move_swipe = { FRAME_swipe01, FRAME_swipe15, baron_fire_frames_swipe, baron_fire_run };
 
@@ -422,7 +422,7 @@ void baron_fire_fireball(edict_t* self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	float slvl = drone_damagelevel(self);
+	const float slvl = drone_damagelevel(self);
 
 	damage = FIREBALL_INITIAL_DAMAGE + FIREBALL_ADDON_DAMAGE * slvl;
 	radius = FIREBALL_INITIAL_RADIUS + FIREBALL_ADDON_RADIUS * slvl;
@@ -438,24 +438,24 @@ void baron_fire_fireball(edict_t* self)
 
 mframe_t baron_fire_frames_backhand[] =
 {
-	ai_charge, 0, NULL,//74
-	ai_charge, 0, NULL,
-	ai_charge, 0, baron_fire_fireball,
-	ai_charge, 0, baron_fire_fireball,
-	ai_charge, 0, baron_fire_fireball,//78
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL,
-	ai_charge, 0, NULL
+	{ai_charge, 0, NULL},//74
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, baron_fire_fireball},
+	{ai_charge, 0, baron_fire_fireball},
+	{ai_charge, 0, baron_fire_fireball},//78
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL},
+	{ai_charge, 0, NULL}
 };
 mmove_t baron_fire_move_backhand = { FRAME_backhand01, FRAME_backhand11, baron_fire_frames_backhand, baron_fire_run };
 
 void baron_fire_attack_sound(edict_t* self)
 {
 	// prevent attack sound from conflicting with sight sound
-	if (self->haste_time > level.time)
+	if (self->msg_time > level.time)
 		return;
 
 	if (random() > 0.5)
@@ -466,9 +466,9 @@ void baron_fire_attack_sound(edict_t* self)
 
 void baron_fire_stand_attack(edict_t* self)
 {
-	float	zDelta = fabs(self->absmin[2] - self->enemy->absmin[2]);
-	float	dist = entdist(self, self->enemy);
-	float	r = random();
+	const float	zDelta = fabs(self->absmin[2] - self->enemy->absmin[2]);
+	const float	dist = entdist(self, self->enemy);
+	const float	r = random();
 
 	if (dist <= 512)
 	{
@@ -485,9 +485,9 @@ void baron_fire_stand_attack(edict_t* self)
 
 void baron_fire_move_attack(edict_t* self)
 {
-	float	zDelta = fabs(self->absmin[2] - self->enemy->absmin[2]);
-	float	dist = entdist(self, self->enemy);
-	float	r = random();
+	const float	zDelta = fabs(self->absmin[2] - self->enemy->absmin[2]);
+	const float	dist = entdist(self, self->enemy);
+	const float	r = random();
 
 	if (dist <= 256)
 	{
@@ -530,7 +530,7 @@ void baron_fire_sight(edict_t* self, edict_t* other)
 		gi.sound(self, CHAN_VOICE, sound_sight1, 1, ATTN_IDLE, 0);
 	else
 		gi.sound(self, CHAN_VOICE, sound_sight2, 1, ATTN_IDLE, 0);
-	self->haste_time = level.time + 1.0;// timer to delay attack sounds
+	self->msg_time = level.time + 1.0;// timer to delay attack sounds
 	//baron_fire_attack(self);
 }
 
@@ -547,31 +547,31 @@ void baron_fire_dead(edict_t* self)
 
 mframe_t baron_fire_frames_death[] =
 {
-	ai_move, 0,	 NULL,//FRAME_death01
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,  NULL,
-	ai_move, 0,  NULL,
-	ai_move, 0,  NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL,
-	ai_move, 0,	 NULL //FRAME_death25
+	{ai_move, 0,	 NULL},//FRAME_death01
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,  NULL},
+	{ai_move, 0,  NULL},
+	{ai_move, 0,  NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL},
+	{ai_move, 0,	 NULL} //FRAME_death25
 };
 mmove_t baron_fire_move_death = { FRAME_death01, FRAME_death25, baron_fire_frames_death, baron_fire_dead };
 

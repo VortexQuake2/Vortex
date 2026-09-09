@@ -43,7 +43,7 @@ edict_t* CreateHealer(edict_t* ent, int skill_level);
 void p_medic_reanimate (edict_t *ent, edict_t *target)
 {
 	int		res_level;
-	int		medic_level = ent->myskills.abilities[MEDIC].current_level;
+	const int		medic_level = ent->myskills.abilities[MEDIC].current_level;
 	int		skill_level;
 	float	skill_bonus, res_time;
 	vec3_t	bmin, bmax;
@@ -92,7 +92,7 @@ void p_medic_reanimate (edict_t *ent, edict_t *target)
 	else if ((!strcmp(target->classname, "bodyque") || !strcmp(target->classname, "player"))
 		&& (ent->num_monsters + 1 <= MAX_MONSTERS))
 	{
-		int		random=GetRandom(1, 3);
+		const int		random=GetRandom(1, 3);
 		vec3_t	start;
 
 		e = G_Spawn();
@@ -387,13 +387,13 @@ void p_medic_heal (edict_t *ent)
 	else if (ent->s.frame == 227)
 		gi.sound (ent, CHAN_WEAPON, gi.soundindex("medic/medatck5.wav"), 1, ATTN_NORM, 0);
 
-	int frames = qf2sf(600 / (float)ent->myskills.abilities[MEDIC].current_level);
+	const int frames = qf2sf(600 / (float)ent->myskills.abilities[MEDIC].current_level);
 
 	// Talent: Range Mastery - allows medic to heal/resurrect multiple targets
-	int talentLevel = vrx_get_talent_level(ent, TALENT_RANGE_MASTERY);
+	const int talentLevel = vrx_get_talent_level(ent, TALENT_RANGE_MASTERY);
 	if (talentLevel > 0)
 	{
-		float range = 40 * talentLevel;
+		const float range = 40 * talentLevel;
 		p_medic_healradius(ent, range, frames);
 		if (ent->s.frame == 220)
 			gi.sound(ent, CHAN_WEAPON, gi.soundindex("medic/medatck4.wav"), 1, ATTN_NORM, 0);
@@ -479,9 +479,9 @@ void p_medic_heal (edict_t *ent)
 void p_medic_hb_regen (edict_t *ent, int regen_frames, int regen_delay)
 {
 	int ammo;
-	int max = ent->myskills.abilities[MEDIC].max_ammo;
-	int *current = &ent->myskills.abilities[MEDIC].ammo;
-	int *delay = &ent->myskills.abilities[MEDIC].ammo_regenframe;
+	const int max = ent->client->pers.morphinventory.medic.max_ammo;
+	int *current = &ent->client->pers.morphinventory.medic.ammo;
+	int *delay = &ent->client->pers.morphinventory.medic.ammo_regenframe;
 
 	if (*current > max)
 		return;
@@ -531,18 +531,18 @@ void p_medic_jump (edict_t *ent)
 {
 	// run jump animation forward until last frame, then hold it
 	if (ent->s.frame != MEDIC_FRAMES_JUMP_END)
-		G_RunFrames(ent, MEDIC_FRAMES_JUMP_START, MEDIC_FRAMES_JUMP_END, false);
+		G_RunFrames(ent, MEDIC_FRAMES_JUMP_START, MEDIC_FRAMES_JUMP_END, false, false);
 }
 
 void p_medic_firehb (edict_t *ent)
 {
-	int		damage = MEDIC_HB_INITIAL_DMG+MEDIC_HB_ADDON_DMG*ent->myskills.abilities[MEDIC].current_level;
-	int		speed = MEDIC_HB_INITIAL_SPEED+MEDIC_HB_ADDON_SPEED*ent->myskills.abilities[MEDIC].current_level;
+	const int		damage = MEDIC_HB_INITIAL_DMG+MEDIC_HB_ADDON_DMG*ent->myskills.abilities[MEDIC].current_level;
+	const int		speed = MEDIC_HB_INITIAL_SPEED+MEDIC_HB_ADDON_SPEED*ent->myskills.abilities[MEDIC].current_level;
 	vec3_t	forward, right, start;
 
-	if (!ent->myskills.abilities[MEDIC].ammo)
+	if (!ent->client->pers.morphinventory.medic.ammo)
 		return;
-	ent->myskills.abilities[MEDIC].ammo--;
+	ent->client->pers.morphinventory.medic.ammo--;
 
 	AngleVectors(ent->client->v_angle, forward, right, NULL);
 	G_ProjectSource(ent->s.origin, monster_flash_offset[MZ2_MEDIC_BLASTER_1], forward, right, start);
@@ -558,7 +558,7 @@ void p_medic_firebolt (edict_t *ent)
 {
 	int		min_dmg;
 	int		damage = MEDIC_BOLT_INITIAL_DMG+MEDIC_BOLT_ADDON_DMG*ent->myskills.abilities[MEDIC].current_level;
-	int		speed = MEDIC_BOLT_INITIAL_SPEED+MEDIC_BOLT_ADDON_SPEED*ent->myskills.abilities[MEDIC].current_level;
+	const int		speed = MEDIC_BOLT_INITIAL_SPEED+MEDIC_BOLT_ADDON_SPEED*ent->myskills.abilities[MEDIC].current_level;
 	vec3_t	forward, right, start;
 
 	// is this a firing frame?
@@ -566,9 +566,9 @@ void p_medic_firebolt (edict_t *ent)
 		return;
 
 	// check for adequate ammo
-	if (ent->myskills.abilities[MEDIC].ammo < MEDIC_BOLT_AMMO)
+	if (ent->client->pers.morphinventory.medic.ammo < MEDIC_BOLT_AMMO)
 		return;
-	ent->myskills.abilities[MEDIC].ammo -= MEDIC_BOLT_AMMO;
+	ent->client->pers.morphinventory.medic.ammo -= MEDIC_BOLT_AMMO;
 
 	AngleVectors(ent->client->v_angle, forward, right, NULL);
 	G_ProjectSource(ent->s.origin, monster_flash_offset[MZ2_MEDIC_BLASTER_1], forward, right, start);
@@ -594,7 +594,7 @@ void p_medic_attack (edict_t *ent)
 	{
 		// cable/healing mode
 		if (ent->s.frame != MEDIC_FRAMES_CABLE_END)
-			G_RunFrames(ent, MEDIC_FRAMES_CABLE_START, MEDIC_FRAMES_CABLE_END, false);
+			G_RunFrames(ent, MEDIC_FRAMES_CABLE_START, MEDIC_FRAMES_CABLE_END, false, false);
 		else
 			ent->s.frame = 218; // loop from this frame forward
 		p_medic_heal(ent);
@@ -603,7 +603,7 @@ void p_medic_attack (edict_t *ent)
 	{
 		// blaster bolt mode
 		if (ent->s.frame != MEDIC_FRAMES_BOLT_END)
-			G_RunFrames(ent, MEDIC_FRAMES_BOLT_START, MEDIC_FRAMES_BOLT_END, false);
+			G_RunFrames(ent, MEDIC_FRAMES_BOLT_START, MEDIC_FRAMES_BOLT_END, false, false);
 		else
 			ent->s.frame = 185; // loop from this frame forward
 		p_medic_firebolt(ent);
@@ -612,7 +612,7 @@ void p_medic_attack (edict_t *ent)
 	{
 		// hyperblaster mode
 		if (ent->s.frame != MEDIC_FRAMES_HB_END)
-			G_RunFrames(ent, MEDIC_FRAMES_HB_START, MEDIC_FRAMES_HB_END, false);
+			G_RunFrames(ent, MEDIC_FRAMES_HB_START, MEDIC_FRAMES_HB_END, false, false);
 		else
 			ent->s.frame = 195; // loop from this frame forward
 		p_medic_firehb(ent);
@@ -638,10 +638,10 @@ void RunMedicFrames (edict_t *ent, usercmd_t *ucmd)
 		
 		// play running animation if we are moving forward or strafing
 		if ((ucmd->forwardmove > 0) || ucmd->sidemove)
-			G_RunFrames(ent, MEDIC_FRAMES_RUN_START, MEDIC_FRAMES_RUN_END, false);
+			G_RunFrames(ent, MEDIC_FRAMES_RUN_START, MEDIC_FRAMES_RUN_END, false, false);
 		// play animation in reverse if we are going backwards
 		else if (ucmd->forwardmove < 0)
-			G_RunFrames(ent, MEDIC_FRAMES_RUN_START, MEDIC_FRAMES_RUN_END, true);
+			G_RunFrames(ent, MEDIC_FRAMES_RUN_START, MEDIC_FRAMES_RUN_END, true, false);
 		// attack
 		else if ((ent->client->buttons & BUTTON_ATTACK) 
 			&& (level.time > ent->monsterinfo.attack_finished))
@@ -650,7 +650,7 @@ void RunMedicFrames (edict_t *ent, usercmd_t *ucmd)
 		else if (!ent->groundentity && (ent->waterlevel < 2))
 			p_medic_jump(ent);
 		else
-			G_RunFrames(ent, MEDIC_FRAMES_IDLE_START, MEDIC_FRAMES_IDLE_END, false); // run idle frames
+			G_RunFrames(ent, MEDIC_FRAMES_IDLE_START, MEDIC_FRAMES_IDLE_END, false, false); // run idle frames
 
 		ent->count = level.framenum + qf2sf(1);
 	}
@@ -660,9 +660,9 @@ void Cmd_PlayerToMedic_f (edict_t *ent)
 {
 	vec3_t	boxmin, boxmax;
 	//trace_t	tr;
-	int cost = MEDIC_INIT_COST;
+	const int cost = MEDIC_INIT_COST;
 	//Talent: More Ammo
-    int talentLevel = vrx_get_talent_level(ent, TALENT_MORE_AMMO);
+    const int talentLevel = vrx_get_talent_level(ent, TALENT_MORE_AMMO);
 
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: %s just called Cmd_PlayerToMedic_f()\n", ent->client->pers.netname);
@@ -722,15 +722,15 @@ void Cmd_PlayerToMedic_f (edict_t *ent)
 		ent->s.skinnum = 2; // commander
 
 	// set maximum hyperblaster ammo
-	ent->myskills.abilities[MEDIC].max_ammo = MEDIC_HB_INITIAL_AMMO+MEDIC_HB_ADDON_AMMO
+	ent->client->pers.morphinventory.medic.max_ammo = MEDIC_HB_INITIAL_AMMO+MEDIC_HB_ADDON_AMMO
 		*ent->myskills.abilities[MEDIC].current_level;
 
 	// Talent: More Ammo
 	// increases ammo 10% per talent level
-	if(talentLevel > 0) ent->myskills.abilities[MEDIC].max_ammo *= 1.0 + 0.1*talentLevel;
+	if(talentLevel > 0) ent->client->pers.morphinventory.medic.max_ammo *= 1.0 + 0.1*talentLevel;
 
 	// give them some starting ammo
-	ent->myskills.abilities[MEDIC].ammo = MEDIC_HB_START_AMMO;
+	ent->client->pers.morphinventory.medic.ammo = MEDIC_HB_START_AMMO;
 
 	ent->client->refire_frames = 0; // reset charged weapon
 	ent->client->weapon_mode = 0; // reset weapon mode

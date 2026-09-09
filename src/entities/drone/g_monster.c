@@ -9,7 +9,7 @@ float vrx_increase_monster_damage_by_talent(edict_t *owner, float damage)
 		// oblation talent provides +10-20% dmg/lv
 		if (pvm->value)
 			bonus = 0.2;
-        int talentLevel = vrx_get_talent_level(owner, TALENT_OBLATION);
+        const int talentLevel = vrx_get_talent_level(owner, TALENT_OBLATION);
 		if (talentLevel > 0) damage *= 1 + bonus * talentLevel;
 	}
 	return damage;
@@ -339,7 +339,7 @@ void monster_fire_fireball(edict_t* self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	float slvl = drone_damagelevel(self);
+	const float slvl = drone_damagelevel(self);
 
 	damage = FIREBALL_INITIAL_DAMAGE + FIREBALL_ADDON_DAMAGE * slvl;
 	damage = vrx_increase_monster_damage_by_talent(self->activator, damage);
@@ -461,7 +461,7 @@ void M_CheckGround (edict_t *ent)
 	point[1] = ent->s.origin[1];
 	point[2] = ent->s.origin[2] - 1;//0.25;
 
-	trace = gi.trace (ent->s.origin, ent->mins, ent->maxs, point, ent, MASK_MONSTERSOLID);
+	trace = gi.trace (ent->s.origin, ent->mins, ent->maxs, point, ent, MASK_BOTSOLIDX);
 
 	// check steepness
 	if ( trace.plane.normal[2] < 0.7 && !trace.startsolid)
@@ -625,7 +625,7 @@ void vrx_adjust_moveframe_scale(edict_t* self)
 	slot = que_findtype(self->curses, slot, AURA_HOLYFREEZE);
 	if (slot)
 	{
-		temp = 1 / (1 + 0.1 * slot->ent->owner->myskills.abilities[HOLY_FREEZE].current_level);
+		temp = 1 / (1 + 0.1 * h2e(slot->ent)->owner->myskills.abilities[HOLY_FREEZE].current_level);
 		if (temp < 0.25) temp = 0.25;
 		self->monsterinfo.scale *= temp;
 	}
@@ -638,7 +638,7 @@ void vrx_adjust_moveframe_scale(edict_t* self)
 	if ((slot = que_findtype(self->curses, NULL, WEAKEN)) != NULL)
 	{
 		temp = 1 / (1 + WEAKEN_SLOW_BASE + WEAKEN_SLOW_BONUS
-			* slot->ent->owner->myskills.abilities[WEAKEN].current_level);
+			* h2e(slot->ent)->owner->myskills.abilities[WEAKEN].current_level);
 		self->monsterinfo.scale *= temp;
 	}
 
@@ -702,7 +702,7 @@ void M_MoveFrame_Reverse (edict_t* self)
 	}
 
 	index = move->firstframe - self->s.frame;
-	if (move->frame[index].aifunc)
+	if (move->frame[index].aifunc) {
 		if (!vrx_holdframe(self))
 		{
 			self->monsterinfo.scale = 1.0;
@@ -715,6 +715,7 @@ void M_MoveFrame_Reverse (edict_t* self)
 			// we're not going anywhere!
 			move->frame[index].aifunc(self, 0);
 		}
+	}
 
 	if (move->frame[index].thinkfunc && !vrx_is_frozen(self))
 		move->frame[index].thinkfunc(self);
@@ -728,6 +729,7 @@ void M_MoveFrame (edict_t *self)
 
 //	edict_t *curse;
 
+	qboolean runthink = false;
 
 	if (!self->inuse)
 		return;
@@ -776,20 +778,24 @@ void M_MoveFrame (edict_t *self)
 		}
 		else
 		{
+			if ( self->monsterinfo.frametimer <= level.framenum ) {
 			if (!vrx_holdframe(self))
-			{
-				self->s.frame++;
-				if (self->s.frame > move->lastframe)
-					self->s.frame = move->firstframe;
+				{
+					self->s.frame++;
+					if (self->s.frame > move->lastframe)
+						self->s.frame = move->firstframe;
+				}
+				self->monsterinfo.frametimer = level.framenum + qf2sf(1);
+				runthink = true;
 			}
 		}
 	}
 
 	index = self->s.frame - move->firstframe;
-	if (move->frame[index].aifunc)
+	if (move->frame[index].aifunc) {
 		if (!vrx_holdframe(self))
 		{
-			self->monsterinfo.scale = 1.0;
+			self->monsterinfo.scale = FRAMETIME * 10;
 			vrx_adjust_moveframe_scale(self);
 			
 			move->frame[index].aifunc (self, move->frame[index].dist * self->monsterinfo.scale);
@@ -799,8 +805,9 @@ void M_MoveFrame (edict_t *self)
 			// we're not going anywhere!
 			move->frame[index].aifunc (self, 0);
 		}
+	}
 
-	if (move->frame[index].thinkfunc && !vrx_is_frozen(self))
+	if (move->frame[index].thinkfunc && !vrx_is_frozen(self) && runthink)
 		move->frame[index].thinkfunc (self);
 }
 

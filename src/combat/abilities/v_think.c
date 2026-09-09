@@ -12,7 +12,7 @@ void think_ability_ammo_regen(edict_t* ent) {
 	}
 
 	if (level.time > ent->client->ammo_regentime) {
-		float regen_level = (float)ent->myskills.abilities[AMMO_REGEN].current_level;
+		const float regen_level = (float)ent->myskills.abilities[AMMO_REGEN].current_level;
 
 		V_GiveAmmoClip(ent,
 			regen_level * 0.2f * amount_mult,
@@ -32,6 +32,15 @@ void think_ability_ammo_regen(edict_t* ent) {
 		V_GiveAmmoClip(ent,
 			regen_level * 0.2f * amount_mult,
 			AMMO_SLUGS);        //20% of a pack per point
+		V_GiveAmmoClip(ent,
+			regen_level * 0.1f * amount_mult,
+			AMMO_MAGSLUG);      //10% of a pack per point
+		V_GiveAmmoClip(ent,
+			regen_level * 0.1f * amount_mult,
+			AMMO_TRAP);         //10% of a pack per point
+		V_GiveAmmoClip(ent,
+			regen_level * 0.1f * amount_mult,
+			AMMO_TESLA);        //10% of a pack per point
 
 		ent->client->ammo_regentime = level.time + AMMO_REGEN_DELAY;
 	}
@@ -42,7 +51,7 @@ void think_ability_power_regen(edict_t* ent) {
 
 	ent->pcr_time += FRAMETIME;
 
-	double regen_time = (5.0f / ent->myskills.abilities[POWER_REGEN].current_level);
+	const double regen_time = (5.0f / ent->myskills.abilities[POWER_REGEN].current_level);
 
 	if (ent->myskills.abilities[POWER_REGEN].disable)
 		return;
@@ -50,7 +59,7 @@ void think_ability_power_regen(edict_t* ent) {
 	gitem_t* item = Fdi_POWERCUBE;
 	if (!item) return;
 
-	int index = ITEM_INDEX(item);
+	const int index = ITEM_INDEX(item);
 
 	while (ent->pcr_time > regen_time) {
 		if (ent->client->pers.inventory[index] < ent->client->pers.max_powercubes) {
@@ -69,28 +78,28 @@ void think_ability_power_regen(edict_t* ent) {
 
 void think_trade(edict_t* ent) {//3.0 new trading
 	//If this player isn't showing a menu any more, cancel the trade
-	if (ent->trade_with && !ent->client->menustorage.menu_active) {
+	if (ent->client->trade_with && !ent->client->menustorage.menu_active) {
 		int i;
 
 		//alert both players
-		safe_cprintf(ent, PRINT_HIGH, "%s has stopped the trade.\n", ent->myskills.player_name);
-		safe_cprintf(ent->trade_with, PRINT_HIGH, "%s has stopped the trade.\n", ent->myskills.player_name);
+		safe_cprintf(ent, PRINT_HIGH, "%s has stopped the trade.\n", ent->client->resp.pstats.player_name);
+		safe_cprintf(ent->client->trade_with, PRINT_HIGH, "%s has stopped the trade.\n", ent->client->resp.pstats.player_name);
 
 		//Clear the trade pointers
 		for (i = 0; i < 3; ++i) {
-			ent->trade_item[i] = NULL;
-			ent->trade_with->trade_item[i] = NULL;
+			ent->client->trade_item[i] = NULL;
+			ent->client->trade_with->client->trade_item[i] = NULL;
 		}
 
 		//cancel the trade (trade_with)
-		menu_close(ent->trade_with, true);
-		ent->trade_with->client->trade_accepted = false;
-		ent->trade_with->client->trade_final = false;
-		ent->trade_with->client->trading = false;
-		ent->trade_with->trade_with = NULL;
+		menu_close(ent->client->trade_with, true);
+		ent->client->trade_with->client->trade_accepted = false;
+		ent->client->trade_with->client->trade_final = false;
+		ent->client->trade_with->client->trading = false;
+		ent->client->trade_with->client->trade_with = NULL;
 
 		//cancel the trade (ent)
-		ent->trade_with = NULL;
+		ent->client->trade_with = NULL;
 		ent->client->trade_accepted = false;
 		ent->client->trade_final = false;
 		ent->client->trading = false;
@@ -99,20 +108,20 @@ void think_trade(edict_t* ent) {//3.0 new trading
 
 }
 
-void think_chat_protect_activate(edict_t* ent) {
-	if (!ptr->value && !domination->value && !ctf->value &&
-		!(hw->value && vrx_has_flag(ent))  // the game isn't holywars and the player doesn't have the flag
-		&& !ent->myskills.administrator // Not an admin
-		&& !que_typeexists(ent->curses, 0)  // Not cursed
-		&& (ent->myskills.streak < SPREE_START)) // Not on a spree
-	{
-		if (!((!ent->myskills.abilities[CLOAK].disable) && ((ent->myskills.abilities[CLOAK].current_level > 0)))) {
-			if (!trading->value && !ent->automag) // trading mode no chat protection or if automagging either
-			{
-				if (sf2qf(ent->client->idle_frames) == CHAT_PROTECT_FRAMES - 100)
-					safe_centerprintf(ent, "10 seconds to chat-protect.\n");
-				else if (sf2qf(ent->client->idle_frames) == CHAT_PROTECT_FRAMES - 50)
-					safe_centerprintf(ent, "5 seconds to chat-protect.\n");
+void think_chat_protect_activate(edict_t *ent) {
+    if (!ptr->value && !domination->value && !ctf->value &&
+        !(hw->value && vrx_has_flag(ent))  // the game isn't holywars and the player doesn't have the flag
+        && !ent->myskills.administrator // Not an admin
+        && !que_typeexists(ent->curses, 0)  // Not cursed
+        && (ent->myskills.streak < SPREE_START)) // Not on a spree
+    {
+        if (!((!ent->myskills.abilities[CLOAK].disable) && ((ent->myskills.abilities[CLOAK].current_level > 0)))) {
+            if (!trading->value && !ent->automag) // trading mode no chat protection or if automagging either
+            {
+                if (sf2qf(ent->client->idle_frames) == qf2sf(CHAT_PROTECT_FRAMES - 100))
+                    safe_centerprintf(ent, "10 seconds to chat-protect.\n");
+                else if (sf2qf(ent->client->idle_frames) == qf2sf(CHAT_PROTECT_FRAMES - 50))
+                    safe_centerprintf(ent, "5 seconds to chat-protect.\n");
 
 				if (sf2qf(ent->client->idle_frames) == qf2sf(CHAT_PROTECT_FRAMES)) {
 					safe_centerprintf(ent, "Now in chat-protect mode.\n");
@@ -132,7 +141,7 @@ void think_chat_protect_activate(edict_t* ent) {
 
 void think_player_inactivity(edict_t* ent) {
 	if (level.time > pregame_time->value && vrx_get_joined_players(false) > maxclients->value * 0.8) {
-		int frames = MAX_IDLE_FRAMES;
+		const int frames = MAX_IDLE_FRAMES;
 
 		if (!ent->myskills.administrator && !trading->value) {
 			if (ent->client->still_frames == frames - 300)
@@ -159,7 +168,7 @@ void think_idle_frame_counter(const edict_t* ent) {
 
 
 			//Make sure they have the talent
-			int talentLevel = vrx_get_talent_level(ent, TALENT_IMP_CLOAK);
+			const int talentLevel = vrx_get_talent_level(ent, TALENT_IMP_CLOAK);
 
 			if (talentLevel > 0) {
 				int cloak_cubecost = 6 - talentLevel;
@@ -225,69 +234,6 @@ qboolean CanSuperSpeed(edict_t* ent) {
 	return false;
 }
 
-/*
-pmove_t
-V_Think_ApplySuperSpeed(edict_t *ent, const usercmd_t *ucmd, gclient_t *client, int i, pmove_t *pm, int viewheight) {
-	if (ent->superspeed) {
-
-		if (!CanSuperSpeed(ent)) {
-			ent->superspeed = false;
-		} else if (level.time > ent->lasthurt + DAMAGE_ESCAPE_DELAY) {
-			// ent->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
-			(*pm).s = client->ps.pmove;
-
-			{
-				(*pm).s.origin[i] = ent->s.origin[i] * 6;
-				//pm.s.velocity[i] = ent->velocity[i]*8;
-			}
-			(*pm).s.velocity[0] = ent->velocity[0] * 6;
-			(*pm).s.velocity[1] = ent->velocity[1] * 6;
-
-			if (memcmp(&client->old_pmove, &(*pm).s, sizeof((*pm).s)) != 0) {
-				(*pm).snapinitial = true;
-				//		gi.dprintf ("pmove changed!\n");
-			}
-
-			(*pm).cmd = *ucmd;
-
-			(*pm).trace = PM_trace;    // adds default parms
-
-			(*pm).pointcontents = gi.pointcontents;
-
-			// perform a pmove
-			gi.Pmove(pm);
-
-// GHz START
-			// if this is a morphed player, restore saved viewheight
-			// this locks them into that viewheight
-			if (ent->mtype)
-				(*pm).viewheight = viewheight;
-//GHz END
-			// save results of pmove
-			client->ps.pmove = (*pm).s;
-			client->old_pmove = (*pm).s;
-
-			for (i = 0; i < 3; i++) {
-				ent->s.origin[i] = (*pm).s.origin[i] * 0.125;
-				//ent->velocity[i] = pm.s.velocity[i]*0.125;
-			}
-			ent->velocity[0] = (*pm).s.velocity[0] * 0.125;
-			ent->velocity[1] = (*pm).s.velocity[1] * 0.125;
-
-			VectorCopy ((*pm).mins, ent->mins);
-			VectorCopy ((*pm).maxs, ent->maxs);
-
-			client->resp.cmd_angles[0] = SHORT2ANGLE(ucmd->angles[0]);
-			client->resp.cmd_angles[1] = SHORT2ANGLE(ucmd->angles[1]);
-			client->resp.cmd_angles[2] = SHORT2ANGLE(ucmd->angles[2]);
-
-			// ent->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
-		}
-	}
-	//K03 End
-
-	return (*pm);
-}*/
 
 float V_ModifyMovement(edict_t* ent, usercmd_t* ucmd, que_t* curse) {// assault cannon slows you down
 	float vel_modification = 1;
@@ -305,7 +251,7 @@ float V_ModifyMovement(edict_t* ent, usercmd_t* ucmd, que_t* curse) {// assault 
 	curse = que_findtype(ent->curses, curse, AURA_HOLYFREEZE);
 	// are we affected by the holy freeze aura?
 	if (curse) {
-		float modifier = 1 / (1 + 0.1 * curse->ent->owner->myskills.abilities[HOLY_FREEZE].current_level);
+		float modifier = 1 / (1 + 0.1 * h2e(curse->ent)->owner->myskills.abilities[HOLY_FREEZE].current_level);
 		if (modifier < 0.25) modifier = 0.25;
 
 		//gi.dprintf("holyfreeze modifier = %.2f\n", modifier);
@@ -329,8 +275,8 @@ float V_ModifyMovement(edict_t* ent, usercmd_t* ucmd, que_t* curse) {// assault 
 
 	// 3.5 weaken slows down target
 	if ((curse = que_findtype(ent->curses, NULL, WEAKEN)) != NULL) {
-		float modifier = 1 / (1 + WEAKEN_SLOW_BASE + WEAKEN_SLOW_BONUS
-			* curse->ent->owner->myskills.abilities[WEAKEN].current_level);
+		const float modifier = 1 / (1 + WEAKEN_SLOW_BASE + WEAKEN_SLOW_BONUS
+			* h2e(curse->ent)->owner->myskills.abilities[WEAKEN].current_level);
 		vel_modification *= modifier;
 	}
 
@@ -383,14 +329,21 @@ float V_ModifyMovement(edict_t* ent, usercmd_t* ucmd, que_t* curse) {// assault 
 	/*
 		az: rewrite how superspeed works because it fucking sucks
 	*/
-	qboolean superspeed = ent->superspeed && CanSuperSpeed(ent) && level.time > ent->lasthurt + DAMAGE_ESCAPE_DELAY;
+	const qboolean superspeed = ent->superspeed && CanSuperSpeed(ent) && level.time > ent->lasthurt + DAMAGE_ESCAPE_DELAY;
+#ifndef VRX_REPRO
 	if (superspeed) {
 		vel_modification *= 1.75;
 	}
-
+#else
+	// handled by pmove
+	if (superspeed)
+		ent->client->ps.pmove.pm_flags |= PMF_SUPERSPEED;
+	else
+		ent->client->ps.pmove.pm_flags &= ~PMF_SUPERSPEED;
+#endif
 
 	//K03 Begin
-	qboolean hook = (ent->client->hook_state == HOOK_ON) && (VectorLength(ent->velocity) < 10);
+	const qboolean hook = (ent->client->hook_state == HOOK_ON) && (VectorLength(ent->velocity) < 10);
 
 	if (hook/* || vel_modification != 1*/) {
 		ent->client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
@@ -399,6 +352,18 @@ float V_ModifyMovement(edict_t* ent, usercmd_t* ucmd, que_t* curse) {// assault 
 		ent->client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
 	}
 	//K03 End
+
+#ifdef	VRX_REPRO
+	if (ent->mtype == MORPH_CACODEMON)
+		ent->client->ps.pmove.pm_flags |= PMF_CACODEMON;
+	else
+		ent->client->ps.pmove.pm_flags &= ~PMF_CACODEMON;
+
+	if (ent->mtype == MORPH_FLYER)
+		ent->client->ps.pmove.pm_flags |= PMF_NOCROUCH;
+	else
+		ent->client->ps.pmove.pm_flags &= ~PMF_NOCROUCH;
+#endif
 
 	return vel_modification;
 }
@@ -448,7 +413,7 @@ void think_recharge_abilities(edict_t* ent) {
 		}
 
 		// az: super speed sprint
-		qboolean can_superspeed = !ent->myskills.abilities[SUPER_SPEED].disable && ent->myskills.abilities[SUPER_SPEED].current_level;
+		const qboolean can_superspeed = !ent->myskills.abilities[SUPER_SPEED].disable && ent->myskills.abilities[SUPER_SPEED].current_level;
 		if (!ent->superspeed && can_superspeed) {
 			if (ent->myskills.abilities[SUPER_SPEED].charge < SPRINT_MAX_CHARGE) {
 				ent->myskills.abilities[SUPER_SPEED].charge += SPRINT_CHARGE_RATE;
@@ -480,13 +445,13 @@ void think_ability_cloak(edict_t* ent) {
 			min_idle_frames = 1;
 		}
 
-		qboolean idled_enough = ent->client->idle_frames >= min_idle_frames;
-		qboolean has_no_curses = !que_typeexists(ent->auras, 0);
-		qboolean ability_delay_over = (level.time > ent->client->ability_delay);
-		qboolean has_no_flag = !vrx_has_flag(ent);
-		qboolean has_no_summons = !V_HasSummons(ent);
-		qboolean is_not_automagging = !ent->automag;
-		qboolean can_cloak = idled_enough
+		const qboolean idled_enough = ent->client->idle_frames >= min_idle_frames;
+		const qboolean has_no_curses = !que_typeexists(ent->auras, 0);
+		const qboolean ability_delay_over = (level.time > ent->client->ability_delay);
+		const qboolean has_no_flag = !vrx_has_flag(ent);
+		const qboolean has_no_summons = !V_HasSummons(ent);
+		const qboolean is_not_automagging = !ent->automag;
+		const qboolean can_cloak = idled_enough
 			&& has_no_curses
 			&& ability_delay_over
 			&& has_no_flag
@@ -529,7 +494,7 @@ void think_ability_antigrav(edict_t* ent) {
 void think_ability_superspeed(edict_t* ent) {
 	if (ent->superspeed && ent->deadflag != DEAD_DEAD) {
 		//3.0 Blessed players get a speed boost too
-		que_t* slot = NULL;
+		const que_t* slot = NULL;
 		slot = que_findtype(ent->curses, NULL, BLESS);
 
 		//eat cubes if the player isn't blessed
@@ -607,7 +572,7 @@ void think_ability_health_regen(edict_t* ent) {
 		&& !(ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent))) {
 		//3.0 cursed players can't heal through regeneration
 		if (que_findtype(ent->curses, NULL, CURSE) == NULL) {
-			int health_factor = 1 * ent->myskills.abilities[REGENERATION].current_level; // Regeneration OP. :D
+			const int health_factor = 1 * ent->myskills.abilities[REGENERATION].current_level; // Regeneration OP. :D
 			ent->health += health_factor;
 
 			if (ent->health > ent->max_health)
@@ -651,9 +616,9 @@ void think_tech_regeneration(edict_t* ent) {
 void think_ability_fury(edict_t* ent) {
 	if (!(level.framenum % (int)(1 / FRAMETIME)) && (ent->fury_time > level.time && ent->client)) {
 		if (G_EntIsAlive(ent) && !(ctf->value && ctf_enable_balanced_fc->value && vrx_has_flag(ent))) {
-			int maxHP = MAX_HEALTH(ent);
-			int maxAP = MAX_ARMOR(ent);
-			int* armor = &ent->client->pers.inventory[body_armor_index];
+			const int maxHP = MAX_HEALTH(ent);
+			const int maxAP = MAX_ARMOR(ent);
+			const int* armor = &ent->client->pers.inventory[body_armor_index];
 			float factor = FURY_INITIAL_REGEN + (FURY_ADDON_REGEN * ent->myskills.abilities[FURY].current_level);
 
 			if (factor > FURY_MAX_REGEN)
@@ -687,8 +652,9 @@ void think_ability_mind_absorb(edict_t* ent) {
 void think_talent_ammo_regen(edict_t* ent) {
 	if (ent->client && vrx_get_talent_slot(ent, TALENT_BASIC_AMMO_REGEN) != -1) {
 		talent_t* talent = &ent->myskills.talents.talent[vrx_get_talent_slot(ent, TALENT_BASIC_AMMO_REGEN)];
+		auto sdelay = &ent->myskills.talents.delay;
 
-		if (talent->upgradeLevel > 0 && (talent->delay < level.time)
+		if (talent->upgradeLevel > 0 && (sdelay->ammoregen < level.time)
 			&& !(ent->client->buttons & BUTTON_ATTACK)) // don't regen ammo while firing
 		{
 			//Give them some ammo
@@ -704,29 +670,17 @@ void think_talent_ammo_regen(edict_t* ent) {
 				V_GiveAmmoClip(ent, 1.0f, AMMO_SHELLS);
 			if (ent->client->ammo_index == slug_index)
 				V_GiveAmmoClip(ent, 1.0f, AMMO_SLUGS);
+			if (ent->client->ammo_index == magslug_index)
+				V_GiveAmmoClip(ent, 1.0f, AMMO_MAGSLUG);
+			if (ent->client->ammo_index == trap_index)
+				V_GiveAmmoClip(ent, 1.0f, AMMO_TRAP);
+			if (ent->client->ammo_index == tesla_index)
+				V_GiveAmmoClip(ent, 1.0f, AMMO_TESLA);
 
-			talent->delay = level.time + 15 - talent->upgradeLevel * 2;    //10 seconds - 1 seconds per upgrade
+			sdelay->ammoregen = level.time + 15 - talent->upgradeLevel * 2;    //10 seconds - 1 seconds per upgrade
 		}
 	}
 }
-
-/*
-void think_talent_life_regen(edict_t* ent) {
-	if (ent->client
-		&& vrx_get_talent_slot(ent, TALENT_LIFE_REG) != -1
-		&& G_EntIsAlive(ent) && (ent->health < ent->max_health)) {
-
-		talent_t* talent = &ent->myskills.talents.talent[vrx_get_talent_slot(ent, TALENT_LIFE_REG)];
-		if (talent->upgradeLevel > 0) {
-			int health_factor = 1;
-			ent->health += health_factor;
-			if (ent->health > ent->max_health)
-				ent->health = ent->max_health;
-			ent->client->healthregen_time = 950;
-		}
-	}
-}
-*/
 
 void think_talent_armor_regen(const edict_t* ent, int max_armor, int* armor) {
 	if (ent->client
@@ -835,9 +789,9 @@ void think_ability_vampire(edict_t* self) {
 
 
 // grid.c
-void DrawNearbyGrid(edict_t* ent);
+void vrx_pf_draw_nearby_grid(edict_t* ent);
 
-void DrawChildLinks(edict_t* ent);
+void vrx_pf_draw_child_links(edict_t* ent);
 
 // magic.c
 void DeflectProjectiles(edict_t* self, float chance, qboolean in_front);
@@ -867,13 +821,9 @@ void vrx_client_think(edict_t* ent) {
 	int* armor;        // 3.5 pointer to client armor
 
 
-    if (ent->client->showGridDebug > 0) 
-    {
-        if (ent->client->showGridDebug <= 2)
-            DrawNearbyGrid(ent);
-        if (ent->client->showGridDebug >= 2)
-            DrawChildLinks(ent);
-    }
+    vrx_pf_draw_nearby_grid(ent);
+    vrx_pf_draw_child_links(ent);
+
     //DrawNavi(ent);
     //DrawPath();
 

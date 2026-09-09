@@ -145,7 +145,7 @@ float AI_FindLinkDistance(int n1, int n2)
 	if (nodes[n1].flags & NODEFLAGS_TELEPORTER_IN && nodes[n2].flags & NODEFLAGS_TELEPORTER_OUT )
 		return NODE_DENSITY; //not 0, just because teleporting has a strategical cost
 
-	return AI_Distance( nodes[n1].origin, nodes[2].origin );
+	return AI_Distance( nodes[n1].origin, nodes[n2].origin );
 }
 
 
@@ -174,7 +174,7 @@ qboolean AI_AddLink( int n1, int n2, int linkType )
 		return false;
 
 	//add the link
-	if (pLinks[n1].numLinks > NODES_MAX_PLINKS) 
+	if (pLinks[n1].numLinks >= NODES_MAX_PLINKS)
 	{
 //		G_Printf("MaxPlinks Reached! node:%i numPlinks:%i\n", n1, pLinks[n1].numLinks);
 		return false;
@@ -191,6 +191,30 @@ qboolean AI_AddLink( int n1, int n2, int linkType )
 	return true;
 }
 
+// az: ugh. I hate this.
+qboolean AI_RemoveLink( int n1, int n2 ) {
+	// must be already referenced
+	if( !AI_PlinkExists(n1, n2) )
+		return false;
+
+	for (int linkIdx = 0; linkIdx < pLinks[n1].numLinks; linkIdx++) {
+		if (pLinks[n1].nodes[linkIdx] == n2) {
+
+			pLinks[n1].nodes[linkIdx] = pLinks[n1].nodes[pLinks[n1].numLinks - 1];
+			pLinks[n1].dist[linkIdx] = pLinks[n1].dist[pLinks[n1].numLinks - 1];
+			pLinks[n1].moveType[linkIdx] = pLinks[n1].moveType[pLinks[n1].numLinks - 1];
+
+			// az: conventionally it's all set to zero it seems
+			pLinks[n1].nodes[pLinks[n1].numLinks - 1] = 0;
+			pLinks[n1].dist[pLinks[n1].numLinks - 1] = 0;
+			pLinks[n1].moveType[pLinks[n1].numLinks - 1] = 0;
+
+			pLinks[n1].numLinks--;
+			return true;
+		}
+	}
+	return false;
+}
 
 //==========================================
 // AI_PlinkExists
@@ -458,7 +482,7 @@ int AI_RunGravityBox( int n1, int n2 )
 {
 	int			move;
 	int			movemask = 0;
-	float		movescale = 8;
+	const float		movescale = 8;
 	trace_t		trace;
 	vec3_t		boxmins, boxmaxs;
 	vec3_t		o1;
@@ -600,11 +624,11 @@ int	AI_FindFallOrigin( int n1, int n2, vec3_t fallorigin )
 {
 	int			move;
 	int			movemask = 0;
-	float		movescale = 8;
+	const float		movescale = 8;
 	trace_t		trace;
 	vec3_t		boxmins, boxmaxs;
 	vec3_t		o1;
-	vec3_t		v1;
+	vec3_t		v1 = { 0, 0, 0 };
 	int			eternalcount = 0;
 
 
@@ -770,7 +794,7 @@ int AI_IsLadderLink( int n1, int n2 )
 	//if both are ladder nodes
 	if( nodes[n1].flags & NODEFLAGS_LADDER && nodes[n2].flags & NODEFLAGS_LADDER )
 	{
-		int	candidate = AI_LadderLink_FindUpperNode( n1 );
+		const int	candidate = AI_LadderLink_FindUpperNode( n1 );
 		if( candidate != n2 )
 			return LINK_INVALID;
 
@@ -953,8 +977,8 @@ int AI_LinkCloseNodes_JumpPass( int start )
 {
 	int			n1, n2;
 	int			count = 0;
-	float		pLinkRadius = NODE_DENSITY*2;
-	qboolean	ignoreHeight = true;
+	const float		pLinkRadius = NODE_DENSITY*2;
+	const qboolean	ignoreHeight = true;
 	int			linkType;
 
 	if( nav.num_nodes < 1 )
@@ -999,8 +1023,8 @@ int AI_LinkCloseNodes( void )
 {
 	int			n1, n2;
 	int			count = 0;
-	float		pLinkRadius = NODE_DENSITY*1.5;
-	qboolean	ignoreHeight = true;
+	const float		pLinkRadius = NODE_DENSITY*1.5;
+	const qboolean	ignoreHeight = true;
 
 	//do it for everynode in the list
 	for( n1=0; n1<nav.num_nodes; n1++ )

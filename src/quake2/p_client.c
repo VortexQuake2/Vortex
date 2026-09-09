@@ -9,10 +9,27 @@
 #include "server/relay.h"
 
 //Function prototypes required for this .c file:
-void ClientUserinfoChanged (edict_t *ent, char *userinfo);
 void SP_misc_teleporter_dest (edict_t *ent);
 void EatCorpses (edict_t *ent);
 void RunCacodemonFrames (edict_t *ent, usercmd_t *ucmd);
+
+void vrx_sync_player_angle_state(edict_t *ent, const vec3_t angles)
+{
+	vec3_t synced_angles;
+	int i;
+
+	if (!ent || !ent->client)
+		return;
+
+	VectorCopy(angles, synced_angles);
+	ValidateAngles(synced_angles);
+
+	for (i = 0; i < 3; i++)
+		ent->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(synced_angles[i] - ent->client->resp.cmd_angles[i]);
+
+	VectorCopy(synced_angles, ent->client->ps.viewangles);
+	VectorCopy(synced_angles, ent->client->v_angle);
+}
 
 //
 // Gross, ugly, disgustuing hack section
@@ -214,7 +231,7 @@ int GetGender(edict_t *ent) {
 }
 
 char *GetPossesiveAdjective(edict_t *ent) {
-	int gender = GetGender(ent);
+	const int gender = GetGender(ent);
 	char *info;
 
 	switch( gender ) {
@@ -235,7 +252,7 @@ char *GetPossesiveAdjective(edict_t *ent) {
 }
 
 char *GetReflexivePronoun(edict_t *ent) {
-	int gender = GetGender(ent);
+	const int gender = GetGender(ent);
 	char *info;
 
 	switch( gender ) {
@@ -314,7 +331,7 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 	qboolean	ff;
 
 	//JABot [start]
-	//	if (self->ai.is_bot){
+	//	if (self->ai){
 	//		AI_BotObituary (self, inflictor, attacker);
 	//		return;
 	//	} //[end]
@@ -556,6 +573,10 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 			case MOD_BFG_EFFECT:
 				message = "couldn't hide from";
 				message2 = "'s BFG";
+				break;
+			case MOD_TRACKER:
+				message = "was disrupted by";
+				message2 = "'s disruptor";
 				break;
 			case MOD_HANDGRENADE:
 				message = "tries to hatch";
@@ -800,6 +821,9 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 				message2 = "'s burning shrapnel";
 				break;
 				//K03 End
+			case MOD_ETFRIFLE:
+				message = "was perforated by";
+				message2 = "'s ETF rifle";
 			}
 			if (message)
 			{
@@ -833,7 +857,7 @@ void TossClientWeapon (edict_t *self)
 	qboolean	quadfire;
 	float		dist;
 	vec3_t		v;
-	edict_t		*enemy = NULL;
+	const edict_t		*enemy = NULL;
 	float		spread;
 
 	if(self->enemy && self->enemy != self)
@@ -987,7 +1011,7 @@ void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 		self->client->ps.pmove.pm_type = PM_DEAD;
 		ClientObituary (self, inflictor, attacker);
 		//TossClientWeapon (self);
-		if (deathmatch->value && !self->ai.is_bot) // GHz: don't send unicast packets to bots!
+		if (deathmatch->value && !self->ai) // GHz: don't send unicast packets to bots!
 			Cmd_Help_f (self);		// show scores
 		// clear inventory
 		memset(self->client->pers.inventory, 0, sizeof(self->client->pers.inventory));
@@ -1102,8 +1126,8 @@ void InitClientPersistant (gclient_t *client)
 {
 	//K03 Begin
 	gitem_t		*item;
-	
-	int spectator=client->pers.spectator;
+
+	const int spectator=client->pers.spectator;
 
 	if (debuginfo->value > 1)
 		gi.dprintf("InitClientPersistant()\n");
@@ -1122,23 +1146,26 @@ void InitClientPersistant (gclient_t *client)
 
 	//K03 End
 
-	client->pers.health			= 100;
-	client->pers.max_health		= 100;
+	client->pers.health				= 100;
+	client->pers.max_health			= 100;
 
-	client->pers.max_bullets	= 200;
-	client->pers.max_shells		= 100;
-	client->pers.max_rockets	= 50;
-	client->pers.max_grenades	= 50;
-	client->pers.max_cells		= 200;
-	client->pers.max_slugs		= 50;
+	client->pers.max_bullets		= 200;
+	client->pers.max_shells			= 100;
+	client->pers.max_rockets		= 50;
+	client->pers.max_grenades		= 50;
+	client->pers.max_cells			= 200;
+	client->pers.max_slugs			= 50;
+	client->pers.max_flechettes		= 200;
 
 	// RAFAEL
-	client->pers.max_magslug	= 50;
-	client->pers.max_trap		= 5;
+	client->pers.max_magslug		= 50;
+	client->pers.max_trap			= 5;
+	client->pers.max_tesla			= 5;
+	client->pers.max_disruptor		= 12;
 
 	//K03 Begin
-	client->pers.max_powercubes = 200;
-	client->pers.max_tballs = 20;
+	client->pers.max_powercubes 	= 200;
+	client->pers.max_tballs 		= 20;
 	//K03 End
 
 	client->pers.connected = true;
@@ -1454,7 +1481,7 @@ qboolean SelectSpawnPoint (edict_t *ent, vec3_t origin, vec3_t angles)
 		if ((spot = vrx_inv_select_player_spawn_point(ent)) != NULL)
 		{
 			vrx_inv_remove_spawn_que(ent); // remove from waiting list
-			ent->spawn = NULL; // player is no longer assigned this spawn
+			ent->client->spawn = NULL; // player is no longer assigned this spawn
 
             VectorCopy (spot->s.angles, angles);
 			VectorCopy (spot->s.origin, origin);
@@ -1611,16 +1638,16 @@ void CopyToBodyQue (edict_t *ent)
 	if ((slot = que_findtype(ent->curses, slot, CURSE_PLAGUE)) != NULL)
 	{
 		// try to add it to the body's curse list
-		if (!que_addent(body->curses, slot->ent, 999.0))
+		if (!que_addent(body->curses, h2en(slot->ent), 999.0))
 		{
 			// failed, remove the curse entity
-			G_FreeEdict(slot->ent);
+			G_FreeEdict(h2en(slot->ent));
 		}
 		else
-			slot->ent->enemy = body; // make the plague entity target the body
+			h2e(slot->ent)->enemy = body; // make the plague entity target the body
 		
 		// remove plague from the player's curses
-		slot->ent = NULL;
+		slot->ent = ENTHANDLE_EMPTY;
 		slot->time = 0;
 	}
 	// FIXME: send an effect on the removed body
@@ -1669,7 +1696,7 @@ void respawn (edict_t *self)
 		// don't let them respawn unless they've been assigned a spawn
 		if (INVASION_OTHERSPAWNS_REMOVED)
 		{
-			if (!self->spawn)
+			if (!self->client->spawn)
 			{
 				vrx_inv_add_spawn_que(self);
 				return;
@@ -1677,7 +1704,7 @@ void respawn (edict_t *self)
 		}
 
 		//JABot[start]
-		if (self->ai.is_bot) {
+		if (self->ai) {
 			BOT_Respawn(self);
 			return;
 		}
@@ -1724,7 +1751,7 @@ void spectator_respawn (edict_t *ent)
 	// exceed max_spectators
 
 	if (ent->client->pers.spectator) {
-		char *value = Info_ValueForKey (ent->client->pers.userinfo, "spectator");
+		const char *value = Info_ValueForKey (ent->client->pers.userinfo, "spectator");
 		if (*spectator_password->string && 
 			strcmp(spectator_password->string, "none") && 
 			strcmp(spectator_password->string, value)) {
@@ -1753,7 +1780,7 @@ void spectator_respawn (edict_t *ent)
 	} else {
 		// he was a spectator and wants to join the game
 		// he must have the right password
-		char *value = Info_ValueForKey (ent->client->pers.userinfo, "password");
+		const char *value = Info_ValueForKey (ent->client->pers.userinfo, "password");
 		if (*password->string && strcmp(password->string, "none") && 
 			strcmp(password->string, value)) {
 			safe_cprintf(ent, PRINT_HIGH, "Password incorrect.\n");
@@ -1871,7 +1898,7 @@ void PutClientInServer (edict_t *ent)
 	ent->solid = SOLID_BBOX;
 	ent->deadflag = DEAD_NO;
 	ent->owner = NULL; //GHz
-	ent->air_finished = level.time + 12;
+	ent->client->air_finished = level.time + 12;
 	ent->clipmask = MASK_PLAYERSOLID;
 	ent->model = "players/male/tris.md2";
 	ent->pain = player_pain;
@@ -1882,8 +1909,8 @@ void PutClientInServer (edict_t *ent)
 	ent->flags &= ~FL_CHATPROTECT;//GHz
 	ent->svflags &= ~SVF_DEADMONSTER;
 	ent->svflags &= ~SVF_MONSTER;
-	ent->lastkill = 0;//GHz
-	ent->nfer = 0;
+	ent->client->lastkill = 0;//GHz
+	ent->client->nfer = 0;
 	ent->exploded = false;
 	VectorCopy (mins, ent->mins);
 	VectorCopy (maxs, ent->maxs);
@@ -1895,6 +1922,7 @@ void PutClientInServer (edict_t *ent)
 		int talentLevel;
 
 		vrx_update_all_character_maximums(ent);
+		vrx_match_inventory_restore(ent);
 		vrx_add_respawn_weapon(ent, ent->myskills.respawn_weapon);
 		vrx_add_respawn_items(ent);
 
@@ -1902,12 +1930,10 @@ void PutClientInServer (edict_t *ent)
 		talentLevel = vrx_get_talent_level(ent, TALENT_SIDEARMS);
 		if (talentLevel > 0)
 		{
-			int i;
-
 			//Give the player one additional respawn weapon for every point in the talent.
 			//This does not give them ammo.
-			for (i = 0; i < talentLevel + 1; ++i)
-				vrx_give_additional_respawn_weapons(ent, i + 1);
+			for (int j = 0; j < talentLevel + 1; ++j)
+				vrx_give_additional_respawn_weapons(ent, j + 1);
 		}
 
 		// az: restore blaster ammo on death
@@ -1938,6 +1964,7 @@ void PutClientInServer (edict_t *ent)
 	client->ps.pmove.origin[0] = spawn_origin[0]*8;
 	client->ps.pmove.origin[1] = spawn_origin[1]*8;
 	client->ps.pmove.origin[2] = spawn_origin[2]*8;
+
 //ZOID
 	client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
 //ZOID
@@ -1958,11 +1985,17 @@ void PutClientInServer (edict_t *ent)
 	if (client->pers.weapon)//K03
 		client->ps.gunindex = gi.modelindex(client->pers.weapon->view_model);
 
+#ifdef VRX_REPRO
+	client->ps.pmove.viewheight = ent->viewheight;
+#endif //VRX_REPRO
 	// clear entity state values
 	ent->s.effects = 0;
 	ent->s.skinnum = ent - g_edicts - 1;
+	// az: 255 = PLAYER MODEL. Repro sets mi2 as well.
 	ent->s.modelindex = 255;		// will use the skin specified model
-//	ent->s.modelindex2 = 255;		// custom gun model
+#ifdef VRX_REPRO
+	ent->s.modelindex2 = 255;		// custom gun model
+#endif
 	ShowGun(ent);					// ### Hentai ### special gun model
 	ent->s.frame = 0;
 	VectorCopy (spawn_origin, ent->s.origin);
@@ -1970,9 +2003,13 @@ void PutClientInServer (edict_t *ent)
 	VectorCopy (ent->s.origin, ent->s.old_origin);
 
 	// set the delta angle
+#ifndef VRX_REPRO
 	for (i=0 ; i<3 ; i++)
 		client->ps.pmove.delta_angles[i] = ANGLE2SHORT(spawn_angles[i] - client->resp.cmd_angles[i]);
-
+#else
+	for (i=0 ; i<3 ; i++)
+		client->ps.pmove.delta_angles[i] = (spawn_angles[i] - client->resp.cmd_angles[i]);
+#endif
 	ent->s.angles[PITCH] = 0;
 	ent->s.angles[YAW] = spawn_angles[YAW];
 	ent->s.angles[ROLL] = 0;
@@ -1980,7 +2017,7 @@ void PutClientInServer (edict_t *ent)
 	VectorCopy (ent->s.angles, client->v_angle);
 
 	//JABot[start]
-	if( ent->ai.is_bot == true )
+	if( ent->ai  )
 		return;
 	//JABot[end]
 
@@ -2096,33 +2133,36 @@ called when a client has finished connecting, and is ready
 to be placed into the game.  This will happen every level load.
 ============
 */
+#ifndef VRX_REPRO
+void ClientBegin (edict_t *ent, qboolean loadgame)
+#else
 void ClientBegin (edict_t *ent)
+#endif
 {
-
 	if (debuginfo->value > 1)
 		gi.dprintf("ClientBegin()\n");
 
 	ent->client = game.clients + (ent - g_edicts - 1);
 
-	if (!ent->ai.is_bot)
-	{
-		//[QBS]
-		// set msg mode fully on so zbot would receive text & crash :)
-		gi.WriteByte (svc_stufftext);
-		gi.WriteString ("msg 4\n");
-		gi.unicast(ent, true);
-
-		//[QBS] RATBOT STOPPER 
-		gi.WriteByte (svc_stufftext);
-		gi.WriteString (".==|please.disconnect.all.bots|==.\n");
-		gi.unicast(ent, true);
-		//[QBS]
-
-		gi.WriteByte (svc_stufftext);
-		gi.WriteString ("msg 0\n");
-		gi.unicast(ent, true);
-		//[QBS]end
-	}
+	// if (!ent->ai)
+	// {
+	// 	//[QBS]
+	// 	// set msg mode fully on so zbot would receive text & crash :)
+	// 	gi.WriteByte (svc_stufftext);
+	// 	gi.WriteString ("msg 4\n");
+	// 	gi.unicast(ent, true);
+	//
+	// 	//[QBS] RATBOT STOPPER
+	// 	gi.WriteByte (svc_stufftext);
+	// 	gi.WriteString (".==|please.disconnect.all.bots|==.\n");
+	// 	gi.unicast(ent, true);
+	// 	//[QBS]
+	//
+	// 	gi.WriteByte (svc_stufftext);
+	// 	gi.WriteString ("msg 0\n");
+	// 	gi.unicast(ent, true);
+	// 	//[QBS]end
+	// }
 
 	vrx_relay_notify_client_begin(ent->client->pers.netname);
 	ClientBeginDeathmatch (ent);
@@ -2140,7 +2180,7 @@ The game can override any of the settings in place
 */
 
 void classmenu_handler (edict_t *ent, int option); // az
-void ClientUserinfoChanged (edict_t *ent, char *userinfo)
+void ClientUserinfoChanged (edict_t *ent, const char *userinfo)
 {
 	char	*s;
 	int		playernum;
@@ -2258,9 +2298,13 @@ Changing levels will NOT cause this to be called again, but
 loadgames will.
 ============
 */
-qboolean ClientConnect (edict_t *ent, char *userinfo)
+#ifndef VRX_REPRO
+qboolean ClientConnect (edict_t *ent, const char *userinfo)
+#else
+bool ClientConnect (edict_t *ent, char *userinfo, const char* social_id, bool is_bot)
+#endif
 {
-	static int lastID = 1;
+	static int64_t lastID = 1;
 	char	ip[16];
 	char	*value;
 	
@@ -2278,8 +2322,6 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 
 	// Reset names!
 	memset(ent->client->pers.netname, 0, sizeof(ent->client->pers.netname)-1);
-
-
 	strncpy (ent->client->pers.netname, value, sizeof(ent->client->pers.netname)-1);
 
 	// update current ip
@@ -2295,8 +2337,6 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 
 		strncpy(ent->client->pers.current_ip, ip, sizeof(ent->client->pers.current_ip)-1);
 	}
-
-	//Info_SetValueForKey(userinfo, "ip", value);
 
 	if (!ClientCanConnect(ent, userinfo))
 		return false;
@@ -2372,12 +2412,12 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 
 	ent->svflags = 0;// make sure we start with known default
 	ent->client->pers.connected = true;
-	ent->ai.is_bot = false;
 
-	ent->gds_connection_id = lastID;
+	ent->gds.connection_id = lastID;
+	ent->gds.connection_load_id = 0;
 	lastID++;
 
-	if (lastID == INT_MAX - 1)
+	if (lastID == INT64_MAX - 1)
 	{
 		gi.dprintf("We seem to have passed a big player ID. Resetting!");
 		lastID = 1;
@@ -2394,15 +2434,13 @@ Called when a player drops from the server.
 Will not be called between levels.
 ============
 */
-void KillMyVote (edict_t *ent);
+void vrx_vote_kill (edict_t *ent);
 void soldier_die(edict_t *ent);
 void turret_remove(edict_t *ent);
 void SaveCharacterQuit (edict_t *ent);
 
 void ClientDisconnect (edict_t *ent)
 {
-	int		i;
-	edict_t *player;
 	int		playernum;
 
 	if (debuginfo->value > 1)
@@ -2411,7 +2449,7 @@ void ClientDisconnect (edict_t *ent)
 	if (!ent->client)
 		return;
 
-	KillMyVote (ent);
+	vrx_vote_kill (ent);
 
 	vrx_relay_notify_client_disconnected(ent->client->pers.netname);
     vrx_clean_damage_list(ent, true);
@@ -2444,8 +2482,8 @@ void ClientDisconnect (edict_t *ent)
 	// make sure there are no mini-bosses on spree war status
 	if (deathmatch->value)
 	{
-		for (i = 1; i <= maxclients->value; i++) {
-			player = &g_edicts[i];
+		for (int i = 1; i <= maxclients->value; i++) {
+			edict_t *player = &g_edicts[i];
 			if (!player->inuse)
 				continue;
 			if (player->solid == SOLID_NOT)
@@ -2496,6 +2534,11 @@ void ClientDisconnect (edict_t *ent)
 	playernum = ent-g_edicts-1;
 	gi.configstring (CS_PLAYERSKINS+playernum, "");
 
+	if (ent->ai) {
+		vrx_free(ent->ai);
+		ent->ai = nullptr;
+	}
+
 	//JABot[start]
 	AI_EnemyRemoved (ent);
 	//[end]
@@ -2539,6 +2582,12 @@ float V_ModifyMovement(edict_t *ent, usercmd_t *ucmd, que_t *curse);
 void think_trade(edict_t *ent);
 void BlinkStrike_think(edict_t* ent);
 void V_PickUpEntity(edict_t* ent);
+
+trace_t SV_PM_Clip(const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, enum contents_t mask)
+{
+	return gire.clip(world, start, mins, maxs, end, mask);
+}
+
 
 void ClientThink (edict_t *ent, usercmd_t *ucmd)
 {
@@ -2600,7 +2649,6 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		client->resp.cmd_angles[0] = SHORT2ANGLE(ucmd->angles[0]);
 		client->resp.cmd_angles[1] = SHORT2ANGLE(ucmd->angles[1]);
 		client->resp.cmd_angles[2] = SHORT2ANGLE(ucmd->angles[2]);
-
 	} else {
 
 		if (ent->lockon == 1 && ent->enemy)
@@ -2614,9 +2662,16 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		memset (&pm, 0, sizeof(pm));
 		
 		if (ent->movetype == MOVETYPE_NOCLIP)
+#ifdef VRX_REPRO
+			// TODO - PM_SPECTATOR works differently from baseline.
+			client->ps.pmove.pm_type = PM_NOCLIP;//PM_SPECTATOR;
+#else
 			client->ps.pmove.pm_type = PM_SPECTATOR;
+#endif //VRX_REPRO
 		else if (ent->deadflag)
 			client->ps.pmove.pm_type = PM_DEAD;
+		else if (ent->flags & FL_COCOONED)
+			client->ps.pmove.pm_type = PM_FREEZE;
 		else
 			client->ps.pmove.pm_type = PM_NORMAL;
 		//K03 Begin
@@ -2638,7 +2693,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		//K03 End
 
 		// reset jump flag
-		if (!ucmd->upmove)
+		if (cmd_standing(ucmd))
 			ent->client->jump = false;
 
 		// double jump
@@ -2660,21 +2715,35 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		    ucmd->sidemove *= velocity_mod;
 		}
 
+#ifndef VRX_REPRO
 		for (i=0 ; i<3 ; i++)
 		{
 			pm.s.origin[i] = ent->s.origin[i]*8;
             pm.s.velocity[i] = ent->velocity[i] * 8;
 		}
+#else
+		for (i=0 ; i<3 ; i++)
+		{
+			pm.s.origin[i] = ent->s.origin[i];
+			pm.s.velocity[i] = ent->velocity[i];
+		}
+#endif
 
 		if (memcmp(&client->old_pmove, &pm.s, sizeof(pm.s)))
 			pm.snapinitial = true;
 
 		pm.cmd = *ucmd;
 
+#ifndef VRX_REPRO
 		pm.trace = PM_trace;	// adds default parms
-		
-
 		pm.pointcontents = gi.pointcontents;
+#else
+		pm.player = ent;
+		pm.trace = gire.trace;
+		pm.clip = SV_PM_Clip;
+		VectorCopy(ent->client->ps.viewoffset, pm.viewoffset);
+		pm.pointcontents = gire.pointcontents;
+#endif
 
 		// perform a pmove
 		gi.Pmove (&pm);
@@ -2682,6 +2751,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		// az: for SPEED, run a Pmove twice
 		// we don't wan't to compound on the existing velocity
 		// thus we undo the change in velocity right after...
+#ifndef VRX_REPRO
 		if (velocity_mod > 1) {
 		    float oldZpos, oldZspeed;
 		    oldZpos = pm.s.origin[2];
@@ -2696,15 +2766,19 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
             pm.s.origin[2] = oldZpos;
             pm.s.velocity[2] = oldZspeed;
 		}
+#endif
 
 // GHz START
 		// if this is a morphed player, restore saved viewheight
 		// this locks them into that viewheight
-		if (ent->mtype)
+		if (ent->mtype) {
+#ifndef VRX_REPRO
 			pm.viewheight = viewheight;
+#else
+			pm.s.viewheight = viewheight;
+#endif
+		}
 //GHz END
-
-
 
 		// save results of pmove
 		client->ps.pmove = pm.s;
@@ -2712,8 +2786,14 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 
 		for (i=0 ; i<3 ; i++)
 		{
+#ifndef VRX_REPRO
 			ent->s.origin[i] = pm.s.origin[i]*0.125;
 			ent->velocity[i] = pm.s.velocity[i]*0.125;
+#else
+			// full precision
+			ent->s.origin[i] = pm.s.origin[i];
+			ent->velocity[i] = pm.s.velocity[i];
+#endif
 		}
 
 		VectorCopy (pm.mins, ent->mins);
@@ -2729,7 +2809,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		//4.07 can't superspeed while being hurt
         // pm = V_Think_ApplySuperSpeed(ent, ucmd, client, i, &pm, viewheight);
 
-		if (/*ent->groundentity && !pm.groundentity &&*/ (pm.cmd.upmove >= 10) /*&& (pm.waterlevel == 0)*/)
+		if (cmd_jumping(&pm.cmd))
 		{
 			if (((ent->mtype == MORPH_BRAIN || ent->mtype == MORPH_MUTANT) && pm.waterlevel > 0) || 
 				 (ent->groundentity && !pm.groundentity))
@@ -2744,7 +2824,11 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		{
 			V_Player_Touchdown(ent);
 		}
+#ifndef VRX_REPRO
 		ent->viewheight = pm.viewheight;
+#else
+		ent->viewheight = pm.s.viewheight;
+#endif
 		ent->waterlevel = pm.waterlevel;
 		ent->watertype = pm.watertype;
 		ent->groundentity = pm.groundentity;
@@ -2770,6 +2854,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 			G_TouchTriggers (ent);
 
 		// touch other objects
+#ifndef VRX_REPRO
 		for (i=0 ; i<pm.numtouch ; i++)
 		{
 			other = pm.touchents[i];
@@ -2780,9 +2865,20 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 				continue;	// duplicated
 			if (!other->touch)
 				continue;
-			other->touch (other, ent, NULL, NULL);
+			other->touch (other, ent, nullptr, nullptr);
+		}
+#else
+		// touch other objects
+		for (i = 0; i < pm.touch.num; i++)
+		{
+			trace_t *tr = &pm.touch.traces[i];
+			other = tr->ent;
+
+			if (other->touch)
+				other->touch(other, ent, &tr->plane, tr->surface);
 		}
 
+#endif
 					//3.0 begin doomie
 	
 			/*************************************************************************
@@ -2839,7 +2935,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 
 	// save light level the player is standing on for
 	// monster sighting AI
-	ent->light_level = ucmd->lightlevel;
+	// ent->light_level = ucmd->;
 
 	// fire weapon from final position if needed
 	if (client->latched_buttons & BUTTON_ATTACK)
@@ -2877,7 +2973,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	}
 
 	if (client->resp.spectator) {
-		if (ucmd->upmove >= 10) {
+		if (cmd_jumping(ucmd)) {
 			if (!(client->ps.pmove.pm_flags & PMF_JUMP_HELD)) {
 				client->ps.pmove.pm_flags |= PMF_JUMP_HELD;
 				if (client->chase_target)
@@ -2885,8 +2981,11 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 				else
 					GetChaseTarget(ent);
 			}
-		} else
+		}
+#ifndef VRX_REPRO
+		else
 			client->ps.pmove.pm_flags &= ~PMF_JUMP_HELD;
+#endif
 	}
 
 	UpdateChaseCam(ent);
@@ -2944,15 +3043,15 @@ void ClientBeginServerFrame (edict_t *ent)
 		int i;
         for(i = 0; i < MAX_CLIENTS; ++i)
 		{
-			if (!ent->myskills.mutelist[i].player || ent->myskills.mutelist[i].time < 1)
+			if (!ent->client->mutelist[i].player || ent->client->mutelist[i].time < 1)
 				continue;
-			ent->myskills.mutelist[i].time -= 1;
-			if (ent->myskills.mutelist[i].time < 1)
-				ent->myskills.mutelist[i].player = NULL;
+			ent->client->mutelist[i].time -= 1;
+			if (ent->client->mutelist[i].time < 1)
+				ent->client->mutelist[i].player = NULL;
 
 		}
 		//3.0 end
-		ent->myskills.playingtime++;		
+		ent->client->resp.pstats.playingtime++;
 	}
 
 	// idle frame counter
@@ -2973,10 +3072,10 @@ void ClientBeginServerFrame (edict_t *ent)
 
 	client = ent->client;
 
-	if (ent->lastkill < level.time && ent->nfer) // we're out of nfer time!
+	if (ent->client->lastkill < level.time && ent->client->nfer) // we're out of nfer time!
 	{
-		G_PrintGreenText(va("%s got a %dfer.", ent->client->pers.netname, ent->nfer));
-		ent->nfer = 0;
+		G_PrintGreenText(va("%s got a %dfer.", ent->client->pers.netname, ent->client->nfer));
+		ent->client->nfer = 0;
 	}
 		
 
@@ -2995,11 +3094,12 @@ void ClientBeginServerFrame (edict_t *ent)
 
 	// run weapon animations if it hasn't been done by a ucmd_t
 	if (!client->weapon_thunk
-//ZOID
+		//ZOID
 		&& ent->movetype != MOVETYPE_NOCLIP
-//ZOID
-		)
-		Think_Weapon (ent);
+		//ZOID
+		) {
+		Think_Weapon(ent);
+	}
 	else
 		client->weapon_thunk = false;
 

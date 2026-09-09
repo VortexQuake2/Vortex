@@ -87,7 +87,7 @@ void fire_plasmabolt (edict_t *self, vec3_t start, vec3_t aimdir, int damage, fl
 
 void Cmd_Plasmabolt_f (edict_t *ent)
 {
-	int		slvl = ent->myskills.abilities[PLASMA_BOLT].current_level;
+	const int		slvl = ent->myskills.abilities[PLASMA_BOLT].current_level;
 	int		damage, speed, duration;
 	float	radius;
 	vec3_t	forward, right, start, offset;

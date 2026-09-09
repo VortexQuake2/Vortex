@@ -64,7 +64,7 @@ typedef struct
 
 } ai_weapon_t;
 
-extern ai_weapon_t		AIWeapons[WEAP_TOTAL];
+extern ai_weapon_t		AIWeapons[WEAPON_TOTAL];
 
 typedef struct
 {

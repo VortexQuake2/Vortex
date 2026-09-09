@@ -4,7 +4,7 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "cppcoreguidelines-narrowing-conversions"
 
-int MAX_ARMOR(struct edict_s *ent) {
+int MAX_ARMOR(const struct edict_s *ent) {
     int vitlvl = 0;
     int talentlevel;
     int value;
@@ -136,46 +136,64 @@ int MAX_HEALTH(const edict_t *ent) {
     return value;
 }
 
-int MAX_BULLETS(struct edict_s *ent) {
+int MAX_BULLETS(const struct edict_s *ent) {
     if (ent->myskills.abilities[MAX_AMMO].disable)
         return 0;
     return (100 * ent->myskills.abilities[MAX_AMMO].current_level);
 }
 
-int MAX_SHELLS(struct edict_s *ent) {
+int MAX_ROUNDS(const struct edict_s *ent) {
+    if (ent->myskills.abilities[MAX_AMMO].disable)
+        return 0;
+    return (3 * ent->myskills.abilities[MAX_AMMO].current_level);
+}
+
+int MAX_SHELLS(const struct edict_s *ent) {
     if (ent->myskills.abilities[MAX_AMMO].disable)
         return 0;
     return (50 * ent->myskills.abilities[MAX_AMMO].current_level);
 }
 
-int MAX_ROCKETS(struct edict_s *ent) {
+int MAX_ROCKETS(const struct edict_s *ent) {
     if (ent->myskills.abilities[MAX_AMMO].disable)
         return 0;
     return (25 * ent->myskills.abilities[MAX_AMMO].current_level);
 }
 
-int MAX_GRENADES(struct edict_s *ent) {
+int MAX_GRENADES(const struct edict_s *ent) {
     if (ent->myskills.abilities[MAX_AMMO].disable)
         return 0;
     return (25 * ent->myskills.abilities[MAX_AMMO].current_level);
 }
 
-int MAX_CELLS(struct edict_s *ent) {
+int MAX_CELLS(const struct edict_s *ent) {
     if (ent->myskills.abilities[MAX_AMMO].disable)
         return 0;
     return (100 * ent->myskills.abilities[MAX_AMMO].current_level);
 }
 
-int MAX_SLUGS(struct edict_s *ent) {
+int MAX_SLUGS(const struct edict_s *ent) {
     if (ent->myskills.abilities[MAX_AMMO].disable)
         return 0;
     return (25 * ent->myskills.abilities[MAX_AMMO].current_level);
 }
 
+int MAX_MAGSLUGS(const struct edict_s *ent) {
+    if (ent->myskills.abilities[MAX_AMMO].disable)
+        return 0;
+    return (50 * ent->myskills.abilities[MAX_AMMO].current_level);
+}
+
+int MAX_FLECHETTES(const struct edict_s *ent) {
+    if (ent->myskills.abilities[MAX_AMMO].disable)
+        return 0;
+    return (100 * ent->myskills.abilities[MAX_AMMO].current_level);
+}
+
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "cppcoreguidelines-narrowing-conversions"
 
-int MAX_POWERCUBES(struct edict_s *ent) {
+int MAX_POWERCUBES(const struct edict_s *ent) {
     int value = 100, clvl;
 
     if (ent->myskills.abilities[MAX_AMMO].disable)
@@ -246,6 +264,9 @@ void vrx_update_all_character_maximums(edict_t *ent) {
     ent->client->pers.max_grenades = 50 + MAX_GRENADES(ent);
     ent->client->pers.max_cells = 200 + MAX_CELLS(ent);
     ent->client->pers.max_slugs = 50 + MAX_SLUGS(ent);
+    ent->client->pers.max_magslug = 100 + MAX_MAGSLUGS(ent);
+    ent->client->pers.max_flechettes = 200 + MAX_FLECHETTES(ent);
+    ent->client->pers.max_disruptor = 12 + MAX_ROUNDS(ent);
 
     ent->client->pers.max_powercubes = MAX_POWERCUBES(ent);
 }

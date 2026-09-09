@@ -15,7 +15,7 @@ qboolean ConvertOwner (edict_t *ent, edict_t *other, float duration, qboolean pa
 {
 	int		current_num, max_num;
 	edict_t *old_owner, **new_owner;
-	qboolean was_packanimal = other->flags & FL_PACKANIMAL;
+	const qboolean was_packanimal = other->flags & FL_PACKANIMAL;
 
 	// don't convert to a player if they are not a valid target
 	//FIXME: this fails on players with godmode :(
@@ -27,7 +27,7 @@ qboolean ConvertOwner (edict_t *ent, edict_t *other, float duration, qboolean pa
 	
 	if (pack_animal)
 	{
-		qboolean player_tank = PM_PlayerHasMonster(ent);
+		const qboolean player_tank = PM_PlayerHasMonster(ent);
 		// player isn't morphed
 		if (!ent->mtype && !player_tank)
 			return false;
@@ -332,9 +332,9 @@ qboolean CanConvert (edict_t *ent, edict_t *other)
 
 void Cmd_Conversion_f (edict_t *ent)
 {
-	int		duration = CONVERSION_INITIAL_DURATION + CONVERSION_ADDON_DURATION * ent->myskills.abilities[CONVERSION].current_level;
+	const int		duration = CONVERSION_INITIAL_DURATION + CONVERSION_ADDON_DURATION * ent->myskills.abilities[CONVERSION].current_level;
 	float	chance = CONVERSION_INITIAL_CHANCE + CONVERSION_ADDON_CHANCE * ent->myskills.abilities[CONVERSION].current_level;
-	float	range = CONVERSION_INITIAL_RANGE + CONVERSION_ADDON_RANGE * ent->myskills.abilities[CONVERSION].current_level;
+	const float	range = CONVERSION_INITIAL_RANGE + CONVERSION_ADDON_RANGE * ent->myskills.abilities[CONVERSION].current_level;
 	edict_t *e=NULL;
 
 	if (!V_CanUseAbilities(ent, CONVERSION, CONVERSION_COST, true))
@@ -345,7 +345,7 @@ void Cmd_Conversion_f (edict_t *ent)
 
 	while ((e = findclosestreticle(e, ent, range)) != NULL)
 	{
-		float r = random();
+		const float r = random();
 
 		if (!CanConvert(ent, e))
 			continue;
@@ -378,7 +378,7 @@ void Cmd_Conversion_f (edict_t *ent)
 // Note: On-hold for now
 void think_talent_pack_animal(edict_t* ent) 
 {
-	int talent_level = vrx_get_talent_level(ent, TALENT_PACK_ANIMAL);
+	const int talent_level = vrx_get_talent_level(ent, TALENT_PACK_ANIMAL);
 	// talent isn't upgraded
 	if (talent_level < 1)
 		return;
@@ -389,7 +389,7 @@ void think_talent_pack_animal(edict_t* ent)
 		return;
 	}
 	// time between conversions gets shorter as the talent is upgraded (10s - 5s)
-	int cooldown = (int)(6.0f / FRAMETIME) - 10 * talent_level;
+	const int cooldown = (int)(6.0f / FRAMETIME) - 10 * talent_level;
 	if (level.framenum % cooldown)
 		return;
 	//gi.dprintf("searching for monsters to convert...\n");

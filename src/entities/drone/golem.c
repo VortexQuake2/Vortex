@@ -8,6 +8,8 @@ GOLEM
 
 #include "g_local.h"
 #include "../../quake2/monsterframes/golem.h"
+void MonsterCommand(edict_t *ent);
+void MonsterFollowMe(edict_t *ent);
 
 #define GOLEM_BACKHAND_RANGE		512 // range for backhand attack (throw rocks)
 #define GOLEM_AOE_ATTACK_RANGE		200 // range for punch/avalanche/stun attacks
@@ -289,7 +291,7 @@ mmove_t golem_move_pain = { FRAME_pain101, FRAME_pain116, golem_frames_pain, gol
 
 void golem_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
-	double rng = random();
+	const double rng = random();
 	//if (self->health < (self->max_health / 2))
 	//	self->s.skinnum = 1;
 
@@ -330,10 +332,10 @@ void fire_rocks(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float sp
 // drops rocks on nearby enemies
 void golem_avalanche(edict_t* self)
 {
-	int damage = 50 * self->monsterinfo.level;
-	float speed = 650;
+	const int damage = 50 * self->monsterinfo.level;
+	const float speed = 650;
 	vec3_t start, end;
-	edict_t* e = NULL;
+	const edict_t* e = NULL;
 	trace_t tr;
 
 	while ((e = findradius(e, self->s.origin, GOLEM_AOE_ATTACK_RANGE)) != NULL)
@@ -362,7 +364,7 @@ void golem_avalanche(edict_t* self)
 void golem_stunattack(edict_t* self)
 {
 	qboolean found_target = false;
-	float stuntime = EMP_INITIAL_TIME + EMP_ADDON_TIME * self->monsterinfo.level;
+	const float stuntime = EMP_INITIAL_TIME + EMP_ADDON_TIME * self->monsterinfo.level;
 	edict_t* e = NULL;
 
 	while ((e = findradius(e, self->s.origin, GOLEM_AOE_ATTACK_RANGE)) != NULL)
@@ -565,7 +567,7 @@ void golem_backhand_attack(edict_t* self)
 void golem_attack_sound(edict_t* self)
 {
 	// prevent attack sound from conflicting with sight sound
-	if (self->haste_time > level.time)
+	if (self->msg_time > level.time)
 		return;
 
 	if (random() > 0.5)
@@ -601,15 +603,15 @@ void golem_nearbyenemies(edict_t* self, float radius, int *num, int *in_front, i
 void golem_attack(edict_t* self)
 {
 	int nearby, in_front, stunned;
-	float range = entdist(self, self->enemy);
+	const float range = entdist(self, self->enemy);
 
 	// Talent: Golem Mastery - allows golem to self-heal when his health is low
-	int talentLevel = vrx_get_talent_level(self->activator, TALENT_GOLEM_MASTERY);
-	float healthFrac = (float)self->health / self->max_health;
+	const int talentLevel = vrx_get_talent_level(self->activator, TALENT_GOLEM_MASTERY);
+	const float healthFrac = (float)self->health / self->max_health;
 	if (talentLevel > 1 && healthFrac < 0.5 && level.framenum > self->monsterinfo.regen_delay1)
 	{
 		//gi.dprintf("%s: healthFrac %.1f\n", __func__, healthFrac);
-		float chance = (1 - healthFrac) + 0.1;
+		const float chance = (1 - healthFrac) + 0.1;
 		if (chance > random())
 			golem_flex(self);
 		return;
@@ -631,10 +633,10 @@ void golem_attack(edict_t* self)
 		return;
 	}
 
-	float r = random();
+	const float r = random();
 
 	// calculate number of enemies in the periphery
-	int peripheral = nearby - in_front;
+	const int peripheral = nearby - in_front;
 
 	// more enemies in front of the golem
 	if (in_front > peripheral)
@@ -659,7 +661,7 @@ void golem_attack(edict_t* self)
 void golem_sight(edict_t* self, edict_t* other)
 {
 	gi.sound(self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
-	self->haste_time = level.time + 1.0;// timer to delay attack sounds
+	self->msg_time = level.time + 1.0;// timer to delay attack sounds
 }
 
 void golem_dead(edict_t* self)
@@ -857,7 +859,7 @@ void init_golem(edict_t* self)
 	self->nextthink = level.time + FRAMETIME;
 
 	// Talent: Golem Mastery - allows golem to activate thorns aura
-	int talentLevel = vrx_get_talent_level(self->activator, TALENT_GOLEM_MASTERY);
+	const int talentLevel = vrx_get_talent_level(self->activator, TALENT_GOLEM_MASTERY);
 	if (talentLevel > 0)
 		aura_create(self, AURA_THORNS, (2*talentLevel), DEFAULT_AURA_DURATION, 256, thorns_think);
 }
@@ -895,7 +897,7 @@ qboolean create_golem(edict_t* ent, vec3_t start, int skill_level)
 // calculate spawn location for golem and then try to create it
 void spawn_golem(edict_t* ent)
 {
-	int slvl = ent->myskills.abilities[GOLEM].current_level;
+	const int slvl = ent->myskills.abilities[GOLEM].current_level;
 	vec3_t forward, right, start, offset, mins, maxs;
 
 	// write a nice effect so everyone knows we've cast a spell

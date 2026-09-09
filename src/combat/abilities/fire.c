@@ -7,7 +7,7 @@
 void bfire_think(edict_t* self)
 {
 	if (self->s.frame > 3)
-		G_RunFrames(self, 4, 15, false); // burning frames
+		G_RunFrames(self, 4, 15, false, true); // burning frames
 	else
 		self->s.frame++; // ignite frames
 
@@ -203,7 +203,7 @@ void fireball_think(edict_t* self)
 	vectoangles(self->velocity, angles);
 	VectorCopy(angles, self->s.angles);
 	// run model animation
-	G_RunFrames(self, 0, 3, false);
+	G_RunFrames(self, 0, 3, false, true);
 
 	self->nextthink = level.time + FRAMETIME;
 }
@@ -249,7 +249,7 @@ void fire_fireball(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float
 	// adjust velocity
 	VectorScale(aimdir, speed, fireball->velocity);
 	// push up
-	if (!self->ai.is_bot && !self->lockon)//GHz: don't boost vertical velocity for bots as it will affect ballistic calculations (i.e. finding the right pitch to hit the target)
+	if (!self->ai && !self->lockon)//GHz: don't boost vertical velocity for bots as it will affect ballistic calculations (i.e. finding the right pitch to hit the target)
 		fireball->velocity[2] += 150;
 	// make it spin/roll
 	VectorSet(fireball->avelocity, 0, 0, 600);
@@ -259,7 +259,7 @@ void fire_fireball(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float
 
 void Cmd_Fireball_f(edict_t* ent, float skill_mult, float cost_mult)
 {
-	int		slvl = ent->myskills.abilities[FIREBALL].current_level;
+	const int		slvl = ent->myskills.abilities[FIREBALL].current_level;
 	int		damage, speed, flames, flamedmg, cost = FIREBALL_COST * cost_mult;
 	float	radius;
 	vec3_t	forward, right, start, offset;
@@ -285,7 +285,7 @@ void Cmd_Fireball_f(edict_t* ent, float skill_mult, float cost_mult)
 	fire_fireball(ent, start, forward, damage, radius, speed, flames, flamedmg);
 
 	//Talent: Wizardry - makes spell timer ability-specific instead of global
-	int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
+	const int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
 	if (talentLevel > 0)
 	{
 		ent->myskills.abilities[FIREBALL].delay = level.time + FIREBALL_DELAY;
@@ -307,13 +307,13 @@ void Cmd_Fireball_f(edict_t* ent, float skill_mult, float cost_mult)
 
 void ShootFireballsAtNearbyEnemies(edict_t* self, float radius, int max_targets, int fireball_level)
 {
-	edict_t* e = NULL;
+	const edict_t* e = NULL;
 
-	int damage = FIREBALL_INITIAL_DAMAGE + FIREBALL_ADDON_DAMAGE * fireball_level;
-	float fb_radius = FIREBALL_INITIAL_RADIUS + FIREBALL_ADDON_RADIUS * fireball_level;
+	const int damage = FIREBALL_INITIAL_DAMAGE + FIREBALL_ADDON_DAMAGE * fireball_level;
+	const float fb_radius = FIREBALL_INITIAL_RADIUS + FIREBALL_ADDON_RADIUS * fireball_level;
 	//float speed = FIREBALL_INITIAL_SPEED + FIREBALL_ADDON_SPEED * fireball_level;
-	int flames = FIREBALL_INITIAL_FLAMES + FIREBALL_ADDON_FLAMES * fireball_level;
-	int flamedmg = 0.1 * damage;
+	const int flames = FIREBALL_INITIAL_FLAMES + FIREBALL_ADDON_FLAMES * fireball_level;
+	const int flamedmg = 0.1 * damage;
 	vec3_t forward, start;
 	edict_t* owner = G_GetSummoner(self);
 
@@ -375,7 +375,7 @@ void flames_attack(edict_t* self)
 	if (level.framenum >= self->monsterinfo.nextattack)
 	{
 		edict_t* touch[MAX_EDICTS], * hit;
-		int num_edicts = gi.BoxEdicts(self->absmin, self->absmax, touch, MAX_EDICTS, AREA_SOLID);
+		const int num_edicts = gi.BoxEdicts(self->absmin, self->absmax, touch, MAX_EDICTS, AREA_SOLID);
 
 		for (int i = 0; i < num_edicts; i++)
 		{
@@ -420,7 +420,7 @@ void flames_adjust_size(edict_t* self)
 	{
 		vec3_t mins, maxs;
 		flames_lg_bbox(mins, maxs);
-		trace_t tr = gi.trace(self->s.origin, mins, maxs, self->s.origin, self, MASK_SOLID);
+		const trace_t tr = gi.trace(self->s.origin, mins, maxs, self->s.origin, self, MASK_SOLID);
 		if (tr.fraction == 1.0)
 		{
 			self->s.modelindex = gi.modelindex("models/flames_big/tris.md2");
@@ -445,7 +445,7 @@ void flames_runframes(edict_t* self)
 {
 	self->s.frame++;
 	int firstframe = 0, lastframe;
-	int style = self->style; // growth/lifecycle stage
+	const int style = self->style; // growth/lifecycle stage
 
 	if (style)
 	{
@@ -543,8 +543,8 @@ edict_t* CreateFirewallFlames(edict_t* ent, int skill_level, float skill_mult)
 
 void Cmd_Firewall_f(edict_t* ent, float skill_mult, float cost_mult)
 {
-	int	cost = FIREWALL_COST * cost_mult;
-	int skill_level = ent->myskills.abilities[FIREWALL].current_level;
+	const int	cost = FIREWALL_COST * cost_mult;
+	const int skill_level = ent->myskills.abilities[FIREWALL].current_level;
 	
 	if (ent->num_firewalls > FIREWALL_MAX)
 	{
@@ -580,7 +580,7 @@ void Cmd_Firewall_f(edict_t* ent, float skill_mult, float cost_mult)
 	ent->lastsound = level.framenum;
 
 	//Talent: Wizardry - makes spell timer ability-specific instead of global
-	int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
+	const int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
 	if (talentLevel > 0)
 	{
 		ent->myskills.abilities[FIREWALL].delay = level.time + FIREWALL_DELAY;

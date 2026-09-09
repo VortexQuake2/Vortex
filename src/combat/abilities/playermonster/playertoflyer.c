@@ -138,13 +138,13 @@ void FlyerVerticalThrust (edict_t *ent, int speed, int max_speed)
 void PlayerAutoThrust (edict_t *ent, usercmd_t *ucmd)
 {
 	vec3_t	forward, right;
-	int max_velocity = FLYER_MAX_VELOCITY;
+	const int max_velocity = FLYER_MAX_VELOCITY;
 
 	AngleVectors(ent->s.angles, forward, right, NULL);
 
-	if (ucmd->upmove > 0) // up
+	if (cmd_jumping(ucmd)) // up
 		FlyerVerticalThrust(ent, FLYER_ACCEL_SPEED*2, max_velocity);
-	else if (ucmd->upmove < 0) // down
+	else if (cmd_ducking(ucmd)) // down
 		FlyerVerticalThrust(ent, -FLYER_ACCEL_SPEED*2, max_velocity);
 	else
 		FlyerBrakeVertical(ent);
@@ -173,7 +173,7 @@ void FlyerCheckForImpact (edict_t *ent)
 	speed = VectorLength(ent->velocity);
 	if (ent->client->oldspeed-speed > FLYER_IMPACT_VELOCITY) // check for drastic decelleration
 	{
-		int flyer_selfdamage = FLYER_IMPACT_DAMAGE;
+		const int flyer_selfdamage = FLYER_IMPACT_DAMAGE;
 
 		gi.sound (ent, CHAN_AUTO, gi.soundindex ("tank/thud.wav"), 1, ATTN_NORM, 0);
 		T_Damage(ent, ent, ent, vec3_origin, ent->s.origin, 
@@ -244,9 +244,9 @@ void FlyerAttack (edict_t *ent)
 			radius = FLYER_ROCKET_INITIAL_RADIUS+FLYER_ROCKET_ADDON_RADIUS*ent->myskills.abilities[FLYER].current_level;
 
 			// check for adequate ammo
-			if (ent->myskills.abilities[FLYER].ammo < FLYER_ROCKET_AMMO)
+			if (ent->client->pers.morphinventory.flyer.ammo < FLYER_ROCKET_AMMO)
 				return;
-			ent->myskills.abilities[FLYER].ammo -= FLYER_ROCKET_AMMO;
+			ent->client->pers.morphinventory.flyer.ammo -= FLYER_ROCKET_AMMO;
 
 
 			AngleVectors(ent->client->v_angle, forward, NULL, NULL);
@@ -281,10 +281,10 @@ void FlyerAttack (edict_t *ent)
 		&& level.framenum >= ent->monsterinfo.stuck_frames) // used to avoid rounding errors
 	{
 		// check for adequate ammo
-		if (ent->myskills.abilities[FLYER].ammo < FLYER_HB_AMMO)
+		if (ent->client->pers.morphinventory.flyer.ammo < FLYER_HB_AMMO)
 			return;
 
-		ent->myskills.abilities[FLYER].ammo -= FLYER_HB_AMMO;
+		ent->client->pers.morphinventory.flyer.ammo -= FLYER_HB_AMMO;
 
 		damage = FLYER_HB_INITIAL_DMG+FLYER_HB_ADDON_DMG*ent->myskills.abilities[FLYER].current_level;
 		speed = FLYER_HB_SPEED;
@@ -308,9 +308,9 @@ void MorphRegenerate (edict_t *ent, int regen_delay, int regen_frames)
 	int	amt, frames;
 
 	if (ent->mtype == MORPH_FLYER)
-		V_RegenAbilityAmmo(ent, FLYER, qf2sf(FLYER_HB_REGEN_FRAMES), qf2sf(FLYER_HB_REGEN_DELAY));
+		V_RegenAbilityAmmo(ent, &ent->client->pers.morphinventory.flyer, qf2sf(FLYER_HB_REGEN_FRAMES), qf2sf(FLYER_HB_REGEN_DELAY));
 	else if (ent->mtype == MORPH_CACODEMON)
-		V_RegenAbilityAmmo(ent, CACODEMON, qf2sf(CACODEMON_SKULL_REGEN_FRAMES), qf2sf(CACODEMON_SKULL_REGEN_DELAY));
+		V_RegenAbilityAmmo(ent, &ent->client->pers.morphinventory.cacodemon, qf2sf(CACODEMON_SKULL_REGEN_FRAMES), qf2sf(CACODEMON_SKULL_REGEN_DELAY));
 
 	if ((level.framenum >= ent->monsterinfo.control_cost)
 		&& (ent->health < ent->max_health))
@@ -368,24 +368,24 @@ void RunFlyerFrames (edict_t *ent, usercmd_t *ucmd)
 		{
 			if (ent->s.frame == FLYER_FRAMES_BANK_R_END) // done with bank animation
 				return; // so don't update the frames
-			G_RunFrames(ent, FLYER_FRAMES_BANK_R_START, FLYER_FRAMES_BANK_R_END, false);
+			G_RunFrames(ent, FLYER_FRAMES_BANK_R_START, FLYER_FRAMES_BANK_R_END, false, false);
 		}
 		else if (ucmd->sidemove < 0) // left
 		{
 			if (ent->s.frame == FLYER_FRAMES_BANK_L_END)
 				return;
-			G_RunFrames(ent, FLYER_FRAMES_BANK_L_START, FLYER_FRAMES_BANK_L_END, false);
+			G_RunFrames(ent, FLYER_FRAMES_BANK_L_START, FLYER_FRAMES_BANK_L_END, false, false);
 		}
 		else // default
-			G_RunFrames(ent, FLYER_FRAMES_STAND_START, FLYER_FRAMES_STAND_END, false);
+			G_RunFrames(ent, FLYER_FRAMES_STAND_START, FLYER_FRAMES_STAND_END, false, false);
 	}
 }
 
 void Cmd_PlayerToFlyer_f (edict_t *ent)
 {
-	int flyer_cubecost = FLYER_INIT_COST;
+	const int flyer_cubecost = FLYER_INIT_COST;
 	//Talent: More Ammo
-    int talentLevel = vrx_get_talent_level(ent, TALENT_MORE_AMMO);
+    const int talentLevel = vrx_get_talent_level(ent, TALENT_MORE_AMMO);
 
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: %s just called Cmd_PlayerToFlyer_f()\n", ent->client->pers.netname);
@@ -435,15 +435,15 @@ void Cmd_PlayerToFlyer_f (edict_t *ent)
 	ent->viewheight = 0;
 
 	// set maximum hyperblaster ammo
-	ent->myskills.abilities[FLYER].max_ammo = FLYER_HB_INITIAL_AMMO+FLYER_HB_ADDON_AMMO
+	ent->client->pers.morphinventory.flyer.max_ammo = FLYER_HB_INITIAL_AMMO+FLYER_HB_ADDON_AMMO
 		*ent->myskills.abilities[FLYER].current_level;
 
 	// Talent: More Ammo
 	// increases ammo 10% per talent level
-	if(talentLevel > 0) ent->myskills.abilities[FLYER].max_ammo *= 1.0 + 0.1*talentLevel;
+	if(talentLevel > 0) ent->client->pers.morphinventory.flyer.max_ammo *= 1.0 + 0.1*talentLevel;
 
 	// give them some starting ammo
-	ent->myskills.abilities[FLYER].ammo = FLYER_HB_START_AMMO;
+	ent->client->pers.morphinventory.flyer.ammo = FLYER_HB_START_AMMO;
 
 	ent->client->refire_frames = 0; // reset charged weapon
 	ent->client->weapon_mode = 0; // reset weapon mode
@@ -451,6 +451,9 @@ void Cmd_PlayerToFlyer_f (edict_t *ent)
 	// pick null gun
 	ent->client->pers.weapon = NULL;
 	ent->client->ps.gunindex = 0;
+
+	// az: how did we forget this
+	ent->v_flags |= SFLG_NO_BOB;
 
 	lasersight_off(ent);
 

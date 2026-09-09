@@ -352,7 +352,8 @@ void minisentry_beam_attack(edict_t* self, vec3_t start)
 	tr = gi.trace(start, NULL, NULL, end, self, MASK_SHOT);
 	brain_beam_sparks(tr.endpos);
 
-	T_Damage(tr.ent, self, self, forward, tr.endpos, tr.plane.normal, self->dmg, 0, DAMAGE_ENERGY, MOD_SENTRY_BEAM);
+	T_Damage(tr.ent, self, self, forward, tr.endpos, tr.plane.normal,
+		scale_fps(self->dmg), 0, DAMAGE_ENERGY, MOD_SENTRY_BEAM);
 
 	gi.WriteByte(svc_temp_entity);
 	gi.WriteByte(TE_BFG_LASER);
@@ -402,13 +403,17 @@ void minisentry_attack (edict_t *self)
 
 	if (self->mtype == M_MINISENTRY)
 	{
-		// cycle attack frames
-		if (self->s.frame == 8)
-			self->s.frame = 7; //idle
-		else
-			self->s.frame = 8; //firing
-		minisentry_rocket_attack(self, start);
-		minisentry_bullet_attack(self, start);
+		if (self->monsterinfo.attack_finished < level.time) {
+			// cycle attack frames
+			if (self->s.frame == 8)
+				self->s.frame = 7; //idle
+			else
+				self->s.frame = 8; //firing
+			minisentry_rocket_attack(self, start);
+			minisentry_bullet_attack(self, start);
+
+			self->monsterinfo.attack_finished = level.time + 0.1;
+		}
 
 	}
 	else
@@ -609,17 +614,17 @@ void minisentry_think (edict_t *self)
 	minisentry_checkstatus(self);
 
 	// toggle sentry spotlight
-	if (level.daytime && self->flashlight)
-		FL_make(self);
-	else if (!level.daytime && !self->flashlight)
-		FL_make(self);
+	if (level.daytime && FL_exists(self))
+		FL_toggle(self);
+	else if (!level.daytime && !FL_exists(self))
+		FL_toggle(self);
 
 	// is the sentry slowed by holy freeze?
 	temp = self->yaw_speed;
 	slot = que_findtype(self->curses, slot, AURA_HOLYFREEZE);
 	if (slot)
 	{
-		modifier = 1 / (1 + 0.1 * slot->ent->owner->myskills.abilities[HOLY_FREEZE].current_level);
+		modifier = 1 / (1 + 0.1 * h2e(slot->ent)->owner->myskills.abilities[HOLY_FREEZE].current_level);
 		if (modifier < 0.25) modifier = 0.25;
 		self->yaw_speed *= modifier;
 	}

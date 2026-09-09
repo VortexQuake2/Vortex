@@ -1,3 +1,5 @@
+#include <stdarg.h>
+
 #include "g_local.h"
 
 lva_result_t lva(const char* format, ...)
@@ -245,7 +247,7 @@ qboolean layout_add_tracked_entity(layout_t* layout, edict_t* ent)
 
 qboolean layout_remove_tracked_entity(layout_t* layout, edict_t* ent)
 {
-	int index = layout_has_tracked_entity(layout, ent);
+	const int index = layout_has_tracked_entity(layout, ent);
 
 	if (index == -1) return false;
 	
@@ -259,7 +261,8 @@ void layout_clean_tracked_entity_list(layout_t* layout)
 	qboolean cleaned = false;
 	for (int i = 0; i < layout->tracked_count; i++)
 	{
-		if (!layout->tracked_list[i]->inuse || (layout->tracked_list[i]->deadflag != DEAD_NO && !(layout->tracked_list[i]->flags & FL_UNDEAD)))
+		if (!layout->tracked_list[i]->inuse ||
+			(layout->tracked_list[i]->deadflag != DEAD_NO && !(layout->tracked_list[i]->flags & FL_UNDEAD)))
 		{
 			layout->tracked_list[i] = layout->tracked_list[--layout->tracked_count];
 			i--; // continue with this entity
@@ -273,7 +276,7 @@ void layout_clean_tracked_entity_list(layout_t* layout)
 
 layout_pos_t sidebar_get_next_line_pos(sidebar_t* sidebar)
 {
-	layout_pos_t ret = layout_set_cursor_xy(
+	const layout_pos_t ret = layout_set_cursor_xy(
 		5, XM_LEFT,
 		(sidebar->line + 2) * 8 + sidebar->y_offset, YM_CENTER
 	);
@@ -345,6 +348,14 @@ sidebar_entry_t layout_add_entity_info(sidebar_t* sidebar, edict_t* ent)
 	case M_MAGMINE:
 		name = lva("magmine");
 		data = lva("+%d/%dc", ent->health, ent->light_level);
+		break;
+	case M_TRAP:
+		name = lva("trap");
+		data = lva("%ds", (int)ceil(ent->timestamp - level.time));
+		break;
+	case M_TESLA:
+		name = lva("tesla");
+		data = lva("+%d %ds", ent->health, (int)ceil(ent->delay - level.time));
 		break;
 	case TOTEM_FIRE:
 	case TOTEM_WATER:
@@ -441,7 +452,7 @@ sidebar_entry_t layout_add_curse_info(sidebar_t* sidebar, que_t* curse)
 	sidebar_entry_t res = {0};
 
 	res.pos = sidebar_get_next_line_pos(sidebar);
-	res.name = lva("%s", GetCurseName(curse->ent->atype));
+	res.name = lva("%s", GetCurseName(h2e(curse->ent)->atype));
 	res.data = lva("%.1fs", curse->time - level.time);
 
 	return res;
@@ -452,6 +463,9 @@ void layout_generate_entities(const layout_t* layout, sidebar_t* sidebar)
 	for (int i = 0; i < layout->tracked_count; i++)
 	{
 		//gi.dprintf("DEBUG: Generating layout for tracked entity %s (mtype %d)\n", layout->tracked_list[i]->classname, layout->tracked_list[i]->mtype);
+		if (!layout->tracked_list[i]->inuse)
+			continue;
+
 		const sidebar_entry_t res = layout_add_entity_info(sidebar, layout->tracked_list[i]);
 		sidebar_add_entry(sidebar, res);
 	}
@@ -463,7 +477,7 @@ sidebar_entry_t layout_add_aura_info(sidebar_t* sidebar, que_t* que)
 
 	res.pos = sidebar_get_next_line_pos(sidebar);
 
-	switch (que->ent->mtype)
+	switch (h2e(que->ent)->mtype)
 	{
 	case AURA_SALVATION:
 		res.name = lva("salvation");
@@ -481,15 +495,15 @@ sidebar_entry_t layout_add_aura_info(sidebar_t* sidebar, que_t* que)
 		res.name = lva("manashield");
 		break;
 	default:
-		res.name = lva("%s", que->ent->classname);
+		res.name = lva("%s", h2e(que->ent)->classname);
 		break;
 	}
 
-	if (que->ent->owner && que->ent->owner->client)
+	if (h2e(que->ent)->owner && h2e(que->ent)->owner->client)
 		res.data = lva(
 			"%.1fs (%s)", 
 			que->time - level.time, 
-			que->ent->owner->client->pers.netname
+			h2e(que->ent)->owner->client->pers.netname
 		);
 	else
 		res.data = lva("%.1fs", que->time - level.time);
@@ -535,6 +549,14 @@ void layout_generate_misc(edict_t* ent, sidebar_t* sidebar)
 		res.pos = sidebar_get_next_line_pos(sidebar);
 		res.name = lva("chilled");
 		res.data = lva("%.2fs (%d)", dt, ent->chill_level);
+		sidebar_add_entry(sidebar, res);
+	}
+
+	if (ent->flags & FL_WORMHOLE) {
+		sidebar_entry_t res = { 0 };
+		res.pos = sidebar_get_next_line_pos(sidebar);
+		res.name = lva("wormhole");
+		res.data = lva("%.1fs", ent->client->wormhole_time - level.time);
 		sidebar_add_entry(sidebar, res);
 	}
 
@@ -737,10 +759,18 @@ void layout_send(edict_t* ent)
 	if (!ent->client)
 		return;
 
-	if (ent->ai.is_bot)
+	if (ent->ai)
 		return;
 
+#ifndef VRX_REPRO
 	gi.WriteByte(svc_layout);
 	gi.WriteString(ent->client->layout.layout);
 	gi.unicast(ent, false);
+#else
+	// as above but sent to CS_GENERAL + 2.
+	gi.WriteByte(svc_configstring);
+	gi.WriteShort(CONFIG_SIDEBAR);
+	gi.WriteString(ent->client->layout.layout);
+	gi.unicast(ent, false);
+#endif
 }

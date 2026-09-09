@@ -1,4 +1,5 @@
 #include "g_local.h"
+#include "menus/upgradehelp.h"
 
 const talent_t null_talent = {0};
 
@@ -121,8 +122,8 @@ const talentdef_t talents_knight[] = {
 const talentdef_t talents_weaponmaster[] = {
         {TALENT_BASIC_AMMO_REGEN, 5, false},
         {TALENT_COMBAT_EXP,       5, false},
-        {TALENT_TACTICS,          3, false},
-        {TALENT_SIDEARMS,         3, false},
+        {TALENT_TACTICS,          5, false},
+        {TALENT_SIDEARMS,         5, false},
         {-1,                      0, 0}
 };
 
@@ -150,7 +151,7 @@ const talentclasslist_t talents_by_class[] = {
  * @param maxLevel max level of the talent
  */
 void vrx_add_talent(edict_t *ent, int talentID, int maxLevel) {
-    int nextEmptySlot = ent->myskills.talents.count;
+    const int nextEmptySlot = ent->myskills.talents.count;
     int i = 0;
 
     //Don't add too many talents.
@@ -174,11 +175,11 @@ void vrx_add_talent(edict_t *ent, int talentID, int maxLevel) {
 /// \param talentID talent id to remove
 /// \return number of points the talent was upgraded
 int vrx_remove_talent(edict_t *ent, int talentID) {
-    int count = ent->myskills.talents.count;
+    const int count = ent->myskills.talents.count;
     int ret = 0;
 
     for (int i = 0; i < count; i++) {
-        talent_t *player_talent = &ent->myskills.talents.talent[i];
+        const talent_t *player_talent = &ent->myskills.talents.talent[i];
         if (player_talent->id != talentID) {
             continue;
         }
@@ -281,7 +282,7 @@ int vrx_get_talent_level(const edict_t *ent, int talentID) {
 
 //Upgrades the talent with a matching talentID
 void vrx_upgrade_talent(edict_t *ent, int talentID) {
-    int slot = vrx_get_talent_slot(ent, talentID);
+    const int slot = vrx_get_talent_slot(ent, talentID);
     talent_t *talent;
 
     if (slot == -1)
@@ -345,7 +346,7 @@ void TalentUpgradeMenu_handler(edict_t *ent, int option) {
         OpenTalentUpgradeMenu(ent, vrx_get_talent_slot(ent, option - 1) + 1);
     } else    //upgrading
     {
-        int talentID = (option * -1) - 1;
+        const int talentID = (option * -1) - 1;
         // upgrade the talent
         vrx_upgrade_talent(ent, talentID);
         // refresh the menu
@@ -353,353 +354,12 @@ void TalentUpgradeMenu_handler(edict_t *ent, int option) {
     }
 }
 
-//Adds menu lines that describe the general use of the talent.
-int writeTalentDescription(edict_t *ent, int talentID) {
-    switch (talentID) {
-        //Soldier talents
-        case TALENT_IMP_STRENGTH:
-            menu_add_line(ent, "Increases damage,", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "but reduces resist.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_IMP_RESIST:
-            menu_add_line(ent, "Increases resist,", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "but reduces damage.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_BLOOD_OF_ARES:
-            menu_add_line(ent, "Increases the damage you", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "give/take as you spree.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_BASIC_HA:
-            menu_add_line(ent, "Increases ammo pickups.", MENU_WHITE_CENTERED);
-            return 1;
-        case TALENT_BOMBARDIER:
-            menu_add_line(ent, "Reduces self-inflicted", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "grenade damage and", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "reduces cost.", MENU_WHITE_CENTERED);
-            return 3;
-        //Poltergeist talents
-        case TALENT_MELEE_MASTERY:
-            menu_add_line(ent, "Upgrades the attack of", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "the following morphs:", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "Berserker, Mutant", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "Parasite, and Brain.", MENU_WHITE_CENTERED);
-            return 4;
-        case TALENT_MORE_AMMO:
-            menu_add_line(ent, "Increases maximum ammo", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "capacity for", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "tank/caco/flyer/medic.", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_SUPERIORITY:
-            menu_add_line(ent, "Increased damage and", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "resistance to monsters.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_RANGE_MASTERY:
-            menu_add_line(ent, "Upgrades the attack of", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "the following morphs:", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "Tank, Medic, Flyer", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "and Cacodemon.", MENU_WHITE_CENTERED);
-            return 4;
-        case TALENT_PACK_ANIMAL:
-            menu_add_line(ent, "Increased damage and", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "resistance when near", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "friendly morphed", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "players.", MENU_WHITE_CENTERED);
-            return 4;
-            //Vampire talents
-        case TALENT_IMP_CLOAK:
-            menu_add_line(ent, "Move while cloaked", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "(must be crouching).", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "1/3 pc cost at night!", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_ARMOR_VAMP:
-            menu_add_line(ent, "Also gain armor using", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "your vampire skill.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_FATAL_WOUND:
-            menu_add_line(ent, "Adds chance for flesh", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "eater to make the", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "victim bleed out.", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_SECOND_CHANCE:
-            menu_add_line(ent, "100% chance of ghost", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "working when hit.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_IMP_MINDABSORB:
-            menu_add_line(ent, "Increases frequency of", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "mind absorb attacks.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_CANNIBALISM:
-            menu_add_line(ent, "Increases your maximum", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "health using corpse eater.", MENU_WHITE_CENTERED);
-            return 2;
-            //Mage talents
-            /*
-        case TALENT_ICE_BOLT:
-            menu_add_line(ent, "Use 'icebolt' instead of", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "fireball to chill targets.", MENU_WHITE_CENTERED);
-            return 2;*/
-        case TALENT_MEDITATION:
-            menu_add_line(ent, "Recharge your power", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "cubes at a whim (cmd '+manacharge').", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_OVERLOAD:
-            menu_add_line(ent, "Use extra power cubes", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "to overload abilities,", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "increasing their", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "effectiveness", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "(cmd 'overload').", MENU_WHITE_CENTERED);
-            return 5;
-            /*
-        case TALENT_FROST_NOVA:
-            menu_add_line(ent, "Special nova spell", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "that chills players.", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "(cmd frostnova)", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_IMP_MAGICBOLT:
-            menu_add_line(ent, "Power cubes are refunded", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "on successful hits.", MENU_WHITE_CENTERED);
-            return 2;*/
-        case TALENT_WIZARDRY:
-            menu_add_line(ent, "Switches spell timers to be", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "ability-specific instead of", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "global, allowing you to use", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "them simultaneously!", MENU_WHITE_CENTERED);
-            return 4;
-        case TALENT_NOVA_ORB:
-            menu_add_line(ent, "Adds chance for frozen orb", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "to explode into a frost nova!", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_CL_STORM:
-            menu_add_line(ent, "Adds chance for lightning", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "storms to fire chain", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "lightning!", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_METEORIC_FIRE:
-            menu_add_line(ent, "Adds chance for meteor", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "to create a firewall on", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "impact.", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_MANASHIELD:
-            menu_add_line(ent, "Reduces physical damage", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "by 80%%. All damage", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "absorbed consumes power", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "cubes. (cmd manashield)", MENU_WHITE_CENTERED);
-            return 4;
-            //Engineer talents
-        case TALENT_LASER_PLATFORM:
-            menu_add_line(ent, "Create a laser platform", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "(cmd 'laserplatform').", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_ALARM:
-            menu_add_line(ent, "Detected enemies take", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "more damage.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_RAPID_ASSEMBLY:
-            menu_add_line(ent, "Reduces build time.", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "Can't be combined with", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "Precision Tune.", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_PRECISION_TUNING:
-            menu_add_line(ent, "Increased cost and", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "build time to build", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "higher level devices.", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "Can't be combined with", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "Rapid Assembly.", MENU_WHITE_CENTERED);
-            return 5;
-        case TALENT_STORAGE_UPGRADE:
-            menu_add_line(ent, "Increases ammunition", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "capacity of SS/sentry/AC.", MENU_WHITE_CENTERED);
-            return 2;
-            //Knight talents
-        case TALENT_REPEL:
-            menu_add_line(ent, "Adds chance for projectiles", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "to deflect from shield.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_MAG_BOOTS:
-            menu_add_line(ent, "Reduces effect of knockback.", MENU_WHITE_CENTERED);
-            return 1;
-        case TALENT_LEAP_ATTACK:
-            menu_add_line(ent, "Adds stun/knockback effect", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "to boost spell when landing.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_MOBILITY:
-            menu_add_line(ent, "Reduces boost cooldown", MENU_WHITE_CENTERED);
-            return 1;
-        case TALENT_DURABILITY:
-            menu_add_line(ent, "Increases your health", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "per level bonus!", MENU_WHITE_CENTERED);
-            return 2;
-            //Cleric talents
-        case TALENT_BALANCESPIRIT:
-            menu_add_line(ent, "New spirit that can", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "use the skills of both", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "yin and yang spirits.", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_HOLY_GROUND:
-            menu_add_line(ent, "Designate an area as", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "holy ground to regenerate", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "teammates (cmd 'holyground').", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_UNHOLY_GROUND:
-            menu_add_line(ent, "Designate an area as", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "unholy ground to damage", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "enemies (cmd 'unholyground').", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_BOOMERANG:
-            menu_add_line(ent, "Turns blessed hammers", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "into boomerangs", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "(cmd 'boomerang').", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_PURGE:
-            menu_add_line(ent, "Removes curses and grants", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "temporary invincibility", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "and immunity to curses", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "(cmd 'purge').", MENU_WHITE_CENTERED);
-            return 4;
-            //Weaponmaster talents
-        case TALENT_BASIC_AMMO_REGEN:
-            menu_add_line(ent, "Basic ammo regeneration.", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "Regenerates one ammo pack", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "for the weapon in use.", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_COMBAT_EXP:
-            menu_add_line(ent, "Increases physical,", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "damage, but reduces", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "resistance.", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_TACTICS:
-            menu_add_line(ent, "Increases your levelup", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "health and armor bonus!", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_SIDEARMS:
-            menu_add_line(ent, "Gives you additional", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "respawn weapons. Weapon", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "choice is determined by", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "weapon upgrade level.", MENU_WHITE_CENTERED);
-            return 4;
-            //Necromancer talents
-        //case TALENT_EVIL_CURSE:
-        //    menu_add_line(ent, "Increases curse duration", MENU_WHITE_CENTERED);
-        //    menu_add_line(ent, "and reduces cost.", MENU_WHITE_CENTERED);
-        //    return 2;
-        case TALENT_HELLSPAWN_MASTERY:
-            menu_add_line(ent, "Improves hellspawn. Adds", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "secondary attack.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_GOLEM_MASTERY:
-            menu_add_line(ent, "Improves golem. Adds thorns", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "aura, causing damage", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "inflicted on your golem to", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "be reflected back to the", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "enemy!", MENU_WHITE_CENTERED);
-            return 5;
-        case TALENT_CORPULENCE:
-            menu_add_line(ent, "Increases monster health/armor", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "Can't combine with Life Tap.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_OBLATION:
-            menu_add_line(ent, "Increases monster damage.", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "Can't combine with", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "Corpulence.", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_AUTOCURSE:
-            menu_add_line(ent, "Adds chance to", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "automatically curse", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "enemies that attack you.", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_BLACK_DEATH:
-            menu_add_line(ent, "Enemies that touch infected", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "corpses will take extra", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "damage from plague.", MENU_WHITE_CENTERED);
-            return 3;
-            //Shaman talents
-        case TALENT_TOTEM:
-            menu_add_line(ent, "Allows you to spawn", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "healthier totems. Totem can not", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "be of the opposite element.", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_ICE:
-            menu_add_line(ent, "Allows your water totem", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "to shoot frozen orbs.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_WIND:
-            menu_add_line(ent, "Allows your air totem to", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "ghost attacks for you.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_STONE:
-            menu_add_line(ent, "Allows your earth totem to", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "increase your resistance.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_SHADOW:
-            menu_add_line(ent, "Allows your darkness totem", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "to let you vamp beyond your", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "maximum health limit.", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_PEACE:
-            menu_add_line(ent, "Allows your nature totem to", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "regenerate your power cubes.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_VOLCANIC:
-            menu_add_line(ent, "Gives your fire totem a", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "secondary meteor attack.", MENU_WHITE_CENTERED);
-            return 2;
-            //Alien talents
-        case TALENT_SPITTING_GASSER:
-            menu_add_line(ent, "Adds chance that acid will", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "spawn a gas cloud on impact.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_SUPER_HEALER:
-            menu_add_line(ent, "Allows healer to heal", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "beyond maximum health.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_DEADLY_SPIKES:
-            menu_add_line(ent, "Adds chance that", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "spikers will stun.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_SWARMING:
-            menu_add_line(ent, "Increases spore damage.", MENU_WHITE_CENTERED);
-            // menu_add_line(ent, "but reduces damage.", MENU_WHITE_CENTERED); // lol
-            return 1;
-        case TALENT_MAGNETISM:
-            menu_add_line(ent, "Makes obstacles magnetic,", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "causing enemies to be", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "pulled toward them.", MENU_WHITE_CENTERED);
-            return 3;
-      case TALENT_TELECOON:
-            menu_add_line(ent, "Allows cocoon to teleport", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "friendly units. Upgrades", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "increase range.", MENU_WHITE_CENTERED);
-            return 3;
-            // Kamikaze talents
-        case TALENT_MARTYR:
-            menu_add_line(ent, "Creates an explotion", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "when you die.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_BLAST_RESIST:
-            menu_add_line(ent, "Increases defense against", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "radius damage.", MENU_WHITE_CENTERED);
-            return 2;
-        case TALENT_MAGMINESELF:
-            menu_add_line(ent, "Gain the ability", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "to turn into a living magmine", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "using 'magmine self'.", MENU_WHITE_CENTERED);
-            return 3;
-        case TALENT_INSTANTPROXYS:
-            menu_add_line(ent, "Makes proxys be removed", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "instantly when they explode.", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "On level 2, it removes", MENU_WHITE_CENTERED);
-            menu_add_line(ent, "hold time when building them.", MENU_WHITE_CENTERED);
-            return 4;
-        default:
-            return 0;
-    }
-}
 
 void vrx_open_talent_menu(edict_t *ent, int talentID, qboolean select_upgrade) {
     talent_t* talent;// = &ent->myskills.talents.talent[vrx_get_talent_slot(ent, talentID)];
     int level;// = talent->upgradeLevel;
-    int slot = vrx_get_talent_slot(ent, talentID);
-    int talentPoints = ent->myskills.talents.talentPoints;
+    const int slot = vrx_get_talent_slot(ent, talentID);
+    const int talentPoints = ent->myskills.talents.talentPoints;
     int lineCount = 7;//12;
     qboolean can_upgrade = false;
 
@@ -718,7 +378,8 @@ void vrx_open_talent_menu(edict_t *ent, int talentID, qboolean select_upgrade) {
     menu_add_line(ent, va("%s: %d/%d", GetTalentString(talentID), level, talent->maxLevel), MENU_WHITE_CENTERED);
     menu_add_line(ent, " ", 0);
 
-    lineCount += writeTalentDescription(ent, talentID);
+    const auto help = vrx_talenthelp_get(talentID);
+    lineCount += vrx_upgradehelp_add_menu_lines(ent, help);
 
     menu_add_line(ent, " ", 0);
     //menu_add_line(ent, "Current", MENU_GREEN_CENTERED);
@@ -812,7 +473,7 @@ void V_UpdatePlayerTalents(edict_t *ent) {
 
     // see differences between class talents and player talents
     for (int i = 0; i < ent->myskills.talents.count; ++i) {
-        int talentId = ent->myskills.talents.talent[i].id;
+        const int talentId = ent->myskills.talents.talent[i].id;
         talent_t *player_talent = &ent->myskills.talents.talent[i];
         const talentdef_t *class_talent = NULL;
 
@@ -841,7 +502,7 @@ void V_UpdatePlayerTalents(edict_t *ent) {
 
             // upgrade level past max level
             if (player_talent->upgradeLevel > player_talent->maxLevel) {
-                int difference = player_talent->upgradeLevel - player_talent->maxLevel;
+                const int difference = player_talent->upgradeLevel - player_talent->maxLevel;
                 player_talent->upgradeLevel -= difference;
                 refunded += difference;
             }
@@ -852,7 +513,7 @@ void V_UpdatePlayerTalents(edict_t *ent) {
     for (const talentdef_t* talent = talents_by_class[ent->myskills.class_num];
          talent->talent_id != -1;
          talent++) {
-        int talentLevel = vrx_get_talent_slot(ent, talent->talent_id);
+        const int talentLevel = vrx_get_talent_slot(ent, talent->talent_id);
         if (talentLevel == -1) { // not found
             vrx_add_talent(ent, talent->talent_id, talent->max_level);
         }

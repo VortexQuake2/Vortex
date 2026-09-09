@@ -1,3 +1,5 @@
+#define VRX_G_SAVE_IMPL
+
 #include "g_local.h"
 #include "../characters/io/v_characterio.h"
 #include "../server/relay.h"
@@ -5,36 +7,6 @@
 // settings.h
 const char *s1;
 const char *s2;
-
-// g_local.h
-gitem_t	*Fdi_GRAPPLE;
-gitem_t	*Fdi_BLASTER;
-gitem_t *Fdi_SHOTGUN;
-gitem_t *Fdi_SUPERSHOTGUN;
-gitem_t *Fdi_MACHINEGUN;
-gitem_t *Fdi_CHAINGUN;
-gitem_t *Fdi_GRENADES;
-gitem_t *Fdi_GRENADELAUNCHER;
-gitem_t *Fdi_ROCKETLAUNCHER;
-gitem_t *Fdi_HYPERBLASTER;
-gitem_t *Fdi_RAILGUN;
-gitem_t *Fdi_BFG;
-gitem_t *Fdi_PHALANX;
-gitem_t *Fdi_BOOMER;
-gitem_t *Fdi_TRAP;
-gitem_t *Fdi_20MM;
-
-gitem_t *Fdi_SHELLS;
-gitem_t *Fdi_BULLETS;
-gitem_t *Fdi_CELLS;
-gitem_t *Fdi_ROCKETS;
-gitem_t *Fdi_SLUGS;
-gitem_t *Fdi_MAGSLUGS;
-gitem_t *Fdi_TBALL;
-gitem_t	*Fdi_POWERCUBE;
-
-int headindex;
-int	skullindex;
 
 cvar_t				*bot_enable;//GHz: Set to 1 to enable bots
 cvar_t				*bot_dropnodes;//GHz: Set to 1 to allow players to automatically drop nodes used for bot pathing
@@ -173,12 +145,34 @@ is loaded.
 ============
 */
 
+void PreInit() {
+	maxclients = gi.cvar("maxclients", "4", CVAR_SERVERINFO | CVAR_LATCH);
+#ifdef VRX_REPRO
+	gi.cvar_forceset("sv_fps", va("%d", gire.tick_rate));
+#endif
+	deathmatch = gi.cvar("deathmatch", "0", CVAR_LATCH);
+	coop = gi.cvar("coop", "0", CVAR_LATCH);
+
+#ifndef VRX_REPRO
+	if (!deathmatch->value) {
+		gi.cvar_forceset("deathmatch", "1");
+	}
+#else
+	if (!deathmatch->integer && !coop->integer) {
+		gi.cvar_forceset("deathmatch", "1");
+	}
+#endif
+}
 
 
+void vrx_backpack_init();
 void InitGame(void)
 {
-	gi.dprintf("==== InitGame ====\n");
+#ifndef VRX_REPRO
+	PreInit();
+#endif
 
+	gi.dprintf("==== InitGame ====\n");
 
 	//K03 Begin
 	srand((unsigned)time(0));
@@ -186,7 +180,6 @@ void InitGame(void)
 	gamedir = gi.cvar("gamedir", "vortex", CVAR_SERVERINFO);
 	save_path = gi.cvar("save_path", va("%s//characters", gamedir->string), CVAR_LATCH);
 	//K03 End
-
 
 	// az begin
 	gi.cvar_forceset("g_features", va("%d", GMF_VARIABLE_FPS));
@@ -199,6 +192,7 @@ void InitGame(void)
 	gi.cvar_forceset("sv_allow_map", "2");
 #endif
 
+	vrx_backpack_init();
 	defer_global_init();
 	vrx_init_lua();
     CreateDirIfNotExists(va("%s/settings", gamedir->string));
@@ -234,11 +228,13 @@ void InitGame(void)
 	gi.cvar("gamename", GAMEVERSION, CVAR_SERVERINFO | CVAR_LATCH);
 	gi.cvar("gamedate", __DATE__, CVAR_SERVERINFO | CVAR_LATCH);
 
-	maxclients = gi.cvar("maxclients", "4", CVAR_SERVERINFO | CVAR_LATCH);
-	deathmatch = gi.cvar("deathmatch", "0", CVAR_LATCH);
-	coop = gi.cvar("coop", "0", CVAR_LATCH);
 	skill = gi.cvar("skill", "1", CVAR_SERVERINFO);
+#ifndef VRX_REPRO
+	maxclients = gi.cvar("maxclients", "4", CVAR_SERVERINFO | CVAR_LATCH);
 	maxentities = gi.cvar("maxentities", "1024", CVAR_LATCH);
+#else
+	maxentities = gi.cvar("maxentities", "8096", CVAR_LATCH);
+#endif
 	//chain edit flag
 	//vwep support
 	vwep = gi.cvar("vwep", "1", CVAR_LATCH);
@@ -369,6 +365,10 @@ void InitGame(void)
 	world_min_grenades = gi.cvar("world_min_grenades", "1", 0);
 	world_min_cells = gi.cvar("world_min_cells", "1", 0);
 	world_min_slugs = gi.cvar("world_min_slugs", "1", 0);
+	world_min_flechettes = gi.cvar("world_min_flechettes", "1", 0);
+	world_min_magslug = gi.cvar("world_min_magslug", "1", 0);
+	world_min_rounds = gi.cvar("world_min_rounds", "1", 0);
+
 
 	// enable special rules for flag carrier in CTF mode
 	ctf_enable_balanced_fc = gi.cvar("ctf_enable_balanced_fc", "1", CVAR_LATCH);
@@ -411,19 +411,35 @@ void InitGame(void)
 
 	// az: requires hostname and g_edicts to be initialized, so it's placed here
 	vrx_relay_connect();
+	vrx_fill_xp_accum_table();
 
 	//3.0 Load the custom map lists
-	if (vrx_load_map_list(MAPMODE_PVP) && vrx_load_map_list(MAPMODE_PVM) && vrx_load_map_list(MAPMODE_INV)
-		&& vrx_load_map_list(MAPMODE_DOM) && vrx_load_map_list(MAPMODE_CTF) && vrx_load_map_list(MAPMODE_FFA)
-		&& vrx_load_map_list(MAPMODE_TRA) && vrx_load_map_list(MAPMODE_INH) && vrx_load_map_list(MAPMODE_VHW)
-		&& vrx_load_map_list(MAPMODE_TBI))
+	const int modes[] = {
+		MAPMODE_PVP,
+		MAPMODE_PVM,
+		MAPMODE_INV,
+		MAPMODE_DOM,
+		MAPMODE_CTF,
+		MAPMODE_FFA,
+		MAPMODE_TRA,
+		MAPMODE_INH,
+		MAPMODE_VHW,
+		MAPMODE_TBI
+	};
+
+	qboolean mload_success = true;
+	for (int i = 0; i < (sizeof(modes) / sizeof(modes[0])); i++) {
+		if (!vrx_load_map_list(modes[i])) {
+			gi.dprintf("WARNING: Error loading custom map list (%d)\n", i);
+			mload_success = false;
+		}
+	}
+
+	if (mload_success)
 		gi.dprintf("INFO: Vortex Custom Map Lists loaded successfully\n");
-	else
-		gi.dprintf("WARNING: Error loading custom map lists\n");
 
 	//3.0 Load the armory
 	LoadArmory();
-
 	InitializeTeamNumbers(); // for allies
 
 	// az begin
@@ -670,14 +686,17 @@ void ReadGame(char *filename)
 	gi.FreeTags(TAG_GAME);
 
 	f = fopen(filename, "rb");
-	if (!f)
+	if (!f) {
 		gi.error("Couldn't open %s", filename);
+		return;
+	}
 
 	fread(str, sizeof(str), 1, f);
 	if (strcmp(str, __DATE__))
 	{
 		fclose(f);
 		gi.error("Savegame from an older version.\n");
+		return;
 	}
 
 	g_edicts = vrx_malloc(game.maxentities * sizeof(g_edicts[0]), TAG_GAME);
@@ -888,6 +907,7 @@ void ReadLevel(char *filename)
 	{
 		fclose(f);
 		gi.error("ReadLevel: mismatched edict size");
+		return;
 	}
 
 	// check function pointer base address
@@ -896,6 +916,7 @@ void ReadLevel(char *filename)
 	{
 		fclose(f);
 		gi.error("ReadLevel: function pointers have moved");
+		return;
 	}
 
 	// load the level locals
@@ -908,6 +929,7 @@ void ReadLevel(char *filename)
 		{
 			fclose(f);
 			gi.error("ReadLevel: failed to read entnum");
+			return;
 		}
 		if (entnum == -1)
 			break;
@@ -918,7 +940,10 @@ void ReadLevel(char *filename)
 		ReadEdict(f, ent);
 
 		// let the server rebuild world links for this ent
+		// TODO?
+#ifndef VRX_REPRO
 		memset(&ent->area, 0, sizeof(ent->area));
+#endif
 		gi.linkentity(ent);
 	}
 

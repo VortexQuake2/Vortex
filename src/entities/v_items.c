@@ -5,10 +5,6 @@
 #include "characters/io/v_characterio.h"
 
 
-void vrx_spawn_normal_rune(edict_t *rune, int targ_level, int type);
-void vrx_spawn_combo_rune(edict_t *rune, int targ_level);
-void vrx_spawn_class_rune(edict_t *rune, int targ_level);
-qboolean vrx_spawn_unique_rune(edict_t *rune, int index);
 
 //************************************************************************************************
 //************************************************************************************************
@@ -38,7 +34,8 @@ int eqSetItems(edict_t *ent, item_t *rune)
 
 	for (i=0; i < 3; ++i)	//loop through only the equip slots
 	{
-		if ((ent->myskills.items[i].itemtype != TYPE_NONE) && (ent->myskills.items[i].setCode == rune->setCode))
+		if ((ent->client->resp.pstats.items[i].itemtype != TYPE_NONE) &&
+			(ent->client->resp.pstats.items[i].setCode == rune->setCode))
 			count++;
 	}
 	//Return number of matching items
@@ -128,7 +125,7 @@ void vrx_runes_apply(edict_t *ent, item_t *rune)
 			if ((mod < MAX_WEAPONMODS) && (weapon < MAX_WEAPONS))
 			{
 				//Increase the player's current level
-				weaponskill_t *wepmod = &(ent->myskills.weapons[weapon].mods[mod]);
+				weaponskill_t *wepmod = &(ent->client->resp.pstats.weapons[weapon].mods[mod]);
 				wepmod->current_level += rune->modifiers[i].value;
 
 				//Cap current_level to the hard maximum
@@ -242,9 +239,9 @@ void vrx_join_redundant_mods(edict_t *rune, int mod_index)
 			} else
 			{
 				/* weapon mods are a little trickier*/
-				int mod = rune->vrxitem.modifiers[mod_index].index;
-				int weap_mod_index = vrx_weapon_mod_index_from_mod_index(mod);
-				int weap = vrx_weapon_index_from_mod_index(mod);
+				const int mod = rune->vrxitem.modifiers[mod_index].index;
+				const int weap_mod_index = vrx_weapon_mod_index_from_mod_index(mod);
+				const int weap = vrx_weapon_index_from_mod_index(mod);
 
 				if (weap_mod_index <= 3 && (weap_mod_index <= 2 || weap == WEAPON_SWORD))
 				{
@@ -317,7 +314,7 @@ void vrx_create_ability_modifier(edict_t *rune, qboolean is_class, int i, int ta
 	}
 	else
 	{
-		int modmax = max((int)roundf(5.0f * ((min(targ_level, 25.0f)) / 15.0f)), 1);
+		const int modmax = max((int)roundf(5.0f * ((min(targ_level, 25.0f)) / 15.0f)), 1);
 		rune->vrxitem.modifiers[i].value = min(rand_clt_distribute(1, modmax, 3), RUNE_ABILITY_MAXVALUE);
 	}
 
@@ -341,7 +338,7 @@ edict_t* vrx_do_random_rune_drop(edict_t* spawner, int targ_level) {
 	rune->vrxitem.quantity = 1;
 
 	//Spawn a random rune
-	int iRandom = GetRandom(0, 1000);
+	const int iRandom = GetRandom(0, 1000);
 
 	if (iRandom < CHANCE_UNIQUE)
 	{
@@ -448,7 +445,7 @@ void vrx_roll_rune_drop(edict_t *self, edict_t *attacker, qboolean debug)
 		// is this a world monster?
 		if (self->mtype && (self->svflags & SVF_MONSTER) && self->activator && !self->activator->client)
 		{
-            float levelRatio = (float) (self->monsterinfo.level + 1) / (attacker->myskills.level + 1);
+            const float levelRatio = (float) (self->monsterinfo.level + 1) / (attacker->myskills.level + 1);
 			if (IsABoss(self) || (self->mtype == M_COMMANDER))
 			//boss has a 100% chance to spawn a rune
                 temp = levelRatio * 100.0f;
@@ -517,7 +514,7 @@ void vrx_make_weapon_rune(edict_t* rune, int targ_level)
 {
 	int max_mods = 1 + (0.25 * targ_level); //This means lvl 16+ can get all 5 mods
 	int num_mods;
-	int weaponIndex = GetRandom(0, MAX_WEAPONS-1);	// random weapon
+	const int weaponIndex = GetRandom(0, MAX_WEAPONS-1);	// random weapon
 
 	
 	if (max_mods > MAX_WEAPONMODS)
@@ -531,7 +528,7 @@ void vrx_make_weapon_rune(edict_t* rune, int targ_level)
 		
 	for (int i = 0; i < num_mods; ++i)
 	{
-		int modIndex	= i;
+		const int modIndex	= i;
 
 		//25% chance for rune mod not to show up
 		if (GetRandom(0, 4) == 0)
@@ -563,7 +560,7 @@ void vrx_make_ability_rune(edict_t* rune, int targ_level)
 	if (max_mods > MAX_VRXITEMMODS)
 		max_mods = MAX_VRXITEMMODS;
 
-	int num_mods = rand_clt_distribute(1, max_mods, 6);
+	const int num_mods = rand_clt_distribute(1, max_mods, 6);
 
 	for (int i = 0; i < num_mods; ++i)
 	{
@@ -597,8 +594,8 @@ void vrx_spawn_normal_rune(edict_t *rune, int targ_level, int type)
 //************************************************************************************************
 
 void vrx_spawn_class_rune(edict_t *rune, int targ_level) {
-	int max_mods = 1 + (0.2 * targ_level);    //This means lvl 15+ can get 4 mods
-    int num_mods = min(rand_clt_distribute(1, max_mods, 3), 5); // az: from 1 - don't be a dick
+	const int max_mods = 1 + (0.2 * targ_level);    //This means lvl 15+ can get 4 mods
+    const int num_mods = min(rand_clt_distribute(1, max_mods, 3), 5); // az: from 1 - don't be a dick
     rune->vrxitem.itemtype = ITEM_CLASSRUNE;
     rune->vrxitem.classNum = GetRandom(1, CLASS_MAX - 1);    //class number
 
@@ -683,7 +680,7 @@ qboolean vrx_spawn_unique_rune(edict_t *rune, int index)
 		rewind(fptr);
 
 		//Find a unique
-		int maxlines = V_tFileCountLines(fptr, size);
+		const int maxlines = V_tFileCountLines(fptr, size);
 
 		if ((index == 0) || (index > maxlines))
 		{
@@ -792,85 +789,6 @@ void vrx_spawn_combo_rune(edict_t *rune, int targ_level)
 //************************************************************************************************
 //************************************************************************************************
 
-void PurchaseRandomRune(edict_t *ent, int runetype)
-{
-	int	cost;
-	edict_t *rune;
-	item_t *slot;
-	char buf[64];
-
-	cost = RUNE_COST_BASE + RUNE_COST_ADDON * ent->myskills.level;
-	if (ent->myskills.credits < cost)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "You need %d credits to purchase a rune.\n", cost);
-		return;
-	}
-
-	slot = V_FindFreeItemSlot(ent);
-	if (!slot)
-	{
-		safe_cprintf(ent, PRINT_HIGH, "Not enough inventory space!\n");
-		return;
-	}
-
-	// rune pick-up delay
-	if (ent->client->rune_delay > level.time)
-		return;
-
-	rune = G_Spawn();				// create a rune
-	ent->myskills.credits -= cost;
-
-    qboolean reroll = true;
-
-    while (reroll) {
-        V_ItemClear(&rune->vrxitem);	// initialize the rune
-
-        if (runetype == ITEM_COMBO) {
-            vrx_spawn_combo_rune(rune, ent->myskills.level);
-        } else if (runetype) {
-            vrx_spawn_normal_rune(rune, ent->myskills.level, runetype);
-        } else if (random() > 0.5) {
-            vrx_spawn_normal_rune(rune, ent->myskills.level, ITEM_WEAPON);
-        } else {
-            vrx_spawn_normal_rune(rune, ent->myskills.level, ITEM_ABILITY);
-        }
-
-        if (rune->vrxitem.itemLevel != 0)
-            reroll = false;
-    }
-    
-	if (Pickup_Rune(rune, ent) == false)
-	{
-		G_FreeEdict(rune);
-		//gi.dprintf("WARNING: PurchaseRandomRune() was unable to spawn a rune\n");
-		return;
-	}
-	G_FreeEdict(rune);
-
-	//Find out what the player bought
-	strcpy(buf, GetRuneValString(slot));
-	switch(slot->itemtype)
-	{
-	case ITEM_WEAPON:	strcat(buf, va(" weapon rune (%d mods)", slot->numMods));	break;
-	case ITEM_ABILITY:	strcat(buf, va(" ability rune (%d mods)", slot->numMods));	break;
-	case ITEM_COMBO:	strcat(buf, va(" combo rune (%d mods)", slot->numMods));	break;
-	}
-
-	//send the message to the player
-	safe_cprintf(ent, PRINT_HIGH, "You bought a %s.\n", buf);
-	safe_cprintf(ent, PRINT_HIGH, "You now have %d credits left. \n", ent->myskills.credits);
-	gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/gold.wav"), 1, ATTN_NORM, 0);
-
-	//Save the player
-	vrx_char_io.save_player_runes(ent);
-
-	//write to the log
-	gi.dprintf("INFO: %s purchased a level %d rune (%s).\n", 
-		ent->client->pers.netname, slot->itemLevel, slot->id);
-    vrx_write_to_logfile(ent, va("Purchased a level %d rune (%s) for %d credits. Player has %d credits left.\n",
-                                 slot->itemLevel, slot->id, cost, ent->myskills.credits));
-}
-
 //************************************************************************************************
 //************************************************************************************************
 
@@ -879,7 +797,7 @@ qboolean Pickup_Rune (edict_t *ent, edict_t *other)
 	item_t *slot;
 
 	// bots and other non-clients can't pick up runes
-	if (!other->client || other->ai.is_bot)
+	if (!other->client || other->ai)
 		return false;
 
 	//Show the user what kind of rune it is
@@ -940,9 +858,9 @@ item_t *V_FindFreeItemSlot (edict_t *ent)
     //Fill items backwards from the bottom of the stash
 	for (i = MAX_VRXITEMS-1; i > 2; --i)
 	{
-		if (ent->myskills.items[i].itemtype)
+		if (ent->client->resp.pstats.items[i].itemtype)
 			continue;
-		return &ent->myskills.items[i];
+		return &ent->client->resp.pstats.items[i];
 	}
 	return NULL;
 }
@@ -957,11 +875,11 @@ item_t *V_FindFreeTradeSlot(edict_t *ent, int index)
     //Check items backwards from the bottom of the stash
 	for (i = MAX_VRXITEMS-1; i > 2; --i)
 	{
-		if (ent->myskills.items[i].itemtype)
+		if (ent->client->resp.pstats.items[i].itemtype)
 			continue;
 		++count;
 		if (count == index)
-			return &ent->myskills.items[i];
+			return &ent->client->resp.pstats.items[i];
 	}
 	return NULL;
 }
@@ -983,7 +901,7 @@ qboolean V_CanPickUpItem (edict_t *ent)
 	// Skip hand, neck, and belt slots
 	for (i=3; i < MAX_VRXITEMS; ++i)
 	{
-		if (!ent->myskills.items[i].itemtype)
+		if (!ent->client->resp.pstats.items[i].itemtype)
 			return true;
 	}
 	return false;
@@ -1088,8 +1006,8 @@ void V_EquipItem(edict_t *ent, int index)
 	int i, wpts, apts, total_pts, clvl = ent->myskills.level;
 
 	// calculate number of weapon and ability points separately
-	wpts = V_GetRuneWeaponPts(ent, &ent->myskills.items[index]);
-	apts = V_GetRuneAbilityPts(ent, &ent->myskills.items[index]);
+	wpts = V_GetRuneWeaponPts(ent, &ent->client->resp.pstats.items[index]);
+	apts = V_GetRuneAbilityPts(ent, &ent->client->resp.pstats.items[index]);
 	// calculate weighted total
 	total_pts = ceil(0.5*wpts + 0.75*apts);//was 0.66,2.0
 	//gi.dprintf("wpts = %d, apts = %d, total = %d\n", wpts, apts, total_pts);
@@ -1103,7 +1021,7 @@ void V_EquipItem(edict_t *ent, int index)
 			safe_cprintf(ent, PRINT_HIGH, "Not enough room in your stash.\n");
 			return;
 		}
-		V_ItemSwap(&ent->myskills.items[index], slot);
+		V_ItemSwap(&ent->client->resp.pstats.items[index], slot);
 		gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/boots.wav"), 1, ATTN_NORM, 0);
 		safe_cprintf(ent, PRINT_HIGH, "Item successfully placed in your stash.\n");
 	}
@@ -1116,7 +1034,7 @@ void V_EquipItem(edict_t *ent, int index)
 	}
 	else if (index < MAX_VRXITEMS)
 	{
-		int type = ent->myskills.items[index].itemtype;
+		int type = ent->client->resp.pstats.items[index].itemtype;
 
 		if (type & ITEM_UNIQUE)
 			type ^= ITEM_UNIQUE;
@@ -1125,26 +1043,26 @@ void V_EquipItem(edict_t *ent, int index)
 		switch(type)
 		{
 		case ITEM_WEAPON:
-			V_ItemSwap(&ent->myskills.items[index], &ent->myskills.items[0]); //put on hand slot
-			if (eqSetItems(ent, &ent->myskills.items[0]) == 3)
+			V_ItemSwap(&ent->client->resp.pstats.items[index], &ent->client->resp.pstats.items[0]); //put on hand slot
+			if (eqSetItems(ent, &ent->client->resp.pstats.items[0]) == 3)
 				gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/blessedaim.wav"), 1, ATTN_NORM, 0);
 			else gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/glovesmetal.wav"), 1, ATTN_NORM, 0);
 			break;
 		case ITEM_ABILITY:
-			V_ItemSwap(&ent->myskills.items[index], &ent->myskills.items[1]); //put on neck slot
-			if (eqSetItems(ent, &ent->myskills.items[0]) == 3)
+			V_ItemSwap(&ent->client->resp.pstats.items[index], &ent->client->resp.pstats.items[1]); //put on neck slot
+			if (eqSetItems(ent, &ent->client->resp.pstats.items[0]) == 3)
 				gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/blessedaim.wav"), 1, ATTN_NORM, 0);
 			else gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/amulet.wav"), 1, ATTN_NORM, 0);
 			break;
 		case ITEM_COMBO:
-			V_ItemSwap(&ent->myskills.items[index], &ent->myskills.items[2]); //put on belt slot
-			if (eqSetItems(ent, &ent->myskills.items[0]) == 3)
+			V_ItemSwap(&ent->client->resp.pstats.items[index], &ent->client->resp.pstats.items[2]); //put on belt slot
+			if (eqSetItems(ent, &ent->client->resp.pstats.items[0]) == 3)
 				gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/blessedaim.wav"), 1, ATTN_NORM, 0);
 			else gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/belt.wav"), 1, ATTN_NORM, 0);
 			break;
 		case ITEM_CLASSRUNE:
-			V_ItemSwap(&ent->myskills.items[index], &ent->myskills.items[1]); //put on neck slot
-			if (eqSetItems(ent, &ent->myskills.items[0]) == 3)
+			V_ItemSwap(&ent->client->resp.pstats.items[index], &ent->client->resp.pstats.items[1]); //put on neck slot
+			if (eqSetItems(ent, &ent->client->resp.pstats.items[0]) == 3)
 				gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/blessedaim.wav"), 1, ATTN_NORM, 0);
 			else gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/amulet.wav"), 1, ATTN_NORM, 0);
 			break;
@@ -1156,8 +1074,8 @@ void V_EquipItem(edict_t *ent, int index)
 	vrx_runes_unapply(ent);
 	for (i = 0; i < 3; ++i)
 	{
-		if (ent->myskills.items[i].itemtype != TYPE_NONE)
-			vrx_runes_apply(ent, &ent->myskills.items[i]);
+		if (ent->client->resp.pstats.items[i].itemtype != TYPE_NONE)
+			vrx_runes_apply(ent, &ent->client->resp.pstats.items[i]);
 	}
 }
 
@@ -1176,15 +1094,15 @@ void cmd_Drink(edict_t *ent, int itemtype, int index) {
         return;
 
     if (index) {
-        slot = &ent->myskills.items[index - 1];
+        slot = &ent->client->resp.pstats.items[index - 1];
         found = true;
     } else {
         //Find item in inventory
 		for (i = 3; i < MAX_VRXITEMS; ++i)
 		{
-			if (ent->myskills.items[i].itemtype == itemtype)
+			if (ent->client->resp.pstats.items[i].itemtype == itemtype)
 			{
-				slot = &ent->myskills.items[i];
+				slot = &ent->client->resp.pstats.items[i];
 				found = true;
 				break;
 			}
@@ -1202,7 +1120,7 @@ void cmd_Drink(edict_t *ent, int itemtype, int index) {
 	{
 	case ITEM_POTION:
 		{
-			int max_hp = MAX_HEALTH(ent);
+			const int max_hp = MAX_HEALTH(ent);
 
 			if (ent->health < max_hp)
 			{
@@ -1264,10 +1182,10 @@ item_menu_t vrx_get_weapon_rune_string(item_t* item)
 
 	for (int i = 0; i < MAX_VRXITEMMODS; i++)
 	{
-		imodifier_t* mod = &item->modifiers[i];
+		const imodifier_t* mod = &item->modifiers[i];
 		if (mod->index > 0 && mod->value > 0 && mod->type == TYPE_WEAPON)
 		{
-			int weap = vrx_weapon_index_from_mod_index(mod->index);
+			const int weap = vrx_weapon_index_from_mod_index(mod->index);
 			wstring = GetWeaponString(weap);
 			if (mod->value > max) max = mod->value;
 		}
@@ -1324,7 +1242,7 @@ item_menu_t vrx_get_ability_rune_string(item_t* item)
 
 	for (int i = 0; i < MAX_VRXITEMMODS; i++)
 	{
-		imodifier_t* mod = &item->modifiers[i];
+		const imodifier_t* mod = &item->modifiers[i];
 		if (mod->index > 0 && mod->value > 0 && mod->type == TYPE_ABILITY && max < mod->value)
 		{
 			max = mod->value;
@@ -1340,12 +1258,12 @@ item_menu_t vrx_get_ability_rune_string(item_t* item)
 
 item_menu_t vrx_get_combo_rune_string(item_t* item)
 {
-	char *astring = "Combo";
+	const char *astring = "Combo";
 	int max = 0;
 
 	for (int i = 0; i < MAX_VRXITEMMODS; i++)
 	{
-		imodifier_t* mod = &item->modifiers[i];
+		const imodifier_t* mod = &item->modifiers[i];
 		if (mod->index > 0 && mod->value > 0 && mod->type == TYPE_ABILITY && max < mod->value)
 		{
 			max = mod->value;
@@ -1389,5 +1307,20 @@ item_menu_t vrx_menu_item_display(item_t* item)
 		}
 	}
 }
+
+int V_ItemCount(edict_t *ent, int itemType) {
+	int i = 0;
+	int count = 0;
+
+	if (!ent || !ent->client)
+		return 0;
+
+	for (i = 0; i < MAX_VRXITEMS; ++i)
+		if (ent->client->resp.pstats.items[i].itemtype == itemType)
+			count++;
+
+	return count;
+}
+
 
 //************************************************************************************************

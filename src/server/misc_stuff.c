@@ -1,10 +1,11 @@
 #include "g_local.h"
 #include "../gamemodes/ctf.h"
+#include "entities/grid.h"
 
 
 void KickPlayerBack(edict_t *ent)
 {
-	edict_t *other=NULL;
+	const edict_t *other=NULL;
 
 	while ((other = findradius(other, ent->s.origin, 175)) != NULL)
 	{
@@ -136,12 +137,9 @@ csurface_t* FindSky()
 }
 
 //FIXME: this should try to use grd coordinates first
-qboolean GetGridPosition(vec3_t pos, int index);
-qboolean GetRandomGridPosition(vec3_t pos);
-int GetGridNodes();
 qboolean vrx_find_random_spawn_point (edict_t *ent, qboolean air)
 {
-	int		max_tries=1000,grd_nodes = GetGridNodes(),i, j = 0, mask;
+	int		max_tries=1000,grd_nodes = vrx_pf_get_node_count(),i, j = 0, mask;
 	vec3_t	start, end, forward, right;
 	trace_t	tr;
 
@@ -155,7 +153,7 @@ qboolean vrx_find_random_spawn_point (edict_t *ent, qboolean air)
 	for (j=0;j<max_tries;j++)
 	{
 		// try to use a random grid position first, then fall back to random coordinates
-		if (j > 100 || !GetRandomGridPosition(start))
+		if (j > 100 || !vrx_pf_get_random_grid_position(start))
 		{
 			//gi.dprintf("couldn't get a random grid position\n");
 			// get a random position within a map
@@ -347,6 +345,30 @@ void Check_full(edict_t *ent)
 		index = ITEM_INDEX(item);
 		if (ent->client->pers.inventory[index] > ent->client->pers.max_slugs)
 			ent->client->pers.inventory[index] = ent->client->pers.max_slugs;
+	}
+
+	item = FindItem("Flechettes");
+	if (item)
+	{
+		index = ITEM_INDEX(item);
+		if (ent->client->pers.inventory[index] > ent->client->pers.max_flechettes)
+			ent->client->pers.inventory[index] = ent->client->pers.max_flechettes;
+	}
+
+	item = FindItem("Mag Slug");
+	if (item)
+	{
+		index = ITEM_INDEX(item);
+		if (ent->client->pers.inventory[index] > ent->client->pers.max_magslug)
+			ent->client->pers.inventory[index] = ent->client->pers.max_magslug;
+	}
+
+	item = FindItem("Rounds");
+	if (item)
+	{
+		index = ITEM_INDEX(item);
+		if (ent->client->pers.inventory[index] > ent->client->pers.max_disruptor)
+			ent->client->pers.inventory[index] = ent->client->pers.max_disruptor;
 	}
 }
 
@@ -629,8 +651,9 @@ void V_PrintSayPrefix (edict_t *speaker, edict_t *listener, char *text)
 	int groupnum;
 	char temp[2048];
 
-	if (!dedicated->value)
-		return;
+	// az: Whyyy is this here??
+	// if (!dedicated->value)
+	// 	return;
 
 	if (G_IsSpectator(speaker))
 	{
@@ -640,8 +663,8 @@ void V_PrintSayPrefix (edict_t *speaker, edict_t *listener, char *text)
 
 	temp[0] = 0;
 	// if they have a title, print it
-	if (strcmp(speaker->myskills.title, ""))
-		Com_sprintf (temp, sizeof(temp), "%s ", speaker->myskills.title);
+	if (strcmp(speaker->client->resp.pstats.title, ""))
+		Com_sprintf (temp, sizeof(temp), "%s ", speaker->client->resp.pstats.title);
 		//safe_cprintf(listener, PRINT_HIGH, "%s ", speaker->myskills.title);
 
 	if (ctf->value && speaker->teamnum)

@@ -140,7 +140,7 @@ void magmine_think(edict_t *self)
 
     if (self->light_level > 0) // magmine has enough energy to operate
     {
-        int pull = MAGMINE_DEFAULT_PULL + MAGMINE_ADDON_PULL * self->monsterinfo.level;
+        const int pull = MAGMINE_DEFAULT_PULL + MAGMINE_ADDON_PULL * self->monsterinfo.level;
         if (magmine_findtarget(self, self->dmg_radius, pull))
         {
             magmine_throwsparks(self);
@@ -187,49 +187,7 @@ void magmine_think(edict_t *self)
 
     self->nextthink = level.time + FRAMETIME;
 }
-/*
-void magmine_reload (edict_t* self, edict_t* other)
-{
-    int	player_ammo;
-    edict_t* player;
 
-    // entity must be alive
-    if (!G_EntIsAlive(other))
-        return;
-    // must be a player entity
-    if (other->client)
-        player = other;
-    else if (PM_MonsterHasPilot(other))
-        player = other->owner;
-    else
-        return;
-
-    // must be in need of ammo
-    if (self->health < self->max_health)
-    {
-        player_ammo = player->client->pers.inventory[cell_index];
-
-        //If player has more cells than needed to fill up the magmine
-        if (self->health + 4 * player_ammo > self->max_health)
-        {
-            player_ammo -= 0.25 * (self->max_health - self->health);
-            self->health = self->max_health;
-        }
-        else	//Player loads all their cells into the magmine
-        {
-            self->health += 4 * player_ammo;
-            player_ammo = 0;
-        }
-
-        // has player's inventory been modified?
-        if (player->client->pers.inventory[cell_index] != player_ammo)
-        {
-            player->client->pers.inventory[cell_index] = player_ammo; // update player's ammo
-            gi.sound(self, CHAN_ITEM, gi.soundindex("misc/w_pkup.wav"), 1, ATTN_STATIC, 0);
-        }
-    }
-}
-*/
 void minisentry_reload(edict_t* self, edict_t* other);
 void drone_heal(edict_t* self, edict_t* other, qboolean heal_while_being_damaged);
 
@@ -341,7 +299,7 @@ void RemoveMagmines(edict_t* ent)
 void Cmd_SpawnMagmine_f(edict_t *ent) {
     int talentLevel, cost = MAGMINE_COST;
     float skill_mult = 1.0, cost_mult = 1.0, delay_mult = 1.0;//Talent: Rapid Assembly & Precision Tuning
-    char *opt = gi.argv(1);
+    const char *opt = gi.argv(1);
 
     if (ent->myskills.abilities[MAGMINE].disable)
         return;

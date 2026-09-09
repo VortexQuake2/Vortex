@@ -18,7 +18,7 @@ joined_t	players[MAX_CLIENTS];
 
 void AssignTeamSkin (edict_t *ent, char *s)
 {
-	int		playernum = ent-g_edicts-1;
+	const int		playernum = ent-g_edicts-1;
 	char	*p;
 	char	t[64];
 
@@ -417,10 +417,8 @@ qboolean SpawnWaitingPlayers (void)
 		if (!player || !player->inuse || !G_IsSpectator(player))
 			continue;
 
-#ifndef NO_GDS
 		if (vrx_char_io.is_loading(player)) // Not loaded?
 			continue; // Can't play
-#endif
 
 		if (!player->client->waiting_to_join)
 			continue;

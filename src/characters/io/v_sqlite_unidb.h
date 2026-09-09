@@ -17,7 +17,7 @@ void cdb_start_connection();
 
 void cdb_end_connection();
 
-qboolean cdb_stash_store(edict_t* ent, int itemindex);
+qboolean cdb_stash_store(edict_t* ent, item_t* item);
 
 qboolean cdb_stash_open(edict_t* ent);
 

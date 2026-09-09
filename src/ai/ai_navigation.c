@@ -162,11 +162,24 @@ int AI_FindClosestHiddenNode(edict_t *ent, int range, int flagsmask)
 //==========================================
 int AI_FindCost(int from, int to, int movetypes)
 {
+	// az: computed? skip this whole business
+	if (nav.costs[from][to] != -1) {
+		return nav.costs[from][to];
+	}
+
+	if (nav.costs[from][to] == INT_MAX) {
+		return -1;
+	}
+
 	astarpath_t	path;
 
-	if (!AStar_GetPath(from, to, movetypes, &path))
+	if (!AStar_GetPath(from, to, movetypes, &path)) {
+		nav.costs[from][to] = INT_MAX;
 		return -1;
+	}
 
+	// relationship ended with recalculation cache is my new best friend
+	nav.costs[from][to] = path.numNodes;
 	return path.numNodes;
 }
 
@@ -225,10 +238,10 @@ int AI_FindClosestReachableNode(vec3_t origin, edict_t *passent, int range, int 
 //==========================================
 int AI_SetupPath(edict_t *self, int from, int to, int movetypes)
 {
-	if (!AStar_GetPath(from, to, movetypes, &self->ai.path))
+	if (!AStar_GetPath(from, to, movetypes, &self->ai->path))
 		return -1;
 
-	return self->ai.path.numNodes;
+	return self->ai->path.numNodes;
 }
 
 //==========================================
@@ -243,10 +256,10 @@ void AI_SetGoal(edict_t *self, int goal_node, qboolean LongRange)
 
 	if (LongRange)
 	{
-		self->ai.lrgoal_node = goal_node;
+		self->ai->lrgoal_node = goal_node;
 	}
 
-	self->ai.goal_node = goal_node;
+	self->ai->goal_node = goal_node;
 	node = AI_FindClosestReachableNode(self->s.origin, self, NODE_DENSITY * 3, NODE_ALL);
 
 	if (node == -1) {
@@ -255,20 +268,20 @@ void AI_SetGoal(edict_t *self, int goal_node, qboolean LongRange)
 	}
 
 	//------- ASTAR -----------
-	if (!AI_SetupPath(self, node, goal_node, self->ai.pers.moveTypesMask))
+	if (!AI_SetupPath(self, node, goal_node, self->ai->pers.moveTypesMask))
 	{
 		AI_SetUpMoveWander(self);
 		return;
 	}
-	self->ai.path_position = 0;
-	self->ai.current_node = self->ai.path.nodes[self->ai.path_position];
+	self->ai->path_position = 0;
+	self->ai->current_node = self->ai->path.nodes[self->ai->path_position];
 	//-------------------------
 
 		if(AIDevel.debugChased && bot_showlrgoal->value)
-			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: GOAL: new START NODE selected %d\n", self->ai.pers.netname, node);
+			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: GOAL: new START NODE selected %d\n", self->ai->pers.netname, node);
 
-	self->ai.next_node = self->ai.current_node; // make sure we get to the nearest node first
-	self->ai.node_timeout = 0;
+	self->ai->next_node = self->ai->current_node; // make sure we get to the nearest node first
+	self->ai->node_timeout = 0;
 }
 
 
@@ -289,64 +302,64 @@ qboolean AI_FollowPath(edict_t *self)
 	if (bot_showpath->value)
 	{
 		if (AIDevel.debugChased)
-			AITools_DrawPath(self, self->ai.current_node, self->ai.goal_node);
+			AITools_DrawPath(self, self->ai->current_node, self->ai->goal_node);
 	}
 
-	if (self->ai.goal_node == INVALID)
+	if (self->ai->goal_node == INVALID)
 		return false;
 
 	// Try again?
-	if (self->ai.node_timeout++ > 30) // frames we've tried to reach next node
+	if (self->ai->node_timeout++ > qf2sf(30)) // frames we've tried to reach next node
 	{
-		AI_DebugPrintf("AI_FollowPath: couldn't follow path, %d tries\n", self->ai.tries);
-		if (self->ai.tries++ > 3) // number of attempts we've tried to grab a new start node
+		AI_DebugPrintf("AI_FollowPath: couldn't follow path, %d tries\n", self->ai->tries);
+		if (self->ai->tries++ > 3) // number of attempts we've tried to grab a new start node
 			return false; // after so many attempts, return false and wander instead because we can't reach the nearest node
 		else
-			AI_SetGoal(self, self->ai.goal_node, false);
+			AI_SetGoal(self, self->ai->goal_node, false);
 	}
 
-	//AI_DebugPrintf("AI_FollowPath: node_timeout %d tries %d\n", self->ai.node_timeout, self->ai.tries);
+	//AI_DebugPrintf("AI_FollowPath: node_timeout %d tries %d\n", self->ai->node_timeout, self->ai->tries);
 
 	// Are we there yet?
-	VectorSubtract(self->s.origin, nodes[self->ai.next_node].origin, v);
+	VectorSubtract(self->s.origin, nodes[self->ai->next_node].origin, v);
 	dist = VectorLength(v);
 
 	//special lower plat reached check
 	if (dist < 64
-		&& nodes[self->ai.current_node].flags & NODEFLAGS_PLATFORM
-		&& nodes[self->ai.next_node].flags & NODEFLAGS_PLATFORM
+		&& nodes[self->ai->current_node].flags & NODEFLAGS_PLATFORM
+		&& nodes[self->ai->next_node].flags & NODEFLAGS_PLATFORM
 		&& self->groundentity && self->groundentity->use == Use_Plat)
 		dist = 16;
 
-	if (self->ai.is_bunnyhop && !self->groundentity)
+	if (self->ai->is_bunnyhop && !self->groundentity)
 		goal_reached = 64; //GHz: bot is likely to jump over node positions, so allow more room
 
-	if ((dist < goal_reached && nodes[self->ai.next_node].flags != NODEFLAGS_JUMPPAD && nodes[self->ai.next_node].flags != NODEFLAGS_TELEPORTER_IN)
-		|| (self->ai.status.jumpadReached && nodes[self->ai.next_node].flags & NODEFLAGS_JUMPPAD)
-		|| (self->ai.status.TeleportReached && nodes[self->ai.next_node].flags & NODEFLAGS_TELEPORTER_IN))
+	if ((dist < goal_reached && nodes[self->ai->next_node].flags != NODEFLAGS_JUMPPAD && nodes[self->ai->next_node].flags != NODEFLAGS_TELEPORTER_IN)
+		|| (self->ai->status.jumpadReached && nodes[self->ai->next_node].flags & NODEFLAGS_JUMPPAD)
+		|| (self->ai->status.TeleportReached && nodes[self->ai->next_node].flags & NODEFLAGS_TELEPORTER_IN))
 	{
 		// reset timeout
-		self->ai.node_timeout = 0;
+		self->ai->node_timeout = 0;
 
-		if (self->ai.next_node == self->ai.goal_node)
+		if (self->ai->next_node == self->ai->goal_node)
 		{
-			self->ai.evade_delay = 0;//GHz: reset delay--we've (hopefully) successfully evaded the enemy
+			self->ai->evade_delay = 0;//GHz: reset delay--we've (hopefully) successfully evaded the enemy
 
 			if(AIDevel.debugChased && bot_showlrgoal->value)
-				safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: GOAL REACHED!\n", self->ai.pers.netname);
+				safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: GOAL REACHED!\n", self->ai->pers.netname);
 
 			//if botroam, setup a timeout for it
-			if (nodes[self->ai.goal_node].flags & NODEFLAGS_BOTROAM)
+			if (nodes[self->ai->goal_node].flags & NODEFLAGS_BOTROAM)
 			{
 				int		i;
 				for (i = 0; i<nav.num_broams; i++) {	//find the broam
-					if (nav.broams[i].node != self->ai.goal_node)
+					if (nav.broams[i].node != self->ai->goal_node)
 						continue;
 
 					if(AIDevel.debugChased && bot_showlrgoal->value)
-						safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: BotRoam Time Out set up for node %i\n", self->ai.pers.netname, nav.broams[i].node);
-					//Com_Printf("%s: BotRoam Time Out set up for node %i\n", self->ai.pers.netname, nav.broams[i].node);
-					self->ai.status.broam_timeouts[i] = level.time + 15.0;
+						safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: BotRoam Time Out set up for node %i\n", self->ai->pers.netname, nav.broams[i].node);
+					//Com_Printf("%s: BotRoam Time Out set up for node %i\n", self->ai->pers.netname, nav.broams[i].node);
+					self->ai->status.broam_timeouts[i] = level.time + 15.0;
 					break;
 				}
 			}
@@ -356,18 +369,18 @@ qboolean AI_FollowPath(edict_t *self)
 		}
 		else
 		{
-			self->ai.current_node = self->ai.next_node;
-			self->ai.next_node = self->ai.path.nodes[self->ai.path_position++];
+			self->ai->current_node = self->ai->next_node;
+			self->ai->next_node = self->ai->path.nodes[self->ai->path_position++];
 		}
 	}
 
 
-	if (self->ai.current_node == -1 || self->ai.next_node == -1)
+	if (self->ai->current_node == -1 || self->ai->next_node == -1)
 		return false;
 
 	// Set bot's movement vector
-	VectorSubtract(nodes[self->ai.next_node].origin, self->s.origin, self->ai.move_vector);
+	VectorSubtract(nodes[self->ai->next_node].origin, self->s.origin, self->ai->move_vector);
 	// save the vector between current and next node to later help us determine if the bot is on-course or not
-	VectorSubtract(nodes[self->ai.next_node].origin, nodes[self->ai.current_node].origin, self->ai.link_vector);//GHz
+	VectorSubtract(nodes[self->ai->next_node].origin, nodes[self->ai->current_node].origin, self->ai->link_vector);//GHz
 	return true;
 }

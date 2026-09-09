@@ -1,179 +1,178 @@
 #include "g_local.h"
 
-abilitydef_t *abilities_by_index[MAX_ABILITIES];
+const abilitydef_t *abilities_by_index[MAX_ABILITIES];
 uint8_t ability_class[MAX_ABILITIES][CLASS_MAX]; // whether ability i is in character class k (1 or 0)
 
 const abilitydef_t ability_general[] = {
-        {VITALITY,        0, DEFAULT_SOFTMAX,  1},
-        {MAX_AMMO,        0, DEFAULT_SOFTMAX,  1},
-        {POWER_REGEN,     1, DEFAULT_SOFTMAX,  1},
-        {WORLD_RESIST,    0, 1,                1},
-        {AMMO_REGEN,      0, DEFAULT_SOFTMAX,  1},
-        {REGENERATION,    0, 5,                1},
-        {STRENGTH,        0, 5,                1},
-        {HASTE,           0, 5,                1},
-        {RESISTANCE,      0, 5,                1},
-        {SHELL_RESIST,    0, 1,                1},
-        {BULLET_RESIST,   0, 1,                1},
-        {SPLASH_RESIST,   0, 1,                1},
-        {PIERCING_RESIST, 0, 1,                1},
-        {ENERGY_RESIST,   0, 1,                1},
-        {SCANNER,         0, 1,                1},
-        {HA_PICKUP,       0, DEFAULT_SOFTMAX,  1},
-        {FLASH,           0, 1,                1},
-        {MONSTER_SUMMON,  0, 5,                1},
-        {FORCE_WALL,      0, 5,                1}, // deprecated--rework for engy?
-        {BOMB_SPELL,      0, 5,                1}, // deprecated
-        {MAGICBOLT,       0, 5,                1}, // deprecated
-        {-1,              0, 0,                0} // Guardian (Add skills above this)
+        {VITALITY,        0, DEFAULT_SOFTMAX,  1, 0},
+        {MAX_AMMO,        0, DEFAULT_SOFTMAX,  1, 0},
+        {POWER_REGEN,     1, DEFAULT_SOFTMAX,  1, 0},
+        {WORLD_RESIST,    0, 1,                1, 0},
+        {AMMO_REGEN,      0, DEFAULT_SOFTMAX,  1, 0},
+        {REGENERATION,    0, 5,                1, 0},
+        {STRENGTH,        0, 5,                1, 0},
+        {RESISTANCE,      0, 5,                1, 0},
+        {SHELL_RESIST,    0, 1,                1, 0},
+        {BULLET_RESIST,   0, 1,                1, 0},
+        {SPLASH_RESIST,   0, 1,                1, 0},
+        {PIERCING_RESIST, 0, 1,                1, 0},
+        {ENERGY_RESIST,   0, 1,                1, 0},
+        {SCANNER,         0, 1,                1, 0},
+        {HA_PICKUP,       0, DEFAULT_SOFTMAX,  1, 0},
+        {FLASH,           0, 1,                1, 0},
+        {MONSTER_SUMMON,  0, 5,                1, 1, DEFAULT_SOFTMAX},
+        {FORCE_WALL,      0, 5,                1, 1, DEFAULT_SOFTMAX}, // deprecated--rework for engy?
+        {BOMB_SPELL,      0, 5,                1, 1, DEFAULT_SOFTMAX}, // deprecated
+        {MAGICBOLT,       0, 5,                1, 0}, // deprecated
+        {-1,              0, 0,                0, 0} // Guardian (Add skills above this)
 };
 
 // theme: run and gun! max mobility and offense-biased
 const abilitydef_t ability_soldier[] = {
-        {STRENGTH,         0, DEFAULT_SOFTMAX,   0},
-        {RESISTANCE,       0, DEFAULT_SOFTMAX,   0},
-        {NAPALM,           0, DEFAULT_SOFTMAX,   0},
-        {SPIKE_GRENADE,    0, DEFAULT_SOFTMAX,   0},
-        {EMP,              0, DEFAULT_SOFTMAX,   0},
-        {MIRV,             0, DEFAULT_SOFTMAX,   0},
-        {EXPLODING_BARREL, 0, DEFAULT_SOFTMAX,   0},
-        {CREATE_QUAD,   0, 1,                 0},
-        {CREATE_INVIN,  0, 1,                 0},
-        {GRAPPLE_HOOK,  3, 3,                 0},
+        {STRENGTH,         0, DEFAULT_SOFTMAX,   0, 1},
+        {RESISTANCE,       0, DEFAULT_SOFTMAX,   0, 1},
+        {NAPALM,           0, DEFAULT_SOFTMAX,   0, 1},
+        {SPIKE_GRENADE,    0, DEFAULT_SOFTMAX,   0, 1},
+        {EMP,              0, DEFAULT_SOFTMAX,   0, 1},
+        {MIRV,             0, DEFAULT_SOFTMAX,   0, 1},
+        {EXPLODING_BARREL, 0, DEFAULT_SOFTMAX,   0, 1},
+        {CREATE_QUAD,   0, 1,                 0, 0},
+        {CREATE_INVIN,  0, 1,                 0, 0},
+        {GRAPPLE_HOOK,  3, 3,                 0, 0},
         {-1,            0, 0,                 0} // Guardian (Add skills above this)
 };
 
 // theme: undead-themed soldier but better defense
 const abilitydef_t ability_vampire[] = {
-        {VAMPIRE,        0, DEFAULT_SOFTMAX,   0},
-        {GHOST,          0, DEFAULT_SOFTMAX,   0},
-        {LIFE_DRAIN,     0, DEFAULT_SOFTMAX,   0},
-        {FLESH_EATER,    0, DEFAULT_SOFTMAX,   0},
-        {PLAGUE,         0, DEFAULT_SOFTMAX,   0},
-        {MIND_ABSORB,    0, DEFAULT_SOFTMAX,   0},
-        {BLINKSTRIKE,    0, DEFAULT_SOFTMAX,   0},
-        {CONVERSION,     0, DEFAULT_SOFTMAX,   0},
-        {CLOAK,          0, 1,                 0},
-        {JETPACK,        1, 1,                 0},
+        {VAMPIRE,        0, DEFAULT_SOFTMAX,   0, 1},
+        {GHOST,          0, DEFAULT_SOFTMAX,   0, 1},
+        {LIFE_DRAIN,     0, DEFAULT_SOFTMAX,   0, 1},
+        {FLESH_EATER,    0, DEFAULT_SOFTMAX,   0, 1},
+        {PLAGUE,         0, DEFAULT_SOFTMAX,   0, 1},
+        {MIND_ABSORB,    0, DEFAULT_SOFTMAX,   0, 1},
+        {BLINKSTRIKE,    0, DEFAULT_SOFTMAX,   0, 1},
+        {CONVERSION,     0, DEFAULT_SOFTMAX,   0, 1},
+        {CLOAK,          0, 1,                 0, 0},
+        {JETPACK,        1, 1,                 0, 0},
         {-1,             0, 0,                 0} // Guardian (Add skills above this)
 };
 
 // theme: undead-themed camper with skills that complement summons
 const abilitydef_t ability_necromancer[] = { // NECROMANCER
 
-        {SKELETON,       0, DEFAULT_SOFTMAX,   0},
-        {HELLSPAWN,      0, DEFAULT_SOFTMAX,   0},
-        {CORPSE_EXPLODE, 0, DEFAULT_SOFTMAX,   0},
-        {LIFE_TAP,       0, DEFAULT_SOFTMAX,   0},
-        {AMP_DAMAGE,     0, DEFAULT_SOFTMAX,   0},
-        //{CRIPPLE,        0, DEFAULT_SOFTMAX,   0},
-        {GOLEM,          0, DEFAULT_SOFTMAX,   0},
-        {CURSE,          0, DEFAULT_SOFTMAX,   0},
-        {WEAKEN,         0, DEFAULT_SOFTMAX,   0},
-        {JETPACK,        1, 1,                 0},
+        {SKELETON,       0, DEFAULT_SOFTMAX,   0, 1},
+        {HELLSPAWN,      0, DEFAULT_SOFTMAX,   0, 1},
+        {CORPSE_EXPLODE, 0, DEFAULT_SOFTMAX,   0, 1},
+        {LIFE_TAP,       0, DEFAULT_SOFTMAX,   0, 1},
+        {AMP_DAMAGE,     0, DEFAULT_SOFTMAX,   0, 1},
+        //{CRIPPLE,        0, DEFAULT_SOFTMAX,   0, 1},
+        {GOLEM,          0, DEFAULT_SOFTMAX,   0, 1},
+        {CURSE,          0, DEFAULT_SOFTMAX,   0, 1},
+        {WEAKEN,         0, DEFAULT_SOFTMAX,   0, 1},
+        {JETPACK,        1, 1,                 0, 0},
         {-1,             0, 0,                 0} // Guardian (Add skills above this)
 };
 
 // theme: high-touch static defense
 const abilitydef_t ability_engineer[] = { // ENGINEER
-        {PROXY,           0, DEFAULT_SOFTMAX,   0},
-        {BUILD_SENTRY,    0, DEFAULT_SOFTMAX,   0},
-        {SUPPLY_STATION,  0, DEFAULT_SOFTMAX,   0},
-        {BUILD_LASER,     0, DEFAULT_SOFTMAX,   0},
-        {MAGMINE,         0, DEFAULT_SOFTMAX,   0},
-       // {CALTROPS,        0, DEFAULT_SOFTMAX,   0},
-        {AUTOCANNON,      0, DEFAULT_SOFTMAX,   0},
-        {DETECTOR,        0, DEFAULT_SOFTMAX,   0},
-        {DECOY,           0, DEFAULT_SOFTMAX,   0},
-        {EXPLODING_ARMOR, 0, DEFAULT_SOFTMAX,   0},
-        {ANTIGRAV,        1, 1,                 0},
+        {PROXY,           0, DEFAULT_SOFTMAX,   0, 1},
+        {BUILD_SENTRY,    0, DEFAULT_SOFTMAX,   0, 1},
+        {SUPPLY_STATION,  0, DEFAULT_SOFTMAX,   0, 1},
+        {BUILD_LASER,     0, DEFAULT_SOFTMAX,   0, 1},
+        {MAGMINE,         0, DEFAULT_SOFTMAX,   0, 1},
+       // {CALTROPS,        0, DEFAULT_SOFTMAX,   0, 1},
+        {AUTOCANNON,      0, DEFAULT_SOFTMAX,   0, 1},
+        {DETECTOR,        0, DEFAULT_SOFTMAX,   0, 1},
+        {DECOY,           0, DEFAULT_SOFTMAX,   0, 1},
+        {EXPLODING_ARMOR, 0, DEFAULT_SOFTMAX,   0, 1},
+        {ANTIGRAV,        1, 1,                 0, 0},
         {-1,              0, 0,                 0} // Guardian (Add skills above this)
 };
 
 // theme: high mobility camper/soldier hybrid
 const abilitydef_t ability_shaman[] = { // SHAMAN
-        {FIRE_TOTEM,    0, DEFAULT_SOFTMAX, 0},
-        {WATER_TOTEM,   0, DEFAULT_SOFTMAX, 0},
-        {AIR_TOTEM,     0, DEFAULT_SOFTMAX, 0},
-        {EARTH_TOTEM,   0, DEFAULT_SOFTMAX, 0},
-        {DARK_TOTEM,    0, DEFAULT_SOFTMAX, 0},
-        {NATURE_TOTEM,  0, DEFAULT_SOFTMAX, 0},
-        {HASTE,         0, 5,               0},
-        {TOTEM_MASTERY, 1, 1,               0},
-        {SUPER_SPEED,   1, 1,               0},
-        {FURY,          0, DEFAULT_SOFTMAX, 0},
+        {FIRE_TOTEM,    0, DEFAULT_SOFTMAX, 0, 1},
+        {WATER_TOTEM,   0, DEFAULT_SOFTMAX, 0, 1},
+        {AIR_TOTEM,     0, DEFAULT_SOFTMAX, 0, 1},
+        {EARTH_TOTEM,   0, DEFAULT_SOFTMAX, 0, 1},
+        {DARK_TOTEM,    0, DEFAULT_SOFTMAX, 0, 1},
+        {NATURE_TOTEM,  0, DEFAULT_SOFTMAX, 0, 1},
+        {HASTE,         0, DEFAULT_SOFTMAX, 0, 1},
+        {TOTEM_MASTERY, 1, 1,               0, 0},
+        {SUPER_SPEED,   1, 1,               0, 0},
+        {FURY,          0, DEFAULT_SOFTMAX, 0, 1},
         {-1,            0, 0,               0} // Guardian (Add skills above this)
 };
 
 // theme: high mobility all out magical offense
 const abilitydef_t ability_mage[] = { // MAGE
-        {NOVA,            0, DEFAULT_SOFTMAX,   0},
-        {FROZEN_ORB,      0, DEFAULT_SOFTMAX,   0},
-        {GLACIAL_SPIKE,   0, DEFAULT_SOFTMAX,   0},
-        {FIREWALL,        0, DEFAULT_SOFTMAX,   0},
-        {LIGHTNING,       0, DEFAULT_SOFTMAX,   0},
-        {METEOR,          0, DEFAULT_SOFTMAX,   0},
-        {FIREBALL,        0, DEFAULT_SOFTMAX,   0},
-        {LIGHTNING_STORM, 0, DEFAULT_SOFTMAX,   0},
-        {STATIC_FIELD,    0, DEFAULT_SOFTMAX,   0},
-        {TELEPORT,        1, 1,                 0},
+        {NOVA,            0, DEFAULT_SOFTMAX,   0, 1},
+        {FROZEN_ORB,      0, DEFAULT_SOFTMAX,   0, 1},
+        {GLACIAL_SPIKE,   0, DEFAULT_SOFTMAX,   0, 1},
+        {FIREWALL,        0, DEFAULT_SOFTMAX,   0, 1},
+        {LIGHTNING,       0, DEFAULT_SOFTMAX,   0, 1},
+        {METEOR,          0, DEFAULT_SOFTMAX,   0, 1},
+        {FIREBALL,        0, DEFAULT_SOFTMAX,   0, 1},
+        {LIGHTNING_STORM, 0, DEFAULT_SOFTMAX,   0, 1},
+        {STATIC_FIELD,    0, DEFAULT_SOFTMAX,   0, 1},
+        {TELEPORT,        1, 1,                 0, 0},
         {-1,              0, 0,                 0} // Guardian (Add skills above this)
 };
 
 const abilitydef_t ability_cleric[] = {
-        {SALVATION,   0, DEFAULT_SOFTMAX, 0},
-        {HEALING,     0, DEFAULT_SOFTMAX, 0},
-        {BLESS,       0, DEFAULT_SOFTMAX, 0},
-        {YIN,         0, DEFAULT_SOFTMAX, 0},
-        {YANG,        0, DEFAULT_SOFTMAX, 0},
-        {HAMMER,      0, DEFAULT_SOFTMAX, 0},
-        {DEFLECT,     0, DEFAULT_SOFTMAX, 0},
-        {SUPER_SPEED, 1, 1,               0},
-        {DOUBLE_JUMP, 1, 1,               0},
-        {HOLY_FREEZE, 0, DEFAULT_SOFTMAX, 0},
+        {SALVATION,   0, DEFAULT_SOFTMAX, 0, 1},
+        {HEALING,     0, DEFAULT_SOFTMAX, 0, 1},
+        {BLESS,       0, DEFAULT_SOFTMAX, 0, 1},
+        {YIN,         0, DEFAULT_SOFTMAX, 0, 1},
+        {YANG,        0, DEFAULT_SOFTMAX, 0, 1},
+        {HAMMER,      0, DEFAULT_SOFTMAX, 0, 1},
+        {DEFLECT,     0, DEFAULT_SOFTMAX, 0, 1},
+        {SUPER_SPEED, 1, 1,               0, 0},
+        {DOUBLE_JUMP, 1, 1,               0, 0},
+        {HOLY_FREEZE, 0, DEFAULT_SOFTMAX, 0, 1},
         {-1,          0, 0,               0} // Guardian (Add skills above this)
 };
 
 // theme: mostly melee tank
 const abilitydef_t ability_knight[] = { // knight
 
-        {ARMOR_UPGRADE, 0, DEFAULT_SOFTMAX,   0},
-        {REGENERATION,  0, DEFAULT_SOFTMAX,   0},
-        {POWER_SHIELD,  0, DEFAULT_SOFTMAX,   0},
-        {ARMOR_REGEN,   0, DEFAULT_SOFTMAX,   0},
-        {BEAM,          0, DEFAULT_SOFTMAX,   0},
-        {PLASMA_BOLT,   0, DEFAULT_SOFTMAX,   0},
-        {CALTROPS,      0, DEFAULT_SOFTMAX,   0},
-        {SHIELD,        1, 1,                 0},
-        {BOOST_SPELL,   1, 1,                 0},
+        {ARMOR_UPGRADE, 0, DEFAULT_SOFTMAX,   0, 1},
+        {REGENERATION,  0, DEFAULT_SOFTMAX,   0, 1},
+        {POWER_SHIELD,  0, DEFAULT_SOFTMAX,   0, 1},
+        {ARMOR_REGEN,   0, DEFAULT_SOFTMAX,   0, 1},
+        {BEAM,          0, DEFAULT_SOFTMAX,   0, 1},
+        {PLASMA_BOLT,   0, DEFAULT_SOFTMAX,   0, 1},
+        {CALTROPS,      0, DEFAULT_SOFTMAX,   0, 1},
+        {SHIELD,        1, 1,                 0, 0},
+        {BOOST_SPELL,   1, 1,                 0, 0},
         {-1,            0, 0,                 0} // Guardian (Add skills above this)
 };
 
 // theme: alien-themed camper with low-touch bio static defense
 const abilitydef_t ability_alien[] = {
-        {SPIKER,    0, DEFAULT_SOFTMAX, 0},//synergy:spike
-        {OBSTACLE,  0, DEFAULT_SOFTMAX, 0},
-        {GASSER,    0, DEFAULT_SOFTMAX, 0},//synergy:acid
-        {HEALER,    0, DEFAULT_SOFTMAX, 0},
-        {SPORE,     0, DEFAULT_SOFTMAX, 0},
-        {ACID,      0, DEFAULT_SOFTMAX, 0},//synergy:gasser
-        {SPIKE,     0, DEFAULT_SOFTMAX, 0},//synergy:spiker
-        {COCOON,    0, DEFAULT_SOFTMAX, 0},
-        {BLACKHOLE, 1, 1,               0},
+        {SPIKER,    0, DEFAULT_SOFTMAX, 0, 1},//synergy:spike
+        {OBSTACLE,  0, DEFAULT_SOFTMAX, 0, 1},
+        {GASSER,    0, DEFAULT_SOFTMAX, 0, 1},//synergy:acid
+        {HEALER,    0, DEFAULT_SOFTMAX, 0, 1},
+        {SPORE,     0, DEFAULT_SOFTMAX, 0, 1},
+        {ACID,      0, DEFAULT_SOFTMAX, 0, 1},//synergy:gasser
+        {SPIKE,     0, DEFAULT_SOFTMAX, 0, 1},//synergy:spiker
+        {COCOON,    0, DEFAULT_SOFTMAX, 0, 1},
+        {BLACKHOLE, 1, 1,               0, 0},
         {-1,        0, 0,               0} // Guardian (Add skills above this)
 };
 
 const abilitydef_t ability_poltergeist[] = {
-        {MORPH_MASTERY, 1, 1,               0},
-        {BERSERK,       1, DEFAULT_SOFTMAX, 0},
-        {CACODEMON,     1, DEFAULT_SOFTMAX, 0},
-        {BLOOD_SUCKER,  1, DEFAULT_SOFTMAX, 0},
-        {BRAIN,         1, DEFAULT_SOFTMAX, 0},
-        {FLYER,         1, DEFAULT_SOFTMAX, 0},
-        {MUTANT,        1, DEFAULT_SOFTMAX, 0},
-        {TANK,          1, DEFAULT_SOFTMAX, 0},
-        {MEDIC,         1, DEFAULT_SOFTMAX, 0},
-        {GHOST,         1, DEFAULT_SOFTMAX, 0}, // given for free with morph mastery
+        {MORPH_MASTERY, 1, 1,               0, 1},
+        {BERSERK,       1, DEFAULT_SOFTMAX, 0, 1},
+        {CACODEMON,     1, DEFAULT_SOFTMAX, 0, 1},
+        {BLOOD_SUCKER,  1, DEFAULT_SOFTMAX, 0, 1},
+        {BRAIN,         1, DEFAULT_SOFTMAX, 0, 1},
+        {FLYER,         1, DEFAULT_SOFTMAX, 0, 1},
+        {MUTANT,        1, DEFAULT_SOFTMAX, 0, 1},
+        {TANK,          1, DEFAULT_SOFTMAX, 0, 1},
+        {MEDIC,         1, DEFAULT_SOFTMAX, 0, 1},
+        {GHOST,         1, DEFAULT_SOFTMAX, 0, 1}, // given for free with morph mastery
         {-1,            0, 0,               0} // Guardian (Add skills above this)
 };
 
@@ -211,8 +210,7 @@ void vrx_assign_abilities(edict_t *ent) {
 
     // enable all skills (weaponmaster/ab or generalabmode is on)
     if (ent->myskills.class_num == CLASS_WEAPONMASTER || generalabmode->value) {
-        int i;
-        for (i = 0; i < MAX_ABILITIES; i++) {
+        for (int i = 0; i < MAX_ABILITIES; i++) {
             const abilitydef_t *first = abilities_by_index[i];
 
             if (first) {
@@ -283,9 +281,6 @@ int vrx_get_hard_max(int index, qboolean general, int class) {
             return 3;
 
             
-        case HASTE:
-            return 10;
-
         // Special cases for the non-general ability mode.
         // Falls through to the default case...
         case STRENGTH:
@@ -303,23 +298,24 @@ int vrx_get_hard_max(int index, qboolean general, int class) {
                     return 15;
             }
             //Everything else
-        default:
+        default: {
             if (vrx_get_ability_upgrade_cost(index) < 2) {
                 if (!generalabmode->value) {
                     if (class == CLASS_WEAPONMASTER) { // apprentice
                         return GENERAL_SOFTMAX * 2;
-                    } else {
-                        return abilities_by_index[index]->softmax * 2;
                     }
 
-                } else { // general ability mode
-                    if (ability_class[index][class] != 0) // current class has this ability
-                        return (int) (abilities_by_index[index]->softmax * 2);
-                    else
-                        return (int) (abilities_by_index[index]->softmax);
+                    return abilities_by_index[index]->softmax * 2;
                 }
-            } else
+
+                // general ability mode
+                if (ability_class[index][class] != 0) // current class has this ability
+                    return abilities_by_index[index]->softmax * 2;
+
                 return abilities_by_index[index]->softmax;
+            }
+            return abilities_by_index[index]->softmax;
+        }
     }
     return abilities_by_index[index]->softmax;
 }
@@ -328,26 +324,31 @@ void vrx_add_ability(edict_t* ent, int index) {
     if (index < 0 || index >= MAX_ABILITIES)
         return;
 
-    int class = vrx_get_ability_class(index);
-    if (class == CLASS_NULL)
+    const abilitydef_t *ability = abilities_by_index[index];
+    const int class = vrx_get_ability_class(index);
+    if (class == CLASS_NULL && !ability->allow_class_upgrade)
         return;
 
-    const abilitydef_t *ability = abilities_by_index[index];
-    int hardmax = vrx_get_hard_max(index, 0, class);
+    auto softmax = ability->softmax;
+    if (vrx_prestige_has_ability(&ent->myskills.prestige, index)) {
+        if (ability->class_softmax_override)
+            softmax = ability->class_softmax_override;
+    }
+
     vrx_enable_ability(
         ent, index,
         ability->start,
-        ability->softmax,
+        softmax,
         0
         );
 }
 
-void vrx_enable_ability(edict_t *ent, int abil, int level, int max_level, int general) {
+void vrx_enable_ability(edict_t *ent, int abil, int level, int soft_max, int general) {
     ent->myskills.abilities[abil].disable = false;
 
     // we can pass this function -1 if we don't want to alter these variables
-    if (max_level != -1)
-        ent->myskills.abilities[abil].max_level = max_level;
+    if (soft_max != -1)
+        ent->myskills.abilities[abil].soft_max = soft_max;
 
     if (level != -1) {
         ent->myskills.abilities[abil].level = level;
@@ -362,9 +363,7 @@ void vrx_enable_ability(edict_t *ent, int abil, int level, int max_level, int ge
 }
 
 void vrx_disable_abilities(edict_t *ent) {
-    int i;
-
-    for (i = 0; i < MAX_ABILITIES; ++i) {
+    for (int i = 0; i < MAX_ABILITIES; ++i) {
         ent->myskills.abilities[i].disable = true;
         ent->myskills.abilities[i].hidden = false;
     }
@@ -460,7 +459,6 @@ const abilitydef_t * vrx_get_random_ability() {
 }
 
 void vrx_init_ability_list() {
-    const abilitydef_t *first;
     // gi.dprintf("INFO: Initializing ability list... ");
 
     memset(abilities_by_index, 0, sizeof abilities_by_index);
@@ -468,7 +466,7 @@ void vrx_init_ability_list() {
 
     for (int i = 0; i < CLASS_MAX; i++) {
         // iterate through our pointer list
-        first = abilities_by_class[i];
+        const abilitydef_t *first = abilities_by_class[i];
 
         // iterate through class' ability list
         while (first->index != -1) {
@@ -504,7 +502,7 @@ void vrx_init_ability_list() {
 }
 
 int vrx_get_last_enabled_skill_index(edict_t *ent, int mode) {
-    int return_index;
+    int return_index = 0;
     for (int i = 0; i < MAX_ABILITIES; i++) {
         if (!ent->myskills.abilities[i].disable) {
             if (ent->myskills.abilities[i].general_skill == mode)
@@ -557,17 +555,17 @@ void vrx_normalize_abilities(edict_t *ent) {
         // if this ability was previously enabled, restore the upgrade level
         if ((ent->myskills.abilities[i].disable == false) && (old_abilities[i].disable == false)) {
             // restore previous upgrade level if our new max_level is greater or equal to the old one
-            if (ent->myskills.abilities[i].max_level >= old_abilities[i].max_level) {
+            if (ent->myskills.abilities[i].soft_max >= old_abilities[i].soft_max) {
                 //if (old_abilities[i].level > 0)
                 //	gi.dprintf("Restoring %s to level %d\n", GetAbilityString(i), old_abilities[i].level);
                 ent->myskills.abilities[i].level = old_abilities[i].level;
             }
                 // otherwise set new upgrade level to soft max and refund unused points
             else {
-                refunded += old_abilities[i].level - ent->myskills.abilities[i].max_level;
+                refunded += old_abilities[i].level - ent->myskills.abilities[i].soft_max;
                 //gi.dprintf("Refunding %d points due to hard max cap\n", refunded);
                 if (refunded > 0) // az: I added this check. I'm not sure why we need this.
-                    ent->myskills.abilities[i].level = ent->myskills.abilities[i].max_level;
+                    ent->myskills.abilities[i].level = ent->myskills.abilities[i].soft_max;
             }
         }
             // if this upgrade was previously disabled, refund them points
@@ -580,7 +578,7 @@ void vrx_normalize_abilities(edict_t *ent) {
     // re-apply equipment
     vrx_runes_unapply(ent);
     for (i = 0; i < 3; ++i)
-        vrx_runes_apply(ent, &ent->myskills.items[i]);
+        vrx_runes_apply(ent, &ent->client->resp.pstats.items[i]);
 
     /*safe_cprintf(ent, PRINT_HIGH, "Your abilities have been updated.\n");	*/
 
@@ -647,7 +645,7 @@ void vrx_ability_open_select_menu(
     int ab_count_on_page = 0;
     int limit = 10;
     for (int i = 0; i < limit && ab_count_on_page <= 10 && i < MAX_ABILITIES; i++) {
-        int index = start_index + i;
+        const int index = start_index + i;
         // if the ability is enabled by the filter
         if (skills[index / 32] & (1 << (index % 32))) {
             const abilitydef_t *ability = vrx_get_ability_by_index(index);

@@ -2,7 +2,7 @@
 
 #ifdef CMD_USEHASH
 
-#include "../libraries/fnv.h"
+#include "../../vendor/fnv.h"
 #endif
 
 void Cmd_IdentifyPlayer (edict_t *ent);
@@ -72,6 +72,8 @@ void Cmd_SaveNodes_f (edict_t *ent);
 void Cmd_LoadNodes_f (edict_t *ent);
 void Cmd_ComputeNodes_f (edict_t *ent);
 void Cmd_ToggleShowGrid (edict_t *ent);
+void Cmd_AddLink_f(edict_t* ent);
+void Cmd_DeleteLink_f(edict_t* ent);
 void Cmd_SelfDestruct_f(edict_t *self);
 void Grenade_Explode (edict_t *ent);
 void Cmd_CorpseExplode(edict_t *ent);
@@ -135,14 +137,14 @@ const gameCommand_s commands[] =
 	{ "laser", 			Cmd_BuildLaser },
     { "sentry", 		cmd_SentryGun },
 	{ "lasersight", 	Cmd_LaserSight_f },
-	{ "flashlight",     FL_make  },
+	{ "flashlight",     FL_toggle  },
 	{ "monster", 		Cmd_Drone_f },
 	{ "detpipes", 		Cmd_DetPipes_f  },
 	{ "vrxinfo", 		OpenMyinfoMenu },
-	{ "vrxarmory", 		OpenArmoryMenu },
-	{ "vrxrespawn", 	OpenRespawnWeapMenu },
+	{ "vrxarmory", 		vrx_armory_open_menu },
+	{ "vrxrespawn", 	OpenRespawnWeapMenuFirstPage },
 	{ "thrust",         Cmd_Thrust_f  },
-	{ "vote", 			ShowVoteModeMenu },
+	{ "vote", 			vrx_vote_cmd },
 	{ "wormhole",	    Cmd_WormHole_f },
 	{ "update",		    vrx_normalize_abilities},
 	{ "berserker",	    Cmd_PlayerToBerserk_f },
@@ -174,6 +176,8 @@ const gameCommand_s commands[] =
 	{ "unholyground",   Cmd_UnHolyGround_f },
 	{ "purge",		    Cmd_Purge_f },
 	{ "boomerang",	    Cmd_Boomerang_f },
+
+	// drone AI
 	{ "loadnodes",	    Cmd_LoadNodes_f },
 	{ "savenodes",	    Cmd_SaveNodes_f },
 	{ "deletenode",	    Cmd_DeleteNode_f },
@@ -181,9 +185,14 @@ const gameCommand_s commands[] =
 	{ "deleteallnodes", Cmd_DeleteAllNodes_f },
 	{ "computenodes",   Cmd_ComputeNodes_f },
 	{ "showgrid",	    Cmd_ToggleShowGrid },
+	{"addlink", Cmd_AddLink_f},
+	{"dellink", Cmd_DeleteLink_f},
+	// bot AI
 	{ "showplinks",		Cmd_ShowPlinks_f },
 	{ "aiaddnode",		Cmd_AI_AddNode_f },
 	{ "airemovenode",	Cmd_AI_RemoveNode_f },
+
+	// more vortex
 	{ "writepos",	    Cmd_WritePos_f },
 	{ "rune",		    Cmd_Rune_f },
 	{ "vrxid",		    Cmd_IdentifyPlayer },
@@ -235,7 +244,7 @@ void InitHash()
 
 	for (i = 0; i < CommandTotal; i++)
 	{
-		unsigned int index = fnv_32a_str(commands[i].FunctionName, FNV1_32A_INIT) % (MAXCOMMANDS);
+		const unsigned int index = fnv_32a_str(commands[i].FunctionName, FNV1_32A_INIT) % (MAXCOMMANDS);
 		memcpy(&hashedList[index], &commands[i], sizeof(gameCommand_s));
 	}
 

@@ -66,7 +66,7 @@ qboolean TBI_CheckRules(edict_t* self)
 void TBI_SpawnPlayers()
 {
 	int CurrentRedSpawn, CurrentBlueSpawn;
-	int i_maxclients = maxclients->value;
+	const int i_maxclients = maxclients->value;
 	edict_t *cl_ent;
 
 	CurrentRedSpawn = CurrentBlueSpawn = 0;
@@ -82,7 +82,7 @@ void TBI_SpawnPlayers()
 			{
 				if (tbi_game.EntRedSpawns[CurrentRedSpawn] != NULL) // we got a valid spawn point
 				{
-					cl_ent->spawn = tbi_game.EntRedSpawns[CurrentRedSpawn];
+					cl_ent->client->spawn = tbi_game.EntRedSpawns[CurrentRedSpawn];
 					CurrentRedSpawn++;
 
 					if (CurrentRedSpawn == tbi_game.TotalRedSpawns) // we're out of spawns then huh
@@ -92,7 +92,7 @@ void TBI_SpawnPlayers()
 			{
 				if (tbi_game.EntBlueSpawns[CurrentBlueSpawn] != NULL)
 				{
-					cl_ent->spawn = tbi_game.EntBlueSpawns[CurrentBlueSpawn];
+					cl_ent->client->spawn = tbi_game.EntBlueSpawns[CurrentBlueSpawn];
 					CurrentBlueSpawn++;
 
 					if (CurrentBlueSpawn == tbi_game.TotalBlueSpawns)
@@ -144,10 +144,10 @@ edict_t* TBI_FindSpawn(edict_t *ent)
 		TBI_AssignTeam(ent);
 	}
 
-	if (ent->spawn)
+	if (ent->client->spawn)
 	{
-		edict_t* spawn = ent->spawn;
-		ent->spawn = NULL;
+		edict_t* spawn = ent->client->spawn;
+		ent->client->spawn = NULL;
 		return spawn;
 	}
 	
@@ -211,14 +211,14 @@ void TBI_CheckSpawns()
 
 	for (i = 0; i < tbi_game.TotalRedSpawns; i++)
 	{
-		edict_t *e = tbi_game.EntRedSpawns[i];
+		const edict_t *e = tbi_game.EntRedSpawns[i];
 		if (e->deadflag != DEAD_DEAD)
 			tbi_game.RedSpawns++;
 	}
 
 	for (i = 0; i < tbi_game.TotalBlueSpawns; i++)
 	{
-		edict_t *e = tbi_game.EntBlueSpawns[i];
+		const edict_t *e = tbi_game.EntBlueSpawns[i];
 		if (e->deadflag != DEAD_DEAD)
 			tbi_game.BlueSpawns++;
 	}
@@ -227,7 +227,7 @@ void TBI_CheckSpawns()
 int TBI_CountTeamPlayers(int team)
 {
 	edict_t *cl_ent;
-	int i_maxclients = maxclients->value;
+	const int i_maxclients = maxclients->value;
 	int total = 0;
 
 	for (cl_ent = g_edicts + 1; cl_ent != g_edicts + i_maxclients + 1; cl_ent++)
@@ -241,7 +241,7 @@ int TBI_CountTeamPlayers(int team)
 int TBI_CountActivePlayers()
 {
 	edict_t *cl_ent;
-	int i_maxclients = maxclients->value;
+	const int i_maxclients = maxclients->value;
 	int total = 0;
 
 	for (cl_ent = g_edicts + 1; cl_ent != g_edicts + i_maxclients + 1; cl_ent++)
@@ -256,7 +256,7 @@ int TBI_CountActivePlayers()
 void TBI_AwardTeam(int Teamnum, int exp, qboolean Broadcast)
 {
 	edict_t *cl_ent;
-	int i_maxclients = maxclients->value;
+	const int i_maxclients = maxclients->value;
 
 	if (TBI_CountActivePlayers() < 4) // we can't give experience if there's not enough active players
 		return; 

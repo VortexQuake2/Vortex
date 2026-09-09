@@ -2,7 +2,7 @@
 
 void lightningstorm_sound(edict_t* self)
 {
-	float r = random();
+	const float r = random();
 	if (r > 0.33)
 		gi.sound(self, CHAN_ITEM, gi.soundindex("abilities/chargedbolt1.wav"), 1, ATTN_NORM, 0);
 	else if (r < 0.66)
@@ -48,8 +48,14 @@ void lightningstorm_attack(edict_t* self, vec3_t start)
 	}
 
 	gi.WriteByte(svc_temp_entity);
+#ifndef VRX_REPRO
 	gi.WriteByte(TE_HEATBEAM);
 	gi.WriteShort(self - g_edicts);
+#else
+	gi.WriteByte(TE_LIGHTNING);
+	gi.WriteShort(self - g_edicts);
+	gi.WriteShort(0);
+#endif
 	gi.WritePosition(start);
 	gi.WritePosition(end);
 	gi.multicast(end, MULTICAST_PVS);
@@ -76,10 +82,10 @@ void lightningstorm_think (edict_t *self)
 	tr = gi.trace(self->pos1, NULL, NULL, start, self, MASK_SOLID);
 
 	// Talent: Chainlightning Storm
-	int talentLevel = vrx_get_talent_level(self->owner, TALENT_CL_STORM);
+	const int talentLevel = vrx_get_talent_level(self->owner, TALENT_CL_STORM);
 
 	if (talentLevel && 0.05 * talentLevel > random())
-		fire_chainlightning(self, tr.endpos, tv(0, 0, -1), self->dmg_counter, self->dmg_radius, 8192, CLIGHTNING_INITIAL_HR, 4);
+		fire_chainlightning(self, tr.endpos, tv(0, 0, -1), self->dmg, self->dmg_radius, 8192, CLIGHTNING_INITIAL_HR, 4);
 	else
 		lightningstorm_attack(self, tr.endpos);
 
@@ -115,20 +121,20 @@ void SpawnLightningStorm (edict_t *ent, vec3_t start, float radius, int duration
 	gi.linkentity(storm);
 
 	// Talent: Chainlightning Storm
-	int talentLevel = vrx_get_talent_level(ent, TALENT_CL_STORM);
+	const int talentLevel = vrx_get_talent_level(ent, TALENT_CL_STORM);
 	if (talentLevel > 1)
 	{
 		int skill_level = ent->myskills.abilities[LIGHTNING].current_level;
 		if (skill_level < 1)
 			skill_level = 1;
 		// set chainlightning damage
-		storm->dmg_counter = CLIGHTNING_INITIAL_DMG + (CLIGHTNING_ADDON_DMG * skill_level * vrx_get_synergy_mult(ent, LIGHTNING));
+		storm->dmg = CLIGHTNING_INITIAL_DMG + (CLIGHTNING_ADDON_DMG * skill_level * vrx_get_synergy_mult(ent, LIGHTNING));
 	}
 }
 
 void Cmd_LightningStorm_f (edict_t *ent, float skill_mult, float cost_mult)
 {
-	int		slvl = ent->myskills.abilities[LIGHTNING_STORM].current_level;
+	const int		slvl = ent->myskills.abilities[LIGHTNING_STORM].current_level;
 	int		damage, duration, cost=LIGHTNING_COST*cost_mult;
 	float	radius;
 	vec3_t	forward, offset, right, start, end;
@@ -164,7 +170,7 @@ void Cmd_LightningStorm_f (edict_t *ent, float skill_mult, float cost_mult)
 	SpawnLightningStorm(ent, tr.endpos, radius, duration, damage);
 
 	//Talent: Wizardry - makes spell timer ability-specific instead of global
-	int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
+	const int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
 	if (talentLevel > 0)
 	{
 		ent->myskills.abilities[LIGHTNING_STORM].delay = level.time + LIGHTNING_ABILITY_DELAY;

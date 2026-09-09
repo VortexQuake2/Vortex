@@ -122,7 +122,7 @@ void explodingarmor_touch (edict_t *self, edict_t *other, cplane_t *plane, csurf
 
 qboolean NearbyEnemy (edict_t *self, float radius)
 {
-	edict_t *e=NULL;
+	const edict_t *e=NULL;
 
 	while ((e = findradius(e, self->s.origin, radius)) != NULL)
 	{

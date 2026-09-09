@@ -1,5 +1,6 @@
 #include "g_local.h"
 #include "../gamemodes/ctf.h"
+#include "characters/class_limits.h"
 #include "characters/io/v_characterio.h"
 
 #define VOTE_MAP	1
@@ -11,6 +12,7 @@ void vrx_check_for_levelup(edict_t *ent, qboolean print_message);
 void Cmd_Armory_f(edict_t*ent, int selection);
 //Function prototypes required for this .c file:
 void OpenDOMJoinMenu (edict_t *ent);
+static int RespawnMenuPageForOption(int option);
 
 void ChaseCam(edict_t *ent)
 {
@@ -46,7 +48,7 @@ void vrx_start_reign(edict_t *ent)
 	PutClientInServer (ent);
 
 	average_player_level = AveragePlayerLevel();
-	ent->health = ent->myskills.current_health;
+	ent->health = MAX_HEALTH(ent);
 
 //	if(savemethod->value == 1) // binary .vrx style saving
 //		for (i=0; i<game.num_items; i++, item++) // reload inventory.
@@ -92,7 +94,7 @@ void vrx_start_reign(edict_t *ent)
     V_UpdatePlayerTalents(ent);
 
 	//Set the player's name
-	strcpy(ent->myskills.player_name, ent->client->pers.netname);
+	strcpy(ent->client->resp.pstats.player_name, ent->client->pers.netname);
 
 	if (level.time < pregame_time->value && !trading->value) {
 		safe_centerprintf(ent, "This map is currently in pre-game\nPlease warm up, upgrade and\naccess the Armory now\n");
@@ -193,8 +195,10 @@ void JoinTheGame (edict_t *ent)
 		return;
 	}
 
-    if (vrx_char_io.is_loading(ent))
-        return;
+    if (vrx_char_io.is_loading(ent)) {
+    	gi.cprintf(ent, PRINT_HIGH, "Character loading in progress, please wait.\n");
+	    return;
+    }
 
     if (vrx_char_io.multithread) {
         /*
@@ -292,8 +296,12 @@ void OpenJoinMenu (edict_t *ent)
 
 	//				    xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
 
-	menu_add_line(ent, "Vortex Revival", MENU_GREEN_CENTERED);
-	menu_add_line(ent, va("vrxcl v%s", VRX_VERSION), MENU_GREEN_CENTERED);
+	menu_add_line(ent, "Quake 2 Vortex", MENU_GREEN_CENTERED);
+#ifndef VRX_REPRO
+	menu_add_line(ent, va("vrx v%s", VRX_VERSION), MENU_GREEN_CENTERED);
+#else
+	menu_add_line(ent, va("vrx-repro v%s", VRX_VERSION), MENU_GREEN_CENTERED);
+#endif
 	menu_add_line(ent, "http://q2vortex.com", MENU_WHITE_CENTERED);
 	menu_add_line(ent, " ", 0);
 	menu_add_line(ent, " ", 0);
@@ -304,7 +312,7 @@ void OpenJoinMenu (edict_t *ent)
     menu_add_line(ent, "to become stronger!", 0);
 	menu_add_line(ent, " ", 0);
 	menu_add_line(ent, "Maintained by", MENU_GREEN_CENTERED);
-	menu_add_line(ent, "The Vortex Revival Team", MENU_GREEN_CENTERED);
+	menu_add_line(ent, "The Vortex Team", MENU_GREEN_CENTERED);
 	menu_add_line(ent, "github: VortexQuake2/Vortex", MENU_WHITE_CENTERED);
 	menu_add_line(ent, " ", 0);
 	menu_add_line(ent, "Start your reign", 1);
@@ -335,17 +343,17 @@ void OpenMyinfoMenu (edict_t *ent)
 	menu_add_line(ent, va("Experience:   %d", ent->myskills.experience), 0);
 	menu_add_line(ent, va("Next Level:   %d", (ent->myskills.next_level-ent->myskills.experience)+ent->myskills.nerfme), 0);
 	menu_add_line(ent, va("Credits:      %d", ent->myskills.credits), 0);
-	if (ent->myskills.shots > 0)
-		menu_add_line(ent, va("Hit Percent:  %d%c", (int)(100*((float)ent->myskills.shots_hit/ent->myskills.shots)), '%'), 0);
+	if (ent->client->resp.pstats.shots > 0)
+		menu_add_line(ent, va("Hit Percent:  %d%c", (int)(100*((float)ent->client->resp.pstats.shots_hit/ent->client->resp.pstats.shots)), '%'), 0);
 	else
 		menu_add_line(ent, "Hit Percent:  --", 0);
-	menu_add_line(ent, va("Frags:        %d", ent->myskills.frags), 0);
-	menu_add_line(ent, va("Fragged:      %d", ent->myskills.fragged), 0);
-	if (ent->myskills.fragged > 0)
-		menu_add_line(ent, va("Frag Percent: %d%c", (int)(100*((float)ent->myskills.frags/ent->myskills.fragged)), '%'), 0);
+	menu_add_line(ent, va("Frags:        %d", ent->client->resp.pstats.frags), 0);
+	menu_add_line(ent, va("Fragged:      %d", ent->client->resp.pstats.fragged), 0);
+	if (ent->client->resp.pstats.fragged > 0)
+		menu_add_line(ent, va("Frag Percent: %d%c", (int)(100*((float)ent->client->resp.pstats.frags/ent->client->resp.pstats.fragged)), '%'), 0);
 	else
 		menu_add_line(ent, "Frag Percent: --", 0);
-	menu_add_line(ent, va("Played Hrs:   %.1f", (float)ent->myskills.playingtime/3600), 0);
+	menu_add_line(ent, va("Played Hrs:   %.1f", (float)ent->client->resp.pstats.playingtime/3600), 0);
 #ifndef REMOVE_RESPAWNS
 	menu_add_line(ent, va("Respawns: %d", ent->myskills.weapon_respawns), 0);
 #endif
@@ -359,39 +367,94 @@ void OpenMyinfoMenu (edict_t *ent)
 
 void respawnmenu_handler (edict_t *ent, int option)
 {
+	int page_num = (option / 1000);
+	int page_choice = (option % 1000);
+
+	if (page_num > 0)
+	{
+		if (page_choice == 2) // next
+		{
+			OpenRespawnWeapMenu(ent, page_num + 1);
+			return;
+		}
+		else if (page_choice == 1) // back
+		{
+			if (page_num == 1)
+				OpenGeneralMenu(ent);
+			else
+				OpenRespawnWeapMenu(ent, page_num - 1);
+			return;
+		}
+	}
+
 	if (option == 99)
 	{
 		menu_close(ent, true);
 		return;
 	}
 
-	ent->myskills.respawn_weapon = option;
+	if (option < 1 || option > 22)
+		return;
+
+	ent->myskills.respawn_weapon = option - 1;
+	OpenRespawnWeapMenu(ent, RespawnMenuPageForOption(option));
 }
 
-char *GetRespawnString (edict_t *ent)
+typedef struct {
+	const char *name;
+	int option;
+} respawn_menu_item_t;
+
+static const respawn_menu_item_t respawn_items[] = {
+	{"Sword", WEAPON_SWORD},
+	{"Shotgun", WEAPON_SHOTGUN},
+	{"Super Shotgun", WEAPON_SUPERSHOTGUN},
+	{"Machinegun", WEAPON_MACHINEGUN},
+	{"Chaingun", WEAPON_CHAINGUN},
+	{"Hand Grenades", WEAPON_HANDGRENADE},
+	{"Grenade Launcher", WEAPON_GRENADELAUNCHER},
+	{"Rocket Launcher", WEAPON_ROCKETLAUNCHER},
+	{"Hyperblaster", WEAPON_HYPERBLASTER},
+	{"Railgun", WEAPON_RAILGUN},
+	{"BFG10k", WEAPON_BFG10K},
+	{"20mm Cannon", WEAPON_20MM},
+	{"Ionripper", WEAPON_IONRIPPER},
+	{"Phalanx", WEAPON_PHALANX},
+	{"Trap", WEAPON_TRAP},
+	{"ETF Rifle", WEAPON_ETFRIFLE},
+	{"Plasma Beam", WEAPON_PLASMABEAM},
+	{"Prox Launcher", WEAPON_PROXLAUNCHER},
+	{"Chainfist", WEAPON_CHAINFIST},
+	{"Tesla", WEAPON_TESLA},
+	{"Disruptor", WEAPON_DISRUPTOR},
+	{"Blaster", WEAPON_BLASTER}
+};
+
+static int RespawnMenuPageForOption(int option)
 {
-	switch (ent->myskills.respawn_weapon)
+	int i;
+	for (i = 0; i < (int)(sizeof(respawn_items) / sizeof(respawn_items[0])); i++)
 	{
-	case 1: return "Sword";
-	case 2: return "Shotgun";
-	case 3: return "Super Shotgun";
-	case 4: return "Machinegun";
-	case 5: return "Chaingun";
-	case 6: return "Grenade Launcher";
-	case 7: return "Rocket Launcher";
-	case 8: return "Hyperblaster";
-	case 9: return "Railgun";
-	case 10: return "BFG10k";
-	case 11: return "Hand Grenades";
-	case 12: return "20mm Cannon";
-	case 13: return "Blaster";
-	default: return "Unknown";
+		if (respawn_items[i].option + 1 == option)
+			return (i / 10) + 1;
 	}
+	return 1;
 }
 
-void OpenRespawnWeapMenu(edict_t *ent)
+void OpenRespawnWeapMenuFirstPage(edict_t *ent)
 {
-    if (!menu_can_show(ent))
+	OpenRespawnWeapMenu(ent, 1);
+}
+
+void OpenRespawnWeapMenu(edict_t *ent, int page_num)
+{
+	int i;
+	int first;
+	int last;
+	int total;
+
+    // Allow internal page flips after selection even if transient menu state flags are set.
+    if ((page_num <= 1) && !menu_can_show(ent))
         return;
 
     if (ent->myskills.class_num == CLASS_KNIGHT) {
@@ -404,38 +467,44 @@ void OpenRespawnWeapMenu(edict_t *ent)
         return;
     }
 
+	if (page_num < 1)
+		page_num = 1;
+
+	total = sizeof(respawn_items) / sizeof(respawn_items[0]);
+	first = (page_num - 1) * 10;
+	if (first >= total)
+		first = 0;
+	last = first + 10;
+	if (last > total)
+		last = total;
+
 	menu_clear(ent);
 
 	//				xxxxxxxxxxxxxxxxxxxxxxxxxxx (max length 27 chars)
 	menu_add_line(ent, "Pick a respawn weapon.", MENU_GREEN_CENTERED);
 	menu_add_line(ent, " ", 0);
-	menu_add_line(ent, "Sword", 1);
-	menu_add_line(ent, "Shotgun", 2);
-	menu_add_line(ent, "Super Shotgun", 3);
-	menu_add_line(ent, "Machinegun", 4);
-	menu_add_line(ent, "Chaingun", 5);
-	menu_add_line(ent, "Hand Grenades", 11);
-	menu_add_line(ent, "Grenade Launcher", 6);
-	menu_add_line(ent, "Rocket Launcher", 7);
-	menu_add_line(ent, "Hyperblaster", 8);
-	menu_add_line(ent, "Railgun", 9);
-	menu_add_line(ent, "BFG10k", 10);
-	menu_add_line(ent, "20mm Cannon", 12);
-	menu_add_line(ent, "Blaster", 13);
+
+	for (i = first; i < last; i++)
+		menu_add_line(ent, respawn_items[i].name, respawn_items[i].option + 1);
+
 	menu_add_line(ent, " ", 0);
-	menu_add_line(ent, va("Respawn: %s", GetRespawnString(ent)), 0);
+	menu_add_line(ent, va("Respawn: %s", GetWeaponString(ent->myskills.respawn_weapon)), 0);
 	menu_add_line(ent, " ", 0);
+	if (last < total)
+		menu_add_line(ent, "Next", (page_num * 1000) + 2);
+	menu_add_line(ent, "Back", (page_num * 1000) + 1);
 	menu_add_line(ent, "Exit", 99);
 
 	menu_set_handler(ent, respawnmenu_handler);
-		ent->client->menustorage.currentline = 3;
+	ent->client->menustorage.currentline = 3;
 	menu_show(ent);
 }
 
+
 void classmenu_handler (edict_t *ent, int option)
 {
-	int page_num = (option / 1000);
-	int page_choice = (option % 1000);
+	const int page_num = (option / 1000);
+	const int page_choice = (option % 1000);
 	int i;
 
 	if ((page_num == 1) && (page_choice == 1))
@@ -470,33 +539,7 @@ void classmenu_handler (edict_t *ent, int option)
 		ent->teamnum = GetRandom(1, 2);
 	}
 
-    ent->myskills.experience = 0;
-	for (i = 0; i < start_level->value; ++i)
-	{
-        ent->myskills.experience += vrx_get_points_tnl(i);
-	}
-
-	ent->myskills.class_num = option;
-    vrx_assign_abilities(ent);
-    vrx_set_talents(ent);
-	vrx_prestige_init(ent);
-	ent->myskills.weapon_respawns = 100;
-
-    gi.dprintf("INFO: %s created a new %s!\n",
-               ent->client->pers.netname,
-               vrx_get_class_string(ent->myskills.class_num));
-
-    vrx_write_to_logfile(ent,
-                         va("%s created a %s.\n",
-                            ent->client->pers.netname,
-                            vrx_get_class_string(ent->myskills.class_num)));
-
-    vrx_check_for_levelup(ent, false);
-    vrx_update_all_character_maximums(ent);
-    vrx_add_respawn_weapon(ent, ent->myskills.respawn_weapon);
-    vrx_add_respawn_items(ent);
-
-    vrx_reset_weapon_maximums(ent);
+    vrx_initialize_player_class(ent, option);
 
 	// FIXME: we should do a better job of selecting a team OR block them from joining (temp make non-spec to make savechar() happy)
 	// we need to select a team if we're past pre-game time in CTF or Domination modes
@@ -552,7 +595,7 @@ void OpenMasterPasswordMenu (edict_t *ent)
 	menu_add_line(ent, "Master Password", MENU_GREEN_CENTERED);
 	menu_add_line(ent, " ", 0);
 
-	if (strcmp(ent->myskills.email, ""))
+	if (strcmp(ent->client->resp.pstats.masterpw, ""))
 	{
 		menu_add_line(ent, "A master password has", 0);
 		menu_add_line(ent, "already been set and can't", 0);
@@ -590,16 +633,17 @@ void generalmenu_handler (edict_t *ent, int option)
 	case 1: OpenUpgradeMenu(ent); break;
 	case 2: OpenWeaponUpgradeMenu(ent, 0); break;
 	case 3: OpenTalentUpgradeMenu(ent, 0); break;
-	case 4: OpenRespawnWeapMenu(ent); break;
+	case 4: OpenRespawnWeapMenu(ent, 1); break;
 	case 5: OpenMasterPasswordMenu(ent); break;
 	case 6: OpenMyinfoMenu(ent); break;
-	case 7: OpenArmoryMenu(ent); break;
+	case 7: vrx_armory_open_menu(ent); break;
 	case 8: ShowInventoryMenu(ent, 0, false); break;
 	case 9: ShowAllyMenu(ent); break;
 	case 10: ShowTradeMenu(ent); break;
-	case 11: ShowVoteModeMenu(ent); break;
+	case 11: vrx_vote_map(ent); break;
 	case 12: ShowHelpMenu(ent, 0); break;
-	case 13: Cmd_Armory_f(ent, 31); break;
+	case 13: Cmd_Armory_f(ent, 30); break;
+	case 14: vrx_vote_bots(ent);
 	case 20: vrx_prestige_open_menu(ent); break;
 	default: menu_close(ent, true);
 	}
@@ -633,30 +677,32 @@ void OpenGeneralMenu (edict_t *ent)
 	else
         menu_add_line(ent, va("Upgrade talents (%d)", ent->myskills.talents.talentPoints), 3);
 
-	int prestigePotential = vrx_prestige_get_upgrade_points(ent->myskills.experience);
+	const int prestigePotential = vrx_prestige_get_upgrade_points(ent->myskills.experience);
 	if (prestigePotential)
 		menu_add_line(ent, va("Prestige %d (%d)", ent->myskills.prestige.total, prestigePotential), 20);
 	else
 		menu_add_line(ent, va("Prestige %d", ent->myskills.prestige.total), 20);
+	menu_add_line(ent, "Access your items", 8);
 
-    menu_add_line(ent, " ", 0);
+	menu_add_line(ent, " ", 0);
+
     if (!vrx_is_morphing_polt(ent) &&
         ent->myskills.class_num != CLASS_KNIGHT)
         menu_add_line(ent, "Set respawn weapon", 4);
 
-	if (ent->myskills.email[0] == '\0')
+	if (ent->client->resp.pstats.masterpw[0] == '\0')
 		menu_add_line(ent, "Set master password", 5);
 
-
     menu_add_line(ent, "Show character info", 6);
+    menu_add_line(ent, " ", 0);
     menu_add_line(ent, "Access the armory", 7);
-    menu_add_line(ent, "Access your items", 8);
 
     if (!invasion->value) // az: don't need this there.
         menu_add_line(ent, "Form alliance", 9);
 
     menu_add_line(ent, "Trade items", 10);
     menu_add_line(ent, "Vote for map/mode", 11);
+	menu_add_line(ent, "Vote for bots", 14);
     menu_add_line(ent, "Help", 12);
 
 #ifndef REMOVE_RESPAWNS
@@ -729,14 +775,14 @@ void OpenWhoisMenu (edict_t *ent)
 	menu_add_line(ent, "", 0);
 
 	menu_add_line(ent, va("Admin:        %s", player->myskills.administrator?"Yes":"No"), 0);
-	menu_add_line(ent, va("Owner:        %s", player->myskills.owner), 0);
+	menu_add_line(ent, va("Owner:        %s", player->client->resp.pstats.owner), 0);
 	menu_add_line(ent, va("Status:       %s", GetStatusString(player)), 0);
 	menu_add_line(ent, va("Team:         %s", GetTeamString(player)), 0);
 	menu_add_line(ent, va("Level:        %d", player->myskills.level), 0);
 	menu_add_line(ent, va("Experience:   %d", player->myskills.experience), 0);
-	menu_add_line(ent, va("Hit Percent:  %d%c", (int)(100*((float)player->myskills.shots_hit/player->myskills.shots)), '%'), 0);
-	menu_add_line(ent, va("Frag Percent: %d%c", (int)(100*((float)player->myskills.frags/player->myskills.fragged)), '%'), 0);
-	menu_add_line(ent, va("Played Hours: %.1f", (float)player->myskills.playingtime/3600), 0);
+	menu_add_line(ent, va("Hit Percent:  %d%c", (int)(100*((float)player->client->resp.pstats.shots_hit/player->client->resp.pstats.shots)), '%'), 0);
+	menu_add_line(ent, va("Frag Percent: %d%c", (int)(100*((float)player->client->resp.pstats.frags/player->client->resp.pstats.fragged)), '%'), 0);
+	menu_add_line(ent, va("Played Hours: %.1f", (float)player->client->resp.pstats.playingtime/3600), 0);
 
 
 	menu_add_line(ent, " ", 0);

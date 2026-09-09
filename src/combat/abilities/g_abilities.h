@@ -3,21 +3,31 @@
 
 typedef struct upgrade_s
 {
-	int			level;
-	int			current_level;
-	int			max_level;
-	int			hard_max;
-	int			modifier;
 	float		delay;
-	int			charge; // 3.5 percent ability is charged up
-	int			ammo; // ability-specific ammo
-	int			max_ammo; // maximum ability-specific ammo
-	int			ammo_regenframe; // frame ability ammo should regenerate
-	qboolean	disable;
-	int     	general_skill; // vrxchile 2.7 allow mobility menu
-	qboolean	hidden;
-	qboolean	runed;
+	int16_t			charge; // 3.5 percent ability is charged up
+	bool	disable;
+	bool    general_skill; // vrxchile 2.7 allow mobility menu
+	bool	hidden;
+	bool	runed;
+
+	int8_t			level;
+	int8_t			current_level;
+	int8_t			soft_max;
+	int8_t			hard_max;
+	int8_t			modifier;
 }upgrade_t;
+
+typedef struct morphammo_s {
+	int32_t			ammo_regenframe; // frame ability ammo should regenerate
+	int16_t			ammo; // ability-specific ammo
+	int16_t			max_ammo; // maximum ability-specific ammo
+} morphammo_t;
+
+typedef struct morphinven_s {
+	morphammo_t cacodemon;
+	morphammo_t flyer;
+	morphammo_t medic;
+} morphinven_t;
 
 typedef struct muted_s
 {
@@ -25,75 +35,82 @@ typedef struct muted_s
 	int			time;
 }muted_t;
 
+typedef struct pstats_s {
+	uint64_t frags;
+	uint64_t fragged;
+
+	uint64_t num_sprees;
+	uint32_t max_streak;
+	uint32_t suicides;
+	uint32_t teleports;
+	uint32_t spree_wars;
+	uint32_t break_sprees;
+	uint32_t break_spree_wars;
+	uint32_t num_2fers;
+
+	//ctf
+	uint32_t flag_pickups;	//number of times player grabs the flag
+	uint32_t flag_captures;	//number of times player caps the flag
+	uint32_t flag_returns;	//number of times player returns his own flag
+	uint32_t flag_kills;		//number of times player kills the flag carrier
+	uint32_t offense_kills;	//number of times player kills a defender
+	uint32_t defense_kills;	//number of times player defends his base by killing a player
+	uint32_t assists;		//number of times player gains an assist (flag_kill or flag_return just before a flag_cap)
+	//end ctf
+
+	uint64_t shots;
+	uint64_t shots_hit;
+
+	uint32_t playingtime;			//Playing time today (in seconds)
+	uint32_t total_playtime;			//Total playing time in minutes
+
+	int32_t	inventory[MAX_ITEMS];
+
+	item_t			items[MAX_VRXITEMS];
+	weapon_t		weapons[MAX_WEAPONS];
+
+	char password[24];
+	char member_since[30];
+	char last_played[30];
+
+	// unlike netname, once the player is logged in
+	// this remains stable.
+	char player_name[24];
+	char owner[24];
+	char masterpw[64];
+	char title[24];
+} pstats_t;
+
 typedef struct skills_s
 {
-	muted_t		mutelist[MAX_CLIENTS];	//mute certain players
+	uint64_t experience;
+	uint64_t next_level;
+	int32_t administrator;
+	int32_t level;
+	int32_t speciality_points;
+	int32_t weapon_points;
+	int32_t respawn_weapon;
 
-	long experience;
-	long next_level;
-	int administrator;
-	int level;
-	int speciality_points;
-	int weapon_points;
-	int respawn_weapon;
-
-	unsigned int frags;
-	unsigned int fragged;
-	unsigned int credits;
-	unsigned int weapon_respawns;
+	uint64_t credits;
+	uint64_t weapon_respawns;
 
 	int class_num;
 	int boss;
 	int streak;
 
-	int current_health;
-	int max_health;
-	int current_armor;
-	int max_armor;
 
-	unsigned long shots;
-	unsigned long shots_hit;
-
-	unsigned int num_sprees;
-	int max_streak;
-	int suicides;
-	int teleports;
-	int spree_wars;
-	int break_sprees;
-	int break_spree_wars;
-	int num_2fers;
-
-	//ctf
-	int flag_pickups;	//number of times player grabs the flag
-	int flag_captures;	//number of times player caps the flag
-	int flag_returns;	//number of times player returns his own flag
-	int flag_kills;		//number of times player kills the flag carrier
-	int offense_kills;	//number of times player kills a defender
-	int defense_kills;	//number of times player defends his base by killing a player
-	int assists;		//number of times player gains an assist (flag_kill or flag_return just before a flag_cap)
-	//end ctf
-
-	int playingtime;			//Playing time today (in seconds)
-	int total_playtime;			//Total playing time in minutes
-
-	int	inventory[MAX_ITEMS];
-	char password[24];
-	char member_since[30];
-	char last_played[30];
-	char player_name[24];
-	char owner[24];
-	char email[64];
-	char title[24];
 
 	int nerfme;
 	int inuse;
 
-	item_t			items[MAX_VRXITEMS];
-	weapon_t		weapons[MAX_WEAPONS];
 	upgrade_t		abilities[MAX_ABILITIES];
 
 	talentlist_t	talents;
 	prestigelist_t  prestige;
 }skills_t;
 
+typedef struct playertransfer_s {
+	pstats_t* stats;
+	skills_t* skills;
+} playertransfer_t;
 #endif

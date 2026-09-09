@@ -1077,31 +1077,43 @@ qboolean G_EntIsAlive(const edict_t *ent)
 	return true;
 }
 
-
-void G_RunFrames (edict_t *ent, int start_frame, int end_frame, qboolean reverse)
+// if something is already limiting the frequency at which G_RunFrames is ran to 10hz
+// and it is not ran every frame
+// set limit_rate to true.
+void G_RunFrames (edict_t *ent, int start_frame, int end_frame, qboolean reverse, bool limit_rate)
 {
-	if (reverse)
-	{
-		if ((ent->s.frame > start_frame) && (ent->s.frame <= end_frame))
-			ent->s.frame--;
+	if ( ( level.framenum % qf2sf(1) ) == 0 || !limit_rate) {
+		if (reverse)
+		{
+			if ((ent->s.frame > start_frame) && (ent->s.frame <= end_frame))
+				ent->s.frame--;
+			else
+				ent->s.frame = end_frame;
+		}
 		else
-			ent->s.frame = end_frame;
-	}
-	else
-	{
-		if ((ent->s.frame < end_frame) && (ent->s.frame >= start_frame))
-			ent->s.frame++;
-		else
-			ent->s.frame = start_frame;
+		{
+			if ((ent->s.frame < end_frame) && (ent->s.frame >= start_frame))
+				ent->s.frame++;
+			else
+				ent->s.frame = start_frame;
+		}
 	}
 }
 
-float distance (vec3_t p1, vec3_t p2)
+float distance (const vec3_t p1, const vec3_t p2)
 {
 	vec3_t v;
 
 	VectorSubtract(p1, p2, v);
 	return VectorLength(v);
+}
+
+float distanceSqr (const vec3_t p1, const vec3_t p2)
+{
+	vec3_t v;
+
+	VectorSubtract(p1, p2, v);
+	return VectorLengthSqr(v);
 }
 
 void AngleCheck (float *val)
@@ -1126,23 +1138,6 @@ void ValidateAngles (vec3_t angles)
 		angles[2] += 360;
 	else if (angles[2] > 360)
 		angles[2] -= 360;
-}
-
-int Get_KindWeapon (gitem_t	*it)
-{
-	if(it == NULL) return WEAP_BLASTER;
-
-	if(it->weaponthink		== Weapon_Shotgun)		return WEAP_SHOTGUN;
-	else if(it->weaponthink == Weapon_SuperShotgun) return WEAP_SUPERSHOTGUN;
-	else if(it->weaponthink == Weapon_Machinegun)	return WEAP_MACHINEGUN;
-	else if(it->weaponthink == Weapon_Chaingun)		return WEAP_CHAINGUN;
-	else if(it->weaponthink == Weapon_Grenade)		return WEAP_GRENADES;
-	else if(it->weaponthink == Weapon_GrenadeLauncher)	return WEAP_GRENADELAUNCHER;
-	else if(it->weaponthink == Weapon_RocketLauncher)	return WEAP_ROCKETLAUNCHER;
-	else if(it->weaponthink == Weapon_HyperBlaster) return WEAP_HYPERBLASTER;
-	else if(it->weaponthink == Weapon_Railgun)		return WEAP_RAILGUN;
-	else if(it->weaponthink == Weapon_BFG)			return WEAP_BFG;
-	else return WEAP_BLASTER;
 }
 
 edict_t *G_GetClient(const edict_t *ent)
@@ -1185,7 +1180,7 @@ edict_t *G_GetSummoner (const edict_t *ent)
 		return NULL;
 }
 
-qboolean G_ValidTargetEnt(edict_t *self, edict_t *target, qboolean alive) 
+qboolean G_ValidTargetEnt(const edict_t *self, const edict_t *target, qboolean alive)
 {
     if (alive) {
         if (!G_EntIsAlive(target))
@@ -1206,7 +1201,7 @@ qboolean G_ValidTargetEnt(edict_t *self, edict_t *target, qboolean alive)
 	if (!ptr->value && (target->flags & FL_CHATPROTECT))
 		return false;
 	// non-bots don't target entities with FL_NOTARGET set
-	if (target->flags & FL_NOTARGET && (!self || !self->ai.is_bot))
+	if (target->flags & FL_NOTARGET && (!self || !self->ai))
 		return false;
 	// don't target spawning world monsters
 	if (target->activator && !target->activator->client && (target->svflags & SVF_MONSTER) 
@@ -1466,6 +1461,8 @@ qboolean visible1 (edict_t *ent1, edict_t *ent2)
 	edict_t *ignore;
 	trace_t	tr;
 
+	tr.fraction = 0.0;
+
 	// dont go thru BSP or forcewall
 	ignore = ent1;
 	VectorCopy(ent1->s.origin, from);
@@ -1500,7 +1497,7 @@ qboolean visible1 (edict_t *ent1, edict_t *ent2)
 void stuffcmd(edict_t *ent, char *s) 	
 {
 	//gi.dprintf("running stuffcmd on %s\n", ent->classname);
-	if(ent->svflags & SVF_MONSTER || ent->ai.is_bot) return;
+	if(ent->svflags & SVF_MONSTER || ent->ai) return;
 
    	gi.WriteByte (svc_stufftext);
 	gi.WriteString (s);
@@ -1818,7 +1815,7 @@ float G_PushAwayFromPlane(vec3_t start, trace_t tr, vec3_t mins, vec3_t maxs)
 	// calculate worst case distance
 	VectorSet(size, fabs(mins[0]) + maxs[0], fabs(mins[1]) + maxs[1], fabs(mins[2]) + maxs[2]);
 	// distance is half of the longest line (i.e diagonal) that can fit within our mins/maxs box
-	float max_dist = 0.5 * G_GetBoxHypotenuse(size) + 1;
+	const float max_dist = 0.5 * G_GetBoxHypotenuse(size) + 1;
 
 	// calculate the pitch angle of the clipped solid
 	vectoangles(tr.plane.normal, angles);

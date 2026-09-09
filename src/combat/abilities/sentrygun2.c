@@ -319,46 +319,47 @@ void attack(edict_t *self)
 		return; // 3.19 sentry can't fire outside its FOV
 
 	//Fire
-	switch (self->mtype)
-	{
-	case M_SENTRY:
-		//Fire a rocket if there is sufficient ammo
-		if ((level.time >= self->delay) && (self->style >= SENTRY_ROCKETCOST) && (self->orders >= 3))
-			sentFireRocket(self);
-		// are we affected by holy freeze?
-		if (que_typeexists(self->curses, AURA_HOLYFREEZE)/*HasActiveCurse(self, AURA_HOLYFREEZE)*/ && !(level.framenum % 2))
-			break;
-		// chill effect reduces attack rate/refire
-		if (self->chill_time > level.time)
-		{
-			chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
-			if (random() > chance)
+	if ( ( level.framenum % qf2sf( 1 ) ) == 0 ) {
+		switch (self->mtype) {
+		case M_SENTRY:
+			//Fire a rocket if there is sufficient ammo
+			if ((level.time >= self->delay) && (self->style >= SENTRY_ROCKETCOST) && (self->orders >= 3))
+				sentFireRocket(self);
+			// are we affected by holy freeze?
+			if (que_typeexists(self->curses, AURA_HOLYFREEZE)/*HasActiveCurse(self, AURA_HOLYFREEZE)*/ && !(level.framenum % 2))
 				break;
-		}
-		//Fire a bullet if there is sufficient ammo
-		if (self->light_level >= SENTRY_BULLETCOST)
-		{
-			sentFireBullet(self);
+			// chill effect reduces attack rate/refire
+			if (self->chill_time > level.time)
+			{
+				chance = 1 / (1 + CHILL_DEFAULT_BASE + CHILL_DEFAULT_ADDON * self->chill_level);
+				if (random() > chance)
+					break;
+			}
+			//Fire a bullet if there is sufficient ammo
+			if (self->light_level >= SENTRY_BULLETCOST)
+			{
+				sentFireBullet(self);
 
-			// firing animation
-			if (self->s.frame == 1)
-				self->s.frame = 2;
-			else
-				self->s.frame = 1;
+				// firing animation
+				if (self->s.frame == 1)
+					self->s.frame = 2;
+				else
+					self->s.frame = 1;
+			}
+			break;
+			/*
+			//New bfg firing (wee!)
+			case M_BFG_SENTRY:
+			if(self->count >= SENTRY_BFG_AMMOCOST)
+			{
+			if(self->delay <= level.time)
+			sentFireBFG(self);
+			else if(self->delay - 1 == level.time)
+			gi.sound(self, CHAN_AUTO, gi.soundindex("misc/power1.wav"), 1, ATTN_STATIC, 0);
+			}
+			break;
+			*/
 		}
-		break;
-		/*
-		//New bfg firing (wee!)
-		case M_BFG_SENTRY:
-		if(self->count >= SENTRY_BFG_AMMOCOST)
-		{
-		if(self->delay <= level.time)
-		sentFireBFG(self);
-		else if(self->delay - 1 == level.time)
-		gi.sound(self, CHAN_AUTO, gi.soundindex("misc/power1.wav"), 1, ATTN_STATIC, 0);
-		}
-		break;
-		*/
 	}
 
 	//	if(self->s.angles[PITCH] != 0)
@@ -528,7 +529,7 @@ qboolean sentReload(edict_t *self, edict_t *other)
 	case M_SENTRY:
 	{
 		int client_bullets, client_rockets;
-		edict_t *player = other;
+		const edict_t *player = other;
 
 		//Point to player's ammo
 		client_bullets = player->client->pers.inventory[ITEM_INDEX(FindItem("Bullets"))];
@@ -764,7 +765,7 @@ void sentRotate(edict_t *self)
 
 void sentrygun_think(edict_t *self)
 {
-	edict_t *target = NULL;
+	const edict_t *target = NULL;
 	qboolean damaged = false;
 	float temp, modifier;
 	que_t *slot = NULL;
@@ -809,17 +810,17 @@ void sentrygun_think(edict_t *self)
 	}
 
 	// toggle sentry spotlight
-	if (level.daytime && self->flashlight)
-		FL_make(self);
-	else if (!level.daytime && !self->flashlight)
-		FL_make(self);
+	if (level.daytime && FL_exists(self))
+		FL_toggle(self);
+	else if (!level.daytime && !FL_exists(self))
+		FL_toggle(self);
 
 	// is the sentry slowed by holy freeze?
 	temp = self->yaw_speed;
 	slot = que_findtype(self->curses, slot, AURA_HOLYFREEZE);
 	if (slot)
 	{
-		modifier = 1 - 0.05*slot->ent->owner->myskills.abilities[HOLY_FREEZE].current_level;
+		modifier = 1 - 0.05*h2e(slot->ent)->owner->myskills.abilities[HOLY_FREEZE].current_level;
 		self->yaw_speed *= modifier;
 	}
 
@@ -829,7 +830,7 @@ void sentrygun_think(edict_t *self)
 
 	if (!self->enemy) //If we do not have a target yet
 	{
-		if (target = sentry_findtarget(self))
+		if ((target = sentry_findtarget(self)))
 			attack(self);
 	}
 	else if (CanTarget(self))
@@ -956,12 +957,12 @@ void SentryGun_Touch(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *
 		gi.sound(ent, CHAN_ITEM, gi.soundindex("plats/pt1_strt.wav"), 1, ATTN_STATIC, 0);
 		safe_cprintf(other, PRINT_HIGH, "Sentry gun repaired/reloaded. ");
 	}
-	else	//Just print gun status to user
-	{
-		safe_cprintf(other, PRINT_HIGH, "SENTRY GUN STATUS: ");
-	}
-
-	statusUpdate(ent, other);
+	// else	//Just print gun status to user
+	// {
+	// 	safe_cprintf(other, PRINT_HIGH, "SENTRY GUN STATUS: ");
+	// }
+	//
+	// statusUpdate(ent, other);
 
 	ent->sentrydelay = level.time + SENTRY_RELOAD_DELAY;
 }
@@ -1181,7 +1182,6 @@ void SpawnSentry1(edict_t *ent, int sentryType, int cost, float skill_mult, floa
 	//If you use this ability, you uncloak!
 	ent->svflags &= ~SVF_NOCLIENT;
 	ent->client->cloaking = false;
-	ent->client->cloakable = 0;
 }
 
 /**********
@@ -1221,7 +1221,7 @@ qboolean canBuildSentry(edict_t *ent, int cost)
 	//Check if player has too many sentries already
 	if (!(ent->num_sentries < SENTRY_MAXIMUM))
 	{
-		safe_cprintf(ent, PRINT_HIGH, "You have reached the max of %d sentry gun(s).\n", SENTRY_MAXIMUM);
+		safe_cprintf(ent, PRINT_HIGH, "You have reached the max of %d sentry gun(s).\n", (int)SENTRY_MAXIMUM);
 		return false;
 	}
 

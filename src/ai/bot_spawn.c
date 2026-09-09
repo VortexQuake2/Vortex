@@ -135,7 +135,7 @@ void BOT_SetName(edict_t *bot, char *name, char *skin, char *team)
 	if(!skin || strlen(skin) == 0)
 	{
 		// randomly choose skin 
-		float rnd = random();
+		const float rnd = random();
 		if(rnd  < 0.05)
 			sprintf(bot_skin,"female/athena");
 		else if(rnd < 0.1)
@@ -189,8 +189,11 @@ void BOT_SetName(edict_t *bot, char *name, char *skin, char *team)
 	Info_SetValueForKey (userinfo, "hand", "2"); // bot is center handed for now!
 	Info_SetValueForKey(userinfo, "ip", "127.0.0.1");
 
+#ifdef VRX_REPRO
+	ClientConnect (bot, userinfo, NULL, true);
+#else
 	ClientConnect (bot, userinfo);
-
+#endif
 //	ACESP_SaveBots(); // make sure to save the bots
 }
 
@@ -287,17 +290,17 @@ qboolean BOT_JoinCTFTeam (edict_t *ent, char *team_name)
 void BOT_UpgradeTalent(edict_t* ent, int talent_index, int amount)
 {
 	// not a bot
-	if (!ent->ai.is_bot)
+	if (!ent->ai)
 		return;
 	// cap amount to the number of talent points we have
 	if (amount > ent->myskills.talents.talentPoints)
 		amount = ent->myskills.talents.talentPoints;
-	int slot = vrx_get_talent_slot(ent, talent_index);
+	const int slot = vrx_get_talent_slot(ent, talent_index);
 	// invalid talent
 	if (slot == -1)
 		return;
 	talent_t* talent = &ent->myskills.talents.talent[slot];
-	int levels_to_max = talent->maxLevel - talent->upgradeLevel;
+	const int levels_to_max = talent->maxLevel - talent->upgradeLevel;
 	// talent can't be upgraded any further
 	if (levels_to_max < 1)
 		return;
@@ -316,7 +319,7 @@ void BOT_UpgradeTalent(edict_t* ent, int talent_index, int amount)
 
 void BOT_UpgradeSkill(edict_t* ent, int ability_index, int amount)
 {
-	if (!ent->ai.is_bot)
+	if (!ent->ai)
 		return;
 	if (amount > ent->myskills.speciality_points)
 		amount = ent->myskills.speciality_points;
@@ -511,11 +514,11 @@ void BOT_UpgradeWeapon(edict_t* ent, int weapID)
 	{
 		while (ent->myskills.weapon_points > 0)
 		{
-			max = ent->myskills.weapons[w].mods[i].soft_max;
-			//gi.dprintf("soft max: %d level: %d\n", max, ent->myskills.weapons[w].mods[i].current_level);
-			if (ent->myskills.weapons[w].mods[i].current_level < max)
+			max = ent->client->resp.pstats.weapons[w].mods[i].soft_max;
+			//gi.dprintf("soft max: %d level: %d\n", max, ent->client->resp.pstats.weapons[w].mods[i].current_level);
+			if (ent->client->resp.pstats.weapons[w].mods[i].current_level < max)
 			{
-				ent->myskills.weapons[w].mods[i].current_level++;
+				ent->client->resp.pstats.weapons[w].mods[i].current_level++;
 				ent->myskills.weapon_points--;
 				continue;
 			}
@@ -524,9 +527,9 @@ void BOT_UpgradeWeapon(edict_t* ent, int weapID)
 		//int Windex = vrx_WeapIDtoWeapIndex(weapID);
 		//gitem_t* it = &itemlist[Windex];
 		//gi.dprintf("%s (%d) %s upgraded to level %d (%d%%)\n", it->pickup_name, w, GetModString(w,i), 
-		//	ent->myskills.weapons[w].mods[i].current_level, V_WeaponUpgradeVal(ent,w));
+		//	ent->client->resp.pstats.weapons[w].mods[i].current_level, V_WeaponUpgradeVal(ent,w));
 	}
-	ent->ai.status.weaponWeights[w] = 0.01 * V_WeaponUpgradeVal(ent, w);
+	ent->ai->status.weaponWeights[w] = 0.01 * V_WeaponUpgradeVal(ent, w);
 }
 
 void BOT_UpgradeWeapons(edict_t* ent)
@@ -538,10 +541,14 @@ void BOT_UpgradeWeapons(edict_t* ent)
 // randomly selects a class-appropriate respawn weapon
 void BOT_SelectRespawnWeapon(edict_t* ent)
 {
-	int soldierWeapons[] = { 7, 9, 12 };//{ 2,3,4,5,7,8,12 };
-	int necroWeapons[] = { 7,8,9 };
-	int mageWeapons[] = { 2,4,5,9,12 }; // medium-long range hitscan preferred
-	int vampireWeapons[] = { 1,3,5 };// { 1, 2, 3, 4, 5 }; // short range preferred
+	int soldierWeapons[] = { WEAPON_ROCKETLAUNCHER, WEAPON_RAILGUN,
+		WEAPON_20MM };
+	int necroWeapons[] = { WEAPON_ROCKETLAUNCHER, WEAPON_HYPERBLASTER,
+		WEAPON_RAILGUN };
+	int mageWeapons[] = { WEAPON_SHOTGUN, WEAPON_MACHINEGUN, WEAPON_CHAINGUN,
+		WEAPON_RAILGUN, WEAPON_20MM }; // medium-long range hitscan preferred
+	int vampireWeapons[] = { WEAPON_SWORD, WEAPON_SUPERSHOTGUN,
+		WEAPON_CHAINGUN }; // short range preferred
 	int* weaponArray;
 	int weaponCount, randomIndex;
 
@@ -549,7 +556,7 @@ void BOT_SelectRespawnWeapon(edict_t* ent)
 	{
 	case CLASS_KNIGHT:
 		// knights can only use sword
-		ent->myskills.respawn_weapon = 1;
+		ent->myskills.respawn_weapon = WEAPON_SWORD;
 		return;
 	case CLASS_SOLDIER: 
 		weaponArray = soldierWeapons;
@@ -574,7 +581,7 @@ void BOT_SelectRespawnWeapon(edict_t* ent)
 
 	//weaponCount = sizeof(&weaponArray) / sizeof(&weaponArray[0]);
 	randomIndex = GetRandom(0, weaponCount-1);
-	int i = weaponArray[randomIndex];
+	const int i = weaponArray[randomIndex];
 	//gi.dprintf("%s: weaponCount: %d randomIndex: %d selected: %d\n", __func__, weaponCount, randomIndex, i);
 	ent->myskills.respawn_weapon = i;
 }
@@ -602,8 +609,8 @@ void BOT_Touchdown(edict_t* self)
 	vec3_t jump_start, jump_end, v;
 
 	gi.dprintf("groundentity:%s ", self->groundentity ? "true" : "false");
-	gi.dprintf("is_step:%s ", self->ai.is_step ? "true" : "false");
-	gi.dprintf("was_step:%s\n", self->ai.was_step ? "true" : "false");
+	gi.dprintf("is_step:%s ", self->ai->is_step ? "true" : "false");
+	gi.dprintf("was_step:%s\n", self->ai->was_step ? "true" : "false");
 
 	VectorCopy(self->monsterinfo.spot1, jump_start);
 	jump_start[2] = 0;
@@ -626,14 +633,14 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 	char *s;
 	//int rnd = CLASS_PALADIN;
 
-	//gi.dprintf("%s called for %s\n", __func__, ent->ai.pers.netname);
+	//gi.dprintf("%s called for %s\n", __func__, ent->ai->pers.netname);
 
 	if ( !BOT_JoinCTFTeam(ent, team_name) )
 		gi.bprintf (PRINT_HIGH,  "[BOT] %s joined the game.\n",
 		ent->client->pers.netname);
 
 	ent->think = AI_Think;
-	ent->nextthink = level.time + FRAMETIME;
+	ent->nextthink = level.time + 0.1;
 	//ent->monsterinfo.touchdown = BOT_Touchdown;//GHz: for testing
 
 	// az: Vortex stuff
@@ -667,15 +674,7 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 		case 6: ent->myskills.class_num = CLASS_POLTERGEIST; break;
 		}
 	}
-	// for respawn_weapon index values, see vrx_WeapIDtoWeapIndex
-	//if (random() > 0.8)
-	//	ent->myskills.respawn_weapon = 9;//GetRandom(1, 11);
-	//else
-	//	ent->myskills.respawn_weapon = 1;//GetRandom(1, 11);
-	//if (ent->myskills.class_num == CLASS_KNIGHT)
-	//	ent->myskills.respawn_weapon = 1;
-	//else
-	//	ent->myskills.respawn_weapon = GetRandom(1, 13);
+
 	BOT_SelectRespawnWeapon(ent);//GHz
 	vrx_reset_weapon_maximums(ent);//GHz
 	BOT_UpgradeWeapons(ent);//GHz
@@ -706,7 +705,7 @@ void BOT_DMClass_JoinGame (edict_t *ent, char *team_name)
 	}
 	gi.linkentity (ent);
 
-	int Windex = vrx_WeapIDtoWeapIndex(ent->myskills.respawn_weapon);
+	const int Windex = vrx_WeapIDtoWeapIndex(ent->myskills.respawn_weapon);
 	gitem_t *it = &itemlist[Windex];
 	//gi.dprintf("bot spawned in game, weapon: %s\n", it->pickup_name);
 }
@@ -769,15 +768,20 @@ void BOT_SpawnBot (char *team, char *name, char *skin, char *userinfo, char *cla
 
 	//init the bot
 	bot->inuse = true;
-	bot->ai.is_bot = true;
+	bot->ai = vrx_malloc(sizeof (ai_handle_t), TAG_LEVEL);
 	bot->yaw_speed = 100;
 
 	// To allow bots to respawn
-	if(userinfo == NULL)
+	if(userinfo == NULL) {
 		BOT_SetName(bot, name, skin, team);
-	else
+	} else {
+		#ifdef VRX_REPRO
+		ClientConnect (bot, userinfo, NULL, true);
+		#else
 		ClientConnect (bot, userinfo);
-	bot->ai.is_bot = true;//GHz: because this gets set to 'false' in ClientConnect
+		#endif
+	}
+	// bot->ai = true;//GHz: because this gets set to 'false' in ClientConnect
 	G_InitEdict (bot);
 	InitClientResp (bot->client);
 
@@ -785,11 +789,11 @@ void BOT_SpawnBot (char *team, char *name, char *skin, char *userinfo, char *cla
 	BOT_StartAsSpectator (bot);
 
 	//skill
-	bot->ai.pers.skillLevel = (int)(random()*MAX_BOT_SKILL);
-	if (bot->ai.pers.skillLevel > MAX_BOT_SKILL)	//fix if off-limits
-		bot->ai.pers.skillLevel =  MAX_BOT_SKILL;
-	else if (bot->ai.pers.skillLevel < 0)
-		bot->ai.pers.skillLevel =  0;
+	bot->ai->pers.skillLevel = (int)(random()*MAX_BOT_SKILL);
+	if (bot->ai->pers.skillLevel > MAX_BOT_SKILL)	//fix if off-limits
+		bot->ai->pers.skillLevel =  MAX_BOT_SKILL;
+	else if (bot->ai->pers.skillLevel < 0)
+		bot->ai->pers.skillLevel =  0;
 
 	BOT_DMclass_InitPersistant(bot);
 	AI_ResetWeights(bot);
@@ -862,7 +866,7 @@ void BOT_RemoveBot(char *name)
 		if(bot->inuse)
 		{
 			//gi.dprintf("found %s\n", bot->classname);
-			if(bot->ai.is_bot && (all || strcmp(bot->client->pers.netname,name)==0))
+			if(bot->ai && (all || strcmp(bot->client->pers.netname,name)==0))
 			{
 				bot->health = 0;
 				player_die (bot, bot, bot, 100000, vec3_origin);
@@ -870,6 +874,8 @@ void BOT_RemoveBot(char *name)
 				bot->deadflag = DEAD_DEAD;
 				bot->inuse = false;
 				freed = true;
+				vrx_free(bot->ai);
+				bot->ai = nullptr;
 				AI_EnemyRemoved (bot);
 				safe_bprintf (PRINT_MEDIUM, "%s removed\n", bot->client->pers.netname);
 			}
@@ -893,7 +899,7 @@ void BOT_ReturnToBase(int teamnum)
 	{
 		bot = g_edicts + i + 1;
 		// find live bots
-		if (bot->inuse && bot->ai.is_bot && bot->health > 1)
+		if (bot->inuse && bot->ai && bot->health > 1)
 		{
 			edict_t* base = NULL;
 			// find base entity
@@ -917,25 +923,25 @@ void BOT_ReturnToBase(int teamnum)
 				if ((current_node = AI_FindClosestReachableNode(bot->s.origin, bot, NODE_DENSITY * 2, NODE_ALL)) == -1)
 					continue;
 				// this is our starting point
-				bot->ai.current_node = current_node;
+				bot->ai->current_node = current_node;
 
 				// now find the node closest to the base
 				if ((goal_node = AI_FindClosestReachableNode(base->s.origin, base, NODE_DENSITY * 4, NODE_ALL)) != -1)
 				{
 					// get the bot moving
-					if (bot->ai.state != BOT_STATE_MOVEATTACK)
-						bot->ai.state = BOT_STATE_MOVE;
-					bot->ai.tries = 0;	// Reset the count of how many times we tried this goal
+					if (bot->ai->state != BOT_STATE_MOVEATTACK)
+						bot->ai->state = BOT_STATE_MOVE;
+					bot->ai->tries = 0;	// Reset the count of how many times we tried this goal
 
 					if (AIDevel.debugChased && bot_showlrgoal->value)
-						safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: RETURNING TO BASE @ node %d!\n", bot->ai.pers.netname, goal_node);
-					//gi.dprintf("**** BASE UNDER ATTACK: RETURNING %s TO BASE! ****", bot->ai.pers.netname);
+						safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: RETURNING TO BASE @ node %d!\n", bot->ai->pers.netname, goal_node);
+					//gi.dprintf("**** BASE UNDER ATTACK: RETURNING %s TO BASE! ****", bot->ai->pers.netname);
 					AI_SetGoal(bot, goal_node, true);
 					bot->goalentity = base;// used in AI_PickShortRangeGoal to prevent overriding LR goal pathfinding/movement
 				}
 			}
 			//else
-			//	gi.dprintf("**** BASE UNDER ATTACK: %s TELEPORTED BACK TO BASE! ****", bot->ai.pers.netname);
+			//	gi.dprintf("**** BASE UNDER ATTACK: %s TELEPORTED BACK TO BASE! ****", bot->ai->pers.netname);
 		}
 	}
 }

@@ -225,7 +225,7 @@ void skeleton_check_landing(edict_t* self)
 
 void skeleton_jump(edict_t* self)
 {
-	int	speed = 800;
+	const int	speed = 800;
 	vec3_t	forward, start;
 
 	//gi.dprintf("%d: baron_fire_jump %d\n", (int)(level.framenum), self->s.frame);
@@ -335,10 +335,10 @@ void skeleton_attack_swing(edict_t* self)
 		// a successful strike has a chance to cause elemental damage/effects
 		if (random() <= SKELETON_ELEMENTAL_CHANCE)
 		{
-			int slvl = drone_damagelevel(self);
+			const int slvl = drone_damagelevel(self);
 			if (self->s.skinnum == SKELETON_TYPE_ICE) // blue skin = cold enchanted
 			{
-				float duration = ICEBOLT_INITIAL_CHILL_DURATION + ICEBOLT_ADDON_CHILL_DURATION * slvl;
+				const float duration = ICEBOLT_INITIAL_CHILL_DURATION + ICEBOLT_ADDON_CHILL_DURATION * slvl;
 				chill_target(self, e, (2 * slvl), duration);
 			}
 			else if (self->s.skinnum == SKELETON_TYPE_POISON) // green skin = poison enchanted
@@ -411,9 +411,9 @@ mmove_t skeleton_move_wave = { FRAME_wave01, FRAME_wave11, skeleton_frames_wave,
 
 void skeleton_attack(edict_t* self)
 {
-	float	r = random();
-	float	dist = entdist(self, self->enemy);
-	mmove_t* prev_move = self->monsterinfo.currentmove;
+	const float	r = random();
+	const float	dist = entdist(self, self->enemy);
+	const mmove_t* prev_move = self->monsterinfo.currentmove;
 
 	self->light_level = 0; // reset counter for continuous or rapid-fire slashing attacks
 
@@ -666,7 +666,7 @@ qboolean spawn_skeleton(edict_t* ent, vec3_t start, int skill_level, int type)
 // find a single valid target that is in-range and nearest to the aiming reticle
 qboolean raise_skeleton_from_corpse(edict_t* ent, float range, int type)
 {
-	int slvl = ent->myskills.abilities[SKELETON].current_level;
+	const int slvl = ent->myskills.abilities[SKELETON].current_level;
 	edict_t* e = NULL;
 	vec3_t start;
 	qboolean found = false;
@@ -710,7 +710,7 @@ qboolean raise_skeleton_from_corpse(edict_t* ent, float range, int type)
 
 void raise_skeleton(edict_t* ent, int type)
 {
-	int slvl = ent->myskills.abilities[SKELETON].current_level;
+	const int slvl = ent->myskills.abilities[SKELETON].current_level;
 	vec3_t forward, right, start, offset, mins, maxs;
 
 	// get view origin

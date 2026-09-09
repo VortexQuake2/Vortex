@@ -208,41 +208,58 @@ void FL_think (edict_t *self)
     self->nextthink = level.time + FRAMETIME;
 }
 
+bool create_flashlight_entity(edict_t *self, vec3_t start, vec3_t forward, vec3_t right, vec3_t end) {
+	if (self->flashlight)
+	{
+		G_FreeEdict(self->flashlight);
+		self->flashlight = NULL;
+		return true;
+	}
+	if (self->client)
+		AngleVectors(self->client->v_angle, forward, right, NULL);
+	else
+		AngleVectors(self->s.angles, forward, right, NULL);
+	VectorSet(end, 100, 0, 0);
+	G_ProjectSource(self->s.origin, end, forward, right, start);
+	self->flashlight = G_Spawn ();
+	self->flashlight->owner = self;
+	self->flashlight->movetype = MOVETYPE_NOCLIP;
+	self->flashlight->solid = SOLID_NOT;
+	self->flashlight->classname = "flashlight";
+	self->flashlight->s.modelindex = gi.modelindex ("models/objects/flash/tris.md2");
+	self->flashlight->s.skinnum = 0;
+	self->flashlight->s.effects |= 0x10000000; //transparency
+	self->flashlight->s.effects |= EF_HYPERBLASTER;
+
+	self->flashlight->think = FL_think;
+	self->flashlight->nextthink = level.time + FRAMETIME;
+	return false;
+}
+
 /*
 ===============
 FL_make
 ===============
 */
-void FL_make(edict_t *self)
+void FL_toggle(edict_t *self)
 {
     vec3_t    start,forward,right,end;
 
-    if (self->flashlight)
-    {
-        G_FreeEdict(self->flashlight);
-        self->flashlight = NULL;
-        return;
-    }
-	if (self->client)
-		AngleVectors(self->client->v_angle, forward, right, NULL);
-	else
-		AngleVectors(self->s.angles, forward, right, NULL);
-    VectorSet(end, 100, 0, 0);
-    G_ProjectSource(self->s.origin, end, forward, right, start);
-    self->flashlight = G_Spawn ();
-    self->flashlight->owner = self;
-    self->flashlight->movetype = MOVETYPE_NOCLIP;
-    self->flashlight->solid = SOLID_NOT;
-    self->flashlight->classname = "flashlight";
-    self->flashlight->s.modelindex = gi.modelindex ("models/objects/flash/tris.md2"); 
-    self->flashlight->s.skinnum = 0;
-    self->flashlight->s.effects |= 0x10000000; //transparency
-    self->flashlight->s.effects |= EF_HYPERBLASTER;
+#ifndef VRX_REPRO
+    if (create_flashlight_entity(self, start, forward, right, end)) return;
+#else
+	self->flags ^= FL_FLASHLIGHT;
+#endif
 
-    self->flashlight->think = FL_think;
-    self->flashlight->nextthink = level.time + FRAMETIME;
+}
 
-} 
+bool FL_exists(edict_t *self) {
+#ifndef VRX_REPRO
+	return self->flashlight != NULL;
+#else
+	return self->flags & FL_FLASHLIGHT;
+#endif
+}
 //K03 End
 
 char *ClientTeam (const edict_t *ent)
@@ -871,14 +888,75 @@ int GetSlot(gitem_t *it)
 	else if(it == FindItem("shotgun")) slot = 2;
 	else if(it == FindItem("super shotgun")) slot = 3;
 	else if(it == FindItem("Machinegun")) slot = 4;
+	else if(it == FindItem("ETF Rifle")) slot = 4;
 	else if(it == FindItem("chaingun"))	slot = 5;
 	else if(it == FindItem("grenade launcher")) slot = 6;
+	else if(it == FindItem("Prox Launcher")) slot = 6;
 	else if(it == FindItem("rocket launcher")) slot = 7;
 	else if(it == FindItem("hyperblaster")) slot = 8;
+	else if(it == FindItem("Ionripper")) slot = 8;
+	else if(it == FindItem("Plasma Beam")) slot = 8;
 	else if(it == FindItem("railgun")) slot = 9;
+	else if(it == FindItem("Phalanx")) slot = 9;
 	else if(it == FindItem("bfg10k")) slot = 10;
+	else if(it == FindItem("Disruptor")) slot = 10;
     else if(it == FindItem("flamethrower")) slot = 10;
 	return (slot);
+}
+
+static qboolean Cmd_PlayerHasWeapon(edict_t *ent, gitem_t *item)
+{
+	return item && ent->client->pers.inventory[ITEM_INDEX(item)];
+}
+
+static gitem_t *Cmd_CycleWeaponGroup(edict_t *ent, gitem_t *requested, const char **names, int count)
+{
+	gitem_t *current;
+	int requested_index = -1;
+	int current_index = -1;
+	int i;
+
+	if (!requested)
+		return NULL;
+
+	current = ent->client->pers.weapon;
+
+	for (i = 0; i < count; i++)
+	{
+		gitem_t *item = FindItem((char *) names[i]);
+
+		if (item == requested)
+			requested_index = i;
+		if (item == current)
+			current_index = i;
+	}
+
+	if (requested_index < 0)
+		return requested;
+
+	if (current_index >= 0)
+	{
+		for (i = 1; i <= count; i++)
+		{
+			gitem_t *item = FindItem((char *) names[(current_index + i) % count]);
+
+			if (Cmd_PlayerHasWeapon(ent, item))
+				return item;
+		}
+	}
+
+	if (Cmd_PlayerHasWeapon(ent, requested))
+		return requested;
+
+	for (i = 1; i < count; i++)
+	{
+		gitem_t *item = FindItem((char *) names[(requested_index + i) % count]);
+
+		if (Cmd_PlayerHasWeapon(ent, item))
+			return item;
+	}
+
+	return requested;
 }
 
 qboolean Cmd_UseMorphWeapons_f (edict_t *ent, char *s)
@@ -980,9 +1058,16 @@ Use an inventory item
 void Cmd_Use_f (edict_t *ent)
 {
 	int			index;
-	int			weapMode=ent->client->weapon_mode;
+	const int			weapMode=ent->client->weapon_mode;
 	gitem_t		*it;
 	char		*s;
+	static const char *blaster_cycle[] = {"Blaster", "Sword", "Chainfist"};
+	static const char *machinegun_cycle[] = {"Machinegun", "ETF Rifle"};
+	static const char *grenade_cycle[] = {"Grenade Launcher", "Prox Launcher"};
+	static const char *throwable_cycle[] = {"Grenades", "Tesla", "Trap"};
+	static const char *hyper_cycle[] = {"HyperBlaster", "Ionripper", "Plasma Beam"};
+	static const char *rail_cycle[] = {"Railgun", "Phalanx"};
+	static const char *bfg_cycle[] = {"BFG10K", "Disruptor"};
 
 	//K03 Begin
 	int		slot;
@@ -1038,10 +1123,13 @@ void Cmd_Use_f (edict_t *ent)
     if ((ent->myskills.class_num == CLASS_KNIGHT) && (slot > 0) && (slot < 11))
         return;
 
-    if (slot == 1 && ent->client->pers.weapon == FindItem("Blaster"))
-        it = FindItem("Sword");
-    else if (slot == 1 && ent->client->pers.weapon == FindItem("Sword"))
-        it = FindItem("Blaster");
+	it = Cmd_CycleWeaponGroup(ent, it, blaster_cycle, sizeof(blaster_cycle) / sizeof(blaster_cycle[0]));
+	it = Cmd_CycleWeaponGroup(ent, it, machinegun_cycle, sizeof(machinegun_cycle) / sizeof(machinegun_cycle[0]));
+	it = Cmd_CycleWeaponGroup(ent, it, grenade_cycle, sizeof(grenade_cycle) / sizeof(grenade_cycle[0]));
+	it = Cmd_CycleWeaponGroup(ent, it, throwable_cycle, sizeof(throwable_cycle) / sizeof(throwable_cycle[0]));
+	it = Cmd_CycleWeaponGroup(ent, it, hyper_cycle, sizeof(hyper_cycle) / sizeof(hyper_cycle[0]));
+	it = Cmd_CycleWeaponGroup(ent, it, rail_cycle, sizeof(rail_cycle) / sizeof(rail_cycle[0]));
+	it = Cmd_CycleWeaponGroup(ent, it, bfg_cycle, sizeof(bfg_cycle) / sizeof(bfg_cycle[0]));
     //K03 End
     index = ITEM_INDEX(it);
     if (!ent->client->pers.inventory[index] && (it != FindItem("tball self")))//K03 tball self exception
@@ -1146,8 +1234,8 @@ gi.dprintf("%s just called Cmd_Drop_f()\n", ent->client->pers.netname);
 		int i;
 		for (i = 3; i < MAX_VRXITEMS; ++i)
 		{
-			if (ent->myskills.items[i].itemtype == ITEM_POTION)
-				memset(&ent->myskills.items[i], 0, sizeof(item_t));
+			if (ent->client->resp.pstats.items[i].itemtype == ITEM_POTION)
+				memset(&ent->client->resp.pstats.items[i], 0, sizeof(item_t));
 		}
 		safe_cprintf(ent, PRINT_HIGH, "You have discarded all of your potions.\n");
 		return;
@@ -1158,8 +1246,8 @@ gi.dprintf("%s just called Cmd_Drop_f()\n", ent->client->pers.netname);
 		int i;
 		for (i = 3; i < MAX_VRXITEMS; ++i)
 		{
-			if (ent->myskills.items[i].itemtype == ITEM_ANTIDOTE)
-				memset(&ent->myskills.items[i], 0, sizeof(item_t));
+			if (ent->client->resp.pstats.items[i].itemtype == ITEM_ANTIDOTE)
+				memset(&ent->client->resp.pstats.items[i], 0, sizeof(item_t));
 		}
 		safe_cprintf(ent, PRINT_HIGH, "You have discarded all of your holy water.\n");
 		return;
@@ -1344,7 +1432,7 @@ void Cmd_WeapLast_f (edict_t *ent)
 	// player-monsters switch between weapon modes
 	if (ent->mtype || PM_PlayerHasMonster(ent))
 	{
-		int currentMode = ent->client->weapon_mode;
+		const int currentMode = ent->client->weapon_mode;
 
 		ent->client->weapon_mode = ent->client->last_weapon_mode;
 		ent->client->last_weapon_mode = currentMode;
@@ -1384,7 +1472,7 @@ void Cmd_InvDrop_f (edict_t *ent)
 
 	if (ent->myskills.administrator && ent->client->menustorage.menu_active)
 	{
-		int index = ent->client->menustorage.messages[ent->client->menustorage.currentline].option-2;
+		const int index = ent->client->menustorage.messages[ent->client->menustorage.currentline].option-2;
 
 		if (menu_active(ent, MENU_SPECIAL_UPGRADES, upgradeSpecialMenu_handler) && index < 500)
 		{
@@ -1489,6 +1577,7 @@ void Cmd_Kill_f (edict_t *ent)
 	ent->health = 0;
 	meansOfDeath = MOD_SUICIDE;
 	player_die (ent, ent, ent, 100000, vec3_origin);
+	RemoveOwnedDeployables(ent);
 	// don't even bother waiting for death frames
 	ent->deadflag = DEAD_DEAD;
 	respawn (ent);
@@ -1504,10 +1593,7 @@ void Cmd_PutAway_f (edict_t *ent)
 	ent->client->showscores = false;
 	ent->client->showhelp = false;
 	ent->client->showinventory = false;
-//GHz START
-	//ItemMenuClose(ent);	//3.0 removed for now
-	ent->client->update_chase = true;
-//GHz END
+	//GHz END
 }
 
 int PlayerSort (void const *a, void const *b)
@@ -1517,8 +1603,8 @@ int PlayerSort (void const *a, void const *b)
 	anum = *(int *)a;
 	bnum = *(int *)b;
 
-	anum = game.clients[anum].ps.stats[STAT_FRAGS];
-	bnum = game.clients[bnum].ps.stats[STAT_FRAGS];
+	anum = game.clients[anum].ps.stats[STAT_SCORE];
+	bnum = game.clients[bnum].ps.stats[STAT_SCORE];
 
 	if (anum < bnum)
 		return -1;
@@ -1557,7 +1643,7 @@ void Cmd_Players_f (edict_t *ent)
 	for (i = 0 ; i < count ; i++)
 	{
 		Com_sprintf (smallq2, sizeof(smallq2), "%3i %s\n",
-			game.clients[indexq2[i]].ps.stats[STAT_FRAGS],
+			game.clients[indexq2[i]].ps.stats[STAT_SCORE],
 			game.clients[indexq2[i]].pers.netname);
 		if (strlen (smallq2) + strlen(largeq2) > sizeof(largeq2) - 100 )
 		{	// can't print all of them in one packet
@@ -1697,9 +1783,9 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 	}
 	
 	// master password prompt
-	if (menu_active(ent, MENU_MASTER_PASSWORD, masterpw_handler) && !strcmp(ent->myskills.email, ""))
+	if (menu_active(ent, MENU_MASTER_PASSWORD, masterpw_handler) && !strcmp(ent->client->resp.pstats.masterpw, ""))
 	{
-		int	len=strlen(p);
+		const int	len=strlen(p);
 
 		// check for valid input
 		if ((len < 4) || (len > 23) || strstr(p, "@"))
@@ -1709,8 +1795,8 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 			return;
 		}
 
-		strcpy(ent->myskills.email, p);
-		safe_cprintf(ent, PRINT_HIGH, "Master password has been set to %s.\n", ent->myskills.email);
+		strcpy(ent->client->resp.pstats.masterpw, p);
+		safe_cprintf(ent, PRINT_HIGH, "Master password has been set to %s.\n", ent->client->resp.pstats.masterpw);
 		menu_close(ent, true);
 		return;
 	}
@@ -1773,9 +1859,9 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 		//Archer (PlayerMute start)
 		for (k = 0; k < game.maxclients; k++)
 		{
-			if(!other->myskills.mutelist[k].player)
+			if(!other->client->mutelist[k].player)
 				continue;
-			if(ent == other->myskills.mutelist[k].player)
+			if(ent == other->client->mutelist[k].player)
 			{
 				ThisPlayerMuted = true;
 				break;
@@ -1791,7 +1877,8 @@ void Cmd_Say_f (edict_t *ent, qboolean team, qboolean arg0)
 
 		//GHz START
 		// print to all players
-		if (dedicated->value)
+		// az: Why was this check here...?
+		//if (dedicated->value)
 		{
 			//if ((strcmp(ent->myskills.title, "") != 0) && (ent->solid != SOLID_NOT))
 				//safe_cprintf(other, PRINT_HIGH, "%s ", ent->myskills.title);
@@ -1878,9 +1965,9 @@ void Cmd_Speech (edict_t *ent, int soundnum)
 void ResetPlayer (edict_t *ent)
 {
 	memset(&ent->myskills,0,sizeof(skills_t));
+	memset(&ent->client->resp.pstats,0,sizeof(pstats_t));
 	stuffcmd(ent, "disconnect\n");
 	gi.bprintf (PRINT_HIGH, "%s was kicked\n", ent->client->pers.netname);
-	return;
 }
 
 char *LoPrint(char *text);
@@ -2073,16 +2160,16 @@ void cmd_PlayerMute(edict_t *ent, char *playername, int time)
 				return;
 			}
 			//Toggle if player is muted or not
-			if (ent->myskills.mutelist[i].player != other)
+			if (ent->client->mutelist[i].player != other)
 			{
-				ent->myskills.mutelist[i].player = other;
-				ent->myskills.mutelist[i].time = time;
+				ent->client->mutelist[i].player = other;
+				ent->client->mutelist[i].time = time;
 				safe_cprintf(ent, PRINT_HIGH, "%s has been muted.\n",other->client->pers.netname);
 			}
 			else 
 			{
-				ent->myskills.mutelist[i].player = NULL;
-				ent->myskills.mutelist[i].time = 0;
+				ent->client->mutelist[i].player = NULL;
+				ent->client->mutelist[i].time = 0;
 				safe_cprintf(ent, PRINT_HIGH, "%s is no longer muted.\n",other->client->pers.netname);
 			}
 			return;
@@ -2255,22 +2342,22 @@ void Cmd_SetOwner_f (edict_t *ent)
 	char* mpw = gi.argv(2);
 
 	// az: nice, lee! :)
-	if (strcmp(ent->myskills.owner, ent->myskills.player_name) == 0)
+	if (strcmp(ent->client->resp.pstats.owner, ent->client->resp.pstats.player_name) == 0)
 	{
 		// Reset owner...
 		vrx_char_io.set_owner(ent, "", "", true);
 		safe_cprintf(ent, PRINT_HIGH, "Owner has been reset.\n");
 	}
 
-	if (strcmp(charname, ent->myskills.player_name) == 0)
+	if (strcmp(charname, ent->client->resp.pstats.player_name) == 0)
 	{
 		safe_cprintf(ent, PRINT_HIGH, "You can't claim yourself as your own character.\n");
 		return;
 	}
 
-	if (strlen(ent->myskills.owner) > 0 && strcmp(ent->myskills.owner, ent->myskills.player_name) != 0)
+	if (strlen(ent->client->resp.pstats.owner) > 0 && strcmp(ent->client->resp.pstats.owner, ent->client->resp.pstats.player_name) != 0)
 	{
-		safe_cprintf(ent, PRINT_HIGH, "%s has already been claimed by %s.\n", ent->myskills.player_name, ent->myskills.owner);
+		safe_cprintf(ent, PRINT_HIGH, "%s has already been claimed by %s.\n", ent->client->resp.pstats.player_name, ent->client->resp.pstats.owner);
 		return;
 	}
 
@@ -2282,7 +2369,7 @@ void Cmd_SetOwner_f (edict_t *ent)
 
 	if (strlen(charname) < 1)
 	{
-		safe_cprintf(ent, PRINT_HIGH, "%s has not yet been claimed.\nCommand: owner <name> <master password>\n", ent->myskills.player_name);
+		safe_cprintf(ent, PRINT_HIGH, "%s has not yet been claimed.\nCommand: owner <name> <master password>\n", ent->client->resp.pstats.player_name);
 		return;
 	}
 
@@ -2292,7 +2379,7 @@ void Cmd_SetOwner_f (edict_t *ent)
 		return;
 	}
 
-	int mpwlen = strlen(mpw);
+	const int mpwlen = strlen(mpw);
 	if (mpwlen == 0)
 	{
 		safe_cprintf(ent, PRINT_HIGH, "Please include the master password of the owner.\n");
@@ -2316,9 +2403,9 @@ void cmd_whois(edict_t *ent, char *playername)
 	{
 		temp = g_edicts + i;
 		if (!temp || !temp->inuse || !temp->client) continue;
-		if(Q_strcasecmp(temp->myskills.player_name, playername) == 0)
+		if(Q_strcasecmp(temp->client->resp.pstats.player_name, playername) == 0)
 		{
-			safe_cprintf(ent, PRINT_HIGH, "%s belongs to %s.\n", playername, temp->myskills.owner);
+			safe_cprintf(ent, PRINT_HIGH, "%s belongs to %s.\n", playername, temp->client->resp.pstats.owner);
 			return;
 		}
 	}
@@ -2473,7 +2560,8 @@ void Cmd_AdminCmd (edict_t *ent)
 
 		if (tr.ent)
 		{
-			safe_cprintf(ent, PRINT_HIGH, "Ent: 0x%p (classname: %s, monstername: %s)\n", tr.ent, tr.ent->classname, V_GetMonsterName(tr.ent));
+			safe_cprintf(ent, PRINT_HIGH, "Ent: 0x%p (classname: %s, monstername: %s, number: %i)\n",
+				tr.ent, tr.ent->classname, V_GetMonsterName(tr.ent), tr.ent->s.number);
 		}
 		
 		return;
@@ -2509,7 +2597,7 @@ void Cmd_AdminCmd (edict_t *ent)
 
 	if (!Q_stricmp(cmd1, "closestnavi"))
     {
-        edict_t *navi = vrx_inv_closest_navi(ent);
+        edict_t *navi = vrx_inv_closest_start_navi(ent);
         if (!navi) return;
         safe_cprintf(ent, PRINT_HIGH, "%s\n", vtos(navi->s.origin));
         gi.WriteByte (svc_temp_entity);
@@ -2630,7 +2718,7 @@ void Cmd_AdminCmd (edict_t *ent)
 	}
 	else if (Q_stricmp(cmd1, "srune") == 0)
 	{
-		int index = atoi(cmd3);
+		const int index = atoi(cmd3);
 		int type = ITEM_ABILITY;
 
 		if (ent->myskills.administrator < 10)
@@ -2662,7 +2750,7 @@ void Cmd_AdminCmd (edict_t *ent)
 			if (!strcmp(cmd3, ""))
 			{
 				safe_cprintf(ent, PRINT_HIGH, "%s's title was reset\n", player->client->pers.netname);
-				player->myskills.title[0] = 0;
+				player->client->resp.pstats.title[0] = 0;
 			}
 			else
 			{
@@ -2673,7 +2761,7 @@ void Cmd_AdminCmd (edict_t *ent)
 				else
 				{
 					safe_cprintf(ent, PRINT_HIGH, "%s's title is now %s\n", player->client->pers.netname, cmd3);
-					strcpy(player->myskills.title, cmd3);
+					strcpy(player->client->resp.pstats.title, cmd3);
 				}
 			}
 		}
@@ -2738,13 +2826,13 @@ void Cmd_TransCredits(edict_t *ent)
 		{
 			player->myskills.credits += creditval;
 			ent->myskills.credits -= creditval;
-			safe_cprintf(player, PRINT_MEDIUM, "%s transfered %d credits to you.\n", ent->myskills.player_name, creditval);
-			safe_cprintf(ent, PRINT_MEDIUM, "You transfer %d credits to %s. (%d left)\n", creditval, player->myskills.player_name, ent->myskills.credits);
+			safe_cprintf(player, PRINT_MEDIUM, "%s transfered %d credits to you.\n", ent->client->resp.pstats.player_name, creditval);
+			safe_cprintf(ent, PRINT_MEDIUM, "You transfer %d credits to %s. (%d left)\n", creditval, player->client->resp.pstats.player_name, ent->myskills.credits);
 
-			WriteToLogFile(ent->myskills.player_name, va("Transfers %d credits to %s. %d left\n", 
-				creditval, player->myskills.player_name, ent->myskills.credits));
-			WriteToLogFile(player->myskills.player_name, va("Got %d credits from %s. (%d after transfer)\n",
-				creditval, ent->myskills.player_name, player->myskills.credits));
+			WriteToLogFile(ent->client->resp.pstats.player_name, va("Transfers %d credits to %s. %d left\n",
+				creditval, player->client->resp.pstats.player_name, ent->myskills.credits));
+			WriteToLogFile(player->client->resp.pstats.player_name, va("Got %d credits from %s. (%d after transfer)\n",
+				creditval, ent->client->resp.pstats.player_name, player->myskills.credits));
 		}else
 			safe_cprintf(ent, PRINT_HIGH, "Not enough credits. (Got %d, need %d, you need %d more.\n)", 
 			ent->myskills.credits, creditval,  creditval - ent->myskills.credits);
@@ -2861,7 +2949,7 @@ que_t *que_ptr (que_t *src, que_t *dst)
 qboolean GetOverloadValues (edict_t *ent, int talentLevel, int cubes, int cost, float *cost_mult, float *skill_mult)
 {
 	// maximum skill/cost multiplier
-	float max_multiplier = 1 + 0.2 * talentLevel;
+	const float max_multiplier = 1 + 0.2 * talentLevel;
 
 	// input skill/cost multiplier
 	*cost_mult = (float)cubes / cost;
@@ -3087,7 +3175,7 @@ void Cmd_Rune_f(edict_t *ent)
 		{
 			if (!strcmp(gi.argv(1), "manip"))
 			{
-				int index = atoi(gi.argv(2));
+				const int index = atoi(gi.argv(2));
 				if (index < 0)
 				{
 					safe_cprintf(ent, PRINT_LOW, "Very funny.\n");
@@ -3106,8 +3194,8 @@ void Cmd_Rune_f(edict_t *ent)
 		{
 			if (!strcmp(gi.argv(1), "swap"))
 			{
-				int index = atoi(gi.argv(2)); // where from
-				int moveto = atoi(gi.argv(3)); // where to
+				const int index = atoi(gi.argv(2)); // where from
+				const int moveto = atoi(gi.argv(3)); // where to
 
 				if (index < 3) // Equiped rune
 				{
@@ -3121,7 +3209,7 @@ void Cmd_Rune_f(edict_t *ent)
 
 					if (moveto > 0 && moveto < MAX_VRXITEMS) // moveto in bounds
 					{
-						V_ItemSwap(&ent->myskills.items[index], &ent->myskills.items[moveto]);
+						V_ItemSwap(&ent->client->resp.pstats.items[index], &ent->client->resp.pstats.items[moveto]);
 						safe_cprintf(ent, PRINT_LOW, "Items swapped successfully.\n");
 						return;
 					}else
@@ -3288,7 +3376,7 @@ void ClientCommand (edict_t *ent)
 	//NewB
 	else if (Q_stricmp (cmd, "trade") == 0)
 	{
-		char *opt = gi.argv(1);
+		const char *opt = gi.argv(1);
 		if (Q_strcasecmp(opt, "on") == 0)
 		{
 			safe_cprintf(ent, PRINT_HIGH, "Trading is enabled.\nPlayers may now trade with you.\n");
@@ -3380,7 +3468,7 @@ void ClientCommand (edict_t *ent)
 				continue;
 			if (e->client->resp.spectator || e->client->pers.spectator || (e->teamnum != ent->teamnum))
 				continue;
-            safe_cprintf(ent, PRINT_HIGH, "      %s", e->myskills.player_name);
+            safe_cprintf(ent, PRINT_HIGH, "      %s", e->client->resp.pstats.player_name);
 		}
 		safe_cprintf(ent, PRINT_HIGH, "\n");
 	}
@@ -3397,7 +3485,7 @@ void ClientCommand (edict_t *ent)
 	else if (Q_stricmp (cmd, "abilityindex") == 0)
 	{
 		//Return string of ability at that index
-		int index = atoi(gi.argv(1));
+		const int index = atoi(gi.argv(1));
 		if ((index < 0) || (index > MAX_ABILITIES))
 			safe_cprintf(ent, PRINT_HIGH, "Bad Ability index: %d\n", index);
 		else safe_cprintf(ent, PRINT_HIGH, "Ability number %d = %s\n", index, GetAbilityString(index));
@@ -3406,7 +3494,7 @@ void ClientCommand (edict_t *ent)
 	//3.0 bless commands
 	else if (Q_stricmp (cmd, "mute") == 0)
 	{
-		int time = atoi(gi.argv(2));		
+		const int time = atoi(gi.argv(2));		
 		if (time > 0) cmd_PlayerMute(ent, gi.argv(1), time);
 		else safe_cprintf(ent, PRINT_HIGH, "Invalid mute duration.\n  Command: mute <playername> <seconds>\n");
 	}

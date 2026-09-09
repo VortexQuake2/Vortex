@@ -113,7 +113,7 @@ void ShowScanner (edict_t *ent, char *layout)
 	{
 		int		sx, sy;
 		vec3_t	v, dp;
-		vec3_t	normal = {0,0,-1};
+		const vec3_t	normal = {0,0,-1};
 		float dist, heightDelta;
 
 		// sanity check

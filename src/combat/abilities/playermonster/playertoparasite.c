@@ -13,7 +13,7 @@ qboolean ParasiteAttack(edict_t* ent, vec3_t start, vec3_t aimdir, float damage,
 
 static qboolean parasite_cantarget (edict_t *self, edict_t *target)
 {
-	int para_range = PARASITE_ATTACK_RANGE;
+	const int para_range = PARASITE_ATTACK_RANGE;
 
 	return (G_EntExists(target) /* && !que_typeexists(target->curses, CURSE_FROZEN) */
 		&& !OnSameTeam(self, target) && visible(self, target) && nearfov(self, target, 45, 45) 
@@ -24,7 +24,7 @@ static qboolean parasite_cantarget (edict_t *self, edict_t *target)
 qboolean myparasite_findtarget (edict_t *self)
 {
 	edict_t *other=NULL;
-	int para_range = PARASITE_ATTACK_RANGE;
+	const int para_range = PARASITE_ATTACK_RANGE;
 
 	while ((other = findclosestradius(other, self->s.origin, para_range)) != NULL)
 	{
@@ -44,7 +44,7 @@ void myparasite_fire (edict_t *self)
 {
 	int		pull;
 	int		damage;
-	int		para_range	= PARASITE_ATTACK_RANGE;
+	const int		para_range	= PARASITE_ATTACK_RANGE;
 	vec3_t	v, start, end, forward;
 	trace_t	tr;
 
@@ -218,17 +218,17 @@ void RunParasiteFrames (edict_t *ent, usercmd_t *ucmd)
 
 		// play running animation if we are moving forward or strafing
 		if ((ucmd->forwardmove > 0) || ucmd->sidemove)
-			G_RunFrames(ent, 70, 76, false);
+			G_RunFrames(ent, 70, 76, false, false);
 		// play animation in reverse if we are going backwards
 		else if (ucmd->forwardmove < 0)
-			G_RunFrames(ent, 70, 76, true);
+			G_RunFrames(ent, 70, 76, true, false);
 		else
 			idle = true;
 		
 		if ((ent->client->buttons & BUTTON_ATTACK) && myparasite_attack(ent) && idle)
 		{
 			// run attack frames
-			G_RunFrames(ent, 39, 51, false);
+			G_RunFrames(ent, 39, 51, false, false);
 			ent->client->idle_frames = 0;
 		}
 		else if (idle)
@@ -245,12 +245,12 @@ void RunParasiteFrames (edict_t *ent, usercmd_t *ucmd)
 			if (ent->oldenemy)
 			{
 				if (ent->s.frame < 56)
-					G_RunFrames(ent, 39, 56, false); // run end attack frames
+					G_RunFrames(ent, 39, 56, false, false); // run end attack frames
 				else
 					ent->oldenemy = NULL; // we're done
 			}
 			else
-				G_RunFrames(ent, 83, 99, false); // run idle frames
+				G_RunFrames(ent, 83, 99, false, false); // run idle frames
 
 			// play parasite's tapping sound
 			if (ent->groundentity && ((ent->s.frame==85) || (ent->s.frame==87) || (ent->s.frame==91) 
@@ -338,7 +338,7 @@ void think_ability_parasite_attack(edict_t *ent)
 
 void Cmd_PlayerToParasite_f (edict_t *ent)
 {
-	int para_cubecost = PARASITE_INIT_COST;
+	const int para_cubecost = PARASITE_INIT_COST;
 
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: %s just called Cmd_PlayerToParasite_f()\n", ent->client->pers.netname);
@@ -389,7 +389,6 @@ void Cmd_PlayerToParasite_f (edict_t *ent)
 	// decloak
 	ent->svflags &= ~SVF_NOCLIENT;
 	ent->client->cloaking = false;
-	ent->client->cloakable = 0;
 
 	ent->maxs[2] = 8;
 	ent->viewheight = 0;

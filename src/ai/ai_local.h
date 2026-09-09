@@ -97,7 +97,6 @@ void		CopyToBodyQue (edict_t *ent);
 void		Use_Plat (edict_t *ent, edict_t *other, edict_t *activator);
 void		ClientThink (edict_t *ent, usercmd_t *ucmd);
 qboolean		SelectSpawnPoint (edict_t *ent, vec3_t origin, vec3_t angles);
-qboolean	ClientConnect (edict_t *ent, char *userinfo);
 
 // bot_spawn.c
 //----------------------------------------------------------
@@ -163,6 +162,7 @@ void		AITools_SaveNodes( void );
 qboolean	AI_LoadPLKFile( char *mapname );
 void		AIDebug_ToogleBotDebug(void);//GHz
 void		AI_RemoveMapNodes(void);//GHz
+void AI_RemoveEntNodes();
 
 // ai_links.c
 //----------------------------------------------------------
@@ -170,6 +170,7 @@ qboolean	AI_VisibleOrigins (vec3_t spot1, vec3_t spot2);
 int			AI_LinkCloseNodes(void);
 int			AI_FindLinkType(int n1, int n2);
 qboolean	AI_AddLink( int n1, int n2, int linkType );
+qboolean	AI_RemoveLink( int n1, int n2 );
 qboolean	AI_PlinkExists(int n1, int n2);
 int			AI_PlinkMoveType(int n1, int n2);
 int			AI_findNodeInRadius (int from, vec3_t org, float rad, qboolean ignoreHeight);
@@ -217,3 +218,6 @@ qboolean AI_ClearWalkingPath(edict_t* self, vec3_t start, vec3_t end);
 float BOT_DMclass_ThrowingPitch1(edict_t* self, float v);
 int AI_RespawnWeaponToWeapIndex(int respawn_weapon);
 int AI_NumSummons(edict_t* self);
+
+// common
+void BOT_AutoSpawn(void);

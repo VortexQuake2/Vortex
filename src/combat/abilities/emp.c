@@ -187,7 +187,7 @@ void EMP_Explode (edict_t *self)
 {
     int		damage;
     float		radius;
-    float		time = EMP_INITIAL_TIME + (EMP_ADDON_TIME * self->monsterinfo.level);
+    const float		time = EMP_INITIAL_TIME + (EMP_ADDON_TIME * self->monsterinfo.level);
     edict_t		*e=NULL;
     qboolean	ammoBox;
 
@@ -256,7 +256,7 @@ void EMP_Touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
     }
 
     // bounce off things that can't be hurt
-    if (!other->takedamage)
+    if (!other->takedamage && ent != other)
     {
         if (random() > 0.5)
             gi.sound (ent, CHAN_VOICE, gi.soundindex ("weapons/hgrenb1a.wav"), 1, ATTN_NORM, 0);

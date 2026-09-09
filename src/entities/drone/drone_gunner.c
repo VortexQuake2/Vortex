@@ -426,8 +426,8 @@ void gunner_stand_attack (edict_t *self)
 
 void gunner_attack (edict_t *self)
 {
-	float	r = random();
-	float	dist = entdist(self, self->enemy);
+	const float	r = random();
+	const float	dist = entdist(self, self->enemy);
 
 	// short range (20% chance grenade, 80% chance run and shoot)
 	if (dist <= 128)
@@ -628,7 +628,7 @@ mmove_t mygunnermove_pain_short = { FRAME_pain301, FRAME_pain305, mygunnerframes
 
 void mygunner_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
-	double rng = random();
+	const double rng = random();
 	if (self->health < (self->max_health / 2))
 		self->s.skinnum = 1;
 

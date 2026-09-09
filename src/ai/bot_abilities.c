@@ -198,9 +198,9 @@ qboolean BOT_DMclass_UseTball(edict_t* self, qboolean forget_enemy)
 		if (forget_enemy)
 			self->enemy = NULL;
 		// change state so that AI_Think finds a new goal and path since we teleported away from our previous one
-		//self->ai.state = BOT_STATE_WANDER;
+		//self->ai->state = BOT_STATE_WANDER;
 		AI_ResetNavigation(self);
-		self->ai.bloqued_timeout = level.time + 15.0;
+		self->ai->bloqued_timeout = level.time + 15.0;
 		return true;
 	}
 	return false;
@@ -222,7 +222,7 @@ float AI_GetAbilityRangeWeightByDistance(int ability_index, float distance)
 
 float AI_GetAbilityProjectileVelocity(edict_t* ent, int ability_index)
 {
-	int slvl = ent->myskills.abilities[ability_index].current_level;
+	const int slvl = ent->myskills.abilities[ability_index].current_level;
 	switch (ability_index)
 	{
 	case MIRV: return 600;
@@ -336,7 +336,7 @@ int BOT_DMclass_ChooseAbility(edict_t* self)
 			continue;
 
 		//compare range weights
-		float weight = AIAbilities[i].RangeWeight[weapon_range];
+		const float weight = AIAbilities[i].RangeWeight[weapon_range];
 		if (weight > best_weight) {
 			best_weight = weight;
 			best_ability = i;
@@ -382,7 +382,7 @@ void BOT_DMclass_FireAbility(edict_t* self, int ability_index)
 		return;
 
 	// range check
-	float dist = entdist(self, self->enemy);
+	const float dist = entdist(self, self->enemy);
 
 	// don't bother firing if we're unlikely to hit anything
 	if (AI_GetAbilityRangeWeightByDistance(ability_index, dist) < 0.1)
@@ -396,8 +396,8 @@ void BOT_DMclass_FireAbility(edict_t* self, int ability_index)
 		//	return;
 
 		// get firing parameters
-		int aimType = AIAbilities[ability_index].aimType;
-		float speed = AI_GetAbilityProjectileVelocity(self, ability_index);
+		const int aimType = AIAbilities[ability_index].aimType;
+		const float speed = AI_GetAbilityProjectileVelocity(self, ability_index);
 		if (aimType == AI_AIMSTYLE_BALLISTIC)
 			is_ballistic = true;
 		else if (aimType == AI_AIMSTYLE_PREDICTION_EXPLOSIVE)
@@ -480,18 +480,18 @@ void BOT_DMclass_UseBlinkStrike(edict_t* self)
 	// can't use blinkstrike
 	if (!V_CanUseAbilities(self, BLINKSTRIKE, cost, false))
 		return;
-	//gi.dprintf("%s: %s\n", self->ai.pers.netname, __func__);
+	//gi.dprintf("%s: %s\n", self->ai->pers.netname, __func__);
 	// range check
-	float dist = entdist(self, self->enemy);
+	const float dist = entdist(self, self->enemy);
 	if (dist > AI_RANGE_SNIPER || dist < AI_RANGE_SHORT)
 		return;
 	// don't bother against flying opponents
 	if (self->enemy->flags & FL_FLY)
 		return;
 	// bot should be attacking and using CombatMovement
-	//if (self->ai.state != BOT_STATE_ATTACK)
+	//if (self->ai->state != BOT_STATE_ATTACK)
 	//	return;
-	//gi.dprintf("%s attempted to call %s\n", self->ai.pers.netname, __func__);
+	//gi.dprintf("%s attempted to call %s\n", self->ai->pers.netname, __func__);
 	Cmd_BlinkStrike_f(self);
 }
 
@@ -507,10 +507,10 @@ void BOT_DMclass_UseBoost(edict_t* self)
 	if (!V_CanUseAbilities(self, BOOST_SPELL, COST_FOR_BOOST, false))
 		return;
 	// bot should be attacking and using CombatMovement
-	if (self->ai.state != BOT_STATE_ATTACK)
+	if (self->ai->state != BOT_STATE_ATTACK)
 		return;
 	// range check
-	float dist = entdist(self, self->enemy);
+	const float dist = entdist(self, self->enemy);
 	if (dist > AI_RANGE_SNIPER || dist < AI_RANGE_SHORT)
 		return;
 
@@ -546,7 +546,7 @@ void BOT_DMclass_UseSkeleton(edict_t* self)
 	if (self->num_skeletons >= SKELETON_MAX)
 		return;
 	// get view origin
-	vec3_t forward, right, start, offset, mins, maxs;
+	vec3_t forward, right, start, offset, mins = { 0, 0, 0 }, maxs = { 0, 0, 0 };
 	AngleVectors(self->client->v_angle, forward, right, NULL);
 	VectorSet(offset, 0, 8, self->viewheight - 8);
 	P_ProjectSource(self->client, self->s.origin, offset, forward, right, start);
@@ -568,7 +568,7 @@ void BOT_DMclass_UseGolem(edict_t* self)
 	if (self->num_golems >= GOLEM_MAX)
 		return;
 	// get view origin
-	vec3_t forward, right, start, offset, mins, maxs;
+	vec3_t forward, right, start, offset, mins = { 0, 0, 0 }, maxs = { 0, 0, 0 };
 	AngleVectors(self->client->v_angle, forward, right, NULL);
 	VectorSet(offset, 0, 8, self->viewheight - 8);
 	P_ProjectSource(self->client, self->s.origin, offset, forward, right, start);
@@ -584,7 +584,7 @@ void BOT_DMclass_UseGolem(edict_t* self)
 int AI_NearbyEnemies(edict_t* self, vec3_t org, float radius)
 {
 	int enemies = 0;
-	edict_t* e = NULL;
+	const edict_t* e = NULL;
 
 	while ((e = findradius(e, org, radius)) != NULL)
 	{
@@ -640,7 +640,7 @@ qboolean BOT_DMclass_TargetBarrel(edict_t* self)
 		self->enemy = bestTarget;
 
 		if (AIDevel.debugChased && bot_showcombat->value)
-			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: targetting %s because of nearby enemies!\n", self->ai.pers.netname, bestTarget->classname);
+			safe_cprintf(AIDevel.chaseguy, PRINT_HIGH, "%s: targetting %s because of nearby enemies!\n", self->ai->pers.netname, bestTarget->classname);
 		return true;
 	}
 
@@ -659,7 +659,7 @@ void BOT_DMclass_MorphPlayer(edict_t* self)
 	// upgraded
 	if (self->myskills.abilities[BERSERK].current_level > 0)
 	{
-		//gi.dprintf("%s: morphing to berserk\n", self->ai.pers.netname);
+		//gi.dprintf("%s: morphing to berserk\n", self->ai->pers.netname);
 		Cmd_PlayerToBerserk_f(self);
 	}
 }

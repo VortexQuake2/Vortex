@@ -93,7 +93,7 @@ qboolean SV_RunThink (edict_t *ent)
 	thinktime = ent->nextthink;
 	if (thinktime <= 0)
 		return true;
-	if (thinktime > level.time+0.001)
+	if (thinktime > level.time+FRAMETIME-0.001)
 		return true;
 	//gi.dprintf("SV_RunThink()\n");
 	//GHz START
@@ -124,10 +124,7 @@ Two entities have touched, so run their touch functions
 */
 void SV_Impact (edict_t *e1, trace_t *trace)
 {
-	edict_t		*e2;
-//	cplane_t	backplane;
-
-	e2 = trace->ent;
+	edict_t *e2 = trace->ent;
 
 	if (e1->touch && e1->solid != SOLID_NOT)
 		e1->touch (e1, e2, &trace->plane, trace->surface);
@@ -185,159 +182,52 @@ Returns the clipflags if the velocity was modified (hit something solid)
 ============
 */
 #define	MAX_CLIP_PLANES	5
+
+// az: the thread_local is here juuuuuuust in case lol
+thread_local edict_t* _flymove_ent;
+thread_local enum contents_t _flymove_mask;
+
+trace_t _traces(const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end)
+{
+	return gi.trace(start, mins, maxs, end, _flymove_ent, _flymove_mask);
+}
+
 int SV_FlyMove (edict_t *ent, float time, int mask)
 {
-	edict_t		*hit;
-	int			bumpcount, numbumps;
-	vec3_t		dir;
-	float		d;
-	int			numplanes;
-	vec3_t		planes[MAX_CLIP_PLANES];
-	vec3_t		primal_velocity, original_velocity, new_velocity;
-	int			i, j;
-	trace_t		trace;
-	vec3_t		end;
-	float		time_left;
-	int			blocked;
-	
-	numbumps = 4;
-	
-	blocked = 0;
-	VectorCopy (ent->velocity, original_velocity);
-	VectorCopy (ent->velocity, primal_velocity);
-	numplanes = 0;
-	
-	time_left = time;
+	int			blocked = 0; //TODO: No-op?
 
-	ent->groundentity = NULL;
-	for (bumpcount=0 ; bumpcount<numbumps ; bumpcount++)
+	ent->groundentity = nullptr;
+
+	//az: replace with repro impl.
+	touch_list_t touch = {};
+	_flymove_ent = ent;
+	_flymove_mask = mask;
+	PM_StepSlideMove_Generic(ent->s.origin, ent->velocity, time, ent->mins, ent->maxs, &touch, false, _traces);
+
+	for (size_t i = 0; i < touch.num; i++)
 	{
-		for (i=0 ; i<3 ; i++)
-			end[i] = ent->s.origin[i] + time_left * ent->velocity[i];
+		const auto trace = &touch.traces[i];
 
-		trace = gi.trace (ent->s.origin, ent->mins, ent->maxs, end, ent, mask);
-
-		if (trace.allsolid)
-		{	// entity is trapped in another solid
-			VectorCopy (vec3_origin, ent->velocity);
-			return 3;
-		}
-
-		if (trace.fraction > 0)
-		{	// actually covered some distance
-			VectorCopy (trace.endpos, ent->s.origin);
-			VectorCopy (ent->velocity, original_velocity);
-			numplanes = 0;
-		}
-
-		if (trace.fraction == 1)
-			 break;		// moved the entire distance
-
-		hit = trace.ent;
-
-		if (trace.plane.normal[2] > 0.7)
+		if (trace->plane.normal[2] > 0.7f)
 		{
-			blocked |= 1;		// floor
-			if ( hit->solid == SOLID_BSP)
-			{
-				//GHz START
-				// monster wasn't previously on the ground (aireborne), so call touchdown function if we have one
-				if (!ent->groundentity && ent->monsterinfo.touchdown)
-					ent->monsterinfo.touchdown(ent);
-				//GHz END
-				ent->groundentity = hit;
-				ent->groundentity_linkcount = hit->linkcount;
-			}
-		}
-		if (!trace.plane.normal[2])
-		{
-			blocked |= 2;		// step
+			ent->groundentity = trace->ent;
+			ent->groundentity_linkcount = trace->ent->linkcount;
 		}
 
-//
-// run the impact function
-//
-		SV_Impact (ent, &trace);
-		if (!ent->inuse)
-			break;		// removed by the impact function
+		//
+		// run the impact function
+		//
+		SV_Impact(ent, trace);
 
-		
-		time_left -= time_left * trace.fraction;
-		
-	// cliped to another plane
-		if (numplanes >= MAX_CLIP_PLANES)
-		{	// this shouldn't really happen
-			VectorCopy (vec3_origin, ent->velocity);
-			return 3;
-		}
-
-		VectorCopy (trace.plane.normal, planes[numplanes]);
-		numplanes++;
-
-//
-// modify original_velocity so it parallels all of the clip planes
-//
-//numplanes = 0;
-		if (ent->client)//K03 added in a call to make sure it is a client entity
-		{
-//PON-CTF
-		i = false;
-		if(!i){if(!ent->groundentity) i = true;}
-//PON-CTF
-		if(!i)
-		{
-			numplanes = 0;
-			if(ent->waterlevel || (!ent->groundentity && ent->velocity[2] > 10 )) goto VELCX;
-			i =0;
-			if(/*ent->groundentity ||*/ ent->velocity[2] > 10) goto VELC;
-
-		}
-		}//K03 End
-
-		for (i=0 ; i<numplanes ; i++)
-		{
-			ClipVelocity (original_velocity, planes[i], new_velocity, 1);
-
-			for (j=0 ; j<numplanes ; j++)
-				if (j != i)
-				{
-					if (DotProduct (new_velocity, planes[j]) < 0)
-						break;	// not ok
-				}
-			if (j == numplanes)
-				break;
-		}
-//ponko
-
-//ponko
-VELC:
-		if (i != numplanes)
-		{	// go along this plane
-			VectorCopy (new_velocity, ent->velocity);
-		}
-		else
-		{	// go along the crease
-			if (numplanes != 2)
-			{
-//				gi.dprintf ("clip velocity, numplanes == %i\n",numplanes);
-				VectorCopy (vec3_origin, ent->velocity);
-				return 7;
-			}
-			CrossProduct (planes[0], planes[1], dir);
-			d = DotProduct (dir, ent->velocity);
-			VectorScale (dir, d, ent->velocity);
-		}
-VELCX:
-//
-// if original velocity is against the original velocity, stop dead
-// to avoid tiny occilations in sloping corners
-//
-		if (DotProduct (ent->velocity, primal_velocity) <= 0)
-		{
-			VectorCopy (vec3_origin, ent->velocity);
-			return blocked;
-		}
+		// impact func requested velocity kill
+		// if (ent->flags & FL_KILL_VELOCITY)
+		// {
+		// 	ent->flags &= ~FL_KILL_VELOCITY;
+		// 	ent->velocity = {};
+		// }
 	}
+
+	
 
 	return blocked;
 }
@@ -485,9 +375,6 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 		if (!check->solid) continue;
 
 //ponko
-		//r1: FIXME: what the fuck?
-		if(check->classname[0] == 'R' && (check->classname[6] == 'X' || check->classname[6] == '3') ) continue;
-
 		if (check->movetype == MOVETYPE_PUSH
 		|| check->movetype == MOVETYPE_STOP
 		|| check->movetype == MOVETYPE_NONE
@@ -495,8 +382,13 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 			continue;
 
 //		if(check->movetype == MOVETYPE_STEP) M_CheckGround(check);
+#ifndef VRX_REPRO
 		if (!check->area.prev)
 			continue;		// not linked in anywhere
+#else
+		if (!check->linked)
+			continue;
+#endif
 
 	// if the entity is standing on the pusher, it will definitely be moved
 		if (check->groundentity != pusher)
@@ -722,7 +614,7 @@ void SV_Physics_Toss (edict_t *ent)
 	qboolean	isinwater;
 	vec3_t		old_origin;
 
-	qboolean	forcethrough = false;
+	const qboolean	forcethrough = false;
 
 // regular thinking
 	SV_RunThink (ent);
@@ -739,15 +631,12 @@ void SV_Physics_Toss (edict_t *ent)
 		if (!ent->groundentity->inuse)
 			ent->groundentity = NULL;
 
-
-
 // if onground, return without moving
 	if (ent->groundentity)
 	{
 		V_TouchSolids(ent);
 		return;
 	}
-
 
 	VectorCopy (ent->s.origin, old_origin);
 
@@ -800,10 +689,10 @@ void SV_Physics_Toss (edict_t *ent)
 		// spikeball never stops bouncing
 		if (ent->mtype == M_SPIKEBALL)
 		{
-			float delta = 275 - ent->velocity[2];
+			const float delta = 275 - ent->velocity[2];
 
 			// don't get stuck on the ceiling
-			if (trace.plane.normal[2] != -1.0)
+			if (trace.plane.normal[2] > -0.7)
 				ent->velocity[2] += delta;
 
 			// always bounce away from the wall

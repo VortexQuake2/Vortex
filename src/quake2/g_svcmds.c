@@ -2,9 +2,7 @@
 #include "../gamemodes/ctf.h"
 #include <sys/stat.h>
 
-//#if defined(_WIN32) || defined(WIN32)
-//#include <windows.h>
-//#endif
+#include "server/relay.h"
 
 //Function prototypes required for this .c file:
 void dom_spawnflag (void);
@@ -306,6 +304,7 @@ void	Svcmd_Test_f (void)
 
 void SVCmd_AddExp_f (void)
 {
+#ifndef LOCK_DEFAULTS
     int		points;
     char	*name;
     edict_t *e;
@@ -322,19 +321,19 @@ void SVCmd_AddExp_f (void)
             return;
         }
 
-        e->myskills.experience += points;
-        e->client->resp.score += points;
+        vrx_apply_experience(e, points);
         safe_cprintf(NULL, PRINT_HIGH, "Gave %d experience to %s.\n", points, e->client->pers.netname);
-        vrx_check_for_levelup(e, true);
         vrx_write_to_logfile(e, va("Experience was modified. (amount = %d)\n", points));
         return;
     }
 
     safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", name);
+#endif
 }
 
 void SVCmd_AddCredits_f (void)
 {
+#ifndef LOCK_DEFAULTS
     int		points;
     char	*name;
     edict_t *e;
@@ -351,16 +350,16 @@ void SVCmd_AddCredits_f (void)
     }
 
     safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", name);
+#endif
 }
 
 void SVCmd_MakeAdmin_f (void)
 {
-    int		lvl;
-    char	*name;
+#ifndef LOCK_DEFAULTS
     edict_t *e;
 
-    name = gi.argv(2);
-    lvl = atoi(gi.argv(3));
+    char *name = gi.argv(2);
+    int lvl = atoi(gi.argv(3));
 
     //gi.dprintf("name: %s level: %d\n", name, lvl);
     if ((e = FindPlayer(name)) != NULL)
@@ -377,6 +376,9 @@ void SVCmd_MakeAdmin_f (void)
     }
 
     safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", name);
+#else
+
+#endif
 }
 
 void SVCmd_AddAbilityPoints_f (void)
@@ -399,6 +401,7 @@ void SVCmd_AddAbilityPoints_f (void)
 
 void SVCmd_AddTalentPoints_f (void)
 {
+#ifndef LOCK_DEFAULTS
     char	*name;
     edict_t *e;
 
@@ -413,10 +416,12 @@ void SVCmd_AddTalentPoints_f (void)
     }
 
     safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", name);
+#endif
 }
 
 void SVCmd_AddWeaponPoints_f (void)
 {
+#ifndef LOCK_DEFAULTS
     char	*name;
     edict_t *e;
 
@@ -431,7 +436,7 @@ void SVCmd_AddWeaponPoints_f (void)
     }
 
     safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", name);
-
+#endif
 }
 
 int GetLevelValue (edict_t *player);
@@ -664,7 +669,7 @@ void SVCmd_MakeBoss_f (void)
 void SVCmd_ChangeClass_f (void)
 {
     char	*playername = gi.argv(2);
-    int		newclass = getClassNum(gi.argv(3));
+    const int		newclass = getClassNum(gi.argv(3));
     edict_t *p;
 
     if ((newclass < 1) || (newclass > CLASS_MAX))
@@ -681,9 +686,10 @@ void SVCmd_ChangeClass_f (void)
 
 void SVCmd_ExpHole_f()
 {
+#ifndef LOCK_DEFAULTS
     char *pname = gi.argv(2);
     edict_t *p;
-    int value = atoi(gi.argv(3));
+    const int value = atoi(gi.argv(3));
 
     if ((value < 0) || (value > 1000000) || (strlen(pname) < 1))
     {
@@ -700,13 +706,14 @@ void SVCmd_ExpHole_f()
     }
 
     safe_cprintf(NULL, PRINT_HIGH, "Can't find %s.\n", pname);
+#endif
 }
 
 void SVCmd_SetTeam_f()
 {
     char *pname = gi.argv(2);
     edict_t *p;
-    int value = atoi(gi.argv(3));
+    const int value = atoi(gi.argv(3));
 
     if ((value < 0) || (strlen(pname) < 0))
     {
@@ -779,7 +786,7 @@ void DoMaplistFilename(int mode, char* filename);
 
 void SV_AddMapToMaplist()
 {
-    int mode = atoi(gi.argv(2));
+    const int mode = atoi(gi.argv(2));
     char* map = gi.argv(3);
     char filename[256];
     qboolean IsAppend = true;
@@ -843,11 +850,6 @@ void	ServerCommand (void)
         // az begin
     else if (Q_stricmp(cmd, "avglevel") == 0)
         gi.dprintf("Average level: %d\n", AveragePlayerLevel());
-#ifndef NO_GDS
-    else if (Q_stricmp (cmd, "connectgds") == 0)
-		gds_connect();
-	// az end
-#endif
 //GHz START
 //#if ALLOW_ADMIN
     else if (Q_stricmp (cmd, "addexp") == 0)
@@ -903,6 +905,8 @@ void	ServerCommand (void)
 //Ticamai START
     else if (Q_stricmp (cmd, "saveplayers") == 0)
         SV_SaveAllCharacters ();
+    else if (Q_stricmp(cmd, "reconnectrelay") == 0)
+        vrx_relay_connect();
 
 //Ticamai END
     else
@@ -911,11 +915,10 @@ void	ServerCommand (void)
 
 
 int HighestLevelPlayer(void) {
-    edict_t *player;
     int highest = 0, i;
 
     for (i = 1; i <= maxclients->value; i++) {
-        player = &g_edicts[i];
+        edict_t *player = &g_edicts[i];
 
         if (!player->inuse)
             continue;
@@ -935,11 +938,10 @@ int HighestLevelPlayer(void) {
 }
 
 int PvMHighestLevelPlayer(void) {
-    edict_t *player;
-    int highest = 0, i;
+    int highest = 0;
 
-    for (i = 1; i <= maxclients->value; i++) {
-        player = &g_edicts[i];
+    for (int i = 1; i <= maxclients->value; i++) {
+        edict_t *player = &g_edicts[i];
 
         if (!player->inuse)
             continue;
@@ -959,11 +961,10 @@ int PvMHighestLevelPlayer(void) {
 }
 
 int PvMLowestLevelPlayer(void) {
-    edict_t *player;
-    int lowest = 999, i;
+    int lowest = 999;
 
-    for (i = 1; i <= maxclients->value; i++) {
-        player = &g_edicts[i];
+    for (int i = 1; i <= maxclients->value; i++) {
+        edict_t *player = &g_edicts[i];
 
         if (!player->inuse)
             continue;
@@ -983,17 +984,16 @@ int PvMLowestLevelPlayer(void) {
 }
 
 int LowestLevelPlayer(void) {
-    edict_t *player;
-    int lowest = 999, i;
+    int lowest = 999;
 
-    for (i = 1; i <= maxclients->value; i++) {
-        player = &g_edicts[i];
+    for (int i = 1; i <= maxclients->value; i++) {
+        edict_t *player = &g_edicts[i];
 
         if (!player->inuse)
             continue;
 
         //decino: don't check for bot levels because this also calculates theirs!
-        if (player->ai.is_bot)
+        if (player->ai)
             continue;
 
         if (G_IsSpectator(player))

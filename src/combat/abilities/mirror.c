@@ -267,7 +267,7 @@ void dummy_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage,
 
 void dummy_copy_activator(edict_t* self)
 {
-	int skin_number = maxclients->value + self->s.number - 1;//self - g_edicts - 1;//maxclients->value; // the first "free" index
+	const int skin_number = maxclients->value + self->s.number - 1;//self - g_edicts - 1;//maxclients->value; // the first "free" index
 	//int weap_index = WEAP_HYPERBLASTER;
 
 	if (!self->activator || !self->activator->inuse)

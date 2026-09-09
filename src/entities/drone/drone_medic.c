@@ -177,7 +177,7 @@ void mymedic_run (edict_t *self)
 void mymedic_fire_blaster (edict_t *self)
 {
 	int		effect, damage;
-	float speed = 2000; // speed: medic_blaster
+	const float speed = 2000; // speed: medic_blaster
 	vec3_t	forward, start;
 	qboolean bounce = false;
 	
@@ -700,7 +700,7 @@ void M_Reanimate (edict_t *ent, edict_t *target, int r_level, float r_modifier, 
 	}
 	else if ((!strcmp(target->classname, "bodyque") || !strcmp(target->classname, "player")))
 	{
-		int		random=GetRandom(1, 3);
+		const int		random=GetRandom(1, 3);
 		vec3_t	start;
 
 		// if the summoner is a player, check for sufficient monster slots

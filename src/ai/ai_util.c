@@ -83,30 +83,30 @@ qboolean AI_StraightPath(edict_t* self, float dist, float min_dp_value)
 	vec3_t v1, v2;
 
 	// distance to next node
-	len = total = distance(self->s.origin, nodes[self->ai.next_node].origin);
+	len = total = distance(self->s.origin, nodes[self->ai->next_node].origin);
 
 	// current leg of path is long enough, and the line between two points is always straight
 	if (len >= dist)
 		return true;
 
 	// find the next node position in the path
-	while (self->ai.path.nodes[pos] != self->ai.next_node)
+	while (self->ai->path.nodes[pos] != self->ai->next_node)
 	{
 		pos++;
-		if (self->ai.path.goalNode == self->ai.path.nodes[pos])
+		if (self->ai->path.goalNode == self->ai->path.nodes[pos])
 			return false;	// reached the end of the path
 	}
 
 	// vector from current node to next node
-	VectorSubtract(nodes[self->ai.next_node].origin, nodes[self->ai.current_node].origin, v1);
+	VectorSubtract(nodes[self->ai->next_node].origin, nodes[self->ai->current_node].origin, v1);
 	VectorNormalize(v1);
 
-	//gi.dprintf("AI_StraightPath: %d (#%d) --> %d (#%d) [len:%.0f]", self->ai.current_node, pos-1, self->ai.next_node, pos, len);
+	//gi.dprintf("AI_StraightPath: %d (#%d) --> %d (#%d) [len:%.0f]", self->ai->current_node, pos-1, self->ai->next_node, pos, len);
 
 	// check the remaining nodes in our path to see if they are (mostly) parallel/straight
-	while (self->ai.path.nodes[pos] != self->ai.goal_node && count < 32)
+	while (self->ai->path.nodes[pos] != self->ai->goal_node && count < 32)
 	{
-		VectorSubtract(nodes[self->ai.path.nodes[pos + 1]].origin, nodes[self->ai.path.nodes[pos]].origin, v2);
+		VectorSubtract(nodes[self->ai->path.nodes[pos + 1]].origin, nodes[self->ai->path.nodes[pos]].origin, v2);
 		len = VectorLength(v2);
 		VectorNormalize(v2);
 		dot = DotProduct(v2, v1);
@@ -116,7 +116,7 @@ qboolean AI_StraightPath(edict_t* self, float dist, float min_dp_value)
 		//if (delta > 180.0f)
 		//	delta = 360.0f - delta;
 
-		//gi.dprintf("--> %d (#%d) [len:%.0f dot:%.2f delta:%.1f]",  self->ai.path.nodes[pos+1], pos+1, len, dot, delta);
+		//gi.dprintf("--> %d (#%d) [len:%.0f dot:%.2f delta:%.1f]",  self->ai->path.nodes[pos+1], pos+1, len, dot, delta);
 		if (dot < 0.8)
 		{
 			//gi.dprintf("\n");
@@ -184,10 +184,10 @@ float BOT_DMclass_ThrowingPitch2(edict_t* self, float v_xy, float v_z)
 //FIXME: move to q_shared.c if this function is used elsewhere
 void ProjectOnPlane(vec3_t dst, const vec3_t p, const vec3_t normal)
 {
-	float sqrMag = DotProduct(normal, normal);
+	const float sqrMag = DotProduct(normal, normal);
 	if (sqrMag < FLT_EPSILON)
 		return;
-	float dot = DotProduct(normal, p);
+	const float dot = DotProduct(normal, p);
 	dst[0] = p[0] - normal[0] * dot / sqrMag;
 	dst[1] = p[1] - normal[1] * dot / sqrMag;
 	dst[2] = p[2] - normal[2] * dot / sqrMag;
@@ -198,7 +198,7 @@ void ProjectOnPlane(vec3_t dst, const vec3_t p, const vec3_t normal)
 //FIXME: move to q_shared.c if this function is used elsewhere
 void CalculateDisplacement(vec3_t startAngles, vec3_t startPos, vec3_t endPos, float* horizontal, float* vertical)
 {
-	vec3_t v, xy_v, up;
+	vec3_t v = { 0, 0, 0 }, xy_v = { 0, 0, 0 }, up = { 0, 0, 0 };
 	VectorSubtract(endPos, startPos, v);
 	*vertical = v[2];
 	AngleVectors(startAngles, NULL, NULL, up);
@@ -263,7 +263,7 @@ float BOT_DMclass_ThrowingPitch1(edict_t* self, float v)
 	//AngleVectors(self->client->v_angle, forward, right, NULL);
 	//P_ProjectSource(self->client, self->s.origin, offset, forward, right, start);
 
-	float g = sv_gravity->value;
+	const float g = sv_gravity->value;
 	float d;// = Get2dDistance(start, self->enemy->s.origin);//Horizontal distance to the target.
 	float h;// = self->enemy->s.origin[2] - start[2]; //Vertical difference between the projectile's initial height and the target height.
 
@@ -273,7 +273,7 @@ float BOT_DMclass_ThrowingPitch1(edict_t* self, float v)
 	//gi.dprintf("displacement: h: %.0f v: %.0f\n", h_d, v_d);
 
 	//float h = 1.0*(self->enemy->absmin[2] - self->absmax[2]);
-	double discriminant = pow(v, 4) - g * (g * pow(d, 2) + (2 * h * pow(v, 2)));
+	const double discriminant = pow(v, 4) - g * (g * pow(d, 2) + (2 * h * pow(v, 2)));
 
 	if (discriminant <= 0)
 	{
@@ -355,7 +355,7 @@ qboolean AI_ClearWalkingPath(edict_t* self, vec3_t start, vec3_t end)
 	// did the bot fall out of the map or are we using noclip?!
 	if (self->solid == SOLID_NOT || gi.pointcontents(self->s.origin) & MASK_SOLID)
 	{
-		//gi.dprintf("**WARNING: %s called %s within a solid or while nonsolid\n", self->ai.pers.netname, __func__);
+		//gi.dprintf("**WARNING: %s called %s within a solid or while nonsolid\n", self->ai->pers.netname, __func__);
 		return true;
 	}
 
@@ -414,20 +414,14 @@ qboolean AI_ClearWalkingPath(edict_t* self, vec3_t start, vec3_t end)
 		//gi.dprintf("remaining distance: %f\n", distance(tr_pos, path_end));
 		i++;
 		//if (i == 9999)
-		//	gi.dprintf("**WARNING: %s aborted infinite loop in %s\n", self->ai.pers.netname, __func__);
+		//	gi.dprintf("**WARNING: %s aborted infinite loop in %s\n", self->ai->pers.netname, __func__);
 	}
 	return true;
 }
 
-// converts the respawn_weapon index value (set in v_menu.c) to WEAP_* index
+// converts the respawn_weapon index value (set in v_menu.c) to WEAPON_* index
+// now is a no-op, respawn_weapon changed to be WEAPON_* values
 int AI_RespawnWeaponToWeapIndex(int respawn_weapon)
 {
-	if (respawn_weapon == 1)
-		return WEAP_SWORD;
-	else if (respawn_weapon == 11)
-		return WEAP_GRENADES;
-	else if (respawn_weapon == 13)
-		return WEAP_BLASTER;
-	else
-		return respawn_weapon - 1;
+		return respawn_weapon;
 }

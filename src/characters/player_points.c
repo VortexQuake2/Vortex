@@ -1,7 +1,9 @@
 #include "g_local.h"
 #include "../gamemodes/ctf.h"
 
+#ifndef TEST_RUNNER
 char *HiPrint(char *text) {
+#ifndef USE_HIGHCHARS
     int i;
     char *ReturnVal;
 
@@ -15,17 +17,34 @@ char *HiPrint(char *text) {
         if ((byte) ReturnVal[i] <= 127)
             ReturnVal[i] = (byte) ReturnVal[i] + 128;
     return ReturnVal;
+#else
+    size_t len = strlen(text);
+    char *ReturnVal = vrx_malloc(len + 3, TAG_LEVEL);
+    char *p = ReturnVal;
+    memset(ReturnVal, 0, len + 3);
+
+    // shift out
+    p = strcat(ReturnVal, "\x14");
+    p = strcat(p, text);
+    p = strcat(p, "\x15");
+    return ReturnVal;
+#endif
 }
+#else
+char* HiPrint(char* ch) {
+    return strdup(ch);
+}
+#endif
 
 // this needs to match vrx_update_free_abilities() in v_utils.c
 void vrx_add_levelup_boons(edict_t *ent) {
     if ((ent->myskills.level % 5) == 0) {
-        if (ent->myskills.abilities[MAX_AMMO].level < ent->myskills.abilities[MAX_AMMO].max_level) {
+        if (ent->myskills.abilities[MAX_AMMO].level < ent->myskills.abilities[MAX_AMMO].soft_max) {
             ent->myskills.abilities[MAX_AMMO].level++;
             ent->myskills.abilities[MAX_AMMO].current_level++;
         } else ent->myskills.speciality_points++;
 
-        if (ent->myskills.abilities[VITALITY].level < ent->myskills.abilities[VITALITY].max_level) {
+        if (ent->myskills.abilities[VITALITY].level < ent->myskills.abilities[VITALITY].soft_max) {
             ent->myskills.abilities[VITALITY].level++;
             ent->myskills.abilities[VITALITY].current_level++;
         } else ent->myskills.speciality_points++;
@@ -46,44 +65,17 @@ void vrx_add_levelup_boons(edict_t *ent) {
         ent->myskills.talents.talentPoints++;
 }
 
-gitem_t *GetWeaponForNumber(int i) {
-    switch (i) {
-        case 2:
-            return Fdi_SHOTGUN;
-        case 3:
-            return Fdi_SUPERSHOTGUN;
-        case 4:
-            return Fdi_MACHINEGUN;
-        case 5:
-            return Fdi_CHAINGUN;
-        case 6:
-            return Fdi_GRENADES;
-        case 7:
-            return Fdi_GRENADELAUNCHER;
-        case 8:
-            return Fdi_ROCKETLAUNCHER;
-        case 9:
-            return Fdi_HYPERBLASTER;
-        case 10:
-            return Fdi_RAILGUN;
-        case 11:
-            return Fdi_BFG;
-    }
-    return Fdi_ROCKETLAUNCHER;
-}
-
-
 double vrx_get_points_tnl (int level) 
 {
     long    tnl = 0;
     // this is the top of our sigmoid 'S' curve, where it becomes asymptotic
-    long    max_exp_tnl = 50000;
+    const long    max_exp_tnl = 50000;
 
     // note: for loop below can be removed to make curve more 'S' like than current exponential curve by changing the max_exp_tnl, e.g. 250000
     // for reference, the old system would return 149K TNL at level 20, whereas this one returns 546K
     for (int i = 0; i <= level; i++) {
         // this is the 'x' input value into the sigmoid function that allows up to determine which part of the curve to utilize
-        double x = i - 5 - (0.5 * i);
+        const double x = i - 5 - (0.5 * i);
         tnl += (long)(sigmoid(x) * max_exp_tnl) + 1000;
         //gi.dprintf("%i x: %f tnl: %d\n", i, x, tnl);
     }
@@ -92,80 +84,56 @@ double vrx_get_points_tnl (int level)
     return tnl;
 }
 
-#if 0
-double vrx_get_points_tnl(int level) {
-    static const double lowlv_curve[] = {
-        2500, // lv 0
-        7500,
-        15000,
-        25000,
-        40000,
-        50000, // lv 5
-        60000,
-        70000,
-        80000,
-        90000,
-        100000 // lv 10
-    };
-
-    if (level <= 10)
-        return lowlv_curve[level];
-
-
-    // we got these coefficients through a polyfit function with the following constraints:
-    /*
-         * lv_constraints = [
-		    [0,  5000,  1 / 3],       # One game to level up (a third of an hour is one game)
-		    [5,  10000, hrs_day * 1], # 1 day to level up
-		    [10, 20000, hrs_day * 1], # this constraint messes up polyfit
-		    [15, 25000, hrs_day * 3], # 3 days to lv. up
-		    [25, 50000, hrs_day * 7],  # 7 days to lv. up
-		    [50, 60000, hrs_day * 14]  # 14 days to lv. up
-		]
-    */
-
-    double x = min(level, 32);
-    double tnl_unrounded = 5.00000000e+03 +
-	    x * 5.30474274e+04 +
-	    pow(x, 2) * -1.33679341e+04 +
-	    pow(x, 3) * 1.08446320e+03  +
-	    pow(x, 4) * -1.75330061e+01 +
-	    pow(x, 5) * -2.30535750e-01 +
-	    pow(x, 6) * 5.23956950e-03;
-
-    // we don't really use those results as is though, we cap xp at around level 32 at approx. 3m xp/level.
-    return min(round(tnl_unrounded / 5000) * 5000, 3000000);
+// xptbl[i] = exp to get to level i
+static uint32_t xptbl[MAX_LEVEL] = {0};
+void vrx_fill_xp_accum_table() {
+    for (int i = 1; i < MAX_LEVEL; i++) {
+        xptbl[i] = xptbl[i - 1] + vrx_get_points_tnl(i - 1);
+    }
 }
-#endif
+
+int16_t vrx_get_xp_percent(long xp, int level) {
+    if (level == MAX_LEVEL || level < 0)
+        return INT16_MAX;
+
+    const auto difference = xp - xptbl[level];
+    const auto range = xptbl[level + 1] - xptbl[level];
+    const auto ratio = difference / (double) range;
+
+    if (difference < 0)
+        return 0;
+
+    return ratio * INT16_MAX;
+}
 
 void vrx_check_for_levelup(edict_t *ent, qboolean print_message) {
 	qboolean levelup = false;
 
-    if (ent->ai.is_bot) // bots don't level up -az
+    if (ent->ai) // bots don't level up -az
         return;
 
     while (ent->myskills.experience >= ent->myskills.next_level) {
         levelup = true;
 
         // maximum level cap
-        if (!ent->myskills.administrator && ent->myskills.level >= 50) // cap to 50
+        if (!ent->myskills.administrator && ent->myskills.level >= MAX_LEVEL) // cap to 50
         {
             ent->myskills.next_level = ent->myskills.experience;
             return;
         }
 
         ent->myskills.level++;
-        double points_needed = vrx_get_points_tnl(ent->myskills.level);
+        const double points_needed = vrx_get_points_tnl(ent->myskills.level);
 
 
         ent->myskills.next_level += points_needed;
 
-        if (ent->myskills.level <= 10 || ent->ai.is_bot) // bots and players under level 10 get 2 ability points per level
+        if (ent->myskills.level <= 10 || ent->ai) // bots and players under level 10 get 2 ability points per level
             ent->myskills.speciality_points += 2;
         else
             ent->myskills.speciality_points += 1;
         if (generalabmode->value && ent->myskills.class_num == CLASS_WEAPONMASTER)
-            ent->myskills.weapon_points += 6;
+            ent->myskills.weapon_points += 8;
         else // 4 points for everyone, only weaponmasters in generalabmode.
             ent->myskills.weapon_points += 4;
 
@@ -178,7 +146,7 @@ void vrx_check_for_levelup(edict_t *ent, qboolean print_message) {
         }
 
         // maximum level cap
-        if (!ent->myskills.administrator && ent->myskills.level >= 50) {
+        if (!ent->myskills.administrator && ent->myskills.level >= MAX_LEVEL) {
             ent->myskills.next_level = ent->myskills.experience;
             break;
         }
@@ -223,8 +191,8 @@ void vrx_trigger_spree_abilities(edict_t *attacker) {
     // otherwise the player will keep getting 10 seconds of quad/invuln
 
     //New quad/invin duration variables
-    int base_duration = 5 / FRAMETIME;    //5 seconds
-    int kill_duration = 0.5 / FRAMETIME;    //0.5 seconds per kill
+    const int base_duration = 5 / FRAMETIME;    //5 seconds
+    const int kill_duration = 0.5 / FRAMETIME;    //0.5 seconds per kill
 
     if (!attacker->client)
         return;
@@ -294,12 +262,10 @@ void vrx_trigger_spree_abilities(edict_t *attacker) {
 }
 
 int vrx_apply_experience(edict_t *player, int exp) {
-    float mod, playtime_minutes;
-
     // reduce experience as play time increases
-    playtime_minutes = player->myskills.playingtime / 60.0;
+    float playtime_minutes = player->client->resp.pstats.playingtime / 60.0;
     if (playtime_minutes > PLAYTIME_MIN_MINUTES) {
-        mod = 1.0 + playtime_minutes / PLAYTIME_MAX_MINUTES;
+        float mod = 1.0 + playtime_minutes / PLAYTIME_MAX_MINUTES;
         if (mod >= PLAYTIME_MAX_PENALTY)
             mod = PLAYTIME_MAX_PENALTY;
         exp /= mod;
@@ -315,11 +281,12 @@ int vrx_apply_experience(edict_t *player, int exp) {
         exp -= player->myskills.nerfme;
     }
 
-    if (player->myskills.level < 50) // hasn't reached the cap
+    if (player->myskills.level <= MAX_LEVEL) // hasn't reached the cap
     {
-        if (!player->ai.is_bot) // not a bot? have exp
+        if (!player->ai) // not a bot? have exp
         {
             player->myskills.experience += exp;
+            player->myskills.experience = min(player->myskills.experience, vrx_get_prestige_max_xp());
         }
     }
     player->client->resp.score += exp;
@@ -395,7 +362,7 @@ int vrx_get_kill_base_experience(
     // apply the damage mod?
     if (dmgmod_out) {
         // calculate damage modifier
-        float damage = GetPlayerBossDamage(attacker, targ);
+        const float damage = GetPlayerBossDamage(attacker, targ);
         if (damage < 1) {
 
             // az: EVERYONE. I MEAN EVERYONE GETS A BONUS. EVERYONE!!
@@ -487,7 +454,7 @@ int vrx_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient, int b
 
     vrx_add_credits(attacker, credits);
 
-    if (!attacker->ai.is_bot && (exp_points > 0 || credits > 0) && attacker->client) {
+    if (!attacker->ai && (exp_points > 0 || credits > 0) && attacker->client) {
 	    int clevel = 0;
 	    if (targ->client) {
             strcat(name, targetclient->client->pers.netname);
@@ -516,27 +483,28 @@ int vrx_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient, int b
 
 void vrx_inv_award_curse_exp( edict_t *attacker, edict_t *targ, edict_t *targetclient, que_t *que, int type, float mult, qboolean is_blessing ) {
     int leveldiff = 0, exp = 0, credits = 0;
-    que_t *slot = NULL;
+    const que_t *slot = NULL;
     edict_t *assister = NULL;
 
     if ((slot = que_findtype(que, NULL, type)) != NULL) {
-        //gi.dprintf("vrx_inv_award_exp: found curse/aura %s, owner is a %s ", slot->ent->classname, slot->ent->owner->classname );
+        //gi.dprintf("vrx_inv_award_exp: found curse/aura %s, owner is a %s ", h2e(slot->ent)->classname, h2e(slot->ent)->owner->classname );
         /*
-        if ( slot->ent->owner->client ) {
-            gi.dprintf("named %s\n", slot->ent->owner->client->pers.netname);
+        if ( h2e(slot->ent)->owner->client ) {
+            gi.dprintf("named %s\n", h2e(slot->ent)->owner->client->pers.netname);
         } else {
             gi.dprintf("\n");
         }*/
 
-        if ( slot->ent->owner->client && slot->ent->owner != attacker ) {
-            leveldiff = vrx_get_level_difference_multiplier(slot->ent->owner, targ, targetclient);
+        auto aura = h2e(slot->ent);
+        if ( aura->owner->client && aura->owner != attacker ) {
+            leveldiff = vrx_get_level_difference_multiplier(aura->owner, targ, targetclient);
             exp = vrx_get_kill_base_experience(
-                slot->ent->owner, targ, targetclient, 
+                aura->owner, targ, targetclient,
                 leveldiff, (1 - INVASION_EXP_SPLIT) * INVASION_ASSIST_EXP_PERCENT * mult, NULL, &credits);
-            vrx_apply_experience(slot->ent->owner, exp);
-            vrx_add_credits(slot->ent->owner, credits);
-            slot->ent->owner->client->resp.wave_assist_exp += exp;
-            slot->ent->owner->client->resp.wave_assist_credits += credits;
+            vrx_apply_experience(aura->owner, exp);
+            vrx_add_credits(aura->owner, credits);
+            aura->owner->client->resp.wave_assist_exp += exp;
+            aura->owner->client->resp.wave_assist_credits += credits;
             //gi.dprintf("  add %dxp, %dcr\n", exp, credits);
         }
     }
@@ -572,7 +540,7 @@ void vrx_inv_award_cooldown_exp( edict_t *attacker, edict_t *targ, edict_t *targ
 
 void vrx_inv_award_totem_exp( edict_t *attacker, edict_t *targ, edict_t *targetclient, int type, float mult, qboolean is_allied ) {
     int exp = 0, credits = 0, leveldiff = 0;
-    edict_t *totem = NULL;
+    const edict_t *totem = NULL;
 
     if ( is_allied ) {
         totem = NextNearestTotem(attacker, type, NULL, true);
@@ -610,7 +578,7 @@ void vrx_inv_award_exp(edict_t *attacker, edict_t *targ, edict_t *targetclient) 
     float player_cnt = 0;
     float dmgmod = 0;
     que_t *slot = NULL;
-    qboolean attacker_was_null = attacker == NULL;
+    const qboolean attacker_was_null = attacker == NULL;
 
     for (i = 1; i <= maxclients->value; i++) {
         player = &g_edicts[i];
@@ -742,6 +710,16 @@ void vrx_get_monster_xp(
 ) {
     (*base_exp) = EXP_WORLD_MONSTER + getOwnLevelBaseBonus(attacker->myskills.level, EXP_PLAYER_BASE);
 
+    float pvm_mod = 1;
+
+    if (pvm->value) {
+        float bonusmod = max((level.pvm.level_bonus / 6.5f + 1), 1);
+        pvm_mod = 1.f + roundf(logf(bonusmod)*4.f) / 4.f;
+        // about 2.5x at level 20, 4x at level 100
+    }
+
+    (*base_exp) *= pvm_mod;
+
 //4.5 monster bonus flags
     if (targ->monsterinfo.bonus_flags & BF_UNIQUE_FIRE
         || targ->monsterinfo.bonus_flags & BF_UNIQUE_LIGHTNING) {
@@ -777,7 +755,7 @@ void vrx_get_player_kill_xp(
         int *break_points,
         float *bonus) {
 
-    qboolean is_mini = vrx_is_newbie_basher(target);
+    const qboolean is_mini = vrx_is_newbie_basher(target);
     // spree break bonus points
     if (target->myskills.streak >= SPREE_START)
         (*break_points) = SPREE_BREAKBONUS;
@@ -833,15 +811,18 @@ float vrx_get_level_difference_multiplier(
 }
 
 float vrx_get_nfer_bonus(edict_t *attacker, const edict_t *target, float bonus) {
-    if (attacker->lastkill >= level.time) {
+    if (!attacker->client)
+        return bonus;
 
-        if (attacker->nfer < 2)
-            attacker->nfer = 2;
+    if (attacker->client->lastkill >= level.time) {
+
+        if (attacker->client->nfer < 2)
+            attacker->client->nfer = 2;
         else
-            attacker->nfer++;
+            attacker->client->nfer++;
 
-        bonus += sqrtf(attacker->nfer / 2.f);
-        attacker->myskills.num_2fers++;
+        bonus += sqrtf(attacker->client->nfer / 2.f);
+        attacker->client->resp.pstats.num_2fers++;
 
         vrx_do_nfer_effects(attacker, target);
     }
@@ -849,13 +830,15 @@ float vrx_get_nfer_bonus(edict_t *attacker, const edict_t *target, float bonus) 
 }
 
 void vrx_do_nfer_effects(const edict_t *attacker, const edict_t *target) {
-    if (attacker->nfer == 4) {
+    if (!attacker->client)
+        return;
+    if (attacker->client->nfer == 4) {
         gi.sound(attacker, CHAN_VOICE, gi.soundindex("misc/assasin.wav"), 1, ATTN_NORM, 0);
-    } else if (attacker->nfer == 5) {
+    } else if (attacker->client->nfer == 5) {
         gi.sound(attacker, CHAN_VOICE, gi.soundindex("speech/hey.wav"), 1, ATTN_NORM, 0);  
-    } else if (attacker->nfer >= 3 && attacker->nfer <= 4) {
+    } else if (attacker->client->nfer >= 3 && attacker->client->nfer <= 4) {
         gi.sound(target, CHAN_VOICE, gi.soundindex("speech/excellent.wav"), 1, ATTN_NORM, 0);
-    } else if (attacker->nfer == 10) {
+    } else if (attacker->client->nfer == 10) {
         gi.sound(attacker, CHAN_VOICE, gi.soundindex("misc/10fer.wav"), 1, ATTN_NORM, 0);
     }
 }
@@ -875,9 +858,11 @@ void vrx_add_team_exp(edict_t *ent, int points) {
             continue;
         if (player->health <= 0)
             continue;
+        if (!player->client)
+            continue;
         // players must help the team in order to get shared points!
-        if ((!pvm->value && (player->lastkill + 30 < level.time))
-            || (player->lastkill + 60 < level.time))
+        if ((!pvm->value && (player->client->lastkill + 30 < level.time))
+            || (player->client->lastkill + 60 < level.time))
             continue;
 
         if (OnSameTeam(ent, player)) {
@@ -961,7 +946,7 @@ void vrx_process_exp(edict_t *attacker, edict_t *targ) {
 
     // give your team some experience
     if ((int) (dmflags->value) & (DF_MODELTEAMS | DF_SKINTEAMS)) {
-        int exp_points = vrx_award_exp(attacker, targ, targetclient, 0);
+        const int exp_points = vrx_award_exp(attacker, targ, targetclient, 0);
         vrx_add_team_exp(attacker, (int) (0.5 * exp_points));
         return;
     }
@@ -970,7 +955,6 @@ void vrx_process_exp(edict_t *attacker, edict_t *targ) {
 
 void vrx_death_cleanup(edict_t *attacker, edict_t *targ) {
     int lose_points = 0;
-    float level_diff;
 
     if (IsABoss(attacker)) {
         targ->myskills.streak = 0;
@@ -990,7 +974,7 @@ void vrx_death_cleanup(edict_t *attacker, edict_t *targ) {
     //GHz: Handle suicides
     if (targ == attacker) {
         targ->myskills.streak = 0;
-        targ->myskills.suicides++;
+        targ->client->resp.pstats.suicides++;
 
         // players don't lose points in PvM mode since it is easy to kill yourself
         if (!pvm->value) {
@@ -1013,11 +997,11 @@ void vrx_death_cleanup(edict_t *attacker, edict_t *targ) {
     }
 
     if (invasion->value < 2) {
-        targ->myskills.fragged++;
+        targ->client->resp.pstats.fragged++;
 
-        attacker->myskills.frags++;
+        attacker->client->resp.pstats.frags++;
         attacker->client->resp.frags++;
-        attacker->lastkill = level.time + 2;
+        attacker->client->lastkill = level.time + 2;
     }
 
     if (!ptr->value && !domination->value && !pvm->value && !ctf->value
@@ -1026,9 +1010,9 @@ void vrx_death_cleanup(edict_t *attacker, edict_t *targ) {
         if (SPREE_WAR == true && targ == SPREE_DUDE) {
             SPREE_WAR = false;
             SPREE_DUDE = NULL;
-            attacker->myskills.break_spree_wars++;
+            attacker->client->resp.pstats.break_spree_wars++;
         }
-        attacker->myskills.break_sprees++;
+        attacker->client->resp.pstats.break_sprees++;
         gi.bprintf(PRINT_HIGH, "%s broke %s's %d frag killing spree!\n", attacker->client->pers.netname,
                    targ->client->pers.netname, targ->myskills.streak);
     }
@@ -1038,7 +1022,7 @@ void vrx_death_cleanup(edict_t *attacker, edict_t *targ) {
     if (vrx_is_newbie_basher(targ))
         gi.bprintf(PRINT_HIGH, "%s wasted a mini-boss!\n", attacker->client->pers.netname);
 
-    level_diff = (float) (targ->myskills.level + 1) / (attacker->myskills.level + 1);
+    float level_diff = (float) (targ->myskills.level + 1) / (attacker->myskills.level + 1);
     // don't let 'em spree off players that offer no challenge!
     if (!(vrx_is_newbie_basher(attacker) && (level_diff <= 0.5))) {
         attacker->myskills.streak++;
@@ -1061,13 +1045,13 @@ void vrx_death_cleanup(edict_t *attacker, edict_t *targ) {
         return;
 
     if (attacker->myskills.streak >= SPREE_START) {
-        if (attacker->myskills.streak > attacker->myskills.max_streak)
-            attacker->myskills.max_streak = attacker->myskills.streak;
+        if (attacker->myskills.streak > attacker->client->resp.pstats.max_streak)
+            attacker->client->resp.pstats.max_streak = attacker->myskills.streak;
         if (attacker->myskills.streak == SPREE_START)
-            attacker->myskills.num_sprees++;
+            attacker->client->resp.pstats.num_sprees++;
 
         if (attacker->myskills.streak == SPREE_WARS_START && SPREE_WARS > 0)
-            attacker->myskills.spree_wars++;
+            attacker->client->resp.pstats.spree_wars++;
 
         if ((attacker->myskills.streak >= SPREE_WARS_START) && SPREE_WARS && (!V_GetNumAllies(attacker))
             && !attacker->myskills.boss && !vrx_is_newbie_basher(attacker)) {

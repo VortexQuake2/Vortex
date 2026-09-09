@@ -38,7 +38,7 @@ void boss_makron_sounds (edict_t *self)
 
 void boss_makron_idle (edict_t *self)
 {
-	G_RunFrames(self, MAKRON_FRAMES_STAND_START, MAKRON_FRAMES_STAND_END, false);
+	G_RunFrames(self, MAKRON_FRAMES_STAND_START, MAKRON_FRAMES_STAND_END, false, true);
 }
 
 void boss_makron_locktarget (edict_t *self)
@@ -181,9 +181,9 @@ void boss_makron_think (edict_t *self)
 	else if (self->style == FRAMES_ATTACK)
 	{
 		if (self->owner->client->weapon_mode)
-			G_RunFrames(self, MAKRON_FRAMES_BFG_START, MAKRON_FRAMES_BFG_END, false);
+			G_RunFrames(self, MAKRON_FRAMES_BFG_START, MAKRON_FRAMES_BFG_END, false, true);
 		else
-			G_RunFrames(self, MAKRON_FRAMES_CHAIN_START, MAKRON_FRAMES_CHAIN_END, false);
+			G_RunFrames(self, MAKRON_FRAMES_CHAIN_START, MAKRON_FRAMES_CHAIN_END, false, true);
 		boss_makron_attack(self);
 	}
 	else

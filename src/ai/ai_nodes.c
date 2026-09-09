@@ -25,6 +25,7 @@ in NO WAY supported by Steve Yeager.
 
 #include "g_local.h"
 #include "ai_local.h"
+#include "entities/grid.h"
 
 
 //ACE
@@ -305,7 +306,7 @@ qboolean AI_PredictJumpadDestity( edict_t *ent, vec3_t out )
 int AI_AddNode_JumpPad( edict_t *ent )
 {
 	vec3_t	v1,v2;
-	vec3_t	out;
+	vec3_t	out = { 0, 0, 0 };
 
 	if (nav.num_nodes + 1 > MAX_NODES)
 		return INVALID;
@@ -415,18 +416,31 @@ int AI_AddNode_Door( edict_t *ent )
 //==========================================
 int AI_AddNode_Platform( edict_t *ent )
 {
-	vec3_t		v1,v2;
-
 	if (nav.num_nodes + 1 > MAX_NODES)//GHz: FIXME: shouldn't this be nav.num_nodes + 2 since we have to add a lower and upper node?
 		return INVALID;
 
+	vec3_t topcenter;
+	vec3_t top, bottom;
+
+	// Upper node
+	VectorSet(topcenter,
+		(ent->maxs[0] - ent->mins[0]) * 0.5 + ent->mins[0],
+		(ent->maxs[1] - ent->mins[1]) * 0.5 + ent->mins[1],
+		ent->maxs[2]
+	);
+
+	VectorSet( top, topcenter[0], topcenter[1], topcenter[2] + 32 );
+
+	const float height = ent->pos1[2] - ent->pos2[2];
+	VectorSet(bottom,
+		topcenter[0],
+		topcenter[1],
+		topcenter[2] - height + 32
+	);
+
 	// Upper node 
 	nodes[nav.num_nodes].flags = (NODEFLAGS_PLATFORM|NODEFLAGS_SERVERLINK|NODEFLAGS_FLOAT);
-	VectorCopy( ent->maxs, v1 );
-	VectorCopy( ent->mins, v2 );
-	nodes[nav.num_nodes].origin[0] = (v1[0] - v2[0]) / 2 + v2[0];
-	nodes[nav.num_nodes].origin[1] = (v1[1] - v2[1]) / 2 + v2[1];
-	nodes[nav.num_nodes].origin[2] = ent->maxs[2] + 8;
+	VectorCopy(top, nodes[nav.num_nodes].origin);
 
 	//gi.dprintf("%s: platform node origin: %.0f %.0f %.0f\n", __func__, nodes[nav.num_nodes].origin[0], nodes[nav.num_nodes].origin[1], nodes[nav.num_nodes].origin[2]);
 	//gi.dprintf("%s: platform actual origin: %.0f %.0f %.0f\n", __func__, ent->s.origin[0], ent->s.origin[1], ent->s.origin[2]);
@@ -443,9 +457,7 @@ int AI_AddNode_Platform( edict_t *ent )
 	
 	// Lower node
 	nodes[nav.num_nodes].flags = (NODEFLAGS_PLATFORM|NODEFLAGS_SERVERLINK|NODEFLAGS_FLOAT);
-	nodes[nav.num_nodes].origin[0] = nodes[nav.num_nodes-1].origin[0];
-	nodes[nav.num_nodes].origin[1] = nodes[nav.num_nodes-1].origin[1];
-	nodes[nav.num_nodes].origin[2] = ent->mins[2] + (AI_JUMPABLE_HEIGHT - 1);
+	VectorCopy(bottom, nodes[nav.num_nodes].origin);
 
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
 
@@ -641,7 +653,7 @@ void AI_CreateNodesForEntities ( void )
 {
 	edict_t *ent;
 	int		node;
-	int		nodes_start=nav.num_nodes;//GHz
+	const int		nodes_start=nav.num_nodes;//GHz
 
 	nav.num_ents = 0;
 	memset( nav.ents, 0, sizeof(nav_ents_t) * MAX_EDICTS );
@@ -698,7 +710,10 @@ void AI_CreateNodesForEntities ( void )
 		if( !ent->classname )		
 			continue;
 
-		if(!strcmp( ent->classname,"item_botroam") || !strcmp(ent->classname, "info_player_deathmatch"))//GHz
+		if(!strcmp( ent->classname,"item_botroam") ||
+			!strcmp(ent->classname, "info_player_deathmatch") || //GHz
+			strstr(ent->classname, "weapon_") // az
+			)
 		{
 			//gi.dprintf("AI: added  node for %s\n", ent->classname);
 			AI_AddNode_BotRoam(ent, false);
@@ -793,6 +808,11 @@ qboolean AI_LoadPLKFile( char *mapname )
 
 	fclose(pIn);
 
+	// az: applying this cleanup on older files
+	// will give us a more workable ai file
+	// order is important because AI_RemoveEntNodes clears empty nodes.
+	AI_RemoveMapNodes();
+	AI_RemoveEntNodes();
 	return true;
 }
 
@@ -969,8 +989,8 @@ int AI_LinkServerNodes( int start )
 {
 	int			n1, n2;
 	int			count = 0;
-	float		pLinkRadius = NODE_DENSITY*1.2;
-	qboolean	ignoreHeight = true;
+	const float		pLinkRadius = NODE_DENSITY*1.2;
+	const qboolean	ignoreHeight = true;
 
 	if( start >= nav.num_nodes )
 		return 0;
@@ -1005,6 +1025,62 @@ int AI_LinkServerNodes( int start )
 	return count;
 }
 
+// az: if we don't find bot nodes, consider using our grid data as a starting point.
+int AI_AddNode( vec3_t origin, int flagsmask );
+void AI_ClearDropNodePlayer(void);
+bool AI_SeedFromDroneAI(void) {
+	AI_ClearDropNodePlayer();
+
+	// add nodes
+	const auto nodecount = vrx_pf_get_node_count();
+	nodeid_t *remap = calloc(nodecount, sizeof(nodeid_t));
+
+	for (size_t node = 0; node < nodecount; node++) {
+		if (vrx_pf_get_nodeflags(node) & NF_NOSAVE) {
+			remap[node] = NODEID_MAX;
+			continue;
+		}
+
+		vec3_t nodepos;
+		vrx_pf_get_node_position(node, nodepos);
+
+		int flags = 0;
+		if (gi.pointcontents(nodepos) & CONTENTS_WATER) {
+			flags = NODEFLAGS_WATER;
+		}
+
+		remap[node] = AI_AddNode(nodepos, flags);
+	}
+
+	// add links
+	for (size_t node = 0; node < nodecount; node++) {
+		const auto links = vrx_pf_get_links(node);
+		const auto linkcount = vrx_pf_get_link_count(node);
+
+		if (remap[node] == NODEID_MAX)
+			continue;
+
+		for (auto linkidx = 0; linkidx < linkcount; linkidx++) {
+			const auto link = links[linkidx];
+			if (remap[link.nodenum] == NODEID_MAX)
+				continue;
+
+			if (link.linkflags & LF_WALK)
+				AI_AddLink(remap[node], remap[link.nodenum], LINK_MOVE);
+			if (link.linkflags & LF_FALL)
+				AI_AddLink(remap[node], remap[link.nodenum], LINK_FALL);
+
+			if (nodes[remap[node]].flags & NODEFLAGS_WATER && nodes[remap[link.nodenum]].flags & NODEFLAGS_WATER) {
+				if (link.linkflags & LF_FLY || link.linkflags & LF_FALL) {
+					AI_AddLink(remap[node], remap[link.nodenum], LINK_WATER);
+				}
+			}
+		}
+	}
+
+	free(remap);
+	return nodecount > 0;
+}
 
 int AI_LinkCloseNodes_JumpPass( int start );
 //==========================================
@@ -1021,17 +1097,21 @@ void AI_InitNavigationData(void)
 
 	//Init nodes arrays
 	nav.num_nodes = 0;
+	memset( nav.costs, -1, sizeof nav.costs );
 	memset( nodes, 0, sizeof(nav_node_t) * MAX_NODES );
 	memset( pLinks, 0, sizeof(nav_plink_t) * MAX_NODES );//GHz: FIXME: is 2048 pLinks enough?
-	memset( Spath, 0, sizeof(spath_t) * MAX_SPATH );//GHz
-	Spath_numNodes = 0;//GHz
 	dropNodeTime = 0;//GHz
 
 	//Load nodes from file
 	nav.loaded = AI_LoadPLKFile( level.mapname );
 	if( !nav.loaded ) {
 		Com_Printf( "AI: FAILED to load nodes file.\n");
-		return;
+		Com_Printf("AI: Attempting to seed from drone AI\n");
+		nav.loaded = AI_SeedFromDroneAI();
+		if( !nav.loaded ) {
+			Com_Printf("AI: FAILED to seed from drone AI\n");
+			return;
+		}
 	}
 
 	servernodesstart = nav.num_nodes;
@@ -1051,3 +1131,4 @@ void AI_InitNavigationData(void)
 	Com_Printf("-------------------------------------\n");
 	// note: loaded = nodes loaded from .nav file, added = nodes generated at map load (for map ents, items, etc.)
 }
+

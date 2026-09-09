@@ -13,7 +13,7 @@ void PlagueCloud(edict_t *ent, edict_t *target);
 
 void InfectedCorpseTouch(edict_t* self, edict_t* other)
 {
-    que_t* q = NULL;
+    const que_t* q = NULL;
 
     if (!G_EntExists(self))
         return; // invalid entity
@@ -28,7 +28,7 @@ void InfectedCorpseTouch(edict_t* self, edict_t* other)
 
     if ((q = que_findtype(self->curses, NULL, CURSE_PLAGUE)) != NULL) // corpse is infected with plague
     {
-        if (vrx_get_talent_level(q->ent->owner, TALENT_BLACK_DEATH)) // plague owner has upgraded black death talent
+        if (vrx_get_talent_level(h2e(q->ent)->owner, TALENT_BLACK_DEATH)) // plague owner has upgraded black death talent
         {
             //gi.dprintf("touched infected corpse\n");
             // flag entity with black death so that they take extra damage from plague
@@ -160,8 +160,7 @@ void plague_think(edict_t *self) {
         self->wait = level.time + PLAGUE_DELAY;
     }
 
-    self->nextthink = level.time + FRAMETIME;
-
+    self->nextthink = level.time + 0.1f;
 }
 
 void PlagueCloud(edict_t *ent, edict_t *target) {

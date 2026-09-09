@@ -34,6 +34,30 @@ void V_GibSound(edict_t *self, int index) {
     }
 }
 
+void vrx_match_inventory_store(edict_t* self) {
+    if (!self->client)
+        return;
+
+    self->client->resp.pstats.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = self->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)];
+    self->client->resp.pstats.inventory[ITEM_INDEX(Fdi_TBALL)] = self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)];
+
+    if (pvm->value || ffa->value) {
+        memcpy(self->client->resp.pstats.inventory, self->client->pers.inventory, sizeof(self->client->pers.inventory));
+    }
+}
+
+void vrx_match_inventory_restore(edict_t* self) {
+    if (!self->client)
+        return;
+
+    self->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = self->client->resp.pstats.inventory[ITEM_INDEX(Fdi_POWERCUBE)];
+    self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)] = self->client->resp.pstats.inventory[ITEM_INDEX(Fdi_TBALL)];
+
+    if (pvm->value || ffa->value) {
+        memcpy(self->client->pers.inventory, self->client->resp.pstats.inventory, sizeof(self->client->resp.pstats.inventory));
+    }
+}
+
 void vrx_player_death(edict_t *self, edict_t *attacker, edict_t *inflictor) {
     if (debuginfo->value > 1)
         gi.dprintf("VortexPlayerDeath()\n");
@@ -44,12 +68,14 @@ void vrx_player_death(edict_t *self, edict_t *attacker, edict_t *inflictor) {
 
     self->gib_health = -BASE_GIB_HEALTH;
 
-    // don't drop powercubes or tballs
-    self->myskills.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = self->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)];
-    self->myskills.inventory[ITEM_INDEX(Fdi_TBALL)] = self->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)];
-
     vrx_process_exp(attacker, self); // modify experience
     vrx_reset_player_state(self);
+
+    // potentially store some items to persist across death
+    // needs to happen after reset_player_state to not duplicate techs
+    // since reset_player_state handles tech dropping.
+    vrx_match_inventory_store(self);
+
     vrx_death_cleanup(attacker, self);
 
     vrx_toss_backpack(self, attacker); // toss a backpack
@@ -72,11 +98,7 @@ void vrx_add_basic_weapons(gclient_t *client, gitem_t *item, int spectator) {
 
 void vrx_add_respawn_items(edict_t *ent) {
 	//gi.dprintf("vrx_add_respawn_items()\n");
-
-    ent->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = ent->myskills.inventory[ITEM_INDEX(Fdi_POWERCUBE)];
-    ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)] = ent->myskills.inventory[ITEM_INDEX(Fdi_TBALL)];
-    ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)] = ent->myskills.inventory[ITEM_INDEX(
-            Fdi_TBALL)] += TBALLS_RESPAWN;
+    ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)] += TBALLS_RESPAWN;
 
     // poltergeist always spawns with at least 50 power cubes (for morphing) and cells (for power screen)
     if (ent->myskills.class_num == CLASS_POLTERGEIST)
@@ -87,7 +109,7 @@ void vrx_add_respawn_items(edict_t *ent) {
             ent->client->pers.inventory[cell_index] = 50;
     }
     else
-        ent->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = ent->myskills.inventory[ITEM_INDEX(
+        ent->client->pers.inventory[ITEM_INDEX(Fdi_POWERCUBE)] = ent->client->resp.pstats.inventory[ITEM_INDEX(
                 Fdi_POWERCUBE)] += POWERCUBES_RESPAWN;
 
     if (ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)] > 20)
@@ -164,21 +186,50 @@ void vrx_give_additional_respawn_weapons(edict_t *ent, int nextWeapon) {
 // converts the index value stored in respawn_weapon to the inventory weapon index
 int vrx_WeapIDtoWeapIndex(int weaponID)
 {
+    gitem_t *item = NULL;
+
     switch (weaponID)
     {
-    case 1: return sword_index;
-    case 2: return shotgun_index;
-    case 3: return supershotgun_index;
-    case 4: return machinegun_index;
-    case 5: return chaingun_index;
-    case 6: return grenadelauncher_index;
-    case 7: return rocketlauncher_index;
-    case 8: return hyperblaster_index;
-    case 9: return railgun_index;
-    case 10: return bfg10k_index;
-    case 11: return grenade_index;
-    case 12: return _20mmcannon_index;
-    case 13: return blaster_index;
+    case WEAPON_BLASTER: return blaster_index;
+    case WEAPON_SWORD: return sword_index;
+    case WEAPON_SHOTGUN: return shotgun_index;
+    case WEAPON_SUPERSHOTGUN: return supershotgun_index;
+    case WEAPON_MACHINEGUN: return machinegun_index;
+    case WEAPON_CHAINGUN: return chaingun_index;
+    case WEAPON_GRENADELAUNCHER: return grenadelauncher_index;
+    case WEAPON_ROCKETLAUNCHER: return rocketlauncher_index;
+    case WEAPON_HYPERBLASTER: return hyperblaster_index;
+    case WEAPON_RAILGUN: return railgun_index;
+    case WEAPON_BFG10K: return bfg10k_index;
+    case WEAPON_HANDGRENADE: return grenade_index;
+    case WEAPON_20MM: return _20mmcannon_index;
+    case WEAPON_PHALANX:
+        item = FindItem("Phalanx");
+        return item ? ITEM_INDEX(item) : blaster_index;
+    case WEAPON_IONRIPPER:
+        item = FindItem("Ionripper");
+        return item ? ITEM_INDEX(item) : blaster_index;
+    case WEAPON_TRAP:
+        item = FindItem("Trap");
+        return item ? ITEM_INDEX(item) : blaster_index;
+    case WEAPON_ETFRIFLE:
+        item = FindItem("ETF Rifle");
+        return item ? ITEM_INDEX(item) : blaster_index;
+    case WEAPON_PLASMABEAM:
+        item = FindItem("Plasma Beam");
+        return item ? ITEM_INDEX(item) : blaster_index;
+    case WEAPON_PROXLAUNCHER:
+        item = FindItem("Prox Launcher");
+        return item ? ITEM_INDEX(item) : blaster_index;
+    case WEAPON_CHAINFIST:
+        item = FindItem("Chainfist");
+        return item ? ITEM_INDEX(item) : blaster_index;
+    case WEAPON_TESLA:
+        item = FindItem("Tesla");
+        return item ? ITEM_INDEX(item) : blaster_index;
+    case WEAPON_DISRUPTOR:
+        item = FindItem("Disruptor");
+        return item ? ITEM_INDEX(item) : blaster_index;
     default: return blaster_index;
     }
 }
@@ -187,7 +238,7 @@ void vrx_add_respawn_weapon(edict_t *ent, int weaponID) {
     //vrx_add_respawn_items(ent);
 
     if (ent->myskills.class_num == CLASS_KNIGHT) {
-        ent->myskills.respawn_weapon = 1;
+        ent->myskills.respawn_weapon = WEAPON_SWORD;
         vrx_pick_respawn_weapon(ent);
     }
 
@@ -207,49 +258,6 @@ void vrx_add_respawn_weapon(edict_t *ent, int weaponID) {
 
     //3.02 begin new respawn weapon code
     //Give them the weapon
-    /*
-    switch (weaponID) {
-        case 2:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_SHOTGUN)] = 1;
-            break;
-        case 3:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_SUPERSHOTGUN)] = 1;
-            break;
-        case 4:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_MACHINEGUN)] = 1;
-            break;
-        case 5:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_CHAINGUN)] = 1;
-            break;
-        case 6:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_GRENADELAUNCHER)] = 1;
-            break;
-        case 7:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_ROCKETLAUNCHER)] = 1;
-            break;
-        case 8:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_HYPERBLASTER)] = 1;
-            break;
-        case 9:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_RAILGUN)] = 1;
-            break;
-        case 10:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_BFG)] = 1;
-            break;
-        case 11:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_GRENADES)] = 1;
-            break;
-        case 12:
-            ent->client->pers.inventory[ITEM_INDEX(FindItem("20mm Cannon"))] = 1;
-            break;
-        case 13:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_BLASTER)] = 1;
-            break;
-        default:
-            ent->client->pers.inventory[ITEM_INDEX(Fdi_BLASTER)] = 1;
-            break;
-    }
-    */
     ent->client->pers.inventory[vrx_WeapIDtoWeapIndex(weaponID)] = 1;
 
     //Give them the ammo
@@ -263,57 +271,8 @@ void vrx_add_respawn_weapon(edict_t *ent, int weaponID) {
 }
 
 void vrx_pick_respawn_weapon(edict_t *ent) {
-    int index;
-    gitem_t *item;
-    /*
-
-    switch (ent->myskills.respawn_weapon) {
-        case 1:
-            item = FindItem("Sword");
-            break;
-        case 2:
-            item = Fdi_SHOTGUN;
-            break;
-        case 3:
-            item = Fdi_SUPERSHOTGUN;
-            break;
-        case 4:
-            item = Fdi_MACHINEGUN;
-            break;
-        case 5:
-            item = Fdi_CHAINGUN;
-            break;
-        case 6:
-            item = Fdi_GRENADELAUNCHER;
-            break;
-        case 7:
-            item = Fdi_ROCKETLAUNCHER;
-            break;
-        case 8:
-            item = Fdi_HYPERBLASTER;
-            break;
-        case 9:
-            item = Fdi_RAILGUN;
-            break;
-        case 10:
-            item = Fdi_BFG;
-            break;
-        case 11:
-            item = Fdi_GRENADES;
-            break;
-        case 12:
-            item = FindItem("20mm Cannon");
-            break;
-        case 13:
-            item = Fdi_BLASTER;
-            break;
-        default:
-            item = Fdi_BLASTER;
-            break;
-    }
-    */
-    index = vrx_WeapIDtoWeapIndex(ent->myskills.respawn_weapon);
-    item = &itemlist[index];
+    const int index = vrx_WeapIDtoWeapIndex(ent->myskills.respawn_weapon);
+    gitem_t *item = &itemlist[index];
 
     ent->client->pers.selected_item = index;//ITEM_INDEX(item);
     ent->client->pers.weapon = item;
@@ -356,7 +315,7 @@ void V_Player_Touchdown(edict_t* ent)
     if (ent->monsterinfo.jumpup)
         mutant_stunattack(ent);
     // bots should call touchdown function if they have one
-    if (ent->ai.is_bot && ent->monsterinfo.touchdown)
+    if (ent->ai && ent->monsterinfo.touchdown)
         ent->monsterinfo.touchdown(ent);
 }
 

@@ -219,7 +219,7 @@ void vrx_award_boss_kill (edict_t *boss)
 	int			i, damage, exp_points, credits, players;
 	float		levelmod, dmgmod;
 	edict_t		*player;
-	dmglist_t	*slot=NULL;
+	const dmglist_t	*slot=NULL;
 
 	// find the player that did the most damage
 	slot = findHighestDmgPlayer(boss);
@@ -251,11 +251,11 @@ void vrx_award_boss_kill (edict_t *boss)
 		credits = levelmod*dmgmod*PVB_BOSS_CREDITS;
 
 		// award extra points for the player that did the most damage
-		if (slot && (player == slot->player))
+		if (slot && player == world + slot->player)
 		{
 			dmgmod = 100*(slot->damage/GetTotalBossDamage(boss));
 			G_PrintGreenText(va("%s got a hi-damage bonus! %d damage (%.1f%c)", 
-				slot->player->client->pers.netname, (int)slot->damage, dmgmod, '%'));
+				(world + slot->player)->client->pers.netname, (int)slot->damage, dmgmod, '%'));
 			exp_points *= BOSS_DAMAGE_BONUSMOD;
 		}
 

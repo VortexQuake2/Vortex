@@ -1,4 +1,6 @@
 #include "g_local.h"
+#include "relay_msgpack.h"
+#include "relay_handlers.h"
 
 #ifndef WIN32
 #include <sys/types.h>
@@ -9,14 +11,20 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#ifdef __APPLE__
+#include <unistd.h>
+#endif
+
 #ifndef SOCKET
 #define SOCKET int
 #endif
 
 #else
 #include <winsock2.h>
-#include <WS2tcpip.h>
+#include <ws2tcpip.h>
+#ifndef MINGW
 #pragma comment(lib, "Ws2_32.lib")
+#endif
 #endif
 
 #include <msgpack.h>
@@ -28,7 +36,7 @@ const char* COMMAND_RELAY = "Relay";
 
 
 // global variables
-SOCKET vrx_relay_socket = -1;
+int vrx_relay_socket = -1;
 uint8_t pending_buf[16 * 1024] = {0};
 size_t pending_buf_size = 0;
 qboolean relay_authorized = false;
@@ -50,9 +58,9 @@ void vrx_relay_connect() {
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    cvar_t* server = gi.cvar("vrx_relay_server", "localhost", 0);
-    cvar_t* port = gi.cvar("vrx_relay_port", "9999", 0);
-    cvar_t* key = gi.cvar("vrx_relay_key", "", 0);
+    const cvar_t* server = gi.cvar("vrx_relay_server", "", 0);
+    const cvar_t* port = gi.cvar("vrx_relay_port", "9999", 0);
+    const cvar_t* key = gi.cvar("vrx_relay_key", "", 0);
 
     if (strlen(server->string) < 1)
     {
@@ -62,14 +70,14 @@ void vrx_relay_connect() {
 
     gi.dprintf("RS: Connecting to relay server...\n");
 
-    int rv = getaddrinfo(server->string, port->string, &hints, &servinfo);
+    const int rv = getaddrinfo(server->string, port->string, &hints, &servinfo);
     if (rv != 0) {
         gi.dprintf("RS: Failed to resolve relay server address. Errno: %s.\n", gai_strerror(rv));
         return;
     }
 
     qboolean connected = false;
-    for (struct addrinfo* p = servinfo; p != NULL; p = p->ai_next) {
+    for (const struct addrinfo* p = servinfo; p != NULL; p = p->ai_next) {
         vrx_relay_socket = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
         if (vrx_relay_socket == -1) {
             continue;
@@ -77,11 +85,11 @@ void vrx_relay_connect() {
 
         char ip[INET6_ADDRSTRLEN];
         if (p->ai_family == AF_INET) {
-            struct sockaddr_in* addr = (struct sockaddr_in*)p->ai_addr;
+            const struct sockaddr_in* addr = (struct sockaddr_in*)p->ai_addr;
             inet_ntop(p->ai_family, &addr->sin_addr, ip, sizeof ip);
             ip[INET_ADDRSTRLEN] = '\0';
         } else {
-            struct sockaddr_in6* addr = (struct sockaddr_in6*)p->ai_addr;
+            const struct sockaddr_in6* addr = (struct sockaddr_in6*)p->ai_addr;
             inet_ntop(p->ai_family, &addr->sin6_addr, ip, sizeof ip);
         }
 
@@ -134,20 +142,20 @@ void vrx_relay_disconnect() {
     }
 }
 
-void send_sbuffer(SOCKET s, msgpack_sbuffer* sbuf) {
+bool send_sbuffer(SOCKET s, msgpack_sbuffer* sbuf) {
     int sent = 0;
-    size_t size = sizeof (uint32_t) * 2 + sbuf->size;
+    const size_t size = sizeof (uint32_t) * 2 + sbuf->size;
 
     if (sbuf->size > UINT_MAX) {
         gi.dprintf("RS: Message size is too large.\n");
-        return;
+        return false;
     }
 
     // az: allocate memory for the size and the data
     char* data = calloc(size, 1);
-    if (data == NULL) {
+    if (data == nullptr) {
         gi.dprintf("RS: Failed to allocate memory for message.\n");
-        return;
+        return false;
     }
 
     memcpy(data, &MAGIC, sizeof (uint32_t));
@@ -155,7 +163,7 @@ void send_sbuffer(SOCKET s, msgpack_sbuffer* sbuf) {
     memcpy(data + HEADER_SIZE, sbuf->data, sbuf->size);
 
     while (sent < size) {
-        int n = send(s, data + sent, size - sent, 0);
+        const int n = send(s, data + sent, size - sent, 0);
         if (n == -1) {
 #ifdef WIN32
             int err = WSAGetLastError();
@@ -163,19 +171,25 @@ void send_sbuffer(SOCKET s, msgpack_sbuffer* sbuf) {
                 continue;
             }
 #else
-            int err = errno;
+            const int err = errno;
             if (errno == EWOULDBLOCK) {
                 continue;
             }
 #endif
             gi.dprintf("RS: Failed to send message to relay server. (%d)\n", err);
             break;
-        }
-
-        sent += n;
+        } else
+            sent += n;
     }
 
     free(data);
+    return sent == size;
+}
+
+bool vrx_relay_send_sbuffer(msgpack_sbuffer* sbuf) {
+    if (!vrx_relay_is_connected())
+        return false;
+    return send_sbuffer(vrx_relay_socket, sbuf);
 }
 
 void vrx_relay_message(const char* message) {
@@ -318,113 +332,6 @@ void vrx_relay_notify_client_disconnected(const char* name) {
     msgpack_sbuffer_destroy(&sbuf);
 }
 
-msgpack_object_str* msgpack_get_map_string(msgpack_object_map* map, const char* key) {
-    for (uint32_t i = 0; i < map->size; i++) {
-        msgpack_object_kv* kv = map->ptr + i;
-
-        if (kv->key.type != MSGPACK_OBJECT_STR) {
-            continue;
-        }
-
-        if (kv->key.via.str.size == strlen(key) && memcmp(kv->key.via.str.ptr, key, strlen(key)) == 0) {
-            if (kv->val.type != MSGPACK_OBJECT_STR) {
-                continue;
-            }
-
-            return &kv->val.via.str;
-        }
-    }
-
-    return NULL;
-}
-
-int msgpack_streq(msgpack_object_str* str, const char* cmp) {
-    return str->size == strlen(cmp) && memcmp(str->ptr, cmp, str->size) == 0;
-}
-
-qboolean vrx_relay_try_message_relay(msgpack_object_str *type, msgpack_object_array *arr, qboolean* invalid) {
-    if (!msgpack_streq(type, COMMAND_RELAY))
-        return false;
-
-    msgpack_object_str* message = arr->ptr[1].type == MSGPACK_OBJECT_STR ? &arr->ptr[1].via.str : NULL;
-    if (message == NULL) {
-        gi.dprintf("RS: Received relay message does not have a valid message field.\n");
-        *invalid = true;
-        return false;
-    }
-
-    // az: null-terminate the string
-    char* msg = calloc(message->size + 1, 1);
-    if (msg == NULL) {
-        gi.dprintf("RS: Failed to allocate memory for relay message.\n");
-        *invalid = true;
-        return false;
-    }
-
-    memcpy(msg, message->ptr, message->size);
-
-    for (int j = 1; j <= game.maxclients; j++) {
-        edict_t *other = &g_edicts[j];
-        if (!other->inuse)
-            continue;
-        if (!other->client)
-            continue;
-        if (other->svflags & SVF_MONSTER)
-            continue;
-
-        gi.cprintf(other, PRINT_CHAT, "[relay] %s\n", msg);
-    }
-
-    // az: print to the server console
-    gi.cprintf(NULL, PRINT_CHAT, "[relay] %s\n", msg);
-    free(msg);
-
-    return true;
-}
-
-qboolean vrx_relay_try_authorized(msgpack_object_str *type, msgpack_object_array *arr, qboolean* invalid) {
-    const char* COMMAND_AUTHORIZE = "Authorize";
-    const char* COMMAND_AUTHORIZE_SUCCESS = "Authorized";
-
-    if (!msgpack_streq(type, COMMAND_AUTHORIZE)) {
-        return false;
-    }
-
-    msgpack_object_array* result = arr->ptr[1].type == MSGPACK_OBJECT_ARRAY ? &arr->ptr[1].via.array : NULL;
-    if (result == NULL) {
-        gi.dprintf("RS: Received relay message does not have a valid message field.\n");
-        *invalid = true;
-        return false;
-    }
-
-    if (result->size != 1) {
-        gi.dprintf("RS: unexpected authorization result; result type length is != 1: %d\n", result->size);
-        *invalid = true;
-        return false;
-    }
-
-    msgpack_object_str* result_type = result->ptr[0].type == MSGPACK_OBJECT_STR ? &result->ptr[0].via.str : NULL;
-    if (result_type == NULL) {
-        gi.dprintf("RS: unexpected authorization result; result type is not a string");
-        *invalid = true;
-        return false;
-    }
-
-    if (msgpack_streq(result_type, COMMAND_AUTHORIZE_SUCCESS)) {
-        relay_authorized = true;
-        return true;
-    }
-
-    return true;
-}
-
-typedef enum {
-    RESULT_INVALID, // "we got an invalid message"
-    RESULT_NEED_MORE_DATA, // "we need more data to parse the message"
-    RESULT_CONTINUE, // "we got a message successfully, but continue parsing"
-    RESULT_SUCCESS // "we got a message successfully, but stop parsing."
-} relay_parse_result_t;
-
 relay_parse_result_t vrx_relay_parse_message(size_t* start) {
 
     // az: we need at least 8 bytes to read the magic and size
@@ -432,11 +339,11 @@ relay_parse_result_t vrx_relay_parse_message(size_t* start) {
         return RESULT_NEED_MORE_DATA;
     }
 
-    uint8_t* curbuf = (uint8_t*)&pending_buf[*start];
+    const uint8_t* curbuf = (uint8_t*)&pending_buf[*start];
     // az: read the magic and size, little-endian
 #ifdef LITTLE_ENDIAN
-    uint32_t magic = curbuf[0] | curbuf[1] << 8 | curbuf[2] << 16 | curbuf[3] << 24;
-    uint32_t size = curbuf[4] | curbuf[5] << 8 | curbuf[6] << 16 | curbuf[7] << 24;
+    const uint32_t magic = curbuf[0] | curbuf[1] << 8 | curbuf[2] << 16 | curbuf[3] << 24;
+    const uint32_t size = curbuf[4] | curbuf[5] << 8 | curbuf[6] << 16 | curbuf[7] << 24;
 #elif BIG_ENDIAN
     uint32_t magic = curbuf[3] | curbuf[2] << 8 | curbuf[1] << 16 | curbuf[0] << 24;
     uint32_t size = curbuf[7] | curbuf[6] << 8 | curbuf[5] << 16 | curbuf[4] << 24;
@@ -457,7 +364,7 @@ relay_parse_result_t vrx_relay_parse_message(size_t* start) {
     msgpack_unpacked result;
     msgpack_unpacked_init(&result);
 
-    msgpack_unpack_return ret = msgpack_unpack_next(&result, curbuf + HEADER_SIZE, size, &off);
+    const msgpack_unpack_return ret = msgpack_unpack_next(&result, curbuf + HEADER_SIZE, size, &off);
     if (ret == MSGPACK_UNPACK_CONTINUE) {
         return RESULT_NEED_MORE_DATA;
     }
@@ -479,7 +386,7 @@ relay_parse_result_t vrx_relay_parse_message(size_t* start) {
         return RESULT_INVALID;
     }
 
-    msgpack_object_str* type = NULL;
+    msgpack_object_str* type = nullptr;
     msgpack_object_array* arr = &obj.via.array;
     if (arr->ptr[0].type == MSGPACK_OBJECT_STR && arr->ptr[0].via.str.size > 0) {
         type = &arr->ptr[0].via.str;
@@ -492,6 +399,11 @@ relay_parse_result_t vrx_relay_parse_message(size_t* start) {
     qboolean message_invalid = false;
     message_processed |= vrx_relay_try_message_relay(type, arr, &message_invalid);
     message_processed |= vrx_relay_try_authorized(type, arr, &message_invalid);
+    message_processed |= vrx_relay_try_character_loaded(type, arr, &message_invalid);
+    message_processed |= vrx_relay_try_stash_page(type, arr, &message_invalid);
+    message_processed |= vrx_relay_try_stash_open_result(type, arr, &message_invalid);
+    message_processed |= vrx_relay_try_stash_event(type, arr, &message_invalid);
+    message_processed |= vrx_relay_try_setowner_result(type, arr, &message_invalid);
 
     msgpack_unpacked_destroy(&result);
     if (!message_invalid) {
@@ -555,7 +467,7 @@ void vrx_relay_recv() {
     size_t start = 0;
     qboolean continue_parsing = true;
     while (continue_parsing) {
-        relay_parse_result_t res = vrx_relay_parse_message(&start);
+        const relay_parse_result_t res = vrx_relay_parse_message(&start);
 
         switch (res) {
             case RESULT_INVALID:

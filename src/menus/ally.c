@@ -22,7 +22,7 @@ int	team_colors[] =
 
 int GetTeamColor (int teamnum)
 {
-	int index = teamnum - 100;
+	const int index = teamnum - 100;
 
 	if (index < 10)
 		return team_colors[index];
@@ -117,7 +117,7 @@ qboolean CanAlly (edict_t *ent, edict_t *other, int range)
 
 	// only allow allies that are close in level
 	// FIXME: we should get an average or median player level if there are >1 allies
-	if (fabsf(ent->myskills.level - other->myskills.level) > ALLY_MAX_LEVEL_DELTA)
+	if (abs(ent->myskills.level - other->myskills.level) > ALLY_MAX_LEVEL_DELTA)
 	{
 		//gi.dprintf("no3\n");
 		return false;
@@ -412,7 +412,7 @@ void AllyID (edict_t *ent)
 {
 	vec3_t	forward, right, offset, start, end;
 	trace_t tr;
-	edict_t *e=NULL;
+	const edict_t *e=NULL;
 
 	if (!allies->value)
 		return;
@@ -509,7 +509,7 @@ void ShowAllyInviteMenu_handler (edict_t *ent, int option)
 
 void ShowAllyInviteMenu (edict_t *ent)
 {
-	edict_t *e = ent->client->allytarget;
+	const edict_t *e = ent->client->allytarget;
 
 	 if (!menu_can_show(ent))
         return;
@@ -636,7 +636,7 @@ void ShowAddAllyMenu (edict_t *ent)
 		if (CanAlly(ent, temp, ALLY_RANGE))
 		{
 			//Add player to the list
-            menu_add_line(ent, va(" %s (%s)", temp->myskills.player_name,
+            menu_add_line(ent, va(" %s (%s)", temp->client->resp.pstats.player_name,
                                   vrx_get_class_string(temp->myskills.class_num)), GetClientNumber(temp));
 			++j;
 
@@ -706,7 +706,7 @@ void ShowRemoveAllyMenu (edict_t *ent)
 		if (IsAlly(ent, temp))
 		{
 			//Add player to the list
-			menu_add_line(ent, va(" %s", temp->myskills.player_name), GetClientNumber(temp));
+			menu_add_line(ent, va(" %s", temp->client->resp.pstats.player_name), GetClientNumber(temp));
 			++j;
 		}
 		
@@ -768,7 +768,7 @@ void ShowAllyMenu (edict_t *ent)
 		if (IsAlly(ent, temp))
 		{
 			//Add player to the list
-			menu_add_line(ent, va(" %s", temp->myskills.player_name), 0);
+			menu_add_line(ent, va(" %s", temp->client->resp.pstats.player_name), 0);
 			++j;
 		}
 	}

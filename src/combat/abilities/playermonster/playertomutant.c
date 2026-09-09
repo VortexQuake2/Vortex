@@ -48,7 +48,7 @@ int melee_attack (edict_t *self, int damage, int range)
 
 void mutant_swing_attack (edict_t *self)
 {
-	int	dmg = MUTANT_INITIAL_SWING_DMG+MUTANT_ADDON_SWING_DMG*self->myskills.abilities[MUTANT].current_level;
+	const int	dmg = MUTANT_INITIAL_SWING_DMG+MUTANT_ADDON_SWING_DMG*self->myskills.abilities[MUTANT].current_level;
 
 	if (self->s.frame == 10) // left
 	{
@@ -79,9 +79,9 @@ qboolean mutant_boost (edict_t *ent)
 	vec3_t forward, right, start, offset;
 
 	if (ent->mtype == MORPH_MUTANT)
-		next_frame = &ent->myskills.abilities[MUTANT].ammo_regenframe;
+		next_frame = &ent->monsterinfo.nextframe;
 	else if (ent->mtype == MORPH_BRAIN)
-		next_frame = &ent->myskills.abilities[BRAIN].ammo_regenframe;
+		next_frame = &ent->monsterinfo.nextframe;
 	else
 		gi.error ("invalid ent->mtype");
 
@@ -167,7 +167,7 @@ void mutant_stunattack(edict_t* ent)
 	if (ent->mtype != MORPH_MUTANT)
 		return;
 	// Talent: Melee Mastery
-	int talentLevel = vrx_get_talent_level(ent, TALENT_MELEE_MASTERY);
+	const int talentLevel = vrx_get_talent_level(ent, TALENT_MELEE_MASTERY);
 	// talent isn't upgraded
 	if (talentLevel < 1)
 		return;
@@ -182,7 +182,7 @@ void mutant_stunattack(edict_t* ent)
 		}
 	}
 
-	int damage = (0.2 * talentLevel) * (MUTANT_INITIAL_JUMP_DMG + MUTANT_ADDON_JUMP_DMG * ent->myskills.abilities[MUTANT].current_level);
+	const int damage = (0.2 * talentLevel) * (MUTANT_INITIAL_JUMP_DMG + MUTANT_ADDON_JUMP_DMG * ent->myskills.abilities[MUTANT].current_level);
 	fire_nova(ent, ent, damage, 150.0, 0, 0);
 }
 
@@ -256,21 +256,21 @@ void RunMutantFrames (edict_t *ent, usercmd_t *ucmd)
 			ent->s.frame = MUTANT_FRAMES_JUMP;
 		// play running animation if we are moving forward or strafing
 		else if ((ucmd->forwardmove > 0) || ucmd->sidemove)
-			G_RunFrames(ent, MUTANT_FRAMES_WALK_START, MUTANT_FRAMES_WALK_END, false);
+			G_RunFrames(ent, MUTANT_FRAMES_WALK_START, MUTANT_FRAMES_WALK_END, false, false);
 		// play animation in reverse if we are going backwards
 		else if (ucmd->forwardmove < 0)
-			G_RunFrames(ent, MUTANT_FRAMES_WALK_START, MUTANT_FRAMES_WALK_END, true);
+			G_RunFrames(ent, MUTANT_FRAMES_WALK_START, MUTANT_FRAMES_WALK_END, true, false);
 		else if ((ent->client->buttons & BUTTON_ATTACK) 
 			&& (level.time > ent->monsterinfo.attack_finished))
 		{
 			ent->client->idle_frames = 0;
 			// run attack frames
-			G_RunFrames(ent, MUTANT_FRAMES_SWING_START, MUTANT_FRAMES_SWING_END, false);
+			G_RunFrames(ent, MUTANT_FRAMES_SWING_START, MUTANT_FRAMES_SWING_END, false, false);
 			mutant_swing_attack(ent);
 		}
 		else
 		{
-			G_RunFrames(ent, MUTANT_FRAMES_IDLE_START, MUTANT_FRAMES_IDLE_END, false); // run idle frames
+			G_RunFrames(ent, MUTANT_FRAMES_IDLE_START, MUTANT_FRAMES_IDLE_END, false, false); // run idle frames
 		}
 
 		ent->count = level.framenum + qf2sf(1);
@@ -281,7 +281,7 @@ void Cmd_PlayerToMutant_f (edict_t *ent)
 {
 	vec3_t	boxmin, boxmax;
 	//trace_t	tr;
-	int mutant_cubecost = MUTANT_INIT_COST;
+	const int mutant_cubecost = MUTANT_INIT_COST;
 
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: %s just called Cmd_PlayerToMutant_f()\n", ent->client->pers.netname);

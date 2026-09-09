@@ -21,9 +21,9 @@ void cmd_mjump(edict_t *ent)
 		//Find item in inventory
 		for (i = 3; i < MAX_VRXITEMS; ++i)
 		{
-			if (ent->myskills.items[i].itemtype & ITEM_GRAVBOOTS)
+			if (ent->client->resp.pstats.items[i].itemtype & ITEM_GRAVBOOTS)
 			{
-				slot = &ent->myskills.items[i];
+				slot = &ent->client->resp.pstats.items[i];
 				found = true;
 				break;
 			}
@@ -36,21 +36,21 @@ void cmd_mjump(edict_t *ent)
 		ent->velocity[2] += MJUMP_VELOCITY;
 
 		//Consume a charge
-		if (!(ent->myskills.items[i].itemtype & ITEM_UNIQUE))
-			ent->myskills.items[i].quantity -= 1;
+		if (!(ent->client->resp.pstats.items[i].itemtype & ITEM_UNIQUE))
+			ent->client->resp.pstats.items[i].quantity -= 1;
 
 		//if out of charges, erase the item
-		if (ent->myskills.items[i].quantity == 0)
+		if (ent->client->resp.pstats.items[i].quantity == 0)
 		{
 			int count = 0;
-			V_ItemClear(&ent->myskills.items[i]);
+			V_ItemClear(&ent->client->resp.pstats.items[i]);
 			//Alert the player
             safe_cprintf(ent, PRINT_HIGH, "Your anti-gravity boots have broken!\n");
 			gi.sound(ent, CHAN_AUTO, gi.soundindex("misc/itembreak.wav"), 1, ATTN_NORM, 0);
 
 			//Check for more boots (backup items)
 			for (i = 3; i < MAX_VRXITEMS; ++i)
-				if (ent->myskills.items[i].itemtype & ITEM_GRAVBOOTS)
+				if (ent->client->resp.pstats.items[i].itemtype & ITEM_GRAVBOOTS)
 					++count;
 			safe_cprintf(ent, PRINT_HIGH, "Boots left: %d.\n", count);
 
@@ -65,95 +65,6 @@ void cmd_mjump(edict_t *ent)
 //end matrix jump
 
 qboolean CheckAuraOwner (edict_t *self, int aura_cost);
-
-/*
-void Cmd_AmmoStealer_f(edict_t *ent)
-{
-	edict_t		*other = NULL;
-	int			shells=0, bullets=0, rockets=0, slugs=0, cells=0;
-	float		steal_base;	//Base multiplier for ammo steal
-	int			skill_level;
-	qboolean	foundtarget = false;
-	vec3_t		start;
-
-	if (debuginfo->value)
-		gi.dprintf("DEBUG: %s just called Cmd_AmmoStealer_f()\n", ent->client->pers.netname);
-
-	if(ent->myskills.abilities[AMMO_STEAL].disable)
-		return;
-
-	//3.0 new ammo steal algorithm, more efficient less buggy (no ammo lost during steal)
-	if (!G_CanUseAbilities(ent, ent->myskills.abilities[AMMO_STEAL].current_level, COST_FOR_STEALER))
-		return;
-
-	G_GetSpawnLocation(ent, 512, vec3_origin, vec3_origin, start);
-
-	//Search for targets
-	while ((other = findradius(other, start, 128)) != NULL)
-	{
-		if (other == ent)
-			continue;
-		if (!other->inuse)
-			continue;
-		if (!other->takedamage)
-			continue;
-		if (other->solid == SOLID_NOT)
-			continue;
-		if (!other->client)
-			continue;
-		if (OnSameTeam(ent, other))
-			continue;
-		if (!visible(ent, other))
-			continue;
-
-		//A target has been found
-		foundtarget = true;
-
-		//Calculate the steal multiplier (random amount for each target)
-		skill_level = ent->myskills.abilities[AMMO_STEAL].current_level;
-		//min = 6.25%/lvl, max = 7.14%/lvl
-		steal_base = GetRandom((int)(skill_level / 16.0 * 100.0), (int)(skill_level / 14.0 * 100.0)) / 100.0;
-		if (steal_base > 0.9)	steal_base = 0.9; //max at 90%
-
-		//Start stealing ammo
-		shells	+= other->client->pers.inventory[ITEM_INDEX(FindItem("Shells"))]	* steal_base;
-		bullets += other->client->pers.inventory[ITEM_INDEX(FindItem("Bullets"))]	* steal_base;
-		rockets += other->client->pers.inventory[ITEM_INDEX(FindItem("Rockets"))]	* steal_base;
-		slugs	+= other->client->pers.inventory[ITEM_INDEX(FindItem("Slugs"))]		* steal_base;
-		cells	+= other->client->pers.inventory[ITEM_INDEX(FindItem("Cells"))]		* steal_base;
-		
-		//This next part does the same thing as subtracting the amount stolen from the target
-		other->client->pers.inventory[ITEM_INDEX(FindItem("Shells"))]	*= (1 - steal_base);
-		other->client->pers.inventory[ITEM_INDEX(FindItem("Bullets"))]	*= (1 - steal_base);
-		other->client->pers.inventory[ITEM_INDEX(FindItem("Rockets"))]	*= (1 - steal_base);
-		other->client->pers.inventory[ITEM_INDEX(FindItem("Slugs"))]	*= (1 - steal_base);
-		other->client->pers.inventory[ITEM_INDEX(FindItem("Cells"))]	*= (1 - steal_base);
-
-		//Play the spell sound!
-		gi.sound(ent, CHAN_ITEM, gi.soundindex("abilities/telekinesis.wav"), 1, ATTN_NORM, 0);
-
-		//Notify the two clients
-		safe_cprintf(other, PRINT_HIGH, "%s just stole some of your ammo!\n", ent->client->pers.netname);
-		safe_cprintf(ent, PRINT_HIGH, "You just stole %d%% of %s's ammo!\n", (int)(steal_base * 100), other->client->pers.netname);
-
-		// calling entity made a sound, used to alert monsters
-		ent->lastsound = level.framenum;
-	}
-	//Add what we stole from the other people. :)
-	ent->client->pers.inventory[ITEM_INDEX(FindItem("Shells"))] += shells;
-	ent->client->pers.inventory[ITEM_INDEX(FindItem("Bullets"))] += bullets;
-	ent->client->pers.inventory[ITEM_INDEX(FindItem("Rockets"))] += rockets;
-	ent->client->pers.inventory[ITEM_INDEX(FindItem("Slugs"))] += slugs;
-	ent->client->pers.inventory[ITEM_INDEX(FindItem("Cells"))] += cells;
-	Check_full(ent);//Make sure we are not over our limits
-
-	if(foundtarget)
-	{
-		ent->client->ability_delay = level.time + DELAY_AMMOSTEAL;
-		ent->client->pers.inventory[power_cube_index] -= COST_FOR_STEALER;
-	}
-}
-*/
 
 void Cmd_BoostPlayer(edict_t *ent)
 {
@@ -339,7 +250,9 @@ void Cmd_CorpseExplode(edict_t *ent)
 
 		//Spells like corpse explode shouldn't display 10000 damage, so show the corpse damage instead
 		ent->client->ps.stats[STAT_ID_DAMAGE] = damage;
-
+#ifdef VRX_REPRO
+		ent->client->ps.stats[STAT_ID_DAMAGE2] = damage >> 16;
+#endif
         gi.sound(e, CHAN_ITEM, gi.soundindex("abilities/corpseexplodecast.wav"), 1, ATTN_NORM, 0);
 		ent->client->pers.inventory[power_cube_index] -= COST_FOR_CORPSEEXPLODE;
 		ent->client->ability_delay = level.time + DELAY_CORPSEEXPLODE;
@@ -610,59 +523,10 @@ void StaticFieldAttack (edict_t* ent, int cripple_level)
 	// calling entity made a sound, used to alert monsters
 	ent->lastsound = level.framenum;
 }
-/*
-void CrippleAttack (edict_t *ent)
-{
-	int		damage;
-	vec3_t	end;
-	trace_t	tr;
-	edict_t	*e=NULL;
-
-	while ((e = findclosestreticle(e, ent, STATICFIELD_RANGE)) != NULL)
-	{
-		if (!G_ValidTarget(ent, e, true))
-			continue;
-		if (!visible(ent, e))
-			continue;
-		if (!infront(ent, e))
-			continue;
-
-		damage = e->health * (1-(1/(1+0.2*ent->myskills.abilities[CRIPPLE].current_level)));
-		if (damage > STATICFIELD_MAX_DAMAGE)
-			damage = STATICFIELD_MAX_DAMAGE;
-		T_Damage(e, ent, ent, vec3_origin, e->s.origin, vec3_origin, damage, 0, DAMAGE_NO_ABILITIES, MOD_CRIPPLE);
-
-		VectorCopy(e->s.origin, end);
-		end[2] += 8192;
-		tr = gi.trace(e->s.origin, NULL, NULL, end, e, MASK_SHOT);
-
-		gi.WriteByte (svc_temp_entity);
-		gi.WriteByte (TE_MONSTER_HEATBEAM);
-		gi.WriteShort (e-g_edicts);
-		gi.WritePosition (e->s.origin);
-		gi.WritePosition (tr.endpos);
-		gi.multicast (e->s.origin, MULTICAST_PVS);
-		break;
-	}
-
-	// write a nice effect so everyone knows we've cast a spell
-	gi.WriteByte (svc_temp_entity);
-	gi.WriteByte (TE_TELEPORT_EFFECT);
-	gi.WritePosition (ent->s.origin);
-	gi.multicast (ent->s.origin, MULTICAST_PVS);
-
-    gi.sound(ent, CHAN_WEAPON, gi.soundindex("abilities/eleccast.wav"), 1, ATTN_NORM, 0);
-	ent->client->ability_delay = level.time + STATICFIELD_DELAY;
-	ent->client->pers.inventory[power_cube_index]-=STATICFIELD_COST;
-
-	// calling entity made a sound, used to alert monsters
-	ent->lastsound = level.framenum;
-}
-*/
 
 void Cmd_StaticField_f (edict_t *ent)
 {
-	int	ability_level=ent->myskills.abilities[STATIC_FIELD].current_level;
+	const int	ability_level=ent->myskills.abilities[STATIC_FIELD].current_level;
 
 	if (!G_CanUseAbilities(ent, ability_level, STATICFIELD_COST))
 		return;
@@ -858,7 +722,7 @@ void meditate_think (edict_t *self)
 void Cmd_Meditate_f (edict_t *ent)
 {
 	//Talent: Meditation
-    int talentLevel = vrx_get_talent_level(ent, TALENT_MEDITATION);
+    const int talentLevel = vrx_get_talent_level(ent, TALENT_MEDITATION);
 
 	if (talentLevel < 1)
 		return;
@@ -895,7 +759,7 @@ void Cmd_Meditate_f (edict_t *ent)
 void Cmd_Purge_f (edict_t *ent)
 {
 	//Talent: Purge
-    int talentLevel = vrx_get_talent_level(ent, TALENT_PURGE);
+    const int talentLevel = vrx_get_talent_level(ent, TALENT_PURGE);
 
 	if (talentLevel < 1)
 	{
@@ -1040,7 +904,7 @@ void TeleportBehindTarget(edict_t* self, edict_t* target, float dist)
 		self->s.angles[YAW] = forward[YAW];
 
 		// set view angles to target
-		if (self->ai.is_bot)
+		if (self->ai)
 			VectorCopy(forward, self->client->v_angle);
 		else if (self->client)
 		{

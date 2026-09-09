@@ -232,15 +232,15 @@ void hw_flagthink (edict_t *self)
 	VectorCopy(tr.endpos, end);
 
 	// update laser entity
-	if (!self->other && !VectorLength(self->velocity))
+	if (!self->flaglaser && !VectorLength(self->velocity))
 	{
-		self->other = hw_spawnlaser(self, self->s.origin, end);
-	} else if (self->other)
+		self->flaglaser = hw_spawnlaser(self, self->s.origin, end);
+	} else if (self->flaglaser)
 	{
-		VectorCopy(self->s.origin, self->other->pos1);
-		VectorCopy(self->s.origin, self->other->s.old_origin);
-		VectorCopy(end, self->other->pos2);
-		VectorCopy(end, self->other->s.origin);
+		VectorCopy(self->s.origin, self->flaglaser->pos1);
+		VectorCopy(self->s.origin, self->flaglaser->s.old_origin);
+		VectorCopy(end, self->flaglaser->pos2);
+		VectorCopy(end, self->flaglaser->s.origin);
 	}
 
 	self->s.effects = 0;
@@ -286,7 +286,7 @@ void hw_touch_flag(edict_t* ent, edict_t* other, cplane_t* plane, csurface_t* su
 void hw_find_spawn_point(edict_t* flag)
 {
 	vec3_t dir = { 0, 0, 0 };
-	float speed = 600;
+	const float speed = 600;
 	edict_t* it = NULL;
 	edict_t* candidates[32];
 	int cnt = 0;
@@ -329,7 +329,7 @@ void hw_find_spawn_point(edict_t* flag)
 void hw_die(edict_t* self, edict_t* inflictor, edict_t* attacker, int damage, vec3_t point)
 {
 	vec3_t start, end, dir;
-	float knockback = 600;
+	const float knockback = 600;
 	
 
 	G_EntMidPoint(self, start);
@@ -364,7 +364,7 @@ void hw_toss(edict_t* flag, float speed)
 void hw_pain(edict_t* self, edict_t* other, float kick, int damage)
 {
 	vec3_t start, end, dir;
-	float knockback_dmg = 500;
+	const float knockback_dmg = 500;
 	edict_t* cl = G_GetClient(other);
 
 	if (!cl)
@@ -388,7 +388,7 @@ void hw_pain(edict_t* self, edict_t* other, float kick, int damage)
 void hw_dropflag (edict_t *ent, gitem_t *item)
 {
 	edict_t *flag;
-	float speed = 600;
+	const float speed = 600;
 
 	//if (!G_EntExists(ent))
 	//	return;

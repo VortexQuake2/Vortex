@@ -128,7 +128,7 @@ void fire_meteor (edict_t *self, vec3_t end, int damage, int radius, int speed)
 	meteor->classname = "meteor";
 
 	// Talent: Meteoric Fire - spawns a firewall on meteor impact
-	int talentLevel = vrx_get_talent_level(self, TALENT_METEORIC_FIRE);
+	const int talentLevel = vrx_get_talent_level(self, TALENT_METEORIC_FIRE);
 	if (talentLevel > 0)
 	{
 		meteor->style = talentLevel;
@@ -254,7 +254,7 @@ void MeteorAttack (edict_t *ent, int damage, int radius, int speed, float skill_
 
     //gi.sound(meteor, CHAN_WEAPON, gi.soundindex("abilities/meteorlaunch_short.wav"), 1, ATTN_NORM, 0);
 	//Talent: Wizardry - makes spell timer ability-specific instead of global
-	int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
+	const int talentLevel = vrx_get_talent_level(ent, TALENT_WIZARDRY);
 	if (talentLevel > 0)
 	{
 		ent->myskills.abilities[METEOR].delay = level.time + METEOR_DELAY;
@@ -270,10 +270,10 @@ void MeteorAttack (edict_t *ent, int damage, int radius, int speed, float skill_
 
 void Cmd_Meteor_f (edict_t *ent, float skill_mult, float cost_mult)
 {
-	int damage=METEOR_INITIAL_DMG+METEOR_ADDON_DMG*ent->myskills.abilities[METEOR].current_level;
-	int speed=METEOR_INITIAL_SPEED+METEOR_ADDON_SPEED*ent->myskills.abilities[METEOR].current_level;
-	int radius=METEOR_INITIAL_RADIUS+METEOR_ADDON_RADIUS*ent->myskills.abilities[METEOR].current_level;
-	int	cost=METEOR_COST*cost_mult;
+	const int damage=METEOR_INITIAL_DMG+METEOR_ADDON_DMG*ent->myskills.abilities[METEOR].current_level;
+	const int speed=METEOR_INITIAL_SPEED+METEOR_ADDON_SPEED*ent->myskills.abilities[METEOR].current_level;
+	const int radius=METEOR_INITIAL_RADIUS+METEOR_ADDON_RADIUS*ent->myskills.abilities[METEOR].current_level;
+	const int	cost=METEOR_COST*cost_mult;
 
 	//if (!G_CanUseAbilities(ent, ent->myskills.abilities[METEOR].current_level, cost))
 	//	return;

@@ -93,7 +93,7 @@ void tech_spawnall(void) {
 
 qboolean tech_pickup(edict_t *ent, edict_t *other) {
     int index;
-    int maxLevel = 1.7 * AveragePlayerLevel();
+    const int maxLevel = 1.7 * AveragePlayerLevel();
 
     // can't pick-up more than 1 tech
     if (other->client->pers.inventory[resistance_index]

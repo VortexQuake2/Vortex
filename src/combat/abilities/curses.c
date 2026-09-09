@@ -8,14 +8,15 @@ void vrx_curse_heal_all(edict_t* target) {
     for (i = 0; i < QUE_MAXSIZE; ++i)
     {
         que_t *curse = &target->curses[i];
-        if ((curse->ent && curse->ent->inuse) && (curse->ent->atype != HEALING && curse->ent->atype != BLESS))
+    	auto cent = h2en(curse->ent);
+        if ((cent && cent->inuse) && (cent->atype != HEALING && cent->atype != BLESS))
         {
             //destroy the curse
-            if (curse->ent->enemy && (curse->ent->enemy == target))
-                G_FreeEdict(curse->ent);
+            if (cent->enemy && (cent->enemy == target))
+                G_FreeEdict(cent);
             // remove entry from the queue
             curse->time = 0;
-            curse->ent = NULL;
+            curse->ent = ENTHANDLE_EMPTY;
         }
     }
 }
@@ -82,7 +83,7 @@ void Healing_think(edict_t *self)
 	//Find my slot
 	que_t *slot = NULL;	
 	int heal_amount = HEALING_HEAL_BASE + HEALING_HEAL_BONUS * self->owner->myskills.abilities[HEALING].current_level;
-	float cooldown = 1.0;
+	const float cooldown = 1.0;
 
 	slot = que_findtype(self->enemy->curses, NULL, HEALING);
 
@@ -230,7 +231,7 @@ void curse_think(edict_t *self)
 qboolean curse_add(edict_t *target, edict_t *caster, int type, int curse_level, float duration)
 {
 	edict_t *curse;
-	que_t	*slot = NULL;
+	const que_t	*slot = NULL;
 	
 	if (type != BLESS && type != HEALING && type != DEFLECT)
 		if (target == caster)
@@ -241,14 +242,14 @@ qboolean curse_add(edict_t *target, edict_t *caster, int type, int curse_level, 
 	if(slot != NULL)
 	{
 		//If the current curse in effect has a level greater than the caster's curse level
-		//if (slot->ent->owner->myskills.abilities[type].current_level > caster->myskills.abilities[type].current_level)
-		if (slot->ent->monsterinfo.level > curse_level)//4.4
+		//if (h2e(slot->ent)->owner->myskills.abilities[type].current_level > caster->myskills.abilities[type].current_level)
+		if (h2e(slot->ent)->monsterinfo.level > curse_level)//4.4
 			//Can't re-curse this player
 			return false;
 		else
 		{
             //Refresh the curse with the new level/ent/duration
-			return que_addent(target->curses, slot->ent, duration);
+			return que_addent(target->curses, h2e(slot->ent), duration);
 		}
 	}
 
@@ -433,7 +434,7 @@ void CurseMessage (edict_t *caster, edict_t *target, int type, int curseLevel, f
 	{
 		safe_cprintf(target, PRINT_HIGH, "**You have been %s with %s (%d) for %0.1f second(s)**\n", typeName, curseName, curseLevel, duration);
 		if (caster && caster->client)
-			safe_cprintf(caster, PRINT_HIGH, "%s %s with %s (%d) for %0.1f second(s)\n", typeName, target->myskills.player_name, curseName, curseLevel, duration);
+			safe_cprintf(caster, PRINT_HIGH, "%s %s with %s (%d) for %0.1f second(s)\n", typeName, target->client->resp.pstats.player_name, curseName, curseLevel, duration);
 	}
 	else if (target->mtype)
 	{
@@ -696,7 +697,7 @@ void Cmd_Curse(edict_t *ent)
 {
 	int range, radius, talentLevel, curseLevel, cost=CURSE_COST;
 	float duration;
-	edict_t *target = NULL;
+	const edict_t *target = NULL;
 
 	if (debuginfo->value)
 		gi.dprintf("DEBUG: %s just called Cmd_Curse()\n", ent->client->pers.netname);
@@ -965,7 +966,7 @@ void Cmd_Amnesia(edict_t *ent)
 		if ((target->client) && !(target->svflags & SVF_MONSTER))
 		{
 			safe_cprintf(target, PRINT_HIGH, "YOU HAVE BEEN CURSED WITH AMNESIA!! (%0.1f seconds)\n", duration);
-			safe_cprintf(ent, PRINT_HIGH, "Cursed %s with amnesia for %0.1f seconds.\n", target->myskills.player_name, duration);
+			safe_cprintf(ent, PRINT_HIGH, "Cursed %s with amnesia for %0.1f seconds.\n", target->client->resp.pstats.player_name, duration);
 		}
 		else
 		{
@@ -1014,7 +1015,7 @@ void Cmd_Healing(edict_t *ent)
 	}
 	if (target != NULL)
 	{
-		que_t *slot = NULL;
+		const que_t *slot = NULL;
 
 		//Finish casting the spell
 		ent->client->ability_delay = level.time + HEALING_DELAY;
@@ -1024,9 +1025,10 @@ void Cmd_Healing(edict_t *ent)
 		slot = que_findtype(target->curses, NULL, HEALING);
 		if (slot)
 		{
-			slot->ent->think = Healing_think;
-			slot->ent->nextthink = level.time + FRAMETIME;
-			slot->ent->delay = level.time + FRAMETIME; // az act immediately
+			auto aura = h2e(slot->ent);
+			aura->think = Healing_think;
+			aura->nextthink = level.time + FRAMETIME;
+			aura->delay = level.time + FRAMETIME; // az act immediately
 		}
 
 		//Notify the target
@@ -1037,7 +1039,7 @@ void Cmd_Healing(edict_t *ent)
 		else if ((target->client) && !(target->svflags & SVF_MONSTER))
 		{
 			safe_cprintf(target, PRINT_HIGH, "YOU HAVE BEEN BLESSED WITH %0.1f seconds OF HEALING!!\n", duration);
-			safe_cprintf(ent, PRINT_HIGH, "Blessed %s with healing for %0.1f seconds.\n", target->myskills.player_name, duration);
+			safe_cprintf(ent, PRINT_HIGH, "Blessed %s with healing for %0.1f seconds.\n", target->client->resp.pstats.player_name, duration);
 		}
 		else
 		{
@@ -1093,7 +1095,7 @@ void Cmd_Bless(edict_t *ent)
 
 	if (target != NULL)
 	{
-		que_t *slot = NULL;
+		const que_t *slot = NULL;
 
 		//Finish casting the spell
 		ent->client->ability_delay = level.time + BLESS_DELAY;
@@ -1109,8 +1111,9 @@ void Cmd_Bless(edict_t *ent)
 		slot = que_findtype(target->curses, NULL, BLESS);
 		if (slot)
 		{
-			slot->ent->think = Bless_think;
-			slot->ent->nextthink = level.time + FRAMETIME;
+			auto aura = h2e(slot->ent);
+			aura->think = Bless_think;
+			aura->nextthink = level.time + FRAMETIME;
 		}
 
 		//Notify the target
@@ -1121,7 +1124,7 @@ void Cmd_Bless(edict_t *ent)
 		else if ((target->client) && !(target->svflags & SVF_MONSTER))
 		{
 			safe_cprintf(target, PRINT_HIGH, "YOU HAVE BEEN BLESSED FOR %0.1f seconds!!\n", duration);
-			safe_cprintf(ent, PRINT_HIGH, "Blessed %s for %0.1f seconds.\n", target->myskills.player_name, duration);
+			safe_cprintf(ent, PRINT_HIGH, "Blessed %s for %0.1f seconds.\n", target->client->resp.pstats.player_name, duration);
 		}
 		else
 		{
@@ -1201,7 +1204,7 @@ void Cmd_Deflect_f(edict_t *ent)
 
 	if (target != NULL)
 	{
-		que_t *slot = NULL;
+		const que_t *slot = NULL;
 
 		//Finish casting the spell
 		ent->client->ability_delay = level.time + DEFLECT_DELAY;
@@ -1212,11 +1215,12 @@ void Cmd_Deflect_f(edict_t *ent)
 		slot = que_findtype(target->curses, NULL, DEFLECT);
 		if (slot)
 		{
-			slot->ent->think = deflect_think;
-			slot->ent->nextthink = level.time + FRAMETIME;
-			slot->ent->random = DEFLECT_INITIAL_PROJECTILE_CHANCE+DEFLECT_ADDON_HITSCAN_CHANCE*ent->myskills.abilities[DEFLECT].current_level;
-			if (slot->ent->random > DEFLECT_MAX_PROJECTILE_CHANCE)
-				slot->ent->random = DEFLECT_MAX_PROJECTILE_CHANCE;
+			auto aura = h2e(slot->ent);
+			aura->think = deflect_think;
+			aura->nextthink = level.time + FRAMETIME;
+			aura->random = DEFLECT_INITIAL_PROJECTILE_CHANCE+DEFLECT_ADDON_HITSCAN_CHANCE*ent->myskills.abilities[DEFLECT].current_level;
+			if (aura->random > DEFLECT_MAX_PROJECTILE_CHANCE)
+				aura->random = DEFLECT_MAX_PROJECTILE_CHANCE;
 		}
 
 		//Notify the target
@@ -1227,7 +1231,7 @@ void Cmd_Deflect_f(edict_t *ent)
 		else if ((target->client) && !(target->svflags & SVF_MONSTER))
 		{
 			safe_cprintf(target, PRINT_HIGH, "You have been blessed with deflect for %0.1f seconds!\n\n", duration);
-			safe_cprintf(ent, PRINT_HIGH, "Blessed %s with deflect for %0.1f seconds.\n", target->myskills.player_name, duration);
+			safe_cprintf(ent, PRINT_HIGH, "Blessed %s with deflect for %0.1f seconds.\n", target->client->resp.pstats.player_name, duration);
 		}
 		else
 		{
@@ -1249,7 +1253,7 @@ void MindAbsorb(edict_t *ent)
 	int radius;  
 	int take;  
 	int total;
-	int abilityLevel = ent->myskills.abilities[MIND_ABSORB].current_level;   
+	const int abilityLevel = ent->myskills.abilities[MIND_ABSORB].current_level;   
 	
 	if(ent->myskills.abilities[MIND_ABSORB].disable)   
 		return;   
@@ -1363,7 +1367,7 @@ void CursedPlayer (edict_t *ent)
 	else if ((forward[ROLL] < 0) && (forward[ROLL] < -CURSE_MAX_ROLL))
 		forward[ROLL] = -CURSE_MAX_ROLL;
 
-	// set view angles 
+	// set view angles
 	for (i = 0 ; i < 3 ; i++)
 		ent->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(forward[i]-ent->client->resp.cmd_angles[i]);
 	VectorCopy(forward, ent->client->ps.viewangles);
@@ -1416,8 +1420,8 @@ int SelectRandomTopCurse(edict_t* player)
 
 	// Find the two highest level curses
 	for (int i = 0; i < NUM_CURSES; i++) {
-		int index = CURSE_INDICES[i];  // Get the actual ability index
-		int level = player->myskills.abilities[index].current_level;
+		const int index = CURSE_INDICES[i];  // Get the actual ability index
+		const int level = player->myskills.abilities[index].current_level;
 
 		if (level > highest_level) {
 			second_highest_level = highest_level;

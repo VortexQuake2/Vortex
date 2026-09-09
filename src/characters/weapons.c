@@ -6,7 +6,7 @@
 qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 {
 	weapon_t *weapon;
-	int maxLevel = 40;		//All hard maximums for the weapon master are set to this number.
+	const int maxLevel = 40;		//All hard maximums for the weapon master are set to this number.
 
 	if (generalabmode->value == 0) // No weapon master bonuses in non-general ab mode.
 		return false;
@@ -15,7 +15,7 @@ qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 	    return false;
 
 	//Point to the correct weapon
-	weapon = &ent->myskills.weapons[WeaponIndex];
+	weapon = &ent->client->resp.pstats.weapons[WeaponIndex];
 
 	//Don't crash
 	if (ModIndex < 0 || ModIndex >= MAX_WEAPONMODS)
@@ -33,13 +33,6 @@ qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 		else return false;
 		break;
 	case WEAPON_SHOTGUN:
-		if(ModIndex == 0 || ModIndex == 2)
-		{
-			weapon->mods[ModIndex].soft_max = 20;
-			weapon->mods[ModIndex].hard_max = maxLevel;
-		}
-		else return false;
-		break;
 	case WEAPON_SUPERSHOTGUN:
 		if(ModIndex == 0 || ModIndex == 2)
 		{
@@ -57,45 +50,10 @@ qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 		else return false;
 		break;
 	case WEAPON_CHAINGUN:
-		if(ModIndex == 0 || ModIndex == 2)
-		{
-			weapon->mods[ModIndex].soft_max = 15;
-			weapon->mods[ModIndex].hard_max = maxLevel;
-		}
-		else return false;
-		break;
 	case WEAPON_GRENADELAUNCHER:
-		if(ModIndex == 0 || ModIndex == 2)
-		{
-			weapon->mods[ModIndex].soft_max = 20;
-			weapon->mods[ModIndex].hard_max = maxLevel;
-		}
-		else return false;
-		break;
 	case WEAPON_ROCKETLAUNCHER:
-		if(ModIndex == 0 || ModIndex == 2)
-		{
-			weapon->mods[ModIndex].soft_max = 20;
-			weapon->mods[ModIndex].hard_max = maxLevel;
-		}
-		else return false;
-		break;
 	case WEAPON_HYPERBLASTER:
-		if(ModIndex == 0 || ModIndex == 2)
-		{
-			weapon->mods[ModIndex].soft_max = 20;
-			weapon->mods[ModIndex].hard_max = maxLevel;
-		}
-		else return false;
-		break;
 	case WEAPON_RAILGUN:
-		if(ModIndex == 0 || ModIndex == 2)
-		{
-			weapon->mods[ModIndex].soft_max = 15;
-			weapon->mods[ModIndex].hard_max = maxLevel;
-		}
-		else return false;
-		break;
 	case WEAPON_BFG10K:
 		if(ModIndex == 0 || ModIndex == 2)
 		{
@@ -128,6 +86,38 @@ qboolean GiveWeaponMasterUpgrade(edict_t *ent, int WeaponIndex, int ModIndex)
 		}
 		else return false;
 		break;
+	case WEAPON_IONRIPPER:
+	case WEAPON_PHALANX:
+	case WEAPON_TRAP:
+		if(ModIndex < 3)
+		{
+			weapon->mods[ModIndex].soft_max = 20;
+			weapon->mods[ModIndex].hard_max = maxLevel;
+		}
+		else return false;
+		break;
+	case WEAPON_ETFRIFLE:
+		if(ModIndex == 0 || ModIndex == 2)
+		{
+			weapon->mods[ModIndex].soft_max = 20;
+			weapon->mods[ModIndex].hard_max = maxLevel;
+		}
+		else return false;
+		break;
+	case WEAPON_PLASMABEAM:
+	case WEAPON_PROXLAUNCHER:
+	case WEAPON_CHAINFIST:
+	case WEAPON_TESLA:
+	case WEAPON_DISRUPTOR:
+		if(ModIndex < 3)
+		{
+			weapon->mods[ModIndex].soft_max = 20;
+			weapon->mods[ModIndex].hard_max = maxLevel;
+		}
+		else return false;
+		break;
+	default:
+		return false;
 	}
 	return true;
 }
@@ -137,10 +127,10 @@ qboolean GiveKnightUpgrade(edict_t *ent, int WeaponIndex, int ModIndex) {
         return false;
 
     weapon_t *weapon;
-    int maxLevel = 40;		// Sword hard maximums for the knight are set to this number.
+    const int maxLevel = 40;		// Sword hard maximums for the knight are set to this number.
 
     //Point to the correct weapon
-    weapon = &ent->myskills.weapons[WeaponIndex];
+    weapon = &ent->client->resp.pstats.weapons[WeaponIndex];
 
     //Don't crash
     if (ModIndex < 0 || ModIndex >= MAX_WEAPONMODS)
@@ -170,27 +160,27 @@ void vrx_reset_weapon_maximums(edict_t *ent)
 		for (j = 0; j < MAX_WEAPONMODS; ++j)
 		{
 			//Reset the current level (make it equal to the user's hard upgrade level)
-			ent->myskills.weapons[i].mods[j].current_level = ent->myskills.weapons[i].mods[j].level;
+			ent->client->resp.pstats.weapons[i].mods[j].current_level = ent->client->resp.pstats.weapons[i].mods[j].level;
 
 			//Update the player's max levels ONLY IF they need it (ex: not loading a weapon from their player file)
-			if(ent->myskills.weapons[i].mods[j].soft_max == 0 || ent->myskills.weapons[i].mods[j].hard_max == 0)
+			if(ent->client->resp.pstats.weapons[i].mods[j].soft_max == 0 || ent->client->resp.pstats.weapons[i].mods[j].hard_max == 0)
 			{
 				//Weapon masters and knights get a bonus to some upgrades
 				if (ent->myskills.class_num != CLASS_WEAPONMASTER || !GiveWeaponMasterUpgrade(ent, i, j)) {
                     if (ent->myskills.class_num != CLASS_KNIGHT || !GiveKnightUpgrade(ent, i, j)) {
                         if (j < 3) {
-                            ent->myskills.weapons[i].mods[j].soft_max = 10;
-                            ent->myskills.weapons[i].mods[j].hard_max = 30;
+                            ent->client->resp.pstats.weapons[i].mods[j].soft_max = 10;
+                            ent->client->resp.pstats.weapons[i].mods[j].hard_max = 30;
                         } else {
                             //Sword gets an extra bonus
                             if (j == 3 && i == WEAPON_SWORD) { // az note: this is sword burn
-                                ent->myskills.weapons[i].mods[j].soft_max = 10;
-                                ent->myskills.weapons[i].mods[j].hard_max = 30;
+                                ent->client->resp.pstats.weapons[i].mods[j].soft_max = 10;
+                                ent->client->resp.pstats.weapons[i].mods[j].hard_max = 30;
                                 continue;
                             }
 
-                            ent->myskills.weapons[i].mods[j].soft_max = 1;
-                            ent->myskills.weapons[i].mods[j].hard_max = 1;
+                            ent->client->resp.pstats.weapons[i].mods[j].soft_max = 1;
+                            ent->client->resp.pstats.weapons[i].mods[j].hard_max = 1;
                         }
                     }
                 }

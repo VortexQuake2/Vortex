@@ -294,8 +294,8 @@ void decoy_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage
     if(damage > 0 && self->activator && self->activator->inuse)// && getTalentLevel(self->activator, TALENT_EXPLODING_DECOY) != -1)
     {
         //int talentLevel = vrx_get_talent_level(self->activator, TALENT_EXPLODING_DECOY);
-		int decoyDamage = 0.2 * self->max_health;
-		int decoyRadius = 100 + 5 * self->monsterinfo.level;// +talentLevel * 25;
+		const int decoyDamage = 0.2 * self->max_health;
+		const int decoyRadius = 100 + 5 * self->monsterinfo.level;// +talentLevel * 25;
 
         T_RadiusDamage(self, self->activator, decoyDamage, self, decoyRadius, MOD_DECOY);
 
@@ -357,7 +357,7 @@ mmove_t actor_move_attack = {FRAME_attack1, FRAME_attack8, actor_frames_attack, 
 void actor_attack(edict_t *self)
 {
 	int	weap_index;
-	float dist = entdist(self, self->enemy);
+	const float dist = entdist(self, self->enemy);
 
 	// we're dying, get up close!
 	if (self->health < 0.3 * self->max_health)
@@ -371,21 +371,21 @@ void actor_attack(edict_t *self)
 
 	if (dist < SABRE_INITIAL_RANGE)
 	{
-		weap_index = WEAP_SWORD;
+		weap_index = WEAPON_SWORD;
 		self->s.skinnum = self->activator->s.skinnum | (weap_index << 8);
 		// sword attack
 		self->monsterinfo.currentmove = &actor_move_attack2;
 	}
 	else if (dist < 512)
 	{
-		weap_index = WEAP_ROCKETLAUNCHER;
+		weap_index = WEAPON_ROCKETLAUNCHER;
 		self->s.skinnum = self->activator->s.skinnum | (weap_index << 8);
 		// rocket attack
 		self->monsterinfo.currentmove = &actor_move_attack;
 	}
 	else
 	{
-		weap_index = WEAP_RAILGUN;
+		weap_index = WEAPON_RAILGUN;
 		self->s.skinnum = self->activator->s.skinnum | (weap_index << 8);
 		// rail attack
 		self->monsterinfo.currentmove = &actor_move_attack3;
@@ -400,8 +400,8 @@ void actor_attack(edict_t *self)
 char* V_GetClassSkin(edict_t* ent);
 void decoy_assign_class_skin(edict_t* self)
 {
-	int skin_number = maxclients->value + self->s.number - 1;
-	char* c_skin = va("decoy\\%s\0", V_GetClassSkin(self->activator));
+	const int skin_number = maxclients->value + self->s.number - 1;
+	const char* c_skin = va("decoy\\%s\0", V_GetClassSkin(self->activator));
 	gi.configstring(CS_PLAYERSKINS + skin_number, c_skin);
 	self->s.skinnum = skin_number;
 	//gi.dprintf("set class skin %s\n", c_skin);
@@ -410,7 +410,7 @@ void decoy_assign_class_skin(edict_t* self)
 //FIXME: this won't work correctly for player morphs--need to default to some other model, either class model or grunt
 void decoy_copy (edict_t *self)
 {
-	edict_t *target = self->activator;
+	const edict_t *target = self->activator;
 
 	if (!self->activator || !self->activator->inuse || !self->activator->client)
 		return;

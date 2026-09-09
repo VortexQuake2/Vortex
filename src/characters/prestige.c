@@ -35,15 +35,19 @@ uint32_t vrx_prestige_get_upgrade_points(uint32_t exp) {
     return exp / PRESTIGE_THRESHOLD;
 }
 
+uint32_t vrx_get_prestige_max_xp() {
+    return PRESTIGE_THRESHOLD * PRESTIGE_MAX_POINTS;
+}
+
 qboolean vrx_prestige_filter_class_skill(const abilitydef_t *pAbility, void *user) {
-    edict_t *pUser = user;
+    const edict_t *pUser = user;
 
     // general skills cannot become class skills
-    if (pAbility->general)
+    if (pAbility->general && !pAbility->allow_class_upgrade)
         return false;
 
     // non-scaleable abilities cannot become class skills
-    if (pAbility->softmax != DEFAULT_SOFTMAX)
+    if (pAbility->softmax != DEFAULT_SOFTMAX && !pAbility->class_softmax_override)
         return false;
 
     // already a class skill
@@ -54,10 +58,11 @@ qboolean vrx_prestige_filter_class_skill(const abilitydef_t *pAbility, void *use
 }
 
 qboolean vrx_prestige_filter_softmax_bump(const abilitydef_t *pAbility, void *user) {
-    edict_t *pUser = user;
+    const edict_t *pUser = user;
 
-    if (pAbility->softmax != DEFAULT_SOFTMAX)
+    if (pAbility->softmax != DEFAULT_SOFTMAX && !pAbility->class_softmax_override) {
         return false;
+    }
 
     // Don't show the skill if it has reached the maximum softmax bump.
     if (pUser->myskills.prestige.softmaxBump[pAbility->index] >= MAX_SOFTMAX_BUMP)
@@ -123,7 +128,7 @@ void vrx_prestige_handle_softmax_bump(edict_t *ent, int option) {
 
     ent->myskills.prestige.softmaxBump[option] += 1;
     ent->myskills.prestige.points -= 1;
-    ent->myskills.abilities[option].max_level += 1;
+    ent->myskills.abilities[option].soft_max += 1;
     ent->myskills.abilities[option].hard_max = vrx_get_hard_max(option, 0, vrx_get_ability_class(option));
 
     gi.cprintf(ent, PRINT_HIGH, "You have increased the softmax of %s by 1.\n", GetAbilityString(option));
@@ -135,14 +140,14 @@ void vrx_prestige_ascend(edict_t *self) {
         return;
 
     // check how many levels the player can ascend
-    int upgradePoints = vrx_prestige_get_upgrade_points(self->myskills.experience);
+    const int upgradePoints = vrx_prestige_get_upgrade_points(self->myskills.experience);
 
     // add the upgrade points to the player's prestige total and current
     self->myskills.prestige.total += upgradePoints;
     self->myskills.prestige.points += upgradePoints;
 
     // reset them to start level
-    vrx_change_class(self->myskills.player_name, self->myskills.class_num, 3);
+    vrx_change_class(self->client->resp.pstats.player_name, self->myskills.class_num, 3);
 }
 
 void vrx_prestige_menu_handler(edict_t *self, int option) {
@@ -206,7 +211,7 @@ void vrx_prestige_open_menu(edict_t *self) {
     menu_add_line(self, va("Prestige %d", self->myskills.prestige.total), MENU_GREEN_CENTERED);
     menu_add_line(self, va("You have %d points available", self->myskills.prestige.points), MENU_WHITE_CENTERED);
 
-    int rem = self->myskills.experience % PRESTIGE_THRESHOLD;
+    const int rem = self->myskills.experience % PRESTIGE_THRESHOLD;
     menu_add_line(self, va("%d xp until next point", PRESTIGE_THRESHOLD - rem), MENU_WHITE_CENTERED);
 
     if (self->myskills.prestige.creditLevel) {
@@ -221,7 +226,7 @@ void vrx_prestige_open_menu(edict_t *self) {
         menu_add_line(self, prestige[i].name, prestige[i].id);
     }
 
-    int upgradePoints = self->myskills.experience / PRESTIGE_THRESHOLD;
+    const int upgradePoints = self->myskills.experience / PRESTIGE_THRESHOLD;
 
     menu_add_line(self, " ", 0);
     if (upgradePoints) {
@@ -236,25 +241,25 @@ void vrx_prestige_open_menu(edict_t *self) {
 }
 
 qboolean vrx_prestige_has_ability(struct prestigelist_s *pre, uint32_t abIndex) {
-    uint32_t arrIdx = abIndex / 32;
-    uint32_t mask = 1 << (abIndex % 32);
+    const uint32_t arrIdx = abIndex / 32;
+    const uint32_t mask = 1 << (abIndex % 32);
     return (pre->classSkill[arrIdx] & mask) != 0;
 }
 
 void vrx_prestige_reapply_abilities(edict_t* self) {
     struct prestigelist_s *pre = &self->myskills.prestige;
-    for (uint32_t abIndex = 0; abIndex < MAX_ABILITIES; abIndex++) {
+    for (size_t abIndex = 0; abIndex < MAX_ABILITIES; abIndex++) {
         if (vrx_prestige_has_ability(pre, abIndex)) {
             vrx_add_ability(self, abIndex);
         }
 
-        self->myskills.abilities[abIndex].max_level += pre->softmaxBump[abIndex];
+        self->myskills.abilities[abIndex].soft_max += pre->softmaxBump[abIndex];
     }
 }
 
 // must be applied after abilities
 void vrx_prestige_reapply_all(edict_t *self) {
-    struct prestigelist_s *pre = &self->myskills.prestige;
+    const struct prestigelist_s *pre = &self->myskills.prestige;
     self->myskills.speciality_points += pre->abilityPoints;
     self->myskills.weapon_points += pre->weaponPoints * 4;
 
@@ -262,8 +267,8 @@ void vrx_prestige_reapply_all(edict_t *self) {
 }
 
 qboolean vrx_prestige_has_class_skills(edict_t *self) {
-    int size = sizeof(self->myskills.prestige.classSkill) / sizeof(self->myskills.prestige.classSkill[0]);
-    for (uint32_t i = 0; i < size; i++) {
+    const size_t size = sizeof(self->myskills.prestige.classSkill) / sizeof(self->myskills.prestige.classSkill[0]);
+    for (size_t i = 0; i < size; i++) {
         if (self->myskills.prestige.classSkill[i])
             return true;
     }

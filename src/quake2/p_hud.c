@@ -20,7 +20,7 @@ void MoveClientToIntermission(edict_t *ent)
 	VectorCopy(level.intermission_angle, ent->client->ps.viewangles);
 	ent->client->ps.pmove.pm_type = PM_FREEZE;
 	ent->client->ps.gunindex = 0;
-	ent->client->ps.blend[3] = 0;
+	ent->client->ps.screen_blend[3] = 0;
 	ent->client->ps.viewangles[ROLL] = 0;
 	ent->client->ps.kick_angles[ROLL] = 0;
 
@@ -56,7 +56,7 @@ void MoveClientToIntermission(edict_t *ent)
 
 	// add the layout
 
-	if (deathmatch->value && !(ent->svflags & SVF_MONSTER) && !ent->ai.is_bot)
+	if (deathmatch->value && !(ent->svflags & SVF_MONSTER) && !ent->ai)
 	{
 		DeathmatchScoreboardMessage(ent, NULL);
 		gi.unicast(ent, true);
@@ -109,59 +109,6 @@ void VortexBeginIntermission(char *nextmap)
 }
 
 //old intermission code. Should be obsolete, but left in just in case
-void BeginIntermission(edict_t *targ)
-{
-	int		i;
-	edict_t	*ent, *client;
-
-	if (level.intermissiontime)
-		return;		// allready activated
-
-	gi.dprintf("WARNING: BeginIntermission() was called when we should be calling VortexBeginIntermission()!\n");
-
-	level.intermissiontime = level.time;
-	level.changemap = targ->map;
-
-	// if on same unit, return immediately
-	if (!deathmatch->value && (targ->map && targ->map[0] != '*'))
-	{	// go immediately to the next level
-		level.exitintermission = 1;
-		return;
-	}
-	level.exitintermission = 0;
-
-	// find an intermission spot
-	ent = G_Find(NULL, FOFS(classname), "info_player_intermission");
-	if (!ent)
-	{	// the map creator forgot to put in an intermission point...
-		ent = G_Find(NULL, FOFS(classname), "info_player_start");
-		if (!ent)
-			ent = G_Find(NULL, FOFS(classname), "info_player_deathmatch");
-	}
-	else
-	{	// chose one of four spots
-		i = randomMT() & 3;
-		while (i--)
-		{
-			ent = G_Find(ent, FOFS(classname), "info_player_intermission");
-			if (!ent)	// wrap around the list
-				ent = G_Find(ent, FOFS(classname), "info_player_intermission");
-		}
-	}
-
-	VectorCopy(ent->s.origin, level.intermission_origin);
-	VectorCopy(ent->s.angles, level.intermission_angle);
-
-	// move all clients to the intermission point
-	for (i = 0; i<maxclients->value; i++)
-	{
-		client = g_edicts + 1 + i;
-		if (!client->inuse)
-			continue;
-		MoveClientToIntermission(client);
-	}
-}
-
 int V_HighestFragScore(void)
 {
 	int i, highScore = 0;
@@ -191,7 +138,6 @@ DeathmatchScoreboardMessage *Improved!*
 void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 {
 	layout_t scoreboard = {0};
-	layout_pos_t cursor;
 	lva_result_t entry;
 	int i, j, k;
 	int sorted[MAX_CLIENTS];
@@ -262,10 +208,14 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 	if (time_left < 0)
 		time_left = 0;
 
-	cursor = layout_set_cursor_xy(
+	layout_pos_t cursor = layout_set_cursor_xy(
 		0, XM_CENTER,
 		16, YM_CENTER
 	);
+
+#ifdef VRX_REPRO
+	layout_add_raw_string(&scoreboard, "mono ");
+#endif
 
 	layout_apply_pos(&scoreboard, cursor);
 
@@ -307,15 +257,15 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 	if (pvm->value)
 		entry = lva("Name            Lv Cl         Score Png");
 	else if (ctf->value)
-		entry = lva("Name            Lv Cl Score Frg Tm  Png");
+		entry = lva("Name            Lv Cl   Score Frg Tm  Png");
 	else
-		entry = lva("Name            Lv Cl Score Frg Spr Png");
+		entry = lva("Name            Lv Cl   Score Frg Spr Png");
 	layout_add_highlight_string(&scoreboard, entry.str);
 	
 
 	// add the clients in sorted order 
-	if (total > 24)
-		total = 24;
+	if (total > 16)
+		total = 16;
 	/* The screen is only so big :( */
 
 	for (i = 0; i<total; i++)
@@ -378,7 +328,7 @@ void DeathmatchScoreboardMessage(edict_t *ent, edict_t *killer)
 		}
 		else
 		{
-			entry = lva("%s%s %2i %s %5i %3i %3i %3i",
+			entry = lva("%s%s %2i %s %7i %3i %3i %3i",
 				prefix, name,
 				cl_ent->client->resp.spectator ? 0 : cl_ent->myskills.level,
 				cl_ent->client->resp.spectator ? "??" : classname,
@@ -578,7 +528,7 @@ void PlayerID_SetStats(edict_t *player, edict_t *target, qboolean chasecam)
 	char	name[24], buf[100];
 	int		team_status = 0;
 
-	if (player->ai.is_bot)
+	if (player->ai)
 		return;
 
 	dist = entdist(player, target);
@@ -625,9 +575,16 @@ void PlayerID_SetStats(edict_t *player, edict_t *target, qboolean chasecam)
 		strcat(buf, va("Chasing "));
 
 	// build the string
+#ifndef VRX_REPRO
 	strcat(buf, va("%s ", name));
 	if (team_status > 1)
 		V_SetColorText(buf);
+#else
+	if (team_status > 1)
+		strcat(buf, va("\x14%s\x15 ", name));
+	else
+		strcat(buf, va("%s ", name));
+#endif
 
 	strcat(buf, va("(%d) ", lvl));
 
@@ -718,11 +675,11 @@ void G_SetStats(edict_t *ent)
 	else
 		ent->client->ps.stats[STAT_CHARGE_LEVEL] = 0;
 
-	if (G_EntExists(ent->supplystation) /*&& (ent->supplystation->wait >= level.time)*/)
+	if (G_EntExists(ent->client->supplystation) /*&& (ent->supplystation->wait >= level.time)*/)
 	{
 		ent->client->ps.stats[STAT_STATION_ICON] = gi.imageindex("i_tele");
 		//if (ent->supplystation->wait < 100)
-		ent->client->ps.stats[STAT_STATION_TIME] = (int)ceil(ent->supplystation->wait);//-level.time;
+		ent->client->ps.stats[STAT_STATION_TIME] = (int)ceil(ent->client->supplystation->wait);//-level.time;
 		//else
 		//	ent->client->ps.stats[STAT_STATION_TIME] = 0;
 	}
@@ -842,6 +799,10 @@ void G_SetStats(edict_t *ent)
 			ent->client->ps.stats[STAT_AMMO_ICON] = gi.imageindex("a_cells_hud");
 		else if (ent->client->pers.weapon == Fdi_20MM)
 			ent->client->ps.stats[STAT_AMMO_ICON] = gi.imageindex("a_shells_hud");
+		else if (ent->client->pers.weapon == Fdi_ETFRIFLE)
+			ent->client->ps.stats[STAT_AMMO_ICON] = gi.imageindex("a_flechettes_hud");
+		else if (ent->client->pers.weapon == Fdi_PHALANX)
+			ent->client->ps.stats[STAT_AMMO_ICON] = gi.imageindex("a_magslug_hud");
 		else
 			ent->client->ps.stats[STAT_AMMO_ICON] = gi.imageindex("a_blaster_hud");
 		ent->client->ps.stats[STAT_AMMO] = ent->client->pers.inventory[ent->client->ammo_index];
@@ -895,17 +856,17 @@ void G_SetStats(edict_t *ent)
 		if ((ent->mtype == MORPH_MEDIC) && (ent->client->weapon_mode == 0 || ent->client->weapon_mode == 2))
 		{
 			ent->client->ps.stats[STAT_AMMO_ICON] = gi.imageindex("a_cells_hud");
-			ent->client->ps.stats[STAT_AMMO] = ent->myskills.abilities[MEDIC].ammo;
+			ent->client->ps.stats[STAT_AMMO] = ent->client->pers.morphinventory.medic.ammo;
 		}
 		else if (ent->mtype == MORPH_FLYER)
 		{
 			ent->client->ps.stats[STAT_AMMO_ICON] = gi.imageindex("a_cells_hud");
-			ent->client->ps.stats[STAT_AMMO] = ent->myskills.abilities[FLYER].ammo;
+			ent->client->ps.stats[STAT_AMMO] = ent->client->pers.morphinventory.flyer.ammo;
 		}
 		else if (ent->mtype == MORPH_CACODEMON)
 		{
 			ent->client->ps.stats[STAT_AMMO_ICON] = gi.imageindex("a_rockets_hud");
-			ent->client->ps.stats[STAT_AMMO] = ent->myskills.abilities[CACODEMON].ammo;
+			ent->client->ps.stats[STAT_AMMO] = ent->client->pers.morphinventory.cacodemon.ammo;
 		}
 		else
 		{
@@ -1000,7 +961,6 @@ void G_SetStats(edict_t *ent)
 	}
 	//K03 Begin
 	else if (ent->client->thrusting == 1 ||
-		ent->client->cloakable ||
 		ent->client->hook_state)
 	{
 		ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex("k_powercube");
@@ -1033,26 +993,38 @@ void G_SetStats(edict_t *ent)
 	//
 	ent->client->ps.stats[STAT_LAYOUTS] = 0;
 
-	if (deathmatch->value)
-	{
+	if (deathmatch->value) {
 		if (ent->client->pers.health <= 0 || level.intermissiontime
-			|| ent->client->showscores || ent->client->pers.scanner_active || ent->client->layout.current_len)
-			ent->client->ps.stats[STAT_LAYOUTS] |= 1;
+			|| ent->client->showscores || ent->client->pers.scanner_active
+#ifndef VRX_REPRO
+			|| ent->client->layout.current_len
+#endif
+			)
+			ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_LAYOUT;
+
+#ifdef VRX_REPRO
+			if (ent->client->layout.current_len)
+				ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_SIDEBAR;
+#endif
+
 		if (ent->client->showinventory && ent->client->pers.health > 0)
-			ent->client->ps.stats[STAT_LAYOUTS] |= 2;
+			ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_INVENTORY;
 	}
 	else
 	{
 		if (ent->client->showscores || ent->client->showhelp)
-			ent->client->ps.stats[STAT_LAYOUTS] |= 1;
+			ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_LAYOUT;
 		if (ent->client->showinventory && ent->client->pers.health > 0)
-			ent->client->ps.stats[STAT_LAYOUTS] |= 2;
+			ent->client->ps.stats[STAT_LAYOUTS] |= LAYOUTS_INVENTORY;
 	}
 
 	//
 	// frags
 	//
-	ent->client->ps.stats[STAT_FRAGS] = ent->client->resp.score;
+	ent->client->ps.stats[STAT_SCORE] = ent->client->resp.score;
+#ifdef VRX_REPRO
+	ent->client->ps.stats[STAT_SCORE2] = ent->client->resp.score >> 16;
+#endif
 
 	//
 	// help icon / current weapon if not shown
@@ -1068,6 +1040,9 @@ void G_SetStats(edict_t *ent)
 	//K03 Begin
 	//ent->client->ps.stats[STAT_LEVEL] = ent->myskills.level;
 	ent->client->ps.stats[STAT_STREAK] = ent->myskills.streak;
+#ifdef VRX_REPRO
+	ent->client->ps.stats[STAT_XP_PERCENT] = vrx_get_xp_percent(ent->myskills.experience, ent->myskills.level);
+#endif // VRX_REPRO
 
 	/*if (timelimit->value)
 	time_left = (timelimit->value*60 - level.time);
@@ -1082,7 +1057,7 @@ void G_SetStats(edict_t *ent)
 	// az invasion stuff.
 	if (invasion->value && level.time > pregame_time->value && !level.intermissiontime)
 	{
-		int invtime = ceil(invasion_data.limitframe - level.time);
+		const int invtime = ceil(invasion_data.limitframe - level.time);
 		if (invtime > 0)
 			ent->client->ps.stats[STAT_INVASIONTIME] = invtime;
 		else
@@ -1091,7 +1066,7 @@ void G_SetStats(edict_t *ent)
 	else
 		ent->client->ps.stats[STAT_INVASIONTIME] = 0;
 
-	if (V_VoteInProgress() && !G_IsSpectator(ent)) // show message only to non spectators
+	if (vrx_vote_is_in_progress() && !G_IsSpectator(ent)) // show message only to non spectators
 		ent->client->ps.stats[STAT_VOTESTRING] = CS_GENERAL + MAX_CLIENTS + 1;
 	else
 		ent->client->ps.stats[STAT_VOTESTRING] = 0;
@@ -1107,8 +1082,22 @@ void G_SetStats(edict_t *ent)
 	// id code
 	//GHz End
 	//GHz START
-	if (level.time > ent->lastdmg + 3)
+#ifdef VRX_REPRO
+	// immediately clear the damage since we don't accumulate it.
+	// repro does the accumulating
+	ent->client->ps.stats[STAT_ID_DAMAGE] = ent->client->dmg_counter;
+	ent->client->ps.stats[STAT_ID_DAMAGE2] = ent->client->dmg_counter >> 16;
+	// debouncer stat
+	ent->client->ps.stats[STAT_DMG_INSTANCE]++;
+
+	ent->client->dmg_counter = 0;
+
+#else
+	if (level.time > ent->lastdmg + 3) {
 		ent->client->ps.stats[STAT_ID_DAMAGE] = 0;
+		ent->dmg_counter = 0;
+	}
+#endif
 	//GHz END
 
 }
@@ -1202,9 +1191,9 @@ void G_SetSpectatorStats(edict_t *ent)
 	// layouts are independant in spectator
 	cl->ps.stats[STAT_LAYOUTS] = 0;
 	if (cl->pers.health <= 0 || level.intermissiontime || cl->showscores)
-		cl->ps.stats[STAT_LAYOUTS] |= 1;
+		cl->ps.stats[STAT_LAYOUTS] |= LAYOUTS_LAYOUT;
 	if (cl->showinventory && cl->pers.health > 0)
-		cl->ps.stats[STAT_LAYOUTS] |= 2;
+		cl->ps.stats[STAT_LAYOUTS] |= LAYOUTS_INVENTORY;
 }
 
 

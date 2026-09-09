@@ -72,7 +72,8 @@ gibs
 */
 void gib_think(edict_t *self)
 {
-	self->s.frame++;
+	if ( ( level.framenum % qf2sf(1) ) == 0 ) 
+		self->s.frame++;
 	self->nextthink = level.time + FRAMETIME;
 
 	if (self->s.frame == 10)
@@ -116,7 +117,7 @@ void gib_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, v
 void ThrowGib(edict_t *self, char *gibname, int damage, int type)
 {
 	edict_t *gib;
-	vec3_t	vd;
+	vec3_t	vd = { 0, 0, 0 };
 	vec3_t	origin;
 	vec3_t	size;
 	float	vscale;
@@ -178,7 +179,7 @@ void ThrowHead(edict_t *self, char *gibname, int damage, int type)
 
 void ThrowHead2(edict_t *self, char *gibname, int damage, int type)
 {
-	vec3_t	vd;
+	vec3_t	vd = { 0, 0, 0 };
 	float	vscale;
 
 	self->s.skinnum = 0;
@@ -223,7 +224,7 @@ void ThrowHead2(edict_t *self, char *gibname, int damage, int type)
 
 void ThrowClientHead(edict_t *self, int damage)
 {
-	vec3_t	vd;
+	vec3_t	vd = { 0, 0, 0 };
 	char	*gibname;
 
 	//gi.dprintf("ThrowClientHead\n");
@@ -699,6 +700,7 @@ Default _cone value is 10 (used to set size of light for spotlights)
 */
 
 #define START_OFF	1
+// TODO: shadow light data setup
 
 static void light_use(edict_t *self, edict_t *other, edict_t *activator)
 {
@@ -1640,7 +1642,8 @@ void SP_misc_transport(edict_t *ent)
 */
 void misc_satellite_dish_think(edict_t *self)
 {
-	self->s.frame++;
+	if ( ( level.framenum % qf2sf(1) ) == 0 ) 
+		self->s.frame++;
 	if (self->s.frame < 38)
 		self->nextthink = level.time + FRAMETIME;
 }
@@ -1709,8 +1712,8 @@ void SP_misc_gib_arm(edict_t *ent)
 
 void misc_dummy_think(edict_t* ent) {
 	if (ent->health < ent->max_health) {
-		int rate = max(ent->max_health - ent->health, 10);
-		int effective_heal_rate = rate * FRAMETIME;
+		const int rate = max(ent->max_health - ent->health, 10);
+		const int effective_heal_rate = rate * FRAMETIME;
 
 		if (ent->health + effective_heal_rate > ent->max_health) {
 			ent->health = ent->max_health;
@@ -2064,13 +2067,8 @@ void PM_UseTeleporter(edict_t *self, edict_t *other, cplane_t *plane, csurface_t
 	other->s.event = EV_PLAYER_TELEPORT;
 
 	// set angles
-	for (i = 0; i<3; i++)
-		other->owner->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(dest->s.angles[i]
-		- other->owner->client->resp.cmd_angles[i]);
-
-	VectorClear(other->owner->s.angles);
-	VectorClear(other->owner->client->ps.viewangles);
-	VectorClear(other->owner->client->v_angle);
+	VectorCopy(dest->s.angles, other->owner->s.angles);
+	vrx_sync_player_angle_state(other->owner, dest->s.angles);
 
 	// kill anything at the destination
 	KillBox(other);
@@ -2081,7 +2079,6 @@ void PM_UseTeleporter(edict_t *self, edict_t *other, cplane_t *plane, csurface_t
 void teleporter_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
 	edict_t		*dest;
-	int			i;
 
 	// must be a live entity
 	if (!G_EntIsAlive(other))
@@ -2119,12 +2116,8 @@ void teleporter_touch(edict_t *self, edict_t *other, cplane_t *plane, csurface_t
 	other->s.event = EV_PLAYER_TELEPORT;
 
 	// set angles
-	for (i = 0; i<3; i++)
-		other->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(dest->s.angles[i] - other->client->resp.cmd_angles[i]);
-
-	VectorClear(other->s.angles);
-	VectorClear(other->client->ps.viewangles);
-	VectorClear(other->client->v_angle);
+	VectorCopy(dest->s.angles, other->s.angles);
+	vrx_sync_player_angle_state(other, dest->s.angles);
 
 	// kill anything at the destination
 	KillBox(other);

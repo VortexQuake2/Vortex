@@ -186,7 +186,7 @@ void CreateHolyGround (edict_t *ent, int type, int skill_level)
 void Cmd_HolyGround_f (edict_t *ent)
 {
 	//Talent: Holy Ground
-    int talentLevel = vrx_get_talent_level(ent, TALENT_HOLY_GROUND);
+    const int talentLevel = vrx_get_talent_level(ent, TALENT_HOLY_GROUND);
 
 	if (level.time < pregame_time->value)
 		return;
@@ -222,7 +222,7 @@ void Cmd_HolyGround_f (edict_t *ent)
 void Cmd_UnHolyGround_f (edict_t *ent)
 {
 	//Talent: Unholy Ground
-    int talentLevel = vrx_get_talent_level(ent, TALENT_UNHOLY_GROUND);
+    const int talentLevel = vrx_get_talent_level(ent, TALENT_UNHOLY_GROUND);
 
 	if (talentLevel < 1)
 	{

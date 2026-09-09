@@ -6,9 +6,13 @@
  *
  */
 
+#pragma once
+
+#define MAX_STASH_PAGE_ITEMS 10
+
 typedef struct
 {
-	item_t page[10];
+	item_t page[MAX_STASH_PAGE_ITEMS];
 } stash_state_t;
 
 void vrx_init_stash_io();
@@ -30,12 +34,13 @@ typedef struct
 	int gds_connection_id;
 } stash_event_t;
 
+
 typedef struct
 {
 	edict_t* ent;
 	int gds_connection_id; // connection ID
 	int gds_owner_id; // database ID
-	item_t page[10];
+	item_t page[MAX_STASH_PAGE_ITEMS];
 	int pagenum;
 } stash_page_event_t;
 
@@ -49,6 +54,8 @@ typedef struct
 
 /*
  * the following functions free the memory of the args passed to them.
+ * these are alternatives to calling the above functions to defer them
+ * to the main thread
  */
 
 /* stash_event_t */

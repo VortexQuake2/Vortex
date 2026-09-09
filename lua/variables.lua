@@ -141,6 +141,10 @@ GRENADES_PICKUP                          = 8
 ROCKETS_PICKUP                           = 8
 CELLS_PICKUP                             = 50
 SLUGS_PICKUP                             = 8
+-- Missionpack Ammo
+FLECHETTES_PICKUP                        = 50
+MAGSLUG_PICKUP                           = 16
+ROUNDS_PICKUP                            = 8
 
 -- Experience Base
 EXP_PLAYER_BASE 						 = 100
@@ -249,6 +253,36 @@ BFG10K_INITIAL_DURATION                  = 1.0
 BFG10K_ADDON_DURATION                    = 0.05
 BFG10K_DEFAULT_DURATION                  = 1.5
 BFG10K_DEFAULT_SLIDE                     = 0
+
+-- ETF Rifle
+ETFRIFLE_INITIAL_DAMAGE                = 12
+ETFRIFLE_ADDON_DAMAGE                  = 0.85
+ETFRIFLE_INITIAL_SPEED                = 750
+ETFRIFLE_ADDON_SPEED                  = 25
+
+-- Disruptor
+DISRUPTOR_INITIAL_DAMAGE                = 90
+DISRUPTOR_ADDON_DAMAGE                  = 4
+DISRUPTOR_INITIAL_SPEED                = 1200
+DISRUPTOR_ADDON_SPEED                  = 20
+
+-- Ionripper
+IONRIPPER_INITIAL_DAMAGE                = 50
+IONRIPPER_ADDON_DAMAGE                  = 2
+IONRIPPER_INITIAL_SPEED                = 500
+IONRIPPER_ADDON_SPEED                  = 40
+
+-- Phalanx
+PHALANX_INITIAL_DAMAGE                  = 70
+PHALANX_ADDON_DAMAGE                    = 2
+PHALANX_INITIAL_RADIUS                  = 120
+PHALANX_ADDON_RADIUS                    = 2
+PHALANX_INITIAL_SPEED                   = 725
+PHALANX_ADDON_SPEED                     = 15
+
+-- Plasma Beam
+PLASMABEAM_INITIAL_DAMAGE                = 15
+PLASMABEAM_ADDON_DAMAGE                  = 1
 
 -- Totems
 TOTEM_MAX_RANGE                          = 512
@@ -391,9 +425,9 @@ M_CONTROL_COST_SCALE					 = 1
 M_PROJECTILE_ACC						= 0.8	-- base monster accuracy with projectile weapons
 M_HITSCAN_INSTANT_ACC					= 0.4	-- base monster accuracy with instaneous hitscan weapons
 M_HITSCAN_CONT_ACC						= 0.6	-- base monster accuracy with continuous hitscan weapons
-M_MIN_REACTION_TIME						= 0.2
+M_MIN_REACTION_TIME						= 0.4
 M_INITIAL_REACTION_TIME					= 3.0
-M_ADDON_REACTION_TIME					= -0.2
+M_ADDON_REACTION_TIME					= -0.15
 
 DELAY_FREEZE                             = 5
 DELAY_BOOST                              = 2.0

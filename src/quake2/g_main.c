@@ -1,3 +1,7 @@
+#define VRX_G_MAIN_IMPL
+
+#include <stdarg.h>
+
 #include "g_local.h"
 #include "../gamemodes/ctf.h"
 #include "../gamemodes/v_hw.h"
@@ -5,186 +9,19 @@
 
 #include <server/relay.h>
 
-game_locals_t	game;
-level_locals_t	level;
-game_import_t	gi;
-game_export_t	globals;
-spawn_temp_t	st;
+#include "bg_local.h"
+#include "q_recompat.h"
 
-int	sm_meat_index;
-int	snd_fry;
-int meansOfDeath;
-
-edict_t		*g_edicts;
-
-cvar_t	*deathmatch;
-cvar_t	*coop;
-cvar_t	*dmflags;
-cvar_t	*skill;
-cvar_t	*fraglimit;
-cvar_t	*timelimit;
-
-cvar_t	*filterban;
-
-//ZOID
-cvar_t	*capturelimit;
-//ZOID
-cvar_t	*password;
-cvar_t	*spectator_password;
-cvar_t	*maxclients;
-cvar_t	*maxspectators;
-cvar_t	*maxentities;
-cvar_t	*g_select_empty;
-cvar_t	*dedicated;
-
-cvar_t	*sv_maxvelocity;
-cvar_t	*sv_gravity;
-
-cvar_t	*sv_rollspeed;
-cvar_t	*sv_rollangle;
-cvar_t	*gun_x;
-cvar_t	*gun_y;
-cvar_t	*gun_z;
-cvar_t  *sv_fps;
-
-cvar_t	*run_pitch;
-cvar_t	*run_roll;
-cvar_t	*bob_up;
-cvar_t	*bob_pitch;
-cvar_t	*bob_roll;
-
-cvar_t	*sv_cheats;
-
-//ponpoko
-cvar_t	*gamepath;
-cvar_t	*vwep;
-float	spawncycle;
-//ponpoko
-
-//K03 Begin
-cvar_t *killboxspawn;
-cvar_t *save_path;
-cvar_t *particles;
-
-cvar_t *nextlevel_mult;
-cvar_t *vrx_creditmult;
-cvar_t *vrx_pvpcreditmult;
-cvar_t *vrx_pvmcreditmult;
-
-cvar_t *invasion_enabled;
-cvar_t *start_level;
-
-cvar_t *vrx_pointmult;
-cvar_t *vrx_pvppointmult;
-cvar_t *vrx_pvmpointmult;
-
-
-cvar_t *flood_msgs;
-cvar_t *flood_persecond;
-cvar_t *flood_waitdelay;
-
-int total_monsters;
-edict_t *SPREE_DUDE;
-edict_t	*red_base; // 3.7 CTF
-edict_t *blue_base; // 3.7 CTF
-int red_flag_caps;
-int blue_flag_caps;
-int	DEFENSE_TEAM;
-int PREV_DEFENSE_TEAM;
-long FLAG_FRAMES;
-float SPREE_TIME;
-int average_player_level;
-int pvm_average_level;
-qboolean SPREE_WAR;
-qboolean INVASION_OTHERSPAWNS_REMOVED;
-int next_invasion_wave_level;
-qboolean found_flag;
-
-cvar_t *gamedir;
-cvar_t *hostname;
-cvar_t *dm_monsters;
-cvar_t *pvm_respawntime;
-cvar_t *pvm_monstermult;
-cvar_t *ffa_respawntime;
-cvar_t *ffa_monstermult;
-cvar_t *server_email;
-cvar_t *reconnect_ip;
-cvar_t *vrx_password;
-cvar_t *min_level;
-cvar_t *max_level;
-cvar_t *check_dupeip;
-cvar_t *check_dupename;
-cvar_t *newbie_protection;
-cvar_t *pvm;
-cvar_t *trading;
-cvar_t *tradingmode_enabled;
-cvar_t *ptr;
-cvar_t *ffa;
-cvar_t *domination;
-cvar_t *hw; // vrxchile 3.0
-cvar_t *tbi; // vrxchile 3.4
-cvar_t *ctf;
-cvar_t *invasion;
-cvar_t *nolag;
-cvar_t *debuginfo;
-cvar_t *adminpass;
-cvar_t *team1_skin;
-cvar_t *team2_skin;
-cvar_t *voting;
-cvar_t *game_path;
-cvar_t *allies;
-cvar_t *pregame_time;
-
-// class skins
-cvar_t *enforce_class_skins;
-cvar_t *class1_skin;
-cvar_t *class2_skin;
-cvar_t *class3_skin;
-cvar_t *class4_skin;
-cvar_t *class5_skin;
-cvar_t *class6_skin;
-cvar_t *class7_skin;
-cvar_t *class8_skin;
-cvar_t *class9_skin;
-cvar_t *class10_skin;
-cvar_t *class11_skin;
-cvar_t *class12_skin;
-
-cvar_t *class1_model;
-cvar_t *class2_model;
-cvar_t *class3_model;
-cvar_t *class4_model;
-cvar_t *class5_model;
-cvar_t *class6_model;
-cvar_t *class7_model;
-cvar_t *class8_model;
-cvar_t *class9_model;
-cvar_t *class10_model;
-cvar_t *class11_model;
-cvar_t *class12_model;
-
-// world spawn ammo
-cvar_t *world_min_bullets;
-cvar_t *world_min_cells;
-cvar_t *world_min_shells;
-cvar_t *world_min_grenades;
-cvar_t *world_min_rockets;
-cvar_t *world_min_slugs;
-
-cvar_t *ctf_enable_balanced_fc;
-
-// Force vote control
-cvar_t* adminctrl;
-// 4x style ab system
-cvar_t *generalabmode;
-//K03 End
-
-void SpawnEntities(char *mapname, char *entities, char *spawnpoint);
+void SpawnEntities(const char *mapname, const char *entities, const char *spawnpoint);
 void ClientThink(edict_t *ent, usercmd_t *cmd);
-qboolean ClientConnect(edict_t *ent, char *userinfo);
-void ClientUserinfoChanged(edict_t *ent, char *userinfo);
-void ClientDisconnect(edict_t *ent);
+#ifdef VRX_REPRO
+bool ClientConnect(edict_t *ent, char *userinfo, const char *social_id, bool is_bot);
+void ClientBegin(edict_t *ent);
+#else
+qboolean ClientConnect(edict_t *ent, const char *userinfo);
 void ClientBegin(edict_t *ent, qboolean loadgame);
+#endif
+void ClientDisconnect(edict_t *ent);
 void ClientCommand(edict_t *ent);
 void RunEntity(edict_t *ent);
 void WriteGame(char *filename, qboolean autosave);
@@ -192,7 +29,11 @@ void ReadGame(char *filename);
 void WriteLevel(char *filename);
 void ReadLevel(char *filename);
 void InitGame(void);
-void G_RunFrame(void);
+#ifndef VRX_REPRO
+static void G_RunFrame(void);
+#else
+static void G_RunFrame(bool main_loop);
+#endif
 void dom_init(void);
 void dom_awardpoints(void);
 void PTRCheckJoinedQue(void);
@@ -208,6 +49,8 @@ Returns a pointer to the structure with all entry points
 and global variables
 =================
 */
+void ShutdownPathfinding() ; // grid.c
+
 void ShutdownGame(void)
 {
 	//K03 Begin
@@ -226,17 +69,14 @@ void ShutdownGame(void)
     vrx_close_char_io();
 	defer_global_close();
 	vrx_relay_disconnect();
+	ShutdownPathfinding();
 
 	gi.FreeTags(TAG_LEVEL);
 	gi.FreeTags(TAG_GAME);
 }
 
-#ifndef _WINDOWS
-__attribute__((visibility("default")))
-#else
-__declspec(dllexport)
-#endif
-game_export_t *GetGameAPI(game_import_t *import)
+#ifndef VRX_REPRO
+q_export game_export_t *GetGameAPI(game_import_t *import)
 {
 	gi = *import;
 
@@ -267,34 +107,79 @@ game_export_t *GetGameAPI(game_import_t *import)
 
 	return &globals;
 }
+#else
 
-#ifndef GAME_HARD_LINKED
-// this is only here so the functions in q_shared.c and q_shwin.c can link
-void Sys_Error(char *error, ...)
-{
-	va_list		argptr;
-	char		text[1024];
-
-	va_start(argptr, error);
-	vsprintf(text, error, argptr);
-	va_end(argptr);
-
-	gi.error(ERR_FATAL, "%s", text);
+bool CanSave() {
+	// not supported
+	return false;
 }
 
-void Com_Printf(char *msg, ...)
+void PreInit();
+// TODO: all these missing thingies.
+q_export repro_export_t *GetGameAPI(repro_import_t *import)
+{
+	vrx_repro_getgameapi(import, &gi);
+
+	globals.apiversion = GAME_API_VERSION;
+	globals.PreInit = PreInit;
+	globals.Init = InitGame;
+	globals.Shutdown = ShutdownGame;
+	globals.SpawnEntities = SpawnEntities;
+
+	globals.WriteGameJson = repro_write_game_json;
+	globals.ReadGameJson = repro_read_game_json;
+	globals.WriteLevelJson = repro_write_level_json;
+	globals.ReadLevelJson = repro_read_level_json;
+
+	globals.CanSave = CanSave;
+
+	globals.ClientChooseSlot = repro_choose_client_slot;
+
+	globals.ClientConnect = ClientConnect;
+	globals.ClientBegin = ClientBegin;
+	globals.ClientUserinfoChanged = ClientUserinfoChanged;
+	globals.ClientDisconnect = ClientDisconnect;
+	globals.ClientCommand = ClientCommand;
+	globals.ClientThink = ClientThink;
+
+
+	globals.RunFrame = G_RunFrame;
+	globals.PrepFrame = repro_prep_frame;
+
+	globals.ServerCommand = ServerCommand;
+
+	globals.edict_size = sizeof(edict_t);
+
+	globals.server_flags = SERVER_FLAGS_NONE;
+#ifdef VRX_REPRO
+	globals.Pmove = Pmove;
+#endif
+	globals.GetExtension = repro_get_extension;
+	globals.Bot_SetWeapon = repro_bot_set_weapon;
+	globals.Bot_TriggerEdict = repro_bot_trigger_edict;
+	globals.Bot_UseItem = repro_bot_use_item;
+	globals.Bot_GetItemID = repro_bot_get_item_id;
+	globals.Edict_ForceLookAtPoint = repro_edict_force_look_at_point;
+	globals.Bot_PickedUpItem = repro_bot_picked_up_item;
+
+	globals.Entity_IsVisibleToPlayer = repro_visible_to_player;
+	globals.GetShadowLightData = repro_get_shadow_light_data;
+
+	return &globals;
+}
+#endif
+
+void Com_Printf(const char *msg, ...)
 {
 	va_list		argptr;
 	char		text[1024];
 
 	va_start(argptr, msg);
-	vsprintf(text, msg, argptr);
+	vsnprintf(text, sizeof(text), msg, argptr);
 	va_end(argptr);
 
 	gi.dprintf("%s", text);
 }
-
-#endif
 
 //======================================================================
 
@@ -320,27 +205,6 @@ void ClientEndServerFrames(void)
 	}
 
 }
-//K03 Begin
-/*
-=================
-CreateTargetChangeLevel
-
-Returns the created target changelevel
-=================
-*/
-edict_t *CreateTargetChangeLevel(char *map)
-{
-	edict_t *ent;
-
-	ent = G_Spawn();
-	ent->classname = "target_changelevel";
-	Com_sprintf(level.nextmap, sizeof(level.nextmap), "%s", map);
-	ent->map = level.nextmap;
-	gi.dprintf("Next map is %s.\n", ent->map);
-	return ent;
-}
-//K03 End
-
 
 /*
 =================
@@ -403,7 +267,7 @@ void EndDMLevel(void)
 	//3.0 Begin new voting/mapchange code
 	if (voting->value)
 	{
-		int mode = V_AttemptModeChange(true);
+		int mode = vrx_vote_attempt_mode_change(true);
 		v_maplist_t *maplist;
 		int mapnum;
 		qboolean changing = false; // vrc 2.32: A small technical thing and q2pro server.
@@ -484,12 +348,12 @@ void EndDMLevel(void)
 			//gi.dprintf("changing to mode %d\n", mode);
 
 			//Select the map with the most votes
-			mapnum = FindBestMap(mode);
+			mapnum = vrx_vote_find_best_map(mode);
 
 			//gi.dprintf("mapnum=%d\n",mapnum);
 
 			//Point to the correct map list
-			maplist = GetMapList(mode);
+			maplist = vrx_get_map_list(mode);
 
 			if (mapnum == -1)
 			{
@@ -498,7 +362,7 @@ void EndDMLevel(void)
 			}
 
 			//Change the map/mode
-			V_ChangeMap(maplist, mapnum, mode);
+			vrx_change_map(maplist, mapnum, mode);
 		}
 		else
 		{
@@ -532,10 +396,10 @@ void EndDMLevel(void)
 			}
 
 			//Point to the correct map list
-			maplist = GetMapList(mode);
+			maplist = vrx_get_map_list(mode);
 
 			//Try to find a map that was voted for
-			mapnum = FindBestMap(mode);
+			mapnum = vrx_vote_find_best_map(mode);
 
 			if (mapnum == -1)
 			{
@@ -544,7 +408,7 @@ void EndDMLevel(void)
 				//Select a random map for this game mode
 				while (1)
 				{
-					int max = maplist->nummaps - 1;
+					const int max = maplist->nummaps - 1;
 					// get a random map index from the map list
 					if (max <= 0)
 					{
@@ -567,7 +431,7 @@ void EndDMLevel(void)
 			//gi.dprintf("picking best map\n");
 
 			//Change the map/mode
-			V_ChangeMap(maplist, mapnum, mode);
+			vrx_change_map(maplist, mapnum, mode);
 		}
 	}
 
@@ -579,46 +443,10 @@ void EndDMLevel(void)
 		//BeginIntermission (CreateTargetChangeLevel (level.nextmap) );
 		VortexBeginIntermission(level.nextmap);
 	}
-	else
-	{
-		// search for a changelevel
-		ent = G_Find(NULL, FOFS(classname), "target_changelevel");
-		if (!ent)
-		{	// the map designer didn't include a changelevel,
-			// so create a fake ent that goes back to the same level
-			VortexBeginIntermission(level.nextmap);
-			return;
-		}
-		BeginIntermission(ent);
-	}
 }
 
 
-/*
-=================
-CheckNeedPass
-=================
-*/
-void CheckNeedPass(void)
-{
-	int need;
 
-	// if password or spectator_password has changed, update needpass
-	// as needed
-	if (password->modified || spectator_password->modified)
-	{
-		password->modified = spectator_password->modified = false;
-
-		need = 0;
-
-		if (*password->string && Q_stricmp(password->string, "none"))
-			need |= 1;
-		if (*spectator_password->string && Q_stricmp(spectator_password->string, "none"))
-			need |= 2;
-
-		gi.cvar_set("needpass", va("%d", need));
-	}
-}
 
 /*
 =================
@@ -631,7 +459,7 @@ void SP_target_speaker(edict_t *ent);
 void CheckDMRules(void)
 {
 	int			i, check;//K03
-	float		totaltime = ((timelimit->value * 60) - level.time);//K03 added totaltime
+	const float		totaltime = ((timelimit->value * 60) - level.time);//K03 added totaltime
 	gclient_t	*cl;
 
 	if (level.intermissiontime)
@@ -893,7 +721,6 @@ void G_RunPregame()
 				//RemoveAllAuras(ent);
 				AuraRemove(ent, 0);
 				CurseRemove(ent, 0, 0);
-				ent->Slower = (int)(level.time - 1);
 			}
 		}
 	}
@@ -904,17 +731,17 @@ double scale_fps(double value) {
 }
 
 uint64_t sf2qf(uint64_t framecount) {
-	double ratio = 10.0 / sv_fps->value;
+	const double ratio = 10.0 / sv_fps->value;
 	uint64_t rounded = (uint64_t)round(framecount * ratio);
 	if ( rounded == 0 ) {
-		uint64_t iratio = sv_fps->value / 10;
+		const uint64_t iratio = sv_fps->value / 10;
 		rounded = level.framenum % iratio ? 0 : 1;
 	}
 	return rounded;
 }
 
 uint64_t qf2sf(uint64_t frames) {
-	double ratio = sv_fps->value / 10.0f;
+	const double ratio = sv_fps->value / 10.0f;
 	return (uint64_t)round(frames * ratio);
 }
 
@@ -927,8 +754,12 @@ Advances the world by
 */
 
 
-void RunVotes();
+void vrx_votes_run();
+#ifndef VRX_REPRO
 void G_RunFrame(void)
+#else
+void G_RunFrame(bool main_loop)
+#endif
 {
 	int		i;//j;
 	edict_t	*ent;
@@ -955,7 +786,7 @@ void G_RunFrame(void)
 		SV_SaveAllCharacters();
 	}
 
-	RunVotes();
+	vrx_votes_run();
 
 	ai_eval_targets(); // az
 
@@ -992,7 +823,7 @@ void G_RunFrame(void)
 			ClientBeginServerFrame(ent);
 
 			// JABot[start]
-			if (ent->ai.is_bot)
+			if (ent->ai)
 				G_RunEntity(ent);
 			//[end]
 
@@ -1005,23 +836,12 @@ void G_RunFrame(void)
 	// see if it is time to end a deathmatch
 	CheckDMRules();
 
-	// see if needpass needs updated
-	CheckNeedPass();
-
 	// build the playerstate_t structures for all players
 	ClientEndServerFrames();
 
 	//JABot[start]
 	AITools_Frame();
 	//[end]
-
-	//3.0 Remove votes by players who left the server
-	//Every 5 minutes
-#ifdef OLD_VOTE_SYSTEM // Paril
-	if (!(level.framenum % 3000))
-		CheckPlayerVotes();
-#endif
-	//3.0 END 
 
 	G_RunPregame();
 

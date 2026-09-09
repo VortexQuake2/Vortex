@@ -60,7 +60,7 @@ void shambler_frostnova(edict_t* self)
 		return;
 
 	edict_t* target = NULL;
-	int damage = NOVA_DEFAULT_DAMAGE + NOVA_ADDON_DAMAGE * self->monsterinfo.level;
+	const int damage = NOVA_DEFAULT_DAMAGE + NOVA_ADDON_DAMAGE * self->monsterinfo.level;
 
 	// nova dmg 
 	T_RadiusDamage(self, self, damage, self, FROSTNOVA_RADIUS, MOD_NOVA);
@@ -206,11 +206,11 @@ void shambler_melee(edict_t* self)
 	if (!G_EntExists(self->enemy))
 		return;
 
-	float dist = entdist(self, self->enemy);
+	const float dist = entdist(self, self->enemy);
 
 	if (dist <= 100) //MELEE_DISTANCE +20
 	{
-		float r = random();
+		const float r = random();
 		if (r > 0.6 || self->health == 600)
 			self->monsterinfo.currentmove = &shambler_move_smash;
 		else if (r > 0.3)
@@ -302,7 +302,7 @@ static const vec3_t lightning_right_hand[] = {
 //attack lightning stuff
 static void shambler_lightning_update(edict_t* self)
 {
-	int frame_offset = self->s.frame - FRAME_magic1;
+	const int frame_offset = self->s.frame - FRAME_magic1;
 	if (frame_offset >= MAX_LIGHTNING_FRAMES)
 	{
 		return;
@@ -319,8 +319,14 @@ static void shambler_lightning_update(edict_t* self)
 	right_pos[2] += lightning_right_hand[frame_offset][2];
 
 	gi.WriteByte(svc_temp_entity);
+#ifdef VRX_REPRO
+	gi.WriteByte(TE_LIGHTNING);
+	gi.WriteShort(self - g_edicts);
+	gi.WriteShort(0);
+#else
 	gi.WriteByte(TE_MONSTER_HEATBEAM);
 	gi.WriteShort(self - g_edicts);
+#endif
 	gi.WritePosition(left_pos);
 	gi.WritePosition(right_pos);
 	gi.multicast(left_pos, MULTICAST_PVS);
@@ -407,8 +413,14 @@ void ShamblerCastLightning(edict_t* self)
 
 	//unused TE_LIGHTNING, doesn't work here or any attack 
 	gi.WriteByte(svc_temp_entity);
+#ifdef VRX_REPRO
+	gi.WriteByte(TE_LIGHTNING);
+	gi.WriteShort(self - g_edicts);
+	gi.WriteShort(0);
+#else
 	gi.WriteByte(TE_MONSTER_HEATBEAM);
 	gi.WriteShort(self - g_edicts);
+#endif
 	gi.WritePosition(start);
 	gi.WritePosition(tr.endpos);
 	gi.multicast(start, MULTICAST_PVS);
@@ -421,7 +433,7 @@ void ShamblerCastLightning(edict_t* self)
 	if (tr.fraction < 1.0 && tr.ent)
 	{
 		//int damage = M_SHAMBLER_LIGHTNING_BASE_DMG + M_SHAMBLER_ADDON_LIGHTNING_DMG; //* self->monsterinfo.level; ?
-		int damage = 4 + 3 * drone_damagelevel(self);
+		const int damage = 4 + 3 * drone_damagelevel(self);
 
 		//if (M_SHAMBLER_LIGHTNING_MAX_DMG && damage > M_SHAMBLER_LIGHTNING_MAX_DMG)
 		//	damage = M_SHAMBLER_LIGHTNING_MAX_DMG;
@@ -451,7 +463,7 @@ mmove_t shambler_move_attack = { FRAME_magic1, FRAME_magic12, shambler_frames_ma
 
 static void shambler_fieryskull_update(edict_t* self)
 {
-	int frame_offset = self->s.frame - FRAME_magic1;
+	const int frame_offset = self->s.frame - FRAME_magic1;
 	if (frame_offset >= MAX_LIGHTNING_FRAMES)
 	{
 		return;
@@ -470,8 +482,15 @@ static void shambler_fieryskull_update(edict_t* self)
 	right_pos[2] += lightning_right_hand[frame_offset][2];
 
 	gi.WriteByte(svc_temp_entity);
+#ifndef VRX_REPRO
 	gi.WriteByte(TE_MONSTER_HEATBEAM);
 	gi.WriteShort(self - g_edicts);
+#else
+	gi.WriteByte(TE_LIGHTNING);
+	gi.WriteShort(self - g_edicts);
+	gi.WriteShort(0);
+#endif
+
 	gi.WritePosition(left_pos);
 	gi.WritePosition(right_pos);
 	gi.multicast(left_pos, MULTICAST_PVS);
@@ -496,7 +515,7 @@ void ShamblerCastIcebolt(edict_t* self)
 	vec3_t forward, right, up;
 	vec3_t start_left, start_right;
 	vec3_t aim_left, aim_right;
-	float accuracy = 0.8; // Aumentamos la precisión base
+	const float accuracy = 0.8; // Aumentamos la precisiï¿½n base
 
 	if (!G_EntIsAlive(self->enemy))
 		return;
@@ -522,12 +541,12 @@ void ShamblerCastIcebolt(edict_t* self)
 	start_right[2] = self->s.origin[2] + lightning_right_hand[frame_offset][2];
 
 	// Calculate damage and other parameters
-	float slvl = drone_damagelevel(self);
-	int damage = ICEBOLT_INITIAL_DAMAGE + ICEBOLT_ADDON_DAMAGE * slvl;
-	float damage_radius = ICEBOLT_INITIAL_RADIUS + ICEBOLT_ADDON_RADIUS * slvl;
-	int speed = ICEBOLT_INITIAL_SPEED + ICEBOLT_ADDON_SPEED * slvl;
-	int chillLevel = 2 * slvl;
-	float chillDuration = ICEBOLT_INITIAL_CHILL_DURATION + ICEBOLT_ADDON_CHILL_DURATION * slvl;
+	const float slvl = drone_damagelevel(self);
+	const int damage = ICEBOLT_INITIAL_DAMAGE + ICEBOLT_ADDON_DAMAGE * slvl;
+	const float damage_radius = ICEBOLT_INITIAL_RADIUS + ICEBOLT_ADDON_RADIUS * slvl;
+	const int speed = ICEBOLT_INITIAL_SPEED + ICEBOLT_ADDON_SPEED * slvl;
+	const int chillLevel = 2 * slvl;
+	const float chillDuration = ICEBOLT_INITIAL_CHILL_DURATION + ICEBOLT_ADDON_CHILL_DURATION * slvl;
 
 	// Use MonsterAim for both hands
 	MonsterAim(self, accuracy, speed, false, -1, aim_left, start_left);
@@ -546,7 +565,7 @@ void ShamblerCastIcebolt(edict_t* self)
 
 static void shambler_ice_update(edict_t* self)
 {
-	int frame_offset = self->s.frame - FRAME_magic1;
+	const int frame_offset = self->s.frame - FRAME_magic1;
 	if (frame_offset >= MAX_LIGHTNING_FRAMES)
 	{
 		return;
@@ -634,7 +653,7 @@ void shambler_windupFire(edict_t* self) // lightning preparing
 //pre fire attack stuff
 static void shambler_fire_update(edict_t* self)
 {
-	int frame_offset = self->s.frame - FRAME_magic1;
+	const int frame_offset = self->s.frame - FRAME_magic1;
 	if (frame_offset >= MAX_LIGHTNING_FRAMES)
 	{
 		return;
@@ -652,7 +671,7 @@ static void shambler_fire_update(edict_t* self)
 	VectorMA(right_pos, lightning_right_hand[frame_offset][1], r, right_pos);
 	right_pos[2] += lightning_right_hand[frame_offset][2];
 
-	// Crear efectos de cráneo en ambas manos
+	// Crear efectos de crï¿½neo en ambas manos
 	edict_t* left_fire = G_Spawn();
 	edict_t* right_fire = G_Spawn();
 
@@ -713,7 +732,7 @@ void ShamblerCastSkull(edict_t* self)
 {
 	vec3_t forward, right;
 	vec3_t start_left, start_right;
-	float accuracy = M_PROJECTILE_ACC;
+	const float accuracy = M_PROJECTILE_ACC;
 
 	if (!G_EntIsAlive(self->enemy))
 		return;
@@ -739,7 +758,7 @@ void ShamblerCastSkull(edict_t* self)
 	start_right[2] = self->s.origin[2] + lightning_right_hand[frame_offset][2];
 
 	// Calculate damage
-	int damage = 30 + 15 * self->monsterinfo.level;
+	const int damage = 30 + 15 * self->monsterinfo.level;
 
 	// Fire skull from left hand
 	MonsterAim(self, accuracy, 1200, false, -1, forward, start_left);
@@ -860,8 +879,8 @@ void shambler_meleehit(edict_t* self)
 void shambler_attack(edict_t* self)
 {
 
-	float r = random();
-	float dist = entdist(self, self->enemy);
+	const float r = random();
+	const float dist = entdist(self, self->enemy);
 
 	if (dist <= MELEE_DISTANCE)
 	{

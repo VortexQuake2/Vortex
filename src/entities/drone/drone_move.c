@@ -1,8 +1,9 @@
 // m_move.c -- monster movement
 
+#include <pthread.h>
+
 #include "g_local.h"
 
-#define	STEPSIZE	18
 
 /*
 =============
@@ -86,17 +87,19 @@ realcheck:
 	return true;
 }
 
+bool CheckPathFall(vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs);
 qboolean LandCloserToGoal (edict_t *self, vec3_t goal_pos, vec3_t landing_pos)
 {
-	// goal position path is obstructed by a wall
-	landing_pos[2] += 8; // raise slightly off floor (navis are usually placed 8 units above floor height)
-	if (!G_IsClearPath(self, MASK_SOLID, landing_pos, goal_pos))
-		return false;
-	// landing position places us farther from our goal
-	//FIXME: subtracting 16 from landing position is a "cheap fix" for monsters with large hitboxes (i.e. bosses) who fail M_CheckBottom
-	if (distance(landing_pos, goal_pos) > distance(self->s.origin, goal_pos))
-		return false;
-	return true;
+	// az: greatly simplifying this. the question is whether we get closer,
+	// nothing more - we should've already decided on the path by now.
+	float stepsize = STEPSIZE;
+	if (self->monsterinfo.aiflags & AI_NOSTEP)
+		stepsize = 1;
+
+	// sure. fall. it's closer. or it's really just a step away.
+	float dz = fabs(landing_pos[2] - goal_pos[2]);
+	float cdz = fabs(self->s.origin[2] - goal_pos[2]);
+	return dz < cdz || dz < stepsize;
 }
 
 qboolean CheckHazards (edict_t *self, vec3_t landing_pos)
@@ -118,8 +121,8 @@ qboolean CheckHazards (edict_t *self, vec3_t landing_pos)
 	return true;
 }
 
-void GetNodePosition (int nodenum, vec3_t pos);
-int NearestWaypointNum(vec3_t start, int* wp);
+void vrx_pf_get_node_position (int nodenum, vec3_t pos);
+int vrx_pf_nearest_waypoint_index_along_path(vec3_t start, const nodeid_t *wp, size_t wpcount);
 qboolean CanJumpDown (edict_t *self, vec3_t neworg)
 {
 	vec3_t	start;
@@ -137,6 +140,10 @@ qboolean CanJumpDown (edict_t *self, vec3_t neworg)
 	else if (self->goalentity && self->goalentity->inuse)
 		goal = self->goalentity;
 	else
+		return false;
+
+	// az: let's just not jump at random off ledges
+	if (goal == world)
 		return false;
 
 	// trace down
@@ -174,12 +181,12 @@ qboolean CanJumpDown (edict_t *self, vec3_t neworg)
 		// is the landing position closer to the next waypoint?
 		if (nearestWpNum < self->monsterinfo.nextWaypoint)
 			return false;*/
-		
-		GetNodePosition(self->monsterinfo.waypoint[self->monsterinfo.nextWaypoint], v);
+
+		vrx_pf_get_node_position(self->monsterinfo.waypoint[self->monsterinfo.nextWaypoint], v);
 		if (!LandCloserToGoal(self, v, tr.endpos))
 		{
 			// is the landing position closer to the final waypoint?
-			GetNodePosition(self->monsterinfo.waypoint[self->monsterinfo.numWaypoints-1], v);
+			vrx_pf_get_node_position(self->monsterinfo.waypoint[self->monsterinfo.numWaypoints-1], v);
 			if (!LandCloserToGoal(self, v, tr.endpos))
 			{
 				//gi.dprintf("can't jump down, landing position farther than current position\n");
@@ -252,7 +259,7 @@ qboolean M_Move (edict_t *ent, vec3_t move, qboolean relink)
 {
 	vec3_t		oldorg, neworg, end;
 	trace_t		trace;//, tr;
-	float		stepsize=STEPSIZE;
+	const float		stepsize=STEPSIZE;
 
 // try the move	
 	VectorCopy (ent->s.origin, oldorg);
@@ -339,7 +346,7 @@ qboolean M_MoveVertical(edict_t* ent, vec3_t dest, vec3_t neworg)
 {
 	float        dz;                        // delta Z
 	float        idealZ;                // ideal Z position, either a destination waypoint/node or a goal entity
-	float        zSpeed = 8;        // Z movement speed
+	const float        zSpeed = 8;        // Z movement speed
 	vec3_t        end, goalpos;
 	trace_t        trace;
 	//qboolean stopOnCollision=false;
@@ -353,7 +360,7 @@ qboolean M_MoveVertical(edict_t* ent, vec3_t dest, vec3_t neworg)
 	}
 	else if (ent->goalentity)
 	{
-		if (ent->goalentity = world)
+		if (ent->goalentity == world)
 			return true;
 		idealZ = ent->goalentity->s.origin[2] + 16;
 		VectorCopy(ent->goalentity->s.origin, goalpos);
@@ -707,14 +714,7 @@ qboolean SV_movestep(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
 	}
 	else if (jump == -1)
 		jump = 0;
-/*
-	if (jump)
-	{
-		VectorCopy(oldorg, ent->s.origin);
-		CanJumpDown(ent, trace.endpos, true);
-		VectorCopy(trace.endpos, ent->s.origin);
-	}
-*/
+
 	
 	if ( ent->flags & FL_PARTIALGROUND )
 	{
@@ -736,7 +736,7 @@ qboolean SV_movestep(edict_t* ent, vec3_t dest, vec3_t move, qboolean relink)
 		*/
 
 		//VectorScale(move, 10, ent->velocity);
-		//ent->velocity[2] = 200;
+		// ent->velocity[2] = 200;
 	}
 	else if (jump == 1)
 	{
@@ -1042,7 +1042,7 @@ void SV_NewChaseDir3(edict_t* actor, vec3_t goalpos, float dist)
 	}
 
 	// try other directions
-	if (((rand() & 3) & 1) || abs(deltay) > abs(deltax))
+	if (((rand() & 3) & 1) || fabsf(deltay) > fabsf(deltax))
 	{
 		tdir = d[1];
 		d[1] = d[2];
@@ -1160,7 +1160,7 @@ void M_ChangeYaw (edict_t *ent)
 		return;
 
 	move = ideal - current;
-	speed = ent->yaw_speed;
+	speed = ent->yaw_speed * FRAMETIME * 10;
 	if (ideal > current)
 	{
 		if (move >= 180)
@@ -1370,6 +1370,12 @@ void M_MoveToPosition(edict_t* ent, vec3_t pos, float dist, qboolean stop_when_c
 		// record current position for comparison
 		VectorCopy(ent->s.origin, ent->monsterinfo.stuck_org);
 
+		// az: stuck for 10 seconds? begone, respawn!
+		if (ent->inuse && ent->monsterinfo.stuck_frames > qf2sf(100) && !G_GetClient(ent) && invasion->value) {
+			M_Remove(ent, true, true);
+			return;
+		}
+
 		// attempt a course-correction
 		// first, we attempt to find an angle perpendicular to wall to escape, and then we try a random direction
 		if (ent->inuse && (level.time > ent->monsterinfo.bump_delay))
@@ -1483,14 +1489,14 @@ M_walkmove
 */
 qboolean M_walkmove (edict_t *ent, float yaw, float dist)
 {
-	float	original_yaw=yaw;//GHz
+	const float	original_yaw=yaw;//GHz
 	vec3_t	move;
 	
 	if (!ent->groundentity && !(ent->flags & (FL_FLY|FL_SWIM)))
 		return false;
 
 	yaw = yaw*M_PI*2 / 360;
-	
+
 	move[0] = cos(yaw)*dist;
 	move[1] = sin(yaw)*dist;
 	move[2] = 0;

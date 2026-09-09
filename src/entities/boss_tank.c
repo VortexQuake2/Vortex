@@ -80,7 +80,7 @@ void boss_punch (edict_t *self)
 void boss_tank_attack (edict_t *ent)
 {
 	int		damage, flash_number;
-	vec3_t	forward, start;
+	vec3_t	forward = {0, 0, 0}, start = {0, 0, 0};
 
 	if ((flash_number=p_tank_getFirePos(ent, start, forward))==-1)
 		return;
@@ -120,7 +120,7 @@ void boss_tank_attack (edict_t *ent)
 
 void boss_idle (edict_t *self)
 {
-	G_RunFrames(self, TANK_FRAMES_START_STAND, TANK_FRAMES_END_STAND, false);
+	G_RunFrames(self, TANK_FRAMES_START_STAND, TANK_FRAMES_END_STAND, false, true);
 }
 
 void boss_tank_think (edict_t *self)
@@ -138,23 +138,25 @@ void boss_tank_think (edict_t *self)
 
 	self->monsterinfo.trail_time = level.time + 1; // stay in eye-cam
 
-	if (self->style == FRAMES_RUN_FORWARD)
-		G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, false);
-	else if (self->style == FRAMES_RUN_BACKWARD)
-		G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, true);
-	else if (self->style == FRAMES_ATTACK)
-	{
-		if (self->owner->client->weapon_mode)
-			G_RunFrames(self, TANK_FRAMES_START_PUNCH, TANK_FRAMES_END_PUNCH, false);
+	if (self->count <= level.framenum) {
+		if (self->style == FRAMES_RUN_FORWARD)
+			G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, false, false);
+		else if (self->style == FRAMES_RUN_BACKWARD)
+			G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, true, false);
+		else if (self->style == FRAMES_ATTACK)
+		{
+			if (self->owner->client->weapon_mode)
+				G_RunFrames(self, TANK_FRAMES_START_PUNCH, TANK_FRAMES_END_PUNCH, false, false);
+			else
+				G_RunFrames(self, TANK_FRAMES_START_ROCKET, TANK_FRAMES_END_ROCKET, false, false);
+		}
 		else
-			G_RunFrames(self, TANK_FRAMES_START_ROCKET, TANK_FRAMES_END_ROCKET, false);
-	}
-	else
-		boss_idle(self);
+			boss_idle(self);
 
-	boss_regenerate(self);
-		
-	boss_tank_attack(self);
+		boss_regenerate(self);
+		boss_tank_attack(self);
+		self->count = (int)(level.framenum + qf2sf(1));
+	}
 
 	frame = self->s.frame;
 	// play tank step sound

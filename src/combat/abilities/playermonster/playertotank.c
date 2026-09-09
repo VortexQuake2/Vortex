@@ -343,10 +343,10 @@ int p_tank_getFirePos(edict_t *self, vec3_t start, vec3_t forward) {
 }
 
 void p_tank_20mm(edict_t* self, vec3_t start, vec3_t forward, int flash_number, int talentLevel) {
-	int skill_level = self->monsterinfo.level;
-    int damage = WEAPON_20MM_INITIAL_DMG + WEAPON_20MM_ADDON_DMG * skill_level;
-    int kick = damage;
-    float range = 250 + talentLevel * 150;
+	const int skill_level = self->monsterinfo.level;
+    const int damage = WEAPON_20MM_INITIAL_DMG + WEAPON_20MM_ADDON_DMG * skill_level;
+    const int kick = damage;
+    const float range = 250 + talentLevel * 150;
 
     // bullet ammo counter
     if (!self->monsterinfo.lefty)
@@ -367,8 +367,8 @@ void p_tank_20mm(edict_t* self, vec3_t start, vec3_t forward, int flash_number, 
 }
 
 void p_tank_bullet(edict_t *self, vec3_t start, vec3_t forward, int flash_number) {
-    int damage = P_TANK_BULLET_INITIAL_DMG + P_TANK_BULLET_ADDON_DMG * self->monsterinfo.level;
-    int kick = damage;
+    const int damage = P_TANK_BULLET_INITIAL_DMG + P_TANK_BULLET_ADDON_DMG * self->monsterinfo.level;
+    const int kick = damage;
 
     // bullet ammo counter
     if (!self->monsterinfo.lefty)
@@ -384,7 +384,7 @@ void p_tank_bullet(edict_t *self, vec3_t start, vec3_t forward, int flash_number
 }
 
 void p_tank_rocket(edict_t *self, vec3_t start, vec3_t forward, int flash_number) {
-    int damage = P_TANK_ROCKET_INITIAL_DMG + P_TANK_ROCKET_ADDON_DMG * self->monsterinfo.level;
+    const int damage = P_TANK_ROCKET_INITIAL_DMG + P_TANK_ROCKET_ADDON_DMG * self->monsterinfo.level;
     int speed = P_TANK_ROCKET_INITIAL_SPD + P_TANK_ROCKET_ADDON_SPD * self->monsterinfo.level;
     float radius = damage;
 
@@ -408,8 +408,8 @@ void p_tank_rocket(edict_t *self, vec3_t start, vec3_t forward, int flash_number
 }
 
 void p_tank_blaster(edict_t *self, vec3_t start, vec3_t forward, int flash_number) {
-    int damage = P_TANK_BLASTER_INITIAL_DMG + P_TANK_BLASTER_ADDON_DMG * self->monsterinfo.level;
-    int speed = P_TANK_BLASTER_INITIAL_SPD + P_TANK_BLASTER_ADDON_SPD * self->monsterinfo.level;
+    const int damage = P_TANK_BLASTER_INITIAL_DMG + P_TANK_BLASTER_ADDON_DMG * self->monsterinfo.level;
+    const int speed = P_TANK_BLASTER_INITIAL_SPD + P_TANK_BLASTER_ADDON_SPD * self->monsterinfo.level;
 
     // blaster ammo counter
     if (!self->monsterinfo.radius)
@@ -456,7 +456,7 @@ void p_tank_attack(edict_t *ent) {
     }
         // bullet attack
     else if (ent->owner->client->weapon_mode == 2) {
-        int talentLevel = vrx_get_talent_level(ent, TALENT_RANGE_MASTERY);
+        const int talentLevel = vrx_get_talent_level(ent, TALENT_RANGE_MASTERY);
 		if (talentLevel > 0)
 			p_tank_20mm(ent, start, forward, flash_number, talentLevel);
 		else
@@ -472,12 +472,12 @@ void p_tank_attack(edict_t *ent) {
 }
 
 void p_tank_idle(edict_t *self) {
-    G_RunFrames(self, TANK_FRAMES_START_STAND, TANK_FRAMES_END_STAND, false);
+    G_RunFrames(self, TANK_FRAMES_START_STAND, TANK_FRAMES_END_STAND, false, false);
 }
 
 void p_tank_think(edict_t *self) {
     int frame, regenFrames = qf2sf(P_TANK_REGEN_FRAMES), regenAmmoFrames = qf2sf(P_TANK_AMMOREGEN_FRAMES);
-    int delayFrames = P_TANK_REGEN_DELAY, delayAmmoFrames = P_TANK_AMMOREGEN_DELAY;
+    int delayFrames = qf2sf(P_TANK_REGEN_DELAY), delayAmmoFrames = qf2sf(P_TANK_AMMOREGEN_DELAY);
 
     if (!boss_checkstatus(self))
         return;
@@ -488,30 +488,32 @@ void p_tank_think(edict_t *self) {
     }
 
     PM_Effects(self);
-
-    self->monsterinfo.trail_time = level.time + 1; // stay in eye-cam
     M_Regenerate(self, regenFrames, delayFrames, 1.0, true, false, false, &self->monsterinfo.regen_delay1);
     PM_RegenAmmo(self, regenAmmoFrames, delayAmmoFrames);
     PM_SyncWithPlayer(self);
 
-    if (self->style == FRAMES_RUN_FORWARD)
-        G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, false);
-    else if (self->style == FRAMES_RUN_BACKWARD)
-        G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, true);
-    else if ((self->style == FRAMES_ATTACK) && (level.time > self->owner->monsterinfo.attack_finished)) {
-        if (self->owner->client->weapon_mode == 1)
-            G_RunFrames(self, TANK_FRAMES_START_PUNCH, TANK_FRAMES_END_PUNCH, false);
-        else if (self->owner->client->weapon_mode == 2)
-            G_RunFrames(self, TANK_FRAMES_START_BULLET, TANK_FRAMES_END_BULLET, false);
-        else if (self->owner->client->weapon_mode == 3) {
-            if (self->s.frame != TANK_FRAMES_BLASTER_END)
-                G_RunFrames(self, TANK_FRAMES_BLASTER_START, TANK_FRAMES_BLASTER_END, false);
-            else
-                self->s.frame = 65; // cycle from this frame forward
+    self->monsterinfo.trail_time = level.time + 1; // stay in eye-cam
+    if (level.framenum >= self->count) {
+
+        if (self->style == FRAMES_RUN_FORWARD)
+            G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, false, false);
+        else if (self->style == FRAMES_RUN_BACKWARD)
+            G_RunFrames(self, TANK_FRAMES_START_WALK, TANK_FRAMES_END_WALK, true, false);
+        else if ((self->style == FRAMES_ATTACK) && (level.time > self->owner->monsterinfo.attack_finished)) {
+            if (self->owner->client->weapon_mode == 1)
+                G_RunFrames(self, TANK_FRAMES_START_PUNCH, TANK_FRAMES_END_PUNCH, false, false);
+            else if (self->owner->client->weapon_mode == 2)
+                G_RunFrames(self, TANK_FRAMES_START_BULLET, TANK_FRAMES_END_BULLET, false, false);
+            else if (self->owner->client->weapon_mode == 3) {
+                if (self->s.frame != TANK_FRAMES_BLASTER_END)
+                    G_RunFrames(self, TANK_FRAMES_BLASTER_START, TANK_FRAMES_BLASTER_END, false, false);
+                else
+                    self->s.frame = 65; // cycle from this frame forward
+            } else
+                G_RunFrames(self, TANK_FRAMES_START_ROCKET, TANK_FRAMES_END_ROCKET, false, false);
         } else
-            G_RunFrames(self, TANK_FRAMES_START_ROCKET, TANK_FRAMES_END_ROCKET, false);
-    } else
-        p_tank_idle(self);
+            p_tank_idle(self);
+    }
 
     p_tank_attack(self);
 
@@ -540,7 +542,8 @@ void p_tank_pain(edict_t *self, edict_t *other, float kick, int damage) {
 void p_tank_die(edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point) {
     // kill the player
     if (self->activator && self->activator->inuse) {
-        attacker->lastkill = 0; // prevent 2fer
+        if (attacker->client)
+            attacker->client->lastkill = 0; // prevent 2fer
         PM_RestorePlayer(self->activator);
         player_die(self->activator, inflictor, attacker, 0, vec3_origin);
         self->activator->health = 0;
@@ -558,7 +561,7 @@ void p_tank_spawn(edict_t *ent, int cost) {
     vec3_t boxmin, boxmax;
     //trace_t tr;
     //Talent: More Ammo
-    int talentLevel = vrx_get_talent_level(ent, TALENT_MORE_AMMO);
+    const int talentLevel = vrx_get_talent_level(ent, TALENT_MORE_AMMO);
 
     // make sure we don't get stuck in a wall
     VectorSet (boxmin, -24, -24, -16);
@@ -664,7 +667,7 @@ void p_tank_spawn(edict_t *ent, int cost) {
 }
 
 void Cmd_PlayerToTank_f(edict_t *ent) {
-    int tank_cubecost = P_TANK_INIT_COST;
+    const int tank_cubecost = P_TANK_INIT_COST;
 
     if (debuginfo->value)
         gi.dprintf("DEBUG: %s just called Cmd_PlayerToTank_f()\n", ent->client->pers.netname);

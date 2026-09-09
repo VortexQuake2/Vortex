@@ -1,3 +1,5 @@
+#define VRX_G_ITEMS_IMPL
+
 #include "g_local.h"
 #include "../../gamemodes/ctf.h"
 #include "../../entities/tech.h"
@@ -18,43 +20,6 @@ void drop_temp_touch(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *
 gitem_armor_t jacketarmor_info = {25, 200, .80, .60, ARMOR_BODY};//K03
 gitem_armor_t combatarmor_info = {50, 200, .80, .60, ARMOR_BODY};//K03
 gitem_armor_t bodyarmor_info = {100, 200, .80, .60, ARMOR_BODY};
-
-int jacket_armor_index;
-int combat_armor_index;
-int armor_shard_index;
-int resistance_index;
-int strength_index;
-int regeneration_index;
-int haste_index;
-int body_armor_index;
-int power_cube_index;
-int flag_index;
-int red_flag_index;
-int blue_flag_index;
-int halo_index;
-
-//ammo
-int bullet_index;
-int shell_index;
-int grenade_index;
-int rocket_index;
-int slug_index;
-int cell_index;
-
-//weapons
-int sword_index;
-int blaster_index;
-int shotgun_index;
-int supershotgun_index;
-int machinegun_index;
-int chaingun_index;
-int grenadelauncher_index;
-int rocketlauncher_index;
-int hyperblaster_index;
-int railgun_index;
-int _20mmcannon_index;
-int bfg10k_index;
-
 
 static int power_screen_index;
 static int power_shield_index;
@@ -258,6 +223,8 @@ qboolean Pickup_Bandolier(edict_t *ent, edict_t *other) {
         other->client->pers.max_cells = 250;
     if (other->client->pers.max_slugs < 75)
         other->client->pers.max_slugs = 75;
+    if (other->client->pers.max_flechettes < 250)
+        other->client->pers.max_flechettes = 250;
     // RAFAEL
     if (other->client->pers.max_magslug < 75)
         other->client->pers.max_magslug = 75;
@@ -295,9 +262,10 @@ qboolean Pickup_Pack(edict_t *ent, edict_t *other) {
     V_GiveAmmoClip(other, 2, AMMO_ROCKETS);
     V_GiveAmmoClip(other, 2, AMMO_CELLS);
     V_GiveAmmoClip(other, 2, AMMO_SLUGS);
+    V_GiveAmmoClip(other, 2, AMMO_FLECHETTES);
 
     // RAFAEL
-    item = Fdi_MAGSLUGS;//FindItem ("Mag Slug");
+    item = Fdi_MAGSLUG;//FindItem ("Mag Slug");
     if (item) {
         index = ITEM_INDEX(item);
         other->client->pers.inventory[index] += item->quantity;
@@ -309,13 +277,13 @@ qboolean Pickup_Pack(edict_t *ent, edict_t *other) {
     if (item) {
         index = ITEM_INDEX(item);
         other->client->pers.inventory[index] += item->quantity * 4;
-        other->myskills.inventory[index] = other->client->pers.inventory[index];
+        other->client->resp.pstats.inventory[index] = other->client->pers.inventory[index];
     }
     item = Fdi_TBALL;
     if (item) {
         index = ITEM_INDEX(item);
         other->client->pers.inventory[index] += item->quantity;
-        other->myskills.inventory[index] = other->client->pers.inventory[index];
+        other->client->resp.pstats.inventory[index] = other->client->pers.inventory[index];
     }
     Check_full(other);
     //K03 End
@@ -474,6 +442,10 @@ qboolean Pickup_Ammo(edict_t *ent, edict_t *other) {
             item->quantity = BULLETS_PICKUP;
         else if (item->tag == AMMO_GRENADES)
             item->quantity = GRENADES_PICKUP;
+        else if (item->tag == AMMO_MAGSLUG)
+            item->quantity = MAGSLUG_PICKUP;
+        else if (item->tag == AMMO_FLECHETTES)
+            item->quantity = FLECHETTES_PICKUP;
 
         count = ent->item->quantity;
     }
@@ -621,7 +593,7 @@ int ArmorIndex(edict_t *ent) {
 
 qboolean Pickup_Armor(edict_t *ent, edict_t *other) {
     int armor, current_armor, max_armor, delta;
-    gitem_armor_t *newinfo = (gitem_armor_t *) ent->item->info;
+    const gitem_armor_t *newinfo = (gitem_armor_t *) ent->item->info;
     qboolean shard = false;
     float temp = 1.0;
 
@@ -666,7 +638,7 @@ qboolean Pickup_Armor(edict_t *ent, edict_t *other) {
     if (current_armor >= max_armor) {
         // let them pick up shards for power cubes even when full
         if (shard) {
-            other->client->pers.inventory[power_cube_index] += 5;
+            other->client->pers.inventory[power_cube_index] += 10;
             return true;
         }
         return false;
@@ -682,7 +654,7 @@ qboolean Pickup_Armor(edict_t *ent, edict_t *other) {
     other->client->pers.inventory[body_armor_index] += armor;
 
     if (shard)
-        other->client->pers.inventory[power_cube_index] += 5;
+        other->client->pers.inventory[power_cube_index] += 10;
 
     if (!(ent->spawnflags & DROPPED_ITEM) && (deathmatch->value))
         SetRespawn(ent, 20);
@@ -785,7 +757,7 @@ void Teleport_them(edict_t *ent) {
 
     //They just got teleported, increment their counter. :)
     if (ent->client) {
-        ent->myskills.teleports++;
+        ent->client->resp.pstats.teleports++;
         hook_reset(ent->client->hook);
         V_RestoreMorphed(ent, 50);
     }
@@ -794,13 +766,14 @@ void Teleport_them(edict_t *ent) {
 
     SelectSpawnPoint(ent, spawn_origin, spawn_angles);
 
-    VectorCopy(spawn_origin, start);
-    start[2] += 9;
-    VectorCopy(start, ent->s.origin);
-    VectorCopy(spawn_angles, ent->s.angles);
+	VectorCopy(spawn_origin, start);
+	start[2] += 9;
+	VectorCopy(start, ent->s.origin);
+	VectorCopy(spawn_angles, ent->s.angles);
+	vrx_sync_player_angle_state(ent, spawn_angles);
 
-    //3.0 You get some invincibility when you spawn, but you can't shoot
-    ent->client->respawn_time = ent->client->ability_delay = level.time + (RESPAWN_INVIN_TIME / 10);
+	//3.0 You get some invincibility when you spawn, but you can't shoot
+	ent->client->respawn_time = ent->client->ability_delay = level.time + (RESPAWN_INVIN_TIME / 10);
     ent->client->invincible_framenum = level.framenum + qf2sf(RESPAWN_INVIN_TIME);
 
     // 3.68 don't allow morphs to immediately attack
@@ -885,7 +858,7 @@ qboolean CanTball(edict_t *ent, qboolean print) {
 void Tball_Aura(edict_t *owner, vec3_t origin) {
     edict_t *other = NULL;
     int i = 0;
-    int radius = 160;
+    const int radius = 160;
 
     //3.0 new algorithm for tball code (faster)
     for (i = 1; i <= game.maxclients; i++) {
@@ -986,7 +959,7 @@ void Use_Tball_Self(edict_t *ent, gitem_t *item) {
 
 
     ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)]--;
-    ent->myskills.inventory[ITEM_INDEX(Fdi_TBALL)] = ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)];
+    ent->client->resp.pstats.inventory[ITEM_INDEX(Fdi_TBALL)] = ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)];
 
     if (!(ent->svflags & SVF_MONSTER))
         safe_cprintf(ent, PRINT_HIGH, "You have %d tballs left.\n", ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)]);
@@ -1010,7 +983,7 @@ void Use_Tball(edict_t *ent, gitem_t *item) {
     }
 
     ent->client->pers.inventory[ITEM_INDEX(item)]--;
-    ent->myskills.inventory[ITEM_INDEX(Fdi_TBALL)] = ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)];
+    ent->client->resp.pstats.inventory[ITEM_INDEX(Fdi_TBALL)] = ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)];
 
     safe_cprintf(ent, PRINT_HIGH, "You have %d tballs left.\n", ent->client->pers.inventory[ITEM_INDEX(Fdi_TBALL)]);
 
@@ -1032,7 +1005,7 @@ void Touch_Item(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
 //GHz START
     // if this is a player-controlled monster, then the player should
     // be able to pick up the items that the monster touches
-    int pm = PM_MonsterHasPilot(other);
+    const int pm = PM_MonsterHasPilot(other);
 
     if (pm && (other->mtype != BOSS_TANK) && (other->mtype != BOSS_MAKRON))
         other = other->activator;
@@ -1049,7 +1022,7 @@ void Touch_Item(edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *surf)
     if (other->health < 1)
         return;        // dead people can't pickup
 
-    if (other->ai.is_bot && other->movetarget && other->movetarget == ent)
+    if (other->ai && other->movetarget && other->movetarget == ent)
         other->movetarget = NULL;//GHz: clear the item as a SR goal, even if we can't pick it up
 
     if (!ent->item->pickup)
@@ -1620,7 +1593,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/blastf1a.wav misc/lasfly.wav a_blaster_hud",
-                        WEAP_BLASTER
+                        WEAPON_BLASTER
                 },
 
 /*QUAKED weapon_shotgun (.3 .3 1) (-16 -16 -16) (16 16 16)	7
@@ -1643,7 +1616,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/shotgf1b.wav weapons/shotgr1b.wav a_shells_hud",
-                        WEAP_SHOTGUN
+                        WEAPON_SHOTGUN
                 },
 
 /*QUAKED weapon_supershotgun (.3 .3 1) (-16 -16 -16) (16 16 16)	8
@@ -1666,7 +1639,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/sshotf1b.wav a_shells_hud",
-                        WEAP_SUPERSHOTGUN
+                        WEAPON_SUPERSHOTGUN
                 },
 
 /*QUAKED weapon_machinegun (.3 .3 1) (-16 -16 -16) (16 16 16)	9
@@ -1690,7 +1663,7 @@ always owned, never in the world
                         0,
 /* precache */
                         "weapons/machgf1b.wav weapons/machgf2b.wav weapons/machgf3b.wav weapons/machgf4b.wav weapons/machgf5b.wav a_bullets_hud",
-                        WEAP_MACHINEGUN
+                        WEAPON_MACHINEGUN
                 },
 
 /*QUAKED weapon_chaingun (.3 .3 1) (-16 -16 -16) (16 16 16)	10
@@ -1713,7 +1686,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/chngnu1a.wav weapons/chngnl1a.wav weapons/machgf3b.wav` weapons/chngnd1a.wav a_bullets_hud",
-                        WEAP_CHAINGUN
+                        WEAPON_CHAINGUN
                 },
 
 /*QUAKED weapon_grenadelauncher (.3 .3 1) (-16 -16 -16) (16 16 16)	11
@@ -1737,7 +1710,7 @@ always owned, never in the world
                         0,
 /* precache */
                         "models/objects/grenade/tris.md2 weapons/grenlf1a.wav weapons/grenlr1b.wav weapons/grenlb1b.wav a_grenades_hud",
-                        WEAP_GRENADES
+                        WEAPON_GRENADELAUNCHER
                 },
 
 /*QUAKED weapon_rocketlauncher (.3 .3 1) (-16 -16 -16) (16 16 16)	12
@@ -1761,7 +1734,7 @@ always owned, never in the world
                         0,
 /* precache */
                         "models/objects/rocket/tris.md2 weapons/rockfly.wav weapons/rocklf1a.wav weapons/rocklr1b.wav models/objects/debris2/tris.md2 a_rockets_hud",
-                        WEAP_ROCKETLAUNCHER
+                        WEAPON_ROCKETLAUNCHER
                 },
 
 /*QUAKED weapon_hyperblaster (.3 .3 1) (-16 -16 -16) (16 16 16)	13
@@ -1787,12 +1760,33 @@ always owned, never in the world
                         0,
 /* precache */
                         "weapons/hyprbu1a.wav weapons/hyprbl1a.wav weapons/hyprbf1a.wav weapons/hyprbd1a.wav misc/lasfly.wav a_cells_hud",
-                        WEAP_HYPERBLASTER
+                        WEAPON_HYPERBLASTER
                 },
 // END 14-APR-98
 
 /*QUAKED weapon_railgun (.3 .3 1) (-16 -16 -16) (16 16 16)	14
 */
+                {
+                        "weapon_boomer",
+                        Pickup_Weapon,
+                        Use_Weapon,
+                        Drop_Weapon,
+                        Weapon_Ionripper,
+                        "misc/w_pkup.wav",
+                        "models/weapons/g_boom/tris.md2", EF_ROTATE,
+                        "models/weapons/v_boomer/tris.md2",
+/* icon */        "w_ripper",
+/* pickup */    "Ionripper",
+                        0,
+                        2,
+                        "Cells",
+                        IT_WEAPON,
+                        NULL,
+                        0,
+/* precache */ "weapons/rg_hum.wav weapons/rippfire.wav a_cells_hud",
+                        WEAPON_IONRIPPER
+                },
+
                 {
                         "weapon_railgun",
                         Pickup_Weapon,
@@ -1813,7 +1807,7 @@ always owned, never in the world
                         NULL,
                         0,
 /* precache */ "weapons/rg_hum.wav a_slugs_hud",
-                        WEAP_RAILGUN
+                        WEAPON_RAILGUN
                 },
 
                 {
@@ -1834,7 +1828,30 @@ always owned, never in the world
                         NULL,
                         0,
                         "weapons/sgun1.wav a_shells_hud",
-                        WEAP_20MM
+                        WEAPON_20MM
+                },
+
+/*QUAKED weapon_bfg (.3 .3 1) (-16 -16 -16) (16 16 16)	15
+*/
+                {
+                        "weapon_phalanx",
+                        Pickup_Weapon,
+                        Use_Weapon,
+                        Drop_Weapon,
+                        Weapon_Phalanx,
+                        "misc/w_pkup.wav",
+                        "models/weapons/g_shotx/tris.md2", EF_ROTATE,
+                        "models/weapons/v_shotx/tris.md2",
+/* icon */        "w_phallanx",
+/* pickup */    "Phalanx",
+                        0,
+                        2,
+                        "Mag Slug",
+                        IT_WEAPON,
+                        NULL,
+                        0,
+/* precache */ "weapons/plasshot.wav a_slugs_hud",
+                        WEAPON_PHALANX
                 },
 
 /*QUAKED weapon_bfg (.3 .3 1) (-16 -16 -16) (16 16 16)	15
@@ -1859,10 +1876,110 @@ always owned, never in the world
                         0,
 /* precache */
                         "sprites/s_bfg1.sp2 sprites/s_bfg2.sp2 sprites/s_bfg3.sp2 weapons/bfg__f1y.wav weapons/bfg__l1a.wav weapons/bfg__x1b.wav weapons/bfg_hum.wav a_cells_hud",
-                        WEAP_BFG
+                        WEAPON_BFG10K
                 },
                 /*QUAKED weapon_machinegun (.3 .3 1) (-16 -16 -16) (16 16 16)	9
 */
+                {
+                        "weapon_etf_rifle",
+                        Pickup_Weapon,
+                        Use_Weapon,
+                        Drop_Weapon,
+                        Weapon_ETF_Rifle,
+                        "misc/w_pkup.wav",
+                        "models/weapons/g_etf_rifle/tris.md2", EF_ROTATE,
+                        "models/weapons/v_etf_rifle/tris.md2",
+/* icon */        "w_etf_rifle",
+/* pickup */    "ETF Rifle",
+                        0,
+                        1,
+                        "Flechettes",
+                        IT_WEAPON,
+                        NULL,
+                        0,
+/* precache */ "weapons/nail1.wav models/proj/flechette/tris.md2 a_bullets_hud",
+                        WEAPON_ETFRIFLE
+                },
+                {
+                        "weapon_plasmabeam",
+                        Pickup_Weapon,
+                        Use_Weapon,
+                        Drop_Weapon,
+                        Weapon_Heatbeam,
+                        "misc/w_pkup.wav",
+                        "models/weapons/g_beamer/tris.md2", EF_ROTATE,
+                        "models/weapons/v_beamer/tris.md2",
+/* icon */        "w_heatbeam",
+/* pickup */    "Plasma Beam",
+                        0,
+                        2,
+                        "Cells",
+                        IT_WEAPON,
+                        NULL,
+                        0,
+/* precache */ "models/weapons/v_beamer2/tris.md2 weapons/bfg__l1a.wav a_cells_hud",
+                        WEAPON_PLASMABEAM
+                },
+                {
+                        "weapon_proxlauncher",
+                        Pickup_Weapon,
+                        Use_Weapon,
+                        Drop_Weapon,
+                        Weapon_ProxLauncher,
+                        "misc/w_pkup.wav",
+                        "models/weapons/g_plaunch/tris.md2", EF_ROTATE,
+                        "models/weapons/v_plaunch/tris.md2",
+/* icon */        "w_proxlaunch",
+/* pickup */    "Prox Launcher",
+                        0,
+                        1,
+                        "Grenades",
+                        IT_WEAPON,
+                        NULL,
+                        0,
+/* precache */ "weapons/grenlf1a.wav weapons/grenlr1b.wav weapons/grenlb1b.wav weapons/proxwarn.wav weapons/proxopen.wav a_grenades_hud",
+                        WEAPON_PROXLAUNCHER
+                },
+                {
+                        "weapon_chainfist",
+                        Pickup_Weapon,
+                        Use_Weapon,
+                        Drop_Weapon,
+                        Weapon_ChainFist,
+                        "misc/w_pkup.wav",
+                        "models/weapons/g_chainf/tris.md2", EF_ROTATE,
+                        "models/weapons/v_chainf/tris.md2",
+/* icon */        "w_chainfist",
+/* pickup */    "Chainfist",
+                        0,
+                        0,
+                        NULL,
+                        IT_WEAPON,
+                        NULL,
+                        0,
+/* precache */ "weapons/sawidle.wav weapons/sawhit.wav",
+                        WEAPON_CHAINFIST
+                },
+                {
+                        "weapon_tesla",
+                        Pickup_Weapon,
+                        Use_Weapon,
+                        Drop_Weapon,
+                        Weapon_Tesla,
+                        "misc/w_pkup.wav",
+                        "models/weapons/g_tesla/tris.md2", EF_ROTATE,
+                        "models/weapons/v_tesla/tris.md2",
+/* icon */        "a_tesla",
+/* pickup */    "Tesla",
+                        0,
+                        1,
+                        "Tesla Ammo",
+                        IT_WEAPON,
+                        NULL,
+                        0,
+/* precache */ "models/weapons/v_tesla2/tris.md2 weapons/teslaopen.wav weapons/hgrenb1a.wav weapons/hgrenb2a.wav models/weapons/g_tesla/tris.md2",
+                        WEAPON_TRAP
+                },
                 {
                         "weapon_flamethrower",
                         Pickup_Weapon,
@@ -1882,7 +1999,7 @@ always owned, never in the world
                         0,
 /* precache */
                         "weapons/machgf1b.wav weapons/machgf2b.wav weapons/machgf3b.wav weapons/machgf4b.wav weapons/machgf5b.wav a_bullets_hud",
-                        WEAP_MACHINEGUN
+                        WEAPON_MACHINEGUN
                 },
 
                 //K03 Begin
@@ -1908,7 +2025,7 @@ always owned, never in the world
                         NULL,
                         0,
                         "misc/power1.wav misc/fhit3.wav", //The sound of the blaster
-                        WEAP_SWORD                         //This is precached
+                        WEAPON_SWORD                         //This is precached
                 },
                 //K03 End
 
@@ -1918,25 +2035,6 @@ always owned, never in the world
 
 /*QUAKED ammo_shells (.3 .3 1) (-16 -16 -16) (16 16 16)	16
 */
-                {
-                        NULL, // ammo to spawn on map
-                        NULL, // ammo to pickup
-                        Use_Lasers, // ammo to use
-                        NULL, // drop ammo
-                        NULL, // weapon ammo
-                        "misc/am_pkup.wav",
-                        "models/items/ammo/grenades/medium/tris.md2", 0,
-                        NULL,
-/* icon */        "a_grenades",
-/* pickup */    "Lasers",
-/* width */        3,
-                        0, // func timer or something
-                        NULL,
-                        0,
-                        NULL,
-                        0,
-/* precache */ ""
-                },
                 {
                         "ammo_shells",
                         Pickup_Ammo,
@@ -2048,6 +2146,106 @@ always owned, never in the world
 
 /*QUAKED ammo_slugs (.3 .3 1) (-16 -16 -16) (16 16 16)
 */
+                {
+                        "ammo_magslug",
+                        Pickup_Ammo,
+                        NULL,
+                        Drop_Ammo,
+                        NULL,
+                        "misc/am_pkup.wav",
+                        "models/objects/ammo/tris.md2", 0,
+                        NULL,
+/* icon */        "a_slugs",
+/* pickup */    "Mag Slug",
+/* width */        3,
+                        0,
+                        NULL,
+                        IT_AMMO,
+                        NULL,
+                        AMMO_MAGSLUG,
+/* precache */ ""
+                },
+
+                /*QUAKED ammo_flechettes (.3 .3 1) (-16 -16 -16) (16 16 16)	17
+                 */
+                {
+                    "ammo_flechettes",
+                    Pickup_Ammo,
+                    NULL,
+                    Drop_Ammo,
+                    NULL,
+                    "misc/am_pkup.wav",
+                    "models/ammo/am_flechette/tris.md2", 0,
+                    NULL,
+                    /* icon */        "a_flechettes",
+                    /* pickup */    "Flechettes",
+                    /* width */        3,
+                    0,
+                    NULL,
+                    IT_AMMO,
+                    NULL,
+                    AMMO_FLECHETTES,
+                    /* precache */ ""
+                },
+
+                {
+                        "ammo_trap",
+                        Pickup_Ammo,
+                        Use_Weapon,
+                        Drop_Ammo,
+                        Weapon_Trap,
+                        "misc/am_pkup.wav",
+                        "models/weapons/g_trap/tris.md2", EF_ROTATE,
+                        "models/weapons/v_trap/tris.md2",
+/* icon */        "a_trap",
+/* pickup */    "Trap",
+/* width */        3,
+                        1,
+                        "Trap",
+                        IT_AMMO | IT_WEAPON,
+                        NULL,
+                        AMMO_TRAP,
+/* precache */ "weapons/trapcock.wav weapons/traploop.wav weapons/trapsuck.wav weapons/trapdown.wav"
+                },
+                {
+                        "ammo_tesla",
+                        Pickup_Ammo,
+                        Use_Weapon,
+                        Drop_Ammo,
+                        Weapon_Tesla,
+                        "misc/am_pkup.wav",
+                        "models/weapons/g_tesla/tris.md2", EF_ROTATE,
+                        "models/weapons/v_tesla/tris.md2",
+/* icon */        "a_tesla",
+/* pickup */    "Tesla Ammo",
+/* width */        3,
+                        1,
+                        "Tesla Ammo",
+                        IT_AMMO | IT_WEAPON,
+                        NULL,
+                        AMMO_TESLA,
+/* precache */ "models/weapons/v_tesla2/tris.md2 weapons/teslaopen.wav weapons/hgrenb1a.wav weapons/hgrenb2a.wav models/weapons/g_tesla/tris.md2"
+                },
+                {
+                        "ammo_disruptor",
+                        Pickup_Ammo,
+                        NULL,
+                        Drop_Ammo,
+                        NULL,
+                        "misc/am_pkup.wav",
+                        "models/ammo/am_disr/tris.md2", 0,
+                        NULL,
+/* icon */        "a_disruptor",
+/* pickup */    "Rounds",
+/* width */        3,
+                        3,
+                        NULL,
+                        IT_AMMO,
+                        NULL,
+                        AMMO_DISRUPTOR,
+/* precache */ ""
+                },
+
                 {
                         "ammo_slugs",
                         Pickup_Ammo,
@@ -2290,218 +2488,7 @@ gives +1 to maximum health
                         0,
 /* precache */ ""
                 },
-#if 0
-        //
-        // KEYS
-        //
-    /*QUAKED key_data_cd (0 .5 .8) (-16 -16 -16) (16 16 16)
-    key for computer centers
-    */
-        {
-            "key_data_cd",
-            Pickup_Key,
-            NULL,
-            Drop_General,
-            NULL,
-            "items/pkup.wav",
-            "models/items/keys/data_cd/tris.md2", EF_ROTATE,
-            NULL,
-            "k_datacd",
-            "Data CD",
-            2,
-            0,
-            NULL,
-            0,
-            NULL,
-            0,
-    /* precache */ ""
-        },
 
-    /*QUAKED key_pyramid (0 .5 .8) (-16 -16 -16) (16 16 16)
-    key for the entrance of jail3
-    */
-        {
-            "key_pyramid",
-            Pickup_Key,
-            NULL,
-            Drop_General,
-            NULL,
-            "items/pkup.wav",
-            "models/items/keys/pyramid/tris.md2", EF_ROTATE,
-            NULL,
-            "k_pyramid",
-            "Pyramid Key",
-            2,
-            0,
-            NULL,
-            0,
-            NULL,
-            0,
-    /* precache */ ""
-        },
-
-    /*QUAKED key_data_spinner (0 .5 .8) (-16 -16 -16) (16 16 16)
-    key for the city computer
-    */
-        {
-            "key_data_spinner",
-            Pickup_Key,
-            NULL,
-            Drop_General,
-            NULL,
-            "items/pkup.wav",
-            "models/items/keys/spinner/tris.md2", EF_ROTATE,
-            NULL,
-            "k_dataspin",
-            "Data Spinner",
-            2,
-            0,
-            NULL,
-            0,
-            NULL,
-            0,
-    /* precache */ ""
-        },
-
-    /*QUAKED key_pass (0 .5 .8) (-16 -16 -16) (16 16 16)
-    security pass for the security level
-    */
-        {
-            "key_pass",
-            Pickup_Key,
-            NULL,
-            Drop_General,
-            NULL,
-            "items/pkup.wav",
-            "models/items/keys/pass/tris.md2", EF_ROTATE,
-            NULL,
-            "k_security",
-            "Security Pass",
-            2,
-            0,
-            NULL,
-            0,
-            NULL,
-            0,
-    /* precache */ ""
-        },
-
-    /*QUAKED key_blue_key (0 .5 .8) (-16 -16 -16) (16 16 16)
-    normal door key - blue
-    */
-        {
-            "key_blue_key",
-            Pickup_Key,
-            NULL,
-            Drop_General,
-            NULL,
-            "items/pkup.wav",
-            "models/items/keys/key/tris.md2", EF_ROTATE,
-            NULL,
-            "k_bluekey",
-            "Blue Key",
-            2,
-            0,
-            NULL,
-            0,
-            NULL,
-            0,
-    /* precache */ ""
-        },
-
-    /*QUAKED key_red_key (0 .5 .8) (-16 -16 -16) (16 16 16)
-    normal door key - red
-    */
-        {
-            "key_red_key",
-            Pickup_Key,
-            NULL,
-            Drop_General,
-            NULL,
-            "items/pkup.wav",
-            "models/items/keys/red_key/tris.md2", EF_ROTATE,
-            NULL,
-            "k_redkey",
-            "Red Key",
-            2,
-            0,
-            NULL,
-            0,
-            NULL,
-            0,
-    /* precache */ ""
-        },
-
-    // RAFAEL
-    /*QUAKED key_green_key (0 .5 .8) (-16 -16 -16) (16 16 16)
-    normal door key - blue
-    */
-        {
-            "key_green_key",
-            Pickup_Key,
-            NULL,
-            Drop_General,
-            NULL,
-            "items/pkup.wav",
-            "models/items/keys/green_key/tris.md2", EF_ROTATE,
-            NULL,
-            "k_green",
-            "Green Key",
-            2,
-            0,
-            NULL,
-            IT_STAY_COOP|IT_KEY,
-    //		0,
-            NULL,
-            0,
-    /* precache */ ""
-        },
-    /*QUAKED key_commander_head (0 .5 .8) (-16 -16 -16) (16 16 16)
-    tank commander's head
-    */
-        {
-            "key_commander_head",
-            Pickup_Key,
-            NULL,
-            Drop_General,
-            NULL,
-            "items/pkup.wav",
-            "models/monsters/commandr/head/tris.md2", EF_GIB,
-            NULL,
-    /* icon */		"k_comhead",
-    /* pickup */	"Commander's Head",
-    /* width */		2,
-            0,
-            NULL,
-            0,
-            NULL,
-            0,
-    /* precache */ ""
-        },
-
-    /*QUAKED key_airstrike_target (0 .5 .8) (-16 -16 -16) (16 16 16)
-    tank commander's head
-    */
-        {
-            "key_airstrike_target",
-            Pickup_Key,
-            NULL,
-            Drop_General,
-            NULL,
-            "items/pkup.wav",
-            "models/items/keys/target/tris.md2", EF_ROTATE,
-            NULL,
-    /* icon */		"i_airstrike",
-    /* pickup */	"Airstrike Marker",
-    /* width */		2,
-            0,
-            NULL,
-            0,
-            NULL,
-            0,
-    /* precache */ ""
-        },
-#endif
 
 //K03 Begin
 /*QUAKED key_power_cube (0 .5 .8) (-16 -16 -16) (16 16 16) TRIGGER_SPAWN NO_TOUCH
@@ -2806,6 +2793,27 @@ warehouse circuits
                         "ctf/tech3.wav"                                    // precache sound
                 },
 
+                {
+                        "weapon_disintegrator",
+                        Pickup_Weapon,
+                        Use_Weapon,
+                        Drop_Weapon,
+                        Weapon_Disruptor,
+                        "misc/w_pkup.wav",
+                        "models/weapons/g_dist/tris.md2", EF_ROTATE,
+                        "models/weapons/v_dist/tris.md2",
+/* icon */        "w_disintegrator",
+/* pickup */    "Disruptor",
+                        0,
+                        1,
+                        "Rounds",
+                        IT_WEAPON,
+                        NULL,
+                        0,
+/* precache */ "models/weapons/g_dist/tris.md2 models/weapons/v_dist/tris.md2 models/proj/disintegrator/tris.md2 weapons/disrupt.wav weapons/disint2.wav weapons/disrupthit.wav a_bullets_hud",
+                        WEAPON_DISRUPTOR
+                },
+
                 // end of list marker
                 {NULL}
         };
@@ -2929,6 +2937,11 @@ void SetItemNames(void) {
     rocket_index = ITEM_INDEX(FindItem("Rockets"));
     slug_index = ITEM_INDEX(FindItem("Slugs"));
     cell_index = ITEM_INDEX(FindItem("Cells"));
+    magslug_index = ITEM_INDEX(FindItem("Mag Slug"));
+    trap_index = ITEM_INDEX(FindItem("Trap"));
+    tesla_index = ITEM_INDEX(FindItem("Tesla Ammo"));
+    disruptor_index = ITEM_INDEX(FindItem("Rounds"));
+    flechette_index = ITEM_INDEX(FindItem("Flechettes"));
 
     //weapons
     sword_index = ITEM_INDEX(FindItem("Sword"));
@@ -2943,12 +2956,19 @@ void SetItemNames(void) {
     railgun_index = ITEM_INDEX(FindItem("Railgun"));
     _20mmcannon_index = ITEM_INDEX(FindItem("20mm Cannon"));
     bfg10k_index = ITEM_INDEX(FindItem("BFG10K"));
+
+    ionripper_index = ITEM_INDEX(FindItem("Ionripper"));
+    phalanx_index = ITEM_INDEX(FindItem("Phalanx"));
+    etfrifle_index = ITEM_INDEX(FindItem("ETF Rifle"));
+    plasmabeam_index = ITEM_INDEX(FindItem("Plasma Beam"));
+    proxlauncher_index = ITEM_INDEX(FindItem("Prox Launcher"));
+    chainfist_index = ITEM_INDEX(FindItem("Chainfist"));
 }
 
 int GetWorldAmmoCount(char *pickupName) {
     int count = 0;
     edict_t *e = NULL;
-    gitem_t *it = FindItem(pickupName);
+    const gitem_t *it = FindItem(pickupName);
 
     while ((e = G_Find(e, FOFS(classname), it->classname)) != NULL) {
         if (e->inuse && !(e->spawnflags & DROPPED_ITEM))
@@ -3005,5 +3025,19 @@ void SpawnWorldAmmo(void) {
         SpawnWorldAmmoType("Cells", need);
         gi.dprintf("World spawned %d cell packs\n", need);
     }
+    if ((count = GetWorldAmmoCount("Flechettes")) < world_min_flechettes->value) {
+        need = world_min_flechettes->value - count;
+        SpawnWorldAmmoType("Flechettes", need);
+        gi.dprintf("World spawned %d flechette packs\n", need);
+    }
+    if ((count = GetWorldAmmoCount("Mag Slug")) < world_min_magslug->value) {
+        need = world_min_magslug->value - count;
+        SpawnWorldAmmoType("Mag Slug", need);
+        gi.dprintf("World spawned %d magslug packs\n", need);
+    }
+    if ((count = GetWorldAmmoCount("Rounds")) < world_min_rounds->value) {
+        need = world_min_rounds->value - count;
+        SpawnWorldAmmoType("Rounds", need);
+        gi.dprintf("World spawned %d disruptor round packs\n", need);
+    }
 }
-

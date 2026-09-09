@@ -136,7 +136,7 @@ void fire_rocks(edict_t* self, vec3_t start, vec3_t aimdir, int damage, float sp
 	VectorScale(aimdir, speed, rock->velocity);
 
 	// push up
-	if (self->client && !self->ai.is_bot && !self->lockon)//GHz: don't boost vertical velocity for bots as it will affect ballistic calculations (i.e. finding the right pitch to hit the target)
+	if (self->client && !self->ai && !self->lockon)//GHz: don't boost vertical velocity for bots as it will affect ballistic calculations (i.e. finding the right pitch to hit the target)
 		rock->velocity[2] += 150;
 	// make it spin/roll
 	VectorSet(rock->avelocity, 0, 0, 600);

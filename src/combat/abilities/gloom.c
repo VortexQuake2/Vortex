@@ -12,7 +12,7 @@ static int sound_gas;
 // az's note for anyone who looks at this in the future: for organ_touch
 void V_Push (edict_t *self, edict_t *other, cplane_t *plane, csurface_t *surf)
 {
-	float maxvel = 300;
+	const float maxvel = 300;
 
 	// our activator or ally can push us
 	if (other && other->inuse && other->client && self->activator && self->activator->inuse 
@@ -419,7 +419,7 @@ qboolean healer_heal (edict_t *self, edict_t *other)
 	// but used G_EntIsAlive for consistency.
 	//if (G_EntIsAlive(other) && G_EntIsAlive(self) && OnSameTeam(self, other) && other != self)
 	//{
-		int frames = qf2sf(5000 / (15 * self->monsterinfo.level)); // idk how much would this change tbh
+		const int frames = qf2sf(5000 / (15 * self->monsterinfo.level)); // idk how much would this change tbh
 
         value = 1.0f + 0.1f * vrx_get_talent_level(self->activator, TALENT_SUPER_HEALER);
 
@@ -546,7 +546,7 @@ void healer_healeffects(edict_t* self, edict_t *target)
 void healer_attack (edict_t *self)
 {
 	edict_t*	target =NULL;
-	float		range = self->monsterinfo.sight_range;
+	const float		range = self->monsterinfo.sight_range;
 	//vec3_t		start, end, forward;//, angles;
 	//trace_t		tr;
 
@@ -613,7 +613,7 @@ void healer_think (edict_t *self)
 		}
 	}
 
-	G_RunFrames(self, HEALER_FRAMES_START, HEALER_FRAMES_END, false);
+	G_RunFrames(self, HEALER_FRAMES_START, HEALER_FRAMES_END, false, true);
 
 	self->nextthink = level.time + FRAMETIME;
 }
@@ -664,7 +664,7 @@ void healer_grow (edict_t *self)
 	if (self->s.frame == HEALER_FRAMES_GROW_START)
 		gi.sound(self, CHAN_VOICE, gi.soundindex("organ/organe3.wav"), 1, ATTN_STATIC, 0);
 
-	G_RunFrames(self, HEALER_FRAMES_GROW_START, HEALER_FRAMES_GROW_END, false);
+	G_RunFrames(self, HEALER_FRAMES_GROW_START, HEALER_FRAMES_GROW_END, false, true);
 }
 
 void healer_dead (edict_t *self)
@@ -873,8 +873,8 @@ void spiker_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 void spiker_attack (edict_t *self)
 {
 	float	dist, chance = 0.05 * self->light_level; // Talent: Deadly Spikes gives 5% chance/level to stun
-	float	range=SPIKER_INITIAL_RANGE+SPIKER_ADDON_RANGE*self->monsterinfo.level;
-	int		speed=SPIKER_INITIAL_SPEED+SPIKER_ADDON_SPEED*self->monsterinfo.level;
+	const float	range=SPIKER_INITIAL_RANGE+SPIKER_ADDON_RANGE*self->monsterinfo.level;
+	const int		speed=SPIKER_INITIAL_SPEED+SPIKER_ADDON_SPEED*self->monsterinfo.level;
 	vec3_t	forward, start, end;
 	edict_t *e=NULL;
 
@@ -981,12 +981,12 @@ void spiker_think (edict_t *self)
 	if (self->monsterinfo.attack_finished - 0.5 > level.time)
 	{
 		if (self->s.frame != SPIKER_FRAME_READY)
-			G_RunFrames(self, SPIKER_FRAMES_NOAMMO_START, SPIKER_FRAMES_NOAMMO_END, false);
+			G_RunFrames(self, SPIKER_FRAMES_NOAMMO_START, SPIKER_FRAMES_NOAMMO_END, false, true);
 	}
 	else
 	{
 		if (self->s.frame != SPIKER_FRAME_READY && self->s.frame != SPIKER_FRAMES_REARM_END)
-			G_RunFrames(self, SPIKER_FRAMES_REARM_START, SPIKER_FRAMES_REARM_END, false);
+			G_RunFrames(self, SPIKER_FRAMES_REARM_START, SPIKER_FRAMES_REARM_END, false, true);
 		else
 			self->s.frame = SPIKER_FRAME_READY;
 	}
@@ -1061,7 +1061,7 @@ void spiker_grow (edict_t *self)
 		gi.sound(self, CHAN_VOICE, gi.soundindex("organ/organe3.wav"), 1, ATTN_NORM, 0);
 
 	if (self->s.frame != SPIKER_FRAMES_GROW_END)
-		G_RunFrames(self, SPIKER_FRAMES_GROW_START, SPIKER_FRAMES_GROW_END, false);
+		G_RunFrames(self, SPIKER_FRAMES_GROW_START, SPIKER_FRAMES_GROW_END, false, true);
 }
 
 edict_t *CreateSpiker (edict_t *ent, int skill_level)
@@ -1202,7 +1202,7 @@ void obstacle_return(edict_t* self)
 
 void obstacle_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
-	int max = OBSTACLE_MAX_COUNT;
+	const int max = OBSTACLE_MAX_COUNT;
 	int cur;
 	qboolean flipped = false;
 
@@ -1515,7 +1515,7 @@ void obstacle_grow (edict_t *self)
 		gi.sound(self, CHAN_VOICE, gi.soundindex("organ/organe3.wav"), 1, ATTN_NORM, 0);
 
 	if (self->s.frame != OBSTACLE_FRAMES_GROW_END)
-		G_RunFrames(self, OBSTACLE_FRAMES_GROW_START, OBSTACLE_FRAMES_GROW_END, false);
+		G_RunFrames(self, OBSTACLE_FRAMES_GROW_START, OBSTACLE_FRAMES_GROW_END, false, true);
 }
 
 edict_t *CreateObstacle (edict_t *ent, int skill_level, int talent_level)
@@ -1538,14 +1538,14 @@ edict_t *CreateObstacle (edict_t *ent, int skill_level, int talent_level)
 	e->takedamage = DAMAGE_AIM;
 	e->max_health = OBSTACLE_INITIAL_HEALTH + OBSTACLE_ADDON_HEALTH * skill_level;
 	e->health = 0.5*e->max_health;
-	e->dmg = OBSTACLE_INITIAL_DAMAGE + OBSTACLE_ADDON_DAMAGE * skill_level;
+	e->dmg = scale_fps(OBSTACLE_INITIAL_DAMAGE + OBSTACLE_ADDON_DAMAGE * skill_level);
 	e->monsterinfo.nextattack = 100;// -9 * vrx_get_talent_level(ent, TALENT_PHANTOM_OBSTACLE);
 	e->monsterinfo.level = skill_level;
 	if (talent_level)
 	{
 		e->light_level = talent_level; // Talent: Magnetism
 		e->monsterinfo.sight_range = (0.2 * MAGMINE_RANGE) * talent_level; // range
-		e->count = MAGMINE_DEFAULT_PULL + (2 * MAGMINE_ADDON_PULL * talent_level); // pull
+		e->count = scale_fps(MAGMINE_DEFAULT_PULL + (2 * MAGMINE_ADDON_PULL * talent_level)); // pull
 		e->radius_dmg = e->dmg; // for bot AI hazard detection
 		e->dmg_radius = e->monsterinfo.sight_range; // for bot AI hazard detection
 		//gi.dprintf("magnetism: level: %d range: %.0f pull: %d\n", e->light_level, e->monsterinfo.sight_range, e->style);
@@ -1681,7 +1681,7 @@ void poison_think (edict_t *self)
 	{
 		//self->dmg_counter += self->dmg;
 		T_Damage(self->enemy, self, self->activator, vec3_origin, self->enemy->s.origin, vec3_origin, self->dmg, 0, 0, self->style);
-		self->monsterinfo.nextattack = level.framenum + floattoint(self->random);
+		self->monsterinfo.nextattack = level.framenum + qf2sf( floattoint(self->random) ); 
 		self->random *= 1.25;
 	}
 
@@ -1700,7 +1700,7 @@ void CreatePoison (edict_t *ent, edict_t *targ, int damage, float duration, int 
 	e->classname = "poison";
 	e->delay = level.time + duration;
 	e->owner = e->enemy = targ;
-	e->random = 1; // starting refire delay (in frames)
+	e->random = 1; // starting refire delay (in quake frames)
 	e->dmg = damage;
 	e->mtype = e->atype = POISON;
 	e->style = meansOfDeath;
@@ -1743,11 +1743,11 @@ void gascloud_runframes (edict_t *self)
 {
 	if (level.time > self->delay - 0.8)
 	{
-		G_RunFrames(self, GASCLOUD_FRAMES_GROW_START, GASCLOUD_FRAMES_GROW_END, true);
+		G_RunFrames(self, GASCLOUD_FRAMES_GROW_START, GASCLOUD_FRAMES_GROW_END, true, true);
 		self->s.effects |= EF_SPHERETRANS;
 	}
 	else if (self->s.frame < GASCLOUD_FRAMES_GROW_END)
-		G_RunFrames(self, GASCLOUD_FRAMES_GROW_START, GASCLOUD_FRAMES_GROW_END, false);
+		G_RunFrames(self, GASCLOUD_FRAMES_GROW_START, GASCLOUD_FRAMES_GROW_END, false, true);
 }
 
 void poison_curse_sound(edict_t* self)
@@ -1771,9 +1771,9 @@ void poison_target(edict_t* ent, edict_t* target, int damage, float duration, in
 	{
 		if (!stack) // stacking of poison curses is not allowed, so refresh the curse instead
 		{
-			slot->ent->random = 1; // initial refire delay for next attack
-			slot->ent->monsterinfo.nextattack = level.framenum + 1; // next attack server frame
-			slot->ent->delay = level.time + duration;
+			h2e(slot->ent)->random = 1; // initial refire delay for next attack
+				h2e(slot->ent)->monsterinfo.nextattack = level.framenum + qf2sf(1);
+			h2e(slot->ent)->delay = level.time + duration;
 			slot->time = level.time + duration;
 			return;
 		}
@@ -1941,7 +1941,7 @@ void tempent_ball_think(edict_t* self)
 		return;
 	}
 
-	G_RunFrames(self, 0, 7, false);
+	G_RunFrames(self, 0, 7, false, true);
 
 	self->nextthink = level.time + FRAMETIME;
 }
@@ -2142,7 +2142,7 @@ void gasser_acidattack (edict_t *self)
 {
 	float	dist, chance;
 	//float	range=self->monsterinfo.sight_range;
-	int		speed= ACID_INITIAL_SPEED;
+	const int		speed= ACID_INITIAL_SPEED;
 	vec3_t	forward, start, end;
 	edict_t *e=NULL;
 
@@ -2252,13 +2252,13 @@ void gasser_think (edict_t *self)
 			//gi.dprintf("cant attack\n");
 
 		if (self->s.frame < GASSER_FRAMES_ATTACK_END)
-			G_RunFrames(self, GASSER_FRAMES_ATTACK_START, GASSER_FRAMES_ATTACK_END, false);
+			G_RunFrames(self, GASSER_FRAMES_ATTACK_START, GASSER_FRAMES_ATTACK_END, false, true);
 		else if (self->s.frame < GASSER_FRAMES_REARM_END && level.time > self->monsterinfo.attack_finished - 0.2)
-			G_RunFrames(self, GASSER_FRAMES_REARM_START, GASSER_FRAMES_REARM_END, false);
+			G_RunFrames(self, GASSER_FRAMES_REARM_START, GASSER_FRAMES_REARM_END, false, true);
 		else if (level.time > self->monsterinfo.attack_finished)
 		{
 			gascloud_sparks(self, 1, 32);
-			G_RunFrames(self, GASSER_FRAMES_IDLE_START, GASSER_FRAMES_IDLE_END, false);
+			G_RunFrames(self, GASSER_FRAMES_IDLE_START, GASSER_FRAMES_IDLE_END, false, true);
 		}
 	}
 
@@ -2384,7 +2384,7 @@ void gasser_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 
 edict_t *CreateGasser (edict_t *ent, int skill_level, int talent_level)
 {
-	float synergy_bonus = vrx_get_synergy_mult(ent, GASSER);
+	const float synergy_bonus = vrx_get_synergy_mult(ent, GASSER);
 	edict_t *e;
 
 	// initialize sound
@@ -2533,6 +2533,7 @@ void cocoon_remove_hold (edict_t *self, edict_t *other)
 	other->svflags &= ~SVF_NOCLIENT;
 	// clear flag
 	other->flags &= ~FL_COCOONED;
+	other->holdtime = 0;
 }
 
 void cocoon_apply_hold (edict_t *self, edict_t *other)
@@ -2640,7 +2641,7 @@ void cocoon_apply_bonus (edict_t *self, edict_t *other)
 		if (self->creator && self->creator->client)
 			self->creator->client->layout.dirty = true;
 
-		if (other->client && !other->ai.is_bot)
+		if (other->client && !other->ai)
 			gi.cprintf(other, PRINT_HIGH, "You have gained a damage/defense bonus of +%.0f%c for %.0f seconds\n",
 				(factor * 100) - 100, '%', duration); 
 		
@@ -2740,12 +2741,17 @@ void cocoon_transform (edict_t *self)
 		return;
 	}
 
-	// notify target of time remaining
-	if (!(level.framenum % (int)(sv_fps->value)) && self->enemy->client)
-		safe_cprintf(self->enemy, PRINT_HIGH, "You will emerge from the cocoon in %d second(s)\n", 
-			(int)((self->monsterinfo.nextattack - level.framenum) * FRAMETIME));
+	const auto frames_left = (int)(self->monsterinfo.nextattack - level.framenum);
+	const int secs_left = (int)((float)frames_left * FRAMETIME);
+	if (frames_left % (int)sv_fps->value == 0 && self->enemy->client)
+		safe_cprintf(
+			self->enemy,
+			PRINT_HIGH,
+			"You will emerge from the cocoon in %d second(s)\n",
+			secs_left
+		);
 
-	time = level.time + FRAMETIME;
+	time = level.time + qf2sf(1);
 
 	// hold target in-place
 	if (!strcmp(self->enemy->classname, "drone"))
@@ -2828,7 +2834,7 @@ qboolean cocoon_excluded_mtype(int mtype)
 }
 
 // return true if target is valid for cocoon attack
-qboolean cocoon_validtarget (edict_t *self, edict_t *target)
+qboolean cocoon_validtarget (edict_t *self, edict_t *target, bool touching)
 {
 	float velocity;
 
@@ -2891,7 +2897,7 @@ qboolean cocoon_validtarget (edict_t *self, edict_t *target)
 	{
 		velocity = VectorLength(target->velocity);
 		// make sure target is touching the ground and isn't moving
-		if (!target->groundentity || velocity > 1)
+		if ((!target->groundentity || velocity > 1) && !touching)
 		{
 			//gi.dprintf("groundentity: %s velocity: %f\n", target->groundentity ? "true" : "false", velocity);
 			return false;
@@ -2909,7 +2915,7 @@ void cocoon_attack (edict_t *self, edict_t *other)
 	int frames = COCOON_INITIAL_DURATION + COCOON_ADDON_DURATION * self->monsterinfo.level;
 	if (frames < COCOON_MINIMUM_DURATION)
 		frames = COCOON_MINIMUM_DURATION;
-	self->monsterinfo.nextattack = level.framenum + sf2qf(frames);
+	self->monsterinfo.nextattack = level.framenum + qf2sf(frames);
 
 	// don't let them move (or fall out of the map)
 	self->count = other->movetype; // store movetype so we can restore it later
@@ -2930,7 +2936,7 @@ void cocoon_touch (edict_t *ent, edict_t *other, cplane_t *plane, csurface_t *su
 	V_Touch(ent, other, plane, surf);
 	
 	// try to attack (transform) the target if we can
-	if (cocoon_canattack(ent) && cocoon_validtarget(ent, other))
+	if (cocoon_canattack(ent) && cocoon_validtarget(ent, other, true))
 		cocoon_attack(ent, other);
 }
 
@@ -2942,7 +2948,7 @@ qboolean cocoon_findtarget (edict_t *self)
 	{
 		//if (!healer_validtarget(self, e))
 		//	continue;
-		if (!cocoon_validtarget(self, e))
+		if (!cocoon_validtarget(self, e, false))
 			continue;
 		if (e->cocoon_time > level.time) // already has a cocoon bonus
 			continue;
@@ -3020,9 +3026,10 @@ void cocoon_think (edict_t *self)
 		}
 		return;
 	}
-	else if (self->s.frame > COCOON_FRAME_STANDBY && self->s.frame < COCOON_FRAMES_GROW_END)
+
+	if (self->s.frame > COCOON_FRAME_STANDBY && self->s.frame < COCOON_FRAMES_GROW_END)
 	{
-		G_RunFrames(self, COCOON_FRAMES_GROW_START, COCOON_FRAMES_GROW_END, false);
+		G_RunFrames(self, COCOON_FRAMES_GROW_START, COCOON_FRAMES_GROW_END, false, true);
 	}
 	else if (self->s.frame == COCOON_FRAMES_GROW_END)
 	{
@@ -3031,7 +3038,7 @@ void cocoon_think (edict_t *self)
 		self->s.frame = COCOON_FRAMES_IDLE_START;
 	}
 	else
-		G_RunFrames(self, COCOON_FRAMES_IDLE_START, COCOON_FRAMES_IDLE_END, false);
+		G_RunFrames(self, COCOON_FRAMES_IDLE_START, COCOON_FRAMES_IDLE_END, false, true);
 }
 
 edict_t *CreateCocoon (edict_t *ent, int skill_level)
@@ -3182,7 +3189,7 @@ void spikeball_move (edict_t *self)
 {
     vec3_t	start, forward, end, goalpos;
     trace_t	tr;
-    float	max_velocity = 350;
+    const float	max_velocity = 350;
 
     if (self->monsterinfo.attack_finished > level.time)
         return;
@@ -3343,8 +3350,10 @@ void spikeball_think (edict_t *self)
                          V_GetMonsterName(self), self->removetime-level.time);
     }
 
-    if (!M_Upkeep(self, 1.3 / FRAMETIME, 1))
-        return;
+    if (!M_Upkeep(self, 1.3 / FRAMETIME, 1)) {
+    	self->owner->num_spikeball--;
+	    return;
+    }
 
 	
     spikeball_effects(self);
@@ -3463,10 +3472,10 @@ void Cmd_TossSpikeball (edict_t *ent)
 {
     int		talentLevel;
     int		cost = SPIKEBALL_COST, max_count = SPIKEBALL_MAX_COUNT;
-    int		health = SPIKEBALL_INITIAL_HEALTH + SPIKEBALL_ADDON_HEALTH * ent->myskills.abilities[SPORE].current_level;
+    const int		health = SPIKEBALL_INITIAL_HEALTH + SPIKEBALL_ADDON_HEALTH * ent->myskills.abilities[SPORE].current_level;
     int		damage = SPIKEBALL_INITIAL_DAMAGE + SPIKEBALL_ADDON_DAMAGE * ent->myskills.abilities[SPORE].current_level;
-    float	duration = SPIKEBALL_INITIAL_DURATION + SPIKEBALL_ADDON_DURATION * ent->myskills.abilities[SPORE].current_level;
-    float	range = SPIKEBALL_INITIAL_RANGE + SPIKEBALL_ADDON_RANGE * ent->myskills.abilities[SPORE].current_level;
+    const float	duration = SPIKEBALL_INITIAL_DURATION + SPIKEBALL_ADDON_DURATION * ent->myskills.abilities[SPORE].current_level;
+    const float	range = SPIKEBALL_INITIAL_RANGE + SPIKEBALL_ADDON_RANGE * ent->myskills.abilities[SPORE].current_level;
     vec3_t	forward, right, start, offset;
 
     if (ent->num_spikeball > 0 && Q_strcasecmp (gi.args(), "move") == 0)

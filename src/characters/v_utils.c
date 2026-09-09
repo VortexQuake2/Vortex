@@ -135,6 +135,14 @@ char *GetArmoryItemString(int purchase_number) {
             return "Rockets";
         case 16:
             return "Slugs";
+
+        case 40:
+            return "Flechettes";
+        case 41:
+            return "Mag Slug";
+        case 42:
+            return "Rounds";
+
         case 17:
             return "T-Balls";
         case 18:
@@ -164,9 +172,31 @@ char *GetArmoryItemString(int purchase_number) {
 #ifndef REMOVE_RESPAWNS
             case 30:
                 return "Respawns";
+#else
+        case 30:
+            return " ";
 #endif
+        case 31:
+            return "Ionripper";
+        case 32:
+            return "Phalanx";
+        case 33:
+            return "Trap";
+        case 34:
+            return "ETF Rifle";
+        case 35:
+            return "Plasma Beam";
+        case 36:
+            return "Prox Launcher";
+        case 37:
+            return "Chainfist";
+        case 38:
+            return "Tesla";
+        case 39:
+            return "Disruptor";
+
         default:
-            return "<BAD ITEM NUMBER>";
+            return " ";
     }
 }
 
@@ -203,6 +233,24 @@ char *GetShortWeaponString(int weapon_number) {
             return "20mm";
         case WEAPON_HANDGRENADE:
             return "HG";
+        case WEAPON_IONRIPPER:
+            return "IR";
+        case WEAPON_PHALANX:
+            return "PH";
+        case WEAPON_TRAP:
+            return "Trap";
+        case WEAPON_ETFRIFLE:
+            return "ETF";
+        case WEAPON_PLASMABEAM:
+            return "PB";
+        case WEAPON_PROXLAUNCHER:
+            return "PL";
+        case WEAPON_CHAINFIST:
+            return "CF";
+        case WEAPON_TESLA:
+            return "Tesla";
+        case WEAPON_DISRUPTOR:
+            return "DR";
         default:
             return "<BAD WEAPON NUMBER>";
     }
@@ -238,6 +286,24 @@ char *GetWeaponString(int weapon_number) {
             return "20mm Cannon";
         case WEAPON_HANDGRENADE:
             return "Hand Grenade";
+        case WEAPON_IONRIPPER:
+            return "Ionripper";
+        case WEAPON_PHALANX:
+            return "Phalanx";
+        case WEAPON_TRAP:
+            return "Trap";
+        case WEAPON_ETFRIFLE:
+            return "ETF Rifle";
+        case WEAPON_PLASMABEAM:
+            return "Plasma Beam";
+        case WEAPON_PROXLAUNCHER:
+            return "Prox Launcher";
+        case WEAPON_CHAINFIST:
+            return "Chainfist";
+        case WEAPON_TESLA:
+            return "Tesla";
+        case WEAPON_DISRUPTOR:
+            return "Disruptor";
         default:
             return "<BAD WEAPON NUMBER>";
     }
@@ -277,6 +343,24 @@ char *GetModString(int weapon_number, int mod_number) {
                     return "Range";
                 case WEAPON_HANDGRENADE:
                     return "Range";
+                case WEAPON_IONRIPPER:
+                    return "Bounce";
+                case WEAPON_PHALANX:
+                    return "Radius";
+                case WEAPON_TRAP:
+                    return "Duration";
+                case WEAPON_ETFRIFLE:
+                    return "Pierce";
+                case WEAPON_PLASMABEAM:
+                    return "Duration";
+                case WEAPON_PROXLAUNCHER:
+                    return "Radius";
+                case WEAPON_CHAINFIST:
+                    return "Refire";
+                case WEAPON_TESLA:
+                    return "Duration";
+                case WEAPON_DISRUPTOR:
+                    return "Speed";
                 default:
                     return "<BAD WEAPON NUMBER>";
             }
@@ -308,6 +392,24 @@ char *GetModString(int weapon_number, int mod_number) {
                     return "Recoil";
                 case WEAPON_HANDGRENADE:
                     return "Radius";
+                case WEAPON_IONRIPPER:
+                    return "Speed";
+                case WEAPON_PHALANX:
+                    return "Speed";
+                case WEAPON_TRAP:
+                    return "Radius";
+                case WEAPON_ETFRIFLE:
+                    return "Speed";
+                case WEAPON_PLASMABEAM:
+                    return "Range";
+                case WEAPON_PROXLAUNCHER:
+                    return "Speed";
+                case WEAPON_CHAINFIST:
+                    return "Range";
+                case WEAPON_TESLA:
+                    return "Radius";
+                case WEAPON_DISRUPTOR:
+                    return "Burn";
                 default:
                     return "<BAD WEAPON NUMBER>";
             }
@@ -339,6 +441,24 @@ char *GetModString(int weapon_number, int mod_number) {
                     return "Caliber";
                 case WEAPON_HANDGRENADE:
                     return "Trails";
+                case WEAPON_IONRIPPER:
+                    return "Trails";
+                case WEAPON_PHALANX:
+                    return "Trails";
+                case WEAPON_TRAP:
+                    return "Pull";
+                case WEAPON_ETFRIFLE:
+                    return "Flechettes";
+                case WEAPON_PLASMABEAM:
+                    return "Width";
+                case WEAPON_PROXLAUNCHER:
+                    return "Mines";
+                case WEAPON_CHAINFIST:
+                    return "Lifesteal";
+                case WEAPON_TESLA:
+                    return "Chains";
+                case WEAPON_DISRUPTOR:
+                    return "PLACEHOLDER";
                 default:
                     return "<BAD WEAPON NUMBER>";
             }
@@ -905,7 +1025,7 @@ class_rune_string_t weaponmaster_rune_val = {
 };
 
 const char *GetRuneValString(item_t *rune) {
-    int level = rune->itemLevel;
+    const int level = rune->itemLevel;
 
     switch (rune->itemtype) {
         case ITEM_WEAPON:
@@ -939,7 +1059,7 @@ const char *GetRuneValString(item_t *rune) {
             }
         }
         case ITEM_CLASSRUNE: {
-            int idx = min(level / 2, 6);
+            const int idx = min(level / 2, 6);
             switch (rune->classNum) {
                 case CLASS_SOLDIER:
                     return soldier_rune_val[idx];
@@ -1012,8 +1132,7 @@ void V_ResetAbilityDelays(edict_t *ent)
         ent->myskills.abilities[i].delay = 0.0f;
 
     //Reset talent cooldowns as well.
-    for (i = 0; i < ent->myskills.talents.count; ++i)
-        ent->myskills.talents.talent[i].delay = 0.0f;
+    memset(&ent->myskills.talents.delay, 0, sizeof ent->myskills.talents.delay);
 }
 
 //************************************************************************************************
@@ -1024,10 +1143,6 @@ qboolean V_CanUseAbility(edict_t* ent, int ability_index, int ability_cost, qboo
     // ability is disabled
     if (ent->myskills.abilities[ability_index].disable)
         return false;
-
-    if (ent->myskills.abilities[ability_index].general_skill == 2 &&
-        pregame_time->value > level.time) // mobility in pregame
-        return true;
 
     // poltergeist cannot use abilities in human form
     if (vrx_is_morphing_polt(ent) && !ent->mtype) 
@@ -1090,10 +1205,6 @@ qboolean V_CanUseAbilities(edict_t *ent, int ability_index, int ability_cost, qb
 
     if (!G_EntIsAlive(ent))
         return false;
-
-    if (ability_index != -1 && ent->myskills.abilities[ability_index].general_skill == 2 &&
-        pregame_time->value > level.time) // mobility in pregame
-        return true;
 
     //if (ent->myskills.abilities[ability_index].disable)
     //    return false;
@@ -1223,6 +1334,31 @@ qboolean V_GiveAmmoClip(edict_t *ent, float qty, int ammotype) {
             current = &ent->client->pers.inventory[cell_index];
             max = &ent->client->pers.max_cells;
             break;
+        case AMMO_MAGSLUG:
+            amount = SLUGS_PICKUP;
+            current = &ent->client->pers.inventory[magslug_index];
+            max = &ent->client->pers.max_magslug;
+            break;
+        case AMMO_FLECHETTES:
+            amount = FLECHETTES_PICKUP;
+            current = &ent->client->pers.inventory[flechette_index];
+            max = &ent->client->pers.max_flechettes;
+            break;
+        case AMMO_TRAP:
+            amount = GRENADES_PICKUP;
+            current = &ent->client->pers.inventory[trap_index];
+            max = &ent->client->pers.max_trap;
+            break;
+        case AMMO_TESLA:
+            amount = GRENADES_PICKUP;
+            current = &ent->client->pers.inventory[tesla_index];
+            max = &ent->client->pers.max_tesla;
+            break;
+        case AMMO_DISRUPTOR:
+            amount = 3;
+            current = &ent->client->pers.inventory[disruptor_index];
+            max = &ent->client->pers.max_disruptor;
+            break;
         default:
             return false;
     }
@@ -1257,23 +1393,36 @@ qboolean V_GiveAmmoClip(edict_t *ent, float qty, int ammotype) {
 //Returns an ammo type based on the player's respawn weapon.
 int V_GetRespawnAmmoType(edict_t *ent) {
     switch (ent->myskills.respawn_weapon) {
-        case 2: //sg
-        case 3: //ssg
-        case 12: //20mm
+        case WEAPON_SHOTGUN: //sg
+        case WEAPON_SUPERSHOTGUN: //ssg
+        case WEAPON_20MM: //20mm
             return AMMO_SHELLS;
-        case 4: //mg
-        case 5: //cg
+        case WEAPON_MACHINEGUN: //mg
+        case WEAPON_CHAINGUN: //cg
             return AMMO_BULLETS;
-        case 6: //gl
-        case 11: //hg
+        case WEAPON_GRENADELAUNCHER: //gl
+        case WEAPON_HANDGRENADE: //hg
+        case WEAPON_PROXLAUNCHER: //prox launcher
             return AMMO_GRENADES;
-        case 7: //rl
+        case WEAPON_TRAP: //trap
+            return AMMO_TRAP;
+        case WEAPON_TESLA: //tesla
+            return AMMO_TESLA;
+        case WEAPON_ROCKETLAUNCHER: //rl
             return AMMO_ROCKETS;
-        case 9: //rg
+        case WEAPON_RAILGUN: //rg
             return AMMO_SLUGS;
-        case 8: //hb
-        case 10: //bfg
+        case WEAPON_PHALANX: //phalanx
+            return AMMO_MAGSLUG;
+        case WEAPON_ETFRIFLE: //etf
+            return AMMO_FLECHETTES;
+        case WEAPON_HYPERBLASTER: //hb
+        case WEAPON_BFG10K: //bfg
+        case WEAPON_IONRIPPER: //ionripper
+        case WEAPON_PLASMABEAM: //plasma beam
             return AMMO_CELLS;
+        case WEAPON_DISRUPTOR: //disruptor
+            return AMMO_DISRUPTOR;
         default: //blaster/sword
             return 0; //nothing
     }
@@ -1297,10 +1446,10 @@ int GetClientNumber(edict_t *ent)
             continue;
 
         //More checking
-        if (strlen(temp->myskills.player_name) < 1)
+        if (strlen(temp->client->resp.pstats.player_name) < 1)
             continue;
 
-        if (Q_stricmp(ent->myskills.player_name, temp->myskills.player_name) == 0) //same name
+        if (Q_stricmp(ent->client->resp.pstats.player_name, temp->client->resp.pstats.player_name) == 0) //same name
             return i + 1;
     }
     return 0;
@@ -1355,7 +1504,7 @@ void ReadString(char *buf, FILE *fptr) {
 //************************************************************************************************
 
 void WriteString(FILE *fptr, char *String) {
-    int Length = strlen(String);
+    const int Length = strlen(String);
     WriteChar(fptr, (char) Length);
     fwrite(String, Length, 1, fptr);
 }
@@ -1366,6 +1515,16 @@ int ReadInteger(FILE *fptr) {
     int Value;
     fread(&Value, sizeof(int), 1, fptr);
     return Value;
+}
+
+float ReadFloat(FILE *fptr) {
+    float Value;
+    fread(&Value, sizeof(float), 1, fptr);
+    return Value;
+}
+
+void WriteFloat(FILE *fptr, float Value) {
+    fwrite(&Value, sizeof(float), 1, fptr);
 }
 
 //************************************************************************************************
@@ -1507,7 +1666,7 @@ void vrx_change_class(char *playername, int newclass, int msgtype) {
         player = &g_edicts[i];
         if (!player->inuse)
             continue;
-        if (Q_strcasecmp(playername, player->myskills.player_name) != 0)
+        if (Q_strcasecmp(playername, player->client->resp.pstats.player_name) != 0)
             continue;
         // Archon respawn only sword
         if (newclass == CLASS_KNIGHT)
@@ -1515,7 +1674,7 @@ void vrx_change_class(char *playername, int newclass, int msgtype) {
 
         //Reset player's skills and change their class
         memset(player->myskills.abilities, 0, sizeof(upgrade_t) * MAX_ABILITIES);
-        memset(player->myskills.weapons, 0, sizeof(weapon_t) * MAX_WEAPONS);
+        memset(player->client->resp.pstats.weapons, 0, sizeof(weapon_t) * MAX_WEAPONS);
         vrx_clear_talents(player);
         player->myskills.class_num = newclass;
 
@@ -1528,7 +1687,7 @@ void vrx_change_class(char *playername, int newclass, int msgtype) {
         //Re-apply equipment
         vrx_runes_unapply(player);
         for (i = 0; i < 3; ++i)
-            vrx_runes_apply(player, &player->myskills.items[i]);
+            vrx_runes_apply(player, &player->client->resp.pstats.items[i]);
 
         if (msgtype == CHANGECLASS_MSG_CHANGE) {
             //Notify everyone
@@ -1588,11 +1747,10 @@ char *V_TruncateString(char *string, int newStringLength) {
     return &buf[0];
 }
 
-void V_RegenAbilityAmmo(edict_t *ent, int ability_index, int regen_frames, int regen_delay) {
-    int ammo;
-    int max = ent->myskills.abilities[ability_index].max_ammo;
-    int *current = &ent->myskills.abilities[ability_index].ammo;
-    int *delay = &ent->myskills.abilities[ability_index].ammo_regenframe;
+void V_RegenAbilityAmmo(edict_t *ent, morphammo_t* minv, int regen_frames, int regen_delay) {
+    const int max = minv->max_ammo;
+    const auto current = &minv->ammo;
+    const auto delay = &minv->ammo_regenframe;
 
     if (*current > max)
         return;
@@ -1609,7 +1767,7 @@ void V_RegenAbilityAmmo(edict_t *ent, int ability_index, int regen_frames, int r
     } else
         regen_delay = 1;
 
-    ammo = floattoint((float) max / ((float) regen_frames / regen_delay));
+    int ammo = floattoint((float) max / ((float) regen_frames / regen_delay));
 
     //gi.dprintf("ammo=%d, max=%d, frames=%d, delay=%d\n", ammo, max, regen_frames, regen_delay);
 
@@ -1760,7 +1918,7 @@ qboolean V_GetCorrectedOrigin(edict_t *self, vec3_t start, float dist, int mask,
 
 // attempts to push (move) away from nearby wall(s) by dist
 qboolean V_PushBackWalls(edict_t *self, vec3_t start, float dist, int mask, qboolean minimum_move) {
-    vec3_t end;
+    vec3_t end = { 0, 0, 0 };
 
     if (V_GetCorrectedOrigin(self, start, dist, mask, end, minimum_move))
     {
@@ -2061,28 +2219,30 @@ qboolean V_IsPVP(void) {
 }
 
 qboolean V_HealthCache(edict_t *ent, int max_per_second, int update_frequency_svframes) {
-    int heal, delta, max;
+    float max;
 
     if (ent->health_cache_nextframe > level.framenum)
         return false;
 
-    ent->health_cache_nextframe = level.framenum + update_frequency_svframes;
+    if (update_frequency_svframes <= sv_fps->value)
+        max = (float)max_per_second * (float)update_frequency_svframes / sv_fps->value;
+    else
+        max = max_per_second;
+
+    int next_update = update_frequency_svframes;
+
+    if (max < 1) {
+        next_update = 1.0f / max;
+        max = 1;
+    }
+
+    ent->health_cache_nextframe = level.framenum + next_update;
 
     if (ent->health_cache > 0 && ent->health < ent->max_health) {
-        if (update_frequency_svframes <= sv_fps->value)
-            max = max_per_second / (sv_fps->value / update_frequency_svframes);
-        else
-            max = max_per_second;
-
         if (max > ent->health_cache)
             max = ent->health_cache;
 
-        delta = ent->max_health - ent->health;
-
-        if (delta > max)
-            heal = max;
-        else
-            heal = delta;
+        const int heal = min(ent->max_health - ent->health, max);
 
         ent->health += heal;
         ent->health_cache -= heal;
@@ -2212,7 +2372,6 @@ void vrx_reset_player_state(edict_t *ent) {
     AuraRemove(ent, 0);
 
     // remove movement penalty
-    ent->Slower = 0;
     ent->slowed_factor = 1.0;
     ent->slowed_time = 0;
     ent->chill_level = 0;
@@ -2291,8 +2450,8 @@ void EmpEffects(edict_t *ent);
 void SV_AddBlend(float r, float g, float b, float a, float *v_blend);
 
 void V_ShellNonAbilityEffects(edict_t *ent) {
-    qboolean finalEffects = true;
-    edict_t *cl_ent = G_GetClient(ent);
+    const qboolean finalEffects = true;
+    const edict_t *cl_ent = G_GetClient(ent);
 
     // ********** NON-ENTITY SPECIFIC EFFECTS BELOW **********
     // drones flash briefly when selected for orders
@@ -2426,7 +2585,7 @@ void V_ShellAbilityEffects(edict_t *ent) {
         (ent->chill_time > level.time)) {
         // client-specific
         if (ent->client) {
-            SV_AddBlend(0.75, 0.75, 0.75, 0.6, ent->client->ps.blend);
+            SV_AddBlend(0.75, 0.75, 0.75, 0.6, ent->client->ps.screen_blend);
             ent->client->ps.rdflags |= RDF_UNDERWATER;
         }
 
@@ -2442,7 +2601,7 @@ void V_ShellAbilityEffects(edict_t *ent) {
     else if (que_typeexists(ent->curses, POISON))
     {
         if (ent->client) {
-            SV_AddBlend(0, 0.75, 0, 0.6, ent->client->ps.blend);
+            SV_AddBlend(0, 0.75, 0, 0.6, ent->client->ps.screen_blend);
             ent->client->ps.rdflags |= RDF_UNDERWATER;
         }
         ent->s.effects |= EF_BLASTER | EF_TRACKER;
@@ -2509,6 +2668,12 @@ void V_NonShellEffects(edict_t *ent) {
     if (ent->superspeed)
         ent->s.effects |= EF_TAGTRAIL;
 
+    if (ent->flags & FL_FLASHLIGHT) {
+#ifdef  VRX_REPRO
+        ent->s.effects |= EF_FLASHLIGHT;
+#endif
+    }
+
     // ********** CLIENT-SPECIFIC EFFECTS BELOW **********
     if (ent->client) {
         // shield ability effect
@@ -2535,7 +2700,7 @@ void V_NonShellEffects(edict_t *ent) {
         // chat protect changes view, but doesn't add effects
         //FIXME: move this?
         if (ent->flags & FL_CHATPROTECT)
-            SV_AddBlend(0.5, 0, 0, 0.3, ent->client->ps.blend);
+            SV_AddBlend(0.5, 0, 0, 0.3, ent->client->ps.screen_blend);
 
         // manashield effects = EF_HALF_DAMAGE and EF_TAGTRAIL
         if (ent->manashield)
