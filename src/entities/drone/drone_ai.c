@@ -10,7 +10,7 @@
 #define	DRONE_TELEPORT_DELAY	30		// delay in seconds before a drone can teleport
 #define DRONE_SLEEP_FRAMES		100		// frames before drone becomes less alert
 #define DRONE_SEARCH_TIMEOUT	300	// frames before drone gives up trying to reach an enemy
-#define DRONE_SUICIDE_FRAMES	1800	// idle frames before a world monster suicides
+#define DRONE_SUICIDE_FRAMES	400	// idle frames before a world monster suicides
 
 #define STEPHEIGHT				18		// standard quake2 step size
 #define DRONE_DEBUG				0		// set to 1 to enable drone AI debugging
